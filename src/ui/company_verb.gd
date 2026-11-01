@@ -46,9 +46,10 @@ static func button(state, loader, ns, company, action) -> Button:
 ## and the line printed beside it (band A5).
 static func refusal(state, loader, ns, company, action) -> String:
 	var why := Companies.refusal_reason(state, ns, action, String(company.id), loader)
-	# V5.3 a: a firm already in a process refuses the other ownership verbs.
-	if why == "" and Processes.blocks(ns, String(company.id), action):
-		why = Processes.BUSY
+	# V5.3 a: a firm already in a process refuses the other ownership verbs, and a
+	# firm that settled a break-up refuses another referral (#248).
+	if why == "":
+		why = Processes.refusal(state, ns, String(company.id), action)
 	return why
 
 

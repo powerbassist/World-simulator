@@ -84,6 +84,8 @@ extends SceneTree
 ##              offers (block, allow), each as its authored bloc offsets;
 ##   failing    a major in its rescue window (the failed_month stamp, and the
 ##              window's last month); answers = let it fail, and the rescue verbs;
+##   process    a process's ask (src/sim/process_asks.gd), the month it is posted;
+##              answers = each answer's debt booked once and bloc offsets (V5.3 a);
 ##   programme  the term-start offer (Programme.available non-empty after a month
 ##              without it; the new game's own offer, open before the first tick,
 ##              in the first month's row); answers = none, and each entry's
@@ -95,6 +97,14 @@ extends SceneTree
 ## verb's price is not on its strip yet (A3/A4 build it), so a firm window counts
 ## on its arrows. Subjects for the repeat rule: event|id, request|person (state =
 ## the want), bid|firm (state = the bidder), failing|firm, programme|term.
+## V5.3 a, the parent's call on the asks PR: in `--density` the ACTIVE player also
+## opens processes, as an engaged player would -- a modelled habit, not the game's
+## rule: at most one a year, only when a reason is on the desk (a foreign bid on a
+## major, or a major failing), and only on a firm where a process verb is available
+## (the minority stake first, else the break-up; a failed firm has no process verb,
+## so a failing major gives none today). Its asks then take their defaults. B7 is
+## reported twice: `band_world`, the world's arrivals alone (every source but
+## `process`), and `band`, with the player's own processes' asks.
 ## Output per nation and regime: the band's figures, the counted, dull and repeated
 ## offers per source, the axes outside the strip that would have counted a dull
 ## one, and every empty month with what was happening (election, term start, an
@@ -112,6 +122,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Industry = preload("res://src/sim/industry.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
 const Characters = preload("res://src/sim/characters.gd")
@@ -652,6 +663,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 	var month := 1
 	var programme_before := false
 	var election_before := false
+	var opened_at := -1000
 	# The new game's programme offer is open before the first tick (months_in_term
 	# is 0 only then), so it is counted in the first month's row.
 	var opening: Array = Programme.available(state, ns, _loader)
@@ -664,6 +676,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		state.month = month
 		if regime == "active":
 			_act(state, ns)
+			opened_at = _open_process(state, ns, year * 12 + month, opened_at)
 		var seen := {"desk_before": {}}
 		var report: Dictionary = WorldMonth.tick_month(state, _loader, func(step: String, after: bool, _step_report: Dictionary) -> void:
 			if step == "Events" and not after:
@@ -677,6 +690,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		_event_candidates(state, ns, seen["desk_before"], candidates)
 		_request_candidates(state, ns, report, now, candidates)
 		_firm_candidates(state, ns, now, candidates)
+		_process_candidates(state, ns, now, candidates)
 		if i == 0 and not opening.is_empty():
 			candidates.append(_programme_candidate(state, ns, opening))
 		if not programme.is_empty() and not programme_before:
@@ -684,10 +698,13 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		programme_before = not programme.is_empty()
 		var out: Dictionary = DensityCount.month(candidates, memory, now)
 		var domains: Array = []
+		var domains_world: Array = []
 		var sources := {}
 		for c in out["counted"]:
 			if not domains.has(String(c["domain"])):
 				domains.append(String(c["domain"]))
+			if String(c["source"]) != "process" and not domains_world.has(String(c["domain"])):
+				domains_world.append(String(c["domain"]))
 			sources[c["source"]] = int(sources.get(c["source"], 0)) + 1
 		for kind in ["counted", "dull"]:
 			for c in out[kind]:
@@ -703,6 +720,8 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		var row := {
 			"now": now, "year": year, "month": month,
 			"count": (out["counted"] as Array).size(), "domains": domains, "sources": sources,
+			"world": (out["counted"] as Array).filter(func(c) -> bool: return String(c["source"]) != "process").size(),
+			"domains_world": domains_world,
 			"dull": (out["dull"] as Array).size(), "repeat": (out["repeat"] as Array).size(),
 			"counted": (out["counted"] as Array).map(func(c) -> String: return "%s %s" % [c["due"], c["subject"]]),
 		}
@@ -723,8 +742,38 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		rows.append(row)
 		if defeated:
 			break
+	var world_rows: Array = rows.map(func(r) -> Dictionary:
+		return {"now": r["now"], "count": r["world"], "domains": r["domains_world"]})
 	return {"nation": nation_id, "regime": regime, "band": DensityCount.summary(rows),
-		"tally": tally, "rows": rows}
+		"band_world": DensityCount.summary(world_rows), "tally": tally, "rows": rows}
+
+
+## The active player's modelled habit (header): at most one process a year, only
+## when a reason is on the desk -- a foreign bid on a major, or a major failing --
+## and only on that firm, the minority stake first, else the break-up. Returns the
+## month a process was last opened.
+func _open_process(state, ns, now: int, opened_at: int) -> int:
+	if now - opened_at < 12:
+		return opened_at
+	var reasons: Array = []
+	for company_id in ns.companies.keys():
+		if String((ns.companies[company_id] as Dictionary).get("bid_bidder", "")) != "":
+			reasons.append(String(company_id))
+	for f in Industry.failing(state, ns, _loader):
+		reasons.append(String(f["company_id"]))
+	for company_id in reasons:
+		for verb in ["minority_stake", "break_up"]:
+			var action = _action(verb)
+			if action != null and bool(Processes.start(state, ns, _loader, action, String(company_id)).get("applied", false)):
+				return now
+	return opened_at
+
+
+func _action(id: String):
+	for a in _loader.company_actions:
+		if String(a.id) == id:
+			return a
+	return null
 
 
 ## A desk entry is offered at its arrival (not on the desk before the Events step)
@@ -824,6 +873,22 @@ func _firm_answers(state, ns, company_id: String, ops: Array) -> Array:
 	return answers
 
 
+## A process's ask, the month it is posted: each answer as the debt it books once
+## and the bloc offsets it moves (process_asks.gd builds them from the sim's numbers).
+func _process_candidates(state, ns, now: int, out: Array) -> void:
+	for row in ns.processes:
+		var ask: Dictionary = row.get("ask", {})
+		if String(row["status"]) != "open" or ask.is_empty() or int(ask["posted"]) != now:
+			continue
+		var answers: Array = []
+		for a in ask["answers"]:
+			var strip := _effects_strip(state, {"bloc_offset": a["bloc_offset"]})
+			strip["debt_bn"] = float(a["debt_eur_bn"])
+			answers.append(strip)
+		out.append({"source": "process", "subject": "process|%s" % String(row["id"]), "state": String(ask["kind"]),
+			"domain": "industrial", "due": "arrival", "answers": answers})
+
+
 func _programme_candidate(state, ns, programme: Array) -> Dictionary:
 	var answers: Array = [{}]
 	for entry in programme:
@@ -878,6 +943,9 @@ func _print_density(run: Dictionary) -> void:
 		run["nation"], run["regime"], int(b["months"]), "PASS" if bool(b["pass"]) else "FAIL",
 		100.0 * float(b["share"]), float(b["mean"]), int(b["max"]), int(b["longest_none"]),
 		DensityCount.BAND_MAX, int(b["over_max"]), DensityCount.BAND_DOMAINS, int(b["quarters_ok"]), int(b["quarters"])])
+	var w: Dictionary = run["band_world"]
+	print("    world only (no own-process asks): B7 %s, >= 1 in %.0f %% of months, mean %.2f, longest none %d" % [
+		"PASS" if bool(w["pass"]) else "FAIL", 100.0 * float(w["share"]), float(w["mean"]), int(w["longest_none"])])
 	print("    counted %s; dull %s (saved by %s); repeats %s" % [
 		JSON.stringify(t["counted"]), JSON.stringify(t["dull"]), JSON.stringify(t["saved_by"]), JSON.stringify(t["repeat"])])
 	var empty := {}

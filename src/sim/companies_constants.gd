@@ -523,3 +523,14 @@ const PROCESS_BLOC_AT_START := 0.5
 ## Content's (section 10), and this constant is the placeholder until they are authored.
 const PROCESS_BREAK_FEE := 0.10
 const PROCESS_UTURN_SHARE := 0.25
+## The asks (src/sim/process_asks.gd, the author's "each stage asks you something"):
+## a held sale waits this many months for a new bid; a contested break-up settled
+## costs the firm a fine of this share of its value, paid to the treasury, and moves
+## this share of the break-up's bloc offsets, the firm left intact.
+const PROCESS_HOLD_MONTHS := 3
+const PROCESS_SETTLEMENT_FINE := 0.05
+const PROCESS_SETTLEMENT_BLOC := 0.5
+## A firm that settled may be referred again for the same verb only this many months
+## after the settlement (the parent's call on #248: a cooldown, so the fine cannot
+## come back every year, and not a bar for ever). Processes.refusal reads it.
+const PROCESS_SETTLED_COOLDOWN_MONTHS := 36
