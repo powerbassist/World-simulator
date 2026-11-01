@@ -21,6 +21,7 @@ var _failures: Array[String] = []
 
 
 func _init() -> void:
+	_check_the_numbers_are_section_7s()
 	_check_arrow_reads_the_briefing_word_bands()
 	_check_strips_differ_only_on_the_spec_axes()
 	_check_meaningful_needs_two_answers_that_differ()
@@ -29,6 +30,26 @@ func _init() -> void:
 	_check_summary_and_band()
 	_check_the_probe_counts_through_the_rule()
 	_finish()
+
+
+## The spec's own numbers, as literals (docs/design/v5.3-ab.md section 7 and B7;
+## the author's "Une par mois"): the fixtures below are built from the constants,
+## so without this a retune of B7's measure would pass every other check (QA's
+## TAKE 1 on #241).
+func _check_the_numbers_are_section_7s() -> void:
+	var want := {
+		"MONEY_BN": 0.5, "APPROVAL_PT": 0.5, "REPEAT_MONTHS": 3, "QUARTER": 3,
+		"BAND_SHARE": 1.0, "BAND_MEAN": 2.0, "BAND_MAX": 6, "BAND_DOMAINS": 3,
+	}
+	var got := {
+		"MONEY_BN": DensityCount.MONEY_BN, "APPROVAL_PT": DensityCount.APPROVAL_PT,
+		"REPEAT_MONTHS": DensityCount.REPEAT_MONTHS, "QUARTER": DensityCount.QUARTER,
+		"BAND_SHARE": DensityCount.BAND_SHARE, "BAND_MEAN": DensityCount.BAND_MEAN,
+		"BAND_MAX": DensityCount.BAND_MAX, "BAND_DOMAINS": DensityCount.BAND_DOMAINS,
+	}
+	for key in want:
+		if not is_equal_approx(float(got[key]), float(want[key])):
+			_failures.append("%s is %s, section 7 says %s" % [key, got[key], want[key]])
 
 
 func _check_arrow_reads_the_briefing_word_bands() -> void:
