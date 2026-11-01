@@ -74,6 +74,9 @@ const FIGURE_ROWS := [
 	# than a policy. Reads "—" while nothing is under construction, which is every
 	# game that has not used the verb.
 	["projects", "  of which public works"],  # i18n: msgid last
+	# V5.3 a + b (spec 3.3 (a)): the regional development funds, a line of their own
+	# and not the public works line, which books builds and their count.
+	["region_funds", "  of which regional aid"],  # i18n: msgid last
 	# V2.8: a build in progress and every running station are on the spending total
 	# with no slider on this panel, so the row is the only place the player can see
 	# WHAT the fleet costs. It stops when the player closes a station, which is why the
@@ -120,6 +123,7 @@ const CHANGE_ROWS := {
 	"subsidies": ["subsidy_bill_pct_gdp", false],
 	"investment": ["investment_bill_pct_gdp", false],
 	"projects": ["project_bill_pct_gdp", false],
+	"region_funds": ["region_fund_bill_pct_gdp", false],
 	"energy": ["energy_bill_pct_gdp", false],
 	"deficit": ["deficit_pct_gdp", false],
 }
