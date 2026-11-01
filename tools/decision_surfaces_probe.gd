@@ -84,6 +84,8 @@ extends SceneTree
 ##              offers (block, allow), each as its authored bloc offsets;
 ##   failing    a major in its rescue window (the failed_month stamp, and the
 ##              window's last month); answers = let it fail, and the rescue verbs;
+##   process    a process's ask (src/sim/process_asks.gd), the month it is posted;
+##              answers = each answer's debt booked once and bloc offsets (V5.3 a);
 ##   programme  the term-start offer (Programme.available non-empty after a month
 ##              without it; the new game's own offer, open before the first tick,
 ##              in the first month's row); answers = none, and each entry's
@@ -677,6 +679,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		_event_candidates(state, ns, seen["desk_before"], candidates)
 		_request_candidates(state, ns, report, now, candidates)
 		_firm_candidates(state, ns, now, candidates)
+		_process_candidates(state, ns, now, candidates)
 		if i == 0 and not opening.is_empty():
 			candidates.append(_programme_candidate(state, ns, opening))
 		if not programme.is_empty() and not programme_before:
@@ -822,6 +825,22 @@ func _firm_answers(state, ns, company_id: String, ops: Array) -> Array:
 		if ops.has(op):
 			answers.append(_effects_strip(state, action.effects))
 	return answers
+
+
+## A process's ask, the month it is posted: each answer as the debt it books once
+## and the bloc offsets it moves (process_asks.gd builds them from the sim's numbers).
+func _process_candidates(state, ns, now: int, out: Array) -> void:
+	for row in ns.processes:
+		var ask: Dictionary = row.get("ask", {})
+		if String(row["status"]) != "open" or ask.is_empty() or int(ask["posted"]) != now:
+			continue
+		var answers: Array = []
+		for a in ask["answers"]:
+			var strip := _effects_strip(state, {"bloc_offset": a["bloc_offset"]})
+			strip["debt_bn"] = float(a["debt_eur_bn"])
+			answers.append(strip)
+		out.append({"source": "process", "subject": "process|%s" % String(row["id"]), "state": String(ask["kind"]),
+			"domain": "industrial", "due": "arrival", "answers": answers})
 
 
 func _programme_candidate(state, ns, programme: Array) -> Dictionary:
