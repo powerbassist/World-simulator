@@ -181,6 +181,8 @@ tests=(
   tests/test_front_page_entry.gd
   tests/test_e1b_gate.gd
   tests/test_events_probe_shards.gd
+  # V5.3 a + b, B7: the density probe's counting rule (tools/density_count.gd).
+  tests/test_density_count.gd
   tests/test_exposure.gd
   # V4.4 T11: the event plate library -- the generator's --dry-run pinned
   # set-equal to what the helper can name, every nameable plate bytes-loading
