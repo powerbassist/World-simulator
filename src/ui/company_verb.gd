@@ -26,15 +26,6 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
 
-## The press: an ownership or structure verb opens its PROCESS (V5.3 a,
-## src/sim/processes.gd) and lands nothing this month; every other verb lands at
-## once through Companies.execute(), as before. Both answer {applied, reason}.
-static func press(state, loader, ns, company, action) -> Dictionary:
-	if Processes.is_process(action):
-		return Processes.start(state, ns, loader, action, String(company.id))
-	return Companies.execute(state, ns, loader.company_actions, action, String(company.id), loader)
-
-
 ## The verb's button: disabled with the sim's reason when the arm would refuse
 ## what the door offers, else live with the verb's summary on its hover.
 static func button(state, loader, ns, company, action) -> Button:

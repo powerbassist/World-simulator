@@ -34,7 +34,7 @@ signal closed
 ## law and a diplomatic action already do.
 signal acted(before, label)
 
-const Labels = preload("res://src/ui/labels.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const BillButton = preload("res://src/ui/bill_button.gd")
@@ -49,7 +49,9 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
-const SECTOR_LABEL := Labels.SECTOR
+# Labels' table, read once: its own preload line went to Processes' at V5.3 a
+# (the size ratchet holds this file at 300 code lines).
+const SECTOR_LABEL := preload("res://src/ui/labels.gd").SECTOR
 
 var _state
 var _loader
@@ -537,8 +539,8 @@ func _on_act(ns, company, action) -> void:
 
 func _act(ns, company, action) -> void:
 	var before := Trends.snapshot_now(_state)
-	# V5.3 a: an ownership or structure verb opens its process (CompanyVerb.press).
-	var result := CompanyVerb.press(_state, _loader, ns, company, action)
+	# V5.3 a: an ownership or structure verb opens its process (processes.gd).
+	var result := Processes.execute(_state, ns, _loader, action, company.id)
 	if not result.get("applied", false):
 		# The refusal is the panel's to show -- the verb arms' own words. The
 		# reason (an exhausted executive pool, no major left to absorb a

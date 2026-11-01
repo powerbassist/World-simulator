@@ -168,6 +168,15 @@ static func start(state, ns, loader, action, company_id: String, by_law := false
 		"process_id": String(row["id"])}
 
 
+## The firm panel's one door for a pressed verb: an ownership or structure verb
+## opens its process, any other lands at once through Companies.execute(). Named
+## execute so test_result_tone_lint sees the panel that calls it run a command.
+static func execute(state, ns, loader, action, company_id: String) -> Dictionary:
+	if is_process(action):
+		return start(state, ns, loader, action, company_id)
+	return Companies.execute(state, ns, loader.company_actions, action, company_id, loader)
+
+
 ## What stopping costs now: {ok, debt_eur_bn, bloc_offset} or {ok: false, reason}.
 static func stop_price(state, ns, loader, process_id: String) -> Dictionary:
 	var row := _find(ns, process_id)

@@ -44,6 +44,7 @@ func _init() -> void:
 	_test_a_ruling_on_a_firm_that_no_longer_qualifies_moves_nothing()
 	_test_a_reopened_process_has_its_own_id()
 	_test_a_remedy_refused_undoes_the_rulings_bloc_move()
+	_test_the_press_door_routes_by_verb()
 	_finish()
 
 
@@ -420,6 +421,21 @@ func _test_a_remedy_refused_undoes_the_rulings_bloc_move() -> void:
 	for bloc in OK_BLOCS:
 		if not is_equal_approx(float(ns.bloc_offset.get(bloc, 0.0)), float(offsets.get(bloc, 0.0))):
 			_fail("the refused remedy left the ruling's move on %s" % bloc)
+
+
+## The panel's one door (Processes.execute): a process verb opens its row and
+## lands nothing; any other firm verb lands at once through Companies.execute().
+func _test_the_press_door_routes_by_verb() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	var r: Dictionary = Processes.execute(state, ns, _loader, _action("minority_stake"), firm)
+	if not bool(r.get("applied", false)) or _row(ns, firm).is_empty() or Companies.state_share_of(ns, firm) != 0.0:
+		_fail("the door did not open the stake's process: %s" % r)
+	var subsidy = _action("industrial_subsidy")
+	var s: Dictionary = Processes.execute(state, ns, _loader, subsidy, firm)
+	if not bool(s.get("applied", false)) or float((ns.companies[firm] as Dictionary).get("subsidy", 0.0)) <= 0.0:
+		_fail("the door did not land a subsidy at once: %s" % s)
 
 
 ## Review pass 1: stopped and reopened in one month, the new process is its own row.
