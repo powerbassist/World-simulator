@@ -82,6 +82,10 @@ func _test_the_rule_loads_and_refuses_a_bad_row() -> void:
 	for key in ["eur_bn", "years", "bloc_offset_per_bn"]:
 		if not rule.has(key):
 			_fail("the fund rule lacks %s: %s" % [key, rule])
+	# The panel prints the range from limits(), since the refusal msgids carry no figures.
+	var lim: Dictionary = RegionFunds.limits(_loader)
+	if lim.get("eur_bn", []) != rule.get("eur_bn") or lim.get("years", []) != rule.get("years"):
+		_fail("limits() is %s, not the rule's ranges" % [lim])
 	var good := {"eur_bn": [0.5, 5.0], "years": [1, 5], "bloc_offset_per_bn": {"workers": 0.04}}
 	var cases := {
 		"a range upside down": func(r: Dictionary) -> void: r["eur_bn"] = [5.0, 0.5],

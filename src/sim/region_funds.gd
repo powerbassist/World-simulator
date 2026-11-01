@@ -51,15 +51,28 @@ static func estimate(state, ns, loader, region_id: String, eur_bn: float, years:
 	if why != "":
 		return {"ok": false, "reason": why}
 	var row := _row(state, ns, loader, region_id, eur_bn, years)
-	var now := _unemployment(state, ns, region_id)
+	var list: Array = state.regions.get(ns.id, [])
+	var access := Regions.accessibility_for(ns, list, state.region_graph)
+	var sites: Dictionary = state.project_sited_pct.get(ns.id, {})
+	var now := Regions.unemployment_pct(ns, list, region_id, access, sites)
 	# The row is appended for one synchronous read and removed at once: the read is
 	# the game's own arithmetic, with nothing between the two writes.
 	ns.region_funds.append(row)
-	var after := _unemployment(state, ns, region_id)
+	var after := Regions.unemployment_pct(ns, list, region_id, access, sites)
 	ns.region_funds.pop_back()
 	return {"ok": true, "pts": float(row["pts"]), "eur_bn_per_year": eur_bn, "total_eur_bn": eur_bn * float(years),
 		"months": years * 12, "unemployment_now": now, "unemployment_after": after,
 		"bloc_offset": (row["bloc_offset"] as Dictionary).duplicate()}
+
+
+## The rule's ranges, {eur_bn: [lowest, highest], years: [shortest, longest]}, for
+## the panel's inputs and its refusal line (the msgids below carry no figures, so
+## they stay translatable; the panel prints the range from here).
+static func limits(loader) -> Dictionary:
+	var rule: Dictionary = loader.region_fund_rule
+	if rule.is_empty():
+		return {}
+	return {"eur_bn": (rule["eur_bn"] as Array).duplicate(), "years": (rule["years"] as Array).duplicate()}
 
 
 ## Why a fund cannot open, "" when it can. English msgids, the panel's line.
@@ -143,12 +156,6 @@ static func _row(state, ns, loader, region_id: String, eur_bn: float, years: int
 		"pts": FK.FUND_BETA * sqrt(100.0 * eur_bn / Regions.output_eur_bn(ns, region_id)),
 		"bloc_offset": offsets, "status": OPEN, "closed": -1,
 	}
-
-
-static func _unemployment(state, ns, region_id: String) -> float:
-	var list: Array = state.regions.get(ns.id, [])
-	var access := Regions.accessibility_for(ns, list, state.region_graph)
-	return Regions.unemployment_pct(ns, list, region_id, access, state.project_sited_pct.get(ns.id, {}))
 
 
 static func _close(state, row: Dictionary, status: String) -> void:
