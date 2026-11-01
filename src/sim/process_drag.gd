@@ -9,16 +9,25 @@ extends RefCounted
 
 const Companies = preload("res://src/sim/companies.gd")
 const K = preload("res://src/sim/companies_constants.gd")
+const EC = preload("res://src/sim/economy_constants.gd")
 
 
-## The output a firm's transition loses: PROCESS_TRANSITION_OUTPUT_LOSS of a year of
-## its live output, bn EUR.
+## The output a firm's transition loses in total: PROCESS_TRANSITION_OUTPUT_LOSS of a
+## year of its live output, bn EUR. What the strip shows, and what drag() delivers.
 static func loss_eur_bn(ns, company) -> float:
 	return K.PROCESS_TRANSITION_OUTPUT_LOSS * Companies.output_eur_bn(ns, company)
 
 
-## The growth drag of the firms in a transition now: their losses as points of GDP
-## a year, negative, bounded at PROCESS_DRAG_MAX_PCT; exactly 0.0 with none.
+## The growth drag of the firms in a transition now, points of GDP a year, negative,
+## bounded at PROCESS_DRAG_MAX_PCT; exactly 0.0 with none.
+##
+## Scaled by GAP_CLOSE over the transition's length in years, because the drag moves
+## growth and the output gap closes at GAP_CLOSE a year: a drag d held for T years
+## opens a gap the economy then closes, and the GDP it loses over the transition and
+## that closing, summed, is d * T / GAP_CLOSE. Unscaled, that was 3.3 times the strip
+## (QA's call 2 on #264); scaled, it is loss_eur_bn() up to the monthly compounding,
+## whatever GAP_CLOSE or the transition's length become. tests/test_processes.gd sums
+## it over Economy's own months.
 static func drag(ns, loader) -> float:
 	if ns.gdp_eur_bn <= 0.0:
 		return 0.0
@@ -28,9 +37,8 @@ static func drag(ns, loader) -> float:
 			continue
 		for company in Companies.firms_of(loader, ns.id):
 			if String(company.id) == String(row["company_id"]):
-				# The measured expression's own order (the balance table at 7cba6e5e), so
-				# moving it here moved no float.
-				loss += K.PROCESS_TRANSITION_OUTPUT_LOSS * 100.0 * Companies.output_eur_bn(ns, company) / ns.gdp_eur_bn
+				loss += 100.0 * loss_eur_bn(ns, company) / ns.gdp_eur_bn
 	if loss == 0.0:
 		return 0.0
-	return -minf(loss, K.PROCESS_DRAG_MAX_PCT)
+	var years := float(K.PROCESS_TRANSITION_MONTHS) / 12.0
+	return -minf(loss * EC.GAP_CLOSE / years, K.PROCESS_DRAG_MAX_PCT)

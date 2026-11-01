@@ -493,10 +493,11 @@ const PROCESS_OFFER_MONTHS := 2
 const PROCESS_TRANSITION_MONTHS := 12
 ## Spec 3.2: "during the transition the firm's output is 4 % below its path
 ## (management turnover), then recovers". Booked as a growth drag on the nation
-## (processes.gd writes `ns.process_drag_pct`, Economy adds it): this share of the
-## firm's output, as points of GDP a year, in every month of the transition, so the
-## level falls by about this share of a year of the firm's output by the transfer of
-## control and the output gap's own closing (GAP_CLOSE) is the recovery after it.
+## (processes.gd writes `ns.process_drag_pct`, Economy adds it) in every month of the
+## transition, sized so that the GDP lost IN TOTAL, over the transition and the output
+## gap's closing after it (GAP_CLOSE), is this share of a year of the firm's output:
+## the figure the strip shows. The level is lowest at the transfer of control (about
+## a quarter of this share of the firm's output) and recovers on the gap's half-life.
 const PROCESS_TRANSITION_OUTPUT_LOSS := 0.04
 ## The drag's bound, points of growth a year: docs/economy-model.md's divergence
 ## argument is per quantity, and a new addend owes one (FIRM_IMPULSE_MAX_PCT's

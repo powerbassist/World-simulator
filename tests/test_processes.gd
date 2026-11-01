@@ -17,6 +17,7 @@ const WorldMonth = preload("res://src/sim/world_month.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const EC = preload("res://src/sim/economy_constants.gd")
 
 const PLAYER := "FRA"
 const OK_BLOCS := ["workers", "pensioners", "urban", "rural", "business", "students"]
@@ -52,6 +53,7 @@ func _init() -> void:
 	_test_no_bid_opens_on_a_firm_in_a_process()
 	_test_the_transition_drags_the_firms_output()
 	_test_the_drag_reaches_growth()
+	_test_the_realised_loss_is_the_strips()
 	_finish()
 
 
@@ -547,9 +549,9 @@ func _finish() -> void:
 
 ## Spec 3.2: "during the transition the firm's output is 4 % below its path
 ## (management turnover), then recovers". As a growth addend, written by the tick:
-## PROCESS_TRANSITION_OUTPUT_LOSS x the firm's output as points of GDP, negative, in
-## every month of the transition and in no other; the output gap's own closing is
-## the recovery.
+## PROCESS_TRANSITION_OUTPUT_LOSS x the firm's output as points of GDP, scaled by the
+## gap's closing (the next test sums what it loses), negative, in every month of the
+## transition and in no other; the output gap's own closing is the recovery.
 func _test_the_transition_drags_the_firms_output() -> void:
 	var state = _new_state()
 	var ns = state.player()
@@ -568,7 +570,9 @@ func _test_the_transition_drags_the_firms_output() -> void:
 		var open := String(_row(ns, firm).get("status", "")) == Processes.OPEN
 		if open and stage == "transition":
 			during += 1
-			var want := -K.PROCESS_TRANSITION_OUTPUT_LOSS * 100.0 * Companies.output_eur_bn(ns, _company(ns, firm)) / float(ns.gdp_eur_bn)
+			# Scaled by the gap's closing over the transition's years (process_drag.gd).
+			var want := -K.PROCESS_TRANSITION_OUTPUT_LOSS * 100.0 * Companies.output_eur_bn(ns, _company(ns, firm)) / float(ns.gdp_eur_bn) \
+				* EC.GAP_CLOSE * 12.0 / K.PROCESS_TRANSITION_MONTHS
 			if want >= 0.0 or not is_equal_approx(float(ns.process_drag_pct), maxf(want, -K.PROCESS_DRAG_MAX_PCT)):
 				_fail("the transition's drag is %.5f, not %.5f" % [float(ns.process_drag_pct), want])
 		elif float(ns.process_drag_pct) != 0.0:
@@ -590,3 +594,30 @@ func _test_the_drag_reaches_growth() -> void:
 	var moved := float(dragged.player().growth_annual_pct) - float(still.player().growth_annual_pct)
 	if not is_equal_approx(moved, -0.5):
 		_fail("a drag of -0.5 moved growth by %.5f" % moved)
+
+
+## The strip must say the truth (QA's call 2 on #264, the parent's ruling): what the
+## economy loses IN TOTAL, over the transition and the gap's closing after it, is the
+## output loss the strip shows before the press. The drag is a growth addend and the
+## gap closes at GAP_CLOSE a year, so an unscaled drag would lose its own sum divided
+## by GAP_CLOSE (about 3.3 times the strip). Two worlds, Economy then Processes each
+## month (the game's order) and nothing else, so their difference is the drag's alone,
+## summed as GDP-years against the untreated world and compared as shares of GDP.
+func _test_the_realised_loss_is_the_strips() -> void:
+	var control = _new_state()
+	var treated = _new_state()
+	var ns = treated.player()
+	var firm := _big(ns)
+	var est: Dictionary = Processes.estimate(treated, ns, _loader, _action("full_nationalisation"), firm)
+	var shown := float(est.get("output_loss_eur_bn", 0.0)) / float(ns.gdp_eur_bn)
+	Bills.adopt(treated, ns, _loader, {"action_id": "full_nationalisation", "company_id": firm})
+	var lost := 0.0
+	# 20 years: the gap's tail left after the transfer is under 0.5 % of the total.
+	for i in range(240):
+		for state in [control, treated]:
+			Economy.tick_month(state)
+			_month(state)
+		var c: float = float(control.player().gdp_eur_bn)
+		lost += (c - float(ns.gdp_eur_bn)) / c / 12.0
+	if shown <= 0.0 or absf(lost / shown - 1.0) > 0.02:
+		_fail("the economy loses %.4f x the strip's output loss over the transition and its tail" % (lost / shown if shown > 0.0 else 0.0))
