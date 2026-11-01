@@ -107,7 +107,7 @@ static func answers(state, ns, loader, request_id: String) -> Dictionary:
 		var closed := {"ok": false, "reason": "this request is no longer waiting"}
 		return {"book": closed, "delegate": closed, "decline": closed}
 	var open := {"ok": true, "reason": ""}
-	var delegate := open.merged(Delegation.odds(ns, loader, String(row["object"]), String(row["stance"])))
+	var delegate := open.merged(Delegation.odds(ns, loader, String(row["object"]), String(row.get("stance", ""))))
 	if String(row["status"]) == K.STATUS_BOOKED:
 		return {"book": {"ok": false, "reason": "already booked"}, "delegate": delegate, "decline": open}
 	var book := {"ok": false, "reason": "none of the days offered is free"}
@@ -174,7 +174,7 @@ static func delegate(state, ns, loader, request_id: String) -> Dictionary:
 	# judges it at its date: kept, a kindness; broken, the deferred share of the
 	# grudge and a betrayal. V5.3-0 gate: the word carries the odds the card showed
 	# (Delegation.odds, the same read as answers()), and the judge rolls on them.
-	var chance := float(Delegation.odds(ns, loader, String(row["object"]), String(row["stance"]))["chance"])
+	var chance := float(Delegation.odds(ns, loader, String(row["object"]), String(row.get("stance", "")))["chance"])
 	if not President.commit(state, ns, loader, "delegated", String(row["person_id"]), String(row["object"]),
 			_now(state) + CalendarK.BOOKING_HORIZON_MONTHS, false, chance):
 		push_error("audiences: the delegation of '%s' wrote no commitment" % String(row["id"]))

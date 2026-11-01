@@ -17,6 +17,7 @@ extends SceneTree
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Words = preload("res://src/ui/lever_words.gd")
+const RequestLane = preload("res://src/ui/request_lane.gd")
 const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
@@ -106,11 +107,16 @@ func _check_answer_by() -> void:
 	var hint := Words.delegate_hint(Audiences.answers(_main._state, ns, _main._loader, _oldest)["delegate"])
 	if hint == "" or String(row.get("delegate_hint", "")) != hint:
 		_fail("the request row's Delegate hint '%s' is not the sim's odds in words '%s'" % [row.get("delegate_hint", ""), hint])
+	# The card's answers in RequestLane's order (Book, Delegate, Decline[, Call]),
+	# the close glyph left out -- found by place, never by their shown words.
 	var shown := ""
+	var answers_shown: Array = []
 	if card != null:
 		for b in card.find_children("*", "Button", true, false):
-			if (b as Button).text == "Delegate":
-				shown = (b as Button).tooltip_text
+			if (b as Button).text != "X":
+				answers_shown.append(b)
+	if answers_shown.size() > RequestLane.DELEGATE:
+		shown = (answers_shown[RequestLane.DELEGATE] as Button).tooltip_text
 	if shown != hint:
 		_fail("the card's Delegate hover reads '%s', not '%s'" % [shown, hint])
 

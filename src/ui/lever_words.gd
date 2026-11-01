@@ -203,7 +203,8 @@ static func delegate_hint(answer: Dictionary) -> String:
 			return Strings.t("They want your own programme dropped: a minister's word on it will be broken unless you drop it.")
 	if not answer.has("chance"):
 		return ""
-	return Strings.t("A minister gives their word in your name. This cabinet keeps about %d in 10 such words.") % roundi(float(answer["chance"]) * 10.0)
+	# 1-9: the odds are clamped to [0.05, 0.95], never a certainty either way.
+	return Strings.t("A minister gives their word in your name. This cabinet keeps about %d in 10 such words.") % clampi(roundi(float(answer["chance"]) * 10.0), 1, 9)
 
 
 ## A judged one: kept, or a lie revealed (a promise) / a betrayal (an IOU, or a
