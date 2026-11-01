@@ -39,6 +39,9 @@ const FLASH_FADE_S := 0.5
 ## 0.98 to 1.0 before, an invisible 2 %. Small and brief: a word, not a banner.
 const POP_SCALE := 0.6
 const POP_S := 0.35
+## Long enough to cover the container sort's frame, short enough that the pop
+## is seen growing rather than fading.
+const POP_FADE_S := 0.1
 ## G8: a card lands with the pulse tint and lets it go, so a new row reads as
 ## new for a moment after its fade (no tint at all before).
 const LAND_S := 0.8
@@ -221,17 +224,21 @@ static func arrive(control: Control, delay_s := 0.0) -> void:
 
 ## A result tag popping in (G8): from POP_SCALE past full size and back, eased
 ## with an overshoot. The pivot is read each step, because a tag that has just
-## appeared has no size until its container sorts it -- and the sort's own scale
-## reset lasts one frame, the next step writes the pop again.
+## appeared has no size until its container sorts it. That sort also resets the
+## scale to 1 before the first frame is drawn (#236 pass 1: full size, shrink,
+## pop), so the tag starts transparent and fades in over POP_FADE_S: the frame
+## the sort reset is not seen, the next step writes the pop again.
 static func pop(control: Control) -> void:
 	if not enabled():
 		return
 	control.scale = Vector2(POP_SCALE, POP_SCALE)
+	control.modulate.a = 0.0
 	var tween := _tween(control)
-	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.set_parallel(true)
+	tween.tween_property(control, "modulate:a", 1.0, POP_FADE_S)
 	tween.tween_method(func(s: float):
 		control.pivot_offset = control.size * 0.5
-		control.scale = Vector2(s, s), POP_SCALE, 1.0, POP_S)
+		control.scale = Vector2(s, s), POP_SCALE, 1.0, POP_S).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
 
 ## A card landing in a list (G8): arrive()'s fade, starting in the pulse tint and

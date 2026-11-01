@@ -337,6 +337,23 @@ func _check_visible_amplitudes() -> void:
 		_fail("a result tag pops %.2f to %.2f, settling at %.2f: it must start under 0.75, overshoot, and rest at 1" % [smallest, largest, tag.scale.x])
 	tag.queue_free()
 
+	# In a container (where every tag lives), the sort that follows the tag's
+	# appearing resets its scale to 1 before the frame is drawn: that frame must
+	# not show the tag whole, or the pop reads full-size, shrink, pop (#236 pass 1).
+	var tag_row := HBoxContainer.new()
+	root.add_child(tag_row)
+	var boxed := Label.new()
+	boxed.text = "Good"
+	tag_row.add_child(boxed)
+	Motion.pop(boxed)
+	tag_row.notification(Container.NOTIFICATION_SORT_CHILDREN)
+	if boxed.modulate.a > 0.5 and boxed.scale.x > 0.9:
+		_fail("a tag popping in a container is drawn whole on its first frame (a=%.2f scale=%.2f) -- the sort reset the pop" % [boxed.modulate.a, boxed.scale.x])
+	Motion.finish(boxed)
+	if not is_equal_approx(boxed.modulate.a, 1.0) or not boxed.scale.is_equal_approx(Vector2.ONE):
+		_fail("a boxed tag's pop did not rest whole (a=%.2f scale=%s)" % [boxed.modulate.a, boxed.scale])
+	tag_row.queue_free()
+
 	# A card lands: faded in, and tinted for a visible moment after.
 	var card := PanelContainer.new()
 	root.add_child(card)
