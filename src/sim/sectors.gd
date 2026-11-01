@@ -49,6 +49,7 @@ extends RefCounted
 ## need a SAVE bump). Absent reads the start, the truth for every older save.
 
 const DK = preload("res://src/sim/domains_constants.gd")
+const RK = preload("res://src/sim/region_constants.gd")
 
 
 static func sectors_of(loader, line: String) -> Array:
@@ -156,3 +157,111 @@ static func _same_ids(a: Dictionary, b: Dictionary) -> bool:
 		if not a.has(k):
 			return false
 	return true
+
+
+# --- The regional priority (V5.3 a, docs/design/v5.3-ab.md 3.3 (a) 1) ---------------
+# "Put hospitals first in Hauts-de-France": the region's spending per head on the
+# sector rises by DK.PRIORITY_UPLIFT and every other region's falls so the money is
+# the same, so the population-weighted mean multiplier is exactly 1 and no national
+# figure moves (the line's total, quantity(), factor() and every channel). One
+# priority per sector at a time: a second replaces the first, which is the choice.
+# It reads the live population shares, so the same money holds as people move.
+
+## The region put first for this sector, "" for none.
+static func priority_of(ns, sector_id: String) -> String:
+	return String(ns.sector_priorities.get(sector_id, ""))
+
+
+## Put `region_id` first for a sector of `line`. {ok} or {ok: false, reason}; a
+## refusal writes nothing.
+static func set_priority(state, ns, loader, line: String, sector_id: String, region_id: String) -> Dictionary:
+	var why := _priority_refusal(state, ns, loader, line, sector_id, region_id)
+	if why != "":
+		return {"ok": false, "reason": why}
+	ns.sector_priorities[sector_id] = region_id
+	return {"ok": true}
+
+
+static func clear_priority(ns, sector_id: String) -> Dictionary:
+	if not ns.sector_priorities.has(sector_id):
+		return {"ok": false, "reason": "This sector has no regional priority."}
+	ns.sector_priorities.erase(sector_id)
+	return {"ok": true}
+
+
+## The region's spending per head on the sector against the nation's: 1.0 with no
+## priority, 1 + uplift in the region put first, and the same money's loss elsewhere.
+static func spend_multiplier(ns, sector_id: String, region_id: String) -> float:
+	var first := priority_of(ns, sector_id)
+	if first == "":
+		return 1.0
+	if first == region_id:
+		return 1.0 + DK.PRIORITY_UPLIFT
+	return _others_multiplier(ns, first)
+
+
+## The sector's quantity in one region: the nation's, moved by the region's spending
+## multiplier ^ elasticity (the sign from `better`), as quantity() moves by spending.
+## Exactly the nation's figure with no priority. pow(): a main-thread read.
+static func regional_quantity(ns, loader, line: String, sector_id: String, region_id: String) -> float:
+	var q := quantity(ns, loader, line, sector_id)
+	var m := spend_multiplier(ns, sector_id, region_id)
+	if m == 1.0:
+		return q
+	return q * pow(maxf(m, DK.RATIO_FLOOR), _signed_elasticity(loader, line, sector_id))
+
+
+## The strip's figures for putting `region_id` first: {ok, region_before,
+## region_after, others_after, national} or {ok: false, reason}. "Others" is any
+## region other than the one put first (they all lose the same share).
+static func priority_estimate(state, ns, loader, line: String, sector_id: String, region_id: String) -> Dictionary:
+	var why := _priority_refusal(state, ns, loader, line, sector_id, region_id)
+	if why != "":
+		return {"ok": false, "reason": why}
+	var q := quantity(ns, loader, line, sector_id)
+	var e := _signed_elasticity(loader, line, sector_id)
+	return {"ok": true, "region_before": regional_quantity(ns, loader, line, sector_id, region_id),
+		"region_after": q * pow(1.0 + DK.PRIORITY_UPLIFT, e),
+		"others_after": q * pow(maxf(_others_multiplier(ns, region_id), DK.RATIO_FLOOR), e), "national": q}
+
+
+## Every other region's spending multiplier when `first` is put first: the uplift's
+## money spread over the rest of the population. Over the map's own total, not 1.0:
+## the live shares need not sum to exactly 1 (migration moves them, the authored ones
+## are rounded), and the same money is what this must keep exactly.
+static func _others_multiplier(ns, first: String) -> float:
+	var p := float(ns.region_pop_share.get(first, 0.0))
+	return 1.0 - DK.PRIORITY_UPLIFT * p / (_pop_total(ns) - p)
+
+
+static func _pop_total(ns) -> float:
+	var total := 0.0
+	for region in ns.region_pop_share:
+		total += float(ns.region_pop_share[region])
+	return total
+
+
+static func _signed_elasticity(loader, line: String, sector_id: String) -> float:
+	for s in sectors_of(loader, line):
+		if String(s["id"]) == sector_id:
+			var e := float(DK.ELASTICITY[sector_id])
+			return -e if String(s["quantity"]["better"]) == "lower" else e
+	return 0.0
+
+
+static func _priority_refusal(state, ns, loader, line: String, sector_id: String, region_id: String) -> String:
+	var known := false
+	for s in sectors_of(loader, line):
+		if String(s["id"]) == sector_id:
+			known = true
+	if not known:
+		return "That is not a sector of this spending line."
+	for region in state.regions.get(ns.id, []):
+		if region.id == region_id and region_id != RK.RESIDUAL_KEY:
+			var p := float(ns.region_pop_share.get(region_id, 0.0))
+			if p <= 0.0:
+				return "This region has no population share to weigh a priority by."
+			if _pop_total(ns) - p <= 0.0:
+				return "This nation has no other region to pay for a priority."
+			return ""
+	return "That is not one of this nation's regions."

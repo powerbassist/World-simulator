@@ -1530,6 +1530,10 @@ var sector_shares := {}
 ## path re-derives it (Sectors.rebuild) from `sector_shares` and data/domains/, so a
 ## save cannot disagree with the rows. Copied deep, so a projection keeps it.
 var sector_factor := {}
+## sector id -> the region the player put first for it (Sectors.set_priority, one per
+## sector). It moves money between regions, never a line's total. absent_ok, no bump:
+## no save before V5.3 a held a priority, so absent is "none", the truth.
+var sector_priorities := {}
 
 ## V5.2b b3. person id -> the absolute month the president last phoned them: one
 ## call per person per month (src/sim/phone.gd, its one writer). absent_ok, no

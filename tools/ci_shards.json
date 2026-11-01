@@ -60,6 +60,7 @@
    "tests/test_processes.gd",
    "tests/test_domains.gd",
    "tests/test_sector_channels.gd",
+   "tests/test_sector_priority.gd",
    "tests/test_process_asks.gd",
    "tests/test_companies_tiers.gd",
    "tests/test_content_memos.gd",

@@ -41,3 +41,9 @@ const MIN_SHARE := 0.01
 ## How far a nation's start shares may sum from 1.0 before the loader refuses them
 ## (Content rounds to three decimals); inside it they are renormalised to exactly 1.
 const SHARE_SUM_TOLERANCE := 0.002
+
+## V5.3 a, the regional priority (docs/design/v5.3-ab.md 3.3 (a) 1, src/sim/sectors.gd):
+## "put hospitals first in Hauts-de-France" raises the region's spending per head on
+## the sector by this share, and every other region's falls so the money is the same
+## (the line's total, the national quantity and every channel unchanged). A stand-in.
+const PRIORITY_UPLIFT := 0.20
