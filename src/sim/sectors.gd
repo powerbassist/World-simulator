@@ -59,13 +59,24 @@ static func shares(ns, loader, line: String) -> Dictionary:
 	var out := {}
 	for s in sectors_of(loader, line):
 		out[String(s["id"])] = _start(ns, s)["share"]
-	var moved: Dictionary = ns.sector_shares.get(line, {})
-	# A content edit that renamed or added a sector since the save makes the moved
-	# vector a different partition: it is dropped for the start, never half-read.
-	if not moved.is_empty() and _same_ids(moved, out):
-		for id in out:
-			out[id] = float(moved[id])
+	var moved := _moved(ns, loader, line)
+	for id in moved:
+		out[id] = float(moved[id])
 	return out
+
+
+## The player's moved vector for `line` as shares() reads it, else {}. A content
+## edit that renamed or added a sector since the save makes the moved vector a
+## different partition: it is dropped for the start, never half-read. One rule, so
+## the factor (_store_factor) and the tile cannot disagree about it.
+static func _moved(ns, loader, line: String) -> Dictionary:
+	var moved: Dictionary = ns.sector_shares.get(line, {})
+	if moved.is_empty():
+		return {}
+	var ids := {}
+	for s in sectors_of(loader, line):
+		ids[String(s["id"])] = true
+	return moved if _same_ids(moved, ids) else {}
 
 
 static func quantity(ns, loader, line: String, sector_id: String) -> float:
@@ -119,11 +130,10 @@ static func rebuild(state, loader) -> void:
 
 
 static func _store_factor(ns, loader, line: String) -> void:
-	var moved: Dictionary = ns.sector_shares.get(line, {})
-	var now := shares(ns, loader, line)
-	if moved.is_empty() or not _same_ids(moved, now):
+	if _moved(ns, loader, line).is_empty():
 		ns.sector_factor.erase(line)
 		return
+	var now := shares(ns, loader, line)
 	var total := 0.0
 	var weight := 0.0
 	for s in sectors_of(loader, line):

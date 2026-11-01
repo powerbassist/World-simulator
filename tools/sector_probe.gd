@@ -8,12 +8,16 @@ extends SceneTree
 ##       (1 + MOVE) ^ elasticity (the sign from its `better`) when MOVE of its own
 ##       share is moved into it from the line's largest other sector, and the donor
 ##       moves the other way. A pure read: the line's money is unchanged.
-##   (b) CHANNELS -- MONTHS months after a move of up to LINE_MOVE of the line from
-##       its least to its most elastic sector, the channel the line feeds has moved
-##       in the factor's direction against a twin that moved nothing: society's
+##   (b) CHANNELS -- one month after a move of up to LINE_MOVE of the line from its
+##       least to its most elastic sector, the channel the line feeds has moved in
+##       the factor's direction against a twin that moved nothing: society's
 ##       quality (health, pensions), the potential shift (education,
-##       infrastructure), capability (defence). Pensions' two sectors are equally
-##       elastic, so its factor is below 1 and its quality must fall.
+##       infrastructure), capability (defence). Banded at month 1 because the twins
+##       are whole worlds: by month MONTHS (printed, not banded) an election or a
+##       cabinet can differ between them for reasons a tiny move (DEU's prevention
+##       can give 0.002 of its line) does not control. A big move can cost the
+##       channel even toward the more elastic sector (diminishing returns,
+##       src/sim/sectors.gd), so the factor's own sign is the band, not "up".
 ## A probe that read the channels after one call would measure a world the game
 ## never runs (AGENTS.md: green is not measured), so (b) ticks both twins through
 ## WorldMonth.tick_month().
@@ -57,6 +61,10 @@ func _initialize() -> void:
 		out["nations"][nation] = {"quantities": quantities, "channels": channels}
 	if json_path != "":
 		var f := FileAccess.open(json_path, FileAccess.WRITE)
+		if f == null:
+			printerr("could not write %s: %s" % [json_path, error_string(FileAccess.get_open_error())])
+			quit(1)
+			return
 		f.store_string(JSON.stringify(out, "  "))
 		f.close()
 	print("sector_probe: %s" % ("PASS" if bool(out["pass"]) else "FAIL"))
@@ -106,16 +114,22 @@ func _channels(loader, nation: String) -> Array:
 		var amount := minf(LINE_MOVE, float(shares[ends[0]]) - DK.MIN_SHARE - 0.001)
 		Sectors.move_share(ns, loader, line, ends[0], ends[1], amount)
 		var factor := Sectors.factor(ns, line)
+		var month_1 := {}
 		for i in range(MONTHS):
 			WorldMonth.tick_month(still, loader)
 			WorldMonth.tick_month(moved, loader)
-		var base := _channel(still.player(), line)
-		var after := _channel(ns, line)
+			if i == 0:
+				month_1 = {"base": _channel(still.player(), line), "moved": _channel(ns, line)}
+		var base := float(month_1["base"])
+		var after := float(month_1["moved"])
 		var ok := factor != 1.0 and signf(after - base) == signf(factor - 1.0)
+		var base_n := _channel(still.player(), line)
+		var after_n := _channel(ns, line)
 		rows.append({"line": line, "from": ends[0], "to": ends[1], "amount": amount, "factor": factor,
-			"base": base, "moved": after, "ok": ok})
-		print("%s %-15s %s -> %s %.3f  factor %.5f  channel %.5f -> %.5f %s" % [
-			nation, line, ends[0], ends[1], amount, factor, base, after, "ok" if ok else "FAIL"])
+			"base": base, "moved": after, "base_end": base_n, "moved_end": after_n, "ok": ok})
+		print("%s %-15s %s -> %s %.3f  factor %.5f  month 1 %.6f -> %.6f %s  month %d %.6f -> %.6f" % [
+			nation, line, ends[0], ends[1], amount, factor, base, after, "ok" if ok else "FAIL",
+			MONTHS, base_n, after_n])
 	return rows
 
 
