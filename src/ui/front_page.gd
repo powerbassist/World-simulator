@@ -182,7 +182,8 @@ func show_entry(entry: Dictionary, state, loader, clock, count_plate: Control = 
 	_left = LIFE_SECONDS
 	show()
 	Motion.arrive(self)
-	# Its sting: silent until the manifest names a file (#223 pass 2).
+	# Its sting: the manifest's recorded file when one is named, else the synthesized
+	# headline (SoundK.STINGS["front_page"], spec 4.3).
 	Music.moment(self, "front_page")  # i18n: ok a moment id
 	return true
 
