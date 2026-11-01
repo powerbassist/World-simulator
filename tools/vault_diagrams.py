@@ -49,8 +49,8 @@ GROUPS = [
     ("Economy", "#cfe3f7", ["Access", "Energy", "Economy", "Commodities", "Budget", "Inflation"]),
     ("Opinion and agenda", "#f6dcc2", ["Orgs", "Media", "Programme", "Opinion", "History", "Calendar"]),
     ("Assembly", "#dccff0", ["Division", "Discipline", "Legislature", "Statute", "Dissolution"]),
-    ("The world", "#cdebd3", ["Diplomacy", "Defence", "Processes", "Companies", "Industry", "Migration",
-                              "Investment", "Projects"]),
+    ("The world", "#cdebd3", ["Diplomacy", "Defence", "Processes", "Companies", "Industry", "Closures",
+                              "Migration", "Investment", "Projects"]),
     ("Campaign and society", "#f3e7b5", ["Campaign", "Pledges", "Demography", "Society", "Unrest"]),
     ("People and the vote", "#f2cfd3", ["Events", "Cabinet", "Characters", "Audiences", "Elections"]),
 ]
