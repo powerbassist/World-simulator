@@ -4,7 +4,8 @@ extends RefCounted
 ## from_dict() used to be three hand-written lists over the same 217 fields, and
 ## a field added to two of them and forgotten in the third failed silently -- the
 ## from_dict() aliasing V4.6 left open on three registers was that failure. The
-## three are now one walk each over FIELDS, and tests/test_nation_fields.gd fails
+## three are now one walk each over FIELDS (src/core/nation_field_walk.gd since
+## V5.3 a; this file is the enums and the table), and tests/test_nation_fields.gd fails
 ## when a NationState `var` is missing from the table.
 ##
 ## A row is [name, copy, read, default, absent_ok]:
