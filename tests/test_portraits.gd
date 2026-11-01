@@ -388,8 +388,11 @@ func _check_scene_set_pin() -> void:
 func _check_python_teeth() -> void:
 	var out: Array = []
 	# SUITE_PYTHON: tools/run_tests.sh exports the interpreter it found (python or python3).
+	# read_stderr: a python traceback goes to stderr, and without it a crash reads as
+	# exit 1 with an empty output (the one red this test showed under a double suite
+	# load said exactly that and nothing about why).
 	var code := OS.execute(OS.get_environment("SUITE_PYTHON") if OS.has_environment("SUITE_PYTHON") else "python",
-		[ProjectSettings.globalize_path("res://tools/portraits_generate.py"), "--self-check"], out)
+		[ProjectSettings.globalize_path("res://tools/portraits_generate.py"), "--self-check"], out, true)
 	if code != 0:
 		_fail("the portrait prompt builder failed --self-check (exit %d): %s" % [code, out])
 
