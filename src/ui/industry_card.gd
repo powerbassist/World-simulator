@@ -8,14 +8,16 @@ extends RefCounted
 ## as rows -- a name, two figures and ONE Act button -- and its body firms folded
 ## into a line. Act opens the firm's verbs (industry_verbs.gd) under its row.
 ##
-## The sector's trend against the nation's (the spec's fourth figure) waits on a
-## sim query (asked of Systems, 2026-11-01): the UI does not copy economy.gd's sum.
+## The sector's trend against the nation's (the spec's fourth figure) is the sim's
+## own query, Economy.sector_trend_pct() (#254: the rate the month's growth applies),
+## beside ns.trend_annual_pct: the UI copies no part of economy.gd's sum.
 ##
 ## The open card, the open firm, the opened body list and the focused verb are the
 ## panel's (they survive its rebuilds); this file only draws them.
 
 const Companies = preload("res://src/sim/companies.gd")
 const Industry = preload("res://src/sim/industry.gd")
+const Economy = preload("res://src/sim/economy.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
@@ -53,8 +55,9 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	toggle.set_meta("sector", sector)
 	toggle.pressed.connect(func() -> void: panel._toggle("_open_sector", sector))
 	head.add_child(toggle)
-	var figures := PanelKit.plain_line(head, Strings.t("%s bn · %s jobs") % [
-		Num.f(float(ns.sector_output.get(sector, 0.0)), 0), CompanyVerb.thousands(jobs)], PanelKit.Tone.PLAIN)
+	var figures := PanelKit.plain_line(head, Strings.t("%s bn · %s jobs · trend %s %%/yr, nation %s") % [
+		Num.f(float(ns.sector_output.get(sector, 0.0)), 0), CompanyVerb.thousands(jobs),
+		Num.fs(Economy.sector_trend_pct(state, ns, sector), 1), Num.fs(float(ns.trend_annual_pct), 1)], PanelKit.Tone.PLAIN)
 	figures.autowrap_mode = TextServer.AUTOWRAP_OFF
 	if _waiting(state, ns, loader, sector):
 		var mark := PanelKit.plain_line(head, Strings.t("Decision due"), PanelKit.Tone.PLAIN)
