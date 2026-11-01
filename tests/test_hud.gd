@@ -15,6 +15,7 @@ const Icon = preload("res://src/ui/icon.gd")
 const MoodIcon = preload("res://src/ui/mood_icon.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Inbox = preload("res://src/ui/inbox.gd")
+const President = preload("res://src/sim/president.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -127,11 +128,12 @@ func _check_portrait_names_the_player() -> void:
 	var nation = _main._loader.nations[_main._state.player_nation_id]
 	var text := _collect_text(_main._hud.portrait_card)
 
-	var leader_name: String = _main._loader.person_name(nation.leader_person_id)
+	var ns = _main._state.player()
+	var leader_name: String = _main._loader.person_name(President.leader_id(ns))
 	if not text.contains(leader_name):
 		_fail("the portrait card does not name the leader '%s': %s" % [leader_name, text])
-	if not text.contains(nation.leader_title):
-		_fail("the portrait card does not carry the leader's title '%s'" % nation.leader_title)
+	if not text.contains(President.leader_title(ns)):
+		_fail("the portrait card does not carry the leader's title '%s'" % President.leader_title(ns))
 	if not text.contains(nation.nation_name):
 		_fail("the portrait card does not name the nation '%s'" % nation.nation_name)
 

@@ -52,6 +52,7 @@ const Staff = preload("res://src/sim/staff.gd")
 const Num = preload("res://src/ui/num.gd")
 const PeopleNow = preload("res://src/ui/people_now.gd")
 const PeopleHeads = preload("res://src/ui/people_heads.gd")
+const President = preload("res://src/sim/president.gd")
 
 ## The face a row carries, at the row's own scale: 22px beside 14px captions
 ## reads as a face, and 30px of height is under two rows of separation.
@@ -422,13 +423,11 @@ func _build_abroad(ns) -> void:
 	var ids: Array = _state.nations.keys()
 	ids.sort()
 	for id in ids:
-		if String(id) == ns.id:
+		if String(id) == ns.id or not _loader.nations.has(id):
 			continue
-		var nation = _loader.nations.get(id)
-		if nation == null:
-			continue
-		_person_line(_body, nation.leader_person_id, [[String(nation.nation_name), COL_NAME],
-			["%s %s" % [nation.leader_title, _name_of(nation.leader_person_id)]]])
+		var other = _state.nations[id]  # the sim's leader, not the nation file's
+		_person_line(_body, President.leader_id(other), [[String(_loader.nations[id].nation_name), COL_NAME],
+			["%s %s" % [President.leader_title(other), _name_of(President.leader_id(other))]]])
 
 
 ## A person's line -- V2.3's face in front, then one Label per cell: [text, width

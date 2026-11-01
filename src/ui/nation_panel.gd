@@ -33,6 +33,7 @@ const Num = preload("res://src/ui/num.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const ForeignReading = preload("res://src/ui/foreign_reading.gd")
+const President = preload("res://src/sim/president.gd")
 
 signal closed
 
@@ -183,7 +184,7 @@ func _refresh() -> void:
 	# and Spain as much as the twelve (the V4.11 review caught the first wording).
 	if Roster.grade(_loader, _nation_id) == "simulated":
 		PanelKit.line(_body, tr("Simulated nation — not playable"), PanelKit.Tone.DIM)
-	PanelKit.rich(_body, tr("Leader: %s (%s)") % [PanelKit.person(n.leader_person_id, _loader.person_name(n.leader_person_id)), n.leader_title], PanelKit.Tone.PLAIN)
+	PanelKit.rich(_body, tr("Leader: %s (%s)") % [PanelKit.person(President.leader_id(ns), _loader.person_name(President.leader_id(ns))), President.leader_title(ns)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %s%%") % [ns.gdp_eur_bn, Num.fs(ns.growth_annual_pct, 2)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Unemployment: %s%%") % Num.f(ns.unemployment_pct, 1), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Debt: %s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1), PanelKit.Tone.PLAIN)

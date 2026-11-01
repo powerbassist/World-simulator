@@ -59,6 +59,11 @@ static func leader_id(ns) -> String:
 	return String(ns.head_of_state_person_id if ns.has_executive else ns.pm_person_id)
 
 
+## leader_id's office, on the same test: what a line naming "the leader" calls them.
+static func leader_title(ns) -> String:
+	return String(ns.head_of_state_title if ns.has_executive else ns.head_of_government_title)
+
+
 # --- Reads --------------------------------------------------------------------------
 
 static func knowledge(ns, person_id: String) -> float:
