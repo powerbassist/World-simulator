@@ -2005,8 +2005,10 @@ func _stage_the_industry_tab() -> void:
 	for action in loader.company_actions:
 		if String(action.id) == "minority_stake" and majors.size() > 1:
 			processes.start(state, ns, loader, action, String(majors[1].id))
+			# An ask posts in its stage's last month: the row reads "1 month left".
 			for row in ns.processes:
-				preload("res://src/sim/process_asks.gd").post(ns, loader, row, action, state.year * 12 + state.month)
+				row["months_left"] = 1
+				preload("res://src/sim/process_asks.gd").post(ns, row, action, state.year * 12 + state.month, majors[1])
 	panel._open_sector = String(majors[0].sector)
 	panel._open_firm = String(majors[0].id)
 	for action in Companies.available(state, ns, loader.company_actions, String(majors[0].id), loader):

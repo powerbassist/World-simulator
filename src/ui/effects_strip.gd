@@ -156,6 +156,14 @@ static func money_text(bn: float) -> String:
 	return PanelKit.Strings.t("%s bn") % PanelKit.Num.fs(bn, MONEY_PLACES)
 
 
+## A one-off sum to or from the treasury, or the words for none: a verb or an
+## answer that moves no money says so rather than printing "0.0 bn".
+static func cost_text(bn: float) -> String:
+	if absf(bn) < 0.05:
+		return PanelKit.Strings.t("No cost to the treasury.")
+	return money_text(bn)
+
+
 ## GOOD only on a gain to the balance (band B1), BAD on a loss, plain at zero.
 static func money_tone(gain_bn: float) -> PanelKit.Tone:
 	if gain_bn >= 0.05:

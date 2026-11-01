@@ -22,7 +22,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## A process's stage, and what its end brings, as a player reads them.
 const STAGE := {
-	"negotiation": "negotiation",  # i18n: msgid
+	"negotiation": "the negotiation",  # i18n: msgid
 	"offer": "the offer",  # i18n: msgid
 	"transition": "the transition",  # i18n: msgid
 	"investigation": "the investigation",  # i18n: msgid
@@ -83,13 +83,17 @@ static func build(parent: Control, state, loader, ns, stop: Callable, answer: Ca
 			continue
 		var price: Dictionary = Processes.stop_price(state, ns, loader, String(row["id"]))
 		if not bool(price.get("ok", false)):
+			# No Stop, and the row says why: a drawn ruling (the stage's last month, a
+			# referral the authority clears asks nothing) or a stage past stopping.
+			PanelKit.plain_line(box, Strings.t("The authority has reached its finding.") if stage == "investigation"
+				else Strings.t(String(price.get("reason", ""))))  # i18n: row-ok the sim's reason, its English the msgid
 			continue
 		var flow := PanelKit.buttons(box)
 		var button := PanelKit.sized(Button.new())
 		button.text = Strings.t("Stop")
 		button.set_meta("process_id", String(row["id"]))
 		var gain := -float(price["debt_eur_bn"])
-		var money := PanelKit.plain_line(flow, EffectsStrip.money_text(gain), PanelKit.Tone.PLAIN)
+		var money := PanelKit.plain_line(flow, EffectsStrip.cost_text(gain), PanelKit.Tone.PLAIN)
 		money.autowrap_mode = TextServer.AUTOWRAP_OFF
 		money.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
 		button.set_meta("money_label", money)
@@ -118,7 +122,7 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 		button.pressed.connect(func() -> void: answer.call(process_id, id, what))
 		flow.add_child(button)
 		var gain := -float(option["debt_eur_bn"])
-		var money := PanelKit.plain_line(flow, EffectsStrip.money_text(gain), PanelKit.Tone.PLAIN)
+		var money := PanelKit.plain_line(flow, EffectsStrip.cost_text(gain), PanelKit.Tone.PLAIN)
 		money.autowrap_mode = TextServer.AUTOWRAP_OFF
 		money.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
 		button.set_meta("money_label", money)

@@ -104,7 +104,8 @@ static func window_ids(state, loader, messages := {}) -> Array:
 	# PLAYER" by the file's own test: each lapses to a committed outcome if
 	# ignored, and the verbs that answer live on the companies window.
 	# V5.3 a + b (#248): a process stage's ask lapses to its default the same way.
-	if not Industry.pending_bid(state, ns, loader).is_empty() or not Industry.failing(state, ns, loader).is_empty() 			or not Processes.asks(ns).is_empty():
+	if not Industry.pending_bid(state, ns, loader).is_empty() or not Industry.failing(state, ns, loader).is_empty() \
+			or not Processes.asks(ns).is_empty():
 		out.append("companies")
 
 	return out

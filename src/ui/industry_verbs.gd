@@ -100,7 +100,7 @@ static func money_line(state, loader, ns, company, action, est: Dictionary) -> A
 	if absf(once) >= 0.05:
 		return [caption, Strings.t("%s once") % EffectsStrip.money_text(once), once]
 	# A verb that moves no money says so in words, not as "0.0 bn".
-	return [caption, Strings.t("No cost to the treasury."), 0.0]
+	return [caption, EffectsStrip.cost_text(0.0), 0.0]
 
 
 ## When it lands and what can go wrong, in whole sentences; `est` is the process's

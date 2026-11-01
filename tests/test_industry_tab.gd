@@ -218,9 +218,9 @@ func _check_in_progress() -> void:
 		return
 	var price: Dictionary = Processes.stop_price(_main._state, ns, _main._loader, String(rows[0]["id"]))
 	var money: Label = stop.get_meta("money_label")
-	if money == null or money.text != EffectsStrip.money_text(-float(price["debt_eur_bn"])):
+	if money == null or money.text != EffectsStrip.cost_text(-float(price["debt_eur_bn"])):
 		_fail("in progress: Stop's money reads '%s', stopping costs %s" % [
-			money.text if money != null else "<none>", EffectsStrip.money_text(-float(price["debt_eur_bn"]))])
+			money.text if money != null else "<none>", EffectsStrip.cost_text(-float(price["debt_eur_bn"]))])
 
 
 ## A5: every verb the live process refuses is greyed and its line is on screen.
@@ -247,7 +247,7 @@ func _post_ask() -> void:
 	var ns = _main._state.player()
 	for row in ns.processes:
 		if String(row["status"]) == Processes.OPEN:
-			Asks.post(ns, _main._loader, row, _action(String(row["action_id"])), _main._state.year * 12 + _main._state.month)
+			Asks.post(ns, row, _action(String(row["action_id"])), _main._state.year * 12 + _main._state.month, _major)
 	_panel.mark_dirty()
 
 
@@ -265,8 +265,8 @@ func _check_ask() -> void:
 			_fail("ask: no '%s' answer on screen" % option["id"])
 			continue
 		var money: Label = button.get_meta("money_label")
-		if money.text != EffectsStrip.money_text(-float(option["debt_eur_bn"])):
-			_fail("ask: '%s' reads '%s', it books %s" % [option["id"], money.text, EffectsStrip.money_text(-float(option["debt_eur_bn"]))])
+		if money.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])):
+			_fail("ask: '%s' reads '%s', it books %s" % [option["id"], money.text, EffectsStrip.cost_text(-float(option["debt_eur_bn"]))])
 	for b in _visible_with_meta("process_id"):
 		if not b.has_meta("answer_id"):
 			_fail("ask: a Stop stands beside the question (walking away is an answer)")
