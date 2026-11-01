@@ -36,7 +36,7 @@ static func button(state, loader, ns, company, action) -> Button:
 	# V5.3 a: a firm already in a process refuses the other ownership verbs, and a
 	# firm that settled a break-up refuses another referral.
 	if why == "":
-		why = Processes.refusal(ns, String(company.id), action)
+		why = Processes.refusal(state, ns, String(company.id), action)
 	out.disabled = why != ""
 	if why != "":
 		out.tooltip_text = Strings.t(why)  # i18n: row-ok the sim's reason, its English the msgid

@@ -1380,8 +1380,9 @@ it lands and the dividend keeps its one-month lag.
     halved, and the firm stays intact. A firm the authority clears is asked nothing.
     The ruling is drawn when its ask is posted, so from then on the investigation can
     no longer be stopped, as after any ruling. A firm that settled is not referred
-    again (`Processes.refusal`, `SETTLED`, shown before the press): it stays intact,
-    so a second referral would collect the fine again;
+    again for 36 months (`PROCESS_SETTLED_COOLDOWN_MONTHS`; `Processes.refusal`,
+    `SETTLED`, shown before the press): it stays intact, so an immediate second
+    referral would collect the fine again;
   - the privatisation's best bid: accept (the default) or hold three months for a new
     bid, priced at the discount the cycle gives then. A sale is held once at most:
     the new bid asks nothing, so the sale ends inside the nine months its strip shows.

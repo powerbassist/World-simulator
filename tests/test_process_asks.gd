@@ -256,8 +256,10 @@ func _test_an_ask_is_answered_once_and_survives_a_save() -> void:
 
 
 ## Pass 1 on #248: a settlement leaves the firm intact, so without this rule a
-## referral-then-settle would be a fine collected again every year. The refusal is
-## the door's own line, read before the press (A5).
+## referral-then-settle would be a fine collected again every year. The parent's
+## call: the refusal holds for PROCESS_SETTLED_COOLDOWN_MONTHS after the settlement,
+## then the firm can be referred again. The refusal is the door's own line, read
+## before the press (A5).
 func _test_a_settled_firm_is_not_referred_again() -> void:
 	var state = _new_state()
 	var ns = state.player()
@@ -273,10 +275,25 @@ func _test_a_settled_firm_is_not_referred_again() -> void:
 	if String(row["status"]) != "settled":
 		_fail("the settlement fixture did not settle: %s" % row)
 		return
-	if Processes.refusal(ns, firm, verb) != Processes.SETTLED:
+	if Processes.refusal(state, ns, firm, verb) != Processes.SETTLED:
 		_fail("a settled firm's break-up is not refused before the press")
 	if bool(Processes.start(state, ns, _loader, verb, firm).get("applied", false)):
 		_fail("a settled firm was referred again")
+	# The last month of the cooldown still refuses; the month after it does not.
+	var settled_at := int(row["closed"])
+	_at(state, settled_at + K.PROCESS_SETTLED_COOLDOWN_MONTHS - 1)
+	if Processes.refusal(state, ns, firm, verb) != Processes.SETTLED:
+		_fail("a settled firm could be referred again before its cooldown ended")
+	_at(state, settled_at + K.PROCESS_SETTLED_COOLDOWN_MONTHS)
+	if Processes.refusal(state, ns, firm, verb) != "":
+		_fail("a settled firm is still refused after its cooldown")
+	if not bool(Processes.start(state, ns, _loader, verb, firm).get("applied", false)):
+		_fail("a settled firm could not be referred again after its cooldown")
+
+
+func _at(state, month_index: int) -> void:
+	state.year = (month_index - 1) / 12
+	state.month = month_index - state.year * 12
 
 
 ## Pass 1 on #248: the ruling is drawn with its ask, a month before the

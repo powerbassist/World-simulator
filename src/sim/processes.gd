@@ -80,15 +80,18 @@ static func blocks(ns, company_id: String, action) -> bool:
 
 
 ## Why the register refuses `action` on this firm now, "" when it does not: a live
-## process (BUSY), or the same verb settled before on it (SETTLED: a settlement
-## leaves the firm intact, so a second referral would collect the fine again --
-## pass 1 on #248). The panel greys the verb with this line before the press (A5).
-static func refusal(ns, company_id: String, action) -> String:
+## process (BUSY), or the same verb settled on it within the last
+## PROCESS_SETTLED_COOLDOWN_MONTHS (SETTLED: a settlement leaves the firm intact, so
+## an immediate second referral would collect the fine again -- pass 1 on #248; the
+## parent's call: a cooldown, not a bar for ever). The panel greys the verb with this
+## line before the press (A5).
+static func refusal(state, ns, company_id: String, action) -> String:
 	if blocks(ns, company_id, action):
 		return BUSY
+	var now := _now(state)
 	for row in ns.processes:
 		if action != null and String(row["company_id"]) == company_id and String(row["action_id"]) == String(action.id) \
-				and String(row["status"]) == "settled":
+				and String(row["status"]) == "settled" and now - int(row["closed"]) < K.PROCESS_SETTLED_COOLDOWN_MONTHS:
 			return SETTLED
 	return ""
 
@@ -145,7 +148,7 @@ static func odds_for(share: float) -> float:
 static func start(state, ns, loader, action, company_id: String, by_law := false) -> Dictionary:
 	if not is_process(action) or not Companies.available(state, ns, loader.company_actions, company_id, loader, by_law).has(action):
 		return _refused(ns, action, company_id, "")
-	var why := BUSY if not live(ns, company_id).is_empty() else refusal(ns, company_id, action)
+	var why := BUSY if not live(ns, company_id).is_empty() else refusal(state, ns, company_id, action)
 	if why == "":
 		why = Companies.refusal_reason(state, ns, action, company_id, loader)
 	if why != "":
