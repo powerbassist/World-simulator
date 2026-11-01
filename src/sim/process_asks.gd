@@ -53,7 +53,7 @@ static func post(ns, row: Dictionary, action, now: int, company) -> void:
 			answers = [_answer("pay", base * (1.0 + float(row["rate"])), rest),
 				_answer("stop", K.PROCESS_BREAK_FEE * base * float(row["rate"]), uturn(action))]
 		"investigation":
-			row["ruled"] = Cycle.unit("%s|ruling" % String(row["id"]), now) < float(row["odds"])
+			row["ruled"] = rule(row, now)
 			if not bool(row["ruled"]):
 				return
 			var value := Companies.value_eur_bn(ns, company)
@@ -68,6 +68,14 @@ static func post(ns, row: Dictionary, action, now: int, company) -> void:
 			answers = [_answer("accept", -base * (1.0 - float(row["rate"])), rest), _answer("hold", 0.0, {})]
 	row["ask"] = {"kind": String(STAGE_ASK[stage][0]), "posted": now, "due": now + 1,
 		"default": String(STAGE_ASK[stage][1]), "answers": answers}
+
+
+## The authority's finding on a referral (true: the break-up is ordered), drawn on
+## the row's own seed in month `now` with the odds its strip showed. One copy, so a
+## referral saved before the asks and ruled at its stage's end (processes.gd) draws
+## from the same stream as one ruled here.
+static func rule(row: Dictionary, now: int) -> bool:
+	return Cycle.unit("%s|ruling" % String(row["id"]), now) < float(row["odds"])
 
 
 ## The answer the stage resolves with: the player's, else the ask's default ("" with

@@ -393,6 +393,11 @@ func _test_a_sale_saved_before_the_asks_is_still_priced() -> void:
 	row["rate"] = 0.0
 	# A downturn deep enough for the whole discount range.
 	ns.gdp_eur_bn = ns.potential_gdp_eur_bn * (1.0 - K.PROCESS_DISCOUNT_GAP_PCT / 100.0)
+	# Pass 1 on #257: with no discount at this gap the fix and its absence book the
+	# same money, and the test would pass without the fix.
+	if Asks.discount(ns) <= 0.0:
+		_fail("the downturn fixture gives the sale no discount")
+		return
 	var debt := float(ns.debt_eur_bn)
 	_month(state)
 	var want := -float(row["base_eur_bn"]) * (1.0 - Asks.discount(ns))
