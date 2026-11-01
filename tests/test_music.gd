@@ -229,6 +229,7 @@ func _check_band_and_moments() -> void:
 		if not is_equal_approx(n, float(Sound.recipe(recipe)["level_db"])):
 			_fail("%s at Normal is %s, not its recipe's level" % [id, n])
 	_set_music(SettingsPanel.DEFAULT_MUSIC)
+	_check_moments_duck(desk, heard)
 	# #223 QA D9: a line Voice.speak places is one Music.speaking() sees.
 	var line_parent := Node.new()
 	desk.add_child(line_parent)
@@ -239,6 +240,40 @@ func _check_band_and_moments() -> void:
 		_fail("a real voice line is not one the music ducks under")
 	desk.free()
 	_finish()
+
+
+## #238's RECORD, the parent's call: a sting that starts over a voice line ducks
+## under it by the bed's own DUCK_DB -- the stand-ins and a recorded file alike --
+## and plays at its full level once the line is done (`heard`: the Normal levels).
+func _check_moments_duck(desk: Node, heard: Dictionary) -> void:
+	var voice := AudioStreamPlayer.new()
+	voice.add_to_group(Music.VOICE_GROUP)
+	voice.set_meta("pending", true)
+	desk.add_child(voice)
+	var normal := SettingsPanel.DEFAULT_MUSIC
+	for id in ["vote_failed", "election_lost", "election_won", "front_page"]:
+		var under := _moment_db(desk, id)
+		var full: float = heard["%s@%d" % [id, normal]]
+		if not is_equal_approx(under, full - SoundK.DUCK_DB):
+			_fail("%s over a voice line plays at %s, not ducked from %s" % [id, under, full])
+	Music.override_manifest = {"stings": {"front_page": {"file": "../voice/activist_f_30/agree.ogg"}}}
+	var recorded := _moment_db(desk, "front_page")
+	if not is_equal_approx(recorded, Music.target_db(normal, true)):
+		_fail("a recorded sting over a voice line plays at %s, not %s" % [recorded, Music.target_db(normal, true)])
+	voice.set_meta("pending", false)
+	if not is_equal_approx(_moment_db(desk, "front_page"), Music.target_db(normal, false)):
+		_fail("a recorded sting after the line is still ducked")
+	Music.override_manifest = {}
+	if not is_equal_approx(_moment_db(desk, "front_page"), float(heard["front_page@%d" % normal])):
+		_fail("the headline after the line is still ducked")
+	voice.free()
+
+
+## The level of the player `id`'s moment placed last under `desk` (NAN: none).
+func _moment_db(desk: Node, id: String) -> float:
+	Music.moment(desk, id)
+	var last: Node = desk.get_child(desk.get_child_count() - 1)
+	return (last as AudioStreamPlayer).volume_db if last is AudioStreamPlayer else NAN
 
 
 func _players(node: Node) -> int:

@@ -133,24 +133,27 @@ static func follow(parent: Node, situation: String, months_to_vote: int, state_i
 ## the same thing before and after the author's files land (#223 pass 1); Quiet and
 ## Loud move a stand-in by the same step they move a file, from its own recipe's
 ## level at Normal, so the default plays the sound V4.9c tuned (#223 pass 2).
+## A sting that starts over a voice line ducks under it by the bed's DUCK_DB (#238's
+## RECORD, the parent's call): set once at its start, since a sting lasts a breath.
 static func moment(parent: Node, id: String) -> void:
 	var level := SettingsPanel.music_level()
 	if parent == null or not parent.is_inside_tree() or level <= 0:
 		return
+	var under := speaking(parent.get_tree())
 	var path := track("stings", id)
 	if path != "":
 		var stream := AudioStreamOggVorbis.load_from_buffer(FileAccess.get_file_as_bytes(path))
 		if stream != null and SettingsPanel.sound_enabled():
 			var player := AudioStreamPlayer.new()
 			player.stream = stream
-			player.volume_db = target_db(level, false)
+			player.volume_db = target_db(level, under)
 			player.set_meta("track", path)  # which file: a count cannot tell one sting from another
 			parent.add_child(player)
 			player.finished.connect(player.queue_free)
 			player.play()
 		return
 	var synth := String(MOMENTS.get(id, ""))
-	var offset := target_db(level, false) - target_db(SettingsPanel.DEFAULT_MUSIC, false)
+	var offset := target_db(level, under) - target_db(SettingsPanel.DEFAULT_MUSIC, false)
 	if synth == "election":
 		Sting.play(parent, offset)
 	elif synth != "":
