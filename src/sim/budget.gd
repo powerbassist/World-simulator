@@ -22,6 +22,7 @@ const Processes = preload("res://src/sim/processes.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const RegionFunds = preload("res://src/sim/region_funds.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
@@ -175,6 +176,10 @@ static func recompute(state, ns) -> void:
 		# other computed line is, because deficit_pct_gdp is this verb's own
 		# precondition field and a same-month bill closes a loop.
 		+ ns.energy_bill_pct_gdp
+		# V5.3 a. The regional development fund's line (src/sim/region_funds.gd), the
+		# third that STOPS: a fund runs its years and ends. Billed a month behind, as
+		# every computed line is, for the same precondition-field reason.
+		+ ns.region_fund_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -686,6 +691,9 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# has. V1.3b's repair, made an eighth time rather than rediscovered an eighth
 	# time.
 	units.append(func() -> void: Projects.tick_month(sim, loader))
+	# V5.3 a: in WorldMonth's slot, after Projects, for Projects' reason: a fund's
+	# bill and its regional term end when its years do, inside the projected window.
+	units.append(func() -> void: RegionFunds.tick_month(sim))
 	# In main.gd's slot. V1.7a needed it for the campaign bill, which V5.2 C6 retired:
 	# the party pays now, on this copy only (party_money_delta_eur_m is DEEP), so the
 	# forecast spends no real money. Kept so the projected register still opens, pays
@@ -834,5 +842,8 @@ static func snapshot(state) -> Dictionary:
 		# PROJECTED month against the current one and a projection has no NationState
 		# to read the bill from.
 		"energy_bill_pct_gdp": ns.energy_bill_pct_gdp,
+		# V5.3 a, on the snapshot for the same reason: the Budget table's fund row
+		# compares a projected month against the current one (Interface's ask).
+		"region_fund_bill_pct_gdp": ns.region_fund_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}

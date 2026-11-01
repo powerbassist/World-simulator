@@ -280,6 +280,7 @@ tests=(
   # V2.5: the partition closes, the deviation is zero-mean, and the register still
   # has exactly one reader.
   tests/test_regions.gd
+  tests/test_region_funds.gd
   # V2.7: the graph is content, the index is mean-one in output weights, and the
   # leaf takes Dictionaries and preloads nothing but its own constants.
   tests/test_network.gd
