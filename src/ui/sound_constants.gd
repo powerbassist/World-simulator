@@ -138,6 +138,20 @@ const EVENTS := [
 ## Both are a low, string-like tone (a fundamental under two soft harmonics) and
 ## both stay under the election toll, the loudest thing the game plays.
 const STINGS := {
+	# V5.3-0 spec 4.3: the front page's headline, synthesized on the losing stings'
+	# precedent (no recorded sting yet; a manifest row still wins). About 1.5 s: a
+	# short low thud, the press coming down, then a bright rising fourth, G4 to a
+	# C5 major chord, quick to ring and quick to clear. News, not a verdict: above
+	# the UI cues, under the failed vote, the quietest of the stings.
+	"front_page": {
+		"rate": RATE, "duration_s": 1.5, "attack_s": 0.005, "env_decay": 1.6,
+		"level_db": -19.0,
+		"partials": [
+			[98.0, 0.22, 14.0, 0.0],
+			[392.0, 0.20, 7.0, 0.0], [784.0, 0.06, 10.0, 0.0],
+			[523.25, 0.22, 2.6, 0.16], [659.26, 0.12, 3.0, 0.16], [1046.5, 0.06, 4.5, 0.16],
+		],
+	},
 	# About 2 s: E3 falling a minor third to C#3, no resolution, a short dry tail.
 	# A bill lost is a setback, not a death: sober, and quieter than election night.
 	"vote_failed": {

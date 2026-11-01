@@ -20,6 +20,7 @@ extends SceneTree
 ##     prints the result while the count declares it; a load drops a held card.
 
 const FrontPage = preload("res://src/ui/front_page.gd")
+const MomentCheck = preload("res://tests/moment_check.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Headlines = preload("res://src/ui/headlines.gd")
 const Inbox = preload("res://src/ui/inbox.gd")
@@ -324,8 +325,10 @@ func _check_sting() -> void:
 	Music.override_manifest = {}
 	var before := _players(_card)
 	_show_full()
-	if _players(_card) != before:
-		_fail("a front page with no sting row placed a player")
+	# Spec 4.3: with no recorded sting the front page plays its synthesized headline.
+	if _players(_card) != before + 1 or not MomentCheck.plays(MomentCheck.last_player(_card), "front_page"):
+		_fail("a front page with no sting row did not play its synthesized headline")
+	before = _players(_card)
 	Music.override_manifest = {"stings": {"front_page": {"file": "../voice/activist_f_30/agree.ogg"}}}
 	_show_full()
 	if _players(_card) != before + 1:

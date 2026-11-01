@@ -223,6 +223,13 @@ func _check_ladder() -> void:
 	if not (cues_max < heard["vote_failed"] and heard["vote_failed"] < heard["election_lost"] 			and heard["election_lost"] < heard["election"]):
 		_fail("ladder: cues %.1f < vote_failed %.1f < election_lost %.1f < election %.1f fails" % [
 			cues_max, heard["vote_failed"], heard["election_lost"], heard["election"]])
+	# V5.3-0 spec 4.3: the front page's headline sting is news, not a verdict: above
+	# every UI cue, quieter than the failed vote, the quietest of the vote stings.
+	if not (cues_max < heard["front_page"] and heard["front_page"] < heard["vote_failed"]):
+		_fail("ladder: cues %.1f < front_page %.1f < vote_failed %.1f fails" % [
+			cues_max, heard["front_page"], heard["vote_failed"]])
+	if float(SoundK.STINGS["front_page"]["duration_s"]) > 2.0:
+		_fail("the front page's sting runs %.1f s -- a headline is short" % float(SoundK.STINGS["front_page"]["duration_s"]))
 	for id in shots:
 		if float(shots[id]["level_db"]) > -8.0:
 			_fail("%s: level %.1f dB is above the -8 dB ceiling" % [id, float(shots[id]["level_db"])])
