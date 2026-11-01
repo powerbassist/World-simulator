@@ -5,9 +5,12 @@ extends SceneTree
 ## V5.3 a, band A2 (docs/design/v5.3-ab.md 3.1 and 9), on the game's own month
 ## (src/sim/world_month.gd), for the four playable nations:
 ##   (a) QUANTITIES -- every sector's quantity moves by its declared
-##       (1 + MOVE) ^ elasticity (the sign from its `better`) when MOVE of its own
-##       share is moved into it from the line's largest other sector, and the donor
-##       moves the other way. A pure read: the line's money is unchanged.
+##       (1 - MOVE) ^ elasticity (the sign from its `better`) when MOVE of its own
+##       share is moved out of it into the line's largest other sector, and the
+##       receiver moves the other way. A pure read: the line's money is unchanged.
+##       Moved OUT because a move in can be refused: pensions' basic pension is
+##       about nine tenths of its line, and its one neighbour has no 10 % of it to
+##       give above its floor.
 ##   (b) CHANNELS -- one month after a move of up to LINE_MOVE of the line from its
 ##       least to its most elastic sector, the channel the line feeds has moved in
 ##       the factor's direction against a twin that moved nothing: society's
@@ -37,6 +40,8 @@ const START_YEAR := 2026
 const MOVE := 0.10
 ## The channel run's move, as a share of the line, capped by the donor's floor.
 const LINE_MOVE := 0.10
+## What the channel run's donor keeps above its floor (a move is refused at it).
+const ROOM := 0.001
 const MONTHS := 24
 
 
@@ -85,18 +90,24 @@ func _quantities(loader, nation: String) -> Array:
 			var id := String(s["id"])
 			var ns = _fresh(loader, nation).player()
 			var shares: Dictionary = Sectors.shares(ns, loader, line)
-			var donor := ""
+			var receiver := ""
 			for other in shares:
-				if other != id and (donor == "" or float(shares[other]) > float(shares[donor])):
-					donor = String(other)
+				if other != id and (receiver == "" or float(shares[other]) > float(shares[receiver])):
+					receiver = String(other)
 			var q0 := Sectors.quantity(ns, loader, line, id)
-			var d0 := Sectors.quantity(ns, loader, line, donor)
-			var r: Dictionary = Sectors.move_share(ns, loader, line, donor, id, MOVE * float(shares[id]))
+			var r0 := Sectors.quantity(ns, loader, line, receiver)
+			var step := -MOVE
+			var r: Dictionary = Sectors.move_share(ns, loader, line, id, receiver, MOVE * float(shares[id]))
+			if not bool(r.get("ok", false)):
+				# A sector that starts under the move floor (POL's digital) cannot give;
+				# it is moved IN instead. A refused move wrote nothing.
+				step = MOVE
+				r = Sectors.move_share(ns, loader, line, receiver, id, MOVE * float(shares[id]))
 			var sign := -1.0 if String(s["quantity"]["better"]) == "lower" else 1.0
-			var declared := pow(1.0 + MOVE, sign * float(DK.ELASTICITY[id]))
+			var declared := pow(1.0 + step, sign * float(DK.ELASTICITY[id]))
 			var got := Sectors.quantity(ns, loader, line, id) / q0 if q0 != 0.0 else 0.0
-			var donor_moved := Sectors.quantity(ns, loader, line, donor) != d0
-			var ok := bool(r.get("ok", false)) and is_equal_approx(got, declared) and donor_moved
+			var receiver_moved := Sectors.quantity(ns, loader, line, receiver) != r0
+			var ok := bool(r.get("ok", false)) and is_equal_approx(got, declared) and receiver_moved
 			rows.append({"line": line, "sector": id, "declared": declared, "got": got, "ok": ok})
 			print("%s %-15s %-16s x%.4f declared x%.4f %s" % [nation, line, id, got, declared, "ok" if ok else "FAIL"])
 	return rows
@@ -109,9 +120,9 @@ func _channels(loader, nation: String) -> Array:
 		var still = _fresh(loader, nation)
 		var moved = _fresh(loader, nation)
 		var ns = moved.player()
-		var ends := _ends(loader, line)
 		var shares: Dictionary = Sectors.shares(ns, loader, line)
-		var amount := minf(LINE_MOVE, float(shares[ends[0]]) - DK.MIN_SHARE - 0.001)
+		var ends := _ends(loader, line, shares)
+		var amount := minf(LINE_MOVE, float(shares[ends[0]]) - DK.MIN_SHARE - ROOM)
 		Sectors.move_share(ns, loader, line, ends[0], ends[1], amount)
 		var factor := Sectors.factor(ns, line)
 		var month_1 := {}
@@ -133,21 +144,23 @@ func _channels(loader, nation: String) -> Array:
 	return rows
 
 
-## The least and the most elastic sector of the line (ties to the first, so equal
-## elasticities give the first two sectors).
-func _ends(loader, line: String) -> Array:
+## [donor, receiver]: the least elastic sector with ROOM above its floor to give
+## (POL's digital has none), and the most elastic other sector (ties to file
+## order, so equal elasticities give two different sectors).
+func _ends(loader, line: String, shares: Dictionary) -> Array:
 	var ids: Array = []
 	for s in Sectors.sectors_of(loader, line):
 		ids.append(String(s["id"]))
-	var lo := String(ids[0])
-	var hi := String(ids[0])
+	var lo := ""
 	for id in ids:
-		if float(DK.ELASTICITY[id]) < float(DK.ELASTICITY[lo]):
+		if float(shares[id]) - DK.MIN_SHARE < 2.0 * ROOM:
+			continue
+		if lo == "" or float(DK.ELASTICITY[id]) < float(DK.ELASTICITY[lo]):
 			lo = id
-		if float(DK.ELASTICITY[id]) > float(DK.ELASTICITY[hi]):
+	var hi := ""
+	for id in ids:
+		if id != lo and (hi == "" or float(DK.ELASTICITY[id]) > float(DK.ELASTICITY[hi])):
 			hi = id
-	if lo == hi:
-		hi = String(ids[1])
 	return [lo, hi]
 
 
