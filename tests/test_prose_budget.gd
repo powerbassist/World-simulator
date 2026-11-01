@@ -65,8 +65,10 @@ const TOTAL_PENDING := {
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
 ## (6 648 in the spec's count, 4 911 once this test played its months as the game
-## does): it can only come down from here.
-const TOTAL_SUM_CEILING := 2934
+## does): it can only come down from here. One stated rise, 2934 -> 2943 (V5.3 a +
+## b, the parent's call): the Industry cards' "trend against the nation's", a figure
+## spec 3.2 asks for, 9 words on a tab still at 22 of its 145.
+const TOTAL_SUM_CEILING := 2943
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
