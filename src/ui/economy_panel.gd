@@ -32,6 +32,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
+const StripReadings = preload("res://src/ui/strip_readings.gd")
 
 ## Widest sector bar, in pixels. The bar is a share of GDP drawn to scale; the
 ## figure beside it is the one to read precisely.
@@ -40,7 +41,10 @@ const BAR_WIDTH := 180
 var _state
 var _loader
 var _title: Label
-var _headline: Label
+## V5.3-0 gate G3: the headline is two captioned figures, GDP and growth. It was
+## one bare line ("EUR 2894bn   -0.09%"), and the author read the growth as the
+## budget balance the top bar shows one row up.
+var _headline: HBoxContainer
 var _headline_note: Label
 var _labour: VBoxContainer
 var _finances: VBoxContainer
@@ -63,8 +67,8 @@ func _ready() -> void:
 	_title.theme_type_variation = UiTheme.HEADING
 	root.add_child(_title)
 
-	_headline = Label.new()
-	_headline.theme_type_variation = UiTheme.LEAD
+	_headline = HBoxContainer.new()
+	_headline.add_theme_constant_override("separation", 28)
 	root.add_child(_headline)
 
 	_headline_note = Label.new()
@@ -123,11 +127,12 @@ func _refresh() -> void:
 	var nation = _loader.nations.get(ns.id) if _loader != null else null
 	_title.text = tr("ECONOMY — %s") % (nation.nation_name if nation != null else ns.id)
 
-	for body in [_labour, _finances, _sectors]:
+	for body in [_headline, _labour, _finances, _sectors]:
 		for child in body.get_children():
 			child.queue_free()
 
-	_headline.text = tr("EUR %.0fbn   %s%%") % [ns.gdp_eur_bn, Num.fs(ns.growth_annual_pct, 2)]
+	PanelKit.figure(_headline, tr("EUR %.0fbn") % ns.gdp_eur_bn, tr("GDP, a year"))
+	PanelKit.figure(_headline, "%s%%" % Num.fs(ns.growth_annual_pct, 2), tr("growth, a year"))
 	_headline_note.text = tr("Annual growth against a trend of %s%%. %s") % [
 		Num.fs(ns.trend_annual_pct, 2), _gap_sentence(Economy.output_gap_pct(ns))
 	]
@@ -215,7 +220,9 @@ func _refresh() -> void:
 				(" (%s)" % String(site["city_name"])) if String(site["city_name"]) != "" else "",
 			], PanelKit.Tone.DIM)
 
-	PanelKit.figure(_finances, "%s%%" % Num.fs(-ns.deficit_pct_gdp, 1), tr("deficit, share of GDP"))
+	# G3: the top bar's own text and name -- a signed balance (surplus +) was
+	# captioned "deficit", at one decimal against the bar's two.
+	PanelKit.figure(_finances, String(StripReadings.read("deficit", _state, _loader)["text"]), tr("budget balance, share of GDP"))
 	_trend(_finances, "deficit_pct_gdp")
 	PanelKit.line(_finances, tr("Debt %s%% of GDP.") % Num.f(ns.debt_to_gdp_pct(), 1))
 	_trend(_finances, "debt_to_gdp_pct")
