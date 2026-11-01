@@ -19,6 +19,7 @@ const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Num = preload("res://src/ui/num.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 var _failures: Array[String] = []
 var _panel
@@ -42,11 +43,22 @@ func _init() -> void:
 
 func _process(_delta: float) -> bool:
 	_frame += 1
-	if _frame < 2:
-		return false
-	_panel._refresh()
-	_run()
-	_finish()
+	if _frame == 2:
+		_panel._refresh()
+		_run()
+		# The headline's captions in French, at the largest text size: laid out
+		# a frame later, each must still read on one line (an autowrapping
+		# caption in an unsized row can wrap word by word).
+		Strings.set_language("fr")
+		UiTheme.set_text_scale(1.3)
+		_panel._refresh()
+	elif _frame == 4:
+		for box in _panel._headline.get_children():
+			for child in box.get_children():
+				if child is Label and child.theme_type_variation == UiTheme.FIGURE_LABEL and child.get_line_count() > 1:
+					_fail("the headline caption '%s' wraps to %d lines in French at 130 %%" % [child.text, child.get_line_count()])
+		Strings.set_language("en")
+		_finish()
 	return false
 
 

@@ -293,7 +293,15 @@ func _check_break_up_asks(state, loader, ns, panel) -> void:
 	card._no.pressed.emit()
 	if bool(ns.companies[first.id].get("failed", false)):
 		_fail("Cancel broke the firm up")
+	# The clock runs behind the card: a month turned under it (shares drift)
+	# asks again rather than acting on figures the card no longer shows.
 	button.pressed.emit()
+	state.month += 1
+	card._yes.pressed.emit()
+	if bool(ns.companies[first.id].get("failed", false)):
+		_fail("a yes given after the month turned acted on the old month's figures")
+	if not card.visible:
+		_fail("a month turned under the card, and it did not ask again")
 	card._yes.pressed.emit()
 	if not bool(ns.companies[first.id].get("failed", false)):
 		_fail("the confirm card's yes did not break the firm up")

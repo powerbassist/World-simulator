@@ -49,7 +49,15 @@ static func ask(from: Node, card, state, loader, ns, company, action, run: Calla
 			run.call()
 			return null
 		card.confirmed.connect(func(): (card.get_meta(&"run") as Callable).call())
-	card.set_meta(&"run", run)
+	# The clock runs behind the card (the Dissolve button's finding): a month turned
+	# under it moved the shares, so the player is asked again on the new figures
+	# rather than held to ones the card no longer shows.
+	var asked := int(state.year) * 12 + int(state.month)
+	card.set_meta(&"run", func():
+		if int(state.year) * 12 + int(state.month) != asked:
+			ask(from, card, state, loader, ns, company, action, run)
+		else:
+			run.call())
 	var verb := Strings.row_name("company-actions", action)
 	var head := Strings.t("%s: %s?") % [verb, company.company_name]
 	card.ask("%s\n%s" % [head, question(state, loader, ns, company, action)], verb)
