@@ -144,7 +144,15 @@ anywhere**, the same discipline `economy.gd`, `budget.gd`, `opinion.gd`,
 `tests/test_budget.gd`'s projection-equals-reality guarantee depends on.
 
 1. **Anchor.** The executive's own party under `presidential_appointment`; the
-   largest party under every other search method.
+   largest party under every other search method, except at game start, where
+   the opening government anchors on the party the nation file names as governing
+   (`leader.party`), a majority or not. The game starts from the government that
+   sits. QA's RECORD after the V5.3 block-0 gate found Poland's opening government
+   to be its largest party alone, 157 of 460 seats, the party four of the other
+   five cordon. Bosnia and Czechia had the same split between the sim's Prime
+   Minister and the authored one. A seat-order majority rule was rejected:
+   Italy's authored seats would hand its opening government to the opposition.
+   Every later formation keeps the largest-party anchor.
 2. **Target.** More than `MAJORITY_FRACTION` of the chamber.
 3. **Add** the compatible party closest to the coalition's *current* agreed
    position, then **recompute that position** and repeat. A third partner is
