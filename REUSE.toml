@@ -13,7 +13,7 @@ SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "PolyForm-Noncommercial-1.0.0"
 
 [[annotations]]
-# Game content, the design vault, and the art generated from text alone (local ComfyUI). Upstream data credited in ATTRIBUTION.md.
+# Game content, the design vault, and the art generated from text alone (local ComfyUI). Upstream data credited in ATTRIBUTION.md. The data layer ships single statistical figures with their source credited, never a document's text or a substantial part of a database (the V5.3 a ruling); the OECD's terms for statistical data could not be read on 2026-11-01 (HTTP 403) and are re-checked before any commercial release.
 path = [
   "data/**",
   "docs/**",

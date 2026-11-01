@@ -1211,7 +1211,7 @@ func _check_cycle_fields(loader) -> void:
 ##                          for and no longer held
 ##
 ## V1.7a's third, `campaign_bill_pct_gdp`, was retired at V5.2 C6 (the party pays); an
-## older save's key is ignored by Fields.read_into(), so its retirement earns no bump.
+## older save's key is ignored by FieldWalk.read_into(), so its retirement earns no bump.
 ##
 ## And it ends with V1.3c's device, pointed at the next session for the sixth time: the
 ## version is STILL 23, so V1.7b has to come and say why it moves.

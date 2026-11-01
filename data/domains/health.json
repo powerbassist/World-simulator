@@ -1,0 +1,146 @@
+{
+  "line": "health",
+  "sectors": [
+    {
+      "id": "hospitals",
+      "name": "Hospitals",
+      "summary": "Inpatient and emergency care. More spending adds hospital beds.",
+      "codes": [
+        "GF0703"
+      ],
+      "quantity": {
+        "id": "beds_per_1000",
+        "unit": "per 1 000 inhabitants",
+        "better": "higher"
+      },
+      "start": {
+        "FRA": {
+          "share": 0.433,
+          "quantity": 5.34,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: Eurostat hlth_rs_bds1, hospital beds, 2024 (https://ec.europa.eu/eurostat/databrowser/view/hlth_rs_bds1/default/table)"
+        },
+        "DEU": {
+          "share": 0.409,
+          "quantity": 7.59,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: Eurostat hlth_rs_bds1, hospital beds, 2024 (https://ec.europa.eu/eurostat/databrowser/view/hlth_rs_bds1/default/table)"
+        },
+        "POL": {
+          "share": 0.637,
+          "quantity": 6.27,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: Eurostat hlth_rs_bds1, hospital beds, 2024 (https://ec.europa.eu/eurostat/databrowser/view/hlth_rs_bds1/default/table)",
+          "note": "Median wait on the list 2024 (OECD Health at a Glance 2025): hip replacement 343 days, cataract 48 days."
+        },
+        "GBR": {
+          "share": 0.493,
+          "quantity": 2.43,
+          "year": 2023.0,
+          "source": "share: default (mean of FRA, DEU, POL): PESA 2026 table 5.2 gives UK health only as medical services, research and central services, no COFOG level 2 split (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: OECD hospital beds, all functions, 2023 (https://sdmx.oecd.org/public/rest/data/OECD.ELS.HD,DSD_HEALTH_REAC_HOSP@DF_BEDS_FUNC,1.1/GBR........)",
+          "note": "England only, general and acute beds: 1.76 per 1 000 (NHS England KH03 Q1 2026/27 over the ONS mid-2025 population). Median wait on the list 2024 (OECD): hip replacement 174 days, cataract 74 days, England."
+        },
+        "default": {
+          "share": 0.493,
+          "quantity": 5.407,
+          "year": 2024.0,
+          "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: default: the mean of FRA, DEU, POL and GBR",
+          "note": "Mean of the four sourced nations (share and quantity)."
+        }
+      }
+    },
+    {
+      "id": "primary_care",
+      "name": "Primary care",
+      "summary": "Family doctors, outpatient clinics and medicines. No published figure is sourced yet, so it is read as an index.",
+      "codes": [
+        "GF0701",
+        "GF0702"
+      ],
+      "quantity": {
+        "id": "primary_care_index",
+        "unit": "index",
+        "better": "higher"
+      },
+      "start": {
+        "FRA": {
+          "share": 0.536,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+        },
+        "DEU": {
+          "share": 0.578,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+        },
+        "POL": {
+          "share": 0.341,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+        },
+        "GBR": {
+          "share": 0.485,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: default (mean of FRA, DEU, POL): PESA 2026 table 5.2 gives UK health only as medical services, research and central services, no COFOG level 2 split (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: index, no published figure"
+        },
+        "default": {
+          "share": 0.485,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: index, no published figure",
+          "note": "Mean of the four sourced nations (share); the quantity is an index."
+        }
+      }
+    },
+    {
+      "id": "prevention",
+      "name": "Prevention",
+      "summary": "Public health: screening, vaccination, health promotion. No published figure is sourced yet, so it is read as an index.",
+      "codes": [
+        "GF0704"
+      ],
+      "quantity": {
+        "id": "prevention_index",
+        "unit": "index",
+        "better": "higher"
+      },
+      "start": {
+        "FRA": {
+          "share": 0.031,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+        },
+        "DEU": {
+          "share": 0.013,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+        },
+        "POL": {
+          "share": 0.022,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+        },
+        "GBR": {
+          "share": 0.022,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: default (mean of FRA, DEU, POL): PESA 2026 table 5.2 gives UK health only as medical services, research and central services, no COFOG level 2 split (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: index, no published figure"
+        },
+        "default": {
+          "share": 0.022,
+          "quantity": 100.0,
+          "year": 2024.0,
+          "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: index, no published figure",
+          "note": "Mean of the four sourced nations (share); the quantity is an index."
+        }
+      }
+    }
+  ]
+}

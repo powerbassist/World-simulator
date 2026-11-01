@@ -1,7 +1,8 @@
 extends RefCounted
 
 ## The from_dict() halves of NationState's registers: one reader per payload
-## shape that a plain deep copy cannot restore. src/core/nation_fields.gd's table
+## shape that a plain deep copy cannot restore, called by src/core/nation_field_walk.gd
+## alone. src/core/nation_fields.gd's table
 ## names the reader each field takes; nothing else calls these.
 ##
 ## EVERY READER REBUILDS, NONE ASSIGNS -- commodities-model.md section 6's rule.
