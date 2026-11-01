@@ -25,6 +25,12 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 ## its tone -- a figure that prints as zero wears no colour.
 const MONEY_PLACES := 1
 
+## The strip's own keys among a panel's per-lever figures: the whole commit and
+## the other tab's draft. Not words a tax key can be (Statute admits lowercase
+## letters, digits and underscores), so a born key named "commit" keeps its row.
+const COMMIT := "@commit"
+const ELSEWHERE := "@elsewhere"
+
 ## What Commit will move the balance by, in EUR bn a year; read by the tests
 ## beside the text the line prints.
 var money_bn := 0.0

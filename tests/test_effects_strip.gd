@@ -89,6 +89,7 @@ func _process(_delta: float) -> bool:
 			_stage_born_key()
 		5:
 			_check_tax_yields()
+			_check_born_key_named_commit()
 			_check_tax_rates()
 			_check_both_drafts()
 			_finish()
@@ -225,6 +226,10 @@ func _stage_born_key() -> void:
 	var ns = _state_t.player()
 	ns.custom_taxes["carbon"] = {"name": "Carbon levy", "base_share": 0.5, "erosion": 0.4, "ref_pct": 4.0}
 	ns.tax_rates_pct["carbon"] = 4.0
+	# A born key may be named "commit" or "elsewhere" (Statute takes any 2-24
+	# lowercase letters): its row must not collide with the strip's own figures.
+	ns.custom_taxes["commit"] = {"name": "Commit levy", "base_share": 0.5, "erosion": 0.4, "ref_pct": 2.0}
+	ns.tax_rates_pct["commit"] = 2.0
 	Budget.recompute(_state_t, ns)
 	_tax.mark_dirty()
 	_tax._refresh()
@@ -242,6 +247,22 @@ func _check_tax_yields() -> void:
 			_fail("tax %s: the yield reads '%s', the books say %s" % [key, _tax._yield_labels[key].text, want])
 	if _tax._yield_labels[TaxPanel.PROGRESSIVITY_KEY].text != "—":
 		_fail("tax: the brackets row has no base and should yield an em dash")
+
+
+## The born key named "commit", moved with another rate: its cell prints its own
+## effect, never the whole commit's (review pass 1 on #247).
+func _check_born_key_named_commit() -> void:
+	var ns = _state_t.player()
+	var one := {"tax_rates_pct": {"commit": float(ns.tax_rates_pct["commit"]) + 1.0}}
+	var alone := _balance_gain(Budget.preview(_state_t, {}), Budget.preview(_state_t, one))
+	_tax._sliders["commit"].value = float(one["tax_rates_pct"]["commit"])
+	_tax._sliders["income"].value = float(ns.tax_rates_pct["income"]) + 2.0
+	_tax._refresh()
+	if _tax._effect_labels["commit"].text != EffectsStrip.money_text(alone):
+		_fail("tax: the born key 'commit' reads '%s', its own effect is %s" % [
+			_tax._effect_labels["commit"].text, EffectsStrip.money_text(alone)])
+	_tax._on_revert()
+	_tax._refresh()
 
 
 func _check_tax_rates() -> void:

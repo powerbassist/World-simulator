@@ -341,10 +341,10 @@ func _ready() -> void:
 	_tax_panel = TaxPanel.new()
 	_windows.register("tax", tr("Tax Code"), _tax_panel, KEY_X, ICONS + "receipt_long.svg")
 	_tax_panel.setup(_state, _loader)
-	# V4.2 ultra pass 2: the budget panel's proposed column and 24-month
-	# projection price the Tax Code window's uncommitted edits (the panels are
-	# siblings; this is a reference, not state, and the load path's setup()
-	# sweep leaves it alone).
+	# The two finance tabs each print the other's uncommitted draft as one line
+	# with a Go (V5.3 a + b; V4.2's ultra pass 2 merged it into the Budget's
+	# columns). The panels are siblings; this is a reference, not state, and the
+	# load path's setup() sweep leaves it alone.
 	_budget_panel.pair(_tax_panel, _windows)
 	_tax_panel.committed.connect(func(before, _pending):
 		_fiscal_committed(tr("Tax code change"), tr("Tax code committed"), before))

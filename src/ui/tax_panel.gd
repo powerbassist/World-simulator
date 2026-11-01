@@ -87,7 +87,7 @@ var _commit_button: Button
 ## V5.3 a + b (docs/design/v5.3-ab.md 4.1): each row's yield on the books as they
 ## stand and its balance effect once moved, and the strip that says what Commit
 ## books -- read in the tab where the rate is made. `_effects` is the panel's own
-## figure per key ("commit" for the strip), read by tests/test_effects_strip.gd
+## figure per key (EffectsStrip.COMMIT for the strip), read by tests/test_effects_strip.gd
 ## beside the text each cell prints (band B1). `_now_books` is the books with
 ## nothing pending, kept across a drag (a drag cannot move them) and dropped on
 ## anything that can.
@@ -305,16 +305,9 @@ func _on_commit() -> void:
 	committed.emit(before, pending)
 
 
-## The uncommitted tax intent, for the budget panel's now-vs-proposed columns
-## and 24-month projection to price -- the ultra pass-2 wiring (without it the
-## budget panel's proposed column asserted "no change" while the player's
-## largest revenue lever sat half-drafted on X). EDITED KEYS ONLY, mirroring
-## what the player actually moved: Budget.commit() splices per key and an
-## untouched lever's pending value is just the live rate restated, so an empty
-## return is the harmless case -- the merge writes nothing. Read-only; the
-## commit is still this panel's own verb.
 ## What this tab's Commit would book, or nothing while no rate stands away from
-## its live value -- read by the Budget for its line about this draft.
+## its live value -- read by the Budget for its line about this draft (V4.2's
+## ultra pass 2 merged it into the Budget's columns; V5.3 a + b made it a line).
 func draft() -> Dictionary:
 	for key in _edited_keys:
 		if _pending_value(String(key)) != _live(String(key)):
@@ -327,6 +320,10 @@ func _live(key: String) -> float:
 	return float(ns.tax_progressivity) if key == PROGRESSIVITY_KEY else float(ns.tax_rates_pct.get(key, 0.0))
 
 
+## The uncommitted tax intent, EDITED KEYS ONLY, mirroring what the player
+## actually moved: Budget.commit() splices per key and an untouched lever's
+## pending value is just the live rate restated. Read-only; the commit is still
+## this panel's own verb.
 func pending_tax() -> Dictionary:
 	var out := {"tax_rates_pct": {}}
 	for key in _edited_keys:
@@ -424,15 +421,15 @@ func _refresh() -> void:
 		else:
 			alone[key]["tax_rates_pct"][key] = _pending_value(String(key))
 	if not alone.is_empty():
-		alone["commit"] = pending_tax()
+		alone[EffectsStrip.COMMIT] = pending_tax()
 	var spending_draft: Dictionary = budget_panel.draft() if budget_panel != null else {}
 	if not spending_draft.is_empty():
-		alone["elsewhere"] = spending_draft
-	_effects = EffectsStrip.per_key(_fx_cache, _state, _now_books, alone, alone.get("commit", {}), {})
+		alone[EffectsStrip.ELSEWHERE] = spending_draft
+	_effects = EffectsStrip.per_key(_fx_cache, _state, _now_books, alone, alone.get(EffectsStrip.COMMIT, {}), {})
 	EffectsStrip.paint(_effect_labels, _effects)
-	_strip.show_effects(float(_effects.get("commit", 0.0)), "", "", _effects.has("commit"),
-		tr("Spending changes not yet committed: %s a year, in the Budget") % EffectsStrip.money_text(_effects["elsewhere"])
-		if _effects.has("elsewhere") else "", float(_effects.get("elsewhere", 0.0)))
+	_strip.show_effects(float(_effects.get(EffectsStrip.COMMIT, 0.0)), "", "", _effects.has(EffectsStrip.COMMIT),
+		tr("Spending changes not yet committed: %s a year, in the Budget") % EffectsStrip.money_text(_effects[EffectsStrip.ELSEWHERE])
+		if _effects.has(EffectsStrip.ELSEWHERE) else "", float(_effects.get(EffectsStrip.ELSEWHERE, 0.0)))
 	_fill_bases()
 
 

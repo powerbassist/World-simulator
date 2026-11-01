@@ -106,7 +106,7 @@ var _lever_moved := false
 var _commit_button: Button
 ## V5.3 a + b (docs/design/v5.3-ab.md 4.1): each moved lever's balance effect, in
 ## the cell beside its value, and the strip that says what Commit books. `_effects`
-## is the panel's own figure, keyed by lever ("commit" for the strip), read by
+## is the panel's own figure, keyed by lever (EffectsStrip.COMMIT for the strip), read by
 ## tests/test_effects_strip.gd beside the text the cell prints (band B1).
 var _strip: EffectsStrip
 var _effect_labels := {}
@@ -496,15 +496,15 @@ func _refresh() -> void:
 		alone[key] = {"spending_pct_gdp": ns.spending_pct_gdp.duplicate()}
 		alone[key]["spending_pct_gdp"][key] = _pending_value(key)
 	if not alone.is_empty():
-		alone["commit"] = _pending
+		alone[EffectsStrip.COMMIT] = _pending
 	var tax_draft: Dictionary = tax_panel.draft() if tax_panel != null else {}
 	if not tax_draft.is_empty():
-		alone["elsewhere"] = tax_draft
+		alone[EffectsStrip.ELSEWHERE] = tax_draft
 	_effects = EffectsStrip.per_key(_fx_cache, _state, now, alone, pending, proposed)
 	EffectsStrip.paint(_effect_labels, _effects)
-	_strip.show_effects(float(_effects.get("commit", 0.0)), "", "", _effects.has("commit"),
-		tr("Tax changes not yet committed: %s a year, in the Tax Code") % EffectsStrip.money_text(_effects["elsewhere"])
-		if _effects.has("elsewhere") else "", float(_effects.get("elsewhere", 0.0)))
+	_strip.show_effects(float(_effects.get(EffectsStrip.COMMIT, 0.0)), "", "", _effects.has(EffectsStrip.COMMIT),
+		tr("Tax changes not yet committed: %s a year, in the Tax Code") % EffectsStrip.money_text(_effects[EffectsStrip.ELSEWHERE])
+		if _effects.has(EffectsStrip.ELSEWHERE) else "", float(_effects.get(EffectsStrip.ELSEWHERE, 0.0)))
 	Ledger.add_changes(_figures, now, proposed)
 	_fill_figures()
 
