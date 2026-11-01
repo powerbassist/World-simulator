@@ -255,7 +255,7 @@ static func figure(parent: Control, value: String, caption: String, tone := Tone
 	return box
 
 
-## An aligned table. Every row is [caption, value] or [caption, value, value],
+## An aligned table. Every row is [caption, value] or [caption, value, value, ...],
 ## and because they share one GridContainer the value columns are ONE
 ## measurement rather than one each.
 ##
@@ -280,7 +280,12 @@ static func ledger(parent: Control, rows: Array) -> GridContainer:
 		var cells: Array = entry
 		for i in range(columns):
 			var label := Label.new()
-			label.text = str(cells[i]) if i < cells.size() else ""
+			# V5.3 a + b: a cell may carry its tone as [text, Tone] -- the Budget's
+			# change column, toned on the balance's sign.
+			var cell = cells[i] if i < cells.size() else ""
+			label.text = str(cell[0]) if cell is Array else str(cell)
+			if cell is Array:
+				label.theme_type_variation = _variation(cell[1], "")
 			if i == 0:
 				label.theme_type_variation = UiTheme.CAPTION
 				label.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -10,6 +10,7 @@ tests=(
   tests/test_economy.gd
   tests/test_budget.gd
   tests/test_budget_panel.gd
+  tests/test_effects_strip.gd
   tests/test_opinion.gd
   tests/test_polling_panel.gd
   tests/test_state_copy.gd
@@ -91,6 +92,7 @@ tests=(
   tests/test_companies.gd
   # V5.3 a, A3 + A4: the ownership and structure verbs as processes.
   tests/test_processes.gd
+  tests/test_process_asks.gd
   # V5.3 a: the plant closures (B7's industry supply).
   tests/test_closures.gd
   # V4.7a: the two-tier register -- tiers, sparse fallback reads, and the

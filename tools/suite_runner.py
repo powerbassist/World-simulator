@@ -14,10 +14,11 @@ finished in. -j1 is the same code with a one-worker pool, so sequential
 semantics hold by construction rather than by a second code path. Tests
 tagged `## suite-exclusive:` in their own source run on a dedicated
 single-worker lane -- they back up and restore the live user:// state and
-must never overlap each other. In an isolated run that lane also gets its
-OWN user dir: it runs beside the plain pool, and a plain test reading
-settings.cfg at play time (test_voice_lines) saw its transients. --no-isolate
-inherits one dir, so there the lane is still only a mutual lock.
+must never overlap each other. That is the --no-isolate case only: in an
+isolated run EVERY godot process gets its own user dir, so no two tests share
+user:// at all (test_voice_lines read settings.cfg while an exclusive test had
+it at sound off; the plain tests clobber each other's settings.cfg the same
+way) and the lane dissolves into the pool.
 """
 from __future__ import annotations
 
@@ -85,15 +86,17 @@ _CHILDREN_LOCK = threading.Lock()
 # it forgets it on is the one that clobbers the first. None = inherit, which is
 # what --no-isolate asks for.
 _CHILD_ENV: dict | None = None
-# The exclusive lane's OWN user dir (2026-11-01, the test_voice_lines flake). The
-# lane serialises the tagged tests against each other, but it runs BESIDE the plain
-# pool, and a plain test that reads settings.cfg at play time (Voice.speak, every
-# Sound cue, Music, Motion) over the same user:// saw an exclusive test's transient
-# -- sound off, voices 0 -- as the player's choice: test_voice_lines then found no
-# Voice node and ran to its timeout. Two dirs make the overlap harmless: the plain
-# pool's dir is never written by an exclusive test. None = inherit (--no-isolate),
-# where the lane is still only a mutual lock and the old overlap remains.
-_EXCL_ENV: dict | None = None
+# One user dir PER godot process (2026-11-01, the test_voice_lines flake and the
+# settings.cfg races behind it). A run-wide dir was still shared by every test in
+# the pool, and several plain tests write settings.cfg (test_settings_language
+# deletes it, test_music sets Music Off, test_briefing_clock / _hold write one key
+# with opposite values) while others read it at play time (Voice, Sound, Music,
+# Motion). _USER_ROOT is the run's temp dir; run_child makes a subdir of it for
+# each child, deleted when the child passes and kept (under the root, which
+# _report_isolated names) when it does not. No test needs a shared dir: the pool's
+# finish order is already nondeterministic, so one that did would already flake.
+# None = inherit (--no-isolate), where the exclusive lane is the only protection.
+_USER_ROOT: str | None = None
 
 
 def isolated_env(base: dict, appdata: str) -> dict:
@@ -101,10 +104,9 @@ def isolated_env(base: dict, appdata: str) -> dict:
     return {**base, "APPDATA": appdata, "XDG_DATA_HOME": appdata}
 
 
-def child_env(exclusive: bool) -> dict | None:
-    """The environment a child gets: an exclusive test's own user dir, else the
-    run's. None inherits (--no-isolate)."""
-    return _EXCL_ENV if exclusive and _EXCL_ENV is not None else _CHILD_ENV
+def child_userdir() -> str | None:
+    """A fresh user dir for one child under the run's root; None when not isolating."""
+    return tempfile.mkdtemp(prefix="p_", dir=_USER_ROOT) if _USER_ROOT else None
 
 
 @dataclass
@@ -243,14 +245,15 @@ def _kill_live_children() -> None:
             pass
 
 
-def run_child(cmd: list[str], timeout: float, expected=(),
-              exclusive: bool = False) -> tuple[str, int, str]:
-    """Returns (filtered output, exit code, status). An `exclusive` child gets the
-    exclusive lane's own user dir when the run is isolated."""
+def run_child(cmd: list[str], timeout: float, expected=()) -> tuple[str, int, str]:
+    """Returns (filtered output, exit code, status). When isolating, the child
+    gets its own user dir, removed if it passed."""
+    udir = child_userdir()
     proc = subprocess.Popen(
         cmd, cwd=str(REPO), stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-        errors="replace", env=child_env(exclusive),
+        errors="replace",
+        env=isolated_env(dict(os.environ), udir) if udir else None,
     )
     with _CHILDREN_LOCK:
         _LIVE_CHILDREN.add(proc)
@@ -264,6 +267,8 @@ def run_child(cmd: list[str], timeout: float, expected=(),
     finally:
         with _CHILDREN_LOCK:
             _LIVE_CHILDREN.discard(proc)
+    if udir and status == "pass":
+        shutil.rmtree(udir, ignore_errors=True)
     return "\n".join(filter_noise((out or "").splitlines())), rc, status
 
 
@@ -324,7 +329,8 @@ def run_parallel(tests: list[str], jobs: list[tuple[str, str | None, list[str]]]
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
     tags = {t: read_tags(t) for t in tests}
-    exclusive_tests = {t for t, (ex, _c) in tags.items() if ex}
+    # The lane exists for a shared user dir; isolated children have none.
+    exclusive_tests = set() if _USER_ROOT else {t for t, (ex, _c) in tags.items() if ex}
     shard_checks = {t: c for t, (_ex, c) in tags.items()}
     expected = {t: read_expected(t) for t in tests}
 
@@ -338,8 +344,7 @@ def run_parallel(tests: list[str], jobs: list[tuple[str, str | None, list[str]]]
         t0 = time.monotonic()
         if check is not None:
             writer.event({"event": "child_start", "test": test, "check": check})
-        out, rc, status = run_child(cmd, timeout, expected[test],
-                                     test in exclusive_tests)
+        out, rc, status = run_child(cmd, timeout, expected[test])
         rec = {"out": out, "status": status, "start": t0,
                "end": time.monotonic()}
         if check is None:
@@ -512,7 +517,7 @@ def _selftest_shard_logs(expect) -> None:
     saved = run_child, read_tags, read_expected
     seen: dict = {}
 
-    def fake_child(cmd, timeout, expected=(), exclusive=False):
+    def fake_child(cmd, timeout, expected=()):
         if cmd[-1] == "_check_a":
             return "FAIL: boom in a", 1, "fail"
         seen["during"] = (writer.dir / "tests/test_x.gd.shards/_check_a.log").is_file()
@@ -546,39 +551,77 @@ def _selftest_shard_logs(expect) -> None:
         run_child, read_tags, read_expected = saved
 
 
-def _selftest_lane_dirs(expect) -> None:
-    """Through the real run_parallel and run_child: an exclusive test's child runs
-    under the exclusive lane's user dir, a plain test's under the run's, and
-    --no-isolate (no env) leaves both inheriting. The probe child prints the
-    APPDATA it was launched with."""
-    global read_tags, read_expected, _CHILD_ENV, _EXCL_ENV
-    saved = read_tags, read_expected, _CHILD_ENV, _EXCL_ENV
-    probe = [sys.executable, "-c", "import os; print('APPDATA=' + os.environ['APPDATA'])"]
-    read_tags = lambda test: (test == "tests/test_ex.gd", [])
+# A probe child for the user-dir selftest: it writes its own name into
+# $APPDATA/settings.cfg, waits for the OTHER probe to have written, then reads
+# its file back. Both are alive at once, so a shared dir is clobbered every time.
+_PROBE = (
+    "import os, sys, time, pathlib\n"
+    "me, other, sync = sys.argv[1:4]\n"
+    "cfg = pathlib.Path(os.environ['APPDATA']) / 'settings.cfg'\n"
+    "cfg.write_text(me)\n"
+    "pathlib.Path(sync, me).touch()\n"
+    "t = time.time()\n"
+    "while not pathlib.Path(sync, other).exists() and time.time() - t < 20:\n"
+    "    time.sleep(0.05)\n"
+    "time.sleep(0.2)\n"
+    "ok = cfg.read_text() == me\n"
+    "print('OWN' if ok else 'CLOBBERED')\n"
+    "sys.exit(0 if ok else 1)\n"
+)
+
+
+def _selftest_user_dirs(expect) -> None:
+    """Through the real run_parallel and run_child, two plain tests forced to
+    interleave on settings.cfg: isolated, each reads back its own write and its
+    dir is gone (it passed); with no root they share one dir and at least one
+    reads the other's (the probe's positive control)."""
+    global read_tags, read_expected, _USER_ROOT
+    saved = read_tags, read_expected, _USER_ROOT
+    read_tags = lambda test: (False, [])
     read_expected = lambda test: []
+    other = {"tests/test_a.gd": "test_b", "tests/test_b.gd": "test_a"}
 
-    def appdata_of(writer, test):
-        log = (writer.dir / "tests" / (test.split("/")[-1] + ".log")).read_text(
-            encoding="utf-8")
-        return log.split("APPDATA=")[1].split()[0]
-
-    try:
-        _CHILD_ENV = isolated_env(dict(os.environ), "run_dir")
-        _EXCL_ENV = isolated_env(dict(os.environ), "excl_dir")
-        with tempfile.TemporaryDirectory() as tmp:
+    def run(root, shared=None):
+        global _USER_ROOT
+        _USER_ROOT = root
+        # Un-isolated the children inherit `shared`; isolated, a broken run_child
+        # would fall back to this scratch dir rather than the real APPDATA.
+        os.environ["APPDATA"] = shared or scratch
+        with tempfile.TemporaryDirectory() as sync, \
+                tempfile.TemporaryDirectory() as tmp:
             writer = RunWriter(Path(tmp))
-            tests = ["tests/test_plain.gd", "tests/test_ex.gd"]
-            jobs = [(t, None, probe) for t in tests]
-            with contextlib.redirect_stdout(io.StringIO()),                     contextlib.redirect_stderr(io.StringIO()):
-                results = run_parallel(tests, jobs, 30.0, False, writer, 2)
+            tests = list(other)
+            jobs = [(t, None, [sys.executable, "-c", _PROBE,
+                               t[6:-3], other[t], sync]) for t in tests]
+            with contextlib.redirect_stdout(io.StringIO()), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                results = run_parallel(tests, jobs, 60.0, False, writer, 2)
             writer.finish(results, interrupted=False, jobs=2)
-            got = (appdata_of(writer, tests[0]), appdata_of(writer, tests[1]))
             writer._events.close()
-            expect(got == ("run_dir", "excl_dir"),
-                   "plain child must run under the run's dir, exclusive under "
-                   "the lane's own: %r" % (got,))
+            return [r.status for r in results]
+
+    old_appdata = os.environ.get("APPDATA")
+    scratch = tempfile.mkdtemp(prefix="nsim_selftest_")
+    try:
+        with tempfile.TemporaryDirectory() as root:
+            statuses = run(root)
+            expect(statuses == ["pass", "pass"],
+                   "isolated: each test must read back its own settings.cfg: %r"
+                   % statuses)
+            expect(os.listdir(root) == [],
+                   "isolated: a passing child's user dir must be removed: %r"
+                   % os.listdir(root))
+        with tempfile.TemporaryDirectory() as shared:
+            statuses = run(None, shared)
+        expect("fail" in statuses,
+               "control: sharing one user dir must clobber a probe: %r" % statuses)
     finally:
-        read_tags, read_expected, _CHILD_ENV, _EXCL_ENV = saved
+        shutil.rmtree(scratch, ignore_errors=True)
+        read_tags, read_expected, _USER_ROOT = saved
+        if old_appdata is None:
+            os.environ.pop("APPDATA", None)
+        else:
+            os.environ["APPDATA"] = old_appdata
 
 
 def _selftest() -> int:
@@ -721,24 +764,8 @@ def _selftest() -> int:
     expect(env == {"PATH": "p", "APPDATA": "tmp", "XDG_DATA_HOME": "tmp"},
            "isolated env: %r" % env)
 
-    # The exclusive lane never shares a user dir with the plain pool (the
-    # test_voice_lines flake): while isolating, a plain child and an exclusive
-    # child resolve to different APPDATAs; un-isolated, both inherit.
-    global _CHILD_ENV, _EXCL_ENV
-    saved = (_CHILD_ENV, _EXCL_ENV)
-    try:
-        _CHILD_ENV, _EXCL_ENV = isolated_env({}, "run"), isolated_env({}, "excl")
-        expect(child_env(False)["APPDATA"] == "run"
-               and child_env(True)["APPDATA"] == "excl",
-               "isolated: plain and exclusive children must not share a user dir")
-        _CHILD_ENV = _EXCL_ENV = None
-        expect(child_env(True) is None and child_env(False) is None,
-               "--no-isolate: both lanes inherit")
-    finally:
-        _CHILD_ENV, _EXCL_ENV = saved
-
     _selftest_shard_logs(expect)
-    _selftest_lane_dirs(expect)
+    _selftest_user_dirs(expect)
 
     if failures:
         for f in failures:
@@ -805,15 +832,13 @@ def main(argv: list[str] | None = None) -> int:
         print("godot not found -- set GODOT_BIN if it is not on PATH", file=sys.stderr)
         return 2
 
-    global _CHILD_ENV, _EXCL_ENV
-    dirs: list[str] = []
+    global _CHILD_ENV, _USER_ROOT
+    appdata = None
     if args.isolate:
         appdata = tempfile.mkdtemp(prefix="nsim_appdata_")
-        excl = tempfile.mkdtemp(prefix="nsim_appdata_excl_")
-        dirs = [appdata, excl]
-        _CHILD_ENV = isolated_env(dict(os.environ), appdata)
-        _EXCL_ENV = isolated_env(dict(os.environ), excl)
-        print("isolated: APPDATA=%s (exclusive lane: %s)" % (appdata, excl),
+        _CHILD_ENV = isolated_env(dict(os.environ), appdata)  # the cold import's
+        _USER_ROOT = appdata  # each test's child gets a subdir of it
+        print("isolated: APPDATA=%s (one subdir per test process)" % appdata,
               file=sys.stderr)
 
     writer = RunWriter(Path(args.run_dir) if args.run_dir else None)
@@ -848,21 +873,20 @@ def main(argv: list[str] | None = None) -> int:
         for r in exc.results:  # the captured output of the finished ones
             writer.write_log(r)
         writer.finish(exc.results, interrupted=True, jobs=args.jobs)
-        _report_isolated(dirs)
+        _report_isolated(appdata)
         return 130
     except KeyboardInterrupt:  # second Ctrl-C, or one before any child ran
         _kill_live_children()
         print("interrupted", file=sys.stderr)
         writer.finish([], interrupted=True, jobs=args.jobs)
-        _report_isolated(dirs)
+        _report_isolated(appdata)
         return 130
     elapsed = int(time.monotonic() - t0)
     code = writer.finish(results, interrupted=False, jobs=args.jobs)
-    if code == 0:
-        for d in dirs:
-            shutil.rmtree(d, ignore_errors=True)
+    if code == 0 and appdata is not None:
+        shutil.rmtree(appdata, ignore_errors=True)
     else:
-        _report_isolated(dirs)
+        _report_isolated(appdata)
     if code == 0:
         print("test suite passed -- %d tests in %d:%02d"
               % (len(results), elapsed // 60, elapsed % 60))
@@ -871,10 +895,11 @@ def main(argv: list[str] | None = None) -> int:
     return code
 
 
-def _report_isolated(dirs: list[str]) -> None:
-    """A failed or interrupted isolated run keeps its user dirs, and says where."""
-    for d in dirs:
-        print("isolated user dir kept for its logs: %s" % d, file=sys.stderr)
+def _report_isolated(appdata: str | None) -> None:
+    """A failed or interrupted isolated run keeps its user dir (a failed test's
+    own subdir inside it), and says where."""
+    if appdata is not None:
+        print("isolated user dir kept for its logs: %s" % appdata, file=sys.stderr)
 
 
 def registry() -> tuple[list[str], list[str]]:
