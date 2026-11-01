@@ -16,6 +16,9 @@ const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const K = preload("res://src/sim/companies_constants.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
+const Asks = preload("res://src/sim/process_asks.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -39,6 +42,8 @@ func _init() -> void:
 	_test_a_drawn_ruling_cannot_be_stopped()
 	_test_every_asking_stage_lasts_two_months()
 	_test_rows_are_deep_copies()
+	_test_a_referral_saved_before_the_asks_is_still_ruled()
+	_test_a_sale_saved_before_the_asks_is_still_priced()
 	_finish()
 
 
@@ -53,6 +58,13 @@ func _action(id: String):
 	for a in _loader.company_actions:
 		if String(a.id) == id:
 			return a
+	return null
+
+
+func _company(ns, company_id: String):
+	for c in Companies.majors_of(_loader, ns.id):
+		if String(c.id) == company_id:
+			return c
 	return null
 
 
@@ -277,14 +289,21 @@ func _test_a_settled_firm_is_not_referred_again() -> void:
 		return
 	if Processes.refusal(state, ns, firm, verb) != Processes.SETTLED:
 		_fail("a settled firm's break-up is not refused before the press")
+	# The firm panel's button greys with the same line before the press (A5).
+	var button: Button = CompanyVerb.button(state, _loader, ns, _company(ns, firm), verb)
+	if not button.disabled or not button.tooltip_text.contains(Processes.SETTLED):
+		_fail("the break-up button of a settled firm is not greyed with SETTLED")
+	button.free()
 	if bool(Processes.start(state, ns, _loader, verb, firm).get("applied", false)):
 		_fail("a settled firm was referred again")
 	# The last month of the cooldown still refuses; the month after it does not.
 	var settled_at := int(row["closed"])
-	_at(state, settled_at + K.PROCESS_SETTLED_COOLDOWN_MONTHS - 1)
+	# The parent's 36 months, as literals (QA on #248: a test that read the constant
+	# stayed green at 35 and 37).
+	_at(state, settled_at + 35)
 	if Processes.refusal(state, ns, firm, verb) != Processes.SETTLED:
 		_fail("a settled firm could be referred again before its cooldown ended")
-	_at(state, settled_at + K.PROCESS_SETTLED_COOLDOWN_MONTHS)
+	_at(state, settled_at + 36)
 	if Processes.refusal(state, ns, firm, verb) != "":
 		_fail("a settled firm is still refused after its cooldown")
 	if not bool(Processes.start(state, ns, _loader, verb, firm).get("applied", false)):
@@ -336,6 +355,54 @@ func _test_rows_are_deep_copies() -> void:
 	(copy["ask"]["answers"] as Array).clear()
 	if ((_row(ns, firm)["ask"] as Dictionary)["answers"] as Array).is_empty():
 		_fail("rows() handed the panel the register's own ask")
+
+
+
+## QA on #248: a row saved before the asks merged, loaded in its stage's last month,
+## reaches its end with no ask posted. A referral draws its ruling there (on the
+## same seed), instead of always closing cleared.
+func _test_a_referral_saved_before_the_asks_is_still_ruled() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	Processes.start(state, ns, _loader, _action("break_up"), firm)
+	var row := _row(ns, firm)
+	row["odds"] = 1.0
+	for i in range(int(row["months_left"]) - 1):
+		_month(state)
+	# The pre-#248 row: no ruling drawn, no ask.
+	row.erase("ruled")
+	row.erase("ask")
+	_month(state)
+	if String(row["stage"]) != "remedy":
+		_fail("a pre-asks referral at its end did not draw its ruling: %s" % row)
+
+
+## The same for a sale: priced at the stage's end with the cycle's discount then,
+## not at the start's rate of 0.
+func _test_a_sale_saved_before_the_asks_is_still_priced() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	(ns.companies[firm] as Dictionary)["state_share"] = 1.0
+	Bills.adopt(state, ns, _loader, {"action_id": "privatisation", "company_id": firm})
+	for i in range(K.PROCESS_SALE_MONTHS - 1):
+		_month(state)
+	var row := _row(ns, firm)
+	row.erase("ask")
+	row["rate"] = 0.0
+	# A downturn deep enough for the whole discount range.
+	ns.gdp_eur_bn = ns.potential_gdp_eur_bn * (1.0 - K.PROCESS_DISCOUNT_GAP_PCT / 100.0)
+	# Pass 1 on #257: with no discount at this gap the fix and its absence book the
+	# same money, and the test would pass without the fix.
+	if Asks.discount(ns) <= 0.0:
+		_fail("the downturn fixture gives the sale no discount")
+		return
+	var debt := float(ns.debt_eur_bn)
+	_month(state)
+	var want := -float(row["base_eur_bn"]) * (1.0 - Asks.discount(ns))
+	if String(row["status"]) != "done" or not is_equal_approx(float(ns.debt_eur_bn) - debt, want):
+		_fail("a pre-asks sale at its end booked %.4f, not the discounted %.4f" % [float(ns.debt_eur_bn) - debt, want])
 
 
 func _fail(msg: String) -> void:
