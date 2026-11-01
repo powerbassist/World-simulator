@@ -20,6 +20,7 @@ extends VBoxContainer
 
 const Budget = preload("res://src/sim/budget.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Labels = preload("res://src/ui/labels.gd")
 
 ## The money line's grain: a tenth of a billion, which is also the boundary of
 ## its tone -- a figure that prints as zero wears no colour.
@@ -35,6 +36,7 @@ const ELSEWHERE := "@elsewhere"
 ## beside the text the line prints.
 var money_bn := 0.0
 var money_label: Label
+var _caption: Label
 var _money_row: HBoxContainer
 var _who: Label
 var _when: Label
@@ -51,6 +53,7 @@ signal go_pressed
 func _init() -> void:
 	add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	_money_row = PanelKit.row(self, tr("Balance this year"), "")
+	_caption = _money_row.get_child(0)
 	money_label = _money_row.get_child(1)
 	_who = PanelKit.plain_line(self, "")
 	_when = PanelKit.plain_line(self, "")
@@ -72,6 +75,7 @@ func _init() -> void:
 func show_effects(gain_bn: float, who := "", when := "", has_money := true,
 		elsewhere := "", elsewhere_bn := 0.0) -> void:
 	money_bn = gain_bn
+	_caption.text = tr("Balance this year")
 	money_label.text = money_text(gain_bn)
 	money_label.theme_type_variation = cell_variation(money_tone(gain_bn))
 	_money_row.visible = has_money
@@ -83,6 +87,51 @@ func show_effects(gain_bn: float, who := "", when := "", has_money := true,
 	elsewhere_label.theme_type_variation = cell_variation(money_tone(elsewhere_bn))
 	_elsewhere_row.visible = elsewhere != ""
 	visible = has_money or elsewhere != ""
+
+
+## A verb whose money is not one balance figure a year -- a process priced as a
+## range on the debt, its Stop, a firm's verb with a one-off price beside a yearly
+## bill (V5.3 a + b step 2, the Industry tab): the same three lines, the money line
+## under the verb's own caption and already printed by the caller from the sim's
+## figures. `gain_bn` gives the tone its sign: a gain to the public purse is GOOD.
+func show_lines(caption: String, money: String, gain_bn: float, who := "", when := "") -> void:
+	money_bn = gain_bn
+	_caption.text = caption
+	money_label.text = money
+	money_label.theme_type_variation = cell_variation(money_tone(gain_bn))
+	_money_row.visible = true
+	_who.text = who
+	_who.visible = who != ""
+	_when.text = when
+	_when.visible = when != ""
+	_elsewhere_row.visible = false
+	visible = true
+
+
+## "-4.1 to -4.6 bn", the strip's range (the truth's fog, spec 2.1); one figure
+## when both ends print alike.
+static func range_text(lo_bn: float, hi_bn: float) -> String:
+	if money_text(lo_bn) == money_text(hi_bn):
+		return money_text(lo_bn)
+	return PanelKit.Strings.t("%s to %s bn") % [PanelKit.Num.fs(lo_bn, MONEY_PLACES), PanelKit.Num.fs(hi_bn, MONEY_PLACES)]
+
+
+## Who a verb moves, read off its authored bloc offsets: the blocs it pleases, then
+## the blocs it angers, each a sentence of its own.
+static func who_text(offsets: Dictionary) -> String:
+	var up := PackedStringArray()
+	var down := PackedStringArray()
+	for bloc in offsets:
+		if float(offsets[bloc]) > 0.0:
+			up.append(Labels.bloc(String(bloc)))
+		elif float(offsets[bloc]) < 0.0:
+			down.append(Labels.bloc(String(bloc)))
+	var out := PackedStringArray()
+	if not up.is_empty():
+		out.append(PanelKit.Strings.t("Pleases %s.") % ", ".join(up))
+	if not down.is_empty():
+		out.append(PanelKit.Strings.t("Angers %s.") % ", ".join(down))
+	return " ".join(out)
 
 
 # -- The sim's figures, as the strip and the cells beside each lever print them --

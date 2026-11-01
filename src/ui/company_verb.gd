@@ -32,16 +32,24 @@ const Num = preload("res://src/ui/num.gd")
 static func button(state, loader, ns, company, action) -> Button:
 	var out := PanelKit.sized(Button.new())
 	out.text = Strings.row_name("company-actions", action)
-	var why := Companies.refusal_reason(state, ns, action, String(company.id), loader)
-	# V5.3 a: a firm already in a process refuses the other ownership verbs.
-	if why == "" and Processes.blocks(ns, String(company.id), action):
-		why = Processes.BUSY
+	var why := refusal(state, loader, ns, company, action)
 	out.disabled = why != ""
 	if why != "":
 		out.tooltip_text = Strings.t(why)  # i18n: row-ok the sim's reason, its English the msgid
 	else:
 		out.tooltip_text = Strings.row_summary("company-actions", action)
 	return out
+
+
+## Why `action` cannot run on `company` now, in the sim's English (the msgid), or
+## "" when it can: the one place the Industry tab reads it, for the greyed button
+## and the line printed beside it (band A5).
+static func refusal(state, loader, ns, company, action) -> String:
+	var why := Companies.refusal_reason(state, ns, action, String(company.id), loader)
+	# V5.3 a: a firm already in a process refuses the other ownership verbs.
+	if why == "" and Processes.blocks(ns, String(company.id), action):
+		why = Processes.BUSY
+	return why
 
 
 ## Asks on `card` (made on `from`'s screen stack at the first ask) and calls

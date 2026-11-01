@@ -20,6 +20,7 @@ var _failures: Array[String] = []
 var _main
 var _frame := 0
 var _bill
+var _bill_firm
 var _target: Control
 
 
@@ -36,6 +37,10 @@ func _process(_delta: float) -> bool:
 			if _bill == null:
 				return _end()
 			_check_names()
+			# V5.3 a + b step 2: a firm's bills sit with its verbs, under its Act.
+			var panel = _main._companies_panel
+			panel._open_sector = String(_bill_firm.sector)
+			panel._open_firm = String(_bill_firm.id)
 			_main._windows.open("companies")
 		6:
 			for b in _main._companies_panel.find_children("TableBill", "Button", true, false):
@@ -71,6 +76,7 @@ func _find_bill() -> void:
 		var bills := Bills.ownership(state, ns, _main._loader, String(company.id))
 		if not bills.is_empty():
 			_bill = bills[0]
+			_bill_firm = company
 			return
 	_fail("premise: no firm of the played nation has an ownership bill")
 
