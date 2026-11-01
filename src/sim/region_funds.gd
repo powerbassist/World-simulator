@@ -11,7 +11,8 @@ extends RefCounted
 ##   the effect  a term in the region's growth deviation, FUND_BETA x sqrt(the fund
 ##               as points of the region's output), fixed at the start and read by
 ##               src/sim/regions.gd from the open rows -- zero-mean over the nation's
-##               output, so it moves growth between regions, never the nation's;
+##               output, so it moves growth between regions, never the nation's,
+##               and the region's unemployment falls by Okun's share of it;
 ##   the demand  the national level: a fund is spending, so the bill's change moves
 ##               `demand_impulse_pct` through the channel every spending change takes
 ##               (Budget.commit()'s MULT_SPENDING over impulse_level_factor()), up when
@@ -156,8 +157,10 @@ static func tick_month(state) -> void:
 			if int(row["months_left"]) <= 0:
 				_close(state, row, "done")
 		# Budget.commit()'s spending term on the bill's change (its arithmetic, the
-		# same constants): the start, the end and GDP's drift in between telescope,
-		# so a fund leaves no lasting impulse.
+		# same constants and the same clamp): the start, the end and GDP's drift in
+		# between telescope, so a fund leaves no lasting impulse -- unless a step
+		# lands while the impulse sits at IMPULSE_MAX_PCT, where the clamp clips it,
+		# as it clips a commit's.
 		ns.demand_impulse_pct = clampf(
 			ns.demand_impulse_pct
 				+ (bill - float(ns.region_fund_bill_pct_gdp)) * C.MULT_SPENDING / C.impulse_level_factor(),
