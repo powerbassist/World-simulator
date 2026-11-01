@@ -249,8 +249,8 @@ func _check_tax_yields() -> void:
 		_fail("tax: the brackets row has no base and should yield an em dash")
 
 
-## The born key named "commit", moved with another rate: its cell prints its own
-## effect, never the whole commit's (review pass 1 on #247).
+## The born keys named "commit" and "elsewhere", each moved with another draft:
+## its cell prints its own effect, never the strip's (review pass 1 on #247).
 func _check_born_key_named_commit() -> void:
 	var ns = _state_t.player()
 	var one := {"tax_rates_pct": {"commit": float(ns.tax_rates_pct["commit"]) + 1.0}}
@@ -263,6 +263,24 @@ func _check_born_key_named_commit() -> void:
 			_tax._effect_labels["commit"].text, EffectsStrip.money_text(alone)])
 	_tax._on_revert()
 	_tax._refresh()
+	# The mirror for "elsewhere" (QA's K2 on #247): it is priced only while the
+	# Budget holds a draft, so the paired tabs carry it.
+	var nc = _state_c.player()
+	nc.custom_taxes["elsewhere"] = {"name": "Elsewhere levy", "base_share": 0.5, "erosion": 0.4, "ref_pct": 2.0}
+	nc.tax_rates_pct["elsewhere"] = 2.0
+	Budget.recompute(_state_c, nc)
+	_tax_c.mark_dirty()
+	_budget_c.mark_dirty()
+	var two := {"tax_rates_pct": {"elsewhere": 3.0}}
+	var own := _balance_gain(Budget.preview(_state_c, {}), Budget.preview(_state_c, two))
+	_tax_c._sliders["elsewhere"].value = 3.0
+	_budget_c._sliders["health"].value = float(nc.spending_pct_gdp["health"]) + 1.0
+	_tax_c._refresh()
+	if _tax_c._effect_labels["elsewhere"].text != EffectsStrip.money_text(own):
+		_fail("tax: the born key 'elsewhere' reads '%s', its own effect is %s" % [
+			_tax_c._effect_labels["elsewhere"].text, EffectsStrip.money_text(own)])
+	_tax_c._on_revert()
+	_budget_c._on_revert()
 
 
 func _check_tax_rates() -> void:
