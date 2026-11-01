@@ -368,7 +368,7 @@ cursor; the name returns when the cursor leaves). The rest are parked:
 
 ### Calibrate the simulation's formulas against the real world
 
-The author's ask, 2026-11-01, relayed by the parent: make the simulation's formulas closer to the real world, but **"pas tout de suite"**: not now, after V5.3. The growth, Okun, tax-erosion, debt-service and inflation constants are hand-tuned and have never been compared to real series; the balance table checks that the game plays, not that it matches the world.
+The author's ask, 2026-11-01, relayed by the parent: make the simulation's formulas closer to the real world, but **"pas tout de suite"**: not now, after V5.3. He added: **"la croissance peut être impactée par le contexte économico-social"**, so population growth should respond to the context (unemployment, income, policies, the health sector, recessions), not stay a fixed rate; that is point 7 of the prompt, and it must answer V1.5b's cut cohort machine ([[demography-model]], section 2). The growth, Okun, tax-erosion, debt-service and inflation constants are hand-tuned and have never been compared to real series; the balance table checks that the game plays, not that it matches the world.
 
 **A correction to the prompt's premise, found when writing this entry.** Step 1 of the prompt below says population growth is "one flat 0.15 %/yr for every nation". That was true until V1.5b, which **deleted** `economy_constants.POP_GROWTH_PCT` ([[demography-model]], section 6; [[economy-model]]). Today each nation carries its own `pop_growth_pct`, read off `imported.cohorts` (a World Bank series, 2015 to 2024, from Italy's -0.238 to Luxembourg's +1.938), compounded monthly in `src/sim/economy.gd`, with `src/core/nation.gd` bounding it at load. What is still true is the weaker claim: the rate is a **fixed, backward-looking figure for the whole run**, not a projection, and it is not compared to UN WPP or Eurostat forward series. The session that runs the prompt should open with that in step 1 and not hunt for the deleted constant. The prompt is otherwise kept verbatim.
 
@@ -404,6 +404,22 @@ decide which formulas to change first.
 6. Proposals, ranked by (gap to reality) x (player visibility): per-nation
    population rates (births, deaths, migration) as DATA in data/nations, never
    `if nation_id`; each changed constant cites its source.
+7. Population that responds to its context (the author, 2026-11-01: "la
+   croissance peut être impactée par le contexte économico-social"): design
+   births, deaths and migration as flows that react to the sim's own state,
+   not fixed rates: fertility to unemployment, income and the family/housing
+   policies (evidence: Sobotka, Skirbekk & Philipov 2011, "Economic recession
+   and fertility in the developed world"); migration to the unemployment and
+   wage gap against neighbours plus the existing migration_stance law (Mayda
+   2010, determinants of bilateral migration flows); mortality to the health
+   sector's quantities (V5.3 a) and to recessions (Ruhm 2000, "Are recessions
+   good for your health?"). Population feeds back through the labour force
+   into potential growth and through ageing into pensions and health. First
+   read docs/demography-model.md: V1.5b CUT a cohort machine and says why
+   (section 2); the proposal must answer that reason, not repeat the cut.
+   Each response coefficient sourced, its sign and size checked against the
+   2008-2013 recession in the four nations (a hindcast of the flows, from
+   Eurostat demo_gind / migr_imm1ctz).
 Verify and show: the error table before/after (MAE, trend sign) incl. the
 held-out nations; the balance re-baseline (tools/balance_diff.py) and the
 play bands still holding; anything not found or not verifiable flagged, never
