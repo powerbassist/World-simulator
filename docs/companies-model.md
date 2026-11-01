@@ -1319,6 +1319,66 @@ repealed, the sale is its own bill. The court's reach reads no ownership channel
 the court never strikes one; recorded, not built. The design and the bands:
 [[v5.2-bplus-spec]] "R14".
 
+## 40. Ownership and structure as processes (V5.3 a)
+
+The author, at the block 0 gate: "nationalisation is still instant". The four verbs
+that change who owns a firm, or what it is, now take time and can be stopped
+([[v5.3-ab]] 2.3 and 3.2). A press, or for the two verbs the law reserves the adopted
+bill, opens a row on `ns.processes`, and that month changes no state share, no failure
+flag and no debt (band A3). `src/sim/processes.gd` is the register's one writer, and
+WorldMonth runs its step just before Companies, so a transfer is priced in the month
+it lands and the dividend keeps its one-month lag.
+
+| Verb | Stages | Price | Bloc move |
+|---|---|---|---|
+| minority stake | negotiation, 2 months | the stake at value × (1 + a 5–15 % premium) | half at the offer, half at the transfer |
+| full nationalisation | offer, 2 months, ending in the transfer; transition, 12 months, ending in control | value × (1 + a 15–30 % premium), paid at the transfer | half at the bill, half at the transfer |
+| break-up | investigation, 9–12 months; the ruling; remedy, 6 months | the legal costs, 0.05 bn, at the ruling | whole, at a ruling for it |
+| privatisation | sale, 6 months | the windfall at value × (1 − a 0–15 % discount, deeper in a downturn) | half at the bill, half at the sale |
+
+- **The price is fixed at the start.** It uses the firm's value then and a rate seeded
+  inside the range the strip shows, so the realised price always falls in that range
+  (band A4: the range is the truth's fog, never a guess). The one exception is the
+  privatisation's discount. It is read from the output gap at the sale, and it is
+  clamped inside the same range.
+- **Control after the transition.** A nationalisation pays at the transfer, but the
+  state share is written at the end of the transition. The dividend reads the share,
+  so it starts after the transition with no new rule. During those twelve months the
+  firm reads as not state-owned, and only the process gate keeps a second verb off it.
+- **The break-up's ruling.** The authority orders the break-up with odds that rise
+  with the firm's share, from 50 % at a 10 % share to 85 % at 30 %. The strip shows
+  the odds as a range of 10 points either side. In the remedy, the sector's other
+  majors absorb 70 % of the split (`BREAK_UP_ABSORBED`, Companies.execute's
+  `break_up` arm). The rest falls to the unnamed residual, which employs nobody, so
+  the firm's jobs beyond that are lost.
+- **One arm.** `Companies.execute()` stays the firm's only arm. The process runs it at
+  the stage's end and puts back the debt and the bloc offsets it writes, because the
+  process books both on its own timetable.
+- **A firm that fails or changes hands mid-process voids it.** What was spent stays
+  spent. A remedy that the arm refuses on the day closes the row as refused, with the
+  arm's reason: the firm's share fell under the 10 % gate, or no rival is left to
+  absorb it.
+- **Stopping** is a verb with its own price (`Processes.stop_price`):
+  - a U-turn on a public stage, where every bloc the verb pleased loses a quarter of
+    its offset. This is a stand-in until Content authors the U-turn prices;
+  - after a nationalisation's vote and before the transfer, a break fee of 10 % of the
+    premium as well;
+  - in an investigation, the legal fees spent so far, pro rata.
+
+  Nothing can be stopped after a transfer or a ruling.
+- **One process per firm.** `Processes.blocks()` greys the other ownership verbs and
+  the foreign bid's allow. `Bills._bills_for` offers no ownership bill on a firm
+  already in a process.
+- **The save.** `ns.processes` is `absent_ok`, with no bump: no save made before
+  V5.3 a could hold a process, so an absent register reads "nothing in progress",
+  which is the truth.
+
+Measured by `tests/test_processes.gd` (every kind, the stops, the gate, the void, the
+round trip) and by `tools/companies_probe.gd --processes` (the four playable nations,
+every verb on the real machine). Not built: the transition's 4 % output dip, because
+`companies.gd` is at its size ratchet, so it needs its own channel; and which stages
+ask the player something.
+
 ---
 
 Related: [[index]] · [[legislature-model]] · [[economy-model]] · [[opinion-model]] ·

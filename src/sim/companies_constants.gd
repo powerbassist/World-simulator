@@ -476,3 +476,50 @@ const BODY_COVERAGE_MAX := 0.97
 ## of Germany's, Manchester 44.0% of Britain's) REPRODUCED, not fought.
 const BODY_PAYROLL_CONCENTRATION_MIN := 0.25
 const BODY_PAYROLL_CONCENTRATION_MAX := 0.50
+
+
+# --- V5.3 a: the ownership and structure verbs as processes -----------------------
+## docs/design/v5.3-ab.md 3.2, the spec's FIRST proposals (src/sim/processes.gd). The
+## bands that hold them are A3 (no verb lands the month it is pressed; every
+## realised duration inside the range its strip showed) and A4 (every realised
+## price inside its range), measured by tests/test_processes.gd and
+## tools/companies_probe.gd --processes; the numbers themselves are tunable there.
+## A minority stake: two months of negotiation, a premium seeded in this range.
+const PROCESS_STAKE_MONTHS := 2
+const PROCESS_STAKE_PREMIUM := Vector2(0.05, 0.15)
+## A nationalisation after its bill: two months of the offer (the price is paid at
+## the transfer that ends it), then a twelve-month transition before control.
+const PROCESS_OFFER_MONTHS := 2
+const PROCESS_TRANSITION_MONTHS := 12
+const PROCESS_NATIONALISE_PREMIUM := Vector2(0.15, 0.30)
+## A break-up: an investigation of 9 to 12 months (seeded), a ruling that charges
+## the legal costs, then a remedy of 6 months. The authority's odds rise with the
+## firm's share, from PROCESS_ODDS.x at PROCESS_ODDS_SHARE.x to PROCESS_ODDS.y at
+## PROCESS_ODDS_SHARE.y (the spec's "about 50 % at 10 %, 85 % at 30 %"), shown
+## as a range PROCESS_ODDS_FOG either side of the truth.
+const PROCESS_INVESTIGATION_MONTHS := Vector2i(9, 12)
+const PROCESS_REMEDY_MONTHS := 6
+const PROCESS_LEGAL_COST_EUR_BN := 0.05
+const PROCESS_ODDS_SHARE := Vector2(0.10, 0.30)
+const PROCESS_ODDS := Vector2(0.50, 0.85)
+const PROCESS_ODDS_FOG := 0.10
+## The remedy's split: the share the sector's other majors absorb (Companies.execute's
+## break_up arm). The rest goes to the unnamed residual, which employs nobody, so the
+## firm's jobs beyond it are lost -- the spec's "70 % move to the rivals, 30 % lost",
+## by share (headcount follows each rival's live share, so the jobs figure is measured).
+const BREAK_UP_ABSORBED := 0.70
+## A privatisation after its bill: six months of sale; the windfall's discount runs
+## from PROCESS_PRIVATISE_DISCOUNT.x at or above potential output to .y at a gap of
+## PROCESS_DISCOUNT_GAP_PCT points below it (the cycle's own phase).
+const PROCESS_SALE_MONTHS := 6
+const PROCESS_PRIVATISE_DISCOUNT := Vector2(0.0, 0.15)
+const PROCESS_DISCOUNT_GAP_PCT := 3.0
+## The bloc move's share that lands at the public start (the offer, the bill); the
+## rest lands at the transfer or the sale. A break-up's lands whole at its ruling.
+const PROCESS_BLOC_AT_START := 0.5
+## Stopping: a nationalisation stopped in its offer pays this share of its premium;
+## a stop on a public stage costs a U-turn, each bloc the verb pleased losing this
+## share of its offset. A STAND-IN rule: the spec names the U-turn prices as
+## Content's (section 10), and this constant is the placeholder until they are authored.
+const PROCESS_BREAK_FEE := 0.10
+const PROCESS_UTURN_SHARE := 0.25

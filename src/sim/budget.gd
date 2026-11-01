@@ -18,6 +18,7 @@ const Coercion = preload("res://src/sim/coercion.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
@@ -642,6 +643,9 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# Statute's divisions read it. Player-gated, so it costs one nation's parties.
 	units.append(func() -> void: Discipline.tick_month(sim, loader))
 	units.append(func() -> void: Statute.tick_month(sim, loader))
+	# V5.3 a: the processes in WorldMonth's slot, just before Companies, so a
+	# pending transfer, sale or dividend start is in the forecast it promises.
+	units.append(func() -> void: Processes.tick_month(sim, loader))
 	units.append(func() -> void: Companies.tick_month(sim, loader))
 	# In main.gd's slot again -- Companies, then the autonomy machine, then
 	# Migration -- and present for the reason the Companies paragraph above

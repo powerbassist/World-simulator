@@ -19,6 +19,8 @@ extends RefCounted
 ## runs the command on `confirmed`.
 
 const Companies = preload("res://src/sim/companies.gd")
+const Processes = preload("res://src/sim/processes.gd")
+const CK = preload("res://src/sim/companies_constants.gd")
 const ConfirmCard = preload("res://src/ui/confirm_card.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -31,6 +33,9 @@ static func button(state, loader, ns, company, action) -> Button:
 	var out := PanelKit.sized(Button.new())
 	out.text = Strings.row_name("company-actions", action)
 	var why := Companies.refusal_reason(state, ns, action, String(company.id), loader)
+	# V5.3 a: a firm already in a process refuses the other ownership verbs.
+	if why == "" and Processes.blocks(ns, String(company.id), action):
+		why = Processes.BUSY
 	out.disabled = why != ""
 	if why != "":
 		out.tooltip_text = Strings.t(why)  # i18n: row-ok the sim's reason, its English the msgid
@@ -67,6 +72,8 @@ static func ask(from: Node, card, state, loader, ns, company, action, run: Calla
 ## What the verb does to jobs and money, in whole sentences, read off the
 ## sim's preview (the verb run on a copy of the nation).
 static func question(state, loader, ns, company, action) -> String:
+	if Processes.is_process(action):
+		return process_question(state, loader, ns, company, action)
 	var preview: Array = Companies.preview(state, ns, loader.company_actions, action, String(company.id), loader)
 	var probe = preview[0]
 	var result: Dictionary = preview[1]
@@ -95,6 +102,45 @@ static func question(state, loader, ns, company, action) -> String:
 		lines.append(Strings.t("No cost to the treasury."))
 	if action.irreversible:
 		lines.append(Strings.t("It cannot be undone."))
+	return " ".join(lines)
+
+
+## V5.3 a (parent pass 2 on #244): a process verb lands nothing on the click, so its
+## question reads Processes.estimate() -- the stages and their months, the price as
+## its range, a break-up's odds as their range -- never the arm's instant preview.
+## Interface's effects strip replaces this text with the Industry tab's rebuild.
+static func process_question(state, loader, ns, company, action) -> String:
+	var est: Dictionary = Processes.estimate(state, ns, loader, action, String(company.id))
+	var lines := PackedStringArray()
+	match String(action.id):
+		"minority_stake":
+			lines.append(Strings.t("%d months of negotiation, then the stake changes hands.") % int(est["months_lo"]))
+		"full_nationalisation":
+			lines.append(Strings.t("%d months of the offer, then the transfer; the state takes control after a %d-month transition.") % [
+				CK.PROCESS_OFFER_MONTHS, CK.PROCESS_TRANSITION_MONTHS])
+		"break_up":
+			lines.append(Strings.t("The competition authority investigates for %d to %d months, then rules: a %d to %d %% chance it orders the break-up.") % [
+				CK.PROCESS_INVESTIGATION_MONTHS.x, CK.PROCESS_INVESTIGATION_MONTHS.y,
+				roundi(100.0 * float(est["odds_lo"])), roundi(100.0 * float(est["odds_hi"]))])
+			var rivals: Array[String] = []
+			for other in Companies.majors_of(loader, ns.id):
+				if other.id != company.id and other.sector == company.sector and not bool(ns.companies.get(other.id, {}).get("failed", false)):
+					rivals.append(String(other.company_name))
+			lines.append(Strings.t("If it does, after a %d-month remedy its rivals (%s) take %d %% of its market and the %s jobs at %s end.") % [
+				CK.PROCESS_REMEDY_MONTHS, ", ".join(rivals), roundi(100.0 * CK.BREAK_UP_ABSORBED),
+				thousands(Companies.headcount(ns, company)), company.company_name])
+		"privatisation":
+			lines.append(Strings.t("%d months of sale, then the state's share changes hands.") % int(est["months_lo"]))
+	var lo := minf(float(est["price_lo"]), float(est["price_hi"]))
+	var hi := maxf(float(est["price_lo"]), float(est["price_hi"]))
+	if String(action.id) == "break_up":
+		lines.append(Strings.t("Costs the treasury %s bn in legal fees.") % Num.f(hi, 2))
+	elif hi > 0.0:
+		lines.append(Strings.t("Costs the treasury %s to %s bn.") % [Num.f(lo, 1), Num.f(hi, 1)])
+	else:
+		lines.append(Strings.t("Raises %s to %s bn for the treasury.") % [Num.f(-hi, 1), Num.f(-lo, 1)])
+	if action.irreversible:
+		lines.append(Strings.t("Once it lands it cannot be undone."))
 	return " ".join(lines)
 
 

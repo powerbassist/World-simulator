@@ -21,6 +21,8 @@ extends SceneTree
 ## same frame.
 
 const Companies = preload("res://src/sim/companies.gd")
+const CompaniesK = preload("res://src/sim/companies_constants.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const IndustryK = preload("res://src/sim/industry_constants.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
@@ -290,6 +292,14 @@ func _check_break_up_asks(state, loader, ns, panel) -> void:
 		_fail("the question does not name the firm, its %s jobs and the rival taking them: '%s'" % [jobs, asked])
 	if not asked.contains("treasury"):
 		_fail("the question says nothing of the money: '%s'" % asked)
+	# V5.3 a (parent pass 2 on #244, TAKE 1): the card reads the process's estimate,
+	# never the instant arm -- the investigation's months and the ruling's odds as
+	# their ranges.
+	var est: Dictionary = Processes.estimate(state, ns, loader, breakup, String(first.id))
+	for figure in ["%d to %d months" % [CompaniesK.PROCESS_INVESTIGATION_MONTHS.x, CompaniesK.PROCESS_INVESTIGATION_MONTHS.y],
+			"%d to %d %%" % [roundi(100.0 * float(est["odds_lo"])), roundi(100.0 * float(est["odds_hi"]))]]:
+		if not asked.contains(figure):
+			_fail("the break-up's question does not read the process's estimate (%s): '%s'" % [figure, asked])
 	card._no.pressed.emit()
 	if bool(ns.companies[first.id].get("failed", false)):
 		_fail("Cancel broke the firm up")
@@ -303,8 +313,17 @@ func _check_break_up_asks(state, loader, ns, panel) -> void:
 	if not card.visible:
 		_fail("a month turned under the card, and it did not ask again")
 	card._yes.pressed.emit()
+	# V5.3 a: the yes refers the firm -- the break-up's process opens and nothing
+	# breaks the month it is pressed (A3); a ruling for it and the remedy land it.
+	var row: Dictionary = Processes.live(ns, String(first.id))
+	if row.is_empty() or bool(ns.companies[first.id].get("failed", false)):
+		_fail("the confirm card's yes did not open the break-up's process, or broke the firm at once")
+		return
+	row["odds"] = 1.0
+	for i in range(int(row["months_left"]) + CompaniesK.PROCESS_REMEDY_MONTHS):
+		Processes.tick_month(state, loader)
 	if not bool(ns.companies[first.id].get("failed", false)):
-		_fail("the confirm card's yes did not break the firm up")
+		_fail("the break-up's process did not break the firm up")
 	var last: Button = panel._action_button(ns, rival, breakup)
 	if not last.disabled:
 		_fail("the sector's last major is offered a break-up the sim refuses")

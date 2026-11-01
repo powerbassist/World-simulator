@@ -575,8 +575,10 @@ func _test_rescue_restores_failing() -> void:
 	for other in Companies.majors_of(_loader, PLAYER):
 		if other.id != major2.id and other.sector == major2.sector:
 			rivals_after_split += Companies.share_of_company(ns2, other)
-	if absf(rivals_after_split - (rivals_before + dissolved)) > 1e-9:
-		_fail("the landed split did not hand the dissolved share to the rivals")
+	# V5.3 a: the rivals absorb BREAK_UP_ABSORBED of the split; the rest falls to
+	# the unnamed residual (the remedy's jobs lost, processes.gd).
+	if absf(rivals_after_split - (rivals_before + dissolved * CK.BREAK_UP_ABSORBED)) > 1e-9:
+		_fail("the landed split did not hand %.0f %% of the dissolved share to the rivals" % (100.0 * CK.BREAK_UP_ABSORBED))
 	Companies.execute(state2, ns2, _loader.company_actions, rescue, major2.id, _loader)
 	var rivals_after := 0.0
 	for other in Companies.majors_of(_loader, PLAYER):

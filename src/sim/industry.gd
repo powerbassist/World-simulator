@@ -43,6 +43,7 @@ const IK = preload("res://src/sim/industry_constants.gd")
 const CK = preload("res://src/sim/companies_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const Net = preload("res://src/sim/network.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 
@@ -468,6 +469,10 @@ static func _bids(state, ns, loader, majors: Array, month: int) -> void:
 				entry["bid_months_left"] = left - 1
 			continue
 		if _failed(ns, company.id):
+			continue
+		# V5.3 a (parent pass 2 on #244): no bid opens on a firm with a live process --
+		# its allow is greyed while the process runs, so the bid would be a dead card.
+		if not Processes.live(ns, String(company.id)).is_empty():
 			continue
 		# A courted firm draws interest at the multiplier the verb bought:
 		# court_investor's flag is the player asking for exposure, and the
