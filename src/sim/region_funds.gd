@@ -1,0 +1,167 @@
+extends RefCounted
+
+## V5.3 a (docs/design/v5.3-ab.md 3.3 (a), band A7): the regional development fund,
+## N bn a year to one region for 1 to 5 years. One open fund per region; the rule's
+## ranges and bloc offsets are data (data/region-actions/fund.json), the response is
+## region_fund_constants.FUND_BETA.
+##
+##   the money   a Budget line of its own, `ns.region_fund_bill_pct_gdp`, written
+##               by tick_month() for the Budget to read a month behind (the other
+##               computed lines' lag: `deficit_pct_gdp` is a precondition field);
+##   the effect  a term in the region's growth deviation, FUND_BETA x sqrt(the fund
+##               as points of the region's output), fixed at the start and read by
+##               src/sim/regions.gd from the open rows -- zero-mean over the nation's
+##               output, so the region's unemployment falls (Okun) and the national
+##               level comes through the spending alone;
+##   the blocs   the rule's per-bn offsets x the bn x the region's share of the
+##               population, at the start (blocs are national, a fund is not);
+##               stopping early gives back FUND_STOP_SHARE of what each pleased
+##               bloc gained.
+##
+## The register `ns.region_funds` is saved whole (absent_ok: no save before V5.3 a
+## could hold a fund). sqrt() runs only in start() and estimate(), the player's verb
+## and its strip, on the main thread; no tick step computes the term.
+
+const Regions = preload("res://src/sim/regions.gd")
+const RK = preload("res://src/sim/region_constants.gd")
+const FK = preload("res://src/sim/region_fund_constants.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
+
+const OPEN := "open"
+
+
+## Open a fund. {ok, id} or {ok: false, reason}; a refusal writes nothing.
+static func start(state, ns, loader, region_id: String, eur_bn: float, years: int) -> Dictionary:
+	var why := refusal(state, ns, loader, region_id, eur_bn, years)
+	if why != "":
+		return {"ok": false, "reason": why}
+	var row := _row(state, ns, loader, region_id, eur_bn, years)
+	_blocs(ns, row["bloc_offset"], 1.0)
+	ns.region_funds.append(row)
+	return {"ok": true, "id": String(row["id"])}
+
+
+## The strip's figures for a fund not yet opened: {ok, pts, eur_bn_per_year,
+## total_eur_bn, months, unemployment_now, unemployment_after, bloc_offset}, or
+## {ok: false, reason}. `unemployment_after` is the region's figure with the fund
+## open, read through the same Regions function the game reads, so it is the booked
+## figure (the term is immediate; later months move it with the national rate).
+static func estimate(state, ns, loader, region_id: String, eur_bn: float, years: int) -> Dictionary:
+	var why := refusal(state, ns, loader, region_id, eur_bn, years)
+	if why != "":
+		return {"ok": false, "reason": why}
+	var row := _row(state, ns, loader, region_id, eur_bn, years)
+	var now := _unemployment(state, ns, region_id)
+	# The row is appended for one synchronous read and removed at once: the read is
+	# the game's own arithmetic, with nothing between the two writes.
+	ns.region_funds.append(row)
+	var after := _unemployment(state, ns, region_id)
+	ns.region_funds.pop_back()
+	return {"ok": true, "pts": float(row["pts"]), "eur_bn_per_year": eur_bn, "total_eur_bn": eur_bn * float(years),
+		"months": years * 12, "unemployment_now": now, "unemployment_after": after,
+		"bloc_offset": (row["bloc_offset"] as Dictionary).duplicate()}
+
+
+## Why a fund cannot open, "" when it can. English msgids, the panel's line.
+static func refusal(state, ns, loader, region_id: String, eur_bn: float, years: int) -> String:
+	var rule: Dictionary = loader.region_fund_rule
+	if rule.is_empty():
+		return "No regional fund rule is loaded."
+	var named := false
+	for region in state.regions.get(ns.id, []):
+		if region.id == region_id and region_id != RK.RESIDUAL_KEY:
+			named = true
+	if not named:
+		return "That is not one of this nation's regions."
+	if eur_bn < float(rule["eur_bn"][0]) or eur_bn > float(rule["eur_bn"][1]):
+		return "A fund runs between its lowest and highest sums a year."
+	if years < int(rule["years"][0]) or years > int(rule["years"][1]):
+		return "A fund runs for between its shortest and longest number of years."
+	if Regions.output_eur_bn(ns, region_id) <= 0.0:
+		return "This region has no recorded output to fund."
+	for row in ns.region_funds:
+		if String(row["region_id"]) == region_id and String(row["status"]) == OPEN:
+			return "This region already has a development fund."
+	return ""
+
+
+## Stop a fund early. {ok} or {ok: false, reason}.
+static func stop(state, ns, fund_id: String) -> Dictionary:
+	for row in ns.region_funds:
+		if String(row["id"]) == fund_id and String(row["status"]) == OPEN:
+			var back := {}
+			for bloc in row["bloc_offset"]:
+				if float(row["bloc_offset"][bloc]) > 0.0:
+					back[bloc] = -FK.FUND_STOP_SHARE * float(row["bloc_offset"][bloc])
+			_blocs(ns, back, 1.0)
+			_close(state, row, "stopped")
+			return {"ok": true}
+	return {"ok": false, "reason": "This fund is no longer running."}
+
+
+## The open funds, oldest first, as copies for a panel to read.
+static func open_funds(ns) -> Array:
+	var out: Array = []
+	for row in ns.region_funds:
+		if String(row["status"]) == OPEN:
+			out.append((row as Dictionary).duplicate(true))
+	return out
+
+
+## A month of every open fund: its bill (the Budget reads it next month), then a
+## month off its run; a fund at its end closes "done". WorldMonth runs this after
+## Projects, the other bill that stops, for the same lag.
+static func tick_month(state) -> void:
+	var ids: Array = state.nations.keys()
+	ids.sort()
+	for id in ids:
+		var ns = state.nations[id]
+		if ns.region_funds.is_empty():
+			continue
+		var bill := 0.0
+		for row in ns.region_funds:
+			if String(row["status"]) != OPEN:
+				continue
+			if float(ns.gdp_eur_bn) > 0.0:
+				bill += 100.0 * float(row["eur_bn_per_year"]) / float(ns.gdp_eur_bn)
+			row["months_left"] = int(row["months_left"]) - 1
+			if int(row["months_left"]) <= 0:
+				_close(state, row, "done")
+		ns.region_fund_bill_pct_gdp = bill
+
+
+static func _row(state, ns, loader, region_id: String, eur_bn: float, years: int) -> Dictionary:
+	var now := _now(state)
+	var pop := float(ns.region_pop_share.get(region_id, 0.0))
+	var offsets := {}
+	var per_bn: Dictionary = loader.region_fund_rule["bloc_offset_per_bn"]
+	for bloc in per_bn:
+		offsets[bloc] = float(per_bn[bloc]) * eur_bn * pop
+	return {
+		"id": "%s|%d|%d" % [region_id, now, ns.region_funds.size()], "region_id": region_id,
+		"eur_bn_per_year": eur_bn, "years": years, "started": now, "months_left": years * 12,
+		"pts": FK.FUND_BETA * sqrt(100.0 * eur_bn / Regions.output_eur_bn(ns, region_id)),
+		"bloc_offset": offsets, "status": OPEN, "closed": -1,
+	}
+
+
+static func _unemployment(state, ns, region_id: String) -> float:
+	var list: Array = state.regions.get(ns.id, [])
+	var access := Regions.accessibility_for(ns, list, state.region_graph)
+	return Regions.unemployment_pct(ns, list, region_id, access, state.project_sited_pct.get(ns.id, {}))
+
+
+static func _close(state, row: Dictionary, status: String) -> void:
+	row["status"] = status
+	row["closed"] = _now(state)
+
+
+## Clamped, as every writer of the register is (Companies.execute's comment).
+static func _blocs(ns, offsets: Dictionary, share: float) -> void:
+	for bloc in offsets:
+		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + share * float(offsets[bloc]),
+			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
+
+
+static func _now(state) -> int:
+	return int(state.year) * 12 + int(state.month)

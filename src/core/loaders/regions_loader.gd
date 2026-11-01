@@ -11,6 +11,7 @@ extends RefCounted
 
 const Region = preload("res://src/core/region.gd")
 const GeoLoader = preload("res://src/core/loaders/geo_loader.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 
 ## One data/regions/<NATION>.json per nation, {"regions": [...]}, on
@@ -206,3 +207,49 @@ static func load_region_graph(loader, path: String) -> void:
 	for key in (raw_endowment as Dictionary).keys():
 		endowment[String(key)] = float(raw_endowment[key])
 	loader.region_graph = {"edges": edges, "endowment": endowment}
+
+
+## V5.3 a: the regional development fund's rule (data/region-actions/fund.json,
+## src/sim/region_funds.gd), one object that applies to every region, never per
+## region. Public so tests/test_region_funds.gd refuses each bad row on a dictionary
+## with no file (the parse_embassy_exceptions idiom). A bad value is a load error:
+## a range that read 0 would offer a fund of nothing, or forbid every fund.
+static func parse_fund_rule(parsed, fname: String, errors: Array[String]) -> Dictionary:
+	if typeof(parsed) != TYPE_DICTIONARY:
+		errors.append("%s: missing or invalid JSON" % fname)
+		return {}
+	for key in ["eur_bn", "years"]:
+		var span = parsed.get(key)
+		if typeof(span) != TYPE_ARRAY or (span as Array).size() != 2 \
+				or not _is_number(span[0]) or not _is_number(span[1]) \
+				or float(span[0]) <= 0.0 or float(span[1]) < float(span[0]):
+			errors.append("%s: '%s' must be [lowest, highest], both above 0" % [fname, key])
+			return {}
+	for v in parsed["years"]:
+		if float(v) != floorf(float(v)):
+			errors.append("%s: 'years' are whole years" % fname)
+			return {}
+	var offsets = parsed.get("bloc_offset_per_bn")
+	if typeof(offsets) != TYPE_DICTIONARY or (offsets as Dictionary).is_empty():
+		errors.append("%s: missing or empty object 'bloc_offset_per_bn'" % fname)
+		return {}
+	for bloc in offsets:
+		if not OpinionK.BLOC_KEYS.has(bloc) or not _is_number(offsets[bloc]):
+			errors.append("%s: bloc_offset_per_bn names an unknown bloc or a non-number: %s" % [fname, bloc])
+			return {}
+	return {
+		"eur_bn": [float(parsed["eur_bn"][0]), float(parsed["eur_bn"][1])],
+		"years": [int(parsed["years"][0]), int(parsed["years"][1])],
+		"bloc_offset_per_bn": (offsets as Dictionary).duplicate(),
+	}
+
+
+static func load_fund_rule(loader, path: String) -> void:
+	var errors: Array[String] = []
+	loader.region_fund_rule = parse_fund_rule(JSON.parse_string(FileAccess.get_file_as_string(path)), path.get_file(), errors)
+	loader.errors.append_array(errors)
+
+
+## JSON reads every number as a float; a rule built in a test may carry ints.
+static func _is_number(v) -> bool:
+	return typeof(v) == TYPE_FLOAT or typeof(v) == TYPE_INT
