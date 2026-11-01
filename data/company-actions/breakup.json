@@ -5,6 +5,7 @@
       "id": "break_up",
       "name": "Break Up the Firm",
       "summary": "Competition law dissolves the champion. Its market share passes to its rivals; its payroll goes with it; it does not come back.",
+      "irreversible": true,
       "preconditions": [{ "field": "firm_share", "op": ">=", "value": 0.10 }],
       "effects": {
         "company": { "op": "break_up" },

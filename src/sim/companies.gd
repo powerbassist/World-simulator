@@ -800,14 +800,12 @@ static func state_owned_count(ns) -> int:
 ## at zero and hand the player a free nationalisation.
 static func execute(state, ns, all_actions: Array, action, company_id: String, loader, by_law := false) -> Dictionary:
 	if not available(state, ns, all_actions, company_id, loader, by_law).has(action):
-		var refused := {
-			"action_id": action.id,
-			"company_id": company_id,
-			"applied": false,
-			"refused": true,
-		}
-		ns.last_company_result = refused
-		return refused
+		return _refused(ns, action, company_id, "")
+	# An offered verb the arm cannot carry out: refused here, before any write,
+	# through the query the panel reads first -- the door and the arm cannot disagree.
+	var why := refusal_reason(state, ns, action, company_id, loader)
+	if why != "":
+		return _refused(ns, action, company_id, why)
 
 	var terms: Dictionary = action.effects.get("company", {})
 	var entry: Dictionary = ns.companies[company_id]
@@ -902,38 +900,8 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			# the standing chair would be an appointment that removed a face
 			# while still pricing the blocs, patronage backwards (the ultra's
 			# find; the exhausted pool is the draw's own bound).
-			var unseated: Array = []
-			# The seated scan counts only LOADER majors' chairs: an orphan
-			# entry (a save written before a content edit removed the firm)
-			# is unactionable -- no verb reaches it, so its chair would drain
-			# the appointable pool forever, the pass-8 defect re-entering
-			# through the one register walk left unskipped (the pass-9
-			# fleet's find).
-			var loader_majors := {}
-			for company in majors_of(loader, ns.id):
-				loader_majors[company.id] = true
-			for person in loader.people.get(ns.id, []):
-				if String(person.kind) != "executive":
-					continue
-				var seated := false
-				for other_id in ns.companies.keys():
-					if not loader_majors.has(other_id):
-						continue
-					if String(ns.companies[other_id].get("board_chair", "")) == String(person.id):
-						seated = true
-						break
-				if not seated:
-					unseated.append(String(person.id))
-			if unseated.is_empty():
-				var refused_chair := {
-					"action_id": action.id,
-					"company_id": company_id,
-					"applied": false,
-					"refused": true,
-					"reason": "every executive already holds a chair",
-				}
-				ns.last_company_result = refused_chair
-				return refused_chair
+			# An empty pool was refused above (refusal_reason).
+			var unseated: Array = _unseated_executives(ns, loader)
 			unseated.sort()
 			var pick_index := int(Cycle.unit(
 				"companies|%s|chair" % company_id, int(state.year) * 12 + int(state.month))
@@ -954,32 +922,14 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 			# body firms past BODY_SHARE_MAX, the exact escalation the tier
 			# boundary exists to make impossible. Majors-only keeps every
 			# invariant: body unchanged, sum conserved, no new ids.
-			var major_absorber := 0.0
-			for other in majors_of(loader, ns.id):
-				if other.id != company_id and other.sector == _sector_of_id(ns, loader, company_id) and not bool(ns.companies.get(other.id, {}).get("failed", false)):
-					major_absorber += share_of_company(ns, other)
-			if major_absorber <= 0.0:
-				# A sector whose only major is the target has no absorber:
-				# the split would silently fall to the residual -- the verb
-				# as a sector lever wearing a firm's name. Refused, and the
-				# refusal is the panel's to show.
-				var refused_split := {
-					"action_id": action.id,
-					"company_id": company_id,
-					"applied": false,
-					"refused": true,
-					"reason": "no other major in the sector can absorb the split",
-				}
-				ns.last_company_result = refused_split
-				return refused_split
-			if major_absorber > 0.0:
-				for other in majors_of(loader, ns.id):
-					if other.id == company_id or other.sector != _sector_of_id(ns, loader, company_id) or bool(ns.companies.get(other.id, {}).get("failed", false)):
-						continue
-					var other_entry: Dictionary = ns.companies.get(other.id, {})
-					if other_entry.is_empty():
-						continue
-					other_entry["share"] = float(other_entry.get("share", other.share)) + split_share * (share_of_company(ns, other) / major_absorber)
+			# No absorber was refused above (refusal_reason).
+			var absorbers: Array = _absorbers(ns, loader, company_id)
+			var major_absorber := _absorbed_share(ns, absorbers)
+			for other in absorbers:
+				var other_entry: Dictionary = ns.companies.get(other.id, {})
+				if other_entry.is_empty():
+					continue
+				other_entry["share"] = float(other_entry.get("share", other.share)) + split_share * (share_of_company(ns, other) / major_absorber)
 			entry["failed"] = true
 			entry["rescue_months_left"] = 0
 			entry["share"] = 0.0
@@ -1046,6 +996,66 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	}
 	ns.last_company_result = result
 	return result
+
+
+## Why an OFFERED verb would still be refused, "" when it would land -- read by
+## execute() before any write and by the panel before the click (V5.3-0 gate G1:
+## France's second break-up in a sector was offered, refused, and the refusal
+## landed above the fold, so the button looked dead). Two arms refuse past the
+## door. A break-up with no other live major in the sector has no absorber: the
+## split would silently fall to the residual -- the verb as a sector lever
+## wearing a firm's name. An appointment with every executive already seated
+## would clear a chair while still pricing the blocs -- patronage backwards.
+## English, the msgid the panel shows it through. Not the door: available() is.
+static func refusal_reason(state, ns, action, company_id: String, loader) -> String:
+	match String(action.effects.get("company", {}).get("op", "")):
+		"break_up":
+			if _absorbed_share(ns, _absorbers(ns, loader, company_id)) <= 0.0:
+				return "no other major in the sector can absorb the split"
+		"appoint_board":
+			if _unseated_executives(ns, loader).is_empty():
+				return "every executive already holds a chair"
+	return ""
+
+
+static func _refused(ns, action, company_id: String, reason: String) -> Dictionary:
+	var refused := {"action_id": action.id, "company_id": company_id, "applied": false, "refused": true}
+	if reason != "":
+		refused["reason"] = reason
+	ns.last_company_result = refused
+	return refused
+
+
+## A break-up's absorbers: the sector's OTHER live majors.
+static func _absorbers(ns, loader, company_id: String) -> Array:
+	var sector := _sector_of_id(ns, loader, company_id)
+	return majors_of(loader, ns.id).filter(func(other) -> bool:
+		return other.id != company_id and other.sector == sector and not bool(ns.companies.get(other.id, {}).get("failed", false)))
+
+
+static func _absorbed_share(ns, absorbers: Array) -> float:
+	var total := 0.0
+	for other in absorbers:
+		total += share_of_company(ns, other)
+	return total
+
+
+## The executives no LOADER major names as its chair. Only loader majors count:
+## an orphan entry (a save written before a content edit removed the firm) is
+## unactionable -- no verb reaches it, so its chair would drain the appointable
+## pool forever, the pass-8 defect re-entering through the one register walk
+## left unskipped (the pass-9 fleet's find).
+static func _unseated_executives(ns, loader) -> Array:
+	var seated := {}
+	for company in majors_of(loader, ns.id):
+		var chair := String(ns.companies.get(company.id, {}).get("board_chair", ""))
+		if chair != "":
+			seated[chair] = true
+	var unseated: Array = []
+	for person in loader.people.get(ns.id, []):
+		if String(person.kind) == "executive" and not seated.has(String(person.id)):
+			unseated.append(String(person.id))
+	return unseated
 
 
 ## V4.7b: the ONE relations writer outside diplomacy.gd, for the one company
