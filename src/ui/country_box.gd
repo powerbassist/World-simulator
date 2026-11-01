@@ -87,7 +87,8 @@ func show_box(id: String) -> void:
 		var home = _main._loader.nations.get(player)
 		PanelKit.line(_body, tr("Relations with %s: %d / 100") % [
 			home.nation_name if home != null else player, roundi(Diplomacy.score(state, player, id))], PanelKit.Tone.PLAIN)
-	PanelKit.rich(_body, tr("Leader: %s (%s)") % [PanelKit.person(President.leader_id(ns), _main._loader.person_name(President.leader_id(ns))), President.leader_title(ns)], PanelKit.Tone.PLAIN)
+	var who := President.leader_id(ns)
+	PanelKit.rich(_body, tr("Leader: %s (%s)") % [PanelKit.person(who, _main._loader.person_name(who)), President.leader_title(ns)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("GDP: EUR %.0fbn   growth %s%%") % [ns.gdp_eur_bn, Num.fs(ns.growth_annual_pct, 2)], PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Unemployment: %s%%") % Num.f(ns.unemployment_pct, 1), PanelKit.Tone.PLAIN)
 	PanelKit.line(_body, tr("Debt: %s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1), PanelKit.Tone.PLAIN)

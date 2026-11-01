@@ -14,9 +14,19 @@ extends SceneTree
 const CountryBox = preload("res://src/ui/country_box.gd")
 const President = preload("res://src/sim/president.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
+const AudienceTalks = preload("res://src/ui/audience_talks.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
 
 const DECOY_TITLE := "Authored Decoy Title"
 const STAGED_TITLE := "Staged Office Title"
+
+## The audience scene, caught: AudienceTalks.open() hands it the view and nothing else.
+class SceneCatcher:
+	var view := {}
+	func open(v: Dictionary) -> void:
+		view = v
+
 
 var _failures: Array[String] = []
 var _main
@@ -35,6 +45,8 @@ func _process(_delta: float) -> bool:
 		_check_every_nation_has_a_leader()
 		_check_poland_names_the_sim_pm()
 		_check_france_names_the_sim_president()
+		_check_audience_names_the_sim_president()
+		_check_executive_visit_meets_the_president()
 		_finish()
 		return true
 	return false
@@ -129,6 +141,89 @@ func _check_france_names_the_sim_president() -> void:
 	_expect_names("the player's portrait card", _text_of(card), staged_name, authored_name)
 	if card._leader_id != staged:
 		_fail("the portrait card's bust is '%s', not the sim's President '%s'" % [card._leader_id, staged])
+
+
+## The audience's view names the president as the sim has them: France's head of
+## state, staged above to someone other than the nation file's leader.
+func _check_audience_names_the_sim_president() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	var ns = state.player()
+	var authored_name: String = loader.person_name(String(loader.nations[ns.id].leader_person_id))
+	var sim_name: String = loader.person_name(President.leader_id(ns))
+	if sim_name == authored_name:
+		_fail("premise: France's sim president is still the authored one")
+		return
+	var person = null
+	for p in loader.people.get(String(ns.id), []):
+		if not p.wants.is_empty() and String(p.id) != President.leader_id(ns):
+			person = p
+			break
+	if person == null:
+		_fail("premise: a French person with a want to ask for an audience")
+		return
+	var now: int = int(state.year) * 12 + int(state.month)
+	Audiences._arrive(ns, person, person.wants[0], now, [])
+	var request: Dictionary = ns.audience_requests[-1]
+	var day := {}
+	for date in Audiences.offered_dates(state, ns, String(request["id"])):
+		if bool(date["free"]):
+			day = date
+			break
+	if day.is_empty() or not bool(Audiences.book(state, ns, loader, String(request["id"]), day).get("ok", false)):
+		_fail("premise: could not book the audience")
+		return
+	# The booked day, without running the days between (Levers.open reads the date).
+	state.year = int(day["year"])
+	state.month = int(day["month"])
+	state.day = int(day["day"])
+	var scene := SceneCatcher.new()
+	if not AudienceTalks.open(_main, {"scene": scene}, AudienceDriver.row_of(_main, request)):
+		_fail("premise: the audience did not open")
+		return
+	if String(scene.view.get("president", "")) != sim_name:
+		_fail("the audience names the president '%s', not the sim's '%s'" % [scene.view.get("president", ""), sim_name])
+
+
+## A nation whose President runs the executive (Romania where it does, else the
+## first such nation other than the player's): a visit meets the head of state,
+## never the PM -- both staged to people other than the nation file's leader.
+func _check_executive_visit_meets_the_president() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	var target := ""
+	var ids: Array = state.nations.keys()
+	ids.sort()
+	ids.erase("ROU")
+	ids.push_front("ROU")
+	for id in ids:
+		if String(id) != state.player_nation_id and state.nations.has(id) and state.nations[id].has_executive:
+			target = String(id)
+			break
+	if target == "":
+		_fail("premise: a nation other than the player's with a separate executive")
+		return
+	var ns = state.nations[target]
+	var authored := String(loader.nations[target].leader_person_id)
+	var pm := String(ns.pm_person_id)
+	var staged := _another_person(target + "_", authored, pm)
+	if staged == "" or pm == "" or pm == staged:
+		_fail("premise: %s has a PM and a second person to stage as head of state" % target)
+		return
+	ns.head_of_state_person_id = staged
+	var meeting = null
+	for action in loader.diplomatic_actions:
+		if action.opens_meeting:
+			meeting = action
+			break
+	var entry: Dictionary = VisitBooking.earliest_entry(state, loader, meeting, target) if meeting != null else {}
+	if entry.is_empty():
+		_fail("premise: a meeting with %s the Diary can book" % target)
+	elif String(entry.get("person_id", "")) != staged:
+		_fail("a visit to %s books '%s', not its President '%s' (PM '%s')" % [target, entry.get("person_id", ""), staged, pm])
+	var booked: String = _main._calendar_panel._leader_person_id(target)
+	if booked != staged:
+		_fail("the Diary's visit to %s meets '%s', not its President '%s' (PM '%s')" % [target, booked, staged, pm])
 
 
 ## Present: the staged name and title. Absent: the authored name and the decoy title.
