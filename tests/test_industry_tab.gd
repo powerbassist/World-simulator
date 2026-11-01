@@ -105,7 +105,9 @@ func _check_closed() -> void:
 		var text := _text_under(head.get_parent())
 		var own := Num.fs(Economy.sector_trend_pct(_main._state, ns, sector), 1)
 		var nation := Num.fs(float(ns.trend_annual_pct), 1)
-		if not text.contains(own) or not text.contains(nation):
+		# Each figure in its place (QA's T1 on #265): the two swapped would read the
+		# nation's rate as the sector's, and both would still be on the line.
+		if not text.contains("trend %s %%/yr, nation %s" % [own, nation]):
 			_fail("closed: the %s card reads '%s', its trend is %s %%/yr against the nation's %s" % [sector, text, own, nation])
 
 
