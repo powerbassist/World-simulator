@@ -51,7 +51,8 @@ static func ask(from: Node, card, state, loader, ns, company, action, run: Calla
 		card.confirmed.connect(func(): (card.get_meta(&"run") as Callable).call())
 	card.set_meta(&"run", run)
 	var verb := Strings.row_name("company-actions", action)
-	card.ask("%s\n%s" % [Strings.t("%s: %s?") % [verb, company.company_name], question(state, loader, ns, company, action)], verb)
+	var head := Strings.t("%s: %s?") % [verb, company.company_name]
+	card.ask("%s\n%s" % [head, question(state, loader, ns, company, action)], verb)
 	return card
 
 

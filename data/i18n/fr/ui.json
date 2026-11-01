@@ -280,7 +280,6 @@
   "%.0f retired per 100 of working age, %+.0f since the start.": "%.0f retraités pour 100 actifs, %+.0f depuis le début.",
   "Unrest %.0f of 100. %s": "Tensions sociales : %.0f sur 100. %s",
   "Concentrated in %s%s.": "Concentration : %s%s.",
-  "deficit, share of GDP": "déficit, en part du PIB",
   "EUR %.0fbn": "%.0f Md€",
   "%s has served %d terms as %s, the most the constitution allows, and cannot stand again. The office passes to whoever wins the election you are not in.": "%s a accompli %d mandats de %s, le maximum permis par la Constitution, et ne peut se représenter. La fonction revient à celui ou celle qui remporte l'élection où vous n'êtes pas candidat.",
   "You have lost your office. This term is over.": "Vous avez perdu votre fonction. Ce mandat est terminé.",
@@ -425,7 +424,6 @@
   "worth %s bn": "vaut %s Md",
   "Backing it earns %s goodwill (+%s); opposing it costs %s; abstaining costs nothing.": "La soutenir rapporte %s de crédit (+%s) ; s'y opposer coûte %s ; s'abstenir ne coûte rien.",
   "You are paying %s %% of GDP in side-payments to this council (%d months left).": "Vous versez %s %% du PIB en compensations à ce Conseil (%d mois restants).",
-  "EUR %.0fbn   %s%%": "%.0f Md€   %s %%",
   "Annual growth against a trend of %s%%. %s": "Croissance annuelle face à une tendance de %s %%. %s",
   "Structural floor %s%%.": "Plancher structurel : %s %%.",
   "Population %sM.": "Population : %s M.",
@@ -764,5 +762,16 @@
   "Head of state": "Chef de l'État",
   "%s, leader": "Direction : %s",
   "appointed by the President; no investiture vote": "nommé par le chef de l'État ; pas de vote d'investiture",
-  "elected by the chamber on an absolute majority": "élu par la chambre à la majorité absolue"
+  "elected by the chamber on an absolute majority": "élu par la chambre à la majorité absolue",
+  "GDP, a year": "PIB, sur un an",
+  "growth, a year": "croissance, sur un an",
+  "budget balance, share of GDP": "solde budgétaire, en part du PIB",
+  "%s jobs end at %s.": "%s emplois disparaissent chez %s.",
+  "%s jobs end at %s; its rivals (%s) take on %s. Net: %s jobs.": "%s emplois disparaissent chez %s ; ses rivaux (%s) en reprennent %s. Solde : %s emplois.",
+  "Costs the treasury %s bn.": "Coûte %s Md au Trésor.",
+  "Raises %s bn for the treasury.": "Rapporte %s Md au Trésor.",
+  "No cost to the treasury.": "Aucun coût pour le Trésor.",
+  "It cannot be undone.": "C'est irréversible.",
+  "Clear all": "Tout effacer",
+  "Take every note away. Decisions and requests stay.": "Retire toutes les notes. Les décisions et les demandes restent."
 }
