@@ -275,6 +275,24 @@ static func tick_month(state, loader) -> void:
 		for row in ns.processes:
 			if String(row["status"]) == OPEN:
 				_tick_row(state, ns, loader, row)
+		ns.process_drag_pct = _drag(ns, loader)
+
+
+## The growth drag of the firms in a transition this month (spec 3.2: output 4 %
+## below its path), points of GDP a year, negative, bounded; 0.0 with none. Read
+## through the firm's live output, so a larger firm's turnover costs more.
+static func _drag(ns, loader) -> float:
+	if ns.gdp_eur_bn <= 0.0:
+		return 0.0
+	var loss := 0.0
+	for row in ns.processes:
+		if String(row["status"]) == OPEN and String(row["stage"]) == "transition":
+			var company = _company(ns, loader, String(row["company_id"]))
+			if company != null:
+				loss += K.PROCESS_TRANSITION_OUTPUT_LOSS * 100.0 * Companies.output_eur_bn(ns, company) / ns.gdp_eur_bn
+	if loss == 0.0:
+		return 0.0
+	return -minf(loss, K.PROCESS_DRAG_MAX_PCT)
 
 
 static func _tick_row(state, ns, loader, row: Dictionary) -> void:

@@ -1007,6 +1007,12 @@ var companies := {}
 ## and never ticked reports the budget it was saved with.
 var subsidy_bill_pct_gdp: float = 0.0
 var firm_impulse_pct: float = 0.0
+## V5.3 a: the growth drag of the firms in a nationalisation's transition (spec 3.2,
+## "4 % below its path"), points a year, negative or 0.0. Written by
+## Processes.tick_month() and read by Economy a month later (it runs after Economy:
+## inflation_impulse_pct's pattern). absent_ok: the next tick rewrites it, and no
+## save before V5.3 a could hold a transition.
+var process_drag_pct: float = 0.0
 var firm_jobs_offset_pct: float = 0.0
 var dividend_revenue_pct_gdp: float = 0.0
 

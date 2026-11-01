@@ -16,6 +16,7 @@ const K = preload("res://src/sim/companies_constants.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Industry = preload("res://src/sim/industry.gd")
+const Economy = preload("res://src/sim/economy.gd")
 
 const PLAYER := "FRA"
 const OK_BLOCS := ["workers", "pensioners", "urban", "rural", "business", "students"]
@@ -49,6 +50,8 @@ func _init() -> void:
 	_test_a_failure_in_the_transition_lands_the_ownership()
 	_test_the_odds_window_does_not_centre_on_the_truth()
 	_test_no_bid_opens_on_a_firm_in_a_process()
+	_test_the_transition_drags_the_firms_output()
+	_test_the_drag_reaches_growth()
 	_finish()
 
 
@@ -540,3 +543,45 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL %s" % f)
 	quit(1)
+
+
+## Spec 3.2: "during the transition the firm's output is 4 % below its path
+## (management turnover), then recovers". As a growth addend, written by the tick:
+## PROCESS_TRANSITION_OUTPUT_LOSS x the firm's output as points of GDP, negative, in
+## every month of the transition and in no other; the output gap's own closing is
+## the recovery.
+func _test_the_transition_drags_the_firms_output() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	Bills.adopt(state, ns, _loader, {"action_id": "full_nationalisation", "company_id": firm})
+	var during := 0
+	var before := true
+	for i in range(K.PROCESS_OFFER_MONTHS + K.PROCESS_TRANSITION_MONTHS + 2):
+		_month(state)
+		var stage := String(_row(ns, firm).get("stage", ""))
+		var open := String(_row(ns, firm).get("status", "")) == Processes.OPEN
+		if open and stage == "transition":
+			during += 1
+			var want := -K.PROCESS_TRANSITION_OUTPUT_LOSS * 100.0 * Companies.output_eur_bn(ns, _company(ns, firm)) / float(ns.gdp_eur_bn)
+			if want >= 0.0 or not is_equal_approx(float(ns.process_drag_pct), maxf(want, -K.PROCESS_DRAG_MAX_PCT)):
+				_fail("the transition's drag is %.5f, not %.5f" % [float(ns.process_drag_pct), want])
+		elif float(ns.process_drag_pct) != 0.0:
+			_fail("a drag of %.5f outside the transition (stage %s, %s)" % [float(ns.process_drag_pct), stage, "before" if before else "after"])
+		if stage == "transition":
+			before = false
+	if during != K.PROCESS_TRANSITION_MONTHS:
+		_fail("the drag ran %d months, not the transition's %d" % [during, K.PROCESS_TRANSITION_MONTHS])
+
+
+## The eleventh addend: Economy's growth reads the drag, a month after the tick
+## that wrote it (Processes runs after Economy), with nothing else moved.
+func _test_the_drag_reaches_growth() -> void:
+	var still = _new_state()
+	var dragged = _new_state()
+	dragged.player().process_drag_pct = -0.5
+	Economy.tick_month(still)
+	Economy.tick_month(dragged)
+	var moved := float(dragged.player().growth_annual_pct) - float(still.player().growth_annual_pct)
+	if not is_equal_approx(moved, -0.5):
+		_fail("a drag of -0.5 moved growth by %.5f" % moved)

@@ -198,6 +198,13 @@ static func _tick_nation(state, ns) -> void:
 		+ ns.firm_impulse_pct + ns.unrest_impulse_pct + ns.cycle_impulse_pct
 		+ ns.inflation_impulse_pct
 		+ ns.energy_impulse_pct
+		# V5.3 a. THE ELEVENTH ADDEND, on the SUSTAINED side: a firm in a
+		# nationalisation's transition runs below its path (spec 3.2). Read, not
+		# computed: Processes.tick_month() wrote it last month (it runs after this),
+		# the inflation term's lag, so economy.gd gains no loader. Bounded in
+		# companies_constants.PROCESS_DRAG_MAX_PCT, and exactly 0.0 with no
+		# transition open, so every regime without one computes the same floats.
+		+ ns.process_drag_pct
 	)
 	growth = clampf(growth, C.GROWTH_MIN_PCT, C.GROWTH_MAX_PCT)
 	ns.growth_annual_pct = growth

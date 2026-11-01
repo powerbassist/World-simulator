@@ -190,6 +190,7 @@ const FIELDS := [
 	["companies", DEEP, COPIED, {}, false],  # bump 15
 	["subsidy_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
 	["firm_impulse_pct", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
+	["process_drag_pct", SCALAR, VALUE, 0.0, true],  # V5.3 a: rewritten by the next tick
 	["firm_jobs_offset_pct", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
 	["dividend_revenue_pct_gdp", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
 	["regulation_burden", DEEP, COPIED, {}, true],  # no verb wrote it before: empty is the truth
