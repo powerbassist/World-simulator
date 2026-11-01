@@ -486,6 +486,22 @@ func _check_the_authored_government_sits_at_game_start() -> void:
 	Government.form(ns, _loader.parties["POL"])
 	if ns.pm_party_id != "narod_i_tradycja" or not ns.is_minority:
 		_fail("Poland re-formed without an opening anchor: %s (PM party %s), not the largest party's minority" % [ns.coalition_party_ids, ns.pm_party_id])
+	# An opening party with no seats falls back to the largest, never to no government.
+	Government.form(ns, _loader.parties["POL"], "no_such_party")
+	if ns.pm_party_id != "narod_i_tradycja":
+		_fail("an opening party with no seats formed %s, not the largest party's government" % [ns.coalition_party_ids])
+	# A scenario that authors the seats authors the government through them
+	# (scenario.gd: the coalition is derived by form() from the seats): the
+	# opening anchor is the nation file's, and does not override a scenario's seats.
+	var hung = _loader.scenarios["gbr_hung_parliament"]
+	var authored: Dictionary = hung.seat_share.duplicate()
+	hung.seat_share = authored.duplicate()
+	hung.seat_share["progress_alliance"] = float(authored["national_unity_party"])
+	hung.seat_share["national_unity_party"] = float(authored["progress_alliance"])
+	var gbr = GameState.new_game(_loader, "GBR", "gbr_hung_parliament").player()
+	hung.seat_share = authored
+	if gbr.pm_party_id != "national_unity_party":
+		_fail("a scenario whose seats make national_unity_party the largest opened under %s, not the seats' largest party" % gbr.pm_party_id)
 
 
 func _compare_government(label: String, a, b) -> void:

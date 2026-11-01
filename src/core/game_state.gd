@@ -1179,7 +1179,7 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	Discipline.init_nation(ns, party_list)
 	# After Elections, which seeds seats_by_party and incumbent_party_id — the
 	# two things a formation search reads.
-	Government.init_nation(ns, n, party_list)
+	Government.init_nation(ns, n, party_list, scenario != null and not scenario.seat_share.is_empty())
 
 	# V1.1e, and it must come after Elections for a reason of its own rather than
 	# Government's: a second chamber is a TILTED TRANSFORM of the lower one, so

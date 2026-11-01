@@ -31,7 +31,7 @@ const NEUTRAL_POSITION := {"economic": 0.0, "social": 0.0}
 ## Seed formation state and form the starting government. Runs for all ten
 ## nations, same as Opinion/Elections/Legislature.init_nation -- a second
 ## playable nation is then a data change, not a change here.
-static func init_nation(ns, nation, party_list: Array) -> void:
+static func init_nation(ns, nation, party_list: Array, scenario_seats := false) -> void:
 	ns.formation_method = nation.formation_method
 	ns.censure_rule = nation.censure_rule
 	ns.amendment_rule = nation.amendment_rule
@@ -63,13 +63,17 @@ static func init_nation(ns, nation, party_list: Array) -> void:
 	ns.last_censure = {}
 
 	# The game starts from the government the nation file names (leader.party):
-	# see form()'s `opening`.
-	form(ns, party_list, String(nation.leader_party_id))
+	# see form()'s `opening`. Not where a scenario authors the seats
+	# (`scenario_seats`): there the government is derived from those seats, the
+	# contract src/core/scenario.gd states, and the authored leader may have lost them.
+	form(ns, party_list, "" if scenario_seats else String(nation.leader_party_id))
 
 
 ## Assemble a government against the assembly the nation currently has, write it
 ## onto `ns`, and return the same description as a Dictionary for the UI to read.
-## Idempotent: calling it twice on unchanged state produces the same government.
+## Idempotent: calling it twice on unchanged state with the same `opening`
+## produces the same government (a bare form() after the opening re-forms by the
+## largest party, which is what an election or a fall does).
 ##
 ## `opening` is the party the nation file names as governing at game start, passed
 ## by init_nation() alone. Where the formation anchors on a party (investiture,
@@ -358,7 +362,8 @@ static func _form_presidential(ns, party_list: Array, by_id: Dictionary) -> Dict
 ## Germany, Spain, Italy, Belgium, the Netherlands, Austria, Luxembourg and the
 ## UK. The head of government comes out of the chamber, so formation anchors on
 ## the largest party whether the rule is an investiture vote, a chancellor
-## election, open coalition negotiation, or nothing at all.
+## election, open coalition negotiation, or nothing at all -- except the game's
+## opening government, which anchors on the authored party (form()'s `opening`).
 static func _form_from_largest(ns, party_list: Array, by_id: Dictionary, opening := "") -> Dictionary:
 	var anchor := opening if _seats(ns, opening) > 0 else _largest_party_id(ns, party_list)
 	if anchor == "":
