@@ -78,7 +78,7 @@ func _check_leaf() -> void:
 			continue
 		# president.gd is the one rule for who leads a nation (V5.3, #240), and a
 		# leaf itself: reading it keeps the summit a leaf.
-		if trimmed.contains("cycle.gd") or trimmed.contains("president.gd"):
+		if trimmed.contains("res://src/sim/cycle.gd") or trimmed.contains("res://src/sim/president.gd"):
 			continue
 		_fail("summits.gd preloads a system: `%s` -- the draw must stay a leaf" % trimmed)
 
@@ -222,6 +222,11 @@ func _check_leader_is_the_sims() -> void:
 		if ns == null:
 			_fail("%s has summit content but no nation state" % nation_id)
 			continue
+		# At the start every partner's office is held by a person the register
+		# knows, or the scene would stage no portrait at all.
+		var start := String(Summits.draw(_state, _loader, nation_id).get("leader_person_id", ""))
+		if not _loader.person_by_id.has(start):
+			_fail("%s's summit names no known leader at the start: '%s'" % [nation_id, start])
 		var kept_hos := String(ns.head_of_state_person_id)
 		var kept_pm := String(ns.pm_person_id)
 		if ns.has_executive:
