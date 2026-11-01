@@ -1395,8 +1395,24 @@ it lands and the dividend keeps its one-month lag.
 
 Measured by `tests/test_processes.gd` (every kind, the stops, the gate, the void, the
 round trip) and by `tools/companies_probe.gd --processes` (the four playable nations,
-every verb on the real machine). Not built: the transition's 4 % output dip, because
-`companies.gd` is at its size ratchet, so it needs its own channel (a follow-up).
+every verb on the real machine).
+
+**The transition's output dip** (the spec's "4 % below its path, then recovers") has
+its own channel, because `companies.gd` is at its size ratchet: in every month of a
+transition `Processes.tick_month()` writes `ns.process_drag_pct`, minus
+`PROCESS_TRANSITION_OUTPUT_LOSS` (0.04) times the firm's live output as points of
+GDP, scaled by `GAP_CLOSE` over the transition's length in years and bounded at
+`PROCESS_DRAG_MAX_PCT`, and Economy adds it to growth a month later as its eleventh
+addend (no loader; the inflation term's lag). The scale is what keeps the strip
+true: a growth drag d held for T years opens an output gap that closes at
+`GAP_CLOSE` a year, and the GDP lost over the transition and that closing is
+d * T / `GAP_CLOSE` in total, so the unscaled drag lost about 3.3 times the 4 % the
+strip showed (QA's call 2 on #264). Scaled, the total is 4 % of a year of the firm's
+output (`tests/test_processes.gd` sums it over Economy's months: 0.996 of the strip
+after 20 years, the rest is the tail still to close). The level is lowest at the
+transfer of control, about a quarter of that loss (1 % of the firm's yearly output),
+and recovers on the gap's 28-month half-life. The estimate carries the loss
+(`output_loss_eur_bn`) so the strip shows it before the press.
 
 ## 41. Plant closures announced (V5.3 a)
 
