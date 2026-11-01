@@ -115,8 +115,11 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 		"full_nationalisation":
 			var base := (stake - held) * value
 			var months := K.PROCESS_OFFER_MONTHS + K.PROCESS_TRANSITION_MONTHS
+			# The transition's cost in output (_drag), shown before the press: the
+			# share of a year of the firm's output its management turnover loses.
 			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.x),
-				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months}
+				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months,
+				"output_loss_eur_bn": K.PROCESS_TRANSITION_OUTPUT_LOSS * Companies.output_eur_bn(ns, company)}
 		"privatisation":
 			var base := held * value
 			# A sale may be held once for a new bid (process_asks.gd), so it can run

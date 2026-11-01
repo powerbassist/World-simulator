@@ -554,6 +554,11 @@ func _test_the_transition_drags_the_firms_output() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var firm := _big(ns)
+	# The strip shows the loss before the press (B2): a year of the firm's output x the share.
+	var est: Dictionary = Processes.estimate(state, ns, _loader, _action("full_nationalisation"), firm)
+	var loss_want := K.PROCESS_TRANSITION_OUTPUT_LOSS * Companies.output_eur_bn(ns, _company(ns, firm))
+	if loss_want <= 0.0 or not is_equal_approx(float(est.get("output_loss_eur_bn", -1.0)), loss_want):
+		_fail("the nationalisation's strip shows an output loss of %s, not %.4f bn" % [est.get("output_loss_eur_bn"), loss_want])
 	Bills.adopt(state, ns, _loader, {"action_id": "full_nationalisation", "company_id": firm})
 	var during := 0
 	var before := true

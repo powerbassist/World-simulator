@@ -1395,8 +1395,17 @@ it lands and the dividend keeps its one-month lag.
 
 Measured by `tests/test_processes.gd` (every kind, the stops, the gate, the void, the
 round trip) and by `tools/companies_probe.gd --processes` (the four playable nations,
-every verb on the real machine). Not built: the transition's 4 % output dip, because
-`companies.gd` is at its size ratchet, so it needs its own channel (a follow-up).
+every verb on the real machine).
+
+**The transition's output dip** (the spec's "4 % below its path, then recovers") has
+its own channel, because `companies.gd` is at its size ratchet: in every month of a
+transition `Processes.tick_month()` writes `ns.process_drag_pct`, minus
+`PROCESS_TRANSITION_OUTPUT_LOSS` (0.04) times the firm's live output as points of
+GDP, bounded at `PROCESS_DRAG_MAX_PCT`, and Economy adds it to growth a month later
+as its eleventh addend (no loader; the inflation term's lag). So the level falls by
+about 4 % of a year of the firm's output by the transfer of control, and the output
+gap's own closing is the recovery after it. The estimate carries the loss
+(`output_loss_eur_bn`) so the strip shows it before the press.
 
 ---
 
