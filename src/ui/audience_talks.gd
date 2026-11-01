@@ -44,7 +44,7 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 	main._save_load_panel.block_save(Strings.t("Finish the audience first"))
 	var view := view_of(main, game)
 	view.merge(row)
-	view["president"] = main._loader.person_name(String(ns.head_of_state_person_id if ns.head_of_state_kind == "executive_president" else ns.pm_person_id))
+	view["president"] = main._loader.person_name(President.leader_id(ns))
 	view["name"] = row["person"]  # i18n: row-ok the person's shown name, from the loader
 	view["opening_title"] = DialogueLines.opening_title(ns, Audiences.request(ns, String(row["id"])))
 	main._windows.open(WINDOW)

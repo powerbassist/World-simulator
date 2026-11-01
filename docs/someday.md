@@ -375,6 +375,10 @@ QA's RECORD after the gate found Poland's opening government to be its largest p
 
 **Trigger:** a play gate or a probe that shows a cordoned party governing alone after an election, or the author asking for it. **Fix shape:** the rule above in `_form_from_largest` for the three anchored methods, test first, with the balance diff and the author's acceptance.
 
+### Delegate is the best answer in 65 % of audience cases (V5.3 b)
+
+#235 made a delegated word keep 60 % of the time (5 % before), and the audience probe's B5 row, as declared, reads as at base. Read as the old single cap, Delegate is now best in 65 % of scored cases (50 % by construction before). To bring it under 50 % Delegate would have to win no "won't serve" case, which contradicts the author's ask that a minister can help there. The author's call was "Corriger avec l'audience": the answer is to make the audience a concrete deal rather than a choice of three, which is [[v5.3-ab]] section 5 (the audience rethink, step 6 of the a + b order). **Owner:** Gameplay, then Systems and Interface in V5.3 b. **Trigger:** V5.3 b's audience rework, then B5 re-read against the new deal.
+
 ## Carried from V5.2d (2026-10-30)
 
 ### The bloc offsets other writers drive to the clamp (V5.3)

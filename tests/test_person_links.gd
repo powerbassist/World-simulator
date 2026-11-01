@@ -17,6 +17,7 @@ extends SceneTree
 ##     click, still up after the pointer leaves, gone on Escape.
 
 const TermText = preload("res://src/ui/term_text.gd")
+const President = preload("res://src/sim/president.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -57,15 +58,14 @@ func _check_markup() -> void:
 func _check_surfaces() -> void:
 	var loader = _main._loader
 	var ns = _main._state.player()
-	var deu = loader.nations["DEU"]
-	_expect_link(_main._nation_panel, String(deu.leader_person_id), "the Diplomacy window's leader")
+	_expect_link(_main._nation_panel, President.leader_id(_main._state.nations["DEU"]), "the Diplomacy window's leader")
 	_main._windows.open("politics")
 	_main._government_panel._process(0.0)
 	_expect_link(_main._government_panel, String(ns.pm_person_id), "the Politics window's head of government")
 	# Shown only where the head of state is not the executive (not France's president).
 	if ns.head_of_state_kind != "executive_president":
 		_expect_link(_main._government_panel, String(ns.head_of_state_person_id), "the Politics window's head of state")
-	_expect_link(_main._hud, String(loader.nations[ns.id].leader_person_id), "the portrait's name")
+	_expect_link(_main._hud, President.leader_id(ns), "the portrait's name")
 	_main._windows.close_all()
 
 
