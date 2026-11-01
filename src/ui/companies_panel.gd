@@ -52,6 +52,7 @@ const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const IndustryCard = preload("res://src/ui/industry_card.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
+const Closures = preload("res://src/sim/closures.gd")
 
 var _state
 var _loader
@@ -206,7 +207,7 @@ func _refresh() -> void:
 	# V5.3 a + b step 2 (spec 3.2): what is under way first, then what waits on the
 	# player, then the three sector cards, closed until opened; the public account
 	# last, folded.
-	_progress = IndustryProgress.build(_body, _state, _loader, ns, _on_stop, _on_answer)
+	_progress = IndustryProgress.build(_body, _state, _loader, ns, _on_stop, _on_answer, _on_closure)
 	_build_autonomy_sections(ns)
 	for sector in EK.SECTOR_TREND.keys():
 		IndustryCard.build(self, _body, ns, String(sector))
@@ -418,6 +419,18 @@ func _on_stop(process_id: String, what: String) -> void:
 func _on_answer(process_id: String, answer_id: String, what: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	var result: Dictionary = Processes.answer(_state, _state.player(), _loader, process_id, answer_id)
+	_dirty = true
+	if not bool(result.get("ok", false)):
+		_last_refusal = tr("Answer refused -- %s") % Strings.t(String(result.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
+		return
+	_last_refusal = ""
+	acted.emit(before, tr("Answered: %s") % what)
+
+
+## An answer to a plant closure (#251): Closures.answer(), the sim's own verb.
+func _on_closure(closure_id: String, answer_id: String, what: String) -> void:
+	var before := Trends.snapshot_now(_state)
+	var result: Dictionary = Closures.answer(_state, _state.player(), _loader, closure_id, answer_id)
 	_dirty = true
 	if not bool(result.get("ok", false)):
 		_last_refusal = tr("Answer refused -- %s") % Strings.t(String(result.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid

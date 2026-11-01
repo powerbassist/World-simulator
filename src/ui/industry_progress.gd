@@ -11,6 +11,12 @@ extends RefCounted
 ## blocs it moves, and the answer taken if the player says nothing. Its Stop gives
 ## way while the question stands: walking away and stopping are among the answers.
 ##
+## A PLANT CLOSURE ANNOUNCED (#251, closures.gd) is a decision card here too: the
+## firm, its city, the jobs and the month it lands, then its answers SIDE BY SIDE --
+## each its own strip (what it books, the jobs it keeps or loses, the blocs it moves)
+## and its button -- and the answer taken if the player says nothing. A buyer search
+## shows its months left.
+##
 ## Hidden while nothing runs, which is every game until a process starts: a strip
 ## that said "nothing in progress" would be words for nothing (the prose budget).
 
@@ -19,6 +25,12 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Closures = preload("res://src/sim/closures.gd")
+const Region = preload("res://src/core/region.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
+
+## One answer's column on a closure card, in px: three fit a docked window.
+const ANSWER_WIDTH := 300
 
 ## A process's stage, and what its end brings, as a player reads them.
 const STAGE := {
@@ -57,15 +69,19 @@ const ANSWER := {
 
 ## The strip under `parent`, or null while nothing runs. `stop` is called with the
 ## process id and the row's words when its Stop is pressed; `answer` with the
-## process id, the answer's id and the row's words when an ask is answered.
-static func build(parent: Control, state, loader, ns, stop: Callable, answer: Callable) -> Control:
+## process id, the answer's id and the row's words when an ask is answered;
+## `closure` with the closure id, the answer's id and the card's words.
+static func build(parent: Control, state, loader, ns, stop: Callable, answer: Callable, closure: Callable) -> Control:
 	var rows := Processes.rows(ns)
-	if rows.is_empty():
+	var closures := Closures.open(ns)
+	if rows.is_empty() and closures.is_empty():
 		return null
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	parent.add_child(box)
 	PanelKit.heading(box, Strings.t("In progress"))
+	for row in closures:
+		_closure(box, state, loader, ns, row, closure)
 	for row in rows:
 		var verb := Strings.row_name("company-actions", _action(loader, String(row["action_id"])))
 		var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
@@ -130,6 +146,79 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 		if who != "":
 			PanelKit.plain_line(flow, who).autowrap_mode = TextServer.AUTOWRAP_OFF
 	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % Strings.t(String(ANSWER.get(String(ask["default"]), ""))))
+
+
+## A closure: announced, its card and answers; searching, its months left.
+static func _closure(box: Control, state, loader, ns, row: Dictionary, closure: Callable) -> void:
+	var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
+	var city = Region.find_city(loader.regions.get(ns.id, []), String(row["city_id"]))
+	var place: String = String(city.city_name) if city != null else firm
+	if String(row["status"]) == Closures.SEARCHING:
+		var left := int(row["months_left"])
+		var sought := Strings.tn("A buyer is sought for %s's plant in %s: %d month left.", "A buyer is sought for %s's plant in %s: %d months left.", left)
+		PanelKit.plain_line(box, sought % [firm, place, left], PanelKit.Tone.PLAIN)
+		return
+	var due := maxi(int(row["due"]) - (int(state.year) * 12 + int(state.month)), 0)
+	var closing := Strings.tn("%s will close its plant in %s: %s jobs, in %d month.", "%s will close its plant in %s: %s jobs, in %d months.", due)
+	var head := PanelKit.plain_line(box, closing % [firm, place, CompanyVerb.thousands(float(row["jobs"])), due], PanelKit.Tone.PLAIN)
+	head.theme_type_variation = UiTheme.WARN_TEXT
+	var flow := PanelKit.buttons(box)
+	var what := "%s, %s" % [firm, place]
+	for option in Closures.answers(state, ns, loader, String(row["id"])):
+		var id := String(option["id"])
+		var column := VBoxContainer.new()
+		column.custom_minimum_size.x = ANSWER_WIDTH
+		flow.add_child(column)
+		var strip := EffectsStrip.new()
+		column.add_child(strip)
+		var money: Array = _closure_money(option)
+		strip.show_lines(Strings.t("Treasury"), String(money[0]), float(money[1]),
+			EffectsStrip.who_text(option["bloc_offset"]), _closure_jobs(option))
+		var button := PanelKit.sized(Button.new())
+		button.text = _closure_label(loader, option)
+		button.set_meta("closure_answer", id)
+		button.set_meta("money_label", strip.money_label)
+		button.pressed.connect(func() -> void: closure.call(String(row["id"]), id, what))
+		column.add_child(button)
+	PanelKit.plain_line(box, Strings.t("Unanswered, the plant closes."))
+
+
+## [text, gain]: a close books nothing; a buyer search its losses now and the
+## sweetener at a sale; a rescue the subsidy's bill a year.
+static func _closure_money(option: Dictionary) -> Array:
+	match String(option["kind"]):
+		"close":
+			return [EffectsStrip.cost_text(0.0), 0.0]
+		"buyer":
+			var now_bn := -float(option["debt_eur_bn"])
+			return [Strings.t("%s now, %s more at a sale") % [EffectsStrip.money_text(now_bn),
+				EffectsStrip.money_text(-float(option["sweetener_eur_bn"]))], now_bn]
+	var year := -float(option["debt_eur_bn_per_year"])
+	return [Strings.t("%s a year") % EffectsStrip.money_text(year), year]
+
+
+## The jobs, said for each answer: a buyer is a chance, not the default's loss
+## (QA's note on #251: its jobs_lost carries the full cut either way).
+static func _closure_jobs(option: Dictionary) -> String:
+	var jobs := CompanyVerb.thousands(float(option["jobs_lost"]))
+	match String(option["kind"]):
+		"close":
+			return Strings.t("%s jobs lost.") % jobs
+		"buyer":
+			var months := int(option["months"])
+			var odds := Strings.tn("A %d %% chance a buyer keeps the %s jobs, in %d month; else they are lost.", "A %d %% chance a buyer keeps the %s jobs, in %d months; else they are lost.", months)
+			return odds % [roundi(100.0 * float(option["chance"])), jobs, months]
+	return Strings.t("The jobs are kept.")
+
+
+static func _closure_label(loader, option: Dictionary) -> String:
+	match String(option["kind"]):
+		"close":
+			return Strings.t("Let it close")
+		"buyer":
+			return Strings.t("Find a buyer")
+	var action = _action(loader, String(option["id"]))
+	return Strings.row_name("company-actions", action) if action != null else String(option["id"])
 
 
 static func _action(loader, id: String):

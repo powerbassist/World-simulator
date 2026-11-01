@@ -44,6 +44,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
@@ -469,6 +470,9 @@ var _moved := false
 ## and its answers, the card's "Decision due"), the first major's sector
 ## card open, its Act open and its first verb that can run focused (one strip).
 var _industry := false
+## V5.3 a + b (#251): a plant closure announced on the first major, its card and
+## its answers side by side on the Industry tab's In progress strip.
+var _closure := false
 
 ## V4.2 close-out. A draft the machine has parked renders NOWHERE on the law
 ## panel -- ns.draft_bills reaches the UI only through the briefing popup ("In
@@ -952,6 +956,8 @@ func _init() -> void:
 			_moved = true
 		elif args[i] == "--industry":
 			_industry = true
+		elif args[i] == "--closure":
+			_closure = true
 		elif args[i] == "--forecast-computing":
 			_forecast_computing = true
 		elif args[i] == "--month-closing":
@@ -1241,6 +1247,12 @@ func _apply_view() -> void:
 		_move_the_levers()
 	if _industry:
 		_stage_the_industry_tab()
+	if _closure:
+		var ns = _main._state.player()
+		var major = Companies.majors_of(_main._loader, ns.id)[0]
+		preload("res://src/sim/closures.gd")._announce(ns, major, ns.companies[major.id], 0.2,
+			_main._loader.closure_rule, _main._state.year * 12 + _main._state.month)
+		_main._companies_panel.mark_dirty()
 	if _compose:
 		_draft_a_bill()
 	if _pmb:
