@@ -12,10 +12,18 @@ const K = preload("res://src/sim/companies_constants.gd")
 const EC = preload("res://src/sim/economy_constants.gd")
 
 
-## The output a firm's transition loses in total: PROCESS_TRANSITION_OUTPUT_LOSS of a
-## year of its live output, bn EUR. What the strip shows, and what drag() delivers.
-static func loss_eur_bn(ns, company) -> float:
-	return K.PROCESS_TRANSITION_OUTPUT_LOSS * Companies.output_eur_bn(ns, company)
+## The output a firm's transition loses in total, bn EUR: rate() of a year of its live
+## output. What the strip shows, and what drag() delivers.
+static func loss_eur_bn(ns, loader, company, held: float) -> float:
+	return rate(loader, company, held) * Companies.output_eur_bn(ns, company)
+
+
+## The firm's sector's rate (data/industry/transition.json) x (1 - the share the state
+## held at the press): a firm the state already part-owns changes less management (the
+## author's call on #264). 0.0 when no rule is loaded (a test fixture's loader).
+static func rate(loader, company, held: float) -> float:
+	var by_sector: Dictionary = loader.transition_rule.get("output_loss_by_sector", {})
+	return float(by_sector.get(String(company.sector), 0.0)) * (1.0 - clampf(held, 0.0, 1.0))
 
 
 ## The growth drag of the firms in a transition now, points of GDP a year, negative,
@@ -37,7 +45,9 @@ static func drag(ns, loader) -> float:
 			continue
 		for company in Companies.firms_of(loader, ns.id):
 			if String(company.id) == String(row["company_id"]):
-				loss += 100.0 * loss_eur_bn(ns, company) / ns.gdp_eur_bn
+				# The share held AT THE PRESS: the transfer of control has already set the
+				# live one to the stake, which would zero the transition's own drag.
+				loss += 100.0 * loss_eur_bn(ns, loader, company, float(row.get("state_share_at_start", 0.0))) / ns.gdp_eur_bn
 	if loss == 0.0:
 		return 0.0
 	var years := float(K.PROCESS_TRANSITION_MONTHS) / 12.0

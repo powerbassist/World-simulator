@@ -120,7 +120,7 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 			# share of a year of the firm's output its management turnover loses.
 			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.x),
 				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months,
-				"output_loss_eur_bn": Drag.loss_eur_bn(ns, company)}
+				"output_loss_eur_bn": Drag.loss_eur_bn(ns, loader, company, held)}
 		"privatisation":
 			var base := held * value
 			# A sale may be held once for a new bid (process_asks.gd), so it can run
@@ -170,6 +170,7 @@ static func start(state, ns, loader, action, company_id: String, by_law := false
 		"base_eur_bn": float(est["base_eur_bn"]), "rate": 0.0, "paid_eur_bn": 0.0,
 		"price_lo": float(est["price_lo"]), "price_hi": float(est["price_hi"]),
 		"months_lo": int(est["months_lo"]), "months_hi": int(est["months_hi"]),
+		"state_share_at_start": Companies.state_share_of(ns, company_id),
 		"owner": String((ns.companies[company_id] as Dictionary).get("owner", "")),
 	}
 	var months := 0

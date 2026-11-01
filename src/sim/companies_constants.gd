@@ -492,13 +492,10 @@ const PROCESS_STAKE_PREMIUM := Vector2(0.05, 0.15)
 const PROCESS_OFFER_MONTHS := 2
 const PROCESS_TRANSITION_MONTHS := 12
 ## Spec 3.2: "during the transition the firm's output is 4 % below its path
-## (management turnover), then recovers". Booked as a growth drag on the nation
-## (processes.gd writes `ns.process_drag_pct`, Economy adds it) in every month of the
-## transition, sized so that the GDP lost IN TOTAL, over the transition and the output
-## gap's closing after it (GAP_CLOSE), is this share of a year of the firm's output:
-## the figure the strip shows. The level is lowest at the transfer of control (about
-## a quarter of this share of the firm's output) and recovers on the gap's half-life.
-const PROCESS_TRANSITION_OUTPUT_LOSS := 0.04
+## (management turnover), then recovers". The share of a year of the firm's output
+## the transition loses is DATA, by the firm's sector (data/industry/transition.json,
+## stand-ins), scaled down by the share the state already held; src/sim/process_drag.gd
+## books it as a growth drag sized so the total loss is the strip's figure.
 ## The drag's bound, points of growth a year: docs/economy-model.md's divergence
 ## argument is per quantity, and a new addend owes one (FIRM_IMPULSE_MAX_PCT's
 ## reason). Slack at the roster's sizes: the largest French major in transition

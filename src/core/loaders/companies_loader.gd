@@ -13,6 +13,7 @@ const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Company = preload("res://src/core/company.gd")
 const ClosuresK = preload("res://src/sim/closures_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const EconomyK = preload("res://src/sim/economy_constants.gd")
 
 
 ## One data/companies/<NATION>.json per nation, {"companies": [...]}, the same
@@ -189,3 +190,34 @@ static func load_closure_rule(loader, path: String) -> void:
 		"cut": float(parsed["cut"]), "cooldown_months": int(parsed["cooldown_months"]),
 		"bloc_offset": (offsets as Dictionary).duplicate(),
 	}
+
+
+## V5.3 a: a nationalisation's transition loss by economic sector
+## (data/industry/transition.json, src/sim/process_drag.gd): a share of a year of the
+## firm's output, one per sector of economy_constants.SECTOR_TREND. A missing or bad
+## rate is a load error, never a silent 0 (a free transition).
+static func load_transition_rule(loader, path: String) -> void:
+	var errors: Array[String] = []
+	var rule := parse_transition_rule(JSON.parse_string(FileAccess.get_file_as_string(path)), path, errors)
+	loader.errors.append_array(errors)
+	if errors.is_empty():
+		loader.transition_rule = rule
+
+
+## The parse step, public so a test feeds it a dictionary: the rule, or {} with an error.
+static func parse_transition_rule(parsed, path: String, errors: Array[String]) -> Dictionary:
+	if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("output_loss_by_sector")) != TYPE_DICTIONARY:
+		errors.append("%s: missing or invalid object 'output_loss_by_sector'" % path)
+		return {}
+	var table: Dictionary = parsed["output_loss_by_sector"]
+	var out := {}
+	for sector in EconomyK.SECTOR_TREND:
+		var v = table.get(sector)
+		if (typeof(v) != TYPE_FLOAT and typeof(v) != TYPE_INT) or float(v) <= 0.0 or float(v) >= 1.0:
+			errors.append("%s: output_loss_by_sector.%s must be a fraction above 0 and below 1" % [path.get_file(), sector])
+			return {}
+		out[sector] = float(v)
+	if table.size() != out.size():
+		errors.append("%s: output_loss_by_sector names a sector the economy does not have" % path.get_file())
+		return {}
+	return {"output_loss_by_sector": out}
