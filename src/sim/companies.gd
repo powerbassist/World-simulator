@@ -352,7 +352,8 @@ static func live_city_of(ns, company) -> String:
 ## commit moves a named share to the residual and the rescue RE-AUTHORS the firm's
 ## CONTENT share (the drifted live share does not survive the death), moving the
 ## named sum by (authored - live) per rescue; break_up's split conserves the sum
-## by its own pro-rata form. The header ledger names the writers.
+## by its own pro-rata form; and since V5.3 a a plant closure (closures.gd) moves its
+## cut of a firm's share to the residual. The header ledger names the writers.
 ##
 ## Every draw is computed against the shares as they stood at the start of the
 ## month and applied afterwards, so the result does not depend on the order firms

@@ -127,7 +127,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 				continue
 			if _fire_act(state, ns, loader, person, act_key, meters, acts, authored_leaders):
 				acted[person.id] = true
-	_record_act_offsets(ns, before)
+	book_act_offsets(ns, before)
 	return acts
 
 
@@ -135,8 +135,10 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 ## the real delta, after the clamp, since nothing else in this tick writes it --
 ## joins the share that fades. The acts price through two doors (the applier for
 ## a brief, Government.penalise_blocs for the rest), so the record reads the
-## result rather than either door.
-static func _record_act_offsets(ns, before: Dictionary) -> void:
+## result rather than either door. V5.3 a: public, because a landed plant closure
+## (closures.gd, the parent's TAKE 2 on #251) is an act too and books here, so this
+## file stays the register's one writer.
+static func book_act_offsets(ns, before: Dictionary) -> void:
 	for bloc in ns.bloc_offset:
 		var wrote := float(ns.bloc_offset[bloc]) - float(before.get(bloc, 0.0))
 		if wrote != 0.0:

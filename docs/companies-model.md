@@ -1398,6 +1398,42 @@ round trip) and by `tools/companies_probe.gd --processes` (the four playable nat
 every verb on the real machine). Not built: the transition's 4 % output dip, because
 `companies.gd` is at its size ratchet, so it needs its own channel (a follow-up).
 
+## 41. Plant closures announced (V5.3 a)
+
+The spec's "New Industry decisions" (`docs/design/v5.3-ab.md` 3.2), and the industry
+supply band B7 lacked: on main a foreign bid or a failing major reaches the player
+almost never. `src/sim/closures.gd`, step `Closures` right after `Industry`.
+
+- **The trigger.** Each month every live major of the PLAYER's nation adds its output
+  (`Companies.output_eur_bn`) to a history of `window_months` + 1 months. The worst
+  fall past `fall` over the window announces a closure in the firm's live city,
+  one announcement a month at most. A firm in a process does not announce, and a
+  firm whose closure ended waits `cooldown_months`. Its history is cleared at the
+  announcement and at the cut, so a closure's own cut is never the next fall.
+- **The answers** (`Closures.answers`, `Closures.answer`):
+  - let it close, the default: the firm's live share falls by `cut` (to the residual,
+    as the failure commit moves it), so its payroll in its city falls with it, and
+    the rule's `bloc_offset` lands;
+  - find a buyer: a search of `BUYER_MONTHS`; on its seed (`BUYER_CHANCE`) a buyer
+    keeps the plant, else it shuts;
+  - rescue: the firm's own subsidy verbs (op `subsidise`, through
+    `Companies.execute`), the spec's "a subsidy".
+  Unanswered, the closure lands two months (`ANSWER_MONTHS`) after it is announced.
+- **The numbers are data:** `data/industry/closures.json` (`loader.closure_rule`,
+  `CompaniesLoader.load_closure_rule`), never per firm. The values there are Systems'
+  stand-ins until Content authors them; `fall` = 0.04 was picked from a survey of
+  the real machine, about one closure a year per playable nation.
+- **Only the player's nation.** A closure is a decision arrival, and a nation no
+  player leads cannot answer one.
+- **The state is the firm's:** `closure` (the record, kept after it ends for the
+  cooldown) and `closure_watch` on the firm's `ns.companies` entry, which the field
+  table deep-copies. So no NationState field and no `SAVE_VERSION` bump: an entry
+  without the keys reads "no closure and no history yet", the truth for every older
+  save. `closures.gd` also writes the entry's `share` when a plant shuts.
+
+Measured by `tests/test_closures.gd` and by `tools/decision_surfaces_probe.gd
+--density` (source `closure`).
+
 ---
 
 Related: [[index]] · [[legislature-model]] · [[economy-model]] · [[opinion-model]] ·

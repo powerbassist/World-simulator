@@ -84,6 +84,10 @@ extends SceneTree
 ##              offers (block, allow), each as its authored bloc offsets;
 ##   failing    a major in its rescue window (the failed_month stamp, and the
 ##              window's last month); answers = let it fail, and the rescue verbs;
+##   closure    a plant closure announced (src/sim/closures.gd; the month it is
+##              announced, and its deadline month); answers = Closures.answers():
+##              let it close (the rule's bloc offsets), seek a buyer (none), and
+##              the firm's subsidy verbs (their bloc offsets) (V5.3 a);
 ##   process    a process's ask (src/sim/process_asks.gd), the month it is posted;
 ##              answers = each answer's debt booked once and bloc offsets (V5.3 a);
 ##   programme  the term-start offer (Programme.available non-empty after a month
@@ -96,11 +100,14 @@ extends SceneTree
 ## an estimate); its arrows are DensityCount.arrow over each bloc offset. A firm
 ## verb's price is not on its strip yet (A3/A4 build it), so a firm window counts
 ## on its arrows. Subjects for the repeat rule: event|id, request|person (state =
-## the want), bid|firm (state = the bidder), failing|firm, programme|term.
+## the want), bid|firm (state = the bidder), failing|firm, closure|id, programme|term.
+## In the ACTIVE regime the player answers every announced closure in the month
+## after it, the way an engaged player would: a rescue verb when the firm has one,
+## else a buyer search (a modelled habit, not the game's rule).
 ## V5.3 a, the parent's call on the asks PR: in `--density` the ACTIVE player also
 ## opens processes, as an engaged player would -- a modelled habit, not the game's
 ## rule: at most one a year, only when a reason is on the desk (a foreign bid on a
-## major, or a major failing), and only on a firm where a process verb is available
+## major, a major failing, or a plant closure open), and only on a firm where a process verb is available
 ## (the minority stake first, else the break-up; a failed firm has no process verb,
 ## so a failing major gives none today). Its asks then take their defaults. B7 is
 ## reported twice: `band_world`, the world's arrivals alone (every source but
@@ -122,6 +129,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Industry = preload("res://src/sim/industry.gd")
+const Closures = preload("res://src/sim/closures.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
@@ -269,6 +277,16 @@ func _act(state, ns) -> void:
 				break
 	for request in Audiences.pending(ns):
 		Audiences.delegate(state, ns, _loader, String(request["id"]))
+	# V5.3 a: an announced closure, rescued when the firm has a verb, else a buyer sought.
+	for row in Closures.open(ns):
+		if String(row["status"]) != Closures.ANNOUNCED:
+			continue
+		var pick := "buyer"
+		for a in Closures.answers(state, ns, _loader, String(row["id"])):
+			if String(a["kind"]) == "rescue":
+				pick = String(a["id"])
+				break
+		Closures.answer(state, ns, _loader, String(row["id"]), pick)
 
 
 func _desk_ids(ns) -> Dictionary:
@@ -690,6 +708,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		_event_candidates(state, ns, seen["desk_before"], candidates)
 		_request_candidates(state, ns, report, now, candidates)
 		_firm_candidates(state, ns, now, candidates)
+		_closure_candidates(state, ns, now, candidates)
 		_process_candidates(state, ns, now, candidates)
 		if i == 0 and not opening.is_empty():
 			candidates.append(_programme_candidate(state, ns, opening))
@@ -749,7 +768,8 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 
 
 ## The active player's modelled habit (header): at most one process a year, only
-## when a reason is on the desk -- a foreign bid on a major, or a major failing --
+## when a reason is on the desk -- a foreign bid on a major, a major failing, or a
+## plant closure open --
 ## and only on that firm, the minority stake first, else the break-up. Returns the
 ## month a process was last opened.
 func _open_process(state, ns, now: int, opened_at: int) -> int:
@@ -761,6 +781,10 @@ func _open_process(state, ns, now: int, opened_at: int) -> int:
 			reasons.append(String(company_id))
 	for f in Industry.failing(state, ns, _loader):
 		reasons.append(String(f["company_id"]))
+	# The parent's call on #248: the habit waits for the plant closures, so a firm
+	# with a closure open (closures.gd) is a reason too.
+	for row in Closures.open(ns):
+		reasons.append(String(row["company_id"]))
 	for company_id in reasons:
 		for verb in ["minority_stake", "break_up"]:
 			var action = _action(verb)
@@ -860,6 +884,27 @@ func _firm_candidates(state, ns, now: int, out: Array) -> void:
 			out.append({"source": "failing", "subject": "failing|%s" % company_id, "state": "",
 				"domain": "industrial", "due": "arrival" if is_new else "deadline",
 				"answers": _firm_answers(state, ns, company_id, ["subsidise"])})
+
+
+## A plant closure, the month it is announced and in its last month to answer:
+## each answer as its bloc offsets (the jobs a cut loses under `other`).
+func _closure_candidates(state, ns, now: int, out: Array) -> void:
+	for row in Closures.open(ns):
+		if String(row["status"]) != Closures.ANNOUNCED:
+			continue
+		var is_new := int(row["announced"]) == now
+		if not is_new and int(row["due"]) - now != 1:
+			continue
+		var answers: Array = []
+		for a in Closures.answers(state, ns, _loader, String(row["id"])):
+			var strip := _effects_strip(state, {"bloc_offset": a["bloc_offset"]})
+			strip["other"]["jobs"] = -float(a["jobs_lost"])
+			# A buyer search is a process stage (density_count's `stage` axis).
+			if String(a["kind"]) == "buyer":
+				strip["stage"] = "buyer search"
+			answers.append(strip)
+		out.append({"source": "closure", "subject": "closure|%s" % String(row["id"]), "state": "",
+			"domain": "industrial", "due": "arrival" if is_new else "deadline", "answers": answers})
 
 
 ## Doing nothing, then every verb Companies.available offers on the firm whose op
