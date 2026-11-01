@@ -180,7 +180,9 @@ func _test_trend_growth_follows_its_factor() -> void:
 		var want := float(TREND_BETA[line]) * float(ns.spending_pct_gdp[line]) \
 			* (Sectors.factor(ns, line) - 1.0) * EconomyC.SHIFT_ADJUST / 12.0
 		var got := float(ns.potential_shift_pct) - float(still.player().potential_shift_pct)
-		if want == 0.0 or not is_equal_approx(got, want):
+		# As a ratio: both are about 1e-5, under is_equal_approx's absolute floor, so
+		# comparing them directly passed with the channel unwired (mutation check).
+		if want == 0.0 or not is_equal_approx(got / want, 1.0):
 			_fail("%s moved the potential shift by %.8f, not %.8f" % [line, got, want])
 
 
