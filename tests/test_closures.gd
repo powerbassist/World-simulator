@@ -39,6 +39,7 @@ func _init() -> void:
 	_test_a_firm_in_a_process_does_not_announce()
 	_test_answer_refusals()
 	_test_a_closure_survives_a_save()
+	_test_a_failed_firms_rescue_stops_paying()
 	_test_a_failed_firm_drops_its_history()
 	_test_the_record_follows_a_relocation()
 	_test_the_three_answers_each_win_somewhere()
@@ -630,3 +631,24 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL %s" % f)
 	quit(1)
+
+
+## QA's TAKE 1 on #277: a firm that fails during its plant's rescue voids the term,
+## and nothing more is paid.
+func _test_a_failed_firms_rescue_stops_paying() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _unsubsidised(ns)
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	Closures.answer(state, ns, _loader, String(row["id"]), "rescue")
+	for i in 3:
+		_month(state)
+	(ns.companies[String(firm.id)] as Dictionary)["failed"] = true
+	_month(state)
+	var debt := float(ns.debt_eur_bn)
+	for i in 3:
+		_month(state)
+	if String(row["status"]) != "void" or float(ns.debt_eur_bn) != debt:
+		_fail("a failed firm's rescue still runs (%s) or still pays (%.6f bn more)" % [row["status"], float(ns.debt_eur_bn) - debt])
