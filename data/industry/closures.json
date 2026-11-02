@@ -1,8 +1,8 @@
 {
-  "_note": "V5.3 a, the plant-closure rule (docs/design/v5.3-ab.md 3.2, src/sim/closures.gd). STAND-INS written by Systems so the rule can be measured; Content authors the numbers (the spec's section 10), as data, never per firm. window_months: the months over which a major's output fall is measured. fall: the fraction of its output a major must lose over the window to announce a closure (chosen from a measured survey: about one closure a year per playable nation at 0.04). cut: the share of the firm's live share, so of its jobs, a landed closure removes (a plant, not the firm). cooldown_months: the months after a closure ends before the same firm may announce again (at least window + the answer's months, so a landed closure's own cut never re-announces). bloc_offset: what a landed closure moves, per closure.",
+  "_note": "V5.3 a, the plant-closure rule (docs/design/v5.3-ab.md 3.2, src/sim/closures.gd). STAND-INS written by Systems so the rule can be measured; Content authors the numbers (the spec's section 10), as data, never per firm. window_months: the months over which a major's output fall is measured. fall: the fraction of its output a major must lose over the window to announce a closure (chosen from a measured survey: about one closure a year per playable nation at 0.04). cut: the share of the firm's live share, so of its jobs, a landed closure removes (a plant, not the firm). cooldown_months: the months after a closure ends before the same firm may announce again (at least window + the answer's months, so a landed closure's own cut never re-announces). bloc_offset: what a landed closure moves, per closure. RECALIBRATED with the real majors (V5.3, Content): with 9-10 majors a nation instead of 6, a decade of play announced 39 closures in FRA against 14 (the fall threshold hardly moves it, since sector output falls hit every major together), and the acts' share of the workers bloc crossed 0.50. cooldown 24 -> 72 and the per-closure workers move -0.02 -> -0.012 bring the decade's total workers cost back near the old level (FRA 19 closures x 0.012 against 14 x 0.02; DEU 25 against 11). Stand-ins still: the author accepts the balance move.",
   "window_months": 6,
   "fall": 0.04,
   "cut": 0.03,
-  "cooldown_months": 24,
-  "bloc_offset": {"workers": -0.02}
+  "cooldown_months": 72,
+  "bloc_offset": {"workers": -0.012}
 }
