@@ -563,8 +563,11 @@ teacher, graduates a year...).
   population-weighted multiplier is exactly 1 and no national figure moves.
   `regional_quantity()` = the nation's quantity x the multiplier ^ elasticity.
   Refused where the others cannot pay (one region, or a multiplier under
-  `RATIO_FLOOR`). Nothing in the sim reads it yet beyond the strip.
-  `tests/test_sector_priority.gd` pins it.
+  `RATIO_FLOOR`). **The money moves the region** (#267): the money moved,
+  `U x the region's share of the people x the sector's spending`, becomes a term in
+  the region's growth deviation, `PRIORITY_BETA x` that money as points of the
+  region's output, fixed at set time and zero-mean like a fund's
+  ([[region-economy-model]] section 15). `tests/test_sector_priority.gd` pins it.
 - **Not built yet:** the tiles' warning marks (a decision arrival, section 7 of
   the spec) and the personnel (staff = a sector's spending / a cost per head, which
   needs sourced costs per head).

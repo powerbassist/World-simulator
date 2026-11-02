@@ -333,5 +333,45 @@ rule's ranges and bloc offsets are data, `data/region-actions/fund.json`, stand-
   against the nation, the larger of its unemployment over the nation's and the
   nation's output per head over its own, ties to unemployment. A British region's
   unemployment ratio reads 1.0 (section 8) until a deviation term moves it.
-- **Not built here:** the sector priority (the second regional verb), and c's
-  construction rows in the same opened region.
+- **Not built here:** c's construction rows in the same opened region.
+
+## 15. The sector priority (V5.3 a, #267)
+
+The second regional verb: "put hospitals first in Hauts-de-France"
+(`Sectors.set_priority()`, one region per sector, `ns.sector_priorities`). The
+region's spending per head on the sector rises by `PRIORITY_UPLIFT` and every
+other region's falls so the money is the same: no line's total, national
+quantity or channel moves ([[economy-model]], "Spending lines into sectors").
+
+- **The effect** (the parent's ruling: a priority must move a real outcome) is
+  the money it moves, fed to the region's existing read. Money = `PRIORITY_UPLIFT x
+  the region's share of the people x the sector's spending` (line % of GDP x the
+  sector's share x GDP); the term is `PRIORITY_BETA x` that money as points of the
+  region's output, fixed when the priority is set (as a fund's), and joins the
+  funds' term in the deviation (`Regions._player_terms()`), zero-mean over the
+  nation's output. The region's unemployment falls by Okun's 0.4 of
+  `pts x (1 - its weight)`, every other region's rises by 0.4 of `pts x that
+  weight`, the national figures do not move (a second-order GDP drift from the
+  regions' compounding: -0.0004 % in 24 months for FRA's largest case).
+- **One deviation.** Since #267 the deviation is ONE function,
+  `Regions.deviation_by_region()`, called by the tick, `trend_deviation_pct()`
+  and `unemployment_by_region()`; there were three copies, and a term added to one
+  could be missed by another. `tests/test_regions.gd` pins the tick to the read.
+  The balance table is `cmp`-identical across the change.
+- **Why linear and small, not the fund's square root:** a priority costs the
+  Budget nothing and has no end date. On the fund's response, basic pensions
+  (the largest sector, 416 bn in France) first in FRA's FRE would move 7.3 bn a
+  year and give 2.5 points, against 0.93 for a 1 bn fund there: the free verb
+  would out-do the paid one. `PRIORITY_BETA` 0.25 (a stand-in, the author's call)
+  makes that largest case about a 1 bn fund and hospitals a third of it.
+  Measured by `tools/region_fund_probe.gd --priority` at month 24 against a twin,
+  in each nation's worst region (hospitals / basic pensions): DEU DE5 0.06 / 0.20,
+  FRA FRE 0.12 / 0.36, GBR UKC 0.08 / 0.20, POL PL81 0.10 / 0.32 points of
+  unemployment (the fund: 0.80, 0.35, 0.43, 0.92). The strip's estimate equals the
+  booked figure; the term is immediate and constant, so month 12 reads as month 24.
+- **The strip** (`Sectors.priority_estimate()`) shows both sides: the sector's
+  quantity in the region and elsewhere, and the region's unemployment now and
+  after with the other named regions' (weighted by their people), read through the
+  game's own arithmetic on the register set for one read and restored.
+- **Not built:** the term follows the money at set time only; a later change to
+  the line or the sector's share leaves it until the priority is set again.
