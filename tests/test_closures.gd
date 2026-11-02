@@ -828,6 +828,10 @@ func _check_closure_leg(year: int, answer_id: String, leg: String) -> void:
 		return
 	debt = float(ns.debt_eur_bn)
 	for i in range(CK.BUYER_MONTHS):
+		# Pass 1: the firm's output falls again before the search ends, so only the
+		# re-ask's own guard (_may_announce) keeps a new announcement off it.
+		if i == CK.BUYER_MONTHS - 1:
+			_falling(ns, firm, 2.0 * float(_rule()["fall"]))
 		_month(state)
 	var record: Dictionary = row.get("negotiation", {})
 	var outcome := "" if leg == "none" else ("back" if leg == "back_close" else leg)
@@ -845,7 +849,7 @@ func _check_closure_leg(year: int, answer_id: String, leg: String) -> void:
 			var again: Array = Closures.answers(state, ns, _loader, String(row["id"]))
 			var buyer := _answer_of(again, "buyer")
 			if String(row["status"]) != Closures.OFFERED or int(row["offered"]) != _now(state) or int(row["due"]) != _now(state) + 1 \
-					or float(ns.debt_eur_bn) != debt or again.map(func(x) -> String: return String(x["id"])) != ["close", "buyer"] \
+					or String(_row(ns, String(firm.id)).get("id", "")) != String(row["id"]) or float(ns.debt_eur_bn) != debt or again.map(func(x) -> String: return String(x["id"])) != ["close", "buyer"] \
 					or float(buyer.get("sweetener_eur_bn", -1.0)) != float(a["back_sweetener_eur_bn"]) or float(buyer.get("chance", -1.0)) != 1.0 \
 					or float(buyer.get("debt_eur_bn", -1.0)) != 0.0 or Closures.open(ns).size() != 1:
 				_fail("%s: came back as %s, asking %s" % [label, row, again])
@@ -857,6 +861,11 @@ func _check_closure_leg(year: int, answer_id: String, leg: String) -> void:
 				if String(row["status"]) != "closed" or not is_equal_approx(Companies.share_of_company(ns, firm), cut) or float(ns.debt_eur_bn) != debt:
 					_fail("%s: closing the buyer that came back ended %s" % [label, row["status"]])
 				return
+			# Answered once, as every ask is: the buyer chosen, closing is no longer asked.
+			Closures.answer(state, ns, _loader, String(row["id"]), "buyer")
+			if bool(Closures.answer(state, ns, _loader, String(row["id"]), "close").get("ok", true)) \
+					or not Closures.answers(state, ns, _loader, String(row["id"])).is_empty():
+				_fail("%s: the re-ask took a second answer" % label)
 			_month(state)
 			if String(row["status"]) != "sold" or not is_equal_approx(Companies.share_of_company(ns, firm), share) \
 					or not is_equal_approx(float(ns.debt_eur_bn) - debt, float(a["back_sweetener_eur_bn"])):

@@ -169,6 +169,9 @@ static func answers(state, ns, loader, closure_id: String) -> Array:
 	if status != ANNOUNCED and status != OFFERED:
 		return []
 	var row: Dictionary = found["row"]
+	# A re-ask is answered once, as every ask is (pass 1 on this PR): the answer stands.
+	if status == OFFERED and row.has("answer"):
+		return []
 	var close := {"id": "close", "kind": "close", "jobs_lost": float(row["jobs"]), "debt_eur_bn": 0.0,
 		"bloc_offset": (loader.closure_rule["bloc_offset"] as Dictionary).duplicate()}
 	if status == OFFERED:
@@ -190,14 +193,13 @@ static func answers(state, ns, loader, closure_id: String) -> Array:
 ## The buyer's three counters (negotiation.gd; the parent's calls 3 and 4): the
 ## buyer's search with the sweetener cut by the counter, the old one kept for a buyer
 ## that comes back (a month more, `months_hi`), and the buyer's odds at full strength,
-## leverage 1 (negotiation.gd's own reading: the closing plant needs the buyer more than
-## the buyer needs it), in the range fixed on the announcement's month, so it does not
+## BUYER_LEVERAGE (closures_constants.gd), in the range fixed on the announcement's month, so it does not
 ## move while the answer waits.
 static func _counters(row: Dictionary, buyer: Dictionary) -> Array:
 	var out: Array = []
 	for c in NK.NEGOTIATE_COUNTERS:
 		var id := "negotiate_%d" % roundi(100.0 * float(c))
-		var p := Negotiation.odds(float(c), 1.0)
+		var p := Negotiation.odds(float(c), K.BUYER_LEVERAGE)
 		var band := Negotiation.shown(p, Negotiation.key(row, id), int(row["announced"]))
 		var a := buyer.duplicate(true)
 		a.merge({"id": id, "kind": "negotiate", "counter": float(c), "months_hi": K.BUYER_MONTHS + 1,
