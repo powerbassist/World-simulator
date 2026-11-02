@@ -18,6 +18,7 @@ const DK = preload("res://src/sim/domains_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
 
 const LINE := "health"
 
@@ -77,6 +78,25 @@ func _process(_delta: float) -> bool:
 			_pick("prevention", "hospitals", 0.02)
 		24:
 			_check_refused()
+			# The parent's ruling on #278: the projection includes the drafted move.
+			var wanted: Dictionary = _panel._forecast._want
+			if (wanted.get("_share_moves", []) as Array).size() != 1:
+				_fail("forecast: the proposed projection does not carry the drafted move (%s)" % [wanted.keys()])
+			# ... and its job starts from a copy with the move on it, not the live state.
+			var job = _panel._forecast._proposed_job()
+			var drafted_shares := Sectors.shares(BudgetSectors.drafted(_panel, _main._state.player()), _main._loader, LINE)
+			var projected := Sectors.shares(job.state.player(), _main._loader, LINE)
+			if job.pending.has("_share_moves") or absf(float(projected["prevention"]) - float(drafted_shares["prevention"])) > 0.0001:
+				_fail("forecast: the projection starts from %s, the draft is %s" % [projected, drafted_shares])
+			# And the tile's heading reads the drafted lever, like the lever above it.
+			var ns = _main._state.player()
+			_panel._sliders[LINE].value = float(ns.spending_pct_gdp[LINE]) + 1.0
+		26:
+			var drafted := float(_panel._pending["spending_pct_gdp"][LINE])
+			var head := (Strings.t("%s: %s %% of GDP, %s bn") % [_panel.tr("Health"), Num.f(drafted, 1),
+				Num.f(drafted / 100.0 * float(_main._state.player().gdp_eur_bn), 0)]).to_upper()
+			if not _text_under(_panel._sector_box).contains(head):
+				_fail("heading: '%s' is not on the tile with the lever drafted" % head)
 			_finish()
 	return false
 

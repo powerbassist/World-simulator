@@ -23,6 +23,7 @@ extends RefCounted
 const Sectors = preload("res://src/sim/sectors.gd")
 const DK = preload("res://src/sim/domains_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const Forecast = preload("res://src/ui/budget_forecast.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -82,10 +83,12 @@ static func build(panel, parent: Control, ns, line: String, line_name: String) -
 	var tile := VBoxContainer.new()
 	tile.add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	parent.add_child(tile)
-	var pct := float(ns.spending_pct_gdp.get(line, 0.0))
-	PanelKit.heading(tile, Strings.t("%s: %s %% of GDP, %s bn") % [line_name, Num.f(pct, 1), Num.f(pct / 100.0 * float(ns.gdp_eur_bn), 0)])
-	# The rows and the verb read the draft: the live nation with the drafted moves on it.
+	# The heading, the rows and the verb read the draft: the live nation with the drafted
+	# levers and moves on it (the parent's ruling on #278: the tile says what the lever
+	# above it says).
 	var dns = drafted(panel, ns)
+	var pct := float(dns.spending_pct_gdp.get(line, 0.0))
+	PanelKit.heading(tile, Strings.t("%s: %s %% of GDP, %s bn") % [line_name, Num.f(pct, 1), Num.f(pct / 100.0 * float(dns.gdp_eur_bn), 0)])
 	var shares := Sectors.shares(dns, loader, line)
 	for sector in sectors:
 		_sector_row(tile, dns, loader, line, sector, float(shares[String(sector["id"])]))
@@ -95,12 +98,24 @@ static func build(panel, parent: Control, ns, line: String, line_name: String) -
 		PanelKit.plain_line(tile, Strings.tn("%d share move drafted: Commit books it, Revert drops it.", "%d share moves drafted: Commit books them, Revert drops them.", moves) % moves)
 
 
-## The live nation with the Budget's drafted share moves applied, on a copy.
+## The live nation with the Budget's drafted levers and share moves applied, on a copy.
 static func drafted(panel, ns):
 	var dns = ns.duplicate_state()
+	dns.spending_pct_gdp = (panel._pending["spending_pct_gdp"] as Dictionary).duplicate()
 	for m in panel._share_moves:
 		Sectors.move_share(dns, panel._loader, String(m["line"]), String(m["from"]), String(m["to"]), float(m["amount"]))
 	return dns
+
+
+## The forecast's proposed budget: the drafted levers, and the drafted share moves
+## riding with them (the parent's ruling on #278: the projection includes them, like
+## the levers); budget_forecast.gd takes them off and applies them to a copy.
+static func want_forecast(panel, pending: Dictionary, edited: bool) -> void:
+	var wanted: Dictionary = pending
+	if not (panel._share_moves as Array).is_empty():
+		wanted = pending.duplicate()
+		wanted[Forecast.MOVES_KEY] = (panel._share_moves as Array).duplicate(true)
+	panel._forecast.want(wanted, edited or not (panel._share_moves as Array).is_empty())
 
 
 ## Commit: the drafted moves booked on the live nation, in the order they were drafted.

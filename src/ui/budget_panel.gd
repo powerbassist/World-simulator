@@ -495,7 +495,7 @@ func _refresh() -> void:
 	_set_figure("gini", Ledger.gini_text(now), Ledger.gini_text(proposed))
 
 	# V5.1-0a: the forecast follows the levers rather than freezing them.
-	_forecast.want(pending, edited)
+	BudgetSectors.want_forecast(self, pending, edited)
 	var rows: Dictionary = _forecast.rows(_state.player())
 	for key in rows.keys():
 		_set_figure(key, rows[key][0], rows[key][1])

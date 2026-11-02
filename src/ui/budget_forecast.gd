@@ -27,6 +27,12 @@ const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const CycleK = preload("res://src/sim/cycle_constants.gd")
 const Num = preload("res://src/ui/num.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
+
+## The key under which the Budget's drafted share moves ride the pending it wants
+## projected (V5.3 a + b, #278): not a Budget.commit() key, so it is taken off and the
+## moves applied to a copy of the state before the projection runs.
+const MOVES_KEY := "_share_moves"
 
 ## A settled forecast's rows changed: the panel redraws them.
 signal settled
@@ -161,9 +167,23 @@ func _begin() -> bool:
 		_proposed_due = false
 		_last_now = false
 		_job_key = _want_key
-		_job = Budget.projection(_state, _want, _months, _loader)
+		_job = _proposed_job()
 		return true
 	return false
+
+
+## The proposed budget's projection: the drafted levers through Budget.projection(),
+## and the drafted share moves, if any, on a copy of the state it starts from.
+func _proposed_job():
+	var pending := _want.duplicate()
+	var moves: Array = pending.get(MOVES_KEY, [])
+	pending.erase(MOVES_KEY)
+	var base = _state
+	if not moves.is_empty():
+		base = _state.duplicate_state()
+		for m in moves:
+			Sectors.move_share(base.player(), _loader, String(m["line"]), String(m["from"]), String(m["to"]), float(m["amount"]))
+	return Budget.projection(base, pending, _months, _loader)
 
 
 ## The three forecast rows, key -> [now, proposed] text: a range from the last
