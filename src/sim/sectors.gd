@@ -276,7 +276,7 @@ static func _priority_row(state, ns, loader, line: String, sector_id: String, re
 	var gap := _shortfall(state, ns, region_id)
 	return {"region_id": region_id, "pts": DK.PRIORITY_BETA * 100.0 * money / Regions.output_eur_bn(ns, region_id),
 		"months_left": DK.PRIORITY_MONTHS, "ends": int(state.year) * 12 + int(state.month) + DK.PRIORITY_MONTHS,
-		"gap": gap, "factor": 1.0 if gap > 0.0 else 0.0}
+		"gap": gap, "factor": 1.0 if gap > DK.PRIORITY_BEHIND_EPS else 0.0}
 
 
 ## The priorities' month (the parent's TAKEs on #267): each counts its term down and
@@ -295,7 +295,7 @@ static func tick_month(state) -> void:
 		row["months_left"] = int(row["months_left"]) - 1
 		if int(row["months_left"]) <= 0:
 			ns.sector_priorities.erase(sector_id)
-		elif float(row["gap"]) > 0.0:
+		elif float(row["gap"]) > DK.PRIORITY_BEHIND_EPS:
 			row["factor"] = clampf(_shortfall(state, ns, String(row["region_id"])) / float(row["gap"]), 0.0, 1.0)
 
 

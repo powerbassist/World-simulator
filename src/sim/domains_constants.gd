@@ -65,3 +65,8 @@ const PRIORITY_BETA := 0.25
 ## renewable by setting it again, the month it ends on its row for the strip.
 const PRIORITY_MAX_PER_REGION := 2
 const PRIORITY_MONTHS := 36
+## A region is behind the nation (its term converges, sectors.gd) only when its output
+## per head is more than this share under the nation's: a smaller gap is float noise
+## (GBR's regions all read 1.0000, where a gap of 1e-16 gave the strip a term the
+## first tick then zeroed). A stand-in.
+const PRIORITY_BEHIND_EPS := 0.01

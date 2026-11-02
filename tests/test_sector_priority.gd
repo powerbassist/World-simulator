@@ -479,6 +479,15 @@ func _test_the_term_converges_and_stops_once_caught_up() -> void:
 	var caught := float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0))
 	if caught != 0.0 or absf(after - float(_without(state, list)[target])) > 1e-12:
 		_fail("a region caught up still gets its term: factor %s" % caught)
+	# A shortfall inside PRIORITY_BEHIND_EPS is float noise, not behind (GBR's
+	# regions all read 1.0000): no term at the press, so the strip shows none.
+	var level = _state()
+	var lns = level.player()
+	var near := _behind(level)
+	_set_index(level, near, 0.995)
+	Sectors.set_priority(level, lns, _loader, "health", "hospitals", near)
+	if String((lns.sector_priorities.get("hospitals", {}) as Dictionary).get("region_id", "")) == near 			and float((lns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0)) != 0.0:
+		_fail("a region half a percent behind (inside the epsilon) got a term at the press")
 	# A region not behind the nation gets no term from the press on.
 	var rich = _state()
 	var e: Dictionary = Sectors.priority_estimate(rich, rich.player(), _loader, "health", "hospitals", _ahead(rich))
