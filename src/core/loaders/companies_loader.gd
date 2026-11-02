@@ -154,37 +154,46 @@ static func validate_companies(loader) -> void:
 ## one object of thresholds that apply to every major, never per firm. A bad value is
 ## a load error: a rule that silently read 0 would close no plant, or every plant.
 static func load_closure_rule(loader, path: String) -> void:
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var errors: Array[String] = []
+	var rule := parse_closure_rule(JSON.parse_string(FileAccess.get_file_as_string(path)), path, errors)
+	loader.errors.append_array(errors)
+	if errors.is_empty():
+		loader.closure_rule = rule
+
+
+## The parse step, public so a test feeds it a dictionary (parse_fund_rule's idiom):
+## the rule, or {} with the first error appended.
+static func parse_closure_rule(parsed, path: String, errors: Array[String]) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
-		loader.errors.append("%s: missing or invalid JSON" % path)
-		return
+		errors.append("%s: missing or invalid JSON" % path)
+		return {}
 	var fname := path.get_file()
 	for key in ["window_months", "fall", "cut", "cooldown_months"]:
 		if typeof(parsed.get(key)) != TYPE_FLOAT or float(parsed[key]) <= 0.0:
-			loader.errors.append("%s: '%s' must be a number above 0" % [fname, key])
-			return
+			errors.append("%s: '%s' must be a number above 0" % [fname, key])
+			return {}
 	for key in ["window_months", "cooldown_months"]:
 		if float(parsed[key]) != floorf(float(parsed[key])):
-			loader.errors.append("%s: '%s' is a whole number of months" % [fname, key])
-			return
+			errors.append("%s: '%s' is a whole number of months" % [fname, key])
+			return {}
 	for key in ["fall", "cut"]:
 		if float(parsed[key]) >= 1.0:
-			loader.errors.append("%s: '%s' is a fraction, below 1" % [fname, key])
-			return
+			errors.append("%s: '%s' is a fraction, below 1" % [fname, key])
+			return {}
 	# The cooldown outlasts a window and the answer, so a landed closure's own cut
 	# is never measured as the next fall (closures.gd also clears the history).
 	if float(parsed["cooldown_months"]) < float(parsed["window_months"]) + float(ClosuresK.ANSWER_MONTHS):
-		loader.errors.append("%s: cooldown_months is shorter than window_months + the answer's months" % fname)
-		return
+		errors.append("%s: cooldown_months is shorter than window_months + the answer's months" % fname)
+		return {}
 	var offsets = parsed.get("bloc_offset")
 	if typeof(offsets) != TYPE_DICTIONARY:
-		loader.errors.append("%s: missing or invalid object 'bloc_offset'" % fname)
-		return
+		errors.append("%s: missing or invalid object 'bloc_offset'" % fname)
+		return {}
 	for bloc in offsets:
 		if not OpinionK.BLOC_SIZE.has(bloc) or typeof(offsets[bloc]) != TYPE_FLOAT:
-			loader.errors.append("%s: bloc_offset names an unknown bloc or a non-number: %s" % [fname, bloc])
-			return
-	loader.closure_rule = {
+			errors.append("%s: bloc_offset names an unknown bloc or a non-number: %s" % [fname, bloc])
+			return {}
+	return {
 		"window_months": int(parsed["window_months"]), "fall": float(parsed["fall"]),
 		"cut": float(parsed["cut"]), "cooldown_months": int(parsed["cooldown_months"]),
 		"bloc_offset": (offsets as Dictionary).duplicate(),
