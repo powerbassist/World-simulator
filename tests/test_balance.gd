@@ -660,7 +660,7 @@ func _subsidise_the_largest(state, ns) -> void:
 
 	var best := ""
 	var best_output := -1.0
-	for company in Companies.firms_of(_loader, ns.id):
+	for company in Companies.majors_of(_loader, ns.id):
 		var out: float = Companies.output_eur_bn(ns, company)
 		if out > best_output:
 			best_output = out
@@ -874,7 +874,7 @@ func _nationalise_the_largest(state, ns) -> void:
 
 	var best := ""
 	var best_output := -1.0
-	for company in Companies.firms_of(_loader, ns.id):
+	for company in Companies.majors_of(_loader, ns.id):
 		var out: float = Companies.output_eur_bn(ns, company)
 		if out > best_output:
 			best_output = out
