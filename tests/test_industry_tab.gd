@@ -34,6 +34,8 @@ var _frame := 0
 var _acted := 0
 var _major
 var _sector := ""
+## The counter picked and made at frame 16 (a #280 answer id, negotiate_N).
+var _counter_made := ""
 
 
 func _init() -> void:
@@ -82,6 +84,15 @@ func _process(_delta: float) -> bool:
 			_press(_button_with_meta("process_id", _live_pid()))
 		20:
 			_check_stopped()
+			# A second stake for the counter's leg: an answered counter cannot be stopped
+			# (#280), so it runs after the Stop's.
+			_start_process()
+		22:
+			_post_ask()
+		24:
+			_make_a_counter()
+		26:
+			_check_countered()
 			_finish()
 	return false
 
@@ -321,6 +332,18 @@ func _check_counter(option: Dictionary) -> void:
 		_fail("counter: no button makes the picked counter")
 
 
+## QA's TAKE 1 (a) on #281: the counter the strip priced is the one booked. A chip
+## other than the first is picked, then "Make the counter" pressed.
+func _make_a_counter() -> void:
+	var chips := _visible_with_meta("counter_id")
+	if chips.size() < 2:
+		_fail("premise: %d counter chips, a non-first pick needs two" % chips.size())
+		return
+	_counter_made = String(chips[-1].get_meta("counter_id"))
+	_press(chips[-1])
+	_press(_button_with_meta("answer_id", "counter"))
+
+
 func _check_answered() -> void:
 	var ns = _main._state.player()
 	if not Processes.asks(ns).is_empty():
@@ -329,17 +352,37 @@ func _check_answered() -> void:
 		_fail("answered: the row does not say what was answered")
 	if _acted < 1:
 		_fail("answered: the panel emitted no acted")
-	# #280: a refused counter says so on its row (staged as the draw writes it).
+
+
+## The counter's leg (QA's TAKE 1 on #281): the counter the strip priced is the one
+## booked and said; each drawn outcome is said on the row (staged as the draw writes
+## it: "back", and "accepted", which a nationalisation's transition keeps open).
+func _check_countered() -> void:
+	var ns = _main._state.player()
+	if not Processes.asks(ns).is_empty():
+		_fail("counter: the ask still waits after 'Make the counter'")
+	var booked := ""
 	for row in ns.processes:
 		if String(row["status"]) == Processes.OPEN:
-			row["negotiation"] = {"answer": "negotiate_10", "outcome": "back", "month": 0}
-	_panel._refresh()
-	var found := false
-	for node in _panel._progress.find_children("*", "Label", true, false):
-		if String(node.get_meta("negotiation", "")) == "back" and node.text == _panel.tr("Your counter was refused: the old price is asked again."):
-			found = true
-	if not found:
-		_fail("negotiation: a refused counter is not said on its row")
+			booked = String(row.get("answer", ""))
+	if booked != _counter_made:
+		_fail("counter: '%s' was picked and made, the row booked '%s'" % [_counter_made, booked])
+	var said: String = _panel.tr("Answered: %s.") % (_panel.tr("Counter %d %%") % int(_counter_made.trim_prefix("negotiate_")))
+	if not _text_under(_panel._progress).contains(said):
+		_fail("counter: the row does not say '%s'" % said)
+	var lines := {"back": _panel.tr("Your counter was refused: the old price is asked again."),
+		"accepted": _panel.tr("Your counter was accepted.")}
+	for outcome in lines:
+		for row in ns.processes:
+			if String(row["status"]) == Processes.OPEN:
+				row["negotiation"] = {"answer": _counter_made, "outcome": outcome, "month": 0}
+		_panel._refresh()
+		var found := false
+		for node in _panel._progress.find_children("*", "Label", true, false):
+			if String(node.get_meta("negotiation", "")) == outcome and node.text == lines[outcome]:
+				found = true
+		if not found:
+			_fail("negotiation: a counter's '%s' outcome is not said on its row" % outcome)
 	for row in ns.processes:
 		row.erase("negotiation")
 

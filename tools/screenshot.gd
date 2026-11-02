@@ -44,6 +44,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region

@@ -163,10 +163,18 @@ static func _counters(box: Control, process_id: String, counters: Array, what: S
 	var row := PanelKit.buttons(box)
 	PanelKit.plain_line(row, Strings.t("Counter"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var group := ButtonGroup.new()
+	# No fixed width (the parent's ruling on #281): the strip takes half the row, a
+	# spacer the other half, so it shrinks with a narrow workspace and wraps at a larger
+	# text size, while its money stays near its caption rather than at the far edge.
 	var strip := EffectsStrip.new()
-	strip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	strip.custom_minimum_size.x = 520
+	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	strip.set_meta("counter_strip", true)
+	var half := HBoxContainer.new()
+	half.add_child(strip)
+	var rest := Control.new()
+	rest.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rest.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	half.add_child(rest)
 	var go := PanelKit.sized(Button.new())
 	go.text = Strings.t("Make the counter")
 	go.set_meta("answer_id", "counter")
@@ -186,7 +194,7 @@ static func _counters(box: Control, process_id: String, counters: Array, what: S
 		chip.set_meta("counter_id", String(option["id"]))
 		chip.pressed.connect(func() -> void: show.call(option))
 		row.add_child(chip)
-	box.add_child(strip)
+	box.add_child(half)
 	box.add_child(go)
 	go.pressed.connect(func() -> void: answer.call(process_id, String(picked[0]), what))
 	show.call(counters[0])
