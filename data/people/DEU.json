@@ -1250,6 +1250,7 @@
       "id": "DEU_chief_zuckerland_sudmark",
       "name": "Heide Drolshagen",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "loyal",
@@ -1260,7 +1261,7 @@
     },
     {
       "id": "DEU_chief_fleischkontor_westmark",
-      "name": "Heide Vollbrecht",
+      "name": "Heiner Vollbrecht",
       "kind": "executive",
       "traits": [
         "networked",
@@ -1283,8 +1284,9 @@
     },
     {
       "id": "DEU_chief_alpenmobil_ag",
-      "name": "Hauke Osterkamp",
+      "name": "Hanne Eickhoff",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "loyal",
         "pragmatic",
@@ -1295,8 +1297,9 @@
     },
     {
       "id": "DEU_chief_eisenstrang_verkehr",
-      "name": "Cornelius Frevert",
+      "name": "Cornelia Frevert",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "networked",
         "stubborn"

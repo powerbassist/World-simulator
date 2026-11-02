@@ -1256,7 +1256,7 @@
     },
     {
       "id": "POL_chief_pasze_warmia",
-      "name": "Agnieszka Cybulski",
+      "name": "Andrzej Cybulski",
       "kind": "executive",
       "traits": [
         "ambitious",
@@ -1268,7 +1268,7 @@
     },
     {
       "id": "POL_chief_przetwory_podlaskie",
-      "name": "Barbara Lewandowicz",
+      "name": "Bartosz Lewandowicz",
       "kind": "executive",
       "traits": [
         "loyal",
@@ -1291,8 +1291,9 @@
     },
     {
       "id": "POL_chief_sklepy_zachodnie",
-      "name": "Zbigniew Dmochowski",
+      "name": "Zofia Dmochowska",
       "kind": "executive",
+      "voice": "executive_f_50",
       "traits": [
         "ambitious",
         "pragmatic",

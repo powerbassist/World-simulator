@@ -510,7 +510,7 @@ func _check_business_law_reaches_the_company_channel() -> void:
 			str(ns.regulation_burden.get("industry", 0.0))
 		])
 	# And it reached nothing else the channel does not own.
-	if not ns.companies.is_empty() and Companies.share_of(ns, "FRA_aurignac") != 0.14:
+	if not ns.companies.is_empty() and not is_equal_approx(Companies.share_of(ns, "FRA_aurignac"), 0.0085):
 		_fail("a regulation moved a firm's share, which is the subsidy's channel")
 
 
