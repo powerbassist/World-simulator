@@ -164,6 +164,12 @@ func _check_rescue() -> void:
 	var left := int(rescues[0]["months_left"])
 	if line == null or not (line as Label).text.contains(Strings.tn("%d month left", "%d months left", left) % left):
 		_fail("rescue: no In progress line with its %d months left (%s)" % [left, line.text if line != null else "<none>"])
+		return
+	# Its money a year and its place (pass 1): the sim's figures, not the firm's name twice.
+	var money := EffectsStrip.sum_text(-float(rescues[0]["rescue_eur_bn_per_year"]))
+	var city = Region.find_city(_main._loader.regions.get(ns.id, []), String(rescues[0]["city_id"]))
+	if not (line as Label).text.contains(money + " a year") or (city != null and not (line as Label).text.contains(String(city.city_name))):
+		_fail("rescue: '%s' does not carry %s a year in %s" % [line.text, money, city.city_name if city != null else "?"])
 	Closures.tick_month(state, _main._loader)
 	var budget = _main._budget_panel
 	budget.mark_dirty()
