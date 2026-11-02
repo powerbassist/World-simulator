@@ -87,7 +87,9 @@ extends SceneTree
 ##   closure    a plant closure announced (src/sim/closures.gd; the month it is
 ##              announced, and its deadline month); answers = Closures.answers():
 ##              let it close (the rule's bloc offsets), seek a buyer (none), and
-##              rescue the plant for its term (none) (V5.3 a);
+##              rescue the plant for its term (none) (V5.3 a); the active regime
+##              answers by _closure_pick (the cheapest cost per job kept under a
+##              ceiling, else close);
 ##   process    a process's ask (src/sim/process_asks.gd), the month it is posted;
 ##              answers = each answer's debt booked once and bloc offsets (V5.3 a);
 ##   programme  the term-start offer (Programme.available non-empty after a month
@@ -155,9 +157,15 @@ const RF4_MAX_DISMISSALS := 2
 const RF4_SHARE := 0.90
 const BUDGET_MODAL_A_YEAR := 4.0
 const BUDGET_CARDS_A_YEAR := 6.0
+## The active player's ceiling on a closure answer's expected cost per job kept, in
+## EUR (_closure_pick). A probe policy, not a sim number: above the rescue's EUR
+## 180,000 a job, so a plant no buyer keeps cheaper is rescued.
+const CLOSURE_MAX_EUR_PER_JOB := 250000.0
 
 var _loader
 var _priorities = null
+## The active regime's closure answers in the current run, by answer id (_act).
+var _closure_picks := {}
 var _music_band = null
 
 
@@ -277,17 +285,41 @@ func _act(state, ns) -> void:
 				break
 	for request in Audiences.pending(ns):
 		Audiences.delegate(state, ns, _loader, String(request["id"]))
-	# V5.3 a: an announced closure is rescued (the plant rescue is always on offer since
-	# QA's call on #270; before, only when the firm had a subsidy verb, else a buyer).
+	# V5.3 a: an announced closure is answered by _closure_pick (the parent's call 5 on
+	# #277: a mixed policy, not always the rescue).
 	for row in Closures.open(ns):
 		if String(row["status"]) != Closures.ANNOUNCED:
 			continue
-		var pick := "buyer"
-		for a in Closures.answers(state, ns, _loader, String(row["id"])):
-			if String(a["kind"]) == "rescue":
-				pick = String(a["id"])
-				break
+		var pick := _closure_pick(Closures.answers(state, ns, _loader, String(row["id"])), float(row["jobs"]))
+		_closure_picks[pick] = int(_closure_picks.get(pick, 0)) + 1
 		Closures.answer(state, ns, _loader, String(row["id"]), pick)
+
+
+## The active player's answer to a closure (the parent's call 5 on #277): the answer
+## that keeps a job for the least expected money, if that is at most
+## CLOSURE_MAX_EUR_PER_JOB, else let it close. A rescue's cost per job is its money
+## over the term per job; a buyer's is its search plus the sweetener a sale would pay,
+## weighted by the sale's chance, per job a sale would keep (chance x jobs). The
+## rescue is priced per job (RESCUE_EUR_PER_JOB_YEAR x its term, EUR 180,000 at the
+## stand-ins) and always on offer, so a threshold on its cost alone would be a switch
+## (always or never): the plant-to-plant difference is the buyer's, and the policy
+## takes the buyer where a sale keeps a job for less than a rescue does.
+func _closure_pick(answers: Array, jobs: float) -> String:
+	var best := "close"
+	var best_cost := CLOSURE_MAX_EUR_PER_JOB
+	for a in answers:
+		var cost := INF
+		match String(a["kind"]):
+			"rescue":
+				cost = 1e9 * float(a["total_eur_bn"]) / maxf(jobs, 1.0)
+			"buyer":
+				var chance := float(a["chance"])
+				if chance > 0.0:
+					cost = 1e9 * (float(a["debt_eur_bn"]) + chance * float(a["sweetener_eur_bn"])) / maxf(chance * jobs, 1.0)
+		if cost <= best_cost:
+			best = String(a["id"])
+			best_cost = cost
+	return best
 
 
 func _desk_ids(ns) -> Dictionary:
@@ -686,6 +718,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 	# The new game's programme offer is open before the first tick (months_in_term
 	# is 0 only then), so it is counted in the first month's row.
 	var opening: Array = Programme.available(state, ns, _loader)
+	_closure_picks = {}
 	for i in range(months):
 		month += 1
 		if month > 12:
@@ -765,7 +798,8 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 	var world_rows: Array = rows.map(func(r) -> Dictionary:
 		return {"now": r["now"], "count": r["world"], "domains": r["domains_world"]})
 	return {"nation": nation_id, "regime": regime, "band": DensityCount.summary(rows),
-		"band_world": DensityCount.summary(world_rows), "tally": tally, "rows": rows}
+		"band_world": DensityCount.summary(world_rows), "tally": tally, "rows": rows,
+		"closure_picks": _closure_picks.duplicate()}
 
 
 ## The active player's modelled habit (header): at most one process a year, only
@@ -992,6 +1026,8 @@ func _print_density(run: Dictionary) -> void:
 	var w: Dictionary = run["band_world"]
 	print("    world only (no own-process asks): B7 %s, >= 1 in %.0f %% of months, mean %.2f, longest none %d" % [
 		"PASS" if bool(w["pass"]) else "FAIL", 100.0 * float(w["share"]), float(w["mean"]), int(w["longest_none"])])
+	if not (run.get("closure_picks", {}) as Dictionary).is_empty():
+		print("    closure answers %s" % JSON.stringify(run["closure_picks"]))
 	print("    counted %s; dull %s (saved by %s); repeats %s" % [
 		JSON.stringify(t["counted"]), JSON.stringify(t["dull"]), JSON.stringify(t["saved_by"]), JSON.stringify(t["repeat"])])
 	var empty := {}
