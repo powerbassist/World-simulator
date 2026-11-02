@@ -53,7 +53,8 @@ const PRIORITY_UPLIFT := 0.20
 ## fund's, of PRIORITY_BETA x the money as points of the region's output, fixed when
 ## the priority is set (src/sim/sectors.gd; src/sim/regions.gd reads the register).
 ## LINEAR AND SMALL, not the fund's FUND_BETA x sqrt(): a priority costs the Budget
-## nothing and has no end date, and the fund's response on its money would make it
+## nothing (only its PRIORITY_MONTHS term and its cap at the nation's unemployment
+## rate bound it), and the fund's response on its money would make it
 ## the stronger verb (2.5 points in France's worst region for basic pensions, the
 ## largest sector, against 0.93 for a 1 bn fund there). At 0.25 that largest case
 ## equals a 1 bn fund and hospitals give a third of it. A stand-in, the author's call.

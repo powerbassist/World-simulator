@@ -174,12 +174,14 @@ static func _same_ids(a: Dictionary, b: Dictionary) -> bool:
 # It reads the live population shares, so the same money holds as people move.
 #
 # THE MONEY MOVES THE REGION (#267, the parent's ruling: a priority must move a real
-# outcome). The register row is {region_id, pts}: pts = PRIORITY_BETA x the money
-# moved as points of the region's output, fixed when the priority is set (the fund
-# row's rule: regions.gd takes no loader, and the strip's figure is the booked one).
-# src/sim/regions.gd adds it to the region's growth deviation, zero-mean over the
-# nation's output as a fund's term is, so the region's unemployment falls (Okun),
-# every other region's rises a little, and the national figures do not move.
+# outcome). The register row is {region_id, pts, months_left, ends, factor}: pts =
+# PRIORITY_BETA x the money moved as points of the region's output, fixed when the
+# priority is set (the fund row's rule: regions.gd takes no loader, and the strip's
+# figure is the booked one), for PRIORITY_MONTHS. src/sim/regions.gd adds pts x factor
+# to the region's growth deviation, zero-mean over the nation's output as a fund's
+# term is, so the region's unemployment falls (Okun), every other region's rises a
+# little, and the national figures do not move; `factor` is _cap()'s, which stops the
+# fall at the nation's rate.
 
 ## The region put first for this sector, "" for none.
 static func priority_of(ns, sector_id: String) -> String:

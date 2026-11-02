@@ -21,7 +21,9 @@ extends SceneTree
 ## (weighted by their people), the strip's estimate, and the national unemployment
 ## and GDP moves (a priority moves money between regions, so they stay near 0). No
 ## band is declared for it; it exits 1 only if the region does not fall or the
-## others do not rise.
+## others do not rise. A region at or under the nation's rate at the start reads
+## "n/a": its term is capped to nothing by design (#267 call B), and Britain's regions
+## all sit at the rate in the data, so FAIL there would report the data, not a defect.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -98,6 +100,7 @@ static func _priorities(loader) -> int:
 			var still = GameState.new_game(loader, nation)
 			var first = GameState.new_game(loader, nation)
 			var region := _worst(still)
+			var at_rate := _u(still, region) <= float(still.player().unemployment_pct) + 1e-9
 			var est: Dictionary = Sectors.priority_estimate(first, first.player(), loader, pick[0], pick[1], region)
 			var applied: Dictionary = Sectors.set_priority(first, first.player(), loader, pick[0], pick[1], region)
 			var at_12 := 0.0
@@ -110,14 +113,14 @@ static func _priorities(loader) -> int:
 			var rise := _others(first, region) - _others(still, region)
 			var nat_u: float = float(first.player().unemployment_pct) - float(still.player().unemployment_pct)
 			var nat_gdp: float = 100.0 * (float(first.player().gdp_eur_bn) / float(still.player().gdp_eur_bn) - 1.0)
-			var ok := bool(applied.get("ok", false)) and drop > 0.0 and rise > 0.0
+			var ok := bool(applied.get("ok", false)) and (at_rate or (drop > 0.0 and rise > 0.0))
 			if not ok:
 				bad += 1
 			print("%s %-6s %-14s term %.3f pts  estimate %.3f / others +%.4f  month 12 %.3f  month 24 %.3f  others +%.4f  nation u %+.5f gdp %+.5f %%  %s" % [
 				nation, region, pick[1], float(est.get("pts", 0.0)),
 				float(est.get("unemployment_now", 0.0)) - float(est.get("unemployment_after", 0.0)),
 				float(est.get("others_unemployment_after", 0.0)) - float(est.get("others_unemployment_now", 0.0)),
-				at_12, drop, rise, nat_u, nat_gdp, "ok" if ok else "FAIL"])
+				at_12, drop, rise, nat_u, nat_gdp, ("n/a (at the rate)" if at_rate else "ok") if ok else "FAIL"])
 	print("region_fund_probe --priority: %s" % ("PASS" if bad == 0 else "FAIL"))
 	return 0 if bad == 0 else 1
 
