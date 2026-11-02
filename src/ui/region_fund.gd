@@ -93,9 +93,12 @@ static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
 		panel._fund_eur = lo_eur
 	if int(panel._fund_years) <= 0:
 		panel._fund_years = lo_years
-	var sums := PanelKit.buttons(box)
-	var eur := _slider(sums, Strings.t("bn a year"), lo_eur, float(rule["eur_bn"][1]), 0.5, float(panel._fund_eur), "fund_eur")
-	var years := _slider(sums, Strings.t("years"), float(lo_years), float(rule["years"][1]), 1.0, float(panel._fund_years), "fund_years")
+	# One sum a line, each value with its unit beside its own control (QA's TAKE 1 on
+	# #269: in one flow, "0.5" ran into the next caption and read "0.5 years").
+	var eur := _slider(PanelKit.buttons(box), lo_eur, float(rule["eur_bn"][1]), 0.5, float(panel._fund_eur), "fund_eur",
+		func(v: float) -> String: return Strings.t("%s bn a year") % Num.f(v, 1))
+	var years := _slider(PanelKit.buttons(box), float(lo_years), float(rule["years"][1]), 1.0, float(panel._fund_years), "fund_years",
+		func(v: float) -> String: return Strings.tn("%d year", "%d years", int(v)) % int(v))
 	var strip := EffectsStrip.new()
 	# The Industry strip's reading measure: the money beside its caption, not at the
 	# window's far edge (the first frame).
@@ -143,8 +146,8 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void
 			Num.f(float(est["unemployment_now"]), 1), Num.f(float(est["unemployment_after"]), 1)])
 
 
-static func _slider(parent: Control, caption: String, lo: float, hi: float, step: float, value: float, meta: String) -> HSlider:
-	PanelKit.plain_line(parent, caption, PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
+## A sum's control: the slider, then its value printed with its unit by `text`.
+static func _slider(parent: Control, lo: float, hi: float, step: float, value: float, meta: String, text: Callable) -> HSlider:
 	var slider := HSlider.new()
 	slider.min_value = lo
 	slider.max_value = hi
@@ -154,7 +157,8 @@ static func _slider(parent: Control, caption: String, lo: float, hi: float, step
 	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	slider.set_meta(meta, true)
 	parent.add_child(slider)
-	var shown := PanelKit.plain_line(parent, Num.f(value, 1 if step < 1.0 else 0), PanelKit.Tone.PLAIN)
+	var shown := PanelKit.plain_line(parent, String(text.call(value)), PanelKit.Tone.PLAIN)
 	shown.autowrap_mode = TextServer.AUTOWRAP_OFF
-	slider.value_changed.connect(func(v: float) -> void: shown.text = Num.f(v, 1 if step < 1.0 else 0))
+	slider.set_meta("value_label", shown)
+	slider.value_changed.connect(func(v: float) -> void: shown.text = String(text.call(v)))
 	return slider

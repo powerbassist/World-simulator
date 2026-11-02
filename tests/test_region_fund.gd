@@ -21,6 +21,7 @@ const Migration = preload("res://src/sim/migration.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const Labels = preload("res://src/ui/labels.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -114,6 +115,18 @@ func _check_strip(region) -> void:
 	var text := _text_under(strip)
 	if not text.contains(Num.f(float(est["unemployment_after"]), 1)):
 		_fail("fund strip: '%s' does not carry the unemployment with the fund (%s)" % [text, Num.f(float(est["unemployment_after"]), 1)])
+	# Each sum on its own line, its value with its unit (QA's TAKE 1).
+	var eur_slider = _with_meta("fund_eur")
+	var years_slider = _with_meta("fund_years")
+	if eur_slider == null or years_slider == null or eur_slider.get_parent() == years_slider.get_parent():
+		_fail("fund: the two sums share one line (or one is missing)")
+	else:
+		var eur_text: String = (eur_slider.get_meta("value_label") as Label).text
+		var years_text: String = (years_slider.get_meta("value_label") as Label).text
+		if eur_text != Strings.t("%s bn a year") % Num.f(eur, 1):
+			_fail("fund: the yearly sum reads '%s'" % eur_text)
+		if years_text != Strings.tn("%d year", "%d years", years) % years:
+			_fail("fund: the years read '%s'" % years_text)
 	var go = _with_meta("go")
 	if go == null or go.disabled:
 		_fail("fund: no live Go for a region with no fund under the cap")
@@ -124,8 +137,16 @@ func _check_started(region) -> void:
 	if funds.size() != 1 or String(funds[0]["region_id"]) != String(region.id):
 		_fail("Go pressed: %d funds open, expected one on %s" % [funds.size(), region.id])
 		return
-	if _with_meta("fund_id") == null:
+	var stop = _with_meta("fund_id")
+	if stop == null:
 		_fail("Go pressed: the running fund shows no Stop on its region")
+		return
+	# What Stop costs, beside it: every bloc the fund pleased is named (QA's TAKE 2).
+	var who: Label = stop.get_meta("who_label") if stop.has_meta("who_label") else null
+	for bloc in funds[0]["bloc_offset"]:
+		if float(funds[0]["bloc_offset"][bloc]) > 0.0:
+			if who == null or not who.is_visible_in_tree() or not who.text.contains(Labels.bloc(String(bloc))):
+				_fail("Stop: the line beside it does not name %s, a bloc stopping angers (%s)" % [bloc, who.text if who != null else "<none>"])
 
 
 ## The Budget's table: the fund's bill on its own line once the month has booked it.
