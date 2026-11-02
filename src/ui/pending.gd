@@ -33,6 +33,7 @@ const CouncilK = preload("res://src/sim/council_constants.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Processes = preload("res://src/sim/processes.gd")
+const Closures = preload("res://src/sim/closures.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 
@@ -105,7 +106,7 @@ static func window_ids(state, loader, messages := {}) -> Array:
 	# ignored, and the verbs that answer live on the companies window.
 	# V5.3 a + b (#248): a process stage's ask lapses to its default the same way.
 	if not Industry.pending_bid(state, ns, loader).is_empty() or not Industry.failing(state, ns, loader).is_empty() \
-			or not Processes.asks(ns).is_empty():
+			or not Processes.asks(ns).is_empty() or _closure_announced(ns):
 		out.append("companies")
 
 	return out
@@ -117,5 +118,14 @@ static func _events_waiting(ns, messages: Dictionary) -> bool:
 			return true
 		if MessageSettings.allows(messages, String(entry.get("category", "")),
 				int(entry.get("severity", 1)), "notify"):
+			return true
+	return false
+
+
+## A plant closure waiting on its answer (#251): it lapses to the plant closing,
+## the same "awaits the player" test as a bid or a failing major.
+static func _closure_announced(ns) -> bool:
+	for row in Closures.open(ns):
+		if String(row["status"]) == Closures.ANNOUNCED:
 			return true
 	return false

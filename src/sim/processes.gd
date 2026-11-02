@@ -117,10 +117,11 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 			var base := (stake - held) * value
 			var months := K.PROCESS_OFFER_MONTHS + K.PROCESS_TRANSITION_MONTHS
 			# The transition's cost in output (process_drag.gd), shown before the press: the
-			# share of a year of the firm's output its management turnover loses.
+			# share of a year of the firm's output its management turnover loses. A part-held
+			# firm is bought outright, the state paying for the rest (`share_bought`).
 			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.x),
 				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months,
-				"output_loss_eur_bn": Drag.loss_eur_bn(ns, loader, company, held)}
+				"output_loss_eur_bn": Drag.loss_eur_bn(ns, loader, company, held), "share_bought": stake - held}
 		"privatisation":
 			var base := held * value
 			# A sale may be held once for a new bid (process_asks.gd), so it can run
@@ -193,7 +194,7 @@ static func start(state, ns, loader, action, company_id: String, by_law := false
 	# Half the bloc move lands at the public start (the offer, the bill); a
 	# break-up's lands whole at a ruling for it.
 	if stage != "investigation":
-		_blocs(ns, action.effects.get("bloc_offset", {}), K.PROCESS_BLOC_AT_START)
+		_blocs(ns, Asks.moved(action, row), K.PROCESS_BLOC_AT_START)
 	ns.processes.append(row)
 	return {"action_id": String(action.id), "company_id": company_id, "applied": true, "refused": false,
 		"process_id": String(row["id"])}
@@ -243,10 +244,10 @@ static func stop_price(state, ns, loader, process_id: String) -> Dictionary:
 	var action = _action(loader, String(row["action_id"]))
 	match String(row["stage"]):
 		"negotiation", "sale":
-			return {"ok": true, "debt_eur_bn": 0.0, "bloc_offset": Asks.uturn(action)}
+			return {"ok": true, "debt_eur_bn": 0.0, "bloc_offset": Asks.uturn(action, row)}
 		"offer":
 			var premium := float(row["base_eur_bn"]) * float(row["rate"])
-			return {"ok": true, "debt_eur_bn": K.PROCESS_BREAK_FEE * premium, "bloc_offset": Asks.uturn(action)}
+			return {"ok": true, "debt_eur_bn": K.PROCESS_BREAK_FEE * premium, "bloc_offset": Asks.uturn(action, row)}
 		"investigation":
 			# The ruling is drawn with its ask, a month before the stage ends
 			# (process_asks.gd); once it is drawn the process is past stopping, as
@@ -308,11 +309,11 @@ static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 		"negotiation":
 			if _land(state, ns, loader, action, row):
 				_pay(ns, row, float(row["base_eur_bn"]) * (1.0 + float(row["rate"])))
-				_blocs(ns, action.effects.get("bloc_offset", {}), half)
+				_blocs(ns, Asks.moved(action, row), half)
 				_close(state, row, "done")
 		"offer":
 			_pay(ns, row, float(row["base_eur_bn"]) * (1.0 + float(row["rate"])))
-			_blocs(ns, action.effects.get("bloc_offset", {}), half)
+			_blocs(ns, Asks.moved(action, row), half)
 			_stage(row, "transition", K.PROCESS_TRANSITION_MONTHS)
 		"transition":
 			if _land(state, ns, loader, action, row):

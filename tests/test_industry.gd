@@ -510,7 +510,7 @@ func _test_refusal_named_before_the_click() -> void:
 		if String(person.kind) == "executive" and i < seats.size():
 			ns.companies[seats[i].id]["board_chair"] = String(person.id)
 			i += 1
-	# A state holding is the appointment's door (state_owned == 1).
+	# A state holding is the appointment's door (state_share > 0).
 	ns.companies[target.id]["state_share"] = 0.51
 	if not Companies.available(state, ns, _loader.company_actions, target.id, _loader).has(board):
 		_fail("the staged state holding does not open the appointment -- the case tests nothing")

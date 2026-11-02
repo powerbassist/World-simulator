@@ -84,7 +84,7 @@ const REGULATION_BURDEN_MAX := 1.00
 ## list gets its entries the same way, when V1.4b and V1.4c have something to ask.
 const PRECONDITION_FIELDS := [
 	"subsidy_active", "subsidy_count",
-	"state_owned", "state_owned_count",
+	"state_share", "state_owned_count",
 	"deficit_pct_gdp", "debt_to_gdp_pct", "unemployment_pct", "overall_approval_pct",
 	# V4.7b: the autonomy machine's state, read from the same register every
 	# other precondition reads -- a takeover verb is answerable only while a

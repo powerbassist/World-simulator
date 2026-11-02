@@ -45,8 +45,8 @@ static func drag(ns, loader) -> float:
 			continue
 		for company in Companies.firms_of(loader, ns.id):
 			if String(company.id) == String(row["company_id"]):
-				# The share held AT THE PRESS: the transfer of control has already set the
-				# live one to the stake, which would zero the transition's own drag.
+				# The share held AT THE PRESS, from the row: the strip's figure. The live
+				# share stays at it until the transition lands and control passes.
 				loss += 100.0 * loss_eur_bn(ns, loader, company, float(row.get("state_share_at_start", 0.0))) / ns.gdp_eur_bn
 	if loss == 0.0:
 		return 0.0
