@@ -110,6 +110,17 @@ func _process(_delta: float) -> bool:
 			var text := _text_under(_strip())
 			if not text.contains(String(_regions[0].region_name)):
 				_fail("replace: the strip for a sector %s holds does not name it ('%s')" % [_regions[0].region_name, text])
+			# The world moves under a drawn verb (a month ends, the panel not yet rebuilt):
+			# the region reaches its cap through the sim, then the press. It must say why
+			# rather than do nothing.
+			var ns = _main._state.player()
+			for p in [_picks[0], _picks[2]]:
+				Sectors.set_priority(_main._state, ns, _main._loader, p[0], p[1], _regions[1].id)
+			_press(_with_meta("priority_go"))
+			# Read in the same frame: a rebuild would grey it anyway, later.
+			if Sectors.priority_of(_main._state.player(), _picks[1][1]) != String(_regions[0].id):
+				_fail("stale press: %s moved off %s although the region was at its cap" % [_picks[1][1], _regions[0].id])
+			_check_refused(Strings.t("This region already holds as many priorities as it can."), false)
 			_finish()
 	return false
 
@@ -174,6 +185,12 @@ func _check_held(region, pick: Array, months: int) -> void:
 	var line: Label = end.get_meta("held_label")
 	if line == null or not line.is_visible_in_tree() or not line.text.contains(str(months)):
 		_fail("held: the line beside End does not say %d months left (%s)" % [months, line.text if line != null else "<none>"])
+		return
+	# What End costs, read before the press: the sector's rest in this region.
+	var rest := Strings.tn("Ending it rests the sector here %d month.", "Ending it rests the sector here %d months.",
+		DK.PRIORITY_REST_MONTHS) % DK.PRIORITY_REST_MONTHS
+	if not line.text.contains(rest):
+		_fail("held: the line beside End does not say what End costs ('%s' not in '%s')" % [rest, line.text])
 
 
 # -- helpers --

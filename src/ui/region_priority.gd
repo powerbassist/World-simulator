@@ -74,6 +74,9 @@ static func _held(panel, box: Control, ns, line: String, sector_id: String) -> v
 	var text := Strings.tn("%s first here, %d month left, renewable once.", "%s first here, %d months left, renewable once.", months) % [name, months]
 	if int(row.get("renewals", 0)) >= DK.PRIORITY_MAX_RENEWALS:
 		text = Strings.tn("%s first here, %d month left, not renewable.", "%s first here, %d months left, not renewable.", months) % [name, months]
+	# What End costs, read before the press (the fund's Stop names the blocs it angers).
+	text += " " + Strings.tn("Ending it rests the sector here %d month.", "Ending it rests the sector here %d months.",
+		DK.PRIORITY_REST_MONTHS) % DK.PRIORITY_REST_MONTHS
 	var held := PanelKit.plain_line(flow, text, PanelKit.Tone.PLAIN)
 	held.autowrap_mode = TextServer.AUTOWRAP_OFF
 	end.set_meta("held_label", held)
@@ -110,8 +113,12 @@ static func _verb(panel, box: Control, ns, region, picks: Array) -> void:
 		redraw.call())
 	go.pressed.connect(func() -> void:
 		var parts := String(panel._priority_pick).split("|")
-		Sectors.set_priority(panel._state, ns, panel._loader, parts[0], parts[1], String(region.id))
-		panel.mark_dirty())
+		# The world may have moved since the strip was drawn (a month ended under it): a
+		# refused press redraws at once, greyed with the sim's line, never a silent no-op.
+		if bool(Sectors.set_priority(panel._state, ns, panel._loader, parts[0], parts[1], String(region.id)).get("ok", false)):
+			panel.mark_dirty()
+		else:
+			redraw.call())
 	redraw.call()
 
 
@@ -131,7 +138,7 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label, free: L
 	# A resting sector: the month it is free again, from the sim's own register.
 	var until := int((ns.sector_priority_rest.get(sector_id, {}) as Dictionary).get(String(region.id), 0))
 	var resting := not ok and int(panel._state.year) * 12 + int(panel._state.month) < until
-	free.text = Strings.t("Free again from %s.") % DateText.month_year((until - 1) % 12 + 1, (until - 1) / 12) if resting else ""
+	free.text = Strings.t("Free again from %s.") % DateText.month_year((until - 1) % 12 + 1, floori((until - 1) / 12.0)) if resting else ""
 	free.visible = resting
 	if not ok:
 		return
@@ -139,11 +146,14 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label, free: L
 	var quantity := Strings.t("%s, here %s -> %s %s; other regions %s.") % [_name(panel._loader, line, sector_id),
 		BudgetSectors.quantity_text(float(est["region_before"])), BudgetSectors.quantity_text(float(est["region_after"])), unit,
 		BudgetSectors.quantity_text(float(est["others_after"]))]
+	var rest := int(est["rest_months"])
 	if first != "" and first != String(region.id):
-		quantity = Strings.t("Takes it from %s, which then waits %d months.") % [_region_name(panel, ns, first), DK.PRIORITY_REST_MONTHS] + " " + quantity
-	var term := Strings.t("For %d months, renewable once; then %d months' rest.") % [DK.PRIORITY_MONTHS, int(est["rest_months"])]
+		quantity = Strings.tn("Takes it from %s, which then waits %d month.", "Takes it from %s, which then waits %d months.", rest) % [
+			_region_name(panel, ns, first), rest] + " " + quantity
+	var term := Strings.tn("For %d month, renewable once.", "For %d months, renewable once.", DK.PRIORITY_MONTHS) % DK.PRIORITY_MONTHS
 	if int(est["renewals_left"]) <= 0:
-		term = Strings.t("For %d months, not renewable; then %d months' rest.") % [DK.PRIORITY_MONTHS, int(est["rest_months"])]
+		term = Strings.tn("For %d month, not renewable.", "For %d months, not renewable.", DK.PRIORITY_MONTHS) % DK.PRIORITY_MONTHS
+	term += " " + Strings.tn("Then %d month of rest.", "Then %d months of rest.", rest) % rest
 	strip.show_lines(Strings.t("Treasury"), EffectsStrip.cost_text(0.0), 0.0, quantity,
 		Strings.t("Unemployment here: %s %% now, %s %% with the priority; other regions %s %% -> %s %%.") % [
 			Num.f(float(est["unemployment_now"]), 1), Num.f(float(est["unemployment_after"]), 1),
