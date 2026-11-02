@@ -152,8 +152,8 @@ func _check_right_edge(windows, frame, id: String, language: String) -> void:
 
 ## A pending bid on the player's largest major, in the three scalars industry.gd
 ## writes (tools/screenshot.gd's --bid): the bidder is another nation's first major.
-## The largest, because a share of 10 % or more adds "break up" -- the seven-button
-## row QA measured.
+## The largest, because a firm with 30 % or more of its sector's majors' share adds
+## "break up" -- the seven-button row QA measured.
 func _stage_a_bid(state, loader) -> void:
 	var ns = state.player()
 	var majors: Array = Companies.majors_of(loader, ns.id)

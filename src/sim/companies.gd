@@ -188,6 +188,18 @@ static func share_of_company(ns, company) -> float:
 	return float(entry.get("share", company.share)) if entry != null else float(company.share)
 
 
+## The firm's weight among its sector's live majors, 0.0 to 1.0: its live share over
+## its own plus the break-up's absorbers' (_absorbers, the arm's one definition), so
+## the door and the arm read one set. The break-up's gate and the ruling's odds read
+## it (V5.3 majors, the parent's call): at the real shares a major holds 0.3 to 4 % of
+## its sector, so an absolute gate (the old 10 %) was never reached, and a firm's
+## dominance is its weight among the named rivals, not the sector's size. A lone live
+## major reads 1.0: the door offers it, and refusal_reason() names the missing absorber.
+static func major_share(ns, loader, company) -> float:
+	var own := share_of_company(ns, company)
+	return own / (own + _absorbed_share(ns, _absorbers(ns, loader, company.id))) if own > 0.0 else 0.0
+
+
 static func subsidy_of(ns, company_id: String) -> float:
 	var entry = ns.companies.get(company_id)
 	return float(entry.get("subsidy", 0.0)) if entry != null else 0.0
@@ -742,21 +754,18 @@ static func _read_field(state, ns, field: String, company_id: String, loader) ->
 		# V4.7b: the autonomy machine's state. A failing firm is one inside its
 		# rescue window (the flag with time left, not a committed failure); the
 		# live share needs the loader firm for its authored fallback.
-		"bid_pending":
-			return 1.0 if String(ns.companies.get(company_id, {}).get("bid_bidder", "")) != "" else 0.0
+		"bid_pending": return 1.0 if String(ns.companies.get(company_id, {}).get("bid_bidder", "")) != "" else 0.0
 		"failing":
 			var fentry: Dictionary = ns.companies.get(company_id, {})
 			return 1.0 if (bool(fentry.get("failed", false)) and int(fentry.get("rescue_months_left", 0)) > 0) else 0.0
-		"courted":
-			# The courtship flag: 1.0 from the moment the verb fires until a
-			# bid is ANSWERED -- the gate that keeps a courtship from being
-			# re-bought click by click.
-			return float(ns.companies.get(company_id, {}).get("courted", 0.0))
-		"firm_share":
-			for company in firms_of(loader, ns.id):
-				if company.id == company_id:
-					return share_of_company(ns, company)
-			return 0.0
+		# The courtship flag: 1.0 from the moment the verb fires until a bid is
+		# ANSWERED -- the gate that keeps a courtship from being re-bought click by click.
+		"courted": return float(ns.companies.get(company_id, {}).get("courted", 0.0))
+		# The break-up's gate reads the firm's weight among its sector's majors.
+		"firm_share", "major_share":
+			var firm = _firm_of(ns, loader, company_id)
+			if firm == null: return 0.0
+			return share_of_company(ns, firm) if field == "firm_share" else major_share(ns, loader, firm)
 		_:
 			push_error("companies: unknown precondition field '%s'" % field)
 			return 0.0

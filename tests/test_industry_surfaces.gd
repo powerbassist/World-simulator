@@ -270,16 +270,26 @@ func _check_break_up_asks(state, loader, ns, panel) -> void:
 	for a in loader.company_actions:
 		if String(a.id) == "break_up":
 			breakup = a
+	# V5.3 majors: the real roster has three or four majors a sector, so the G1 case
+	# (a sector down to two live majors) is staged: the others fail first. The larger
+	# of the two clears the gate (major_share >= 0.30: at least half the majors' share).
 	var first = null
 	var rival = null
 	for company in Companies.majors_of(loader, ns.id):
 		for other in Companies.majors_of(loader, ns.id):
-			if first == null and other.id != company.id and other.sector == company.sector and company.share >= 0.10 and other.share >= 0.10:
+			if first == null and other.id != company.id and other.sector == company.sector:
 				first = company
 				rival = other
 	if breakup == null or first == null:
-		_fail("no sector with two break-up-able majors -- the G1 pin cannot run")
+		_fail("no sector with two majors -- the G1 pin cannot run")
 		return
+	for other in Companies.majors_of(loader, ns.id):
+		if other.sector == first.sector and other.id != first.id and other.id != rival.id:
+			_stage_failure(ns, other)
+	if Companies.major_share(ns, loader, rival) > Companies.major_share(ns, loader, first):
+		var larger = rival
+		rival = first
+		first = larger
 	var button: Button = panel._action_button(ns, first, breakup)
 	if button.disabled:
 		_fail("a break-up with a rival to absorb it is disabled")

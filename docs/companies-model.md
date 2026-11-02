@@ -1354,8 +1354,14 @@ it lands and the dividend keeps its one-month lag.
   so it starts after the transition with no new rule. During those twelve months the
   firm reads as not state-owned, and only the process gate keeps a second verb off it.
 - **The break-up's ruling.** The authority orders the break-up with odds that rise
-  with the firm's share, from 50 % at a 10 % share to 85 % at 30 %. The strip shows
-  the odds as a range of 10 points either side. In the remedy, the sector's other
+  with the firm's weight among its sector's live majors (`Companies.major_share`: its
+  share over its own plus its rivals'), from 50 % at 30 % to 85 % at 70 %. The verb's
+  gate is the same measure, at least 30 % (`breakup.json`). The spec put both on the
+  firm's share of the SECTOR (50 % at 10 %, 85 % at 30 %, a 10 % gate); at the real
+  shares a major holds 0.3 to 4 % of its sector and no major reached the gate (V5.3
+  majors). All three numbers are stand-ins for the author. A lone live major reads
+  1.0: the door offers it and the arm refuses it for want of an absorber. The strip
+  shows the odds as a range of 10 points either side. In the remedy, the sector's other
   majors absorb 70 % of the split (`BREAK_UP_ABSORBED`, Companies.execute's
   `break_up` arm). The rest falls to the unnamed residual, which employs nobody, so
   the firm's jobs beyond that are lost.
@@ -1364,7 +1370,7 @@ it lands and the dividend keeps its one-month lag.
   process books both on its own timetable.
 - **A firm that fails or changes hands mid-process voids it.** What was spent stays
   spent. A remedy that the arm refuses on the day closes the row as refused, with the
-  arm's reason: the firm's share fell under the 10 % gate, or no rival is left to
+  arm's reason: the firm's weight among its sector's majors fell under the gate, or no rival is left to
   absorb it.
 - **Stopping** is a verb with its own price (`Processes.stop_price`):
   - a U-turn on a public stage, where every bloc the verb pleased loses a quarter of

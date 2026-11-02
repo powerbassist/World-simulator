@@ -457,30 +457,38 @@ func _test_break_up() -> void:
 
 
 ## G1 (V5.3-0 gate, the author: "it worked once and dont work for next
-## company"). France has two majors per sector, so the first break-up hands the
-## split to the only rival left and the rival's own break-up has no absorber:
-## the sim refuses it, while the door (firm_share >= 0.10) still offers it. The
+## company"). In a sector of two live majors the first break-up hands the split
+## to the only rival left and the rival's own break-up has no absorber: the sim
+## refuses it, while the door (major_share >= 0.30; a lone major reads 1.0) still
+## offers it. The
 ## panel can name the refusal on the button only if the sim says it BEFORE the
 ## click -- refusal_reason(), the same scan the arm refuses through.
 func _test_refusal_named_before_the_click() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.nations[PLAYER]
 	var breakup = _action("break_up")
+	# V5.3 majors: the real roster has three or four majors a sector, so the G1 case
+	# (a sector down to two live majors) is staged: the others have failed, their
+	# share gone to the residual and their firms out of the absorbers.
 	var first = null
 	var rival = null
 	for company in Companies.majors_of(_loader, PLAYER):
-		if company.share < 0.10:
-			continue
 		for other in Companies.majors_of(_loader, PLAYER):
-			if other.id != company.id and other.sector == company.sector and other.share >= 0.10:
+			if first == null and other.id != company.id and other.sector == company.sector:
 				first = company
 				rival = other
-				break
-		if first != null:
-			break
 	if first == null:
-		_fail("no sector with two break-up-able majors -- the G1 case needs one")
+		_fail("no sector with two majors -- the G1 case needs one")
 		return
+	for other in Companies.majors_of(_loader, PLAYER):
+		if other.sector == first.sector and other.id != first.id and other.id != rival.id:
+			ns.companies[other.id]["failed"] = true
+			ns.companies[other.id]["share"] = 0.0
+	# The larger of the two clears the gate (at least half the majors' share).
+	if Companies.major_share(ns, _loader, rival) > Companies.major_share(ns, _loader, first):
+		var larger = rival
+		rival = first
+		first = larger
 	if Companies.refusal_reason(state, ns, breakup, first.id, _loader) != "":
 		_fail("a break-up with a rival to absorb it named a refusal")
 	var landed: Dictionary = Companies.execute(state, ns, _loader.company_actions, breakup, first.id, _loader)
@@ -557,7 +565,7 @@ func _test_rescue_restores_failing() -> void:
 	var ns2 = state2.nations[PLAYER]
 	var major2 = null
 	for company in Companies.majors_of(_loader, PLAYER):
-		if company.sector != Companies.majors_of(_loader, PLAYER)[0].sector and company.share >= 0.10:
+		if company.sector != Companies.majors_of(_loader, PLAYER)[0].sector and Companies.major_share(ns2, _loader, company) >= 0.30:
 			major2 = company
 			break
 	if major2 == null:
