@@ -1395,8 +1395,60 @@ it lands and the dividend keeps its one-month lag.
 
 Measured by `tests/test_processes.gd` (every kind, the stops, the gate, the void, the
 round trip) and by `tools/companies_probe.gd --processes` (the four playable nations,
-every verb on the real machine). Not built: the transition's 4 % output dip, because
-`companies.gd` is at its size ratchet, so it needs its own channel (a follow-up).
+every verb on the real machine).
+
+**The transition's output dip** (the spec's "4 % below its path, then recovers") has
+its own channel, because `companies.gd` is at its size ratchet: in every month of a
+transition `Processes.tick_month()` writes `ns.process_drag_pct`, minus
+`PROCESS_TRANSITION_OUTPUT_LOSS` (0.04) times the firm's live output as points of
+GDP, scaled by `GAP_CLOSE` over the transition's length in years and bounded at
+`PROCESS_DRAG_MAX_PCT`, and Economy adds it to growth a month later as its eleventh
+addend (no loader; the inflation term's lag). The scale is what keeps the strip
+true: a growth drag d held for T years opens an output gap that closes at
+`GAP_CLOSE` a year, and the GDP lost over the transition and that closing is
+d * T / `GAP_CLOSE` in total, so the unscaled drag lost about 3.3 times the 4 % the
+strip showed (QA's call 2 on #264). Scaled, the total is 4 % of a year of the firm's
+output (`tests/test_processes.gd` sums it over Economy's months: 0.996 of the strip
+after 20 years, the rest is the tail still to close). The level is lowest at the
+transfer of control, about a quarter of that loss (1 % of the firm's yearly output),
+and recovers on the gap's 28-month half-life. The estimate carries the loss
+(`output_loss_eur_bn`) so the strip shows it before the press.
+
+## 41. Plant closures announced (V5.3 a)
+
+The spec's "New Industry decisions" (`docs/design/v5.3-ab.md` 3.2), and the industry
+supply band B7 lacked: on main a foreign bid or a failing major reaches the player
+almost never. `src/sim/closures.gd`, step `Closures` right after `Industry`.
+
+- **The trigger.** Each month every live major of the PLAYER's nation adds its output
+  (`Companies.output_eur_bn`) to a history of `window_months` + 1 months. The worst
+  fall past `fall` over the window announces a closure in the firm's live city,
+  one announcement a month at most. A firm in a process does not announce, and a
+  firm whose closure ended waits `cooldown_months`. Its history is cleared at the
+  announcement and at the cut, so a closure's own cut is never the next fall.
+- **The answers** (`Closures.answers`, `Closures.answer`):
+  - let it close, the default: the firm's live share falls by `cut` (to the residual,
+    as the failure commit moves it), so its payroll in its city falls with it, and
+    the rule's `bloc_offset` lands;
+  - find a buyer: a search of `BUYER_MONTHS`; on its seed (`BUYER_CHANCE`) a buyer
+    keeps the plant, else it shuts;
+  - rescue: the firm's own subsidy verbs (op `subsidise`, through
+    `Companies.execute`), the spec's "a subsidy".
+  Unanswered, the closure lands two months (`ANSWER_MONTHS`) after it is announced.
+- **The numbers are data:** `data/industry/closures.json` (`loader.closure_rule`,
+  `CompaniesLoader.load_closure_rule`), never per firm. The values there are Systems'
+  stand-ins until Content authors them; `fall` = 0.04 was picked from a survey of
+  the real machine, about one closure a year per playable nation.
+- **Only the player's nation.** A closure is a decision arrival, and a nation no
+  player leads cannot answer one.
+- **The state is the firm's:** `closure` (the record, kept after it ends for the
+  cooldown) and `closure_watch` on the firm's `ns.companies` entry, which the field
+  table deep-copies. So no NationState field and no `SAVE_VERSION` bump: an entry
+  without the keys reads "no closure and no history yet", the truth for every older
+  save. `closures.gd` also writes the entry's `share` when a plant shuts.
+
+Measured by `tests/test_closures.gd` and by `tools/decision_surfaces_probe.gd
+--density` (source `closure`).
 
 ---
 

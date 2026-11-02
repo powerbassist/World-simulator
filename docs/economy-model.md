@@ -329,7 +329,10 @@ later session needs it; nothing is wired "for completeness".
 ### Demand impulse — short run
 
 Fires on **commit**, not continuously. A budget change is a shock; a budget left
-alone is not.
+alone is not. One other writer since V5.3 a: a regional development fund's bill,
+whose change month on month enters through the same spending term
+(`RegionFunds.tick_month()`, [[region-economy-model]]), so a fund's start is a
+shock and its end the mirror one.
 
 ```
 Δimpulse = ( Δspending_pct × MULT_SPENDING
