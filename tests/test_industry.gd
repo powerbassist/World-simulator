@@ -599,13 +599,26 @@ func _test_rescue_restores_failing() -> void:
 func _test_court_multiplies_bids() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.nations[PLAYER]
-	# The verb's own gate: courting targets a small major (< 0.10 share). The
-	# register's first firm is 0.28 and is rightly refused.
+	# The verb's own gate: courting targets a small major. V5.3 majors (the parent's
+	# call on #283): the gate reads the firm's weight among its sector's majors, under
+	# the break-up's 30 % (a firm the authority would not break up), not an absolute
+	# 10 % of the sector that every real major sits under. Both sides of it, pinned as
+	# the literal; a major the register leaves bid-free and uncourted at the start.
+	var court_id := "court_investor"
 	var major = null
+	var refused_big := false
 	for company in Companies.majors_of(_loader, PLAYER):
-		if company.share < 0.10:
+		var weight := Companies.major_share(ns, _loader, company)
+		var offered := not Companies.available(state, ns, _loader.company_actions, company.id, _loader).filter(
+			func(a): return String(a.id) == court_id).is_empty()
+		if offered != (weight < 0.30):
+			_fail("%s holds %.0f %% of its sector's majors' share and courting it offered is %s -- the gate is 30 %%" % [
+				company.id, 100.0 * weight, offered])
+		refused_big = refused_big or not offered
+		if offered and major == null:
 			major = company
-			break
+	if not refused_big:
+		_fail("every major can be courted -- the gate bites nothing")
 	if major == null:
 		_fail("no small major to court -- the test needs one")
 		return

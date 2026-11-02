@@ -760,12 +760,12 @@ static func _read_field(state, ns, field: String, company_id: String, loader) ->
 		# The courtship flag: 1.0 from the moment the verb fires until a bid is
 		# ANSWERED -- the gate that keeps a courtship from being re-bought click by click.
 		"courted": return float(ns.companies.get(company_id, {}).get("courted", 0.0))
-		# The live share needs the loader firm for its authored fallback; the
-		# break-up's gate reads the firm's weight among its sector's majors.
-		"firm_share", "major_share":
+		# The break-up's and the courtship's gates read the firm's weight among its
+		# sector's majors (the live share needs the loader firm for its authored
+		# fallback). The absolute firm_share went with the last gate that read it.
+		"major_share":
 			var firm = _firm_of(ns, loader, company_id)
-			if firm == null: return 0.0
-			return share_of_company(ns, firm) if field == "firm_share" else major_share(ns, loader, firm)
+			return major_share(ns, loader, firm) if firm != null else 0.0
 		_:
 			push_error("companies: unknown precondition field '%s'" % field)
 			return 0.0

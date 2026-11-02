@@ -92,8 +92,9 @@ const PRECONDITION_FIELDS := [
 	# only on share worth splitting. The court verb gates on its own flag:
 	# an invitation stands until a bid is ANSWERED, so it cannot be re-bought
 	# click by click (the ultra's unpriced-lever finding). V5.3 majors: the
-	# break-up gates on the firm's weight among its sector's majors.
-	"bid_pending", "failing", "firm_share", "courted", "major_share",
+	# break-up and the courtship gate on the firm's weight among its sector's
+	# majors; the absolute firm_share, read by no gate since, is gone.
+	"bid_pending", "failing", "courted", "major_share",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]

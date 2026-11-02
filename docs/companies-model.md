@@ -1359,7 +1359,9 @@ it lands and the dividend keeps its one-month lag.
   gate is the same measure, at least 30 % (`breakup.json`). The spec put both on the
   firm's share of the SECTOR (50 % at 10 %, 85 % at 30 %, a 10 % gate); at the real
   shares a major holds 0.3 to 4 % of its sector and no major reached the gate (V5.3
-  majors). All three numbers are stand-ins for the author. A lone live major reads
+  majors). The courtship (`court_investor`) gates on the same measure under 30 %,
+  the gate's complement, as its old 10 % absolute gate was. All four numbers are
+  stand-ins for the author. A lone live major reads
   1.0: the door offers it and the arm refuses it for want of an absorber. The strip
   shows the odds as a range of 10 points either side. In the remedy, the sector's other
   majors absorb 70 % of the split (`BREAK_UP_ABSORBED`, Companies.execute's
