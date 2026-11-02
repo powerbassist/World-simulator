@@ -44,6 +44,7 @@ func _init() -> void:
 	_test_the_forecast_sees_the_fund_end()
 	_test_three_funds_at_most()
 	_test_the_snapshot_carries_the_bill()
+	_test_the_bill_moves_demand_as_spending_does()
 	_finish()
 
 
@@ -416,6 +417,66 @@ func _test_the_snapshot_carries_the_bill() -> void:
 	if not snap.has("region_fund_bill_pct_gdp") or float(ns.region_fund_bill_pct_gdp) <= 0.0 \
 			or not is_equal_approx(float(snap["region_fund_bill_pct_gdp"]), float(ns.region_fund_bill_pct_gdp)):
 		_fail("the Budget snapshot does not carry the fund's bill: %s" % [snap.get("region_fund_bill_pct_gdp")])
+
+
+## A fund is spending (the parent's ruling on #263, QA's call 1), so its bill moves
+## demand through the channel every spending change takes: Budget.commit()'s
+## MULT_SPENDING over impulse_level_factor(), on the bill's change. Up when the fund
+## starts billing, down when it stops, so the level effect over its life sums to
+## zero (no free lunch, no lasting stimulus). _month() runs no Economy, so the impulse
+## does not decay between the reads and every step is the fund's alone.
+func _test_the_bill_moves_demand_as_spending_does() -> void:
+	var state = _state()
+	var ns = state.player()
+	RegionFunds.start(state, ns, _loader, _worst(state, ns), 2.0, 1)
+	var bill := 0.0
+	var level := 0.0
+	var rose := false
+	var fell := false
+	for i in range(14):
+		var impulse := float(ns.demand_impulse_pct)
+		_month(state)
+		var step := float(ns.demand_impulse_pct) - impulse
+		var want := (float(ns.region_fund_bill_pct_gdp) - bill) * C.MULT_SPENDING / C.impulse_level_factor()
+		if not is_equal_approx(step, want):
+			_fail("month %d: the fund moved demand by %.6f, not its bill's change x MULT_SPENDING (%.6f)" % [i + 1, step, want])
+		rose = rose or step > 0.0
+		fell = fell or step < 0.0
+		level += step * C.impulse_level_factor()
+		bill = float(ns.region_fund_bill_pct_gdp)
+	if not rose or not fell:
+		_fail("a one-year fund did not raise demand at its start and lower it at its end")
+	if not is_equal_approx(level, 0.0):
+		_fail("the fund's level effect over its life is %.6f points of GDP, not zero" % level)
+	# Two funds that overlap, each stopped early: every step is the SUMMED bill's
+	# change, and the stops close the sum.
+	state = _state()
+	ns = state.player()
+	var first := _worst(state, ns)
+	var second := ""
+	for r in _list(state):
+		if r.id != first and r.id != RK.RESIDUAL_KEY:
+			second = r.id
+			break
+	bill = 0.0
+	level = 0.0
+	RegionFunds.start(state, ns, _loader, first, 2.0, 3)
+	for i in range(10):
+		if i == 3:
+			RegionFunds.start(state, ns, _loader, second, 1.0, 3)
+		if i == 6:
+			RegionFunds.stop(state, ns, String(ns.region_funds[0]["id"]))
+		if i == 8:
+			RegionFunds.stop(state, ns, String(ns.region_funds[1]["id"]))
+		var impulse := float(ns.demand_impulse_pct)
+		_month(state)
+		var step := float(ns.demand_impulse_pct) - impulse
+		if not is_equal_approx(step, (float(ns.region_fund_bill_pct_gdp) - bill) * C.MULT_SPENDING / C.impulse_level_factor()):
+			_fail("month %d of two funds: demand moved %.6f, not the summed bill's change" % [i + 1, step])
+		level += step * C.impulse_level_factor()
+		bill = float(ns.region_fund_bill_pct_gdp)
+	if bill != 0.0 or not is_equal_approx(level, 0.0):
+		_fail("two stopped funds left a bill of %.5f or a level effect of %.6f" % [bill, level])
 
 
 func _month(state) -> void:
