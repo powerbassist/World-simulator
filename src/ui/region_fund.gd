@@ -139,7 +139,7 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void
 	strip.show_lines(Strings.t("Treasury"),
 		Strings.tn("%s a year for %d year", "%s a year for %d years", years) % [EffectsStrip.money_text(-eur), years], -eur,
 		EffectsStrip.who_text(est["bloc_offset"]),
-		Strings.t("Unemployment here: %s %% now, %s %% with the fund. Paid from next month.") % [
+		Strings.t("Unemployment here: %s %% now, %s %% with the fund. Paid from next month; the lift to demand reverses when it ends.") % [
 			Num.f(float(est["unemployment_now"]), 1), Num.f(float(est["unemployment_after"]), 1)])
 
 
