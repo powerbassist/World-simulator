@@ -17,6 +17,8 @@ const Cycle = preload("res://src/sim/cycle.gd")
 const CK = preload("res://src/sim/closures_constants.gd")
 const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Negotiation = preload("res://src/sim/negotiation.gd")
+const NK = preload("res://src/sim/companies_constants.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -51,6 +53,10 @@ func _init() -> void:
 	_test_the_cooldown_ends_on_its_month()
 	_test_a_failed_firms_open_closure_is_voided()
 	_test_the_loader_refuses_a_short_cooldown()
+	_test_a_closure_offers_three_counters()
+	_test_a_countered_buyer_accepts_comes_back_or_walks()
+	_test_no_buyer_answer_is_dominated()
+	_test_a_countered_closure_survives_a_save()
 	_finish()
 
 
@@ -156,8 +162,8 @@ func _test_a_falling_major_announces_a_closure() -> void:
 	if (ns.companies[String(firm.id)] as Dictionary).has("closure_watch"):
 		_fail("the announcing firm's output history was kept, so its own cut would count as the next fall")
 	var ids: Array = Closures.answers(state, ns, _loader, String(row["id"])).map(func(a) -> String: return String(a["id"]))
-	if ids != ["close", "buyer", "rescue"]:
-		_fail("the closure offers %s, not close, buyer and the rescue" % [ids])
+	if ids != ["close", "buyer"] + NEGOTIATE_IDS + ["rescue"]:
+		_fail("the closure offers %s, not close, buyer, its three counters and the rescue" % [ids])
 	if Closures.open(ns).size() != 1:
 		_fail("the open closures list does not hold the announcement")
 	# A fall under the threshold announces nothing.
@@ -712,3 +718,229 @@ func _test_the_forecast_sees_the_rescue_end() -> void:
 		_fail("the forecast still books %.6f of spending after the rescue ended" % after)
 	if String(row["status"]) != Closures.RESCUING or int(row["months_left"]) != 6:
 		_fail("the forecast moved the real rescue's term: %s" % row)
+
+
+# --- Negotiate PR 2: the closing plant's buyer -----------------------------------------
+
+const NEGOTIATE_IDS := ["negotiate_5", "negotiate_10", "negotiate_15"]
+
+
+## [state, ns, firm, row]: the first major's closure announced in March of `year`.
+func _announced(year: int) -> Array:
+	var state = _new_state()
+	state.year = year
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	return [state, ns, firm, _row(ns, String(firm.id))]
+
+
+func _answer_of(answers: Array, answer_id: String) -> Dictionary:
+	for a in answers:
+		if String(a["id"]) == answer_id:
+			return a
+	return {}
+
+
+## The parent's calls 3 and 4 on Negotiate: the closing plant's buyer can be
+## countered, its sweetener cut by 5, 10 or 15 %. Each counter is the buyer's search
+## (its chance, months and losses, paid at the answer) with the sweetener cut, the old
+## one kept for a buyer that comes back, a month more on the longest road, and the
+## buyer's odds at full strength (Negotiation.odds at leverage 1: 55, 35 and 15 %,
+## stand-ins the parent accepted, pinned as literals) inside the range the strip
+## shows -- fixed on the announcement's month, so it does not move as the answer waits.
+func _test_a_closure_offers_three_counters() -> void:
+	var at: Array = _announced(2026)
+	var state = at[0]
+	var ns = at[1]
+	var row: Dictionary = at[3]
+	var answers: Array = Closures.answers(state, ns, _loader, String(row["id"]))
+	var ids: Array = answers.map(func(a) -> String: return String(a["id"]))
+	if ids != ["close", "buyer"] + NEGOTIATE_IDS + ["rescue"]:
+		_fail("the closure offers %s, not close, buyer, the three counters and the rescue" % [ids])
+		return
+	var buyer: Dictionary = answers[1]
+	var want_odds := [0.55, 0.35, 0.15]
+	for i in 3:
+		var a: Dictionary = answers[2 + i]
+		var c := float(NK.NEGOTIATE_COUNTERS[i])
+		if String(a["kind"]) != "negotiate" or float(a["counter"]) != c \
+				or not is_equal_approx(float(a["sweetener_eur_bn"]), float(buyer["sweetener_eur_bn"]) * (1.0 - c)) \
+				or float(a["back_sweetener_eur_bn"]) != float(buyer["sweetener_eur_bn"]) or float(a["debt_eur_bn"]) != float(buyer["debt_eur_bn"]) \
+				or float(a["chance"]) != float(buyer["chance"]) or int(a["months"]) != int(buyer["months"]) \
+				or int(a["months_hi"]) != int(buyer["months"]) + 1 or float(a["jobs_lost"]) != float(buyer["jobs_lost"]) \
+				or not (a["bloc_offset"] as Dictionary).is_empty() or float(a["walk"]) != NK.NEGOTIATE_WALK:
+			_fail("%s reads %s against the buyer's %s" % [a["id"], a, buyer])
+		if not is_equal_approx(float(a["odds"]), float(want_odds[i])):
+			_fail("%s's buyer accepts at %.3f, not %.2f" % [a["id"], float(a["odds"]), float(want_odds[i])])
+		if float(a["odds"]) < float(a["odds_lo"]) or float(a["odds"]) > float(a["odds_hi"]) \
+				or not is_equal_approx(float(a["odds_hi"]) - float(a["odds_lo"]), 2.0 * NK.NEGOTIATE_FOG):
+			_fail("%s shows %s..%s for a true %.3f" % [a["id"], a["odds_lo"], a["odds_hi"], float(a["odds"])])
+	var shown: Array = answers.map(func(a) -> float: return float(a.get("odds_lo", -1.0)))
+	_month(state)
+	var later: Array = Closures.answers(state, ns, _loader, String(row["id"])).map(func(a) -> float: return float(a.get("odds_lo", -1.0)))
+	if later != shown:
+		_fail("the counters' ranges moved while the answer waited: %s -> %s" % [shown, later])
+
+
+## A countered search ends on the buyer's own seed, as the plain one does: no buyer,
+## the plant closes and nothing more is paid. A buyer found answers the counter on its
+## own seed: accepted, the sale books the cut sweetener; walked, the buyer leaves and
+## the plant closes; back (the parent's ruling (b)), the buyer comes back at the OLD
+## sweetener and the player is asked once more, for a month: sell at it (the default)
+## or close -- the closure's new status, offered.
+func _test_a_countered_buyer_accepts_comes_back_or_walks() -> void:
+	var seen := {}
+	for k in 80:
+		var at: Array = _announced(2026 + k)
+		var row: Dictionary = at[3]
+		var end := _now(at[0]) + CK.BUYER_MONTHS
+		for answer_id in NEGOTIATE_IDS:
+			var a := _answer_of(Closures.answers(at[0], at[1], _loader, String(row["id"])), answer_id)
+			var leg := "none"
+			if Cycle.unit("closure|%s|buyer" % String(row["id"]), end) < CK.BUYER_CHANCE:
+				leg = Negotiation.draw(float(a["odds"]), Negotiation.key(row, answer_id), end)
+			var legs: Array = ["back", "back_close"] if leg == "back" else [leg]
+			for l in legs:
+				if not seen.has(l):
+					seen[l] = true
+					_check_closure_leg(2026 + k, answer_id, String(l))
+		if seen.size() == 5:
+			return
+	_fail("80 seeded closures drew only %s" % [seen.keys()])
+
+
+func _check_closure_leg(year: int, answer_id: String, leg: String) -> void:
+	var at: Array = _announced(year)
+	var state = at[0]
+	var ns = at[1]
+	var firm = at[2]
+	var row: Dictionary = at[3]
+	var label := "%s %s" % [answer_id, leg]
+	var a := _answer_of(Closures.answers(state, ns, _loader, String(row["id"])), answer_id)
+	var share := Companies.share_of_company(ns, firm)
+	var cut := share * (1.0 - float(_rule()["cut"]))
+	var debt := float(ns.debt_eur_bn)
+	if not bool(Closures.answer(state, ns, _loader, String(row["id"]), answer_id).get("ok", false)) \
+			or String(row["status"]) != Closures.SEARCHING or not is_equal_approx(float(ns.debt_eur_bn) - debt, float(a["debt_eur_bn"])):
+		_fail("%s: the counter did not start the search at its losses: %s" % [label, row])
+		return
+	debt = float(ns.debt_eur_bn)
+	for i in range(CK.BUYER_MONTHS):
+		_month(state)
+	var record: Dictionary = row.get("negotiation", {})
+	var outcome := "" if leg == "none" else ("back" if leg == "back_close" else leg)
+	if String(record.get("outcome", "")) != outcome or (outcome != "" and String(record.get("answer", "")) != answer_id):
+		_fail("%s: the row records %s" % [label, record])
+	match leg:
+		"none", "walked":
+			if String(row["status"]) != "closed" or not is_equal_approx(Companies.share_of_company(ns, firm), cut) or float(ns.debt_eur_bn) != debt:
+				_fail("%s: ended %s, share %.5f (cut %.5f), paid %.5f more" % [label, row["status"], Companies.share_of_company(ns, firm), cut, float(ns.debt_eur_bn) - debt])
+		"accepted":
+			if String(row["status"]) != "sold" or not is_equal_approx(Companies.share_of_company(ns, firm), share) \
+					or not is_equal_approx(float(ns.debt_eur_bn) - debt, float(a["sweetener_eur_bn"])):
+				_fail("%s: ended %s, paid %.5f, not the cut sweetener %.5f" % [label, row["status"], float(ns.debt_eur_bn) - debt, float(a["sweetener_eur_bn"])])
+		"back", "back_close":
+			var again: Array = Closures.answers(state, ns, _loader, String(row["id"]))
+			var buyer := _answer_of(again, "buyer")
+			if String(row["status"]) != Closures.OFFERED or int(row["offered"]) != _now(state) or int(row["due"]) != _now(state) + 1 \
+					or float(ns.debt_eur_bn) != debt or again.map(func(x) -> String: return String(x["id"])) != ["close", "buyer"] \
+					or float(buyer.get("sweetener_eur_bn", -1.0)) != float(a["back_sweetener_eur_bn"]) or float(buyer.get("chance", -1.0)) != 1.0 \
+					or float(buyer.get("debt_eur_bn", -1.0)) != 0.0 or Closures.open(ns).size() != 1:
+				_fail("%s: came back as %s, asking %s" % [label, row, again])
+				return
+			if bool(Closures.answer(state, ns, _loader, String(row["id"]), "rescue").get("ok", true)):
+				_fail("%s: a buyer that came back took a rescue" % label)
+			if leg == "back_close":
+				Closures.answer(state, ns, _loader, String(row["id"]), "close")
+				if String(row["status"]) != "closed" or not is_equal_approx(Companies.share_of_company(ns, firm), cut) or float(ns.debt_eur_bn) != debt:
+					_fail("%s: closing the buyer that came back ended %s" % [label, row["status"]])
+				return
+			_month(state)
+			if String(row["status"]) != "sold" or not is_equal_approx(Companies.share_of_company(ns, firm), share) \
+					or not is_equal_approx(float(ns.debt_eur_bn) - debt, float(a["back_sweetener_eur_bn"])):
+				_fail("%s: the buyer that came back ended %s, paid %.5f, not the old sweetener %.5f" % [
+					label, row["status"], float(ns.debt_eur_bn) - debt, float(a["back_sweetener_eur_bn"])])
+
+
+## No answer of the buyer's is beaten on every figure (PR 1's gate, pin 7): the buyer
+## and its three counters, by their expected cash (the search and the sweetener a sale
+## pays), the chance the plant is sold, the sweetener if it is, and the jobs kept. The
+## buyer wins the completion, a counter the cash.
+func _test_no_buyer_answer_is_dominated() -> void:
+	var at: Array = _announced(2026)
+	var answers: Array = Closures.answers(at[0], at[1], _loader, String((at[3] as Dictionary)["id"]))
+	var jobs := float((at[3] as Dictionary)["jobs"])
+	var figures := {}
+	for a in answers:
+		var chance := float(a.get("chance", 0.0))
+		match String(a["kind"]):
+			"buyer":
+				var sw := float(a["sweetener_eur_bn"])
+				figures[a["id"]] = [-(float(a["debt_eur_bn"]) + chance * sw), chance, -sw, chance * jobs]
+			"negotiate":
+				var p := float(a["odds"])
+				var back := (1.0 - p) * (1.0 - float(a["walk"]))
+				var sold := p + back
+				var paid := p * float(a["sweetener_eur_bn"]) + back * float(a["back_sweetener_eur_bn"])
+				figures[a["id"]] = [-(float(a["debt_eur_bn"]) + chance * paid), chance * sold, -paid / sold, chance * sold * jobs]
+	if figures.size() != 4:
+		_fail("the buyer's answers are %s" % [figures.keys()])
+		return
+	for x in figures:
+		for y in figures:
+			if x == y:
+				continue
+			var no_worse := true
+			var better := false
+			for i in 4:
+				no_worse = no_worse and float(figures[x][i]) >= float(figures[y][i]) - 1e-12
+				better = better or float(figures[x][i]) > float(figures[y][i]) + 1e-12
+			if no_worse and better:
+				_fail("%s %s beats %s %s on every figure" % [x, figures[x], y, figures[y]])
+
+
+## A countered search and a buyer that came back survive a save: the loaded game
+## draws and lands exactly as the one that never saved. No SAVE bump: the keys live in
+## the firm's closure record, absent in every older save, which never held "offered".
+func _test_a_countered_closure_survives_a_save() -> void:
+	for answer_id in NEGOTIATE_IDS:
+		for k in 80:
+			var at: Array = _announced(2026 + k)
+			var state = at[0]
+			var row: Dictionary = at[3]
+			var end := _now(state) + CK.BUYER_MONTHS
+			var a := _answer_of(Closures.answers(state, at[1], _loader, String(row["id"])), answer_id)
+			if Cycle.unit("closure|%s|buyer" % String(row["id"]), end) >= CK.BUYER_CHANCE \
+					or Negotiation.draw(float(a["odds"]), Negotiation.key(row, answer_id), end) != "back":
+				continue
+			Closures.answer(state, at[1], _loader, String(row["id"]), answer_id)
+			var searching = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+			for i in range(CK.BUYER_MONTHS):
+				_month(state)
+				_month(searching)
+			var offered = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+			var firm_id := String(at[2].id)
+			for kept in [searching, offered]:
+				if not _same_closure(_row(kept.player(), firm_id), row):
+					_fail("a countered closure resolved differently after a save: %s against %s" % [_row(kept.player(), firm_id), row])
+			_month(state)
+			_month(offered)
+			if not _same_closure(_row(offered.player(), firm_id), row) \
+					or not is_equal_approx(float(offered.player().debt_eur_bn), float(at[1].debt_eur_bn)):
+				_fail("a buyer that came back landed differently after a save: %s against %s" % [_row(offered.player(), firm_id), row])
+			return
+	_fail("no seeded closure came back to test the save")
+
+
+## Two closure records alike on what the counter decides: its status, the drawn
+## answer and the months it is due (a save's floats are compared within precision).
+func _same_closure(a: Dictionary, b: Dictionary) -> bool:
+	var na: Dictionary = a.get("negotiation", {})
+	var nb: Dictionary = b.get("negotiation", {})
+	return String(a.get("status", "")) == String(b.get("status", "")) and int(a.get("due", -1)) == int(b.get("due", -1)) \
+			and String(na.get("answer", "")) == String(nb.get("answer", "")) and String(na.get("outcome", "")) == String(nb.get("outcome", "")) \
+			and int(na.get("month", -1)) == int(nb.get("month", -1)) \
+			and is_equal_approx(float(a.get("sweetener_eur_bn", 0.0)), float(b.get("sweetener_eur_bn", 0.0)))
+

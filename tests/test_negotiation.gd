@@ -9,6 +9,7 @@ extends SceneTree
 
 const Negotiation = preload("res://src/sim/negotiation.gd")
 const K = preload("res://src/sim/companies_constants.gd")
+const Cycle = preload("res://src/sim/cycle.gd")
 
 var _failures: Array[String] = []
 
@@ -16,6 +17,7 @@ var _failures: Array[String] = []
 func _init() -> void:
 	_test_odds_fall_with_the_counter_and_the_other_sides_leverage()
 	_test_the_shown_range_brackets_the_truth()
+	_test_the_range_keeps_its_fog_at_the_edges()
 	_test_the_draw_lands_at_its_odds()
 	_test_the_draw_is_seeded()
 	_finish()
@@ -55,6 +57,34 @@ func _test_the_shown_range_brackets_the_truth() -> void:
 			off_centre += 1
 	if off_centre < 200:
 		_fail("only %d of 400 ranges sit off their truth: the midpoint gives it away" % off_centre)
+
+
+## The #280 RECORD the parent routed to PR 2: the range was clamped at the edges, so
+## true odds above 1 - 2 x FOG (a 5 % counter against a weak seller) sat in the top
+## window on most seeds, and below 2 x FOG in the bottom one: the fog said where the
+## truth was. The window now slides over every place that holds the truth inside
+## [0, 1], so at the edges it is rarely pinned; in the middle it is the window it was,
+## on the same seed.
+func _test_the_range_keeps_its_fog_at_the_edges() -> void:
+	var w := 2.0 * K.NEGOTIATE_FOG
+	for p in [K.NEGOTIATE_ODDS_BOUNDS.x, K.NEGOTIATE_ODDS_BOUNDS.y]:
+		var pinned := 0
+		for i in 200:
+			var r: Vector2 = Negotiation.shown(p, "edge|%d" % i, 50 + i)
+			if r.x > p + 1e-12 or r.y < p - 1e-12 or r.x < -1e-12 or r.y > 1.0 + 1e-12 or not is_equal_approx(r.y - r.x, w):
+				_fail("seed %d shows %s for a true %.2f" % [i, r, p])
+				return
+			if is_equal_approx(r.x, 0.0) or is_equal_approx(r.y, 1.0):
+				pinned += 1
+		if pinned > 20:
+			_fail("%d of 200 ranges for a true %.2f sit pinned at the edge: the fog gives it away" % [pinned, p])
+	for i in 200:
+		var p := w + (1.0 - 2.0 * w) * float(i) / 199.0
+		var key := "mid|%d" % i
+		var u := Cycle.unit("%s|odds" % key, 70 + i)
+		if not is_equal_approx(Negotiation.shown(p, key, 70 + i).x, p - w * u):
+			_fail("a true %.3f in the middle moved its window: %s, was %.4f" % [p, Negotiation.shown(p, key, 70 + i), p - w * u])
+			return
 
 
 ## Over many deals the other side accepts at its odds, and of the refusals the

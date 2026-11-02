@@ -19,6 +19,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
+const ProcessAsks = preload("res://src/sim/process_asks.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
@@ -555,6 +556,8 @@ static func projection_step(job: ProjectionJob) -> void:
 	if job.sim == null:
 		job.sim = job.state.duplicate_state()
 		commit(job.sim, job.pending)
+		# The copy does not know the other side's answer to a counter (process_asks.gd).
+		ProcessAsks.blind(job.sim)
 		return
 	if job.units.is_empty():
 		job.units = _projected_month(job)

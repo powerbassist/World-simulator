@@ -20,6 +20,7 @@ const Cycle = preload("res://src/sim/cycle.gd")
 const Asks = preload("res://src/sim/process_asks.gd")
 const Negotiation = preload("res://src/sim/negotiation.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
+const Budget = preload("res://src/sim/budget.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -53,6 +54,7 @@ func _init() -> void:
 	_test_no_answer_is_dominated()
 	_test_a_counter_survives_a_save()
 	_test_an_answered_counter_cannot_be_stopped()
+	_test_the_forecast_does_not_know_the_answer()
 	_finish()
 
 
@@ -826,6 +828,31 @@ func _test_an_answered_counter_cannot_be_stopped() -> void:
 	if bool(price.get("ok", true)) or String(price.get("reason", "")) == "" or bool(r.get("ok", true)) \
 			or String(row["status"]) != "open" or float(ns.debt_eur_bn) != debt:
 		_fail("a stake with an answered counter was stopped: %s, %s" % [price, row["status"]])
+
+
+## The #280 RECORD the parent routed to Negotiate PR 2: Budget.project() ran the
+## counter's seeded draw on its copy, so the forecast's debt path showed the other
+## side's answer a month before it was due. The forecast is blind to it now: an
+## answered counter projects as the deal at its old price, the path of a player who
+## never countered, and the real row keeps its answer and is drawn at its month.
+func _test_the_forecast_does_not_know_the_answer() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	Processes.start(state, ns, _loader, _action("minority_stake"), firm)
+	_month(state)
+	var row := _row(ns, firm)
+	var plain: Array = Budget.project(state, {}, 2, _loader)
+	Processes.answer(state, ns, _loader, String(row["id"]), "negotiate_15")
+	var countered: Array = Budget.project(state, {}, 2, _loader)
+	if countered != plain:
+		_fail("the forecast with a counter on the table books %s, the deal at its old price %s" % [
+			countered.map(func(m) -> float: return float(m["debt_eur_bn"])), plain.map(func(m) -> float: return float(m["debt_eur_bn"]))])
+	if String(row.get("answer", "")) != "negotiate_15":
+		_fail("forecasting erased the player's counter: %s" % row.get("answer"))
+	_month(state)
+	if String((row.get("negotiation", {}) as Dictionary).get("answer", "")) != "negotiate_15":
+		_fail("after a forecast the counter was not drawn at its month: %s" % row.get("negotiation"))
 
 
 func _now(state) -> int:
