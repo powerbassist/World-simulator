@@ -21,6 +21,7 @@ const DK = preload("res://src/sim/domains_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const RegionPriority = preload("res://src/ui/region_priority.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
@@ -31,6 +32,8 @@ var _frame := 0
 var _regions: Array = []
 ## Three [line, sector_id] picks, distinct sectors.
 var _picks: Array = []
+## [region, [line, sector]] whose strip moves both unemployment pairs as printed.
+var _moving: Array = []
 
 
 func _init() -> void:
@@ -80,32 +83,47 @@ func _process(_delta: float) -> bool:
 			_pick(_picks[2])
 		12:
 			_check_refused(Strings.t("This region already holds as many priorities as it can."), false)
+			# QA's TAKE 1 (c) on #284: a non-first pick survives a rebuild.
+			_panel.mark_dirty()
+		14:
+			var option = _with_meta("priority_sector")
+			var kept := "%s|%s" % [_picks[2][0], _picks[2][1]]
+			if option == null or String(option.get_item_metadata((option as OptionButton).selected)) != kept:
+				_fail("rebuild: the picker no longer holds %s" % kept)
+			_check_refused(Strings.t("This region already holds as many priorities as it can."), false)
 			_pick(_picks[0])
-		13:
+		15:
 			# The region's own priority: the verb renews it, once.
 			var go = _with_meta("priority_go")
 			if go == null or go.disabled or (go as Button).text != Strings.t("Renew here"):
 				_fail("renew: the held sector's verb is not a live 'Renew here' (%s)" % [_describe(go)])
 			_press(go)
-		15:
+		17:
 			var row: Dictionary = _main._state.player().sector_priorities.get(_picks[0][1], {})
 			if int(row.get("renewals", 0)) != 1:
 				_fail("Renew pressed: the priority's renewals are %s, expected 1" % row.get("renewals", "<none>"))
+			# QA's TAKE 1 (a): the held row says it can no longer be renewed.
+			var end = _clear_button(_picks[0][1])
+			var name := RegionPriority._name(_main._loader, _picks[0][0], _picks[0][1])
+			var months := int(row.get("months_left", 0))
+			var said := Strings.tn("%s first here, %d month left, not renewable.", "%s first here, %d months left, not renewable.", months) % [name, months]
+			if end == null or not (end.get_meta("held_label") as Label).text.contains(said):
+				_fail("renewed: the held row does not say '%s' (%s)" % [said, (end.get_meta("held_label") as Label).text if end != null else "<none>"])
 			_pick(_picks[0])
-		16:
+		18:
 			_check_refused(Strings.t("This priority was renewed once already: it ends with this term."), false)
 			_press(_clear_button(_picks[0][1]))
-		18:
+		20:
 			if Sectors.priority_of(_main._state.player(), _picks[0][1]) != "":
 				_fail("End pressed: %s still has its priority" % _picks[0][1])
 			_pick(_picks[0])
-		19:
+		21:
 			_check_refused(Strings.t("This region held this priority lately and must wait before taking it again."), true)
 			# Another region takes a sector the first one holds: the strip says from whom.
 			_press(_region_button(_regions[1]))
-		21:
+		23:
 			_pick(_picks[1])
-		22:
+		24:
 			_check_strip(_regions[1], _picks[1])
 			var text := _text_under(_strip())
 			if not text.contains(String(_regions[0].region_name)):
@@ -121,8 +139,53 @@ func _process(_delta: float) -> bool:
 			if Sectors.priority_of(_main._state.player(), _picks[1][1]) != String(_regions[0].id):
 				_fail("stale press: %s moved off %s although the region was at its cap" % [_picks[1][1], _regions[0].id])
 			_check_refused(Strings.t("This region already holds as many priorities as it can."), false)
+			# QA's TAKE 1 (b): a pick whose unemployment figures differ as printed, so an
+			# order or a swap in the sentence shows.
+			_find_a_moving_pick()
+			if _moving.is_empty():
+				_finish()
+				return false
+			_press(_region_button(_moving[0]))
+		26:
+			_pick(_moving[1])
+		27:
+			_check_unemployment(_moving[0], _moving[1])
 			_finish()
 	return false
+
+
+## The region and pick whose estimate moves both unemployment pairs the most, as
+## printed: [region, [line, sector]].
+func _find_a_moving_pick() -> void:
+	var ns = _main._state.player()
+	var best := 0.0
+	for region in _regions:
+		for line in _main._loader.domains:
+			for s in Sectors.sectors_of(_main._loader, String(line)):
+				var est: Dictionary = Sectors.priority_estimate(_main._state, ns, _main._loader, String(line), String(s["id"]), region.id)
+				if not bool(est.get("ok", false)):
+					continue
+				var here := float(est["unemployment_now"]) - float(est["unemployment_after"])
+				var there := float(est["others_unemployment_after"]) - float(est["others_unemployment_now"])
+				if Num.f(float(est["unemployment_now"]), 1) == Num.f(float(est["unemployment_after"]), 1) 						or Num.f(float(est["others_unemployment_now"]), 1) == Num.f(float(est["others_unemployment_after"]), 1):
+					continue
+				if here + there > best:
+					best = here + there
+					_moving = [region, [String(line), String(s["id"])]]
+	if _moving.is_empty():
+		_fail("premise: no region and sector moves both unemployment pairs as printed")
+
+
+## The unemployment sentence whole and in order: here now, here with the priority,
+## the other regions now, then after (QA's TAKE 1 (b): a swap must not pass).
+func _check_unemployment(region, pick: Array) -> void:
+	var est: Dictionary = Sectors.priority_estimate(_main._state, _main._state.player(), _main._loader, pick[0], pick[1], region.id)
+	var want: String = Strings.t("Unemployment here: %s %% now, %s %% with the priority; other regions %s %% -> %s %%.") % [
+		Num.f(float(est["unemployment_now"]), 1), Num.f(float(est["unemployment_after"]), 1),
+		Num.f(float(est["others_unemployment_now"]), 1), Num.f(float(est["others_unemployment_after"]), 1)]
+	var text := _text_under(_strip())
+	if not text.contains(want):
+		_fail("priority strip on %s, %s: '%s' does not read '%s'" % [region.id, pick[1], text, want])
 
 
 ## The strip reads Sectors.priority_estimate() for the pick the control holds.
