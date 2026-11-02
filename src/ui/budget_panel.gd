@@ -25,6 +25,7 @@ const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
 const Ledger = preload("res://src/ui/budget_ledger.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
 
 const PROJECTION_MONTHS := 24
 
@@ -112,6 +113,13 @@ var _strip: EffectsStrip
 var _effect_labels := {}
 var _effects := {}
 var _fx_cache := {}
+## V5.3 a + b (spec 3.1): the line whose tile is open ("" none) and the share move's
+## three picks, held across rebuilds (budget_sectors.gd draws them).
+var _open_line := ""
+var _move_from := ""
+var _move_to := ""
+var _move_amount := 0.0
+var _sector_box: VBoxContainer
 
 
 func _ready() -> void:
@@ -153,10 +161,8 @@ func _build_levers() -> Control:
 	box.add_child(grid)
 
 	for key in _lever_keys():
-		var name_label := Label.new()
-		name_label.text = tr(LEVER_LABELS[key])
-		name_label.custom_minimum_size.x = 130
-		grid.add_child(name_label)
+		# V5.3 a + b (spec 3.1): the line's name opens its tile (budget_sectors.gd).
+		grid.add_child(BudgetSectors.line_toggle(self, key, tr(LEVER_LABELS[key])))
 
 		var slider := HSlider.new()
 		# A tenth of a point everywhere: the spending levers all run to
@@ -167,8 +173,10 @@ func _build_levers() -> Control:
 		# 200, not 220: G11's caption size took the window's last 20 px under +35%
 		# pseudo, and since d1b3 the span, not the track's width, guards a drag.
 		# 140 since V5.3 a + b: the change column took 89 px of the band, and the
-		# track still fills the window it is docked in -- this is its floor only.
-		slider.custom_minimum_size.x = 140
+		# track still fills the window it is docked in -- this is its floor only. 116
+		# since the line names became the toggles that open their tiles: a button's
+		# padding took 24 px of the band under +35 % pseudo.
+		slider.custom_minimum_size.x = 116
 		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.draw.connect(_draw_span.bind(key))
@@ -190,6 +198,8 @@ func _build_levers() -> Control:
 		_effect_labels[key].size_flags_horizontal = Control.SIZE_SHRINK_END
 		grid.add_child(Control.new())
 
+	_sector_box = VBoxContainer.new()
+	box.add_child(_sector_box)
 	return box
 
 
@@ -508,6 +518,7 @@ func _refresh() -> void:
 		if _effects.has(EffectsStrip.ELSEWHERE) else "", float(_effects.get(EffectsStrip.ELSEWHERE, 0.0)))
 	Ledger.add_changes(_figures, now, proposed)
 	_fill_figures()
+	BudgetSectors.refresh(self, tr(LEVER_LABELS.get(_open_line, "")))
 
 
 ## Writes one row of the now/proposed table for this refresh.

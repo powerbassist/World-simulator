@@ -78,6 +78,9 @@ const TOTAL_SUM_TARGET := 3600
 ## card on the Industry tab, its first major's verbs open and one verb focused --
 ## one full strip and the other verbs' name and money line -- under 90 words.
 const INDUSTRY_CARD_CEILING := 90
+## The same band for a spending line's tile on the Budget (spec 3.1), opened with
+## its share move and strip.
+const SECTOR_TILE_CEILING := 90
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit", "audience"]
@@ -131,6 +134,7 @@ func _initialize() -> void:
 	for fixture in ["calm", "tense", "crisis"]:
 		await _sweep_briefing(main, fixture)
 	await _sweep_industry_card(main)
+	await _sweep_sector_tile(main)
 	_report()
 	quit(1 if not _failures.is_empty() else 0)
 
@@ -232,6 +236,26 @@ func _sweep_briefing(main, fixture: String) -> void:
 		_fail("briefing (%s): %d visible words, the ceiling is %d" % [fixture, total, BRIEFING_CEILING])
 	BriefingDriver.close(main)
 	await process_frame
+
+
+## A6: the health line's tile on the Budget, opened with its verb and strip.
+func _sweep_sector_tile(main) -> void:
+	var panel = main._budget_panel
+	main._windows.open("budget", true)
+	panel._open_line = "health"
+	panel.mark_dirty()
+	await process_frame
+	await process_frame
+	var total := 0
+	for node in _visible_text_nodes(panel._sector_box):
+		total += _words(_text_of(node)).size()
+	print("prose: sector tile (health, opened) %d words" % total)
+	if total == 0:
+		_fail("sector tile: the health tile drew nothing")
+	if total > SECTOR_TILE_CEILING:
+		_fail("sector tile: %d visible words, the ceiling is %d (A6)" % [total, SECTOR_TILE_CEILING])
+	panel._open_line = ""
+	main._windows.close_all()
 
 
 ## A6: the opened card, as a player leaves it mid-decision.
