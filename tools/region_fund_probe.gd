@@ -14,6 +14,14 @@ extends SceneTree
 ##
 ## Not a test, excluded from run_tests.sh. tests/test_region_funds.gd pins the
 ## mechanism; this prints the numbers a human reads, and exits 1 on a failed band.
+##
+## `--priority` (#267): the same twin run for a sector priority instead of a fund --
+## each PRIORITY_SECTORS sector put first in the same worst region, against a twin
+## with none: the region's drop at months 12 and 24, the other named regions' rise
+## (weighted by their people), the strip's estimate, and the national unemployment
+## and GDP moves (a priority moves money between regions, so they stay near 0). No
+## band is declared for it; it exits 1 only if the region does not fall or the
+## others do not rise.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -21,12 +29,15 @@ const WorldMonth = preload("res://src/sim/world_month.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 const RK = preload("res://src/sim/region_constants.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
 
 const NATIONS := ["DEU", "FRA", "GBR", "POL"]
 const EUR_BN := 1.0
 const FUND_YEARS := 3
 const MONTHS := 24
 const BAND := Vector2(0.3, 1.0)
+## [line, sector]: a mid-sized sector and the largest one (basic pensions).
+const PRIORITY_SECTORS := [["health", "hospitals"], ["pensions", "basic_pension"]]
 
 
 func _initialize() -> void:
@@ -40,6 +51,9 @@ func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--json="):
 			json_path = arg.substr(7)
+	if "--priority" in OS.get_cmdline_user_args():
+		quit(_priorities(loader))
+		return
 	var rows: Array = []
 	var ok_all := true
 	for nation in NATIONS:
@@ -73,6 +87,52 @@ func _initialize() -> void:
 		f.close()
 	print("region_fund_probe: %s" % ("PASS" if ok_all else "FAIL"))
 	quit(0 if ok_all else 1)
+
+
+## The --priority run: one twin pair per nation and sector. 0 when every region put
+## first fell and every other side rose, else 1.
+static func _priorities(loader) -> int:
+	var bad := 0
+	for nation in NATIONS:
+		for pick in PRIORITY_SECTORS:
+			var still = GameState.new_game(loader, nation)
+			var first = GameState.new_game(loader, nation)
+			var region := _worst(still)
+			var est: Dictionary = Sectors.priority_estimate(first, first.player(), loader, pick[0], pick[1], region)
+			var applied: Dictionary = Sectors.set_priority(first, first.player(), loader, pick[0], pick[1], region)
+			var at_12 := 0.0
+			for i in range(MONTHS):
+				WorldMonth.tick_month(still, loader)
+				WorldMonth.tick_month(first, loader)
+				if i == 11:
+					at_12 = _u(still, region) - _u(first, region)
+			var drop := _u(still, region) - _u(first, region)
+			var rise := _others(first, region) - _others(still, region)
+			var nat_u: float = float(first.player().unemployment_pct) - float(still.player().unemployment_pct)
+			var nat_gdp: float = 100.0 * (float(first.player().gdp_eur_bn) / float(still.player().gdp_eur_bn) - 1.0)
+			var ok := bool(applied.get("ok", false)) and drop > 0.0 and rise > 0.0
+			if not ok:
+				bad += 1
+			print("%s %-6s %-14s term %.3f pts  estimate %.3f / others +%.4f  month 12 %.3f  month 24 %.3f  others +%.4f  nation u %+.5f gdp %+.5f %%  %s" % [
+				nation, region, pick[1], float(est.get("pts", 0.0)),
+				float(est.get("unemployment_now", 0.0)) - float(est.get("unemployment_after", 0.0)),
+				float(est.get("others_unemployment_after", 0.0)) - float(est.get("others_unemployment_now", 0.0)),
+				at_12, drop, rise, nat_u, nat_gdp, "ok" if ok else "FAIL"])
+	print("region_fund_probe --priority: %s" % ("PASS" if bad == 0 else "FAIL"))
+	return 0 if bad == 0 else 1
+
+
+## The other named regions' unemployment, weighted by their people.
+static func _others(state, region_id: String) -> float:
+	var ns = state.player()
+	var weighted := 0.0
+	var people := 0.0
+	for region in state.regions.get(ns.id, []):
+		if region.id != RK.RESIDUAL_KEY and region.id != region_id:
+			var p := float(ns.region_pop_share.get(region.id, 0.0))
+			weighted += p * _u(state, region.id)
+			people += p
+	return weighted / people if people > 0.0 else 0.0
 
 
 static func _u(state, region_id: String) -> float:
