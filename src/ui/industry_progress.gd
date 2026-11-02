@@ -198,8 +198,8 @@ static func _closure_money(option: Dictionary) -> Array:
 			var sale_bn := -float(option["sweetener_eur_bn"])
 			# The tone reads both sums: a search that costs little now still books
 			# its sweetener at a sale (pass 1: a cost read as neutral).
-			return [Strings.t("%s now, %s more at a sale") % [EffectsStrip.money_text(now_bn),
-				EffectsStrip.money_text(sale_bn)], now_bn + sale_bn]
+			return [Strings.t("%s now, %s more at a sale") % [EffectsStrip.sum_text(now_bn),
+				EffectsStrip.sum_text(sale_bn)], now_bn + sale_bn]
 	var year := -float(option["debt_eur_bn_per_year"])
 	return [Strings.t("%s a year") % EffectsStrip.money_text(year), year]
 

@@ -19,6 +19,7 @@ const Region = preload("res://src/core/region.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Pending = preload("res://src/ui/pending.gd")
+const Num = preload("res://src/ui/num.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -110,8 +111,13 @@ func _money_of(answer: Dictionary) -> String:
 		"close":
 			return EffectsStrip.cost_text(0.0)
 		"buyer":
-			return Strings.t("%s now, %s more at a sale") % [
-				EffectsStrip.money_text(-float(answer["debt_eur_bn"])), EffectsStrip.money_text(-float(answer["sweetener_eur_bn"]))]
+			# A small search in millions, never "0.0 bn" (QA's TAKE on #270): the first
+			# major's search (Verdelis, ~0.023 bn) is one of them.
+			var search := -float(answer["debt_eur_bn"])
+			var shown := (Strings.t("%s m") % Num.fs(search * 1000.0, 0)) if absf(search) < 0.1 else EffectsStrip.money_text(search)
+			if search < -0.0005 and shown.begins_with("0.0"):
+				_fail("card: the buyer's search reads as free ('%s')" % shown)
+			return Strings.t("%s now, %s more at a sale") % [shown, EffectsStrip.sum_text(-float(answer["sweetener_eur_bn"]))]
 	return Strings.t("%s a year") % EffectsStrip.money_text(-float(answer["debt_eur_bn_per_year"]))
 
 

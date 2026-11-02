@@ -156,6 +156,15 @@ static func money_text(bn: float) -> String:
 	return PanelKit.Strings.t("%s bn") % PanelKit.Num.fs(bn, MONEY_PLACES)
 
 
+## A sum that may be small, in full: under a tenth of a billion in millions
+## ("-23 m"), so a priced answer never reads "0.0 bn" (QA's TAKE on #270: a third
+## of the playable majors' buyer searches cost under 0.05 bn).
+static func sum_text(bn: float) -> String:
+	if absf(bn) < 0.1 and absf(bn) >= 0.0005:
+		return PanelKit.Strings.t("%s m") % PanelKit.Num.fs(bn * 1000.0, 0)
+	return money_text(bn)
+
+
 ## A one-off sum to or from the treasury, or the words for none: a verb or an
 ## answer that moves no money says so rather than printing "0.0 bn".
 static func cost_text(bn: float) -> String:
