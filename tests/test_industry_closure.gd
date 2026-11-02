@@ -118,7 +118,9 @@ func _money_of(answer: Dictionary) -> String:
 			if search < -0.0005 and shown.begins_with("0.0"):
 				_fail("card: the buyer's search reads as free ('%s')" % shown)
 			return Strings.t("%s now, %s more at a sale") % [shown, EffectsStrip.sum_text(-float(answer["sweetener_eur_bn"]))]
-	return Strings.t("%s a year") % EffectsStrip.money_text(-float(answer["debt_eur_bn_per_year"]))
+	var months := int(answer["months"])
+	return Strings.tn("%s a year for %d month", "%s a year for %d months", months) % [
+		EffectsStrip.sum_text(-float(answer["debt_eur_bn_per_year"])), months]
 
 
 func _check_searching() -> void:

@@ -13,9 +13,13 @@ extends RefCounted
 ##                    takes the plant and nothing is lost, else the plant shuts. It
 ##                    has a price: the plant's losses for the search, paid at the
 ##                    answer, and a sweetener on the buyer's price, paid at the sale;
-##   rescue           the firm's own subsidy verbs (op "subsidise",
-##                    Companies.execute), the spec's "a subsidy": the bill, the
-##                    firm's share and the verb's bloc moves are the verb's own.
+##   rescue           the PLANT is kept for RESCUE_MONTHS, the state paying
+##                    RESCUE_EUR_PER_JOB_YEAR for each job the closure would cut, on
+##                    the debt month by month (QA's call on #270, the parent's
+##                    ruling: priced on the plant, not on the firm's subsidy verbs,
+##                    whose bill read EUR 5-9 bn a year for a 720-job plant). It
+##                    announces nothing during its term and is watched afresh after
+##                    it (a new window, no cooldown: the term was the wait).
 ##
 ## Unanswered, the closure lands at its due month. The rule's numbers are data
 ## (data/industry/closures.json, loader.closure_rule), never per firm.
@@ -41,13 +45,12 @@ const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const K = preload("res://src/sim/closures_constants.gd")
-const CoK = preload("res://src/sim/companies_constants.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 
 const ANNOUNCED := "announced"
 const SEARCHING := "searching"
-const RESCUE_OP := "subsidise"
+const RESCUING := "rescuing"
 
 
 static func tick_month(state, loader) -> void:
@@ -94,11 +97,23 @@ static func open(ns) -> Array:
 	return out
 
 
+## The plant rescues running, as copies for a panel to read: each closure record
+## with its `months_left`, `ends` (the month it ends) and `rescue_eur_bn_per_year`.
+static func rescues(ns) -> Array:
+	var out: Array = []
+	for company_id in ns.companies:
+		var row: Dictionary = (ns.companies[company_id] as Dictionary).get("closure", {})
+		if String(row.get("status", "")) == RESCUING:
+			out.append(row.duplicate(true))
+	return out
+
+
 ## An announced closure's answers, each with its figures for the strip: `kind`
 ## (close | buyer | rescue), `jobs_lost` if it ends in the cut, `bloc_offset`, the
-## money on the debt (`debt_eur_bn` once: 0 to close, the buyer's search; a rescue's
-## `debt_eur_bn_per_year`, the subsidy's bill), and a buyer's `chance`, `months` and
-## `sweetener_eur_bn` (paid only at a sale). [] when nothing is waiting for an answer.
+## money on the debt (`debt_eur_bn` once: 0 to close, the buyer's search; the
+## rescue's `debt_eur_bn_per_year` for its `months`, `total_eur_bn` in all, ending in
+## month `ends`), and a buyer's `chance`, `months` and `sweetener_eur_bn` (paid only
+## at a sale). [] when nothing is waiting for an answer.
 static func answers(state, ns, loader, closure_id: String) -> Array:
 	var found := _find(ns, loader, closure_id)
 	if found.is_empty() or String(found["row"]["status"]) != ANNOUNCED:
@@ -112,16 +127,15 @@ static func answers(state, ns, loader, closure_id: String) -> Array:
 			"debt_eur_bn": _search_eur_bn(ns, found["company"], loader.closure_rule),
 			"sweetener_eur_bn": _sweetener_eur_bn(ns, found["company"], loader.closure_rule)},
 	]
-	for action in _rescues(state, ns, loader, String(row["company_id"])):
-		var intensity := float((action.effects.get("company", {}) as Dictionary).get("intensity", 0.0))
-		out.append({"id": String(action.id), "kind": "rescue", "jobs_lost": 0.0,
-			"debt_eur_bn_per_year": CoK.SUBSIDY_COST_PCT_GDP * intensity * float(ns.gdp_eur_bn) / 100.0,
-			"bloc_offset": (action.effects.get("bloc_offset", {}) as Dictionary).duplicate()})
+	var yearly := _rescue_eur_bn_per_year(row)
+	out.append({"id": "rescue", "kind": "rescue", "jobs_lost": 0.0, "bloc_offset": {},
+		"debt_eur_bn_per_year": yearly, "months": K.RESCUE_MONTHS,
+		"total_eur_bn": yearly * float(K.RESCUE_MONTHS) / 12.0, "ends": _now(state) + K.RESCUE_MONTHS})
 	return out
 
 
-## The player's answer: close lands at once, buyer starts the search, a rescue runs
-## the firm's subsidy verb (its refusal is the answer's). {ok} or {ok: false, reason}.
+## The player's answer: close lands at once, buyer starts the search, rescue starts
+## the plant's term. {ok} or {ok: false, reason}.
 static func answer(state, ns, loader, closure_id: String, answer_id: String) -> Dictionary:
 	var found := _find(ns, loader, closure_id)
 	if found.is_empty() or String(found["row"]["status"]) != ANNOUNCED:
@@ -142,15 +156,13 @@ static func answer(state, ns, loader, closure_id: String, answer_id: String) -> 
 		ns.debt_eur_bn += _search_eur_bn(ns, company, loader.closure_rule)
 		row["sweetener_eur_bn"] = _sweetener_eur_bn(ns, company, loader.closure_rule)
 		return {"ok": true}
-	for action in _rescues(state, ns, loader, String(row["company_id"])):
-		if String(action.id) == answer_id:
-			var result: Dictionary = Companies.execute(state, ns, loader.company_actions, action,
-				String(row["company_id"]), loader)
-			if not bool(result.get("applied", false)):
-				return {"ok": false, "reason": String(result.get("reason", ""))}
-			row["answer"] = answer_id
-			_end(row, "rescued", now)
-			return {"ok": true}
+	if answer_id == "rescue":
+		row["answer"] = answer_id
+		row["status"] = RESCUING
+		row["months_left"] = K.RESCUE_MONTHS
+		row["ends"] = now + K.RESCUE_MONTHS
+		row["rescue_eur_bn_per_year"] = _rescue_eur_bn_per_year(row)
+		return {"ok": true}
 	return {"ok": false, "reason": "That is not one of the answers."}
 
 
@@ -160,13 +172,20 @@ static func _resolve(ns, company, rule: Dictionary, now: int) -> void:
 	var entry: Dictionary = ns.companies.get(company.id, {})
 	var row: Dictionary = entry.get("closure", {})
 	var status := String(row.get("status", ""))
-	if status != ANNOUNCED and status != SEARCHING:
+	if status != ANNOUNCED and status != SEARCHING and status != RESCUING:
 		return
 	# A firm that failed meanwhile has nothing left to close.
 	if _gone(entry):
 		_end(row, "void", now)
 	elif status == ANNOUNCED and now >= int(row["due"]):
 		_cut(ns, company, entry, row, rule, now)
+	elif status == RESCUING:
+		# A month of the term on the debt; at its end the plant is watched afresh.
+		ns.debt_eur_bn += float(row["rescue_eur_bn_per_year"]) / 12.0
+		row["months_left"] = int(row["months_left"]) - 1
+		if int(row["months_left"]) <= 0:
+			entry.erase("closure_watch")
+			_end(row, "rescued", now)
 	elif status == SEARCHING:
 		row["months_left"] = int(row["months_left"]) - 1
 		if int(row["months_left"]) > 0:
@@ -184,8 +203,11 @@ static func _may_announce(ns, company, entry: Dictionary, rule: Dictionary, now:
 	var row: Dictionary = entry.get("closure", {})
 	if row.is_empty():
 		return true
-	if [ANNOUNCED, SEARCHING].has(String(row["status"])):
+	if [ANNOUNCED, SEARCHING, RESCUING].has(String(row["status"])):
 		return false
+	# A rescue's term was the wait: its plant is re-evaluated on the next full window.
+	if String(row["status"]) == "rescued":
+		return true
 	return now - int(row["ended"]) >= int(rule["cooldown_months"])
 
 
@@ -226,6 +248,11 @@ static func _search_eur_bn(ns, company, rule: Dictionary) -> float:
 	return K.BUYER_SEARCH_LOSS * Companies.output_eur_bn(ns, company) * float(rule["cut"]) * float(K.BUYER_MONTHS) / 12.0
 
 
+## The rescue's yearly price: RESCUE_EUR_PER_JOB_YEAR for each job the closure would cut.
+static func _rescue_eur_bn_per_year(row: Dictionary) -> float:
+	return float(row["jobs"]) * K.RESCUE_EUR_PER_JOB_YEAR / 1e9
+
+
 ## The sweetener on the buyer's price: BUYER_SWEETENER of the plant's value.
 static func _sweetener_eur_bn(ns, company, rule: Dictionary) -> float:
 	return K.BUYER_SWEETENER * Companies.value_eur_bn(ns, company) * float(rule["cut"])
@@ -238,12 +265,6 @@ static func _end(row: Dictionary, status: String, now: int) -> void:
 
 static func _gone(entry: Dictionary) -> bool:
 	return bool(entry.get("failed", false)) or float(entry.get("share", 1.0)) <= 0.0
-
-
-## The firm's subsidy verbs it can take now (Companies.available's own door).
-static func _rescues(state, ns, loader, company_id: String) -> Array:
-	return Companies.available(state, ns, loader.company_actions, company_id, loader).filter(func(a) -> bool:
-		return String((a.effects.get("company", {}) as Dictionary).get("op", "")) == RESCUE_OP)
 
 
 ## {row, entry, company} for a closure id, {} when no major holds it.

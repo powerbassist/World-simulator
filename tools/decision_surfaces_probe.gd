@@ -87,7 +87,7 @@ extends SceneTree
 ##   closure    a plant closure announced (src/sim/closures.gd; the month it is
 ##              announced, and its deadline month); answers = Closures.answers():
 ##              let it close (the rule's bloc offsets), seek a buyer (none), and
-##              the firm's subsidy verbs (their bloc offsets) (V5.3 a);
+##              rescue the plant for its term (none) (V5.3 a);
 ##   process    a process's ask (src/sim/process_asks.gd), the month it is posted;
 ##              answers = each answer's debt booked once and bloc offsets (V5.3 a);
 ##   programme  the term-start offer (Programme.available non-empty after a month
@@ -277,7 +277,8 @@ func _act(state, ns) -> void:
 				break
 	for request in Audiences.pending(ns):
 		Audiences.delegate(state, ns, _loader, String(request["id"]))
-	# V5.3 a: an announced closure, rescued when the firm has a verb, else a buyer sought.
+	# V5.3 a: an announced closure is rescued (the plant rescue is always on offer since
+	# QA's call on #270; before, only when the firm had a subsidy verb, else a buyer).
 	for row in Closures.open(ns):
 		if String(row["status"]) != Closures.ANNOUNCED:
 			continue

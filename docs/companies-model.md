@@ -1434,8 +1434,16 @@ almost never. `src/sim/closures.gd`, step `Closures` right after `Industry`.
     the rule's `bloc_offset` lands;
   - find a buyer: a search of `BUYER_MONTHS`; on its seed (`BUYER_CHANCE`) a buyer
     keeps the plant, else it shuts;
-  - rescue: the firm's own subsidy verbs (op `subsidise`, through
-    `Companies.execute`), the spec's "a subsidy".
+  - rescue the plant (QA's call on #270, the parent's ruling: priced on the plant,
+    not on the firm's subsidy verbs, whose bill read EUR 5 to 9 bn a year to keep a
+    720-job plant): `RESCUE_EUR_PER_JOB_YEAR` (60,000, a stand-in, about a worker's
+    yearly labour cost) for each job the closure would cut, for `RESCUE_MONTHS` (36),
+    on the debt month by month -- a job kept costs EUR 180,000 over the term, inside
+    the EUR 90,000 to 950,000 QA found for a job a buyer keeps. The plant announces
+    nothing during its term and is watched afresh after it, on a new window with no
+    cooldown. `Closures.rescues()` lists the terms running. No answer is dominated on
+    (money over the deal, jobs lost now, jobs not secured for good): close is the
+    cheapest, the rescue the surest now, the buyer the only lasting answer.
   Unanswered, the closure lands two months (`ANSWER_MONTHS`) after it is announced.
 - **The numbers are data:** `data/industry/closures.json` (`loader.closure_rule`,
   `CompaniesLoader.load_closure_rule`), never per firm. The values there are Systems'
