@@ -50,6 +50,11 @@ func _process(_delta: float) -> bool:
 			_press(_with_meta("closure_answer", "buyer"))
 		6:
 			_check_searching()
+			_announce_second()
+		8:
+			_press(_with_meta("closure_answer", "rescue"))
+		10:
+			_check_rescue()
 			_finish()
 	return false
 
@@ -135,6 +140,37 @@ func _money_of(answer: Dictionary) -> String:
 	var months := int(answer["months"])
 	return Strings.tn("%s a year for %d month", "%s a year for %d months", months) % [
 		EffectsStrip.sum_text(-float(answer["debt_eur_bn_per_year"])), months]
+
+
+## A second closure, on the second major, to be rescued (#277).
+func _announce_second() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var second = Companies.majors_of(_main._loader, ns.id)[1]
+	Closures._announce(ns, second, ns.companies[second.id], 0.2, _main._loader.closure_rule, state.year * 12 + state.month)
+	_panel.mark_dirty()
+
+
+## A rescue running is seen (the parent's call on #277): its line on In progress with
+## its months left, and its bill on the Budget's own line once the month books it.
+func _check_rescue() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var rescues := Closures.rescues(ns)
+	if rescues.size() != 1:
+		_fail("rescue pressed: %d rescues running, expected 1" % rescues.size())
+		return
+	var line = _with_meta("rescue", String(rescues[0]["company_id"]))
+	var left := int(rescues[0]["months_left"])
+	if line == null or not (line as Label).text.contains(Strings.tn("%d month left", "%d months left", left) % left):
+		_fail("rescue: no In progress line with its %d months left (%s)" % [left, line.text if line != null else "<none>"])
+	Closures.tick_month(state, _main._loader)
+	var budget = _main._budget_panel
+	budget.mark_dirty()
+	budget._refresh()
+	var cells: Array = budget._figures.get("rescues", [])
+	if cells.is_empty() or String(cells[0]) == "—":
+		_fail("budget: no plant rescue line with a rescue billed (%s)" % [cells])
 
 
 func _check_searching() -> void:

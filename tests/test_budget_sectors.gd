@@ -85,7 +85,7 @@ func _process(_delta: float) -> bool:
 			# ... and its job starts from a copy with the move on it, not the live state.
 			var job = _panel._forecast._proposed_job()
 			var drafted_shares := Sectors.shares(BudgetSectors.drafted(_panel, _main._state.player()), _main._loader, LINE)
-			var projected := Sectors.shares(job.state.player(), _main._loader, LINE)
+			var projected := Sectors.shares((job.sim if job.sim != null else job.state).player(), _main._loader, LINE)
 			if job.pending.has("_share_moves") or absf(float(projected["prevention"]) - float(drafted_shares["prevention"])) > 0.0001:
 				_fail("forecast: the projection starts from %s, the draft is %s" % [projected, drafted_shares])
 			# And the tile's heading reads the drafted lever, like the lever above it.
