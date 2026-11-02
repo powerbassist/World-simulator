@@ -127,6 +127,9 @@ static func process_question(state, loader, ns, company, action) -> String:
 		"full_nationalisation":
 			lines.append(Strings.t("%d months of the offer, then the transfer; the state takes control after a %d-month transition.") % [
 				CK.PROCESS_OFFER_MONTHS, CK.PROCESS_TRANSITION_MONTHS])
+			# V5.3 a, the author's call on #272: a part-held firm is bought outright.
+			if float(est.get("share_bought", 1.0)) < 1.0:
+				lines.append(Strings.t("The state buys the remaining %d %%.") % roundi(100.0 * float(est["share_bought"])))
 		"break_up":
 			lines.append(Strings.t("The competition authority investigates for %d to %d months, then rules: a %d to %d %% chance it orders the break-up.") % [
 				CK.PROCESS_INVESTIGATION_MONTHS.x, CK.PROCESS_INVESTIGATION_MONTHS.y,

@@ -1302,8 +1302,16 @@ vote on, the cooldown after a defeat). `Companies.available()` never offers a
 `requires_law` verb as an executive act; it is offered only through the law's door
 (`by_law`), and the law's door offers nothing else. The minority stake stays an
 executive act, as a state holding agency buys stakes without a law, and it cannot
-stack: `state_owned` reads 1 for any holding, so only a privatisation bill takes a
-firm back to 0 and only a nationalisation bill takes it to 1.0.
+stack: it needs `state_share == 0`, so only a privatisation bill takes a firm back
+to 0 and only a nationalisation bill takes it to 1.0. Since the author's call on
+#272 ("racheter le reste") the nationalisation needs only `state_share < 1`: a
+part-held firm (a stake, or an authored state share) is bought outright, the state
+paying `(1 - held) x value x (1 + premium)` for the rest, and its transition's
+output loss is scaled by `(1 - held)` (`process_drag.gd`); the estimate's
+`share_bought` is what the strip prints. Its bloc move scales the same way (the
+parent's call on #275, `ProcessAsks.moved()`): buying the last 60 % moves every bloc
+0.6 x what buying a private firm does, at the offer, at the transfer, in the ask's
+answers and in the U-turn a stopped offer costs.
 
 `src/sim/bills.gd` builds one ready bill per eligible firm, id
 `ownership:<action_id>:<company_id>`: an ordinary law at a simple majority,
@@ -1313,7 +1321,7 @@ holds is found again on its day and after a load. `Legislature.propose()`'s lega
 scan reads `Bills.open()`, so the bill divides, is held, is forced by Article 49.3 and
 cools down like any law. Adopted, it runs the verb through the law's door: the price
 on the debt and the action's own `bloc_offset`, once. A firm no longer eligible on
-the day (a stake taken while the bill was held) buys nothing, and
+the day (wholly held by then, or in a process) buys nothing, and
 `ns.last_company_result` records the refusal. Not ledgered: an ownership law is not
 repealed, the sale is its own bill. The court's reach reads no ownership channel, so
 the court never strikes one; recorded, not built. The design and the bands:
