@@ -104,8 +104,11 @@ extends SceneTree
 ## on its arrows. Subjects for the repeat rule: event|id, request|person (state =
 ## the want), bid|firm (state = the bidder), failing|firm, closure|id, programme|term.
 ## In the ACTIVE regime the player answers every announced closure in the month
-## after it, the way an engaged player would: a rescue verb when the firm has one,
-## else a buyer search (a modelled habit, not the game's rule).
+## after it, the way an engaged player would, by _closure_pick (the parent's call 5
+## on #277): the answer that keeps a job for the least expected money (the rescue's
+## term per job, a buyer's search and chance-weighted sweetener per job a sale
+## keeps) if it is at most CLOSURE_MAX_EUR_PER_JOB, else it lets the plant close (a
+## modelled habit, not the game's rule).
 ## V5.3 a, the parent's call on the asks PR: in `--density` the ACTIVE player also
 ## opens processes, as an engaged player would -- a modelled habit, not the game's
 ## rule: at most one a year, only when a reason is on the desk (a foreign bid on a
