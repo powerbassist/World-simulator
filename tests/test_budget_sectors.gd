@@ -63,6 +63,11 @@ func _check_tile() -> void:
 	var ns = _main._state.player()
 	var loader = _main._loader
 	var shares := Sectors.shares(ns, loader, LINE)
+	# The heading's money: the line's share of GDP in bn (QA's B8 on #278).
+	var pct := float(ns.spending_pct_gdp[LINE])
+	var bn := (Num.f(pct / 100.0 * float(ns.gdp_eur_bn), 0) + " bn").to_upper()
+	if not _text_under(_panel._sector_box).contains(bn):
+		_fail("tile: the heading does not carry the line's %s" % bn)
 	for sector in Sectors.sectors_of(loader, LINE):
 		var id := String(sector["id"])
 		var row = _with_meta("sector", id)
@@ -131,6 +136,12 @@ func _check_strip(from_id: String, to_id: String, amount: float) -> void:
 			_fail("strip: '%s' does not carry %s after the move (%s)" % [text, id, after])
 	if strip.money_label.text != EffectsStrip.cost_text(0.0):
 		_fail("strip: a reallocation reads '%s', it moves no money" % strip.money_label.text)
+	# The channel's figure, sign included (QA's B4 on #278): the copy's factor over the
+	# live one's.
+	var ns = _main._state.player()
+	var change := 100.0 * (Sectors.factor(cns, LINE) / Sectors.factor(ns, LINE) - 1.0)
+	if not text.contains(": %s %%." % Num.fs(change, 1)):
+		_fail("strip: '%s' does not carry the channel's change %s %%" % [text, Num.fs(change, 1)])
 
 
 func _check_moved(from_id: String, to_id: String, amount: float) -> void:
