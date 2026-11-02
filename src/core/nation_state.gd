@@ -1536,9 +1536,10 @@ var sector_shares := {}
 ## path re-derives it (Sectors.rebuild) from `sector_shares` and data/domains/, so a
 ## save cannot disagree with the rows. Copied deep, so a projection keeps it.
 var sector_factor := {}
-## sector id -> the region the player put first for it (Sectors.set_priority, one per
-## sector). It moves money between regions, never a line's total. absent_ok, no bump:
-## no save before V5.3 a held a priority, so absent is "none", the truth.
+## sector id -> {region_id, pts}: the region the player put first for it and the term
+## its money adds to that region's growth deviation, fixed when set (Sectors.set_priority,
+## one per sector; regions.gd reads it). It moves money between regions, never a line's
+## total. absent_ok, no bump: no save before V5.3 a held a priority, so absent is "none".
 var sector_priorities := {}
 
 # --- Regional development funds (V5.3 a) -------------------------------------------
