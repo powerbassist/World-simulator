@@ -273,6 +273,10 @@ func _check_ask() -> void:
 		_fail("ask: %d asks in the register, expected 1" % asks.size())
 		return
 	for option in asks[0]["ask"]["answers"]:
+		# #280's counters: one row of chips, the picked chip's figures in the strip.
+		if option.has("counter"):
+			_check_counter(option)
+			continue
 		var button = _button_with_meta("answer_id", String(option["id"]))
 		if button == null:
 			_fail("ask: no '%s' answer on screen" % option["id"])
@@ -280,15 +284,6 @@ func _check_ask() -> void:
 		var money: Label = button.get_meta("money_label")
 		if money.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])):
 			_fail("ask: '%s' reads '%s', it books %s" % [option["id"], money.text, EffectsStrip.cost_text(-float(option["debt_eur_bn"]))])
-		# #280's counters: named by their percentage, their chances the shown range.
-		if option.has("counter"):
-			var counter := roundi(100.0 * float(option["counter"]))
-			if (button as Button).text != Strings.t("Counter %d %%") % counter:
-				_fail("ask: the %d %% counter is labelled '%s'" % [counter, button.text])
-			var odds: Label = button.get_meta("odds_label") if button.has_meta("odds_label") else null
-			var range_text := "%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))]
-			if odds == null or not odds.is_visible_in_tree() or not odds.text.contains(range_text):
-				_fail("ask: the %d %% counter does not show its range %s (%s)" % [counter, range_text, odds.text if odds != null else "<none>"])
 	if not asks[0]["ask"]["answers"].any(func(o): return (o as Dictionary).has("counter")):
 		_fail("premise: the stake's price ask carries no counter (#280)")
 	for b in _visible_with_meta("process_id"):
@@ -299,6 +294,31 @@ func _check_ask() -> void:
 	var head = _button_with_meta("sector", _sector)
 	if head == null or not _text_under(head.get_parent()).contains(_panel.tr("Decision due")):
 		_fail("ask: the %s card does not say a decision is due" % _sector)
+
+
+## A counter's chip, pressed: the strip under the row reads its price, its shown
+## odds range (never the drawn odds) and its walk-away risk; one button makes it.
+func _check_counter(option: Dictionary) -> void:
+	var counter := roundi(100.0 * float(option["counter"]))
+	var chip = _button_with_meta("counter_id", String(option["id"]))
+	if chip == null or (chip as Button).text != Strings.t("%d %%") % counter:
+		_fail("counter: no '%d %%' chip (%s)" % [counter, chip.text if chip != null else "<none>"])
+		return
+	(chip as Button).pressed.emit()
+	var strip = null
+	for node in _panel._progress.find_children("*", "", true, false):
+		if node.has_meta("counter_strip"):
+			strip = node
+	if strip == null:
+		_fail("counter: no strip under the chips")
+		return
+	var text := _text_under(strip)
+	var range_text := "%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))]
+	var walk := "%d %% of refusals" % roundi(100.0 * float(option["walk"]))
+	if strip.money_label.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])) or not text.contains(range_text) or not text.contains(walk):
+		_fail("counter %d %%: the strip reads '%s', expected its price, %s and %s" % [counter, text, range_text, walk])
+	if _button_with_meta("answer_id", "counter") == null:
+		_fail("counter: no button makes the picked counter")
 
 
 func _check_answered() -> void:

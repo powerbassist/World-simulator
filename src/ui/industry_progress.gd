@@ -129,8 +129,12 @@ static func build(parent: Control, state, loader, ns, stop: Callable, answer: Ca
 static func _ask(box: Control, process_id: String, ask: Dictionary, what: String, answer: Callable) -> void:
 	var question := PanelKit.plain_line(box, Strings.t(String(QUESTION.get(String(ask["kind"]), ""))), PanelKit.Tone.PLAIN)
 	question.theme_type_variation = UiTheme.WARN_TEXT
+	var counters: Array = []
 	for option in ask["answers"]:
 		var id := String(option["id"])
+		if option.has("counter"):
+			counters.append(option)
+			continue
 		var flow := PanelKit.buttons(box)
 		var button := PanelKit.sized(Button.new())
 		button.text = _label(id)
@@ -146,14 +150,46 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 		var who := EffectsStrip.who_text(option["bloc_offset"])
 		if who != "":
 			PanelKit.plain_line(flow, who).autowrap_mode = TextServer.AUTOWRAP_OFF
-		if option.has("counter"):
-			# A counter's chances, as the sim shows them: the range, NEVER the drawn odds
-			# (#280), and what a refusal brings.
-			var odds := PanelKit.plain_line(flow, Strings.t("A %d to %d %% chance they accept; refused, the old price stands or they walk away (%d %% of refusals).") % [
-				roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"])), roundi(100.0 * float(option["walk"]))])
-			odds.autowrap_mode = TextServer.AUTOWRAP_OFF
-			button.set_meta("odds_label", odds)
+	if not counters.is_empty():
+		_counters(box, process_id, counters, what, answer)
 	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % _label(String(ask["default"])))
+
+
+## #280's counters as ONE row (the parent's design): a chip per counter (5, 10, 15 %),
+## the picked chip's strip under the row -- the countered price, the blocs, its chances
+## as the sim shows them (the range, NEVER the drawn odds) and the walk-away risk --
+## and one button that makes the picked counter. The picks are read, then answered.
+static func _counters(box: Control, process_id: String, counters: Array, what: String, answer: Callable) -> void:
+	var row := PanelKit.buttons(box)
+	PanelKit.plain_line(row, Strings.t("Counter"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
+	var group := ButtonGroup.new()
+	var strip := EffectsStrip.new()
+	strip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	strip.custom_minimum_size.x = 520
+	strip.set_meta("counter_strip", true)
+	var go := PanelKit.sized(Button.new())
+	go.text = Strings.t("Make the counter")
+	go.set_meta("answer_id", "counter")
+	var picked := [String(counters[0]["id"])]
+	var show := func(option: Dictionary) -> void:
+		picked[0] = String(option["id"])
+		strip.show_lines(Strings.t("Treasury"), EffectsStrip.cost_text(-float(option["debt_eur_bn"])), -float(option["debt_eur_bn"]),
+			EffectsStrip.who_text(option["bloc_offset"]),
+			Strings.t("A %d to %d %% chance they accept. Refused, the old price stands, or they walk away: %d %% of refusals.") % [
+				roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"])), roundi(100.0 * float(option["walk"]))])
+	for option in counters:
+		var chip := PanelKit.sized(Button.new())
+		chip.text = Strings.t("%d %%") % roundi(100.0 * float(option["counter"]))
+		chip.toggle_mode = true
+		chip.button_group = group
+		chip.button_pressed = String(option["id"]) == picked[0]
+		chip.set_meta("counter_id", String(option["id"]))
+		chip.pressed.connect(func() -> void: show.call(option))
+		row.add_child(chip)
+	box.add_child(strip)
+	box.add_child(go)
+	go.pressed.connect(func() -> void: answer.call(process_id, String(picked[0]), what))
+	show.call(counters[0])
 
 
 ## An answer's words: the table's, or a counter's ("Counter 10 %", #280's negotiate_N).
