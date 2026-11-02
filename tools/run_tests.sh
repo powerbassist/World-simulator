@@ -98,6 +98,7 @@ tests=(
   tests/test_domains.gd
   tests/test_sector_channels.gd
   tests/test_process_asks.gd
+  tests/test_negotiation.gd
   # V5.3 a: the plant closures (B7's industry supply).
   tests/test_closures.gd
   # V4.7a: the two-tier register -- tiers, sparse fallback reads, and the
