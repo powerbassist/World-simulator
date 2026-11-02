@@ -113,6 +113,41 @@ static func resolve_negotiation(ns, row: Dictionary, action, now: int) -> bool:
 	return true
 
 
+## What the month end the player just crossed did to the processes, said for that month
+## only (the parent's call on #280: a walk-out, like any end, is otherwise silent). The
+## tick runs after the clock moves (world_month.gd), so a row stamped by it carries the
+## month now: closed now, or a counter answered now on a process still running (back,
+## or an accepted offer going into its transition). One line per row, as
+## {id, company_id, action_id, outcome, month}; outcome is the closing status, with
+## "done" said as accepted when a counter was accepted this month and landed otherwise
+## (a transition that ends a year after its accepted offer lands), or the counter's
+## answer (back, accepted) on a row still open. A walk adds `side` (Negotiation.side_of:
+## the seller or the buyers walked) and `hold_ends`, the FIRST month the walked side's
+## verbs open again (Negotiation.cooldown). A stop is stamped by the press, in its month.
+static func closed_last_month(state, ns) -> Array:
+	var now := int(state.year) * 12 + int(state.month)
+	var out: Array = []
+	for row in ns.processes:
+		var record: Dictionary = row.get("negotiation", {})
+		var answered := int(record.get("month", -1)) == now
+		var outcome := ""
+		if int(row["closed"]) == now:
+			outcome = String(row["status"])
+			if outcome == "done":
+				outcome = "accepted" if answered and String(record["outcome"]) == "accepted" else "landed"
+		elif answered and String(row["status"]) == "open":
+			outcome = String(record["outcome"])
+		if outcome == "":
+			continue
+		var line := {"id": String(row["id"]), "company_id": String(row["company_id"]),
+			"action_id": String(row["action_id"]), "outcome": outcome, "month": now}
+		if outcome == "walked":
+			line["side"] = Negotiation.side_of(String(row["action_id"]))
+			line["hold_ends"] = int(row["closed"]) + K.NEGOTIATE_WALK_COOLDOWN_MONTHS
+		out.append(line)
+	return out
+
+
 ## What stopping a price stage costs now (Processes.stop_price): the U-turn, and at
 ## a nationalisation's offer the break fee too. Refused while a counter is answered:
 ## Budget.project() runs the seeded draw on its copy, so the forecast shows the answer

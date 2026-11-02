@@ -48,6 +48,7 @@ func _init() -> void:
 	_test_a_price_ask_offers_three_counters()
 	_test_a_counter_is_accepted_comes_back_or_walks()
 	_test_a_sale_that_comes_back_keeps_its_old_price()
+	_test_an_offer_and_a_sale_land_at_their_counter_or_old_price()
 	_test_the_cycle_moves_a_purchase_counter_not_a_sale()
 	_test_no_answer_is_dominated()
 	_test_a_counter_survives_a_save()
@@ -470,8 +471,8 @@ func _check_counters(ns, row: Dictionary, sale: bool, label: String) -> void:
 ## A counter is answered at the ask's due month on its own seed: accepted lands the
 ## countered price inside the strip's range; back runs one more month at the old price
 ## and asks again without the counters; walked ends the deal with nothing paid, no
-## U-turn (the start's half of the bloc move stays) and the firm's negotiable verbs
-## held for 24 months (the parent's call 1, pinned as the literal).
+## U-turn (the start's half of the bloc move stays) and the firm's purchases held for
+## 24 months (the parent's call 1, pinned as the literal; _check_hold).
 func _test_a_counter_is_accepted_comes_back_or_walks() -> void:
 	var seen := {}
 	for trial in 60:
@@ -524,17 +525,7 @@ func _test_a_counter_is_accepted_comes_back_or_walks() -> void:
 				if String(row["status"]) != "walked" or float(ns.debt_eur_bn) != debt or Companies.state_share_of(ns, firm) != 0.0 \
 						or ns.bloc_offset != blocs:
 					_fail("a walked %s is %s, paid %.4f, or moved the blocs" % [id, row["status"], float(ns.debt_eur_bn) - debt])
-				var now := _now(state)
-				var why := Processes.refusal(state, ns, firm, _action("minority_stake"))
-				if why == "" or why == Processes.SETTLED or why == Processes.BUSY \
-						or Processes.refusal(state, ns, firm, _action("full_nationalisation")) != why:
-					_fail("after a walk the firm's purchases are refused with '%s'" % why)
-				_set_now(state, now + 23)
-				if Processes.refusal(state, ns, firm, _action("minority_stake")) == "":
-					_fail("the walk's cooldown ended before 24 months")
-				_set_now(state, now + 24)
-				if Processes.refusal(state, ns, firm, _action("minority_stake")) != "":
-					_fail("the walk's cooldown outlived its 24 months")
+				_check_hold(state, ns, row, "the stake's walked %s" % id)
 		if seen.size() == 3:
 			break
 	if seen.size() < 3:
@@ -569,6 +560,147 @@ func _test_a_sale_that_comes_back_keeps_its_old_price() -> void:
 			_fail("a sale that came back re-priced its bid: rate %.4f -> %.4f, accept %s" % [rate, float(row["rate"]), deal])
 		return
 	_fail("60 seeded trials drew no sale counter that comes back")
+
+
+## QA on #280: the counter's price and the strips' widening hold on the offer and the
+## sale as on the stake. On each verb seeded trials find each outcome: accepted books
+## the counter's price inside the strip's range (A4) -- on the offer the largest
+## counter, the one that books under the premium's floor; back books the old price a
+## month later, and a sale that comes back and is then held sells at a new bid, its
+## longest road; every deal run to its end closes inside the strip's months (A3). A walk
+## holds its own side's verbs only (_check_hold). Each outcome is said for one month.
+func _test_an_offer_and_a_sale_land_at_their_counter_or_old_price() -> void:
+	for kind in ["full_nationalisation", "privatisation"]:
+		var legs := {}
+		for trial in 120:
+			var row: Dictionary = _at_the_price_ask(kind, trial)[2]
+			for id in NEGOTIATE_IDS:
+				var a := Asks.answer_of(row, id)
+				if a.is_empty():
+					_fail("the %s's ask offers no %s" % [kind, id])
+					return
+				var outcome := Negotiation.draw(float(a["odds"]), Negotiation.key(row, id), int(row["ask"]["due"]))
+				if legs.has(outcome) or (outcome == "accepted" and kind == "full_nationalisation" and id != "negotiate_15"):
+					continue
+				legs[outcome] = true
+				_check_leg(kind, trial, id, outcome, "accept")
+				if outcome == "back" and kind == "privatisation":
+					_check_leg(kind, trial, id, outcome, "hold")
+			if legs.size() == 3:
+				break
+		if legs.size() < 3:
+			_fail("120 seeded %s trials drew only %s" % [kind, legs.keys()])
+
+
+## [state, ns, row]: `kind` adopted by its bill in `trial`'s month and run to its price
+## ask (a sale of a firm the state owns whole).
+func _at_the_price_ask(kind: String, trial: int) -> Array:
+	var state = _new_state()
+	state.month = 1 + trial % 12
+	state.year = 2026 + floori(trial / 12.0)
+	var ns = state.player()
+	var firm := _big(ns)
+	if kind == "privatisation":
+		(ns.companies[firm] as Dictionary)["state_share"] = 1.0
+	Bills.adopt(state, ns, _loader, {"action_id": kind, "company_id": firm})
+	var months := K.PROCESS_SALE_MONTHS if kind == "privatisation" else K.PROCESS_OFFER_MONTHS
+	for i in range(months - 1):
+		_month(state)
+	return [state, ns, _row(ns, firm)]
+
+
+## One seeded leg: `kind` on `trial`'s month, `id` answered at its price ask and drawn
+## `outcome`; after a "back", `then` answers the ask posted again.
+func _check_leg(kind: String, trial: int, id: String, outcome: String, then: String) -> void:
+	var at: Array = _at_the_price_ask(kind, trial)
+	var state = at[0]
+	var ns = at[1]
+	var row: Dictionary = at[2]
+	var label := "the %s's %s %s (then %s)" % [kind, id, outcome, then]
+	var a := Asks.answer_of(row, id)
+	var debt := float(ns.debt_eur_bn)
+	Processes.answer(state, ns, _loader, String(row["id"]), id)
+	_month(state)
+	if String((row.get("negotiation", {}) as Dictionary).get("outcome", "")) != outcome:
+		_fail("%s: the row drew %s" % [label, row.get("negotiation")])
+		return
+	if String(_said(state, ns, row).get("outcome", "")) != outcome:
+		_fail("%s: closed_last_month() says %s" % [label, _said(state, ns, row)])
+	match outcome:
+		"accepted":
+			var paid := float(ns.debt_eur_bn) - debt
+			if not is_equal_approx(paid, float(a["debt_eur_bn"])):
+				_fail("%s booked %.4f, not the counter's %.4f" % [label, paid, float(a["debt_eur_bn"])])
+			if paid < float(row["price_lo"]) - 1e-9 or paid > float(row["price_hi"]) + 1e-9:
+				_fail("A4: %s booked %.4f, outside the strip's %.4f..%.4f" % [label, paid, float(row["price_lo"]), float(row["price_hi"])])
+		"back":
+			if then == "hold":
+				Processes.answer(state, ns, _loader, String(row["id"]), "hold")
+			debt = float(ns.debt_eur_bn)
+			_month(state)
+			var paid := float(ns.debt_eur_bn) - debt
+			if then == "accept" and not is_equal_approx(paid, float(a["back_debt_eur_bn"])):
+				_fail("%s booked %.4f a month later, not the old price %.4f" % [label, paid, float(a["back_debt_eur_bn"])])
+		"walked":
+			_check_hold(state, ns, row, label)
+			return
+	var ran := false
+	for i in K.PROCESS_TRANSITION_MONTHS + K.PROCESS_HOLD_MONTHS + 2:
+		if String(row["status"]) != "open":
+			break
+		_month(state)
+		ran = true
+	var months := int(row["closed"]) - int(row["started"])
+	if String(row["status"]) != "done" or months < int(row["months_lo"]) or months > int(row["months_hi"]):
+		_fail("A3: %s ended %s after %d months against %s..%s" % [label, row["status"], months, row["months_lo"], row["months_hi"]])
+	# A landing after the counter's month is said as landed, not accepted again.
+	if ran and String(_said(state, ns, row).get("outcome", "")) != "landed":
+		_fail("%s: its landing is said as %s" % [label, _said(state, ns, row)])
+
+
+## A walk holds the walked side's verbs on the firm -- the purchases after the seller
+## walks, the sale after the buyers do -- and only them (the parent's ruling on #280),
+## until the line's hold_ends, the first month they open again: 24 months on (the
+## parent's call 1, pinned as the literal). The line is said in the walk's month only.
+func _check_hold(state, ns, row: Dictionary, label: String) -> void:
+	var said := _said(state, ns, row)
+	var sale := String(row["action_id"]) == "privatisation"
+	var closed := int(row["closed"])
+	if String(row["status"]) != "walked" or String(said.get("outcome", "")) != "walked" \
+			or String(said.get("side", "")) != ("buyers" if sale else "seller") or int(said.get("hold_ends", -1)) != closed + 24:
+		_fail("%s: the row is %s, said %s" % [label, row["status"], said])
+		return
+	var held: Array = ["privatisation"] if sale else ["minority_stake", "full_nationalisation"]
+	var free: Array = ["minority_stake", "full_nationalisation"] if sale else ["privatisation"]
+	var firm := String(row["company_id"])
+	for now in [closed, closed + 23, closed + 24]:
+		_set_now(state, now)
+		var why := (Negotiation.BUYERS_WALKED if sale else Negotiation.SELLER_WALKED) if now < closed + 24 else ""
+		for verb in held:
+			if Processes.refusal(state, ns, firm, _action(verb)) != why:
+				_fail("%s: %d months on, %s is refused with '%s', not '%s'" % [label, now - closed, verb, Processes.refusal(state, ns, firm, _action(verb)), why])
+		for verb in free:
+			if Processes.refusal(state, ns, firm, _action(verb)) != "":
+				_fail("%s: the other side's %s is held: '%s'" % [label, verb, Processes.refusal(state, ns, firm, _action(verb))])
+	_set_now(state, closed + 1)
+	if not _said(state, ns, row).is_empty():
+		_fail("%s: the walk is still said a month later" % label)
+	_set_now(state, closed)
+
+
+## closed_last_month()'s line for `row` now, {} when it says nothing of it.
+func _said(state, ns, row: Dictionary) -> Dictionary:
+	var out := {}
+	for line in Asks.closed_last_month(state, ns):
+		if String(line["id"]) != String(row["id"]):
+			continue
+		if not out.is_empty():
+			_fail("closed_last_month() says %s twice" % row["id"])
+		out = line
+		if int(out["month"]) != _now(state) or String(out["company_id"]) != String(row["company_id"]) \
+				or String(out["action_id"]) != String(row["action_id"]):
+			_fail("closed_last_month()'s line %s does not match its row" % [out])
+	return out
 
 
 ## The other side's strength follows the cycle on a purchase (a seller is strong in a
