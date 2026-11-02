@@ -178,12 +178,16 @@ func _proposed_job():
 	var pending := _want.duplicate()
 	var moves: Array = pending.get(MOVES_KEY, [])
 	pending.erase(MOVES_KEY)
-	var base = _state
+	var job = Budget.projection(_state, pending, _months, _loader)
 	if not moves.is_empty():
-		base = _state.duplicate_state()
+		# ONE copy (QA's RECORD on #278: a pre-copy then the job's own was two world
+		# copies in a frame): the job's first step done here, Budget.projection_step's
+		# own two lines, then the moves on that copy, after the levers as Commit books.
+		job.sim = _state.duplicate_state()
+		Budget.commit(job.sim, pending)
 		for m in moves:
-			Sectors.move_share(base.player(), _loader, String(m["line"]), String(m["from"]), String(m["to"]), float(m["amount"]))
-	return Budget.projection(base, pending, _months, _loader)
+			Sectors.move_share(job.sim.player(), _loader, String(m["line"]), String(m["from"]), String(m["to"]), float(m["amount"]))
+	return job
 
 
 ## The three forecast rows, key -> [now, proposed] text: a range from the last

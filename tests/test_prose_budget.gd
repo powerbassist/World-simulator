@@ -57,7 +57,7 @@ const PENDING := {}
 const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250, "events": 95, "commodities": 210,
 	"companies": 145}
 const TOTAL_PENDING := {
-	"budget": 109, "calendar": 42, "campaign": 140,
+	"budget": 113, "calendar": 42, "campaign": 140,
 	"diplomacy": 22, "economy": 115, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106, "tax": 24,
@@ -70,8 +70,11 @@ const TOTAL_PENDING := {
 ## spec 3.2 asks for, 9 words on a tab still at 22 of its 145. A second, 2943 -> 2947
 ## (the parent's call): the Budget's "of which regional aid" line, the development
 ## fund's money on a line of its own (spec 3.3 (a)), "—" at rest like its siblings
-## rather than a row that comes and goes; the Budget's held total 105 -> 109.
-const TOTAL_SUM_CEILING := 2947
+## rather than a row that comes and goes; the Budget's held total 105 -> 109. A
+## third, 2947 -> 2951, the same shape (#277's "of which plant rescues"; 109 -> 113).
+## The parent's standing rule since: a Budget row of that shape (one named line, four
+## words, "—" at rest) rises with no call, said in its PR body.
+const TOTAL_SUM_CEILING := 2951
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
