@@ -116,8 +116,8 @@ static func trend_deviation_pct(ns, region_list: Array, region_id: String, acces
 ## was fixed at the fund's start, so the strip's figure is the booked one. It enters
 ## the deviation through _sited_pct()'s arithmetic, zero-mean over the nation's
 ## output shares, for the sited term's reason: the national level is the fund's
-## SPENDING (a Budget line), and a term that also moved the national total would
-## count the money twice.
+## SPENDING (a Budget line whose change moves demand, src/sim/region_funds.gd), and
+## a term that also moved the national total would count the money twice.
 static func _fund_map(ns) -> Dictionary:
 	var out := {}
 	for row in ns.region_funds:

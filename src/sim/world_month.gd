@@ -67,6 +67,7 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
+const Closures = preload("res://src/sim/closures.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Investment = preload("res://src/sim/investment.gd")
@@ -96,7 +97,7 @@ const STEPS: Array[String] = [
 	"Division", "Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
 	"Media", "Programme", "Opinion", "History", "Calendar", "Discipline",
 	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Processes",
-	"Companies", "Industry", "Migration", "Investment", "Projects", "RegionFunds", "Campaign", "Pledges",
+	"Companies", "Industry", "Closures", "Migration", "Investment", "Projects", "RegionFunds", "Campaign", "Pledges",
 	"Demography", "Society", "Unrest", "Events", "Cabinet", "Characters",
 	"Audiences", "Elections",
 ]
@@ -345,6 +346,10 @@ static func _step(month: Month, step: String) -> Array:
 		# V4.7b: the autonomy machine ticks after Companies and before Migration.
 		"Industry":
 			Industry.tick_month(state, loader)
+		# V5.3 a: the plant closures read each major's output after the machine moved its
+		# share this month, and a plant that shuts cuts the payroll Migration reads next.
+		"Closures":
+			Closures.tick_month(state, loader)
 		# After Companies, because the city pull reads live headcount: a month in which a
 		# subsidy moved a firm's hiring should move people in the same month rather than
 		# the next one. After Economy for the same reason one level up -- the region pull
