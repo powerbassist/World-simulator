@@ -670,7 +670,8 @@ func _test_the_rate_is_the_sectors_and_falls_with_the_stake_held() -> void:
 	if String(_row(ns, firm).get("stage", "")) != "transition":
 		_fail("the stake fixture is not in its transition")
 		return
-	var want := -_rate_of(ns, firm) * 0.6 * 100.0 * Companies.output_eur_bn(ns, _company(ns, firm)) / float(ns.gdp_eur_bn) 		* EC.GAP_CLOSE * 12.0 / K.PROCESS_TRANSITION_MONTHS
+	var want := -_rate_of(ns, firm) * 0.6 * 100.0 * Companies.output_eur_bn(ns, _company(ns, firm)) / float(ns.gdp_eur_bn) \
+		* EC.GAP_CLOSE * 12.0 / K.PROCESS_TRANSITION_MONTHS
 	if not is_equal_approx(float(ns.process_drag_pct), want):
 		_fail("a 40 %%-held firm's transition drags %.6f, not %.6f (the stake held at the press)" % [float(ns.process_drag_pct), want])
 

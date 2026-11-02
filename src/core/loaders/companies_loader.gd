@@ -207,7 +207,7 @@ static func load_transition_rule(loader, path: String) -> void:
 ## The parse step, public so a test feeds it a dictionary: the rule, or {} with an error.
 static func parse_transition_rule(parsed, path: String, errors: Array[String]) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("output_loss_by_sector")) != TYPE_DICTIONARY:
-		errors.append("%s: missing or invalid object 'output_loss_by_sector'" % path)
+		errors.append("%s: missing or invalid object 'output_loss_by_sector'" % path.get_file())
 		return {}
 	var table: Dictionary = parsed["output_loss_by_sector"]
 	var out := {}
