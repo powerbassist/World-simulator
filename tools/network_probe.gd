@@ -506,7 +506,7 @@ func _table_e() -> void:
 	if absf(rho) <= 0.60:
 		print("  VERDICT (e): PASS -- the network term is not the mix term renamed")
 	else:
-		print("  VERDICT (e): FAIL -- delete NETWORK_BETA and _network_pct, ship the graph")
+		print("  VERDICT (e): FAIL -- delete NETWORK_BETA and the network term of Regions.deviation_by_region(), ship the graph")
 
 
 ## The specialisation-times-reach term at one region: the arithmetic

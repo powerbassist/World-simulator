@@ -194,6 +194,9 @@ static func set_priority(state, ns, loader, line: String, sector_id: String, reg
 	var why := _priority_refusal(state, ns, loader, line, sector_id, region_id)
 	if why != "":
 		return {"ok": false, "reason": why}
+	var first := priority_of(ns, sector_id)
+	if first != "" and first != region_id:
+		_rest(state, ns, sector_id, first)
 	ns.sector_priorities[sector_id] = _priority_row(state, ns, loader, line, sector_id, region_id)
 	_cap(state, ns)
 	return {"ok": true}
@@ -203,6 +206,7 @@ static func set_priority(state, ns, loader, line: String, sector_id: String, reg
 static func clear_priority(state, ns, sector_id: String) -> Dictionary:
 	if not ns.sector_priorities.has(sector_id):
 		return {"ok": false, "reason": "This sector has no regional priority."}
+	_rest(state, ns, sector_id, priority_of(ns, sector_id))
 	ns.sector_priorities.erase(sector_id)
 	_cap(state, ns)
 	return {"ok": true}
@@ -264,7 +268,8 @@ static func priority_estimate(state, ns, loader, line: String, sector_id: String
 		"pts": float(row["pts"]), "unemployment_now": float(now.get(region_id, 0.0)),
 		"unemployment_after": float(after.get(region_id, 0.0)),
 		"others_unemployment_now": _others_mean(ns, now, region_id),
-		"others_unemployment_after": _others_mean(ns, after, region_id)}
+		"others_unemployment_after": _others_mean(ns, after, region_id),
+		"renewals_left": DK.PRIORITY_MAX_RENEWALS - int(row["renewals"]), "rest_months": DK.PRIORITY_REST_MONTHS}
 
 
 ## The register's row for putting `region_id` first: the region and its term, fixed
@@ -279,7 +284,8 @@ static func _priority_row(state, ns, loader, line: String, sector_id: String, re
 		* float(shares(ns, loader, line).get(sector_id, 0.0)) * float(ns.gdp_eur_bn)
 	var money := DK.PRIORITY_UPLIFT * float(ns.region_pop_share.get(region_id, 0.0)) / _pop_total(ns) * spend
 	return {"region_id": region_id, "pts": DK.PRIORITY_BETA * 100.0 * money / Regions.output_eur_bn(ns, region_id),
-		"months_left": DK.PRIORITY_MONTHS, "ends": int(state.year) * 12 + int(state.month) + DK.PRIORITY_MONTHS}
+		"months_left": DK.PRIORITY_MONTHS, "ends": _now(state) + DK.PRIORITY_MONTHS,
+		"renewals": int((ns.sector_priorities[sector_id] as Dictionary).get("renewals", 0)) + 1 if priority_of(ns, sector_id) == region_id else 0}
 
 
 ## The priorities' month (the parent's TAKEs on #267): each counts its term down and
@@ -295,8 +301,21 @@ static func tick_month(state) -> void:
 		var row: Dictionary = ns.sector_priorities[sector_id]
 		row["months_left"] = int(row["months_left"]) - 1
 		if int(row["months_left"]) <= 0:
+			_rest(state, ns, String(sector_id), String(row["region_id"]))
 			ns.sector_priorities.erase(sector_id)
 	_cap(state, ns)
+
+
+## A stopped priority's region waits PRIORITY_REST_MONTHS before it may take the
+## sector first again (the parent's renewal call on #267).
+static func _rest(state, ns, sector_id: String, region_id: String) -> void:
+	var rest: Dictionary = ns.sector_priority_rest.get(sector_id, {})
+	rest[region_id] = _now(state) + DK.PRIORITY_REST_MONTHS
+	ns.sector_priority_rest[sector_id] = rest
+
+
+static func _now(state) -> int:
+	return int(state.year) * 12 + int(state.month)
 
 
 ## Call B on #267 (the parent's): a region's priorities lower its unemployment only as
@@ -378,6 +397,11 @@ static func _priority_refusal(state, ns, loader, line: String, sector_id: String
 			known = true
 	if not known:
 		return "That is not a sector of this spending line."
+	if priority_of(ns, sector_id) == region_id \
+			and int((ns.sector_priorities[sector_id] as Dictionary).get("renewals", 0)) >= DK.PRIORITY_MAX_RENEWALS:
+		return "This priority was renewed once already: it ends with this term."
+	if _now(state) < int((ns.sector_priority_rest.get(sector_id, {}) as Dictionary).get(region_id, 0)):
+		return "This region held this priority lately and must wait before taking it again."
 	var held := 0
 	for other in ns.sector_priorities:
 		if String(other) != sector_id and priority_of(ns, String(other)) == region_id:

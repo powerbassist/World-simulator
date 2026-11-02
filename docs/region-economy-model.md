@@ -395,5 +395,12 @@ quantity or channel moves ([[economy-model]], "Spending lines into sectors").
   1.77 x the nation's unemployment. **Britain gets no term in either:** every
   British region reads `unemployment_rel` 1.0 and a zero deviation, so none sits
   above the nation's rate until the regional data is sourced (the Content card).
+  **Renewed once, then a rest** (the parent's call, after QA measured a freely renewed
+  priority as a permanent lift): a region's priority on a sector renews
+  `PRIORITY_MAX_RENEWALS` (1) times, 6 years in all, and once it stops (its term runs
+  out, it is cleared, or another region takes the sector) that region waits
+  `PRIORITY_REST_MONTHS` (36) before taking the sector again (`ns.sector_priority_rest`,
+  absent_ok). A clear rests it too, else clear-and-set would restart the count. The
+  strip's estimate carries `renewals_left` and `rest_months`.
 - **Not built:** the term follows the money at set time only; a later change to
   the line or the sector's share leaves it until the priority is set again.

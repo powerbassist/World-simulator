@@ -347,9 +347,9 @@ func _test_society_is_a_leaf() -> void:
 	# V1.5b added demography.gd, and the addition does not weaken the property: that
 	# file is the strictest leaf in the project, preloading only its own constants, so
 	# the chain this test exists to bound is still two deep and still ends.
-	# V5.3 a added sectors.gd on the same argument: it preloads only constants
-	# files (domains_constants.gd, region_constants.gd), so the chain is still two
-	# deep and ends.
+	# V5.3 a added sectors.gd: it preloads constants files (economy, domains, region)
+	# and regions.gd, a leaf of the same kind (it reads no system that preloads
+	# society.gd), so the chain still ends.
 	var allowed := [
 		"res://src/sim/society_constants.gd",
 		"res://src/sim/cabinet.gd",

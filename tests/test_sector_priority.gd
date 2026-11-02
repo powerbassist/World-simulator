@@ -14,6 +14,7 @@ const RK = preload("res://src/sim/region_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const EC = preload("res://src/sim/economy_constants.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -41,6 +42,8 @@ func _init() -> void:
 	_test_the_term_stops_at_the_national_rate()
 	_test_a_regions_priorities_share_one_cap()
 	_test_no_priority_takes_a_region_under_the_nation()
+	_test_a_priority_renews_once_then_rests()
+	_test_the_game_month_ends_and_recaps_a_priority()
 	_finish()
 
 
@@ -535,14 +538,15 @@ func _test_a_regions_priorities_share_one_cap() -> void:
 		_fail("the priority left alone reads a factor of %.9f, not %.9f, until a month passes" % [alone, clampf(head / r1, 0.0, 1.0)])
 	# The strip for the second while the first is held shows the shared cap, and it is
 	# what setting it books; the first is re-capped at once.
-	var e: Dictionary = Sectors.priority_estimate(state, ns, _loader, "health", "primary_care", target)
+	# (The cleared sector's region now waits: the line's third sector takes its place.)
+	var e: Dictionary = Sectors.priority_estimate(state, ns, _loader, "health", "prevention", target)
 	if float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0)) != alone:
 		_fail("the estimate moved the held priority's factor")
-	Sectors.set_priority(state, ns, _loader, "health", "primary_care", target)
+	Sectors.set_priority(state, ns, _loader, "health", "prevention", target)
 	if absf(float(e.get("unemployment_after", -1.0)) - float(_u(state)[target])) > 1e-12:
 		_fail("the strip shows %s for the second priority, but setting it books %.9f" % [e.get("unemployment_after"), float(_u(state)[target])])
 	var g1 := float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0))
-	var g2 := float((ns.sector_priorities["primary_care"] as Dictionary).get("factor", -2.0))
+	var g2 := float((ns.sector_priorities["prevention"] as Dictionary).get("factor", -2.0))
 	if g1 != g2:
 		_fail("setting a second priority did not re-cap the first at once (%.9f against %.9f)" % [g1, g2])
 
@@ -582,6 +586,98 @@ func _test_no_priority_takes_a_region_under_the_nation() -> void:
 			_fail("%s: a region sits above the nation's rate, yet no priority moves one (best %.9f)" % [nation, best])
 		if not above and best > 1e-12:
 			_fail("%s: no region sits above the nation's rate, yet a priority moved one by %.12f" % [nation, best])
+
+
+## The parent's renewal call on #267: a region's priority on a sector renews once (6
+## years in all, the literal 1 and 36), then that region waits 36 months before taking
+## the sector again; a clear or a replacement starts the wait too. The strip says so.
+func _test_a_priority_renews_once_then_rests() -> void:
+	var state = _state()
+	var ns = state.player()
+	var target := _behind(state)
+	var e: Dictionary = Sectors.priority_estimate(state, ns, _loader, "health", "hospitals", target)
+	if int(e.get("renewals_left", -1)) != 1 or int(e.get("rest_months", -1)) != 36:
+		_fail("the strip offers %s renewals and a %s-month wait, not 1 and 36" % [e.get("renewals_left"), e.get("rest_months")])
+	Sectors.set_priority(state, ns, _loader, "health", "hospitals", target)
+	for i in 12:
+		_tick(state)
+	var renewed: Dictionary = Sectors.set_priority(state, ns, _loader, "health", "hospitals", target)
+	if not bool(renewed.get("ok", false)) or int((ns.sector_priorities["hospitals"] as Dictionary).get("renewals", -1)) != 1:
+		_fail("the first renewal was refused or not counted: %s" % renewed)
+	if bool(Sectors.priority_estimate(state, ns, _loader, "health", "hospitals", target).get("ok", true)):
+		_fail("the strip offers a second renewal")
+	var again: Dictionary = Sectors.set_priority(state, ns, _loader, "health", "hospitals", target)
+	if bool(again.get("ok", true)) or String(again.get("reason", "")) == "":
+		_fail("a second renewal was accepted: %s" % again)
+	for i in 36:
+		_tick(state)
+	if ns.sector_priorities.has("hospitals"):
+		_fail("the renewed priority outlived its second term")
+	for i in 36:
+		if bool(Sectors.set_priority(state, ns, _loader, "health", "hospitals", target).get("ok", true)):
+			_fail("the region took the sector again %d months after its priority ended" % i)
+			return
+		_tick(state)
+	if not bool(Sectors.set_priority(state, ns, _loader, "health", "hospitals", target).get("ok", false)):
+		_fail("the region could not take the sector again 36 months after its priority ended")
+	# A clear rests the region too, else clear-and-set restarts the count; another
+	# region may take the sector meanwhile, and the region it replaces rests.
+	Sectors.clear_priority(state, ns, "hospitals")
+	if bool(Sectors.set_priority(state, ns, _loader, "health", "hospitals", target).get("ok", true)):
+		_fail("a cleared priority could be set again at once")
+	var other := _ahead(state)
+	if not bool(Sectors.set_priority(state, ns, _loader, "health", "hospitals", other).get("ok", false)):
+		_fail("another region could not take the sector while the first rests")
+	Sectors.set_priority(state, ns, _loader, "health", "primary_care", target)
+	Sectors.set_priority(state, ns, _loader, "health", "primary_care", other)
+	if bool(Sectors.set_priority(state, ns, _loader, "health", "primary_care", target).get("ok", true)):
+		_fail("a replaced region took the sector straight back")
+
+
+## QA's TAKE on #267: the priorities through the game's own month (WorldMonth), not
+## the step called by hand: one month re-caps the term against that month's rates,
+## and 36 months end it and rest its region. A region whose headroom is under the term's
+## reach, so the cap binds and follows the nation's rate.
+func _test_the_game_month_ends_and_recaps_a_priority() -> void:
+	var state = _state()
+	var ns = state.player()
+	var list := _list(state)
+	var target := ""
+	for id in _regions(state):
+		var headroom := float(_u(state)[id]) - float(ns.unemployment_pct)
+		if headroom > 0.0 and target == "":
+			Sectors.set_priority(state, ns, _loader, "pensions", "basic_pension", id)
+			var f := float((ns.sector_priorities.get("basic_pension", {}) as Dictionary).get("factor", 0.0))
+			if f > 0.05 and f < 0.95:
+				target = id
+			else:
+				ns.sector_priorities.clear()
+				ns.sector_priority_rest.clear()
+	if target == "":
+		_fail("the fixture found no FRA region whose cap binds on basic pensions")
+		return
+	var pressed := float((ns.sector_priorities["basic_pension"] as Dictionary)["factor"])
+	_game_month(state)
+	var row: Dictionary = ns.sector_priorities.get("basic_pension", {})
+	var reach := EC.OKUN * _gain_of(state, list, "basic_pension")
+	var want := clampf((float(_without_u(state)[target]) - float(ns.unemployment_pct)) / reach, 0.0, 1.0)
+	if int(row.get("months_left", -1)) != 35 or absf(float(row.get("factor", -1.0)) - want) > 1e-9 or float(row["factor"]) == pressed:
+		_fail("a game month left the priority at %s months and factor %s (pressed %.9f, this month's cap %.9f)" % [
+			row.get("months_left"), row.get("factor"), pressed, want])
+	for i in 35:
+		_game_month(state)
+	if ns.sector_priorities.has("basic_pension") \
+			or int((ns.sector_priority_rest.get("basic_pension", {}) as Dictionary).get(target, 0)) <= int(state.year) * 12 + int(state.month):
+		_fail("36 game months did not end the priority and rest its region: %s, %s" % [ns.sector_priorities, ns.sector_priority_rest])
+
+
+## One month of the whole game, in its own order (the clock is the caller's).
+func _game_month(state) -> void:
+	state.month += 1
+	if state.month > 12:
+		state.month = 1
+		state.year += 1
+	WorldMonth.tick_month(state, _loader)
 
 
 ## One month of the priorities' step (the clock moves first, as WorldMonth's does).

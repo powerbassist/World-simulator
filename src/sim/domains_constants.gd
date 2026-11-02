@@ -66,3 +66,12 @@ const PRIORITY_BETA := 0.25
 ## renewable by setting it again, the month it ends on its row for the strip.
 const PRIORITY_MAX_PER_REGION := 2
 const PRIORITY_MONTHS := 36
+## The parent's call on #267 (QA's measure: renewed freely, pensions + hospitals kept
+## FRE's unemployment ~0.45 points lower and grew its output share 11.8 % in ten
+## years -- a permanent lift): a region's priority on a sector may be renewed this many
+## times (6 years in all), and once it stops -- its term runs out, it is cleared, or
+## another region takes the sector -- that region waits PRIORITY_REST_MONTHS before it
+## can take that sector again (a stop by clearing too, else clear-and-set would restart
+## the count). The strip shows both (Sectors.priority_estimate()).
+const PRIORITY_MAX_RENEWALS := 1
+const PRIORITY_REST_MONTHS := 36
