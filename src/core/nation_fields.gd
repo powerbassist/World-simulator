@@ -288,4 +288,5 @@ const FIELDS := [
 	["sector_factor", DEEP, NOT_SAVED, {}, true],  # V5.3 a: derived, re-derived on load (Sectors.rebuild)
 	["region_funds", DEEP, ROWS, [], true],  # V5.3 a: absent is no fund
 	["region_fund_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
+	["rescue_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # V5.3 a: rewritten by the next tick
 ]
