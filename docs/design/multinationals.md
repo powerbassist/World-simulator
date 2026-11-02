@@ -37,7 +37,7 @@ Only the player answers a bid. A grep finds no caller of `allow_bid` outside `co
 
 **What allowing a bid does.** `allow_bid` (`companies.gd:876-884`) writes `owner` on the firm's register entry as a **nation code** (the bidder string is `NATION|firm_id`, and only the nation part is kept), pulses relations with the bidder nation by `BID_ALLOW_RELATIONS_PULSE` +0.5, and moves the action's `bloc_offset` (business +0.12, urban +0.04, workers −0.08, `data/company-actions/takeover.json:26-30`). Blocking pulses −0.5 (`companies_constants.gd:123`). The content's own note says it plainly: foreign ownership "is recorded, not modelled further, until a block owns it" (`takeover.json:2`).
 
-**Who reads `owner`.** Only the process register, to void a process when the owner changes (`processes.gd:173`, `:287`). No figure reads it: not the jobs (`Companies.headcount`, `:263`), not the jobs offset into unemployment (`firm_jobs_offset_pct`, `:581`), not the value, the dividend, migration or closures. No panel prints it. After an allowed takeover the firm looks and behaves exactly as before.
+**Who reads `owner`.** Only the process register, to void a process when the owner changes (`processes.gd:174`, `:288`). No figure reads it: not the jobs (`Companies.headcount`, `:263`), not the jobs offset into unemployment (`firm_jobs_offset_pct`, `:581`), not the value, the dividend, migration or closures. No panel prints it. After an allowed takeover the firm looks and behaves exactly as before.
 
 **The relations pulse is invisible.** Relations run on 0 to 100 (`diplomacy_constants.gd:21-22`). A state visit moves a pair by +5 and a condemnation by −8, and one act's mark has a half-life of 35 months ([[diplomacy-model]], "What survives of one action"). A pulse of 0.5 is a tenth of the cheapest diplomatic verb. It also bypasses the third-party rule: `_pulse_relations` calls `Relations.adjust` directly (`companies.gd:1072-1076`), where a diplomatic action goes through [[foreign-policy-model]]'s stake-scaled reactions.
 
@@ -60,7 +60,8 @@ The firm is read in three ways, and each moves differently under the new model:
 
 | Read | Sites in `src/` | Files |
 |---|---:|---|
-| the register, `ns.companies` | 70 | 17: `companies.gd` 24, `industry.gd` 12, `companies_loader.gd` 6, `closures.gd` 6, `event_hooks.gd` 4, `industry_news.gd` 3, two each in `regions_loader.gd`, `processes.gd`, `statute.gd`, `companies_panel.gd`, one each in `game_state.gd`, `bills.gd`, `companies_roster.gd`, `companies_walk.gd`, `company_verb.gd`, `industry_card.gd`, `territory_city.gd` |
+| the register, `ns.companies` (and one `state.nations[id].companies` in `industry.gd`'s bid scan) | 57 | 11: `companies.gd` 24, `industry.gd` 12, `closures.gd` 6, `event_hooks.gd` 4, `industry_news.gd` 3, two each in `processes.gd` and `companies_panel.gd`, one each in `companies_walk.gd`, `statute.gd`, `company_verb.gd`, `industry_card.gd` |
+| the authored rows, `loader.companies` (the projection's own input, not register reads) | 13 | 7: `companies_loader.gd` 6, `regions_loader.gd` 2, one each in `game_state.gd`, `bills.gd`, `companies_roster.gd`, `statute.gd`, `territory_city.gd` |
 | the authored fields, `<firm>.share` / `.headcount` / `.city` | 40 | 11: `companies.gd` 11, `company.gd` 9, `regions_loader.gd` 5, `industry.gd` 5, `city.gd` 3, `companies_loader.gd` 2, one each in `capital.gd`, `region.gd`, `companies_walk.gd`, `migration.gd`, `statute.gd` |
 | the `Companies` API | below | |
 
@@ -170,7 +171,7 @@ So the readers that walk a nation's firms and read the authored fields, which ar
 
 ### 4.2 The firm-level reads go through `firm_of(plant)`
 
-The readers that ask about control or survival read the firm, wherever the plant is: `state_share_of`, the failure flag, `owner`, the bid scalars, `courted`, `board_chair`, the processes gate. A new `Companies.firm_entry(state, plant)` returns the home register's entry. For a home plant that is the entry the reader reads today, so the result is identical; for a plant abroad it is the home nation's entry. This is the main rewrite: the reads of firm-level keys among the 70 register sites (24 in `companies.gd`, 12 in `industry.gd`, 6 in `closures.gd`, 2 in `processes.gd`, and the event and news hooks) each become a `firm_entry` read.
+The readers that ask about control or survival read the firm, wherever the plant is: `state_share_of`, the failure flag, `owner`, the bid scalars, `courted`, `board_chair`, the processes gate. A new `Companies.firm_entry(state, plant)` returns the home register's entry. For a home plant that is the entry the reader reads today, so the result is identical; for a plant abroad it is the home nation's entry. This is the main rewrite: the reads of firm-level keys among the 57 register sites (24 in `companies.gd`, 12 in `industry.gd`, 6 in `closures.gd`, 2 in `processes.gd`, and the event and news hooks) each become a `firm_entry` read.
 
 - **Failure is the group's.** A failed firm employs nobody in **every** plant: `headcount()` reads the firm's `failed`, so a German group's collapse empties its Lille plant the same month, with no rule of its own (band M6). The failure hazard's subsidy memory (`subsidy_lapsed_month`, a plant key in 3.4) is read from the **home plant**, the entry it is read from today.
 - **A spun-out plant is a firm.** After a host nationalises a hosted plant (5.3), its entry carries `spun_out`, and `firm_entry(plant)` returns that entry itself: from then on it holds its own firm-level keys (`state_share` 1 among them) and is read as a host firm.
@@ -289,7 +290,7 @@ So `SAVE_VERSION` stays where it is. `tests/test_save_load.gd` widens its `LIVE_
 - `tools/firms_generate.py` (plants on generated majors, if Content uses it), `tools/companies_probe.gd` (a plants flag), the closures probe, `decision_surfaces_probe.gd` (source `foreign`);
 - tests: `test_save_load.gd`, `test_companies*.gd`, `test_industry.gd`, `test_closures.gd`, `test_processes.gd`, a new `test_plants.gd`.
 
-About **25 source files and 6 test files**, and of the 70 register reads and 40 authored-field reads, the firm-level ones (section 4.2) rewritten, the rest unchanged behind the projection.
+About **25 source files and 6 test files**, and of the 57 register reads and 40 authored-field reads (the 13 `loader.companies` reads feed the projection and stay as they are), the firm-level ones (section 4.2) rewritten, the rest unchanged behind the projection.
 
 **The size ratchet.** `companies.gd` cannot grow (423 code lines in the baseline), so the group aggregates and `firm_entry` land in a new file (proposed `src/sim/companies_group.gd`), as the roster and walk splits did, and `companies.gd` keeps the public names and delegates.
 
@@ -352,6 +353,6 @@ The calls as they were put to him:
 - **France's, Germany's and Britain's jobs shares** under foreign control: not in the fetched Eurostat text; Content reads `fats_activ` (and the ONS for Britain). M2's ±5 points is set before those figures are read, so it may need the parent's look once they are.
 - **The OECD's terms.** `REUSE.toml` records that they could not be read on 2026-11-01 (HTTP 403). Eurostat is the primary source; the OECD's AMNE tables are a cross-check only until the terms are read.
 - **The arrival rates** in section 10 are arithmetic on the constants, not a probe run. M3's baseline is a `--density` run on main with the source added, before the rules.
-- **The file and reader counts** in section 9 are inferred from section 1.1's grep; which of the 70 register reads are firm-level is classified by key (3.4), not read site by site.
+- **The file and reader counts** in section 9 are inferred from section 1.1's grep; which of the 57 register reads are firm-level is classified by key (3.4), not read site by site.
 - **The proposed numbers** (the summon's 4 points and odds, `expropriation_k`, `block_k`, `W_INV`, the 200 plants) are first proposals; each band says what must hold.
 - **No GLM red-team** was run on this revision; the review is `code-review` and QA.
