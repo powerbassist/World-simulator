@@ -556,7 +556,8 @@ teacher, graduates a year...).
   `tools/sector_probe.gd` runs it on the game's own month for the four playable
   nations.
 - **The regional priority (3.3 (a) 1):** `Sectors.set_priority()` puts one region
-  first for a sector (`ns.sector_priorities`, one per sector, `absent_ok`): its
+  first for a sector (`ns.sector_priorities`, one per sector and at most two per
+  region, for 36 months, renewable, `absent_ok`): its
   spending per head on the sector rises by `PRIORITY_UPLIFT` (a stand-in) and every
   other region, the unlocated residual included, spends `1 - U x p / (total - p)` of
   the nation's, over the live population shares' own total, so the
@@ -566,8 +567,9 @@ teacher, graduates a year...).
   `RATIO_FLOOR`). **The money moves the region** (#267): the money moved,
   `U x the region's share of the people x the sector's spending`, becomes a term in
   the region's growth deviation, `PRIORITY_BETA x` that money as points of the
-  region's output, fixed at set time and zero-mean like a fund's
-  ([[region-economy-model]] section 15). `tests/test_sector_priority.gd` pins it.
+  region's output, fixed at set time and zero-mean like a fund's, scaled by a
+  convergence factor that falls to 0 as the region catches up with the nation's
+  output per head ([[region-economy-model]] section 15). `tests/test_sector_priority.gd` pins it.
 - **Not built yet:** the tiles' warning marks (a decision arrival, section 7 of
   the spec) and the personnel (staff = a sector's spending / a cost per head, which
   needs sourced costs per head).

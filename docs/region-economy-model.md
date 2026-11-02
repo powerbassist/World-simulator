@@ -359,7 +359,7 @@ quantity or channel moves ([[economy-model]], "Spending lines into sectors").
   could be missed by another. `tests/test_regions.gd` pins the tick to the read.
   The balance table is `cmp`-identical across the change.
 - **Why linear and small, not the fund's square root:** a priority costs the
-  Budget nothing and has no end date. On the fund's response, basic pensions
+  Budget nothing. On the fund's response, basic pensions
   (the largest sector, 416 bn in France) first in FRA's FRE would move 7.3 bn a
   year and give 2.5 points, against 0.93 for a 1 bn fund there: the free verb
   would out-do the paid one. `PRIORITY_BETA` 0.25 (a stand-in, the author's call)
@@ -373,5 +373,17 @@ quantity or channel moves ([[economy-model]], "Spending lines into sectors").
   quantity in the region and elsewhere, and the region's unemployment now and
   after with the other named regions' (weighted by their people), read through the
   game's own arithmetic on the register set for one read and restored.
+- **No free stacking, a term, convergence** (the parent's two TAKEs on #267). One
+  region per sector (a second replaces the first) and a REGION holds at most
+  `PRIORITY_MAX_PER_REGION` (2) priorities: a third is refused, and renewing one
+  of the two is not a third. A priority lasts `PRIORITY_MONTHS` (36), renewable by
+  setting it again; its row carries `ends`, the month it stops, for the strip. Its
+  term converges: the row keeps the region's shortfall in output per head at the
+  press (`gap`, 1 minus `gdp_per_head_index`), and `Sectors.tick_month()` (a
+  WorldMonth step after Migration and RegionFunds, run by `Budget.project()` too)
+  sets `factor` = the shortfall now over `gap`, clamped to 0..1. The deviation
+  reads `pts x factor`: all of the strip's figure at the press, shrinking as the
+  region catches up, nothing once it has. A region not behind the nation (FRA's
+  Ile-de-France) gets no term at all, only the sector's regional quantity.
 - **Not built:** the term follows the money at set time only; a later change to
   the line or the sector's share leaves it until the priority is set again.
