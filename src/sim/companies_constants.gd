@@ -101,10 +101,14 @@ const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
 ## its sector by any reachable amount, so it is a name on a panel rather than a
 ## firm -- the same standard PeopleLoader.validate_people() applies to an unreferenced
 ## person, and the same one U6b's probe cut a five-deep minister bench for.
-## MAJORS only: company.gd scopes this floor by tier, and a body firm reads
+## V5.3: 0.02 -> 0.002. The real majors (a utility is ~0.037 of French
+## industry turnover, an airline ~0.002 of German services) sit far below the
+## six invented ones' 0.05-0.28; a major is a firm with a named chief and a
+## payroll in the thousands, and 0.002 of a sector is still 10x MIN_BODY_SHARE's
+## typical neighbour. MAJORS only: company.gd scopes this floor by tier, and a body firm reads
 ## MIN_BODY_SHARE below, because the body's whole band (~0.005 typical share)
 ## lives under 0.02 by design -- it is the tier boundary the block is built on.
-const MIN_AUTHORED_SHARE := 0.02
+const MIN_AUTHORED_SHARE := 0.002
 
 ## V4.7a A3. The smallest share a BODY-tier firm may be authored at. The same
 ## "a firm that cannot move its sector is a label" rule at the body's own

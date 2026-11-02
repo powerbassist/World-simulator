@@ -1381,6 +1381,53 @@
       "social_skill": 0.55,
       "voice": "chief_fra",
       "bench": true
+    },
+    {
+      "id": "FRA_chief_laitis_cooperative",
+      "name": "Anaëlle Briandais",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic"
+      ],
+      "ambition": 0.38,
+      "bench": true
+    },
+    {
+      "id": "FRA_chief_lumenor",
+      "name": "Rémi Nogaret",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.31,
+      "bench": true
+    },
+    {
+      "id": "FRA_chief_calorex_energies",
+      "name": "Margaux Montcharvin",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.82,
+      "bench": true
+    },
+    {
+      "id": "FRA_chief_transhexa",
+      "name": "Diane Périer",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "stubborn"
+      ],
+      "ambition": 0.78,
+      "bench": true
     }
   ]
 }
