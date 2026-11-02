@@ -102,18 +102,27 @@ static func trend_deviation_pct(ns, region_list: Array, region_id: String, acces
 	return float(deviation_by_region(ns, region_list, access, sites).get(region_id, 0.0))
 
 
-## V5.3 a: the regional development funds' terms, region id -> points a year, summed
-## over the OPEN rows of `ns.region_funds` (src/sim/region_funds.gd writes them; this
-## file only reads the register, as it reads the sited-project map). Each row's term
-## was fixed at the fund's start, so the strip's figure is the booked one. It enters
-## deviation_by_region() as the sited term does, zero-mean over the nation's
-## output shares, for the sited term's reason: the national level is the fund's
-## SPENDING (a Budget line whose change moves demand, src/sim/region_funds.gd), and
-## a term that also moved the national total would count the money twice.
-static func _fund_map(ns) -> Dictionary:
+## V5.3 a: the player's regional terms, region id -> points a year: the OPEN rows of
+## `ns.region_funds` (src/sim/region_funds.gd writes them), then the sector
+## priorities of `ns.sector_priorities` in sector order (src/sim/sectors.gd writes
+## them, #267). This file only reads the registers, as it reads the sited-project
+## map. Each row's term was fixed when the player acted, so the strip's figure is the
+## booked one. They enter deviation_by_region() as the sited term does, zero-mean
+## over the nation's output shares, for the sited term's reason: a fund's national
+## level is its SPENDING (a Budget line whose change moves demand), a priority's is
+## none (it moves money between regions, never a line's total), and a term that also
+## moved the national total would count the money twice or invent it.
+static func _player_terms(ns) -> Dictionary:
 	var out := {}
 	for row in ns.region_funds:
 		if String(row["status"]) == "open":
+			var id := String(row["region_id"])
+			out[id] = float(out.get(id, 0.0)) + float(row["pts"])
+	if not ns.sector_priorities.is_empty():
+		var sectors: Array = ns.sector_priorities.keys()
+		sectors.sort()
+		for sector in sectors:
+			var row: Dictionary = ns.sector_priorities[sector]
 			var id := String(row["region_id"])
 			out[id] = float(out.get(id, 0.0)) + float(row["pts"])
 	return out
@@ -152,8 +161,9 @@ static func _fund_map(ns) -> Dictionary:
 ##          content. A region hosting nothing reads exactly `-mean`, never 0.0: the
 ##          model, not a leak. V1.6f's national channel still carries the level through
 ##          project_potential_target_pct -- one act, priced once.
-##   funds  the player's regional terms (_fund_map()), only when one is open, so a
-##          nation with none computes exactly the floats it computed before.
+##   player the player's regional terms (_player_terms(): the open funds and the
+##          sector priorities), only when one is set, so a nation with none computes
+##          exactly the floats it computed before either existed.
 static func deviation_by_region(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	if region_list.is_empty():
@@ -175,9 +185,9 @@ static func deviation_by_region(ns, region_list: Array, access: Dictionary, site
 			own_net[other.id] = spec * lg
 			weighted += float(shares[other.id]) * spec * lg
 		mean_net = weighted / total
-	var funds: Dictionary = _fund_map(ns)
+	var bought: Dictionary = _player_terms(ns)
 	var mean_site: float = _weighted_mean(sites, shares, region_list, total)
-	var mean_fund: float = _weighted_mean(funds, shares, region_list, total)
+	var mean_bought: float = _weighted_mean(bought, shares, region_list, total)
 	for region in region_list:
 		if region.id == K.RESIDUAL_KEY:
 			continue
@@ -189,8 +199,8 @@ static func deviation_by_region(ns, region_list: Array, access: Dictionary, site
 		if not sites.is_empty() and total > 0.0:
 			sited = float(sites.get(region.id, 0.0)) - mean_site
 		var deviation: float = mix + net + sited
-		if not funds.is_empty() and total > 0.0:
-			deviation += float(funds.get(region.id, 0.0)) - mean_fund
+		if not bought.is_empty() and total > 0.0:
+			deviation += float(bought.get(region.id, 0.0)) - mean_bought
 		out[region.id] = deviation
 	return out
 

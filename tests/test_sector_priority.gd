@@ -12,6 +12,7 @@ const Sectors = preload("res://src/sim/sectors.gd")
 const DK = preload("res://src/sim/domains_constants.gd")
 const RK = preload("res://src/sim/region_constants.gd")
 const Society = preload("res://src/sim/society.gd")
+const Regions = preload("res://src/sim/regions.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -31,6 +32,9 @@ func _init() -> void:
 	_test_refusals_write_nothing()
 	_test_the_estimate_is_what_the_priority_books()
 	_test_clearing_and_a_save()
+	_test_a_priority_moves_the_regions_unemployment()
+	_test_a_cleared_priority_leaves_no_trace()
+	_test_the_strip_shows_both_sides()
 	_finish()
 
 
@@ -195,10 +199,133 @@ func _test_clearing_and_a_save() -> void:
 	var kept = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
 	if Sectors.priority_of(kept.player(), "hospitals") != region:
 		_fail("a priority did not survive the round trip")
+	# Its points travel with it: the term is fixed at set time, never re-derived.
+	var pts := float((ns.sector_priorities["hospitals"] as Dictionary)["pts"])
+	if pts <= 0.0 or not is_equal_approx(float((kept.player().sector_priorities["hospitals"] as Dictionary).get("pts", 0.0)), pts):
+		_fail("a priority's points did not survive the round trip")
 	Sectors.clear_priority(ns, "hospitals")
 	if Sectors.priority_of(ns, "hospitals") != "" \
 			or Sectors.regional_quantity(ns, _loader, "health", "hospitals", region) != Sectors.quantity(ns, _loader, "health", "hospitals"):
 		_fail("a cleared priority still lifts its region")
+
+
+func _list(state) -> Array:
+	return state.regions.get("FRA", [])
+
+
+func _access(state) -> Dictionary:
+	return Regions.accessibility_for(state.player(), _list(state), state.region_graph)
+
+
+func _sites(state) -> Dictionary:
+	return state.project_sited_pct.get("FRA", {})
+
+
+## #267 redesign (the parent's ruling: a priority must move a real outcome): the money
+## a priority moves feeds the region's growth deviation, zero-mean, as a fund's does.
+## pts = PRIORITY_BETA x 100 x money / the region's output, money = PRIORITY_UPLIFT x
+## the region's share of the population x the sector's spending. The region's
+## deviation rises by pts x (1 - its output weight), every other region's falls by
+## pts x that weight, the output-weighted sum is 0, and through Okun the region's
+## unemployment falls while every other region's rises.
+func _test_a_priority_moves_the_regions_unemployment() -> void:
+	var state = _state()
+	var ns = state.player()
+	var list := _list(state)
+	var target := String(_regions(state)[0])
+	var dev0: Dictionary = Regions.deviation_by_region(ns, list, _access(state), _sites(state))
+	var u0: Dictionary = Regions.unemployment_by_region(ns, list, _access(state), _sites(state))
+	if not bool(Sectors.set_priority(state, ns, _loader, "health", "hospitals", target).get("ok", false)):
+		_fail("a good priority was refused")
+		return
+	var people := 0.0
+	for region in ns.region_pop_share:
+		people += float(ns.region_pop_share[region])
+	var spend := float(ns.spending_pct_gdp["health"]) / 100.0 \
+		* float(Sectors.shares(ns, _loader, "health")["hospitals"]) * float(ns.gdp_eur_bn)
+	var money := DK.PRIORITY_UPLIFT * float(ns.region_pop_share[target]) / people * spend
+	var pts := DK.PRIORITY_BETA * 100.0 * money / Regions.output_eur_bn(ns, target)
+	var booked := float((ns.sector_priorities.get("hospitals", {}) as Dictionary).get("pts", 0.0))
+	if pts <= 0.0 or not is_equal_approx(booked, pts):
+		_fail("the priority booked %.6f points, not the money's %.6f" % [booked, pts])
+	var dev1: Dictionary = Regions.deviation_by_region(ns, list, _access(state), _sites(state))
+	var u1: Dictionary = Regions.unemployment_by_region(ns, list, _access(state), _sites(state))
+	var shares: Dictionary = Regions.shares_of(ns, list)
+	var output := 0.0
+	for region in list:
+		output += float(shares[region.id])
+	var w := float(shares[target]) / output
+	var weighted := 0.0
+	for region in list:
+		var id := String(region.id)
+		var moved := float(dev1[id]) - float(dev0[id])
+		weighted += float(shares[id]) * moved
+		var want := pts * (1.0 - w) if id == target else -pts * w
+		if absf(moved - want) > 1e-12:
+			_fail("%s's deviation moved %.9f, not %.9f" % [id, moved, want])
+		var du := float(u1[id]) - float(u0[id])
+		if (id == target and du >= 0.0) or (id != target and du <= 0.0):
+			_fail("%s's unemployment moved %.5f points (the region put first falls, the others rise)" % [id, du])
+	if absf(weighted) > 1e-12:
+		_fail("the priority moved the output-weighted deviation by %.12f: not zero-mean" % weighted)
+
+
+## No priority, no term: a priority set and then cleared leaves every region's
+## deviation the float it was (A1 by construction, as a nation with no fund).
+func _test_a_cleared_priority_leaves_no_trace() -> void:
+	var state = _state()
+	var ns = state.player()
+	var list := _list(state)
+	var before: Dictionary = Regions.deviation_by_region(ns, list, _access(state), _sites(state))
+	Sectors.set_priority(state, ns, _loader, "health", "hospitals", String(_regions(state)[0]))
+	Sectors.clear_priority(ns, "hospitals")
+	if Regions.deviation_by_region(ns, list, _access(state), _sites(state)) != before:
+		_fail("a cleared priority left a trace in the regions' deviation")
+
+
+## The strip shows both sides, read through the game's own arithmetic: the region's
+## unemployment now and with the priority, and the other regions' (population-
+## weighted) now and after. The after figures are the booked ones, and the estimate
+## leaves the register as it found it, a priority already set elsewhere included.
+func _test_the_strip_shows_both_sides() -> void:
+	var state = _state()
+	var ns = state.player()
+	var list := _list(state)
+	var regions := _regions(state)
+	var target := String(regions[0])
+	var est: Dictionary = Sectors.priority_estimate(state, ns, _loader, "health", "hospitals", target)
+	if not ns.sector_priorities.is_empty():
+		_fail("the estimate left a priority set")
+	var u0: Dictionary = Regions.unemployment_by_region(ns, list, _access(state), _sites(state))
+	if float(est.get("unemployment_now", -1.0)) != float(u0[target]) \
+			or float(est.get("others_unemployment_now", -1.0)) != _others_mean(ns, u0, target):
+		_fail("the strip's now figures %s are not the region's and the others' today" % est)
+	if not (float(est.get("unemployment_after", 99.0)) < float(est.get("unemployment_now", -1.0)) \
+			and float(est.get("others_unemployment_after", -1.0)) > float(est.get("others_unemployment_now", 99.0))):
+		_fail("the strip %s does not show the region's gain and the others' loss" % est)
+	Sectors.set_priority(state, ns, _loader, "health", "hospitals", target)
+	var u1: Dictionary = Regions.unemployment_by_region(ns, list, _access(state), _sites(state))
+	if float(est["unemployment_after"]) != float(u1[target]) \
+			or float(est["others_unemployment_after"]) != _others_mean(ns, u1, target):
+		_fail("the strip's after figures %s are not what the priority booked" % est)
+	# An estimate for another region while this one holds the sector: the register is
+	# the same afterwards, its points included.
+	var held: Dictionary = (ns.sector_priorities["hospitals"] as Dictionary).duplicate()
+	Sectors.priority_estimate(state, ns, _loader, "health", "hospitals", String(regions[1]))
+	if ns.sector_priorities.get("hospitals") != held:
+		_fail("the estimate for another region moved the priority already set")
+
+
+## The other named regions' unemployment, weighted by their share of the population.
+func _others_mean(ns, rates: Dictionary, target: String) -> float:
+	var weighted := 0.0
+	var people := 0.0
+	for id in rates:
+		if String(id) != target and String(id) != RK.RESIDUAL_KEY:
+			var p := float(ns.region_pop_share.get(id, 0.0))
+			weighted += p * float(rates[id])
+			people += p
+	return weighted / people if people > 0.0 else 0.0
 
 
 func _fail(msg: String) -> void:

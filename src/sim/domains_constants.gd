@@ -47,3 +47,14 @@ const SHARE_SUM_TOLERANCE := 0.002
 ## the sector by this share, and every other region's falls so the money is the same
 ## (the line's total, the national quantity and every channel unchanged). A stand-in.
 const PRIORITY_UPLIFT := 0.20
+
+## What the money a priority moves does to the region (#267, the parent's ruling: it
+## must move a real outcome): a term in the region's growth deviation, zero-mean as a
+## fund's, of PRIORITY_BETA x the money as points of the region's output, fixed when
+## the priority is set (src/sim/sectors.gd; src/sim/regions.gd reads the register).
+## LINEAR AND SMALL, not the fund's FUND_BETA x sqrt(): a priority costs the Budget
+## nothing and has no end date, and the fund's response on its money would make it
+## the stronger verb (2.5 points in France's worst region for basic pensions, the
+## largest sector, against 0.93 for a 1 bn fund there). At 0.25 that largest case
+## equals a 1 bn fund and hospitals give a third of it. A stand-in, the author's call.
+const PRIORITY_BETA := 0.25
