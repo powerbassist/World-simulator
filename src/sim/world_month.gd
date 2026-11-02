@@ -378,8 +378,8 @@ static func _step(month: Month, step: String) -> Array:
 		"RegionFunds":
 			RegionFunds.tick_month(state)
 		# V5.3 a: the sector priorities' month (src/sim/sectors.gd, the parent's TAKEs on
-		# #267): each term counts down, and its convergence factor reads the region's
-		# output per head after Migration has moved the people.
+		# #267): each term counts down, and its cap reads the region's unemployment
+		# against the nation's rate (Economy's) with the funds' terms (RegionFunds').
 		"Sectors":
 			Sectors.tick_month(state)
 		# V1.7a: a month of every campaign effort in the field, onto the mobilisation the

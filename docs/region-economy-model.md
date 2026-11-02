@@ -378,12 +378,22 @@ quantity or channel moves ([[economy-model]], "Spending lines into sectors").
   `PRIORITY_MAX_PER_REGION` (2) priorities: a third is refused, and renewing one
   of the two is not a third. A priority lasts `PRIORITY_MONTHS` (36), renewable by
   setting it again; its row carries `ends`, the month it stops, for the strip. Its
-  term converges: the row keeps the region's shortfall in output per head at the
-  press (`gap`, 1 minus `gdp_per_head_index`), and `Sectors.tick_month()` (a
-  WorldMonth step after Migration and RegionFunds, run by `Budget.project()` too)
-  sets `factor` = the shortfall now over `gap`, clamped to 0..1. The deviation
-  reads `pts x factor`: all of the strip's figure at the press, shrinking as the
-  region catches up, nothing once it has. A region not behind the nation (FRA's
-  Ile-de-France) gets no term at all, only the sector's regional quantity.
+  term is capped at the nation's unemployment rate (the parent's call B):
+  `Sectors._cap()` gives each region holding a priority ONE `factor`, written on
+  all its rows, = its headroom (its unemployment with every priority taken out,
+  less the nation's rate) over its terms' reach (`OKUN x` their summed `pts x`
+  (1 - its output weight)), clamped to 0..1. The deviation reads `pts x factor`, so
+  the region's unemployment falls to the nation's rate and no further; another
+  region's priority only raises it, so a capped region never ends under the rate.
+  The baseline keeps the funds' terms (a fund is Budget money, the priority the free
+  lift, so the priority yields). It is read again at every set, clear and month
+  (`Sectors.tick_month()`, a WorldMonth step after RegionFunds, run by
+  `Budget.project()` too), so it follows the nation's rate. A region at or under the
+  rate (FRA's Pays de la Loire) is not refused: it gets no term, only the sector's
+  regional quantity, and the strip shows its unemployment unchanged. Unemployment
+  rather than output per head: Germany's DE5 reads a flat 1.0 output per head and
+  1.77 x the nation's unemployment. **Britain gets no term in either:** every
+  British region reads `unemployment_rel` 1.0 and a zero deviation, so none sits
+  above the nation's rate until the regional data is sourced (the Content card).
 - **Not built:** the term follows the money at set time only; a later change to
   the line or the sector's share leaves it until the priority is set again.

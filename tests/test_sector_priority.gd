@@ -13,6 +13,7 @@ const DK = preload("res://src/sim/domains_constants.gd")
 const RK = preload("res://src/sim/region_constants.gd")
 const Society = preload("res://src/sim/society.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const EC = preload("res://src/sim/economy_constants.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -37,7 +38,9 @@ func _init() -> void:
 	_test_the_strip_shows_both_sides()
 	_test_a_region_holds_two_priorities_at_most()
 	_test_a_priority_lasts_three_years()
-	_test_the_term_converges_and_stops_once_caught_up()
+	_test_the_term_stops_at_the_national_rate()
+	_test_a_regions_priorities_share_one_cap()
+	_test_no_priority_takes_a_region_under_the_nation()
 	_finish()
 
 
@@ -155,7 +158,7 @@ func _test_refusals_write_nothing() -> void:
 	var r2: Dictionary = Sectors.set_priority(alone, ans, _loader, "health", "hospitals", region)
 	if bool(r2.get("ok", true)) or not ans.sector_priorities.is_empty():
 		_fail("a priority the other regions cannot pay for was accepted")
-	if bool(Sectors.clear_priority(ns, "hospitals").get("ok", true)):
+	if bool(Sectors.clear_priority(state, ns, "hospitals").get("ok", true)):
 		_fail("clearing a sector with no priority was accepted")
 
 
@@ -206,7 +209,7 @@ func _test_clearing_and_a_save() -> void:
 	var pts := float((ns.sector_priorities["hospitals"] as Dictionary)["pts"])
 	if pts <= 0.0 or not is_equal_approx(float((kept.player().sector_priorities["hospitals"] as Dictionary).get("pts", 0.0)), pts):
 		_fail("a priority's points did not survive the round trip")
-	Sectors.clear_priority(ns, "hospitals")
+	Sectors.clear_priority(state, ns, "hospitals")
 	if Sectors.priority_of(ns, "hospitals") != "" \
 			or Sectors.regional_quantity(ns, _loader, "health", "hospitals", region) != Sectors.quantity(ns, _loader, "health", "hospitals"):
 		_fail("a cleared priority still lifts its region")
@@ -235,9 +238,10 @@ func _test_a_priority_moves_the_regions_unemployment() -> void:
 	var state = _state()
 	var ns = state.player()
 	var list := _list(state)
-	# The region furthest behind: a priority's term converges on the nation's output
-	# per head, so a region ahead of it gets none (the parent's TAKE on #267).
+	# The region furthest above the nation's unemployment, a point above it so the
+	# whole term applies (call B on #267 caps it at the nation's rate).
 	var target := _behind(state)
+	_set_headroom(state, target, 1.0)
 	var dev0: Dictionary = Regions.deviation_by_region(ns, list, _access(state), _sites(state))
 	var u0: Dictionary = Regions.unemployment_by_region(ns, list, _access(state), _sites(state))
 	if not bool(Sectors.set_priority(state, ns, _loader, "health", "hospitals", target).get("ok", false)):
@@ -283,7 +287,7 @@ func _test_a_cleared_priority_leaves_no_trace() -> void:
 	var list := _list(state)
 	var before: Dictionary = Regions.deviation_by_region(ns, list, _access(state), _sites(state))
 	Sectors.set_priority(state, ns, _loader, "health", "hospitals", _behind(state))
-	Sectors.clear_priority(ns, "hospitals")
+	Sectors.clear_priority(state, ns, "hospitals")
 	if Regions.deviation_by_region(ns, list, _access(state), _sites(state)) != before:
 		_fail("a cleared priority left a trace in the regions' deviation")
 
@@ -360,35 +364,29 @@ func _pairs(ns) -> Array:
 	return out
 
 
-## The named regions' output per head against the nation's, region id -> index.
-func _indices(state) -> Dictionary:
-	var ns = state.player()
-	var people := 0.0
-	for region in ns.region_pop_share:
-		people += float(ns.region_pop_share[region])
-	var out := {}
-	for id in _regions(state):
-		out[id] = Regions.gdp_per_head_index(ns, _list(state), id, float(ns.region_pop_share.get(id, 0.0)) / people)
-	return out
+## Every named region's unemployment now, region id -> points.
+func _u(state) -> Dictionary:
+	return Regions.unemployment_by_region(state.player(), _list(state), _access(state), _sites(state))
 
 
-## The named region with the lowest output per head.
+## The named region with the highest unemployment: the furthest above the nation's
+## rate, so a priority there gets its term (call B on #267).
 func _behind(state) -> String:
-	var idx := _indices(state)
+	var u := _u(state)
 	var best := ""
-	for id in idx:
-		if float(idx[id]) > 0.0 and (best == "" or float(idx[id]) < float(idx[best])):
-			best = String(id)
+	for id in _regions(state):
+		if best == "" or float(u[id]) > float(u[best]):
+			best = id
 	return best
 
 
-## The named region with the highest output per head.
+## The named region with the lowest unemployment.
 func _ahead(state) -> String:
-	var idx := _indices(state)
+	var u := _u(state)
 	var best := ""
-	for id in idx:
-		if best == "" or float(idx[id]) > float(idx[best]):
-			best = String(id)
+	for id in _regions(state):
+		if best == "" or float(u[id]) < float(u[best]):
+			best = id
 	return best
 
 
@@ -414,7 +412,7 @@ func _test_a_region_holds_two_priorities_at_most() -> void:
 	# Renewing one of the two in its region is not a third.
 	if not bool(Sectors.set_priority(state, ns, _loader, pairs[0][0], pairs[0][1], target).get("ok", false)):
 		_fail("renewing a region's priority was refused as a third")
-	Sectors.clear_priority(ns, pairs[0][1])
+	Sectors.clear_priority(state, ns, pairs[0][1])
 	if not bool(Sectors.set_priority(state, ns, _loader, pairs[2][0], pairs[2][1], target).get("ok", false)):
 		_fail("a cleared priority did not free its region's place")
 
@@ -445,54 +443,145 @@ func _test_a_priority_lasts_three_years() -> void:
 		_fail("the priority outlived its 36 months: %s" % ns.sector_priorities)
 
 
-## TAKE 2, a convergence term: the term scales with the region's shortfall in output
-## per head against the nation's, from all of it at the press (the strip's figure) to
-## none once caught up; a region not behind gets no term at all.
-func _test_the_term_converges_and_stops_once_caught_up() -> void:
+## Call B on #267 (the parent's): a priority lowers its region's unemployment only as
+## far as the nation's rate. The factor is the region's headroom (its unemployment
+## without the priorities, less the nation's) over the term's reach (OKUN x the booked
+## points x (1 - its output weight)), between 0 and 1, read again every month.
+func _test_the_term_stops_at_the_national_rate() -> void:
 	var state = _state()
 	var ns = state.player()
 	var list := _list(state)
 	var target := _behind(state)
-	var gap0 := 1.0 - float(_indices(state)[target])
-	if gap0 <= 0.0:
-		_fail("the fixture found no region behind the nation")
-		return
+	var nat := float(ns.unemployment_pct)
+	_set_headroom(state, target, 1.0)
 	Sectors.set_priority(state, ns, _loader, "health", "hospitals", target)
-	var row: Dictionary = ns.sector_priorities["hospitals"]
-	if float(row.get("factor", -1.0)) != 1.0:
-		_fail("a priority's term starts at %s of its booked points, not all of them" % row.get("factor"))
-	# Half the shortfall made up: the region's output per head at 1 - gap0 / 2.
-	_set_index(state, target, 1.0 - gap0 / 2.0)
+	var reach := EC.OKUN * _gain(state, list)
+	if reach <= 0.0 or reach >= 1.0:
+		_fail("the fixture's term reaches %.4f points, not inside (0, 1)" % reach)
+		return
+	# A point above the nation: the whole booked term, from the press on.
+	if float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0)) != 1.0:
+		_fail("a region a point above the nation gets %s of its term, not all of it" % (ns.sector_priorities["hospitals"] as Dictionary).get("factor"))
+	var full := float(_without_u(state)[target]) - float(_u(state)[target])
+	if absf(full - reach) > 1e-9:
+		_fail("the whole term lowered the region's unemployment by %.9f, not its reach %.9f" % [full, reach])
+	# Half the reach above the nation: half the term, and the region lands on the
+	# nation's rate.
+	_set_headroom(state, target, reach / 2.0)
 	_tick(state)
-	var factor := float(row.get("factor", -1.0))
-	if absf(factor - 0.5) > 1e-6:
-		_fail("half the shortfall made up leaves a factor of %.6f, not 0.5" % factor)
-	var moved := float(Regions.deviation_by_region(ns, list, _access(state), _sites(state))[target]) \
-		- float(_without(state, list)[target])
-	if absf(moved - factor * _gain(state, list)) > 1e-9:
-		_fail("the half-way term moved the region by %.9f, not %.6f x the whole %.9f" % [moved, factor, _gain(state, list)])
-	# Caught up: the term stops.
-	_set_index(state, target, 1.02)
+	var half := float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0))
+	if absf(half - 0.5) > 1e-9:
+		_fail("half the reach above the nation leaves a factor of %.9f, not 0.5" % half)
+	if absf(float(_u(state)[target]) - nat) > 1e-9:
+		_fail("the capped region's unemployment is %.9f, not the nation's %.9f" % [float(_u(state)[target]), nat])
+	var moved := float(Regions.deviation_by_region(ns, list, _access(state), _sites(state))[target]) - float(_without(state, list)[target])
+	if absf(moved - half * _gain(state, list)) > 1e-12:
+		_fail("the half term moved the region by %.12f, not %.6f x the whole %.12f" % [moved, half, _gain(state, list)])
+	# At or under the nation's rate: no term.
+	_set_headroom(state, target, -0.1)
 	_tick(state)
-	var after := float(Regions.deviation_by_region(ns, list, _access(state), _sites(state))[target])
-	# _without() put copies back: read the register's own row again.
-	var caught := float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0))
-	if caught != 0.0 or absf(after - float(_without(state, list)[target])) > 1e-12:
-		_fail("a region caught up still gets its term: factor %s" % caught)
-	# A shortfall inside PRIORITY_BEHIND_EPS is float noise, not behind (GBR's
-	# regions all read 1.0000): no term at the press, so the strip shows none.
-	var level = _state()
-	var lns = level.player()
-	var near := _behind(level)
-	_set_index(level, near, 0.995)
-	Sectors.set_priority(level, lns, _loader, "health", "hospitals", near)
-	if String((lns.sector_priorities.get("hospitals", {}) as Dictionary).get("region_id", "")) == near 			and float((lns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0)) != 0.0:
-		_fail("a region half a percent behind (inside the epsilon) got a term at the press")
-	# A region not behind the nation gets no term from the press on.
+	var none := float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0))
+	var left := float(Regions.deviation_by_region(ns, list, _access(state), _sites(state))[target]) - float(_without(state, list)[target])
+	if none != 0.0 or absf(left) > 1e-12:
+		_fail("a region under the nation's rate still gets its term: factor %s, deviation %.12f" % [none, left])
+	# Read again every month, not a ratchet: back above the nation, the whole term.
+	_set_headroom(state, target, 1.0)
+	_tick(state)
+	if float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0)) != 1.0:
+		_fail("a region back above the nation did not get its term back")
+	# A region under the nation's rate is not refused (the money still moves its
+	# sector's quantity); the strip shows its unemployment unchanged.
 	var rich = _state()
-	var e: Dictionary = Sectors.priority_estimate(rich, rich.player(), _loader, "health", "hospitals", _ahead(rich))
+	var low := _ahead(rich)
+	if float(_u(rich)[low]) >= float(rich.player().unemployment_pct):
+		_fail("the fixture found no region under the nation's unemployment")
+		return
+	var e: Dictionary = Sectors.priority_estimate(rich, rich.player(), _loader, "health", "hospitals", low)
 	if not bool(e.get("ok", false)) or absf(float(e["unemployment_after"]) - float(e["unemployment_now"])) > 1e-12:
-		_fail("a priority in the region with the most output per head moves its unemployment: %s" % e)
+		_fail("a priority in a region under the nation's rate moves its unemployment, or is refused: %s" % e)
+
+
+## Call B, shared: a region's priorities share one cap, so two together stop at the
+## nation's rate with one factor; setting a second or clearing one re-caps the other
+## at once, and the strip shows the capped figure it books.
+func _test_a_regions_priorities_share_one_cap() -> void:
+	var state = _state()
+	var ns = state.player()
+	var list := _list(state)
+	var target := _behind(state)
+	var nat := float(ns.unemployment_pct)
+	_set_headroom(state, target, 1.0)
+	Sectors.set_priority(state, ns, _loader, "health", "hospitals", target)
+	Sectors.set_priority(state, ns, _loader, "health", "primary_care", target)
+	var r1 := EC.OKUN * _gain_of(state, list, "hospitals")
+	var r2 := EC.OKUN * _gain_of(state, list, "primary_care")
+	if r1 <= 0.0 or r2 <= 0.0:
+		_fail("the fixture's terms reach %.6f and %.6f points" % [r1, r2])
+		return
+	# Above the nation by half of both terms' reach: one factor, the nation's rate.
+	var head := (r1 + r2) / 2.0
+	_set_headroom(state, target, head)
+	_tick(state)
+	var f1 := float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0))
+	var f2 := float((ns.sector_priorities["primary_care"] as Dictionary).get("factor", -1.0))
+	if f1 != f2 or absf(f1 - head / (r1 + r2)) > 1e-9:
+		_fail("two priorities in one region read factors %.9f and %.9f, not one %.9f" % [f1, f2, head / (r1 + r2)])
+	if absf(float(_u(state)[target]) - nat) > 1e-9:
+		_fail("two capped priorities leave the region at %.9f, not the nation's %.9f" % [float(_u(state)[target]), nat])
+	# One cleared: the other is re-capped at once, alone.
+	Sectors.clear_priority(state, ns, "primary_care")
+	var alone := float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0))
+	if absf(alone - clampf(head / r1, 0.0, 1.0)) > 1e-9:
+		_fail("the priority left alone reads a factor of %.9f, not %.9f, until a month passes" % [alone, clampf(head / r1, 0.0, 1.0)])
+	# The strip for the second while the first is held shows the shared cap, and it is
+	# what setting it books; the first is re-capped at once.
+	var e: Dictionary = Sectors.priority_estimate(state, ns, _loader, "health", "primary_care", target)
+	if float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0)) != alone:
+		_fail("the estimate moved the held priority's factor")
+	Sectors.set_priority(state, ns, _loader, "health", "primary_care", target)
+	if absf(float(e.get("unemployment_after", -1.0)) - float(_u(state)[target])) > 1e-12:
+		_fail("the strip shows %s for the second priority, but setting it books %.9f" % [e.get("unemployment_after"), float(_u(state)[target])])
+	var g1 := float((ns.sector_priorities["hospitals"] as Dictionary).get("factor", -1.0))
+	var g2 := float((ns.sector_priorities["primary_care"] as Dictionary).get("factor", -2.0))
+	if g1 != g2:
+		_fail("setting a second priority did not re-cap the first at once (%.9f against %.9f)" % [g1, g2])
+
+
+## Call B holds for every region of three nations: a region above the nation's rate
+## never ends under it, and one at or under it stays where it was. Where some region
+## sits above the nation's rate, a priority there moves it: Germany's DE5, whose output
+## per head reads a flat 1.0 where the convergence on output per head never ran, sits
+## at 1.77 x the nation's unemployment. Where none does (Britain's regions carry no
+## unemployment spread and no deviation in the data, the Content card), none moves.
+func _test_no_priority_takes_a_region_under_the_nation() -> void:
+	for nation in ["FRA", "DEU", "GBR"]:
+		var s = GameState.new_game(_loader, nation)
+		var nsx = s.player()
+		var lst: Array = s.regions.get(nation, [])
+		var acc := Regions.accessibility_for(nsx, lst, s.region_graph)
+		var sites: Dictionary = s.project_sited_pct.get(nation, {})
+		var nat := float(nsx.unemployment_pct)
+		var best := 0.0
+		var above := false
+		for region in lst:
+			if region.id == RK.RESIDUAL_KEY:
+				continue
+			var before: Dictionary = Regions.unemployment_by_region(nsx, lst, acc, sites)
+			above = above or float(before[region.id]) > nat + 1e-9
+			if not bool(Sectors.set_priority(s, nsx, _loader, "health", "hospitals", region.id).get("ok", false)):
+				_fail("%s: a priority in %s was refused" % [nation, region.id])
+				continue
+			var after: Dictionary = Regions.unemployment_by_region(nsx, lst, acc, sites)
+			var lowest := minf(float(before[region.id]), nat)
+			if float(after[region.id]) < lowest - 1e-9:
+				_fail("%s: a priority takes %s from %.9f to %.9f, under the nation's %.9f" % [
+					nation, region.id, float(before[region.id]), float(after[region.id]), nat])
+			best = maxf(best, float(before[region.id]) - float(after[region.id]))
+			Sectors.clear_priority(s, nsx, "hospitals")
+		if above and best <= 1e-6:
+			_fail("%s: a region sits above the nation's rate, yet no priority moves one (best %.9f)" % [nation, best])
+		if not above and best > 1e-12:
+			_fail("%s: no region sits above the nation's rate, yet a priority moved one by %.12f" % [nation, best])
 
 
 ## One month of the priorities' step (the clock moves first, as WorldMonth's does).
@@ -514,26 +603,44 @@ func _without(state, list: Array) -> Dictionary:
 	return out
 
 
+## Every region's unemployment with the register emptied for one read.
+func _without_u(state) -> Dictionary:
+	var ns = state.player()
+	var held: Dictionary = ns.sector_priorities.duplicate(true)
+	ns.sector_priorities.clear()
+	var out := _u(state)
+	ns.sector_priorities.merge(held)
+	return out
+
+
 ## The whole term's gain in its region now: its booked points x (1 - its output weight).
 func _gain(state, list: Array) -> float:
+	return _gain_of(state, list, "hospitals")
+
+
+func _gain_of(state, list: Array, sector: String) -> float:
 	var ns = state.player()
-	var row: Dictionary = ns.sector_priorities["hospitals"]
-	var shares: Dictionary = Regions.shares_of(ns, list)
+	var row: Dictionary = ns.sector_priorities[sector]
+	return float(row["pts"]) * (1.0 - _weight(state, list, String(row["region_id"])))
+
+
+## A region's share of the nation's output, over the regions' own total.
+func _weight(state, list: Array, region_id: String) -> float:
+	var shares: Dictionary = Regions.shares_of(state.player(), list)
 	var output := 0.0
 	for region in list:
 		output += float(shares[region.id])
-	return float(row["pts"]) * (1.0 - float(shares[String(row["region_id"])]) / output)
+	return float(shares[region_id]) / output
 
 
-## Move one region's output so its output per head reads `index` of the nation's.
-func _set_index(state, region_id: String, index: float) -> void:
+## Put a region's unemployment without the priorities `headroom` points above the
+## nation's, through a sited term on this state's own map (the region records are the
+## loader's, shared by every test): a sited s moves the region's deviation by
+## s x (1 - its output weight), so its unemployment by -OKUN x that.
+func _set_headroom(state, region_id: String, headroom: float) -> void:
 	var ns = state.player()
-	var people := 0.0
-	for region in ns.region_pop_share:
-		people += float(ns.region_pop_share[region])
-	var share := index * float(ns.region_pop_share[region_id]) / people
-	var rest := 0.0
-	for id in ns.region_gdp_eur_bn:
-		if String(id) != region_id:
-			rest += float(ns.region_gdp_eur_bn[id])
-	ns.region_gdp_eur_bn[region_id] = share * rest / (1.0 - share)
+	var list := _list(state)
+	var gap := float(_without_u(state)[region_id]) - float(ns.unemployment_pct)
+	var sites: Dictionary = _sites(state).duplicate()
+	sites[region_id] = float(sites.get(region_id, 0.0)) + (gap - headroom) / (EC.OKUN * (1.0 - _weight(state, list, region_id)))
+	state.project_sited_pct["FRA"] = sites
