@@ -216,6 +216,17 @@ func _test_clearing_and_a_save() -> void:
 	if Sectors.priority_of(ns, "hospitals") != "" \
 			or Sectors.regional_quantity(ns, _loader, "health", "hospitals", region) != Sectors.quantity(ns, _loader, "health", "hospitals"):
 		_fail("a cleared priority still lifts its region")
+	# QA on #267: the rest travels too, else a save and a load would wipe every wait
+	# and the renewal rule with it.
+	var rested = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	# The load path re-attaches the region register and the graph (SaveManager.load_game).
+	rested.regions = _loader.regions
+	rested.region_graph = _loader.region_graph
+	var until := int((ns.sector_priority_rest.get("hospitals", {}) as Dictionary).get(region, -1))
+	if until <= 0 or int((rested.player().sector_priority_rest.get("hospitals", {}) as Dictionary).get(region, -1)) != until:
+		_fail("the rest %s did not survive a save, which read %s" % [ns.sector_priority_rest, rested.player().sector_priority_rest])
+	if bool(Sectors.set_priority(rested, rested.player(), _loader, "health", "hospitals", region).get("ok", true)):
+		_fail("a save and a load lifted the cleared priority's rest: %s" % rested.player().sector_priority_rest)
 
 
 func _list(state) -> Array:
