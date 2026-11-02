@@ -126,6 +126,7 @@ A firm stays a row of its **home** nation's file. Its existing fields keep their
 
 One read answers it, `Companies.controller_of(state, plant) -> String` (OPINION):
 
+0. the host, if the plant is `spun_out` (a host nationalised it, 5.3);
 1. the firm's runtime `owner` if a takeover wrote one (the register key that exists today, `companies.gd:879`);
 2. else the authored `owner` (`"world"`);
 3. else the firm's home nation.
@@ -143,7 +144,7 @@ A firm's state splits by one rule (OPINION): **what a host government's act or t
 
 - A home plant's id is the firm's id, so its plant keys and its firm keys share the entry they share today. **Nothing in an existing register moves.**
 - A plant abroad has the id `<firm_id>@<HOST>` (for example `DEU_kessler@FRA`) and lives in the host's register. The `@` cannot appear in an authored id (the loader refuses it), so the two never collide.
-- `tests/test_save_load.gd` pins the split: a plant-abroad entry carries no firm-level key.
+- `tests/test_save_load.gd` pins the split: a plant-abroad entry that is not `spun_out` carries no firm-level key. A spun-out one is a firm entry (4.2).
 
 ## 4. How the readers move (OPINION; section 1.1's counts)
 
@@ -155,12 +156,14 @@ So the readers that walk a nation's firms and read the authored fields, which ar
 
 | Reader | Today | Under the projection |
 |---|---|---|
+| `share_of_company` (`companies.gd:186`), `output_eur_bn` (`:216`), `value_eur_bn` (`:227`) | a firm's live share (register, authored fallback), its output and worth in its nation | unchanged code, read per plant: the host register's plant entry, the plant's authored share as fallback, times the host's sector output. These three stay **plant** reads; the group's sums are new names (4.3) |
 | `headcount_in_city` (`companies.gd:317`), the Territory panel | the nation's firms in a city | plants in the city, foreign ones included; a German plant's jobs are Lille's jobs |
 | migration's jobs map (`migration.gd:169-172`) | `firms_of` by authored city | unchanged code; hosted plants pull migrants to their city |
 | `firm_jobs_offset_pct` (`companies.gd:581`) into unemployment | every firm's live minus authored headcount | unchanged code; a hosted plant that shuts raises the host's unemployment |
 | `firm_impulse_pct` (`:539`) into growth | standing subsidies and burdens through live share | unchanged code; a host's subsidy to a hosted plant is the host's impulse |
-| the investment pool (`industry.gd:118`, majors only) | the nation's majors | a major's hosted plants join the host's pool, so they gain and give share inside the host's sector |
-| relocation (`industry.gd:243`) | a major moves to a near region | per plant, inside its host (a plant never changes nation) |
+| the investment pool (`industry.gd:118`, majors only) | the nation's majors | **home plants only.** A hosted plant (authored at a few points of share) in the pool would drain and gain the same absolute `INVEST_STEP` as a major ten times its size, the escalator that kept the body out of the pool ([[companies-model]] 32). The stated cost: a hosted plant's share never drifts; it moves only by a closure's cut or a spin-out. A host's subsidy on it still prices its impulse (`firm_impulse_pct`), and a closure's rescue answer still keeps it open |
+| relocation (`industry.gd:243`) | a major moves to a near region | per plant, inside its host (a plant never changes nation), each plant on its own `Cycle` key |
+| the failure and bid draws (`industry.gd:347`, `:456`) | every major of the ticking nation | **home plants only** (`view.home == ns.id`): the group fails and draws bids once, under its home nation's tick. A hosted plant draws neither, so the projection adds no draw to a host's month |
 | sector regulation, the burden's shedding (`headcount`) | the sector's firms | hosted plants obey the host's sector law |
 | closures (`closures.gd:53-75`) | the player's majors | the player's nation's major plants, home and hosted |
 | the Industry tab and the city card | the nation's firms | hosted plants listed with their controller |
@@ -169,17 +172,25 @@ So the readers that walk a nation's firms and read the authored fields, which ar
 
 The readers that ask about control or survival read the firm, wherever the plant is: `state_share_of`, the failure flag, `owner`, the bid scalars, `courted`, `board_chair`, the processes gate. A new `Companies.firm_entry(state, plant)` returns the home register's entry. For a home plant that is the entry the reader reads today, so the result is identical; for a plant abroad it is the home nation's entry. This is the main rewrite: the reads of firm-level keys among the 70 register sites (24 in `companies.gd`, 12 in `industry.gd`, 6 in `closures.gd`, 2 in `processes.gd`, and the event and news hooks) each become a `firm_entry` read.
 
-- **Failure is the group's.** A failed firm employs nobody in **every** plant: `headcount()` reads the firm's `failed`, so a German group's collapse empties its Lille plant the same month, with no rule of its own (band M6).
+- **Failure is the group's.** A failed firm employs nobody in **every** plant: `headcount()` reads the firm's `failed`, so a German group's collapse empties its Lille plant the same month, with no rule of its own (band M6). The failure hazard's subsidy memory (`subsidy_lapsed_month`, a plant key in 3.4) is read from the **home plant**, the entry it is read from today.
+- **A spun-out plant is a firm.** After a host nationalises a hosted plant (5.3), its entry carries `spun_out`, and `firm_entry(plant)` returns that entry itself: from then on it holds its own firm-level keys (`state_share` 1 among them) and is read as a host firm.
 - **Ownership is the group's.** A nationalised firm's state share covers every plant, and its dividend (below) includes them.
 
 ### 4.3 The group aggregates read across nations
 
-Four reads become sums over a firm's plants:
+Two new reads, in `companies_group.gd`, sum a firm's plants; the plant reads of 4.1 keep their names and meaning:
 
-- `output_eur_bn(firm)`: the sum of each plant's live share × its **host's** sector output;
-- `value_eur_bn(firm)`: that sum × `PRICE_TO_OUTPUT` (`companies.gd:227`), so nationalising Kessler buys its plants abroad too, at their value;
-- the dividend (`companies.gd:610`): `state_share × group output × DIVIDEND_YIELD`, paid to the **home** nation's budget;
-- the bid's "larger" test (`industry.gd:488-498`): the group's output, not its home share.
+- `group_output_eur_bn(state, firm)`: the sum of each plant's `output_eur_bn` (its live share × its **host's** sector output);
+- `group_value_eur_bn(state, firm)`: that sum × `PRICE_TO_OUTPUT`.
+
+Which caller takes which:
+
+| Plant read (`output_eur_bn`, `value_eur_bn`) | Group read (`group_output_eur_bn`, `group_value_eur_bn`) |
+|---|---|
+| a closure's output history (`closures.gd:73`) and its own fall | 5.2's group fall |
+| the transition drag (`process_drag.gd`) and the region funds (`region_funds.gd`, 2 sites): per-nation reads | the dividend (`companies.gd:610`): `state_share × group output × DIVIDEND_YIELD`, paid to the **home** nation's budget |
+| a plant's row on the Industry card; a plant spin-out's price (5.3) | the price of nationalising a group, plants abroad included (5.3); the bid's price |
+| | the bid's "larger" test (`industry.gd:488-498`): the group's output, not its home share; the group card |
 
 These read other nations' `sector_output`. The rule that keeps them safe (OPINION): a group table (each firm's plant outputs) is built **once**, on the calling thread, at the start of the Companies step from the outputs already committed, and the aggregates read the table. No per-nation unit then reads another nation mid-step, and nothing new runs on a worker (rules 1 and 4 of `src/core/parallel.gd:8-23`). For a firm with no plants abroad the table holds its home plant alone, and every aggregate equals today's read.
 
@@ -210,9 +221,9 @@ A hosted plant's closure trigger reads the worse of two falls: its own output's 
 
 ### 5.3 Expropriation is a diplomatic act
 
-- **The home state nationalises a group** (the V5.3 a process, unchanged in its stages): the price is the group's value (4.3), plants abroad included. Each host of a plant sees its relations with the home nation move by `−clamp(expropriation_k × that plant's value, 1, 8)` at the transfer, because a foreign state now owns a plant on its soil.
+- **The home state nationalises a group** (the V5.3 a process, unchanged in its stages): the price is `group_value_eur_bn` (4.3), plants abroad included. Each host of a plant sees its relations with the home nation move by `−clamp(expropriation_k × that plant's value, 1, 8)` at the transfer, because a foreign state now owns a plant on its soil.
 - **A host nationalises a hosted plant** (one new process kind, `nationalise_plant`, the nationalisation's stages and premium on the plant's value): at the transfer the plant **leaves the group**. Its entry gains `spun_out` and a state share of 1; from then it is a host firm read like any other, and its controller is the host. Relations with the former controller move by `−clamp(expropriation_k × plant value, 3, 15)`, through the third-party rule. A `"world"` controller moves nothing, and the strip says why.
-- **The bid answers** are re-sized on the same scale: blocking costs `−clamp(block_k × group value, 2, 8)` and allowing gains half that, replacing the fixed ±0.5 (`companies_constants.gd:123-124`), both through the third-party rule. An allowed bid writes `owner` (the bidder's nation) and `parent` (the bidder) on the target firm: the target keeps its plants and is now controlled from abroad.
+- **The bid answers** are re-sized on the same scale: blocking costs `−clamp(block_k × group_value_eur_bn, 2, 8)` and allowing gains half that, replacing the fixed ±0.5 (`companies_constants.gd:123-124`), both through the third-party rule. An allowed bid writes `owner` (the bidder's nation) and `parent` (the bidder) on the target firm: the target keeps its plants and is now controlled from abroad.
 
 ### 5.4 The player's groups abroad (call 3: "Oui")
 
@@ -235,7 +246,7 @@ Each step ends with the balance table `cmp`-identical to the step before (`tools
 |---|---|---|
 | **1. The plant view** | `Company` parses `plants`; the loader's checks (3.1); `firms_of` returns plant views; the `@` id; `controller_of` | no file has `plants`, so every view is the home plant, the same object as today |
 | **2. The two levels** | `firm_entry(state, plant)`; every firm-level read of section 4.2 goes through it; the register-key split pinned by a test | a home plant's firm entry is its own entry |
-| **3. The group table** | the table of 4.3, built at the Companies step; output, value, dividend and the bid's size read it | a group of one plant sums to that plant |
+| **3. The group table** | the table of 4.3, built at the Companies step; `group_output_eur_bn` and `group_value_eur_bn`; the dividend, the group nationalisation's price and the bid's size and test read them | a group of one plant sums to that plant, so each group read equals the plant read it replaces |
 | **4. The rules, inert** | 5.1's summon, 5.2's group trigger, 5.3's relations moves and the plant spin-out, 5.4's outward bid and stake term, all behind the controller test | no plant is foreign-controlled until step 5. The one way a runtime controller appears without plants is an allowed bid, and no balance regime answers one: `tools/balance_probe.gd` never calls `allow_bid` (MEASURED; its only bid answer is in `decision_surfaces_probe.gd:879`, which is not the balance gate) |
 | **5. Content** | plants authored on the playable nations' majors, `"world"` rows, sized to `fats_activ` (and the ONS for Britain) | **moves numbers**: jobs by city, sector partitions, the investment pool, every machine draw over the new plants. The re-baseline goes to the author |
 | **6. Investment as stake on** | 5.4's term reads non-zero | **moves numbers** at month 0: every stake vector, so agreement gates and the AI's agenda. A second re-baseline to the author |
@@ -250,7 +261,7 @@ Steps 1 to 4 are Systems' and can merge one by one, each green and identical. A 
 | Change | Numbers it moves | When |
 |---|---|---|
 | Steps 1 to 4 | none (band M1) | never |
-| Step 5, plants authored | jobs by city, unemployment through `firm_jobs_offset_pct`, migration's pull, sector shares through the pool, failures and bids over more majors, closures in the player's nation | from month 1 of every run; re-baseline 1 |
+| Step 5, plants authored | jobs by city, unemployment through `firm_jobs_offset_pct`, migration's pull, each host sector's partition (a hosted plant takes part of the unnamed residual), bids over larger groups, closures in the player's nation | from month 1 of every run; re-baseline 1 |
 | 5.1 summon | relations with the controller (and third parties by stake), so the trade mix and so GDP slightly; jobs kept in the plant's city | on the player's answer |
 | 5.2 and 4.2 group failure | closures and job losses in hosts of a failing or slumping group | in idle runs; part of re-baseline 1 |
 | 5.3 expropriation, spin-out, bid re-size | relations, the trade mix, agreement gates; the home debt by a group's value | on the player's verb |
@@ -273,7 +284,7 @@ So `SAVE_VERSION` stays where it is. `tests/test_save_load.gd` widens its `LIVE_
 
 **Files touched (INFERRED from section 1.1):**
 - `src/core/company.gd` (the `plants` field), a new `src/core/plant.gd` or a plant-view builder, `src/core/loaders/companies_loader.gd` (the checks), `src/core/loaders/regions_loader.gd` (the city check per host);
-- `src/sim/companies_roster.gd` (the projection), `src/sim/companies.gd` (24 register reads, the aggregates, the bid answers), `src/sim/companies_walk.gd`, `src/sim/industry.gd` (12: bids and failures go firm-level, investment and relocation stay plant-level), `src/sim/closures.gd` (6, the summon and the group trigger), `src/sim/processes.gd`, `process_asks.gd`, `process_drag.gd` (the group value, the plant spin-out), `src/sim/budget.gd` (the dividend over the group), `src/sim/foreign_policy.gd` (the stake term), `src/sim/event_hooks.gd` and `industry_news.gd` (firm-level reads);
+- `src/sim/companies_roster.gd` (the projection), `src/sim/companies.gd` (24 register reads, the aggregates, the bid answers), `src/sim/companies_walk.gd`, `src/sim/industry.gd` (12: failures and bids over home plants only, the pool over home plants only, relocation per plant), `src/sim/closures.gd` (6, the summon and the group trigger), `src/sim/processes.gd`, `process_asks.gd`, `process_drag.gd` (the group price, the plant spin-out), `src/sim/budget.gd` (the dividend over the group), `src/sim/foreign_policy.gd` (the stake term), `src/sim/event_hooks.gd` and `industry_news.gd` (firm-level reads);
 - `src/ui/companies_panel.gd`, `industry_card.gd`, `company_verb.gd`, `territory_city.gd`, `region_panel.gd`, the country box;
 - `tools/firms_generate.py` (plants on generated majors, if Content uses it), `tools/companies_probe.gd` (a plants flag), the closures probe, `decision_surfaces_probe.gd` (source `foreign`);
 - tests: `test_save_load.gd`, `test_companies*.gd`, `test_industry.gd`, `test_closures.gd`, `test_processes.gd`, a new `test_plants.gd`.
@@ -303,9 +314,9 @@ About **25 source files and 6 test files**, and of the 70 register reads and 40 
 | **M3, the player meets the subject** | over 120 months, both regimes, the four playable nations: 1 to 4 multinational arrivals a year on average (a bid on one of the player's firms, a foreign-controlled closure, a group-led closure, an outward bid), at most one a month from these sources, counted as source `foreign` (a foreign-controlled closure keeps its `closure` tag as well, so B7's totals do not change; M3 reads `foreign` alone) | `tools/decision_surfaces_probe.gd --density` | 0.2 a year, the bid machine's silence today |
 | **M4, a diplomatic matter is visible** | a summon moves the pair by 3 to 8 points; a plant spin-out by 3 to 15; a blocked bid by 2 to 8; a closure the player lets happen moves no pair | `tests/` per rule; a companies probe flag | a move under 3 points |
 | **M5, the summon is a choice** | the odds shown bracket the realised outcome in 100 % of probe runs; across the probe's staged states (high and low stake, a large and a small plant), each of the four closure answers is best on at least one of jobs kept, relations or EUR bn in at least one state | the closures probe, extended | "always summon" or "never summon" winning everywhere |
-| **M6, the group is one firm** | a group's failure sets every plant's headcount to 0 in the same month, in every host, in 100 % of runs; a nationalised group's dividend equals `state_share × the sum of its plants' output × DIVIDEND_YIELD`; a group's value is the sum of its plants' | a plants test | a German group fails and its Lille plant runs on |
+| **M6, the group is one firm** | a group's failure sets every plant's headcount to 0 in the same month, in every host, in 100 % of runs; a nationalised group's dividend equals `state_share × group_output_eur_bn × DIVIDEND_YIELD`; `group_value_eur_bn` is the sum of its plants' `value_eur_bn`; a hosted plant draws no failure and no bid of its own and its share does not drift | a plants test | a German group fails and its Lille plant runs on |
 | **M7, investment as stake** | with every plant stripped the stake vectors are identical to the base; at month 0, POL's stake toward DEU rises (the term is live); every agreement gate that flips at month 0 among the four playable nations is listed in the re-baseline for the author | a foreign-policy test; the diplomacy probe | a silent flip |
-| **M8, the save** | an older save loads, seeds its hosted plants at their authored values, and round-trips `parent`, `spun_out` and plant entries; a plant-abroad entry carries no firm-level key | `tests/test_save_load.gd` | a lost runtime owner, or a firm key on a plant |
+| **M8, the save** | an older save loads, seeds its hosted plants at their authored values, and round-trips `parent`, `spun_out` and plant entries; a plant-abroad entry that is not `spun_out` carries no firm-level key | `tests/test_save_load.gd` | a lost runtime owner, or a firm key on a plant |
 | **M9, no `if nation_id`** | the rules read `controller_of`, the plant fields and `foreign_ownership.json`; a grep of the new code finds no nation literal | the existing lint and review | a branch on `"DEU"` |
 | **M10, the month's cost** | Companies, Industry and Closures together cost at most 10 % more per month after step 5 than before it, on `tools/tick_budget_probe.gd`, run alone | the timing probe, on the parent's PROBE GO | a projection that walks the roster per firm |
 | **M11, the author's gate** | after 30 minutes the author has met at least one foreign group as a decision, and names it | the playtest receiver's report, verbatim | "I never saw it" |
