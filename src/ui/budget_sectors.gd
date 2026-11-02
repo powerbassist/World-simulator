@@ -62,6 +62,11 @@ static func refresh(panel, line_name: String) -> void:
 		child.queue_free()
 	if panel._open_line != "":
 		build(panel, panel._sector_box, panel._state.player(), panel._open_line, line_name)
+	# The toggles are built once: each says whether its line is the open one (pass 1:
+	# a second line opened left the first pressed).
+	for toggle in panel.find_children("*", "Button", true, false):  # i18n: ok a class name
+		if toggle.has_meta("line"):
+			toggle.set_pressed_no_signal(String(toggle.get_meta("line")) == String(panel._open_line))
 
 
 static func build(panel, parent: Control, ns, line: String, line_name: String) -> void:
@@ -96,7 +101,7 @@ static func _sector_row(tile: Control, ns, loader, line: String, sector: Diction
 	row.add_child(bar)
 	name.set_meta("bar", bar)
 	PanelKit.plain_line(row, Strings.t("%s %% · %s %s") % [Num.f(100.0 * share, 0),
-		Num.f(Sectors.quantity(ns, loader, line, id), 2), _unit(sector)], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
+		quantity_text(Sectors.quantity(ns, loader, line, id)), _unit(sector)], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 
 
 ## The verb: from, to, how much, the strip, Move and the refusal line.
@@ -107,6 +112,8 @@ static func _verb(panel, tile: Control, ns, line: String, sectors: Array) -> voi
 		panel._move_to = String(sectors[1]["id"])
 	if float(panel._move_amount) <= 0.0:
 		panel._move_amount = STEP
+	if sectors.size() < 2:
+		return  # a line of one sector has no share to move
 	var picks := PanelKit.buttons(tile)
 	PanelKit.plain_line(picks, Strings.t("Move"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var from := _picker(picks, sectors, String(panel._move_from), "from")
@@ -158,8 +165,9 @@ static func _price(panel, ns, line: String, sectors: Array, strip, move: Button,
 	var loader = panel._loader
 	var from_id := String(panel._move_from)
 	var to_id := String(panel._move_to)
-	var copy = panel._state.duplicate_state()
-	var cns = copy.player()
+	# The nation alone (Companies.preview's copy): the move reads no other nation, and a
+	# world copy per drag step was a hitch on the Budget.
+	var cns = ns.duplicate_state()
 	var r: Dictionary = Sectors.move_share(cns, loader, line, from_id, to_id, float(panel._move_amount))
 	var ok := bool(r.get("ok", false))
 	move.disabled = not ok
@@ -171,11 +179,17 @@ static func _price(panel, ns, line: String, sectors: Array, strip, move: Button,
 	var parts := PackedStringArray()
 	for id in [from_id, to_id]:
 		var sector := _sector(sectors, id)
-		parts.append(Strings.t("%s %s -> %s %s.") % [_name(sector), Num.f(Sectors.quantity(ns, loader, line, id), 2),
-			Num.f(Sectors.quantity(cns, loader, line, id), 2), _unit(sector)])
+		parts.append(Strings.t("%s %s -> %s %s.") % [_name(sector), quantity_text(Sectors.quantity(ns, loader, line, id)),
+			quantity_text(Sectors.quantity(cns, loader, line, id)), _unit(sector)])
 	var change := 100.0 * (Sectors.factor(cns, line) / maxf(Sectors.factor(ns, line), 0.000001) - 1.0)
 	strip.show_lines(Strings.t("Treasury"), EffectsStrip.cost_text(0.0), 0.0, " ".join(parts),
-		Strings.t("The line's money buys %s %% of %s.") % [Num.fs(change, 1), Strings.t(String(CHANNEL.get(line, "")))])
+		Strings.t("Effect on %s, for the same money: %s %%.") % [Strings.t(String(CHANNEL.get(line, ""))), Num.fs(change, 1)])
+
+
+## A quantity as the tile prints it: two decimals under ten (5.34 beds), one at or
+## above (100.9, an index), so the figure that moved is the one the eye finds.
+static func quantity_text(q: float) -> String:
+	return Num.f(q, 2 if absf(q) < 10.0 else 1)
 
 
 static func _picker(parent: Control, sectors: Array, selected: String, meta: String) -> OptionButton:

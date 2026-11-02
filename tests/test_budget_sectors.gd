@@ -43,7 +43,10 @@ func _process(_delta: float) -> bool:
 		6:
 			_check_tile()
 			_pick("hospitals", "prevention", 0.02)
+			_press(_with_meta("line", "defence"))
+			_press(_with_meta("line", "health"))
 		8:
+			_check_toggles()
 			_check_strip("hospitals", "prevention", 0.02)
 			_press(_with_meta("move", "move"))
 		10:
@@ -67,7 +70,8 @@ func _check_tile() -> void:
 			_fail("tile: no row for %s" % id)
 			continue
 		var text := _text_under(row.get_parent())
-		var q := Num.f(Sectors.quantity(ns, loader, LINE, id), 2)
+		var raw := Sectors.quantity(ns, loader, LINE, id)
+		var q := Num.f(raw, 2 if absf(raw) < 10.0 else 1)
 		if not text.contains(q):
 			_fail("tile %s: '%s' does not carry its quantity %s" % [id, text, q])
 		var bar = row.get_meta("bar")
@@ -96,6 +100,13 @@ func _select(option: OptionButton, id: String) -> void:
 	_fail("verb: no '%s' in a sector picker" % id)
 
 
+## Defence opened then Health again: only Health's toggle reads as pressed.
+func _check_toggles() -> void:
+	for b in _panel.find_children("*", "Button", true, false):
+		if b.has_meta("line") and (b as Button).button_pressed != (String(b.get_meta("line")) == LINE):
+			_fail("toggles: '%s' reads %s with %s open" % [b.get_meta("line"), (b as Button).button_pressed, LINE])
+
+
 ## The strip reads Sectors.move_share() on a copy: both quantities after the move.
 func _check_strip(from_id: String, to_id: String, amount: float) -> void:
 	var copy = _main._state.duplicate_state()
@@ -114,7 +125,8 @@ func _check_strip(from_id: String, to_id: String, amount: float) -> void:
 		return
 	var text := _text_under(strip)
 	for id in [from_id, to_id]:
-		var after := Num.f(Sectors.quantity(cns, loader, LINE, id), 2)
+		var raw := Sectors.quantity(cns, loader, LINE, id)
+		var after := Num.f(raw, 2 if absf(raw) < 10.0 else 1)
 		if not text.contains(after):
 			_fail("strip: '%s' does not carry %s after the move (%s)" % [text, id, after])
 	if strip.money_label.text != EffectsStrip.cost_text(0.0):
