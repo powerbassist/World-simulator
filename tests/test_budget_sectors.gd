@@ -65,6 +65,18 @@ func _process(_delta: float) -> bool:
 			_check_moved("hospitals", "prevention", 0.02)
 			if not (_panel._share_moves as Array).is_empty():
 				_fail("Revert: the drafted move is still in the Budget's draft")
+			# Prevention stands at about 0.051: a first draft takes it to 0.021.
+			_pick("prevention", "hospitals", 0.03)
+		20:
+			_press(_with_meta("move", "move"))
+		22:
+			# QA's E3 on #278: the words that say a move waits for Commit.
+			if not _text_under(_panel._sector_box).contains(Strings.tn("%d share move drafted: Commit books it, Revert drops it.", "%d share moves drafted: Commit books them, Revert drops them.", 1) % 1):
+				_fail("draft: the tile does not say one move is drafted")
+			# QA's E5: 0.02 more is fine on the live share, under the floor on the draft.
+			_pick("prevention", "hospitals", 0.02)
+		24:
+			_check_refused()
 			_finish()
 	return false
 
