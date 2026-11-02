@@ -58,3 +58,10 @@ const PRIORITY_UPLIFT := 0.20
 ## largest sector, against 0.93 for a 1 bn fund there). At 0.25 that largest case
 ## equals a 1 bn fund and hospitals give a third of it. A stand-in, the author's call.
 const PRIORITY_BETA := 0.25
+
+## The parent's two TAKEs on #267. No free stacking: one region per sector (a second
+## replaces the first, which is the choice) and a REGION holds at most this many
+## priorities. A term, not a standing lift: a priority lasts PRIORITY_MONTHS,
+## renewable by setting it again, the month it ends on its row for the strip.
+const PRIORITY_MAX_PER_REGION := 2
+const PRIORITY_MONTHS := 36

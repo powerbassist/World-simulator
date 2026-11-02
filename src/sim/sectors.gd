@@ -191,7 +191,7 @@ static func set_priority(state, ns, loader, line: String, sector_id: String, reg
 	var why := _priority_refusal(state, ns, loader, line, sector_id, region_id)
 	if why != "":
 		return {"ok": false, "reason": why}
-	ns.sector_priorities[sector_id] = _priority_row(ns, loader, line, sector_id, region_id)
+	ns.sector_priorities[sector_id] = _priority_row(state, ns, loader, line, sector_id, region_id)
 	return {"ok": true}
 
 
@@ -244,7 +244,7 @@ static func priority_estimate(state, ns, loader, line: String, sector_id: String
 	var now := Regions.unemployment_by_region(ns, list, access, sites)
 	# The row is set for one synchronous read and the register restored at once, a
 	# priority already set on the sector included (RegionFunds.estimate()'s idiom).
-	var row := _priority_row(ns, loader, line, sector_id, region_id)
+	var row := _priority_row(state, ns, loader, line, sector_id, region_id)
 	var held = ns.sector_priorities.get(sector_id)
 	ns.sector_priorities[sector_id] = row
 	var after := Regions.unemployment_by_region(ns, list, access, sites)
@@ -266,11 +266,45 @@ static func priority_estimate(state, ns, loader, line: String, sector_id: String
 ## sector's spending (the line's % of GDP x the sector's share x GDP), and the term is
 ## PRIORITY_BETA x that money as points of the region's output. Only after
 ## _priority_refusal() passed: the people, the others and the output are all > 0.
-static func _priority_row(ns, loader, line: String, sector_id: String, region_id: String) -> Dictionary:
+## The term lasts PRIORITY_MONTHS (`ends`, the strip's end month) and converges:
+## `gap` is the region's shortfall in output per head now, and `factor` (1 at the
+## press, 0 for a region not behind) is what tick_month() scales the term by.
+static func _priority_row(state, ns, loader, line: String, sector_id: String, region_id: String) -> Dictionary:
 	var spend := float(ns.spending_pct_gdp.get(line, 0.0)) / 100.0 \
 		* float(shares(ns, loader, line).get(sector_id, 0.0)) * float(ns.gdp_eur_bn)
 	var money := DK.PRIORITY_UPLIFT * float(ns.region_pop_share.get(region_id, 0.0)) / _pop_total(ns) * spend
-	return {"region_id": region_id, "pts": DK.PRIORITY_BETA * 100.0 * money / Regions.output_eur_bn(ns, region_id)}
+	var gap := _shortfall(state, ns, region_id)
+	return {"region_id": region_id, "pts": DK.PRIORITY_BETA * 100.0 * money / Regions.output_eur_bn(ns, region_id),
+		"months_left": DK.PRIORITY_MONTHS, "ends": int(state.year) * 12 + int(state.month) + DK.PRIORITY_MONTHS,
+		"gap": gap, "factor": 1.0 if gap > 0.0 else 0.0}
+
+
+## The priorities' month (the parent's TAKEs on #267): each counts its term down and
+## ends with it, and its factor follows the region's shortfall in output per head
+## against the nation's: the shortfall now over the shortfall at the press, never
+## above 1, so the term is all of the strip's figure at the press, shrinks as the
+## region catches up and stops once it has: a convergence term, not a standing lift.
+## A WorldMonth step after Migration, which moves the people the shortfall is read
+## on; Budget.project() runs it too, so a forecast sees a priority end.
+static func tick_month(state) -> void:
+	var ns = state.player()
+	if ns == null or ns.sector_priorities.is_empty():
+		return
+	for sector_id in ns.sector_priorities.keys():
+		var row: Dictionary = ns.sector_priorities[sector_id]
+		row["months_left"] = int(row["months_left"]) - 1
+		if int(row["months_left"]) <= 0:
+			ns.sector_priorities.erase(sector_id)
+		elif float(row["gap"]) > 0.0:
+			row["factor"] = clampf(_shortfall(state, ns, String(row["region_id"])) / float(row["gap"]), 0.0, 1.0)
+
+
+## A region's shortfall in output per head against the nation's (1 - its index; at
+## or below 0 it is not behind).
+static func _shortfall(state, ns, region_id: String) -> float:
+	var total := _pop_total(ns)
+	var p := float(ns.region_pop_share.get(region_id, 0.0)) / total if total > 0.0 else 0.0
+	return 1.0 - Regions.gdp_per_head_index(ns, state.regions.get(ns.id, []), region_id, p)
 
 
 ## The other named regions' unemployment, weighted by their share of the people.
@@ -316,6 +350,12 @@ static func _priority_refusal(state, ns, loader, line: String, sector_id: String
 			known = true
 	if not known:
 		return "That is not a sector of this spending line."
+	var held := 0
+	for other in ns.sector_priorities:
+		if String(other) != sector_id and priority_of(ns, String(other)) == region_id:
+			held += 1
+	if held >= DK.PRIORITY_MAX_PER_REGION:
+		return "This region already holds as many priorities as it can."
 	for region in state.regions.get(ns.id, []):
 		if region.id == region_id and region_id != RK.RESIDUAL_KEY:
 			var p := float(ns.region_pop_share.get(region_id, 0.0))

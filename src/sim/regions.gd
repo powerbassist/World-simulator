@@ -124,7 +124,8 @@ static func _player_terms(ns) -> Dictionary:
 		for sector in sectors:
 			var row: Dictionary = ns.sector_priorities[sector]
 			var id := String(row["region_id"])
-			out[id] = float(out.get(id, 0.0)) + float(row["pts"])
+			# The convergence factor (Sectors.tick_month(), the parent's TAKE on #267).
+			out[id] = float(out.get(id, 0.0)) + float(row["pts"]) * float(row.get("factor", 1.0))
 	return out
 
 
