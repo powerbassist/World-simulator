@@ -752,8 +752,7 @@ static func _read_field(state, ns, field: String, company_id: String, loader) ->
 		"unemployment_pct": return ns.unemployment_pct
 		"overall_approval_pct": return ns.overall_approval_pct
 		# V4.7b: the autonomy machine's state. A failing firm is one inside its
-		# rescue window (the flag with time left, not a committed failure); the
-		# live share needs the loader firm for its authored fallback.
+		# rescue window (the flag with time left, not a committed failure).
 		"bid_pending": return 1.0 if String(ns.companies.get(company_id, {}).get("bid_bidder", "")) != "" else 0.0
 		"failing":
 			var fentry: Dictionary = ns.companies.get(company_id, {})
@@ -761,7 +760,8 @@ static func _read_field(state, ns, field: String, company_id: String, loader) ->
 		# The courtship flag: 1.0 from the moment the verb fires until a bid is
 		# ANSWERED -- the gate that keeps a courtship from being re-bought click by click.
 		"courted": return float(ns.companies.get(company_id, {}).get("courted", 0.0))
-		# The break-up's gate reads the firm's weight among its sector's majors.
+		# The live share needs the loader firm for its authored fallback; the
+		# break-up's gate reads the firm's weight among its sector's majors.
 		"firm_share", "major_share":
 			var firm = _firm_of(ns, loader, company_id)
 			if firm == null: return 0.0
