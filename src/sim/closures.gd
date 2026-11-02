@@ -14,8 +14,9 @@ extends RefCounted
 ##                    has a price: the plant's losses for the search, paid at the
 ##                    answer, and a sweetener on the buyer's price, paid at the sale;
 ##   rescue           the PLANT is kept for RESCUE_MONTHS, the state paying
-##                    RESCUE_EUR_PER_JOB_YEAR for each job the closure would cut, on
-##                    the debt month by month (QA's call on #270, the parent's
+##                    RESCUE_EUR_PER_JOB_YEAR for each job the closure would cut,
+##                    a Budget line (`rescue_bill_pct_gdp`, the parent's call 4 on
+##                    #277) for the term (QA's call on #270, the parent's
 ##                    ruling: priced on the plant, not on the firm's subsidy verbs,
 ##                    whose bill read EUR 5-9 bn a year for a 720-job plant). It
 ##                    announces nothing during its term and is watched afresh after
@@ -59,6 +60,7 @@ static func tick_month(state, loader) -> void:
 	if rule.is_empty() or ns == null:
 		return
 	var now := _now(state)
+	tick_rescues(state)
 	var majors: Array = Companies.majors_of(loader, ns.id)
 	for company in majors:
 		_resolve(ns, company, rule, now)
@@ -98,14 +100,47 @@ static func open(ns) -> Array:
 
 
 ## The plant rescues running, as copies for a panel to read: each closure record
-## with its `months_left`, `ends` (the month it ends) and `rescue_eur_bn_per_year`.
+## with its `months_left`, `ends` (the month it ends), `rescue_eur_bn_per_year` and
+## `eur_bn_per_month` (the In progress strip's row, the parent's call 4 on #277).
 static func rescues(ns) -> Array:
 	var out: Array = []
 	for company_id in ns.companies:
 		var row: Dictionary = (ns.companies[company_id] as Dictionary).get("closure", {})
 		if String(row.get("status", "")) == RESCUING:
-			out.append(row.duplicate(true))
+			var copy := row.duplicate(true)
+			copy["eur_bn_per_month"] = float(row["rescue_eur_bn_per_year"]) / 12.0
+			out.append(copy)
 	return out
+
+
+## The rescues' month (the parent's call 4 on #277): each running term counts down,
+## and their yearly price as a percent of GDP is the Budget line
+## `ns.rescue_bill_pct_gdp`, billed a month behind as every computed line is, so the
+## cost is on the debt path the Budget shows. Budget.project() runs this alone, so a
+## forecast books the bill while a term runs and drops it when the term ends. A
+## firm that failed meanwhile has nothing left to rescue (QA's TAKE 1 on #277).
+static func tick_rescues(state) -> void:
+	var ns = state.player()
+	if ns == null:
+		return
+	var now := _now(state)
+	var bill := 0.0
+	for company_id in ns.companies:
+		var entry: Dictionary = ns.companies[company_id]
+		var row: Dictionary = entry.get("closure", {})
+		if String(row.get("status", "")) != RESCUING:
+			continue
+		if _gone(entry):
+			_end(row, "void", now)
+			continue
+		if float(ns.gdp_eur_bn) > 0.0:
+			bill += 100.0 * float(row["rescue_eur_bn_per_year"]) / float(ns.gdp_eur_bn)
+		row["months_left"] = int(row["months_left"]) - 1
+		if int(row["months_left"]) <= 0:
+			# At its end the plant is watched afresh.
+			entry.erase("closure_watch")
+			_end(row, "rescued", now)
+	ns.rescue_bill_pct_gdp = bill
 
 
 ## An announced closure's answers, each with its figures for the strip: `kind`
@@ -172,20 +207,13 @@ static func _resolve(ns, company, rule: Dictionary, now: int) -> void:
 	var entry: Dictionary = ns.companies.get(company.id, {})
 	var row: Dictionary = entry.get("closure", {})
 	var status := String(row.get("status", ""))
-	if status != ANNOUNCED and status != SEARCHING and status != RESCUING:
+	if status != ANNOUNCED and status != SEARCHING:
 		return
 	# A firm that failed meanwhile has nothing left to close.
 	if _gone(entry):
 		_end(row, "void", now)
 	elif status == ANNOUNCED and now >= int(row["due"]):
 		_cut(ns, company, entry, row, rule, now)
-	elif status == RESCUING:
-		# A month of the term on the debt; at its end the plant is watched afresh.
-		ns.debt_eur_bn += float(row["rescue_eur_bn_per_year"]) / 12.0
-		row["months_left"] = int(row["months_left"]) - 1
-		if int(row["months_left"]) <= 0:
-			entry.erase("closure_watch")
-			_end(row, "rescued", now)
 	elif status == SEARCHING:
 		row["months_left"] = int(row["months_left"]) - 1
 		if int(row["months_left"]) > 0:

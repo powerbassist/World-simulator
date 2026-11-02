@@ -23,6 +23,7 @@ const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
+const Closures = preload("res://src/sim/closures.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
@@ -180,6 +181,9 @@ static func recompute(state, ns) -> void:
 		# third that STOPS: a fund runs its years and ends. Billed a month behind, as
 		# every computed line is, for the same precondition-field reason.
 		+ ns.region_fund_bill_pct_gdp
+		# V5.3 a. The plant rescues' line (src/sim/closures.gd, the parent's call 4 on
+		# #277), the fourth that STOPS: a rescue runs its term and ends. A month behind.
+		+ ns.rescue_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -661,6 +665,10 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# re-baseline measured unemployment as the largest channel moved
 	# through exactly this read.
 	units.append(func() -> void: Industry.tick_month(sim, loader))
+	# V5.3 a: the plant rescues' terms in Closures' slot (after Industry), and only
+	# those: a rescue's bill ends inside the window when its term does (the parent's
+	# call 4 on #277). Announcements and cuts stay out, as the forecast runs no draw.
+	units.append(func() -> void: Closures.tick_rescues(sim))
 	# In main.gd's slot -- between Companies and Investment -- and absent
 	# altogether until the V2.8 review, which is the one system here that had
 	# neither a paragraph justifying its presence nor Media's paragraph
@@ -845,5 +853,6 @@ static func snapshot(state) -> Dictionary:
 		# V5.3 a, on the snapshot for the same reason: the Budget table's fund row
 		# compares a projected month against the current one (Interface's ask).
 		"region_fund_bill_pct_gdp": ns.region_fund_bill_pct_gdp,
+		"rescue_bill_pct_gdp": ns.rescue_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}

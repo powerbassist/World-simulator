@@ -26,7 +26,7 @@ const BUYER_SWEETENER := 0.20
 ## PLANT, not on the firm's subsidy verbs, whose bill read EUR 5 to 9 bn a year to keep
 ## a 720-job plant. The state pays this much a year for each job the closure would
 ## cut -- about a worker's yearly labour cost, an order of magnitude rather than a
-## sourced figure -- for RESCUE_MONTHS, on the debt month by month, and the plant is
+## sourced figure -- for RESCUE_MONTHS, a Budget line of its own, and the plant is
 ## watched afresh after it. Stand-ins: over the term a job kept costs EUR 180,000,
 ## inside the EUR 90,000 to 950,000 QA found for a job a buyer keeps.
 const RESCUE_EUR_PER_JOB_YEAR := 60000.0

@@ -1438,10 +1438,15 @@ almost never. `src/sim/closures.gd`, step `Closures` right after `Industry`.
     not on the firm's subsidy verbs, whose bill read EUR 5 to 9 bn a year to keep a
     720-job plant): `RESCUE_EUR_PER_JOB_YEAR` (60,000, a stand-in, about a worker's
     yearly labour cost) for each job the closure would cut, for `RESCUE_MONTHS` (36),
-    on the debt month by month -- a job kept costs EUR 180,000 over the term, inside
+    as a Budget line of its own (`rescue_bill_pct_gdp`, the parent's call 4 on #277:
+    the deficit reads it a month behind, as every computed line, so its cost is on
+    the debt path the Budget shows, and `Budget.project()` counts the terms down
+    through `Closures.tick_rescues()`, so the 24-month forecast drops the bill when
+    a term ends) -- a job kept costs EUR 180,000 over the term, inside
     the EUR 90,000 to 950,000 QA found for a job a buyer keeps. The plant announces
     nothing during its term and is watched afresh after it, on a new window with no
-    cooldown. `Closures.rescues()` lists the terms running. No answer is dominated on
+    cooldown. `Closures.rescues()` lists the terms running, each with its `eur_bn_per_month`
+    and `ends` (the In progress strip's row). No answer is dominated on
     (money over the deal, jobs lost now, jobs not secured for good): close is the
     cheapest, the rescue the surest now, the buyer the only lasting answer.
   Unanswered, the closure lands two months (`ANSWER_MONTHS`) after it is announced.
