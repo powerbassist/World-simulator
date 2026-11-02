@@ -1400,7 +1400,9 @@ every verb on the real machine).
 **The transition's output dip** (the spec's "4 % below its path, then recovers") has
 its own channel, because `companies.gd` is at its size ratchet: in every month of a
 transition `Processes.tick_month()` writes `ns.process_drag_pct`, minus
-`PROCESS_TRANSITION_OUTPUT_LOSS` (0.04) times the firm's live output as points of
+the firm's sector's rate (`data/industry/transition.json`: agriculture 0.02, industry
+0.05, services 0.04, stand-ins with no published source, the author's call on #264)
+times (1 - the share the state held at the press) times the firm's live output as points of
 GDP, scaled by `GAP_CLOSE` over the transition's length in years and bounded at
 `PROCESS_DRAG_MAX_PCT`, and Economy adds it to growth a month later as its eleventh
 addend (no loader; the inflation term's lag). The scale is what keeps the strip
