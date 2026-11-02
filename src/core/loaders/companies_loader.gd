@@ -13,6 +13,7 @@ const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Company = preload("res://src/core/company.gd")
 const ClosuresK = preload("res://src/sim/closures_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const EconomyK = preload("res://src/sim/economy_constants.gd")
 
 
 ## One data/companies/<NATION>.json per nation, {"companies": [...]}, the same
@@ -154,38 +155,78 @@ static func validate_companies(loader) -> void:
 ## one object of thresholds that apply to every major, never per firm. A bad value is
 ## a load error: a rule that silently read 0 would close no plant, or every plant.
 static func load_closure_rule(loader, path: String) -> void:
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var errors: Array[String] = []
+	var rule := parse_closure_rule(JSON.parse_string(FileAccess.get_file_as_string(path)), path, errors)
+	loader.errors.append_array(errors)
+	if errors.is_empty():
+		loader.closure_rule = rule
+
+
+## The parse step, public so a test feeds it a dictionary (parse_fund_rule's idiom):
+## the rule, or {} with the first error appended.
+static func parse_closure_rule(parsed, path: String, errors: Array[String]) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
-		loader.errors.append("%s: missing or invalid JSON" % path)
-		return
+		errors.append("%s: missing or invalid JSON" % path)
+		return {}
 	var fname := path.get_file()
 	for key in ["window_months", "fall", "cut", "cooldown_months"]:
 		if typeof(parsed.get(key)) != TYPE_FLOAT or float(parsed[key]) <= 0.0:
-			loader.errors.append("%s: '%s' must be a number above 0" % [fname, key])
-			return
+			errors.append("%s: '%s' must be a number above 0" % [fname, key])
+			return {}
 	for key in ["window_months", "cooldown_months"]:
 		if float(parsed[key]) != floorf(float(parsed[key])):
-			loader.errors.append("%s: '%s' is a whole number of months" % [fname, key])
-			return
+			errors.append("%s: '%s' is a whole number of months" % [fname, key])
+			return {}
 	for key in ["fall", "cut"]:
 		if float(parsed[key]) >= 1.0:
-			loader.errors.append("%s: '%s' is a fraction, below 1" % [fname, key])
-			return
+			errors.append("%s: '%s' is a fraction, below 1" % [fname, key])
+			return {}
 	# The cooldown outlasts a window and the answer, so a landed closure's own cut
 	# is never measured as the next fall (closures.gd also clears the history).
 	if float(parsed["cooldown_months"]) < float(parsed["window_months"]) + float(ClosuresK.ANSWER_MONTHS):
-		loader.errors.append("%s: cooldown_months is shorter than window_months + the answer's months" % fname)
-		return
+		errors.append("%s: cooldown_months is shorter than window_months + the answer's months" % fname)
+		return {}
 	var offsets = parsed.get("bloc_offset")
 	if typeof(offsets) != TYPE_DICTIONARY:
-		loader.errors.append("%s: missing or invalid object 'bloc_offset'" % fname)
-		return
+		errors.append("%s: missing or invalid object 'bloc_offset'" % fname)
+		return {}
 	for bloc in offsets:
 		if not OpinionK.BLOC_SIZE.has(bloc) or typeof(offsets[bloc]) != TYPE_FLOAT:
-			loader.errors.append("%s: bloc_offset names an unknown bloc or a non-number: %s" % [fname, bloc])
-			return
-	loader.closure_rule = {
+			errors.append("%s: bloc_offset names an unknown bloc or a non-number: %s" % [fname, bloc])
+			return {}
+	return {
 		"window_months": int(parsed["window_months"]), "fall": float(parsed["fall"]),
 		"cut": float(parsed["cut"]), "cooldown_months": int(parsed["cooldown_months"]),
 		"bloc_offset": (offsets as Dictionary).duplicate(),
 	}
+
+
+## V5.3 a: a nationalisation's transition loss by economic sector
+## (data/industry/transition.json, src/sim/process_drag.gd): a share of a year of the
+## firm's output, one per sector of economy_constants.SECTOR_TREND. A missing or bad
+## rate is a load error, never a silent 0 (a free transition).
+static func load_transition_rule(loader, path: String) -> void:
+	var errors: Array[String] = []
+	var rule := parse_transition_rule(JSON.parse_string(FileAccess.get_file_as_string(path)), path, errors)
+	loader.errors.append_array(errors)
+	if errors.is_empty():
+		loader.transition_rule = rule
+
+
+## The parse step, public so a test feeds it a dictionary: the rule, or {} with an error.
+static func parse_transition_rule(parsed, path: String, errors: Array[String]) -> Dictionary:
+	if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("output_loss_by_sector")) != TYPE_DICTIONARY:
+		errors.append("%s: missing or invalid object 'output_loss_by_sector'" % path.get_file())
+		return {}
+	var table: Dictionary = parsed["output_loss_by_sector"]
+	var out := {}
+	for sector in EconomyK.SECTOR_TREND:
+		var v = table.get(sector)
+		if (typeof(v) != TYPE_FLOAT and typeof(v) != TYPE_INT) or float(v) <= 0.0 or float(v) >= 1.0:
+			errors.append("%s: output_loss_by_sector.%s must be a fraction above 0 and below 1" % [path.get_file(), sector])
+			return {}
+		out[sector] = float(v)
+	if table.size() != out.size():
+		errors.append("%s: output_loss_by_sector names a sector the economy does not have" % path.get_file())
+		return {}
+	return {"output_loss_by_sector": out}

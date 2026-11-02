@@ -491,6 +491,16 @@ const PROCESS_STAKE_PREMIUM := Vector2(0.05, 0.15)
 ## the transfer that ends it), then a twelve-month transition before control.
 const PROCESS_OFFER_MONTHS := 2
 const PROCESS_TRANSITION_MONTHS := 12
+## Spec 3.2: "during the transition the firm's output is 4 % below its path
+## (management turnover), then recovers". The share of a year of the firm's output
+## the transition loses is DATA, by the firm's sector (data/industry/transition.json,
+## stand-ins), scaled down by the share the state already held; src/sim/process_drag.gd
+## books it as a growth drag sized so the total loss is the strip's figure.
+## The drag's bound, points of growth a year: docs/economy-model.md's divergence
+## argument is per quantity, and a new addend owes one (FIRM_IMPULSE_MAX_PCT's
+## reason). Slack at the roster's sizes: the largest French major in transition
+## drags well under a tenth of a point.
+const PROCESS_DRAG_MAX_PCT := 0.5
 const PROCESS_NATIONALISE_PREMIUM := Vector2(0.15, 0.30)
 ## A break-up: an investigation of 9 to 12 months (seeded), a ruling that charges
 ## the legal costs, then a remedy of 6 months. The authority's odds rise with the

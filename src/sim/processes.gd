@@ -37,6 +37,7 @@ const K = preload("res://src/sim/companies_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Asks = preload("res://src/sim/process_asks.gd")
+const Drag = preload("res://src/sim/process_drag.gd")
 
 ## The verbs that run as processes, by action id, and their first stage.
 const FIRST_STAGE := {
@@ -115,8 +116,11 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 		"full_nationalisation":
 			var base := (stake - held) * value
 			var months := K.PROCESS_OFFER_MONTHS + K.PROCESS_TRANSITION_MONTHS
+			# The transition's cost in output (process_drag.gd), shown before the press: the
+			# share of a year of the firm's output its management turnover loses.
 			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.x),
-				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months}
+				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months,
+				"output_loss_eur_bn": Drag.loss_eur_bn(ns, loader, company, held)}
 		"privatisation":
 			var base := held * value
 			# A sale may be held once for a new bid (process_asks.gd), so it can run
@@ -166,6 +170,7 @@ static func start(state, ns, loader, action, company_id: String, by_law := false
 		"base_eur_bn": float(est["base_eur_bn"]), "rate": 0.0, "paid_eur_bn": 0.0,
 		"price_lo": float(est["price_lo"]), "price_hi": float(est["price_hi"]),
 		"months_lo": int(est["months_lo"]), "months_hi": int(est["months_hi"]),
+		"state_share_at_start": Companies.state_share_of(ns, company_id),
 		"owner": String((ns.companies[company_id] as Dictionary).get("owner", "")),
 	}
 	var months := 0
@@ -275,6 +280,7 @@ static func tick_month(state, loader) -> void:
 		for row in ns.processes:
 			if String(row["status"]) == OPEN:
 				_tick_row(state, ns, loader, row)
+		ns.process_drag_pct = Drag.drag(ns, loader)
 
 
 static func _tick_row(state, ns, loader, row: Dictionary) -> void:

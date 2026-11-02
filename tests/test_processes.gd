@@ -16,6 +16,9 @@ const K = preload("res://src/sim/companies_constants.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Industry = preload("res://src/sim/industry.gd")
+const Economy = preload("res://src/sim/economy.gd")
+const EC = preload("res://src/sim/economy_constants.gd")
+const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
 
 const PLAYER := "FRA"
 const OK_BLOCS := ["workers", "pensioners", "urban", "rural", "business", "students"]
@@ -49,6 +52,11 @@ func _init() -> void:
 	_test_a_failure_in_the_transition_lands_the_ownership()
 	_test_the_odds_window_does_not_centre_on_the_truth()
 	_test_no_bid_opens_on_a_firm_in_a_process()
+	_test_the_transition_drags_the_firms_output()
+	_test_the_drag_reaches_growth()
+	_test_the_realised_loss_is_the_strips()
+	_test_the_rate_is_the_sectors_and_falls_with_the_stake_held()
+	_test_the_transition_rule_refuses_a_bad_table()
 	_finish()
 
 
@@ -540,3 +548,146 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL %s" % f)
 	quit(1)
+
+
+## Spec 3.2: "during the transition the firm's output is 4 % below its path
+## (management turnover), then recovers". As a growth addend, written by the tick:
+## the firm's sector's rate x its output as points of GDP, scaled by the
+## gap's closing (the next test sums what it loses), negative, in every month of the
+## transition and in no other; the output gap's own closing is the recovery.
+func _test_the_transition_drags_the_firms_output() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	# The strip shows the loss before the press (B2): a year of the firm's output x the share.
+	var est: Dictionary = Processes.estimate(state, ns, _loader, _action("full_nationalisation"), firm)
+	var loss_want := _rate_of(ns, firm) * Companies.output_eur_bn(ns, _company(ns, firm))
+	if loss_want <= 0.0 or not is_equal_approx(float(est.get("output_loss_eur_bn", -1.0)), loss_want):
+		_fail("the nationalisation's strip shows an output loss of %s, not %.4f bn" % [est.get("output_loss_eur_bn"), loss_want])
+	Bills.adopt(state, ns, _loader, {"action_id": "full_nationalisation", "company_id": firm})
+	var during := 0
+	var before := true
+	for i in range(K.PROCESS_OFFER_MONTHS + K.PROCESS_TRANSITION_MONTHS + 2):
+		_month(state)
+		var stage := String(_row(ns, firm).get("stage", ""))
+		var open := String(_row(ns, firm).get("status", "")) == Processes.OPEN
+		if open and stage == "transition":
+			during += 1
+			# Scaled by the gap's closing over the transition's years (process_drag.gd).
+			var want := -_rate_of(ns, firm) * 100.0 * Companies.output_eur_bn(ns, _company(ns, firm)) / float(ns.gdp_eur_bn) \
+				* EC.GAP_CLOSE * 12.0 / K.PROCESS_TRANSITION_MONTHS
+			if want >= 0.0 or not is_equal_approx(float(ns.process_drag_pct), maxf(want, -K.PROCESS_DRAG_MAX_PCT)):
+				_fail("the transition's drag is %.5f, not %.5f" % [float(ns.process_drag_pct), want])
+		elif float(ns.process_drag_pct) != 0.0:
+			_fail("a drag of %.5f outside the transition (stage %s, %s)" % [float(ns.process_drag_pct), stage, "before" if before else "after"])
+		if stage == "transition":
+			before = false
+	if during != K.PROCESS_TRANSITION_MONTHS:
+		_fail("the drag ran %d months, not the transition's %d" % [during, K.PROCESS_TRANSITION_MONTHS])
+
+
+## The eleventh addend: Economy's growth reads the drag, a month after the tick
+## that wrote it (Processes runs after Economy), with nothing else moved.
+func _test_the_drag_reaches_growth() -> void:
+	var still = _new_state()
+	var dragged = _new_state()
+	dragged.player().process_drag_pct = -0.5
+	Economy.tick_month(still)
+	Economy.tick_month(dragged)
+	var moved := float(dragged.player().growth_annual_pct) - float(still.player().growth_annual_pct)
+	if not is_equal_approx(moved, -0.5):
+		_fail("a drag of -0.5 moved growth by %.5f" % moved)
+
+
+## The strip must say the truth (QA's call 2 on #264, the parent's ruling): what the
+## economy loses IN TOTAL, over the transition and the gap's closing after it, is the
+## output loss the strip shows before the press. The drag is a growth addend and the
+## gap closes at GAP_CLOSE a year, so an unscaled drag would lose its own sum divided
+## by GAP_CLOSE (about 3.3 times the strip). Two worlds, Economy then Processes each
+## month (the game's order) and nothing else, so their difference is the drag's alone,
+## summed as GDP-years against the untreated world and compared as shares of GDP.
+func _test_the_realised_loss_is_the_strips() -> void:
+	var control = _new_state()
+	var treated = _new_state()
+	var ns = treated.player()
+	var firm := _big(ns)
+	var est: Dictionary = Processes.estimate(treated, ns, _loader, _action("full_nationalisation"), firm)
+	var shown := float(est.get("output_loss_eur_bn", 0.0)) / float(ns.gdp_eur_bn)
+	Bills.adopt(treated, ns, _loader, {"action_id": "full_nationalisation", "company_id": firm})
+	var lost := 0.0
+	# 20 years: the gap's tail left after the transfer is under 0.5 % of the total.
+	for i in range(240):
+		for state in [control, treated]:
+			Economy.tick_month(state)
+			_month(state)
+		var c: float = float(control.player().gdp_eur_bn)
+		lost += (c - float(ns.gdp_eur_bn)) / c / 12.0
+	if shown <= 0.0 or absf(lost / shown - 1.0) > 0.02:
+		_fail("the economy loses %.4f x the strip's output loss over the transition and its tail" % (lost / shown if shown > 0.0 else 0.0))
+
+
+## The shipped rate of the firm's sector (data/industry/transition.json), with no stake held.
+func _rate_of(ns, firm: String) -> float:
+	return float(_loader.transition_rule["output_loss_by_sector"][String(_company(ns, firm).sector)])
+
+
+## The author's call on #264: the transition's rate is the firm's SECTOR's (data, stand-ins)
+## and falls with the share the state already held (a firm it part-owns changes less
+## management): rate x (1 - held), read from the share held at the press, so the
+## transfer of control that sets it to 1 does not zero the transition's own drag.
+func _test_the_rate_is_the_sectors_and_falls_with_the_stake_held() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var table: Dictionary = _loader.transition_rule.get("output_loss_by_sector", {})
+	var seen := {}
+	for company in Companies.majors_of(_loader, ns.id):
+		var output := Companies.output_eur_bn(ns, company)
+		if output <= 0.0 or seen.has(String(company.sector)):
+			continue
+		seen[String(company.sector)] = true
+		var est: Dictionary = Processes.estimate(state, ns, _loader, _action("full_nationalisation"), String(company.id))
+		if not is_equal_approx(float(est.get("output_loss_eur_bn", -1.0)) / output, float(table.get(String(company.sector), -1.0))):
+			_fail("a %s firm's strip loses %s of its output, not its sector's %s" % [company.sector,
+				float(est.get("output_loss_eur_bn", -1.0)) / output, table.get(String(company.sector))])
+	if seen.size() < 2:
+		_fail("the sector fixture found majors in %d sector(s), not two or more" % seen.size())
+	var firm := _big(ns)
+	var full := float(Processes.estimate(state, ns, _loader, _action("full_nationalisation"), firm)["output_loss_eur_bn"])
+	(ns.companies[firm] as Dictionary)["state_share"] = 0.4
+	var part := float(Processes.estimate(state, ns, _loader, _action("full_nationalisation"), firm)["output_loss_eur_bn"])
+	if full <= 0.0 or not is_equal_approx(part, full * 0.6):
+		_fail("a firm 40 %% state-held loses %.4f bn, not 0.6 x the %.4f a private one loses" % [part, full])
+	# The verb's precondition (state_owned == 0) refuses a part-held firm today, so the
+	# row's share at the press is set after a private firm's press: the drag must read
+	# the row's figure, not the live share the transfer of control has set to 1.
+	(ns.companies[firm] as Dictionary)["state_share"] = 0.0
+	Bills.adopt(state, ns, _loader, {"action_id": "full_nationalisation", "company_id": firm})
+	if float(_row(ns, firm).get("state_share_at_start", -1.0)) != 0.0:
+		_fail("a private firm's press did not record a share held of 0")
+	_row(ns, firm)["state_share_at_start"] = 0.4
+	for i in range(K.PROCESS_OFFER_MONTHS + 2):
+		_month(state)
+	if String(_row(ns, firm).get("stage", "")) != "transition":
+		_fail("the stake fixture is not in its transition")
+		return
+	var want := -_rate_of(ns, firm) * 0.6 * 100.0 * Companies.output_eur_bn(ns, _company(ns, firm)) / float(ns.gdp_eur_bn) \
+		* EC.GAP_CLOSE * 12.0 / K.PROCESS_TRANSITION_MONTHS
+	if not is_equal_approx(float(ns.process_drag_pct), want):
+		_fail("a 40 %%-held firm's transition drags %.6f, not %.6f (the stake held at the press)" % [float(ns.process_drag_pct), want])
+
+
+func _test_the_transition_rule_refuses_a_bad_table() -> void:
+	var good: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/industry/transition.json"))
+	var errors: Array[String] = []
+	if CompaniesLoader.parse_transition_rule(good, "transition.json", errors).is_empty() or not errors.is_empty():
+		_fail("the shipped transition rule was refused: %s" % [errors])
+	var bad := {
+		"a sector missing": {"agriculture": 0.02, "industry": 0.05},
+		"a rate of 1": {"agriculture": 0.02, "industry": 1.0, "services": 0.04},
+		"a rate of 0": {"agriculture": 0.0, "industry": 0.05, "services": 0.04},
+		"a sector the economy lacks": {"agriculture": 0.02, "industry": 0.05, "services": 0.04, "mining": 0.05},
+	}
+	for label in bad:
+		var e: Array[String] = []
+		if not CompaniesLoader.parse_transition_rule({"output_loss_by_sector": bad[label]}, "transition.json", e).is_empty() or e.is_empty():
+			_fail("the transition rule accepted %s" % label)
