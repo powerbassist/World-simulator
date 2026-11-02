@@ -119,6 +119,8 @@ var _open_line := ""
 var _move_from := ""
 var _move_to := ""
 var _move_amount := 0.0
+## The drafted share moves (budget_sectors.gd), booked by Commit, dropped by Revert.
+var _share_moves := []
 var _sector_box: VBoxContainer
 
 
@@ -298,6 +300,7 @@ func _on_revert(state_moved := false) -> void:
 	for key in _lever_keys():
 		_set_lever(key, _pending_value(key))
 	_edited_keys.clear()
+	_share_moves = []
 	# mark_dirty() for a commit (V5.1-0a review pass 1): the forecast keeps its
 	# projection until told the state moved. A plain Revert moved none, so the
 	# forecast on screen stands -- re-projecting it was ~5 s of work (D14, V5.1-d2).
@@ -312,6 +315,7 @@ func _on_commit() -> void:
 	# reverted zero.
 	var pending := _pending.duplicate()
 	Budget.commit(_state, _pending)
+	BudgetSectors.apply_moves(self)
 	_on_revert(true)
 	committed.emit(before, pending)
 

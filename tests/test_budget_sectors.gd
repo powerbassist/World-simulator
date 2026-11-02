@@ -50,10 +50,21 @@ func _process(_delta: float) -> bool:
 			_check_strip("hospitals", "prevention", 0.02)
 			_press(_with_meta("move", "move"))
 		10:
+			_check_drafted("hospitals", "prevention", 0.02)
+			_press(_panel._commit_button)
+		12:
 			_check_moved("hospitals", "prevention", 0.02)
 			_pick("prevention", "hospitals", 0.05)
-		12:
+		14:
 			_check_refused()
+			_pick("hospitals", "primary_care", 0.01)
+		16:
+			_press(_with_meta("move", "move"))
+			_press(_button_text(_panel.tr("Revert")))
+		18:
+			_check_moved("hospitals", "prevention", 0.02)
+			if not (_panel._share_moves as Array).is_empty():
+				_fail("Revert: the drafted move is still in the Budget's draft")
 			_finish()
 	return false
 
@@ -144,6 +155,22 @@ func _check_strip(from_id: String, to_id: String, amount: float) -> void:
 		_fail("strip: '%s' does not carry the channel's change %s %%" % [text, Num.fs(change, 1)])
 
 
+## A move is a draft (the parent's ruling on #278): the live shares stand, the tile's
+## bars read the draft.
+func _check_drafted(from_id: String, to_id: String, amount: float) -> void:
+	var ns = _main._state.player()
+	var start := {}
+	for sector in Sectors.sectors_of(_main._loader, LINE):
+		start[String(sector["id"])] = float(sector["start"]["FRA"]["share"])
+	var live := Sectors.shares(ns, _main._loader, LINE)
+	if absf(float(live[from_id]) - float(start[from_id])) > 0.0001:
+		_fail("drafted: the live share moved before Commit (%s)" % live)
+	var row = _with_meta("sector", to_id)
+	var bar = row.get_meta("bar") if row != null else null
+	if bar == null or absf(float(bar.value) - 100.0 * (float(start[to_id]) + amount)) > 0.001:
+		_fail("drafted: the %s bar reads %s, the draft is %s" % [to_id, bar.value if bar != null else "<none>", 100.0 * (float(start[to_id]) + amount)])
+
+
 func _check_moved(from_id: String, to_id: String, amount: float) -> void:
 	var ns = _main._state.player()
 	var start := {}
@@ -165,6 +192,13 @@ func _check_refused() -> void:
 
 
 # -- helpers --
+
+func _button_text(text: String):
+	for b in _panel.find_children("*", "Button", true, false):
+		if (b as Button).text == text and (b as Control).is_visible_in_tree():
+			return b
+	return null
+
 
 func _with_meta(key: String, value: String):
 	for node in _panel.find_children("*", "", true, false):

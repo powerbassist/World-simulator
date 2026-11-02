@@ -12,6 +12,11 @@ extends RefCounted
 ## pure reallocation, so its money line says it costs nothing. A move the sim refuses
 ## (a sector under its floor, two picks alike) greys Move and prints the sim's line.
 ##
+## A MOVE IS A DRAFT, like the levers (the parent's ruling on #278): Move puts it in
+## the Budget's draft (`panel._share_moves`), the tile and the strip read the nation
+## with the draft applied (on a copy), Commit books it (apply_moves) and Revert drops
+## it. Committed with the levers, it is one decision with them.
+##
 ## Not here yet (the sim has no query for them, 2026-11-02): each quantity's trend, a
 ## warning mark for a quantity in its bad band, the sector's staff.
 
@@ -79,10 +84,30 @@ static func build(panel, parent: Control, ns, line: String, line_name: String) -
 	parent.add_child(tile)
 	var pct := float(ns.spending_pct_gdp.get(line, 0.0))
 	PanelKit.heading(tile, Strings.t("%s: %s %% of GDP, %s bn") % [line_name, Num.f(pct, 1), Num.f(pct / 100.0 * float(ns.gdp_eur_bn), 0)])
-	var shares := Sectors.shares(ns, loader, line)
+	# The rows and the verb read the draft: the live nation with the drafted moves on it.
+	var dns = drafted(panel, ns)
+	var shares := Sectors.shares(dns, loader, line)
 	for sector in sectors:
-		_sector_row(tile, ns, loader, line, sector, float(shares[String(sector["id"])]))
-	_verb(panel, tile, ns, line, sectors)
+		_sector_row(tile, dns, loader, line, sector, float(shares[String(sector["id"])]))
+	_verb(panel, tile, dns, line, sectors)
+	var moves: int = (panel._share_moves as Array).size()
+	if moves > 0:
+		PanelKit.plain_line(tile, Strings.tn("%d share move drafted: Commit books it, Revert drops it.", "%d share moves drafted: Commit books them, Revert drops them.", moves) % moves)
+
+
+## The live nation with the Budget's drafted share moves applied, on a copy.
+static func drafted(panel, ns):
+	var dns = ns.duplicate_state()
+	for m in panel._share_moves:
+		Sectors.move_share(dns, panel._loader, String(m["line"]), String(m["from"]), String(m["to"]), float(m["amount"]))
+	return dns
+
+
+## Commit: the drafted moves booked on the live nation, in the order they were drafted.
+static func apply_moves(panel) -> void:
+	var ns = panel._state.player()
+	for m in panel._share_moves:
+		Sectors.move_share(ns, panel._loader, String(m["line"]), String(m["from"]), String(m["to"]), float(m["amount"]))
 
 
 static func _sector_row(tile: Control, ns, loader, line: String, sector: Dictionary, share: float) -> void:
@@ -136,7 +161,7 @@ static func _verb(panel, tile: Control, ns, line: String, sectors: Array) -> voi
 	strip.custom_minimum_size.x = 520
 	tile.add_child(strip)
 	var move := PanelKit.sized(Button.new())
-	move.text = Strings.t("Move the share")
+	move.text = Strings.t("Draft the move")
 	move.set_meta("move", "move")
 	tile.add_child(move)
 	var refusal := PanelKit.plain_line(tile, "")
@@ -155,8 +180,9 @@ static func _verb(panel, tile: Control, ns, line: String, sectors: Array) -> voi
 		panel._move_amount = v
 		redraw.call())
 	move.pressed.connect(func() -> void:
-		Sectors.move_share(ns, panel._loader, line, String(panel._move_from), String(panel._move_to), float(panel._move_amount))
-		panel.mark_dirty())
+		panel._share_moves.append({"line": line, "from": String(panel._move_from), "to": String(panel._move_to),
+			"amount": float(panel._move_amount)})
+		panel._dirty = true)
 	redraw.call()
 
 
