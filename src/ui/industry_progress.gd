@@ -188,7 +188,8 @@ static func _closure(box: Control, state, loader, ns, row: Dictionary, closure: 
 
 
 ## [text, gain]: a close books nothing; a buyer search its losses now and the
-## sweetener at a sale; a rescue the subsidy's bill a year.
+## sweetener at a sale; a rescue the plant's price a year for its term (in millions
+## when small, never "0.0 bn"), its tone on the whole term.
 static func _closure_money(option: Dictionary) -> Array:
 	match String(option["kind"]):
 		"close":
@@ -201,7 +202,9 @@ static func _closure_money(option: Dictionary) -> Array:
 			return [Strings.t("%s now, %s more at a sale") % [EffectsStrip.sum_text(now_bn),
 				EffectsStrip.sum_text(sale_bn)], now_bn + sale_bn]
 	var year := -float(option["debt_eur_bn_per_year"])
-	return [Strings.t("%s a year") % EffectsStrip.money_text(year), year]
+	var months := int(option["months"])
+	return [Strings.tn("%s a year for %d month", "%s a year for %d months", months) % [EffectsStrip.sum_text(year), months],
+		-float(option["total_eur_bn"])]
 
 
 ## The jobs, said for each answer: a buyer is a chance, not the default's loss
@@ -215,7 +218,8 @@ static func _closure_jobs(option: Dictionary) -> String:
 			var months := int(option["months"])
 			var odds := Strings.tn("A %d %% chance a buyer keeps the %s jobs, in %d month; else they are lost.", "A %d %% chance a buyer keeps the %s jobs, in %d months; else they are lost.", months)
 			return odds % [roundi(100.0 * float(option["chance"])), jobs, months]
-	return Strings.t("The jobs are kept.")
+	var term := int(option["months"])
+	return Strings.tn("The jobs are kept for %d month, then the plant is reviewed.", "The jobs are kept for %d months, then the plant is reviewed.", term) % term
 
 
 static func _closure_label(loader, option: Dictionary) -> String:
@@ -224,6 +228,8 @@ static func _closure_label(loader, option: Dictionary) -> String:
 			return Strings.t("Let it close")
 		"buyer":
 			return Strings.t("Find a buyer")
+		"rescue":
+			return Strings.t("Rescue the plant")
 	var action = _action(loader, String(option["id"]))
 	return Strings.row_name("company-actions", action) if action != null else String(option["id"])
 

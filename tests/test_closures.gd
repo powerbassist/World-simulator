@@ -3,7 +3,7 @@ extends SceneTree
 ## V5.3 a (docs/design/v5.3-ab.md 3.2, "New Industry decisions"): a plant closure
 ## announced. When a major's output has fallen by more than the rule's threshold
 ## over its window, the firm announces a closure in its live city, and the player
-## answers: rescue it (the firm's own subsidy verbs), find a buyer (a search of
+## answers: rescue the plant (paid per job for a term), find a buyer (a search of
 ## CLOSURE_BUYER_MONTHS with a seeded chance), or let it close (the default: a cut
 ## of the firm's share, so of its jobs in its city, and the rule's bloc move). The
 ## rule's numbers are data (data/industry/closures.json), never per firm.
@@ -16,6 +16,7 @@ const Processes = preload("res://src/sim/processes.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const CK = preload("res://src/sim/closures_constants.gd")
 const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
+const Budget = preload("res://src/sim/budget.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -32,13 +33,16 @@ func _init() -> void:
 	_test_a_falling_major_announces_a_closure()
 	_test_one_announcement_a_month_the_worst_first()
 	_test_an_unanswered_closure_lands_by_default()
-	_test_a_rescue_runs_the_firms_subsidy_verb()
+	_test_a_rescue_keeps_the_plant_for_its_term_at_its_price()
 	_test_a_buyer_search_resolves_on_its_seed()
 	_test_a_closed_firm_does_not_announce_again_in_its_cooldown()
 	_test_only_the_player_announces()
 	_test_a_firm_in_a_process_does_not_announce()
 	_test_answer_refusals()
 	_test_a_closure_survives_a_save()
+	_test_a_failed_firms_rescue_stops_paying()
+	_test_a_rescue_is_a_budget_line()
+	_test_the_forecast_sees_the_rescue_end()
 	_test_a_failed_firm_drops_its_history()
 	_test_the_record_follows_a_relocation()
 	_test_the_three_answers_each_win_somewhere()
@@ -116,6 +120,12 @@ func _now(state) -> int:
 	return int(state.year) * 12 + int(state.month)
 
 
+## The rescue line's month in EUR bn: what the next Budget.tick_month() puts on the
+## debt for it (the line is a percent of GDP, billed a month behind).
+func _billed(ns) -> float:
+	return float(ns.rescue_bill_pct_gdp) / 100.0 * float(ns.gdp_eur_bn) / 12.0
+
+
 func _test_the_rule_is_data() -> void:
 	var rule := _rule()
 	for key in ["window_months", "fall", "cut", "cooldown_months", "bloc_offset"]:
@@ -146,8 +156,8 @@ func _test_a_falling_major_announces_a_closure() -> void:
 	if (ns.companies[String(firm.id)] as Dictionary).has("closure_watch"):
 		_fail("the announcing firm's output history was kept, so its own cut would count as the next fall")
 	var ids: Array = Closures.answers(state, ns, _loader, String(row["id"])).map(func(a) -> String: return String(a["id"]))
-	if not ids.has("close") or not ids.has("buyer") or ids.size() < 3:
-		_fail("the closure offers %s, not close, buyer and a rescue verb" % [ids])
+	if ids != ["close", "buyer", "rescue"]:
+		_fail("the closure offers %s, not close, buyer and the rescue" % [ids])
 	if Closures.open(ns).size() != 1:
 		_fail("the open closures list does not hold the announcement")
 	# A fall under the threshold announces nothing.
@@ -207,30 +217,64 @@ func _test_an_unanswered_closure_lands_by_default() -> void:
 		_fail("a landed closure is still listed as open")
 
 
-func _test_a_rescue_runs_the_firms_subsidy_verb() -> void:
+## QA's call on #270, the parent's ruling: a rescue is priced on the PLANT, not the
+## firm's subsidy (which read EUR 5-9 bn a year to keep a 720-job plant). One answer,
+## `rescue`: RESCUE_EUR_PER_JOB_YEAR for each job the closure would cut, for
+## RESCUE_MONTHS, a Budget line of its own (rescue_bill_pct_gdp, the parent's call 4
+## on #277) billed a month behind; the plant is kept for the term,
+## announces nothing during it, and is watched afresh after it (a new window, no
+## cooldown: the term was the wait). The firm's own subsidy verbs are not touched.
+func _test_a_rescue_keeps_the_plant_for_its_term_at_its_price() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var firm = _unsubsidised(ns)
 	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
 	_month(state)
 	var row := _row(ns, String(firm.id))
-	var rescue := ""
-	for a in Closures.answers(state, ns, _loader, String(row["id"])):
-		if String(a["kind"]) == "rescue":
-			rescue = String(a["id"])
-	if rescue == "":
-		_fail("no rescue answer on an unsubsidised major")
+	var rescues: Array = Closures.answers(state, ns, _loader, String(row["id"])).filter(func(a) -> bool:
+		return String(a["kind"]) == "rescue")
+	if rescues.size() != 1 or String(rescues[0]["id"]) != "rescue":
+		_fail("the closure offers %s as its rescue, not the one plant rescue" % [rescues])
 		return
+	var strip: Dictionary = rescues[0]
+	var jobs := float(row["jobs"])
+	var yearly := jobs * CK.RESCUE_EUR_PER_JOB_YEAR / 1e9
+	if not is_equal_approx(float(strip["debt_eur_bn_per_year"]), yearly) or int(strip["months"]) != CK.RESCUE_MONTHS \
+			or not is_equal_approx(float(strip["total_eur_bn"]), yearly * float(CK.RESCUE_MONTHS) / 12.0) \
+			or int(strip["ends"]) != _now(state) + CK.RESCUE_MONTHS or float(strip["jobs_lost"]) != 0.0:
+		_fail("the rescue's strip %s is not %.1f jobs x the plant's price for its term" % [strip, jobs])
+	# QA's band for a job kept: EUR 90k to 950k over the deal.
+	var per_job := 1e9 * float(strip["total_eur_bn"]) / jobs
+	if per_job < 90000.0 or per_job > 950000.0:
+		_fail("a job kept costs EUR %.0f over the rescue, outside 90k-950k" % per_job)
 	var share := Companies.share_of_company(ns, firm)
-	var r: Dictionary = Closures.answer(state, ns, _loader, String(row["id"]), rescue)
-	if not bool(r.get("ok", false)) or String(row["status"]) != "rescued":
-		_fail("the rescue did not close the closure rescued: %s %s" % [r, row])
-	if Companies.subsidy_of(ns, String(firm.id)) <= 0.0:
-		_fail("the rescue did not run the firm's subsidy verb")
-	for i in range(CK.ANSWER_MONTHS):
+	var booked := 0.0
+	var r: Dictionary = Closures.answer(state, ns, _loader, String(row["id"]), "rescue")
+	if not bool(r.get("ok", false)) or String(row["status"]) != "rescuing" or Closures.rescues(ns).size() != 1:
+		_fail("the rescue did not start its term: %s %s" % [r, row])
+		return
+	if Companies.subsidy_of(ns, String(firm.id)) > 0.0:
+		_fail("the plant rescue ran the firm's subsidy verb")
+	for i in range(CK.RESCUE_MONTHS):
+		_falling(ns, firm, 2.0 * float(_rule()["fall"]))
 		_month(state)
-	if Companies.share_of_company(ns, firm) < share:
-		_fail("a rescued plant closed anyway")
+		booked += _billed(ns)
+		if Companies.share_of_company(ns, firm) < share or _row(ns, String(firm.id))["id"] != row["id"]:
+			_fail("the rescued plant closed or announced again in month %d of its term" % (i + 1))
+			return
+	if absf(booked - float(strip["total_eur_bn"])) > 1e-9:
+		_fail("the term billed %.6f bn, not the strip's %.6f" % [booked, float(strip["total_eur_bn"])])
+	if String(row["status"]) != "rescued" or not Closures.rescues(ns).is_empty():
+		_fail("the rescue did not end with its term: %s" % row)
+	# Watched afresh: a fall over a new window announces again, with no cooldown.
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	if String(_row(ns, String(firm.id)).get("status", "")) != "announced":
+		_fail("a plant still falling after its rescue was not re-evaluated")
+	# The term's last month was billed by the tick that ended it (a month behind);
+	# the month after it bills nothing.
+	if float(ns.rescue_bill_pct_gdp) != 0.0:
+		_fail("the rescue still bills %.6f %% of GDP the month after its term" % float(ns.rescue_bill_pct_gdp))
 
 
 func _test_a_buyer_search_resolves_on_its_seed() -> void:
@@ -359,6 +403,26 @@ func _test_a_closure_survives_a_save() -> void:
 		(without["nations"]["FRA"]["companies"][company_id] as Dictionary).erase("closure_watch")
 	if not Closures.open(GameState.from_dict(without).player()).is_empty():
 		_fail("an entry with no closure keys did not read as no closure")
+	# A rescue's term survives a save mid-way: it keeps paying and ends on its month.
+	var rescued = _new_state()
+	var rns = rescued.player()
+	_falling(rns, firm, 2.0 * float(_rule()["fall"]))
+	_month(rescued)
+	Closures.answer(rescued, rns, _loader, String(_row(rns, String(firm.id))["id"]), "rescue")
+	_month(rescued)
+	var mid = GameState.from_dict(JSON.parse_string(JSON.stringify(rescued.to_dict())))
+	var mns = mid.player()
+	var booked := 0.0
+	var row := _row(mns, String(firm.id))
+	if Closures.rescues(mns).size() != 1 or int(row.get("months_left", 0)) != CK.RESCUE_MONTHS - 1:
+		_fail("a rescue's term did not survive the round trip: %s" % row)
+		return
+	for i in range(CK.RESCUE_MONTHS - 1):
+		_month(mid)
+		booked += _billed(mns)
+	if String(row["status"]) != "rescued" or not is_equal_approx(booked,
+			float(row["rescue_eur_bn_per_year"]) * float(CK.RESCUE_MONTHS - 1) / 12.0):
+		_fail("a loaded rescue did not pay out and end on its month: %s" % row)
 
 
 
@@ -399,11 +463,14 @@ func _test_the_record_follows_a_relocation() -> void:
 		_fail("the landed closure names %s, not the city its cut hit, %s" % [row["city_id"], elsewhere])
 
 
-## Parent TAKE 1 on #251 (B5's no-dominated-pair rule): the three strips side by
-## side. Money is the expected cost on the debt (the rescue's first year; the buyer's
-## search plus its chance of the sweetener), jobs the expected jobs lost. No answer
-## may be at least as good on both and better on one: close is the cheapest, the
-## rescue the surest, the buyer between them.
+## Parent TAKE 1 on #251 (B5's no-dominated-pair rule), re-cut for the plant rescue
+## (QA's call on #270): the three strips side by side on three figures, each better
+## when smaller -- the expected money on the debt over the whole deal (the rescue's
+## term; the buyer's search plus its chance of the sweetener), the expected jobs lost
+## now, and the expected jobs not secured for good (a rescue keeps the plant only for
+## its term, then it is re-evaluated; a buyer who takes it keeps it). No answer may be
+## at least as good on all three and better on one: close is the cheapest, the
+## rescue the surest now, the buyer the only lasting answer.
 func _test_the_three_answers_each_win_somewhere() -> void:
 	var state = _new_state()
 	var ns = state.player()
@@ -413,30 +480,32 @@ func _test_the_three_answers_each_win_somewhere() -> void:
 	var row := _row(ns, String(firm.id))
 	var strips := {}
 	for a in Closures.answers(state, ns, _loader, String(row["id"])):
-		var money := 0.0
-		var jobs := float(a["jobs_lost"])
+		var jobs := float(row["jobs"])
 		match String(a["kind"]):
 			"close":
-				money = float(a["debt_eur_bn"])
+				strips["close"] = [float(a["debt_eur_bn"]), jobs, jobs]
 			"buyer":
-				money = float(a["debt_eur_bn"]) + float(a["chance"]) * float(a["sweetener_eur_bn"])
-				jobs = (1.0 - float(a["chance"])) * jobs
+				var kept := float(a["chance"]) * jobs
+				strips["buyer"] = [float(a["debt_eur_bn"]) + float(a["chance"]) * float(a["sweetener_eur_bn"]), jobs - kept, jobs - kept]
 			"rescue":
-				money = float(a["debt_eur_bn_per_year"])
-		if not strips.has(String(a["kind"])):
-			strips[String(a["kind"])] = [money, jobs]
+				strips["rescue"] = [float(a["total_eur_bn"]), float(a["jobs_lost"]), jobs]
 	if strips.size() != 3:
 		_fail("the closure does not offer close, buyer and a rescue: %s" % [strips.keys()])
 		return
-	if float(strips["buyer"][0]) <= 0.0:
-		_fail("finding a buyer is free (%s): it dominates letting the plant close" % [strips["buyer"]])
+	if float(strips["buyer"][0]) <= 0.0 or float(strips["rescue"][0]) <= 0.0:
+		_fail("a buyer or a rescue is free (%s): it dominates letting the plant close" % [strips])
 	for a in strips:
 		for b in strips:
 			if a == b:
 				continue
 			var x: Array = strips[a]
 			var y: Array = strips[b]
-			if x[0] <= y[0] and x[1] <= y[1] and (x[0] < y[0] or x[1] < y[1]):
+			var no_worse := true
+			var better := false
+			for i in 3:
+				no_worse = no_worse and float(x[i]) <= float(y[i])
+				better = better or float(x[i]) < float(y[i])
+			if no_worse and better:
 				_fail("%s %s dominates %s %s" % [a, x, b, y])
 
 
@@ -578,3 +647,68 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL %s" % f)
 	quit(1)
+
+
+## QA's TAKE 1 on #277: a firm that fails during its plant's rescue voids the term,
+## and nothing more is paid.
+func _test_a_failed_firms_rescue_stops_paying() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _unsubsidised(ns)
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	Closures.answer(state, ns, _loader, String(row["id"]), "rescue")
+	for i in 3:
+		_month(state)
+	(ns.companies[String(firm.id)] as Dictionary)["failed"] = true
+	_month(state)
+	var booked := _billed(ns)
+	for i in 3:
+		_month(state)
+		booked += _billed(ns)
+	if String(row["status"]) != "void" or booked != 0.0:
+		_fail("a failed firm's rescue still runs (%s) or still bills (%.6f bn more)" % [row["status"], booked])
+
+
+## The parent's call 4 on #277: a running rescue is a Budget line of its own, read
+## into the deficit like every computed line and carried on the snapshot the Budget
+## panel reads (Interface shows it), so its cost is on the debt path the player sees.
+func _test_a_rescue_is_a_budget_line() -> void:
+	var plain = _new_state()
+	var billed = _new_state()
+	billed.player().rescue_bill_pct_gdp = 0.25
+	Budget.tick_month(plain)
+	Budget.tick_month(billed)
+	var gap := float(billed.player().deficit_pct_gdp) - float(plain.player().deficit_pct_gdp)
+	if not is_equal_approx(gap, 0.25):
+		_fail("a rescue bill of 0.25 %% of GDP moved the deficit by %.6f" % gap)
+	var snap: Dictionary = Budget.snapshot(billed)
+	if not is_equal_approx(float(snap.get("rescue_bill_pct_gdp", -1.0)), 0.25):
+		_fail("the Budget snapshot does not carry the rescue's bill: %s" % [snap.get("rescue_bill_pct_gdp")])
+
+
+## Budget.project() counts the rescue terms down (Closures.tick_rescues), so the
+## 24-month forecast books a rescue's bill while it runs and drops it when it ends.
+func _test_the_forecast_sees_the_rescue_end() -> void:
+	var still = _new_state()
+	var rescued = _new_state()
+	for state in [still, rescued]:
+		var ns = state.player()
+		_falling(ns, _unsubsidised(ns), 2.0 * float(_rule()["fall"]))
+		_month(state)
+	var rns = rescued.player()
+	var row := _row(rns, String(_unsubsidised(rns).id))
+	Closures.answer(rescued, rns, _loader, String(row["id"]), "rescue")
+	row["months_left"] = 6
+	var a: Array = Budget.project(still, {}, 24, _loader)
+	var b: Array = Budget.project(rescued, {}, 24, _loader)
+	var bill := 100.0 * float(row["rescue_eur_bn_per_year"]) / float(rns.gdp_eur_bn)
+	var during := float(b[3]["total_spending_pct_gdp"]) - float(a[3]["total_spending_pct_gdp"])
+	var after := float(b[20]["total_spending_pct_gdp"]) - float(a[20]["total_spending_pct_gdp"])
+	if bill <= 0.0 or absf(during - bill) > 0.1 * bill:
+		_fail("the forecast's spending in the rescue's fourth month is up %.6f, not about its bill %.6f" % [during, bill])
+	if absf(after) > 0.1 * bill:
+		_fail("the forecast still books %.6f of spending after the rescue ended" % after)
+	if String(row["status"]) != Closures.RESCUING or int(row["months_left"]) != 6:
+		_fail("the forecast moved the real rescue's term: %s" % row)

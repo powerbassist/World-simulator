@@ -44,6 +44,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
@@ -472,6 +473,9 @@ var _moved := false
 ## and its answers, the card's "Decision due"), the first major's sector
 ## card open, its Act open and its first verb that can run focused (one strip).
 var _industry := false
+## V5.3 a + b (spec 3.1): the Budget with the health line's tile open -- its sectors'
+## bars and quantities, the share move with its strip.
+var _sectors := false
 ## V5.3 a + b (#251): a plant closure announced on the first major, its card and
 ## its answers side by side on the Industry tab's In progress strip.
 var _closure := false
@@ -965,6 +969,8 @@ func _init() -> void:
 			_moved = true
 		elif args[i] == "--industry":
 			_industry = true
+		elif args[i] == "--sectors":
+			_sectors = true
 		elif args[i] == "--closure":
 			_closure = true
 		elif args[i] == "--fund":
@@ -1260,6 +1266,9 @@ func _apply_view() -> void:
 		_move_the_levers()
 	if _industry:
 		_stage_the_industry_tab()
+	if _sectors:
+		_main._budget_panel._open_line = "health"
+		_main._budget_panel.mark_dirty()
 	if _closure:
 		var ns = _main._state.player()
 		var major = Companies.majors_of(_main._loader, ns.id)[0]

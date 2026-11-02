@@ -289,4 +289,5 @@ const FIELDS := [
 	["sector_priorities", DEEP, COPIED, {}, true],  # V5.3 a: absent is no priority
 	["region_funds", DEEP, ROWS, [], true],  # V5.3 a: absent is no fund
 	["region_fund_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
+	["rescue_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # V5.3 a: rewritten by the next tick
 ]

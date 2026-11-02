@@ -1553,6 +1553,10 @@ var region_funds: Array[Dictionary] = []
 ## and read by Budget a month behind (project_bill_pct_gdp's case). absent_ok: the
 ## next tick rewrites it.
 var region_fund_bill_pct_gdp: float = 0.0
+## The plant rescues' bill, % of GDP (src/sim/closures.gd's tick_rescues, the
+## parent's call 4 on #277), rewritten every month and read by Budget a month behind.
+## absent_ok: no save before #277 could hold a rescue, and the next tick rewrites it.
+var rescue_bill_pct_gdp: float = 0.0
 
 ## V5.2b b3. person id -> the absolute month the president last phoned them: one
 ## call per person per month (src/sim/phone.gd, its one writer). absent_ok, no

@@ -75,8 +75,8 @@ static func _bills_for(state, ns, loader, company) -> Array:
 
 
 ## The adopted bill's channel: the verb's process, opened through the law's door
-## (Processes.start, by_law). A firm no longer eligible on the day (a stake taken
-## while the bill was held) is refused there and buys nothing;
+## (Processes.start, by_law). A firm no longer eligible on the day (wholly held by
+## then, or in a process) is refused there and buys nothing;
 ## ns.last_company_result records the refusal.
 static func adopt(state, ns, loader, terms: Dictionary) -> void:
 	var action = _action(loader, String(terms.get("action_id", "")))

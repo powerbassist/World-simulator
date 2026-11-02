@@ -25,6 +25,7 @@ const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
 const Ledger = preload("res://src/ui/budget_ledger.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
 
 const PROJECTION_MONTHS := 24
 
@@ -112,6 +113,15 @@ var _strip: EffectsStrip
 var _effect_labels := {}
 var _effects := {}
 var _fx_cache := {}
+## V5.3 a + b (spec 3.1): the line whose tile is open ("" none) and the share move's
+## three picks, held across rebuilds (budget_sectors.gd draws them).
+var _open_line := ""
+var _move_from := ""
+var _move_to := ""
+var _move_amount := 0.0
+## The drafted share moves (budget_sectors.gd), booked by Commit, dropped by Revert.
+var _share_moves := []
+var _sector_box: VBoxContainer
 
 
 func _ready() -> void:
@@ -153,10 +163,8 @@ func _build_levers() -> Control:
 	box.add_child(grid)
 
 	for key in _lever_keys():
-		var name_label := Label.new()
-		name_label.text = tr(LEVER_LABELS[key])
-		name_label.custom_minimum_size.x = 130
-		grid.add_child(name_label)
+		# V5.3 a + b (spec 3.1): the line's name opens its tile (budget_sectors.gd).
+		grid.add_child(BudgetSectors.line_toggle(self, key, tr(LEVER_LABELS[key])))
 
 		var slider := HSlider.new()
 		# A tenth of a point everywhere: the spending levers all run to
@@ -167,8 +175,10 @@ func _build_levers() -> Control:
 		# 200, not 220: G11's caption size took the window's last 20 px under +35%
 		# pseudo, and since d1b3 the span, not the track's width, guards a drag.
 		# 140 since V5.3 a + b: the change column took 89 px of the band, and the
-		# track still fills the window it is docked in -- this is its floor only.
-		slider.custom_minimum_size.x = 140
+		# track still fills the window it is docked in -- this is its floor only. 116
+		# since the line names became the toggles that open their tiles: a button's
+		# padding took 24 px of the band under +35 % pseudo.
+		slider.custom_minimum_size.x = 116
 		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.draw.connect(_draw_span.bind(key))
@@ -190,6 +200,8 @@ func _build_levers() -> Control:
 		_effect_labels[key].size_flags_horizontal = Control.SIZE_SHRINK_END
 		grid.add_child(Control.new())
 
+	_sector_box = VBoxContainer.new()
+	box.add_child(_sector_box)
 	return box
 
 
@@ -288,6 +300,7 @@ func _on_revert(state_moved := false) -> void:
 	for key in _lever_keys():
 		_set_lever(key, _pending_value(key))
 	_edited_keys.clear()
+	_share_moves = []
 	# mark_dirty() for a commit (V5.1-0a review pass 1): the forecast keeps its
 	# projection until told the state moved. A plain Revert moved none, so the
 	# forecast on screen stands -- re-projecting it was ~5 s of work (D14, V5.1-d2).
@@ -302,6 +315,7 @@ func _on_commit() -> void:
 	# reverted zero.
 	var pending := _pending.duplicate()
 	Budget.commit(_state, _pending)
+	BudgetSectors.apply_moves(self)
 	_on_revert(true)
 	committed.emit(before, pending)
 
@@ -481,7 +495,7 @@ func _refresh() -> void:
 	_set_figure("gini", Ledger.gini_text(now), Ledger.gini_text(proposed))
 
 	# V5.1-0a: the forecast follows the levers rather than freezing them.
-	_forecast.want(pending, edited)
+	BudgetSectors.want_forecast(self, pending, edited)
 	var rows: Dictionary = _forecast.rows(_state.player())
 	for key in rows.keys():
 		_set_figure(key, rows[key][0], rows[key][1])
@@ -508,6 +522,7 @@ func _refresh() -> void:
 		if _effects.has(EffectsStrip.ELSEWHERE) else "", float(_effects.get(EffectsStrip.ELSEWHERE, 0.0)))
 	Ledger.add_changes(_figures, now, proposed)
 	_fill_figures()
+	BudgetSectors.refresh(self, tr(LEVER_LABELS.get(_open_line, "")))
 
 
 ## Writes one row of the now/proposed table for this refresh.

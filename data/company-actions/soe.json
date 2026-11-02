@@ -5,7 +5,7 @@
       "id": "appoint_board",
       "name": "Appoint a Board Chair",
       "summary": "The state names the chair of a firm it part-owns. A domestic executive takes the seat; the business answers for the politics of patronage.",
-      "preconditions": [{ "field": "state_owned", "op": "==", "value": 1 }],
+      "preconditions": [{ "field": "state_share", "op": ">", "value": 0 }],
       "effects": {
         "company": { "op": "appoint_board" },
         "bloc_offset": {

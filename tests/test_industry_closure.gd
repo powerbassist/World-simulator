@@ -20,6 +20,8 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const Num = preload("res://src/ui/num.gd")
+const IndustryProgress = preload("res://src/ui/industry_progress.gd")
+const CK = preload("res://src/sim/closures_constants.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -80,6 +82,18 @@ func _check_card() -> void:
 		_fail("card: '%s' names neither %s nor its city" % [text, _major.company_name])
 	var answers: Array = Closures.answers(state, ns, loader, _closure_id)
 	var parent: Node = null
+	# QA's TAKE 2 on #277: the rescue's own texts -- its label, a cost (not a gain) for
+	# its term, and the jobs kept for that term.
+	for answer in answers:
+		if String(answer["kind"]) != "rescue":
+			continue
+		var money: Array = IndustryProgress._closure_money(answer)
+		var jobs_line := IndustryProgress._closure_jobs(answer)
+		var months := Strings.tn("%d month", "%d months", CK.RESCUE_MONTHS) % CK.RESCUE_MONTHS
+		if IndustryProgress._closure_label(loader, answer) != Strings.t("Rescue the plant") or float(money[1]) >= 0.0 \
+				or not String(money[0]).contains(months) or not jobs_line.contains(months):
+			_fail("card: the rescue reads '%s' / %s / '%s', not a labelled cost and jobs for its %s" % [
+				IndustryProgress._closure_label(loader, answer), money, jobs_line, months])
 	for answer in answers:
 		var id := String(answer["id"])
 		var button = _with_meta("closure_answer", id)
@@ -118,7 +132,9 @@ func _money_of(answer: Dictionary) -> String:
 			if search < -0.0005 and shown.begins_with("0.0"):
 				_fail("card: the buyer's search reads as free ('%s')" % shown)
 			return Strings.t("%s now, %s more at a sale") % [shown, EffectsStrip.sum_text(-float(answer["sweetener_eur_bn"]))]
-	return Strings.t("%s a year") % EffectsStrip.money_text(-float(answer["debt_eur_bn_per_year"]))
+	var months := int(answer["months"])
+	return Strings.tn("%s a year for %d month", "%s a year for %d months", months) % [
+		EffectsStrip.sum_text(-float(answer["debt_eur_bn_per_year"])), months]
 
 
 func _check_searching() -> void:
