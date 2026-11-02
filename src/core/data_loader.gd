@@ -123,6 +123,11 @@ var embassy_exceptions: Dictionary = {}
 ## CompaniesLoader.load_closure_rule; src/sim/closures.gd reads it).
 var closure_rule: Dictionary = {}
 
+## V5.3 a: a nationalisation's transition loss by economic sector, {output_loss_by_sector}
+## (data/industry/transition.json; CompaniesLoader.load_transition_rule;
+## src/sim/process_drag.gd reads it).
+var transition_rule: Dictionary = {}
+
 ## V5.3 a: line -> {line, sectors} (data/domains/<line>.json; DomainsLoader). Empty
 ## when the folder is absent: every read then falls back to the line's total.
 var domains: Dictionary = {}
@@ -321,6 +326,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	outlines.clear()
 	embassy_exceptions.clear()
 	closure_rule = {}
+	transition_rule = {}
 	domains.clear()
 	errors = []
 
@@ -401,6 +407,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	CommoditiesLoader.load_outlines(self, world_dir.path_join("outlines.json"))
 	DiplomacyLoader.load_embassies(self, world_dir.path_join("embassies.json"))
 	CompaniesLoader.load_closure_rule(self, industry_dir.path_join("closures.json"))
+	CompaniesLoader.load_transition_rule(self, industry_dir.path_join("transition.json"))
 	DomainsLoader.load_domains(self, domains_dir)
 
 	GeoLoader.validate_cross_file(self, geo_path, world_path)

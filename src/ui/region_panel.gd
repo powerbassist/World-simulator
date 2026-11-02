@@ -30,6 +30,7 @@ const Migration = preload("res://src/sim/migration.gd")
 const Num = preload("res://src/ui/num.gd")
 const TerritorySites = preload("res://src/ui/territory_sites.gd")
 const TerritoryCity = preload("res://src/ui/territory_city.gd")
+const RegionFund = preload("res://src/ui/region_fund.gd")
 
 ## The figure columns, px at text size 100 %: per head, jobless, sites.
 const COLUMNS := [86.0, 76.0, 56.0]
@@ -48,6 +49,9 @@ var _map
 var _city_id := ""
 ## The region opened under its row, "" for none.
 var _open_region := ""
+## The development fund's two sums (region_fund.gd), held across rebuilds.
+var _fund_eur := 0.0
+var _fund_years := 0
 var _about_open := false
 
 var _title: Label
@@ -238,6 +242,8 @@ func _pick(region_id: String) -> void:
 func _opened(ns, regions: Array, region, access: Dictionary, sites: Array) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
+	# V5.3 a + b (spec 3.3): the region's one problem first, then its fund.
+	RegionFund.build(self, box, ns, region, regions, access)
 	var jobs := 0.0
 	for city in region.cities:
 		jobs += Companies.headcount_in_city(ns, _loader, city.id)

@@ -57,7 +57,7 @@ const PENDING := {}
 const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250, "events": 95, "commodities": 210,
 	"companies": 145}
 const TOTAL_PENDING := {
-	"budget": 105, "calendar": 42, "campaign": 140,
+	"budget": 109, "calendar": 42, "campaign": 140,
 	"diplomacy": 22, "economy": 115, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106, "tax": 24,
@@ -67,8 +67,11 @@ const TOTAL_PENDING := {
 ## (6 648 in the spec's count, 4 911 once this test played its months as the game
 ## does): it can only come down from here. One stated rise, 2934 -> 2943 (V5.3 a +
 ## b, the parent's call): the Industry cards' "trend against the nation's", a figure
-## spec 3.2 asks for, 9 words on a tab still at 22 of its 145.
-const TOTAL_SUM_CEILING := 2943
+## spec 3.2 asks for, 9 words on a tab still at 22 of its 145. A second, 2943 -> 2947
+## (the parent's call): the Budget's "of which regional aid" line, the development
+## fund's money on a line of its own (spec 3.3 (a)), "—" at rest like its siblings
+## rather than a row that comes and goes; the Budget's held total 105 -> 109.
+const TOTAL_SUM_CEILING := 2947
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

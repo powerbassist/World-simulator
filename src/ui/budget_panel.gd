@@ -468,6 +468,7 @@ func _refresh() -> void:
 	_set_figure("subsidies", Ledger.line_text(now, "subsidy_bill_pct_gdp"), Ledger.line_text(proposed, "subsidy_bill_pct_gdp"))
 	_set_figure("investment", Ledger.bill_text(now, "investment_bill_pct_gdp"), Ledger.bill_text(proposed, "investment_bill_pct_gdp"))
 	_set_figure("projects", Ledger.bill_text(now, "project_bill_pct_gdp"), Ledger.bill_text(proposed, "project_bill_pct_gdp"))
+	_set_figure("region_funds", Ledger.bill_text(now, "region_fund_bill_pct_gdp"), Ledger.bill_text(proposed, "region_fund_bill_pct_gdp"))
 	_set_figure("energy", Ledger.bill_text(now, "energy_bill_pct_gdp"), Ledger.bill_text(proposed, "energy_bill_pct_gdp"))
 	_set_figure("deficit", Ledger.pct_and_eur(now, "deficit_pct_gdp"), Ledger.pct_and_eur(proposed, "deficit_pct_gdp"))
 	_set_figure("debt", tr("%s%% GDP") % PanelKit.Num.f(now["debt_to_gdp_pct"], 1), tr("%s%% GDP") % PanelKit.Num.f(proposed["debt_to_gdp_pct"], 1))

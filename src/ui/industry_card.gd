@@ -19,6 +19,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Processes = preload("res://src/sim/processes.gd")
+const Closures = preload("res://src/sim/closures.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -93,6 +94,9 @@ static func _waiting(state, ns, loader, sector: String) -> bool:
 		ids.append(String(failure["company_id"]))
 	for row in Processes.asks(ns):
 		ids.append(String(row["company_id"]))
+	for row in Closures.open(ns):
+		if String(row["status"]) == Closures.ANNOUNCED:
+			ids.append(String(row["company_id"]))
 	for company in Companies.firms_in_sector(loader, ns.id, sector):
 		if ids.has(String(company.id)):
 			return true

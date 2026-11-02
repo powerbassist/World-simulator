@@ -15,6 +15,7 @@ const Closures = preload("res://src/sim/closures.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const CK = preload("res://src/sim/closures_constants.gd")
+const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -43,6 +44,9 @@ func _init() -> void:
 	_test_the_three_answers_each_win_somewhere()
 	_test_the_buyer_pays_its_search_and_its_sweetener()
 	_test_a_landed_closures_bloc_move_fades()
+	_test_the_cooldown_ends_on_its_month()
+	_test_a_failed_firms_open_closure_is_voided()
+	_test_the_loader_refuses_a_short_cooldown()
 	_finish()
 
 
@@ -488,6 +492,78 @@ func _test_a_landed_closures_bloc_move_fades() -> void:
 		var booked := float(ns.act_bloc_offset.get(bloc, 0.0)) - float(acts.get(bloc, 0.0))
 		if wrote == 0.0 or not is_equal_approx(booked, wrote):
 			_fail("%s: the closure wrote %.4f and booked %.4f to fade" % [bloc, wrote, booked])
+
+
+## QA's RECORD C2 on #251: the cooldown's first allowed month is the closure's end +
+## cooldown_months. A month before it a fall is ignored; on it the firm announces.
+func _test_the_cooldown_ends_on_its_month() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	for i in range(CK.ANSWER_MONTHS):
+		_month(state)
+	var row := _row(ns, String(firm.id))
+	if String(row.get("status", "")) != "closed":
+		_fail("the cooldown boundary fixture did not close: %s" % row)
+		return
+	var first := int(row["ended"]) + int(_rule()["cooldown_months"])
+	_set_now(state, first - 1)
+	_falling(ns, firm, 3.0 * float(_rule()["fall"]))
+	Closures.tick_month(state, _loader)
+	if String(_row(ns, String(firm.id))["status"]) != "closed":
+		_fail("a firm announced a month before its cooldown ended")
+	_set_now(state, first)
+	_falling(ns, firm, 3.0 * float(_rule()["fall"]))
+	Closures.tick_month(state, _loader)
+	if String(_row(ns, String(firm.id))["status"]) != "announced":
+		_fail("a firm did not announce on its cooldown's first allowed month")
+
+
+## QA's RECORD C6 on #251: a firm that fails while its closure is open has nothing
+## left to close. The record is voided at once, and no cut or bloc move lands later.
+func _test_a_failed_firms_open_closure_is_voided() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	if String(_row(ns, String(firm.id)).get("status", "")) != "announced":
+		_fail("the void fixture did not announce")
+		return
+	var offsets: Dictionary = (ns.bloc_offset as Dictionary).duplicate()
+	(ns.companies[String(firm.id)] as Dictionary)["failed"] = true
+	_month(state)
+	if String(_row(ns, String(firm.id))["status"]) != "void" or not Closures.open(ns).is_empty():
+		_fail("a failed firm's open closure is %s, not void" % _row(ns, String(firm.id))["status"])
+	for i in range(CK.ANSWER_MONTHS):
+		_month(state)
+	if (ns.bloc_offset as Dictionary) != offsets:
+		_fail("a voided closure moved a bloc")
+
+
+## QA's RECORD C10 on #251: the loader refuses a cooldown shorter than a window and
+## an answer. At the boundary: exactly a window and an answer loads; a month less is
+## refused, and refused rules come back empty.
+func _test_the_loader_refuses_a_short_cooldown() -> void:
+	var good: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/industry/closures.json"))
+	var least := float(good["window_months"]) + float(CK.ANSWER_MONTHS)
+	var at := good.duplicate(true)
+	at["cooldown_months"] = least
+	var errors: Array[String] = []
+	if CompaniesLoader.parse_closure_rule(at, "closures.json", errors).is_empty() or not errors.is_empty():
+		_fail("a cooldown of exactly a window and an answer was refused: %s" % [errors])
+	var short := good.duplicate(true)
+	short["cooldown_months"] = least - 1.0
+	var refused: Array[String] = []
+	if not CompaniesLoader.parse_closure_rule(short, "closures.json", refused).is_empty() or refused.is_empty():
+		_fail("a cooldown a month shorter than a window and an answer was accepted")
+
+
+func _set_now(state, absolute_month: int) -> void:
+	state.year = floori(float(absolute_month - 1) / 12.0)
+	state.month = (absolute_month - 1) % 12 + 1
 
 
 func _fail(msg: String) -> void:

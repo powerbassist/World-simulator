@@ -1,0 +1,8 @@
+{
+  "_note": "V5.3 a, a nationalisation's transition (docs/design/v5.3-ab.md 3.2, src/sim/process_drag.gd): the share of a year of the firm's output its management turnover loses in total, by the firm's economic sector, before the share the state already held scales it down (x (1 - held)). STAND-INS written by Systems: no published source gives a turnover loss per sector (the author's call on #264, 2026-11-02). Their order is the argument: an industrial plant's output hangs most on its management and its processes, a farm's least; services between. The mean of the three is the spec's 4 %.",
+  "output_loss_by_sector": {
+    "agriculture": 0.02,
+    "industry": 0.05,
+    "services": 0.04
+  }
+}
