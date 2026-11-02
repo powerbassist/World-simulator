@@ -44,14 +44,14 @@ static func post(ns, row: Dictionary, action, now: int, company) -> void:
 		return
 	var base := float(row["base_eur_bn"])
 	var offsets: Dictionary = action.effects.get("bloc_offset", {})
-	var rest := scaled(offsets, 1.0 - K.PROCESS_BLOC_AT_START)
+	var rest := scaled(moved(action, row), 1.0 - K.PROCESS_BLOC_AT_START)
 	var answers: Array = []
 	match stage:
 		"negotiation":
-			answers = [_answer("accept", base * (1.0 + float(row["rate"])), rest), _answer("walk", 0.0, uturn(action))]
+			answers = [_answer("accept", base * (1.0 + float(row["rate"])), rest), _answer("walk", 0.0, uturn(action, row))]
 		"offer":
 			answers = [_answer("pay", base * (1.0 + float(row["rate"])), rest),
-				_answer("stop", K.PROCESS_BREAK_FEE * base * float(row["rate"]), uturn(action))]
+				_answer("stop", K.PROCESS_BREAK_FEE * base * float(row["rate"]), uturn(action, row))]
 		"investigation":
 			row["ruled"] = rule(row, now)
 			if not bool(row["ruled"]):
@@ -100,14 +100,27 @@ static func discount(ns) -> float:
 	return lerpf(K.PROCESS_PRIVATISE_DISCOUNT.x, K.PROCESS_PRIVATISE_DISCOUNT.y, depth)
 
 
-## The U-turn: every bloc the verb pleased loses PROCESS_UTURN_SHARE of its offset.
-static func uturn(action) -> Dictionary:
+## The U-turn: every bloc the verb pleased loses PROCESS_UTURN_SHARE of its offset
+## (of the move this row makes, `moved`).
+static func uturn(action, row: Dictionary) -> Dictionary:
 	var out := {}
-	var offsets: Dictionary = action.effects.get("bloc_offset", {}) if action != null else {}
+	var offsets := moved(action, row)
 	for bloc in offsets:
 		if float(offsets[bloc]) > 0.0:
 			out[bloc] = -K.PROCESS_UTURN_SHARE * float(offsets[bloc])
 	return out
+
+
+## The bloc move this row's verb makes: a buying verb's scales with the share it
+## buys, so buying the last 60 % of a part-held firm moves 0.6 x what buying a
+## private one does (the parent's call on #275). A row saved before the share was
+## recorded reads as bought from nothing, the whole move.
+static func moved(action, row: Dictionary) -> Dictionary:
+	var offsets: Dictionary = action.effects.get("bloc_offset", {}) if action != null else {}
+	if action == null or String(action.id) not in ["minority_stake", "full_nationalisation"]:
+		return offsets
+	var stake := float((action.effects.get("company", {}) as Dictionary).get("stake", 1.0))
+	return scaled(offsets, (stake - float(row.get("state_share_at_start", 0.0))) / stake)
 
 
 static func scaled(offsets: Dictionary, share: float) -> Dictionary:

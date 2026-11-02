@@ -1308,7 +1308,10 @@ to 0 and only a nationalisation bill takes it to 1.0. Since the author's call on
 part-held firm (a stake, or an authored state share) is bought outright, the state
 paying `(1 - held) x value x (1 + premium)` for the rest, and its transition's
 output loss is scaled by `(1 - held)` (`process_drag.gd`); the estimate's
-`share_bought` is what the strip prints.
+`share_bought` is what the strip prints. Its bloc move scales the same way (the
+parent's call on #275, `ProcessAsks.moved()`): buying the last 60 % moves every bloc
+0.6 x what buying a private firm does, at the offer, at the transfer, in the ask's
+answers and in the U-turn a stopped offer costs.
 
 `src/sim/bills.gd` builds one ready bill per eligible firm, id
 `ownership:<action_id>:<company_id>`: an ordinary law at a simple majority,

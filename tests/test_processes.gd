@@ -21,6 +21,7 @@ const EC = preload("res://src/sim/economy_constants.gd")
 const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
 const IndustryVerbs = preload("res://src/ui/industry_verbs.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
+const Asks = preload("res://src/sim/process_asks.gd")
 
 const PLAYER := "FRA"
 const OK_BLOCS := ["workers", "pensioners", "urban", "rural", "business", "students"]
@@ -61,6 +62,7 @@ func _init() -> void:
 	_test_the_transition_rule_refuses_a_bad_table()
 	_test_the_ownership_doors_read_the_share_held()
 	_test_the_strips_say_the_remaining_share()
+	_test_the_bloc_move_scales_with_the_share_bought()
 	_finish()
 
 
@@ -748,3 +750,47 @@ func _test_the_strips_say_the_remaining_share() -> void:
 	question = CompanyVerb.process_question(state, _loader, ns, company, action)
 	if strip.contains("remaining") or question.contains("remaining"):
 		_fail("a private firm's strip or question names a remaining share: '%s' / '%s'" % [strip, question])
+
+
+## The parent's call on #275: buying the rest of a part-held firm moves the blocs by
+## the share bought. A 40 %-held firm's offer, its transfer, its ask's "pay" answer
+## and its stop price each move 0.6 x what a private firm's do.
+func _test_the_bloc_move_scales_with_the_share_bought() -> void:
+	var moves := {}
+	for held in [0.0, 0.4]:
+		var state = _new_state()
+		var ns = state.player()
+		var firm := _big(ns)
+		(ns.companies[firm] as Dictionary)["state_share"] = held
+		var before := _offsets(ns)
+		Processes.start(state, ns, _loader, _action("full_nationalisation"), firm, true)
+		var row := _row(ns, firm)
+		if row.is_empty():
+			_fail("no offer opened on a firm %d %% state-held" % roundi(100.0 * held))
+			return
+		var at_start := _delta(before, _offsets(ns))
+		for i in range(K.PROCESS_OFFER_MONTHS - 1):
+			_month(state)
+		var pay: Dictionary = Asks.answer_of(row, "pay").get("bloc_offset", {})
+		var stop: Dictionary = Processes.stop_price(state, ns, _loader, String(row["id"])).get("bloc_offset", {})
+		var mid := _offsets(ns)
+		_month(state)
+		moves[held] = {"start": at_start, "pay": pay, "stop": stop, "transfer": _delta(mid, _offsets(ns))}
+	for part in ["start", "pay", "stop", "transfer"]:
+		var full: Dictionary = moves[0.0][part]
+		var rest: Dictionary = moves[0.4][part]
+		if full.is_empty():
+			_fail("a private firm's %s moves no bloc: the fixture tests nothing" % part)
+		for bloc in full:
+			if not is_equal_approx(float(rest.get(bloc, 0.0)), 0.6 * float(full[bloc])):
+				_fail("buying the last 60 %% moves %s by %s at the %s, not 0.6 x a private firm's %s" % [
+					bloc, rest.get(bloc, 0.0), part, full[bloc]])
+
+
+func _delta(before: Dictionary, after: Dictionary) -> Dictionary:
+	var out := {}
+	for bloc in after:
+		var d := float(after[bloc]) - float(before.get(bloc, 0.0))
+		if absf(d) > 1e-12:
+			out[bloc] = d
+	return out
