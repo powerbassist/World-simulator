@@ -1318,7 +1318,7 @@ holds is found again on its day and after a load. `Legislature.propose()`'s lega
 scan reads `Bills.open()`, so the bill divides, is held, is forced by Article 49.3 and
 cools down like any law. Adopted, it runs the verb through the law's door: the price
 on the debt and the action's own `bloc_offset`, once. A firm no longer eligible on
-the day (a stake taken while the bill was held) buys nothing, and
+the day (wholly held by then, or in a process) buys nothing, and
 `ns.last_company_result` records the refusal. Not ledgered: an ownership law is not
 repealed, the sale is its own bill. The court's reach reads no ownership channel, so
 the court never strikes one; recorded, not built. The design and the bands:
