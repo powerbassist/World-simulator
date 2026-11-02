@@ -51,6 +51,7 @@ func _init() -> void:
 	_test_the_cycle_moves_a_purchase_counter_not_a_sale()
 	_test_no_answer_is_dominated()
 	_test_a_counter_survives_a_save()
+	_test_an_answered_counter_cannot_be_stopped()
 	_finish()
 
 
@@ -672,6 +673,27 @@ func _test_a_counter_survives_a_save() -> void:
 	if String(a["status"]) != String(b["status"]) or a.get("negotiation") != b.get("negotiation") \
 			or not is_equal_approx(float(ns.debt_eur_bn), float(kept.player().debt_eur_bn)):
 		_fail("a counter answered before a save resolved differently after it: %s against %s" % [a.get("negotiation"), b.get("negotiation")])
+
+
+## Pass 1 on #280: Budget.project() runs the seeded draw on its copy, so the forecast
+## shows a counter's answer before it is due; a known answer must not be dodged, so a
+## price stage with an answered counter cannot be stopped (the drawn ruling's rule).
+func _test_an_answered_counter_cannot_be_stopped() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	Processes.start(state, ns, _loader, _action("minority_stake"), firm)
+	_month(state)
+	var row := _row(ns, firm)
+	if not bool(Processes.stop_price(state, ns, _loader, String(row["id"])).get("ok", false)):
+		_fail("a stake's price ask cannot be stopped before any counter")
+	Processes.answer(state, ns, _loader, String(row["id"]), "negotiate_10")
+	var price: Dictionary = Processes.stop_price(state, ns, _loader, String(row["id"]))
+	var debt := float(ns.debt_eur_bn)
+	var r: Dictionary = Processes.stop(state, ns, _loader, String(row["id"]))
+	if bool(price.get("ok", true)) or String(price.get("reason", "")) == "" or bool(r.get("ok", true)) \
+			or String(row["status"]) != "open" or float(ns.debt_eur_bn) != debt:
+		_fail("a stake with an answered counter was stopped: %s, %s" % [price, row["status"]])
 
 
 func _now(state) -> int:

@@ -1421,6 +1421,9 @@ it lands and the dividend keeps its one-month lag.
   value on a sale). No answer is beaten on every figure (`tests/test_process_asks.gd`):
   walking wins the cash, accepting the completion, a counter the price if it lands. The
   closing plant's buyer (`closures.gd`) is the next step. Every number is a stand-in.
+  A price stage with an answered counter cannot be stopped: `Budget.project()` runs the
+  seeded draw on its copy, so the forecast shows the answer early, and a known answer
+  must not be dodged (the drawn ruling's rule). A counter that comes back reopens it.
 - **The save.** `ns.processes` is `absent_ok`, with no bump: no save made before
   V5.3 a could hold a process, so an absent register reads "nothing in progress",
   which is the truth.

@@ -28,6 +28,8 @@ const Economy = preload("res://src/sim/economy.gd")
 const Negotiation = preload("res://src/sim/negotiation.gd")
 
 ## stage -> [the ask's kind, its default answer].
+## Why a price stage cannot be stopped while a counter is on the table.
+const COUNTERING := "A counter is on the table: the answer comes when this stage ends."
 const STAGE_ASK := {
 	"negotiation": ["price", "accept"], "offer": ["offer", "pay"],
 	"investigation": ["contest", "press_on"], "sale": ["bid", "accept"],
@@ -90,6 +92,8 @@ static func resolve_negotiation(ns, row: Dictionary, action, now: int) -> bool:
 	if not pick.begins_with("negotiate_"):
 		return false
 	var a := answer_of(row, pick)
+	if a.is_empty():
+		return false
 	var outcome := Negotiation.draw(float(a["odds"]), Negotiation.key(row, pick), now)
 	row["negotiated"] = true
 	row["negotiation"] = {"answer": pick, "outcome": outcome, "month": now}
@@ -107,6 +111,18 @@ static func resolve_negotiation(ns, row: Dictionary, action, now: int) -> bool:
 	row["status"] = "walked"
 	row["closed"] = now
 	return true
+
+
+## What stopping a price stage costs now (Processes.stop_price): the U-turn, and at
+## a nationalisation's offer the break fee too. Refused while a counter is answered:
+## Budget.project() runs the seeded draw on its copy, so the forecast shows the answer
+## before it is due, and a known answer must not be dodgeable (the drawn ruling's rule;
+## pass 1 on #280). Once a counter comes back the ask has no answer and stopping is open.
+static func stop_price(action, row: Dictionary) -> Dictionary:
+	if chosen(row).begins_with("negotiate_"):
+		return {"ok": false, "reason": COUNTERING}
+	var fee := K.PROCESS_BREAK_FEE * float(row["base_eur_bn"]) * float(row["rate"]) if String(row["stage"]) == "offer" else 0.0
+	return {"ok": true, "debt_eur_bn": fee, "bloc_offset": uturn(action, row)}
 
 
 ## The authority's finding on a referral (true: the break-up is ordered), drawn on

@@ -246,11 +246,8 @@ static func stop_price(state, ns, loader, process_id: String) -> Dictionary:
 		return {"ok": false, "reason": "This process is no longer running."}
 	var action = _action(loader, String(row["action_id"]))
 	match String(row["stage"]):
-		"negotiation", "sale":
-			return {"ok": true, "debt_eur_bn": 0.0, "bloc_offset": Asks.uturn(action, row)}
-		"offer":
-			var premium := float(row["base_eur_bn"]) * float(row["rate"])
-			return {"ok": true, "debt_eur_bn": K.PROCESS_BREAK_FEE * premium, "bloc_offset": Asks.uturn(action, row)}
+		"negotiation", "sale", "offer":
+			return Asks.stop_price(action, row)
 		"investigation":
 			# The ruling is drawn with its ask, a month before the stage ends
 			# (process_asks.gd); once it is drawn the process is past stopping, as
