@@ -280,6 +280,17 @@ func _check_ask() -> void:
 		var money: Label = button.get_meta("money_label")
 		if money.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])):
 			_fail("ask: '%s' reads '%s', it books %s" % [option["id"], money.text, EffectsStrip.cost_text(-float(option["debt_eur_bn"]))])
+		# #280's counters: named by their percentage, their chances the shown range.
+		if option.has("counter"):
+			var counter := roundi(100.0 * float(option["counter"]))
+			if (button as Button).text != Strings.t("Counter %d %%") % counter:
+				_fail("ask: the %d %% counter is labelled '%s'" % [counter, button.text])
+			var odds: Label = button.get_meta("odds_label") if button.has_meta("odds_label") else null
+			var range_text := "%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))]
+			if odds == null or not odds.is_visible_in_tree() or not odds.text.contains(range_text):
+				_fail("ask: the %d %% counter does not show its range %s (%s)" % [counter, range_text, odds.text if odds != null else "<none>"])
+	if not asks[0]["ask"]["answers"].any(func(o): return (o as Dictionary).has("counter")):
+		_fail("premise: the stake's price ask carries no counter (#280)")
 	for b in _visible_with_meta("process_id"):
 		if not b.has_meta("answer_id"):
 			_fail("ask: a Stop stands beside the question (walking away is an answer)")
@@ -298,6 +309,19 @@ func _check_answered() -> void:
 		_fail("answered: the row does not say what was answered")
 	if _acted < 1:
 		_fail("answered: the panel emitted no acted")
+	# #280: a refused counter says so on its row (staged as the draw writes it).
+	for row in ns.processes:
+		if String(row["status"]) == Processes.OPEN:
+			row["negotiation"] = {"answer": "negotiate_10", "outcome": "back", "month": 0}
+	_panel._refresh()
+	var found := false
+	for node in _panel._progress.find_children("*", "Label", true, false):
+		if String(node.get_meta("negotiation", "")) == "back" and node.text == _panel.tr("Your counter was refused: the old price is asked again."):
+			found = true
+	if not found:
+		_fail("negotiation: a refused counter is not said on its row")
+	for row in ns.processes:
+		row.erase("negotiation")
 
 
 func _check_stopped() -> void:

@@ -92,8 +92,9 @@ static func build(parent: Control, state, loader, ns, stop: Callable, answer: Ca
 			PanelKit.Tone.PLAIN)
 		var what := "%s, %s" % [verb, firm]
 		var ask: Dictionary = row.get("ask", {})
+		_outcome(box, row)
 		if row.has("answer"):
-			PanelKit.plain_line(box, Strings.t("Answered: %s.") % Strings.t(String(ANSWER.get(String(row["answer"]), ""))))
+			PanelKit.plain_line(box, Strings.t("Answered: %s.") % _label(String(row["answer"])))
 		elif not ask.is_empty():
 			_ask(box, String(row["id"]), ask, what, answer)
 			continue
@@ -132,7 +133,7 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 		var id := String(option["id"])
 		var flow := PanelKit.buttons(box)
 		var button := PanelKit.sized(Button.new())
-		button.text = Strings.t(String(ANSWER.get(id, id)))
+		button.text = _label(id)
 		button.set_meta("answer_id", id)
 		button.set_meta("process_id", process_id)
 		button.pressed.connect(func() -> void: answer.call(process_id, id, what))
@@ -145,7 +146,32 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 		var who := EffectsStrip.who_text(option["bloc_offset"])
 		if who != "":
 			PanelKit.plain_line(flow, who).autowrap_mode = TextServer.AUTOWRAP_OFF
-	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % Strings.t(String(ANSWER.get(String(ask["default"]), ""))))
+		if option.has("counter"):
+			# A counter's chances, as the sim shows them: the range, NEVER the drawn odds
+			# (#280), and what a refusal brings.
+			var odds := PanelKit.plain_line(flow, Strings.t("A %d to %d %% chance they accept; refused, the old price stands or they walk away (%d %% of refusals).") % [
+				roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"])), roundi(100.0 * float(option["walk"]))])
+			odds.autowrap_mode = TextServer.AUTOWRAP_OFF
+			button.set_meta("odds_label", odds)
+	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % _label(String(ask["default"])))
+
+
+## An answer's words: the table's, or a counter's ("Counter 10 %", #280's negotiate_N).
+static func _label(id: String) -> String:
+	if id.begins_with("negotiate_"):
+		return Strings.t("Counter %d %%") % int(id.trim_prefix("negotiate_"))
+	return Strings.t(String(ANSWER.get(id, id)))
+
+
+## A counter's outcome, once drawn (#280): accepted, or refused with the old price
+## asked again. A walk-out closes the process, so its row is gone.
+static func _outcome(box: Control, row: Dictionary) -> void:
+	var talk: Dictionary = row.get("negotiation", {})
+	match String(talk.get("outcome", "")):
+		"accepted":
+			PanelKit.plain_line(box, Strings.t("Your counter was accepted.")).set_meta("negotiation", "accepted")
+		"back":
+			PanelKit.plain_line(box, Strings.t("Your counter was refused: the old price is asked again.")).set_meta("negotiation", "back")
 
 
 ## A closure: announced, its card and answers; searching, its months left.
