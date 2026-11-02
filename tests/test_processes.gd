@@ -19,6 +19,8 @@ const Industry = preload("res://src/sim/industry.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const EC = preload("res://src/sim/economy_constants.gd")
 const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
+const IndustryVerbs = preload("res://src/ui/industry_verbs.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
 const PLAYER := "FRA"
 const OK_BLOCS := ["workers", "pensioners", "urban", "rural", "business", "students"]
@@ -58,6 +60,7 @@ func _init() -> void:
 	_test_the_rate_is_the_sectors_and_falls_with_the_stake_held()
 	_test_the_transition_rule_refuses_a_bad_table()
 	_test_the_ownership_doors_read_the_share_held()
+	_test_the_strips_say_the_remaining_share()
 	_finish()
 
 
@@ -724,3 +727,24 @@ func _test_the_ownership_doors_read_the_share_held() -> void:
 		open.sort()
 		if open != want[held]:
 			_fail("a firm %d %% state-held opens %s, not %s" % [roundi(100.0 * held), open, want[held]])
+
+
+## QA's TAKE 1 on #275: the two lines a player reads say the share the state buys.
+## A 40 %-held firm's verb strip and confirm question both name the remaining 60 %; a
+## private firm's name no remaining share at all.
+func _test_the_strips_say_the_remaining_share() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	var action = _action("full_nationalisation")
+	var company = _company(ns, firm)
+	(ns.companies[firm] as Dictionary)["state_share"] = 0.4
+	var strip := IndustryVerbs.when_text(action, Processes.estimate(state, ns, _loader, action, firm))
+	var question := CompanyVerb.process_question(state, _loader, ns, company, action)
+	if not strip.contains("Buys the remaining 60 %.") or not question.contains("The state buys the remaining 60 %."):
+		_fail("a 40 %%-held firm's strip reads '%s' and its question '%s', not the remaining 60 %%" % [strip, question])
+	(ns.companies[firm] as Dictionary)["state_share"] = 0.0
+	strip = IndustryVerbs.when_text(action, Processes.estimate(state, ns, _loader, action, firm))
+	question = CompanyVerb.process_question(state, _loader, ns, company, action)
+	if strip.contains("remaining") or question.contains("remaining"):
+		_fail("a private firm's strip or question names a remaining share: '%s' / '%s'" % [strip, question])
