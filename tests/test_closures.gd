@@ -387,6 +387,25 @@ func _test_a_closure_survives_a_save() -> void:
 		(without["nations"]["FRA"]["companies"][company_id] as Dictionary).erase("closure_watch")
 	if not Closures.open(GameState.from_dict(without).player()).is_empty():
 		_fail("an entry with no closure keys did not read as no closure")
+	# A rescue's term survives a save mid-way: it keeps paying and ends on its month.
+	var rescued = _new_state()
+	var rns = rescued.player()
+	_falling(rns, firm, 2.0 * float(_rule()["fall"]))
+	_month(rescued)
+	Closures.answer(rescued, rns, _loader, String(_row(rns, String(firm.id))["id"]), "rescue")
+	_month(rescued)
+	var mid = GameState.from_dict(JSON.parse_string(JSON.stringify(rescued.to_dict())))
+	var mns = mid.player()
+	var debt := float(mns.debt_eur_bn)
+	var row := _row(mns, String(firm.id))
+	if Closures.rescues(mns).size() != 1 or int(row.get("months_left", 0)) != CK.RESCUE_MONTHS - 1:
+		_fail("a rescue's term did not survive the round trip: %s" % row)
+		return
+	for i in range(CK.RESCUE_MONTHS - 1):
+		_month(mid)
+	if String(row["status"]) != "rescued" or not is_equal_approx(float(mns.debt_eur_bn) - debt,
+			float(row["rescue_eur_bn_per_year"]) * float(CK.RESCUE_MONTHS - 1) / 12.0):
+		_fail("a loaded rescue did not pay out and end on its month: %s" % row)
 
 
 
