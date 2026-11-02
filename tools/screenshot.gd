@@ -44,6 +44,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
@@ -471,6 +472,9 @@ var _moved := false
 ## and its answers, the card's "Decision due"), the first major's sector
 ## card open, its Act open and its first verb that can run focused (one strip).
 var _industry := false
+## V5.3 a + b (#251): a plant closure announced on the first major, its card and
+## its answers side by side on the Industry tab's In progress strip.
+var _closure := false
 
 ## V5.3 a + b (spec 3.3 (a), #263): the Territory tab with a region opened -- its one
 ## problem first, then the development fund's sums, strip and Start; a fund already
@@ -961,6 +965,8 @@ func _init() -> void:
 			_moved = true
 		elif args[i] == "--industry":
 			_industry = true
+		elif args[i] == "--closure":
+			_closure = true
 		elif args[i] == "--fund":
 			_fund = true
 		elif args[i] == "--fund-cap":
@@ -1254,6 +1260,12 @@ func _apply_view() -> void:
 		_move_the_levers()
 	if _industry:
 		_stage_the_industry_tab()
+	if _closure:
+		var ns = _main._state.player()
+		var major = Companies.majors_of(_main._loader, ns.id)[0]
+		preload("res://src/sim/closures.gd")._announce(ns, major, ns.companies[major.id], 0.2,
+			_main._loader.closure_rule, _main._state.year * 12 + _main._state.month)
+		_main._companies_panel.mark_dirty()
 	if _fund:
 		_stage_a_fund()
 	if _compose:
