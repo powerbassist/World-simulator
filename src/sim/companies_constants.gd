@@ -566,3 +566,6 @@ const NEGOTIATE_FOG := 0.10
 ## Of the refusals, the share where the other side walks away; the rest come back the
 ## next month at the old price. Even, so a refusal is a coin the strip shows.
 const NEGOTIATE_WALK := 0.5
+## After the other side walks away, the firm's negotiable verbs wait this many months
+## (the parent's call 1 on Negotiate: a cooldown, as a settlement's, two years).
+const NEGOTIATE_WALK_COOLDOWN_MONTHS := 24

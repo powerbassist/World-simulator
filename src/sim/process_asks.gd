@@ -25,6 +25,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const K = preload("res://src/sim/companies_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Negotiation = preload("res://src/sim/negotiation.gd")
 
 ## stage -> [the ask's kind, its default answer].
 const STAGE_ASK := {
@@ -37,8 +38,10 @@ const STAGE_ASK := {
 ## is drawn here, with the odds its strip showed; the sale's bid is priced here, at
 ## the discount the cycle gives now, and that is the price the sale then books.
 ## `company` is the firm, from the caller's own lookup (Processes._company), for
-## the settlement's fine.
-static func post(ns, row: Dictionary, action, now: int, company) -> void:
+## the settlement's fine. A price ask also offers Negotiate's three counters
+## (negotiation.gd), once per deal; `reprice` false keeps the sale's bid at its old
+## price when a counter comes back (resolve_negotiation()).
+static func post(ns, row: Dictionary, action, now: int, company, reprice := true) -> void:
 	var stage := String(row["stage"])
 	if not STAGE_ASK.has(stage):
 		return
@@ -60,14 +63,50 @@ static func post(ns, row: Dictionary, action, now: int, company) -> void:
 			answers = [_answer("press_on", 0.0, offsets),
 				_answer("settle", -K.PROCESS_SETTLEMENT_FINE * value, scaled(offsets, K.PROCESS_SETTLEMENT_BLOC))]
 		"sale":
-			row["rate"] = discount(ns)
+			if reprice:
+				row["rate"] = discount(ns)
 			# One hold only (pass 1 on #248): the new bid is priced and asks nothing,
 			# so the sale ends inside the months its strip showed (A3).
 			if bool(row.get("held", false)):
 				return
 			answers = [_answer("accept", -base * (1.0 - float(row["rate"])), rest), _answer("hold", 0.0, {})]
+	if Negotiation.PRICE_STAGES.has(stage) and not row.has("negotiated"):
+		answers.append_array(Negotiation.answers(ns, row, float(answers[0]["debt_eur_bn"]), answers[0]["bloc_offset"], now))
 	row["ask"] = {"kind": String(STAGE_ASK[stage][0]), "posted": now, "due": now + 1,
 		"default": String(STAGE_ASK[stage][1]), "answers": answers}
+
+
+## A counter's answer at its ask's due month `now` (negotiation.gd), before the stage
+## lands (Processes._tick_row): true when the stage does not land this month.
+##   accepted  the price moves by the counter (base_eur_bn, which every landing reads)
+##             and the stage lands as its default would: false.
+##   back      one more month at the old price, asked again without the counters
+##             (once per deal; a new arrival): true.
+##   walked    the deal ends: nothing paid, no U-turn (the other side left), the
+##             start's half of the bloc move stays, and Negotiation.cooldown() holds
+##             the firm's negotiable verbs: true.
+static func resolve_negotiation(ns, row: Dictionary, action, now: int) -> bool:
+	var pick := chosen(row)
+	if not pick.begins_with("negotiate_"):
+		return false
+	var a := answer_of(row, pick)
+	var outcome := Negotiation.draw(float(a["odds"]), Negotiation.key(row, pick), now)
+	row["negotiated"] = true
+	row["negotiation"] = {"answer": pick, "outcome": outcome, "month": now}
+	match outcome:
+		"accepted":
+			var c := float(a["counter"])
+			row["countered"] = c
+			row["base_eur_bn"] = float(row["base_eur_bn"]) * (1.0 + c if String(row["stage"]) == "sale" else 1.0 - c)
+			return false
+		"back":
+			row.erase("answer")
+			row["months_left"] = 1
+			post(ns, row, action, now, null, false)
+			return true
+	row["status"] = "walked"
+	row["closed"] = now
+	return true
 
 
 ## The authority's finding on a referral (true: the break-up is ordered), drawn on
