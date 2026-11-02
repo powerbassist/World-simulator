@@ -510,7 +510,7 @@ func _table_e() -> void:
 
 
 ## The specialisation-times-reach term at one region: the arithmetic
-## Regions._network_pct() applies, restated here because a probe cannot set a
+## Regions.deviation_by_region() applies for its network term, restated here because a probe cannot set a
 ## const at runtime -- migration_probe.gd's own reason for emulating through
 ## share_delta().
 func _net_val(region, access: Dictionary, national: Dictionary) -> float:
