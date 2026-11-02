@@ -408,7 +408,8 @@ func _test_a_ruling_on_a_firm_that_no_longer_qualifies_moves_nothing() -> void:
 	Processes.start(state, ns, _loader, _action("break_up"), firm)
 	var row := _row(ns, firm)
 	row["odds"] = 1.0
-	(ns.companies[firm] as Dictionary)["share"] = 0.05
+	# 1 % of the sector: about 7 % of its majors' share, well under the 30 % gate.
+	(ns.companies[firm] as Dictionary)["share"] = 0.01
 	var offsets := _offsets(ns)
 	for i in range(int(row["months_left"])):
 		_month(state)
@@ -433,7 +434,7 @@ func _test_a_remedy_refused_undoes_the_rulings_bloc_move() -> void:
 	if String(row["stage"]) != "remedy":
 		_fail("the ruling did not open the remedy")
 		return
-	(ns.companies[firm] as Dictionary)["share"] = 0.05
+	(ns.companies[firm] as Dictionary)["share"] = 0.01
 	for i in range(K.PROCESS_REMEDY_MONTHS):
 		_month(state)
 	if String(row["status"]) != "refused" or bool((ns.companies[firm] as Dictionary).get("failed", false)):
