@@ -173,6 +173,17 @@ func _test_the_estimate_is_what_the_priority_books() -> void:
 	var payer := Sectors.regional_quantity(ns, _loader, "health", "hospitals", String(regions[1]))
 	if payer >= Sectors.quantity(ns, _loader, "health", "hospitals") or not is_equal_approx(float(moved["region_before"]), payer):
 		_fail("the estimate's before (%s) is not the payer's %.4f" % [moved.get("region_before"), payer])
+	# QA's TAKE on #267: a lower-is-better quantity (schools: pupils per teacher) falls
+	# where the money goes and rises where it leaves, on the strip and in the read.
+	var schools: Dictionary = Sectors.priority_estimate(state, ns, _loader, "education", "schools", String(regions[0]))
+	var pupils := Sectors.quantity(ns, _loader, "education", "schools")
+	if not (float(schools["region_after"]) < pupils and float(schools["others_after"]) > pupils):
+		_fail("schools first: the region reads %s and the others %s pupils per teacher against the nation's %.3f" % [
+			schools.get("region_after"), schools.get("others_after"), pupils])
+	Sectors.set_priority(state, ns, _loader, "education", "schools", String(regions[0]))
+	if not (Sectors.regional_quantity(ns, _loader, "education", "schools", String(regions[0])) < pupils \
+			and Sectors.regional_quantity(ns, _loader, "education", "schools", String(regions[1])) > pupils):
+		_fail("schools first: the booked pupils per teacher do not fall in the region and rise elsewhere")
 
 
 ## absent_ok: no save before V5.3 a held a priority, so absent is "none".
