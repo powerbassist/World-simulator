@@ -57,6 +57,7 @@ func _init() -> void:
 	_test_the_realised_loss_is_the_strips()
 	_test_the_rate_is_the_sectors_and_falls_with_the_stake_held()
 	_test_the_transition_rule_refuses_a_bad_table()
+	_test_the_ownership_doors_read_the_share_held()
 	_finish()
 
 
@@ -657,23 +658,33 @@ func _test_the_rate_is_the_sectors_and_falls_with_the_stake_held() -> void:
 	var part := float(Processes.estimate(state, ns, _loader, _action("full_nationalisation"), firm)["output_loss_eur_bn"])
 	if full <= 0.0 or not is_equal_approx(part, full * 0.6):
 		_fail("a firm 40 %% state-held loses %.4f bn, not 0.6 x the %.4f a private one loses" % [part, full])
-	# The verb's precondition (state_owned == 0) refuses a part-held firm today, so the
-	# row's share at the press is set after a private firm's press: the drag must read
-	# the row's figure, not the live share the transfer of control has set to 1.
-	(ns.companies[firm] as Dictionary)["state_share"] = 0.0
+	# The author's call on #272, "racheter le reste": a part-held firm can be fully
+	# nationalised, the state buying the rest. Through the law's real door, the row
+	# records the share held at the press (QA's K1) and the drag scales by it; the
+	# state takes control (the share becomes 1) when the transition lands.
+	var value := Companies.value_eur_bn(ns, _company(ns, firm))
+	var est: Dictionary = Processes.estimate(state, ns, _loader, _action("full_nationalisation"), firm)
+	if not is_equal_approx(float(est.get("base_eur_bn", -1.0)), 0.6 * value) or not is_equal_approx(float(est.get("share_bought", -1.0)), 0.6):
+		_fail("buying the rest of a 40 %%-held firm prices %s bn for a share of %s, not 0.6 of its %.3f bn" % [
+			est.get("base_eur_bn"), est.get("share_bought"), value])
 	Bills.adopt(state, ns, _loader, {"action_id": "full_nationalisation", "company_id": firm})
-	if float(_row(ns, firm).get("state_share_at_start", -1.0)) != 0.0:
-		_fail("a private firm's press did not record a share held of 0")
-	_row(ns, firm)["state_share_at_start"] = 0.4
+	if not is_equal_approx(float(_row(ns, firm).get("state_share_at_start", -1.0)), 0.4):
+		_fail("the press on a 40 %%-held firm recorded a share held of %s, not 0.4" % _row(ns, firm).get("state_share_at_start"))
+		return
 	for i in range(K.PROCESS_OFFER_MONTHS + 2):
 		_month(state)
 	if String(_row(ns, firm).get("stage", "")) != "transition":
-		_fail("the stake fixture is not in its transition")
+		_fail("the part-held fixture is not in its transition")
 		return
 	var want := -_rate_of(ns, firm) * 0.6 * 100.0 * Companies.output_eur_bn(ns, _company(ns, firm)) / float(ns.gdp_eur_bn) \
 		* EC.GAP_CLOSE * 12.0 / K.PROCESS_TRANSITION_MONTHS
 	if not is_equal_approx(float(ns.process_drag_pct), want):
 		_fail("a 40 %%-held firm's transition drags %.6f, not %.6f (the stake held at the press)" % [float(ns.process_drag_pct), want])
+	for i in range(K.PROCESS_TRANSITION_MONTHS):
+		_month(state)
+	if Companies.state_share_of(ns, firm) != 1.0 or String(_row(ns, firm).get("status", "")) != "done":
+		_fail("the part-held firm's nationalisation ended with a share of %.3f, status %s" % [
+			Companies.state_share_of(ns, firm), _row(ns, firm).get("status")])
 
 
 func _test_the_transition_rule_refuses_a_bad_table() -> void:
@@ -691,3 +702,25 @@ func _test_the_transition_rule_refuses_a_bad_table() -> void:
 		var e: Array[String] = []
 		if not CompaniesLoader.parse_transition_rule({"output_loss_by_sector": bad[label]}, "transition.json", e).is_empty() or e.is_empty():
 			_fail("the transition rule accepted %s" % label)
+
+
+## The author's call on #272: the ownership verbs read the share the state holds, not
+## a yes/no. A private firm takes a stake or a nationalisation; a part-held one a
+## nationalisation (the rest) or a sale, never a second stake; a wholly held one only
+## a sale.
+func _test_the_ownership_doors_read_the_share_held() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	var want := {0.0: ["full_nationalisation", "minority_stake"], 0.4: ["full_nationalisation", "privatisation"],
+		1.0: ["privatisation"]}
+	for held in want:
+		(ns.companies[firm] as Dictionary)["state_share"] = held
+		var open: Array = []
+		for by_law in [false, true]:
+			for action in Companies.available(state, ns, _loader.company_actions, firm, _loader, by_law):
+				if String(action.id) in ["full_nationalisation", "minority_stake", "privatisation"]:
+					open.append(String(action.id))
+		open.sort()
+		if open != want[held]:
+			_fail("a firm %d %% state-held opens %s, not %s" % [roundi(100.0 * held), open, want[held]])

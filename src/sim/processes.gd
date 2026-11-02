@@ -117,10 +117,11 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 			var base := (stake - held) * value
 			var months := K.PROCESS_OFFER_MONTHS + K.PROCESS_TRANSITION_MONTHS
 			# The transition's cost in output (process_drag.gd), shown before the press: the
-			# share of a year of the firm's output its management turnover loses.
+			# share of a year of the firm's output its management turnover loses. A part-held
+			# firm is bought outright, the state paying for the rest (`share_bought`).
 			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.x),
 				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months,
-				"output_loss_eur_bn": Drag.loss_eur_bn(ns, loader, company, held)}
+				"output_loss_eur_bn": Drag.loss_eur_bn(ns, loader, company, held), "share_bought": stake - held}
 		"privatisation":
 			var base := held * value
 			# A sale may be held once for a new bid (process_asks.gd), so it can run

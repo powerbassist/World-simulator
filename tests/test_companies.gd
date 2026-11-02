@@ -721,7 +721,7 @@ func _test_no_law_ever_moves_state_share() -> void:
 			_fail("%s was taken into public ownership by a law" % company.id)
 
 
-## A holding is standing state, so `state_owned` gates the buy exactly as
+## A holding is standing state, so `state_share == 0` gates the buy exactly as
 ## `subsidy_active` gates the subsidy -- and the only route down is the sale. Without
 ## that, buying a minority stake in a wholly-owned firm would be a partial sale that
 ## paid no windfall.
@@ -840,16 +840,18 @@ func _test_an_adopted_bill_buys_and_is_found_by_id() -> void:
 		_fail("Bills.by_id() built a bill for a firm content does not name")
 
 
-## A bill adopted after its firm stopped being eligible (a stake taken while the
-## second chamber held it) buys nothing, and says so on the company result.
+## A bill adopted after its firm stopped being eligible buys nothing, and says so on
+## the company result. Since the author's call on #272 a stake no longer shuts the
+## nationalisation (the state buys the rest), so the firm here is wholly held by the
+## time the bill passes.
 func _test_an_ineligible_bill_adopted_buys_nothing() -> void:
 	var state = _new_state()
 	var ns = state.nations[PLAYER]
 	var bill = Bills.ownership(state, ns, _loader, BIG)[0]
-	Companies.execute(state, ns, _loader.company_actions, _action("minority_stake"), BIG, _loader)
+	ns.companies[BIG]["state_share"] = 1.0
 	var debt_before: float = ns.debt_eur_bn
 	Legislature.apply(state, ns, bill, _loader)
-	if Companies.state_share_of(ns, BIG) != 0.35 or ns.debt_eur_bn != debt_before:
+	if Companies.state_share_of(ns, BIG) != 1.0 or ns.debt_eur_bn != debt_before or not Processes.live(ns, BIG).is_empty():
 		_fail("an ineligible ownership bill still bought the firm")
 	if not bool(ns.last_company_result.get("refused", false)):
 		_fail("the refused purchase left no record on last_company_result")

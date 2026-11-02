@@ -1302,8 +1302,13 @@ vote on, the cooldown after a defeat). `Companies.available()` never offers a
 `requires_law` verb as an executive act; it is offered only through the law's door
 (`by_law`), and the law's door offers nothing else. The minority stake stays an
 executive act, as a state holding agency buys stakes without a law, and it cannot
-stack: `state_owned` reads 1 for any holding, so only a privatisation bill takes a
-firm back to 0 and only a nationalisation bill takes it to 1.0.
+stack: it needs `state_share == 0`, so only a privatisation bill takes a firm back
+to 0 and only a nationalisation bill takes it to 1.0. Since the author's call on
+#272 ("racheter le reste") the nationalisation needs only `state_share < 1`: a
+part-held firm (a stake, or an authored state share) is bought outright, the state
+paying `(1 - held) x value x (1 + premium)` for the rest, and its transition's
+output loss is scaled by `(1 - held)` (`process_drag.gd`); the estimate's
+`share_bought` is what the strip prints.
 
 `src/sim/bills.gd` builds one ready bill per eligible firm, id
 `ownership:<action_id>:<company_id>`: an ordinary law at a simple majority,

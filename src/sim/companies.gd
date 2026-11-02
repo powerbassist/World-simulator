@@ -733,7 +733,7 @@ static func _read_field(state, ns, field: String, company_id: String, loader) ->
 	match field:
 		"subsidy_active": return 1.0 if subsidy_of(ns, company_id) > 0.0 else 0.0
 		"subsidy_count": return float(subsidised_count(ns))
-		"state_owned": return 1.0 if state_share_of(ns, company_id) > 0.0 else 0.0
+		"state_share": return state_share_of(ns, company_id)
 		"state_owned_count": return float(state_owned_count(ns))
 		"deficit_pct_gdp": return ns.deficit_pct_gdp
 		"debt_to_gdp_pct": return ns.debt_to_gdp_pct()
