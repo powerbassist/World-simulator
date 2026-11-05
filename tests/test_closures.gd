@@ -47,6 +47,9 @@ func _init() -> void:
 	_test_the_cooldown_ends_on_its_month()
 	_test_a_failed_firms_open_closure_is_voided()
 	_test_the_loader_refuses_a_short_cooldown()
+	_test_one_sector_fall_closes_one_plant()
+	_test_the_fall_picks_by_jobs()
+	_test_the_bloc_move_scales_with_the_plant()
 	_finish()
 
 
@@ -201,8 +204,9 @@ func _test_an_unanswered_closure_lands_by_default() -> void:
 	if absf(lost - float(row["jobs"])) > 1e-6 * maxf(city_jobs, 1.0):
 		_fail("the city lost %.1f jobs, not the %.1f the closure announced" % [lost, float(row["jobs"])])
 	for bloc in offsets:
-		if not is_equal_approx(float(ns.bloc_offset.get(bloc, 0.0)) - float(before[bloc]), float(offsets[bloc])):
-			_fail("the landed closure did not move %s by the rule's offset" % bloc)
+		var moved := float(offsets[bloc]) * float(row["jobs"]) / float(_rule()["reference_jobs"])
+		if not is_equal_approx(float(ns.bloc_offset.get(bloc, 0.0)) - float(before[bloc]), moved):
+			_fail("the landed closure did not move %s by the rule's offset for its plant" % bloc)
 	if not Closures.open(ns).is_empty():
 		_fail("a landed closure is still listed as open")
 
@@ -578,3 +582,104 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL %s" % f)
 	quit(1)
+
+
+# --- One closure per sector fall (the parent's ruling on the majors PR) -----------------
+
+## The FRA sector with the most majors.
+func _crowded_sector(ns) -> Array:
+	var by_sector := {}
+	for c in _majors(ns):
+		if not by_sector.has(c.sector):
+			by_sector[c.sector] = []
+		(by_sector[c.sector] as Array).append(c)
+	var best: Array = []
+	for sector in by_sector:
+		if (by_sector[sector] as Array).size() > best.size():
+			best = by_sector[sector]
+	return best
+
+
+## Adding real majors must not change the calibrated rate: one fall closes one plant.
+## While it waits for an answer, and for the cooldown after it ends, the sector announces
+## nothing, whichever of its majors falls; then it may again. Pinned over a sector of
+## several majors, all falling every month.
+func _test_one_sector_fall_closes_one_plant() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var peers := _crowded_sector(ns)
+	if peers.size() < 2:
+		_fail("no FRA sector holds two majors: the rule's case cannot be staged")
+		return
+	var ids := {}
+	var ended := -1
+	var cooldown := int(_rule()["cooldown_months"])
+	for i in CK.ANSWER_MONTHS + cooldown + 2:
+		for c in peers:
+			_falling(ns, c, 2.0 * float(_rule()["fall"]))
+		_month(state)
+		for c in peers:
+			var row := _row(ns, String(c.id))
+			if not row.is_empty():
+				ids[String(row["id"])] = true
+				if ended < 0 and int(row["ended"]) > 0:
+					ended = int(row["ended"])
+		if ended < 0 or _now(state) < ended + cooldown:
+			if ids.size() > 1:
+				_fail("the sector announced %d closures in month %d, its first ended in %d" % [ids.size(), _now(state), ended])
+				return
+	if ended < 0 or ids.size() != 2:
+		_fail("the sector's second closure after the cooldown: %d announced, the first ended in %d" % [ids.size(), ended])
+
+
+## One fall picks one of the majors past the threshold, weighted by its jobs. With all
+## of a sector's majors falling, one with most of its payroll is picked that often.
+func _test_the_fall_picks_by_jobs() -> void:
+	var trials := 80
+	var picks := 0
+	var want := 0.0
+	for k in trials:
+		var state = _new_state()
+		state.year = 2026 + k
+		var ns = state.player()
+		var peers := _crowded_sector(ns)
+		var big = peers[0]
+		(ns.companies[String(big.id)] as Dictionary)["share"] = 20.0 * Companies.share_of_company(ns, big)
+		var total := 0.0
+		for c in peers:
+			total += Companies.headcount(ns, c)
+			_falling(ns, c, 2.0 * float(_rule()["fall"]))
+		want = Companies.headcount(ns, big) / total
+		_month(state)
+		if not _row(ns, String(big.id)).is_empty():
+			picks += 1
+	if want < 0.6 or absf(float(picks) / float(trials) - want) > 0.15:
+		_fail("a major with %.0f %% of its sector's jobs was picked %d times of %d" % [100.0 * want, picks, trials])
+
+
+## A landed closure's bloc move scales with the plant's jobs: the rule's -0.02 is the
+## move of a plant of `reference_jobs` (a stand-in, data), so a small plant moves the
+## workers less than a large one. The strip shows the move that lands. Literals: the
+## parent's ruling restores #251's cooldown and move.
+func _test_the_bloc_move_scales_with_the_plant() -> void:
+	if int(_rule()["cooldown_months"]) != 24 or float((_rule()["bloc_offset"] as Dictionary)["workers"]) != -0.02:
+		_fail("the rule reads cooldown %s and workers %s, not #251's 24 and -0.02" % [_rule()["cooldown_months"], _rule()["bloc_offset"]])
+	var moves: Array = []
+	for scale in [1.0, 2.0]:
+		var state = _new_state()
+		var ns = state.player()
+		var firm = _majors(ns)[0]
+		(ns.companies[String(firm.id)] as Dictionary)["share"] = scale * Companies.share_of_company(ns, firm)
+		_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+		_month(state)
+		var row := _row(ns, String(firm.id))
+		var want := -0.02 * float(row["jobs"]) / float(_rule()["reference_jobs"])
+		var strip: Dictionary = Closures.answers(state, ns, _loader, String(row["id"]))[0]
+		var before := float(ns.bloc_offset.get("workers", 0.0))
+		Closures.answer(state, ns, _loader, String(row["id"]), "close")
+		var moved := float(ns.bloc_offset.get("workers", 0.0)) - before
+		if not is_equal_approx(moved, want) or not is_equal_approx(float(strip["bloc_offset"]["workers"]), want):
+			_fail("a plant of %.0f jobs moved the workers %.5f (strip %s), not %.5f" % [float(row["jobs"]), moved, strip["bloc_offset"], want])
+		moves.append(moved)
+	if not is_equal_approx(float(moves[1]), 2.0 * float(moves[0])):
+		_fail("twice the plant did not move the workers twice as far: %s" % [moves])

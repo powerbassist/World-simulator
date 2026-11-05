@@ -1430,12 +1430,16 @@ The spec's "New Industry decisions" (`docs/design/v5.3-ab.md` 3.2), and the indu
 supply band B7 lacked: on main a foreign bid or a failing major reaches the player
 almost never. `src/sim/closures.gd`, step `Closures` right after `Industry`.
 
-- **The trigger.** Each month every live major of the PLAYER's nation adds its output
-  (`Companies.output_eur_bn`) to a history of `window_months` + 1 months. The worst
-  fall past `fall` over the window announces a closure in the firm's live city,
-  one announcement a month at most. A firm in a process does not announce, and a
-  firm whose closure ended waits `cooldown_months`. Its history is cleared at the
-  announcement and at the cut, so a closure's own cut is never the next fall.
+- **The trigger** (the parent's ruling on the real majors; `tools/closure_rate_probe.gd`).
+  The rule fires per SECTOR: fired per major, adding real majors took FRA from 14 closures
+  a decade to 39. A sector falls when one of its majors has lost `fall` of its output over
+  `window_months`: the falls are firms losing share to rivals, and the majors' summed
+  output, tried first, fires 0 to 2 times a decade at 2 to 4 %. One fall closes one plant,
+  at one of the majors past the threshold, weighted by its jobs, in the firm's live city;
+  one announcement a month, the worst fall first; a firm in a process is passed over; a
+  sector whose closure ended waits `cooldown_months`, which sets the rate (5 a sector a
+  decade at 24). A landed closure's `bloc_offset` is the move of a plant of
+  `reference_jobs`, scaled by the plant's jobs.
 - **The answers** (`Closures.answers`, `Closures.answer`):
   - let it close, the default: the firm's live share falls by `cut` (to the residual,
     as the failure commit moves it), so its payroll in its city falls with it, and
