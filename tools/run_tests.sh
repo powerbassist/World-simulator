@@ -15,6 +15,7 @@ tests=(
   tests/test_industry_tab.gd
   tests/test_industry_closure.gd
   tests/test_region_fund.gd
+  tests/test_region_priority.gd
   tests/test_opinion.gd
   tests/test_polling_panel.gd
   tests/test_state_copy.gd
@@ -99,6 +100,7 @@ tests=(
   # V5.3 a: the sectors of each spending line (data/domains/, A2).
   tests/test_domains.gd
   tests/test_sector_channels.gd
+  tests/test_sector_priority.gd
   tests/test_process_asks.gd
   tests/test_negotiation.gd
   # V5.3 a: the plant closures (B7's industry supply).

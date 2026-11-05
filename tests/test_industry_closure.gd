@@ -20,6 +20,7 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const Num = preload("res://src/ui/num.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
 const CK = preload("res://src/sim/closures_constants.gd")
 
@@ -50,6 +51,11 @@ func _process(_delta: float) -> bool:
 			_press(_with_meta("closure_answer", "buyer"))
 		6:
 			_check_searching()
+			_announce_second()
+		8:
+			_press(_with_meta("closure_answer", "rescue"))
+		10:
+			_check_rescue()
 			_finish()
 	return false
 
@@ -135,6 +141,67 @@ func _money_of(answer: Dictionary) -> String:
 	var months := int(answer["months"])
 	return Strings.tn("%s a year for %d month", "%s a year for %d months", months) % [
 		EffectsStrip.sum_text(-float(answer["debt_eur_bn_per_year"])), months]
+
+
+## A second closure, on the second major, to be rescued (#277).
+func _announce_second() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var second = Companies.majors_of(_main._loader, ns.id)[1]
+	Closures._announce(ns, second, ns.companies[second.id], 0.2, _main._loader.closure_rule, state.year * 12 + state.month)
+	_panel.mark_dirty()
+
+
+## A rescue running is seen (the parent's call on #277): its line on In progress with
+## its months left, and its bill on the Budget's own line once the month books it.
+func _check_rescue() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var rescues := Closures.rescues(ns)
+	if rescues.size() != 1:
+		_fail("rescue pressed: %d rescues running, expected 1" % rescues.size())
+		return
+	var line = _with_meta("rescue", String(rescues[0]["company_id"]))
+	var left := int(rescues[0]["months_left"])
+	if line == null or not (line as Label).text.contains(Strings.tn("%d month left", "%d months left", left) % left):
+		_fail("rescue: no In progress line with its %d months left (%s)" % [left, line.text if line != null else "<none>"])
+		return
+	# Its money a year and its place (pass 1): the sim's figures, not the firm's name twice.
+	var money := EffectsStrip.sum_text(-float(rescues[0]["rescue_eur_bn_per_year"]))
+	var city = Region.find_city(_main._loader.regions.get(ns.id, []), String(rescues[0]["city_id"]))
+	if not (line as Label).text.contains(money + " a year") or (city != null and not (line as Label).text.contains(String(city.city_name))):
+		_fail("rescue: '%s' does not carry %s a year in %s" % [line.text, money, city.city_name if city != null else "?"])
+	Closures.tick_month(state, _main._loader)
+	var budget = _main._budget_panel
+	budget.mark_dirty()
+	budget._refresh()
+	var cells: Array = budget._figures.get("rescues", [])
+	if cells.is_empty() or String(cells[0]) == "—":
+		_fail("budget: no plant rescue line with a rescue billed (%s)" % [cells])
+	# Its change cell (QA's H6 on #279): an em dash with nothing proposed, the shape
+	# CHANGE_ROWS gives; a row missing from it carries an empty cell.
+	elif cells.size() < 3 or String((cells[2] as Array)[0]) != "—":
+		_fail("budget: the plant rescue line has no change cell (%s)" % [cells])
+	# QA's H1/H2/H3: the rescue alone (the searching closure ended), a few months into
+	# its term; the strip still drawn, the months counted down, the jobs printed.
+	var first = Companies.majors_of(_main._loader, ns.id)[0]
+	(ns.companies[first.id] as Dictionary).erase("closure")
+	Closures.tick_month(state, _main._loader)
+	var row: Dictionary = Closures.rescues(ns)[0]
+	_panel._refresh()
+	if _panel._progress == null:
+		_fail("rescue alone: the In progress strip is not drawn")
+		return
+	# Read in the new strip: the old rows are queued for freeing, still in the tree.
+	var later = null
+	for node in _panel._progress.find_children("*", "Label", true, false):
+		if node.has_meta("rescue") and String(node.get_meta("rescue")) == String(row["company_id"]):
+			later = node
+	var months := int(row["months_left"])
+	var jobs := CompanyVerb.thousands(float(row["jobs"]))
+	if later == null or months >= left or not later.text.contains(Strings.tn("%d month left", "%d months left", months) % months) \
+			or not later.text.contains(jobs + " jobs kept"):
+		_fail("rescue alone: '%s' should say %d months left and %s jobs kept" % [later.text if later != null else "<none>", months, jobs])
 
 
 func _check_searching() -> void:

@@ -33,6 +33,7 @@ func _init() -> void:
 	_check_round_trip_keeps_the_level()
 	_check_unemployment_is_not_a_stock()
 	_check_every_nation_is_complete()
+	_check_the_tick_grows_by_the_read_deviation()
 	_finish()
 
 
@@ -225,6 +226,38 @@ func _check_every_nation_is_complete() -> void:
 			gdp_total += region.gdp_share
 		if gdp_total <= 0.0 or gdp_total > 1.0:
 			_fail("%s GDP shares sum to %f" % [nation_id, gdp_total])
+
+
+## V5.3 a (#267): ONE deviation. The tick grows every named region by exactly the
+## deviation trend_deviation_pct() reads, TO THE BIT, with the network, a sited
+## project and a fund all in it: the region arithmetic lived in three copies whose
+## sums ran in different orders, so the growth the tick booked and the deviation the
+## unemployment read were not the same float, and a term added to one copy could be
+## missed by another.
+func _check_the_tick_grows_by_the_read_deviation() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.nations["FRA"]
+	var list: Array = _loader.regions.get("FRA", [])
+	for i in 12:
+		Economy.tick_month(state)
+	var access: Dictionary = Regions.accessibility_for(ns, list, state.region_graph)
+	# A raw sited map, as Projects.sited_map() hands one, and one open fund row.
+	var sites := {String(list[0].id): 0.3, String(list[1].id): -0.1}
+	ns.region_funds.append({"status": "open", "region_id": String(list[2].id), "pts": 0.7})
+	var before := {}
+	var dev := {}
+	for region in list:
+		before[region.id] = Regions.output_eur_bn(ns, region.id)
+		dev[region.id] = Regions.trend_deviation_pct(ns, list, region.id, access, sites)
+	var growth := 1.25
+	Regions.tick_month(ns, list, growth, access, sites)
+	var off := 0
+	for region in list:
+		var want: float = float(before[region.id]) * EK.monthly_factor(growth + float(dev[region.id]))
+		if Regions.output_eur_bn(ns, region.id) != want:
+			off += 1
+	if off > 0:
+		_fail("the tick grew %d of %d regions by another float than the deviation it reads" % [off, list.size()])
 
 
 func _finish() -> void:

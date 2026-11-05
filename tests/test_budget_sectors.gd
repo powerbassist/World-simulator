@@ -85,7 +85,7 @@ func _process(_delta: float) -> bool:
 			# ... and its job starts from a copy with the move on it, not the live state.
 			var job = _panel._forecast._proposed_job()
 			var drafted_shares := Sectors.shares(BudgetSectors.drafted(_panel, _main._state.player()), _main._loader, LINE)
-			var projected := Sectors.shares(job.state.player(), _main._loader, LINE)
+			var projected := Sectors.shares((job.sim if job.sim != null else job.state).player(), _main._loader, LINE)
 			if job.pending.has("_share_moves") or absf(float(projected["prevention"]) - float(drafted_shares["prevention"])) > 0.0001:
 				_fail("forecast: the projection starts from %s, the draft is %s" % [projected, drafted_shares])
 			# And the tile's heading reads the drafted lever, like the lever above it.
@@ -97,6 +97,15 @@ func _process(_delta: float) -> bool:
 				Num.f(drafted / 100.0 * float(_main._state.player().gdp_eur_bn), 0)]).to_upper()
 			if not _text_under(_panel._sector_box).contains(head):
 				_fail("heading: '%s' is not on the tile with the lever drafted" % head)
+			# QA's H7 on #279: a lever AND a move drafted, the projection's copy carries
+			# both -- the lever's spending and the move's share.
+			var job = _panel._forecast._proposed_job()
+			var copy_ns = (job.sim if job.sim != null else job.state).player()
+			if absf(float(copy_ns.spending_pct_gdp[LINE]) - drafted) > 0.0001:
+				_fail("forecast: the projection's copy spends %s on %s, the draft %s" % [copy_ns.spending_pct_gdp[LINE], LINE, drafted])
+			var want_shares := Sectors.shares(BudgetSectors.drafted(_panel, _main._state.player()), _main._loader, LINE)
+			if absf(float(Sectors.shares(copy_ns, _main._loader, LINE)["prevention"]) - float(want_shares["prevention"])) > 0.0001:
+				_fail("forecast: the projection's copy lost the drafted move")
 			_finish()
 	return false
 
