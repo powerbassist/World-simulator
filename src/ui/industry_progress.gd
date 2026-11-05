@@ -29,6 +29,21 @@ const Closures = preload("res://src/sim/closures.gd")
 const Region = preload("res://src/core/region.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
+const ProcessAsks = preload("res://src/sim/process_asks.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+## A closed process's words and tone (closed_last_month's outcomes, the walk apart).
+const ENDED := {
+	"landed": "done",  # i18n: msgid
+	"accepted": "your counter was accepted, done",  # i18n: msgid
+	"stopped": "stopped",  # i18n: msgid
+	"refused": "refused",  # i18n: msgid
+	"cleared": "cleared",  # i18n: msgid
+	"settled": "settled",  # i18n: msgid
+	"void": "called off",  # i18n: msgid
+}
+const ENDED_TONE := {"walked": ResultTone.BAD, "landed": ResultTone.GOOD, "accepted": ResultTone.GOOD}
+
 ## One answer's column on a closure card, in px: three fit a docked window.
 const ANSWER_WIDTH := 300
 
@@ -74,12 +89,17 @@ const ANSWER := {
 static func build(parent: Control, state, loader, ns, stop: Callable, answer: Callable, closure: Callable) -> Control:
 	var rows := Processes.rows(ns)
 	var closures := Closures.open(ns)
-	if rows.is_empty() and closures.is_empty():
+	# An open row says its own counter's outcome (_outcome): the closed lines are the rest.
+	var ended: Array = ProcessAsks.closed_last_month(state, ns).filter(func(line: Dictionary) -> bool:
+		return not rows.any(func(r: Dictionary) -> bool: return String(r["id"]) == String(line["id"])))
+	if rows.is_empty() and closures.is_empty() and ended.is_empty():
 		return null
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	parent.add_child(box)
 	PanelKit.heading(box, Strings.t("In progress"))
+	for line in ended:
+		_ended(box, loader, ns, line)
 	for row in closures:
 		_closure(box, state, loader, ns, row, closure)
 	for row in rows:
@@ -198,6 +218,24 @@ static func _counters(box: Control, process_id: String, counters: Array, what: S
 	box.add_child(go)
 	go.pressed.connect(func() -> void: answer.call(process_id, String(picked[0]), what))
 	show.call(counters[0])
+
+
+## A process the month end just closed, for that one month (the parent's ruling on
+## #281): walked is BAD and names the hold's last month, done is GOOD, the rest plain.
+static func _ended(box: Control, loader, ns, line: Dictionary) -> void:
+	var outcome := String(line["outcome"])
+	var what := "%s, %s" % [Strings.row_name("company-actions", _action(loader, String(line["action_id"]))),
+		loader.firm_name(ns.id, String(line["company_id"]))]
+	var text := Strings.t("%s: %s.") % [what, Strings.t(String(ENDED.get(outcome, outcome)))]  # i18n: row-ok the table's words
+	if outcome == "walked":
+		var last := int(line["hold_ends"]) - 1
+		var until := DateText.month_year((last - 1) % 12 + 1, floori((last - 1) / 12.0))
+		text = (Strings.t("%s: the buyers walked away, no bids until %s.") if String(line["side"]) == "buyers"
+			else Strings.t("%s: the seller walked away, no talks until %s.")) % [what, until]
+	var label := PanelKit.plain_line(box, text, PanelKit.Tone.PLAIN)
+	label.set_meta("closed_outcome", outcome)
+	if ENDED_TONE.has(outcome):
+		ResultTone.tint(label, String(ENDED_TONE[outcome]))
 
 
 ## An answer's words: the table's, or a counter's ("Counter 10 %", #280's negotiate_N).
