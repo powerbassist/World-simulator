@@ -24,9 +24,12 @@ const Economy = preload("res://src/sim/economy.gd")
 ## The stages whose ask is a price, and of them the state's purchases.
 const PRICE_STAGES := ["negotiation", "offer", "sale"]
 const PURCHASE_STAGES := ["negotiation", "offer"]
-## The verbs whose deals can be negotiated, so a walk holds them (cooldown()).
-const NEGOTIABLE_VERBS := ["minority_stake", "full_nationalisation", "privatisation"]
-const WALKED := "The other side walked away from a deal on this firm and will not talk again yet."
+## The verbs whose deals can be negotiated, by the side the state deals with: a seller
+## on a purchase, the buyers on a sale (side_of(); a walk holds its own side's, cooldown()).
+const PURCHASE_VERBS := ["minority_stake", "full_nationalisation"]
+const SALE_VERBS := ["privatisation"]
+const SELLER_WALKED := "The seller walked away from a deal on this firm and will not talk again yet."
+const BUYERS_WALKED := "The buyers walked away from the sale of this firm and will not bid again yet."
 
 
 ## The other side's true chance of accepting a counter of `counter` (a share of the
@@ -90,16 +93,26 @@ static func key(row: Dictionary, answer_id: String) -> String:
 	return "%s|%s" % [String(row["id"]), answer_id]
 
 
+## The side the state deals with on `action_id`'s deal: "seller" on a purchase,
+## "buyers" on a sale, "" for a verb that is not negotiated.
+static func side_of(action_id: String) -> String:
+	if PURCHASE_VERBS.has(action_id):
+		return "seller"
+	return "buyers" if SALE_VERBS.has(action_id) else ""
+
+
 ## Why a walk still holds this verb on this firm, "" when it does not (the parent's
-## call 1): after the other side walks away from a deal on the firm, none of its
-## negotiable verbs -- a new stake, a nationalisation bill, a sale -- opens for
-## NEGOTIATE_WALK_COOLDOWN_MONTHS. A walked sale holds a new sale too: the buyers walked
-## from this firm. Processes.refusal() reads it.
+## call 1, per side by its ruling on #280): after a seller walks away from a purchase,
+## the firm's purchases -- a new stake, a nationalisation bill -- wait
+## NEGOTIATE_WALK_COOLDOWN_MONTHS; after the buyers walk away from a sale, its sales do.
+## The other side's verbs stay open: a walked stake does not hold a sale of the share
+## the state already owns. Processes.refusal() reads it; the line names who walked.
 static func cooldown(ns, company_id: String, action, now: int) -> String:
-	if action == null or not NEGOTIABLE_VERBS.has(String(action.id)):
+	var side := side_of(String(action.id)) if action != null else ""
+	if side == "":
 		return ""
 	for row in ns.processes:
 		if String(row["company_id"]) == company_id and String(row["status"]) == "walked" \
-				and now - int(row["closed"]) < K.NEGOTIATE_WALK_COOLDOWN_MONTHS:
-			return WALKED
+				and side_of(String(row["action_id"])) == side and now - int(row["closed"]) < K.NEGOTIATE_WALK_COOLDOWN_MONTHS:
+			return SELLER_WALKED if side == "seller" else BUYERS_WALKED
 	return ""

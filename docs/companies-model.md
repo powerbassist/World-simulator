@@ -1413,9 +1413,17 @@ it lands and the dividend keeps its one-month lag.
     ask posted again without the counters (once per deal, a new arrival); a sale's bid
     is not re-priced;
   - walked: the deal ends, nothing paid, no U-turn (the other side left), the start's
-    half of the bloc move stays, and none of the firm's negotiable verbs (a stake, a
-    nationalisation bill, a sale) opens for 24 months (`NEGOTIATE_WALK_COOLDOWN_MONTHS`,
-    the parent's call 1; `Negotiation.cooldown()` through `Processes.refusal`).
+    half of the bloc move stays, and the walked side's verbs on the firm wait 24 months
+    (`NEGOTIATE_WALK_COOLDOWN_MONTHS`, the parent's call 1, per side by its ruling on
+    #280; `Negotiation.cooldown()` through `Processes.refusal`): after a seller walks,
+    the purchases (a stake, a nationalisation bill); after the buyers walk, the sale.
+    The other side's verbs stay open, so a walked stake does not hold a sale of the
+    share the state already owns, and the refusal names who walked.
+  The month end that draws an answer says it for that month
+  (`ProcessAsks.closed_last_month()`, the parent's call on #280; the Industry card draws
+  it): every process closed by that tick or with a counter answered by it, as landed,
+  accepted, back, walked (with the side and the first month its verbs open again),
+  stopped, refused, cleared, settled or void.
   The strips hold it (A3, A4): a month more on each price verb's longest duration, and
   the price range reaches the largest counter (under the premium's floor; above the
   value on a sale). No answer is beaten on every figure (`tests/test_process_asks.gd`):
