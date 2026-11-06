@@ -44,6 +44,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
@@ -487,6 +489,8 @@ var _closure := false
 ## problem first, then the development fund's sums, strip and Start; a fund already
 ## runs on the second region. With --fund-cap two more run elsewhere, the cap of
 ## three, and the opened region's Start is greyed with the sim's line under it.
+## #281: the Industry tab the month a seller walked: its one closed line, BAD, with the hold.
+var _walked := false
 var _fund := false
 var _fund_cap := false
 
@@ -983,6 +987,8 @@ func _init() -> void:
 			_sectors = true
 		elif args[i] == "--closure":
 			_closure = true
+		elif args[i] == "--walked":
+			_walked = true
 		elif args[i] == "--fund":
 			_fund = true
 		elif args[i] == "--fund-cap":
@@ -1289,6 +1295,8 @@ func _apply_view() -> void:
 		_main._companies_panel.mark_dirty()
 	if _fund:
 		_stage_a_fund()
+	if _walked:
+		_stage_a_walk()
 	if _priority != "":
 		_stage_a_priority()
 	if _compose:
@@ -2045,6 +2053,20 @@ func _open_the_tax_code() -> void:
 ## For --moved: health up a point and a half, education down half a point,
 ## income up two, VAT down one -- each through its slider, so the panels hear the
 ## edit the way a drag sends it.
+func _stage_a_walk() -> void:
+	var processes = preload("res://src/sim/processes.gd")
+	var state = _main._state
+	var ns = state.player()
+	var major = Companies.majors_of(_main._loader, ns.id)[0]
+	for action in _main._loader.company_actions:
+		if String(action.id) == "minority_stake":
+			processes.start(state, ns, _main._loader, action, String(major.id))
+	var row: Dictionary = ns.processes[-1]
+	row["status"] = "walked"
+	row["closed"] = state.year * 12 + state.month
+	_main._companies_panel.mark_dirty()
+
+
 func _stage_a_fund() -> void:
 	var funds = preload("res://src/sim/region_funds.gd")
 	var state = _main._state
