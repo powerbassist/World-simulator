@@ -58,6 +58,7 @@ func _init() -> void:
 	_test_a_walked_firm_says_who_walked("privatisation", Negotiation.BUYERS_WALKED)
 	_test_a_busy_firm_says_so()
 	_test_a_settled_firm_says_so()
+	_test_a_firm_no_longer_eligible_says_so()
 	_test_a_free_firm_says_nothing_and_starts()
 	_test_a_stale_refusal_is_not_told_again()
 	_test_every_door_tells_it()
@@ -161,6 +162,18 @@ func _test_a_settled_firm_says_so() -> void:
 	ns.processes.append(_closed_row(state, firm, "full_nationalisation", "settled", 2))
 	var line := _adopt_refused(state, ns, firm, "full_nationalisation", "SETTLED")
 	_check_line(line, firm, Processes.SETTLED, "SETTLED")
+
+
+## Wholly held by the day it passes: the door refuses with no reason of its own. The bill
+## must not pass in silence for that.
+func _test_a_firm_no_longer_eligible_says_so() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm := _big(ns)
+	(ns.companies[firm] as Dictionary)["state_share"] = 1.0
+	var line := _adopt_refused(state, ns, firm, "full_nationalisation", "ineligible")
+	if line != Strings.t("The law passed, but nothing started on %s: it no longer qualifies.") % _name(firm):
+		_fail("ineligible: the line reads '%s'" % line)
 
 
 func _test_a_free_firm_says_nothing_and_starts() -> void:

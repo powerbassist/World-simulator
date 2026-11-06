@@ -170,15 +170,17 @@ static func card_referendum(main, before_law_id: String) -> void:
 
 
 ## The line for an ownership bill that passed and started nothing -- a walk-out hold, a
-## process already under way, a settlement (Bills.adopt stamps the refusal `by_law`).
+## process already under way, a firm no longer eligible (Bills.adopt stamps it `by_law`).
 ## "" when this month has none. Without it the law passes in silence: the vote's card
 ## says "Carried" and the firm never moves, which reads as a bug (the card's finding).
 static func ownership_line(state, ns, loader) -> String:
 	var result: Dictionary = ns.last_company_result if ns != null else {}
 	if not bool(result.get("by_law", false)) or int(result.get("month", -1)) != int(state.year) * 12 + int(state.month):
 		return ""
-	return Strings.t("The law passed, but nothing started on %s: %s") % [
-		loader.firm_name(ns.id, String(result.get("company_id", ""))),
+	var firm: String = loader.firm_name(ns.id, String(result.get("company_id", "")))
+	if String(result.get("reason", "")) == "":
+		return Strings.t("The law passed, but nothing started on %s: it no longer qualifies.") % firm
+	return Strings.t("The law passed, but nothing started on %s: %s") % [firm,
 		Strings.t(String(result.get("reason", "")))]  # i18n: row-ok the sim's reason, its English the msgid
 
 
