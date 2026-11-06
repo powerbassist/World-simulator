@@ -23,6 +23,7 @@ extends RefCounted
 ## (last month's lines, each trend's onset, the unrest readings): presentation memory,
 ## never GameState, so the first briefing after a load reads novelty 1 everywhere.
 
+const Closures = preload("res://src/sim/closures.gd")
 const K = preload("res://src/ui/priorities_constants.gd")
 const Events = preload("res://src/sim/events.gd")
 const Programme = preload("res://src/sim/programme.gd")
@@ -57,6 +58,7 @@ static func rank(state, loader, opts := {}) -> Dictionary:
 	var cands: Array = []
 	var held: Array = []
 	_desk(ns, loader, now, opts, cands, held)
+	_re_asks(ns, now, held)
 	if bool(opts.get("programme_held", not Programme.available(state, ns, loader).is_empty())):
 		held.append(_cand("programme", "offer", now, K.WEIGHT["programme"], 1.0, now))
 	_election(state, ns, now, cands)
@@ -228,6 +230,14 @@ static func _desk(ns, loader, now: int, opts: Dictionary, cands: Array, held: Ar
 		(held if holds else cands).append(c)
 	# The spec's hold order: an interrupt, then major cards, then the rest.
 	held.sort_custom(func(a, b): return float(a["w"]) > float(b["w"]))
+
+
+## A buyer that came back (#285, the parent's ruling): one month to answer, so it is
+## held among the three, never ranked out of the one card that always shows.
+static func _re_asks(ns, now: int, held: Array) -> void:
+	for row in Closures.open(ns):
+		if String(row["status"]) == Closures.OFFERED and not row.has("answer"):
+			held.append(_cand("plant", String(row["id"]), int(row["due"]), K.WEIGHT["plant"], 1.0, now))
 
 
 static func _holds_by_rule(entry: Dictionary, loader) -> bool:

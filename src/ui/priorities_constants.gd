@@ -8,12 +8,12 @@ extends RefCounted
 
 ## The kinds, in the table's row order: the third tie-break after weight and
 ## deadline, and the order a quiet month's standing reads come in.
-const KINDS := ["crisis", "election", "decision", "bill", "majority", "commitment",
+const KINDS := ["crisis", "election", "decision", "plant", "bill", "majority", "commitment",
 	"request", "programme", "bloc", "budget", "unrest", "person"]  # i18n: ok kind keys
 
 ## W, the weight of a kind. A decision weighs by its severity (sev 2 at 8, sev 1 at
 ## 6); every standing read weighs 1, so it only fills a slot nothing urgent wants.
-const WEIGHT := {"crisis": 10.0, "election": 9.0, "decision_major": 8.0, "decision_minor": 6.0,
+const WEIGHT := {"crisis": 10.0, "election": 9.0, "decision_major": 8.0, "decision_minor": 6.0, "plant": 8.0,
 	"bill": 8.0, "majority": 8.0, "commitment": 7.0, "request": 6.0, "programme": 6.0,
 	"bloc": 5.0, "budget": 5.0, "unrest": 5.0, "person": 4.0}  # i18n: ok weight keys
 const STANDING_WEIGHT := 1.0
@@ -68,7 +68,7 @@ const HOSTILE_GRUDGE: float = preload("res://src/ui/feelings.gd").BANDS["grudge"
 
 ## What a priority's Go opens, by kind (2.4): a domains.gd tab id, or "inbox" for a
 ## desk card raised in the inbox, or "person" for the person card.
-const GO_TAB := {"crisis": "inbox", "decision": "inbox", "election": "campaign",
+const GO_TAB := {"crisis": "inbox", "decision": "inbox", "plant": "companies", "election": "campaign",
 	"bill": "legislature", "majority": "politics", "commitment": "calendar",
 	"request": "calendar", "programme": "agenda", "bloc": "legislature",
 	"budget": "budget", "unrest": "society", "person": "people"}  # i18n: ok tab ids

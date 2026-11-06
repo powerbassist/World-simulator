@@ -22,6 +22,8 @@ const Pending = preload("res://src/ui/pending.gd")
 const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const ClosureCard = preload("res://src/ui/closure_card.gd")
+const Priorities = preload("res://src/ui/priorities.gd")
+const PriorityWords = preload("res://src/ui/priority_words.gd")
 const CK = preload("res://src/sim/closures_constants.gd")
 
 var _failures: Array[String] = []
@@ -150,7 +152,7 @@ func _check_card() -> void:
 func _money_of(answer: Dictionary) -> String:
 	match String(answer["kind"]):
 		"close":
-			return EffectsStrip.cost_text(0.0)
+			return Strings.t("No cost.")
 		"buyer", "negotiate":
 			# A small search in millions, never "0.0 bn" (QA's TAKE on #270): the first
 			# major's search (Verdelis, ~0.023 bn) is one of them.
@@ -158,9 +160,9 @@ func _money_of(answer: Dictionary) -> String:
 			var shown := (Strings.t("%s m") % Num.fs(search * 1000.0, 0)) if absf(search) < 0.1 else EffectsStrip.money_text(search)
 			if search < -0.0005 and shown.begins_with("0.0"):
 				_fail("card: the buyer's search reads as free ('%s')" % shown)
-			return Strings.t("%s now, %s more at a sale") % [shown, EffectsStrip.sum_text(-float(answer["sweetener_eur_bn"]))]
+			return Strings.t("%s now, %s at a sale") % [shown, EffectsStrip.sum_text(-float(answer["sweetener_eur_bn"]))]
 	var months := int(answer["months"])
-	return Strings.tn("%s a year for %d month", "%s a year for %d months", months) % [
+	return Strings.tn("%s a year, %d month", "%s a year, %d months", months) % [
 		EffectsStrip.sum_text(-float(answer["debt_eur_bn_per_year"])), months]
 
 
@@ -281,7 +283,7 @@ func _make_the_counter() -> void:
 	if strip.money_label.text != _money_of(option):
 		_fail("counter: the strip's money reads '%s', its figures print '%s'" % [strip.money_label.text, _money_of(option)])
 	for want in ["%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))],
-			"%d %% of refusals" % roundi(100.0 * float(option["walk"])), EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"]))]:
+			"(%d %% of refusals)" % roundi(100.0 * float(option["walk"])), EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"]))]:
 		if not text.contains(want):
 			_fail("counter: the strip '%s' does not carry %s" % [text, want])
 	_counter_id = String(option["id"])
@@ -331,6 +333,7 @@ func _check_re_ask() -> void:
 		_fail("re-ask: the %s card does not say a decision is due" % _third.sector)
 	if not text.contains(String(_third.company_name)):
 		_fail("re-ask: the row does not name %s" % _third.company_name)
+	_check_re_ask_ranks(true)
 
 
 ## Answered once: the row says so, and nothing waits any more.
@@ -345,6 +348,31 @@ func _check_re_ask_answered() -> void:
 		_fail("re-ask answered: the answers still stand")
 	if Pending._closure_waiting(ns):
 		_fail("re-ask answered: the closure still waits on the player")
+	_check_re_ask_ranks(false)
+	_check_unknown_kind()
+
+
+## The parent's ruling on #287: a pending re-ask is one of the briefing's three, its
+## title names the plant's firm; answered, it is not.
+func _check_re_ask_ranks(pending: bool) -> void:
+	var state = _main._state
+	var found := {}
+	for line in Priorities.rank(state, _main._loader, {"held_events": [], "programme_held": false})["lines"]:
+		if String(line["kind"]) == "plant" and String(line["subject"]) == String(_row_of_third()["id"]):
+			found = line
+	if found.is_empty() == pending:
+		_fail("briefing: a %s re-ask %s the three priorities" % ["pending" if pending else "answered", "is not among" if pending else "is still among"])
+	elif pending and not PriorityWords.title(found, state, _main._loader).contains(String(_third.company_name)):
+		_fail("briefing: the re-ask's line does not name %s" % _third.company_name)
+
+
+## The parent's ruling on #287: a kind the card does not know is no other answer's
+## words and no crash. The error line is the loud half, declared here for the runner.
+## expects-error: closure_card: an answer of unknown kind
+func _check_unknown_kind() -> void:
+	var odd := {"id": "odd_answer", "kind": "odd", "jobs_lost": 1.0, "months": 1}
+	if ClosureCard.label(odd) != "odd_answer" or ClosureCard.jobs_text(odd) != "" or String(ClosureCard.money(odd)[0]) != "":
+		_fail("unknown kind: the card reads '%s' / '%s' / %s" % [ClosureCard.label(odd), ClosureCard.jobs_text(odd), ClosureCard.money(odd)])
 
 
 func _row_of_third() -> Dictionary:

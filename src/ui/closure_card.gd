@@ -4,6 +4,7 @@ extends RefCounted
 ## its answers side by side and the buyer's counters; searching, its months left; a buyer
 ## that came back (OFFERED), one month's re-ask at the old sweetener.
 
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Region = preload("res://src/core/region.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
@@ -34,13 +35,13 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 	var offered := String(row["status"]) == Closures.OFFERED
 	var due := maxi(int(row["due"]) - (int(state.year) * 12 + int(state.month)), 0)
 	var jobs := CompanyVerb.thousands(float(row["jobs"]))
-	var closing := Strings.tn("%s will close its plant in %s: %s jobs, in %d month.", "%s will close its plant in %s: %s jobs, in %d months.", due) % [firm, place, jobs, due]
+	var closing := Strings.tn("%s closes its %s plant in %d month: %s jobs.", "%s closes its %s plant in %d months: %s jobs.", due) % [firm, place, due, jobs]
 	if offered:
 		# Ruling (b) on #280: the buyer came back at the old sweetener, for one month.
 		closing = Strings.t("The buyer came back for %s's plant in %s: %s jobs, at the old price.") % [firm, place, jobs]
 	elif due == 0:
 		# Drawn in its due month, before the tick lands it (a load, a redraw).
-		closing = Strings.t("%s will close its plant in %s: %s jobs, this month.") % [firm, place, jobs]
+		closing = Strings.t("%s closes its %s plant this month: %s jobs.") % [firm, place, jobs]
 	var head := PanelKit.plain_line(box, closing, PanelKit.Tone.PLAIN)
 	head.theme_type_variation = UiTheme.WARN_TEXT
 	if offered and row.has("answer"):
@@ -62,12 +63,13 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 		var button := PanelKit.sized(Button.new())
 		if offered and String(option["kind"]) == "buyer":
 			var sale := -float(option["sweetener_eur_bn"])
-			strip.show_lines(Strings.t("Treasury"), Strings.t("%s at the sale") % EffectsStrip.sum_text(sale), sale, "",
+			strip.show_lines("", Strings.t("%s at the sale") % EffectsStrip.sum_text(sale), sale, "",
 				Strings.t("The buyer keeps the %s jobs next month.") % jobs)
 			button.text = Strings.t(SELL_OLD)
+			ActsOn.tag(button, [String(row["id"])])
 		else:
 			var sums: Array = money(option)
-			strip.show_lines(Strings.t("Treasury"), String(sums[0]), float(sums[1]),
+			strip.show_lines("", String(sums[0]), float(sums[1]),
 				EffectsStrip.who_text(option["bloc_offset"]), jobs_text(option))
 			button.text = label(option)
 		button.set_meta("closure_answer", id)
@@ -86,18 +88,20 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 static func money(option: Dictionary) -> Array:
 	match String(option["kind"]):
 		"close":
-			return [EffectsStrip.cost_text(0.0), 0.0]
+			return [Strings.t("No cost."), 0.0]
 		"buyer", "negotiate":
 			var now_bn := -float(option["debt_eur_bn"])
 			var sale_bn := -float(option["sweetener_eur_bn"])
 			# The tone reads both sums: a search that costs little now still books
 			# its sweetener at a sale (pass 1: a cost read as neutral).
-			return [Strings.t("%s now, %s more at a sale") % [EffectsStrip.sum_text(now_bn),
+			return [Strings.t("%s now, %s at a sale") % [EffectsStrip.sum_text(now_bn),
 				EffectsStrip.sum_text(sale_bn)], now_bn + sale_bn]
-	var year := -float(option["debt_eur_bn_per_year"])
-	var months := int(option["months"])
-	return [Strings.tn("%s a year for %d month", "%s a year for %d months", months) % [EffectsStrip.sum_text(year), months],
-		-float(option["total_eur_bn"])]
+		"rescue":
+			var months := int(option["months"])
+			return [Strings.tn("%s a year, %d month", "%s a year, %d months", months) % [EffectsStrip.sum_text(-float(option["debt_eur_bn_per_year"])), months],
+				-float(option["total_eur_bn"])]
+	_unknown(option)
+	return ["", 0.0]
 
 
 ## The jobs, said for each answer: a buyer is a chance, not the default's loss
@@ -109,10 +113,12 @@ static func jobs_text(option: Dictionary) -> String:
 			return Strings.t("%s jobs lost.") % jobs
 		"buyer":
 			var months := int(option["months"])
-			var odds := Strings.tn("A %d %% chance a buyer keeps the %s jobs, in %d month; else they are lost.", "A %d %% chance a buyer keeps the %s jobs, in %d months; else they are lost.", months)
-			return odds % [roundi(100.0 * float(option["chance"])), jobs, months]
-	var term := int(option["months"])
-	return Strings.tn("The jobs are kept for %d month, then the plant is reviewed.", "The jobs are kept for %d months, then the plant is reviewed.", term) % term
+			return Strings.tn("A buyer keeps the jobs: %d %% chance, in %d month.", "A buyer keeps the jobs: %d %% chance, in %d months.", months) % [roundi(100.0 * float(option["chance"])), months]
+		"rescue":
+			var term := int(option["months"])
+			return Strings.tn("Jobs kept %d month, then reviewed.", "Jobs kept %d months, then reviewed.", term) % term
+	_unknown(option)
+	return ""
 
 
 static func label(option: Dictionary) -> String:
@@ -121,16 +127,27 @@ static func label(option: Dictionary) -> String:
 			return Strings.t("Let it close")
 		"buyer":
 			return Strings.t("Find a buyer")
-	return Strings.t("Rescue the plant")
+		"rescue":
+			return Strings.t("Rescue the plant")
+	_unknown(option)
+	return String(option.get("id", ""))
+
+
+## The parent's ruling on #287: a kind this card does not know is an error in the log
+## and a blank on the card, never another answer's words or a crash (#285's first
+## "negotiate" fell through to the rescue and read a field it does not carry).
+static func _unknown(option: Dictionary) -> void:
+	push_error("closure_card: an answer of unknown kind '%s'" % String(option.get("kind", "")))
 
 
 ## A closure's counter on the strip (#285): the search and the cut sweetener, then what
 ## a buyer that was found may answer: yes, back at the old sweetener, or gone.
 static func _strip(strip, option: Dictionary) -> void:
 	var sums: Array = money(option)
-	strip.show_lines(Strings.t("Treasury"), String(sums[0]), float(sums[1]), "",
-		Strings.t("A %d %% chance a buyer is found, in %d to %d months, else %s jobs are lost. It accepts at %d to %d %%; refused, it returns at the old %s, or walks and the jobs are lost: %d %% of refusals.") % [
-			roundi(100.0 * float(option["chance"])), int(option["months"]), int(option["months_hi"]),
-			CompanyVerb.thousands(float(option["jobs_lost"])),
+	# The chance of a buyer is the column beside it; the prose budget (at most 100 words
+	# on the announced card, the parent's ruling) keeps this to what a counter adds.
+	strip.show_lines("", String(sums[0]), float(sums[1]), "",
+		Strings.t("In %d to %d months. It accepts at %d to %d %%; refused, it returns at %s, or walks (%d %% of refusals). No deal, the jobs are lost.") % [
+			int(option["months"]), int(option["months_hi"]),
 			roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"])),
 			EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"])), roundi(100.0 * float(option["walk"]))])
