@@ -126,6 +126,7 @@ static func _events_waiting(ns, messages: Dictionary) -> bool:
 ## the same "awaits the player" test as a bid or a failing major.
 static func _closure_announced(ns) -> bool:
 	for row in Closures.open(ns):
-		if String(row["status"]) == Closures.ANNOUNCED:
+		# A buyer that came back (#285) waits too, until it is answered once.
+		if String(row["status"]) == Closures.ANNOUNCED or (String(row["status"]) == Closures.OFFERED and not row.has("answer")):
 			return true
 	return false

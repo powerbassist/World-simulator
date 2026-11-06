@@ -95,7 +95,7 @@ static func _waiting(state, ns, loader, sector: String) -> bool:
 	for row in Processes.asks(ns):
 		ids.append(String(row["company_id"]))
 	for row in Closures.open(ns):
-		if String(row["status"]) == Closures.ANNOUNCED:
+		if String(row["status"]) == Closures.ANNOUNCED or (String(row["status"]) == Closures.OFFERED and not row.has("answer")):
 			ids.append(String(row["company_id"]))
 	for company in Companies.firms_in_sector(loader, ns.id, sector):
 		if ids.has(String(company.id)):
