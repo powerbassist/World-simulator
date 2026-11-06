@@ -24,6 +24,7 @@ const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Society = preload("res://src/sim/society.gd")
@@ -705,6 +706,9 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# V5.3 a: in WorldMonth's slot, after Projects, for Projects' reason: a fund's
 	# bill and its regional term end when its years do, inside the projected window.
 	units.append(func() -> void: RegionFunds.tick_month(sim))
+	# V5.3 a: in WorldMonth's slot, after RegionFunds: a sector priority's term ends and
+	# its cap moves inside the window, as the real month's do.
+	units.append(func() -> void: Sectors.tick_month(sim))
 	# In main.gd's slot. V1.7a needed it for the campaign bill, which V5.2 C6 retired:
 	# the party pays now, on this copy only (party_money_delta_eur_m is DEEP), so the
 	# forecast spends no real money. Kept so the projected register still opens, pays

@@ -506,11 +506,11 @@ func _table_e() -> void:
 	if absf(rho) <= 0.60:
 		print("  VERDICT (e): PASS -- the network term is not the mix term renamed")
 	else:
-		print("  VERDICT (e): FAIL -- delete NETWORK_BETA and _network_pct, ship the graph")
+		print("  VERDICT (e): FAIL -- delete NETWORK_BETA and the network term of Regions.deviation_by_region(), ship the graph")
 
 
 ## The specialisation-times-reach term at one region: the arithmetic
-## Regions._network_pct() applies, restated here because a probe cannot set a
+## Regions.deviation_by_region() applies for its network term, restated here because a probe cannot set a
 ## const at runtime -- migration_probe.gd's own reason for emulating through
 ## share_delta().
 func _net_val(region, access: Dictionary, national: Dictionary) -> float:

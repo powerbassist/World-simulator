@@ -12,6 +12,9 @@ extends SceneTree
 ## shows on its region with a Stop. The Budget's table carries the fund's bill on a
 ## line of its own (region_fund_bill_pct_gdp), not on the public works line.
 ##
+## The fund's strip is the one without the "priority" meta: the sector priority
+## (region_priority.gd) draws its own strip under it.
+##
 ## Driven through the real controls a frame apart (AGENTS.md: a Control built but
 ## not shown fails silently).
 
@@ -102,7 +105,7 @@ func _check_strip(region) -> void:
 	var ns = _main._state.player()
 	var strip = null
 	for node in _panel.find_children("*", "", true, false):
-		if node.get_script() == EffectsStrip and (node as Control).is_visible_in_tree():
+		if node.get_script() == EffectsStrip and not node.has_meta("priority") and (node as Control).is_visible_in_tree():
 			strip = node
 	if strip == null:
 		_fail("opened %s: no fund strip on screen" % region.id)
@@ -204,7 +207,7 @@ func _check_redrawn() -> void:
 	(slider as HSlider).value = top
 	var strip = null
 	for node in _panel.find_children("*", "", true, false):
-		if node.get_script() == EffectsStrip and (node as Control).is_visible_in_tree():
+		if node.get_script() == EffectsStrip and not node.has_meta("priority") and (node as Control).is_visible_in_tree():
 			strip = node
 	if strip == null or absf(float(strip.money_bn) + top) > 0.0001:
 		_fail("redraw: the strip did not follow the yearly sum to %s bn (%s)" % [top, strip.money_bn if strip != null else "<none>"])

@@ -31,6 +31,7 @@ const Num = preload("res://src/ui/num.gd")
 const TerritorySites = preload("res://src/ui/territory_sites.gd")
 const TerritoryCity = preload("res://src/ui/territory_city.gd")
 const RegionFund = preload("res://src/ui/region_fund.gd")
+const RegionPriority = preload("res://src/ui/region_priority.gd")
 
 ## The figure columns, px at text size 100 %: per head, jobless, sites.
 const COLUMNS := [86.0, 76.0, 56.0]
@@ -52,6 +53,8 @@ var _open_region := ""
 ## The development fund's two sums (region_fund.gd), held across rebuilds.
 var _fund_eur := 0.0
 var _fund_years := 0
+## The sector priority's pick, "line|sector" (region_priority.gd), held across rebuilds.
+var _priority_pick := ""
 var _about_open := false
 
 var _title: Label
@@ -242,8 +245,9 @@ func _pick(region_id: String) -> void:
 func _opened(ns, regions: Array, region, access: Dictionary, sites: Array) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
-	# V5.3 a + b (spec 3.3): the region's one problem first, then its fund.
+	# V5.3 a + b (spec 3.3): the region's one problem first, then its two verbs.
 	RegionFund.build(self, box, ns, region, regions, access)
+	RegionPriority.build(self, box, ns, region)
 	var jobs := 0.0
 	for city in region.cities:
 		jobs += Companies.headcount_in_city(ns, _loader, city.id)

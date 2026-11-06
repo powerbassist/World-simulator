@@ -74,7 +74,8 @@ const ANSWER := {
 static func build(parent: Control, state, loader, ns, stop: Callable, answer: Callable, closure: Callable) -> Control:
 	var rows := Processes.rows(ns)
 	var closures := Closures.open(ns)
-	if rows.is_empty() and closures.is_empty():
+	var rescues := Closures.rescues(ns)
+	if rows.is_empty() and closures.is_empty() and rescues.is_empty():
 		return null
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
@@ -82,6 +83,8 @@ static func build(parent: Control, state, loader, ns, stop: Callable, answer: Ca
 	PanelKit.heading(box, Strings.t("In progress"))
 	for row in closures:
 		_closure(box, state, loader, ns, row, closure)
+	for row in rescues:
+		_rescue(box, loader, ns, row)
 	for row in rows:
 		var verb := Strings.row_name("company-actions", _action(loader, String(row["action_id"])))
 		var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
@@ -185,6 +188,19 @@ static func _closure(box: Control, state, loader, ns, row: Dictionary, closure: 
 		button.pressed.connect(func() -> void: closure.call(String(row["id"]), id, what))
 		column.add_child(button)
 	PanelKit.plain_line(box, Strings.t("Unanswered, the plant closes."))
+
+
+## A plant rescue running (#277, the parent's call: a running rescue must be seen):
+## the plant, the jobs it keeps, what it costs a year and the months left.
+static func _rescue(box: Control, loader, ns, row: Dictionary) -> void:
+	var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
+	var city = Region.find_city(loader.regions.get(ns.id, []), String(row["city_id"]))
+	var place: String = String(city.city_name) if city != null else firm
+	var left := int(row["months_left"])
+	var rescued := Strings.tn("%s's plant in %s is rescued: %s jobs kept, %s a year, %d month left.", "%s's plant in %s is rescued: %s jobs kept, %s a year, %d months left.", left)
+	var line := PanelKit.plain_line(box, rescued % [firm, place, CompanyVerb.thousands(float(row["jobs"])),
+		EffectsStrip.sum_text(-float(row["rescue_eur_bn_per_year"])), left], PanelKit.Tone.PLAIN)
+	line.set_meta("rescue", String(row["company_id"]))
 
 
 ## [text, gain]: a close books nothing; a buyer search its losses now and the
