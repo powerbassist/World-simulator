@@ -54,6 +54,7 @@ func _init() -> void:
 	_test_the_press_door_routes_by_verb()
 	_test_a_failure_in_the_transition_lands_the_ownership()
 	_test_the_odds_window_does_not_centre_on_the_truth()
+	_test_the_gate_and_the_odds_read_the_share_of_the_sectors_majors()
 	_test_no_bid_opens_on_a_firm_in_a_process()
 	_test_the_transition_drags_the_firms_output()
 	_test_the_drag_reaches_growth()
@@ -82,7 +83,8 @@ func _action(id: String):
 	return null
 
 
-## The player's largest major by share -- one that clears break-up's 10 % gate.
+## The player's largest major by share -- one that clears break-up's gate (France's,
+## Verdelis, holds 38 % of its sector's majors' share against the gate's 30 %).
 func _big(ns) -> String:
 	var best := ""
 	var share := -1.0
@@ -406,7 +408,8 @@ func _test_a_ruling_on_a_firm_that_no_longer_qualifies_moves_nothing() -> void:
 	Processes.start(state, ns, _loader, _action("break_up"), firm)
 	var row := _row(ns, firm)
 	row["odds"] = 1.0
-	(ns.companies[firm] as Dictionary)["share"] = 0.05
+	# 1 % of the sector: about 7 % of its majors' share, well under the 30 % gate.
+	(ns.companies[firm] as Dictionary)["share"] = 0.01
 	var offsets := _offsets(ns)
 	for i in range(int(row["months_left"])):
 		_month(state)
@@ -431,7 +434,7 @@ func _test_a_remedy_refused_undoes_the_rulings_bloc_move() -> void:
 	if String(row["stage"]) != "remedy":
 		_fail("the ruling did not open the remedy")
 		return
-	(ns.companies[firm] as Dictionary)["share"] = 0.05
+	(ns.companies[firm] as Dictionary)["share"] = 0.01
 	for i in range(K.PROCESS_REMEDY_MONTHS):
 		_month(state)
 	if String(row["status"]) != "refused" or bool((ns.companies[firm] as Dictionary).get("failed", false)):
@@ -497,6 +500,52 @@ func _test_the_odds_window_does_not_centre_on_the_truth() -> void:
 				off_centre += 1
 	if seen == 0 or off_centre == 0:
 		_fail("the odds window's midpoint is the truth in all %d estimates" % seen)
+
+
+## V5.3 majors (the parent, 2026-11-02): at the real shares (0.3 to 4 % of a sector
+## each) no major reached the old 10 % gate, so the break-up was never offered. The
+## gate and the ruling's odds read the firm's share OF ITS SECTOR'S LIVE MAJORS (the
+## arm's absorbers plus itself): its weight among the named firms, which the size of
+## the sector does not change. The 30 % gate and the odds' two points (50 % at 30 %,
+## 85 % at 70 %) are stand-ins for the author, pinned as literals here.
+func _test_the_gate_and_the_odds_read_the_share_of_the_sectors_majors() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var split = _action("break_up")
+	var offered_small := false
+	var refused_some := false
+	for company in Companies.majors_of(_loader, ns.id):
+		var total := 0.0
+		for other in Companies.majors_of(_loader, ns.id):
+			if other.sector == company.sector:
+				total += Companies.share_of_company(ns, other)
+		var weight := Companies.share_of_company(ns, company) / total
+		if not is_equal_approx(Companies.major_share(ns, _loader, company), weight):
+			_fail("%s: major_share %.4f, its share of the sector's majors is %.4f" % [
+				company.id, Companies.major_share(ns, _loader, company), weight])
+		var offered: bool = Companies.available(state, ns, _loader.company_actions, String(company.id), _loader).has(split)
+		if offered != (weight >= 0.30):
+			_fail("%s holds %.0f %% of its sector's majors' share and the break-up offered is %s -- the gate is 30 %%" % [
+				company.id, 100.0 * weight, offered])
+		offered_small = offered_small or (offered and Companies.share_of_company(ns, company) < 0.10)
+		refused_some = refused_some or not offered
+	if not offered_small:
+		_fail("no major under a 10 % sector share is offered the break-up -- the real roster cannot reach it")
+	if not refused_some:
+		_fail("every major is offered the break-up -- the gate bites nothing")
+	if not is_equal_approx(Processes.odds_for(0.30), 0.50) or not is_equal_approx(Processes.odds_for(0.70), 0.85):
+		_fail("the ruling's odds are not 50 %% at 30 %% of the majors' share and 85 %% at 70 %% (%.3f, %.3f)" % [
+			Processes.odds_for(0.30), Processes.odds_for(0.70)])
+	# A sector four times larger, every major in it scaled alike, is no more dominated:
+	# the odds stay (the old absolute read moved them from 50 % to 85 %).
+	var firm := _big(ns)
+	var before := float(Processes.estimate(state, ns, _loader, split, firm)["odds"])
+	for other in Companies.majors_of(_loader, ns.id):
+		if other.sector == _company(ns, firm).sector:
+			ns.companies[other.id]["share"] = 4.0 * Companies.share_of_company(ns, other)
+	var after := float(Processes.estimate(state, ns, _loader, split, firm)["odds"])
+	if not is_equal_approx(before, after):
+		_fail("scaling the whole sector moved the ruling's odds %.3f -> %.3f" % [before, after])
 
 
 ## Parent pass 2, TAKE 4: no foreign bid opens on a firm with a live process (its
