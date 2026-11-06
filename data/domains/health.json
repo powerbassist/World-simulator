@@ -18,34 +18,44 @@
           "share": 0.433,
           "quantity": 5.34,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: Eurostat hlth_rs_bds1, hospital beds, 2024 (https://ec.europa.eu/eurostat/databrowser/view/hlth_rs_bds1/default/table)"
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: Eurostat hlth_rs_bds1, hospital beds, 2024 (https://ec.europa.eu/eurostat/databrowser/view/hlth_rs_bds1/default/table)",
+          "need_drift_pct_year": 2.4,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "DEU": {
           "share": 0.409,
           "quantity": 7.59,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: Eurostat hlth_rs_bds1, hospital beds, 2024 (https://ec.europa.eu/eurostat/databrowser/view/hlth_rs_bds1/default/table)"
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: Eurostat hlth_rs_bds1, hospital beds, 2024 (https://ec.europa.eu/eurostat/databrowser/view/hlth_rs_bds1/default/table)",
+          "need_drift_pct_year": 1.19,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "POL": {
           "share": 0.637,
           "quantity": 6.27,
           "year": 2024.0,
           "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: Eurostat hlth_rs_bds1, hospital beds, 2024 (https://ec.europa.eu/eurostat/databrowser/view/hlth_rs_bds1/default/table)",
-          "note": "Median wait on the list 2024 (OECD Health at a Glance 2025): hip replacement 343 days, cataract 48 days."
+          "note": "Median wait on the list 2024 (OECD Health at a Glance 2025): hip replacement 343 days, cataract 48 days.",
+          "need_drift_pct_year": 3.43,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "GBR": {
           "share": 0.493,
           "quantity": 2.43,
           "year": 2023.0,
           "source": "share: default (mean of FRA, DEU, POL): PESA 2026 table 5.2 gives UK health only as medical services, research and central services, no COFOG level 2 split (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: OECD hospital beds, all functions, 2023 (https://sdmx.oecd.org/public/rest/data/OECD.ELS.HD,DSD_HEALTH_REAC_HOSP@DF_BEDS_FUNC,1.1/GBR........)",
-          "note": "England only, general and acute beds: 1.76 per 1 000 (NHS England KH03 Q1 2026/27 over the ONS mid-2025 population). Median wait on the list 2024 (OECD): hip replacement 174 days, cataract 74 days, England."
+          "note": "England only, general and acute beds: 1.76 per 1 000 (NHS England KH03 Q1 2026/27 over the ONS mid-2025 population). Median wait on the list 2024 (OECD): hip replacement 174 days, cataract 74 days, England.",
+          "need_drift_pct_year": 2.02,
+          "need_source": "ONS National population projections: 2024-based, principal projection, mid-2026 to mid-2036 (https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/z1zippedpopulationprojectionsdatafilesuk): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "default": {
           "share": 0.493,
           "quantity": 5.407,
           "year": 2024.0,
           "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: default: the mean of FRA, DEU, POL and GBR",
-          "note": "Mean of the four sourced nations (share and quantity)."
+          "note": "Mean of the four sourced nations (share and quantity).",
+          "need_drift_pct_year": 2.26,
+          "need_source": "default: the mean of FRA, DEU, POL and GBR"
         }
       }
     },
@@ -67,32 +77,42 @@
           "share": 0.536,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure",
+          "need_drift_pct_year": 2.4,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "DEU": {
           "share": 0.578,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure",
+          "need_drift_pct_year": 1.19,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "POL": {
           "share": 0.341,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure",
+          "need_drift_pct_year": 3.43,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "GBR": {
           "share": 0.485,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: default (mean of FRA, DEU, POL): PESA 2026 table 5.2 gives UK health only as medical services, research and central services, no COFOG level 2 split (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: index, no published figure"
+          "source": "share: default (mean of FRA, DEU, POL): PESA 2026 table 5.2 gives UK health only as medical services, research and central services, no COFOG level 2 split (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: index, no published figure",
+          "need_drift_pct_year": 2.02,
+          "need_source": "ONS National population projections: 2024-based, principal projection, mid-2026 to mid-2036 (https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/z1zippedpopulationprojectionsdatafilesuk): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "default": {
           "share": 0.485,
           "quantity": 100.0,
           "year": 2024.0,
           "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: index, no published figure",
-          "note": "Mean of the four sourced nations (share); the quantity is an index."
+          "note": "Mean of the four sourced nations (share); the quantity is an index.",
+          "need_drift_pct_year": 2.26,
+          "need_source": "default: the mean of FRA, DEU, POL and GBR"
         }
       }
     },
@@ -113,32 +133,42 @@
           "share": 0.031,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure",
+          "need_drift_pct_year": 2.4,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "DEU": {
           "share": 0.013,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure",
+          "need_drift_pct_year": 1.19,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "POL": {
           "share": 0.022,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure"
+          "source": "share: Eurostat gov_10a_exp, S13, 2024 (https://ec.europa.eu/eurostat/databrowser/view/gov_10a_exp/default/table). quantity: index, no published figure",
+          "need_drift_pct_year": 3.43,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "GBR": {
           "share": 0.022,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: default (mean of FRA, DEU, POL): PESA 2026 table 5.2 gives UK health only as medical services, research and central services, no COFOG level 2 split (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: index, no published figure"
+          "source": "share: default (mean of FRA, DEU, POL): PESA 2026 table 5.2 gives UK health only as medical services, research and central services, no COFOG level 2 split (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx). quantity: index, no published figure",
+          "need_drift_pct_year": 2.02,
+          "need_source": "ONS National population projections: 2024-based, principal projection, mid-2026 to mid-2036 (https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/z1zippedpopulationprojectionsdatafilesuk): the mean of the yearly rates of the 65+ and the 80+, less the total population rate."
         },
         "default": {
           "share": 0.022,
           "quantity": 100.0,
           "year": 2024.0,
           "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: index, no published figure",
-          "note": "Mean of the four sourced nations (share); the quantity is an index."
+          "note": "Mean of the four sourced nations (share); the quantity is an index.",
+          "need_drift_pct_year": 2.26,
+          "need_source": "default: the mean of FRA, DEU, POL and GBR"
         }
       }
     }

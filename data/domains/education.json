@@ -20,35 +20,45 @@
           "quantity": 17.9,
           "year": 2024.0,
           "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_perp04, primary, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_perp04/default/table)",
-          "note": "Lower secondary 14.7, upper secondary 11.5."
+          "note": "Lower secondary 14.7, upper secondary 11.5.",
+          "need_drift_pct_year": -0.87,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 5 to 17 cohort, less the total population rate."
         },
         "DEU": {
           "share": 0.662,
           "quantity": 15.2,
           "year": 2024.0,
           "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_perp04, primary, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_perp04/default/table)",
-          "note": "Lower secondary 12.9, upper secondary 11.9."
+          "note": "Lower secondary 12.9, upper secondary 11.9.",
+          "need_drift_pct_year": 0.22,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 5 to 17 cohort, less the total population rate."
         },
         "POL": {
           "share": 0.637,
           "quantity": 13.0,
           "year": 2024.0,
           "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_perp04, primary, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_perp04/default/table)",
-          "note": "Lower secondary 9.5, upper secondary 11.9."
+          "note": "Lower secondary 9.5, upper secondary 11.9.",
+          "need_drift_pct_year": -1.49,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 5 to 17 cohort, less the total population rate."
         },
         "GBR": {
           "share": 0.843,
           "quantity": 19.5,
           "year": 2024.0,
           "source": "share: HM Treasury PESA 2026 table 5.2, 2024-25 outturn, public sector basis (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx); vocational is the default (mean of FRA, DEU, POL). quantity: OECD students per teaching staff, primary, 2024 (https://sdmx.oecd.org/public/rest/data/OECD.EDU.IMEP,DSD_EAG_UOE_NON_FIN_PERS@DF_UOE_NF_PERS_STR,1.1/all)",
-          "note": "OECD definition (all teaching staff), not the Eurostat series used for the other nations. Lower secondary 17.0 (2024), upper secondary 18.4 (2021, all institutions)."
+          "note": "OECD definition (all teaching staff), not the Eurostat series used for the other nations. Lower secondary 17.0 (2024), upper secondary 18.4 (2021, all institutions).",
+          "need_drift_pct_year": -1.64,
+          "need_source": "ONS National population projections: 2024-based, principal projection, mid-2026 to mid-2036 (https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/z1zippedpopulationprojectionsdatafilesuk): the yearly rate of the 5 to 17 cohort, less the total population rate."
         },
         "default": {
           "share": 0.739,
           "quantity": 16.4,
           "year": 2024.0,
           "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: default: the mean of FRA, DEU, POL and GBR",
-          "note": "Mean of the four sourced nations (share and quantity)."
+          "note": "Mean of the four sourced nations (share and quantity).",
+          "need_drift_pct_year": -0.945,
+          "need_source": "default: the mean of FRA, DEU, POL and GBR"
         }
       }
     },
@@ -70,35 +80,45 @@
           "quantity": 12.888,
           "year": 2024.0,
           "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_grad01, ISCED 5-8, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad01/default/table), over Eurostat demo_pjan population",
-          "note": "884 985 graduates over 68 669 303 inhabitants (1 January 2024)."
+          "note": "884 985 graduates over 68 669 303 inhabitants (1 January 2024).",
+          "need_drift_pct_year": -0.6,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 18 to 24 cohort, less the total population rate."
         },
         "DEU": {
           "share": 0.201,
           "quantity": 7.613,
           "year": 2024.0,
           "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_grad01, ISCED 5-8, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad01/default/table), over Eurostat demo_pjan population",
-          "note": "635 338 graduates over 83 456 045 inhabitants (1 January 2024)."
+          "note": "635 338 graduates over 83 456 045 inhabitants (1 January 2024).",
+          "need_drift_pct_year": 0.44,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 18 to 24 cohort, less the total population rate."
         },
         "POL": {
           "share": 0.246,
           "quantity": 11.051,
           "year": 2024.0,
           "source": "share: Eurostat gov_10a_exp 2024 (universities) and educ_uoe_fine01 2023 (vocational, derived). quantity: Eurostat educ_uoe_grad01, ISCED 5-8, 2024 (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad01/default/table), over Eurostat demo_pjan population",
-          "note": "404 685 graduates over 36 620 970 inhabitants (1 January 2024)."
+          "note": "404 685 graduates over 36 620 970 inhabitants (1 January 2024).",
+          "need_drift_pct_year": 0.93,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 18 to 24 cohort, less the total population rate."
         },
         "GBR": {
           "share": 0.045,
           "quantity": 13.005,
           "year": 2019.0,
           "source": "share: HM Treasury PESA 2026 table 5.2, 2024-25 outturn, public sector basis (https://assets.publishing.service.gov.uk/media/6a5772f59e63154454413701/PESA_2026_CP_Chapter_5_tables.xlsx); vocational is the default (mean of FRA, DEU, POL). quantity: Eurostat educ_uoe_grad02, ISCED 5-8, 2019, the last UK year (https://ec.europa.eu/eurostat/databrowser/view/educ_uoe_grad02/default/table), over Eurostat demo_pjan population",
-          "note": "866 745 graduates over 66 647 112 inhabitants (1 January 2019). The share is the true public share: tuition fees run through student loans, outside the PESA table."
+          "note": "866 745 graduates over 66 647 112 inhabitants (1 January 2019). The share is the true public share: tuition fees run through student loans, outside the PESA table.",
+          "need_drift_pct_year": 0.24,
+          "need_source": "ONS National population projections: 2024-based, principal projection, mid-2026 to mid-2036 (https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/z1zippedpopulationprojectionsdatafilesuk): the yearly rate of the 18 to 24 cohort, less the total population rate."
         },
         "default": {
           "share": 0.149,
           "quantity": 11.139,
           "year": 2024.0,
           "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: default: the mean of FRA, DEU, POL and GBR",
-          "note": "Mean of the four sourced nations (share and quantity)."
+          "note": "Mean of the four sourced nations (share and quantity).",
+          "need_drift_pct_year": 0.253,
+          "need_source": "default: the mean of FRA, DEU, POL and GBR"
         }
       }
     },

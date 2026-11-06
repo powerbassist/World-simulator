@@ -101,6 +101,7 @@ tests=(
   tests/test_domains.gd
   tests/test_sector_channels.gd
   tests/test_sector_priority.gd
+  tests/test_sector_warnings.gd
   tests/test_process_asks.gd
   # V5.3 a: the plant closures (B7's industry supply).
   tests/test_closures.gd

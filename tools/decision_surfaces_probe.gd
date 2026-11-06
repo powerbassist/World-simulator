@@ -70,7 +70,7 @@ extends SceneTree
 ## builds each answer's effects strip from the sim's own numbers; the rule (what is
 ## meaningful, the 3-month repeat, the band) is tools/density_count.gd's, pinned by
 ## tests/test_density_count.gd. The sources, all that exist on main (the spec's
-## process stages, sector and region warnings, polls on any measure, divisions open
+## process stages, region warnings, polls on any measure, divisions open
 ## to an address and plant closures are not built yet, and count nothing here):
 ##   event      a desk entry: its arrival, and its last month (months_left <= 1,
 ##              the lapse guard); answers = its choices' authored effects;
@@ -135,6 +135,8 @@ const Budget = preload("res://src/sim/budget.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Closures = preload("res://src/sim/closures.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
+const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
@@ -164,6 +166,9 @@ const BUDGET_CARDS_A_YEAR := 6.0
 ## EUR (_closure_pick). A probe policy, not a sim number: above the rescue's EUR
 ## 180,000 a job, so a plant no buyer keeps cheaper is rescued.
 const CLOSURE_MAX_EUR_PER_JOB := 250000.0
+## The share of a line the active player moves into a warned sector (_act). A probe
+## policy, not a sim number.
+const ACTIVE_SECTOR_MOVE := 0.02
 
 var _loader
 var _priorities = null
@@ -296,6 +301,17 @@ func _act(state, ns) -> void:
 		var pick := _closure_pick(Closures.answers(state, ns, _loader, String(row["id"])), float(row["jobs"]))
 		_closure_picks[pick] = int(_closure_picks.get(pick, 0)) + 1
 		Closures.answer(state, ns, _loader, String(row["id"]), pick)
+	# V5.3 a + b: a sector warning is answered the month after it arrived, by the free
+	# verb: a share of the line moved into the sector from its largest other sector.
+	# Raising the line would change the budget of a run that is measuring the world's
+	# arrivals, and this player answers everything, not everything with money.
+	for row in SectorWarnings.arrivals(ns, _loader, int(state.year) * 12 + int(state.month) - 1):
+		var shares := Sectors.shares(ns, _loader, String(row["line"]))
+		var donor := ""
+		for id in shares:
+			if String(id) != String(row["id"]) and (donor == "" or float(shares[id]) > float(shares[donor])):
+				donor = String(id)
+		Sectors.move_share(ns, _loader, String(row["line"]), donor, String(row["id"]), ACTIVE_SECTOR_MOVE)
 
 
 ## The active player's answer to a closure (the parent's call 5 on #277): the answer
@@ -746,6 +762,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		_request_candidates(state, ns, report, now, candidates)
 		_firm_candidates(state, ns, now, candidates)
 		_closure_candidates(state, ns, now, candidates)
+		_sector_candidates(state, ns, now, candidates)
 		_process_candidates(state, ns, now, candidates)
 		if i == 0 and not opening.is_empty():
 			candidates.append(_programme_candidate(state, ns, opening))
@@ -943,6 +960,19 @@ func _closure_candidates(state, ns, now: int, out: Array) -> void:
 			answers.append(strip)
 		out.append({"source": "closure", "subject": "closure|%s" % String(row["id"]), "state": "",
 			"domain": "industrial", "due": "arrival" if is_new else "deadline", "answers": answers})
+
+
+## A sector warning, the month its figure crossed into the bad band: hold, or raise
+## its line by what brings the figure back (SectorWarnings' own number, so the money
+## on the strip is what the answer would cost). A share move is the free answer and
+## sits on no axis of the strip, so it is not what makes this decision count.
+func _sector_candidates(state, ns, now: int, out: Array) -> void:
+	for row in SectorWarnings.arrivals(ns, _loader, now):
+		var line := String(row["line"])
+		var points := SectorWarnings.restore_pct_gdp(ns, _loader, line, String(row["id"]))
+		out.append({"source": "sector", "subject": "sector|%s" % String(row["id"]), "state": "",
+			"domain": line, "due": "arrival",
+			"answers": [{}, _effects_strip(state, {"spending_pct_gdp": {line: points}})]})
 
 
 ## Doing nothing, then every verb Companies.available offers on the firm whose op

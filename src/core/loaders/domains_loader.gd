@@ -6,8 +6,9 @@ extends RefCounted
 ##
 ##   {line, sectors: [{id, name, summary, codes: [string],
 ##                     quantity: {id, unit, better: "higher" | "lower"},
-##                     start: {<NATION> | "default": {share, quantity, year,
-##                                                   source, note?}}}]}
+##                     start: {<NATION> | "default": {share, quantity, year, source,
+##                                                   note?, need_drift_pct_year?,
+##                                                   need_source?}}}]}
 ##
 ## The facts are Content's (sourced, one row per sector); the tuning is
 ## src/sim/domains_constants.gd's (a sector id the table does not know for its line
@@ -125,8 +126,16 @@ static func _sector(loader, raw, line: String, where: String, errors: Array[Stri
 		if typeof(row.get("source")) != TYPE_STRING or String(row["source"]) == "" or typeof(row.get("year")) != TYPE_FLOAT:
 			errors.append("%s: %s needs a source and a year" % [where, nation])
 			return {}
+		var need = row.get("need_drift_pct_year", 0.0)
+		if typeof(need) != TYPE_FLOAT or absf(float(need)) > DK.NEED_DRIFT_MAX_PCT_YEAR:
+			errors.append("%s: %s's need_drift_pct_year must be a number within %.1f a year" % [where, nation, DK.NEED_DRIFT_MAX_PCT_YEAR])
+			return {}
+		if float(need) != 0.0 and String(row.get("need_source", "")) == "":
+			errors.append("%s: %s has a need drift and no need_source" % [where, nation])
+			return {}
 		out_start[String(nation)] = {"share": float(row["share"]), "quantity": float(row["quantity"]),
-			"year": int(row["year"]), "source": String(row["source"]), "note": String(row.get("note", ""))}
+			"year": int(row["year"]), "source": String(row["source"]), "note": String(row.get("note", "")),
+			"need_drift_pct_year": float(need), "need_source": String(row.get("need_source", ""))}
 	return {"id": id, "name": String(raw["name"]), "summary": String(raw["summary"]),
 		"codes": (codes as Array).duplicate(), "quantity": (q as Dictionary).duplicate(), "start": out_start}
 

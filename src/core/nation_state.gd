@@ -1547,6 +1547,9 @@ var sector_priorities := {}
 ## the wait after a priority stops (Sectors, the parent's renewal call on #267).
 ## absent_ok, no bump: no save before V5.3 a held a priority, so absent is "no wait".
 var sector_priority_rest := {}
+## The sector figures' drift, the player only: src/sim/sector_warnings.gd has its shape.
+## absent_ok, no bump: absent reads as a drift that begins with the next month.
+var sector_drift := {}
 
 # --- Regional development funds (V5.3 a) -------------------------------------------
 ## One row per fund opened, running or ended -- {id, region_id, eur_bn_per_year,

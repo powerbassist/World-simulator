@@ -288,6 +288,7 @@ const FIELDS := [
 	["sector_factor", DEEP, NOT_SAVED, {}, true],  # V5.3 a: derived, re-derived on load (Sectors.rebuild)
 	["sector_priorities", DEEP, COPIED, {}, true],  # V5.3 a: absent is no priority
 	["sector_priority_rest", DEEP, COPIED, {}, true],  # V5.3 a: absent is no wait
+	["sector_drift", DEEP, COPIED, {}, true],  # V5.3 a + b: absent is a drift that begins next month
 	["region_funds", DEEP, ROWS, [], true],  # V5.3 a: absent is no fund
 	["region_fund_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
 	["rescue_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # V5.3 a: rewritten by the next tick
