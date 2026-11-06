@@ -462,9 +462,7 @@ static func _tick_shares(ns, loader) -> void:
 			for rival in majors:
 				if rival.id == company.id:
 					continue
-				available += maxf(
-					float(before[rival.id]) - K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
-				)
+				available += K.can_give(float(before[rival.id]), rival.share)
 			if available <= 0.0:
 				continue
 
@@ -489,9 +487,7 @@ static func _tick_shares(ns, loader) -> void:
 			for rival in majors:
 				if rival.id == company.id:
 					continue
-				var supply: float = maxf(
-					float(before[rival.id]) - K.RIVAL_FLOOR_FRACTION * rival.share, 0.0
-				)
+				var supply: float = K.can_give(float(before[rival.id]), rival.share)
 				deltas[rival.id] = float(deltas[rival.id]) - gain * supply / available
 
 		# Majors only, because the pool only ever moved majors (A3's amended

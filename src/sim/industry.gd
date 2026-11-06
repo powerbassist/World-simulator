@@ -191,7 +191,7 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 				var spare := 0.0
 				for other in firms:
 					if other.id != company.id:
-						spare += maxf(float(before[other.id]) - CK.RIVAL_FLOOR_FRACTION * other.share, 0.0)
+						spare += CK.can_give(float(before[other.id]), other.share)
 				if spare <= 0.0:
 					continue
 				var headroom: float = maxf(CK.SHARE_MAX - float(before[company.id]) - float(deltas[company.id]), 0.0)
@@ -210,7 +210,7 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 			for other in firms:
 				if other.id == company_id:
 					continue
-				var supply: float = maxf(float(before[other.id]) - CK.RIVAL_FLOOR_FRACTION * other.share, 0.0)
+				var supply: float = CK.can_give(float(before[other.id]), other.share)
 				deltas[other.id] = float(deltas[other.id]) - want * supply / spare
 		for company in firms:
 			# EXACT zero, deliberately not is_equal_approx: Godot's approximate

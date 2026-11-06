@@ -745,8 +745,9 @@ func _test_a_share_step_is_relative_to_the_firm() -> void:
 
 ## The case that started it: "a grocer's output fell 48 % in 6 months", and the firm ended
 ## the decade where it began. Ten years of the autonomous drift alone, every playable
-## nation: no major's six-month fall in share passes NOISE_FALL_MAX.
-const NOISE_FALL_MAX := 0.25
+## nation: no major's six-month fall in share passes NOISE_FALL_MAX, the bound a firm that
+## gives at most 4 % of itself a month has by construction (1 - 0.96 ^ 6).
+const NOISE_FALL_MAX := 0.2173
 
 
 func _test_no_major_swings_from_noise_alone() -> void:

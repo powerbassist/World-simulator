@@ -192,6 +192,16 @@ const SHARE_STEP_REFERENCE := 0.05
 static func relative_step(points: float, share: float) -> float:
 	return points * minf(share / SHARE_STEP_REFERENCE, 1.0)
 
+
+## What a firm can give up to its rivals in a month: its share above its floor, and never
+## more of itself than the steepest step takes (SHARE_SHIFT_PER_MONTH at the reference,
+## 4 %). Scaling the steps alone was measured not to be enough: a 0.3 % major beside a
+## 2 % one rose by its own steps and lost them at one blow to the larger firm's, 47 % in
+## six months. The most any firm falls by drift alone in six months is now 1 - 0.96 ^ 6.
+static func can_give(share_now: float, authored: float) -> float:
+	return minf(maxf(share_now - RIVAL_FLOOR_FRACTION * authored, 0.0),
+		share_now * SHARE_SHIFT_PER_MONTH / SHARE_STEP_REFERENCE)
+
 ## The most of its own AUTHORED position a rival can be made to give up, ever.
 ##
 ## THE PROBE'S FIRST CORRECTION, and it moved the model rather than the number.
