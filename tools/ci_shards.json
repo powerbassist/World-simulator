@@ -2,6 +2,7 @@
  "shards": [
   [
    "tests/test_state_copy.gd",
+   "tests/test_bill_refusal_line.gd",
    "tests/test_electoral_systems.gd",
    "tests/test_elections.gd",
    "tests/test_amendment.gd",

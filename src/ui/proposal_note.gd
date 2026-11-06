@@ -26,6 +26,9 @@ const Music = preload("res://src/ui/music.gd")
 ## keyed by the game, AudienceDriver's shape, so main.gd (at its baseline) keeps
 ## no field for it.
 static var _tabled := {}
+## main's instance id -> the refusal already told (month|firm|verb), so a refusal that
+## stands on the record through the month's later steps is one card, not one per step.
+static var _told := {}
 
 
 ## `parties`: the nation's Party rows, to name who broke ranks.
@@ -76,6 +79,7 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 ## The proposal's card, pushed at the press; a tabled bill's card is remembered for
 ## its division.
 static func push(main, title: String, result: Dictionary) -> void:
+	card_ownership_refusal(main)
 	var card: String = ResultTone.push(main._hud.inbox, title, body(result, main._loader.parties.get(main._state.player().id, [])), tone(result, main._state.player()))
 	if bool(result.get("tabled", false)):
 		remember(main, String(result.get("law_id", "")), card)
@@ -90,6 +94,7 @@ static func remember(main, law_id: String, card: String) -> void:
 ## on the card the tabling pushed, raised as the news it is. A new card only when
 ## that one is gone: dismissed, or a load.
 static func card_division(main, report: Dictionary) -> void:
+	card_ownership_refusal(main)
 	var result: Dictionary = report.get("division", {})
 	if result.is_empty():
 		return
@@ -148,6 +153,7 @@ static func referendum_in_flight(ns) -> String:
 ## lost. A withdrawal is the player's own act on the panel, before the step: the
 ## snapshot is already empty and nothing plays.
 static func card_referendum(main, before_law_id: String) -> void:
+	card_ownership_refusal(main)
 	var ns = main._state.player()
 	if before_law_id == "" or ns == null or Referendum.pending_law_id(ns) == before_law_id:
 		return
@@ -161,3 +167,31 @@ static func card_referendum(main, before_law_id: String) -> void:
 	ResultTone.push(main._hud.inbox, Strings.law_name(main._law_panel._find_law(before_law_id), before_law_id),
 		text, ResultTone.GOOD if passed else ResultTone.BAD)
 	Music.moment(main, "vote_passed" if passed else "vote_failed")  # i18n: ok moment ids
+
+
+## The line for an ownership bill that passed and started nothing -- a walk-out hold, a
+## process already under way, a settlement (Bills.adopt stamps the refusal `by_law`).
+## "" when this month has none. Without it the law passes in silence: the vote's card
+## says "Carried" and the firm never moves, which reads as a bug (the card's finding).
+static func ownership_line(state, ns, loader) -> String:
+	var result: Dictionary = ns.last_company_result if ns != null else {}
+	if not bool(result.get("by_law", false)) or int(result.get("month", -1)) != int(state.year) * 12 + int(state.month):
+		return ""
+	return Strings.t("The law passed, but nothing started on %s: %s") % [
+		loader.firm_name(ns.id, String(result.get("company_id", ""))),
+		Strings.t(String(result.get("reason", "")))]  # i18n: row-ok the sim's reason, its English the msgid
+
+
+## That line as one card, once. Called wherever a bill can be adopted -- the division, the
+## release of a held bill or a referendum, the press of a 49.3 -- since the refusal
+## is written inside the adoption, whichever door it came through.
+static func card_ownership_refusal(main) -> void:
+	var ns = main._state.player()
+	var line := ownership_line(main._state, ns, main._loader)
+	if line == "":
+		return
+	var stamp := "%d|%s|%s" % [int(ns.last_company_result["month"]), ns.last_company_result["company_id"], ns.last_company_result["action_id"]]
+	if _told.get(main.get_instance_id(), "") == stamp:
+		return
+	_told[main.get_instance_id()] = stamp
+	ResultTone.push(main._hud.inbox, Strings.t("Law passed, nothing started"), line, ResultTone.BLOCKED)
