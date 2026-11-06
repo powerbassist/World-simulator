@@ -142,6 +142,7 @@ func _initialize() -> void:
 	await _sweep_industry_card(main)
 	await _sweep_closure_card(main)
 	await _sweep_sector_tile(main)
+	await _sweep_warned_tile(main)
 	_report()
 	quit(1 if not _failures.is_empty() else 0)
 
@@ -289,6 +290,29 @@ func _sweep_closure_card(main) -> void:
 	if total == 0:
 		_fail("closure card: nothing on the tab; the count proves nothing")
 	(ns.companies[major.id] as Dictionary).erase("closure")
+	panel.mark_dirty()
+	main._windows.close_all()
+
+
+## The same band with every sector of the line warned: the marks, the reason, the raise.
+func _sweep_warned_tile(main) -> void:
+	var ns = main._state.player()
+	var had: Dictionary = (ns.sector_drift as Dictionary).duplicate(true)
+	ns.sector_drift["base_gdp_per_head"] = float(ns.gdp_eur_bn) / float(ns.population) * 1.5
+	var panel = main._budget_panel
+	main._windows.open("budget", true)
+	panel._open_line = "health"
+	panel.mark_dirty()
+	await process_frame
+	await process_frame
+	var total := 0
+	for node in _visible_text_nodes(panel._sector_box):
+		total += _words(_text_of(node)).size()
+	print("prose: sector tile (health, all warned) %d words" % total)
+	if total > SECTOR_TILE_CEILING:
+		_fail("sector tile, warned: %d visible words, the ceiling is %d (A6)" % [total, SECTOR_TILE_CEILING])
+	ns.sector_drift = had
+	panel._open_line = ""
 	panel.mark_dirty()
 	main._windows.close_all()
 

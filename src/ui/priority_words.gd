@@ -12,11 +12,12 @@ const Events = preload("res://src/sim/events.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
 const Closures = preload("res://src/sim/closures.gd")
 
 ## The Material Symbols icon per kind (assets/icons/material/).
 const ICON := {"crisis": "event", "decision": "mail", "plant": "factory", "election": "campaign", "bill": "gavel",
-	"majority": "account_balance", "commitment": "handshake", "request": "person", "programme": "checklist",
+	"majority": "account_balance", "commitment": "handshake", "request": "person", "programme": "checklist", "sector": "payments",
 	"bloc": "groups", "budget": "payments", "unrest": "diversity_3", "person": "person"}  # i18n: ok icon names
 
 
@@ -69,6 +70,8 @@ static func title(entry: Dictionary, state, loader) -> String:
 			if subject == "offer":
 				return Strings.t("Choose the term's programme")
 			return Strings.t("Programme: %s") % Strings.row_name("programme", Programme.terms_of(loader, subject))
+		"sector":
+			return Strings.t("Slipping: %s") % SectorWarningView.name_of(loader, subject.get_slice("|", 0), subject.get_slice("|", 1))
 		"bloc":
 			var polled := PollNoise.displayed(int(state.year) * 12 + int(state.month), subject, float(ns.bloc_approval.get(subject, 0.0)))
 			if standing:
