@@ -57,6 +57,7 @@ func _init() -> void:
 	_test_a_countered_buyer_accepts_comes_back_or_walks()
 	_test_a_plain_buyer_is_not_said_as_a_counter()
 	_test_a_countered_search_on_a_failed_firm_is_said()
+	_test_a_firm_that_fails_in_the_re_ask_sells_nothing()
 	_test_no_buyer_answer_is_dominated()
 	_test_a_countered_closure_survives_a_save()
 	_finish()
@@ -911,6 +912,35 @@ func _test_a_countered_search_on_a_failed_firm_is_said() -> void:
 	(at[1].companies[String(at[2].id)] as Dictionary)["failed"] = true
 	_month(at[0])
 	_check_said(at[0], at[1], row, at[2], "void", 0.0, "a failed firm's counter")
+
+
+## QA on #285: the buyer came back, the firm fails in the re-ask's month: there is
+## nothing left to sell, so the row is void and the state pays no old sweetener.
+func _test_a_firm_that_fails_in_the_re_ask_sells_nothing() -> void:
+	for k in 80:
+		var at: Array = _announced(2026 + k)
+		var row: Dictionary = at[3]
+		var end := _now(at[0]) + CK.BUYER_MONTHS
+		if Cycle.unit("closure|%s|buyer" % String(row["id"]), end) >= CK.BUYER_CHANCE:
+			continue
+		for answer_id in NEGOTIATE_IDS:
+			var a := _answer_of(Closures.answers(at[0], at[1], _loader, String(row["id"])), answer_id)
+			if Negotiation.draw(float(a["odds"]), Negotiation.key(row, answer_id), end) != "back":
+				continue
+			Closures.answer(at[0], at[1], _loader, String(row["id"]), answer_id)
+			for i in range(CK.BUYER_MONTHS):
+				_month(at[0])
+			if String(row["status"]) != Closures.OFFERED:
+				_fail("premise: the buyer did not come back: %s" % row["status"])
+				return
+			var debt := float(at[1].debt_eur_bn)
+			(at[1].companies[String(at[2].id)] as Dictionary)["failed"] = true
+			_month(at[0])
+			if String(row["status"]) != "void" or float(at[1].debt_eur_bn) != debt:
+				_fail("a firm that failed in the re-ask ended %s and paid %.5f" % [row["status"], float(at[1].debt_eur_bn) - debt])
+			_check_said(at[0], at[1], row, at[2], "void", 0.0, "a failed firm's re-ask")
+			return
+	_fail("80 seeded closures drew no buyer that came back")
 
 
 func _test_a_plain_buyer_is_not_said_as_a_counter() -> void:
