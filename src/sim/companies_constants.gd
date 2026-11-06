@@ -183,8 +183,8 @@ const SHARE_SHIFT_PER_MONTH := 0.0020
 ## for majors of 5 to 28 %. On a real 0.5 % major one step was 40 % of the firm in a month
 ## (a grocer's output "fell 48 % in 6 months" and ended the decade where it began; QA on
 ## #286, the parent's ruling). So a firm under this share moves in proportion to itself,
-## and one at or over it exactly as it did: the smallest major main ever held is the
-## reference, and what it swung is what any major may swing.
+## and one at or over it exactly as it did: the low end of the majors those steps were
+## set for is the reference, and what such a firm swung is what any major may swing.
 const SHARE_STEP_REFERENCE := 0.05
 
 
