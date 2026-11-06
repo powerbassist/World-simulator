@@ -287,6 +287,11 @@ func _check_ask() -> void:
 	if asks.size() != 1:
 		_fail("ask: %d asks in the register, expected 1" % asks.size())
 		return
+	# Before any press, the strip is the first counter's (QA's optional on #281).
+	for option in asks[0]["ask"]["answers"]:
+		if option.has("counter"):
+			_read_counter_strip(option)
+			break
 	for option in asks[0]["ask"]["answers"]:
 		# #280's counters: one row of chips, the picked chip's figures in the strip.
 		if option.has("counter"):
@@ -320,6 +325,13 @@ func _check_counter(option: Dictionary) -> void:
 		_fail("counter: no '%d %%' chip (%s)" % [counter, chip.text if chip != null else "<none>"])
 		return
 	(chip as Button).pressed.emit()
+	_read_counter_strip(option)
+	if _button_with_meta("answer_id", "counter") == null:
+		_fail("counter: no button makes the picked counter")
+
+
+func _read_counter_strip(option: Dictionary) -> void:
+	var counter := roundi(100.0 * float(option["counter"]))
 	var strip = null
 	for node in _panel._progress.find_children("*", "", true, false):
 		if node.has_meta("counter_strip"):
@@ -332,8 +344,6 @@ func _check_counter(option: Dictionary) -> void:
 	var walk := "%d %% of refusals" % roundi(100.0 * float(option["walk"]))
 	if strip.money_label.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])) or not text.contains(range_text) or not text.contains(walk):
 		_fail("counter %d %%: the strip reads '%s', expected its price, %s and %s" % [counter, text, range_text, walk])
-	if _button_with_meta("answer_id", "counter") == null:
-		_fail("counter: no button makes the picked counter")
 
 
 ## QA's TAKE 1 (a) on #281: the counter the strip priced is the one booked. A chip
@@ -418,17 +428,12 @@ func _check_closed_lines() -> void:
 		if lines.size() != 1 or String(lines[0].get_meta("closed_outcome")) != case[2]:
 			_fail("closed line: %s should say '%s' once, found %d" % [case[0], case[2], lines.size()])
 			continue
-		var want := Label.new()
-		if case[3] != "":
-			ResultTone.tint(want, case[3])
-		if lines[0].modulate != want.modulate or lines[0].theme_type_variation != want.theme_type_variation:
-			_fail("closed line: '%s' does not wear its tone (%s)" % [case[2], case[3]])
-		want.free()
+		# ResultTone.tint() writes a colour override and nothing else (QA's W4 on #281).
+		var colour: Variant = lines[0].get_theme_color("font_color") if lines[0].has_theme_color_override("font_color") else null
+		if colour != ResultTone.TINT.get(case[3]):
+			_fail("closed line: '%s' wears %s, its tone is '%s'" % [case[2], colour, case[3]])
 		if case[2] == "walked":
-			var last: int = now + Negotiation.K.NEGOTIATE_WALK_COOLDOWN_MONTHS - 1
-			var until := DateText.month_year((last - 1) % 12 + 1, floori((last - 1) / 12.0))
-			if not (lines[0] as Label).text.contains(until):
-				_fail("closed line: the walk does not name its hold's end %s ('%s')" % [until, lines[0].text])
+			_check_walk_words(row, now, lines[0])
 	row["closed"] = now - 1
 	_panel._refresh()
 	if not _closed_lines().is_empty():
@@ -440,6 +445,28 @@ func _check_closed_lines() -> void:
 	if not _closed_lines().is_empty():
 		_fail("closed line: an open row's outcome is said twice")
 	row.erase("negotiation")
+
+
+## A walk's whole line, by side (QA's W2 on #281): a purchase's seller, a sale's buyers.
+func _check_walk_words(row: Dictionary, now: int, line: Label) -> void:
+	var last: int = now + Negotiation.K.NEGOTIATE_WALK_COOLDOWN_MONTHS - 1
+	var until := DateText.month_year((last - 1) % 12 + 1, floori((last - 1) / 12.0))
+	var firm: String = _main._loader.firm_name(_main._state.player().id, String(row["company_id"]))
+	var stake := "%s, %s" % [Strings.row_name("company-actions", _action("minority_stake")), firm]
+	var seller := Strings.t("%s: the seller walked away, no talks until %s.") % [stake, until]
+	if line.text != seller:
+		_fail("closed line: a seller's walk reads '%s', not '%s'" % [line.text, seller])
+	var held := String(row["action_id"])
+	row["action_id"] = "privatisation"
+	if Negotiation.side_of("privatisation") != "buyers":
+		_fail("premise: a privatisation's walk is not the buyers' side")
+	_panel._refresh()
+	var sale := "%s, %s" % [Strings.row_name("company-actions", _action("privatisation")), firm]
+	var buyers := Strings.t("%s: the buyers walked away, no bids until %s.") % [sale, until]
+	var lines := _closed_lines()
+	if lines.size() != 1 or (lines[0] as Label).text != buyers:
+		_fail("closed line: a sale's walk reads '%s', not '%s'" % [(lines[0] as Label).text if not lines.is_empty() else "<none>", buyers])
+	row["action_id"] = held
 
 
 func _closed_lines() -> Array:
