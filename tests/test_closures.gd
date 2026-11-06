@@ -55,6 +55,8 @@ func _init() -> void:
 	_test_the_loader_refuses_a_short_cooldown()
 	_test_a_closure_offers_three_counters()
 	_test_a_countered_buyer_accepts_comes_back_or_walks()
+	_test_a_plain_buyer_is_not_said_as_a_counter()
+	_test_a_countered_search_on_a_failed_firm_is_said()
 	_test_no_buyer_answer_is_dominated()
 	_test_a_countered_closure_survives_a_save()
 	_finish()
@@ -833,10 +835,15 @@ func _check_closure_leg(year: int, answer_id: String, leg: String) -> void:
 		if i == CK.BUYER_MONTHS - 1:
 			_falling(ns, firm, 2.0 * float(_rule()["fall"]))
 		_month(state)
+		if i < CK.BUYER_MONTHS - 1 and not _said(state, ns, row).is_empty():
+			_fail("%s: said before the answer: %s" % [label, _said(state, ns, row)])
 	var record: Dictionary = row.get("negotiation", {})
 	var outcome := "" if leg == "none" else ("back" if leg == "back_close" else leg)
 	if String(record.get("outcome", "")) != outcome or (outcome != "" and String(record.get("answer", "")) != answer_id):
 		_fail("%s: the row records %s" % [label, record])
+	var outcomes := {"none": "no_buyer", "walked": "walked", "accepted": "accepted", "back": "back", "back_close": "back"}
+	var money := {"accepted": float(a["sweetener_eur_bn"]), "back": float(a["back_sweetener_eur_bn"]), "back_close": float(a["back_sweetener_eur_bn"])}
+	_check_said(state, ns, row, firm, String(outcomes[leg]), float(money.get(leg, 0.0)), label)
 	match leg:
 		"none", "walked":
 			if String(row["status"]) != "closed" or not is_equal_approx(Companies.share_of_company(ns, firm), cut) or float(ns.debt_eur_bn) != debt:
@@ -860,6 +867,7 @@ func _check_closure_leg(year: int, answer_id: String, leg: String) -> void:
 				Closures.answer(state, ns, _loader, String(row["id"]), "close")
 				if String(row["status"]) != "closed" or not is_equal_approx(Companies.share_of_company(ns, firm), cut) or float(ns.debt_eur_bn) != debt:
 					_fail("%s: closing the buyer that came back ended %s" % [label, row["status"]])
+				_check_said(state, ns, row, firm, "closed", 0.0, label)
 				return
 			# Answered once, as every ask is: the buyer chosen, closing is no longer asked.
 			Closures.answer(state, ns, _loader, String(row["id"]), "buyer")
@@ -871,6 +879,48 @@ func _check_closure_leg(year: int, answer_id: String, leg: String) -> void:
 					or not is_equal_approx(float(ns.debt_eur_bn) - debt, float(a["back_sweetener_eur_bn"])):
 				_fail("%s: the buyer that came back ended %s, paid %.5f, not the old sweetener %.5f" % [
 					label, row["status"], float(ns.debt_eur_bn) - debt, float(a["back_sweetener_eur_bn"])])
+			_check_said(state, ns, row, firm, "sold", float(a["back_sweetener_eur_bn"]), label)
+	# Said for its month, not after it.
+	_month(state)
+	if not _said(state, ns, row).is_empty():
+		_fail("%s: still said a month later: %s" % [label, _said(state, ns, row)])
+
+
+## The parent's ruling on #285, the same as #280's: a countered closure's result is said.
+func _check_said(state, ns, row: Dictionary, firm, outcome: String, sweetener: float, label: String) -> void:
+	var line := _said(state, ns, row)
+	if String(line.get("outcome", "")) != outcome or String(line.get("company_id", "")) != String(firm.id) \
+			or String(line.get("city_id", "")) != String(row["city_id"]) or int(line.get("month", -1)) != _now(state) \
+			or float(line.get("jobs", -1.0)) != float(row["jobs"]) or not is_equal_approx(float(line.get("sweetener_eur_bn", -1.0)), sweetener):
+		_fail("%s: closed_last_month() says %s, not %s at %.5f" % [label, line, outcome, sweetener])
+
+
+## closed_last_month()'s line for `row` now, {} when it says nothing of it.
+func _said(state, ns, row: Dictionary) -> Dictionary:
+	var out := {}
+	for line in Closures.closed_last_month(state, ns):
+		if String(line["id"]) == String(row["id"]):
+			out = line
+	return out
+
+
+func _test_a_countered_search_on_a_failed_firm_is_said() -> void:
+	var at: Array = _announced(2026)
+	var row: Dictionary = at[3]
+	Closures.answer(at[0], at[1], _loader, String(row["id"]), "negotiate_10")
+	(at[1].companies[String(at[2].id)] as Dictionary)["failed"] = true
+	_month(at[0])
+	_check_said(at[0], at[1], row, at[2], "void", 0.0, "a failed firm's counter")
+
+
+func _test_a_plain_buyer_is_not_said_as_a_counter() -> void:
+	var at: Array = _announced(2026)
+	var row: Dictionary = at[3]
+	Closures.answer(at[0], at[1], _loader, String(row["id"]), "buyer")
+	for i in range(CK.BUYER_MONTHS):
+		_month(at[0])
+		if not Closures.closed_last_month(at[0], at[1]).is_empty():
+			_fail("a plain buyer's search is said as a counter: %s" % [Closures.closed_last_month(at[0], at[1])])
 
 
 ## No answer of the buyer's is beaten on every figure (PR 1's gate, pin 7): the buyer

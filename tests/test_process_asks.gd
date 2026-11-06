@@ -21,6 +21,7 @@ const Asks = preload("res://src/sim/process_asks.gd")
 const Negotiation = preload("res://src/sim/negotiation.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Forecast = preload("res://src/ui/budget_forecast.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -48,6 +49,7 @@ func _init() -> void:
 	_test_a_sale_saved_before_the_asks_is_still_priced()
 	_test_a_price_ask_offers_three_counters()
 	_test_a_counter_is_accepted_comes_back_or_walks()
+	_test_a_counter_that_comes_back_reopens_the_ask()
 	_test_a_sale_that_comes_back_keeps_its_old_price()
 	_test_an_offer_and_a_sale_land_at_their_counter_or_old_price()
 	_test_the_cycle_moves_a_purchase_counter_not_a_sale()
@@ -534,6 +536,49 @@ func _test_a_counter_is_accepted_comes_back_or_walks() -> void:
 		_fail("60 seeded trials drew only %s" % [seen.keys()])
 
 
+## QA on #280: a counter that comes back reopens the ask ("A counter that comes back
+## reopens it"). The answered counter is cleared, so the re-ask reaches the player, the
+## deal can be stopped again, and walking closes it stopped with the U-turn's blocs and
+## no money. Without the clearing the deal lands at the old price with no way to refuse.
+func _test_a_counter_that_comes_back_reopens_the_ask() -> void:
+	for trial in 60:
+		var state = _new_state()
+		state.month = 1 + trial % 12
+		state.year = 2026 + floori(trial / 12.0)
+		var ns = state.player()
+		var firm := _big(ns)
+		Processes.start(state, ns, _loader, _action("minority_stake"), firm)
+		_month(state)
+		var row := _row(ns, firm)
+		var id := String(NEGOTIATE_IDS[trial % 3])
+		var a := Asks.answer_of(row, id)
+		if Negotiation.draw(float(a["odds"]), "%s|%s" % [String(row["id"]), id], int(row["ask"]["due"])) != "back":
+			continue
+		Processes.answer(state, ns, _loader, String(row["id"]), id)
+		_month(state)
+		var listed := false
+		for asked in Processes.asks(ns):
+			listed = listed or String(asked["id"]) == String(row["id"])
+		if not listed:
+			_fail("a counter that came back does not reach the player: %s" % [row.get("answer", "")])
+		var price: Dictionary = Processes.stop_price(state, ns, _loader, String(row["id"]))
+		if not bool(price.get("ok", false)):
+			_fail("a counter that came back cannot be stopped: %s" % price)
+			return
+		var debt := float(ns.debt_eur_bn)
+		var workers := float(ns.bloc_offset.get("workers", 0.0))
+		var r: Dictionary = Processes.answer(state, ns, _loader, String(row["id"]), "walk")
+		if not bool(r.get("ok", false)) or String(row["status"]) != "stopped":
+			_fail("walking from a counter that came back did not stop the deal: %s, %s" % [r, row["status"]])
+		if float(ns.debt_eur_bn) != debt or float(ns.bloc_offset.get("workers", 0.0)) >= workers:
+			_fail("walking from a counter that came back cost money, or no U-turn on the blocs")
+		_month(state)
+		if Companies.state_share_of(ns, firm) != 0.0:
+			_fail("a deal walked from after its counter came back still transferred")
+		return
+	_fail("60 seeded trials drew no stake counter that comes back")
+
+
 ## A sale's counter that comes back keeps the bid's OLD price, though the cycle turned
 ## between the bid and the answer (the re-posted ask is not re-priced).
 func _test_a_sale_that_comes_back_keeps_its_old_price() -> void:
@@ -843,16 +888,35 @@ func _test_the_forecast_does_not_know_the_answer() -> void:
 	_month(state)
 	var row := _row(ns, firm)
 	var plain: Array = Budget.project(state, {}, 2, _loader)
+	var drafted := _drafted_path(state)
 	Processes.answer(state, ns, _loader, String(row["id"]), "negotiate_15")
 	var countered: Array = Budget.project(state, {}, 2, _loader)
 	if countered != plain:
 		_fail("the forecast with a counter on the table books %s, the deal at its old price %s" % [
 			countered.map(func(m) -> float: return float(m["debt_eur_bn"])), plain.map(func(m) -> float: return float(m["debt_eur_bn"]))])
+	# QA on #285: a drafted share move starts the job from its own copy, and that road
+	# has to be as blind as the other.
+	var drafted_countered := _drafted_path(state)
+	if drafted_countered != drafted:
+		_fail("the forecast with a share move drafted books %s, the deal at its old price %s" % [
+			drafted_countered.map(func(m) -> float: return float(m["debt_eur_bn"])), drafted.map(func(m) -> float: return float(m["debt_eur_bn"]))])
 	if String(row.get("answer", "")) != "negotiate_15":
 		_fail("forecasting erased the player's counter: %s" % row.get("answer"))
 	_month(state)
 	if String((row.get("negotiation", {}) as Dictionary).get("answer", "")) != "negotiate_15":
 		_fail("after a forecast the counter was not drawn at its month: %s" % row.get("negotiation"))
+
+
+## The Budget's proposed path with a share move drafted: the forecast's own job.
+func _drafted_path(state) -> Array:
+	var forecast = Forecast.new()
+	forecast.setup(state, _loader, 2)
+	forecast._want = {Forecast.MOVES_KEY: [{"line": "health", "from": "hospitals", "to": "prevention", "amount": 0.01}]}
+	var job = forecast._proposed_job()
+	while not Budget.projection_done(job):
+		Budget.projection_step(job)
+	forecast.free()
+	return job.path
 
 
 func _now(state) -> int:
