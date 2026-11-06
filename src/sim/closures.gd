@@ -110,6 +110,48 @@ static func open(ns) -> Array:
 	return out
 
 
+## What this month did to the closures the player countered, said for that month only
+## (the parent's ruling on #285, #280's for a process: a result is otherwise silent).
+## One line per row: {id, company_id, city_id, jobs, outcome, month, sweetener_eur_bn},
+## with outcome one of
+##   accepted  the buyer took the counter and bought; sweetener_eur_bn is the cut one;
+##   back      the buyer came back at its old sweetener and asks once more;
+##   sold      that buyer bought, at the old sweetener;
+##   walked    the buyer left over the counter, and the plant closed;
+##   no_buyer  the search found nobody, so the counter was never answered: it closed;
+##   closed    the player closed the plant rather than sell to the buyer that came back;
+##   void      the firm failed during the search.
+## sweetener_eur_bn is 0 for the last four, nothing having been paid to a buyer.
+static func closed_last_month(state, ns) -> Array:
+	var now := _now(state)
+	var out: Array = []
+	for company_id in ns.companies:
+		var row: Dictionary = (ns.companies[company_id] as Dictionary).get("closure", {})
+		if not row.has("countered"):
+			continue
+		var outcome := _said(row, now)
+		if outcome != "":
+			var paid := {"accepted": float(row["sweetener_eur_bn"]), "back": float(row["back_sweetener_eur_bn"]), "sold": float(row["back_sweetener_eur_bn"])}
+			out.append({"id": String(row["id"]), "company_id": String(company_id), "city_id": String(row["city_id"]),
+				"jobs": float(row["jobs"]), "outcome": outcome, "month": now, "sweetener_eur_bn": float(paid.get(outcome, 0.0))})
+	return out
+
+
+static func _said(row: Dictionary, now: int) -> String:
+	var record: Dictionary = row.get("negotiation", {})
+	var drawn := String(record["outcome"]) if int(record.get("month", -1)) == now else ""
+	if int(row["ended"]) != now:
+		return drawn
+	match String(row["status"]):
+		"sold":
+			return "accepted" if drawn == "accepted" else "sold"
+		"closed":
+			if drawn == "walked":
+				return drawn
+			return "no_buyer" if record.is_empty() else "closed"
+	return String(row["status"])
+
+
 ## The plant rescues running, as copies for a panel to read: each closure record
 ## with its `months_left`, `ends` (the month it ends), `rescue_eur_bn_per_year` and
 ## `eur_bn_per_month` (the In progress strip's row, the parent's call 4 on #277).

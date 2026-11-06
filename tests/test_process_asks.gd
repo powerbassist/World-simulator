@@ -21,6 +21,7 @@ const Asks = preload("res://src/sim/process_asks.gd")
 const Negotiation = preload("res://src/sim/negotiation.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Forecast = preload("res://src/ui/budget_forecast.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -887,16 +888,35 @@ func _test_the_forecast_does_not_know_the_answer() -> void:
 	_month(state)
 	var row := _row(ns, firm)
 	var plain: Array = Budget.project(state, {}, 2, _loader)
+	var drafted := _drafted_path(state)
 	Processes.answer(state, ns, _loader, String(row["id"]), "negotiate_15")
 	var countered: Array = Budget.project(state, {}, 2, _loader)
 	if countered != plain:
 		_fail("the forecast with a counter on the table books %s, the deal at its old price %s" % [
 			countered.map(func(m) -> float: return float(m["debt_eur_bn"])), plain.map(func(m) -> float: return float(m["debt_eur_bn"]))])
+	# QA on #285: a drafted share move starts the job from its own copy, and that road
+	# has to be as blind as the other.
+	var drafted_countered := _drafted_path(state)
+	if drafted_countered != drafted:
+		_fail("the forecast with a share move drafted books %s, the deal at its old price %s" % [
+			drafted_countered.map(func(m) -> float: return float(m["debt_eur_bn"])), drafted.map(func(m) -> float: return float(m["debt_eur_bn"]))])
 	if String(row.get("answer", "")) != "negotiate_15":
 		_fail("forecasting erased the player's counter: %s" % row.get("answer"))
 	_month(state)
 	if String((row.get("negotiation", {}) as Dictionary).get("answer", "")) != "negotiate_15":
 		_fail("after a forecast the counter was not drawn at its month: %s" % row.get("negotiation"))
+
+
+## The Budget's proposed path with a share move drafted: the forecast's own job.
+func _drafted_path(state) -> Array:
+	var forecast = Forecast.new()
+	forecast.setup(state, _loader, 2)
+	forecast._want = {Forecast.MOVES_KEY: [{"line": "health", "from": "hospitals", "to": "prevention", "amount": 0.01}]}
+	var job = forecast._proposed_job()
+	while not Budget.projection_done(job):
+		Budget.projection_step(job)
+	forecast.free()
+	return job.path
 
 
 func _now(state) -> int:
