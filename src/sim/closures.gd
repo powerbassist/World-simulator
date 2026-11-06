@@ -114,9 +114,8 @@ static func tick_month(state, loader) -> void:
 
 ## The month's chance that a falling sector closes a plant: `monthly_chance` at the
 ## rule's `reference_fall` with the economy at its potential, moved by the two reads,
-## each bounded (closures_constants.gd). A major's worst falls are firms losing share and
-## can pass 40 % in a window, so the fall's term saturates, or it would swallow the
-## economy's. Below 1.0 always, and above 0 in the best of booms: a plant can still close.
+## each bounded (closures_constants.gd). Below 1.0 always, and above 0 in the best of
+## booms: a plant can still close.
 static func chance(rule: Dictionary, worst_fall: float, gap_pct: float) -> float:
 	var fall_term := clampf(worst_fall / float(rule["reference_fall"]), 0.0, K.FALL_TERM_MAX)
 	var economy_term := clampf(1.0 - float(rule["gap_slope"]) * gap_pct, K.ECONOMY_TERM_MIN, K.ECONOMY_TERM_MAX)

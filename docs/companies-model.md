@@ -1448,7 +1448,10 @@ almost never. `src/sim/closures.gd`, step `Closures` right after `Industry`.
   major past `fall` is nearly always there, so the rate is a chance (the author's call on
   #286): a falling sector closes a plant in a month with `Closures.chance()`, on its own
   seed, reading its worst major's fall and the nation's output gap, so more in a slump.
-  `cooldown_months` is only a floor. A landed closure's `bloc_offset` is the move of a plant of
+  `cooldown_months` is only a floor. The fall reads a real fall since the share steps
+  became relative to the firm (`companies_constants.relative_step`, `can_give`): they were
+  points of the sector, so a 0.5 % major's six-month fall was 48 % at p90, and the firm
+  ended the decade where it began. A landed closure's `bloc_offset` is the move of a plant of
   `reference_jobs`, scaled by the plant's jobs.
 - **The answers** (`Closures.answers`, `Closures.answer`):
   - let it close, the default: the firm's live share falls by `cut` (to the residual,

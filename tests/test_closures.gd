@@ -67,7 +67,7 @@ func _init() -> void:
 
 ## The stand-ins as shipped in data/industry/closures.json, pinned as literals.
 const SHIPPED_COOLDOWN := 12
-const SHIPPED_CHANCE := 0.05
+const SHIPPED_CHANCE := 0.18
 const SHIPPED_REFERENCE := 0.10
 const SHIPPED_SLOPE := 0.35
 
