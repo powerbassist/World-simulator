@@ -11,7 +11,7 @@ extends SceneTree
 ## Two regimes, declared with their bands before the first run:
 ##
 ##   L1 BY KNOWLEDGE BAND. Every France person but the president, at each band's
-##      midpoint (0.165, 0.5, 0.835), rapport 0, below friend, both asks. The
+##      midpoint (0.165, 0.5, 0.835), rapport at the new game's seed, below friend, both asks. The
 ##      player picks the offered lever with the highest SHOWN midpoint; the row is
 ##      the mean TRUE odds of that pick.
 ##      B4: 0.30-0.50 stranger, 0.45-0.65 acquaintance, 0.60-0.80 known, each band
