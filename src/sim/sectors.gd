@@ -140,10 +140,19 @@ static func held_ratio(ns, loader, line: String, sector_id: String) -> float:
 ## twice. The need's rate is per inhabitant (data/domains/, the group the line serves
 ## less the population), since the money is too. Exactly 1.0 until the first month.
 static func drift_ratio(ns, sector: Dictionary) -> float:
+	return income_ratio(ns) / need_ratio(ns, sector)
+
+
+## GDP per head over where the drift began: drift_ratio()'s money.
+static func income_ratio(ns) -> float:
 	var base := float(ns.sector_drift.get("base_gdp_per_head", 0.0))
-	var income := float(ns.gdp_eur_bn) / float(ns.population) / base if base > 0.0 else 1.0
+	return float(ns.gdp_eur_bn) / float(ns.population) / base if base > 0.0 else 1.0
+
+
+## The sector's need per inhabitant over where the drift began: drift_ratio()'s need.
+static func need_ratio(ns, sector: Dictionary) -> float:
 	var rate := float(_start(ns, sector)["need_drift_pct_year"]) / 100.0
-	return income / pow(1.0 + rate, float(ns.sector_drift.get("need_months", 0)) / 12.0)
+	return pow(1.0 + rate, float(ns.sector_drift.get("need_months", 0)) / 12.0)
 
 
 ## Move `amount` of the line's share from one sector to another. {ok, shares} or

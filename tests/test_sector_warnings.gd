@@ -15,6 +15,7 @@ const Sectors = preload("res://src/sim/sectors.gd")
 const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
 const Society = preload("res://src/sim/society.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -37,7 +38,7 @@ func _init() -> void:
 	_test_a_held_line_crosses_at_the_month_the_arithmetic_says()
 	_test_a_better_figure_never_warns()
 	_test_one_arrival_per_crossing_then_the_rearm()
-	_test_the_reason_names_the_cut_or_the_need()
+	_test_the_reason_names_the_cut_the_income_or_the_need()
 	_test_the_trend_is_capped_and_oldest_first()
 	_test_the_restore_figure_brings_it_back_to_the_start()
 	_test_the_registers_survive_a_save()
@@ -227,16 +228,34 @@ func _test_one_arrival_per_crossing_then_the_rearm() -> void:
 		_fail("still in the band after the rearm, nothing arrived: %s" % [ns.sector_drift["warnings"]["hospitals"]])
 
 
-func _test_the_reason_names_the_cut_or_the_need() -> void:
+## Each cause reads its own reason (the parent's ruling on #288: a fall in income must
+## not say "the need"), and with two at once, the larger.
+func _test_the_reason_names_the_cut_the_income_or_the_need() -> void:
 	var state = _state()
 	var ns = state.player()
 	ns.spending_pct_gdp["health"] = float(ns.spending_pct_gdp["health"]) * 0.8
-	if SectorWarnings.warning(ns, _loader, "health", "hospitals") != SectorWarnings.REASON_CUT:
-		_fail("a cut line read: %s" % SectorWarnings.warning(ns, _loader, "health", "hospitals"))
-	var drifted = _state().player()
-	drifted.sector_drift["need_months"] = 120
-	if SectorWarnings.warning(drifted, _loader, "health", "hospitals") != SectorWarnings.REASON_NEED:
-		_fail("a held line read: %s" % SectorWarnings.warning(drifted, _loader, "health", "hospitals"))
+	_reads(ns, "health", "hospitals", SectorWarnings.REASON_CUT, "a cut line")
+	var aged = _state().player()
+	aged.sector_drift["need_months"] = 120
+	_reads(aged, "health", "hospitals", SectorWarnings.REASON_NEED, "a held line, ten years of need")
+	var poorer = _state()
+	_tick(poorer)
+	poorer.player().gdp_eur_bn *= 0.90
+	# Defence has no need at all: the figure fell with the money per head alone.
+	_reads(poorer.player(), "defence", "personnel", SectorWarnings.REASON_INCOME, "defence after a 10 % fall in GDP")
+	_reads(poorer.player(), "health", "hospitals", SectorWarnings.REASON_INCOME, "hospitals after a month's need and a 10 % fall")
+	var both = _state()
+	_tick(both)
+	both.player().gdp_eur_bn *= 0.98
+	both.player().sector_drift["need_months"] = 120
+	_reads(both.player(), "health", "hospitals", SectorWarnings.REASON_NEED, "ten years of need against a 2 % fall")
+	both.player().spending_pct_gdp["health"] = float(both.player().spending_pct_gdp["health"]) * 0.5
+	_reads(both.player(), "health", "hospitals", SectorWarnings.REASON_CUT, "the line halved on top of both")
+
+
+func _reads(ns, line: String, id: String, reason: String, what: String) -> void:
+	if SectorWarnings.warning(ns, _loader, line, id) != reason:
+		_fail("%s read: %s" % [what, SectorWarnings.warning(ns, _loader, line, id)])
 
 
 func _test_the_trend_is_capped_and_oldest_first() -> void:
@@ -274,6 +293,19 @@ func _test_the_restore_figure_brings_it_back_to_the_start() -> void:
 	_near(Sectors.quantity(ns, _loader, "health", "hospitals"), 5.34, "the restored line")
 	if SectorWarnings.restore_pct_gdp(ns, _loader, "health", "hospitals") > 1e-9:
 		_fail("a restored sector still asks for money")
+	# Above its start a figure asks for nothing, not for a negative raise (QA on #288).
+	var richer = _state()
+	_tick(richer)
+	richer.player().gdp_eur_bn *= 1.5
+	if SectorWarnings.restore_pct_gdp(richer.player(), _loader, "defence", "personnel") != 0.0:
+		_fail("a figure above its start reads a restore of %s" % SectorWarnings.restore_pct_gdp(richer.player(), _loader, "defence", "personnel"))
+	# The warning's Budget answer is the same number through the game's own applier
+	# (the probe's strip reads these effects, QA on #288).
+	var raised = _state()
+	raised.player().sector_drift["need_months"] = 120
+	var effects := SectorWarnings.raise_effects(raised.player(), _loader, "health", "hospitals")
+	Legislature.apply_effects(raised, raised.player(), effects, _loader)
+	_near(Sectors.quantity(raised.player(), _loader, "health", "hospitals"), 5.34, "the raise through the game's applier")
 	# A line cut to nothing is the worst case, not a free one (pass 1): the start's own
 	# level, here with no drift yet, brings the figure back.
 	var cut = _state().player()
@@ -310,7 +342,20 @@ func _test_the_game_month_runs_it() -> void:
 	var state = _state()
 	var ns = state.player()
 	state.month = 2
-	WorldMonth.tick_month(state, _loader)
+	# In the Sectors step, after Economy: the sample reads this month's GDP (QA on #288).
+	var seen := {}
+	WorldMonth.tick_month(state, _loader, func(step: String, after: bool, _report: Dictionary) -> void:
+		if step == "Economy" and after:
+			seen["after_economy"] = int(ns.sector_drift.get("need_months", 0))
+		if step == "Sectors" and not after:
+			seen["before_sectors"] = int(ns.sector_drift.get("need_months", 0))
+		if step == "Sectors" and after:
+			seen["after_sectors"] = int(ns.sector_drift.get("need_months", 0))
+			seen["figure"] = Sectors.quantity(ns, _loader, "defence", "personnel"))
+	if int(seen["after_economy"]) != 0 or int(seen["before_sectors"]) != 0 or int(seen["after_sectors"]) != 1:
+		_fail("the drift's month did not run inside the Sectors step: %s" % [seen])
+	if float(SectorWarnings.trend(ns, "personnel")[-1]) != float(seen["figure"]):
+		_fail("the sample is not the figure at its step: %s, %s" % [SectorWarnings.trend(ns, "personnel"), seen])
 	if int(ns.sector_drift.get("need_months", 0)) != 1 or float(ns.sector_drift.get("base_gdp_per_head", 0.0)) <= 0.0:
 		_fail("the game's month did not run the sector drift: %s" % [ns.sector_drift])
 	if SectorWarnings.trend(ns, "hospitals").size() != 1:

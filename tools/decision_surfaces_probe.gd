@@ -139,6 +139,7 @@ const Industry = preload("res://src/sim/industry.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
+const DomainsK = preload("res://src/sim/domains_constants.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
@@ -176,6 +177,9 @@ var _loader
 var _priorities = null
 ## The active regime's closure answers in the current run, by answer id (_act).
 var _closure_picks := {}
+## The active regime's answers to sector warnings in the current run (_act): a share moved,
+## or none where no sector of the line can pay.
+var _sector_answers := {"moved": 0, "none": 0}
 var _music_band = null
 
 
@@ -304,16 +308,17 @@ func _act(state, ns) -> void:
 		_closure_picks[pick] = int(_closure_picks.get(pick, 0)) + 1
 		Closures.answer(state, ns, _loader, String(row["id"]), pick)
 	# V5.3 a + b: a sector warning is answered the month after it arrived, by the free
-	# verb: a share of the line moved into the sector from its largest other sector.
-	# Raising the line would change the budget of a run that is measuring the world's
-	# arrivals, and this player answers everything, not everything with money.
+	# verb: a share of the line moved into the sector from a sector that can pay
+	# (DensityCount.donor). Raising the line would change the budget of a run that is
+	# measuring the world's arrivals. A line with no such sector goes unanswered, France's,
+	# Germany's and Poland's pensions from the first warning, and the tally says how many.
 	for row in SectorWarnings.arrivals(ns, _loader, int(state.year) * 12 + int(state.month) - 1):
-		var shares := Sectors.shares(ns, _loader, String(row["line"]))
-		var donor := ""
-		for id in shares:
-			if String(id) != String(row["id"]) and (donor == "" or float(shares[id]) > float(shares[donor])):
-				donor = String(id)
-		Sectors.move_share(ns, _loader, String(row["line"]), donor, String(row["id"]), ACTIVE_SECTOR_MOVE)
+		var line := String(row["line"])
+		var shares := Sectors.shares(ns, _loader, line)
+		var warned: Array = shares.keys().filter(func(id) -> bool: return SectorWarnings.warning(ns, _loader, line, String(id)) != "")
+		var donor := DensityCount.donor(shares, String(row["id"]), warned, ACTIVE_SECTOR_MOVE, DomainsK.MIN_SHARE)
+		var answered := donor != "" and bool(Sectors.move_share(ns, _loader, line, donor, String(row["id"]), ACTIVE_SECTOR_MOVE).get("ok", false))
+		_sector_answers["moved" if answered else "none"] += 1
 
 
 ## The active player's answer to a closure (the parent's call 5 on #277): the answer
@@ -740,6 +745,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 	# is 0 only then), so it is counted in the first month's row.
 	var opening: Array = Programme.available(state, ns, _loader)
 	_closure_picks = {}
+	_sector_answers = {"moved": 0, "none": 0}
 	for i in range(months):
 		month += 1
 		if month > 12:
@@ -821,7 +827,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		return {"now": r["now"], "count": r["world"], "domains": r["domains_world"]})
 	return {"nation": nation_id, "regime": regime, "band": DensityCount.summary(rows),
 		"band_world": DensityCount.summary(world_rows), "tally": tally, "rows": rows,
-		"closure_picks": _closure_picks.duplicate()}
+		"closure_picks": _closure_picks.duplicate(), "sector_answers": _sector_answers.duplicate()}
 
 
 ## The active player's modelled habit (header): at most one process a year, only
@@ -975,10 +981,9 @@ func _closure_candidates(state, ns, now: int, out: Array) -> void:
 func _sector_candidates(state, ns, now: int, out: Array) -> void:
 	for row in SectorWarnings.arrivals(ns, _loader, now):
 		var line := String(row["line"])
-		var points := SectorWarnings.restore_pct_gdp(ns, _loader, line, String(row["id"]))
 		out.append({"source": "sector", "subject": "sector|%s" % String(row["id"]), "state": "",
 			"domain": line, "due": "arrival",
-			"answers": [{}, _effects_strip(state, {"spending_pct_gdp": {line: points}})]})
+			"answers": [{}, _effects_strip(state, SectorWarnings.raise_effects(ns, _loader, line, String(row["id"])))]})
 
 
 ## Doing nothing, then every verb Companies.available offers on the firm whose op
@@ -1067,6 +1072,7 @@ func _print_density(run: Dictionary) -> void:
 		"PASS" if bool(w["pass"]) else "FAIL", 100.0 * float(w["share"]), float(w["mean"]), int(w["longest_none"])])
 	if not (run.get("closure_picks", {}) as Dictionary).is_empty():
 		print("    closure answers %s" % JSON.stringify(run["closure_picks"]))
+		print("    sector answers %s" % JSON.stringify(run["sector_answers"]))
 	print("    counted %s; dull %s (saved by %s); repeats %s" % [
 		JSON.stringify(t["counted"]), JSON.stringify(t["dull"]), JSON.stringify(t["saved_by"]), JSON.stringify(t["repeat"])])
 	var empty := {}

@@ -7,14 +7,15 @@ extends RefCounted
 ##
 ##   tick_month(state, loader)      the player's month: the drift's clock, the trend's
 ##                                  sample, the crossings. In WorldMonth's Sectors step;
-##   warning(ns, loader, line, id)  "" or why the figure is in its bad band: the mark on
-##                                  the tile, read live, so it shows the moment a verb
-##                                  moves the figure and never disagrees with it;
+##   warning(ns, loader, line, id)  "" or why the figure is in its bad band, for the
+##                                  tile's mark (no UI draws it yet), read live, so it
+##                                  follows a verb at once and never disagrees with it;
 ##   arrivals(ns, loader, now)      the sectors whose figure crossed INTO the band this
 ##                                  month, once per crossing: the decision arrival;
 ##   trend(ns, id)                  the figure, a sample a month, oldest first;
 ##   restore_pct_gdp(...)           the points of GDP on the line that bring the figure
-##                                  back to its start, for the warning's Budget answer.
+##                                  back to its start, for the warning's Budget answer;
+##   raise_effects(...)             that answer as effects for the game's own applier.
 ##
 ## The band is against the figure the player reads at the start (DK.WARNING_BAND), not
 ## against the money: a sector that answers its money weakly (digital, 0.2) has a figure
@@ -39,6 +40,7 @@ const DK = preload("res://src/sim/domains_constants.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 
 const REASON_CUT := "Its money has been cut below where it started."  # i18n: msgid
+const REASON_INCOME := "Its money per head has fallen with the economy."  # i18n: msgid
 const REASON_NEED := "Its money has not kept up with the need."  # i18n: msgid
 
 
@@ -60,16 +62,21 @@ static func tick_month(state, loader) -> void:
 			_watch(warnings, id, Sectors.shortfall(ns, loader, String(line), id) >= DK.WARNING_BAND, now)
 
 
-## Why the figure is in its bad band, the larger of the two causes, "" when it is not.
-## Both reasons are msgids: the caller translates.
+## Why the figure is in its bad band, the largest of the three causes, "" when it is
+## not: the player's levers, the money per head, the need. Each is a factor of ratio(),
+## so the smallest factor did the most. The reasons are msgids: the caller translates.
 static func warning(ns, loader, line: String, sector_id: String) -> String:
 	if Sectors.shortfall(ns, loader, line, sector_id) < DK.WARNING_BAND:
 		return ""
-	var drift := 1.0
+	var income := Sectors.income_ratio(ns)
+	var need := 1.0
 	for s in Sectors.sectors_of(loader, line):
 		if String(s["id"]) == sector_id:
-			drift = Sectors.drift_ratio(ns, s)
-	return REASON_CUT if Sectors.ratio(ns, loader, line, sector_id) / drift < drift else REASON_NEED
+			need = Sectors.need_ratio(ns, s)
+	var levers := Sectors.ratio(ns, loader, line, sector_id) * need / income
+	if levers <= income and levers <= 1.0 / need:
+		return REASON_CUT
+	return REASON_INCOME if income <= 1.0 / need else REASON_NEED
 
 
 ## The sectors whose figure crossed into the band at `now`: [{line, id}].
@@ -94,6 +101,11 @@ static func trend(ns, sector_id: String) -> Array:
 static func restore_pct_gdp(ns, loader, line: String, sector_id: String) -> float:
 	var target := float(ns.start_spending_pct_gdp.get(line, 0.0)) / Sectors.held_ratio(ns, loader, line, sector_id)
 	return maxf(target - float(ns.spending_pct_gdp.get(line, 0.0)), 0.0)
+
+
+## restore_pct_gdp() as an effect the game's own applier books (Legislature.apply_effects).
+static func raise_effects(ns, loader, line: String, sector_id: String) -> Dictionary:
+	return {"spending_pct_gdp": {line: restore_pct_gdp(ns, loader, line, sector_id)}}
 
 
 static func _sample(history: Dictionary, sector_id: String, figure: float) -> void:
