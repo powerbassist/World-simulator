@@ -38,6 +38,7 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Asks = preload("res://src/sim/process_asks.gd")
 const Drag = preload("res://src/sim/process_drag.gd")
+const Negotiation = preload("res://src/sim/negotiation.gd")
 
 ## The verbs that run as processes, by action id, and their first stage.
 const FIRST_STAGE := {
@@ -94,7 +95,7 @@ static func refusal(state, ns, company_id: String, action) -> String:
 		if action != null and String(row["company_id"]) == company_id and String(row["action_id"]) == String(action.id) \
 				and String(row["status"]) == "settled" and now - int(row["closed"]) < K.PROCESS_SETTLED_COOLDOWN_MONTHS:
 			return SETTLED
-	return ""
+	return Negotiation.cooldown(ns, company_id, action, now)
 
 
 ## The strip's figures for a process verb on this firm now: its stages, the
@@ -110,24 +111,26 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 	match String(action.id):
 		"minority_stake":
 			var base := (stake - held) * value
-			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_STAKE_PREMIUM.x),
+			# Negotiate (V5.3 b): an accepted counter books under the premium's floor, and one
+			# that comes back takes a month more; the strip holds both (A3, A4).
+			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_STAKE_PREMIUM.x) * (1.0 - K.NEGOTIATE_COUNTERS.max()),
 				"price_hi": base * (1.0 + K.PROCESS_STAKE_PREMIUM.y),
-				"months_lo": K.PROCESS_STAKE_MONTHS, "months_hi": K.PROCESS_STAKE_MONTHS}
+				"months_lo": K.PROCESS_STAKE_MONTHS, "months_hi": K.PROCESS_STAKE_MONTHS + 1}
 		"full_nationalisation":
 			var base := (stake - held) * value
 			var months := K.PROCESS_OFFER_MONTHS + K.PROCESS_TRANSITION_MONTHS
 			# The transition's cost in output (process_drag.gd), shown before the press: the
 			# share of a year of the firm's output its management turnover loses. A part-held
 			# firm is bought outright, the state paying for the rest (`share_bought`).
-			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.x),
-				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months,
+			return {"base_eur_bn": base, "price_lo": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.x) * (1.0 - K.NEGOTIATE_COUNTERS.max()),
+				"price_hi": base * (1.0 + K.PROCESS_NATIONALISE_PREMIUM.y), "months_lo": months, "months_hi": months + 1,
 				"output_loss_eur_bn": Drag.loss_eur_bn(ns, loader, company, held), "share_bought": stake - held}
 		"privatisation":
 			var base := held * value
 			# A sale may be held once for a new bid (process_asks.gd), so it can run
 			# one hold longer than its six months.
-			return {"base_eur_bn": base, "price_lo": -base, "price_hi": -base * (1.0 - K.PROCESS_PRIVATISE_DISCOUNT.y),
-				"months_lo": K.PROCESS_SALE_MONTHS, "months_hi": K.PROCESS_SALE_MONTHS + K.PROCESS_HOLD_MONTHS}
+			return {"base_eur_bn": base, "price_lo": -base * (1.0 + K.NEGOTIATE_COUNTERS.max()), "price_hi": -base * (1.0 - K.PROCESS_PRIVATISE_DISCOUNT.y),
+				"months_lo": K.PROCESS_SALE_MONTHS, "months_hi": K.PROCESS_SALE_MONTHS + K.PROCESS_HOLD_MONTHS + 1}
 		"break_up":
 			var odds := odds_for(Companies.share_of_company(ns, company))
 			# The truth's fog, as the prices are (parent pass 2 on #244): a fixed-width
@@ -243,11 +246,8 @@ static func stop_price(state, ns, loader, process_id: String) -> Dictionary:
 		return {"ok": false, "reason": "This process is no longer running."}
 	var action = _action(loader, String(row["action_id"]))
 	match String(row["stage"]):
-		"negotiation", "sale":
-			return {"ok": true, "debt_eur_bn": 0.0, "bloc_offset": Asks.uturn(action, row)}
-		"offer":
-			var premium := float(row["base_eur_bn"]) * float(row["rate"])
-			return {"ok": true, "debt_eur_bn": K.PROCESS_BREAK_FEE * premium, "bloc_offset": Asks.uturn(action, row)}
+		"negotiation", "sale", "offer":
+			return Asks.stop_price(action, row)
 		"investigation":
 			# The ruling is drawn with its ask, a month before the stage ends
 			# (process_asks.gd); once it is drawn the process is past stopping, as
@@ -303,6 +303,9 @@ static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 	# The stage's ask, posted in its last month and due when it ends (process_asks.gd).
 	if int(row["months_left"]) == 1:
 		Asks.post(ns, row, action, _now(state), _company(ns, loader, String(row["company_id"])))
+		return
+	# A counter is answered first: accepted lands below, back or walked does not.
+	if Asks.resolve_negotiation(ns, row, action, _now(state)):
 		return
 	var half := 1.0 - K.PROCESS_BLOC_AT_START
 	match String(row["stage"]):

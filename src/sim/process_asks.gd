@@ -25,8 +25,11 @@ const Companies = preload("res://src/sim/companies.gd")
 const K = preload("res://src/sim/companies_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Economy = preload("res://src/sim/economy.gd")
+const Negotiation = preload("res://src/sim/negotiation.gd")
 
 ## stage -> [the ask's kind, its default answer].
+## Why a price stage cannot be stopped while a counter is on the table.
+const COUNTERING := "A counter is on the table: the answer comes when this stage ends."
 const STAGE_ASK := {
 	"negotiation": ["price", "accept"], "offer": ["offer", "pay"],
 	"investigation": ["contest", "press_on"], "sale": ["bid", "accept"],
@@ -37,8 +40,10 @@ const STAGE_ASK := {
 ## is drawn here, with the odds its strip showed; the sale's bid is priced here, at
 ## the discount the cycle gives now, and that is the price the sale then books.
 ## `company` is the firm, from the caller's own lookup (Processes._company), for
-## the settlement's fine.
-static func post(ns, row: Dictionary, action, now: int, company) -> void:
+## the settlement's fine. A price ask also offers Negotiate's three counters
+## (negotiation.gd), once per deal; `reprice` false keeps the sale's bid at its old
+## price when a counter comes back (resolve_negotiation()).
+static func post(ns, row: Dictionary, action, now: int, company, reprice := true) -> void:
 	var stage := String(row["stage"])
 	if not STAGE_ASK.has(stage):
 		return
@@ -60,14 +65,99 @@ static func post(ns, row: Dictionary, action, now: int, company) -> void:
 			answers = [_answer("press_on", 0.0, offsets),
 				_answer("settle", -K.PROCESS_SETTLEMENT_FINE * value, scaled(offsets, K.PROCESS_SETTLEMENT_BLOC))]
 		"sale":
-			row["rate"] = discount(ns)
+			if reprice:
+				row["rate"] = discount(ns)
 			# One hold only (pass 1 on #248): the new bid is priced and asks nothing,
 			# so the sale ends inside the months its strip showed (A3).
 			if bool(row.get("held", false)):
 				return
 			answers = [_answer("accept", -base * (1.0 - float(row["rate"])), rest), _answer("hold", 0.0, {})]
+	if Negotiation.PRICE_STAGES.has(stage) and not row.has("negotiated"):
+		answers.append_array(Negotiation.answers(ns, row, float(answers[0]["debt_eur_bn"]), answers[0]["bloc_offset"], now))
 	row["ask"] = {"kind": String(STAGE_ASK[stage][0]), "posted": now, "due": now + 1,
 		"default": String(STAGE_ASK[stage][1]), "answers": answers}
+
+
+## A counter's answer at its ask's due month `now` (negotiation.gd), before the stage
+## lands (Processes._tick_row): true when the stage does not land this month.
+##   accepted  the price moves by the counter (base_eur_bn, which every landing reads)
+##             and the stage lands as its default would: false.
+##   back      one more month at the old price, asked again without the counters
+##             (once per deal; a new arrival): true.
+##   walked    the deal ends: nothing paid, no U-turn (the other side left), the
+##             start's half of the bloc move stays, and Negotiation.cooldown() holds
+##             the firm's negotiable verbs: true.
+static func resolve_negotiation(ns, row: Dictionary, action, now: int) -> bool:
+	var pick := chosen(row)
+	if not pick.begins_with("negotiate_"):
+		return false
+	var a := answer_of(row, pick)
+	if a.is_empty():
+		return false
+	var outcome := Negotiation.draw(float(a["odds"]), Negotiation.key(row, pick), now)
+	row["negotiated"] = true
+	row["negotiation"] = {"answer": pick, "outcome": outcome, "month": now}
+	match outcome:
+		"accepted":
+			var c := float(a["counter"])
+			row["countered"] = c
+			row["base_eur_bn"] = float(row["base_eur_bn"]) * (1.0 + c if String(row["stage"]) == "sale" else 1.0 - c)
+			return false
+		"back":
+			row.erase("answer")
+			row["months_left"] = 1
+			post(ns, row, action, now, null, false)
+			return true
+	row["status"] = "walked"
+	row["closed"] = now
+	return true
+
+
+## What the month end the player just crossed did to the processes, said for that month
+## only (the parent's call on #280: a walk-out, like any end, is otherwise silent). The
+## tick runs after the clock moves (world_month.gd), so a row stamped by it carries the
+## month now: closed now, or a counter answered now on a process still running (back,
+## or an accepted offer going into its transition). One line per row, as
+## {id, company_id, action_id, outcome, month}; outcome is the closing status, with
+## "done" said as accepted when a counter was accepted this month and landed otherwise
+## (a transition that ends a year after its accepted offer lands), or the counter's
+## answer (back, accepted) on a row still open. A walk adds `side` (Negotiation.side_of:
+## the seller or the buyers walked) and `hold_ends`, the FIRST month the walked side's
+## verbs open again (Negotiation.cooldown). A stop is stamped by the press, in its month.
+static func closed_last_month(state, ns) -> Array:
+	var now := int(state.year) * 12 + int(state.month)
+	var out: Array = []
+	for row in ns.processes:
+		var record: Dictionary = row.get("negotiation", {})
+		var answered := int(record.get("month", -1)) == now
+		var outcome := ""
+		if int(row["closed"]) == now:
+			outcome = String(row["status"])
+			if outcome == "done":
+				outcome = "accepted" if answered and String(record["outcome"]) == "accepted" else "landed"
+		elif answered and String(row["status"]) == "open":
+			outcome = String(record["outcome"])
+		if outcome == "":
+			continue
+		var line := {"id": String(row["id"]), "company_id": String(row["company_id"]),
+			"action_id": String(row["action_id"]), "outcome": outcome, "month": now}
+		if outcome == "walked":
+			line["side"] = Negotiation.side_of(String(row["action_id"]))
+			line["hold_ends"] = int(row["closed"]) + K.NEGOTIATE_WALK_COOLDOWN_MONTHS
+		out.append(line)
+	return out
+
+
+## What stopping a price stage costs now (Processes.stop_price): the U-turn, and at
+## a nationalisation's offer the break fee too. Refused while a counter is answered:
+## Budget.project() runs the seeded draw on its copy, so the forecast shows the answer
+## before it is due, and a known answer must not be dodgeable (the drawn ruling's rule;
+## pass 1 on #280). Once a counter comes back the ask has no answer and stopping is open.
+static func stop_price(action, row: Dictionary) -> Dictionary:
+	if chosen(row).begins_with("negotiate_"):
+		return {"ok": false, "reason": COUNTERING}
+	var fee := K.PROCESS_BREAK_FEE * float(row["base_eur_bn"]) * float(row["rate"]) if String(row["stage"]) == "offer" else 0.0
+	return {"ok": true, "debt_eur_bn": fee, "bloc_offset": uturn(action, row)}
 
 
 ## The authority's finding on a referral (true: the break-up is ordered), drawn on

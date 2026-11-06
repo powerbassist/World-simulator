@@ -1393,10 +1393,45 @@ it lands and the dividend keeps its one-month lag.
     referral would collect the fine again;
   - the privatisation's best bid: accept (the default) or hold three months for a new
     bid, priced at the discount the cycle gives then. A sale is held once at most:
-    the new bid asks nothing, so the sale ends inside the nine months its strip shows.
+    the new bid asks nothing, so the sale ends inside the ten months its strip shows
+    (one more for a counter that comes back, below).
   Each answer carries the debt it books once and the bloc offsets it moves. That makes
   the ask a B7 decision arrival (`decision_surfaces_probe.gd --density`, source
   `process`), and the card the UI draws reads these figures.
+- **Negotiate** (V5.3 b, the author's idea, `src/sim/negotiation.gd`). Every PRICE
+  ask (the stake's, the offer's, the sale's) also offers three counters,
+  `negotiate_5 / 10 / 15`: the price moved by 5, 10 or 15 % (less to pay, more to
+  receive). The other side's true chance of accepting falls with the counter
+  (`NEGOTIATE_ODDS`: 0.75, 0.55, 0.35 at an even leverage) and with its strength: on a
+  purchase the seller is strong in a boom and weak in a downturn, at full strength a
+  gap of `PROCESS_DISCOUNT_GAP_PCT` either way; a sale has no leverage, the discount
+  already carrying the cycle (the parent's call 2). The strip shows a fixed-width range
+  with the truth seeded inside (the break-up odds' fog); the answer keeps the true odds
+  for the draw, never shown. At the due month the counter is drawn on its own seed:
+  - accepted: the deal lands at the countered price;
+  - back (half the refusals, `NEGOTIATE_WALK`): one more month at the OLD price, the
+    ask posted again without the counters (once per deal, a new arrival); a sale's bid
+    is not re-priced;
+  - walked: the deal ends, nothing paid, no U-turn (the other side left), the start's
+    half of the bloc move stays, and the walked side's verbs on the firm wait 24 months
+    (`NEGOTIATE_WALK_COOLDOWN_MONTHS`, the parent's call 1, per side by its ruling on
+    #280; `Negotiation.cooldown()` through `Processes.refusal`): after a seller walks,
+    the purchases (a stake, a nationalisation bill); after the buyers walk, the sale.
+    The other side's verbs stay open, so a walked stake does not hold a sale of the
+    share the state already owns, and the refusal names who walked.
+  The month end that draws an answer says it for that month
+  (`ProcessAsks.closed_last_month()`, the parent's call on #280; the Industry card draws
+  it): every process closed by that tick or with a counter answered by it, as landed,
+  accepted, back, walked (with the side and the first month its verbs open again),
+  stopped, refused, cleared, settled or void.
+  The strips hold it (A3, A4): a month more on each price verb's longest duration, and
+  the price range reaches the largest counter (under the premium's floor; above the
+  value on a sale). No answer is beaten on every figure (`tests/test_process_asks.gd`):
+  walking wins the cash, accepting the completion, a counter the price if it lands. The
+  closing plant's buyer (`closures.gd`) is the next step. Every number is a stand-in.
+  A price stage with an answered counter cannot be stopped: `Budget.project()` runs the
+  seeded draw on its copy, so the forecast shows the answer early, and a known answer
+  must not be dodged (the drawn ruling's rule). A counter that comes back reopens it.
 - **The save.** `ns.processes` is `absent_ok`, with no bump: no save made before
   V5.3 a could hold a process, so an absent register reads "nothing in progress",
   which is the truth.

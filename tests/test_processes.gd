@@ -134,10 +134,12 @@ func _test_stake_takes_two_months_and_its_price_brackets() -> void:
 	var stake = _action("minority_stake")
 	var est: Dictionary = Processes.estimate(state, ns, _loader, stake, firm)
 	var value := Companies.value_eur_bn(ns, _company(ns, firm))
-	if not is_equal_approx(float(est["price_lo"]), value * float(stake.effects["company"]["stake"]) * (1.0 + K.PROCESS_STAKE_PREMIUM.x)) \
+	# Negotiate (V5.3 b): an accepted counter books up to the largest counter under the
+	# premium's floor, and one that comes back takes a month more; the strip holds both.
+	if not is_equal_approx(float(est["price_lo"]), value * float(stake.effects["company"]["stake"]) * (1.0 + K.PROCESS_STAKE_PREMIUM.x) * (1.0 - K.NEGOTIATE_COUNTERS.max())) \
 			or not is_equal_approx(float(est["price_hi"]), value * float(stake.effects["company"]["stake"]) * (1.0 + K.PROCESS_STAKE_PREMIUM.y)):
 		_fail("the stake's price range is %s..%s, not value x stake x (1 + premium)" % [est["price_lo"], est["price_hi"]])
-	if int(est["months_lo"]) != K.PROCESS_STAKE_MONTHS or int(est["months_hi"]) != K.PROCESS_STAKE_MONTHS:
+	if int(est["months_lo"]) != K.PROCESS_STAKE_MONTHS or int(est["months_hi"]) != K.PROCESS_STAKE_MONTHS + 1:
 		_fail("the stake's duration range is not %d months: %s" % [K.PROCESS_STAKE_MONTHS, est])
 	var debt := float(ns.debt_eur_bn)
 	var offsets := _offsets(ns)
@@ -207,7 +209,7 @@ func _test_privatisation_sells_after_six_months_at_a_discount() -> void:
 	var sell = _action("privatisation")
 	var est: Dictionary = Processes.estimate(state, ns, _loader, sell, firm)
 	var value := Companies.value_eur_bn(ns, _company(ns, firm))
-	if not is_equal_approx(float(est["price_lo"]), -value) \
+	if not is_equal_approx(float(est["price_lo"]), -value * (1.0 + K.NEGOTIATE_COUNTERS.max())) \
 			or not is_equal_approx(float(est["price_hi"]), -value * (1.0 - K.PROCESS_PRIVATISE_DISCOUNT.y)):
 		_fail("the sale's range is %s..%s, not -value..-value x (1 - max discount)" % [est["price_lo"], est["price_hi"]])
 	var debt := float(ns.debt_eur_bn)
