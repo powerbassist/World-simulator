@@ -151,7 +151,7 @@ static func _invest(ns, loader, majors: Array, month: int) -> void:
 			var acts: bool = Cycle.unit("industry|%s|invest" % company.id, month) < IK.INVEST_PROBABILITY_MONTHLY
 			if not acts:
 				continue
-			var step: float = IK.INVEST_STEP
+			var step: float = CK.relative_step(IK.INVEST_STEP, float(before[company.id]))
 			if declining:
 				# Shedding is bounded by what the firm still holds above zero.
 				step = minf(step, float(before[company.id]))

@@ -469,7 +469,7 @@ static func _tick_shares(ns, loader) -> void:
 				continue
 
 			var want: float = minf(
-				K.SHARE_SHIFT_PER_MONTH * intensity,
+				K.relative_step(K.SHARE_SHIFT_PER_MONTH, float(before[company.id])) * intensity,
 				minf(available, maxf(K.SHARE_MAX - float(before[company.id]), 0.0))
 			)
 			if want <= 0.0:

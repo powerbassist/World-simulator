@@ -179,6 +179,19 @@ const SUBSIDY_BILL_MAX_PCT_GDP := 2.50
 ## t90 is 25 months: a subsidy pays off inside a term without being over in a year.
 const SHARE_SHIFT_PER_MONTH := 0.0020
 
+## SHARE_SHIFT_PER_MONTH and industry_constants.INVEST_STEP are points of the sector, set
+## for majors of 5 to 28 %. On a real 0.5 % major one step was 40 % of the firm in a month
+## (a grocer's output "fell 48 % in 6 months" and ended the decade where it began; QA on
+## #286, the parent's ruling). So a firm under this share moves in proportion to itself,
+## and one at or over it exactly as it did: the smallest major main ever held is the
+## reference, and what it swung is what any major may swing.
+const SHARE_STEP_REFERENCE := 0.05
+
+
+## A step of `points` of the sector, for a firm holding `share` of it.
+static func relative_step(points: float, share: float) -> float:
+	return points * minf(share / SHARE_STEP_REFERENCE, 1.0)
+
 ## The most of its own AUTHORED position a rival can be made to give up, ever.
 ##
 ## THE PROBE'S FIRST CORRECTION, and it moved the model rather than the number.
