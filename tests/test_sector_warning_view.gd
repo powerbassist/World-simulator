@@ -245,14 +245,41 @@ func _check_arrival() -> void:
 		_fail("arrival: the note comes again the month after")
 
 
-## A month the briefing does not show: the crossings reach the inbox.
+## The crossings are always said: a line on the card, or a note when the card ranked them
+## out or is not shown at all.
 func _check_note_wired() -> void:
-	var ns = _main._state.player()
+	var state = _main._state
+	var ns = state.player()
+	var now: int = state.year * 12 + state.month
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	var title := Strings.t("Sectors slipping").to_upper()
+	var standing := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")]
+	var open_with := func(lines: Array) -> void:
+		# A new state re-ranks and would throw these lines away (_will_show).
+		game["state_id"] = state.get_instance_id()
+		game["pending"] = {"month": now, "lines": lines, "memory": {}, "also_due": []}
+		BriefingDriver.open(_main, {})
+		BriefingDriver.close(_main)
+	open_with.call(standing + [Priorities._standing("majority", "seats")])
+	if not _shows(_main._hud.inbox, title):
+		_fail("note: a crossing the briefing ranked out does not reach the inbox")
+	for id in (_main._hud.inbox._notes as Dictionary).keys():
+		_main._hud.inbox.dismiss(id)
+	open_with.call(standing + [Priorities._cand("sector", "health|hospitals", -1, 6.0, 1.0, now, false)])
+	if _shows_live(_main._hud.inbox, title):
+		_fail("note: a crossing on the card is said again in the inbox")
 	ns.in_government = false
 	BriefingDriver.open(_main, {})
 	ns.in_government = true
-	if not _shows(_main._hud.inbox, Strings.t("Sectors slipping").to_upper()):
+	if not _shows_live(_main._hud.inbox, title):
 		_fail("note: a month with no briefing does not put the crossings in the inbox")
+
+
+func _shows_live(node: Node, text: String) -> bool:
+	for label in node.find_children("*", "Label", true, false):
+		if (label as Label).text == text and not _gone(label):
+			return true
+	return false
 
 
 func _shows(node: Node, text: String) -> bool:
