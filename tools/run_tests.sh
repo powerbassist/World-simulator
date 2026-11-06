@@ -16,6 +16,7 @@ tests=(
   tests/test_industry_closure.gd
   tests/test_region_fund.gd
   tests/test_region_priority.gd
+  tests/test_sector_warning_view.gd
   tests/test_opinion.gd
   tests/test_polling_panel.gd
   tests/test_state_copy.gd

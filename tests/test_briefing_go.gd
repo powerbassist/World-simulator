@@ -155,6 +155,11 @@ func _plan() -> Array:
 		_main._windows.open("companies")
 		_main._companies_panel._body.custom_minimum_size.y = 6000.0
 		return String(row["id"])})
+	# #288: a sector slipping: its Go opens the line, on the raise.
+	cases.append({"kind": "sector", "setup": func() -> String:
+		ns.sector_drift["base_gdp_per_head"] = float(ns.gdp_eur_bn) / float(ns.population) * 1.5
+		_main._budget_panel.mark_dirty()
+		return "health|hospitals"})
 	# A live entry: chosen now, its "Work on it" is the verb.
 	cases.append({"kind": "programme", "setup": func() -> String:
 		var offer: Array = Programme.available(state, ns, loader)
@@ -218,6 +223,8 @@ func _check(c: Dictionary) -> void:
 		if _main._companies_panel._scroll.scroll_vertical != 0:
 			_fail("plant: Go left the tab scrolled past the plant's row")
 		_main._companies_panel._body.custom_minimum_size.y = 0.0
+	if kind == "sector":
+		_main._state.player().sector_drift.erase("base_gdp_per_head")
 	if kind == "bill":
 		var page: Control = _main._windows.content("legislature")
 		if not _shows_text(page, _main._law_panel._laws.tabled_text(_main._state.player())):

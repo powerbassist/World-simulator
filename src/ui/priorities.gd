@@ -23,6 +23,7 @@ extends RefCounted
 ## (last month's lines, each trend's onset, the unrest readings): presentation memory,
 ## never GameState, so the first briefing after a load reads novelty 1 everywhere.
 
+const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const K = preload("res://src/ui/priorities_constants.gd")
 const Events = preload("res://src/sim/events.gd")
@@ -66,6 +67,7 @@ static func rank(state, loader, opts := {}) -> Dictionary:
 	_majority(ns, now, onsets, cands)
 	_commitments(ns, now, cands)
 	_requests(ns, now, cands)
+	_sectors(ns, loader, now, cands)
 	_programme(state, ns, loader, now, cands)
 	_blocs(state, ns, now, onsets, cands)
 	_budget(state, now, onsets, cands)
@@ -307,6 +309,15 @@ static func _requests(ns, now: int, cands: Array) -> void:
 			continue
 		var m := clampf(0.5 + float(ns.person_standing.get(pid, 0.0)), K.MAGNITUDE_MIN, K.MAGNITUDE_MAX)
 		cands.append(_cand("request", String(row.get("id", "")), int(row.get("deadline_month", now)), K.WEIGHT["request"], m, now))
+
+
+## A sector crossing into its bad band this month (#288's arrival), with no deadline: as
+## loud as a trend's onset, and gone next month, the tile's mark staying.
+static func _sectors(ns, loader, now: int, cands: Array) -> void:
+	for a in SectorWarnings.arrivals(ns, loader, now):
+		var c := _cand("sector", "%s|%s" % [a["line"], a["id"]], -1, K.WEIGHT["sector"], 1.0, now, false)
+		c["u"] = K.TREND_ONSET
+		cands.append(c)
 
 
 static func _programme(state, ns, loader, now: int, cands: Array) -> void:

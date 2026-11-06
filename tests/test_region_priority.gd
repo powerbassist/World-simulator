@@ -203,6 +203,12 @@ func _check_strip(region, pick: Array) -> void:
 			Num.f(float(est["unemployment_now"]), 1), Num.f(float(est["unemployment_after"]), 1)]:
 		if not text.contains(want):
 			_fail("priority strip: '%s' does not carry %s (the sim's estimate)" % [text, want])
+	# The unit says it is adjusted for need here too (#290).
+	for row in Sectors.sectors_of(_main._loader, pick[0]):
+		if String(row["id"]) == pick[1]:
+			var unit: String = Strings.t("%s, need-adjusted") % Strings.row("domains", pick[1], "quantity.unit", String(row["quantity"]["unit"]))
+			if not text.contains(unit):
+				_fail("priority strip: '%s' does not carry the unit '%s'" % [text, unit])
 	var go = _with_meta("priority_go")
 	if go == null or go.disabled:
 		_fail("priority: no live verb for a pick the sim accepts (%s)" % [_describe(go)])
