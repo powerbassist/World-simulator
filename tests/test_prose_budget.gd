@@ -84,6 +84,9 @@ const INDUSTRY_CARD_CEILING := 90
 ## The same band for a spending line's tile on the Budget (spec 3.1), opened with
 ## its share move and strip.
 const SECTOR_TILE_CEILING := 90
+## An announced closure's row on In progress, its answers and its counters (the
+## parent's ruling on #287): a decision this size must read at a glance.
+const CLOSURE_CARD_CEILING := 100
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit", "audience"]
@@ -137,6 +140,7 @@ func _initialize() -> void:
 	for fixture in ["calm", "tense", "crisis"]:
 		await _sweep_briefing(main, fixture)
 	await _sweep_industry_card(main)
+	await _sweep_closure_card(main)
 	await _sweep_sector_tile(main)
 	_report()
 	quit(1 if not _failures.is_empty() else 0)
@@ -258,6 +262,34 @@ func _sweep_sector_tile(main) -> void:
 	if total > SECTOR_TILE_CEILING:
 		_fail("sector tile: %d visible words, the ceiling is %d (A6)" % [total, SECTOR_TILE_CEILING])
 	panel._open_line = ""
+	main._windows.close_all()
+
+
+## The announced closure, as it arrives: its three answers, its chips, the first chip's
+## strip. Taken back off the register after, so no later count sees it.
+func _sweep_closure_card(main) -> void:
+	var state = main._state
+	var ns = state.player()
+	var major = preload("res://src/sim/companies.gd").majors_of(main._loader, ns.id)[0]
+	preload("res://src/sim/closures.gd")._announce(ns, major, ns.companies[major.id], 0.2, main._loader.closure_rule, state.year * 12 + state.month)
+	var panel = main._companies_panel
+	main._windows.open("companies", true)
+	panel.mark_dirty()
+	await process_frame
+	await process_frame
+	var total := 0
+	for node in _visible_text_nodes(panel._progress):
+		var words := _words(_text_of(node))
+		total += words.size()
+		if _dump.has("closure_card"):
+			print("dump closure_card %3d %s: %s" % [words.size(), node.get_class(), _text_of(node).left(90)])
+	print("prose: closure card (announced, first chip) %d words" % total)
+	if total > CLOSURE_CARD_CEILING:
+		_fail("closure card: %d visible words, the ceiling is %d" % [total, CLOSURE_CARD_CEILING])
+	if total == 0:
+		_fail("closure card: nothing on the tab; the count proves nothing")
+	(ns.companies[major.id] as Dictionary).erase("closure")
+	panel.mark_dirty()
 	main._windows.close_all()
 
 

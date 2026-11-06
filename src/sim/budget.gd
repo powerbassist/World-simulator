@@ -19,6 +19,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
+const ProcessAsks = preload("res://src/sim/process_asks.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
@@ -550,12 +551,22 @@ static func projection_done(job: ProjectionJob) -> bool:
 	return job.sim != null and job.months_left == 0 and job.units.is_empty()
 
 
+## A projection's copy: the pending committed on it, and blind to the other side's
+## answer to a counter (process_asks.gd). One function, because the forecast starts a
+## job from it too when a share move is drafted (budget_forecast.gd), and a second copy
+## of these lines is how that road once saw the answer a month early (QA on #285).
+static func projection_copy(state, pending: Dictionary):
+	var sim = state.duplicate_state()
+	commit(sim, pending)
+	ProcessAsks.blind(sim)
+	return sim
+
+
 ## The next unit: the copy (and the pending committed on it) first, then one
 ## projected month's units at a time.
 static func projection_step(job: ProjectionJob) -> void:
 	if job.sim == null:
-		job.sim = job.state.duplicate_state()
-		commit(job.sim, job.pending)
+		job.sim = projection_copy(job.state, job.pending)
 		return
 	if job.units.is_empty():
 		job.units = _projected_month(job)

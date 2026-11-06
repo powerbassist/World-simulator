@@ -21,7 +21,10 @@ const Strings = preload("res://src/ui/strings.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
-const IndustryProgress = preload("res://src/ui/industry_progress.gd")
+const ClosureCard = preload("res://src/ui/closure_card.gd")
+const Priorities = preload("res://src/ui/priorities.gd")
+const PriorityWords = preload("res://src/ui/priority_words.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const CK = preload("res://src/sim/closures_constants.gd")
 
 var _failures: Array[String] = []
@@ -31,6 +34,9 @@ var _frame := 0
 var _acted := 0
 var _major
 var _closure_id := ""
+var _third
+var _counter_id := ""
+var _option := {}
 
 
 func _init() -> void:
@@ -56,6 +62,19 @@ func _process(_delta: float) -> bool:
 			_press(_with_meta("closure_answer", "rescue"))
 		10:
 			_check_rescue()
+			_announce_third()
+		12:
+			_pick_the_last_chip()
+		14:
+			_make_the_counter()
+		16:
+			_check_countered()
+			_stage_the_buyer_back()
+		18:
+			_check_re_ask()
+			_press(_with_meta("closure_answer", "buyer"))
+		20:
+			_check_re_ask_answered()
 			_finish()
 	return false
 
@@ -93,15 +112,20 @@ func _check_card() -> void:
 	for answer in answers:
 		if String(answer["kind"]) != "rescue":
 			continue
-		var money: Array = IndustryProgress._closure_money(answer)
-		var jobs_line := IndustryProgress._closure_jobs(answer)
+		var money: Array = ClosureCard.money(answer)
+		var jobs_line := ClosureCard.jobs_text(answer)
 		var months := Strings.tn("%d month", "%d months", CK.RESCUE_MONTHS) % CK.RESCUE_MONTHS
-		if IndustryProgress._closure_label(loader, answer) != Strings.t("Rescue the plant") or float(money[1]) >= 0.0 \
+		if ClosureCard.label(answer) != Strings.t("Rescue the plant") or float(money[1]) >= 0.0 \
 				or not String(money[0]).contains(months) or not jobs_line.contains(months):
 			_fail("card: the rescue reads '%s' / %s / '%s', not a labelled cost and jobs for its %s" % [
-				IndustryProgress._closure_label(loader, answer), money, jobs_line, months])
+				ClosureCard.label(answer), money, jobs_line, months])
 	for answer in answers:
 		var id := String(answer["id"])
+		# #285's counters are one row of chips (_make_the_counter), not columns.
+		if String(answer["kind"]) == "negotiate":
+			if _with_meta("counter_id", id) == null:
+				_fail("card: no chip for the counter '%s'" % id)
+			continue
 		var button = _with_meta("closure_answer", id)
 		if button == null:
 			_fail("card: no '%s' answer on screen" % id)
@@ -129,17 +153,17 @@ func _check_card() -> void:
 func _money_of(answer: Dictionary) -> String:
 	match String(answer["kind"]):
 		"close":
-			return EffectsStrip.cost_text(0.0)
-		"buyer":
+			return Strings.t("No cost.")
+		"buyer", "negotiate":
 			# A small search in millions, never "0.0 bn" (QA's TAKE on #270): the first
 			# major's search (Verdelis, ~0.023 bn) is one of them.
 			var search := -float(answer["debt_eur_bn"])
 			var shown := (Strings.t("%s m") % Num.fs(search * 1000.0, 0)) if absf(search) < 0.1 else EffectsStrip.money_text(search)
 			if search < -0.0005 and shown.begins_with("0.0"):
 				_fail("card: the buyer's search reads as free ('%s')" % shown)
-			return Strings.t("%s now, %s more at a sale") % [shown, EffectsStrip.sum_text(-float(answer["sweetener_eur_bn"]))]
+			return Strings.t("%s now, %s at a sale") % [shown, EffectsStrip.sum_text(-float(answer["sweetener_eur_bn"]))]
 	var months := int(answer["months"])
-	return Strings.tn("%s a year for %d month", "%s a year for %d months", months) % [
+	return Strings.tn("%s a year, %d month", "%s a year, %d months", months) % [
 		EffectsStrip.sum_text(-float(answer["debt_eur_bn_per_year"])), months]
 
 
@@ -217,6 +241,212 @@ func _check_searching() -> void:
 	var months := int(open[0]["months_left"])
 	if not _text_under(_panel._progress).contains(Strings.tn("%d month left", "%d months left", months) % months):
 		_fail("searching: the row does not say the search's months left (%d)" % months)
+
+
+## #285: a third closure, on the third major, for the counter's leg.
+func _announce_third() -> void:
+	var state = _main._state
+	var ns = state.player()
+	_third = Companies.majors_of(_main._loader, ns.id)[2]
+	Closures._announce(ns, _third, ns.companies[_third.id], 0.2, _main._loader.closure_rule, state.year * 12 + state.month)
+	_panel.mark_dirty()
+
+
+## A chip other than the first, then a rebuild: the pick must survive it.
+func _pick_the_last_chip() -> void:
+	var state = _main._state
+	for a in Closures.answers(state, state.player(), _main._loader, _row_of_third()["id"]):
+		if String(a["kind"]) == "negotiate":
+			_option = a
+	var chip = _with_meta("counter_id", String(_option.get("id", "")))
+	if chip == null:
+		_fail("counter: no chip for the last counter (%s)" % [_option])
+		return
+	(chip as Button).pressed.emit()
+	_panel.mark_dirty()
+
+
+## After the rebuild: the chip still pressed, the strip reads ITS figures, the button
+## makes it.
+func _make_the_counter() -> void:
+	var option := _option
+	var chip = _with_meta("counter_id", String(option.get("id", "")))
+	if chip == null or not (chip as Button).button_pressed:
+		_fail("counter: the pick did not survive a rebuild (%s)" % [option.get("id", "")])
+	var strip = null
+	for node in _panel.find_children("*", "", true, false):
+		if node.has_meta("counter_strip") and (node as Control).is_visible_in_tree():
+			strip = node
+	if strip == null:
+		_fail("counter: no strip under the chips")
+		return
+	var text := _text_under(strip)
+	if strip.money_label.text != _money_of(option):
+		_fail("counter: the strip's money reads '%s', its figures print '%s'" % [strip.money_label.text, _money_of(option)])
+	for want in ["%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))],
+			"(%d %% of refusals)" % roundi(100.0 * float(option["walk"])), EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"]))]:
+		if not text.contains(want):
+			_fail("counter: the strip '%s' does not carry %s" % [text, want])
+	_counter_id = String(option["id"])
+	_press(_with_meta("closure_answer", "counter"))
+
+
+func _check_countered() -> void:
+	var row := _row_of_third()
+	if String(row.get("answer", "")) != _counter_id or String(row.get("status", "")) != Closures.SEARCHING:
+		_fail("counter made: the row is %s / '%s', expected searching on '%s'" % [row.get("status", ""), row.get("answer", ""), _counter_id])
+	var said := Strings.t("Answered: %s.") % (Strings.t("Counter %d %%") % int(_counter_id.trim_prefix("negotiate_")))
+	if not _text_under(_panel._progress).contains(said):
+		_fail("counter made: the searching row does not say '%s'" % said)
+
+
+## As the search's end writes it when the buyer's answer comes back (closures.gd).
+func _stage_the_buyer_back() -> void:
+	var state = _main._state
+	var row := _row_of_third()
+	var now: int = state.year * 12 + state.month
+	row["status"] = Closures.OFFERED
+	row["offered"] = now
+	row["due"] = now + 1
+	row.erase("answer")
+	_panel.mark_dirty()
+
+
+## Ruling (b): one month's re-ask at the old sweetener; the default is the SALE.
+func _check_re_ask() -> void:
+	var state = _main._state
+	var row := _row_of_third()
+	var text := _text_under(_panel._progress)
+	var old: String = EffectsStrip.sum_text(-float(row["back_sweetener_eur_bn"]))
+	if not text.contains(Strings.t("Unanswered, the plant is sold at the old price.")) or text.contains(Strings.t("Unanswered, the plant closes.")):
+		_fail("re-ask: the default line is not the sale ('%s')" % text)
+	var sell = _with_meta("closure_answer", "buyer")
+	if sell == null or (sell as Button).text != Strings.t("Sell at the old price") or not (sell.get_meta("money_label") as Label).text.contains(old):
+		_fail("re-ask: no 'Sell at the old price' reading %s (%s)" % [old, sell.text if sell != null else "<none>"])
+	if _with_meta("closure_answer", "close") == null:
+		_fail("re-ask: no 'Let it close'")
+	if _with_meta("counter_id", _counter_id) != null:
+		_fail("re-ask: the chips are offered again")
+	if not Pending.window_ids(state, _main._loader).has("companies"):
+		_fail("re-ask: the Industry tab is not marked as waiting")
+	var head = _with_meta("sector", String(_third.sector))
+	if head == null or not _text_under(head.get_parent()).contains(_panel.tr("Decision due")):
+		_fail("re-ask: the %s card does not say a decision is due" % _third.sector)
+	if not text.contains(String(_third.company_name)):
+		_fail("re-ask: the row does not name %s" % _third.company_name)
+	_check_re_ask_ranks(true)
+
+
+## Answered once: the row says so, and nothing waits any more.
+func _check_re_ask_answered() -> void:
+	var ns = _main._state.player()
+	var text := _text_under(_panel._progress)
+	if not text.contains(Strings.t("Answered: %s.") % Strings.t("Sell at the old price")):
+		_fail("re-ask answered: the row does not say so ('%s')" % text)
+	if text.contains(Strings.t("Unanswered, the plant is sold at the old price.")):
+		_fail("re-ask answered: the default line still stands")
+	if _with_meta("closure_answer", "buyer") != null:
+		_fail("re-ask answered: the answers still stand")
+	if Pending._closure_waiting(ns):
+		_fail("re-ask answered: the closure still waits on the player")
+	_check_re_ask_ranks(false)
+	_check_results()
+	_check_unknown_kind()
+
+
+## The parent's ruling on #287: a countered closure's result is one toned line for one
+## month, the words whole, staged as the machine writes each ending (closures.gd).
+func _check_results() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var row := _row_of_third()
+	var now: int = state.year * 12 + state.month
+	var firm: String = _main._loader.firm_name(ns.id, String(row["company_id"]))
+	var city = Region.find_city(_main._loader.regions.get(ns.id, []), String(row["city_id"]))
+	var place: String = String(city.city_name) if city != null else firm
+	var jobs: String = CompanyVerb.thousands(float(row["jobs"]))
+	var cut: String = EffectsStrip.sum_text(-float(row["sweetener_eur_bn"]))
+	var old: String = EffectsStrip.sum_text(-float(row["back_sweetener_eur_bn"]))
+	var drawn := func(outcome: String) -> Dictionary: return {"answer": _counter_id, "outcome": outcome, "month": now}
+	var earlier := {"answer": _counter_id, "outcome": "back", "month": now - 1}
+	for c in [
+			["accepted", "sold", drawn.call("accepted"), Strings.t("%s's plant in %s is sold at your counter, %s: %s jobs kept.") % [firm, place, cut, jobs], ResultTone.GOOD],
+			["sold", "sold", earlier, Strings.t("%s's plant in %s is sold at the old price, %s: %s jobs kept.") % [firm, place, old, jobs], ResultTone.GOOD],
+			["walked", "closed", drawn.call("walked"), Strings.t("The buyer walked away from %s's plant in %s, and it closed: %s jobs lost.") % [firm, place, jobs], ResultTone.BAD],
+			["no_buyer", "closed", {}, Strings.t("No buyer came for %s's plant in %s, and it closed: %s jobs lost.") % [firm, place, jobs], ResultTone.BAD],
+			["closed", "closed", earlier, Strings.t("%s's plant in %s closed, as you chose: %s jobs lost.") % [firm, place, jobs], ""],
+			["void", "void", earlier, Strings.t("%s failed before a buyer came for its plant in %s.") % [firm, place], ""]]:
+		row["status"] = c[1]
+		row["ended"] = now
+		row["negotiation"] = c[2]
+		if (c[2] as Dictionary).is_empty():
+			row.erase("negotiation")
+		_panel._refresh()
+		var lines := _result_lines()
+		if lines.size() != 1 or String(lines[0].get_meta("closure_result")) != c[0]:
+			_fail("result: '%s' should be said once, found %d" % [c[0], lines.size()])
+			continue
+		if (lines[0] as Label).text != c[3]:
+			_fail("result: '%s' reads '%s', not '%s'" % [c[0], lines[0].text, c[3]])
+		var colour: Variant = lines[0].get_theme_color("font_color") if lines[0].has_theme_color_override("font_color") else null
+		if colour != ResultTone.TINT.get(c[4]):
+			_fail("result: '%s' wears %s, its tone is '%s'" % [c[0], colour, c[4]])
+	# The month after, it is gone.
+	row["status"] = "closed"
+	row["ended"] = now - 1
+	row["negotiation"] = {"answer": _counter_id, "outcome": "walked", "month": now - 1}
+	_panel._refresh()
+	if not _result_lines().is_empty():
+		_fail("result: still said the month after")
+	# A counter that came back is the re-ask's own row, not a result.
+	row["status"] = Closures.OFFERED
+	row["ended"] = -1
+	row["negotiation"] = {"answer": _counter_id, "outcome": "back", "month": now}
+	row["due"] = now + 1
+	_panel._refresh()
+	if not _result_lines().is_empty():
+		_fail("result: a re-ask is said as a result too")
+
+
+func _result_lines() -> Array:
+	var out := []
+	for node in _panel.find_children("*", "Label", true, false):
+		var gone := false
+		var up: Node = node
+		while up != null and not gone:
+			gone = up.is_queued_for_deletion()
+			up = up.get_parent()
+		if node.has_meta("closure_result") and not gone:
+			out.append(node)
+	return out
+
+
+## The parent's ruling on #287: a pending re-ask is one of the briefing's three, its
+## title names the plant's firm; answered, it is not.
+func _check_re_ask_ranks(pending: bool) -> void:
+	var state = _main._state
+	var found := {}
+	for line in Priorities.rank(state, _main._loader, {"held_events": [], "programme_held": false})["lines"]:
+		if String(line["kind"]) == "plant" and String(line["subject"]) == String(_row_of_third()["id"]):
+			found = line
+	if found.is_empty() == pending:
+		_fail("briefing: a %s re-ask %s the three priorities" % ["pending" if pending else "answered", "is not among" if pending else "is still among"])
+	elif pending and not PriorityWords.title(found, state, _main._loader).contains(String(_third.company_name)):
+		_fail("briefing: the re-ask's line does not name %s" % _third.company_name)
+
+
+## The parent's ruling on #287: a kind the card does not know is no other answer's
+## words and no crash. The error line is the loud half, declared here for the runner.
+## expects-error: closure_card: an answer of unknown kind
+func _check_unknown_kind() -> void:
+	var odd := {"id": "odd_answer", "kind": "odd", "jobs_lost": 1.0, "months": 1}
+	if ClosureCard.label(odd) != "odd_answer" or ClosureCard.jobs_text(odd) != "" or String(ClosureCard.money(odd)[0]) != "":
+		_fail("unknown kind: the card reads '%s' / '%s' / %s" % [ClosureCard.label(odd), ClosureCard.jobs_text(odd), ClosureCard.money(odd)])
+
+
+func _row_of_third() -> Dictionary:
+	# The register's own row: Closures.open() hands out copies, and a stage must write.
+	return _main._state.player().companies[_third.id].get("closure", {})
 
 
 # -- helpers --

@@ -87,9 +87,11 @@ extends SceneTree
 ##   closure    a plant closure announced (src/sim/closures.gd; the month it is
 ##              announced, and its deadline month); answers = Closures.answers():
 ##              let it close (the rule's bloc offsets), seek a buyer (none), and
-##              rescue the plant for its term (none) (V5.3 a); the active regime
-##              answers by _closure_pick (the cheapest cost per job kept under a
-##              ceiling, else close);
+##              rescue the plant for its term (none) (V5.3 a), and the buyer's three
+##              counters (Negotiate PR 2: a buyer search too); a buyer that came back
+##              (offered) is asked again the month it returns; the active regime
+##              answers an announcement by _closure_pick (the cheapest cost per job
+##              kept under a ceiling, else close; a counter is never its pick);
 ##   process    a process's ask (src/sim/process_asks.gd), the month it is posted;
 ##              answers = each answer's debt booked once and bloc offsets (V5.3 a);
 ##   programme  the term-start offer (Programme.available non-empty after a month
@@ -942,23 +944,27 @@ func _firm_candidates(state, ns, now: int, out: Array) -> void:
 
 
 ## A plant closure, the month it is announced and in its last month to answer:
-## each answer as its bloc offsets (the jobs a cut loses under `other`).
+## each answer as its bloc offsets (the jobs a cut loses under `other`). A buyer that
+## came back at the old sweetener (Negotiate PR 2, the parent's ruling (b): status
+## offered) is asked again, a new state of the same subject, the month it returns.
 func _closure_candidates(state, ns, now: int, out: Array) -> void:
 	for row in Closures.open(ns):
-		if String(row["status"]) != Closures.ANNOUNCED:
+		var offered := String(row["status"]) == Closures.OFFERED
+		if String(row["status"]) != Closures.ANNOUNCED and not offered:
 			continue
-		var is_new := int(row["announced"]) == now
+		var is_new := int(row["offered"] if offered else row["announced"]) == now
 		if not is_new and int(row["due"]) - now != 1:
 			continue
 		var answers: Array = []
 		for a in Closures.answers(state, ns, _loader, String(row["id"])):
 			var strip := _effects_strip(state, {"bloc_offset": a["bloc_offset"]})
 			strip["other"]["jobs"] = -float(a["jobs_lost"])
-			# A buyer search is a process stage (density_count's `stage` axis).
-			if String(a["kind"]) == "buyer":
+			# A buyer search, plain or countered, is a process stage (density_count's
+			# `stage` axis); a buyer that came back sells, it searches nothing.
+			if ["buyer", "negotiate"].has(String(a["kind"])) and not offered:
 				strip["stage"] = "buyer search"
 			answers.append(strip)
-		out.append({"source": "closure", "subject": "closure|%s" % String(row["id"]), "state": "",
+		out.append({"source": "closure", "subject": "closure|%s" % String(row["id"]), "state": "offered" if offered else "",
 			"domain": "industrial", "due": "arrival" if is_new else "deadline", "answers": answers})
 
 

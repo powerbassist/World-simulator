@@ -29,8 +29,23 @@ const Closures = preload("res://src/sim/closures.gd")
 const Region = preload("res://src/core/region.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
-## One answer's column on a closure card, in px: three fit a docked window.
-const ANSWER_WIDTH := 300
+const ProcessAsks = preload("res://src/sim/process_asks.gd")
+const CounterChips = preload("res://src/ui/counter_chips.gd")
+const ClosureCard = preload("res://src/ui/closure_card.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+## A closed process's words and tone (closed_last_month's outcomes, the walk apart).
+const ENDED := {
+	"landed": "done",  # i18n: msgid
+	"accepted": "your counter was accepted, done",  # i18n: msgid
+	"stopped": "stopped",  # i18n: msgid
+	"refused": "refused",  # i18n: msgid
+	"cleared": "cleared",  # i18n: msgid
+	"settled": "settled",  # i18n: msgid
+	"void": "called off",  # i18n: msgid
+}
+const ENDED_TONE := {"walked": ResultTone.BAD, "landed": ResultTone.GOOD, "accepted": ResultTone.GOOD}
+
 
 ## A process's stage, and what its end brings, as a player reads them.
 const STAGE := {
@@ -75,14 +90,24 @@ static func build(parent: Control, state, loader, ns, stop: Callable, answer: Ca
 	var rows := Processes.rows(ns)
 	var closures := Closures.open(ns)
 	var rescues := Closures.rescues(ns)
-	if rows.is_empty() and closures.is_empty() and rescues.is_empty():
+	# An open row says its own counter's outcome (_outcome): the closed lines are the rest.
+	var ended: Array = ProcessAsks.closed_last_month(state, ns).filter(func(line: Dictionary) -> bool:
+		return not rows.any(func(r: Dictionary) -> bool: return String(r["id"]) == String(line["id"])))
+	# A counter that came back is the re-ask's own row (ClosureCard.build): not a result.
+	var results: Array = Closures.closed_last_month(state, ns).filter(func(line: Dictionary) -> bool:
+		return String(line["outcome"]) != "back")
+	if rows.is_empty() and closures.is_empty() and rescues.is_empty() and ended.is_empty() and results.is_empty():
 		return null
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	parent.add_child(box)
 	PanelKit.heading(box, Strings.t("In progress"))
+	for line in ended:
+		_ended(box, loader, ns, line)
+	for line in results:
+		ClosureCard.result(box, loader, ns, line)
 	for row in closures:
-		_closure(box, state, loader, ns, row, closure)
+		ClosureCard.build(box, state, loader, ns, row, closure)
 	for row in rescues:
 		_rescue(box, loader, ns, row)
 	for row in rows:
@@ -95,8 +120,9 @@ static func build(parent: Control, state, loader, ns, stop: Callable, answer: Ca
 			PanelKit.Tone.PLAIN)
 		var what := "%s, %s" % [verb, firm]
 		var ask: Dictionary = row.get("ask", {})
+		_outcome(box, row)
 		if row.has("answer"):
-			PanelKit.plain_line(box, Strings.t("Answered: %s.") % Strings.t(String(ANSWER.get(String(row["answer"]), ""))))
+			PanelKit.plain_line(box, Strings.t("Answered: %s.") % _label(String(row["answer"])))
 		elif not ask.is_empty():
 			_ask(box, String(row["id"]), ask, what, answer)
 			continue
@@ -131,11 +157,15 @@ static func build(parent: Control, state, loader, ns, stop: Callable, answer: Ca
 static func _ask(box: Control, process_id: String, ask: Dictionary, what: String, answer: Callable) -> void:
 	var question := PanelKit.plain_line(box, Strings.t(String(QUESTION.get(String(ask["kind"]), ""))), PanelKit.Tone.PLAIN)
 	question.theme_type_variation = UiTheme.WARN_TEXT
+	var counters: Array = []
 	for option in ask["answers"]:
 		var id := String(option["id"])
+		if option.has("counter"):
+			counters.append(option)
+			continue
 		var flow := PanelKit.buttons(box)
 		var button := PanelKit.sized(Button.new())
-		button.text = Strings.t(String(ANSWER.get(id, id)))
+		button.text = _label(id)
 		button.set_meta("answer_id", id)
 		button.set_meta("process_id", process_id)
 		button.pressed.connect(func() -> void: answer.call(process_id, id, what))
@@ -148,46 +178,53 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 		var who := EffectsStrip.who_text(option["bloc_offset"])
 		if who != "":
 			PanelKit.plain_line(flow, who).autowrap_mode = TextServer.AUTOWRAP_OFF
-	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % Strings.t(String(ANSWER.get(String(ask["default"]), ""))))
+	if not counters.is_empty():
+		CounterChips.build(box, process_id, counters, _process_strip, func(id: String) -> void: answer.call(process_id, id, what), "answer_id")
+	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % _label(String(ask["default"])))
 
 
-## A closure: announced, its card and answers; searching, its months left.
-static func _closure(box: Control, state, loader, ns, row: Dictionary, closure: Callable) -> void:
-	var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
-	var city = Region.find_city(loader.regions.get(ns.id, []), String(row["city_id"]))
-	var place: String = String(city.city_name) if city != null else firm
-	if String(row["status"]) == Closures.SEARCHING:
-		var left := int(row["months_left"])
-		var sought := Strings.tn("A buyer is sought for %s's plant in %s: %d month left.", "A buyer is sought for %s's plant in %s: %d months left.", left)
-		PanelKit.plain_line(box, sought % [firm, place, left], PanelKit.Tone.PLAIN)
-		return
-	var due := maxi(int(row["due"]) - (int(state.year) * 12 + int(state.month)), 0)
-	var jobs := CompanyVerb.thousands(float(row["jobs"]))
-	var closing := Strings.tn("%s will close its plant in %s: %s jobs, in %d month.", "%s will close its plant in %s: %s jobs, in %d months.", due) % [firm, place, jobs, due]
-	if due == 0:
-		# Drawn in its due month, before the tick lands it (a load, a redraw).
-		closing = Strings.t("%s will close its plant in %s: %s jobs, this month.") % [firm, place, jobs]
-	var head := PanelKit.plain_line(box, closing, PanelKit.Tone.PLAIN)
-	head.theme_type_variation = UiTheme.WARN_TEXT
-	var flow := PanelKit.buttons(box)
-	var what := "%s, %s" % [firm, place]
-	for option in Closures.answers(state, ns, loader, String(row["id"])):
-		var id := String(option["id"])
-		var column := VBoxContainer.new()
-		column.custom_minimum_size.x = ANSWER_WIDTH
-		flow.add_child(column)
-		var strip := EffectsStrip.new()
-		column.add_child(strip)
-		var money: Array = _closure_money(option)
-		strip.show_lines(Strings.t("Treasury"), String(money[0]), float(money[1]),
-			EffectsStrip.who_text(option["bloc_offset"]), _closure_jobs(option))
-		var button := PanelKit.sized(Button.new())
-		button.text = _closure_label(loader, option)
-		button.set_meta("closure_answer", id)
-		button.set_meta("money_label", strip.money_label)
-		button.pressed.connect(func() -> void: closure.call(String(row["id"]), id, what))
-		column.add_child(button)
-	PanelKit.plain_line(box, Strings.t("Unanswered, the plant closes."))
+## A process's counter on the strip: the countered price, the range, the walk-away risk.
+static func _process_strip(strip, option: Dictionary) -> void:
+	strip.show_lines(Strings.t("Treasury"), EffectsStrip.cost_text(-float(option["debt_eur_bn"])), -float(option["debt_eur_bn"]),
+		EffectsStrip.who_text(option["bloc_offset"]),
+		Strings.t("A %d to %d %% chance they accept. Refused, the old price stands, or they walk away: %d %% of refusals.") % [
+			roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"])), roundi(100.0 * float(option["walk"]))])
+
+
+## A process the month end just closed, for that one month (the parent's ruling on
+## #281): walked is BAD and names the hold's last month, done is GOOD, the rest plain.
+static func _ended(box: Control, loader, ns, line: Dictionary) -> void:
+	var outcome := String(line["outcome"])
+	var what := "%s, %s" % [Strings.row_name("company-actions", _action(loader, String(line["action_id"]))),
+		loader.firm_name(ns.id, String(line["company_id"]))]
+	var text := Strings.t("%s: %s.") % [what, Strings.t(String(ENDED.get(outcome, outcome)))]  # i18n: row-ok the table's words
+	if outcome == "walked":
+		var last := int(line["hold_ends"]) - 1
+		var until := DateText.month_year((last - 1) % 12 + 1, floori((last - 1) / 12.0))
+		text = (Strings.t("%s: the buyers walked away, no bids until %s.") if String(line["side"]) == "buyers"
+			else Strings.t("%s: the seller walked away, no talks until %s.")) % [what, until]
+	var label := PanelKit.plain_line(box, text, PanelKit.Tone.PLAIN)
+	label.set_meta("closed_outcome", outcome)
+	if ENDED_TONE.has(outcome):
+		ResultTone.tint(label, String(ENDED_TONE[outcome]))
+
+
+## An answer's words: the table's, or a counter's ("Counter 10 %", #280's negotiate_N).
+static func _label(id: String) -> String:
+	if id.begins_with("negotiate_"):
+		return CounterChips.label(id)
+	return Strings.t(String(ANSWER.get(id, id)))
+
+
+## A counter's outcome, once drawn (#280): accepted, or refused with the old price
+## asked again. A walk-out closes the process, so its row is gone.
+static func _outcome(box: Control, row: Dictionary) -> void:
+	var talk: Dictionary = row.get("negotiation", {})
+	match String(talk.get("outcome", "")):
+		"accepted":
+			PanelKit.plain_line(box, Strings.t("Your counter was accepted.")).set_meta("negotiation", "accepted")
+		"back":
+			PanelKit.plain_line(box, Strings.t("Your counter was refused: the old price is asked again.")).set_meta("negotiation", "back")
 
 
 ## A plant rescue running (#277, the parent's call: a running rescue must be seen):
@@ -201,53 +238,6 @@ static func _rescue(box: Control, loader, ns, row: Dictionary) -> void:
 	var line := PanelKit.plain_line(box, rescued % [firm, place, CompanyVerb.thousands(float(row["jobs"])),
 		EffectsStrip.sum_text(-float(row["rescue_eur_bn_per_year"])), left], PanelKit.Tone.PLAIN)
 	line.set_meta("rescue", String(row["company_id"]))
-
-
-## [text, gain]: a close books nothing; a buyer search its losses now and the
-## sweetener at a sale; a rescue the plant's price a year for its term (in millions
-## when small, never "0.0 bn"), its tone on the whole term.
-static func _closure_money(option: Dictionary) -> Array:
-	match String(option["kind"]):
-		"close":
-			return [EffectsStrip.cost_text(0.0), 0.0]
-		"buyer":
-			var now_bn := -float(option["debt_eur_bn"])
-			var sale_bn := -float(option["sweetener_eur_bn"])
-			# The tone reads both sums: a search that costs little now still books
-			# its sweetener at a sale (pass 1: a cost read as neutral).
-			return [Strings.t("%s now, %s more at a sale") % [EffectsStrip.sum_text(now_bn),
-				EffectsStrip.sum_text(sale_bn)], now_bn + sale_bn]
-	var year := -float(option["debt_eur_bn_per_year"])
-	var months := int(option["months"])
-	return [Strings.tn("%s a year for %d month", "%s a year for %d months", months) % [EffectsStrip.sum_text(year), months],
-		-float(option["total_eur_bn"])]
-
-
-## The jobs, said for each answer: a buyer is a chance, not the default's loss
-## (QA's note on #251: its jobs_lost carries the full cut either way).
-static func _closure_jobs(option: Dictionary) -> String:
-	var jobs := CompanyVerb.thousands(float(option["jobs_lost"]))
-	match String(option["kind"]):
-		"close":
-			return Strings.t("%s jobs lost.") % jobs
-		"buyer":
-			var months := int(option["months"])
-			var odds := Strings.tn("A %d %% chance a buyer keeps the %s jobs, in %d month; else they are lost.", "A %d %% chance a buyer keeps the %s jobs, in %d months; else they are lost.", months)
-			return odds % [roundi(100.0 * float(option["chance"])), jobs, months]
-	var term := int(option["months"])
-	return Strings.tn("The jobs are kept for %d month, then the plant is reviewed.", "The jobs are kept for %d months, then the plant is reviewed.", term) % term
-
-
-static func _closure_label(loader, option: Dictionary) -> String:
-	match String(option["kind"]):
-		"close":
-			return Strings.t("Let it close")
-		"buyer":
-			return Strings.t("Find a buyer")
-		"rescue":
-			return Strings.t("Rescue the plant")
-	var action = _action(loader, String(option["id"]))
-	return Strings.row_name("company-actions", action) if action != null else String(option["id"])
 
 
 static func _action(loader, id: String):
