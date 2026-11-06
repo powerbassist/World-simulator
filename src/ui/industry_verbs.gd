@@ -118,7 +118,7 @@ static func when_text(action, est: Dictionary) -> String:
 		if float(est.get("share_bought", 1.0)) < 1.0:
 			out.append(Strings.t("Buys the remaining %d %%.") % roundi(100.0 * float(est["share_bought"])))
 		if est.has("odds_lo"):
-			out.append(Strings.t("A %d to %d %% chance the authority orders it.") % [
+			out.append(Strings.t("%d to %d %% odds it is ordered.") % [
 				roundi(100.0 * float(est["odds_lo"])), roundi(100.0 * float(est["odds_hi"]))])
 	else:
 		out.append(Strings.t("Takes effect at once."))

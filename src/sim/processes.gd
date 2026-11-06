@@ -129,7 +129,7 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 			return {"base_eur_bn": base, "price_lo": -base, "price_hi": -base * (1.0 - K.PROCESS_PRIVATISE_DISCOUNT.y),
 				"months_lo": K.PROCESS_SALE_MONTHS, "months_hi": K.PROCESS_SALE_MONTHS + K.PROCESS_HOLD_MONTHS}
 		"break_up":
-			var odds := odds_for(Companies.share_of_company(ns, company))
+			var odds := odds_for(Companies.major_share(ns, loader, company))
 			# The truth's fog, as the prices are (parent pass 2 on #244): a fixed-width
 			# window with the truth seeded inside it, so its midpoint does not give it away.
 			var u := Cycle.unit("process|odds|%s" % company_id, _now(state))
@@ -141,8 +141,9 @@ static func estimate(state, ns, loader, action, company_id: String) -> Dictionar
 	return {}
 
 
-## The authority's odds of ordering the break-up, rising with the firm's share
-## between the spec's two points (about 50 % at a 10 % share, 85 % at 30 %).
+## The authority's odds of ordering the break-up, rising with the firm's weight
+## among its sector's majors (Companies.major_share) between PROCESS_ODDS_SHARE's
+## two points: 50 % at 30 %, 85 % at 70 % (stand-ins, companies_constants.gd).
 static func odds_for(share: float) -> float:
 	var t := clampf((share - K.PROCESS_ODDS_SHARE.x) / (K.PROCESS_ODDS_SHARE.y - K.PROCESS_ODDS_SHARE.x), 0.0, 1.0)
 	return lerpf(K.PROCESS_ODDS.x, K.PROCESS_ODDS.y, t)
