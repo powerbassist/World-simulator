@@ -53,8 +53,10 @@ extends RefCounted
 ## save), so the channel and the tile never disagree.
 ##
 ## quantity() and the factor call pow(): MAIN-THREAD only (src/core/parallel.gd's
-## rule: no pow()/exp() on a worker). No tick step computes either; a channel reads
-## the stored float, a panel or a probe reads quantity().
+## rule: no pow()/exp() on a worker). A channel reads the stored float, a panel or a
+## probe reads quantity(), and the one tick step that computes it is SectorWarnings' in
+## WorldMonth's Sectors step, a whole step on the calling thread: it must stay out of
+## any fan-out.
 ##
 ## THE REGISTER IS THE PLAYER'S MOVES ONLY: `ns.sector_shares` holds a line only
 ## once the player has moved one of its shares, never a copy of the start (a copy
@@ -115,17 +117,19 @@ static func shortfall(ns, loader, line: String, sector_id: String) -> float:
 
 
 ## The sector's money against its need, now over the start: 1.0 at a new game, and
-## exactly so. The player's two levers (the line, the share) times drift_ratio().
+## exactly so. The line's own lever times held_ratio().
 static func ratio(ns, loader, line: String, sector_id: String) -> float:
+	var line_then := float(ns.start_spending_pct_gdp.get(line, 0.0))
+	if line_then <= 0.0:
+		return 1.0
+	return float(ns.spending_pct_gdp.get(line, 0.0)) / line_then * held_ratio(ns, loader, line, sector_id)
+
+
+## ratio() with the line at its start level: the share's lever times drift_ratio().
+static func held_ratio(ns, loader, line: String, sector_id: String) -> float:
 	for s in sectors_of(loader, line):
-		if String(s["id"]) != sector_id:
-			continue
-		var start: Dictionary = _start(ns, s)
-		var line_then := float(ns.start_spending_pct_gdp.get(line, 0.0))
-		if line_then <= 0.0 or float(start["share"]) <= 0.0:
-			return 1.0
-		return (float(ns.spending_pct_gdp.get(line, 0.0)) / line_then) \
-			* (float(shares(ns, loader, line)[sector_id]) / float(start["share"])) * drift_ratio(ns, s)
+		if String(s["id"]) == sector_id:
+			return float(shares(ns, loader, line)[sector_id]) / float(_start(ns, s)["share"]) * drift_ratio(ns, s)
 	return 1.0
 
 

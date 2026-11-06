@@ -92,8 +92,8 @@ static func trend(ns, sector_id: String) -> Array:
 ## The points of GDP to add to the line so the figure reads its start again, 0 for a
 ## figure at or above it. The share is held, so the line's other sectors gain too.
 static func restore_pct_gdp(ns, loader, line: String, sector_id: String) -> float:
-	var r := maxf(Sectors.ratio(ns, loader, line, sector_id), DK.RATIO_FLOOR)
-	return maxf(float(ns.spending_pct_gdp.get(line, 0.0)) * (1.0 / r - 1.0), 0.0)
+	var target := float(ns.start_spending_pct_gdp.get(line, 0.0)) / Sectors.held_ratio(ns, loader, line, sector_id)
+	return maxf(target - float(ns.spending_pct_gdp.get(line, 0.0)), 0.0)
 
 
 static func _sample(history: Dictionary, sector_id: String, figure: float) -> void:

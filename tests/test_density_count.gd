@@ -196,7 +196,7 @@ func _check_summary_and_band() -> void:
 
 func _check_the_probe_counts_through_the_rule() -> void:
 	var text := FileAccess.get_file_as_string("res://tools/decision_surfaces_probe.gd")
-	for needle in ["--density", "DensityCount.month(", "DensityCount.summary(", "WorldMonth.tick_month("]:
+	for needle in ["--density", "DensityCount.month(", "DensityCount.summary(", "WorldMonth.tick_month(", "_sector_candidates(state, ns, now, candidates)"]:
 		if not text.contains(needle):
 			_failures.append("decision_surfaces_probe.gd does not contain %s" % needle)
 

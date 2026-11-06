@@ -274,6 +274,14 @@ func _test_the_restore_figure_brings_it_back_to_the_start() -> void:
 	_near(Sectors.quantity(ns, _loader, "health", "hospitals"), 5.34, "the restored line")
 	if SectorWarnings.restore_pct_gdp(ns, _loader, "health", "hospitals") > 1e-9:
 		_fail("a restored sector still asks for money")
+	# A line cut to nothing is the worst case, not a free one (pass 1): the start's own
+	# level, here with no drift yet, brings the figure back.
+	var cut = _state().player()
+	cut.spending_pct_gdp["health"] = 0.0
+	var whole := SectorWarnings.restore_pct_gdp(cut, _loader, "health", "hospitals")
+	_near(whole, float(cut.start_spending_pct_gdp["health"]), "the restore of a zeroed line")
+	cut.spending_pct_gdp["health"] = whole
+	_near(Sectors.quantity(cut, _loader, "health", "hospitals"), 5.34, "the zeroed line restored")
 
 
 func _test_the_registers_survive_a_save() -> void:
