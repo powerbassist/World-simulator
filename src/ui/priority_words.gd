@@ -39,7 +39,6 @@ static func group(items: Array, state, loader) -> String:
 		"commitment": return Strings.tn("%d promise", "%d promises", n) % n
 		"bill": return Strings.tn("%d bill", "%d bills", n) % n
 		"programme": return Strings.tn("%d programme goal", "%d programme goals", n) % n
-		"sector": return Strings.tn("%d sector slipping", "%d sectors slipping", n) % n
 	return Strings.tn("%d vote", "%d votes", n) % n
 
 

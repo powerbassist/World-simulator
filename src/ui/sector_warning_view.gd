@@ -4,11 +4,12 @@ extends RefCounted
 ## (src/sim/sector_warnings.gd). A figure drifts on its own, so a held line slips into its
 ## bad band: the tile marks the sector and says why, and offers the answer that exists.
 ##
-## THE ANSWER IS THE LINE ITSELF. Systems measured that most warnings have no donor, no
-## sector of the line that can pay, so a move would only ever be greyed there. So the tile
-## shows one raise for the line, priced by the Budget's own books, and shows the move only
-## while a sector can pay for it. A raise holds the shares, so it lifts every sector of the
-## line: one verb, the largest restore of those warned, not one per sector.
+## TWO ANSWERS, SIDE BY SIDE (the parent's ruling on #290). Systems measured that a warned
+## sector rarely has an un-warned one to pay it, so the tile offers one raise for the line,
+## priced by the Budget's own books, beside the move. The move stays whenever the sim
+## accepts it, a warned sector paying included: that is the tradeoff, and its strip shows
+## it. A raise holds the shares, so it lifts every sector of the line: one verb, the largest
+## restore of those warned, not one per sector.
 ##
 ## ARRIVALS SPEND NO STOP (decision-surfaces.md, 4 + 6 a year): a crossing is a line on the
 ## monthly briefing, which holds the clock anyway (Priorities._sectors), or a note on a
@@ -25,7 +26,8 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
-## The move's step, as the tile's own: the smallest share a sector could pay.
+## The share a move takes, in points of the line: the tile's smallest, and what "can pay"
+## tries.
 const STEP := 0.01
 
 
@@ -70,13 +72,15 @@ static func _raise(panel, tile: Control, ns, dns, line: String, why_of: Dictiona
 		PanelKit.plain_line(tile, Strings.t("This line can rise no further in this Commit."))
 		return
 	# What this raise adds on top of the draft: the words count from the drafted line.
-	var gain := _books(panel, ns, line, target, now) - _books(panel, ns, line, drafted, now)
+	# The drafted line's figure is priced already, just before this draw (0 at its live
+	# value): pricing it again was one more preview on each frame of a drag (QA on #290).
+	var gain := _books(panel, ns, line, target, now) - float(panel._effects.get(line, 0.0))
 	var strip := EffectsStrip.new()
 	strip.set_meta("raise_strip", true)
 	tile.add_child(strip)
 	strip.show_lines("", Strings.t("%s a year") % EffectsStrip.money_text(gain), gain, "",
-		(Strings.t("The line up %s points of GDP restores the figures; its other sectors gain too.") if target >= drafted + need
-			else Strings.t("The line up %s points of GDP, part of the way; the rest takes a second Commit.")) % Num.f(target - drafted, 1))
+		(Strings.t("Up %s points of GDP restores the figures; its other sectors gain too.") if target >= drafted + need
+			else Strings.t("Up %s points of GDP, part of the way; the rest takes a second Commit.")) % Num.f(target - drafted, 1))
 	var go := PanelKit.sized(Button.new())
 	go.text = Strings.t("Draft the raise")
 	go.set_meta("raise_line", line)
@@ -97,7 +101,20 @@ static func _books(panel, ns, line: String, value: float, now: Dictionary) -> fl
 	return float(EffectsStrip.per_key(panel._fx_cache, panel._state, now, {key: alone}, panel._pending, {})[key])
 
 
-## The first sector that can pay `to_id` a share and is not itself warned, "" for none.
+## Whether the sim would let any sector of the line pay another: the move's floor, asked
+## of the sim, so "cannot pay" is said only where it refuses.
+static func can_pay(ns, loader, line: String, sectors: Array) -> bool:
+	for s in sectors:
+		for other in sectors:
+			if String(s["id"]) != String(other["id"]):
+				if bool(Sectors.move_share(ns.duplicate_state(), loader, line, String(s["id"]), String(other["id"]), STEP).get("ok", false)):
+					return true
+				break
+	return false
+
+
+## The first sector that can pay `to_id` a share and is not itself warned, "" for none:
+## what a Go aims the move from, not what decides whether the move is offered.
 static func donor(ns, loader, line: String, sectors: Array, why_of: Dictionary, to_id: String) -> String:
 	for s in sectors:
 		var id := String(s["id"])
@@ -117,6 +134,13 @@ static func aim(panel, subject: String) -> void:
 		panel._move_from = from
 		panel._move_to = id
 	panel._dirty = true
+
+
+## A warned line's tile opened by its toggle: aimed at its first warned sector.
+static func aim_first(panel, line: String) -> void:
+	var why_of := warned(panel._state.player(), panel._loader, line)
+	if not why_of.is_empty():
+		aim(panel, subject_of(line, String(why_of.keys()[0])))
 
 
 ## A month the briefing does not show: the crossings, folded into one note.

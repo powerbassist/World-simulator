@@ -38,7 +38,7 @@ const Num = preload("res://src/ui/num.gd")
 ## A sector's bar, in px: the tile's widest share reads at a glance beside it.
 const BAR_WIDTH := 100
 ## The share a move takes, in points of the line: one to ten.
-const STEP := 0.01
+const STEP := SectorWarningView.STEP
 ## A sector's trend beside its figure, in px.
 const SPARK_SIZE := Vector2(72, 18)
 const MOST := 0.10
@@ -67,6 +67,10 @@ static func line_toggle(panel, key: String, text: String) -> Button:
 	toggle.set_meta("line_name", text)
 	toggle.pressed.connect(func() -> void:
 		panel._open_line = "" if panel._open_line == key else key
+		# Opened on a warned line, the move's default aims as a briefing's Go does: from a
+		# sector that can pay into the one slipping, not from the first row (QA on #290).
+		if panel._open_line == key:
+			SectorWarningView.aim_first(panel, key)
 		panel._dirty = true)
 	return toggle
 
@@ -109,12 +113,12 @@ static func build(panel, parent: Control, ns, dns, line: String, line_name: Stri
 		_sector_row(tile, dns, loader, line, sector, float(shares[String(sector["id"])]), why_of.has(String(sector["id"])))
 	if not why_of.is_empty():
 		SectorWarningView.build(panel, tile, ns, dns, line, sectors, why_of, now)
-	# No sector can pay the warned one: the move would only ever be greyed (Systems'
-	# measure on #288), so the line's raise above is the choice, and this says why.
-	if not why_of.is_empty() and SectorWarningView.donor(dns, loader, line, sectors, why_of, String(why_of.keys()[0])) == "":
-		PanelKit.plain_line(tile, Strings.t("No other sector of this line can pay."))
-	else:
+	# The parent's ruling on #290: the move stays whenever any sector can pay, a warned one
+	# included (paying from one is the tradeoff, and the strip shows it), beside the raise.
+	if SectorWarningView.can_pay(dns, loader, line, sectors):
 		_verb(panel, tile, dns, line, sectors)
+	else:
+		PanelKit.plain_line(tile, Strings.t("No sector of this line can pay."))
 	var moves: int = (panel._share_moves as Array).size()
 	if moves > 0:
 		PanelKit.plain_line(tile, Strings.tn("%d share move drafted: Commit books it, Revert drops it.", "%d share moves drafted: Commit books them, Revert drops them.", moves) % moves)
@@ -165,7 +169,7 @@ static func _sector_row(tile: Control, ns, loader, line: String, sector: Diction
 	row.add_child(bar)
 	name.set_meta("bar", bar)
 	PanelKit.plain_line(row, Strings.t("%s %% · %s %s") % [Num.f(100.0 * share, 0),
-		quantity_text(Sectors.quantity(ns, loader, line, id)), _unit(sector)], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
+		quantity_text(Sectors.quantity(ns, loader, line, id)), unit_text(sector)], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var trend := SectorWarnings.trend(ns, id)
 	if trend.size() >= 2:
 		ChartKit.spark(row, PackedFloat64Array(trend), []).custom_minimum_size = SPARK_SIZE
@@ -248,7 +252,10 @@ static func _price(panel, ns, line: String, sectors: Array, strip, move: Button,
 	for id in [from_id, to_id]:
 		var sector := _sector(sectors, id)
 		parts.append(Strings.t("%s %s -> %s %s.") % [_name(sector), quantity_text(Sectors.quantity(ns, loader, line, id)),
-			quantity_text(Sectors.quantity(cns, loader, line, id)), _unit(sector)])
+			quantity_text(Sectors.quantity(cns, loader, line, id)), unit_text(sector)])
+	# Paying from a warned sector is the tradeoff (the parent's ruling on #290): said here.
+	if SectorWarnings.warning(ns, loader, line, from_id) != "":
+		parts.append(Strings.t("Slipping too: %s.") % _name(_sector(sectors, from_id)))
 	var change := 100.0 * (Sectors.factor(cns, line) / maxf(Sectors.factor(ns, line), 0.000001) - 1.0)
 	strip.show_lines(Strings.t("Treasury"), EffectsStrip.cost_text(0.0), 0.0, " ".join(parts),
 		Strings.t("Effect on %s, for the same money: %s %%.") % [Strings.t(String(CHANNEL.get(line, ""))), Num.fs(change, 1)])
@@ -276,7 +283,7 @@ static func _name(sector: Dictionary) -> String:
 	return SectorWarningView.sector_name(sector)
 
 
-static func _unit(sector: Dictionary) -> String:
+static func unit_text(sector: Dictionary) -> String:
 	return Strings.t("%s, need-adjusted") % Strings.row("domains", String(sector["id"]), "quantity.unit", String(sector["quantity"]["unit"]))
 
 

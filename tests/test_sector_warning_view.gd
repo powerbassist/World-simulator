@@ -19,6 +19,8 @@ const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const ChartLine = preload("res://src/ui/chart_line.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
+const PK = preload("res://src/ui/priorities_constants.gd")
+const DK = preload("res://src/sim/domains_constants.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
@@ -35,6 +37,7 @@ var _frame := 0
 var _price := 0.0
 var _target := 0.0
 var _gdp_base := 0.0
+var _most := 0.0
 
 
 func _init() -> void:
@@ -63,9 +66,31 @@ func _process(_delta: float) -> bool:
 		10:
 			_check_price_on_a_draft()
 			_panel._on_revert(false)
-			_stage_one_cut()
+			_stage_uneven_needs()
 		12:
+			_check_uncapped()
+			_press(_with_meta("raise_line", LINE))
+		14:
+			_check_marks(false, "a drafted restore")
+			_check_largest_restored()
+			_panel._on_revert(false)
+		16:
+			_check_marks(true, "Revert")
+			_stage_no_payer()
+		18:
+			_check_no_payer()
+			_stage_one_cut()
+		20:
 			_check_one_cut()
+			_press(_with_meta("line", LINE))
+		22:
+			# Off the donor: only opening the tile may aim it. _check_one_cut already aimed.
+			_panel._move_from = "hospitals"
+			_panel._move_to = "primary_care"
+			_press(_with_meta("line", LINE))
+		24:
+			_check_toggle_aims()
+			_check_floor_cannot_pay()
 			_check_arrival()
 			_check_note_wired()
 			_finish()
@@ -78,8 +103,8 @@ func _check_quiet_unit() -> void:
 	var ns = _main._state.player()
 	if SectorWarningView.warned(ns, _main._loader, LINE).size() != 0:
 		_fail("premise: a sector warns on day one")
-	if BudgetSectors._unit(s) != Strings.t("%s, need-adjusted") % Strings.row("domains", String(s["id"]), "quantity.unit", String(s["quantity"]["unit"])):
-		_fail("unit: '%s' does not say it is adjusted for need" % BudgetSectors._unit(s))
+	if BudgetSectors.unit_text(s) != Strings.t("%s, need-adjusted") % Strings.row("domains", String(s["id"]), "quantity.unit", String(s["quantity"]["unit"])):
+		_fail("unit: '%s' does not say it is adjusted for need" % BudgetSectors.unit_text(s))
 
 
 ## Money per head well below the drift's base: every sector of every line warns, by income.
@@ -87,7 +112,8 @@ func _stage_all_warned() -> void:
 	var ns = _main._state.player()
 	_gdp_base = float(ns.gdp_eur_bn) / float(ns.population)
 	ns.sector_drift["base_gdp_per_head"] = _gdp_base * 2.0
-	ns.sector_drift["history"] = {"hospitals": [5.3, 5.2, 5.1, 5.0]}
+	# One sample on a second sector: a trend needs two.
+	ns.sector_drift["history"] = {"hospitals": [5.3, 5.2, 5.1, 5.0], "prevention": [5.0]}
 	_panel.mark_dirty()
 
 
@@ -117,11 +143,28 @@ func _check_all_warned() -> void:
 			spark += 1
 	if spark != 1:
 		_fail("trend: %d sparklines, one sector has a history" % spark)
-	# No sector can pay: no greyed move, the real choice instead.
-	if _with_meta("move", "move") != null:
-		_fail("verb: a move is offered though every sector of the line is warned")
-	if not _text_under(_panel._sector_box).contains(Strings.t("No other sector of this line can pay.")):
-		_fail("verb: nothing says why no move is offered")
+	# Each reason once, whatever the number of sectors it names.
+	var lines := 0
+	for node in _panel._sector_box.find_children("*", "Label", true, false):
+		if String(node.get_meta("sector_warning", "")) == SectorWarnings.REASON_INCOME and not _gone(node):
+			lines += 1
+	if lines != 1:
+		_fail("mark: the reason is said %d times" % lines)
+	# The parent's ruling: every sector warned, the sim still accepts a move: move AND raise.
+	var move = _with_meta("move", "move")
+	if move == null or move.disabled:
+		_fail("verb: every sector warned, and the move the sim accepts is not live")
+	if _text_under(_panel._sector_box).contains(Strings.t("No sector of this line can pay.")):
+		_fail("verb: 'cannot pay' said where the sim accepts a move")
+	# The donor is warned too, and its strip says so: that is the tradeoff.
+	var from := SectorWarningView.name_of(_main._loader, LINE, String(_panel._move_from))
+	var slipping: String = Strings.t("Slipping too: %s.") % from
+	var strips := []
+	for node in _panel._sector_box.find_children("*", "", true, false):
+		if node.has_meta("sectors") and not _gone(node):
+			strips.append(_text_under(node))
+	if strips.size() != 1 or not String(strips[0]).contains(slipping):
+		_fail("verb: the move's strip does not say its donor is slipping (%s): %s" % [slipping, strips])
 	var go = _with_meta("raise_line", LINE)
 	if go == null or go.disabled:
 		_fail("verb: no live raise")
@@ -140,8 +183,10 @@ func _check_all_warned() -> void:
 		most = maxf(most, SectorWarnings.restore_pct_gdp(ns, _main._loader, LINE, String(id)))
 	var drafted := float(ns.spending_pct_gdp[LINE])
 	_target = minf(drafted + most, _panel.lever_span(LINE).y)
-	if not _text_under(strip).contains(Num.f(_target - drafted, 1)):
-		_fail("verb: the strip does not say the raise's points (%s): '%s'" % [Num.f(_target - drafted, 1), _text_under(strip)])
+	# This stage is capped by the span: the words must not claim the figures come back.
+	var capped: String = Strings.t("Up %s points of GDP, part of the way; the rest takes a second Commit.") % Num.f(_target - drafted, 1)
+	if not _text_under(strip).contains(capped):
+		_fail("verb: the capped raise does not say so ('%s')" % _text_under(strip))
 
 
 ## Drafted, not booked: the lever moved, the Budget's own figure is the strip's price (B1).
@@ -189,7 +234,106 @@ func _check_price_on_a_draft() -> void:
 		_fail("draft: the points do not count from the draft ('%s')" % _text_under(strip))
 
 
-## One sector cut far below the rest: its reason is the cut, others can pay it.
+## A smaller fall with one sector's share moved away: a restore inside the span, and not
+## the same for each sector warned (they share a need rate, so a share is what parts them).
+func _stage_uneven_needs() -> void:
+	var ns = _main._state.player()
+	ns.sector_drift["base_gdp_per_head"] = _gdp_base * 1.1
+	Sectors.move_share(ns, _main._loader, LINE, "hospitals", "primary_care", 0.05)
+	_panel.mark_dirty()
+
+
+func _check_uncapped() -> void:
+	var ns = _main._state.player()
+	var why := SectorWarningView.warned(ns, _main._loader, LINE)
+	_most = 0.0
+	var least := INF
+	for id in why:
+		var restore := SectorWarnings.restore_pct_gdp(ns, _main._loader, LINE, String(id))
+		_most = maxf(_most, restore)
+		least = minf(least, restore)
+	if why.size() < 2 or _most - least < 0.01:
+		_fail("premise: the warned sectors' restores do not differ (%d warned, %s to %s)" % [why.size(), least, _most])
+	var drafted := float(ns.spending_pct_gdp[LINE])
+	if drafted + _most >= _panel.lever_span(LINE).y:
+		_fail("premise: the restore is capped by the span")
+	var said: String = Strings.t("Up %s points of GDP restores the figures; its other sectors gain too.") % Num.f(_most, 1)
+	if not _text_under(_raise_strip()).contains(said):
+		_fail("verb: an uncapped raise does not say it restores ('%s')" % _text_under(_raise_strip()))
+
+
+## The largest restore, not the smallest: every warned sector comes back.
+func _check_largest_restored() -> void:
+	var ns = _main._state.player()
+	var want := float(ns.spending_pct_gdp[LINE]) + _most
+	if absf(float(_panel._pending["spending_pct_gdp"][LINE]) - want) > 0.0001:
+		_fail("raise: the lever reads %s, the largest restore is %s" % [_panel._pending["spending_pct_gdp"][LINE], want])
+
+
+## The marks follow the draft, on the toggle and on the row, and come back with Revert.
+func _check_marks(marked: bool, when: String) -> void:
+	var ns = _main._state.player()
+	if SectorWarningView.warned(ns, _main._loader, LINE).is_empty():
+		_fail("premise: the live nation is not warned (%s)" % when)
+	var toggle = _with_meta("line", LINE)
+	if toggle == null or (toggle as Button).text.contains("(!)") != marked:
+		_fail("mark: after %s the toggle reads '%s'" % [when, toggle.text if toggle != null else "<none>"])
+	var row := _sector_label("hospitals")
+	if row == null or row.text.contains("(!)") != marked:
+		_fail("mark: after %s the row reads '%s'" % [when, row.text if row != null else "<none>"])
+
+
+## Every sector at the move's floor: the one place "cannot pay" is true. No verb; the raise
+## still stands beside the sentence.
+func _stage_no_payer() -> void:
+	var ns = _main._state.player()
+	ns.sector_drift["base_gdp_per_head"] = _gdp_base * 2.0
+	var shares := {}
+	for s in Sectors.sectors_of(_main._loader, LINE):
+		shares[String(s["id"])] = DK.MIN_SHARE
+	ns.sector_shares[LINE] = shares
+	_panel.mark_dirty()
+
+
+func _check_no_payer() -> void:
+	var ns = _main._state.player()
+	if not _text_under(_panel._sector_box).contains(Strings.t("No sector of this line can pay.")):
+		_fail("no payer: nothing says no sector can pay ('%s')" % _text_under(_panel._sector_box))
+	if _with_meta("move", "move") != null:
+		_fail("no payer: a move is offered that the sim refuses")
+	if _with_meta("raise_line", LINE) == null:
+		_fail("no payer: the raise is gone")
+	ns.sector_shares.erase(LINE)
+
+
+## Opened by its toggle, the move aims as a Go does: from a sector that can pay.
+func _check_toggle_aims() -> void:
+	var ns = _main._state.player()
+	var why := SectorWarningView.warned(ns, _main._loader, LINE)
+	var from := SectorWarningView.donor(ns, _main._loader, LINE, Sectors.sectors_of(_main._loader, LINE), why, "hospitals")
+	if _panel._open_line != LINE or _panel._move_to != "hospitals" or _panel._move_from != from:
+		_fail("toggle: the move reads %s -> %s on '%s', the warned sector is hospitals and a donor %s" % [_panel._move_from, _panel._move_to, _panel._open_line, from])
+
+
+## A sector at the floor is no donor, un-warned or not (the sim's refusal).
+func _check_floor_cannot_pay() -> void:
+	var loader = _main._loader
+	var copy = _main._state.player().duplicate_state()
+	var sectors: Array = Sectors.sectors_of(loader, LINE)
+	var why := {}
+	for s in sectors:
+		if String(s["id"]) != "prevention":
+			why[String(s["id"])] = "x"
+	if SectorWarningView.donor(copy, loader, LINE, sectors, why, "hospitals") != "prevention":
+		_fail("donor: the one un-warned sector above its floor does not pay")
+	while bool(Sectors.move_share(copy, loader, LINE, "prevention", "hospitals", 0.01).get("ok", false)):
+		pass
+	if SectorWarningView.donor(copy, loader, LINE, sectors, why, "hospitals") != "":
+		_fail("donor: a sector at its floor pays")
+
+
+## One sector cut far below the rest: its reason is the cut, others can pay it. An
+## un-warned donor is not said to be slipping.
 func _stage_one_cut() -> void:
 	var ns = _main._state.player()
 	ns.sector_drift["base_gdp_per_head"] = _gdp_base
@@ -208,6 +352,8 @@ func _check_one_cut() -> void:
 		_fail("mark: the cut's reason is not on the tile")
 	if _with_meta("move", "move") == null:
 		_fail("verb: a sector can pay, and no move is offered")
+	if _text_under(_panel._sector_box).contains(Strings.t("Slipping too: %s.") % Strings.row("domains", "primary_care", "name", "Primary care")):
+		_fail("verb: an un-warned donor is said to be slipping")
 	if _with_meta("raise_line", LINE) == null:
 		_fail("verb: a move does not replace the raise")
 	# The Go's aim: the move points at the warned sector, from one that can pay.
@@ -235,11 +381,17 @@ func _check_arrival() -> void:
 		return
 	if int(found["more"]) != 1:
 		_fail("arrival: two crossings do not fold into one line (+%s)" % found["more"])
+	# The parent's call on #290: 6.0 at a trend's onset, so a crossing outranks a slow trend.
+	if absf(float(found["w"]) * float(found["u"]) - 6.0 * 0.7) > 0.0001:
+		_fail("arrival: a crossing weighs %s x %s" % [found["w"], found["u"]])
+	if not PK.KINDS.has("sector"):
+		_fail("arrival: 'sector' is not a kind")
 	if not PriorityWords.title(found, state, _main._loader).contains(Strings.row("domains", "hospitals", "name", "Hospitals")) \
 			and not PriorityWords.title(found, state, _main._loader).contains(Strings.row("domains", "prevention", "name", "Prevention")):
 		_fail("arrival: the line does not name a sector ('%s')" % PriorityWords.title(found, state, _main._loader))
 	var cards := SectorWarningView.note_cards(ns, _main._loader, now)
-	if cards.size() != 1 or not String(cards[0]["body"]).contains(Strings.row("domains", "hospitals", "name", "Hospitals")):
+	if cards.size() != 1 or not String(cards[0]["body"]).contains(Strings.row("domains", "hospitals", "name", "Hospitals")) \
+			or not String(cards[0]["body"]).contains(Strings.row("domains", "prevention", "name", "Prevention")):
 		_fail("arrival: not one note naming the sectors (%s)" % [cards])
 	if not SectorWarningView.note_cards(ns, _main._loader, now + 1).is_empty():
 		_fail("arrival: the note comes again the month after")

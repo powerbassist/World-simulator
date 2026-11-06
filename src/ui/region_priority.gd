@@ -176,7 +176,7 @@ static func _name(loader, line: String, sector_id: String) -> String:
 
 
 static func _unit(loader, line: String, sector_id: String) -> String:
-	return BudgetSectors._unit(_sector(loader, line, sector_id))
+	return BudgetSectors.unit_text(_sector(loader, line, sector_id))
 
 
 static func _region_name(panel, ns, region_id: String) -> String:
