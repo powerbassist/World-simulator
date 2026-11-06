@@ -12,6 +12,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Closures = preload("res://src/sim/closures.gd")
+const Economy = preload("res://src/sim/economy.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const CK = preload("res://src/sim/closures_constants.gd")
@@ -28,7 +29,16 @@ func _init() -> void:
 		_failures.append("data did not load cleanly: %s" % [_loader.errors])
 		_finish()
 		return
+	# Most of this file stages one fall and reads what it does, so the month's chance
+	# is certain here; the tests of the chance itself read the shipped rule (_shipped).
+	_loader.closure_rule["monthly_chance"] = 1000.0
 	_test_the_rule_is_data()
+	_test_the_chance_reads_the_fall_and_the_economy()
+	_test_the_rate_follows_the_economy()
+	_test_the_rate_follows_the_sectors_fall()
+	_test_a_chance_that_does_not_come_up_announces_nothing()
+	_test_a_void_row_does_not_cool_the_sector()
+	_test_the_record_says_what_fell()
 	_test_a_falling_major_announces_a_closure()
 	_test_one_announcement_a_month_the_worst_first()
 	_test_the_worst_fall_ranks_the_sectors()
@@ -52,6 +62,13 @@ func _init() -> void:
 	_test_the_fall_picks_by_jobs()
 	_test_the_bloc_move_scales_with_the_plant()
 	_finish()
+
+
+## The stand-ins as shipped in data/industry/closures.json, pinned as literals.
+const SHIPPED_COOLDOWN := 12
+const SHIPPED_CHANCE := 0.05
+const SHIPPED_REFERENCE := 0.10
+const SHIPPED_SLOPE := 0.35
 
 
 func _new_state():
@@ -122,7 +139,7 @@ func _now(state) -> int:
 
 func _test_the_rule_is_data() -> void:
 	var rule := _rule()
-	for key in ["window_months", "fall", "cut", "cooldown_months", "bloc_offset"]:
+	for key in ["window_months", "fall", "cut", "cooldown_months", "bloc_offset", "reference_jobs", "monthly_chance", "reference_fall", "gap_slope"]:
 		if not rule.has(key):
 			_fail("the closure rule has no %s" % key)
 	if int(rule.get("cooldown_months", 0)) < int(rule.get("window_months", 0)) + CK.ANSWER_MONTHS:
@@ -175,6 +192,113 @@ func _test_one_announcement_a_month_the_worst_first() -> void:
 		_fail("two falling majors did not give one announcement, the worst first")
 	if not (ns.companies[String(a.id)] as Dictionary).has("closure_watch"):
 		_fail("the firm that did not announce lost its history")
+
+
+## The rule as it ships, for the tests of the chance: _init makes the chance certain on
+## the loaded one, and these must fail on a retune of the shipped numbers.
+func _shipped() -> Dictionary:
+	var errors: Array[String] = []
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/industry/closures.json"))
+	return CompaniesLoader.parse_closure_rule(parsed, "closures.json", errors)
+
+
+## The author's call on #286: a closure follows the economy. The month's chance for a
+## falling sector reads how far its worst major fell and how far the nation runs below
+## its potential. Literals, the stand-ins as shipped.
+func _test_the_chance_reads_the_fall_and_the_economy() -> void:
+	var rule := _shipped()
+	if int(rule["cooldown_months"]) != SHIPPED_COOLDOWN or float(rule["monthly_chance"]) != SHIPPED_CHANCE \
+			or float(rule["reference_fall"]) != SHIPPED_REFERENCE or float(rule["gap_slope"]) != SHIPPED_SLOPE:
+		_fail("the rule reads %s, not the shipped stand-ins" % [rule])
+	var at_rest := Closures.chance(rule, SHIPPED_REFERENCE, 0.0)
+	if not is_equal_approx(at_rest, SHIPPED_CHANCE):
+		_fail("the reference fall in an economy at its potential reads %.4f, not %.4f" % [at_rest, SHIPPED_CHANCE])
+	if Closures.chance(rule, SHIPPED_REFERENCE, -3.0) <= at_rest or Closures.chance(rule, SHIPPED_REFERENCE, 1.0) >= at_rest:
+		_fail("the chance does not rise in a slump and fall in a boom: %.4f / %.4f / %.4f" % [
+			Closures.chance(rule, SHIPPED_REFERENCE, -3.0), at_rest, Closures.chance(rule, SHIPPED_REFERENCE, 1.0)])
+	if Closures.chance(rule, 0.5 * SHIPPED_REFERENCE, 0.0) >= at_rest:
+		_fail("a smaller fall is not a smaller chance")
+	if Closures.chance(rule, 100.0, -100.0) > 1.0 or Closures.chance(rule, SHIPPED_REFERENCE, 100.0) <= 0.0:
+		_fail("the chance leaves (0, 1]: %.4f, %.4f" % [Closures.chance(rule, 100.0, -100.0), Closures.chance(rule, SHIPPED_REFERENCE, 100.0)])
+
+
+## Announcements in `months` of the closure machine alone: every major of the crowded
+## sector falling by `fall` each month, the economy held at `gap_pct` below or above its
+## potential, the shipped rule. One seed, so the runs differ only by what they read.
+func _rate(fall: float, gap_pct: float, months: int) -> int:
+	var saved: Dictionary = _loader.closure_rule
+	_loader.closure_rule = _shipped()
+	var state = _new_state()
+	var ns = state.player()
+	var seen := {}
+	for i in months:
+		ns.potential_gdp_eur_bn = float(ns.gdp_eur_bn) / (1.0 + gap_pct / 100.0)
+		for c in _crowded_sector(ns):
+			_falling(ns, c, fall)
+		_month(state)
+		for c in _crowded_sector(ns):
+			var row := _row(ns, String(c.id))
+			if not row.is_empty():
+				seen[String(row["id"])] = true
+	_loader.closure_rule = saved
+	return seen.size()
+
+
+## The test that fails if the rate stops reading the economy (the author's call).
+func _test_the_rate_follows_the_economy() -> void:
+	var slump := _rate(0.10, -4.0, 480)
+	var rest := _rate(0.10, 0.0, 480)
+	var boom := _rate(0.10, 2.0, 480)
+	if not (slump > rest and rest > boom) or float(slump) < 1.5 * float(boom):
+		_fail("a sector closes %d plants in a slump, %d at potential, %d in a boom: the rate does not follow the economy" % [slump, rest, boom])
+
+
+func _test_the_rate_follows_the_sectors_fall() -> void:
+	var steep := _rate(0.20, 0.0, 480)
+	var shallow := _rate(0.05, 0.0, 480)
+	if float(steep) < 1.25 * float(shallow):
+		_fail("a sector falling 20 %% closes %d plants, one falling 5 %% closes %d: the rate does not read the fall" % [steep, shallow])
+
+
+func _test_a_chance_that_does_not_come_up_announces_nothing() -> void:
+	var saved := float(_rule()["monthly_chance"])
+	_rule()["monthly_chance"] = 0.0
+	var state = _new_state()
+	var ns = state.player()
+	_falling(ns, _majors(ns)[0], 2.0 * float(_rule()["fall"]))
+	_month(state)
+	_rule()["monthly_chance"] = saved
+	if _count(ns) != 0:
+		_fail("a fall announced with no chance of it: the timer is back")
+
+
+## QA's RECORD on #286: a void row is a firm that failed, nothing that closed. Its peers
+## must not wait out a cooldown for a plant that never shut.
+func _test_a_void_row_does_not_cool_the_sector() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var peers := _crowded_sector(ns)
+	(ns.companies[String(peers[0].id)] as Dictionary)["closure"] = {"id": "x|1", "company_id": String(peers[0].id),
+		"city_id": "", "status": "void", "announced": _now(state), "due": _now(state), "ended": _now(state), "fall": 0.1, "jobs": 1.0}
+	_falling(ns, peers[1], 2.0 * float(_rule()["fall"]))
+	_month(state)
+	if _row(ns, String(peers[1].id)).is_empty():
+		_fail("a failed firm's void row cooled its sector")
+
+
+## The author's call: the card's reason is true. The record keeps the picked firm's own
+## fall, the months it fell over and the economy the month it was announced.
+func _test_the_record_says_what_fell() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	ns.potential_gdp_eur_bn = float(ns.gdp_eur_bn) * 1.03
+	_falling(ns, firm, 0.25)
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	if row.is_empty() or not is_equal_approx(float(row["fall"]), 0.25) or int(row["window_months"]) != int(_rule()["window_months"]) \
+			or absf(float(row["gap_pct"]) - Economy.output_gap_pct(ns)) > 1e-9:
+		_fail("the record does not say what fell: %s" % [row])
 
 
 ## QA on #286: the month's one announcement goes to the sector with the worst fall, and
@@ -593,11 +717,12 @@ func _test_the_loader_refuses_a_short_cooldown() -> void:
 	var refused: Array[String] = []
 	if not CompaniesLoader.parse_closure_rule(short, "closures.json", refused).is_empty() or refused.is_empty():
 		_fail("a cooldown a month shorter than a window and an answer was accepted")
-	var no_scale := good.duplicate(true)
-	no_scale.erase("reference_jobs")
-	var unscaled: Array[String] = []
-	if not CompaniesLoader.parse_closure_rule(no_scale, "closures.json", unscaled).is_empty() or unscaled.is_empty():
-		_fail("a rule with no reference_jobs was accepted: every plant's move would divide by nothing")
+	for key in ["reference_jobs", "monthly_chance", "reference_fall", "gap_slope"]:
+		var missing := good.duplicate(true)
+		missing.erase(key)
+		var unread: Array[String] = []
+		if not CompaniesLoader.parse_closure_rule(missing, "closures.json", unread).is_empty() or unread.is_empty():
+			_fail("a rule with no %s was accepted" % key)
 
 
 func _set_now(state, absolute_month: int) -> void:
@@ -697,10 +822,9 @@ func _test_the_fall_picks_by_jobs() -> void:
 ## workers less than a large one. The strip shows the move that lands. Literals: the
 ## parent's ruling restores #251's cooldown and move.
 func _test_the_bloc_move_scales_with_the_plant() -> void:
-	if int(_rule()["cooldown_months"]) != 24 or float((_rule()["bloc_offset"] as Dictionary)["workers"]) != -0.02 \
-			or float(_rule()["reference_jobs"]) != 2500.0:
-		_fail("the rule reads cooldown %s, workers %s and reference jobs %s, not #251's 24 and -0.02 at 2500" % [
-			_rule()["cooldown_months"], _rule()["bloc_offset"], _rule()["reference_jobs"]])
+	if float((_rule()["bloc_offset"] as Dictionary)["workers"]) != -0.02 or float(_rule()["reference_jobs"]) != 2500.0:
+		_fail("the rule reads workers %s and reference jobs %s, not #251's -0.02 at 2500" % [
+			_rule()["bloc_offset"], _rule()["reference_jobs"]])
 	var moves: Array = []
 	for scale in [1.0, 2.0]:
 		var state = _new_state()

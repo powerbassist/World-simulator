@@ -78,6 +78,14 @@ func _check_card() -> void:
 	var city = Region.find_city(loader.regions.get(ns.id, []), String(row["city_id"]))
 	if not text.contains(String(_major.company_name)) or (city != null and not text.contains(String(city.city_name))):
 		_fail("card: '%s' names neither %s nor its city" % [text, _major.company_name])
+	# The author's call on #286: the reason is what the record kept, the firm's own fall
+	# and the economy's gap, as literals over what this test staged (a 20 % fall).
+	var fell := Strings.tn("Its output fell %s %% in %d month.", "Its output fell %s %% in %d months.", int(row["window_months"])) % ["20", int(row["window_months"])]
+	if not text.contains(fell):
+		_fail("card: '%s' does not say what fell: %s" % [text, fell])
+	var below := Strings.t("The economy runs %s %% below its potential.") % Num.f(-float(row["gap_pct"]), 1)
+	if text.contains(below) != (float(row["gap_pct"]) < 0.0):
+		_fail("card: the economy's clause and the record's gap %s disagree: '%s'" % [row["gap_pct"], text])
 	var answers: Array = Closures.answers(state, ns, loader, _closure_id)
 	var parent: Node = null
 	for answer in answers:

@@ -7,6 +7,15 @@ extends RefCounted
 ## after the month's tick and lands at the tick ANSWER_MONTHS later, so two months of
 ## play see it, the second its deadline.
 const ANSWER_MONTHS := 2
+## The bounds on the month's chance (Closures.chance; the rule's own numbers are data).
+## The fall's term saturates at this many reference falls: a firm losing 40 % of its
+## output in a window is mostly losing share to a rival. The economy's term stays
+## inside these, so the worst slump does not make a closure certain and the best boom
+## does not rule one out. Stand-ins (Systems), for the author's table.
+const FALL_TERM_MAX := 1.5
+const ECONOMY_TERM_MIN := 0.2
+const ECONOMY_TERM_MAX := 3.0
+
 ## The buyer search (the spec's "a 3-month process with a seeded chance"), and the
 ## chance it finds one. A stand-in, shown on the answer as it is.
 const BUYER_MONTHS := 3

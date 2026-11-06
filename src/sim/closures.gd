@@ -28,8 +28,17 @@ extends RefCounted
 ## 4 %, 5 at 0.6 %): what falls 4 % in six months is a firm losing share to its rivals,
 ## which the sum nets out. One fall closes one plant, at one of the majors past the
 ## threshold, weighted by its jobs (not one in a process). One announcement a month at
-## most, the worst fall first; a sector whose closure ended waits `cooldown_months`
-## (longer than a window and an answer, so a closure's own cut is never the next fall).
+## most, the worst fall first.
+##
+## THE RATE IS A CHANCE THAT READS THE ECONOMY (the author's call on #286). A firm past
+## `fall` is nearly always there, so a closure waiting only on `cooldown_months` fired
+## every 26 months in a boom and in a slump alike: a timer, which no policy could move.
+## Now a falling sector closes a plant in a month with chance() on its own seed, more in
+## a slump and in a sector whose worst major fell further. `cooldown_months` is only a
+## floor (longer than a window and an answer, so a closure's own cut is never the next
+## fall), and tests/test_closures.gd fails if the rate stops reading the economy. The
+## output gap is the read: it is what a slump IS in this model (src/sim/cycle.gd), and a
+## policy reaches it. The record keeps what fell and the gap, for the card's reason.
 ##
 ## The record's place is `city_id` (not `city`: the firm entry's `city` is the
 ## industry machine's relocation key, single-writer by tests/test_industry.gd).
@@ -42,6 +51,7 @@ extends RefCounted
 ## no history yet", the truth for every older save.
 
 const Companies = preload("res://src/sim/companies.gd")
+const Economy = preload("res://src/sim/economy.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const K = preload("res://src/sim/closures_constants.gd")
@@ -86,15 +96,31 @@ static func tick_month(state, loader) -> void:
 				falling[company.sector] = {"worst": 0.0, "firms": []}
 			falling[company.sector]["worst"] = maxf(float(falling[company.sector]["worst"]), fall)
 			(falling[company.sector]["firms"] as Array).append([company, fall])
-	# The month's one announcement: the worst fall among the sectors that may announce.
+	# The month's one announcement: the worst fall among the sectors that may announce
+	# and whose chance came up. The seed is the nation's, the sector's and the month's,
+	# so two runs of one game differ only by what the chance reads.
 	var worst := ""
+	var gap := Economy.output_gap_pct(ns)
 	for sector in falling:
+		var fall := float(falling[sector]["worst"])
 		if _sector_may_announce(ns, majors, sector, rule, now) \
-				and (worst == "" or float(falling[sector]["worst"]) > float(falling[worst]["worst"])):
+				and Cycle.unit("closure|fire|%s|%s" % [String(ns.id), sector], now) < chance(rule, fall, gap) \
+				and (worst == "" or fall > float(falling[worst]["worst"])):
 			worst = sector
 	if worst != "":
 		var pick: Array = _pick(ns, falling[worst]["firms"], worst, now)
 		_announce(ns, pick[0], ns.companies[pick[0].id], float(pick[1]), rule, now)
+
+
+## The month's chance that a falling sector closes a plant: `monthly_chance` at the
+## rule's `reference_fall` with the economy at its potential, moved by the two reads,
+## each bounded (closures_constants.gd). A major's worst falls are firms losing share and
+## can pass 40 % in a window, so the fall's term saturates, or it would swallow the
+## economy's. Below 1.0 always, and above 0 in the best of booms: a plant can still close.
+static func chance(rule: Dictionary, worst_fall: float, gap_pct: float) -> float:
+	var fall_term := clampf(worst_fall / float(rule["reference_fall"]), 0.0, K.FALL_TERM_MAX)
+	var economy_term := clampf(1.0 - float(rule["gap_slope"]) * gap_pct, K.ECONOMY_TERM_MIN, K.ECONOMY_TERM_MAX)
+	return minf(float(rule["monthly_chance"]) * fall_term * economy_term, 1.0)
 
 
 ## The closures waiting for an answer or a buyer, as copies for a panel to read.
@@ -198,7 +224,8 @@ static func _sector_may_announce(ns, majors: Array, sector: String, rule: Dictio
 		if company.sector != sector:
 			continue
 		var row: Dictionary = (ns.companies.get(company.id, {}) as Dictionary).get("closure", {})
-		if row.is_empty():
+		# A void row is a firm that failed, no plant that closed: nothing to wait out.
+		if row.is_empty() or String(row["status"]) == "void":
 			continue
 		if [ANNOUNCED, SEARCHING].has(String(row["status"])) or now - int(row["ended"]) < int(rule["cooldown_months"]):
 			return false
@@ -233,7 +260,8 @@ static func _announce(ns, company, entry: Dictionary, fall: float, rule: Diction
 	entry["closure"] = {
 		"id": "%s|%d" % [String(company.id), now], "company_id": String(company.id),
 		"city_id": Companies.live_city_of(ns, company), "status": ANNOUNCED, "announced": now,
-		"due": now + K.ANSWER_MONTHS, "ended": -1, "fall": fall,
+		"due": now + K.ANSWER_MONTHS, "ended": -1, "fall": fall, "window_months": int(rule["window_months"]),
+		"gap_pct": Economy.output_gap_pct(ns),
 		"jobs": Companies.headcount(ns, company) * float(rule["cut"]),
 	}
 	entry.erase("closure_watch")
