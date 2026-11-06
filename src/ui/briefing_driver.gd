@@ -21,6 +21,7 @@ extends RefCounted
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
+const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const Music = preload("res://src/ui/music.gd")
 const Trends = preload("res://src/ui/trends.gd")
@@ -104,6 +105,8 @@ static func open(main, report: Dictionary) -> void:
 	var ns = main._state.player() if main._state != null else null
 	var cards: Array = game.get("month_cards", [])
 	game.erase("month_cards")
+	if ns != null:
+		cards.append_array(SectorWarningView.note_cards(ns, main._loader, int(main._state.year) * 12 + int(main._state.month)))
 	if game.is_empty() or ns == null or not bool(ns.in_government) or not _will_show(main, game, report):
 		# A month the briefing does not show keeps its consequence cards in the inbox.
 		for card in cards:
@@ -376,6 +379,9 @@ static func go(main, index: int) -> void:
 			# down would hide the one month's answer.
 			main._windows.open(tab)
 			main._companies_panel._scroll.scroll_vertical = 0
+		"sector":
+			main._windows.open(tab)
+			SectorWarningView.aim(main._budget_panel, subject)
 		"commitment" when tab == "calendar":
 			# The Diary on the due day (2.4): a word is judged as its month begins,
 			# so its mark and its Call are on the first.

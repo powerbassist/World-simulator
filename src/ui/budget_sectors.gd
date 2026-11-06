@@ -17,22 +17,30 @@ extends RefCounted
 ## with the draft applied (on a copy), Commit books it (apply_moves) and Revert drops
 ## it. Committed with the levers, it is one decision with them.
 ##
-## Not here yet: each quantity's trend and its warning mark (the sim has them,
-## SectorWarnings.trend() and .warning()), the sector's staff (no query yet).
+## A figure is what the money buys against today's need, not a count of what stands, so
+## its unit says so: 5.34 "beds per 1 000" falling must not read as beds closed (QA's
+## RECORD on #288). A warned sector's mark, reason and answer: sector_warning_view.gd.
+##
+## Not here yet: the sector's staff (no query yet).
 
 const Sectors = preload("res://src/sim/sectors.gd")
 const DK = preload("res://src/sim/domains_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
+const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
+const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
+const ChartKit = preload("res://src/ui/chart_kit.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
 ## A sector's bar, in px: the tile's widest share reads at a glance beside it.
-const BAR_WIDTH := 160
+const BAR_WIDTH := 100
 ## The share a move takes, in points of the line: one to ten.
 const STEP := 0.01
+## A sector's trend beside its figure, in px.
+const SPARK_SIZE := Vector2(72, 18)
 const MOST := 0.10
 
 ## What the line's money buys, as the strip names it.
@@ -56,6 +64,7 @@ static func line_toggle(panel, key: String, text: String) -> Button:
 	toggle.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	toggle.custom_minimum_size.x = 130
 	toggle.set_meta("line", key)
+	toggle.set_meta("line_name", text)
 	toggle.pressed.connect(func() -> void:
 		panel._open_line = "" if panel._open_line == key else key
 		panel._dirty = true)
@@ -63,19 +72,22 @@ static func line_toggle(panel, key: String, text: String) -> Button:
 
 
 ## The open line's tile, redrawn into the panel's box on each refresh.
-static func refresh(panel, line_name: String) -> void:
+static func refresh(panel, line_name: String, now: Dictionary) -> void:
 	for child in panel._sector_box.get_children():
 		child.queue_free()
 	if panel._open_line != "":
-		build(panel, panel._sector_box, panel._state.player(), panel._open_line, line_name)
+		build(panel, panel._sector_box, panel._state.player(), panel._open_line, line_name, now)
 	# The toggles are built once: each says whether its line is the open one (pass 1:
 	# a second line opened left the first pressed).
 	for toggle in panel.find_children("*", "Button", true, false):  # i18n: ok a class name
 		if toggle.has_meta("line"):
 			toggle.set_pressed_no_signal(String(toggle.get_meta("line")) == String(panel._open_line))
+			# The mark that says which tile to open: a warning on a closed line is unseen.
+			var slipping := not SectorWarningView.warned(panel._state.player(), panel._loader, String(toggle.get_meta("line"))).is_empty()
+			toggle.text = Strings.t("%s (!)") % String(toggle.get_meta("line_name")) if slipping else String(toggle.get_meta("line_name"))
 
 
-static func build(panel, parent: Control, ns, line: String, line_name: String) -> void:
+static func build(panel, parent: Control, ns, line: String, line_name: String, now: Dictionary) -> void:
 	var loader = panel._loader
 	var sectors: Array = Sectors.sectors_of(loader, line)
 	if sectors.is_empty():
@@ -90,9 +102,17 @@ static func build(panel, parent: Control, ns, line: String, line_name: String) -
 	var pct := float(dns.spending_pct_gdp.get(line, 0.0))
 	PanelKit.heading(tile, Strings.t("%s: %s %% of GDP, %s bn") % [line_name, Num.f(pct, 1), Num.f(pct / 100.0 * float(dns.gdp_eur_bn), 0)])
 	var shares := Sectors.shares(dns, loader, line)
+	var why_of := SectorWarningView.warned(dns, loader, line)
 	for sector in sectors:
-		_sector_row(tile, dns, loader, line, sector, float(shares[String(sector["id"])]))
-	_verb(panel, tile, dns, line, sectors)
+		_sector_row(tile, dns, loader, line, sector, float(shares[String(sector["id"])]), why_of.has(String(sector["id"])))
+	if not why_of.is_empty():
+		SectorWarningView.build(panel, tile, ns, dns, line, sectors, why_of, now)
+	# No sector can pay the warned one: the move would only ever be greyed (Systems'
+	# measure on #288), so the line's raise above is the choice, and this says why.
+	if not why_of.is_empty() and SectorWarningView.donor(dns, loader, line, sectors, why_of, String(why_of.keys()[0])) == "":
+		PanelKit.plain_line(tile, Strings.t("No other sector of this line can pay."))
+	else:
+		_verb(panel, tile, dns, line, sectors)
 	var moves: int = (panel._share_moves as Array).size()
 	if moves > 0:
 		PanelKit.plain_line(tile, Strings.tn("%d share move drafted: Commit books it, Revert drops it.", "%d share moves drafted: Commit books them, Revert drops them.", moves) % moves)
@@ -125,11 +145,13 @@ static func apply_moves(panel) -> void:
 		Sectors.move_share(ns, panel._loader, String(m["line"]), String(m["from"]), String(m["to"]), float(m["amount"]))
 
 
-static func _sector_row(tile: Control, ns, loader, line: String, sector: Dictionary, share: float) -> void:
+static func _sector_row(tile: Control, ns, loader, line: String, sector: Dictionary, share: float, warned: bool) -> void:
 	var id := String(sector["id"])
 	var row := PanelKit.buttons(tile)
-	var name := PanelKit.plain_line(row, _name(sector), PanelKit.Tone.PLAIN)
-	name.custom_minimum_size.x = 160
+	var name := PanelKit.plain_line(row, Strings.t("%s (!)") % _name(sector) if warned else _name(sector), PanelKit.Tone.PLAIN)
+	if warned:
+		ResultTone.tint(name, ResultTone.RISKY)
+	name.custom_minimum_size.x = 130
 	name.autowrap_mode = TextServer.AUTOWRAP_OFF
 	name.set_meta("sector", id)
 	var bar := ProgressBar.new()
@@ -142,6 +164,9 @@ static func _sector_row(tile: Control, ns, loader, line: String, sector: Diction
 	name.set_meta("bar", bar)
 	PanelKit.plain_line(row, Strings.t("%s %% · %s %s") % [Num.f(100.0 * share, 0),
 		quantity_text(Sectors.quantity(ns, loader, line, id)), _unit(sector)], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
+	var trend := SectorWarnings.trend(ns, id)
+	if trend.size() >= 2:
+		ChartKit.spark(row, PackedFloat64Array(trend), []).custom_minimum_size = SPARK_SIZE
 
 
 ## The verb: from, to, how much, the strip, Move and the refusal line.
@@ -250,7 +275,7 @@ static func _name(sector: Dictionary) -> String:
 
 
 static func _unit(sector: Dictionary) -> String:
-	return Strings.row("domains", String(sector["id"]), "quantity.unit", String(sector["quantity"]["unit"]))
+	return Strings.t("%s, need-adjusted") % Strings.row("domains", String(sector["id"]), "quantity.unit", String(sector["quantity"]["unit"]))
 
 
 static func _has(sectors: Array, id: String) -> bool:

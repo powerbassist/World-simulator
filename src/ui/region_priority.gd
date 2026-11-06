@@ -136,7 +136,7 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label, free: L
 	refusal.visible = not ok
 	strip.visible = ok
 	# A resting sector: the month it is free again, from the sim's own register.
-	var until := int((ns.sector_priority_rest.get(sector_id, {}) as Dictionary).get(String(region.id), 0))
+	var until := Sectors.rest_until(ns, sector_id, String(region.id))
 	var resting := not ok and int(panel._state.year) * 12 + int(panel._state.month) < until
 	free.text = Strings.t("Free again from %s.") % DateText.month_year((until - 1) % 12 + 1, floori((until - 1) / 12.0)) if resting else ""
 	free.visible = resting
@@ -176,8 +176,7 @@ static func _name(loader, line: String, sector_id: String) -> String:
 
 
 static func _unit(loader, line: String, sector_id: String) -> String:
-	var s := _sector(loader, line, sector_id)
-	return Strings.row("domains", sector_id, "quantity.unit", String((s.get("quantity", {}) as Dictionary).get("unit", "")))
+	return BudgetSectors._unit(_sector(loader, line, sector_id))
 
 
 static func _region_name(panel, ns, region_id: String) -> String:

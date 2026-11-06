@@ -1,0 +1,263 @@
+extends SceneTree
+
+## Headless test: godot --headless --script res://tests/test_sector_warning_view.gd
+## Non-zero exit on any failure.
+##
+## V5.3 a + b, band B7, #288's reads on the Budget's tile: a warned sector carries a mark
+## and its reason (the sim's), its trend draws, its unit says it is adjusted for need, and
+## the tile offers the answer that exists: one raise for the line, priced by the Budget's
+## own books (B1: what Commit books), a move only while a sector can pay. A crossing ranks
+## in the briefing and, on a month with none, folds into one note.
+##
+## Driven through the real controls a frame apart (AGENTS.md: a Control built but not shown
+## fails silently).
+
+const Sectors = preload("res://src/sim/sectors.gd")
+const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
+const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
+const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
+const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const ChartLine = preload("res://src/ui/chart_line.gd")
+const Priorities = preload("res://src/ui/priorities.gd")
+const PriorityWords = preload("res://src/ui/priority_words.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
+const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
+
+const LINE := "health"
+
+var _failures: Array[String] = []
+var _main
+var _panel
+var _frame := 0
+var _price := 0.0
+var _target := 0.0
+var _gdp_base := 0.0
+
+
+func _init() -> void:
+	_main = load("res://src/ui/main.tscn").instantiate()
+	root.add_child(_main)
+
+
+func _process(_delta: float) -> bool:
+	_frame += 1
+	match _frame:
+		2:
+			_panel = _main._budget_panel
+			_main._windows.open("budget")
+			_check_quiet_unit()
+			_stage_all_warned()
+			_press(_with_meta("line", LINE))
+		4:
+			_check_all_warned()
+			_press(_with_meta("raise_line", LINE))
+		6:
+			_check_drafted()
+			_panel._on_revert(false)
+			_stage_one_cut()
+		8:
+			_check_one_cut()
+			_check_arrival()
+			_finish()
+	return false
+
+
+## Before any drift: the unit says it is adjusted for need, and nothing is marked.
+func _check_quiet_unit() -> void:
+	var s: Dictionary = Sectors.sectors_of(_main._loader, LINE)[0]
+	var ns = _main._state.player()
+	if SectorWarningView.warned(ns, _main._loader, LINE).size() != 0:
+		_fail("premise: a sector warns on day one")
+	if BudgetSectors._unit(s) != Strings.t("%s, need-adjusted") % Strings.row("domains", String(s["id"]), "quantity.unit", String(s["quantity"]["unit"])):
+		_fail("unit: '%s' does not say it is adjusted for need" % BudgetSectors._unit(s))
+
+
+## Money per head well below the drift's base: every sector of every line warns, by income.
+func _stage_all_warned() -> void:
+	var ns = _main._state.player()
+	_gdp_base = float(ns.gdp_eur_bn) / float(ns.population)
+	ns.sector_drift["base_gdp_per_head"] = _gdp_base * 1.5
+	ns.sector_drift["history"] = {"hospitals": [5.3, 5.2, 5.1, 5.0]}
+	_panel.mark_dirty()
+
+
+func _check_all_warned() -> void:
+	var ns = _main._state.player()
+	var why := SectorWarningView.warned(ns, _main._loader, LINE)
+	if why.size() != Sectors.sectors_of(_main._loader, LINE).size():
+		_fail("premise: %d of the line's sectors warn" % why.size())
+	var said = _with_meta("sector_warning", SectorWarnings.REASON_INCOME)
+	if said == null or not (said as Label).text.contains(Strings.t(SectorWarnings.REASON_INCOME)):
+		_fail("mark: no line says the sim's reason (%s)" % [said.text if said != null else "<none>"])
+	elif not (said as Label).text.contains(Strings.row("domains", "hospitals", "name", "Hospitals")):
+		_fail("mark: the reason does not name the sector ('%s')" % said.text)
+	else:
+		var tone: Variant = said.get_theme_color("font_color") if said.has_theme_color_override("font_color") else null
+		if tone != ResultTone.TINT[ResultTone.RISKY]:
+			_fail("mark: the reason wears %s" % tone)
+	var toggle = _with_meta("line", LINE)
+	if toggle == null or not (toggle as Button).text.contains("(!)"):
+		_fail("mark: the line's toggle does not say a sector is slipping (%s)" % [toggle.text if toggle != null else "<none>"])
+	var name_label := _sector_label("hospitals")
+	if name_label == null or not name_label.text.contains("(!)"):
+		_fail("mark: the warned row is not marked (%s)" % [name_label.text if name_label != null else "<none>"])
+	var spark := 0
+	for node in _panel._sector_box.find_children("*", "", true, false):
+		if node.get_script() == ChartLine:
+			spark += 1
+	if spark != 1:
+		_fail("trend: %d sparklines, one sector has a history" % spark)
+	# No sector can pay: no greyed move, the real choice instead.
+	if _with_meta("move", "move") != null:
+		_fail("verb: a move is offered though every sector of the line is warned")
+	if not _text_under(_panel._sector_box).contains(Strings.t("No other sector of this line can pay.")):
+		_fail("verb: nothing says why no move is offered")
+	var go = _with_meta("raise_line", LINE)
+	if go == null or go.disabled:
+		_fail("verb: no live raise")
+		return
+	var strip = _raise_strip()
+	if strip == null:
+		_fail("verb: no strip prices the raise")
+		return
+	_price = float(strip.money_bn)
+	if _price >= 0.0:
+		_fail("verb: the raise reads as no cost (%s)" % _price)
+	if not (strip.money_label as Label).text.contains(EffectsStrip.money_text(_price)):
+		_fail("verb: the strip's money reads '%s'" % strip.money_label.text)
+	var most := 0.0
+	for id in why:
+		most = maxf(most, SectorWarnings.restore_pct_gdp(ns, _main._loader, LINE, String(id)))
+	var drafted := float(ns.spending_pct_gdp[LINE])
+	_target = minf(drafted + most, _panel.lever_span(LINE).y)
+	if not _text_under(strip).contains(Num.f(_target - drafted, 1)):
+		_fail("verb: the strip does not say the raise's points (%s): '%s'" % [Num.f(_target - drafted, 1), _text_under(strip)])
+
+
+## Drafted, not booked: the lever moved, the Budget's own figure is the strip's price (B1).
+func _check_drafted() -> void:
+	var ns = _main._state.player()
+	if absf(float(_panel._pending["spending_pct_gdp"][LINE]) - _target) > 0.0001 or absf(float(_panel._sliders[LINE].value) - _target) > 0.2:
+		_fail("raise: the lever reads %s, the raise is %s" % [_panel._pending["spending_pct_gdp"][LINE], _target])
+	if absf(float(ns.spending_pct_gdp[LINE]) - _target) < 0.0001:
+		_fail("raise: booked at the press, not drafted")
+	if absf(float(_panel._effects.get(LINE, 0.0)) - _price) > 0.005:
+		_fail("raise: priced %s, the lever's own figure is %s" % [_price, _panel._effects.get(LINE, 0.0)])
+
+
+## One sector cut far below the rest: its reason is the cut, others can pay it.
+func _stage_one_cut() -> void:
+	var ns = _main._state.player()
+	ns.sector_drift["base_gdp_per_head"] = _gdp_base
+	for i in 8:
+		Sectors.move_share(ns, _main._loader, LINE, "hospitals", "prevention", 0.1)
+	_panel.mark_dirty()
+
+
+func _check_one_cut() -> void:
+	var ns = _main._state.player()
+	var why := SectorWarningView.warned(ns, _main._loader, LINE)
+	if why.get("hospitals", "") != SectorWarnings.REASON_CUT:
+		_fail("premise: hospitals is not warned for a cut (%s)" % [why])
+		return
+	if _with_meta("sector_warning", SectorWarnings.REASON_CUT) == null:
+		_fail("mark: the cut's reason is not on the tile")
+	if _with_meta("move", "move") == null:
+		_fail("verb: a sector can pay, and no move is offered")
+	if _with_meta("raise_line", LINE) == null:
+		_fail("verb: a move does not replace the raise")
+	# The Go's aim: the move points at the warned sector, from one that can pay.
+	var from := SectorWarningView.donor(ns, _main._loader, LINE, Sectors.sectors_of(_main._loader, LINE), why, "hospitals")
+	SectorWarningView.aim(_panel, SectorWarningView.subject_of(LINE, "hospitals"))
+	if from == "" or _panel._move_to != "hospitals" or _panel._move_from != from or _panel._open_line != LINE:
+		_fail("aim: the move reads %s -> %s on %s, a donor is %s" % [_panel._move_from, _panel._move_to, _panel._open_line, from])
+
+
+## A crossing this month: it ranks among the priorities, and folds into one note.
+func _check_arrival() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var now: int = state.year * 12 + state.month
+	var warnings: Dictionary = ns.sector_drift.get_or_add("warnings", {})
+	warnings["hospitals"] = {"entered": now, "left": -1}
+	warnings["prevention"] = {"entered": now, "left": -1}
+	var ranked: Array = Priorities.rank(state, _main._loader, {"held_events": [], "programme_held": false})["lines"]
+	var found := {}
+	for line in ranked:
+		if String(line["kind"]) == "sector":
+			found = line
+	if found.is_empty():
+		_fail("arrival: a crossing is not among the three priorities (%s)" % [ranked.map(func(l): return l["kind"])])
+		return
+	if int(found["more"]) != 1:
+		_fail("arrival: two crossings do not fold into one line (+%s)" % found["more"])
+	if not PriorityWords.title(found, state, _main._loader).contains(Strings.row("domains", "hospitals", "name", "Hospitals")) \
+			and not PriorityWords.title(found, state, _main._loader).contains(Strings.row("domains", "prevention", "name", "Prevention")):
+		_fail("arrival: the line does not name a sector ('%s')" % PriorityWords.title(found, state, _main._loader))
+	var cards := SectorWarningView.note_cards(ns, _main._loader, now)
+	if cards.size() != 1 or not String(cards[0]["body"]).contains(Strings.row("domains", "hospitals", "name", "Hospitals")):
+		_fail("arrival: not one note naming the sectors (%s)" % [cards])
+	if not SectorWarningView.note_cards(ns, _main._loader, now + 1).is_empty():
+		_fail("arrival: the note comes again the month after")
+
+
+# -- helpers --
+
+func _sector_label(id: String) -> Label:
+	for node in _panel._sector_box.find_children("*", "Label", true, false):
+		if String(node.get_meta("sector", "")) == id and not _gone(node):
+			return node
+	return null
+
+
+func _raise_strip():
+	for node in _panel._sector_box.find_children("*", "", true, false):
+		if node.has_meta("raise_strip") and not _gone(node):
+			return node
+	return null
+
+
+func _with_meta(key: String, value: String):
+	for node in _panel.find_children("*", "", true, false):
+		if node.has_meta(key) and String(node.get_meta(key)) == value and not _gone(node) and (node as Control).is_visible_in_tree():
+			return node
+	return null
+
+
+func _gone(node: Node) -> bool:
+	var up: Node = node
+	while up != null:
+		if up.is_queued_for_deletion():
+			return true
+		up = up.get_parent()
+	return false
+
+
+func _press(button) -> void:
+	if button == null:
+		_fail("frame %d: the control to press is not on screen" % _frame)
+		return
+	(button as Button).pressed.emit()
+
+
+func _text_under(node: Node) -> String:
+	var out := ""
+	for label in node.find_children("*", "Label", true, false):
+		if not _gone(label):
+			out += (label as Label).text + " "
+	return out
+
+
+func _fail(message: String) -> void:
+	_failures.append(message)
+
+
+func _finish() -> void:
+	if _failures.is_empty():
+		print("test_sector_warning_view: all checks passed")
+		quit(0)
+	else:
+		for f in _failures:
+			printerr(f)
+		quit(1)
