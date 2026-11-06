@@ -178,6 +178,11 @@ jobs:
       # with its synthetic self-checks: stdlib, no Godot.
       - name: Event book lint
         run: python tools/event_lint.py --check
+      # The numbers only: the private basis is not in a clone (tools/private/ is gitignored).
+      - name: Shipped real-relations offsets
+        run: |
+          python tools/check_skills.py --selftest
+          python tools/check_skills.py
       - name: Translation tables (stale keys, empty values, placeholders)
         run: |
           python tools/i18n_extract.py --selftest

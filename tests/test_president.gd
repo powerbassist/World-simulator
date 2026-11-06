@@ -63,6 +63,9 @@ func _check_absent_reads_as_nothing_happened() -> void:
 	var party_id: String = _loader.parties[PLAYER][0].id
 	var authored: float = _loader.parties[PLAYER][0].funds_eur_m
 	var old_save = NationState.from_dict({"id": PLAYER})
+	# What an absent row reads. A new game writes one for a person with a party, which
+	# is tests/test_start_regard.gd's to pin.
+	state.player().person_rapport.erase(pid)
 	for ns in [state.player(), old_save]:
 		if President.knowledge(ns, pid) != 0.0 or President.knowledge_band(ns, pid) != "stranger":
 			_fail("absent knowledge read %.2f / %s, not 0 / stranger" % [President.knowledge(ns, pid), President.knowledge_band(ns, pid)])

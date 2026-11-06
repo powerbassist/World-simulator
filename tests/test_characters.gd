@@ -62,7 +62,8 @@ func _init() -> void:
 ## marker contract: the ALLOWED preloads and no others. The meter systems
 ## are the ones a writer's temptation would reach for first. V5.3-0 added
 ## staff.gd: a leaf of the schema alone (character_constants), it hands this
-## file the cast to walk and reads no system.
+## file the cast to walk and reads no system. V5.3 a + b added character_seed.gd:
+## the new game's arithmetic, which the month never reaches.
 func _check_leaf_property() -> void:
 	var src := FileAccess.get_file_as_string("res://src/sim/characters.gd")
 	if src.is_empty():
@@ -70,7 +71,7 @@ func _check_leaf_property() -> void:
 		return
 	var allowed := [
 		"character_constants.gd", "character_act_constants.gd",
-		"government.gd", "legislature.gd", "staff.gd",
+		"government.gd", "legislature.gd", "staff.gd", "character_seed.gd",
 	]
 	# Comments STRIPPED (the tick-order check's own lesson): characters.gd
 	# discusses the systems it refuses to preload at length, and a comment
