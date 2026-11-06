@@ -170,12 +170,12 @@ func _test_the_drift_stays_out_of_the_channels() -> void:
 		_fail("the drift reached a channel")
 
 
-## FRA's hospitals, GDP per head held: the figure is 0.05 under its start once
-## 1.024 ^ (0.6 m / 12) >= 1 / 0.95, that is m >= 43.25.
+## FRA's hospitals, GDP per head held: the figure is 0.03 under its start once
+## 1.024 ^ (0.6 m / 12) >= 1 / 0.97, that is m >= 25.69.
 func _test_a_held_line_crosses_at_the_month_the_arithmetic_says() -> void:
 	var state = _state()
 	var ns = state.player()
-	for m in range(1, 44):
+	for m in range(1, 26):
 		_tick(state)
 		if not SectorWarnings.arrivals(ns, _loader, _now(state)).is_empty():
 			_fail("something arrived at month %d: %s" % [m, SectorWarnings.arrivals(ns, _loader, _now(state))])
@@ -183,9 +183,9 @@ func _test_a_held_line_crosses_at_the_month_the_arithmetic_says() -> void:
 			_fail("hospitals warned at month %d, before the band" % m)
 	_tick(state)
 	if SectorWarnings.warning(ns, _loader, "health", "hospitals") == "":
-		_fail("hospitals did not warn at month 44: %s" % Sectors.quantity(ns, _loader, "health", "hospitals"))
+		_fail("hospitals did not warn at month 26: %s" % Sectors.quantity(ns, _loader, "health", "hospitals"))
 	if not _arrived(state, "hospitals"):
-		_fail("hospitals did not arrive at month 44: %s" % [SectorWarnings.arrivals(ns, _loader, _now(state))])
+		_fail("hospitals did not arrive at month 26: %s" % [SectorWarnings.arrivals(ns, _loader, _now(state))])
 
 
 func _test_a_better_figure_never_warns() -> void:
@@ -201,7 +201,7 @@ func _test_a_better_figure_never_warns() -> void:
 func _test_one_arrival_per_crossing_then_the_rearm() -> void:
 	var state = _state()
 	var ns = state.player()
-	for i in 44:
+	for i in 26:
 		_tick(state)
 	if not _arrived(state, "hospitals"):
 		_fail("the crossing did not arrive")

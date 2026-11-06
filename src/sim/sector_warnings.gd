@@ -39,7 +39,7 @@ const DK = preload("res://src/sim/domains_constants.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 
 const REASON_CUT := "Its money has been cut below where it started."  # i18n: msgid
-const REASON_NEED := "The need has grown faster than its money."  # i18n: msgid
+const REASON_NEED := "Its money has not kept up with the need."  # i18n: msgid
 
 
 static func tick_month(state, loader) -> void:
