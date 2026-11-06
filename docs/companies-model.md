@@ -1415,7 +1415,8 @@ it lands and the dividend keeps its one-month lag.
   - walked: the deal ends, nothing paid, no U-turn (the other side left), the start's
     half of the bloc move stays, and the walked side's verbs on the firm wait 24 months
     (`NEGOTIATE_WALK_COOLDOWN_MONTHS`, the parent's call 1, per side by its ruling on
-    #280; `Negotiation.cooldown()` through `Processes.refusal`): after a seller walks,
+    #280; `Negotiation.holds()`, read in `Processes.refusal`'s one scan of the
+    register): after a seller walks,
     the purchases (a stake, a nationalisation bill); after the buyers walk, the sale.
     The other side's verbs stay open, so a walked stake does not hold a sale of the
     share the state already owns, and the refusal names who walked.
@@ -1427,11 +1428,21 @@ it lands and the dividend keeps its one-month lag.
   The strips hold it (A3, A4): a month more on each price verb's longest duration, and
   the price range reaches the largest counter (under the premium's floor; above the
   value on a sale). No answer is beaten on every figure (`tests/test_process_asks.gd`):
-  walking wins the cash, accepting the completion, a counter the price if it lands. The
-  closing plant's buyer (`closures.gd`) is the next step. Every number is a stand-in.
-  A price stage with an answered counter cannot be stopped: `Budget.project()` runs the
-  seeded draw on its copy, so the forecast shows the answer early, and a known answer
-  must not be dodged (the drawn ruling's rule). A counter that comes back reopens it.
+  walking wins the cash, accepting the completion, a counter the price if it lands.
+  Every number is a stand-in. The strip's range slides over every place that holds the
+  truth inside [0, 1], so at the edges (a 5 % counter against a weak seller) it is not
+  pinned at 80 to 100 % (Negotiate PR 2); in the middle it is the window it was. The
+  forecast is blind to the answer: `Budget.project()` reads an answered counter on its
+  copy as the deal at its old price (`ProcessAsks.blind`), so the debt path says
+  nothing of the draw. A price stage with an answered counter still cannot be stopped
+  (pass 1 on #280: the counter is on the table); a counter that comes back reopens it.
+  - **The closing plant's buyer** (`closures.gd`, Negotiate PR 2). A plant closure
+    offers the buyer's search with its sweetener cut by 5, 10 or 15 %, the buyer
+    answering at full strength (`Negotiation.odds` at leverage 1: 55, 35 and 15 %).
+    The search runs as the buyer's; a buyer found accepts (the cut sweetener), walks
+    (the plant shuts) or comes back at the OLD sweetener, and the closure is then
+    `offered` for a month: sell at it (the default at its due month) or close now.
+    No cooldown and no U-turn: the closure's own `cooldown_months` stands.
 - **The save.** `ns.processes` is `absent_ok`, with no bump: no save made before
   V5.3 a could hold a process, so an absent register reads "nothing in progress",
   which is the truth.

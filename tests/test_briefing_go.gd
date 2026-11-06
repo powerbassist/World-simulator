@@ -25,6 +25,8 @@ const ActsOn = preload("res://src/ui/acts_on.gd")
 const DeskCards = preload("res://src/ui/desk_cards.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Programme = preload("res://src/sim/programme.gd")
+const Companies = preload("res://src/sim/companies.gd")
+const Closures = preload("res://src/sim/closures.gd")
 const Person = preload("res://src/core/person.gd")
 const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 
@@ -66,6 +68,9 @@ func _process(_delta: float) -> bool:
 			_show(_case)
 			_step = 1
 		1:
+			if String(_case["kind"]) == "plant":
+				_main._companies_panel._scroll.scroll_vertical = 1500
+				_case["scrolled"] = _main._companies_panel._scroll.scroll_vertical
 			Click.half(_main.get_viewport(), _go_button(), true)
 			_step = 2
 		2:
@@ -136,6 +141,20 @@ func _plan() -> Array:
 	cases.append({"kind": "person", "subject": pid, "setup": func() -> String:
 		ns.person_grudges[pid] = 0.9
 		return pid})
+	# #287: a buyer that came back: its Go lands on "Sell at the old price".
+	cases.append({"kind": "plant", "setup": func() -> String:
+		var major = Companies.majors_of(loader, ns.id)[0]
+		Closures._announce(ns, major, ns.companies[major.id], 0.2, loader.closure_rule, now)
+		var row: Dictionary = ns.companies[major.id]["closure"]
+		row["status"] = Closures.OFFERED
+		row["offered"] = now
+		row["due"] = now + 1
+		row["back_sweetener_eur_bn"] = 0.1
+		_main._companies_panel.mark_dirty()
+		# The tab left scrolled down: Go must bring the row, at its top, back in view.
+		_main._windows.open("companies")
+		_main._companies_panel._body.custom_minimum_size.y = 6000.0
+		return String(row["id"])})
 	# A live entry: chosen now, its "Work on it" is the verb.
 	cases.append({"kind": "programme", "setup": func() -> String:
 		var offer: Array = Programme.available(state, ns, loader)
@@ -193,6 +212,12 @@ func _check(c: Dictionary) -> void:
 			_fail("%s: Go did not bring up the inbox" % label)
 	elif not _main._windows.is_open(tab):
 		_fail("%s: Go did not open the '%s' tab" % [label, tab])
+	if kind == "plant":
+		if int(c["scrolled"]) <= 0:
+			_fail("plant: premise, the tab was not scrolled before Go")
+		if _main._companies_panel._scroll.scroll_vertical != 0:
+			_fail("plant: Go left the tab scrolled past the plant's row")
+		_main._companies_panel._body.custom_minimum_size.y = 0.0
 	if kind == "bill":
 		var page: Control = _main._windows.content("legislature")
 		if not _shows_text(page, _main._law_panel._laws.tabled_text(_main._state.player())):

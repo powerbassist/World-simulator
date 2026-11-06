@@ -181,10 +181,9 @@ func _proposed_job():
 	var job = Budget.projection(_state, pending, _months, _loader)
 	if not moves.is_empty():
 		# ONE copy (QA's RECORD on #278: a pre-copy then the job's own was two world
-		# copies in a frame): the job's first step done here, Budget.projection_step's
-		# own two lines, then the moves on that copy, after the levers as Commit books.
-		job.sim = _state.duplicate_state()
-		Budget.commit(job.sim, pending)
+		# copies in a frame): the job's first step done here, by Budget.projection_step's
+		# own helper, then the moves on that copy, after the levers as Commit books.
+		job.sim = Budget.projection_copy(_state, pending)
 		for m in moves:
 			Sectors.move_share(job.sim.player(), _loader, String(m["line"]), String(m["from"]), String(m["to"]), float(m["amount"]))
 	return job

@@ -25,7 +25,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const PRICE_STAGES := ["negotiation", "offer", "sale"]
 const PURCHASE_STAGES := ["negotiation", "offer"]
 ## The verbs whose deals can be negotiated, by the side the state deals with: a seller
-## on a purchase, the buyers on a sale (side_of(); a walk holds its own side's, cooldown()).
+## on a purchase, the buyers on a sale (side_of(); a walk holds its own side's, holds()).
 const PURCHASE_VERBS := ["minority_stake", "full_nationalisation"]
 const SALE_VERBS := ["privatisation"]
 const SELLER_WALKED := "The seller walked away from a deal on this firm and will not talk again yet."
@@ -42,11 +42,16 @@ static func odds(counter: float, leverage: float) -> float:
 
 
 ## The range the strip shows for true odds `odds_true`: NEGOTIATE_FOG either side
-## wide, the truth seeded inside it on the deal's key in month `now`.
+## wide, the truth seeded inside it on the deal's key in month `now`. The window slides
+## over every place that holds the truth inside [0, 1] (the #280 RECORD: clamped, a
+## truth above 1 - 2 x FOG sat in the top window on most seeds and the fog said where
+## it was); in the middle that is the window it always was, on the same seed.
 static func shown(odds_true: float, key: String, now: int) -> Vector2:
 	var u := Cycle.unit("%s|odds" % key, now)
-	var lo := clampf(odds_true - 2.0 * K.NEGOTIATE_FOG * u, 0.0, 1.0 - 2.0 * K.NEGOTIATE_FOG)
-	return Vector2(lo, lo + 2.0 * K.NEGOTIATE_FOG)
+	var width := 2.0 * K.NEGOTIATE_FOG
+	var top := minf(odds_true, 1.0 - width)
+	var lo := top - (top - maxf(odds_true - width, 0.0)) * u
+	return Vector2(lo, lo + width)
 
 
 ## The other side's answer at the ask's due month: "accepted" at its odds, else
@@ -101,18 +106,18 @@ static func side_of(action_id: String) -> String:
 	return "buyers" if SALE_VERBS.has(action_id) else ""
 
 
-## Why a walk still holds this verb on this firm, "" when it does not (the parent's
-## call 1, per side by its ruling on #280): after a seller walks away from a purchase,
-## the firm's purchases -- a new stake, a nationalisation bill -- wait
-## NEGOTIATE_WALK_COOLDOWN_MONTHS; after the buyers walk away from a sale, its sales do.
-## The other side's verbs stay open: a walked stake does not hold a sale of the share
-## the state already owns. Processes.refusal() reads it; the line names who walked.
-static func cooldown(ns, company_id: String, action, now: int) -> String:
-	var side := side_of(String(action.id)) if action != null else ""
-	if side == "":
-		return ""
-	for row in ns.processes:
-		if String(row["company_id"]) == company_id and String(row["status"]) == "walked" \
-				and side_of(String(row["action_id"])) == side and now - int(row["closed"]) < K.NEGOTIATE_WALK_COOLDOWN_MONTHS:
-			return SELLER_WALKED if side == "seller" else BUYERS_WALKED
-	return ""
+## Whether the walk on `row` still holds the verbs of `side` ("seller" or "buyers",
+## side_of) in month `now` (the parent's call 1, per side by its ruling on #280): after
+## a seller walks away from a purchase, the firm's purchases -- a new stake, a
+## nationalisation bill -- wait NEGOTIATE_WALK_COOLDOWN_MONTHS; after the buyers walk
+## away from a sale, its sales do. The other side's verbs stay open: a walked stake does
+## not hold a sale of the share the state already owns. Processes.refusal() reads it in
+## its one scan of the register and names who walked (walked_line()).
+static func holds(row: Dictionary, side: String, now: int) -> bool:
+	return side != "" and String(row["status"]) == "walked" and side_of(String(row["action_id"])) == side \
+			and now - int(row["closed"]) < K.NEGOTIATE_WALK_COOLDOWN_MONTHS
+
+
+## The refusal that names who walked away: the seller, or the buyers.
+static func walked_line(side: String) -> String:
+	return SELLER_WALKED if side == "seller" else BUYERS_WALKED

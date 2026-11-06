@@ -371,6 +371,11 @@ static func go(main, index: int) -> void:
 		"person":
 			main._windows.open(tab)
 			main._people_panel.focus(subject)
+		"plant":
+			# The closure's row heads In progress, the tab's top: a tab left scrolled
+			# down would hide the one month's answer.
+			main._windows.open(tab)
+			main._companies_panel._scroll.scroll_vertical = 0
 		"commitment" when tab == "calendar":
 			# The Diary on the due day (2.4): a word is judged as its month begins,
 			# so its mark and its Call are on the first.

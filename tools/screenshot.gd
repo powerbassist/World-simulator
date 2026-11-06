@@ -48,6 +48,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-back --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority --open region
@@ -484,6 +486,10 @@ var _sectors := false
 ## V5.3 a + b (#251): a plant closure announced on the first major, its card and
 ## its answers side by side on the Industry tab's In progress strip.
 var _closure := false
+## #285: with --closure, the buyer came back: the one month's re-ask at the old price.
+var _buyer_back := false
+## #287: with --closure, the buyer walked over a counter: its one result line, BAD.
+var _buyer_walked := false
 
 ## V5.3 a + b (spec 3.3 (a), #263): the Territory tab with a region opened -- its one
 ## problem first, then the development fund's sums, strip and Start; a fund already
@@ -987,6 +993,10 @@ func _init() -> void:
 			_sectors = true
 		elif args[i] == "--closure":
 			_closure = true
+		elif args[i] == "--buyer-back":
+			_buyer_back = true
+		elif args[i] == "--buyer-walked":
+			_buyer_walked = true
 		elif args[i] == "--walked":
 			_walked = true
 		elif args[i] == "--fund":
@@ -1295,6 +1305,10 @@ func _apply_view() -> void:
 		_main._companies_panel.mark_dirty()
 	if _fund:
 		_stage_a_fund()
+	if _buyer_back:
+		_stage_a_buyer_back()
+	if _buyer_walked:
+		_stage_a_buyer_walked()
 	if _walked:
 		_stage_a_walk()
 	if _priority != "":
@@ -2053,6 +2067,39 @@ func _open_the_tax_code() -> void:
 ## For --moved: health up a point and a half, education down half a point,
 ## income up two, VAT down one -- each through its slider, so the panels hear the
 ## edit the way a drag sends it.
+func _stage_a_buyer_walked() -> void:
+	var state = _main._state
+	var now: int = state.year * 12 + state.month
+	for entry in state.player().companies.values():
+		var row: Dictionary = entry.get("closure", {})
+		if not row.is_empty():
+			row["countered"] = 0.15
+			# Both as Closures.answer() writes them on a countered row: the query reads them.
+			row["sweetener_eur_bn"] = 0.06
+			row["back_sweetener_eur_bn"] = 0.07
+			row["status"] = "closed"
+			row["ended"] = now
+			row["negotiation"] = {"answer": "negotiate_15", "outcome": "walked", "month": now}
+	_main._companies_panel.mark_dirty()
+
+
+func _stage_a_buyer_back() -> void:
+	var closures = preload("res://src/sim/closures.gd")
+	var state = _main._state
+	var ns = state.player()
+	for entry in ns.companies.values():
+		var row: Dictionary = entry.get("closure", {})
+		if String(row.get("status", "")) == closures.ANNOUNCED:
+			for a in closures.answers(state, ns, _main._loader, String(row["id"])):
+				if String(a["kind"]) == "buyer":
+					row["back_sweetener_eur_bn"] = float(a["sweetener_eur_bn"])
+			var now: int = state.year * 12 + state.month
+			row["status"] = closures.OFFERED
+			row["offered"] = now
+			row["due"] = now + 1
+	_main._companies_panel.mark_dirty()
+
+
 func _stage_a_walk() -> void:
 	var processes = preload("res://src/sim/processes.gd")
 	var state = _main._state
