@@ -93,7 +93,7 @@ Natural Earth (public domain).
 
 ## Spending sectors (V5.3 a)
 
-The shares and start quantities in `data/domains/*.json`, read on 2026-11-01; each row's `source` line gives the table, the year and the address.
+The shares and start quantities in `data/domains/*.json`, read on 2026-11-01; each row's `source` line gives the table, the year and the address. The yearly need rates in the same files, read on 2026-11-02, come from Eurostat's EUROPOP2023 projections (`proj_23np`) and the Office for National Statistics' *National population projections: 2024-based*, under the Open Government Licence v3.0; each row's `need_source` line says which.
 
 - Eurostat: `gov_10a_exp` (COFOG), `hlth_rs_bds1`, `educ_uoe_perp04`, `educ_uoe_grad01`, `educ_uoe_grad02`, `educ_uoe_fine01`, `isoc_cbt`, `ilc_pnp3`, `spr_exp_pens`, `ert_bil_eur_a`, under Eurostat's re-use policy (Commission Decision 2011/833/EU): re-use is allowed with acknowledgement of the source and a note of any change. Values were recomputed into shares; Eurostat is not responsible for the result.
 - HM Treasury, *Public Expenditure Statistical Analyses 2026*, table 5.2 (2024-25 outturn); DWP, *Benefit expenditure and caseload tables 2026* (Great Britain, not the UK); NHS England KH03 bed availability; ONS mid-2025 population estimates. Open Government Licence v3.0, contains public sector information.

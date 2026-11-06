@@ -17,8 +17,8 @@ extends RefCounted
 ## with the draft applied (on a copy), Commit books it (apply_moves) and Revert drops
 ## it. Committed with the levers, it is one decision with them.
 ##
-## Not here yet (the sim has no query for them, 2026-11-02): each quantity's trend, a
-## warning mark for a quantity in its bad band, the sector's staff.
+## Not here yet: each quantity's trend and its warning mark (the sim has them,
+## SectorWarnings.trend() and .warning()), the sector's staff (no query yet).
 
 const Sectors = preload("res://src/sim/sectors.gd")
 const DK = preload("res://src/sim/domains_constants.gd")

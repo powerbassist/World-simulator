@@ -8,9 +8,11 @@ extends RefCounted
 ##                                  moved shares, else the nation's start shares
 ##                                  (else the `default` row);
 ##   quantity(ns, loader, line, id) the sector's quantity: its start figure moved by
-##                                  (its spending now / at the start) ^ elasticity,
-##                                  with the sign of the row's `better` (more
-##                                  spending always improves it);
+##                                  ratio() ^ elasticity, with the sign of the row's
+##                                  `better` (more spending always improves it);
+##   ratio(ns, loader, line, id)    what moves it: the player's levers (its spending
+##                                  now / at the start) x drift_ratio() (real money
+##                                  per head / the need);
 ##   move_share(...)                the quantified verb: move part of one sector's
 ##                                  share to another, a pure reallocation (the line's
 ##                                  money is unchanged);
@@ -36,6 +38,13 @@ extends RefCounted
 ## x * 1.0 == x in IEEE arithmetic, so band A1 (every share at its start, the
 ## balance table cmp-identical) holds by construction.
 ##
+## THE DRIFT STAYS OUT OF THE FACTOR (the parent's option (c); src/sim/sector_warnings.gd
+## ticks it). A held line's figure moves every month, with GDP per head and the need,
+## and no channel reads that: the channels read a line as a share of GDP, which already
+## scales with the money, and pensions already pay for ageing through
+## Society.dependency_divisor(), so a need in the factor would charge it twice. So the
+## drift is what a player reads and is warned of, and moves no balance figure.
+##
 ## THE FACTOR IS DERIVED, NOT SAVED (project_sited_pct's case): the three channels
 ## take no loader, so move_share() stores it on the nation (`ns.sector_factor`) and
 ## the load path re-derives it from the saved moves and the shipped rows
@@ -44,8 +53,10 @@ extends RefCounted
 ## save), so the channel and the tile never disagree.
 ##
 ## quantity() and the factor call pow(): MAIN-THREAD only (src/core/parallel.gd's
-## rule: no pow()/exp() on a worker). No tick step computes either; a channel reads
-## the stored float, a panel or a probe reads quantity().
+## rule: no pow()/exp() on a worker). A channel reads the stored float, a panel or a
+## probe reads quantity(), and the one tick step that computes it is SectorWarnings' in
+## WorldMonth's Sectors step, a whole step on the calling thread: it must stay out of
+## any fan-out.
 ##
 ## THE REGISTER IS THE PLAYER'S MOVES ONLY: `ns.sector_shares` holds a line only
 ## once the player has moved one of its shares, never a copy of the start (a copy
@@ -88,20 +99,60 @@ static func _moved(ns, loader, line: String) -> Dictionary:
 
 static func quantity(ns, loader, line: String, sector_id: String) -> float:
 	for s in sectors_of(loader, line):
-		if String(s["id"]) != sector_id:
-			continue
-		var start: Dictionary = _start(ns, s)
-		var line_now := float(ns.spending_pct_gdp.get(line, 0.0))
-		var line_then := float(ns.start_spending_pct_gdp.get(line, 0.0))
-		var share_now := float(shares(ns, loader, line)[sector_id])
-		if line_then <= 0.0 or float(start["share"]) <= 0.0:
-			return float(start["quantity"])
-		var ratio := (line_now / line_then) * (share_now / float(start["share"]))
-		var e := float(DK.ELASTICITY[sector_id])
-		if String(s["quantity"]["better"]) == "lower":
-			e = -e
-		return float(start["quantity"]) * pow(maxf(ratio, DK.RATIO_FLOOR), e)
+		if String(s["id"]) == sector_id:
+			return float(_start(ns, s)["quantity"]) \
+				* pow(maxf(ratio(ns, loader, line, sector_id), DK.RATIO_FLOOR), _signed_elasticity(loader, line, sector_id))
 	return 0.0
+
+
+## How far quantity() is worse than the sector's start figure, as a share of that
+## figure: 0.05 is 5 % worse, below zero is better. The `better` of the row reads it.
+static func shortfall(ns, loader, line: String, sector_id: String) -> float:
+	for s in sectors_of(loader, line):
+		if String(s["id"]) == sector_id:
+			var start := float(_start(ns, s)["quantity"])
+			var off := (start - quantity(ns, loader, line, sector_id)) / start
+			return -off if String(s["quantity"]["better"]) == "lower" else off
+	return 0.0
+
+
+## The sector's money against its need, now over the start: 1.0 at a new game, and
+## exactly so. The line's own lever times held_ratio().
+static func ratio(ns, loader, line: String, sector_id: String) -> float:
+	var line_then := float(ns.start_spending_pct_gdp.get(line, 0.0))
+	if line_then <= 0.0:
+		return 1.0
+	return float(ns.spending_pct_gdp.get(line, 0.0)) / line_then * held_ratio(ns, loader, line, sector_id)
+
+
+## ratio() with the line at its start level: the share's lever times drift_ratio().
+static func held_ratio(ns, loader, line: String, sector_id: String) -> float:
+	for s in sectors_of(loader, line):
+		if String(s["id"]) == sector_id:
+			return float(shares(ns, loader, line)[sector_id]) / float(_start(ns, s)["share"]) * drift_ratio(ns, s)
+	return 1.0
+
+
+## What a held line's money does on its own: real money per head over the need, both
+## against where the drift began. Every figure in this project is in constant prices
+## and a line is a share of GDP (src/sim/inflation.gd's boundary), so GDP per head IS
+## the real money per head, already after inflation; a deflator here would charge it
+## twice. The need's rate is per inhabitant (data/domains/, the group the line serves
+## less the population), since the money is too. Exactly 1.0 until the first month.
+static func drift_ratio(ns, sector: Dictionary) -> float:
+	return income_ratio(ns) / need_ratio(ns, sector)
+
+
+## GDP per head over where the drift began: drift_ratio()'s money.
+static func income_ratio(ns) -> float:
+	var base := float(ns.sector_drift.get("base_gdp_per_head", 0.0))
+	return float(ns.gdp_eur_bn) / float(ns.population) / base if base > 0.0 else 1.0
+
+
+## The sector's need per inhabitant over where the drift began: drift_ratio()'s need.
+static func need_ratio(ns, sector: Dictionary) -> float:
+	var rate := float(_start(ns, sector)["need_drift_pct_year"]) / 100.0
+	return pow(1.0 + rate, float(ns.sector_drift.get("need_months", 0)) / 12.0)
 
 
 ## Move `amount` of the line's share from one sector to another. {ok, shares} or
@@ -200,6 +251,11 @@ static func set_priority(state, ns, loader, line: String, sector_id: String, reg
 	ns.sector_priorities[sector_id] = _priority_row(state, ns, loader, line, sector_id, region_id)
 	_cap(state, ns)
 	return {"ok": true}
+
+
+## The month `region_id` may take this sector first again, 0 when it need not wait.
+static func rest_until(ns, sector_id: String, region_id: String) -> int:
+	return int((ns.sector_priority_rest.get(sector_id, {}) as Dictionary).get(region_id, 0))
 
 
 ## Clear a sector's priority; its region's other priority is re-capped at once.
@@ -400,7 +456,7 @@ static func _priority_refusal(state, ns, loader, line: String, sector_id: String
 	if priority_of(ns, sector_id) == region_id \
 			and int((ns.sector_priorities[sector_id] as Dictionary).get("renewals", 0)) >= DK.PRIORITY_MAX_RENEWALS:
 		return "This priority was renewed once already: it ends with this term."
-	if _now(state) < int((ns.sector_priority_rest.get(sector_id, {}) as Dictionary).get(region_id, 0)):
+	if _now(state) < rest_until(ns, sector_id, region_id):
 		return "This region held this priority lately and must wait before taking it again."
 	var held := 0
 	for other in ns.sector_priorities:

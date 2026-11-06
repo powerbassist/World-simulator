@@ -70,7 +70,7 @@ extends SceneTree
 ## builds each answer's effects strip from the sim's own numbers; the rule (what is
 ## meaningful, the 3-month repeat, the band) is tools/density_count.gd's, pinned by
 ## tests/test_density_count.gd. The sources, all that exist on main (the spec's
-## process stages, sector and region warnings, polls on any measure, divisions open
+## process stages, region warnings, polls on any measure, divisions open
 ## to an address and plant closures are not built yet, and count nothing here):
 ##   event      a desk entry: its arrival, and its last month (months_left <= 1,
 ##              the lapse guard); answers = its choices' authored effects;
@@ -137,6 +137,9 @@ const Budget = preload("res://src/sim/budget.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Closures = preload("res://src/sim/closures.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
+const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
+const DomainsK = preload("res://src/sim/domains_constants.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
@@ -166,11 +169,17 @@ const BUDGET_CARDS_A_YEAR := 6.0
 ## EUR (_closure_pick). A probe policy, not a sim number: above the rescue's EUR
 ## 180,000 a job, so a plant no buyer keeps cheaper is rescued.
 const CLOSURE_MAX_EUR_PER_JOB := 250000.0
+## The share of a line the active player moves into a warned sector (_act). A probe
+## policy, not a sim number.
+const ACTIVE_SECTOR_MOVE := 0.02
 
 var _loader
 var _priorities = null
 ## The active regime's closure answers in the current run, by answer id (_act).
 var _closure_picks := {}
+## The active regime's answers to sector warnings in the current run (_act): a share moved,
+## or none where no sector of the line can pay.
+var _sector_answers := {"moved": 0, "none": 0}
 var _music_band = null
 
 
@@ -298,6 +307,18 @@ func _act(state, ns) -> void:
 		var pick := _closure_pick(Closures.answers(state, ns, _loader, String(row["id"])), float(row["jobs"]))
 		_closure_picks[pick] = int(_closure_picks.get(pick, 0)) + 1
 		Closures.answer(state, ns, _loader, String(row["id"]), pick)
+	# V5.3 a + b: a sector warning is answered the month after it arrived, by the free
+	# verb: a share of the line moved into the sector from a sector that can pay
+	# (DensityCount.donor). Raising the line would change the budget of a run that is
+	# measuring the world's arrivals. A line with no such sector goes unanswered, France's,
+	# Germany's and Poland's pensions from the first warning, and the tally says how many.
+	for row in SectorWarnings.arrivals(ns, _loader, int(state.year) * 12 + int(state.month) - 1):
+		var line := String(row["line"])
+		var shares := Sectors.shares(ns, _loader, line)
+		var warned: Array = shares.keys().filter(func(id) -> bool: return SectorWarnings.warning(ns, _loader, line, String(id)) != "")
+		var donor := DensityCount.donor(shares, String(row["id"]), warned, ACTIVE_SECTOR_MOVE, DomainsK.MIN_SHARE)
+		var answered := donor != "" and bool(Sectors.move_share(ns, _loader, line, donor, String(row["id"]), ACTIVE_SECTOR_MOVE).get("ok", false))
+		_sector_answers["moved" if answered else "none"] += 1
 
 
 ## The active player's answer to a closure (the parent's call 5 on #277): the answer
@@ -724,6 +745,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 	# is 0 only then), so it is counted in the first month's row.
 	var opening: Array = Programme.available(state, ns, _loader)
 	_closure_picks = {}
+	_sector_answers = {"moved": 0, "none": 0}
 	for i in range(months):
 		month += 1
 		if month > 12:
@@ -748,6 +770,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		_request_candidates(state, ns, report, now, candidates)
 		_firm_candidates(state, ns, now, candidates)
 		_closure_candidates(state, ns, now, candidates)
+		_sector_candidates(state, ns, now, candidates)
 		_process_candidates(state, ns, now, candidates)
 		if i == 0 and not opening.is_empty():
 			candidates.append(_programme_candidate(state, ns, opening))
@@ -804,7 +827,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		return {"now": r["now"], "count": r["world"], "domains": r["domains_world"]})
 	return {"nation": nation_id, "regime": regime, "band": DensityCount.summary(rows),
 		"band_world": DensityCount.summary(world_rows), "tally": tally, "rows": rows,
-		"closure_picks": _closure_picks.duplicate()}
+		"closure_picks": _closure_picks.duplicate(), "sector_answers": _sector_answers.duplicate()}
 
 
 ## The active player's modelled habit (header): at most one process a year, only
@@ -951,6 +974,18 @@ func _closure_candidates(state, ns, now: int, out: Array) -> void:
 			"domain": "industrial", "due": "arrival" if is_new else "deadline", "answers": answers})
 
 
+## A sector warning, the month its figure crossed into the bad band: hold, or raise
+## its line by what brings the figure back (SectorWarnings' own number, so the money
+## on the strip is what the answer would cost). A share move is the free answer and
+## sits on no axis of the strip, so it is not what makes this decision count.
+func _sector_candidates(state, ns, now: int, out: Array) -> void:
+	for row in SectorWarnings.arrivals(ns, _loader, now):
+		var line := String(row["line"])
+		out.append({"source": "sector", "subject": "sector|%s" % String(row["id"]), "state": "",
+			"domain": line, "due": "arrival",
+			"answers": [{}, _effects_strip(state, SectorWarnings.raise_effects(ns, _loader, line, String(row["id"])))]})
+
+
 ## Doing nothing, then every verb Companies.available offers on the firm whose op
 ## answers this window.
 func _firm_answers(state, ns, company_id: String, ops: Array) -> Array:
@@ -1037,6 +1072,7 @@ func _print_density(run: Dictionary) -> void:
 		"PASS" if bool(w["pass"]) else "FAIL", 100.0 * float(w["share"]), float(w["mean"]), int(w["longest_none"])])
 	if not (run.get("closure_picks", {}) as Dictionary).is_empty():
 		print("    closure answers %s" % JSON.stringify(run["closure_picks"]))
+		print("    sector answers %s" % JSON.stringify(run["sector_answers"]))
 	print("    counted %s; dull %s (saved by %s); repeats %s" % [
 		JSON.stringify(t["counted"]), JSON.stringify(t["dull"]), JSON.stringify(t["saved_by"]), JSON.stringify(t["repeat"])])
 	var empty := {}

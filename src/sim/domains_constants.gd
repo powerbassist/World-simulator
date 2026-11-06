@@ -75,3 +75,18 @@ const PRIORITY_MONTHS := 36
 ## the count). The strip shows both (Sectors.priority_estimate()).
 const PRIORITY_MAX_RENEWALS := 1
 const PRIORITY_REST_MONTHS := 36
+
+## V5.3 a + b, the sector warnings (src/sim/sector_warnings.gd; band B7, the parent's
+## option (c)). A sector is in its bad band once its quantity is this share of its
+## start figure worse. A stand-in, set by when it fires on a held line (the game's own
+## month, nobody answering): at 3 % the first crossings fall in months 34 to 37, inside
+## a first term with time left to answer; at 5 % in months 43 to 55, about when it ends.
+const WARNING_BAND := 0.03
+## After a sector leaves its band, the months before a return can arrive again: the
+## mark shows at once, the arrival waits, so a figure sitting on the band's edge does
+## not ask every month. A stand-in.
+const WARNING_REARM_MONTHS := 12
+## The trend's length, for "the worst in ten years" (the spec's own wording, 3.1).
+const TREND_MONTHS := 120
+## A yearly need rate past this is a data error (the highest sourced cell is 5.24).
+const NEED_DRIFT_MAX_PCT_YEAR := 10.0

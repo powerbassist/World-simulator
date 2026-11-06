@@ -29,6 +29,7 @@ func _init() -> void:
 	_check_arrival_and_deadline_count_once()
 	_check_summary_and_band()
 	_check_the_probe_counts_through_the_rule()
+	_check_the_active_player_moves_only_from_a_sector_that_can_pay()
 	_finish()
 
 
@@ -196,9 +197,27 @@ func _check_summary_and_band() -> void:
 
 func _check_the_probe_counts_through_the_rule() -> void:
 	var text := FileAccess.get_file_as_string("res://tools/decision_surfaces_probe.gd")
-	for needle in ["--density", "DensityCount.month(", "DensityCount.summary(", "WorldMonth.tick_month("]:
+	for needle in ["--density", "DensityCount.month(", "DensityCount.summary(", "WorldMonth.tick_month(", "_sector_candidates(state, ns, now, candidates)",
+			"SectorWarnings.raise_effects(", "DensityCount.donor("]:
 		if not text.contains(needle):
 			_failures.append("decision_surfaces_probe.gd does not contain %s" % needle)
+
+
+## QA on #288: the active player's move into a warned sector. France's pensions as
+## shipped: minimum_income holds 0.013 against a 0.02 move over a 0.01 floor, so it cannot
+## pay, and basic_pension is warned too, so it must not.
+func _check_the_active_player_moves_only_from_a_sector_that_can_pay() -> void:
+	var cases := [
+		["a warned sector the only other", {"a": 0.5, "b": 0.5}, "a", ["a", "b"], ""],
+		["the other under the floor", {"a": 0.987, "b": 0.013}, "a", ["a"], ""],
+		["the largest that can pay", {"a": 0.2, "b": 0.5, "c": 0.3}, "a", ["a"], "b"],
+		["the largest passed over if warned", {"a": 0.2, "b": 0.5, "c": 0.3}, "a", ["a", "b"], "c"],
+		["just above the floor can pay", {"a": 0.96, "b": 0.04}, "a", ["a"], "b"],
+	]
+	for c in cases:
+		var got := DensityCount.donor(c[1], String(c[2]), c[3], 0.02, 0.01)
+		if got != String(c[4]):
+			_failures.append("%s: donor %s, not %s" % [c[0], got, c[4]])
 
 
 func _finish() -> void:

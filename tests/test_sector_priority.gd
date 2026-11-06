@@ -44,6 +44,7 @@ func _init() -> void:
 	_test_no_priority_takes_a_region_under_the_nation()
 	_test_a_priority_renews_once_then_rests()
 	_test_the_game_month_ends_and_recaps_a_priority()
+	_test_rest_until_reads_the_register()
 	_finish()
 
 
@@ -683,6 +684,24 @@ func _test_the_game_month_ends_and_recaps_a_priority() -> void:
 
 
 ## One month of the whole game, in its own order (the clock is the caller's).
+## #284's RECORD: the Regions view reads the sim's own wait instead of re-deriving it.
+func _test_rest_until_reads_the_register() -> void:
+	var state = _state()
+	var ns = state.player()
+	var regions: Array = _list(state)
+	var first := String(regions[0].id)
+	var second := String(regions[1].id)
+	if Sectors.rest_until(ns, "hospitals", first) != 0:
+		_fail("no rest yet, and rest_until read %d" % Sectors.rest_until(ns, "hospitals", first))
+	Sectors.set_priority(state, ns, _loader, "health", "hospitals", first)
+	Sectors.clear_priority(state, ns, "hospitals")
+	var want := int(state.year) * 12 + int(state.month) + 36
+	if Sectors.rest_until(ns, "hospitals", first) != want:
+		_fail("rest_until read %d, the stop's rest ends at %d" % [Sectors.rest_until(ns, "hospitals", first), want])
+	if Sectors.rest_until(ns, "hospitals", second) != 0 or Sectors.rest_until(ns, "primary_care", first) != 0:
+		_fail("the rest reached another region or another sector")
+
+
 func _game_month(state) -> void:
 	state.month += 1
 	if state.month > 12:
