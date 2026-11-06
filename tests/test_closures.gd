@@ -723,6 +723,12 @@ func _test_the_loader_refuses_a_short_cooldown() -> void:
 		var unread: Array[String] = []
 		if not CompaniesLoader.parse_closure_rule(missing, "closures.json", unread).is_empty() or unread.is_empty():
 			_fail("a rule with no %s was accepted" % key)
+	for key in ["monthly_chance", "reference_fall"]:
+		var whole := good.duplicate(true)
+		whole[key] = 1.0
+		var refused_whole: Array[String] = []
+		if not CompaniesLoader.parse_closure_rule(whole, "closures.json", refused_whole).is_empty() or refused_whole.is_empty():
+			_fail("a rule with %s at 1 or more was accepted: the chance would be a timer" % key)
 
 
 func _set_now(state, absolute_month: int) -> void:

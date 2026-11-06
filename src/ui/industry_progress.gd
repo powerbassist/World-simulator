@@ -30,6 +30,8 @@ const Region = preload("res://src/core/region.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const Num = preload("res://src/ui/num.gd")
 
+const CLOSURE_GAP_SAID_PCT := 0.05
+
 ## One answer's column on a closure card, in px: three fit a docked window.
 const ANSWER_WIDTH := 300
 
@@ -149,16 +151,17 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % Strings.t(String(ANSWER.get(String(ask["default"]), ""))))
 
 
-## Why this plant, said as what the record kept: the firm's own output, and the economy
-## when it runs below its potential (the author's call on #286: the reason is true).
+## Why this plant, said as what the record kept the month it was announced: the firm's
+## own output, and the economy when it ran below its potential (the author's call on
+## #286: the reason is true). CLOSURE_GAP_SAID_PCT: under it the figure prints as 0.0.
 static func _closure_reason(row: Dictionary) -> String:
 	var months := int(row["window_months"])
 	var fell := Strings.tn("Its output fell %s %% in %d month.", "Its output fell %s %% in %d months.", months) % [
 		Num.f(100.0 * float(row["fall"]), 0), months]
 	var gap := float(row.get("gap_pct", 0.0))
-	if gap >= 0.0:
+	if gap > -CLOSURE_GAP_SAID_PCT:
 		return fell
-	return fell + " " + Strings.t("The economy runs %s %% below its potential.") % Num.f(-gap, 1)
+	return fell + " " + Strings.t("The economy was %s %% below its potential.") % Num.f(-gap, 1)
 
 
 ## A closure: announced, its card and answers; searching, its months left.

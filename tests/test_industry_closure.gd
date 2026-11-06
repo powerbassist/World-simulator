@@ -20,6 +20,7 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Pending = preload("res://src/ui/pending.gd")
 const Num = preload("res://src/ui/num.gd")
+const IndustryProgress = preload("res://src/ui/industry_progress.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -83,9 +84,19 @@ func _check_card() -> void:
 	var fell := Strings.tn("Its output fell %s %% in %d month.", "Its output fell %s %% in %d months.", int(row["window_months"])) % ["20", int(row["window_months"])]
 	if not text.contains(fell):
 		_fail("card: '%s' does not say what fell: %s" % [text, fell])
-	var below := Strings.t("The economy runs %s %% below its potential.") % Num.f(-float(row["gap_pct"]), 1)
-	if text.contains(below) != (float(row["gap_pct"]) < 0.0):
+	var below := Strings.t("The economy was %s %% below its potential.") % Num.f(-float(row["gap_pct"]), 1)
+	if text.contains(below) != (float(row["gap_pct"]) <= -0.05):
 		_fail("card: the economy's clause and the record's gap %s disagree: '%s'" % [row["gap_pct"], text])
+	# The sentence, whole: a gap that rounds to nothing is no reason to give (pass 1 on
+	# #286), a real one is said in the past, as the record's month it is.
+	var six := Strings.tn("Its output fell %s %% in %d month.", "Its output fell %s %% in %d months.", 6) % ["20", 6]
+	var flat := IndustryProgress._closure_reason({"window_months": 6, "fall": 0.2, "gap_pct": -0.03})
+	if flat != six:
+		_fail("card: a gap of -0.03 reads '%s', not '%s'" % [flat, six])
+	var slump := IndustryProgress._closure_reason({"window_months": 6, "fall": 0.2, "gap_pct": -2.0})
+	var said := six + " " + Strings.t("The economy was %s %% below its potential.") % Num.f(2.0, 1)
+	if slump != said:
+		_fail("card: a gap of -2.0 reads '%s', not '%s'" % [slump, said])
 	var answers: Array = Closures.answers(state, ns, loader, _closure_id)
 	var parent: Node = null
 	for answer in answers:

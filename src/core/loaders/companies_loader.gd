@@ -177,7 +177,7 @@ static func parse_closure_rule(parsed, path: String, errors: Array[String]) -> D
 		if float(parsed[key]) != floorf(float(parsed[key])):
 			errors.append("%s: '%s' is a whole number of months" % [fname, key])
 			return {}
-	for key in ["fall", "cut"]:
+	for key in ["fall", "cut", "monthly_chance", "reference_fall"]:
 		if float(parsed[key]) >= 1.0:
 			errors.append("%s: '%s' is a fraction, below 1" % [fname, key])
 			return {}

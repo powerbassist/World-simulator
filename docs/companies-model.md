@@ -1444,9 +1444,11 @@ almost never. `src/sim/closures.gd`, step `Closures` right after `Industry`.
   `window_months`: the falls are firms losing share to rivals, and the majors' summed
   output, tried first, fires 0 to 2 times a decade at 2 to 4 %. One fall closes one plant,
   at one of the majors past the threshold, weighted by its jobs, in the firm's live city;
-  one announcement a month, the worst fall first; a firm in a process is passed over; a
-  sector whose closure ended waits `cooldown_months`, which sets the rate (5 a sector a
-  decade at 24). A landed closure's `bloc_offset` is the move of a plant of
+  one announcement a month, the worst fall first; a firm in a process is passed over. A
+  major past `fall` is nearly always there, so the rate is a chance (the author's call on
+  #286): a falling sector closes a plant in a month with `Closures.chance()`, on its own
+  seed, reading its worst major's fall and the nation's output gap, so more in a slump.
+  `cooldown_months` is only a floor. A landed closure's `bloc_offset` is the move of a plant of
   `reference_jobs`, scaled by the plant's jobs.
 - **The answers** (`Closures.answers`, `Closures.answer`):
   - let it close, the default: the firm's live share falls by `cut` (to the residual,
