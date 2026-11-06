@@ -2074,6 +2074,9 @@ func _stage_a_buyer_walked() -> void:
 		var row: Dictionary = entry.get("closure", {})
 		if not row.is_empty():
 			row["countered"] = 0.15
+			# Both as Closures.answer() writes them on a countered row: the query reads them.
+			row["sweetener_eur_bn"] = 0.06
+			row["back_sweetener_eur_bn"] = 0.07
 			row["status"] = "closed"
 			row["ended"] = now
 			row["negotiation"] = {"answer": "negotiate_15", "outcome": "walked", "month": now}
