@@ -313,6 +313,9 @@ func _check_toggle_aims() -> void:
 	var from := SectorWarningView.donor(ns, _main._loader, LINE, Sectors.sectors_of(_main._loader, LINE), why, "hospitals")
 	if _panel._open_line != LINE or _panel._move_to != "hospitals" or _panel._move_from != from:
 		_fail("toggle: the move reads %s -> %s on '%s', the warned sector is hospitals and a donor %s" % [_panel._move_from, _panel._move_to, _panel._open_line, from])
+	# The donor it picked is not warned, so its strip does not call it slipping.
+	if from == "" or _text_under(_panel._sector_box).contains(Strings.t("Slipping too: %s.") % SectorWarningView.name_of(_main._loader, LINE, from)):
+		_fail("verb: an un-warned donor is said to be slipping ('%s')" % from)
 
 
 ## A sector at the floor is no donor, un-warned or not (the sim's refusal).
@@ -332,8 +335,7 @@ func _check_floor_cannot_pay() -> void:
 		_fail("donor: a sector at its floor pays")
 
 
-## One sector cut far below the rest: its reason is the cut, others can pay it. An
-## un-warned donor is not said to be slipping.
+## One sector cut far below the rest: its reason is the cut, others can pay it.
 func _stage_one_cut() -> void:
 	var ns = _main._state.player()
 	ns.sector_drift["base_gdp_per_head"] = _gdp_base
@@ -352,8 +354,6 @@ func _check_one_cut() -> void:
 		_fail("mark: the cut's reason is not on the tile")
 	if _with_meta("move", "move") == null:
 		_fail("verb: a sector can pay, and no move is offered")
-	if _text_under(_panel._sector_box).contains(Strings.t("Slipping too: %s.") % Strings.row("domains", "primary_care", "name", "Primary care")):
-		_fail("verb: an un-warned donor is said to be slipping")
 	if _with_meta("raise_line", LINE) == null:
 		_fail("verb: a move does not replace the raise")
 	# The Go's aim: the move points at the warned sector, from one that can pay.
