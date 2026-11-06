@@ -31,6 +31,7 @@ func _init() -> void:
 	_test_the_rule_is_data()
 	_test_a_falling_major_announces_a_closure()
 	_test_one_announcement_a_month_the_worst_first()
+	_test_the_worst_fall_ranks_the_sectors()
 	_test_an_unanswered_closure_lands_by_default()
 	_test_a_rescue_runs_the_firms_subsidy_verb()
 	_test_a_buyer_search_resolves_on_its_seed()
@@ -174,6 +175,35 @@ func _test_one_announcement_a_month_the_worst_first() -> void:
 		_fail("two falling majors did not give one announcement, the worst first")
 	if not (ns.companies[String(a.id)] as Dictionary).has("closure_watch"):
 		_fail("the firm that did not announce lost its history")
+
+
+## QA on #286: the month's one announcement goes to the sector with the worst fall, and
+## a sector's worst firm ranks it, whichever firm the month's loop reaches last. Written
+## as multiples of the rule's fall: the two firms of the crowded sector, then the other
+## sector's one, and whether the crowded sector should win.
+func _test_the_worst_fall_ranks_the_sectors() -> void:
+	for case in [[4.0, 2.0, 3.0, true], [2.0, 4.0, 3.0, true], [2.0, 1.5, 3.0, false]]:
+		var state = _new_state()
+		var ns = state.player()
+		var peers := _crowded_sector(ns)
+		var other = null
+		for c in _majors(ns):
+			if other == null and c.sector != peers[0].sector:
+				other = c
+		if peers.size() < 2 or other == null:
+			_fail("no FRA sector holds two majors beside another sector: the case cannot be staged")
+			return
+		_falling(ns, peers[0], float(case[0]) * float(_rule()["fall"]))
+		_falling(ns, peers[peers.size() - 1], float(case[1]) * float(_rule()["fall"]))
+		_falling(ns, other, float(case[2]) * float(_rule()["fall"]))
+		_month(state)
+		var open := Closures.open(ns)
+		if open.size() != 1:
+			_fail("falls %s gave %d announcements, not one" % [case, open.size()])
+			continue
+		var crowded_won: bool = String(open[0]["company_id"]) != String(other.id)
+		if crowded_won != bool(case[3]):
+			_fail("falls %s announced %s" % [case, open[0]["company_id"]])
 
 
 func _test_an_unanswered_closure_lands_by_default() -> void:
@@ -563,6 +593,11 @@ func _test_the_loader_refuses_a_short_cooldown() -> void:
 	var refused: Array[String] = []
 	if not CompaniesLoader.parse_closure_rule(short, "closures.json", refused).is_empty() or refused.is_empty():
 		_fail("a cooldown a month shorter than a window and an answer was accepted")
+	var no_scale := good.duplicate(true)
+	no_scale.erase("reference_jobs")
+	var unscaled: Array[String] = []
+	if not CompaniesLoader.parse_closure_rule(no_scale, "closures.json", unscaled).is_empty() or unscaled.is_empty():
+		_fail("a rule with no reference_jobs was accepted: every plant's move would divide by nothing")
 
 
 func _set_now(state, absolute_month: int) -> void:
@@ -662,8 +697,10 @@ func _test_the_fall_picks_by_jobs() -> void:
 ## workers less than a large one. The strip shows the move that lands. Literals: the
 ## parent's ruling restores #251's cooldown and move.
 func _test_the_bloc_move_scales_with_the_plant() -> void:
-	if int(_rule()["cooldown_months"]) != 24 or float((_rule()["bloc_offset"] as Dictionary)["workers"]) != -0.02:
-		_fail("the rule reads cooldown %s and workers %s, not #251's 24 and -0.02" % [_rule()["cooldown_months"], _rule()["bloc_offset"]])
+	if int(_rule()["cooldown_months"]) != 24 or float((_rule()["bloc_offset"] as Dictionary)["workers"]) != -0.02 \
+			or float(_rule()["reference_jobs"]) != 2500.0:
+		_fail("the rule reads cooldown %s, workers %s and reference jobs %s, not #251's 24 and -0.02 at 2500" % [
+			_rule()["cooldown_months"], _rule()["bloc_offset"], _rule()["reference_jobs"]])
 	var moves: Array = []
 	for scale in [1.0, 2.0]:
 		var state = _new_state()
@@ -673,7 +710,7 @@ func _test_the_bloc_move_scales_with_the_plant() -> void:
 		_falling(ns, firm, 2.0 * float(_rule()["fall"]))
 		_month(state)
 		var row := _row(ns, String(firm.id))
-		var want := -0.02 * float(row["jobs"]) / float(_rule()["reference_jobs"])
+		var want := -0.02 * float(row["jobs"]) / 2500.0
 		var strip: Dictionary = Closures.answers(state, ns, _loader, String(row["id"]))[0]
 		var before := float(ns.bloc_offset.get("workers", 0.0))
 		Closures.answer(state, ns, _loader, String(row["id"]), "close")
