@@ -105,15 +105,19 @@ static func open(main, report: Dictionary) -> void:
 	var ns = main._state.player() if main._state != null else null
 	var cards: Array = game.get("month_cards", [])
 	game.erase("month_cards")
-	if ns != null:
-		cards.append_array(SectorWarningView.note_cards(ns, main._loader, int(main._state.year) * 12 + int(main._state.month)))
+	# The month's crossings: a line on the card, or a note when the card is not shown or
+	# ranked them out (they have no deadline, so its footer does not catch them either).
+	var slipped: Array = [] if ns == null else SectorWarningView.note_cards(ns, main._loader, int(main._state.year) * 12 + int(main._state.month))
 	if game.is_empty() or ns == null or not bool(ns.in_government) or not _will_show(main, game, report):
 		# A month the briefing does not show keeps its consequence cards in the inbox.
-		for card in cards:
+		for card in cards + slipped:
 			ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
 		return
 	var ranked: Dictionary = game["pending"]
 	game["pending"] = {}
+	if not (ranked["lines"] as Array).any(func(l): return String(l["kind"]) == "sector"):
+		for card in slipped:
+			ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
 	game["memory"] = ranked["memory"]
 	game["lines"] = ranked["lines"]
 	game["also"] = ranked.get("also_due", [])

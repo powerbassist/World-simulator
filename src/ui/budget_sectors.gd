@@ -75,19 +75,22 @@ static func line_toggle(panel, key: String, text: String) -> Button:
 static func refresh(panel, line_name: String, now: Dictionary) -> void:
 	for child in panel._sector_box.get_children():
 		child.queue_free()
+	# One draft for the tile and the marks: the toggle and its tile read the same nation.
+	var ns = panel._state.player()
+	var dns = drafted(panel, ns)
 	if panel._open_line != "":
-		build(panel, panel._sector_box, panel._state.player(), panel._open_line, line_name, now)
+		build(panel, panel._sector_box, ns, dns, panel._open_line, line_name, now)
 	# The toggles are built once: each says whether its line is the open one (pass 1:
 	# a second line opened left the first pressed).
 	for toggle in panel.find_children("*", "Button", true, false):  # i18n: ok a class name
 		if toggle.has_meta("line"):
 			toggle.set_pressed_no_signal(String(toggle.get_meta("line")) == String(panel._open_line))
 			# The mark that says which tile to open: a warning on a closed line is unseen.
-			var slipping := not SectorWarningView.warned(panel._state.player(), panel._loader, String(toggle.get_meta("line"))).is_empty()
+			var slipping := not SectorWarningView.warned(dns, panel._loader, String(toggle.get_meta("line"))).is_empty()
 			toggle.text = Strings.t("%s (!)") % String(toggle.get_meta("line_name")) if slipping else String(toggle.get_meta("line_name"))
 
 
-static func build(panel, parent: Control, ns, line: String, line_name: String, now: Dictionary) -> void:
+static func build(panel, parent: Control, ns, dns, line: String, line_name: String, now: Dictionary) -> void:
 	var loader = panel._loader
 	var sectors: Array = Sectors.sectors_of(loader, line)
 	if sectors.is_empty():
@@ -98,7 +101,6 @@ static func build(panel, parent: Control, ns, line: String, line_name: String, n
 	# The heading, the rows and the verb read the draft: the live nation with the drafted
 	# levers and moves on it (the parent's ruling on #278: the tile says what the lever
 	# above it says).
-	var dns = drafted(panel, ns)
 	var pct := float(dns.spending_pct_gdp.get(line, 0.0))
 	PanelKit.heading(tile, Strings.t("%s: %s %% of GDP, %s bn") % [line_name, Num.f(pct, 1), Num.f(pct / 100.0 * float(dns.gdp_eur_bn), 0)])
 	var shares := Sectors.shares(dns, loader, line)
@@ -271,7 +273,7 @@ static func _picker(parent: Control, sectors: Array, selected: String, meta: Str
 
 
 static func _name(sector: Dictionary) -> String:
-	return Strings.row("domains", String(sector["id"]), "name", String(sector["name"]))
+	return SectorWarningView.sector_name(sector)
 
 
 static func _unit(sector: Dictionary) -> String:

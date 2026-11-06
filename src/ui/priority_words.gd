@@ -72,7 +72,7 @@ static func title(entry: Dictionary, state, loader) -> String:
 				return Strings.t("Choose the term's programme")
 			return Strings.t("Programme: %s") % Strings.row_name("programme", Programme.terms_of(loader, subject))
 		"sector":
-			return Strings.t("%s is slipping") % SectorWarningView.name_of(loader, subject.get_slice("|", 0), subject.get_slice("|", 1))
+			return Strings.t("Slipping: %s") % SectorWarningView.name_of(loader, subject.get_slice("|", 0), subject.get_slice("|", 1))
 		"bloc":
 			var polled := PollNoise.displayed(int(state.year) * 12 + int(state.month), subject, float(ns.bloc_approval.get(subject, 0.0)))
 			if standing:

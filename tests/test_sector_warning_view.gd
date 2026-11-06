@@ -19,6 +19,8 @@ const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const ChartLine = preload("res://src/ui/chart_line.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
+const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
+const Budget = preload("res://src/sim/budget.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -54,11 +56,18 @@ func _process(_delta: float) -> bool:
 			_press(_with_meta("raise_line", LINE))
 		6:
 			_check_drafted()
+			_check_span_spent()
+			_panel._on_revert(false)
+		8:
+			_drag_the_lever()
+		10:
+			_check_price_on_a_draft()
 			_panel._on_revert(false)
 			_stage_one_cut()
-		8:
+		12:
 			_check_one_cut()
 			_check_arrival()
+			_check_note_wired()
 			_finish()
 	return false
 
@@ -77,7 +86,7 @@ func _check_quiet_unit() -> void:
 func _stage_all_warned() -> void:
 	var ns = _main._state.player()
 	_gdp_base = float(ns.gdp_eur_bn) / float(ns.population)
-	ns.sector_drift["base_gdp_per_head"] = _gdp_base * 1.5
+	ns.sector_drift["base_gdp_per_head"] = _gdp_base * 2.0
 	ns.sector_drift["history"] = {"hospitals": [5.3, 5.2, 5.1, 5.0]}
 	_panel.mark_dirty()
 
@@ -146,6 +155,40 @@ func _check_drafted() -> void:
 		_fail("raise: priced %s, the lever's own figure is %s" % [_price, _panel._effects.get(LINE, 0.0)])
 
 
+## The capped raise drafted, the sectors still warned: the tile says why no verb is left.
+func _check_span_spent() -> void:
+	if _with_meta("raise_line", LINE) != null:
+		_fail("span: a raise is offered past the span")
+	if not _text_under(_panel._sector_box).contains(Strings.t("This line can rise no further in this Commit.")):
+		_fail("span: nothing says the line can rise no further ('%s')" % _text_under(_panel._sector_box))
+
+
+## A lever dragged by hand, a point up, the sectors still warned.
+func _drag_the_lever() -> void:
+	var live := float(_main._state.player().spending_pct_gdp[LINE])
+	_panel._on_lever_changed(live + 1.0, LINE)
+
+
+## The strip prices what the raise adds to the draft, in step with the points it says.
+func _check_price_on_a_draft() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var strip = _raise_strip()
+	if strip == null:
+		_fail("draft: no raise left on a dragged lever")
+		return
+	var live := float(ns.spending_pct_gdp[LINE])
+	var alone := func(value: float) -> Dictionary:
+		var spending: Dictionary = ns.spending_pct_gdp.duplicate()
+		spending[LINE] = value
+		return {"spending_pct_gdp": spending}
+	var want := EffectsStrip.balance_bn(Budget.preview(state, alone.call(live + 1.0)), Budget.preview(state, alone.call(_target)))
+	if absf(float(strip.money_bn) - want) > 0.05:
+		_fail("draft: the raise reads %s on a dragged lever, it adds %s" % [strip.money_bn, want])
+	if not _text_under(strip).contains(Num.f(_target - (live + 1.0), 1)):
+		_fail("draft: the points do not count from the draft ('%s')" % _text_under(strip))
+
+
 ## One sector cut far below the rest: its reason is the cut, others can pay it.
 func _stage_one_cut() -> void:
 	var ns = _main._state.player()
@@ -200,6 +243,23 @@ func _check_arrival() -> void:
 		_fail("arrival: not one note naming the sectors (%s)" % [cards])
 	if not SectorWarningView.note_cards(ns, _main._loader, now + 1).is_empty():
 		_fail("arrival: the note comes again the month after")
+
+
+## A month the briefing does not show: the crossings reach the inbox.
+func _check_note_wired() -> void:
+	var ns = _main._state.player()
+	ns.in_government = false
+	BriefingDriver.open(_main, {})
+	ns.in_government = true
+	if not _shows(_main._hud.inbox, Strings.t("Sectors slipping").to_upper()):
+		_fail("note: a month with no briefing does not put the crossings in the inbox")
+
+
+func _shows(node: Node, text: String) -> bool:
+	for label in node.find_children("*", "Label", true, false):
+		if (label as Label).text == text:
+			return true
+	return false
 
 
 # -- helpers --

@@ -66,17 +66,16 @@ static func _raise(panel, tile: Control, ns, dns, line: String, why_of: Dictiona
 	var drafted := float(dns.spending_pct_gdp.get(line, 0.0))
 	var target := minf(drafted + need, panel.lever_span(line).y)
 	if target <= drafted:
+		# The span spent or the line at its ceiling: still warned, so say what opens next.
+		PanelKit.plain_line(tile, Strings.t("This line can rise no further in this Commit."))
 		return
-	var alone := {"spending_pct_gdp": ns.spending_pct_gdp.duplicate()}
-	alone["spending_pct_gdp"][line] = target
-	var gain := float(EffectsStrip.per_key(panel._fx_cache, panel._state, now, {"raise|" + line: alone}, panel._pending, {})["raise|" + line])
+	# What this raise adds on top of the draft: the words count from the drafted line.
+	var gain := _books(panel, ns, line, target, now) - _books(panel, ns, line, drafted, now)
 	var strip := EffectsStrip.new()
 	strip.set_meta("raise_strip", true)
-	strip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	strip.custom_minimum_size.x = 400
 	tile.add_child(strip)
 	strip.show_lines("", Strings.t("%s a year") % EffectsStrip.money_text(gain), gain, "",
-		(Strings.t("The line up %s points of GDP restores them; its other sectors gain too.") if target >= drafted + need
+		(Strings.t("The line up %s points of GDP restores the figures; its other sectors gain too.") if target >= drafted + need
 			else Strings.t("The line up %s points of GDP, part of the way; the rest takes a second Commit.")) % Num.f(target - drafted, 1))
 	var go := PanelKit.sized(Button.new())
 	go.text = Strings.t("Draft the raise")
@@ -86,6 +85,16 @@ static func _raise(panel, tile: Control, ns, dns, line: String, why_of: Dictiona
 		panel._set_lever(line, target, false)
 		panel._on_lever_changed(target, line))
 	tile.add_child(go)
+
+
+## The balance, EUR bn a year, with `line` alone at `value`: the Budget's own lever figure.
+static func _books(panel, ns, line: String, value: float, now: Dictionary) -> float:
+	if value == float(ns.spending_pct_gdp.get(line, 0.0)):
+		return 0.0
+	var alone := {"spending_pct_gdp": ns.spending_pct_gdp.duplicate()}
+	alone["spending_pct_gdp"][line] = value
+	var key := "raise|%s|%s" % [line, value]
+	return float(EffectsStrip.per_key(panel._fx_cache, panel._state, now, {key: alone}, panel._pending, {})[key])
 
 
 ## The first sector that can pay `to_id` a share and is not itself warned, "" for none.
