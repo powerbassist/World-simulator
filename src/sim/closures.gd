@@ -13,6 +13,14 @@ extends RefCounted
 ##                    takes the plant and nothing is lost, else the plant shuts. It
 ##                    has a price: the plant's losses for the search, paid at the
 ##                    answer, and a sweetener on the buyer's price, paid at the sale;
+##   negotiate_5/10/15  the buyer's search with the sweetener cut by 5, 10 or 15 %
+##                    (Negotiate, the parent's calls 3 and 4; negotiation.gd). A buyer
+##                    found answers the counter on its own seed, at full strength
+##                    (the plant needs it more than it needs the plant): accepted, it
+##                    buys at the cut sweetener; walked, it leaves and the plant shuts;
+##                    back (the parent's ruling (b)), it returns at the OLD sweetener
+##                    and the player is asked once more, for a month (`offered`): sell
+##                    at it, the default at the due month, or close now;
 ##   rescue           the PLANT is kept for RESCUE_MONTHS, the state paying
 ##                    RESCUE_EUR_PER_JOB_YEAR for each job the closure would cut,
 ##                    a Budget line (`rescue_bill_pct_gdp`, the parent's call 4 on
@@ -48,10 +56,13 @@ const Cycle = preload("res://src/sim/cycle.gd")
 const K = preload("res://src/sim/closures_constants.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
+const NK = preload("res://src/sim/companies_constants.gd")
+const Negotiation = preload("res://src/sim/negotiation.gd")
 
 const ANNOUNCED := "announced"
 const SEARCHING := "searching"
 const RESCUING := "rescuing"
+const OFFERED := "offered"
 
 
 static func tick_month(state, loader) -> void:
@@ -94,7 +105,7 @@ static func open(ns) -> Array:
 	var out: Array = []
 	for company_id in ns.companies:
 		var row: Dictionary = (ns.companies[company_id] as Dictionary).get("closure", {})
-		if [ANNOUNCED, SEARCHING].has(String(row.get("status", ""))):
+		if [ANNOUNCED, SEARCHING, OFFERED].has(String(row.get("status", ""))):
 			out.append(row.duplicate(true))
 	return out
 
@@ -144,24 +155,34 @@ static func tick_rescues(state) -> void:
 
 
 ## An announced closure's answers, each with its figures for the strip: `kind`
-## (close | buyer | rescue), `jobs_lost` if it ends in the cut, `bloc_offset`, the
-## money on the debt (`debt_eur_bn` once: 0 to close, the buyer's search; the
-## rescue's `debt_eur_bn_per_year` for its `months`, `total_eur_bn` in all, ending in
-## month `ends`), and a buyer's `chance`, `months` and `sweetener_eur_bn` (paid only
-## at a sale). [] when nothing is waiting for an answer.
+## (close | buyer | negotiate | rescue), `jobs_lost` if it ends in the cut,
+## `bloc_offset`, the money on the debt (`debt_eur_bn` once: 0 to close, the buyer's
+## search; the rescue's `debt_eur_bn_per_year` for its `months`, `total_eur_bn` in all,
+## ending in month `ends`), and a buyer's `chance`, `months` and `sweetener_eur_bn`
+## (paid only at a sale). A counter (_counters) adds `counter`, `back_sweetener_eur_bn`,
+## `months_hi`, the range shown (`odds_lo`, `odds_hi`; `odds` is the draw's, never
+## shown) and `walk`. A buyer that came back (OFFERED) asks close or buyer at the old
+## sweetener. [] when nothing is waiting for an answer.
 static func answers(state, ns, loader, closure_id: String) -> Array:
 	var found := _find(ns, loader, closure_id)
-	if found.is_empty() or String(found["row"]["status"]) != ANNOUNCED:
+	var status := String(found["row"]["status"]) if not found.is_empty() else ""
+	if status != ANNOUNCED and status != OFFERED:
 		return []
 	var row: Dictionary = found["row"]
-	var out: Array = [
-		{"id": "close", "kind": "close", "jobs_lost": float(row["jobs"]), "debt_eur_bn": 0.0,
-			"bloc_offset": (loader.closure_rule["bloc_offset"] as Dictionary).duplicate()},
-		{"id": "buyer", "kind": "buyer", "jobs_lost": float(row["jobs"]), "bloc_offset": {},
-			"chance": K.BUYER_CHANCE, "months": K.BUYER_MONTHS,
-			"debt_eur_bn": _search_eur_bn(ns, found["company"], loader.closure_rule),
-			"sweetener_eur_bn": _sweetener_eur_bn(ns, found["company"], loader.closure_rule)},
-	]
+	# A re-ask is answered once, as every ask is (pass 1 on this PR): the answer stands.
+	if status == OFFERED and row.has("answer"):
+		return []
+	var close := {"id": "close", "kind": "close", "jobs_lost": float(row["jobs"]), "debt_eur_bn": 0.0,
+		"bloc_offset": (loader.closure_rule["bloc_offset"] as Dictionary).duplicate()}
+	if status == OFFERED:
+		return [close, {"id": "buyer", "kind": "buyer", "jobs_lost": float(row["jobs"]), "bloc_offset": {},
+			"chance": 1.0, "months": 1, "debt_eur_bn": 0.0, "sweetener_eur_bn": float(row["back_sweetener_eur_bn"])}]
+	var buyer := {"id": "buyer", "kind": "buyer", "jobs_lost": float(row["jobs"]), "bloc_offset": {},
+		"chance": K.BUYER_CHANCE, "months": K.BUYER_MONTHS,
+		"debt_eur_bn": _search_eur_bn(ns, found["company"], loader.closure_rule),
+		"sweetener_eur_bn": _sweetener_eur_bn(ns, found["company"], loader.closure_rule)}
+	var out: Array = [close, buyer]
+	out.append_array(_counters(row, buyer))
 	var yearly := _rescue_eur_bn_per_year(row)
 	out.append({"id": "rescue", "kind": "rescue", "jobs_lost": 0.0, "bloc_offset": {},
 		"debt_eur_bn_per_year": yearly, "months": K.RESCUE_MONTHS,
@@ -169,36 +190,65 @@ static func answers(state, ns, loader, closure_id: String) -> Array:
 	return out
 
 
-## The player's answer: close lands at once, buyer starts the search, rescue starts
-## the plant's term. {ok} or {ok: false, reason}.
+## The buyer's three counters (negotiation.gd; the parent's calls 3 and 4): the
+## buyer's search with the sweetener cut by the counter, the old one kept for a buyer
+## that comes back (a month more, `months_hi`), and the buyer's odds at full strength,
+## BUYER_LEVERAGE (closures_constants.gd), in the range fixed on the announcement's month, so it does not
+## move while the answer waits.
+static func _counters(row: Dictionary, buyer: Dictionary) -> Array:
+	var out: Array = []
+	for c in NK.NEGOTIATE_COUNTERS:
+		var id := "negotiate_%d" % roundi(100.0 * float(c))
+		var p := Negotiation.odds(float(c), K.BUYER_LEVERAGE)
+		var band := Negotiation.shown(p, Negotiation.key(row, id), int(row["announced"]))
+		var a := buyer.duplicate(true)
+		a.merge({"id": id, "kind": "negotiate", "counter": float(c), "months_hi": K.BUYER_MONTHS + 1,
+			"sweetener_eur_bn": float(buyer["sweetener_eur_bn"]) * (1.0 - float(c)), "back_sweetener_eur_bn": float(buyer["sweetener_eur_bn"]),
+			"odds": p, "odds_lo": band.x, "odds_hi": band.y, "walk": NK.NEGOTIATE_WALK}, true)
+		out.append(a)
+	return out
+
+
+## The player's answer, one of answers(): close lands at once; buyer or a counter
+## starts the search, paying its losses now and fixing the sweetener paid at a sale;
+## rescue starts the plant's term; a buyer that came back sells at the due month, as
+## its default. {ok} or {ok: false, reason}.
 static func answer(state, ns, loader, closure_id: String, answer_id: String) -> Dictionary:
-	var found := _find(ns, loader, closure_id)
-	if found.is_empty() or String(found["row"]["status"]) != ANNOUNCED:
+	var offered := answers(state, ns, loader, closure_id)
+	if offered.is_empty():
 		return {"ok": false, "reason": "Nothing here is waiting for an answer."}
+	var picked := {}
+	for a in offered:
+		if String(a["id"]) == answer_id:
+			picked = a
+	if picked.is_empty():
+		return {"ok": false, "reason": "That is not one of the answers."}
+	var found := _find(ns, loader, closure_id)
 	var row: Dictionary = found["row"]
-	var company = found["company"]
 	var now := _now(state)
-	if answer_id == "close":
-		row["answer"] = answer_id
-		_cut(ns, company, found["entry"], row, loader.closure_rule, now)
-		return {"ok": true}
-	if answer_id == "buyer":
-		row["answer"] = answer_id
-		row["status"] = SEARCHING
-		row["months_left"] = K.BUYER_MONTHS
-		# The price the strip showed: the search's losses now, the sweetener fixed now
-		# and paid only at a sale.
-		ns.debt_eur_bn += _search_eur_bn(ns, company, loader.closure_rule)
-		row["sweetener_eur_bn"] = _sweetener_eur_bn(ns, company, loader.closure_rule)
-		return {"ok": true}
-	if answer_id == "rescue":
-		row["answer"] = answer_id
-		row["status"] = RESCUING
-		row["months_left"] = K.RESCUE_MONTHS
-		row["ends"] = now + K.RESCUE_MONTHS
-		row["rescue_eur_bn_per_year"] = _rescue_eur_bn_per_year(row)
-		return {"ok": true}
-	return {"ok": false, "reason": "That is not one of the answers."}
+	row["answer"] = answer_id
+	match String(picked["kind"]):
+		"close":
+			_cut(ns, found["company"], found["entry"], row, loader.closure_rule, now)
+		"buyer", "negotiate":
+			if String(row["status"]) == OFFERED:
+				return {"ok": true}
+			row["status"] = SEARCHING
+			row["months_left"] = K.BUYER_MONTHS
+			# The price the strip showed: the search's losses now, the sweetener fixed now
+			# and paid only at a sale (a counter's, with the old one kept for a return).
+			ns.debt_eur_bn += float(picked["debt_eur_bn"])
+			row["sweetener_eur_bn"] = float(picked["sweetener_eur_bn"])
+			if picked.has("counter"):
+				row["countered"] = float(picked["counter"])
+				row["back_sweetener_eur_bn"] = float(picked["back_sweetener_eur_bn"])
+				row["odds"] = float(picked["odds"])
+		"rescue":
+			row["status"] = RESCUING
+			row["months_left"] = K.RESCUE_MONTHS
+			row["ends"] = now + K.RESCUE_MONTHS
+			row["rescue_eur_bn_per_year"] = _rescue_eur_bn_per_year(row)
+	return {"ok": true}
 
 
 # --- The machine ----------------------------------------------------------------------
@@ -207,22 +257,48 @@ static func _resolve(ns, company, rule: Dictionary, now: int) -> void:
 	var entry: Dictionary = ns.companies.get(company.id, {})
 	var row: Dictionary = entry.get("closure", {})
 	var status := String(row.get("status", ""))
-	if status != ANNOUNCED and status != SEARCHING:
+	if status != ANNOUNCED and status != SEARCHING and status != OFFERED:
 		return
 	# A firm that failed meanwhile has nothing left to close.
 	if _gone(entry):
 		_end(row, "void", now)
 	elif status == ANNOUNCED and now >= int(row["due"]):
 		_cut(ns, company, entry, row, rule, now)
+	elif status == OFFERED and now >= int(row["due"]):
+		# A buyer that came back sells at the old sweetener unless the player closed.
+		ns.debt_eur_bn += float(row["back_sweetener_eur_bn"])
+		_end(row, "sold", now)
 	elif status == SEARCHING:
 		row["months_left"] = int(row["months_left"]) - 1
 		if int(row["months_left"]) > 0:
 			return
-		if Cycle.unit("closure|%s|buyer" % String(row["id"]), now) < K.BUYER_CHANCE:
-			ns.debt_eur_bn += float(row.get("sweetener_eur_bn", 0.0))
-			_end(row, "sold", now)
-		else:
+		if Cycle.unit("closure|%s|buyer" % String(row["id"]), now) >= K.BUYER_CHANCE:
 			_cut(ns, company, entry, row, rule, now)
+			return
+		match _answer_counter(row, now):
+			"back":
+				# The parent's ruling (b): the buyer returns at the OLD sweetener and the
+				# player is asked once more, for a month: sell at it (the default) or close.
+				row["status"] = OFFERED
+				row["offered"] = now
+				row["due"] = now + 1
+				row.erase("answer")
+			"walked":
+				_cut(ns, company, entry, row, rule, now)
+			_:
+				ns.debt_eur_bn += float(row.get("sweetener_eur_bn", 0.0))
+				_end(row, "sold", now)
+
+
+## The found buyer's answer to the player's counter, drawn on the counter's own seed
+## (negotiation.gd) and recorded on the row; "" for a plain buyer (no counter, no draw:
+## a closure nobody countered draws exactly what it drew before).
+static func _answer_counter(row: Dictionary, now: int) -> String:
+	if not row.has("countered"):
+		return ""
+	var outcome := Negotiation.draw(float(row["odds"]), Negotiation.key(row, String(row["answer"])), now)
+	row["negotiation"] = {"answer": String(row["answer"]), "outcome": outcome, "month": now}
+	return outcome
 
 
 static func _may_announce(ns, company, entry: Dictionary, rule: Dictionary, now: int) -> bool:
@@ -231,7 +307,7 @@ static func _may_announce(ns, company, entry: Dictionary, rule: Dictionary, now:
 	var row: Dictionary = entry.get("closure", {})
 	if row.is_empty():
 		return true
-	if [ANNOUNCED, SEARCHING, RESCUING].has(String(row["status"])):
+	if [ANNOUNCED, SEARCHING, OFFERED, RESCUING].has(String(row["status"])):
 		return false
 	# A rescue's term was the wait: its plant is re-evaluated on the next full window.
 	if String(row["status"]) == "rescued":

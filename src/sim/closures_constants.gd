@@ -21,6 +21,11 @@ const BUYER_CHANCE := 0.5
 ## sits between them. Stand-ins, shown on the strip as they are.
 const BUYER_SEARCH_LOSS := 0.25
 const BUYER_SWEETENER := 0.20
+## The buyer's strength when the player counters its sweetener (Negotiate PR 2;
+## Negotiation.odds' -1..1): full, the closing plant needs the buyer more than the
+## buyer needs it (negotiation.gd's own reading). At the stand-in odds it accepts the
+## three counters at 55, 35 and 15 % (the parent accepted them).
+const BUYER_LEVERAGE := 1.0
 
 ## The plant rescue (QA's call on #270, the parent's ruling): a rescue is priced on the
 ## PLANT, not on the firm's subsidy verbs, whose bill read EUR 5 to 9 bn a year to keep

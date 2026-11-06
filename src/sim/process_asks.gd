@@ -85,8 +85,8 @@ static func post(ns, row: Dictionary, action, now: int, company, reprice := true
 ##   back      one more month at the old price, asked again without the counters
 ##             (once per deal; a new arrival): true.
 ##   walked    the deal ends: nothing paid, no U-turn (the other side left), the
-##             start's half of the bloc move stays, and Negotiation.cooldown() holds
-##             the firm's negotiable verbs: true.
+##             start's half of the bloc move stays, and Negotiation.holds() keeps
+##             the walked side's verbs on the firm waiting: true.
 static func resolve_negotiation(ns, row: Dictionary, action, now: int) -> bool:
 	var pick := chosen(row)
 	if not pick.begins_with("negotiate_"):
@@ -123,7 +123,7 @@ static func resolve_negotiation(ns, row: Dictionary, action, now: int) -> bool:
 ## (a transition that ends a year after its accepted offer lands), or the counter's
 ## answer (back, accepted) on a row still open. A walk adds `side` (Negotiation.side_of:
 ## the seller or the buyers walked) and `hold_ends`, the FIRST month the walked side's
-## verbs open again (Negotiation.cooldown). A stop is stamped by the press, in its month.
+## verbs open again (Negotiation.holds). A stop is stamped by the press, in its month.
 static func closed_last_month(state, ns) -> Array:
 	var now := int(state.year) * 12 + int(state.month)
 	var out: Array = []
@@ -148,11 +148,23 @@ static func closed_last_month(state, ns) -> Array:
 	return out
 
 
+## The forecast's copy blind to the other side's answer (the #280 RECORD the parent
+## routed to Negotiate PR 2): Budget.project() runs the processes on `sim`, and a counter
+## left on it would be drawn there, showing the answer a month before it is due. On the
+## copy only, an answered counter reads as the deal at its old price: the path of a
+## player who never countered, which says nothing of the draw.
+static func blind(sim) -> void:
+	for id in sim.nations:
+		for row in sim.nations[id].processes:
+			if String(row.get("answer", "")).begins_with("negotiate_"):
+				row.erase("answer")
+
+
 ## What stopping a price stage costs now (Processes.stop_price): the U-turn, and at
-## a nationalisation's offer the break fee too. Refused while a counter is answered:
-## Budget.project() runs the seeded draw on its copy, so the forecast shows the answer
-## before it is due, and a known answer must not be dodgeable (the drawn ruling's rule;
-## pass 1 on #280). Once a counter comes back the ask has no answer and stopping is open.
+## a nationalisation's offer the break fee too. Refused while a counter is answered
+## (pass 1 on #280): the counter is on the table and the other side is answering. The
+## forecast that once leaked that answer is blind to it now (blind()); the rule stays,
+## a counter made is a counter the player keeps. Once one comes back, stopping is open.
 static func stop_price(action, row: Dictionary) -> Dictionary:
 	if chosen(row).begins_with("negotiate_"):
 		return {"ok": false, "reason": COUNTERING}
