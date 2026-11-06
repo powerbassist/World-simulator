@@ -764,6 +764,11 @@ func _test_no_major_swings_from_noise_alone() -> void:
 				(history[company.id] as Array).append(Companies.share_of_company(ns, company))
 		for company in majors:
 			var h: Array = history[company.id]
+			# Up as down: a month's rise is at most the firm's own step, 4 % of itself.
+			for i in range(1, h.size()):
+				if float(h[i]) - float(h[i - 1]) > 0.04 * float(h[i - 1]) + 1e-12:
+					_fail("%s rose from %.5f to %.5f in a month of drift" % [company.id, float(h[i - 1]), float(h[i])])
+					break
 			for i in range(6, h.size()):
 				var fall: float = (float(h[i - 6]) - float(h[i])) / float(h[i - 6])
 				if fall > NOISE_FALL_MAX:
