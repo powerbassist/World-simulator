@@ -34,6 +34,7 @@ func _init() -> void:
 	_loader.closure_rule["monthly_chance"] = 1000.0
 	_test_the_rule_is_data()
 	_test_the_chance_reads_the_fall_and_the_economy()
+	_test_each_sector_draws_its_own_chance()
 	_test_the_rate_follows_the_economy()
 	_test_the_rate_follows_the_sectors_fall()
 	_test_a_chance_that_does_not_come_up_announces_nothing()
@@ -220,6 +221,47 @@ func _test_the_chance_reads_the_fall_and_the_economy() -> void:
 		_fail("a smaller fall is not a smaller chance")
 	if Closures.chance(rule, 100.0, -100.0) > 1.0 or Closures.chance(rule, SHIPPED_REFERENCE, 100.0) <= 0.0:
 		_fail("the chance leaves (0, 1]: %.4f, %.4f" % [Closures.chance(rule, 100.0, -100.0), Closures.chance(rule, SHIPPED_REFERENCE, 100.0)])
+	# QA on #286: each bound, as a literal, at the extreme that reaches it.
+	for row in [["the fall's cap", 100.0, 0.0, 1.5], ["the slump's cap", SHIPPED_REFERENCE, -100.0, 3.0],
+			["the boom's floor", SHIPPED_REFERENCE, 100.0, 0.2]]:
+		if not is_equal_approx(Closures.chance(rule, float(row[1]), float(row[2])), SHIPPED_CHANCE * float(row[3])):
+			_fail("%s reads %.4f, not %.4f" % [row[0], Closures.chance(rule, float(row[1]), float(row[2])), SHIPPED_CHANCE * float(row[3])])
+
+
+## QA on #286: each sector draws its own number. Two sectors falling alike, in a month
+## where only one's draw is under the chance, then in one where only the other's is.
+func _test_each_sector_draws_its_own_chance() -> void:
+	var saved: Dictionary = _loader.closure_rule
+	_loader.closure_rule = _shipped()
+	var fall := 2.0 * float(_rule()["fall"])
+	var odds := Closures.chance(_rule(), fall, 0.0)
+	var ns = _new_state().player()
+	var peers := _crowded_sector(ns)
+	var other = null
+	for c in _majors(ns):
+		if other == null and c.sector != peers[0].sector:
+			other = c
+	var key := "closure|fire|FRA|%s"
+	var found := {}
+	for now in range(24400, 26000):
+		var first := Cycle.unit(key % String(peers[0].sector), now) < odds
+		var second := Cycle.unit(key % String(other.sector), now) < odds
+		if first != second and not found.has(first):
+			found[first] = now
+	if found.size() != 2:
+		_fail("no month stages the two draws apart: %s" % [found])
+	for peers_win in found:
+		var state = _new_state()
+		_set_now(state, int(found[peers_win]) - 1)
+		ns = state.player()
+		ns.potential_gdp_eur_bn = float(ns.gdp_eur_bn)
+		_falling(ns, _crowded_sector(ns)[0], fall)
+		_falling(ns, other, fall)
+		_month(state)
+		var open := Closures.open(ns)
+		if open.size() != 1 or (String(open[0]["company_id"]) != String(other.id)) != bool(peers_win):
+			_fail("in month %d only one sector's draw came up, and the month announced %s" % [int(found[peers_win]), open])
+	_loader.closure_rule = saved
 
 
 ## Announcements in `months` of the closure machine alone: every major of the crowded
