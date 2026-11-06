@@ -5,6 +5,7 @@ extends RefCounted
 ## that came back (OFFERED), one month's re-ask at the old sweetener.
 
 const ActsOn = preload("res://src/ui/acts_on.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Region = preload("res://src/core/region.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
@@ -16,8 +17,45 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## One answer's column on a closure card, in px: three fit a docked window.
 const ANSWER_WIDTH := 300
+## A countered closure's result, the month it lands (the parent's ruling on #287,
+## Closures.closed_last_month): the firm, the place, then the sum on a sale, the jobs.
+const RESULT := {
+	"accepted": "%s's plant in %s is sold at your counter, %s: %s jobs kept.",  # i18n: msgid
+	"sold": "%s's plant in %s is sold at the old price, %s: %s jobs kept.",  # i18n: msgid
+	"walked": "The buyer walked away from %s's plant in %s, and it closed: %s jobs lost.",  # i18n: msgid
+	"no_buyer": "No buyer came for %s's plant in %s, and it closed: %s jobs lost.",  # i18n: msgid
+	"closed": "%s's plant in %s closed, as you chose: %s jobs lost.",  # i18n: msgid
+	"void": "%s failed before a buyer came for its plant in %s.",  # i18n: msgid
+}
+## A sale is GOOD and a plant lost to the counter BAD; the player's own closing and a
+## firm that failed are plain, no verdict on an answer.
+const RESULT_TONE := {"accepted": ResultTone.GOOD, "sold": ResultTone.GOOD, "walked": ResultTone.BAD, "no_buyer": ResultTone.BAD}
+
 ## A re-ask's sale (#285), its button and its Answered line.
 const SELL_OLD := "Sell at the old price"  # i18n: msgid
+
+
+## One toned line for one month: the sim's query says which closures, for how long.
+static func result(box: Control, loader, ns, line: Dictionary) -> void:
+	var outcome := String(line["outcome"])
+	if not RESULT.has(outcome):
+		push_error("closure_card: a result of unknown outcome '%s'" % outcome)
+		return
+	var firm: String = loader.firm_name(ns.id, String(line["company_id"]))
+	var city = Region.find_city(loader.regions.get(ns.id, []), String(line["city_id"]))
+	var place: String = String(city.city_name) if city != null else firm
+	var jobs := CompanyVerb.thousands(float(line["jobs"]))
+	var figures := [firm, place]
+	match outcome:
+		"accepted", "sold":
+			figures.append_array([EffectsStrip.sum_text(-float(line["sweetener_eur_bn"])), jobs])
+		"walked", "no_buyer", "closed":
+			figures.append(jobs)
+	var text: String = Strings.t(String(RESULT[outcome])) % figures  # i18n: row-ok the table's msgid
+	var label := PanelKit.plain_line(box, text, PanelKit.Tone.PLAIN)
+	label.set_meta("closure_result", outcome)
+	if RESULT_TONE.has(outcome):
+		ResultTone.tint(label, String(RESULT_TONE[outcome]))
 
 
 ## A closure: announced, its card and answers; searching, its months left.

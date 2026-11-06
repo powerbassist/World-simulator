@@ -93,7 +93,10 @@ static func build(parent: Control, state, loader, ns, stop: Callable, answer: Ca
 	# An open row says its own counter's outcome (_outcome): the closed lines are the rest.
 	var ended: Array = ProcessAsks.closed_last_month(state, ns).filter(func(line: Dictionary) -> bool:
 		return not rows.any(func(r: Dictionary) -> bool: return String(r["id"]) == String(line["id"])))
-	if rows.is_empty() and closures.is_empty() and rescues.is_empty() and ended.is_empty():
+	# A counter that came back is the re-ask's own row (ClosureCard.build): not a result.
+	var results: Array = Closures.closed_last_month(state, ns).filter(func(line: Dictionary) -> bool:
+		return String(line["outcome"]) != "back")
+	if rows.is_empty() and closures.is_empty() and rescues.is_empty() and ended.is_empty() and results.is_empty():
 		return null
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
@@ -101,6 +104,8 @@ static func build(parent: Control, state, loader, ns, stop: Callable, answer: Ca
 	PanelKit.heading(box, Strings.t("In progress"))
 	for line in ended:
 		_ended(box, loader, ns, line)
+	for line in results:
+		ClosureCard.result(box, loader, ns, line)
 	for row in closures:
 		ClosureCard.build(box, state, loader, ns, row, closure)
 	for row in rescues:

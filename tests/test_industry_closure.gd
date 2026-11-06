@@ -24,6 +24,7 @@ const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const ClosureCard = preload("res://src/ui/closure_card.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 const CK = preload("res://src/sim/closures_constants.gd")
 
 var _failures: Array[String] = []
@@ -349,7 +350,75 @@ func _check_re_ask_answered() -> void:
 	if Pending._closure_waiting(ns):
 		_fail("re-ask answered: the closure still waits on the player")
 	_check_re_ask_ranks(false)
+	_check_results()
 	_check_unknown_kind()
+
+
+## The parent's ruling on #287: a countered closure's result is one toned line for one
+## month, the words whole, staged as the machine writes each ending (closures.gd).
+func _check_results() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var row := _row_of_third()
+	var now: int = state.year * 12 + state.month
+	var firm: String = _main._loader.firm_name(ns.id, String(row["company_id"]))
+	var city = Region.find_city(_main._loader.regions.get(ns.id, []), String(row["city_id"]))
+	var place: String = String(city.city_name) if city != null else firm
+	var jobs: String = CompanyVerb.thousands(float(row["jobs"]))
+	var cut: String = EffectsStrip.sum_text(-float(row["sweetener_eur_bn"]))
+	var old: String = EffectsStrip.sum_text(-float(row["back_sweetener_eur_bn"]))
+	var drawn := func(outcome: String) -> Dictionary: return {"answer": _counter_id, "outcome": outcome, "month": now}
+	var earlier := {"answer": _counter_id, "outcome": "back", "month": now - 1}
+	for c in [
+			["accepted", "sold", drawn.call("accepted"), Strings.t("%s's plant in %s is sold at your counter, %s: %s jobs kept.") % [firm, place, cut, jobs], ResultTone.GOOD],
+			["sold", "sold", earlier, Strings.t("%s's plant in %s is sold at the old price, %s: %s jobs kept.") % [firm, place, old, jobs], ResultTone.GOOD],
+			["walked", "closed", drawn.call("walked"), Strings.t("The buyer walked away from %s's plant in %s, and it closed: %s jobs lost.") % [firm, place, jobs], ResultTone.BAD],
+			["no_buyer", "closed", {}, Strings.t("No buyer came for %s's plant in %s, and it closed: %s jobs lost.") % [firm, place, jobs], ResultTone.BAD],
+			["closed", "closed", earlier, Strings.t("%s's plant in %s closed, as you chose: %s jobs lost.") % [firm, place, jobs], ""],
+			["void", "void", earlier, Strings.t("%s failed before a buyer came for its plant in %s.") % [firm, place], ""]]:
+		row["status"] = c[1]
+		row["ended"] = now
+		row["negotiation"] = c[2]
+		if (c[2] as Dictionary).is_empty():
+			row.erase("negotiation")
+		_panel._refresh()
+		var lines := _result_lines()
+		if lines.size() != 1 or String(lines[0].get_meta("closure_result")) != c[0]:
+			_fail("result: '%s' should be said once, found %d" % [c[0], lines.size()])
+			continue
+		if (lines[0] as Label).text != c[3]:
+			_fail("result: '%s' reads '%s', not '%s'" % [c[0], lines[0].text, c[3]])
+		var colour: Variant = lines[0].get_theme_color("font_color") if lines[0].has_theme_color_override("font_color") else null
+		if colour != ResultTone.TINT.get(c[4]):
+			_fail("result: '%s' wears %s, its tone is '%s'" % [c[0], colour, c[4]])
+	# The month after, it is gone.
+	row["status"] = "closed"
+	row["ended"] = now - 1
+	row["negotiation"] = {"answer": _counter_id, "outcome": "walked", "month": now - 1}
+	_panel._refresh()
+	if not _result_lines().is_empty():
+		_fail("result: still said the month after")
+	# A counter that came back is the re-ask's own row, not a result.
+	row["status"] = Closures.OFFERED
+	row["ended"] = -1
+	row["negotiation"] = {"answer": _counter_id, "outcome": "back", "month": now}
+	row["due"] = now + 1
+	_panel._refresh()
+	if not _result_lines().is_empty():
+		_fail("result: a re-ask is said as a result too")
+
+
+func _result_lines() -> Array:
+	var out := []
+	for node in _panel.find_children("*", "Label", true, false):
+		var gone := false
+		var up: Node = node
+		while up != null and not gone:
+			gone = up.is_queued_for_deletion()
+			up = up.get_parent()
+		if node.has_meta("closure_result") and not gone:
+			out.append(node)
+	return out
 
 
 ## The parent's ruling on #287: a pending re-ask is one of the briefing's three, its
