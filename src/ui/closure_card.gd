@@ -35,12 +35,12 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 	var due := maxi(int(row["due"]) - (int(state.year) * 12 + int(state.month)), 0)
 	var jobs := CompanyVerb.thousands(float(row["jobs"]))
 	var closing := Strings.tn("%s will close its plant in %s: %s jobs, in %d month.", "%s will close its plant in %s: %s jobs, in %d months.", due) % [firm, place, jobs, due]
-	if due == 0:
-		# Drawn in its due month, before the tick lands it (a load, a redraw).
-		closing = Strings.t("%s will close its plant in %s: %s jobs, this month.") % [firm, place, jobs]
 	if offered:
 		# Ruling (b) on #280: the buyer came back at the old sweetener, for one month.
 		closing = Strings.t("The buyer came back for %s's plant in %s: %s jobs, at the old price.") % [firm, place, jobs]
+	elif due == 0:
+		# Drawn in its due month, before the tick lands it (a load, a redraw).
+		closing = Strings.t("%s will close its plant in %s: %s jobs, this month.") % [firm, place, jobs]
 	var head := PanelKit.plain_line(box, closing, PanelKit.Tone.PLAIN)
 	head.theme_type_variation = UiTheme.WARN_TEXT
 	if offered and row.has("answer"):
@@ -59,23 +59,24 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 		flow.add_child(column)
 		var strip := EffectsStrip.new()
 		column.add_child(strip)
-		var money: Array = money(option)
-		strip.show_lines(Strings.t("Treasury"), String(money[0]), float(money[1]),
-			EffectsStrip.who_text(option["bloc_offset"]), jobs_text(option))
 		var button := PanelKit.sized(Button.new())
-		button.text = label(option)
-		button.set_meta("closure_answer", id)
-		button.set_meta("money_label", strip.money_label)
-		button.pressed.connect(make.bind(id))
-		column.add_child(button)
 		if offered and String(option["kind"]) == "buyer":
 			var sale := -float(option["sweetener_eur_bn"])
 			strip.show_lines(Strings.t("Treasury"), Strings.t("%s at the sale") % EffectsStrip.sum_text(sale), sale, "",
 				Strings.t("The buyer keeps the %s jobs next month.") % jobs)
 			button.text = Strings.t(SELL_OLD)
+		else:
+			var sums: Array = money(option)
+			strip.show_lines(Strings.t("Treasury"), String(sums[0]), float(sums[1]),
+				EffectsStrip.who_text(option["bloc_offset"]), jobs_text(option))
+			button.text = label(option)
+		button.set_meta("closure_answer", id)
+		button.set_meta("money_label", strip.money_label)
+		button.pressed.connect(make.bind(id))
+		column.add_child(button)
 	var counters := answers.filter(func(o: Dictionary) -> bool: return String(o["kind"]) == "negotiate")
 	if not counters.is_empty():
-		CounterChips.build(box, counters, _strip, make, "closure_answer")
+		CounterChips.build(box, String(row["id"]), counters, _strip, make, "closure_answer")
 	PanelKit.plain_line(box, Strings.t("Unanswered, the plant is sold at the old price.") if offered else Strings.t("Unanswered, the plant closes."))
 
 
@@ -126,10 +127,10 @@ static func label(option: Dictionary) -> String:
 ## A closure's counter on the strip (#285): the search and the cut sweetener, then what
 ## a buyer that was found may answer: yes, back at the old sweetener, or gone.
 static func _strip(strip, option: Dictionary) -> void:
-	var money: Array = money(option)
-	strip.show_lines(Strings.t("Treasury"), String(money[0]), float(money[1]), "",
-		Strings.t("A %d %% chance a buyer is found, in %d to %d months. It accepts at %d to %d %%; refused, it returns at %s, or walks and %s jobs are lost: %d %% of refusals.") % [
+	var sums: Array = money(option)
+	strip.show_lines(Strings.t("Treasury"), String(sums[0]), float(sums[1]), "",
+		Strings.t("A %d %% chance a buyer is found, in %d to %d months, else %s jobs are lost. It accepts at %d to %d %%; refused, it returns at the old %s, or walks and the jobs are lost: %d %% of refusals.") % [
 			roundi(100.0 * float(option["chance"])), int(option["months"]), int(option["months_hi"]),
+			CompanyVerb.thousands(float(option["jobs_lost"])),
 			roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"])),
-			EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"])), CompanyVerb.thousands(float(option["jobs_lost"])),
-			roundi(100.0 * float(option["walk"]))])
+			EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"])), roundi(100.0 * float(option["walk"]))])

@@ -2061,15 +2061,19 @@ func _open_the_tax_code() -> void:
 ## income up two, VAT down one -- each through its slider, so the panels hear the
 ## edit the way a drag sends it.
 func _stage_a_buyer_back() -> void:
-	var ns = _main._state.player()
+	var closures = preload("res://src/sim/closures.gd")
+	var state = _main._state
+	var ns = state.player()
 	for entry in ns.companies.values():
 		var row: Dictionary = entry.get("closure", {})
-		if String(row.get("status", "")) == "announced":
-			var now: int = _main._state.year * 12 + _main._state.month
-			row["status"] = "offered"
+		if String(row.get("status", "")) == closures.ANNOUNCED:
+			for a in closures.answers(state, ns, _main._loader, String(row["id"])):
+				if String(a["kind"]) == "buyer":
+					row["back_sweetener_eur_bn"] = float(a["sweetener_eur_bn"])
+			var now: int = state.year * 12 + state.month
+			row["status"] = closures.OFFERED
 			row["offered"] = now
 			row["due"] = now + 1
-			row["back_sweetener_eur_bn"] = 0.5
 	_main._companies_panel.mark_dirty()
 
 

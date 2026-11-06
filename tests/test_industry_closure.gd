@@ -33,6 +33,7 @@ var _major
 var _closure_id := ""
 var _third
 var _counter_id := ""
+var _option := {}
 
 
 func _init() -> void:
@@ -60,14 +61,16 @@ func _process(_delta: float) -> bool:
 			_check_rescue()
 			_announce_third()
 		12:
-			_make_the_counter()
+			_pick_the_last_chip()
 		14:
+			_make_the_counter()
+		16:
 			_check_countered()
 			_stage_the_buyer_back()
-		16:
+		18:
 			_check_re_ask()
 			_press(_with_meta("closure_answer", "buyer"))
-		18:
+		20:
 			_check_re_ask_answered()
 			_finish()
 	return false
@@ -246,19 +249,27 @@ func _announce_third() -> void:
 	_panel.mark_dirty()
 
 
-## A chip other than the first: the strip reads ITS figures, and the button makes it.
-func _make_the_counter() -> void:
+## A chip other than the first, then a rebuild: the pick must survive it.
+func _pick_the_last_chip() -> void:
 	var state = _main._state
-	var ns = state.player()
-	var option := {}
-	for a in Closures.answers(state, ns, _main._loader, _row_of_third()["id"]):
+	for a in Closures.answers(state, state.player(), _main._loader, _row_of_third()["id"]):
 		if String(a["kind"]) == "negotiate":
-			option = a
-	var chip = _with_meta("counter_id", String(option.get("id", "")))
+			_option = a
+	var chip = _with_meta("counter_id", String(_option.get("id", "")))
 	if chip == null:
-		_fail("counter: no chip for the last counter (%s)" % [option])
+		_fail("counter: no chip for the last counter (%s)" % [_option])
 		return
 	(chip as Button).pressed.emit()
+	_panel.mark_dirty()
+
+
+## After the rebuild: the chip still pressed, the strip reads ITS figures, the button
+## makes it.
+func _make_the_counter() -> void:
+	var option := _option
+	var chip = _with_meta("counter_id", String(option.get("id", "")))
+	if chip == null or not (chip as Button).button_pressed:
+		_fail("counter: the pick did not survive a rebuild (%s)" % [option.get("id", "")])
 	var strip = null
 	for node in _panel.find_children("*", "", true, false):
 		if node.has_meta("counter_strip") and (node as Control).is_visible_in_tree():
@@ -332,7 +343,7 @@ func _check_re_ask_answered() -> void:
 		_fail("re-ask answered: the default line still stands")
 	if _with_meta("closure_answer", "buyer") != null:
 		_fail("re-ask answered: the answers still stand")
-	if Pending._closure_announced(ns):
+	if Pending._closure_waiting(ns):
 		_fail("re-ask answered: the closure still waits on the player")
 
 

@@ -174,7 +174,7 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 		if who != "":
 			PanelKit.plain_line(flow, who).autowrap_mode = TextServer.AUTOWRAP_OFF
 	if not counters.is_empty():
-		CounterChips.build(box, counters, _process_strip, func(id: String) -> void: answer.call(process_id, id, what), "answer_id")
+		CounterChips.build(box, process_id, counters, _process_strip, func(id: String) -> void: answer.call(process_id, id, what), "answer_id")
 	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % _label(String(ask["default"])))
 
 

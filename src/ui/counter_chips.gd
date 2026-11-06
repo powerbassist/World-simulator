@@ -8,12 +8,17 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
+## The chip picked on each row (a process or a closure id), so a rebuild of the panel
+## keeps what the player is weighing. A display pick only: a stale id falls back to the
+## first chip, and the strip always prices the chip shown.
+static var _picked := {}
+
 
 ## #280's counters as ONE row (the parent's design): a chip per counter (5, 10, 15 %),
 ## the picked chip's strip under the row -- the countered price, the blocs, its chances
 ## as the sim shows them (the range, NEVER the drawn odds) and the walk-away risk --
 ## and one button that makes the picked counter. The picks are read, then answered.
-static func build(box: Control, counters: Array, fill: Callable, make: Callable, go_key: String) -> void:
+static func build(box: Control, key: String, counters: Array, fill: Callable, make: Callable, go_key: String) -> void:
 	var row := PanelKit.buttons(box)
 	PanelKit.plain_line(row, Strings.t("Counter"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var group := ButtonGroup.new()
@@ -32,23 +37,26 @@ static func build(box: Control, counters: Array, fill: Callable, make: Callable,
 	var go := PanelKit.sized(Button.new())
 	go.text = Strings.t("Make the counter")
 	go.set_meta(go_key, "counter")
-	var picked := [String(counters[0]["id"])]
+	var shown: Dictionary = counters[0]
+	for option in counters:
+		if String(option["id"]) == String(_picked.get(key, "")):
+			shown = option
 	var show := func(option: Dictionary) -> void:
-		picked[0] = String(option["id"])
+		_picked[key] = String(option["id"])
 		fill.call(strip, option)
 	for option in counters:
 		var chip := PanelKit.sized(Button.new())
 		chip.text = Strings.t("%d %%") % roundi(100.0 * float(option["counter"]))
 		chip.toggle_mode = true
 		chip.button_group = group
-		chip.button_pressed = String(option["id"]) == picked[0]
+		chip.button_pressed = String(option["id"]) == String(shown["id"])
 		chip.set_meta("counter_id", String(option["id"]))
 		chip.pressed.connect(func() -> void: show.call(option))
 		row.add_child(chip)
 	box.add_child(half)
 	box.add_child(go)
-	go.pressed.connect(func() -> void: make.call(String(picked[0])))
-	show.call(counters[0])
+	go.pressed.connect(func() -> void: make.call(String(_picked[key])))
+	show.call(shown)
 
 
 ## An answer id's words: negotiate_N is "Counter N %".
