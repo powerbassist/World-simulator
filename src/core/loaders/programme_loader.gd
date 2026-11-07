@@ -76,6 +76,25 @@ static func load_programme(loader, programme_dir: String) -> void:
 			loader.programme.append(terms)
 
 
+## Step 6's deal. `laws`, optional: the bills that serve an entry, in the order a person who
+## sponsors it asks for them (src/sim/deal.gd). Read after both registers are loaded, since
+## programme loads before laws. Every id must be a law: an inert ask would be a person asking
+## for nothing.
+static func validate_laws(loader) -> void:
+	var known := {}
+	for law in loader.laws:
+		known[String(law.id)] = true
+	for entry in loader.programme:
+		if not entry.has("laws"):
+			continue
+		if typeof(entry["laws"]) != TYPE_ARRAY:
+			loader.errors.append("programme entry '%s': `laws` must be a list of law ids" % str(entry.get("id", "?")))
+			continue
+		for law_id in entry["laws"]:
+			if not known.has(str(law_id)):
+				loader.errors.append("programme entry '%s': `laws` names '%s', which is not a law" % [str(entry.get("id", "?")), str(law_id)])
+
+
 static func extract_programme_entry(loader, d: Dictionary, filename: String, errors: Array[String]) -> Dictionary:
 	# The unknown-field refusal FIRST: an entry carrying anything beside the schema
 	# does not get the courtesy of a partial load.
@@ -102,6 +121,8 @@ static func extract_programme_entry(loader, d: Dictionary, filename: String, err
 		errors.append("%s: programme entry missing or invalid string field 'id'" % filename)
 		return {}
 	out["id"] = id
+	if d.has("laws"):
+		out["laws"] = d["laws"]
 
 	var name = d.get("name", "")
 	if typeof(name) != TYPE_STRING or name == "":

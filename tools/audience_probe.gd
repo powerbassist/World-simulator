@@ -45,6 +45,9 @@ extends SceneTree
 ##               0.08 + 0.5 x 0.2)); since the V5.3-0 gate K=0 is kept anyway at
 ##               the minister's odds m on arrival (src/sim/delegation.gd):
 ##               m x 0.5 x 0.10 + (1 - m) x the break;
+##        Book, since step 6's deal, is K=1 a certain Grant (LW.grant_value) and K=0 the
+##               best of the three approaches on the form below with the lie's price on all
+##               three, since every win now writes a word; the form:
 ##        Book = the best offered lever's three-attempt net under that intent: A -
 ##               s(1 + q + q^2) + q^3 x Refuse - DIARY_DAY + 0.5 x 0.10 (received) +
 ##               KV(0.05 (1 - k)), A = 1 - q^3, q = 1 - p, s the weighted spend, the
@@ -92,6 +95,7 @@ const CabinetK = preload("res://src/sim/cabinet_constants.gd")
 const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const LW = preload("res://tools/lever_weights.gd")
+const DealK = preload("res://src/sim/deal_constants.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Phone = preload("res://src/sim/phone.gd")
@@ -368,20 +372,26 @@ func _b5_table(requests: Array, mix: bool) -> Dictionary:
 	return out
 
 
-## One case's three answers, as bands-v5.2.md's table and player model declare
-## them; book is the best offered lever's three-attempt net under the intent.
+## One case's three answers, as bands-v5.2.md's table and player model declare them, Book
+## under the deal (docs/audiences-model.md section 14): a certain Grant for a player who will
+## serve; for one who will not, the best of the three approaches over three attempts, each win
+## now a word that breaks at its date. A minister strikes no deal, so Delegate and Refuse are
+## as they were.
 func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool, minister := 0.0) -> Dictionary:
 	var k := float(cell["knowledge"])
 	var book := -INF
 	var pick := ""
-	for lever in LK.LEVERS:
+	var best_p := 0.0
+	for lever in DealK.APPROACHES:
 		var p := LeverOdds.odds(person, lever, cell)
-		if p < 0.0:
-			continue
-		var v := LW.book_value(p, LW.cost(LW.spend(person, lever, p)), g, k, serve, lever == "promise_date", Characters.grudge_intake(person))
+		best_p = maxf(best_p, p)
+		var v := LW.book_value(p, LW.cost(LW.spend(person, lever, p)), g, k, false, true, Characters.grudge_intake(person))
 		if v > book:
 			book = v
 			pick = lever
+	if serve:
+		book = LW.grant_value(k, 1.0 - best_p)
+		pick = "grant"
 	return {"book": book, "delegate": LW.delegate_value(g, snub, serve, minister), "refuse": LW.refuse_value(g), "lever": pick}
 
 

@@ -94,7 +94,7 @@ const ENTRY_FIELDS := [
 	"immediate", "complete", "fail", "invalid", "timeout_months",
 	"current_value", "goal_value", "progressbar",
 	"on_complete", "on_fail", "on_invalid", "on_timeout",
-	"weight", "pinned",
+	"weight", "pinned", "laws",
 ]
 
 ## The keys an entry cannot be an entry without, ENFORCED at load:
