@@ -474,8 +474,8 @@ The author's "Un marchandage concret" ([[v5.3-ab]] section 5, option 1). The sce
 Every month above is a labelled stand-in (`deal_constants.gd`, the parent's ruling).
 
 **The offer** (`Deal.offer_of`), by a general rule over who the person is:
-- **A vote.** A person whose party holds seats, with a bill tabled or in the diary, offers their faction's seats on it: a `pledge` row ([[legislature-model]], `DivisionTerms`), which the division reads and judges. The strip's seats are the division's.
-- **Silence.** Everyone else, and anyone who has already pledged that bill. For 12 months the person does not brief against the president (`Characters`, the brief's gate). It is real only because a brief reads it, and the strip says so.
+- **A vote.** A person whose party holds seats, with a bill tabled or in the diary, offers their faction's seats on it: a `pledge` row ([[legislature-model]], `DivisionTerms`), which the division reads and judges. The strip's seats are what the division adds, read on a copy of the nation at the bill's grade and route: the parent's ruling, since a pledge on a line that already votes yes adds nothing.
+- **Silence.** Everyone else: no party, no bill, a vote that adds no seat, or a pledge already given on that bill. For 12 months the person does not brief against the president (`Characters`, the brief's gate). It is real only because a brief reads it, and the strip says so.
 
 **The answers:**
 - **Grant** pays the ask and takes the offer, with no roll. It spends no attempt and stays open when the attempts run out, so three failures leave the full price on the table. A promise not believed earlier in the scene is taken up, held to the ask's date if that is nearer. A post goes through `Removal.reassign`, so taking one from a partner is priced as a removal, and the strip shows it.

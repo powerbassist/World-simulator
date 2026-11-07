@@ -165,10 +165,11 @@ static func keeps_silent(ns, person_id: String) -> bool:
 ## revealed after the month's report is gone. Cast like commitments(), plus
 ## {verdict, judged_month}. A "void" row may name a person content no longer
 ## carries -- the reason it was void -- so a reader resolves the id with care.
-static func judged_commitments(ns) -> Array[Dictionary]:
+## `owed`: step 6, the other half instead, what people owed, a broken pledge among it.
+static func judged_commitments(ns, owed := false) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for row in ns.commitments_judged:
-		if K.OWED_KINDS.has(String(row.get("kind", ""))):
+		if K.OWED_KINDS.has(String(row.get("kind", ""))) != owed:
 			continue
 		var view := _commitment(row)
 		view["verdict"] = String(row.get("verdict", ""))

@@ -24,7 +24,8 @@ extends RefCounted
 ## flatter and friendship as modifiers, with the lever bands re-measured on three approaches;
 ## a phone win still settles with no ask and no offer, B5's channel row unchanged.
 ##
-## `answers()`, `ask_of()` and `offer_of()` write nothing, so the UI may read them on any redraw.
+## `answers()`, `ask_of()` and `offer_of()` write nothing. Read them on a redraw, not every frame:
+## with a bill in hand an offer reads the division twice on a copy of the nation.
 
 const K = preload("res://src/sim/deal_constants.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
@@ -36,6 +37,7 @@ const Cabinet = preload("res://src/sim/cabinet.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
+const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const President = preload("res://src/sim/president.gd")
@@ -81,15 +83,20 @@ static func ask_of(state, ns, loader, row: Dictionary) -> Dictionary:
 
 
 ## {kind: vote, law_id, party_id, seats, due_month, date} or {kind: silence, months, due_month}.
-## `date` is the bill's day in the diary, {} for one already tabled. The seats are what the
-## division will count, before the cap a second pledge from the party might meet.
+## `date` is the bill's day in the diary, {} for one already tabled. `seats` is what this word
+## adds to the yes line of the division as it would fall now, so a person whose faction votes
+## yes anyway has no vote to give (the parent's ruling, QA's read: 8 of 32 offers in France would
+## have added nothing, and the strip would have said 427 seats where the division adds 251), and
+## offers silence. Grant and Bargain write this read, so the row is what the card said.
 static func offer_of(state, ns, loader, person_id: String) -> Dictionary:
 	var now := _now(state)
 	var party := President.party_id_of(ns, loader, person_id)
-	var seats := int(ns.seats_by_party.get(party, 0))
 	var bill := _next_bill(state, ns, now)
-	if seats > 0 and not bill.is_empty() and not _pledged(ns, person_id, String(bill["law_id"])):
-		return bill.merged({"kind": K.OFFER_VOTE, "party_id": party, "seats": DivisionTerms.one_pledge(ns, person_id, seats)})
+	if int(ns.seats_by_party.get(party, 0)) > 0 and not bill.is_empty() and not _pledged(ns, person_id, String(bill["law_id"])):
+		var gain := _seats_gained(state, ns, loader, person_id, bill)
+		if gain > 0:
+			return {"kind": K.OFFER_VOTE, "law_id": String(bill["law_id"]), "party_id": party, "seats": gain,
+				"due_month": int(bill["due_month"]), "date": bill["date"]}
 	return {"kind": K.OFFER_SILENCE, "months": K.SILENCE_MONTHS, "due_month": now + K.SILENCE_MONTHS}
 
 
@@ -245,13 +252,31 @@ static func _word_due(ns, now: int, object: String) -> int:
 	return vote + 1 if vote >= now else now + K.WORD_MONTHS
 
 
-## The next bill the president brings: one already tabled, else the earliest in the diary, or
-## {}. {law_id, due_month, date}: a pledge stands until the division reads it, the tick after
-## the bill's day.
+## What this person's word adds to the yes line, the division read twice as Division.forecast
+## reads it, on a copy with the pledge written and on the nation without it. A copy and not a
+## parameter on resolve_vote: every rule of the pledge, the cap and the peel stay the division's
+## own. Not for every frame: it copies the nation (Removal.price's precedent).
+static func _seats_gained(state, ns, loader, person_id: String, bill: Dictionary) -> int:
+	var law = Legislature.open_law(state, ns, loader, String(bill["law_id"]))
+	if law == null:
+		return 0
+	law = LawMagnitude.scaled(law, float(bill.get("scale", 1.0)))
+	var route: bool = Legislature.takes_route(ns, law, bool(bill.get("referendum", false)))
+	var parties: Array = loader.parties.get(ns.id, [])
+	var copy = ns.duplicate_state()
+	if not President.pledge(state, copy, loader, person_id, String(law.id), int(bill["due_month"])):
+		return 0
+	return int(Legislature.resolve_vote(copy, parties, law, route)["yes_seats"]) - int(Legislature.resolve_vote(ns, parties, law, route)["yes_seats"])
+
+
+## The next bill the president brings: one already tabled, at its grade and route, else the
+## earliest in the diary, or {}. {law_id, due_month, date}: a pledge stands until the division
+## reads it, the tick after the bill's day.
 static func _next_bill(state, ns, now: int) -> Dictionary:
 	var tabled := String(ns.tabled_bill.get("law_id", ""))
 	if tabled != "":
-		return {"law_id": tabled, "due_month": now + 1, "date": {}}
+		return {"law_id": tabled, "due_month": now + 1, "date": {},
+			"scale": float(ns.tabled_bill.get("scale", 1.0)), "referendum": bool(ns.tabled_bill.get("referendum", false))}
 	var best := {}
 	for entry in Calendar.booked(state):
 		if String(entry.get("kind", "")) == CalK.KIND_LAW and String(entry.get("law_id", "")) != "" \

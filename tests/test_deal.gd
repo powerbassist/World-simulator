@@ -71,9 +71,12 @@ func _init() -> void:
 	_check_someone_with_no_party_cannot_be_granted_a_post()
 
 	_check_the_offer_is_a_vote_on_the_tabled_bill()
+	_check_a_party_already_voting_yes_offers_silence()
+	_check_a_grade_is_read_in_the_gain()
 	_check_the_offer_is_a_vote_on_the_bill_in_the_diary()
 	_check_the_next_bill_is_the_earliest()
 	_check_no_bill_means_silence()
+	_check_a_bill_no_longer_open_means_silence()
 	_check_no_party_means_silence()
 	_check_someone_who_pledged_offers_silence()
 
@@ -107,6 +110,7 @@ func _init() -> void:
 	_check_only_silence_stops_a_brief()
 
 	_check_what_they_owe_is_not_the_presidents_word()
+	_check_a_broken_pledge_can_be_read()
 	_check_the_people_panel_reads_no_pledge_as_a_promise()
 	_check_a_word_on_a_bill_reads_the_bills_name()
 	_check_a_deal_survives_a_save()
@@ -245,27 +249,93 @@ func _check_someone_with_no_party_cannot_be_granted_a_post() -> void:
 func _check_the_offer_is_a_vote_on_the_tabled_bill() -> void:
 	var f := _held_on_want("programme:", "sponsor", true)
 	var ns = f["ns"]
-	var law_id: String = _open_laws(f, 1)[0]
+	var law_id: String = _votable(f, 1)[0]
 	ns.tabled_bill = {"law_id": law_id}
 	var offer: Dictionary = Deal.offer_of(f["state"], ns, _loader, f["person_id"])
 	if String(offer.get("kind", "")) != "vote" or String(offer.get("law_id", "")) != law_id:
 		_fail("a party person offers a vote on the tabled bill, got %s" % [offer])
 	if int(offer.get("due_month", 0)) != _now(f) + 1:
 		_fail("a tabled bill divides at the next month's close, got %s" % [offer])
-	# The strip's seats are the division's: strike it and read them back.
+	# The strip's seats are what the division adds: strike it and read the forecast either side.
+	var before := int(Division.forecast(f["state"], ns, _loader)["yes_seats"])
 	var result := Deal.grant(f["state"], ns, _loader, f["session"])
 	if not bool(result.get("ok", false)):
 		_fail("Grant refused: %s" % [result])
 		return
-	var party = _party(ns, String(offer["party_id"]))
-	if int(offer["seats"]) <= 0 or int(offer["seats"]) != DivisionTerms.pledged_seats(ns, party, _law(law_id)):
-		_fail("the strip's %d seats are not the division's %d" % [int(offer["seats"]), DivisionTerms.pledged_seats(ns, party, _law(law_id))])
+	var gained := int(Division.forecast(f["state"], ns, _loader)["yes_seats"]) - before
+	if int(offer["seats"]) <= 0 or int(offer["seats"]) != gained:
+		_fail("the strip's %d seats are not the %d the division adds" % [int(offer["seats"]), gained])
+
+
+## On a yes line at the bill's own size a pledge adds no seat, so a vote is no offer. The whole
+## cast of a new game, in the four playable nations: every vote offered must add its seats.
+func _check_a_party_already_voting_yes_offers_silence() -> void:
+	var yes_lines := 0
+	for id in PLAYABLE:
+		var state = GameState.new_game(_loader, id)
+		state.year = 2026
+		state.month = 2
+		var ns = state.player()
+		var law = null
+		for candidate in Legislature.available(ns, _loader.laws):
+			if not candidate.constitutional:
+				law = candidate
+				break
+		ns.tabled_bill = {"law_id": String(law.id)}
+		var forecast: Dictionary = Division.forecast(state, ns, _loader)
+		for person in _loader.people.get(id, []):
+			var party := President.party_id_of(ns, _loader, person.id)
+			if int(ns.seats_by_party.get(party, 0)) <= 0:
+				continue
+			var offer: Dictionary = Deal.offer_of(state, ns, _loader, person.id)
+			if String(forecast["party_votes"].get(party, "")) == "yes" and int(forecast["party_rebels"].get(party, 0)) == 0:
+				yes_lines += 1
+				if String(offer["kind"]) != "silence":
+					_fail("%s: a party voting yes has no seat to add, got %s" % [person.id, offer])
+			elif String(offer["kind"]) == "vote" and int(offer["seats"]) <= 0:
+				_fail("%s: a vote offered must add a seat, got %s" % [person.id, offer])
+	if yes_lines == 0:
+		_fail("premise: no party voted yes on the fixture's bills")
+
+
+## The read is the bill as it will divide: at ten times a yes line peels, and a pledge holds
+## seats that would have left, so the same person who offered silence at one offers a vote.
+func _check_a_grade_is_read_in_the_gain() -> void:
+	var f := _held_on_want("programme:", "sponsor", true)
+	var ns = f["ns"]
+	var party := President.party_id_of(ns, _loader, f["person_id"])
+	var graded = null
+	for candidate in Legislature.available(ns, _loader.laws):
+		if candidate.constitutional:
+			continue
+		ns.tabled_bill = {"law_id": String(candidate.id)}
+		if String(Division.forecast(f["state"], ns, _loader)["party_votes"].get(party, "")) == "yes" \
+				and String(Deal.offer_of(f["state"], ns, _loader, f["person_id"])["kind"]) == "silence":
+			graded = candidate
+			break
+	if graded == null:
+		_fail("premise: no bill the fixture's party votes yes on")
+		return
+	# A row with a magnitude and a cost, as #297's grade needs one, on this test's copy of the law.
+	var saved: Dictionary = graded.magnitude
+	graded.magnitude = {"value": 40.0, "reference": 40.0, "unit": "lycees", "eur_bn_per_unit": 0.01}
+	ns.tabled_bill = {"law_id": String(graded.id), "scale": 10.0}
+	var offer: Dictionary = Deal.offer_of(f["state"], ns, _loader, f["person_id"])
+	var with_gain := int(Division.forecast(f["state"], ns, _loader)["yes_seats"])
+	var seats := int(offer.get("seats", 0))
+	if String(offer["kind"]) != "vote" or seats <= 0:
+		_fail("at ten times a yes line peels, and a pledge holds seats that would leave, got %s" % [offer])
+	else:
+		Deal.grant(f["state"], ns, _loader, f["session"])
+		if int(Division.forecast(f["state"], ns, _loader)["yes_seats"]) - with_gain != seats:
+			_fail("the strip's %d seats on a graded bill are not the division's" % seats)
+	graded.magnitude = saved
 
 
 func _check_the_offer_is_a_vote_on_the_bill_in_the_diary() -> void:
 	var f := _held_on_want("programme:", "sponsor", true)
 	var state = f["state"]
-	var law_id: String = _open_laws(f, 1)[0]
+	var law_id: String = _votable(f, 1)[0]
 	var month: int = 1 if int(state.month) == 12 else int(state.month) + 1
 	var year: int = int(state.year) + 1 if int(state.month) == 12 else int(state.year)
 	if not bool(Calendar.book(state, Calendar.make_entry(CalK.KIND_LAW, year, month, 15, "", "", law_id)).get("ok", false)):
@@ -284,7 +354,7 @@ func _check_the_offer_is_a_vote_on_the_bill_in_the_diary() -> void:
 func _check_the_next_bill_is_the_earliest() -> void:
 	var f := _held_on_want("programme:", "sponsor", true)
 	var state = f["state"]
-	var laws := _open_laws(f, 2)
+	var laws := _votable(f, 2)
 	# Booked later-first, so neither booking order nor the last date can pass for the next.
 	if not bool(Calendar.book(state, Calendar.make_entry(CalK.KIND_LAW, 2026, 4, 10, "", "", laws[1])).get("ok", false)) \
 			or not bool(Calendar.book(state, Calendar.make_entry(CalK.KIND_LAW, 2026, 3, 20, "", "", laws[0])).get("ok", false)):
@@ -302,6 +372,17 @@ func _check_no_bill_means_silence() -> void:
 		_fail("with no bill to vote on, the offer is 12 months of silence, got %s" % [offer])
 	if int(offer.get("due_month", 0)) != _now(f) + 12:
 		_fail("silence is dated, got %s" % [offer])
+
+
+## The division refuses a bill no longer open, so nobody can vote for it.
+func _check_a_bill_no_longer_open_means_silence() -> void:
+	var f := _held_on_want("programme:", "sponsor", true)
+	var ns = f["ns"]
+	var law_id: String = _votable(f, 1)[0]
+	ns.tabled_bill = {"law_id": law_id}
+	ns.law_cooldown_months[law_id] = 5
+	if String(Deal.offer_of(f["state"], ns, _loader, f["person_id"]).get("kind", "")) != "silence":
+		_fail("a bill that will not divide has no vote to give")
 
 
 func _check_no_party_means_silence() -> void:
@@ -324,7 +405,7 @@ func _check_no_party_means_silence() -> void:
 func _check_someone_who_pledged_offers_silence() -> void:
 	var f := _held_on_want("programme:", "sponsor", true)
 	var ns = f["ns"]
-	var law_id: String = _open_laws(f, 1)[0]
+	var law_id: String = _votable(f, 1)[0]
 	ns.tabled_bill = {"law_id": law_id}
 	if not President.pledge(f["state"], ns, _loader, f["person_id"], law_id, _now(f) + 1):
 		_fail("the fixture's pledge was refused")
@@ -857,6 +938,24 @@ func _check_the_people_panel_reads_no_pledge_as_a_promise() -> void:
 		_fail("the president owes nothing here, and the panel says a promise falls due")
 
 
+## Interface's "their word: X broke it" reads this: what they owed, judged, kept apart from the
+## president's own words.
+func _check_a_broken_pledge_can_be_read() -> void:
+	var f := _law_deal(true)
+	var ns = f["ns"]
+	Deal.grant(f["state"], ns, _loader, f["session"])
+	ns.person_party_override[f["person_id"]] = ""
+	ns.tabled_bill = {"law_id": f["bill_id"]}
+	Division.divide(f["state"], _loader)
+	var owed := President.judged_commitments(ns, true)
+	if owed.size() != 1 or String(owed[0]["kind"]) != "pledge" or String(owed[0]["verdict"]) != "broken" \
+			or String(owed[0]["person_id"]) != String(f["person_id"]) or int(owed[0]["judged_month"]) != _now(f):
+		_fail("a broken pledge reads through judged_commitments(ns, true), got %s" % [owed])
+	for row in President.judged_commitments(ns):
+		if String(row["kind"]) == "pledge":
+			_fail("the president's own list still leaves it out, got %s" % [row])
+
+
 func _check_a_word_on_a_bill_reads_the_bills_name() -> void:
 	var f := _law_deal(false)
 	var words := PersonCard.object_text(_loader, f["ns"], "law:%s" % f["law_id"], {})
@@ -1096,13 +1195,18 @@ func _post_held_by_a_partner() -> Dictionary:
 ## `bill`, a second law tabled, so the offer is a vote on it, else the offer is silence.
 func _law_deal(bill: bool) -> Dictionary:
 	var f := _held_on_want("programme:", "sponsor", true)
-	var open := _open_laws(f, 2)
+	var votable := _votable(f, 1)
+	var law_id := ""
+	for id in _open_laws(f, 2):
+		if String(id) != String(votable[0]):
+			law_id = String(id)
+			break
 	var entry := _entry(f["object"])
-	entry["laws"] = [open[0]]
+	entry["laws"] = [law_id]
 	if bill:
-		f["ns"].tabled_bill = {"law_id": open[1]}
-		f["bill_id"] = open[1]
-	f["law_id"] = open[0]
+		f["ns"].tabled_bill = {"law_id": votable[0]}
+		f["bill_id"] = votable[0]
+	f["law_id"] = law_id
 	f["session"] = _reopen(f)
 	entry.erase("laws")
 	return f
@@ -1127,6 +1231,25 @@ func _open_laws(f: Dictionary, n: int) -> Array:
 			break
 	if out.size() < n:
 		_fail("fewer than %d open laws" % n)
+	return out
+
+
+## Open bills this person's vote would add seats to, so the offer on them is a vote.
+func _votable(f: Dictionary, n: int) -> Array:
+	var ns = f["ns"]
+	var kept: Dictionary = ns.tabled_bill
+	var out := []
+	for law in Legislature.available(ns, _loader.laws):
+		if law.constitutional:
+			continue
+		ns.tabled_bill = {"law_id": String(law.id)}
+		if String(Deal.offer_of(f["state"], ns, _loader, f["person_id"]).get("kind", "")) == "vote":
+			out.append(String(law.id))
+		if out.size() == n:
+			break
+	ns.tabled_bill = kept
+	if out.size() < n:
+		_fail("fewer than %d bills this person's vote would add to" % n)
 	return out
 
 
