@@ -11,7 +11,7 @@ extends SceneTree
 ## Two regimes, declared with their bands before the first run:
 ##
 ##   L1 BY KNOWLEDGE BAND. Every France person but the president, at each band's
-##      midpoint (0.165, 0.5, 0.835), rapport 0, below friend, both asks. The
+##      midpoint (0.165, 0.5, 0.835), rapport at the new game's seed, below friend, both asks. The
 ##      player picks the offered lever with the highest SHOWN midpoint; the row is
 ##      the mean TRUE odds of that pick.
 ##      B4: 0.30-0.50 stranger, 0.45-0.65 acquaintance, 0.60-0.80 known, each band
@@ -83,6 +83,10 @@ const BANDS := {"stranger": 0.165, "acquaintance": 0.5, "known": 0.835}
 const LW = preload("res://tools/lever_weights.gd")
 
 var _loader
+## The regard a new game starts with, read before the warm months so a cell holds the
+## seed and not the idle year's lapses: empty on a build with no seed, whose rows this
+## therefore leaves byte for byte as they were.
+var _start_regard: Dictionary = {}
 
 
 func _init() -> void:
@@ -100,6 +104,7 @@ func _init() -> void:
 		quit(1)
 		return
 	var state = GameState.new_game(_loader, PLAYER)
+	_start_regard = state.player().person_rapport.duplicate()
 	for i in range(WARM_MONTHS):
 		state.year = 2026 + i / 12
 		state.month = i % 12 + 1
@@ -416,7 +421,9 @@ func _no_costlier(a: Dictionary, b: Dictionary) -> bool:
 
 
 func _cell(ns, person, k: float, rel: String, aligned: bool) -> Dictionary:
-	return {"knowledge": k, "rapport": 0.0, "relationship": rel, "aligned": aligned,
+	# The seed, not 0: a probe that omits it measures a world the game no longer runs
+	# (docs/design/v5.3-ab.md section 6, B6 re-reads B4 and B5 here).
+	return {"knowledge": k, "rapport": float(_start_regard.get(person.id, 0.0)), "relationship": rel, "aligned": aligned,
 		"standing": float(ns.person_standing.get(person.id, 0.5)), "approval": float(ns.overall_approval_pct)}
 
 

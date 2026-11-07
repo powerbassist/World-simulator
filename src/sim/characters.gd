@@ -47,16 +47,14 @@ const CharacterK = preload("res://src/sim/character_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const CK = preload("res://src/sim/character_act_constants.gd")
+const CharacterSeed = preload("res://src/sim/character_seed.gd")
 const Staff = preload("res://src/sim/staff.gd")
 
 
-## Seed standing for the people of ONE nation (new_game calls it for the
-## player's, the only nation whose registers anything reads) off authored
-## ambition, the only value the register holds before anything happens. The
-## seed is ambition plus the trait's floor (the scalar is the dial, the trait
-## is the floor -- 14.2's own distinction), so an ambitious person starts
-## with weight to use and a contented one starts anonymous. V5.3-0: the people
-## are the nation's cast (Staff.cast), so a chief of staff is never seeded.
+## Seed the people of ONE nation (new_game calls it for the player's, the only
+## nation whose registers anything reads): standing and, since V5.3 a + b, the
+## president's regard, both CharacterSeed's arithmetic. V5.3-0: the people are
+## the nation's cast (Staff.cast), so a chief of staff is never seeded.
 static func init_nation(ns, loader) -> void:
 	ns.person_loyalty.clear()
 	ns.person_standing.clear()
@@ -65,12 +63,10 @@ static func init_nation(ns, loader) -> void:
 	ns.person_party_override.clear()
 	ns.person_want_state.clear()
 	for person in Staff.cast(loader, ns.id):
-		var standing := CK.STANDING_SEED_BASE + CK.STANDING_SEED_AMBITION * float(person.ambition)
-		if person.traits.has("ambitious"):
-			standing += CK.STANDING_SEED_AMBITIOUS_BONUS
-		ns.person_standing[person.id] = clampf(standing, 0.0, 1.0)
+		ns.person_standing[person.id] = CharacterSeed.standing(person)
 		ns.person_loyalty[person.id] = 0.0
 		ns.person_grudges[person.id] = 0.0
+	CharacterSeed.regard(ns, loader)
 
 
 ## The month: settle wants into loyalty and grudges, decay the grudges, then

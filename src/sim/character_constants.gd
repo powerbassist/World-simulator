@@ -13,6 +13,11 @@ extends RefCounted
 ## compares strings with, so a typo in data/people/*.json is a load error
 ## rather than a silently inert trait.
 
+## The largest real-relations offset a person row may ship, either way (Person.
+## start_regard_offset), the bound docs/design/v5.3-ab.md section 6 sets: at 0.20 x
+## regard, at most 0.06 of an audience's odds.
+const REGARD_OFFSET_MAX := 0.30
+
 ## The eight traits, 2-3 authored per person. Each gates an act threshold or
 ## price -- the CK lever docs/tiers/v4.md 4.3 signed -- and the whole
 ## mechanical definitions live in docs/people-model.md section 14.2 beside the
