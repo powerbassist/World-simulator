@@ -621,7 +621,7 @@ func _check_the_peel_on_a_real_division() -> void:
 	if String(loose["party_votes"][party.id]) != "yes":
 		_fail("a peel moved the party's line")
 	var reference: Dictionary = Legislature.resolve_vote(ns, _parties(), law)
-	ns.party_discipline[party.id] = 0.0
+	ns.party_discipline[party.id] = 1.0
 	if str(reference) != str(Legislature.resolve_vote(ns, _parties(), law)):
 		_fail("a bill at its reference size reads discipline through the peel")
 
