@@ -503,12 +503,13 @@ func _check_a_bill_brought_keeps_the_word_whatever_the_verdict() -> void:
 func _check_a_bill_not_brought_breaks_the_word_and_releases_them() -> void:
 	var f := _law_deal(false)
 	var ns = f["ns"]
-	Deal.grant(f["state"], ns, _loader, f["session"])
-	Levers.close(f["state"], ns, _loader, f["session"])
-	if _owed_row(ns, f["person_id"], "silence").is_empty():
-		_fail("the fixture's offer should be silence")
+	# Earlier in the register than this deal's row, as an older deal's would be.
 	if not President.commit(f["state"], ns, _loader, "silence", f["person_id"], "silence:an_older_deal", _now(f) + 24):
 		_fail("the fixture's older silence was refused")
+	Deal.grant(f["state"], ns, _loader, f["session"])
+	Levers.close(f["state"], ns, _loader, f["session"])
+	if President.owed(ns).size() != 2:
+		_fail("the fixture's offer should be silence, got %s" % [President.owed(ns)])
 	# Another bill reaches the floor, and that keeps no word on this one.
 	ns.tabled_bill = {"law_id": _open_laws(f, 2)[1]}
 	Division.divide(f["state"], _loader)
