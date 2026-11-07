@@ -11,12 +11,15 @@ const Region = preload("res://src/core/region.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const CounterChips = preload("res://src/ui/counter_chips.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const Num = preload("res://src/ui/num.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## One answer's column on a closure card, in px: three fit a docked window.
 const ANSWER_WIDTH := 300
+## The economy's clause in the card's reason: under this gap the figure prints as 0.0.
+const GAP_SAID_PCT := 0.05
 ## A countered closure's result, the month it lands (the parent's ruling on #287,
 ## Closures.closed_last_month): the firm, the place, then the sum on a sale, the jobs.
 const RESULT := {
@@ -58,6 +61,19 @@ static func result(box: Control, loader, ns, line: Dictionary) -> void:
 		ResultTone.tint(label, String(RESULT_TONE[outcome]))
 
 
+## Why this plant, said as what the record kept the month it was announced: the firm's
+## own output, and the economy when it ran below its potential (the author's call on
+## #286: the reason is true).
+static func reason(row: Dictionary) -> String:
+	var months := int(row["window_months"])
+	var fell := Strings.tn("Its output fell %s %% in %d month.", "Its output fell %s %% in %d months.", months) % [
+		Num.f(100.0 * float(row["fall"]), 0), months]
+	var gap := float(row.get("gap_pct", 0.0))
+	if gap > -GAP_SAID_PCT:
+		return fell
+	return fell + " " + Strings.t("The economy was %s %% below its potential.") % Num.f(-gap, 1)
+
+
 ## A closure: announced, its card and answers; searching, its months left.
 static func build(box: Control, state, loader, ns, row: Dictionary, closure: Callable) -> void:
 	var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
@@ -85,6 +101,8 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 	if offered and row.has("answer"):
 		PanelKit.plain_line(box, Strings.t("Answered: %s.") % Strings.t(SELL_OLD))
 		return
+	if not offered and row.has("window_months"):
+		PanelKit.plain_line(box, reason(row), PanelKit.Tone.PLAIN)
 	var flow := PanelKit.buttons(box)
 	var what := "%s, %s" % [firm, place]
 	var answers := Closures.answers(state, ns, loader, String(row["id"]))

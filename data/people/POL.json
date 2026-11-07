@@ -1253,6 +1253,54 @@
       "social_skill": 0.45,
       "voice": "chief_pol",
       "bench": true
+    },
+    {
+      "id": "POL_chief_pasze_warmia",
+      "name": "Andrzej Cybulski",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.62,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_przetwory_podlaskie",
+      "name": "Bartosz Lewandowicz",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked",
+        "pragmatic"
+      ],
+      "ambition": 0.71,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_siec_wielkopolska",
+      "name": "Bronisław Kietlicz",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.35,
+      "bench": true
+    },
+    {
+      "id": "POL_chief_sklepy_zachodnie",
+      "name": "Zofia Dmochowska",
+      "kind": "executive",
+      "voice": "executive_f_50",
+      "traits": [
+        "ambitious",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.62,
+      "bench": true
     }
   ]
 }

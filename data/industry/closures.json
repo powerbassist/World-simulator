@@ -1,8 +1,12 @@
 {
-  "_note": "V5.3 a, the plant-closure rule (docs/design/v5.3-ab.md 3.2, src/sim/closures.gd). STAND-INS written by Systems so the rule can be measured; Content authors the numbers (the spec's section 10), as data, never per firm. window_months: the months over which a major's output fall is measured. fall: the fraction of its output a major must lose over the window to announce a closure (chosen from a measured survey: about one closure a year per playable nation at 0.04). cut: the share of the firm's live share, so of its jobs, a landed closure removes (a plant, not the firm). cooldown_months: the months after a closure ends before the same firm may announce again (at least window + the answer's months, so a landed closure's own cut never re-announces). bloc_offset: what a landed closure moves, per closure.",
+  "_note": "V5.3 a, the plant-closure rule (docs/design/v5.3-ab.md 3.2, src/sim/closures.gd). STAND-INS written by Systems so the rule can be measured; Content authors the numbers (the spec's section 10), as data, never per firm. window_months: the months over which a major's output fall is measured. fall: the fraction of its output a major must lose over the window for its sector to announce a closure. cut: the share of the picked firm's live share, so of its jobs, a landed closure removes (a plant, not the firm). cooldown_months: the months after a closure ends before the same SECTOR may announce again (at least window + the answer's months, so a landed closure's own cut never re-announces). bloc_offset: what a landed closure of reference_jobs moves; a plant moves it in proportion to its jobs. V5.3 majors (the parent's ruling): the rule fires per sector, one major picked by its share of the sector's jobs, so adding real majors does not change the calibrated rate; per major, FRA went from 14 closures a decade to 39. reference_jobs is about the mean plant at the real majors' shares (tools/closure_rate_probe.gd), so the mean closure moves #251's -0.02. THE RATE (the author's call on #286): a major past `fall` is nearly always there, so the rule is a chance, not a timer. monthly_chance: a falling sector's chance of a closure in a month, at reference_fall and with the economy at its potential. reference_fall: the worst major's fall that reads as 1. gap_slope: how much each point of output gap below potential adds, and each point above takes away. cooldown_months is only a floor now. STAND-INS by Systems, the mean set across six seeds to the base economy's targets (FRA 14, DEU 11, GBR 14, POL 15 a decade; tools/closure_rate_probe.gd), for the author's table.",
   "window_months": 6,
   "fall": 0.04,
   "cut": 0.03,
-  "cooldown_months": 24,
+  "cooldown_months": 12,
+  "reference_jobs": 2500,
+  "monthly_chance": 0.18,
+  "reference_fall": 0.10,
+  "gap_slope": 0.35,
   "bloc_offset": {"workers": -0.02}
 }

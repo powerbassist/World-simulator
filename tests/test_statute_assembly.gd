@@ -56,12 +56,12 @@ const PLAYER := "FRA"
 const ENDORSE_LAW := "retirement_age_reform"
 ## The sector whose majors lobby, and the deregulation law they name --
 ## data/laws/business.json's own rows: industrial_deregulation carries
-## industry -0.4, and FRA's biggest industry major is FRA_aurignac (share
-## 0.14 against FRA_sevrenne's 0.10).
+## industry -0.4, and FRA's biggest industry major is FRA_lumenor (share
+## 0.037 against FRA_sevrenne's 0.0143).
 const LOBBY_SECTOR := "industry"
 const LOBBY_LAW := "industrial_deregulation"
-const LOBBY_FIRM := "FRA_aurignac"
-const LOBBY_CHIEF := "FRA_chief_aurignac"
+const LOBBY_FIRM := "FRA_lumenor"
+const LOBBY_CHIEF := "FRA_chief_lumenor"
 ## The idle band, from statute_constants' comment: the draws fire ~0.96 a
 ## year and the measured 120-month idle run tabled 9 bills; the pin holds a
 ## ceiling well inside the draws' own 12-per-decade.

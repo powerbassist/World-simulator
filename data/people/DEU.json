@@ -1245,6 +1245,91 @@
       "social_skill": 0.5,
       "voice": "chief_deu",
       "bench": true
+    },
+    {
+      "id": "DEU_chief_zuckerland_sudmark",
+      "name": "Heide Drolshagen",
+      "kind": "executive",
+      "voice": "executive_f_50",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.59,
+      "bench": true
+    },
+    {
+      "id": "DEU_chief_fleischkontor_westmark",
+      "name": "Heiner Vollbrecht",
+      "kind": "executive",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "DEU_chief_elektrowerk_siedel",
+      "name": "Bertram Osterkamp",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.63,
+      "bench": true
+    },
+    {
+      "id": "DEU_chief_alpenmobil_ag",
+      "name": "Hanne Eickhoff",
+      "kind": "executive",
+      "voice": "executive_f_50",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "bench": true
+    },
+    {
+      "id": "DEU_chief_eisenstrang_verkehr",
+      "name": "Cornelia Frevert",
+      "kind": "executive",
+      "voice": "executive_f_50",
+      "traits": [
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.39,
+      "bench": true
+    },
+    {
+      "id": "DEU_chief_telenord_kommunikation",
+      "name": "Jörn Lindhorst",
+      "kind": "executive",
+      "traits": [
+        "loyal",
+        "pragmatic",
+        "stubborn"
+      ],
+      "ambition": 0.45,
+      "bench": true
+    },
+    {
+      "id": "DEU_chief_nordlicht_luftfahrt",
+      "name": "Falk Hülsbusch",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "networked",
+        "stubborn"
+      ],
+      "ambition": 0.65,
+      "bench": true
     }
   ]
 }

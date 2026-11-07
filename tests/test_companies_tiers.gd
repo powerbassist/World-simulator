@@ -57,9 +57,11 @@ func _init() -> void:
 func _test_tiers() -> void:
 	# A3 grew the register: FRA now holds its majors PLUS a body list, so the
 	# A1 pin (exactly six majors, empty body) is now the majors count alone.
+	# V5.3: the six invented majors took real magnitudes and four real-sized
+	# counterparts joined them (10 -- the author's "real figures" call).
 	var fra_majors := Companies.majors_of(_loader, "FRA")
-	if fra_majors.size() != 6:
-		_fail("FRA should hold exactly its six majors, got %d" % fra_majors.size())
+	if fra_majors.size() != 10:
+		_fail("FRA should hold exactly its ten majors, got %d" % fra_majors.size())
 	for nation_id in _loader.companies.keys():
 		if _loader.companies[nation_id].is_empty():
 			_fail("%s holds no firms at all -- A3 generates every nation's register" % nation_id)
@@ -257,7 +259,7 @@ func _test_register_scale() -> void:
 		# 10-15 majors a nation: the majors are hand-curated content, and a
 		# nation under ten has no sector with a plausible champion ladder, while
 		# one over fifteen is a body list wearing the tier the verbs read.
-		# FRA/DEU/GBR/POL keep their AUTHORED majors (6/6/6/8, A2's curated
+		# FRA/DEU/GBR/POL keep their AUTHORED majors (A2 six/six/six/eight, now 10/13/8/12 at V5.3; A2 curated
 		# set) -- the band scopes to the 25 nations A3 authored.
 		var authored := [ "FRA", "DEU", "GBR", "POL" ].has(nation_id)
 		if not authored and (majors.size() < 10 or majors.size() > 15):
