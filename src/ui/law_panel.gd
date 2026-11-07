@@ -18,6 +18,8 @@ extends PanelContainer
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const DivisionTerms = preload("res://src/sim/division_terms.gd")
+const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
@@ -422,38 +424,34 @@ static func forecast_text(ns, party_list: Array, law, band: float) -> String:
 	return text
 
 
-## The same walk, as the counts (V5.2-0b: the catalogue's forecast bar).
+## The same walk, as the counts (V5.2-0b: the catalogue's forecast bar). It is the division's
+## own tally (DivisionTerms.seats_of: a pledge, the peel, an address's sway) with only the band
+## its own, so at ABSTAIN_BAND it reads what resolve_vote reads, law by law (tests/
+## test_forecast_reads.gd; the review's finding 3 on #298). A tabled bill reads at its grade.
 static func forecast_counts(ns, party_list: Array, law, band: float) -> Dictionary:
-	var yes := 0
-	var no := 0
-	var undecided := 0
+	var bill = LawMagnitude.scaled(law, float(ns.tabled_bill.get("scale", 1.0))) if String(ns.tabled_bill.get("law_id", "")) == String(law.id) else law
+	var totals := [0, 0, 0]
 	var rebels := 0
-
 	for party in party_list:
-		var s: float = Legislature.support(ns, party, law)
-		var own: float = Legislature.spatial_support(ns, party, law)
-		var seats: int = int(ns.seats_by_party.get(party.id, 0))
-
+		var s: float = Legislature.support(ns, party, bill)
+		var lean: float = Legislature.spatial_support(ns, party, bill)
+		var own: float = clampf(lean + DivisionTerms.of(lean, party, bill), -1.0, 1.0)
 		var broke := 0
 		if Legislature.vote_of(own) != Legislature.vote_of(s):
 			broke = Discipline.rebel_seats(ns, party, s, own)
 		rebels += broke
+		var tally := DivisionTerms.seats_of(_line_at(s, band), _line_at(own, band), int(ns.seats_by_party.get(party.id, 0)), broke,
+			DivisionTerms.pledged_seats(ns, party, bill), DivisionTerms.peel_share(ns, party, bill) + DivisionTerms.swayed_share(ns, party, bill, false),
+			DivisionTerms.swayed_share(ns, party, bill, true))
+		for i in 3:
+			totals[i] += int(tally[i])
+	return {"yes": totals[0], "no": totals[1], "undecided": totals[2], "rebels": rebels}
 
-		if s > band:
-			yes += seats - broke
-		elif s < -band:
-			no += seats - broke
-		else:
-			undecided += seats - broke
 
-		if own > band:
-			yes += broke
-		elif own < -band:
-			no += broke
-		else:
-			undecided += broke
-
-	return {"yes": yes, "no": no, "undecided": undecided, "rebels": rebels}
+static func _line_at(support_now: float, band: float) -> String:
+	if support_now > band:
+		return "yes"
+	return "no" if support_now < -band else "abstain"
 
 
 func _forecast_text(ns, party_list: Array, law) -> String:
