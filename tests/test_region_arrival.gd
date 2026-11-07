@@ -12,9 +12,12 @@ extends SceneTree
 ## Driven through the real inbox and the real Go, a frame apart.
 
 const Regions = preload("res://src/sim/regions.gd")
+const GameState = preload("res://src/core/game_state.gd")
+const Migration = preload("res://src/sim/migration.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 const RegionFund = preload("res://src/ui/region_fund.gd")
 const RegionArrival = preload("res://src/ui/region_arrival.gd")
+const Priorities = preload("res://src/ui/priorities.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 const Inbox = preload("res://src/ui/inbox.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
@@ -36,6 +39,8 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		2:
 			_check_rule()
+			_check_worst_is_the_panels("FRA")
+			_check_worst_is_the_panels("DEU")
 			_check_under_threshold()
 			_check_card_arrives()
 		3:
@@ -46,6 +51,15 @@ func _process(_delta: float) -> bool:
 			_check_rearm()
 			_check_not_with_a_fund()
 			_check_wired()
+			_check_out_of_government()
+			_check_new_state()
+			_check_unanswered_card()
+		7:
+			_press_go()
+		9:
+			var panel = _main._windows.content("region")
+			if not _main._windows.is_open("region") or _card() != null or String(panel._open_region) != String(_worst["region"].id):
+				_fail("an older card: its Go did not land (tab open %s, card up %s, region '%s')" % [_main._windows.is_open("region"), _card() != null, panel._open_region])
 			_finish()
 	return false
 
@@ -62,6 +76,26 @@ func _check_rule() -> void:
 	_worst = RegionArrival.worst(_main._state, _main._state.player())
 	if _worst.is_empty() or float(_worst["problem"]["ratio"]) < float(_rule()["ratio"]):
 		_fail("premise: France's worst region is under the threshold (%s)" % [_worst])
+
+
+## The month's quick walk names what the panel's Regions.problem() names, region by region:
+## Germany's worst is an unemployment figure, France's an output one.
+func _check_worst_is_the_panels(nation: String) -> void:
+	var state = GameState.new_game(_main._loader, nation)
+	var ns = state.player()
+	var list: Array = state.regions.get(ns.id, [])
+	var access := Regions.accessibility_for(ns, list, state.region_graph)
+	var sites: Dictionary = state.project_sited_pct.get(ns.id, {})
+	var best := {}
+	for region in list:
+		var p: Dictionary = Regions.problem(ns, list, region.id, access, sites, Migration.region_share(ns, region.id))
+		if best.is_empty() or float(p["ratio"]) > float(best["ratio"]):
+			best = p
+	var quick := RegionArrival.worst(state, ns)
+	if String(quick["problem"]["kind"]) != String(best["kind"]) or absf(float(quick["problem"]["ratio"]) - float(best["ratio"])) > 0.000001:
+		_fail("%s: the walk says %s, the panel's reads %s" % [nation, quick["problem"], best])
+	if nation == "DEU" and String(best["kind"]) != "unemployment":
+		_fail("premise: Germany's worst is no longer an unemployment figure (%s)" % [best])
 
 
 ## Under the data's threshold, nothing is said. A number in data, read by the rule.
@@ -120,6 +154,10 @@ func _check_go_landed() -> void:
 		_fail("Go: the tab opened '%s', the card named %s" % [panel._open_region, _worst["region"].id])
 	if _card() != null:
 		_fail("Go: the card is still up")
+	# The pick's own refocus: a region low in the list comes into view.
+	var focused: Control = _main.get_viewport().gui_get_focus_owner()
+	if focused == null or not (focused is Button) or (focused as Button).text != String(_worst["region"].region_name):
+		_fail("Go: the region's row does not hold the focus (%s)" % [focused.name if focused != null else "<none>"])
 
 
 ## It comes back after the rule's months, not before.
@@ -153,13 +191,58 @@ func _check_not_with_a_fund() -> void:
 
 ## The month's end reaches it, through the driver every month ends in.
 func _check_wired() -> void:
-	(RegionArrival._told[_main.get_instance_id()]["told"] as Dictionary).clear()
-	var ns = _main._state.player()
-	ns.in_government = false
+	_forget()
+	var state = _main._state
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	game["state_id"] = state.get_instance_id()
+	game["pending"] = {"month": state.year * 12 + state.month, "memory": {}, "also_due": [],
+		"lines": [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest"), Priorities._standing("majority", "seats")]}
 	BriefingDriver.open(_main, {})
-	ns.in_government = true
+	BriefingDriver.close(_main)
 	if _card() == null:
 		_fail("wired: the month's end does not bring the card")
+	_main._hud.inbox.dismiss(_card_id())
+
+
+func _check_out_of_government() -> void:
+	_forget()
+	var ns = _main._state.player()
+	ns.in_government = false
+	RegionArrival.check(_main)
+	ns.in_government = true
+	if _card() != null:
+		_fail("out of government: a card arrived")
+
+
+## A load is a new state: what the old one was told does not silence this one. (A load
+## into an earlier month read a negative age, under the rearm, for years.)
+func _check_new_state() -> void:
+	RegionArrival.check(_main)
+	if _card() == null:
+		_fail("premise: the card did not arrive for the new state's check")
+		return
+	_main._hud.inbox.dismiss(_card_id())
+	var memory: Dictionary = RegionArrival._told[_main.get_instance_id()]
+	memory["state_id"] = -1
+	RegionArrival.check(_main)
+	if _card() == null:
+		_fail("new state: the old state's months silenced it")
+	else:
+		_main._hud.inbox.dismiss(_card_id())
+
+
+## A card left unanswered: its months up, no second one beside it, and its Go still works.
+func _check_unanswered_card() -> void:
+	_advance(int(_rule()["rearm_months"]) + 1)
+	RegionArrival.check(_main)
+	_advance(int(_rule()["rearm_months"]) + 1)
+	RegionArrival.check(_main)
+	if _cards() != 1:
+		_fail("unanswered: %d cards for one region" % _cards())
+	# A later card for another region: this older one's Go must still land.
+	var inbox = _main._hud.inbox
+	var memory: Dictionary = RegionArrival._told[_main.get_instance_id()]
+	memory["cards"][inbox.push("Later", "A later card", [{"label": "Later"}])] = "another"
 
 
 # -- helpers --
@@ -188,7 +271,12 @@ func _card():
 
 
 func _card_id() -> String:
-	return String(RegionArrival._told[_main.get_instance_id()]["card"])
+	return String((RegionArrival._told[_main.get_instance_id()]["cards"] as Dictionary).keys()[-1])
+
+
+## This main's told months, wiped: the rearm's memory only, not the Go's connection.
+func _forget() -> void:
+	(RegionArrival._told[_main.get_instance_id()]["told"] as Dictionary).clear()
 
 
 func _cards() -> int:

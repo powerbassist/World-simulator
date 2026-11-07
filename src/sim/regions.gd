@@ -400,10 +400,15 @@ static func output_eur_bn(ns, region_id: String) -> float:
 ## (unemployment_rel 1.0, docs/region-economy-model.md section 8), so a British
 ## region's unemployment ratio is 1.0 until a deviation term moves it.
 static func problem(ns, region_list: Array, region_id: String, access: Dictionary, sites: Dictionary, pop_share: float) -> Dictionary:
-	var u := unemployment_pct(ns, region_list, region_id, access, sites)
+	return problem_of(ns, unemployment_pct(ns, region_list, region_id, access, sites),
+		gdp_per_head_index(ns, region_list, region_id, pop_share))
+
+
+## problem() with the two figures already read: a caller walking every region takes
+## unemployment_by_region() once rather than the nation's sum per region.
+static func problem_of(ns, u: float, index: float) -> Dictionary:
 	var nation := float(ns.unemployment_pct)
 	var u_ratio := u / nation if nation > 0.0 else 0.0
-	var index := gdp_per_head_index(ns, region_list, region_id, pop_share)
 	var g_ratio := 1.0 / index if index > 0.0 else 0.0
 	if u_ratio >= g_ratio:
 		return {"kind": "unemployment", "value": u, "nation": nation, "ratio": u_ratio}
