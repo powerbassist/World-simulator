@@ -296,9 +296,13 @@ static func commit(state, ns, loader, kind: String, person_id: String, object: S
 
 ## V5.3 b. A person's vote and their faction's on one bill, for step 6's deal: a `pledge`
 ## row naming the party it was given for, which the division reads through
-## DivisionTerms. False for someone with no party: they have no seats to bring.
+## DivisionTerms. False for someone with no party, who has no seats to bring, and for a
+## second word on one bill, since the division sums the rows.
 static func pledge(state, ns, loader, person_id: String, law_id: String, due_month: int) -> bool:
 	var party_id := _party_id_of(ns, loader, person_id)
+	for row in pledges_on(ns, law_id):
+		if String(row["person_id"]) == person_id:
+			return false
 	if party_id == "" or not commit(state, ns, loader, "pledge", person_id, "law:%s" % law_id, due_month):
 		return false
 	ns.commitments[-1]["party_id"] = party_id

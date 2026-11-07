@@ -12,9 +12,9 @@ extends RefCounted
 ##
 ## THE PEEL (the parent's ruling, since lines alone left over half of the laws dividing alike
 ## at ten times). A bigger bill is harder to whip: seats on a yes line go to abstain, by the
-## tenfolds above the reference, by how loose the party is. Seats, not the line, so the party
-## still reads yes and a law's size still has no road to a whole party's flip here. It is not
-## a rebellion: `party_rebels` is what discipline is charged for, and sitting out a bigger
+## tenfolds above the reference, by how loose the party is. Seats, not the line: the party
+## still reads yes, and a law that reads yes on every line still loses seats. It is not a
+## rebellion: `party_rebels` is what discipline is charged for, and sitting out a bigger
 ## bill breaks no line. At or below the reference nothing peels, byte for byte.
 ##
 ## THE PLEDGE (the parent's ruling). A person's vote and their faction's, on one bill: SEATS,
@@ -81,7 +81,7 @@ static func seats_of(line: String, rebel_line: String, seats: int, rebels: int, 
 	var from_abstain := mini(pledged - from_no, int(tally["abstain"]))
 	var peeled := 0
 	if line == "yes":
-		peeled = roundi(float(seats - rebels - mini(pledged - from_no - from_abstain, seats - rebels)) * peel)
+		peeled = roundi(float(seats - rebels - (pledged - from_no - from_abstain)) * peel)
 	return [int(tally["yes"]) + from_no + from_abstain - peeled, int(tally["no"]) - from_no, int(tally["abstain"]) - from_abstain + peeled]
 
 

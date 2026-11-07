@@ -85,8 +85,8 @@ static func divide(state, loader) -> Dictionary:
 				result["held_by_upper"] = true
 				result["held_months"] = ChambersK.UPPER_HOLD_MONTHS
 				ns.held_bills[law.id] = {"months": ChambersK.UPPER_HOLD_MONTHS, "origin": "player"}
-				if LawMagnitude.ratio(law) != 1.0:
-					ns.held_bills[law.id]["scale"] = LawMagnitude.ratio(law)
+				if tabled.has("scale"):
+					ns.held_bills[law.id]["scale"] = tabled["scale"]
 			Discipline.penalise_rebellions(ns, result["party_rebels"], by_id)
 			ns.last_law_result = result
 			return result

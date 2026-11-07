@@ -46,11 +46,13 @@ func _init() -> void:
 	_check_the_deficit_is_charged_to_the_right()
 	_check_the_grade_on_the_real_road()
 	_check_a_grade_is_refused_where_it_means_nothing()
+	_check_a_forced_bill_keeps_its_grade()
 	_check_a_hold_writes_its_grade()
 	_check_a_held_bill_keeps_its_grade()
 	_check_size_is_not_a_whips_strain()
 	_check_a_grade_survives_a_save()
 	_check_a_pledge_moves_seats_on_one_bill()
+	_check_one_person_pledges_a_bill_once()
 	_check_a_pledge_takes_no_before_abstain_and_caps()
 	_check_only_a_whipped_yes_line_peels()
 	_check_pledged_and_peeled_seats_do_not_double_count()
@@ -348,9 +350,34 @@ func _check_a_grade_is_refused_where_it_means_nothing() -> void:
 	plain.magnitude = {}
 
 
+## Article 49.3 skips the division and not the grade: twins of one game forced at each scale,
+## read from what was realised, and a law with no size is refused on this road too.
+func _check_a_forced_bill_keeps_its_grade() -> void:
+	var one = _new_state()
+	var ten = _new_state()
+	var law = _open_graded(one)
+	if law == null:
+		return
+	var at_one: Dictionary = Legislature.propose(one, _loader, law, true)
+	var at_ten: Dictionary = Legislature.propose(ten, _loader, law, true, false, 10.0)
+	if not bool(at_one.get("forced", false)) or not bool(at_ten.get("forced", false)) or bool(at_one.get("refused", false)) or bool(at_ten.get("refused", false)):
+		_fail("premise: the forced road was not taken: %s, %s" % [at_one, at_ten])
+	var line_one := _ledger_spending(one.player(), law)
+	var line_ten := _ledger_spending(ten.player(), law)
+	if line_one <= 0.0 or not is_equal_approx(line_ten, 10.0 * line_one):
+		_fail("%s forced at ten times realised %.4f, at one %.4f" % [law.id, line_ten, line_one])
+	law.magnitude = {}
+	var plain = _new_state()
+	var cooldown := int(plain.player().force_cooldown_months)
+	var refused: Dictionary = Legislature.propose(plain, _loader, law, true, false, 10.0)
+	if not bool(refused.get("refused", false)) or _ledger_spending(plain.player(), law) != 0.0 or int(plain.player().force_cooldown_months) != cooldown:
+		_fail("a law with no magnitude was forced at a grade: %s" % [refused])
+
+
 ## The division that holds a graded bill writes its grade on the hold, or the release above
 ## would apply one times the bill: a chamber that says no, on the first nation whose upper
-## house only holds, its seats against the bill by hand.
+## house only holds, its seats against the bill by hand. A row at twice its reference, so a
+## grade of 2 cannot be mistaken for the ratio of 4.
 func _check_a_hold_writes_its_grade() -> void:
 	for nation_id in _loader.nations:
 		if not _loader.nations[nation_id].playable:
@@ -364,7 +391,7 @@ func _check_a_hold_writes_its_grade() -> void:
 				continue
 			if Chambers.power_over(ns, law) != ChambersK.VERDICT_SUSPENSIVE:
 				continue
-			law.magnitude = {"value": 40.0, "reference": 40.0, "unit": "lycees"}
+			law.magnitude = {"value": 80.0, "reference": 40.0, "unit": "lycees"}
 			var big = LawMagnitude.scaled(law, 2.0)
 			var parties: Array = _loader.parties[nation_id]
 			if bool(Legislature.resolve_vote(ns, parties, big)["passed"]) and not bool(Legislature.resolve_upper(ns, parties, big)["passed"]):
@@ -462,13 +489,14 @@ func _check_a_pledge_moves_seats_on_one_bill() -> void:
 	if int(own["yes_seats"]) - int(before["yes_seats"]) != 1:
 		_fail("a person of no standing brought %d seats, not their own" % (int(own["yes_seats"]) - int(before["yes_seats"])))
 	# Many hands cap at the party's seats, in the result as in the tally.
-	ns.person_standing[pid] = 1.0
-	for i in 5:
-		President.pledge(state, ns, _loader, pid, law.id, _now(state) + 3)
+	var hands: Array[String] = ["hand_0", "hand_1", "hand_2", "hand_3", "hand_4"]
+	for hand in hands:
+		ns.person_standing[hand] = 1.0
+		ns.commitments.append({"kind": "pledge", "person_id": hand, "object": "law:%s" % law.id, "made_month": _now(state), "due_month": _now(state) + 3, "party_id": party.id})
 	if int(Legislature.resolve_vote(ns, _parties(), law)["party_pledged"][party.id]) != seats:
 		_fail("pledges past the party's %d seats read %s" % [seats, Legislature.resolve_vote(ns, _parties(), law)["party_pledged"]])
-	for row in President.pledges_on(ns, law.id).slice(1):
-		President.withdraw_commitment(ns, "pledge", pid, String(row["object"]))
+	for hand in hands:
+		President.withdraw_commitment(ns, "pledge", hand, "law:%s" % law.id)
 	ns.person_standing[pid] = 0.0
 	# A party's leader has no party_id: the party names them, and they pledge for it.
 	var leader := String(party.leader_person_id)
@@ -611,6 +639,34 @@ func _opposition_on_yes(ns) -> Dictionary:
 			if Legislature.vote_of(Legislature.support(ns, party, graded)) == "yes" and Legislature.vote_of(Legislature.support(ns, party, big)) == "yes":
 				return {"party": party, "law": graded}
 	return {}
+
+
+## pledged_seats() sums the rows, so a second word on one bill must not write a second row.
+func _check_one_person_pledges_a_bill_once() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _graded()
+	var found := _no_party_and_person(ns, law)
+	if found.is_empty():
+		return
+	var pid: String = found[1]
+	var due: int = _now(state) + 3
+	if not President.pledge(state, ns, _loader, pid, law.id, due):
+		_fail("premise: %s could not pledge" % pid)
+	var once := DivisionTerms.pledged_seats(ns, found[0], law)
+	if President.pledge(state, ns, _loader, pid, law.id, due):
+		_fail("%s pledged %s twice" % [pid, law.id])
+	if DivisionTerms.pledged_seats(ns, found[0], law) != once or President.pledges_on(ns, law.id).size() != 1:
+		_fail("a second pledge moved the seats: %d against %d" % [DivisionTerms.pledged_seats(ns, found[0], law), once])
+	if not President.pledge(state, ns, _loader, pid, "another_bill", due):
+		_fail("a pledge on one bill refused one on another")
+	var second := false
+	for other_id in _loader.person_by_id:
+		if String(other_id).begins_with("%s_" % PLAYER) and other_id != pid and President.pledge(state, ns, _loader, other_id, law.id, due):
+			second = true
+			break
+	if not second:
+		_fail("one person's pledge refused everybody else's on that bill")
 
 
 ## The mark the deal reads: kept when it delivered, broken when the person left the party,

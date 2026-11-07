@@ -1299,8 +1299,11 @@ static func propose(state, loader, law, force := false, referendum := false, sca
 		ns.last_law_result = refused
 		return refused
 
+	if scale != 1.0 and not LawMagnitude.may_grade(law, scale, referendum):
+		return refused(ns, law.id, law.majority, "not_graded")
+
 	if force:
-		return _force(state, ns, party_list, law, loader)
+		return _force(state, ns, party_list, LawMagnitude.scaled(law, scale), loader)
 
 	var route := takes_route(ns, law, referendum)
 
@@ -1329,8 +1332,6 @@ static func propose(state, loader, law, force := false, referendum := false, sca
 	# the court, the cooldown) as that close's first step. What comes back is the
 	# tabling: the vote day and the forecast, resolve_vote() now -- the pure read
 	# the panel already shows. Nothing is written to last_law_result until then.
-	if scale != 1.0 and not LawMagnitude.may_grade(law, scale, referendum):
-		return refused(ns, law.id, law.majority, "not_graded")
 	ns.tabled_bill = {
 		"law_id": law.id, "referendum": referendum, "vote_year": int(state.year),
 		"vote_month": int(state.month), "vote_day": Calendar.days_in_month(int(state.year), int(state.month)),
