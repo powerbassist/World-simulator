@@ -34,6 +34,7 @@ func _init() -> void:
 	_check_unemployment_is_not_a_stock()
 	_check_every_nation_is_complete()
 	_check_the_tick_grows_by_the_read_deviation()
+	_check_britain_is_the_ons_spread()
 	_finish()
 
 
@@ -269,3 +270,40 @@ func _finish() -> void:
 	else:
 		printerr("test_regions: %d failure(s)" % _failures.size())
 		quit(1)
+
+
+## V5.3: Britain's twelve regions carry the ONS's figures, not the flat population
+## proxy. Pinned as ratios BETWEEN regions, which the importer's normalisation to a
+## weighted mean of 1.0 cannot move, because QA's #296 round found the importer fed
+## the EMPLOYMENT rate (about 60) for the unemployment rate (about 4.7): the mean
+## still came out 1.0 and the spread read a tame 0.91 to 1.09, so a test that only
+## asked "is there a spread" passed. The published rates (HI00, Jun-Aug 2026) are
+## London 6.637, Northern Ireland 2.125, South West 3.801; output per head against
+## the UK (Table 5 over the regions' populations) is London 1.69, North East 0.72.
+func _check_britain_is_the_ons_spread() -> void:
+	var by_id := {}
+	for region in _loader.regions.get("GBR", []):
+		by_id[region.id] = region
+	for id in ["UKI", "UKN", "UKK", "UKC"]:
+		if not by_id.has(id):
+			_fail("GBR has no region %s" % id)
+			return
+	var highest := ""
+	var lowest := ""
+	for id in by_id.keys():
+		if highest == "" or by_id[id].unemployment_rel > by_id[highest].unemployment_rel:
+			highest = id
+		if lowest == "" or by_id[id].unemployment_rel < by_id[lowest].unemployment_rel:
+			lowest = id
+	if highest != "UKI" or lowest != "UKN":
+		_fail("Britain's unemployment runs from %s up to %s: the ONS has Northern Ireland lowest (2.1 %%) and London highest (6.6 %%)" % [lowest, highest])
+	var london_over_ni: float = by_id["UKI"].unemployment_rel / by_id["UKN"].unemployment_rel
+	if absf(london_over_ni - 6.6367 / 2.125) > 0.002:
+		_fail("London over Northern Ireland unemployment reads %.4f, the ONS rates give %.4f" % [london_over_ni, 6.6367 / 2.125])
+	var london_over_sw: float = by_id["UKI"].unemployment_rel / by_id["UKK"].unemployment_rel
+	if absf(london_over_sw - 6.6367 / 3.8011) > 0.002:
+		_fail("London over the South West unemployment reads %.4f, the ONS rates give %.4f" % [london_over_sw, 6.6367 / 3.8011])
+	var london_head: float = by_id["UKI"].gdp_share / by_id["UKI"].share
+	var ne_head: float = by_id["UKC"].gdp_share / by_id["UKC"].share
+	if absf(london_head - 1.688) > 0.005 or absf(ne_head - 0.719) > 0.005:
+		_fail("output per head against the UK reads London %.3f, North East %.3f; the ONS has 1.688 and 0.719" % [london_head, ne_head])

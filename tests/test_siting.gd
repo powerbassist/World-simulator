@@ -171,8 +171,8 @@ func _test_pick_only_returns_scoring_ids() -> void:
 ##
 ## Luxembourg is one region, so it has no site at MONTH ONE and is unpriced there.
 ## Britain was the second case while its regions carried unemployment_rel exactly 1.0
-## (V2.5 section 8's ITL1 proxy); V5.3's ONS figures give it London as a site from
-## month one, so it left this list. Deliberately NOT asserted over a whole run: the
+## (V2.5 section 8's ITL1 proxy); V5.3's ONS figures give its regions a real spread
+## (London 6.6 % unemployment, Northern Ireland 2.1 %), so it left this list. Deliberately NOT asserted over a whole run: the
 ## probe measured a one-region nation acquiring a site later, and a test claiming it
 ## is permanently unsited would be asserting something the model does not do.
 func _test_the_two_structural_bounds_on_real_data() -> void:

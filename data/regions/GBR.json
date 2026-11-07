@@ -8,7 +8,7 @@
       "name": "North East (England)",
       "share": 0.039866,
       "gdp_share": 0.028676,
-      "unemployment_rel": 0.908923,
+      "unemployment_rel": 0.999904,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -83,7 +83,7 @@
       "name": "North West (England)",
       "share": 0.109533,
       "gdp_share": 0.099066,
-      "unemployment_rel": 0.991839,
+      "unemployment_rel": 0.984912,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -260,7 +260,7 @@
       "name": "Yorkshire and the Humber",
       "share": 0.082317,
       "gdp_share": 0.06696,
-      "unemployment_rel": 0.958799,
+      "unemployment_rel": 1.108958,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -371,7 +371,7 @@
       "name": "East Midlands (England)",
       "share": 0.072187,
       "gdp_share": 0.05629,
-      "unemployment_rel": 1.000111,
+      "unemployment_rel": 1.00165,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -446,7 +446,7 @@
       "name": "West Midlands (England)",
       "share": 0.088644,
       "gdp_share": 0.072875,
-      "unemployment_rel": 0.960395,
+      "unemployment_rel": 1.221653,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -593,7 +593,7 @@
       "name": "East of England",
       "share": 0.093558,
       "gdp_share": 0.084237,
-      "unemployment_rel": 1.020087,
+      "unemployment_rel": 0.822981,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -716,7 +716,7 @@
       "name": "London",
       "share": 0.134773,
       "gdp_share": 0.227562,
-      "unemployment_rel": 1.085148,
+      "unemployment_rel": 1.413311,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -737,7 +737,7 @@
       "name": "South East (England)",
       "share": 0.137665,
       "gdp_share": 0.144368,
-      "unemployment_rel": 1.035952,
+      "unemployment_rel": 0.888359,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -944,7 +944,7 @@
       "name": "South West (England)",
       "share": 0.08427,
       "gdp_share": 0.07713,
-      "unemployment_rel": 1.01064,
+      "unemployment_rel": 0.80946,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -1043,7 +1043,7 @@
       "name": "Wales",
       "share": 0.047059,
       "gdp_share": 0.034787,
-      "unemployment_rel": 0.945472,
+      "unemployment_rel": 0.726854,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -1100,7 +1100,7 @@
       "name": "Scotland",
       "share": 0.081837,
       "gdp_share": 0.075858,
-      "unemployment_rel": 0.9483,
+      "unemployment_rel": 0.921112,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,
@@ -1151,7 +1151,7 @@
       "name": "Northern Ireland",
       "share": 0.028286,
       "gdp_share": 0.023468,
-      "unemployment_rel": 0.965178,
+      "unemployment_rel": 0.452527,
       "sector_mix": {
         "agriculture": 0.007,
         "industry": 0.189,

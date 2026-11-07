@@ -1442,6 +1442,20 @@ def overlay_gbr_ons(gdp, unemployment):
     unemployment["UK"] = float(ons["unemployment"]["uk_rate_pct"])
     for code, value in ons["unemployment"]["regions_rate_pct"].items():
         unemployment[code] = float(value)
+    # A wrong column of the right workbook reads as a plausible spread once
+    # `unemployment_rel` is normalised (QA #296: the employment rate, ~60, sat
+    # where the unemployment rate, ~4.7, belongs, and came out as 0.91 to 1.09),
+    # so the raw figures are bounded here, before any ratio hides the mistake: a
+    # region's rate within a factor of four of the UK's, and a GDP share that is
+    # a share.
+    for code, value in ons["unemployment"]["regions_rate_pct"].items():
+        if not 0.25 <= float(value) / unemployment["UK"] <= 4.0:
+            sys.exit(f"GBR {code}: unemployment {value} % against the UK's "
+                     f"{unemployment['UK']} % -- the wrong column of HI00?")
+    for code, value in ons["gdp"]["regions_mio_gbp"].items():
+        if not 0.005 <= float(value) / gdp["UK"] <= 0.5:
+            sys.exit(f"GBR {code}: GDP {value} against the UK's {gdp['UK']} "
+                     f"is not a regional share")
 
 
 # V4.11. Where a nation's regional series is ABSENT at the dataset boundary, the
