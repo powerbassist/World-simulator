@@ -44,6 +44,7 @@
     },
     {
       "id": "GBR_pell",
+      "start_regard_offset": 0.05,
       "social_skill": 0.71,
       "wealth_eur_m": 3.1,
       "name": "Adrian Pell",
@@ -67,6 +68,7 @@
     },
     {
       "id": "GBR_harlow",
+      "start_regard_offset": -0.15,
       "social_skill": 0.78,
       "wealth_eur_m": 4.6,
       "name": "Duncan Harlow",
