@@ -13,6 +13,7 @@ extends SceneTree
 ##   - THE DISMISS CARD while a bill is tabled says what a dismissal does to its
 ##     division (Removal.price's forecast_before / forecast_after, Gameplay #157).
 
+const LawAddress = preload("res://src/ui/law_address.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Government = preload("res://src/sim/government.gd")
 const Statute = preload("res://src/sim/statute.gd")
@@ -132,6 +133,9 @@ func _check_legislature() -> void:
 		if verb.name == "Force":
 			if verb.disabled != not Government.can_force(ns):
 				_fail("49.3 is %s while a bill is tabled" % ("down" if verb.disabled else "live past its cooldown"))
+			continue
+		# The address is a word to the country, not a bill: the tabled bill is what it is for.
+		if verb.has_meta(LawAddress.FOLD_META) or verb.has_meta(LawAddress.GO_META):
 			continue
 		if not verb.disabled:
 			live += 1

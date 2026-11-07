@@ -96,10 +96,10 @@ static func money_bn(state, loader, bill) -> float:
 	var sim = state.duplicate_state()
 	var ns = sim.player()
 	Budget.recompute(sim, ns)
-	var before := Budget.snapshot(sim)
+	var before := {"deficit_pct_gdp": ns.deficit_pct_gdp, "gdp_eur_bn": ns.gdp_eur_bn}
 	Legislature.apply_effects(sim, ns, bill.effects, loader)
 	Budget.recompute(sim, ns)
-	return EffectsStrip.balance_bn(before, Budget.snapshot(sim))
+	return EffectsStrip.balance_bn(before, {"deficit_pct_gdp": ns.deficit_pct_gdp, "gdp_eur_bn": ns.gdp_eur_bn})
 
 
 ## "At this size 134 for; at 40 lycees 311." Nothing at the bill's own size.
