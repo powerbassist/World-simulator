@@ -200,10 +200,11 @@ static func _step(month: Month, step: String) -> Array:
 			month.report["division"] = division
 			if not division.is_empty():
 				Calendar.settle_tabled(state, String(division["law_id"]), bool(division["passed"]))
-		# Before the fade, so a poll reads what the month's division read. The close ends the
-		# month, so what falls due inside it arrives, whatever day the clock reads.
+		# Before the fade, so a poll reads what the month's division read. The caller has moved
+		# the month already and the day is stale, so the close stands on the first of the new
+		# month: what fell due by then arrives, and what is due later waits for the next close.
 		"Polls":
-			month.report["polls"] = MeasurePolls.deliver_due(state, Calendar.days_in_month(int(state.year), int(state.month)))
+			month.report["polls"] = MeasurePolls.deliver_due(state, 1)
 		# After the division, which reads an address at its full worth in the month it is given.
 		"Addresses":
 			Address.tick_month(state)

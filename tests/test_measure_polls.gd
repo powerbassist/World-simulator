@@ -46,6 +46,7 @@ func _init() -> void:
 	_check_each_bloc_is_its_own_fieldwork()
 	_check_support_reads_an_address_on_that_measure()
 	_check_the_game_month_delivers()
+	_check_a_poll_bought_on_the_last_day_waits()
 	_check_a_poll_survives_a_save()
 	_check_the_address_fade_leaves_the_polls()
 
@@ -354,23 +355,52 @@ func _check_support_reads_an_address_on_that_measure() -> void:
 		_fail("support past 100")
 
 
-## The month's close delivers what falls due inside the month, whatever day the clock reads.
+## The clock moves the month, then the close runs (world_month.gd's caller, main.gd): so the
+## close stands on the first of the new month, and the day it reads is stale. Ticked the way
+## the game ticks: bought on 1 Jan, due 15 and 29 Jan and 12 Feb.
 func _check_the_game_month_delivers() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var law = _open_bill(state)
+	state.month = 1
 	state.day = 1
-	MeasurePolls.commission(state, _loader, law.id, "quick")
-	MeasurePolls.commission(state, _loader, law.id, "deep")
+	for tier in TIERS:
+		MeasurePolls.commission(state, _loader, law.id, tier)
 	if not WorldMonth.STEPS.has("Polls"):
 		_fail("no Polls step in the month")
 		return
-	var report: Dictionary = WorldMonth.tick_month(state, _loader)
-	var arrived: Array = report.get("polls", [])
-	if arrived.size() != 1 or String(arrived[0]["tier"]) != "quick":
-		_fail("the close delivered %s" % [arrived])
+	state.month = 2
+	state.day = 31
+	var first: Array = WorldMonth.tick_month(state, _loader).get("polls", [])
+	if first.map(func(row) -> String: return String(row["tier"])) != ["quick", "standard"]:
+		_fail("the close on 1 Feb delivered %s" % [first])
 	if not MeasurePolls.result(ns, law.id, "deep").is_empty():
-		_fail("a six-week poll printed at the first close")
+		_fail("a six-week poll bought on 1 Jan printed on 1 Feb")
+	state.month = 3
+	var second: Array = WorldMonth.tick_month(state, _loader).get("polls", [])
+	if second.size() != 1 or String(second[0]["tier"]) != "deep":
+		_fail("the close on 1 Mar delivered %s" % [second])
+
+
+## Bought on a month's last day, it is not that month's close's to print: due 14 Feb, it waits
+## for the close on 1 Mar, the first on or after its day.
+func _check_a_poll_bought_on_the_last_day_waits() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _open_bill(state)
+	state.month = 1
+	state.day = 31
+	MeasurePolls.commission(state, _loader, law.id, "quick")
+	state.month = 2
+	state.day = 1
+	if not WorldMonth.tick_month(state, _loader).get("polls", []).is_empty():
+		_fail("a two-week poll printed a day after its purchase")
+	if not MeasurePolls.result(ns, law.id, "quick").is_empty():
+		_fail("a two-week poll has a result a day after its purchase")
+	state.month = 3
+	var arrived: Array = WorldMonth.tick_month(state, _loader).get("polls", [])
+	if arrived.size() != 1 or String(arrived[0]["tier"]) != "quick":
+		_fail("the close on 1 Mar delivered %s" % [arrived])
 
 
 func _check_a_poll_survives_a_save() -> void:

@@ -96,8 +96,9 @@ static func _refused(why: String) -> Dictionary:
 
 
 ## Every poll due by `day` of the state's month is read and printed: the rows that arrived,
-## {"key", "tier", "ranges"}. The month's close calls it with its last day; a day's driver may
-## call it sooner.
+## {"key", "tier", "ranges"}. The month's close calls it on the first of the month the clock
+## has just entered, so a poll arrives at the first close on or after its day; a day's driver
+## may call it sooner.
 static func deliver_due(state, day: int) -> Array:
 	var ns = state.player()
 	var out := []
