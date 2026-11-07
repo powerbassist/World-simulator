@@ -44,6 +44,7 @@
     },
     {
       "id": "GBR_pell",
+      "start_regard_offset": 0.05,
       "social_skill": 0.71,
       "wealth_eur_m": 3.1,
       "name": "Adrian Pell",
@@ -67,6 +68,7 @@
     },
     {
       "id": "GBR_harlow",
+      "start_regard_offset": -0.15,
       "social_skill": 0.78,
       "wealth_eur_m": 4.6,
       "name": "Duncan Harlow",
@@ -193,6 +195,7 @@
     },
     {
       "id": "GBR_beckwith",
+      "start_regard_offset": -0.10,
       "name": "Desmond Beckwith",
       "kind": "politician",
       "traits": [
@@ -315,6 +318,7 @@
     },
     {
       "id": "GBR_greenaway",
+      "start_regard_offset": -0.10,
       "name": "Letitia Greenaway",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -342,6 +346,7 @@
     },
     {
       "id": "GBR_harrington",
+      "start_regard_offset": -0.10,
       "name": "Ivor Harrington",
       "kind": "politician",
       "traits": [
@@ -534,6 +539,7 @@
     },
     {
       "id": "GBR_ravensworth",
+      "start_regard_offset": -0.15,
       "name": "Montague Ravensworth",
       "kind": "politician",
       "traits": [
@@ -687,6 +693,7 @@
     },
     {
       "id": "GBR_aldwyn",
+      "start_regard_offset": -0.15,
       "name": "Cuthbert Aldwyn",
       "kind": "politician",
       "traits": [
@@ -1057,6 +1064,7 @@
     },
     {
       "id": "GBR_denby",
+      "start_regard_offset": -0.05,
       "name": "Frederick Denby",
       "kind": "politician",
       "traits": [

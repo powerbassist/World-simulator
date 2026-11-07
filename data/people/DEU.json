@@ -27,6 +27,7 @@
     },
     {
       "id": "DEU_bohlen",
+      "start_regard_offset": 0.10,
       "social_skill": 0.53,
       "wealth_eur_m": 5.3,
       "name": "Katrin Bohlen",
@@ -51,6 +52,7 @@
     },
     {
       "id": "DEU_ruppert",
+      "start_regard_offset": 0.05,
       "social_skill": 0.79,
       "wealth_eur_m": 6.5,
       "name": "Jens Ruppert",
@@ -74,6 +76,7 @@
     },
     {
       "id": "DEU_seibold",
+      "start_regard_offset": -0.10,
       "social_skill": 0.5,
       "wealth_eur_m": 3.6,
       "name": "Annika Seibold",
@@ -101,6 +104,7 @@
     },
     {
       "id": "DEU_falk",
+      "start_regard_offset": -0.15,
       "social_skill": 0.7,
       "wealth_eur_m": 3.7,
       "name": "Dietrich Falk",
@@ -231,6 +235,7 @@
     },
     {
       "id": "DEU_claussen",
+      "start_regard_offset": -0.10,
       "name": "Cornelius Claussen",
       "kind": "politician",
       "traits": [
@@ -491,6 +496,7 @@
     },
     {
       "id": "DEU_quast",
+      "start_regard_offset": -0.10,
       "name": "Achim Quast",
       "kind": "politician",
       "traits": [
@@ -652,6 +658,7 @@
     },
     {
       "id": "DEU_ziegenhals",
+      "start_regard_offset": 0.10,
       "name": "Gernot Ziegenhals",
       "kind": "politician",
       "traits": [
@@ -837,6 +844,7 @@
     },
     {
       "id": "DEU_kesselring",
+      "start_regard_offset": -0.05,
       "name": "Achim Kesselring",
       "kind": "politician",
       "traits": [
@@ -959,6 +967,7 @@
     },
     {
       "id": "DEU_suhren",
+      "start_regard_offset": -0.10,
       "name": "Silke Suhren",
       "kind": "politician",
       "voice": "politician_f_50",
