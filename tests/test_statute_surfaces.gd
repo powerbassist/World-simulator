@@ -231,15 +231,13 @@ func _run() -> void:
 			_fail("a quote past the bound is not marked as clamped")
 
 	# --- (d) The two paid polls ---------------------------------------------
-	# Back on the authored bill: the clamp leg left the briefing on a draft,
-	# and the purchase must land on the law id the forecast reads.
+	# V5.3 b: the briefing sells the tiers now (tests/test_poll_card.gd), and V4.2's two
+	# verbs are the sim's alone until they go, so they are bought through it here.
 	briefing.open_for_law(surtax, state, loader)
+	if _find_button(briefing, "assembly poll") != null or _find_button(briefing, "popular poll") != null:
+		_fail("the briefing still sells V4.2's polls beside the tiers")
 	var debt_before: float = ns.debt_eur_bn
-	var assembly_btn := _find_button(briefing, "assembly poll")
-	if assembly_btn == null:
-		_fail("the briefing built no assembly poll button")
-	else:
-		_press(assembly_btn)
+	Statute.buy_poll(state, ns, "high_earner_surtax", "assembly")
 	var poll_cost: float = ns.debt_eur_bn - debt_before
 	var expected_cost: float = StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_ASSEMBLY)
 	if absf(poll_cost - expected_cost) > 1e-9:
@@ -258,49 +256,12 @@ func _run() -> void:
 	if carbon != null:
 		law_panel._on_propose(carbon)
 		var debt2: float = ns.debt_eur_bn
-		var popular_btn := _find_button(briefing, "popular poll")
-		if popular_btn == null:
-			_fail("the briefing built no popular poll button")
-		else:
-			# The ultra pass-3 finding: the label read "Commission an popular
-			# poll". Pinned on the rendered button because the substring find
-			# above matches inside the wrong label too -- the exact silent
-			# class this file exists for.
-			if not String(popular_btn.text).contains("Commission a popular poll"):
-				_fail("the popular poll button's article is wrong: '%s'" % popular_btn.text)
-			_press(popular_btn)
+		Statute.buy_poll(state, ns, "carbon_levy", "popular")
 		var expected2: float = StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_POPULAR)
 		if absf(ns.debt_eur_bn - (debt2 + expected2)) > 1e-9:
 			_fail("the popular poll charged the wrong one-off")
 		if not ns.poll_purchases.get("carbon_levy", {}).has("popular"):
 			_fail("the popular purchase is not on the register")
-		# (f) the bought popular poll narrows the bloc read to +-1.0, and the
-		# rows are exactly the precise hash the function publishes.
-		var id := PollNoise.poll_id(int(state.year), int(state.month))
-		for bloc in K.BLOC_KEYS:
-			var truth: float = float(ns.bloc_approval.get(bloc, 0.0))
-			var shown: float = PollNoise.displayed_precise(id, "carbon_levy|%s" % bloc, truth)
-			if absf(shown - truth) > PollNoise.PRECISE_MAX_PCT + 1e-9:
-				_fail("displayed_precise left its own band for %s" % bloc)
-			if not _live_text_has(briefing, "%.1f" % shown):
-				_fail("the briefing's bloc read for %s is not the precise figure" % bloc)
-		if not _live_text_has(briefing, "Commissioned poll"):
-			_fail("the bought popular poll's margin line is missing")
-		# And the narrowing is real: the ordinary band DOES exceed one point
-		# for some (id, key), so +-1.0 is a purchase and not the world.
-		var widened := false
-		for i in range(40):
-			for bloc in K.BLOC_KEYS:
-				if absf(PollNoise.offset(id + i, "carbon_levy|%s" % bloc)) > PollNoise.PRECISE_MAX_PCT:
-					widened = true
-		if not widened:
-			_fail("no ordinary offset exceeds the precise band -- the narrowing proves nothing")
-
-	# The bought button is dead -- the fixed-forecast rule, made visible.
-	law_panel._on_propose(surtax)
-	var bought_btn := _find_button(briefing, "assembly poll")
-	if bought_btn != null and not bought_btn.disabled:
-		_fail("a bought poll's commission button is still live")
 
 	# --- (e) The forecast firms for THAT bill alone -------------------------
 	if not is_equal_approx(LawPanelUi.forecast_band(ns, "high_earner_surtax"), LK.ABSTAIN_BAND):
@@ -349,7 +310,7 @@ func _run() -> void:
 		_fail("src/sim reads poll_purchases outside the writer: %s" % ", ".join(readers))
 	# The UI half of the pin: the surfaces DO read it -- a pin that cannot
 	# fail when the reader disappears is decoration.
-	for path in ["res://src/ui/briefing.gd", "res://src/ui/law_panel.gd"]:
+	for path in ["res://src/ui/law_panel.gd"]:
 		if not FileAccess.get_file_as_string(path).contains("poll_purchases"):
 			_fail("%s no longer reads the purchase register -- the pins outlived the feature" % path)
 
