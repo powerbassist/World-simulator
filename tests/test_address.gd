@@ -57,6 +57,7 @@ func _init() -> void:
 	_check_the_register_survives_a_save()
 	_check_the_term_reads_voters_and_discipline()
 	_check_the_term_moves_seats_through_a_division()
+	_check_hardened_voters_leave_a_yes_line()
 	_check_seats_with_a_sway()
 	_check_the_estimate_is_a_pure_read()
 
@@ -482,6 +483,32 @@ func _check_the_term_moves_seats_through_a_division() -> void:
 			_fail("the seats do not add up: %s" % [after])
 		return
 	_fail("no open bill with 100 seats against")
+
+
+## Voters who hardened, through a real division: yes seats go to abstain, by the share the
+## term reads, the party's line stays, and it is charged as no rebellion.
+func _check_hardened_voters_leave_a_yes_line() -> void:
+	var ns = _new_state().player()
+	for law in Legislature.available(ns, _loader.laws):
+		if law.constitutional:
+			continue
+		var before: Dictionary = Legislature.resolve_vote(ns, _parties(), law)
+		if int(before["yes_seats"]) < 100:
+			continue
+		var hardened := {}
+		for bloc in OpinionK.BLOC_KEYS:
+			hardened[bloc] = -10.0
+		ns.measure_opinion = {"measures": {law.id: {"months_left": 3, "shifts": hardened}}, "given": []}
+		var after: Dictionary = Legislature.resolve_vote(ns, _parties(), law)
+		ns.measure_opinion = {}
+		if not int(after["yes_seats"]) < int(before["yes_seats"]):
+			_fail("%s: voters hardened and yes stayed at %d" % [law.id, before["yes_seats"]])
+		if int(after["abstain_seats"]) - int(before["abstain_seats"]) != int(before["yes_seats"]) - int(after["yes_seats"]):
+			_fail("%s: the seats that left yes did not go to abstain: %s against %s" % [law.id, after, before])
+		if str(after["party_votes"]) != str(before["party_votes"]) or str(after["party_rebels"]) != str(before["party_rebels"]):
+			_fail("hardened voters moved a line or a rebellion: %s" % [after])
+		return
+	_fail("no open bill with 100 seats for")
 
 
 ## [yes, no, abstain]. The pledge first, then what is won from what is left of no and
