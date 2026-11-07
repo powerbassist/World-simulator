@@ -28,7 +28,6 @@ const WorldMonth = preload("res://src/sim/world_month.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Economy = preload("res://src/sim/economy.gd")
-const Closures = preload("res://src/sim/closures.gd")
 const Budget = preload("res://src/sim/budget.gd")
 
 const RULE_ARGS := {"--fall=": "fall", "--chance=": "monthly_chance", "--slope=": "gap_slope", "--reference=": "reference_fall"}
@@ -104,7 +103,7 @@ func _act(state, ns, loader, policy: String) -> int:
 			var top = null
 			for action in Companies.available(state, ns, loader.company_actions, String(company.id), loader):
 				var terms: Dictionary = action.effects.get("company", {})
-				if String(terms.get("op", "")) == Closures.RESCUE_OP and (top == null or float(terms["intensity"]) > float(top.effects["company"]["intensity"])):
+				if String(terms.get("op", "")) == "subsidise" and (top == null or float(terms["intensity"]) > float(top.effects["company"]["intensity"])):
 					top = action
 			if top != null and bool(Companies.execute(state, ns, loader.company_actions, top, String(company.id), loader).get("applied", false)):
 				done += 1
