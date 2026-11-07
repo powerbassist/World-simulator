@@ -140,6 +140,17 @@ static func printed_range(truth: float, margin: float, draw: float) -> Array:
 	return [floorf(low * 10.0) / 10.0, ceilf(high * 10.0) / 10.0]
 
 
+## Every poll bought on a measure, {tier: its row}: the UI's read of the register. Read it, never edit it.
+static func bought(ns, key: String) -> Dictionary:
+	return (ns.measure_opinion.get("polls", {}) as Dictionary).get(key, {})
+
+
+## The date a poll's row is due, {year, month, day}: what a printed range is dated by, a poll
+## printing on its day when a day's driver runs.
+static func arrives_on(row: Dictionary) -> Dictionary:
+	return Calendar.from_day_number(int(row["due_day"]))
+
+
 ## The printed ranges of one poll, {} until it arrives.
 static func result(ns, key: String, tier: String) -> Dictionary:
 	var row: Dictionary = ((ns.measure_opinion.get("polls", {}) as Dictionary).get(key, {}) as Dictionary).get(tier, {})

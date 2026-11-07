@@ -15,6 +15,7 @@ extends RefCounted
 const Address = preload("res://src/sim/address.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
+const PollStrip = preload("res://src/ui/poll_strip.gd")
 const AddressK = preload("res://src/sim/address_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -68,6 +69,9 @@ static func build(list, box: Control, ns, law) -> void:
 	var moved: Array = moved_seats(est)
 	strip.show_lines(Strings.t("The division"), seats_text(est), float(int(moved[0]) - int(moved[1])),
 		EffectsStrip.who_text(est["shifts"]), _cost_text(float(est["worth"])))
+	var poll := PollStrip.narrowest(ns, String(law.id))
+	if not poll.is_empty():
+		PanelKit.plain_line(box, Strings.t("As of %s: %s.") % [PollStrip.arrived_text(poll["row"]), PollStrip.support_line(poll["ranges"])])
 	var go := PanelKit.sized(Button.new())
 	go.text = Strings.t("Go on air")
 	go.set_meta(GO_META, true)

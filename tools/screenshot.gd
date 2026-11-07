@@ -34,6 +34,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade-tabled --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address-again --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --poll --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --poll-arrived --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --poll-address --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip approval:1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --outliner --open outliner
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip deficit:1
@@ -526,6 +529,8 @@ var _region_arrival := false
 var _priority := ""
 ## The bill's two decisions (V5.3 b, step 5): "grade", "grade-tabled", "address" or "address-again".
 var _law_verbs := ""
+## A poll on a bill: "poll" (bought, out), "poll-arrived" or "poll-address".
+var _poll := ""
 
 ## V4.2 close-out. A draft the machine has parked renders NOWHERE on the law
 ## panel -- ns.draft_bills reaches the UI only through the briefing popup ("In
@@ -1033,6 +1038,8 @@ func _init() -> void:
 			_region_arrival = true
 		elif args[i] in ["--grade", "--grade-tabled", "--address", "--address-again"]:
 			_law_verbs = String(args[i]).trim_prefix("--")
+		elif args[i] in ["--poll", "--poll-arrived", "--poll-address"]:
+			_poll = String(args[i]).trim_prefix("--")
 		elif args[i] in ["--priority", "--priority-cap", "--priority-rest"]:
 			_priority = String(args[i]).trim_prefix("--")
 		elif args[i] == "--forecast-computing":
@@ -1351,6 +1358,8 @@ func _apply_view() -> void:
 		_stage_a_priority()
 	if _law_verbs != "":
 		_stage_the_law_verbs()
+	if _poll != "":
+		_stage_a_poll()
 	if _compose:
 		_draft_a_bill()
 	if _pmb:
@@ -2195,6 +2204,27 @@ func _stage_the_law_verbs() -> void:
 		list._selected = String(laws[1].id)
 		list.address_open = list._selected
 	panel.mark_dirty()
+
+
+## Bought today and out; or, with its day forced to today, printed and carded by the poll's
+## own road. The briefing stands open on it, or the address's strip reads it.
+func _stage_a_poll() -> void:
+	var polls = preload("res://src/sim/measure_polls.gd")
+	var state = _main._state
+	var panel = _main._law_panel
+	var law = preload("res://src/sim/legislature.gd").available(state.player(), _main._loader.laws)[0]
+	polls.commission(state, _main._loader, String(law.id), "standard")
+	polls.commission(state, _main._loader, String(law.id), "quick")
+	if _poll != "poll":
+		polls.bought(state.player(), String(law.id))["quick"]["due_day"] = preload("res://src/sim/calendar.gd").day_number(int(state.year), int(state.month), int(state.day))
+		for row in polls.deliver_due(state, int(state.day)):
+			preload("res://src/ui/poll_card.gd").arrived(_main, row)
+	if _poll == "poll-address":
+		panel._laws._selected = String(law.id)
+		panel._laws.address_open = String(law.id)
+		panel.mark_dirty()
+	else:
+		panel.brief_requested.emit(law)
 
 
 func _stage_a_priority() -> void:
