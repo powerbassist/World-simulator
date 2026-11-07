@@ -16,6 +16,7 @@ const MeasurePolls = preload("res://src/sim/measure_polls.gd")
 const Address = preload("res://src/sim/address.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Bills = preload("res://src/sim/bills.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
@@ -96,7 +97,7 @@ func _check_the_price_and_nothing_else_moves() -> void:
 		var twin = _new_state()
 		var law = _open_bill(bought)
 		var before := float(bought.player().debt_eur_bn)
-		var result: Dictionary = MeasurePolls.commission(bought, bought.player(), _loader, law.id, tier)
+		var result: Dictionary = MeasurePolls.commission(bought, _loader, law.id, tier)
 		if not bool(result.get("ok", false)) or bool(result.get("refused", true)):
 			_fail("%s was refused: %s" % [tier, result])
 			continue
@@ -130,18 +131,18 @@ func _check_a_poll_is_refused_with_no_effect() -> void:
 	var law = _open_bill(state)
 	var debt := float(ns.debt_eur_bn)
 	for bad in [[law.id, "no_such_tier"], ["", "quick"], ["no_such_measure", "quick"], ["tax:vat:sideways", "quick"], ["tax:no_such_tax:up", "quick"]]:
-		var result: Dictionary = MeasurePolls.commission(state, ns, _loader, bad[0], bad[1])
+		var result: Dictionary = MeasurePolls.commission(state, _loader, bad[0], bad[1])
 		if bool(result.get("ok", true)) or not bool(result.get("refused", false)) or String(result.get("refusal", "")) == "" or float(result.get("cost_eur_bn", 1.0)) != 0.0:
 			_fail("%s took: %s" % [bad, result])
 	if float(ns.debt_eur_bn) != debt or not ns.measure_opinion.is_empty():
 		_fail("a refused poll left a mark: %s" % [ns.measure_opinion])
-	if not bool(MeasurePolls.commission(state, ns, _loader, law.id, "quick")["ok"]):
+	if not bool(MeasurePolls.commission(state, _loader, law.id, "quick")["ok"]):
 		_fail("a first poll was refused")
 	var charged := float(ns.debt_eur_bn)
-	var again: Dictionary = MeasurePolls.commission(state, ns, _loader, law.id, "quick")
+	var again: Dictionary = MeasurePolls.commission(state, _loader, law.id, "quick")
 	if bool(again["ok"]) or float(ns.debt_eur_bn) != charged:
 		_fail("a second commission of one tier was a reroll: %s" % [again])
-	if not bool(MeasurePolls.commission(state, ns, _loader, law.id, "deep")["ok"]):
+	if not bool(MeasurePolls.commission(state, _loader, law.id, "deep")["ok"]):
 		_fail("another tier on the same measure was refused")
 
 
@@ -158,20 +159,24 @@ func _check_any_measure_can_be_polled() -> void:
 	ns.draft_bills["draft_probe"] = {"name": "probe", "position": {"economic": 0.3, "social": -0.2}, "months_left": 3}
 	measures.append("draft_probe")
 	var action = _action_with_bill()
-	ns.processes.append({"id": "process_probe", "action_id": String(action.id), "company_id": "firm", "status": "running"})
+	ns.processes.append({"id": "process_probe", "action_id": String(action.id), "company_id": "firm", "status": Processes.OPEN})
 	measures.append("process_probe")
 	for key in measures:
 		var read: Dictionary = MeasurePolls.support(ns, _loader, key)
 		if read.size() != OpinionK.BLOC_KEYS.size():
 			_fail("%s reads no support: %s" % [key, read])
-		if not bool(MeasurePolls.commission(state, ns, _loader, key, "quick").get("ok", false)):
+		if not bool(MeasurePolls.commission(state, _loader, key, "quick").get("ok", false)):
 			_fail("%s could not be polled" % key)
 	# A tax up and the same tax down are opposite measures: the business bloc says so.
 	if not Referendum.bloc_yes(ns, "business", MeasurePolls.position_of(ns, _loader, "tax:vat:down")) > Referendum.bloc_yes(ns, "business", MeasurePolls.position_of(ns, _loader, "tax:vat:up")):
 		_fail("business likes a tax rise as a tax cut")
+	# A process that has ended is no longer a measure.
+	ns.processes.append({"id": "process_over", "action_id": String(action.id), "company_id": "firm", "status": "settled"})
+	if not MeasurePolls.position_of(ns, _loader, "process_over").is_empty():
+		_fail("a closed process took a poll")
 	var stake = _action_without_bill()
-	ns.processes.append({"id": "process_stake", "action_id": String(stake.id), "company_id": "firm", "status": "running"})
-	if bool(MeasurePolls.commission(state, ns, _loader, "process_stake", "quick").get("ok", true)):
+	ns.processes.append({"id": "process_stake", "action_id": String(stake.id), "company_id": "firm", "status": Processes.OPEN})
+	if bool(MeasurePolls.commission(state, _loader, "process_stake", "quick").get("ok", true)):
 		_fail("a verb content gives no position took a poll")
 
 
@@ -197,7 +202,7 @@ func _check_nothing_is_printed_before_its_day() -> void:
 		var state = _new_state()
 		var ns = state.player()
 		var law = _open_bill(state)
-		MeasurePolls.commission(state, ns, _loader, law.id, tier)
+		MeasurePolls.commission(state, _loader, law.id, tier)
 		if not MeasurePolls.result(ns, law.id, tier).is_empty():
 			_fail("%s printed on the day it was bought" % tier)
 		var when := Time.get_datetime_dict_from_unix_time(int(Time.get_unix_time_from_datetime_dict({"year": 2026, "month": 3, "day": 10, "hour": 0, "minute": 0, "second": 0})) + 86400 * int(TIERS[tier][2]))
@@ -221,7 +226,7 @@ func _check_a_printed_poll_is_fixed() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var law = _open_bill(state)
-	MeasurePolls.commission(state, ns, _loader, law.id, "quick")
+	MeasurePolls.commission(state, _loader, law.id, "quick")
 	state.month = 4
 	MeasurePolls.deliver_due(state, 1)
 	var printed: String = str(MeasurePolls.result(ns, law.id, "quick"))
@@ -237,7 +242,7 @@ func _check_a_printed_poll_is_fixed() -> void:
 	var other_law = _open_bill(other)
 	for bloc in OpinionK.BLOC_KEYS:
 		other.player().bloc_approval[bloc] = 90.0
-	MeasurePolls.commission(other, other.player(), _loader, other_law.id, "quick")
+	MeasurePolls.commission(other, _loader, other_law.id, "quick")
 	other.month = 4
 	MeasurePolls.deliver_due(other, 1)
 	if str(MeasurePolls.result(other.player(), other_law.id, "quick")) == printed:
@@ -277,7 +282,7 @@ func _check_the_band_on_real_measures() -> void:
 					count += 1
 			for key in keys:
 				for tier in TIERS:
-					MeasurePolls.commission(state, ns, _loader, key, tier)
+					MeasurePolls.commission(state, _loader, key, tier)
 			state.year = 2026
 			state.month = 8
 			MeasurePolls.deliver_due(state, 1)
@@ -330,8 +335,8 @@ func _check_the_game_month_delivers() -> void:
 	var ns = state.player()
 	var law = _open_bill(state)
 	state.day = 1
-	MeasurePolls.commission(state, ns, _loader, law.id, "quick")
-	MeasurePolls.commission(state, ns, _loader, law.id, "deep")
+	MeasurePolls.commission(state, _loader, law.id, "quick")
+	MeasurePolls.commission(state, _loader, law.id, "deep")
 	if not WorldMonth.STEPS.has("Polls"):
 		_fail("no Polls step in the month")
 		return
@@ -346,8 +351,8 @@ func _check_the_game_month_delivers() -> void:
 func _check_a_poll_survives_a_save() -> void:
 	var state = _new_state()
 	var law = _open_bill(state)
-	MeasurePolls.commission(state, state.player(), _loader, law.id, "quick")
-	MeasurePolls.commission(state, state.player(), _loader, law.id, "deep")
+	MeasurePolls.commission(state, _loader, law.id, "quick")
+	MeasurePolls.commission(state, _loader, law.id, "deep")
 	state.month = 4
 	MeasurePolls.deliver_due(state, 1)
 	var back = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
@@ -359,7 +364,7 @@ func _check_a_poll_survives_a_save() -> void:
 	var arrived: Array = MeasurePolls.deliver_due(back, 1)
 	if arrived.size() != 1 or String(arrived[0]["tier"]) != "deep":
 		_fail("a pending poll did not arrive after a save: %s" % [arrived])
-	if bool(MeasurePolls.commission(back, back.player(), _loader, law.id, "quick").get("ok", true)):
+	if bool(MeasurePolls.commission(back, _loader, law.id, "quick").get("ok", true)):
 		_fail("a save forgot a purchase: a reroll")
 
 
@@ -369,7 +374,7 @@ func _check_the_address_fade_leaves_the_polls() -> void:
 	var ns = state.player()
 	var law = _open_bill(state)
 	Address.give(state, _loader, law.id)
-	MeasurePolls.commission(state, ns, _loader, law.id, "quick")
+	MeasurePolls.commission(state, _loader, law.id, "quick")
 	for i in 8:
 		Address.tick_month(state)
 		state.month = 3 + i + 1

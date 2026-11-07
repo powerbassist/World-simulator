@@ -22,6 +22,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
+const Processes = preload("res://src/sim/processes.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 
 
@@ -39,7 +40,7 @@ static func position_of(ns, loader, key: String) -> Dictionary:
 	if ns.draft_bills.has(key):
 		return ns.draft_bills[key].get("position", {})
 	for row in ns.processes:
-		if String(row["id"]) == key:
+		if String(row["id"]) == key and String(row["status"]) == Processes.OPEN:
 			return _process_position(loader, String(row["action_id"]))
 	return {}
 
@@ -67,7 +68,8 @@ static func _support_at(ns, key: String, position: Dictionary) -> Dictionary:
 
 
 ## The player command, buy_poll's shape: on a refusal, no mark and no charge.
-static func commission(state, ns, loader, key: String, tier: String) -> Dictionary:
+static func commission(state, loader, key: String, tier: String) -> Dictionary:
+	var ns = state.player()
 	if not K.TIERS.has(tier):
 		return _refused("There is no such poll.")
 	var position := position_of(ns, loader, key)
