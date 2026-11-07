@@ -29,6 +29,10 @@ Map camera panning, zooming and dragging from MapCamera2D by Julian Vos, MIT Lic
 
 It arrived from the Asset Library as a loose `MapCamera2D.gd` plus a bare `LICENSE` in the project root. The licence was renamed and moved with the file it covers, because a root `LICENSE` file states the licence of *this* project — which is not MIT and is not Julian Vos's.
 
+## Office for National Statistics
+
+Britain's regional GDP and unemployment (V5.3): regional GDP at current market prices for 2024 (Table 5 of "Regional gross domestic product: all International Territorial Level regions", published 23 September 2026) and the Labour Force Survey unemployment rate, 16 and over, seasonally adjusted, June to August 2026 (HI00 "Headline Labour Force Survey indicators for all regions", with the UK rate from A01), from the Office for National Statistics, https://www.ons.gov.uk. Contains public sector information licensed under the Open Government Licence v3.0; the licence text is committed at `LICENSES/OGL-UK-3.0.txt`. The figures sit in `tools/gbr_ons_itl1.json` and are generated into `data/regions/GBR.json` by `tools/import_data.py`. GDP stands in for GVA because ONS publishes no GVA per head at ITL1.
+
 ## Eurostat and GISCO
 
 Regional population by NUTS region from Eurostat (`demo_r_pjangrp3`,
