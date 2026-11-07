@@ -89,6 +89,7 @@
     },
     {
       "id": "FRA_aubertin",
+      "start_regard_offset": -0.20,
       "social_skill": 0.47,
       "wealth_eur_m": 2.1,
       "name": "Gilles Aubertin",
@@ -116,6 +117,7 @@
     },
     {
       "id": "FRA_perrault",
+      "start_regard_offset": -0.15,
       "social_skill": 0.59,
       "wealth_eur_m": 2.8,
       "name": "Nadia Perrault",
