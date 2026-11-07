@@ -6,8 +6,9 @@ extends RefCounted
 ## the forecast do).
 ##
 ## The register, ns.measure_opinion, one field: {"measures": {law id: {"months_left", "shifts":
-## {bloc: points away from neutral}}}, "given": [the month of each address in the window]}.
-## {} when nothing is live, and on every game that has given none.
+## {bloc: points away from neutral}}}, "given": [the month of each address in the window]}. The
+## key "polls" is MeasurePolls', a poll being the other thing a measure's opinion holds. {} on
+## every game that has done neither.
 ##
 ## THE DIARY IS THE PRICE, AND IT HAS NO HALF-DAY. The spec says a half-day. The diary's unit is
 ## the day and its rule is one thing at a time, and half a day would need a second kind of day
@@ -139,8 +140,10 @@ static func tick_month(state) -> void:
 	var given: Array = (ns.measure_opinion.get("given", []) as Array).filter(func(month) -> bool:
 		return now - int(month) < K.REPEAT_WINDOW_MONTHS)
 	ns.measure_opinion["given"] = given
-	if measures.is_empty() and given.is_empty():
-		ns.measure_opinion = {}
+	if measures.is_empty():
+		ns.measure_opinion.erase("measures")
+	if given.is_empty():
+		ns.measure_opinion.erase("given")
 	for entry in state.appointments.duplicate():
 		if String(entry["kind"]) == CalendarK.KIND_ADDRESS and String(entry["status"]) == CalendarK.STATUS_BOOKED:
 			Calendar.resolve(state, Calendar.verb_key(entry), true)
