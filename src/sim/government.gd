@@ -173,13 +173,13 @@ static func position_of(seats_by_party: Dictionary, party_ids: Array, by_id: Dic
 
 ## Symmetric: a cordon is authored once, on the party that draws it, and read
 ## from both directions so authoring order cannot change the outcome.
-static func _refuses(a, b) -> bool:
+static func refuses(a, b) -> bool:
 	return a.excluded_partners.has(b.id) or b.excluded_partners.has(a.id)
 
 
 static func _compatible(candidate, member_ids: Array, by_id: Dictionary) -> bool:
 	for pid in member_ids:
-		if by_id.has(pid) and _refuses(candidate, by_id[pid]):
+		if by_id.has(pid) and refuses(candidate, by_id[pid]):
 			return false
 	return true
 
@@ -188,7 +188,7 @@ static func _seats(ns, party_id: String) -> int:
 	return int(ns.seats_by_party.get(party_id, 0))
 
 
-static func _distance(pos_a: Dictionary, pos_b: Dictionary) -> float:
+static func distance(pos_a: Dictionary, pos_b: Dictionary) -> float:
 	var d_econ: float = float(pos_a["economic"]) - float(pos_b["economic"])
 	var d_social: float = float(pos_a["social"]) - float(pos_b["social"])
 	return sqrt(d_econ * d_econ + d_social * d_social)
@@ -220,7 +220,7 @@ static func _grow(ns, anchor_id: String, party_list: Array, by_id: Dictionary, b
 			if not _compatible(party, chosen, by_id):
 				continue
 			var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, NEUTRAL_POSITION)
-			var dist := _distance(position, pos)
+			var dist := distance(position, pos)
 			# A partner too far from the line refuses regardless of arithmetic.
 			# Without this the search buys any seat that closes the gap.
 			if dist > GK.MAX_PARTNER_DISTANCE:
@@ -402,7 +402,7 @@ static func _form_directorial(ns, party_list: Array) -> Dictionary:
 ## how much its vote is worth.
 static func cohesion(ns, party) -> float:
 	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, NEUTRAL_POSITION)
-	var dist := _distance(ns.coalition_position, pos)
+	var dist := distance(ns.coalition_position, pos)
 	return exp(-pow(dist / GK.COALITION_SIGMA, 2.0))
 
 

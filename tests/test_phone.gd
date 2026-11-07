@@ -287,11 +287,12 @@ func _check_topics_teach_the_topic_only() -> void:
 	var pid := _someone(ns)
 	var other := _someone(ns, [pid])
 	ns.person_knowledge[pid] = 0.2
+	var rapport_before := President.rapport(ns, pid)
 	var r: Dictionary = Phone.dial(state, ns, _loader, pid, "opinion")
 	var want := LK.KNOW_TOPIC * (1.0 - 0.2)
 	if not bool(r.get("ok", false)) or absf(President.knowledge(ns, pid) - 0.2 - want) > 0.000001 \
-			or absf(President.rapport(ns, pid) - LK.RAPPORT_TOPIC) > 0.000001:
-		_fail("an opinion call taught %.4f (not %.4f) and rapport %.4f" % [President.knowledge(ns, pid) - 0.2, want, President.rapport(ns, pid)])
+			or absf(President.rapport(ns, pid) - rapport_before - LK.RAPPORT_TOPIC) > 0.000001:
+		_fail("an opinion call taught %.4f (not %.4f) and rapport %.4f" % [President.knowledge(ns, pid) - 0.2, want, President.rapport(ns, pid) - rapport_before])
 	var third := _someone(ns, [pid, other])
 	var k_other := President.knowledge(ns, other)
 	var g: Dictionary = Phone.dial(state, ns, _loader, other, "gossip", {"about": third})
