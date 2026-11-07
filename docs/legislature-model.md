@@ -643,3 +643,13 @@ measured effect (control 115/307, endorsed 268/309 on the same assembly).
 Related: [[index]] · [[election-model]] · [[electoral-systems]] ·
 [[government-model]] · [[discipline-model]] · [[opinion-model]] ·
 [[economy-model]] · [[amendment-model]] · [[data-architecture]]
+
+## What a division reads besides position (V5.3 b, band B4)
+
+`src/sim/division_terms.gd`, [[v5.3-ab]] 4.4, with the parent's two rulings.
+
+- **A law's size.** `Law.magnitude` is optional data, `{value, reference, unit}`, and `Legislature.propose(..., scale)` tables a bill at a grade between a tenth and ten times. The grade multiplies the law's budget effects and its magnitude, linearly. **Its other effects follow it down and not up:** below 1 they scale with the grade, above 1 they stay whole, and institutional terms, being set values, never scale. Only the change from the reference counts: a party moves the way it already leans, and a right-leaning party pays for the net cost past the reference. At scale 1, or with no magnitude, a division is the same byte for byte. No row is tagged yet.
+- **A pledge.** A person's vote and their faction's on one bill: a `pledge` row in `ns.commitments`, written by `President.pledge()`. It moves seats, not the party's line, since a line is yes, no or abstain and one backbencher must not flip a whole party: party seats x standing x 0.25, a labelled stand-in, at least their own seat, from the party's no first, then its abstentions. `resolve_vote` reads it, so every caller and the forecast see it.
+- **The peel.** A bigger bill is harder to whip: the seats on a party's yes line go to abstain, `PEEL_PER_TENFOLD` x the tenfolds above the reference x (1 - discipline), read live. The party's line does not move, a seat that peels is no rebellion and is not charged as one, and at or below the reference nothing peels. **A seat is pledged or peeled, never both:** the pledge is spent first, then what is left of it holds seats already on the yes line, and the peel reads the rest.
+- **The mark.** The real division judges each pledge into `ns.commitments_judged`: `kept` if it delivered, `broken` if the person left the party or it holds no seat. A bill that never divides reads `void` at the due month. `President.pledge_verdict()` is the read. Nothing is charged here: the deal prices its own broken word.
+- **Measured** by `tools/legislature_probe.gd`. Lines being discrete, a steeper slope stops flipping anyone at 0.5, and it is the peel that holds the size band: 82, 70, 93 and 91 % of laws in France, Germany, Britain and Poland move 5 points at ten times, with `PEEL_PER_TENFOLD` at 0.85, a labelled stand-in, where a party of discipline 0.85 peels 12.75 % and one of 0.65 peels 30 %.

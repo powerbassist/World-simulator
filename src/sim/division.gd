@@ -19,6 +19,8 @@ const Bills = preload("res://src/sim/bills.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
+const DivisionTerms = preload("res://src/sim/division_terms.gd")
+const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 
@@ -39,6 +41,7 @@ static func divide(state, loader) -> Dictionary:
 	var law = Legislature.open_law(state, ns, loader, String(tabled.get("law_id", "")))
 	if law == null:
 		return Legislature.refused(ns, String(tabled.get("law_id", "")), "", "unavailable")
+	law = LawMagnitude.scaled(law, float(tabled.get("scale", 1.0)))
 
 	var route := Legislature.takes_route(ns, law, bool(tabled.get("referendum", false)))
 	# propose() refused a route with a vote in flight; read again at the vote, so a
@@ -47,6 +50,7 @@ static func divide(state, loader) -> Dictionary:
 		return Legislature.refused(ns, law.id, law.majority, "referendum_in_flight")
 
 	var result := Legislature.resolve_vote(ns, party_list, law, route)
+	DivisionTerms.judge_pledges(ns, law, int(state.year) * 12 + int(state.month))
 	var by_id := {}
 	for party in party_list:
 		by_id[party.id] = party
@@ -81,6 +85,8 @@ static func divide(state, loader) -> Dictionary:
 				result["held_by_upper"] = true
 				result["held_months"] = ChambersK.UPPER_HOLD_MONTHS
 				ns.held_bills[law.id] = {"months": ChambersK.UPPER_HOLD_MONTHS, "origin": "player"}
+				if tabled.has("scale"):
+					ns.held_bills[law.id]["scale"] = tabled["scale"]
 			Discipline.penalise_rebellions(ns, result["party_rebels"], by_id)
 			ns.last_law_result = result
 			return result
@@ -118,5 +124,6 @@ static func forecast(state, ns, loader) -> Dictionary:
 	var law = Legislature.open_law(state, ns, loader, String(ns.tabled_bill.get("law_id", "")))
 	if law == null:
 		return {}
+	law = LawMagnitude.scaled(law, float(ns.tabled_bill.get("scale", 1.0)))
 	return Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law,
 		Legislature.takes_route(ns, law, bool(ns.tabled_bill.get("referendum", false))))

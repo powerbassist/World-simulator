@@ -112,3 +112,24 @@ const PRECONDITION_FIELDS := [
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
+
+# --- V5.3 b: what a division reads besides position (division_terms.gd, band B4) ---------
+
+## How far a party's support moves per tenfold change in a bill's size, the way it already
+## leans. A STAND-IN: 0.5 is where the probe saturates, a line being yes, no or abstain, so
+## a steeper slope flips nobody more (measured from 0.25 to 1.0, tools/legislature_probe.gd).
+const SIZE_SLOPE := 0.5
+## What a party pays per point of GDP of net cost beyond the reference, per unit of its
+## economic position right of centre: only the right weighs the deficit here. A stand-in.
+const DEFICIT_WEIGHT := 0.25
+## The share of a party's yes line that goes to abstain per tenfold above a bill's reference,
+## at no discipline at all: the party's own (1 - discipline) scales it. A LABELLED STAND-IN, by
+## the parent's ruling: a party of discipline 0.85 peels 12.75 %, the 10 to 12 % asked of a
+## disciplined party, a 0.65 one 30 %. 0.85 is where B4's band first holds in all four nations.
+const PEEL_PER_TENFOLD := 0.85
+## The bounds on a grade at the proposal (LawMagnitude.may_grade): a tenth to ten times.
+const GRADE_SCALE_MIN := 0.1
+const GRADE_SCALE_MAX := 10.0
+## The share of a party's seats, at standing 1, that a person's pledge brings (the parent's
+## ruling on B4). A LABELLED STAND-IN: a leader of standing 0.8 brings a fifth of the party.
+const PLEDGE_SEAT_SHARE := 0.25

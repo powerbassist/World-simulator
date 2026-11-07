@@ -20,7 +20,9 @@ const BONDS := ["friend", "close", "rival", "enemy", "affair"]
 ## its date), an IOU, the council's vote trade extended to people, or -- V5.2b
 ## b2.1 -- a delegation, a minister's word in the president's name that the want
 ## is served (bands-v5.2.md "Delegation's commitment"; broken, a betrayal, not a lie).
-const COMMITMENT_KINDS := ["promise", "iou", "delegated"]
+## V5.3 b: `pledge` runs the other way, what a person owes the president, a vote on one
+## bill (division_terms.gd reads it, President.pledge writes it, no third register).
+const COMMITMENT_KINDS := ["promise", "iou", "delegated", "pledge"]
 
 ## What an act leaves behind: the author's four corruption currencies, ordered
 ## by how much evidence each leaves, and the affair (spec, the currencies table).
