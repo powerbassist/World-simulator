@@ -48,6 +48,9 @@ func _init() -> void:
 		_fail("data did not load cleanly: %s" % [_loader.errors])
 	else:
 		_test_tick_order_pin()
+		_test_a_share_step_is_relative_to_the_firm()
+		_test_no_major_swings_from_noise_alone()
+		_test_a_subsidy_moves_a_small_major_in_proportion()
 		_test_single_writer()
 		_test_determinism()
 		_test_idle_is_bit_stable_except_failures()
@@ -457,30 +460,38 @@ func _test_break_up() -> void:
 
 
 ## G1 (V5.3-0 gate, the author: "it worked once and dont work for next
-## company"). France has two majors per sector, so the first break-up hands the
-## split to the only rival left and the rival's own break-up has no absorber:
-## the sim refuses it, while the door (firm_share >= 0.10) still offers it. The
+## company"). In a sector of two live majors the first break-up hands the split
+## to the only rival left and the rival's own break-up has no absorber: the sim
+## refuses it, while the door (major_share >= 0.30; a lone major reads 1.0) still
+## offers it. The
 ## panel can name the refusal on the button only if the sim says it BEFORE the
 ## click -- refusal_reason(), the same scan the arm refuses through.
 func _test_refusal_named_before_the_click() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.nations[PLAYER]
 	var breakup = _action("break_up")
+	# V5.3 majors: the real roster has three or four majors a sector, so the G1 case
+	# (a sector down to two live majors) is staged: the others have failed, their
+	# share gone to the residual and their firms out of the absorbers.
 	var first = null
 	var rival = null
 	for company in Companies.majors_of(_loader, PLAYER):
-		if company.share < 0.10:
-			continue
 		for other in Companies.majors_of(_loader, PLAYER):
-			if other.id != company.id and other.sector == company.sector and other.share >= 0.10:
+			if first == null and other.id != company.id and other.sector == company.sector:
 				first = company
 				rival = other
-				break
-		if first != null:
-			break
 	if first == null:
-		_fail("no sector with two break-up-able majors -- the G1 case needs one")
+		_fail("no sector with two majors -- the G1 case needs one")
 		return
+	for other in Companies.majors_of(_loader, PLAYER):
+		if other.sector == first.sector and other.id != first.id and other.id != rival.id:
+			ns.companies[other.id]["failed"] = true
+			ns.companies[other.id]["share"] = 0.0
+	# The larger of the two clears the gate (at least half the majors' share).
+	if Companies.major_share(ns, _loader, rival) > Companies.major_share(ns, _loader, first):
+		var larger = rival
+		rival = first
+		first = larger
 	if Companies.refusal_reason(state, ns, breakup, first.id, _loader) != "":
 		_fail("a break-up with a rival to absorb it named a refusal")
 	var landed: Dictionary = Companies.execute(state, ns, _loader.company_actions, breakup, first.id, _loader)
@@ -557,7 +568,7 @@ func _test_rescue_restores_failing() -> void:
 	var ns2 = state2.nations[PLAYER]
 	var major2 = null
 	for company in Companies.majors_of(_loader, PLAYER):
-		if company.sector != Companies.majors_of(_loader, PLAYER)[0].sector and company.share >= 0.10:
+		if company.sector != Companies.majors_of(_loader, PLAYER)[0].sector and Companies.major_share(ns2, _loader, company) >= 0.30:
 			major2 = company
 			break
 	if major2 == null:
@@ -591,13 +602,26 @@ func _test_rescue_restores_failing() -> void:
 func _test_court_multiplies_bids() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.nations[PLAYER]
-	# The verb's own gate: courting targets a small major (< 0.10 share). The
-	# register's first firm is 0.28 and is rightly refused.
+	# The verb's own gate: courting targets a small major. V5.3 majors (the parent's
+	# call on #283): the gate reads the firm's weight among its sector's majors, under
+	# the break-up's 30 % (a firm the authority would not break up), not an absolute
+	# 10 % of the sector that every real major sits under. Both sides of it, pinned as
+	# the literal; a major the register leaves bid-free and uncourted at the start.
+	var court_id := "court_investor"
 	var major = null
+	var refused_big := false
 	for company in Companies.majors_of(_loader, PLAYER):
-		if company.share < 0.10:
+		var weight := Companies.major_share(ns, _loader, company)
+		var offered := not Companies.available(state, ns, _loader.company_actions, company.id, _loader).filter(
+			func(a): return String(a.id) == court_id).is_empty()
+		if offered != (weight < 0.30):
+			_fail("%s holds %.0f %% of its sector's majors' share and courting it offered is %s -- the gate is 30 %%" % [
+				company.id, 100.0 * weight, offered])
+		refused_big = refused_big or not offered
+		if offered and major == null:
 			major = company
-			break
+	if not refused_big:
+		_fail("every major can be courted -- the gate bites nothing")
 	if major == null:
 		_fail("no small major to court -- the test needs one")
 		return
@@ -707,6 +731,69 @@ func _test_appoint_board() -> void:
 		for other_id in before_chairs.keys():
 			if String(ns.companies[other_id].get("board_chair", "")) != String(before_chairs[other_id]):
 				_fail("the refused appointment disturbed %s's chair" % other_id)
+
+
+## The parent's ruling on #286 (QA's finding): the share steps were points of the sector,
+## tuned for majors of 5 to 28 %, so one step was 40 % of a 0.5 % major in a month. A firm
+## under the reference moves in proportion to itself; one at or over it as it always did.
+## Literals: 0.002 is the step, 0.05 the reference.
+func _test_a_share_step_is_relative_to_the_firm() -> void:
+	for row in [[0.005, 0.0002], [0.02, 0.0008], [0.05, 0.002], [0.28, 0.002]]:
+		if not is_equal_approx(CK.relative_step(0.002, float(row[0])), float(row[1])):
+			_fail("a major at %.3f steps %.5f, not %.5f" % [row[0], CK.relative_step(0.002, float(row[0])), row[1]])
+
+
+## The case that started it: "a grocer's output fell 48 % in 6 months", and the firm ended
+## the decade where it began. Ten years of the autonomous drift alone, every playable
+## nation: no major's six-month fall in share passes NOISE_FALL_MAX, the bound a firm that
+## gives at most 4 % of itself a month has by construction (1 - 0.96 ^ 6).
+const NOISE_FALL_MAX := 0.2173
+
+
+func _test_no_major_swings_from_noise_alone() -> void:
+	for nation in ["FRA", "DEU", "GBR", "POL"]:
+		var state = GameState.new_game(_loader, nation)
+		var ns = state.player()
+		var majors: Array = Companies.majors_of(_loader, nation)
+		var history := {}
+		for company in majors:
+			history[company.id] = [Companies.share_of_company(ns, company)]
+		for month in range(24313, 24433):
+			Industry._invest(ns, _loader, majors, month)
+			for company in majors:
+				(history[company.id] as Array).append(Companies.share_of_company(ns, company))
+		for company in majors:
+			var h: Array = history[company.id]
+			# Up as down: a month's rise is at most the firm's own step, 4 % of itself.
+			for i in range(1, h.size()):
+				if float(h[i]) - float(h[i - 1]) > 0.04 * float(h[i - 1]) + 1e-12:
+					_fail("%s rose from %.5f to %.5f in a month of drift" % [company.id, float(h[i - 1]), float(h[i])])
+					break
+			for i in range(6, h.size()):
+				var fall: float = (float(h[i - 6]) - float(h[i])) / float(h[i - 6])
+				if fall > NOISE_FALL_MAX:
+					_fail("%s at %.4f fell %.1f %% in six months of drift alone" % [company.id, float(h[0]), 100.0 * fall])
+					break
+
+
+## The player's lever reads the same rule: a full subsidy on the smallest major of a
+## sector with room moves it at 4 % of itself a month, not at 0.2 points of the sector.
+func _test_a_subsidy_moves_a_small_major_in_proportion() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.player()
+	var small = null
+	for company in Companies.majors_of(_loader, PLAYER):
+		if small == null or Companies.share_of_company(ns, company) < Companies.share_of_company(ns, small):
+			small = company
+	var before := Companies.share_of_company(ns, small)
+	if before >= 0.05:
+		_fail("premise: FRA's smallest major holds %.4f, no small firm to stage" % before)
+		return
+	(ns.companies[String(small.id)] as Dictionary)["subsidy"] = 1.0
+	Companies.tick_month(state, _loader)
+	var gain := Companies.share_of_company(ns, small) - before
+	if not is_equal_approx(gain, 0.04 * before):
+		_fail("a fully subsidised %.4f major gained %.5f in a month, not %.5f" % [before, gain, 0.04 * before])
 
 
 func _fail(message: String) -> void:

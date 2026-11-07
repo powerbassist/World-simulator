@@ -1354,8 +1354,16 @@ it lands and the dividend keeps its one-month lag.
   so it starts after the transition with no new rule. During those twelve months the
   firm reads as not state-owned, and only the process gate keeps a second verb off it.
 - **The break-up's ruling.** The authority orders the break-up with odds that rise
-  with the firm's share, from 50 % at a 10 % share to 85 % at 30 %. The strip shows
-  the odds as a range of 10 points either side. In the remedy, the sector's other
+  with the firm's weight among its sector's live majors (`Companies.major_share`: its
+  share over its own plus its rivals'), from 50 % at 30 % to 85 % at 70 %. The verb's
+  gate is the same measure, at least 30 % (`breakup.json`). The spec put both on the
+  firm's share of the SECTOR (50 % at 10 %, 85 % at 30 %, a 10 % gate); at the real
+  shares a major holds 0.3 to 4 % of its sector and no major reached the gate (V5.3
+  majors). The courtship (`court_investor`) gates on the same measure under 30 %,
+  the gate's complement, as its old 10 % absolute gate was. All four numbers are
+  stand-ins for the author. A lone live major reads
+  1.0: the door offers it and the arm refuses it for want of an absorber. The strip
+  shows the odds as a range of 10 points either side. In the remedy, the sector's other
   majors absorb 70 % of the split (`BREAK_UP_ABSORBED`, Companies.execute's
   `break_up` arm). The rest falls to the unnamed residual, which employs nobody, so
   the firm's jobs beyond that are lost.
@@ -1364,7 +1372,7 @@ it lands and the dividend keeps its one-month lag.
   process books both on its own timetable.
 - **A firm that fails or changes hands mid-process voids it.** What was spent stays
   spent. A remedy that the arm refuses on the day closes the row as refused, with the
-  arm's reason: the firm's share fell under the 10 % gate, or no rival is left to
+  arm's reason: the firm's weight among its sector's majors fell under the gate, or no rival is left to
   absorb it.
 - **Stopping** is a verb with its own price (`Processes.stop_price`):
   - a U-turn on a public stage, where every bloc the verb pleased loses a quarter of
@@ -1476,12 +1484,21 @@ The spec's "New Industry decisions" (`docs/design/v5.3-ab.md` 3.2), and the indu
 supply band B7 lacked: on main a foreign bid or a failing major reaches the player
 almost never. `src/sim/closures.gd`, step `Closures` right after `Industry`.
 
-- **The trigger.** Each month every live major of the PLAYER's nation adds its output
-  (`Companies.output_eur_bn`) to a history of `window_months` + 1 months. The worst
-  fall past `fall` over the window announces a closure in the firm's live city,
-  one announcement a month at most. A firm in a process does not announce, and a
-  firm whose closure ended waits `cooldown_months`. Its history is cleared at the
-  announcement and at the cut, so a closure's own cut is never the next fall.
+- **The trigger** (the parent's ruling on the real majors; `tools/closure_rate_probe.gd`).
+  The rule fires per SECTOR: fired per major, adding real majors took FRA from 14 closures
+  a decade to 39. A sector falls when one of its majors has lost `fall` of its output over
+  `window_months`: the falls are firms losing share to rivals, and the majors' summed
+  output, tried first, fires 0 to 2 times a decade at 2 to 4 %. One fall closes one plant,
+  at one of the majors past the threshold, weighted by its jobs, in the firm's live city;
+  one announcement a month, the worst fall first; a firm in a process is passed over. A
+  major past `fall` is nearly always there, so the rate is a chance (the author's call on
+  #286): a falling sector closes a plant in a month with `Closures.chance()`, on its own
+  seed, reading its worst major's fall and the nation's output gap, so more in a slump.
+  `cooldown_months` is only a floor. The fall reads a real fall since the share steps
+  became relative to the firm (`companies_constants.relative_step`, `can_give`): they were
+  points of the sector, so a 0.5 % major's six-month fall was 48 % at p90, and the firm
+  ended the decade where it began. A landed closure's `bloc_offset` is the move of a plant of
+  `reference_jobs`, scaled by the plant's jobs.
 - **The answers** (`Closures.answers`, `Closures.answer`):
   - let it close, the default: the firm's live share falls by `cut` (to the residual,
     as the failure commit moves it), so its payroll in its city falls with it, and

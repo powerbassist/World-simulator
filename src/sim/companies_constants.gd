@@ -91,8 +91,10 @@ const PRECONDITION_FIELDS := [
 	# bid pends, a rescue-restore only while the window stands, and break-up
 	# only on share worth splitting. The court verb gates on its own flag:
 	# an invitation stands until a bid is ANSWERED, so it cannot be re-bought
-	# click by click (the ultra's unpriced-lever finding).
-	"bid_pending", "failing", "firm_share", "courted",
+	# click by click (the ultra's unpriced-lever finding). V5.3 majors: the
+	# break-up and the courtship gate on the firm's weight among its sector's
+	# majors; the absolute firm_share, read by no gate since, is gone.
+	"bid_pending", "failing", "courted", "major_share",
 ]
 
 const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
@@ -101,10 +103,14 @@ const PRECONDITION_OPS := ["<", "<=", ">", ">=", "=="]
 ## its sector by any reachable amount, so it is a name on a panel rather than a
 ## firm -- the same standard PeopleLoader.validate_people() applies to an unreferenced
 ## person, and the same one U6b's probe cut a five-deep minister bench for.
-## MAJORS only: company.gd scopes this floor by tier, and a body firm reads
+## V5.3: 0.02 -> 0.002. The real majors (a utility is ~0.037 of French
+## industry turnover, an airline ~0.002 of German services) sit far below the
+## six invented ones' 0.05-0.28; a major is a firm with a named chief and a
+## payroll in the thousands, and 0.002 of a sector is still 10x MIN_BODY_SHARE's
+## typical neighbour. MAJORS only: company.gd scopes this floor by tier, and a body firm reads
 ## MIN_BODY_SHARE below, because the body's whole band (~0.005 typical share)
 ## lives under 0.02 by design -- it is the tier boundary the block is built on.
-const MIN_AUTHORED_SHARE := 0.02
+const MIN_AUTHORED_SHARE := 0.002
 
 ## V4.7a A3. The smallest share a BODY-tier firm may be authored at. The same
 ## "a firm that cannot move its sector is a label" rule at the body's own
@@ -172,6 +178,29 @@ const SUBSIDY_BILL_MAX_PCT_GDP := 2.50
 ## that endpoint, against a band of 12-48 fixed before the column existed. At 0.0020
 ## t90 is 25 months: a subsidy pays off inside a term without being over in a year.
 const SHARE_SHIFT_PER_MONTH := 0.0020
+
+## SHARE_SHIFT_PER_MONTH and industry_constants.INVEST_STEP are points of the sector, set
+## for majors of 5 to 28 %. On a real 0.5 % major one step was 40 % of the firm in a month
+## (a grocer's output "fell 48 % in 6 months" and ended the decade where it began; QA on
+## #286, the parent's ruling). So a firm under this share moves in proportion to itself,
+## and one at or over it exactly as it did: the low end of the majors those steps were
+## set for is the reference, and what such a firm swung is what any major may swing.
+const SHARE_STEP_REFERENCE := 0.05
+
+
+## A step of `points` of the sector, for a firm holding `share` of it.
+static func relative_step(points: float, share: float) -> float:
+	return points * minf(share / SHARE_STEP_REFERENCE, 1.0)
+
+
+## What a firm can give up to its rivals in a month: its share above its floor, and never
+## more of itself than the steepest step takes (SHARE_SHIFT_PER_MONTH at the reference,
+## 4 %). Scaling the steps alone was measured not to be enough: a 0.3 % major beside a
+## 2 % one rose by its own steps and lost them at one blow to the larger firm's, 47 % in
+## six months. The most any firm falls by drift alone in six months is now 1 - 0.96 ^ 6.
+static func can_give(share_now: float, authored: float) -> float:
+	return minf(maxf(share_now - RIVAL_FLOOR_FRACTION * authored, 0.0),
+		share_now * SHARE_SHIFT_PER_MONTH / SHARE_STEP_REFERENCE)
 
 ## The most of its own AUTHORED position a rival can be made to give up, ever.
 ##
@@ -504,13 +533,17 @@ const PROCESS_DRAG_MAX_PCT := 0.5
 const PROCESS_NATIONALISE_PREMIUM := Vector2(0.15, 0.30)
 ## A break-up: an investigation of 9 to 12 months (seeded), a ruling that charges
 ## the legal costs, then a remedy of 6 months. The authority's odds rise with the
-## firm's share, from PROCESS_ODDS.x at PROCESS_ODDS_SHARE.x to PROCESS_ODDS.y at
-## PROCESS_ODDS_SHARE.y (the spec's "about 50 % at 10 %, 85 % at 30 %"), shown
-## as a range PROCESS_ODDS_FOG either side of the truth.
+## firm's weight among its sector's live majors (Companies.major_share), from
+## PROCESS_ODDS.x at PROCESS_ODDS_SHARE.x to PROCESS_ODDS.y at PROCESS_ODDS_SHARE.y,
+## shown as a range PROCESS_ODDS_FOG either side of the truth. The spec said "about
+## 50 % at a 10 % share, 85 % at 30 %" of the SECTOR; at the real shares no major
+## reached 10 % (V5.3 majors), so the points moved onto the majors' weight: 50 % at
+## 30 % (the gate, breakup.json), 85 % at 70 % (about the most dominant major on the
+## four played rosters). STAND-INS for the author.
 const PROCESS_INVESTIGATION_MONTHS := Vector2i(9, 12)
 const PROCESS_REMEDY_MONTHS := 6
 const PROCESS_LEGAL_COST_EUR_BN := 0.05
-const PROCESS_ODDS_SHARE := Vector2(0.10, 0.30)
+const PROCESS_ODDS_SHARE := Vector2(0.30, 0.70)
 const PROCESS_ODDS := Vector2(0.50, 0.85)
 const PROCESS_ODDS_FOG := 0.10
 ## The remedy's split: the share the sector's other majors absorb (Companies.execute's

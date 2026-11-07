@@ -46,7 +46,10 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --bill-refused --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --slipping --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --sectors --slipping --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-back --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-walked --open companies
@@ -483,6 +486,8 @@ var _industry := false
 ## V5.3 a + b (spec 3.1): the Budget with the health line's tile open -- its sectors'
 ## bars and quantities, the share move with its strip.
 var _sectors := false
+## #288: with --sectors, money per head down so every sector warns, with a trend drawn.
+var _slipping := false
 ## V5.3 a + b (#251): a plant closure announced on the first major, its card and
 ## its answers side by side on the Industry tab's In progress strip.
 var _closure := false
@@ -497,6 +502,8 @@ var _buyer_walked := false
 ## three, and the opened region's Start is greyed with the sim's line under it.
 ## #281: the Industry tab the month a seller walked: its one closed line, BAD, with the hold.
 var _walked := false
+## With --walked: a bill on that firm adopted inside the hold: its one card in the inbox.
+var _bill_refused := false
 var _fund := false
 var _fund_cap := false
 
@@ -991,6 +998,8 @@ func _init() -> void:
 			_industry = true
 		elif args[i] == "--sectors":
 			_sectors = true
+		elif args[i] == "--slipping":
+			_slipping = true
 		elif args[i] == "--closure":
 			_closure = true
 		elif args[i] == "--buyer-back":
@@ -999,6 +1008,8 @@ func _init() -> void:
 			_buyer_walked = true
 		elif args[i] == "--walked":
 			_walked = true
+		elif args[i] == "--bill-refused":
+			_bill_refused = true
 		elif args[i] == "--fund":
 			_fund = true
 		elif args[i] == "--fund-cap":
@@ -1294,6 +1305,10 @@ func _apply_view() -> void:
 		_move_the_levers()
 	if _industry:
 		_stage_the_industry_tab()
+	if _slipping:
+		var drifting = _main._state.player()
+		drifting.sector_drift["base_gdp_per_head"] = float(drifting.gdp_eur_bn) / float(drifting.population) * 1.5
+		drifting.sector_drift["history"] = {"hospitals": [5.34, 5.3, 5.22, 5.1, 4.9, 4.7, 4.45]}
 	if _sectors:
 		_main._budget_panel._open_line = "health"
 		_main._budget_panel.mark_dirty()
@@ -2112,6 +2127,10 @@ func _stage_a_walk() -> void:
 	row["status"] = "walked"
 	row["closed"] = state.year * 12 + state.month
 	_main._companies_panel.mark_dirty()
+	if _bill_refused:
+		preload("res://src/sim/legislature.gd").apply_effects(state, ns,
+			{"company_ownership": {"company_id": String(major.id), "action_id": "full_nationalisation"}}, _main._loader)
+		preload("res://src/ui/proposal_note.gd").card_ownership_refusal(_main)
 
 
 func _stage_a_fund() -> void:

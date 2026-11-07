@@ -69,6 +69,20 @@ SEED = 20260927  # fixed; the tree's content must not depend on when it was made
 # list is left untouched (A2 named the chiefs); A3 grows only their body.
 AUTHORED = ("FRA", "DEU", "GBR", "POL")
 
+# V5.3. The four authored nations sit in the SHARED rng stream (FROZEN_STREAM),
+# so growing their majors would change how many draws they take and shift every
+# later nation's body. Their legacy draws are therefore BURNED -- the body the
+# six/eight original majors fed, and one sidecar draw per original chief --
+# and the real body is drawn on a private stream. `cov` is those original
+# majors' sector sums (summed in file order, as the loop does); `chiefs` is the
+# number of chiefs whose sidecar draws were taken. Never edit these.
+AUTHORED_LEGACY = {
+    "FRA": {"cov": {"agriculture": 0.47000000000000003, "industry": 0.24000000000000002, "services": 0.11}, "chiefs": 6},
+    "DEU": {"cov": {"agriculture": 0.41000000000000003, "industry": 0.24, "services": 0.09}, "chiefs": 6},
+    "GBR": {"cov": {"agriculture": 0.38, "industry": 0.21, "services": 0.11}, "chiefs": 6},
+    "POL": {"cov": {"industry": 0.45, "agriculture": 0.41000000000000003, "services": 0.14}, "chiefs": 8},
+}
+
 SECTORS = ("agriculture", "industry", "services")
 
 # --- Bands, mirroring src/sim/companies_constants.gd -------------------------
@@ -678,6 +692,16 @@ def main() -> int:
         major_cov = {}
         for m in majors:
             major_cov[m["sector"]] = major_cov.get(m["sector"], 0.0) + m["share"]
+
+        if nation in AUTHORED:
+            legacy = AUTHORED_LEGACY[nation]
+            if not majors_only:
+                gen_body(rng, nation, legacy["cov"], cities, set(used_slugs))
+            for _ in range(legacy["chiefs"]):
+                rng.random()
+                rng.randint(40, 68)
+                sidecar_entry(rng, "male", 50)
+            rng = random.Random("%d:%s:authored" % (SEED, nation))
 
         if majors_only:
             body = []

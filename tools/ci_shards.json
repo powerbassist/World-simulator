@@ -2,6 +2,7 @@
  "shards": [
   [
    "tests/test_state_copy.gd",
+   "tests/test_bill_refusal_line.gd",
    "tests/test_electoral_systems.gd",
    "tests/test_elections.gd",
    "tests/test_amendment.gd",
@@ -110,6 +111,7 @@
    "tests/test_industry_closure.gd",
    "tests/test_region_fund.gd",
    "tests/test_region_priority.gd",
+   "tests/test_sector_warning_view.gd",
    "tests/test_government.gd",
    "tests/test_government_panel.gd",
    "tests/test_discipline.gd",

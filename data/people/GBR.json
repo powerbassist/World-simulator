@@ -1263,6 +1263,29 @@
       "social_skill": 0.8,
       "voice": "chief_gbr",
       "bench": true
+    },
+    {
+      "id": "GBR_chief_merlyn_propulsion",
+      "name": "Benedict Hawtrey",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "stubborn"
+      ],
+      "ambition": 0.56,
+      "bench": true
+    },
+    {
+      "id": "GBR_chief_haldane_grocers",
+      "name": "Edmund Massingham",
+      "kind": "executive",
+      "traits": [
+        "ambitious",
+        "loyal",
+        "networked"
+      ],
+      "ambition": 0.5,
+      "bench": true
     }
   ]
 }

@@ -16,6 +16,7 @@ tests=(
   tests/test_industry_closure.gd
   tests/test_region_fund.gd
   tests/test_region_priority.gd
+  tests/test_sector_warning_view.gd
   tests/test_opinion.gd
   tests/test_polling_panel.gd
   tests/test_state_copy.gd
@@ -251,6 +252,8 @@ tests=(
   tests/test_front_page.gd
   tests/test_legislature_dissolve.gd
   tests/test_table_bill.gd
+  # An ownership bill that passes while its firm's process is refused says so in one line.
+  tests/test_bill_refusal_line.gd
   tests/test_tabled_ui.gd
   tests/test_bill_card.gd
   tests/test_dismiss_ui.gd

@@ -523,7 +523,7 @@ func _refresh() -> void:
 		if _effects.has(EffectsStrip.ELSEWHERE) else "", float(_effects.get(EffectsStrip.ELSEWHERE, 0.0)))
 	Ledger.add_changes(_figures, now, proposed)
 	_fill_figures()
-	BudgetSectors.refresh(self, tr(LEVER_LABELS.get(_open_line, "")))
+	BudgetSectors.refresh(self, tr(LEVER_LABELS.get(_open_line, "")), now)
 
 
 ## Writes one row of the now/proposed table for this refresh.

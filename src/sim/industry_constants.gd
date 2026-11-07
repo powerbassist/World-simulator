@@ -13,7 +13,8 @@ extends RefCounted
 ## the world's actors cannot out-shout the player's one lever. Signed by the
 ## sector's own trend and zero-sum across the partition (the Trade.sector_shift
 ## idiom), so an idle world leaves every sector's named sum exactly where the
-## content put it.
+## content put it. A step at or over companies_constants.SHARE_STEP_REFERENCE: a smaller
+## firm moves in proportion to itself (relative_step, can_give).
 const INVEST_STEP := 0.002
 
 ## The share of major-months in which invest intent DRAWS at all: half the

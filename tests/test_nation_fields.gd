@@ -40,8 +40,10 @@ const GameState = preload("res://src/core/game_state.gd")
 ## Re-pinned at 41 (V5.1-0d) for two fields, `embassies` and `no_relations`: absent,
 ## a reloaded world holds no embassy anywhere and every pair reads as in relations
 ## (their declarations in nation_state.gd have the argument).
+## Re-pinned at 42 (V5.3 majors) with the SAME count and digest: the bump is on no field,
+## the firms' size is content a version-41 save would carry from the old roster.
 const MUST_BUMP_PIN := {
-	"save_version": 41,
+	"save_version": 42,
 	"count": 170,
 	"md5": "0369e45386d088fd9caf7aa187274dbb",
 }
