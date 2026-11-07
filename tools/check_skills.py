@@ -53,8 +53,11 @@ def basis_problems(people, basis):
     """Lines for a marked person's offset with no basis, and a row naming nobody."""
     out = []
     known = {person.get("id") for person in people}
-    for person_id in sorted(set(basis) - known):
-        out.append("%s: in the basis file, not in data/people" % person_id)
+    # A count, never the key: a key that matches no game id is the one string in that
+    # file that can be a real name or a draft.
+    strays = len(set(basis) - known)
+    if strays:
+        out.append("%d rows in the basis file name nobody in data/people" % strays)
     for person in people:
         person_id = person.get("id")
         row = basis.get(person_id)
@@ -92,7 +95,7 @@ def selftest():
     if basis_problems([{"id": "A_a", OFFSET: 0}], {"A_a": {"real_inspired": True}}):
         print("SELFTEST FAIL: a zero offset asked for a basis")
         return 1
-    if basis_problems([], {"A_z": {}}) != ["A_z: in the basis file, not in data/people"]:
+    if basis_problems([], {"A_z": {}}) != ["1 rows in the basis file name nobody in data/people"]:
         print("SELFTEST FAIL: a row naming nobody passed")
         return 1
     print("check_skills selftest: all checks passed")

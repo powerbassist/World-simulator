@@ -65,14 +65,23 @@ func _init() -> void:
 ## file the cast to walk and reads no system. V5.3 a + b added character_seed.gd:
 ## the new game's arithmetic, which the month never reaches.
 func _check_leaf_property() -> void:
-	var src := FileAccess.get_file_as_string("res://src/sim/characters.gd")
-	if src.is_empty():
-		_fail("could not read src/sim/characters.gd")
-		return
-	var allowed := [
+	_check_preloads("characters.gd", [
 		"character_constants.gd", "character_act_constants.gd",
 		"government.gd", "legislature.gd", "staff.gd", "character_seed.gd",
-	]
+	])
+	# One hop deeper, by the same rule: the new game's arithmetic reads the president's
+	# leaf and the government's distance, no system of the month.
+	_check_preloads("character_seed.gd", [
+		"character_act_constants.gd", "election_constants.gd",
+		"government.gd", "president.gd", "staff.gd",
+	])
+
+
+func _check_preloads(file: String, allowed: Array) -> void:
+	var src := FileAccess.get_file_as_string("res://src/sim/%s" % file)
+	if src.is_empty():
+		_fail("could not read src/sim/%s" % file)
+		return
 	# Comments STRIPPED (the tick-order check's own lesson): characters.gd
 	# discusses the systems it refuses to preload at length, and a comment
 	# naming an allowed file beside a disallowed preload would pass a raw scan.
@@ -86,7 +95,7 @@ func _check_leaf_property() -> void:
 			if l.contains(String(a)):
 				found = true
 		if not found:
-			_fail("characters.gd preloads outside its leaf: %s" % l.strip_edges())
+			_fail("%s preloads outside its leaf: %s" % [file, l.strip_edges()])
 
 
 ## THE TICK-ORDER PIN: the game month's call order, read from source (the
