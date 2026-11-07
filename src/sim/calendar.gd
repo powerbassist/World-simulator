@@ -275,6 +275,11 @@ static func tick_month(state) -> void:
 	state.appointments = kept
 
 
+## A date's day number, for a span counted in days (a poll's weeks).
+static func day_number(year: int, month: int, day: int) -> int:
+	return _to_day_number(year, month, day)
+
+
 ## --- reading ---------------------------------------------------------------
 
 static func booked(state) -> Array:
