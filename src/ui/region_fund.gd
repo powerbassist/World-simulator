@@ -72,6 +72,12 @@ static func _running(panel, box: Control, ns, row: Dictionary) -> void:
 	flow.add_child(stop)
 	PanelKit.plain_line(flow, Strings.tn("%s a year, %d month left.", "%s a year, %d months left.", months) % [
 		EffectsStrip.money_text(-float(row["eur_bn_per_year"])), months], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
+	# What the money has done: the figure the month it began against now. A fund opened
+	# before the snapshot existed has none, and says nothing rather than a wrong change.
+	if row.has("unemployment_at_start"):
+		var since := PanelKit.plain_line(box, Strings.t("Unemployment here since it began: %s -> %s %%.") % [
+			Num.f(float(row["unemployment_at_start"]), 1), Num.f(RegionFunds.unemployment_here(panel._state, ns, String(row["region_id"])), 1)], PanelKit.Tone.PLAIN)
+		since.set_meta("fund_since", true)
 	# What Stop costs, read before the press: RegionFunds.stop() takes back part of
 	# what each pleased bloc gained, so those blocs are the ones it angers.
 	var angered := {}

@@ -21,6 +21,7 @@ extends RefCounted
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
+const RegionArrival = preload("res://src/ui/region_arrival.gd")
 const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const Music = preload("res://src/ui/music.gd")
@@ -105,6 +106,8 @@ static func open(main, report: Dictionary) -> void:
 	var ns = main._state.player() if main._state != null else null
 	var cards: Array = game.get("month_cards", [])
 	game.erase("month_cards")
+	if ns != null:
+		RegionArrival.check(main)
 	# The month's crossings: a line on the card, or a note when the card is not shown or
 	# ranked them out (they have no deadline, so its footer does not catch them either).
 	var slipped: Array = [] if ns == null else SectorWarningView.note_cards(ns, main._loader, int(main._state.year) * 12 + int(main._state.month))

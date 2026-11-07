@@ -25,7 +25,10 @@ extends RefCounted
 ##               bloc gained.
 ##
 ## The register `ns.region_funds` is saved whole (absent_ok: no save before V5.3 a
-## could hold a fund). sqrt() runs only in start() and estimate(), the player's verb
+## could hold a fund). A row's `unemployment_at_start` is the region's figure the month it
+## opened, for its row to say what changed; a fund opened before that key has none, reads
+## no comparison and earns no bump (the figure was never recorded, so nothing can be
+## shown wrongly: tests/test_region_fund.gd pins the row without it). sqrt() runs only in start() and estimate(), the player's verb
 ## and its strip, on the main thread; no tick step computes the term.
 
 const Regions = preload("res://src/sim/regions.gd")
@@ -43,6 +46,7 @@ static func start(state, ns, loader, region_id: String, eur_bn: float, years: in
 	if why != "":
 		return {"ok": false, "reason": why}
 	var row := _row(state, ns, loader, region_id, eur_bn, years)
+	row["unemployment_at_start"] = unemployment_here(state, ns, region_id)
 	_blocs(ns, row["bloc_offset"], 1.0)
 	ns.region_funds.append(row)
 	return {"ok": true, "id": String(row["id"])}
@@ -58,18 +62,22 @@ static func estimate(state, ns, loader, region_id: String, eur_bn: float, years:
 	if why != "":
 		return {"ok": false, "reason": why}
 	var row := _row(state, ns, loader, region_id, eur_bn, years)
-	var list: Array = state.regions.get(ns.id, [])
-	var access := Regions.accessibility_for(ns, list, state.region_graph)
-	var sites: Dictionary = state.project_sited_pct.get(ns.id, {})
-	var now := Regions.unemployment_pct(ns, list, region_id, access, sites)
+	var now := unemployment_here(state, ns, region_id)
 	# The row is appended for one synchronous read and removed at once: the read is
 	# the game's own arithmetic, with nothing between the two writes.
 	ns.region_funds.append(row)
-	var after := Regions.unemployment_pct(ns, list, region_id, access, sites)
+	var after := unemployment_here(state, ns, region_id)
 	ns.region_funds.pop_back()
 	return {"ok": true, "pts": float(row["pts"]), "eur_bn_per_year": eur_bn, "total_eur_bn": eur_bn * float(years),
 		"months": years * 12, "unemployment_now": now, "unemployment_after": after,
 		"bloc_offset": (row["bloc_offset"] as Dictionary).duplicate()}
+
+
+## The region's unemployment now, through the function the game reads.
+static func unemployment_here(state, ns, region_id: String) -> float:
+	var list: Array = state.regions.get(ns.id, [])
+	return Regions.unemployment_pct(ns, list, region_id, Regions.accessibility_for(ns, list, state.region_graph),
+		state.project_sited_pct.get(ns.id, {}))
 
 
 ## The rule's ranges and the cap, {eur_bn: [lowest, highest], years: [shortest,
