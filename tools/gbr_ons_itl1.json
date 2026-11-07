@@ -1,0 +1,45 @@
+{
+  "_note": "ONS inputs for tools/import_data.py's GBR region figures (V5.3). Read from the workbooks by script, never typed; re-verified cell by cell on 2026-11-06 (.superpowers/sdd/v5.3-sector-sources.md). GDP stands in for GVA: ONS publishes GDP (GVA plus taxes less subsidies on products) per head and in total at ITL1, and no GVA per head.",
+  "licence": "Open Government Licence v3.0",
+  "gdp": {
+    "source": "ONS, Regional gross domestic product: all International Territorial Level (ITL) regions, Table 5 (GDP at current market prices, pounds million), ITL1 rows, 2024 (provisional); published 23 September 2026",
+    "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/datasets/regionalgrossdomesticproductallnutslevelregions",
+    "year": 2024,
+    "uk_total_mio_gbp": 2884006,
+    "extra_regio_mio_gbp": 25140,
+    "regions_mio_gbp": {
+      "UKC": 82703,
+      "UKD": 285709,
+      "UKE": 193115,
+      "UKF": 162343,
+      "UKG": 210173,
+      "UKH": 242942,
+      "UKI": 656291,
+      "UKJ": 416359,
+      "UKK": 222445,
+      "UKL": 100327,
+      "UKM": 218777,
+      "UKN": 67683
+    }
+  },
+  "unemployment": {
+    "source": "ONS, Regional labour market: headline Labour Force Survey indicators for all regions (HI00), sheets *_p, unemployment rate, people aged 16 and over, seasonally adjusted, Jun-Aug 2026; UK from A01 Summary of labour market statistics (series MGSX), same period; released 20 October 2026",
+    "url": "https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/employmentandemployeetypes/datasets/headlinelabourforcesurveyindicatorsforallregionshi00",
+    "period": "Jun-Aug 2026",
+    "uk_rate_pct": 4.7185,
+    "regions_rate_pct": {
+      "UKC": 4.6954,
+      "UKD": 4.625,
+      "UKE": 5.2075,
+      "UKF": 4.7036,
+      "UKG": 5.7367,
+      "UKH": 3.8646,
+      "UKI": 6.6367,
+      "UKJ": 4.1716,
+      "UKK": 3.8011,
+      "UKL": 3.4132,
+      "UKM": 4.3254,
+      "UKN": 2.125
+    }
+  }
+}

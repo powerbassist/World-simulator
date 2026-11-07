@@ -129,10 +129,13 @@ func _check_pull_is_expected_income() -> void:
 	var gbr_list: Array = _loader.regions.get("GBR", [])
 	var gbr_access: Dictionary = Regions.accessibility_for(gbr_ns, gbr_list, gbr.region_graph)
 	var gbr_sites: Dictionary = gbr.project_sited_pct.get("GBR", {})
-	var first: float = Migration.region_pull(gbr_ns, gbr_list, gbr_list[0].id, gbr_access, gbr_sites)
-	for region in gbr_list:
-		if absf(Migration.region_pull(gbr_ns, gbr_list, region.id, gbr_access, gbr_sites) - first) > 0.000000001:
-			_fail("a British region's expected income differs from another's -- section 8's proxy says every one of them is identical, so either the proxy moved or this test is measuring the wrong thing")
+	# V5.3: Britain's regions are the ONS's (output per head, LFS unemployment), no
+	# longer one proxy, so the pull differs between them -- London's output per head is
+	# 1.69 of the UK's, the North East's 0.72, and the pull is that times the share employed.
+	var london: float = Migration.region_pull(gbr_ns, gbr_list, "UKI", gbr_access, gbr_sites)
+	var north_east: float = Migration.region_pull(gbr_ns, gbr_list, "UKC", gbr_access, gbr_sites)
+	if not (london > north_east * 1.5):
+		_fail("London's pull %f is not clearly above the North East's %f: the ONS output per head (1.69 against 0.72) should show" % [london, north_east])
 
 
 ## THE CITY PULL IS A SECOND SIGNAL AT A SECOND LEVEL, and city_pull() carries no
