@@ -29,6 +29,15 @@ SPDX-FileCopyrightText = "2026 powerbassist"
 SPDX-License-Identifier = "CC-BY-NC-4.0"
 
 [[annotations]]
+# ONS figures read for Britain's regions (V5.3): regional GDP 2024 and LFS unemployment, Jun-Aug 2026. Open Government Licence v3.0; the licence text is committed at LICENSES/OGL-UK-3.0.txt and the credit is in ATTRIBUTION.md.
+path = [
+  "tools/gbr_ons_itl1.json",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Office for National Statistics"
+SPDX-License-Identifier = "OGL-UK-3.0"
+
+[[annotations]]
 # Busts generated from CC BY / CC BY-SA / CC0 / public-domain Wikimedia Commons photographs; credited per image in docs/portrait-attribution.md.
 path = [
   "assets/portraits/*/AUT_aichinger.webp*",

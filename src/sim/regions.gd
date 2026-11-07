@@ -396,9 +396,9 @@ static func output_eur_bn(ns, region_id: String) -> float:
 ## and the nation's output per head / the region's (1 / gdp_per_head_index). The
 ## larger one is the problem, ties to unemployment. A region better than the nation on
 ## both still names its worse figure, with a ratio under 1 -- the line says so rather
-## than inventing a problem. Britain's regions carry no unemployment spread
-## (unemployment_rel 1.0, docs/region-economy-model.md section 8), so a British
-## region's unemployment ratio is 1.0 until a deviation term moves it.
+## than inventing a problem. Britain's regions carry the ONS's unemployment and
+## output since V5.3 (docs/data-sources.md), so London's problem is its unemployment
+## above the nation's and the North East's its output below it, as for any nation.
 static func problem(ns, region_list: Array, region_id: String, access: Dictionary, sites: Dictionary, pop_share: float) -> Dictionary:
 	return problem_of(ns, unemployment_pct(ns, region_list, region_id, access, sites),
 		gdp_per_head_index(ns, region_list, region_id, pop_share))

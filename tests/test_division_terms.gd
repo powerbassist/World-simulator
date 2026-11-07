@@ -4,8 +4,9 @@ extends SceneTree
 ## reads a bill's size, and a person's pledge. Headless.
 ##
 ##   - NO MAGNITUDE, NO PLEDGE, SCALE 1: the same division, byte for byte.
-##   - THE GRADE multiplies the budget effects and the magnitude, nothing else, on a
-##     copy, and travels the real road: tabled, forecast, divided, applied, held.
+##   - THE GRADE multiplies the budget effects and the magnitude on a copy, and below 1 the
+##     law's other effects too, and travels the real road: tabled, forecast, divided, applied,
+##     held, saved.
 ##   - THE SIZE TERM moves support away from zero in the direction the party already
 ##     leans, and charges a party that weighs the deficit for the cost.
 ##   - THE PLEDGE moves seats on one bill, the forecast sees it, and the vote judges it
@@ -41,6 +42,8 @@ func _init() -> void:
 	_check_no_row_ships_a_magnitude_yet()
 	_check_nothing_moves_at_scale_one()
 	_check_the_scale_reads_budget_effects_only()
+	_check_a_bill_graded_down_brings_less_of_everything()
+	_check_a_bill_graded_down_on_the_real_road()
 	_check_the_loader_reads_a_magnitude()
 	_check_the_size_term_moves_away_from_zero()
 	_check_the_deficit_is_charged_to_the_right()
@@ -49,6 +52,7 @@ func _init() -> void:
 	_check_a_forced_bill_keeps_its_grade()
 	_check_a_hold_writes_its_grade()
 	_check_a_held_bill_keeps_its_grade()
+	_check_a_held_grade_survives_a_save()
 	_check_size_is_not_a_whips_strain()
 	_check_a_grade_survives_a_save()
 	_check_a_pledge_moves_seats_on_one_bill()
@@ -153,6 +157,65 @@ func _check_the_scale_reads_budget_effects_only() -> void:
 	if float(d.effects["tax_rates_pct"]["income"]) != 10.0 or float(d.effects["other_revenue_pct_gdp"]) != 1.0 \
 			or float(d.effects["bloc_offset"]["business"]) != -0.1:
 		_fail("a tax rate and other revenue scale, a bloc offset does not: %s" % [d.effects])
+
+
+## The parent's ruling, correcting the first: a tenth of the cost must not keep the whole of
+## the rest, or grading down is a dominant line. Linear below 1; a law's institutional terms
+## are set values, not quantities, and stay.
+func _check_a_bill_graded_down_brings_less_of_everything() -> void:
+	var law = _graded()
+	law.effects = {"spending_pct_gdp": {"health": 0.5}, "tax_rates_pct": {"income": 2.0}, "other_revenue_pct_gdp": 0.4,
+		"structural_unemployment_pct": -0.2, "potential_growth_pct": 0.1,
+		"bloc_offset": {"workers": 0.3, "business": -0.2}, "society": {"corruption": -0.04},
+		"company": {"sector": "energy", "burden": 0.06}, "institutional": {"election_threshold_pct": 5.0}}
+	var before: String = str(law.effects)
+	var half = LawMagnitude.scaled(law, 0.5)
+	var want := {"structural_unemployment_pct": -0.1, "potential_growth_pct": 0.05, "other_revenue_pct_gdp": 0.2}
+	for key in want:
+		if not is_equal_approx(float(half.effects[key]), float(want[key])):
+			_fail("%s at half a bill reads %.4f" % [key, half.effects[key]])
+	if not is_equal_approx(float(half.effects["bloc_offset"]["workers"]), 0.15) or not is_equal_approx(float(half.effects["bloc_offset"]["business"]), -0.1):
+		_fail("a bloc's offset at half a bill: %s" % [half.effects["bloc_offset"]])
+	if not is_equal_approx(float(half.effects["society"]["corruption"]), -0.02):
+		_fail("society at half a bill: %s" % [half.effects["society"]])
+	if not is_equal_approx(float(half.effects["company"]["burden"]), 0.03) or String(half.effects["company"]["sector"]) != "energy":
+		_fail("a company's burden at half a bill: %s" % [half.effects["company"]])
+	if not is_equal_approx(float(half.effects["spending_pct_gdp"]["health"]), 0.25) or not is_equal_approx(float(half.effects["tax_rates_pct"]["income"]), 1.0):
+		_fail("the budget at half a bill: %s" % [half.effects])
+	if float(half.effects["institutional"]["election_threshold_pct"]) != 5.0:
+		_fail("a set value scaled: %s" % [half.effects["institutional"]])
+	if str(law.effects) != before:
+		_fail("grading down touched the original law: %s" % [law.effects])
+	var big = LawMagnitude.scaled(law, 10.0)
+	if float(big.effects["potential_growth_pct"]) != 0.1 or float(big.effects["bloc_offset"]["workers"]) != 0.3 \
+			or float(big.effects["society"]["corruption"]) != -0.04 or float(big.effects["company"]["burden"]) != 0.06:
+		_fail("a bigger bill multiplied its other effects: %s" % [big.effects])
+	if LawMagnitude.scaled(law, 1.0) != law:
+		_fail("scale 1 made a copy")
+
+
+## Twins of one game, at reference and at half, on what the game realised.
+func _check_a_bill_graded_down_on_the_real_road() -> void:
+	var one = _new_state()
+	var half = _new_state()
+	var law = _open_graded_passing(one)
+	if law == null:
+		return
+	if not (law.effects.get("bloc_offset", {}) as Dictionary).size() > 0:
+		_fail("premise: %s has no bloc offset" % law.id)
+	Legislature.propose(one, _loader, law)
+	Legislature.propose(half, _loader, law, false, false, 0.5)
+	if not bool(Division.divide(one, _loader).get("passed", false)) or not bool(Division.divide(half, _loader).get("passed", false)):
+		_fail("premise: %s did not pass at both grades" % law.id)
+	else:
+		var offsets_one: Dictionary = (one.player().law_ledger.get(law.id, {}) as Dictionary).get("channels", {}).get("bloc_offset", {})
+		var offsets_half: Dictionary = (half.player().law_ledger.get(law.id, {}) as Dictionary).get("channels", {}).get("bloc_offset", {})
+		if offsets_one.is_empty():
+			_fail("the ledger read no bloc offset on %s" % law.id)
+		for bloc in offsets_one:
+			if not is_equal_approx(float(offsets_half.get(bloc, 0.0)), 0.5 * float(offsets_one[bloc])):
+				_fail("%s realised %.4f at half a bill, %.4f at one" % [bloc, offsets_half.get(bloc, 0.0), offsets_one[bloc]])
+	law.magnitude = {}
 
 
 func _check_the_loader_reads_a_magnitude() -> void:
@@ -425,6 +488,31 @@ func _check_a_held_bill_keeps_its_grade() -> void:
 	var line_ten := _ledger_spending(ten.player(), law)
 	if line_one == 0.0 or not is_equal_approx(line_ten, 10.0 * line_one):
 		_fail("a held bill at ten times released %.4f, at one %.4f" % [line_ten, line_one])
+	law.magnitude = {}
+
+
+## held_bills goes through a reader that names its keys, unlike tabled_bill: a hold saved and
+## loaded releases at its grade, and an ungraded hold reads as it always did.
+func _check_a_held_grade_survives_a_save() -> void:
+	var state = _new_state()
+	var law = _open_graded(state)
+	if law == null:
+		return
+	var plain = _new_state()
+	state.player().held_bills[law.id] = {"months": 1, "origin": "player", "scale": 10.0}
+	plain.player().held_bills[law.id] = {"months": 1, "origin": "player"}
+	var back = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	var plain_back = GameState.from_dict(JSON.parse_string(JSON.stringify(plain.to_dict())))
+	if float(back.player().held_bills.get(law.id, {}).get("scale", 0.0)) != 10.0:
+		_fail("a held grade did not survive a save: %s" % [back.player().held_bills])
+	if plain_back.player().held_bills.get(law.id, {}).has("scale"):
+		_fail("an ungraded hold came back with a grade: %s" % [plain_back.player().held_bills])
+	Legislature.tick_month(back, _loader)
+	Legislature.tick_month(plain_back, _loader)
+	var line_ten := _ledger_spending(back.player(), law)
+	var line_one := _ledger_spending(plain_back.player(), law)
+	if line_one == 0.0 or not is_equal_approx(line_ten, 10.0 * line_one):
+		_fail("a hold released after a load realised %.4f at ten times, %.4f at one" % [line_ten, line_one])
 	law.magnitude = {}
 
 
