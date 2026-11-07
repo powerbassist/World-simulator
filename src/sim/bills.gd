@@ -77,11 +77,18 @@ static func _bills_for(state, ns, loader, company) -> Array:
 ## The adopted bill's channel: the verb's process, opened through the law's door
 ## (Processes.start, by_law). A firm no longer eligible on the day (wholly held by
 ## then, or in a process) is refused there and buys nothing;
-## ns.last_company_result records the refusal.
+## ns.last_company_result records the refusal -- and this stamps it `by_law` with the
+## month, whatever the door's reason (a walk-out hold, a process under way, or none: a
+## firm no longer eligible): the law passed and nothing started, which only the bill's
+## own door can say (the firm panel's click reads the same refusal at once). The UI words
+## it from there (proposal_note.gd); no number moves, the record was written already.
 static func adopt(state, ns, loader, terms: Dictionary) -> void:
 	var action = _action(loader, String(terms.get("action_id", "")))
-	if action != null:
-		Processes.start(state, ns, loader, action, String(terms.get("company_id", "")), true)
+	if action == null:
+		return
+	if bool(Processes.start(state, ns, loader, action, String(terms.get("company_id", "")), true).get("refused", false)):
+		ns.last_company_result["by_law"] = true
+		ns.last_company_result["month"] = int(state.year) * 12 + int(state.month)
 
 
 static func _action(loader, action_id: String):

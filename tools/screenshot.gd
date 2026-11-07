@@ -46,6 +46,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --bill-refused --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --slipping --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --sectors --slipping --open budget
@@ -501,6 +502,8 @@ var _buyer_walked := false
 ## three, and the opened region's Start is greyed with the sim's line under it.
 ## #281: the Industry tab the month a seller walked: its one closed line, BAD, with the hold.
 var _walked := false
+## With --walked: a bill on that firm adopted inside the hold: its one card in the inbox.
+var _bill_refused := false
 var _fund := false
 var _fund_cap := false
 
@@ -1005,6 +1008,8 @@ func _init() -> void:
 			_buyer_walked = true
 		elif args[i] == "--walked":
 			_walked = true
+		elif args[i] == "--bill-refused":
+			_bill_refused = true
 		elif args[i] == "--fund":
 			_fund = true
 		elif args[i] == "--fund-cap":
@@ -2122,6 +2127,10 @@ func _stage_a_walk() -> void:
 	row["status"] = "walked"
 	row["closed"] = state.year * 12 + state.month
 	_main._companies_panel.mark_dirty()
+	if _bill_refused:
+		preload("res://src/sim/legislature.gd").apply_effects(state, ns,
+			{"company_ownership": {"company_id": String(major.id), "action_id": "full_nationalisation"}}, _main._loader)
+		preload("res://src/ui/proposal_note.gd").card_ownership_refusal(_main)
 
 
 func _stage_a_fund() -> void:

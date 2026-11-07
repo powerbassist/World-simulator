@@ -1034,7 +1034,7 @@ var dividend_revenue_pct_gdp: float = 0.0
 var regulation_burden := {}
 
 ## The most recent company action, for the companies panel to read after acting.
-## Empty until the first one resolves. `last_diplomatic_result`'s shape.
+## Empty until the first one resolves. `last_diplomatic_result`'s shape; a bill's refusal adds `by_law` and `month` (bills.gd).
 var last_company_result := {}
 
 # --- Sectoral investment (V1.6e) -------------------------------------------------
