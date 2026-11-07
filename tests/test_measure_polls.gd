@@ -43,6 +43,7 @@ func _init() -> void:
 	_check_a_printed_poll_is_fixed()
 	_check_the_range_at_every_level_of_support()
 	_check_the_band_on_real_measures()
+	_check_each_bloc_is_its_own_fieldwork()
 	_check_support_reads_an_address_on_that_measure()
 	_check_the_game_month_delivers()
 	_check_a_poll_survives_a_save()
@@ -305,6 +306,30 @@ func _check_the_band_on_real_measures() -> void:
 					_fail("%s %s: widths %s are not narrower for the dearer tier" % [nation_id, key, widths])
 	if reads < 1000:
 		_fail("the band read only %d" % reads)
+
+
+## Each bloc's error is its own, and another game's seed draws another: one shared draw
+## would let a player read every bloc's truth off the first one they could check.
+func _check_each_bloc_is_its_own_fieldwork() -> void:
+	var offsets := {}
+	var printed := []
+	for draw in 2:
+		var state = _new_state()
+		var ns = state.player()
+		ns.draw_seed = draw
+		MeasurePolls.commission(state, _loader, "tax:vat:up", "quick")
+		state.month = 4
+		MeasurePolls.deliver_due(state, 1)
+		var truth: Dictionary = MeasurePolls.support(ns, _loader, "tax:vat:up")
+		var ranges: Dictionary = MeasurePolls.result(ns, "tax:vat:up", "quick")
+		printed.append(str(ranges))
+		if draw == 0:
+			for bloc in truth:
+				offsets[snappedf((float(ranges[bloc][0]) + float(ranges[bloc][1])) / 2.0 - float(truth[bloc]), 0.1)] = true
+	if offsets.size() < 3:
+		_fail("the blocs share a draw: offsets %s" % [offsets.keys()])
+	if printed[0] == printed[1]:
+		_fail("another game's seed printed the same poll")
 
 
 ## An address on a measure is in its truth, on that measure, within 0 to 100.
