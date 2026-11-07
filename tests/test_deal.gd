@@ -284,12 +284,17 @@ func _check_grant_writes_the_two_rows() -> void:
 	var ns = f["ns"]
 	var pid: String = f["person_id"]
 	var loyalty := float(ns.person_loyalty.get(pid, 0.0))
+	var other := _someone_else(ns, pid)
+	if not President.commit(f["state"], ns, _loader, "promise", other, "law:%s" % f["law_id"], _now(f) + 6):
+		_fail("the fixture's other word was refused")
 	var result := Deal.grant(f["state"], ns, _loader, f["session"])
 	if not bool(result.get("ok", false)):
 		_fail("Grant refused: %s" % [result])
 		return
 	var word := _word_row(ns, pid, "law:%s" % f["law_id"])
 	var pledge := _owed_row(ns, pid, "pledge")
+	if _word_row(ns, other, "law:%s" % f["law_id"]).has("deal"):
+		_fail("a deal marked someone else's word on the same bill")
 	if word.is_empty() or int(word["due_month"]) != _now(f) + 6:
 		_fail("Grant writes the president's dated word, got %s" % [word])
 	if pledge.is_empty() or String(pledge["object"]) != "law:%s" % f["bill_id"]:
@@ -502,6 +507,13 @@ func _check_a_bill_not_brought_breaks_the_word_and_releases_them() -> void:
 	Levers.close(f["state"], ns, _loader, f["session"])
 	if _owed_row(ns, f["person_id"], "silence").is_empty():
 		_fail("the fixture's offer should be silence")
+	if not President.commit(f["state"], ns, _loader, "silence", f["person_id"], "silence:an_older_deal", _now(f) + 24):
+		_fail("the fixture's older silence was refused")
+	# Another bill reaches the floor, and that keeps no word on this one.
+	ns.tabled_bill = {"law_id": _open_laws(f, 2)[1]}
+	Division.divide(f["state"], _loader)
+	if bool(_word_row(ns, f["person_id"], "law:%s" % f["law_id"]).get("brought", false)):
+		_fail("a division on another bill marked this word brought")
 	var rapport := President.rapport(ns, f["person_id"])
 	_advance_to(f, _now(f) + 6)
 	var judged := Levers.tick_month(f["state"], _loader, METERS)
@@ -509,8 +521,9 @@ func _check_a_bill_not_brought_breaks_the_word_and_releases_them() -> void:
 		_fail("a bill never brought breaks the word, got %s" % [judged])
 	if not is_equal_approx(President.rapport(ns, f["person_id"]) - rapport, -0.5):
 		_fail("a broken word in person is a lie revealed, -0.5 of regard")
-	if not _owed_row(ns, f["person_id"], "silence").is_empty():
-		_fail("the president's word broken, their silence is off")
+	var left: Array = President.owed(ns).map(func(row: Dictionary) -> String: return String(row["object"]))
+	if left != ["silence:an_older_deal"]:
+		_fail("the president's word broken, this deal's silence is off and no other, got %s" % [left])
 
 
 func _check_a_forced_bill_is_brought_and_voids_the_pledge() -> void:
@@ -709,8 +722,8 @@ func _check_the_loader_reads_an_entrys_laws() -> void:
 	loader.errors.clear()
 	entry["laws"] = law_id
 	ProgrammeLoader.validate_laws(loader)
-	if loader.errors.is_empty():
-		_fail("`laws` must be a list")
+	if loader.errors.size() != 1 or not String(loader.errors[0]).contains("must be a list"):
+		_fail("`laws` must be a list, got %s" % [loader.errors])
 
 
 # --- Fixtures ---------------------------------------------------------------------------
@@ -880,6 +893,16 @@ func _seed_for(f: Dictionary, lever: String, want: bool) -> void:
 			ns.draw_seed = s
 			return
 	_fail("no seed lands %s as %s" % [lever, want])
+
+
+## Another person of this nation the president deals with.
+func _someone_else(ns, pid: String) -> String:
+	var leader := President.leader_id(ns)
+	for person in _loader.people.get(PLAYER, []):
+		if person.id != pid and person.id != leader:
+			return String(person.id)
+	_fail("nobody else in the fixture")
+	return ""
 
 
 func _advance_to(f: Dictionary, month: int) -> void:
