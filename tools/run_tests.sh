@@ -255,6 +255,7 @@ tests=(
   tests/test_front_page.gd
   tests/test_legislature_dissolve.gd
   tests/test_table_bill.gd
+  tests/test_forecast_reads.gd
   # An ownership bill that passes while its firm's process is refused says so in one line.
   tests/test_bill_refusal_line.gd
   tests/test_tabled_ui.gd

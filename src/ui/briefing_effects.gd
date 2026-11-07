@@ -47,8 +47,11 @@ static func lines(state, loader, report: Dictionary) -> Array:
 		if int(row.get("judged_month", -1)) == now and String(row.get("verdict", "")) != "void":
 			var kept := String(row["verdict"]) == "kept"
 			var who: String = loader.person_name(String(row.get("person_id", "")))
-			out.append(_booked(Strings.t("Your word to %s: kept") % who if kept else Strings.t("Your word to %s: broken") % who,
-				ResultTone.GOOD if kept else ResultTone.BAD))
+			var words: String = Strings.t("Your word to %s: kept") % who if kept else Strings.t("Your word to %s: broken") % who
+			# A pledge is the deputy's word to the president: a broken one is theirs.
+			if String(row.get("kind", "")) == "pledge":
+				words = Strings.t("Their word: %s kept it.") % who if kept else Strings.t("Their word: %s broke it.") % who
+			out.append(_booked(words, ResultTone.GOOD if kept else ResultTone.BAD))
 	var lapsed: Array = (report.get("audience_requests", {}) as Dictionary).get("lapsed", [])
 	if not lapsed.is_empty():
 		out.append(_booked(Strings.tn("%d request lapsed: taken as a refusal", "%d requests lapsed: taken as a refusal",
