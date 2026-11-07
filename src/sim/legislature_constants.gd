@@ -126,6 +126,10 @@ const DEFICIT_WEIGHT := 0.25
 ## at no discipline at all: the party's own (1 - discipline) scales it. A LABELLED STAND-IN,
 ## the top of the 10 to 12 % the parent ruled. A party of discipline 0.85 peels 1.8 %.
 const PEEL_PER_TENFOLD := 0.12
+## The share of a party's no and abstain seats an address moves is this x its voters' shift
+## / 50 x (1 - discipline): a shift of 50 points at no discipline would move this many times
+## the whole party. A STAND-IN, tuned to B5's 2 to 6 % of seats (tools/legislature_probe.gd).
+const OPINION_WEIGHT := 5.0
 ## The bounds on a grade at the proposal (LawMagnitude.may_grade): a tenth to ten times.
 const GRADE_SCALE_MIN := 0.1
 const GRADE_SCALE_MAX := 10.0

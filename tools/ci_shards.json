@@ -144,6 +144,7 @@
    "tests/test_ribbon.gd",
    "tests/test_people.gd",
    "tests/test_division_terms.gd",
+   "tests/test_address.gd",
    "tests/test_audiences.gd",
    "tests/test_phone.gd",
    "tests/test_shadows.gd",

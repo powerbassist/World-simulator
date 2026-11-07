@@ -648,7 +648,7 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 		var pledged := DivisionTerms.pledged_seats(ns, party, law)
 		if pledged > 0:
 			party_pledged[party.id] = pledged
-		var tally := DivisionTerms.seats_of(line, rebel_line, seats, rebels, pledged, DivisionTerms.peel_share(ns, party, law))
+		var tally := DivisionTerms.seats_of(line, rebel_line, seats, rebels, pledged, DivisionTerms.peel_share(ns, party, law), DivisionTerms.sway_share(ns, party, law))
 		yes_seats += int(tally[0])
 		no_seats += int(tally[1])
 		abstain_seats += int(tally[2])

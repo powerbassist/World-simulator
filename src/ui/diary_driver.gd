@@ -47,6 +47,11 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 		var before := Trends.snapshot_now(state)
 		before.merge(Opinion.snapshot(state))
 
+		# V5.3 b: an address was given when it was booked. Its day passing is all that is left.
+		if String(entry.get("kind", "")) == CalendarK.KIND_ADDRESS:
+			Calendar.resolve(state, Calendar.verb_key(entry), true)
+			continue
+
 		var label := ""
 		var ok := false
 		var tabled := false  # V5.2 b+ R2: a booked law tabled today, settled at its division

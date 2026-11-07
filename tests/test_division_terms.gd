@@ -510,20 +510,20 @@ func _check_a_pledge_moves_seats_on_one_bill() -> void:
 
 
 func _check_a_pledge_takes_no_before_abstain_and_caps() -> void:
-	if DivisionTerms.seats_of("no", "no", 100, 0, 30, 0.0) != [30, 70, 0]:
-		_fail("a pledge on a no line: %s" % [DivisionTerms.seats_of("no", "no", 100, 0, 30, 0.0)])
-	if DivisionTerms.seats_of("abstain", "abstain", 100, 0, 30, 0.0) != [30, 0, 70]:
-		_fail("a pledge on an abstaining line: %s" % [DivisionTerms.seats_of("abstain", "abstain", 100, 0, 30, 0.0)])
-	if DivisionTerms.seats_of("yes", "yes", 100, 0, 30, 0.0) != [100, 0, 0]:
-		_fail("a pledge on a yes line added seats: %s" % [DivisionTerms.seats_of("yes", "yes", 100, 0, 30, 0.0)])
-	if DivisionTerms.seats_of("no", "abstain", 100, 10, 95, 0.0) != [95, 0, 5]:
-		_fail("a pledge takes no before abstain: %s" % [DivisionTerms.seats_of("no", "abstain", 100, 10, 95, 0.0)])
-	if DivisionTerms.seats_of("yes", "no", 100, 10, 5, 0.0) != [95, 5, 0]:
-		_fail("a pledge comes from the rebels of a yes line: %s" % [DivisionTerms.seats_of("yes", "no", 100, 10, 5, 0.0)])
-	if DivisionTerms.seats_of("no", "no", 100, 0, 500, 0.0) != [100, 0, 0]:
-		_fail("a pledge past the party's seats: %s" % [DivisionTerms.seats_of("no", "no", 100, 0, 500, 0.0)])
-	if DivisionTerms.seats_of("no", "yes", 100, 10, 0, 0.0) != [10, 90, 0]:
-		_fail("no pledge changed the split: %s" % [DivisionTerms.seats_of("no", "yes", 100, 10, 0, 0.0)])
+	if DivisionTerms.seats_of("no", "no", 100, 0, 30, 0.0, 0.0) != [30, 70, 0]:
+		_fail("a pledge on a no line: %s" % [DivisionTerms.seats_of("no", "no", 100, 0, 30, 0.0, 0.0)])
+	if DivisionTerms.seats_of("abstain", "abstain", 100, 0, 30, 0.0, 0.0) != [30, 0, 70]:
+		_fail("a pledge on an abstaining line: %s" % [DivisionTerms.seats_of("abstain", "abstain", 100, 0, 30, 0.0, 0.0)])
+	if DivisionTerms.seats_of("yes", "yes", 100, 0, 30, 0.0, 0.0) != [100, 0, 0]:
+		_fail("a pledge on a yes line added seats: %s" % [DivisionTerms.seats_of("yes", "yes", 100, 0, 30, 0.0, 0.0)])
+	if DivisionTerms.seats_of("no", "abstain", 100, 10, 95, 0.0, 0.0) != [95, 0, 5]:
+		_fail("a pledge takes no before abstain: %s" % [DivisionTerms.seats_of("no", "abstain", 100, 10, 95, 0.0, 0.0)])
+	if DivisionTerms.seats_of("yes", "no", 100, 10, 5, 0.0, 0.0) != [95, 5, 0]:
+		_fail("a pledge comes from the rebels of a yes line: %s" % [DivisionTerms.seats_of("yes", "no", 100, 10, 5, 0.0, 0.0)])
+	if DivisionTerms.seats_of("no", "no", 100, 0, 500, 0.0, 0.0) != [100, 0, 0]:
+		_fail("a pledge past the party's seats: %s" % [DivisionTerms.seats_of("no", "no", 100, 0, 500, 0.0, 0.0)])
+	if DivisionTerms.seats_of("no", "yes", 100, 10, 0, 0.0, 0.0) != [10, 90, 0]:
+		_fail("no pledge changed the split: %s" % [DivisionTerms.seats_of("no", "yes", 100, 10, 0, 0.0, 0.0)])
 
 
 ## A peel reads the seats a whip holds on yes: not a no line, not an abstaining one, not
@@ -556,7 +556,7 @@ func _check_pledged_and_peeled_seats_do_not_double_count() -> void:
 	]
 	_read_seats(table)
 	for row in table:
-		var got: Array = DivisionTerms.seats_of(row[0][0], row[0][1], row[0][2], row[0][3], row[0][4], row[0][5])
+		var got: Array = DivisionTerms.seats_of(row[0][0], row[0][1], row[0][2], row[0][3], row[0][4], row[0][5], 0.0)
 		if int(got[0]) + int(got[1]) + int(got[2]) != int(row[0][2]):
 			_fail("%s: %s does not add up to the party's seats" % [row[2], got])
 
@@ -564,7 +564,7 @@ func _check_pledged_and_peeled_seats_do_not_double_count() -> void:
 func _read_seats(table: Array) -> void:
 	for row in table:
 		var a: Array = row[0]
-		var got: Array = DivisionTerms.seats_of(a[0], a[1], a[2], a[3], a[4], a[5])
+		var got: Array = DivisionTerms.seats_of(a[0], a[1], a[2], a[3], a[4], a[5], 0.0)
 		if got != row[1]:
 			_fail("%s: %s, want %s" % [row[2], got, row[1]])
 
