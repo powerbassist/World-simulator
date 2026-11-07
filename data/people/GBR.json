@@ -147,6 +147,7 @@
     },
     {
       "id": "GBR_robert_iii",
+      "start_regard_offset": 0.05,
       "social_skill": 0.78,
       "wealth_eur_m": 410.0,
       "spouse_id": "GBR_ingham",

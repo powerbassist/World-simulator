@@ -146,6 +146,7 @@
     },
     {
       "id": "POL_ostrowski",
+      "start_regard_offset": -0.20,
       "social_skill": 0.71,
       "wealth_eur_m": 5.2,
       "name": "Bogdan Ostrowski",

@@ -144,6 +144,7 @@
     },
     {
       "id": "FRA_aumont",
+      "start_regard_offset": -0.15,
       "social_skill": 0.65,
       "wealth_eur_m": 10.0,
       "name": "Cécile Aumont",

@@ -152,6 +152,7 @@
     },
     {
       "id": "DEU_emmerich",
+      "start_regard_offset": 0.05,
       "social_skill": 0.62,
       "wealth_eur_m": 4.8,
       "name": "Wolfgang Emmerich",
