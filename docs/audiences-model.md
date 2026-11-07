@@ -501,7 +501,20 @@ Each half lets the other go: a broken pledge makes the president's word void, un
 
 **B5's answers row under the deal, declared before the read:** at K=1, Book is a certain Grant, `1 + 0.10 + 0.5 x 0.25 - 1.05 + 0.5 x 0.10 + KV`, the ask's cost outside the row as it always was at K=1, 0.10 being silence's value, the conservative reading for every request. At K=0, Book is the best of the three approaches with the lie's price on all three, since every win now writes a word. A minister strikes no deal, so Delegate and Refuse are as they were.
 
-MEASURED_B5_PLACEHOLDER
+**Measured (base d30839d4), 33 requests scored twice:**
+
+| Best answer | All cases | Will serve | Won't serve |
+|---|---|---|---|
+| Book | 0.50 (base 0.15) | 1.00 (base 0) | 0 (base 0.30) |
+| Delegate | **0.18 (base 0.65)** | 0 (base 1.00) | 0.36 (base 0.30) |
+| Refuse | 0.32 (base 0.20) | 0 | 0.64 (base 0.39) |
+
+- **The carry holds:** Delegate is under 50 %, and Book sits exactly on its ceiling of 50 %.
+- **"Within will serve, delegate at least 5 %" FAILS, as predicted.** That floor predates a Grant that cannot fail. Delegate stays alive in play where no offered day is free, 25 % of requests in A2, which this row does not score. Its mirror, "book at least 5 %", failed at base and now passes.
+- **The prediction was wrong on Delegate:** 35 to 40 % predicted, 18 % measured. It assumed a minister's odds near 0.7 on most requests, and at K=0 Refuse wins nearly two cases in three.
+- **A won't-serve player never books (0, from 0.30).** Every win now writes a word that breaks, so there is no reason to give up a day for it.
+
+**On the real road** (`audience_probe --deal`, a player who Grants every audience and serves only what the packer brings, 60 months, France): 22 deals, 15 votes and 7 silences. Every ask was a word, since no entry carries `laws` yet. Of the 21 words judged, 1 was kept and 20 were broken. Silence is real but thin: nobody under it reached the brief gate in any month.
 
 Related: [[people-model]] · [[calendar-model]] · [[v5.2-spec]] · [[bands-v5.2]] ·
 [[decision-surfaces]] · [[programme-model]] · [[summits-model]]
