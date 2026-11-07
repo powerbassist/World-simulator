@@ -24,18 +24,19 @@ const Media = preload("res://src/sim/media.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 
 
-## The shift an address would bring, per bloc. `worth` discounts what persuades and not what
-## hardens (address_constants.HARDEN_SHARE). A bloc's lean is the read a referendum takes of
-## the same position, so the country has one opinion of where a bill stands.
-static func shifts(ns, outlets: Array, law, worth_now: float) -> Dictionary:
+## The shift an address would bring, per bloc, after `earlier` addresses in the window: those
+## discount what persuades and grow what hardens. A bloc's lean is the read a referendum takes
+## of the same position, so the country has one opinion of where a bill stands.
+static func shifts(ns, outlets: Array, law, earlier: int) -> Dictionary:
 	var standing := clampf(float(ns.overall_approval_pct) / OpinionK.APPROVAL_NEUTRAL, K.STANDING_MIN, K.STANDING_MAX)
-	var persuades: float = K.PERSUASION_FLAT * standing * worth_now
+	var persuades: float = K.PERSUASION_FLAT * standing * pow(K.REPEAT_WORTH, earlier)
+	var hardens: float = K.HARDEN_SHARE * K.SHIFT_TOWARD * (1.0 + K.HARDEN_GROWTH * earlier)
 	var out := {}
 	for bloc in OpinionK.BLOC_KEYS:
 		var yes := Referendum.bloc_yes(ns, bloc, law.position)
 		var heard := _heard(ns, outlets, bloc)
 		if yes < 0.5 - K.LEAN_BAND:
-			out[bloc] = -K.HARDEN_SHARE * K.SHIFT_TOWARD * heard
+			out[bloc] = -hardens * heard
 		elif yes > 0.5 + K.LEAN_BAND:
 			out[bloc] = K.SHIFT_TOWARD * persuades * heard
 		else:
@@ -52,13 +53,18 @@ static func _heard(ns, outlets: Array, bloc: String) -> float:
 	return clampf(1.0 + K.OUTLET_BETA * carried, K.OUTLET_MIN, K.OUTLET_MAX)
 
 
-## What the next address persuades, against the first's, at month `now` (year * 12 + month).
-static func worth(ns, now: int) -> float:
-	var earlier := 0
+## The addresses given in the window, at month `now` (year * 12 + month).
+static func earlier(ns, now: int) -> int:
+	var count := 0
 	for month in (ns.measure_opinion.get("given", []) as Array):
 		if now - int(month) < K.REPEAT_WINDOW_MONTHS:
-			earlier += 1
-	return pow(K.REPEAT_WORTH, earlier)
+			count += 1
+	return count
+
+
+## What the next address persuades, against the first's.
+static func worth(ns, now: int) -> float:
+	return pow(K.REPEAT_WORTH, earlier(ns, now))
 
 
 ## The player command: {"ok", "error"}, and on ok what it did, "shifts" and "worth". Refused,
@@ -75,7 +81,7 @@ static func give(state, loader, law_id: String) -> Dictionary:
 		return booked
 	var now: int = int(state.year) * 12 + int(state.month)
 	var worth_now := worth(ns, now)
-	var moved := shifts(ns, loader.outlets.get(ns.id, []), law, worth_now)
+	var moved := shifts(ns, loader.outlets.get(ns.id, []), law, earlier(ns, now))
 	_write(ns, law_id, moved, now)
 	var price := {}
 	for bloc in moved:
@@ -99,7 +105,7 @@ static func _write(ns, law_id: String, moved: Dictionary, now: int) -> void:
 static func estimate(state, ns, loader, law) -> Dictionary:
 	var now: int = int(state.year) * 12 + int(state.month)
 	var worth_now := worth(ns, now)
-	var moved := shifts(ns, loader.outlets.get(ns.id, []), law, worth_now)
+	var moved := shifts(ns, loader.outlets.get(ns.id, []), law, earlier(ns, now))
 	var parties: Array = loader.parties.get(ns.id, [])
 	var after = ns.duplicate_state()
 	_write(after, String(law.id), moved, now)

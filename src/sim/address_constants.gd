@@ -6,9 +6,13 @@ extends RefCounted
 ## Points of support an address moves among the blocs leaning toward a bill, and the neutral.
 const SHIFT_TOWARD := 6.0
 const SHIFT_NEUTRAL := 3.0
-## The blocs against harden by this share of SHIFT_TOWARD, the other way. Not discounted by
-## repetition: an opponent does not mind a bill less for hearing about it again.
+## The blocs against harden by this share of SHIFT_TOWARD, the other way. Repetition does not
+## discount it, it grows it by HARDEN_GROWTH per earlier address in the window: an opponent
+## minds a president always on air more. A STAND-IN: at the spec's flat 30 %, always addressing
+## won bills in France and Britain (tools/legislature_probe.gd), since a tight yes line lost too
+## few seats for anything to flip.
 const HARDEN_SHARE := 0.3
+const HARDEN_GROWTH := 0.5
 ## The k-th address within the window persuades REPEAT_WORTH^(k-1) of the first.
 const REPEAT_WORTH := 0.6
 const REPEAT_WINDOW_MONTHS := 6

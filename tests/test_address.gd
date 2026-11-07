@@ -6,7 +6,7 @@ extends SceneTree
 ##   - THE VERB takes the day, writes the register, prices the blocs against, and refuses
 ##     with no effect when the bill is not open or the diary is taken.
 ##   - THE SHIFT per bloc: toward, neutral, against, by standing and outlets; repetition
-##     discounts what persuades and not what hardens.
+##     discounts what persuades and grows what hardens.
 ##   - THE REGISTER fades over three months, on one bill, and survives a save.
 ##   - THE TERM moves seats, never the line, by the voters' shift and by discipline; a
 ##     pledge is spent first, and a negative sway goes with the peel.
@@ -44,7 +44,7 @@ func _init() -> void:
 	_check_a_nation_with_no_address_reads_no_term()
 	_check_the_shift_per_bloc()
 	_check_standing_and_outlets_scale_it()
-	_check_repetition_discounts_what_persuades_only()
+	_check_repetition_discounts_what_persuades_and_grows_what_hardens()
 	_check_the_verb_writes_the_register_and_the_diary()
 	_check_the_verb_refuses_with_no_effect()
 	_check_the_verb_prices_the_blocs_against()
@@ -124,7 +124,7 @@ func _check_the_shift_per_bloc() -> void:
 	var seen := {"toward": 0, "neutral": 0, "against": 0}
 	for position in [[-0.6, 0.1], [0.7, 0.1], [-0.5, -0.8], [0.1, 0.6], [0.0, 0.0], [0.9, 0.9], [-0.9, 0.9], [0.9, -0.9]]:
 		var law = _law_at(position[0], position[1])
-		var shifts: Dictionary = Address.shifts(ns, [], law, 1.0)
+		var shifts: Dictionary = Address.shifts(ns, [], law, 0)
 		for bloc in OpinionK.BLOC_KEYS:
 			var yes: float = Referendum.bloc_yes(ns, bloc, law.position)
 			var want := 3.0
@@ -149,25 +149,25 @@ func _check_standing_and_outlets_scale_it() -> void:
 	var ns = _new_state().player()
 	var law = _law_at(-0.5, -0.8)
 	ns.overall_approval_pct = 50.0
-	var neutral: float = Address.shifts(ns, [], law, 1.0)["students"]
+	var neutral: float = Address.shifts(ns, [], law, 0)["students"]
 	for row in [[60.0, 1.2, "standing 60 over 50"], [15.0, 0.5, "standing's floor"], [95.0, 1.5, "standing's ceiling"]]:
 		ns.overall_approval_pct = float(row[0])
 		if Referendum.bloc_yes(ns, "students", law.position) <= 0.6:
 			_fail("premise: students do not lean toward the bill at approval %.0f" % row[0])
-		if not is_equal_approx(float(Address.shifts(ns, [], law, 1.0)["students"]), neutral * float(row[1])):
-			_fail("%s reads %.3f, want %.3f" % [row[2], Address.shifts(ns, [], law, 1.0)["students"], neutral * float(row[1])])
+		if not is_equal_approx(float(Address.shifts(ns, [], law, 0)["students"]), neutral * float(row[1])):
+			_fail("%s reads %.3f, want %.3f" % [row[2], Address.shifts(ns, [], law, 0)["students"], neutral * float(row[1])])
 	ns.overall_approval_pct = 50.0
 	var friend = _outlet("students", 0.4, ns.coalition_position)
-	var plain: Dictionary = Address.shifts(ns, [], law, 1.0)
-	var heard: Dictionary = Address.shifts(ns, [friend], law, 1.0)
+	var plain: Dictionary = Address.shifts(ns, [], law, 0)
+	var heard: Dictionary = Address.shifts(ns, [friend], law, 0)
 	if not float(heard["students"]) > float(plain["students"]):
 		_fail("a friendly paper did not carry it: %.3f against %.3f" % [heard["students"], plain["students"]])
 	if heard["workers"] != plain["workers"]:
 		_fail("a paper read by students moved workers")
-	var huge: Dictionary = Address.shifts(ns, [_outlet("students", 50.0, ns.coalition_position)], law, 1.0)
+	var huge: Dictionary = Address.shifts(ns, [_outlet("students", 50.0, ns.coalition_position)], law, 0)
 	if not is_equal_approx(float(huge["students"]), float(plain["students"]) * 1.5):
 		_fail("the outlets' ceiling: %.3f" % huge["students"])
-	var hostile: Dictionary = Address.shifts(ns, [_outlet("students", 50.0, _opposite(ns.coalition_position))], law, 1.0)
+	var hostile: Dictionary = Address.shifts(ns, [_outlet("students", 50.0, _opposite(ns.coalition_position))], law, 0)
 	if not is_equal_approx(float(hostile["students"]), float(plain["students"]) * 0.5):
 		_fail("the outlets' floor: %.3f" % hostile["students"])
 
@@ -184,12 +184,12 @@ func _outlet(audience: String, reach: float, position: Dictionary):
 	return outlet
 
 
-func _check_repetition_discounts_what_persuades_only() -> void:
+func _check_repetition_discounts_what_persuades_and_grows_what_hardens() -> void:
 	var ns = _new_state().player()
 	ns.overall_approval_pct = 50.0
 	var law = _law_at(-0.5, -0.8)
-	var first: Dictionary = Address.shifts(ns, [], law, 1.0)
-	var third: Dictionary = Address.shifts(ns, [], law, 0.36)
+	var first: Dictionary = Address.shifts(ns, [], law, 0)
+	var third: Dictionary = Address.shifts(ns, [], law, 2)
 	var against := 0
 	for bloc in OpinionK.BLOC_KEYS:
 		if float(first[bloc]) > 0.0:
@@ -197,8 +197,8 @@ func _check_repetition_discounts_what_persuades_only() -> void:
 				_fail("%s persuaded %.3f at a third address, want %.3f" % [bloc, third[bloc], float(first[bloc]) * 0.36])
 		else:
 			against += 1
-			if float(third[bloc]) != float(first[bloc]):
-				_fail("%s hardened %.3f at a third address, %.3f at the first" % [bloc, third[bloc], first[bloc]])
+			if not is_equal_approx(float(third[bloc]), float(first[bloc]) * 2.0):
+				_fail("%s hardened %.3f at a third address, %.3f at the first, want twice" % [bloc, third[bloc], first[bloc]])
 	if against == 0:
 		_fail("no bloc against: the check proved nothing")
 

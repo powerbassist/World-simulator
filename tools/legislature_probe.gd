@@ -16,7 +16,9 @@ extends SceneTree
 ## a seat won from a no counts one and a seat lost to an abstention a half; on an absolute one
 ## only yes counts. Within 5 % of seats is 2.5 % short, a gap of 5 %. `--regimes` runs the band's
 ## two scripted players through the game's own month, 36 months, inside the first term, the
-## same bill policy: table the open bill nearest its line that has not been tried in two years. One addresses every bill,
+## same bill policy: of the bills not tried in two years, the one past its line by the least,
+## else the one nearest it. A player who tables what it can carry, since one carrying nothing
+## cannot tell the regimes apart (`--nearest` is that first policy, either side of the line). One addresses every bill,
 ## the other the first three within 5 % each year; a third never does, for reference. The
 ## first must pass fewer bills and end lower in approval than the second, on the mean over
 ## `--seeds=N` of the game's draw (one game is one run of its events, and that noise is larger
@@ -178,6 +180,7 @@ func _regime(loader, nation_id: String, regime: String, draw: int) -> Dictionary
 	var state = GameState.new_game(loader, nation_id)
 	state.player().draw_seed = draw
 	var tried := {}
+	var ledger_at_start: int = state.player().law_ledger.size()
 	var out := {"tabled": 0, "passed": 0, "close_passed": 0, "addresses": 0, "approval": 0.0, "refused": 0}
 	var this_year := {}
 	for i in REGIME_MONTHS:
@@ -202,22 +205,31 @@ func _regime(loader, nation_id: String, regime: String, draw: int) -> Dictionary
 					out["tabled"] += 1
 		var report: Dictionary = WorldMonth.tick_month(state, loader)
 		var division: Dictionary = report.get("division", {})
-		if bool(division.get("passed", false)):
-			out["passed"] += 1
-			if was_close:
-				out["close_passed"] += 1
+		if bool(division.get("passed", false)) and was_close:
+			out["close_passed"] += 1
+	# What became law, a bill an upper chamber held and released included: the division's own
+	# `passed` reads false on a hold, and Germany would count nothing.
+	out["passed"] = state.player().law_ledger.size() - ledger_at_start
 	out["approval"] = float(state.player().overall_approval_pct)
 	return out
 
 
 func _nearest_its_line(ns, loader, tried: Dictionary, month: int) -> Dictionary:
+	var nearest_only := OS.get_cmdline_user_args().has("--nearest")
 	var best = null
 	var margin := INF
+	var best_carried = null
+	var margin_carried := INF
 	for law in Legislature.available(ns, loader.laws):
 		if law.constitutional or month - int(tried.get(law.id, -24)) < 24:
 			continue
-		var m := absf(_short_by(Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law), law, ns.assembly_seats))
-		if m < margin:
-			margin = m
+		var short := _short_by(Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law), law, ns.assembly_seats)
+		if absf(short) < margin:
+			margin = absf(short)
 			best = law
+		if short < 0.0 and -short < margin_carried:
+			margin_carried = -short
+			best_carried = law
+	if best_carried != null and not nearest_only:
+		return {"law": best_carried, "margin": margin_carried}
 	return {"law": best, "margin": margin}
