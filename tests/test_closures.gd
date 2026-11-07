@@ -74,6 +74,8 @@ func _init() -> void:
 	_test_a_countered_closure_survives_a_save()
 	_test_one_sector_fall_closes_one_plant()
 	_test_a_sector_waits_for_every_open_plant()
+	_test_a_rescue_holds_its_plant_and_not_its_sector()
+	_test_always_rescuing_pays_for_every_plant()
 	_test_the_fall_picks_by_jobs()
 	_test_the_bloc_move_scales_with_the_plant()
 	_finish()
@@ -919,10 +921,11 @@ func _test_one_sector_fall_closes_one_plant() -> void:
 		_fail("the sector's second closure after the cooldown: %d announced, the first ended in %d" % [ids.size(), ended])
 
 
-## QA's MUST at the merge with main: a plant still open holds its whole sector, whatever
-## it waits for. An offered or rescuing row has ended = -1, so a cooldown test alone
-## passes it and a sibling would announce while the plant is still open. A rescue that
-## ended holds nothing (its term was the wait), nor does a void row (no plant closed).
+## QA's MUST at the merge with main, as the parent's ruling on #294 left it. A plant
+## waiting on an answer, a buyer or a re-ask holds its whole sector: its row's `ended` is -1,
+## so a cooldown test alone would pass it and a sibling announce beside it. A rescue does not:
+## it saves its plant and does not silence the sector, whose clock runs from the announcement.
+## A rescue that ended holds nothing (its term was the wait), nor does a void row.
 func _test_a_sector_waits_for_every_open_plant() -> void:
 	var state = _new_state()
 	var ns = state.player()
@@ -932,35 +935,105 @@ func _test_a_sector_waits_for_every_open_plant() -> void:
 		return
 	var now := _now(state)
 	var cooldown := int(_rule()["cooldown_months"])
+	var long_ago := now - 10 * cooldown
 	var entry: Dictionary = ns.companies[String(peers[0].id)]
-	for case in [[Closures.ANNOUNCED, -1, false], [Closures.SEARCHING, -1, false], [Closures.OFFERED, -1, false],
-			[Closures.RESCUING, -1, false], ["closed", now - 1, false], ["sold", now - 1, false],
-			["closed", now - cooldown, true], ["sold", now - cooldown, true], ["rescued", now - 1, true], ["void", now - 1, true]]:
-		entry["closure"] = {"status": case[0], "ended": case[1]}
-		if Closures._sector_may_announce(ns, _majors(ns), peers[0].sector, _rule(), now) != case[2]:
-			_fail("a sibling's closure %s, ended %d: the sector may announce should read %s" % [case[0], case[1], case[2]])
-	# The real road: a rescue running, the sibling falling every month, nothing announced;
-	# the month the term ends, the sibling may (no cooldown: the term was the wait).
-	state = _new_state()
-	ns = state.player()
-	peers = _crowded_sector(ns)
+	for case in [[Closures.ANNOUNCED, long_ago, -1, false], [Closures.SEARCHING, long_ago, -1, false],
+			[Closures.OFFERED, long_ago, -1, false],
+			[Closures.RESCUING, now - 1, -1, false], [Closures.RESCUING, now - cooldown + 1, -1, false],
+			[Closures.RESCUING, now - cooldown, -1, true], [Closures.RESCUING, long_ago, -1, true],
+			["closed", long_ago, now - 1, false], ["sold", long_ago, now - 1, false],
+			["closed", long_ago, now - cooldown, true], ["sold", long_ago, now - cooldown, true],
+			["rescued", now - 1, now - 1, true], ["void", now - 1, now - 1, true]]:
+		entry["closure"] = {"status": case[0], "announced": case[1], "ended": case[2]}
+		if Closures._sector_may_announce(ns, _majors(ns), peers[0].sector, _rule(), now) != case[3]:
+			_fail("a sibling's closure %s, announced %d, ended %d: the sector may announce should read %s" % [case[0], case[1], case[2], case[3]])
+
+
+## The real road for the same ruling. A plant rescued, every major of its sector falling
+## every month: nothing until the cooldown has run from the announcement; then a sibling
+## announces, never the rescued firm, and rescuing that one too is a second price.
+func _test_a_rescue_holds_its_plant_and_not_its_sector() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var peers := _crowded_sector(ns)
+	if peers.size() < 2:
+		_fail("no FRA sector holds two majors: the rule's case cannot be staged")
+		return
+	var first_id := String(peers[0].id)
 	_falling(ns, peers[0], 2.0 * float(_rule()["fall"]))
 	_month(state)
-	var row := _row(ns, String(peers[0].id))
-	if row.is_empty() or not bool(Closures.answer(state, ns, _loader, String(row["id"]), "rescue").get("ok", false)):
-		_fail("premise: no rescue to stage: %s" % row)
+	var first := _row(ns, first_id)
+	if first.is_empty() or not bool(Closures.answer(state, ns, _loader, String(first["id"]), "rescue").get("ok", false)):
+		_fail("premise: no rescue to stage: %s" % first)
 		return
-	for i in 3:
-		_falling(ns, peers[1], 2.0 * float(_rule()["fall"]))
+	var opens := int(first["announced"]) + int(_rule()["cooldown_months"])
+	var second := {}
+	while _now(state) < opens:
+		for c in peers:
+			_falling(ns, c, 2.0 * float(_rule()["fall"]))
 		_month(state)
-		if not _row(ns, String(peers[1].id)).is_empty():
-			_fail("a sibling announced in month %d of its sector's running rescue" % (i + 1))
+		for c in peers:
+			if String(c.id) != first_id and not _row(ns, String(c.id)).is_empty():
+				second = _row(ns, String(c.id))
+		if _now(state) < opens and not second.is_empty():
+			_fail("a sibling announced in month %d, before the cooldown ran out in month %d" % [_now(state), opens])
 			return
-	row["months_left"] = 1
-	_falling(ns, peers[1], 2.0 * float(_rule()["fall"]))
+	if second.is_empty():
+		_fail("the cooldown ran out in month %d and no falling sibling announced" % opens)
+		return
+	if _row(ns, first_id) != first or String(first["status"]) != Closures.RESCUING:
+		_fail("the rescued firm re-announced during its term: %s" % _row(ns, first_id))
+	if not bool(Closures.answer(state, ns, _loader, String(second["id"]), "rescue").get("ok", false)) or Closures.rescues(ns).size() != 2:
+		_fail("a second rescue did not start beside the first: %s" % [Closures.rescues(ns)])
+		return
 	_month(state)
-	if String(row["status"]) != "rescued" or _row(ns, String(peers[1].id)).is_empty():
-		_fail("the term ended (%s) and the falling sibling announced nothing" % row["status"])
+	var both := (float(first["rescue_eur_bn_per_year"]) + float(second["rescue_eur_bn_per_year"])) / 12.0
+	if not is_equal_approx(_billed(ns), both):
+		_fail("two rescues bill %.6f bn a month, not the sum of their prices %.6f" % [_billed(ns), both])
+
+
+## One decade of a sector falling every month, every announcement answered by the rescue
+## or by nobody: what the ruling asks of a player who always rescues. {announced, paid,
+## priced (each rescue's whole term), rescued}. Every major in the sector stays falling.
+func _a_sector_s_decade(rescue: bool) -> Dictionary:
+	var state = _new_state()
+	var ns = state.player()
+	var peers := _crowded_sector(ns)
+	var seen := {}
+	var paid := 0.0
+	var priced := 0.0
+	var rescued := 0
+	for m in 120:
+		for c in peers:
+			_falling(ns, c, 2.0 * float(_rule()["fall"]))
+		_month(state)
+		paid += _billed(ns)
+		for c in peers:
+			var row := _row(ns, String(c.id))
+			if row.is_empty() or seen.has(String(row["id"])):
+				continue
+			seen[String(row["id"])] = true
+			if rescue and bool(Closures.answer(state, ns, _loader, String(row["id"]), "rescue").get("ok", false)):
+				rescued += 1
+				priced += float(row["rescue_eur_bn_per_year"]) * float(CK.RESCUE_MONTHS) / 12.0
+	return {"announced": seen.size(), "paid": paid, "priced": priced, "rescued": rescued}
+
+
+## The ruling's twin: rescuing every closure keeps the closures coming near the idle rate
+## and pays for each, where one plant's price used to hold the sector for its whole term.
+## A sector falling every month is the rule's floor: a close's clock starts two months
+## after its announcement, so the rescuer's count sits a little above the idle one.
+func _test_always_rescuing_pays_for_every_plant() -> void:
+	var idle := _a_sector_s_decade(false)
+	var always := _a_sector_s_decade(true)
+	var near := 0.25 * float(idle["announced"])
+	if absf(float(always["announced"]) - float(idle["announced"])) > near:
+		_fail("always rescuing announced %d a decade against %d idle, more than 25 %% apart" % [always["announced"], idle["announced"]])
+	if int(always["rescued"]) != int(always["announced"]) or int(always["rescued"]) < 5:
+		_fail("the rescuer paid for %d rescues of %d announced, not several, every one" % [always["rescued"], always["announced"]])
+	# The last terms run past the decade's end, so what was paid is under the whole price.
+	if float(always["paid"]) < 0.6 * float(always["priced"]) or float(always["paid"]) > float(always["priced"]) * 1.000001:
+		_fail("always rescuing paid %.3f bn against %.3f bn of terms" % [always["paid"], always["priced"]])
 
 
 ## One fall picks one of the majors past the threshold, weighted by its jobs. With all

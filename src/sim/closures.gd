@@ -26,9 +26,14 @@ extends RefCounted
 ##                    a Budget line (`rescue_bill_pct_gdp`, the parent's call 4 on
 ##                    #277) for the term (QA's call on #270, the parent's
 ##                    ruling: priced on the plant, not on the firm's subsidy verbs,
-##                    whose bill read EUR 5-9 bn a year for a 720-job plant). It
-##                    announces nothing during its term and is watched afresh after
-##                    it (a new window, no cooldown: the term was the wait).
+##                    whose bill read EUR 5-9 bn a year for a 720-job plant). The
+##                    firm announces nothing during its term and is watched afresh
+##                    after it (a new window, no cooldown: the term was the wait). It
+##                    saves its plant and does not silence the sector (the parent's
+##                    ruling on #294: at one plant's price, a player who always
+##                    rescued stopped every plant in the game shutting): the sector's
+##                    clock runs from the announcement, so a sibling may announce after
+##                    the cooldown, and a second rescue is a second price.
 ##
 ## Unanswered, the closure lands at its due month. The rule's numbers are data
 ## (data/industry/closures.json, loader.closure_rule), never per firm.
@@ -107,7 +112,8 @@ static func tick_month(state, loader) -> void:
 		if h.size() <= int(rule["window_months"]) or float(h[0]) <= 0.0:
 			continue
 		var fall := (float(h[0]) - float(h[h.size() - 1])) / float(h[0])
-		if fall > float(rule["fall"]) and Processes.live(ns, String(company.id)).is_empty():
+		if fall > float(rule["fall"]) and Processes.live(ns, String(company.id)).is_empty() \
+				and String((entry.get("closure", {}) as Dictionary).get("status", "")) != RESCUING:
 			if not falling.has(company.sector):
 				falling[company.sector] = {"worst": 0.0, "firms": []}
 			falling[company.sector]["worst"] = maxf(float(falling[company.sector]["worst"]), fall)
@@ -381,10 +387,10 @@ static func _answer_counter(row: Dictionary, now: int) -> String:
 	return outcome
 
 
-## Whether the sector may announce: none of its plants is still open (waiting for an
-## answer, a buyer or a re-ask, or under a rescue), and none of its closures ended within
-## `cooldown_months`. An open row's `ended` is -1, so the cooldown test alone would pass
-## it (QA's MUST at the merge with main).
+## Whether the sector may announce: none of its plants waits for an answer, a buyer or a
+## re-ask, whose rows' `ended` is -1, so the cooldown test alone would pass them (QA's MUST
+## at the merge with main); and none of its closures ended within `cooldown_months`. A
+## rescue's clock runs from its announcement, its end being three years off (the header).
 static func _sector_may_announce(ns, majors: Array, sector: String, rule: Dictionary, now: int) -> bool:
 	for company in majors:
 		if company.sector != sector:
@@ -394,7 +400,8 @@ static func _sector_may_announce(ns, majors: Array, sector: String, rule: Dictio
 		# rescue's term was the wait: its plant is watched afresh on the next full window.
 		if row.is_empty() or ["void", "rescued"].has(String(row["status"])):
 			continue
-		if [ANNOUNCED, SEARCHING, OFFERED, RESCUING].has(String(row["status"])) or now - int(row["ended"]) < int(rule["cooldown_months"]):
+		var since := int(row["announced"]) if String(row["status"]) == RESCUING else int(row["ended"])
+		if [ANNOUNCED, SEARCHING, OFFERED].has(String(row["status"])) or now - since < int(rule["cooldown_months"]):
 			return false
 	return true
 

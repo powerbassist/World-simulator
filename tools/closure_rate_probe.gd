@@ -19,6 +19,8 @@ extends SceneTree
 ##   --policy=stimulus the health line raised STIMULUS_PTS of GDP every month through
 ##                     Budget.commit(), the player's own lever: an impulse the decay
 ##                     cannot finish, so demand stays lifted;
+##   --answer=rescue   every closure answered by the rescue the month it is announced: the
+##                     parent's ruling on #294, read beside the idle run, and the bill;
 ## and each number of the rule can be tried without editing the data:
 ##   --chance=X --slope=X --reference=X --cooldown=N --fall=X --nation=FRA
 
@@ -29,6 +31,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
+const Closures = preload("res://src/sim/closures.gd")
 
 const RULE_ARGS := {"--fall=": "fall", "--chance=": "monthly_chance", "--slope=": "gap_slope", "--reference=": "reference_fall"}
 ## Points of GDP a month: 0.6 a year, so its impulse settles near
@@ -43,6 +46,7 @@ func _init() -> void:
 	var nations: Array = ["FRA", "DEU", "GBR", "POL"]
 	var force := 0.0
 	var policy := ""
+	var answer := ""
 	for arg in OS.get_cmdline_user_args():
 		for key in RULE_ARGS:
 			if arg.begins_with(key):
@@ -55,12 +59,14 @@ func _init() -> void:
 			force = float(arg.trim_prefix("--force="))
 		if arg.begins_with("--policy="):
 			policy = arg.trim_prefix("--policy=")
+		if arg.begins_with("--answer="):
+			answer = arg.trim_prefix("--answer=")
 	for id in nations:
-		_run(loader, String(id), force, policy)
+		_run(loader, String(id), force, policy, answer)
 	quit(0)
 
 
-func _run(loader, id: String, force: float, policy: String) -> void:
+func _run(loader, id: String, force: float, policy: String, answer: String) -> void:
 	var state = GameState.new_game(loader, id)
 	var ns = state.player()
 	var acted := _act(state, ns, loader, policy)
@@ -68,6 +74,9 @@ func _run(loader, id: String, force: float, policy: String) -> void:
 	var jobs: Array = []
 	var by_sector := {}
 	var gap_sum := 0.0
+	var paid := 0.0
+	var rescued := 0
+	var shut := {}
 	var hook := func(step: String, after: bool, _report: Dictionary) -> void:
 		if step == "Economy" and not after and force != 0.0:
 			ns.demand_impulse_pct = force
@@ -80,8 +89,15 @@ func _run(loader, id: String, force: float, policy: String) -> void:
 			state.year += 1
 		WorldMonth.tick_month(state, loader, hook)
 		gap_sum += Economy.output_gap_pct(ns)
+		paid += float(ns.rescue_bill_pct_gdp) / 100.0 * float(ns.gdp_eur_bn) / 12.0
+		if answer == "rescue":
+			for row in Closures.open(ns):
+				if String(row["status"]) == Closures.ANNOUNCED and bool(Closures.answer(state, ns, loader, String(row["id"]), "rescue").get("ok", false)):
+					rescued += 1
 		for company in Companies.majors_of(loader, id):
 			var row: Dictionary = (ns.companies.get(company.id, {}) as Dictionary).get("closure", {})
+			if String(row.get("status", "")) == "closed":
+				shut[String(row["id"])] = true
 			if not row.is_empty() and not seen.has(String(row["id"])):
 				seen[String(row["id"])] = true
 				jobs.append(float(row["jobs"]))
@@ -93,6 +109,8 @@ func _run(loader, id: String, force: float, policy: String) -> void:
 		total / maxf(float(seen.size()), 1.0), float(jobs[-1]) if not jobs.is_empty() else 0.0,
 		(float(jobs[-1]) if not jobs.is_empty() else 0.0) * float(loader.closure_rule["bloc_offset"]["workers"]) / float(loader.closure_rule["reference_jobs"]),
 		float(ns.bloc_offset.get("workers", 0.0)), by_sector])
+	print("  answered '%s': %d rescues, %d plants shut, EUR %.2f bn paid over the decade, %.4f %% of the last GDP a year" % [
+		answer, rescued, shut.size(), paid, 100.0 * paid / 10.0 / float(ns.gdp_eur_bn)])
 
 
 ## The policy's own verbs, through what the game offers: how many took.
