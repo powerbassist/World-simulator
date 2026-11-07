@@ -31,8 +31,16 @@ const Priorities = preload("res://src/ui/priorities.gd")
 const PeopleNow = preload("res://src/ui/people_now.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const DiaryGrid = preload("res://src/ui/diary_grid.gd")
 
 const NATIONS := ["FRA", "DEU", "GBR", "POL"]
+
+## What AudienceDriver's two lists read off the game.
+class FakeMain:
+	var _state
+	var _loader
+
 
 var _loader
 var _failures: Array[String] = []
@@ -238,6 +246,26 @@ func _check_a_pledge_is_not_your_word() -> void:
 	for entry in PeopleNow.chosen(state, _loader, func(_pid) -> String: return "left"):
 		if String(entry["id"]) == String(person.id) and String(entry["reason"]) == Strings.t("A promise falls due"):
 			_fail("people: a pledge reads as a promise of the player's falling due")
+	var seat := FakeMain.new()
+	seat._state = state
+	seat._loader = _loader
+	if not AudienceDriver.given_lines(seat).is_empty():
+		_fail("the Your word list carries a pledge: %s" % [AudienceDriver.given_lines(seat)])
+	var grid := DiaryGrid.new()
+	grid._state = state
+	grid._loader = _loader
+	var due: int = now + 1
+	var days: Dictionary = grid._entries((due - 1) / 12, (due - 1) % 12 + 1)
+	var found := false
+	for day in days:
+		for entry in days[day]:
+			if String(entry.get("subject", "")).begins_with("pledge|"):
+				found = true
+				if String(entry.get("call", "")) != "":
+					_fail("diary: a pledge offers a Call before it is judged, as a word of the president's would")
+	if not found:
+		_fail("premise: the diary shows no pledge row")
+	grid.free()
 	ns.commitments.clear()
 	for verdict in [["kept", "Their word: %s kept it."], ["broken", "Their word: %s broke it."]]:
 		ns.commitments_judged.clear()
@@ -250,6 +278,8 @@ func _check_a_pledge_is_not_your_word() -> void:
 			_fail("briefing: a judged pledge reads as your word: '%s'" % said)
 		if not said.contains(Strings.t(verdict[1]) % who):
 			_fail("briefing: a judged pledge says nothing of %s's word: '%s'" % [who, said])
+		if not AudienceDriver.judged_rows(seat).is_empty():
+			_fail("the Your word list carries a judged pledge: %s" % [AudienceDriver.judged_rows(seat)])
 
 
 func _fail(message: String) -> void:

@@ -427,7 +427,8 @@ static func forecast_text(ns, party_list: Array, law, band: float) -> String:
 ## The same walk, as the counts (V5.2-0b: the catalogue's forecast bar). It is the division's
 ## own tally (DivisionTerms.seats_of: a pledge, the peel, an address's sway) with only the band
 ## its own, so at ABSTAIN_BAND it reads what resolve_vote reads, law by law (tests/
-## test_forecast_reads.gd; the review's finding 3 on #298). A tabled bill reads at its grade.
+## test_forecast_reads.gd; the review's finding 3 on #298). A tabled bill reads at its grade, so
+## it takes the row: a graded copy of the tabled bill would read twice graded.
 static func forecast_counts(ns, party_list: Array, law, band: float) -> Dictionary:
 	var bill = LawMagnitude.scaled(law, float(ns.tabled_bill.get("scale", 1.0))) if String(ns.tabled_bill.get("law_id", "")) == String(law.id) else law
 	var totals := [0, 0, 0]
