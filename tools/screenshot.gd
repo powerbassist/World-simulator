@@ -55,6 +55,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-arrival
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority-cap --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority-rest --open region
@@ -506,6 +508,10 @@ var _walked := false
 var _bill_refused := false
 var _fund := false
 var _fund_cap := false
+## With --fund: the region with the running fund opened, its line since it began.
+var _fund_running := false
+## The worst region's quiet card in the inbox (src/ui/region_arrival.gd).
+var _region_arrival := false
 
 ## V5.3 a (spec 3.3 (a) 1, #267): the same opened region with its sector priority.
 ## --priority: the region holds its first sector, the picker on the second, its
@@ -1014,6 +1020,10 @@ func _init() -> void:
 			_fund = true
 		elif args[i] == "--fund-cap":
 			_fund_cap = true
+		elif args[i] == "--fund-running":
+			_fund_running = true
+		elif args[i] == "--region-arrival":
+			_region_arrival = true
 		elif args[i] in ["--priority", "--priority-cap", "--priority-rest"]:
 			_priority = String(args[i]).trim_prefix("--")
 		elif args[i] == "--forecast-computing":
@@ -1320,6 +1330,8 @@ func _apply_view() -> void:
 		_main._companies_panel.mark_dirty()
 	if _fund:
 		_stage_a_fund()
+	if _region_arrival:
+		preload("res://src/ui/region_arrival.gd").check(_main)
 	if _buyer_back:
 		_stage_a_buyer_back()
 	if _buyer_walked:
@@ -2146,7 +2158,7 @@ func _stage_a_fund() -> void:
 	for i in ([1, 2, 3] if _fund_cap else [1]):
 		funds.start(state, ns, loader, named[i].id, low, 2)
 	var panel = _main._windows.content("region")
-	panel._open_region = String(named[0].id)
+	panel._open_region = String(named[1 if _fund_running else 0].id)
 	panel.mark_dirty()
 
 

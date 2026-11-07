@@ -140,6 +140,7 @@ func _check_started(region) -> void:
 	if funds.size() != 1 or String(funds[0]["region_id"]) != String(region.id):
 		_fail("Go pressed: %d funds open, expected one on %s" % [funds.size(), region.id])
 		return
+	_check_since(funds[0])
 	var stop = _with_meta("fund_id")
 	if stop == null:
 		_fail("Go pressed: the running fund shows no Stop on its region")
@@ -150,6 +151,46 @@ func _check_started(region) -> void:
 		if float(funds[0]["bloc_offset"][bloc]) > 0.0:
 			if who == null or not who.is_visible_in_tree() or not who.text.contains(Labels.bloc(String(bloc))):
 				_fail("Stop: the line beside it does not name %s, a bloc stopping angers (%s)" % [bloc, who.text if who != null else "<none>"])
+
+
+## The snapshot: the row says the figure it began at against the figure now, both the
+## sim's; a row from before the key says nothing rather than a wrong change.
+func _check_since(_copy: Dictionary) -> void:
+	var ns = _main._state.player()
+	# The register's own row: open_funds() hands out copies, and this stage must write.
+	var row: Dictionary = ns.region_funds[0]
+	var at := float(row.get("unemployment_at_start", -1.0))
+	if at < 0.0:
+		_fail("snapshot: the opened row has no start figure")
+		return
+	var said = _live_since()
+	var want: String = Strings.t("Unemployment here since it began: %s -> %s %%.") % [Num.f(at, 1),
+		Num.f(RegionFunds.unemployment_here(_main._state, ns, String(row["region_id"])), 1)]
+	if said == null or (said as Label).text != want:
+		_fail("snapshot: the row reads '%s', not '%s'" % [said.text if said != null else "<none>", want])
+	row["unemployment_at_start"] = 40.0
+	_panel._refresh()
+	said = _live_since()
+	if said == null or not (said as Label).text.contains(Num.f(40.0, 1)):
+		_fail("snapshot: the row does not read the row's own figure (%s)" % [said.text if said != null else "<none>"])
+	row.erase("unemployment_at_start")
+	_panel._refresh()
+	if _live_since() != null:
+		_fail("snapshot: a row with no start figure still says a change ('%s')" % _live_since().text)
+	row["unemployment_at_start"] = at
+
+
+## The line on the panel as drawn now: a rebuild leaves the old box queued for a frame.
+func _live_since():
+	for node in _panel.find_children("*", "Label", true, false):
+		var gone := false
+		var up: Node = node
+		while up != null and not gone:
+			gone = up.is_queued_for_deletion()
+			up = up.get_parent()
+		if node.has_meta("fund_since") and not gone:
+			return node
+	return null
 
 
 ## The Budget's table: the fund's bill on its own line once the month has booked it.
