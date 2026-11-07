@@ -177,12 +177,13 @@ static func _strike(state, ns, loader, session: Dictionary, outcome: String) -> 
 	var pid := String(session["person_id"])
 	var deal := String(session["request_id"])
 	var offer := offer_of(state, ns, loader, pid)
-	var wrote := String(offer["kind"]) == K.OFFER_VOTE and President.pledge(state, ns, loader, pid, String(offer["law_id"]), int(offer["due_month"]))
-	if not wrote:
+	var owed := "law:%s" % String(offer.get("law_id", ""))
+	if String(offer["kind"]) != K.OFFER_VOTE or not President.pledge(state, ns, loader, pid, String(offer["law_id"]), int(offer["due_month"])):
+		# Named for the deal, so what the judge lets go is this silence and no other.
+		owed = "silence:%s" % deal
 		offer = {"kind": K.OFFER_SILENCE, "months": K.SILENCE_MONTHS, "due_month": _now(state) + K.SILENCE_MONTHS}
-		wrote = President.commit(state, ns, loader, "silence", pid, "silence", int(offer["due_month"]))
-	if wrote:
-		ns.commitments[-1]["deal"] = deal
+		President.commit(state, ns, loader, "silence", pid, owed, int(offer["due_month"]))
+	President.mark_rows(ns, owed, "deal", deal, pid)
 	session["outcome"] = outcome
 	Audiences.agree(ns, deal, outcome)
 	return offer
@@ -190,10 +191,7 @@ static func _strike(state, ns, loader, session: Dictionary, outcome: String) -> 
 
 ## The president's word on this ask joins the deal.
 static func _link(ns, session: Dictionary) -> void:
-	for row in ns.commitments:
-		if String(row.get("kind", "")) == "promise" and String(row.get("person_id", "")) == String(session["person_id"]) \
-				and String(row.get("object", "")) == String(session["ask"]["object"]):
-			row["deal"] = String(session["request_id"])
+	President.mark_rows(ns, String(session["ask"]["object"]), "deal", String(session["request_id"]), String(session["person_id"]))
 
 
 ## The first law a programme entry names that is open to the president now, or "".

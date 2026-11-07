@@ -322,6 +322,14 @@ static func commit(state, ns, loader, kind: String, person_id: String, object: S
 	return true
 
 
+## Step 6's marks on rows already written: `deal` on this person's row on `object`, `brought`
+## on every word on a bill. No other file writes this register.
+static func mark_rows(ns, object: String, key: String, value: Variant, person_id := "") -> void:
+	for row in ns.commitments:
+		if String(row.get("object", "")) == object and (person_id == "" or String(row.get("person_id", "")) == person_id):
+			row[key] = value
+
+
 ## V5.3 b. A person's vote and their faction's on one bill, for step 6's deal: a `pledge`
 ## row naming the party it was given for, which the division reads through
 ## DivisionTerms. False for someone with no party, who has no seats to bring, and for a

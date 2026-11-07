@@ -146,9 +146,7 @@ static func judge_pledges(ns, law, now: int, forced := false) -> void:
 		var kept := _delivers(ns, row) and int(ns.seats_by_party.get(String(row["party_id"]), 0)) > 0
 		President.withdraw_commitment(ns, "pledge", String(row["person_id"]), String(row["object"]))
 		President.record_judged(ns, row, "void" if forced else ("kept" if kept else "broken"), now)
-	for row in ns.commitments:
-		if String(row.get("object", "")) == "law:%s" % law.id:
-			row["brought"] = true
+	President.mark_rows(ns, "law:%s" % law.id, "brought", true)
 
 
 static func _delivers(ns, row: Dictionary) -> bool:

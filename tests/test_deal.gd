@@ -35,7 +35,7 @@ const Cycle = preload("res://src/sim/cycle.gd")
 const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const Offers = preload("res://src/sim/offers.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
-const Government = preload("res://src/sim/government.gd")
+const Exposure = preload("res://src/sim/exposure.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
@@ -317,6 +317,11 @@ func _check_grant_on_a_post_seats_the_party() -> void:
 		_fail("Grant on a post seats the party in it")
 	if not _word_row(ns, f["person_id"], String(f["object"])).is_empty():
 		_fail("a post paid now leaves no word to keep")
+	# No word stands in the way here, so this is the audience's own one-deal rule.
+	if bool(Deal.grant(f["state"], ns, _loader, f["session"]).get("ok", true)):
+		_fail("one audience strikes one deal")
+	if bool(Deal.bargain(f["state"], ns, _loader, f["session"], "argue").get("ok", true)):
+		_fail("a deal struck leaves nothing to bargain")
 	if String(Levers.close(f["state"], ns, _loader, f["session"]).get("outcome", "")) != AK.STATUS_SETTLED:
 		_fail("a post paid now closes as settled")
 
@@ -652,8 +657,12 @@ func _check_the_money_shows_its_risk_first() -> void:
 		_fail("the strip names the money, got %s" % [money])
 	if not is_equal_approx(float(money.get("evidence", 0.0)), 1.0):
 		_fail("the strip names the evidence it leaves, got %s" % [money])
-	if float(money.get("found_in_a_year", 0.0)) <= 0.0 or float(money.get("found_in_a_year", 1.0)) >= 1.0:
-		_fail("the strip names the chance it is found within a year, got %s" % [money])
+	var month := Exposure.hazard_if(f["state"], ns, _loader, "party_money", f["person_id"], 1.0)
+	var clear := 1.0
+	for i in range(12):
+		clear *= 1.0 - month
+	if month <= 0.0 or not is_equal_approx(float(money.get("found_in_a_year", 0.0)), 1.0 - clear):
+		_fail("the strip names the chance it is found within a year, %f, got %s" % [1.0 - clear, money])
 	var taken := Shadows.accept_offer(f["state"], ns, _loader, f["session"])
 	if not is_equal_approx(float(taken.get("evidence", 0.0)), float(money["evidence"])):
 		_fail("the evidence shown is the evidence left: %s against %s" % [money, taken])
