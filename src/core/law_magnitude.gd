@@ -5,9 +5,12 @@ extends RefCounted
 ## must not cost alike. A magnitude is optional data on a row: {value, reference, unit},
 ## read as data and never per law id.
 ##
-## A grade multiplies the law's BUDGET effects and its magnitude, linearly, on a copy. The
-## limit, by the same ruling: its other effects (a bloc's offset, society, the rest) stay
-## unscaled for now, so four hundred lycees cost ten times forty and move a bloc as forty do.
+## A grade multiplies the law's BUDGET effects and its magnitude, linearly, on a copy. Its
+## other effects (a bloc's offset, society, a sector's burden, growth, unemployment) follow it
+## DOWN and not up, by the parent's second ruling: four hundred lycees cost ten times forty and
+## move a bloc as forty do, and four lycees cost and move a tenth. The first ruling left them
+## whole both ways, which made a bill graded down a dominant line: a tenth of the cost, all of
+## the effect. Institutional terms are set values, not quantities, and stay.
 
 const LK = preload("res://src/sim/legislature_constants.gd")
 
@@ -15,6 +18,9 @@ const FIELDS := ["value", "reference", "unit"]
 ## The effects a grade multiplies: per line or per tax, and the one scalar.
 const BUDGET_MAPS := ["spending_pct_gdp", "tax_rates_pct"]
 const BUDGET_SCALAR := "other_revenue_pct_gdp"
+## The effects that follow a grade below 1 only.
+const OTHER_MAPS := ["bloc_offset", "society"]
+const OTHER_SCALARS := ["structural_unemployment_pct", "potential_growth_pct"]
 
 
 ## A row's magnitude, {} when it has none. A constitutional law has none: a grade has no
@@ -64,6 +70,15 @@ static func scaled(law, scale: float):
 			out.effects[key][line] = float(out.effects[key][line]) * scale
 	if out.effects.has(BUDGET_SCALAR):
 		out.effects[BUDGET_SCALAR] = float(out.effects[BUDGET_SCALAR]) * scale
+	if scale < 1.0:
+		for key in OTHER_MAPS:
+			for line in (out.effects.get(key, {}) as Dictionary):
+				out.effects[key][line] = float(out.effects[key][line]) * scale
+		for key in OTHER_SCALARS:
+			if out.effects.has(key):
+				out.effects[key] = float(out.effects[key]) * scale
+		if out.effects.has("company"):
+			out.effects["company"]["burden"] = float(out.effects["company"]["burden"]) * scale
 	return out
 
 

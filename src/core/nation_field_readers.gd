@@ -246,6 +246,9 @@ static func held_bills(raw) -> Dictionary:
 				"months": int(held_entry.get("months", 0)),
 				"origin": String(held_entry.get("origin", "player")),
 			}
+			# V5.3 b: a graded bill's grade, only when it has one. Absent reads as scale 1.
+			if held_entry.has("scale"):
+				out[law_id]["scale"] = float(held_entry["scale"])
 		else:
 			out[law_id] = {"months": int(held_entry), "origin": "player"}
 	return out
