@@ -17,6 +17,15 @@ extends RefCounted
 ## rebellion: `party_rebels` is what discipline is charged for, and sitting out a bigger
 ## bill breaks no line. At or below the reference nothing peels, byte for byte.
 ##
+## THE SWAY (band B5). The deputies whose voters an address moved feel it. Seats again, not
+## the spec's word "support", because the band asks for 2 to 6 % of seats and one line's flip
+## is a whole party: 10 to 40 % of the chamber or nothing. Scaled down by discipline: a loose
+## party answers to its voters, a tight one to its whip. Not a rebellion, as the peel is not.
+## EACH WAY ON ITS OWN, not the party's mean: a party on a no line has voters against on
+## balance, so a mean never reached it (measured: no seat moved on half of Britain's close
+## divisions). Its deputies are not its mean. Those whose voters came round come round, and
+## those on a yes line whose voters hardened leave it.
+##
 ## THE PLEDGE (the parent's ruling). A person's vote and their faction's, on one bill: SEATS,
 ## read from a `pledge` row in ns.commitments, not the party's line, because a line is yes,
 ## no or abstain and one backbencher must not flip a whole party. resolve_vote reads it, so
@@ -27,6 +36,7 @@ const K = preload("res://src/sim/election_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const President = preload("res://src/sim/president.gd")
 
 
@@ -66,6 +76,29 @@ static func peel_share(ns, party, law) -> float:
 	return minf(1.0, LK.PEEL_PER_TENFOLD * log(ratio) / log(10.0) * (1.0 - Discipline.of(ns, party)))
 
 
+## The share of a party's seats its voters move on this bill, one way: `toward`, off its no
+## and its abstentions, else off its yes line. 0 with no address on the bill. Voters are read
+## by each bloc's size and its affinity to the party, the election's own affinity without its
+## contest between parties, since a party here only needs to know whose voters are whose.
+static func swayed_share(ns, party, law, toward: bool) -> float:
+	if ns.measure_opinion.is_empty():
+		return 0.0
+	var row: Dictionary = (ns.measure_opinion.get("measures", {}) as Dictionary).get(law.id, {})
+	if row.is_empty():
+		return 0.0
+	var pos: Dictionary = K.SLOT_POSITION.get(party.ideology_slot, {"economic": 0.0, "social": 0.0})
+	var shift := 0.0
+	var total := 0.0
+	for bloc in row["shifts"]:
+		var ideal: Dictionary = K.BLOC_IDEAL[bloc]
+		var d_econ: float = float(pos["economic"]) - float(ideal["economic"])
+		var d_social: float = float(pos["social"]) - float(ideal["social"])
+		var voters: float = float(OpinionK.BLOC_SIZE[bloc]) * exp(-(d_econ * d_econ + d_social * d_social) / (K.AFFINITY_SIGMA * K.AFFINITY_SIGMA))
+		shift += voters * maxf(float(row["shifts"][bloc]) * (1.0 if toward else -1.0), 0.0)
+		total += voters
+	return minf(1.0, LK.OPINION_WEIGHT * shift / total / 50.0 * (1.0 - Discipline.of(ns, party)))
+
+
 ## [yes, no, abstain] from one party: the line's seats, the rebels', then what was pledged,
 ## from the party's no first, then its abstentions, then what peels off a yes line.
 ##
@@ -73,16 +106,24 @@ static func peel_share(ns, party, law) -> float:
 ## cannot draw a peeled seat back. What is left of it sits on seats already on the yes line
 ## and holds them: they leave the base the peel reads, so a pledged seat never peels. So a
 ## pledge on a yes line, worth nothing at the reference, is worth the seats it holds above it.
-static func seats_of(line: String, rebel_line: String, seats: int, rebels: int, pledged: int, peel: float) -> Array:
+##
+## `peel` is the share leaving the yes line for any reason: the bill's size and voters who
+## hardened. `won` is the share won from what the pledge left of the no and the abstentions,
+## each its own.
+static func seats_of(line: String, rebel_line: String, seats: int, rebels: int, pledged: int, peel: float, won: float) -> Array:
 	var tally := {"yes": 0, "no": 0, "abstain": 0}
 	tally[line] += seats - rebels
 	tally[rebel_line] += rebels
 	var from_no := mini(pledged, int(tally["no"]))
 	var from_abstain := mini(pledged - from_no, int(tally["abstain"]))
+	var no: int = int(tally["no"]) - from_no
+	var abstain: int = int(tally["abstain"]) - from_abstain
+	var won_no := roundi(float(no) * won)
+	var won_abstain := roundi(float(abstain) * won)
 	var peeled := 0
 	if line == "yes":
-		peeled = roundi(float(seats - rebels - (pledged - from_no - from_abstain)) * peel)
-	return [int(tally["yes"]) + from_no + from_abstain - peeled, int(tally["no"]) - from_no, int(tally["abstain"]) - from_abstain + peeled]
+		peeled = roundi(float(seats - rebels - (pledged - from_no - from_abstain)) * minf(1.0, peel))
+	return [int(tally["yes"]) + from_no + from_abstain + won_no + won_abstain - peeled, no - won_no, abstain - won_abstain + peeled]
 
 
 ## The real division's verdict on each pledge to this bill: off the live register and into

@@ -162,7 +162,7 @@ func _build_form(root: VBoxContainer) -> void:
 	PanelKit.line(grid, tr("Kind"), PanelKit.Tone.PLAIN)
 	_kind_pick = OptionButton.new()
 	_kind_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for kind in K.KINDS.filter(func(k): return k != K.KIND_AUDIENCE):  # an audience is booked from its request
+	for kind in K.KINDS.filter(func(k): return k != K.KIND_AUDIENCE and k != K.KIND_ADDRESS):  # an audience is booked from its request, an address given at once
 		_kind_pick.add_item(tr(String(KIND_LABEL.get(kind, kind))))
 	_kind_pick.item_selected.connect(func(_i: int): _refresh_form())
 	grid.add_child(_kind_pick)
@@ -272,7 +272,7 @@ func _refresh_strip() -> void:
 	var items := []
 	for row in rows:
 		var booking: bool = row.has("status")
-		var live: bool = booking and String(row["status"]) == K.STATUS_BOOKED and String(row.get("kind", "")) != K.KIND_AUDIENCE
+		var live: bool = booking and Calendar.can_cancel(row)
 		items.append({"year": int(row["year"]), "month": int(row["month"]), "day": int(row.get("day", 1)),
 			"text": _booking_text(row) if booking else _fixed_text(row), "mark": "booking" if booking else "fixed",
 			"cancel": Calendar.verb_key(row) if live else ""})
@@ -366,11 +366,10 @@ func _booking_text(entry: Dictionary) -> String:
 			return line + VisitBooking.away_text(entry)
 		K.KIND_LAW:
 			return tr("Propose %s") % _law_name(String(entry.get("law_id", "")))
+		K.KIND_ADDRESS:
+			return tr("Address to the nation: %s") % _law_name(String(entry.get("law_id", "")))
 		K.KIND_RESHUFFLE:
-			return tr("%s to %s") % [
-				PanelKit.Labels.portfolio(String(entry.get("portfolio", ""))),
-				_party_name(String(entry.get("party_id", ""))),
-			]
+			return tr("%s to %s") % [PanelKit.Labels.portfolio(String(entry.get("portfolio", ""))), _party_name(String(entry.get("party_id", "")))]
 	return tr("Audience: %s") % _loader.person_name(String(entry.get("target_id", ""))) if String(entry.get("kind", "")) == K.KIND_AUDIENCE else String(entry.get("kind", ""))
 
 

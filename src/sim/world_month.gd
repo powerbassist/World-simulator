@@ -87,6 +87,7 @@ const Characters = preload("res://src/sim/characters.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const Meetings = preload("res://src/sim/meetings.gd")
 const Levers = preload("res://src/sim/levers.gd")
+const Address = preload("res://src/sim/address.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -96,7 +97,7 @@ const FrontPage = preload("res://src/sim/front_page.gd")
 ## holds tick_month() to this list by recording the calls, so the list cannot
 ## become a comment that disagrees with the code.
 const STEPS: Array[String] = [
-	"Division", "Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
+	"Division", "Addresses", "Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
 	"Media", "Programme", "Opinion", "History", "Calendar", "Discipline",
 	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Processes",
 	"Companies", "Industry", "Closures", "Migration", "Investment", "Projects", "RegionFunds", "Sectors", "Campaign", "Pledges",
@@ -197,6 +198,9 @@ static func _step(month: Month, step: String) -> Array:
 			month.report["division"] = division
 			if not division.is_empty():
 				Calendar.settle_tabled(state, String(division["law_id"]), bool(division["passed"]))
+		# After the division, which reads an address at its full worth in the month it is given.
+		"Addresses":
+			Address.tick_month(state)
 		# V2.8. The accessibility index per nation, built here because energy.gd never
 		# learns that a graph exists. Same index Regions already computes, so the
 		# Dijkstra rows are served from network.gd's own per-graph cache and this

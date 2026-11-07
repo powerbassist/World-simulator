@@ -9,11 +9,30 @@ extends SceneTree
 ## ordinary law with a budget effect stands in as graded here, at reference size. resolve_vote
 ## is the function the game divides with, on a new game of each playable nation. `--laws`
 ## prints each law's yes-share at reference and its signed move at ten times.
+##
+## BAND B5, the address (`--address`): one address moves a close division, within 5 % of
+## seats, by 2 to 6 % of seats. Both read how many seats a division stands short of the line
+## its own majority sets, the spec's "short by 12 seats, short by 3 to 7": on a simple majority
+## a seat won from a no counts one and a seat lost to an abstention a half; on an absolute one
+## only yes counts. Within 5 % of seats is 2.5 % short, a gap of 5 %. `--regimes` runs the band's
+## two scripted players through the game's own month, 36 months, inside the first term, the
+## same bill policy: table the open bill nearest its line that has not been tried in two years.
+## One addresses every bill,
+## the other the first three within 5 % each year; a third never does, for reference. The
+## first must pass fewer bills and end lower in approval than the second. `--nation=FRA` runs
+## one nation, so four can run side by side.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
+const Address = preload("res://src/sim/address.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
+const NATIONS := ["FRA", "DEU", "GBR", "POL"]
+const CLOSE_POINTS := 2.5
+const REGIME_MONTHS := 36
+const CLOSEST_A_YEAR := 3
 
 const BUDGET := ["spending_pct_gdp", "tax_rates_pct", "other_revenue_pct_gdp"]
 const POINTS := 5.0
@@ -31,8 +50,18 @@ func _init() -> void:
 		return not law.constitutional and BUDGET.any(func(key: String) -> bool: return law.effects.has(key)))
 	print("%d ordinary laws with a budget effect stand in as graded" % laws.size())
 	var per_law := OS.get_cmdline_user_args().has("--laws")
+	if OS.get_cmdline_user_args().has("--address"):
+		_address_band(loader)
+		quit(0)
+		return
+	if OS.get_cmdline_user_args().has("--regimes"):
+		for nation_id in NATIONS:
+			if _arg_string("--nation=", nation_id) == nation_id:
+				_regimes(loader, nation_id)
+		quit(0)
+		return
 	var failed := false
-	for nation_id in ["FRA", "DEU", "GBR", "POL"]:
+	for nation_id in NATIONS:
 		var ns = GameState.new_game(loader, nation_id).player()
 		var parties: Array = loader.parties[nation_id]
 		var moved := 0
@@ -64,3 +93,122 @@ func _init() -> void:
 			"PASS" if share >= BAND else "FAIL", nation_id, moved, laws.size(), POINTS, share, BAND, total / float(laws.size()), widest, any, flipped_verdict])
 	print("legislature probe: B4's size band %s" % ("FAILS" if failed else "holds"))
 	quit(0)
+
+
+## Seats a division stands short of the line its majority sets, in points of the chamber:
+## negative once past it.
+func _short_by(result: Dictionary, law, seats: int) -> float:
+	var yes := float(result["yes_seats"])
+	var short := (float(result["no_seats"]) - yes) / 2.0
+	if law.majority == "absolute":
+		short = LK.ABSOLUTE_MAJORITY_FRACTION * float(seats) - yes
+	elif law.majority == "two_thirds":
+		short = LK.TWO_THIRDS_MAJORITY_FRACTION * float(seats) - yes
+	return 100.0 * short / float(seats)
+
+
+## One address on every close division of a new game: Address.estimate, the read the strip
+## shows, whose after the verb is pinned to (tests/test_address.gd).
+func _address_band(loader) -> void:
+	for nation_id in NATIONS:
+		var state = GameState.new_game(loader, nation_id)
+		state.year = 2026
+		state.month = 1
+		state.day = 1
+		var ns = state.player()
+		var moves: Array[float] = []
+		var in_band := 0
+		var flips := 0
+		for law in loader.laws:
+			if law.constitutional:
+				continue
+			var read: Dictionary = Address.estimate(state, ns, loader, law)
+			if absf(_short_by(read["before"], law, ns.assembly_seats)) > CLOSE_POINTS:
+				continue
+			var points := absf(_short_by(read["after"], law, ns.assembly_seats) - _short_by(read["before"], law, ns.assembly_seats))
+			moves.append(points)
+			if OS.get_cmdline_user_args().has("--laws"):
+				var b: Dictionary = read["before"]
+				var a: Dictionary = read["after"]
+				print("  %s %-32s yes %3d no %3d abstain %3d -> yes %+3d no %+3d abstain %+3d  lines %s" % [nation_id, law.id, b["yes_seats"], b["no_seats"], b["abstain_seats"],
+					int(a["yes_seats"]) - int(b["yes_seats"]), int(a["no_seats"]) - int(b["no_seats"]), int(a["abstain_seats"]) - int(b["abstain_seats"]), b["party_votes"].values()])
+			if points >= 2.0 and points <= 6.0:
+				in_band += 1
+			if bool(read["before"]["passed"]) != bool(read["after"]["passed"]):
+				flips += 1
+		moves.sort()
+		if moves.is_empty():
+			print("%s: no close division" % nation_id)
+			continue
+		print("%s: %d close divisions, %d move 2 to 6 %% of seats, min %.1f, median %.1f, max %.1f, %d change their verdict" % [
+			nation_id, moves.size(), in_band, moves[0], moves[moves.size() / 2], moves[-1], flips])
+
+
+func _arg_string(prefix: String, fallback: String) -> String:
+	for arg in OS.get_cmdline_user_args():
+		if String(arg).begins_with(prefix):
+			return String(arg).substr(prefix.length())
+	return fallback
+
+
+func _regimes(loader, nation_id: String) -> void:
+	var rows := {}
+	for regime in ["never", "closest", "always"]:
+		rows[regime] = _regime(loader, nation_id, regime)
+		print("%s %-8s tabled %d, became law %d, close carried %d, addresses %d, approval %.1f, diary refused %d" % [nation_id, regime,
+			rows[regime]["tabled"], rows[regime]["passed"], rows[regime]["close_passed"], rows[regime]["addresses"], rows[regime]["approval"], rows[regime]["refused"]])
+	var bills: bool = int(rows["always"]["passed"]) < int(rows["closest"]["passed"])
+	var approval: bool = float(rows["always"]["approval"]) < float(rows["closest"]["approval"])
+	print("%s  %s: always against the three closest: became law %d against %d, approval %.1f against %.1f" % [
+		"PASS" if bills and approval else "FAIL", nation_id, rows["always"]["passed"], rows["closest"]["passed"], rows["always"]["approval"], rows["closest"]["approval"]])
+
+
+## One scripted player. Acts at the top of each month, before the month that closes it divides.
+func _regime(loader, nation_id: String, regime: String) -> Dictionary:
+	var state = GameState.new_game(loader, nation_id)
+	var tried := {}
+	var ledger_at_start: int = state.player().law_ledger.size()
+	var out := {"tabled": 0, "passed": 0, "close_passed": 0, "addresses": 0, "approval": 0.0, "refused": 0}
+	var this_year := {}
+	for i in REGIME_MONTHS:
+		state.year = 2026 + i / 12
+		state.month = i % 12 + 1
+		state.day = 1
+		var ns = state.player()
+		var was_close := false
+		if ns.tabled_bill.is_empty():
+			var pick := _nearest_its_line(ns, loader, tried, i)
+			if pick["law"] != null:
+				tried[pick["law"].id] = i
+				was_close = float(pick["margin"]) <= CLOSE_POINTS
+				var year_count := int(this_year.get(state.year, 0))
+				if regime == "always" or (regime == "closest" and was_close and year_count < CLOSEST_A_YEAR):
+					if bool(Address.give(state, loader, pick["law"].id).get("ok", false)):
+						out["addresses"] += 1
+						this_year[state.year] = year_count + 1
+					else:
+						out["refused"] += 1
+				if bool(Legislature.propose(state, loader, pick["law"]).get("tabled", false)):
+					out["tabled"] += 1
+		var report: Dictionary = WorldMonth.tick_month(state, loader)
+		var division: Dictionary = report.get("division", {})
+		if bool(division.get("passed", false)) and was_close:
+			out["close_passed"] += 1
+	# What became law, a bill an upper chamber held and released included: the division's own
+	# `passed` reads false on a hold, and Germany would count nothing.
+	out["passed"] = state.player().law_ledger.size() - ledger_at_start
+	out["approval"] = float(state.player().overall_approval_pct)
+	return out
+
+
+func _nearest_its_line(ns, loader, tried: Dictionary, month: int) -> Dictionary:
+	var best = null
+	var margin := INF
+	for law in Legislature.available(ns, loader.laws):
+		if law.constitutional or month - int(tried.get(law.id, -24)) < 24:
+			continue
+		var short := absf(_short_by(Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law), law, ns.assembly_seats))
+		if short < margin:
+			margin = short
+			best = law
+	return {"law": best, "margin": margin}

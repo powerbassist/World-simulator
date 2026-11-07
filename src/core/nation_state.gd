@@ -1550,6 +1550,9 @@ var sector_priority_rest := {}
 ## The sector figures' drift, the player only: src/sim/sector_warnings.gd has its shape.
 ## absent_ok, no bump: absent reads as a drift that begins with the next month.
 var sector_drift := {}
+## The country's opinion of a pending bill, moved by an address: src/sim/address.gd has its
+## shape. absent_ok, no bump: no older save holds an opinion.
+var measure_opinion := {}
 
 # --- Regional development funds (V5.3 a) -------------------------------------------
 ## One row per fund opened, running or ended -- {id, region_id, eur_bn_per_year,
@@ -1631,15 +1634,10 @@ var audience_lane_start: int = -1
 ## character registers' discipline applied to a register that is a dictionary of
 ## dictionaries rather than a typed flat map.
 ##
-## THE LAZY SEED IN Commodities.tick_month() STAYS, and the reason is narrower
-## than "backwards compatibility": save_manager refuses a mismatched version
-## outright (V3.3's argument at the gate), so no pre-37 save reaches this field
-## through the load path at all. What the branch still covers is an ns arriving
-## from a payload with the key absent -- a stripped dictionary, a hand-built
-## fixture, or a caller that built a NationState before the first tick -- and it
-## is deterministic for `init_nation`'s own reason: a pure function of the
-## nation's measured mix. tests/test_commodities.gd pins that it agrees with a
-## fresh init to the bit.
+## THE LAZY SEED IN Commodities.tick_month() STAYS: save_manager refuses a mismatched
+## version, so no pre-37 save reaches this field through a load. It covers an ns from a
+## payload with the key absent (a stripped dictionary, a fixture, before the first tick)
+## and is a pure function of the nation's measured mix, pinned by tests/test_commodities.gd.
 var commodity_state: Dictionary = {}
 
 ## V1.5a. Spending line → the quality of that service as a stock, in points of GDP,

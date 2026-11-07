@@ -67,7 +67,11 @@ const KIND_RESHUFFLE := "reshuffle"
 ## exists only because someone asked, and the scene it opens is the verb.
 const KIND_AUDIENCE := "audience"
 
-const KINDS := [KIND_DIPLOMATIC, KIND_LAW, KIND_RESHUFFLE, KIND_AUDIENCE]
+## V5.3 b. An address to the nation (src/sim/address.gd): given when it is booked, so its
+## row holds the day and nothing is left to do when the day comes.
+const KIND_ADDRESS := "address"
+
+const KINDS := [KIND_DIPLOMATIC, KIND_LAW, KIND_RESHUFFLE, KIND_AUDIENCE, KIND_ADDRESS]
 
 ## Kinds of fixed date the diary reads off state the game already carries. These
 ## are labels for a surface, not behaviour: nothing in src/sim/ branches on them.

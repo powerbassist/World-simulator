@@ -201,6 +201,12 @@ static func book(state, entry: Dictionary) -> Dictionary:
 	return {"ok": true, "error": ""}
 
 
+## What the diary lets be taken back: a booking still ahead. Not an audience, booked from its
+## request, nor an address, given when booked: taking its row back would refund the day alone.
+static func can_cancel(entry: Dictionary) -> bool:
+	return String(entry.get("status", "")) == K.STATUS_BOOKED and not [K.KIND_AUDIENCE, K.KIND_ADDRESS].has(String(entry.get("kind", "")))
+
+
 ## Cancelling is free and leaves no trace. A cancelled booking is REMOVED rather
 ## than marked, because the diary's past is a record of what happened and an act
 ## the player thought better of never happened.
