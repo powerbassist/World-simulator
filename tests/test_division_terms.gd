@@ -10,6 +10,8 @@ extends SceneTree
 ##     leans, and charges a party that weighs the deficit for the cost.
 ##   - THE PLEDGE moves seats on one bill, the forecast sees it, and the vote judges it
 ##     into a mark the deal can read.
+##   - THE PEEL takes seats off a whipped yes line as a bill grows, by discipline, and a
+##     pledged seat is never counted as peeled too.
 ##
 ## The band's numbers are written here as literals, never read from the constants.
 
@@ -50,6 +52,10 @@ func _init() -> void:
 	_check_a_grade_survives_a_save()
 	_check_a_pledge_moves_seats_on_one_bill()
 	_check_a_pledge_takes_no_before_abstain_and_caps()
+	_check_only_a_whipped_yes_line_peels()
+	_check_pledged_and_peeled_seats_do_not_double_count()
+	_check_the_share_that_peels()
+	_check_the_peel_on_a_real_division()
 	_check_the_vote_judges_a_pledge()
 	_check_a_pledge_with_no_vote_is_void_at_no_price()
 	_check_a_pledge_survives_a_save()
@@ -476,20 +482,135 @@ func _check_a_pledge_moves_seats_on_one_bill() -> void:
 
 
 func _check_a_pledge_takes_no_before_abstain_and_caps() -> void:
-	if DivisionTerms.seats_of("no", "no", 100, 0, 30) != [30, 70, 0]:
-		_fail("a pledge on a no line: %s" % [DivisionTerms.seats_of("no", "no", 100, 0, 30)])
-	if DivisionTerms.seats_of("abstain", "abstain", 100, 0, 30) != [30, 0, 70]:
-		_fail("a pledge on an abstaining line: %s" % [DivisionTerms.seats_of("abstain", "abstain", 100, 0, 30)])
-	if DivisionTerms.seats_of("yes", "yes", 100, 0, 30) != [100, 0, 0]:
-		_fail("a pledge on a yes line added seats: %s" % [DivisionTerms.seats_of("yes", "yes", 100, 0, 30)])
-	if DivisionTerms.seats_of("no", "abstain", 100, 10, 95) != [95, 0, 5]:
-		_fail("a pledge takes no before abstain: %s" % [DivisionTerms.seats_of("no", "abstain", 100, 10, 95)])
-	if DivisionTerms.seats_of("yes", "no", 100, 10, 5) != [95, 5, 0]:
-		_fail("a pledge comes from the rebels of a yes line: %s" % [DivisionTerms.seats_of("yes", "no", 100, 10, 5)])
-	if DivisionTerms.seats_of("no", "no", 100, 0, 500) != [100, 0, 0]:
-		_fail("a pledge past the party's seats: %s" % [DivisionTerms.seats_of("no", "no", 100, 0, 500)])
-	if DivisionTerms.seats_of("no", "yes", 100, 10, 0) != [10, 90, 0]:
-		_fail("no pledge changed the split: %s" % [DivisionTerms.seats_of("no", "yes", 100, 10, 0)])
+	if DivisionTerms.seats_of("no", "no", 100, 0, 30, 0.0) != [30, 70, 0]:
+		_fail("a pledge on a no line: %s" % [DivisionTerms.seats_of("no", "no", 100, 0, 30, 0.0)])
+	if DivisionTerms.seats_of("abstain", "abstain", 100, 0, 30, 0.0) != [30, 0, 70]:
+		_fail("a pledge on an abstaining line: %s" % [DivisionTerms.seats_of("abstain", "abstain", 100, 0, 30, 0.0)])
+	if DivisionTerms.seats_of("yes", "yes", 100, 0, 30, 0.0) != [100, 0, 0]:
+		_fail("a pledge on a yes line added seats: %s" % [DivisionTerms.seats_of("yes", "yes", 100, 0, 30, 0.0)])
+	if DivisionTerms.seats_of("no", "abstain", 100, 10, 95, 0.0) != [95, 0, 5]:
+		_fail("a pledge takes no before abstain: %s" % [DivisionTerms.seats_of("no", "abstain", 100, 10, 95, 0.0)])
+	if DivisionTerms.seats_of("yes", "no", 100, 10, 5, 0.0) != [95, 5, 0]:
+		_fail("a pledge comes from the rebels of a yes line: %s" % [DivisionTerms.seats_of("yes", "no", 100, 10, 5, 0.0)])
+	if DivisionTerms.seats_of("no", "no", 100, 0, 500, 0.0) != [100, 0, 0]:
+		_fail("a pledge past the party's seats: %s" % [DivisionTerms.seats_of("no", "no", 100, 0, 500, 0.0)])
+	if DivisionTerms.seats_of("no", "yes", 100, 10, 0, 0.0) != [10, 90, 0]:
+		_fail("no pledge changed the split: %s" % [DivisionTerms.seats_of("no", "yes", 100, 10, 0, 0.0)])
+
+
+## A peel reads the seats a whip holds on yes: not a no line, not an abstaining one, not
+## rebels voting yes against their line, and a rebel leaving a yes line is not peeled again.
+func _check_only_a_whipped_yes_line_peels() -> void:
+	var table := [
+		[["yes", "yes", 100, 0, 0, 0.2], [80, 0, 20], "a yes line"],
+		[["no", "no", 100, 0, 0, 0.2], [0, 100, 0], "a no line"],
+		[["abstain", "abstain", 100, 0, 0, 0.2], [0, 0, 100], "an abstaining line"],
+		[["no", "yes", 100, 10, 0, 0.2], [10, 90, 0], "rebels voting yes against a no line"],
+		[["yes", "no", 100, 10, 0, 0.2], [72, 10, 18], "the whipped seats of a yes line, its rebels out"],
+		[["yes", "abstain", 100, 10, 0, 0.2], [72, 0, 28], "rebels abstaining beside what peeled"],
+		[["yes", "no", 100, 10, 5, 0.0], [95, 5, 0], "no peel at all"],
+	]
+	_read_seats(table)
+
+
+## Exactly the pledged number of seats is bound. The numbers tell apart the wrong orders:
+## with 100 seats, 10 rebels against, 15 pledged and 20 % peeling, leaving the pledge out of
+## the peel's base reads 82, peeling first and drawing the pledge back out of it reads 87,
+## and holding the whole pledge on the line besides drawing the rebels reads 85.
+func _check_pledged_and_peeled_seats_do_not_double_count() -> void:
+	var table := [
+		[["yes", "yes", 100, 0, 30, 0.2], [86, 0, 14], "a pledge holds seats on a yes line"],
+		[["yes", "no", 100, 10, 15, 0.2], [83, 0, 17], "a pledge brings the rebels, then holds"],
+		[["yes", "no", 100, 10, 10, 0.2], [82, 0, 18], "a pledge spent on the rebels holds nothing"],
+		[["yes", "abstain", 100, 10, 5, 0.2], [77, 0, 23], "a pledge draws no seat that peeled"],
+		[["yes", "yes", 100, 0, 100, 0.5], [100, 0, 0], "a whole party pledged: nothing peels"],
+		[["no", "no", 100, 0, 30, 0.2], [30, 70, 0], "a pledge across a no line peels nothing"],
+	]
+	_read_seats(table)
+	for row in table:
+		var got: Array = DivisionTerms.seats_of(row[0][0], row[0][1], row[0][2], row[0][3], row[0][4], row[0][5])
+		if int(got[0]) + int(got[1]) + int(got[2]) != int(row[0][2]):
+			_fail("%s: %s does not add up to the party's seats" % [row[2], got])
+
+
+func _read_seats(table: Array) -> void:
+	for row in table:
+		var a: Array = row[0]
+		var got: Array = DivisionTerms.seats_of(a[0], a[1], a[2], a[3], a[4], a[5])
+		if got != row[1]:
+			_fail("%s: %s, want %s" % [row[2], got, row[1]])
+
+
+## 12 % per tenfold at no discipline at all, by the live discipline, and nothing at or below
+## the reference. The number is written here, never read from the constant.
+func _check_the_share_that_peels() -> void:
+	var ns = _new_state().player()
+	var party = _parties()[0]
+	var table := [
+		[0.85, 400.0, 0.018], [0.5, 400.0, 0.06], [0.0, 400.0, 0.12], [0.0, 4000.0, 0.24],
+		[0.5, 40.0, 0.0], [0.5, 4.0, 0.0],
+	]
+	for row in table:
+		ns.party_discipline[party.id] = float(row[0])
+		var share := DivisionTerms.peel_share(ns, party, _graded(float(row[1]), 40.0))
+		if not is_equal_approx(share, float(row[2])) and not (float(row[2]) == 0.0 and share == 0.0):
+			_fail("discipline %.2f at %.0f of 40 peels %.4f, want %.4f" % [row[0], row[1], share, row[2]])
+	var plain = _graded()
+	plain.magnitude = {}
+	if DivisionTerms.peel_share(ns, party, plain) != 0.0:
+		_fail("a law with no magnitude peels")
+	ns.party_discipline[party.id] = 0.0
+	if DivisionTerms.peel_share(ns, party, _graded(4.0e20, 40.0)) != 1.0:
+		_fail("a row of any ratio must not peel past the whole line: %.3f" % DivisionTerms.peel_share(ns, party, _graded(4.0e20, 40.0)))
+
+
+## An opposition party on a yes line, so no whip moves when its discipline does. Through
+## resolve_vote: the seats go from yes to abstain, by its discipline, and it is no rebellion.
+func _check_the_peel_on_a_real_division() -> void:
+	var ns = _new_state().player()
+	var found := _opposition_on_yes(ns)
+	if found.is_empty():
+		_fail("no opposition party on a yes line at both sizes")
+		return
+	var party = found["party"]
+	var seats := int(ns.seats_by_party[party.id])
+	var law = found["law"]
+	var big = LawMagnitude.scaled(law, 10.0)
+	ns.party_discipline[party.id] = 1.0
+	var whole: Dictionary = Legislature.resolve_vote(ns, _parties(), big)
+	ns.party_discipline[party.id] = 0.0
+	var loose: Dictionary = Legislature.resolve_vote(ns, _parties(), big)
+	var want := roundi(float(seats) * 0.12)
+	if want == 0:
+		_fail("premise: %s is too small to read a peel" % party.id)
+	if int(whole["yes_seats"]) - int(loose["yes_seats"]) != want or int(loose["abstain_seats"]) - int(whole["abstain_seats"]) != want:
+		_fail("%s of %d seats peeled %d yes, %d abstain, want %d" % [party.id, seats,
+			int(whole["yes_seats"]) - int(loose["yes_seats"]), int(loose["abstain_seats"]) - int(whole["abstain_seats"]), want])
+	if int(whole["no_seats"]) != int(loose["no_seats"]):
+		_fail("a peel moved a no")
+	if loose["party_rebels"].has(party.id):
+		_fail("a peel is not a rebellion, and it would be charged as one: %s" % [loose["party_rebels"]])
+	if String(loose["party_votes"][party.id]) != "yes":
+		_fail("a peel moved the party's line")
+	var reference: Dictionary = Legislature.resolve_vote(ns, _parties(), law)
+	ns.party_discipline[party.id] = 0.0
+	if str(reference) != str(Legislature.resolve_vote(ns, _parties(), law)):
+		_fail("a bill at its reference size reads discipline through the peel")
+
+
+func _opposition_on_yes(ns) -> Dictionary:
+	for law in _loader.laws:
+		if law.constitutional or not law.effects.has("spending_pct_gdp"):
+			continue
+		var graded = LawMagnitude.copy(law)
+		graded.magnitude = {"value": 40.0, "reference": 40.0, "unit": "u"}
+		var big = LawMagnitude.scaled(graded, 10.0)
+		for party in _parties():
+			if ns.coalition_party_ids.has(party.id) or int(ns.seats_by_party.get(party.id, 0)) < 20:
+				continue
+			if Legislature.vote_of(Legislature.support(ns, party, graded)) == "yes" and Legislature.vote_of(Legislature.support(ns, party, big)) == "yes":
+				return {"party": party, "law": graded}
+	return {}
 
 
 ## The mark the deal reads: kept when it delivered, broken when the person left the party,

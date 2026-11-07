@@ -10,6 +10,13 @@ extends RefCounted
 ## deficit for the cost beyond the reference. Lines are discrete, so a party moves whole:
 ## what flips is a partner the whip carried, or a party near the abstain band.
 ##
+## THE PEEL (the parent's ruling, since lines alone left over half of the laws dividing alike
+## at ten times). A bigger bill is harder to whip: seats on a yes line go to abstain, by the
+## tenfolds above the reference, by how loose the party is. Seats, not the line, so the party
+## still reads yes and a law's size still has no road to a whole party's flip here. It is not
+## a rebellion: `party_rebels` is what discipline is charged for, and sitting out a bigger
+## bill breaks no line. At or below the reference nothing peels, byte for byte.
+##
 ## THE PLEDGE (the parent's ruling). A person's vote and their faction's, on one bill: SEATS,
 ## read from a `pledge` row in ns.commitments, not the party's line, because a line is yes,
 ## no or abstain and one backbencher must not flip a whole party. resolve_vote reads it, so
@@ -19,6 +26,7 @@ extends RefCounted
 const K = preload("res://src/sim/election_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
+const Discipline = preload("res://src/sim/discipline.gd")
 const President = preload("res://src/sim/president.gd")
 
 
@@ -49,15 +57,32 @@ static func pledged_seats(ns, party, law) -> int:
 	return mini(pledged, seats)
 
 
+## The share of a whipped yes line that peels on this bill. Clamped because a row's ratio is
+## data, with no ceiling of its own: a grade stops at ten times, the row it grades does not.
+static func peel_share(ns, party, law) -> float:
+	var ratio := LawMagnitude.ratio(law)
+	if ratio <= 1.0:
+		return 0.0
+	return minf(1.0, LK.PEEL_PER_TENFOLD * log(ratio) / log(10.0) * (1.0 - Discipline.of(ns, party)))
+
+
 ## [yes, no, abstain] from one party: the line's seats, the rebels', then what was pledged,
-## from the party's no first, then its abstentions. A yes line has nothing to give.
-static func seats_of(line: String, rebel_line: String, seats: int, rebels: int, pledged: int) -> Array:
+## from the party's no first, then its abstentions, then what peels off a yes line.
+##
+## A pledged seat is bound once. The pledge is spent first, and nothing has peeled yet, so it
+## cannot draw a peeled seat back. What is left of it sits on seats already on the yes line
+## and holds them: they leave the base the peel reads, so a pledged seat never peels. So a
+## pledge on a yes line, worth nothing at the reference, is worth the seats it holds above it.
+static func seats_of(line: String, rebel_line: String, seats: int, rebels: int, pledged: int, peel: float) -> Array:
 	var tally := {"yes": 0, "no": 0, "abstain": 0}
 	tally[line] += seats - rebels
 	tally[rebel_line] += rebels
 	var from_no := mini(pledged, int(tally["no"]))
 	var from_abstain := mini(pledged - from_no, int(tally["abstain"]))
-	return [int(tally["yes"]) + from_no + from_abstain, int(tally["no"]) - from_no, int(tally["abstain"]) - from_abstain]
+	var peeled := 0
+	if line == "yes":
+		peeled = roundi(float(seats - rebels - mini(pledged - from_no - from_abstain, seats - rebels)) * peel)
+	return [int(tally["yes"]) + from_no + from_abstain - peeled, int(tally["no"]) - from_no, int(tally["abstain"]) - from_abstain + peeled]
 
 
 ## The real division's verdict on each pledge to this bill: off the live register and into
