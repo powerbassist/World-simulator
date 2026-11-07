@@ -760,6 +760,8 @@ func _check_a_deal_survives_a_save() -> void:
 		_fail("a word's deal and its mark must survive a save, got %s" % [word])
 	if String(_owed_row(back, f["person_id"], "pledge").get("deal", "")) != String(f["id"]):
 		_fail("a pledge's deal must survive a save")
+	if not Delegation.heard(back, f["person_id"], String(f["object"]), _now(f)):
+		_fail("the want a word answers must survive a save, or the person asks again after a load")
 
 
 func _check_a_row_from_before_the_deal_is_judged_as_it_was() -> void:
