@@ -60,6 +60,11 @@ func _run() -> void:
 		return
 	var ribbon = hud.ribbon
 
+	# The diary has five kinds, and a row's tooltip names each in words, never the raw kind.
+	for kind in K.KINDS:
+		if String(ribbon._booking_name({"kind": kind})) == kind:
+			_fail("the ribbon's tooltip names a %s row by its raw kind" % kind)
+
 	# Fed, not orphaned: setup() ran with the live state, so a frame later the
 	# title carries the month the game actually opened on -- a ribbon whose
 	# state reference is null draws nothing and never errors.

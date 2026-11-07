@@ -27,6 +27,9 @@ const EK = preload("res://src/sim/election_constants.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 
+const Division = preload("res://src/sim/division.gd")
+const ReferendumK = preload("res://src/sim/referendum_constants.gd")
+
 const PLAYER := "FRA"
 ## A hand-written copy of OPINION_WEIGHT, never read from the constant.
 const WEIGHT := 6.5
@@ -60,6 +63,10 @@ func _init() -> void:
 	_check_hardened_voters_leave_a_yes_line()
 	_check_seats_with_a_sway()
 	_check_the_estimate_is_a_pure_read()
+	_check_the_estimate_reads_the_window()
+	_check_the_estimate_reads_like_the_forecast()
+	_check_every_bloc_hears_through_its_outlets()
+	_check_the_term_weighs_a_bloc_by_its_size()
 
 	if _failures.is_empty():
 		print("test_address: all checks passed")
@@ -535,6 +542,108 @@ func _check_seats_with_a_sway() -> void:
 			_fail("%s: %s, want %s" % [row[2], got, row[1]])
 		elif int(got[0]) + int(got[1]) + int(got[2]) != int(a[2]):
 			_fail("%s does not add up" % row[2])
+
+
+## After one address the strip reads the second's worth and shift, not the first's.
+func _check_the_estimate_reads_the_window() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _open_bill(state)
+	var first: Dictionary = Address.estimate(state, ns, _loader, law)
+	Address.give(state, _loader, law.id)
+	var second: Dictionary = Address.estimate(state, ns, _loader, law)
+	if not is_equal_approx(float(second["worth"]), 0.6):
+		_fail("the strip reads a second address at %.2f" % second["worth"])
+	if str(second["shifts"]) != str(Address.shifts(ns, _loader.outlets[PLAYER], law, 1)):
+		_fail("the strip's shift is not the second address's: %s" % [second["shifts"]])
+	if str(second["shifts"]) == str(first["shifts"]):
+		_fail("the check proved nothing: the two addresses read alike")
+
+
+## The strip and the division must not disagree on a bill's road or its size: on the tabled
+## bill it reads as Division.forecast reads, and an amendment untabled takes its own route.
+func _check_the_estimate_reads_like_the_forecast() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var amendment = null
+	for law in Legislature.available(ns, _loader.laws):
+		if law.constitutional and Legislature.can_put_to_referendum(ns, law) \
+				and bool(Legislature.resolve_vote(ns, _parties(), law, true)["passed"]) != bool(Legislature.resolve_vote(ns, _parties(), law)["passed"]):
+			amendment = law
+			break
+	if amendment == null:
+		_fail("no amendment whose verdict turns on its route: the check proves nothing")
+		return
+	if not bool(Legislature.propose(state, _loader, amendment, false, true).get("tabled", false)):
+		_fail("premise: %s did not table on route B" % amendment.id)
+		return
+	var read: Dictionary = Address.estimate(state, ns, _loader, amendment)
+	if str(read["before"]) != str(Division.forecast(state, ns, _loader)):
+		_fail("the strip reads %s on route B, the forecast %s" % [read["before"]["passed"], Division.forecast(state, ns, _loader)["passed"]])
+	# A tabled grade of ten: the before, and the after against the forecast once it is given.
+	var graded_state = _new_state()
+	var graded_ns = graded_state.player()
+	var bill = _open_bill(graded_state)
+	bill.magnitude = {"value": 40.0, "reference": 40.0, "unit": "lycees"}
+	Legislature.propose(graded_state, _loader, bill, false, false, 10.0)
+	var graded: Dictionary = Address.estimate(graded_state, graded_ns, _loader, bill)
+	if str(graded["before"]) != str(Division.forecast(graded_state, graded_ns, _loader)):
+		_fail("the strip ignores a tabled grade: %s against %s" % [graded["before"]["yes_seats"], Division.forecast(graded_state, graded_ns, _loader)["yes_seats"]])
+	Address.give(graded_state, _loader, bill.id)
+	if str(graded["after"]) != str(Division.forecast(graded_state, graded_ns, _loader)):
+		_fail("the strip's after is not the forecast's: %s against %s" % [graded["after"]["yes_seats"], Division.forecast(graded_state, graded_ns, _loader)["yes_seats"]])
+	bill.magnitude = {}
+	# Untabled, under a constitution with no other road: the mandatory route, not the bar.
+	var mandatory = _new_state()
+	var mandatory_ns = mandatory.player()
+	mandatory_ns.referendum_mode = ReferendumK.MODE_MANDATORY
+	if str(Address.estimate(mandatory, mandatory_ns, _loader, amendment)["before"]) != str(Legislature.resolve_vote(mandatory_ns, _parties(), amendment, true)):
+		_fail("an untabled amendment did not read the route its constitution gives it")
+
+
+## Toward, neutral and against alike: a bloc's own paper carries what it hears, and stops at
+## its ceiling. The first check of this kind read one bloc on one bill.
+func _check_every_bloc_hears_through_its_outlets() -> void:
+	var ns = _new_state().player()
+	ns.overall_approval_pct = 50.0
+	var seen := {"toward": 0, "neutral": 0, "against": 0}
+	for position in [[-0.6, 0.1], [0.7, 0.1], [-0.5, -0.8], [0.1, 0.6], [0.0, 0.0], [0.9, 0.9], [-0.9, 0.9], [0.9, -0.9]]:
+		var law = _law_at(position[0], position[1])
+		var plain: Dictionary = Address.shifts(ns, [], law, 0)
+		for bloc in OpinionK.BLOC_KEYS:
+			var heard: Dictionary = Address.shifts(ns, [_outlet(bloc, 50.0, ns.coalition_position)], law, 0)
+			var yes: float = Referendum.bloc_yes(ns, bloc, law.position)
+			seen["toward" if yes > 0.6 else ("against" if yes < 0.4 else "neutral")] += 1
+			if not is_equal_approx(float(heard[bloc]), float(plain[bloc]) * 1.5):
+				_fail("%s reads yes %.2f on %s: a full paper carries %.3f of %.3f" % [bloc, yes, position, heard[bloc], plain[bloc]])
+	for kind in seen:
+		if int(seen[kind]) == 0:
+			_fail("no bloc read %s: the check proved nothing" % kind)
+
+
+## The formula by hand on one bloc's shift: voters are its size times its affinity.
+func _check_the_term_weighs_a_bloc_by_its_size() -> void:
+	var ns = _new_state().player()
+	var law = _law_at(0.0, 0.0)
+	var shifts := {}
+	for bloc in OpinionK.BLOC_KEYS:
+		shifts[bloc] = 0.0
+	shifts["students"] = 10.0
+	ns.measure_opinion = {"measures": {law.id: {"months_left": 3, "shifts": shifts}}}
+	for party in _parties():
+		ns.party_discipline[party.id] = 0.5
+		var pos: Dictionary = EK.SLOT_POSITION[party.ideology_slot]
+		var moved := 0.0
+		var total := 0.0
+		for bloc in OpinionK.BLOC_KEYS:
+			var ideal: Dictionary = EK.BLOC_IDEAL[bloc]
+			var d2: float = pow(float(pos["economic"]) - float(ideal["economic"]), 2.0) + pow(float(pos["social"]) - float(ideal["social"]), 2.0)
+			var voters: float = float(OpinionK.BLOC_SIZE[bloc]) * exp(-d2 / (EK.AFFINITY_SIGMA * EK.AFFINITY_SIGMA))
+			moved += voters * float(shifts[bloc])
+			total += voters
+		var want: float = WEIGHT * moved / total / 50.0 * 0.5
+		if not is_equal_approx(DivisionTerms.swayed_share(ns, party, law, true), want):
+			_fail("%s sways %.5f on a bloc's shift, want %.5f" % [party.id, DivisionTerms.swayed_share(ns, party, law, true), want])
 
 
 ## What the strip reads, on a copy: nothing written, and the after is what the verb then does.

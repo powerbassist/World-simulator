@@ -22,6 +22,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Division = preload("res://src/sim/division.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
+const PoliticsLoader = preload("res://src/core/loaders/politics_loader.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
@@ -45,6 +46,7 @@ func _init() -> void:
 	_check_a_bill_graded_down_brings_less_of_everything()
 	_check_a_bill_graded_down_on_the_real_road()
 	_check_the_loader_reads_a_magnitude()
+	_check_a_row_carries_its_magnitude_through_the_loader()
 	_check_the_size_term_moves_away_from_zero()
 	_check_the_deficit_is_charged_to_the_right()
 	_check_the_grade_on_the_real_road()
@@ -63,6 +65,9 @@ func _init() -> void:
 	_check_the_share_that_peels()
 	_check_the_peel_on_a_real_division()
 	_check_the_vote_judges_a_pledge()
+	_check_a_pledge_is_broken_with_no_seat()
+	_check_a_pledge_names_the_party_the_person_is_in()
+	_check_the_verdict_is_this_bill_and_the_latest()
 	_check_a_pledge_with_no_vote_is_void_at_no_price()
 	_check_a_pledge_survives_a_save()
 
@@ -235,6 +240,35 @@ func _check_the_loader_reads_a_magnitude() -> void:
 	LawMagnitude.parse({"id": "x", "magnitude": {"value": 40, "reference": 40, "unit": "u"}}, "x", true, "t.json", c)
 	if c.is_empty():
 		_fail("a constitutional law took a size: it has no road for a grade")
+
+
+## The wire, not the parser: a row on disk reaches a Law with its size, through the function
+## the game loads with, and a bad size is the loader's error.
+func _check_a_row_carries_its_magnitude_through_the_loader() -> void:
+	var dir := "user://test_division_terms_laws"
+	DirAccess.make_dir_recursive_absolute(dir)
+	var row: Dictionary = {"id": "sized_bill", "name": "Sized bill", "theme": "social", "summary": "A row for this test.",
+		"position": {"economic": 0.0, "social": 0.0}, "majority": "simple", "cooldown_months": 12, "once": false,
+		"effects": {"bloc_offset": {"workers": 0.01}}, "magnitude": {"value": 40, "reference": 40, "unit": "lycees"}}
+	var file := FileAccess.open(dir.path_join("laws.json"), FileAccess.WRITE)
+	file.store_string(JSON.stringify({"laws": [row]}))
+	file.close()
+	var fresh = DataLoader.new()
+	PoliticsLoader.load_laws(fresh, dir)
+	if not fresh.errors.is_empty():
+		_fail("the test's row did not load: %s" % [fresh.errors])
+	if fresh.laws.size() != 1 or float(fresh.laws[0].magnitude.get("value", 0.0)) != 40.0 or String(fresh.laws[0].magnitude.get("unit", "")) != "lycees":
+		_fail("the loader dropped a row's magnitude: %s" % [fresh.laws])
+	row["magnitude"] = {"value": 0, "reference": 40, "unit": "lycees"}
+	file = FileAccess.open(dir.path_join("laws.json"), FileAccess.WRITE)
+	file.store_string(JSON.stringify({"laws": [row]}))
+	file.close()
+	var bad = DataLoader.new()
+	PoliticsLoader.load_laws(bad, dir)
+	if bad.errors.is_empty():
+		_fail("the loader took a magnitude of nothing")
+	DirAccess.remove_absolute(dir.path_join("laws.json"))
+	DirAccess.remove_absolute(dir)
 
 
 ## The party's own lean, read with the spatial term alone so the whip does not hide it.
@@ -787,6 +821,71 @@ func _check_the_vote_judges_a_pledge() -> void:
 		if President.rapport(ns, pid) != rapport or float(ns.person_grudges.get(pid, 0.0)) != grudge:
 			_fail("the vote charged a %s pledge: the deal prices it, not the division" % leg)
 		law.magnitude = {}
+
+
+## The person did not leave, the party holds no seat: nothing was delivered.
+func _check_a_pledge_is_broken_with_no_seat() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _graded()
+	var found := _no_party_and_person(ns, law)
+	if found.is_empty():
+		return
+	var pid: String = found[1]
+	President.pledge(state, ns, _loader, pid, law.id, _now(state) + 3)
+	ns.seats_by_party[found[0].id] = 0
+	DivisionTerms.judge_pledges(ns, law, _now(state))
+	if President.pledge_verdict(ns, pid, law.id) != "broken":
+		_fail("a pledge from a party with no seat reads '%s'" % President.pledge_verdict(ns, pid, law.id))
+
+
+## A defector pledges for the party they joined, and someone sitting alone cannot pledge.
+func _check_a_pledge_names_the_party_the_person_is_in() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _graded()
+	var found := _no_party_and_person(ns, law)
+	if found.is_empty():
+		return
+	var pid: String = found[1]
+	var other := ""
+	for party in _parties():
+		if party.id != found[0].id:
+			other = String(party.id)
+			break
+	ns.person_party_override[pid] = other
+	if not President.pledge(state, ns, _loader, pid, law.id, _now(state) + 3):
+		_fail("a defector's pledge was refused")
+	var rows: Array = President.pledges_on(ns, law.id)
+	if rows.size() != 1 or String(rows[0]["party_id"]) != other:
+		_fail("a defector's pledge names %s, want %s" % [rows, other])
+	President.withdraw_commitment(ns, "pledge", pid, "law:%s" % law.id)
+	ns.person_party_override[pid] = ""
+	if President.pledge(state, ns, _loader, pid, law.id, _now(state) + 3):
+		_fail("someone sitting alone pledged seats they do not have")
+
+
+## Judged twice over a game: the read is this bill's, and the later of its two marks.
+func _check_the_verdict_is_this_bill_and_the_latest() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _graded()
+	var found := _no_party_and_person(ns, law)
+	if found.is_empty():
+		return
+	var pid: String = found[1]
+	var due: int = _now(state) + 3
+	President.pledge(state, ns, _loader, pid, law.id, due)
+	DivisionTerms.judge_pledges(ns, law, _now(state))
+	if President.pledge_verdict(ns, pid, law.id) != "kept":
+		_fail("premise: the first pledge reads '%s'" % President.pledge_verdict(ns, pid, law.id))
+	if President.pledge_verdict(ns, pid, "another_bill") != "":
+		_fail("a mark on one bill reads on another: '%s'" % President.pledge_verdict(ns, pid, "another_bill"))
+	President.pledge(state, ns, _loader, pid, law.id, due)
+	ns.person_party_override[pid] = ""
+	DivisionTerms.judge_pledges(ns, law, _now(state))
+	if President.pledge_verdict(ns, pid, law.id) != "broken":
+		_fail("the later mark is 'broken', and the read says '%s'" % President.pledge_verdict(ns, pid, law.id))
 
 
 func _check_a_pledge_with_no_vote_is_void_at_no_price() -> void:
