@@ -28,6 +28,9 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Region = preload("res://src/core/region.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
+const Num = preload("res://src/ui/num.gd")
+
+const CLOSURE_GAP_SAID_PCT := 0.05
 
 ## One answer's column on a closure card, in px: three fit a docked window.
 const ANSWER_WIDTH := 300
@@ -148,6 +151,19 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % Strings.t(String(ANSWER.get(String(ask["default"]), ""))))
 
 
+## Why this plant, said as what the record kept the month it was announced: the firm's
+## own output, and the economy when it ran below its potential (the author's call on
+## #286: the reason is true). CLOSURE_GAP_SAID_PCT: under it the figure prints as 0.0.
+static func _closure_reason(row: Dictionary) -> String:
+	var months := int(row["window_months"])
+	var fell := Strings.tn("Its output fell %s %% in %d month.", "Its output fell %s %% in %d months.", months) % [
+		Num.f(100.0 * float(row["fall"]), 0), months]
+	var gap := float(row.get("gap_pct", 0.0))
+	if gap > -CLOSURE_GAP_SAID_PCT:
+		return fell
+	return fell + " " + Strings.t("The economy was %s %% below its potential.") % Num.f(-gap, 1)
+
+
 ## A closure: announced, its card and answers; searching, its months left.
 static func _closure(box: Control, state, loader, ns, row: Dictionary, closure: Callable) -> void:
 	var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
@@ -166,6 +182,8 @@ static func _closure(box: Control, state, loader, ns, row: Dictionary, closure: 
 		closing = Strings.t("%s will close its plant in %s: %s jobs, this month.") % [firm, place, jobs]
 	var head := PanelKit.plain_line(box, closing, PanelKit.Tone.PLAIN)
 	head.theme_type_variation = UiTheme.WARN_TEXT
+	if row.has("window_months"):
+		PanelKit.plain_line(box, _closure_reason(row), PanelKit.Tone.PLAIN)
 	var flow := PanelKit.buttons(box)
 	var what := "%s, %s" % [firm, place]
 	for option in Closures.answers(state, ns, loader, String(row["id"])):

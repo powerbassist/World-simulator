@@ -21,11 +21,24 @@ extends RefCounted
 ## (data/industry/closures.json, loader.closure_rule), never per firm.
 ##
 ## THE PLAYER'S NATION ONLY: a closure is a decision arrival, and a nation nobody
-## leads cannot answer one. One announcement a month at most, the worst fall first;
-## a firm in a process (processes.gd) does not announce, and a firm whose closure
-## ended waits `cooldown_months` (longer than a window and an answer, and its output
-## history is cleared at the announcement and at the cut, so a closure's own cut is
-## never the next fall).
+## leads cannot answer one. The rule fires per SECTOR (the parent's ruling on the majors
+## PR): fired per major, each real major added added closures (FRA 14 -> 39 a decade). A
+## sector falls when one of its majors has lost `fall` of its output over the window;
+## the majors' summed output was tried first and measured dead (0 to 2 a decade at 2 to
+## 4 %, 5 at 0.6 %): what falls 4 % in six months is a firm losing share to its rivals,
+## which the sum nets out. One fall closes one plant, at one of the majors past the
+## threshold, weighted by its jobs (not one in a process). One announcement a month at
+## most, the worst fall first.
+##
+## THE RATE IS A CHANCE THAT READS THE ECONOMY (the author's call on #286). A firm past
+## `fall` is nearly always there, so a closure waiting only on `cooldown_months` fired
+## every 26 months in a boom and in a slump alike: a timer, which no policy could move.
+## Now a falling sector closes a plant in a month with chance() on its own seed, more in
+## a slump and in a sector whose worst major fell further. `cooldown_months` is only a
+## floor (longer than a window and an answer, so a closure's own cut is never the next
+## fall), and tests/test_closures.gd fails if the rate stops reading the economy. The
+## output gap is the read: it is what a slump IS in this model (src/sim/cycle.gd), and a
+## policy reaches it. The record keeps what fell and the gap, for the card's reason.
 ##
 ## The record's place is `city_id` (not `city`: the firm entry's `city` is the
 ## industry machine's relocation key, single-writer by tests/test_industry.gd).
@@ -38,6 +51,7 @@ extends RefCounted
 ## no history yet", the truth for every older save.
 
 const Companies = preload("res://src/sim/companies.gd")
+const Economy = preload("res://src/sim/economy.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const K = preload("res://src/sim/closures_constants.gd")
@@ -59,9 +73,9 @@ static func tick_month(state, loader) -> void:
 	var majors: Array = Companies.majors_of(loader, ns.id)
 	for company in majors:
 		_resolve(ns, company, rule, now)
-	# The month's one announcement: the worst fall past the threshold.
-	var worst = null
-	var worst_fall := float(rule["fall"])
+	# Every major's window, the falls past the threshold gathered by sector: the rule
+	# fires per sector, or each real major added would add closures.
+	var falling := {}
 	for company in majors:
 		var entry: Dictionary = ns.companies.get(company.id, {})
 		if entry.is_empty() or _gone(entry):
@@ -74,14 +88,38 @@ static func tick_month(state, loader) -> void:
 		while h.size() > int(rule["window_months"]) + 1:
 			h.pop_front()
 		entry["closure_watch"] = h
-		if h.size() <= int(rule["window_months"]) or float(h[0]) <= 0.0 or not _may_announce(ns, company, entry, rule, now):
+		if h.size() <= int(rule["window_months"]) or float(h[0]) <= 0.0:
 			continue
 		var fall := (float(h[0]) - float(h[h.size() - 1])) / float(h[0])
-		if fall > worst_fall:
-			worst = company
-			worst_fall = fall
-	if worst != null:
-		_announce(ns, worst, ns.companies[worst.id], worst_fall, rule, now)
+		if fall > float(rule["fall"]) and Processes.live(ns, String(company.id)).is_empty():
+			if not falling.has(company.sector):
+				falling[company.sector] = {"worst": 0.0, "firms": []}
+			falling[company.sector]["worst"] = maxf(float(falling[company.sector]["worst"]), fall)
+			(falling[company.sector]["firms"] as Array).append([company, fall])
+	# The month's one announcement: the worst fall among the sectors that may announce
+	# and whose chance came up. The seed is the nation's, the sector's and the month's,
+	# so two runs of one game differ only by what the chance reads.
+	var worst := ""
+	var gap := Economy.output_gap_pct(ns)
+	for sector in falling:
+		var fall := float(falling[sector]["worst"])
+		if _sector_may_announce(ns, majors, sector, rule, now) \
+				and Cycle.unit("closure|fire|%s|%s" % [String(ns.id), sector], now) < chance(rule, fall, gap) \
+				and (worst == "" or fall > float(falling[worst]["worst"])):
+			worst = sector
+	if worst != "":
+		var pick: Array = _pick(ns, falling[worst]["firms"], worst, now)
+		_announce(ns, pick[0], ns.companies[pick[0].id], float(pick[1]), rule, now)
+
+
+## The month's chance that a falling sector closes a plant: `monthly_chance` at the
+## rule's `reference_fall` with the economy at its potential, moved by the two reads,
+## each bounded (closures_constants.gd). Below 1.0 always, and above 0 in the best of
+## booms: a plant can still close.
+static func chance(rule: Dictionary, worst_fall: float, gap_pct: float) -> float:
+	var fall_term := clampf(worst_fall / float(rule["reference_fall"]), 0.0, K.FALL_TERM_MAX)
+	var economy_term := clampf(1.0 - float(rule["gap_slope"]) * gap_pct, K.ECONOMY_TERM_MIN, K.ECONOMY_TERM_MAX)
+	return minf(float(rule["monthly_chance"]) * fall_term * economy_term, 1.0)
 
 
 ## The closures waiting for an answer or a buyer, as copies for a panel to read.
@@ -106,7 +144,7 @@ static func answers(state, ns, loader, closure_id: String) -> Array:
 	var row: Dictionary = found["row"]
 	var out: Array = [
 		{"id": "close", "kind": "close", "jobs_lost": float(row["jobs"]), "debt_eur_bn": 0.0,
-			"bloc_offset": (loader.closure_rule["bloc_offset"] as Dictionary).duplicate()},
+			"bloc_offset": _plant_offsets(loader.closure_rule, row)},
 		{"id": "buyer", "kind": "buyer", "jobs_lost": float(row["jobs"]), "bloc_offset": {},
 			"chance": K.BUYER_CHANCE, "months": K.BUYER_MONTHS,
 			"debt_eur_bn": _search_eur_bn(ns, found["company"], loader.closure_rule),
@@ -178,22 +216,51 @@ static func _resolve(ns, company, rule: Dictionary, now: int) -> void:
 			_cut(ns, company, entry, row, rule, now)
 
 
-static func _may_announce(ns, company, entry: Dictionary, rule: Dictionary, now: int) -> bool:
-	if not Processes.live(ns, String(company.id)).is_empty():
-		return false
-	var row: Dictionary = entry.get("closure", {})
-	if row.is_empty():
-		return true
-	if [ANNOUNCED, SEARCHING].has(String(row["status"])):
-		return false
-	return now - int(row["ended"]) >= int(rule["cooldown_months"])
+## Whether the sector may announce: none of its plants waits for an answer or a buyer,
+## and none of its closures ended within `cooldown_months`.
+static func _sector_may_announce(ns, majors: Array, sector: String, rule: Dictionary, now: int) -> bool:
+	for company in majors:
+		if company.sector != sector:
+			continue
+		var row: Dictionary = (ns.companies.get(company.id, {}) as Dictionary).get("closure", {})
+		# A void row is a firm that failed, no plant that closed: nothing to wait out.
+		if row.is_empty() or String(row["status"]) == "void":
+			continue
+		if [ANNOUNCED, SEARCHING].has(String(row["status"])) or now - int(row["ended"]) < int(rule["cooldown_months"]):
+			return false
+	return true
+
+
+## The major a sector's fall closes a plant of, as [company, its fall]: one of those past
+## the threshold, weighted by its jobs, on the sector's seed this month (stateless:
+## Cycle.unit consumes no stream).
+static func _pick(ns, firms: Array, sector: String, now: int) -> Array:
+	var total := 0.0
+	for firm in firms:
+		total += Companies.headcount(ns, firm[0])
+	var at := Cycle.unit("closure|pick|%s" % sector, now) * total
+	for firm in firms:
+		at -= Companies.headcount(ns, firm[0])
+		if at < 0.0:
+			return firm
+	return firms[firms.size() - 1]
+
+
+## A landed closure's bloc moves, for the strip and the cut: the rule's `bloc_offset` is
+## the move of a plant of `reference_jobs`, scaled by this plant's jobs.
+static func _plant_offsets(rule: Dictionary, row: Dictionary) -> Dictionary:
+	var out := {}
+	for bloc in rule["bloc_offset"]:
+		out[bloc] = float(rule["bloc_offset"][bloc]) * float(row["jobs"]) / float(rule["reference_jobs"])
+	return out
 
 
 static func _announce(ns, company, entry: Dictionary, fall: float, rule: Dictionary, now: int) -> void:
 	entry["closure"] = {
 		"id": "%s|%d" % [String(company.id), now], "company_id": String(company.id),
 		"city_id": Companies.live_city_of(ns, company), "status": ANNOUNCED, "announced": now,
-		"due": now + K.ANSWER_MONTHS, "ended": -1, "fall": fall,
+		"due": now + K.ANSWER_MONTHS, "ended": -1, "fall": fall, "window_months": int(rule["window_months"]),
+		"gap_pct": Economy.output_gap_pct(ns),
 		"jobs": Companies.headcount(ns, company) * float(rule["cut"]),
 	}
 	entry.erase("closure_watch")
@@ -210,7 +277,7 @@ static func _cut(ns, company, entry: Dictionary, row: Dictionary, rule: Dictiona
 	# The record names where the jobs went: a relocation since the announcement
 	# moved the payroll the cut removes.
 	row["city_id"] = Companies.live_city_of(ns, company)
-	var offsets: Dictionary = rule["bloc_offset"]
+	var offsets := _plant_offsets(rule, row)
 	var before: Dictionary = (ns.bloc_offset as Dictionary).duplicate()
 	for bloc in offsets:
 		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + float(offsets[bloc]),

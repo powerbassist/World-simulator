@@ -169,7 +169,7 @@ static func parse_closure_rule(parsed, path: String, errors: Array[String]) -> D
 		errors.append("%s: missing or invalid JSON" % path)
 		return {}
 	var fname := path.get_file()
-	for key in ["window_months", "fall", "cut", "cooldown_months"]:
+	for key in ["window_months", "fall", "cut", "cooldown_months", "reference_jobs", "monthly_chance", "reference_fall", "gap_slope"]:
 		if typeof(parsed.get(key)) != TYPE_FLOAT or float(parsed[key]) <= 0.0:
 			errors.append("%s: '%s' must be a number above 0" % [fname, key])
 			return {}
@@ -177,7 +177,7 @@ static func parse_closure_rule(parsed, path: String, errors: Array[String]) -> D
 		if float(parsed[key]) != floorf(float(parsed[key])):
 			errors.append("%s: '%s' is a whole number of months" % [fname, key])
 			return {}
-	for key in ["fall", "cut"]:
+	for key in ["fall", "cut", "monthly_chance", "reference_fall"]:
 		if float(parsed[key]) >= 1.0:
 			errors.append("%s: '%s' is a fraction, below 1" % [fname, key])
 			return {}
@@ -197,6 +197,8 @@ static func parse_closure_rule(parsed, path: String, errors: Array[String]) -> D
 	return {
 		"window_months": int(parsed["window_months"]), "fall": float(parsed["fall"]),
 		"cut": float(parsed["cut"]), "cooldown_months": int(parsed["cooldown_months"]),
+		"reference_jobs": float(parsed["reference_jobs"]), "monthly_chance": float(parsed["monthly_chance"]),
+		"reference_fall": float(parsed["reference_fall"]), "gap_slope": float(parsed["gap_slope"]),
 		"bloc_offset": (offsets as Dictionary).duplicate(),
 	}
 
