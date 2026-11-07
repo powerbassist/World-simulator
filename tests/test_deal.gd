@@ -95,6 +95,7 @@ func _init() -> void:
 	_check_a_bill_not_brought_breaks_the_word_and_releases_them()
 	_check_a_forced_bill_is_brought_and_voids_the_pledge()
 	_check_their_broken_pledge_voids_my_word()
+	_check_a_kept_pledge_leaves_the_word_standing()
 	_check_a_pledge_never_voted_lapses_unpriced()
 	_check_silence_stops_a_brief_then_ends_unpriced()
 
@@ -620,6 +621,8 @@ func _check_a_forced_bill_is_brought_and_voids_the_pledge() -> void:
 		_fail("a forced bill takes no vote, so the pledge leaves the live register")
 	if President.pledge_verdict(ns, f["person_id"], law.id) != "void":
 		_fail("no vote was taken, so the pledge is void, got %s" % President.pledge_verdict(ns, f["person_id"], law.id))
+	if _word_row(ns, f["person_id"], "law:%s" % f["law_id"]).is_empty():
+		_fail("a pledge void breaks nothing: the president's word stands")
 	var g := _law_deal(false)
 	Deal.grant(g["state"], g["ns"], _loader, g["session"])
 	var word_forced := Legislature.propose(g["state"], _loader, _law(String(g["law_id"])), true)
@@ -634,9 +637,16 @@ func _check_their_broken_pledge_voids_my_word() -> void:
 	var ns = f["ns"]
 	Deal.grant(f["state"], ns, _loader, f["session"])
 	Levers.close(f["state"], ns, _loader, f["session"])
+	var elsewhere := "programme:an_older_deal"
+	if not President.commit(f["state"], ns, _loader, "promise", f["person_id"], elsewhere, _now(f) + 24):
+		_fail("the fixture's older word was refused")
+	President.mark_rows(ns, elsewhere, "deal", "an_older_deal", f["person_id"])
 	ns.person_party_override[f["person_id"]] = ""
 	ns.tabled_bill = {"law_id": f["bill_id"]}
 	Division.divide(f["state"], _loader)
+	if _word_row(ns, f["person_id"], elsewhere).is_empty():
+		_fail("a broken pledge releases its own deal's word and no other")
+	President.withdraw_commitment(ns, "promise", f["person_id"], elsewhere)
 	if President.pledge_verdict(ns, f["person_id"], f["bill_id"]) != "broken":
 		_fail("the fixture's pledge should break, got %s" % President.pledge_verdict(ns, f["person_id"], f["bill_id"]))
 	# At the vote and not at the word's date: the judged register forgets in 12 months, and a
@@ -650,6 +660,18 @@ func _check_their_broken_pledge_voids_my_word() -> void:
 		_fail("they broke first, so my word is off, unpriced, got %s" % [judged])
 	if not is_equal_approx(President.rapport(ns, f["person_id"]), rapport):
 		_fail("a word they released costs nothing")
+
+
+func _check_a_kept_pledge_leaves_the_word_standing() -> void:
+	var f := _law_deal(true)
+	var ns = f["ns"]
+	Deal.grant(f["state"], ns, _loader, f["session"])
+	ns.tabled_bill = {"law_id": f["bill_id"]}
+	Division.divide(f["state"], _loader)
+	if President.pledge_verdict(ns, f["person_id"], f["bill_id"]) != "kept":
+		_fail("the fixture's pledge should be kept, got %s" % President.pledge_verdict(ns, f["person_id"], f["bill_id"]))
+	if _word_row(ns, f["person_id"], "law:%s" % f["law_id"]).is_empty():
+		_fail("they kept their half, so the president still owes the word")
 
 
 func _check_a_pledge_never_voted_lapses_unpriced() -> void:
