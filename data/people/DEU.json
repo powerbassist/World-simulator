@@ -131,6 +131,7 @@
     },
     {
       "id": "DEU_grotholt",
+      "start_regard_offset": -0.25,
       "social_skill": 0.51,
       "wealth_eur_m": 4.9,
       "name": "Marlene Grotholt",
@@ -686,6 +687,7 @@
     },
     {
       "id": "DEU_brinkmann",
+      "start_regard_offset": 0.05,
       "name": "Katharina Brinkmann",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -996,6 +998,7 @@
     },
     {
       "id": "DEU_tschirner",
+      "start_regard_offset": 0.10,
       "name": "Silke Tschirner",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -1105,6 +1108,7 @@
     },
     {
       "id": "DEU_frevert",
+      "start_regard_offset": 0.10,
       "name": "Jörn Frevert",
       "kind": "politician",
       "traits": [

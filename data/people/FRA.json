@@ -22,6 +22,7 @@
     },
     {
       "id": "FRA_vasseur",
+      "start_regard_offset": -0.10,
       "social_skill": 0.66,
       "wealth_eur_m": 4.8,
       "name": "Hélène Vasseur",
@@ -50,6 +51,7 @@
     },
     {
       "id": "FRA_lachapelle",
+      "start_regard_offset": 0.10,
       "social_skill": 0.49,
       "wealth_eur_m": 1.6,
       "name": "Bruno Lachapelle",
@@ -68,6 +70,7 @@
     },
     {
       "id": "FRA_ferrand",
+      "start_regard_offset": 0.05,
       "social_skill": 0.67,
       "wealth_eur_m": 8.2,
       "name": "Camille Ferrand",
@@ -995,6 +998,7 @@
     },
     {
       "id": "FRA_saint_leger",
+      "start_regard_offset": 0.05,
       "social_skill": 0.64,
       "wealth_eur_m": 3.6,
       "name": "Loïc Saint-Léger",
@@ -1124,6 +1128,7 @@
     },
     {
       "id": "FRA_valsergent",
+      "start_regard_offset": 0.05,
       "social_skill": 0.76,
       "wealth_eur_m": 1.9,
       "name": "Aurélien Valsergent",

@@ -879,6 +879,7 @@
     },
     {
       "id": "POL_malinowski",
+      "start_regard_offset": 0.05,
       "name": "Dariusz Malinowski",
       "kind": "politician",
       "traits": [
@@ -974,6 +975,7 @@
     },
     {
       "id": "POL_sadowski",
+      "start_regard_offset": 0.05,
       "name": "Stanisław Sadowski",
       "kind": "politician",
       "traits": [

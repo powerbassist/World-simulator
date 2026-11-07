@@ -2,6 +2,7 @@
   "people": [
     {
       "id": "GBR_wexford",
+      "start_regard_offset": -0.20,
       "social_skill": 0.7,
       "wealth_eur_m": 3.2,
       "name": "Caroline Wexford",
@@ -88,6 +89,7 @@
     },
     {
       "id": "GBR_cobbett",
+      "start_regard_offset": 0.10,
       "social_skill": 0.64,
       "wealth_eur_m": 2.5,
       "name": "Miriam Cobbett",
@@ -116,6 +118,7 @@
     },
     {
       "id": "GBR_kilbride",
+      "start_regard_offset": 0.15,
       "social_skill": 0.6,
       "wealth_eur_m": 3.0,
       "name": "Rhona Kilbride",
@@ -754,6 +757,7 @@
     },
     {
       "id": "GBR_danvers",
+      "start_regard_offset": 0.10,
       "name": "Imogen Danvers",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -959,6 +963,7 @@
     },
     {
       "id": "GBR_nethercott",
+      "start_regard_offset": 0.10,
       "name": "Gwendolen Nethercott",
       "kind": "politician",
       "voice": "politician_f_50",
