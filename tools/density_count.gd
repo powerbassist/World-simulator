@@ -104,6 +104,20 @@ static func saved_by(answers: Array) -> Array:
 	return out
 
 
+## The sector the active player moves `move` of a line's share from, into warned sector
+## `into`: the largest other one that can pay it and stay at the floor, and is not warned
+## itself. "" when none can: a refused move is no answer, and a move out of a warned
+## sector only deepens that one, so the player then leaves the warning unanswered.
+static func donor(shares: Dictionary, into: String, warned: Array, move: float, floor_share: float) -> String:
+	var best := ""
+	for id in shares:
+		if String(id) == into or warned.has(id) or float(shares[id]) - move < floor_share:
+			continue
+		if best == "" or float(shares[id]) > float(shares[best]):
+			best = String(id)
+	return best
+
+
 ## One month: each candidate is {source, subject, state, domain, due ("arrival" or
 ## "deadline"), answers: [strip]}. Returns the candidates sorted three ways --
 ## `counted`, `dull` (not meaningful) and `repeat` (section 7 item 3) -- and

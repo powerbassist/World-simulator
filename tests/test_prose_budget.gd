@@ -57,7 +57,7 @@ const PENDING := {}
 const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250, "events": 95, "commodities": 210,
 	"companies": 145}
 const TOTAL_PENDING := {
-	"budget": 109, "calendar": 42, "campaign": 140,
+	"budget": 113, "calendar": 42, "campaign": 140,
 	"diplomacy": 22, "economy": 115, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106, "tax": 24,
@@ -70,14 +70,23 @@ const TOTAL_PENDING := {
 ## spec 3.2 asks for, 9 words on a tab still at 22 of its 145. A second, 2943 -> 2947
 ## (the parent's call): the Budget's "of which regional aid" line, the development
 ## fund's money on a line of its own (spec 3.3 (a)), "—" at rest like its siblings
-## rather than a row that comes and goes; the Budget's held total 105 -> 109.
-const TOTAL_SUM_CEILING := 2947
+## rather than a row that comes and goes; the Budget's held total 105 -> 109. A
+## third, 2947 -> 2951, the same shape (#277's "of which plant rescues"; 109 -> 113).
+## The parent's standing rule since: a Budget row of that shape (one named line, four
+## words, "—" at rest) rises with no call, said in its PR body.
+const TOTAL_SUM_CEILING := 2951
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
 ## card on the Industry tab, its first major's verbs open and one verb focused --
 ## one full strip and the other verbs' name and money line -- under 90 words.
 const INDUSTRY_CARD_CEILING := 90
+## The same band for a spending line's tile on the Budget (spec 3.1), opened with
+## its share move and strip.
+const SECTOR_TILE_CEILING := 90
+## An announced closure's row on In progress, its answers and its counters (the
+## parent's ruling on #287): a decision this size must read at a glance.
+const CLOSURE_CARD_CEILING := 100
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit", "audience"]
@@ -131,6 +140,9 @@ func _initialize() -> void:
 	for fixture in ["calm", "tense", "crisis"]:
 		await _sweep_briefing(main, fixture)
 	await _sweep_industry_card(main)
+	await _sweep_closure_card(main)
+	await _sweep_sector_tile(main)
+	await _sweep_warned_tile(main)
 	_report()
 	quit(1 if not _failures.is_empty() else 0)
 
@@ -232,6 +244,77 @@ func _sweep_briefing(main, fixture: String) -> void:
 		_fail("briefing (%s): %d visible words, the ceiling is %d" % [fixture, total, BRIEFING_CEILING])
 	BriefingDriver.close(main)
 	await process_frame
+
+
+## A6: the health line's tile on the Budget, opened with its verb and strip.
+func _sweep_sector_tile(main) -> void:
+	var panel = main._budget_panel
+	main._windows.open("budget", true)
+	panel._open_line = "health"
+	panel.mark_dirty()
+	await process_frame
+	await process_frame
+	var total := 0
+	for node in _visible_text_nodes(panel._sector_box):
+		total += _words(_text_of(node)).size()
+	print("prose: sector tile (health, opened) %d words" % total)
+	if total == 0:
+		_fail("sector tile: the health tile drew nothing")
+	if total > SECTOR_TILE_CEILING:
+		_fail("sector tile: %d visible words, the ceiling is %d (A6)" % [total, SECTOR_TILE_CEILING])
+	panel._open_line = ""
+	main._windows.close_all()
+
+
+## The announced closure, as it arrives: its three answers, its chips, the first chip's
+## strip. Taken back off the register after, so no later count sees it.
+func _sweep_closure_card(main) -> void:
+	var state = main._state
+	var ns = state.player()
+	var major = preload("res://src/sim/companies.gd").majors_of(main._loader, ns.id)[0]
+	preload("res://src/sim/closures.gd")._announce(ns, major, ns.companies[major.id], 0.2, main._loader.closure_rule, state.year * 12 + state.month)
+	var panel = main._companies_panel
+	main._windows.open("companies", true)
+	panel.mark_dirty()
+	await process_frame
+	await process_frame
+	var total := 0
+	for node in _visible_text_nodes(panel._progress):
+		var words := _words(_text_of(node))
+		total += words.size()
+		if _dump.has("closure_card"):
+			print("dump closure_card %3d %s: %s" % [words.size(), node.get_class(), _text_of(node).left(90)])
+	print("prose: closure card (announced, first chip) %d words" % total)
+	if total > CLOSURE_CARD_CEILING:
+		_fail("closure card: %d visible words, the ceiling is %d" % [total, CLOSURE_CARD_CEILING])
+	if total == 0:
+		_fail("closure card: nothing on the tab; the count proves nothing")
+	(ns.companies[major.id] as Dictionary).erase("closure")
+	panel.mark_dirty()
+	main._windows.close_all()
+
+
+## The same band with every sector of the line warned: the marks, the reason, the raise.
+func _sweep_warned_tile(main) -> void:
+	var ns = main._state.player()
+	var had: Dictionary = (ns.sector_drift as Dictionary).duplicate(true)
+	ns.sector_drift["base_gdp_per_head"] = float(ns.gdp_eur_bn) / float(ns.population) * 1.5
+	var panel = main._budget_panel
+	main._windows.open("budget", true)
+	panel._open_line = "health"
+	panel.mark_dirty()
+	await process_frame
+	await process_frame
+	var total := 0
+	for node in _visible_text_nodes(panel._sector_box):
+		total += _words(_text_of(node)).size()
+	print("prose: sector tile (health, all warned) %d words" % total)
+	if total > SECTOR_TILE_CEILING:
+		_fail("sector tile, warned: %d visible words, the ceiling is %d (A6)" % [total, SECTOR_TILE_CEILING])
+	ns.sector_drift = had
+	panel._open_line = ""
+	panel.mark_dirty()
+	main._windows.close_all()
 
 
 ## A6: the opened card, as a player leaves it mid-decision.

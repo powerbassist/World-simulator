@@ -19,10 +19,13 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
+const ProcessAsks = preload("res://src/sim/process_asks.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
+const Closures = preload("res://src/sim/closures.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Society = preload("res://src/sim/society.gd")
 const Demography = preload("res://src/sim/demography.gd")
@@ -180,6 +183,9 @@ static func recompute(state, ns) -> void:
 		# third that STOPS: a fund runs its years and ends. Billed a month behind, as
 		# every computed line is, for the same precondition-field reason.
 		+ ns.region_fund_bill_pct_gdp
+		# V5.3 a. The plant rescues' line (src/sim/closures.gd, the parent's call 4 on
+		# #277), the fourth that STOPS: a rescue runs its term and ends. A month behind.
+		+ ns.rescue_bill_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -545,12 +551,22 @@ static func projection_done(job: ProjectionJob) -> bool:
 	return job.sim != null and job.months_left == 0 and job.units.is_empty()
 
 
+## A projection's copy: the pending committed on it, and blind to the other side's
+## answer to a counter (process_asks.gd). One function, because the forecast starts a
+## job from it too when a share move is drafted (budget_forecast.gd), and a second copy
+## of these lines is how that road once saw the answer a month early (QA on #285).
+static func projection_copy(state, pending: Dictionary):
+	var sim = state.duplicate_state()
+	commit(sim, pending)
+	ProcessAsks.blind(sim)
+	return sim
+
+
 ## The next unit: the copy (and the pending committed on it) first, then one
 ## projected month's units at a time.
 static func projection_step(job: ProjectionJob) -> void:
 	if job.sim == null:
-		job.sim = job.state.duplicate_state()
-		commit(job.sim, job.pending)
+		job.sim = projection_copy(job.state, job.pending)
 		return
 	if job.units.is_empty():
 		job.units = _projected_month(job)
@@ -661,6 +677,10 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# re-baseline measured unemployment as the largest channel moved
 	# through exactly this read.
 	units.append(func() -> void: Industry.tick_month(sim, loader))
+	# V5.3 a: the plant rescues' terms in Closures' slot (after Industry), and only
+	# those: a rescue's bill ends inside the window when its term does (the parent's
+	# call 4 on #277). Announcements and cuts stay out, as the forecast runs no draw.
+	units.append(func() -> void: Closures.tick_rescues(sim))
 	# In main.gd's slot -- between Companies and Investment -- and absent
 	# altogether until the V2.8 review, which is the one system here that had
 	# neither a paragraph justifying its presence nor Media's paragraph
@@ -694,6 +714,9 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# V5.3 a: in WorldMonth's slot, after Projects, for Projects' reason: a fund's
 	# bill and its regional term end when its years do, inside the projected window.
 	units.append(func() -> void: RegionFunds.tick_month(sim))
+	# V5.3 a: in WorldMonth's slot, after RegionFunds: a sector priority's term ends and
+	# its cap moves inside the window, as the real month's do.
+	units.append(func() -> void: Sectors.tick_month(sim))
 	# In main.gd's slot. V1.7a needed it for the campaign bill, which V5.2 C6 retired:
 	# the party pays now, on this copy only (party_money_delta_eur_m is DEEP), so the
 	# forecast spends no real money. Kept so the projected register still opens, pays
@@ -845,5 +868,6 @@ static func snapshot(state) -> Dictionary:
 		# V5.3 a, on the snapshot for the same reason: the Budget table's fund row
 		# compares a projected month against the current one (Interface's ask).
 		"region_fund_bill_pct_gdp": ns.region_fund_bill_pct_gdp,
+		"rescue_bill_pct_gdp": ns.rescue_bill_pct_gdp,
 		"sectors": ns.sector_output.duplicate(true),
 	}

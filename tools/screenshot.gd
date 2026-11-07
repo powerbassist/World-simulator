@@ -44,9 +44,20 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --bill-refused --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --slipping --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --sectors --slipping --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-back --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority-cap --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority-rest --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
@@ -472,16 +483,36 @@ var _moved := false
 ## and its answers, the card's "Decision due"), the first major's sector
 ## card open, its Act open and its first verb that can run focused (one strip).
 var _industry := false
+## V5.3 a + b (spec 3.1): the Budget with the health line's tile open -- its sectors'
+## bars and quantities, the share move with its strip.
+var _sectors := false
+## #288: with --sectors, money per head down so every sector warns, with a trend drawn.
+var _slipping := false
 ## V5.3 a + b (#251): a plant closure announced on the first major, its card and
 ## its answers side by side on the Industry tab's In progress strip.
 var _closure := false
+## #285: with --closure, the buyer came back: the one month's re-ask at the old price.
+var _buyer_back := false
+## #287: with --closure, the buyer walked over a counter: its one result line, BAD.
+var _buyer_walked := false
 
 ## V5.3 a + b (spec 3.3 (a), #263): the Territory tab with a region opened -- its one
 ## problem first, then the development fund's sums, strip and Start; a fund already
 ## runs on the second region. With --fund-cap two more run elsewhere, the cap of
 ## three, and the opened region's Start is greyed with the sim's line under it.
+## #281: the Industry tab the month a seller walked: its one closed line, BAD, with the hold.
+var _walked := false
+## With --walked: a bill on that firm adopted inside the hold: its one card in the inbox.
+var _bill_refused := false
 var _fund := false
 var _fund_cap := false
+
+## V5.3 a (spec 3.3 (a) 1, #267): the same opened region with its sector priority.
+## --priority: the region holds its first sector, the picker on the second, its
+## strip live. --priority-cap: it holds two, the picker on a third, the verb greyed
+## with the cap's line. --priority-rest: it held the second and ended it, the picker
+## on it, greyed with the rest's line and the month it is free again.
+var _priority := ""
 
 ## V4.2 close-out. A draft the machine has parked renders NOWHERE on the law
 ## panel -- ns.draft_bills reaches the UI only through the briefing popup ("In
@@ -965,12 +996,26 @@ func _init() -> void:
 			_moved = true
 		elif args[i] == "--industry":
 			_industry = true
+		elif args[i] == "--sectors":
+			_sectors = true
+		elif args[i] == "--slipping":
+			_slipping = true
 		elif args[i] == "--closure":
 			_closure = true
+		elif args[i] == "--buyer-back":
+			_buyer_back = true
+		elif args[i] == "--buyer-walked":
+			_buyer_walked = true
+		elif args[i] == "--walked":
+			_walked = true
+		elif args[i] == "--bill-refused":
+			_bill_refused = true
 		elif args[i] == "--fund":
 			_fund = true
 		elif args[i] == "--fund-cap":
 			_fund_cap = true
+		elif args[i] in ["--priority", "--priority-cap", "--priority-rest"]:
+			_priority = String(args[i]).trim_prefix("--")
 		elif args[i] == "--forecast-computing":
 			_forecast_computing = true
 		elif args[i] == "--month-closing":
@@ -1260,6 +1305,13 @@ func _apply_view() -> void:
 		_move_the_levers()
 	if _industry:
 		_stage_the_industry_tab()
+	if _slipping:
+		var drifting = _main._state.player()
+		drifting.sector_drift["base_gdp_per_head"] = float(drifting.gdp_eur_bn) / float(drifting.population) * 1.5
+		drifting.sector_drift["history"] = {"hospitals": [5.34, 5.3, 5.22, 5.1, 4.9, 4.7, 4.45]}
+	if _sectors:
+		_main._budget_panel._open_line = "health"
+		_main._budget_panel.mark_dirty()
 	if _closure:
 		var ns = _main._state.player()
 		var major = Companies.majors_of(_main._loader, ns.id)[0]
@@ -1268,6 +1320,14 @@ func _apply_view() -> void:
 		_main._companies_panel.mark_dirty()
 	if _fund:
 		_stage_a_fund()
+	if _buyer_back:
+		_stage_a_buyer_back()
+	if _buyer_walked:
+		_stage_a_buyer_walked()
+	if _walked:
+		_stage_a_walk()
+	if _priority != "":
+		_stage_a_priority()
 	if _compose:
 		_draft_a_bill()
 	if _pmb:
@@ -2022,6 +2082,57 @@ func _open_the_tax_code() -> void:
 ## For --moved: health up a point and a half, education down half a point,
 ## income up two, VAT down one -- each through its slider, so the panels hear the
 ## edit the way a drag sends it.
+func _stage_a_buyer_walked() -> void:
+	var state = _main._state
+	var now: int = state.year * 12 + state.month
+	for entry in state.player().companies.values():
+		var row: Dictionary = entry.get("closure", {})
+		if not row.is_empty():
+			row["countered"] = 0.15
+			# Both as Closures.answer() writes them on a countered row: the query reads them.
+			row["sweetener_eur_bn"] = 0.06
+			row["back_sweetener_eur_bn"] = 0.07
+			row["status"] = "closed"
+			row["ended"] = now
+			row["negotiation"] = {"answer": "negotiate_15", "outcome": "walked", "month": now}
+	_main._companies_panel.mark_dirty()
+
+
+func _stage_a_buyer_back() -> void:
+	var closures = preload("res://src/sim/closures.gd")
+	var state = _main._state
+	var ns = state.player()
+	for entry in ns.companies.values():
+		var row: Dictionary = entry.get("closure", {})
+		if String(row.get("status", "")) == closures.ANNOUNCED:
+			for a in closures.answers(state, ns, _main._loader, String(row["id"])):
+				if String(a["kind"]) == "buyer":
+					row["back_sweetener_eur_bn"] = float(a["sweetener_eur_bn"])
+			var now: int = state.year * 12 + state.month
+			row["status"] = closures.OFFERED
+			row["offered"] = now
+			row["due"] = now + 1
+	_main._companies_panel.mark_dirty()
+
+
+func _stage_a_walk() -> void:
+	var processes = preload("res://src/sim/processes.gd")
+	var state = _main._state
+	var ns = state.player()
+	var major = Companies.majors_of(_main._loader, ns.id)[0]
+	for action in _main._loader.company_actions:
+		if String(action.id) == "minority_stake":
+			processes.start(state, ns, _main._loader, action, String(major.id))
+	var row: Dictionary = ns.processes[-1]
+	row["status"] = "walked"
+	row["closed"] = state.year * 12 + state.month
+	_main._companies_panel.mark_dirty()
+	if _bill_refused:
+		preload("res://src/sim/legislature.gd").apply_effects(state, ns,
+			{"company_ownership": {"company_id": String(major.id), "action_id": "full_nationalisation"}}, _main._loader)
+		preload("res://src/ui/proposal_note.gd").card_ownership_refusal(_main)
+
+
 func _stage_a_fund() -> void:
 	var funds = preload("res://src/sim/region_funds.gd")
 	var state = _main._state
@@ -2036,6 +2147,33 @@ func _stage_a_fund() -> void:
 		funds.start(state, ns, loader, named[i].id, low, 2)
 	var panel = _main._windows.content("region")
 	panel._open_region = String(named[0].id)
+	panel.mark_dirty()
+
+
+func _stage_a_priority() -> void:
+	var sectors = preload("res://src/sim/sectors.gd")
+	var state = _main._state
+	var ns = state.player()
+	var loader = _main._loader
+	var region = null
+	for r in loader.regions.get(ns.id, []):
+		if region == null and preload("res://src/sim/regions.gd").output_eur_bn(ns, r.id) > 0.0:
+			region = r
+	var picks: Array = []
+	for line in loader.domains:
+		for s in sectors.sectors_of(loader, String(line)):
+			picks.append([String(line), String(s["id"])])
+	sectors.set_priority(state, ns, loader, picks[0][0], picks[0][1], region.id)
+	var picked: Array = picks[1]
+	if _priority == "priority-cap":
+		sectors.set_priority(state, ns, loader, picks[1][0], picks[1][1], region.id)
+		picked = picks[2]
+	elif _priority == "priority-rest":
+		sectors.set_priority(state, ns, loader, picks[1][0], picks[1][1], region.id)
+		sectors.clear_priority(state, ns, picks[1][1])
+	var panel = _main._windows.content("region")
+	panel._open_region = String(region.id)
+	panel._priority_pick = "%s|%s" % picked
 	panel.mark_dirty()
 
 

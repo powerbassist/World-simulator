@@ -577,3 +577,29 @@ const PROCESS_SETTLEMENT_BLOC := 0.5
 ## after the settlement (the parent's call on #248: a cooldown, so the fine cannot
 ## come back every year, and not a bar for ever). Processes.refusal reads it.
 const PROCESS_SETTLED_COOLDOWN_MONTHS := 36
+
+## V5.3 b, Negotiate on a price ask (src/sim/negotiation.gd; the author's idea, the
+## parent's mechanic). ALL STAND-INS, no published source sizes a counter's odds.
+## The three counters the strip offers, as a share of the price: less to pay or more
+## to receive.
+const NEGOTIATE_COUNTERS := [0.05, 0.10, 0.15]
+## The other side's odds of accepting: x at a counter of nothing, falling by y per
+## unit of counter -- 0.75, 0.55 and 0.35 for the three counters at an even leverage,
+## so the smallest is likelier than not and the largest a gamble.
+const NEGOTIATE_ODDS := Vector2(0.95, 4.0)
+## How far the other side's strength moves those odds, at its full strength (1) or
+## weakness (-1): a fifth either way, so a strong side halves the middle counter's
+## chance without making any counter hopeless.
+const NEGOTIATE_LEVERAGE := 0.20
+## No counter is ever certain or hopeless.
+const NEGOTIATE_ODDS_BOUNDS := Vector2(0.05, 0.95)
+## The strip's range is this either side of a window holding the truth (the break-up
+## odds' PROCESS_ODDS_FOG, the same fog).
+const NEGOTIATE_FOG := 0.10
+## Of the refusals, the share where the other side walks away; the rest come back the
+## next month at the old price. Even, so a refusal is a coin the strip shows.
+const NEGOTIATE_WALK := 0.5
+## After the other side walks away, its side's verbs on the firm wait this many months:
+## the purchases after a seller walks, the sale after the buyers do (the parent's call 1
+## on Negotiate: a cooldown, as a settlement's, two years; per side by its #280 ruling).
+const NEGOTIATE_WALK_COOLDOWN_MONTHS := 24

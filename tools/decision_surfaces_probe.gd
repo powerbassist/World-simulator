@@ -70,7 +70,7 @@ extends SceneTree
 ## builds each answer's effects strip from the sim's own numbers; the rule (what is
 ## meaningful, the 3-month repeat, the band) is tools/density_count.gd's, pinned by
 ## tests/test_density_count.gd. The sources, all that exist on main (the spec's
-## process stages, sector and region warnings, polls on any measure, divisions open
+## process stages, region warnings, polls on any measure, divisions open
 ## to an address and plant closures are not built yet, and count nothing here):
 ##   event      a desk entry: its arrival, and its last month (months_left <= 1,
 ##              the lapse guard); answers = its choices' authored effects;
@@ -87,7 +87,11 @@ extends SceneTree
 ##   closure    a plant closure announced (src/sim/closures.gd; the month it is
 ##              announced, and its deadline month); answers = Closures.answers():
 ##              let it close (the rule's bloc offsets), seek a buyer (none), and
-##              the firm's subsidy verbs (their bloc offsets) (V5.3 a);
+##              rescue the plant for its term (none) (V5.3 a), and the buyer's three
+##              counters (Negotiate PR 2: a buyer search too); a buyer that came back
+##              (offered) is asked again the month it returns; the active regime
+##              answers an announcement by _closure_pick (the cheapest cost per job
+##              kept under a ceiling, else close; a counter is never its pick);
 ##   process    a process's ask (src/sim/process_asks.gd), the month it is posted;
 ##              answers = each answer's debt booked once and bloc offsets (V5.3 a);
 ##   programme  the term-start offer (Programme.available non-empty after a month
@@ -102,8 +106,11 @@ extends SceneTree
 ## on its arrows. Subjects for the repeat rule: event|id, request|person (state =
 ## the want), bid|firm (state = the bidder), failing|firm, closure|id, programme|term.
 ## In the ACTIVE regime the player answers every announced closure in the month
-## after it, the way an engaged player would: a rescue verb when the firm has one,
-## else a buyer search (a modelled habit, not the game's rule).
+## after it, the way an engaged player would, by _closure_pick (the parent's call 5
+## on #277): the answer that keeps a job for the least expected money (the rescue's
+## term per job, a buyer's search and chance-weighted sweetener per job a sale
+## keeps) if it is at most CLOSURE_MAX_EUR_PER_JOB, else it lets the plant close (a
+## modelled habit, not the game's rule).
 ## V5.3 a, the parent's call on the asks PR: in `--density` the ACTIVE player also
 ## opens processes, as an engaged player would -- a modelled habit, not the game's
 ## rule: at most one a year, only when a reason is on the desk (a foreign bid on a
@@ -130,6 +137,9 @@ const Budget = preload("res://src/sim/budget.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Closures = preload("res://src/sim/closures.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
+const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
+const DomainsK = preload("res://src/sim/domains_constants.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
@@ -155,9 +165,21 @@ const RF4_MAX_DISMISSALS := 2
 const RF4_SHARE := 0.90
 const BUDGET_MODAL_A_YEAR := 4.0
 const BUDGET_CARDS_A_YEAR := 6.0
+## The active player's ceiling on a closure answer's expected cost per job kept, in
+## EUR (_closure_pick). A probe policy, not a sim number: above the rescue's EUR
+## 180,000 a job, so a plant no buyer keeps cheaper is rescued.
+const CLOSURE_MAX_EUR_PER_JOB := 250000.0
+## The share of a line the active player moves into a warned sector (_act). A probe
+## policy, not a sim number.
+const ACTIVE_SECTOR_MOVE := 0.02
 
 var _loader
 var _priorities = null
+## The active regime's closure answers in the current run, by answer id (_act).
+var _closure_picks := {}
+## The active regime's answers to sector warnings in the current run (_act): a share moved,
+## or none where no sector of the line can pay.
+var _sector_answers := {"moved": 0, "none": 0}
 var _music_band = null
 
 
@@ -277,16 +299,53 @@ func _act(state, ns) -> void:
 				break
 	for request in Audiences.pending(ns):
 		Audiences.delegate(state, ns, _loader, String(request["id"]))
-	# V5.3 a: an announced closure, rescued when the firm has a verb, else a buyer sought.
+	# V5.3 a: an announced closure is answered by _closure_pick (the parent's call 5 on
+	# #277: a mixed policy, not always the rescue).
 	for row in Closures.open(ns):
 		if String(row["status"]) != Closures.ANNOUNCED:
 			continue
-		var pick := "buyer"
-		for a in Closures.answers(state, ns, _loader, String(row["id"])):
-			if String(a["kind"]) == "rescue":
-				pick = String(a["id"])
-				break
+		var pick := _closure_pick(Closures.answers(state, ns, _loader, String(row["id"])), float(row["jobs"]))
+		_closure_picks[pick] = int(_closure_picks.get(pick, 0)) + 1
 		Closures.answer(state, ns, _loader, String(row["id"]), pick)
+	# V5.3 a + b: a sector warning is answered the month after it arrived, by the free
+	# verb: a share of the line moved into the sector from a sector that can pay
+	# (DensityCount.donor). Raising the line would change the budget of a run that is
+	# measuring the world's arrivals. A line with no such sector goes unanswered, France's,
+	# Germany's and Poland's pensions from the first warning, and the tally says how many.
+	for row in SectorWarnings.arrivals(ns, _loader, int(state.year) * 12 + int(state.month) - 1):
+		var line := String(row["line"])
+		var shares := Sectors.shares(ns, _loader, line)
+		var warned: Array = shares.keys().filter(func(id) -> bool: return SectorWarnings.warning(ns, _loader, line, String(id)) != "")
+		var donor := DensityCount.donor(shares, String(row["id"]), warned, ACTIVE_SECTOR_MOVE, DomainsK.MIN_SHARE)
+		var answered := donor != "" and bool(Sectors.move_share(ns, _loader, line, donor, String(row["id"]), ACTIVE_SECTOR_MOVE).get("ok", false))
+		_sector_answers["moved" if answered else "none"] += 1
+
+
+## The active player's answer to a closure (the parent's call 5 on #277): the answer
+## that keeps a job for the least expected money, if that is at most
+## CLOSURE_MAX_EUR_PER_JOB, else let it close. A rescue's cost per job is its money
+## over the term per job; a buyer's is its search plus the sweetener a sale would pay,
+## weighted by the sale's chance, per job a sale would keep (chance x jobs). The
+## rescue is priced per job (RESCUE_EUR_PER_JOB_YEAR x its term, EUR 180,000 at the
+## stand-ins) and always on offer, so a threshold on its cost alone would be a switch
+## (always or never): the plant-to-plant difference is the buyer's, and the policy
+## takes the buyer where a sale keeps a job for less than a rescue does.
+func _closure_pick(answers: Array, jobs: float) -> String:
+	var best := "close"
+	var best_cost := CLOSURE_MAX_EUR_PER_JOB
+	for a in answers:
+		var cost := INF
+		match String(a["kind"]):
+			"rescue":
+				cost = 1e9 * float(a["total_eur_bn"]) / maxf(jobs, 1.0)
+			"buyer":
+				var chance := float(a["chance"])
+				if chance > 0.0:
+					cost = 1e9 * (float(a["debt_eur_bn"]) + chance * float(a["sweetener_eur_bn"])) / maxf(chance * jobs, 1.0)
+		if cost <= best_cost:
+			best = String(a["id"])
+			best_cost = cost
+	return best
 
 
 func _desk_ids(ns) -> Dictionary:
@@ -685,6 +744,8 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 	# The new game's programme offer is open before the first tick (months_in_term
 	# is 0 only then), so it is counted in the first month's row.
 	var opening: Array = Programme.available(state, ns, _loader)
+	_closure_picks = {}
+	_sector_answers = {"moved": 0, "none": 0}
 	for i in range(months):
 		month += 1
 		if month > 12:
@@ -709,6 +770,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		_request_candidates(state, ns, report, now, candidates)
 		_firm_candidates(state, ns, now, candidates)
 		_closure_candidates(state, ns, now, candidates)
+		_sector_candidates(state, ns, now, candidates)
 		_process_candidates(state, ns, now, candidates)
 		if i == 0 and not opening.is_empty():
 			candidates.append(_programme_candidate(state, ns, opening))
@@ -764,7 +826,8 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 	var world_rows: Array = rows.map(func(r) -> Dictionary:
 		return {"now": r["now"], "count": r["world"], "domains": r["domains_world"]})
 	return {"nation": nation_id, "regime": regime, "band": DensityCount.summary(rows),
-		"band_world": DensityCount.summary(world_rows), "tally": tally, "rows": rows}
+		"band_world": DensityCount.summary(world_rows), "tally": tally, "rows": rows,
+		"closure_picks": _closure_picks.duplicate(), "sector_answers": _sector_answers.duplicate()}
 
 
 ## The active player's modelled habit (header): at most one process a year, only
@@ -887,24 +950,40 @@ func _firm_candidates(state, ns, now: int, out: Array) -> void:
 
 
 ## A plant closure, the month it is announced and in its last month to answer:
-## each answer as its bloc offsets (the jobs a cut loses under `other`).
+## each answer as its bloc offsets (the jobs a cut loses under `other`). A buyer that
+## came back at the old sweetener (Negotiate PR 2, the parent's ruling (b): status
+## offered) is asked again, a new state of the same subject, the month it returns.
 func _closure_candidates(state, ns, now: int, out: Array) -> void:
 	for row in Closures.open(ns):
-		if String(row["status"]) != Closures.ANNOUNCED:
+		var offered := String(row["status"]) == Closures.OFFERED
+		if String(row["status"]) != Closures.ANNOUNCED and not offered:
 			continue
-		var is_new := int(row["announced"]) == now
+		var is_new := int(row["offered"] if offered else row["announced"]) == now
 		if not is_new and int(row["due"]) - now != 1:
 			continue
 		var answers: Array = []
 		for a in Closures.answers(state, ns, _loader, String(row["id"])):
 			var strip := _effects_strip(state, {"bloc_offset": a["bloc_offset"]})
 			strip["other"]["jobs"] = -float(a["jobs_lost"])
-			# A buyer search is a process stage (density_count's `stage` axis).
-			if String(a["kind"]) == "buyer":
+			# A buyer search, plain or countered, is a process stage (density_count's
+			# `stage` axis); a buyer that came back sells, it searches nothing.
+			if ["buyer", "negotiate"].has(String(a["kind"])) and not offered:
 				strip["stage"] = "buyer search"
 			answers.append(strip)
-		out.append({"source": "closure", "subject": "closure|%s" % String(row["id"]), "state": "",
+		out.append({"source": "closure", "subject": "closure|%s" % String(row["id"]), "state": "offered" if offered else "",
 			"domain": "industrial", "due": "arrival" if is_new else "deadline", "answers": answers})
+
+
+## A sector warning, the month its figure crossed into the bad band: hold, or raise
+## its line by what brings the figure back (SectorWarnings' own number, so the money
+## on the strip is what the answer would cost). A share move is the free answer and
+## sits on no axis of the strip, so it is not what makes this decision count.
+func _sector_candidates(state, ns, now: int, out: Array) -> void:
+	for row in SectorWarnings.arrivals(ns, _loader, now):
+		var line := String(row["line"])
+		out.append({"source": "sector", "subject": "sector|%s" % String(row["id"]), "state": "",
+			"domain": line, "due": "arrival",
+			"answers": [{}, _effects_strip(state, SectorWarnings.raise_effects(ns, _loader, line, String(row["id"])))]})
 
 
 ## Doing nothing, then every verb Companies.available offers on the firm whose op
@@ -991,6 +1070,9 @@ func _print_density(run: Dictionary) -> void:
 	var w: Dictionary = run["band_world"]
 	print("    world only (no own-process asks): B7 %s, >= 1 in %.0f %% of months, mean %.2f, longest none %d" % [
 		"PASS" if bool(w["pass"]) else "FAIL", 100.0 * float(w["share"]), float(w["mean"]), int(w["longest_none"])])
+	if not (run.get("closure_picks", {}) as Dictionary).is_empty():
+		print("    closure answers %s" % JSON.stringify(run["closure_picks"]))
+		print("    sector answers %s" % JSON.stringify(run["sector_answers"]))
 	print("    counted %s; dull %s (saved by %s); repeats %s" % [
 		JSON.stringify(t["counted"]), JSON.stringify(t["dull"]), JSON.stringify(t["saved_by"]), JSON.stringify(t["repeat"])])
 	var empty := {}

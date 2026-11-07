@@ -73,6 +73,8 @@ const Migration = preload("res://src/sim/migration.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
+const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
 const Demography = preload("res://src/sim/demography.gd")
@@ -97,7 +99,7 @@ const STEPS: Array[String] = [
 	"Division", "Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
 	"Media", "Programme", "Opinion", "History", "Calendar", "Discipline",
 	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Processes",
-	"Companies", "Industry", "Closures", "Migration", "Investment", "Projects", "RegionFunds", "Campaign", "Pledges",
+	"Companies", "Industry", "Closures", "Migration", "Investment", "Projects", "RegionFunds", "Sectors", "Campaign", "Pledges",
 	"Demography", "Society", "Unrest", "Events", "Cabinet", "Characters",
 	"Audiences", "Elections",
 ]
@@ -376,6 +378,17 @@ static func _step(month: Month, step: String) -> Array:
 		# deficit is a precondition field; the bill -> deficit -> precondition loop).
 		"RegionFunds":
 			RegionFunds.tick_month(state)
+		# V5.3 a: the sector priorities' month (src/sim/sectors.gd, the parent's TAKEs on
+		# #267): each term counts down, and its cap reads the region's unemployment
+		# against the nation's rate (Economy's) with the funds' terms (RegionFunds').
+		#
+		# V5.3 a + b: then the sector figures' month, after Economy so the sample reads
+		# this month's GDP (Demography runs later, so its people are last month's: a
+		# month's lag on a figure that moves by a tenth of a point a year). Budget.project()
+		# does not run it: no channel reads a figure, so a forecast has nothing to see.
+		"Sectors":
+			Sectors.tick_month(state)
+			SectorWarnings.tick_month(state, loader)
 		# V1.7a: a month of every campaign effort in the field, onto the mobilisation the
 		# vote reads -- or the whole register cleared, if the run-up is over. In Projects'
 		# slot, where V1.7a's bill (retired at V5.2 C6) broke the bill -> deficit ->

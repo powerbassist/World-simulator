@@ -76,6 +76,7 @@ func show_effects(gain_bn: float, who := "", when := "", has_money := true,
 		elsewhere := "", elsewhere_bn := 0.0) -> void:
 	money_bn = gain_bn
 	_caption.text = tr("Balance this year")
+	_caption.visible = true
 	money_label.text = money_text(gain_bn)
 	money_label.theme_type_variation = cell_variation(money_tone(gain_bn))
 	_money_row.visible = has_money
@@ -97,6 +98,8 @@ func show_effects(gain_bn: float, who := "", when := "", has_money := true,
 func show_lines(caption: String, money: String, gain_bn: float, who := "", when := "") -> void:
 	money_bn = gain_bn
 	_caption.text = caption
+	# No caption: the money stands at the line's start (a closure's narrow columns).
+	_caption.visible = caption != ""
 	money_label.text = money
 	money_label.theme_type_variation = cell_variation(money_tone(gain_bn))
 	_money_row.visible = true

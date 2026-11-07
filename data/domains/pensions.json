@@ -19,34 +19,44 @@
           "share": 0.987,
           "quantity": 0.61,
           "year": 2025.0,
-          "source": "share: Eurostat ESSPROS spr_exp_pens, 2024: means-tested old-age 4 779 of 364 137 MIO EUR (https://ec.europa.eu/eurostat/databrowser/view/spr_exp_pens/default/table). quantity: Eurostat ilc_pnp3, aggregate replacement ratio, 2025 (https://ec.europa.eu/eurostat/databrowser/view/ilc_pnp3/default/table)"
+          "source": "share: Eurostat ESSPROS spr_exp_pens, 2024: means-tested old-age 4 779 of 364 137 MIO EUR (https://ec.europa.eu/eurostat/databrowser/view/spr_exp_pens/default/table). quantity: Eurostat ilc_pnp3, aggregate replacement ratio, 2025 (https://ec.europa.eu/eurostat/databrowser/view/ilc_pnp3/default/table)",
+          "need_drift_pct_year": 1.29,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 65+, less the total population rate."
         },
         "DEU": {
           "share": 0.983,
           "quantity": 0.48,
           "year": 2025.0,
           "source": "share: ESTIMATE, Germany: Grundsicherung im Alter und bei Erwerbsminderung 11.43 bn EUR net 2024 (Deutscher Landkreistag circular 245/2025 of the BMAS table, https://www.bay-landkreistag.de/media/105842/vwi-13052025-ausgaben-und-empfaenger-der-grundsicherung-im-a.pdf) times the 58.6 % of recipients over the age limit, against Eurostat ESSPROS old-age 385 478 MIO EUR. quantity: Eurostat ilc_pnp3, aggregate replacement ratio, 2025 (https://ec.europa.eu/eurostat/databrowser/view/ilc_pnp3/default/table)",
-          "note": "Anticipated old-age pension (ESSPROS AOLD), context only: 20 840 MIO EUR in 2024."
+          "note": "Anticipated old-age pension (ESSPROS AOLD), context only: 20 840 MIO EUR in 2024.",
+          "need_drift_pct_year": 1.57,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 65+, less the total population rate."
         },
         "POL": {
           "share": 0.996,
           "quantity": 0.6,
           "year": 2025.0,
           "source": "share: PRESS SOURCE, Poland: top-up to the minimum pension 1.2 bn PLN in 2024 (ZUS answer to Wyborcza.biz, https://superbiz.se.pl/wiadomosci/tyle-zus-doplaca-do-glodowych-emerytur-polakow-ujawnili-cala-kwote-aa-4rwK-qfSr-9Rs8.html), at 4.3058 PLN per EUR (Eurostat ert_bil_eur_a), against ESSPROS old-age 78 419 MIO EUR. quantity: Eurostat ilc_pnp3, aggregate replacement ratio, 2025 (https://ec.europa.eu/eurostat/databrowser/view/ilc_pnp3/default/table)",
-          "note": "Anticipated old-age pension (ESSPROS AOLD), context only: 3 199 MIO EUR in 2024."
+          "note": "Anticipated old-age pension (ESSPROS AOLD), context only: 3 199 MIO EUR in 2024.",
+          "need_drift_pct_year": 1.12,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 65+, less the total population rate."
         },
         "GBR": {
           "share": 0.958,
           "quantity": 0.61,
           "year": 2018.0,
-          "source": "share: GB NOT UK: DWP benefit expenditure tables spring forecast 2026, Pension Credit 6 008 against State Pension 136 584 GBP million, 2024-25 outturn (https://assets.publishing.service.gov.uk/media/69dcdc8c6b695d635c34dcc4/outturn-and-forecast-tables-spring-forecast-2026.xlsx). quantity: Eurostat ilc_pnp3, aggregate replacement ratio, 2018, the last UK year (https://ec.europa.eu/eurostat/databrowser/view/ilc_pnp3/default/table)"
+          "source": "share: GB NOT UK: DWP benefit expenditure tables spring forecast 2026, Pension Credit 6 008 against State Pension 136 584 GBP million, 2024-25 outturn (https://assets.publishing.service.gov.uk/media/69dcdc8c6b695d635c34dcc4/outturn-and-forecast-tables-spring-forecast-2026.xlsx). quantity: Eurostat ilc_pnp3, aggregate replacement ratio, 2018, the last UK year (https://ec.europa.eu/eurostat/databrowser/view/ilc_pnp3/default/table)",
+          "need_drift_pct_year": 1.59,
+          "need_source": "ONS National population projections: 2024-based, principal projection, mid-2026 to mid-2036 (https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/z1zippedpopulationprojectionsdatafilesuk): the yearly rate of the 65+, less the total population rate."
         },
         "default": {
           "share": 0.981,
           "quantity": 0.575,
           "year": 2024.0,
           "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: default: the mean of FRA, DEU, POL and GBR",
-          "note": "Mean of the four sourced nations (share and quantity)."
+          "note": "Mean of the four sourced nations (share and quantity).",
+          "need_drift_pct_year": 1.393,
+          "need_source": "default: the mean of FRA, DEU, POL and GBR"
         }
       }
     },
@@ -68,32 +78,42 @@
           "share": 0.013,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: Eurostat ESSPROS spr_exp_pens, 2024: means-tested old-age 4 779 of 364 137 MIO EUR (https://ec.europa.eu/eurostat/databrowser/view/spr_exp_pens/default/table). quantity: index, no published figure"
+          "source": "share: Eurostat ESSPROS spr_exp_pens, 2024: means-tested old-age 4 779 of 364 137 MIO EUR (https://ec.europa.eu/eurostat/databrowser/view/spr_exp_pens/default/table). quantity: index, no published figure",
+          "need_drift_pct_year": 1.29,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 65+, less the total population rate."
         },
         "DEU": {
           "share": 0.017,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: ESTIMATE, Germany: Grundsicherung im Alter und bei Erwerbsminderung 11.43 bn EUR net 2024 (Deutscher Landkreistag circular 245/2025 of the BMAS table, https://www.bay-landkreistag.de/media/105842/vwi-13052025-ausgaben-und-empfaenger-der-grundsicherung-im-a.pdf) times the 58.6 % of recipients over the age limit, against Eurostat ESSPROS old-age 385 478 MIO EUR. quantity: index, no published figure"
+          "source": "share: ESTIMATE, Germany: Grundsicherung im Alter und bei Erwerbsminderung 11.43 bn EUR net 2024 (Deutscher Landkreistag circular 245/2025 of the BMAS table, https://www.bay-landkreistag.de/media/105842/vwi-13052025-ausgaben-und-empfaenger-der-grundsicherung-im-a.pdf) times the 58.6 % of recipients over the age limit, against Eurostat ESSPROS old-age 385 478 MIO EUR. quantity: index, no published figure",
+          "need_drift_pct_year": 1.57,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 65+, less the total population rate."
         },
         "POL": {
           "share": 0.004,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: PRESS SOURCE, Poland: top-up to the minimum pension 1.2 bn PLN in 2024 (ZUS answer to Wyborcza.biz, https://superbiz.se.pl/wiadomosci/tyle-zus-doplaca-do-glodowych-emerytur-polakow-ujawnili-cala-kwote-aa-4rwK-qfSr-9Rs8.html), at 4.3058 PLN per EUR (Eurostat ert_bil_eur_a), against ESSPROS old-age 78 419 MIO EUR. quantity: index, no published figure"
+          "source": "share: PRESS SOURCE, Poland: top-up to the minimum pension 1.2 bn PLN in 2024 (ZUS answer to Wyborcza.biz, https://superbiz.se.pl/wiadomosci/tyle-zus-doplaca-do-glodowych-emerytur-polakow-ujawnili-cala-kwote-aa-4rwK-qfSr-9Rs8.html), at 4.3058 PLN per EUR (Eurostat ert_bil_eur_a), against ESSPROS old-age 78 419 MIO EUR. quantity: index, no published figure",
+          "need_drift_pct_year": 1.12,
+          "need_source": "Eurostat EUROPOP2023, proj_23np, baseline scenario, 1 January 2026 to 2036 (https://ec.europa.eu/eurostat/databrowser/view/proj_23np/default/table): the yearly rate of the 65+, less the total population rate."
         },
         "GBR": {
           "share": 0.042,
           "quantity": 100.0,
           "year": 2024.0,
-          "source": "share: GB NOT UK: DWP benefit expenditure tables spring forecast 2026, Pension Credit 6 008 against State Pension 136 584 GBP million, 2024-25 outturn (https://assets.publishing.service.gov.uk/media/69dcdc8c6b695d635c34dcc4/outturn-and-forecast-tables-spring-forecast-2026.xlsx). quantity: index, no published figure"
+          "source": "share: GB NOT UK: DWP benefit expenditure tables spring forecast 2026, Pension Credit 6 008 against State Pension 136 584 GBP million, 2024-25 outturn (https://assets.publishing.service.gov.uk/media/69dcdc8c6b695d635c34dcc4/outturn-and-forecast-tables-spring-forecast-2026.xlsx). quantity: index, no published figure",
+          "need_drift_pct_year": 1.59,
+          "need_source": "ONS National population projections: 2024-based, principal projection, mid-2026 to mid-2036 (https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/z1zippedpopulationprojectionsdatafilesuk): the yearly rate of the 65+, less the total population rate."
         },
         "default": {
           "share": 0.019,
           "quantity": 100.0,
           "year": 2024.0,
           "source": "share: default: the mean of FRA, DEU, POL and GBR. quantity: index, no published figure",
-          "note": "Mean of the four sourced nations (share); the quantity is an index."
+          "note": "Mean of the four sourced nations (share); the quantity is an index.",
+          "need_drift_pct_year": 1.393,
+          "need_source": "default: the mean of FRA, DEU, POL and GBR"
         }
       }
     }

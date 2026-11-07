@@ -12,10 +12,12 @@ const Events = preload("res://src/sim/events.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
+const Closures = preload("res://src/sim/closures.gd")
 
 ## The Material Symbols icon per kind (assets/icons/material/).
-const ICON := {"crisis": "event", "decision": "mail", "election": "campaign", "bill": "gavel",
-	"majority": "account_balance", "commitment": "handshake", "request": "person", "programme": "checklist",
+const ICON := {"crisis": "event", "decision": "mail", "plant": "factory", "election": "campaign", "bill": "gavel",
+	"majority": "account_balance", "commitment": "handshake", "request": "person", "programme": "checklist", "sector": "payments",
 	"bloc": "groups", "budget": "payments", "unrest": "diversity_3", "person": "person"}  # i18n: ok icon names
 
 
@@ -32,6 +34,7 @@ static func group(items: Array, state, loader) -> String:
 	match String(items[0]["kind"]):
 		"crisis": return Strings.tn("%d crisis", "%d crises", n) % n
 		"decision": return Strings.tn("%d decision", "%d decisions", n) % n
+		"plant": return Strings.tn("%d buyer waiting", "%d buyers waiting", n) % n
 		"request": return Strings.tn("%d request", "%d requests", n) % n
 		"commitment": return Strings.tn("%d promise", "%d promises", n) % n
 		"bill": return Strings.tn("%d bill", "%d bills", n) % n
@@ -49,6 +52,8 @@ static func title(entry: Dictionary, state, loader) -> String:
 			return Strings.t("Crisis: %s") % _event(loader, subject)
 		"decision":
 			return Strings.t("%s needs an answer") % _event(loader, subject)
+		"plant":
+			return Strings.t("A buyer came back for %s's plant") % _firm_of_closure(ns, loader, subject)
 		"election":
 			return Strings.t("The European election") if subject == "ep" else Strings.t("The next election")
 		"bill":
@@ -65,6 +70,8 @@ static func title(entry: Dictionary, state, loader) -> String:
 			if subject == "offer":
 				return Strings.t("Choose the term's programme")
 			return Strings.t("Programme: %s") % Strings.row_name("programme", Programme.terms_of(loader, subject))
+		"sector":
+			return Strings.t("Slipping: %s") % SectorWarningView.name_of(loader, subject.get_slice("|", 0), subject.get_slice("|", 1))
 		"bloc":
 			var polled := PollNoise.displayed(int(state.year) * 12 + int(state.month), subject, float(ns.bloc_approval.get(subject, 0.0)))
 			if standing:
@@ -100,6 +107,13 @@ static func chip(entry: Dictionary, state) -> String:
 	if int(entry["more"]) > 0:
 		parts.append(Strings.tn("+%d more", "+%d more", int(entry["more"])) % int(entry["more"]))
 	return " · ".join(parts)
+
+
+static func _firm_of_closure(ns, loader, closure_id: String) -> String:
+	for row in Closures.open(ns):
+		if String(row["id"]) == closure_id:
+			return loader.firm_name(ns.id, String(row["company_id"]))
+	return closure_id
 
 
 static func _event(loader, event_id: String) -> String:

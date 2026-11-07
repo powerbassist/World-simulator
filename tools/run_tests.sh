@@ -11,9 +11,12 @@ tests=(
   tests/test_budget.gd
   tests/test_budget_panel.gd
   tests/test_effects_strip.gd
+  tests/test_budget_sectors.gd
   tests/test_industry_tab.gd
   tests/test_industry_closure.gd
   tests/test_region_fund.gd
+  tests/test_region_priority.gd
+  tests/test_sector_warning_view.gd
   tests/test_opinion.gd
   tests/test_polling_panel.gd
   tests/test_state_copy.gd
@@ -98,7 +101,10 @@ tests=(
   # V5.3 a: the sectors of each spending line (data/domains/, A2).
   tests/test_domains.gd
   tests/test_sector_channels.gd
+  tests/test_sector_priority.gd
+  tests/test_sector_warnings.gd
   tests/test_process_asks.gd
+  tests/test_negotiation.gd
   # V5.3 a: the plant closures (B7's industry supply).
   tests/test_closures.gd
   # V4.7a: the two-tier register -- tiers, sparse fallback reads, and the
@@ -245,6 +251,8 @@ tests=(
   tests/test_front_page.gd
   tests/test_legislature_dissolve.gd
   tests/test_table_bill.gd
+  # An ownership bill that passes while its firm's process is refused says so in one line.
+  tests/test_bill_refusal_line.gd
   tests/test_tabled_ui.gd
   tests/test_bill_card.gd
   tests/test_dismiss_ui.gd

@@ -26,6 +26,7 @@ func _init() -> void:
 		return
 	_test_a_good_line_parses_and_renormalises()
 	_test_every_refusal()
+	_test_a_need_drift_is_optional()
 	_test_every_sector_id_has_a_moving_elasticity()
 	_test_a_share_move_moves_each_quantity_by_its_elasticity()
 	_test_a_lower_is_better_quantity_falls_with_spending()
@@ -101,12 +102,36 @@ func _test_every_refusal() -> void:
 		"a quantity of zero": func(r: Dictionary) -> void: r["sectors"][0]["start"]["FRA"]["quantity"] = 0.0,
 		"an empty source": func(r: Dictionary) -> void: r["sectors"][0]["start"]["FRA"]["source"] = "",
 		"a sector with no elasticity": func(r: Dictionary) -> void: r["sectors"][0]["id"] = "casino_sector",
+		"a need drift that is no number": func(r: Dictionary) -> void:
+			r["sectors"][0]["start"]["FRA"]["need_drift_pct_year"] = "fast"
+			r["sectors"][0]["start"]["FRA"]["need_source"] = "Eurostat",
+		"a need drift with no source": func(r: Dictionary) -> void: r["sectors"][0]["start"]["FRA"]["need_drift_pct_year"] = 2.4,
+		"a need drift of a shrinking kind of nonsense": func(r: Dictionary) -> void:
+			r["sectors"][0]["start"]["FRA"]["need_drift_pct_year"] = -100.0
+			r["sectors"][0]["start"]["FRA"]["need_source"] = "Eurostat",
 	}
 	for label in cases:
 		var raw := _health().duplicate(true)
 		(cases[label] as Callable).call(raw)
 		if _parse(raw).is_empty():
 			_fail("the loader accepted %s" % label)
+
+
+## A row with no need drift reads 0, the need of a line with no demographic driver.
+func _test_a_need_drift_is_optional() -> void:
+	var errors: Array[String] = []
+	var raw := _health().duplicate(true)
+	raw["sectors"][0]["start"]["FRA"]["need_drift_pct_year"] = 2.4
+	raw["sectors"][0]["start"]["FRA"]["need_source"] = "Eurostat"
+	var line: Dictionary = DomainsLoader.parse_line(_loader, raw, "health.json", errors)
+	if not errors.is_empty():
+		_fail("a sourced need drift was refused: %s" % [errors])
+		return
+	var fra: Dictionary = line["sectors"][0]["start"]["FRA"]
+	if float(fra["need_drift_pct_year"]) != 2.4 or String(fra["need_source"]) != "Eurostat":
+		_fail("the need drift did not load: %s" % [fra])
+	if float(line["sectors"][1]["start"]["FRA"]["need_drift_pct_year"]) != 0.0:
+		_fail("a row with no need drift did not read 0")
 
 
 ## A2's load half: a sector that moves nothing is refused, so every sector id the

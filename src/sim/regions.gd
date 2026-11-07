@@ -87,7 +87,8 @@ static func _mean_trend_pct(ns, region_list: Array) -> float:
 ## THE NAMED REGIONS BY CONSTRUCTION, which is the whole of why the aggregate stays
 ## on the national trajectory -- Trade.sector_shift()'s sum-to-zero rule, one level
 ## up and enforced by subtraction rather than by a load-time check. Since V2.7 it is
-## zero-mean three times over: sector mix, network, and sited-project payoffs.
+## zero-mean three times over: sector mix, network, and sited-project payoffs (and
+## since V5.3 a the player's regional terms). One region of deviation_by_region().
 ##
 ## THE FOURTH AND FIFTH ARGUMENTS ARE REQUIRED AND NOT DEFAULTED. A defaulted empty
 ## Dictionary would read as "no network" / "nothing built" and every harness that
@@ -98,60 +99,122 @@ static func _mean_trend_pct(ns, region_list: Array) -> float:
 static func trend_deviation_pct(ns, region_list: Array, region_id: String, access: Dictionary, sites: Dictionary) -> float:
 	if region_id == K.RESIDUAL_KEY:
 		return 0.0
-	for region in region_list:
-		if region.id == region_id:
-			var mix: float = trend_pct(region) - _mean_trend_pct(ns, region_list)
-			var deviation: float = mix + _network_pct(ns, region_list, region, access) + _sited_pct(ns, region_list, region_id, sites)
-			# V5.3 a: the fund term only when a fund is open, so a nation with none
-			# computes exactly the floats it computed before the fund existed.
-			if not ns.region_funds.is_empty():
-				deviation += _sited_pct(ns, region_list, region_id, _fund_map(ns))
-			return deviation
-	return 0.0
+	return float(deviation_by_region(ns, region_list, access, sites).get(region_id, 0.0))
 
 
-## V5.3 a: the regional development funds' terms, region id -> points a year, summed
-## over the OPEN rows of `ns.region_funds` (src/sim/region_funds.gd writes them; this
-## file only reads the register, as it reads the sited-project map). Each row's term
-## was fixed at the fund's start, so the strip's figure is the booked one. It enters
-## the deviation through _sited_pct()'s arithmetic, zero-mean over the nation's
-## output shares, for the sited term's reason: the national level is the fund's
-## SPENDING (a Budget line whose change moves demand, src/sim/region_funds.gd), and
-## a term that also moved the national total would count the money twice.
-static func _fund_map(ns) -> Dictionary:
+## V5.3 a: the player's regional terms, region id -> points a year: the OPEN rows of
+## `ns.region_funds` (src/sim/region_funds.gd writes them), then the sector
+## priorities of `ns.sector_priorities` in sector order (src/sim/sectors.gd writes
+## them, #267). This file only reads the registers, as it reads the sited-project
+## map. Each row's term was fixed when the player acted, so the strip's figure is the
+## booked one. They enter deviation_by_region() as the sited term does, zero-mean
+## over the nation's output shares, for the sited term's reason: a fund's national
+## level is its SPENDING (a Budget line whose change moves demand), a priority's is
+## none (it moves money between regions, never a line's total), and a term that also
+## moved the national total would count the money twice or invent it.
+static func _player_terms(ns) -> Dictionary:
 	var out := {}
 	for row in ns.region_funds:
 		if String(row["status"]) == "open":
 			var id := String(row["region_id"])
 			out[id] = float(out.get(id, 0.0)) + float(row["pts"])
+	if not ns.sector_priorities.is_empty():
+		var sectors: Array = ns.sector_priorities.keys()
+		sectors.sort()
+		for sector in sectors:
+			var row: Dictionary = ns.sector_priorities[sector]
+			var id := String(row["region_id"])
+			# The convergence factor (Sectors.tick_month(), the parent's TAKE on #267).
+			out[id] = float(out.get(id, 0.0)) + float(row["pts"]) * float(row.get("factor", 1.0))
 	return out
 
 
-## What a FINISHED project is worth here, in points of growth per year, measured
-## against the nation's own output-weighted mean of the same payoffs so the
-## national total is untouched: the site gains `p - mean` and every other region
-## loses its weighted share of the mean. V2.7's third term. The map arrives raw
-## ({region id -> points/year}, Projects.sited_pct()); the subtraction happens
-## HERE, because zero-mean is a property of the readers it protects and not of the
-## content -- a project's authored payoff is what it is.
+## THE ONE DEVIATION (V5.3 a, #267): every named region's growth deviation from its
+## nation's, region id -> points a year. The tick grows each region by it,
+## trend_deviation_pct() reads one region of it and unemployment_by_region() turns it
+## into unemployment through Okun: three readers of one sum. There were three copies,
+## whose sums ran in different orders, so a term added to one could be missed by
+## another; tests/test_regions.gd pins the tick to the read. The sum is
+## `mix + net + sited`, then `+ the player's terms` when any is open, in that order.
 ##
-## A region hosting nothing reads exactly `-mean`, never 0.0: that is the model,
-## not a leak. The nation's total is unchanged, which is the invariant that
-## matters, and V1.6f's national channel still carries the level through
-## project_potential_target_pct -- one act, priced once.
-static func _sited_pct(ns, region_list: Array, region_id: String, sites: Dictionary) -> float:
-	if sites.is_empty():
-		return 0.0
-	var own: float = float(sites.get(region_id, 0.0))
-	var weighted: float = 0.0
+## EVERYTHING THAT DOES NOT VARY BY REGION IS COMPUTED ONCE, before any region's
+## figure (V5.0c's lever: asked region by region it was cubic in the region count):
+## the GDP-weighted mean trend, the national production mix, and each term's
+## output-weighted mean over shares_of()'s one national total. Every read comes from
+## one snapshot, which is also why the tick calls this before its loop rewrites the
+## levels (the V2.8 review's finding: a mean rebuilt mid-loop drifts region by region
+## and breaks the zero-mean sum).
+##
+## After the mix, each term is (own - the nation's output-weighted mean of it), so it
+## cannot move the national total:
+##   net    a region's POSITION, NETWORK_BETA x specialisation x ln(accessibility).
+##          THE PRODUCT IS THE MODEL: `specialisation` says how much a region needs a
+##          market it does not contain and `ln(accessibility)` how much market it can
+##          reach; either alone is half an argument. A region making exactly what its
+##          country makes reads 0.0 whatever its accessibility, and one at exactly the
+##          mean accessibility reads 0.0 whatever it makes -- two structural zeros,
+##          neither a clamp. The mix is `sector_mix`: the six-branch production mix was
+##          REFUSED at clause (d) (rho 0.9170 against 0.90 -- one quantity written
+##          twice), and the refusal is recorded beside the field it would have extended.
+##   sited  what a FINISHED project is worth here (V2.7). The map arrives raw ({region
+##          id -> points/year}, Projects.sited_map()); the subtraction happens HERE,
+##          because zero-mean is a property of the readers it protects and not of the
+##          content. A region hosting nothing reads exactly `-mean`, never 0.0: the
+##          model, not a leak. V1.6f's national channel still carries the level through
+##          project_potential_target_pct -- one act, priced once.
+##   player the player's regional terms (_player_terms(): the open funds and the
+##          sector priorities), only when one is set, so a nation with none computes
+##          exactly the floats it computed before either existed.
+static func deviation_by_region(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	if region_list.is_empty():
+		return out
+	var mean_trend: float = _mean_trend_pct(ns, region_list)
+	var shares: Dictionary = shares_of(ns, region_list)
 	var total: float = 0.0
 	for other in region_list:
-		var w: float = share_of(ns, other.id)
-		weighted += w * float(sites.get(other.id, 0.0))
-		total += w
-	if total <= 0.0:
+		total += float(shares[other.id])
+	var net_on: bool = NK.NETWORK_BETA != 0.0 and total > 0.0
+	var own_net: Dictionary = {}
+	var mean_net: float = 0.0
+	if net_on:
+		var national: Dictionary = _national_production_mix(ns, region_list)
+		var weighted: float = 0.0
+		for other in region_list:
+			var spec: float = Net.specialisation(other.sector_mix, national)
+			var lg: float = log(maxf(float(access.get(other.id, 1.0)), 0.0001))
+			own_net[other.id] = spec * lg
+			weighted += float(shares[other.id]) * spec * lg
+		mean_net = weighted / total
+	var bought: Dictionary = _player_terms(ns)
+	var mean_site: float = _weighted_mean(sites, shares, region_list, total)
+	var mean_bought: float = _weighted_mean(bought, shares, region_list, total)
+	for region in region_list:
+		if region.id == K.RESIDUAL_KEY:
+			continue
+		var mix: float = trend_pct(region) - mean_trend
+		var net: float = 0.0
+		if net_on:
+			net = NK.NETWORK_BETA * (float(own_net[region.id]) - mean_net)
+		var sited: float = 0.0
+		if not sites.is_empty() and total > 0.0:
+			sited = float(sites.get(region.id, 0.0)) - mean_site
+		var deviation: float = mix + net + sited
+		if not bought.is_empty() and total > 0.0:
+			deviation += float(bought.get(region.id, 0.0)) - mean_bought
+		out[region.id] = deviation
+	return out
+
+
+## A raw region map's output-weighted mean over the nation's own total; 0.0 for an
+## empty map or no output.
+static func _weighted_mean(map: Dictionary, shares: Dictionary, region_list: Array, total: float) -> float:
+	if map.is_empty() or total <= 0.0:
 		return 0.0
-	return own - weighted / total
+	var weighted: float = 0.0
+	for other in region_list:
+		weighted += float(shares[other.id]) * float(map.get(other.id, 0.0))
+	return weighted / total
 
 
 ## The accessibility index for one nation, from its live output shares -- the
@@ -161,86 +224,6 @@ static func _sited_pct(ns, region_list: Array, region_id: String, sites: Diction
 ## graph came from -- the caller passes it, `state.region_graph` today.
 static func accessibility_for(ns, region_list: Array, graph: Dictionary) -> Dictionary:
 	return Net.accessibility(graph, shares_of(ns, region_list))
-
-
-## What a region's POSITION is worth, in points of growth per year, measured against
-## the nation's own output-weighted mean so it cannot move the national total.
-##
-## THE PRODUCT IS THE MODEL. `specialisation` says how much a region needs a market
-## it does not contain and `ln(accessibility)` says how much market it can reach;
-## either alone is half an argument. A region making exactly what its country makes
-## reads exactly 0.0 whatever its accessibility, and a region at exactly the mean
-## accessibility reads exactly 0.0 whatever it makes -- two structural zeros, neither
-## of them a clamp. The mix here is `sector_mix`: the six-branch production mix was
-## REFUSED at clause (d) (rho 0.9170 against 0.90 -- one quantity written twice),
-## and the refusal is recorded beside the field it would have extended.
-## The network and sited terms for every region at once, with everything that does
-## not vary by region lifted out of the loop. Returns region id -> the sum of the two.
-## _network_pct() and _sited_pct() below are kept as the single-region statements of
-## the same arithmetic, which is what tools/network_probe.gd's prose refers to.
-static func _deviation_terms(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
-	var out: Dictionary = {}
-	for region in region_list:
-		out[region.id] = 0.0
-	if region_list.is_empty():
-		return out
-
-	var shares: Dictionary = shares_of(ns, region_list)
-	var total: float = 0.0
-	for other in region_list:
-		total += float(shares[other.id])
-	if total <= 0.0:
-		return out
-
-	if NK.NETWORK_BETA != 0.0:
-		var national: Dictionary = _national_production_mix(ns, region_list)
-		var own_net: Dictionary = {}
-		var weighted: float = 0.0
-		for other in region_list:
-			var term: float = Net.specialisation(other.sector_mix, national) 				* log(maxf(float(access.get(other.id, 1.0)), 0.0001))
-			own_net[other.id] = term
-			weighted += float(shares[other.id]) * term
-		var mean_net: float = weighted / total
-		for region in region_list:
-			out[region.id] += NK.NETWORK_BETA * (float(own_net[region.id]) - mean_net)
-
-	if not sites.is_empty():
-		var weighted_site: float = 0.0
-		for other in region_list:
-			weighted_site += float(shares[other.id]) * float(sites.get(other.id, 0.0))
-		var mean_site: float = weighted_site / total
-		for region in region_list:
-			out[region.id] += float(sites.get(region.id, 0.0)) - mean_site
-
-	# V5.3 a: the fund term, the sited term's arithmetic over the funds' map.
-	var funds: Dictionary = _fund_map(ns)
-	if not funds.is_empty():
-		var weighted_fund: float = 0.0
-		for other in region_list:
-			weighted_fund += float(shares[other.id]) * float(funds.get(other.id, 0.0))
-		var mean_fund: float = weighted_fund / total
-		for region in region_list:
-			out[region.id] += float(funds.get(region.id, 0.0)) - mean_fund
-
-	return out
-
-
-static func _network_pct(ns, region_list: Array, region, access: Dictionary) -> float:
-	if NK.NETWORK_BETA == 0.0:
-		return 0.0
-	var national: Dictionary = _national_production_mix(ns, region_list)
-	var own: float = Net.specialisation(region.sector_mix, national) \
-		* log(maxf(float(access.get(region.id, 1.0)), 0.0001))
-	var weighted: float = 0.0
-	var total: float = 0.0
-	for other in region_list:
-		var w: float = share_of(ns, other.id)
-		weighted += w * Net.specialisation(other.sector_mix, national) \
-			* log(maxf(float(access.get(other.id, 1.0)), 0.0001))
-		total += w
-	if total <= 0.0:
-		return 0.0
-	return NK.NETWORK_BETA * (own - weighted / total)
 
 
 ## The nation's own output-weighted mean production mix -- the national mix a
@@ -282,42 +265,23 @@ static func tick_month(ns, region_list: Array, growth: float, access: Dictionary
 	if ns.region_gdp_eur_bn.is_empty():
 		return ns.gdp_eur_bn * C.monthly_factor(growth)
 
-	# THE MEAN IS TAKEN ONCE, BEFORE THE LOOP MUTATES ANY LEVEL -- not through
-	# trend_deviation_pct(), which recomputes it against live state and would
-	# therefore drift as this loop writes region after region. The deviation
-	# EXPRESSION below is still the one expression: mix term, network term, sited
-	# term -- identical to the public function's, and at NETWORK_BETA 0.0 with
-	# nothing built it is bit-equal to the pre-V2.7 arithmetic because both added
-	# terms return exactly 0.0.
-	var mean: float = _mean_trend_pct(ns, region_list)
-
-	# THE OTHER TWO TERMS ARE FROZEN THE SAME WAY, and until the V2.8 review they
-	# were not: both build their own share-weighted mean from share_of(), which
-	# reads total(ns) over the very dictionary the loop below rewrites one entry at
-	# a time -- so at iteration k the first k regions carried this month's levels
-	# and the rest last month's, every region subtracted a DIFFERENT mean, and the
-	# zero-mean property sum(w_i * dev_i) = 0 stopped holding exactly. _network_pct
-	# was the worse of the two, since it also recomputes the national production
-	# mix each region's specialisation is measured against. It also made the result
-	# depend on region_list's order, which is the property Siting.site(),
-	# Network.adjacency(), Projects._advance() and Migration._tick_nation() all
-	# sort to protect and migration.gd states as a rule. Computed here, every read
-	# comes from one frozen snapshot.
-	# Both terms are (own_r - mean), and the mean is the same figure for every region
-	# -- so computing it inside a per-region call made this O(n^2) over 112 regions,
-	# with _national_production_mix() rebuilt 112 identical times per nation-month on
-	# top. Hoisted: the mean once, then one subtraction per region. Arithmetically
-	# identical (the weighted sums run over region_list in the same order), and this
-	# is the projection's hot path -- Budget.project() walks it for 24 months, twice
-	# per budget-panel refresh.
-	var extra: Dictionary = _deviation_terms(ns, region_list, access, sites)
+	# EVERY DEVIATION IS TAKEN ONCE, BEFORE THE LOOP MUTATES ANY LEVEL, by the one
+	# function every reader calls (deviation_by_region()). Until the V2.8 review the
+	# means were rebuilt inside the loop from share_of(), which reads total(ns) over the
+	# very dictionary this loop rewrites one entry at a time: at iteration k the first
+	# k regions carried this month's levels and the rest last month's, every region
+	# subtracted a DIFFERENT mean, the zero-mean sum stopped holding exactly, and the
+	# result depended on region_list's order -- the property Siting.site(),
+	# Network.adjacency(), Projects._advance() and Migration._tick_nation() all sort to
+	# protect. This is also the projection's hot path: Budget.project() walks it for
+	# 24 months, twice per budget-panel refresh.
+	var deviations: Dictionary = deviation_by_region(ns, region_list, access, sites)
 
 	var sum: float = 0.0
 
 	for region in region_list:
 		var current: float = float(ns.region_gdp_eur_bn.get(region.id, 0.0))
-		var deviation: float = (trend_pct(region) - mean) \
-			+ float(extra.get(region.id, 0.0))
+		var deviation: float = float(deviations.get(region.id, 0.0))
 		var value: float = current * C.monthly_factor(growth + deviation)
 		ns.region_gdp_eur_bn[region.id] = value
 		sum += value
@@ -381,69 +345,20 @@ static func unemployment_pct(ns, region_list: Array, region_id: String, access: 
 
 
 ## unemployment_pct() for every region of a nation in one pass -- V5.0c's tick
-## lever. Asked region by region, each call re-derived everything that does not
-## depend on the region (the GDP-weighted mean trend, the national production
-## mix, the network term's weighted mean, the sited mean, and share_of()'s
-## national total under every one of them): cubic in the region count, and the
-## month's single largest line after Diplomacy, because Migration asks it for
-## every region of every nation. Here each of those is computed ONCE, by the same
-## functions on the same inputs, and each region's figure is the same expression
-## in the same order -- `w * spec * lg` stays left to right, `mix + net + sited`
-## stays that sum -- so the result is the same float unemployment_pct() returns,
-## not an approximation of it (tests/test_regions.gd pins the two equal; the
-## 51-regime table is cmp-identical).
+## lever, because Migration and Unrest ask it for every region of every nation. The
+## deviations come from deviation_by_region() in one call, so each region's figure
+## is the same float unemployment_pct() returns (tests/test_regions.gd pins the two
+## equal).
 static func unemployment_by_region(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	if region_list.is_empty():
 		return out
-	var mean_trend: float = _mean_trend_pct(ns, region_list)
-	var shares: Dictionary = shares_of(ns, region_list)
-	var net_on: bool = NK.NETWORK_BETA != 0.0
-	var spec: Dictionary = {}
-	var lg: Dictionary = {}
-	var net_weighted: float = 0.0
-	var net_total: float = 0.0
-	if net_on:
-		var national: Dictionary = _national_production_mix(ns, region_list)
-		for other in region_list:
-			spec[other.id] = Net.specialisation(other.sector_mix, national)
-			lg[other.id] = log(maxf(float(access.get(other.id, 1.0)), 0.0001))
-			var w: float = float(shares[other.id])
-			net_weighted += w * float(spec[other.id]) * float(lg[other.id])
-			net_total += w
-	var site_weighted: float = 0.0
-	var site_total: float = 0.0
-	if not sites.is_empty():
-		for other in region_list:
-			var w: float = float(shares[other.id])
-			site_weighted += w * float(sites.get(other.id, 0.0))
-			site_total += w
-	# V5.3 a: the fund term, the same arithmetic over the funds' map (_fund_map).
-	var funds: Dictionary = _fund_map(ns)
-	var fund_weighted: float = 0.0
-	var fund_total: float = 0.0
-	if not funds.is_empty():
-		for other in region_list:
-			var w: float = float(shares[other.id])
-			fund_weighted += w * float(funds.get(other.id, 0.0))
-			fund_total += w
+	var deviations: Dictionary = deviation_by_region(ns, region_list, access, sites)
 	for region in region_list:
 		if out.has(region.id):
 			continue
-		var deviation: float = 0.0
-		if region.id != K.RESIDUAL_KEY:
-			var mix: float = trend_pct(region) - mean_trend
-			var net: float = 0.0
-			if net_on and net_total > 0.0:
-				net = NK.NETWORK_BETA * (float(spec[region.id]) * float(lg[region.id]) - net_weighted / net_total)
-			var sited: float = 0.0
-			if not sites.is_empty() and site_total > 0.0:
-				sited = float(sites.get(region.id, 0.0)) - site_weighted / site_total
-			deviation = mix + net + sited
-			if not funds.is_empty() and fund_total > 0.0:
-				deviation += float(funds.get(region.id, 0.0)) - fund_weighted / fund_total
 		out[region.id] = clampf(
-			ns.unemployment_pct * region.unemployment_rel - C.OKUN * deviation,
+			ns.unemployment_pct * region.unemployment_rel - C.OKUN * float(deviations.get(region.id, 0.0)),
 			C.UNEMP_MIN_PCT,
 			C.UNEMP_MAX_PCT
 		)

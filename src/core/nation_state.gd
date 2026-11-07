@@ -1034,7 +1034,7 @@ var dividend_revenue_pct_gdp: float = 0.0
 var regulation_burden := {}
 
 ## The most recent company action, for the companies panel to read after acting.
-## Empty until the first one resolves. `last_diplomatic_result`'s shape.
+## Empty until the first one resolves. `last_diplomatic_result`'s shape; a bill's refusal adds `by_law` and `month` (bills.gd).
 var last_company_result := {}
 
 # --- Sectoral investment (V1.6e) -------------------------------------------------
@@ -1536,6 +1536,20 @@ var sector_shares := {}
 ## path re-derives it (Sectors.rebuild) from `sector_shares` and data/domains/, so a
 ## save cannot disagree with the rows. Copied deep, so a projection keeps it.
 var sector_factor := {}
+## sector id -> {region_id, pts, months_left, ends, factor}: the region the player put
+## first for it, the term its money adds to that region's growth deviation (pts, fixed
+## when set; Sectors.set_priority, one per sector; regions.gd reads pts x factor), the
+## 36-month term and the share of it the cap lets through (Sectors._cap(): it stops at
+## the nation's unemployment rate). It moves money between regions, never a line's
+## total. absent_ok, no bump: no save before V5.3 a held a priority, so absent is "none".
+var sector_priorities := {}
+## sector id -> {region id: the month that region may take the sector first again}:
+## the wait after a priority stops (Sectors, the parent's renewal call on #267).
+## absent_ok, no bump: no save before V5.3 a held a priority, so absent is "no wait".
+var sector_priority_rest := {}
+## The sector figures' drift, the player only: src/sim/sector_warnings.gd has its shape.
+## absent_ok, no bump: absent reads as a drift that begins with the next month.
+var sector_drift := {}
 
 # --- Regional development funds (V5.3 a) -------------------------------------------
 ## One row per fund opened, running or ended -- {id, region_id, eur_bn_per_year,
@@ -1548,6 +1562,10 @@ var region_funds: Array[Dictionary] = []
 ## and read by Budget a month behind (project_bill_pct_gdp's case). absent_ok: the
 ## next tick rewrites it.
 var region_fund_bill_pct_gdp: float = 0.0
+## The plant rescues' bill, % of GDP (src/sim/closures.gd's tick_rescues, the
+## parent's call 4 on #277), rewritten every month and read by Budget a month behind.
+## absent_ok: no save before #277 could hold a rescue, and the next tick rewrites it.
+var rescue_bill_pct_gdp: float = 0.0
 
 ## V5.2b b3. person id -> the absolute month the president last phoned them: one
 ## call per person per month (src/sim/phone.gd, its one writer). absent_ok, no

@@ -20,6 +20,10 @@ The one line it changes in `regions.gd`:
 return mix + _network_pct(ns, region_list, region, access) + _sited_pct(ns, region_list, region_id, sites)
 ```
 
+Since V5.3 a (#267) that sum lives in ONE function, `Regions.deviation_by_region()`,
+which the tick, `trend_deviation_pct()` and `unemployment_by_region()` all call; the
+single-region helpers above are gone.
+
 Three terms, each zero-mean by subtraction: the sector mix (V2.5), the network
 (V2.7), and the sited-project payoffs (V2.7). `NETWORK_BETA` is the only swept
 constant in `src/sim/network_constants.gd`; `DECAY_KM` is derived, not swept.
@@ -214,7 +218,7 @@ DEU's five and GBR's five likewise (GBR flood_defence and freight_corridor both
 
 The payoff placement: the site region's deviation gains the authored
 `potential_growth_pct`, the rest of the nation loses it in output-weighted
-proportion (`Regions._sited_pct()` — zero-mean by the same subtraction), so
+proportion (the sited term of `Regions.deviation_by_region()` — zero-mean by the same subtraction), so
 the nation's total is untouched and V1.6f's national channel still carries the
 level through `project_potential_target_pct`. One act, priced once.
 

@@ -27,6 +27,10 @@ const Pending = preload("res://src/ui/pending.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Num = preload("res://src/ui/num.gd")
 
+const ResultTone = preload("res://src/ui/result_tone.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const Negotiation = preload("res://src/sim/negotiation.gd")
+
 var _failures: Array[String] = []
 var _main
 var _panel
@@ -34,6 +38,8 @@ var _frame := 0
 var _acted := 0
 var _major
 var _sector := ""
+## The counter picked and made at frame 16 (a #280 answer id, negotiate_N).
+var _counter_made := ""
 
 
 func _init() -> void:
@@ -82,6 +88,15 @@ func _process(_delta: float) -> bool:
 			_press(_button_with_meta("process_id", _live_pid()))
 		20:
 			_check_stopped()
+			# A second stake for the counter's leg: an answered counter cannot be stopped
+			# (#280), so it runs after the Stop's.
+			_start_process()
+		22:
+			_post_ask()
+		24:
+			_make_a_counter()
+		26:
+			_check_countered()
 			_finish()
 	return false
 
@@ -272,7 +287,16 @@ func _check_ask() -> void:
 	if asks.size() != 1:
 		_fail("ask: %d asks in the register, expected 1" % asks.size())
 		return
+	# Before any press, the strip is the first counter's (QA's optional on #281).
 	for option in asks[0]["ask"]["answers"]:
+		if option.has("counter"):
+			_read_counter_strip(option)
+			break
+	for option in asks[0]["ask"]["answers"]:
+		# #280's counters: one row of chips, the picked chip's figures in the strip.
+		if option.has("counter"):
+			_check_counter(option)
+			continue
 		var button = _button_with_meta("answer_id", String(option["id"]))
 		if button == null:
 			_fail("ask: no '%s' answer on screen" % option["id"])
@@ -280,6 +304,8 @@ func _check_ask() -> void:
 		var money: Label = button.get_meta("money_label")
 		if money.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])):
 			_fail("ask: '%s' reads '%s', it books %s" % [option["id"], money.text, EffectsStrip.cost_text(-float(option["debt_eur_bn"]))])
+	if not asks[0]["ask"]["answers"].any(func(o): return (o as Dictionary).has("counter")):
+		_fail("premise: the stake's price ask carries no counter (#280)")
 	for b in _visible_with_meta("process_id"):
 		if not b.has_meta("answer_id"):
 			_fail("ask: a Stop stands beside the question (walking away is an answer)")
@@ -290,6 +316,48 @@ func _check_ask() -> void:
 		_fail("ask: the %s card does not say a decision is due" % _sector)
 
 
+## A counter's chip, pressed: the strip under the row reads its price, its shown
+## odds range (never the drawn odds) and its walk-away risk; one button makes it.
+func _check_counter(option: Dictionary) -> void:
+	var counter := roundi(100.0 * float(option["counter"]))
+	var chip = _button_with_meta("counter_id", String(option["id"]))
+	if chip == null or (chip as Button).text != Strings.t("%d %%") % counter:
+		_fail("counter: no '%d %%' chip (%s)" % [counter, chip.text if chip != null else "<none>"])
+		return
+	(chip as Button).pressed.emit()
+	_read_counter_strip(option)
+	if _button_with_meta("answer_id", "counter") == null:
+		_fail("counter: no button makes the picked counter")
+
+
+func _read_counter_strip(option: Dictionary) -> void:
+	var counter := roundi(100.0 * float(option["counter"]))
+	var strip = null
+	for node in _panel._progress.find_children("*", "", true, false):
+		if node.has_meta("counter_strip"):
+			strip = node
+	if strip == null:
+		_fail("counter: no strip under the chips")
+		return
+	var text := _text_under(strip)
+	var range_text := "%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))]
+	var walk := "%d %% of refusals" % roundi(100.0 * float(option["walk"]))
+	if strip.money_label.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])) or not text.contains(range_text) or not text.contains(walk):
+		_fail("counter %d %%: the strip reads '%s', expected its price, %s and %s" % [counter, text, range_text, walk])
+
+
+## QA's TAKE 1 (a) on #281: the counter the strip priced is the one booked. A chip
+## other than the first is picked, then "Make the counter" pressed.
+func _make_a_counter() -> void:
+	var chips := _visible_with_meta("counter_id")
+	if chips.size() < 2:
+		_fail("premise: %d counter chips, a non-first pick needs two" % chips.size())
+		return
+	_counter_made = String(chips[-1].get_meta("counter_id"))
+	_press(chips[-1])
+	_press(_button_with_meta("answer_id", "counter"))
+
+
 func _check_answered() -> void:
 	var ns = _main._state.player()
 	if not Processes.asks(ns).is_empty():
@@ -298,6 +366,121 @@ func _check_answered() -> void:
 		_fail("answered: the row does not say what was answered")
 	if _acted < 1:
 		_fail("answered: the panel emitted no acted")
+
+
+## The counter's leg (QA's TAKE 1 on #281): the counter the strip priced is the one
+## booked and said; each drawn outcome is said on the row (staged as the draw writes
+## it: "back", and "accepted", which a nationalisation's transition keeps open).
+func _check_countered() -> void:
+	var ns = _main._state.player()
+	if not Processes.asks(ns).is_empty():
+		_fail("counter: the ask still waits after 'Make the counter'")
+	var booked := ""
+	for row in ns.processes:
+		if String(row["status"]) == Processes.OPEN:
+			booked = String(row.get("answer", ""))
+	if booked != _counter_made:
+		_fail("counter: '%s' was picked and made, the row booked '%s'" % [_counter_made, booked])
+	var said: String = _panel.tr("Answered: %s.") % (_panel.tr("Counter %d %%") % int(_counter_made.trim_prefix("negotiate_")))
+	if not _text_under(_panel._progress).contains(said):
+		_fail("counter: the row does not say '%s'" % said)
+	var lines := {"back": _panel.tr("Your counter was refused: the old price is asked again."),
+		"accepted": _panel.tr("Your counter was accepted.")}
+	for outcome in lines:
+		for row in ns.processes:
+			if String(row["status"]) == Processes.OPEN:
+				row["negotiation"] = {"answer": _counter_made, "outcome": outcome, "month": 0}
+		_panel._refresh()
+		var found := false
+		for node in _panel._progress.find_children("*", "Label", true, false):
+			if String(node.get_meta("negotiation", "")) == outcome and node.text == lines[outcome]:
+				found = true
+		if not found:
+			_fail("negotiation: a counter's '%s' outcome is not said on its row" % outcome)
+	for row in ns.processes:
+		row.erase("negotiation")
+	_check_closed_lines()
+
+
+## The parent's ruling on #281: a process closed by the month end just crossed gets ONE
+## toned line that month (ProcessAsks.closed_last_month). A walk is BAD and names the
+## last month of its hold (hold_ends is the first free one); done is GOOD; the next
+## month it is gone. An open row's outcome stays on its row, not a second line.
+func _check_closed_lines() -> void:
+	var ns = _main._state.player()
+	var row: Dictionary = {}
+	for r in ns.processes:
+		if String(r["status"]) == Processes.OPEN:
+			row = r
+	var now: int = _main._state.year * 12 + _main._state.month
+	# The stake stopped this month has its own line: moved a month back, it is out.
+	for r in ns.processes:
+		if r != row:
+			r["closed"] = now - 1
+	var accepted :={"answer": _counter_made, "outcome": "accepted", "month": now}
+	for case in [["walked", {}, "walked", ResultTone.BAD], ["done", {}, "landed", ResultTone.GOOD],
+			["done", accepted, "accepted", ResultTone.GOOD], ["stopped", {}, "stopped", ""]]:
+		row["status"] = case[0]
+		row["closed"] = now
+		row["negotiation"] = case[1]
+		_panel._refresh()
+		var lines := _closed_lines()
+		if lines.size() != 1 or String(lines[0].get_meta("closed_outcome")) != case[2]:
+			_fail("closed line: %s should say '%s' once, found %d" % [case[0], case[2], lines.size()])
+			continue
+		# ResultTone.tint() writes a colour override and nothing else (QA's W4 on #281).
+		var colour: Variant = lines[0].get_theme_color("font_color") if lines[0].has_theme_color_override("font_color") else null
+		if colour != ResultTone.TINT.get(case[3]):
+			_fail("closed line: '%s' wears %s, its tone is '%s'" % [case[2], colour, case[3]])
+		if case[2] == "walked":
+			_check_walk_words(row, now, lines[0])
+	row["closed"] = now - 1
+	_panel._refresh()
+	if not _closed_lines().is_empty():
+		_fail("closed line: still said the month after")
+	row["status"] = Processes.OPEN
+	row["closed"] = -1
+	row["negotiation"] = {"answer": _counter_made, "outcome": "back", "month": now}
+	_panel._refresh()
+	if not _closed_lines().is_empty():
+		_fail("closed line: an open row's outcome is said twice")
+	row.erase("negotiation")
+
+
+## A walk's whole line, by side (QA's W2 on #281): a purchase's seller, a sale's buyers.
+func _check_walk_words(row: Dictionary, now: int, line: Label) -> void:
+	var last: int = now + Negotiation.K.NEGOTIATE_WALK_COOLDOWN_MONTHS - 1
+	var until := DateText.month_year((last - 1) % 12 + 1, floori((last - 1) / 12.0))
+	var firm: String = _main._loader.firm_name(_main._state.player().id, String(row["company_id"]))
+	var stake := "%s, %s" % [Strings.row_name("company-actions", _action("minority_stake")), firm]
+	var seller := Strings.t("%s: the seller walked away, no talks until %s.") % [stake, until]
+	if line.text != seller:
+		_fail("closed line: a seller's walk reads '%s', not '%s'" % [line.text, seller])
+	var held := String(row["action_id"])
+	row["action_id"] = "privatisation"
+	if Negotiation.side_of("privatisation") != "buyers":
+		_fail("premise: a privatisation's walk is not the buyers' side")
+	_panel._refresh()
+	var sale := "%s, %s" % [Strings.row_name("company-actions", _action("privatisation")), firm]
+	var buyers := Strings.t("%s: the buyers walked away, no bids until %s.") % [sale, until]
+	var lines := _closed_lines()
+	if lines.size() != 1 or (lines[0] as Label).text != buyers:
+		_fail("closed line: a sale's walk reads '%s', not '%s'" % [(lines[0] as Label).text if not lines.is_empty() else "<none>", buyers])
+	row["action_id"] = held
+
+
+func _closed_lines() -> Array:
+	var out := []
+	for node in _panel.find_children("*", "Label", true, false):
+		# _refresh() queues the old box: its labels are not themselves queued.
+		var gone := false
+		var up: Node = node
+		while up != null and not gone:
+			gone = up.is_queued_for_deletion()
+			up = up.get_parent()
+		if node.has_meta("closed_outcome") and not gone:
+			out.append(node)
+	return out
 
 
 func _check_stopped() -> void:
