@@ -181,7 +181,7 @@ was all twelve; it failed; **the proxy was taken**: a British region's
 mix is the national mix, and `data/regions/GBR.json`'s `_source` says so in
 words.
 
-**BRITAIN HAS NO REGIONAL DIVERGENCE AT ALL** — table (b) measures it at
+**V5.3 CLOSED THE GDP AND UNEMPLOYMENT HALF OF THIS** (ONS regional GDP 2024 and LFS Jun-Aug 2026 now feed `gdp_share` and `unemployment_rel`; the mix is still the national mix and natural change still 0.0, so table (b) below is the measurement from before). Until then: **BRITAIN HAS NO REGIONAL DIVERGENCE AT ALL** — table (b) measures it at
 `moved 0.000`, and that is a recorded bound with the number beside it, not a
 bug. Handing it forward: closing the gap means an authored twelve-number
 table (the devolved administrations' own products), and [[tiers/v2|§6]]'s

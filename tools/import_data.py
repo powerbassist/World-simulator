@@ -1420,11 +1420,28 @@ def load_region_sector_mix():
 # regional-gdp-by-year publishes ITL1 UKC-UKL -- ten of twelve -- while Scotland
 # (UKM) and Northern Ireland (UKN) come from the devolved administrations.
 #
-# None means the proxy below is taken: a British region's GDP share IS its population
-# share, its unemployment_rel is exactly 1.0 and its mix is the national mix, so
-# BRITAIN HAS NO REGIONAL DIVERGENCE AT ALL. That is a bound this session records
-# rather than a number it invents, and docs/region-economy-model.md carries it.
-GBR_GDP_MIO_EUR = None
+# V5.3 replaced the population proxy for GDP and unemployment with ONS's own figures,
+# committed in tools/gbr_ons_itl1.json (OGL v3.0): all twelve ITL1 regions, GDP in
+# pounds million for 2024 (Table 5, with Extra-Regio as the residual, as every other
+# nation's) and the 16+ seasonally adjusted LFS rate for Jun-Aug 2026. GDP stands in
+# for GVA because ONS publishes no GVA per head at ITL1. The sector mix is still the
+# national mix, and natural change is still the zero proxy (Scotland publishes none).
+# Only the ratios are read, so the unit (pounds against Eurostat's euros) never meets
+# a euro figure. docs/region-economy-model.md carries the bound this closed.
+GBR_ONS = ROOT / "tools" / "gbr_ons_itl1.json"
+
+
+def overlay_gbr_ons(gdp, unemployment):
+    """Put ONS's twelve British regions and the UK total into the two Eurostat-shaped
+    tables, under the keys the rest of build_regions already reads (`UK`, `UKC`...)."""
+    with open(GBR_ONS, encoding="utf-8") as f:
+        ons = json.load(f)
+    gdp["UK"] = float(ons["gdp"]["uk_total_mio_gbp"])
+    for code, value in ons["gdp"]["regions_mio_gbp"].items():
+        gdp[code] = float(value)
+    unemployment["UK"] = float(ons["unemployment"]["uk_rate_pct"])
+    for code, value in ons["unemployment"]["regions_rate_pct"].items():
+        unemployment[code] = float(value)
 
 
 # V4.11. Where a nation's regional series is ABSENT at the dataset boundary, the
@@ -1438,8 +1455,8 @@ GBR_GDP_MIO_EUR = None
 # Every entry is a measured gap with its number in docs/data-sources.md.
 PROXY_SERIES = {
     "GBR": {
-        "series": {"gdp", "unemployment", "natural_change"},
-        "why": "no UK regional GDP, unemployment or GVA exists in Eurostat and none was authored",
+        "series": {"natural_change"},
+        "why": "no UK regional GDP, unemployment or GVA exists in Eurostat; ONS's are used instead",
         "natural_why": ("demo_r_gind3 carries NATGROWRT for eleven of the twelve UK codes "
                         "(2012-2018) but Scotland (UKM) publishes none at any year"),
     },
@@ -2527,6 +2544,7 @@ def build_regions():
     counts = assign_cities(index)
     gdp = load_region_gdp()
     unemployment = load_region_unemployment()
+    overlay_gbr_ons(gdp, unemployment)
     mixes = load_region_sector_mix()
     natural = load_natural_change(
         {nid: [r["id"] for r in index[nid]["kept"]] for nid in NATIONS})
@@ -2636,8 +2654,13 @@ def build_regions():
                             "population share, unemployment_rel is 1.0 and the mix is the "
                             "national mix" % PROXY_SERIES[nid]["why"]
                             if proxy else
-                            "Eurostat nama_10r_2gdp, lfst_r_lfu3rt and nama_10r_3gva (%d)"
-                            % REGION_ECON_YEAR
+                            ("ONS regional GDP, ITL1, 2024 (Table 5, pounds million, "
+                             "GDP standing in for GVA, which ONS publishes no per head), "
+                             "and ONS LFS unemployment, 16+ seasonally adjusted, "
+                             "Jun-Aug 2026 (Open Government Licence v3.0)"
+                             if nid == "GBR" else
+                             "Eurostat nama_10r_2gdp, lfst_r_lfu3rt and nama_10r_3gva (%d)"
+                             % REGION_ECON_YEAR)
                             + ("; regional GDP is the population-share proxy -- %s"
                                % PROXY_SERIES[nid]["why"] if proxy_gdp else "")
                             + ("; unemployment_rel is 1.0 -- %s"
