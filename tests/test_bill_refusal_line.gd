@@ -61,6 +61,7 @@ func _init() -> void:
 	_test_a_firm_no_longer_eligible_says_so()
 	_test_a_free_firm_says_nothing_and_starts()
 	_test_a_stale_refusal_is_not_told_again()
+	_test_a_second_refusal_is_a_second_card()
 	_test_every_door_tells_it()
 	_test_a_real_walk_out_reaches_the_line("minority_stake", "full_nationalisation", Negotiation.SELLER_WALKED)
 	_test_a_real_walk_out_reaches_the_line("privatisation", "privatisation", Negotiation.BUYERS_WALKED)
@@ -206,6 +207,31 @@ func _test_a_stale_refusal_is_not_told_again() -> void:
 	ProposalNote.card_ownership_refusal(main)
 	if main._hud.inbox.cards.size() != 1:
 		_fail("a refusal from last month was told again")
+
+
+## "Once" is once per refusal, not once a game: the same bill re-tabled inside the hold and
+## refused in a later month is told again, and so is another firm's in the same month.
+func _test_a_second_refusal_is_a_second_card() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var majors: Array = Companies.majors_of(_loader, ns.id)
+	var first := String(majors[0].id)
+	var second := String(majors[1].id)
+	for firm in [first, second]:
+		ns.processes.append(_closed_row(state, firm, "minority_stake", "walked", 2))
+	var main := StubMain.new()
+	main._state = state
+	main._loader = _loader
+	_adopt_refused(state, ns, first, "full_nationalisation", "first refusal")
+	ProposalNote.card_ownership_refusal(main)
+	state.month += 1
+	_adopt_refused(state, ns, first, "full_nationalisation", "the same bill, a month on")
+	ProposalNote.card_ownership_refusal(main)
+	_adopt_refused(state, ns, second, "full_nationalisation", "another firm, that month")
+	ProposalNote.card_ownership_refusal(main)
+	var cards: Array = main._hud.inbox.cards
+	if cards.size() != 3 or not String(cards[-1].get("body", "")).contains(_name(second)):
+		_fail("three refusals were not three cards, the last naming %s: %s" % [_name(second), cards])
 
 
 ## A bill is adopted at a division, a release or a press: each hook says it, once.
