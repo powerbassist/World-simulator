@@ -15,8 +15,8 @@ The private file, tools/private/skills_basis.json, is keyed by the game's id:
     {"<person id>": {"real_inspired": true, "regard_offset": "<one line, with its source>"}}
 
 `real_inspired` is the mark. A worktree does not carry a gitignored file, so --basis
-points at the main checkout's copy. A failure prints ids and nothing from the file: a
-log can reach a PR, and the basis must not.
+points at the main checkout's copy. A basis failure names only the id, and the id on
+that line IS the mark: read it locally, never paste it into a PR, a commit or a job.
 
     python tools/check_skills.py [--basis PATH]
     python tools/check_skills.py --selftest
@@ -31,7 +31,8 @@ import sys
 
 OFFSET = "start_regard_offset"
 OFFSET_MAX = 0.30
-DEFAULT_BASIS = "tools/private/skills_basis.json"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_BASIS = os.path.join(ROOT, "tools", "private", "skills_basis.json")
 
 
 def offset_problems(people):
@@ -53,20 +54,20 @@ def basis_problems(people, basis):
     out = []
     known = {person.get("id") for person in people}
     for person_id in sorted(set(basis) - known):
-        out.append("%s: in the basis, not in data/people" % person_id)
+        out.append("%s: in the basis file, not in data/people" % person_id)
     for person in people:
         person_id = person.get("id")
         row = basis.get(person_id)
         if not person.get(OFFSET) or not isinstance(row, dict) or row.get("real_inspired") is not True:
             continue
         if not str(row.get("regard_offset", "")).strip():
-            out.append("%s: a marked person's offset has no basis line" % person_id)
+            out.append("%s: no basis line" % person_id)
     return out
 
 
 def load_people():
     people = []
-    for path in sorted(glob.glob("data/people/*.json")):
+    for path in sorted(glob.glob(os.path.join(ROOT, "data", "people", "*.json"))):
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
         people.extend(data["people"] if isinstance(data, dict) else data)
@@ -85,13 +86,13 @@ def selftest():
     marked = {"A_a": {"real_inspired": True, "regard_offset": "a line"}, "A_b": {"real_inspired": True}, "A_c": {"regard_offset": ""}}
     people = [{"id": "A_a", OFFSET: 0.1}, {"id": "A_b", OFFSET: 0.1}, {"id": "A_c", OFFSET: 0.1}, {"id": "A_d", OFFSET: 0.1}]
     # A_b is marked with no line; A_c is not marked; A_d is not in the file at all.
-    if basis_problems(people, marked) != ["A_b: a marked person's offset has no basis line"]:
+    if basis_problems(people, marked) != ["A_b: no basis line"]:
         print("SELFTEST FAIL: basis_problems returned %r" % basis_problems(people, marked))
         return 1
     if basis_problems([{"id": "A_a", OFFSET: 0}], {"A_a": {"real_inspired": True}}):
         print("SELFTEST FAIL: a zero offset asked for a basis")
         return 1
-    if basis_problems([], {"A_z": {}}) != ["A_z: in the basis, not in data/people"]:
+    if basis_problems([], {"A_z": {}}) != ["A_z: in the basis file, not in data/people"]:
         print("SELFTEST FAIL: a row naming nobody passed")
         return 1
     print("check_skills selftest: all checks passed")

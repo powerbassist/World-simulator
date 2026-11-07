@@ -14,8 +14,8 @@ extends RefCounted
 ## rather than a silently inert trait.
 
 ## The largest real-relations offset a person row may ship, either way (Person.
-## start_regard_offset): large enough to read, smaller than the party's own distance
-## can already say (docs/design/v5.3-ab.md section 6).
+## start_regard_offset), the bound docs/design/v5.3-ab.md section 6 sets: at 0.20 x
+## regard, at most 0.06 of an audience's odds.
 const REGARD_OFFSET_MAX := 0.30
 
 ## The eight traits, 2-3 authored per person. Each gates an act threshold or

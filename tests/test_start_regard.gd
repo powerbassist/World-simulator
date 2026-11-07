@@ -118,6 +118,10 @@ func _check_the_formula() -> void:
 		var ns = state.player()
 		var leader := President.leader_id(ns)
 		var own := _party_of(nation_id, leader)
+		# The offset's gate compares these two: if a standard start seated anyone else,
+		# every offset shipped for the nation would go silently unread.
+		if leader != String(_loader.nations[nation_id].leader_person_id):
+			_fail("%s: the standard start seats '%s', the file names '%s'" % [nation_id, leader, _loader.nations[nation_id].leader_person_id])
 		if own == "":
 			_fail("%s: the president '%s' reads no party" % [nation_id, leader])
 			continue
