@@ -11,11 +11,15 @@ extends SceneTree
 ## prints each law's yes-share at reference and its signed move at ten times.
 ##
 ## BAND B5, the address (`--address`): one address moves a close division, within 5 % of
-## seats, by 2 to 6 % of seats. `--regimes` runs the band's two scripted players through the
-## game's own month, 48 months per nation, the same bill policy: table the open bill nearest
-## its line. One addresses every bill, the other the first three within 5 % each year; a
-## third never does, for reference. The first must pass fewer bills and end lower in approval
-## than the second.
+## seats, by 2 to 6 % of seats. "Moves" is how much nearer its line the division stands, half
+## the change in yes less no, the spec's "short by 12 seats, short by 3 to 7": a seat won from
+## a no counts one, a seat lost to an abstention a half. `--regimes` runs the band's two
+## scripted players through the game's own month, 48 months, the same bill policy: table the
+## open bill nearest its line that has not been tried in two years. One addresses every bill,
+## the other the first three within 5 % each year; a third never does, for reference. The
+## first must pass fewer bills and end lower in approval than the second, on the mean over
+## `--seeds=N` of the game's draw (one game is one run of its events, and that noise is larger
+## than an address). `--nation=FRA` runs one nation, so four can run side by side.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -49,8 +53,10 @@ func _init() -> void:
 		quit(0)
 		return
 	if OS.get_cmdline_user_args().has("--regimes"):
+		var seeds := _arg_int("--seeds=", 5)
 		for nation_id in NATIONS:
-			_regimes(loader, nation_id)
+			if _arg_string("--nation=", nation_id) == nation_id:
+				_regimes(loader, nation_id, seeds)
 		quit(0)
 		return
 	var failed := false
@@ -91,7 +97,11 @@ func _init() -> void:
 ## How far from its line a division stands, in points of the chamber. Against the two tallies,
 ## as a simple majority reads them, whichever majority the law asks for.
 func _margin(result: Dictionary, seats: int) -> float:
-	return 100.0 * absf(float(result["yes_seats"]) - float(result["no_seats"])) / float(seats)
+	return 100.0 * absf(_gap(result)) / float(seats)
+
+
+func _gap(result: Dictionary) -> float:
+	return float(result["yes_seats"]) - float(result["no_seats"])
 
 
 ## One address on every close division of a new game: Address.estimate, the read the strip
@@ -112,8 +122,13 @@ func _address_band(loader) -> void:
 			var read: Dictionary = Address.estimate(state, ns, loader, law)
 			if _margin(read["before"], ns.assembly_seats) > CLOSE_POINTS:
 				continue
-			var points := 100.0 * absf(float(read["after"]["yes_seats"]) - float(read["before"]["yes_seats"])) / float(ns.assembly_seats)
+			var points := absf(_gap(read["after"]) - _gap(read["before"])) / 2.0 * 100.0 / float(ns.assembly_seats)
 			moves.append(points)
+			if OS.get_cmdline_user_args().has("--laws"):
+				var b: Dictionary = read["before"]
+				var a: Dictionary = read["after"]
+				print("  %s %-32s yes %3d no %3d abstain %3d -> yes %+3d no %+3d abstain %+3d  lines %s" % [nation_id, law.id, b["yes_seats"], b["no_seats"], b["abstain_seats"],
+					int(a["yes_seats"]) - int(b["yes_seats"]), int(a["no_seats"]) - int(b["no_seats"]), int(a["abstain_seats"]) - int(b["abstain_seats"]), b["party_votes"].values()])
 			if points >= 2.0 and points <= 6.0:
 				in_band += 1
 			if bool(read["before"]["passed"]) != bool(read["after"]["passed"]):
@@ -126,21 +141,39 @@ func _address_band(loader) -> void:
 			nation_id, moves.size(), in_band, moves[0], moves[moves.size() / 2], moves[-1], flips])
 
 
-func _regimes(loader, nation_id: String) -> void:
+func _arg_string(prefix: String, fallback: String) -> String:
+	for arg in OS.get_cmdline_user_args():
+		if String(arg).begins_with(prefix):
+			return String(arg).substr(prefix.length())
+	return fallback
+
+
+func _arg_int(prefix: String, fallback: int) -> int:
+	return int(_arg_string(prefix, str(fallback)))
+
+
+func _regimes(loader, nation_id: String, seeds: int) -> void:
 	var rows := {}
 	for regime in ["never", "closest", "always"]:
-		rows[regime] = _regime(loader, nation_id, regime)
-		print("%s %-8s tabled %2d, passed %2d, close carried %2d, addresses %2d, approval %.1f, diary refused %d" % [nation_id, regime,
-			rows[regime]["tabled"], rows[regime]["passed"], rows[regime]["close_passed"], rows[regime]["addresses"], rows[regime]["approval"], rows[regime]["refused"]])
-	var bills: bool = int(rows["always"]["passed"]) < int(rows["closest"]["passed"])
+		var mean := {"tabled": 0.0, "passed": 0.0, "close_passed": 0.0, "addresses": 0.0, "approval": 0.0, "refused": 0.0}
+		for draw in seeds:
+			var one := _regime(loader, nation_id, regime, draw)
+			for key in mean:
+				mean[key] = float(mean[key]) + float(one[key]) / float(seeds)
+		rows[regime] = mean
+		print("%s %-8s tabled %.1f, passed %.1f, close carried %.1f, addresses %.1f, approval %.1f, diary refused %.1f" % [nation_id, regime,
+			mean["tabled"], mean["passed"], mean["close_passed"], mean["addresses"], mean["approval"], mean["refused"]])
+	var bills: bool = float(rows["always"]["passed"]) < float(rows["closest"]["passed"])
 	var approval: bool = float(rows["always"]["approval"]) < float(rows["closest"]["approval"])
-	print("%s  %s: always against the three closest: passed %d against %d, approval %.1f against %.1f" % [
-		"PASS" if bills and approval else "FAIL", nation_id, rows["always"]["passed"], rows["closest"]["passed"], rows["always"]["approval"], rows["closest"]["approval"]])
+	print("%s  %s: always against the three closest, over %d draws: passed %.1f against %.1f, approval %.1f against %.1f" % [
+		"PASS" if bills and approval else "FAIL", nation_id, seeds, rows["always"]["passed"], rows["closest"]["passed"], rows["always"]["approval"], rows["closest"]["approval"]])
 
 
 ## One scripted player. Acts at the top of each month, before the month that closes it divides.
-func _regime(loader, nation_id: String, regime: String) -> Dictionary:
+func _regime(loader, nation_id: String, regime: String, draw: int) -> Dictionary:
 	var state = GameState.new_game(loader, nation_id)
+	state.player().draw_seed = draw
+	var tried := {}
 	var out := {"tabled": 0, "passed": 0, "close_passed": 0, "addresses": 0, "approval": 0.0, "refused": 0}
 	var this_year := {}
 	for i in REGIME_MONTHS:
@@ -150,8 +183,9 @@ func _regime(loader, nation_id: String, regime: String) -> Dictionary:
 		var ns = state.player()
 		var was_close := false
 		if ns.tabled_bill.is_empty():
-			var pick := _nearest_its_line(state, ns, loader)
+			var pick := _nearest_its_line(ns, loader, tried, i)
 			if pick["law"] != null:
+				tried[pick["law"].id] = i
 				was_close = float(pick["margin"]) <= CLOSE_POINTS
 				var year_count := int(this_year.get(state.year, 0))
 				if regime == "always" or (regime == "closest" and was_close and year_count < CLOSEST_A_YEAR):
@@ -172,11 +206,11 @@ func _regime(loader, nation_id: String, regime: String) -> Dictionary:
 	return out
 
 
-func _nearest_its_line(state, ns, loader) -> Dictionary:
+func _nearest_its_line(ns, loader, tried: Dictionary, month: int) -> Dictionary:
 	var best = null
 	var margin := INF
 	for law in Legislature.available(ns, loader.laws):
-		if law.constitutional:
+		if law.constitutional or month - int(tried.get(law.id, -24)) < 24:
 			continue
 		var m := _margin(Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law), ns.assembly_seats)
 		if m < margin:

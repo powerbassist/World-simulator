@@ -29,7 +29,7 @@ const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 
 const PLAYER := "FRA"
 ## A hand-written copy of OPINION_WEIGHT, never read from the constant.
-const WEIGHT := 5.0
+const WEIGHT := 6.5
 
 var _failures: Array[String] = []
 var _loader
@@ -275,9 +275,7 @@ func _check_the_register_fades_over_three_months() -> void:
 	Address.tick_month(state)
 	if not _shift_of(ns, law.id).is_empty():
 		_fail("after three months the shift stands: %s" % [_shift_of(ns, law.id)])
-	# The diary's row is settled when its day has passed, here or by the day's driver.
-	state.month = 4
-	Address.tick_month(state)
+	# The month's close marks the row, for a game with no day's driver.
 	for e in state.appointments:
 		if String(e["kind"]) == CalendarK.KIND_ADDRESS and String(e["status"]) != CalendarK.STATUS_DONE:
 			_fail("a past address is still %s" % e["status"])
@@ -323,11 +321,11 @@ func _check_a_second_address_adds_to_the_first() -> void:
 	var ns = state.player()
 	var law = _open_bill(state)
 	var first: Dictionary = Address.give(state, _loader, law.id)["shifts"].duplicate()
-	Address.tick_month(state)
-	var faded: Dictionary = _shift_of(ns, law.id).duplicate()
-	# The day's driver marks yesterday's row: it no longer holds a verb of the same key.
+	# The day's driver marks yesterday's row, with no card: it no longer holds a verb of the same key.
 	if not DiaryDriver.resolve(state, _loader, 2026, 3, 10, func(_outcome: Dictionary) -> void: _fail("an address brought the day's card")):
 		_fail("the driver had no address to mark")
+	Address.tick_month(state)
+	var faded: Dictionary = _shift_of(ns, law.id).duplicate()
 	state.day = 11
 	var second: Dictionary = Address.give(state, _loader, law.id)
 	if not bool(second.get("ok", false)):

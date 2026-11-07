@@ -107,8 +107,9 @@ static func estimate(state, ns, loader, law) -> Dictionary:
 		"before": Legislature.resolve_vote(ns, parties, law), "after": Legislature.resolve_vote(after, parties, law)}
 
 
-## The month: every shift a third nearer nothing, the window's old addresses forgotten, and a
-## row whose day has passed marked, here for a game with no day's driver and after a load.
+## The month's close: every shift a third nearer nothing, the window's old addresses forgotten,
+## and the month's rows marked, here for a game with no day's driver. An address is dated the
+## day it is given, so none is ahead of the close.
 static func tick_month(state) -> void:
 	var ns = state.player()
 	if ns == null or ns.measure_opinion.is_empty():
@@ -128,7 +129,6 @@ static func tick_month(state) -> void:
 	ns.measure_opinion["given"] = given
 	if measures.is_empty() and given.is_empty():
 		ns.measure_opinion = {}
-	var first := Calendar.ordinal(int(state.year), int(state.month), 1)
 	for entry in state.appointments.duplicate():
-		if String(entry["kind"]) == CalendarK.KIND_ADDRESS and String(entry["status"]) == CalendarK.STATUS_BOOKED and Calendar.entry_ordinal(entry) < first:
+		if String(entry["kind"]) == CalendarK.KIND_ADDRESS and String(entry["status"]) == CalendarK.STATUS_BOOKED:
 			Calendar.resolve(state, Calendar.verb_key(entry), true)
