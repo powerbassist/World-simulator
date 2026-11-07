@@ -601,7 +601,15 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     from_dict() rebuilds from the save alone, so an absent key would read as no
 ##     embassy anywhere: the pre-0d model, where open_embassy is offered in every
 ##     capital. eu_member/neighbours' case; the argument is at the declaration.
-const SAVE_VERSION := 41
+##   * V5.3 majors -- 41 -> 42 ON NO FIELD, V3.3's and V4.11's argument again. The
+##     four authored nations' firms are rebuilt at real size (FRA, DEU, GBR, POL:
+##     real headcounts and shares, 17 new chiefs), and a company's size is content
+##     that from_dict() re-reads from the save alone. A version-41 save made against
+##     the old roster would load, unrefused, with firms 7 to 16 times too large
+##     (QA's reproduction: FRA_aurignac 882,824 jobs against 56,000 in a new game),
+##     so the break-up gate and the courtship would read the wrong weights. The
+##     bump is the loader saying the firms changed. No new field.
+const SAVE_VERSION := 42
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
