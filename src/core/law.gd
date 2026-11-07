@@ -30,9 +30,7 @@ const THEME_KEYS := ["tax", "labour", "social", "institutional", "business"]
 
 ## Effect keys that are a single float delta into one of the non-budget
 ## channels legislature.gd accumulates onto NationState.
-const SCALAR_EFFECT_KEYS := [
-	"structural_unemployment_pct", "potential_growth_pct", "other_revenue_pct_gdp",
-]
+const SCALAR_EFFECT_KEYS := ["structural_unemployment_pct", "potential_growth_pct", "other_revenue_pct_gdp"]
 
 ## effects.institutional keys a constitutional amendment may set, each an
 ## ABSOLUTE value written straight onto NationState -- an institution is set,
@@ -226,6 +224,9 @@ var new_tax: Dictionary = {}
 ## certainly hear. Recorded as a bound rather than patched, because the alternative is
 ## an authored score and that is the thing this whole approach exists to avoid.
 var reach: float = 0.0
+## V5.3 b. How big the law is, {value, reference, unit}, {} for none: read from data by
+## src/core/law_magnitude.gd, which holds the grade (this file is at the size ratchet's ceiling).
+var magnitude: Dictionary = {}
 
 
 ## `sector_keys` is PASSED rather than preloaded, the way tax_keys, spending_keys

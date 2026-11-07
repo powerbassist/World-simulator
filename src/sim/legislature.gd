@@ -13,6 +13,8 @@ extends RefCounted
 ## docs/legislature-model.md.
 
 const LK = preload("res://src/sim/legislature_constants.gd")
+const DivisionTerms = preload("res://src/sim/division_terms.gd")
+const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const LawConditions = preload("res://src/sim/law_conditions.gd")
 # V4.2. The yield ceiling lives here (a constants leaf -- no cycle: statute.gd
 # preloads this file, and this file preloads only its constants and leaves).
@@ -221,6 +223,7 @@ static func _tick_held_bills(state, ns, loader) -> void:
 	for law_id in due:
 		# The origin is read BEFORE the erase -- it is the charge's gate below.
 		var origin: String = String(ns.held_bills[law_id].get("origin", "player"))
+		var grade := float(ns.held_bills[law_id].get("scale", 1.0))
 		ns.held_bills.erase(law_id)
 		var law = Bills.by_id(loader, String(law_id))
 		if law == null:
@@ -236,6 +239,7 @@ static func _tick_held_bills(state, ns, loader) -> void:
 					break
 		if law == null:
 			continue
+		law = LawMagnitude.scaled(law, grade)
 		var released := {
 			"law_id": law.id, "passed": true, "released": true,
 			"majority": law.majority, "yes_seats": 0, "no_seats": 0,
@@ -556,7 +560,8 @@ static func read_field(ns, field: String) -> float:
 ## dependable vote than the one that wrote the bill. Opposition still gets
 ## nothing. See docs/government-model.md.
 static func support(ns, party, law) -> float:
-	return clampf(spatial_support(ns, party, law) + Government.coalition_bonus(ns, party), -1.0, 1.0)
+	var lean := spatial_support(ns, party, law)
+	return clampf(lean + Government.coalition_bonus(ns, party) + DivisionTerms.of(lean, party, law), -1.0, 1.0)
 
 
 ## The same party's view of the same bill with no government whip on it -- the
@@ -619,12 +624,14 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 	var party_votes := {}
 	var party_support := {}
 	var party_rebels := {}
+	var party_pledged := {}
 
 	for party in party_list:
 		var s: float = support(ns, party, law)
 		if support_bonus != 0.0:
 			s = clampf(s + support_bonus, -1.0, 1.0)
-		var own: float = spatial_support(ns, party, law)
+		# The members read a bill's size too: only the whip is strain.
+		var own: float = clampf(spatial_support(ns, party, law) + DivisionTerms.of(spatial_support(ns, party, law), party, law), -1.0, 1.0)
 		party_support[party.id] = s
 
 		var seats: int = int(ns.seats_by_party.get(party.id, 0))
@@ -637,65 +644,20 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 		if rebels > 0:
 			party_rebels[party.id] = rebels
 
-		match line:
-			"yes": yes_seats += seats - rebels
-			"no": no_seats += seats - rebels
-			_: abstain_seats += seats - rebels
-		match rebel_line:
-			"yes": yes_seats += rebels
-			"no": no_seats += rebels
-			_: abstain_seats += rebels
+		var pledged := DivisionTerms.pledged_seats(ns, party, law)
+		if pledged > 0:
+			party_pledged[party.id] = pledged
+		var tally := DivisionTerms.seats_of(line, rebel_line, seats, rebels, pledged)
+		yes_seats += int(tally[0])
+		no_seats += int(tally[1])
+		abstain_seats += int(tally[2])
 
 		party_votes[party.id] = line
 
 	var seats_total: int = ns.assembly_seats
-	var passed: bool
-	match law.majority:
-		"simple":
-			passed = yes_seats > no_seats
-		"absolute":
-			passed = float(yes_seats) > LK.ABSOLUTE_MAJORITY_FRACTION * float(seats_total)
-		"two_thirds":
-			passed = float(yes_seats) >= LK.TWO_THIRDS_MAJORITY_FRACTION * float(seats_total)
-		"amendment":
-			# Reads the PROPOSING nation's own threshold, not a fixed fraction --
-			# the whole point of amendment_rule being per-nation data. Every rule has
-			# had a fraction since V1.7c gave referendum_required one; the check
-			# stays because an unrecognised rule is still a content bug rather than a
-			# runtime state a played game can produce.
-			if not LK.AMENDMENT_RULE_FRACTIONS.has(ns.amendment_rule):
-				push_error("legislature: amendment_rule '%s' has no seat fraction" % ns.amendment_rule)
-				passed = false
-			elif referendum:
-				# Route B. The referendum replaces the SUPERMAJORITY, not the
-				# division -- Art. 89 (FRA), Art. 138 (ITA), Art. 114 (LUX) and
-				# Art. 195 (CHE) all put an ordinary chamber majority first. So
-				# "passed" here means "carried in the chamber and now goes to the
-				# country", and propose() is what turns that into a pending vote.
-				#
-				# `simple` and not `absolute`, and the probe is what settled it. Art.
-				# 89's first stage is the ORDINARY legislative procedure, which is a
-				# majority of votes CAST; the absolute reading counts abstentions
-				# against and put route B at 270 of the 289 seats it needed in every
-				# one of 168 months, so the verb was unreachable in a played run --
-				# V1.3f's error, caught by tools/referendum_probe.gd's table R6 rather
-				# than shipped. Luxembourg (Art. 114) and Switzerland (Art. 195) read
-				# the same way; ITALY IS THE OUTLIER, whose Art. 138 second vote is
-				# explicitly absolute, and that divergence is recorded in
-				# docs/referendum-model.md the way docs/electoral-systems.md records a
-				# per-method reduction rather than being modelled per nation.
-				passed = yes_seats > no_seats
-			else:
-				# A rule at the absolute fraction is "more than half", like the
-				# absolute arm above; the higher ones are "at least" bars (V5.0d:
-				# >= let a GBR amendment carry at exactly 325 of 650).
-				var bar: float = LK.AMENDMENT_RULE_FRACTIONS[ns.amendment_rule] * float(seats_total)
-				passed = float(yes_seats) > bar if LK.AMENDMENT_RULE_FRACTIONS[ns.amendment_rule] <= LK.ABSOLUTE_MAJORITY_FRACTION else float(yes_seats) >= bar
-		_:
-			push_error("legislature: unknown majority type '%s'" % law.majority)
-			passed = false
+	var passed := DivisionTerms.passed(ns, law, yes_seats, no_seats, referendum)
 
-	return {
+	var result := {
 		"law_id": law.id,
 		"passed": passed,
 		"majority": law.majority,
@@ -708,6 +670,9 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 		"party_support": party_support,
 		"party_rebels": party_rebels,
 	}
+	if not party_pledged.is_empty():
+		result["party_pledged"] = party_pledged
+	return result
 
 
 ## Apply a passed law's effects onto ns. Budget-lever effects are routed through
@@ -1279,7 +1244,7 @@ static func can_put_to_referendum(ns, law) -> bool:
 ## amendment under a constitution that offers the route. A carried division does NOT
 ## apply the law: it calls the country, and Legislature.tick_month() settles it
 ## REFERENDUM_DELAY_MONTHS later. See docs/referendum-model.md.
-static func propose(state, loader, law, force := false, referendum := false) -> Dictionary:
+static func propose(state, loader, law, force := false, referendum := false, scale := 1.0) -> Dictionary:
 	var ns = state.player()
 	var party_list: Array = loader.parties.get(ns.id, [])
 
@@ -1363,13 +1328,17 @@ static func propose(state, loader, law, force := false, referendum := false) -> 
 	# the court, the cooldown) as that close's first step. What comes back is the
 	# tabling: the vote day and the forecast, resolve_vote() now -- the pure read
 	# the panel already shows. Nothing is written to last_law_result until then.
+	if scale != 1.0 and not LawMagnitude.may_grade(law, scale, referendum):
+		return refused(ns, law.id, law.majority, "not_graded")
 	ns.tabled_bill = {
 		"law_id": law.id, "referendum": referendum, "vote_year": int(state.year),
 		"vote_month": int(state.month), "vote_day": Calendar.days_in_month(int(state.year), int(state.month)),
 	}
+	if scale != 1.0:
+		ns.tabled_bill["scale"] = scale
 	var tabling: Dictionary = ns.tabled_bill.duplicate()
 	tabling["tabled"] = true
-	tabling["forecast"] = resolve_vote(ns, party_list, law, route)
+	tabling["forecast"] = resolve_vote(ns, party_list, LawMagnitude.scaled(law, scale), route)
 	return tabling
 
 

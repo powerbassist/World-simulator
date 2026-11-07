@@ -294,6 +294,36 @@ static func commit(state, ns, loader, kind: String, person_id: String, object: S
 	return true
 
 
+## V5.3 b. A person's vote and their faction's on one bill, for step 6's deal: a `pledge`
+## row naming the party it was given for, which the division reads through
+## DivisionTerms. False for someone with no party: they have no seats to bring.
+static func pledge(state, ns, loader, person_id: String, law_id: String, due_month: int) -> bool:
+	var party_id := _party_id_of(ns, loader, person_id)
+	if party_id == "" or not commit(state, ns, loader, "pledge", person_id, "law:%s" % law_id, due_month):
+		return false
+	ns.commitments[-1]["party_id"] = party_id
+	return true
+
+
+## The live pledges on one bill, as every reader gets a commitment.
+static func pledges_on(ns, law_id: String) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for row in ns.commitments:
+		if String(row.get("kind", "")) == "pledge" and String(row.get("object", "")) == "law:%s" % law_id:
+			out.append(_commitment(row))
+	return out
+
+
+## The mark a pledge leaves: "kept", "broken" or "void", the latest judged for this
+## person and bill, "" before the vote and once JUDGED_KEPT_MONTHS have passed.
+static func pledge_verdict(ns, person_id: String, law_id: String) -> String:
+	var verdict := ""
+	for row in ns.commitments_judged:
+		if String(row.get("kind", "")) == "pledge" and String(row.get("person_id", "")) == person_id and String(row.get("object", "")) == "law:%s" % law_id:
+			verdict = String(row.get("verdict", ""))
+	return verdict
+
+
 ## V5.2c. A commitment in flight taken back unjudged -- a promise caught as a lie
 ## is no promise (Lies.settle). The first row of that kind, person and object.
 static func withdraw_commitment(ns, kind: String, person_id: String, object: String) -> bool:
@@ -412,7 +442,23 @@ static func _commitment(row: Dictionary) -> Dictionary:
 		view["lie"] = true
 	if row.has("chance"):
 		view["chance"] = float(row["chance"])
+	if row.has("party_id"):
+		view["party_id"] = String(row["party_id"])
 	return view
+
+
+## A person's party as the registers stand: a defection's override ("" is sitting alone),
+## the authored edge, else the party they lead, whose row names them.
+static func _party_id_of(ns, loader, person_id: String) -> String:
+	if ns.person_party_override.has(person_id):
+		return String(ns.person_party_override[person_id])
+	var person = loader.person_by_id.get(person_id)
+	if person != null and String(person.party_id) != "":
+		return String(person.party_id)
+	for party in loader.parties.get(ns.id, []):
+		if String(ns.party_leader_override.get(party.id, party.leader_person_id)) == person_id:
+			return String(party.id)
+	return ""
 
 
 ## An authored person of this nation: the loader's id-prefix rule.
