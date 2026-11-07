@@ -32,6 +32,7 @@
    "tests/test_broken_word_card.gd",
    "tests/test_table_bill.gd",
    "tests/test_forecast_reads.gd",
+   "tests/test_law_verbs.gd",
    "tests/test_tabled_ui.gd",
    "tests/test_diary_grid.gd",
    "tests/test_chart_series.gd",

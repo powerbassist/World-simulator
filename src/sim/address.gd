@@ -76,8 +76,7 @@ static func give(state, loader, law_id: String) -> Dictionary:
 	var law = Legislature.open_law(state, ns, loader, law_id)
 	if law == null:
 		return {"ok": false, "error": "no such bill is open"}
-	var today := mini(int(state.day), Calendar.days_in_month(int(state.year), int(state.month)))
-	var booked: Dictionary = Calendar.book(state, Calendar.make_entry(CalendarK.KIND_ADDRESS, int(state.year), int(state.month), today, "", "", law_id))
+	var booked: Dictionary = Calendar.book(state, _entry(state, law_id))
 	if not bool(booked["ok"]):
 		return booked
 	var now: int = int(state.year) * 12 + int(state.month)
@@ -91,6 +90,18 @@ static func give(state, loader, law_id: String) -> Dictionary:
 	if not price.is_empty():
 		Legislature.apply_effects(state, ns, {"bloc_offset": price}, loader)
 	return {"ok": true, "error": "", "shifts": moved, "worth": worth_now}
+
+
+## What the diary would say to an address today, "" when it would take it: read before the
+## press, so a panel never re-derives the rule it is greying a button for.
+static func refusal(state, law_id: String) -> String:
+	return Calendar.refusal_reason(state, _entry(state, law_id))
+
+
+## Today's row. A stale day past the month's end reads as its last, as the diary's own check does.
+static func _entry(state, law_id: String) -> Dictionary:
+	var today := mini(int(state.day), Calendar.days_in_month(int(state.year), int(state.month)))
+	return Calendar.make_entry(CalendarK.KIND_ADDRESS, int(state.year), int(state.month), today, "", "", law_id)
 
 
 static func _write(ns, law_id: String, moved: Dictionary, now: int) -> void:

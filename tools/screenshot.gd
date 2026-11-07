@@ -29,6 +29,11 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --empty-chest --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade --text 130 --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade-tabled --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address-again --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip approval:1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --outliner --open outliner
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip deficit:1
@@ -519,6 +524,8 @@ var _region_arrival := false
 ## with the cap's line. --priority-rest: it held the second and ended it, the picker
 ## on it, greyed with the rest's line and the month it is free again.
 var _priority := ""
+## The bill's two decisions (V5.3 b, step 5): "grade", "grade-tabled", "address" or "address-again".
+var _law_verbs := ""
 
 ## V4.2 close-out. A draft the machine has parked renders NOWHERE on the law
 ## panel -- ns.draft_bills reaches the UI only through the briefing popup ("In
@@ -1024,6 +1031,8 @@ func _init() -> void:
 			_fund_running = true
 		elif args[i] == "--region-arrival":
 			_region_arrival = true
+		elif args[i] in ["--grade", "--grade-tabled", "--address", "--address-again"]:
+			_law_verbs = String(args[i]).trim_prefix("--")
 		elif args[i] in ["--priority", "--priority-cap", "--priority-rest"]:
 			_priority = String(args[i]).trim_prefix("--")
 		elif args[i] == "--forecast-computing":
@@ -1340,6 +1349,8 @@ func _apply_view() -> void:
 		_stage_a_walk()
 	if _priority != "":
 		_stage_a_priority()
+	if _law_verbs != "":
+		_stage_the_law_verbs()
 	if _compose:
 		_draft_a_bill()
 	if _pmb:
@@ -2159,6 +2170,30 @@ func _stage_a_fund() -> void:
 		funds.start(state, ns, loader, named[i].id, low, 2)
 	var panel = _main._windows.content("region")
 	panel._open_region = String(named[1 if _fund_running else 0].id)
+	panel.mark_dirty()
+
+
+## No row ships a size yet (Content tags them): the first budget bill stands in, at forty.
+func _stage_the_law_verbs() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var panel = _main._law_panel
+	var list = panel._laws
+	var laws: Array = preload("res://src/sim/legislature.gd").available(ns, _main._loader.laws).filter(func(law) -> bool:
+		return not (law.effects.get("spending_pct_gdp", {}) as Dictionary).is_empty())
+	var law = laws[0]
+	law.magnitude = {"value": 40.0, "reference": 40.0, "unit": "lycees"}
+	list._game = state
+	list._selected = String(law.id)
+	list.grades[String(law.id)] = 10.0
+	if _law_verbs == "grade-tabled":
+		preload("res://src/sim/legislature.gd").propose(state, _main._loader, law, false, false, 10.0)
+	elif _law_verbs != "grade":
+		preload("res://src/ui/law_address.gd").give(list, law)
+	if _law_verbs == "address-again":
+		state.day += 1
+		list._selected = String(laws[1].id)
+		list.address_open = list._selected
 	panel.mark_dirty()
 
 

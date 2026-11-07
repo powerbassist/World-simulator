@@ -580,7 +580,7 @@ func _on_propose(law) -> void:
 ## own it forgot to redraw, and the panel kept the old result's buttons (V5.0d).
 func run_proposal(law, force := false, referendum := false) -> void:
 	var before := Trends.snapshot_now(_state)
-	var result := Legislature.propose(_state, _loader, law, force, referendum)
+	var result := Legislature.propose(_state, _loader, law, force, referendum, _laws.grade(law, referendum))
 	proposed.emit(before, Strings.law_name(law), result)
 	LawVerdict.sting(self, result, _state.player())  # V5.3-0 (d)
 	_dirty = true
