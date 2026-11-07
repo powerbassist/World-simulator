@@ -32,6 +32,7 @@ const CalK = preload("res://src/sim/calendar_constants.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const Bills = preload("res://src/sim/bills.gd")
+const Cabinet = preload("res://src/sim/cabinet.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
@@ -66,8 +67,10 @@ static func ask_of(state, ns, loader, row: Dictionary) -> Dictionary:
 	if object.begins_with("office:portfolio:"):
 		var portfolio := object.substr("office:portfolio:".length())
 		var party := President.party_id_of(ns, loader, String(row.get("person_id", "")))
+		# Removal reads a party of "" as a Dismiss, and answers for that; the cabinet's rule is the one here.
+		var why := Cabinet.refusal_reason(ns, portfolio, party) if party == "" else Removal.why_not(state, ns, portfolio, party)
 		return {"kind": K.ASK_POST, "object": object, "portfolio": portfolio, "party_id": party,
-			"why_not": Removal.why_not(state, ns, portfolio, party), "smaller_due_month": now + K.SMALLER_EXTRA_MONTHS}
+			"why_not": why, "smaller_due_month": now + K.SMALLER_EXTRA_MONTHS}
 	if object.begins_with("programme:") and String(row.get("stance", "")) == "sponsor":
 		var law_id := _open_law_named(state, ns, loader, object.substr("programme:".length()))
 		if law_id != "":
@@ -93,7 +96,9 @@ static func offer_of(state, ns, loader, person_id: String) -> Dictionary:
 ## The scene's card, everything its strips need and nothing written:
 ##   ask, offer  as above;
 ##   money       the request's offer of money, with what taking it risks, shown first (the
-##               author's ruling): {currency, amount_eur_m, evidence, found_in_a_year}, or {};
+##               author's ruling): {currency, amount_eur_m, evidence, found_in_a_year,
+##               found_in_a_year_without}, the second chance being the same with this money
+##               refused, since the first also counts all evidence already on the books; or {};
 ##   grant       {ok, why_not}, and on a partner's post {removal}, Removal.price();
 ##   bargain     {due_month, approaches}, each a Levers lever row, a promise's own date beside;
 ##   refuse      the price Levers.close() would charge with nothing agreed.
@@ -274,11 +279,17 @@ static func _money(state, ns, loader, session: Dictionary) -> Dictionary:
 	var amount := float(offer.get("amount_eur_m", 0.0))
 	var evidence := amount * SC.EVIDENCE_PER_EUR_M
 	var currency := String(offer.get("currency", ""))
-	var month := Exposure.hazard_if(state, ns, loader, currency, String(session["person_id"]), evidence)
+	var pid := String(session["person_id"])
+	return {"currency": currency, "amount_eur_m": amount, "evidence": evidence,
+		"found_in_a_year": _within_a_year(Exposure.hazard_if(state, ns, loader, currency, pid, evidence)),
+		"found_in_a_year_without": _within_a_year(Exposure.hazard_if(state, ns, loader, currency, pid, 0.0))}
+
+
+static func _within_a_year(month: float) -> float:
 	var clear := 1.0
 	for i in 12:
 		clear *= 1.0 - month
-	return {"currency": currency, "amount_eur_m": amount, "evidence": evidence, "found_in_a_year": 1.0 - clear}
+	return 1.0 - clear
 
 
 static func _day(entry: Dictionary) -> int:

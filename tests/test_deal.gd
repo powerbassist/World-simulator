@@ -39,6 +39,8 @@ const Exposure = preload("res://src/sim/exposure.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
 const Removal = preload("res://src/sim/removal.gd")
 const PeopleNow = preload("res://src/ui/people_now.gd")
+const Lies = preload("res://src/sim/lies.gd")
+const SC = preload("res://src/sim/shadow_constants.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
@@ -66,9 +68,11 @@ func _init() -> void:
 	_check_a_meter_is_a_word_a_year_on()
 	_check_a_portfolio_is_a_post()
 	_check_a_party_outside_the_coalition_cannot_be_granted_a_post()
+	_check_someone_with_no_party_cannot_be_granted_a_post()
 
 	_check_the_offer_is_a_vote_on_the_tabled_bill()
 	_check_the_offer_is_a_vote_on_the_bill_in_the_diary()
+	_check_the_next_bill_is_the_earliest()
 	_check_no_bill_means_silence()
 	_check_no_party_means_silence()
 	_check_someone_who_pledged_offers_silence()
@@ -88,7 +92,9 @@ func _init() -> void:
 	_check_a_win_on_a_post_is_a_word_not_a_seat()
 	_check_a_promise_win_is_the_named_date()
 	_check_a_promise_not_believed_binds_and_strikes_nothing()
+	_check_a_caught_lie_on_a_bill_is_no_word()
 	_check_refuse_is_a_decline()
+	_check_a_scene_left_open_ends_as_the_deal()
 	_check_answers_write_nothing()
 
 	_check_a_bill_brought_keeps_the_word_whatever_the_verdict()
@@ -98,6 +104,7 @@ func _init() -> void:
 	_check_a_kept_pledge_leaves_the_word_standing()
 	_check_a_pledge_never_voted_lapses_unpriced()
 	_check_silence_stops_a_brief_then_ends_unpriced()
+	_check_only_silence_stops_a_brief()
 
 	_check_what_they_owe_is_not_the_presidents_word()
 	_check_the_people_panel_reads_no_pledge_as_a_promise()
@@ -106,9 +113,11 @@ func _init() -> void:
 	_check_a_row_from_before_the_deal_is_judged_as_it_was()
 
 	_check_the_money_shows_its_risk_first()
+	_check_the_money_says_what_it_adds()
 	_check_a_principled_person_never_offers()
 
 	_check_the_loader_reads_an_entrys_laws()
+	_check_the_loader_checks_the_laws_on_every_load()
 
 	_finish()
 
@@ -207,6 +216,30 @@ func _check_a_party_outside_the_coalition_cannot_be_granted_a_post() -> void:
 		_fail("a refused Grant moved the cabinet")
 
 
+## Removal reads a party of "" as a Dismiss, so with no party the card would offer an open
+## Grant and a price, and the press would refuse.
+func _check_someone_with_no_party_cannot_be_granted_a_post() -> void:
+	for id in PLAYABLE:
+		var state = GameState.new_game(_loader, id)
+		var ns = state.player()
+		var partyless := ""
+		for person in _loader.people.get(id, []):
+			if President.party_id_of(ns, _loader, person.id) == "":
+				partyless = person.id
+				break
+		var portfolio := ""
+		for key in ns.cabinet:
+			if String(ns.cabinet[key]) != "":
+				portfolio = String(key)
+				break
+		if partyless == "" or portfolio == "":
+			_fail("%s: the fixture needs a partyless person and a held portfolio" % id)
+			continue
+		var ask: Dictionary = Deal.ask_of(state, ns, _loader, {"object": "office:portfolio:%s" % portfolio, "stance": "want", "person_id": partyless})
+		if String(ask.get("why_not", "")) == "":
+			_fail("%s: a post for no party must be greyed, got %s" % [id, ask])
+
+
 # --- The offer --------------------------------------------------------------------------
 
 func _check_the_offer_is_a_vote_on_the_tabled_bill() -> void:
@@ -246,6 +279,20 @@ func _check_the_offer_is_a_vote_on_the_bill_in_the_diary() -> void:
 	var date: Dictionary = offer.get("date", {})
 	if int(date.get("day", 0)) != 15 or int(date.get("month", 0)) != month:
 		_fail("the strip names the bill's day, got %s" % [offer])
+
+
+func _check_the_next_bill_is_the_earliest() -> void:
+	var f := _held_on_want("programme:", "sponsor", true)
+	var state = f["state"]
+	var laws := _open_laws(f, 2)
+	# Booked later-first, so neither booking order nor the last date can pass for the next.
+	if not bool(Calendar.book(state, Calendar.make_entry(CalK.KIND_LAW, 2026, 4, 10, "", "", laws[1])).get("ok", false)) \
+			or not bool(Calendar.book(state, Calendar.make_entry(CalK.KIND_LAW, 2026, 3, 20, "", "", laws[0])).get("ok", false)):
+		_fail("the fixture's bills did not book")
+		return
+	var offer: Dictionary = Deal.offer_of(state, f["ns"], _loader, f["person_id"])
+	if String(offer.get("law_id", "")) != String(laws[0]):
+		_fail("they vote on the next bill in the diary, %s, got %s" % [laws[0], offer])
 
 
 func _check_no_bill_means_silence() -> void:
@@ -539,6 +586,34 @@ func _check_a_promise_not_believed_binds_and_strikes_nothing() -> void:
 		_fail("an attempt is what a failure spends")
 
 
+## A promise seen through in the room is no promise: `settle` must withdraw the row `pay` wrote,
+## which on a bill names the bill, or the date prices the same lie a second time.
+func _check_a_caught_lie_on_a_bill_is_no_word() -> void:
+	var f := _law_deal(false)
+	var ns = f["ns"]
+	var session: Dictionary = f["session"]
+	var found := false
+	for s in range(1, 2000):
+		ns.draw_seed = s
+		if Lies.caught(f["state"], ns, _loader, session, "promise_date", 0):
+			found = true
+			break
+	if not found:
+		_fail("no seed catches the lie")
+		return
+	var result := Deal.bargain(f["state"], ns, _loader, session, "promise_date", {"due_month": _now(f) + 9, "lie": true})
+	if not bool(result.get("ok", false)) or bool(result.get("success", true)) or not bool(result.get("caught", false)):
+		_fail("the seeded lie was not caught: %s" % [result])
+		return
+	if not _word_row(ns, f["person_id"], "law:%s" % f["law_id"]).is_empty():
+		_fail("a lie caught in the room leaves no word on the bill")
+	var rapport := President.rapport(ns, f["person_id"])
+	_advance_to(f, _now(f) + 9)
+	var judged := Levers.tick_month(f["state"], _loader, METERS)
+	if (judged["broken"] as Array).size() != 0 or not is_equal_approx(President.rapport(ns, f["person_id"]), rapport):
+		_fail("a lie caught in the room is priced once, not again at its date: %s" % [judged])
+
+
 func _check_refuse_is_a_decline() -> void:
 	var f := _law_deal(false)
 	var ns = f["ns"]
@@ -548,6 +623,20 @@ func _check_refuse_is_a_decline() -> void:
 		_fail("Refuse closes as a decline, got %s" % [closed])
 	if not is_equal_approx(float(shown["grudge"]), float(closed["price"]["grudge"])):
 		_fail("the price shown is the price paid: %s against %s" % [shown, closed["price"]])
+
+
+## The month's tick closes a held audience as what it agreed: `_strike` must have stamped it.
+func _check_a_scene_left_open_ends_as_the_deal() -> void:
+	var f := _law_deal(false)
+	var ns = f["ns"]
+	Deal.grant(f["state"], ns, _loader, f["session"])
+	var grudge := float(ns.person_grudges.get(f["person_id"], 0.0))
+	_advance_to(f, _now(f) + 1)
+	Audiences.tick_month(f["state"], _loader, METERS)
+	if String(Audiences.request(ns, f["id"]).get("status", "")) != AK.STATUS_PROMISED:
+		_fail("a scene never closed ends as its deal, got %s" % [Audiences.request(ns, f["id"])])
+	if not is_equal_approx(float(ns.person_grudges.get(f["person_id"], 0.0)), grudge):
+		_fail("a scene never closed is no no-show once the deal is struck")
 
 
 func _check_answers_write_nothing() -> void:
@@ -623,6 +712,14 @@ func _check_a_forced_bill_is_brought_and_voids_the_pledge() -> void:
 		_fail("no vote was taken, so the pledge is void, got %s" % President.pledge_verdict(ns, f["person_id"], law.id))
 	if _word_row(ns, f["person_id"], "law:%s" % f["law_id"]).is_empty():
 		_fail("a pledge void breaks nothing: the president's word stands")
+	# A forced bill breaks nothing, even for someone who has left the party they pledged for.
+	var left := _law_deal(true)
+	Deal.grant(left["state"], left["ns"], _loader, left["session"])
+	left["ns"].tabled_bill = {}
+	left["ns"].person_party_override[left["person_id"]] = ""
+	Legislature.propose(left["state"], _loader, _law(String(left["bill_id"])), true)
+	if _word_row(left["ns"], left["person_id"], "law:%s" % left["law_id"]).is_empty():
+		_fail("no vote was taken, so no pledge broke, and the president's word stands")
 	var g := _law_deal(false)
 	Deal.grant(g["state"], g["ns"], _loader, g["session"])
 	var word_forced := Legislature.propose(g["state"], _loader, _law(String(g["law_id"])), true)
@@ -653,6 +750,11 @@ func _check_their_broken_pledge_voids_my_word() -> void:
 	# word on a programme can fall due long after that.
 	if not _word_row(ns, f["person_id"], "law:%s" % f["law_id"]).is_empty():
 		_fail("they broke first, so the word leaves the register at the vote")
+	var remembered := false
+	for row in President.judged_commitments(ns):
+		remembered = remembered or (String(row["object"]) == "law:%s" % f["law_id"] and String(row["verdict"]) == "void")
+	if not remembered:
+		_fail("a word they released is remembered as void, got %s" % [President.judged_commitments(ns)])
 	var rapport := President.rapport(ns, f["person_id"])
 	_advance_to(f, _now(f) + 6)
 	var judged := Levers.tick_month(f["state"], _loader, METERS)
@@ -695,6 +797,8 @@ func _check_silence_stops_a_brief_then_ends_unpriced() -> void:
 	var person = _loader.person_by_id[f["person_id"]]
 	Deal.grant(f["state"], ns, _loader, f["session"])
 	Levers.close(f["state"], ns, _loader, f["session"])
+	if String(_owed_row(ns, f["person_id"], "silence").get("object", "")) != "silence:%s" % f["id"]:
+		_fail("a silence is named for its deal, got %s" % [_owed_row(ns, f["person_id"], "silence")])
 	ns.person_grudges[f["person_id"]] = CK.GRUDGE_BRIEF_THRESHOLD + 0.1
 	if Characters._fire_act(f["state"], ns, _loader, person, "brief_against", METERS, [], {}):
 		_fail("silence given, the person does not brief")
@@ -710,6 +814,18 @@ func _check_silence_stops_a_brief_then_ends_unpriced() -> void:
 		_fail("silence ending costs nothing")
 	if not Characters._fire_act(f["state"], ns, _loader, person, "brief_against", METERS, [], {}):
 		_fail("silence over, the grudge briefs again")
+
+
+func _check_only_silence_stops_a_brief() -> void:
+	var f := _held_on_want("programme:", "sponsor", true)
+	var ns = f["ns"]
+	if not President.pledge(f["state"], ns, _loader, f["person_id"], _open_laws(f, 1)[0], _now(f) + 1) \
+			or not President.commit(f["state"], ns, _loader, "promise", f["person_id"], String(f["object"]), _now(f) + 3):
+		_fail("the fixture's rows were refused")
+		return
+	ns.person_grudges[f["person_id"]] = CK.GRUDGE_BRIEF_THRESHOLD + 0.1
+	if not Characters._fire_act(f["state"], ns, _loader, _loader.person_by_id[f["person_id"]], "brief_against", METERS, [], {}):
+		_fail("a pledge or a word is no silence: the grudge briefs")
 
 
 func _check_what_they_owe_is_not_the_presidents_word() -> void:
@@ -802,6 +918,33 @@ func _check_the_money_shows_its_risk_first() -> void:
 		_fail("the evidence shown is the evidence left: %s against %s" % [money, taken])
 
 
+## The strip says both: the chance anything is found, and that chance without this money, so
+## refusing is seen to lower it. A size of nothing is the game's own hazard.
+func _check_the_money_says_what_it_adds() -> void:
+	var f := _law_deal(false)
+	var ns = f["ns"]
+	if not President.leave_evidence(f["state"], ns, _loader, "personal_wealth", f["person_id"], 5.0):
+		_fail("the fixture's evidence was refused")
+		return
+	for row in ns.audience_requests:
+		if String(row["id"]) == String(f["id"]):
+			row["offer"] = {"currency": "party_money", "amount_eur_m": 1.0}
+	var clear := 1.0
+	for route in SC.ROUTES:
+		clear *= 1.0 - Exposure.hazard(f["state"], ns, _loader, route)
+	var at_nothing := Exposure.hazard_if(f["state"], ns, _loader, "party_money", f["person_id"], 0.0)
+	if clear >= 1.0 or not is_equal_approx(at_nothing, 1.0 - clear):
+		_fail("hazard_if at size 0 is the game's own hazard over the routes: %f against %f" % [at_nothing, 1.0 - clear])
+	var without := 1.0
+	for i in range(12):
+		without *= clear
+	var money: Dictionary = Deal.answers(f["state"], ns, _loader, f["session"])["money"]
+	if not is_equal_approx(float(money.get("found_in_a_year_without", -1.0)), 1.0 - without):
+		_fail("the strip names the year's chance without this money, %f, got %s" % [1.0 - without, money])
+	if float(money.get("found_in_a_year", 0.0)) <= float(money.get("found_in_a_year_without", 1.0)):
+		_fail("taking the money must read as adding to the risk, got %s" % [money])
+
+
 func _check_a_principled_person_never_offers() -> void:
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.player()
@@ -845,6 +988,16 @@ func _check_the_loader_reads_an_entrys_laws() -> void:
 	ProgrammeLoader.validate_laws(loader)
 	if loader.errors.size() != 1 or not String(loader.errors[0]).contains("must be a list"):
 		_fail("`laws` must be a list, got %s" % [loader.errors])
+
+
+## test_deal's other check drives the validator by hand, which proves nothing about the wire,
+## and a bad row must be a load error in the game: read after laws, since programme loads first.
+func _check_the_loader_checks_the_laws_on_every_load() -> void:
+	var src := FileAccess.get_file_as_string("res://src/core/data_loader.gd")
+	var laws_at := src.find("PoliticsLoader.load_laws(self, laws_dir)")
+	var check_at := src.find("ProgrammeLoader.validate_laws(self)")
+	if laws_at < 0 or check_at < laws_at:
+		_fail("load_all must validate programme laws after loading the laws")
 
 
 # --- Fixtures ---------------------------------------------------------------------------

@@ -467,7 +467,7 @@ The author's "Un marchandage concret" ([[v5.3-ab]] section 5, option 1). The sce
 | The want | The ask (`Deal.ask_of`) | Grant pays | The smaller grant |
 |---|---|---|---|
 | A programme entry sponsored, and the entry's `laws` name one open now | a bill brought by a date, `law:<id>` | a dated word, 6 months | the same word, 12 months later |
-| A portfolio | a post for the person's party | `Cabinet.seat_party`, now; greyed with the cabinet's reason outside the coalition | the word within 12 months |
+| A portfolio | a post for the person's party | `Removal.reassign`, now, priced as a removal when it comes from a partner; greyed with Removal's reason | the word within 12 months |
 | A programme entry otherwise, sponsored or opposed | a word on the want | a dated word, the month after the next vote (the register opens in the vote's month, after that month's judge) | the same word, 12 months later |
 | A meter, a measure | a word on the want | a dated word, 12 months | the same word, 12 months later |
 
@@ -484,7 +484,7 @@ Every month above is a labelled stand-in (`deal_constants.gd`, the parent's ruli
 
 The three attempts stay the scene's one tension, since small talk spends them too.
 
-**The money.** A corrupt offer still rides on a request (section 12), now never from a principled person, whatever their kind: the author's ruling that it comes only from someone whose row justifies it. `Deal.answers()` shows it before it is taken, with the evidence it leaves and the chance of being found within a year.
+**The money.** A corrupt offer still rides on a request (section 12), now never from a principled person, whatever their kind: the author's ruling that it comes only from someone whose row justifies it. `Deal.answers()` shows it before it is taken, with the evidence it leaves and the chance of being found within a year, with this money and without it.
 
 **Two rows, no third register.** A deal is the president's word and what the person owes, both in `ns.commitments`, both carrying `deal`, the request's id. `President.commitments()` lists the president's words as it always did, and `President.owed()` the rest.
 
