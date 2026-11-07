@@ -193,6 +193,15 @@ func _check_warm_step(graph: Dictionary) -> void:
 func _check_split_matches_reference(loader) -> void:
 	var state = GameState.new_game(loader, "FRA")
 	var graph: Dictionary = loader.region_graph
+	# The reference's distance rows are a function of the graph alone, never of a
+	# nation's weights, so they are built ONCE here and handed in. They used to be
+	# rebuilt inside every _reference_accessibility call -- 112 Dijkstra rows for each of
+	# the 41 nations, 406 s of this test's ~450 s -- for the same numbers each time.
+	# They still come from Network.distances_from, not from Network's own matrix
+	# (warm()), so the reference stays independent of the split it checks.
+	var rows: Dictionary = {}
+	for region_id in graph.get("endowment", {}).keys():
+		rows[String(region_id)] = Network.distances_from(graph, String(region_id))
 	for nation_id in state.nations.keys():
 		var ns = state.nations[nation_id]
 		var region_list: Array = state.regions.get(nation_id, [])
@@ -200,10 +209,15 @@ func _check_split_matches_reference(loader) -> void:
 		for region in region_list:
 			weights[region.id] = Regions.share_of(ns, region.id)
 		var split: Dictionary = Network.accessibility(graph, weights)
-		var reference: Dictionary = _reference_accessibility(graph, weights)
+		var reference: Dictionary = _reference_accessibility(graph, weights, rows)
 		for region_id in split.keys():
 			var a: float = float(split[region_id])
 			var b: float = float(reference.get(region_id, 0.0))
+			# A NaN on either side makes the comparison below false, so it would pass:
+			# a reference built from empty rows (0 / 0) read as agreement.
+			if is_nan(a) or is_inf(a) or is_nan(b) or is_inf(b):
+				_fail("accessibility %s/%s is not finite: split %s, reference %s" % [nation_id, region_id, a, b])
+				return
 			if absf(a - b) > 1e-9 * maxf(1.0, absf(b)):
 				_fail("split accessibility %s/%s reads %.17f, reference %.17f" % [
 					nation_id, region_id, a, b])
@@ -211,11 +225,8 @@ func _check_split_matches_reference(loader) -> void:
 
 
 ## The pre-split form, kept verbatim as the reference the split must agree with.
-func _reference_accessibility(graph: Dictionary, weights: Dictionary) -> Dictionary:
+func _reference_accessibility(graph: Dictionary, weights: Dictionary, rows: Dictionary) -> Dictionary:
 	var NetK = preload("res://src/sim/network_constants.gd")
-	var rows: Dictionary = {}
-	for region_id in graph.get("endowment", {}).keys():
-		rows[String(region_id)] = Network.distances_from(graph, String(region_id))
 	var raw: Dictionary = {}
 	var ids: Array = weights.keys()
 	ids.sort()
