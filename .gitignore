@@ -113,6 +113,10 @@ docs/superpowers/
 
 # Session dev reports (playtests, probes, reviews) — local working record, never staged
 reports/
+# The real-relations basis (docs/design/v5.3-ab.md section 6, v5.3-skills.md): who a
+# character winks at, and the public record behind a shipped number. Local only,
+# the author's private record; the repository ships numbers under altered names.
+tools/private/
 tools/_fetch_born.py
 tools/portraits_counterparts.json
 tools/_apply_corrections.py

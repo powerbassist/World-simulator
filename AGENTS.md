@@ -101,6 +101,15 @@ Fails on a tracked `X.uid` whose `X` is not tracked: Godot never deletes a scrip
 when the script goes, so a deletion commit has to `git rm` it too. CI runs it.
 
 ```bash
+python tools/check_skills.py
+```
+
+Every shipped `start_regard_offset` is inside its range, and, where the gitignored
+`tools/private/skills_basis.json` is present, every one on a marked person has a basis line
+(a worktree has no copy: `--basis PATH`, the main checkout's). CI has no file and checks the
+numbers only. The basis and the mark are never committed: nothing but numbers ships.
+
+```bash
 reuse lint
 ```
 

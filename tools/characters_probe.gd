@@ -26,6 +26,9 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const CharacterK = preload("res://src/sim/character_constants.gd")
+const LK = preload("res://src/sim/lever_constants.gd")
+const President = preload("res://src/sim/president.gd")
+const Shadows = preload("res://src/sim/shadows.gd")
 
 const MONTHS := 168
 
@@ -78,6 +81,8 @@ func _init() -> void:
 
 	print("== P5: determinism ==")
 	_band(true, "P5", "no rand() anywhere in characters.gd -- pinned by tests/test_characters.gd's identical-runs check")
+
+	_report_start_regard(loader)
 
 	print("characters probe complete")
 	quit(0)
@@ -149,6 +154,36 @@ func _meters(state) -> Dictionary:
 		"press_freedom": float(ns.press_freedom),
 		"judicial_independence": 0.0,
 	}
+
+
+## B6's report (docs/design/v5.3-ab.md section 6): who starts where, per playable
+## nation, and who is a rival once the first month's bond rule has read them. A
+## report, not a band: the author accepts these numbers, no threshold decides them.
+func _report_start_regard(loader) -> void:
+	print("== B6: the regard a new game starts with ==")
+	for nation_id in loader.nations:
+		if not loader.nations[nation_id].playable:
+			continue
+		var state = GameState.new_game(loader, nation_id)
+		var ns = state.player()
+		var warm := 0
+		var below := 0
+		var coldest := 0.0
+		for pid in ns.person_rapport:
+			var regard := President.rapport(ns, String(pid))
+			coldest = minf(coldest, regard)
+			if regard > 0.0:
+				warm += 1
+			elif regard < 0.0:
+				below += 1
+		Shadows.tick_month(state, loader)
+		var rivals := []
+		for pid in ns.person_bond:
+			if String(ns.person_bond[pid]) == "rival":
+				rivals.append(String(pid))
+		rivals.sort()
+		print("%s: %d warm, %d below neutral, coldest %.2f (odds %.3f), %d rivals after month 1: %s" % [
+			nation_id, warm, below, coldest, LK.K_RAPPORT * coldest, rivals.size(), rivals])
 
 
 func _band(passed: bool, tag: String, verdict: String) -> void:

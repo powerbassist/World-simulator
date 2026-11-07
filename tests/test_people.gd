@@ -215,7 +215,10 @@ func _check_person_field_contract() -> void:
 			"voice",
 			# V5.3-0: a one-line biography, the same class of fact as the voice
 			# (presentation only, never moves, read by the UI alone).
-			"bio"]:
+			"bio",
+			# V5.3 a + b: what a relation adds to the start regard. A number that never
+			# moves and that no slot states, read once at the new game (character_seed.gd).
+			"start_regard_offset"]:
 		expected.append(String(n))
 	if names != expected:
 		_fail("Person declares %s, expected exactly %s -- a new field is a number or a fact that MOVES or that a slot already states, and people-model 14 owns that argument" % [str(names), str(expected)])
