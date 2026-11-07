@@ -24,7 +24,7 @@ extends RefCounted
 ## flatter and friendship as modifiers, with the lever bands re-measured on three approaches;
 ## a phone win still settles with no ask and no offer, B5's channel row unchanged.
 ##
-## `answers()`, `ask_of()` and `offer_of()` write nothing, so the UI may read them every frame.
+## `answers()`, `ask_of()` and `offer_of()` write nothing, so the UI may read them on any redraw.
 
 const K = preload("res://src/sim/deal_constants.gd")
 const AK = preload("res://src/sim/audience_constants.gd")

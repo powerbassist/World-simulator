@@ -36,6 +36,8 @@ const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const Offers = preload("res://src/sim/offers.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Government = preload("res://src/sim/government.gd")
+const PersonCard = preload("res://src/ui/person_card.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 const PLAYER := "FRA"
 const METERS := {"press_freedom": 50.0, "judicial_independence": 50.0, "grievance": 30.0}
@@ -90,6 +92,7 @@ func _init() -> void:
 	_check_silence_stops_a_brief_then_ends_unpriced()
 
 	_check_what_they_owe_is_not_the_presidents_word()
+	_check_a_word_on_a_bill_reads_the_bills_name()
 	_check_a_deal_survives_a_save()
 	_check_a_row_from_before_the_deal_is_judged_as_it_was()
 
@@ -599,6 +602,13 @@ func _check_what_they_owe_is_not_the_presidents_word() -> void:
 			_fail("a judged pledge reads as the president's word: %s" % [row])
 	if President.pledge_verdict(ns, f["person_id"], f["bill_id"]) != "kept":
 		_fail("the pledge's own mark still reads through pledge_verdict")
+
+
+func _check_a_word_on_a_bill_reads_the_bills_name() -> void:
+	var f := _law_deal(false)
+	var words := PersonCard.object_text(_loader, f["ns"], "law:%s" % f["law_id"], {})
+	if words != Strings.law_name(_law(String(f["law_id"])), String(f["law_id"])) or words.begins_with("law:"):
+		_fail("the Diary's words for a word on a bill are '%s'" % words)
 
 
 func _check_a_deal_survives_a_save() -> void:

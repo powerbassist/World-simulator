@@ -30,6 +30,11 @@ extends SceneTree
 ##      the way L1's player reads the card -- and only what the phone does not answer
 ##      is booked. B5 (channel): B2's audiences row still holds -- 12-30 held in 60
 ##      months, >= 4 in months 1-20.
+##   A5 (`-- --deal`, V5.3 b, step 6) THE DEAL ON THE REAL ROAD: A2's machine, every audience
+##      held through Deal.open and answered with Deal.grant, a player who agrees to everything
+##      and serves nothing but what the packer happens to bring. No band: it reads what a deal
+##      does across a term (the asks and offers it meets, words kept and broken, a brief stopped
+##      by silence) so "green" is not the only evidence. Off by default, A1-A4's table stands.
 ##   A3 DECLINE EVERYTHING on arrival. B3's act row again, under explicit declines,
 ##      and the per-request price beside A1's lapse (tests/test_audiences.gd pins
 ##      the equality per request; this reports the means).
@@ -96,6 +101,8 @@ const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const LW = preload("res://tools/lever_weights.gd")
 const DealK = preload("res://src/sim/deal_constants.gd")
+const Deal = preload("res://src/sim/deal.gd")
+const Levers = preload("res://src/sim/levers.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Phone = preload("res://src/sim/phone.gd")
@@ -110,17 +117,22 @@ const NAMED_GRUDGE := 0.05
 const B5_MIX := [0.165, 0.5, 0.835]
 
 var _loader
+## A5's tally, filled by _fire_month when the regime is running.
+var _deal_tally := {}
 
 
 func _init() -> void:
 	var json_path := ""
 	var b5 := false
+	var deal := false
 	var seeds: Array = []
 	for arg in OS.get_cmdline_user_args():
 		if String(arg).begins_with("--json="):
 			json_path = String(arg).substr(7)
 		elif String(arg) == "--b5-answers":
 			b5 = true
+		elif String(arg) == "--deal":
+			deal = true
 		elif String(arg).begins_with("--seeds="):
 			var span := String(arg).substr(8).split("-")
 			seeds = range(int(span[0]), int(span[span.size() - 1]) + 1)
@@ -141,6 +153,11 @@ func _init() -> void:
 		out["bands"]["B5_answers_will_serve_book_5pct"] = float(shares["will_serve"]["book"]) >= 0.05
 		out["bands"]["B5_answers_will_serve_delegate_5pct"] = float(shares["will_serve"]["delegate"]) >= 0.05
 		out["bands"]["B5_answers_wont_serve_refuse_5pct"] = float(shares["wont_serve"]["refuse"]) >= 0.05
+	if deal:
+		_deal_tally = {"held": 0, "granted": 0, "refused_grant": {}, "asks": {}, "offers": {}, "kept": 0, "broken": 0, "void": 0, "briefs": 0, "silent_at_brief_gate": 0}
+		out["a5_deal"] = _run("A5")
+		out["a5_deal"]["tally"] = _deal_tally
+		_deal_tally = {}
 	if not seeds.is_empty():
 		out["b1_seeds"] = _b1_seeds(seeds)
 		for band in out["b1_seeds"]["bands"]:
@@ -154,7 +171,7 @@ func _init() -> void:
 
 
 func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
-	var book_all := regime == "A2" or regime == "A2F" or regime == "A4"
+	var book_all := regime == "A2" or regime == "A2F" or regime == "A4" or regime == "A5"
 	var calls := 0
 	var answered_by_phone := 0
 	var b5_requests: Array = []
@@ -221,6 +238,14 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 		# does. The diary used to fire before the tick, which read the player's own
 		# visits as heads visiting France once visitors existed.
 		var report: Dictionary = WorldMonth.tick_month(state, _loader)
+		if not _deal_tally.is_empty():
+			for key in ["kept", "broken", "void"]:
+				_deal_tally[key] += (report["commitments"][key] as Array).size()
+			for act in report.get("character_acts", []):
+				_deal_tally["briefs"] += 1 if String(act["act"]) == "brief_against" else 0
+			for row in President.owed(ns):
+				var gated: bool = String(row["kind"]) == "silence" and float(ns.person_grudges.get(String(row["person_id"]), 0.0)) >= 0.45
+				_deal_tally["silent_at_brief_gate"] += 1 if gated else 0
 		if book_all:
 			_fire_month(state, fire, held, month, refused_at, visitors)
 		for row in report["audience_requests"]["arrived"]:
@@ -491,7 +516,9 @@ func _fire_month(state, fire: Array, held: Array, month: int, refused_at: Dictio
 				Removal.reassign(state, _loader, String(e["portfolio"]), String(e["party_id"]))
 			CalK.KIND_AUDIENCE:
 				var id := String(e["action_id"])
-				if bool(Audiences.hold(state, ns, _loader, id)["ok"]):
+				if not _deal_tally.is_empty():
+					_grant_audience(state, ns, id, e)
+				elif bool(Audiences.hold(state, ns, _loader, id)["ok"]):
 					var pid := String(e["target_id"])
 					Audiences.settle(state, ns, _loader, id, AK.STATUS_DECLINED)
 					if _visitor(pid):
@@ -500,6 +527,26 @@ func _fire_month(state, fire: Array, held: Array, month: int, refused_at: Dictio
 						held.append(month)
 						refused_at[pid] = refused_at.get(pid, month)
 		Calendar.resolve(state, Calendar.verb_key(e), true)
+
+
+## A5's audience: held on its day, Granted if Grant is open, else refused.
+func _grant_audience(state, ns, id: String, e: Dictionary) -> void:
+	state.day = int(e.get("day", 1))
+	var session: Dictionary = Deal.open(state, ns, _loader, id)
+	if session.is_empty():
+		return
+	_deal_tally["held"] += 1
+	var ask := String(session["ask"]["kind"])
+	_deal_tally["asks"][ask] = int(_deal_tally["asks"].get(ask, 0)) + 1
+	var result: Dictionary = Deal.grant(state, ns, _loader, session)
+	if bool(result.get("ok", false)):
+		_deal_tally["granted"] += 1
+		var offer := String(result["offer"]["kind"])
+		_deal_tally["offers"][offer] = int(_deal_tally["offers"].get(offer, 0)) + 1
+	else:
+		var why := String(result.get("error", ""))
+		_deal_tally["refused_grant"][why] = int(_deal_tally["refused_grant"].get(why, 0)) + 1
+	Levers.close(state, ns, _loader, session)
 
 
 func _action(id: String):
@@ -596,6 +643,8 @@ func _print(out: Dictionary) -> void:
 		print("A2F B5 answers over %d requests x 2 intents (day %.2f, realized kept %.3f): %s | Book's best lever per case, won or not: %s" % [
 			b5["requests"], b5["diary_day"], b5["realized_kept_share"], b5["shares"], b5["book_levers"]])
 		print("   declared mix (information): %s" % [b5["mix_info"]["shares"]])
+	if out.has("a5_deal"):
+		print("A5 deal: %s | arrivals %d, booked %d, unplaceable %d" % [out["a5_deal"]["tally"], out["a5_deal"]["arrivals"], out["a5_deal"]["booked"], out["a5_deal"]["unplaceable"]])
 	if out.has("b1_seeds"):
 		var b: Dictionary = out["b1_seeds"]
 		print("A1 over %d seeds: emptiest 12-month window >= 1 in %d, >= 2 in %d; B1 rows held %s" % [
