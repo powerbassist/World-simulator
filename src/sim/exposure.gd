@@ -67,7 +67,27 @@ static func tick_month(state, loader) -> Array[Dictionary]:
 
 ## This month's chance that `route` finds something. Public for the probe.
 static func hazard(state, ns, loader, route: String) -> float:
-	var x := pressure(state, ns, loader, route)
+	return _hazard_at(route, pressure(state, ns, loader, route))
+
+
+## This month's chance that ANY route finds something, had evidence of `kind` and `size`
+## on `person_id` been left: the deal's strip, before the money is taken, reads what the
+## months after would read. Writes nothing.
+static func hazard_if(state, ns, loader, kind: String, person_id: String, size: float) -> float:
+	var clear := 1.0
+	for route in SC.ROUTES:
+		var reach := 0.0
+		for index in _reachable(state, ns, loader, route):
+			reach += _weight(ns.exposure_evidence[index])
+		var reaches: bool = SC.ROUTE_KINDS.get(route, []).has(kind) \
+			and (route != "turned" or (President.covers(state, ns, loader, person_id) and TURNED_BONDS.has(President.relationship(ns, person_id))))
+		if reaches:
+			reach += _weight({"kind": kind, "size": size})
+		clear *= 1.0 - _hazard_at(route, reach * _modifier(ns, loader, route))
+	return 1.0 - clear
+
+
+static func _hazard_at(route: String, x: float) -> float:
 	return 0.0 if x <= 0.0 else clampf(float(SC.RATE[route]) * x, 0.0, SC.HAZARD_MAX)
 
 

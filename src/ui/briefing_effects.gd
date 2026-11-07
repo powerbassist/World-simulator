@@ -23,6 +23,7 @@ const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
 const AudienceK = preload("res://src/sim/audience_constants.gd")
+const President = preload("res://src/sim/president.gd")
 
 const MAX_LINES := 3
 ## Decisions named on the "Decided last month" line before "and N more".
@@ -43,7 +44,7 @@ static func lines(state, loader, report: Dictionary) -> Array:
 	var now := int(state.year) * 12 + int(state.month)
 	var out: Array = []
 	_laws(ns, loader, now, out)
-	for row in ns.commitments_judged:
+	for row in President.judged_commitments(ns):
 		if int(row.get("judged_month", -1)) == now and String(row.get("verdict", "")) != "void":
 			var kept := String(row["verdict"]) == "kept"
 			var who: String = loader.person_name(String(row.get("person_id", "")))

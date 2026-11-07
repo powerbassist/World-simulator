@@ -28,10 +28,9 @@ const AK = preload("res://src/sim/audience_constants.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
-const Coercion = preload("res://src/sim/coercion.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Lies = preload("res://src/sim/lies.gd")
-const Delegation = preload("res://src/sim/delegation.gd")
+const CommitmentJudge = preload("res://src/sim/commitment_judge.gd")
 
 ## The six levers and the other topics, in the order the scene lists them.
 const LEVERS := K.LEVERS
@@ -90,7 +89,7 @@ static func offered(state, ns, loader, session: Dictionary) -> Array[Dictionary]
 	var why := _why_not(ns, session)
 	for lever in K.LEVERS:
 		var p := LeverOdds.odds(person, lever, c)
-		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else word_given(ns, person.id, lever, String(session["object"])))
+		var why_not := why if why != "" else ("you are not friends" if p < 0.0 else word_given(ns, person.id, lever, _asked(session)))
 		out.append(lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state), true, Lies.catch_for(ns, loader, person)))
 	return out
 
@@ -155,7 +154,7 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	if p < 0.0:
 		refused["error"] = "not a lever offered here"
 		return refused
-	refused["error"] = word_given(ns, pid, lever, String(session["object"]))
+	refused["error"] = word_given(ns, pid, lever, _asked(session))
 	if refused["error"] != "":
 		return refused
 	var now := _now(state)
@@ -163,7 +162,7 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	if refused["error"] != "":
 		return refused
 	p = clampf(p + Shadows.odds_bonus(lever, args) + Lies.odds_bonus(lever, args), K.ODDS_MIN, K.ODDS_MAX)
-	var spent := pay(state, ns, loader, person, String(session["object"]), lever, args, now)
+	var spent := pay(state, ns, loader, person, _asked(session), lever, args, now)
 	if spent.has("refused"):
 		refused["error"] = "the promise could not be made"
 		return refused
@@ -208,12 +207,14 @@ static func talk(state, ns, loader, session: Dictionary, topic: String, args := 
 ## "promised"); none, and it is a decline, priced once through Audiences.
 ## {ok, error, outcome: "settled" | "promised" | "declined", price: Dictionary}
 static func close(state, ns, loader, session: Dictionary) -> Dictionary:
-	var why := _open_reason(ns, session)
+	var why := open_reason(ns, session)
 	if why != "":
 		return {"ok": false, "error": why, "outcome": "", "price": {}}
 	var won := String(session["won"])
 	var outcome := AK.STATUS_DECLINED
-	if won == "promise_date":
+	if session.has("outcome"):
+		outcome = String(session["outcome"])
+	elif won == "promise_date":
 		outcome = AK.STATUS_PROMISED
 	elif won != "":
 		outcome = AK.STATUS_SETTLED
@@ -244,48 +245,10 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 	for party in loader.parties.get(ns.id, []):
 		leaders[party.id] = party.leader_person_id
 	for row in President.take_commitments_due(ns, now):
-		var verdict := _judge(state, ns, loader, row, meters, leaders)
+		var verdict := CommitmentJudge.verdict(state, ns, loader, row, meters, leaders)
 		out[verdict].append(row)
 		President.record_judged(ns, row, verdict, now)
 	return out
-
-
-## One commitment at its date: its verdict, its price written.
-static func _judge(state, ns, loader, row: Dictionary, meters: Dictionary, leaders: Dictionary) -> String:
-	var person = loader.person_by_id.get(String(row["person_id"]))
-	var object := String(row["object"])
-	var want := {}
-	if person != null:
-		for w in person.wants:
-			if String(w["object"]) == object:
-				want = w
-	# b3: a visitor's ask names a measure the played nation holds, not a want in
-	# content; it is served once the measure is lifted -- France's own, so an org's
-	# levy written on the emptied pair later does not undo the kept word.
-	if person != null and object.begins_with("measure:"):
-		want = {"measure": object.substr("measure:".length())}
-	if want.is_empty():
-		return "void"
-	var pid := String(person.id)
-	var kind := String(row["kind"])
-	var served: bool = Coercion.own_measure(state, want["measure"]) == null if want.has("measure") \
-		else Characters.want_served(ns, person, want, meters, leaders)
-	# V5.2c: a promise told as a lie is revealed at its date, served or not (B8).
-	# V5.3-0 gate: a delegated word the world has not served is the minister's to
-	# keep, on the odds it was given (delegation.gd says why the world alone broke 19 in 20).
-	if (served or Delegation.keeps(ns, loader, row, String(want.get("stance", "")))) and not bool(row.get("lie", false)):
-		if kind != "iou":
-			_rapport(state, ns, loader, pid, K.PROMISE_KEPT_RAPPORT if kind == "promise" else Delegation.kept_rapport(served))
-		return "kept"
-	if kind == "promise":
-		Lies.reveal(state, ns, loader, person)
-		return "broken"
-	if kind == "delegated":
-		Delegation.price_broken(ns, person)
-	_rapport(state, ns, loader, pid, -K.IOU_BETRAYAL_RAPPORT)
-	Characters.price_refusal(ns, person, K.IOU_BETRAYAL_GRUDGE, 0.0)
-	Lies.cross(state, ns, loader, person, int(row.get("made_month", 0)))  # c1c rule 1: a broken word to an accomplice
-	return "broken"
 
 
 ## The traits the president knows; a hidden trait is absent, never wrong.
@@ -399,9 +362,14 @@ static func spends(lever: String) -> Dictionary:
 
 # --- Helpers ------------------------------------------------------------------------
 
+## What a word given in this session is on: the deal's ask (Deal.open), else the want.
+static func _asked(session: Dictionary) -> String:
+	return String(session.get("ask_object", session["object"]))
+
+
 ## Why a session takes no command at all: it was closed, or its request is no
 ## longer being held (it lapsed as a no-show, or was never opened).
-static func _open_reason(ns, session: Dictionary) -> String:
+static func open_reason(ns, session: Dictionary) -> String:
 	if session.is_empty() or bool(session.get("closed", true)):
 		return "this audience is over"
 	var row := Audiences.request(ns, String(session.get("request_id", "")))
@@ -413,7 +381,7 @@ static func _open_reason(ns, session: Dictionary) -> String:
 ## Why no attempt -- lever or topic -- can be made: the session's reason, or the
 ## three are spent. Closing stays open either way.
 static func _attempt_reason(ns, session: Dictionary) -> String:
-	var why := _open_reason(ns, session)
+	var why := open_reason(ns, session)
 	if why == "" and int(session.get("attempts_left", 0)) <= 0:
 		why = "no attempts left"
 	return why
