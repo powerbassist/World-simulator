@@ -214,4 +214,8 @@ func _booking_name(entry: Dictionary) -> String:
 			return tr("A law is proposed")
 		"reshuffle":
 			return tr("A portfolio changes hands")
+		"address":
+			return tr("An address to the nation")
+		"audience":
+			return tr("An audience")
 	return String(entry.get("kind", ""))

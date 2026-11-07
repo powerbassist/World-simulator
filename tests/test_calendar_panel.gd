@@ -65,6 +65,7 @@ func _run() -> void:
 	_check_strip_spans_the_horizon(panel, state)
 	_check_booking_appears_on_the_strip(panel, state)
 	_check_a_refusal_is_printed(panel, state)
+	_check_the_form_offers_what_can_be_booked(panel)
 	_check_away_line_months(panel, state)
 
 
@@ -178,6 +179,17 @@ func _check_booking_appears_on_the_strip(panel, state) -> void:
 
 ## A refusal must be visible. The same verb again is the refusal that is easiest
 ## to trigger and hardest to explain if it is silent.
+## An audience is booked from its request and an address is given at once: the form's kinds
+## are the other three, and picking one reads that kind.
+func _check_the_form_offers_what_can_be_booked(panel) -> void:
+	if panel._kind_pick.item_count != 3:
+		_fail("the form offers %d kinds" % panel._kind_pick.item_count)
+	for i in panel._kind_pick.item_count:
+		var kind: String = String(K.KINDS[i])
+		if kind == K.KIND_AUDIENCE or kind == K.KIND_ADDRESS:
+			_fail("the form's item %d reads %s" % [i, kind])
+
+
 func _check_a_refusal_is_printed(panel, state) -> void:
 	var total: int = state.year * 12 + (state.month - 1) + 4
 	var twin := Calendar.make_entry(

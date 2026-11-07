@@ -20,6 +20,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Media = preload("res://src/sim/media.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 
@@ -100,8 +101,10 @@ static func _write(ns, law_id: String, moved: Dictionary, now: int) -> void:
 	(ns.measure_opinion.get_or_add("given", []) as Array).append(now)
 
 
-## What the strip reads before the player acts, for `law` at the grade it is tabled at: the
-## shift, what this address is worth, and the division before and after. Pure, on a copy.
+## What the strip reads before the player acts, for `law` the open bill at its reference: the
+## shift, what this address is worth, and the division before and after, as Division.forecast
+## reads it: a tabled bill at its grade and on its route, any other on the route it would take.
+## Pure, on a copy.
 static func estimate(state, ns, loader, law) -> Dictionary:
 	var now: int = int(state.year) * 12 + int(state.month)
 	var worth_now := worth(ns, now)
@@ -109,8 +112,11 @@ static func estimate(state, ns, loader, law) -> Dictionary:
 	var parties: Array = loader.parties.get(ns.id, [])
 	var after = ns.duplicate_state()
 	_write(after, String(law.id), moved, now)
+	var tabled: bool = String(ns.tabled_bill.get("law_id", "")) == String(law.id)
+	var bill = LawMagnitude.scaled(law, float(ns.tabled_bill.get("scale", 1.0))) if tabled else law
+	var route := Legislature.takes_route(ns, bill, tabled and bool(ns.tabled_bill.get("referendum", false)))
 	return {"shifts": moved, "worth": worth_now,
-		"before": Legislature.resolve_vote(ns, parties, law), "after": Legislature.resolve_vote(after, parties, law)}
+		"before": Legislature.resolve_vote(ns, parties, bill, route), "after": Legislature.resolve_vote(after, parties, bill, route)}
 
 
 ## The month's close: every shift a third nearer nothing, the window's old addresses forgotten,
