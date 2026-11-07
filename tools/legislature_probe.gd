@@ -11,11 +11,12 @@ extends SceneTree
 ## prints each law's yes-share at reference and its signed move at ten times.
 ##
 ## BAND B5, the address (`--address`): one address moves a close division, within 5 % of
-## seats, by 2 to 6 % of seats. "Moves" is how much nearer its line the division stands, half
-## the change in yes less no, the spec's "short by 12 seats, short by 3 to 7": a seat won from
-## a no counts one, a seat lost to an abstention a half. `--regimes` runs the band's two
-## scripted players through the game's own month, 48 months, the same bill policy: table the
-## open bill nearest its line that has not been tried in two years. One addresses every bill,
+## seats, by 2 to 6 % of seats. Both read how many seats a division stands short of the line
+## its own majority sets, the spec's "short by 12 seats, short by 3 to 7": on a simple majority
+## a seat won from a no counts one and a seat lost to an abstention a half; on an absolute one
+## only yes counts. Within 5 % of seats is 2.5 % short, a gap of 5 %. `--regimes` runs the band's
+## two scripted players through the game's own month, 36 months, inside the first term, the
+## same bill policy: table the open bill nearest its line that has not been tried in two years. One addresses every bill,
 ## the other the first three within 5 % each year; a third never does, for reference. The
 ## first must pass fewer bills and end lower in approval than the second, on the mean over
 ## `--seeds=N` of the game's draw (one game is one run of its events, and that noise is larger
@@ -25,11 +26,12 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
+const LK = preload("res://src/sim/legislature_constants.gd")
 const Address = preload("res://src/sim/address.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const NATIONS := ["FRA", "DEU", "GBR", "POL"]
-const CLOSE_POINTS := 5.0
-const REGIME_MONTHS := 48
+const CLOSE_POINTS := 2.5
+const REGIME_MONTHS := 36
 const CLOSEST_A_YEAR := 3
 
 const BUDGET := ["spending_pct_gdp", "tax_rates_pct", "other_revenue_pct_gdp"]
@@ -94,14 +96,16 @@ func _init() -> void:
 	quit(0)
 
 
-## How far from its line a division stands, in points of the chamber. Against the two tallies,
-## as a simple majority reads them, whichever majority the law asks for.
-func _margin(result: Dictionary, seats: int) -> float:
-	return 100.0 * absf(_gap(result)) / float(seats)
-
-
-func _gap(result: Dictionary) -> float:
-	return float(result["yes_seats"]) - float(result["no_seats"])
+## Seats a division stands short of the line its majority sets, in points of the chamber:
+## negative once past it.
+func _short_by(result: Dictionary, law, seats: int) -> float:
+	var yes := float(result["yes_seats"])
+	var short := (float(result["no_seats"]) - yes) / 2.0
+	if law.majority == "absolute":
+		short = LK.ABSOLUTE_MAJORITY_FRACTION * float(seats) - yes
+	elif law.majority == "two_thirds":
+		short = LK.TWO_THIRDS_MAJORITY_FRACTION * float(seats) - yes
+	return 100.0 * short / float(seats)
 
 
 ## One address on every close division of a new game: Address.estimate, the read the strip
@@ -120,9 +124,9 @@ func _address_band(loader) -> void:
 			if law.constitutional:
 				continue
 			var read: Dictionary = Address.estimate(state, ns, loader, law)
-			if _margin(read["before"], ns.assembly_seats) > CLOSE_POINTS:
+			if absf(_short_by(read["before"], law, ns.assembly_seats)) > CLOSE_POINTS:
 				continue
-			var points := absf(_gap(read["after"]) - _gap(read["before"])) / 2.0 * 100.0 / float(ns.assembly_seats)
+			var points := absf(_short_by(read["after"], law, ns.assembly_seats) - _short_by(read["before"], law, ns.assembly_seats))
 			moves.append(points)
 			if OS.get_cmdline_user_args().has("--laws"):
 				var b: Dictionary = read["before"]
@@ -212,7 +216,7 @@ func _nearest_its_line(ns, loader, tried: Dictionary, month: int) -> Dictionary:
 	for law in Legislature.available(ns, loader.laws):
 		if law.constitutional or month - int(tried.get(law.id, -24)) < 24:
 			continue
-		var m := _margin(Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law), ns.assembly_seats)
+		var m := absf(_short_by(Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law), law, ns.assembly_seats))
 		if m < margin:
 			margin = m
 			best = law
