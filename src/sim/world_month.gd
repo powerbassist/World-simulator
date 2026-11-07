@@ -26,6 +26,7 @@ extends RefCounted
 ##   character_acts    Characters.tick_month's acts (Array)
 ##   audience_requests Audiences.tick_month's {arrived, lapsed} (V5.2b)
 ##   commitments       Levers.tick_month's {kept, broken} (V5.2b b2)
+##   polls             MeasurePolls.deliver_due's rows, a poll printed at this close (V5.3 b)
 ##   meetings          Meetings.tick_month's heads met last month (V5.2b b3)
 ##   exposures         Exposure.tick_month's exposures made (V5.2c)
 ##   election_results  Elections.tick_month's results (Array)
@@ -88,6 +89,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const Meetings = preload("res://src/sim/meetings.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const Address = preload("res://src/sim/address.gd")
+const MeasurePolls = preload("res://src/sim/measure_polls.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Elections = preload("res://src/sim/elections.gd")
@@ -97,7 +99,7 @@ const FrontPage = preload("res://src/sim/front_page.gd")
 ## holds tick_month() to this list by recording the calls, so the list cannot
 ## become a comment that disagrees with the code.
 const STEPS: Array[String] = [
-	"Division", "Addresses", "Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
+	"Division", "Polls", "Addresses", "Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
 	"Media", "Programme", "Opinion", "History", "Calendar", "Discipline",
 	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Processes",
 	"Companies", "Industry", "Closures", "Migration", "Investment", "Projects", "RegionFunds", "Sectors", "Campaign", "Pledges",
@@ -198,6 +200,11 @@ static func _step(month: Month, step: String) -> Array:
 			month.report["division"] = division
 			if not division.is_empty():
 				Calendar.settle_tabled(state, String(division["law_id"]), bool(division["passed"]))
+		# Before the fade, so a poll reads what the month's division read. The caller has moved
+		# the month already and the day is stale, so the close stands on the first of the new
+		# month: what fell due by then arrives, and what is due later waits for the next close.
+		"Polls":
+			month.report["polls"] = MeasurePolls.deliver_due(state, 1)
 		# After the division, which reads an address at its full worth in the month it is given.
 		"Addresses":
 			Address.tick_month(state)
