@@ -376,8 +376,8 @@ func _check_a_forced_bill_keeps_its_grade() -> void:
 
 ## The division that holds a graded bill writes its grade on the hold, or the release above
 ## would apply one times the bill: a chamber that says no, on the first nation whose upper
-## house only holds, its seats against the bill by hand. A row at twice its reference, so a
-## grade of 2 cannot be mistaken for the ratio of 4.
+## house only holds, its seats against the bill by hand. A row at half its reference, so a
+## grade of 2 cannot be mistaken for the ratio of 1.
 func _check_a_hold_writes_its_grade() -> void:
 	for nation_id in _loader.nations:
 		if not _loader.nations[nation_id].playable:
@@ -391,7 +391,7 @@ func _check_a_hold_writes_its_grade() -> void:
 				continue
 			if Chambers.power_over(ns, law) != ChambersK.VERDICT_SUSPENSIVE:
 				continue
-			law.magnitude = {"value": 80.0, "reference": 40.0, "unit": "lycees"}
+			law.magnitude = {"value": 20.0, "reference": 40.0, "unit": "lycees"}
 			var big = LawMagnitude.scaled(law, 2.0)
 			var parties: Array = _loader.parties[nation_id]
 			if bool(Legislature.resolve_vote(ns, parties, big)["passed"]) and not bool(Legislature.resolve_upper(ns, parties, big)["passed"]):
@@ -569,13 +569,13 @@ func _read_seats(table: Array) -> void:
 			_fail("%s: %s, want %s" % [row[2], got, row[1]])
 
 
-## 12 % per tenfold at no discipline at all, by the live discipline, and nothing at or below
+## 85 % per tenfold at no discipline at all, by the live discipline, and nothing at or below
 ## the reference. The number is written here, never read from the constant.
 func _check_the_share_that_peels() -> void:
 	var ns = _new_state().player()
 	var party = _parties()[0]
 	var table := [
-		[0.85, 400.0, 0.018], [0.5, 400.0, 0.06], [0.0, 400.0, 0.12], [0.0, 4000.0, 0.24],
+		[0.85, 400.0, 0.1275], [0.5, 400.0, 0.425], [0.0, 400.0, 0.85], [0.5, 4000.0, 0.85],
 		[0.5, 40.0, 0.0], [0.5, 4.0, 0.0],
 	]
 	for row in table:
@@ -608,7 +608,7 @@ func _check_the_peel_on_a_real_division() -> void:
 	var whole: Dictionary = Legislature.resolve_vote(ns, _parties(), big)
 	ns.party_discipline[party.id] = 0.0
 	var loose: Dictionary = Legislature.resolve_vote(ns, _parties(), big)
-	var want := roundi(float(seats) * 0.12)
+	var want := roundi(float(seats) * 0.85)
 	if want == 0:
 		_fail("premise: %s is too small to read a peel" % party.id)
 	if int(whole["yes_seats"]) - int(loose["yes_seats"]) != want or int(loose["abstain_seats"]) - int(whole["abstain_seats"]) != want:
