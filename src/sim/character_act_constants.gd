@@ -43,6 +43,16 @@ const STANDING_SEED_BASE := 0.3
 const STANDING_SEED_AMBITION := 0.4
 const STANDING_SEED_AMBITIOUS_BONUS := 0.1
 
+# --- Regard seed ------------------------------------------------------------------------
+
+## Where the president's regard starts (docs/design/v5.3-ab.md section 6, the
+## author's answer, character_seed.gd). 0.10 reads "warm", just above "neutral"'s
+## 0.05. The slope is a first proposal against the audience's odds: odds move by
+## 0.20 x regard, so France's far party (distance 1.12) pays 0.06 and its cordon 0.02.
+const REGARD_OWN_PARTY := 0.10
+const REGARD_PER_DISTANCE := -0.25
+const REGARD_CORDON := -0.10
+
 ## The act price's standing weight: weight = BASE + standing, so an act by the
 ## register's anonymous costs half what the same act by its heavyweight does.
 ## 0.5 puts standing 0 at 0.5x and standing 1 at 1.5x.

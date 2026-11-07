@@ -76,6 +76,11 @@ var voice: String = ""
 ## none. Presentation only, like `voice`: no mechanism reads it, it never moves,
 ## and it is content, so it is not saved.
 var bio: String = ""
+## V5.3 a + b (docs/design/v5.3-ab.md section 6). What a relation adds to the regard
+## the distance between two parties already gives, against the nation's authored start
+## leader. A number and nothing more: nothing in a row says why (a value is not a flag,
+## Content authors them for invented people too). Content, read once at the seed.
+var start_regard_offset: float = 0.0
 
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
@@ -184,6 +189,15 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 			p.bio = String(d["bio"])
 		else:
 			errors.append("%s: %s field 'bio' must be a string" % [filename, path])
+
+	if d.has("start_regard_offset"):
+		var offset = d["start_regard_offset"]
+		if typeof(offset) in [TYPE_FLOAT, TYPE_INT] and absf(float(offset)) <= CharacterK.REGARD_OFFSET_MAX \
+				and absf(float(offset) - snappedf(float(offset), 0.01)) < 0.000001:
+			p.start_regard_offset = float(offset)
+		else:
+			errors.append("%s: %s field 'start_regard_offset' must be a number in [-%.2f, %.2f] with two decimals" % [
+				filename, path, CharacterK.REGARD_OFFSET_MAX, CharacterK.REGARD_OFFSET_MAX])
 
 	if d.has("wants"):
 		if typeof(d["wants"]) != TYPE_ARRAY:

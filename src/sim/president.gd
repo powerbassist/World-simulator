@@ -228,6 +228,13 @@ static func adjust_rapport(state, ns, loader, person_id: String, amount: float) 
 	return true
 
 
+## The regard a new game starts with (CharacterSeed.regard, which walks the cast and
+## so already leaves out the president and the staff). No state to read yet, so no
+## coverage check to make: a person of this nation, at new-game, by its one caller.
+static func seed_rapport(ns, person_id: String, amount: float) -> void:
+	ns.person_rapport[person_id] = clampf(amount, -1.0, 1.0)
+
+
 ## One of K.BONDS, or "" to clear back to the knowledge-read relationship.
 static func set_bond(state, ns, loader, person_id: String, bond: String) -> bool:
 	if not covers(state, ns, loader, person_id):
