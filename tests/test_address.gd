@@ -28,6 +28,8 @@ const WorldMonth = preload("res://src/sim/world_month.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 
 const PLAYER := "FRA"
+## A hand-written copy of OPINION_WEIGHT, never read from the constant.
+const WEIGHT := 5.0
 
 var _failures: Array[String] = []
 var _loader
@@ -110,7 +112,7 @@ func _check_a_nation_with_no_address_reads_no_term() -> void:
 	var ns = _new_state().player()
 	if not ns.measure_opinion.is_empty():
 		_fail("a new game has an opinion register: %s" % [ns.measure_opinion])
-	if DivisionTerms.sway_share(ns, _parties()[0], _law_at(0.0, 0.0)) != 0.0:
+	if DivisionTerms.swayed_share(ns, _parties()[0], _law_at(0.0, 0.0), true) != 0.0 or DivisionTerms.swayed_share(ns, _parties()[0], _law_at(0.0, 0.0), false) != 0.0:
 		_fail("no address, and a sway")
 
 
@@ -373,15 +375,17 @@ func _check_the_term_reads_voters_and_discipline() -> void:
 		shifts[bloc] = 10.0
 	ns.measure_opinion = {"measures": {law.id: {"months_left": 3, "shifts": shifts}}, "given": []}
 	ns.party_discipline[party.id] = 0.5
-	if not is_equal_approx(DivisionTerms.sway_share(ns, party, law), 5.0 * 10.0 / 50.0 * 0.5):
-		_fail("a uniform 10 points at discipline 0.5 sways %.4f, want 0.5" % DivisionTerms.sway_share(ns, party, law))
+	if not is_equal_approx(DivisionTerms.swayed_share(ns, party, law, true), WEIGHT * 10.0 / 50.0 * 0.5):
+		_fail("a uniform 10 points at discipline 0.5 sways %.4f, want %.4f" % [DivisionTerms.swayed_share(ns, party, law, true), WEIGHT * 10.0 / 50.0 * 0.5])
+	if DivisionTerms.swayed_share(ns, party, law, false) != 0.0:
+		_fail("no voter hardened, and seats leave the yes line")
 	ns.party_discipline[party.id] = 1.0
-	if DivisionTerms.sway_share(ns, party, law) != 0.0:
+	if DivisionTerms.swayed_share(ns, party, law, true) != 0.0:
 		_fail("a perfectly disciplined party swayed")
 	ns.party_discipline[party.id] = 0.5
 	var other = _law_at(0.0, 0.0)
 	other.id = "another"
-	if DivisionTerms.sway_share(ns, party, other) != 0.0:
+	if DivisionTerms.swayed_share(ns, party, other, true) != 0.0:
 		_fail("an address on one bill swayed another")
 	# Two parties, one bloc shifted: the party whose voters those are moves more.
 	var near_bloc := {}
@@ -392,17 +396,28 @@ func _check_the_term_reads_voters_and_discipline() -> void:
 	var by_slot := {}
 	for p in _parties():
 		ns.party_discipline[p.id] = 0.5
-		by_slot[p.ideology_slot] = DivisionTerms.sway_share(ns, p, law)
+		by_slot[p.ideology_slot] = DivisionTerms.swayed_share(ns, p, law, true)
 	if not float(by_slot["centre_right"]) > float(by_slot["left_populist"]):
 		_fail("business moved the left as the right: %s" % [by_slot])
 	if not float(by_slot["left_populist"]) > 0.0:
 		_fail("a bloc's shift reached no voters of a far party: %s" % [by_slot])
-	# Against: negative, and clamped.
+	# Each way on its own, never the mean: half the voters each way moves seats both ways,
+	# and the two shares add up to the whole shift's.
+	var half := {}
+	for bloc in OpinionK.BLOC_KEYS:
+		half[bloc] = -10.0
+	half["business"] = 10.0
+	ns.measure_opinion["measures"][law.id]["shifts"] = half
+	var won := DivisionTerms.swayed_share(ns, party, law, true)
+	var lost := DivisionTerms.swayed_share(ns, party, law, false)
+	if won <= 0.0 or lost <= 0.0 or not is_equal_approx(won + lost, WEIGHT * 10.0 / 50.0 * 0.5):
+		_fail("a split country sways %.4f and %.4f, want them to add to %.4f" % [won, lost, WEIGHT * 10.0 / 50.0 * 0.5])
+	# Clamped: a share is never more than the seats.
 	for bloc in OpinionK.BLOC_KEYS:
 		shifts[bloc] = -5000.0
 	ns.measure_opinion["measures"][law.id]["shifts"] = shifts
-	if DivisionTerms.sway_share(ns, party, law) != -1.0:
-		_fail("a sway past the whole line: %.3f" % DivisionTerms.sway_share(ns, party, law))
+	if DivisionTerms.swayed_share(ns, party, law, false) != 1.0:
+		_fail("a sway past the whole line: %.3f" % DivisionTerms.swayed_share(ns, party, law, false))
 
 
 ## An address on a real game: more yes, fewer no, every party's line where it was, and no
@@ -435,8 +450,8 @@ func _check_the_term_moves_seats_through_a_division() -> void:
 	_fail("no open bill with 100 seats against")
 
 
-## [yes, no, abstain]. The pledge first, then a positive sway on what is left of no and
-## abstain; a negative sway leaves the yes line with the peel, on the base the pledge holds.
+## [yes, no, abstain]. The pledge first, then what is won from what is left of no and
+## abstain; what leaves the yes line reads the base the pledge holds.
 func _check_seats_with_a_sway() -> void:
 	var table := [
 		[["no", "no", 100, 0, 0, 0.0, 0.2], [20, 80, 0], "a no line gives a fifth"],
@@ -446,12 +461,10 @@ func _check_seats_with_a_sway() -> void:
 		[["yes", "no", 100, 10, 0, 0.0, 0.5], [95, 5, 0], "rebels against a yes line can be won"],
 		[["no", "abstain", 100, 10, 0, 0.0, 0.5], [50, 45, 5], "no and abstain each give their share"],
 		[["no", "no", 100, 0, 100, 0.0, 0.2], [100, 0, 0], "nothing left to sway"],
-		[["yes", "yes", 100, 0, 0, 0.0, -0.1], [90, 0, 10], "a negative sway leaves the yes line"],
-		[["yes", "yes", 100, 0, 0, 0.1, -0.1], [80, 0, 20], "it adds to the peel"],
-		[["yes", "yes", 100, 0, 30, 0.1, -0.1], [86, 0, 14], "a pledged seat holds against both"],
-		[["yes", "yes", 100, 0, 0, 0.8, -0.8], [0, 0, 100], "together, the whole line at most"],
-		[["no", "no", 100, 0, 0, 0.0, -0.3], [0, 100, 0], "a no line has no yes to lose"],
-		[["abstain", "abstain", 100, 0, 0, 0.0, -0.3], [0, 0, 100], "nor an abstaining one"],
+		[["yes", "yes", 100, 0, 30, 0.2, 0.0], [86, 0, 14], "a pledged seat holds"],
+		[["yes", "yes", 100, 0, 0, 1.6, 0.0], [0, 0, 100], "the whole line at most"],
+		[["no", "no", 100, 0, 0, 0.3, 0.0], [0, 100, 0], "a no line has no yes to lose"],
+		[["abstain", "abstain", 100, 0, 0, 0.3, 0.0], [0, 0, 100], "nor an abstaining one"],
 		[["yes", "no", 100, 10, 0, 0.1, 0.5], [86, 5, 9], "a sway and a peel on one line"],
 	]
 	for row in table:
