@@ -272,7 +272,7 @@ func _refresh_strip() -> void:
 	var items := []
 	for row in rows:
 		var booking: bool = row.has("status")
-		var live: bool = booking and String(row["status"]) == K.STATUS_BOOKED and String(row.get("kind", "")) != K.KIND_AUDIENCE
+		var live: bool = booking and Calendar.can_cancel(row)
 		items.append({"year": int(row["year"]), "month": int(row["month"]), "day": int(row.get("day", 1)),
 			"text": _booking_text(row) if booking else _fixed_text(row), "mark": "booking" if booking else "fixed",
 			"cancel": Calendar.verb_key(row) if live else ""})

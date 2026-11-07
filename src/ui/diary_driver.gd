@@ -38,6 +38,11 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 	var ns = state.player()
 
 	for entry in due:
+		# V5.3 b: an address was given when it was booked. Its day passing is all that is left.
+		if String(entry.get("kind", "")) == CalendarK.KIND_ADDRESS:
+			Calendar.resolve(state, Calendar.verb_key(entry), true)
+			continue
+
 		# THE BASELINE IS TAKEN HERE, not when the player booked. U4's decision
 		# delta measures a command against the next history entry, and a booking
 		# commits nothing in the month it is made -- measured from the press, a
@@ -46,11 +51,6 @@ static func resolve(state, loader, year: int, month: int, day: int, on_outcome: 
 		# across a booking would lose a baseline taken at the press entirely.
 		var before := Trends.snapshot_now(state)
 		before.merge(Opinion.snapshot(state))
-
-		# V5.3 b: an address was given when it was booked. Its day passing is all that is left.
-		if String(entry.get("kind", "")) == CalendarK.KIND_ADDRESS:
-			Calendar.resolve(state, Calendar.verb_key(entry), true)
-			continue
 
 		var label := ""
 		var ok := false

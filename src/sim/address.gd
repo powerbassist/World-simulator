@@ -24,13 +24,13 @@ const Media = preload("res://src/sim/media.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 
 
-## The shift an address would bring, per bloc, after `earlier` addresses in the window: those
+## The shift an address would bring, per bloc, after `repeats` addresses in the window: those
 ## discount what persuades and grow what hardens. A bloc's lean is the read a referendum takes
 ## of the same position, so the country has one opinion of where a bill stands.
-static func shifts(ns, outlets: Array, law, earlier: int) -> Dictionary:
+static func shifts(ns, outlets: Array, law, repeats: int) -> Dictionary:
 	var standing := clampf(float(ns.overall_approval_pct) / OpinionK.APPROVAL_NEUTRAL, K.STANDING_MIN, K.STANDING_MAX)
-	var persuades: float = K.PERSUASION_FLAT * standing * pow(K.REPEAT_WORTH, earlier)
-	var hardens: float = K.HARDEN_SHARE * K.SHIFT_TOWARD * (1.0 + K.HARDEN_GROWTH * earlier)
+	var persuades: float = K.PERSUASION_FLAT * standing * pow(K.REPEAT_WORTH, repeats)
+	var hardens: float = K.HARDEN_SHARE * K.SHIFT_TOWARD * (1.0 + K.HARDEN_GROWTH * repeats)
 	var out := {}
 	for bloc in OpinionK.BLOC_KEYS:
 		var yes := Referendum.bloc_yes(ns, bloc, law.position)

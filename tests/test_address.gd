@@ -47,6 +47,8 @@ func _init() -> void:
 	_check_repetition_discounts_what_persuades_and_grows_what_hardens()
 	_check_the_verb_writes_the_register_and_the_diary()
 	_check_the_verb_refuses_with_no_effect()
+	_check_a_tabled_bill_can_be_addressed()
+	_check_the_diary_offers_no_cancel_on_an_address()
 	_check_the_verb_prices_the_blocs_against()
 	_check_the_register_fades_over_three_months()
 	_check_the_game_month_fades_it()
@@ -238,6 +240,40 @@ func _check_the_verb_refuses_with_no_effect() -> void:
 		_fail("an address on a taken day: %s" % [taken])
 	if not ns.measure_opinion.is_empty() or str(ns.bloc_offset) != offsets or state.appointments.size() != 1:
 		_fail("a refusal left a mark: %s, %d appointments" % [ns.measure_opinion, state.appointments.size()])
+
+
+## The bill before the chamber is the verb's first use, and its division reads the address.
+func _check_a_tabled_bill_can_be_addressed() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _open_bill(state)
+	if not bool(Legislature.propose(state, _loader, law).get("tabled", false)):
+		_fail("premise: %s was not tabled" % law.id)
+		return
+	if not bool(Address.give(state, _loader, law.id).get("ok", false)):
+		_fail("an address on the tabled bill was refused")
+	if _shift_of(ns, law.id).is_empty():
+		_fail("the tabled bill's address wrote nothing")
+
+
+## An address is given when it is booked: taking its row back would refund the day, the verb's
+## whole price, and keep the shift.
+func _check_the_diary_offers_no_cancel_on_an_address() -> void:
+	var state = _new_state()
+	var law = _open_bill(state)
+	Address.give(state, _loader, law.id)
+	var entry: Dictionary = state.appointments.filter(func(e) -> bool: return String(e["kind"]) == CalendarK.KIND_ADDRESS)[0]
+	if Calendar.can_cancel(entry):
+		_fail("the diary offers to cancel an address")
+	var other := Calendar.make_entry(CalendarK.KIND_LAW, 2026, 4, 2, "", "", "another")
+	if not Calendar.can_cancel(other):
+		_fail("the diary no longer offers to cancel a booked bill")
+	var audience := Calendar.make_entry(CalendarK.KIND_AUDIENCE, 2026, 4, 3, "request", "person")
+	if Calendar.can_cancel(audience):
+		_fail("the diary offers to cancel an audience")
+	other["status"] = CalendarK.STATUS_DONE
+	if Calendar.can_cancel(other):
+		_fail("the diary offers to cancel what has happened")
 
 
 ## The blocs against pay, the rest do not, through the applier that clamps.

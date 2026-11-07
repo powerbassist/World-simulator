@@ -127,9 +127,10 @@ const DEFICIT_WEIGHT := 0.25
 ## the parent's ruling: a party of discipline 0.85 peels 12.75 %, the 10 to 12 % asked of a
 ## disciplined party, a 0.65 one 30 %. 0.85 is where B4's band first holds in all four nations.
 const PEEL_PER_TENFOLD := 0.85
-## The share of a party's no and abstain seats an address moves is this x its voters' shift
-## / 50 x (1 - discipline): a shift of 50 points at no discipline would move this many times
-## the whole party. A STAND-IN, tuned to B5's 2 to 6 % of seats (tools/legislature_probe.gd).
+## The share of a party's seats an address moves is this x its voters' shift / 50 x (1 -
+## discipline), one way off its no and abstentions, the other off its yes line where voters
+## hardened. A STAND-IN: 6.5 is the highest weight at which no close division moves past B5's
+## 6 % of seats (tools/legislature_probe.gd, the sweep is in #298).
 const OPINION_WEIGHT := 6.5
 ## The bounds on a grade at the proposal (LawMagnitude.may_grade): a tenth to ten times.
 const GRADE_SCALE_MIN := 0.1
