@@ -313,8 +313,9 @@ func _test_the_register_survives_a_save() -> void:
 
 ## The opened region's one problem: its worst figure against the nation, the
 ## larger of unemployment / the nation's and the nation's output per head / its
-## own (ties to unemployment). Britain's unemployment has no regional spread, so
-## its regions' problem is never unemployment above the nation's.
+## own (ties to unemployment). Britain's regions are measured since V5.3 (ONS), so
+## the same rule has to hold for them as for France: London's problem is the
+## unemployment above the nation's, the North East's the output below it.
 func _test_the_one_problem() -> void:
 	var state = _state()
 	var ns = state.player()
@@ -335,13 +336,22 @@ func _test_the_one_problem() -> void:
 		_fail("the one problem is %s, not %s at x%.3f" % [p, kind, maxf(u_ratio, g_ratio)])
 	var gbr = _state("GBR")
 	var g = gbr.player()
-	for r in _list(gbr, "GBR"):
+	var glist := _list(gbr, "GBR")
+	var kinds := {}
+	for r in glist:
 		if r.id == RK.RESIDUAL_KEY:
 			continue
-		var gp: Dictionary = Regions.problem(g, _list(gbr, "GBR"), r.id, _access(gbr, g), _sites(gbr, g),
-			float(g.region_pop_share.get(r.id, 0.0)))
-		if String(gp["kind"]) == "unemployment" and float(gp["ratio"]) > 1.0 + 1e-9:
-			_fail("a British region's problem is unemployment above the nation's: %s" % gp)
+		var gshare := float(g.region_pop_share.get(r.id, 0.0))
+		var gp: Dictionary = Regions.problem(g, glist, r.id, _access(gbr, g), _sites(gbr, g), gshare)
+		var gu_ratio := _unemployment(gbr, g, r.id) / float(g.unemployment_pct)
+		var gidx := Regions.gdp_per_head_index(g, glist, r.id, gshare)
+		var gg_ratio := 1.0 / gidx if gidx > 0.0 else 0.0
+		var gkind := "unemployment" if gu_ratio >= gg_ratio else "output_per_head"
+		if String(gp["kind"]) != gkind or not is_equal_approx(float(gp["ratio"]), maxf(gu_ratio, gg_ratio)):
+			_fail("a British region's problem is %s, not %s at x%.3f" % [gp, gkind, maxf(gu_ratio, gg_ratio)])
+		kinds[String(gp["kind"])] = true
+	if kinds.size() < 2:
+		_fail("Britain's measured regions all share one kind of problem (%s): the ONS figures should split them" % [kinds.keys()])
 
 
 ## The level path (Regions.tick_month, the third copy of the deviation arithmetic):

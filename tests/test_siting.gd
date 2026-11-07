@@ -169,14 +169,14 @@ func _test_pick_only_returns_scoring_ids() -> void:
 ## THE TWO BOUNDS AS ASSERTIONS RATHER THAN AS PROSE, which is what V2.6a did for its
 ## own two and the reason they survive a later session's edit.
 ##
-## Britain's regions carry unemployment_rel exactly 1.0 -- V2.5 section 8's ITL1 index
-## proxy -- and Luxembourg is one region. Both therefore have no site at MONTH ONE and
-## both are unpriced there. Deliberately NOT asserted over a whole run: the probe
-## measured Britain acquiring a site later, because the GDP weights that set the mean
-## trend move under V2.5's divergence, and a test claiming Britain is permanently
-## unsited would be asserting something the model does not do.
+## Luxembourg is one region, so it has no site at MONTH ONE and is unpriced there.
+## Britain was the second case while its regions carried unemployment_rel exactly 1.0
+## (V2.5 section 8's ITL1 proxy); V5.3's ONS figures give it London as a site from
+## month one, so it left this list. Deliberately NOT asserted over a whole run: the
+## probe measured a one-region nation acquiring a site later, and a test claiming it
+## is permanently unsited would be asserting something the model does not do.
 func _test_the_two_structural_bounds_on_real_data() -> void:
-	for id in ["GBR", "LUX"]:
+	for id in ["LUX"]:
 		var state = GameState.new_game(_loader, id)
 		var ns = state.player()
 		var region_list: Array = state.regions.get(id, [])
@@ -184,7 +184,7 @@ func _test_the_two_structural_bounds_on_real_data() -> void:
 			Regions.accessibility_for(ns, region_list, state.region_graph),
 			state.project_sited_pct.get(id, {}))
 		if String(report["region_id"]) != "":
-			_fail("%s has a site at month one (%s), and both recorded bounds say it should have none" % [id, report["region_id"]])
+			_fail("%s has a site at month one (%s), and the recorded bound says it should have none" % [id, report["region_id"]])
 		if float(report["concentration"]) != 1.0:
 			_fail("%s is unsited and its concentration is %s rather than exactly 1.0" % [id, str(report["concentration"])])
 		if float(report["output_index"]) != 1.0:
