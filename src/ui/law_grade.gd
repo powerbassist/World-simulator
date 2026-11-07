@@ -84,7 +84,7 @@ static func build(list, box: Control, ns, law) -> void:
 	box.add_child(strip)
 	var bill = read(ns, law, picked)
 	var bn := money_bn(list._panel._state, list._panel._loader, bill)
-	strip.show_lines(Strings.t("Balance a year, if it passes"), EffectsStrip.money_text(bn), bn,
+	strip.show_lines(Strings.t("Balance a year, if it passes"), EffectsStrip.sum_text(bn), bn,
 		EffectsStrip.who_text(bill.effects.get("bloc_offset", {})), _against_own_size(list, ns, law, bill, picked))
 
 

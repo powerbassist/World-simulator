@@ -13,6 +13,7 @@ extends RefCounted
 ## would grade twice.
 
 const Address = preload("res://src/sim/address.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
 const AddressK = preload("res://src/sim/address_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
@@ -25,6 +26,17 @@ const GO_META := "address_go"
 const STRIP_META := "address_strip"
 
 
+## Redraws the bill when the day turns: a refusal and "on air today" hold for one day, and the
+## panel itself redraws by the month.
+class NextDay extends Node:
+	var list
+	var day := 0
+
+	func _process(_delta: float) -> void:
+		if int(list._panel._state.day) != day:
+			list.select(list.selected_id())
+
+
 static func build(list, box: Control, ns, law) -> void:
 	var state = list._panel._state
 	# The press's answer takes the verb's place: the day is gone, and a strip under a grey
@@ -32,19 +44,23 @@ static func build(list, box: Control, ns, law) -> void:
 	if list.aired.get("key", "") == _aired_key(state, law):
 		PanelKit.heading(box, Strings.t("Address to the nation"))
 		PanelKit.plain_line(box, Strings.t("On air today: %s.") % String(list.aired["seats"]), PanelKit.Tone.PLAIN)
+		_watch_the_day(list, box, state)
 		return
 	# Folded at rest, the Industry verbs' rule (spec 3.2): one strip, for the verb the player
-	# has opened. Open on the tabled bill, the one with a division coming.
-	var open: bool = String(ns.tabled_bill.get("law_id", "")) == String(law.id) or list.address_open == String(law.id)
-	var fold := PanelKit.sized(Button.new())
-	fold.text = Strings.t("Address the nation")
-	fold.toggle_mode = true
-	fold.button_pressed = open
-	fold.set_meta(FOLD_META, true)
-	fold.pressed.connect(_fold.bind(list, law), CONNECT_DEFERRED)
-	box.add_child(fold)
-	if not open:
-		return
+	# has opened. The tabled bill has a division coming, so it stands open with nothing to fold.
+	if String(ns.tabled_bill.get("law_id", "")) == String(law.id):
+		PanelKit.heading(box, Strings.t("Address to the nation"))
+	else:
+		var open: bool = list.address_open == String(law.id)
+		var fold := PanelKit.sized(Button.new())
+		fold.text = Strings.t("Address the nation")
+		fold.toggle_mode = true
+		fold.button_pressed = open
+		fold.set_meta(FOLD_META, true)
+		fold.pressed.connect(_fold.bind(list, law), CONNECT_DEFERRED)
+		box.add_child(fold)
+		if not open:
+			return
 	var est := _estimate(list, ns, law)
 	var strip := EffectsStrip.new()
 	strip.set_meta(STRIP_META, true)
@@ -61,14 +77,27 @@ static func build(list, box: Control, ns, law) -> void:
 	go.pressed.connect(give.bind(list, law), CONNECT_DEFERRED)
 	if reason != "":
 		PanelKit.plain_line(box, Strings.t("Not today: %s.") % Strings.t(reason))  # i18n: row-ok the sim's reason, its English the msgid
+		_watch_the_day(list, box, state)
 
 
+static func _watch_the_day(list, box: Control, state) -> void:
+	var watch := NextDay.new()
+	watch.list = list
+	watch.day = int(state.day)
+	box.add_child(watch)
+
+
+## Opens or closes the strip. It may land under the column's foot, so the scroll follows it
+## once the rebuilt column has its layout: a press that shows nothing reads as a dead click.
 static func _fold(list, law) -> void:
 	list.address_open = "" if list.address_open == String(law.id) else String(law.id)
 	list.select(String(law.id))
+	var scroll: ScrollContainer = list._detail.get_parent()
 	for button in list._detail.find_children("*", "Button", true, false):  # i18n: ok a class name
 		if button.has_meta(FOLD_META):
 			button.grab_focus()
+		elif button.has_meta(GO_META):
+			list.get_tree().process_frame.connect(scroll.ensure_control_visible.bind(button), CONNECT_ONE_SHOT)
 
 
 ## The press: the seats it moved are read as the strip read them, then the page redraws, and
@@ -78,6 +107,8 @@ static func give(list, law) -> void:
 	var est := _estimate(list, state.player(), law)
 	if bool(Address.give(state, list._panel._loader, String(law.id))["ok"]):
 		list.aired = {"key": _aired_key(state, law), "seats": seats_text(est)}
+		# The diary took a row: the same repaint a booking asks of main.
+		list.get_tree().get_first_node_in_group(WindowManager.GROUP).content("calendar").diary_changed.emit()
 	list._panel.mark_dirty()
 
 

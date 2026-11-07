@@ -34,6 +34,7 @@ var _plain  # a row with none
 var _click: Control
 var _click_at := -1
 var _before := {}
+var _diary_repaints := 0
 var _strip_before := {}
 
 
@@ -78,14 +79,27 @@ func _process(_delta: float) -> bool:
 			_check_the_address_stands_beside_a_tabled_bill()
 			_strip_before = Division.forecast(_main._state, _ns(), _main._loader)
 			_before = _strip_of(LawAddress.STRIP_META).duplicate()
+			_main._calendar_panel.diary_changed.connect(func() -> void: _diary_repaints += 1)
 			_press(_air())
 		42:
 			_check_the_address_moved_the_forecast()
 			_check_the_bill_addressed_says_so()
+			_check_the_aired_line_goes_with_the_day()
+		46:
+			if "On air" in _detail_text():
+				_fail("the page says on air today after the day turned, with nothing pressed")
+			_main._state.day -= 1
+			_main._law_panel._refresh()
+			# A long summary, so the fold stands at the column's foot.
+			_plain.summary = "word ".repeat(1500)
 			_list().select(String(_plain.id))
+		49:
 			_press(_fold())
-		50:
+		58:
 			_check_the_refusal_is_read_before_the_press()
+			_main._state.day += 1
+		62:
+			_check_the_day_turning_lifts_the_refusal()
 			_check_a_new_game_drops_the_picks()
 			_check_the_strip_is_not_offered_a_dead_verb()
 			_finish()
@@ -273,7 +287,7 @@ func _check_the_money_is_what_it_books() -> void:
 	var shown: float = float(strip.get("bn", 0.0))
 	if shown >= -0.05:
 		_fail("premise: a dearer bill shows a cost: %s" % shown)
-	if strip.get("money", "") != EffectsStrip.money_text(shown):
+	if strip.get("money", "") != EffectsStrip.sum_text(shown):
 		_fail("the money line is not its figure: %s" % strip.get("money", ""))
 	var sim = _main._state.duplicate_state()
 	var before := Budget.snapshot(sim)
@@ -348,6 +362,8 @@ func _check_the_address_stands_beside_a_tabled_bill() -> void:
 		_fail("premise: Propose is down on a tabled bill")
 	if _air().disabled:
 		_fail("the address is the tabled bill's verb, and it is greyed")
+	if not _in_detail(func(n: Node) -> bool: return n is Button and n.has_meta(LawAddress.FOLD_META)).is_empty():
+		_fail("a tabled bill's address stands open, and a fold would be a dead click")
 	var strip := _strip_of(LawAddress.STRIP_META)
 	if strip.is_empty():
 		_fail("the address has no strip")
@@ -363,6 +379,13 @@ func _check_the_address_stands_beside_a_tabled_bill() -> void:
 		_fail("the strip does not say the shift fades: %s" % strip["when"])
 
 
+## The bill just addressed has the day's line in place of the verb, and it goes with the day.
+func _check_the_aired_line_goes_with_the_day() -> void:
+	if "On air" not in _detail_text():
+		_fail("premise: the aired line stands")
+	_main._state.day += 1
+
+
 ## QA's merge gate: the forecast the player reads moves after an address, as the strip said.
 func _check_the_address_moved_the_forecast() -> void:
 	var after: Dictionary = Division.forecast(_main._state, _ns(), _main._loader)
@@ -374,6 +397,8 @@ func _check_the_address_moved_the_forecast() -> void:
 		_fail("the strip promised %s, the division moved %d, %d" % [_before["money"], dy, dn])
 	if (_ns().measure_opinion.get("measures", {}) as Dictionary).is_empty():
 		_fail("the press gave no address")
+	if _diary_repaints != 1:
+		_fail("the diary took a row and the ribbon was asked to repaint %d times" % _diary_repaints)
 	# The bar on screen, redrawn: its yes is the division's own walk at the page's band.
 	var band: float = _main._law_panel.forecast_band(_ns(), _law.id)
 	var counts: Dictionary = _main._law_panel.forecast_counts(_ns(), _parties(), _law, band)
@@ -398,21 +423,31 @@ func _check_the_refusal_is_read_before_the_press() -> void:
 		_fail("the fold's press dropped its focus")
 	if not _air().disabled:
 		_fail("another bill's address, the same day, is offered")
+	var scroll: ScrollContainer = _list()._detail.get_parent()
+	if scroll.scroll_vertical <= 0:
+		_fail("premise: the column had room, so nothing here tests the scroll")
+	if not scroll.get_global_rect().encloses(_air().get_global_rect()):
+		_fail("the opened strip's button is out of the column's view")
 	var other := Address.refusal(_main._state, String(_plain.id))
 	if other == "" or other not in _detail_text():
 		_fail("the diary's refusal is not on the page: '%s'" % other)
+
+
+func _check_the_day_turning_lifts_the_refusal() -> void:
+	if _air().disabled:
+		_fail("the next day, the address is still refused: %s" % _detail_text())
+	if "Not today" in _detail_text():
+		_fail("the next day, the page still says not today")
 
 
 func _check_a_new_game_drops_the_picks() -> void:
 	var picked: float = _list().grade(_law)
 	if picked != 10.0:
 		_fail("premise: the pick stands: %s" % picked)
-	var state = _main._state
 	_list()._game = null
 	_list().fill(_ns(), _parties(), _list()._shown.duplicate())
 	if float(_list().grade(_law)) != 1.0:
 		_fail("a grade outlived its game")
-	_list()._game = state
 
 
 ## "A verb whose strip cannot be filled from the sim's own numbers is not offered."
