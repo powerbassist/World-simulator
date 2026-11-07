@@ -37,6 +37,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
 const PollStrip = preload("res://src/ui/poll_strip.gd")
+const MeasurePolls = preload("res://src/sim/measure_polls.gd")
 
 ## Emitted for the division, and ONLY for the division: main.gd hides the
 ## briefing and calls law_panel.run_proposal(law), whose `proposed` signal
@@ -273,11 +274,17 @@ func _build_polls() -> void:
 
 	# The country's read: what the player has bought, and the tiers they can buy. A bill that
 	# has reached the order paper keeps its draft's key, the id it carries.
-	PollStrip.build(section, _state, _loader, _bill_key, _on_polled)
+	PollStrip.build(section, _state, _loader, _bill_key, _on_poll)
 
 
-func _on_polled() -> void:
-	polled.emit(Trends.snapshot_now(_state), tr("Commissioned a poll: %s") % _bill_name())
+func _on_poll(tier: String) -> void:
+	# A hidden panel's stale signal must not act: after detach() the state is the discarded
+	# game, and the commission would charge the dead run's debt.
+	if _state == null:
+		return
+	var before := Trends.snapshot_now(_state)
+	if bool(MeasurePolls.commission(_state, _loader, _bill_key, tier)["ok"]):
+		polled.emit(before, tr("Commissioned a poll: %s") % _bill_name())
 	_rebuild()
 
 

@@ -18,6 +18,9 @@ const LawAddress = preload("res://src/ui/law_address.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
+const Trends = preload("res://src/ui/trends.gd")
+const Num = preload("res://src/ui/num.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
@@ -34,6 +37,8 @@ var _second_bought_on := 0
 var _second_key := ""
 var _second_printed_on := -1
 var _third_key := ""
+var _pre_press := {}
+var _baseline := {}
 
 
 func _init() -> void:
@@ -76,6 +81,8 @@ func _process(_delta: float) -> bool:
 			_check_the_strip_reads_the_tier("quick")
 			_debt = float(_ns().debt_eur_bn)
 			_bought_on = _today()
+			_pre_press = Trends.snapshot_now(_main._state)
+			_main._briefing.polled.connect(func(before: Dictionary, _label: String) -> void: _baseline = before)
 			_press(_go())
 		7:
 			_check_the_press_charged_the_price()
@@ -105,6 +112,8 @@ func _process(_delta: float) -> bool:
 		13:
 			_check_the_poll_across_a_close()
 			_check_the_close_road_has_a_card()
+			_check_a_composed_bill_can_be_polled()
+			_check_a_detached_briefing_charges_nothing()
 			_finish()
 			return true
 	return false
@@ -184,16 +193,12 @@ func _check_the_strip_reads_the_tier(tier: String) -> void:
 		_fail("%s: the strip's price reads %s" % [tier, strip.money_label.text])
 	if str(int(terms["weeks"])) not in strip._when.text:
 		_fail("%s: the strip's wait reads '%s'" % [tier, strip._when.text])
-	if Num_text(float(terms["margin"])) not in strip._who.text:
+	if Num.f(float(terms["margin"]), 1) not in strip._who.text:
 		_fail("%s: the strip's margin reads '%s'" % [tier, strip._who.text])
 	if strip.money_bn >= 0.0:
 		_fail("%s: the price does not read as a cost" % tier)
 	if not _chip(tier).button_pressed:
 		_fail("%s: the picked chip is not pressed" % tier)
-
-
-func Num_text(value: float) -> String:
-	return preload("res://src/ui/num.gd").f(value, 1)
 
 
 func _check_the_press_charged_the_price() -> void:
@@ -205,6 +210,10 @@ func _check_the_press_charged_the_price() -> void:
 	if not _go().disabled:
 		_fail("a tier bought is offered again: never a reroll")
 	var text := _text_in(_main._briefing)
+	if "No poll on this yet." in text:
+		_fail("a poll bought and out, and the page says there is none")
+	if _baseline != _pre_press:
+		_fail("the effect's baseline was not taken before the purchase")
 	var row: Dictionary = MeasurePolls.bought(_ns(), String(_law.id))["quick"]
 	if "arrives %s" % PollStrip.arrived_text(row) not in text:
 		_fail("the briefing does not say when it arrives: %s" % text)
@@ -244,12 +253,12 @@ func _check_the_poll_arrived_on_its_day() -> void:
 
 
 func _card_title() -> String:
-	return ("Poll: %s" % preload("res://src/ui/strings.gd").law_name(_law)).to_upper()
+	return ("Poll: %s" % Strings.law_name(_law)).to_upper()
 
 
 func _open_button() -> Button:
 	for b in _all_in(_main._hud.inbox, func(n: Node) -> bool: return n is Button and String(n.text) == "Open"):
-		if String(b.get_parent().get_parent().name) != "" and _card_holding(b):
+		if _card_holding(b):
 			return b
 	_fail("the card has no Open")
 	return Button.new()
@@ -359,9 +368,27 @@ func _check_the_poll_across_a_close() -> void:
 func _check_the_close_road_has_a_card() -> void:
 	if MeasurePolls.result(_ns(), _third_key, "quick").is_empty():
 		_fail("the poll due on the 1st never printed")
-	var title := ("Poll: %s" % preload("res://src/ui/strings.gd").law_name(_main._law_panel._find_law(_third_key))).to_upper()
+	var title := ("Poll: %s" % Strings.law_name(_main._law_panel._find_law(_third_key))).to_upper()
 	if title not in _text_in(_main._hud.inbox):
 		_fail("the poll the close printed has no card: %s" % title)
+
+
+## A finished draft is on the order paper under the id it carried, and V4.2 could poll it.
+func _check_a_composed_bill_can_be_polled() -> void:
+	var position := {"economic": 0.2, "social": 0.0}
+	_ns().custom_laws["draft_7"] = {"position": position}
+	if MeasurePolls.position_of(_ns(), _main._loader, "draft_7") != position:
+		_fail("a composed bill has no position for a poll to read")
+	_ns().custom_laws.erase("draft_7")
+
+
+func _check_a_detached_briefing_charges_nothing() -> void:
+	var ns = _ns()
+	var debt := float(ns.debt_eur_bn)
+	_main._briefing.detach()
+	_main._briefing._on_poll("deep")
+	if float(ns.debt_eur_bn) != debt:
+		_fail("a stale press after detach charged the dead run")
 
 
 ## Two polls printed: the table is the narrower's, whichever was bought first.

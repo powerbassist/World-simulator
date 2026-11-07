@@ -32,10 +32,10 @@ const GO_META := "poll_go"
 static var _picked := {}
 
 
-## The whole of it, in `box`. `bought` is called after a commission lands. A measure the
-## country cannot read yet offers no poll (MeasurePolls.position_of: a process verb with no
-## position in content).
-static func build(box: Control, state, loader, key: String, bought: Callable) -> void:
+## The whole of it, in `box`. `commission` takes the tier and makes the purchase: the host owns
+## the press, its baseline and its redraw. A measure the country cannot read yet offers no poll
+## (MeasurePolls.position_of: a process verb with no position in content).
+static func build(box: Control, state, loader, key: String, commission: Callable) -> void:
 	var ns = state.player()
 	_results(box, ns, key)
 	if MeasurePolls.position_of(ns, loader, key).is_empty():
@@ -62,9 +62,7 @@ static func build(box: Control, state, loader, key: String, bought: Callable) ->
 		row.add_child(chip)
 	box.add_child(strip)
 	box.add_child(go)
-	go.pressed.connect(func() -> void:
-		if bool(MeasurePolls.commission(state, loader, key, String(_picked[key]))["ok"]):
-			bought.call())
+	go.pressed.connect(func() -> void: commission.call(String(_picked[key])))
 	show.call(shown)
 
 
@@ -72,7 +70,7 @@ static func build(box: Control, state, loader, key: String, bought: Callable) ->
 static func _fill(strip: EffectsStrip, go: Button, ns, key: String, tier: String) -> void:
 	var terms: Dictionary = K.TIERS[tier]
 	var cost := -float(terms["cost_eur_bn"])
-	strip.show_lines(Strings.t("Debt, once"), EffectsStrip.sum_text(cost), cost,
+	strip.show_lines(Strings.t("Treasury"), EffectsStrip.sum_text(cost), cost,
 		Strings.t("Support per bloc, within %s points.") % Num.f(float(terms["margin"]), 1),
 		Strings.t("Arrives in %d weeks.") % int(terms["weeks"]))
 	go.disabled = MeasurePolls.bought(ns, key).has(tier)
@@ -81,15 +79,15 @@ static func _fill(strip: EffectsStrip, go: Button, ns, key: String, tier: String
 ## The narrowest poll printed as a table, and a line for each still out.
 static func _results(box: Control, ns, key: String) -> void:
 	var best := narrowest(ns, key)
-	if best.is_empty():
+	var polls := MeasurePolls.bought(ns, key)
+	if polls.is_empty():
 		PanelKit.line(box, Strings.t("No poll on this yet."), PanelKit.Tone.DIM)
-	else:
+	elif not best.is_empty():
 		var rows: Array = [["", Strings.t("Support")]]
 		for bloc in best["ranges"]:
 			rows.append([Labels.bloc(String(bloc)), range_text(best["ranges"][bloc])])
 		PanelKit.ledger(box, rows)
 		PanelKit.line(box, Strings.t("As of %s, within %s points.") % [arrived_text(best["row"]), Num.f(float(K.TIERS[best["tier"]]["margin"]), 1)], PanelKit.Tone.DIM)
-	var polls := MeasurePolls.bought(ns, key)
 	for tier in polls:
 		if not (polls[tier] as Dictionary).has("ranges"):
 			PanelKit.line(box, Strings.t("%s poll: arrives %s.") % [Strings.t(String(TIER_NAME[tier])), arrived_text(polls[tier])], PanelKit.Tone.PLAIN)  # i18n: row-ok a tier id, its name the msgid
@@ -111,7 +109,8 @@ static func range_text(printed: Array) -> String:
 
 static func arrived_text(row: Dictionary) -> String:
 	var on := MeasurePolls.arrives_on(row)
-	return DateText.day_month(int(on["day"]), int(on["month"]))
+	# With its year: a read is fixed for good, and can be years old.
+	return DateText.day_month_year(int(on["day"]), int(on["month"]), int(on["year"]))
 
 
 ## "Workers 41.2-47.4, Urban 38.0-44.0, ...": a poll's blocs on one line, for a card or a strip.

@@ -39,6 +39,8 @@ static func position_of(ns, loader, key: String) -> Dictionary:
 		return law.position
 	if ns.draft_bills.has(key):
 		return ns.draft_bills[key].get("position", {})
+	if ns.custom_laws.has(key):  # the draft on the order paper, under the id it carried
+		return ns.custom_laws[key].get("position", {})
 	for row in ns.processes:
 		if String(row["id"]) == key and String(row["status"]) == Processes.OPEN:
 			return _process_position(loader, String(row["action_id"]))
