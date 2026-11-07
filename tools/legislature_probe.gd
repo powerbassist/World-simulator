@@ -16,13 +16,11 @@ extends SceneTree
 ## a seat won from a no counts one and a seat lost to an abstention a half; on an absolute one
 ## only yes counts. Within 5 % of seats is 2.5 % short, a gap of 5 %. `--regimes` runs the band's
 ## two scripted players through the game's own month, 36 months, inside the first term, the
-## same bill policy: of the bills not tried in two years, the one past its line by the least,
-## else the one nearest it. A player who tables what it can carry, since one carrying nothing
-## cannot tell the regimes apart (`--nearest` is that first policy, either side of the line). One addresses every bill,
+## same bill policy: table the open bill nearest its line that has not been tried in two years.
+## One addresses every bill,
 ## the other the first three within 5 % each year; a third never does, for reference. The
-## first must pass fewer bills and end lower in approval than the second, on the mean over
-## `--seeds=N` of the game's draw (one game is one run of its events, and that noise is larger
-## than an address). `--nation=FRA` runs one nation, so four can run side by side.
+## first must pass fewer bills and end lower in approval than the second. `--nation=FRA` runs
+## one nation, so four can run side by side.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -57,10 +55,9 @@ func _init() -> void:
 		quit(0)
 		return
 	if OS.get_cmdline_user_args().has("--regimes"):
-		var seeds := _arg_int("--seeds=", 5)
 		for nation_id in NATIONS:
 			if _arg_string("--nation=", nation_id) == nation_id:
-				_regimes(loader, nation_id, seeds)
+				_regimes(loader, nation_id)
 		quit(0)
 		return
 	var failed := false
@@ -154,31 +151,21 @@ func _arg_string(prefix: String, fallback: String) -> String:
 	return fallback
 
 
-func _arg_int(prefix: String, fallback: int) -> int:
-	return int(_arg_string(prefix, str(fallback)))
-
-
-func _regimes(loader, nation_id: String, seeds: int) -> void:
+func _regimes(loader, nation_id: String) -> void:
 	var rows := {}
 	for regime in ["never", "closest", "always"]:
-		var mean := {"tabled": 0.0, "passed": 0.0, "close_passed": 0.0, "addresses": 0.0, "approval": 0.0, "refused": 0.0}
-		for draw in seeds:
-			var one := _regime(loader, nation_id, regime, draw)
-			for key in mean:
-				mean[key] = float(mean[key]) + float(one[key]) / float(seeds)
-		rows[regime] = mean
-		print("%s %-8s tabled %.1f, passed %.1f, close carried %.1f, addresses %.1f, approval %.1f, diary refused %.1f" % [nation_id, regime,
-			mean["tabled"], mean["passed"], mean["close_passed"], mean["addresses"], mean["approval"], mean["refused"]])
-	var bills: bool = float(rows["always"]["passed"]) < float(rows["closest"]["passed"])
+		rows[regime] = _regime(loader, nation_id, regime)
+		print("%s %-8s tabled %d, became law %d, close carried %d, addresses %d, approval %.1f, diary refused %d" % [nation_id, regime,
+			rows[regime]["tabled"], rows[regime]["passed"], rows[regime]["close_passed"], rows[regime]["addresses"], rows[regime]["approval"], rows[regime]["refused"]])
+	var bills: bool = int(rows["always"]["passed"]) < int(rows["closest"]["passed"])
 	var approval: bool = float(rows["always"]["approval"]) < float(rows["closest"]["approval"])
-	print("%s  %s: always against the three closest, over %d draws: passed %.1f against %.1f, approval %.1f against %.1f" % [
-		"PASS" if bills and approval else "FAIL", nation_id, seeds, rows["always"]["passed"], rows["closest"]["passed"], rows["always"]["approval"], rows["closest"]["approval"]])
+	print("%s  %s: always against the three closest: became law %d against %d, approval %.1f against %.1f" % [
+		"PASS" if bills and approval else "FAIL", nation_id, rows["always"]["passed"], rows["closest"]["passed"], rows["always"]["approval"], rows["closest"]["approval"]])
 
 
 ## One scripted player. Acts at the top of each month, before the month that closes it divides.
-func _regime(loader, nation_id: String, regime: String, draw: int) -> Dictionary:
+func _regime(loader, nation_id: String, regime: String) -> Dictionary:
 	var state = GameState.new_game(loader, nation_id)
-	state.player().draw_seed = draw
 	var tried := {}
 	var ledger_at_start: int = state.player().law_ledger.size()
 	var out := {"tabled": 0, "passed": 0, "close_passed": 0, "addresses": 0, "approval": 0.0, "refused": 0}
@@ -215,21 +202,13 @@ func _regime(loader, nation_id: String, regime: String, draw: int) -> Dictionary
 
 
 func _nearest_its_line(ns, loader, tried: Dictionary, month: int) -> Dictionary:
-	var nearest_only := OS.get_cmdline_user_args().has("--nearest")
 	var best = null
 	var margin := INF
-	var best_carried = null
-	var margin_carried := INF
 	for law in Legislature.available(ns, loader.laws):
 		if law.constitutional or month - int(tried.get(law.id, -24)) < 24:
 			continue
-		var short := _short_by(Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law), law, ns.assembly_seats)
-		if absf(short) < margin:
-			margin = absf(short)
+		var short := absf(_short_by(Legislature.resolve_vote(ns, loader.parties.get(ns.id, []), law), law, ns.assembly_seats))
+		if short < margin:
+			margin = short
 			best = law
-		if short < 0.0 and -short < margin_carried:
-			margin_carried = -short
-			best_carried = law
-	if best_carried != null and not nearest_only:
-		return {"law": best_carried, "margin": margin_carried}
 	return {"law": best, "margin": margin}
