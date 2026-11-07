@@ -31,7 +31,7 @@ const AK = preload("res://src/sim/audience_constants.gd")
 const CalK = preload("res://src/sim/calendar_constants.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
+const Bills = preload("res://src/sim/bills.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
@@ -39,6 +39,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const President = preload("res://src/sim/president.gd")
 const Programme = preload("res://src/sim/programme.gd")
+const Removal = preload("res://src/sim/removal.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 
 
@@ -66,7 +67,7 @@ static func ask_of(state, ns, loader, row: Dictionary) -> Dictionary:
 		var portfolio := object.substr("office:portfolio:".length())
 		var party := President.party_id_of(ns, loader, String(row.get("person_id", "")))
 		return {"kind": K.ASK_POST, "object": object, "portfolio": portfolio, "party_id": party,
-			"why_not": Cabinet.refusal_reason(ns, portfolio, party), "smaller_due_month": now + K.SMALLER_EXTRA_MONTHS}
+			"why_not": Removal.why_not(state, ns, portfolio, party), "smaller_due_month": now + K.SMALLER_EXTRA_MONTHS}
 	if object.begins_with("programme:") and String(row.get("stance", "")) == "sponsor":
 		var law_id := _open_law_named(state, ns, loader, object.substr("programme:".length()))
 		if law_id != "":
@@ -93,7 +94,7 @@ static func offer_of(state, ns, loader, person_id: String) -> Dictionary:
 ##   ask, offer  as above;
 ##   money       the request's offer of money, with what taking it risks, shown first (the
 ##               author's ruling): {currency, amount_eur_m, evidence, found_in_a_year}, or {};
-##   grant       {ok, why_not};
+##   grant       {ok, why_not}, and on a partner's post {removal}, Removal.price();
 ##   bargain     {due_month, approaches}, each a Levers lever row, a promise's own date beside;
 ##   refuse      the price Levers.close() would charge with nothing agreed.
 static func answers(state, ns, loader, session: Dictionary) -> Dictionary:
@@ -102,11 +103,15 @@ static func answers(state, ns, loader, session: Dictionary) -> Dictionary:
 	for row in Levers.offered(state, ns, loader, session):
 		if K.APPROACHES.has(String(row["lever"])):
 			approaches.append(row)
+	var grant_card := {"ok": why == "", "why_not": why}
+	if String(session.get("ask", {}).get("kind", "")) == K.ASK_POST:
+		grant_card["removal"] = Removal.price(state, ns, loader, String(session["ask"]["portfolio"]))
 	return {
 		"ask": session.get("ask", {}),
-		"offer": offer_of(state, ns, loader, String(session.get("person_id", ""))),
-		"money": _money(state, ns, loader, session),
-		"grant": {"ok": why == "", "why_not": why},
+		# Once struck, the offer it took: the card reads the deal, not what would be on offer now.
+		"offer": session.get("struck", offer_of(state, ns, loader, String(session.get("person_id", "")))),
+		"money": {} if String(session.get("won", "")) != "" else _money(state, ns, loader, session),
+		"grant": grant_card,
 		"bargain": {"due_month": int(session.get("ask", {}).get("smaller_due_month", 0)), "approaches": approaches},
 		"refuse": Audiences.decline_price(ns, loader, String(session.get("request_id", ""))),
 	}
@@ -123,9 +128,15 @@ static func grant(state, ns, loader, session: Dictionary) -> Dictionary:
 	var pid := String(session["person_id"])
 	var outcome := AK.STATUS_SETTLED
 	if String(ask["kind"]) == K.ASK_POST:
-		Cabinet.seat_party(state, String(ask["portfolio"]), String(ask["party_id"]), loader.parties.get(ns.id, []))
+		# The player's own command and not the seat primitive: a post taken from a partner is a
+		# removal, priced as one, whichever door it goes through.
+		var seated := Removal.reassign(state, loader, String(ask["portfolio"]), String(ask["party_id"]))
+		if not bool(seated.get("ok", false)):
+			return {"ok": false, "error": String(seated.get("error", ""))}
 	else:
-		if not President.commit(state, ns, loader, "promise", pid, String(ask["object"]), int(ask["due_month"])):
+		if Levers.word_given(ns, pid, "promise_date", String(ask["object"])) != "":
+			_hold_to(ns, pid, String(ask["object"]), int(ask["due_month"]))
+		elif not President.commit(state, ns, loader, "promise", pid, String(ask["object"]), int(ask["due_month"])):
 			return {"ok": false, "error": "the promise could not be made"}
 		_link(ns, session)
 		outcome = AK.STATUS_PROMISED
@@ -165,10 +176,7 @@ static func _grant_reason(ns, session: Dictionary) -> String:
 		return why
 	if String(session.get("won", "")) != "":
 		return "they have already agreed"
-	var ask: Dictionary = session.get("ask", {})
-	if String(ask.get("kind", "")) == K.ASK_POST:
-		return String(ask.get("why_not", ""))
-	return Levers.word_given(ns, String(session["person_id"]), "promise_date", String(ask.get("object", "")))
+	return String(session.get("ask", {}).get("why_not", ""))
 
 
 ## What the person owes, written, and the audience's outcome stamped so a scene left open ends
@@ -185,21 +193,37 @@ static func _strike(state, ns, loader, session: Dictionary, outcome: String) -> 
 		President.commit(state, ns, loader, "silence", pid, owed, int(offer["due_month"]))
 	President.mark_rows(ns, owed, "deal", deal, pid)
 	session["outcome"] = outcome
+	session["struck"] = offer
 	Audiences.agree(ns, deal, outcome)
 	return offer
 
 
-## The president's word on this ask joins the deal.
+## The president's word on this ask joins the deal, and names the want it answers, so the
+## person does not come back about it while the word stands (Delegation.heard).
 static func _link(ns, session: Dictionary) -> void:
-	President.mark_rows(ns, String(session["ask"]["object"]), "deal", String(session["request_id"]), String(session["person_id"]))
+	var object := String(session["ask"]["object"])
+	var pid := String(session["person_id"])
+	President.mark_rows(ns, object, "deal", String(session["request_id"]), pid)
+	President.mark_rows(ns, object, "want", String(session["object"]), pid)
+
+
+## A word already given on this ask, a promise not believed, is what Grant pays. Grant is the
+## full price, so it holds the word to the ask's date when that is the nearer one.
+static func _hold_to(ns, pid: String, object: String, due: int) -> void:
+	for row in President.commitments_with(ns, pid):
+		if String(row["kind"]) == "promise" and String(row["object"]) == object and int(row["due_month"]) > due:
+			President.mark_rows(ns, object, "due_month", due, pid)
 
 
 ## The first law a programme entry names that is open to the president now, or "".
 static func _open_law_named(state, ns, loader, entry_id: String) -> String:
 	for entry in loader.programme:
-		if String(entry["id"]) == entry_id:
-			for law_id in entry.get("laws", []):
-				if Legislature.open_law(state, ns, loader, String(law_id)) != null:
+		if String(entry["id"]) == entry_id and entry.has("laws"):
+			var open := {}
+			for law in Legislature.available(ns, Bills.open(state, ns, loader)):
+				open[String(law.id)] = true
+			for law_id in entry["laws"]:
+				if open.has(String(law_id)):
 					return String(law_id)
 	return ""
 

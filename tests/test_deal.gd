@@ -36,6 +36,9 @@ const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const Offers = preload("res://src/sim/offers.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
+const Delegation = preload("res://src/sim/delegation.gd")
+const Removal = preload("res://src/sim/removal.gd")
+const PeopleNow = preload("res://src/ui/people_now.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
@@ -74,7 +77,11 @@ func _init() -> void:
 	_check_grant_on_a_post_seats_the_party()
 	_check_grant_spends_no_attempt_and_survives_spent_attempts()
 	_check_a_refused_grant_writes_nothing()
-	_check_a_word_in_flight_greys_grant()
+	_check_grant_takes_up_a_word_in_flight()
+	_check_grant_on_a_post_pays_the_removal()
+	_check_a_post_too_recently_moved_is_greyed()
+	_check_someone_under_a_deal_does_not_ask_again()
+	_check_answers_after_the_deal_read_the_deal()
 
 	_check_three_approaches_and_no_more()
 	_check_a_win_is_the_smaller_grant_for_the_same_offer()
@@ -92,6 +99,7 @@ func _init() -> void:
 	_check_silence_stops_a_brief_then_ends_unpriced()
 
 	_check_what_they_owe_is_not_the_presidents_word()
+	_check_the_people_panel_reads_no_pledge_as_a_promise()
 	_check_a_word_on_a_bill_reads_the_bills_name()
 	_check_a_deal_survives_a_save()
 	_check_a_row_from_before_the_deal_is_judged_as_it_was()
@@ -356,15 +364,87 @@ func _check_a_refused_grant_writes_nothing() -> void:
 		_fail("a refused Grant wrote the registers")
 
 
-func _check_a_word_in_flight_greys_grant() -> void:
+## A promise not believed still binds, and spent attempts must not leave Refuse alone on the
+## table. Grant takes it up, at the ask's date if that is nearer: Grant is the full price.
+func _check_grant_takes_up_a_word_in_flight() -> void:
+	for named in [9, 3]:
+		var f := _law_deal(false)
+		var ns = f["ns"]
+		var object := "law:%s" % f["law_id"]
+		if not President.commit(f["state"], ns, _loader, "promise", f["person_id"], object, _now(f) + int(named)):
+			_fail("the fixture's promise was refused")
+			return
+		f["session"]["attempts_left"] = 0
+		if not bool(Deal.answers(f["state"], ns, _loader, f["session"])["grant"]["ok"]):
+			_fail("a word in flight must leave Grant open")
+		if not bool(Deal.grant(f["state"], ns, _loader, f["session"]).get("ok", false)):
+			_fail("Grant over a word in flight was refused")
+		var rows := 0
+		for row in President.commitments(ns):
+			if String(row["person_id"]) == String(f["person_id"]) and String(row["object"]) == object:
+				rows += 1
+		if rows != 1:
+			_fail("one word on one ask, got %d rows" % rows)
+		var word := _word_row(ns, f["person_id"], object)
+		if int(word.get("due_month", 0)) != _now(f) + mini(int(named), 6) or String(word.get("deal", "")) != String(f["id"]):
+			_fail("a word named at %d months: Grant holds it to the nearer of that and 6, on the deal, got %s" % [int(named), word])
+
+
+func _check_grant_on_a_post_pays_the_removal() -> void:
+	var f := _post_held_by_a_partner()
+	var ns = f["ns"]
+	var portfolio := String(f["session"]["ask"]["portfolio"])
+	var holder := String(ns.cabinet[portfolio])
+	var shown: Dictionary = Deal.answers(f["state"], ns, _loader, f["session"])["grant"].get("removal", {})
+	if String(shown.get("party_id", "")) != holder:
+		_fail("the strip names the party that loses the post, %s, got %s" % [holder, shown])
+	if not bool(Deal.grant(f["state"], ns, _loader, f["session"]).get("ok", false)):
+		_fail("Grant on a partner's post was refused")
+		return
+	if int(ns.portfolio_removed_month.get(portfolio, -1)) != _now(f):
+		_fail("taking a post from a partner is a removal, and pays as one")
+	var after := float(ns.person_grudges.get(String(shown["leader_id"]), 0.0))
+	if after <= float(shown["grudge_before"]) or not is_equal_approx(after, float(shown["grudge_after"])):
+		_fail("the partner's leader takes it badly, as the strip said: %f against %s" % [after, shown])
+
+
+func _check_a_post_too_recently_moved_is_greyed() -> void:
+	var f := _post_held_by_a_partner()
+	var ns = f["ns"]
+	ns.portfolio_removed_month[String(f["session"]["ask"]["portfolio"])] = _now(f)
+	var why := String(Deal.ask_of(f["state"], ns, _loader, Audiences.request(ns, f["id"])).get("why_not", ""))
+	if why != "this portfolio changed hands too recently to change again":
+		_fail("the ask reads Removal's own refusal, got '%s'" % why)
+
+
+func _check_someone_under_a_deal_does_not_ask_again() -> void:
 	var f := _law_deal(false)
 	var ns = f["ns"]
-	if not President.commit(f["state"], ns, _loader, "promise", f["person_id"], "law:%s" % f["law_id"], _now(f) + 3):
-		_fail("the fixture's promise was refused")
-		return
+	var want := String(f["object"])
+	if Delegation.heard(ns, f["person_id"], want, _now(f)):
+		_fail("nothing agreed yet, so the want is not heard")
+	Deal.grant(f["state"], ns, _loader, f["session"])
+	if not Delegation.heard(ns, f["person_id"], want, _now(f)):
+		_fail("a word stands on this want: they do not ask again and pay a decline for it")
+	Levers.close(f["state"], ns, _loader, f["session"])
+	_advance_to(f, _now(f) + 6)
+	Levers.tick_month(f["state"], _loader, METERS)
+	if Delegation.heard(ns, f["person_id"], want, _now(f)):
+		_fail("the word broken, an aggrieved person asks again")
+
+
+func _check_answers_after_the_deal_read_the_deal() -> void:
+	var f := _law_deal(true)
+	var ns = f["ns"]
+	for row in ns.audience_requests:
+		if String(row["id"]) == String(f["id"]):
+			row["offer"] = {"currency": "party_money", "amount_eur_m": 1.0}
+	Deal.grant(f["state"], ns, _loader, f["session"])
 	var answers: Dictionary = Deal.answers(f["state"], ns, _loader, f["session"])
-	if bool(answers["grant"]["ok"]) or String(answers["grant"]["why_not"]) != LK.WORD_GIVEN:
-		_fail("a word already given on this ask greys Grant, got %s" % [answers["grant"]])
+	if String(answers["offer"].get("kind", "")) != "vote":
+		_fail("after the deal the card reads the offer it took, got %s" % [answers["offer"]])
+	if not (answers["money"] as Dictionary).is_empty():
+		_fail("after the deal the money is no longer on the table, got %s" % [answers["money"]])
 
 
 # --- Bargain ----------------------------------------------------------------------------
@@ -559,6 +639,10 @@ func _check_their_broken_pledge_voids_my_word() -> void:
 	Division.divide(f["state"], _loader)
 	if President.pledge_verdict(ns, f["person_id"], f["bill_id"]) != "broken":
 		_fail("the fixture's pledge should break, got %s" % President.pledge_verdict(ns, f["person_id"], f["bill_id"]))
+	# At the vote and not at the word's date: the judged register forgets in 12 months, and a
+	# word on a programme can fall due long after that.
+	if not _word_row(ns, f["person_id"], "law:%s" % f["law_id"]).is_empty():
+		_fail("they broke first, so the word leaves the register at the vote")
 	var rapport := President.rapport(ns, f["person_id"])
 	_advance_to(f, _now(f) + 6)
 	var judged := Levers.tick_month(f["state"], _loader, METERS)
@@ -621,6 +705,18 @@ func _check_what_they_owe_is_not_the_presidents_word() -> void:
 			_fail("a judged pledge reads as the president's word: %s" % [row])
 	if President.pledge_verdict(ns, f["person_id"], f["bill_id"]) != "kept":
 		_fail("the pledge's own mark still reads through pledge_verdict")
+
+
+func _check_the_people_panel_reads_no_pledge_as_a_promise() -> void:
+	var f := _held_on_want("programme:", "sponsor", true)
+	var ns = f["ns"]
+	if not President.pledge(f["state"], ns, _loader, f["person_id"], _open_laws(f, 1)[0], _now(f) + 1):
+		_fail("the fixture's pledge was refused")
+		return
+	ns.audience_requests.clear()
+	var said := str(PeopleNow.chosen(f["state"], _loader, func(_person) -> String: return ""))
+	if said.contains(Strings.t("A promise falls due")):
+		_fail("the president owes nothing here, and the panel says a promise falls due")
 
 
 func _check_a_word_on_a_bill_reads_the_bills_name() -> void:
@@ -803,6 +899,20 @@ func _held(state, ns, person_id: String, want: Dictionary) -> Dictionary:
 		_fail("a booked audience on its day did not open")
 		return {}
 	return {"state": state, "ns": ns, "id": id, "person_id": person_id, "object": String(want["object"]), "session": session}
+
+
+## An audience on a post another coalition party holds.
+func _post_held_by_a_partner() -> Dictionary:
+	var f := _held_on_post(true)
+	var ns = f["ns"]
+	var portfolio := String(f["session"]["ask"]["portfolio"])
+	# Not the president's own party, whose leader is the president, who feels no removal.
+	for party in ns.coalition_party_ids:
+		if String(party) != String(f["party_id"]) and String(party) != String(ns.incumbent_party_id):
+			ns.cabinet[portfolio] = String(party)
+			return f
+	_fail("no partner in the fixture's coalition")
+	return f
 
 
 ## An audience on a programme want whose entry names a law, so the ask is that law; with

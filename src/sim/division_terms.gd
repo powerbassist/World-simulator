@@ -135,8 +135,10 @@ static func seats_of(line: String, rebel_line: String, seats: int, rebels: int, 
 ## The real division's verdict on each pledge to this bill: off the live register and into
 ## the judged one, kept 12 months, which is the mark step 6's deal reads through
 ## President.pledge_verdict(). Kept if it delivered; broken if the person left the party or
-## it holds no seat. Nothing is charged here: the deal prices its own broken word. `forced`:
-## no vote was taken, so nobody kept or broke anything, void.
+## it holds no seat. Nothing is charged here. A pledge broken releases the president's word on
+## its deal, void and unpriced, at the vote and not at the word's date: the judged register
+## forgets in 12 months, and a word can fall due long after. `forced`: no vote was taken, so
+## nobody kept or broke anything, void.
 ##
 ## A word to bring this bill is kept by bringing it, whatever the chamber does: the president
 ## answers for the bill, not for the deputies. Marked here because the vote and a forced bill
@@ -146,7 +148,18 @@ static func judge_pledges(ns, law, now: int, forced := false) -> void:
 		var kept := _delivers(ns, row) and int(ns.seats_by_party.get(String(row["party_id"]), 0)) > 0
 		President.withdraw_commitment(ns, "pledge", String(row["person_id"]), String(row["object"]))
 		President.record_judged(ns, row, "void" if forced else ("kept" if kept else "broken"), now)
+		if not kept and not forced:
+			_release_the_word(ns, String(row.get("deal", "")), now)
 	President.mark_rows(ns, "law:%s" % law.id, "brought", true)
+
+
+static func _release_the_word(ns, deal: String, now: int) -> void:
+	if deal == "":
+		return
+	for word in President.commitments(ns):
+		if String(word.get("deal", "")) == deal:
+			President.withdraw_commitment(ns, String(word["kind"]), String(word["person_id"]), String(word["object"]))
+			President.record_judged(ns, word, "void", now)
 
 
 static func _delivers(ns, row: Dictionary) -> bool:

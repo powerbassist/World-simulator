@@ -478,7 +478,7 @@ Every month above is a labelled stand-in (`deal_constants.gd`, the parent's ruli
 - **Silence.** Everyone else, and anyone who has already pledged that bill. For 12 months the person does not brief against the president (`Characters`, the brief's gate). It is real only because a brief reads it, and the strip says so.
 
 **The answers:**
-- **Grant** pays the ask and takes the offer, with no roll. It spends no attempt and stays open when the attempts run out, so three failures leave the full price on the table.
+- **Grant** pays the ask and takes the offer, with no roll. It spends no attempt and stays open when the attempts run out, so three failures leave the full price on the table. A promise not believed earlier in the scene is taken up, held to the ask's date if that is nearer. A post goes through `Removal.reassign`, so taking one from a partner is priced as a removal, and the strip shows it.
 - **Bargain** is one of three approaches: argue, promise a date, pressure. Each is `Levers.attempt`, so the odds, the fog, the spends and the lies are unchanged. A win is the smaller grant for the same offer. A promise's win is the word at the date the player named; not believed, it still binds on no deal ("Oui, parole donnée").
 - **Refuse** is `Levers.close` with nothing agreed: a decline, priced once.
 
@@ -495,7 +495,7 @@ The three attempts stay the scene's one tension, since small talk spends them to
 | A pledge | judged at the division: kept, or broken if the person left the party. A forced bill, or a bill that never came, is void and unpriced |
 | Silence | ends unpriced |
 
-Each half lets the other go: a broken pledge makes the president's word void, unpriced, and a broken word ends what the person still owes. A save carries `deal` and `brought` on the row, so an older save's rows read as they did, and nothing is bumped.
+Each half lets the other go: a broken pledge makes the president's word void, unpriced, at the vote; a broken word ends what the person still owes. While a word stands the want is heard (section 13's rule), so the person does not come back about it and pay a decline for it. A save carries `deal` and `brought` on the row, so an older save's rows read as they did, and nothing is bumped.
 
 **Not in this block's first PR:** firm and region asks (no want names one: executives carry none, France's regional figures carry programme wants, so they need new want objects and Content's rows); flatter and friendship as modifiers with the lever bands re-measured on three approaches (B5's "none best over 40 %" was declared over six levers and can fail over three by arithmetic, so it needs re-declaring first). A phone win still settles with no ask and no offer.
 

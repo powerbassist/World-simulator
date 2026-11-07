@@ -102,6 +102,7 @@ const LK = preload("res://src/sim/lever_constants.gd")
 const LW = preload("res://tools/lever_weights.gd")
 const DealK = preload("res://src/sim/deal_constants.gd")
 const Deal = preload("res://src/sim/deal.gd")
+const ActK = preload("res://src/sim/character_act_constants.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
@@ -244,7 +245,7 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 			for act in report.get("character_acts", []):
 				_deal_tally["briefs"] += 1 if String(act["act"]) == "brief_against" else 0
 			for row in President.owed(ns):
-				var gated: bool = String(row["kind"]) == "silence" and float(ns.person_grudges.get(String(row["person_id"]), 0.0)) >= 0.45
+				var gated: bool = String(row["kind"]) == "silence" and float(ns.person_grudges.get(String(row["person_id"]), 0.0)) >= ActK.GRUDGE_BRIEF_THRESHOLD
 				_deal_tally["silent_at_brief_gate"] += 1 if gated else 0
 		if book_all:
 			_fire_month(state, fire, held, month, refused_at, visitors)

@@ -7,8 +7,8 @@ extends RefCounted
 ##
 ## THE DEAL IS TWO ROWS (docs/design/v5.3-ab.md section 5, no third register). A row carrying
 ## `deal` names the request that struck it, and each half lets the other go: a person who broke
-## a pledge has released the president's word, unpriced, and the president's word broken releases
-## whatever that person still owes.
+## a pledge has released the president's word, unpriced (DivisionTerms, at the vote), and the
+## president's word broken releases whatever that person still owes (here).
 
 const K = preload("res://src/sim/lever_constants.gd")
 const PK = preload("res://src/sim/president_constants.gd")
@@ -24,8 +24,6 @@ static func verdict(state, ns, loader, row: Dictionary, meters: Dictionary, lead
 	# What a person owes reaches its date unjudged: a pledge whose bill never came, silence
 	# that ran its months. Nobody broke anything. A pledge the vote reached is off the register.
 	if PK.OWED_KINDS.has(String(row["kind"])):
-		return "void"
-	if _they_broke(ns, String(row.get("deal", ""))):
 		return "void"
 	var person = loader.person_by_id.get(String(row["person_id"]))
 	var object := String(row["object"])
@@ -70,16 +68,6 @@ static func verdict(state, ns, loader, row: Dictionary, meters: Dictionary, lead
 	Characters.price_refusal(ns, person, K.IOU_BETRAYAL_GRUDGE, 0.0)
 	Lies.cross(state, ns, loader, person, int(row.get("made_month", 0)))  # c1c rule 1: a broken word to an accomplice
 	return "broken"
-
-
-## Whether this deal's other side already broke: a pledge the vote judged broken.
-static func _they_broke(ns, deal: String) -> bool:
-	if deal == "":
-		return false
-	for row in ns.commitments_judged:
-		if String(row.get("deal", "")) == deal and String(row.get("kind", "")) == "pledge" and String(row.get("verdict", "")) == "broken":
-			return true
-	return false
 
 
 ## The president's word is gone, so what the person owed under it is gone too.
