@@ -20,6 +20,8 @@ const Division = preload("res://src/sim/division.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Levers = preload("res://src/sim/levers.gd")
+const Chambers = preload("res://src/sim/chambers.gd")
+const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const President = preload("res://src/sim/president.gd")
 
 const PLAYER := "FRA"
@@ -42,7 +44,9 @@ func _init() -> void:
 	_check_the_deficit_is_charged_to_the_right()
 	_check_the_grade_on_the_real_road()
 	_check_a_grade_is_refused_where_it_means_nothing()
+	_check_a_hold_writes_its_grade()
 	_check_a_held_bill_keeps_its_grade()
+	_check_size_is_not_a_whips_strain()
 	_check_a_grade_survives_a_save()
 	_check_a_pledge_moves_seats_on_one_bill()
 	_check_a_pledge_takes_no_before_abstain_and_caps()
@@ -109,6 +113,8 @@ func _check_nothing_moves_at_scale_one() -> void:
 	var plain = _graded()
 	plain.magnitude = {}
 	var at_reference = _graded()
+	if LawMagnitude.scaled(plain, 2.0) != plain:
+		_fail("a row with no size took a saved grade")
 	if LawMagnitude.scaled(at_reference, 1.0) != at_reference:
 		_fail("scale 1 made a copy: an ungraded road should not pay for one")
 	for party in _parties():
@@ -210,6 +216,30 @@ func _check_the_deficit_is_charged_to_the_right() -> void:
 	raises.effects = {"other_revenue_pct_gdp": 0.5}
 	if _term(ns, right, LawMagnitude.scaled(raises, 10.0)) != _term(ns, right, free):
 		_fail("a bill that raises revenue charged the deficit")
+	var paid_for = LawMagnitude.copy(law)
+	paid_for.effects = {"spending_pct_gdp": {"health": 0.5}, "other_revenue_pct_gdp": 0.5}
+	if _term(ns, right, LawMagnitude.scaled(paid_for, 10.0)) != _term(ns, right, free):
+		_fail("a bill its own revenue pays for charged the deficit")
+
+
+## The members read a bill's size as the line does, so only the whip is strain: an
+## opposition party has no whip on it and does not rebel at any size.
+func _check_size_is_not_a_whips_strain() -> void:
+	var ns = _new_state().player()
+	var read := 0
+	for law in _loader.laws:
+		if law.constitutional or not law.effects.has("spending_pct_gdp"):
+			continue
+		var graded = LawMagnitude.copy(law)
+		graded.magnitude = {"value": 1.0, "reference": 1.0, "unit": "u"}
+		var rebels: Dictionary = Legislature.resolve_vote(ns, _parties(), LawMagnitude.scaled(graded, 10.0))["party_rebels"]
+		for party in _parties():
+			if not ns.coalition_party_ids.has(party.id):
+				read += 1
+				if rebels.has(party.id):
+					_fail("%s is in opposition and %d of its seats rebel on %s at ten times" % [party.id, rebels[party.id], law.id])
+	if read == 0:
+		_fail("no opposition party read")
 
 
 func _cost_of(law, times: float):
@@ -304,9 +334,43 @@ func _check_a_grade_is_refused_where_it_means_nothing() -> void:
 			_fail("a grade of %.2f was taken" % bad)
 	if bool(Legislature.propose(state, _loader, plain, false, true, 10.0).get("tabled", false)):
 		_fail("a grade took the referendum road")
+	# may_grade itself: the proposal above is refused earlier for a law with no such road.
+	if LawMagnitude.may_grade(plain, 2.0, true) or not LawMagnitude.may_grade(plain, 2.0, false):
+		_fail("may_grade reads the referendum road wrongly")
 	if not state.player().tabled_bill.is_empty():
 		_fail("a refused grade left a tabled bill: %s" % [state.player().tabled_bill])
 	plain.magnitude = {}
+
+
+## The division that holds a graded bill writes its grade on the hold, or the release above
+## would apply one times the bill: a chamber that says no, on the first nation whose upper
+## house only holds, its seats against the bill by hand.
+func _check_a_hold_writes_its_grade() -> void:
+	for nation_id in _loader.nations:
+		if not _loader.nations[nation_id].playable:
+			continue
+		var state = GameState.new_game(_loader, nation_id)
+		state.year = 2026
+		state.month = 3
+		var ns = state.player()
+		for law in Legislature.available(ns, _loader.laws):
+			if law.constitutional or not law.effects.has("spending_pct_gdp"):
+				continue
+			if Chambers.power_over(ns, law) != ChambersK.VERDICT_SUSPENSIVE:
+				continue
+			law.magnitude = {"value": 40.0, "reference": 40.0, "unit": "lycees"}
+			var big = LawMagnitude.scaled(law, 2.0)
+			var parties: Array = _loader.parties[nation_id]
+			if bool(Legislature.resolve_vote(ns, parties, big)["passed"]) and not bool(Legislature.resolve_upper(ns, parties, big)["passed"]):
+				Legislature.propose(state, _loader, law, false, false, 2.0)
+				Division.divide(state, _loader)
+				var hold: Dictionary = ns.held_bills.get(law.id, {})
+				law.magnitude = {}
+				if float(hold.get("scale", 0.0)) != 2.0:
+					_fail("a held graded bill kept %s on its hold" % [hold])
+				return
+			law.magnitude = {}
+	_fail("no playable nation holds a graded bill: the write went unread")
 
 
 ## Held by the upper chamber, a graded bill comes back at its grade (tick_month's release).
@@ -391,6 +455,20 @@ func _check_a_pledge_moves_seats_on_one_bill() -> void:
 	var own: Dictionary = Legislature.resolve_vote(ns, _parties(), law)
 	if int(own["yes_seats"]) - int(before["yes_seats"]) != 1:
 		_fail("a person of no standing brought %d seats, not their own" % (int(own["yes_seats"]) - int(before["yes_seats"])))
+	# Many hands cap at the party's seats, in the result as in the tally.
+	ns.person_standing[pid] = 1.0
+	for i in 5:
+		President.pledge(state, ns, _loader, pid, law.id, _now(state) + 3)
+	if int(Legislature.resolve_vote(ns, _parties(), law)["party_pledged"][party.id]) != seats:
+		_fail("pledges past the party's %d seats read %s" % [seats, Legislature.resolve_vote(ns, _parties(), law)["party_pledged"]])
+	for row in President.pledges_on(ns, law.id).slice(1):
+		President.withdraw_commitment(ns, "pledge", pid, String(row["object"]))
+	ns.person_standing[pid] = 0.0
+	# A party's leader has no party_id: the party names them, and they pledge for it.
+	var leader := String(party.leader_person_id)
+	if not President.pledge(state, ns, _loader, leader, other.id, _now(state) + 3) or String(President.pledges_on(ns, other.id)[0].get("party_id", "")) != party.id:
+		_fail("a party's leader could not pledge for the party they lead: %s" % [President.pledges_on(ns, other.id)])
+	President.withdraw_commitment(ns, "pledge", leader, "law:%s" % other.id)
 	# Their party left: the row delivers nothing, and is a broken pledge at the vote.
 	ns.person_party_override[pid] = ""
 	if str(Legislature.resolve_vote(ns, _parties(), law)) != str(before):

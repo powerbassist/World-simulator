@@ -631,7 +631,8 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 		if support_bonus != 0.0:
 			s = clampf(s + support_bonus, -1.0, 1.0)
 		# The members read a bill's size too: only the whip is strain.
-		var own: float = clampf(spatial_support(ns, party, law) + DivisionTerms.of(spatial_support(ns, party, law), party, law), -1.0, 1.0)
+		var lean := spatial_support(ns, party, law)
+		var own: float = clampf(lean + DivisionTerms.of(lean, party, law), -1.0, 1.0)
 		party_support[party.id] = s
 
 		var seats: int = int(ns.seats_by_party.get(party.id, 0))

@@ -52,9 +52,10 @@ static func may_grade(law, scale: float, referendum: bool) -> bool:
 
 
 ## The law at a grade: the same object at 1, so an ungraded road pays for no copy and is
-## the same law, byte for byte. Never touches the loader's row.
+## the same law, byte for byte, and at a row with no size, which a saved grade can outlive
+## across a content edit. Never touches the loader's row.
 static func scaled(law, scale: float):
-	if scale == 1.0:
+	if scale == 1.0 or law.magnitude.is_empty():
 		return law
 	var out = copy(law)
 	out.magnitude["value"] = float(law.magnitude["value"]) * scale
