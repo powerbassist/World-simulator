@@ -89,13 +89,17 @@ func _test_the_rule_loads_and_refuses_a_bad_row() -> void:
 	var lim: Dictionary = RegionFunds.limits(_loader)
 	if lim.get("eur_bn", []) != rule.get("eur_bn") or lim.get("years", []) != rule.get("years"):
 		_fail("limits() is %s, not the rule's ranges" % [lim])
-	var good := {"eur_bn": [0.5, 5.0], "years": [1, 5], "bloc_offset_per_bn": {"workers": 0.04}}
+	var good := {"eur_bn": [0.5, 5.0], "years": [1, 5], "bloc_offset_per_bn": {"workers": 0.04},
+		"arrival": {"ratio": 1.25, "rearm_months": 24}}
 	var cases := {
 		"a range upside down": func(r: Dictionary) -> void: r["eur_bn"] = [5.0, 0.5],
 		"a zero floor": func(r: Dictionary) -> void: r["eur_bn"] = [0.0, 5.0],
 		"years not whole": func(r: Dictionary) -> void: r["years"] = [1.5, 5],
 		"an unknown bloc": func(r: Dictionary) -> void: r["bloc_offset_per_bn"] = {"wizards": 0.1},
 		"no offsets": func(r: Dictionary) -> void: r.erase("bloc_offset_per_bn"),
+		"no arrival": func(r: Dictionary) -> void: r.erase("arrival"),
+		"an arrival at the nation's own level": func(r: Dictionary) -> void: r["arrival"]["ratio"] = 1.0,
+		"a part month's rearm": func(r: Dictionary) -> void: r["arrival"]["rearm_months"] = 1.5,
 	}
 	var errors: Array[String] = []
 	RegionsLoader.parse_fund_rule(good.duplicate(true), "fund.json", errors)
@@ -301,6 +305,11 @@ func _test_the_register_survives_a_save() -> void:
 	RegionFunds.start(state, ns, _loader, region, 1.0, 2)
 	var u := _unemployment(state, ns, region)
 	var kept = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	# The snapshot rides the row through a save (the register's absent_ok is unchanged).
+	var start_row: Dictionary = (ns.region_funds as Array)[0]
+	# Within a printed tenth: the JSON here is not the save's full-precision writer.
+	if absf(float((kept.player().region_funds as Array)[0].get("unemployment_at_start", -1.0)) - float(start_row.get("unemployment_at_start", -2.0))) > 0.001:
+		_fail("save: the fund's start figure did not survive the round trip")
 	kept.regions = state.regions
 	kept.region_graph = state.region_graph
 	if not is_equal_approx(_unemployment(kept, kept.player(), region), u):

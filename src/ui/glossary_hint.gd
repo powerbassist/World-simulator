@@ -45,7 +45,7 @@ static func offer(inbox) -> void:
 	if _shown_in == inbox and inbox.lane_of(_card) != "":
 		return
 	_card = inbox.push(Strings.t("Dotted words explain themselves"),
-		Strings.t("A word underlined in dots has a note behind it: point at one, as here -- [g=approval]approval[/g]. Click it to keep the note open, and its own dotted words open the next."))
+		Strings.t("A dotted word has a note: point at one -- [g=approval]approval[/g]. Click it to keep it open; its dotted words open the next."))
 	# Its second sentence is the instruction: never folded behind More.
 	inbox.keep_whole(_card)
 	_shown_in = inbox
