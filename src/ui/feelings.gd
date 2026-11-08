@@ -5,7 +5,8 @@ extends RefCounted
 ## one register, and each cut is where the person's behaviour changes (0.45 the
 ## brief, 0.60 the defection, -0.40 the resignation), so a word names what the
 ## person may now do. A figure stays only in a tooltip (tests/test_feelings.gd
-## lints src/ui for one anywhere else).
+## lints src/ui for one anywhere else), but for the person card's rapport and loyalty,
+## which carry figure() beside the word (the author, 2026-11-08).
 ##
 ## The words are the spec's, as English msgids in this one table (the parent's
 ## call, 2026-10-24: no Content file); the cut points are the spec's own.
@@ -158,6 +159,13 @@ static func stands(feel: Dictionary, delta: Dictionary) -> PackedStringArray:
 	return out
 
 
-## The figure behind a word, for its tooltip only.
+## A person's relation to the president as the player reads it: a whole number from -100 to
+## +100 (the author, 2026-11-08). The one place the register's -1 to +1 is turned into one.
+static func figure(value: float) -> String:
+	var whole := roundi(100.0 * value)
+	return Num.f(0.0, 0) if whole == 0 else Num.fs(float(whole), 0)
+
+
+## The figure behind a word, for its tooltip only: a grudge, which runs 0 to 1 and is no relation.
 static func tip(value: float) -> String:
 	return Num.fs(value, 2)
