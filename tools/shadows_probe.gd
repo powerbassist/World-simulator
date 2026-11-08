@@ -421,7 +421,10 @@ func _summarize(rows: Array) -> Dictionary:
 				# #170's call 1 (Gameplay #171): a favour is found, less often than party money.
 				out["bands"]["B6_once_favour_above_0_below_party_money"] = float(rates[kind]) > 0.0 and float(rates[kind]) < float(rates["party_money"])
 				continue
-			out["bands"]["B6_once_%s_10_30" % kind] = float(rates[kind]) >= 0.10 and float(rates[kind]) <= 0.30
+			# The author's decision (2026-11-08, V5.3 full-scale start regard): the diverted-budget
+			# ceiling is 33 %, "real enemies have a price"; the other currencies stay at 30 %.
+			var ceiling := 0.33 if kind == "diverted_budget" else 0.30
+			out["bands"]["B6_once_%s_10_%d" % [kind, int(round(ceiling * 100.0))]] = float(rates[kind]) >= 0.10 and float(rates[kind]) <= ceiling
 		out["bands"]["B6_order"] = rates["favour"] < rates["party_money"] and rates["party_money"] < rates["personal_wealth"] \
 			and rates["personal_wealth"] < rates["diverted_budget"]
 		var per_term := float(out["S1"]["offers_per_term"])

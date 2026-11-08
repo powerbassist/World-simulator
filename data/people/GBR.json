@@ -2,6 +2,7 @@
   "people": [
     {
       "id": "GBR_wexford",
+      "start_regard_offset": -0.50,
       "social_skill": 0.7,
       "wealth_eur_m": 3.2,
       "name": "Caroline Wexford",
@@ -44,6 +45,7 @@
     },
     {
       "id": "GBR_pell",
+      "start_regard_offset": 0.15,
       "social_skill": 0.71,
       "wealth_eur_m": 3.1,
       "name": "Adrian Pell",
@@ -67,6 +69,7 @@
     },
     {
       "id": "GBR_harlow",
+      "start_regard_offset": -0.45,
       "social_skill": 0.78,
       "wealth_eur_m": 4.6,
       "name": "Duncan Harlow",
@@ -86,6 +89,7 @@
     },
     {
       "id": "GBR_cobbett",
+      "start_regard_offset": 0.25,
       "social_skill": 0.64,
       "wealth_eur_m": 2.5,
       "name": "Miriam Cobbett",
@@ -114,6 +118,7 @@
     },
     {
       "id": "GBR_kilbride",
+      "start_regard_offset": 0.40,
       "social_skill": 0.6,
       "wealth_eur_m": 3.0,
       "name": "Rhona Kilbride",
@@ -142,6 +147,7 @@
     },
     {
       "id": "GBR_robert_iii",
+      "start_regard_offset": 0.15,
       "social_skill": 0.78,
       "wealth_eur_m": 410.0,
       "spouse_id": "GBR_ingham",
@@ -193,6 +199,7 @@
     },
     {
       "id": "GBR_beckwith",
+      "start_regard_offset": -0.50,
       "name": "Desmond Beckwith",
       "kind": "politician",
       "traits": [
@@ -315,6 +322,7 @@
     },
     {
       "id": "GBR_greenaway",
+      "start_regard_offset": -0.60,
       "name": "Letitia Greenaway",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -342,6 +350,7 @@
     },
     {
       "id": "GBR_harrington",
+      "start_regard_offset": -0.60,
       "name": "Ivor Harrington",
       "kind": "politician",
       "traits": [
@@ -534,6 +543,7 @@
     },
     {
       "id": "GBR_ravensworth",
+      "start_regard_offset": -0.70,
       "name": "Montague Ravensworth",
       "kind": "politician",
       "traits": [
@@ -687,6 +697,7 @@
     },
     {
       "id": "GBR_aldwyn",
+      "start_regard_offset": -0.70,
       "name": "Cuthbert Aldwyn",
       "kind": "politician",
       "traits": [
@@ -747,6 +758,7 @@
     },
     {
       "id": "GBR_danvers",
+      "start_regard_offset": 0.45,
       "name": "Imogen Danvers",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -952,6 +964,7 @@
     },
     {
       "id": "GBR_nethercott",
+      "start_regard_offset": 0.55,
       "name": "Gwendolen Nethercott",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -1057,6 +1070,7 @@
     },
     {
       "id": "GBR_denby",
+      "start_regard_offset": -0.35,
       "name": "Frederick Denby",
       "kind": "politician",
       "traits": [
