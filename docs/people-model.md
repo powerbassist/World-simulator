@@ -641,7 +641,7 @@ of the president alone; never person to person (§14.7). The design is
   president's own party +0.10, a partner in the start government 0, any other party
   -0.25 x the distance between the two ideology slots, -0.10 more across a cordon, no floor.
   A party's leader counts: the party names them, though their row has no `party_id`. On top,
-  `Person.start_regard_offset` in [-0.30, +0.30], read only while the nation's authored start
+  `Person.start_regard_offset` in [-1.00, +1.00], read only while the nation's authored start
   leader sits; what it rests on stays in the gitignored `tools/private/`. The bond rule then
   makes a rival of whoever starts below -0.30, in the first month.
 - **Rapport is not loyalty.** Loyalty is political (does the person follow the
