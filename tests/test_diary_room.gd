@@ -102,7 +102,7 @@ func _next() -> void:
 		"days":
 			# The card's Days: the grid turns to the first free day and the keyboard
 			# lands on its Book here.
-			_main._calendar_panel.requests.focus_requested.emit(String(_ids[0]))
+			AudienceDriver.lane_of(_main).book_requested.emit(String(_ids[0]))
 		"busy":
 			# The day's own entries listed beside its Book here.
 			var date: Dictionary = free[0]
@@ -171,8 +171,8 @@ func _check(c: Dictionary) -> void:
 		return
 	var label := "text %d %%, %d words, %d requests, %s %d" % [roundi(float(c["scale"]) * 100), int(c["words"]), int(c["n"]), c["path"], int(c.get("entries", 0))]
 	var panel = _main._calendar_panel
-	if panel.requests.find_children("Request_*", "", true, false).size() != int(c["n"]):
-		_fail("premise: %s: the column does not hold %d cards" % [label, int(c["n"])])
+	if Audiences.pending(_main._state.player()).size() != int(c["n"]):
+		_fail("premise: %s: %d requests are not waiting" % [label, int(c["n"])])
 		return
 	var book := panel.find_child("BookHere_%s" % String(_ids[0]), true, false) as Control
 	if book == null or not book.is_visible_in_tree():

@@ -28,6 +28,7 @@ var _lane: RequestLane
 var _asked := []
 var _booked := []
 var _target: Button
+signal booked_probe(id: String, date: Dictionary)
 
 
 func _init() -> void:
@@ -104,53 +105,33 @@ func _check_cards() -> void:
 		_fail("Delegate's hover does not carry the ministers' odds: '%s'" % _answer_button("req_1", 1).tooltip_text)
 
 
+## The chips the grid puts on an offered day (the column's cards went there, step 6).
 func _check_booking() -> void:
-	# A column of its own: the game's is wired to the sim (audience_driver).
-	var column = preload("res://src/ui/diary_requests.gd").new()
-	_main.add_child(column)
-	var heard := []
-	for sig in ["focus_requested", "delegate_requested", "decline_requested"]:
-		column.connect(sig, func(id: String) -> void: heard.append([sig, id]))
-	column.show_requests(_rows(true), "")
-	var refused: Node = column.find_child("Request_req_1", true, false)
-	var open: Node = column.find_child("Request_req_2", true, false)
-	if refused == null or open == null:
-		_fail("the Diary's request column has no card per request")
-		return
-	# #222, the parent's call: the asker's mood on the column's face (spec 4.2).
-	if open.find_child("MoodBadge", true, false) == null:
-		_fail("a request with feelings shows no mood badge on the Diary's card")
-	if refused.find_child("MoodBadge", true, false) != null:
-		_fail("a request with no feelings wears a mood badge")
-	var days: Button = refused.find_child("Days", true, false)
-	if days == null or not days.disabled or not days.tooltip_text.contains("taken"):
-		_fail("a request with no free day offers Days, or hides why")
-	for verb in ["delegate", "decline"]:
-		var b: Button = refused.find_child(verb, true, false)
-		if b == null or b.disabled:
-			_fail("%s went out with Days (B2)" % verb)
-	var delegate: Button = refused.find_child("delegate", true, false)
-	if delegate != null and not delegate.tooltip_text.contains("8 in 10"):
-		_fail("the Diary's Delegate does not carry the ministers' odds: '%s'" % delegate.tooltip_text)
-	(open.find_child("Days", true, false) as Button).pressed.emit()
-	(open.find_child("decline", true, false) as Button).pressed.emit()
-	if heard != [["focus_requested", "req_2"], ["decline_requested", "req_2"]]:
-		_fail("the column's verbs emitted %s" % [heard])
-	if column._drag(_rows(true)[0]) != null:
-		_fail("a request with no free day can be dragged onto the grid")
-
+	var free := {"year": 2026, "month": 2, "day": 10, "free": true, "reason": ""}
+	var taken := {"year": 2026, "month": 2, "day": 10, "free": false, "reason": "This day is taken."}
 	var cell = preload("res://src/ui/diary_day.gd").new()
 	_main.add_child(cell)
-	var free := {"year": 2026, "month": 2, "day": 10, "free": true, "reason": ""}
-	cell.offers = {"req_2": free, "req_1": {"year": 2026, "month": 2, "day": 10, "free": false, "reason": "This day is taken."}}
-	cell.dropped.connect(func(id: String, date: Dictionary) -> void: _booked.append([id, date]))
-	if not cell._can_drop_data(Vector2.ZERO, {"request": "req_2"}):
-		_fail("a day refused the drop of a request offering it free")
-	if cell._can_drop_data(Vector2.ZERO, {"request": "req_1"}) or cell._can_drop_data(Vector2.ZERO, {"request": "req_3"}):
-		_fail("a day took the drop of a request it does not offer free")
-	cell._drop_data(Vector2.ZERO, {"request": "req_2"})
-	if _booked != [["req_2", free]]:
-		_fail("the drop booked %s" % [_booked])
+	var rows := {"req_1": _rows(true)[0], "req_2": _rows(true)[1]}
+	var heard := []
+	booked_probe.connect(func(id: String, date: Dictionary) -> void: heard.append([id, date]))
+	cell.show_chips([{"id": "req_2", "person_id": "", "person": "B", "date": free}, {"id": "req_1", "person_id": "", "person": "A", "date": taken}], rows, booked_probe)
+	var open: Button = cell.find_child("Chip_req_2", true, false)
+	var refused: Button = cell.find_child("Chip_req_1", true, false)
+	if open == null or refused == null:
+		_fail("a day does not carry one chip per offering request")
+		return
+	if open.disabled or not refused.disabled or not refused.tooltip_text.contains("taken"):
+		_fail("a chip's state does not follow its day: free %s, refused %s '%s'" % [not open.disabled, refused.disabled, refused.tooltip_text])
+	open.pressed.emit()
+	if heard != [["req_2", free]]:
+		_fail("the chip booked %s" % [heard])
+	# B6: a call since the request came is said on its card; none says nothing.
+	var called: Dictionary = _rows(true)[0].duplicate()
+	called["called"] = 24316
+	if not RequestLane._body(called).contains("still want"):
+		_fail("the card does not say a call left them waiting: %s" % RequestLane._body(called))
+	if RequestLane._body(_rows(true)[0]).contains("still want"):
+		_fail("a card with no call says one was made")
 
 
 func _answer_button(request_id: String, index: int) -> Button:

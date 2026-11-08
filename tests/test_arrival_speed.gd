@@ -36,7 +36,6 @@ const CASES := [
 	[3, "load", 1, "a load between the arrival and the click still gave the speed back"],
 	[3, "code", 1, "a card the code took down gave the speed back"],
 	[3, "book_day", 3, "a day booked from the picker did not give the speed back"],
-	[2, "book_cancel", 2, "the request's Days pressed again did not give the speed back"],
 	[3, "book_close", 3, "the Diary closed under the picker did not give the speed back"],
 ]
 ## Frames from an arrival to its press, to its release, to the check: the press
@@ -147,7 +146,7 @@ func _arrive(i: int) -> Control:
 			for b in buttons:
 				if (b as Button).text == "X":
 					return b
-		"answer", "book_day", "book_cancel", "book_close":
+		"answer", "book_day", "book_close":
 			# Decline is the card's third answer, Book its first (request_lane.gd's order).
 			var answers := buttons.filter(func(b): return (b as Button).text != "X")
 			var at := 2 if String(c[1]) == "answer" else 0
@@ -168,13 +167,9 @@ func _arrive(i: int) -> Control:
 ## card's Days pressed again, or the workspace's "Back to the map", which closes the
 ## Diary under it.
 func _picker_button(how: String) -> Control:
-	var column = _main._calendar_panel.requests
-	if not column.is_visible_in_tree() or column.request_id() != _request_id:
-		_fail("Book a day did not turn the Diary to the request's days")
+	if not _main._calendar_panel.is_visible_in_tree() or _main._calendar_panel.booking.request != _request_id:
+		_fail("Go did not turn the Diary to the request's days")
 		return null
-	if how == "book_cancel":
-		var card: Node = column.find_child("Request_%s" % _request_id, true, false)
-		return card.find_child("Days", true, false) if card != null else null
 	if how == "book_close":
 		for b in _main._windows.find_children("*", "Button", true, false):
 			if (b as Button).text == "Back to the map":

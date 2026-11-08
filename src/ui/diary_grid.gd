@@ -6,8 +6,9 @@ extends VBoxContainer
 ## day carries a mark per entry (diary_day.gd): the register's bookings and the
 ## fixed dates the panel hands in, a commitment falling due and a waiting
 ## request's last day to answer, read here. A day a waiting request offers is
-## tinted, and a click on any day lists its entries -- with "Book here" where a
-## request offered it.
+## tinted and carries the asker's chip (diary_chip.gd), whose click books that day;
+## a click on the day itself lists its entries -- with "Book here" where a request
+## offered it, the keyboard's and the inbox's path.
 ##
 ## The day list is `day_list`, which the panel places inside its scroll: a list
 ## that changes height must not move the booking form under it (the form's own
@@ -22,7 +23,7 @@ signal cancel_requested(key: String)
 ## A commitment's "Call": the Diary's verb on a word falling due (pre-gate RF3).
 signal call_requested(person_id: String)
 ## The day list was rebuilt (deferred to the frame's end, past every early return):
-## the request column puts a pending focus back (QA's TAKE on #221).
+## a pending booking puts the focus back (diary_booking.gd, QA's TAKE on #221).
 signal listed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -37,6 +38,7 @@ const K = preload("res://src/sim/calendar_constants.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const President = preload("res://src/sim/president.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
+const DiaryChip = preload("res://src/ui/diary_chip.gd")
 
 ## Monday first, as a European diary is ruled.
 const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msgid
@@ -49,6 +51,8 @@ const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msg
 const LIST_ROOM_PX := 96.0
 
 var day_list := VBoxContainer.new()
+## Where the president's word sits, under the grid: the panel places it, as it does day_list.
+var promise_slot := VBoxContainer.new()
 ## The day list's scroll, which the panel places (list_scroll()).
 var _list_scroll: ScrollContainer
 var _state
@@ -64,6 +68,9 @@ var _drawn_day := 0  # the state's day at the last render: a new day redraws (to
 var _wanted := Vector3i.ZERO
 var _title: Label
 var _days: GridContainer
+var _later: Button
+## request id -> audience_driver's row: the chips' words (set_requests).
+var _rows := {}
 
 
 func _init() -> void:
@@ -86,11 +93,12 @@ func _ready() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	head.add_child(_title)
-	var on := PanelKit.sized(Button.new())
-	on.text = ">"  # i18n: ok a glyph
-	on.tooltip_text = tr("Next month")
-	on.pressed.connect(page_by.bind(1))
-	head.add_child(on)
+	_later = PanelKit.sized(Button.new())
+	_later.name = "Later"  # i18n: ok a node name, found by tests
+	_later.text = ">"  # i18n: ok a glyph
+	_later.tooltip_text = tr("Next month")
+	_later.pressed.connect(page_by.bind(1))
+	head.add_child(_later)
 	var names := GridContainer.new()
 	names.columns = 7
 	add_child(names)
@@ -119,6 +127,15 @@ func list_scroll() -> ScrollContainer:
 	return _list_scroll
 
 
+## The waiting requests, in audience_driver's words, read once a refresh: the chips'
+## face, deadline and hover, never read on the daily redraw.
+func set_requests(rows: Array) -> void:
+	_rows = {}
+	for row in rows:
+		_rows[String(row["id"])] = row
+	_render()
+
+
 func show_items(state, loader, items: Array) -> void:
 	_state = state
 	_loader = loader
@@ -135,8 +152,16 @@ func show_items(state, loader, items: Array) -> void:
 ## The clock runs with the Diary open, and the panel is redrawn on a month, never a
 ## day: today's ring and the offered days follow the day here (QA's TAKE 2 on #153).
 func _process(_delta: float) -> void:
-	if _state != null and _days != null and int(_state.day) != _drawn_day and is_visible_in_tree():
+	if _state != null and _days != null and int(_state.day) != _drawn_day and is_visible_in_tree() and not _chip_in_hand():
 		_render()
+
+
+## A chip the pointer is on or the keyboard stands on (a press takes the focus too): the
+## daily redraw frees every cell, which would drop the click, the focus and the hover.
+## It waits, so today's ring can lag until the chip is let go; a booking still redraws.
+func _chip_in_hand() -> bool:
+	var viewport := get_viewport()
+	return viewport != null and (viewport.gui_get_focus_owner() is DiaryChip or viewport.gui_get_hovered_control() is DiaryChip)
 
 
 func page() -> int:
@@ -207,15 +232,14 @@ func _render() -> void:
 			cell.marks.append(String(e["mark"]))
 			texts.append(String(e["text"]))
 		for o in offered.get(d, []):
-			cell.offers[String(o["id"])] = o["date"]
 			# A refused offered day says why on its hover, as its Book here does.
 			var why := String((o["date"] as Dictionary).get("reason", ""))
 			if why != "":
 				texts.append("%s: %s" % [String(o["person"]), Strings.t(why)])  # i18n: row-ok the sim's reason, its English the msgid
 		cell.tooltip_text = "\n".join(texts)
 		cell.picked.connect(_pick)
-		cell.dropped.connect(func(id: String, date: Dictionary) -> void: booked.emit(id, date))
 		_days.add_child(cell)
+		cell.show_chips(offered.get(d, []), _rows, booked)
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 
 
@@ -269,11 +293,19 @@ func _entries(year: int, month: int) -> Dictionary:
 func _offered(year: int, month: int) -> Dictionary:
 	var out := {}
 	var ns = _state.player()
+	var later := 0
 	for row in Audiences.pending(ns):
 		var rid := String(row["id"])
+		var past_this_page := false
 		for date in Audiences.offered_dates(_state, ns, rid):
 			if int(date["year"]) == year and int(date["month"]) == month:
-				_add(out, int(date["day"]), {"id": rid, "person": _loader.person_name(String(row["person_id"])), "date": date})
+				_add(out, int(date["day"]), {"id": rid, "person_id": String(row["person_id"]), "person": _loader.person_name(String(row["person_id"])), "date": date})
+			elif int(date["year"]) * 12 + int(date["month"]) > year * 12 + month:
+				past_this_page = true
+		later += 1 if past_this_page else 0
+	_later.text = "> %d" % later if later > 0 else ">"  # i18n: ok a glyph and a count
+	# No column lists the requests any more: the button says some have days further on.
+	_later.tooltip_text = tr_n("Next month: %d request offers a later day", "Next month: %d requests offer later days", later) % later if later > 0 else tr("Next month")
 	return out
 
 
