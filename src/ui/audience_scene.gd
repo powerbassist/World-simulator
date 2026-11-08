@@ -27,6 +27,8 @@ signal closed
 ## V5.2c: the money on the table answered, an affair proposed or ended.
 signal offer_answered(accepted: bool)
 signal affair(action: String)
+## V5.3 b, step 6: Grant pressed (Deal.grant). Refuse is `ended`, the same way out.
+signal granted
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -40,6 +42,7 @@ const PartyChip = preload("res://src/ui/party_chip.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const MoodBadge = preload("res://src/ui/mood_badge.gd")
 const AudienceVoice = preload("res://src/ui/audience_voice.gd")
+const DealView = preload("res://src/ui/deal_view.gd")
 
 ## 16:9, the board's scene window over the map.
 const SIZE := Vector2(1120, 630)
@@ -48,6 +51,7 @@ const SIZE := Vector2(1120, 630)
 ## names them (hold_reason.gd, the summit's `visiting` seam).
 var visiting := ""
 var verbs := AudienceVerbs.new()
+var deal := DealView.new()
 var shadow := AudienceShadow.new()
 
 var _view: Dictionary = {}
@@ -66,6 +70,8 @@ var _result: Label
 ## V5.2 close R5: how the last result landed, a STATUS-toned word before it.
 var _tone: Label
 var _end: Button
+## Refuse's price, beside the way out (empty once the deal is struck, or over).
+var _refuse_cost: Label
 var _over := false
 
 
@@ -111,6 +117,8 @@ func _ready() -> void:
 	_traits = Label.new()
 	_traits.theme_type_variation = UiTheme.CAPTION
 	talk.add_child(_traits)
+	talk.add_child(deal)
+	deal.granted.connect(func() -> void: granted.emit())
 	talk.add_child(verbs)
 	verbs.attempted.connect(func(lever: String, args: Dictionary) -> void: attempted.emit(lever, args))
 	verbs.talked.connect(func(topic: String, args: Dictionary) -> void: talked.emit(topic, args))
@@ -137,7 +145,17 @@ func _ready() -> void:
 			closed.emit()
 		else:
 			ended.emit())
-	root.add_child(_end)
+	var out_row := HBoxContainer.new()
+	out_row.add_theme_constant_override("separation", 12)
+	root.add_child(out_row)
+	out_row.add_child(_end)
+	_refuse_cost = Label.new()
+	_refuse_cost.name = "RefuseCost"  # i18n: ok a node name, found by tests
+	_refuse_cost.theme_type_variation = UiTheme.CAPTION
+	_refuse_cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_refuse_cost.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_refuse_cost.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	out_row.add_child(_refuse_cost)
 
 
 ## `view`: {request_id, person_id, name, ask, stance, president, fog ("stranger" |
@@ -198,6 +216,8 @@ func show_close(outcome: String, text: String, tone := "") -> void:
 	verbs.show_verbs([], [], 0, {})
 	verbs.visible = false
 	shadow.visible = false
+	deal.visible = false
+	_refuse_cost.text = ""
 	_end.text = tr("Leave")
 	AudienceVoice.say(self, _spoken, _voice, "farewell")
 	say(DialogueLines.close_title(_view, outcome), {})
@@ -211,6 +231,7 @@ func close_scene() -> void:
 	_view = {}
 	verbs.visible = true
 	shadow.visible = true
+	deal.visible = true
 
 
 func _show_state(view: Dictionary) -> void:
@@ -219,7 +240,17 @@ func _show_state(view: Dictionary) -> void:
 	_traits.text = tr("What you know of them: %s.") % ", ".join(PackedStringArray(traits)) if not traits.is_empty() else tr("You know nothing of their character yet.")
 	verbs.show_verbs(view.get("offered", []), view.get("topics", []), int(view.get("attempts_left", 0)), view.get("choices", {}))
 	shadow.show_for(view)
+	_show_deal(view.get("deal", {}))
 	_badge(view)
+
+
+## The deal's strip, and the way out named for what it is: before a deal it is the Refuse,
+## priced beside it; once struck it only ends the audience. A view with no deal is the old one.
+func _show_deal(card: Dictionary) -> void:
+	deal.show_card(card)
+	var refusing := not card.is_empty() and not bool(card["struck"])
+	_end.text = tr("Refuse") if refusing else tr("End the audience")
+	_refuse_cost.text = String(card["refuse"]) if refusing else ""
 
 
 ## V5.3-0 (c) 4.2: the mood badge on the face, re-read after every lever, so a

@@ -89,6 +89,11 @@
 % {{name}}: I will take that as a compliment, and leave it exactly where it is.
 => END
 
+~ deal_grant
+% {{name}}: Then we have an understanding, {{president}}. I keep my side if you keep yours.
+% {{name}}: Good. I will hold you to it, and you may hold me to mine.
+=> END
+
 ~ close_settled
 % {{name}}: Then we are agreed, and I leave satisfied. Thank you for your time, {{president}}.
 % {{name}}: That is more than I hoped for. I will not forget it.

@@ -13,6 +13,8 @@ extends RefCounted
 
 const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 const Levers = preload("res://src/sim/levers.gd")
+const Deal = preload("res://src/sim/deal.gd")
+const DealWords = preload("res://src/ui/deal_words.gd")
 const President = preload("res://src/sim/president.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Words = preload("res://src/ui/lever_words.gd")
@@ -29,11 +31,11 @@ const ResultTone = preload("res://src/ui/result_tone.gd")
 const WINDOW := "audience"
 
 
-## The booked day: Levers opens the session (and holds the request); the scene
-## owns the screen and the clock. `row` is the lane's row for the request.
+## The booked day: Deal opens the session (and holds the request, the ask fixed on it);
+## the scene owns the screen and the clock. `row` is the lane's row for the request.
 static func open(main, game: Dictionary, row: Dictionary) -> bool:
 	var ns = main._state.player()
-	var session := Levers.open(main._state, ns, main._loader, String(row["id"]))
+	var session := Deal.open(main._state, ns, main._loader, String(row["id"]))
 	if session.is_empty():
 		return false
 	game["session"] = session
@@ -66,13 +68,19 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	if person != null:
 		for t in Levers.known_traits(ns, person):
 			traits.append(Strings.t(String(PersonCard.TRAIT_LABEL.get(t, t))))  # i18n: row-ok a trait id, its label the msgid
+	# Once a redraw, never a frame: with a bill in hand this reads the division twice on a copy.
+	var answers := Deal.answers(state, ns, loader, session)
+	var kind := String(person.kind) if person != null else ""
 	return {"fog": President.knowledge_band(ns, pid), "traits": traits, "voice": AudienceVoice.lines(loader, pid),
-		"offered": Levers.offered(state, ns, loader, session), "topics": Levers.topics(state, ns, loader, session),
+		# Struck, there is nothing left to bargain for: small talk and the way out remain.
+		"offered": [] if session.has("struck") else answers["bargain"]["approaches"], "topics": Levers.topics(state, ns, loader, session),
 		"attempts_left": int(session["attempts_left"]),
 		"choices": {"now": int(state.year) * 12 + int(state.month), "people": gossip_people(main, pid),
-			"given_due": AudienceVerbs.given_due(ns, pid, String(session["object"])), "feel": Feelings.of(ns, pid)},
+			"given_due": AudienceVerbs.given_due(ns, pid, String(session.get("ask_object", session["object"]))), "feel": Feelings.of(ns, pid), "deal": true},
+		# Won with no deal, as money taken: nothing was struck, so the strip must not read as if it was.
+		"deal": {} if String(session.get("won", "")) != "" and not session.has("struck") else DealWords.card(loader, ns, answers, Feelings.of(ns, pid), want_words(main, pid, String(session["object"])), kind),
 		# V5.2c: the money on the table and the affair, as Shadows reads them now.
-		"shadow": {"offer": Shadows.offer(ns, session), "kind": String(person.kind) if person != null else "",
+		"shadow": {"offer": Shadows.offer(ns, session), "kind": kind, "risk": DealWords.risk(answers["money"]),
 			# Accept's refusals that are the scene's own state (Shadows.accept_offer's
 			# reasons, its sentences): the button is down with them, never a dead press.
 			"offer_why": "they have already agreed" if String(session.get("won", "")) != "" else ("no attempts left" if int(session["attempts_left"]) <= 0 else ""),  # i18n: ok the sim's reasons (shadows.gd), shown through Words.reason
@@ -108,7 +116,7 @@ static func attempt(main, game: Dictionary, lever: String, args: Dictionary) -> 
 	var session: Dictionary = game.get("session", {})
 	if session.is_empty():
 		return
-	var r := Levers.attempt(main._state, main._state.player(), main._loader, session, lever, args)
+	var r := Deal.bargain(main._state, main._state.player(), main._loader, session, lever, args)
 	if not bool(r["ok"]):
 		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "", {}, ResultTone.BLOCKED)
 		return
@@ -118,6 +126,22 @@ static func attempt(main, game: Dictionary, lever: String, args: Dictionary) -> 
 	var paid := Words.paid_text(r["spent"], r["effects"], main._loader.person_name, _feel(main, session))
 	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),
 		lever_title(lever, args, r), {"lever": Words.lever(lever)}, ResultTone.GOOD if bool(r["success"]) else ResultTone.BAD)
+	main._windows.mark_all_dirty()
+
+
+## Grant: the ask paid and the offer taken, no roll (Deal.grant). The scene stays up: small
+## talk is still open, and End says how it ended.
+static func grant(main, game: Dictionary) -> void:
+	var session: Dictionary = game.get("session", {})
+	if session.is_empty():
+		return
+	var r := Deal.grant(main._state, main._state.player(), main._loader, session)
+	if not bool(r["ok"]):
+		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "", {}, ResultTone.BLOCKED)
+		return
+	var paid := Words.paid_text({}, r["effects"], main._loader.person_name, _feel(main, session))
+	var said := Strings.t("The deal is struck.")
+	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game), "deal_grant", {}, ResultTone.GOOD)
 	main._windows.mark_all_dirty()
 
 

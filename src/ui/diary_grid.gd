@@ -39,6 +39,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const President = preload("res://src/sim/president.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const DiaryChip = preload("res://src/ui/diary_chip.gd")
+const DealWords = preload("res://src/ui/deal_words.gd")
 
 ## Monday first, as a European diary is ruled.
 const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msgid
@@ -280,6 +281,10 @@ func _entries(year: int, month: int) -> Dictionary:
 			# commitment's Go lands on its Call here.
 			_add(out, 1, {"text": Words.commitment_text(String(row["kind"]), who, want, int(row["due_month"])), "mark": "due", "cancel": "",
 				"call": String(row["person_id"]), "subject": "%s|%s|%s" % [row["kind"], row["person_id"], row["object"]]})
+	# What people owe the president under a deal, as its month begins too.
+	for row in President.owed(ns):
+		if int(row["due_month"]) == abs_month:
+			_add(out, 1, {"text": DealWords.owed_text(_loader, ns, row), "mark": "due", "cancel": ""})
 	# A request lapses as its deadline month begins (Audiences._overdue), so the
 	# last day to answer is the end of the month before -- the card's "Answer by".
 	for row in Audiences.pending(ns):

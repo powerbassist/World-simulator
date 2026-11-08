@@ -59,6 +59,7 @@ func _process(_delta: float) -> bool:
 			_press(false)
 		11:
 			_check_accepted()
+			_check_no_deal_after_money()
 			_check_lie_toggle()
 		13:
 			_check_lie_sent()
@@ -172,13 +173,20 @@ func _check_currencies() -> void:
 		pick.item_selected.emit(at)
 		if spend.text == Words.spends_text({}, {}):
 			_fail("the %s currency reads as costing nothing: '%s'" % [currency, spend.text])
+		if not spend.text.contains("%"):
+			_fail("the %s currency's risk is not beside it: '%s'" % [currency, spend.text])
 		# c1c rule 2: a corrupt win buys no loyalty and eases no grudge, and says so.
 		if not spend.text.contains("buys the act, not the person"):
 			_fail("the %s currency does not say it buys the act, not the person: '%s'" % [currency, spend.text])
-	pick.select(0)
-	pick.item_selected.emit(0)
-	if spend.text.contains("buys the act"):
-		_fail("an honest favour says it buys the act, not the person: '%s'" % spend.text)
+	# The fourth approach is the corrupt one alone: the honest bargain did not come back with it.
+	if pick.item_count != SC.CURRENCY_EVIDENCE.size():
+		_fail("the corrupt approach lists %d currencies" % pick.item_count)
+
+
+## Money taken settles the request with no deal: the strip must not claim one.
+func _check_no_deal_after_money() -> void:
+	if _scene().deal.visible:
+		_fail("the deal's strip is still up after the money settled the audience")
 
 
 func _check_offer_shown() -> void:
@@ -192,6 +200,10 @@ func _check_offer_shown() -> void:
 	var line: Label = shadow.find_child("OfferLine", true, false)
 	if line == null or line.text == "":
 		_fail("the offer is not put in words")
+	# Step 6: what taking it risks, before the click (the author's ruling on #301).
+	var risk: Label = shadow.find_child("OfferRisk", true, false)
+	if risk == null or not risk.is_visible_in_tree() or not risk.text.contains("%"):
+		_fail("the money's risk is not on the strip: '%s'" % (risk.text if risk != null else "no label"))
 
 
 ## The money the offer pays, where it lands: the president's or the party's.

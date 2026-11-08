@@ -19,6 +19,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const President = preload("res://src/sim/president.gd")
+const DealWords = preload("res://src/ui/deal_words.gd")
 
 var _levers: GridContainer
 var _attempts: Label
@@ -60,7 +61,7 @@ func show_verbs(offered: Array, topics: Array, attempts_left: int, choices: Dict
 	elif attempts_left > 0:
 		_attempts.text = tr_n("%d attempt left", "%d attempts left", attempts_left) % attempts_left
 	else:
-		_attempts.text = tr("No attempts left: end the audience.")
+		_attempts.text = tr("No attempts left: grant it or refuse.") if bool(choices.get("deal", false)) else tr("No attempts left: end the audience.")
 	_talk_heading.visible = not topics.is_empty()
 	for row in topics:
 		_topic(row, choices.get("people", []))
@@ -116,6 +117,8 @@ func _lever_row(row: Dictionary, now: int, given: int, feel: Dictionary) -> void
 	for pick in cell.get_children():
 		if pick is OptionButton or pick is CheckBox:
 			pick.disabled = button.disabled
+		# A row's price can wrap to several lines; the buttons keep their own height.
+		pick.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.pressed.connect(func() -> void: attempted.emit(lever, args.duplicate()))
 	_levers.add_child(cell)
 	_levers.add_child(odds)
@@ -143,6 +146,9 @@ func _currency_pick(row: Dictionary, spend: Label, args: Dictionary, feel: Dicti
 		var c: Dictionary = pick.get_item_metadata(i)
 		args["currency"] = String(c["currency"])
 		spend.text = Words.spends_text(c.get("spends", {}), feel)
+		# The deal's corrupt approach carries what it risks, read before the click.
+		if c.has("found_in_a_year"):
+			spend.text += ". " + DealWords.act_risk(c)
 		var own: Dictionary = c if c.has("odds_hi") else row
 		if bool(row.get("offered", false)) or float(row.get("odds_hi", 0.0)) > 0.0:
 			odds.text = Words.odds_text(float(own.get("odds_lo", 0.0)), float(own.get("odds_hi", 0.0)))
