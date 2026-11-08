@@ -26,7 +26,7 @@
     },
     {
       "id": "POL_wilk",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.70,
       "social_skill": 0.74,
       "wealth_eur_m": 4.5,
       "name": "Grzegorz Wilk",
@@ -50,7 +50,7 @@
     },
     {
       "id": "POL_grabowski",
-      "start_regard_offset": 0.15,
+      "start_regard_offset": 0.55,
       "social_skill": 0.58,
       "wealth_eur_m": 1.3,
       "name": "Szymon Grabowski",
@@ -70,7 +70,7 @@
     },
     {
       "id": "POL_piasecki",
-      "start_regard_offset": 0.10,
+      "start_regard_offset": 0.45,
       "social_skill": 0.49,
       "wealth_eur_m": 3.0,
       "name": "Robert Piasecki",
@@ -98,7 +98,7 @@
     },
     {
       "id": "POL_wilczynski",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.40,
       "social_skill": 0.53,
       "wealth_eur_m": 1.8,
       "name": "Tomasz Wilczyński",
@@ -122,7 +122,7 @@
     },
     {
       "id": "POL_kalinowska",
-      "start_regard_offset": 0.10,
+      "start_regard_offset": 0.55,
       "social_skill": 0.41,
       "wealth_eur_m": 1.6,
       "name": "Ewa Kalinowska",
@@ -146,7 +146,7 @@
     },
     {
       "id": "POL_ostrowski",
-      "start_regard_offset": -0.20,
+      "start_regard_offset": -0.65,
       "social_skill": 0.71,
       "wealth_eur_m": 5.2,
       "name": "Bogdan Ostrowski",
@@ -700,7 +700,7 @@
     },
     {
       "id": "POL_cybulski",
-      "start_regard_offset": -0.05,
+      "start_regard_offset": -0.10,
       "name": "Marek Cybulski",
       "kind": "politician",
       "traits": [
@@ -786,7 +786,7 @@
     },
     {
       "id": "POL_horodynski",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.25,
       "name": "Jan Horodyński",
       "kind": "politician",
       "traits": [
@@ -880,7 +880,7 @@
     },
     {
       "id": "POL_malinowski",
-      "start_regard_offset": 0.05,
+      "start_regard_offset": 0.10,
       "name": "Dariusz Malinowski",
       "kind": "politician",
       "traits": [
@@ -976,7 +976,7 @@
     },
     {
       "id": "POL_sadowski",
-      "start_regard_offset": 0.05,
+      "start_regard_offset": 0.10,
       "name": "Stanisław Sadowski",
       "kind": "politician",
       "traits": [
@@ -1093,7 +1093,7 @@
     },
     {
       "id": "POL_estko",
-      "start_regard_offset": 0.10,
+      "start_regard_offset": 0.25,
       "name": "Renata Estko",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -1117,7 +1117,7 @@
     },
     {
       "id": "POL_galicinski",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.25,
       "name": "Zbigniew Galicinski",
       "kind": "politician",
       "traits": [

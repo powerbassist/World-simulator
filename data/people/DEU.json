@@ -27,7 +27,7 @@
     },
     {
       "id": "DEU_bohlen",
-      "start_regard_offset": 0.10,
+      "start_regard_offset": 0.45,
       "social_skill": 0.53,
       "wealth_eur_m": 5.3,
       "name": "Katrin Bohlen",
@@ -52,7 +52,7 @@
     },
     {
       "id": "DEU_ruppert",
-      "start_regard_offset": 0.05,
+      "start_regard_offset": 0.15,
       "social_skill": 0.79,
       "wealth_eur_m": 6.5,
       "name": "Jens Ruppert",
@@ -76,7 +76,7 @@
     },
     {
       "id": "DEU_seibold",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.35,
       "social_skill": 0.5,
       "wealth_eur_m": 3.6,
       "name": "Annika Seibold",
@@ -104,7 +104,7 @@
     },
     {
       "id": "DEU_falk",
-      "start_regard_offset": -0.15,
+      "start_regard_offset": -0.65,
       "social_skill": 0.7,
       "wealth_eur_m": 3.7,
       "name": "Dietrich Falk",
@@ -131,7 +131,7 @@
     },
     {
       "id": "DEU_grotholt",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.60,
       "social_skill": 0.51,
       "wealth_eur_m": 4.9,
       "name": "Marlene Grotholt",
@@ -152,7 +152,7 @@
     },
     {
       "id": "DEU_emmerich",
-      "start_regard_offset": 0.05,
+      "start_regard_offset": 0.20,
       "social_skill": 0.62,
       "wealth_eur_m": 4.8,
       "name": "Wolfgang Emmerich",
@@ -237,7 +237,7 @@
     },
     {
       "id": "DEU_claussen",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.25,
       "name": "Cornelius Claussen",
       "kind": "politician",
       "traits": [
@@ -498,7 +498,7 @@
     },
     {
       "id": "DEU_quast",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.25,
       "name": "Achim Quast",
       "kind": "politician",
       "traits": [
@@ -660,7 +660,7 @@
     },
     {
       "id": "DEU_ziegenhals",
-      "start_regard_offset": 0.10,
+      "start_regard_offset": 0.25,
       "name": "Gernot Ziegenhals",
       "kind": "politician",
       "traits": [
@@ -688,7 +688,7 @@
     },
     {
       "id": "DEU_brinkmann",
-      "start_regard_offset": 0.05,
+      "start_regard_offset": 0.10,
       "name": "Katharina Brinkmann",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -847,7 +847,7 @@
     },
     {
       "id": "DEU_kesselring",
-      "start_regard_offset": -0.05,
+      "start_regard_offset": -0.10,
       "name": "Achim Kesselring",
       "kind": "politician",
       "traits": [
@@ -970,7 +970,7 @@
     },
     {
       "id": "DEU_suhren",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.25,
       "name": "Silke Suhren",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -999,7 +999,7 @@
     },
     {
       "id": "DEU_tschirner",
-      "start_regard_offset": 0.10,
+      "start_regard_offset": 0.25,
       "name": "Silke Tschirner",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -1109,7 +1109,7 @@
     },
     {
       "id": "DEU_frevert",
-      "start_regard_offset": 0.10,
+      "start_regard_offset": 0.25,
       "name": "Jörn Frevert",
       "kind": "politician",
       "traits": [
