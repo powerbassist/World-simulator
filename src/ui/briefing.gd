@@ -39,6 +39,7 @@ const StatuteK = preload("res://src/sim/statute_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const LawGrade = preload("res://src/ui/law_grade.gd")
 
 ## Emitted for the division, and ONLY for the division: main.gd hides the
 ## briefing and calls law_panel.run_proposal(law), whose `proposed` signal
@@ -57,6 +58,8 @@ var _loader = null
 var _bill_key := ""
 ## Set for a law on the book (authored or composed); empty for a draft.
 var _law = null
+## The grade the player picked in the catalogue; 1 for a draft and for a bill with no size.
+var _scale := 1.0
 ## The draft entry (ns.draft_bills shape) for a draft; {} for a law.
 var _draft := {}
 var _ns = null
@@ -91,10 +94,11 @@ func _ready() -> void:
 
 
 ## A bill on the book -- authored, or a composed law past its drafting.
-func open_for_law(law, state, loader) -> void:
+func open_for_law(law, state, loader, scale := 1.0) -> void:
 	_state = state
 	_loader = loader
 	_law = law
+	_scale = scale
 	_draft = {}
 	_bill_key = String(law.id)
 	_ns = _state.player()
@@ -144,7 +148,9 @@ func _rebuild() -> void:
 	# say what there is to say. Each line is a whole sentence with its own full
 	# stop, so they are joined by a space and nothing is added (QA #50: ". " plus
 	# a final "." printed every stop twice).
-	var effects: Dictionary = _law.effects if _law != null else _draft.get("channels", {})
+	if _law != null and _scale != 1.0:
+		PanelKit.line(_body, tr("At %s.") % LawGrade.size_text(_law, _scale), PanelKit.Tone.PLAIN)
+	var effects: Dictionary = _read().effects if _law != null else _draft.get("channels", {})
 	var lines := effect_lines(effects, _ns)
 	if not lines.is_empty():
 		PanelKit.line(_body, " ".join(lines), PanelKit.Tone.PLAIN)
@@ -176,6 +182,11 @@ func _rebuild() -> void:
 	close_btn.text = tr("Close")
 	close_btn.pressed.connect(func(): hide())
 	buttons.add_child(close_btn)
+
+
+## The bill as it reads at the player's grade. _law stays the row: the sim grades it once.
+func _read():
+	return LawGrade.read(_ns, _law, _scale)
 
 
 func _bill_name() -> String:
@@ -212,7 +223,7 @@ func _repeal_line() -> String:
 ## a note beside it, never the number itself.
 func _build_price() -> void:
 	var section := PanelKit.section(_body, tr("The price"))
-	var price: Dictionary = _law.effects.get("bloc_offset", {}) if _law != null else _draft.get("price", {})
+	var price: Dictionary = _read().effects.get("bloc_offset", {}) if _law != null else _draft.get("price", {})
 	if price.is_empty():
 		PanelKit.line(section, tr("The book prices this bill at no bloc directly."), PanelKit.Tone.DIM)
 		return
@@ -259,7 +270,7 @@ func _build_polls() -> void:
 	if _law != null:
 		var band := LawPanel.forecast_band(_ns, _bill_key)
 		PanelKit.line(section, tr("The Assembly: %s") % LawPanel.forecast_text(
-			_ns, _party_list, _law, band), PanelKit.Tone.PLAIN)
+			_ns, _party_list, _read(), band), PanelKit.Tone.PLAIN)
 	else:
 		PanelKit.line(section, tr("Drafting first; when it completes, the bill waits on your Propose in the Legislature."), PanelKit.Tone.DIM)
 

@@ -42,6 +42,9 @@ const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 const LawColumns = preload("res://src/ui/law_columns.gd")
+const LawMagnitude = preload("res://src/core/law_magnitude.gd")
+const LawGrade = preload("res://src/ui/law_grade.gd")
+const LawAddress = preload("res://src/ui/law_address.gd")
 
 ## The forecast's three columns: a for / against pair that reads as opposite, and
 ## a grey for the undecided between them (the dataviz method's diverging rule).
@@ -68,6 +71,14 @@ var bloc_filter := ""
 var _shown: Array = []
 var _ns
 var _party_list: Array = []
+## The chip picked on each bill, by id: a display pick until Propose, kept through a refresh
+## and the briefing, dropped with its game. See law_grade.gd.
+var grades := {}
+## The last address the page gave, for the line that answers the press (law_address.gd).
+var aired := {}
+## The bill whose address is unfolded, "" for none: only one strip stands at a time.
+var address_open := ""
+var _game = null
 
 
 func _init(panel) -> void:
@@ -121,6 +132,13 @@ func selected_id() -> String:
 	return _selected
 
 
+## The grade this bill goes to the Assembly at: the player's pick, on a bill that may take one.
+## 1 on the referendum route, whose settlement reads the row (LawMagnitude.may_grade).
+func grade(law, referendum := false) -> float:
+	var picked := float(grades.get(String(law.id), 1.0))
+	return picked if LawMagnitude.may_grade(law, picked, referendum) else 1.0
+
+
 ## Opens a law's detail. The selection survives the panel's refreshes; a law that
 ## left the list hands the selection back to the first one.
 func select(law_id: String) -> void:
@@ -149,6 +167,10 @@ func _notification(what: int) -> void:
 
 
 func fill(ns, party_list: Array, laws: Array) -> void:
+	if not is_same(_game, _panel._state):
+		_game = _panel._state
+		grades.clear()
+		aired.clear()
 	for box in [_rows, _detail]:
 		for child in box.get_children():
 			box.remove_child(child)
@@ -255,7 +277,7 @@ func _chip(text: String, tone := UiTheme.CAPTION, width := 0.0) -> Label:
 
 ## For, undecided and against as one bar, the law's majority marked across it.
 func _forecast_bar(ns, party_list: Array, law, width: float) -> Control:
-	var counts: Dictionary = _panel.forecast_counts(ns, party_list, law, _panel.forecast_band(ns, law.id))
+	var counts: Dictionary = _panel.forecast_counts(ns, party_list, LawGrade.read(ns, law, grade(law)), _panel.forecast_band(ns, law.id))
 	var bar := ChartStack.new()
 	bar.setup([
 		{"label": tr("For"), "value": float(counts["yes"])},
@@ -332,11 +354,13 @@ func _build_detail(ns, party_list: Array, law) -> void:
 		var target = _panel._loader.political_systems.get(target_id)
 		PanelKit.line(_detail, tr("Rewrites the constitution to a %s.") % (target.display_name if target != null else target_id), PanelKit.Tone.PLAIN)
 	PanelKit.rich(_detail, Strings.law_summary(law), PanelKit.Tone.PLAIN)
+	LawGrade.build(self, _detail, ns, law)
 	_detail.add_child(_forecast_bar(ns, party_list, law, 0.0))
-	PanelKit.line(_detail, tr("Forecast: %s") % _panel._forecast_text(ns, party_list, law), PanelKit.Tone.PLAIN)
+	PanelKit.line(_detail, tr("Forecast: %s") % _panel._forecast_text(ns, party_list, LawGrade.read(ns, law, grade(law))), PanelKit.Tone.PLAIN)
 	for part in after_parts(ns, party_list, law, _panel.FORECAST_UNCERTAIN_BAND):
 		PanelKit.line(_detail, String(part["text"]), PanelKit.Tone.PLAIN)
 	_verbs(ns, law)
+	LawAddress.build(self, _detail, ns, law)
 
 
 func _verbs(ns, law) -> void:

@@ -154,6 +154,11 @@ static func law_summary(law) -> String:
 	return row_summary("laws", law)
 
 
+## "lycees": what a law's size counts (Law.magnitude).
+static func law_unit(law) -> String:
+	return row("laws", String(law.id), "unit", String(law.magnitude["unit"]))
+
+
 ## The name and summary of a data row as the player reads them (V5.1b3) -- every
 ## display of a row's text goes through these, and tests/test_i18n_rows_lint.gd fails
 ## a panel that reads the English field itself. `row_data` is the loaded object or a plain

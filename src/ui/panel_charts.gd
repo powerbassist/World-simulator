@@ -140,7 +140,7 @@ func _build(state) -> void:
 		SEATS:
 			var ns = state.player()
 			var seated := _seat_parts(ns, _panel.get("_loader"))
-			ChartKit.hemicycle(self, Strings.t("The assembly, by party — the line is a majority"), seated[0],
+			ChartKit.hemicycle(self, Strings.t("By party; the line is a majority"), seated[0],
 				{"marker": 0.5, "unit": Strings.t(" seats"), "places": 0, "colors": seated[1]})
 
 

@@ -135,6 +135,9 @@ const OPINION_WEIGHT := 6.5
 ## The bounds on a grade at the proposal (LawMagnitude.may_grade): a tenth to ten times.
 const GRADE_SCALE_MIN := 0.1
 const GRADE_SCALE_MAX := 10.0
+## The grades the picker offers: even steps on a log scale, so forty lycees reads 4, 12, 40,
+## 120, 400, and the sim's bounds are its two ends. A LABELLED STAND-IN for the parent.
+const GRADE_STEPS := [0.1, 0.3, 1.0, 3.0, 10.0]
 ## The share of a party's seats, at standing 1, that a person's pledge brings (the parent's
 ## ruling on B4). A LABELLED STAND-IN: a leader of standing 0.8 brings a fifth of the party.
 const PLEDGE_SEAT_SHARE := 0.25
