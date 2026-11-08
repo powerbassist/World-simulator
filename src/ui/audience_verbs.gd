@@ -60,7 +60,7 @@ func show_verbs(offered: Array, topics: Array, attempts_left: int, choices: Dict
 	elif attempts_left > 0:
 		_attempts.text = tr_n("%d attempt left", "%d attempts left", attempts_left) % attempts_left
 	else:
-		_attempts.text = tr("No attempts left: end the audience.")
+		_attempts.text = tr("No attempts left: grant it or refuse.") if bool(choices.get("deal", false)) else tr("No attempts left: end the audience.")
 	_talk_heading.visible = not topics.is_empty()
 	for row in topics:
 		_topic(row, choices.get("people", []))

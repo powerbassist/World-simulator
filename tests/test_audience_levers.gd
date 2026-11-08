@@ -20,6 +20,7 @@ extends SceneTree
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const Levers = preload("res://src/sim/levers.gd")
+const DealK = preload("res://src/sim/deal_constants.gd")
 const President = preload("res://src/sim/president.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Words = preload("res://src/ui/lever_words.gd")
@@ -117,6 +118,9 @@ func _check_open() -> void:
 func _check_ranges(when: String) -> void:
 	var ns = _main._state.player()
 	for row in Levers.offered(_main._state, ns, _main._loader, _session()):
+		# The deal's scene offers the three approaches; the other levers stay the sim's.
+		if not DealK.APPROACHES.has(String(row["lever"])):
+			continue
 		var button: Button = _scene().verbs.lever_button(String(row["lever"]))
 		if button == null:
 			_fail("%s: lever %s has no button" % [when, row["lever"]])

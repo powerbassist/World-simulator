@@ -25,6 +25,7 @@ const Feelings = preload("res://src/ui/feelings.gd")
 const President = preload("res://src/sim/president.gd")
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
+const DealWords = preload("res://src/ui/deal_words.gd")
 
 const WINDOW := "audience"
 
@@ -65,6 +66,9 @@ static func register(main) -> void:
 	# Each verb redraws the lane's side too: a promise made is in the Diary at once.
 	scene.attempted.connect(func(lever: String, args: Dictionary) -> void:
 		AudienceTalks.attempt(main, game, lever, args)
+		refresh(main))
+	scene.granted.connect(func() -> void:
+		AudienceTalks.grant(main, game)
 		refresh(main))
 	scene.talked.connect(func(topic: String, args: Dictionary) -> void: AudienceTalks.talk(main, game, topic, args))
 	scene.ended.connect(func() -> void: AudienceTalks.end(main, game))
@@ -258,9 +262,13 @@ static func open_oldest(main) -> void:
 ## Every promise and IOU in flight, worded, soonest due first (the sim's order).
 static func given_lines(main) -> Array:
 	var out: Array = []
-	for row in President.commitments(main._state.player()):
+	var ns = main._state.player()
+	for row in President.commitments(ns):
 		out.append(Words.commitment_text(String(row["kind"]), main._loader.person_name(String(row["person_id"])),
 			AudienceTalks.want_words(main, String(row["person_id"]), String(row["object"])), int(row["due_month"])))
+	# The deal's other half, what the person gave in return.
+	for row in President.owed(ns):
+		out.append(DealWords.owed_text(main._loader, ns, row))
 	return out
 
 

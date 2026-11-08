@@ -26,6 +26,8 @@ const UNASKED := ["not_covered", "already", "asked"]
 var _offer: VBoxContainer
 var _line: Label
 var _terms: Label
+## What taking it risks, beside what is at risk anyway (Deal.answers' money).
+var _risk: Label
 var _affair: HFlowContainer
 var _propose: Button
 var _stop: Button
@@ -43,6 +45,11 @@ func _ready() -> void:
 	_terms = Label.new()
 	_terms.theme_type_variation = UiTheme.CAPTION
 	_offer.add_child(_terms)
+	_risk = Label.new()
+	_risk.name = "OfferRisk"
+	_risk.theme_type_variation = UiTheme.WARN_TEXT
+	_risk.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_offer.add_child(_risk)
 	var answers := PanelKit.buttons(_offer)
 	var accept := PanelKit.sized(Button.new())
 	accept.name = "OfferAccept"
@@ -52,7 +59,7 @@ func _ready() -> void:
 	answers.add_child(accept)
 	var refuse := PanelKit.sized(Button.new())
 	refuse.name = "OfferRefuse"
-	refuse.text = tr("Refuse")
+	refuse.text = tr("Turn it down")
 	refuse.tooltip_text = tr("Turn it down: they think a little less of you, and nothing else.")
 	refuse.pressed.connect(func() -> void: offer_answered.emit(false))
 	answers.add_child(refuse)
@@ -82,6 +89,8 @@ func show_for(view: Dictionary) -> void:
 	_offer.visible = not offer.is_empty()
 	if not offer.is_empty():
 		_terms.text = tr("On the table: %s.") % Words.offer_terms(offer)
+		_risk.text = String(shadow.get("risk", ""))
+		_risk.visible = _risk.text != ""
 		var accept: Button = _offer.find_child("OfferAccept", true, false)
 		var refusal := String(shadow.get("offer_why", ""))
 		accept.disabled = refusal != ""

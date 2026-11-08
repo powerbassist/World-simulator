@@ -155,6 +155,10 @@ func _check_reason_words() -> void:
 ## The bargain's picker names both corrupt currencies, and each one's price is
 ## written beside it before the click.
 func _check_currencies() -> void:
+	# The deal's scene offers the three approaches, so the row that carries the currencies is
+	# drawn from the sim's own list here: its picker is what this check is about.
+	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
+	_scene().verbs.show_verbs(Levers.offered(_main._state, _main._state.player(), _main._loader, _session()), [], 3, {"now": now})
 	var bargain: Button = _scene().verbs.lever_button("bargain")
 	var pick: OptionButton = bargain.get_parent().find_child("Currency", false, false)
 	var spend: Label = bargain.get_parent().get_parent().get_child(bargain.get_parent().get_index() + 2)
@@ -192,6 +196,10 @@ func _check_offer_shown() -> void:
 	var line: Label = shadow.find_child("OfferLine", true, false)
 	if line == null or line.text == "":
 		_fail("the offer is not put in words")
+	# Step 6: what taking it risks, before the click (the author's ruling on #301).
+	var risk: Label = shadow.find_child("OfferRisk", true, false)
+	if risk == null or not risk.is_visible_in_tree() or not risk.text.contains("%"):
+		_fail("the money's risk is not on the strip: '%s'" % (risk.text if risk != null else "no label"))
 
 
 ## The money the offer pays, where it lands: the president's or the party's.

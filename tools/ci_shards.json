@@ -177,6 +177,7 @@
    "tests/test_front_page.gd",
    "tests/test_bill_refusal_line.gd",
    "tests/test_diary_chips.gd",
+   "tests/test_deal_scene.gd",
    "tests/test_economy_legend.gd",
    "tests/test_priorities.gd",
    "tests/test_briefing_effects.gd",

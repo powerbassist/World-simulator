@@ -2364,6 +2364,9 @@ func _stage_requests() -> void:
 	for person in people:
 		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
 			Audiences._arrive(ns, person, person.wants[0], now, [])
+			# The draw is rare and refuses the principled: a frame of the money needs some.
+			if _audience_offer and (ns.audience_requests[-1].get("offer", {}) as Dictionary).is_empty():
+				ns.audience_requests[-1]["offer"] = {"currency": "personal_wealth", "amount_eur_m": 2.0}
 			asked += 1
 			if _broken_word:
 				ns.exposure_evidence.append({"kind": "favour", "person_id": String(person.id), "size": 1.0,
@@ -2394,6 +2397,8 @@ func _stage_audience_step() -> void:
 	match _audience_step:
 		"argue", "closed":
 			verbs.lever_button("argue").pressed.emit()
+		"grant":
+			scene.deal.find_child("Grant", true, false).pressed.emit()
 		"promise", "diary":
 			verbs.lever_button("promise_date").pressed.emit()
 		"save":
@@ -2407,12 +2412,6 @@ func _stage_audience_step() -> void:
 			# with the reason (one ask per audience); accepted, the affair's own row.
 			verbs.topic_button("flirt").pressed.emit()
 			scene.shadow.find_child("ProposeAffair", true, false).pressed.emit()
-		"backroom":
-			var pick: OptionButton = verbs.lever_button("bargain").get_parent().find_child("Currency", false, false)
-			for i in pick.item_count:
-				if String(pick.get_item_metadata(i).get("currency", "")) == "backroom":
-					pick.select(i)
-					pick.item_selected.emit(i)
 		"spent":
 			verbs.lever_button("argue").pressed.emit()
 			verbs.topic_button("family").pressed.emit()
