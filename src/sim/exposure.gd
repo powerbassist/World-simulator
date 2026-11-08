@@ -148,7 +148,8 @@ static func _modifier(ns, loader, route: String) -> float:
 
 
 ## The share of the nation's press owners against the president: below zero
-## rapport, or holding the grudge that promises a leak. 0 with no press owner.
+## rapport, or holding the grudge that promises a leak, and owing no silence. 0 with
+## no press owner.
 static func _hostile_press(ns, loader) -> float:
 	var owners := 0
 	var hostile := 0
