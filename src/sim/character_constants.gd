@@ -14,9 +14,11 @@ extends RefCounted
 ## rather than a silently inert trait.
 
 ## The largest real-relations offset a person row may ship, either way (Person.
-## start_regard_offset), the bound docs/design/v5.3-ab.md section 6 sets: at 0.20 x
-## regard, at most 0.06 of an audience's odds.
-const REGARD_OFFSET_MAX := 0.30
+## start_regard_offset): the whole regard scale, the author's call of 2026-11-08 over
+## docs/design/v5.3-ab.md section 6's first +-0.30, since a real relation may start
+## anywhere on it. President.seed_rapport clamps the seed plus the offset. Copied in
+## tools/check_skills.py, which runs without a Godot.
+const REGARD_OFFSET_MAX := 1.00
 
 ## The eight traits, 2-3 authored per person. Each gates an act threshold or
 ## price -- the CK lever docs/tiers/v4.md 4.3 signed -- and the whole

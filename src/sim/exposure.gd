@@ -148,7 +148,8 @@ static func _modifier(ns, loader, route: String) -> float:
 
 
 ## The share of the nation's press owners against the president: below zero
-## rapport, or holding the grudge that promises a leak. 0 with no press owner.
+## rapport, or holding the grudge that promises a leak, and owing no silence. 0 with
+## no press owner.
 static func _hostile_press(ns, loader) -> float:
 	var owners := 0
 	var hostile := 0
@@ -157,6 +158,10 @@ static func _hostile_press(ns, loader) -> float:
 			continue
 		owners += 1
 		var pid := String(person.id)
+		# A press owner who owes the president a silence (a deal, docs/audiences-model.md
+		# section 14) keeps their papers off them for its term. It is the row that ends it.
+		if President.keeps_silent(ns, pid):
+			continue
 		if Cut.below(President.rapport(ns, pid), 0.0) \
 				or Cut.at_or_above(float(ns.person_grudges.get(pid, 0.0)), SC.PRESS_GRUDGE_HOSTILE):
 			hostile += 1
