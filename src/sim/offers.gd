@@ -18,7 +18,7 @@ const SC = preload("res://src/sim/shadow_constants.gd")
 ## this month, a second on the same salt which currency.
 static func offer_for(ns, person, now: int) -> Dictionary:
 	var currencies: Array = SC.OFFER_KINDS.get(String(person.kind), [])
-	if currencies.is_empty():
+	if currencies.is_empty() or person.traits.has(SC.OFFER_NEVER_TRAIT):
 		return {}
 	var salt := Cycle.salted("%s|%s" % [SC.SALT_OFFER, person.id], ns.draw_seed)
 	if Cycle.unit(salt, now) >= SC.OFFER_CHANCE:

@@ -88,7 +88,8 @@ static func settle(state, ns, loader, session: Dictionary, person, lever: String
 	if not told(lever, args) or not caught(state, ns, loader, session, lever, index):
 		return false
 	if lever == "promise_date":
-		President.withdraw_commitment(ns, "promise", String(person.id), String(session.get("object", "")))
+		# The row Levers.pay wrote: on a deal's ask (Deal.open), the ask's object, not the want.
+		President.withdraw_commitment(ns, "promise", String(person.id), String(session.get("ask_object", session.get("object", ""))))
 	effects["revealed"] = reveal(state, ns, loader, person)
 	return true
 

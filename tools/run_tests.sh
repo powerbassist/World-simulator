@@ -64,6 +64,8 @@ tests=(
   tests/test_president.gd
   tests/test_division_terms.gd
   tests/test_address.gd
+  tests/test_deal.gd
+  tests/test_measure_polls.gd
   tests/test_start_regard.gd
   tests/test_audiences.gd
   tests/test_levers.gd

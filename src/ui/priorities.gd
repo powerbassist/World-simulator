@@ -296,7 +296,7 @@ static func _majority(ns, now: int, onsets: Dictionary, cands: Array) -> void:
 static func _commitments(ns, now: int, cands: Array) -> void:
 	for row in President.commitments(ns):
 		var due := int(row["due_month"])
-		if due >= now and String(row["kind"]) != "pledge":  # a pledge is their word, not the president's to keep
+		if due >= now:
 			var subject := "%s|%s|%s" % [row["kind"], row["person_id"], row["object"]]
 			cands.append(_cand("commitment", subject, due, K.WEIGHT["commitment"], 1.0, now))
 

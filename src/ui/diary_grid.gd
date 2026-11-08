@@ -255,7 +255,7 @@ func _entries(year: int, month: int) -> Dictionary:
 			# The briefing's subject for this word (priorities.gd _commitments), so a
 			# commitment's Go lands on its Call here.
 			_add(out, 1, {"text": Words.commitment_text(String(row["kind"]), who, want, int(row["due_month"])), "mark": "due", "cancel": "",
-				"call": "" if String(row["kind"]) == "pledge" else String(row["person_id"]), "subject": "%s|%s|%s" % [row["kind"], row["person_id"], row["object"]]})
+				"call": String(row["person_id"]), "subject": "%s|%s|%s" % [row["kind"], row["person_id"], row["object"]]})
 	# A request lapses as its deadline month begins (Audiences._overdue), so the
 	# last day to answer is the end of the month before -- the card's "Answer by".
 	for row in Audiences.pending(ns):
