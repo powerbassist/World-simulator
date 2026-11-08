@@ -1,11 +1,12 @@
 extends RefCounted
 
 ## How a want is priced, and whether a region's is served. Split out of characters.gd when
-## the `region:` family (V5.3 b, step 6) met that file's 300-line cap.
+## the `region:` family (V5.3 b, step 6) met that file's 300-line cap. A leaf like it, constants
+## only (tests/test_characters.gd): the fund's row is read off NationState, no system preloaded.
 
 const CharacterK = preload("res://src/sim/character_constants.gd")
 const CK = preload("res://src/sim/character_act_constants.gd")
-const RegionFunds = preload("res://src/sim/region_funds.gd")
+const FK = preload("res://src/sim/region_fund_constants.gd")
 
 
 ## A STANDING want's object: a condition the government holds month by month (a
@@ -33,6 +34,6 @@ static func denial_factor(person, object: String) -> float:
 ## A `region:<id>` want is served while the region has a development fund open.
 static func fund_open(ns, region_id: String) -> bool:
 	for row in ns.region_funds:
-		if String(row["region_id"]) == region_id and String(row["status"]) == RegionFunds.OPEN:
+		if String(row["region_id"]) == region_id and String(row["status"]) == FK.STATUS_OPEN:
 			return true
 	return false
