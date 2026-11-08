@@ -236,7 +236,7 @@ static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dict
 
 
 ## The derived satisfaction read -- NEVER stored. programme reads the live
-## register, office reads the slots, meter reads the hand-ins.
+## register, office reads the slots, meter reads the hand-ins, region the open funds.
 ##
 ## want_satisfied is the PUBLIC surface of the private read below -- the
 ## Programme.this_term() precedent: the People panel consumed a hand-kept

@@ -35,6 +35,7 @@ const Levers = preload("res://src/sim/levers.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const Offers = preload("res://src/sim/offers.gd")
 const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const President = preload("res://src/sim/president.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
@@ -130,6 +131,9 @@ func _check_a_chief_is_offered_only_days_before_the_plant_lands() -> void:
 
 
 func _check_a_closure_that_lands_closes_the_request_unpriced() -> void:
+	# Read off the tick itself: in the other order the request lapses, priced, as the plant lands.
+	if WorldMonth.STEPS.find("Closures") >= WorldMonth.STEPS.find("Audiences"):
+		_fail("the month runs Audiences before Closures")
 	var f := _announced()
 	_tick_audiences(f)
 	var before := _prices(f)

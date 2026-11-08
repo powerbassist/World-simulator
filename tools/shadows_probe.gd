@@ -236,7 +236,7 @@ func _firm(row: Dictionary) -> bool:
 ## requests is booked on its first free day ...
 func _book_person(state, ns, pid: String) -> void:
 	for row in Audiences.pending(ns):
-		if String(row["person_id"]) == pid:
+		if String(row["person_id"]) == pid and not _firm(row):
 			_book_on_first_day(state, ns, String(row["id"]))
 
 
