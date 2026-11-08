@@ -55,6 +55,9 @@ func _process(_delta: float) -> bool:
 				_fail("the day a waiting request offers is not tinted")
 				_finish()
 				return true
+			# The chips (step 6) book on their own click: this is a click on the day itself.
+			for child in cell.get_children():
+				child.visible = false
 			_target = cell
 			_press(true)
 		9:
