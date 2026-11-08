@@ -38,6 +38,7 @@ const K = preload("res://src/sim/calendar_constants.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const President = preload("res://src/sim/president.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
+const DiaryChip = preload("res://src/ui/diary_chip.gd")
 
 ## Monday first, as a European diary is ruled.
 const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msgid
@@ -151,8 +152,16 @@ func show_items(state, loader, items: Array) -> void:
 ## The clock runs with the Diary open, and the panel is redrawn on a month, never a
 ## day: today's ring and the offered days follow the day here (QA's TAKE 2 on #153).
 func _process(_delta: float) -> void:
-	if _state != null and _days != null and int(_state.day) != _drawn_day and is_visible_in_tree():
+	if _state != null and _days != null and int(_state.day) != _drawn_day and is_visible_in_tree() and not _chip_in_hand():
 		_render()
+
+
+## A chip the pointer is on or the keyboard stands on (a press takes the focus too): the
+## daily redraw frees every cell, which would drop the click, the focus and the hover.
+## It waits, so today's ring can lag until the chip is let go; a booking still redraws.
+func _chip_in_hand() -> bool:
+	var viewport := get_viewport()
+	return viewport != null and (viewport.gui_get_focus_owner() is DiaryChip or viewport.gui_get_hovered_control() is DiaryChip)
 
 
 func page() -> int:
@@ -202,7 +211,6 @@ func _render() -> void:
 		child.queue_free()
 	var entries := _entries(ym.x, ym.y)
 	var offered := _offered(ym.x, ym.y)
-	_mark_later(ym)
 	# Monday-first: the engine's weekday is 0 for Sunday.
 	var first: int = (int(Time.get_datetime_dict_from_unix_time(int(Time.get_unix_time_from_datetime_dict(
 		{"year": ym.x, "month": ym.y, "day": 1, "hour": 0, "minute": 0, "second": 0})))["weekday"]) + 6) % 7
@@ -281,29 +289,23 @@ func _entries(year: int, month: int) -> Dictionary:
 	return out
 
 
-## A request whose days all lie past this page has no mark on it: the page-on button
-## counts them, since no column lists the requests any more.
-func _mark_later(ym: Vector2i) -> void:
-	var waiting := 0
-	var ns = _state.player()
-	for row in Audiences.pending(ns):
-		for date in Audiences.offered_dates(_state, ns, String(row["id"])):
-			if int(date["year"]) * 12 + int(date["month"]) > ym.x * 12 + ym.y:
-				waiting += 1
-				break
-	_later.text = "> %d" % waiting if waiting > 0 else ">"  # i18n: ok a glyph and a count
-	_later.tooltip_text = tr_n("Next month: %d request offers a later day", "Next month: %d requests offer later days", waiting) % waiting if waiting > 0 else tr("Next month")
-
-
 ## Day -> [{request id, person, date}] a waiting request offers in the shown month.
 func _offered(year: int, month: int) -> Dictionary:
 	var out := {}
 	var ns = _state.player()
+	var later := 0
 	for row in Audiences.pending(ns):
 		var rid := String(row["id"])
+		var past_this_page := false
 		for date in Audiences.offered_dates(_state, ns, rid):
 			if int(date["year"]) == year and int(date["month"]) == month:
-				_add(out, int(date["day"]), {"id": rid, "person": _loader.person_name(String(row["person_id"])), "date": date})
+				_add(out, int(date["day"]), {"id": rid, "person_id": String(row["person_id"]), "person": _loader.person_name(String(row["person_id"])), "date": date})
+			elif int(date["year"]) * 12 + int(date["month"]) > year * 12 + month:
+				past_this_page = true
+		later += 1 if past_this_page else 0
+	_later.text = "> %d" % later if later > 0 else ">"  # i18n: ok a glyph and a count
+	# No column lists the requests any more: the button says some have days further on.
+	_later.tooltip_text = tr_n("Next month: %d request offers a later day", "Next month: %d requests offer later days", later) % later if later > 0 else tr("Next month")
 	return out
 
 

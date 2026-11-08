@@ -114,7 +114,7 @@ func _check_booking() -> void:
 	var rows := {"req_1": _rows(true)[0], "req_2": _rows(true)[1]}
 	var heard := []
 	booked_probe.connect(func(id: String, date: Dictionary) -> void: heard.append([id, date]))
-	cell.show_chips([{"id": "req_2", "person": "B", "date": free}, {"id": "req_1", "person": "A", "date": taken}], rows, booked_probe)
+	cell.show_chips([{"id": "req_2", "person_id": "", "person": "B", "date": free}, {"id": "req_1", "person_id": "", "person": "A", "date": taken}], rows, booked_probe)
 	var open: Button = cell.find_child("Chip_req_2", true, false)
 	var refused: Button = cell.find_child("Chip_req_1", true, false)
 	if open == null or refused == null:

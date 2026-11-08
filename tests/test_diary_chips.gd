@@ -46,11 +46,18 @@ func _process(_delta: float) -> bool:
 		11:
 			_check_refused()
 		12:
+			_click_refused(true)
+		14:
+			_click_refused(false)
+		16:
+			_check_refused_clicked()
+			_check_day_keeps_chip()
+		18:
 			_go()
-		22:
+		28:
 			_check_focus()
 			_main._windows.close("calendar")
-		24:
+		30:
 			_check_closed()
 			_finish()
 			return true
@@ -125,6 +132,11 @@ func _check_chips() -> void:
 	var who: String = _main._loader.person_name(String(row["person_id"]))
 	if not chip.tooltip_text.contains(who):
 		_fail("the chip's hover does not name who asks: '%s'" % chip.tooltip_text)
+	var party: Dictionary = preload("res://src/ui/party_chip.gd").of(_main._loader, _main._state.player(), String(row["person_id"]))
+	if not party.is_empty() and not chip.tooltip_text.contains(String(party.get("name", "?"))):
+		_fail("the chip's hover does not name the party: '%s'" % chip.tooltip_text)
+	if chip.find_child("MoodBadge", true, false) == null:
+		_fail("the chip does not wear the asker's mood")
 	if chip.focus_mode != Control.FOCUS_ALL:
 		_fail("a keyboard cannot reach the chip")
 
@@ -154,12 +166,49 @@ func _check_refused() -> void:
 	var cell := _cell(1)
 	var row := {"id": "req|1", "person": "Someone", "wants": "wants a thing", "by": "MAR 2027"}
 	var date := {"year": 2026, "month": 2, "day": 1, "free": false, "reason": "This day is taken."}
-	cell.show_chips([{"id": "req|1", "person": "Someone", "date": date}], {"req|1": row}, grid.booked)
+	cell.show_chips([{"id": "req|1", "person_id": "", "person": "Someone", "date": date}], {"req|1": row}, grid.booked)
 	var chip := _chip("req|1", 1)
 	if chip == null or not chip.disabled or not chip.tooltip_text.contains(tr("This day is taken.")):
 		_fail("a refused day's chip is not disabled with the sim's reason")
 	elif chip.mouse_filter != Control.MOUSE_FILTER_PASS:
 		_fail("a disabled chip swallows the click on its day")
+
+
+func _click_refused(down: bool) -> void:
+	var chip := _chip("req|1", 1)
+	if chip != null:
+		Click.half(_main.get_viewport(), chip, down)
+
+
+## The real click, through the chip and its box to the cell: the day is picked and listed.
+func _check_refused_clicked() -> void:
+	if _main._calendar_panel._grid._selected != 1:
+		_fail("a click on a refused chip did not pick its day (%d)" % _main._calendar_panel._grid._selected)
+
+
+## The daily redraw rebuilds the grid. On a chip in the player's hand it must wait, or a click
+## held across a new day books nothing and the keyboard is thrown off; let go, it runs.
+func _check_day_keeps_chip() -> void:
+	var grid = _main._calendar_panel._grid
+	var first: Dictionary = _free(_other)[0]
+	grid.show_month(int(first["year"]), int(first["month"]))
+	var chip := _chip(_other, int(first["day"]))
+	if chip == null:
+		_fail("premise: the second request has no chip on its first free day")
+		return
+	chip.grab_focus()
+	_main._state.day += 1
+	grid._process(0.0)
+	if not is_instance_valid(chip) or not chip.is_inside_tree():
+		_fail("a new day freed the chip the keyboard stands on")
+		_main._state.day -= 1
+		return
+	chip.release_focus()
+	grid._process(0.0)
+	if is_instance_valid(chip) and chip.is_inside_tree():
+		_fail("the day's redraw never ran once the chip was let go")
+	_main._state.day -= 1
+	grid._process(0.0)
 
 
 func _go() -> void:

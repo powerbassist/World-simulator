@@ -16,6 +16,7 @@ const DateText = preload("res://src/ui/date_text.gd")
 
 const FACE := Vector2(18, 24)
 const HEIGHT := 28.0
+const BADGE := 11.0
 
 
 ## `offer` is the grid's {id, person, date}; `row` audience_driver's row_of() for the request,
@@ -34,9 +35,13 @@ func fill(offer: Dictionary, row: Dictionary) -> void:
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 2)
-	var pid := String(row.get("person_id", ""))
+	var pid := String(offer["person_id"])
 	var size_face := FACE * scale_by
-	var face: Control = Portrait.framed_for(pid, size_face, MoodBadge.mood_portrait(pid, row.get("feel", {})))
+	var feel: Dictionary = row.get("feel", {})
+	var face: Control = Portrait.framed_for(pid, size_face, MoodBadge.mood_portrait(pid, feel))
+	# The asker's mood on their face, as everywhere a person asks (#222, the parent's call).
+	if not feel.is_empty():
+		MoodBadge.wear(face, feel, BADGE * scale_by)
 	face.name = "Face"  # i18n: ok a node name, found by tests
 	face.custom_minimum_size = size_face
 	box.add_child(face)
@@ -49,6 +54,9 @@ func fill(offer: Dictionary, row: Dictionary) -> void:
 	box.add_child(by)
 	_ignore_mouse(box)
 	var who := String(row.get("person", offer["person"]))
+	var party := String(row.get("party", {}).get("name", ""))
+	if party != "":
+		who = "%s (%s)" % [who, party]
 	var wants := String(row.get("wants", ""))
 	var day := DateText.day_month_year(int(date["day"]), int(date["year"]), int(date["month"]))
 	var free := bool(date.get("free", true))

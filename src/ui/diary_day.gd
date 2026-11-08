@@ -106,8 +106,8 @@ func _draw() -> void:
 	for kind in marks:
 		_mark(kind, Vector2(x, y), accent)
 		x += MARK * 3.0
-		# A row of chips sits over everything right of the date.
-		if x > (CHIP_LEFT if _chips != null else size.x - 6.0):
+		# A second chip reaches the marks' row, right of the date.
+		if x > (CHIP_LEFT * UiTheme.text_scale() if _chips != null and _chips.get_child_count() > 1 else size.x - 6.0):
 			break
 
 
