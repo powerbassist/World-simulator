@@ -394,7 +394,7 @@ var _broken_word := false
 ## promise made, the audience left, the Diary open on "Your word"); bargain, dates
 ## and gossip open that verb's choice. V5.2c: lie ticks argue's lie toggle, flirt
 ## flirts (the affair's proposal shows), propose flirts then proposes (V5.2 close
-## R7), backroom picks the corrupt currency.
+## R7), grant strikes the deal.
 var _audience_step := ""
 ## V5.2c: --audience-offer asks the audience of a press owner first, whose request
 ## comes with money (Offers' draw), so the scene shows the offer and its answers.

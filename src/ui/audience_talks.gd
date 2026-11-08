@@ -73,11 +73,12 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	var kind := String(person.kind) if person != null else ""
 	return {"fog": President.knowledge_band(ns, pid), "traits": traits, "voice": AudienceVoice.lines(loader, pid),
 		# Struck, there is nothing left to bargain for: small talk and the way out remain.
-		"offered": [] if String(session.get("won", "")) != "" else answers["bargain"]["approaches"], "topics": Levers.topics(state, ns, loader, session),
+		"offered": [] if session.has("struck") else answers["bargain"]["approaches"], "topics": Levers.topics(state, ns, loader, session),
 		"attempts_left": int(session["attempts_left"]),
 		"choices": {"now": int(state.year) * 12 + int(state.month), "people": gossip_people(main, pid),
 			"given_due": AudienceVerbs.given_due(ns, pid, String(session.get("ask_object", session["object"]))), "feel": Feelings.of(ns, pid), "deal": true},
-		"deal": DealWords.card(loader, ns, answers, Feelings.of(ns, pid), want_words(main, pid, String(session["object"])), kind),
+		# Won with no deal, as money taken: nothing was struck, so the strip must not read as if it was.
+		"deal": {} if String(session.get("won", "")) != "" and not session.has("struck") else DealWords.card(loader, ns, answers, Feelings.of(ns, pid), want_words(main, pid, String(session["object"])), kind),
 		# V5.2c: the money on the table and the affair, as Shadows reads them now.
 		"shadow": {"offer": Shadows.offer(ns, session), "kind": kind, "risk": DealWords.risk(answers["money"]),
 			# Accept's refusals that are the scene's own state (Shadows.accept_offer's

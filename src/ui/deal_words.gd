@@ -28,7 +28,7 @@ static func card(loader, ns, answers: Dictionary, feel: Dictionary, wants: Strin
 		refuse_text += " " + Strings.t("They hold something on you. Refusing them breaks your word.")
 	var out := {
 		"grant_ok": bool(grant.get("ok", false)), "grant_why": Words.reason(String(grant.get("why_not", ""))),
-		"bargain": Strings.t("Or bargain for less: your word by %s, the same offer.") % Words.when(int(answers.get("bargain", {}).get("due_month", 0))),
+		"bargain": Strings.t("Or bargain for less: your word by %s, or the date you promise, for the same offer.") % Words.when(int(answers.get("bargain", {}).get("due_month", 0))),
 		"refuse": refuse_text, "struck": String(grant.get("why_not", "")) == "they have already agreed",  # i18n: ok the sim's reason, compared
 	}
 	out.merge(_ask(loader, ns, ask, grant, wants))
@@ -50,6 +50,12 @@ static func owed_text(loader, ns, row: Dictionary) -> String:
 	if String(row["kind"]) == "pledge":
 		return Strings.t("%s has pledged a vote on %s, until %s.") % [who, PersonCard.object_text(loader, ns, String(row["object"]), {}), Words.when(int(row["due_month"]))]
 	return Strings.t("%s keeps silent until %s.") % [who, Words.when(int(row["due_month"]))]
+
+
+## What a person owed, judged, for the Diary's record beside the president's own words.
+static func owed_verdict(loader, row: Dictionary) -> String:
+	var who: String = loader.person_name(String(row["person_id"]))
+	return Strings.t("%s kept their word to you.") % who if String(row["verdict"]) == "kept" else Strings.t("%s broke their word to you.") % who
 
 
 static func _ask(loader, ns, ask: Dictionary, grant: Dictionary, wants: String) -> Dictionary:

@@ -59,6 +59,7 @@ func _process(_delta: float) -> bool:
 			_press(false)
 		11:
 			_check_accepted()
+			_check_no_deal_after_money()
 			_check_lie_toggle()
 		13:
 			_check_lie_sent()
@@ -183,6 +184,12 @@ func _check_currencies() -> void:
 	pick.item_selected.emit(0)
 	if spend.text.contains("buys the act"):
 		_fail("an honest favour says it buys the act, not the person: '%s'" % spend.text)
+
+
+## Money taken settles the request with no deal: the strip must not claim one.
+func _check_no_deal_after_money() -> void:
+	if _scene().deal.visible:
+		_fail("the deal's strip is still up after the money settled the audience")
 
 
 func _check_offer_shown() -> void:

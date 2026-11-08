@@ -284,7 +284,12 @@ static func judged_rows(main) -> Array:
 		var pid := String(row["person_id"])
 		var text := Words.verdict_text(String(row["kind"]), String(row["verdict"]) == "kept", main._loader.person_name(pid),
 			AudienceTalks.want_words(main, pid, String(row["object"])))
-		out.push_front({"text": "%s — %s" % [Words.when(int(row["judged_month"])), text], "kept": String(row["verdict"]) == "kept"})
+		out.push_front({"text": "%s — %s" % [Words.when(int(row["judged_month"])), text], "kept": String(row["verdict"]) == "kept", "month": int(row["judged_month"])})
+	# The other half of a deal: their word, kept or broken, on the same record.
+	for row in President.judged_commitments(main._state.player(), true):
+		if String(row["verdict"]) != "void":
+			out.append({"text": "%s — %s" % [Words.when(int(row["judged_month"])), DealWords.owed_verdict(main._loader, row)], "kept": String(row["verdict"]) == "kept", "month": int(row["judged_month"])})
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["month"]) > int(b["month"]))
 	return out
 
 

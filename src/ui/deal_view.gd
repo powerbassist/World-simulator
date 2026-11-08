@@ -57,7 +57,9 @@ func show_card(card: Dictionary) -> void:
 	_give_stake.theme_type_variation = UiTheme.GOOD_SMALL if bool(card["give_good"]) else UiTheme.CAPTION
 	_grant.disabled = not bool(card["grant_ok"])
 	_grant.tooltip_text = String(card["grant_why"])
-	_grant_cost.text = String(card["grant_cost"])
+	# Refused, the reason is what the line says: the price of a Grant nobody can press is noise.
+	var refused := not bool(card["grant_ok"]) and not bool(card["struck"]) and String(card["grant_why"]) != ""
+	_grant_cost.text = String(card["grant_why"]) if refused else String(card["grant_cost"])
 	# Once struck there is no less to bargain for.
 	_bargain.visible = not bool(card["struck"])
 	_bargain.text = String(card["bargain"])

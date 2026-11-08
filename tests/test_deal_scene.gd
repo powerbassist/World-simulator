@@ -142,6 +142,11 @@ func _check_words() -> void:
 		_fail("the money's risk does not give both chances: '%s'" % risk)
 	if DealWords.risk({}) != "":
 		_fail("no money still reads a risk")
+	var deal = _scene().deal
+	deal.show_card({"want": "w", "want_stake": "", "give": "g", "give_stake": "", "give_good": false, "grant_ok": false,
+		"grant_why": "Why not.", "grant_cost": "A price.", "bargain": "", "struck": false, "refuse": ""})
+	if _text("GrantCost") != "Why not.":
+		_fail("a refused Grant does not say why on its line: '%s'" % _text("GrantCost"))
 
 
 func _check_offer_card() -> void:
@@ -195,8 +200,18 @@ func _end_and_leave() -> void:
 	_scene()._end.pressed.emit()
 
 
-## The deal stands in the Diary's list, what they owe in their name.
+## The deal stands in the Diary's list, what they owe in their name; judged, in its record.
 func _check_owed() -> void:
+	var row: Dictionary = President.owed(_ns())[0].duplicate()
+	row["verdict"] = "broken"
+	row["judged_month"] = 1
+	_ns().commitments_judged.append(row)
+	var recorded := false
+	for line in AudienceDriver.judged_rows(_main):
+		recorded = recorded or String(line["text"]).contains(_main._loader.person_name(String(row["person_id"])))
+	if not recorded:
+		_fail("a judged pledge is not on the Diary's record")
+	_ns().commitments_judged.pop_back()
 	var who: String = _main._loader.person_name(_voter)
 	var found := false
 	for line in AudienceDriver.given_lines(_main):
@@ -217,6 +232,11 @@ func _check_silence_and_refuse() -> void:
 		_fail("a silence's strip does not give its months: '%s'" % _text("GiveStake"))
 	if _scene()._end.text != tr("Refuse"):
 		_fail("the way out before a deal reads '%s', not Refuse" % _scene()._end.text)
+	# A lever outside the three is refused by Deal.bargain, and Levers.attempt would have taken it.
+	var attempts := int(session["attempts_left"])
+	_scene().attempted.emit("flatter", {})
+	if _scene()._tone.text != tr("Not possible") or int(session["attempts_left"]) != attempts:
+		_fail("an approach did not go through Deal.bargain: tone '%s', attempts %d" % [_scene()._tone.text, int(session["attempts_left"])])
 	var id := String(session["request_id"])
 	_scene()._end.pressed.emit()
 	if String(Audiences.request(_ns(), id).get("status", "")) == "held":
