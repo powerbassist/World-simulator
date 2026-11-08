@@ -469,7 +469,8 @@ The author's "Un marchandage concret" ([[v5.3-ab]] section 5, option 1). The sce
 | A programme entry sponsored, and the entry's `laws` name one open now | a bill brought by a date, `law:<id>` | a dated word, 6 months | the same word, 12 months later |
 | A portfolio | a post for the person's party | `Removal.reassign`, now, priced as a removal when it comes from a partner; greyed with Removal's reason | the word within 12 months |
 | A programme entry otherwise, sponsored or opposed | a word on the want | a dated word, the month after the next vote (the register opens in the vote's month, after that month's judge) | the same word, 12 months later |
-| A meter, a measure | a word on the want | a dated word, 12 months | the same word, 12 months later |
+| A meter, a measure, a region's fund (`region:<id>`) | a word on the want | a dated word, 12 months | the same word, 12 months later |
+| A closing plant (`firm:<id>`, a chief's request, below) | the plant saved | `Closures.answer(rescue)`, now, no word | `Closures.answer(buyer)`, now, no word |
 
 Every month above is a labelled stand-in (`deal_constants.gd`, the parent's ruling).
 
@@ -497,7 +498,13 @@ The three attempts stay the scene's one tension, since small talk spends them to
 
 Each half lets the other go: a broken pledge makes the president's word void, unpriced, at the vote; a broken word ends what the person still owes. While a word stands the want is heard (section 13's rule), so the person does not come back about it and pay a decline for it. A save carries `deal` and `brought` on the row, so an older save's rows read as they did, and nothing is bumped.
 
-**Not in this block's first PR:** firm and region asks (no want names one: executives carry none, France's regional figures carry programme wants, so they need new want objects and Content's rows); flatter and friendship as modifiers with the lever bands re-measured on three approaches (B5's "none best over 40 %" was declared over six levers and can fail over three by arithmetic, so it needs re-declaring first). A phone win still settles with no ask and no offer.
+**A chief at the door.** The month a major's closure is announced, its chief asks to see the president (`AudienceTriggers.chiefs`). The request stands in a place of its own: the object says so (`firm:<company>`), not the person, since a chief carries the nation's id prefix, and it takes no slot under `MAX_PENDING`. It carries no money. Its window is the closure's two months, and its days are offered only in the first, because the plant lands as the last month opens. A request whose closure has stopped waiting, because the plant landed or the player answered on the Industry tab, closes unpriced as `overtaken`, its day given back. Refused to their face, a chief is priced like anyone. A minister's word on a plant is kept if the plant was rescued or sold and broken otherwise. There is no dated promise on a plant, so only argue and pressure are approaches. A phone win still settles with no ask and no offer, so a chief won over by phone leaves the plant to its fate.
+
+**A region's want.** `region:<id>` is a want family: served while the region has an open development fund, a discrete holding charged once when it turns, as an office is, because a fund ends by design. No row ships one yet, so what it moves arrives with Content's rows.
+
+**Measured (main e0cd8f81 against 806de8d7).** `balance_parallel` 52 regimes and `shadows_parallel` S2 50 seeds are byte-identical, and A1-A4 are the same: no regime answers a chief, and those probes skip their requests. On the real road (`audience_probe --deal`, France, 60 months, a player who books chiefs ahead of the month's diary) 8 chiefs were held and all 8 Granted. Behind that diary none is placed: a chief offers one month only. `decision_surfaces_probe --density` does move: each closure is one more card, so counted requests rise by 4 to 16 a run and decisions a month by 0.10 to 0.15, the share of months with one unchanged. B7 fails at base and at tip; one Polish run gains a month over the maximum (7), and one or two quarters come into the band in five of the eight runs.
+
+**Not in this block's first PR:** flatter and friendship as modifiers with the lever bands re-measured on three approaches (B5's "none best over 40 %" was declared over six levers and can fail over three by arithmetic, so it needs re-declaring first). A phone win still settles with no ask and no offer.
 
 **B5's answers row under the deal, declared before the read:** at K=1, Book is a certain Grant, `1 + 0.10 + 0.5 x 0.25 - 1.05 + 0.5 x 0.10 + KV`, the ask's cost outside the row as it always was at K=1, 0.10 being silence's value, the conservative reading for every request. At K=0, Book is the best of the three approaches with the lie's price on all three, since every win now writes a word. A minister strikes no deal, so Delegate and Refuse are as they were.
 
