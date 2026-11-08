@@ -1213,7 +1213,7 @@ Over 200 seeded runs (salts), France, otherwise idle.
 | Regime | Declared |
 |---|---|
 | Corruption offers reaching the president per term | **2 to 6** |
-| **Once:** one corrupt act at month 6, any currency — exposed by month 60 | **10 % to 30 %** of runs |
+| **Once:** one corrupt act at month 6, any currency — exposed by month 60 | **10 % to 30 %** of runs (diverted budget **10 % to 33 %**, the author's decision of 2026-11-08: the full-scale starting regard makes more people rivals, and "real enemies have a price") |
 | **Always:** every offer accepted — exposed by month 60 | **at least 80 %** of runs |
 | **Always:** median months to the first exposure | **at most 24** |
 | Exposure odds by currency, for the same act size | **favours < party money < personal wealth < diverted budget** |
