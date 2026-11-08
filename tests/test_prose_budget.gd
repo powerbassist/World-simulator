@@ -57,7 +57,7 @@ const PENDING := {}
 const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250, "events": 95, "commodities": 210,
 	"companies": 145}
 const TOTAL_PENDING := {
-	"budget": 113, "calendar": 42, "campaign": 140,
+	"budget": 113, "calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 115, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106, "tax": 24,

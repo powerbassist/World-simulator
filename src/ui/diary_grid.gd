@@ -6,8 +6,9 @@ extends VBoxContainer
 ## day carries a mark per entry (diary_day.gd): the register's bookings and the
 ## fixed dates the panel hands in, a commitment falling due and a waiting
 ## request's last day to answer, read here. A day a waiting request offers is
-## tinted, and a click on any day lists its entries -- with "Book here" where a
-## request offered it.
+## tinted and carries the asker's chip (diary_chip.gd), whose click books that day;
+## a click on the day itself lists its entries -- with "Book here" where a request
+## offered it, the keyboard's and the inbox's path.
 ##
 ## The day list is `day_list`, which the panel places inside its scroll: a list
 ## that changes height must not move the booking form under it (the form's own
@@ -22,7 +23,7 @@ signal cancel_requested(key: String)
 ## A commitment's "Call": the Diary's verb on a word falling due (pre-gate RF3).
 signal call_requested(person_id: String)
 ## The day list was rebuilt (deferred to the frame's end, past every early return):
-## the request column puts a pending focus back (QA's TAKE on #221).
+## a pending booking puts the focus back (diary_booking.gd, QA's TAKE on #221).
 signal listed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -49,6 +50,8 @@ const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msg
 const LIST_ROOM_PX := 96.0
 
 var day_list := VBoxContainer.new()
+## Where the president's word sits, under the grid: the panel places it, as it does day_list.
+var promise_slot := VBoxContainer.new()
 ## The day list's scroll, which the panel places (list_scroll()).
 var _list_scroll: ScrollContainer
 var _state
@@ -64,6 +67,9 @@ var _drawn_day := 0  # the state's day at the last render: a new day redraws (to
 var _wanted := Vector3i.ZERO
 var _title: Label
 var _days: GridContainer
+var _later: Button
+## request id -> audience_driver's row: the chips' words (set_requests).
+var _rows := {}
 
 
 func _init() -> void:
@@ -86,11 +92,12 @@ func _ready() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	head.add_child(_title)
-	var on := PanelKit.sized(Button.new())
-	on.text = ">"  # i18n: ok a glyph
-	on.tooltip_text = tr("Next month")
-	on.pressed.connect(page_by.bind(1))
-	head.add_child(on)
+	_later = PanelKit.sized(Button.new())
+	_later.name = "Later"  # i18n: ok a node name, found by tests
+	_later.text = ">"  # i18n: ok a glyph
+	_later.tooltip_text = tr("Next month")
+	_later.pressed.connect(page_by.bind(1))
+	head.add_child(_later)
 	var names := GridContainer.new()
 	names.columns = 7
 	add_child(names)
@@ -117,6 +124,15 @@ func list_scroll() -> ScrollContainer:
 	_list_scroll.follow_focus = true
 	_list_scroll.custom_minimum_size.y = LIST_ROOM_PX * UiTheme.text_scale()
 	return _list_scroll
+
+
+## The waiting requests, in audience_driver's words, read once a refresh: the chips'
+## face, deadline and hover, never read on the daily redraw.
+func set_requests(rows: Array) -> void:
+	_rows = {}
+	for row in rows:
+		_rows[String(row["id"])] = row
+	_render()
 
 
 func show_items(state, loader, items: Array) -> void:
@@ -186,6 +202,7 @@ func _render() -> void:
 		child.queue_free()
 	var entries := _entries(ym.x, ym.y)
 	var offered := _offered(ym.x, ym.y)
+	_mark_later(ym)
 	# Monday-first: the engine's weekday is 0 for Sunday.
 	var first: int = (int(Time.get_datetime_dict_from_unix_time(int(Time.get_unix_time_from_datetime_dict(
 		{"year": ym.x, "month": ym.y, "day": 1, "hour": 0, "minute": 0, "second": 0})))["weekday"]) + 6) % 7
@@ -207,15 +224,14 @@ func _render() -> void:
 			cell.marks.append(String(e["mark"]))
 			texts.append(String(e["text"]))
 		for o in offered.get(d, []):
-			cell.offers[String(o["id"])] = o["date"]
 			# A refused offered day says why on its hover, as its Book here does.
 			var why := String((o["date"] as Dictionary).get("reason", ""))
 			if why != "":
 				texts.append("%s: %s" % [String(o["person"]), Strings.t(why)])  # i18n: row-ok the sim's reason, its English the msgid
 		cell.tooltip_text = "\n".join(texts)
 		cell.picked.connect(_pick)
-		cell.dropped.connect(func(id: String, date: Dictionary) -> void: booked.emit(id, date))
 		_days.add_child(cell)
+		cell.show_chips(offered.get(d, []), _rows, booked)
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 
 
@@ -263,6 +279,20 @@ func _entries(year: int, month: int) -> Dictionary:
 			_add(out, Calendar.days_in_month(year, month), {"text": Strings.t("Last day to answer %s") % _loader.person_name(String(row["person_id"])),
 				"mark": "deadline", "cancel": ""})
 	return out
+
+
+## A request whose days all lie past this page has no mark on it: the page-on button
+## counts them, since no column lists the requests any more.
+func _mark_later(ym: Vector2i) -> void:
+	var waiting := 0
+	var ns = _state.player()
+	for row in Audiences.pending(ns):
+		for date in Audiences.offered_dates(_state, ns, String(row["id"])):
+			if int(date["year"]) * 12 + int(date["month"]) > ym.x * 12 + ym.y:
+				waiting += 1
+				break
+	_later.text = "> %d" % waiting if waiting > 0 else ">"  # i18n: ok a glyph and a count
+	_later.tooltip_text = tr_n("Next month: %d request offers a later day", "Next month: %d requests offer later days", waiting) % waiting if waiting > 0 else tr("Next month")
 
 
 ## Day -> [{request id, person, date}] a waiting request offers in the shown month.

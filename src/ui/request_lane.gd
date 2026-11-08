@@ -25,6 +25,7 @@ signal seen(request_id: String)
 
 const Strings = preload("res://src/ui/strings.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
+const Words = preload("res://src/ui/lever_words.gd")
 
 ## The answers, in the card's order: the index card_action() carries.
 const BOOK := 0
@@ -60,13 +61,16 @@ func show_requests(rows: Array) -> void:
 	for row in rows:
 		var request_id := String(row["id"])
 		var answers: Array = [
-			_answer(Strings.t("Book a day…"), row.get("book", {})),
+			_answer(Strings.t("Go"), row.get("book", {})),
 			_answer(Strings.t("Delegate"), row.get("delegate", {})),
 			_answer(Strings.t("Decline"), row.get("decline", {})),
 		] + ([_answer(Strings.t("Call them…"), row["call"])] if row.has("call") else [])
 		# V5.3-0 RF3: each answer acts on this request (acts_on.gd, the briefing's Go).
 		for a in answers:
 			a["acts_on"] = request_id
+		# V5.3 b, step 6: the calendar is where a day is booked; this only goes there.
+		if String(answers[0]["tooltip"]) == "":
+			answers[0]["tooltip"] = Strings.t("See the days they offer, on the calendar.")
 		# Spec 3.5's inbox diet: the price of a no is Decline's hover, not the body.
 		if String(answers[2]["tooltip"]) == "":
 			answers[2]["tooltip"] = Strings.t("Declining, or no answer by then: %s.") % String(row.get("price", ""))
@@ -81,7 +85,7 @@ func show_requests(rows: Array) -> void:
 			continue
 		if _card_of.has(request_id):
 			_inbox.dismiss(String(_card_of[request_id]))
-		var card_id: String = _inbox.push(Strings.t("%s asks to see you") % String(row["person"]), _body(row), answers, null, false, _inbox.REQUESTS)
+		var card_id: String = _inbox.push(Strings.t("%s wants to see you") % String(row["person"]), _body(row), answers, null, false, _inbox.REQUESTS)
 		# V5.2 close R3: whom you would be seeing, by party, under the name.
 		if row.has("party"):
 			_inbox.add_under_title(card_id, PartyChip.make(row["party"]))
@@ -112,6 +116,9 @@ static func _body(row: Dictionary) -> String:
 	# c1c: why this refusal costs more (its price above already counts it).
 	if bool(row.get("broken_word", false)):
 		body += " " + Strings.t("They hold something on you. Refusing them breaks your word.")
+	# B6: a call does not answer them, and the card used to say nothing about it.
+	if int(row.get("called", 0)) > 0:
+		body += " " + Strings.t("You called in %s; they still want to see you.") % Words.when(int(row["called"]))
 	return body
 
 

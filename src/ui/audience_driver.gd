@@ -39,7 +39,7 @@ static func register(main) -> void:
 	main._windows.register("audience", Strings.t("Audience"), scene, KEY_NONE, main.ICONS + "account_balance.svg")
 	# The president's word sits in the Diary under its grid.
 	var promises := PromiseList.new()
-	main._calendar_panel.requests.promise_slot.add_child(promises)
+	main._calendar_panel._grid.promise_slot.add_child(promises)
 	# booking_for: the request whose days the Diary shows (V5.3-0 (b2)), "" for none.
 	# Presentation only: a load clears it.
 	var game := {"lane": lane, "scene": scene, "session": {}, "answered": {}, "promises": promises,
@@ -49,28 +49,14 @@ static func register(main) -> void:
 	lane.seen.connect(func(id: String) -> void: _seen(main, id))
 	lane.delegate_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
 	lane.decline_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))
-	main._calendar_panel.requests.booked.connect(func(id: String, date: Dictionary) -> void:
+	main._calendar_panel._grid.booked.connect(func(id: String, date: Dictionary) -> void:
 		var result := Audiences.book(main._state, main._state.player(), main._loader, id, date)
 		game["booking_for"] = ""
 		_answer(main, id, result)
 		_seen(main, id))
-	# V5.3-0 (b2): the Diary's request column, the lane's verbs beside the grid.
-	var column = main._calendar_panel.requests
-	column.focus_requested.connect(func(id: String) -> void: _open_booking(main, id))
-	column.delegate_requested.connect(func(id: String) -> void:
-		_seen(main, id)
-		_answer(main, id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
-	column.decline_requested.connect(func(id: String) -> void:
-		_seen(main, id)
-		_answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))
-	# A booking left without a day -- its Days pressed again, or the Diary closed
-	# under it -- ends the player's action as surely as a booking does.
-	column.unfocus_requested.connect(func(id: String) -> void:
-		game["booking_for"] = ""
-		_seen(main, id)
-		refresh(main))
+	# A Go left without a day -- the Diary closed under it -- ends the player's action
+	# as surely as a booking does.
 	main._windows.closed.connect(func(id: String) -> void:
-		# The booking ends with the Diary: its days no longer tinted, its Days up.
 		if id == "calendar" and String(game["booking_for"]) != "":
 			var was := String(game["booking_for"])
 			game["booking_for"] = ""
@@ -135,7 +121,8 @@ static func refresh(main) -> void:
 	if not live.has(String(game["booking_for"])):
 		game["booking_for"] = ""
 	game["lane"].show_requests(rows)
-	main._calendar_panel.requests.show_requests(rows, String(game["booking_for"]))
+	main._calendar_panel._grid.set_requests(rows)
+	main._calendar_panel.booking.request = String(game["booking_for"])
 	main._hud.title_bar.set_requests(Audiences.waiting_count(ns))
 	game["promises"].show_rows(given_lines(main), judged_rows(main))
 
@@ -158,10 +145,17 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"ask": PersonCard.object_text(loader, ns, String(request["object"]), request),
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
-		"by": Words.when(last), "party": PartyChip.of(loader, ns, String(request["person_id"])),
+		"by": Words.when(last), "called": _called(main, request), "party": PartyChip.of(loader, ns, String(request["person_id"])),
 		"price": Words.price_text(price, Feelings.of(ns, String(request["person_id"]))), "broken_word": price.has("broken_word"), "feel": Feelings.of(ns, String(request["person_id"])),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"],
 		"delegate_hint": Words.delegate_hint(answers["delegate"])}.merged(_call_answer(main, String(request["person_id"])))
+
+
+## B6: the month of a call made since the request came, 0 for none (a failed call leaves
+## the request waiting, by design: the card says so instead of saying nothing).
+static func _called(main, request: Dictionary) -> int:
+	var month := int(main._state.player().phone_calls.get(String(request["person_id"]), -1))
+	return month if month >= int(request["arrived_month"]) else 0
 
 
 ## The card's fourth answer: the sim's own refusal on it (spoken this month
@@ -337,9 +331,9 @@ static func _open_booking(main, request_id: String) -> void:
 		return
 	_games[main.get_instance_id()]["booking_for"] = request_id
 	main._windows.open("calendar")
-	main._calendar_panel.requests.show_days(Audiences.offered_dates(main._state, ns, request_id), main._state, main._loader)
+	main._calendar_panel.booking.show_days(Audiences.offered_dates(main._state, ns, request_id), main._state, main._loader)
 	refresh(main)
-	main._calendar_panel.requests.focus_booking(request_id)
+	main._calendar_panel.booking.focus(request_id)
 
 
 static func _answer(main, request_id: String, result: Dictionary) -> void:
