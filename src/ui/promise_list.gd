@@ -36,7 +36,7 @@ func show_rows(given: Array, judged: Array) -> void:
 	visible = not (given.is_empty() and judged.is_empty())
 	if not visible:
 		return
-	PanelKit.heading(self, tr("Your word"))
+	PanelKit.heading(self, tr("Words given"))  # theirs as well as the president's, since the deal
 	var host: Control = self
 	if given.size() + judged.size() > FOLD_AT:
 		var scroll := ScrollContainer.new()

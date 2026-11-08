@@ -63,6 +63,10 @@ func _init() -> void:
 	_finish()
 
 
+## A judged month with a date in it: a new game's clock stands at month 0 until it starts.
+const JUDGED := 24315
+
+
 func _state(nation: String):
 	return GameState.new_game(_loader, nation)
 
@@ -249,8 +253,10 @@ func _check_a_pledge_is_not_your_word() -> void:
 	var seat := FakeMain.new()
 	seat._state = state
 	seat._loader = _loader
-	if not AudienceDriver.given_lines(seat).is_empty():
-		_fail("the Your word list carries a pledge: %s" % [AudienceDriver.given_lines(seat)])
+	# Step 6: what they gave stands in the Diary's list, in their name and never as the president's.
+	var given: Array = AudienceDriver.given_lines(seat)
+	if given.size() != 1 or not String(given[0]).contains(who) or String(given[0]).contains(Strings.t("Your word to %s, due %s (their want: %s).").get_slice("%", 0)):
+		_fail("the Diary's list does not carry their pledge as theirs: %s" % [given])
 	var grid := DiaryGrid.new()
 	grid._state = state
 	grid._loader = _loader
@@ -267,7 +273,7 @@ func _check_a_pledge_is_not_your_word() -> void:
 	for verdict in [["kept", "Their word: %s kept it."], ["broken", "Their word: %s broke it."]]:
 		ns.commitments_judged.clear()
 		ns.commitments_judged.append({"kind": "pledge", "person_id": String(person.id), "object": "law:x",
-			"verdict": verdict[0], "judged_month": now})
+			"verdict": verdict[0], "judged_month": JUDGED})
 		var said := ""
 		for line in BriefingEffects.lines(state, _loader, {}):
 			said += String(line["text"]) + "|"
@@ -275,8 +281,12 @@ func _check_a_pledge_is_not_your_word() -> void:
 			_fail("briefing: a judged pledge reads as your word: '%s'" % said)
 		if not said.contains(Strings.t(verdict[1]) % who):
 			_fail("briefing: a judged pledge says nothing of %s's word: '%s'" % [who, said])
-		if not AudienceDriver.judged_rows(seat).is_empty():
-			_fail("the Your word list carries a judged pledge: %s" % [AudienceDriver.judged_rows(seat)])
+		# Step 6: their word stands on the Diary's record, in their name and never as the president's.
+		var record: Array = AudienceDriver.judged_rows(seat)
+		if record.size() != 1 or not String(record[0]["text"]).contains(who) or String(record[0]["text"]).contains(Strings.t("Your word to %s") % who):
+			_fail("the Diary's record does not carry their word as theirs: %s" % [record])
+		elif not String(record[0]["text"]).begins_with(Words.when(JUDGED)):
+			_fail("their word's verdict is not dated by its month: %s" % record[0]["text"])
 
 
 func _fail(message: String) -> void:

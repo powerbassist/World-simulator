@@ -14,6 +14,7 @@ const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Deal = preload("res://src/sim/deal.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
+const ClosureCard = preload("res://src/ui/closure_card.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const President = preload("res://src/sim/president.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
@@ -142,11 +143,57 @@ func _check_words() -> void:
 		_fail("the money's risk does not give both chances: '%s'" % risk)
 	if DealWords.risk({}) != "":
 		_fail("no money still reads a risk")
+	if risk.find("34") > risk.find("12"):
+		_fail("the money's two chances are the wrong way round: '%s'" % risk)
+	_check_a_firm_card()
+	_check_a_dated_vote()
+	_check_a_post_cost()
+	var row := {"person_id": _voter, "verdict": "kept"}
+	var kept := DealWords.owed_verdict(_main._loader, row)
+	row["verdict"] = "broken"
+	if not kept.contains("kept") or not DealWords.owed_verdict(_main._loader, row).contains("broke"):
+		_fail("a judged word reads the wrong way: '%s', '%s'" % [kept, DealWords.owed_verdict(_main._loader, row)])
 	var deal = _scene().deal
 	deal.show_card({"want": "w", "want_stake": "", "give": "g", "give_stake": "", "give_good": false, "grant_ok": false,
 		"grant_why": "Why not.", "grant_cost": "A price.", "bargain": "", "struck": false, "refuse": ""})
 	if _text("GrantCost") != "Why not.":
 		_fail("a refused Grant does not say why on its line: '%s'" % _text("GrantCost"))
+
+
+func _card(ask: Dictionary, offer: Dictionary) -> Dictionary:
+	return DealWords.card(_main._loader, _ns(), {"ask": ask, "offer": offer, "grant": {"ok": true, "why_not": ""}, "refuse": {},
+		"bargain": {"due_month": int(ask.get("smaller_due_month", 0)), "approaches": []}}, {}, "wants it", "executive")
+
+
+## A closing plant is paid now: the rescue's price on Grant, the buyer's on Bargain, no word.
+func _check_a_firm_card() -> void:
+	var rescue := {"id": "rescue", "kind": "rescue", "debt_eur_bn_per_year": 0.5, "months": 24, "jobs_lost": 0.0, "total_eur_bn": 1.0}
+	var buyer := {"id": "buyer", "kind": "buyer", "jobs_lost": 1000.0, "debt_eur_bn": 0.1, "sweetener_eur_bn": 0.2, "chance": 0.6, "months": 6}
+	var card := _card({"kind": "firm", "object": "firm:nobody", "closure_id": "c", "why_not": "", "rescue": rescue, "buyer": buyer}, {"kind": "silence", "months": 12})
+	if not String(card["grant_cost"]).contains(ClosureCard.money(rescue)[0]):
+		_fail("a firm's Grant does not say what the rescue costs: '%s'" % card["grant_cost"])
+	if not String(card["bargain"]).contains(ClosureCard.money(buyer)[0]):
+		_fail("a firm's Bargain does not say what the buyer costs: '%s'" % card["bargain"])
+	for key in ["grant_cost", "bargain"]:
+		if String(card[key]).contains("-1") or String(card[key]).contains(tr("Your word")):
+			_fail("a firm's card reads as a dated word: '%s'" % card[key])
+
+
+func _check_a_dated_vote() -> void:
+	var offer := {"kind": "vote", "law_id": "x", "seats": 16, "date": {"year": 2026, "month": 12, "day": 3}}
+	var stake := String(_card({"kind": "word", "object": "meter:x", "due_month": 24313, "smaller_due_month": 24325}, offer)["give_stake"])
+	var day: String = preload("res://src/ui/date_text.gd").day_month_year(3, 12, 2026)
+	if not stake.contains(day) or not stake.contains("16"):
+		_fail("a dated vote does not say its seats and day '%s': '%s'" % [day, stake])
+
+
+func _check_a_post_cost() -> void:
+	var removal := {"leader_id": _voter, "grudge_before": 0.0, "grudge_after": 0.5, "rebels": 1, "rebels_after": 3}
+	var cost := DealWords._post_cost(_main._loader, _ns(), removal)
+	if not cost.contains(_main._loader.person_name(_voter)) or not cost.contains("2 more"):
+		_fail("a post taken from a partner does not read its price: '%s'" % cost)
+	if not DealWords._post_cost(_main._loader, _ns(), {}).contains("free"):
+		_fail("a free portfolio reads as priced")
 
 
 func _check_offer_card() -> void:
@@ -216,6 +263,14 @@ func _check_owed() -> void:
 	var theirs := DealWords.owed_text(_main._loader, _ns(), President.owed(_ns())[0])
 	if not AudienceDriver.given_lines(_main).has(theirs):
 		_fail("what they owe is not in the Diary's list: %s" % [AudienceDriver.given_lines(_main)])
+	var owed: Dictionary = President.owed(_ns())[0]
+	var due := int(owed["due_month"])
+	_main._calendar_panel._grid.show_items(_main._state, _main._loader, [])
+	var marked := false
+	for entry in _main._calendar_panel._grid._entries((due - 1) / 12, (due - 1) % 12 + 1).get(1, []):
+		marked = marked or String(entry["text"]) == theirs
+	if not marked:
+		_fail("what they owe is not on its due date in the Diary")
 
 
 func _check_silence_and_refuse() -> void:
