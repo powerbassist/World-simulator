@@ -144,6 +144,12 @@ static func chance(rule: Dictionary, worst_fall: float, gap_pct: float) -> float
 	return minf(float(rule["monthly_chance"]) * fall_term * economy_term, 1.0)
 
 
+## This firm's closure while it waits for a first answer, or {}: the record itself, read only.
+static func announced(ns, company_id: String) -> Dictionary:
+	var row: Dictionary = (ns.companies.get(company_id, {}) as Dictionary).get("closure", {})
+	return row if String(row.get("status", "")) == ANNOUNCED else {}
+
+
 ## The closures waiting for an answer or a buyer, as copies for a panel to read.
 static func open(ns) -> Array:
 	var out: Array = []

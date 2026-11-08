@@ -157,6 +157,8 @@ func _run(regime: String, s: int, real_kind := "") -> Dictionary:
 			_book_person(state, ns, String(act["person_id"]))
 		var report: Dictionary = WorldMonth.tick_month(state, _loader, hook)
 		for row in report["audience_requests"]["arrived"]:
+			if _firm(row):
+				continue
 			if not (row.get("offer", {}) as Dictionary).is_empty():
 				r["offers_arrived"] += 1
 			var asker = _loader.person_by_id.get(String(row["person_id"]))
@@ -202,6 +204,8 @@ func _run(regime: String, s: int, real_kind := "") -> Dictionary:
 func _book(state, ns, cross := false) -> int:
 	var crossed := 0
 	for row in Audiences.pending(ns):
+		if _firm(row):
+			continue
 		var id := String(row["id"])
 		if cross and _holds_evidence(ns, String(row["person_id"])):
 			Audiences.decline(state, ns, _loader, id)
@@ -216,9 +220,14 @@ func _book(state, ns, cross := false) -> int:
 ## could be placed this month (the next month tries again).
 func _book_one(state, ns) -> String:
 	for row in Audiences.pending(ns):
-		if not _visitor(String(row["person_id"])) and _book_on_first_day(state, ns, String(row["id"])):
+		if not _visitor(String(row["person_id"])) and not _firm(row) and _book_on_first_day(state, ns, String(row["id"])):
 			return String(row["id"])
 	return ""
+
+
+## A chief's request brings no money and is no lever's: left to close unpriced.
+func _firm(row: Dictionary) -> bool:
+	return String(row["object"]).begins_with(AK.FIRM_PREFIX)
 
 
 ## c1c's S1 amendment (bands-v5.2.md "c1c", rule 1): after the act its counterpart

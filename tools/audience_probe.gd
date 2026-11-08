@@ -202,11 +202,14 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 			fire = _pack(state)
 		if regime == "A4":
 			for row in ns.audience_requests.duplicate():
-				if AK.OPEN.has(String(row.get("status", ""))):
+				if AK.OPEN.has(String(row.get("status", ""))) and not _firm(row):
 					var call := _phone_first(state, ns, String(row["person_id"]))
 					calls += 1 if bool(call.get("ok", false)) else 0
 					answered_by_phone += 1 if bool(call.get("success", false)) else 0
 		for row in Audiences.pending(ns):
+			# The regimes A1-A4 measure the domestic lane. A5 is the deal on the real road, chiefs included.
+			if _firm(row) and regime != "A5":
+				continue
 			var id := String(row["id"])
 			var visitor := _visitor(String(row["person_id"]))
 			if regime == "A3":
@@ -250,6 +253,8 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 		if book_all:
 			_fire_month(state, fire, held, month, refused_at, visitors)
 		for row in report["audience_requests"]["arrived"]:
+			if _firm(row):
+				continue
 			if _visitor(String(row["person_id"])):
 				visitors["arrivals"] += 1
 				continue
@@ -422,6 +427,10 @@ func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool, mi
 
 
 ## A visiting head (b3), not one of this nation's people.
+func _firm(row: Dictionary) -> bool:
+	return String(row["object"]).begins_with(AK.FIRM_PREFIX)
+
+
 func _visitor(pid: String) -> bool:
 	return not pid.begins_with("%s_" % PLAYER)
 

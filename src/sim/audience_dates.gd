@@ -20,7 +20,9 @@ static func offered(state, ns, row: Dictionary) -> Array[Dictionary]:
 		return out
 	var spans := []
 	var total := 0
-	for m in range(int(row["arrived_month"]) + 1, int(row["deadline_month"]) + 1):
+	# A chief's last month is the closure's due month, and the plant lands as it opens: a day
+	# in it would be an audience about a plant already gone.
+	for m in range(int(row["arrived_month"]) + 1, int(row["deadline_month"]) + (0 if String(row["object"]).begins_with(K.FIRM_PREFIX) else 1)):
 		var ym := _ym(m)
 		var days := Calendar.days_in_month(int(ym["year"]), int(ym["month"]))
 		spans.append([ym, days])
