@@ -22,6 +22,10 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
+## The blocs an address names before it counts the rest (the parent's ruling on #303: a speech
+## moves every bloc, and six names was the longest line on the page).
+const WHO_NAMED := 3
+
 const FOLD_META := "address_fold"
 const GO_META := "address_go"
 const STRIP_META := "address_strip"
@@ -68,7 +72,7 @@ static func build(list, box: Control, ns, law) -> void:
 	box.add_child(strip)
 	var moved: Array = moved_seats(est)
 	strip.show_lines(Strings.t("The division"), seats_text(est), float(int(moved[0]) - int(moved[1])),
-		EffectsStrip.who_text(est["shifts"]), _cost_text(float(est["worth"])))
+		who_line(est["shifts"]), _cost_text(float(est["worth"])))
 	var poll := PollStrip.narrowest(ns, String(law.id))
 	if not poll.is_empty():
 		PanelKit.plain_line(box, Strings.t("As of %s: %s.") % [PollStrip.arrived_text(poll["row"]), PollStrip.support_line(poll["ranges"])])
@@ -135,6 +139,18 @@ static func moved_seats(est: Dictionary) -> Array:
 static func seats_text(est: Dictionary) -> String:
 	var moved := moved_seats(est)
 	return delta_text(int(moved[0]), int(moved[1]))
+
+
+## Who it moves: the WHO_NAMED blocs moved most, largest first, then how many more.
+static func who_line(shifts: Dictionary) -> String:
+	var moved: Array = shifts.keys().filter(func(bloc) -> bool: return float(shifts[bloc]) != 0.0)
+	moved.sort_custom(func(a, b) -> bool: return absf(float(shifts[a])) > absf(float(shifts[b])))
+	var named := {}
+	for bloc in moved.slice(0, WHO_NAMED):
+		named[bloc] = shifts[bloc]
+	var rest: int = moved.size() - named.size()
+	var line := EffectsStrip.who_text(named)
+	return line if rest == 0 else "%s %s" % [line, Strings.tn("And %d more.", "And %d more.", rest) % rest]
 
 
 ## "+8 for, -11 against"; a division it leaves alone says so.
