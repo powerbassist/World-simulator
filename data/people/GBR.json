@@ -199,7 +199,7 @@
     },
     {
       "id": "GBR_beckwith",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.50,
       "name": "Desmond Beckwith",
       "kind": "politician",
       "traits": [
@@ -322,7 +322,7 @@
     },
     {
       "id": "GBR_greenaway",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.60,
       "name": "Letitia Greenaway",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -350,7 +350,7 @@
     },
     {
       "id": "GBR_harrington",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.60,
       "name": "Ivor Harrington",
       "kind": "politician",
       "traits": [
@@ -543,7 +543,7 @@
     },
     {
       "id": "GBR_ravensworth",
-      "start_regard_offset": -0.40,
+      "start_regard_offset": -0.70,
       "name": "Montague Ravensworth",
       "kind": "politician",
       "traits": [
@@ -697,7 +697,7 @@
     },
     {
       "id": "GBR_aldwyn",
-      "start_regard_offset": -0.40,
+      "start_regard_offset": -0.70,
       "name": "Cuthbert Aldwyn",
       "kind": "politician",
       "traits": [
@@ -758,7 +758,7 @@
     },
     {
       "id": "GBR_danvers",
-      "start_regard_offset": 0.25,
+      "start_regard_offset": 0.45,
       "name": "Imogen Danvers",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -964,7 +964,7 @@
     },
     {
       "id": "GBR_nethercott",
-      "start_regard_offset": 0.25,
+      "start_regard_offset": 0.55,
       "name": "Gwendolen Nethercott",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -1070,7 +1070,7 @@
     },
     {
       "id": "GBR_denby",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.35,
       "name": "Frederick Denby",
       "kind": "politician",
       "traits": [

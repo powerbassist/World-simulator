@@ -237,7 +237,7 @@
     },
     {
       "id": "DEU_claussen",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.40,
       "name": "Cornelius Claussen",
       "kind": "politician",
       "traits": [
@@ -498,7 +498,7 @@
     },
     {
       "id": "DEU_quast",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.40,
       "name": "Achim Quast",
       "kind": "politician",
       "traits": [
@@ -660,7 +660,7 @@
     },
     {
       "id": "DEU_ziegenhals",
-      "start_regard_offset": 0.25,
+      "start_regard_offset": 0.40,
       "name": "Gernot Ziegenhals",
       "kind": "politician",
       "traits": [
@@ -847,7 +847,7 @@
     },
     {
       "id": "DEU_kesselring",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.25,
       "name": "Achim Kesselring",
       "kind": "politician",
       "traits": [
@@ -970,7 +970,7 @@
     },
     {
       "id": "DEU_suhren",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.40,
       "name": "Silke Suhren",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -1109,7 +1109,7 @@
     },
     {
       "id": "DEU_frevert",
-      "start_regard_offset": 0.25,
+      "start_regard_offset": 0.20,
       "name": "Jörn Frevert",
       "kind": "politician",
       "traits": [

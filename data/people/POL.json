@@ -700,7 +700,7 @@
     },
     {
       "id": "POL_cybulski",
-      "start_regard_offset": -0.10,
+      "start_regard_offset": -0.35,
       "name": "Marek Cybulski",
       "kind": "politician",
       "traits": [
@@ -786,7 +786,7 @@
     },
     {
       "id": "POL_horodynski",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.65,
       "name": "Jan Horodyński",
       "kind": "politician",
       "traits": [
@@ -880,7 +880,7 @@
     },
     {
       "id": "POL_malinowski",
-      "start_regard_offset": 0.10,
+      "start_regard_offset": 0.15,
       "name": "Dariusz Malinowski",
       "kind": "politician",
       "traits": [
@@ -976,7 +976,7 @@
     },
     {
       "id": "POL_sadowski",
-      "start_regard_offset": 0.10,
+      "start_regard_offset": 0.15,
       "name": "Stanisław Sadowski",
       "kind": "politician",
       "traits": [
@@ -1093,7 +1093,7 @@
     },
     {
       "id": "POL_estko",
-      "start_regard_offset": 0.25,
+      "start_regard_offset": 0.55,
       "name": "Renata Estko",
       "kind": "politician",
       "voice": "politician_f_50",
@@ -1117,7 +1117,7 @@
     },
     {
       "id": "POL_galicinski",
-      "start_regard_offset": -0.25,
+      "start_regard_offset": -0.65,
       "name": "Zbigniew Galicinski",
       "kind": "politician",
       "traits": [
