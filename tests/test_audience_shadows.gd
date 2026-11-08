@@ -156,10 +156,6 @@ func _check_reason_words() -> void:
 ## The bargain's picker names both corrupt currencies, and each one's price is
 ## written beside it before the click.
 func _check_currencies() -> void:
-	# The deal's scene offers the three approaches, so the row that carries the currencies is
-	# drawn from the sim's own list here: its picker is what this check is about.
-	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
-	_scene().verbs.show_verbs(Levers.offered(_main._state, _main._state.player(), _main._loader, _session()), [], 3, {"now": now})
 	var bargain: Button = _scene().verbs.lever_button("bargain")
 	var pick: OptionButton = bargain.get_parent().find_child("Currency", false, false)
 	var spend: Label = bargain.get_parent().get_parent().get_child(bargain.get_parent().get_index() + 2)
@@ -177,13 +173,14 @@ func _check_currencies() -> void:
 		pick.item_selected.emit(at)
 		if spend.text == Words.spends_text({}, {}):
 			_fail("the %s currency reads as costing nothing: '%s'" % [currency, spend.text])
+		if not spend.text.contains("%"):
+			_fail("the %s currency's risk is not beside it: '%s'" % [currency, spend.text])
 		# c1c rule 2: a corrupt win buys no loyalty and eases no grudge, and says so.
 		if not spend.text.contains("buys the act, not the person"):
 			_fail("the %s currency does not say it buys the act, not the person: '%s'" % [currency, spend.text])
-	pick.select(0)
-	pick.item_selected.emit(0)
-	if spend.text.contains("buys the act"):
-		_fail("an honest favour says it buys the act, not the person: '%s'" % spend.text)
+	# The fourth approach is the corrupt one alone: the honest bargain did not come back with it.
+	if pick.item_count != SC.CURRENCY_EVIDENCE.size():
+		_fail("the corrupt approach lists %d currencies" % pick.item_count)
 
 
 ## Money taken settles the request with no deal: the strip must not claim one.

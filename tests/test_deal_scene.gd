@@ -15,6 +15,7 @@ const Bills = preload("res://src/sim/bills.gd")
 const Deal = preload("res://src/sim/deal.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
 const ClosureCard = preload("res://src/ui/closure_card.gd")
+const SC = preload("res://src/sim/shadow_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const President = preload("res://src/sim/president.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
@@ -43,6 +44,7 @@ func _process(_delta: float) -> bool:
 			_open(_voter)
 		6:
 			_check_offer_card()
+			_check_the_corrupt_approach()
 			_check_grant()
 		8:
 			_end_and_leave()
@@ -225,6 +227,37 @@ func _check_offer_card() -> void:
 	for lever in ["flatter", "friendship", "bargain"]:
 		if verbs.lever_button(lever) != null:
 			_fail("the scene still offers %s" % lever)
+
+
+## The parent's ruling on #311, the author's call: the corrupt bargain is a fourth approach, on
+## a person whose request came with money (rare, and never a principled person's), its risk
+## on the row; favour and vote trade do not come back with it.
+func _check_the_corrupt_approach() -> void:
+	var session := _session()
+	var row: Dictionary = {}
+	for candidate in _ns().audience_requests:
+		if String(candidate["id"]) == String(session["request_id"]):
+			row = candidate
+	var state = _main._state
+	var plain: Array = Deal.answers(state, _ns(), _main._loader, session)["bargain"]["approaches"]
+	if plain.any(func(r: Dictionary) -> bool: return String(r["lever"]) == "bargain"):
+		_fail("the corrupt bargain is open on a person who offered nothing")
+	row["offer"] = {"currency": "personal_wealth", "amount_eur_m": 2.0}
+	var approaches: Array = Deal.answers(state, _ns(), _main._loader, session)["bargain"]["approaches"]
+	var found: Array = approaches.filter(func(r: Dictionary) -> bool: return String(r["lever"]) == "bargain")
+	if found.size() != 1:
+		_fail("a person who came with money has no corrupt approach")
+	else:
+		for currency in found[0]["currencies"]:
+			if not SC.CURRENCY_EVIDENCE.has(String(currency["currency"])):
+				_fail("the fourth approach still sells %s" % currency["currency"])
+			if not currency.has("found_in_a_year") or not currency.has("found_in_a_year_without"):
+				_fail("the %s row has no risk on it" % currency["currency"])
+	var attempts := int(session["attempts_left"])
+	var refused: Dictionary = Deal.bargain(state, _ns(), _main._loader, session, "bargain", {"currency": "favour"})
+	if bool(refused["ok"]) or int(session["attempts_left"]) != attempts:
+		_fail("the fourth approach took a clean currency: %s" % [refused])
+	row.erase("offer")
 
 
 func _check_grant() -> void:

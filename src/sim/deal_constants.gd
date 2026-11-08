@@ -19,6 +19,8 @@ const OFFER_SILENCE := "silence"
 ## The three priced approaches (the spec's fold), the scene's one tension. A win is the smaller
 ## grant for the same offer. Flatter and friendship fold in as modifiers in a later PR.
 const APPROACHES := ["argue", "promise_date", "pressure"]
+## The fourth, on the corrupt currencies alone, and only where Deal says the person allows it.
+const CORRUPT_APPROACH := "bargain"
 
 ## A bill is asked for inside half a year: long enough to book a division.
 const LAW_MONTHS := 6

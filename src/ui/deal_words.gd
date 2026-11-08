@@ -45,6 +45,12 @@ static func risk(money: Dictionary) -> String:
 		Num.f(float(money.get("found_in_a_year", 0.0)) * 100.0, 0), Num.f(float(money.get("found_in_a_year_without", 0.0)) * 100.0, 0)]
 
 
+## A corrupt approach's risk, beside its price.
+static func act_risk(row: Dictionary) -> String:
+	return Strings.t("Found within a year: %s %% if you do this, %s %% if you do not.") % [
+		Num.f(float(row.get("found_in_a_year", 0.0)) * 100.0, 0), Num.f(float(row.get("found_in_a_year_without", 0.0)) * 100.0, 0)]
+
+
 ## What a person owes, in the Diary's list: a pledge on a bill, or their silence.
 static func owed_text(loader, ns, row: Dictionary) -> String:
 	var who: String = loader.person_name(String(row["person_id"]))

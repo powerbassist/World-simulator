@@ -117,9 +117,10 @@ static func offer_of(state, ns, loader, person_id: String) -> Dictionary:
 static func answers(state, ns, loader, session: Dictionary) -> Dictionary:
 	var why := _grant_reason(ns, session)
 	var approaches: Array = []
+	var open := _approaches(ns, session)
 	for row in Levers.offered(state, ns, loader, session):
-		if _approaches(session).has(String(row["lever"])):
-			approaches.append(row)
+		if open.has(String(row["lever"])):
+			approaches.append(_corrupt_row(state, ns, loader, session, row) if String(row["lever"]) == K.CORRUPT_APPROACH else row)
 	var grant_card := {"ok": why == "", "why_not": why}
 	if String(session.get("ask", {}).get("kind", "")) == K.ASK_POST:
 		grant_card["removal"] = Removal.price(state, ns, loader, String(session["ask"]["portfolio"]))
@@ -170,7 +171,7 @@ static func grant(state, ns, loader, session: Dictionary) -> Dictionary:
 ## One approach: Levers.attempt()'s result, and on a win {ask, offer} with the smaller grant
 ## written. A promise not believed still binds (the author's "Oui, parole donnée"), on no deal.
 static func bargain(state, ns, loader, session: Dictionary, approach: String, args := {}) -> Dictionary:
-	if not _approaches(session).has(approach):
+	if not _approaches(ns, session).has(approach) or (approach == K.CORRUPT_APPROACH and not Shadows.is_currency(String(args.get("currency", "")))):
 		return {"ok": false, "error": "not an approach", "success": false, "spent": {}, "effects": {}}
 	var result := Levers.attempt(state, ns, loader, session, approach, args)
 	if not bool(result.get("success", false)):
@@ -194,11 +195,30 @@ static func bargain(state, ns, loader, session: Dictionary, approach: String, ar
 
 # --- Helpers ------------------------------------------------------------------------------
 
-## The approaches this ask takes. A plant is paid for now, so there is no date to promise.
-static func _approaches(session: Dictionary) -> Array:
-	if String(session.get("ask", {}).get("kind", "")) != K.ASK_FIRM:
-		return K.APPROACHES
-	return K.APPROACHES.filter(func(lever: String) -> bool: return lever != "promise_date")
+## The approaches this ask takes. A plant is paid for now, so there is no date to promise. The
+## corrupt bargain joins them on a person whose request came with money: the rare draw, which
+## never falls on a principled person (the author's call: in ordinary audiences, rare).
+static func _approaches(ns, session: Dictionary) -> Array:
+	var out: Array = K.APPROACHES.duplicate()
+	if String(session.get("ask", {}).get("kind", "")) == K.ASK_FIRM:
+		out.erase("promise_date")
+	if not Shadows.offer(ns, session).is_empty():
+		out.append(K.CORRUPT_APPROACH)
+	return out
+
+
+## The bargain row with only its corrupt currencies, each with what doing it risks.
+static func _corrupt_row(state, ns, loader, session: Dictionary, row: Dictionary) -> Dictionary:
+	var out := row.duplicate()
+	var pid := String(session["person_id"])
+	out["currencies"] = []
+	for currency in row.get("currencies", []):
+		if Shadows.is_currency(String(currency["currency"])):
+			var kind := String(SC.CURRENCY_EVIDENCE[String(currency["currency"])])
+			(out["currencies"] as Array).append((currency as Dictionary).merged({
+				"found_in_a_year": _within_a_year(Exposure.hazard_if(state, ns, loader, kind, pid, SC.ACT_EVIDENCE)),
+				"found_in_a_year_without": _within_a_year(Exposure.hazard_if(state, ns, loader, kind, pid, 0.0))}))
+	return out
 
 
 ## A closing plant, with the two prices the card shows: {rescue, buyer}, rows of
