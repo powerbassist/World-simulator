@@ -36,6 +36,8 @@ const Trends = preload("res://src/ui/trends.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
+const Statute = preload("res://src/sim/statute.gd")
+const StatuteK = preload("res://src/sim/statute_constants.gd")
 const PollStrip = preload("res://src/ui/poll_strip.gd")
 const MeasurePolls = preload("res://src/sim/measure_polls.gd")
 
@@ -275,6 +277,43 @@ func _build_polls() -> void:
 	# The country's read: what the player has bought, and the tiers they can buy. A bill that
 	# has reached the order paper keeps its draft's key, the id it carries.
 	PollStrip.build(section, _state, _loader, _bill_key, _on_poll)
+	_build_whip_count(section)
+
+
+## V4.2's priced whip count stays (the parent's ruling on #304): the tiers read the country,
+## and this alone firms the Assembly's forecast for this bill. The sim's own price and refusal.
+func _build_whip_count(section: Control) -> void:
+	var whip := Button.new()
+	whip.name = "AssemblyPoll"  # i18n: ok a node name, found by tests
+	whip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	whip.text = tr("Commission an assembly poll — €%s k") % Num.f(StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_ASSEMBLY) * 1.0e6, 0)
+	if (_ns.poll_purchases.get(_bill_key, {}) as Dictionary).has(StatuteK.POLL_KIND_ASSEMBLY):
+		whip.disabled = true
+		whip.tooltip_text = tr("Commissioned — the figures it bought are fixed.")
+	else:
+		whip.pressed.connect(_on_whip)
+	section.add_child(whip)
+	# One line, filled only by a refusal: an empty label is no line at all.
+	var refusal := Label.new()
+	refusal.name = "RefusalLine"  # i18n: ok a node name, found by tests
+	refusal.hide()
+	section.add_child(refusal)
+
+
+func _on_whip() -> void:
+	# As _on_poll: a hidden panel's stale signal must not charge the discarded game.
+	if _state == null:
+		return
+	var before := Trends.snapshot_now(_state)
+	var result: Dictionary = Statute.buy_poll(_state, _ns, _bill_key, StatuteK.POLL_KIND_ASSEMBLY)
+	if bool(result.get("refused", false)):
+		var refusal: Label = _body.find_child("RefusalLine", true, false)
+		if refusal != null:
+			refusal.text = String(result.get("refusal", tr("Refused.")))
+			refusal.show()
+		return
+	polled.emit(before, tr("Commissioned an assembly poll: %s") % _bill_name())
+	_rebuild()
 
 
 func _on_poll(tier: String) -> void:

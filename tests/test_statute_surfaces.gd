@@ -234,10 +234,14 @@ func _run() -> void:
 	# V5.3 b: the briefing sells the tiers now (tests/test_poll_card.gd), and V4.2's two
 	# verbs are the sim's alone until they go, so they are bought through it here.
 	briefing.open_for_law(surtax, state, loader)
-	if _find_button(briefing, "assembly poll") != null or _find_button(briefing, "popular poll") != null:
-		_fail("the briefing still sells V4.2's polls beside the tiers")
+	if _find_button(briefing, "popular poll") != null:
+		_fail("the briefing still sells V4.2's popular poll beside the tiers")
 	var debt_before: float = ns.debt_eur_bn
-	Statute.buy_poll(state, ns, "high_earner_surtax", "assembly")
+	var assembly_btn := _find_button(briefing, "assembly poll")
+	if assembly_btn == null:
+		_fail("the briefing built no assembly poll button")
+	else:
+		_press(assembly_btn)
 	var poll_cost: float = ns.debt_eur_bn - debt_before
 	var expected_cost: float = StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_ASSEMBLY)
 	if absf(poll_cost - expected_cost) > 1e-9:
@@ -310,7 +314,7 @@ func _run() -> void:
 		_fail("src/sim reads poll_purchases outside the writer: %s" % ", ".join(readers))
 	# The UI half of the pin: the surfaces DO read it -- a pin that cannot
 	# fail when the reader disappears is decoration.
-	for path in ["res://src/ui/law_panel.gd"]:
+	for path in ["res://src/ui/briefing.gd", "res://src/ui/law_panel.gd"]:
 		if not FileAccess.get_file_as_string(path).contains("poll_purchases"):
 			_fail("%s no longer reads the purchase register -- the pins outlived the feature" % path)
 

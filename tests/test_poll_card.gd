@@ -21,6 +21,8 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Num = preload("res://src/ui/num.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Labels = preload("res://src/ui/labels.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
@@ -86,6 +88,7 @@ func _process(_delta: float) -> bool:
 			_press(_go())
 		7:
 			_check_the_press_charged_the_price()
+			_check_the_whip_count_is_still_sold()
 			_second_key = _main._law_panel._laws._shown[1].id
 			_third_key = _main._law_panel._laws._shown[2].id
 			_main._briefing.hide()
@@ -177,13 +180,40 @@ func _check_nothing_is_bought_yet() -> void:
 	var text := _text_in(_main._briefing)
 	if "No poll on this yet." not in text:
 		_fail("a bill with no poll does not say so: %s" % text)
-	for gone in ["assembly poll", "popular poll"]:
-		if gone in text:
-			_fail("V4.2's %s is still sold beside the tiers" % gone)
+	if "popular poll" in text:
+		_fail("V4.2's popular poll is still sold beside the tiers")
+	var words: Dictionary = PollStrip.free_words(_main._state, _main._loader, String(_law.id))
+	if words.size() != OpinionK.BLOC_KEYS.size():
+		_fail("the free read is not one word a bloc: %s" % [words])
+	for bloc in words:
+		if not String(words[bloc]) in [tr("For"), tr("Against"), tr("Unsure")] or String(words[bloc]) not in text:
+			_fail("the free read for %s is not its word on the page: %s" % [bloc, words[bloc]])
+	if PollStrip.lean_word(60.0) != tr("For") or PollStrip.lean_word(40.0) != tr("Against") or PollStrip.lean_word(50.0) != tr("Unsure"):
+		_fail("the words do not follow the split")
+	# A load brings a row's keys back sorted; the blocs keep their own order.
+	var line := PollStrip.support_line({"business": [1.0, 2.0], "workers": [3.0, 4.0]})
+	if line.find(Labels.bloc("workers")) > line.find(Labels.bloc("business")):
+		_fail("the poll's blocs follow the row's keys: %s" % line)
 	if _strip() == null:
 		_fail("no strip before the press")
 	if _all_in(_main._briefing, func(n: Node) -> bool: return n is Button and n.has_meta(PollStrip.CHIP_META)).size() != K.TIERS.size():
 		_fail("a chip per tier")
+
+
+## V4.2's priced whip count stays beside the tiers (the parent's ruling on #304).
+func _check_the_whip_count_is_still_sold() -> void:
+	var whip: Button = _main._briefing.find_child("AssemblyPoll", true, false)
+	if whip == null or whip.disabled:
+		_fail("the assembly poll is not for sale")
+		return
+	var key := String(_law.id)
+	whip.pressed.emit()
+	if not (_ns().poll_purchases.get(key, {}) as Dictionary).has("assembly"):
+		_fail("the whip count's press bought nothing")
+	# The pressed button's section is on its way out this frame; the rebuilt one is greyed.
+	var rebuilt := _all_in(_main._briefing, func(n: Node) -> bool: return n is Button and String(n.name) == "AssemblyPoll" and n.disabled)
+	if rebuilt.is_empty():
+		_fail("a bought whip count can be pressed again")
 
 
 func _check_the_strip_reads_the_tier(tier: String) -> void:
@@ -217,6 +247,10 @@ func _check_the_press_charged_the_price() -> void:
 	var row: Dictionary = MeasurePolls.bought(_ns(), String(_law.id))["quick"]
 	if "arrives %s" % PollStrip.arrived_text(row) not in text:
 		_fail("the briefing does not say when it arrives: %s" % text)
+	# QA's TAKE on #304: the date the player reads is the row's own due day.
+	var on: Dictionary = MeasurePolls.arrives_on(row)
+	if Calendar.day_number(int(on["year"]), int(on["month"]), int(on["day"])) != int(row["due_day"]):
+		_fail("the arrival date read is not the row's due day: %s against %d" % [on, row["due_day"]])
 	_chip("standard").pressed.emit()
 	if _go().disabled:
 		_fail("a tier not bought is down")
