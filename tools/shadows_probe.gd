@@ -157,6 +157,8 @@ func _run(regime: String, s: int, real_kind := "") -> Dictionary:
 			_book_person(state, ns, String(act["person_id"]))
 		var report: Dictionary = WorldMonth.tick_month(state, _loader, hook)
 		for row in report["audience_requests"]["arrived"]:
+			if _firm(row):
+				continue
 			if not (row.get("offer", {}) as Dictionary).is_empty():
 				r["offers_arrived"] += 1
 			var asker = _loader.person_by_id.get(String(row["person_id"]))
@@ -202,6 +204,8 @@ func _run(regime: String, s: int, real_kind := "") -> Dictionary:
 func _book(state, ns, cross := false) -> int:
 	var crossed := 0
 	for row in Audiences.pending(ns):
+		if _firm(row):
+			continue
 		var id := String(row["id"])
 		if cross and _holds_evidence(ns, String(row["person_id"])):
 			Audiences.decline(state, ns, _loader, id)
@@ -216,9 +220,14 @@ func _book(state, ns, cross := false) -> int:
 ## could be placed this month (the next month tries again).
 func _book_one(state, ns) -> String:
 	for row in Audiences.pending(ns):
-		if not _visitor(String(row["person_id"])) and _book_on_first_day(state, ns, String(row["id"])):
+		if not _visitor(String(row["person_id"])) and not _firm(row) and _book_on_first_day(state, ns, String(row["id"])):
 			return String(row["id"])
 	return ""
+
+
+## A chief's request brings no money and is no lever's: left to close unpriced.
+func _firm(row: Dictionary) -> bool:
+	return String(row["object"]).begins_with(AK.FIRM_PREFIX)
 
 
 ## c1c's S1 amendment (bands-v5.2.md "c1c", rule 1): after the act its counterpart
@@ -227,7 +236,7 @@ func _book_one(state, ns) -> String:
 ## requests is booked on its first free day ...
 func _book_person(state, ns, pid: String) -> void:
 	for row in Audiences.pending(ns):
-		if String(row["person_id"]) == pid:
+		if String(row["person_id"]) == pid and not _firm(row):
 			_book_on_first_day(state, ns, String(row["id"]))
 
 
@@ -421,7 +430,10 @@ func _summarize(rows: Array) -> Dictionary:
 				# #170's call 1 (Gameplay #171): a favour is found, less often than party money.
 				out["bands"]["B6_once_favour_above_0_below_party_money"] = float(rates[kind]) > 0.0 and float(rates[kind]) < float(rates["party_money"])
 				continue
-			out["bands"]["B6_once_%s_10_30" % kind] = float(rates[kind]) >= 0.10 and float(rates[kind]) <= 0.30
+			# The author's decision (2026-11-08, V5.3 full-scale start regard): the diverted-budget
+			# ceiling is 33 %, "real enemies have a price"; the other currencies stay at 30 %.
+			var ceiling := 0.33 if kind == "diverted_budget" else 0.30
+			out["bands"]["B6_once_%s_10_%d" % [kind, int(round(ceiling * 100.0))]] = float(rates[kind]) >= 0.10 and float(rates[kind]) <= ceiling
 		out["bands"]["B6_order"] = rates["favour"] < rates["party_money"] and rates["party_money"] < rates["personal_wealth"] \
 			and rates["personal_wealth"] < rates["diverted_budget"]
 		var per_term := float(out["S1"]["offers_per_term"])

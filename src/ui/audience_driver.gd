@@ -10,6 +10,7 @@ extends RefCounted
 ## card never holds the clock; the scene does, as a summit does -- and the scene's
 ## session, Levers', is audience_talks.gd's.
 
+const PollCard = preload("res://src/ui/poll_card.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
@@ -172,6 +173,9 @@ static func _call_answer(main, pid: String) -> Dictionary:
 ## The diary's outcome, its UI half: the scene for an audience, else the news card
 ## and, for a visit that landed, the summit (V2.4a / V2.4b).
 static func on_appointment(main, outcome: Dictionary) -> void:
+	if outcome.has("poll"):
+		PollCard.arrived(main, outcome["poll"])
+		return
 	var entry: Dictionary = outcome["entry"]
 	if String(entry.get("kind", "")) == CalendarK.KIND_AUDIENCE:
 		open_scene(main, String(entry.get("action_id", "")))
@@ -196,6 +200,8 @@ static func open_scene(main, request_id: String) -> void:
 ## promises the month judged, a card each.
 static func after_month(main, report: Dictionary) -> void:
 	refresh(main)
+	for row in report.get("polls", []):
+		PollCard.arrived(main, row)
 	AudienceTalks.card_verdicts(main, report)
 	# The author's "Ralentir à l'arrivée" (2026-10-24): a month that brings a
 	# request drops the clock to speed 1. Not a stop -- a request never holds --

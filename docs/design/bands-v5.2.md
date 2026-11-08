@@ -728,7 +728,7 @@ want, against one) × the channel (audience, phone call).
 | Share of cells in which each lever has the best net value | **at least 5 %** for every lever |
 | The denominator of both shares, per lever | the cells **in which that lever is offered**: the whole grid for five levers, and only the friend-or-closer half for appeal to friendship, which is not offered below friend |
 | The channel (amended 2026-10-24, see below): audiences held by a player who phones every open request once a month before booking (`audience_probe` regime A4) | **B2's audiences row still holds**: 12 to 30 held a term, at least 4 in months 1–20 |
-| The answers to a request — book, delegate, refuse (decline and unanswered, one answer by the tie rule) — scored under the declared player model ("B5 amendment" below: two intents per request, a diary day at 1.05 of one ask won, the real three-attempt audience) | book **at most 50 %** of all scored cases; within "will serve", book and delegate **each at least 5 %**; within "won't serve", refuse **at least 5 %** |
+| The answers to a request — book, delegate, refuse (decline and unanswered, one answer by the tie rule) — scored under the declared player model ("B5 amendment" below: two intents per request, a diary day at 1.05 of one ask won, the real three-attempt audience) | book **at most 50 %** of all scored cases; within "will serve", book **at least 5 %**, and delegate **at least 5 %** over the requests with no free day (amended 2026-11-08, below); within "won't serve", refuse **at least 5 %** |
 
 - **Net value** is success × the ask's gain minus the expected cost, in the
   registers the lever spends. The probe's header states the exchange weights
@@ -770,6 +770,13 @@ want, against one) × the channel (audience, phone call).
     shares. Each lever's denominator is the cells, in each channel, where that
     lever is offered: a lever withheld by phone under 0.15 is not counted
     there. This is friendship's rule, applied to the floor.
+
+### B5 amendment (2026-11-08): the deal's Grant and its three approaches
+
+The parent's rulings on #301's calls, read against [[audiences-model]] section 14.
+
+- **Delegate's floor moves.** "Within will serve, delegate at least 5 %" predates a Grant that cannot fail: a player who will serve books whenever a day is free, so the floor read about 0 by construction. It is now read over the A2F requests that found no free day, where Book is not an answer and only Delegate and Refuse compete. A run where no request lacks a day reads 0 and fails, rather than passing empty. Measured at main e0cd8f81: 8 of 33 requests, Delegate best in all 8, PASS.
+- **The lever band over three approaches, UNMEASURED.** "None best over 40 %" was declared over six levers and can fail over three by arithmetic. For the deal's three approaches: **none best over 60 %, each best in at least 10 %**. It stays UNMEASURED until flatter and friendship exist as modifiers, and the 40 % row above stands for the grid it was measured on.
 
 ### B5 amendment (2026-10-24): the price of a diary day
 
@@ -1213,7 +1220,7 @@ Over 200 seeded runs (salts), France, otherwise idle.
 | Regime | Declared |
 |---|---|
 | Corruption offers reaching the president per term | **2 to 6** |
-| **Once:** one corrupt act at month 6, any currency — exposed by month 60 | **10 % to 30 %** of runs |
+| **Once:** one corrupt act at month 6, any currency — exposed by month 60 | **10 % to 30 %** of runs (diverted budget **10 % to 33 %**, the author's decision of 2026-11-08: the full-scale starting regard makes more people rivals, and "real enemies have a price") |
 | **Always:** every offer accepted — exposed by month 60 | **at least 80 %** of runs |
 | **Always:** median months to the first exposure | **at most 24** |
 | Exposure odds by currency, for the same act size | **favours < party money < personal wealth < diverted budget** |

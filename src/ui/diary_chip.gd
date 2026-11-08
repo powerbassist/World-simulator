@@ -58,7 +58,7 @@ func fill(offer: Dictionary, row: Dictionary) -> void:
 	if party != "":
 		who = "%s (%s)" % [who, party]
 	var wants := String(row.get("wants", ""))
-	var day := DateText.day_month_year(int(date["day"]), int(date["year"]), int(date["month"]))
+	var day := DateText.day_month_year(int(date["day"]), int(date["month"]), int(date["year"]))
 	var free := bool(date.get("free", true))
 	disabled = not free
 	# Disabled, the press goes to the cell behind it, which lists the day and why.

@@ -66,7 +66,7 @@ the bond rule. Per route, in the order press, courts, auditors, turned:
   president's rows the route can reach. A turned person reaches only rows whose
   person is now a rival or an enemy and still covered.
 - **modifier:** the press rises with the share of hostile press owners (rapport
-  below 0, or a grudge at the brief gate); the courts read judicial independence
+  below 0, or a grudge at the brief gate, and not under a deal's silence); the courts read judicial independence
   on its 0-100 scale, divided by 100, so a captured court prosecutes nobody
   (spec C7); the auditors and a turned person, 1.
 - **A hit** moves the heaviest reachable row to `exposures` and arms its scandal

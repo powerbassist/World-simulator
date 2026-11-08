@@ -100,6 +100,9 @@ const DELEGATE_KEPT_MAX := 0.95
 const DELEGATE_WHY_OFFICE := "office"
 const DELEGATE_WHY_MEASURE := "measure"
 const DELEGATE_WHY_PROGRAMME := "own_programme"
+## A plant is the president's to rescue, and a development fund the president's to open.
+const DELEGATE_WHY_FIRM := "firm"
+const DELEGATE_WHY_REGION := "region"
 ## The parent's call on #235, no rapport farm. A word only the minister kept (the
 ## want still unserved) earns the president half of a served word's +0.10
 ## (lever_constants DELEGATED_KEPT_RAPPORT): the minister takes the other half of
@@ -133,6 +136,10 @@ const STATUS_DECLINED := "declined"
 const STATUS_LAPSED := "lapsed"
 const STATUS_SETTLED := "settled"
 const STATUS_PROMISED := "promised"
+## A chief's request whose closure stopped waiting for an answer: unpriced (AudienceLane).
+const STATUS_OVERTAKEN := "overtaken"
+## A chief's request names the firm: `firm:<company id>` (AudienceTriggers.chiefs).
+const FIRM_PREFIX := "firm:"
 
 ## The open statuses: a request in the lane or in the diary.
 const OPEN := [STATUS_PENDING, STATUS_BOOKED]

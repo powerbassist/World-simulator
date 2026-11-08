@@ -20,8 +20,10 @@ extends RefCounted
 ## what the person owes (`pledge`, `silence`), each carrying `deal`, the request's id.
 ## CommitmentJudge judges them at their dates and lets each release the other.
 ##
-## WHAT IS NOT HERE (each named in the PR): firm and region asks, since no want names one yet;
-## flatter and friendship as modifiers, with the lever bands re-measured on three approaches;
+## A CLOSING PLANT is the one ask besides a post that is paid now: Grant is the rescue and the
+## smaller grant the buyer, so no word is written and a dated promise is not an approach.
+##
+## WHAT IS NOT HERE (each named in the PR): flatter and friendship as modifiers, with the lever bands re-measured on three approaches;
 ## a phone win still settles with no ask and no offer, B5's channel row unchanged.
 ##
 ## `answers()`, `ask_of()` and `offer_of()` write nothing. Read them on a redraw, not every frame:
@@ -35,6 +37,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
+const Closures = preload("res://src/sim/closures.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
@@ -66,6 +69,8 @@ static func open(state, ns, loader, request_id: String) -> Dictionary:
 static func ask_of(state, ns, loader, row: Dictionary) -> Dictionary:
 	var now := _now(state)
 	var object := String(row.get("object", ""))
+	if object.begins_with(AK.FIRM_PREFIX):
+		return _firm_ask(state, ns, loader, object)
 	if object.begins_with("office:portfolio:"):
 		var portfolio := object.substr("office:portfolio:".length())
 		var party := President.party_id_of(ns, loader, String(row.get("person_id", "")))
@@ -113,7 +118,7 @@ static func answers(state, ns, loader, session: Dictionary) -> Dictionary:
 	var why := _grant_reason(ns, session)
 	var approaches: Array = []
 	for row in Levers.offered(state, ns, loader, session):
-		if K.APPROACHES.has(String(row["lever"])):
+		if _approaches(session).has(String(row["lever"])):
 			approaches.append(row)
 	var grant_card := {"ok": why == "", "why_not": why}
 	if String(session.get("ask", {}).get("kind", "")) == K.ASK_POST:
@@ -145,6 +150,10 @@ static func grant(state, ns, loader, session: Dictionary) -> Dictionary:
 		var seated := Removal.reassign(state, loader, String(ask["portfolio"]), String(ask["party_id"]))
 		if not bool(seated.get("ok", false)):
 			return {"ok": false, "error": String(seated.get("error", ""))}
+	elif String(ask["kind"]) == K.ASK_FIRM:
+		var rescued := Closures.answer(state, ns, loader, String(ask["closure_id"]), "rescue")
+		if not bool(rescued.get("ok", false)):
+			return {"ok": false, "error": String(rescued.get("reason", ""))}
 	else:
 		if Levers.word_given(ns, pid, "promise_date", String(ask["object"])) != "":
 			_hold_to(ns, pid, String(ask["object"]), int(ask["due_month"]))
@@ -161,13 +170,18 @@ static func grant(state, ns, loader, session: Dictionary) -> Dictionary:
 ## One approach: Levers.attempt()'s result, and on a win {ask, offer} with the smaller grant
 ## written. A promise not believed still binds (the author's "Oui, parole donnée"), on no deal.
 static func bargain(state, ns, loader, session: Dictionary, approach: String, args := {}) -> Dictionary:
-	if not K.APPROACHES.has(approach):
+	if not _approaches(session).has(approach):
 		return {"ok": false, "error": "not an approach", "success": false, "spent": {}, "effects": {}}
 	var result := Levers.attempt(state, ns, loader, session, approach, args)
 	if not bool(result.get("success", false)):
 		return result
 	var ask: Dictionary = session["ask"]
 	var pid := String(session["person_id"])
+	if String(ask["kind"]) == K.ASK_FIRM:
+		Closures.answer(state, ns, loader, String(ask["closure_id"]), "buyer")
+		result["ask"] = ask
+		result["offer"] = _strike(state, ns, loader, session, AK.STATUS_SETTLED)
+		return result
 	# A promise's own spend is the word. A word given earlier in this scene and not believed
 	# then is taken up now: one word on one ask.
 	if Levers.word_given(ns, pid, "promise_date", String(ask["object"])) == "":
@@ -179,6 +193,26 @@ static func bargain(state, ns, loader, session: Dictionary, approach: String, ar
 
 
 # --- Helpers ------------------------------------------------------------------------------
+
+## The approaches this ask takes. A plant is paid for now, so there is no date to promise.
+static func _approaches(session: Dictionary) -> Array:
+	if String(session.get("ask", {}).get("kind", "")) != K.ASK_FIRM:
+		return K.APPROACHES
+	return K.APPROACHES.filter(func(lever: String) -> bool: return lever != "promise_date")
+
+
+## A closing plant, with the two prices the card shows: {rescue, buyer}, rows of
+## Closures.answers(). `why_not` once the closure has stopped waiting.
+static func _firm_ask(state, ns, loader, object: String) -> Dictionary:
+	var closure := Closures.announced(ns, object.substr(AK.FIRM_PREFIX.length()))
+	if closure.is_empty():
+		return {"kind": K.ASK_FIRM, "object": object, "closure_id": "", "why_not": "The plant is no longer waiting for an answer."}
+	var ask := {"kind": K.ASK_FIRM, "object": object, "closure_id": String(closure["id"]), "why_not": ""}
+	for answer in Closures.answers(state, ns, loader, String(closure["id"])):
+		if String(answer["id"]) == "rescue" or String(answer["id"]) == "buyer":
+			ask[String(answer["id"])] = answer
+	return ask
+
 
 ## Why Grant is closed, "" when it is open. Spent attempts do not close it: three failures
 ## leave the full price on the table.

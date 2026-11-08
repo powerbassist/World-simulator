@@ -68,7 +68,11 @@ func _init() -> void:
 func _check_leaf_property() -> void:
 	_check_preloads("characters.gd", [
 		"character_constants.gd", "character_act_constants.gd",
-		"government.gd", "legislature.gd", "staff.gd", "character_seed.gd", "president.gd",
+		"government.gd", "legislature.gd", "staff.gd", "character_seed.gd", "president.gd", "want_terms.gd",
+	])
+	# Split out of characters.gd at its line cap, so held to more than it: constants alone.
+	_check_preloads("want_terms.gd", [
+		"character_constants.gd", "character_act_constants.gd", "region_fund_constants.gd",
 	])
 	# One hop deeper, by the same rule: the new game's arithmetic reads the president's
 	# leaf and the government's distance, no system of the month.

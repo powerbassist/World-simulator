@@ -400,7 +400,7 @@ func _ready() -> void:
 	# run_proposal() from the briefing's own verb, so the path below is still
 	# the one propose path in the game.
 	_law_panel.brief_requested.connect(func(law):
-		_briefing.open_for_law(law, _state, _loader)
+		_briefing.open_for_law(law, _state, _loader, _law_panel._laws.grade(law))
 		_briefing.show()
 	)
 	_law_panel.proposed.connect(func(before, law_name, result):

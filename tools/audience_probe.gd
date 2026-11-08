@@ -103,6 +103,7 @@ const LW = preload("res://tools/lever_weights.gd")
 const DealK = preload("res://src/sim/deal_constants.gd")
 const Deal = preload("res://src/sim/deal.gd")
 const ActK = preload("res://src/sim/character_act_constants.gd")
+const SC = preload("res://src/sim/shadow_constants.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
@@ -152,10 +153,10 @@ func _init() -> void:
 		var shares: Dictionary = out["b5_answers"]["shares"]
 		out["bands"]["B5_answers_book_at_most_50pct"] = float(shares["all"]["book"]) <= 0.50
 		out["bands"]["B5_answers_will_serve_book_5pct"] = float(shares["will_serve"]["book"]) >= 0.05
-		out["bands"]["B5_answers_will_serve_delegate_5pct"] = float(shares["will_serve"]["delegate"]) >= 0.05
+		out["bands"]["B5_answers_will_serve_delegate_5pct"] = float(out["b5_answers"]["no_free_day"]["will_serve_delegate"]) >= 0.05
 		out["bands"]["B5_answers_wont_serve_refuse_5pct"] = float(shares["wont_serve"]["refuse"]) >= 0.05
 	if deal:
-		_deal_tally = {"held": 0, "granted": 0, "refused_grant": {}, "asks": {}, "offers": {}, "kept": 0, "broken": 0, "void": 0, "briefs": 0, "silent_at_brief_gate": 0}
+		_deal_tally = {"held": 0, "granted": 0, "refused_grant": {}, "asks": {}, "offers": {}, "kept": 0, "broken": 0, "void": 0, "briefs": 0, "silent_at_brief_gate": 0, "press_silent_months": 0, "press_silence_held": 0}
 		out["a5_deal"] = _run("A5")
 		out["a5_deal"]["tally"] = _deal_tally
 		_deal_tally = {}
@@ -176,6 +177,7 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 	var calls := 0
 	var answered_by_phone := 0
 	var b5_requests: Array = []
+	var no_free_day := {}
 	var state = GameState.new_game(_loader, PLAYER)
 	var ns = state.player()
 	if draw_seed != 0:
@@ -198,15 +200,20 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 		state.month = i % 12 + 1
 		state.day = 1
 		var fire: Array = []
+		if regime == "A5":
+			_book_firms(state, ns)
 		if book_all:
 			fire = _pack(state)
 		if regime == "A4":
 			for row in ns.audience_requests.duplicate():
-				if AK.OPEN.has(String(row.get("status", ""))):
+				if AK.OPEN.has(String(row.get("status", ""))) and not _firm(row):
 					var call := _phone_first(state, ns, String(row["person_id"]))
 					calls += 1 if bool(call.get("ok", false)) else 0
 					answered_by_phone += 1 if bool(call.get("success", false)) else 0
 		for row in Audiences.pending(ns):
+			# The regimes A1-A4 measure the domestic lane. A5 is the deal on the real road, chiefs included.
+			if _firm(row) and regime != "A5":
+				continue
 			var id := String(row["id"])
 			var visitor := _visitor(String(row["person_id"]))
 			if regime == "A3":
@@ -231,6 +238,7 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 						visitors["unplaceable"] += 1
 					else:
 						unplaceable += 1
+						no_free_day[id] = true
 						if bool(answers["delegate"]["ok"]) and bool(answers["decline"]["ok"]):
 							unplaceable_offered += 1
 					Audiences.delegate(state, ns, _loader, id)
@@ -247,9 +255,12 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 			for row in President.owed(ns):
 				var gated: bool = String(row["kind"]) == "silence" and float(ns.person_grudges.get(String(row["person_id"]), 0.0)) >= ActK.GRUDGE_BRIEF_THRESHOLD
 				_deal_tally["silent_at_brief_gate"] += 1 if gated else 0
+				_tally_press_silence(ns, row)
 		if book_all:
 			_fire_month(state, fire, held, month, refused_at, visitors)
 		for row in report["audience_requests"]["arrived"]:
+			if _firm(row):
+				continue
 			if _visitor(String(row["person_id"])):
 				visitors["arrivals"] += 1
 				continue
@@ -315,8 +326,21 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 	if draw_seed != 0:
 		result["arrival_months"] = arrivals.map(func(a) -> int: return int(a[0]))
 	if regime == "A2F":
+		for r in b5_requests:
+			r["no_free_day"] = no_free_day.has(String(r["id"]))
 		result["b5_requests"] = b5_requests
 	return result
+
+
+## A press owner's silence this month, and whether it is holding them off the hostile count:
+## cold or grudging, as Exposure reads it, and silent.
+func _tally_press_silence(ns, row: Dictionary) -> void:
+	var pid := String(row["person_id"])
+	if String(row["kind"]) != "silence" or String(_loader.person_by_id[pid].kind) != "press_owner":
+		return
+	_deal_tally["press_silent_months"] += 1
+	if President.rapport(ns, pid) < 0.0 or float(ns.person_grudges.get(pid, 0.0)) >= SC.PRESS_GRUDGE_HOSTILE:
+		_deal_tally["press_silence_held"] += 1
 
 
 ## One arriving request, as B5's answers row reads it: the person's cell, the
@@ -327,7 +351,7 @@ func _b5_capture(ns, row: Dictionary, month: int) -> Dictionary:
 	var person = _loader.person_by_id[pid]
 	var snub: bool = person.traits.has("vain") or String(row["object"]).begins_with("office:")
 	return {
-		"person_id": pid, "object": String(row["object"]), "arrival_month": month,
+		"id": String(row["id"]), "person_id": pid, "object": String(row["object"]), "arrival_month": month,
 		"due_loop_month": month + 1 + CalK.BOOKING_HORIZON_MONTHS,
 		"band": President.knowledge_band(ns, pid),
 		"cell": {
@@ -359,7 +383,23 @@ func _b5_answers(requests: Array) -> Dictionary:
 	out["diary_day"] = LW.DIARY_DAY
 	out["realized_kept_share"] = float(kept) / maxf(1.0, float(requests.size()))
 	out["rows"] = requests
+	out["no_free_day"] = _b5_no_free_day(requests)
 	return out
+
+
+## The parent's ruling on #301's first call: "within will serve, delegate at least 5 %" is
+## read over the requests with no free day. Book is not an answer there, so only Delegate and
+## Refuse compete; a Grant that cannot fail left the floor nothing to read over the rest.
+## After _b5_table, whose non-mix pass writes each row's will_serve values. No such request
+## reads 0, so an A2F whose diary never fills fails the band rather than passing it empty.
+func _b5_no_free_day(requests: Array) -> Dictionary:
+	var cases := 0
+	var delegate := 0
+	for r in requests:
+		if bool(r["no_free_day"]):
+			cases += 1
+			delegate += 1 if float(r["will_serve"]["delegate"]) >= float(r["will_serve"]["refuse"]) - 0.000000001 else 0
+	return {"requests": cases, "will_serve_delegate": float(delegate) / maxf(1.0, float(cases))}
 
 
 ## {shares: {all, will_serve, wont_serve}: {book, delegate, refuse}} -- each the
@@ -422,6 +462,21 @@ func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool, mi
 
 
 ## A visiting head (b3), not one of this nation's people.
+## A5's player puts a closing plant ahead of the month's diary. A chief offers one month only,
+## the month before the plant lands, and behind _pack's visits and laws no day of it stays free
+## (measured: all 8 went to a minister).
+func _book_firms(state, ns) -> void:
+	for row in Audiences.pending(ns):
+		if _firm(row):
+			for d in Audiences.offered_dates(state, ns, String(row["id"])):
+				if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, String(row["id"]), d)["ok"]):
+					break
+
+
+func _firm(row: Dictionary) -> bool:
+	return String(row["object"]).begins_with(AK.FIRM_PREFIX)
+
+
 func _visitor(pid: String) -> bool:
 	return not pid.begins_with("%s_" % PLAYER)
 

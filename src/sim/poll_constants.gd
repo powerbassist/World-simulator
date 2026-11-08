@@ -14,6 +14,10 @@ const TIERS := {
 ## How far the printed centre may stand from the truth, as a share of the margin. Under 1, so
 ## the range always brackets the truth: the band, by construction.
 const NOISE_SHARE := 0.8
+## How long a tier's poll on a measure stands before it can be bought again, in months. A
+## STAND-IN (the parent's ruling on #304): "bought once" had no end, and a poll two years old
+## says nothing about the country now.
+const REPOLL_MONTHS := 12
 ## A tax change as a measure: `tax:<key>:up` or `tax:<key>:down`. It has no law's position, so
 ## each way stands here: a rise reads left of centre, a cut right. A STAND-IN.
 const TAX_PREFIX := "tax:"

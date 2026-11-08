@@ -228,7 +228,7 @@ static func _validate_want(w, wpath: String, filename: String, errors: Array[Str
 	var family := object.split(":")[0] if object.contains(":") else ""
 
 	if not CharacterK.WANT_STANCES.has(family):
-		errors.append("%s: %s object '%s' has no known want family (programme:/office:/meter:)" % [
+		errors.append("%s: %s object '%s' has no known want family (programme:/office:/meter:/region:)" % [
 			filename, wpath, object])
 		return
 	if not (CharacterK.WANT_STANCES[family] as Array).has(stance):
