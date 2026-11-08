@@ -21,6 +21,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Num = preload("res://src/ui/num.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Words = preload("res://src/ui/lever_words.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Click = preload("res://tests/click.gd")
@@ -89,6 +90,7 @@ func _process(_delta: float) -> bool:
 		7:
 			_check_the_press_charged_the_price()
 			_check_the_whip_count_is_still_sold()
+			_check_a_bought_tier_opens_again()
 			_second_key = _main._law_panel._laws._shown[1].id
 			_third_key = _main._law_panel._laws._shown[2].id
 			_main._briefing.hide()
@@ -214,6 +216,23 @@ func _check_the_whip_count_is_still_sold() -> void:
 	var rebuilt := _all_in(_main._briefing, func(n: Node) -> bool: return n is Button and String(n.name) == "AssemblyPoll" and n.disabled)
 	if rebuilt.is_empty():
 		_fail("a bought whip count can be pressed again")
+
+
+## The parent's ruling on #304: a tier opens again after REPOLL_MONTHS, and the strip says when.
+func _check_a_bought_tier_opens_again() -> void:
+	var row: Dictionary = MeasurePolls.bought(_ns(), String(_law.id))["quick"]
+	_chip("quick").pressed.emit()
+	if not _go().disabled:
+		_fail("a tier bought this month can be bought again")
+	var open_on: int = MeasurePolls.next_open_month(_ns(), String(_law.id), "quick")
+	if Words.when(open_on) not in _strip()._when.text:
+		_fail("the strip does not say when the tier opens: %s" % _strip()._when.text)
+	row["month"] = int(row["month"]) - K.REPOLL_MONTHS
+	_chip("quick").pressed.emit()
+	if _go().disabled:
+		_fail("a tier past its span stays closed")
+	row["month"] = int(row["month"]) + K.REPOLL_MONTHS
+	_chip("quick").pressed.emit()
 
 
 func _check_the_strip_reads_the_tier(tier: String) -> void:

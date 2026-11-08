@@ -18,6 +18,7 @@ const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const Words = preload("res://src/ui/lever_words.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 
 const TIER_NAME := {
@@ -54,7 +55,7 @@ static func build(box: Control, state, loader, key: String, commission: Callable
 	var shown: String = _picked.get(key, K.TIERS.keys()[0])
 	var show := func(tier: String) -> void:
 		_picked[key] = tier
-		_fill(strip, go, ns, key, tier)
+		_fill(strip, go, ns, key, tier, int(state.year) * 12 + int(state.month))
 	for tier in K.TIERS:
 		var chip := PanelKit.sized(Button.new())
 		chip.text = Strings.t(String(TIER_NAME[tier]))  # i18n: row-ok a tier id, its name the msgid
@@ -70,14 +71,17 @@ static func build(box: Control, state, loader, key: String, commission: Callable
 	show.call(shown)
 
 
-## Price, margin and wait, and the Go down on a tier already bought: fixed, never a reroll.
-static func _fill(strip: EffectsStrip, go: Button, ns, key: String, tier: String) -> void:
+## Price, margin and wait. A tier bought stays down until its term is out, and says when:
+## within it the figures are fixed, never a reroll; past it the poll is new fieldwork.
+static func _fill(strip: EffectsStrip, go: Button, ns, key: String, tier: String, now: int) -> void:
 	var terms: Dictionary = K.TIERS[tier]
 	var cost := -float(terms["cost_eur_bn"])
+	var open_on := MeasurePolls.next_open_month(ns, key, tier)
+	var closed := open_on > now
 	strip.show_lines(Strings.t("Treasury"), EffectsStrip.sum_text(cost), cost,
 		Strings.t("Support per bloc, within %s points.") % Num.f(float(terms["margin"]), 1),
-		Strings.t("Arrives in %d weeks.") % int(terms["weeks"]))
-	go.disabled = MeasurePolls.bought(ns, key).has(tier)
+		Strings.t("Can be polled again from %s.") % Words.when(open_on) if closed else Strings.t("Arrives in %d weeks.") % int(terms["weeks"]))
+	go.disabled = closed
 
 
 ## The narrowest poll printed as a table, and a line for each still out.
