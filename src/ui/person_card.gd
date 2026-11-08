@@ -29,6 +29,7 @@ const President = preload("res://src/sim/president.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
+const Bills = preload("res://src/sim/bills.gd")
 
 const KIND_LABEL := {
 	"politician": "Politician", "regional_figure": "Regional figure",  # i18n: msgid
@@ -132,6 +133,10 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 		var parts := Relations.directed_parts(object.substr("measure:".length()))
 		var on = loader.nations.get(String(parts[1])) if parts.size() == 2 else null
 		return Strings.t("your measure on %s lifted") % (String(on.nation_name) if on != null else Strings.t("their nation"))  # i18n: row-ok a nation's shown name
+	# Step 6's deal: a word to bring a bill names the bill.
+	if object.begins_with("law:"):
+		var law_id := object.substr("law:".length())
+		return Strings.law_name(Bills.by_id(loader, law_id), law_id)
 	if object.begins_with("meter:"):
 		var meter := object.substr("meter:".length())
 		var threshold := float(want.get("below", want.get("above", 0.0)))

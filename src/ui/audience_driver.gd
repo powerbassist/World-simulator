@@ -265,8 +265,6 @@ static func open_oldest(main) -> void:
 static func given_lines(main) -> Array:
 	var out: Array = []
 	for row in President.commitments(main._state.player()):
-		if String(row["kind"]) == "pledge":  # the deputy's word, and this list is the president's
-			continue
 		out.append(Words.commitment_text(String(row["kind"]), main._loader.person_name(String(row["person_id"])),
 			AudienceTalks.want_words(main, String(row["person_id"]), String(row["object"])), int(row["due_month"])))
 	return out
@@ -279,7 +277,7 @@ static func given_lines(main) -> Array:
 static func judged_rows(main) -> Array:
 	var out: Array = []
 	for row in President.judged_commitments(main._state.player()):
-		if String(row["verdict"]) == "void" or String(row["kind"]) == "pledge":
+		if String(row["verdict"]) == "void":
 			continue
 		var pid := String(row["person_id"])
 		var text := Words.verdict_text(String(row["kind"]), String(row["verdict"]) == "kept", main._loader.person_name(pid),

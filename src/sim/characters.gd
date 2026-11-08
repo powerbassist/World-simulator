@@ -46,6 +46,7 @@ extends RefCounted
 const CharacterK = preload("res://src/sim/character_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const President = preload("res://src/sim/president.gd")
 const CK = preload("res://src/sim/character_act_constants.gd")
 const CharacterSeed = preload("res://src/sim/character_seed.gd")
 const Staff = preload("res://src/sim/staff.gd")
@@ -427,7 +428,7 @@ static func _fire_act(state, ns, loader, person, act_key: String, meters: Dictio
 			# arithmetic -- the review's C2. The cost lands on the BRIEFER,
 			# and it is what makes the grudge gate and the loyalty floor two
 			# ends of one walk rather than two registers.
-			if grudge < CK.GRUDGE_BRIEF_THRESHOLD:
+			if grudge < CK.GRUDGE_BRIEF_THRESHOLD or President.keeps_silent(ns, person.id):
 				return false
 			var magnitude := CK.PRICE_BRIEF * _standing_weight(standing)
 			if person.traits.has("networked"):

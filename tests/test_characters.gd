@@ -63,11 +63,12 @@ func _init() -> void:
 ## are the ones a writer's temptation would reach for first. V5.3-0 added
 ## staff.gd: a leaf of the schema alone (character_constants), it hands this
 ## file the cast to walk and reads no system. V5.3 a + b added character_seed.gd:
-## the new game's arithmetic, which the month never reaches.
+## the new game's arithmetic, which the month never reaches. Step 6 added president.gd: a
+## leaf of its constants, read for one row of its register, a person's word of silence.
 func _check_leaf_property() -> void:
 	_check_preloads("characters.gd", [
 		"character_constants.gd", "character_act_constants.gd",
-		"government.gd", "legislature.gd", "staff.gd", "character_seed.gd",
+		"government.gd", "legislature.gd", "staff.gd", "character_seed.gd", "president.gd",
 	])
 	# One hop deeper, by the same rule: the new game's arithmetic reads the president's
 	# leaf and the government's distance, no system of the month.

@@ -1389,8 +1389,7 @@ static func _by_id(party_list: Array) -> Dictionary:
 ## only for a government that cannot cover the censure threshold.
 static func _force(state, ns, party_list: Array, law, loader) -> Dictionary:
 	var result := {
-		"law_id": law.id,
-		"passed": true,
+		"law_id": law.id, "passed": true,
 		"forced": true,
 		"majority": law.majority,
 		"yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
@@ -1416,6 +1415,7 @@ static func _force(state, ns, party_list: Array, law, loader) -> Dictionary:
 	# government.judicial._note. Only presidential_appointment can force at all, and
 	# no nation with an ABSOLUTE second chamber uses it, so nothing is bypassed here
 	# that could have killed the bill outright.
+	DivisionTerms.judge_pledges(ns, law, int(state.year) * 12 + int(state.month), true)
 	_review_and_apply(state, ns, law, loader, result)
 	#
 	# A struck bill still costs the government everything forcing it cost: the cooldown

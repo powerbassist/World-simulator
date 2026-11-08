@@ -77,6 +77,11 @@ const OFFER_KINDS := {
 ## offerer a term (4.7 offers at 0.5); the shadows probe measured 30.2 requests a
 ## term from the 49 offerers (S1, 200 seeds), 15.4 offers at 0.5 -- so 0.16, about 5.
 const OFFER_CHANCE := 0.16
+## The author's ruling on step 6's deal: money comes only from someone whose row justifies
+## it. A principled person never comes with it, whatever their kind. 10 of France's 41
+## offerers with a want are principled, so this is about a quarter of the offers: the
+## shadows probe's S1 reads B6's 2 to 6 a term again.
+const OFFER_NEVER_TRAIT := "principled"
 ## What an offer is worth, EUR millions, and the evidence each million leaves: one
 ## act of evidence size 1, the size RATE above is set at.
 const OFFER_EUR_M := 1.0
