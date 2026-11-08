@@ -220,7 +220,15 @@ func _check_card_party() -> void:
 
 func _check_booking_party() -> void:
 	AudienceDriver._open_booking(_main, _request)
-	_chip_matches(_main._calendar_panel.requests.find_child("Request_%s" % _request, true, false), "the Diary's request card")
+	# The Diary's chip says the party on its hover, the column's card having gone.
+	var chip: Button = _main._calendar_panel._grid._days.find_child("Chip_%s" % _request, true, false)
+	var ns = _main._state.player()
+	var person := String(Audiences.request(ns, _request)["person_id"])
+	var party: Dictionary = preload("res://src/ui/party_chip.gd").of(_main._loader, ns, person)
+	if chip == null:
+		_fail("the Diary has no chip for the request")
+	elif not party.is_empty() and not chip.tooltip_text.contains(String(party["name"])):
+		_fail("the Diary's chip does not name the party: '%s'" % chip.tooltip_text)
 
 
 func _reach_audience() -> bool:
