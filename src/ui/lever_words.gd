@@ -204,6 +204,10 @@ static func delegate_hint(answer: Dictionary) -> String:
 			return Strings.t("Only you can lift a measure: a minister's word on it will be broken unless you do.")
 		"own_programme":
 			return Strings.t("They want your own programme dropped: a minister's word on it will be broken unless you drop it.")
+		"firm":
+			return Strings.t("Only you can rescue a plant: a minister cannot answer for it.")
+		"region":
+			return Strings.t("Only you can open a development fund: a minister's word on it will be broken unless you do.")
 	if not answer.has("chance"):
 		return ""
 	# 1-9: the odds are clamped to [0.05, 0.95], never a certainty either way.

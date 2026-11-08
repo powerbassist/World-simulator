@@ -250,7 +250,7 @@ func _check_kind_meter_coverage() -> void:
 		if not CharacterK.METER_KEYS.has(String(CharacterK.KIND_METERS[kind])):
 			_fail("KIND_METERS maps '%s' at meter '%s', which is not in METER_KEYS" % [kind, String(CharacterK.KIND_METERS[kind])])
 	for family in CharacterK.WANT_STANCES.keys():
-		if not ["programme", "office", "meter"].has(family):
+		if not ["programme", "office", "meter", "region"].has(family):
 			_fail("WANT_STANCES carries family '%s', which the object grammar does not define" % family)
 
 

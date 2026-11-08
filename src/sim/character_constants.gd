@@ -114,6 +114,7 @@ const WANT_STANCES := {
 	"programme": ["sponsor", "oppose"],
 	"office": ["want"],
 	"meter": ["demand", "defend"],
+	"region": ["want"],
 }
 
 ## The portfolios an `office:portfolio:<key>` want may name. BORROWED rather

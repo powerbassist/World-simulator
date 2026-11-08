@@ -409,6 +409,7 @@ trait is the floor.
 {"object": "office:portfolio:health", "stance": "want"}
 {"object": "office:premiership", "stance": "want"}
 {"object": "office:party_leadership:renouveau_civique", "stance": "want"}
+{"object": "region:FR1", "stance": "want"}
 {"object": "meter:grievance", "below": 35.0, "stance": "demand"}
 {"object": "meter:judicial_independence", "above": 0.8, "stance": "defend"}
 ```

@@ -17,6 +17,8 @@ const Characters = preload("res://src/sim/characters.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Lies = preload("res://src/sim/lies.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
+const AK = preload("res://src/sim/audience_constants.gd")
+const Closures = preload("res://src/sim/closures.gd")
 
 
 ## "kept", "broken" or "void", the price written. `row` is a commitment as President casts it.
@@ -37,6 +39,9 @@ static func verdict(state, ns, loader, row: Dictionary, meters: Dictionary, lead
 	# levy written on the emptied pair later does not undo the kept word.
 	if person != null and object.begins_with("measure:"):
 		want = {"measure": object.substr("measure:".length())}
+	# Step 6: no person wants a plant in content, so a minister's word on one is read off the plant.
+	if person != null and object.begins_with(AK.FIRM_PREFIX):
+		want = {"firm": object.substr(AK.FIRM_PREFIX.length())}
 	# Step 6: a word to bring a bill. DivisionTerms marks it when the bill reaches the floor.
 	if person != null and object.begins_with("law:"):
 		want = {"law": object.substr("law:".length())}
@@ -47,6 +52,9 @@ static func verdict(state, ns, loader, row: Dictionary, meters: Dictionary, lead
 	var served: bool
 	if want.has("law"):
 		served = bool(row.get("brought", false))
+	elif want.has("firm"):
+		var closure: Dictionary = (ns.companies.get(want["firm"], {}) as Dictionary).get("closure", {})
+		served = [Closures.RESCUING, "sold"].has(String(closure.get("status", "")))
 	elif want.has("measure"):
 		served = Coercion.own_measure(state, want["measure"]) == null
 	else:

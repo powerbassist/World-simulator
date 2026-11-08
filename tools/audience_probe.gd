@@ -200,15 +200,20 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 		state.month = i % 12 + 1
 		state.day = 1
 		var fire: Array = []
+		if regime == "A5":
+			_book_firms(state, ns)
 		if book_all:
 			fire = _pack(state)
 		if regime == "A4":
 			for row in ns.audience_requests.duplicate():
-				if AK.OPEN.has(String(row.get("status", ""))):
+				if AK.OPEN.has(String(row.get("status", ""))) and not _firm(row):
 					var call := _phone_first(state, ns, String(row["person_id"]))
 					calls += 1 if bool(call.get("ok", false)) else 0
 					answered_by_phone += 1 if bool(call.get("success", false)) else 0
 		for row in Audiences.pending(ns):
+			# The regimes A1-A4 measure the domestic lane. A5 is the deal on the real road, chiefs included.
+			if _firm(row) and regime != "A5":
+				continue
 			var id := String(row["id"])
 			var visitor := _visitor(String(row["person_id"]))
 			if regime == "A3":
@@ -254,6 +259,8 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 		if book_all:
 			_fire_month(state, fire, held, month, refused_at, visitors)
 		for row in report["audience_requests"]["arrived"]:
+			if _firm(row):
+				continue
 			if _visitor(String(row["person_id"])):
 				visitors["arrivals"] += 1
 				continue
@@ -455,6 +462,21 @@ func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool, mi
 
 
 ## A visiting head (b3), not one of this nation's people.
+## A5's player puts a closing plant ahead of the month's diary. A chief offers one month only,
+## the month before the plant lands, and behind _pack's visits and laws no day of it stays free
+## (measured: all 8 went to a minister).
+func _book_firms(state, ns) -> void:
+	for row in Audiences.pending(ns):
+		if _firm(row):
+			for d in Audiences.offered_dates(state, ns, String(row["id"])):
+				if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, String(row["id"]), d)["ok"]):
+					break
+
+
+func _firm(row: Dictionary) -> bool:
+	return String(row["object"]).begins_with(AK.FIRM_PREFIX)
+
+
 func _visitor(pid: String) -> bool:
 	return not pid.begins_with("%s_" % PLAYER)
 
