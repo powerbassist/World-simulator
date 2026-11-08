@@ -54,7 +54,7 @@ func fill(offer: Dictionary, row: Dictionary) -> void:
 	box.add_child(by)
 	_ignore_mouse(box)
 	var who := String(row.get("person", offer["person"]))
-	var party := String(row.get("party", {}).get("name", ""))
+	var party := String(row.get("party", {}).get("name", ""))  # i18n: row-ok a party's shown name, from PartyChip.of
 	if party != "":
 		who = "%s (%s)" % [who, party]
 	var wants := String(row.get("wants", ""))
