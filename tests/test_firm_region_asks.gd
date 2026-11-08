@@ -60,6 +60,7 @@ func _init() -> void:
 	_check_a_closure_brings_its_chief_once()
 	_check_a_chief_is_outside_the_domestic_lane()
 	_check_a_chief_is_offered_only_days_before_the_plant_lands()
+	_check_only_a_chief_loses_the_deadline_month()
 	_check_a_closure_that_lands_closes_the_request_unpriced()
 	_check_a_closure_answered_elsewhere_closes_the_request_and_frees_its_day()
 	_check_a_chief_refused_is_priced_as_a_refusal()
@@ -130,6 +131,29 @@ func _check_a_chief_is_offered_only_days_before_the_plant_lands() -> void:
 			_fail("a day offered after the plant lands: %s, due %d" % [d, due])
 
 
+## The days are drawn per request, so read over seeds: one seed may simply not pick that month.
+func _check_only_a_chief_loses_the_deadline_month() -> void:
+	var state = _state()
+	var ns = state.player()
+	var leader := String(_loader.nations[PLAYER].leader_person_id)
+	var asked := {}
+	for person in _loader.people.get(PLAYER, []):
+		if String(person.id) != leader and not person.wants.is_empty():
+			asked = Audiences.invite(state, ns, _loader, String(person.id), String(person.wants[0]["object"]), String(person.wants[0]["stance"]))
+			break
+	if not bool(asked.get("ok", false)):
+		_fail("no ordinary request to read: %s" % [asked])
+		return
+	var deadline := int(asked["request"]["deadline_month"])
+	var reached := false
+	for s in range(1, 200):
+		ns.draw_seed = s
+		for d in Audiences.offered_dates(state, ns, String(asked["request"]["id"])):
+			reached = reached or int(d["year"]) * 12 + int(d["month"]) == deadline
+	if not reached:
+		_fail("an ordinary request is never offered a day in its deadline month")
+
+
 func _check_a_closure_that_lands_closes_the_request_unpriced() -> void:
 	# Read off the tick itself: in the other order the request lapses, priced, as the plant lands.
 	if WorldMonth.STEPS.find("Closures") >= WorldMonth.STEPS.find("Audiences"):
@@ -187,14 +211,18 @@ func _check_a_chief_refused_is_priced_as_a_refusal() -> void:
 ## The hint says a minister cannot answer for a plant, so the word is worth the plant: a word
 ## judged void would make Delegate the cheap way to be rid of a chief.
 func _check_a_ministers_word_on_a_plant_is_judged_on_the_plant() -> void:
-	for pair in [["close", "broken"], ["rescue", "kept"]]:
+	# What became of the plant, and the verdict: kept only if it was rescued or sold. A buyer
+	# still being looked for at the date has saved nothing yet.
+	for pair in [["close", "broken"], ["rescue", "kept"], ["buyer", "broken"], ["sold", "kept"]]:
 		var f := _announced()
 		_tick_audiences(f)
 		var delegated: Dictionary = Audiences.delegate(f["state"], f["ns"], _loader, String(_chief_row(f)["id"]))
 		if not bool(delegated.get("ok", false)):
 			_fail("the chief's request could not be delegated: %s" % [delegated])
 			continue
-		Closures.answer(f["state"], f["ns"], _loader, String(f["closure"]["id"]), String(pair[0]))
+		Closures.answer(f["state"], f["ns"], _loader, String(f["closure"]["id"]), "buyer" if pair[0] == "sold" else String(pair[0]))
+		if pair[0] == "sold":
+			f["closure"]["status"] = "sold"
 		var due := int(President.commitments_with(f["ns"], f["chief"])[0]["due_month"])
 		f["state"].year = floori((due - 1) / 12.0)
 		f["state"].month = due - int(f["state"].year) * 12
@@ -380,7 +408,8 @@ func _check_the_card_names_both_objects() -> void:
 	var company_id := String(Companies.majors_of(_loader, PLAYER)[0].id)
 	for object in ["region:%s" % REGION, "firm:%s" % company_id]:
 		var text: String = PersonCard.object_text(_loader, ns, object, {})
-		if text == "" or text.contains(":") or text.contains(REGION) or text.contains(company_id):
+		# Read in the person's own voice too ("I want ..."), so never "their".
+		if text == "" or text.contains(":") or text.contains(REGION) or text.contains(company_id) or text.begins_with("their"):
 			_fail("the card shows a raw object for %s: '%s'" % [object, text])
 
 

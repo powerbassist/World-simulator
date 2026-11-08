@@ -137,8 +137,8 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 		var company_id := object.substr(AK.FIRM_PREFIX.length())
 		for company in loader.companies.get(ns.id, []):
 			if String(company.id) == company_id:
-				return Strings.t("their plant at %s saved") % company.company_name
-		return Strings.t("their plant saved")
+				return Strings.t("the plant at %s saved") % company.company_name
+		return Strings.t("the plant saved")
 	# V5.2b b3: a visiting head's ask, "measure:<FRA>DEU>" -- the played nation's
 	# measure on their nation, lifted ("wants your measure on Germany lifted").
 	if object.begins_with("measure:"):
