@@ -108,6 +108,7 @@ func _init() -> void:
 	_check_a_pledge_never_voted_lapses_unpriced()
 	_check_silence_stops_a_brief_then_ends_unpriced()
 	_check_only_silence_stops_a_brief()
+	_check_a_press_owner_under_silence_is_not_hostile_for_its_term()
 
 	_check_what_they_owe_is_not_the_presidents_word()
 	_check_a_broken_pledge_can_be_read()
@@ -895,6 +896,47 @@ func _check_silence_stops_a_brief_then_ends_unpriced() -> void:
 		_fail("silence ending costs nothing")
 	if not Characters._fire_act(f["state"], ns, _loader, person, "brief_against", METERS, [], {}):
 		_fail("silence over, the grudge briefs again")
+
+
+## The parent's ruling on #301's third call: silence has to bite somewhere. A press owner who
+## owes it stops counting against the president, on either road to hostile, and counts again
+## once the row is gone. Staged, because no probe's player strikes a deal with a hostile owner.
+func _check_a_press_owner_under_silence_is_not_hostile_for_its_term() -> void:
+	var state = GameState.new_game(_loader, PLAYER)
+	var ns = state.player()
+	var owners: Array[String] = []
+	for person in _loader.people.get(ns.id, []):
+		if String(person.kind) == "press_owner":
+			owners.append(String(person.id))
+			ns.person_rapport[String(person.id)] = -0.5
+	if owners.size() < 2:
+		_fail("this check needs two press owners, read %d" % owners.size())
+		return
+	var f := {"state": state}
+	var rest := float(owners.size() - 1) / float(owners.size())
+	var everyone: float = Exposure._modifier(ns, _loader, "press")
+	if not is_equal_approx(Exposure._hostile_press(ns, _loader), 1.0):
+		_fail("every owner staged cold reads %.3f hostile" % Exposure._hostile_press(ns, _loader))
+	var quiet := owners[0]
+	var due: int = _now(f) + int(Deal.K.SILENCE_MONTHS)
+	if not President.commit(state, ns, _loader, "silence", quiet, "silence:staged", due):
+		_fail("the silence was not written")
+		return
+	if not is_equal_approx(Exposure._hostile_press(ns, _loader), rest):
+		_fail("cold and silent is not hostile: read %.3f, want %.3f" % [Exposure._hostile_press(ns, _loader), rest])
+	if Exposure._modifier(ns, _loader, "press") >= everyone:
+		_fail("a press owner's silence does not lower the press route")
+	# The other road to hostile, the grudge at the brief's gate, is held off the same way.
+	ns.person_rapport[quiet] = 0.5
+	ns.person_grudges[quiet] = SC.PRESS_GRUDGE_HOSTILE
+	if not is_equal_approx(Exposure._hostile_press(ns, _loader), rest):
+		_fail("a grudge under silence is not hostile: read %.3f, want %.3f" % [Exposure._hostile_press(ns, _loader), rest])
+	_advance_to(f, due)
+	Levers.tick_month(state, _loader, METERS)
+	if President.keeps_silent(ns, quiet):
+		_fail("the silence outlived its date")
+	if not is_equal_approx(Exposure._hostile_press(ns, _loader), 1.0):
+		_fail("the term over, the owner counts again: read %.3f" % Exposure._hostile_press(ns, _loader))
 
 
 func _check_only_silence_stops_a_brief() -> void:
