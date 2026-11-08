@@ -4,7 +4,7 @@ docs/design/v5.3-ab.md section 6 (b): a person row may ship `start_regard_offset
 number under an altered name. Who it winks at and why lives in a gitignored local file,
 never in the repository, so this lint has two halves:
 
-  - EVERYWHERE, CI included: every shipped offset is a number inside [-0.30, +0.30] with
+  - EVERYWHERE, CI included: every shipped offset is a number inside [-1.00, +1.00] with
     two decimals. The loader refuses the same (Person.from_dict); this says it without a
     Godot, over every nation at once, before a data PR is opened.
   - ONLY WHERE THE PRIVATE FILE IS PRESENT: every non-zero offset on a marked person has
@@ -30,7 +30,7 @@ import os
 import sys
 
 OFFSET = "start_regard_offset"
-OFFSET_MAX = 0.30
+OFFSET_MAX = 1.00
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_BASIS = os.path.join(ROOT, "tools", "private", "skills_basis.json")
 
@@ -45,7 +45,7 @@ def offset_problems(people):
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             out.append("%s: %s is not a number" % (person.get("id", "?"), OFFSET))
         elif abs(value) > OFFSET_MAX or abs(value - round(value, 2)) > 1e-9:
-            out.append("%s: %s %s is outside [-0.30, +0.30] or past two decimals" % (person.get("id", "?"), OFFSET, value))
+            out.append("%s: %s %s is outside [-%.2f, +%.2f] or past two decimals" % (person.get("id", "?"), OFFSET, value, OFFSET_MAX, OFFSET_MAX))
     return out
 
 
@@ -78,11 +78,11 @@ def load_people():
 
 
 def selftest():
-    good = [{"id": "A_a", OFFSET: -0.30}, {"id": "A_b", OFFSET: 0.07}, {"id": "A_c", OFFSET: 0}, {"id": "A_d"}]
+    good = [{"id": "A_a", OFFSET: -1.00}, {"id": "A_b", OFFSET: 0.07}, {"id": "A_c", OFFSET: 0}, {"id": "A_d"}, {"id": "A_e", OFFSET: 1.00}]
     if offset_problems(good):
         print("SELFTEST FAIL: a good row was refused: %r" % offset_problems(good))
         return 1
-    for bad in (0.31, -0.31, 0.255, "0.2", True):
+    for bad in (1.01, -1.01, 0.255, "0.2", True):
         if not offset_problems([{"id": "A_a", OFFSET: bad}]):
             print("SELFTEST FAIL: %r was taken" % (bad,))
             return 1

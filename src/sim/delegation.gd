@@ -115,7 +115,9 @@ static func kept_rapport(served: bool) -> float:
 ## is not heard: an aggrieved person asks again.
 static func heard(ns, person_id: String, object: String, now: int) -> bool:
 	for row in ns.commitments:
-		if String(row.get("kind", "")) == "delegated" and String(row.get("person_id", "")) == person_id and String(row.get("object", "")) == object:
+		# Step 6: a deal's word names the want it answers, which may not be its object.
+		if String(row.get("person_id", "")) == person_id and (String(row.get("want", "")) == object \
+				or (String(row.get("kind", "")) == "delegated" and String(row.get("object", "")) == object)):
 			return true
 	for row in ns.commitments_judged:
 		if String(row.get("kind", "")) == "delegated" and String(row.get("verdict", "")) == "kept" \

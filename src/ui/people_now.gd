@@ -38,7 +38,7 @@ static func chosen(state, loader, side: Callable) -> Array:
 	var now := int(state.year) * 12 + int(state.month)
 	for request in Audiences.pending(ns):
 		_add(out, seen, String(request.get("person_id", "")), Strings.t("Asks to see you"), UiTheme.WARN_TEXT, String(request.get("id", "")))
-	for row in ns.commitments:
+	for row in President.commitments(ns):
 		if int(row.get("due_month", now + 99)) - now <= DUE_MONTHS:
 			_add(out, seen, String(row.get("person_id", "")), Strings.t("A promise falls due"), UiTheme.WARN_TEXT)
 	var grudges: Array = ns.person_grudges.keys()

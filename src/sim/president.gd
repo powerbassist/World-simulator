@@ -131,7 +131,8 @@ static func commitments_with(ns, person_id: String) -> Array[Dictionary]:
 static func commitments(ns) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for row in ns.commitments:
-		out.append(_commitment(row))
+		if not K.OWED_KINDS.has(String(row.get("kind", ""))):
+			out.append(_commitment(row))
 	var order := range(out.size())
 	order.sort_custom(func(a: int, b: int) -> bool:
 		return out[a]["due_month"] < out[b]["due_month"] or (out[a]["due_month"] == out[b]["due_month"] and a < b))
@@ -141,14 +142,35 @@ static func commitments(ns) -> Array[Dictionary]:
 	return sorted
 
 
+## Step 6: what people owe the president under a deal, in the order it was struck: the
+## other half of the register, the half commitments() leaves out.
+static func owed(ns) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for row in ns.commitments:
+		if K.OWED_KINDS.has(String(row.get("kind", ""))):
+			out.append(_commitment(row))
+	return out
+
+
+## Whether this person's word of silence stands: the brief's gate reads it.
+static func keeps_silent(ns, person_id: String) -> bool:
+	for row in ns.commitments:
+		if String(row.get("kind", "")) == "silence" and String(row.get("person_id", "")) == person_id:
+			return true
+	return false
+
+
 ## V5.2b b2.1. The commitments judged at their date and still remembered, in
 ## judging order (oldest first): the Diary's record of a promise kept or a lie
 ## revealed after the month's report is gone. Cast like commitments(), plus
 ## {verdict, judged_month}. A "void" row may name a person content no longer
 ## carries -- the reason it was void -- so a reader resolves the id with care.
-static func judged_commitments(ns) -> Array[Dictionary]:
+## `owed`: step 6, the other half instead, what people owed, a broken pledge among it.
+static func judged_commitments(ns, owed := false) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for row in ns.commitments_judged:
+		if K.OWED_KINDS.has(String(row.get("kind", ""))) != owed:
+			continue
 		var view := _commitment(row)
 		view["verdict"] = String(row.get("verdict", ""))
 		view["judged_month"] = int(row.get("judged_month", 0))
@@ -301,12 +323,20 @@ static func commit(state, ns, loader, kind: String, person_id: String, object: S
 	return true
 
 
+## Step 6's marks on rows already written: `deal` on this person's row on `object`, `brought`
+## on every word on a bill. No other file writes this register.
+static func mark_rows(ns, object: String, key: String, value: Variant, person_id := "") -> void:
+	for row in ns.commitments:
+		if String(row.get("object", "")) == object and (person_id == "" or String(row.get("person_id", "")) == person_id):
+			row[key] = value
+
+
 ## V5.3 b. A person's vote and their faction's on one bill, for step 6's deal: a `pledge`
 ## row naming the party it was given for, which the division reads through
 ## DivisionTerms. False for someone with no party, who has no seats to bring, and for a
 ## second word on one bill, since the division sums the rows.
 static func pledge(state, ns, loader, person_id: String, law_id: String, due_month: int) -> bool:
-	var party_id := _party_id_of(ns, loader, person_id)
+	var party_id := party_id_of(ns, loader, person_id)
 	for row in pledges_on(ns, law_id):
 		if String(row["person_id"]) == person_id:
 			return false
@@ -449,18 +479,16 @@ static func _commitment(row: Dictionary) -> Dictionary:
 		"made_month": int(row.get("made_month", 0)),
 		"due_month": int(row.get("due_month", 0)),
 	}
-	if bool(row.get("lie", false)):
-		view["lie"] = true
-	if row.has("chance"):
-		view["chance"] = float(row["chance"])
-	if row.has("party_id"):
-		view["party_id"] = String(row["party_id"])
+	# Each written only when it says something; a save keeps a string a string and a float a float.
+	for key in ["lie", "chance", "party_id", "deal", "brought"]:
+		if row.has(key):
+			view[key] = row[key]
 	return view
 
 
 ## A person's party as the registers stand: a defection's override ("" is sitting alone),
 ## the authored edge, else the party they lead, whose row names them.
-static func _party_id_of(ns, loader, person_id: String) -> String:
+static func party_id_of(ns, loader, person_id: String) -> String:
 	if ns.person_party_override.has(person_id):
 		return String(ns.person_party_override[person_id])
 	var person = loader.person_by_id.get(person_id)
