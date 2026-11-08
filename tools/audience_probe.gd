@@ -198,6 +198,8 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 		state.month = i % 12 + 1
 		state.day = 1
 		var fire: Array = []
+		if regime == "A5":
+			_book_firms(state, ns)
 		if book_all:
 			fire = _pack(state)
 		if regime == "A4":
@@ -427,6 +429,17 @@ func _b5_values(person, cell: Dictionary, g: float, snub: float, serve: bool, mi
 
 
 ## A visiting head (b3), not one of this nation's people.
+## A5's player puts a closing plant ahead of the month's diary. A chief offers one month only,
+## the month before the plant lands, and behind _pack's visits and laws no day of it stays free
+## (measured: all 8 went to a minister).
+func _book_firms(state, ns) -> void:
+	for row in Audiences.pending(ns):
+		if _firm(row):
+			for d in Audiences.offered_dates(state, ns, String(row["id"])):
+				if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, String(row["id"]), d)["ok"]):
+					break
+
+
 func _firm(row: Dictionary) -> bool:
 	return String(row["object"]).begins_with(AK.FIRM_PREFIX)
 

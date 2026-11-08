@@ -33,6 +33,8 @@ const Delegation = preload("res://src/sim/delegation.gd")
 const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
+const Offers = preload("res://src/sim/offers.gd")
+const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
 const President = preload("res://src/sim/president.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
@@ -60,6 +62,8 @@ func _init() -> void:
 	_check_a_closure_that_lands_closes_the_request_unpriced()
 	_check_a_closure_answered_elsewhere_closes_the_request_and_frees_its_day()
 	_check_a_chief_refused_is_priced_as_a_refusal()
+	_check_a_ministers_word_on_a_plant_is_judged_on_the_plant()
+	_check_a_chief_brings_no_money_even_when_the_draw_would()
 	_check_no_minister_can_answer_for_a_firm_or_a_region()
 	_check_grant_is_the_rescue_and_writes_no_word()
 	_check_a_bargain_won_is_the_buyer_and_writes_no_word()
@@ -86,6 +90,8 @@ func _check_a_closure_brings_its_chief_once() -> void:
 		return
 	if String(row["object"]) != "firm:%s" % f["company_id"] or String(row["stance"]) != "want":
 		_fail("the chief asks about the wrong thing: %s" % [row])
+	if not AudienceTriggers.chiefs(f["ns"], _loader, _now(f) + 1).is_empty():
+		_fail("a closure announced last month still invites its chief")
 	if int(row["deadline_month"]) != int(f["closure"]["due"]):
 		_fail("the request's window (%d) is not the closure's due month (%d)" % [int(row["deadline_month"]), int(f["closure"]["due"])])
 	if not (row["offer"] as Dictionary).is_empty():
@@ -172,6 +178,42 @@ func _check_a_chief_refused_is_priced_as_a_refusal() -> void:
 		_fail("the chief could not be refused: %s" % [refused])
 	if float(_prices(f)["grudge"]) <= float(before["grudge"]):
 		_fail("refusing a chief to their face cost nothing")
+
+
+## The hint says a minister cannot answer for a plant, so the word is worth the plant: a word
+## judged void would make Delegate the cheap way to be rid of a chief.
+func _check_a_ministers_word_on_a_plant_is_judged_on_the_plant() -> void:
+	for pair in [["close", "broken"], ["rescue", "kept"]]:
+		var f := _announced()
+		_tick_audiences(f)
+		var delegated: Dictionary = Audiences.delegate(f["state"], f["ns"], _loader, String(_chief_row(f)["id"]))
+		if not bool(delegated.get("ok", false)):
+			_fail("the chief's request could not be delegated: %s" % [delegated])
+			continue
+		Closures.answer(f["state"], f["ns"], _loader, String(f["closure"]["id"]), String(pair[0]))
+		var due := int(President.commitments_with(f["ns"], f["chief"])[0]["due_month"])
+		f["state"].year = floori((due - 1) / 12.0)
+		f["state"].month = due - int(f["state"].year) * 12
+		var judged: Dictionary = Levers.tick_month(f["state"], _loader, METERS)
+		if (judged[pair[1]] as Array).size() != 1:
+			_fail("a minister's word on a plant answered '%s' should be %s: %s" % [pair[0], pair[1], judged])
+
+
+func _check_a_chief_brings_no_money_even_when_the_draw_would() -> void:
+	var f := _announced()
+	var person = _loader.person_by_id[f["chief"]]
+	var tempted := false
+	for s in range(1, 2000):
+		f["ns"].draw_seed = s
+		if not Offers.offer_for(f["ns"], person, _now(f)).is_empty():
+			tempted = true
+			break
+	if not tempted:
+		_fail("no seed tempts %s, so this check reads nothing" % f["chief"])
+		return
+	_tick_audiences(f)
+	if not (_chief_row(f).get("offer", {}) as Dictionary).is_empty():
+		_fail("a chief's plea carried money: %s" % [_chief_row(f)["offer"]])
 
 
 func _check_no_minister_can_answer_for_a_firm_or_a_region() -> void:
