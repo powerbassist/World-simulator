@@ -224,11 +224,15 @@ func _check_the_offset_is_added_and_clamped() -> void:
 	var loose := _someone("FRA", "")
 	var president := String(_loader.nations["FRA"].leader_person_id)
 	var chief := String(Staff.chief_of(_loader, "FRA").id)
-	_with_offsets({partner: 0.20, opponent: -0.30, cold: -0.90, loose: 0.15, president: 0.30, chief: 0.30}, func() -> void:
+	var colleague := _someone("FRA", "renouveau_civique")
+	_with_offsets({partner: 0.20, opponent: -0.30, cold: -1.00, loose: 0.15, president: 0.30, chief: 0.30, colleague: 1.00}, func() -> void:
 		var ns = GameState.new_game(_loader, "FRA").player()
 		_near(President.rapport(ns, partner), 0.20, "an offset on a neutral partner")
 		_near(President.rapport(ns, opponent), -0.46, "an offset on top of the distance")
-		_near(President.rapport(ns, cold), -1.0, "the sum is clamped")
+		_near(President.rapport(ns, cold), -1.0, "the sum is clamped at the bottom of the scale")
+		_near(President.rapport(ns, colleague), 1.0, "the sum is clamped at the top of the scale")
+		if President.rapport(ns, colleague) > 1.0 or President.rapport(ns, cold) < -1.0:
+			_fail("a start regard left [-1, +1]: %.4f, %.4f" % [President.rapport(ns, colleague), President.rapport(ns, cold)])
 		_near(President.rapport(ns, loose), 0.15, "a person with no party takes the offset alone")
 		if ns.person_rapport.has(president) or ns.person_rapport.has(chief):
 			_fail("an offset wrote a row for the president or the staff"))
@@ -272,12 +276,12 @@ func _check_someone_else_seated_reads_no_offset() -> void:
 
 
 func _check_the_loader_refuses_a_bad_offset() -> void:
-	for bad in [0.31, -0.31, 0.255, "0.2", true]:
+	for bad in [1.01, -1.01, 0.255, "0.2", true]:
 		var errors: Array[String] = []
 		Person.from_dict({"id": "X_a", "name": "A", "start_regard_offset": bad}, 0, "t.json", errors)
 		if errors.is_empty():
 			_fail("the loader took start_regard_offset %s" % str(bad))
-	for good in [0.30, -0.30, 0.25, -0.07, 0, 0.0]:
+	for good in [1.00, -1.00, 1, -1, 0.31, 0.25, -0.07, 0, 0.0]:
 		var errors: Array[String] = []
 		var p = Person.from_dict({"id": "X_a", "name": "A", "start_regard_offset": good}, 0, "t.json", errors)
 		if not errors.is_empty() or absf(float(p.start_regard_offset) - float(good)) > 0.0000001:
