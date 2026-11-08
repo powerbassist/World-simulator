@@ -1,5 +1,6 @@
 {
   "_note": "V4.2 T7. A new SHELF, not a new theme: the loader directory-scans and keys every law on its own `theme`, so this file exists only to keep the climate and energy statutes together for the reader. Its laws carry themes from THEME_KEYS like every other file's -- levy-shaped ones are tax, plant-facing ones business, and the spend-and-target ones social, where the Society cluster already holds climate (V2.1c's own call). Nothing under src/ knows this file exists, which is the point.",
+  "_magnitude": "Each `magnitude` is the quantity the law's own summary states and its effects are authored for (a tax rate's points, a number of years, a share of seats, a number of homes), so reference equals value at the authored size and the ratio is 1; unit says what is counted. A law with no natural quantity carries none.",
   "laws": [
     {
       "id": "coal_phase_out_act",
@@ -76,6 +77,7 @@
     },
     {
       "id": "home_insulation_programme",
+      "magnitude": {"value": 1, "reference": 1, "unit": "million homes"},
       "name": "Home Insulation Programme",
       "theme": "social",
       "summary": "Pay for the loft, wall and window retrofits of a million draughty homes.",

@@ -1,4 +1,5 @@
 {
+  "_magnitude": "Each `magnitude` is the quantity the law's own summary states and its effects are authored for (a tax rate's points, a number of years, a share of seats, a number of homes), so reference equals value at the authored size and the ratio is 1; unit says what is counted. A law with no natural quantity carries none.",
   "laws": [
     {
       "id": "minimum_wage_rise",
@@ -18,6 +19,7 @@
     },
     {
       "id": "retirement_age_reform",
+      "magnitude": {"value": 2, "reference": 2, "unit": "years of retirement age"},
       "name": "Retirement Age Reform",
       "theme": "labour",
       "summary": "Raise the statutory retirement age by two years.",
