@@ -283,9 +283,8 @@ func _build_polls() -> void:
 ## V4.2's priced whip count stays (the parent's ruling on #304): the tiers read the country,
 ## and this alone firms the Assembly's forecast for this bill. The sim's own price and refusal.
 func _build_whip_count(section: Control) -> void:
-	var whip := Button.new()
+	var whip := PanelKit.sized(Button.new())
 	whip.name = "AssemblyPoll"  # i18n: ok a node name, found by tests
-	whip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	whip.text = tr("Commission an assembly poll — €%s k") % Num.f(StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_ASSEMBLY) * 1.0e6, 0)
 	if (_ns.poll_purchases.get(_bill_key, {}) as Dictionary).has(StatuteK.POLL_KIND_ASSEMBLY):
 		whip.disabled = true
