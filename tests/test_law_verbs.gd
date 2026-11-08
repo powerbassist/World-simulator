@@ -59,6 +59,14 @@ func _process(_delta: float) -> bool:
 		9:
 			_check_a_row_with_no_size_shows_nothing()
 			_check_the_address_rests_folded()
+			LawAddress._fold(_list(), _plain)
+		10:
+			if _strip_node(LawAddress.STRIP_META) == null:
+				_fail("the fold's first press did not open the strip")
+			LawAddress._fold(_list(), _plain)
+		11:
+			if _strip_node(LawAddress.STRIP_META) != null:
+				_fail("the fold's second press left the strip up")
 			_list().select(String(_law.id))
 		12:
 			_check_the_reference_grade()
@@ -373,10 +381,31 @@ func _check_the_address_stands_beside_a_tabled_bill() -> void:
 	var expect := LawAddress.seats_text(est)
 	if String(strip["money"]) != expect:
 		_fail("the strip reads %s, the estimate %s" % [strip["money"], expect])
-	if String(strip["who"]) != EffectsStrip.who_text(est["shifts"]):
+	# Seats won are good news whichever way they are read: more for, or fewer against.
+	var moved: Array = LawAddress.moved_seats(est)
+	var net := float(int(moved[0]) - int(moved[1]))
+	if float(strip["bn"]) != net or String(strip["tone"]) != EffectsStrip.cell_variation(EffectsStrip.money_tone(net)):
+		_fail("the strip's tone is not the net of the seats it moved: %s, %s, net %s" % [strip["bn"], strip["tone"], net])
+	if String(strip["who"]) != LawAddress.who_line(est["shifts"]):
 		_fail("the strip's blocs are not the estimate's: %s" % strip["who"])
+	_check_the_who_line()
 	if String(strip["when"]).find(str(AddressK.FADE_MONTHS)) < 0:
 		_fail("the strip does not say the shift fades: %s" % strip["when"])
+
+
+## The parent's ruling on #303: the three blocs moved most, largest first, then a count.
+func _check_the_who_line() -> void:
+	var shifts := {"workers": 1.0, "pensioners": -6.0, "urban": 2.0, "rural": 5.0, "business": 0.0, "students": 3.0}
+	var line := LawAddress.who_line(shifts)
+	var expect := EffectsStrip.who_text({"pensioners": -6.0, "rural": 5.0, "students": 3.0})
+	if not line.begins_with(expect):
+		_fail("the who-line is not the three largest: '%s', wanted '%s'" % [line, expect])
+	# Urban and workers are left; a bloc that did not move is no bloc at all.
+	if not line.contains("2 more"):
+		_fail("the who-line does not count the rest: '%s'" % line)
+	var few := LawAddress.who_line({"workers": 1.0, "rural": -2.0})
+	if few != EffectsStrip.who_text({"rural": -2.0, "workers": 1.0}):
+		_fail("two blocs moved read as more: '%s'" % few)
 
 
 ## The bill just addressed has the day's line in place of the verb, and it goes with the day.
