@@ -391,6 +391,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	CampaignLoader.load_pledges(self, pledges_dir)
 	ProgrammeLoader.load_programme(self, programme_dir)
 	PoliticsLoader.load_laws(self, laws_dir)
+	ProgrammeLoader.validate_laws(self)
 	PoliticsLoader.load_political_systems(self, political_systems_dir)
 	PoliticsLoader.load_scenarios(self, scenarios_dir)
 	DiplomacyLoader.load_diplomatic_actions(self, diplomatic_actions_dir)

@@ -223,6 +223,7 @@ meters, judges each one due, once, with no roll (a delegated word since the V5.3
 | | The person's want served at the date | Not served |
 |---|---|---|
 | **Promise** | kept: rapport +0.25 (b2.2: a promise kept in person, 2.5 times a minister's word -- the ratio the broken side already carries) | **a lie revealed**: rapport -0.5, knowledge halved, a grudge pulse of 0.15 |
+| **Bill** (step 6, section 14) | brought to a vote or forced by the date, whatever the chamber said: kept, rapport +0.25 | **a lie revealed**, as a promise |
 | **IOU** | paid | **a betrayal**: rapport -0.2, a grudge pulse of 0.08; knowledge stands, since no lie was told |
 | **Delegated** (b2.1) | kept: rapport +0.10 | since the V5.3-0 gate, kept anyway when the minister's seeded roll falls under the odds the card showed (section 13); otherwise the deferred 0.75 of the decline's grudge lands, plus the IOU's betrayal; not a lie, since the president did not give their own word |
 
@@ -458,6 +459,62 @@ The realised rate tracks the odds the card showed. In the keep-cabinet run, word
   - The original single cap ("no answer best in more than 50 %") was replaced by those floors because, under b2.1, Delegate sat at exactly 50 % by construction. It now reads 65 %, because the minister's odds beat a refusal in some "won't serve" cases. Neither the half credit nor the heard want moves it, since B5 scores one request at a time.
 - `decision_surfaces_probe --briefing`, FRA, active regime (every request delegated): the base lost the May 2032 presidential vote, which ended its run at month 76. This change wins that vote, and the run reaches month 120. The idle run is identical. RF1, RF2, RF4 and RF9 all PASS.
 - `shadows_parallel` S2, S2c and S4 (seeds 0-49; all three delegate unplaceable requests): cmp-identical, and every B6 and B8 band PASSES.
+
+## 14. The deal (V5.3 b, step 6)
+
+The author's "Un marchandage concret" ([[v5.3-ab]] section 5, option 1). The scene was three picks among ten buttons for a prize nobody could see. `src/sim/deal.gd` makes it one ask, one offer and three answers. The audience, its attempts, its odds and its registers are as above. `Deal.open()` wraps `Levers.open()`, so the scene still holds one session.
+
+| The want | The ask (`Deal.ask_of`) | Grant pays | The smaller grant |
+|---|---|---|---|
+| A programme entry sponsored, and the entry's `laws` name one open now | a bill brought by a date, `law:<id>` | a dated word, 6 months | the same word, 12 months later |
+| A portfolio | a post for the person's party | `Removal.reassign`, now, priced as a removal when it comes from a partner; greyed with Removal's reason | the word within 12 months |
+| A programme entry otherwise, sponsored or opposed | a word on the want | a dated word, the month after the next vote (the register opens in the vote's month, after that month's judge) | the same word, 12 months later |
+| A meter, a measure | a word on the want | a dated word, 12 months | the same word, 12 months later |
+
+Every month above is a labelled stand-in (`deal_constants.gd`, the parent's ruling).
+
+**The offer** (`Deal.offer_of`), by a general rule over who the person is:
+- **A vote.** A person whose party holds seats, with a bill tabled or in the diary, offers their faction's seats on it: a `pledge` row ([[legislature-model]], `DivisionTerms`), which the division reads and judges. The strip's seats are what the division adds, read on a copy of the nation at the bill's grade and route: the parent's ruling, since a pledge on a line that already votes yes adds nothing.
+- **Silence.** Everyone else: no party, no bill, a vote that adds no seat, or a pledge already given on that bill. For 12 months the person does not brief against the president (`Characters`, the brief's gate). It is real only because a brief reads it, and the strip says so.
+
+**The answers:**
+- **Grant** pays the ask and takes the offer, with no roll. It spends no attempt and stays open when the attempts run out, so three failures leave the full price on the table. A promise not believed earlier in the scene is taken up, held to the ask's date if that is nearer. A post goes through `Removal.reassign`, so taking one from a partner is priced as a removal, and the strip shows it.
+- **Bargain** is one of three approaches: argue, promise a date, pressure. Each is `Levers.attempt`, so the odds, the fog, the spends and the lies are unchanged. A win is the smaller grant for the same offer. A promise's win is the word at the date the player named; not believed, it still binds on no deal ("Oui, parole donnée").
+- **Refuse** is `Levers.close` with nothing agreed: a decline, priced once.
+
+The three attempts stay the scene's one tension, since small talk spends them too.
+
+**The money.** A corrupt offer still rides on a request (section 12), now never from a principled person, whatever their kind: the author's ruling that it comes only from someone whose row justifies it. `Deal.answers()` shows it before it is taken, with the evidence it leaves and the chance of being found within a year, with this money and without it.
+
+**Two rows, no third register.** A deal is the president's word and what the person owes, both in `ns.commitments`, both carrying `deal`, the request's id. `President.commitments()` lists the president's words as it always did, and `President.owed()` the rest.
+
+| | At its date |
+|---|---|
+| A word to bring a bill | kept if the bill reached a vote or was forced by then, **whatever the chamber said**: the president answers for the bill, not the deputies; broken, a lie revealed (section 7) |
+| Any other word | section 7, on the want |
+| A pledge | judged at the division: kept, or broken if the person left the party. A forced bill, or a bill that never came, is void and unpriced |
+| Silence | ends unpriced |
+
+Each half lets the other go: a broken pledge makes the president's word void, unpriced, at the vote; a broken word ends what the person still owes. While a word stands the want is heard (section 13's rule), so the person does not come back about it and pay a decline for it. A save carries `deal` and `brought` on the row, so an older save's rows read as they did, and nothing is bumped.
+
+**Not in this block's first PR:** firm and region asks (no want names one: executives carry none, France's regional figures carry programme wants, so they need new want objects and Content's rows); flatter and friendship as modifiers with the lever bands re-measured on three approaches (B5's "none best over 40 %" was declared over six levers and can fail over three by arithmetic, so it needs re-declaring first). A phone win still settles with no ask and no offer.
+
+**B5's answers row under the deal, declared before the read:** at K=1, Book is a certain Grant, `1 + 0.10 + 0.5 x 0.25 - 1.05 + 0.5 x 0.10 + KV`, the ask's cost outside the row as it always was at K=1, 0.10 being silence's value, the conservative reading for every request. At K=0, Book is the best of the three approaches with the lie's price on all three, since every win now writes a word. A minister strikes no deal, so Delegate and Refuse are as they were.
+
+**Measured (base d30839d4), 33 requests scored twice:**
+
+| Best answer | All cases | Will serve | Won't serve |
+|---|---|---|---|
+| Book | 0.50 (base 0.15) | 1.00 (base 0) | 0 (base 0.30) |
+| Delegate | **0.18 (base 0.65)** | 0 (base 1.00) | 0.36 (base 0.30) |
+| Refuse | 0.32 (base 0.20) | 0 | 0.64 (base 0.39) |
+
+- **The carry holds:** Delegate is under 50 %, and Book sits exactly on its ceiling of 50 %.
+- **"Within will serve, delegate at least 5 %" FAILS, as predicted.** That floor predates a Grant that cannot fail. Delegate stays alive in play where no offered day is free, 25 % of requests in A2, which this row does not score. Its mirror, "book at least 5 %", failed at base and now passes.
+- **The prediction was wrong on Delegate:** 35 to 40 % predicted, 18 % measured. It assumed a minister's odds near 0.7 on most requests, and at K=0 Refuse wins nearly two cases in three.
+- **A won't-serve player never books (0, from 0.30).** Every win now writes a word that breaks, so there is no reason to give up a day for it.
+
+**On the real road** (`audience_probe --deal`, a player who Grants every audience and serves only what the packer brings, 60 months, France): 22 deals, 15 votes and 7 silences. Every ask was a word, since no entry carries `laws` yet. Of the 21 words judged, 1 was kept and 20 were broken. Silence is real but thin: nobody under it reached the brief gate in any month.
 
 Related: [[people-model]] · [[calendar-model]] · [[v5.2-spec]] · [[bands-v5.2]] ·
 [[decision-surfaces]] · [[programme-model]] · [[summits-model]]

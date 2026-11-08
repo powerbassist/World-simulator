@@ -151,7 +151,7 @@ static func offer_terms(offer: Dictionary) -> String:
 
 ## What a lie costs if it is caught (Lies.reveal's price), in the words it would
 ## leave the person in: before the click, on the toggle. A promise told as a lie
-## is found out at its date whatever happens (Levers._judge, B8), so its price is
+## is found out at its date whatever happens (CommitmentJudge.verdict, B8), so its price is
 ## certain, not a risk. The words promise no "better odds": since c1b a caught lie
 ## fails the attempt, so a lie is not a free edge and the hover must not sell one.
 static func lie_text(feel: Dictionary, lever := "argue") -> String:
@@ -187,7 +187,7 @@ static func commitment_text(kind: String, person: String, want: String, due: int
 	if kind == "pledge":
 		return Strings.t("%s has pledged a vote on %s, until %s.") % [person, want, when(due)]
 	# A delegated request is a minister's word, not the president's: broken, it is
-	# a betrayal and never a lie (levers.gd _judge; bands-v5.2.md).
+	# a betrayal and never a lie (commitment_judge.gd; bands-v5.2.md).
 	if kind == "delegated":
 		return Strings.t("Delegated to a minister for %s, due %s (their want: %s).") % [person, when(due), want]
 	return Strings.t("Your word to %s, due %s (their want: %s).") % [person, when(due), want]

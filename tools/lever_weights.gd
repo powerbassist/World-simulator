@@ -99,6 +99,20 @@ static func book_value(p: float, s: float, g: float, k: float, serve: bool, prom
 	return v - a * (r_w * K.LIE_RAPPORT + K.LIE_GRUDGE * intake + knowledge_value((1.0 - K.LIE_KNOWLEDGE_KEEP) * k_then, q))
 
 
+## Step 6's deal, declared in docs/audiences-model.md section 14 before any read. What a
+## person's offer is worth, in asks: silence's reading for every request, since a vote needs
+## a bill in the diary and this row cannot know one.
+const OFFER := 0.10
+
+
+## Book under the deal for a player who will serve: a certain Grant, the ask's cost outside the
+## row as it always was at K=1. `q` is the best approach's, for what later encounters read.
+static func grant_value(k: float, q: float) -> float:
+	var r_w := float(WEIGHTS["rapport"])
+	return GAIN + OFFER + r_w * K.PROMISE_KEPT_RAPPORT - DIARY_DAY + r_w * AK.RECEIVED_RAPPORT \
+		+ knowledge_value(AK.KNOW_AUDIENCE * (1.0 - k), q)
+
+
 ## Knowledge `dk` in asks: B4's slope x the three-attempt sensitivity 3q^2 x the
 ## further encounters this term.
 static func knowledge_value(dk: float, q: float) -> float:

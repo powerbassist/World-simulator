@@ -23,6 +23,7 @@ const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
 const AudienceK = preload("res://src/sim/audience_constants.gd")
+const President = preload("res://src/sim/president.gd")
 
 const MAX_LINES := 3
 ## Decisions named on the "Decided last month" line before "and N more".
@@ -43,13 +44,15 @@ static func lines(state, loader, report: Dictionary) -> Array:
 	var now := int(state.year) * 12 + int(state.month)
 	var out: Array = []
 	_laws(ns, loader, now, out)
-	for row in ns.commitments_judged:
-		if int(row.get("judged_month", -1)) == now and String(row.get("verdict", "")) != "void":
+	# The president's word, then what people owed them (a pledge, a silence): theirs to keep.
+	for owed in [false, true]:
+		for row in President.judged_commitments(ns, owed):
+			if int(row.get("judged_month", -1)) != now or String(row.get("verdict", "")) == "void":
+				continue
 			var kept := String(row["verdict"]) == "kept"
 			var who: String = loader.person_name(String(row.get("person_id", "")))
 			var words: String = Strings.t("Your word to %s: kept") % who if kept else Strings.t("Your word to %s: broken") % who
-			# A pledge is the deputy's word to the president: a broken one is theirs.
-			if String(row.get("kind", "")) == "pledge":
+			if owed:
 				words = Strings.t("Their word: %s kept it.") % who if kept else Strings.t("Their word: %s broke it.") % who
 			out.append(_booked(words, ResultTone.GOOD if kept else ResultTone.BAD))
 	var lapsed: Array = (report.get("audience_requests", {}) as Dictionary).get("lapsed", [])

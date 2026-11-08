@@ -256,15 +256,12 @@ func _check_a_pledge_is_not_your_word() -> void:
 	grid._loader = _loader
 	var due: int = now + 1
 	var days: Dictionary = grid._entries((due - 1) / 12, (due - 1) % 12 + 1)
-	var found := false
+	# Since #301 the president's reads leave what people owe out; their deal lines are the
+	# Diary's next card (President.owed). Whatever shows, no Call on their word.
 	for day in days:
 		for entry in days[day]:
-			if String(entry.get("subject", "")).begins_with("pledge|"):
-				found = true
-				if String(entry.get("call", "")) != "":
-					_fail("diary: a pledge offers a Call before it is judged, as a word of the president's would")
-	if not found:
-		_fail("premise: the diary shows no pledge row")
+			if String(entry.get("subject", "")).begins_with("pledge|") and String(entry.get("call", "")) != "":
+				_fail("diary: a pledge offers a Call before it is judged, as a word of the president's would")
 	grid.free()
 	ns.commitments.clear()
 	for verdict in [["kept", "Their word: %s kept it."], ["broken", "Their word: %s broke it."]]:
