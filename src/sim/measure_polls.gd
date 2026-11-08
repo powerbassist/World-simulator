@@ -2,7 +2,8 @@ extends RefCounted
 
 ## V5.3 b, band B3 (docs/design/v5.3-ab.md 4.2): a poll on any measure, the country's support
 ## per bloc, at a margin the player pays for. V4.2's poll on a named bill (Statute.buy_poll)
-## widened, keeping its rule: bought once per measure per tier, fixed, never a reroll, and the
+## widened, keeping its rule for K.REPOLL_MONTHS: bought once per measure per tier, fixed, never
+## a reroll. After that the tier is a new poll, which replaces the row at its own price. The
 ## price lands on the debt stock, a one-off that moves no deficit. Its two kinds stay until the
 ## briefing and the law panel move to these.
 ##
@@ -78,12 +79,13 @@ static func commission(state, loader, key: String, tier: String) -> Dictionary:
 	if position.is_empty():
 		return _refused("A poll is commissioned on a measure the country can read.")
 	var polls: Dictionary = (ns.measure_opinion.get("polls", {}) as Dictionary).get(key, {})
-	if polls.has(tier):
+	var now := int(state.year) * 12 + int(state.month)
+	if polls.has(tier) and now < _open_after(polls[tier]):
 		return _refused("That poll was commissioned already: the figures it bought are fixed.")
 	var cost := float(K.TIERS[tier]["cost_eur_bn"])
 	var today := mini(int(state.day), Calendar.days_in_month(int(state.year), int(state.month)))
 	var row := {
-		"month": int(state.year) * 12 + int(state.month),
+		"month": now,
 		"cost": cost,
 		"due_day": Calendar.day_number(int(state.year), int(state.month), today) + 7 * int(K.TIERS[tier]["weeks"]),
 		"position": position.duplicate(),
@@ -91,6 +93,18 @@ static func commission(state, loader, key: String, tier: String) -> Dictionary:
 	((ns.measure_opinion.get_or_add("polls", {}) as Dictionary).get_or_add(key, {}) as Dictionary)[tier] = row
 	ns.debt_eur_bn += cost
 	return {"ok": true, "refused": false, "refusal": "", "key": key, "tier": tier, "cost_eur_bn": cost, "due_day": int(row["due_day"])}
+
+
+## The first month this tier can be commissioned again, 0 for a tier never bought: what a strip
+## reads to say when, and to grey the verb before a press.
+static func next_open_month(ns, key: String, tier: String) -> int:
+	var row: Dictionary = ((ns.measure_opinion.get("polls", {}) as Dictionary).get(key, {}) as Dictionary).get(tier, {})
+	return 0 if row.is_empty() else _open_after(row)
+
+
+## A row back from a save has every number a float.
+static func _open_after(row: Dictionary) -> int:
+	return int(row["month"]) + K.REPOLL_MONTHS
 
 
 static func _refused(why: String) -> Dictionary:

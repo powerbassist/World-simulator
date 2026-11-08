@@ -20,6 +20,7 @@ const Processes = preload("res://src/sim/processes.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const PollK = preload("res://src/sim/poll_constants.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 
 const PLAYER := "FRA"
@@ -41,6 +42,7 @@ func _init() -> void:
 	_check_any_measure_can_be_polled()
 	_check_nothing_is_printed_before_its_day()
 	_check_a_printed_poll_is_fixed()
+	_check_a_tier_can_be_bought_again_after_its_term()
 	_check_the_range_at_every_level_of_support()
 	_check_the_band_on_real_measures()
 	_check_each_bloc_is_its_own_fieldwork()
@@ -249,6 +251,56 @@ func _check_a_printed_poll_is_fixed() -> void:
 	MeasurePolls.deliver_due(other, 1)
 	if str(MeasurePolls.result(other.player(), other_law.id, "quick")) == printed:
 		_fail("the fieldwork did not read the country: a poll bought in a better month prints the same")
+
+
+## The parent's ruling on #304: "bought once" had no end, so a measure could never be polled
+## twice however far the country had moved. Inside the term the rule stands; after it the tier
+## is a new poll, with its own month, date, position and price.
+func _check_a_tier_can_be_bought_again_after_its_term() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _open_bill(state)
+	var first := int(state.year) * 12 + int(state.month)
+	if MeasurePolls.next_open_month(ns, law.id, "quick") != 0 or MeasurePolls.next_open_month(ns, "no_such_measure", "quick") != 0:
+		_fail("a tier never bought is not open at 0")
+	MeasurePolls.commission(state, _loader, law.id, "quick")
+	if MeasurePolls.next_open_month(ns, law.id, "quick") != first + PollK.REPOLL_MONTHS:
+		_fail("the tier reopens at %d, bought at %d" % [MeasurePolls.next_open_month(ns, law.id, "quick"), first])
+	if MeasurePolls.next_open_month(ns, law.id, "deep") != 0:
+		_fail("buying one tier closed another")
+	_at_month(state, first + 1)
+	MeasurePolls.deliver_due(state, 1)
+	var printed: Dictionary = MeasurePolls.result(ns, law.id, "quick")
+	if printed.is_empty():
+		_fail("the first poll did not print")
+	# A row back from a save has every number a float.
+	ns.measure_opinion["polls"][law.id]["quick"]["month"] = float(first)
+	_at_month(state, first + PollK.REPOLL_MONTHS - 1)
+	var debt := float(ns.debt_eur_bn)
+	var early: Dictionary = MeasurePolls.commission(state, _loader, law.id, "quick")
+	if bool(early["ok"]) or String(early["refusal"]) == "" or float(ns.debt_eur_bn) != debt or str(MeasurePolls.result(ns, law.id, "quick")) != str(printed):
+		_fail("a month inside the term was not refused cleanly: %s" % [early])
+	_at_month(state, first + PollK.REPOLL_MONTHS)
+	for bloc in OpinionK.BLOC_KEYS:
+		ns.bloc_approval[bloc] = 90.0
+	var again: Dictionary = MeasurePolls.commission(state, _loader, law.id, "quick")
+	# Not is_equal_approx: its tolerance scales with the debt, and at this size it takes in the fee.
+	if not bool(again["ok"]) or absf(float(ns.debt_eur_bn) - debt - float(PollK.TIERS["quick"]["cost_eur_bn"])) > 0.000001:
+		_fail("the term over, the tier was not bought and charged: %s, debt %.3f from %.3f" % [again, float(ns.debt_eur_bn), debt])
+	var row: Dictionary = ns.measure_opinion["polls"][law.id]["quick"]
+	if int(row["month"]) != first + PollK.REPOLL_MONTHS or row.has("ranges") or not MeasurePolls.result(ns, law.id, "quick").is_empty():
+		_fail("the row was not replaced: %s" % [row])
+	if MeasurePolls.next_open_month(ns, law.id, "quick") != first + 2 * PollK.REPOLL_MONTHS:
+		_fail("the term did not restart from the new poll")
+	_at_month(state, first + PollK.REPOLL_MONTHS + 1)
+	MeasurePolls.deliver_due(state, 1)
+	if MeasurePolls.result(ns, law.id, "quick").is_empty() or str(MeasurePolls.result(ns, law.id, "quick")) == str(printed):
+		_fail("the new poll printed nothing new: %s" % [MeasurePolls.result(ns, law.id, "quick")])
+
+
+func _at_month(state, absolute: int) -> void:
+	state.year = floori((absolute - 1) / 12.0)
+	state.month = absolute - int(state.year) * 12
 
 
 ## The range by hand, at the edges and the noise's two ends: always the truth inside, always
