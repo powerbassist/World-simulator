@@ -40,7 +40,7 @@ func _init() -> void:
 	if not _loader.errors.is_empty():
 		_fail("data did not load cleanly: %s" % [_loader.errors])
 
-	_check_no_row_ships_a_magnitude_yet()
+	_check_every_shipped_magnitude_sits_at_its_reference()
 	_check_nothing_moves_at_scale_one()
 	_check_the_scale_reads_budget_effects_only()
 	_check_a_bill_graded_down_brings_less_of_everything()
@@ -118,11 +118,16 @@ func _party_by_slot(slot: String):
 	return null
 
 
-func _check_no_row_ships_a_magnitude_yet() -> void:
+## Content tagged the rows: each ships its own reference as its value, so at the
+## default grade (1.0) nothing moves -- the balance table stays byte-identical.
+func _check_every_shipped_magnitude_sits_at_its_reference() -> void:
 	for law in _loader.laws:
-		if not law.magnitude.is_empty():
-			# Content tags rows after this PR: this pin then becomes the rows' own band.
-			_fail("%s ships a magnitude: the balance prediction assumed none" % law.id)
+		if law.magnitude.is_empty():
+			continue
+		if not is_equal_approx(float(law.magnitude.get("value", -1.0)), float(law.magnitude.get("reference", -2.0))):
+			_fail("%s ships a magnitude off its reference: scale 1 would move it" % law.id)
+		if str(law.magnitude.get("unit", "")).is_empty():
+			_fail("%s ships a magnitude with no unit" % law.id)
 
 
 func _check_nothing_moves_at_scale_one() -> void:
