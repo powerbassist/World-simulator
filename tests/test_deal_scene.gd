@@ -212,11 +212,9 @@ func _check_owed() -> void:
 	if not recorded:
 		_fail("a judged pledge is not on the Diary's record")
 	_ns().commitments_judged.pop_back()
-	var who: String = _main._loader.person_name(_voter)
-	var found := false
-	for line in AudienceDriver.given_lines(_main):
-		found = found or String(line).contains(who)
-	if not found:
+	# Their half by its own words: the president's word names the same person.
+	var theirs := DealWords.owed_text(_main._loader, _ns(), President.owed(_ns())[0])
+	if not AudienceDriver.given_lines(_main).has(theirs):
 		_fail("what they owe is not in the Diary's list: %s" % [AudienceDriver.given_lines(_main)])
 
 
