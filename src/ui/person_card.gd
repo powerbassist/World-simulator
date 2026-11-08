@@ -210,14 +210,16 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 	var rapport := President.rapport(ns, String(person.id))
 	if grudge >= 0.05 or loyalty != 0.0 or standing >= 0.05 or rapport != 0.0:
 		PanelKit.row(_body, tr("Standing"), Num.f(standing, 2))
-		# R11: a feeling, the figure behind it in the tooltip; a band with no word
-		# (no grudge, an unmoved loyalty) is no row.
+		# R11: a feeling; a relation has its number beside the word, a grudge in the
+		# tooltip. A band with no word (no grudge, an unmoved loyalty) is no row.
 		var feel := Feelings.of(ns, String(person.id))
 		var words := Feelings.words(feel)
 		for register in ["loyalty", "grudge", "rapport"]:
 			if words[register] != "":
-				var row := PanelKit.row(_body, tr(FEELING_LABEL[register]), words[register])
-				row.tooltip_text = Feelings.tip(float(feel[register]))
+				if register == "grudge":
+					PanelKit.row(_body, tr(FEELING_LABEL[register]), words[register]).tooltip_text = Feelings.tip(float(feel[register]))
+				else:
+					PanelKit.row(_body, tr(FEELING_LABEL[register]), "%s %s" % [words[register], Feelings.figure(float(feel[register]))])
 	# V5.2c: the bond the term has made of them -- a rival or a lover is news.
 	var bond := Feelings.bond_word(String(ns.person_bond.get(person.id, "")))
 	if bond != "":

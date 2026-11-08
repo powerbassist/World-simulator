@@ -133,9 +133,12 @@ func _check_card() -> void:
 	if _card == null:
 		return
 	var text := _text(_card)
-	# R11 turned the figure into its word: -0.10 reads wary.
+	# R11 turned the figure into its word: -0.10 reads wary. The author, 2026-11-08: a whole
+	# number from -100 to +100 stands beside it, and the register's own scale is never shown.
 	if not text.contains("Rapport") or not text.contains("wary") or text.contains("-0.10"):
 		_fail("RECORD 5: the person card does not show a rapport of -0.10 as wary:\n%s" % text)
+	if not text.contains("wary -10"):
+		_fail("the card's rapport is not a whole number from -100 to +100:\n%s" % text)
 
 
 ## Given for 15 months on, the row refused ("your word is given"): the window the

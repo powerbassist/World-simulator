@@ -39,6 +39,7 @@ func _init() -> void:
 	_check_bond_words()
 	_check_broken_delegation()
 	_check_lint()
+	_check_the_figure()
 	_loader = DataLoader.new()
 	_loader.load_all()
 	if not _loader.errors.is_empty():
@@ -181,6 +182,12 @@ func _check_dated_order() -> void:
 
 ## Every line of src/ui that prints a figure (Num.f / Num.fs) and names one of the
 ## three registers fails, unless the figure goes to a tooltip.
+func _check_the_figure() -> void:
+	for row in [[1.0, "+100"], [-1.0, "-100"], [0.374, "+37"], [-0.376, "-38"], [0.004, "0"], [-0.004, "0"], [0.0, "0"]]:
+		if Feelings.figure(float(row[0])) != String(row[1]):
+			_fail("a relation of %s reads '%s', not '%s'" % [row[0], Feelings.figure(float(row[0])), row[1]])
+
+
 func _check_lint() -> void:
 	var figure := RegEx.create_from_string(FIGURE)
 	var register := RegEx.create_from_string(REGISTER)
