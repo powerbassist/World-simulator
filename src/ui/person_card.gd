@@ -127,6 +127,18 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 			if p.id == pid:
 				return Strings.t("the leadership of %s") % String(p.party_name)
 		return Strings.t("a party leadership")
+	if object.begins_with("region:"):
+		var region_id := object.substr("region:".length())
+		for region in loader.regions.get(ns.id, []):
+			if String(region.id) == region_id:
+				return Strings.t("a development fund for %s") % region.region_name
+		return Strings.t("a development fund")
+	if object.begins_with(AK.FIRM_PREFIX):
+		var company_id := object.substr(AK.FIRM_PREFIX.length())
+		for company in loader.companies.get(ns.id, []):
+			if String(company.id) == company_id:
+				return Strings.t("the plant at %s saved") % company.company_name
+		return Strings.t("the plant saved")
 	# V5.2b b3: a visiting head's ask, "measure:<FRA>DEU>" -- the played nation's
 	# measure on their nation, lifted ("wants your measure on Germany lifted").
 	if object.begins_with("measure:"):

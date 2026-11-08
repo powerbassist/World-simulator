@@ -185,6 +185,16 @@ static func resolve_want(loader, want: Dictionary, nation_id: String, person_id:
 			)
 		return
 
+	if object.begins_with("region:"):
+		for region in loader.regions.get(nation_id, []):
+			if String(region.id) == rest:
+				return
+		loader.errors.append(
+			"people/%s.json: person '%s' wants region '%s', which is not one of this nation's"
+			% [nation_id, person_id, rest]
+		)
+		return
+
 	if object.begins_with("office:"):
 		if object == "office:premiership":
 			# Every nation has exactly one; nothing to resolve against. The

@@ -5,9 +5,11 @@ extends RefCounted
 ## source to read, and no band reads these yet, since the fold into three approaches and its
 ## lever bands are a later PR. They are the first thing the play gate should move.
 
-## What is asked: a bill brought by a date, a portfolio now, or a dated word on the want.
+## What is asked: a bill brought by a date, a portfolio now, a closing plant saved now, or a
+## dated word on the want.
 const ASK_LAW := "law"
 const ASK_POST := "post"
+const ASK_FIRM := "firm"
 const ASK_WORD := "word"
 
 ## What is offered: a vote on the next bill, or silence.

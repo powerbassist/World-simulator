@@ -28,3 +28,6 @@ const FUND_STOP_SHARE := 0.25
 ## what was left would be plain spending through the demand channel, a stimulus by
 ## another door than the Budget's lines. Three keeps the verb a choice of where.
 const FUND_MAX_OPEN := 3
+
+## A fund row's status while it runs. Here so a leaf can read it without preloading the system.
+const STATUS_OPEN := "open"

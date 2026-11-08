@@ -324,6 +324,10 @@ func _lover(ns) -> String:
 	var leader = _loader.person_by_id[President.leader_id(ns)]
 	for person in _loader.people[PLAYER]:
 		if person.id != leader.id and person.id != leader.spouse_id and Shadows.spark(ns, String(person.id)):
+			# These checks count declines "from 0" and read the bond thresholds off that:
+			# a start_regard_offset, or the distance seed, is a head start the test did
+			# not mean to measure, so the person begins from the neutral reading.
+			ns.person_rapport.erase(String(person.id))
 			return String(person.id)
 	return ""
 

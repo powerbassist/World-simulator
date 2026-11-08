@@ -50,6 +50,7 @@ const President = preload("res://src/sim/president.gd")
 const CK = preload("res://src/sim/character_act_constants.gd")
 const CharacterSeed = preload("res://src/sim/character_seed.gd")
 const Staff = preload("res://src/sim/staff.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 
 
 ## Seed the people of ONE nation (new_game calls it for the player's, the only
@@ -230,32 +231,12 @@ static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dict
 		ns.person_want_state[latch_key] = latched or served
 		if served and not prev:
 			_adjust_loyalty(ns, person.id, CK.LOYALTY_WANT_SERVED)
-		elif not served and (latched if _is_standing(object) else prev):
-			_adjust_grudge(ns, person, CK.GRUDGE_WANT_DENIED * _denial_factor(person, object))
-
-
-## A STANDING want's object: a condition the government holds month by month (a
-## meter's level, a programme entry's presence on the register). Everything else
-## -- the `office:` family -- is a discrete holding, charged once at the turn.
-static func _is_standing(object: String) -> bool:
-	return object.begins_with("meter:") or object.begins_with("programme:")
-
-
-## The want-shaped half of a grudge pulse. FERVENT amplifies a METER want's
-## denial for the collective kinds, and only there: the meter IS a union
-## leader's or an activist's lever (14.4), so being denied at the meter is
-## being denied in their own register rather than at one of a politician's
-## many objects. A fervent politician gets nothing here, which is the
-## distinction the trait's own wording draws.
-static func _denial_factor(person, object: String) -> float:
-	if person.traits.has("fervent") and object.begins_with("meter:"):
-		if CharacterK.KIND_COLLECTIVE.has(String(person.kind)):
-			return CK.FERVENT_METER_FACTOR
-	return 1.0
+		elif not served and (latched if WantTerms.is_standing(object) else prev):
+			_adjust_grudge(ns, person, CK.GRUDGE_WANT_DENIED * WantTerms.denial_factor(person, object))
 
 
 ## The derived satisfaction read -- NEVER stored. programme reads the live
-## register, office reads the slots, meter reads the hand-ins.
+## register, office reads the slots, meter reads the hand-ins, region the open funds.
 ##
 ## want_satisfied is the PUBLIC surface of the private read below -- the
 ## Programme.this_term() precedent: the People panel consumed a hand-kept
@@ -315,6 +296,8 @@ static func _want_satisfied(ns, person, want: Dictionary, meters: Dictionary, au
 	if object.begins_with("office:party_leadership:"):
 		var pid := object.substr("office:party_leadership:".length())
 		return party_leader(ns, pid, authored_leaders) == person.id
+	if object.begins_with("region:"):
+		return WantTerms.fund_open(ns, object.substr("region:".length()))
 	if object.begins_with("meter:"):
 		var meter_key := object.substr("meter:".length())
 		var value := float(meters.get(meter_key, 0.0))

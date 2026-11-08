@@ -37,7 +37,7 @@ const FK = preload("res://src/sim/region_fund_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
-const OPEN := "open"
+const OPEN := FK.STATUS_OPEN
 
 
 ## Open a fund. {ok, id} or {ok: false, reason}; a refusal writes nothing.

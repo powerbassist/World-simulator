@@ -67,6 +67,10 @@ static func impossible(object: String, stance: String) -> String:
 		return K.DELEGATE_WHY_OFFICE
 	if object.begins_with("measure:"):
 		return K.DELEGATE_WHY_MEASURE
+	if object.begins_with(K.FIRM_PREFIX):
+		return K.DELEGATE_WHY_FIRM
+	if object.begins_with("region:"):
+		return K.DELEGATE_WHY_REGION
 	if object.begins_with("programme:") and stance == "oppose":
 		return K.DELEGATE_WHY_PROGRAMME
 	return ""

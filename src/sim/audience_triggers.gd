@@ -30,6 +30,9 @@ const Staff = preload("res://src/sim/staff.gd")
 const President = preload("res://src/sim/president.gd")
 const RK = preload("res://src/core/relations.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
+const AK = preload("res://src/sim/audience_constants.gd")
+const Closures = preload("res://src/sim/closures.gd")
+const Companies = preload("res://src/sim/companies.gd")
 
 
 ## [[person, want], ...] in the order they are invited: the programme's people in
@@ -56,6 +59,18 @@ static func invitations(state, ns, loader, meters: Dictionary, leaders: Dictiona
 			if String(want["object"]) == moved and not Characters.want_served(ns, person, want, meters, leaders):
 				out.append([person, want])
 				break
+	return out
+
+
+## Step 6: the chief of a firm whose closure was announced this month comes about the plant.
+## [[chief, want], ...]; Audiences gives them a place of their own (AudienceLane).
+static func chiefs(ns, loader, now: int) -> Array:
+	var out := []
+	for company in Companies.majors_of(loader, ns.id):
+		var closure := Closures.announced(ns, String(company.id))
+		var chief = loader.person_by_id.get(String(company.chief_id))
+		if not closure.is_empty() and int(closure["announced"]) == now and chief != null:
+			out.append([chief, {"object": "%s%s" % [AK.FIRM_PREFIX, String(company.id)], "stance": "want"}])
 	return out
 
 

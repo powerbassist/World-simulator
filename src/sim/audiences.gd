@@ -41,6 +41,7 @@ const Dates = preload("res://src/sim/audience_dates.gd")
 const Lies = preload("res://src/sim/lies.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
+const Lane = preload("res://src/sim/audience_lane.gd")
 
 
 ## One month of the played nation's lane: what is overdue lapses (priced), who
@@ -52,6 +53,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 	if ns == null:
 		return out
 	var now := _now(state)
+	Lane.close_overtaken(state, ns, now)
 	for row in ns.audience_requests:
 		if not _overdue(row, now):
 			continue
@@ -229,7 +231,7 @@ static func invite(state, ns, loader, person_id: String, object: String, stance:
 		return {"ok": false, "error": "not someone of this nation", "request": {}}
 	if Staff.is_staff(loader, person_id):
 		return {"ok": false, "error": "staff do not ask", "request": {}}
-	if _open_count(ns, true) >= K.MAX_PENDING or not _may_ask(ns, person, President.leader_id(ns), now):
+	if Lane.open_count(ns, true) >= K.MAX_PENDING or not _may_ask(ns, person, President.leader_id(ns), now):
 		return {"ok": false, "error": "they cannot ask now", "request": {}}
 	var arrived := []
 	_arrive(ns, person, {"object": object, "stance": stance}, now, arrived)
@@ -286,12 +288,15 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 		ns.audience_lane_start = now
 	var people: Array = Staff.cast(loader, state.player_nation_id)
 	var leader := President.leader_id(ns)
-	var open := _open_count(ns, true)
-	var visiting := _open_count(ns, false)
+	var open := Lane.open_count(ns, true)
+	var visiting := Lane.open_count(ns, false)
 	for invited in AudienceTriggers.visitors(state, ns, loader, now):
 		if visiting < K.MAX_PENDING_FOREIGN and _may_ask(ns, invited[0], leader, now):
 			_arrive(ns, invited[0], invited[1], now, arrived)
 			visiting += 1
+	for invited in AudienceTriggers.chiefs(ns, loader, now):
+		if _may_ask(ns, invited[0], leader, now):
+			_arrive(ns, invited[0], invited[1], now, arrived)
 	var leaders := {}
 	for party in loader.parties.get(state.player_nation_id, []):
 		leaders[party.id] = party.leader_person_id
@@ -319,7 +324,7 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 	# people by the lane's second month is answered in its third by the candidate
 	# the hazard weighs most -- the highest standing, ties by id -- about the want
 	# the draw would have asked. Once a game: the month comes once.
-	if now != int(ns.audience_lane_start) + K.FIRST_REQUEST_BY_MONTH - 1 or _asked_ever(ns):
+	if now != int(ns.audience_lane_start) + K.FIRST_REQUEST_BY_MONTH - 1 or Lane.asked_ever(ns):
 		return
 	var best = null
 	for person in people:
@@ -331,24 +336,6 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 			best = person
 	if best != null:
 		_arrive(ns, best, _unserved(ns, best, meters, leaders, now), now, arrived)
-
-
-## Whether any of the played nation's own people has ever asked (a visiting head
-## is not the draw's).
-static func _asked_ever(ns) -> bool:
-	for pid in ns.audience_asked_month:
-		if String(pid).begins_with("%s_" % ns.id):
-			return true
-	return false
-
-
-## The open requests of this nation's people (`own`), or of the visiting heads.
-static func _open_count(ns, own: bool) -> int:
-	var n := 0
-	for row in ns.audience_requests:
-		if K.OPEN.has(String(row.get("status", ""))) and String(row.get("person_id", "")).begins_with("%s_" % ns.id) == own:
-			n += 1
-	return n
 
 
 static func _may_ask(ns, person, leader: String, now: int) -> bool:
@@ -385,7 +372,8 @@ static func _arrive(ns, person, want: Dictionary, now: int, arrived: Array) -> v
 		"status": K.STATUS_PENDING,
 		"date": {},
 		"resolved_month": -1,
-		"offer": Offers.offer_for(ns, person, now),
+		# A chief comes to save a plant: a plea, with no envelope on it.
+		"offer": {} if String(want["object"]).begins_with(K.FIRM_PREFIX) else Offers.offer_for(ns, person, now),
 	}
 	ns.audience_requests.append(row)
 	ns.audience_asked_month[String(person.id)] = now

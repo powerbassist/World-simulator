@@ -65,6 +65,7 @@ tests=(
   tests/test_division_terms.gd
   tests/test_address.gd
   tests/test_deal.gd
+  tests/test_firm_region_asks.gd
   tests/test_measure_polls.gd
   tests/test_start_regard.gd
   tests/test_audiences.gd
@@ -257,6 +258,9 @@ tests=(
   tests/test_front_page.gd
   tests/test_legislature_dissolve.gd
   tests/test_table_bill.gd
+  tests/test_forecast_reads.gd
+  tests/test_law_verbs.gd
+  tests/test_poll_card.gd
   # An ownership bill that passes while its firm's process is refused says so in one line.
   tests/test_bill_refusal_line.gd
   tests/test_tabled_ui.gd
