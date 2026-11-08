@@ -753,6 +753,11 @@ func _check_a_delegated_commitment_is_judged() -> void:
 	if kept.is_empty() or broken.is_empty():
 		_fail("no served want or no unserved office want to delegate (%s, %s)" % [kept, broken])
 		return
+	# Both start from the neutral reading: the deltas below are measured against it, and a
+	# full-scale start_regard_offset can sit at the register's clamp, where a delta shows
+	# nothing.
+	ns.person_rapport.erase(String(kept["id"]))
+	ns.person_rapport.erase(String(broken["id"]))
 	var due := _now(state) + CalendarK.BOOKING_HORIZON_MONTHS
 	President.commit(state, ns, _loader, "delegated", kept["id"], kept["object"], due)
 	President.commit(state, ns, _loader, "delegated", broken["id"], broken["object"], due)
