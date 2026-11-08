@@ -31,15 +31,15 @@ extends PanelContainer
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
-const K = preload("res://src/sim/opinion_constants.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
-const PollNoise = preload("res://src/ui/poll_noise.gd")
-const Statute = preload("res://src/sim/statute.gd")
-const StatuteK = preload("res://src/sim/statute_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
+const Statute = preload("res://src/sim/statute.gd")
+const StatuteK = preload("res://src/sim/statute_constants.gd")
+const PollStrip = preload("res://src/ui/poll_strip.gd")
+const MeasurePolls = preload("res://src/sim/measure_polls.gd")
 
 ## Emitted for the division, and ONLY for the division: main.gd hides the
 ## briefing and calls law_panel.run_proposal(law), whose `proposed` signal
@@ -274,86 +274,55 @@ func _build_polls() -> void:
 	else:
 		PanelKit.line(section, tr("Drafting first; when it completes, the bill waits on your Propose in the Legislature."), PanelKit.Tone.DIM)
 
-	# The country's read, bloc by bloc, at the margin the player has paid
-	# for: the ordinary poll noise, or the commissioned +-1.0 where the
-	# popular poll was bought. The poll is ABOUT this bill, so its hash is
-	# keyed by the bill as well as the bloc -- two bills' polls are two
-	# pieces of fieldwork, not one number read twice. A COMMISSIONED poll's
-	# hash is keyed on the month the fieldwork happened -- the purchase
-	# record's own month, stored exactly in poll_id units -- because the
-	# fixed-forecast rule means the player bought one published figure, not
-	# a fresh draw every month (the ultra pass-14 finding): the free poll
-	# beside it keeps the live month, and the two legitimately read
-	# differently as the months pass.
-	var bought: Dictionary = _ns.poll_purchases.get(_bill_key, {})
-	var precise: bool = bought.has(StatuteK.POLL_KIND_POPULAR)
-	var id := PollNoise.poll_id(int(_state.year), int(_state.month))
-	if precise:
-		id = int(bought[StatuteK.POLL_KIND_POPULAR].get("month", id))
-	var rows: Array = [["", tr("the country")]]
-	for bloc in K.BLOC_KEYS:
-		var truth: float = float(_ns.bloc_approval.get(bloc, 0.0))
-		var shown: float = PollNoise.displayed_precise(id, _poll_key(bloc), truth) if precise \
-			else PollNoise.displayed(id, _poll_key(bloc), truth)
-		rows.append([Labels.bloc(String(bloc)), Num.f(shown, 1)])
-	PanelKit.ledger(section, rows)
-	if precise:
-		PanelKit.line(section, tr("Commissioned poll — margin of error about %.0f point.") % PollNoise.PRECISE_MAX_PCT, PanelKit.Tone.DIM)
+	# The country's read: what the player has bought, and the tiers they can buy. A bill that
+	# has reached the order paper keeps its draft's key, the id it carries.
+	PollStrip.build(section, _state, _loader, _bill_key, _on_poll)
+	_build_whip_count(section)
 
-	# Stacked, not side by side: the two commission buttons are long sentences, and
-	# in Archivo two of them in one row measured 716 px inside a 646 px view -- every
-	# right-aligned figure above landed in the clipped strip (V5.1a QA).
-	var row := VBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
-	section.add_child(row)
-	for kind in [StatuteK.POLL_KIND_ASSEMBLY, StatuteK.POLL_KIND_POPULAR]:
-		var btn := Button.new()
-		# A translated sentence on one line is the widest thing in the briefing: it wraps
-		# (two lines in a longer language) rather than push the figures out of the view.
-		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		# The sim's own price (G8: a flat fee, thousands of euros, not a share of GDP).
-		var cost_k: float = StatuteK.poll_cost_eur_bn(kind) * 1.0e6
-		# One whole sentence per kind (the article and the kind are the sentence's own).
-		btn.text = (tr("Commission an assembly poll — €%s k") if kind == StatuteK.POLL_KIND_ASSEMBLY
-			else tr("Commission a popular poll — €%s k")) % Num.f(cost_k, 0)
-		if bought.has(kind):
-			# The fixed-forecast rule, made visible: a bought poll is a
-			# published figure, and the second commission is refused by the
-			# sim even if a stale frame offers the button.
-			btn.disabled = true
-			btn.tooltip_text = tr("Commissioned — the figures it bought are fixed.")
-		else:
-			btn.pressed.connect(_on_poll.bind(kind))
-		row.add_child(btn)
 
-	# One line, filled only by a refusal -- an empty label is no line at all,
-	# which is what a briefing with nothing refused should show.
+## V4.2's priced whip count stays (the parent's ruling on #304): the tiers read the country,
+## and this alone firms the Assembly's forecast for this bill. The sim's own price and refusal.
+func _build_whip_count(section: Control) -> void:
+	var whip := PanelKit.sized(Button.new())
+	whip.name = "AssemblyPoll"  # i18n: ok a node name, found by tests
+	whip.text = tr("Commission an assembly poll — €%s k") % Num.f(StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_ASSEMBLY) * 1.0e6, 0)
+	if (_ns.poll_purchases.get(_bill_key, {}) as Dictionary).has(StatuteK.POLL_KIND_ASSEMBLY):
+		whip.disabled = true
+		whip.tooltip_text = tr("Commissioned — the figures it bought are fixed.")
+	else:
+		whip.pressed.connect(_on_whip)
+	section.add_child(whip)
+	# One line, filled only by a refusal: an empty label is no line at all.
 	var refusal := Label.new()
-	refusal.name = "RefusalLine"
+	refusal.name = "RefusalLine"  # i18n: ok a node name, found by tests
 	refusal.hide()
 	section.add_child(refusal)
 
 
-func _poll_key(bloc: String) -> String:
-	return "%s|%s" % [_bill_key, bloc]
-
-
-func _on_poll(kind: String) -> void:
-	# A hidden panel's stale signal must not act: after detach() the state is
-	# the discarded game, and buy_poll() would charge the dead run's debt and
-	# emit a snapshot nothing live can compare against.
+func _on_whip() -> void:
+	# As _on_poll: a hidden panel's stale signal must not charge the discarded game.
 	if _state == null:
 		return
 	var before := Trends.snapshot_now(_state)
-	var result: Dictionary = Statute.buy_poll(_state, _ns, _bill_key, kind)
+	var result: Dictionary = Statute.buy_poll(_state, _ns, _bill_key, StatuteK.POLL_KIND_ASSEMBLY)
 	if bool(result.get("refused", false)):
 		var refusal: Label = _body.find_child("RefusalLine", true, false)
 		if refusal != null:
 			refusal.text = String(result.get("refusal", tr("Refused.")))
 			refusal.show()
 		return
-	polled.emit(before, (tr("Commissioned an assembly poll: %s") if kind == StatuteK.POLL_KIND_ASSEMBLY
-		else tr("Commissioned a popular poll: %s")) % _bill_name())
+	polled.emit(before, tr("Commissioned an assembly poll: %s") % _bill_name())
+	_rebuild()
+
+
+func _on_poll(tier: String) -> void:
+	# A hidden panel's stale signal must not act: after detach() the state is the discarded
+	# game, and the commission would charge the dead run's debt.
+	if _state == null:
+		return
+	var before := Trends.snapshot_now(_state)
+	if bool(MeasurePolls.commission(_state, _loader, _bill_key, tier)["ok"]):
+		polled.emit(before, tr("Commissioned a poll: %s") % _bill_name())
 	_rebuild()
 
 

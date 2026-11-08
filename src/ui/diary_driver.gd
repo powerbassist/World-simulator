@@ -26,11 +26,16 @@ const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const Bills = preload("res://src/sim/bills.gd")
+const MeasurePolls = preload("res://src/sim/measure_polls.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 
 
 static func resolve(state, loader, year: int, month: int, day: int, on_outcome: Callable) -> bool:
+	# A poll arrives on its day, not at the month's close: bought on 19 Jan, a two-week poll
+	# would otherwise print on 1 March (QA's merge gate on the poll card).
+	for row in MeasurePolls.deliver_due(state, day):
+		on_outcome.call({"label": "", "poll": row})
 	var due: Array = Calendar.due(state, year, month, day)
 	if due.is_empty():
 		return false

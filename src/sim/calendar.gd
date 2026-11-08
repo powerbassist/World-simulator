@@ -320,14 +320,14 @@ static func departure(entry: Dictionary) -> Dictionary:
 	var dn := _to_day_number(
 		int(entry.get("year", 0)), int(entry.get("month", 0)), int(entry.get("day", 1))
 	) - int(entry.get("travel_days", 0))
-	return _from_day_number(dn)
+	return from_day_number(dn)
 
 
 static func arrival_home(entry: Dictionary) -> Dictionary:
 	var dn := _to_day_number(
 		int(entry.get("year", 0)), int(entry.get("month", 0)), int(entry.get("day", 1))
 	) + int(entry.get("travel_days", 0))
-	return _from_day_number(dn)
+	return from_day_number(dn)
 
 
 ## One row per day of one month, classifying what occupies it: {"day", "travel",
@@ -401,7 +401,7 @@ static func _first_of_next_month(year: int, month: int) -> int:
 	return _to_day_number(year, month + 1, 1)
 
 
-static func _from_day_number(n: int) -> Dictionary:
+static func from_day_number(n: int) -> Dictionary:
 	var d := Time.get_datetime_dict_from_unix_time(n * 86400)
 	return {"year": int(d["year"]), "month": int(d["month"]), "day": int(d["day"])}
 
