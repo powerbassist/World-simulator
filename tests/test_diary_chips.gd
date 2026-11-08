@@ -139,6 +139,55 @@ func _check_chips() -> void:
 		_fail("the chip does not wear the asker's mood")
 	if chip.focus_mode != Control.FOCUS_ALL:
 		_fail("a keyboard cannot reach the chip")
+	var day: String = preload("res://src/ui/date_text.gd").day_month_year(int(_date["day"]), int(_date["month"]), int(_date["year"]))
+	if not chip.tooltip_text.contains(day):
+		_fail("the chip's hover does not give its day '%s': '%s'" % [day, chip.tooltip_text])
+	_check_the_later_count()
+	_check_go_takes_the_first_free_day()
+	_check_a_call_counts_from_the_request()
+
+
+## The page-on button is the only sign left that a request has days further on.
+func _check_the_later_count() -> void:
+	var ns = _main._state.player()
+	var grid = _main._calendar_panel._grid
+	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
+	var later := 0
+	for row in Audiences.pending(ns):
+		for date in Audiences.offered_dates(_main._state, ns, String(row["id"])):
+			if int(date["year"]) * 12 + int(date["month"]) > now:
+				later += 1
+				break
+	grid.show_month(int(_main._state.year), int(_main._state.month))
+	if later == 0 or grid._later.text != "> %d" % later:
+		_fail("the next-month button reads '%s', with %d requests offering later days" % [grid._later.text, later])
+	grid.show_month(int(_date["year"]), int(_date["month"]))
+
+
+## The first FREE day, whatever comes before it.
+func _check_go_takes_the_first_free_day() -> void:
+	var grid = _main._calendar_panel._grid
+	var y := int(_date["year"])
+	var m := int(_date["month"])
+	_main._calendar_panel.booking.show_days([{"year": y, "month": m, "day": 3, "free": false}, {"year": y, "month": m, "day": 9, "free": true}], _main._state, _main._loader)
+	if grid._selected != 9:
+		_fail("Go took day %d, not the first free one" % grid._selected)
+	grid.show_month(y, m)
+
+
+## B6: a call counts only from the month the request came.
+func _check_a_call_counts_from_the_request() -> void:
+	var ns = _main._state.player()
+	var row := Audiences.request(ns, _request_id)
+	var pid := String(row["person_id"])
+	var arrived := int(row["arrived_month"])
+	ns.phone_calls[pid] = arrived - 1
+	if AudienceDriver._called(_main, row) != 0:
+		_fail("a call before the request came is said on its card")
+	ns.phone_calls[pid] = arrived
+	if AudienceDriver._called(_main, row) != arrived:
+		_fail("a call in the month it came is not said")
+	ns.phone_calls.erase(pid)
 
 
 func _click(down: bool) -> void:
