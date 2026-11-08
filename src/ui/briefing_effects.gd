@@ -44,12 +44,17 @@ static func lines(state, loader, report: Dictionary) -> Array:
 	var now := int(state.year) * 12 + int(state.month)
 	var out: Array = []
 	_laws(ns, loader, now, out)
-	for row in President.judged_commitments(ns):
-		if int(row.get("judged_month", -1)) == now and String(row.get("verdict", "")) != "void":
+	# The president's word, then what people owed them (a pledge, a silence): theirs to keep.
+	for owed in [false, true]:
+		for row in President.judged_commitments(ns, owed):
+			if int(row.get("judged_month", -1)) != now or String(row.get("verdict", "")) == "void":
+				continue
 			var kept := String(row["verdict"]) == "kept"
 			var who: String = loader.person_name(String(row.get("person_id", "")))
-			out.append(_booked(Strings.t("Your word to %s: kept") % who if kept else Strings.t("Your word to %s: broken") % who,
-				ResultTone.GOOD if kept else ResultTone.BAD))
+			var words: String = Strings.t("Your word to %s: kept") % who if kept else Strings.t("Your word to %s: broken") % who
+			if owed:
+				words = Strings.t("Their word: %s kept it.") % who if kept else Strings.t("Their word: %s broke it.") % who
+			out.append(_booked(words, ResultTone.GOOD if kept else ResultTone.BAD))
 	var lapsed: Array = (report.get("audience_requests", {}) as Dictionary).get("lapsed", [])
 	if not lapsed.is_empty():
 		out.append(_booked(Strings.tn("%d request lapsed: taken as a refusal", "%d requests lapsed: taken as a refusal",

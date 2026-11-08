@@ -183,6 +183,9 @@ static func outcome(id: String) -> String:
 static func commitment_text(kind: String, person: String, want: String, due: int) -> String:
 	if kind == "iou":
 		return Strings.t("You owe %s a vote by %s (their want: %s).") % [person, when(due), want]
+	# A pledge runs the other way: the deputy's word to the president (the review on #298).
+	if kind == "pledge":
+		return Strings.t("%s has pledged a vote on %s, until %s.") % [person, want, when(due)]
 	# A delegated request is a minister's word, not the president's: broken, it is
 	# a betrayal and never a lie (commitment_judge.gd; bands-v5.2.md).
 	if kind == "delegated":
