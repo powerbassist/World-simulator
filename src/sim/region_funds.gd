@@ -1,7 +1,8 @@
 extends RefCounted
 
 ## V5.3 a (docs/design/v5.3-ab.md 3.3 (a), band A7): the regional development fund,
-## N bn a year to one region for 1 to 5 years. One open fund per region; the rule's
+## a chosen share of one region's output a year for 1 to 5 years, the bill in euros and fixed
+## at the opening (the author, 2026-11-09: 1 bn was 0.12 % of London, 2.2 % of DE5). One open fund per region; the rule's
 ## ranges and bloc offsets are data (data/region-actions/fund.json), the response is
 ## region_fund_constants.FUND_BETA.
 ##
@@ -9,7 +10,7 @@ extends RefCounted
 ##               by tick_month() for the Budget to read a month behind (the other
 ##               computed lines' lag: `deficit_pct_gdp` is a precondition field);
 ##   the effect  a term in the region's growth deviation, FUND_BETA x sqrt(the fund
-##               as points of the region's output), fixed at the start and read by
+##               as a percentage of the region's output), fixed at the start and read by
 ##               src/sim/regions.gd from the open rows -- zero-mean over the nation's
 ##               output, so it moves growth between regions, never the nation's,
 ##               and the region's unemployment falls by Okun's share of it;
@@ -41,11 +42,11 @@ const OPEN := FK.STATUS_OPEN
 
 
 ## Open a fund. {ok, id} or {ok: false, reason}; a refusal writes nothing.
-static func start(state, ns, loader, region_id: String, eur_bn: float, years: int) -> Dictionary:
-	var why := refusal(state, ns, loader, region_id, eur_bn, years)
+static func start(state, ns, loader, region_id: String, share_pct: float, years: int) -> Dictionary:
+	var why := refusal(state, ns, loader, region_id, share_pct, years)
 	if why != "":
 		return {"ok": false, "reason": why}
-	var row := _row(state, ns, loader, region_id, eur_bn, years)
+	var row := _row(state, ns, loader, region_id, share_pct, years)
 	row["unemployment_at_start"] = unemployment_here(state, ns, region_id)
 	_blocs(ns, row["bloc_offset"], 1.0)
 	ns.region_funds.append(row)
@@ -57,11 +58,12 @@ static func start(state, ns, loader, region_id: String, eur_bn: float, years: in
 ## {ok: false, reason}. `unemployment_after` is the region's figure with the fund
 ## open, read through the same Regions function the game reads, so it is the booked
 ## figure (the term is immediate; later months move it with the national rate).
-static func estimate(state, ns, loader, region_id: String, eur_bn: float, years: int) -> Dictionary:
-	var why := refusal(state, ns, loader, region_id, eur_bn, years)
+static func estimate(state, ns, loader, region_id: String, share_pct: float, years: int) -> Dictionary:
+	var why := refusal(state, ns, loader, region_id, share_pct, years)
 	if why != "":
 		return {"ok": false, "reason": why}
-	var row := _row(state, ns, loader, region_id, eur_bn, years)
+	var row := _row(state, ns, loader, region_id, share_pct, years)
+	var eur_bn := float(row["eur_bn_per_year"])
 	var list: Array = state.regions.get(ns.id, [])
 	var access := Regions.accessibility_for(ns, list, state.region_graph)
 	var sites: Dictionary = state.project_sited_pct.get(ns.id, {})
@@ -83,7 +85,7 @@ static func unemployment_here(state, ns, region_id: String) -> float:
 		state.project_sited_pct.get(ns.id, {}))
 
 
-## The rule's ranges and the cap, {eur_bn: [lowest, highest], years: [shortest,
+## The rule's ranges and the cap, {share_pct: [lowest, highest], years: [shortest,
 ## longest], max_open}, for
 ## the panel's inputs and its refusal line (the msgids below carry no figures, so
 ## they stay translatable; the panel prints the range from here).
@@ -91,12 +93,12 @@ static func limits(loader) -> Dictionary:
 	var rule: Dictionary = loader.region_fund_rule
 	if rule.is_empty():
 		return {}
-	return {"eur_bn": (rule["eur_bn"] as Array).duplicate(), "years": (rule["years"] as Array).duplicate(),
+	return {"share_pct": (rule["share_pct"] as Array).duplicate(), "years": (rule["years"] as Array).duplicate(),
 		"max_open": FK.FUND_MAX_OPEN}
 
 
 ## Why a fund cannot open, "" when it can. English msgids, the panel's line.
-static func refusal(state, ns, loader, region_id: String, eur_bn: float, years: int) -> String:
+static func refusal(state, ns, loader, region_id: String, share_pct: float, years: int) -> String:
 	var rule: Dictionary = loader.region_fund_rule
 	if rule.is_empty():
 		return "No regional fund rule is loaded."
@@ -106,8 +108,8 @@ static func refusal(state, ns, loader, region_id: String, eur_bn: float, years: 
 			named = true
 	if not named:
 		return "That is not one of this nation's regions."
-	if eur_bn < float(rule["eur_bn"][0]) or eur_bn > float(rule["eur_bn"][1]):
-		return "A fund runs between its lowest and highest sums a year."
+	if share_pct < float(rule["share_pct"][0]) or share_pct > float(rule["share_pct"][1]):
+		return "A fund runs between its lowest and highest shares of the region's output."
 	if years < int(rule["years"][0]) or years > int(rule["years"][1]):
 		return "A fund runs for between its shortest and longest number of years."
 	if Regions.output_eur_bn(ns, region_id) <= 0.0:
@@ -179,8 +181,9 @@ static func tick_month(state) -> void:
 		ns.region_fund_bill_pct_gdp = bill
 
 
-static func _row(state, ns, loader, region_id: String, eur_bn: float, years: int) -> Dictionary:
+static func _row(state, ns, loader, region_id: String, share_pct: float, years: int) -> Dictionary:
 	var now := _now(state)
+	var eur_bn := share_pct / 100.0 * Regions.output_eur_bn(ns, region_id)
 	var pop := float(ns.region_pop_share.get(region_id, 0.0))
 	var offsets := {}
 	var per_bn: Dictionary = loader.region_fund_rule["bloc_offset_per_bn"]
@@ -189,7 +192,7 @@ static func _row(state, ns, loader, region_id: String, eur_bn: float, years: int
 	return {
 		"id": "%s|%d|%d" % [region_id, now, ns.region_funds.size()], "region_id": region_id,
 		"eur_bn_per_year": eur_bn, "years": years, "started": now, "months_left": years * 12,
-		"pts": FK.FUND_BETA * sqrt(100.0 * eur_bn / Regions.output_eur_bn(ns, region_id)),
+		"pts": FK.FUND_BETA * sqrt(share_pct),
 		"bloc_offset": offsets, "status": OPEN, "closed": -1,
 	}
 

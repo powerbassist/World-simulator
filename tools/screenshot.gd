@@ -2174,7 +2174,7 @@ func _stage_a_fund() -> void:
 	for region in loader.regions.get(ns.id, []):
 		if preload("res://src/sim/regions.gd").output_eur_bn(ns, region.id) > 0.0:
 			named.append(region)
-	var low: float = float(funds.limits(loader)["eur_bn"][0])
+	var low: float = float(funds.limits(loader)["share_pct"][0])
 	for i in ([1, 2, 3] if _fund_cap else [1]):
 		funds.start(state, ns, loader, named[i].id, low, 2)
 	var panel = _main._windows.content("region")

@@ -218,7 +218,7 @@ static func parse_fund_rule(parsed, fname: String, errors: Array[String]) -> Dic
 	if typeof(parsed) != TYPE_DICTIONARY:
 		errors.append("%s: missing or invalid JSON" % fname)
 		return {}
-	for key in ["eur_bn", "years"]:
+	for key in ["share_pct", "years"]:
 		var span = parsed.get(key)
 		if typeof(span) != TYPE_ARRAY or (span as Array).size() != 2 \
 				or not _is_number(span[0]) or not _is_number(span[1]) \
@@ -246,7 +246,7 @@ static func parse_fund_rule(parsed, fname: String, errors: Array[String]) -> Dic
 		errors.append("%s: 'arrival' must be {ratio above 1, rearm_months a whole number from 1}" % fname)
 		return {}
 	return {
-		"eur_bn": [float(parsed["eur_bn"][0]), float(parsed["eur_bn"][1])],
+		"share_pct": [float(parsed["share_pct"][0]), float(parsed["share_pct"][1])],
 		"years": [int(parsed["years"][0]), int(parsed["years"][1])],
 		"bloc_offset_per_bn": (offsets as Dictionary).duplicate(),
 		"arrival": {"ratio": float(arrival["ratio"]), "rearm_months": int(arrival["rearm_months"])},

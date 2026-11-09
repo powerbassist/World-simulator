@@ -1,6 +1,6 @@
 {
-  "_note": "V5.3 a, the regional development fund (docs/design/v5.3-ab.md 3.3 (a), src/sim/region_funds.gd). STAND-INS written by Systems so the verb can be measured; Content authors the numbers (the spec's section 10). eur_bn: the fund's range, bn a year, [lowest, highest]. years: how long it may run, whole years, [shortest, longest]. bloc_offset_per_bn: what each bn a year of a fund moves at its start, scaled by the funded region's share of the nation's population (the blocs are national, a fund is not): the region's workers and the rural vote gain, the city vote pays a little for a transfer it does not receive.",
-  "eur_bn": [0.5, 5.0],
+  "_note": "V5.3 a, the regional development fund (docs/design/v5.3-ab.md 3.3 (a), src/sim/region_funds.gd). STAND-INS written by Systems so the verb can be measured; Content authors the numbers (the spec's section 10). share_pct: the levels a fund runs at, percent of the region's output a year, [lowest, highest], STAND-INS (the author, 2026-11-09: the same choice is the same effort everywhere; the bill is that share of the region's output at the opening, in euros). years: how long it may run, whole years, [shortest, longest]. bloc_offset_per_bn: what each bn a year of a fund moves at its start, scaled by the funded region's share of the nation's population (the blocs are national, a fund is not): the region's workers and the rural vote gain, the city vote pays a little for a transfer it does not receive.",
+  "share_pct": [1.0, 3.0],
   "years": [1, 5],
   "arrival": {"ratio": 1.25, "rearm_months": 24},
   "bloc_offset_per_bn": {"workers": 0.04, "rural": 0.03, "business": 0.02, "urban": -0.02}

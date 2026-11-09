@@ -294,15 +294,16 @@ how, so the next reader does not treat them as open:
 ## 14. The regional development fund (V5.3 a)
 
 The spec's 3.3 (a) ([[v5.3-ab]]): the opened region gets verbs, and the first is a
-fund, N bn a year to one region for 1 to 5 years (`src/sim/region_funds.gd`; the
-rule's ranges and bloc offsets are data, `data/region-actions/fund.json`, stand-ins).
+fund, a share of the region's output a year (1 % to 3 %, stand-ins) to one region for 1 to 5
+years (`src/sim/region_funds.gd`; the bill is that share of the region's output at the
+opening, in euros, fixed for the fund's life; the rule's ranges and bloc offsets are data, `data/region-actions/fund.json`, stand-ins).
 
 - **The money** is a Budget line of its own, `region_fund_bill_pct_gdp`, written by
   the `RegionFunds` step after `Projects` and read by the Budget a month behind, the
   lag every computed line takes. The projection ticks it in the same slot, so a
   forecast sees a fund end.
 - **The effect** is a fourth term in the growth deviation, `FUND_BETA x sqrt(the
-  fund as points of the region's output)`, fixed at the start and read here from
+  fund as a percentage of the region's output)`, fixed at the start and read here from
   the open rows. It is ZERO-MEAN over the nation's output shares, the sited term's
   arithmetic exactly (section 4): `Regions.tick_month()`'s sum IS the national GDP,
   and the national level comes through the fund's spending (below), so a term that
@@ -317,15 +318,17 @@ rule's ranges and bloc offsets are data, `data/region-actions/fund.json`, stand-
   the level effect over its life sums to zero. Before this the bill reached only the
   deficit (QA's twin probe on #263: a 5 bn a year fund lowered national GDP a
   little); `tests/test_region_funds.gd` pins the channel.
-- **Why a square root:** band A7 asks one fund (1 bn a year to the region with the
-  highest unemployment) to lower unemployment by 0.3 to 1.0 point in 24 months in
-  all four playable nations, and their worst regions run from about 32 bn of output
-  (POL's PL81) to about 205 bn (FRA's FRE). A linear response that gives FRE 0.3
-  gives PL81 well over 1.0. `FUND_BETA` 1.3 is a stand-in fitted to the band, not a
-  sourced elasticity. Measured by `tools/region_fund_probe.gd` on the game's own
-  month, a 3-year fund read at month 24 against an unfunded twin: DEU DE5 0.79,
-  FRA FRE 0.34, GBR UKC 0.43 (Britain's regions tie on unemployment, so the first
-  in list order), POL PL81 0.90. The strip's estimate equals the booked figure.
+- **A share, not a sum (the author, 2026-11-09).** The fund was 0.5 to 5 bn a year, so 1 bn
+  was 0.12 % of London and 2.2 % of Germany's DE5, and band A7 failed for Britain alone. A
+  level is now one effort in any nation, and the bill is what that effort costs there.
+- **Why a square root:** a fund twice the size does not do twice the work (absorption,
+  leakage to other regions). `FUND_BETA` 1.3 is a stand-in, not a sourced elasticity.
+  Measured by `tools/region_fund_probe.gd` on the game's own month, a 3-year fund to the
+  worst region read at month 24 against an unfunded twin, inside A7's 0.3 to 1.0 at both
+  ends of the range: at 1 %, DEU DE5 0.52, FRA FRE 0.49, GBR UKI 0.44, POL PL81 0.51; at
+  3 %, 0.90, 0.87, 0.81, 0.89. Britain reads above the term's share because its fund is
+  the most money, and a fund is also spending (below). The strip's estimate is the booked
+  figure.
 - **The blocs** move at the start by the rule's per-bn offsets x the bn x the
   region's share of the population (blocs are national, a fund is not); stopping
   early gives back `FUND_STOP_SHARE` of each pleased bloc's gain.
