@@ -66,7 +66,7 @@
     },
     {
       "id": "wealth_levy",
-      "magnitude": {"value": 0.3, "reference": 0.3, "unit": "points of net wealth levy"},
+      "magnitude": {"value": 30, "reference": 30, "unit": "basis points of net wealth"},
       "name": "Net Wealth Levy",
       "theme": "tax",
       "summary": "An annual levy of 0.3 points on large net wealth, collected outside the income tax.",
