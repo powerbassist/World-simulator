@@ -291,7 +291,7 @@
     },
     {
       "id": "assembly_reduction_act",
-      "magnitude": {"value": 20, "reference": 20, "unit": "% of assembly seats"},
+      "magnitude": {"value": 20, "reference": 20, "unit": "% of assembly seats", "max": 50},
       "name": "Assembly Reduction Act",
       "theme": "institutional",
       "summary": "Cut the chamber by a fifth: fewer seats, less pay, a smaller staff bill.",

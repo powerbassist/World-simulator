@@ -33,7 +33,7 @@
     },
     {
       "id": "health_service_reform",
-      "magnitude": {"value": 1, "reference": 1, "unit": "point of income tax"},
+      "magnitude": {"value": 1, "reference": 1, "unit": "point of income tax", "max": 5},
       "name": "Health Service Reform Act",
       "theme": "social",
       "summary": "Expand health [g=spending]spending[/g], funded by a small rise in income tax.",

@@ -77,7 +77,7 @@
     },
     {
       "id": "home_insulation_programme",
-      "magnitude": {"value": 1, "reference": 1, "unit": "million homes"},
+      "magnitude": {"value": 1, "reference": 1, "unit": "million homes", "max": 3},
       "name": "Home Insulation Programme",
       "theme": "social",
       "summary": "Pay for the loft, wall and window retrofits of a million draughty homes.",

@@ -19,7 +19,7 @@
     },
     {
       "id": "retirement_age_reform",
-      "magnitude": {"value": 2, "reference": 2, "unit": "years of retirement age"},
+      "magnitude": {"value": 2, "reference": 2, "unit": "years of retirement age", "max": 6},
       "name": "Retirement Age Reform",
       "theme": "labour",
       "summary": "Raise the statutory retirement age by two years.",
