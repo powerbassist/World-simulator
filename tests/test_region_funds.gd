@@ -83,21 +83,21 @@ func _worst(state, ns) -> String:
 
 func _test_the_rule_loads_and_refuses_a_bad_row() -> void:
 	var rule: Dictionary = _loader.region_fund_rule
-	for key in ["share_pct", "years", "bloc_offset_per_bn"]:
+	for key in ["share_pct", "years", "bloc_offset_per_pct"]:
 		if not rule.has(key):
 			_fail("the fund rule lacks %s: %s" % [key, rule])
 	# The panel prints the range from limits(), since the refusal msgids carry no figures.
 	var lim: Dictionary = RegionFunds.limits(_loader)
 	if lim.get("share_pct", []) != rule.get("share_pct") or lim.get("years", []) != rule.get("years"):
 		_fail("limits() is %s, not the rule's ranges" % [lim])
-	var good := {"share_pct": [1.0, 3.0], "years": [1, 5], "bloc_offset_per_bn": {"workers": 0.04},
+	var good := {"share_pct": [1.0, 3.0], "years": [1, 5], "bloc_offset_per_pct": {"workers": 0.04},
 		"arrival": {"ratio": 1.25, "rearm_months": 24}}
 	var cases := {
 		"a range upside down": func(r: Dictionary) -> void: r["share_pct"] = [3.0, 1.0],
 		"a zero floor": func(r: Dictionary) -> void: r["share_pct"] = [0.0, 3.0],
 		"years not whole": func(r: Dictionary) -> void: r["years"] = [1.5, 5],
-		"an unknown bloc": func(r: Dictionary) -> void: r["bloc_offset_per_bn"] = {"wizards": 0.1},
-		"no offsets": func(r: Dictionary) -> void: r.erase("bloc_offset_per_bn"),
+		"an unknown bloc": func(r: Dictionary) -> void: r["bloc_offset_per_pct"] = {"wizards": 0.1},
+		"no offsets": func(r: Dictionary) -> void: r.erase("bloc_offset_per_pct"),
 		"no arrival": func(r: Dictionary) -> void: r.erase("arrival"),
 		"an arrival at the nation's own level": func(r: Dictionary) -> void: r["arrival"]["ratio"] = 1.0,
 		"a part month's rearm": func(r: Dictionary) -> void: r["arrival"]["rearm_months"] = 1.5,
@@ -142,7 +142,7 @@ func _test_start_refusals_write_nothing() -> void:
 
 ## The term is stored at the start (the strip's figure is the booked one), as
 ## FUND_BETA x sqrt(the fund as a share of the region's output, in points); the
-## bloc move is the rule's per-bn offsets x the bn x the region's population share.
+## bloc move is the rule's offsets per level x the level x the region's population share.
 func _test_a_fund_stores_its_term_and_moves_the_blocs_by_population() -> void:
 	var state = _state()
 	var ns = state.player()
@@ -161,13 +161,13 @@ func _test_a_fund_stores_its_term_and_moves_the_blocs_by_population() -> void:
 	if not is_equal_approx(float(row["pts"]), want):
 		_fail("the fund's term is %.4f, not %.4f" % [float(row["pts"]), want])
 	var pop := float(ns.region_pop_share.get(region, 0.0))
-	var per_bn: Dictionary = _loader.region_fund_rule["bloc_offset_per_bn"]
-	for bloc in per_bn:
+	var per_pct: Dictionary = _loader.region_fund_rule["bloc_offset_per_pct"]
+	for bloc in per_pct:
 		var moved := float(ns.bloc_offset.get(bloc, 0.0)) - float(before.get(bloc, 0.0))
-		var bloc_want := clampf(float(before.get(bloc, 0.0)) + float(per_bn[bloc]) * eur * pop,
+		var bloc_want := clampf(float(before.get(bloc, 0.0)) + float(per_pct[bloc]) * 1.0 * pop,
 			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX) - float(before.get(bloc, 0.0))
 		if not is_equal_approx(moved, bloc_want) or moved == 0.0:
-			_fail("%s moved %.6f, not %.6f (the per-bn offset x population share)" % [bloc, moved, bloc_want])
+			_fail("%s moved %.6f, not %.6f (the offset per level x population share)" % [bloc, moved, bloc_want])
 
 
 ## The author, 2026-11-09: one bn was 0.12 % of London and 2.2 % of Germany's DE5, so "the same
@@ -186,6 +186,11 @@ func _test_the_same_level_is_the_same_effort_in_every_nation() -> void:
 		var row: Dictionary = ns.region_funds[0]
 		terms[nation] = float(row["pts"])
 		euros[nation] = float(row["eur_bn_per_year"])
+		# The parent's ruling on #316: the blocs read the level and the region's people, not the euros.
+		for bloc in _loader.region_fund_rule["bloc_offset_per_pct"]:
+			var offset_want := float(_loader.region_fund_rule["bloc_offset_per_pct"][bloc]) * 2.0 * float(ns.region_pop_share.get(region, 0.0))
+			if not is_equal_approx(float(row["bloc_offset"][bloc]), offset_want):
+				_fail("%s: %s moves %.5f at 2 %%, not %.5f" % [nation, bloc, float(row["bloc_offset"][bloc]), offset_want])
 		if not is_equal_approx(float(row["eur_bn_per_year"]), 0.02 * Regions.output_eur_bn(ns, region)):
 			_fail("%s: the bill is %.3f bn, not 2 %% of the region" % [nation, float(row["eur_bn_per_year"])])
 	for nation in terms:

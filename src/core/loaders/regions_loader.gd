@@ -229,13 +229,13 @@ static func parse_fund_rule(parsed, fname: String, errors: Array[String]) -> Dic
 		if float(v) != floorf(float(v)):
 			errors.append("%s: 'years' are whole years" % fname)
 			return {}
-	var offsets = parsed.get("bloc_offset_per_bn")
+	var offsets = parsed.get("bloc_offset_per_pct")
 	if typeof(offsets) != TYPE_DICTIONARY or (offsets as Dictionary).is_empty():
-		errors.append("%s: missing or empty object 'bloc_offset_per_bn'" % fname)
+		errors.append("%s: missing or empty object 'bloc_offset_per_pct'" % fname)
 		return {}
 	for bloc in offsets:
 		if not OpinionK.BLOC_KEYS.has(bloc) or not _is_number(offsets[bloc]):
-			errors.append("%s: bloc_offset_per_bn names an unknown bloc or a non-number: %s" % [fname, bloc])
+			errors.append("%s: bloc_offset_per_pct names an unknown bloc or a non-number: %s" % [fname, bloc])
 			return {}
 	# When the worst region earns a card (src/ui/region_arrival.gd): Regions.problem()'s
 	# ratio at or past `ratio`, again after `rearm_months`.
@@ -248,7 +248,7 @@ static func parse_fund_rule(parsed, fname: String, errors: Array[String]) -> Dic
 	return {
 		"share_pct": [float(parsed["share_pct"][0]), float(parsed["share_pct"][1])],
 		"years": [int(parsed["years"][0]), int(parsed["years"][1])],
-		"bloc_offset_per_bn": (offsets as Dictionary).duplicate(),
+		"bloc_offset_per_pct": (offsets as Dictionary).duplicate(),
 		"arrival": {"ratio": float(arrival["ratio"]), "rearm_months": int(arrival["rearm_months"])},
 	}
 

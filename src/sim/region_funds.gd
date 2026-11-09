@@ -20,7 +20,7 @@ extends RefCounted
 ##               it starts billing and down when it stops, so its level effect over
 ##               the fund's life sums to zero -- a transfer to the region paid by the
 ##               deficit, with the stimulus any spending of its size would give;
-##   the blocs   the rule's per-bn offsets x the bn x the region's share of the
+##   the blocs   the rule's offsets per level x the level x the region's share of the
 ##               population, at the start (blocs are national, a fund is not);
 ##               stopping early gives back FUND_STOP_SHARE of what each pleased
 ##               bloc gained.
@@ -186,9 +186,9 @@ static func _row(state, ns, loader, region_id: String, share_pct: float, years: 
 	var eur_bn := share_pct / 100.0 * Regions.output_eur_bn(ns, region_id)
 	var pop := float(ns.region_pop_share.get(region_id, 0.0))
 	var offsets := {}
-	var per_bn: Dictionary = loader.region_fund_rule["bloc_offset_per_bn"]
-	for bloc in per_bn:
-		offsets[bloc] = float(per_bn[bloc]) * eur_bn * pop
+	var per_pct: Dictionary = loader.region_fund_rule["bloc_offset_per_pct"]
+	for bloc in per_pct:
+		offsets[bloc] = float(per_pct[bloc]) * share_pct * pop
 	return {
 		"id": "%s|%d|%d" % [region_id, now, ns.region_funds.size()], "region_id": region_id,
 		"eur_bn_per_year": eur_bn, "years": years, "started": now, "months_left": years * 12,

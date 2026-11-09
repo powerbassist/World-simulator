@@ -329,7 +329,7 @@ opening, in euros, fixed for the fund's life; the rule's ranges and bloc offsets
   3 %, 0.90, 0.87, 0.81, 0.89. Britain reads above the term's share because its fund is
   the most money, and a fund is also spending (below). The strip's estimate is the booked
   figure.
-- **The blocs** move at the start by the rule's per-bn offsets x the bn x the
+- **The blocs** move at the start by the rule's offsets per level x the level x the
   region's share of the population (blocs are national, a fund is not); stopping
   early gives back `FUND_STOP_SHARE` of each pleased bloc's gain.
 - **The one problem** (`Regions.problem()`): the opened region's worst figure
