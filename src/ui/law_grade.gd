@@ -15,7 +15,6 @@ extends RefCounted
 ## player learns one shape. The spec's "side by side" is the strip's third line, the picked
 ## size's yes against the bill's own, since five strips will not fit the detail's column.
 
-const LK = preload("res://src/sim/legislature_constants.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -69,7 +68,7 @@ static func build(list, box: Control, ns, law) -> void:
 	var row := PanelKit.buttons(box)
 	PanelKit.plain_line(row, Strings.t("Size"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var group := ButtonGroup.new()
-	for step in LK.GRADE_STEPS:
+	for step in LawMagnitude.offered(law):
 		var chip := PanelKit.sized(Button.new())
 		chip.text = size_text(law, float(step))
 		chip.toggle_mode = true

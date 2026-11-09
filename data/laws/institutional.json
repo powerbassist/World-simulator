@@ -1,5 +1,6 @@
 {
   "_note": "V1.5a re-authored anti_corruption_agency onto effects.society, and the reason is booked in the ROADMAP's V1.5 decomposition (retired 2026-10-05 -- the tier docs carry the build order now; the substance survives in docs/society-model.md and docs/media-model.md) rather than discovered here. S7 priced corruption as `other_revenue_pct_gdp: 0.1` -- recovered money -- because there was no corruption quantity for a law to move, so the law described its own SIDE EFFECT and called it the mechanism. The day the quantity exists that channel is wrong twice over: it says fighting corruption is a revenue measure, and it leaves the level untouched, so the agency this law establishes changes nothing about how well the state delivers anything. The recovered revenue is not modelled rather than modelled at zero -- a receipts line for one law would be the corporate-receipts channel V1.4b cut, arriving through a side door. Same treatment `immigration_tightening` in social.json is owed at V1.5b.",
+  "_magnitude": "Each `magnitude` is the quantity the law's own summary states and its effects are authored for (a tax rate's points, a number of years, a share of seats, a number of homes), so reference equals value at the authored size and the ratio is 1; unit says what is counted. A law with no natural quantity carries none.",
   "laws": [
     {
       "id": "proportional_representation_act",
@@ -290,6 +291,7 @@
     },
     {
       "id": "assembly_reduction_act",
+      "magnitude": {"value": 20, "reference": 20, "unit": "% of assembly seats", "max": 50},
       "name": "Assembly Reduction Act",
       "theme": "institutional",
       "summary": "Cut the chamber by a fifth: fewer seats, less pay, a smaller staff bill.",

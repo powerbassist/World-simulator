@@ -40,7 +40,8 @@ func _init() -> void:
 	if not _loader.errors.is_empty():
 		_fail("data did not load cleanly: %s" % [_loader.errors])
 
-	_check_no_row_ships_a_magnitude_yet()
+	_check_every_shipped_magnitude_sits_at_its_reference()
+	_check_a_ceiling_caps_the_grades()
 	_check_nothing_moves_at_scale_one()
 	_check_the_scale_reads_budget_effects_only()
 	_check_a_bill_graded_down_brings_less_of_everything()
@@ -118,11 +119,40 @@ func _party_by_slot(slot: String):
 	return null
 
 
-func _check_no_row_ships_a_magnitude_yet() -> void:
+## Content tagged the rows: each ships its own reference as its value, so at the
+## default grade (1.0) nothing moves -- the balance table stays byte-identical.
+func _check_every_shipped_magnitude_sits_at_its_reference() -> void:
 	for law in _loader.laws:
-		if not law.magnitude.is_empty():
-			# Content tags rows after this PR: this pin then becomes the rows' own band.
-			_fail("%s ships a magnitude: the balance prediction assumed none" % law.id)
+		if law.magnitude.is_empty():
+			continue
+		if not is_equal_approx(float(law.magnitude.get("value", -1.0)), float(law.magnitude.get("reference", -2.0))):
+			_fail("%s ships a magnitude off its reference: scale 1 would move it" % law.id)
+		if str(law.magnitude.get("unit", "")).is_empty():
+			_fail("%s ships a magnitude with no unit" % law.id)
+
+
+## A row's ceiling: a size past it is refused by the sim and absent from the picker, a chip that
+## would read "0.0" goes, and the row's own size stays whatever the ceiling.
+func _check_a_ceiling_caps_the_grades() -> void:
+	var capped = _graded(20.0, 20.0)
+	capped.magnitude["max"] = 50.0
+	if not LawMagnitude.may_grade(capped, 2.5, false) or LawMagnitude.may_grade(capped, 3.0, false):
+		_fail("the ceiling is read wrongly: 50 admits 2.5x of 20 and not 3x")
+	if LawMagnitude.offered(capped) != [0.1, 0.3, 1.0]:
+		_fail("offered grades under a ceiling of 50 on 20: %s" % [LawMagnitude.offered(capped)])
+	var tiny = _graded(0.3, 0.3)
+	if 0.1 in LawMagnitude.offered(tiny) or not 1.0 in LawMagnitude.offered(tiny):
+		_fail("a 0.03 chip stays, or the own size goes: %s" % [LawMagnitude.offered(tiny)])
+	var errors: Array[String] = []
+	var bad_ceiling := {"magnitude": {"value": 5, "reference": 5, "unit": "u", "max": 4}}
+	if not LawMagnitude.parse(bad_ceiling, "x", false, "f", errors).is_empty() or errors.size() != 1:
+		_fail("a ceiling under the reference size loaded")
+	var good := {"magnitude": {"value": 5, "reference": 5, "unit": "u", "max": 9}}
+	if LawMagnitude.parse(good, "x", false, "f", errors).get("max", 0.0) != 9.0:
+		_fail("a ceiling did not load")
+	for law in _loader.laws:
+		if not law.magnitude.is_empty() and not law.magnitude.has("max"):
+			_fail("%s ships a size with no ceiling" % law.id)
 
 
 func _check_nothing_moves_at_scale_one() -> void:

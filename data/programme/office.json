@@ -1,8 +1,10 @@
 {
   "_note": "Task 5's register of the office itself: the mandate, its length, its ledger and its end. These are the entries a president signs about the presidency -- the opening sprint, the record majority, the orderly house, the full term -- and they are the book's most approval-shaped group on purpose: the office's own output IS the standing it leaves. The gated entries carry their gate honestly: a second-mandate entry is inert at a first term, and the full term is offerable ONLY to a first (terms_served <= 0), because its conclusion arrives by calendar and a second-term player would already have lived it.",
+  "_laws": "`laws` lists the bills that serve an entry, in the order a sponsor asks for them, and only those whose own effects move the entry's `complete` field the right way: deficit and debt by budget effects (revenue up, spending down), unemployment by `structural_unemployment_pct`, growth by `potential_growth_pct`, approval by a net-positive `bloc_offset`. An entry with no such law carries none: no law's effects touch emissions, unrest or terms served.",
   "programme": [
     {
       "id": "prog_first_hundred_days",
+      "laws": ["childcare_expansion", "housing_programme", "student_grants_act"],
       "name": "The First Hundred Days",
       "summary": "The honeymoon spent rather than banked: fifty-three per cent by the sixth month, or the term's opening written down as a miss. Six months on the clock, because that is all a beginning ever gets.",
       "group": "office",
@@ -31,6 +33,7 @@
     },
     {
       "id": "prog_the_record_majority",
+      "laws": ["health_service_reform", "childcare_expansion", "apprenticeship_guarantee_act"],
       "name": "The Record Majority",
       "summary": "Fifty-eight per cent by the year's end -- a majority the assembly does not grant and the register can. The broadest reward in the book, because a number that size is made of every bloc.",
       "group": "office",
@@ -62,6 +65,7 @@
     },
     {
       "id": "prog_the_orderly_house",
+      "laws": ["retirement_age_reform", "vat_consolidation", "tobacco_alcohol_duty"],
       "name": "The Orderly House",
       "summary": "The deficit held under two and a half for as long as the register is open -- discipline as the term's character rather than its clock. The anti-avoidance yield lands on the day of the choice; the drift, not the president, writes the fail line. Offered between the lines, where discipline is still a choice.",
       "group": "office",
@@ -110,6 +114,7 @@
     },
     {
       "id": "prog_the_statesman_term",
+      "laws": ["four_year_term_amendment", "two_term_limit_amendment"],
       "name": "The Statesman's Term",
       "summary": "Sixty per cent as the work of a final mandate -- the entry a term-limited president signs when the next election is someone else's. The world can still overtake it; the streets can end anything.",
       "group": "office",
@@ -145,6 +150,7 @@
     },
     {
       "id": "prog_the_presidents_ledger",
+      "laws": ["carbon_levy", "vat_consolidation", "tax_amnesty_act"],
       "name": "The President's Ledger",
       "summary": "The ratio two points under where the decade found it, left there on purpose: a second-mandate programme, because the first mandate spends and the second one answers for it.",
       "group": "office",

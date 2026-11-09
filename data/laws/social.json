@@ -1,4 +1,5 @@
 {
+  "_magnitude": "Each `magnitude` is the quantity the law's own summary states and its effects are authored for (a tax rate's points, a number of years, a share of seats, a number of homes), so reference equals value at the authored size and the ratio is 1; unit says what is counted. A law with no natural quantity carries none.",
   "laws": [
     {
       "id": "childcare_expansion",
@@ -32,6 +33,7 @@
     },
     {
       "id": "health_service_reform",
+      "magnitude": {"value": 1, "reference": 1, "unit": "point of income tax", "max": 5},
       "name": "Health Service Reform Act",
       "theme": "social",
       "summary": "Expand health [g=spending]spending[/g], funded by a small rise in income tax.",

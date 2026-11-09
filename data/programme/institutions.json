@@ -1,8 +1,10 @@
 {
   "_note": "Task 5's register of the state itself: confidence, corruption, the courts, the press, the administration and the settlement of the streets. The institution group prices its work on the only verdict the register carries -- overall approval -- because a state reform that leaves no trace in the country's confidence is indistinguishable from one that never happened. The schema-wide notes (_field_note, _progress_note, _pulse_note) live once in economy.json; this file carries only what is this group's own. Entries gated by terms_served or by unrest carry their gate in `possible`, so the offer itself is what makes the goal honest.",
+  "_laws": "`laws` lists the bills that serve an entry, in the order a sponsor asks for them, and only those whose own effects move the entry's `complete` field the right way: deficit and debt by budget effects (revenue up, spending down), unemployment by `structural_unemployment_pct`, growth by `potential_growth_pct`, approval by a net-positive `bloc_offset`. An entry with no such law carries none: no law's effects touch emissions, unrest or terms served.",
   "programme": [
     {
       "id": "prog_confidence_majority",
+      "laws": ["constructive_confidence_reform"],
       "name": "A Governing Majority of Opinion",
       "summary": "Fifty-five per cent, and the register holds you to the number -- a governing majority in the [g=poll]polls[/g], where every other programme this term will have to be paid for. The fail line is the forties: an opinion the country has withdrawn.",
       "group": "institutions",
@@ -32,6 +34,7 @@
     },
     {
       "id": "prog_clean_hands",
+      "laws": ["anti_corruption_agency", "freedom_of_information_act", "ownership_register_act"],
       "name": "Clean Hands",
       "summary": "An anti-corruption drive filed as the term's institutional work and priced on the only verdict that matters: the country's confidence. The agency is created on the day the programme is chosen; the judgement waits for the number.",
       "group": "institutions",
@@ -110,6 +113,7 @@
     },
     {
       "id": "prog_free_airwaves",
+      "laws": ["public_broadcasting_reform"],
       "name": "The Free Airwaves",
       "summary": "A broadcasting law the government cannot quiet, judged like everything else this term -- on the confidence it leaves behind. The press freedom is granted on the day of the choice; the verdict belongs to the register.",
       "group": "institutions",
@@ -144,6 +148,7 @@
     },
     {
       "id": "prog_sworn_offices",
+      "laws": ["judicial_independence_act", "lobbying_transparency_act"],
       "name": "The Sworn Offices",
       "summary": "The courts settled beyond a government's reach, and a programme for a second mandate only -- a first-term president who promises judicial independence is announcing a fight, not a programme.",
       "group": "institutions",
@@ -179,6 +184,7 @@
     },
     {
       "id": "prog_the_long_record",
+      "laws": ["freedom_of_information_act", "civil_service_reform_act"],
       "name": "The Long Record",
       "summary": "Fifty-eight per cent in a second mandate -- the number a re-elected president is promised by the job and rarely shown by the country. Open-ended, because a record compounds or it does not; the reward is drawn from every bloc because a number that size is made of every bloc.",
       "group": "institutions",
@@ -217,6 +223,7 @@
     },
     {
       "id": "prog_the_civil_register",
+      "laws": ["electoral_commission_act", "ownership_register_act"],
       "name": "The Civil Register",
       "summary": "The administration rewritten onto one register -- licences, filings and the wait for both, halved. Ten months on the clock, because an administration that cannot be fixed inside a year was never going to be fixed.",
       "group": "institutions",

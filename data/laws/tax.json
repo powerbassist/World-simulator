@@ -1,7 +1,9 @@
 {
+  "_magnitude": "Each `magnitude` is the quantity the law's own summary states and its effects are authored for (a tax rate's points, a number of years, a share of seats, a number of homes), so reference equals value at the authored size and the ratio is 1; unit says what is counted. A law with no natural quantity carries none.",
   "laws": [
     {
       "id": "high_earner_surtax",
+      "magnitude": {"value": 5, "reference": 5, "unit": "points of the top income tax rate", "max": 15},
       "name": "High-Earner Surtax",
       "theme": "tax",
       "summary": "Raise the top rate of income tax by five points.",
@@ -17,6 +19,7 @@
     },
     {
       "id": "corporate_tax_cut",
+      "magnitude": {"value": 5, "reference": 5, "unit": "points of corporate tax", "max": 10},
       "name": "Corporate Tax Relief Act",
       "theme": "tax",
       "summary": "Cut the corporate [g=tax_rate]tax rate[/g] by five points to attract investment.",
@@ -32,6 +35,7 @@
     },
     {
       "id": "vat_consolidation",
+      "magnitude": {"value": 2, "reference": 2, "unit": "points of VAT", "max": 6},
       "name": "VAT Consolidation Act",
       "theme": "tax",
       "summary": "Raise the standard VAT rate by two points to shore up revenue.",
@@ -62,6 +66,7 @@
     },
     {
       "id": "wealth_levy",
+      "magnitude": {"value": 30, "reference": 30, "unit": "basis points of net wealth", "max": 100},
       "name": "Net Wealth Levy",
       "theme": "tax",
       "summary": "An annual levy of 0.3 points on large net wealth, collected outside the income tax.",
@@ -77,6 +82,7 @@
     },
     {
       "id": "capital_gains_surtax",
+      "magnitude": {"value": 3, "reference": 3, "unit": "points of capital gains tax", "max": 9},
       "name": "Capital Gains Surtax",
       "theme": "tax",
       "summary": "Raise the tax on investment gains by three points.",

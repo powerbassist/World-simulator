@@ -1,8 +1,10 @@
 {
   "_note": "Task 5's society register: the health line, the schools line, the pension line, the migration argument and the towns' growth -- each filed as a goal the register holds, not a promise the campaign made. The book's one deliberate PAIR lives here: the open door and the firm hand are the two answers to the same argument, and the register offers both rather than a verdict -- the player picks a side and is then held to it. Entries that spend at choice (the hospital year, the classroom ledger, the pension pact) price the act in `immediate` and the verdict in the conclusion, because a service is legislated once and judged for a term.",
+  "_laws": "`laws` lists the bills that serve an entry, in the order a sponsor asks for them, and only those whose own effects move the entry's `complete` field the right way: deficit and debt by budget effects (revenue up, spending down), unemployment by `structural_unemployment_pct`, growth by `potential_growth_pct`, approval by a net-positive `bloc_offset`. An entry with no such law carries none: no law's effects touch emissions, unrest or terms served.",
   "programme": [
     {
       "id": "prog_the_hospital_year",
+      "laws": ["health_service_reform", "social_care_cap_act", "homelessness_duty_act"],
       "name": "The Hospital Year",
       "summary": "Eight tenths of GDP onto the health line the day the programme is chosen, and the term's verdict taken from the only [g=poll]poll[/g] that prices it. A hospital service is judged in confidence and in waiting lists; the register keeps the confidence.",
       "group": "society",
@@ -37,6 +39,7 @@
     },
     {
       "id": "prog_the_classroom_ledger",
+      "laws": ["universal_school_meals", "student_grants_act", "tuition_fees_abolition_act"],
       "name": "The Classroom Ledger",
       "summary": "The schools line raised at choice, the judgement due within the year -- education is the [g=spending]spending[/g] the country audits fastest. Miss the clock and the students' bloc keeps the score.",
       "group": "society",
@@ -76,6 +79,7 @@
     },
     {
       "id": "prog_the_pension_pact",
+      "laws": ["retirement_age_reform", "pension_age_linkage_act"],
       "name": "The Pension Pact",
       "summary": "The pension line touched at choice -- a settlement's worth of friction and six hundredths off the pensioners' ledger, priced in -- and the deficit under four and a half as the pact's proof. If the streets answer instead, the register records what the pact cost. Offered only to a ledger still above the four and a half, where the pact is a proof rather than a formality.",
       "group": "society",
@@ -120,6 +124,7 @@
     },
     {
       "id": "prog_the_open_door",
+      "laws": ["seasonal_worker_programme"],
       "name": "The Open Door",
       "summary": "A migration stance opened at choice and argued for a term -- the programme concludes when the country is persuaded, not when the decree is signed. The streets at thirty overtake the argument: a country on strike is not debating.",
       "group": "society",
@@ -153,6 +158,7 @@
     },
     {
       "id": "prog_the_firm_hand",
+      "laws": ["immigration_tightening", "essential_services_minimum"],
       "name": "The Firm Hand",
       "summary": "The other answer to the same argument, offerable only once the country is angry enough to ask for it: the stance closed, and a majority earned from the country that becomes. At forty the streets have overtaken the question.",
       "group": "society",
@@ -193,6 +199,7 @@
     },
     {
       "id": "prog_the_measured_country",
+      "laws": ["rent_stabilisation_act", "national_heritage_fund", "digital_inclusion_programme"],
       "name": "The Measured Country",
       "summary": "The deeper clean, priced at six tenths of corruption and offerable only to a second mandate -- a first-term president who promises to measure the country has not yet earned the instruments. Judged at fifty-six per cent.",
       "group": "society",
@@ -234,6 +241,7 @@
     },
     {
       "id": "prog_the_growing_towns",
+      "laws": ["planning_liberalisation_act", "grid_modernisation_act"],
       "name": "The Growing Towns",
       "summary": "Half a point of GDP into the towns' roads and rails at choice, and a year's growth at one point eight as the proof the money went somewhere. A recession is the world overtaking the programme, not the programme failing.",
       "group": "society",

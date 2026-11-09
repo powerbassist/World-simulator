@@ -1,8 +1,10 @@
 {
   "_note": "Task 5's European register: the goals whose frame is the continent and whose ledger is still the nation's own -- credibility for the trade fight, convergence with the continent's strongest economy, the climate fleet, the border fund. The co2e entries carry a TWO-SIDED `possible` gate, argued here because it is the book's one authored band: an absolute per-capita goal means nothing across a roster whose emissions run from nuclear France to coal-and-gas elsewhere, so the energy entries are offered only inside the band where the number is both UNMET (above the goal) and REACHABLE (not so far above that no build programme closes it). A goal nobody's country can reach is not ambition; a gate is.",
+  "_laws": "`laws` lists the bills that serve an entry, in the order a sponsor asks for them, and only those whose own effects move the entry's `complete` field the right way: deficit and debt by budget effects (revenue up, spending down), unemployment by `structural_unemployment_pct`, growth by `potential_growth_pct`, approval by a net-positive `bloc_offset`. An entry with no such law carries none: no law's effects touch emissions, unrest or terms served.",
   "programme": [
     {
       "id": "prog_the_european_voice",
+      "laws": ["euro_preparation_act"],
       "name": "The European Voice",
       "summary": "To speak for Europe the president first has to be backed at home -- fifty-four per cent, held open until it lands. The weight abroad is borrowed from the mandate, and the register is where the mandate is audited.",
       "group": "europe",
@@ -32,6 +34,7 @@
     },
     {
       "id": "prog_rhine_axis",
+      "laws": ["single_market_standards_act", "competition_enforcement"],
       "name": "The Rhine Axis",
       "summary": "Two per cent alongside the continent's strongest economy, within the year -- convergence filed as a programme rather than a press release. A eurozone recession overtakes the entry rather than failing it; a merely slow year fails it on the clock.",
       "group": "europe",
@@ -101,6 +104,7 @@
     },
     {
       "id": "prog_the_tariff_line",
+      "laws": ["carbon_border_adjustment", "fuel_duty_uplift"],
       "name": "The Tariff Line",
       "summary": "Credibility for the trade fight, priced on the ledger: the deficit under four and a half inside eight months, with a corporate levy raised the day the programme opens. The markets read budgets before they read communiques. Offered where the four and a half is still ahead and the seven has not already arrived.",
       "group": "europe",
@@ -146,6 +150,7 @@
     },
     {
       "id": "prog_the_continents_granary",
+      "laws": ["hiring_credit_act", "wage_insurance_scheme"],
       "name": "The Continent's Granary",
       "summary": "The rural payroll inside a European farm policy: unemployment under seven point two by the tenth month, with the countryside's stake declared at choice. A labour market with a clock on it, because harvests have them. Offered only where the harvest line still sits ahead of the payroll.",
       "group": "europe",
@@ -191,6 +196,7 @@
     },
     {
       "id": "prog_the_border_fund",
+      "laws": ["immigration_tightening", "seasonal_worker_programme"],
       "name": "The Border Fund",
       "summary": "Cross-border infrastructure, paid for at choice and judged like every other programme -- on whether the country ends the term more persuaded than it began. The fund is the act; the confidence is the verdict.",
       "group": "europe",
@@ -225,6 +231,7 @@
     },
     {
       "id": "prog_the_federal_moment",
+      "laws": ["regional_devolution", "citizens_initiative_act"],
       "name": "The Federal Moment",
       "summary": "The chapter of the treaty only a renewed mandate can open -- offered to a second-term president and concluded at fifty-seven per cent, because a continent follows a leader its own country still follows. A recession overtakes the moment like it overtakes anything.",
       "group": "europe",
