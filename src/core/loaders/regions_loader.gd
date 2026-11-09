@@ -218,7 +218,7 @@ static func parse_fund_rule(parsed, fname: String, errors: Array[String]) -> Dic
 	if typeof(parsed) != TYPE_DICTIONARY:
 		errors.append("%s: missing or invalid JSON" % fname)
 		return {}
-	for key in ["eur_bn", "years"]:
+	for key in ["share_pct", "years"]:
 		var span = parsed.get(key)
 		if typeof(span) != TYPE_ARRAY or (span as Array).size() != 2 \
 				or not _is_number(span[0]) or not _is_number(span[1]) \
@@ -229,13 +229,13 @@ static func parse_fund_rule(parsed, fname: String, errors: Array[String]) -> Dic
 		if float(v) != floorf(float(v)):
 			errors.append("%s: 'years' are whole years" % fname)
 			return {}
-	var offsets = parsed.get("bloc_offset_per_bn")
+	var offsets = parsed.get("bloc_offset_per_pct")
 	if typeof(offsets) != TYPE_DICTIONARY or (offsets as Dictionary).is_empty():
-		errors.append("%s: missing or empty object 'bloc_offset_per_bn'" % fname)
+		errors.append("%s: missing or empty object 'bloc_offset_per_pct'" % fname)
 		return {}
 	for bloc in offsets:
 		if not OpinionK.BLOC_KEYS.has(bloc) or not _is_number(offsets[bloc]):
-			errors.append("%s: bloc_offset_per_bn names an unknown bloc or a non-number: %s" % [fname, bloc])
+			errors.append("%s: bloc_offset_per_pct names an unknown bloc or a non-number: %s" % [fname, bloc])
 			return {}
 	# When the worst region earns a card (src/ui/region_arrival.gd): Regions.problem()'s
 	# ratio at or past `ratio`, again after `rearm_months`.
@@ -246,9 +246,9 @@ static func parse_fund_rule(parsed, fname: String, errors: Array[String]) -> Dic
 		errors.append("%s: 'arrival' must be {ratio above 1, rearm_months a whole number from 1}" % fname)
 		return {}
 	return {
-		"eur_bn": [float(parsed["eur_bn"][0]), float(parsed["eur_bn"][1])],
+		"share_pct": [float(parsed["share_pct"][0]), float(parsed["share_pct"][1])],
 		"years": [int(parsed["years"][0]), int(parsed["years"][1])],
-		"bloc_offset_per_bn": (offsets as Dictionary).duplicate(),
+		"bloc_offset_per_pct": (offsets as Dictionary).duplicate(),
 		"arrival": {"ratio": float(arrival["ratio"]), "rearm_months": int(arrival["rearm_months"])},
 	}
 

@@ -51,7 +51,7 @@ var _city_id := ""
 ## The region opened under its row, "" for none.
 var _open_region := ""
 ## The development fund's two sums (region_fund.gd), held across rebuilds.
-var _fund_eur := 0.0
+var _fund_share := 0.0
 var _fund_years := 0
 ## The sector priority's pick, "line|sector" (region_priority.gd), held across rebuilds.
 var _priority_pick := ""

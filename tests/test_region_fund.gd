@@ -110,23 +110,24 @@ func _check_strip(region) -> void:
 	if strip == null:
 		_fail("opened %s: no fund strip on screen" % region.id)
 		return
-	var eur := float(_panel._fund_eur)
+	var share := float(_panel._fund_share)
 	var years := int(_panel._fund_years)
-	var est: Dictionary = RegionFunds.estimate(_main._state, ns, _main._loader, region.id, eur, years)
-	if absf(float(strip.money_bn) + eur) > 0.0001:
+	var est: Dictionary = RegionFunds.estimate(_main._state, ns, _main._loader, region.id, share, years)
+	var eur := float(est.get("eur_bn_per_year", 0.0))
+	if eur <= 0.0 or absf(float(strip.money_bn) + eur) > 0.0001:
 		_fail("fund strip: money %s bn, the fund costs %s bn a year" % [strip.money_bn, eur])
 	var text := _text_under(strip)
 	if not text.contains(Num.f(float(est["unemployment_after"]), 1)):
 		_fail("fund strip: '%s' does not carry the unemployment with the fund (%s)" % [text, Num.f(float(est["unemployment_after"]), 1)])
 	# Each sum on its own line, its value with its unit (QA's TAKE 1).
-	var eur_slider = _with_meta("fund_eur")
+	var eur_slider = _with_meta("fund_share")
 	var years_slider = _with_meta("fund_years")
 	if eur_slider == null or years_slider == null or eur_slider.get_parent() == years_slider.get_parent():
 		_fail("fund: the two sums share one line (or one is missing)")
 	else:
 		var eur_text: String = (eur_slider.get_meta("value_label") as Label).text
 		var years_text: String = (years_slider.get_meta("value_label") as Label).text
-		if eur_text != Strings.t("%s bn a year") % Num.f(eur, 1):
+		if eur_text != Strings.t("%s %% of its output a year") % Num.f(share, 1):
 			_fail("fund: the yearly sum reads '%s'" % eur_text)
 		if years_text != Strings.tn("%d year", "%d years", years) % years:
 			_fail("fund: the years read '%s'" % years_text)
@@ -207,7 +208,7 @@ func _check_budget_row() -> void:
 ## Two more funds elsewhere: three are open, the cap.
 func _fill_to_the_cap() -> void:
 	var ns = _main._state.player()
-	var low: float = float(RegionFunds.limits(_main._loader)["eur_bn"][0])
+	var low: float = float(RegionFunds.limits(_main._loader)["share_pct"][0])
 	for i in [1, 2]:
 		var r: Dictionary = RegionFunds.start(_main._state, ns, _main._loader, _regions[i].id, low, 1)
 		if not bool(r.get("ok", false)):
@@ -240,7 +241,7 @@ func _move_a_sum() -> void:
 
 
 func _check_redrawn() -> void:
-	var slider = _with_meta("fund_eur")
+	var slider = _with_meta("fund_share")
 	if slider == null:
 		_fail("redraw: no yearly-sum control on the opened region")
 		return
@@ -250,8 +251,10 @@ func _check_redrawn() -> void:
 	for node in _panel.find_children("*", "", true, false):
 		if node.get_script() == EffectsStrip and not node.has_meta("priority") and (node as Control).is_visible_in_tree():
 			strip = node
-	if strip == null or absf(float(strip.money_bn) + top) > 0.0001:
-		_fail("redraw: the strip did not follow the yearly sum to %s bn (%s)" % [top, strip.money_bn if strip != null else "<none>"])
+	var est: Dictionary = RegionFunds.estimate(_main._state, _main._state.player(), _main._loader, _panel._open_region, top, int(_panel._fund_years))
+	var eur := float(est.get("eur_bn_per_year", 0.0))
+	if strip == null or eur <= 0.0 or absf(float(strip.money_bn) + eur) > 0.0001:
+		_fail("redraw: the strip did not follow the level to %s %%, %s bn (%s)" % [top, eur, strip.money_bn if strip != null else "<none>"])
 
 
 ## Stop on a running fund closes it, and the row said whom it angers before.

@@ -13,7 +13,7 @@ extends RefCounted
 ## and prints RegionFunds.refusal()'s line under it, read before any press (A5's
 ## grammar, the Industry tab's).
 ##
-## The two sums live on the panel (`_fund_eur`, `_fund_years`), so a rebuild keeps
+## The two sums live on the panel (`_fund_share`, `_fund_years`), so a rebuild keeps
 ## them; a drag redraws only the strip, never the panel, so the slider keeps the mouse.
 
 const Regions = preload("res://src/sim/regions.gd")
@@ -93,16 +93,16 @@ static func _running(panel, box: Control, ns, row: Dictionary) -> void:
 
 ## The verb: two sums, the strip they price, the Go, and the refusal line.
 static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
-	var lo_eur := float(rule["eur_bn"][0])
+	var lo_share := float(rule["share_pct"][0])
 	var lo_years := int(rule["years"][0])
-	if float(panel._fund_eur) <= 0.0:
-		panel._fund_eur = lo_eur
+	if float(panel._fund_share) <= 0.0:
+		panel._fund_share = lo_share
 	if int(panel._fund_years) <= 0:
 		panel._fund_years = lo_years
 	# One sum a line, each value with its unit beside its own control (QA's TAKE 1 on
 	# #269: in one flow, "0.5" ran into the next caption and read "0.5 years").
-	var eur := _slider(PanelKit.buttons(box), lo_eur, float(rule["eur_bn"][1]), 0.5, float(panel._fund_eur), "fund_eur",
-		func(v: float) -> String: return Strings.t("%s bn a year") % Num.f(v, 1))
+	var share := _slider(PanelKit.buttons(box), lo_share, float(rule["share_pct"][1]), 0.5, float(panel._fund_share), "fund_share",
+		func(v: float) -> String: return Strings.t("%s %% of its output a year") % Num.f(v, 1))
 	var years := _slider(PanelKit.buttons(box), float(lo_years), float(rule["years"][1]), 1.0, float(panel._fund_years), "fund_years",
 		func(v: float) -> String: return Strings.tn("%d year", "%d years", int(v)) % int(v))
 	var strip := EffectsStrip.new()
@@ -121,23 +121,23 @@ static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
 	ResultTone.tint(refusal, ResultTone.BLOCKED)
 	var redraw := func() -> void:
 		_price(panel, ns, region, strip, go, refusal)
-	eur.value_changed.connect(func(v: float) -> void:
-		panel._fund_eur = v
+	share.value_changed.connect(func(v: float) -> void:
+		panel._fund_share = v
 		redraw.call())
 	years.value_changed.connect(func(v: float) -> void:
 		panel._fund_years = int(v)
 		redraw.call())
 	go.pressed.connect(func() -> void:
-		RegionFunds.start(panel._state, ns, panel._loader, String(region.id), float(panel._fund_eur), int(panel._fund_years))
+		RegionFunds.start(panel._state, ns, panel._loader, String(region.id), float(panel._fund_share), int(panel._fund_years))
 		panel.mark_dirty())
 	redraw.call()
 
 
 ## The strip, the Go and the refusal line for the sums the controls hold now.
 static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void:
-	var eur := float(panel._fund_eur)
+	var share := float(panel._fund_share)
 	var years := int(panel._fund_years)
-	var est: Dictionary = RegionFunds.estimate(panel._state, ns, panel._loader, String(region.id), eur, years)
+	var est: Dictionary = RegionFunds.estimate(panel._state, ns, panel._loader, String(region.id), share, years)
 	var ok := bool(est.get("ok", false))
 	go.disabled = not ok
 	refusal.text = "" if ok else Strings.t(String(est.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
@@ -145,6 +145,7 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void
 	strip.visible = ok
 	if not ok:
 		return
+	var eur := float(est["eur_bn_per_year"])
 	strip.show_lines(Strings.t("Treasury"),
 		Strings.tn("%s a year for %d year", "%s a year for %d years", years) % [EffectsStrip.money_text(-eur), years], -eur,
 		EffectsStrip.who_text(est["bloc_offset"]),

@@ -7,15 +7,11 @@ extends RefCounted
 ## trend. The rule's ranges and bloc offsets are data (data/region-actions/fund.json).
 
 ## The fund's term in the region's growth deviation, in points a year:
-## FUND_BETA x sqrt(the fund's bn a year as points of the region's output). SQUARE
-## ROOT, not linear, because A7 asks one fund size (1 bn a year to the region with
-## the highest unemployment) to lower unemployment by 0.3 to 1.0 point in 24 months
-## in all four playable nations, and their worst regions run from 31 bn (POL's PL81)
-## to 197 bn (FRA's FRE) of output: a linear response that gives FRE its 0.3 point
-## gives PL81 well over 1.0. Diminishing returns in the fund's size against the
-## region's is also the honest shape (absorption, leakage to other regions).
-## 1.3 is a stand-in measured by tools/region_fund_probe.gd against A7, not a sourced
-## elasticity.
+## FUND_BETA x sqrt(the fund as a percentage of the region's output). The fund is a share
+## of the region (the author, 2026-11-09), so one level is one effort in any nation. SQUARE
+## ROOT, not linear, for the levels: a fund twice the size does not do twice the work
+## (absorption, leakage to other regions). 1.3 is a stand-in measured by
+## tools/region_fund_probe.gd against A7 at 1 % and 3 %, not a sourced elasticity.
 const FUND_BETA := 1.3
 
 ## Stopping a fund early: every bloc the fund pleased gives back this share of what

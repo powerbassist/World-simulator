@@ -498,7 +498,7 @@ func _person_with_region_want():
 
 func _open_fund(state, ns) -> String:
 	var rule: Dictionary = _loader.region_fund_rule
-	var opened: Dictionary = RegionFunds.start(state, ns, _loader, REGION, float(rule["eur_bn"][0]), int(rule["years"][1]))
+	var opened: Dictionary = RegionFunds.start(state, ns, _loader, REGION, float(rule["share_pct"][0]), int(rule["years"][1]))
 	if not bool(opened.get("ok", false)):
 		_fail("the fund did not open: %s" % [opened])
 		return ""

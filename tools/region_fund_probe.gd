@@ -3,7 +3,8 @@ extends SceneTree
 ## Region fund probe: godot --headless --script res://tools/region_fund_probe.gd -- [--json=PATH]
 ##
 ## V5.3 a, band A7 (docs/design/v5.3-ab.md 3.3 and 9), on the game's own month
-## (src/sim/world_month.gd): for each playable nation, a fund of 1 bn a year to the
+## (src/sim/world_month.gd): for each playable nation, a fund of a level of the region's
+## output (the lowest and the highest the rule offers, so every level is read) to the
 ## named region with the highest unemployment at the start (ties to the first in the
 ## nation's region list) lowers that region's unemployment by 0.3 to 1.0 point in 24
 ## months, against a twin that opened no fund. The fund runs FUND_YEARS so it is still
@@ -34,7 +35,6 @@ const RK = preload("res://src/sim/region_constants.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 
 const NATIONS := ["DEU", "FRA", "GBR", "POL"]
-const EUR_BN := 1.0
 const FUND_YEARS := 3
 const MONTHS := 24
 const BAND := Vector2(0.3, 1.0)
@@ -58,27 +58,12 @@ func _initialize() -> void:
 		return
 	var rows: Array = []
 	var ok_all := true
+	var levels: Array = RegionFunds.limits(loader)["share_pct"]
 	for nation in NATIONS:
-		var still = GameState.new_game(loader, nation)
-		var funded = GameState.new_game(loader, nation)
-		var region := _worst(still)
-		var est: Dictionary = RegionFunds.estimate(funded, funded.player(), loader, region, EUR_BN, FUND_YEARS)
-		var start: Dictionary = RegionFunds.start(funded, funded.player(), loader, region, EUR_BN, FUND_YEARS)
-		var at_12 := 0.0
-		for i in range(MONTHS):
-			WorldMonth.tick_month(still, loader)
-			WorldMonth.tick_month(funded, loader)
-			if i == 11:
-				at_12 = _u(still, region) - _u(funded, region)
-		var drop := _u(still, region) - _u(funded, region)
-		var ok := bool(start.get("ok", false)) and drop >= BAND.x and drop <= BAND.y
-		ok_all = ok_all and ok
-		var estimated := float(est.get("unemployment_now", 0.0)) - float(est.get("unemployment_after", 0.0))
-		rows.append({"nation": nation, "region": region, "output_eur_bn": Regions.output_eur_bn(still.player(), region),
-			"pts": float(est.get("pts", 0.0)), "estimated_drop": estimated, "drop_12": at_12, "drop_24": drop, "ok": ok})
-		print("%s %-6s output %6.1f bn  term %.3f pts  estimate %.3f  month 12 %.3f  month 24 %.3f %s" % [
-			nation, region, Regions.output_eur_bn(still.player(), region), float(est.get("pts", 0.0)),
-			estimated, at_12, drop, "ok" if ok else "FAIL"])
+		for share in levels:
+			var row := _fund_row(loader, nation, float(share))
+			ok_all = ok_all and bool(row["ok"])
+			rows.append(row)
 	if json_path != "":
 		var f := FileAccess.open(json_path, FileAccess.WRITE)
 		if f == null:
@@ -89,6 +74,33 @@ func _initialize() -> void:
 		f.close()
 	print("region_fund_probe: %s" % ("PASS" if ok_all else "FAIL"))
 	quit(0 if ok_all else 1)
+
+
+## One nation at one level: the twin pair, and the euros the level costs there. The peak impulse
+## is printed so a clip at IMPULSE_MAX_PCT would show at the top level.
+static func _fund_row(loader, nation: String, share: float) -> Dictionary:
+	var still = GameState.new_game(loader, nation)
+	var funded = GameState.new_game(loader, nation)
+	var region := _worst(still)
+	var output := Regions.output_eur_bn(still.player(), region)
+	var est: Dictionary = RegionFunds.estimate(funded, funded.player(), loader, region, share, FUND_YEARS)
+	var start: Dictionary = RegionFunds.start(funded, funded.player(), loader, region, share, FUND_YEARS)
+	var at_12 := 0.0
+	var peak := 0.0
+	for i in range(MONTHS):
+		WorldMonth.tick_month(still, loader)
+		WorldMonth.tick_month(funded, loader)
+		peak = maxf(peak, absf(float(funded.player().demand_impulse_pct)))
+		if i == 11:
+			at_12 = _u(still, region) - _u(funded, region)
+	var drop := _u(still, region) - _u(funded, region)
+	var ok := bool(start.get("ok", false)) and drop >= BAND.x and drop <= BAND.y
+	var estimated := float(est.get("unemployment_now", 0.0)) - float(est.get("unemployment_after", 0.0))
+	print("%s %-6s %.1f %% of %6.1f bn = %5.2f bn a year  term %.3f pts  estimate %.3f  month 12 %.3f  month 24 %.3f  peak impulse %.3f %s" % [
+		nation, region, share, output, float(est.get("eur_bn_per_year", 0.0)), float(est.get("pts", 0.0)),
+		estimated, at_12, drop, peak, "ok" if ok else "FAIL"])
+	return {"nation": nation, "region": region, "share_pct": share, "output_eur_bn": output, "eur_bn_per_year": float(est.get("eur_bn_per_year", 0.0)),
+		"pts": float(est.get("pts", 0.0)), "estimated_drop": estimated, "drop_12": at_12, "drop_24": drop, "peak_impulse": peak, "ok": ok}
 
 
 ## The --priority run: one twin pair per nation and sector. 0 when every region put

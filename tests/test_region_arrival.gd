@@ -179,7 +179,7 @@ func _check_not_with_a_fund() -> void:
 	var state = _main._state
 	var ns = state.player()
 	_advance(int(_rule()["rearm_months"]))
-	var lo := float(_main._loader.region_fund_rule["eur_bn"][0])
+	var lo := float(_main._loader.region_fund_rule["share_pct"][0])
 	var started: Dictionary = RegionFunds.start(state, ns, _main._loader, String(_worst["region"].id), lo, 1)
 	if not bool(started.get("ok", false)):
 		_fail("premise: the fund did not start (%s)" % [started])
