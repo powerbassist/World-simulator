@@ -80,7 +80,7 @@ func announce(assembly_release: Dictionary = {}) -> void:
 		# V5.3 B7: a bill awaiting the president's stand is a decision, so its card
 		# carries a Go to the Endorse button (law_panel.gd tags it); once the stand is
 		# taken there is nothing left to decide, and the card goes.
-		var endorsed := float(entry.get("endorse_bonus", 0.0)) > 0.0
+		var endorsed := float(entry.get("endorse_bonus", 0.0)) != 0.0  # Statute.awaiting_endorsement's test
 		if _announced_assembly_bills.has(bill_id):
 			if _assembly_cards.has(bill_id) and endorsed:
 				_stack.dismiss(String(_assembly_cards[bill_id]))

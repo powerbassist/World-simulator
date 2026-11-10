@@ -222,10 +222,10 @@ func _check_settled_cards_go() -> void:
 	var council := _stage_council()
 	if inbox.lane_of(council) != Inbox.DECISIONS:
 		_fail("council: the card is not in the DECISIONS lane (%s)" % inbox.lane_of(council))
-	_main._state.orgs[org.id]["pending"] = {}
+	_main._state.orgs[org.id]["pending"]["player_vote"] = Orgs.VOTE_FOR
 	CouncilCards.check(_main)
 	if inbox.lane_of(council) != "":
-		_fail("council: the card stayed up after the division")
+		_fail("council: the card stayed up once the player had voted")
 
 
 

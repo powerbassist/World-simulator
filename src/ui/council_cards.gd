@@ -39,6 +39,7 @@ static func check(main) -> void:
 		inbox.card_action.connect(go)
 	# What waits now, keyed by the decision: {key: [subject, title, body]}.
 	var now := {}
+	var month := int(state.year) * 12 + int(state.month)
 	for org in main._loader.orgs:
 		if not org.council or not ns.orgs.has(org.id):
 			continue
@@ -47,10 +48,13 @@ static func check(main) -> void:
 		if String((r.get("nations", {}) as Dictionary).get(ns.id, "")) == CouncilK.RATIFY_PENDING:
 			var left := int(r.get("months_left", 0))
 			var asks := Strings.tn("%s passed the council and now needs your assembly. Put it to a vote within %d month, or it falls for every member.", "%s passed the council and now needs your assembly. Put it to a vote within %d months, or it falls for every member.", left)
-			now["ratify|%s|%s" % [org.id, String(r.get("proposal_id", ""))]] = ["ratify|%s" % org.id, Strings.t("Treaty to ratify — %s") % title,
+			# Keyed by the window's opening month too: a treaty carried again later is news again.
+			now["ratify|%s|%s|%d" % [org.id, String(r.get("proposal_id", "")), month - (CouncilK.RATIFY_WINDOW_MONTHS - left)]] = ["ratify|%s" % org.id, Strings.t("Treaty to ratify — %s") % title,
 				asks % [_proposal_name(r), left]]
 		var pending: Dictionary = Orgs.pending(state, org.id)
-		if bool(pending.get("player_swings", false)):
+		# The player's vote cast from the tab settles it as the Go would (an abstention
+		# is the default and cannot be told from no answer).
+		if bool(pending.get("player_swings", false)) and String(pending.get("player_vote", Orgs.VOTE_ABSTAIN)) == Orgs.VOTE_ABSTAIN:
 			var months := int(pending.get("months_left", 0))
 			var swing := Strings.tn("%s goes to the council's vote in %d month, and your vote can decide it.", "%s goes to the council's vote in %d months, and your vote can decide it.", months)
 			now["council|%s|%s|%d" % [org.id, String(pending.get("proposal_id", "")),
