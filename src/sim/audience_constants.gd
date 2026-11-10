@@ -79,6 +79,22 @@ const RECEIVED_RAPPORT := 0.1
 ## Delegation (spec): a minister answers, most of the grudge avoided, no
 ## knowledge gained; a vain person or one who wanted an office is snubbed.
 const DELEGATE_GRUDGE_SHARE := 0.25
+
+## V5.3 B7, the author's ruling of 2026-11-10 on #317 (band B3: the acts' share of a
+## bloc's offset stays at or under 0.50). The quiet-month call picked the highest
+## standing every time, so a government that answers no one let the same few people
+## lapse again and again (France, four years: Ferrand called four times, Turcy and
+## Perier three each); their grudges grew until their briefings against the
+## government were 0.9 of the workers' offset. Two rules, measured together to hold
+## B3 (tests/test_balance.gd), neither enough alone:
+## - the call passes over anyone whose grudge is above QUIET_CALL_GRUDGE_MAX -- the
+##   game does not call up a person the government already wronged;
+## - a CALLED request that lapses (or is booked and missed) costs CALLED_LAPSE_SHARE of
+##   a decline -- grudge, loyalty and rapport -- the delegation's share: the person
+##   was called, they did not ask. Every request a person asked for keeps the full
+##   decline on a lapse (the author's answer 3, 2026-10-21, unchanged).
+const QUIET_CALL_GRUDGE_MAX := 0.0
+const CALLED_LAPSE_SHARE := DELEGATE_GRUDGE_SHARE
 const DELEGATE_SNUB_RAPPORT := -0.05
 
 ## V5.3-0 gate: the chance a minister keeps a delegated word the world has not

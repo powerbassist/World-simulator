@@ -55,6 +55,8 @@ func _init() -> void:
 		_check_an_arrival_stops_the_person(month)
 		_check_the_cap_sends_the_month_to_an_event(month)
 		_check_a_full_lane_sends_the_month_to_an_event(month)
+		_check_a_grudge_holder_is_never_called(month)
+	_check_a_called_lapse_costs_a_share()
 	_check_a_drawn_event_carries_no_never_holds()
 	_check_the_swing_stamp_agrees_with_the_division()
 	_finish()
@@ -325,6 +327,56 @@ func _check_a_full_lane_sends_the_month_to_an_event(now: int) -> void:
 	Events.quiet_call(state, _loader)
 	_ok(_called(state).is_empty(), "the call brought a person into a full lane")
 	_ok(ns.event_queue.size() == 1, "a full lane's quiet month brought no event")
+
+
+## The author's ruling on #317 (B3): the call passes over anyone holding a grudge.
+## The person the month calls, given the slightest grudge, is not called; whoever
+## comes instead holds none.
+func _check_a_grudge_holder_is_never_called(now: int) -> void:
+	var first = _fresh(now)
+	Audiences.tick_month(first, _loader, METERS)
+	var picked: Array = _called(first)
+	if picked.size() != 1:
+		_failures.append("fixture: month %d no longer calls one person" % now)
+		return
+	var state = _fresh(now)
+	var ns = state.player()
+	ns.person_grudges[String(picked[0])] = AudK.QUIET_CALL_GRUDGE_MAX + 0.01
+	var before: Dictionary = ns.person_grudges.duplicate()
+	Audiences.tick_month(state, _loader, METERS)
+	for pid in _called(state):
+		_ok(pid != String(picked[0]), "the call brought %s, who holds a grudge" % pid)
+		_ok(float(before.get(pid, 0.0)) <= AudK.QUIET_CALL_GRUDGE_MAX, "the call brought %s, who held a grudge of %s" % [pid, before.get(pid, 0.0)])
+
+
+## The author's ruling on #317 (B3): a called request that lapses costs
+## CALLED_LAPSE_SHARE (0.25) of a decline -- grudge and rapport -- and a request the
+## person asked for keeps the full decline (1.0). Same person, same month, the only
+## difference the `called` stamp.
+func _check_a_called_lapse_costs_a_share() -> void:
+	_ok(is_equal_approx(AudK.CALLED_LAPSE_SHARE, 0.25) and is_equal_approx(AudK.QUIET_CALL_GRUDGE_MAX, 0.0),
+		"the ruling's numbers moved: a share of %s, a grudge bar of %s" % [AudK.CALLED_LAPSE_SHARE, AudK.QUIET_CALL_GRUDGE_MAX])
+	var cost := {}
+	for called in [false, true]:
+		var state = _fresh()
+		var ns = state.player()
+		var now := _now(state)
+		var person = _loader.people[PLAYER][1]
+		var pid := String(person.id)
+		ns.person_grudges[pid] = 0.0
+		ns.person_rapport[pid] = 0.0
+		var row := {"id": "%s|%d" % [pid, now - 3], "person_id": pid, "object": "x", "stance": "",
+			"arrived_month": now - 3, "deadline_month": now, "status": AudK.STATUS_PENDING, "date": {}, "resolved_month": -1}
+		if called:
+			row["called"] = true
+		ns.audience_requests.append(row)
+		Audiences.tick_month(state, _loader, METERS)
+		_ok(String(row["status"]) == AudK.STATUS_LAPSED, "the fixture request did not lapse")
+		cost[called] = [float(ns.person_grudges.get(pid, 0.0)), float(ns.person_rapport.get(pid, 0.0))]
+	_ok(float(cost[false][0]) > 0.0 and float(cost[false][1]) < 0.0, "an ordinary lapse cost nothing: %s" % [cost[false]])
+	_ok(is_equal_approx(float(cost[true][0]), float(cost[false][0]) * AudK.CALLED_LAPSE_SHARE)
+		and is_equal_approx(float(cost[true][1]), float(cost[false][1]) * AudK.CALLED_LAPSE_SHARE),
+		"a called lapse cost %s against an ordinary %s, not a quarter" % [cost[true], cost[false]])
 
 
 ## Left alone, the called entry is answered by its default when its countdown runs

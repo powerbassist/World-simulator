@@ -64,7 +64,9 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 			_close(row, agreed, now)
 			continue
 		_unbook(state, row)
-		_price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT, true)
+		# A called request costs a share of a decline (CALLED_LAPSE_SHARE's reason).
+		var share: float = K.CALLED_LAPSE_SHARE if bool(row.get("called", false)) else 1.0
+		_price(state, ns, loader, row, share, K.DECLINE_RAPPORT * share, true)
 		_close(row, K.STATUS_LAPSED, now)
 		out["lapsed"].append(_view(row))
 	_arrivals(state, ns, loader, meters, now, out["arrived"])
@@ -321,7 +323,7 @@ static func _quiet_call(state, ns, loader, meters: Dictionary, now: int, arrived
 	var leaders := {}
 	for party in loader.parties.get(state.player_nation_id, []):
 		leaders[party.id] = party.leader_person_id
-	if _call_best(ns, Staff.cast(loader, state.player_nation_id), President.leader_id(ns), meters, leaders, now, arrived):
+	if _call_best(ns, Staff.cast(loader, state.player_nation_id), President.leader_id(ns), meters, leaders, now, arrived, true):
 		var row: Dictionary = ns.audience_requests.back()
 		row["called"] = true
 		row["differs"] = Landings.differs(state, ns, loader, row)
@@ -329,11 +331,14 @@ static func _quiet_call(state, ns, loader, meters: Dictionary, now: int, arrived
 
 ## The candidate the hazard weighs most, asked about the want the draw would have
 ## asked: the highest standing among those who may ask and want something unserved,
-## ties by id. Whether anyone came.
-static func _call_best(ns, people: Array, leader: String, meters: Dictionary, leaders: Dictionary, now: int, arrived: Array) -> bool:
+## ties by id. Whether anyone came. `spare_aggrieved`: the quiet-month call passes over
+## anyone holding a grudge above QUIET_CALL_GRUDGE_MAX (the author's ruling on #317,
+## a deviation from the spec's plain "highest standing"); the month-3 guarantee does not.
+static func _call_best(ns, people: Array, leader: String, meters: Dictionary, leaders: Dictionary, now: int, arrived: Array, spare_aggrieved := false) -> bool:
 	var best = null
 	for person in people:
-		if not _may_ask(ns, person, leader, now) or _unserved(ns, person, meters, leaders, now).is_empty():
+		if not _may_ask(ns, person, leader, now) or _unserved(ns, person, meters, leaders, now).is_empty() \
+				or (spare_aggrieved and float(ns.person_grudges.get(person.id, 0.0)) > K.QUIET_CALL_GRUDGE_MAX):
 			continue
 		var st := float(ns.person_standing.get(person.id, 0.0))
 		var best_st := -INF if best == null else float(ns.person_standing.get(best.id, 0.0))
