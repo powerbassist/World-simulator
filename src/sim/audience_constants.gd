@@ -48,8 +48,13 @@ const FIRST_REQUEST_BY_MONTH := 3
 ## author's call 2, 2026-11-10): a month with nothing arrived calls the guarantee's
 ## best candidate, unless this many people already asked in the last
 ## QUIET_ASKS_MONTHS months (every lane, read off audience_asked_month) -- then the
-## month goes to a minor event instead. Nine a year sits at B1's ceiling of 48
-## requests a term, so the call does not push the lane past its flood line.
+## month goes to a minor event instead. It counts PEOPLE, not requests: a person may
+## ask twice in twelve months (REQUEST_COOLDOWN_MONTHS is 8) and counts once, so more
+## than nine requests can come in a year with the cap still open. That is the rule
+## the spec measured (section 4, "fewer than nine people asked"; the prototype read
+## this register) and the figures the author accepted assume it. The cap does not
+## bound B1 by itself: B1 is measured, 48 arrivals in 60 months on this build, at its
+## ceiling of 48 (tools/audience_probe.gd, QA's TAKE on #317).
 const QUIET_ASKS_MAX := 9
 const QUIET_ASKS_MONTHS := 12
 

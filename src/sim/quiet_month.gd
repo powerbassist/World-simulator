@@ -26,7 +26,11 @@ extends RefCounted
 ## whose answers all leave the person in the same feeling words (Audiences stamps
 ## `differs` on each request the month brings, with the cuts the card draws its words
 ## with, src/sim/feeling_constants.gd) is no arrival. An event this build does not
-## know, and a request with no stamp, end the quiet: the safe side.
+## know, and a request with no stamp, end the quiet: the safe side. A request the call
+## itself brought (`called`) ends it whatever its words: it is the person branch's
+## answer, and the event branch must not answer the same month again (QA's TAKE on
+## #317). It always differs today all the same: the call passes over anyone holding a
+## grudge, and from no grudge a decline moves the grudge word where a booking does not.
 ##
 ## What does NOT end the quiet, as the spec measured it: a backbench bill awaiting the
 ## president's stand, a treaty awaiting the assembly and the Regions arrival -- each
@@ -50,7 +54,7 @@ static func quiet(state, ns, loader, now: int) -> bool:
 		if int(entry.get("arrived", -1)) == now and _decides(ns, loader, String(entry.get("event_id", ""))):
 			return false
 	for row in ns.audience_requests:
-		if int(row.get("arrived_month", -1)) == now and bool(row.get("differs", true)):
+		if int(row.get("arrived_month", -1)) == now and (bool(row.get("differs", true)) or bool(row.get("called", false))):
 			return false
 	for company_id in ns.companies:
 		var c: Dictionary = ns.companies[company_id]
@@ -81,9 +85,10 @@ static func _decides(ns, loader, event_id: String) -> bool:
 	return true
 
 
-## How many people asked in the QUIET_ASKS_MONTHS before `now` (every lane: a
+## How many PEOPLE asked in the QUIET_ASKS_MONTHS before `now` (every lane: a
 ## visitor and a chief count as the nation's own do), off the one register every ask
-## stamps -- the person branch's cap reads it.
+## stamps, which keeps each person's latest month: one who asked twice in the window
+## counts once. The person branch's cap reads it (QUIET_ASKS_MAX says why people).
 static func asks_in_year(ns, now: int) -> int:
 	var n := 0
 	for pid in ns.audience_asked_month:

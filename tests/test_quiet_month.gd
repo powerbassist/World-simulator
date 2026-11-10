@@ -22,9 +22,12 @@ const President = preload("res://src/sim/president.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const DensityCount = preload("res://tools/density_count.gd")
+const Budget = preload("res://src/sim/budget.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
 
 const PLAYER := "FRA"
+const PLAYABLE := ["DEU", "FRA", "GBR", "POL"]
 const EU := "eu"
 const METERS := {"grievance": 0.0, "press_freedom": 0.0, "judicial_independence": 0.0}
 ## A month well after the lane's month-3 guarantee, so only the hazard and the
@@ -170,13 +173,21 @@ func _check_asks_count_the_last_twelve_months() -> void:
 	var ns = state.player()
 	var now := _now(state)
 	ns.audience_asked_month = {"FRA_a": now - 1, "FRA_b": now - 11, "FRA_c": now - 12, "GBR_d": now - 3}
-	_ok(QuietMonth.asks_in_year(ns, now) == 3, "asks in the last twelve months read %d, want 3 (a visitor counts, a year ago does not)" % QuietMonth.asks_in_year(ns, now))
+	# FRA_a asked twice in the window, REQUEST_COOLDOWN_MONTHS apart: four requests, three
+	# people. The cap counts people, the rule the spec measured (QA's TAKE on #317).
+	for ask in [["FRA_a", now - 1 - AudK.REQUEST_COOLDOWN_MONTHS], ["FRA_a", now - 1], ["FRA_b", now - 11], ["FRA_c", now - 12], ["GBR_d", now - 3]]:
+		ns.audience_requests.append({"id": "%s|%d" % ask, "person_id": ask[0], "arrived_month": ask[1], "status": AudK.STATUS_LAPSED})
+	_ok(QuietMonth.asks_in_year(ns, now) == 3, "asks in the last twelve months read %d, want 3 people (a visitor counts, a year ago does not, a person asking twice counts once)" % QuietMonth.asks_in_year(ns, now))
 	_ok(AudK.QUIET_ASKS_MAX == 9 and AudK.QUIET_ASKS_MONTHS == 12, "the cap is not the author's nine asks in twelve months")
 
 
 ## The call's filter is the probe's own rule on the two axes the ruling names: two
 ## answers whose bloc arrows differ (DensityCount.arrow, the briefing's word bands)
-## or whose money differs by MONEY_BN.
+## or whose money differs by MONEY_BN. The money side is the PROBE's: each answer
+## booked on a copy of the world (_booked_money), not the filter's own estimate, for
+## every shipped minor event in each playable nation at the game's start (QA's TAKE on
+## #317). A tax at 0 that a law raises later in a run is where the estimate (which
+## reads it as yielding nothing) and the booking could part; this checks the start.
 func _check_the_filter_is_the_probes_rule() -> void:
 	_ok(is_equal_approx(EventsK.QUIET_MONEY_BN, DensityCount.MONEY_BN), "the call's money bar is not the probe's")
 	_ok(is_equal_approx(OpinionK.OFFSET_SLIGHT, BriefingEffects.OFFSET_SLIGHT) and is_equal_approx(OpinionK.OFFSET_CLEAR, BriefingEffects.OFFSET_CLEAR),
@@ -187,25 +198,55 @@ func _check_the_filter_is_the_probes_rule() -> void:
 	_ok(is_equal_approx(EventDraw.money_bn(ns, {"spending_pct_gdp": {"health": 0.1}}), -0.001 * float(ns.gdp_eur_bn)),
 		"a spending of 0.1 point of GDP does not cost 0.1 % of GDP")
 	var seen := {true: 0, false: 0}
-	for ev in _loader.events:
-		if int(ev.severity) != 1 or ev.on_action != "":
-			continue
-		var strips: Array = []
-		for c in ev.choices:
-			var fx: Dictionary = c.get("effects", {})
-			var arrows := {}
-			for bloc in fx.get("bloc_offset", {}):
-				arrows[bloc] = DensityCount.arrow(float(fx["bloc_offset"][bloc]))
-			strips.append({"arrows": arrows, "money_bn": EventDraw.money_bn(ns, fx)})
-		var want := false
-		for i in strips.size():
-			for j in range(i + 1, strips.size()):
-				var axes: Array = DensityCount.differs(strips[i], strips[j])
-				want = want or axes.has("arrow") or axes.has("money")
-		var got: bool = EventDraw.meaningful(ns, ev)
-		seen[got] = int(seen[got]) + 1
-		_ok(got == want, "%s: the filter says %s, the probe's rule %s" % [ev.id, got, want])
+	for nation in PLAYABLE:
+		var world = _base if nation == PLAYER else GameState.new_game(_loader, nation)
+		for ev in _loader.events:
+			if int(ev.severity) != 1 or ev.on_action != "":
+				continue
+			var strips: Array = []
+			var estimates: Array = []
+			for c in ev.choices:
+				var fx: Dictionary = c.get("effects", {})
+				var arrows := {}
+				for bloc in fx.get("bloc_offset", {}):
+					arrows[bloc] = DensityCount.arrow(float(fx["bloc_offset"][bloc]))
+				strips.append({"arrows": arrows, "money_bn": _booked_money(world, fx)})
+				estimates.append({"money_bn": EventDraw.money_bn(world.player(), fx)})
+			var want := false
+			var money_booked := false
+			var money_estimated := false
+			for i in strips.size():
+				for j in range(i + 1, strips.size()):
+					var axes: Array = DensityCount.differs(strips[i], strips[j])
+					want = want or axes.has("arrow") or axes.has("money")
+					money_booked = money_booked or axes.has("money")
+					money_estimated = money_estimated or DensityCount.differs(estimates[i], estimates[j]).has("money")
+			var got: bool = EventDraw.meaningful(world.player(), ev)
+			seen[got] = int(seen[got]) + 1
+			_ok(got == want, "%s %s: the filter says %s, the probe's rule %s" % [nation, ev.id, got, want])
+			# The money axis alone: most events that differ in money differ in arrows too,
+			# which would hide a wrong estimate from the line above.
+			_ok(money_estimated == money_booked, "%s %s: the estimate's money says %s, the booking's %s" % [nation, ev.id, money_estimated, money_booked])
 	_ok(int(seen[true]) > 0 and int(seen[false]) > 0, "the shipped book has no minor event on one side of the filter: %s" % [seen])
+
+
+## The probe's money for one answer (decision_surfaces_probe.gd's _balance_move): its
+## fiscal channels booked on a copy through Legislature.apply_effects, read off the
+## deficit, EUR bn a year, positive a better balance.
+func _booked_money(world, fx: Dictionary) -> float:
+	var fiscal := {}
+	for key in ["spending_pct_gdp", "tax_rates_pct", "other_revenue_pct_gdp"]:
+		if fx.has(key):
+			fiscal[key] = fx[key]
+	if fiscal.is_empty():
+		return 0.0
+	var copy = world.duplicate_state()
+	var cns = copy.player()
+	Budget.recompute(copy, cns)
+	var before := float(cns.deficit_pct_gdp)
+	Legislature.apply_effects(copy, cns, fiscal, _loader)
+	Budget.recompute(copy, cns)
+	return -(float(cns.deficit_pct_gdp) - before) * float(cns.gdp_eur_bn) / 100.0
 
 
 ## The first month of 2027-2029 where the fixture's quiet month calls a person.
@@ -241,7 +282,22 @@ func _check_the_person_comes_first(now: int) -> void:
 	_ok(int(row["arrived_month"]) == now and bool(row["called"]), "the called request is not stamped as called this month")
 	_ok(row.has("differs") and bool(row["differs"]) == Landings.differs(state, state.player(), _loader, row),
 		"the called request's differs stamp is not request_landings.gd's answer")
+	# quiet_month.gd's header: from no grudge, a called request always differs.
+	_ok(bool(row["differs"]), "the called request leaves the person in the same words whatever the answer")
+	_check_a_called_person_spends_the_month(now)
 	_check_a_dull_request_does_not_stop_the_call(now)
+
+
+## QA's TAKE on #317: a called request ends the quiet whatever its words, so the event
+## branch never answers the same month again -- one call a month, by construction.
+func _check_a_called_person_spends_the_month(now: int) -> void:
+	var state = _fresh(now)
+	Audiences.tick_month(state, _loader, METERS)
+	var row: Dictionary = state.player().audience_requests.back()
+	_ok(bool(row.get("called", false)), "the fixture month called no one")
+	row["differs"] = false
+	Events.quiet_call(state, _loader)
+	_ok(state.player().event_queue.is_empty(), "a called request whose answers read the same let the event branch call too")
 
 
 ## The author's ruling (2026-11-10): a request whose answers all leave the person in
