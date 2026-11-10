@@ -1291,7 +1291,7 @@ func _on_month_step(step: String, after: bool, report: Dictionary, year: int, mo
 				# exactly that month.
 				var desk_before := {}
 				for desk_entry in _state.player().event_queue:
-					desk_before[String(desk_entry.get("event_id", ""))] = true
+					desk_before[String(desk_entry.get("event_id", ""))] = desk_entry
 				_month_capture["desk_before"] = desk_before
 		return
 

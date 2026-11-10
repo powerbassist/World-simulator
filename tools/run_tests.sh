@@ -17,6 +17,8 @@ tests=(
   tests/test_region_fund.gd
   tests/test_region_priority.gd
   tests/test_region_arrival.gd
+  tests/test_called_event.gd
+  tests/test_decision_cards.gd
   tests/test_sector_warning_view.gd
   tests/test_opinion.gd
   tests/test_polling_panel.gd

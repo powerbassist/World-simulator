@@ -550,7 +550,7 @@ func _build_endorse_button(bill_id: String) -> Control:
 	endorse_btn.tooltip_text = tr("Stand behind the bill publicly: %s on every party's support line at its division, priced now as executive activism (%s). One stand per bill.") % [Num.fs(StatuteK.PMB_ENDORSE_SUPPORT, 2), ", ".join(price_bits)]
 	endorse_btn.pressed.connect(_on_endorse.bind(bill_id))
 	_offer(endorse_btn)
-	row.add_child(endorse_btn)
+	row.add_child(preload("res://src/ui/acts_on.gd").tag(endorse_btn, ["assembly|%s" % bill_id]))  # B7: the bill card's Go
 	return row
 
 

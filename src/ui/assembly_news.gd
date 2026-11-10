@@ -12,6 +12,9 @@ const Bills = preload("res://src/sim/bills.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 
+## V5.3 B7: a bill's Go, to the tab where its stand is taken (BriefingDriver opens it).
+signal go_requested(tab: String)
+
 var _state
 var _loader: DataLoader
 var _stack
@@ -21,6 +24,18 @@ func setup(state, loader, stack) -> void:
 	_state = state
 	_loader = loader
 	_stack = stack
+	if not _stack.card_action.is_connected(_on_card_action):
+		_stack.card_action.connect(_on_card_action)
+
+
+## V5.3 B7: the Go on a bill's card (the only action this writer puts on a card).
+func _on_card_action(card: String, _index: int) -> void:
+	for bill_id in _assembly_cards.keys():
+		if String(_assembly_cards[bill_id]) == card:
+			_assembly_cards.erase(bill_id)
+			_stack.dismiss(card)
+			go_requested.emit("legislature")
+			return
 
 
 ## V4.2 T6: the assembly's own events, as cards -- _announce_industry_events's
@@ -65,14 +80,22 @@ func announce(assembly_release: Dictionary = {}) -> void:
 	for bill_id in ns.assembly_bills.keys():
 		var entry: Dictionary = ns.assembly_bills[bill_id]
 		var body := _assembly_bill_body(entry)
+		# V5.3 B7: a bill awaiting the president's stand is a decision, so its card
+		# carries a Go to the Endorse button (law_panel.gd tags it); once the stand is
+		# taken there is nothing left to decide, and the card goes.
+		var endorsed := float(entry.get("endorse_bonus", 0.0)) > 0.0
 		if _announced_assembly_bills.has(bill_id):
-			if _assembly_cards.has(bill_id):
+			if _assembly_cards.has(bill_id) and endorsed:
+				_stack.dismiss(String(_assembly_cards[bill_id]))
+				_assembly_cards.erase(bill_id)
+			elif _assembly_cards.has(bill_id):
 				_stack.set_body(String(_assembly_cards[bill_id]), body)
 			continue
 		_announced_assembly_bills[bill_id] = true
 		var backed := String(entry.get("backer_firm", "")) != ""
+		var go: Array = [] if endorsed else [{"label": tr("Open"), "acts_on": "assembly|%s" % bill_id}]
 		var card_id: String = _stack.push(
-			tr("A chief before the assembly") if backed else tr("Private member's bill"), body)
+			tr("A chief before the assembly") if backed else tr("Private member's bill"), body, go)
 		_assembly_cards[bill_id] = card_id
 	# The release card, handed in from _on_month_step. The capture there is
 	# what lets a COLLISION month -- a PMB dividing the same tick an
