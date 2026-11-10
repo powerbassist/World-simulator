@@ -100,9 +100,11 @@ static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
 	if int(panel._fund_years) <= 0:
 		panel._fund_years = lo_years
 	# One sum a line, each value with its unit beside its own control (QA's TAKE 1 on
-	# #269: in one flow, "0.5" ran into the next caption and read "0.5 years").
+	# #269: in one flow, "0.5" ran into the next caption and read "0.5 years"). The share
+	# says what it costs too, the sim's estimate at that level (#316's ask): a share of
+	# output is not a sum a player can weigh until it is money.
 	var share := _slider(PanelKit.buttons(box), lo_share, float(rule["share_pct"][1]), 0.5, float(panel._fund_share), "fund_share",
-		func(v: float) -> String: return Strings.t("%s %% of its output a year") % Num.f(v, 1))
+		func(v: float) -> String: return _share_text(panel, ns, region, v))
 	var years := _slider(PanelKit.buttons(box), float(lo_years), float(rule["years"][1]), 1.0, float(panel._fund_years), "fund_years",
 		func(v: float) -> String: return Strings.tn("%d year", "%d years", int(v)) % int(v))
 	var strip := EffectsStrip.new()
@@ -151,6 +153,17 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void
 		EffectsStrip.who_text(est["bloc_offset"]),
 		Strings.t("Unemployment here: %s %% now, %s %% with the fund. Paid from next month; the lift to demand reverses when it ends.") % [
 			Num.f(float(est["unemployment_now"]), 1), Num.f(float(est["unemployment_after"]), 1)])
+
+
+## The share beside its slider, with the money it costs a year at that level, unsigned
+## (a cost beside its control; the strip below carries the Treasury's sign). A level
+## the register refuses has no estimate, and reads the share alone.
+static func _share_text(panel, ns, region, share: float) -> String:
+	var est: Dictionary = RegionFunds.estimate(panel._state, ns, panel._loader, String(region.id), share, int(panel._fund_years))
+	if not bool(est.get("ok", false)):
+		return Strings.t("%s %% of the region's output a year") % Num.f(share, 1)
+	return Strings.t("%s %% of the region's output: %s a year") % [Num.f(share, 1),
+		Strings.t("%s bn") % Num.f(float(est["eur_bn_per_year"]), EffectsStrip.MONEY_PLACES)]
 
 
 ## A sum's control: the slider, then its value printed with its unit by `text`.

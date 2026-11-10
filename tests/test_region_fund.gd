@@ -127,8 +127,9 @@ func _check_strip(region) -> void:
 	else:
 		var eur_text: String = (eur_slider.get_meta("value_label") as Label).text
 		var years_text: String = (years_slider.get_meta("value_label") as Label).text
-		if eur_text != Strings.t("%s %% of its output a year") % Num.f(share, 1):
-			_fail("fund: the yearly sum reads '%s'" % eur_text)
+		# #316's ask: the money beside the slider too, the sim's estimate at its level.
+		if eur_text != Strings.t("%s %% of the region's output: %s a year") % [Num.f(share, 1), Strings.t("%s bn") % Num.f(eur, EffectsStrip.MONEY_PLACES)]:
+			_fail("fund: the yearly sum reads '%s', not the share and the sim's %s bn" % [eur_text, Num.f(eur, 2)])
 		if years_text != Strings.tn("%d year", "%d years", years) % years:
 			_fail("fund: the years read '%s'" % years_text)
 	var go = _with_meta("go")
@@ -255,6 +256,11 @@ func _check_redrawn() -> void:
 	var eur := float(est.get("eur_bn_per_year", 0.0))
 	if strip == null or eur <= 0.0 or absf(float(strip.money_bn) + eur) > 0.0001:
 		_fail("redraw: the strip did not follow the level to %s %%, %s bn (%s)" % [top, eur, strip.money_bn if strip != null else "<none>"])
+	# The money beside the slider follows the drag too (#316's ask), at the new level.
+	var beside: String = ((slider as HSlider).get_meta("value_label") as Label).text
+	var money := Strings.t("%s bn") % Num.f(eur, EffectsStrip.MONEY_PLACES)
+	if not beside.contains(money):
+		_fail("redraw: the money beside the slider did not follow the level to %s %%: '%s', the sim's %s" % [top, beside, money])
 
 
 ## Stop on a running fund closes it, and the row said whom it angers before.
