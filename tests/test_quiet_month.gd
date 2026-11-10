@@ -54,6 +54,7 @@ func _init() -> void:
 		_check_the_person_comes_first(month)
 		_check_an_arrival_stops_the_person(month)
 		_check_the_cap_sends_the_month_to_an_event(month)
+		_check_a_full_lane_sends_the_month_to_an_event(month)
 	_check_a_drawn_event_carries_no_never_holds()
 	_check_the_swing_stamp_agrees_with_the_division()
 	_finish()
@@ -309,6 +310,21 @@ func _check_the_cap_sends_the_month_to_an_event(now: int) -> void:
 		_ok(int(entry.get("arrived", -1)) == now, "the called event is not stamped as arrived this month")
 		_ok(int(ev.severity) == 1 and ev.on_action == "" and EventDraw.meaningful(ns, ev), "the call brought %s, not a minor event whose answers differ" % ev.id)
 		_lapses(state, String(entry["event_id"]), int(entry["months_left"]))
+
+
+## A full lane takes no one: the month the call would bring a person brings an
+## event instead (the open rows are old, so they are no arrival this month).
+func _check_a_full_lane_sends_the_month_to_an_event(now: int) -> void:
+	var state = _fresh(now)
+	var ns = state.player()
+	for i in AudK.MAX_PENDING:
+		ns.audience_requests.append({"id": "lane|%d" % i, "person_id": "%s_lane%d" % [PLAYER, i], "object": "x",
+			"stance": "", "arrived_month": now - 2, "deadline_month": now + 2, "status": AudK.STATUS_PENDING,
+			"date": {}, "resolved_month": -1})
+	Audiences.tick_month(state, _loader, METERS)
+	Events.quiet_call(state, _loader)
+	_ok(_called(state).is_empty(), "the call brought a person into a full lane")
+	_ok(ns.event_queue.size() == 1, "a full lane's quiet month brought no event")
 
 
 ## Left alone, the called entry is answered by its default when its countdown runs
