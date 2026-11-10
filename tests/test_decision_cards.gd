@@ -22,6 +22,7 @@ const Inbox = preload("res://src/ui/inbox.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const CouncilCards = preload("res://src/ui/council_cards.gd")
+const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -58,6 +59,7 @@ func _process(_delta: float) -> bool:
 		0:
 			if _cases.is_empty():
 				_check_settled_cards_go()
+				_check_month_end_checks()
 				_finish()
 				return true
 			_case = _cases.pop_front()
@@ -114,15 +116,19 @@ func _stage_bill() -> String:
 	return _card_for("assembly|pmb_test")
 
 
+func _stage_treaty_state(org) -> void:
+	var proposal = Orgs._next_proposal(_main._state, _main._loader, org.id)
+	_main._state.orgs[org.id]["ratifying"] = {"proposal_id": String(proposal.id), "name": proposal.proposal_name, "sponsor": "",
+		"months_left": CouncilK.RATIFY_WINDOW_MONTHS, "nations": {_main._state.player_nation_id: CouncilK.RATIFY_PENDING}}
+
+
 ## A treaty the council carried, waiting on the player's assembly.
 func _stage_treaty() -> String:
 	var org = _player_council()
 	if org == null:
 		_fail("treaty: premise, the player sits on no council")
 		return ""
-	var proposal = Orgs._next_proposal(_main._state, _main._loader, org.id)
-	_main._state.orgs[org.id]["ratifying"] = {"proposal_id": String(proposal.id), "name": proposal.proposal_name, "sponsor": "",
-		"months_left": CouncilK.RATIFY_WINDOW_MONTHS, "nations": {_main._state.player_nation_id: CouncilK.RATIFY_PENDING}}
+	_stage_treaty_state(org)
 	CouncilCards.check(_main)
 	_case["subject"] = "ratify|%s" % org.id
 	_case["tab"] = "orgs"
@@ -221,6 +227,21 @@ func _check_settled_cards_go() -> void:
 	if inbox.lane_of(council) != "":
 		_fail("council: the card stayed up after the division")
 
+
+
+## The month's end runs the check (BriefingDriver.open, beside the Regions arrival).
+func _check_month_end_checks() -> void:
+	var org = _player_council()
+	if org == null:
+		return
+	CouncilCards._told.erase(_main.get_instance_id())
+	for id in _main._hud.inbox._cards.keys():
+		_main._hud.inbox.dismiss(String(id))
+	_stage_treaty_state(org)
+	BriefingDriver.finish_month(_main, {})
+	if _card_for("ratify|%s" % org.id) == "":
+		_fail("treaty: the month's end did not put up the card")
+	BriefingDriver.close(_main)
 
 func _fail(message: String) -> void:
 	_failures.append(message)

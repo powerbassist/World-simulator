@@ -18,8 +18,7 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
-## main's instance id -> {state_id, told: {key: true}, cards: {live card id: key},
-## wired: the Go's handler is connected}.
+## main's instance id -> {state_id, told: {key: true}, cards: {live card id: key}}.
 static var _told := {}
 
 
@@ -29,15 +28,15 @@ static func check(main) -> void:
 	var ns = state.player() if state != null else null
 	if ns == null:
 		return
-	var memory: Dictionary = _told.get_or_add(main.get_instance_id(), {"state_id": 0, "told": {}, "cards": {}, "wired": false})
+	var memory: Dictionary = _told.get_or_add(main.get_instance_id(), {"state_id": 0, "told": {}, "cards": {}})
 	var inbox = main._hud.inbox
 	if int(memory["state_id"]) != state.get_instance_id():
 		memory["state_id"] = state.get_instance_id()
 		memory["told"] = {}
 		memory["cards"] = {}
-	if not bool(memory["wired"]):
-		memory["wired"] = true
-		inbox.card_action.connect(_on_go.bind(main))
+	var go := _on_go.bind(main)
+	if not inbox.card_action.is_connected(go):
+		inbox.card_action.connect(go)
 	# What waits now, keyed by the decision: {key: [subject, title, body]}.
 	var now := {}
 	for org in main._loader.orgs:
