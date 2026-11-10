@@ -220,3 +220,11 @@ const CHOOSER_UNREST_FLOOR := 10.0
 const CHOOSER_FISCAL_WEIGHT := 0.5
 const CHOOSER_CORRUPTION_WEIGHT := 2.0
 const CHOOSER_UNREST_WEIGHT := 0.25
+
+## V5.3 B7, the quiet-month call (docs/design/v5.3-b7-density.md; the author's calls 2
+## and 3, 2026-11-10). The event it calls is a minor one (SEVERITY_NAMES' first, a
+## severity of 1) whose answers differ on a bloc arrow or on money by at least this
+## much, EUR bn a year: the probe's own MONEY_BN (tools/density_count.gd), pinned
+## equal by tests/test_quiet_month.gd, so the called event is one the band counts.
+const QUIET_SEVERITY := 1
+const QUIET_MONEY_BN := 0.5

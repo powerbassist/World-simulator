@@ -76,7 +76,7 @@ extends SceneTree
 ##              the lapse guard); answers = its choices' authored effects;
 ##   request    an audience request: its arrival, and its last month while still
 ##              waiting (deadline_month - 1: it lapses in its deadline's tick); answers = book (when a day is free), delegate, decline, each
-##              as the feeling bands the person lands in (Feelings over the prices
+##              as the feeling bands the person lands in (request_landings.gd over the prices
 ##              Audiences pays: RECEIVED_RAPPORT, the delegation's snub and grudge
 ##              share, decline_price());
 ##   bid        a foreign bid on a major (the bid_month stamp, and the window's last
@@ -119,6 +119,14 @@ extends SceneTree
 ## so a failing major gives none today). Its asks then take their defaults. B7 is
 ## reported twice: `band_world`, the world's arrivals alone (every source but
 ## `process`), and `band`, with the player's own processes' asks.
+## V5.3 B7 (docs/design/v5.3-b7-density.md section 8), four sources that already
+## existed and were not counted: a council division the player's vote decides (Orgs'
+## `player_swings` stamp, at the opening only: the card comes then), a backbench bill
+## awaiting the president's stand (endorse at PMB_ENDORSE_PRICE, or not), a treaty
+## awaiting the player's assembly (ratified, or it falls), and the Regions arrival (the
+## UI's rule, src/ui/region_arrival.gd: the worst region past the ratio, no fund open,
+## re-told after the rearm; answered by a fund at the lowest level, its bill and offsets).
+## A row also counts what the quiet-month call brought (`called`: a person, an event).
 ## Output per nation and regime: the band's figures, the counted, dull and repeated
 ## offers per source, the axes outside the strip that would have counted a dull
 ## one, and every empty month with what was happening (election, term start, an
@@ -142,10 +150,12 @@ const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
 const DomainsK = preload("res://src/sim/domains_constants.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
-const Delegation = preload("res://src/sim/delegation.gd")
-const Characters = preload("res://src/sim/characters.gd")
-const AudK = preload("res://src/sim/audience_constants.gd")
-const Feelings = preload("res://src/ui/feelings.gd")
+const RequestLandings = preload("res://src/sim/request_landings.gd")
+const Orgs = preload("res://src/sim/orgs.gd")
+const CouncilK = preload("res://src/sim/council_constants.gd")
+const SK = preload("res://src/sim/statute_constants.gd")
+const RegionArrival = preload("res://src/ui/region_arrival.gd")
+const RegionFunds = preload("res://src/sim/region_funds.gd")
 
 const START_YEAR := 2026
 const PLAYABLE := ["DEU", "FRA", "GBR", "POL"]
@@ -181,6 +191,11 @@ var _closure_picks := {}
 ## or none where no sector of the line can pay.
 var _sector_answers := {"moved": 0, "none": 0}
 var _music_band = null
+## V5.3 B7, the sources the probe gained (header): the run's memory of a backbench bill
+## already offered, and of the month each region's arrival was last told (the UI's own
+## rearm, src/ui/region_arrival.gd).
+var _bills_seen := {}
+var _regions_told := {}
 
 
 func _init() -> void:
@@ -437,7 +452,10 @@ func _holds(state, ns, row: Dictionary, report: Dictionary, minor_held: Dictiona
 			continue
 		if int(entry.get("severity", 1)) >= 2:
 			continue
-		if int(entry.get("months_left", 0)) <= 1 and not minor_held.has(event_id):
+		# V5.3 B7: an event the quiet-month call brought never holds (the author's
+		# call 3); it lapses to its default unheld.
+		if int(entry.get("months_left", 0)) <= 1 and not minor_held.has(event_id) \
+				and not bool(entry.get("never_holds", false)):
 			minor_held[event_id] = true
 			holds.append("minor")
 			held_ids.append(event_id)
@@ -746,6 +764,9 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 	var opening: Array = Programme.available(state, ns, _loader)
 	_closure_picks = {}
 	_sector_answers = {"moved": 0, "none": 0}
+	_bills_seen = {}
+	_regions_told = {}
+	var called := {"person": 0, "event": 0}
 	for i in range(months):
 		month += 1
 		if month > 12:
@@ -772,6 +793,16 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		_closure_candidates(state, ns, now, candidates)
 		_sector_candidates(state, ns, now, candidates)
 		_process_candidates(state, ns, now, candidates)
+		_council_candidates(state, ns, now, candidates)
+		_bill_candidates(state, ns, candidates)
+		_treaty_candidates(state, ns, candidates)
+		_region_candidates(state, ns, now, candidates)
+		for r in ns.audience_requests:
+			if bool(r.get("called", false)) and int(r.get("arrived_month", -1)) == now:
+				called["person"] += 1
+		for entry in ns.event_queue:
+			if bool(entry.get("never_holds", false)) and int(entry.get("arrived", -1)) == now:
+				called["event"] += 1
 		if i == 0 and not opening.is_empty():
 			candidates.append(_programme_candidate(state, ns, opening))
 		if not programme.is_empty() and not programme_before:
@@ -805,6 +836,8 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 			"domains_world": domains_world,
 			"dull": (out["dull"] as Array).size(), "repeat": (out["repeat"] as Array).size(),
 			"counted": (out["counted"] as Array).map(func(c) -> String: return "%s %s" % [c["due"], c["subject"]]),
+			"dull_subjects": (out["dull"] as Array).map(func(c) -> String: return "%s %s" % [c["due"], c["subject"]]),
+			"repeat_subjects": (out["repeat"] as Array).map(func(c) -> String: return "%s %s" % [c["due"], c["subject"]]),
 		}
 		if int(row["count"]) == 0:
 			var tags: Array = []
@@ -827,7 +860,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		return {"now": r["now"], "count": r["world"], "domains": r["domains_world"]})
 	return {"nation": nation_id, "regime": regime, "band": DensityCount.summary(rows),
 		"band_world": DensityCount.summary(world_rows), "tally": tally, "rows": rows,
-		"closure_picks": _closure_picks.duplicate(), "sector_answers": _sector_answers.duplicate()}
+		"closure_picks": _closure_picks.duplicate(), "sector_answers": _sector_answers.duplicate(), "called": called}
 
 
 ## The active player's modelled habit (header): at most one process a year, only
@@ -899,34 +932,11 @@ func _request_candidates(state, ns, report: Dictionary, now: int, out: Array) ->
 			"due": "arrival" if is_new else "deadline", "answers": _request_answers(state, ns, r)})
 
 
-## Each open answer as the feeling bands the person lands in, every register filled
-## (an unmoved one at its current band), so two answers compare register by register.
+## Each open answer as the feeling bands the person lands in -- the sim's own
+## definition (src/sim/request_landings.gd, V5.3 B7), the one the quiet-month call
+## stamps `differs` with, so the call and this count cannot disagree on a request.
 func _request_answers(state, ns, r: Dictionary) -> Array:
-	var request_id := String(r["id"])
-	var pid := String(r["person_id"])
-	var person = _loader.person_by_id.get(pid)
-	var open: Dictionary = Audiences.answers(state, ns, _loader, request_id)
-	var deltas: Array = []
-	if bool(open["book"]["ok"]):
-		deltas.append({"rapport": AudK.RECEIVED_RAPPORT})
-	if bool(open["delegate"]["ok"]):
-		deltas.append({
-			"rapport": Delegation.snub(person, String(r["object"])),
-			"grudge": Characters.refusal_grudge(ns, person, AudK.DECLINE_GRUDGE * AudK.DELEGATE_GRUDGE_SHARE) if person != null else 0.0,
-			"loyalty": AudK.DECLINE_LOYALTY * AudK.DELEGATE_GRUDGE_SHARE,
-		})
-	if bool(open["decline"]["ok"]):
-		deltas.append(Audiences.decline_price(ns, _loader, request_id))
-	var feel: Dictionary = Feelings.of(ns, pid)
-	var answers: Array = []
-	for delta in deltas:
-		var bands := {}
-		for register in Feelings.BANDS:
-			var span: Vector2 = Feelings.RANGE[register]
-			var value := clampf(float(feel.get(register, 0.0)) + float(delta.get(register, 0.0)), span.x, span.y)
-			bands["%s|%s" % [pid, register]] = Feelings.band(register, value)
-		answers.append({"feel": bands})
-	return answers
+	return RequestLandings.landings(state, ns, _loader, r)
 
 
 ## A bid and a rescue window, per major: the stamp month and the window's last.
@@ -1013,6 +1023,70 @@ func _process_candidates(state, ns, now: int, out: Array) -> void:
 			"domain": "industrial", "due": "arrival", "answers": answers})
 
 
+## A council division the player's vote decides, the month it opens (Orgs stamps the
+## swing then): its answers are the division's outcomes, which differ by construction.
+func _council_candidates(state, ns, now: int, out: Array) -> void:
+	for org_id in ns.orgs:
+		var pending: Dictionary = Orgs.pending(state, String(org_id))
+		if not bool(pending.get("player_swings", false)) \
+				or int(pending.get("opened_year", 0)) * 12 + int(pending.get("opened_month", 0)) != now:
+			continue
+		out.append({"source": "council", "subject": "council|%s|%s" % [org_id, String(pending.get("proposal_id", ""))],
+			"state": "", "domain": "council", "due": "arrival",
+			"answers": [{"division": "carried"}, {"division": "falls"}]})
+
+
+## A backbench bill the president has not taken a stand on, the first month it is seen:
+## endorsing it costs PMB_ENDORSE_PRICE in bloc offsets, staying out costs nothing.
+func _bill_candidates(state, ns, out: Array) -> void:
+	for bill_id in ns.assembly_bills:
+		var entry: Dictionary = ns.assembly_bills[bill_id]
+		if float(entry.get("endorse_bonus", 0.0)) != 0.0 or _bills_seen.has(bill_id):
+			continue
+		_bills_seen[bill_id] = true
+		out.append({"source": "bill", "subject": "bill|%s" % String(bill_id), "state": "", "domain": "legislature",
+			"due": "arrival", "answers": [{}, _effects_strip(state, {"bloc_offset": SK.PMB_ENDORSE_PRICE})]})
+
+
+## A treaty the council carried that awaits the player's assembly, the month the window
+## opens (its months_left still the whole window): ratified, or it falls.
+func _treaty_candidates(state, ns, out: Array) -> void:
+	for org_id in ns.orgs:
+		var rat: Dictionary = (state.orgs.get(org_id, {}) as Dictionary).get("ratifying", {})
+		if String((rat.get("nations", {}) as Dictionary).get(ns.id, "")) != CouncilK.RATIFY_PENDING \
+				or int(rat.get("months_left", 0)) != CouncilK.RATIFY_WINDOW_MONTHS:
+			continue
+		out.append({"source": "treaty", "subject": "treaty|%s|%s" % [org_id, String(rat.get("proposal_id", ""))],
+			"state": "", "domain": "council", "due": "arrival",
+			"answers": [{"division": "ratified"}, {"division": "falls"}]})
+
+
+## The Regions arrival, as src/ui/region_arrival.gd tells it: the worst region past the
+## rule's ratio, no fund open there, not told within the rearm. Answered by a fund at the
+## lowest level and term (its bill a year and its bloc offsets), or by nothing.
+func _region_candidates(state, ns, now: int, out: Array) -> void:
+	var rule: Dictionary = _loader.region_fund_rule
+	if rule.is_empty() or not bool(ns.in_government):
+		return
+	var found: Dictionary = RegionArrival.worst(state, ns)
+	if found.is_empty() or float(found["problem"]["ratio"]) < float(rule["arrival"]["ratio"]):
+		return
+	var id := String(found["region"].id)
+	for row in RegionFunds.open_funds(ns):
+		if String(row["region_id"]) == id:
+			return
+	if _regions_told.has(id) and now - int(_regions_told[id]) < int(rule["arrival"]["rearm_months"]):
+		return
+	_regions_told[id] = now
+	var fund: Dictionary = RegionFunds.estimate(state, ns, _loader, id, float(rule["share_pct"][0]), int(rule["years"][0]))
+	var answer := {}
+	if bool(fund.get("ok", false)):
+		answer = _effects_strip(state, {"bloc_offset": fund["bloc_offset"]})
+		answer["money_bn"] = -float(fund["eur_bn_per_year"])
+	out.append({"source": "region", "subject": "region|%s" % id, "state": "", "domain": "regions",
+		"due": "arrival", "answers": [{}, answer]})
+
+
 func _programme_candidate(state, ns, programme: Array) -> Dictionary:
 	var answers: Array = [{}]
 	for entry in programme:
@@ -1073,6 +1147,7 @@ func _print_density(run: Dictionary) -> void:
 	if not (run.get("closure_picks", {}) as Dictionary).is_empty():
 		print("    closure answers %s" % JSON.stringify(run["closure_picks"]))
 		print("    sector answers %s" % JSON.stringify(run["sector_answers"]))
+	print("    the quiet-month call brought %s" % JSON.stringify(run.get("called", {})))
 	print("    counted %s; dull %s (saved by %s); repeats %s" % [
 		JSON.stringify(t["counted"]), JSON.stringify(t["dull"]), JSON.stringify(t["saved_by"]), JSON.stringify(t["repeat"])])
 	var empty := {}

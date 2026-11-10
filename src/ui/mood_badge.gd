@@ -12,7 +12,7 @@ extends "res://src/ui/mood_icon.gd"
 
 const Feelings = preload("res://src/ui/feelings.gd")
 
-## Grudge bands (Feelings.BANDS): 1 annoyed, 2 resentful and up. Rapport: 0 cold,
+## Grudge bands (Feelings.WORDS, cut by feeling_constants.gd): 1 annoyed, 2 resentful and up. Rapport: 0 cold,
 ## 1 wary, 3 warm and up. Indices, not figures: a cut moved in Feelings moves here.
 const GRUDGE_SORE := 1
 const GRUDGE_HOSTILE := 2

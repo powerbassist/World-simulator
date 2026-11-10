@@ -525,5 +525,15 @@ Each half lets the other go: a broken pledge makes the president's word void, un
 
 **Re-read after the parent's rulings on #301 (2026-11-08, main e0cd8f81).** "Within will serve, delegate at least 5 %" is now read over the requests with no free day, Book out: 8 of the 33, Delegate best in all 8, so the band passes. Eight requests is a small denominator. Silence's press bite moved no probe number, as predicted: no regime of `balance_parallel` or `shadows_probe` strikes a deal. On the real road press owners spent 7 owner-months under silence over the 60 and were neither cold nor grudging in any of them (`press_silence_held` 0), so the bite is proven by `tests/test_deal.gd` on a staged owner, not by a played game. Nobody under silence reached the brief gate either, so the valve QA recorded as blocked (a silent person's grudge is not relieved by a brief) was read over no case.
 
+## 15. The quiet-month call's person (V5.3 B7)
+
+A month in which nothing arrived for the player calls someone in (`docs/design/v5.3-b7-density.md`; the author's call 2, 2026-11-10). At the end of `Audiences.tick_month`, if the month brought no request and `src/sim/quiet_month.gd` reads no other arrival, the month-3 guarantee's own candidate is called: the highest standing among the people who may ask and want something the government does not serve, ties by id. The guarantee and the call share one function, `_call_best`.
+
+- **The cap.** Not when `QUIET_ASKS_MAX` (9) people asked in the last `QUIET_ASKS_MONTHS` (12), every lane, read off `audience_asked_month`. Nine a year sits at B1's ceiling of 48 a term. Past the cap the month goes to a minor event instead (docs/events-model.md section 13).
+- **The lane.** A full lane already returned before the call, so the call never pushes the lane past `MAX_PENDING`.
+- **The stamp.** The row carries `called: true`, Audiences' answer to whether it called someone; the event step reads the row's `arrived_month` and so sees the call. Absent on every other row, read as false. No bump.
+
+A called request is a request like any other: it never holds the clock, and a lapse costs a decline.
+
 Related: [[people-model]] · [[calendar-model]] · [[v5.2-spec]] · [[bands-v5.2]] ·
 [[decision-surfaces]] · [[programme-model]] · [[summits-model]]

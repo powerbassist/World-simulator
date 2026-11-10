@@ -87,6 +87,41 @@ static func decision_of(loader, proposal) -> String:
 	return org.decision_rule if org != null else CouncilK.DECISION_QMR
 
 
+## The division's rule, Orgs._resolve's own (moved here at V5.3 B7 so the swing stamp
+## below divides with the same arithmetic): unanimity carries on at least one seat for
+## and nobody against; otherwise a share of the seats actually CAST, which is what
+## makes abstention a third option (orgs.gd's note at the division says why).
+static func passes(decision: String, seats_for: int, seats_against: int, vetoed: bool) -> bool:
+	if decision == CouncilK.DECISION_UNANIMITY:
+		return seats_for > 0 and not vetoed
+	var cast := seats_for + seats_against
+	return cast > 0 and float(seats_for) >= K.PASS_SEAT_FRACTION * float(cast)
+
+
+## V5.3 B7: whether the player's vote decides a division, the others' votes held --
+## the division under each of the three votes, and whether they disagree. Orgs stamps
+## it at the session's opening (`player_swings` on the pending division), the
+## quiet-month call and the council card read the stamp. `ballot` returns [seats,
+## vote] for a member: Orgs' own reads, handed in, because this file cannot preload
+## orgs.gd (orgs.gd preloads it). A player outside the council swings nothing.
+static func player_swings(loader, proposal, player_id: String, members: Array, ballot: Callable) -> bool:
+	if not members.has(player_id):
+		return false
+	var seats_for := 0
+	var seats_against := 0
+	var vetoed := false
+	for id in members:
+		if id != player_id:
+			var b: Array = ballot.call(id)
+			seats_for += int(b[0]) if String(b[1]) == CouncilK.ASK_FOR else 0
+			seats_against += int(b[0]) if String(b[1]) == CouncilK.ASK_AGAINST else 0
+			vetoed = vetoed or String(b[1]) == CouncilK.ASK_AGAINST
+	var mine := int(ballot.call(player_id)[0])
+	var decision := decision_of(loader, proposal)
+	return passes(decision, seats_for + mine, seats_against, vetoed) != passes(decision, seats_for, seats_against + mine, true) \
+		or passes(decision, seats_for, seats_against, vetoed) != passes(decision, seats_for + mine, seats_against, vetoed)
+
+
 ## How hard a nation pushes what it sponsors: its live head of government's
 ## authored ambition. The SAME person state V4.3's character layer reads -- the
 ## tier's "no second ambition meter" -- and live, so an election abroad that

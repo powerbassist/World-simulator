@@ -34,6 +34,7 @@ const MessageSettings = preload("res://src/ui/message_settings.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
+const AudK = preload("res://src/sim/audience_constants.gd")
 
 const SPEED := 4
 const TIMEOUT_FRAMES := 900
@@ -253,6 +254,14 @@ func _quiet_month() -> void:
 	ns.commitments.clear()
 	ns.person_grudges.clear()
 	ns.tabled_bill = {}
+	# V5.3 B7: the quiet-month call fills a month with nothing arrived (a person, then
+	# a minor event). Held off -- its asks cap filled with visitors, every event
+	# category quiet -- so the next month can truly bring nothing new.
+	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
+	for i in AudK.QUIET_ASKS_MAX:
+		ns.audience_asked_month["ZZZ_hold%d" % i] = now
+	for ev in _main._loader.events:
+		ns.event_category_quiet[ev.category] = 3
 	_date = _today()
 	_last_day()
 

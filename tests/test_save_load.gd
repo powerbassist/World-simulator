@@ -1837,12 +1837,53 @@ func _check_event_fields(loader) -> void:
 	# carries no announcement month (months_left only counts down), so a save
 	# reloaded mid-crisis could not reconstruct which month drew which place. A
 	# non-sited event's entry carries neither key, as staged here.
+	#
+	# V5.3 B7 adds two, neither a bump: `arrived`, the month the entry came (the
+	# quiet-month call's stamp: absent, an older save's entry reads as no arrival,
+	# true of every month but the one it was saved in, which already ran its call);
+	# and `never_holds`, on an entry the call brought (absent reads false, every
+	# other entry's truth).
 	var allowed := ["event_id", "event_name", "months_left", "interrupt",
-		"severity", "category", "region_id", "region_name"]
+		"severity", "category", "region_id", "region_name", "arrived", "never_holds"]
 	for entry in (dict["nations"]["FRA"]["event_queue"] as Array):
 		for key in (entry as Dictionary).keys():
 			if not allowed.has(String(key)):
 				_fail("a serialised event carries '%s' -- the choices round-trip through data/events/, not through the save" % key)
+	_check_the_quiet_stamps_round_trip(state, loader)
+
+
+## V5.3 B7: the quiet-month call's three stamps round-trip, and each one dropped (an
+## older save) reads as the truth, no bump: a desk entry with no `arrived` is no
+## arrival, with no `never_holds` an entry that may hold; a request with no `called`
+## came on its own; a division with no `player_swings` is not the player's to swing.
+func _check_the_quiet_stamps_round_trip(state, loader) -> void:
+	var QuietMonth = load("res://src/sim/quiet_month.gd")
+	var ns = state.player()
+	var now := int(state.year) * 12 + int(state.month)
+	ns.event_queue[0]["arrived"] = now
+	ns.event_queue[0]["never_holds"] = true
+	ns.audience_requests.append({"id": "x|1", "person_id": "FRA_x", "arrived_month": now - 1,
+		"deadline_month": now + 2, "status": "pending", "date": {}, "resolved_month": -1, "called": true})
+	state.orgs["eu"]["pending"] = {"proposal_id": "p", "months_left": 3, "player_vote": "abstain",
+		"opened_year": state.year, "opened_month": state.month, "player_swings": true}
+	var back = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	var bns = back.player()
+	if int(bns.event_queue[0].get("arrived", -1)) != now or not bool(bns.event_queue[0].get("never_holds", false)) \
+			or not bool(bns.audience_requests.back().get("called", false)) \
+			or not bool((back.orgs["eu"]["pending"] as Dictionary).get("player_swings", false)):
+		_fail("a quiet-month stamp did not survive a save and load")
+	if QuietMonth.quiet(back, bns, loader, now):
+		_fail("a reloaded division the player swings, opened this month, read as no arrival")
+	var old: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	for entry in old["nations"]["FRA"]["event_queue"]:
+		(entry as Dictionary).erase("arrived")
+		(entry as Dictionary).erase("never_holds")
+	(old["orgs"]["eu"]["pending"] as Dictionary).erase("player_swings")
+	var aged = GameState.from_dict(old)
+	if aged == null or not QuietMonth.quiet(aged, aged.player(), loader, now):
+		_fail("an older save's unstamped desk and division read as an arrival this month")
+	elif bool(aged.player().event_queue[0].get("never_holds", false)):
+		_fail("an older save's desk entry read as never holding")
 
 
 ## V1.1e. SAVE_VERSION 26 -> 27, on EIGHT added fields of ten, and they fail the rule
