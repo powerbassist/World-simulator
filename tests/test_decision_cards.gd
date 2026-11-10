@@ -271,6 +271,12 @@ func _check_one_card_for_every_swing() -> void:
 	var card := String(cards[0])
 	if String(_main._hud.inbox._bodies[card].get_parsed_text()).strip_edges() != "":
 		_fail("council: the gathered card carries a body: '%s'" % _main._hud.inbox._bodies[card].get_parsed_text())
+	# A new division opens while the card is up: still the one card.
+	_main._state.orgs[orgs[0].id]["pending"]["opened_month"] = int(_main._state.orgs[orgs[0].id]["pending"]["opened_month"]) + 1
+	CouncilCards.check(_main)
+	var again: Array = _main._hud.inbox._cards.keys().filter(func(id): return ActsOn.find(_main._hud.inbox._cards[id], "council") != null)
+	if again != [card]:
+		_fail("council: a new division while the card is up made another card (%d cards)" % again.size())
 	_main._state.orgs[orgs[0].id]["pending"] = {}
 	CouncilCards.check(_main)
 	if _main._hud.inbox.lane_of(card) == "":
