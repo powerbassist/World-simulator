@@ -44,6 +44,15 @@ const RESOLVED_KEPT_MONTHS := 12
 ## "the first by month 3", now held in every game rather than most.
 const FIRST_REQUEST_BY_MONTH := 3
 
+## V5.3 B7, the quiet-month call's person branch (docs/design/v5.3-b7-density.md; the
+## author's call 2, 2026-11-10): a month with nothing arrived calls the guarantee's
+## best candidate, unless this many people already asked in the last
+## QUIET_ASKS_MONTHS months (every lane, read off audience_asked_month) -- then the
+## month goes to a minor event instead. Nine a year sits at B1's ceiling of 48
+## requests a term, so the call does not push the lane past its flood line.
+const QUIET_ASKS_MAX := 9
+const QUIET_ASKS_MONTHS := 12
+
 ## How many days a person offers inside the window. Scarcity is occupancy (the
 ## diary's U6a / V2.4a rule), so an offered day the diary has taken is a day
 ## lost; B2 wants 20-50 % of requests unplaceable for a player who books all.

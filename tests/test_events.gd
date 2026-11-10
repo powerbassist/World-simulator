@@ -41,6 +41,7 @@ const GameEvent = preload("res://src/core/event.gd")
 const Events = preload("res://src/sim/events.gd")
 const EventHooks = preload("res://src/sim/event_hooks.gd")
 const EventChooser = preload("res://src/sim/event_chooser.gd")
+const EventDraw = preload("res://src/sim/event_draw.gd")
 const K = preload("res://src/sim/events_constants.gd")
 const LegislatureK = preload("res://src/sim/legislature_constants.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -318,11 +319,12 @@ func _test_sited_register_carries_place() -> void:
 		if String(region.id) == drawn and String(region.region_name) != named:
 			_fail("the register names %s '%s', the loader says '%s'" % [drawn, named, region.region_name])
 	# And the keys gained are exactly the queue entry's own: the V1.8 register's
-	# shape grown by severity and category (V4.4) and by the sited pair (V3.5).
+	# shape grown by severity and category (V4.4), by the sited pair (V3.5) and by the
+	# arrival month (V5.3 B7, the quiet-month call's stamp).
 	for key in Events.head_entry(ns).keys():
 		if key != "event_id" and key != "event_name" and key != "months_left" \
 				and key != "interrupt" and key != "severity" and key != "category" \
-				and key != "region_id" and key != "region_name":
+				and key != "region_id" and key != "region_name" and key != "arrived":
 			_fail("a sited register gained '%s'" % key)
 
 	# The diary row carries the place, because the register does -- the one UI
@@ -1738,14 +1740,14 @@ func _test_the_weighted_pick_is_pure_and_weighted() -> void:
 	low.weight = K.WEIGHT_MIN
 	var fired: Array = [high, low]
 	var month := Events._absolute_month(2029, 3)
-	var a = Events._weighted_pick(_new_state().player(), fired, month)
-	var b = Events._weighted_pick(_new_state().player(), fired, month)
+	var a = EventDraw.weighted_pick(_new_state().player(), fired, month)
+	var b = EventDraw.weighted_pick(_new_state().player(), fired, month)
 	if a != b:
 		_fail("the weighted pick gave two answers for one (nation, category, month)")
 	var wins := {"high": 0, "low": 0}
 	var ns = _new_state().player()
 	for m in range(month, month + 240):
-		var winner = Events._weighted_pick(ns, fired, m)
+		var winner = EventDraw.weighted_pick(ns, fired, m)
 		if winner == high:
 			wins["high"] += 1
 		else:

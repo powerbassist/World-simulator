@@ -429,6 +429,12 @@ static func _tick_council(state, loader, org_id: String) -> void:
 			if not state.nations[id].has_budget:
 				supports[id] = support(state, state.nations[id], proposal)
 		register["pending"]["lobbied"] = Council.lobby(state, loader, sponsor, supports)
+	# V5.3 B7: whether the player's vote decides this division, on the opening's books
+	# and its lobbying -- the stamp the quiet-month call and the council card read
+	# (absent on an older save's division: read as false). The books can move before
+	# the division three months on, so it is the opening's answer, as the card is.
+	register["pending"]["player_swings"] = Council.player_swings(loader, proposal, state.player_nation_id, members(state, org_id),
+		func(id: String) -> Array: return [live_seats(state, org_id, id), _vote_of(state, id, proposal, register["pending"])])
 	register["months_to_next"] = K.PROPOSAL_INTERVAL_MONTHS
 
 
@@ -598,10 +604,10 @@ static func _resolve(state, loader, org_id: String) -> void:
 	# to the denominator and blocks, and abstaining removes you from both and lets
 	# it through on a smaller base. That is constructive abstention, and it is what
 	# the real Council does.
-	var cast: int = seats_for + seats_against
+	# The arithmetic is Council.passes (moved there at V5.3 B7, unchanged), so the
+	# swing stamp at the opening divides exactly as this does.
 	var decision: String = Council.decision_of(loader, proposal)
 	var vetoed_by: Array = []
-	var passed: bool
 	if decision == CouncilK.DECISION_UNANIMITY:
 		# Any member against is a veto; an abstention is not -- the real
 		# Council's constructive abstention, and the only reason the player's
@@ -610,9 +616,7 @@ static func _resolve(state, loader, org_id: String) -> void:
 			if by_nation[id] == VOTE_AGAINST:
 				vetoed_by.append(id)
 		vetoed_by.sort()
-		passed = seats_for > 0 and vetoed_by.is_empty()
-	else:
-		passed = cast > 0 and float(seats_for) >= K.PASS_SEAT_FRACTION * float(cast)
+	var passed: bool = Council.passes(decision, seats_for, seats_against, not vetoed_by.is_empty())
 
 	register["last_vote"] = {
 		"proposal_id": proposal.id,

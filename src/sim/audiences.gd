@@ -42,6 +42,7 @@ const Lies = preload("res://src/sim/lies.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
 const Lane = preload("res://src/sim/audience_lane.gd")
+const QuietMonth = preload("res://src/sim/quiet_month.gd")
 
 
 ## One month of the played nation's lane: what is overdue lapses (priced), who
@@ -324,8 +325,24 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 	# people by the lane's second month is answered in its third by the candidate
 	# the hazard weighs most -- the highest standing, ties by id -- about the want
 	# the draw would have asked. Once a game: the month comes once.
-	if now != int(ns.audience_lane_start) + K.FIRST_REQUEST_BY_MONTH - 1 or Lane.asked_ever(ns):
-		return
+	if now == int(ns.audience_lane_start) + K.FIRST_REQUEST_BY_MONTH - 1 and not Lane.asked_ever(ns):
+		_call_best(ns, people, leader, meters, leaders, now, arrived)
+	# V5.3 B7, THE QUIET-MONTH CALL's person branch (docs/design/v5.3-b7-density.md
+	# section 4; the author's call 2, 2026-11-10): a month in which nothing arrived for
+	# the player (quiet_month.gd, over the month's stamps) calls the same candidate the
+	# guarantee would, unless QUIET_ASKS_MAX people asked in the last year -- then the
+	# QuietEvent step after this one brings a minor event instead. The lane is not full
+	# here: a full lane returned above. The row is stamped `called` (absent on every
+	# other row, read as false), Audiences' answer to whether it called someone.
+	if arrived.is_empty() and QuietMonth.asks_in_year(ns, now) < K.QUIET_ASKS_MAX and QuietMonth.quiet(state, ns, now) \
+			and _call_best(ns, people, leader, meters, leaders, now, arrived):
+		ns.audience_requests.back()["called"] = true
+
+
+## The candidate the hazard weighs most, asked about the want the draw would have
+## asked: the highest standing among those who may ask and want something unserved,
+## ties by id. Whether anyone came.
+static func _call_best(ns, people: Array, leader: String, meters: Dictionary, leaders: Dictionary, now: int, arrived: Array) -> bool:
 	var best = null
 	for person in people:
 		if not _may_ask(ns, person, leader, now) or _unserved(ns, person, meters, leaders, now).is_empty():
@@ -336,6 +353,7 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 			best = person
 	if best != null:
 		_arrive(ns, best, _unserved(ns, best, meters, leaders, now), now, arrived)
+	return best != null
 
 
 static func _may_ask(ns, person, leader: String, now: int) -> bool:

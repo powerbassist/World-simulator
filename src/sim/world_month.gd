@@ -104,7 +104,7 @@ const STEPS: Array[String] = [
 	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Processes",
 	"Companies", "Industry", "Closures", "Migration", "Investment", "Projects", "RegionFunds", "Sectors", "Campaign", "Pledges",
 	"Demography", "Society", "Unrest", "Events", "Cabinet", "Characters",
-	"Audiences", "Elections",
+	"Audiences", "QuietEvent", "Elections",
 ]
 
 
@@ -483,6 +483,11 @@ static func _step(month: Month, step: String) -> Array:
 			# broken this month can turn its person before the roll.
 			Shadows.tick_month(state, loader)
 			month.report["exposures"] = Exposure.tick_month(state, loader)
+		# V5.3 B7, the quiet-month call's event branch (events.gd quiet_call): after
+		# Audiences, whose person branch comes first and stamps the request it called,
+		# so this step sees the whole month; before Elections, which still runs last.
+		"QuietEvent":
+			Events.quiet_call(state, loader)
 		# Elections run last, on the already-settled history entry, and can fire a
 		# national and an EP result in the same month (France and Belgium, June 2029).
 		"Elections":

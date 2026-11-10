@@ -11,8 +11,9 @@ extends SceneTree
 ##   - the 3-month repeat rule: a subject counted in the last 3 months is not counted
 ##     again unless its state changed; an arrival and its deadline in the same month
 ##     count once;
-##   - the band: every month at least one, a mean of at least 2, never more than 6,
-##     at least 3 domains a quarter.
+##   - the band (the author's call 1 on B7, 2026-11-10, docs/design/v5.3-b7-density.md
+##     section 10): every month at least one, a mean of at least 1.4, never more
+##     than 6, at least 3 domains in at least 60 % of quarters.
 
 const DensityCount = preload("res://tools/density_count.gd")
 const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
@@ -40,13 +41,15 @@ func _init() -> void:
 func _check_the_numbers_are_section_7s() -> void:
 	var want := {
 		"MONEY_BN": 0.5, "APPROVAL_PT": 0.5, "REPEAT_MONTHS": 3, "QUARTER": 3,
-		"BAND_SHARE": 1.0, "BAND_MEAN": 2.0, "BAND_MAX": 6, "BAND_DOMAINS": 3,
+		"BAND_SHARE": 1.0, "BAND_MEAN": 1.4, "BAND_MAX": 6, "BAND_DOMAINS": 3,
+		"BAND_QUARTERS_SHARE": 0.6,
 	}
 	var got := {
 		"MONEY_BN": DensityCount.MONEY_BN, "APPROVAL_PT": DensityCount.APPROVAL_PT,
 		"REPEAT_MONTHS": DensityCount.REPEAT_MONTHS, "QUARTER": DensityCount.QUARTER,
 		"BAND_SHARE": DensityCount.BAND_SHARE, "BAND_MEAN": DensityCount.BAND_MEAN,
 		"BAND_MAX": DensityCount.BAND_MAX, "BAND_DOMAINS": DensityCount.BAND_DOMAINS,
+		"BAND_QUARTERS_SHARE": DensityCount.BAND_QUARTERS_SHARE,
 	}
 	for key in want:
 		if not is_equal_approx(float(got[key]), float(want[key])):
@@ -193,6 +196,32 @@ func _check_summary_and_band() -> void:
 	full.append({"now": 7, "count": 0, "domains": []})
 	if bool(DensityCount.summary(full)["pass"]):
 		_failures.append("an empty month in a partial tail passed the band")
+	_check_the_accepted_band_edges()
+
+
+## The accepted band's two new edges (call 1): a mean of exactly 1.4 passes and one
+## under it fails; 3 of 5 quarters with three domains pass (60 %), 2 of 5 fail.
+func _check_the_accepted_band_edges() -> void:
+	# Fifteen months, 21 decisions (six months of two, nine of one): a mean of 1.4.
+	# Quarters 0-2 see three domains, one a month; quarters 3-4 see one.
+	var three := ["fiscal", "audience", "industrial"]
+	var run := []
+	for i in range(15):
+		var domains: Array = [three[i % 3]] if i < 9 else ["fiscal"]
+		run.append({"now": i, "count": 2 if i < 6 else 1, "domains": domains})
+	var s := DensityCount.summary(run)
+	if int(s["quarters_ok"]) != 3 or int(s["quarters"]) != 5 or absf(float(s["mean"]) - 1.4) > 1e-9:
+		_failures.append("the edge fixture is not what it says: %s" % [s])
+	elif not bool(s["pass"]):
+		_failures.append("a mean of 1.4 with 3 of 5 quarters at three domains failed the band: %s" % [s])
+	run[0]["count"] = 1
+	if bool(DensityCount.summary(run)["pass"]):
+		_failures.append("a mean under 1.4 passed the band: %s" % [DensityCount.summary(run)])
+	run[0]["count"] = 2
+	for i in [6, 7, 8]:
+		run[i]["domains"] = ["fiscal"]
+	if bool(DensityCount.summary(run)["pass"]):
+		_failures.append("2 of 5 quarters at three domains passed the band: %s" % [DensityCount.summary(run)])
 
 
 func _check_the_probe_counts_through_the_rule() -> void:

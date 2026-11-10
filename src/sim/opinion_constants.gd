@@ -60,6 +60,14 @@ const BLOC_SIZE := {
 	"students": 0.08,
 }
 
+## A bloc offset's size on the effects strip and in the briefing's words: under
+## OFFSET_SLIGHT no arrow ("slightly"), then one, from OFFSET_CLEAR two ("clearly").
+## Offsets live in [-1, 1]. Here rather than in src/ui/briefing_effects.gd, which
+## reads them, because the quiet-month call's filter (event_draw.gd, V5.3 B7) counts
+## the same arrows and the sim never reads the UI.
+const OFFSET_SLIGHT := 0.05
+const OFFSET_CLEAR := 0.15
+
 const BLOC_LABEL := {
 	"workers": "Workers",
 	"pensioners": "Pensioners",

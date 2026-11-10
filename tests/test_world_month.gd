@@ -91,6 +91,7 @@ func _init() -> void:
 	_check_no_hand_copy_is_left()
 	_check_each_step_runs_its_system()
 	_check_every_step_has_an_arm()
+	_check_the_quiet_call_sits_after_audiences()
 	_finish()
 
 
@@ -251,6 +252,15 @@ func _check_each_step_runs_its_system() -> void:
 		_fail("Investment: capital at 0 under intensity 1 did not move in a month -- the step did not run")
 	if float(ns.campaign_saturation.get("probe_region", 0.0)) >= 1.0:
 		_fail("Campaign: saturation 1.0 did not decay in a month -- the step did not run")
+
+
+## V5.3 B7: the quiet-month call's event branch reads the month whole -- the person
+## Audiences called included -- so it runs right after Audiences, and Elections still
+## runs last (the parent's ruling: no existing step moved).
+func _check_the_quiet_call_sits_after_audiences() -> void:
+	var at := WorldMonth.STEPS.find("QuietEvent")
+	if at < 0 or at != WorldMonth.STEPS.find("Audiences") + 1 or WorldMonth.STEPS.back() != "Elections":
+		_fail("QuietEvent is not between Audiences and Elections: %s" % [WorldMonth.STEPS])
 
 
 ## The other half of (4), for the steps no fingerprint covers: _step() matches on
