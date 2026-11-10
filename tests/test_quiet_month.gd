@@ -58,6 +58,7 @@ func _init() -> void:
 		_check_the_person_comes_first(month)
 		_check_an_arrival_stops_the_person(month)
 		_check_the_cap_sends_the_month_to_an_event(month)
+		_check_an_interrupt_is_never_called(month)
 		_check_a_full_lane_sends_the_month_to_an_event(month)
 		_check_a_grudge_holder_is_never_called(month)
 	_check_a_called_lapse_costs_a_share()
@@ -370,6 +371,30 @@ func _check_the_cap_sends_the_month_to_an_event(now: int) -> void:
 		_ok(int(entry.get("arrived", -1)) == now, "the called event is not stamped as arrived this month")
 		_ok(int(ev.severity) == 1 and ev.on_action == "" and EventDraw.meaningful(ns, ev), "the call brought %s, not a minor event whose answers differ" % ev.id)
 		_lapses(state, String(entry["event_id"]), int(entry["months_left"]))
+
+
+## The author's call 3: a called event never holds the clock, and an interrupt-flagged
+## entry pauses it (Events.interrupt_pending). No minor event is flagged today, so
+## this flags them all for the run: the month at the cap that brings an event without
+## the flag brings none with it.
+func _check_an_interrupt_is_never_called(now: int) -> void:
+	var flagged: Array = []
+	for ev in _loader.events:
+		if int(ev.severity) == EventsK.QUIET_SEVERITY and not bool(ev.interrupt):
+			flagged.append(ev)
+	for interrupt in [false, true]:
+		for ev in flagged:
+			ev.interrupt = interrupt
+		var state = _fresh(now)
+		var ns = state.player()
+		for i in AudK.QUIET_ASKS_MAX:
+			ns.audience_asked_month["%s_cap%d" % [PLAYER, i]] = now - 1 - i
+		Audiences.tick_month(state, _loader, METERS)
+		Events.quiet_call(state, _loader)
+		_ok(ns.event_queue.size() == (0 if interrupt else 1),
+			"with every minor event flagged interrupt %s, the call brought %d events, want %d" % [interrupt, ns.event_queue.size(), 0 if interrupt else 1])
+	for ev in flagged:
+		ev.interrupt = false
 
 
 ## A full lane takes no one: the month the call would bring a person brings an

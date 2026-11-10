@@ -318,8 +318,11 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 ## which includes a person Audiences just called -- one minor hazard event whose gates
 ## pass is delivered through the hazard's own door, marked never_holds. Its pool is
 ## the hazard pool's minor half without the draw: the category quiet, the desk, the
-## cooldown and the `once` mark as the hazard loop checks them; the pick is
-## event_draw.gd's. A full desk takes nothing, as at every door.
+## cooldown and the `once` mark as the hazard loop checks them, and never an
+## interrupt-flagged event: that flag pauses the clock (interrupt_pending) and a called
+## event never holds it (the author's call 3). No minor event carries it today: a
+## guard, not a fix. The pick is event_draw.gd's. A full desk takes nothing, as at
+## every door.
 static func quiet_call(state, loader) -> void:
 	var ns = state.player()
 	var month_index := _absolute_month(int(state.year), int(state.month))
@@ -327,7 +330,7 @@ static func quiet_call(state, loader) -> void:
 		return
 	var pool: Array = []
 	for ev in loader.events:
-		if int(ev.severity) == K.QUIET_SEVERITY and ev.on_action == "" and int(ns.event_category_quiet.get(ev.category, 0)) == 0 \
+		if int(ev.severity) == K.QUIET_SEVERITY and ev.on_action == "" and not ev.interrupt and int(ns.event_category_quiet.get(ev.category, 0)) == 0 \
 				and not _on_desk(ns, ev.id) and _cooldown_ok(ns, ev, month_index) and _gates_pass(ns, ev, month_index):
 			pool.append(ev)
 	var picked = EventDraw.quiet_pick(ns, pool, month_index)
