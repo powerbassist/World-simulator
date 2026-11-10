@@ -721,7 +721,7 @@ The author asked for a meaningful decision in every month (`docs/design/v5.3-b7-
 - **How it lands.** Through `_deliver`, the hazard's own door: the category quiet, the cooldown and the `once` mark bind as for any delivery, and a full desk takes nothing. The entry carries `never_holds: true`: it never holds the clock and lapses to its default like any entry (the author's call 3; the lapse guard is unchanged for every other minor event).
 - **The stamp.** Every desk entry now carries `arrived`, the month it came. Absent on an older save's entry, it reads as no arrival, which is true of every month but the one the save was taken in. No bump.
 
-The hazard's weighted pick moved to `src/sim/event_draw.gd` with it, unchanged.
+The hazard's weighted pick moved to `src/sim/event_draw.gd` with it, unchanged. E4's cadence band (section 6) is [6, 22] events a term since #317: the call measured 19.0 on the shipped row, and the author accepted "12 to 16-22 a term" (call 5).
 
 ---
 
