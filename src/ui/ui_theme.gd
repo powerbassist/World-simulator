@@ -207,6 +207,7 @@ static func build() -> Theme:
 	_buttons(theme)
 	_progress(theme)
 	_scrollbars(theme)
+	_sliders(theme)
 	return theme
 
 
@@ -496,6 +497,20 @@ static func _scrollbars(theme: Theme) -> void:
 		theme.set_stylebox("grabber", type, _grabber_box(EDGE))
 		theme.set_stylebox("grabber_highlight", type, _grabber_box(EDGE.lightened(0.25)))
 		theme.set_stylebox("grabber_pressed", type, _grabber_box(TEXT_DIM))
+
+
+## Every slider (the budget's, the tax's, a fund's): the engine default draws no track
+## on graphite, so a slider read as a lone dot beside its value (the fund's frame,
+## #316). The track is EDGE, the hairline; the part behind the grabber is the accent,
+## a fill. The content margins are the bar's thickness, as for the scrollbars.
+static func _sliders(theme: Theme) -> void:
+	for part in [["slider", EDGE], ["grabber_area", _accent], ["grabber_area_highlight", _accent]]:
+		var bar := StyleBoxFlat.new()
+		bar.bg_color = part[1]
+		bar.set_corner_radius_all(2)
+		bar.content_margin_top = 2
+		bar.content_margin_bottom = 2
+		theme.set_stylebox(part[0], "HSlider", bar)
 
 
 static func _grabber_box(bg: Color) -> StyleBoxFlat:

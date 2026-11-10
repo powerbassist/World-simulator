@@ -18,6 +18,7 @@ extends SceneTree
 ## Driven through the real controls a frame apart (AGENTS.md: a Control built but
 ## not shown fails silently).
 
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 const Migration = preload("res://src/sim/migration.gd")
@@ -127,8 +128,9 @@ func _check_strip(region) -> void:
 	else:
 		var eur_text: String = (eur_slider.get_meta("value_label") as Label).text
 		var years_text: String = (years_slider.get_meta("value_label") as Label).text
-		if eur_text != Strings.t("%s %% of its output a year") % Num.f(share, 1):
-			_fail("fund: the yearly sum reads '%s'" % eur_text)
+		# #316's ask: the money beside the slider too, the sim's estimate at its level.
+		if eur_text != Strings.t("%s %% of the region's output: %s a year") % [Num.f(share, 1), Strings.t("%s bn") % Num.f(eur, EffectsStrip.MONEY_PLACES)]:
+			_fail("fund: the yearly sum reads '%s', not the share and the sim's %s bn" % [eur_text, Num.f(eur, 2)])
 		if years_text != Strings.tn("%d year", "%d years", years) % years:
 			_fail("fund: the years read '%s'" % years_text)
 	var go = _with_meta("go")
@@ -255,6 +257,17 @@ func _check_redrawn() -> void:
 	var eur := float(est.get("eur_bn_per_year", 0.0))
 	if strip == null or eur <= 0.0 or absf(float(strip.money_bn) + eur) > 0.0001:
 		_fail("redraw: the strip did not follow the level to %s %%, %s bn (%s)" % [top, eur, strip.money_bn if strip != null else "<none>"])
+	# The track is drawn (the frame on #316: the engine default left a lone dot on
+	# graphite): a bar with height, visibly off the panel behind it.
+	var track: StyleBox = (slider as HSlider).get_theme_stylebox("slider")
+	var hull: Color = UiTheme.HULL
+	if not (track is StyleBoxFlat) or track.get_minimum_size().y < 4.0 			or absf((track as StyleBoxFlat).bg_color.get_luminance() - hull.get_luminance()) < 0.05:
+		_fail("fund: the slider's track does not show on the panel (%s)" % track)
+	# The money beside the slider follows the drag too (#316's ask), at the new level.
+	var beside: String = ((slider as HSlider).get_meta("value_label") as Label).text
+	var money := Strings.t("%s bn") % Num.f(eur, EffectsStrip.MONEY_PLACES)
+	if not beside.contains(money):
+		_fail("redraw: the money beside the slider did not follow the level to %s %%: '%s', the sim's %s" % [top, beside, money])
 
 
 ## Stop on a running fund closes it, and the row said whom it angers before.

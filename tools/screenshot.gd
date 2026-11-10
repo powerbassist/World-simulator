@@ -62,6 +62,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-back --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --text 130 --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-arrival
