@@ -227,7 +227,11 @@ func _check_the_accepted_band_edges() -> void:
 func _check_the_probe_counts_through_the_rule() -> void:
 	var text := FileAccess.get_file_as_string("res://tools/decision_surfaces_probe.gd")
 	for needle in ["--density", "DensityCount.month(", "DensityCount.summary(", "WorldMonth.tick_month(", "_sector_candidates(state, ns, now, candidates)",
-			"SectorWarnings.raise_effects(", "DensityCount.donor("]:
+			"SectorWarnings.raise_effects(", "DensityCount.donor(",
+			# V5.3 B7: the four sources the spec added, and RF4's skip of a called event.
+			"_council_candidates(state, ns, now, candidates)", "_bill_candidates(state, ns, candidates)",
+			"_treaty_candidates(state, ns, candidates)", "_region_candidates(state, ns, now, candidates)",
+			"player_swings", "not bool(entry.get(\"never_holds\", false))"]:
 		if not text.contains(needle):
 			_failures.append("decision_surfaces_probe.gd does not contain %s" % needle)
 
