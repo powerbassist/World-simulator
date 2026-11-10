@@ -76,6 +76,8 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const EventHooks = preload("res://src/sim/event_hooks.gd")
 const EventChooser = preload("res://src/sim/event_chooser.gd")
+const EventDraw = preload("res://src/sim/event_draw.gd")
+const QuietMonth = preload("res://src/sim/quiet_month.gd")
 const Speakers = preload("res://src/sim/speakers.gd")
 const FrontPage = preload("res://src/sim/front_page.gd")
 const FrontPageK = preload("res://src/sim/front_page_constants.gd")
@@ -304,9 +306,36 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 			# later categories lose first, a fixed bias only a nearly-full desk
 			# exposes (recorded in docs/someday.md; E5's spread was swept with it).
 			break
-		var winner = _weighted_pick(ns, fired_by_category[category], month_index)
+		var winner = EventDraw.weighted_pick(ns, fired_by_category[category], month_index)
 		if winner != null:
 			_deliver(state, ns, loader, winner, month_index, is_player)
+
+
+## V5.3 B7, the quiet-month call's event branch -- WorldMonth's QuietEvent step,
+## after Audiences and before Elections (docs/design/v5.3-b7-density.md section 4;
+## the author's calls 2 and 3 and the parent's ruling on the shape, 2026-11-10). When
+## nothing arrived for the player this month -- quiet_month.gd's read of the stamps,
+## which includes a person Audiences just called -- one minor hazard event whose gates
+## pass is delivered through the hazard's own door, marked never_holds. Its pool is
+## the hazard pool's minor half without the draw: the category quiet, the desk, the
+## cooldown and the `once` mark as the hazard loop checks them, and never an
+## interrupt-flagged event: that flag pauses the clock (interrupt_pending) and a called
+## event never holds it (the author's call 3). No minor event carries it today: a
+## guard, not a fix. The pick is event_draw.gd's. A full desk takes nothing, as at
+## every door.
+static func quiet_call(state, loader) -> void:
+	var ns = state.player()
+	var month_index := _absolute_month(int(state.year), int(state.month))
+	if ns == null or not QuietMonth.quiet(state, ns, loader, month_index):
+		return
+	var pool: Array = []
+	for ev in loader.events:
+		if int(ev.severity) == K.QUIET_SEVERITY and ev.on_action == "" and not ev.interrupt and int(ns.event_category_quiet.get(ev.category, 0)) == 0 \
+				and not _on_desk(ns, ev.id) and _cooldown_ok(ns, ev, month_index) and _gates_pass(ns, ev, month_index):
+			pool.append(ev)
+	var picked = EventDraw.quiet_pick(ns, pool, month_index)
+	if picked != null:
+		_deliver(state, ns, loader, picked, month_index, true, true)
 
 
 ## The quiet counts down BEFORE the hazard loop reads it, in the same tick. A
@@ -374,34 +403,6 @@ static func _month_of(month_index: int) -> int:
 	return month_index % 12
 
 
-## The weighted winner inside one pulsing category. One hash per (nation,
-## category, sorted eligible roster, month) walked against the cumulative authored
-## weights -- a pure function like the hazard, so a reload mid-month picks the
-## same winner. The key carries the SORTED roster of eligible ids, not the
-## category alone (the category is in the key too): what the roster adds is a
-## RE-KEY whenever the eligible set changes as gates open and close, so a
-## category's winners do not ride one stream through a changing book -- with no
-## stored draw anywhere, which is the pin test_save_load.gd holds.
-static func _weighted_pick(ns, fired: Array, month_index: int):
-	var total := 0.0
-	var roster: Array[String] = []
-	for ev in fired:
-		total += float(ev.weight)
-		roster.append(String(ev.id))
-	if total <= 0.0:
-		return fired[0]
-	roster.sort()
-	var draw: float = Cycle.unit(
-		"%s|%s|draw|%s" % [ns.id, String(fired[0].category), "|".join(roster)],
-		month_index
-	) * total
-	for ev in fired:
-		draw -= float(ev.weight)
-		if draw < 0.0:
-			return ev
-	return fired[fired.size() - 1]
-
-
 ## A `once` event that already fired is closed to every door; one helper so the
 ## armed door (which skips preconditions) and _gates_pass cannot diverge on it.
 static func _once_blocks(ns, ev) -> bool:
@@ -442,7 +443,10 @@ static func _cooldown_ok(ns, ev, month_index: int) -> bool:
 ## which is delivery in the only sense left); false only when the desk is full.
 ## Every door reads the false: the armed chain WAITS a month (the entry survives,
 ## due again), the hook and the hazard skip finitely (next happening, next month).
-static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -> bool:
+##
+## `called`: the quiet-month call's delivery (quiet_call below) -- the entry is marked
+## so the clock never holds for it.
+static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool, called := false) -> bool:
 	# THE BOUND LIVES HERE, at the one function every delivery door passes: the
 	# chain, hook and hazard doors all deliver through here, so one gate is
 	# every door's -- gating any single caller loop let the other two push the
@@ -487,7 +491,7 @@ static func _deliver(state, ns, loader, ev, month_index: int, is_player: bool) -
 		announce(
 			ns, ev, month_index,
 			region_names(ns, loader),
-			Speakers.resolve(state, ns, loader, ev, month_index)
+			Speakers.resolve(state, ns, loader, ev, month_index), called
 		)
 		return true
 	var choice := EventChooser.choose(ns, ev)
@@ -540,7 +544,14 @@ static func region_names(ns, loader) -> Dictionary:
 ## that drive this primitive month after month must leave no cooldown state behind
 ## -- which holds for sweeps that never resolve: a sweep that answers the entry
 ## runs _resolve and stamps the cooldown and the quiet like any other resolution.
-static func announce(ns, ev, month_index: int, region_by_id: Dictionary, speaker := "") -> void:
+##
+## V5.3 B7: `arrived` is the month the entry came, the quiet-month call's stamp
+## (quiet_month.gd reads it); an older save's entry has none and reads as no arrival,
+## which is true of every month but the one it was saved in, so no bump.
+## `never_holds` marks an entry the quiet-month call brought: it waits on the desk and
+## lapses to its default without the lapse guard holding the clock (the author's call
+## 3, 2026-11-10). Absent is false, every other entry's case.
+static func announce(ns, ev, month_index: int, region_by_id: Dictionary, speaker := "", called := false) -> void:
 	var entry := {
 		"event_id": ev.id,
 		"event_name": ev.event_name,
@@ -548,7 +559,10 @@ static func announce(ns, ev, month_index: int, region_by_id: Dictionary, speaker
 		"interrupt": bool(ev.interrupt),
 		"severity": int(ev.severity),
 		"category": ev.category,
+		"arrived": month_index,
 	}
+	if called:
+		entry["never_holds"] = true
 	# V5.2d: the person who brings it, resolved by the caller at delivery. Absent
 	# is the narrator -- what every entry before d carries, so no save bump.
 	if speaker != "":

@@ -711,6 +711,18 @@ copied in at announcement, so this is the one row on that list needing no lookup
   `event_armed`'s one writer. The chain door waits on a full desk rather than
   skipping, so a scandal found is never lost.
 
+## 13. The quiet-month call (V5.3 B7)
+
+The author asked for a meaningful decision in every month (`docs/design/v5.3-b7-density.md`, his calls of 2026-11-10). The hazard draws rarely and the arrivals clump, so a month can end with nothing on the desk although the world has plenty to say. The quiet-month call answers that month, after the person branch in Audiences (docs/audiences-model.md section 15) has had its turn.
+
+- **Where it runs.** A step of its own, `QuietEvent` (`Events.quiet_call`), right after `Audiences` and before `Elections` in `src/sim/world_month.gd`. No other step moved.
+- **When.** Only in a month in which nothing arrived for the player and the government is in office: `src/sim/quiet_month.gd` reads the month's stamps (a desk entry's `arrived`, a request's `arrived_month`, a closure, a bid, a failure, a process ask, a sector warning, a council division the player's vote decides). A desk event or process ask whose answers differ on no arrow and no money is not counted as an arrival: the band would not count it either.
+- **What.** One minor hazard event (severity 1, no hook) whose gates pass exactly as the hazard loop checks them (category quiet, desk, cooldown, `once`, preconditions), and whose answers differ on a bloc arrow or by `QUIET_MONEY_BN` (0.5 bn a year). The arrow is `EventDraw.arrow`, the same function `tools/density_count.gd` counts with. Drawn by likelihood, keyed on the sorted roster, so a reload calls the same event.
+- **How it lands.** Through `_deliver`, the hazard's own door: the category quiet, the cooldown and the `once` mark bind as for any delivery, and a full desk takes nothing. The entry carries `never_holds: true`: it never holds the clock and lapses to its default like any entry (the author's call 3; the lapse guard is unchanged for every other minor event).
+- **The stamp.** Every desk entry now carries `arrived`, the month it came. Absent on an older save's entry, it reads as no arrival, which is true of every month but the one the save was taken in. No bump.
+
+The hazard's weighted pick moved to `src/sim/event_draw.gd` with it, unchanged. E4's cadence band (section 6) is [6, 22] events a term since #317: the call measured 19.0 on the shipped row, and the author accepted "12 to 16-22 a term" (call 5).
+
 ---
 
 Related: [[v1]] · [[legislature-model]] · [[media-model]] · [[pledge-model]] ·

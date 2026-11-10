@@ -683,7 +683,11 @@ func _weighted_offset(effects: Dictionary) -> float:
 ## choice arms); hook events are witnessed separately, in E6.
 const QUIET_SWEEP := [1, 2, 3, 4, 5, 6]
 const CADENCE_MIN := 6.0
-const CADENCE_MAX := 18.0
+## 18 until V5.3 B7. The quiet-month call (events.gd quiet_call) brings a minor event
+## into a month with nothing arrived, and the author accepted "events 12 -> 16-22 a
+## term" in principle (call 5 on docs/design/v5.3-b7-density.md, 2026-11-10); the
+## band follows that acceptance, measured 19.0 on the shipped row at #317.
+const CADENCE_MAX := 22.0
 const OVERFULL_MAX := 0.05
 
 

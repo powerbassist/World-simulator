@@ -23,7 +23,7 @@ const CARD_WIDTH := 210.0
 ## A promise is "due" when its date is this close (months), the briefing's own near.
 const DUE_MONTHS := 2
 ## Feelings' "neutral" rapport band, closed at both ends.
-const NEUTRAL: float = Feelings.BANDS["rapport"][2][0]
+const NEUTRAL: float = Feelings.FK.CUTS["rapport"][2][0]
 
 
 ## [{id, reason, tone}] in order: requests, promises due, hostile grudges, then the

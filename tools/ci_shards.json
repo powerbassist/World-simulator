@@ -95,6 +95,7 @@
    "tests/test_event_arm.gd",
    "tests/test_events_probe_shards.gd",
    "tests/test_density_count.gd",
+   "tests/test_quiet_month.gd",
    "tests/test_exposure.gd",
    "tests/test_glossary_panel.gd",
    "tests/test_music.gd",

@@ -36,6 +36,7 @@ var _loader
 
 func _init() -> void:
 	_check_cuts()
+	_check_the_words_did_not_move()
 	_check_bond_words()
 	_check_broken_delegation()
 	_check_lint()
@@ -75,6 +76,40 @@ func _check_cuts() -> void:
 		var got := Feelings.word(String(c[0]), float(c[1]), bool(c[2]))
 		if got != String(c[3]):
 			_fail("cut: %s %s (office %s) reads '%s', not '%s'" % [c[0], c[1], c[2], got, c[3]])
+
+
+## V5.3 B7 moved the cuts to src/sim/feeling_constants.gd (the author's ruling,
+## 2026-11-10): the words on screen must be byte-identical. The table below is the
+## one feelings.gd held before the move, as literals; every value from -1 to 1 in
+## steps of 0.001, and each cut itself, must read the same word now.
+const BEFORE := {
+	"grudge": [[0.05, false, ""], [0.20, false, "annoyed"], [0.45, false, "resentful"],
+		[0.60, false, "hostile, may leak"], [INF, true, "bitter, may defect"]],
+	"rapport": [[-0.30, false, "cold"], [-0.05, false, "wary"], [0.05, true, "neutral"],
+		[0.30, true, "warm"], [INF, true, "close"]],
+	"loyalty": [[-0.40, true, "disloyal"], [-0.10, false, "uncertain"], [0.10, true, ""],
+		[0.40, true, "loyal"], [INF, true, "devoted"]],
+}
+
+
+func _check_the_words_did_not_move() -> void:
+	var Cut = load("res://src/core/cut.gd")
+	for register in BEFORE:
+		var values: Array = []
+		for i in range(-1000, 1001):
+			values.append(i / 1000.0)
+		for band in BEFORE[register]:
+			values.append(float(band[0]))
+		for value in values:
+			var want := ""
+			for band in BEFORE[register]:
+				if Cut.at_or_below(value, float(band[0])) if bool(band[1]) else Cut.below(value, float(band[0])):
+					want = String(band[2])
+					break
+			var got := Feelings.word(register, value)
+			if got != want:
+				_fail("%s at %s reads '%s', before the move '%s'" % [register, value, got, want])
+				return
 
 
 ## A broken delegated commitment: the deferred grudge share reaches resentful from

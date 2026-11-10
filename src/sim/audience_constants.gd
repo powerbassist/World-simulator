@@ -44,6 +44,20 @@ const RESOLVED_KEPT_MONTHS := 12
 ## "the first by month 3", now held in every game rather than most.
 const FIRST_REQUEST_BY_MONTH := 3
 
+## V5.3 B7, the quiet-month call's person branch (docs/design/v5.3-b7-density.md; the
+## author's call 2, 2026-11-10): a month with nothing arrived calls the guarantee's
+## best candidate, unless this many people already asked in the last
+## QUIET_ASKS_MONTHS months (every lane, read off audience_asked_month) -- then the
+## month goes to a minor event instead. It counts PEOPLE, not requests: a person may
+## ask twice in twelve months (REQUEST_COOLDOWN_MONTHS is 8) and counts once, so more
+## than nine requests can come in a year with the cap still open. That is the rule
+## the spec measured (section 4, "fewer than nine people asked"; the prototype read
+## this register) and the figures the author accepted assume it. The cap does not
+## bound B1 by itself: B1 is measured, 48 arrivals in 60 months on this build, at its
+## ceiling of 48 (tools/audience_probe.gd, QA's TAKE on #317).
+const QUIET_ASKS_MAX := 9
+const QUIET_ASKS_MONTHS := 12
+
 ## How many days a person offers inside the window. Scarcity is occupancy (the
 ## diary's U6a / V2.4a rule), so an offered day the diary has taken is a day
 ## lost; B2 wants 20-50 % of requests unplaceable for a player who books all.
@@ -70,6 +84,22 @@ const RECEIVED_RAPPORT := 0.1
 ## Delegation (spec): a minister answers, most of the grudge avoided, no
 ## knowledge gained; a vain person or one who wanted an office is snubbed.
 const DELEGATE_GRUDGE_SHARE := 0.25
+
+## V5.3 B7, the author's ruling of 2026-11-10 on #317 (band B3: the acts' share of a
+## bloc's offset stays at or under 0.50). The quiet-month call picked the highest
+## standing every time, so a government that answers no one let the same few people
+## lapse again and again (France, four years: Ferrand called four times, Turcy and
+## Perier three each); their grudges grew until their briefings against the
+## government were 0.9 of the workers' offset. Two rules, measured together to hold
+## B3 (tests/test_balance.gd), neither enough alone:
+## - the call passes over anyone whose grudge is above QUIET_CALL_GRUDGE_MAX -- the
+##   game does not call up a person the government already wronged;
+## - a CALLED request that lapses (or is booked and missed) costs CALLED_LAPSE_SHARE of
+##   a decline -- grudge, loyalty and rapport -- the delegation's share: the person
+##   was called, they did not ask. Every request a person asked for keeps the full
+##   decline on a lapse (the author's answer 3, 2026-10-21, unchanged).
+const QUIET_CALL_GRUDGE_MAX := 0.0
+const CALLED_LAPSE_SHARE := DELEGATE_GRUDGE_SHARE
 const DELEGATE_SNUB_RAPPORT := -0.05
 
 ## V5.3-0 gate: the chance a minister keeps a delegated word the world has not

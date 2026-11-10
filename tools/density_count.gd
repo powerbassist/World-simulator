@@ -17,7 +17,7 @@ extends RefCounted
 ##              term, a sector's regulation burden): never counted, reported.
 ## A key that is absent reads as unmoved.
 
-const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
+const EventDraw = preload("res://src/sim/event_draw.gd")
 
 ## Section 7 item 2's thresholds.
 const MONEY_BN := 0.5
@@ -26,25 +26,26 @@ const APPROVAL_PT := 0.5
 ## unless its state changed. "Within 3 months" reads inclusive: counted at t, the
 ## same subject in the same state is a repeat at t+1, t+2 and t+3, and counts at t+4.
 const REPEAT_MONTHS := 3
-## The band (section 7, the author's "Une par mois"): every month at least one,
-## a mean of at least 2, at most 6 a month, at least 3 domains a quarter.
+## The band (section 7, the author's "Une par mois"; his call 1 on B7, 2026-11-10,
+## docs/design/v5.3-b7-density.md section 10): every month at least one, a mean of
+## at least 1.4 (2 before: no run reached it, and twice B1's flood line), at most 6
+## a month, at least 3 domains in at least 60 % of quarters (every quarter before).
 const BAND_SHARE := 1.0
-const BAND_MEAN := 2.0
+const BAND_MEAN := 1.4
 const BAND_MAX := 6
 const BAND_DOMAINS := 3
+const BAND_QUARTERS_SHARE := 0.6
 const QUARTER := 3
 
 const AXES := ["money", "approval", "arrow", "feeling", "division", "stage"]
 
 
-## A bloc offset's arrow, on the briefing's own word bands (briefing_effects.gd):
-## under OFFSET_SLIGHT no arrow, then one, from OFFSET_CLEAR two ("business ↓↓").
+## A bloc offset's arrow, on the briefing's own word bands (opinion_constants.gd's
+## OFFSET_SLIGHT and OFFSET_CLEAR, which briefing_effects.gd reads): under the first
+## no arrow, then one, from the second two ("business ↓↓"). The sim's rule, so the
+## quiet-month call (V5.3 B7) filters on the arrows this probe counts.
 static func arrow(offset: float) -> int:
-	var size := absf(offset)
-	if size < float(BriefingEffects.OFFSET_SLIGHT):
-		return 0
-	var grade := 1 if size < float(BriefingEffects.OFFSET_CLEAR) else 2
-	return grade if offset > 0.0 else -grade
+	return EventDraw.arrow(offset)
 
 
 ## The spec axes on which two strips differ, in AXES order.
@@ -176,10 +177,14 @@ static func summary(months: Array) -> Dictionary:
 			domains = {}
 	var share := float(with_one) / maxf(float(n), 1.0)
 	var mean := float(total) / maxf(float(n), 1.0)
+	# A run shorter than a quarter has no quarter to fail. The epsilon keeps 3 of 5
+	# (0.6 exactly in decimal) on the passing side of a binary float.
+	var quarters_share := 1.0 if quarters == 0 else float(quarters_ok) / float(quarters)
 	return {
 		"months": n, "with_one": with_one, "share": share, "mean": mean, "max": most,
 		"longest_none": longest, "over_max": over, "quarters": quarters, "quarters_ok": quarters_ok,
-		"pass": n > 0 and share >= BAND_SHARE and mean >= BAND_MEAN and over == 0 and quarters_ok == quarters,
+		"pass": n > 0 and share >= BAND_SHARE and mean >= BAND_MEAN - 1e-9 and over == 0
+			and quarters_share >= BAND_QUARTERS_SHARE - 1e-9,
 	}
 
 

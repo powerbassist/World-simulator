@@ -24,14 +24,16 @@ const ResultTone = preload("res://src/ui/result_tone.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
 const AudienceK = preload("res://src/sim/audience_constants.gd")
 const President = preload("res://src/sim/president.gd")
+const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
 const MAX_LINES := 3
 ## Decisions named on the "Decided last month" line before "and N more".
 const DECIDED_NAMED := 2
 ## A bloc offset's size word: under the first cut "slightly", under the second
-## nothing, beyond it "clearly". Offsets live in [-1, 1].
-const OFFSET_SLIGHT := 0.05
-const OFFSET_CLEAR := 0.15
+## nothing, beyond it "clearly". The cuts are the sim's (opinion_constants.gd), where
+## the quiet-month call's filter reads the same arrows.
+const OFFSET_SLIGHT: float = OpinionK.OFFSET_SLIGHT
+const OFFSET_CLEAR: float = OpinionK.OFFSET_CLEAR
 ## The sparkline's reach back into history.
 const SPARK_MONTHS := 12
 

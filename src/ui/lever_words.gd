@@ -114,7 +114,7 @@ static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable,
 	# The larger write, never the sum: a spend and an effect of opposite signs both
 	# happened, and the word after names where they left the person.
 	var moved := {}
-	for register in Feelings.BANDS:
+	for register in Feelings.WORDS:
 		var a := float(spent.get(register, 0.0))
 		var b := float(effects.get(register, 0.0))
 		moved[register] = a if absf(a) >= absf(b) else b

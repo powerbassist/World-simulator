@@ -164,6 +164,12 @@ func _check_a_first_request_by_month_3_in_every_playable_nation() -> void:
 		for draw_seed in range(1, 400):
 			var s = base.duplicate_state()
 			President.seed_draws(s, draw_seed)
+			# V5.3 B7: the quiet-month call would answer an empty month 1 or 2 with the
+			# same candidate; it is held at its cap (nine asks in the year, staged as
+			# visitors so the lane's own asked_ever stays false) so that the guarantee is
+			# what this tests.
+			for i in K.QUIET_ASKS_MAX:
+				s.player().audience_asked_month["ZZZ_hold%d" % i] = _now(s)
 			if not _own_arrivals(s, Audiences.tick_month(s, _loader, METERS)).is_empty():
 				continue
 			_advance(s)
