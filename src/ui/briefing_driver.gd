@@ -66,7 +66,8 @@ static func register(main) -> void:
 	# The two verbs block 0 added where a Go lands (2.4); the panels only ask.
 	main._agenda_panel.open_requested.connect(func(tab: String) -> void: main._windows.open(tab))
 	main._polling_panel.calm_requested.connect(func(tab: String, bloc: String) -> void: _open_laws_or(main, tab, bloc))
-	main._assembly_news.go_requested.connect(func(tab: String) -> void: _open_laws_or(main, tab, ""))  # V5.3 B7
+	main._hud.inbox.card_action.connect(func(id: String, _i: int) -> void:  # V5.3 B7: a bill card's Go
+		if main._assembly_news.take_go(id): _open_laws_or(main, "legislature", ""))
 
 
 static func card_of(main) -> ChiefBriefing:

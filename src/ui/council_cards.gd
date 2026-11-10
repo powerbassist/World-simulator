@@ -46,18 +46,16 @@ static func check(main) -> void:
 		var r: Dictionary = state.orgs.get(org.id, {}).get("ratifying", {})
 		if String((r.get("nations", {}) as Dictionary).get(ns.id, "")) == CouncilK.RATIFY_PENDING:
 			var left := int(r.get("months_left", 0))
-			now["ratify|%s|%s" % [org.id, String(r.get("proposal_id", ""))]] = ["ratify|%s" % org.id, Strings.t("Treaty to ratify — %s") % title, Strings.tn(
-				"%s passed the council and now needs your assembly. Put it to a vote within %d month, or it falls for every member.",
-				"%s passed the council and now needs your assembly. Put it to a vote within %d months, or it falls for every member.",
-				left) % [_proposal_name(r), left]]
+			var asks := Strings.tn("%s passed the council and now needs your assembly. Put it to a vote within %d month, or it falls for every member.", "%s passed the council and now needs your assembly. Put it to a vote within %d months, or it falls for every member.", left)
+			now["ratify|%s|%s" % [org.id, String(r.get("proposal_id", ""))]] = ["ratify|%s" % org.id, Strings.t("Treaty to ratify — %s") % title,
+				asks % [_proposal_name(r), left]]
 		var pending: Dictionary = Orgs.pending(state, org.id)
 		if bool(pending.get("player_swings", false)):
 			var months := int(pending.get("months_left", 0))
+			var swing := Strings.tn("%s goes to the council's vote in %d month, and your vote can decide it.", "%s goes to the council's vote in %d months, and your vote can decide it.", months)
 			now["council|%s|%s|%d" % [org.id, String(pending.get("proposal_id", "")),
-				int(pending.get("opened_year", 0)) * 12 + int(pending.get("opened_month", 0))]] = ["council|%s" % org.id, Strings.t("Council vote — %s") % title, Strings.tn(
-				"%s goes to the council's vote in %d month, and your vote can decide it.",
-				"%s goes to the council's vote in %d months, and your vote can decide it.",
-				months) % [_proposal_name(pending), months]]
+				int(pending.get("opened_year", 0)) * 12 + int(pending.get("opened_month", 0))]] = ["council|%s" % org.id, Strings.t("Council vote — %s") % title,
+				swing % [_proposal_name(pending), months]]
 	# Settled since: the card goes. Still waiting: its months age in place.
 	var cards: Dictionary = memory["cards"]
 	for card in cards.keys():
