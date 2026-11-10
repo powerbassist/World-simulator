@@ -49,19 +49,33 @@ static func answers(state, ns, loader, row: Dictionary) -> Dictionary:
 	return {"book": book, "delegate": delegate, "decline": open}
 
 
-## What a decline -- or the lapse, or a no-show -- writes on the person's card
-## now, through the same ceiling the price pays: the card names it (B3). An
-## accomplice's broken word is in it (c1c, rule 1), flagged `broken_word` so the
-## card can say why; one summed pulse under the room clamp is the two pulses exactly.
-static func decline_price(ns, loader, row: Dictionary) -> Dictionary:
+## What a decline writes on the person's card now, through the same ceiling the
+## price pays: the card names it (B3). An accomplice's broken word is in it (c1c,
+## rule 1), flagged `broken_word` so the card can say why; one summed pulse under the
+## room clamp is the two pulses exactly. `share` scales the decline's own part and
+## never the broken word, as Audiences' lapse does: lapse_price below is the caller.
+static func decline_price(ns, loader, row: Dictionary, share := 1.0) -> Dictionary:
 	var person = loader.person_by_id.get(String(row.get("person_id", "")))
 	var crossed: bool = person != null and President.holds_evidence(ns, String(person.id), int(row.get("arrived_month", 0)))
-	var pulse: float = K.DECLINE_GRUDGE + (LK.LIE_GRUDGE if crossed else 0.0)
-	var grudge: float = Characters.refusal_grudge(ns, person, pulse) if person != null else K.DECLINE_GRUDGE
-	var price := {"grudge": grudge, "loyalty": K.DECLINE_LOYALTY, "rapport": K.DECLINE_RAPPORT - (LK.LIE_RAPPORT if crossed else 0.0)}
+	var pulse: float = K.DECLINE_GRUDGE * share + (LK.LIE_GRUDGE if crossed else 0.0)
+	var grudge: float = Characters.refusal_grudge(ns, person, pulse) if person != null else K.DECLINE_GRUDGE * share
+	var price := {"grudge": grudge, "loyalty": K.DECLINE_LOYALTY * share, "rapport": K.DECLINE_RAPPORT * share - (LK.LIE_RAPPORT if crossed else 0.0)}
 	if crossed:
 		price["broken_word"] = true
 	return price
+
+
+## The share of a decline a lapse or a no-show costs: CALLED_LAPSE_SHARE for a request
+## the quiet-month call brought, the whole decline for one the person asked for. One
+## definition for the lapse (audiences.gd) and the card (lapse_price), so they agree.
+static func lapse_share(row: Dictionary) -> float:
+	return K.CALLED_LAPSE_SHARE if bool(row.get("called", false)) else 1.0
+
+
+## What letting the request lapse (or missing the booked day) writes on the card now:
+## decline_price at lapse_share. An uncalled request's is its decline_price exactly.
+static func lapse_price(ns, loader, row: Dictionary) -> Dictionary:
+	return decline_price(ns, loader, row, lapse_share(row))
 
 
 ## Each open answer as the feeling bands it leaves the person in, every register

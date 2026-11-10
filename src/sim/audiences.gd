@@ -65,7 +65,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 			continue
 		_unbook(state, row)
 		# A called request costs a share of a decline (CALLED_LAPSE_SHARE's reason).
-		var share: float = K.CALLED_LAPSE_SHARE if bool(row.get("called", false)) else 1.0
+		var share: float = Landings.lapse_share(row)
 		_price(state, ns, loader, row, share, K.DECLINE_RAPPORT * share, true)
 		_close(row, K.STATUS_LAPSED, now)
 		out["lapsed"].append(_view(row))

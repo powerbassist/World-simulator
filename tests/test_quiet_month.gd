@@ -18,6 +18,7 @@ const EventsK = preload("res://src/sim/events_constants.gd")
 const EventDraw = preload("res://src/sim/event_draw.gd")
 const QuietMonth = preload("res://src/sim/quiet_month.gd")
 const Landings = preload("res://src/sim/request_landings.gd")
+const President = preload("res://src/sim/president.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const DensityCount = preload("res://tools/density_count.gd")
@@ -57,6 +58,7 @@ func _init() -> void:
 		_check_a_full_lane_sends_the_month_to_an_event(month)
 		_check_a_grudge_holder_is_never_called(month)
 	_check_a_called_lapse_costs_a_share()
+	_check_a_called_accomplice_pays_the_whole_broken_word()
 	_check_a_drawn_event_carries_no_never_holds()
 	_check_the_swing_stamp_agrees_with_the_division()
 	_finish()
@@ -370,13 +372,45 @@ func _check_a_called_lapse_costs_a_share() -> void:
 		if called:
 			row["called"] = true
 		ns.audience_requests.append(row)
+		# The card's read of the lapse (Interface's ask on #317) is what the lapse writes.
+		var told: Dictionary = Landings.lapse_price(ns, _loader, row)
+		if not called:
+			_ok(told == Landings.decline_price(ns, _loader, row), "an uncalled lapse is not priced as a decline: %s" % [told])
+		var loyalty_before := float(ns.person_loyalty.get(pid, 0.0))
 		Audiences.tick_month(state, _loader, METERS)
 		_ok(String(row["status"]) == AudK.STATUS_LAPSED, "the fixture request did not lapse")
 		cost[called] = [float(ns.person_grudges.get(pid, 0.0)), float(ns.person_rapport.get(pid, 0.0))]
+		var paid := {"grudge": cost[called][0], "rapport": cost[called][1],
+			"loyalty": float(ns.person_loyalty.get(pid, 0.0)) - loyalty_before}
+		for register in paid:
+			_ok(is_equal_approx(float(told[register]), float(paid[register])),
+				"lapse_price told %s %s, the lapse wrote %s (called %s)" % [register, told[register], paid[register], called])
 	_ok(float(cost[false][0]) > 0.0 and float(cost[false][1]) < 0.0, "an ordinary lapse cost nothing: %s" % [cost[false]])
 	_ok(is_equal_approx(float(cost[true][0]), float(cost[false][0]) * AudK.CALLED_LAPSE_SHARE)
 		and is_equal_approx(float(cost[true][1]), float(cost[false][1]) * AudK.CALLED_LAPSE_SHARE),
 		"a called lapse cost %s against an ordinary %s, not a quarter" % [cost[true], cost[false]])
+
+
+## The share is the decline's own part: an accomplice called up and left to lapse still
+## breaks their word whole (Lies.cross is unshared), and lapse_price says so.
+func _check_a_called_accomplice_pays_the_whole_broken_word() -> void:
+	var state = _fresh()
+	var ns = state.player()
+	var now := _now(state)
+	var pid := String(_loader.people[PLAYER][1].id)
+	ns.person_grudges[pid] = 0.0
+	ns.person_rapport[pid] = 0.0
+	ns.exposure_evidence.append({"kind": "favour", "person_id": pid, "size": 1.0, "month": now - 4, "leader_id": President.leader_id(ns)})
+	var row := {"id": "%s|%d" % [pid, now - 3], "person_id": pid, "object": "x", "stance": "", "called": true,
+		"arrived_month": now - 3, "deadline_month": now, "status": AudK.STATUS_PENDING, "date": {}, "resolved_month": -1}
+	ns.audience_requests.append(row)
+	var told: Dictionary = Landings.lapse_price(ns, _loader, row)
+	_ok(bool(told.get("broken_word", false)), "lapse_price does not flag a called accomplice's broken word")
+	Audiences.tick_month(state, _loader, METERS)
+	_ok(String(row["status"]) == AudK.STATUS_LAPSED, "the accomplice's request did not lapse")
+	var paid := [float(ns.person_grudges.get(pid, 0.0)), float(ns.person_rapport.get(pid, 0.0))]
+	_ok(is_equal_approx(float(told["grudge"]), paid[0]) and is_equal_approx(float(told["rapport"]), paid[1]),
+		"lapse_price told %s, the accomplice's lapse wrote grudge %s rapport %s" % [told, paid[0], paid[1]])
 
 
 ## Left alone, the called entry is answered by its default when its countdown runs
