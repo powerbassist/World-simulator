@@ -82,17 +82,28 @@ static func quiet_pick(ns, pool: Array, month_index: int):
 
 ## Whether two of an event's answers differ on a bloc arrow or on money.
 static func meaningful(ns, ev) -> bool:
-	var strips: Array = []
+	var answers: Array = []
 	for choice in ev.choices:
-		var effects: Dictionary = choice.get("effects", {})
+		answers.append(choice.get("effects", {}))
+	return answers_differ(ns, answers)
+
+
+## Whether two of these answers -- effects dictionaries, an event choice's or a
+## process ask's -- differ on a bloc arrow, on the balance a year, or on a one-off
+## price on the debt (`debt_eur_bn`, which a process ask carries): the band's money
+## axis is either (tools/density_count.gd).
+static func answers_differ(ns, answers: Array) -> bool:
+	var strips: Array = []
+	for effects in answers:
 		var arrows := {}
 		var offsets: Dictionary = effects.get("bloc_offset", {})
 		for bloc in offsets:
 			arrows[bloc] = arrow(float(offsets[bloc]))
-		strips.append({"arrows": arrows, "money": money_bn(ns, effects)})
+		strips.append({"arrows": arrows, "money": money_bn(ns, effects), "debt": float(effects.get("debt_eur_bn", 0.0))})
 	for i in strips.size():
 		for j in range(i + 1, strips.size()):
-			if absf(float(strips[i]["money"]) - float(strips[j]["money"])) >= K.QUIET_MONEY_BN:
+			if absf(float(strips[i]["money"]) - float(strips[j]["money"])) >= K.QUIET_MONEY_BN \
+					or absf(float(strips[i]["debt"]) - float(strips[j]["debt"])) >= K.QUIET_MONEY_BN:
 				return true
 			for bloc in strips[i]["arrows"].keys() + strips[j]["arrows"].keys():
 				if int(strips[i]["arrows"].get(bloc, 0)) != int(strips[j]["arrows"].get(bloc, 0)):

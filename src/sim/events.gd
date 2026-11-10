@@ -323,7 +323,7 @@ static func _tick_nation(state, ns, loader, month_index: int, is_player: bool) -
 static func quiet_call(state, loader) -> void:
 	var ns = state.player()
 	var month_index := _absolute_month(int(state.year), int(state.month))
-	if ns == null or not QuietMonth.quiet(state, ns, month_index):
+	if ns == null or not QuietMonth.quiet(state, ns, loader, month_index):
 		return
 	var pool: Array = []
 	for ev in loader.events:

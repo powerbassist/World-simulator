@@ -80,20 +80,28 @@ func _now(state) -> int:
 
 
 ## Each arrival the rule names ends the quiet; an older stamp, an absent stamp, a
-## council the player cannot swing and a council opened last month do not.
+## council the player cannot swing and a council opened last month do not. Nor does
+## an arrival that is no decision by the call's own filter (an event or a process ask
+## whose answers differ on no arrow and no money): the band would not count it, so the
+## month is still quiet. An event this build does not know ends it (the safe side).
 func _check_each_arrival_ends_the_quiet() -> void:
 	var state = _fresh()
 	var now := _now(state)
+	var live := _event_id(true)
+	var dull := _event_id(false)
+	_ok(live != "" and dull != "", "fixture: the book has no minor event on one side of the filter")
 	_ok(bool(state.player().in_government), "fixture: France starts out of government")
-	_ok(QuietMonth.quiet(state, state.player(), now), "a month with nothing arrived is not quiet")
+	_ok(QuietMonth.quiet(state, state.player(), _loader, now), "a month with nothing arrived is not quiet")
 
 	var cases := {
-		"a desk entry arrived this month": func(_s, ns) -> void: ns.event_queue.append({"event_id": "x", "arrived": now}),
+		"an event that differs arrived this month": func(_s, ns) -> void: ns.event_queue.append({"event_id": live, "arrived": now}),
+		"an event this build does not know arrived this month": func(_s, ns) -> void: ns.event_queue.append({"event_id": "x", "arrived": now}),
 		"a request arrived this month": func(_s, ns) -> void: ns.audience_requests.append({"id": "r", "arrived_month": now}),
 		"a closure announced this month": func(_s, ns) -> void: _set_company(ns, "closure", {"status": "announced", "announced": now}),
 		"a bid this month": func(_s, ns) -> void: _set_company(ns, "bid_month", now),
 		"a failure this month": func(_s, ns) -> void: _set_company(ns, "failed_month", now),
-		"a process ask posted this month": func(_s, ns) -> void: ns.processes.append({"status": "open", "ask": {"posted": now}}),
+		"a process ask that differs posted this month": func(_s, ns) -> void: ns.processes.append(_ask_fixture(now, 0.2, 0.0)),
+		"a process ask whose price differs posted this month": func(_s, ns) -> void: ns.processes.append(_ask_fixture(now, 0.0, 1.0)),
 		"a sector warning this month": func(_s, ns) -> void: ns.sector_drift["warnings"] = {"x": {"entered": now}},
 		"a council the player swings, opened this month": func(s, _ns) -> void: s.orgs[EU]["pending"] = _pending(s, true, 0),
 		"a government out of office": func(_s, ns) -> void: ns.in_government = false,
@@ -101,10 +109,12 @@ func _check_each_arrival_ends_the_quiet() -> void:
 	for label in cases:
 		var s = _fresh()
 		(cases[label] as Callable).call(s, s.player())
-		_ok(not QuietMonth.quiet(s, s.player(), now), "%s left the month quiet" % label)
+		_ok(not QuietMonth.quiet(s, s.player(), _loader, now), "%s left the month quiet" % label)
 
 	var still := {
-		"a desk entry from last month": func(_s, ns) -> void: ns.event_queue.append({"event_id": "x", "arrived": now - 1}),
+		"a desk entry from last month": func(_s, ns) -> void: ns.event_queue.append({"event_id": live, "arrived": now - 1}),
+		"an event whose answers do not differ, this month": func(_s, ns) -> void: ns.event_queue.append({"event_id": dull, "arrived": now}),
+		"a process ask whose answers do not differ, this month": func(_s, ns) -> void: ns.processes.append(_ask_fixture(now, 0.0, 0.0)),
 		"a desk entry with no stamp (an older save)": func(_s, ns) -> void: ns.event_queue.append({"event_id": "x"}),
 		"a request from last month": func(_s, ns) -> void: ns.audience_requests.append({"id": "r", "arrived_month": now - 1}),
 		"a council the player cannot swing": func(s, _ns) -> void: s.orgs[EU]["pending"] = _pending(s, false, 0),
@@ -114,7 +124,23 @@ func _check_each_arrival_ends_the_quiet() -> void:
 	for label in still:
 		var s = _fresh()
 		(still[label] as Callable).call(s, s.player())
-		_ok(QuietMonth.quiet(s, s.player(), now), "%s ended the quiet" % label)
+		_ok(QuietMonth.quiet(s, s.player(), _loader, now), "%s ended the quiet" % label)
+
+
+## A minor hazard event the call's filter accepts (`differs`) or refuses; "" if none.
+func _event_id(differs: bool) -> String:
+	for ev in _loader.events:
+		if int(ev.severity) == 1 and ev.on_action == "" and EventDraw.meaningful(_base.player(), ev) == differs:
+			return String(ev.id)
+	return ""
+
+
+## A process ask posted at `now` with two answers: the second moves workers by
+## `offset` and the debt by `debt` bn more than the first.
+func _ask_fixture(now: int, offset: float, debt: float) -> Dictionary:
+	return {"status": "open", "ask": {"posted": now, "answers": [
+		{"bloc_offset": {"workers": 0.0}, "debt_eur_bn": 0.0},
+		{"bloc_offset": {"workers": offset}, "debt_eur_bn": debt}]}}
 
 
 func _set_company(ns, key: String, value) -> void:

@@ -1872,15 +1872,15 @@ func _check_the_quiet_stamps_round_trip(state, loader) -> void:
 			or not bool(bns.audience_requests.back().get("called", false)) \
 			or not bool((back.orgs["eu"]["pending"] as Dictionary).get("player_swings", false)):
 		_fail("a quiet-month stamp did not survive a save and load")
-	if QuietMonth.quiet(back, bns, now):
-		_fail("a reloaded desk entry stamped this month read as no arrival")
+	if QuietMonth.quiet(back, bns, loader, now):
+		_fail("a reloaded division the player swings, opened this month, read as no arrival")
 	var old: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
 	for entry in old["nations"]["FRA"]["event_queue"]:
 		(entry as Dictionary).erase("arrived")
 		(entry as Dictionary).erase("never_holds")
 	(old["orgs"]["eu"]["pending"] as Dictionary).erase("player_swings")
 	var aged = GameState.from_dict(old)
-	if aged == null or not QuietMonth.quiet(aged, aged.player(), now):
+	if aged == null or not QuietMonth.quiet(aged, aged.player(), loader, now):
 		_fail("an older save's unstamped desk and division read as an arrival this month")
 	elif bool(aged.player().event_queue[0].get("never_holds", false)):
 		_fail("an older save's desk entry read as never holding")

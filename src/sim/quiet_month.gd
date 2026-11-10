@@ -12,9 +12,19 @@ extends RefCounted
 ## `arrived_month` (Audiences), a closure's `announced` (Closures), a firm's
 ## `bid_month` and `failed_month` (Companies), a process ask's `posted` (Processes), a
 ## sector warning's `entered` (SectorWarnings) and a council division's opening with
-## its `player_swings` (Orgs). It preloads a constants file and no system: budget.gd
-## preloads events.gd, so a system preloaded here could close a cycle back to its
-## caller.
+## its `player_swings` (Orgs). It preloads constants and Events' draw leaf (whose own
+## preloads are the cycle and constants) and no system: budget.gd preloads events.gd,
+## so a system preloaded here could close a cycle back to its caller.
+##
+## AN ARRIVAL THAT IS NO DECISION DOES NOT END THE QUIET. A desk event or a process ask
+## whose answers differ on no bloc arrow and no money (event_draw.gd's filter, the same
+## one the call's own event passes) is not something the band counts, so the month is
+## still empty for the player -- the scandal whose answers move only press freedom and
+## corruption, the minority stake whose asks all cost alike. Measured on the build: five
+## of the seven months left empty in the first density run held exactly such an event
+## or ask. A request is always an arrival: whether its answers land in different feeling
+## words is the UI's reading (src/ui/feelings.gd), which the sim cannot make. An event
+## this build does not know ends the quiet, the safe side.
 ##
 ## What does NOT end the quiet, as the spec measured it: a backbench bill awaiting the
 ## president's stand, a treaty awaiting the assembly and the Regions arrival -- each
@@ -28,13 +38,14 @@ extends RefCounted
 ## was taken in -- and that month already ran its call.
 
 const AudK = preload("res://src/sim/audience_constants.gd")
+const EventDraw = preload("res://src/sim/event_draw.gd")
 
 
-static func quiet(state, ns, now: int) -> bool:
+static func quiet(state, ns, loader, now: int) -> bool:
 	if not bool(ns.in_government):
 		return false
 	for entry in ns.event_queue:
-		if int(entry.get("arrived", -1)) == now:
+		if int(entry.get("arrived", -1)) == now and _decides(ns, loader, String(entry.get("event_id", ""))):
 			return false
 	for row in ns.audience_requests:
 		if int(row.get("arrived_month", -1)) == now:
@@ -45,7 +56,8 @@ static func quiet(state, ns, now: int) -> bool:
 				or int((c.get("closure", {}) as Dictionary).get("announced", -1)) == now:
 			return false
 	for row in ns.processes:
-		if int((row.get("ask", {}) as Dictionary).get("posted", -1)) == now:
+		var ask: Dictionary = row.get("ask", {})
+		if int(ask.get("posted", -1)) == now and EventDraw.answers_differ(ns, ask.get("answers", [])):
 			return false
 	for row in (ns.sector_drift.get("warnings", {}) as Dictionary).values():
 		if int(row.get("entered", -1)) == now:
@@ -55,6 +67,15 @@ static func quiet(state, ns, now: int) -> bool:
 		if bool(pending.get("player_swings", false)) \
 				and int(pending.get("opened_year", 0)) * 12 + int(pending.get("opened_month", 0)) == now:
 			return false
+	return true
+
+
+## Whether a desk event's answers differ (event_draw.gd's filter); an id this build's
+## book does not hold reads as a decision.
+static func _decides(ns, loader, event_id: String) -> bool:
+	for ev in loader.events:
+		if String(ev.id) == event_id:
+			return EventDraw.meaningful(ns, ev)
 	return true
 
 

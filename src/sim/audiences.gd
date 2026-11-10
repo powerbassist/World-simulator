@@ -334,7 +334,7 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 	# QuietEvent step after this one brings a minor event instead. The lane is not full
 	# here: a full lane returned above. The row is stamped `called` (absent on every
 	# other row, read as false), Audiences' answer to whether it called someone.
-	if arrived.is_empty() and QuietMonth.asks_in_year(ns, now) < K.QUIET_ASKS_MAX and QuietMonth.quiet(state, ns, now) \
+	if arrived.is_empty() and QuietMonth.asks_in_year(ns, now) < K.QUIET_ASKS_MAX and QuietMonth.quiet(state, ns, loader, now) \
 			and _call_best(ns, people, leader, meters, leaders, now, arrived):
 		ns.audience_requests.back()["called"] = true
 
