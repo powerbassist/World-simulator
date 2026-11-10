@@ -44,7 +44,7 @@ func _rows(both: bool) -> Array:
 		"delegate_hint": "This cabinet keeps about 8 in 10 such words."}]
 	if both:
 		rows.append({"id": "req_2", "person": "Daniel Moucron", "ask": "He wants a portfolio.",
-			"by": "APR 2026", "price": "his grudge +0.12", "feel": {"rapport": 0.4},
+			"by": "APR 2026", "price": "his grudge +0.12", "lapse_price": "his grudge +0.03", "feel": {"rapport": 0.4},
 			"book": {"ok": true, "reason": ""}, "delegate": {"ok": true, "reason": ""}, "decline": {"ok": true, "reason": ""}})
 	return rows
 
@@ -100,6 +100,13 @@ func _check_cards() -> void:
 	# Spec 3.5: the deadline is the body's, the price of a no Decline's hover.
 	if not text.contains("MAR 2026") or not _answer_button("req_1", 2).tooltip_text.contains("grudge +0.12"):
 		_fail("the card does not say the deadline, or Decline the price: %s" % text)
+	# V5.3 B7: a request the game called lapses at a share of a decline (the author's B3
+	# ruling): its Decline hover names both prices; an asked one keeps the one sentence.
+	var called := _answer_button("req_2", 2).tooltip_text
+	if not called.contains("his grudge +0.12") or not called.contains("his grudge +0.03"):
+		_fail("a called request's Decline hover does not name the decline and the lapse apart: '%s'" % called)
+	if _answer_button("req_1", 2).tooltip_text.contains("No answer by then"):
+		_fail("an asked request's hover split its price: '%s'" % _answer_button("req_1", 2).tooltip_text)
 	# V5.3-0 gate: Delegate's hover says how often this cabinet keeps the word.
 	if not _answer_button("req_1", 1).tooltip_text.contains("8 in 10"):
 		_fail("Delegate's hover does not carry the ministers' odds: '%s'" % _answer_button("req_1", 1).tooltip_text)
