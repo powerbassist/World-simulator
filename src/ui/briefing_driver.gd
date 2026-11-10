@@ -66,6 +66,8 @@ static func register(main) -> void:
 	# The two verbs block 0 added where a Go lands (2.4); the panels only ask.
 	main._agenda_panel.open_requested.connect(func(tab: String) -> void: main._windows.open(tab))
 	main._polling_panel.calm_requested.connect(func(tab: String, bloc: String) -> void: _open_laws_or(main, tab, bloc))
+	main._hud.inbox.card_action.connect(func(id: String, _i: int) -> void:  # V5.3 B7: a bill card's Go
+		if main._assembly_news.take_go(id): _open_laws_or(main, "legislature", ""))
 
 
 static func card_of(main) -> ChiefBriefing:
@@ -108,6 +110,8 @@ static func open(main, report: Dictionary) -> void:
 	game.erase("month_cards")
 	if ns != null:
 		RegionArrival.check(main)
+		preload("res://src/ui/desk_cards.gd").card_called(main)  # B7: the quiet-month call comes after the Events hook
+		preload("res://src/ui/council_cards.gd").check(main)  # B7: a treaty at home, a division the player swings
 	# The month's crossings: a line on the card, or a note when the card is not shown or
 	# ranked them out (they have no deadline, so its footer does not catch them either).
 	var slipped: Array = [] if ns == null else SectorWarningView.note_cards(ns, main._loader, int(main._state.year) * 12 + int(main._state.month))

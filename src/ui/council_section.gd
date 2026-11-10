@@ -26,6 +26,7 @@ const Bargains = preload("res://src/ui/council_bargains.gd")
 const Ratification = preload("res://src/sim/ratification.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
@@ -81,6 +82,7 @@ static func build(body: VBoxContainer, panel, state, loader, ns, org) -> void:
 			if choice == Orgs.VOTE_ABSTAIN:
 				button.tooltip_text = Strings.t("Counted against the threshold, for neither side.")
 			button.pressed.connect(panel._on_vote.bind(org.id, choice))
+			ActsOn.tag(button, ["council"])  # V5.3 B7: council_cards.gd's gathered Go
 			if not button.disabled:
 				panel.offer_primary(button)
 			row.add_child(button)
@@ -146,6 +148,7 @@ static func _ratify_card(body: VBoxContainer, panel, state, loader, ns, org) -> 
 	var button := PanelKit.sized(Button.new())
 	button.text = Strings.t("Put it to the assembly")
 	button.pressed.connect(panel._on_ratify.bind(org.id))
+	ActsOn.tag(button, ["ratify|%s" % org.id])  # V5.3 B7: council_cards.gd's Go
 	panel.claim_primary(button)
 	body.add_child(button)
 

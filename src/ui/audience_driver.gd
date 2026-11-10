@@ -13,6 +13,7 @@ extends RefCounted
 const PollCard = preload("res://src/ui/poll_card.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
+const RequestLandings = preload("res://src/sim/request_landings.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const RequestLane = preload("res://src/ui/request_lane.gd")
 const AudienceScene = preload("res://src/ui/audience_scene.gd")
@@ -153,7 +154,16 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"by": Words.when(last), "called": _called(main, request), "party": PartyChip.of(loader, ns, String(request["person_id"])),
 		"price": Words.price_text(price, Feelings.of(ns, String(request["person_id"]))), "broken_word": price.has("broken_word"), "feel": Feelings.of(ns, String(request["person_id"])),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"],
-		"delegate_hint": Words.delegate_hint(answers["delegate"])}.merged(_call_answer(main, String(request["person_id"])))
+		"delegate_hint": Words.delegate_hint(answers["delegate"])}.merged(_call_answer(main, String(request["person_id"]))).merged(_lapse(main, request))
+
+
+## V5.3 B7: a request the game called lapses at a share of a decline (the author's B3
+## ruling), the sim's price; an asked one lapses at the decline's, and carries no second.
+static func _lapse(main, request: Dictionary) -> Dictionary:
+	if not bool(request.get("called", false)):
+		return {}
+	var ns = main._state.player()
+	return {"lapse_price": Words.price_text(RequestLandings.lapse_price(ns, main._loader, request), Feelings.of(ns, String(request["person_id"])))}
 
 
 ## B6: the month of a call made since the request came, 0 for none (a failed call leaves

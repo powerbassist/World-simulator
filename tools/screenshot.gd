@@ -65,6 +65,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-arrival
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-cards
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-cards --text 130
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-lapse
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority-cap --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority-rest --open region
@@ -520,6 +523,9 @@ var _fund_cap := false
 var _fund_running := false
 ## The worst region's quiet card in the inbox (src/ui/region_arrival.gd).
 var _region_arrival := false
+## V5.3 B7: the bill, treaty, council and called-event cards in the inbox (--b7-cards),
+## or the called event lapsed to its note (--b7-lapse).
+var _b7 := ""
 
 ## V5.3 a (spec 3.3 (a) 1, #267): the same opened region with its sector priority.
 ## --priority: the region holds its first sector, the picker on the second, its
@@ -1036,6 +1042,8 @@ func _init() -> void:
 			_fund_running = true
 		elif args[i] == "--region-arrival":
 			_region_arrival = true
+		elif args[i] in ["--b7-cards", "--b7-lapse"]:
+			_b7 = String(args[i]).trim_prefix("--b7-")
 		elif args[i] in ["--grade", "--grade-tabled", "--address", "--address-again"]:
 			_law_verbs = String(args[i]).trim_prefix("--")
 		elif args[i] in ["--poll", "--poll-arrived", "--poll-address"]:
@@ -1348,6 +1356,8 @@ func _apply_view() -> void:
 		_stage_a_fund()
 	if _region_arrival:
 		preload("res://src/ui/region_arrival.gd").check(_main)
+	if _b7 != "":
+		_stage_b7()
 	if _buyer_back:
 		_stage_a_buyer_back()
 	if _buyer_walked:
@@ -3947,3 +3957,43 @@ func _empty_the_chest() -> void:
 	_tick_months(1)
 	_main._clock.paused = true
 	_main._campaign_panel.mark_dirty()
+
+
+## V5.3 B7, for --b7-cards / --b7-lapse: the three quiet cards and the called event, each
+## staged through its own writer (assembly_news.gd, council_cards.gd, desk_cards.gd)
+## on fixture registers -- the frame judges the cards, not the draw that brings them.
+func _stage_b7() -> void:
+	var state = _main._state
+	var loader = _main._loader
+	var ns = state.player()
+	var DeskCards = preload("res://src/ui/desk_cards.gd")
+	var ev = null
+	for candidate in loader.events:
+		if int(candidate.severity) == 1 and not bool(candidate.interrupt) and candidate.choices.size() > 1 and candidate.on_action == "":
+			ev = candidate
+			break
+	ns.event_queue.clear()
+	Events.announce(ns, ev, Events._absolute_month(int(state.year), int(state.month)), Events.region_names(ns, loader))
+	var entry: Dictionary = ns.event_queue[0]
+	entry["never_holds"] = true
+	entry["arrived"] = Events._absolute_month(int(state.year), int(state.month))
+	if _b7 == "lapse":
+		entry["months_left"] = 1
+		Events._tick_countdowns(state, ns, loader, Events._absolute_month(int(state.year), int(state.month)))
+		DeskCards.card_events(_main, int(state.year), int(state.month), {String(ev.id): entry}, {})
+	else:
+		DeskCards.card_called(_main)
+		ns.assembly_bills["frame_pmb"] = {"law_id": String(loader.laws[0].id), "months_left": 2, "backer_firm": "", "backer_chief": "", "endorse_bonus": 0.0}
+		_main._assembly_news.announce()
+		var org := "eu"
+		var treaty = Orgs.proposal_by_id(loader, org, "cohesion_fund")
+		state.orgs[org]["ratifying"] = {"proposal_id": treaty.id, "name": treaty.proposal_name, "sponsor": treaty.sponsor,
+			"months_left": CouncilK.RATIFY_WINDOW_MONTHS, "nations": {state.player_nation_id: CouncilK.RATIFY_PENDING}}
+		var p = Orgs.proposal_by_id(loader, org, "investment_floor")
+		state.orgs[org]["pending"] = {"proposal_id": p.id, "name": p.proposal_name, "summary": p.summary, "org_id": org,
+			"org_name": loader.orgs_by_id[org].name, "months_left": 3, "player_vote": Orgs.VOTE_ABSTAIN,
+			"opened_year": state.year, "opened_month": state.month, "sponsor": p.sponsor, "player_swings": true}
+		preload("res://src/ui/council_cards.gd").check(_main)
+	_main._windows.close_all()
+	_main._hud.inbox.slide_in()
+	print("--b7-%s: event %s, %d inbox cards" % [_b7, String(ev.id), _main._hud.inbox.card_count()])

@@ -77,8 +77,15 @@ static func card_events(main, year: int, month: int, desk_before: Dictionary, be
 		var where := String(record.get("region_name", ""))
 		if where != "":
 			named = "%s — %s" % [named, where]
-		preload("res://src/ui/briefing_driver.gd").hold_card(main, {"title": Strings.t("Decided for you"), "tone": ResultTone.RISKY,
-			"body": Strings.t("%s. Nobody answered, so it went the way it was always going to: %s.") % [named, Strings.record_choice_label(record)]})
+		var lapsed := {"title": Strings.t("Decided for you"), "tone": ResultTone.RISKY,
+			"body": Strings.t("%s. Nobody answered, so it went the way it was always going to: %s.") % [named, Strings.record_choice_label(record)]}
+		# V5.3 B7: an event the quiet-month call brought lapses to a note in the inbox,
+		# never to the month's briefing, which stops the clock (the author's call 3).
+		# main hands the entry itself in `desk_before`; a dev staging hands true.
+		if desk_before[event_id] is Dictionary and bool(desk_before[event_id].get("never_holds", false)):
+			ResultTone.mark(main._hud.inbox, main._hud.inbox.push(lapsed["title"], lapsed["body"]), ResultTone.RISKY)
+		else:
+			preload("res://src/ui/briefing_driver.gd").hold_card(main, lapsed)
 		defaulted_names.append(Strings.record_event_name(record))
 
 	# The delta is queued HERE and not at the choice, because this is the one case
@@ -176,6 +183,10 @@ static func guard_lapses(main, ns) -> void:
 		var event_id := String(entry.get("event_id", ""))
 		if not main._unseen_events.has(event_id) or bool(main._unseen_events[event_id]):
 			continue
+		# V5.3 B7, the author's call 3: what the quiet-month call brought waits and lapses
+		# to a note (card_events below); the guard is unchanged for every other entry.
+		if bool(entry.get("never_holds", false)):
+			continue
 		if int(entry.get("months_left", 0)) > 1:
 			continue
 		var ev = Events.event_by_id(main._loader, event_id)
@@ -186,6 +197,34 @@ static func guard_lapses(main, ns) -> void:
 		# The card opens here for the first time, so its speaker speaks (no sting).
 		if not main._event_cards.values().has(event_id):
 			speak(main, push(main, ev, entry), Voice.clip_for(ev, main._loader, String(entry.get("speaker", ""))))
+
+
+## V5.3 B7: the card for a minor event the quiet-month call brought. The call is
+## WorldMonth's QuietEvent step, after the Events step whose hook (card_events) cards
+## the month's arrivals, so the month's end cards it here (BriefingDriver.open, beside
+## the Regions arrival). An arrival in every way but the hold: in the unseen set as
+## quiet, its card and sting by the player's bands, its speaker's line. Only in the
+## month it came (Systems' `arrived` stamp): a card the player dismissed is not put up
+## again, as no arrival's is.
+static func card_called(main) -> void:
+	var ns = main._state.player() if main._state != null else null
+	if ns == null or main._hud == null:
+		return
+	var now := Events._absolute_month(int(main._state.year), int(main._state.month))
+	for entry in ns.event_queue:
+		var event_id := String(entry.get("event_id", ""))
+		if not bool(entry.get("never_holds", false)) or int(entry.get("arrived", -1)) != now or main._event_cards.values().has(event_id):
+			continue
+		var ev = Events.event_by_id(main._loader, event_id)
+		if ev == null:
+			continue
+		var severity := int(entry.get("severity", 1))
+		main._unseen_events[event_id] = false
+		if MessageSettings.allows(main._messages, ev.category, severity, "notify"):
+			Sound.event_sting(main, severity)
+		if MessageSettings.allows(main._messages, ev.category, severity, "popup"):
+			speak(main, push(main, ev, entry), Voice.clip_for(ev, main._loader, String(entry.get("speaker", ""))),
+				float(SoundK.EVENTS[severity - 1]["duration_s"]))
 
 
 ## The decision card for one desk entry: the event's choices as buttons, the

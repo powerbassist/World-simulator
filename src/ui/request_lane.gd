@@ -72,7 +72,11 @@ func show_requests(rows: Array) -> void:
 		if String(answers[0]["tooltip"]) == "":
 			answers[0]["tooltip"] = Strings.t("See the days they offer, on the calendar.")
 		# Spec 3.5's inbox diet: the price of a no is Decline's hover, not the body.
-		if String(answers[2]["tooltip"]) == "":
+		# V5.3 B7: a request the game called lapses at a share of a decline (the author's B3
+		# ruling), so its hover names the two prices apart (`lapse_price`, the sim's).
+		if String(answers[2]["tooltip"]) == "" and row.has("lapse_price"):
+			answers[2]["tooltip"] = Strings.t("Declining: %s. No answer by then: %s.") % [String(row.get("price", "")), String(row["lapse_price"])]
+		elif String(answers[2]["tooltip"]) == "":
 			answers[2]["tooltip"] = Strings.t("Declining, or no answer by then: %s.") % String(row.get("price", ""))
 		# V5.3-0 gate: the odds a minister keeps the word, or why none can (lever_words).
 		if String(answers[1]["tooltip"]) == "":

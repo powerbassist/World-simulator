@@ -79,6 +79,7 @@ static func rank(state, loader, opts := {}) -> Dictionary:
 			next_onsets[_key(c)] = int(onsets.get(_key(c), now))
 	memory["onsets"] = next_onsets
 	var lines := _pick(held, cands, memory.get("last", []), now)
+	preload("res://src/ui/priority_rotation.gd").rotate(lines, cands, memory, now)  # B7, RF2: an unseen kind takes line 3
 	var also_due := _also_due(lines, held + cands, now)
 	memory["last"] = lines.map(func(l): return {"kind": l["kind"], "subject": l["subject"], "u": l["u"], "m": l["m"]})
 	# `qualified`: every kind that had a candidate this month, held included, in row
