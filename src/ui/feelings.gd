@@ -14,41 +14,34 @@ extends RefCounted
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const President = preload("res://src/sim/president.gd")
-const ActK = preload("res://src/sim/character_act_constants.gd")
+## The cuts are the sim's (V5.3 B7, the author's ruling of 2026-11-10): the quiet-month
+## call judges whether a request's answers land in different words with the same
+## cuts this file draws them with (src/sim/feeling_constants.gd).
+const FK = preload("res://src/sim/feeling_constants.gd")
 
-## bands-v5.2.md, the B6 amendment: ONE comparison for every cut, the one the
-## sim's bonds call too (V5.2c moved it to src/core), so a card cannot say "cold"
-## while the bond says nothing.
-const Cut = preload("res://src/core/cut.gd")
-
-## Each register's bands, lowest first: [the band's upper cut, whether the band
-## includes that cut, its word]. "" shows no word: no grudge, an unmoved loyalty.
-const BANDS := {
+## Each register's words, lowest band first, one per FK.CUTS band (the same index).
+## "" shows no word: no grudge, an unmoved loyalty.
+const WORDS := {
 	"grudge": [
-		[0.05, false, ""],
-		[0.20, false, "annoyed"],  # i18n: msgid
-		[0.45, false, "resentful"],  # i18n: msgid
-		[0.60, false, "hostile, may leak"],  # i18n: msgid
-		[INF, true, "bitter, may defect"],  # i18n: msgid
+		"",
+		"annoyed",  # i18n: msgid
+		"resentful",  # i18n: msgid
+		"hostile, may leak",  # i18n: msgid
+		"bitter, may defect",  # i18n: msgid
 	],
 	"rapport": [
-		[-0.30, false, "cold"],  # i18n: msgid
-		[-0.05, false, "wary"],  # i18n: msgid
-		# Closed at both ends: a delegation's snub (-0.05) from 0 stays neutral, so
-		# only a refusal (-0.10) moves this word.
-		[0.05, true, "neutral"],  # i18n: msgid
-		[0.30, true, "warm"],  # i18n: msgid
-		[INF, true, "close"],  # i18n: msgid
+		"cold",  # i18n: msgid
+		"wary",  # i18n: msgid
+		"neutral",  # i18n: msgid
+		"warm",  # i18n: msgid
+		"close",  # i18n: msgid
 	],
 	"loyalty": [
-		# Closed at the floor: the premier resigns AT it (characters.gd, loyalty <=
-		# the floor), so the floor itself reads as the brink. The sim's constant,
-		# never a copy (the parent's call on #151).
-		[ActK.LOYALTY_RESIGN_FLOOR, true, "disloyal"],  # i18n: msgid
-		[-0.10, false, "uncertain"],  # i18n: msgid
-		[0.10, true, ""],
-		[0.40, true, "loyal"],  # i18n: msgid
-		[INF, true, "devoted"],  # i18n: msgid
+		"disloyal",  # i18n: msgid
+		"uncertain",  # i18n: msgid
+		"",
+		"loyal",  # i18n: msgid
+		"devoted",  # i18n: msgid
 	],
 }
 ## The resign act covers only an office holder (characters.gd, _office_held), so
@@ -59,7 +52,7 @@ const BOND := {
 	"friend": "a friend", "close": "close to you", "rival": "a rival, may talk",  # i18n: msgid
 	"enemy": "an enemy, may talk", "affair": "your lover, in secret",  # i18n: msgid
 }
-const RANGE := {"grudge": Vector2(0.0, 1.0), "rapport": Vector2(-1.0, 1.0), "loyalty": Vector2(-1.0, 1.0)}
+const RANGE: Dictionary = FK.RANGE
 ## A delta under this moved nothing a player should read (QA on #105: "loyalty
 ## +0.00" was noise on a card).
 const MOVED := 0.005
@@ -90,26 +83,22 @@ static func word(register: String, value: float, office := false) -> String:
 		return ""
 	if register == "loyalty" and office and i == 0:
 		return Strings.t(OFFICE_DISLOYAL)
-	var said := String(BANDS[register][i][2])
-	return Strings.t(said) if said != "" else ""  # i18n: row-ok a band's word, the msgid in BANDS
+	var said := String(WORDS[register][i])
+	return Strings.t(said) if said != "" else ""  # i18n: row-ok a band's word, the msgid in WORDS
 
 
 ## The index of the band `value` falls in, lowest first -- the one cut the word
 ## and the mood badge (mood_badge.gd) both read, so the two cannot disagree.
+## Above every cut (NaN) it is -1: no word, as word() always had it.
 static func band(register: String, value: float) -> int:
-	var bands: Array = BANDS[register]
-	for i in bands.size():
-		var cut := float(bands[i][0])
-		if Cut.at_or_below(value, cut) if bool(bands[i][1]) else Cut.below(value, cut):
-			return i
-	return -1  # above every cut (NaN): no word, as word() always had it
+	return FK.band(register, value)
 
 
 ## Register -> word for `feel` (of() above), the bands that show none included. A
 ## register `feel` lacks reads 0.0, the value the sim's own reads default to.
 static func words(feel: Dictionary) -> Dictionary:
 	var out := {}
-	for register in BANDS:
+	for register in WORDS:
 		out[register] = word(register, float(feel.get(register, 0.0)), bool(feel.get("office", false)))
 	return out
 
@@ -118,7 +107,7 @@ static func words(feel: Dictionary) -> Dictionary:
 ## now plus the delta, clamped as the sim clamps it.
 static func landing(feel: Dictionary, delta: Dictionary) -> Dictionary:
 	var out := {}
-	for register in BANDS:
+	for register in WORDS:
 		if absf(float(delta.get(register, 0.0))) < MOVED:
 			continue
 		var r: Vector2 = RANGE[register]
@@ -146,7 +135,7 @@ static func promised(feel: Dictionary, delta: Dictionary) -> PackedStringArray:
 static func stands(feel: Dictionary, delta: Dictionary) -> PackedStringArray:
 	var now := words(feel)
 	var out := PackedStringArray()
-	for register in BANDS:
+	for register in WORDS:
 		if absf(float(delta.get(register, 0.0))) < MOVED:
 			continue
 		match register:

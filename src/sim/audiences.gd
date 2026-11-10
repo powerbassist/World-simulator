@@ -43,6 +43,7 @@ const LK = preload("res://src/sim/lever_constants.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
 const Lane = preload("res://src/sim/audience_lane.gd")
 const QuietMonth = preload("res://src/sim/quiet_month.gd")
+const Landings = preload("res://src/sim/request_landings.gd")
 
 
 ## One month of the played nation's lane: what is overdue lapses (priced), who
@@ -67,6 +68,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 		_close(row, K.STATUS_LAPSED, now)
 		out["lapsed"].append(_view(row))
 	_arrivals(state, ns, loader, meters, now, out["arrived"])
+	_quiet_call(state, ns, loader, meters, now, out["arrived"])
 	_prune(ns, now)
 	return out
 
@@ -97,44 +99,15 @@ static func offered_dates(state, ns, request_id: String) -> Array[Dictionary]:
 	return Dates.offered(state, ns, _row(ns, request_id))
 
 
-## The card's three answers. Booking needs a waiting request and an offered day
-## the diary can place; delegation and decline are open on every open request,
-## booked included -- the commands accept both, and a booked day is given back
-## (B2's 100 %). Delegate also carries the cabinet's odds of keeping the word and
-## why none can (V5.3-0 gate: Delegation.odds' {chance, why, effectiveness,
-## loyalty}), so the player sees the risk before handing it over; it stays open
-## even at chance 0, B2's row.
+## The card's three answers (request_landings.gd, where the rule lives since V5.3 B7).
 static func answers(state, ns, loader, request_id: String) -> Dictionary:
-	var row := _row(ns, request_id)
-	if row.is_empty() or not K.OPEN.has(String(row["status"])):
-		var closed := {"ok": false, "reason": "this request is no longer waiting"}
-		return {"book": closed, "delegate": closed, "decline": closed}
-	var open := {"ok": true, "reason": ""}
-	var delegate := open.merged(Delegation.odds(ns, loader, String(row["object"]), String(row.get("stance", ""))))
-	if String(row["status"]) == K.STATUS_BOOKED:
-		return {"book": {"ok": false, "reason": "already booked"}, "delegate": delegate, "decline": open}
-	var book := {"ok": false, "reason": "none of the days offered is free"}
-	for date in offered_dates(state, ns, request_id):
-		if bool(date["free"]):
-			book = {"ok": true, "reason": ""}
-			break
-	return {"book": book, "delegate": delegate, "decline": open}
+	return Landings.answers(state, ns, loader, _row(ns, request_id))
 
 
-## What a decline -- or the lapse, or a no-show -- writes on the person's card
-## now, through the same ceiling the price pays: the card names it (B3). An
-## accomplice's broken word is in it (c1c, rule 1), flagged `broken_word` so the
-## card can say why; one summed pulse under the room clamp is the two pulses exactly.
+## What a decline, a lapse or a no-show writes on the person's card now
+## (request_landings.gd).
 static func decline_price(ns, loader, request_id: String) -> Dictionary:
-	var row := _row(ns, request_id)
-	var person = loader.person_by_id.get(String(row.get("person_id", "")))
-	var crossed: bool = person != null and President.holds_evidence(ns, String(person.id), int(row.get("arrived_month", 0)))
-	var pulse: float = K.DECLINE_GRUDGE + (LK.LIE_GRUDGE if crossed else 0.0)
-	var grudge: float = Characters.refusal_grudge(ns, person, pulse) if person != null else K.DECLINE_GRUDGE
-	var price := {"grudge": grudge, "loyalty": K.DECLINE_LOYALTY, "rapport": K.DECLINE_RAPPORT - (LK.LIE_RAPPORT if crossed else 0.0)}
-	if crossed:
-		price["broken_word"] = true
-	return price
+	return Landings.decline_price(ns, loader, _row(ns, request_id))
 
 
 # --- Commands -------------------------------------------------------------------------
@@ -327,16 +300,31 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 	# the draw would have asked. Once a game: the month comes once.
 	if now == int(ns.audience_lane_start) + K.FIRST_REQUEST_BY_MONTH - 1 and not Lane.asked_ever(ns):
 		_call_best(ns, people, leader, meters, leaders, now, arrived)
-	# V5.3 B7, THE QUIET-MONTH CALL's person branch (docs/design/v5.3-b7-density.md
-	# section 4; the author's call 2, 2026-11-10): a month in which nothing arrived for
-	# the player (quiet_month.gd, over the month's stamps) calls the same candidate the
-	# guarantee would, unless QUIET_ASKS_MAX people asked in the last year -- then the
-	# QuietEvent step after this one brings a minor event instead. The lane is not full
-	# here: a full lane returned above. The row is stamped `called` (absent on every
-	# other row, read as false), Audiences' answer to whether it called someone.
-	if arrived.is_empty() and QuietMonth.asks_in_year(ns, now) < K.QUIET_ASKS_MAX and QuietMonth.quiet(state, ns, loader, now) \
-			and _call_best(ns, people, leader, meters, leaders, now, arrived):
-		ns.audience_requests.back()["called"] = true
+
+
+## V5.3 B7, THE QUIET-MONTH CALL's person branch (docs/design/v5.3-b7-density.md
+## section 4; the author's calls of 2026-11-10). First every request this month brought
+## is stamped `differs`: whether two of its answers leave the person in different
+## feeling words (request_landings.gd; absent on an older row, read as true). Then a
+## month in which nothing that counts arrived for the player (quiet_month.gd, over the
+## month's stamps) calls the candidate the month-3 guarantee would, unless the lane is
+## full or QUIET_ASKS_MAX people asked in the last year -- then the QuietEvent step
+## after this one brings a minor event instead. The row is stamped `called` (absent,
+## read as false), Audiences' answer to whether it called someone.
+static func _quiet_call(state, ns, loader, meters: Dictionary, now: int, arrived: Array) -> void:
+	for row in ns.audience_requests:
+		if int(row.get("arrived_month", -1)) == now:
+			row["differs"] = Landings.differs(state, ns, loader, row)
+	if Lane.open_count(ns, true) >= K.MAX_PENDING or QuietMonth.asks_in_year(ns, now) >= K.QUIET_ASKS_MAX \
+			or not QuietMonth.quiet(state, ns, loader, now):
+		return
+	var leaders := {}
+	for party in loader.parties.get(state.player_nation_id, []):
+		leaders[party.id] = party.leader_person_id
+	if _call_best(ns, Staff.cast(loader, state.player_nation_id), President.leader_id(ns), meters, leaders, now, arrived):
+		var row: Dictionary = ns.audience_requests.back()
+		row["called"] = true
+		row["differs"] = Landings.differs(state, ns, loader, row)
 
 
 ## The candidate the hazard weighs most, asked about the want the draw would have

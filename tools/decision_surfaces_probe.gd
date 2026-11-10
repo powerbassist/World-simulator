@@ -76,7 +76,7 @@ extends SceneTree
 ##              the lapse guard); answers = its choices' authored effects;
 ##   request    an audience request: its arrival, and its last month while still
 ##              waiting (deadline_month - 1: it lapses in its deadline's tick); answers = book (when a day is free), delegate, decline, each
-##              as the feeling bands the person lands in (Feelings over the prices
+##              as the feeling bands the person lands in (request_landings.gd over the prices
 ##              Audiences pays: RECEIVED_RAPPORT, the delegation's snub and grudge
 ##              share, decline_price());
 ##   bid        a foreign bid on a major (the bid_month stamp, and the window's last
@@ -150,10 +150,7 @@ const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
 const DomainsK = preload("res://src/sim/domains_constants.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
-const Delegation = preload("res://src/sim/delegation.gd")
-const Characters = preload("res://src/sim/characters.gd")
-const AudK = preload("res://src/sim/audience_constants.gd")
-const Feelings = preload("res://src/ui/feelings.gd")
+const RequestLandings = preload("res://src/sim/request_landings.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const SK = preload("res://src/sim/statute_constants.gd")
@@ -935,34 +932,11 @@ func _request_candidates(state, ns, report: Dictionary, now: int, out: Array) ->
 			"due": "arrival" if is_new else "deadline", "answers": _request_answers(state, ns, r)})
 
 
-## Each open answer as the feeling bands the person lands in, every register filled
-## (an unmoved one at its current band), so two answers compare register by register.
+## Each open answer as the feeling bands the person lands in -- the sim's own
+## definition (src/sim/request_landings.gd, V5.3 B7), the one the quiet-month call
+## stamps `differs` with, so the call and this count cannot disagree on a request.
 func _request_answers(state, ns, r: Dictionary) -> Array:
-	var request_id := String(r["id"])
-	var pid := String(r["person_id"])
-	var person = _loader.person_by_id.get(pid)
-	var open: Dictionary = Audiences.answers(state, ns, _loader, request_id)
-	var deltas: Array = []
-	if bool(open["book"]["ok"]):
-		deltas.append({"rapport": AudK.RECEIVED_RAPPORT})
-	if bool(open["delegate"]["ok"]):
-		deltas.append({
-			"rapport": Delegation.snub(person, String(r["object"])),
-			"grudge": Characters.refusal_grudge(ns, person, AudK.DECLINE_GRUDGE * AudK.DELEGATE_GRUDGE_SHARE) if person != null else 0.0,
-			"loyalty": AudK.DECLINE_LOYALTY * AudK.DELEGATE_GRUDGE_SHARE,
-		})
-	if bool(open["decline"]["ok"]):
-		deltas.append(Audiences.decline_price(ns, _loader, request_id))
-	var feel: Dictionary = Feelings.of(ns, pid)
-	var answers: Array = []
-	for delta in deltas:
-		var bands := {}
-		for register in Feelings.BANDS:
-			var span: Vector2 = Feelings.RANGE[register]
-			var value := clampf(float(feel.get(register, 0.0)) + float(delta.get(register, 0.0)), span.x, span.y)
-			bands["%s|%s" % [pid, register]] = Feelings.band(register, value)
-		answers.append({"feel": bands})
-	return answers
+	return RequestLandings.landings(state, ns, _loader, r)
 
 
 ## A bid and a rescue window, per major: the stamp month and the window's last.

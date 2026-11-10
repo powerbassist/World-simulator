@@ -17,6 +17,7 @@ const Events = preload("res://src/sim/events.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
 const EventDraw = preload("res://src/sim/event_draw.gd")
 const QuietMonth = preload("res://src/sim/quiet_month.gd")
+const Landings = preload("res://src/sim/request_landings.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const DensityCount = preload("res://tools/density_count.gd")
@@ -96,7 +97,8 @@ func _check_each_arrival_ends_the_quiet() -> void:
 	var cases := {
 		"an event that differs arrived this month": func(_s, ns) -> void: ns.event_queue.append({"event_id": live, "arrived": now}),
 		"an event this build does not know arrived this month": func(_s, ns) -> void: ns.event_queue.append({"event_id": "x", "arrived": now}),
-		"a request arrived this month": func(_s, ns) -> void: ns.audience_requests.append({"id": "r", "arrived_month": now}),
+		"a request that differs arrived this month": func(_s, ns) -> void: ns.audience_requests.append({"id": "r", "arrived_month": now, "differs": true}),
+		"a request with no stamp arrived this month": func(_s, ns) -> void: ns.audience_requests.append({"id": "r", "arrived_month": now}),
 		"a closure announced this month": func(_s, ns) -> void: _set_company(ns, "closure", {"status": "announced", "announced": now}),
 		"a bid this month": func(_s, ns) -> void: _set_company(ns, "bid_month", now),
 		"a failure this month": func(_s, ns) -> void: _set_company(ns, "failed_month", now),
@@ -117,6 +119,7 @@ func _check_each_arrival_ends_the_quiet() -> void:
 		"a process ask whose answers do not differ, this month": func(_s, ns) -> void: ns.processes.append(_ask_fixture(now, 0.0, 0.0)),
 		"a desk entry with no stamp (an older save)": func(_s, ns) -> void: ns.event_queue.append({"event_id": "x"}),
 		"a request from last month": func(_s, ns) -> void: ns.audience_requests.append({"id": "r", "arrived_month": now - 1}),
+		"a request whose answers leave the same words, this month": func(_s, ns) -> void: ns.audience_requests.append({"id": "r", "arrived_month": now, "differs": false}),
 		"a council the player cannot swing": func(s, _ns) -> void: s.orgs[EU]["pending"] = _pending(s, false, 0),
 		"a council with no stamp (an older save)": func(s, _ns) -> void: s.orgs[EU]["pending"] = _pending(s, true, 0, false),
 		"a council the player swings, opened last month": func(s, _ns) -> void: s.orgs[EU]["pending"] = _pending(s, true, 1),
@@ -231,6 +234,25 @@ func _check_the_person_comes_first(now: int) -> void:
 	_ok(state.player().event_queue.is_empty(), "the call brought a person and an event in one month")
 	var row: Dictionary = state.player().audience_requests.back()
 	_ok(int(row["arrived_month"]) == now and bool(row["called"]), "the called request is not stamped as called this month")
+	_ok(row.has("differs") and bool(row["differs"]) == Landings.differs(state, state.player(), _loader, row),
+		"the called request's differs stamp is not request_landings.gd's answer")
+	_check_a_dull_request_does_not_stop_the_call(now)
+
+
+## The author's ruling (2026-11-10): a request whose answers all leave the person in
+## the same feeling words is no arrival. A row that arrived this month with no open
+## answer (already declined) lands nowhere, so request_landings.gd calls it dull:
+## Audiences stamps it so, and the month still calls someone.
+func _check_a_dull_request_does_not_stop_the_call(now: int) -> void:
+	var state = _fresh(now)
+	var ns = state.player()
+	var row := {"id": "fixture|%d" % now, "person_id": "%s_fixture" % PLAYER, "object": "x", "stance": "",
+		"arrived_month": now, "deadline_month": now + 3, "status": "declined", "date": {}, "resolved_month": now}
+	ns.audience_requests.append(row)
+	Audiences.tick_month(state, _loader, METERS)
+	_ok(row.has("differs") and not bool(row["differs"]) and not Landings.differs(state, ns, _loader, row),
+		"a request with no open answer was not stamped as leaving the same words")
+	_ok(_called(state).size() == 1, "a month whose only request leaves the same words called no one")
 
 
 ## Fires only in a month with no arrival: the same month with a desk arrival calls

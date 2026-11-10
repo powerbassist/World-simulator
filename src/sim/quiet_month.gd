@@ -22,9 +22,11 @@ extends RefCounted
 ## still empty for the player -- the scandal whose answers move only press freedom and
 ## corruption, the minority stake whose asks all cost alike. Measured on the build: five
 ## of the seven months left empty in the first density run held exactly such an event
-## or ask. A request is always an arrival: whether its answers land in different feeling
-## words is the UI's reading (src/ui/feelings.gd), which the sim cannot make. An event
-## this build does not know ends the quiet, the safe side.
+## or ask. A request counts the same way since the author's ruling of 2026-11-10: one
+## whose answers all leave the person in the same feeling words (Audiences stamps
+## `differs` on each request the month brings, with the cuts the card draws its words
+## with, src/sim/feeling_constants.gd) is no arrival. An event this build does not
+## know, and a request with no stamp, end the quiet: the safe side.
 ##
 ## What does NOT end the quiet, as the spec measured it: a backbench bill awaiting the
 ## president's stand, a treaty awaiting the assembly and the Regions arrival -- each
@@ -48,7 +50,7 @@ static func quiet(state, ns, loader, now: int) -> bool:
 		if int(entry.get("arrived", -1)) == now and _decides(ns, loader, String(entry.get("event_id", ""))):
 			return false
 	for row in ns.audience_requests:
-		if int(row.get("arrived_month", -1)) == now:
+		if int(row.get("arrived_month", -1)) == now and bool(row.get("differs", true)):
 			return false
 	for company_id in ns.companies:
 		var c: Dictionary = ns.companies[company_id]
