@@ -17,6 +17,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
+const Rotation = preload("res://src/ui/priority_rotation.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const MusicBand = preload("res://src/ui/music_band.gd")
 
@@ -39,6 +40,7 @@ func _initialize() -> void:
 	_check_no_damping()
 	_check_quiet_rotates()
 	_check_situation_and_band()
+	_check_unseen_kind_takes_line_three()
 	if _failures.is_empty():
 		print("test_priorities: all checks passed")
 	for f in _failures:
@@ -264,6 +266,59 @@ func _check_situation_and_band() -> void:
 		_fail("the band did not come down after two calm months")
 	if MusicBand.step(b, "calm", 2)["band"] != "campaign" or MusicBand.step(b, "crisis", 2)["band"] != "crisis":
 		_fail("the campaign band does not take the last three months, or beats a crisis")
+
+
+## V5.3 B7, RF2 (Gameplay's rule, docs/design/v5.3-b7-density.md section 11): a kind
+## that qualifies and has had no line for twelve months takes the third line, unless
+## that line is held or due this month; a standing read is never forced in, and a kind
+## shown eleven months ago waits. The memory of what was shown is rank()'s.
+func _check_unseen_kind_takes_line_three() -> void:
+	var now := 100
+	# Scores: election 9 x 0.4, majority 8 x 0.4, then the bloc -- 7 x 0.4 far off, or
+	# 2 x 1.0 due this month -- third either way; the person 0.1 x 0.4 is fourth.
+	var three := func(third_deadline: int) -> Array:
+		return [Priorities._cand("election", "national", now + 6, 9.0, 1.0, now),
+			Priorities._cand("majority", "seats", now + 6, 8.0, 1.0, now),
+			Priorities._cand("bloc", "workers", third_deadline, 7.0 if third_deadline > now + 1 else 2.0, 1.0, now)]
+	var pick := func(held: Array, cands: Array, seen_then: Dictionary) -> Array:
+		var chosen: Array = Priorities._pick(held, cands, [], now)
+		Rotation.rotate(chosen, cands, {"shown": seen_then}, now)
+		return chosen
+	var person := func() -> Dictionary: return Priorities._cand("person", "FRA_x", now + 6, 0.1, 1.0, now)
+	var seen := {"election": now - 1, "majority": now - 1, "bloc": now - 1}
+	var lines: Array = pick.call([], three.call(now + 6) + [person.call()], seen.duplicate())
+	if String(lines[2]["kind"]) != "person":
+		_fail("RF2: a kind never shown did not take the third line: %s" % _names(lines))
+	if lines.size() != 3:
+		_fail("RF2: the rule changed the line count: %d" % lines.size())
+	lines = pick.call([], three.call(now + 1) + [person.call()], seen.duplicate())
+	if String(lines[2]["subject"]) != "workers":
+		_fail("RF2: a third line due this month was replaced (or the fixture moved it): %s" % _names(lines))
+	var held: Array = three.call(now + 6)
+	lines = pick.call(held, [person.call()], seen.duplicate())
+	if String(lines[2]["kind"]) == "person":
+		_fail("RF2: a held third line was replaced: %s" % _names(lines))
+	var standing := Priorities._standing("person", "FRA_x")
+	lines = pick.call([], three.call(now + 6) + [standing], seen.duplicate())
+	if String(lines[2]["kind"]) == "person":
+		_fail("RF2: a standing read was forced in: %s" % _names(lines))
+	var recent := seen.duplicate()
+	recent["person"] = now - 11
+	lines = pick.call([], three.call(now + 6) + [person.call()], recent)
+	if String(lines[2]["kind"]) == "person":
+		_fail("RF2: a kind shown eleven months ago was forced in: %s" % _names(lines))
+	recent["person"] = now - 12
+	lines = pick.call([], three.call(now + 6) + [person.call()], recent)
+	if String(lines[2]["kind"]) != "person":
+		_fail("RF2: a kind unshown for twelve months did not take the third line: %s" % _names(lines))
+	# rank() keeps the memory: every kind on the month's lines, stamped this month.
+	var state = _new("FRA")
+	var r: Dictionary = Priorities.rank(state, _loader, {})
+	var shown: Dictionary = (r["memory"] as Dictionary).get("shown", {})
+	var month := int(state.year) * 12 + int(state.month)
+	for l in r["lines"]:
+		if int(shown.get(String(l["kind"]), -1)) != month:
+			_fail("RF2: rank() did not remember '%s' as shown this month (%s)" % [l["kind"], shown])
 
 
 func _line_of(lines: Array, kind: String) -> Dictionary:

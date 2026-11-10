@@ -66,6 +66,12 @@ const UNREST_RISING_MONTHS := 3
 ## that band's lower cut, read from the table rather than copied (QA's RECORD on #218).
 const HOSTILE_GRUDGE: float = preload("res://src/sim/feeling_constants.gd").CUTS["grudge"][2][0]
 
+## V5.3 B7, RF2 (Gameplay, docs/design/v5.3-b7-density.md section 11): a kind that
+## qualifies and has had no line this long takes the third line (priorities.gd
+## _rotate_third). Twelve: a kind shown once a year is shown; measured 10 third lines
+## replaced over 685 briefings, 8/8 runs passing RF2.
+const UNSEEN_MONTHS := 12
+
 ## What a priority's Go opens, by kind (2.4): a domains.gd tab id, or "inbox" for a
 ## desk card raised in the inbox, or "person" for the person card.
 const GO_TAB := {"crisis": "inbox", "decision": "inbox", "plant": "companies", "election": "campaign",
