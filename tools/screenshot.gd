@@ -3976,6 +3976,7 @@ func _stage_b7() -> void:
 	Events.announce(ns, ev, Events._absolute_month(int(state.year), int(state.month)), Events.region_names(ns, loader))
 	var entry: Dictionary = ns.event_queue[0]
 	entry["never_holds"] = true
+	entry["arrived"] = Events._absolute_month(int(state.year), int(state.month))
 	if _b7 == "lapse":
 		entry["months_left"] = 1
 		Events._tick_countdowns(state, ns, loader, Events._absolute_month(int(state.year), int(state.month)))

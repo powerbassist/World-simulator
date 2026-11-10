@@ -203,14 +203,17 @@ static func guard_lapses(main, ns) -> void:
 ## WorldMonth's QuietEvent step, after the Events step whose hook (card_events) cards
 ## the month's arrivals, so the month's end cards it here (BriefingDriver.open, beside
 ## the Regions arrival). An arrival in every way but the hold: in the unseen set as
-## quiet, its card and sting by the player's bands, its speaker's line.
+## quiet, its card and sting by the player's bands, its speaker's line. Only in the
+## month it came (Systems' `arrived` stamp): a card the player dismissed is not put up
+## again, as no arrival's is.
 static func card_called(main) -> void:
 	var ns = main._state.player() if main._state != null else null
 	if ns == null or main._hud == null:
 		return
+	var now := Events._absolute_month(int(main._state.year), int(main._state.month))
 	for entry in ns.event_queue:
 		var event_id := String(entry.get("event_id", ""))
-		if not bool(entry.get("never_holds", false)) or main._unseen_events.has(event_id) or main._event_cards.values().has(event_id):
+		if not bool(entry.get("never_holds", false)) or int(entry.get("arrived", -1)) != now or main._event_cards.values().has(event_id):
 			continue
 		var ev = Events.event_by_id(main._loader, event_id)
 		if ev == null:

@@ -40,6 +40,7 @@ func _process(_delta: float) -> bool:
 	_check_called_lapses_to_a_note()
 	_check_control_lapses_to_the_briefing()
 	_check_month_end_cards_it()
+	_check_dismissed_stays_down()
 	_finish()
 	return true
 
@@ -64,7 +65,8 @@ func _stage(ev, called: bool) -> Dictionary:
 	var entry: Dictionary = ns.event_queue[0]
 	entry["months_left"] = 1
 	if called:
-		entry["never_holds"] = true  # Systems' mark (events.gd announce, B7)
+		entry["never_holds"] = true  # Systems' marks (events.gd announce, B7)
+		entry["arrived"] = _now()
 	_main._clock.paused = false
 	return entry
 
@@ -167,6 +169,30 @@ func _check_month_end_cards_it() -> void:
 	if not _main._event_cards.values().has(String(ev.id)):
 		_fail("called: the month's end did not card the called event")
 	BriefingDriver.close(_main)
+
+
+## An X on the called card is final: the next month's end does not put it up again.
+func _check_dismissed_stays_down() -> void:
+	var ev = _minor_event()
+	if ev == null:
+		return
+	_stage(ev, true)
+	_main._event_cards.clear()
+	DeskCards.card_called(_main)
+	var card := ""
+	for id in _main._event_cards:
+		if String(_main._event_cards[id]) == String(ev.id):
+			card = String(id)
+	if card == "":
+		_fail("premise: the called event got no card to dismiss")
+		return
+	_main._hud.inbox.dismiss(card)  # the X: both of main's registers forget it
+	# The next month's end: the entry still waits on the desk, one month older.
+	_main._state.player().event_queue[0]["arrived"] = _now() - 1
+	DeskCards.card_called(_main)
+	if _main._event_cards.values().has(String(ev.id)):
+		_fail("called: a dismissed called card came back the next month")
+	_clear_notes()
 
 
 func _clear_notes() -> void:
