@@ -253,6 +253,26 @@ func _check_a_dull_request_does_not_stop_the_call(now: int) -> void:
 	_ok(row.has("differs") and not bool(row["differs"]) and not Landings.differs(state, ns, _loader, row),
 		"a request with no open answer was not stamped as leaving the same words")
 	_ok(_called(state).size() == 1, "a month whose only request leaves the same words called no one")
+	_check_where_the_answers_land(now)
+
+
+## request_landings.gd on an open request: from a neutral rapport, booking leaves the
+## person warm and declining leaves them wary, so the answers differ; from the
+## coldest rapport and the worst grudge every answer reads the same.
+func _check_where_the_answers_land(now: int) -> void:
+	var state = _fresh(now)
+	var ns = state.player()
+	var person = _loader.people[PLAYER][0]
+	var row := {"id": "%s|%d" % [person.id, now], "person_id": String(person.id), "object": "x", "stance": "",
+		"arrived_month": now, "deadline_month": now + 3, "status": AudK.STATUS_PENDING, "date": {}, "resolved_month": -1}
+	ns.audience_requests.append(row)
+	ns.person_rapport[person.id] = 0.0
+	ns.person_grudges[person.id] = 0.0
+	_ok(Landings.differs(state, ns, _loader, row), "from a neutral rapport, booking and declining read the same")
+	ns.person_rapport[person.id] = -1.0
+	ns.person_grudges[person.id] = 1.0
+	_ok(Landings.landings(state, ns, _loader, row).size() >= 2 and not Landings.differs(state, ns, _loader, row),
+		"from the coldest rapport and the worst grudge, the answers read as different words")
 
 
 ## Fires only in a month with no arrival: the same month with a desk arrival calls
