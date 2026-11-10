@@ -4,9 +4,11 @@ extends RefCounted
 ## already put to the player, which no card pointed at -- only the Orgs tab's mark.
 ## A treaty the council carried that waits on the player's own assembly (`ratifying`),
 ## and a division the player's vote can swing (Orgs' `player_swings` stamp, set at the
-## session's opening). One quiet card each, with a Go on the Orgs tab, whose verbs are
-## tagged with the same subjects (council_section.gd). The author's call 4: a division
-## the player cannot swing gets no card, it stays the tab's mark.
+## session's opening). A quiet card for each treaty, and ONE for every division the
+## player swings, its title and its Go only: the Orgs tab it opens carries the detail
+## (the parent's ruling on RF6's inbox ceiling, 2026-11-10). The verbs there are tagged
+## with the same subjects (council_section.gd). The author's call 4: a division the
+## player cannot swing gets no card, it stays the tab's mark.
 ##
 ## IT SPENDS NONE OF THE 4 + 6 A YEAR (docs/design/decision-surfaces.md): the cards wait
 ## in the inbox and never touch the clock -- region_arrival.gd's shape, and its rule that
@@ -18,7 +20,8 @@ const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
-## main's instance id -> {state_id, told: {key: true}, cards: {live card id: key}}.
+## main's instance id -> {state_id, told: {key: true}, cards: {live treaty card id: key},
+## council: the live gathered card's id or ""}.
 static var _told := {}
 
 
@@ -28,17 +31,19 @@ static func check(main) -> void:
 	var ns = state.player() if state != null else null
 	if ns == null:
 		return
-	var memory: Dictionary = _told.get_or_add(main.get_instance_id(), {"state_id": 0, "told": {}, "cards": {}})
+	var memory: Dictionary = _told.get_or_add(main.get_instance_id(), {"state_id": 0, "told": {}, "cards": {}, "council": ""})
 	var inbox = main._hud.inbox
 	if int(memory["state_id"]) != state.get_instance_id():
 		memory["state_id"] = state.get_instance_id()
 		memory["told"] = {}
 		memory["cards"] = {}
+		memory["council"] = ""
 	var go := _on_go.bind(main)
 	if not inbox.card_action.is_connected(go):
 		inbox.card_action.connect(go)
 	# What waits now, keyed by the decision: {key: [subject, title, body]}.
 	var now := {}
+	var swings: Array = []  # every division the player swings, by its opening
 	var month := int(state.year) * 12 + int(state.month)
 	for org in main._loader.orgs:
 		if not org.council or not ns.orgs.has(org.id):
@@ -47,7 +52,7 @@ static func check(main) -> void:
 		var r: Dictionary = state.orgs.get(org.id, {}).get("ratifying", {})
 		if String((r.get("nations", {}) as Dictionary).get(ns.id, "")) == CouncilK.RATIFY_PENDING:
 			var left := int(r.get("months_left", 0))
-			var asks := Strings.tn("%s passed the council and now needs your assembly. Put it to a vote within %d month, or it falls for every member.", "%s passed the council and now needs your assembly. Put it to a vote within %d months, or it falls for every member.", left)
+			var asks := Strings.tn("%s passed the council and needs your assembly within %d month, or it falls.", "%s passed the council and needs your assembly within %d months, or it falls.", left)
 			# Keyed by the window's opening month too: a treaty carried again later is news again.
 			now["ratify|%s|%s|%d" % [org.id, String(r.get("proposal_id", "")), month - (CouncilK.RATIFY_WINDOW_MONTHS - left)]] = ["ratify|%s" % org.id, Strings.t("Treaty to ratify — %s") % title,
 				asks % [_proposal_name(r), left]]
@@ -55,11 +60,9 @@ static func check(main) -> void:
 		# The player's vote cast from the tab settles it as the Go would (an abstention
 		# is the default and cannot be told from no answer).
 		if bool(pending.get("player_swings", false)) and String(pending.get("player_vote", Orgs.VOTE_ABSTAIN)) == Orgs.VOTE_ABSTAIN:
-			var months := int(pending.get("months_left", 0))
-			var swing := Strings.tn("%s goes to the council's vote in %d month, and your vote can decide it.", "%s goes to the council's vote in %d months, and your vote can decide it.", months)
-			now["council|%s|%s|%d" % [org.id, String(pending.get("proposal_id", "")),
-				int(pending.get("opened_year", 0)) * 12 + int(pending.get("opened_month", 0))]] = ["council|%s" % org.id, Strings.t("Council vote — %s") % title,
-				swing % [_proposal_name(pending), months]]
+			swings.append("council|%s|%s|%d" % [org.id, String(pending.get("proposal_id", "")),
+				int(pending.get("opened_year", 0)) * 12 + int(pending.get("opened_month", 0))])
+	_council_card(memory, inbox, swings)
 	# Settled since: the card goes. Still waiting: its months age in place.
 	var cards: Dictionary = memory["cards"]
 	for card in cards.keys():
@@ -78,14 +81,33 @@ static func check(main) -> void:
 		cards[card] = key
 
 
+## The one card for every division the player swings: up while any waits, put up
+## again only for a division not told before (one the player dismissed stays down).
+static func _council_card(memory: Dictionary, inbox, swings: Array) -> void:
+	var card := String(memory["council"])
+	if card != "" and (inbox.lane_of(card) == "" or swings.is_empty()):
+		inbox.dismiss(card)
+		card = ""
+	var fresh := swings.filter(func(k): return not (memory["told"] as Dictionary).has(k))
+	for k in fresh:
+		memory["told"][k] = true
+	if card == "" and not fresh.is_empty():
+		card = inbox.push(Strings.t("Your vote decides"), "",
+			[{"label": Strings.t("Open"), "acts_on": "council"}])
+	memory["council"] = card
+
+
 static func _proposal_name(row: Dictionary) -> String:
 	return Strings.row("bloc-proposals", String(row.get("proposal_id", "")), "name", String(row.get("name", "")))
 
 
 static func _on_go(card: String, _index: int, main) -> void:
-	var cards: Dictionary = (_told.get(main.get_instance_id(), {}) as Dictionary).get("cards", {})
-	if not cards.has(card):
+	var memory: Dictionary = _told.get(main.get_instance_id(), {})
+	var cards: Dictionary = memory.get("cards", {})
+	if not cards.has(card) and String(memory.get("council", "")) != card:
 		return
+	if String(memory.get("council", "")) == card:
+		memory["council"] = ""
 	main._windows.open("orgs")
 	# The tab lists the orgs that wait on the player first (orgs_panel.gd): its top.
 	main._windows.content("orgs").mark_dirty()

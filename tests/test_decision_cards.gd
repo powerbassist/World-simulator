@@ -60,6 +60,7 @@ func _process(_delta: float) -> bool:
 			if _cases.is_empty():
 				_check_settled_cards_go()
 				_check_month_end_checks()
+				_check_one_card_for_every_swing()
 				_finish()
 				return true
 			_case = _cases.pop_front()
@@ -151,7 +152,7 @@ func _stage_council() -> String:
 	CouncilCards.check(_main)  # the treaty's card goes with its decision
 	_main._state.orgs[org.id]["pending"] = _pending(org, true)
 	CouncilCards.check(_main)
-	_case["subject"] = "council|%s" % org.id
+	_case["subject"] = "council"
 	_case["tab"] = "orgs"
 	return _card_for(String(_case["subject"]))
 
@@ -190,7 +191,7 @@ func _check_no_swing_no_card() -> void:
 		return
 	_main._state.orgs[org.id]["pending"] = _pending(org, false)
 	CouncilCards.check(_main)
-	if _card_for("council|%s" % org.id) != "":
+	if _card_for("council") != "":
 		_fail("council: a division the player cannot swing got a card")
 	_main._state.orgs[org.id]["pending"] = {}
 	CouncilCards.check(_main)
@@ -242,6 +243,42 @@ func _check_month_end_checks() -> void:
 	if _card_for("ratify|%s" % org.id) == "":
 		_fail("treaty: the month's end did not put up the card")
 	BriefingDriver.close(_main)
+
+
+## The parent's ruling on RF6 (2026-11-10): every division the player swings is ONE card,
+## its title and Go only. It stays while any waits, goes when none does, and comes back
+## only for a division not told before.
+func _check_one_card_for_every_swing() -> void:
+	var ns = _main._state.player()
+	var orgs: Array = []
+	for org in _main._loader.orgs:
+		if org.council and ns.orgs.has(org.id):
+			orgs.append(org)
+	if orgs.size() < 2:
+		_fail("council: premise, the player sits on fewer than two councils")
+		return
+	CouncilCards._told.erase(_main.get_instance_id())
+	for id in _main._hud.inbox._cards.keys():
+		_main._hud.inbox.dismiss(String(id))
+	for org in orgs.slice(0, 2):
+		_main._state.orgs[org.id]["ratifying"] = {}
+		_main._state.orgs[org.id]["pending"] = _pending(org, true)
+	CouncilCards.check(_main)
+	var cards: Array = _main._hud.inbox._cards.keys().filter(func(id): return ActsOn.find(_main._hud.inbox._cards[id], "council") != null)
+	if cards.size() != 1:
+		_fail("council: two divisions the player swings made %d cards, not one" % cards.size())
+		return
+	var card := String(cards[0])
+	if String(_main._hud.inbox._bodies[card].get_parsed_text()).strip_edges() != "":
+		_fail("council: the gathered card carries a body: '%s'" % _main._hud.inbox._bodies[card].get_parsed_text())
+	_main._state.orgs[orgs[0].id]["pending"] = {}
+	CouncilCards.check(_main)
+	if _main._hud.inbox.lane_of(card) == "":
+		_fail("council: the card went while a division it gathers still waits")
+	_main._state.orgs[orgs[1].id]["pending"] = {}
+	CouncilCards.check(_main)
+	if _main._hud.inbox.lane_of(card) != "":
+		_fail("council: the card stayed once no division waits")
 
 func _fail(message: String) -> void:
 	_failures.append(message)
