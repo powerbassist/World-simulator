@@ -20,6 +20,10 @@ extends SceneTree
 
 const RequestLane = preload("res://src/ui/request_lane.gd")
 const Click = preload("res://tests/click.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const RequestLandings = preload("res://src/sim/request_landings.gd")
+const Words = preload("res://src/ui/lever_words.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -74,6 +78,7 @@ func _process(_delta: float) -> bool:
 			if _lane.card_of("req_2") != "" or _main._hud.inbox._cards.size() == 0:
 				_fail("a request gone from the rows kept its card, or the lane lost the other")
 			_check_booking()
+			_check_lapse_price_is_the_sims()
 			_finish()
 			return true
 	return false
@@ -110,6 +115,33 @@ func _check_cards() -> void:
 	# V5.3-0 gate: Delegate's hover says how often this cabinet keeps the word.
 	if not _answer_button("req_1", 1).tooltip_text.contains("8 in 10"):
 		_fail("Delegate's hover does not carry the ministers' odds: '%s'" % _answer_button("req_1", 1).tooltip_text)
+
+
+## V5.3 B7: the driver words a called request's lapse with the sim's own price
+## (RequestLandings.lapse_price, CALLED_LAPSE_SHARE of a decline), not the decline's;
+## an asked request carries no second price.
+func _check_lapse_price_is_the_sims() -> void:
+	var ns = _main._state.player()
+	var loader = _main._loader
+	var pid := ""
+	for person in loader.people[String(ns.id)]:
+		if String(person.kind) != "chief_of_staff" and String(person.id) != String(ns.cabinet.get("head_of_state", "")):
+			pid = String(person.id)
+			break
+	var now := int(_main._state.year) * 12 + int(_main._state.month)
+	var request := {"id": "%s|%d" % [pid, now], "person_id": pid, "object": "programme:none", "stance": "sponsor",
+		"arrived_month": now, "deadline_month": now + 2, "status": "pending", "date": {}, "resolved_month": -1, "called": true}
+	ns.audience_requests.append(request)
+	var row := AudienceDriver.row_of(_main, request)
+	var expected := Words.price_text(RequestLandings.lapse_price(ns, loader, request), Feelings.of(ns, pid))
+	if String(row.get("lapse_price", "")) != expected:
+		_fail("a called request's lapse is not the sim's price: '%s', the sim's '%s'" % [row.get("lapse_price", ""), expected])
+	if String(row.get("lapse_price", "")) == String(row.get("price", "")):
+		_fail("premise: the called lapse reads the same as the decline ('%s')" % row.get("price", ""))
+	request.erase("called")
+	if AudienceDriver.row_of(_main, request).has("lapse_price"):
+		_fail("an asked request carries a second price")
+	ns.audience_requests.erase(request)
 
 
 ## The chips the grid puts on an offered day (the column's cards went there, step 6).
