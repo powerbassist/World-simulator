@@ -10,6 +10,6 @@
     {"id": "gossip", "tier": "are", "topic": "gossip", "tag": "learn", "condition": {"kind": "gossip_people", "max": 4}},
     {"id": "dinner", "tier": "opener", "topic": "dinner", "tag": "warm_more", "condition": {"kind": "knowledge", "at_least": "acquaintance"}},
     {"id": "family", "tier": "opener", "topic": "family", "tag": "warm", "condition": {"kind": "knowledge", "at_most": "acquaintance"}},
-    {"id": "flirt", "tier": "rare", "topic": "flirt", "tag": "risk", "condition": {"kind": "affair_gates", "knowledge_at_least": "acquaintance"}}
+    {"id": "flirt", "tier": "rare", "topic": "flirt", "tag": "warm", "condition": {"kind": "affair_gates", "knowledge_at_least": "acquaintance"}}
   ]
 }

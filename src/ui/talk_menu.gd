@@ -131,18 +131,28 @@ static func gossip_people(state, ns, loader, pid: String, cap: int) -> Array[Dic
 			continue
 		var tie := _tie(ns, loader, person, other, party)
 		if not tie.is_empty():
-			out.append({"id": id, "tie": tie, "know": President.knowledge(ns, id), "key": Capital.fold(String(loader.person_name(id)))})
+			out.append({"id": id, "tie": tie, "rank": 1 if String(tie["kind"]) == "party" else 0, "know": President.knowledge(ns, id),
+				"key": Capital.fold(String(loader.person_name(id)))})
+	# A tie that is about something (a want shared, a post wanted) before a colleague of the same party:
+	# those are the people worth asking about; then the ones the president knows best, then by name.
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if a["rank"] != b["rank"]:
+			return a["rank"] < b["rank"]
 		return a["know"] > b["know"] or (a["know"] == b["know"] and String(a["key"]) < String(b["key"])))
 	return out.slice(0, cap)
 
 
-## {kind: "party", party_id} | {kind: "want", object, same_side: bool} | {}.
+## {kind: "office", party_id} | {kind: "want", object, same_side: bool} | {kind: "party", party_id} | {}.
+## "office": the other wants this person's party's leadership.
 static func _tie(ns, loader, person, other, party: String) -> Dictionary:
-	if party != "" and President.party_id_of(ns, loader, String(other.id)) == party:
-		return {"kind": "party", "party_id": party}
+	if party != "":
+		for theirs in other.wants:
+			if String(theirs["object"]) == "office:party_leadership:%s" % party:
+				return {"kind": "office", "party_id": party}
 	for want in person.wants:
 		for theirs in other.wants:
 			if String(theirs["object"]) == String(want["object"]):
 				return {"kind": "want", "object": String(want["object"]), "same_side": String(theirs["stance"]) == String(want["stance"])}
+	if party != "" and President.party_id_of(ns, loader, String(other.id)) == party:
+		return {"kind": "party", "party_id": party}
 	return {}

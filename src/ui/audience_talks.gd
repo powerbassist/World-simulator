@@ -16,6 +16,8 @@ const Deal = preload("res://src/sim/deal.gd")
 const President = preload("res://src/sim/president.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Words = preload("res://src/ui/lever_words.gd")
+const MoodBadge = preload("res://src/ui/mood_badge.gd")
+const Portrait = preload("res://src/ui/portrait.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
 const Capital = preload("res://src/core/capital.gd")
@@ -120,6 +122,8 @@ static func ask(main, game: Dictionary, line_id: String, topic: String, args: Di
 	var session: Dictionary = game.get("session", {})
 	if session.is_empty():
 		return
+	# Cold or hostile before the talk, she deflects (her _no); else she answers (her _yes).
+	var cold := MoodBadge.emotion_of(_feel(main, session)) == Portrait.Emotion.STERN
 	var r := Levers.talk(main._state, main._state.player(), main._loader, session, topic, args)
 	if not bool(r["ok"]):
 		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "", {}, ResultTone.BLOCKED)
@@ -131,7 +135,7 @@ static func ask(main, game: Dictionary, line_id: String, topic: String, args: Di
 			extra.merge(row.get("vars", {}), true)
 	if args.has("about"):
 		extra["third"] = main._loader.person_name(String(args["about"]))
-	var answer := "no" if tone == ResultTone.BAD else "yes"
+	var answer := "no" if cold else "yes"
 	game["scene"].show_result(Words.changed(Words.paid_text({}, r["effects"], main._loader.person_name, _feel(main, session))), view_of(main, game),
 		"talk_%s_%s" % [line_id, answer], extra, tone)
 

@@ -106,6 +106,8 @@ static func _vars(loader, ns, facts: Dictionary) -> Dictionary:
 
 ## How a face in a gossip is tied, for its tooltip: the sim's links, in words.
 static func _tie_words(loader, ns, tie: Dictionary) -> String:
+	if String(tie["kind"]) == "office":
+		return Strings.t("Wants the leadership of the party: their post.")
 	if String(tie["kind"]) == "party":
 		for party in loader.parties.get(ns.id, []):
 			if String(party.id) == String(tie["party_id"]):

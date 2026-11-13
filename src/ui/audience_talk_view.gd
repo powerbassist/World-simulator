@@ -23,9 +23,10 @@ const TAGS := {
 	"learn": ["menu_book", "Learn about them", ""],  # i18n: msgid
 	"warm": ["handshake", "They warm", ""],  # i18n: msgid
 	"warm_more": ["handshake", "They warm more", ""],  # i18n: msgid
-	"risk": ["!", "Risks exposure", "warn"],  # i18n: msgid
 	"asked": ["✓", "Asked", ""],  # i18n: msgid
 }
+const FACE := Vector2i(22, 28)
+static var _faces := {}
 const MARK := "¶"  # i18n: ok the placeholder a gossip's sentence splits on
 
 
@@ -101,12 +102,21 @@ func _chip(person: Dictionary, live: bool, picked: bool) -> Button:
 	chip.disabled = not live
 	chip.toggle_mode = true
 	chip.button_pressed = picked
-	var face := Portrait.texture_for(String(person["id"]))
+	var face := _face(String(person["id"]))
 	if face != null:
 		chip.icon = face
-		chip.expand_icon = true
-		chip.add_theme_constant_override("icon_max_width", 22)
 	return chip
+
+
+## A person's portrait cut to a chip's size (the button draws an icon at its own size), once each.
+static func _face(person_id: String) -> Texture2D:
+	if not _faces.has(person_id):
+		var full := Portrait.texture_for(person_id)
+		var small: Image = full.get_image() if full != null else null
+		if small != null:
+			small.resize(FACE.x, FACE.y, Image.INTERPOLATE_LANCZOS)
+		_faces[person_id] = ImageTexture.create_from_image(small) if small != null else null
+	return _faces[person_id]
 
 
 ## The glyph and its words, right-aligned: toned by the table, dimmed once the line is spent.

@@ -124,7 +124,13 @@ func _pick_a_day() -> void:
 	field.choose(10, _promised_due)
 
 
+## The word binds only when she took the Counter (the author's ruling, Systems' #323): both
+## sides of that rule read the same, so this holds on either side of it.
+var _won_promise := false
+
+
 func _check_attempt() -> void:
+	_won_promise = String(_session().get("won", "")) == "promise_date"
 	if int(_session().get("attempts_left", 0)) != 2:
 		_fail("a held click on Counter did not reach Deal.bargain(): %s" % [_session()])
 	if _scene()._result.text == "":
@@ -136,7 +142,7 @@ func _promise() -> void:
 
 
 func _check_promise() -> void:
-	if _promised_due < 0:
+	if _promised_due < 0 or not _won_promise:
 		return
 	var ns = _main._state.player()
 	var found := false
@@ -169,7 +175,7 @@ func _check_left() -> void:
 		_fail("Leave left the audience open")
 	if _main._clock.paused and not _main._decision_holds_clock():
 		_fail("leaving the audience did not let the clock go")
-	if _promised_due > 0 and not _diary_has(_main._loader.person_name(_person), Words.when(_promised_due)):
+	if _promised_due > 0 and _won_promise and not _diary_has(_main._loader.person_name(_person), Words.when(_promised_due)):
 		_fail("a promise binds whatever the outcome, and the Diary dropped it")
 
 

@@ -185,10 +185,15 @@ func _check_gossip_people_are_tied_and_few() -> void:
 		var pid := String(person.id)
 		var people := TalkMenu.gossip_people(_state, _state.player(), _loader, pid, 4)
 		_ok(people.size() <= 4, "%s reads %d people to gossip about" % [pid, people.size()])
+		# A tie about something (a want, a post) comes before a colleague of the same party.
+		var plain_seen := false
+		for p in people:
+			plain_seen = plain_seen or String(p["tie"]["kind"]) == "party"
+			_ok(not (plain_seen and String(p["tie"]["kind"]) != "party"), "%s: a plain party colleague came before a want or office tie" % pid)
 		for p in people:
 			seen += 1
 			_ok(String(p["id"]) != pid and String(p["id"]) != President.leader_id(_state.player()), "%s may gossip about themselves or the president" % pid)
-			_ok(["party", "want"].has(String(p["tie"]["kind"])), "a gossip name without a tie: %s" % [p])
+			_ok(["party", "want", "office"].has(String(p["tie"]["kind"])), "a gossip name without a tie: %s" % [p])
 	_ok(seen > 0, "nobody was ever tied to anybody")
 
 
