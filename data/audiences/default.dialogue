@@ -341,3 +341,87 @@
 % {{name}}: Understood. No offence taken, none stored either. My foundation will pursue its aims through customary channels, and I will not trouble you with generosity again.
 % {{name}}: Pity. I thought you a realist. The money will find its uses elsewhere, and we shall speak of this again when circumstances are less delicate.
 => END
+
+~ talk_bill
+% {{president}}: {{bill}} reaches the floor soon, {{first}}. Where do your people stand?
+=> END
+
+~ talk_bill_yes
+% {{name}}: Divided, if I am honest, but the leadership is behind it. You will have my voice in the corridor, whatever the vote.
+=> END
+
+~ talk_bill_no
+% {{name}}: I will keep my count to myself until the day. Ask me again when it is tabled.
+=> END
+
+~ talk_plant
+% {{president}}: {{plant}} is due to close by {{date}}. What would keep it open?
+=> END
+
+~ talk_plant_yes
+% {{name}}: A buyer, or a rescue with a date on it. Either one saves the jobs, and neither is cheap, with the clock already running.
+=> END
+
+~ talk_plant_no
+% {{name}}: If I knew a way I would have brought it to you already. Do not ask me to promise what I cannot deliver.
+=> END
+
+~ talk_sector
+% {{president}}: Your sector, {{sector}}, is losing ground. Is it money, or rules?
+=> END
+
+~ talk_sector_yes
+% {{name}}: Both, but rules first. Money only buys time; a rule decides whether anyone invests.
+=> END
+
+~ talk_sector_no
+% {{name}}: You will hear a different answer from everyone you ask. Ask me again when the figures stop moving.
+=> END
+
+~ talk_gossip
+% {{president}}: What do you make of {{third}}?
+=> END
+
+~ talk_gossip_yes
+% {{name}}: {{third}} is more careful than people think, and more ambitious. I would not turn my back on that.
+=> END
+
+~ talk_gossip_no
+% {{name}}: {{third}} is a colleague. What I have to say about colleagues, I say to their faces.
+=> END
+
+~ talk_family
+% {{president}}: How is your family, {{first}}?
+=> END
+
+~ talk_family_yes
+% {{name}}: Kind of you to ask. They put up with the hours I keep, which is more than I deserve.
+=> END
+
+~ talk_family_no
+% {{name}}: Well, thank you. Is there something about them you wanted to know?
+=> END
+
+~ talk_dinner
+% {{president}}: Dine with me at the residence next week.
+=> END
+
+~ talk_dinner_yes
+% {{name}}: I would be glad to, {{president}}. Send the date to my office.
+=> END
+
+~ talk_dinner_no
+% {{name}}: You honour me, but my diary will not allow it. Another time.
+=> END
+
+~ talk_flirt
+% {{president}}: You look well tonight, {{first}}.
+=> END
+
+~ talk_flirt_yes
+% {{name}}: Careful, {{president}}. Someone might hear you say it, and I might like it.
+=> END
+
+~ talk_flirt_no
+% {{name}}: That is not what I came here for. Let us pretend you did not say it.
+=> END

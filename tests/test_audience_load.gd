@@ -19,6 +19,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const President = preload("res://src/sim/president.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
 const Capital = preload("res://src/core/capital.gd")
 
@@ -91,28 +92,28 @@ func _open_an_audience() -> void:
 
 
 func _check_picker() -> void:
-	var gossip: Button = AudienceDriver.scene_of(_main).verbs.topic_button("gossip")
-	var pick: OptionButton = gossip.get_parent().find_child("About", false, false) if gossip != null else null
-	if pick == null or pick.item_count < 2:
-		_fail("premise: no gossip picker with people in it")
+	# Whom a gossip may name (the phone's list; the audience's talk ranks its own, test_talk_menu):
+	# the people the president knows first, then by name with case and accents folded.
+	var ns = _main._state.player()
+	var people: Array = AudienceTalks.gossip_people(_main, String(Audiences.request(ns, _request)["person_id"]))
+	if people.size() < 2:
+		_fail("premise: no gossip list with people in it")
 		return
-	if String(pick.get_item_metadata(0)) != _known:
-		_fail("the person the president knows is not first in the gossip picker: %s" % pick.get_item_text(0))
-	# Name order folds case and accents (QA on #120): an "É" name sorts among
-	# the E's, between the D's and the F's, not after every Z.
+	if String(people[0]["id"]) != _known:
+		_fail("the person the president knows is not first in the gossip list: %s" % people[0]["name"])
 	var accented := 0
-	for i in range(1, pick.item_count):
-		var here := Capital.fold(pick.get_item_text(i))
-		if i >= 2 and here < Capital.fold(pick.get_item_text(i - 1)):
-			_fail("the strangers are not in name order: '%s' after '%s'" % [pick.get_item_text(i), pick.get_item_text(i - 1)])
+	for i in range(1, people.size()):
+		var here := Capital.fold(String(people[i]["name"]))
+		if i >= 2 and here < Capital.fold(String(people[i - 1]["name"])):
+			_fail("the strangers are not in name order: '%s' after '%s'" % [people[i]["name"], people[i - 1]["name"]])
 			return
-		if pick.get_item_text(i).begins_with("É"):
+		if String(people[i]["name"]).begins_with("É"):
 			accented += 1
-			var after := Capital.fold(pick.get_item_text(i + 1)) if i + 1 < pick.item_count else "f"
-			if not (Capital.fold(pick.get_item_text(i - 1)) <= here and after.substr(0, 1) >= "e"):
-				_fail("'%s' does not sort among the E's" % pick.get_item_text(i))
+			var after := Capital.fold(String(people[i + 1]["name"])) if i + 1 < people.size() else "f"
+			if not (Capital.fold(String(people[i - 1]["name"])) <= here and after.substr(0, 1) >= "e"):
+				_fail("'%s' does not sort among the E's" % people[i]["name"])
 	if accented == 0:
-		_fail("premise: no name with an accented capital in the picker to pin the fold")
+		_fail("premise: no name with an accented capital in the list to pin the fold")
 
 
 func _check_save_refused() -> void:

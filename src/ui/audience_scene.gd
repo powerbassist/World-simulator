@@ -1,174 +1,166 @@
 extends PanelContainer
 
-## The audience -- V5.2b. A person of the played nation sits across the desk and
-## asks for what they want; the president has three attempts to move them, each a
-## lever with its odds shown as a RANGE as wide as the president's ignorance of the
-## person (B4: the true odds are always inside it), and the topics that buy
-## knowledge and rapport. A scene: it owns the screen and holds the clock (the
-## screen stack's SCENE rank, summit_panel's shape); the request card that led here
-## never did.
+## The audience -- V5.3, the author's C4 and C4-talk. A person of the played nation sits across the
+## desk and asks for what they want: her face and her line, the ask in one sentence, then THREE
+## cards (Grant / Counter / Refuse, audience_cards.gd). A deal struck, the cards give way to what it
+## did and the conversation (audience_talk_view.gd): a few lines, only the ones that have a reason
+## to be there. A refusal ends it: her parting line, what it cost, the way out. The scene owns the
+## screen and holds the clock (the screen stack's SCENE rank, summit_panel's shape).
 ##
-## The frame is the summit's: the face, the speaker's line, the verbs. The LINES
-## come from DialogueManager (the project's stated autoload exception, V2.4b) over
-## data/audiences/*.dialogue -- Content's, one file a request stance overriding
-## default.dialogue title by title, with {{name}}, {{ask}}, {{president}}, {{lever}}
-## and {{topic}} in scope. A title neither file has falls back to a plain line, so
-## the scene plays while the lines are being written.
-##
-## The panel never touches state: each verb is a signal, and the wiring calls the
-## sim (Levers.attempt / talk / close) and hands the result back. Ending is two
-## clicks apart on purpose: End closes the audience in the sim and shows its
-## outcome in the person's mouth; Leave takes the scene down.
+## Its states are audience_flow.gd's, in one table; this file draws the state the flow is in and
+## moves it only by that table's events. It never touches the sim: each verb is a signal, the
+## wiring (audience_talks.gd, audience_ask.gd) calls the sim and hands the result back through
+## show_result() / show_close(), with a `view` carrying what the sim now reads. The lines come
+## from DialogueManager over data/audiences/*.dialogue; a title the files lack falls back to a
+## plain line, so the scene plays while the lines are being written.
 
-signal attempted(lever: String, args: Dictionary)
-signal talked(topic: String, args: Dictionary)
+signal granted
+signal countered(date: Dictionary)
+signal asked(line_id: String, topic: String, args: Dictionary)
 signal ended
 signal closed
-## V5.2c: the money on the table answered, an affair proposed or ended.
-signal offer_answered(accepted: bool)
-signal affair(action: String)
-## V5.3 b, step 6: Grant pressed (Deal.grant). Refuse is `ended`, the same way out.
-signal granted
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
-const Strings = preload("res://src/ui/strings.gd")
-const Words = preload("res://src/ui/lever_words.gd")
-const AudienceVerbs = preload("res://src/ui/audience_verbs.gd")
-const AudienceShadow = preload("res://src/ui/audience_shadow.gd")
+const AudienceFlow = preload("res://src/ui/audience_flow.gd")
+const AudienceCards = preload("res://src/ui/audience_cards.gd")
+const AudienceTalkView = preload("res://src/ui/audience_talk_view.gd")
+const Words = preload("res://src/ui/audience_words.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const MoodBadge = preload("res://src/ui/mood_badge.gd")
 const AudienceVoice = preload("res://src/ui/audience_voice.gd")
-const DealView = preload("res://src/ui/deal_view.gd")
+const Icon = preload("res://src/ui/icon.gd")
 
-## 16:9, the board's scene window over the map.
-const SIZE := Vector2(1120, 630)
+## The mockup's dialog: 1160 wide, as tall as its content.
+const SIZE := Vector2(1160, 0)
+const FACE := Vector2(190, 240)
+const ICONS := "res://assets/icons/material/"
 
-## The person in the chair while a scene runs, "" otherwise: the clock's hold line
-## names them (hold_reason.gd, the summit's `visiting` seam).
+## The person in the chair while a scene runs, "" otherwise: the clock's hold line names them.
 var visiting := ""
-var verbs := AudienceVerbs.new()
-var deal := DealView.new()
-var shadow := AudienceShadow.new()
+var flow := AudienceFlow.new()
+var cards := AudienceCards.new()
+var talk := AudienceTalkView.new()
 
 var _view: Dictionary = {}
 var _resource = null
 var _face: Control
 var _spoken: Label
-## AudienceVoice.lines() for the person in the room; {} is silence.
 var _voice: Dictionary = {}
 var _speaker: Label
-## V5.2 close R3: the person's party beside their name, said and swatched.
 var _party: HBoxContainer
 var _line: Label
-var _fog: Label
-var _traits: Label
-var _result: Label
-## V5.2 close R5: how the last result landed, a STATUS-toned word before it.
+var _lead: Label
+var _band: PanelContainer
 var _tone: Label
+var _result: Label
+var _band_lines: VBoxContainer
 var _end: Button
-## Refuse's price, beside the way out (empty once the deal is struck, or over).
-var _refuse_cost: Label
-var _over := false
+var _pending := ""
+## The talk's rows being built: a newer build discards an older one still awaiting its lines.
+var _build := 0
 
 
 func _ready() -> void:
 	custom_minimum_size = SIZE
-	var root := PanelKit.padded(self, 16, 10)
-	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 16)
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(body)
+	var root := PanelKit.padded(self, 24, 14)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 24)
+	root.add_child(top)
 	var side := VBoxContainer.new()
-	side.add_theme_constant_override("separation", 8)
-	body.add_child(side)
+	side.add_theme_constant_override("separation", 6)
+	top.add_child(side)
 	_face = Control.new()
-	_face.custom_minimum_size = Vector2(220, 302)
+	_face.custom_minimum_size = FACE
 	side.add_child(_face)
-	# V5.3-0 (c) 4.2: what the person says aloud, under their face (AudienceVoice).
 	_spoken = Label.new()
 	_spoken.name = "Spoken"  # i18n: ok a node name, found by tests
 	_spoken.theme_type_variation = UiTheme.CAPTION
 	_spoken.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_spoken.custom_minimum_size.x = 220
+	_spoken.custom_minimum_size.x = FACE.x
 	_spoken.visible = false
 	side.add_child(_spoken)
-	var talk := VBoxContainer.new()
-	talk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	talk.add_theme_constant_override("separation", 8)
-	body.add_child(talk)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.add_theme_constant_override("separation", 10)
+	top.add_child(words)
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
-	talk.add_child(head)
+	words.add_child(head)
 	_speaker = Label.new()
 	_speaker.theme_type_variation = UiTheme.MICRO
+	_speaker.uppercase = true
 	head.add_child(_speaker)
 	_party = HBoxContainer.new()
 	head.add_child(_party)
 	_line = Label.new()
+	_line.theme_type_variation = UiTheme.FIGURE
 	_line.autowrap_mode = TextServer.AUTOWRAP_WORD
-	talk.add_child(_line)
-	_fog = Label.new()
-	_fog.theme_type_variation = UiTheme.CAPTION
-	talk.add_child(_fog)
-	_traits = Label.new()
-	_traits.theme_type_variation = UiTheme.CAPTION
-	talk.add_child(_traits)
-	talk.add_child(deal)
-	deal.granted.connect(func() -> void: granted.emit())
-	talk.add_child(verbs)
-	verbs.attempted.connect(func(lever: String, args: Dictionary) -> void: attempted.emit(lever, args))
-	verbs.talked.connect(func(topic: String, args: Dictionary) -> void: talked.emit(topic, args))
-	talk.add_child(shadow)
-	shadow.offer_answered.connect(func(accepted: bool) -> void: offer_answered.emit(accepted))
-	shadow.affair.connect(func(action: String) -> void: affair.emit(action))
-	var said := HBoxContainer.new()
-	said.add_theme_constant_override("separation", 10)
-	talk.add_child(said)
+	words.add_child(_line)
+	_lead = Label.new()
+	_lead.name = "Lead"  # i18n: ok a node name, found by tests
+	_lead.theme_type_variation = UiTheme.CAPTION
+	_lead.autowrap_mode = TextServer.AUTOWRAP_WORD
+	words.add_child(_lead)
+	_band = PanelContainer.new()
+	_band.theme_type_variation = UiTheme.PLATE
+	words.add_child(_band)
+	var band_box := PanelKit.padded(_band, 12, 6)
+	var band_head := HBoxContainer.new()
+	band_head.add_theme_constant_override("separation", 12)
+	band_box.add_child(band_head)
 	_tone = Label.new()
 	_tone.name = "ResultTone"  # i18n: ok a node name, found by tests
 	_tone.uppercase = true
-	_tone.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	said.add_child(_tone)
+	_tone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	band_head.add_child(_tone)
 	_result = Label.new()
+	_result.theme_type_variation = UiTheme.LEAD
 	_result.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	said.add_child(_result)
-	ResultTone.apply(_tone, "")
+	band_head.add_child(_result)
+	_band_lines = VBoxContainer.new()
+	_band_lines.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_band_lines.add_theme_constant_override("separation", 3)
+	band_box.add_child(_band_lines)
+	root.add_child(cards)
+	cards.granted.connect(func() -> void: granted.emit())
+	cards.countered.connect(func(date: Dictionary) -> void: countered.emit(date))
+	cards.refused.connect(func() -> void: ended.emit())
+	cards.date_picked.connect(func(date: Dictionary) -> void: flow.date = date)
+	cards.date_opened.connect(func() -> void: flow.fire("open_date"))
+	cards.date_closed.connect(func() -> void: flow.fire("close_date"))
+	root.add_child(talk)
+	talk.asked.connect(func(line_id: String, topic: String, args: Dictionary) -> void:
+		_pending = line_id
+		if args.has("about"):
+			flow.pick(line_id, String(args["about"]))
+		asked.emit(line_id, topic, args))
 	_end = PanelKit.sized(Button.new())
+	_end.custom_minimum_size.x = AudienceCards.BUTTON_WIDTH
+	# The way out sits where the cards' buttons sit: the dialog's own left padding.
 	_end.pressed.connect(func() -> void:
-		if _over:
-			AudienceVoice.hush(self)  # the queued farewell goes with the scene (#222 QA)
-			closed.emit()
+		if flow.state == AudienceFlow.S.REFUSED:
+			flow.fire("end")
+			_over()
 		else:
 			ended.emit())
-	var out_row := HBoxContainer.new()
-	out_row.add_theme_constant_override("separation", 12)
-	root.add_child(out_row)
-	out_row.add_child(_end)
-	_refuse_cost = Label.new()
-	_refuse_cost.name = "RefuseCost"  # i18n: ok a node name, found by tests
-	_refuse_cost.theme_type_variation = UiTheme.CAPTION
-	_refuse_cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_refuse_cost.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_refuse_cost.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	out_row.add_child(_refuse_cost)
+	root.add_child(_end)
 
 
-## `view`: {request_id, person_id, name, ask, stance, president, fog ("stranger" |
-## "acquaintance" | "known"), traits (shown words), offered (Levers.offered()'s
-## rows), topics (Levers.topics()'s), attempts_left, choices (audience_verbs')}.
+## `view`: {request_id, person_id, name, ask, stance, president, party, voice, opening_title,
+## choices.feel, question (AudienceWords.question), counter_default, struck, struck_lines, talk (the
+## ranked rows, resolved), refused_lines}.
 func open(view: Dictionary) -> void:
 	_view = view
-	_over = false
-	_end.text = tr("End the audience")
+	flow = AudienceFlow.new()
 	visiting = String(view.get("name", ""))  # i18n: row-ok the person's shown name, resolved by the wiring
 	_resource = DialogueLines.resource_for(String(view.get("stance", "")))
 	for child in _face.get_children():
-		_face.remove_child(child)  # out now: the next badge must not find the last one
+		_face.remove_child(child)
 		child.queue_free()
 	var person_id := String(view.get("person_id", ""))
 	if person_id != "":
@@ -176,115 +168,165 @@ func open(view: Dictionary) -> void:
 		_face.add_child(Portrait.framed_for(person_id, _face.custom_minimum_size, MoodBadge.mood_portrait(person_id, feel),
 			Portrait.scene_from_name("office")))
 		_badge(view)
-	_result.text = ""
-	ResultTone.apply(_tone, "")
 	_voice = view.get("voice", {})
 	_spoken.visible = false
-	AudienceVoice.hush(self)  # the last visitor's queued line is not this one's
+	AudienceVoice.hush(self)
 	AudienceVoice.say(self, _spoken, _voice, "greet")
 	for child in _party.get_children():
 		child.queue_free()
-	# A view without the key (a test's, the phone's) shows no party line at all;
-	# the lane's row always carries it, {} for a person with none.
 	if view.has("party"):
 		_party.add_child(PartyChip.make(view["party"]))
-	_show_state(view)
+	_render(_view)
 	say(String(view.get("opening_title", "opening")), {})
-	_say_offer(view)
 
 
-## After a verb: the sim's result in words, the levers' new ranges, what is left.
-## `view` carries the fresh fog, traits, offered, topics and attempts_left; `tone`
-## is a ResultTone key, "" for a result that is neither good nor bad news.
+## After a verb: the sim's result in words (the band's head), what the sim now reads (`view`),
+## the title of her answer, and how it landed. A line asked and answered is marked asked.
 func show_result(text: String, view: Dictionary, title: String, extra := {}, tone := "") -> void:
+	_view.merge(view, true)  # the face, the name and the party stay: a result's view carries only what changed
+	flow.sync(bool(view.get("struck", false)))
+	flow.fire("close_date")  # a Counter she did not take is back on the question, with the date kept
+	if _pending != "":
+		if tone != ResultTone.BLOCKED:
+			flow.ask(_pending)
+		_pending = ""
 	_result.text = text
 	ResultTone.apply(_tone, tone)
-	# The badge still shows the face before this result: a band it crosses is said.
 	var badge = _face.get_node_or_null("MoodBadge")
 	AudienceVoice.say(self, _spoken, _voice, AudienceVoice.answer(_voice, tone, badge.emotion if badge != null else -1,
 		view.get("choices", {}).get("feel", {})))
-	_show_state(view)
+	_render(_view)
+	_badge(_view)
 	if title != "":
 		say(title, extra)
 
 
-## The sim has closed the audience: its outcome, said; every verb down; one way out.
+## The sim has closed the audience. From the question, that is a refusal: her parting line, what it
+## cost and the way out. From the talk, it is the end: the scene comes down at once.
 func show_close(outcome: String, text: String, tone := "") -> void:
-	_over = true
 	_result.text = text
 	ResultTone.apply(_tone, tone)
-	verbs.show_verbs([], [], 0, {})
-	verbs.visible = false
-	shadow.visible = false
-	deal.visible = false
-	_refuse_cost.text = ""
-	_end.text = tr("Leave")
 	AudienceVoice.say(self, _spoken, _voice, "farewell")
 	say(DialogueLines.close_title(_view, outcome), {})
+	if flow.fire("refuse"):
+		_render(_view)
+	elif flow.fire("end"):
+		_over()
 
 
-## The line already playing may finish; nothing queued behind it outlives the
-## scene (#222 QA, TAKE 4's addendum: a farewell started 2 s after Leave).
 func close_scene() -> void:
 	AudienceVoice.hush(self)
 	visiting = ""
 	_view = {}
-	verbs.visible = true
-	shadow.visible = true
-	deal.visible = true
 
 
-func _show_state(view: Dictionary) -> void:
-	_fog.text = Words.fog(String(view.get("fog", Words.FOG_DEFAULT)))
-	var traits: Array = view.get("traits", [])
-	_traits.text = tr("What you know of them: %s.") % ", ".join(PackedStringArray(traits)) if not traits.is_empty() else tr("You know nothing of their character yet.")
-	verbs.show_verbs(view.get("offered", []), view.get("topics", []), int(view.get("attempts_left", 0)), view.get("choices", {}))
-	shadow.show_for(view)
-	_show_deal(view.get("deal", {}))
-	_badge(view)
+## The flow is at ENDED: the scene's own farewell goes with it.
+func _over() -> void:
+	AudienceVoice.hush(self)
+	closed.emit()
 
 
-## The deal's strip, and the way out named for what it is: before a deal it is the Refuse,
-## priced beside it; once struck it only ends the audience. A view with no deal is the old one.
-func _show_deal(card: Dictionary) -> void:
-	deal.show_card(card)
-	var refusing := not card.is_empty() and not bool(card["struck"])
-	_end.text = tr("Refuse") if refusing else tr("End the audience")
-	_refuse_cost.text = String(card["refuse"]) if refusing else ""
+## What the flow's state shows: the cards, the deal's band with the talk, or the refusal's.
+func _render(view: Dictionary) -> void:
+	flow.sync(bool(view.get("struck", false)))
+	var state := flow.state
+	var asking := state == AudienceFlow.S.QUESTION or state == AudienceFlow.S.COUNTER_OPEN
+	cards.visible = asking
+	talk.visible = flow.in_talk()
+	_lead.visible = asking
+	_band.visible = not asking
+	_end.visible = not asking
+	_end.text = tr("That will be all") if flow.in_talk() else tr("End the audience")
+	if asking:
+		_lead.text = String(view.get("question", {}).get("lead", ""))
+		if not view.is_empty() and view.has("question"):
+			cards.show_question(view["question"], flow.date, view.get("counter_default", {}))
+		return
+	if state == AudienceFlow.S.REFUSED:
+		_lines(view.get("refused_lines", []))
+	else:
+		_lines(view.get("struck_lines", []))
+		if not flow.ranked and view.has("talk"):
+			flow.lines = view["talk"]
+			flow.ranked = true
+		_fill_talk(view)
 
 
-## V5.3-0 (c) 4.2: the mood badge on the face, re-read after every lever, so a
-## refusal that cools them shows on the face too. A view with no feelings (a
-## test's) wears none.
+func _lines(rows: Array) -> void:
+	for child in _band_lines.get_children():
+		_band_lines.remove_child(child)
+		child.queue_free()
+	for row in rows:
+		var cell := HBoxContainer.new()
+		cell.add_theme_constant_override("separation", 8)
+		_band_lines.add_child(cell)
+		var glyph := String(row["glyph"])
+		var tone := String(row["tone"])
+		var colour := UiTheme.GOOD if tone == Words.GOOD else (UiTheme.BAD if tone == Words.BAD else UiTheme.TEXT_DIM)
+		if glyph.length() > 2:
+			var picture := TextureRect.new()
+			picture.texture = Icon.load_icon(ICONS + glyph + ".svg", colour, 16)
+			picture.custom_minimum_size = Vector2(16, 16)
+			cell.add_child(picture)
+		else:
+			var sign_label := Label.new()
+			sign_label.text = glyph
+			sign_label.theme_type_variation = UiTheme.GOOD_SMALL if tone == Words.GOOD else (UiTheme.BAD_SMALL if tone == Words.BAD else UiTheme.CAPTION)
+			cell.add_child(sign_label)
+		var text := Label.new()
+		text.text = String(row["text"])  # i18n: row-ok words built by audience_words.gd
+		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cell.add_child(text)
+
+
+## The talk's rows, their sentences from the dialogue (a title the files lack: a plain line), each
+## with what the flow remembers: asked, and the face picked. Built once the lines are in.
+func _fill_talk(view: Dictionary) -> void:
+	_build += 1
+	var mine := _build
+	var rows: Array = []
+	for line in flow.lines:
+		var vars := {"name": String(view.get("name", "")), "ask": String(view.get("ask", "")),  # i18n: row-ok the person's shown name, resolved by the wiring
+			"president": String(view.get("president", "")), "lever": "", "topic": "", "first": String(view.get("name", "")).get_slice(" ", 0)}  # i18n: row-ok a shown name
+		vars.merge(line.get("vars", {}), true)
+		vars["third"] = AudienceTalkView.MARK
+		var said: String = await DialogueLines.line(_resource, "talk_" + String(line["id"]), vars)
+		if mine != _build:
+			return
+		var parts := (said if said != "" else _plain(line)).split(AudienceTalkView.MARK)
+		var open_quote := "“"  # i18n: ok a quotation mark
+		var shut_quote := "”"  # i18n: ok a quotation mark
+		var before: String = open_quote + parts[0]
+		var after: String = (parts[1] if parts.size() > 1 else "") + shut_quote
+		if parts.size() == 1:
+			before += shut_quote
+			after = ""
+		rows.append({"id": line["id"], "topic": line["topic"], "tag": line["tag"], "args": line.get("args", {}),
+			"people": line.get("people", []), "prefix": before, "suffix": after,
+			"asked": flow.asked.has(line["id"]), "picked": String(flow.picked.get(line["id"], "")),
+			"blocked": String(view.get("talk_blocked", {}).get(String(line["topic"]), ""))})
+	talk.show_lines(rows)
+
+
+## The line the files do not have: the topic's own word, and a gossip's sentence around its faces.
+func _plain(line: Dictionary) -> String:
+	if not (line.get("people", []) as Array).is_empty():
+		return tr("What do you make of") + " " + AudienceTalkView.MARK + "?"
+	return String(line.get("plain", line["topic"]))  # i18n: row-ok the wiring's own word for the line
+
+
 func _badge(view: Dictionary) -> void:
 	var feel: Dictionary = view.get("choices", {}).get("feel", {})
 	if not feel.is_empty() and _face.get_child_count() > 0:
 		MoodBadge.wear(_face, feel, 28.0)
 
 
-## The money a request came with, in the person's own words (Content's
-## offer_<kind>_<currency> title) beside the opening, which keeps the ask.
-func _say_offer(view: Dictionary) -> void:
-	var offer: Dictionary = view.get("shadow", {}).get("offer", {})
-	shadow.set_offer_line("")
-	if offer.is_empty():
-		return
-	var state := {"name": String(view.get("name", "")), "ask": String(view.get("ask", "")),  # i18n: row-ok the person's shown name, resolved by the wiring
-		"president": String(view.get("president", "")), "lever": "", "topic": ""}
-	var asked := String(view.get("request_id", ""))
-	var said: String = await DialogueLines.line(_resource, "offer_%s_%s" % [String(view["shadow"].get("kind", "")), String(offer.get("currency", ""))], state)
-	# The line is awaited: the audience it was asked for may be gone by now.
-	if String(_view.get("request_id", "")) == asked:
-		shadow.set_offer_line(said)
-
-
-## One title of the person's lines, through the addon; a title the files lack is
-## a plain line in the person's mouth, so a missing line never stops the scene.
+## One title of her lines, through the addon; a title the files lack is a plain line in her mouth.
 func say(title: String, extra: Dictionary) -> void:
 	var state := {"name": String(_view.get("name", "")), "ask": String(_view.get("ask", "")),  # i18n: row-ok the person's shown name, resolved by the wiring
-		"president": String(_view.get("president", "")), "lever": "", "topic": ""}
+		"president": String(_view.get("president", "")), "lever": "", "topic": "", "first": String(_view.get("name", "")).get_slice(" ", 0)}  # i18n: row-ok a shown name
 	state.merge(extra, true)
 	_speaker.text = String(state["name"])  # i18n: row-ok the person's shown name, resolved by the wiring
 	var said: String = await DialogueLines.line(_resource, title, state)
-	# No line for the title: the opening says the ask bare, anything else nothing.
 	_line.text = said if said != "" or not title.ends_with("opening") else String(state["ask"])
