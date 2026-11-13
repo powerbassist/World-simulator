@@ -39,9 +39,9 @@ extends SceneTree
 
 const ROOT := "res://src/ui"
 const OK_MARK := "# i18n: ok"
-## Files with no text a player reads: grade.gd is a shader (its const holds GLSL, where
-## an end-of-line marker would be code).
-const NO_TEXT := ["grade.gd"]
+## Files with no text a player reads: grade.gd and backdrop.gd are shaders (their const holds
+## GLSL, where an end-of-line marker would be code).
+const NO_TEXT := ["grade.gd", "backdrop.gd"]
 const MSGID_MARK := "# i18n: msgid"
 ## Builders whose first argument is text, and builders whose first argument is an id
 ## (the drawer's _entry(id, label) and add_cluster(id, label, ...)): the lint reads

@@ -34,6 +34,7 @@ extends SceneTree
 ## reason they existed.
 
 const MainScene := "res://src/ui/main.tscn"
+const Backdrop = preload("res://src/ui/backdrop.gd")
 
 ## Paris. Every zoom is framed on the same land-heavy point, so the deep-zoom
 ## samples rasterise polygons rather than open sea -- the player case the gate
@@ -226,6 +227,13 @@ func _build_configs() -> void:
 	# so it is measured under the same regime rather than argued about.
 	_configs.append({"label": "G6 CLOCK-WINDOW @ 1440 fit convoys", "zoom": 2.08, "map": true, "size": SIZE_BIG, "vsync": true, "clock": true, "flows": true})
 	_configs.append({"label": "G6 CLOCK-WINDOW @ 1440 max convoys", "zoom": mv.MAX_ZOOM, "map": true, "size": SIZE_BIG, "vsync": true, "clock": true, "flows": true})
+	# V5.3, THE MODAL BACKDROP -- a dimmed modal (the pause menu) over the opening fit, in three
+	# states in ONE run: no modal, the dim the stack drew before (a plain ColorRect), and the
+	# backdrop (blur + dim, backdrop.gd). Run alone: PROBE_ONLY=M.
+	for size_row in [["1080", SIZE_BASE], ["1440", SIZE_BIG]]:
+		for state in ["no modal", "plain dim (before)", "backdrop (after)"]:
+			_configs.append({"label": "M %s opening fit, %s" % [size_row[0], state], "zoom": 2.08, "map": true,
+				"size": size_row[1], "vsync": false, "modal": state})
 
 
 ## Absolute day count for one clock date -- clock.gd's own month lengths, so a
@@ -281,6 +289,7 @@ func _apply_config(cfg: Dictionary) -> void:
 	DisplayServer.window_set_vsync_mode(
 		DisplayServer.VSYNC_ENABLED if bool(cfg["vsync"]) else DisplayServer.VSYNC_DISABLED)
 	_main._map_view.visible = bool(cfg["map"])
+	_set_modal(String(cfg.get("modal", "no modal")))
 	if _ground_tex == null:
 		_ground_tex = _main._map_view._ground
 	_main._map_view._ground = null if bool(cfg.get("ground_off", false)) else _ground_tex
@@ -359,6 +368,19 @@ func _finish_sample() -> void:
 
 func _restore_toggles() -> void:
 	_main._map_view.visible = true
+	_set_modal("no modal")
+
+
+## The pause menu is the probe's dimmed modal. Shown through main's own setter, which
+## leaves the clock alone (the probe sets it per row). "plain dim (before)" swaps the
+## backdrop's material for the flat ColorRect the stack drew before V5.3, so the two
+## are measured in the same run, on the same renderer state.
+func _set_modal(state: String) -> void:
+	_main._set_pause_menu_visible(state != "no modal")
+	for child in _main._stack._hosts[_main._stack.SYSTEM].get_children():
+		if child is ColorRect:
+			child.material = null if state == "plain dim (before)" else Backdrop.material()
+			child.color = Color(0.02, 0.03, 0.05, 0.55)
 
 
 func _process(delta: float) -> bool:

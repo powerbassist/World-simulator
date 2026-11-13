@@ -46,6 +46,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open energy --arm-energy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --consequence
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --election --polls-closed
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pause-menu
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step m-money
 ##       (the offer of money: m-money, m-left, m-taken; the affair: m-affair, m-no, m-yes, m-end)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card
@@ -618,6 +619,8 @@ var _city := false
 ## data/regions/ says. Ten years is what makes the moved column readable.
 var _diverge := false
 var _election := false
+## V5.3: the pause menu open over the map -- a dimmed modal, the backdrop's other frame.
+var _pause_menu := false
 ## V5.1-d1b2 (G4): an election reached through the month end stops on the polls
 ## closing; --election and --tally press its Continue unless this keeps the beat.
 var _polls_closed := false
@@ -1009,6 +1012,8 @@ func _init() -> void:
 			_book_visit = true
 		elif args[i] == "--menu":
 			_menu = true
+		elif args[i] == "--pause-menu":
+			_pause_menu = true
 		elif args[i] == "--tally":
 			_tally = true
 			# V4.9b: the count is motion, so this flag alone turns it back on --
@@ -1397,6 +1402,8 @@ func _apply_view() -> void:
 		_open_the_partition()
 	if _election:
 		_stage_the_election()
+	if _pause_menu:
+		_main._open_pause_menu()
 	if _tally:
 		_stage_the_tally()
 	if _diverge:

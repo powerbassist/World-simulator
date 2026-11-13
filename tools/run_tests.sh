@@ -387,6 +387,7 @@ tests=(
   tests/test_hud.gd
   tests/test_ui_theme.gd
   tests/test_grade.gd
+  tests/test_backdrop.gd
   tests/test_ui_fit.gd
   tests/test_map_ownership.gd
   tests/test_load_hygiene.gd
