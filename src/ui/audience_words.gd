@@ -7,6 +7,7 @@ extends RefCounted
 ## tone, a sentence. Nothing here explains the interface (the author's first ruling).
 
 const DealK = preload("res://src/sim/deal_constants.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
 const Num = preload("res://src/ui/num.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -41,7 +42,7 @@ static func question(loader, ns, session: Dictionary, answers: Dictionary, feel:
 	if spared != "":
 		grant_lines.append(line(UP, GOOD, spared))
 	if ask.has("due_month"):
-		grant_lines.append(line(CALENDAR, DIM, Strings.t("Judged at the end of %s") % Words.when(int(ask["due_month"]))))
+		grant_lines.append(line(CALENDAR, DIM, judged_on(int(ask["due_month"]))))
 	if not bool(card["grant_ok"]):
 		grant_lines.append(line("!", WARN, String(card["grant_why"])))
 	var refuse_lines: Array = [line(DOWN, BAD, String(card["refuse"]))]
@@ -65,7 +66,8 @@ static func _counter(answers: Dictionary, session: Dictionary) -> Dictionary:
 		if String(row["lever"]) != "promise_date":
 			continue
 		var lines: Array = [line(PERCENT, DIM, Strings.t("%s they agree") % Words.odds_text(float(row.get("odds_lo", 0.0)), float(row.get("odds_hi", 0.0)))),
-			line(NEUTRAL, DIM, Strings.t("The same terms, judged at the end of the month you pick"))]
+			line(NEUTRAL, DIM, Strings.t("The same terms, judged on %s") % _first_day(int(answers.get("bargain", {}).get("due_month", 0))))]
+		(lines[1] as Dictionary)["live"] = true
 		var ok := bool(row.get("offered", false))
 		var why := Words.reason(String(row.get("why_not", "")))
 		if ok and _countered(session):
@@ -77,6 +79,25 @@ static func _counter(answers: Dictionary, session: Dictionary) -> Dictionary:
 		return {"micro": Strings.t("Counter"), "title": Strings.t("The same word, later"), "lines": lines, "ok": ok,
 			"why": why, "earliest": int(dates.get("earliest", 0)), "latest": int(dates.get("latest", 0))}
 	return {}
+
+
+## "Judged on 01 OCT 2026": a word is judged when its due month BEGINS -- the clock emits
+## month_elapsed with the new month and Levers.tick_month takes every row with due_month <= now --
+## so the card says that day, never "the end of" the month (QA #324, the real-window play).
+static func judged_on(due_month: int) -> String:
+	return Strings.t("Judged on %s") % _first_day(due_month)
+
+
+## The Counter's own line for the date the field shows: the picked MONTH decides, the day is the
+## diary's only (due_day changes nothing in the judgement).
+static func counter_judged(date: Dictionary) -> String:
+	return Strings.t("The same terms, judged on %s") % _first_day(int(date["year"]) * 12 + int(date["month"]))
+
+
+## An absolute month (year x 12 + month) as the first day of it, in the house date.
+static func _first_day(due_month: int) -> String:
+	var year := floori((due_month - 1) / 12.0)
+	return DateText.day_month_year(1, due_month - year * 12, year)
 
 
 static func _countered(session: Dictionary) -> bool:
@@ -118,7 +139,7 @@ static func struck_lines(answers: Dictionary, card: Dictionary) -> Array:
 	var out: Array = [line(UP, GOOD, String(card["give_stake"]))]
 	var ask: Dictionary = answers.get("ask", {})
 	if ask.has("due_month"):
-		out.append(line(CALENDAR, DIM, Strings.t("Your word is in the Diary, judged at the end of %s.") % Words.when(int(ask["due_month"]))))
+		out.append(line(CALENDAR, DIM, Strings.t("Your word is in the Diary, judged on %s.") % _first_day(int(ask["due_month"]))))
 	return out
 
 

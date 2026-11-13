@@ -27,6 +27,8 @@ const ICONS := "res://assets/icons/material/"
 const NODE := {"grant": ["GrantCard", "GrantButton"], "counter": ["CounterCard", "CounterButton"], "refuse": ["RefuseCard", "RefuseButton"]}  # i18n: ok node names, found by tests
 
 var date_pick: DatePick
+## The Counter's live 'judged on' line: it follows the date field's month, never rebuilt by a pick.
+var _judged: Label
 
 
 func _ready() -> void:
@@ -41,6 +43,7 @@ func show_question(q: Dictionary, date: Dictionary, default_date: Dictionary) ->
 		remove_child(child)
 		child.queue_free()
 	date_pick = null
+	_judged = null
 	_card("grant", q["grant"], func() -> void: granted.emit())
 	if not (q["counter"] as Dictionary).is_empty():
 		var counter: Dictionary = q["counter"]
@@ -52,7 +55,12 @@ func show_question(q: Dictionary, date: Dictionary, default_date: Dictionary) ->
 		footer.add_child(date_pick)
 		footer.move_child(date_pick, 0)
 		date_pick.setup(int(counter["earliest"]), int(counter["latest"]), date if not date.is_empty() else default_date)
-		date_pick.picked.connect(func(chosen: Dictionary) -> void: date_picked.emit(chosen))
+		date_pick.picked.connect(func(chosen: Dictionary) -> void:
+			if _judged != null:
+				_judged.text = Words.counter_judged(chosen)
+			date_picked.emit(chosen))
+		if _judged != null:
+			_judged.text = Words.counter_judged(date_pick.date)
 		date_pick.opened.connect(func() -> void: date_opened.emit())
 		date_pick.closed.connect(func() -> void: date_closed.emit())
 		date_pick.disabled = not bool(counter["ok"])
@@ -119,6 +127,9 @@ func _line(into: Control, row: Dictionary) -> void:
 		cell.add_child(sign_label)
 	var text := Label.new()
 	text.text = String(row["text"])  # i18n: row-ok words built by audience_words.gd
+	if bool(row.get("live", false)):
+		text.name = "JudgedLine"  # i18n: ok a node name, found by tests
+		_judged = text
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cell.add_child(text)

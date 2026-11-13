@@ -172,6 +172,7 @@ func _check_words() -> void:
 	if not (q["counter"] as Dictionary).is_empty():
 		_fail("an ask with no date to move still has a Counter")
 	_check_the_cards_after_qa_round_one()
+	_check_a_word_is_judged_on_day_one()
 
 
 ## QA's round on #324: one counter per audience (the parent's ruling), the spared brief only for a
@@ -207,6 +208,31 @@ func _check_the_cards_after_qa_round_one() -> void:
 	var refuse_texts: Array = (fresh["refuse"]["lines"] as Array).map(func(l: Dictionary) -> String: return String(l["text"]))
 	if not refuse_texts.any(func(t: String) -> bool: return t.begins_with("A brief likely ") and not t.contains("3")):
 		_fail("a refusal's risk is not one brief line: %s" % [refuse_texts])
+
+
+## QA #324, the real-window play: a word is judged when its due month BEGINS (the clock emits
+## month_elapsed with the new month, and Levers.tick_month takes due_month <= now), so every line
+## that dates a word says day 1 of that month, not "the end of" it.
+func _check_a_word_is_judged_on_day_one() -> void:
+	var due := 2026 * 12 + 10
+	var answers := {"ask": {"kind": "word", "object": "x", "due_month": due}, "offer": {"kind": "silence", "months": 12},
+		"grant": {"ok": true, "why_not": ""}, "refuse": {}, "bargain": {"due_month": 2027 * 12 + 10, "approaches": [
+			{"lever": "promise_date", "offered": true, "odds_lo": 0.0, "odds_hi": 0.36, "why_not": "", "dates": {"earliest": 1, "latest": 2}}]}}
+	var q := AudienceWords.question(_main._loader, _ns(), {"attempts": []}, answers, {}, "w", "executive", {})
+	var texts: Array = []
+	for card in ["grant", "counter"]:
+		for l in q[card]["lines"]:
+			texts.append(String(l["text"]))
+	if not texts.any(func(t: String) -> bool: return t.contains("01 OCT 2026")):
+		_fail("the Grant card does not say the word is judged on 01 OCT 2026: %s" % [texts])
+	if not texts.any(func(t: String) -> bool: return t.contains("01 OCT 2027")):
+		_fail("the Counter card does not say its default word is judged on 01 OCT 2027: %s" % [texts])
+	if texts.any(func(t: String) -> bool: return t.contains("end of")):
+		_fail("a card still says a word is judged at the end of a month: %s" % [texts])
+	var struck := AudienceWords.struck_lines(answers, {"give_stake": "A silence."})
+	var struck_texts: Array = struck.map(func(l: Dictionary) -> String: return String(l["text"]))
+	if not struck_texts.any(func(t: String) -> bool: return t.contains("01 OCT 2026")) or struck_texts.any(func(t: String) -> bool: return t.contains("end of")):
+		_fail("the struck band does not say the word is judged on 01 OCT 2026: %s" % [struck_texts])
 
 
 func _card(ask: Dictionary, offer: Dictionary) -> Dictionary:

@@ -54,7 +54,7 @@ func _card(micro: String, title: String, ok: bool, lines := []) -> Dictionary:
 
 
 func _view(struck: bool) -> Dictionary:
-	var counter := _card("Counter", "The same word, later", true, [{"glyph": "%", "tone": "", "text": "0–36 % they agree"}])
+	var counter := _card("Counter", "The same word, later", true, [{"glyph": "%", "tone": "", "text": "0–36 % they agree"}, {"glyph": "=", "tone": "", "text": "The same terms, judged on 01 APR 2027", "live": true}])
 	counter["earliest"] = 2027 * 12 + 1
 	counter["latest"] = 2027 * 12 + 12
 	return {"request_id": "req_1", "person_id": "", "name": "Cécile Aumont", "ask": "the pension age held",
@@ -79,6 +79,7 @@ func _process(_delta: float) -> bool:
 		5:
 			_check_cards()
 			_check_the_grid()
+			_check_the_judged_line_follows_the_picked_month()
 			_check_the_date_survives_a_counter_she_did_not_take()
 		8:
 			_check_the_deal_gives_way_to_the_talk()
@@ -135,6 +136,22 @@ func _check_the_grid() -> void:
 	if field._shown != field._last or not field._forward.disabled:
 		_fail("paging forward passed the window's last month")
 	field._show(APRIL_2027)
+
+
+## The Counter's "judged on" line follows the date field's MONTH (a word is judged on day 1 of its
+## month; the day picked is for the diary only), live, without the cards being rebuilt.
+func _check_the_judged_line_follows_the_picked_month() -> void:
+	var label: Label = _scene.cards.find_child("JudgedLine", true, false) as Label
+	if label == null:
+		_fail("the Counter has no live 'judged on' line")
+		return
+	_scene.cards.date_pick.choose(16, 2027 * 12 + 10)
+	if not label.text.contains("01 OCT 2027") or label.text.contains("16"):
+		_fail("the Counter's line does not follow the picked month's first day: '%s'" % label.text)
+	_scene.cards.date_pick.choose(3, 2027 * 12 + 10)
+	if not label.text.contains("01 OCT 2027"):
+		_fail("the Counter's line moved with the day: '%s'" % label.text)
+	_scene.cards.date_pick.choose(16, APRIL_2027)
 
 
 func _check_the_date_survives_a_counter_she_did_not_take() -> void:
