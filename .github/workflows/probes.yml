@@ -25,6 +25,11 @@
 #
 # Every job checks out the PROBED commit, not this file's, so all logic here is
 # inline and works on any commit that has the probe tools.
+#
+# The Godot cache is RESTORED, never saved (actions/cache/restore): a probed commit can
+# be anyone's (a fork PR's refs/pull/N/head), its code runs after the install, and a
+# saved ~/godot would be restored by tests.yml's suite on main. On a miss, a job
+# downloads Godot for itself and keeps nothing.
 
 name: probes
 
@@ -152,9 +157,9 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Cache Godot
+      - name: Restore the Godot cache (never saved here)
         id: godot-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0, restore only
         with:
           path: ~/godot
           key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
@@ -211,9 +216,9 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Cache Godot
+      - name: Restore the Godot cache (never saved here)
         id: godot-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0, restore only
         with:
           path: ~/godot
           key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
@@ -303,9 +308,9 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Cache Godot
+      - name: Restore the Godot cache (never saved here)
         id: godot-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0, restore only
         with:
           path: ~/godot
           key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
@@ -354,9 +359,9 @@ jobs:
           ref: ${{ matrix.target.sha }}
           persist-credentials: false
 
-      - name: Cache Godot
+      - name: Restore the Godot cache (never saved here)
         id: godot-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0, restore only
         with:
           path: ~/godot
           key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
