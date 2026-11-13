@@ -725,7 +725,13 @@ func _check_a_day_outside_its_month_is_refused() -> void:
 	var short := due
 	while Calendar.days_in_month(int((short - 1) / 12.0), (short - 1) % 12 + 1) != 30:
 		short += 1
-	for bad in [{"due_month": due, "due_day": 0}, {"due_month": due, "due_day": 32}, {"due_month": short, "due_day": 31}]:
+	var december := due
+	while (december - 1) % 12 + 1 != 12:
+		december += 1
+	var fine := Levers.arg_error("promise_date", {"due_month": december, "due_day": 31}, _now(f))
+	if fine != "":
+		_fail("the 31st of December was refused: %s" % fine)
+	for bad in [{"due_month": due, "due_day": 0}, {"due_month": due, "due_day": 32}, {"due_month": short, "due_day": 31}, {"due_month": december, "due_day": 32}]:
 		var before: int = ns.commitments.size()
 		var result := Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", bad)
 		if bool(result.get("ok", true)) or ns.commitments.size() != before:
