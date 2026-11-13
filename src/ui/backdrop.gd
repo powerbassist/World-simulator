@@ -31,21 +31,22 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const BLUR_PX := 4.0
 const DIM := Color(UiTheme.INK.r, UiTheme.INK.g, UiTheme.INK.b, 0.30)
 
-## The node's name, so a test and a frame can find it among the host's children.
-const NODE_NAME := "Backdrop"
-
 const CODE := """shader_type canvas_item;
 render_mode unshaded;
 
 uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap;
-uniform float blur_px = 4.0;
-uniform vec4 tint : source_color = vec4(0.059, 0.071, 0.078, 0.3);
+uniform float blur_px;
+uniform vec4 tint : source_color;
+// The project's design height: blur_px is in design pixels, so a 1440p window blurs as
+// much of the picture as a 1080p one (SCREEN_PIXEL_SIZE is physical pixels).
+uniform float design_h;
 
 void fragment() {
 	// The mip whose texel is about the blur radius; the taps are spread over the
 	// same radius so the mip's blocks average out instead of showing.
-	float lod = max(log2(blur_px) - 0.5, 0.0);
-	vec2 px = SCREEN_PIXEL_SIZE * blur_px * 0.5;
+	float radius = blur_px * (1.0 / SCREEN_PIXEL_SIZE.y) / design_h;
+	float lod = max(log2(radius) - 0.5, 0.0);
+	vec2 px = SCREEN_PIXEL_SIZE * radius * 0.5;
 	vec3 sum = vec3(0.0);
 	for (int y = -1; y <= 1; y++) {
 		for (int x = -1; x <= 1; x++) {
@@ -53,7 +54,8 @@ void fragment() {
 		}
 	}
 	vec3 blurred = sum / 9.0;
-	COLOR = vec4(mix(blurred, tint.rgb, tint.a), 1.0);
+	// COLOR.a is the rect's own alpha (its modulate), so a fade-in of the modal still fades.
+	COLOR = vec4(mix(blurred, tint.rgb, tint.a), COLOR.a);
 }
 """
 
@@ -69,13 +71,14 @@ static func material() -> ShaderMaterial:
 		_material.shader = shader
 		_material.set_shader_parameter("blur_px", BLUR_PX)
 		_material.set_shader_parameter("tint", DIM)
+		_material.set_shader_parameter("design_h", float(ProjectSettings.get_setting("display/window/size/viewport_height", 1080)))
 	return _material
 
 
 ## Dresses a full-rect rect as a backdrop and hands it back, so a call site reads
-## `host.add_child(Backdrop.apply(rect))`.
+## `host.add_child(Backdrop.apply(rect))`. Found again by its material (is_applied), not by
+## name: the engine renames a second node of the same name.
 static func apply(rect: ColorRect) -> ColorRect:
-	rect.name = NODE_NAME
 	rect.material = material()
 	return rect
 

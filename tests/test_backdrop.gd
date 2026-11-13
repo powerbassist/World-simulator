@@ -101,6 +101,9 @@ func _check_the_tokens_are_what_is_drawn() -> void:
 	var tint: Color = mat.get_shader_parameter("tint")
 	if not tint.is_equal_approx(Backdrop.DIM):
 		_fail("the dim is not Backdrop.DIM: %s" % [tint])
+	var design_h := float(ProjectSettings.get_setting("display/window/size/viewport_height", 1080))
+	if not is_equal_approx(float(mat.get_shader_parameter("design_h")), design_h):
+		_fail("the blur is not scaled to the project's design height: %s" % [mat.get_shader_parameter("design_h")])
 	var code := String(mat.shader.code)
 	if not code.contains("hint_screen_texture") or not code.contains("textureLod"):
 		_fail("the backdrop does not sample the screen texture's mips")

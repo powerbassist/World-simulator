@@ -126,7 +126,7 @@ func add(layer: int, panel: Control, dim := false, cancel := Callable()) -> void
 		# It follows the panel's visibility, so every existing show()/hide()
 		# call site keeps working unchanged.
 		# The dim is the backdrop (backdrop.gd): the world behind a modal is darkened AND
-		# blurred, one shared material, its strength UiTheme's tokens -- no panel sets it.
+		# blurred, one shared material, its strength backdrop.gd's tokens -- no panel sets it.
 		var shade := Backdrop.apply(ColorRect.new())
 		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		shade.mouse_filter = Control.MOUSE_FILTER_STOP
