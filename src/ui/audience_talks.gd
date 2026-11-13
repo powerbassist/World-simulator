@@ -146,11 +146,17 @@ static func end(main, game: Dictionary) -> void:
 	var session: Dictionary = game.get("session", {})
 	if session.is_empty() or bool(session.get("closed", false)):
 		return
+	# c1c rule 1: an audience settled as declined is a crossing; read before the close
+	# settles the request, so the close can say why the price was a broken word.
+	var broken := Audiences.decline_price(main._state.player(), main._loader, String(session.get("request_id", ""))).has("broken_word")
 	var r := Levers.close(main._state, main._state.player(), main._loader, session)
 	# Good news only for an outcome worded as one: anything else -- an outcome the sim leaves
 	# empty included -- is said as the refusal it is (Words.outcome). The price it cost is the
 	# refused band's own lines, read before the close (audience_view.gd).
-	game["scene"].show_close(String(r["outcome"]), Words.outcome(String(r["outcome"])), ResultTone.GOOD if String(r["outcome"]) in ["settled", "promised"] else ResultTone.BAD)
+	var text := Words.outcome(String(r["outcome"]))
+	if String(r["outcome"]) == "declined" and broken:
+		text += " " + Strings.t("They held something on you. Refusing them broke your word.")
+	game["scene"].show_close(String(r["outcome"]), text, ResultTone.GOOD if String(r["outcome"]) in ["settled", "promised"] else ResultTone.BAD)
 	main._windows.mark_all_dirty()
 
 
