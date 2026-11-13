@@ -160,6 +160,11 @@ func _check_promise() -> void:
 	var found := false
 	for row in President.commitments_with(ns, _person):
 		found = found or (String(row["kind"]) == "promise" and int(row["due_month"]) == _promised_due)
+	# The author's ruling of 2026-11-13: a promise the person refused binds nothing.
+	if not _promise_won():
+		if found:
+			_fail("a refused promise wrote a commitment: %s" % [ns.commitments])
+		return
 	if not found:
 		_fail("the promise made in the scene is not a commitment in the register: %s" % [ns.commitments])
 	if not _diary_has(_main._loader.person_name(_person), Words.when(_promised_due)):
@@ -189,8 +194,15 @@ func _check_left() -> void:
 		_fail("Leave left the audience open")
 	if _main._clock.paused and not _main._decision_holds_clock():
 		_fail("leaving the audience did not let the clock go")
-	if _promised_due > 0 and not _diary_has(_main._loader.person_name(_person), Words.when(_promised_due)):
-		_fail("a promise binds whatever the outcome, and the Diary dropped it")
+	if _promised_due > 0 and _promise_won() and not _diary_has(_main._loader.person_name(_person), Words.when(_promised_due)):
+		_fail("a promise the person took, and the Diary dropped it")
+
+
+func _promise_won() -> bool:
+	for attempt in _session().get("attempts", []):
+		if String(attempt["lever"]) == "promise_date" and bool(attempt["success"]):
+			return true
+	return false
 
 
 ## A second person promised something due next month (staged through the sim's

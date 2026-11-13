@@ -236,7 +236,10 @@ judged twice, and a row loaded from a save is judged at its date like any other.
   register is `absent_ok`: an older save had judged nothing.
 - **The author's call (2026-10-24), verbatim: "Oui, parole donnée".** A promise binds
   win or lose, so the president who promised a date and was not believed still owes
-  it. A
+  it. **Superseded in the audience by the author's ruling of 2026-11-13:** a counter
+  (the same word at a later date) the person refuses binds nothing: no row, no date,
+  no lie to come of it, and Grant and Refuse stay open; its cost is the attempt. The
+  phone's promise is unchanged and still binds win or lose. A
 person who has defected or left office meanwhile is judged on the same want. No balance
 regime makes a promise, so the tick has nothing to do there.
 
