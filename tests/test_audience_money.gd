@@ -65,6 +65,7 @@ func _process(_delta: float) -> bool:
 			if not _open_with_offer("press_owner"):
 				return _end()
 		11:
+			_check_no_notice_leaks()
 			_before = _money()
 			_press("money_take")
 		13:
@@ -261,6 +262,15 @@ func _check_the_end_of_an_affair() -> void:
 		_fail("the line did not end the affair through the sim")
 	if _row_button(_scene().talk, "affair_end") != null:
 		_fail("the line that ends an affair stayed after it ended")
+
+
+## The first audience ended on Leave's notice ("She thinks a little less of you"): the next audience
+## opens without it (QA's TAKE 4: a notice is one audience's, never the next one's).
+func _check_no_notice_leaks() -> void:
+	if not (_scene()._view.get("notice_lines", []) as Array).is_empty():
+		_fail("the last audience's notice is in the next one's view: %s" % [_scene()._view.get("notice_lines")])
+	if _game().has("notice"):
+		_fail("the game still holds the last audience's notice")
 
 
 ## Escape (the frame's X) over an offer left unanswered is walking out on her: Leave (Shadows.refuse_offer,

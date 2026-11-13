@@ -44,6 +44,7 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 	main._save_load_panel.block_save(Strings.t("Finish the audience first"))
 	game.erase("money_taken")
 	game.erase("money_open")
+	game.erase("notice")  # one audience's last word is never the next one's
 	var view := view_of(main, game)
 	view.merge(row)
 	view["president"] = main._loader.person_name(President.leader_id(ns))
@@ -240,6 +241,7 @@ static func leave(main, game: Dictionary) -> bool:
 			Shadows.refuse_offer(state, state.player(), main._loader, session)
 		Levers.close(state, state.player(), main._loader, session)
 	game["session"] = {}
+	game.erase("notice")
 	main._save_load_panel.block_save("")
 	game["scene"].close_scene()
 	main._windows.close(WINDOW)
