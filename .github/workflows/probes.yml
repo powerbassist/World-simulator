@@ -1,0 +1,439 @@
+# The heavy probes on GitHub's runners, on demand: shadows, balance, density.
+#
+# Why: the probes saturate a local machine for an hour (shadows: 55 min per side at
+# -j8 on the author's box), and standard runners are free on a public repo, 4 vCPU
+# each, 20 jobs at once account-wide. A child dispatches this, reads the JSON back
+# and spends no local CPU (docs/tooling.md, "The probes on GitHub").
+#
+# workflow_dispatch ONLY. No pull_request trigger (a probe on every push would
+# starve the PR checks of the 20 concurrent jobs), no secret, a read-only token, and
+# no credential left in the checkout. A fork cannot dispatch it.
+#
+# What its tables compare with (measured 2026-11-13, offload-cpu-report):
+# - shadows: the same rows and summary as a Windows run. Only the line endings differ,
+#   because shadows_parallel.py writes in text mode (CRLF on Windows), so compare a
+#   Windows table with its CRs stripped.
+# - balance: Linux and Windows differ in the last bit of a few vote shares, 0 verdict
+#   flips. Compare CI head with CI base (cmp), or a Windows table with balance_diff.py.
+# - density: cross-platform unmeasured; compare CI head with CI base only.
+#
+# Every job checks out the PROBED commit, not this file's, so all logic here is
+# inline and works on any commit that has the probe tools.
+
+name: probes
+
+on:
+  workflow_dispatch:
+    inputs:
+      head:
+        description: "Commit to probe: a full sha (needed for a commit no branch or tag reaches), a branch or a tag"
+        required: true
+      base:
+        description: "Optional second commit, probed beside it (for a PR: main's sha). Empty: head only"
+        required: false
+        default: ""
+      shadows:
+        description: "Run shadows_parallel (one job per regime and side)"
+        type: boolean
+        default: true
+      seeds:
+        description: "Shadows seed range (0-24 is a cheap spot-check)"
+        required: false
+        default: "0-199"
+      balance:
+        description: "Run balance_parallel (one job per side)"
+        type: boolean
+        default: false
+      density:
+        description: "Run decision_surfaces_probe --density (one job per side)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  # Pinned like project.godot's config/features and tests.yml: bump them together.
+  GODOT_VERSION: "4.7.2"
+  # Must match shadows_parallel.py's default --regimes on the probed commit; the
+  # merge job fails if it does not, so a new regime cannot be dropped silently.
+  SHADOWS_REGIMES: "S1,S2,S2c,S3,S4"
+
+jobs:
+  # Resolves head and base to full shas once, so every job probes the same commit
+  # even if a branch moves mid-run, and turns the inputs into outputs the jobs read.
+  setup:
+    name: Resolve the commits
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      targets: ${{ steps.resolve.outputs.targets }}
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+      shadows: ${{ steps.resolve.outputs.shadows }}
+      balance: ${{ steps.resolve.outputs.balance }}
+      density: ${{ steps.resolve.outputs.density }}
+      seeds: ${{ steps.resolve.outputs.seeds }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          fetch-depth: 0  # every branch and tag, so a short sha or a name resolves
+          persist-credentials: false
+
+      - name: Resolve
+        id: resolve
+        env:
+          HEAD_REF: ${{ inputs.head }}
+          BASE_REF: ${{ inputs.base }}
+          SHADOWS: ${{ inputs.shadows }}
+          BALANCE: ${{ inputs.balance }}
+          DENSITY: ${{ inputs.density }}
+          SEEDS: ${{ inputs.seeds }}
+        run: |
+          set -euo pipefail
+          resolve() {
+            # A full sha passes as given: actions/checkout fetches it even when no
+            # branch reaches it (a rebased PR's old head). Anything else must resolve
+            # from the fetched branches and tags.
+            if [[ "$1" =~ ^[0-9a-f]{40}$ ]]; then echo "$1"; return; fi
+            git rev-parse --verify --quiet "origin/$1^{commit}" \
+              || git rev-parse --verify --quiet "$1^{commit}" \
+              || { echo "cannot resolve '$1': give a full 40-character sha" >&2; return 1; }
+          }
+          [[ "$SEEDS" =~ ^[0-9]+-[0-9]+$ ]] || { echo "seeds must look like 0-199, got '$SEEDS'" >&2; exit 1; }
+          head_sha="$(resolve "$HEAD_REF")"
+          targets="[{\"side\":\"head\",\"sha\":\"$head_sha\"}"
+          if [ -n "$BASE_REF" ]; then
+            targets="$targets,{\"side\":\"base\",\"sha\":\"$(resolve "$BASE_REF")\"}"
+          fi
+          targets="$targets]"
+          {
+            echo "targets=$targets"
+            echo "head_sha=$head_sha"
+            echo "shadows=$SHADOWS"
+            echo "balance=$BALANCE"
+            echo "density=$DENSITY"
+            echo "seeds=$SEEDS"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Probe run"
+            echo "targets: \`$targets\`"
+            echo "shadows: $SHADOWS (seeds $SEEDS), balance: $BALANCE, density: $DENSITY"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # One job per regime and side: each runs its regime's chunks at -j4 on one runner.
+  # Splitting by regime over the full seed range keeps --exact on S1's first chunk
+  # only, exactly as a local run does.
+  shadows:
+    name: Shadows ${{ matrix.target.side }} ${{ matrix.regime }}
+    needs: setup
+    if: needs.setup.outputs.shadows == 'true'
+    runs-on: ubuntu-latest
+    # A 25-seed chunk took 11 to 24 min on loaded local machines; a regime is 8
+    # chunks on 4 workers, S1 carries --exact. Generous on purpose.
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.setup.outputs.targets) }}
+        regime: [S1, S2, S2c, S3, S4]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          ref: ${{ matrix.target.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
+      - name: Install Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -fsSL -o godot.zip "$url"
+          unzip -q godot.zip -d "$HOME/godot"
+
+      - name: Put Godot on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          ln -sf "$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/.local/bin/godot"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # shadows_parallel imports once itself when .godot/ is absent, and gives each
+      # probe a private user dir.
+      - name: Run the regime
+        env:
+          REGIME: ${{ matrix.regime }}
+          SEEDS: ${{ needs.setup.outputs.seeds }}
+        run: python tools/shadows_parallel.py --regimes="$REGIME" --seeds="$SEEDS" --json="$RUNNER_TEMP/rows.json"
+
+      - name: Keep the regime's rows
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: shadows-rows-${{ matrix.target.side }}-${{ matrix.regime }}
+          path: ${{ runner.temp }}/rows.json
+          retention-days: 7
+
+  # Rebuilds the table a local `shadows_parallel.py --json=...` writes: the rows in
+  # regime order (each regime's rows are already in chunk order), the probed commit's
+  # own --summarize over all of them, and the same writer (json.dumps indent=1).
+  shadows-merge:
+    name: Shadows ${{ matrix.target.side }} merged
+    needs: [setup, shadows]
+    if: needs.setup.outputs.shadows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.setup.outputs.targets) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          ref: ${{ matrix.target.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
+      - name: Install Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -fsSL -o godot.zip "$url"
+          unzip -q godot.zip -d "$HOME/godot"
+
+      - name: Put Godot on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          ln -sf "$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/.local/bin/godot"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: The regime list matches the probed commit's
+        run: |
+          set -euo pipefail
+          theirs="$(grep -oP 'add_argument\("--regimes", default="\K[^"]+' tools/shadows_parallel.py)"
+          [ "$theirs" = "$SHADOWS_REGIMES" ] \
+            || { echo "shadows_parallel.py's regimes are '$theirs', this workflow runs '$SHADOWS_REGIMES'"; exit 1; }
+
+      - name: Import
+        run: XDG_DATA_HOME="$RUNNER_TEMP/xdg_import" godot --headless --path . --import
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          pattern: shadows-rows-${{ matrix.target.side }}-*
+          path: ${{ runner.temp }}/rows
+
+      - name: Merge and summarize
+        env:
+          SIDE: ${{ matrix.target.side }}
+        run: |
+          python - <<'EOF'
+          # Keep in step with the end of tools/shadows_parallel.py's main().
+          import json, os, pathlib, subprocess, sys
+          tmp = pathlib.Path(os.environ["RUNNER_TEMP"])
+          side = os.environ["SIDE"]
+          rows = []
+          for regime in os.environ["SHADOWS_REGIMES"].split(","):
+              part = tmp / "rows" / ("shadows-rows-%s-%s" % (side, regime)) / "rows.json"
+              rows += json.loads(part.read_text(encoding="utf-8"))["rows"]
+          merged = tmp / "merged.json"
+          merged.write_text(json.dumps({"rows": rows}), encoding="utf-8")
+          summary_path = tmp / "summary.json"
+          env = {**os.environ, "XDG_DATA_HOME": str(tmp / "xdg_sum"), "APPDATA": str(tmp / "xdg_sum")}
+          proc = subprocess.run(["godot", "--headless", "--path", ".", "--script", "res://tools/shadows_probe.gd", "--",
+                                 "--summarize=" + str(merged), "--json=" + str(summary_path)],
+                                env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+          print(proc.stdout.strip())
+          if proc.returncode != 0 or not summary_path.is_file():
+              sys.exit("the summary failed")
+          summary = json.loads(summary_path.read_text(encoding="utf-8"))["summary"]
+          out = tmp / ("shadows-%s.json" % side)
+          out.write_text(json.dumps({"rows": rows, "summary": summary}, indent=1), encoding="utf-8")
+          print("%d rows -> %s" % (len(rows), out))
+          EOF
+
+      - name: Keep the table
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: probe-shadows-${{ matrix.target.side }}
+          path: ${{ runner.temp }}/shadows-${{ matrix.target.side }}.json
+          retention-days: 7
+
+  balance:
+    name: Balance ${{ matrix.target.side }}
+    needs: setup
+    if: needs.setup.outputs.balance == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.setup.outputs.targets) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          ref: ${{ matrix.target.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
+      - name: Install Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -fsSL -o godot.zip "$url"
+          unzip -q godot.zip -d "$HOME/godot"
+
+      - name: Put Godot on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          ln -sf "$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/.local/bin/godot"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run balance_parallel
+        env:
+          SIDE: ${{ matrix.target.side }}
+        run: python tools/balance_parallel.py --json="$RUNNER_TEMP/balance-$SIDE.json"
+
+      - name: Keep the table
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: probe-balance-${{ matrix.target.side }}
+          path: ${{ runner.temp }}/balance-${{ matrix.target.side }}.json
+          retention-days: 7
+
+  # The density probe exits 1 on an accepted exception (POL 2029-04 today), so its
+  # exit code is kept beside the table and the table is what gets compared.
+  density:
+    name: Density ${{ matrix.target.side }}
+    needs: setup
+    if: needs.setup.outputs.density == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.setup.outputs.targets) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          ref: ${{ matrix.target.sha }}
+          persist-credentials: false
+
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
+      - name: Install Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -fsSL -o godot.zip "$url"
+          unzip -q godot.zip -d "$HOME/godot"
+
+      - name: Put Godot on PATH
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          ln -sf "$HOME/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$HOME/.local/bin/godot"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Import
+        run: XDG_DATA_HOME="$RUNNER_TEMP/xdg_import" godot --headless --path . --import
+
+      - name: Run the density probe
+        env:
+          SIDE: ${{ matrix.target.side }}
+        run: |
+          set +e
+          out="$RUNNER_TEMP/density-$SIDE"
+          mkdir -p "$out"
+          XDG_DATA_HOME="$RUNNER_TEMP/xdg_density" godot --headless --path . \
+            --script res://tools/decision_surfaces_probe.gd -- --density --json="$out/density-$SIDE.json" \
+            > "$out/density-$SIDE.log" 2>&1
+          rc=$?
+          echo "$rc" > "$out/exit-code.txt"
+          tail -n 20 "$out/density-$SIDE.log"
+          echo "density probe exit $rc (judged on the JSON, not on this code)"
+          [ -s "$out/density-$SIDE.json" ] || { echo "no JSON written"; exit 1; }
+
+      - name: Keep the table
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: probe-density-${{ matrix.target.side }}
+          path: ${{ runner.temp }}/density-${{ matrix.target.side }}/
+          retention-days: 7
+
+  # Head against base for every probe both sides produced. A difference is reported,
+  # never failed on: whether a PR may move a number is the author's call.
+  compare:
+    name: Head against base
+    needs: [setup, shadows-merge, balance, density]
+    if: always() && needs.setup.result == 'success' && contains(needs.setup.outputs.targets, '"base"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          ref: ${{ needs.setup.outputs.head_sha }}
+          persist-credentials: false
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          pattern: probe-*
+          path: ${{ runner.temp }}/probes
+
+      - name: Compare
+        run: |
+          set -uo pipefail
+          p="$RUNNER_TEMP/probes"
+          {
+            echo "### Head against base"
+            for probe in shadows balance density; do
+              h="$p/probe-$probe-head/$probe-head.json"
+              b="$p/probe-$probe-base/$probe-base.json"
+              if [ ! -f "$h" ] || [ ! -f "$b" ]; then echo "- $probe: not run on both sides"; continue; fi
+              if cmp -s "$h" "$b"; then echo "- $probe: **cmp-identical**"; else echo "- $probe: **differs**"; fi
+            done
+            h="$p/probe-balance-head/balance-head.json"
+            b="$p/probe-balance-base/balance-base.json"
+            if [ -f "$h" ] && [ -f "$b" ] && [ -f tools/balance_diff.py ]; then
+              echo ""
+              echo '```'
+              python3 tools/balance_diff.py "$b" "$h"
+              echo "balance_diff exit $?"
+              echo '```'
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
