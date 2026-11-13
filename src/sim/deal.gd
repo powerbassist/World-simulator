@@ -296,11 +296,15 @@ static func _link(ns, session: Dictionary) -> void:
 
 
 ## A word already given on this ask, a promise not believed, is what Grant pays. Grant is the
-## full price, so it holds the word to the ask's date when that is the nearer one.
+## full price, so it holds the word to the ask's date when that is the nearer one -- and a day
+## picked on the counter belongs to its month, so a word moved to another month drops it.
 static func _hold_to(ns, pid: String, object: String, due: int) -> void:
 	for row in President.commitments_with(ns, pid):
 		if String(row["kind"]) == "promise" and String(row["object"]) == object and int(row["due_month"]) > due:
 			President.mark_rows(ns, object, "due_month", due, pid)
+			for stored in ns.commitments:
+				if String(stored.get("kind", "")) == "promise" and String(stored.get("object", "")) == object and String(stored.get("person_id", "")) == pid:
+					stored.erase("due_day")
 
 
 ## The first law a programme entry names that is open to the president now, or "".

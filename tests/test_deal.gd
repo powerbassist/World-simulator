@@ -506,6 +506,7 @@ func _check_grant_takes_up_a_word_in_flight() -> void:
 		if not President.commit(f["state"], ns, _loader, "promise", f["person_id"], object, _now(f) + int(named)):
 			_fail("the fixture's promise was refused")
 			return
+		ns.commitments[-1]["due_day"] = 16
 		f["session"]["attempts_left"] = 0
 		if not bool(Deal.answers(f["state"], ns, _loader, f["session"])["grant"]["ok"]):
 			_fail("a word in flight must leave Grant open")
@@ -520,6 +521,9 @@ func _check_grant_takes_up_a_word_in_flight() -> void:
 		var word := _word_row(ns, f["person_id"], object)
 		if int(word.get("due_month", 0)) != _now(f) + mini(int(named), 6) or String(word.get("deal", "")) != String(f["id"]):
 			_fail("a word named at %d months: Grant holds it to the nearer of that and 6, on the deal, got %s" % [int(named), word])
+		# A day belongs to its month: a word Grant moves to another month loses it.
+		if word.has("due_day") != (int(named) <= 6):
+			_fail("a word named at %d months kept the wrong day after Grant: %s" % [int(named), word])
 
 
 func _check_grant_on_a_post_pays_the_removal() -> void:

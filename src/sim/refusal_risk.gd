@@ -43,15 +43,17 @@ const HORIZON := DealK.SILENCE_MONTHS
 ## Refused now: {briefs, first_month, approval_pt, basis}. `briefs` this person runs in the
 ## HORIZON months after the refusal, `first_month` the first of them counted from now (1 is
 ## next month's tick), -1 for none; `approval_pt` one brief's price; `basis` names the
-## assumption. {} when the request or its person is unknown.
+## assumption. {} when the request or its person is unknown, or the request is past refusing
+## (answered or lapsed): there is no refusal left to price.
 static func of_refusal(state, loader, request_id: String) -> Dictionary:
 	var copy = state.duplicate_state()
 	var cns = copy.player()
 	var row := Audiences.request(cns, request_id)
 	if row.is_empty() or not loader.person_by_id.has(String(row.get("person_id", ""))):
 		return {}
-	if not bool(Audiences.decline(copy, cns, loader, request_id).get("ok", false)):
-		Audiences.settle(copy, cns, loader, request_id, AudK.STATUS_DECLINED)
+	if not bool(Audiences.decline(copy, cns, loader, request_id).get("ok", false)) \
+			and not bool(Audiences.settle(copy, cns, loader, request_id, AudK.STATUS_DECLINED).get("ok", false)):
+		return {}
 	return _project(copy, loader, String(row["person_id"]))
 
 

@@ -9,7 +9,7 @@ extends RefCounted
 ##   1. the anchor: a firm's chief (companies' `chief_id`);
 ##   2. the others whose wants name the same object, the other stance first (the ones who
 ##      would argue against the asker), then the same stance, each by standing, then id;
-##   3. on a law, or a programme goal that names laws: the leaders of the parties with
+##   3. on a programme goal that names laws: the leaders of the parties with
 ##      seats, ordered by their party's support for the goal's laws (Legislature.support,
 ##      the division's own read), the other side of the asker's stance first;
 ##   4. on a meter: the people whose kind reads that meter (CharacterK.KIND_METERS), by
@@ -78,13 +78,11 @@ static func _by_standing(ns, people: Array) -> Array:
 	return sorted
 
 
-## The leaders of the parties with seats on a law or a goal's laws, by their mean support,
+## The leaders of the parties with seats on a goal's laws, by their mean support,
 ## the asker's other side first: an opponent of the goal meets its supporters first.
 static func _party_leaders(ns, loader, object: String, stance: String) -> Array[String]:
 	var law_ids: Array = []
-	if object.begins_with("law:"):
-		law_ids.append(object.substr("law:".length()))
-	elif object.begins_with("programme:"):
+	if object.begins_with("programme:"):
 		for entry in loader.programme:
 			if "programme:%s" % String(entry["id"]) == object:
 				law_ids = entry.get("laws", [])

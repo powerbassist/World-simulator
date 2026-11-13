@@ -109,10 +109,12 @@ func _check_the_same_want_the_other_stance_first() -> void:
 	var kept := String(flipped["stance"])
 	flipped["stance"] = "attack" if kept != "attack" else "defend"
 	var ns = _base.player()
+	var before: Dictionary = ns.person_standing.duplicate()
 	ns.person_standing[String(other_side.id)] = 0.0
 	ns.person_standing[String(holders[1].id)] = 0.9
 	var got := _of(_row(String(asker.id), object, "defend"))
 	flipped["stance"] = kept
+	ns.person_standing = before
 	_ok(got.size() >= 2 and String(got[0]) == String(other_side.id) and String(got[1]) == String(holders[1].id),
 		"the other stance did not come first, then the same by standing: %s" % [got])
 

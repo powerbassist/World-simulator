@@ -59,6 +59,7 @@ func _init() -> void:
 	_check_silence_is_worth_what_they_would_do_left_alone()
 	_check_the_approval_is_the_strips()
 	_check_the_read_writes_nothing()
+	_check_an_answered_request_has_no_refusal_to_price()
 	_check_deal_reads_the_same()
 	_check_the_read_against_a_seeded_run()
 	_finish()
@@ -177,6 +178,14 @@ func _check_the_read_writes_nothing() -> void:
 	RefusalRisk.of_refusal(f["state"], _loader, f["id"])
 	RefusalRisk.of_silence(f["state"], _loader, f["id"])
 	_ok(JSON.stringify(f["state"].to_dict()) == before, "the risk read wrote on the world")
+
+
+## A request already answered (declined here) is past refusing: the read is {}, never the
+## silence projection under a refusal's name.
+func _check_an_answered_request_has_no_refusal_to_price() -> void:
+	var f := _fixture(CK.GRUDGE_BRIEF_THRESHOLD + 0.01)
+	Audiences.decline(f["state"], f["ns"], _loader, f["id"])
+	_ok(RefusalRisk.of_refusal(f["state"], _loader, f["id"]).is_empty(), "an answered request read a refusal's risk")
 
 
 func _check_deal_reads_the_same() -> void:
