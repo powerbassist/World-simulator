@@ -9,7 +9,7 @@ tags:
 
 # The finance bill
 
-**Status: spec, nothing built (Systems, 2026-11-14).** The author's call 1 for screen 4 (2026-11-14, on Gameplay's brief `F:/Dev/autoclaw-out/mockups/laws/brief.md`, row H10): pending budget and tax changes become one text, the finance bill. It takes the month's slot, divides at the month's end, and applies before the next month's books. The Assembly reads it by its channels, and forcing (49.3) is allowed where the constitution allows it, by a field in data. Read on `main` at `4f2b8df4`. The figures in section 6 come from four throwaway scans (`APPDATA` isolated, no code changed). The calls for the parent are in section 8.
+**Status: spec, nothing built (Systems, 2026-11-14).** The author's call 1 for screen 4 (2026-11-14, on Gameplay's brief `F:/Dev/autoclaw-out/mockups/laws/brief.md`, row H10): pending budget and tax changes become one text, the finance bill. It takes the month's slot, divides at the month's end, and applies before the next month's books. The Assembly reads it by its channels, and forcing (49.3) is allowed where the constitution allows it, by a field in data. Read on `main` at `4f2b8df4`. The figures in sections 3 and 6 come from throwaway scans (`APPDATA` isolated, no code changed). The calls for the parent are in section 8.
 
 ## 1. What is pending
 
@@ -59,7 +59,7 @@ Today `Budget.commit(state, pending)` applies the budget and tax panels' absolut
 - **When:** the player engages it at tabling (`table(..., force = true)`). The bill still waits for the month's end. At the division it is adopted with no vote taken, and the censure motion is resolved then, at `FORCE_HOSTILITY_BONUS`, with the price an ordinary 49.3 pays (`FORCE_BLOC_PENALTY`, `FORCE_DISCIPLINE_PENALTY`, the rebellions charged). Forcing at once would bypass H10 in France; that is refused.
 - **A carried censure kills the bill** (the government falls; the budget does not apply): the December 2024 sequence. A failed censure applies it.
 - **The cooldown:** the finance bill neither reads nor writes `force_cooldown_months` (Art. 49.3 al. 3 as amended in 2008: unlimited on finance bills, once a session on other bills). Section 8, call 2.
-- The price block of `Legislature._force` moves into one shared function, so the two forcings cannot drift.
+- **The order differs from an ordinary 49.3, on purpose.** `Legislature._force` applies the law first and resolves the censure after, so a carried censure leaves the law in force. The finance bill resolves the censure first and applies only if it fails. The price itself (the bloc and discipline penalties, the rebellions) moves into one shared function, so the two forcings cannot drift on what they charge.
 
 ## 5. Taxes: the autumn rule
 
@@ -69,21 +69,36 @@ The author's call: a tax is created or abolished only in the autumn finance bill
 
 **A failed finance bill:** the live budget stands unchanged, as France's loi spéciale and Germany's provisional budget roll the previous year's on. No cooldown: the month's slot was the price, and the player may table it again next month. The division's result lands in `ns.last_law_result` with the bill's deltas copied in, so a panel can offer to table it again. Rebellions are charged as on any division.
 
-**At game start (measured, the reading of section 3, the ten base regimes in each playable nation):**
+**At game start (measured, the reading of section 3 with the rebel split, the nine base regimes that table something, in each playable nation; `hands_off` tables nothing):**
 
-| nation | coalition seats | regimes that fail | how |
+| nation | coalition seats | regimes that fail | rebels on a passing budget |
 |---|---|---|---|
-| France | 318 / 577 | none | all ten pass, 277 to 433 yes |
-| Germany | 390 / 630 | spend_zero | 239 to 240 |
-| Britain | 364 / 650 | tax_max | 286 to 286 (a tie fails) |
-| Poland | 248 / 460 | spend_zero | 225 to 235 |
+| France | 318 / 577 | none (yes 261 to 417) | 6 to 26 seats, 16 on `managed` |
+| Germany | 390 / 630 | spend_zero (233 to 261) | 23 to 38 |
+| Britain | 364 / 650 | tax_max (281 to 299) | 13 to 40 |
+| Poland | 248 / 460 | tax_max (230 to 230, a tie fails), spend_zero (207 to 253) | 0 to 6 |
 
-At approval 40 % (unpopularity 0.25) the verdicts are the same; only Germany's tax_max narrows to 208 to 183. So **in a majority government with its whips intact almost every budget passes; it fails once the majority is gone (after an election), once discipline has eroded (rebellions, a 49.3), or when the content strays from a thin coalition.** That is how budgets behave in real parliaments, and it is where the vote becomes a decision: the forecast before tabling says who leaves and why.
+So **32 of 36** pass at the start. Partners whose own members would vote no if unwhipped (France's social democrats and greens on `managed`, Germany's and Britain's liberals even at the centroid) follow their whip, and a share of their seats rebels: every carried budget charges discipline (`Discipline.penalise_rebellions`), as every division does.
+
+**France under stress (same scan, the nine regimes):**
+
+| state | budgets that fail |
+|---|---|
+| start | 0 of 9 |
+| approval 30 % | 3 (austerity, spend_max, ruinous) |
+| approval 20 % | 5 |
+| discipline after one 49.3 | 0 |
+| after three 49.3 | 2 (tax_zero, spend_zero) |
+| three 49.3 and approval 25 % | 7 (only `managed` and tax_max pass) |
+| the social democrats leave the coalition (minority) | 5 |
+
+So **a majority with its whips intact passes almost every budget; the vote bites once the government is unpopular, once forcings and rebellions have worn discipline down, or once the majority is gone.** That is how budgets behave in real parliaments, and it is where the vote becomes a decision: the forecast before tabling says who leaves and why.
 
 **Prediction for the re-baseline (to be measured base vs tip before merge):**
 
-- **`tools/balance_probe.gd`'s regimes run in France**, where all ten pass at the first tick, at the same step the commit was read. Prediction: **`hands_off` cmp-identical** (it tables nothing: the control), and the other regimes identical or close. Any move traces to the division's own records: `last_law_result` written, the rebellion charge (zero predicted at start), a front page earned by a carried budget. The regimes that switch budget mid-run (`_switch_budget`) meet a later, possibly unpopular coalition and may fail: those are the likeliest movers.
-- **The author was told "every regime moves".** Measured, that is unlikely in the probe's France. The game changes for the player (a month's wait, a vote that bites when the coalition weakens, the extremes failing in Germany, Britain and Poland); the probe's France mostly does not.
+- **`hands_off` cmp-identical**: it tables nothing, the control.
+- **Every other regime moves a little**, and not because its budget fails: in the probe's France all nine pass at the first tick, at the same step the commit was read, but each carried budget charges 6 to 26 rebel seats to discipline in month 1, and lower discipline then reaches every later division and censure. Expect small moves in vote shares and possibly a flip where a later division or censure was close. The regimes that switch budget mid-run (`_switch_budget`) meet a later, possibly unpopular coalition and may fail outright: the likeliest larger movers.
+- **The author was told "every regime moves".** True, but mostly through the discipline charge; no regime's budget is refused at the start in France. The game changes more for the player than for the probe: a month's wait, a vote that bites as the coalition weakens, the extremes failing in Germany, Britain and Poland.
 - **Density (`decision_surfaces_probe.gd --density`), lever and audience probes:** unchanged unless their regimes commit a budget; checked at build. The corruption bands are not touched.
 
 ## 7. The harnesses, the save, the UI
@@ -98,10 +113,11 @@ At approval 40 % (unpopularity 0.25) the verdicts are the same; only Germany's t
 
 ## 8. Calls for the parent
 
-1. **A regime's failed bill:** (a, recommended) re-table every month until it passes, recording the month it landed; (b) stay failed; (c) force where allowed. With (b), the failing extremes become `hands_off`, and a stress check that runs one of them proves nothing.
+1. **A regime's failed bill:** (a, recommended) re-table every month until it passes, recording the month it landed; (b) stay failed; (c) force where allowed. With (b), the failing extremes become `hands_off`, and a stress check that runs one of them proves nothing. With (a), each retry is a division and charges its rebels, so a regime that keeps failing wears its own discipline down month after month: that is the real cost of insisting, and the JSON's `tries` shows it.
 2. **49.3 on the finance bill:** (a, recommended) free of the 12-month cooldown (France's 2008 rule), the same price otherwise; (b) the ordinary cooldown, one forcing a year.
 3. **The second chamber:** (a, recommended) skipped in every nation, Italy's Senate a recorded reduction; (b) a data field `government.upper.finance` (absent = no power), with rows for the equal-chamber nations.
 4. **Tax births and abolitions:** (a, recommended) unchanged in PR 1; the autumn gate and the catalogue together in V5.3 e; (b) PR 1 gates today's composed births to an autumn month now.
-5. **The reading, and a RECORD:** this spec departs from the card's "reads it by its channels" as a law (section 3: under that reading Germany and Britain cannot pass even an unchanged budget). The position comes from the channels; the whip is the censure's. Separately, **Germany passes 1 of 104 available laws and Britain 5 of 106 at game start**: that is screen 4's laws problem in those nations, not the budget's, and it needs its own owner.
+5. **The reading (every call above depends on it):** (a, recommended) the position from the channels, the whip the censure's (section 3); (b) the card's plain law reading through the unchanged `resolve_vote`, which needs the law model fixed first: under it Germany and Britain cannot pass even an unchanged budget. **RECORD with it:** at game start Germany passes 1 of its 104 available laws and Britain 5 of 106. That is screen 4's laws problem in those nations, not the budget's, and it needs its own owner.
+6. **What a defeat costs:** (a, recommended) nothing beyond the month's slot and the rebellions charged, re-tabling allowed next month; (b) a cooldown of N months, or a bloc or approval price on a lost budget. With (a) a defeat is cheap to retry; the cost is the month lost and the discipline the rebels take.
 
 Open RECORDs from #326 (`pay_offer` ignores register refusals; `take_reason` duplicates `President._party`; the corrupt bargain with money open has no test; the per-read cost) touch none of this PR's files; they fold into the first later PR that opens `shadows.gd` or `deal.gd`.
