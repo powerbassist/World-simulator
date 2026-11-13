@@ -46,6 +46,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open energy --arm-energy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --consequence
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --election --polls-closed
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step m-money
+##       (the offer of money: m-money, m-left, m-taken; the affair: m-affair, m-no, m-yes, m-end)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation DEU --book-visit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
@@ -1179,7 +1181,9 @@ func _process(_delta: float) -> bool:
 		_stage_console()
 	if _term.split(":").size() > 2 and _frame == _frames_wanted - 2 and not _menu:
 		_stage_term_nested()
-	if _audience_step in ["counter", "answered"] and _frame == _frames_wanted - 2 and not _menu:
+	if _audience_step == "m-yes" and _frame == _frames_wanted - 8 and not _menu:
+		_flirt_said_and_redrawn()
+	if _audience_step in ["counter", "answered", "m-no", "m-yes"] and _frame == _frames_wanted - 2 and not _menu:
 		_open_audience_pick()
 	if _frame == 3 and not _menu:
 		for n in _cards:
@@ -2429,6 +2433,10 @@ func _stage_requests() -> void:
 	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
 	var asked := 0
 	var people: Array = _main._loader.people.get(String(ns.id), []).duplicate()
+	if _audience_step == "m-yes":
+		# The affair's yes needs a spark (a seeded draw per pair): the first person with a want and one asks.
+		var Sh := load("res://src/sim/shadows.gd")
+		people.sort_custom(func(a, b) -> bool: return Sh.spark(ns, String(a.id)) and not Sh.spark(ns, String(b.id)))
 	for person in people:
 		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
 			Audiences._arrive(ns, person, person.wants[0], now, [])
@@ -2440,6 +2448,13 @@ func _stage_requests() -> void:
 	var first: Dictionary = Audiences.pending(ns)[0] if not Audiences.pending(ns).is_empty() else {}
 	if first.is_empty() or _request == "--request":
 		return
+	if _audience_step.begins_with("m-") and _audience_step != "m-yes":
+		# The first request comes with money (the rare draw, staged): the currency its kind is offered.
+		var kind := String(_main._loader.person_by_id[String(first["person_id"])].kind)
+		var currencies: Array = load("res://src/sim/shadow_constants.gd").OFFER_KINDS.get(kind, ["party_money"])
+		for row in ns.audience_requests:  # the live row: request() hands back a copy
+			if String(row.get("id", "")) == String(first["id"]):
+				row["offer"] = {"currency": String(currencies[0]), "amount_eur_m": 1.0}
 	Driver._open_booking(_main, String(first["id"]))
 	if _request != "--audience":
 		return
@@ -2465,6 +2480,21 @@ func _stage_audience_step() -> void:
 			scene.cards.find_child("RefuseButton", true, false).pressed.emit()
 		"countered":
 			scene.cards.find_child("CounterButton", true, false).pressed.emit()
+		"m-left":
+			scene.money_answered.emit(false)
+		"m-taken":
+			scene.money_answered.emit(true)
+		"m-affair", "m-no", "m-end":
+			_stage_the_affair(scene)
+		"m-yes":
+			# A spouse for the president and some warmth, the deal struck; the Flirt and the ask follow.
+			var ns = _main._state.player()
+			var leader = _main._loader.person_by_id[load("res://src/sim/president.gd").leader_id(ns)]
+			if String(leader.spouse_id) == "":
+				leader.spouse_id = "FRA_a_spouse_the_staging_lends"
+			var pid := String(scene._view.get("person_id", ""))
+			load("res://src/sim/president.gd").adjust_rapport(_main._state, ns, _main._loader, pid, 0.6)
+			scene.cards.find_child("GrantButton", true, false).pressed.emit()
 		"answered":
 			# Someone known well: the president has met them, so the talk has more to offer.
 			var pid := String(scene._view.get("person_id", ""))
@@ -2506,9 +2536,36 @@ func _stage_phone() -> void:
 		Phone.dialog_of(_main).verbs.topic_button("family").pressed.emit()
 
 
+## The money taken, a Flirt marked said on the session (its gates are the talk menu's own), the
+## scene redrawn from the sim; "m-end" makes them lovers first, "m-no" asks at the next staged frame.
+func _stage_the_affair(scene) -> void:
+	scene.money_answered.emit(true)
+	var driver := load("res://src/ui/audience_driver.gd")
+	var game: Dictionary = driver._games[_main.get_instance_id()]
+	(game["session"]["used_topics"] as Array).append("flirt")
+	if _audience_step == "m-end":
+		var ns = _main._state.player()
+		load("res://src/sim/president.gd").set_bond(_main._state, ns, _main._loader, String(game["session"]["person_id"]), "affair")
+	scene.show_result("", load("res://src/ui/audience_talks.gd").view_of(_main, game), "", {}, "")
+
+
+## The Flirt marked said on the session and the scene redrawn from the sim, so the ask is on the screen.
+func _flirt_said_and_redrawn() -> void:
+	var driver := load("res://src/ui/audience_driver.gd")
+	var game: Dictionary = driver._games[_main.get_instance_id()]
+	(game["session"]["used_topics"] as Array).append("flirt")
+	driver.scene_of(_main).show_result("", load("res://src/ui/audience_talks.gd").view_of(_main, game), "", {}, "")
+
+
 func _open_audience_pick() -> void:
 	var scene = load("res://src/ui/audience_driver.gd").scene_of(_main)
-	if _audience_step == "counter":
+	if _audience_step in ["m-no", "m-yes"]:
+		var ask: Node = scene.talk.find_child("Line_affair_ask", true, false)  # m-no and m-yes press it
+		if ask != null:
+			for button in ask.find_children("*", "Button", true, false):
+				button.pressed.emit()
+				break
+	elif _audience_step == "counter":
 		scene.cards.date_pick.pressed.emit()
 	elif _audience_step == "answered":
 		var first: Array = scene.talk.find_children("*", "Button", true, false).filter(func(b: Button) -> bool: return not b.disabled)

@@ -24,6 +24,11 @@ const TAGS := {
 	"warm": ["handshake", "They warm", ""],  # i18n: msgid
 	"warm_more": ["handshake", "They warm more", ""],  # i18n: msgid
 	"asked": ["✓", "Asked", ""],  # i18n: msgid
+	# The rare proposals (C4-offer, C4-affair): what each risks in two or three words, in a status tone.
+	"trail": ["payments", "A money trail", "bad"],  # i18n: msgid
+	"cools": ["▼", "They cool", "warn"],  # i18n: msgid
+	"scandal": ["!", "Risks a scandal", "bad"],  # i18n: msgid
+	"regard": ["▼", "Costs their regard", "bad"],  # i18n: msgid
 }
 const FACE := Vector2i(22, 28)
 static var _faces := {}
@@ -31,7 +36,8 @@ const MARK := "¶"  # i18n: ok the placeholder a gossip's sentence splits on
 
 
 ## `rows`: [{id, topic, tag, args, prefix, suffix, people: [{id, name, tip}], asked: bool,
-## blocked: String (the sim's reason this line cannot be put now, "" for none), picked: String}].
+## blocked: String (the sim's reason this line cannot be put now, "" for none), picked: String,
+## sub: bool (a follow-up drawn under the line above, indented)}].
 func show_lines(rows: Array) -> void:
 	for child in get_children():
 		remove_child(child)
@@ -53,6 +59,10 @@ func _row(row: Dictionary) -> void:
 	line_box.name = "Line_" + String(row["id"])  # i18n: ok a node name, found by tests
 	line_box.add_theme_constant_override("separation", 8)
 	add_child(line_box)
+	if bool(row.get("sub", false)):
+		var indent := Control.new()
+		indent.custom_minimum_size.x = 18
+		line_box.add_child(indent)
 	var chevron := Label.new()
 	chevron.text = "›"  # i18n: ok a glyph
 	chevron.theme_type_variation = UiTheme.CAPTION
@@ -123,7 +133,7 @@ static func _face(person_id: String) -> Texture2D:
 func _tag(key: String, spent: bool) -> Control:
 	var def: Array = TAGS[key]
 	var tone := String(def[2])
-	var colour := UiTheme.WARN if tone == "warn" else UiTheme.TEXT_DIM
+	var colour := UiTheme.WARN if tone == "warn" else (UiTheme.BAD if tone == "bad" else UiTheme.TEXT_DIM)
 	var box := HBoxContainer.new()
 	box.name = "Tag"  # i18n: ok a node name, found by tests
 	box.add_theme_constant_override("separation", 6)
@@ -137,10 +147,10 @@ func _tag(key: String, spent: bool) -> Control:
 	else:
 		var sign_label := Label.new()
 		sign_label.text = glyph
-		sign_label.theme_type_variation = UiTheme.WARN_TEXT if tone == "warn" else UiTheme.CAPTION
+		sign_label.theme_type_variation = UiTheme.WARN_TEXT if tone == "warn" else (UiTheme.BAD_SMALL if tone == "bad" else UiTheme.CAPTION)
 		box.add_child(sign_label)
 	var words := Label.new()
 	words.text = Strings.t(String(def[1]))  # i18n: row-ok a tag key, its words the msgid
-	words.theme_type_variation = UiTheme.WARN_TEXT if tone == "warn" and not spent else UiTheme.CAPTION
+	words.theme_type_variation = UiTheme.WARN_TEXT if tone == "warn" and not spent else (UiTheme.BAD_SMALL if tone == "bad" and not spent else UiTheme.CAPTION)
 	box.add_child(words)
 	return box

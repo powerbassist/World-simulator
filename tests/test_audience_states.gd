@@ -22,6 +22,7 @@ func _init() -> void:
 	_check_the_sims_struck_takes_the_question_to_the_deal()
 	_check_choices_survive_every_event()
 	_check_the_talk_is_open_only_after_a_deal()
+	_check_the_money_is_answered_before_the_cards()
 	_finish()
 
 
@@ -112,6 +113,41 @@ func _check_the_talk_is_open_only_after_a_deal() -> void:
 	_ok(flow.in_talk() and flow.state == S.GRANTED, "a deal struck did not open the talk")
 	flow.fire("end")
 	_ok(not flow.in_talk() and flow.state == S.ENDED, "the end left the talk open")
+
+
+## The money on the table (the author, 2026-11-13: "Prendre = promettre + argent"): it is answered
+## BEFORE the cards, the cards are held while it is open (the sim refuses Grant and Bargain with it
+## open, Deal.MONEY_FIRST, so the UI hold is the sim's own rule), Take is a struck deal and Leave
+## is the question.
+func _check_the_money_is_answered_before_the_cards() -> void:
+	var flow := AudienceFlow.new()
+	flow.sync(false, true)
+	_ok(flow.state == S.MONEY, "an open offer of money did not hold the question: %s" % flow.name_of(flow.state))
+	for event in ["open_date", "close_date", "refuse", "ask", "end"]:
+		_ok(not flow.fire(event) and flow.state == S.MONEY, "the money step took '%s': the cards are not held" % event)
+	_ok(not flow.in_talk(), "the money step counts as the talk")
+	flow.sync(false, true)
+	_ok(flow.state == S.MONEY, "a redraw moved the money step")
+	var left := AudienceFlow.new()
+	left.sync(false, true)
+	left.sync(false, false)
+	_ok(left.state == S.QUESTION, "Leave did not return to the question: %s" % left.name_of(left.state))
+	var taken := AudienceFlow.new()
+	taken.sync(false, true)
+	taken.sync(true, false)
+	_ok(taken.state == S.GRANTED and taken.in_talk(), "Take did not strike the deal: %s" % taken.name_of(taken.state))
+	var gone := AudienceFlow.new()
+	gone.sync(false, true)
+	_ok(gone.fire("abandon") and gone.state == S.ENDED, "the frame's X did not end the money step")
+	# An offer still open once the deal is struck changes nothing (a stale read never reopens a deal).
+	var struck := AudienceFlow.new()
+	struck.fire("deal_struck")
+	struck.sync(true, true)
+	_ok(struck.state == S.GRANTED, "a struck deal went back to the money: %s" % struck.name_of(struck.state))
+	var refused := AudienceFlow.new()
+	refused.fire("refuse")
+	refused.sync(false, true)
+	_ok(refused.state == S.REFUSED, "a refusal went back to the money")
 
 
 func _ok(cond: bool, msg: String) -> void:

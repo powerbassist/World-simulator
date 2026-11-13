@@ -7,6 +7,8 @@ extends RefCounted
 ## Here a state is a name in a table, an event is the only way to move, and what the player
 ## has chosen lives beside it and is never rebuilt:
 ##
+##   MONEY         an offer of money is on the table (corrupt, the rare draw): answered first,
+##                 the cards held (the sim refuses Grant and Bargain while it is open)
 ##   QUESTION      the three cards: Grant / Counter / Refuse
 ##   COUNTER_OPEN  the Counter's date field is open (a QUESTION with its grid down)
 ##   GRANTED       a deal is struck (Grant, or a Counter she took): the band and the talk
@@ -19,11 +21,13 @@ extends RefCounted
 ## `struck`): `sync()` takes it from the view the wiring hands in, so the table is not asked
 ## to remember what the session already knows.
 
-enum S { QUESTION, COUNTER_OPEN, GRANTED, ANSWERED, REFUSED, ENDED }
+enum S { QUESTION, COUNTER_OPEN, GRANTED, ANSWERED, REFUSED, ENDED, MONEY }
 
 const NEXT := {
-	S.QUESTION: {"open_date": S.COUNTER_OPEN, "deal_struck": S.GRANTED, "refuse": S.REFUSED, "abandon": S.ENDED},
-	S.COUNTER_OPEN: {"close_date": S.QUESTION, "deal_struck": S.GRANTED, "refuse": S.REFUSED, "abandon": S.ENDED},
+	# Take is Grant plus the money (Deal.take): a struck deal. Leave is the question, with the offer gone.
+	S.MONEY: {"money_left": S.QUESTION, "deal_struck": S.GRANTED, "abandon": S.ENDED},
+	S.QUESTION: {"open_date": S.COUNTER_OPEN, "deal_struck": S.GRANTED, "refuse": S.REFUSED, "money_due": S.MONEY, "abandon": S.ENDED},
+	S.COUNTER_OPEN: {"close_date": S.QUESTION, "deal_struck": S.GRANTED, "refuse": S.REFUSED, "money_due": S.MONEY, "abandon": S.ENDED},
 	S.GRANTED: {"ask": S.ANSWERED, "end": S.ENDED, "abandon": S.ENDED},
 	S.ANSWERED: {"ask": S.ANSWERED, "end": S.ENDED, "abandon": S.ENDED},
 	S.REFUSED: {"end": S.ENDED, "abandon": S.ENDED},
@@ -53,10 +57,19 @@ func fire(event: String) -> bool:
 	return true
 
 
-## The sim's half: a struck deal is GRANTED whatever the UI was doing, and nothing else is read.
-func sync(struck: bool) -> void:
-	if struck and (state == S.QUESTION or state == S.COUNTER_OPEN):
+## The sim's half: a struck deal is GRANTED whatever the UI was doing; an offer of money still open
+## holds the question (MONEY) and, answered, gives way to the question or, taken, to the deal.
+## Nothing else is read, and a struck or refused audience never goes back to the money.
+func sync(struck: bool, money_open := false) -> void:
+	if state == S.MONEY:
+		if struck:
+			fire("deal_struck")
+		elif not money_open:
+			fire("money_left")
+	elif struck and (state == S.QUESTION or state == S.COUNTER_OPEN):
 		fire("deal_struck")
+	elif money_open and (state == S.QUESTION or state == S.COUNTER_OPEN):
+		fire("money_due")
 
 
 ## The talk is open: a deal is struck and the audience is not over.
