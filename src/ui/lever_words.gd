@@ -127,7 +127,7 @@ static func paid_text(spent: Dictionary, effects: Dictionary, name_of: Callable,
 		parts.append(Strings.t("your bond is looser"))
 	if spent.has("evidence"):
 		parts.append(Strings.t("you left evidence behind"))
-	# The offer's money (Shadows.accept_offer's `paid`): a figure, money being no feeling.
+	# The offer's money (Deal.take's `paid`): a figure, money being no feeling.
 	if spent.has("wealth_eur_m"):
 		parts.append(offer_terms({"currency": "personal_wealth", "amount_eur_m": spent["wealth_eur_m"]}))
 	if spent.has("party_money_eur_m"):
