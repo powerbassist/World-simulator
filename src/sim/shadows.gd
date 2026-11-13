@@ -7,8 +7,9 @@ extends RefCounted
 ##
 ## Two doors. An OFFER rides on a request (offers.gd draws it as the request
 ## arrives): in the scene the president takes the money -- paid to themself, or to
-## their own party (the governing party), the request served, an attempt spent, evidence left -- or
-## refuses it, which costs the offerer's regard and nothing else. A CORRUPT
+## their own party (the governing party), evidence left, and their word given on the request
+## as Grant gives it (Deal.take, the author's ruling of 2026-11-13) -- or refuses it, which
+## costs the offerer's regard and nothing else. A CORRUPT
 ## CURRENCY pays a bargain off the books: backroom (a person who knows) or aid (a
 ## diverted budget line) -- better odds, evidence instead of an open spend, and no
 ## fiscal line (the plan's Call 7: EUR millions against hundreds of billions). The
@@ -42,44 +43,38 @@ static func offer(ns, session: Dictionary) -> Dictionary:
 	return Audiences.request(ns, String(session.get("request_id", ""))).get("offer", {})
 
 
-## Take the money: {ok, error, paid: {register: EUR m}, evidence: size}. Refused,
-## with nothing written: no open offer, the audience over, the person agreed or no
-## attempt left, or no one to pay (party money to a president with no party).
-static func accept_offer(state, ns, loader, session: Dictionary) -> Dictionary:
-	var refused := {"ok": false, "error": _why_not(ns, session), "paid": {}, "evidence": 0.0}
-	if refused["error"] == "" and String(session.get("won", "")) != "":
-		refused["error"] = "they have already agreed"
-	elif refused["error"] == "" and int(session.get("attempts_left", 0)) <= 0:
-		refused["error"] = "no attempts left"
-	var pid := String(session.get("person_id", ""))
-	if refused["error"] == "" and not President.covers(state, ns, loader, pid):
-		refused["error"] = "they are no longer someone the president deals with"
-	if refused["error"] != "":
-		return refused
+## Why the money cannot be taken, "" when it can: no open offer, the audience over, a person
+## the president no longer deals with, or party money and no party to pay. Deal.take reads it
+## before it writes anything, so a refused Take is refused whole.
+static func take_reason(state, ns, loader, session: Dictionary) -> String:
+	var why := _why_not(ns, session)
+	if why == "" and not President.covers(state, ns, loader, String(session.get("person_id", ""))):
+		why = "they are no longer someone the president deals with"
+	if why == "" and String(offer(ns, session).get("currency", "")) == "party_money" 			and not loader.parties.get(ns.id, []).any(func(p) -> bool: return p.id == String(ns.incumbent_party_id)):
+		why = "the president has no party to pay"
+	return why
+
+
+## The money's half of Deal.take (the author's ruling of 2026-11-13: taking it is Grant plus
+## the money, never a deal by itself): paid to the president or to their own party, and the
+## evidence it leaves. {paid: {register: EUR m}, evidence: size}. Deal.take has read
+## take_reason() first; this writes no request status and wins nothing.
+static func pay_offer(state, ns, loader, session: Dictionary) -> Dictionary:
 	var o := offer(ns, session)
 	var currency := String(o.get("currency", ""))
 	var amount := float(o.get("amount_eur_m", 0.0))
-	var leader := President.leader_id(ns)
 	var paid := {}
 	if currency == "party_money":
 		# The governing party, the one C6's campaigns draw on: the president's own.
-		if not President.adjust_party_money_eur_m(ns, loader, String(ns.incumbent_party_id), amount):
-			refused["error"] = "the president has no party to pay"
-			return refused
+		President.adjust_party_money_eur_m(ns, loader, String(ns.incumbent_party_id), amount)
 		paid["party_money_eur_m"] = amount
 	else:
-		if not President.adjust_wealth_eur_m(ns, loader, leader, amount):
-			refused["error"] = "the president cannot be paid"
-			return refused
+		President.adjust_wealth_eur_m(ns, loader, President.leader_id(ns), amount)
 		paid["wealth_eur_m"] = amount
 	var evidence := amount * SC.EVIDENCE_PER_EUR_M
-	President.leave_evidence(state, ns, loader, currency, pid, evidence)
-	Audiences.agree(ns, String(session["request_id"]), AK.STATUS_SETTLED)
+	President.leave_evidence(state, ns, loader, currency, String(session["person_id"]), evidence)
 	session["offer_answered"] = true
-	session["won"] = "offer"
-	session["attempts_left"] = int(session["attempts_left"]) - 1
-	(session["attempts"] as Array).append({"lever": "offer", "success": true})
-	return {"ok": true, "error": "", "paid": paid, "evidence": evidence}
+	return {"paid": paid, "evidence": evidence}
 
 
 ## Turn the money down: the offerer's regard falls by OFFER_REFUSED_RAPPORT, no

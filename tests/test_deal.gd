@@ -122,6 +122,12 @@ func _init() -> void:
 	_check_the_money_shows_its_risk_first()
 	_check_the_money_says_what_it_adds()
 	_check_a_principled_person_never_offers()
+	_check_take_is_grant_and_the_money()
+	_check_leave_writes_no_word_and_no_money()
+	_check_the_cards_wait_for_the_money()
+	_check_a_refused_take_writes_nothing()
+	_check_the_corrupt_bargain_outlives_the_money_left()
+	_check_the_term_risk_is_read_to_the_vote()
 
 	_check_the_loader_reads_an_entrys_laws()
 	_check_the_loader_checks_the_laws_on_every_load()
@@ -575,7 +581,7 @@ func _check_answers_after_the_deal_read_the_deal() -> void:
 	for row in ns.audience_requests:
 		if String(row["id"]) == String(f["id"]):
 			row["offer"] = {"currency": "party_money", "amount_eur_m": 1.0}
-	Deal.grant(f["state"], ns, _loader, f["session"])
+	Deal.take(f["state"], ns, _loader, f["session"])
 	var answers: Dictionary = Deal.answers(f["state"], ns, _loader, f["session"])
 	if String(answers["offer"].get("kind", "")) != "vote":
 		_fail("after the deal the card reads the offer it took, got %s" % [answers["offer"]])
@@ -1124,7 +1130,7 @@ func _check_the_money_shows_its_risk_first() -> void:
 		clear *= 1.0 - month
 	if month <= 0.0 or not is_equal_approx(float(money.get("found_in_a_year", 0.0)), 1.0 - clear):
 		_fail("the strip names the chance it is found within a year, %f, got %s" % [1.0 - clear, money])
-	var taken := Shadows.accept_offer(f["state"], ns, _loader, f["session"])
+	var taken := Deal.take(f["state"], ns, _loader, f["session"])
 	if not is_equal_approx(float(taken.get("evidence", 0.0)), float(money["evidence"])):
 		_fail("the evidence shown is the evidence left: %s against %s" % [money, taken])
 
@@ -1154,6 +1160,170 @@ func _check_the_money_says_what_it_adds() -> void:
 		_fail("the strip names the year's chance without this money, %f, got %s" % [1.0 - without, money])
 	if float(money.get("found_in_a_year", 0.0)) <= float(money.get("found_in_a_year_without", 1.0)):
 		_fail("taking the money must read as adding to the risk, got %s" % [money])
+
+
+# --- Taking the money is a deal too (the author's ruling of 2026-11-13) -------------------
+
+## A law deal with 1.0 m of party money on the table.
+func _money_deal(bill: bool) -> Dictionary:
+	var f := _law_deal(bill)
+	for row in f["ns"].audience_requests:
+		if String(row["id"]) == String(f["id"]):
+			row["offer"] = {"currency": "party_money", "amount_eur_m": 1.0}
+	return f
+
+
+## Take = Grant + the money + its evidence: the word and the pledge as Grant writes them, the
+## loyalty a deal buys, 1.0 m to the president's party, one row of party-money evidence.
+func _check_take_is_grant_and_the_money() -> void:
+	var f := _money_deal(true)
+	var ns = f["ns"]
+	var pid: String = f["person_id"]
+	var own := String(ns.incumbent_party_id)
+	var money := President.party_money_eur_m(ns, _loader, own)
+	var loyalty := float(ns.person_loyalty.get(pid, 0.0))
+	f["session"]["attempts_left"] = 0
+	var r := Deal.take(f["state"], ns, _loader, f["session"])
+	if not bool(r.get("ok", false)):
+		_fail("Take refused: %s" % [r])
+		return
+	var word := _word_row(ns, pid, "law:%s" % f["law_id"])
+	var pledge := _owed_row(ns, pid, "pledge")
+	if word.is_empty() or int(word["due_month"]) != _now(f) + 6 or String(word.get("deal", "")) != String(f["id"]):
+		_fail("Take gives the president's word as Grant does, got %s" % [word])
+	if pledge.is_empty() or String(pledge.get("deal", "")) != String(f["id"]):
+		_fail("Take takes their pledge as Grant does, got %s" % [pledge])
+	if not is_equal_approx(float(ns.person_loyalty.get(pid, 0.0)) - loyalty, 0.05):
+		_fail("Take buys what Grant buys, loyalty 0.05")
+	if not is_equal_approx(President.party_money_eur_m(ns, _loader, own) - money, 1.0):
+		_fail("Take pays the 1.0 m to the president's party")
+	if ns.exposure_evidence.size() != 1 or String(ns.exposure_evidence[0]["kind"]) != "party_money" \
+			or String(ns.exposure_evidence[0]["person_id"]) != pid or not is_equal_approx(float(ns.exposure_evidence[0]["size"]), 1.0):
+		_fail("Take leaves one act of party-money evidence, got %s" % [ns.exposure_evidence])
+	if not is_equal_approx(float(r.get("paid", {}).get("party_money_eur_m", 0.0)), 1.0) or not is_equal_approx(float(r.get("evidence", 0.0)), 1.0):
+		_fail("Take says what it paid and left, got %s" % [r])
+	if int(f["session"]["attempts_left"]) != 0 or String(f["session"]["won"]) != "grant":
+		_fail("Take is Grant: no attempt needed or spent, the scene won as a grant, got %s" % [f["session"]])
+	if bool(Deal.take(f["state"], ns, _loader, f["session"]).get("ok", true)) or bool(Shadows.refuse_offer(f["state"], ns, _loader, f["session"]).get("ok", true)):
+		_fail("the money is answered once")
+	if String(Levers.close(f["state"], ns, _loader, f["session"]).get("outcome", "")) != AK.STATUS_PROMISED:
+		_fail("a Take that gives a word closes as promised")
+
+
+## Leave: no word, no pledge, no money, no evidence; the cards stay open, Grant still the price.
+func _check_leave_writes_no_word_and_no_money() -> void:
+	var f := _money_deal(true)
+	var ns = f["ns"]
+	var pid: String = f["person_id"]
+	var money := President.party_money_eur_m(ns, _loader, String(ns.incumbent_party_id))
+	var commitments: Array = ns.commitments.duplicate(true)
+	if not bool(Shadows.refuse_offer(f["state"], ns, _loader, f["session"]).get("ok", false)):
+		_fail("Leave refused")
+		return
+	if ns.commitments != commitments or not ns.exposure_evidence.is_empty() \
+			or not is_equal_approx(President.party_money_eur_m(ns, _loader, String(ns.incumbent_party_id)), money):
+		_fail("Leave wrote a word, a pledge, money or evidence")
+	if String(f["session"]["won"]) != "" or not bool(Deal.answers(f["state"], ns, _loader, f["session"])["grant"]["ok"]):
+		_fail("Leave keeps the deal's cards open")
+	if not bool(Deal.grant(f["state"], ns, _loader, f["session"]).get("ok", false)) or _word_row(ns, pid, "law:%s" % f["law_id"]).is_empty():
+		_fail("Grant after Leave is the deal without the money")
+	if not ns.exposure_evidence.is_empty():
+		_fail("Grant after Leave left evidence")
+
+
+## The cards wait for the money (Interface's notes, point 1): with it unanswered, Grant and the
+## counter are refused and write nothing, and the card says why.
+func _check_the_cards_wait_for_the_money() -> void:
+	var f := _money_deal(false)
+	var ns = f["ns"]
+	var before := _snapshot(ns, f["person_id"])
+	var card: Dictionary = Deal.answers(f["state"], ns, _loader, f["session"])
+	if bool(card["grant"]["ok"]) or String(card["grant"]["why_not"]) == "":
+		_fail("Grant reads closed while the money is on the table, got %s" % [card["grant"]])
+	if not bool(card["money"].get("take", {}).get("ok", false)):
+		_fail("Take reads open, got %s" % [card["money"]])
+	if bool(Deal.grant(f["state"], ns, _loader, f["session"]).get("ok", true)):
+		_fail("Grant went through with the money open")
+	if bool(Deal.bargain(f["state"], ns, _loader, f["session"], "argue").get("ok", true)):
+		_fail("a counter went through with the money open")
+	if _snapshot(ns, f["person_id"]) != before or int(f["session"]["attempts_left"]) != 3:
+		_fail("a refused Grant or counter with the money open wrote something")
+
+
+## Atomic: a Take refused for the deal's reason or the money's writes nothing at all.
+func _check_a_refused_take_writes_nothing() -> void:
+	var f := _money_deal(false)
+	var ns = f["ns"]
+	var own := String(ns.incumbent_party_id)
+	var money := President.party_money_eur_m(ns, _loader, own)
+	var before := _snapshot(ns, f["person_id"])
+	var over: Dictionary = (f["session"] as Dictionary).duplicate(true)
+	over["closed"] = true
+	if bool(Deal.take(f["state"], ns, _loader, over).get("ok", true)):
+		_fail("a closed audience took the money")
+	f["session"]["ask"]["why_not"] = "fixture: the ask is closed"
+	var closed := Deal.take(f["state"], ns, _loader, f["session"])
+	if bool(closed.get("ok", true)) or bool(Deal.answers(f["state"], ns, _loader, f["session"])["money"]["take"]["ok"]):
+		_fail("Take with Grant closed went through, or read open: %s" % [closed])
+	f["session"]["ask"]["why_not"] = ""
+	ns.incumbent_party_id = ""
+	if bool(Deal.take(f["state"], ns, _loader, f["session"]).get("ok", true)):
+		_fail("party money with no party to pay was taken")
+	ns.incumbent_party_id = own
+	if _snapshot(ns, f["person_id"]) != before or not is_equal_approx(President.party_money_eur_m(ns, _loader, own), money) \
+			or String(f["session"]["won"]) != "" or bool(f["session"].get("offer_answered", false)):
+		_fail("a refused Take wrote something")
+
+
+## Notes point 5: the corrupt bargain stays in the sim. It opens on a request that came with
+## money, and leaving the money does not close it; no money, no corrupt bargain.
+func _check_the_corrupt_bargain_outlives_the_money_left() -> void:
+	var f := _law_deal(false)
+	if _approach_names(f).has("bargain"):
+		_fail("a request with no money opens the corrupt bargain")
+	f = _money_deal(false)
+	if not bool(Shadows.refuse_offer(f["state"], f["ns"], _loader, f["session"]).get("ok", false)):
+		_fail("Leave refused")
+		return
+	if not _approach_names(f).has("bargain"):
+		_fail("leaving the money closed the corrupt bargain, got %s" % [_approach_names(f)])
+
+
+func _approach_names(f: Dictionary) -> Array:
+	var out := []
+	for row in Deal.answers(f["state"], f["ns"], _loader, f["session"])["bargain"]["approaches"]:
+		out.append(String(row["lever"]))
+	return out
+
+
+## The risk over the term (the author's ruling, point 2): the month's chance compounded over
+## the months to the next vote for the office, with the months beside it. A vote this month
+## leaves no month to be found in; a clock never set reads -1 and the year's figure stands.
+func _check_the_term_risk_is_read_to_the_vote() -> void:
+	var f := _money_deal(false)
+	var ns = f["ns"]
+	var now := _now(f)
+	ns.next_executive_year = (now + 29) / 12
+	ns.next_executive_month = (now + 29) % 12 + 1
+	var money: Dictionary = Deal.answers(f["state"], ns, _loader, f["session"])["money"]
+	var month := Exposure.hazard_if(f["state"], ns, _loader, "party_money", f["person_id"], 1.0)
+	var without := Exposure.hazard_if(f["state"], ns, _loader, "party_money", f["person_id"], 0.0)
+	if int(money.get("months_to_vote", 0)) != 30:
+		_fail("30 months to the vote, got %s" % [money])
+	if month <= 0.0 or not is_equal_approx(float(money.get("found_by_the_vote", -1.0)), 1.0 - pow(1.0 - month, 30)) \
+			or not is_equal_approx(float(money.get("found_by_the_vote_without", -1.0)), 1.0 - pow(1.0 - without, 30)):
+		_fail("the term's chance is 1 - (1 - %f)^30, got %s" % [month, money])
+	if float(money["found_by_the_vote"]) <= float(money["found_in_a_year"]):
+		_fail("30 months must read above 12, got %s" % [money])
+	ns.next_executive_year = (now - 1) / 12
+	ns.next_executive_month = (now - 1) % 12 + 1
+	money = Deal.answers(f["state"], ns, _loader, f["session"])["money"]
+	if int(money.get("months_to_vote", -1)) != 0 or float(money.get("found_by_the_vote", -1.0)) != 0.0:
+		_fail("a vote this month leaves no month to be found in, got %s" % [money])
+	ns.next_executive_year = 0
+	money = Deal.answers(f["state"], ns, _loader, f["session"])["money"]
+	if int(money.get("months_to_vote", 0)) != -1 or float(money.get("found_by_the_vote", 0.0)) != -1.0:
+		_fail("no vote on the clock reads -1, got %s" % [money])
 
 
 func _check_a_principled_person_never_offers() -> void:

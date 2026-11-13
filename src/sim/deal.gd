@@ -37,6 +37,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
+const Campaign = preload("res://src/sim/campaign.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
@@ -49,6 +50,9 @@ const Removal = preload("res://src/sim/removal.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const RefusalRisk = preload("res://src/sim/refusal_risk.gd")
 const MatterPeople = preload("res://src/sim/matter_people.gd")
+
+## Why Grant and the counter wait while the money is on the table.
+const MONEY_FIRST := "the money on the table is not answered yet"
 
 
 ## The booked day has come: Levers' session, which this scene hands back on every call, with the
@@ -131,9 +135,12 @@ static func people_in_matter(state, ns, loader, session: Dictionary) -> Array[St
 ##   ask, offer  as above;
 ##   money       the request's offer of money, with what taking it risks, shown first (the
 ##               author's ruling): {currency, amount_eur_m, evidence, found_in_a_year,
-##               found_in_a_year_without}, the second chance being the same with this money
-##               refused, since the first also counts all evidence already on the books; or {};
-##   grant       {ok, why_not}, and on a partner's post {removal}, Removal.price();
+##               found_in_a_year_without, months_to_vote, found_by_the_vote,
+##               found_by_the_vote_without, take: {ok, why_not}}, each "without" the same with
+##               this money refused, since the first also counts all evidence already on the
+##               books; the term's pair is -1 with no vote on the clock; or {};
+##   grant       {ok, why_not}, and on a partner's post {removal}, Removal.price(); closed while
+##               the money is unanswered;
 ##   bargain     {due_month, approaches}, each a Levers lever row, a promise's own date beside;
 ##   refuse      the price Levers.close() would charge with nothing agreed.
 static func answers(state, ns, loader, session: Dictionary) -> Dictionary:
@@ -164,6 +171,24 @@ static func grant(state, ns, loader, session: Dictionary) -> Dictionary:
 	var why := _grant_reason(ns, session)
 	if why != "":
 		return {"ok": false, "error": why}
+	return _grant(state, ns, loader, session)
+
+
+## Take the money (the author's ruling of 2026-11-13, "Prendre = promettre + argent"): Grant,
+## with the money and the evidence it leaves on top -- {ok, error, ask, offer, effects, paid,
+## evidence}. Grant's effects, so Take buys what a deal buys; no attempt needed or spent, as
+## Grant. Every refusal is read before the first write, so a refused Take writes nothing.
+static func take(state, ns, loader, session: Dictionary) -> Dictionary:
+	var why := _take_reason(state, ns, loader, session)
+	if why != "":
+		return {"ok": false, "error": why}
+	var result := _grant(state, ns, loader, session)
+	if bool(result["ok"]):
+		result.merge(Shadows.pay_offer(state, ns, loader, session))
+	return result
+
+
+static func _grant(state, ns, loader, session: Dictionary) -> Dictionary:
 	var ask: Dictionary = session["ask"]
 	var pid := String(session["person_id"])
 	var outcome := AK.STATUS_SETTLED
@@ -196,6 +221,8 @@ static func grant(state, ns, loader, session: Dictionary) -> Dictionary:
 static func bargain(state, ns, loader, session: Dictionary, approach: String, args := {}) -> Dictionary:
 	if not _approaches(ns, session).has(approach) or (approach == K.CORRUPT_APPROACH and not Shadows.is_currency(String(args.get("currency", "")))):
 		return {"ok": false, "error": "not an approach", "success": false, "spent": {}, "effects": {}}
+	if not Shadows.offer(ns, session).is_empty():
+		return {"ok": false, "error": MONEY_FIRST, "success": false, "spent": {}, "effects": {}}
 	var result := Levers.attempt(state, ns, loader, session, approach, args)
 	if not bool(result.get("success", false)):
 		return result
@@ -220,12 +247,14 @@ static func bargain(state, ns, loader, session: Dictionary, approach: String, ar
 
 ## The approaches this ask takes. A plant is paid for now, so there is no date to promise. The
 ## corrupt bargain joins them on a person whose request came with money: the rare draw, which
-## never falls on a principled person (the author's call: in ordinary audiences, rare).
+## never falls on a principled person (the author's call: in ordinary audiences, rare). Read
+## off the request, not the open offer: the counter waits for the money to be answered, and
+## leaving it does not close the corrupt bargain (Interface's notes, point 5).
 static func _approaches(ns, session: Dictionary) -> Array:
 	var out: Array = K.APPROACHES.duplicate()
 	if String(session.get("ask", {}).get("kind", "")) == K.ASK_FIRM:
 		out.erase("promise_date")
-	if not Shadows.offer(ns, session).is_empty():
+	if not (Audiences.request(ns, String(session.get("request_id", ""))).get("offer", {}) as Dictionary).is_empty():
 		out.append(K.CORRUPT_APPROACH)
 	return out
 
@@ -258,8 +287,20 @@ static func _firm_ask(state, ns, loader, object: String) -> Dictionary:
 
 
 ## Why Grant is closed, "" when it is open. Spent attempts do not close it: three failures
-## leave the full price on the table.
+## leave the full price on the table. The money on the table is answered first (Interface's
+## notes, point 1): Grant with it open would drop it for free, where leaving it costs regard.
 static func _grant_reason(ns, session: Dictionary) -> String:
+	var why := _deal_reason(ns, session)
+	return MONEY_FIRST if why == "" and not Shadows.offer(ns, session).is_empty() else why
+
+
+## Take's refusals: the deal's, then the money's. Writes nothing.
+static func _take_reason(state, ns, loader, session: Dictionary) -> String:
+	var why := _deal_reason(ns, session)
+	return why if why != "" else Shadows.take_reason(state, ns, loader, session)
+
+
+static func _deal_reason(ns, session: Dictionary) -> String:
 	var why := Levers.open_reason(ns, session)
 	if why != "":
 		return why
@@ -386,14 +427,27 @@ static func _money(state, ns, loader, session: Dictionary) -> Dictionary:
 	var evidence := amount * SC.EVIDENCE_PER_EUR_M
 	var currency := String(offer.get("currency", ""))
 	var pid := String(session["person_id"])
+	var month := Exposure.hazard_if(state, ns, loader, currency, pid, evidence)
+	var month_without := Exposure.hazard_if(state, ns, loader, currency, pid, 0.0)
+	# The term (the author's ruling, point 2): the months to the vote that decides the office.
+	# A vote this month leaves no month to be found in; a clock never set reads -1 for both.
+	var months := Campaign.months_to_election(state, ns)
+	var why := _take_reason(state, ns, loader, session)
 	return {"currency": currency, "amount_eur_m": amount, "evidence": evidence,
-		"found_in_a_year": _within_a_year(Exposure.hazard_if(state, ns, loader, currency, pid, evidence)),
-		"found_in_a_year_without": _within_a_year(Exposure.hazard_if(state, ns, loader, currency, pid, 0.0))}
+		"found_in_a_year": _within_a_year(month), "found_in_a_year_without": _within_a_year(month_without),
+		"months_to_vote": months, "found_by_the_vote": _within(month, months) if months >= 0 else -1.0,
+		"found_by_the_vote_without": _within(month_without, months) if months >= 0 else -1.0,
+		"take": {"ok": why == "", "why_not": why}}
 
 
 static func _within_a_year(month: float) -> float:
+	return _within(month, 12)
+
+
+## A month's chance, held for `months` months: the same compounding as the year's figure.
+static func _within(month: float, months: int) -> float:
 	var clear := 1.0
-	for i in 12:
+	for i in months:
 		clear *= 1.0 - month
 	return 1.0 - clear
 

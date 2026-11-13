@@ -45,8 +45,8 @@ from one run (section 6).
 - **Offers** ride on a request: `src/sim/offers.gd` draws, as the request
   arrives, whether it comes with money and in which currency, on a salt of its
   own (no other draw moves). In the scene the president takes it
-  (`Shadows.accept_offer`: paid, the request served, an attempt spent, evidence
-  left) or refuses it (`Shadows.refuse_offer`: the offerer's rapport only). Party
+  (`Deal.take`, since 2026-11-13: Grant's word and offer, the money paid,
+  evidence left; `Shadows.pay_offer` is its money half) or refuses it (`Shadows.refuse_offer`: the offerer's rapport only). Party
   money goes to `ns.incumbent_party_id`, the payer C6's campaigns draw on.
 - **The corrupt bargain currencies** raise the bargain's odds
   (`CURRENCY_ODDS`) and pay in evidence instead of an open spend. Aid writes no
