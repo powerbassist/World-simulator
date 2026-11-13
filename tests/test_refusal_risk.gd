@@ -56,6 +56,7 @@ func _init() -> void:
 	_check_no_grudge_no_brief()
 	_check_the_read_runs_the_year()
 	_check_a_word_of_silence_stops_the_brief()
+	_check_refusal_and_silence_part_just_under_the_line()
 	_check_silence_is_worth_what_they_would_do_left_alone()
 	_check_the_approval_is_the_strips()
 	_check_the_read_writes_nothing()
@@ -131,6 +132,20 @@ func _check_a_word_of_silence_stops_the_brief() -> void:
 	President.commit(f["state"], f["ns"], _loader, "silence", f["pid"], "silence:fixture", now + 12)
 	var risk: Dictionary = RefusalRisk.of_refusal(f["state"], _loader, f["id"])
 	_ok(int(risk.get("briefs", -1)) == 0, "a person who owes silence read as briefing: %s" % [risk])
+
+
+## The screen's main contrast (QA's TAKE on #322): just under the brief line, close enough
+## that a refusal's pulse lifts the person over it, refusing reads a brief next month and
+## leaving them alone (what silence spares) reads none.
+func _check_refusal_and_silence_part_just_under_the_line() -> void:
+	var f := _fixture(CK.GRUDGE_BRIEF_THRESHOLD - 0.05)
+	var session := {"request_id": f["id"], "person_id": f["pid"]}
+	var refused: Dictionary = Deal.refusal_risk(f["state"], f["ns"], _loader, session)
+	var spared: Dictionary = Deal.silence_worth(f["state"], f["ns"], _loader, session)
+	_ok(int(refused.get("first_month", -1)) == 1 and int(refused.get("briefs", 0)) >= 1,
+		"just under the line, a refusal did not read a brief next month: %s" % [refused])
+	_ok(int(spared.get("briefs", -1)) == 0 and int(spared.get("first_month", 0)) == -1,
+		"just under the line, leaving them alone read a brief: %s" % [spared])
 
 
 ## From Grant's side: with no refusal, a person already over the line briefs in month one

@@ -163,7 +163,14 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	if refused["error"] != "":
 		return refused
 	p = clampf(p + Shadows.odds_bonus(lever, args) + Lies.odds_bonus(lever, args), K.ODDS_MIN, K.ODDS_MAX)
-	var spent := pay(state, ns, loader, person, _asked(session), lever, args, now)
+	# The author's ruling of 2026-11-13 (it replaces "Oui, parole donnee" in the audience): a
+	# promise the person refuses binds NOTHING, so its word is written after the roll and only
+	# on a yes. A promise the president could not make is still refused before any roll.
+	var promise := lever == "promise_date"
+	if promise and not President.covers(state, ns, loader, String(person.id)):
+		refused["error"] = "the promise could not be made"
+		return refused
+	var spent := {} if promise else pay(state, ns, loader, person, _asked(session), lever, args, now)
 	if spent.has("refused"):
 		refused["error"] = "the promise could not be made"
 		return refused
@@ -173,6 +180,11 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	# reading it here moves no other draw; Lies.settle() below reads the same roll.
 	var seen_through := Lies.told(lever, args) and Lies.caught(state, ns, loader, session, lever, index)
 	var success := Cycle.unit_pair(String(session["request_id"]), Cycle.salted("%s:%s:%d" % [K.SALT_ROLL, lever, index], ns.draw_seed), now) < p and not seen_through
+	if promise and success:
+		spent = pay(state, ns, loader, person, _asked(session), lever, args, now)
+		if spent.has("refused"):
+			refused["error"] = "the promise could not be made"
+			return refused
 	session["attempts_left"] = int(session["attempts_left"]) - 1
 	(session["attempts"] as Array).append({"lever": lever, "success": success})
 	if success:
