@@ -54,6 +54,7 @@ func _init() -> void:
 	_base = GameState.new_game(_loader, PLAYER)
 	_check_over_the_line_a_refusal_briefs_in_month_one()
 	_check_no_grudge_no_brief()
+	_check_the_read_runs_the_year()
 	_check_a_word_of_silence_stops_the_brief()
 	_check_silence_is_worth_what_they_would_do_left_alone()
 	_check_the_approval_is_the_strips()
@@ -97,11 +98,30 @@ func _check_over_the_line_a_refusal_briefs_in_month_one() -> void:
 		"a refusal that lifts the grudge over the brief line did not brief in month one: %s" % [risk])
 
 
+## No grudge, no brief -- while someone else in the cast is over the line and briefs: the
+## read counts this person's briefs only.
 func _check_no_grudge_no_brief() -> void:
 	var f := _fixture(0.0)
+	var other := ""
+	for person in Staff.cast(_loader, PLAYER):
+		if String(person.id) != String(f["pid"]) and String(person.kind) != "chief_of_staff" and String(person.id) != President.leader_id(f["ns"]):
+			other = String(person.id)
+			break
+	f["ns"].person_grudges[other] = 1.0
+	f["ns"].person_loyalty[other] = 1.0
 	var risk: Dictionary = RefusalRisk.of_refusal(f["state"], _loader, f["id"])
 	_ok(int(risk.get("briefs", -1)) == 0 and int(risk.get("first_month", 0)) == -1,
 		"a refusal from no grudge read as a brief within the year: %s" % [risk])
+
+
+## The horizon is the year: someone far over the line, loyal enough not to resign first,
+## briefs month after month, so the read counts more than one.
+func _check_the_read_runs_the_year() -> void:
+	var f := _fixture(1.0)
+	f["ns"].person_loyalty[f["pid"]] = 1.0
+	var left_alone: Dictionary = RefusalRisk.of_silence(f["state"], _loader, f["id"])
+	_ok(int(left_alone.get("briefs", 0)) > 1 and int(left_alone.get("briefs", 0)) <= RefusalRisk.HORIZON,
+		"far over the line, the year read %s briefs" % [left_alone.get("briefs")])
 
 
 func _check_a_word_of_silence_stops_the_brief() -> void:
