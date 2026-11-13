@@ -244,7 +244,9 @@ tests=(
   tests/test_audience_scene.gd
   tests/test_audience_flow.gd
   tests/test_audience_levers.gd
-  tests/test_audience_shadows.gd
+  tests/test_talk_menu.gd
+  tests/test_audience_states.gd
+  tests/test_audience_money.gd
   tests/test_audience_close_fixes.gd
   tests/test_exposure_desk.gd
   tests/test_audience_load.gd

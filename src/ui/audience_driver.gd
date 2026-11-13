@@ -66,16 +66,17 @@ static func register(main) -> void:
 			_seen(main, was)
 			refresh(main))
 	# Each verb redraws the lane's side too: a promise made is in the Diary at once.
-	scene.attempted.connect(func(lever: String, args: Dictionary) -> void:
-		AudienceTalks.attempt(main, game, lever, args)
+	scene.countered.connect(func(date: Dictionary) -> void:
+		AudienceTalks.counter(main, game, date)
 		refresh(main))
 	scene.granted.connect(func() -> void:
 		AudienceTalks.grant(main, game)
 		refresh(main))
-	scene.talked.connect(func(topic: String, args: Dictionary) -> void: AudienceTalks.talk(main, game, topic, args))
+	scene.money_answered.connect(func(take: bool) -> void:
+		AudienceTalks.money(main, game, take)
+		refresh(main))
+	scene.asked.connect(func(line_id: String, topic: String, args: Dictionary) -> void: AudienceTalks.ask(main, game, line_id, topic, args))
 	scene.ended.connect(func() -> void: AudienceTalks.end(main, game))
-	scene.offer_answered.connect(func(accepted: bool) -> void: AudienceTalks.offer(main, game, accepted))
-	scene.affair.connect(func(action: String) -> void: AudienceTalks.affair(main, game, action))
 	scene.closed.connect(func() -> void: _leave(main, game))
 	# The frame's X ends it too: the hold the opening took goes with the window.
 	main._windows.closed.connect(func(id: String) -> void:

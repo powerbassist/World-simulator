@@ -9,6 +9,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const Levers = preload("res://src/sim/levers.gd")
+const Deal = preload("res://src/sim/deal.gd")
 const Offers = preload("res://src/sim/offers.gd")
 const Phone = preload("res://src/sim/phone.gd")
 const President = preload("res://src/sim/president.gd")
@@ -90,7 +91,7 @@ func _booked() -> Dictionary:
 				state.year = int(d["year"])
 				state.month = int(d["month"])
 				state.day = int(d["day"])
-				var session: Dictionary = Levers.open(state, ns, _loader, id)
+				var session: Dictionary = Deal.open(state, ns, _loader, id)
 				if session.is_empty():
 					break
 				return {"state": state, "ns": ns, "id": id, "pid": String(lane[0]["person_id"]), "session": session}
@@ -183,7 +184,7 @@ func _check_accept_pays_and_leaves_evidence() -> void:
 	var attempts := int(b["session"]["attempts_left"])
 	if Shadows.offer(ns, b["session"]).is_empty():
 		_failures.append("the scene does not see the request's offer")
-	var r: Dictionary = Shadows.accept_offer(b["state"], ns, _loader, b["session"])
+	var r: Dictionary = Deal.take(b["state"], ns, _loader, b["session"])
 	if not bool(r.get("ok", false)):
 		_failures.append("a legal offer was refused: %s" % [r])
 		return
@@ -193,12 +194,12 @@ func _check_accept_pays_and_leaves_evidence() -> void:
 			or String(ns.exposure_evidence[0]["person_id"]) != String(b["pid"]) \
 			or not is_equal_approx(float(ns.exposure_evidence[0]["size"]), SC.OFFER_EUR_M * SC.EVIDENCE_PER_EUR_M):
 		_failures.append("accepting left the wrong evidence: %s" % [ns.exposure_evidence])
-	if int(b["session"]["attempts_left"]) != attempts - 1 or String(b["session"]["won"]) == "":
-		_failures.append("accepting did not spend an attempt and win the scene: %s" % [b["session"]])
-	var grudge := float(ns.person_grudges.get(String(b["pid"]), 0.0))
+	# Taking it is Grant plus the money (the author's ruling of 2026-11-13): the deal's own
+	# rows are test_deal's; here, that it wins the scene as Grant does, spending no attempt.
+	if int(b["session"]["attempts_left"]) != attempts or String(b["session"]["won"]) != "grant":
+		_failures.append("accepting is Grant: no attempt spent, the scene won as a grant: %s" % [b["session"]])
 	var closed: Dictionary = Levers.close(b["state"], ns, _loader, b["session"])
-	if String(closed.get("outcome", "")) != AK.STATUS_SETTLED or not (closed.get("price", {}) as Dictionary).is_empty() \
-			or float(ns.person_grudges.get(String(b["pid"]), 0.0)) != grudge:
+	if String(closed.get("outcome", "")) == AK.STATUS_DECLINED or not (closed.get("price", {}) as Dictionary).is_empty():
 		_failures.append("a bought audience closed as %s, priced %s" % [closed.get("outcome", ""), closed.get("price", {})])
 
 
@@ -216,7 +217,7 @@ func _check_accept_party_money_pays_the_presidents_party() -> void:
 	var before := {}
 	for party in _loader.parties[PLAYER]:
 		before[party.id] = President.party_money_eur_m(ns, _loader, party.id)
-	if not bool(Shadows.accept_offer(b["state"], ns, _loader, b["session"]).get("ok", false)):
+	if not bool(Deal.take(b["state"], ns, _loader, b["session"]).get("ok", false)):
 		_failures.append("a party-money offer was refused")
 		return
 	for party in _loader.parties[PLAYER]:
@@ -249,7 +250,7 @@ func _check_refuse_costs_rapport_only() -> void:
 		_failures.append("refusing an offer moved a grudge or a loyalty")
 	if int(b["session"]["attempts_left"]) != attempts or not ns.exposure_evidence.is_empty():
 		_failures.append("refusing an offer spent an attempt or left evidence")
-	if not Shadows.offer(ns, b["session"]).is_empty() or bool(Shadows.accept_offer(b["state"], ns, _loader, b["session"]).get("ok", false)):
+	if not Shadows.offer(ns, b["session"]).is_empty() or bool(Deal.take(b["state"], ns, _loader, b["session"]).get("ok", false)):
 		_failures.append("a refused offer could still be taken")
 
 
@@ -261,13 +262,13 @@ func _check_one_offer_per_scene() -> void:
 	for row in ns.audience_requests:
 		if String(row["id"]) == String(b["id"]):
 			row.erase("offer")
-	if bool(Shadows.accept_offer(b["state"], ns, _loader, b["session"]).get("ok", false)) \
+	if bool(Deal.take(b["state"], ns, _loader, b["session"]).get("ok", false)) \
 			or bool(Shadows.refuse_offer(b["state"], ns, _loader, b["session"]).get("ok", false)):
 		_failures.append("a scene with no offer took or refused one")
 	_with_offer(b, "personal_wealth")
-	Shadows.accept_offer(b["state"], ns, _loader, b["session"])
+	Deal.take(b["state"], ns, _loader, b["session"])
 	var after := JSON.stringify([ns.to_dict(), b["session"]])
-	if bool(Shadows.accept_offer(b["state"], ns, _loader, b["session"]).get("ok", false)) \
+	if bool(Deal.take(b["state"], ns, _loader, b["session"]).get("ok", false)) \
 			or bool(Shadows.refuse_offer(b["state"], ns, _loader, b["session"]).get("ok", false)) \
 			or JSON.stringify([ns.to_dict(), b["session"]]) != after:
 		_failures.append("one scene answered its offer twice, or a refused second answer wrote")

@@ -18,6 +18,8 @@ const GOOD := "good"  # i18n: ok a tone key
 const BAD := "bad"  # i18n: ok a tone key
 const BLOCKED := "blocked"  # i18n: ok a tone key
 const RISKY := "risky"  # i18n: ok a tone key
+const TABLE := "table"  # i18n: ok a tone key
+const AT_RISK := "at_risk"  # i18n: ok a tone key
 const POP_META := "result_tone_pop"  # i18n: ok a meta key
 
 ## key -> [variation, word]. The words are tags, short and upper-cased on screen.
@@ -26,10 +28,13 @@ const TAG := {
 	BAD: [UiTheme.BAD_SMALL, "Against you"],  # i18n: msgid
 	BLOCKED: [UiTheme.WARN_TEXT, "Not possible"],  # i18n: msgid
 	RISKY: [UiTheme.WARN_TEXT, "Risky"],  # i18n: msgid
+	# The audience's rare proposals (the C4-offer / C4-affair renders): what is offered, and what it left.
+	TABLE: [UiTheme.WARN_TEXT, "On the table"],  # i18n: msgid
+	AT_RISK: [UiTheme.WARN_TEXT, "At a risk"],  # i18n: msgid
 }
 
 ## key -> the status colour tint() lays on a sentence, at whatever size it has.
-const TINT := {GOOD: UiTheme.GOOD, BAD: UiTheme.BAD, BLOCKED: UiTheme.WARN, RISKY: UiTheme.WARN}
+const TINT := {GOOD: UiTheme.GOOD, BAD: UiTheme.BAD, BLOCKED: UiTheme.WARN, RISKY: UiTheme.WARN, TABLE: UiTheme.WARN, AT_RISK: UiTheme.WARN}
 
 
 ## The tag `label` shows for `tone`; "" (a neutral result) hides it.

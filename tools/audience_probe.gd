@@ -102,6 +102,7 @@ const LK = preload("res://src/sim/lever_constants.gd")
 const LW = preload("res://tools/lever_weights.gd")
 const DealK = preload("res://src/sim/deal_constants.gd")
 const Deal = preload("res://src/sim/deal.gd")
+const Shadows = preload("res://src/sim/shadows.gd")
 const ActK = preload("res://src/sim/character_act_constants.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
 const Levers = preload("res://src/sim/levers.gd")
@@ -594,6 +595,10 @@ func _grant_audience(state, ns, id: String, e: Dictionary) -> void:
 	_deal_tally["held"] += 1
 	var ask := String(session["ask"]["kind"])
 	_deal_tally["asks"][ask] = int(_deal_tally["asks"].get(ask, 0)) + 1
+	# The money first, as the scene asks: this player agrees to the deal and leaves the money
+	# (Leave, the clean answer), so Grant is the deal without it.
+	if not Shadows.offer(ns, session).is_empty():
+		Shadows.refuse_offer(state, ns, _loader, session)
 	var result: Dictionary = Deal.grant(state, ns, _loader, session)
 	if bool(result.get("ok", false)):
 		_deal_tally["granted"] += 1

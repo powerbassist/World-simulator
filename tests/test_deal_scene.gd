@@ -16,6 +16,7 @@ const Deal = preload("res://src/sim/deal.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
 const ClosureCard = preload("res://src/ui/closure_card.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
+const AudienceWords = preload("res://src/ui/audience_words.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const President = preload("res://src/sim/president.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
@@ -128,9 +129,16 @@ func _open(pid: String) -> void:
 	_fail("premise: no free day for %s" % pid)
 
 
-func _text(name: String) -> String:
-	var node: Label = _scene().find_child(name, true, false)
-	return node.text if node != null else ""
+## Every word the three cards say, joined: the card's lines are built from the sim's reads and read here as a player does.
+func _text(_name := "") -> String:
+	var out := PackedStringArray()
+	for label in _scene().cards.find_children("*", "Label", true, false):
+		out.append((label as Label).text)
+	return " ".join(out)
+
+
+func _button(name: String) -> Button:
+	return _scene().cards.find_child(name, true, false) as Button
 
 
 func _session() -> Dictionary:
@@ -155,11 +163,76 @@ func _check_words() -> void:
 	row["verdict"] = "broken"
 	if not kept.contains("kept") or not DealWords.owed_verdict(_main._loader, row).contains("broke"):
 		_fail("a judged word reads the wrong way: '%s', '%s'" % [kept, DealWords.owed_verdict(_main._loader, row)])
-	var deal = _scene().deal
-	deal.show_card({"want": "w", "want_stake": "", "give": "g", "give_stake": "", "give_good": false, "grant_ok": false,
-		"grant_why": "Why not.", "grant_cost": "A price.", "bargain": "", "struck": false, "refuse": ""})
-	if _text("GrantCost") != "Why not.":
-		_fail("a refused Grant does not say why on its line: '%s'" % _text("GrantCost"))
+	# A Grant the sim refuses says why on its own card's line, and its button is down.
+	var q := AudienceWords.question(_main._loader, _ns(), {}, {"ask": {"kind": "word", "object": "x", "due_month": 0}, "offer": {"kind": "silence", "months": 12},
+		"grant": {"ok": false, "why_not": "Why not."}, "refuse": {}, "bargain": {"due_month": 0, "approaches": []}}, {}, "w", "executive", {})
+	var lines: Array = q["grant"]["lines"]
+	if bool(q["grant"]["ok"]) or not lines.any(func(l: Dictionary) -> bool: return String(l["text"]) == "Why not."):
+		_fail("a refused Grant does not say why on its card: %s" % [lines])
+	if not (q["counter"] as Dictionary).is_empty():
+		_fail("an ask with no date to move still has a Counter")
+	_check_the_cards_after_qa_round_one()
+	_check_a_word_is_judged_on_day_one()
+
+
+## QA's round on #324: one counter per audience (the parent's ruling), the spared brief only for a
+## silence, and one line for a brief whatever the count.
+func _check_the_cards_after_qa_round_one() -> void:
+	var row := {"lever": "promise_date", "offered": true, "odds_lo": 0.0, "odds_hi": 0.36, "why_not": "",
+		"dates": {"earliest": 24313, "latest": 24324}}
+	var answers := {"ask": {"kind": "word", "object": "x", "due_month": 0}, "offer": {"kind": "silence", "months": 12},
+		"grant": {"ok": true, "why_not": ""}, "refuse": {}, "bargain": {"due_month": 0, "approaches": [row]}}
+	var reads := {"silence": {"briefs": 3, "first_month": 1, "approval_pt": -0.6}, "refusal": {"briefs": 3, "first_month": 4, "approval_pt": -0.6}}
+	var fresh := AudienceWords.question(_main._loader, _ns(), {"attempts": []}, answers, {}, "w", "executive", reads)
+	if not bool(fresh["counter"]["ok"]):
+		_fail("a first Counter is not open")
+	var other := AudienceWords.question(_main._loader, _ns(), {"attempts": [{"lever": "argue", "success": false}]}, answers, {}, "w", "executive", reads)
+	if not bool(other["counter"]["ok"]):
+		_fail("an Argue closed the Counter")
+	var spent := AudienceWords.question(_main._loader, _ns(), {"attempts": [{"lever": "promise_date", "success": false}]}, answers, {}, "w", "executive", reads)
+	if bool(spent["counter"]["ok"]):
+		_fail("a refused Counter can be rolled again")
+	if not (spent["counter"]["lines"] as Array).any(func(l: Dictionary) -> bool: return String(l["tone"]) == AudienceWords.WARN):
+		_fail("a spent Counter does not say so: %s" % [spent["counter"]["lines"]])
+	if not bool(spent["grant"]["ok"]) or not bool(spent["refuse"]["ok"]):
+		_fail("a refused Counter closed Grant or Refuse")
+	var spared := func(q: Dictionary) -> Array:
+		return (q["grant"]["lines"] as Array).filter(func(l: Dictionary) -> bool: return String(l["text"]).begins_with("Spares"))
+	if (spared.call(fresh) as Array).size() != 1 or not String(spared.call(fresh)[0]["text"]).begins_with("Spares you a brief "):
+		_fail("a silence's Grant does not spare one brief, whatever the count: %s" % [spared.call(fresh)])
+	var votes := answers.duplicate(true)
+	votes["offer"] = {"kind": "vote", "law_id": "x", "seats": 16, "date": {"year": 2026, "month": 12, "day": 3}}
+	var vote_card := AudienceWords.question(_main._loader, _ns(), {"attempts": []}, votes, {}, "w", "executive", reads)
+	if not (spared.call(vote_card) as Array).is_empty():
+		_fail("a vote's Grant says it spares a brief, and the pledge writes no silence: %s" % [spared.call(vote_card)])
+	var refuse_texts: Array = (fresh["refuse"]["lines"] as Array).map(func(l: Dictionary) -> String: return String(l["text"]))
+	if not refuse_texts.any(func(t: String) -> bool: return t.begins_with("A brief likely ") and not t.contains("3")):
+		_fail("a refusal's risk is not one brief line: %s" % [refuse_texts])
+
+
+## QA #324, the real-window play: a word is judged when its due month BEGINS (the clock emits
+## month_elapsed with the new month, and Levers.tick_month takes due_month <= now), so every line
+## that dates a word says day 1 of that month, not "the end of" it.
+func _check_a_word_is_judged_on_day_one() -> void:
+	var due := 2026 * 12 + 10
+	var answers := {"ask": {"kind": "word", "object": "x", "due_month": due}, "offer": {"kind": "silence", "months": 12},
+		"grant": {"ok": true, "why_not": ""}, "refuse": {}, "bargain": {"due_month": 2027 * 12 + 10, "approaches": [
+			{"lever": "promise_date", "offered": true, "odds_lo": 0.0, "odds_hi": 0.36, "why_not": "", "dates": {"earliest": 1, "latest": 2}}]}}
+	var q := AudienceWords.question(_main._loader, _ns(), {"attempts": []}, answers, {}, "w", "executive", {})
+	var texts: Array = []
+	for card in ["grant", "counter"]:
+		for l in q[card]["lines"]:
+			texts.append(String(l["text"]))
+	if not texts.any(func(t: String) -> bool: return t.contains("01 OCT 2026")):
+		_fail("the Grant card does not say the word is judged on 01 OCT 2026: %s" % [texts])
+	if not texts.any(func(t: String) -> bool: return t.contains("01 OCT 2027")):
+		_fail("the Counter card does not say its default word is judged on 01 OCT 2027: %s" % [texts])
+	if texts.any(func(t: String) -> bool: return t.contains("end of")):
+		_fail("a card still says a word is judged at the end of a month: %s" % [texts])
+	var struck := AudienceWords.struck_lines(answers, {"give_stake": "A silence."})
+	var struck_texts: Array = struck.map(func(l: Dictionary) -> String: return String(l["text"]))
+	if not struck_texts.any(func(t: String) -> bool: return t.contains("01 OCT 2026")) or struck_texts.any(func(t: String) -> bool: return t.contains("end of")):
+		_fail("the struck band does not say the word is judged on 01 OCT 2026: %s" % [struck_texts])
 
 
 func _card(ask: Dictionary, offer: Dictionary) -> Dictionary:
@@ -207,26 +280,21 @@ func _check_offer_card() -> void:
 		_fail("the scene opened Levers' session, not Deal's")
 	var answers: Dictionary = Deal.answers(_main._state, _ns(), _main._loader, session)
 	var seats := int(answers["offer"]["seats"])
-	if not _text("GiveStake").contains(str(seats)):
-		_fail("the strip does not say the %d seats the division gains: '%s'" % [seats, _text("GiveStake")])
-	if _text("Want") == "" or _text("Give") == "":
+	var said := _text()
+	if not said.contains(str(seats)):
+		_fail("the cards do not say the %d seats the division gains: '%s'" % [seats, said])
+	if _scene()._lead.text == "":
 		_fail("the card has no ask or no offer")
-	if _text("GrantCost") == "":
-		_fail("Grant's cost is not on the strip")
 	var feel := preload("res://src/ui/feelings.gd").of(_ns(), _voter)
 	var price := Words.price_text(answers["refuse"], feel)
-	if not _text("RefuseCost").contains(price):
-		_fail("Refuse's price is not on the strip: '%s' against '%s'" % [_text("RefuseCost"), price])
-	var bargain_head := _text("BargainHead")
-	if not bargain_head.contains(Words.when(int(answers["bargain"]["due_month"]))):
-		_fail("Bargain's smaller grant has no date: '%s'" % bargain_head)
-	var verbs = _scene().verbs
-	for lever in ["argue", "promise_date", "pressure"]:
-		if verbs.lever_button(lever) == null:
-			_fail("the approach %s is missing" % lever)
-	for lever in ["flatter", "friendship", "bargain"]:
-		if verbs.lever_button(lever) != null:
-			_fail("the scene still offers %s" % lever)
+	if not said.contains(price):
+		_fail("Refuse's price is not on its card: '%s' against '%s'" % [said, price])
+	var counter = _scene().cards.date_pick
+	if counter == null or counter.absolute_month() != int(answers["bargain"]["due_month"]):
+		_fail("the Counter's field does not open on the month the smaller grant is for")
+	for lever in ["argue", "promise_date", "pressure", "flatter", "friendship", "bargain"]:
+		if _scene().find_child("Lever_" + lever, true, false) != null:
+			_fail("the scene still shows the lever %s" % lever)
 
 
 ## The parent's ruling on #311, the author's call: the corrupt bargain is a fourth approach, on
@@ -262,21 +330,18 @@ func _check_the_corrupt_approach() -> void:
 
 func _check_grant() -> void:
 	var before := President.owed(_ns()).size()
-	(_scene().find_child("Grant", true, false) as Button).pressed.emit()
+	_button("GrantButton").pressed.emit()
 	if President.owed(_ns()).size() != before + 1:
 		_fail("Grant did not write what they owe")
 	if _scene()._tone.text != tr("In your favour"):
 		_fail("Grant landed as '%s', not in the player's favour" % _scene()._tone.text)
-	if not (_scene().find_child("Grant", true, false) as Button).disabled:
-		_fail("Grant stays open after the deal is struck")
-	if _scene().verbs.lever_button("argue") != null:
-		_fail("the approaches stay on the table after the deal is struck")
-	if _scene()._end.text != tr("End the audience"):
+	if _scene().cards.visible or not _scene().flow.in_talk():
+		_fail("after the deal the cards stay up or the talk does not open")
+	if _scene()._end.text != tr("That will be all"):
 		_fail("after the deal the way out reads '%s'" % _scene()._end.text)
 
 
 func _end_and_leave() -> void:
-	_scene()._end.pressed.emit()
 	_scene()._end.pressed.emit()
 
 
@@ -314,17 +379,19 @@ func _check_silence_and_refuse() -> void:
 	var answers: Dictionary = Deal.answers(_main._state, _ns(), _main._loader, session)
 	if String(answers["offer"]["kind"]) != "silence":
 		_fail("premise: the second offer is no longer silence")
-	if not _text("GiveStake").contains(str(int(answers["offer"]["months"]))):
-		_fail("a silence's strip does not give its months: '%s'" % _text("GiveStake"))
-	if _scene()._end.text != tr("Refuse"):
-		_fail("the way out before a deal reads '%s', not Refuse" % _scene()._end.text)
-	# A lever outside the three is refused by Deal.bargain, and Levers.attempt would have taken it.
+	if not _text().contains(str(int(answers["offer"]["months"]))):
+		_fail("a silence's card does not give its months: '%s'" % _text())
+	if _button("RefuseButton") == null or _button("GrantButton") == null:
+		_fail("the question has no Grant or no Refuse")
+	# A lever outside the approaches is refused by Deal.bargain, and Levers.attempt would have taken it.
 	var attempts := int(session["attempts_left"])
-	_scene().attempted.emit("flatter", {})
-	if _scene()._tone.text != tr("Not possible") or int(session["attempts_left"]) != attempts:
-		_fail("an approach did not go through Deal.bargain: tone '%s', attempts %d" % [_scene()._tone.text, int(session["attempts_left"])])
+	var refused: Dictionary = Deal.bargain(_main._state, _ns(), _main._loader, session, "flatter", {})
+	if bool(refused["ok"]) or int(session["attempts_left"]) != attempts:
+		_fail("an approach did not go through Deal.bargain: %s" % [refused])
 	var id := String(session["request_id"])
-	_scene()._end.pressed.emit()
+	_button("RefuseButton").pressed.emit()
+	if _scene().flow.state != preload("res://src/ui/audience_flow.gd").S.REFUSED:
+		_fail("Refuse did not end on the refusal's own state: %s" % _scene().flow.name_of(_scene().flow.state))
 	if String(Audiences.request(_ns(), id).get("status", "")) == "held":
 		_fail("Refuse left the request held")
 

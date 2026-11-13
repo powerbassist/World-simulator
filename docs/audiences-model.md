@@ -386,9 +386,12 @@ The design and the numbers are [[shadows-model]]; what the audience gains:
 
 - **An offer** rides on a request from an executive or a press owner
   (`src/sim/offers.gd`, drawn as it arrives, on a salt of its own). In the scene
-  the president takes it -- `Shadows.accept_offer`: the money paid, the request
-  served, an attempt spent, evidence left -- or refuses it, which costs the
-  offerer's rapport (0.05) and nothing else. One offer a scene.
+  the president takes it -- `Deal.take`, since 2026-11-13 Grant plus the money
+  (the author's "Prendre = promettre + argent"): the word given and the offer
+  struck as Grant writes them, the money paid, evidence left, no attempt spent --
+  or refuses it, which costs the offerer's rapport (0.05) and nothing else. One
+  offer a scene, answered before Grant or the counter (`Deal.MONEY_FIRST`); the
+  card reads the risk over the year and to the next vote (`found_by_the_vote`).
 - **Two corrupt bargain currencies** beside the favour and the vote trade:
   `backroom` (a want served off the books, `favour` evidence) and `aid` (a
   diverted budget line, `diverted_budget` evidence), each with an odds bonus and

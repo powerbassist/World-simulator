@@ -1,0 +1,15 @@
+{
+  "_comment": "The audience's conversation (V5.3, Gameplay's talk menu sections 1-4). One general rule reads this table (src/ui/talk_menu.gd): a line is offered only when its condition holds, tier by tier, at most `tier_limits[tier]` of a tier and `max_lines` in all; nothing fills the gap. `topic` is the EXISTING topic the line spends (Levers.talk); the words are the .dialogue titles talk_<id>, talk_<id>_yes, talk_<id>_no; `tag` names the glyph and words at the line's right end (talk_menu.gd's TAGS). A row 3 (their region) and a row for the unfilled tiers are absent on purpose: no person in the data carries a region, and a want only names a programme entry, an office or a meter.",
+  "max_lines": 5,
+  "tier_order": ["recent", "between", "are", "opener", "rare"],
+  "tier_limits": {"recent": 2, "between": 1, "are": 1, "opener": 1, "rare": 1},
+  "lines": [
+    {"id": "bill", "tier": "recent", "topic": "opinion", "tag": "learn", "condition": {"kind": "bill_soon", "months": 3}},
+    {"id": "plant", "tier": "recent", "topic": "opinion", "tag": "learn", "condition": {"kind": "closure_at_chief_firm"}},
+    {"id": "sector", "tier": "recent", "topic": "opinion", "tag": "learn", "condition": {"kind": "sector_warning_at_chief_firm", "months": 3}},
+    {"id": "gossip", "tier": "are", "topic": "gossip", "tag": "learn", "condition": {"kind": "gossip_people", "max": 4}},
+    {"id": "dinner", "tier": "opener", "topic": "dinner", "tag": "warm_more", "condition": {"kind": "knowledge", "at_least": "acquaintance"}},
+    {"id": "family", "tier": "opener", "topic": "family", "tag": "warm", "condition": {"kind": "knowledge", "at_most": "acquaintance"}},
+    {"id": "flirt", "tier": "rare", "topic": "flirt", "tag": "warm", "condition": {"kind": "affair_gates", "knowledge_at_least": "acquaintance"}}
+  ]
+}

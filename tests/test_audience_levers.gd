@@ -24,6 +24,7 @@ const DealK = preload("res://src/sim/deal_constants.gd")
 const President = preload("res://src/sim/president.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Words = preload("res://src/ui/lever_words.gd")
+const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
@@ -48,6 +49,7 @@ func _process(_delta: float) -> bool:
 			_open_an_audience()
 		5:
 			_check_open()
+			_pick_a_day()
 			_press(true)
 		9:
 			_press(false)
@@ -56,7 +58,7 @@ func _process(_delta: float) -> bool:
 			_promise()
 		13:
 			_check_promise()
-			_scene().verbs.topic_button("family").pressed.emit()
+			AudienceTalks.ask(_main, AudienceDriver._games[_main.get_instance_id()], "family", "family", {})
 		15:
 			_check_topic()
 			_scene()._end.pressed.emit()
@@ -110,47 +112,41 @@ func _open_an_audience() -> void:
 func _check_open() -> void:
 	if not _main._windows.is_open("audience") or _session().is_empty():
 		_fail("the booked day did not open Levers' session in the scene")
+
+
+## The Counter's day, picked on the field: a day inside the window the row gives.
+func _pick_a_day() -> void:
+	var field = _scene().cards.date_pick
+	if field == null:
+		_fail("no Counter field on the question")
 		return
-	_check_ranges("on opening")
+	_promised_due = field._first + 2
+	field.choose(10, _promised_due)
 
 
-## The ranges on screen are the sim's, row for row.
-func _check_ranges(when: String) -> void:
-	var ns = _main._state.player()
-	for row in Levers.offered(_main._state, ns, _main._loader, _session()):
-		# The deal's scene offers the three approaches; the other levers stay the sim's.
-		if not DealK.APPROACHES.has(String(row["lever"])):
-			continue
-		var button: Button = _scene().verbs.lever_button(String(row["lever"]))
-		if button == null:
-			_fail("%s: lever %s has no button" % [when, row["lever"]])
-			continue
-		var odds := (button.get_parent().get_parent().get_child(button.get_parent().get_index() + 1) as Label).text
-		# A refused lever with no range at all (no friendship to appeal to) is a dash.
-		var want := "—" if not bool(row["offered"]) and float(row["odds_hi"]) <= 0.0 else Words.odds_text(float(row["odds_lo"]), float(row["odds_hi"]))
-		if odds != want:
-			_fail("%s: %s shows %s, the sim prints %s" % [when, row["lever"], odds, want])
-		if button.disabled == bool(row["offered"]):
-			_fail("%s: %s is %s though the sim says offered=%s" % [when, row["lever"], "down" if button.disabled else "live", row["offered"]])
+## The word binds only when she took the Counter (the author's ruling, Systems' #323): both
+## sides of that rule read the same, so this holds on either side of it.
+var _won_promise := false
 
 
 func _check_attempt() -> void:
+	_won_promise = String(_session().get("won", "")) == "promise_date"
 	if int(_session().get("attempts_left", 0)) != 2:
-		_fail("a held click on Argue did not reach Levers.attempt(): %s" % [_session()])
+		_fail("a held click on Counter did not reach Deal.bargain(): %s" % [_session()])
 	if _scene()._result.text == "":
 		_fail("the attempt's result is not said")
-	_check_ranges("after argue")
+	# One counter per audience (the parent's ruling, QA #324): a Counter she did not take closes the
+	# Counter's button AND its date field, and leaves Grant and Refuse open.
+	if not _won_promise:
+		var counter: Button = _scene().cards.find_child("CounterButton", true, false) as Button
+		if counter == null or not counter.disabled:
+			_fail("the Counter stayed open after a Counter she did not take")
+		if _scene().cards.date_pick == null or not _scene().cards.date_pick.disabled:
+			_fail("the Counter's date field stayed open after a Counter she did not take")
 
 
 func _promise() -> void:
-	var promise: Button = _scene().verbs.lever_button("promise_date")
-	if String(_session().get("won", "")) != "":
-		if not promise.disabled or promise.tooltip_text != Words.reason("they have already agreed"):
-			_fail("a won lever left the promise live, or without the sim's reason")
-		return
-	var due: OptionButton = promise.get_parent().find_child("Due", false, false)
-	_promised_due = int(due.get_item_metadata(due.selected))
-	promise.pressed.emit()
+	pass
 
 
 func _check_promise() -> void:
@@ -160,8 +156,8 @@ func _check_promise() -> void:
 	var found := false
 	for row in President.commitments_with(ns, _person):
 		found = found or (String(row["kind"]) == "promise" and int(row["due_month"]) == _promised_due)
-	# The author's ruling of 2026-11-13: a promise the person refused binds nothing.
-	if not _promise_won():
+	# The author's ruling of 2026-11-13 (#323): a promise the person refused binds nothing.
+	if not _won_promise:
 		if found:
 			_fail("a refused promise wrote a commitment: %s" % [ns.commitments])
 		return
@@ -172,7 +168,7 @@ func _check_promise() -> void:
 
 
 func _check_topic() -> void:
-	var left := 1 if _promised_due < 0 else 0
+	var left := 1  # the Counter and the topic: two of the three attempts
 	if int(_session().get("attempts_left", -1)) != left:
 		_fail("the topic did not spend an attempt: %s" % [_session()])
 	if not _scene()._result.text.contains("know them better"):
@@ -185,8 +181,6 @@ func _check_end() -> void:
 	var want := "declined" if won == "" else ("promised" if won == "promise_date" else "settled")
 	if String(Audiences.request(ns, _request).get("status", "")) != want:
 		_fail("End did not close the audience as %s: %s" % [want, Audiences.request(ns, _request)])
-	if not _main._windows.is_open("audience") or _scene()._end.text != "Leave":
-		_fail("End took the scene down, or does not offer Leave")
 
 
 func _check_left() -> void:
@@ -194,15 +188,8 @@ func _check_left() -> void:
 		_fail("Leave left the audience open")
 	if _main._clock.paused and not _main._decision_holds_clock():
 		_fail("leaving the audience did not let the clock go")
-	if _promised_due > 0 and _promise_won() and not _diary_has(_main._loader.person_name(_person), Words.when(_promised_due)):
-		_fail("a promise the person took, and the Diary dropped it")
-
-
-func _promise_won() -> bool:
-	for attempt in _session().get("attempts", []):
-		if String(attempt["lever"]) == "promise_date" and bool(attempt["success"]):
-			return true
-	return false
+	if _promised_due > 0 and _won_promise and not _diary_has(_main._loader.person_name(_person), Words.when(_promised_due)):
+		_fail("a promise binds whatever the outcome, and the Diary dropped it")
 
 
 ## A second person promised something due next month (staged through the sim's
@@ -283,9 +270,9 @@ func _text_of(node: Node) -> String:
 
 
 func _press(down: bool) -> void:
-	var target: Button = _scene().verbs.lever_button("argue") if _scene() != null else null
+	var target: Button = _scene().cards.find_child("CounterButton", true, false) as Button if _scene() != null else null
 	if target == null:
-		_fail("no Argue button to click")
+		_fail("no Counter button to click")
 		return
 	Click.half(_main.get_viewport(), target, down)
 

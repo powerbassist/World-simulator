@@ -116,7 +116,7 @@ static func ceiling_room_eur_m(ns, loader) -> float:
 
 
 ## The window's spend grows by `amount`; the part of it past the ceiling leaves
-## party-money evidence at a donation's own rate (SC.EVIDENCE_PER_EUR_M, accept_offer's
+## party-money evidence at a donation's own rate (SC.EVIDENCE_PER_EUR_M, pay_offer's
 ## formula), so overspending EUR 10 m is as exposed as taking EUR 10 m. One row per
 ## person, grown (Gameplay, 2026-10-25).
 static func _spend(state, ns, loader, amount: float) -> void:

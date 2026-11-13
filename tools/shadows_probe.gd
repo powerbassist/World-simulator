@@ -26,7 +26,8 @@ extends SceneTree
 ##      `--exact=N` re-runs the first N seeds with the real row written at the act
 ##      and compares first-exposure months (0 mismatches is the evidence).
 ##   S2 ALWAYS. Every request booked on its first free day (else delegated); in each
-##      audience an offer is accepted, else bargains in backroom and aid in turn
+##      audience an offer is taken (Deal.take: the word given as Grant gives it, kept or
+##      broken as the idle run leaves it), else bargains in backroom and aid in turn
 ##      until one wins or the attempts run out.
 ##   S2c CROSSED (#170's call 2, Gameplay #171). S2, but every request from a person
 ##      who holds evidence on the sitting president is declined: the turned route is
@@ -47,6 +48,7 @@ const WorldMonth = preload("res://src/sim/world_month.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
+const Deal = preload("res://src/sim/deal.gd")
 const CalK = preload("res://src/sim/calendar_constants.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
 const Levers = preload("res://src/sim/levers.gd")
@@ -324,14 +326,19 @@ func _roll_hypothetical(state, ns, act: Dictionary, hits: Dictionary, trace: Arr
 func _fire(state, ns, regime: String, lies: Array) -> void:
 	for e in _due(state):
 		state.day = int(e["day"])
-		var session: Dictionary = Levers.open(state, ns, _loader, String(e["action_id"]))
+		# S2's scenes open as the game's deal (Deal.open), so a Take is the game's Take: Grant
+		# plus the money (the author's ruling of 2026-11-13). S4 keeps the lever scene it measures.
+		var deal := regime == "S2" or regime == "S2c"
+		var session: Dictionary = Deal.open(state, ns, _loader, String(e["action_id"])) if deal else Levers.open(state, ns, _loader, String(e["action_id"]))
 		Calendar.resolve(state, Calendar.verb_key(e), true)
 		if session.is_empty():
 			continue
 		var person = _loader.person_by_id.get(String(session["person_id"]))
 		if regime == "S2" or regime == "S2c":
-			if not Shadows.offer(ns, session).is_empty():
-				Shadows.accept_offer(state, ns, _loader, session)
+			# A Take the game refuses (Grant closed on this ask) leaves the money, the one
+			# other answer, before any bargain: the game's counter waits for the money.
+			if not Shadows.offer(ns, session).is_empty() and not bool(Deal.take(state, ns, _loader, session).get("ok", false)):
+				Shadows.refuse_offer(state, ns, _loader, session)
 			while String(session["won"]) == "" and int(session["attempts_left"]) > 0:
 				var currency: String = LK.CURRENCY_BACKROOM if _bargains % 2 == 0 else LK.CURRENCY_AID
 				_bargains += 1
