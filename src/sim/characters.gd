@@ -413,9 +413,7 @@ static func _fire_act(state, ns, loader, person, act_key: String, meters: Dictio
 			# ends of one walk rather than two registers.
 			if grudge < CK.GRUDGE_BRIEF_THRESHOLD or President.keeps_silent(ns, person.id):
 				return false
-			var magnitude := CK.PRICE_BRIEF * _standing_weight(standing)
-			if person.traits.has("networked"):
-				magnitude *= CK.NETWORKED_MAGNITUDE
+			var magnitude := brief_magnitude(person, standing)
 			# Brief THROUGH the applier, with an effects dict shaped the way
 			# the law and the event choice shape theirs -- one channel.
 			Legislature.apply_effects(state, ns, {"bloc_offset": _brief_blocs(magnitude)}, loader)
@@ -431,6 +429,13 @@ static func _fire_act(state, ns, loader, person, act_key: String, meters: Dictio
 		_:
 			return false
 	return false
+
+
+## A brief's offset on each of its blocs (negative): the standing-weighted price, half
+## again for a networked person. Public for the audience's risk read
+## (src/sim/refusal_risk.gd), so the card prices the act this file writes.
+static func brief_magnitude(person, standing: float) -> float:
+	return CK.PRICE_BRIEF * _standing_weight(standing) * (CK.NETWORKED_MAGNITUDE if person.traits.has("networked") else 1.0)
 
 
 ## The brief's blocs: a leak lands on the blocs whose matter it is. PRICES ARE

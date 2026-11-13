@@ -211,6 +211,8 @@ tests=(
   # V5.3 a + b, B7: the density probe's counting rule (tools/density_count.gd).
   tests/test_density_count.gd
   tests/test_quiet_month.gd
+  tests/test_refusal_risk.gd
+  tests/test_matter_people.gd
   tests/test_exposure.gd
   # V4.4 T11: the event plate library -- the generator's --dry-run pinned
   # set-equal to what the helper can name, every nameable plate bytes-loading

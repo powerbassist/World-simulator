@@ -173,7 +173,7 @@ static func run_unit(month: Month) -> void:
 
 ## The three meters the people read, off the player's nation: Characters and
 ## Audiences read the same values in the same month.
-static func _character_meters(state) -> Dictionary:
+static func character_meters(state) -> Dictionary:
 	var player = state.player()
 	return {
 		"grievance": float(player.unrest_pct),
@@ -465,7 +465,7 @@ static func _step(month: Month, step: String) -> Array:
 		# unrest.gd/media.gd/judiciary.gd un-preloaded in characters.gd. The acts
 		# are a record for the caller, not state.
 		"Characters":
-			month.report["character_acts"] = Characters.tick_month(state, loader, _character_meters(state))
+			month.report["character_acts"] = Characters.tick_month(state, loader, character_meters(state))
 		# V5.2b, after Characters (wants read the same settled meters, and a lapse's
 		# grudge is read by next month's acts rather than this one's) and before
 		# Elections, which still runs last.
@@ -476,7 +476,7 @@ static func _step(month: Month, step: String) -> Array:
 		# what the meeting taught.
 		"Audiences":
 			month.report["meetings"] = Meetings.tick_month(state, loader)
-			var meters := _character_meters(state)
+			var meters := character_meters(state)
 			month.report["audience_requests"] = Audiences.tick_month(state, loader, meters)
 			month.report["commitments"] = Levers.tick_month(state, loader, meters)
 			# After the judge, the affairs and the bonds, then the exposures: a promise
