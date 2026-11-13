@@ -72,6 +72,9 @@ static func register(main) -> void:
 	scene.granted.connect(func() -> void:
 		AudienceTalks.grant(main, game)
 		refresh(main))
+	scene.money_answered.connect(func(take: bool) -> void:
+		AudienceTalks.money(main, game, take)
+		refresh(main))
 	scene.asked.connect(func(line_id: String, topic: String, args: Dictionary) -> void: AudienceTalks.ask(main, game, line_id, topic, args))
 	scene.ended.connect(func() -> void: AudienceTalks.end(main, game))
 	scene.closed.connect(func() -> void: _leave(main, game))

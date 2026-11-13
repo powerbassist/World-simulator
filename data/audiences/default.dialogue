@@ -89,6 +89,22 @@
 % {{name}}: I will take that as a compliment, and leave it exactly where it is.
 => END
 
+~ money_take
+% {{president}}: Your benefactors are welcome, {{first}}.
+=> END
+
+~ money_leave
+% {{president}}: Keep your money, {{first}}. Let us talk about {{ask}}.
+=> END
+
+~ talk_affair_ask
+% {{president}}: Stay after the others have gone, {{first}}.
+=> END
+
+~ talk_affair_end
+% {{president}}: This has to end, {{first}}.
+=> END
+
 ~ deal_grant
 % {{name}}: Then we have an understanding, {{president}}. I keep my side if you keep yours.
 % {{name}}: Good. I will hold you to it, and you may hold me to mine.

@@ -15,6 +15,7 @@ const Levers = preload("res://src/sim/levers.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const President = preload("res://src/sim/president.gd")
 const Region = preload("res://src/core/region.gd")
+const Shadows = preload("res://src/sim/shadows.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const TalkMenu = preload("res://src/ui/talk_menu.gd")
 const Words = preload("res://src/ui/lever_words.gd")
@@ -35,13 +36,26 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	var struck := session.has("struck") or String(session.get("won", "")) != ""
 	var wants := _want_words(loader, ns, person, String(session["object"]))
 	var card := DealWords.card(loader, ns, answers, feel, wants, kind)
-	var view := {"voice": AudienceVoice.lines(loader, pid), "choices": {"feel": feel}, "struck": struck,
+	# "money" is ALWAYS in the view: the scene merges a result's view over its own, and a key left
+	# out would keep the offer on screen after it was answered.
+	var view := {"voice": AudienceVoice.lines(loader, pid), "choices": {"feel": feel}, "struck": struck, "money": {},
 		"attempts_left": int(session["attempts_left"]), "talk_blocked": _blocked(state, ns, loader, session)}
 	if struck:
 		view["struck_lines"] = AWords.struck_lines(answers, card)
+		if game.has("money_taken"):
+			view["struck_lines"] += AWords.taken_lines(game["money_taken"])
+		view["affair"] = _affair(state, ns, loader, session, pid)
 		# Ranked once: the flow holds the first ranking, so a later redraw does not read it again.
 		if not game["scene"].flow.ranked:
 			view["talk"] = _talk(state, ns, loader, session)
+		return view
+	# An offer of money not yet answered holds the question (Deal.MONEY_FIRST is the sim's own rule):
+	# the screen is the offer and its two answers, and the cards' reads wait for the answer.
+	var money: Dictionary = answers["money"]
+	if not money.is_empty():
+		view["money"] = {"lead": "%s %s" % [String(card["want"]), String(card["give_stake"])], "terms": AWords.money_terms(money),
+			"lines": AWords.money_lines(money), "take_why": String(money["take"]["why_not"]),
+			"title": "offer_%s_%s" % [kind, String(money["currency"])]}
 		return view
 	# Both reads copy the world: only the question needs them, and a refusal's own band reuses them.
 	var reads := {"refusal": Deal.refusal_risk(state, ns, loader, session), "silence": Deal.silence_worth(state, ns, loader, session)}
@@ -49,6 +63,14 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	view["refused_lines"] = AWords.refused_lines(card, reads)
 	view["counter_default"] = _default_date(state, int(answers["bargain"]["due_month"]))
 	return view
+
+
+## The affair as the sim reads it: a lover, a Flirt said this audience, a proposal already put (once an
+## audience), and the reasons not even to put one (not_covered, already), shown on the line.
+static func _affair(state, ns, loader, session: Dictionary, pid: String) -> Dictionary:
+	var why := Shadows.may_begin_affair(state, ns, loader, pid, session)
+	return {"lovers": President.relationship(ns, pid) == "affair", "flirted": (session["used_topics"] as Array).has("flirt"),
+		"asked": bool(session.get("affair_asked", false)), "blocked": Words.reason(why) if why in ["not_covered", "already"] else ""}
 
 
 ## The topics the sim will not take now (no attempts left, dined already): topic -> its reason, shown.

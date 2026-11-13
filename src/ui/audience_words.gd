@@ -143,6 +143,42 @@ static func struck_lines(answers: Dictionary, card: Dictionary) -> Array:
 	return out
 
 
+## The money on the table: where it lands (the band's head) and its two lines, the risk and what
+## taking it gives. Take is Grant plus the money (the author, 2026-11-13: "Prendre = promettre +
+## argent"), so the word is stated here, not left to be found out after the click.
+static func money_terms(money: Dictionary) -> String:
+	return Words.offer_terms(money)
+
+
+static func money_lines(money: Dictionary) -> Array:
+	return [line(DOWN, BAD, money_risk(money)), line(NEUTRAL, DIM, Strings.t("Taken, it gives her your word as Grant does, and the money"))]
+
+
+## What taking it risks over the TERM (the author's ruling: not one year): the chance of being found
+## before the vote that decides the office, with it taken and with it left. Without a vote on the
+## clock the sim gives only the year, and that is what is said.
+static func money_risk(money: Dictionary) -> String:
+	var months := int(money.get("months_to_vote", -1))
+	if months < 0:
+		return DealWords.risk(money)
+	if months == 0:
+		return Strings.t("The vote is this month: nothing is found before it.")
+	var taken := Num.f(float(money.get("found_by_the_vote", 0.0)) * 100.0, 0)
+	var left := Num.f(float(money.get("found_by_the_vote_without", 0.0)) * 100.0, 0)
+	return Strings.tn("Found before the vote, in %d month: %s %% if you take it, %s %% if you do not.", "Found before the vote, in %d months: %s %% if you take it, %s %% if you do not.", months) % [months, taken, left]
+
+
+## The two lines the struck band adds once the money is taken: the gain and the risk it left.
+static func taken_lines(money: Dictionary) -> Array:
+	var months := int(money.get("months_to_vote", -1))
+	var risk := Strings.t("The vote is this month: nothing is found before it.")
+	if months < 0:
+		risk = Strings.t("Found within a year: %s %%") % Num.f(float(money.get("found_in_a_year", 0.0)) * 100.0, 0)
+	elif months > 0:
+		risk = Strings.tn("Found before the vote, in %d month: %s %%", "Found before the vote, in %d months: %s %%", months) % [months, Num.f(float(money.get("found_by_the_vote", 0.0)) * 100.0, 0)]
+	return [line(UP, GOOD, money_terms(money)), line(DOWN, BAD, risk)]
+
+
 ## The band after a refusal: what it cost, then the risk, read before the refusal.
 static func refused_lines(card: Dictionary, reads: Dictionary) -> Array:
 	var out: Array = [line(DOWN, BAD, String(card["refuse"]))]

@@ -12,6 +12,7 @@ extends RefCounted
 ## guessed.
 
 const Levers = preload("res://src/sim/levers.gd")
+const Shadows = preload("res://src/sim/shadows.gd")
 const Deal = preload("res://src/sim/deal.gd")
 const President = preload("res://src/sim/president.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
@@ -40,11 +41,13 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 	game["session"] = session
 	game["state"] = main._state
 	main._save_load_panel.block_save(Strings.t("Finish the audience first"))
+	game.erase("money_taken")
 	var view := view_of(main, game)
 	view.merge(row)
 	view["president"] = main._loader.person_name(President.leader_id(ns))
 	view["name"] = row["person"]  # i18n: row-ok the person's shown name, from the loader
-	view["opening_title"] = DialogueLines.opening_title(ns, Audiences.request(ns, String(row["id"])))
+	view["opening_title"] = String(view["money"]["title"]) if not (view["money"] as Dictionary).is_empty() \
+		else DialogueLines.opening_title(ns, Audiences.request(ns, String(row["id"])))
 	main._windows.open(WINDOW)
 	main._clock.paused = true
 	game["scene"].open(view)
@@ -116,11 +119,61 @@ static func grant(main, game: Dictionary) -> void:
 	main._windows.mark_all_dirty()
 
 
+## The money on the table, answered: Take is Deal.take (Grant plus the money, the evidence it leaves),
+## Leave is Shadows.refuse_offer (her regard, nothing else). Her reply is Content's offer_accept_ /
+## offer_refuse_ line for her kind and the currency; what Take paid is kept for the struck band.
+static func money(main, game: Dictionary, take: bool) -> void:
+	var session: Dictionary = game.get("session", {})
+	if session.is_empty():
+		return
+	var ns = main._state.player()
+	var snapshot: Dictionary = Deal.answers(main._state, ns, main._loader, session)["money"]
+	var person = main._loader.person_by_id.get(String(session["person_id"]))
+	var title := ("offer_accept_%s_%s" if take else "offer_refuse_%s_%s") % [String(person.kind) if person != null else "", String(snapshot.get("currency", ""))]
+	var r := Deal.take(main._state, ns, main._loader, session) if take else Shadows.refuse_offer(main._state, ns, main._loader, session)
+	if not bool(r["ok"]):
+		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "", {}, ResultTone.BLOCKED)
+		return
+	if take:
+		game["money_taken"] = snapshot
+	var said := Strings.t("You take it.") if take else Strings.t("You turn it down.")
+	var paid := "" if take else Words.paid_text({}, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
+	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game), title, {},
+		ResultTone.RISKY if take else ResultTone.of_rapport(float(r.get("rapport", 0.0))))
+	main._windows.mark_all_dirty()
+
+
+## The affair, put or ended (Shadows.begin_affair / end_affair): the president's own ask, never hers.
+## A refusal is the person's to explain in their own words (affair_why_<key>); the sim marks the
+## proposal on the session whatever the answer, so it is asked once an audience.
+static func affair(main, game: Dictionary, line_id: String) -> void:
+	var session: Dictionary = game.get("session", {})
+	if session.is_empty():
+		return
+	var ns = main._state.player()
+	var pid := String(session["person_id"])
+	var asking := line_id == "affair_ask"
+	var r := Shadows.begin_affair(main._state, ns, main._loader, pid, session) if asking else Shadows.end_affair(main._state, ns, main._loader, pid)
+	if not bool(r["ok"]):
+		var why := String(r["error"])
+		game["scene"].show_result(Words.reason(why), view_of(main, game), "affair_why_" + why, {},
+			ResultTone.BAD if why in ["too_cold", "no_spark"] else ResultTone.BLOCKED)
+		return
+	var paid := Words.paid_text({}, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
+	var said := Strings.t("It begins, and no one must know.") if asking else Strings.t("It is over.")
+	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),
+		"affair_begin" if asking else "affair_end", {}, ResultTone.RISKY if asking else ResultTone.of_rapport(float(r.get("rapport", 0.0))))
+	main._windows.mark_all_dirty()
+
+
 ## A line put to her: the topic it maps to (Levers.talk) spends an attempt for knowledge and rapport.
 ## Her answer is the line's own title, yes or no by how it landed; a gossip names the face picked.
 static func ask(main, game: Dictionary, line_id: String, topic: String, args: Dictionary) -> void:
 	var session: Dictionary = game.get("session", {})
 	if session.is_empty():
+		return
+	if topic == "affair":
+		affair(main, game, line_id)
 		return
 	# Cold or hostile before the talk, she deflects (her _no); else she answers (her _yes).
 	var cold := MoodBadge.emotion_of(_feel(main, session)) == Portrait.Emotion.STERN

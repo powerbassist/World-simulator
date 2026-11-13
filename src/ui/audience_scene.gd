@@ -15,6 +15,7 @@ extends PanelContainer
 ## plain line, so the scene plays while the lines are being written.
 
 signal granted
+signal money_answered(take: bool)
 signal countered(date: Dictionary)
 signal asked(line_id: String, topic: String, args: Dictionary)
 signal ended
@@ -26,6 +27,8 @@ const Portrait = preload("res://src/ui/portrait.gd")
 const AudienceFlow = preload("res://src/ui/audience_flow.gd")
 const AudienceCards = preload("res://src/ui/audience_cards.gd")
 const AudienceTalkView = preload("res://src/ui/audience_talk_view.gd")
+const AudienceMoney = preload("res://src/ui/audience_money.gd")
+const Lines = preload("res://src/ui/audience_lines.gd")
 const Words = preload("res://src/ui/audience_words.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
@@ -44,6 +47,7 @@ var visiting := ""
 var flow := AudienceFlow.new()
 var cards := AudienceCards.new()
 var talk := AudienceTalkView.new()
+var money_rows := AudienceMoney.new()
 
 var _view: Dictionary = {}
 var _resource = null
@@ -133,6 +137,8 @@ func _ready() -> void:
 	cards.date_picked.connect(func(date: Dictionary) -> void: flow.date = date)
 	cards.date_opened.connect(func() -> void: flow.fire("open_date"))
 	cards.date_closed.connect(func() -> void: flow.fire("close_date"))
+	root.add_child(money_rows)
+	money_rows.asked.connect(func(line_id: String, _topic: String, _args: Dictionary) -> void: money_answered.emit(line_id == AudienceMoney.TAKE))
 	root.add_child(talk)
 	talk.asked.connect(func(line_id: String, topic: String, args: Dictionary) -> void:
 		_pending = line_id
@@ -228,14 +234,26 @@ func _over() -> void:
 
 ## What the flow's state shows: the cards, the deal's band with the talk, or the refusal's.
 func _render(view: Dictionary) -> void:
-	flow.sync(bool(view.get("struck", false)))
+	var money: Dictionary = view.get("money", {})
+	flow.sync(bool(view.get("struck", false)), not money.is_empty())
 	var state := flow.state
 	var asking := state == AudienceFlow.S.QUESTION or state == AudienceFlow.S.COUNTER_OPEN
+	var on_money := state == AudienceFlow.S.MONEY
 	cards.visible = asking
+	money_rows.visible = on_money
 	talk.visible = flow.in_talk()
-	_lead.visible = asking
+	_lead.visible = asking or on_money
 	_band.visible = not asking
-	_end.visible = not asking
+	_end.visible = not asking and not on_money
+	if on_money:
+		_lead.text = String(money.get("lead", ""))
+		_result.text = String(money.get("terms", ""))
+		ResultTone.apply(_tone, ResultTone.RISKY)
+		_lines(money.get("lines", []))
+		_build += 1
+		var mine := _build
+		money_rows.fill(money, Lines.vars(view), _resource, func() -> bool: return mine == _build)
+		return
 	_end.text = tr("That will be all") if flow.in_talk() else tr("End the audience")
 	if asking:
 		_lead.text = String(view.get("question", {}).get("lead", ""))
@@ -287,14 +305,13 @@ func _fill_talk(view: Dictionary) -> void:
 	var mine := _build
 	var rows: Array = []
 	for line in flow.lines:
-		var vars := {"name": String(view.get("name", "")), "ask": String(view.get("ask", "")),  # i18n: row-ok the person's shown name, resolved by the wiring
-			"president": String(view.get("president", "")), "lever": "", "topic": "", "first": String(view.get("name", "")).get_slice(" ", 0)}  # i18n: row-ok a shown name
+		var vars := Lines.vars(view)
 		vars.merge(line.get("vars", {}), true)
 		vars["third"] = AudienceTalkView.MARK
 		var said: String = await DialogueLines.line(_resource, "talk_" + String(line["id"]), vars)
 		if mine != _build:
 			return
-		var parts := (said if said != "" else _plain(line)).split(AudienceTalkView.MARK)
+		var parts := (said if said != "" else Lines.plain(line)).split(AudienceTalkView.MARK)
 		var open_quote := "“"  # i18n: ok a quotation mark
 		var shut_quote := "”"  # i18n: ok a quotation mark
 		var before: String = open_quote + parts[0]
@@ -306,14 +323,15 @@ func _fill_talk(view: Dictionary) -> void:
 			"people": line.get("people", []), "prefix": before, "suffix": after,
 			"asked": flow.asked.has(line["id"]), "picked": String(flow.picked.get(line["id"], "")),
 			"blocked": String(view.get("talk_blocked", {}).get(String(line["topic"]), ""))})
+	for affair in Lines.affair_rows(view):
+		var said: String = await DialogueLines.line(_resource, "talk_" + String(affair["id"]), Lines.vars(view))
+		if mine != _build:
+			return
+		var open_quote := "“"  # i18n: ok a quotation mark
+		var shut_quote := "”"  # i18n: ok a quotation mark
+		affair["prefix"] = open_quote + (said if said != "" else Lines.plain(affair)) + shut_quote
+		rows.append(affair)
 	talk.show_lines(rows)
-
-
-## The line the files do not have: the topic's own word, and a gossip's sentence around its faces.
-func _plain(line: Dictionary) -> String:
-	if not (line.get("people", []) as Array).is_empty():
-		return tr("What do you make of") + " " + AudienceTalkView.MARK + "?"
-	return String(line.get("plain", line["topic"]))  # i18n: row-ok the wiring's own word for the line
 
 
 func _badge(view: Dictionary) -> void:
@@ -329,4 +347,4 @@ func say(title: String, extra: Dictionary) -> void:
 	state.merge(extra, true)
 	_speaker.text = String(state["name"])  # i18n: row-ok the person's shown name, resolved by the wiring
 	var said: String = await DialogueLines.line(_resource, title, state)
-	_line.text = said if said != "" or not title.ends_with("opening") else String(state["ask"])
+	_line.text = said if said != "" or not (title.ends_with("opening") or title.begins_with("offer_")) else String(state["ask"])
