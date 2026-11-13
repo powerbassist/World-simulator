@@ -31,6 +31,7 @@ const Cycle = preload("res://src/sim/cycle.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Lies = preload("res://src/sim/lies.gd")
 const CommitmentJudge = preload("res://src/sim/commitment_judge.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
 
 ## The six levers and the other topics, in the order the scene lists them.
 const LEVERS := K.LEVERS
@@ -282,6 +283,8 @@ static func arg_error(lever: String, args: Dictionary, now: int, shadows := fals
 		return "not a lie you can tell here"
 	if lever == "promise_date" and (due < now + K.PROMISE_MIN_MONTHS or due > now + K.PROMISE_MAX_MONTHS):
 		return "that date is too near or too far for a promise"
+	if lever == "promise_date" and args.has("due_day") and not _day_in(due, int(args["due_day"])):
+		return "that day is not in that month"
 	return ""
 
 
@@ -330,6 +333,10 @@ static func pay(state, ns, loader, person, object: String, lever: String, args: 
 		"promise_date":
 			if not President.commit(state, ns, loader, "promise", pid, object, due, Lies.told(lever, args)):
 				return {"refused": true}
+			# The day the player picked (mockup C's counter): kept for the diary, never judged --
+			# the judge takes the row at the end of its month, as before (no number moves).
+			if args.has("due_day"):
+				ns.commitments[-1]["due_day"] = int(args["due_day"])
 			return {"promise": due}
 		"pressure":
 			var spent: Dictionary = Characters.price_refusal(ns, person, K.PRESSURE_GRUDGE, 0.0)
@@ -403,6 +410,12 @@ static func _rapport(state, ns, loader, pid: String, amount: float) -> float:
 	var before := President.rapport(ns, pid)
 	President.adjust_rapport(state, ns, loader, pid, amount)
 	return President.rapport(ns, pid) - before
+
+
+## Whether `day` is a day of the absolute month `month_index` (year * 12 + month).
+static func _day_in(month_index: int, day: int) -> bool:
+	var year := floori((month_index - 1) / 12.0)
+	return day >= 1 and day <= Calendar.days_in_month(year, month_index - year * 12)
 
 
 static func _ymd(y: int, m: int, d: int) -> int:

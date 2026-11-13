@@ -480,7 +480,7 @@ static func _commitment(row: Dictionary) -> Dictionary:
 		"due_month": int(row.get("due_month", 0)),
 	}
 	# Each written only when it says something; a save keeps a string a string and a float a float.
-	for key in ["lie", "chance", "party_id", "deal", "brought"]:
+	for key in ["lie", "chance", "party_id", "deal", "brought", "due_day"]:
 		if row.has(key):
 			view[key] = row[key]
 	return view

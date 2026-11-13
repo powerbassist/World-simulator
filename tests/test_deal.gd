@@ -95,6 +95,8 @@ func _init() -> void:
 	_check_a_win_on_a_post_is_a_word_not_a_seat()
 	_check_a_promise_win_is_the_named_date()
 	_check_a_promise_not_believed_binds_and_strikes_nothing()
+	_check_a_counter_keeps_its_day()
+	_check_a_day_outside_its_month_is_refused()
 	_check_a_caught_lie_on_a_bill_is_no_word()
 	_check_refuse_is_a_decline()
 	_check_a_scene_left_open_ends_as_the_deal()
@@ -666,6 +668,46 @@ func _check_a_promise_not_believed_binds_and_strikes_nothing() -> void:
 		_fail("a failed attempt takes no offer")
 	if int(f["session"]["attempts_left"]) != 2:
 		_fail("an attempt is what a failure spends")
+
+
+## The counter's day (mockup C, the parent's card of 2026-11-13): the player picks a day in the
+## month; the word stores it, the cast carries it, and the judge still takes the row at the end of
+## its MONTH, so a day moves no verdict and no number. No day, no key.
+func _check_a_counter_keeps_its_day() -> void:
+	for day in [16, -1]:
+		var f := _law_deal(true)
+		var ns = f["ns"]
+		var due := _now(f) + 9
+		var args := {"due_month": due}
+		if day > 0:
+			args["due_day"] = day
+		_seed_for(f, "promise_date", false)
+		var result := Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", args)
+		if not bool(result.get("ok", false)):
+			_fail("a counter on day %d was refused: %s" % [day, result])
+			continue
+		var word := _word_row(ns, f["person_id"], "law:%s" % f["law_id"])
+		if day > 0 and int(word.get("due_day", 0)) != day:
+			_fail("the word does not keep its day %d: %s" % [day, word])
+		if day < 0 and word.has("due_day"):
+			_fail("a word with no day picked carries one: %s" % [word])
+		if President.take_commitments_due(ns, due - 1).any(func(r): return String(r.get("object", "")) == "law:%s" % f["law_id"] and String(r.get("kind", "")) == "promise"):
+			_fail("a word with a day was taken before its month")
+
+
+## A day the month does not have (0, 32, the 31st of a 30-day month) is refused and writes nothing.
+func _check_a_day_outside_its_month_is_refused() -> void:
+	var f := _law_deal(true)
+	var ns = f["ns"]
+	var due := _now(f) + 9
+	var short := due
+	while Calendar.days_in_month(int((short - 1) / 12.0), (short - 1) % 12 + 1) != 30:
+		short += 1
+	for bad in [{"due_month": due, "due_day": 0}, {"due_month": due, "due_day": 32}, {"due_month": short, "due_day": 31}]:
+		var before: int = ns.commitments.size()
+		var result := Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", bad)
+		if bool(result.get("ok", true)) or ns.commitments.size() != before:
+			_fail("a day outside its month was taken: %s -> %s" % [bad, result])
 
 
 ## A promise seen through in the room is no promise: `settle` must withdraw the row `pay` wrote,
