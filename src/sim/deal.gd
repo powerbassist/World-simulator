@@ -47,6 +47,8 @@ const President = preload("res://src/sim/president.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const Removal = preload("res://src/sim/removal.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
+const RefusalRisk = preload("res://src/sim/refusal_risk.gd")
+const MatterPeople = preload("res://src/sim/matter_people.gd")
 
 
 ## The booked day has come: Levers' session, which this scene hands back on every call, with the
@@ -103,6 +105,26 @@ static func offer_of(state, ns, loader, person_id: String) -> Dictionary:
 			return {"kind": K.OFFER_VOTE, "law_id": String(bill["law_id"]), "party_id": party, "seats": gain,
 				"due_month": int(bill["due_month"]), "date": bill["date"]}
 	return {"kind": K.OFFER_SILENCE, "months": K.SILENCE_MONTHS, "due_month": now + K.SILENCE_MONTHS}
+
+
+## Refuse's priced risk, mockup C's card: {briefs, first_month, approval_pt, basis}, the
+## briefs this person would run in the year after a refusal, the world as it stands
+## (src/sim/refusal_risk.gd says what that projection can and cannot see). Copies the world:
+## read it on a redraw, not every frame.
+static func refusal_risk(state, _ns, loader, session: Dictionary) -> Dictionary:
+	return RefusalRisk.of_refusal(state, loader, String(session.get("request_id", "")))
+
+
+## What their silence is worth, from Grant's side: the same figures with no refusal, the
+## briefs a word of silence spares over its term.
+static func silence_worth(state, _ns, loader, session: Dictionary) -> Dictionary:
+	return RefusalRisk.of_silence(state, loader, String(session.get("request_id", "")))
+
+
+## The people in the matter (mockup C's "Ask her about"): at most five person ids, ordered,
+## maybe none -- src/sim/matter_people.gd says what links them.
+static func people_in_matter(state, ns, loader, session: Dictionary) -> Array[String]:
+	return MatterPeople.of(state, ns, loader, Audiences.request(ns, String(session.get("request_id", ""))))
 
 
 ## The scene's card, everything its strips need and nothing written:
@@ -274,11 +296,15 @@ static func _link(ns, session: Dictionary) -> void:
 
 
 ## A word already given on this ask, a promise not believed, is what Grant pays. Grant is the
-## full price, so it holds the word to the ask's date when that is the nearer one.
+## full price, so it holds the word to the ask's date when that is the nearer one -- and a day
+## picked on the counter belongs to its month, so a word moved to another month drops it.
 static func _hold_to(ns, pid: String, object: String, due: int) -> void:
 	for row in President.commitments_with(ns, pid):
 		if String(row["kind"]) == "promise" and String(row["object"]) == object and int(row["due_month"]) > due:
 			President.mark_rows(ns, object, "due_month", due, pid)
+			for stored in ns.commitments:
+				if String(stored.get("kind", "")) == "promise" and String(stored.get("object", "")) == object and String(stored.get("person_id", "")) == pid:
+					stored.erase("due_day")
 
 
 ## The first law a programme entry names that is open to the president now, or "".

@@ -104,7 +104,7 @@ func _run(draw_seed: int, months: int) -> Array:
 			if bool(r.get("ok", false)):
 				open["%s|%s|%d" % [row["person_id"], row["object"], int(row["made_month"])]] = row
 		var report: Dictionary = WorldMonth.tick_month(state, _loader)
-		var meters := WorldMonth._character_meters(state)
+		var meters := WorldMonth.character_meters(state)
 		for key in open:
 			var row: Dictionary = open[key]
 			if _served(state, ns, String(row["person_id"]), String(row["object"]), meters):

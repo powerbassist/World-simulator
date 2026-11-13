@@ -1850,6 +1850,7 @@ func _check_event_fields(loader) -> void:
 			if not allowed.has(String(key)):
 				_fail("a serialised event carries '%s' -- the choices round-trip through data/events/, not through the save" % key)
 	_check_the_quiet_stamps_round_trip(state, loader)
+	_check_a_word_keeps_its_day(state)
 
 
 ## V5.3 B7: the quiet-month call's three stamps round-trip, and each one dropped (an
@@ -1884,6 +1885,26 @@ func _check_the_quiet_stamps_round_trip(state, loader) -> void:
 		_fail("an older save's unstamped desk and division read as an arrival this month")
 	elif bool(aged.player().event_queue[0].get("never_holds", false)):
 		_fail("an older save's desk entry read as never holding")
+
+
+## V5.3 audience reads: a word's day (`due_day`, the counter's pick) round-trips and the
+## cast carries it; a row with none -- every older save's -- reads as no day, which is
+## true, so no bump (the judge reads only the month).
+func _check_a_word_keeps_its_day(state) -> void:
+	var President = load("res://src/sim/president.gd")
+	var ns = state.player()
+	var now := int(state.year) * 12 + int(state.month)
+	ns.commitments.append({"kind": "promise", "person_id": "FRA_x", "object": "meter:grievance", "made_month": now, "due_month": now + 9, "due_day": 16})
+	ns.commitments.append({"kind": "promise", "person_id": "FRA_y", "object": "meter:grievance", "made_month": now, "due_month": now + 9})
+	var back = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	var days := {}
+	for row in President.commitments(back.player()):
+		days[String(row["person_id"])] = row.get("due_day", -1)
+	if int(days.get("FRA_x", -1)) != 16:
+		_fail("a word's day did not survive a save and load: %s" % [days])
+	if int(days.get("FRA_y", 0)) != -1:
+		_fail("a word saved with no day read back with one: %s" % [days])
+	ns.commitments.resize(ns.commitments.size() - 2)
 
 
 ## V1.1e. SAVE_VERSION 26 -> 27, on EIGHT added fields of ten, and they fail the rule
