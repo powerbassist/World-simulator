@@ -77,7 +77,7 @@ Companies, for the [[v1]] economic layer:
 
 This is checkable, so it gets checked. A banned-names list lives alongside the project and is grepped over the whole repository before any milestone commit: real heads of state and government, real party names and abbreviations, and real company names for every nation in scope. Zero hits, or the content is wrong.
 
-**`tools/check_names.sh` iterates `git ls-files`, so it cannot see an untracked file.** U6b added `data/people/` and the first run of the check over it passed with zero hits and zero files scanned. Any session authoring a NEW content directory must `git add` before the check means anything — the largest exposure this check has ever had was, for one run, not being checked at all.
+**`tools/check_names.sh` reads only tracked files (one `git grep`, formerly a loop over `git ls-files`), so it cannot see an untracked file.** U6b added `data/people/` and the first run of the check over it passed with zero hits and zero files scanned. Any session authoring a NEW content directory must `git add` before the check means anything — the largest exposure this check has ever had was, for one run, not being checked at all.
 
 The check is cheap now and gets expensive to retrofit once there are hundreds of data files, which is exactly why it starts at session S2.
 
