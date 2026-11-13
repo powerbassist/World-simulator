@@ -204,7 +204,7 @@ gh workflow run probes.yml -f head=<sha> -f base=<main sha> -f shadows=true -f b
 
 `seeds` (default `0-199`) narrows shadows: `-f seeds=0-24` is a cheap spot-check. `shadows` defaults to on, `balance` and `density` to off.
 
-**Its size.** Shadows is one job per regime and side: 5 for head only, 10 with a base. Balance and density are one job per side each. Every PR push already uses 9 of the 20 concurrent jobs, so a full dispatch with a base (14 jobs) makes PR checks queue behind it while it runs.
+**Its size.** Shadows is one job per regime and side: 5 for head only, 10 with a base. Balance and density are one job per side each. Every PR push already uses 9 of the 20 concurrent jobs, so a full dispatch with a base (14 jobs) makes PR checks queue behind it while it runs. Measured wall times (2026-11-13): shadows at 200 seeds, head only, 30 min (S1, which carries `--exact`, is the longest job; a local run is 55 min per side); seeds 0-24, head only, 16 min; every probe on both sides at seeds 0-24, 15 min (balance 9 min, density 2.5 min).
 
 **Read it back.**
 
