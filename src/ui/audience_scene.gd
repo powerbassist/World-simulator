@@ -330,7 +330,9 @@ func _fill_talk(view: Dictionary) -> void:
 		var open_quote := "“"  # i18n: ok a quotation mark
 		var shut_quote := "”"  # i18n: ok a quotation mark
 		affair["prefix"] = open_quote + (said if said != "" else Lines.plain(affair)) + shut_quote
-		rows.append(affair)
+		# The ask follows the Flirt it answers; the end of an affair, and an ask whose Flirt line is not
+		# among the ranked ones, close the talk.
+		rows.insert(Lines.affair_index(rows, affair), affair)
 	talk.show_lines(rows)
 
 

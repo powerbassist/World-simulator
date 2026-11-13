@@ -28,6 +28,16 @@ static func affair_rows(view: Dictionary) -> Array:
 	return []
 
 
+## Where an affair row goes among the ranked rows: the ask directly under the Flirt line it follows
+## (when the Flirt is among them), the end of an affair, and an ask with no Flirt line, at the foot.
+static func affair_index(rows: Array, affair: Dictionary) -> int:
+	if bool(affair.get("sub", false)):
+		for i in rows.size():
+			if String(rows[i]["id"]) == "flirt":
+				return i + 1
+	return rows.size()
+
+
 ## The line the files do not have: the topic's own word, and a gossip's sentence around its faces.
 static func plain(line: Dictionary) -> String:
 	if not (line.get("people", []) as Array).is_empty():

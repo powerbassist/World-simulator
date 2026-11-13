@@ -42,6 +42,7 @@ static func open(main, game: Dictionary, row: Dictionary) -> bool:
 	game["state"] = main._state
 	main._save_load_panel.block_save(Strings.t("Finish the audience first"))
 	game.erase("money_taken")
+	game.erase("money_open")
 	var view := view_of(main, game)
 	view.merge(row)
 	view["president"] = main._loader.person_name(President.leader_id(ns))
@@ -127,7 +128,7 @@ static func money(main, game: Dictionary, take: bool) -> void:
 	if session.is_empty():
 		return
 	var ns = main._state.player()
-	var snapshot: Dictionary = Deal.answers(main._state, ns, main._loader, session)["money"]
+	var snapshot: Dictionary = game.get("money_open", {})
 	var person = main._loader.person_by_id.get(String(session["person_id"]))
 	var title := ("offer_accept_%s_%s" if take else "offer_refuse_%s_%s") % [String(person.kind) if person != null else "", String(snapshot.get("currency", ""))]
 	var r := Deal.take(main._state, ns, main._loader, session) if take else Shadows.refuse_offer(main._state, ns, main._loader, session)

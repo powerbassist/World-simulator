@@ -26,6 +26,7 @@ const Shadows = preload("res://src/sim/shadows.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const AudienceFlow = preload("res://src/ui/audience_flow.gd")
+const AudienceLines = preload("res://src/ui/audience_lines.gd")
 const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const AudienceWords = preload("res://src/ui/audience_words.gd")
 const Words = preload("res://src/ui/lever_words.gd")
@@ -49,6 +50,7 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		3:
 			_check_the_words()
+			_check_where_the_affair_rows_go()
 			if not _open_with_offer("executive"):
 				return _end()
 		5:
@@ -119,6 +121,17 @@ func _check_the_words() -> void:
 	var taken: Array = AudienceWords.taken_lines(money)
 	if taken.size() != 2 or String(taken[0]["tone"]) != AudienceWords.GOOD or String(taken[1]["tone"]) != AudienceWords.BAD:
 		_fail("the struck band after the money is not one gain and one risk: %s" % [taken])
+
+
+## The ask follows the Flirt it answers; the end of an affair closes the talk.
+func _check_where_the_affair_rows_go() -> void:
+	var rows: Array = [{"id": "gossip"}, {"id": "flirt"}, {"id": "dinner"}]
+	var ask := {"id": "affair_ask", "sub": true}
+	var end := {"id": "affair_end", "sub": false}
+	if AudienceLines.affair_index(rows, ask) != 2:
+		_fail("the ask is not directly under the Flirt: %d" % AudienceLines.affair_index(rows, ask))
+	if AudienceLines.affair_index(rows, end) != 3 or AudienceLines.affair_index([{"id": "gossip"}], ask) != 1:
+		_fail("the end of an affair, or an ask with no Flirt line, is not at the foot")
 
 
 func _check_the_money_holds_the_cards() -> void:

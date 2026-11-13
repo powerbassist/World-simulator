@@ -52,6 +52,7 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	# An offer of money not yet answered holds the question (Deal.MONEY_FIRST is the sim's own rule):
 	# the screen is the offer and its two answers, and the cards' reads wait for the answer.
 	var money: Dictionary = answers["money"]
+	game["money_open"] = money  # what the press will answer: read once per redraw, never again on the click
 	if not money.is_empty():
 		view["money"] = {"lead": "%s %s" % [String(card["want"]), String(card["give_stake"])], "terms": AWords.money_terms(money),
 			"lines": AWords.money_lines(money), "take_why": String(money["take"]["why_not"]),
