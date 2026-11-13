@@ -4,6 +4,7 @@
       "id": "test_fixture_illegal_target_transition",
       "name": "Test Fixture Illegal Target Transition",
       "theme": "institutional",
+      "category": "constitution",
       "summary": "A complete bundle, but formation_method 'largest_party' is not legal under the TARGET system parliamentary_republic -- must fail to load, the target-side cross-check.",
       "constitutional": true,
       "systems": ["constitutional_monarchy"],

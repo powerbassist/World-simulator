@@ -4,6 +4,7 @@
       "id": "test_fixture_incomplete_transition",
       "name": "Test Fixture Incomplete Transition",
       "theme": "institutional",
+      "category": "constitution",
       "summary": "Writes system_id but not the rest of the required bundle -- must fail to load.",
       "constitutional": true,
       "systems": ["constitutional_monarchy"],

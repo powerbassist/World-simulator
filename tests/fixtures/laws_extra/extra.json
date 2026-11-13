@@ -4,6 +4,7 @@
       "id": "test_fixture_extra_law",
       "name": "Test Fixture Extra Law",
       "theme": "institutional",
+      "category": "constitution",
       "summary": "A seventeenth law used only to prove a data-only edit works.",
       "position": { "economic": 0.0, "social": 0.0 },
       "majority": "simple",

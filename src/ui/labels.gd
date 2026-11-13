@@ -37,6 +37,15 @@ const LAW_THEME := {
 	"business": "business", "institutional": "institutional", "labour": "labour",  # i18n: msgid
 	"social": "social", "tax": "tax",  # i18n: msgid
 }
+## A law's shelf in the statute book (src/core/law_category.gd), the catalogue's grouping.
+const LAW_CATEGORY := {
+	"taxes": "Taxes", "work": "Work", "welfare_health": "Welfare and health",  # i18n: msgid
+	"education_culture": "Education and culture", "housing": "Housing",  # i18n: msgid
+	"energy_environment": "Energy and environment", "business": "Business",  # i18n: msgid
+	"farming": "Farming and the countryside", "justice_transparency": "Justice and transparency",  # i18n: msgid
+	"constitution": "Constitution and the state", "elections": "Elections", "media": "Media",  # i18n: msgid
+	"europe_migration": "Europe and migration",  # i18n: msgid
+}
 const TAX := {
 	"income": "Income tax", "corporate": "Corporate tax", "vat": "VAT",  # i18n: msgid
 	"capital_gains": "Capital gains tax", "wealth": "Wealth tax",  # i18n: msgid
@@ -87,3 +96,7 @@ static func tax(id: String) -> String:
 
 static func law_theme(id: String) -> String:
 	return of(LAW_THEME, id)
+
+
+static func law_category(id: String) -> String:
+	return of(LAW_CATEGORY, id)

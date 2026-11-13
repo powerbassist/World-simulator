@@ -6,6 +6,7 @@
       "id": "coal_phase_out_act",
       "name": "Coal Phase-Out Act",
       "theme": "business",
+      "category": "energy_environment",
       "summary": "Close the last coal-fired plant by a fixed date, with a fund for the towns that live off it.",
       "position": {
         "economic": -0.35,
@@ -24,6 +25,7 @@
       "id": "renewables_capacity_act",
       "name": "Renewables Capacity Act",
       "theme": "social",
+      "category": "energy_environment",
       "summary": "A binding auction calendar for wind and solar, and the grid capacity to carry what it signs.",
       "position": {
         "economic": -0.4,
@@ -42,6 +44,7 @@
       "id": "nuclear_lifetime_extension_act",
       "name": "Nuclear Lifetime Extension Act",
       "theme": "social",
+      "category": "energy_environment",
       "summary": "Relicense the existing reactors for another decade of baseload.",
       "position": {
         "economic": 0.4,
@@ -60,6 +63,7 @@
       "id": "nuclear_phase_out_act",
       "name": "Nuclear Phase-Out Act",
       "theme": "social",
+      "category": "energy_environment",
       "summary": "Close the reactors on a published timetable, and replace every megawatt they were carrying.",
       "position": {
         "economic": -0.2,
@@ -80,6 +84,7 @@
       "magnitude": {"value": 1, "reference": 1, "unit": "million homes", "max": 3},
       "name": "Home Insulation Programme",
       "theme": "social",
+      "category": "energy_environment",
       "summary": "Pay for the loft, wall and window retrofits of a million draughty homes.",
       "position": {
         "economic": -0.35,
@@ -98,6 +103,7 @@
       "id": "combustion_engine_ban_act",
       "name": "Combustion Engine (Sales Ban) Act",
       "theme": "business",
+      "category": "energy_environment",
       "summary": "No new petrol or diesel car sold after a fixed date, whatever the showrooms have in stock.",
       "position": {
         "economic": -0.3,
@@ -116,6 +122,7 @@
       "id": "air_passenger_levy",
       "name": "Air Passenger Levy",
       "theme": "tax",
+      "category": "taxes",
       "summary": "A per-passenger charge on flights, rising with the distance flown.",
       "position": {
         "economic": -0.1,
@@ -134,6 +141,7 @@
       "id": "sustainable_fisheries_act",
       "name": "Sustainable Fisheries Act",
       "theme": "business",
+      "category": "farming",
       "summary": "Quotas cut to what the stocks can bear, and monitoring equipment on every licensed boat.",
       "position": {
         "economic": -0.2,
@@ -152,6 +160,7 @@
       "id": "nature_restoration_fund",
       "name": "Nature Restoration Fund",
       "theme": "social",
+      "category": "energy_environment",
       "summary": "Rewet the peat, replant the forests, fence the river margins.",
       "position": {
         "economic": -0.25,
@@ -170,6 +179,7 @@
       "id": "plastic_packaging_levy",
       "name": "Plastic Packaging Levy",
       "theme": "tax",
+      "category": "taxes",
       "summary": "A charge on packaging made from virgin plastic, tonne by tonne.",
       "position": {
         "economic": -0.15,
@@ -188,6 +198,7 @@
       "id": "emissions_trading_expansion",
       "name": "Emissions Trading Expansion",
       "theme": "tax",
+      "category": "energy_environment",
       "summary": "Bring buildings and transport into the carbon market, and their emissions into the price.",
       "position": {
         "economic": -0.2,
@@ -206,6 +217,7 @@
       "id": "grid_modernisation_act",
       "name": "Grid Modernisation Act",
       "theme": "social",
+      "category": "energy_environment",
       "summary": "New pylons, storage and smart meters for a grid built for another century's load.",
       "position": {
         "economic": -0.15,
@@ -225,6 +237,7 @@
       "id": "sewage_enforcement_act",
       "name": "Sewage Enforcement Act",
       "theme": "business",
+      "category": "energy_environment",
       "summary": "Monitoring on every storm overflow, and fines that arrive automatically when it spills.",
       "position": {
         "economic": -0.3,
@@ -243,6 +256,7 @@
       "id": "persistent_chemicals_act",
       "name": "Persistent Chemicals (Restriction) Act",
       "theme": "business",
+      "category": "energy_environment",
       "summary": "Phase out the forever chemicals used in non-stick coatings and waterproofing.",
       "position": {
         "economic": -0.35,
@@ -261,6 +275,7 @@
       "id": "climate_adaptation_fund",
       "name": "Climate Adaptation Fund",
       "theme": "social",
+      "category": "energy_environment",
       "summary": "Sea defences, reservoirs and cooling centres for the weather already arriving.",
       "position": {
         "economic": -0.2,
@@ -279,6 +294,7 @@
       "id": "low_emission_zones_act",
       "name": "Low-Emission Zones Act",
       "theme": "tax",
+      "category": "energy_environment",
       "summary": "Charge or bar the oldest vehicles from the city centres.",
       "position": {
         "economic": -0.1,
@@ -297,6 +313,7 @@
       "id": "agroecology_payments_act",
       "name": "Agroecology Payments Act",
       "theme": "social",
+      "category": "farming",
       "summary": "Pay the farmer for hedges, cover crops and soil carbon instead of for tonnage.",
       "position": {
         "economic": -0.3,
@@ -315,6 +332,7 @@
       "id": "carbon_border_adjustment",
       "name": "Carbon Border Adjustment",
       "theme": "tax",
+      "category": "taxes",
       "summary": "A charge at the border on the carbon embedded in imported goods.",
       "position": {
         "economic": -0.1,
