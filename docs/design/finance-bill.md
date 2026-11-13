@@ -63,7 +63,7 @@ Today `Budget.commit(state, pending)` applies the budget and tax panels' absolut
 
 ## 5. Taxes: the autumn rule
 
-The author's call: a tax is created or abolished only in the autumn finance bill (signed in V5.3 e); a rate changes through any finance bill. **PR 1 builds the second half only.** Births today are composed laws (`Statute.draft` with `new_tax`, the Tax Code's "Propose a tax"), and V5.3 e replaces that path with the catalogue of real taxes (`data/taxes/`). Gating today's path to one month would make the autumn birth compete with the autumn finance bill for the same slot. **Proposed for V5.3 e:** a per-nation data field `government.finance_bill.autumn_month` (France 10, the PLF's tabling month); the autumn finance bill is the one text that may carry a birth or an abolition from the catalogue; the composed birth path retires. Section 8, call 4.
+The author's call: a tax is created or abolished only in the autumn finance bill (signed in V5.3 e); a rate changes through any finance bill. **PR 1 builds the second half only.** Births today are composed laws (`Statute.draft` with `new_tax`, the Tax Code's "Propose a tax"), and V5.3 e replaces that path with the catalogue of real taxes (`data/taxes/`). Gating today's path to one month would make the autumn birth compete with the autumn finance bill for the same slot. **Proposed for V5.3 e:** a per-nation data field `government.finance_bill.autumn_month` (France 10, the PLF's tabling month); the autumn finance bill is the one text that may carry a birth or an abolition from the catalogue; the composed birth path retires. The catalogue's schema is section 9. Section 8, call 4.
 
 ## 6. What a failed bill leaves, and what moves
 
@@ -121,3 +121,76 @@ So **a majority with its whips intact passes almost every budget; the vote bites
 6. **What a defeat costs:** (a, recommended) nothing beyond the month's slot and the rebellions charged, re-tabling allowed next month; (b) a cooldown of N months, or a bloc or approval price on a lost budget. With (a) a defeat is cheap to retry; the cost is the month lost and the discipline the rebels take.
 
 Open RECORDs from #326 (`pay_offer` ignores register refusals; `take_reason` duplicates `President._party`; the corrupt bargain with money open has no test; the per-read cost) touch none of this PR's files; they fold into the first later PR that opens `shadows.gd` or `deal.gd`.
+
+## 9. The tax library (the author's call, 2026-11-14; built in V5.3 e)
+
+**One library of tax kinds, each kind written once; each nation only says which kinds it has in force and at what rate.** No per-nation code, no per-nation copy of a kind's model. Content fills the rows against this schema; Systems wires the readers. Nothing in this section is built by PR 1.
+
+### 9.1 A kind: `data/taxes/<id>.json`, one file per kind
+
+```json
+{
+  "id": "vat",
+  "name": "Value added tax",
+  "summary": "A tax on consumption, collected at every stage of sale.",
+  "rate_meaning": "statutory standard rate",
+  "who_pays": ["workers", "pensioners", "rural", "students"],
+  "base_share": 0.53,
+  "erosion": 0.25,
+  "zero_ref_pct": 20.0,
+  "rate_range_pct": [0.0, 40.0],
+  "demand_multiplier": 0.70,
+  "opinion_scale_pp": 16.0,
+  "bloc_salience": {"workers": 0.08, "pensioners": 0.08, "rural": 0.11, "students": 0.10},
+  "progressive": false,
+  "finance_anchor": {"up": {"economic": 0.3, "social": 0.0}, "down": {"economic": -0.3, "social": 0.0}},
+  "reference": {"_source": "OECD Revenue Statistics, 5110", "yield_pct_gdp": {"FRA": 7.1}, "_note": "..."}
+}
+```
+
+The figures in the example are VAT's as the model carries them today: its base, erosion, reference rate, multiplier, scale, the four blocs' salience and the Tax Code's 40-point ceiling. The `reference` yield is illustrative; Content sources it.
+
+| field | what reads it | today's home (moved, values unchanged) |
+|---|---|---|
+| `id` | every reader of a tax key; `tax_<id>` is its opinion issue | `economy_constants.TAX_KEYS` |
+| `name`, `summary` | the Tax Code, through `Strings.row("tax", id, ...)` | `opinion_constants` issue labels |
+| `rate_meaning` | the panel's label, and Content's check that `base_share` matches it (an effective average or a statutory rate) | new, display only |
+| `who_pays` | the panel and the effects strip: the blocs the kind falls on | new, display only; every bloc named needs a `bloc_salience` weight |
+| `base_share` | `Budget.revenue_lines`: yield in % of GDP per rate point at the reference | `TAX_BASE_SHARE` |
+| `erosion` | `Budget._erosion`: base lost per unit of relative rate rise | `TAX_EROSION` |
+| `zero_ref_pct` | `_erosion`'s reference when the nation's start rate is 0 | `EROSION_ZERO_REF_PCT` |
+| `rate_range_pct` | the loader's range check, the slider, the finance bill's floor and ceiling | `nation.gd`'s `MAX_TAX_RATE_PCT`, `WEALTH_RATE_MAX_PCT`, the panels' `LEVER_MAX` rows |
+| `demand_multiplier` | `Budget.apply_pending`'s demand impulse | `MULT_TAX` |
+| `opinion_scale_pp` | `Opinion`'s satisfaction scale for `tax_<id>` | `TAX_SCALE_PP_BY_KEY`, else the shared `TAX_SCALE_PP` |
+| `bloc_salience` | each bloc's weight on `tax_<id>` (the "bloc reads") | the `tax_*` rows of `BLOC_SALIENCE_BASE` |
+| `progressive` | the progressivity factor applies to this kind's base (income alone today) | the `key == "income"` test in `revenue_lines` |
+| `finance_anchor` | the finance bill's position (section 3) | `finance_bill_constants.gd` from PR 1 |
+| `reference` | Content's yield check and the REUSE provenance; nothing in `src/` reads it | new |
+
+**The loader refuses:** a duplicate id; an id among the computed revenue lines (`other`, `tariffs`, `dividends`, `Budget.COMPUTED_REVENUE_LINES`); an id outside `[a-z0-9_]{2,24}` (the ledger's pipe rule); a `who_pays` bloc with no `bloc_salience` weight; a salience row that breaks a bloc's renormalisation; a `rate_range_pct` with no room.
+
+**The check every row must pass** (Content's; a test pins it): `base_share` times the nation's rate reproduces the kind's real yield in % of GDP, within a stated band, for each playable nation that has it in force, against the row's `reference`.
+
+**Order is data too.** Every revenue and opinion sum runs in dictionary order, so the library loads in a fixed order: today's five first, in today's order (income, corporate, vat, capital_gains, wealth), then the new kinds by file name. That keeps the five's arithmetic byte-identical when new kinds exist.
+
+### 9.2 A nation: which kinds, at what rate
+
+`fiscal.tax_rates_pct` keeps its shape, `{kind id: rate}`. **A kind listed is in force; a kind absent is not.** An absent kind may be created only in the autumn finance bill, and a kind in force may be abolished only there (section 5). A listed rate of 0 is a kind in force at 0: a lever any finance bill may raise, which is what every nation's zero wealth row is today.
+
+- **The four playable nations** get researched rows (Content): the kinds really in force and their real rates, each with its source.
+- **The default for the other 37:** today's five rows exactly as they stand (VAT each nation's own, income and corporate France's scaled, capital gains and wealth as authored), and **no new kind in force unless that nation's data lists it.** The 37 move nothing.
+
+### 9.3 The revenue anchor: how a kind in force is carved out of it
+
+Today `GameState.new_game` sets `other_revenue_pct_gdp = fiscal.tax_revenue_pct_gdp - Budget.modelled_revenue_total(rates, start_rates)`: the residual absorbs whatever the modelled taxes do not explain, so starting revenue equals the real figure. **The library keeps that rule and widens the sum:** `modelled_revenue_total` loops over the kinds the nation has in force (library order) instead of the five keys. A kind in force at start with a real rate adds its yield to the modelled total, and the residual shrinks by exactly that much. **Total revenue at new game is unchanged:** the kind moves money from "other" into its own line and adds none. (Exact to the bit only if the residual's subtraction is the last operation, as it is today; the build checks it with `cmp` on the start books.)
+
+- **Nothing moves on day one from the catalogue alone.** At start every kind sits at its start rate: its opinion satisfaction reads 0 (rate minus start), its demand impulse is 0 (raised only by a change), and its yield in % of GDP stays constant until its rate moves, like the residual it came out of.
+- **The guard:** the loader refuses a nation whose kinds in force explain more than its `tax_revenue_pct_gdp`; a negative residual would be revenue from nowhere. Content sees it before any run.
+- **What does move, and goes to the author as a re-baseline:** a researched rate for one of the five in a playable nation, in place of France's scaled one. The total still starts at the real figure, but the erosion curve is relative to the start rate, so a regime's delta in points yields differently. That is Content's change, measured base vs tip, not the library's.
+
+### 9.4 What goes, and the save
+
+- **`custom_taxes` goes, with the Tax Code's "Propose a tax"** (`tax_compose.gd`, `Statute`'s `new_tax`, `Legislature._register_new_tax`, the custom branches of `revenue_lines`, `_erosion` and `Opinion`). A birth becomes "put a kind from the library in force" in the autumn finance bill: the kind's model is the library's, never the player's.
+- **The save: a `SAVE_VERSION` bump** at the PR that removes it. `custom_taxes` is `absent_ok: false` today (bump 38), and a save from before the removal can hold a player-made kind with a live rate under its key in `tax_rates_pct` and a `tax|<key>` row in a composed law's ledger. Loaded without the register, that rate has no model behind it: revenue reads it as nothing and the ledger cannot repeal it. A missing model reads as something wrong, so the bump rule applies and such a save is refused, as every superseded save is.
+- **The library itself is not saved.** It is content: `GameState` holds a reference set from the loader at new game and at load, as it does `region_graph`, so a game always reads the library it is loaded with.
+- **Every reader of `C.TAX_KEYS` reads the library's ids instead** (about fifteen sites: the nation, law, event and programme loaders' key checks, `Budget`, `Opinion`, `Pledges`, `Statute`'s channel check, the Tax Code). Statute's composed tax channel retires with the rest: from V5.3 e a rate moves only through a finance bill.
