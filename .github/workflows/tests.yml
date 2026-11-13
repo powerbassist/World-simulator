@@ -163,7 +163,9 @@ jobs:
         with:
           python-version: "3.13"
       - name: Banned names
-        run: bash tools/check_names.sh
+        run: |
+          bash tools/check_names.sh --selftest
+          bash tools/check_names.sh
       - name: Vault links
         run: python tools/check_vault.py
       - name: No orphan .uid files
