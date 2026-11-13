@@ -50,7 +50,9 @@ static func take_reason(state, ns, loader, session: Dictionary) -> String:
 	var why := _why_not(ns, session)
 	if why == "" and not President.covers(state, ns, loader, String(session.get("person_id", ""))):
 		why = "they are no longer someone the president deals with"
-	if why == "" and String(offer(ns, session).get("currency", "")) == "party_money" 			and not loader.parties.get(ns.id, []).any(func(p) -> bool: return p.id == String(ns.incumbent_party_id)):
+	var own := String(ns.incumbent_party_id)
+	if why == "" and String(offer(ns, session).get("currency", "")) == "party_money" \
+			and not loader.parties.get(ns.id, []).any(func(p) -> bool: return p.id == own):
 		why = "the president has no party to pay"
 	return why
 

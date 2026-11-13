@@ -335,8 +335,10 @@ func _fire(state, ns, regime: String, lies: Array) -> void:
 			continue
 		var person = _loader.person_by_id.get(String(session["person_id"]))
 		if regime == "S2" or regime == "S2c":
-			if not Shadows.offer(ns, session).is_empty():
-				Deal.take(state, ns, _loader, session)
+			# A Take the game refuses (Grant closed on this ask) leaves the money, the one
+			# other answer, before any bargain: the game's counter waits for the money.
+			if not Shadows.offer(ns, session).is_empty() and not bool(Deal.take(state, ns, _loader, session).get("ok", false)):
+				Shadows.refuse_offer(state, ns, _loader, session)
 			while String(session["won"]) == "" and int(session["attempts_left"]) > 0:
 				var currency: String = LK.CURRENCY_BACKROOM if _bargains % 2 == 0 else LK.CURRENCY_AID
 				_bargains += 1
