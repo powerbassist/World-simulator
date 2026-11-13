@@ -10,11 +10,15 @@
 # no credential left in the checkout. A fork cannot dispatch it.
 #
 # What its tables compare with (measured 2026-11-13, offload-cpu-report):
-# - shadows: the same rows and summary as a Windows run. Only the line endings differ,
-#   because shadows_parallel.py writes in text mode (CRLF on Windows), so compare a
-#   Windows table with its CRs stripped.
-# - balance: Linux and Windows differ in the last bit of a few vote shares, 0 verdict
-#   flips. Compare CI head with CI base (cmp), or a Windows table with balance_diff.py.
+# - CI head against CI base: cmp. Same platform, same printer, byte for byte.
+# - shadows against a Windows table: at 3060c143, 200 seeds, all 1010 rows were byte-
+#   identical (after stripping the CRs shadows_parallel.py writes on Windows), and one
+#   summary float of ~60 printed differently: 0.363652173913044 on Windows, ...043 here.
+#   The double is the same (4182/11500); Godot's JSON.stringify rounds the 15th digit
+#   differently on Windows (a two-line script prints both). So compare rows exactly and
+#   floats to 1e-14, never with a raw cmp (docs/tooling.md has the command).
+# - balance against a Windows table: balance_diff.py (a few vote shares differ in the
+#   last printed digit, 0 verdict flips; possibly the same printer, not measured).
 # - density: cross-platform unmeasured; compare CI head with CI base only.
 #
 # Every job checks out the PROBED commit, not this file's, so all logic here is
