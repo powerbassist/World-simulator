@@ -151,7 +151,7 @@ static func money_terms(money: Dictionary) -> String:
 
 
 static func money_lines(money: Dictionary) -> Array:
-	return [line(DOWN, BAD, money_risk(money)), line(NEUTRAL, DIM, Strings.t("Taken, it gives her your word on it, and the money"))]
+	return [line(DOWN, BAD, money_risk(money)), line(NEUTRAL, DIM, Strings.t("Taken, she has your word, and the money"))]
 
 
 ## What taking it risks over the TERM (the author's ruling: not one year): the chance of being found

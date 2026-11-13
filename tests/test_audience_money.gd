@@ -263,8 +263,8 @@ func _check_the_end_of_an_affair() -> void:
 		_fail("the line that ends an affair stayed after it ended")
 
 
-## Escape (the frame's X) over an offer left unanswered: the sim's rule is a decline, priced once, and
-## the money is neither taken nor refused on the way out.
+## Escape (the frame's X) over an offer left unanswered is walking out on her: Leave (Shadows.refuse_offer,
+## once) and then the decline (once), the money never taken -- no exit is cheaper than answering.
 func _check_escape_over_open_money() -> void:
 	var ns = _main._state.player()
 	var request := String(_session()["request_id"])
@@ -277,9 +277,12 @@ func _check_escape_over_open_money() -> void:
 	AudienceTalks.leave(_main, _game())
 	if String(Audiences.request(ns, request).get("status", "")) != "declined":
 		_fail("leaving over the open money did not decline the request: %s" % [Audiences.request(ns, request).get("status", "")])
+	# Walking out on her is Leave and then the decline (the parent's ruling, 2026-11-14): her regard falls
+	# by the offer's refusal once AND by the decline once. No exit is cheaper than answering.
 	var moved := President.rapport(ns, _person) - rapport
-	if absf(moved - float(price["rapport"])) > 1e-6 and moved > -1.0 + 1e-6 + float(price["rapport"]):
-		_fail("the decline was not priced exactly once: regard moved %s, one decline is %s" % [moved, price["rapport"]])
+	var want := float(price["rapport"]) - SC.OFFER_REFUSED_RAPPORT
+	if absf(moved - want) > 1e-6 and rapport + want > -1.0 + 1e-6:
+		_fail("walking out is not Leave plus one decline: regard moved %s, want %s" % [moved, want])
 	if _money() != money:
 		_fail("leaving over the open money moved money")
 

@@ -234,6 +234,10 @@ static func leave(main, game: Dictionary) -> bool:
 	# discarded game's audience is closed in the game it was opened in.
 	var state = game.get("state", main._state)
 	if not bool(session.get("closed", false)):
+		# Walking out over an offer not yet answered is walking out on her: Leave, once, and then the
+		# decline, once. No exit is cheaper than answering (the parent's ruling, 2026-11-14).
+		if not Shadows.offer(state.player(), session).is_empty():
+			Shadows.refuse_offer(state, state.player(), main._loader, session)
 		Levers.close(state, state.player(), main._loader, session)
 	game["session"] = {}
 	main._save_load_panel.block_save("")
