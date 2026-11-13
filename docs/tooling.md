@@ -192,6 +192,38 @@ python tools/export_windows.py --templates PATH/TO/that/folder --smoke
 
 **Why a stage.** The game reads its icons, audio and summit scenes as bytes or text, never `load()`, and an export keeps an imported file only as its converted form. The script builds a throwaway copy of the tracked tree and sets `importer="keep"` on those `.import` files in the COPY (the webp and jpg already use it), so the committed files do not change. A new asset kind the game reads as bytes needs its extension in `KEEP_EXT` there; the audit fails the build when a raw file is missing. The dev console (`dev_console.gd` and what only it loads) is excluded by the preset's filter; `main.gd` loads it behind `ResourceLoader.exists()`, so its absence is silent, and a release template has no debug build for it anyway.
 
+## The probes on GitHub (`.github/workflows/probes.yml`)
+
+The heavy probes run on GitHub's runners on demand, so they spend no local CPU. Standard runners are free on this public repo (4 vCPU each, 20 jobs at once across the account). The workflow is `workflow_dispatch` only: it never runs on a push or a PR, and only someone with write access can start it.
+
+**Start it.** `head` is required. A full 40-character sha works for any commit, a rebased PR's old head included; a short sha or a name must be reachable from a branch or tag. `base` is optional: give main's sha to probe both sides in one run.
+
+```bash
+gh workflow run probes.yml -f head=<sha> -f base=<main sha> -f shadows=true -f balance=true -f density=true
+```
+
+`seeds` (default `0-199`) narrows shadows: `-f seeds=0-24` is a cheap spot-check. `shadows` defaults to on, `balance` and `density` to off.
+
+**Its size.** Shadows is one job per regime and side: 5 for head only, 10 with a base. Balance and density are one job per side each. Every PR push already uses 9 of the 20 concurrent jobs, so a full dispatch with a base (14 jobs) makes PR checks queue behind it while it runs.
+
+**Read it back.**
+
+```bash
+gh run list --workflow probes.yml --limit 3
+gh run watch <run id> --exit-status
+gh run download <run id> -p "probe-*" -D <dir>
+```
+
+The tables are `probe-shadows-<side>/shadows-<side>.json`, `probe-balance-<side>/balance-<side>.json` and `probe-density-<side>/density-<side>.json` (with the probe's log and `exit-code.txt`). With a base, the "Head against base" job prints `cmp` for each probe, and `balance_diff.py` for balance, in the run's summary. A difference is reported, never failed on. Artifacts are kept 7 days.
+
+**What compares with what** (measured 2026-11-13):
+- **Shadows:** a CI table equals a Windows `shadows_parallel` table except for line endings. The Windows writer is in text mode and writes CRLF; rows and summary are identical. Compare with `tr -d '\r' < windows.json | cmp - shadows-head.json`.
+- **Balance:** Linux and Windows differ in the last bit of a few vote shares, with 0 verdict flips. `cmp` CI head against CI base, or use `python tools/balance_diff.py windows.json balance-head.json` against a Windows table. Never `cmp` across platforms.
+- **Density:** cross-platform is unmeasured. Compare CI head with CI base only. The probe exits 1 on an accepted exception, so judge the JSON, not the job's exit code.
+- Windows-only behaviour (paths, CRLF, the user dir) is invisible on Linux. That is why QA keeps one local Windows cold suite per PR.
+
+**Changing it.** The jobs check out the probed commit, not the workflow's, so all of the workflow's logic is inline. The merge job rebuilds what the end of `tools/shadows_parallel.py`'s `main()` writes: keep the two in step. The regime list (`SHADOWS_REGIMES`) must match `shadows_parallel.py`'s default `--regimes`, and the merge job fails when it does not.
+
 ## Godot docs MCP
 
 [Nihilantropy/godot-mcp-docs](https://github.com/Nihilantropy/godot-mcp-docs) — the full official Godot documentation, served locally. Two tools: `get_documentation_tree` and `get_documentation_file`.
