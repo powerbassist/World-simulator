@@ -40,8 +40,8 @@ var lines: Array = []
 var asked := {}
 ## line id -> the person id picked among a gossip's faces; survives every redraw.
 var picked := {}
-## The line asked last, "" before any.
-var answer := ""
+## True once the talk has been ranked: the ranking is held, never redone.
+var ranked := false
 
 
 ## True when `event` moves the flow; an event the state has no row for changes nothing.
@@ -68,7 +68,6 @@ func ask(line_id: String) -> bool:
 	if not fire("ask"):
 		return false
 	asked[line_id] = true
-	answer = line_id
 	return true
 
 

@@ -408,9 +408,6 @@ var _broken_word := false
 ## pressed on the field's date), refused (Refuse pressed), talk (Grant pressed: a stranger's talk),
 ## answered (someone known well, Grant pressed, then the first line put to them).
 var _audience_step := ""
-## V5.2c: --audience-offer asks the audience of a press owner first, whose request
-## comes with money (Offers' draw), so the scene shows the offer and its answers.
-var _audience_offer := false
 ## V5.2b b3: --phone open | dialed | people -- the call dialog on a request's asker
 ## (open), after its one try (dialed), or on someone who asked nothing (people).
 var _phone := ""
@@ -1067,9 +1064,6 @@ func _init() -> void:
 			_broken_word = true
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
-		elif args[i] == "--audience-offer":
-			_audience_offer = true
-			_request = "--audience"
 		elif args[i] == "--audience-step" and i + 1 < args.size():
 			_audience_step = args[i + 1]
 			_request = "--audience"
@@ -2435,14 +2429,9 @@ func _stage_requests() -> void:
 	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
 	var asked := 0
 	var people: Array = _main._loader.people.get(String(ns.id), []).duplicate()
-	if _audience_offer:
-		people.sort_custom(func(a, b) -> bool: return String(a.kind) == "press_owner" and String(b.kind) != "press_owner")
 	for person in people:
 		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
 			Audiences._arrive(ns, person, person.wants[0], now, [])
-			# The draw is rare and refuses the principled: a frame of the money needs some.
-			if _audience_offer and (ns.audience_requests[-1].get("offer", {}) as Dictionary).is_empty():
-				ns.audience_requests[-1]["offer"] = {"currency": "personal_wealth", "amount_eur_m": 2.0}
 			asked += 1
 			if _broken_word:
 				ns.exposure_evidence.append({"kind": "favour", "person_id": String(person.id), "size": 1.0,

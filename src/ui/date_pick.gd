@@ -70,6 +70,11 @@ func setup(earliest: int, latest: int, current: Dictionary) -> void:
 	_first = earliest
 	_last = maxi(earliest, latest)
 	date = current if not current.is_empty() else {"year": _year_of(earliest), "month": _month_of(earliest), "day": 1}
+	# A date the row's window cannot reach is moved to its edge, so the field never shows a day the sim would refuse.
+	var month := absolute_month()
+	if month < _first or month > _last:
+		var edge := clampi(month, _first, _last)
+		date = {"year": _year_of(edge), "month": _month_of(edge), "day": mini(int(date["day"]), DateText.days_in(_month_of(edge), _year_of(edge)))}
 	_refresh()
 
 
@@ -112,7 +117,7 @@ func _show(absolute: int) -> void:
 	var lead := (DateText.weekday_index(1, month, year) + 6) % 7
 	for i in lead:
 		_grid.add_child(Control.new())
-	for day in range(1, _days_in(month, year) + 1):
+	for day in range(1, DateText.days_in(month, year) + 1):
 		var cell := Button.new()
 		cell.text = str(day)
 		cell.custom_minimum_size = Vector2(38, 0)
@@ -135,7 +140,3 @@ static func _year_of(absolute: int) -> int:
 static func _month_of(absolute: int) -> int:
 	return absolute - _year_of(absolute) * 12
 
-
-static func _days_in(month: int, year: int) -> int:
-	var next := Time.get_unix_time_from_datetime_dict({"year": year + (1 if month == 12 else 0), "month": 1 if month == 12 else month + 1, "day": 1, "hour": 0, "minute": 0, "second": 0})
-	return int(Time.get_datetime_dict_from_unix_time(next - 86400)["day"])

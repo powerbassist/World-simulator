@@ -69,6 +69,13 @@ static func weekday(day: int, month_number: int, year: int) -> String:
 	return Strings.t(WEEKDAYS[weekday_index(day, month_number, year)])
 
 
+## The days of a month, leap years by the Gregorian rule: the one copy the audience's field and its default share.
+static func days_in(month_number: int, year: int) -> int:
+	var next := Time.get_unix_time_from_datetime_dict({"year": year + (1 if month_number == 12 else 0), "month": 1 if month_number == 12 else month_number + 1,
+		"day": 1, "hour": 0, "minute": 0, "second": 0})
+	return int(Time.get_datetime_dict_from_unix_time(next - 86400)["day"])
+
+
 ## 0 for Sunday, as the engine counts.
 static func weekday_index(day: int, month_number: int, year: int) -> int:
 	var stamp := Time.get_unix_time_from_datetime_dict({"year": year, "month": month_number, "day": day, "hour": 0, "minute": 0, "second": 0})

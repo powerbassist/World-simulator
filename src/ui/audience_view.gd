@@ -8,6 +8,7 @@ extends RefCounted
 
 const AudienceVoice = preload("res://src/ui/audience_voice.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 const Deal = preload("res://src/sim/deal.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const Levers = preload("res://src/sim/levers.gd")
@@ -38,7 +39,9 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 		"attempts_left": int(session["attempts_left"]), "talk_blocked": _blocked(state, ns, loader, session)}
 	if struck:
 		view["struck_lines"] = AWords.struck_lines(answers, card)
-		view["talk"] = _talk(state, ns, loader, session)
+		# Ranked once: the flow holds the first ranking, so a later redraw does not read it again.
+		if not game["scene"].flow.ranked:
+			view["talk"] = _talk(state, ns, loader, session)
 		return view
 	# Both reads copy the world: only the question needs them, and a refusal's own band reuses them.
 	var reads := {"refusal": Deal.refusal_risk(state, ns, loader, session), "silence": Deal.silence_worth(state, ns, loader, session)}
@@ -61,9 +64,7 @@ static func _blocked(state, ns, loader, session: Dictionary) -> Dictionary:
 static func _default_date(state, due_month: int) -> Dictionary:
 	var year := floori((due_month - 1) / 12.0)
 	var month := due_month - year * 12
-	var span: Array[int] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-	var days: int = 29 if month == 2 and year % 4 == 0 else span[month - 1]
-	return {"year": year, "month": month, "day": mini(int(state.day), days)}
+	return {"year": year, "month": month, "day": mini(int(state.day), DateText.days_in(month, year))}
 
 
 static func _want_words(loader, ns, person, object: String) -> String:

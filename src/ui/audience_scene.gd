@@ -246,8 +246,9 @@ func _render(view: Dictionary) -> void:
 		_lines(view.get("refused_lines", []))
 	else:
 		_lines(view.get("struck_lines", []))
-		if flow.lines.is_empty() and view.has("talk"):
+		if not flow.ranked and view.has("talk"):
 			flow.lines = view["talk"]
+			flow.ranked = true
 		_fill_talk(view)
 
 

@@ -78,6 +78,7 @@ func _process(_delta: float) -> bool:
 			_other.open(_view(false))
 		5:
 			_check_cards()
+			_check_the_grid()
 			_check_the_date_survives_a_counter_she_did_not_take()
 		8:
 			_check_the_deal_gives_way_to_the_talk()
@@ -118,6 +119,22 @@ func _check_cards() -> void:
 		_fail("the Counter's date field is not above its button")
 	if field != null and field.text != "Mon 05/04/2027":
 		_fail("the field opens on '%s', not the row's default day" % field.text)
+
+
+## The grid's Monday-first lead (1 April 2027 is a Thursday: three blanks), and paging that stops at the window.
+func _check_the_grid() -> void:
+	var field = _scene.cards.date_pick
+	field._show(APRIL_2027)
+	var cells: Array = field._grid.get_children()
+	if cells.size() < 11 or cells[10].name != "Day1":
+		_fail("1 April 2027 is not under Thursday: cell 10 is %s" % [cells[10].name if cells.size() > 10 else "missing"])
+	field._show(field._first - 5)
+	if field._shown != field._first or not field._back.disabled:
+		_fail("paging back passed the window's first month")
+	field._show(field._last + 5)
+	if field._shown != field._last or not field._forward.disabled:
+		_fail("paging forward passed the window's last month")
+	field._show(APRIL_2027)
 
 
 func _check_the_date_survives_a_counter_she_did_not_take() -> void:

@@ -46,7 +46,7 @@ func _check_refuse_is_an_end() -> void:
 	_ok(not flow.fire("ask") and not flow.ask("gossip"), "a line was asked after Refuse")
 	_ok(not flow.fire("deal_struck") and flow.state == S.REFUSED, "a deal was struck after Refuse")
 	_ok(not flow.in_talk(), "the talk is open after Refuse")
-	_ok(flow.asked.is_empty() and flow.answer == "", "a refusal left a line marked asked")
+	_ok(flow.asked.is_empty(), "a refusal left a line marked asked")
 	_ok(flow.fire("end") and flow.state == S.ENDED, "the refusal's way out did not end the audience")
 	# Reachability, the other way: no path from REFUSED touches GRANTED or ANSWERED.
 	var seen := {}
