@@ -191,7 +191,8 @@ static func grant(state, ns, loader, session: Dictionary) -> Dictionary:
 
 
 ## One approach: Levers.attempt()'s result, and on a win {ask, offer} with the smaller grant
-## written. A promise not believed still binds (the author's "Oui, parole donnée"), on no deal.
+## written. A counter the person refuses binds nothing (the author's ruling of 2026-11-13, which
+## replaced "Oui, parole donnée" here): no word, no date, and Grant and Refuse stay open.
 static func bargain(state, ns, loader, session: Dictionary, approach: String, args := {}) -> Dictionary:
 	if not _approaches(ns, session).has(approach) or (approach == K.CORRUPT_APPROACH and not Shadows.is_currency(String(args.get("currency", "")))):
 		return {"ok": false, "error": "not an approach", "success": false, "spent": {}, "effects": {}}
@@ -205,8 +206,8 @@ static func bargain(state, ns, loader, session: Dictionary, approach: String, ar
 		result["ask"] = ask
 		result["offer"] = _strike(state, ns, loader, session, AK.STATUS_SETTLED)
 		return result
-	# A promise's own spend is the word. A word given earlier in this scene and not believed
-	# then is taken up now: one word on one ask.
+	# A promise's own spend is the word, written on its win. A word given earlier (a phone
+	# promise, which still binds win or lose) is taken up now: one word on one ask.
 	if Levers.word_given(ns, pid, "promise_date", String(ask["object"])) == "":
 		President.commit(state, ns, loader, "promise", pid, String(ask["object"]), int(ask["smaller_due_month"]))
 	_link(ns, session)
@@ -295,7 +296,7 @@ static func _link(ns, session: Dictionary) -> void:
 	President.mark_rows(ns, object, "want", String(session["object"]), pid)
 
 
-## A word already given on this ask, a promise not believed, is what Grant pays. Grant is the
+## A word already given on this ask (a phone promise not believed still binds) is what Grant pays. Grant is the
 ## full price, so it holds the word to the ask's date when that is the nearer one -- and a day
 ## picked on the counter belongs to its month, so a word moved to another month drops it.
 static func _hold_to(ns, pid: String, object: String, due: int) -> void:

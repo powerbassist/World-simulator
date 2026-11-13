@@ -94,7 +94,7 @@ func _init() -> void:
 	_check_a_win_is_the_smaller_grant_for_the_same_offer()
 	_check_a_win_on_a_post_is_a_word_not_a_seat()
 	_check_a_promise_win_is_the_named_date()
-	_check_a_promise_not_believed_binds_and_strikes_nothing()
+	_check_a_refused_counter_binds_nothing()
 	_check_a_counter_keeps_its_day()
 	_check_a_day_outside_its_month_is_refused()
 	_check_a_caught_lie_on_a_bill_is_no_word()
@@ -657,21 +657,39 @@ func _check_a_promise_win_is_the_named_date() -> void:
 		_fail("the promise takes the same offer")
 
 
-func _check_a_promise_not_believed_binds_and_strikes_nothing() -> void:
+## The author's ruling of 2026-11-13 (it replaces "Oui, parole donnee" for the audience): a
+## counter the person refuses binds NOTHING -- no commitment row, no date, nothing owed, no lie
+## to come of it -- and Grant and Refuse stay open in the same audience. Its cost is today's
+## cost of a failed attempt: the attempt itself.
+func _check_a_refused_counter_binds_nothing() -> void:
 	var f := _law_deal(true)
 	var ns = f["ns"]
+	var rows_before: int = ns.commitments.size()
 	_seed_for(f, "promise_date", false)
-	var result := Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", {"due_month": _now(f) + 9})
+	var result := Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", {"due_month": _now(f) + 9, "due_day": 16})
 	if not bool(result.get("ok", false)) or bool(result.get("success", true)):
-		_fail("the seeded promise did not fail: %s" % [result])
+		_fail("the seeded counter was not refused: %s" % [result])
 		return
-	var word := _word_row(ns, f["person_id"], "law:%s" % f["law_id"])
-	if word.is_empty() or word.has("deal"):
-		_fail("a word not believed still binds (the author's 'parole donnee'), on no deal, got %s" % [word])
-	if not _owed_row(ns, f["person_id"], "pledge").is_empty():
-		_fail("a failed attempt takes no offer")
+	if ns.commitments.size() != rows_before:
+		_fail("a refused counter wrote a commitment row: %s" % [ns.commitments.slice(rows_before)])
+	for row in ns.commitments:
+		if String(row.get("person_id", "")) == String(f["person_id"]):
+			_fail("a refused counter left a word or a date on the person: %s" % [row])
+	if not (result.get("spent", {}) as Dictionary).is_empty():
+		_fail("a refused counter spent something beyond the attempt: %s" % [result["spent"]])
 	if int(f["session"]["attempts_left"]) != 2:
-		_fail("an attempt is what a failure spends")
+		_fail("an attempt is what a refused counter costs")
+	var answers := Deal.answers(f["state"], ns, _loader, f["session"])
+	if not bool(answers["grant"]["ok"]):
+		_fail("Grant closed after a refused counter: %s" % [answers["grant"]])
+	if not bool(Deal.grant(f["state"], ns, _loader, f["session"]).get("ok", false)):
+		_fail("Grant after a refused counter was refused")
+	var r := _law_deal(true)
+	_seed_for(r, "promise_date", false)
+	Deal.bargain(r["state"], r["ns"], _loader, r["session"], "promise_date", {"due_month": _now(r) + 9})
+	var closed := Levers.close(r["state"], r["ns"], _loader, r["session"])
+	if not bool(closed.get("ok", false)) or String(closed.get("outcome", "")) != AK.STATUS_DECLINED:
+		_fail("Refuse after a refused counter is not a decline: %s" % [closed])
 
 
 ## The counter's day (mockup C, the parent's card of 2026-11-13): the player picks a day in the
@@ -685,7 +703,7 @@ func _check_a_counter_keeps_its_day() -> void:
 		var args := {"due_month": due}
 		if day > 0:
 			args["due_day"] = day
-		_seed_for(f, "promise_date", false)
+		_seed_for(f, "promise_date", true)
 		var result := Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", args)
 		if not bool(result.get("ok", false)):
 			_fail("a counter on day %d was refused: %s" % [day, result])
@@ -707,7 +725,13 @@ func _check_a_day_outside_its_month_is_refused() -> void:
 	var short := due
 	while Calendar.days_in_month(int((short - 1) / 12.0), (short - 1) % 12 + 1) != 30:
 		short += 1
-	for bad in [{"due_month": due, "due_day": 0}, {"due_month": due, "due_day": 32}, {"due_month": short, "due_day": 31}]:
+	var december := due
+	while (december - 1) % 12 + 1 != 12:
+		december += 1
+	var fine := Levers.arg_error("promise_date", {"due_month": december, "due_day": 31}, _now(f))
+	if fine != "":
+		_fail("the 31st of December was refused: %s" % fine)
+	for bad in [{"due_month": due, "due_day": 0}, {"due_month": due, "due_day": 32}, {"due_month": short, "due_day": 31}, {"due_month": december, "due_day": 32}]:
 		var before: int = ns.commitments.size()
 		var result := Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", bad)
 		if bool(result.get("ok", true)) or ns.commitments.size() != before:

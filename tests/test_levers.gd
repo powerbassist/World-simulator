@@ -81,6 +81,7 @@ func _init() -> void:
 	_check_a_lever_tried_again_rolls_afresh()
 	_check_agree_takes_only_an_agreement_on_a_held_audience()
 	_check_a_word_is_given_once()
+	_check_a_promise_nobody_can_hold_is_refused_before_the_roll()
 
 	_finish()
 
@@ -1175,10 +1176,11 @@ func _check_agree_takes_only_an_agreement_on_a_held_audience() -> void:
 		_fail("a held audience refused the stamp 'promised'")
 
 
-## b2.2, the parent's decision on #122: a word given stands. A promise not believed
-## still binds ("Oui, parole donnee"), so a second date on the same want -- in the
-## same audience or a later one -- is refused with its reason and writes nothing;
-## stacked promises were an exploit (each kept for PROMISE_KEPT_RAPPORT).
+## b2.2, the parent's decision on #122: a word given stands, so a second date on the same
+## want in a later audience is refused with its reason and writes nothing (stacked promises
+## were an exploit, each kept for PROMISE_KEPT_RAPPORT). Since the author's ruling of
+## 2026-11-13 a counter the person REFUSES binds nothing: no word is given, so a second date
+## in the same audience is open.
 func _check_a_word_is_given_once() -> void:
 	var state = _plain_game()
 	var ns = state.player()
@@ -1188,33 +1190,68 @@ func _check_a_word_is_given_once() -> void:
 			pid = person.id
 			break
 	var now := _now(state)
-	var refused_twice := false
-	for n in range(1, 30):
+	var seen := {"given": false, "refused": false}
+	for n in range(1, 60):
 		ns.commitments.clear()
 		var s := _stage(state, ns, pid, "word%d" % n)
 		var first: Dictionary = Levers.attempt(state, ns, _loader, s, "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS})
-		if bool(first.get("success", true)):
+		if bool(first.get("success", false)) and not seen["given"]:
 			Levers.close(state, ns, _loader, s)
-			continue
-		var before := _snapshot(ns, pid)
+			var later := _stage(state, ns, pid, "word_later%d" % n)
+			var before := _snapshot(ns, pid)
+			var left := int(later["attempts_left"])
+			var again: Dictionary = Levers.attempt(state, ns, _loader, later, "promise_date", {"due_month": now + LK.PROMISE_MAX_MONTHS})
+			if bool(again.get("ok", true)) or String(again.get("error", "")) != LK.WORD_GIVEN:
+				_fail("a later audience took a second date on a want already promised: %s" % [again])
+			if _snapshot(ns, pid) != before or int(later["attempts_left"]) != left:
+				_fail("a refused second promise wrote a register or spent an attempt")
+			var row := _row(Levers.offered(state, ns, _loader, later), "promise_date")
+			if bool(row.get("offered", true)) or String(row.get("why_not", "")) != LK.WORD_GIVEN:
+				_fail("the card still offers a second date on a word given: %s" % [row])
+			Levers.close(state, ns, _loader, later)
+			seen["given"] = true
+		elif not bool(first.get("success", true)) and not seen["refused"]:
+			if not President.commitments_with(ns, pid).is_empty():
+				_fail("a refused counter gave a word: %s" % [President.commitments_with(ns, pid)])
+			var again: Dictionary = Levers.attempt(state, ns, _loader, s, "promise_date", {"due_month": now + LK.PROMISE_MAX_MONTHS})
+			if not bool(again.get("ok", false)):
+				_fail("after a refused counter, a second date in the same audience was refused: %s" % [again])
+			Levers.close(state, ns, _loader, s)
+			seen["refused"] = true
+		else:
+			Levers.close(state, ns, _loader, s)
+		if seen["given"] and seen["refused"]:
+			break
+	if not (seen["given"] and seen["refused"]):
+		_fail("the staging never saw both a word given and a counter refused: %s" % [seen])
+
+
+## A promise the president cannot make (someone they do not cover: a foreign figure who is
+## no head of government) is refused before any roll and spends no attempt -- whether the
+## roll would have said yes or no. Since the author's ruling of 2026-11-13 the word itself
+## is written after the roll, so this check stands in front of it.
+func _check_a_promise_nobody_can_hold_is_refused_before_the_roll() -> void:
+	var state = _plain_game()
+	var ns = state.player()
+	var pid := ""
+	for person in _loader.people.get("DEU", []):
+		if not President.covers(state, ns, _loader, String(person.id)):
+			pid = String(person.id)
+			break
+	if pid == "":
+		_fail("the fixture found no foreign figure the president does not cover")
+		return
+	for n in range(1, 12):
+		var s := _stage(state, ns, pid, "uncovered%d" % n)
+		if s.is_empty():
+			_fail("the fixture could not open an audience with %s" % pid)
+			return
 		var left := int(s["attempts_left"])
-		var again: Dictionary = Levers.attempt(state, ns, _loader, s, "promise_date", {"due_month": now + LK.PROMISE_MAX_MONTHS})
-		if bool(again.get("ok", true)) or String(again.get("error", "")) != LK.WORD_GIVEN:
-			_fail("a second date on the same want was not refused with its reason: %s" % [again])
-		if _snapshot(ns, pid) != before or int(s["attempts_left"]) != left:
-			_fail("a refused second promise wrote a register or spent an attempt")
-		var row := _row(Levers.offered(state, ns, _loader, s), "promise_date")
-		if bool(row.get("offered", true)) or String(row.get("why_not", "")) != LK.WORD_GIVEN:
-			_fail("the card still offers a second date: %s" % [row])
+		var r: Dictionary = Levers.attempt(state, ns, _loader, s, "promise_date", {"due_month": _now(state) + LK.PROMISE_MIN_MONTHS})
+		if bool(r.get("ok", true)) or int(s["attempts_left"]) != left:
+			_fail("a promise to %s, whom the president does not cover, was rolled: %s" % [pid, r])
+			return
 		Levers.close(state, ns, _loader, s)
-		var later := _stage(state, ns, pid, "word_later%d" % n)
-		if bool(Levers.attempt(state, ns, _loader, later, "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS}).get("ok", true)):
-			_fail("a later audience took a second date on a want already promised")
-		Levers.close(state, ns, _loader, later)
-		refused_twice = true
-		break
-	if not refused_twice:
-		_fail("a first promise was believed in 29 audiences; the staging needs another person")
 
 
 ## A France game with its first request still pending: {state, ns, id}, or {}.

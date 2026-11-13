@@ -142,12 +142,17 @@ func _promise() -> void:
 
 
 func _check_promise() -> void:
-	if _promised_due < 0 or not _won_promise:
+	if _promised_due < 0:
 		return
 	var ns = _main._state.player()
 	var found := false
 	for row in President.commitments_with(ns, _person):
 		found = found or (String(row["kind"]) == "promise" and int(row["due_month"]) == _promised_due)
+	# The author's ruling of 2026-11-13 (#323): a promise the person refused binds nothing.
+	if not _won_promise:
+		if found:
+			_fail("a refused promise wrote a commitment: %s" % [ns.commitments])
+		return
 	if not found:
 		_fail("the promise made in the scene is not a commitment in the register: %s" % [ns.commitments])
 	if not _diary_has(_main._loader.person_name(_person), Words.when(_promised_due)):
