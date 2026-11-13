@@ -27,6 +27,7 @@ const SC = preload("res://src/sim/shadow_constants.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const AudienceFlow = preload("res://src/ui/audience_flow.gd")
 const AudienceLines = preload("res://src/ui/audience_lines.gd")
+const AudienceTalkView = preload("res://src/ui/audience_talk_view.gd")
 const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const AudienceWords = preload("res://src/ui/audience_words.gd")
 const Words = preload("res://src/ui/lever_words.gd")
@@ -51,6 +52,7 @@ func _process(_delta: float) -> bool:
 		3:
 			_check_the_words()
 			_check_where_the_affair_rows_go()
+			_check_the_words_are_neutral()
 			if not _open_with_offer("executive"):
 				return _end()
 		5:
@@ -143,6 +145,22 @@ func _check_the_words() -> void:
 
 
 ## The ask follows the Flirt it answers; the end of an affair closes the talk.
+## The person may be a man: nothing this PR adds says she or her (QA's TAKE 5; #324's words are neutral,
+## "They warm", "they agree"). The tags, the money's band, Leave's band and the affair's band.
+func _check_the_words_are_neutral() -> void:
+	var said: Array = []
+	for key in ["trail", "cools", "scandal", "regard"]:
+		said.append(String(AudienceTalkView.TAGS[key][1]))
+	var money := {"currency": "party_money", "amount_eur_m": 1.0, "found_in_a_year": 0.02, "found_in_a_year_without": 0.0, "months_to_vote": 16, "found_by_the_vote": 0.06, "found_by_the_vote_without": 0.0}
+	for rows in [AudienceWords.money_lines(money), AudienceWords.left_lines(), AudienceWords.affair_lines(), AudienceWords.taken_lines(money)]:
+		for row in rows:
+			said.append(String(row["text"]))
+	var gendered := RegEx.create_from_string(r"(?i)\b(she|her|hers)\b")
+	for text in said:
+		if gendered.search(text) != null:
+			_fail("a line says she or her of someone who may be a man: '%s'" % text)
+
+
 func _check_where_the_affair_rows_go() -> void:
 	var rows: Array = [{"id": "gossip"}, {"id": "flirt"}, {"id": "dinner"}]
 	var ask := {"id": "affair_ask", "sub": true}

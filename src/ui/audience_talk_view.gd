@@ -26,9 +26,9 @@ const TAGS := {
 	"asked": ["✓", "Asked", ""],  # i18n: msgid
 	# The rare proposals (C4-offer, C4-affair): what each risks in two or three words, in a status tone.
 	"trail": ["payments", "A money trail", "bad"],  # i18n: msgid
-	"cools": ["▼", "She cools", "warn"],  # i18n: msgid
+	"cools": ["▼", "They cool", "warn"],  # i18n: msgid
 	"scandal": ["!", "Risks a scandal", "bad"],  # i18n: msgid
-	"regard": ["▼", "Costs her regard", "bad"],  # i18n: msgid
+	"regard": ["▼", "Costs their regard", "bad"],  # i18n: msgid
 }
 const FACE := Vector2i(22, 28)
 static var _faces := {}

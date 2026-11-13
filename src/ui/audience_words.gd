@@ -151,7 +151,7 @@ static func money_terms(money: Dictionary) -> String:
 
 
 static func money_lines(money: Dictionary) -> Array:
-	return [line(DOWN, BAD, money_risk(money)), line(NEUTRAL, DIM, Strings.t("Taken, she has your word, and the money"))]
+	return [line(DOWN, BAD, money_risk(money)), line(NEUTRAL, DIM, Strings.t("Taken, they have your word, and the money"))]
 
 
 ## What taking it risks over the TERM (the author's ruling: not one year): the chance of being found
@@ -171,13 +171,13 @@ static func money_risk(money: Dictionary) -> String:
 ## The band after Leave: what turning the money down cost (the render's line), one fixed sentence,
 ## since the sim prices it in regard alone (Shadows.refuse_offer).
 static func left_lines() -> Array:
-	return [line(DOWN, BAD, Strings.t("She thinks a little less of you"))]
+	return [line(DOWN, BAD, Strings.t("They think a little less of you"))]
 
 
 ## The band after an affair begins: what it will cost, in the sim's two terms (evidence each month it
 ## lasts, Shadows.AFFAIR_EVIDENCE_PER_MONTH, and the regard lost when it ends, AFFAIR_END_RAPPORT).
 static func affair_lines() -> Array:
-	return [line(DOWN, BAD, Strings.t("Each month it lasts leaves a trace the press can find")), line(DOWN, BAD, Strings.t("Ending it will cost you most of her regard"))]
+	return [line(DOWN, BAD, Strings.t("Each month it lasts leaves a trace the press can find")), line(DOWN, BAD, Strings.t("Ending it will cost you most of their regard"))]
 
 
 ## The two lines the struck band adds once the money is taken: the gain and the risk it left.

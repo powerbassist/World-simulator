@@ -1,7 +1,7 @@
 extends "res://src/ui/audience_talk_view.gd"
 
 ## The money on the table -- V5.3, mockup C4-offer. Two lines in the talk's own grammar answer an
-## offer: take it (a money trail, the tag says so) or leave it (she cools). The words of each are the
+## offer: take it (a money trail, the tag says so) or leave it (they cool). The words of each are the
 ## president's, from the dialogue; the sim's refusals (Deal.take's `why_not`) hang on the take line
 ## as its tooltip and put it down. It draws what it is handed and writes nothing.
 
