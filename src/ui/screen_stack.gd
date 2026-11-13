@@ -25,6 +25,7 @@ extends Control
 
 signal top_changed(from: int, to: int)
 
+const Backdrop = preload("res://src/ui/backdrop.gd")
 const GlossaryTip = preload("res://src/ui/glossary_tip.gd")
 
 ## Ranks, lowest first. MAP is the bare map: nothing on the stack.
@@ -124,8 +125,9 @@ func add(layer: int, panel: Control, dim := false, cancel := Callable()) -> void
 		# draws below the panel and above everything added earlier.
 		# It follows the panel's visibility, so every existing show()/hide()
 		# call site keeps working unchanged.
-		var shade := ColorRect.new()
-		shade.color = Color(0.02, 0.03, 0.05, 0.55)
+		# The dim is the backdrop (backdrop.gd): the world behind a modal is darkened AND
+		# blurred, one shared material, its strength UiTheme's tokens -- no panel sets it.
+		var shade := Backdrop.apply(ColorRect.new())
 		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		shade.mouse_filter = Control.MOUSE_FILTER_STOP
 		shade.visible = false
