@@ -41,6 +41,7 @@ func _process(_delta: float) -> bool:
 	_check_the_backdrop_follows_the_panel()
 	_check_the_tokens_are_what_is_drawn()
 	_check_every_dimmed_modal_shares_one_material()
+	_check_a_modal_over_a_modal_keeps_the_lower_one()
 	_finish()
 	return true
 
@@ -121,6 +122,44 @@ func _check_every_dimmed_modal_shares_one_material() -> void:
 		return
 	if found[0].material != found[1].material:
 		_fail("two modals carry two blur materials: the screen is copied twice")
+
+
+## QA's R1: a screen-reading shader reuses the FIRST screen copy of the frame, so a second dimmed modal
+## drawn over a first one would overwrite it with the world as it was before it (the election panel over
+## the briefing vanished). Each backdrop therefore has its own BackBufferCopy right before it, which takes
+## a fresh copy of the viewport at that point in the draw order, and it is up exactly while the panel is.
+func _check_a_modal_over_a_modal_keeps_the_lower_one() -> void:
+	var host: Control = _stack._hosts[ScreenStack.SCENE]
+	var kids := host.get_children()
+	var seen := 0
+	for i in kids.size():
+		if not (kids[i] is ColorRect and Backdrop.is_applied(kids[i])):
+			continue
+		seen += 1
+		var before: Node = kids[i - 1] if i > 0 else null
+		if not (before is BackBufferCopy) or (before as BackBufferCopy).copy_mode != BackBufferCopy.COPY_MODE_VIEWPORT:
+			_fail("a backdrop has no fresh screen copy right before it: %s" % [before])
+	if seen == 0:
+		_fail("premise: no backdrop in the host")
+		return
+	var copy: BackBufferCopy = null
+	for child in host.get_children():
+		if child is BackBufferCopy:
+			copy = child
+	if copy == null:
+		return
+	var panel := _panel()
+	_stack.add(ScreenStack.SCENE, panel, true)
+	var last: BackBufferCopy = null
+	for child in host.get_children():
+		if child is BackBufferCopy:
+			last = child
+	panel.visible = true
+	if not last.visible:
+		_fail("the screen copy is not up while its panel is")
+	panel.visible = false
+	if last.visible:
+		_fail("the screen copy stayed up after its panel was hidden")
 
 
 func _fail(message: String) -> void:

@@ -83,5 +83,15 @@ static func apply(rect: ColorRect) -> ColorRect:
 	return rect
 
 
+## A fresh copy of the viewport at this point of the draw order, to sit right before a backdrop. A
+## screen-reading shader reuses the first copy of the frame, so without it a modal over a modal would
+## paint the world as it was BEFORE the lower one (QA's R1: the lower modal vanished).
+static func fresh_copy() -> BackBufferCopy:
+	var copy := BackBufferCopy.new()
+	copy.copy_mode = BackBufferCopy.COPY_MODE_VIEWPORT
+	copy.visible = false
+	return copy
+
+
 static func is_applied(rect: CanvasItem) -> bool:
 	return rect.material == material()

@@ -131,6 +131,8 @@ func add(layer: int, panel: Control, dim := false, cancel := Callable()) -> void
 		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		shade.mouse_filter = Control.MOUSE_FILTER_STOP
 		shade.visible = false
+		var copy := Backdrop.fresh_copy()  # so a modal over a modal blurs the lower one too
+		host.add_child(copy)
 		host.add_child(shade)
 		# The HOLDER follows the panel too, not just the dim. A Container
 		# defaults to MOUSE_FILTER_PASS, so a full-rect dimmed holder goes on
@@ -144,6 +146,7 @@ func add(layer: int, panel: Control, dim := false, cancel := Callable()) -> void
 		# on the panel while the panel's own flag is still true, and this
 		# handler would put the holder back.
 		panel.visibility_changed.connect(func():
+			copy.visible = panel.visible
 			shade.visible = panel.visible
 			holder.visible = panel.visible
 		)
