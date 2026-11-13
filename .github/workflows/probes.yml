@@ -9,16 +9,18 @@
 # starve the PR checks of the 20 concurrent jobs), no secret, a read-only token, and
 # no credential left in the checkout. A fork cannot dispatch it.
 #
-# What its tables compare with (measured 2026-11-13, offload-cpu-report):
-# - CI head against CI base: cmp. Same platform, same printer, byte for byte.
-# - shadows against a Windows table: at 3060c143, 200 seeds, all 1010 rows were byte-
-#   identical (after stripping the CRs shadows_parallel.py writes on Windows), and one
-#   summary float of ~60 printed differently: 0.363652173913044 on Windows, ...043 here.
-#   The double is the same (4182/11500); Godot's JSON.stringify rounds the 15th digit
-#   differently on Windows (a two-line script prints both). So compare rows exactly and
-#   floats to 2e-14, never with a raw cmp (docs/tooling.md has the command).
-# - balance against a Windows table: balance_diff.py (a few vote shares differ in the
-#   last printed digit, 0 verdict flips; possibly the same printer, not measured).
+# What its tables compare with (the parent's ruling, 2026-11-13):
+# - SAME platform -- CI head against CI base, or a local table against a local one: a
+#   raw cmp, ALWAYS. Byte-identity is what proves a refactor moves no number: a
+#   reordered float sum shows only in the last bit, well under any tolerance.
+# - ACROSS platforms -- a CI (Linux) table against a Windows one: tools/json_close.py,
+#   and only then. At 3060c143, 200 seeds, all 1010 shadows rows were byte-identical
+#   (after stripping the CRs shadows_parallel.py writes on Windows) and one summary
+#   float of ~60 printed differently: 0.363652173913044 on Windows, ...043 here. It is
+#   the same double (4182/11500); Godot's JSON.stringify rounds the 15th digit
+#   differently on Windows (a two-line script prints both). json_close.py lets such a
+#   float through at 2e-14 and prints every one it let through, with the difference.
+#   Balance across platforms: balance_diff.py, its own verdict-level check.
 # - density: cross-platform unmeasured; compare CI head with CI base only.
 #
 # Every job checks out the PROBED commit, not this file's, so all logic here is

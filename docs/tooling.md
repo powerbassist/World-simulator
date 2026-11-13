@@ -216,10 +216,13 @@ gh run download <run id> -p "probe-*" -D <dir>
 
 The tables are `probe-shadows-<side>/shadows-<side>.json`, `probe-balance-<side>/balance-<side>.json` and `probe-density-<side>/density-<side>.json` (with the probe's log and `exit-code.txt`). With a base, the "Head against base" job prints `cmp` for each probe, and `balance_diff.py` for balance, in the run's summary. A difference is reported, never failed on. Artifacts are kept 7 days.
 
-**What compares with what** (measured 2026-11-13):
-- **CI head against CI base:** `cmp`. Same platform and same printer, so byte for byte.
-- **Shadows against a Windows table:** `python tools/json_close.py windows.json shadows-head.json`. At 3060c143 (200 seeds), all 1010 rows were byte-identical and one summary float of about 60 printed differently: `0.363652173913044` on Windows, `…043` on Linux. It is the same double (4182/11500). Godot's `JSON.stringify` rounds the 15th digit differently on Windows, and a two-line script prints both. So a raw `cmp` fails on equal numbers. `json_close.py` parses both files, needs everything but floats to match exactly, and floats to agree to 2e-14 relative (a one-digit difference in the 15th significant digit).
-- **Balance against a Windows table:** `python tools/balance_diff.py windows.json balance-head.json`. A few vote shares differ in their last printed digit, with 0 verdict flips. Never `cmp` across platforms.
+**What compares with what** (the parent's ruling, 2026-11-13):
+- **Same platform, always a raw `cmp`.** That covers CI head against CI base (the run's "Head against base" job does it) and a local table against a local one. Byte-identity is what proves a refactor moves no number: a reordered float sum shows only in the last bit, well under any tolerance, so no tolerant compare is allowed here.
+- **Across platforms, and only then, `tools/json_close.py`:** a CI (Linux) table against a Windows one, `python tools/json_close.py shadows-head.json windows.json`.
+  - At 3060c143 (200 seeds), all 1010 shadows rows were byte-identical, and one summary float of about 60 printed differently: `0.363652173913044` on Windows, `…043` on Linux.
+  - It is the same double (4182/11500). Godot's `JSON.stringify` rounds the 15th digit differently on Windows, and a two-line script prints both.
+  - `json_close.py` parses both files and needs keys, ints, strings and list order to match exactly. Floats must agree to 2e-14 relative, and it prints every float it let through with both values and the relative difference.
+- **Balance across platforms:** `python tools/balance_diff.py windows.json balance-head.json`, its own verdict-level check. A few vote shares differ in their last printed digit, with 0 verdict flips.
 - **Density:** cross-platform is unmeasured. Compare CI head with CI base only. The probe exits 1 on an accepted exception, so judge the JSON, not the job's exit code.
 - Windows-only behaviour (paths, CRLF, the user dir) is invisible on Linux. That is why QA keeps one local Windows cold suite per PR.
 
