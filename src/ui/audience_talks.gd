@@ -25,6 +25,7 @@ const Capital = preload("res://src/core/capital.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceView = preload("res://src/ui/audience_view.gd")
+const AudienceWords = preload("res://src/ui/audience_words.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 
@@ -91,6 +92,7 @@ static func counter(main, game: Dictionary, date: Dictionary) -> void:
 	var session: Dictionary = game.get("session", {})
 	if session.is_empty():
 		return
+	game.erase("notice")
 	var args := {"due_month": int(date["year"]) * 12 + int(date["month"]), "due_day": int(date["day"])}
 	var r := Deal.bargain(main._state, main._state.player(), main._loader, session, "promise_date", args)
 	if not bool(r["ok"]):
@@ -110,6 +112,7 @@ static func grant(main, game: Dictionary) -> void:
 	var session: Dictionary = game.get("session", {})
 	if session.is_empty():
 		return
+	game.erase("notice")
 	var r := Deal.grant(main._state, main._state.player(), main._loader, session)
 	if not bool(r["ok"]):
 		game["scene"].show_result(Words.reason(String(r["error"])), view_of(main, game), "", {}, ResultTone.BLOCKED)
@@ -127,6 +130,7 @@ static func money(main, game: Dictionary, take: bool) -> void:
 	var session: Dictionary = game.get("session", {})
 	if session.is_empty():
 		return
+	game.erase("notice")
 	var ns = main._state.player()
 	var snapshot: Dictionary = game.get("money_open", {})
 	var person = main._loader.person_by_id.get(String(session["person_id"]))
@@ -137,10 +141,11 @@ static func money(main, game: Dictionary, take: bool) -> void:
 		return
 	if take:
 		game["money_taken"] = snapshot
-	var said := Strings.t("You take it.") if take else Strings.t("You turn it down.")
-	var paid := "" if take else Words.paid_text({}, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
-	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game), title, {},
-		ResultTone.RISKY if take else ResultTone.of_rapport(float(r.get("rapport", 0.0))))
+	# Left, the band over the cards is the render's: "Against you: You turn it down." and the regard it cost.
+	if not take:
+		game["notice"] = AudienceWords.left_lines()
+	game["scene"].show_result(Strings.t("You take it.") if take else Strings.t("You turn it down."), view_of(main, game), title, {},
+		ResultTone.AT_RISK if take else ResultTone.BAD)
 	main._windows.mark_all_dirty()
 
 
@@ -151,6 +156,7 @@ static func affair(main, game: Dictionary, line_id: String) -> void:
 	var session: Dictionary = game.get("session", {})
 	if session.is_empty():
 		return
+	game.erase("notice")
 	var ns = main._state.player()
 	var pid := String(session["person_id"])
 	var asking := line_id == "affair_ask"
@@ -162,8 +168,11 @@ static func affair(main, game: Dictionary, line_id: String) -> void:
 		return
 	var paid := Words.paid_text({}, {"rapport": float(r.get("rapport", 0.0))}, main._loader.person_name, _feel(main, session))
 	var said := Strings.t("It begins, and no one must know.") if asking else Strings.t("It is over.")
-	game["scene"].show_result(said + " " + Words.changed(paid) if paid != "" else said, view_of(main, game),
-		"affair_begin" if asking else "affair_end", {}, ResultTone.RISKY if asking else ResultTone.of_rapport(float(r.get("rapport", 0.0))))
+	# Begun, the band is the render's: what it will cost, in the sim's two terms, in place of the deal's lines.
+	if asking:
+		game["notice"] = AudienceWords.affair_lines()
+	game["scene"].show_result(said if asking else (said + " " + Words.changed(paid) if paid != "" else said), view_of(main, game),
+		"affair_begin" if asking else "affair_end", {}, ResultTone.AT_RISK if asking else ResultTone.of_rapport(float(r.get("rapport", 0.0))))
 	main._windows.mark_all_dirty()
 
 
@@ -176,6 +185,7 @@ static func ask(main, game: Dictionary, line_id: String, topic: String, args: Di
 	if topic == "affair":
 		affair(main, game, line_id)
 		return
+	game.erase("notice")
 	# Cold or hostile before the talk, she deflects (her _no); else she answers (her _yes).
 	var cold := MoodBadge.emotion_of(_feel(main, session)) == Portrait.Emotion.STERN
 	var r := Levers.talk(main._state, main._state.player(), main._loader, session, topic, args)

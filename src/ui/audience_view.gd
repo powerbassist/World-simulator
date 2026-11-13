@@ -38,7 +38,7 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	var card := DealWords.card(loader, ns, answers, feel, wants, kind)
 	# "money" is ALWAYS in the view: the scene merges a result's view over its own, and a key left
 	# out would keep the offer on screen after it was answered.
-	var view := {"voice": AudienceVoice.lines(loader, pid), "choices": {"feel": feel}, "struck": struck, "money": {},
+	var view := {"voice": AudienceVoice.lines(loader, pid), "choices": {"feel": feel}, "struck": struck, "money": {}, "notice_lines": game.get("notice", []),
 		"attempts_left": int(session["attempts_left"]), "talk_blocked": _blocked(state, ns, loader, session)}
 	if struck:
 		view["struck_lines"] = AWords.struck_lines(answers, card)

@@ -202,6 +202,9 @@ func show_result(text: String, view: Dictionary, title: String, extra := {}, ton
 	AudienceVoice.say(self, _spoken, _voice, AudienceVoice.answer(_voice, tone, badge.emotion if badge != null else -1,
 		view.get("choices", {}).get("feel", {})))
 	_render(_view)
+	if tone == ResultTone.BLOCKED and flow.state == AudienceFlow.S.MONEY:
+		_result.text = text
+		ResultTone.apply(_tone, tone)
 	_badge(_view)
 	if title != "":
 		say(title, extra)
@@ -243,12 +246,15 @@ func _render(view: Dictionary) -> void:
 	money_rows.visible = on_money
 	talk.visible = flow.in_talk()
 	_lead.visible = asking or on_money
-	_band.visible = not asking
+	# A notice (the sim's last word on the money left, the affair begun) is a band of its own: over the
+	# cards after Leave, in place of the deal's lines over the talk.
+	var notice: Array = view.get("notice_lines", [])
+	_band.visible = not asking or not notice.is_empty()
 	_end.visible = not asking and not on_money
 	if on_money:
 		_lead.text = String(money.get("lead", ""))
 		_result.text = String(money.get("terms", ""))
-		ResultTone.apply(_tone, ResultTone.RISKY)
+		ResultTone.apply(_tone, ResultTone.TABLE)
 		_lines(money.get("lines", []))
 		_build += 1
 		var mine := _build
@@ -259,11 +265,13 @@ func _render(view: Dictionary) -> void:
 		_lead.text = String(view.get("question", {}).get("lead", ""))
 		if not view.is_empty() and view.has("question"):
 			cards.show_question(view["question"], flow.date, view.get("counter_default", {}))
+		if not notice.is_empty():
+			_lines(notice)
 		return
 	if state == AudienceFlow.S.REFUSED:
 		_lines(view.get("refused_lines", []))
 	else:
-		_lines(view.get("struck_lines", []))
+		_lines(notice if not notice.is_empty() else view.get("struck_lines", []))
 		if not flow.ranked and view.has("talk"):
 			flow.lines = view["talk"]
 			flow.ranked = true
@@ -349,4 +357,4 @@ func say(title: String, extra: Dictionary) -> void:
 	state.merge(extra, true)
 	_speaker.text = String(state["name"])  # i18n: row-ok the person's shown name, resolved by the wiring
 	var said: String = await DialogueLines.line(_resource, title, state)
-	_line.text = said if said != "" or not (title.ends_with("opening") or title.begins_with("offer_")) else String(state["ask"])
+	_line.text = said if said != "" or not (title.ends_with("opening") or (title.begins_with("offer_") and not title.begins_with("offer_accept_") and not title.begins_with("offer_refuse_"))) else String(state["ask"])

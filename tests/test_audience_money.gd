@@ -76,6 +76,24 @@ func _process(_delta: float) -> bool:
 		17:
 			_check_the_affair_answer()
 			_check_the_end_of_an_affair()
+			_leave()
+		19:
+			if not _open_with_offer("politician"):
+				return _end()
+		21:
+			_check_escape_over_open_money()
+		23:
+			if not _open_for_a_spark():
+				return _end()
+		25:
+			_scene().cards.find_child("GrantButton", true, false).pressed.emit()
+		27:
+			_stage_a_flirt()
+		29:
+			_why = Shadows.may_begin_affair(_main._state, _main._state.player(), _main._loader, _person, _session())
+			_press("affair_ask")
+		31:
+			_check_the_affair_yes()
 			return _end()
 	return false
 
@@ -144,6 +162,8 @@ func _check_the_money_holds_the_cards() -> void:
 		_fail("the money's two answers are not on the screen")
 	if not String(scene._result.text).contains("m "):
 		_fail("the money's terms are not in the band: '%s'" % scene._result.text)
+	if scene._tone.text != "On the table":
+		_fail("the offer's band head reads '%s', not On the table" % scene._tone.text)
 	var grant: Dictionary = Deal.answers(_main._state, _main._state.player(), _main._loader, _session())["grant"]
 	if bool(grant["ok"]):
 		_fail("the sim lets Grant through with the money open: %s" % [grant])
@@ -162,6 +182,11 @@ func _check_leaving_the_money() -> void:
 	var grant: Button = scene.cards.find_child("GrantButton", true, false) as Button
 	if grant == null or grant.disabled:
 		_fail("Grant is down after the money was left")
+	# The render's band, over the cards: "Against you: You turn it down." and what it cost.
+	if not scene._band.visible or scene._tone.text != "Against you" or scene._result.text != "You turn it down.":
+		_fail("Leave's band is not there: visible %s, head '%s', '%s'" % [scene._band.visible, scene._tone.text, scene._result.text])
+	if not _band_texts(scene).any(func(t: String) -> bool: return t.contains("less of you")):
+		_fail("Leave's band does not say what it cost: %s" % [_band_texts(scene)])
 
 
 func _check_taking_the_money() -> void:
@@ -176,6 +201,8 @@ func _check_taking_the_money() -> void:
 		_fail("Take did not pay the money through the sim (moved %s)" % paid)
 	if not scene.talk.visible:
 		_fail("the talk did not open after Take")
+	if scene._tone.text != "At a risk":
+		_fail("the band after Take reads '%s', not At a risk" % scene._tone.text)
 	var said: Array = []
 	for cell in scene._band_lines.get_children():
 		for child in cell.get_children():
@@ -234,6 +261,96 @@ func _check_the_end_of_an_affair() -> void:
 		_fail("the line did not end the affair through the sim")
 	if _row_button(_scene().talk, "affair_end") != null:
 		_fail("the line that ends an affair stayed after it ended")
+
+
+## Escape (the frame's X) over an offer left unanswered: the sim's rule is a decline, priced once, and
+## the money is neither taken nor refused on the way out.
+func _check_escape_over_open_money() -> void:
+	var ns = _main._state.player()
+	var request := String(_session()["request_id"])
+	if _scene().flow.state != S.MONEY:
+		_fail("premise: the third audience did not open on the money")
+		return
+	var price: Dictionary = Audiences.decline_price(ns, _main._loader, request)
+	var rapport := President.rapport(ns, _person)
+	var money := _money()
+	AudienceTalks.leave(_main, _game())
+	if String(Audiences.request(ns, request).get("status", "")) != "declined":
+		_fail("leaving over the open money did not decline the request: %s" % [Audiences.request(ns, request).get("status", "")])
+	var moved := President.rapport(ns, _person) - rapport
+	if absf(moved - float(price["rapport"])) > 1e-6 and moved > -1.0 + 1e-6 + float(price["rapport"]):
+		_fail("the decline was not priced exactly once: regard moved %s, one decline is %s" % [moved, price["rapport"]])
+	if _money() != money:
+		_fail("leaving over the open money moved money")
+
+
+## A person with a spark (Shadows.spark, a seeded draw per pair), asked for by a plain request: the
+## premise lends the president a spouse and the person some warmth, and strips any offer, so the
+## audience opens on the three cards and the affair's gates are the sim's own.
+func _open_for_a_spark() -> bool:
+	var state = _main._state
+	var ns = state.player()
+	var loader = _main._loader
+	var now: int = int(state.year) * 12 + int(state.month)
+	var chosen = null
+	for person in loader.people.get(String(ns.id), []):
+		if not person.wants.is_empty() and President.covers(state, ns, loader, String(person.id)) and Shadows.spark(ns, String(person.id)) \
+				and String(person.id) != President.leader_id(ns):
+			chosen = person
+			break
+	if chosen == null:
+		_fail("premise: nobody in the nation has a spark with this president")
+		return false
+	_person = String(chosen.id)
+	var leader = loader.person_by_id[President.leader_id(ns)]
+	if String(leader.spouse_id) == "":
+		leader.spouse_id = "FRA_a_spouse_the_premise_lends"
+	President.adjust_rapport(state, ns, loader, _person, 0.6)
+	Audiences._arrive(ns, chosen, chosen.wants[0], now, [])
+	var request: Dictionary = ns.audience_requests[-1]
+	request.erase("offer")
+	var day := {}
+	for date in Audiences.offered_dates(state, ns, String(request["id"])):
+		if bool(date["free"]):
+			day = date
+			break
+	if day.is_empty() or not bool(Audiences.book(state, ns, loader, String(request["id"]), day).get("ok", false)):
+		_fail("premise: could not book the spark's request")
+		return false
+	state.year = int(day["year"])
+	state.month = int(day["month"])
+	_main._on_day_advanced(int(day["year"]), int(day["month"]), int(day["day"]))
+	return true
+
+
+## The usual outcome in play (the Flirt line is only offered when the sim would say yes): the press
+## begins the affair through the sim, her line is affair_begin, and the band is the render's.
+func _check_the_affair_yes() -> void:
+	var ns = _main._state.player()
+	var scene = _scene()
+	if _why != "":
+		_fail("premise: the sim would not say yes here: %s" % _why)
+	if President.relationship(ns, _person) != "affair":
+		_fail("the press did not begin the affair through the sim")
+	if scene._tone.text != "At a risk" or scene._result.text != "It begins, and no one must know.":
+		_fail("the yes band's head reads '%s: %s'" % [scene._tone.text, scene._result.text])
+	var said: Array = _band_texts(scene)
+	if not said.any(func(t: String) -> bool: return t.contains("trace")) or not said.any(func(t: String) -> bool: return t.contains("regard")):
+		_fail("the yes band does not name what it will cost: %s" % [said])
+	if said.any(func(t: String) -> bool: return t.contains("Diary")):
+		_fail("the deal's lines are still under the affair's band: %s" % [said])
+	if _row_button(scene.talk, "affair_end") == null:
+		_fail("a lover has no line that ends it right after the yes")
+
+
+## The sentences in the scene's band, in order.
+func _band_texts(scene) -> Array:
+	var out: Array = []
+	for cell in scene._band_lines.get_children():
+		for child in cell.get_children():
+			if child is Label and child.text.length() > 2:
+				out.append(child.text)
+	return out
 
 
 ## The first Button of a talk row, by its line id: what a press on the sentence is.
