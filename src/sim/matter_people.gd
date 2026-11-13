@@ -24,6 +24,7 @@ const Characters = preload("res://src/sim/characters.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const President = preload("res://src/sim/president.gd")
+const Staff = preload("res://src/sim/staff.gd")
 
 ## The parent's card: three to five faces, never the roster.
 const MAX := 5
@@ -40,7 +41,7 @@ static func of(_state, ns, loader, row: Dictionary) -> Array[String]:
 		for company in Companies.majors_of(loader, ns.id):
 			if AK.FIRM_PREFIX + String(company.id) == object:
 				_add(out, skip, loader, String(company.chief_id))
-	var people: Array = loader.people.get(ns.id, [])
+	var people: Array = Staff.cast(loader, ns.id)
 	var others: Array = []
 	var same: Array = []
 	for person in people:
