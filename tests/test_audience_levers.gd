@@ -135,6 +135,14 @@ func _check_attempt() -> void:
 		_fail("a held click on Counter did not reach Deal.bargain(): %s" % [_session()])
 	if _scene()._result.text == "":
 		_fail("the attempt's result is not said")
+	# One counter per audience (the parent's ruling, QA #324): a Counter she did not take closes the
+	# Counter's button AND its date field, and leaves Grant and Refuse open.
+	if not _won_promise:
+		var counter: Button = _scene().cards.find_child("CounterButton", true, false) as Button
+		if counter == null or not counter.disabled:
+			_fail("the Counter stayed open after a Counter she did not take")
+		if _scene().cards.date_pick == null or not _scene().cards.date_pick.disabled:
+			_fail("the Counter's date field stayed open after a Counter she did not take")
 
 
 func _promise() -> void:

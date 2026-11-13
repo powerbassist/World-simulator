@@ -171,6 +171,42 @@ func _check_words() -> void:
 		_fail("a refused Grant does not say why on its card: %s" % [lines])
 	if not (q["counter"] as Dictionary).is_empty():
 		_fail("an ask with no date to move still has a Counter")
+	_check_the_cards_after_qa_round_one()
+
+
+## QA's round on #324: one counter per audience (the parent's ruling), the spared brief only for a
+## silence, and one line for a brief whatever the count.
+func _check_the_cards_after_qa_round_one() -> void:
+	var row := {"lever": "promise_date", "offered": true, "odds_lo": 0.0, "odds_hi": 0.36, "why_not": "",
+		"dates": {"earliest": 24313, "latest": 24324}}
+	var answers := {"ask": {"kind": "word", "object": "x", "due_month": 0}, "offer": {"kind": "silence", "months": 12},
+		"grant": {"ok": true, "why_not": ""}, "refuse": {}, "bargain": {"due_month": 0, "approaches": [row]}}
+	var reads := {"silence": {"briefs": 3, "first_month": 1, "approval_pt": -0.6}, "refusal": {"briefs": 3, "first_month": 4, "approval_pt": -0.6}}
+	var fresh := AudienceWords.question(_main._loader, _ns(), {"attempts": []}, answers, {}, "w", "executive", reads)
+	if not bool(fresh["counter"]["ok"]):
+		_fail("a first Counter is not open")
+	var other := AudienceWords.question(_main._loader, _ns(), {"attempts": [{"lever": "argue", "success": false}]}, answers, {}, "w", "executive", reads)
+	if not bool(other["counter"]["ok"]):
+		_fail("an Argue closed the Counter")
+	var spent := AudienceWords.question(_main._loader, _ns(), {"attempts": [{"lever": "promise_date", "success": false}]}, answers, {}, "w", "executive", reads)
+	if bool(spent["counter"]["ok"]):
+		_fail("a refused Counter can be rolled again")
+	if not (spent["counter"]["lines"] as Array).any(func(l: Dictionary) -> bool: return String(l["tone"]) == AudienceWords.WARN):
+		_fail("a spent Counter does not say so: %s" % [spent["counter"]["lines"]])
+	if not bool(spent["grant"]["ok"]) or not bool(spent["refuse"]["ok"]):
+		_fail("a refused Counter closed Grant or Refuse")
+	var spared := func(q: Dictionary) -> Array:
+		return (q["grant"]["lines"] as Array).filter(func(l: Dictionary) -> bool: return String(l["text"]).begins_with("Spares"))
+	if (spared.call(fresh) as Array).size() != 1 or not String(spared.call(fresh)[0]["text"]).begins_with("Spares you a brief "):
+		_fail("a silence's Grant does not spare one brief, whatever the count: %s" % [spared.call(fresh)])
+	var votes := answers.duplicate(true)
+	votes["offer"] = {"kind": "vote", "law_id": "x", "seats": 16, "date": {"year": 2026, "month": 12, "day": 3}}
+	var vote_card := AudienceWords.question(_main._loader, _ns(), {"attempts": []}, votes, {}, "w", "executive", reads)
+	if not (spared.call(vote_card) as Array).is_empty():
+		_fail("a vote's Grant says it spares a brief, and the pledge writes no silence: %s" % [spared.call(vote_card)])
+	var refuse_texts: Array = (fresh["refuse"]["lines"] as Array).map(func(l: Dictionary) -> String: return String(l["text"]))
+	if not refuse_texts.any(func(t: String) -> bool: return t.begins_with("A brief likely ") and not t.contains("3")):
+		_fail("a refusal's risk is not one brief line: %s" % [refuse_texts])
 
 
 func _card(ask: Dictionary, offer: Dictionary) -> Dictionary:

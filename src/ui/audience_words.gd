@@ -6,6 +6,7 @@ extends RefCounted
 ## is {glyph, tone, text}: a glyph that carries the sign (never colour alone), the status
 ## tone, a sentence. Nothing here explains the interface (the author's first ruling).
 
+const DealK = preload("res://src/sim/deal_constants.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
 const Num = preload("res://src/ui/num.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -34,7 +35,9 @@ static func question(loader, ns, session: Dictionary, answers: Dictionary, feel:
 	var ask: Dictionary = answers.get("ask", {})
 	var grant_lines: Array = [line(DOWN, BAD, String(card["grant_cost"]))] if String(card["grant_cost"]) != "" else []
 	grant_lines.append(line(UP, GOOD, String(card["give_stake"])))
-	var spared := risk_text(reads.get("silence", {}), true)
+	# Only a SILENCE spares a brief: a vote's pledge writes no silence (Deal._strike), so the line
+	# would promise what the sim does not deliver (QA #324 TAKE 2).
+	var spared := risk_text(reads.get("silence", {}), true) if String(answers.get("offer", {}).get("kind", "")) == DealK.OFFER_SILENCE else ""
 	if spared != "":
 		grant_lines.append(line(UP, GOOD, spared))
 	if ask.has("due_month"):
@@ -48,25 +51,39 @@ static func question(loader, ns, session: Dictionary, answers: Dictionary, feel:
 	return {
 		"lead": "%s %s" % [String(card["want"]), String(card["give_stake"])],
 		"grant": {"micro": Strings.t("Grant"), "title": _grant_title(String(ask.get("kind", ""))), "lines": grant_lines, "ok": bool(card["grant_ok"]), "why": String(card["grant_why"])},
-		"counter": _counter(answers),
+		"counter": _counter(answers, session),
 		"refuse": {"micro": Strings.t("Refuse"), "title": Strings.t("Say no"), "lines": refuse_lines, "ok": true, "why": ""},
 	}
 
 
 ## The Counter is Deal.bargain's promise_date row: its odds shown once, its window of months.
-static func _counter(answers: Dictionary) -> Dictionary:
+## ONE per audience (the parent's ruling, QA #324 TAKE 1): the sim keeps the row offered while
+## attempts remain, so the same counter could be rolled again at a rising chance; the session's own
+## attempt list says it was made, and the cards close it. Grant and Refuse stay open.
+static func _counter(answers: Dictionary, session: Dictionary) -> Dictionary:
 	for row in answers.get("bargain", {}).get("approaches", []):
 		if String(row["lever"]) != "promise_date":
 			continue
 		var lines: Array = [line(PERCENT, DIM, Strings.t("%s they agree") % Words.odds_text(float(row.get("odds_lo", 0.0)), float(row.get("odds_hi", 0.0)))),
 			line(NEUTRAL, DIM, Strings.t("The same terms, judged at the end of the month you pick"))]
 		var ok := bool(row.get("offered", false))
+		var why := Words.reason(String(row.get("why_not", "")))
+		if ok and _countered(session):
+			ok = false
+			why = Strings.t("You have already made your counter.")
 		if not ok:
-			lines.append(line("!", WARN, Words.reason(String(row.get("why_not", "")))))
+			lines.append(line("!", WARN, why))
 		var dates: Dictionary = row.get("dates", {})
 		return {"micro": Strings.t("Counter"), "title": Strings.t("The same word, later"), "lines": lines, "ok": ok,
-			"why": Words.reason(String(row.get("why_not", ""))), "earliest": int(dates.get("earliest", 0)), "latest": int(dates.get("latest", 0))}
+			"why": why, "earliest": int(dates.get("earliest", 0)), "latest": int(dates.get("latest", 0))}
 	return {}
+
+
+static func _countered(session: Dictionary) -> bool:
+	for attempt in session.get("attempts", []):
+		if String(attempt.get("lever", "")) == "promise_date":
+			return true
+	return false
 
 
 static func _grant_title(kind: String) -> String:
@@ -81,7 +98,9 @@ static func _grant_title(kind: String) -> String:
 
 
 ## "A brief likely within a year: about -0.6 approval", or "" when the read expects none.
-## `spared` words what a silence keeps off you instead of what a refusal brings.
+## `spared` words what a silence keeps off you instead of what a refusal brings. One line whatever
+## the count: only whether a brief comes and the first month are validated against a real run
+## (test_refusal_risk's band); a count past the first is twelve frozen-clock ticks (QA #324 TAKE 3).
 static func risk_text(read: Dictionary, spared: bool) -> String:
 	var briefs := int(read.get("briefs", 0))
 	if briefs <= 0:
@@ -89,10 +108,8 @@ static func risk_text(read: Dictionary, spared: bool) -> String:
 	var when_text := Strings.t("next month") if int(read.get("first_month", -1)) == 1 else Strings.t("within a year")
 	var points := Num.fs(float(read.get("approval_pt", 0.0)) * (-1.0 if spared else 1.0), 1)
 	if spared:
-		return Strings.t("Spares you a brief %s: about %s approval") % [when_text, points] if briefs == 1 \
-			else Strings.t("Spares you %d briefs %s: about %s approval each") % [briefs, when_text, points]
-	return Strings.t("A brief likely %s: about %s approval") % [when_text, points] if briefs == 1 \
-		else Strings.t("%d briefs likely %s: about %s approval each") % [briefs, when_text, points]
+		return Strings.t("Spares you a brief %s: about %s approval") % [when_text, points]
+	return Strings.t("A brief likely %s: about %s approval") % [when_text, points]
 
 
 ## The band under her line once the deal is struck (the sim's `struck` row on the session): what it
