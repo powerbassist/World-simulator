@@ -51,3 +51,25 @@ static func local_stamp(unix: int, bias_minutes: int) -> String:
 ## "01 JAN".
 static func day_month(day: int, month_number: int) -> String:
 	return "%02d %s" % [day, month(month_number)]
+
+
+const WEEKDAYS: Array[String] = [
+	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",  # i18n: msgid
+]
+
+
+## "Fri 16/04/2027": the weekday and the full date, the way the title bar's clock writes it
+## (the audience's Counter field opens on days, never on a month).
+static func weekday_full(day: int, month_number: int, year: int) -> String:
+	return "%s %02d/%02d/%d" % [weekday(day, month_number, year), day, month_number, year]
+
+
+## The three-letter weekday name of a date, in the current language.
+static func weekday(day: int, month_number: int, year: int) -> String:
+	return Strings.t(WEEKDAYS[weekday_index(day, month_number, year)])
+
+
+## 0 for Sunday, as the engine counts.
+static func weekday_index(day: int, month_number: int, year: int) -> int:
+	var stamp := Time.get_unix_time_from_datetime_dict({"year": year, "month": month_number, "day": day, "hour": 0, "minute": 0, "second": 0})
+	return int(Time.get_datetime_dict_from_unix_time(stamp)["weekday"])
