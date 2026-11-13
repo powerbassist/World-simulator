@@ -1,6 +1,6 @@
 """Two probe tables equal up to the last printed digit of a float.
 
-  python tools/json_close.py A.json B.json [--rel=1e-14]
+  python tools/json_close.py A.json B.json [--rel=2e-14]
 
 For a probe table made on Linux (the probes workflow on GitHub) against one made on
 Windows. Godot's JSON.stringify prints the same double differently on the two
@@ -22,7 +22,7 @@ import sys
 def diff(a, b, rel: float, path: str, out: list[str]) -> None:
     if isinstance(a, float) or isinstance(b, float):
         if not (isinstance(a, (int, float)) and isinstance(b, (int, float))) or isinstance(a, bool) or isinstance(b, bool) \
-                or not math.isclose(a, b, rel_tol=rel, abs_tol=rel):
+                or not math.isclose(a, b, rel_tol=rel):
             out.append("%s: %r != %r" % (path, a, b))
     elif isinstance(a, dict) and isinstance(b, dict):
         if list(a) != list(b):
@@ -41,7 +41,9 @@ def diff(a, b, rel: float, path: str, out: list[str]) -> None:
 
 
 def main(argv: list[str]) -> int:
-    rel = 1e-14
+    # 2e-14, not 1e-14: a one-digit print difference at the 15th significant digit is up
+    # to 1e-14 relative for a value whose leading digit is 1.
+    rel = 2e-14
     files = []
     for arg in argv:
         if arg.startswith("--rel="):

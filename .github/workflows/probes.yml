@@ -16,7 +16,7 @@
 #   summary float of ~60 printed differently: 0.363652173913044 on Windows, ...043 here.
 #   The double is the same (4182/11500); Godot's JSON.stringify rounds the 15th digit
 #   differently on Windows (a two-line script prints both). So compare rows exactly and
-#   floats to 1e-14, never with a raw cmp (docs/tooling.md has the command).
+#   floats to 2e-14, never with a raw cmp (docs/tooling.md has the command).
 # - balance against a Windows table: balance_diff.py (a few vote shares differ in the
 #   last printed digit, 0 verdict flips; possibly the same printer, not measured).
 # - density: cross-platform unmeasured; compare CI head with CI base only.
