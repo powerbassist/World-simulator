@@ -44,8 +44,10 @@ const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 const LawColumns = preload("res://src/ui/law_columns.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
-const LawAddress = preload("res://src/ui/law_address.gd")
 const BillActions = preload("res://src/ui/bill_actions.gd")
+const LawFilters = preload("res://src/ui/law_filters.gd")
+const LawSheet = preload("res://src/ui/law_sheet.gd")
+const LawSeatsTip = preload("res://src/ui/law_seats_tip.gd")
 
 ## The forecast's three columns: a for / against pair that reads as opposite, and
 ## a grey for the undecided between them (the dataviz method's diverging rule).
@@ -63,6 +65,8 @@ var _rows: VBoxContainer
 var _header: HBoxContainer
 var _detail: VBoxContainer
 var _selected := ""
+## The shelf and the search above the rows (law_filters.gd): built once, so the typed words stay.
+var _filters: LawFilters
 ## V5.3-0 (2.4): the bloc whose liked laws the list shows, "" for every law. Set by
 ## the briefing's bloc Go and the Society panel's "what calms it" row; cleared by
 ## the filter's own button.
@@ -94,6 +98,8 @@ func _init(panel) -> void:
 	left.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left.size_flags_stretch_ratio = 0.6
 	add_child(left)
+	_filters = LawFilters.new(_panel.mark_dirty)
+	left.add_child(_filters)
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 0)
 	left.add_child(head)
@@ -179,12 +185,16 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 	if bloc_filter != "":
 		laws = liked_by(laws, bloc_filter)
 		_filter_row()
+	laws = _filters.apply(laws, _panel._loader)
+	_shown = laws
 	if laws.is_empty():
+		if _filters.is_active():
+			PanelKit.line(_rows, _filters.empty_text(), PanelKit.Tone.PLAIN)
+			return
 		if not ns.tabled_bill.is_empty():
 			PanelKit.line(_rows, tabled_text(ns), PanelKit.Tone.PLAIN)
 		PanelKit.line(_rows, tr("No law is currently proposable."), PanelKit.Tone.PLAIN)
 		return
-	_shown = laws
 	_ns = ns
 	_party_list = party_list
 	LawColumns.header(_header, ns, COLUMNS, NAME_WIDTH, BAR_WIDTH)
@@ -286,6 +296,7 @@ func _forecast_bar(ns, party_list: Array, law, width: float) -> Control:
 		{"label": tr("Undecided"), "value": float(counts["undecided"])},
 		{"label": tr("Against"), "value": float(counts["no"])},
 	], {"marker": majority_share(ns, law), "colors": FORECAST_COLORS, "places": 0, "unit": tr(" seats")})
+	bar.hover = LawSeatsTip.build.bind(_panel, counts)
 	bar.custom_minimum_size.x = width
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return bar
@@ -337,32 +348,9 @@ static func after_parts(ns, party_list: Array, law, band: float) -> Array:
 	return parts
 
 
-## The selected law in full: the name, its summary never cut, the forecast and what
-## waits after the division spelled out, then the verbs.
+## The selected law in full (law_sheet.gd lays it out).
 func _build_detail(ns, party_list: Array, law) -> void:
-	# V5.2 b+ R2: a bill before the Assembly is the page's first fact while it waits.
-	if not ns.tabled_bill.is_empty():
-		PanelKit.line(_detail, tabled_text(ns), PanelKit.Tone.PLAIN)
-	var title := Label.new()
-	title.text = Strings.law_name(law)
-	title.theme_type_variation = UiTheme.LEAD
-	title.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_detail.add_child(title)
-	PanelKit.line(_detail, "%s · %s" % [PanelKit.Labels.law_theme(law.theme), _panel._majority_phrase(ns, law)])
-	# A system transition rewrites the whole constitution, not one field -- named
-	# structurally, off the loaded template's display_name (docs/transition-model.md).
-	if law.changes_system:
-		var target_id: String = law.effects.get("institutional", {}).get("system_id", "")
-		var target = _panel._loader.political_systems.get(target_id)
-		PanelKit.line(_detail, tr("Rewrites the constitution to a %s.") % (target.display_name if target != null else target_id), PanelKit.Tone.PLAIN)
-	PanelKit.rich(_detail, Strings.law_summary(law), PanelKit.Tone.PLAIN)
-	LawGrade.build(self, _detail, ns, law)
-	_detail.add_child(_forecast_bar(ns, party_list, law, 0.0))
-	PanelKit.line(_detail, tr("Forecast: %s") % _panel._forecast_text(ns, party_list, LawGrade.read(ns, law, grade(law))), PanelKit.Tone.PLAIN)
-	for part in after_parts(ns, party_list, law, _panel.FORECAST_UNCERTAIN_BAND):
-		PanelKit.line(_detail, String(part["text"]), PanelKit.Tone.PLAIN)
-	_verbs(ns, law)
-	LawAddress.build(self, _detail, ns, law)
+	LawSheet.build(self, _detail, ns, party_list, law)
 
 
 func _verbs(ns, law) -> void:
@@ -370,7 +358,7 @@ func _verbs(ns, law) -> void:
 	var propose := Button.new()
 	propose.name = "Propose"  # i18n: ok a node name
 	propose.text = tr("Propose")
-	propose.pressed.connect(_panel._on_propose.bind(law))
+	propose.pressed.connect(_panel.run_proposal.bind(law))
 	# V5.3-0 RF3: Propose acts on the law, and on the bloc the list is filtered for.
 	ActsOn.tag(propose, [law.id] + ([bloc_filter] if bloc_filter != "" else []))
 	_panel._offer(propose)

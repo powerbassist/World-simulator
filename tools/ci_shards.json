@@ -44,6 +44,7 @@
    "tests/test_findable_terms.gd",
    "tests/test_hold_reason.gd",
    "tests/test_region_funds.gd",
+   "tests/test_screen_reads.gd",
    "tests/test_siting.gd",
    "tests/test_energy.gd",
    "tests/test_calendar_panel.gd",
@@ -70,6 +71,7 @@
    "tests/test_goal_table.gd",
    "tests/test_bill_verbs.gd",
    "tests/test_order_paper.gd",
+   "tests/test_law_filters.gd",
    "tests/test_tax_library.gd"
   ],
   [
