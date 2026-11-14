@@ -76,7 +76,7 @@ func _run() -> void:
 	if not text_before.contains(law.law_name):
 		_fail("law panel does not list '%s' before proposing it" % law.law_name)
 
-	# V4.2 T5: _on_propose opens the bill briefing; the division itself is
+	# V5.3: the sheet's Propose divides at once; the division itself is
 	# run_proposal(), the verb the briefing's own button routes into.
 	_main._law_panel.run_proposal(law)
 	_divide()
@@ -167,7 +167,7 @@ func _check_rebellion_is_forecast_and_named(loader, ns) -> void:
 	if not forecast.contains("expected to break ranks"):
 		_fail("the forecast does not warn that seats will break ranks: %s" % forecast)
 
-	# V4.2 T5: _on_propose opens the bill briefing; the division itself is
+	# V5.3: the sheet's Propose divides at once; the division itself is
 	# run_proposal(), the verb the briefing's own button routes into.
 	_main._law_panel.run_proposal(law)
 	_divide()

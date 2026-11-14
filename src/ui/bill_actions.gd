@@ -89,7 +89,7 @@ static func menu(list, law) -> void:
 		return
 	var cells := BillVerbs.cells(panel._state, panel._loader, String(law.id), panel._find_law)
 	var items: Array = [
-		{"text": Strings.t("Propose"), "enabled": cells["propose"] == "", "reason": cells["propose"], "call": panel._on_propose.bind(law)}]
+		{"text": Strings.t("Propose"), "enabled": cells["propose"] == "", "reason": cells["propose"], "call": panel.run_proposal.bind(law)}]
 	var queue: Dictionary = cells["queue"]
 	if bool(queue["shown"]):
 		items.append({"text": queue["text"], "enabled": queue["enabled"], "reason": queue["reason"], "call": add.bind(list, law)})

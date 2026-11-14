@@ -138,6 +138,9 @@ func _check_legislature() -> void:
 		# (bill_queue.gd), so they are the verbs a held slot leaves live (test_order_paper.gd).
 		if verb.name == "Queue" or verb.name == "TakeOut":
 			continue
+		# "Poll it" opens the sheet's polls (law_sheet.gd): a read the player may buy at any time.
+		if verb.name == "PollIt":
+			continue
 		# The address is a word to the country, not a bill: the tabled bill is what it is for.
 		if verb.has_meta(LawAddress.FOLD_META) or verb.has_meta(LawAddress.GO_META):
 			continue
