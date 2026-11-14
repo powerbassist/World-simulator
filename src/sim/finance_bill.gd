@@ -34,6 +34,8 @@ const FrontPage = preload("res://src/sim/front_page.gd")
 const ForcePrice = preload("res://src/sim/force_price.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const FK = preload("res://src/sim/finance_bill_constants.gd")
+## The spending-verb rows (section 12): a sector programme, a regional fund.
+const FinanceRows = preload("res://src/sim/finance_rows.gd")
 
 const CHANNELS := ["tax_rates_pct", "spending_pct_gdp"]
 const PROGRESSIVITY := "tax_progressivity"
@@ -101,13 +103,18 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 			if not gone.has(kind):
 				gone.append(kind)
 		merged[ABOLISH] = gone
+	FinanceRows.merge(merged, bill)
 	# Checked on the merged bill, so an amendment cannot re-rate a kind an earlier
 	# tabling abolished.
 	var season := _autumn_refusal(state, loader, ns, merged)
 	if season.is_empty():
 		season = _range_refusal(ns, merged)
+	if season.is_empty() and FinanceRows.illegal(state, loader, ns, merged):
+		season = {"tabled": false, "refused": true, "verb": true}
 	if not season.is_empty():
 		return season
+	if merged.has(FinanceRows.PROGRAMMES) or merged.has(FinanceRows.FUNDS):
+		merged[FinanceRows.COST] = FinanceRows.cost_pct_gdp(state, loader, ns, merged)
 	var id := String(held.get("law_id", "")) if not held.is_empty() else FinanceBillLaw.id_for(state)
 	ns.tabled_bill = {
 		"law_id": id, "finance": merged, "forced": force or bool(held.get("forced", false)),
@@ -214,6 +221,11 @@ static func divide(state, loader, ns, tabled: Dictionary) -> Dictionary:
 			ns.tax_rates_pct[kind] = 0.0
 			ns.start_tax_rates_pct.erase(kind)
 		Budget.apply_pending(ns, _absolute(ns, bill))
+		# Section 12: the verb rows through their own commands; one no longer legal is
+		# skipped and named (call 3), the rest of the bill stands.
+		var skipped := FinanceRows.apply(state, loader, ns, bill)
+		if not skipped.is_empty():
+			result["skipped"] = skipped
 		for kind in bill.get(ABOLISH, []):
 			ns.tax_rates_pct.erase(kind)
 			ns.start_tax_rates_pct.erase(kind)

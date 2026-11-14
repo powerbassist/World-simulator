@@ -18,6 +18,9 @@ extends RefCounted
 
 const Regions = preload("res://src/sim/regions.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
+## V5.3 e (section 12): Go and Stop table rows of the finance bill, applied at the month's end.
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -67,7 +70,7 @@ static func _running(panel, box: Control, ns, row: Dictionary) -> void:
 	stop.text = Strings.t("Stop")
 	stop.set_meta("fund_id", String(row["id"]))
 	stop.pressed.connect(func() -> void:
-		RegionFunds.stop(panel._state, ns, String(row["id"]))
+		FinanceBill.table(panel._state, panel._loader, {"funds": {"stop": [String(row["id"])]}})
 		panel.mark_dirty())
 	flow.add_child(stop)
 	PanelKit.plain_line(flow, Strings.tn("%s a year, %d month left.", "%s a year, %d months left.", months) % [
@@ -130,8 +133,11 @@ static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
 		panel._fund_years = int(v)
 		redraw.call())
 	go.pressed.connect(func() -> void:
-		RegionFunds.start(panel._state, ns, panel._loader, String(region.id), float(panel._fund_share), int(panel._fund_years))
-		panel.mark_dirty())
+		var tabling := FinanceBill.table(panel._state, panel._loader, {"funds": {"start": [
+			{"region_id": String(region.id), "share_pct": float(panel._fund_share), "years": int(panel._fund_years)}]}})
+		panel.mark_dirty()
+		if not bool(tabling.get("tabled", false)):
+			refusal.text = ProposalNote.body(tabling))
 	redraw.call()
 
 

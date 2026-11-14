@@ -365,3 +365,17 @@ What exists per region each month:
 5. **Where the price ring lives** (a, recommended): world level, once on `GameState`. (b) Per nation: the same 12 vectors stored forty-one times in every save.
 6. **A series for trade** (a, recommended): none for now. The table shows this month's trade against the price series, labelled "this month". (b) A 12-month ring per nation per good: about 60 goods x 12 months x 41 nations in the save.
 7. **Where the region sample lives** (a, recommended): one NationState field as above, written at the Regions and Migration steps. (b) A ring on GameState, keyed by region.
+
+**The parent's go on sections 12 and 13 (2026-11-14): (a) on calls 1 to 7, with riders.**
+- **Two PRs:** PR A the bill rows (programmes and funds), PR B the reads (the price ring, `GoodsRead`, `region_history`, the fund strip's loss to the other regions, the unrest and migration read).
+- **A headless end-to-end test per verb through the bill** (`tests/test_finance_rows.gd`):
+  - tabled, carried, applied at the division, its cost booked;
+  - a refused tabling and a defeated bill apply nothing and write no `bloc_offset`;
+  - a withdrawn bill applies nothing;
+  - a row illegal by the division is skipped and named while the rest applies.
+- **The price ring and `region_history` start empty in a new game.** The reader says how many months it holds, so the screens label the series honestly, with no invented history.
+- **The `absent_ok` verdicts pinned** (`test_nation_fields`, `test_save_load`); no save bump unless a missing field would read wrong.
+- **Nothing moves:** balance, density and shadows compared base vs tip with `cmp` on the probe workflow.
+- **A `changelog.d` fragment in each PR** once #340 (versioning) has merged.
+
+**As built in PR A:** `src/sim/finance_rows.gd` (merge, the legality check at tabling, the rows' cost, the apply at the division); `FinanceBill.table` refuses `verb`; `FinanceBill.divide` applies the rows after the rates and returns `skipped`; `FinanceBillLaw.position` reads `verbs_pct_gdp` as an infrastructure rise. In the UI, the industry card's programme buttons and the fund's Go and Stop now table the row; the fund's refusal line shows a refused tabling.

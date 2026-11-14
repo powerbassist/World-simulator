@@ -69,6 +69,10 @@ static func position(ns, bill: Dictionary) -> Dictionary:
 		rows.append(["tax_rates_pct", String(kind), float(bill["create"][kind]), float(SK.CHANNEL_COST["tax_rates_pct"])])
 	for kind in bill.get("abolish", []):
 		rows.append(["tax_rates_pct", String(kind), -float(ns.tax_rates_pct.get(kind, 0.0)), float(SK.CHANNEL_COST["tax_rates_pct"])])
+	# Section 12, call 2: a programme's or a fund's cost reads as a rise of the
+	# infrastructure line, the anchor of the twelve infrastructure movers.
+	if bill.has("verbs_pct_gdp"):
+		rows.append(["spending_pct_gdp", "infrastructure", float(bill["verbs_pct_gdp"]), float(SK.CHANNEL_COST["spending_pct_gdp"])])
 	if bill.has("tax_progressivity"):
 		rows.append(["tax_rates_pct", FK.FALLBACK_TAX_KEY, float(bill["tax_progressivity"]) * FK.PROGRESSIVITY_INCOME_POINTS,
 			float(SK.CHANNEL_COST["tax_rates_pct"])])
