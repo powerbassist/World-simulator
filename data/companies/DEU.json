@@ -405,7 +405,7 @@
     },
     {
       "id": "DEU_schwarzkopf_versicherung",
-      "name": "Schwarzkopf Technik",
+      "name": "Iserlohe Technik",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18892,
@@ -765,7 +765,7 @@
     },
     {
       "id": "DEU_schwarzkopf_energie",
-      "name": "Schwarzkopf Versicherung",
+      "name": "Diekmann Versicherung",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24559,
@@ -945,7 +945,7 @@
     },
     {
       "id": "DEU_schwarzkopf_werke",
-      "name": "Schwarzkopf Dienste",
+      "name": "Tiefensee Dienste",
       "sector": "services",
       "share": 0.0073,
       "headcount": 10022,
@@ -990,7 +990,7 @@
     },
     {
       "id": "DEU_schwarzkopf_logistik_energie",
-      "name": "Schwarzkopf Logistik",
+      "name": "Bergmann Logistik",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22637,
@@ -1170,7 +1170,7 @@
     },
     {
       "id": "DEU_schwarzkopf_industrie",
-      "name": "Schwarzkopf Gruppe",
+      "name": "Diederichs Gruppe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22740,

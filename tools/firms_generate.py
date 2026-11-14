@@ -705,6 +705,33 @@ def tidy_names(nation: str, firms: list, taken: set) -> None:
         firm["name"] = new_name
 
 
+# Surnames in the name pools that are also a real brand once a firm wears them
+# (docs/fictionalization.md: no real company's name). A person may keep the surname;
+# a firm may not. Not in tools/banned_names.txt, because name_ok() reads that list AT
+# DRAW TIME and a refusal there redraws -- shifting the stream for the whole nation.
+# Here the swap happens after the draw: QA's TAKE on #349 ("Schwarzkopf Gruppe").
+BRAND_SURNAMES = {"Schwarzkopf"}
+
+
+def retire_brand_surnames(nation: str, firms: list, taken: set) -> None:
+    """Draw-free: a body firm named after a BRAND_SURNAMES surname takes another
+    surname of the nation's pool, ordered by a hash of the firm id, its corporate
+    words kept and its id unchanged; the new name stays unique."""
+    pool = [s for s in surname_pool(nation) if s not in BRAND_SURNAMES]
+    for firm in firms:
+        surname = next((b for b in BRAND_SURNAMES if firm["name"].startswith(b + " ")), None)
+        if surname is None:
+            continue
+        words = firm["name"][len(surname):]
+        order = sorted(pool, key=lambda s: hashlib.sha256(("%s:%s" % (firm["id"], s)).encode("utf-8")).digest())
+        taken.discard(firm["name"])
+        new_name = next((s + words for s in order if s + words not in taken and name_ok(s + words)), None)
+        if new_name is None:
+            raise SystemExit("retire_brand_surnames: no unique name for %s" % firm["id"])
+        taken.add(new_name)
+        firm["name"] = new_name
+
+
 def sidecar_entry(rng: random.Random, sex: str, age: int) -> dict:
     return {
         "sex": sex, "age": age,
@@ -814,7 +841,9 @@ def main() -> int:
             body = []
         else:
             body = gen_body(rng, nation, major_cov, cities, used_slugs)
-            tidy_names(nation, body, {f["name"] for f in majors + body})
+            taken = {f["name"] for f in majors + body}
+            tidy_names(nation, body, taken)
+            retire_brand_surnames(nation, body, taken)
 
         # --- write the companies file ----------------------------------------
         if nation in AUTHORED:
