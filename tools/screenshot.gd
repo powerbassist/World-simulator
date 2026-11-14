@@ -1210,6 +1210,8 @@ func _process(_delta: float) -> bool:
 		_flirt_said_and_redrawn()
 	if _audience_step in ["counter", "answered", "m-no", "m-yes"] and _frame == _frames_wanted - 2 and not _menu:
 		_open_audience_pick()
+	if _queue == "queue-menu" and _frame == _frames_wanted - 3 and not _menu:
+		_open_the_queue_menu()
 	if _frame == 3 and not _menu:
 		for n in _cards:
 			_main._hud.inbox.push("Card %d" % (n + 1), "A notification body long enough to wrap onto a second line in the column.")
@@ -2264,10 +2266,12 @@ func _stage_the_queue() -> void:
 		preload("res://src/sim/bill_queue.gd").add(state, {"law_id": ids[i + 1]})
 	panel._laws._selected = ids[4]
 	panel.mark_dirty()
-	panel._process(0.0)
-	if _queue == "queue-menu":
-		panel._paper.places[1].menu_requested.emit(0)
-		preload("res://src/ui/verb_plate.gd").of(panel).position = Vector2(560, 330)
+
+
+## "queue-menu": a few frames after the tab has refreshed, so the paper it opens from exists.
+func _open_the_queue_menu() -> void:
+	_main._law_panel._paper.places[1].menu_requested.emit(0)
+	preload("res://src/ui/verb_plate.gd").of(_main._law_panel).position = Vector2(560, 330)
 
 
 ## Bought today and out; or, with its day forced to today, printed and carded by the poll's

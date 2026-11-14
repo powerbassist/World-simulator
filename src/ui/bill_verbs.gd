@@ -58,7 +58,7 @@ static func cells(state, loader, law_id: String, find_law := Callable()) -> Dict
 	if slot == "held":
 		var full: bool = ns.bill_queue.size() >= BillQueue.SIZE
 		out["queue"] = {"shown": true, "enabled": not full,
-			"text": Strings.t("Queue for %s") % month_name(state, ns.bill_queue.size()),
+			"text": Strings.t("The queue is full") if full else Strings.t("Queue for %s") % month_name(state, ns.bill_queue.size()),
 			"reason": Strings.t("The queue holds three bills. Take one out first.") if full else ""}
 	return out
 

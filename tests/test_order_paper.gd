@@ -303,6 +303,8 @@ func _check_a_full_queue_shows_queue_down_with_its_reason() -> void:
 	var queue: Button = _sheet_button("Queue")
 	if queue == null or not queue.disabled or queue.tooltip_text == "":
 		_fail("a full queue: Queue is not shown down with its reason")
+	elif queue.text.begins_with("Queue for "):
+		_fail("a full queue names a month it has no place for: '%s'" % queue.text)
 
 
 func _check_a_queued_law_shows_take_out() -> void:
