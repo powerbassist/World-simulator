@@ -276,7 +276,7 @@ static func _autumn_refusal(state, loader, ns, bill: Dictionary) -> Dictionary:
 ## a rate row whose live rate plus its delta leaves its kind's `rate_range_pct`. Read after
 ## _autumn_refusal, so every row names a kind in force. Checked at tabling, which for a
 ## queued bill is the month it reaches the slot. A rate a law moves between the tabling and
-## the division is not read again: Budget.apply_pending's floor is the guard there.
+## the division is not read again: Budget.apply_pending holds the rate inside its band there.
 static func _range_refusal(ns, bill: Dictionary) -> Dictionary:
 	var rows: Dictionary = bill.get("tax_rates_pct", {})
 	for kind in rows:

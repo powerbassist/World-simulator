@@ -348,14 +348,21 @@ static func apply_pending(ns, pending: Dictionary) -> void:
 		# books the erasure as a tax cut) -- the opposite of "refused, and the
 		# register keeps its rate". A refused pending write lands nothing and
 		# changes nothing.
+		#
+		# THE BAND (QA's R2 on #334): the floor at 0 is the low half of the kind's
+		# rate_range_pct, and the high half holds too, so a law's or an event's delta
+		# cannot carry a rate past the ceiling the finance bill is checked against.
 		for key in pending["tax_rates_pct"]:
 			if new_rates.has(key):
-				new_rates[key] = maxf(float(pending["tax_rates_pct"][key]), 0.0)
+				var band: Array = ns.tax_library[key]["rate_range_pct"]
+				new_rates[key] = clampf(float(pending["tax_rates_pct"][key]), float(band[0]), float(band[1]))
 			elif not ns.tax_library.has(key):
 				push_error("budget: pending rate for tax key '%s', which the tax library does not define -- refused" % key)
-			# A kind of the library NOT in force is skipped without a word: a law's or
-			# an event's rate on a tax this nation does not levy changes nothing, and
-			# only the autumn finance bill puts a kind in force (V5.3 e, section 5).
+			else:
+				# A kind of the library NOT in force: refused out loud (QA's R1 on #334), as
+				# an unknown key is. Only the autumn finance bill puts a kind in force (V5.3 e,
+				# section 5), so a rate reaching here for one is a writer's mistake.
+				push_error("budget: pending rate for tax kind '%s', which this nation does not levy -- refused" % key)
 
 	var new_spending: Dictionary = ns.spending_pct_gdp.duplicate(true)
 	if pending.has("spending_pct_gdp"):
