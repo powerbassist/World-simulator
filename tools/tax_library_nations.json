@@ -69,5 +69,31 @@
       "bank_levy": 0.44,
       "retail_tax": 1.4
     }
-  }
+  },
+  "base_share_overrides": {
+    "FRA": {
+      "air_passenger_tax": 0.002149,
+      "digital_services_tax": 0.009,
+      "inheritance_tax": 0.01596,
+      "transactions_tax": 0.1145
+    },
+    "GBR": {
+      "air_passenger_tax": 0.01697,
+      "carbon_tax": 0.002927,
+      "tobacco_duty": 0.002597,
+      "transactions_tax": 0.3252
+    },
+    "DEU": {
+      "alcohol_duty": 0.000691,
+      "high_income_surcharge": 0.054327,
+      "property_tax": 0.003735
+    },
+    "POL": {
+      "fuel_duty": 2.927621,
+      "inheritance_tax": 0.00094,
+      "sugar_drinks_levy": 0.144876,
+      "tobacco_duty": 0.008685
+    }
+  },
+  "_note_overrides": "PROPOSED per-nation base_share for a kind in force whose library base_share models its real yield more than 30 % off (the parent's ruling, 2026-11-14): the nation's real yield in % of GDP over its rate. The field's final name and place are Systems' PR 1b's."
 }

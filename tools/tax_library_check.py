@@ -16,7 +16,10 @@ its kind's range, a kind a nation lists that the library lacks, and a nation who
 force explain more revenue than its tax_revenue_pct_gdp (9.3's negative residual).
 
 YIELD (report; --band makes it a gate): for every kind a nation has in force with a real yield
-in its reference, base_share x rate against the real yield in % of GDP. The ratio is the
+in its reference, the effective base_share x rate against the real yield in % of GDP. The
+effective base_share is the nation's override for that kind where it has one (the parent's
+ruling, 2026-11-14: a nation may override a kind's base_share for a kind in force), else the
+library's; the `src` column says which. The ratio is the
 finding: one base_share per kind has to serve every nation, and where the ratios spread the
 kind needs a per-nation base or a different rate unit (Systems' call, finance-bill.md 9.1).
 Nothing here models erosion: at the start rate the erosion term is 1, which is the state the
@@ -74,14 +77,29 @@ def load_library(fails):
 
 
 def load_nations(fails):
-    proposal = json.loads(PROPOSAL.read_text(encoding="utf-8"))["nations"] if PROPOSAL.exists() else {}
+    data = json.loads(PROPOSAL.read_text(encoding="utf-8")) if PROPOSAL.exists() else {}
+    proposal = data.get("nations", {})
+    overrides = data.get("base_share_overrides", {})
     out = {}
     for n in PLAYABLE:
         d = json.loads((NATIONS / ("%s.json" % n)).read_text(encoding="utf-8"))
         rates = proposal.get(n, d["fiscal"]["tax_rates_pct"])
         out[n] = {"rates": rates, "gdp": float(d["imported"]["gdp_eur_bn"]),
-                  "revenue": float(d["fiscal"]["tax_revenue_pct_gdp"])}
+                  "revenue": float(d["fiscal"]["tax_revenue_pct_gdp"]),
+                  "overrides": overrides.get(n, {})}
+        for kid, share in out[n]["overrides"].items():
+            if kid not in rates:
+                fails.append("%s overrides the base_share of '%s', which it does not have in force" % (n, kid))
+            elif not float(share) > 0.0:
+                fails.append("%s: base_share override for %s must be above 0" % (n, kid))
     return out
+
+
+def share(kinds, nd, kid):
+    """The effective base_share of `kid` in a nation, and where it came from."""
+    if kid in nd["overrides"]:
+        return float(nd["overrides"][kid]), "nation"
+    return float(kinds[kid]["base_share"]), "library"
 
 
 def main() -> int:
@@ -93,7 +111,7 @@ def main() -> int:
     kinds, order = load_library(fails)
     nations = load_nations(fails)
 
-    print("%-22s %-4s %10s %10s %10s %7s  %s" % ("kind", "nat", "rate", "model%GDP", "real%GDP", "ratio", "provenance"))
+    print("%-22s %-4s %10s %-7s %10s %10s %7s  %s" % ("kind", "nat", "rate", "src", "model%GDP", "real%GDP", "ratio", "provenance"))
     off_band = []
     for n, nd in nations.items():
         for kid, rate in nd["rates"].items():
@@ -112,19 +130,20 @@ def main() -> int:
             rate = nations[n]["rates"].get(kid)
             if rate is None:
                 continue
-            modelled = float(k["base_share"]) * float(rate)
+            used, src = share(kinds, nations[n], kid)
+            modelled = used * float(rate)
             if n in real:
                 ratio = modelled / real[n] if real[n] else float("inf")
-                print("%-22s %-4s %10.4g %10.4f %10.4f %7.2f  %s" % (kid, n, rate, modelled, real[n], ratio, prov.get(n, "")))
+                print("%-22s %-4s %10.4g %-7s %10.4f %10.4f %7.2f  %s" % (kid, n, rate, src, modelled, real[n], ratio, prov.get(n, "")))
                 if args.band is not None and abs(ratio - 1.0) > args.band:
                     off_band.append("%s %s: modelled %.4f vs real %.4f %% of GDP (ratio %.2f)" % (kid, n, modelled, real[n], ratio))
             else:
-                print("%-22s %-4s %10.4g %10.4f %10s %7s  %s" % (kid, n, rate, modelled, "-", "-", prov.get(n, "no real yield in the reference")))
+                print("%-22s %-4s %10.4g %-7s %10.4f %10s %7s  %s" % (kid, n, rate, src, modelled, "-", "-", prov.get(n, "no real yield in the reference")))
 
     print("")
     print("revenue explained by the kinds in force (9.3's guard: must not exceed tax_revenue_pct_gdp):")
     for n, nd in nations.items():
-        total = sum(float(kinds[k]["base_share"]) * float(r) for k, r in nd["rates"].items() if k in kinds)
+        total = sum(share(kinds, nd, k)[0] * float(r) for k, r in nd["rates"].items() if k in kinds)
         print("  %s  %6.2f %% of GDP of %5.1f" % (n, total, nd["revenue"]))
         if total > nd["revenue"]:
             fails.append("%s: kinds in force explain %.2f %% of GDP, above its %.1f (negative residual)" % (n, total, nd["revenue"]))
