@@ -296,7 +296,7 @@ func _forecast_bar(ns, party_list: Array, law, width: float) -> Control:
 		{"label": tr("Undecided"), "value": float(counts["undecided"])},
 		{"label": tr("Against"), "value": float(counts["no"])},
 	], {"marker": majority_share(ns, law), "colors": FORECAST_COLORS, "places": 0, "unit": tr(" seats")})
-	bar.hover = LawSeatsTip.build.bind(_panel)
+	bar.hover = LawSeatsTip.build.bind(_panel, counts)
 	bar.custom_minimum_size.x = width
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return bar
