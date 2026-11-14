@@ -151,6 +151,9 @@ func _rebuild_tiles(state, loader) -> void:
 		var kept := not Pledges.in_breach(state, ns, entry)
 		tiles.append(["field:" + String(entry["field"]), Strings.noun("pledges", loader.pledges, "pledge", "pledge_id", String(entry["pledge_id"]), "pledge_name", Pledges.name_of(loader, String(entry["pledge_id"]))),
 			Strings.t("kept") if kept else Strings.t("broken"), Strings.t("A promise on the books.")])
+	# The bloc tile follows the rank: a second press walks to the next weakest bloc and the goal with it.
+	if goal.begins_with("bloc:"):
+		goal = "bloc:" + bloc
 	if not tiles.any(func(t) -> bool: return t[0] == goal):
 		goal = "deficit"
 	for t in tiles:

@@ -19,6 +19,7 @@ var _frame := 0
 var _phase := 0
 var _waited := 0
 var _went := []
+var _bloc_first := ""
 
 
 func _init() -> void:
@@ -56,6 +57,18 @@ func _process(_delta: float) -> bool:
 			_goals()._pick_goal("deficit")
 			_phase = 4
 		4:
+			# QA on #358: a second press on the bloc tile walks to the next bloc, it does not drop the goal.
+			_goals()._tiles.get_child(2).pressed.emit()
+			_phase = 5
+		5:
+			_bloc_first = _goals().goal
+			_goals()._tiles.get_child(2).pressed.emit()
+			_phase = 6
+		6:
+			_check_the_bloc_tile_walks()
+			_goals()._pick_goal("deficit")
+			_phase = 7
+		7:
 			_check_a_press()
 			_check_the_catalogue()
 			_finish()
@@ -147,6 +160,16 @@ func _check_a_bill_in_the_slot_greys_rows() -> void:
 			greyed += 1
 	if greyed == 0:
 		_fail("premise: the unemployment list holds no law row")
+
+
+func _check_the_bloc_tile_walks() -> void:
+	var goals = _goals()
+	if not _bloc_first.begins_with("bloc:"):
+		_fail("the first press on the bloc tile gave the goal '%s'" % _bloc_first)
+	if not goals.goal.begins_with("bloc:") or goals.goal == _bloc_first:
+		_fail("a second press on the bloc tile gave '%s' after '%s', not the next bloc" % [goals.goal, _bloc_first])
+	if not (goals._tiles.get_child(2) as Button).button_pressed:
+		_fail("the bloc tile is not pressed after the second press")
 
 
 func _check_a_press() -> void:
