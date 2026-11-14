@@ -285,9 +285,15 @@ func _test_the_save_carries_both_and_absence_is_empty() -> void:
 		_fail("an absent price ring did not read as empty")
 	if not old.player().region_history.is_empty() or RegionRead.months_held(old.player()) != 0:
 		_fail("an absent region sample did not read as empty")
-	# The budget projection's copy has no past: the ring is not copied.
-	if not state.duplicate_state().commodity_price_history.is_empty():
+	# The budget projection's copy has no past: neither the ring nor the sample is copied,
+	# and the live state keeps both.
+	var copy = state.duplicate_state()
+	if not copy.commodity_price_history.is_empty():
 		_fail("duplicate_state() carries the price ring into a projection")
+	if not copy.player().region_history.is_empty():
+		_fail("duplicate_state() carries the region sample into a projection")
+	if GoodsRead.months_held(state) != 2 or RegionRead.months_held(ns) != 2:
+		_fail("taking a copy emptied the live state's series")
 
 
 # --- the fund strip -----------------------------------------------------------
