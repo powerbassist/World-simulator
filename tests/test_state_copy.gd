@@ -35,6 +35,8 @@ const NOT_COPIED := {
 	"recent_effects": "a projection has no past, same reasoning as history",
 	"foreign_acts": "a projection has no past; the SCHEDULE that produces acts is on NationState and IS copied",
 	"unrest_acts": "a projection has no past; the SCHEDULE that produces acts (unrest_cooldown_months) is on NationState and IS copied -- foreign_acts' split exactly",
+	"commodity_price_history": "a projection has no past; the screens' price ring, read back by nothing in the sim (V5.3 e PR B)",
+	"region_history": "a projection has no past; the regions screen's sample, read back by nothing in the sim, and ~10 ms a copy (V5.3 e PR B, the parent's call on #347)",
 }
 
 var _failures: Array[String] = []

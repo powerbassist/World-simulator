@@ -68,14 +68,38 @@ static func estimate(state, ns, loader, region_id: String, share_pct: float, yea
 	var access := Regions.accessibility_for(ns, list, state.region_graph)
 	var sites: Dictionary = state.project_sited_pct.get(ns.id, {})
 	var now := Regions.unemployment_pct(ns, list, region_id, access, sites)
+	var dev_now := Regions.deviation_by_region(ns, list, access, sites)
 	# The row is appended for one synchronous read and removed at once: the read is
 	# the game's own arithmetic, with nothing between the two writes.
 	ns.region_funds.append(row)
 	var after := Regions.unemployment_pct(ns, list, region_id, access, sites)
+	var dev_after := Regions.deviation_by_region(ns, list, access, sites)
 	ns.region_funds.pop_back()
-	return {"ok": true, "pts": float(row["pts"]), "eur_bn_per_year": eur_bn, "total_eur_bn": eur_bn * float(years),
+	var out := {"ok": true, "pts": float(row["pts"]), "eur_bn_per_year": eur_bn, "total_eur_bn": eur_bn * float(years),
 		"months": years * 12, "unemployment_now": now, "unemployment_after": after,
 		"bloc_offset": (row["bloc_offset"] as Dictionary).duplicate()}
+	_others(out, ns, region_id, dev_now, dev_after)
+	return out
+
+
+## V5.3 e PR B (docs/design/finance-bill.md section 13): what the fund takes from the
+## other regions. The term is zero-mean over the nation's output, so each other region's
+## growth deviation falls; `others` is {region_id: {pts, eur_bn}} (points a year, and
+## those points on the region's output, EUR bn a year), `others_eur_bn` their sum and
+## `here_eur_bn` the funded region's gain on the same measure, equal and opposite.
+static func _others(out: Dictionary, ns, region_id: String, dev_now: Dictionary, dev_after: Dictionary) -> void:
+	var others := {}
+	var sum := 0.0
+	for id in dev_after:
+		var pts := float(dev_after[id]) - float(dev_now.get(id, 0.0))
+		var eur := pts / 100.0 * Regions.output_eur_bn(ns, id)
+		if id == region_id:
+			out["here_eur_bn"] = eur
+			continue
+		others[id] = {"pts": pts, "eur_bn": eur}
+		sum += eur
+	out["others"] = others
+	out["others_eur_bn"] = sum
 
 
 ## The region's unemployment now, through the function the game reads.

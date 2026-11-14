@@ -30,6 +30,13 @@ const NationState = preload("res://src/core/nation_state.gd")
 const Fields = preload("res://src/core/nation_fields.gd")
 const GameState = preload("res://src/core/game_state.gd")
 
+## Saved fields a projection deliberately runs without (copy NONE), each with its reason.
+## Only a register nothing in the sim reads back may be here: a projection copy without
+## it computes exactly what it computed with it.
+const SAVED_NOT_COPIED := {
+	"region_history": "a projection has no past: the regions screen's sample, read back by nothing in the sim (V5.3 e PR B; the parent's call on #347, its copy cost)",
+}
+
 ## The saved fields whose absence reads WRONG (absent_ok == false), as a count and
 ## the md5 of their sorted names joined by commas, at the SAVE_VERSION they were
 ## pinned at. A new field marked absent_ok = false changes the digest: bump
@@ -106,7 +113,7 @@ func _check_completeness() -> void:
 			_fail("%s is a container copied as SCALAR -- a projection would share it" % name)
 		if copy == Fields.DEEP and not container:
 			_fail("%s is a scalar marked DEEP" % name)
-		if row[Fields.COL_READ] != Fields.NOT_SAVED and copy == Fields.NONE:
+		if row[Fields.COL_READ] != Fields.NOT_SAVED and copy == Fields.NONE and not SAVED_NOT_COPIED.has(name):
 			_fail("%s is saved but not copied: a projection would run without it" % name)
 
 

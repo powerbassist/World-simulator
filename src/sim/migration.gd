@@ -46,6 +46,7 @@ const K = preload("res://src/sim/migration_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const NaturalChange = preload("res://src/sim/natural_change.gd")
+const RegionSample = preload("res://src/sim/region_sample.gd")
 
 
 ## Seed both levels from the authored shares. Called once from GameState.new_game(),
@@ -327,11 +328,15 @@ static func _tick_migration(ns, region_list: Array, loader, access: Dictionary, 
 		shares[region.id] = share
 		weighted += share * pull
 		total += share
+	var deltas: Dictionary = {}
 	if total > 0.0:
 		var mean: float = weighted / total
 		for region in region_list:
 			var share: float = float(shares[region.id])
-			ns.region_pop_share[region.id] = share + share_delta(share, float(pulls[region.id]), mean, K.MIGRATION_RATE)
+			deltas[region.id] = share_delta(share, float(pulls[region.id]), mean, K.MIGRATION_RATE)
+			ns.region_pop_share[region.id] = share + float(deltas[region.id])
+	# V5.3 e PR B: the regions screen's sample, from this step's own reads (region_sample.gd).
+	RegionSample.record(ns, region_list, unemployment, shares, deltas)
 
 
 ## Has any region drifted past the bound? Read by tools/migration_probe.gd's table
