@@ -157,12 +157,12 @@ func _check_the_slot_is_shared_with_laws() -> void:
 func _check_a_second_tabling_amends_the_same_bill() -> void:
 	var state = _new_state()
 	var ns = state.player()
-	FinanceBill.table(state, _loader, {"spending_pct_gdp": {"defence": -1.4}})
+	FinanceBill.table(state, _loader, {"spending_pct_gdp": {"defence": -1.4, "health": 0.5}})
 	var second := FinanceBill.table(state, _loader, {"tax_rates_pct": {"vat": 3.0}, "spending_pct_gdp": {"defence": -1.0}})
 	if not bool(second.get("tabled", false)):
 		_fail("amend: a second tabling of the finance bill was refused: %s" % [second])
 	var bill: Dictionary = ns.tabled_bill.get("finance", {})
-	if bill != {"spending_pct_gdp": {"defence": -1.0}, "tax_rates_pct": {"vat": 3.0}}:
+	if bill != {"spending_pct_gdp": {"defence": -1.0, "health": 0.5}, "tax_rates_pct": {"vat": 3.0}}:
 		_fail("amend: the second tabling did not replace per key into one bill: %s" % [bill])
 
 
