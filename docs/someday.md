@@ -443,6 +443,53 @@ Output: a design note docs/design/calibration.md with the tables and the
 ranked list; no code until the author picks.
 ```
 
+## Carried from the V5.3 a + b gate (2026-11-13)
+
+Play gate B8 on the exported build from `114e1fba` scored **2/5**, "trop de choses cassées" ([[tiers/v5]], the V5.3 progress record). The sheet has 23 items, H1 to H23; the report is gitignored, so each item is here with where it stands on 2026-11-14. The screens are rebuilt one at a time, in the order the author signed: the audience, the bar, the decision card and the quiet-month visitor, laws and the budget, Sectors, Regions.
+
+| Item | What the author said | Where it stands |
+|---|---|---|
+| H1 | hover tooltips missing on many names | cross-cutting, folded into each screen as it is rebuilt; the bar's names done in #332 |
+| H2 | promising a date: a card showing a month, no day to pick | screen 1, merged (#324: the counter's date grid) |
+| H3 | choosing a person to talk about: a hard card of names, it resets to the default person | screen 1, merged (#324, #327) |
+| H4, H21 | French text although English chosen, the language needing a restart | French resumed 2026-11-14 (#335 counter, #337 API drafter); the switch itself is not fixed |
+| H5, H6 | day bar and time buttons outdated; info bar not aligned, some info useless | screen 2, merged (#332) |
+| H7, H15 | the decision popup unclear; the quiet-month visitors filling | screen 3, merged (#333: the month's folder, the docked file page) |
+| H8 | most UI changes "moche et illisible" | the reason for the method change; judged again at the next play gate |
+| H9, H11 | law decision panel cropped; numbers by slider or by typing | screen 4, building |
+| H10 | budget adjustment instant | sim half merged (#331: Commit tables a finance bill voted at the month's end); screen 4 shows it |
+| H12 | laws not in categories | merged (#330: thirteen shelves for the 120 laws) |
+| H13 | Tax Code: proposing a tax unclear, wants a list of real taxes | sim and data merged (#334 library, #336 fifteen real taxes, #339 queue); screen 4 shows it |
+| H14 | no right-click quick decisions | cross-cutting, folded into each screen where a verb exists |
+| H16 | Industry worse than block 0 ("Pire") | screen 5, decided: one tab per sector, the goods, programmes through the finance bill; builds after screen 4 |
+| H17 | Regions "mieux mais ... toujours très mauvais" | screen 6, last; pictures after Gameplay's brief |
+| H18 | the audience "Pareil" | screen 1, merged (#322 to #327) |
+| H19 | "little to do" "Pareil" | answered through screens 3 and 4; re-read at the next play gate |
+| H20 to H23 | the staged save's empty desk; French paused; a kit copy lost in the app's private folder; the budget estimate "Mieux" | kit items, fixed in the kit (`PLAY.bat` with its own profile); not product work |
+
+**Trigger:** the next play gate, after screen 6; each row is closed or re-opened by what the author says there.
+
+### Carried from the screens' PRs and the board
+
+Each is real and unscheduled; none blocks a screen.
+
+- **QA's four RECORDs on #326**, for Systems' backlog (the finance-bill card folded them in): `pay_offer` ignores register refusals, a `take_reason` that duplicates `President._party`, a test gap on the corrupt bargain with the money open, and a per-read cost. **Trigger:** the next change to `src/sim/shadows.gd` or `src/sim/deal.gd`.
+- **A word is judged when its month begins** (a promise "by the end of the month" is read on the first day). The #324 audience lines say the truth in the meantime. The call is to judge it at the month's end or on its `due_day`, measured, with a table for the author. **Trigger:** a play session where a kept word reads as broken.
+- **The affair's ask nearly always lands** (a QA RECORD, 2026-11-13). **Owner:** Gameplay. **Trigger:** the next audience probe.
+- **People's home region and sector are not in data**, so a talk line cannot name where someone is from. **Owner:** Content and Gameplay. **Trigger:** the talk rows that need it.
+- **Germany passes 1 of 104 laws and Britain 5 of 106 at the start**, from the start coalitions. **Owner:** Gameplay, then Systems. **Trigger:** a playable-nation gate on either.
+- **The choices' effects are tiny** ("ridicules", the author on gate B8): most events' answers move a bloc by a fraction. **Owner:** Gameplay and Systems. **Trigger:** the density band holding at 100 % while the author still calls the choices empty.
+
+### Parked ideas (the author, 2026-11-14: "just if i suggest new ideas, park them for later")
+
+Work in progress always finishes; these wait for the roadmap's screens to be done.
+
+- **A relation's detail, shown by skill** (the author, 2026-11-08): named lines (political position, refused proposals, feelings) with their values, visible only if the played character is skilled enough, in the manner of a medieval dynasty game. Goes with the skills block ([[v5.3-skills]]); it needs a per-source register of what moved a relation.
+- **New regional figures** (the parent, from Gameplay's Regions brief, 2026-11-14): France has four figures for thirteen regions, so most regions have no voice. New people are new scope.
+- **A continuous programme intensity** (the parent, 2026-11-14): any amount rather than the two named stops, a sim change to the investment command.
+- **The next set of countries** (the author, 2026-11-14: "Nous avons l'Europe, à quand le prochain set de pays ?"). There are 41 European nations on the map and four playable. [[tiers/someday]] holds "Additional playable nations beyond the European roster" and "Global scope, all ~195 nations" with no tier; V5 ends at V5.4 and V5.5, and V6 is war, espionage and regimes. Two readings to put to the author at the next tier plan: more playable nations among the 41, or nations beyond Europe. His direction the same day: "plus judicieux d'avoir un jeu et Sim complet sur un petit set de pays avant de l'étendre".
+- **Separating the state from the territory** (the author, 2026-11-14: "Devrait on séparer l'état du territoire ? Pour une annexion, etc."). A region is today a field of its nation (shares of the nation, `data/regions/<NAT>.json`); annexation is V6. The parent's view: yes, a region with an owner and, for occupation, a controller, the nation being what it owns, as V6's first foundation block rather than mid-V5, because it is a large refactor that moves numbers. Meanwhile new region code keys by region id.
+
 ## Carried from the V5.3 block-0 gate (2026-11-01)
 
 ### Majority-first formation after an election

@@ -87,8 +87,7 @@ static func from_dict(
 	# content ever grows conditions or nested jumps, this check grows with it and says so here.
 	var labels: Array[String] = []
 	var tag := RegEx.create_from_string("\\[#id:([^\\]\\s]+)\\]")
-	for line in s.dialogue_text.split("
-"):
+	for line in s.dialogue_text.split("\n"):
 		var trimmed := line.strip_edges()
 		if not trimmed.begins_with("- "):
 			continue

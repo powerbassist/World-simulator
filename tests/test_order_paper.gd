@@ -84,6 +84,8 @@ func _process(_delta: float) -> bool:
 			_check_a_real_press_queued_it()
 			_check_a_full_queue_shows_queue_down_with_its_reason()
 			_check_a_queued_law_shows_take_out()
+			_check_take_out_on_a_later_place()
+			_check_a_graded_law_queues_at_its_grade()
 			_finish()
 			return true
 	return false
@@ -320,6 +322,39 @@ func _check_a_queued_law_shows_take_out() -> void:
 	var places: Array = _paper().places
 	if (places[3] as OrderSlot).place_name() != "—" and _ns().bill_queue.size() < BillQueue.SIZE:
 		_fail("the paper still shows a bill in the free place after a take out")
+
+
+## QA's gap on #344: the plate's Take out is the PLACE'S own index, not the head: with three queued,
+## the middle one goes and the other two keep their order.
+func _check_take_out_on_a_later_place() -> void:
+	_set_queue([_ids[1], _ids[2], _ids[3]])
+	_paper().places[2].menu_requested.emit(1)
+	_plate_buttons(_plate())[2].pressed.emit()  # Take out of the queue
+	_panel()._process(0.0)
+	var order := []
+	for entry in _ns().bill_queue:
+		order.append(String(entry["law_id"]))
+	if order != [_ids[1], _ids[3]]:
+		_fail("Take out on the middle place left the queue %s, wanted %s" % [order, [_ids[1], _ids[3]]])
+
+
+## QA's gap on #344: a law queued at another size is tabled at that size when it reaches the
+## slot, so the entry carries the sheet's grade (propose() reads `scale`).
+func _check_a_graded_law_queues_at_its_grade() -> void:
+	_set_queue([_ids[1]])
+	var law = _panel()._find_law(_ids[4])
+	law.magnitude = {"value": 40.0, "reference": 40.0, "unit": "lycees"}
+	_panel()._laws.grades[_ids[4]] = 3.0
+	_select(_ids[4])
+	var queue: Button = _sheet_button("Queue")
+	if queue == null or queue.disabled:
+		_fail("a graded law has no enabled Queue to press")
+		return
+	queue.pressed.emit()
+	_panel()._process(0.0)
+	var entry: Dictionary = _ns().bill_queue[_ns().bill_queue.size() - 1]
+	if String(entry["law_id"]) != _ids[4] or not is_equal_approx(float(entry.get("scale", 0.0)), 3.0):
+		_fail("a law queued at grade 3 carries %s, not scale 3" % [entry])
 
 
 func _fail(message: String) -> void:
