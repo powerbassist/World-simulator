@@ -120,7 +120,6 @@ func _ready() -> void:
 ## BriefingDriver.speak plays), face (Texture2D or null), rows: [{icon, title, chip,
 ## held}], effects: [{text, tone, uncertain, spark, tooltip}], close}.
 func show_view(view: Dictionary) -> void:
-	_header.text = String(view.get("header", ""))
 	_name.text = String(view.get("who", ""))
 	_name.visible = not _name.text.is_empty()
 	_line.text = String(view.get("line", ""))
@@ -133,6 +132,23 @@ func show_view(view: Dictionary) -> void:
 	elif _face.has_node("MoodBadge"):
 		# A card reused for a month with no chief must not keep the last one's mood.
 		_face.get_node("MoodBadge").free()
+	show_lines(view, true)
+	for child in _effects.get_children():
+		_effects.remove_child(child)
+		child.queue_free()
+	for effect in view.get("effects", []):
+		_effects.add_child(_effect(effect))
+	select("", false)  # a new month's view opens on the month's own page
+	show()
+	Motion.arrive(self)
+	_close.grab_focus()
+
+
+## The month's lines, their footer and the close button again, the card left as it is: the
+## folder takes an answered file's line off the page (QA #333 T3). The chief's words and the
+## effects stay what they were when he spoke; `arrive` is a new month's (the rows come in).
+func show_lines(view: Dictionary, arrive := false) -> void:
+	_header.text = String(view.get("header", ""))
 	for child in _rows.get_children():
 		_rows.remove_child(child)
 		child.queue_free()
@@ -141,6 +157,8 @@ func show_view(view: Dictionary) -> void:
 	for i in rows.size():
 		var row := _row(rows[i], i)
 		_rows.add_child(row)
+		if not arrive:
+			continue
 		# V5.3-0 4.5: the three come in a beat apart; one new this month pulses.
 		Motion.arrive(row, Motion.STAGGER_S * i)
 		# The wait is a tween the ROW owns, so it dies with the row: a SceneTreeTimer's
@@ -150,17 +168,8 @@ func show_view(view: Dictionary) -> void:
 			var wait := row.create_tween()
 			wait.tween_interval(Motion.STAGGER_S * i + Motion.ARRIVE_S)
 			wait.tween_callback(Callable(Motion, "pulse").bind(row))
-	for child in _effects.get_children():
-		_effects.remove_child(child)
-		child.queue_free()
 	_fill_also(view.get("also", []))
-	for effect in view.get("effects", []):
-		_effects.add_child(_effect(effect))
 	_close.text = String(view.get("close", ""))
-	select("", false)  # a new month's view opens on the month's own page
-	show()
-	Motion.arrive(self)
-	_close.grab_focus()
 
 
 ## The desk's files, [{id, title, by}], in the list at the left; none hides the list and the card

@@ -15,6 +15,7 @@ extends SceneTree
 ##   - A file gone while shown (answered, lapsed) never leaves a stale page; no files means the
 ##     card is as it was (no list, its old width).
 ##   - A Go on a file-kind priority selects the page and keeps the folder up.
+##   - A file answered in the folder takes its priority line and Go off the month page (QA #333 T3).
 
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 const FolderDriver = preload("res://src/ui/folder_driver.gd")
@@ -41,6 +42,7 @@ func _process(_delta: float) -> bool:
 	_check_a_request_in_the_folder()
 	_check_a_file_gone_while_shown()
 	_check_go_selects_a_file()
+	_check_an_answer_takes_its_priority()
 	_finish()
 	return true
 
@@ -214,6 +216,56 @@ func _check_go_selects_a_file() -> void:
 		_fail("a Go on a priority that is not a file claimed the folder")
 	BriefingDriver.close(_main)
 	_clear_desk()
+
+
+## QA #333 T3 (found in play): a request answered in the folder kept its priority line and Go on
+## "This month"; that stale Go closed the folder and opened the Diary for a request already gone.
+func _check_an_answer_takes_its_priority() -> void:
+	_clear_desk()
+	var asked := _request()
+	if asked == "":
+		_fail("the staging made no request card")
+		return
+	var request: Dictionary = _main._state.player().audience_requests[0]
+	var rid := String(request["id"])
+	var who: String = _main._loader.person_name(String(request["person_id"]))
+	_main._clock.paused = true
+	var card := _open_folder()
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	var named := func() -> bool:
+		return ((game["lines"] as Array) + (game["also"] as Array)).any(
+			func(l): return String(l["kind"]) == "request" and String(l["subject"]) == rid)
+	if not named.call() or not _texts(card._month).contains(who):
+		_fail("staging: the request is not among the month's priorities on the month page")
+		return
+	card.select(asked)
+	card.file_pressed.emit(asked, 2)  # Decline: stays in the folder
+	if named.call():
+		_fail("an answered request's priority line is still among the month's lines")
+	if _texts(card._month).contains(who):
+		_fail("the month page still names the answered request ('%s')" % who)
+	if card.go_buttons.size() + card.also_buttons.size() != (game["lines"] as Array).size() + _groups(game["also"]):
+		_fail("the month page's Go buttons do not match its lines after an answer")
+	if not card.visible or card.selected_file() != "":
+		_fail("after the answer the folder is not up on the month's page")
+	BriefingDriver.close(_main)
+	_clear_desk()
+
+
+func _texts(node: Node) -> String:
+	var out := ""
+	for child in node.get_children():
+		if child is Label or child is Button:
+			out += String(child.text) + "\n"
+		out += _texts(child)
+	return out
+
+
+func _groups(also: Array) -> int:
+	var kinds := {}
+	for entry in also:
+		kinds[String(entry["kind"])] = true
+	return kinds.size()
 
 
 func _fail(message: String) -> void:

@@ -43,18 +43,36 @@ static func refresh(main, selected := "") -> void:
 ## A Go on a priority whose subject is a file selects its page and keeps the folder up.
 ## False for any other line.
 static func go(main, line: Dictionary) -> bool:
-	var id := ""
-	match String(line["kind"]):
-		"crisis", "decision":
-			for card_id in main._event_cards:
-				if String(main._event_cards[card_id]) == String(line["subject"]):
-					id = String(card_id)
-		"request":
-			id = AudienceDriver.lane_of(main).card_of(String(line["subject"]))
+	var id := file_of(main, line)
 	if id == "" or InboxFiles.of(main._hud.inbox, id).is_empty():
 		return false
 	refresh(main, id)
 	return BriefingDriver.card_of(main).selected_file() == id
+
+
+## The desk file a priority line is about, or "" for a line that is not a file.
+static func file_of(main, line: Dictionary) -> String:
+	match String(line["kind"]):
+		"crisis", "decision":
+			for card_id in main._event_cards:
+				if String(main._event_cards[card_id]) == String(line["subject"]):
+					return String(card_id)
+		"request":
+			return AudienceDriver.lane_of(main).card_of(String(line["subject"]))
+	return ""
+
+
+## An answered file's lines leave the month page with it (QA #333 T3): a Go left there would
+## close the folder and open the surface of a file that is gone. `answered` are the lines that
+## named it, read before the answer (a declined request has no card to look up after). The
+## lines are not ranked again: the chief spoke over these three, and the rest keep their places.
+static func _drop_lines(main, card, id: String, answered: Array) -> void:
+	if answered.is_empty() or not InboxFiles.of(main._hud.inbox, id).is_empty():
+		return
+	var game: Dictionary = BriefingDriver._games[main.get_instance_id()]
+	for key in ["lines", "also"]:
+		game[key] = (game[key] as Array).filter(func(l): return not answered.has(l))
+	card.show_lines(BriefingDriver.view(main, game["lines"], game.get("report", {}), game["also"]))
 
 
 static func _show(main, card, id: String) -> void:
@@ -71,9 +89,12 @@ static func _press(main, card, id: String, index: int) -> void:
 		BriefingDriver.close(main)
 		InboxFiles.press(main._hud.inbox, id, index)
 		return
+	var game: Dictionary = BriefingDriver._games[main.get_instance_id()]
+	var answered: Array = ((game["lines"] as Array) + (game["also"] as Array)).filter(func(l): return file_of(main, l) == id)
 	if not InboxFiles.press(main._hud.inbox, id, index):
 		return
 	main._clock.paused = true
 	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
 	refresh(main)
+	_drop_lines(main, card, id, answered)
 	card.set_close_text(BriefingDriver._close_text(main))
