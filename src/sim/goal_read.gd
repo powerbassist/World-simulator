@@ -63,8 +63,15 @@ static func measures(state, loader) -> Array:
 
 
 ## One measure on a copy: every goal's figure, and the division as it would fall now.
+## A law tabled, passed or put on cooldown since the month's list was built is no longer
+## open: read as gone ({measure, unavailable}), which rank() leaves out.
 static func read(state, loader, measure: Dictionary) -> Dictionary:
 	var ns = state.player()
+	var law = null
+	if String(measure["kind"]) == "law":
+		law = Legislature.open_law(state, ns, loader, String(measure["id"]))
+		if law == null:
+			return {"measure": measure, "unavailable": true}
 	var parties: Array = loader.parties.get(ns.id, [])
 	var sim = state.duplicate_state()
 	var sns = sim.player()
@@ -72,8 +79,7 @@ static func read(state, loader, measure: Dictionary) -> Dictionary:
 	var deficit_before := float(sns.deficit_pct_gdp) * float(sns.gdp_eur_bn)
 	var impulse_before := float(sns.demand_impulse_pct)
 	var vote: Dictionary
-	if String(measure["kind"]) == "law":
-		var law = Legislature.open_law(state, ns, loader, String(measure["id"]))
+	if law != null:
 		Legislature.apply_effects(sim, sns, law.effects, loader)
 		vote = Legislature.resolve_vote(ns, parties, law, Legislature.takes_route(ns, law, false))
 	else:
@@ -129,6 +135,8 @@ static func rank(reads: Array, goal: String, _state, _loader) -> Array:
 	var read_rows := []
 	var unread := []
 	for r in reads:
+		if bool(r.get("unavailable", false)):
+			continue
 		var row := {"measure": r["measure"], "passes": r["passes"], "cost_bn": r["cost_bn"], "read": true, "sign": 0}
 		var effect := _effect(r, goal)
 		if effect != 0.0:
@@ -182,8 +190,13 @@ static func list_for(prev, state, loader) -> List:
 
 
 ## One measure's projection against the month's baseline, `prev`'s baseline kept when
-## it is this game's, this month's and this horizon's.
+## it is this game's, this month's and this horizon's. null for a law no longer open.
 static func years_for(prev, state, loader, measure: Dictionary, months: int = K.YEARS_MONTHS) -> Years:
+	var law = null
+	if String(measure["kind"]) == "law":
+		law = Legislature.open_law(state, state.player(), loader, String(measure["id"]))
+		if law == null:
+			return null
 	var month := int(state.year) * 12 + int(state.month)
 	var years := Years.new()
 	if prev != null and prev.baseline.state == state and prev.baseline.month == month and prev.baseline.months == months:
@@ -197,8 +210,7 @@ static func years_for(prev, state, loader, measure: Dictionary, months: int = K.
 	years.job = Budget.projection(state, {}, months, loader)
 	years.job.sim = Budget.projection_copy(state, {})
 	var sns = years.job.sim.player()
-	if String(measure["kind"]) == "law":
-		var law = Legislature.open_law(state, state.player(), loader, String(measure["id"]))
+	if law != null:
 		Legislature.apply_effects(years.job.sim, sns, law.effects, loader)
 	else:
 		Budget.commit(years.job.sim, _pending(sns, measure))

@@ -41,6 +41,7 @@ func _init() -> void:
 	_check_the_list_is_kept_for_the_month(state, list)
 	_check_the_reads_write_nothing()
 	_check_two_years_is_the_projection_against_the_baseline(state)
+	_check_a_law_closed_mid_month_is_read_as_gone()
 	_finish()
 
 
@@ -246,3 +247,23 @@ func _check_two_years_is_the_projection_against_the_baseline(state) -> void:
 	var again = GoalRead.years_for(years, state, _loader, {"kind": "line", "key": "health", "step": GK.SPENDING_STEP}, 3)
 	if again.baseline != years.baseline:
 		_fail("two years: a second measure the same month ran the baseline again")
+
+
+## The list is kept for the month, so a law the player tables or passes after it was built
+## is no longer open when its turn comes: read as gone, never ranked, and no crash.
+func _check_a_law_closed_mid_month_is_read_as_gone() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var list = GoalRead.list_for(null, state, _loader)
+	var gone := String(list.measures[0]["id"])
+	ns.law_cooldown_months[gone] = 3
+	while not list.done():
+		GoalRead.step(list)
+	if not bool(list.reads[0].get("unavailable", false)):
+		_fail("closed: a law no longer open was read as if it were: %s" % [list.reads[0].keys()])
+	for goal in ["deficit", "unemployment", "approval"]:
+		for row in GoalRead.rank(list.reads, goal, state, _loader):
+			if String(row["measure"].get("id", "")) == gone:
+				_fail("closed: a law no longer open ranks on %s" % goal)
+	if GoalRead.years_for(null, state, _loader, list.measures[0], 3) != null:
+		_fail("closed: two years were begun for a law no longer open")
