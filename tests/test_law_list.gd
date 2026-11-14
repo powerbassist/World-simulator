@@ -185,6 +185,11 @@ func _check_propose() -> void:
 		whip.pressed.emit()
 		if polled.size() != 1 or _main._state.player().debt_eur_bn <= debt:
 			_fail("a poll bought on the sheet booked %d baselines and moved the debt %.6f" % [polled.size(), _main._state.player().debt_eur_bn - debt])
+		# QA's M3 on #352: the end of the path -- main's handler queues the decision card the popup's
+		# poll queues (main.gd connects the panel's `polled` to it).
+		var carded: Array = _main._pending_effects.filter(func(e) -> bool: return String(e["label"]).begins_with("Commissioned an assembly poll: "))
+		if carded.size() != 1:
+			_fail("a poll bought on the sheet queued %d 'Commissioned an assembly poll' cards in main" % carded.size())
 	panel.brief_requested.connect(func(law): _briefed.append(law.id))
 	var proposed := []
 	panel.proposed.connect(func(_before, law_name, _result): proposed.append(law_name))

@@ -131,11 +131,9 @@ func price(box: Control, compact := false) -> void:
 			PanelKit.Tone.BAD if landed < 0.0 else PanelKit.Tone.GOOD)
 		if landed < 0.0:
 			offended.append(Labels.bloc(bloc))
-	if compact:
-		pass
-	elif offended.is_empty():
+	if not compact and offended.is_empty():
 		PanelKit.line(section, tr("It offends no bloc outright."), PanelKit.Tone.DIM)
-	else:
+	elif not compact:
 		PanelKit.line(section, tr("It offends: %s.") % ", ".join(offended), PanelKit.Tone.PLAIN)
 
 	# The reversal preview is the record of what the player was SHOWN at draft time -- the
