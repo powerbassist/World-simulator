@@ -4,6 +4,7 @@
   "summary": "A tax on what the largest digital platforms earn in the country.",
   "rate_meaning": "% of in-scope revenue",
   "unit": "%",
+  "group": "companies_finance",
   "who_pays": [
     "business"
   ],

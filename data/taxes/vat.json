@@ -4,6 +4,7 @@
   "summary": "A tax on consumption, collected at every stage of sale.",
   "rate_meaning": "statutory standard rate",
   "unit": "%",
+  "group": "consumption",
   "who_pays": [
     "workers",
     "pensioners",

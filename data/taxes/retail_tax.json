@@ -4,6 +4,7 @@
   "summary": "A tax on the turnover of the largest retailers.",
   "rate_meaning": "% of retail turnover, top band",
   "unit": "%",
+  "group": "companies_finance",
   "who_pays": [
     "business"
   ],

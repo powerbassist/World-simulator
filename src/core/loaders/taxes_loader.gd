@@ -29,6 +29,11 @@ static var _id_regex := RegEx.create_from_string("^[a-z0-9_]{2,24}$")
 ## another rate (the high-income surcharge); "index" a schedule against today's (100).
 const UNITS := ["%", "pt", "index", "EUR/l", "EUR/kg", "EUR/t", "EUR/passenger"]
 
+## The base a kind taxes, the panel's grouping (Gameplay's finances brief, section 4):
+## consumption; income; companies and finance; wealth and property; energy, transport
+## and environment. Codes, not prose, like UNITS.
+const GROUPS := ["consumption", "income", "companies_finance", "wealth_property", "energy_environment"]
+
 
 static func load_taxes(loader, dir: String) -> void:
 	var da := DirAccess.open(dir)
@@ -77,6 +82,8 @@ static func parse_row(d: Dictionary, fname: String, errors: Array[String]) -> Di
 			errors.append("%s: '%s' must be a non-empty string" % [fname, key])
 	if not UNITS.has(d.get("unit")):
 		errors.append("%s: 'unit' must be one of %s" % [fname, str(UNITS)])
+	if not GROUPS.has(d.get("group")):
+		errors.append("%s: 'group' must be one of %s" % [fname, str(GROUPS)])
 	# Strictly positive where the model divides or multiplies a yield by the field: a zero
 	# base is a kind that yields nothing, a zero reference or scale a division by zero.
 	for key in ["base_share", "zero_ref_pct", "opinion_scale_pp"]:

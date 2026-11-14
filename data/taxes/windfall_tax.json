@@ -4,6 +4,7 @@
   "summary": "A levy on the excess profits of energy producers when prices spike.",
   "rate_meaning": "% of excess profit",
   "unit": "%",
+  "group": "companies_finance",
   "who_pays": [
     "business"
   ],

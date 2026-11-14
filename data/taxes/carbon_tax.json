@@ -4,6 +4,7 @@
   "summary": "A price on the carbon in heating and transport fuels, outside the EU emissions market.",
   "rate_meaning": "EUR per tonne of CO2",
   "unit": "EUR/t",
+  "group": "energy_environment",
   "who_pays": [
     "workers",
     "rural",

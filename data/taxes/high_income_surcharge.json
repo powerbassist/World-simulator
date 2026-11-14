@@ -4,6 +4,7 @@
   "summary": "Extra points of tax on the very highest incomes.",
   "rate_meaning": "points added on incomes above the threshold",
   "unit": "pt",
+  "group": "income",
   "who_pays": [
     "urban",
     "business"

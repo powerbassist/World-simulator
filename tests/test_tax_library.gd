@@ -165,6 +165,12 @@ func _test_every_row_refusal() -> void:
 	r = _row()
 	r["unit"] = "percent"
 	_refuses("a unit outside the closed set", r)
+	r = _row()
+	r.erase("group")
+	_refuses("a kind with no group", r)
+	r = _row()
+	r["group"] = "consumption tax"
+	_refuses("a group outside the closed set", r)
 	# A new kind with no core slot carries its own weights freely.
 	r = _row()
 	r["id"] = "test_levy"
@@ -176,8 +182,9 @@ func _test_every_row_refusal() -> void:
 		_failures.append("a new kind with its own weights was refused: %s" % [errors])
 
 
-## Screen 4: every kind in the library says what its rate is counted in, from the closed
-## set the panel formats (TaxesLoader.UNITS), and the library is the whole of data/taxes.
+## Screen 4: every kind in the library says what its rate is counted in and which base it
+## taxes, each from the closed set the panel reads (TaxesLoader.UNITS, TaxesLoader.GROUPS),
+## every group holds a kind, and the library is the whole of data/taxes.
 func _test_every_kind_carries_a_unit() -> void:
 	var files := 0
 	for f in DirAccess.get_files_at("res://data/taxes"):
@@ -189,6 +196,15 @@ func _test_every_kind_carries_a_unit() -> void:
 		var unit = (_loader.taxes[id] as Dictionary).get("unit")
 		if not TaxesLoader.UNITS.has(unit):
 			_failures.append("tax kind %s carries unit %s, not one of %s" % [id, str(unit), str(TaxesLoader.UNITS)])
+	var filled := {}
+	for id in _loader.taxes:
+		var group = (_loader.taxes[id] as Dictionary).get("group")
+		if not TaxesLoader.GROUPS.has(group):
+			_failures.append("tax kind %s carries group %s, not one of %s" % [id, str(group), str(TaxesLoader.GROUPS)])
+		filled[group] = true
+	for group in TaxesLoader.GROUPS:
+		if not filled.has(group):
+			_failures.append("no tax kind falls in group %s" % group)
 
 
 class FakeLoader:

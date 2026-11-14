@@ -4,6 +4,7 @@
   "summary": "An annual tax on large net fortunes, above a high threshold.",
   "rate_meaning": "top rate on net wealth per year",
   "unit": "%",
+  "group": "wealth_property",
   "who_pays": [
     "workers",
     "pensioners",

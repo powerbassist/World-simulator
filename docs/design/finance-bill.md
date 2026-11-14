@@ -139,6 +139,7 @@ Open RECORDs from #326 (`pay_offer` ignores register refusals; `take_reason` dup
   "summary": "A tax on consumption, collected at every stage of sale.",
   "rate_meaning": "statutory standard rate",
   "unit": "%",
+  "group": "consumption",
   "who_pays": ["workers", "pensioners", "rural", "students"],
   "base_share": 0.53,
   "erosion": 0.25,
@@ -161,6 +162,7 @@ The figures in the example are VAT's as the model carries them today: its base, 
 | `name`, `summary` | the Tax Code, through `Strings.row("tax", id, ...)` | `opinion_constants` issue labels |
 | `rate_meaning` | the panel's label, and Content's check that `base_share` matches it (an effective average or a statutory rate) | new, display only |
 | `unit` | the panel's figures: what the rate is counted in, one code of `TaxesLoader.UNITS` (`%`, `pt`, `index`, `EUR/l`, `EUR/kg`, `EUR/t`, `EUR/passenger`); the loader refuses any other | new, display only (screen 4) |
+| `group` | the panel's grouping by base: one code of `TaxesLoader.GROUPS` (`consumption`, `income`, `companies_finance`, `wealth_property`, `energy_environment`); the loader refuses any other | new, display only (screen 4) |
 | `who_pays` | the panel and the effects strip: the blocs the kind falls on | new, display only; every bloc named needs a `bloc_salience` weight |
 | `base_share` | `Budget.revenue_lines`: yield in % of GDP per rate point at the reference | `TAX_BASE_SHARE` |
 | `erosion` | `Budget._erosion`: base lost per unit of relative rate rise | `TAX_EROSION` |
