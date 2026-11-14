@@ -350,6 +350,7 @@ tests=(
   tests/test_portraits.gd
   tests/test_game_loop.gd
   tests/test_menu.gd
+  tests/test_build_info.gd
   # V5.0 fix pass: the play gate's crash -- save, back to the menu, continue,
   # and the Overview drawn on the loaded game.
   tests/test_save_cycle.gd
