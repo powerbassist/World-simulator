@@ -17,6 +17,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const GoalRead = preload("res://src/sim/goal_read.gd")
 const GK = preload("res://src/sim/goal_read_constants.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -101,14 +102,15 @@ func _check_the_measures_are_every_law_and_every_step_in_range(state) -> void:
 	var rates := 0
 	for kind in ns.tax_rates_pct:
 		var band: Array = ns.tax_library[kind]["rate_range_pct"]
-		for step in [-GK.RATE_STEP, GK.RATE_STEP]:
+		var size := TaxLibrary.step_pct(ns, kind)
+		for step in [-size, size]:
 			var landed: float = float(ns.tax_rates_pct[kind]) + float(step)
-			if landed >= float(band[0]) and landed <= float(band[1]):
+			if landed >= float(band[0]) - 1e-9 and landed <= float(band[1]) + 1e-9:
 				rates += 1
 	if counts["rate"] != rates:
 		_fail("measures: %d rate steps, not the %d inside each kind's band" % [counts["rate"], rates])
 	for m in measures:
-		if String(m["kind"]) == "rate" and String(m["key"]) == "wealth" and float(m["step"]) < 0.0 and float(ns.tax_rates_pct["wealth"]) < GK.RATE_STEP:
+		if String(m["kind"]) == "rate" and String(m["key"]) == "wealth" and float(m["step"]) < 0.0 and float(ns.tax_rates_pct["wealth"]) < TaxLibrary.step_pct(ns, "wealth"):
 			_fail("measures: a cut below the wealth tax's floor was offered")
 
 
