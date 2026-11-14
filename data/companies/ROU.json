@@ -378,7 +378,7 @@
     },
     {
       "id": "ROU_dumitresc_industrie_industrie",
-      "name": "Dumitresc Industrie Industrie",
+      "name": "Dumitresc Transport",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20051,
@@ -561,7 +561,7 @@
       "name": "Kogălniceanu Construcții",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24955,
       "city": "RO11_baia_mare",
       "tier": "body"
     },
@@ -570,7 +570,7 @@
       "name": "Năstase Logistică",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22861,
       "city": "RO21_iasi",
       "tier": "body"
     },
@@ -597,7 +597,7 @@
       "name": "Petrescu Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23563,
       "city": "RO32_bucharest",
       "tier": "body"
     },
@@ -606,7 +606,7 @@
       "name": "Hurmuzache Transport",
       "sector": "services",
       "share": 0.0163,
-      "headcount": 25000,
+      "headcount": 24453,
       "city": "RO32_bucharest",
       "tier": "body"
     },
@@ -615,7 +615,7 @@
       "name": "Ilie Construcții",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23033,
       "city": "RO31_targoviste",
       "tier": "body"
     },
@@ -633,7 +633,7 @@
       "name": "Mavrocordat Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24170,
       "city": "RO42_timisoara",
       "tier": "body"
     },
@@ -642,7 +642,7 @@
       "name": "Golescu Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23524,
       "city": "RO41_ramnicu_valcea",
       "tier": "body"
     },
@@ -660,7 +660,7 @@
       "name": "Zamfirescu Agricultură",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22917,
       "city": "RO32_bucharest",
       "tier": "body"
     },
@@ -678,7 +678,7 @@
       "name": "Tănăsescu Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23755,
       "city": "RO32_bucharest",
       "tier": "body"
     },
@@ -714,7 +714,7 @@
       "name": "Petrescu Logistică",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23776,
       "city": "RO42_timisoara",
       "tier": "body"
     },
@@ -741,7 +741,7 @@
       "name": "Vlădescu Comerț",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24960,
       "city": "RO32_bucharest",
       "tier": "body"
     },
@@ -750,7 +750,7 @@
       "name": "Albu Logistică Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22771,
       "city": "RO32_bucharest",
       "tier": "body"
     },
@@ -759,7 +759,7 @@
       "name": "Petrescu Grup Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23837,
       "city": "RO11_oradea",
       "tier": "body"
     },
@@ -777,7 +777,7 @@
       "name": "Turculet Construcții",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22697,
       "city": "RO21_piatra_neamt",
       "tier": "body"
     },
@@ -840,7 +840,7 @@
       "name": "Filipescu Grup",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22873,
       "city": "RO11_oradea",
       "tier": "body"
     },
@@ -849,7 +849,7 @@
       "name": "Mănescu Logistică Agricultură",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24297,
       "city": "RO21_iasi",
       "tier": "body"
     },
@@ -921,7 +921,7 @@
       "name": "Brădeanu Construcții",
       "sector": "services",
       "share": 0.0157,
-      "headcount": 25000,
+      "headcount": 24308,
       "city": "RO11_oradea",
       "tier": "body"
     }

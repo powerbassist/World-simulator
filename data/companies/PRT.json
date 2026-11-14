@@ -516,7 +516,7 @@
       "name": "Vasconcelos Grupo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22968,
       "city": "PT16_leiria",
       "tier": "body"
     },
@@ -534,7 +534,7 @@
       "name": "Esteves Grupo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24220,
       "city": "PT17_lisbon",
       "tier": "body"
     },
@@ -552,7 +552,7 @@
       "name": "Sampaio Agricultura",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24778,
       "city": "PT17_algueirao",
       "tier": "body"
     },
@@ -651,7 +651,7 @@
       "name": "Paiva Seguros",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24481,
       "city": "PT16_coimbra",
       "tier": "body"
     },
@@ -687,7 +687,7 @@
       "name": "Lourenço Transportes",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23665,
       "city": "PT16_aveiro",
       "tier": "body"
     },
@@ -696,7 +696,7 @@
       "name": "Trindade Materiais",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24896,
       "city": "PT17_setubal",
       "tier": "body"
     },
@@ -750,7 +750,7 @@
       "name": "Nogueira Materiais Transportes",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23930,
       "city": "PT17_lisbon",
       "tier": "body"
     },
@@ -786,7 +786,7 @@
       "name": "Almeirim Seguros Agricultura",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24470,
       "city": "PT17_lisbon",
       "tier": "body"
     },
@@ -795,7 +795,7 @@
       "name": "Simões Transportes",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24069,
       "city": "PT17_lisbon",
       "tier": "body"
     },
@@ -822,13 +822,13 @@
       "name": "Guerra Comércio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24961,
       "city": "PT16_coimbra",
       "tier": "body"
     },
     {
       "id": "PRT_bettencourt_grupo_grupo",
-      "name": "Bettencourt Grupo Grupo",
+      "name": "Bettencourt Grupo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23143,
@@ -849,13 +849,13 @@
       "name": "Pacheco Seguros",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23841,
       "city": "PT16_coimbra",
       "tier": "body"
     },
     {
       "id": "PRT_aguiar_energia_energia",
-      "name": "Aguiar Energia Energia",
+      "name": "Aguiar Energia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24851,
@@ -876,7 +876,7 @@
       "name": "Aguiar Comércio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24517,
       "city": "PT16_aveiro",
       "tier": "body"
     },

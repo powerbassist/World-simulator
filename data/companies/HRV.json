@@ -451,7 +451,7 @@
       "name": "Rman Graditeljstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24188,
       "city": "HR06_varazdin",
       "tier": "body"
     },
@@ -514,7 +514,7 @@
       "name": "Srakočić Graditeljstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23973,
       "city": "HR02_osijek",
       "tier": "body"
     },
@@ -523,7 +523,7 @@
       "name": "Jelavić Energija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24313,
       "city": "HR03_split",
       "tier": "body"
     },
@@ -613,7 +613,7 @@
       "name": "Živković Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23191,
       "city": "HR02_osijek",
       "tier": "body"
     },
@@ -631,7 +631,7 @@
       "name": "Župan Energija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22895,
       "city": "HR05_zagreb",
       "tier": "body"
     },
@@ -640,7 +640,7 @@
       "name": "Lukić Logistika Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24822,
       "city": "HR05_zagreb",
       "tier": "body"
     },
@@ -658,7 +658,7 @@
       "name": "Nikolić Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24682,
       "city": "HR05_zagreb",
       "tier": "body"
     },
@@ -694,7 +694,7 @@
       "name": "Vukasović Osiguranje Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22877,
       "city": "HR03_split",
       "tier": "body"
     },
@@ -703,7 +703,7 @@
       "name": "Anđelić Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24815,
       "city": "HR02_osijek",
       "tier": "body"
     },
@@ -730,7 +730,7 @@
       "name": "Roglić Trgovina Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24750,
       "city": "HR03_rijeka",
       "tier": "body"
     },
@@ -784,7 +784,7 @@
       "name": "Matošević Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23419,
       "city": "HR03_zadar",
       "tier": "body"
     },

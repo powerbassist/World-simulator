@@ -68,12 +68,6 @@
           "lonlat": [4.7009, 50.8796]
         },
         {
-          "id": "BE2_deurne",
-          "name": "Deurne",
-          "share": 0.011736,
-          "lonlat": [4.466, 51.2213]
-        },
-        {
           "id": "BE2_hasselt",
           "name": "Hasselt",
           "share": 0.011572,

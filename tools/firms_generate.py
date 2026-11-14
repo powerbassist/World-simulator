@@ -35,6 +35,7 @@ tests/test_companies_tiers.gd, and the generator obeys all of them):
 
 See docs/superpowers/plans/2026-09-27-v4.7-industry.md and task-A3-brief.md.
 """
+import hashlib
 import json
 import random
 import sys
@@ -506,6 +507,18 @@ def _site_majors(rng: random.Random, majors: list, cities: list) -> None:
         m["city"] = rng.choice(lead)
 
 
+def body_headcount(jobs: int) -> int:
+    """The body's headcount band, with an overshoot of the cap REFLECTED below it
+    rather than clamped onto it. The services share ceiling sits at 0.995 of the cap
+    and the +-10 % jitter pushes about half the firms near it past the cap, so a
+    clamp printed the top eighteen of FRA's services body at 25 000 jobs each
+    (Interface, screen 5; 611 firms across the roster). Reflection spreads them over
+    22 600-25 000 and takes no draw -- the 29 frozen nations share one stream."""
+    if jobs > HEADCOUNT_MAX:
+        jobs = 2 * HEADCOUNT_MAX - jobs
+    return max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs))
+
+
 def gen_body(rng: random.Random, nation: str, major_cov: dict, cities: list,
              used_slugs: set) -> list:
     """The body: counts follow the need each sector has left under the coverage
@@ -556,10 +569,10 @@ def gen_body(rng: random.Random, nation: str, major_cov: dict, cities: list,
                     break
             used_slugs.add(fid)
             jobs = int(round(share * SECTOR_JOBS_PER_SHARE[s] * rng.uniform(0.9, 1.1)))
-            jobs = max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs))
             body.append({
                 "id": fid, "name": name, "sector": s,
-                "share": share, "headcount": jobs, "city": "", "tier": "body",
+                "share": share, "headcount": max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs)),
+                "city": "", "tier": "body", "_jobs": jobs,
             })
     # BODY_MIN_PER_NATION floor: a sector-need-sized body can land at 77-79
     # firms for a nation whose majors already cover generously (CYP, CZE, NLD,
@@ -589,13 +602,134 @@ def gen_body(rng: random.Random, nation: str, major_cov: dict, cities: list,
                     break
             used_slugs.add(fid)
             jobs = int(round(share * SECTOR_JOBS_PER_SHARE[s] * rng.uniform(0.9, 1.1)))
-            jobs = max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs))
             body.append({
                 "id": fid, "name": name, "sector": s,
-                "share": share, "headcount": jobs, "city": "", "tier": "body",
+                "share": share, "headcount": max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs)),
+                "city": "", "tier": "body", "_jobs": jobs,
             })
     allocate_cities(rng, body, cities)
+    # The reflection lands AFTER siting: allocate_cities fills the largest city by
+    # headcount, so a firm sited on the reflected figure would move cities and
+    # reshuffle a nation that never asked (six did, in the first cut of this fix).
+    for firm in body:
+        firm["headcount"] = body_headcount(firm.pop("_jobs"))
     return body
+
+
+# V5.3 a, screen 5 (Interface's finding). Which sectors a corporate word may name,
+# for the four playable nations only -- their body is what the Sectors tabs list. A
+# word absent here fits every sector ("Groupe", "AG"). The other 37 lists are
+# untagged: they keep the doubled-word fix below and nothing else, until a nation
+# of theirs becomes playable.
+AGRI, IND, SERV = "agriculture", "industry", "services"
+SUFFIX_SECTORS = {
+    "FRA": {"Industries": {IND}, "Distribution": {AGRI, SERV}, "Coopérative": {AGRI},
+            "Énergie": {IND}, "Transports": {SERV}, "Assurances": {SERV},
+            "Agro": {AGRI}, "Matériaux": {IND}, "Logistique": {SERV}},
+    "DEU": {"Werke": {IND}, "Handel": {AGRI, SERV}, "Industrie": {IND}, "Energie": {IND},
+            "Transporte": {SERV}, "Versicherung": {SERV}, "Bau": {IND}, "Logistik": {SERV}},
+    "GBR": {"Industries": {IND}, "Trading": {AGRI, SERV}, "Energy": {IND},
+            "Transport": {SERV}, "Insurance": {SERV}, "Agri": {AGRI},
+            "Materials": {IND}, "Logistics": {SERV}},
+    "POL": {"Zakłady": {IND}, "Handel": {AGRI, SERV}, "Przemysł": {IND}, "Energia": {IND},
+            "Transport": {SERV}, "Ubezpieczenia": {SERV}, "Budownictwo": {IND},
+            "Logistyka": {SERV}, "Rolnictwo": {AGRI}},
+}
+
+
+# Words a repair may use that the generator never draws (adding them to CORP_SUFFIX
+# would change rng.choice's range and so every later draw): a sector whose own words
+# in the list are few (DEU agriculture holds AG, Gruppe and Handel) would otherwise
+# run out of unique names.
+REPAIR_WORDS = {
+    "FRA": {AGRI: ["Agricole"], IND: ["Mécanique"], SERV: ["Services"]},
+    "DEU": {AGRI: ["Agrar"], IND: ["Technik"], SERV: ["Dienste"]},
+    "GBR": {AGRI: ["Farms", "Produce"], IND: ["Engineering"], SERV: ["Services"]},
+    "POL": {AGRI: ["Agro"], IND: ["Technika"], SERV: ["Usługi"]},
+}
+
+
+def tidy_names(nation: str, firms: list, taken: set) -> None:
+    """Draw-free repair of the body's generated names, ids kept (a save keys the
+    register by id, and no reader derives an id from a name):
+
+    - a corporate word written twice ("Laroussi Coopérative Coopérative", the
+      collision fallback drawing its two suffixes independently);
+    - in the four playable nations, a word of another sector ("Chauviré Agro" in
+      services, "Beaufour Énergie Industries" in services).
+
+    The repair keeps the words that fit, once each; when that name is taken it tries
+    one word of the firm's own sector, then two, in an order hashed from the id --
+    never the RNG: the 29 frozen nations share one stream, and a repair that took a
+    draw would regenerate every nation after it.
+    `taken` holds the nation's other names; every repaired name stays unique."""
+    suffixes = CORP_SUFFIX[nation]
+    tags = SUFFIX_SECTORS.get(nation, {})
+    for firm in firms:
+        name = firm["name"]
+        # The trailing corporate words, longest first so a two-word suffix
+        # ("Žemės ūkis") is read whole; the generator writes at most two.
+        tail = []
+        rest = name
+        for _ in range(2):
+            hit = next((s for s in sorted(suffixes, key=len, reverse=True)
+                        if rest.endswith(" " + s) and rest != " " + s), None)
+            if hit is None:
+                break
+            tail.insert(0, hit)
+            rest = rest[: -len(hit) - 1]
+        if not tail or not rest.strip():
+            continue
+        fits = [s for s in suffixes if firm["sector"] in tags.get(s, {AGRI, IND, SERV})]
+        fits += REPAIR_WORDS.get(nation, {}).get(firm["sector"], [])
+        keep = []
+        for word in tail:
+            if word in fits and word not in keep:
+                keep.append(word)
+        if keep == tail:
+            continue
+        order = sorted(fits, key=lambda w: hashlib.sha256(("%s:%s" % (firm["id"], w)).encode("utf-8")).digest())
+        candidates = [keep] if keep else []
+        candidates += [[w] for w in order]
+        candidates += [[a, b] for a in order for b in order if a != b]
+        taken.discard(name)
+        new_name = None
+        for words in candidates:
+            candidate = " ".join([rest] + words)
+            if candidate not in taken and name_ok(candidate):
+                new_name = candidate
+                break
+        if new_name is None:
+            raise SystemExit("tidy_names: no unique name for %s (%s)" % (firm["id"], name))
+        taken.add(new_name)
+        firm["name"] = new_name
+
+
+# Surnames in the name pools that are also a real brand once a firm wears them
+# (docs/fictionalization.md: no real company's name). A person may keep the surname;
+# a firm may not. Not in tools/banned_names.txt, because name_ok() reads that list AT
+# DRAW TIME and a refusal there redraws -- shifting the stream for the whole nation.
+# Here the swap happens after the draw: QA's TAKE on #349 ("Schwarzkopf Gruppe").
+BRAND_SURNAMES = {"Schwarzkopf"}
+
+
+def retire_brand_surnames(nation: str, firms: list, taken: set) -> None:
+    """Draw-free: a body firm named after a BRAND_SURNAMES surname takes another
+    surname of the nation's pool, ordered by a hash of the firm id, its corporate
+    words kept and its id unchanged; the new name stays unique."""
+    pool = [s for s in surname_pool(nation) if s not in BRAND_SURNAMES]
+    for firm in firms:
+        surname = next((b for b in BRAND_SURNAMES if firm["name"].startswith(b + " ")), None)
+        if surname is None:
+            continue
+        words = firm["name"][len(surname):]
+        order = sorted(pool, key=lambda s: hashlib.sha256(("%s:%s" % (firm["id"], s)).encode("utf-8")).digest())
+        taken.discard(firm["name"])
+        new_name = next((s + words for s in order if s + words not in taken and name_ok(s + words)), None)
+        if new_name is None:
+            raise SystemExit("retire_brand_surnames: no unique name for %s" % firm["id"])
+        taken.add(new_name)
+        firm["name"] = new_name
 
 
 def sidecar_entry(rng: random.Random, sex: str, age: int) -> dict:
@@ -707,6 +841,9 @@ def main() -> int:
             body = []
         else:
             body = gen_body(rng, nation, major_cov, cities, used_slugs)
+            taken = {f["name"] for f in majors + body}
+            tidy_names(nation, body, taken)
+            retire_brand_surnames(nation, body, taken)
 
         # --- write the companies file ----------------------------------------
         if nation in AUTHORED:

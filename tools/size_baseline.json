@@ -8,7 +8,7 @@
   "src/sim/companies.gd": 418,
   "src/sim/diplomacy.gd": 320,
   "src/sim/government.gd": 324,
-  "src/sim/legislature.gd": 619,
+  "src/sim/legislature.gd": 600,
   "src/sim/orgs.gd": 736,
   "src/sim/statute.gd": 441,
   "src/ui/calendar_panel.gd": 414,

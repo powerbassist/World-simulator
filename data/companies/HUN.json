@@ -217,7 +217,7 @@
     },
     {
       "id": "HUN_albertfalusi_mezogazdasag_mezogazdasag",
-      "name": "Albertfalusi Mezőgazdaság Mezőgazdaság",
+      "name": "Albertfalusi Mezőgazdaság",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2211,
@@ -526,7 +526,7 @@
       "name": "Mészáros Energia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23897,
       "city": "HU11_budapest",
       "tier": "body"
     },
@@ -544,7 +544,7 @@
       "name": "Nagydani Energia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22737,
       "city": "HU22_szombathely",
       "tier": "body"
     },
@@ -571,7 +571,7 @@
       "name": "Szilágyi Ipar Energia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24892,
       "city": "HU12_erd",
       "tier": "body"
     },
@@ -589,7 +589,7 @@
       "name": "Galgóczy Építőipar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22879,
       "city": "HU33_kecskemet",
       "tier": "body"
     },
@@ -634,7 +634,7 @@
       "name": "Vörös Szállítás",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22859,
       "city": "HU11_budapest",
       "tier": "body"
     },
@@ -661,7 +661,7 @@
       "name": "Orosz Csoport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24379,
       "city": "HU33_szeged",
       "tier": "body"
     },
@@ -670,7 +670,7 @@
       "name": "Vörös Logisztika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24945,
       "city": "HU32_debrecen",
       "tier": "body"
     },
@@ -715,7 +715,7 @@
       "name": "Jakabfi Energia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24235,
       "city": "HU22_szombathely",
       "tier": "body"
     },
@@ -724,7 +724,7 @@
       "name": "Zsoldos Ipar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23970,
       "city": "HU11_budapest",
       "tier": "body"
     },
@@ -769,7 +769,7 @@
       "name": "Takács Építőipar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22904,
       "city": "HU32_debrecen",
       "tier": "body"
     },
@@ -778,7 +778,7 @@
       "name": "Töröksz Logisztika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23815,
       "city": "HU11_budapest",
       "tier": "body"
     },
@@ -787,7 +787,7 @@
       "name": "Orosz Mezőgazdaság",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22897,
       "city": "HU11_budapest",
       "tier": "body"
     },
@@ -850,7 +850,7 @@
       "name": "Zsak Logisztika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23866,
       "city": "HU31_miskolc",
       "tier": "body"
     },
@@ -859,7 +859,7 @@
       "name": "Zsoldos Építőipar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24427,
       "city": "HU33_kecskemet",
       "tier": "body"
     },
@@ -877,7 +877,7 @@
       "name": "Bátori Ipar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24037,
       "city": "HU33_szeged",
       "tier": "body"
     },

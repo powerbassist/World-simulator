@@ -507,7 +507,7 @@
       "name": "Paulauskas Statyba Medžiagos",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23619,
       "city": "LT01_vilnius",
       "tier": "body"
     },
@@ -516,7 +516,7 @@
       "name": "Simkus Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24534,
       "city": "LT02_panevezys",
       "tier": "body"
     },
@@ -543,7 +543,7 @@
       "name": "Dvariakis Pramonė",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23167,
       "city": "LT02_klaipeda",
       "tier": "body"
     },
@@ -588,7 +588,7 @@
       "name": "Uleckas Pramonė",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24183,
       "city": "LT02_kaunas",
       "tier": "body"
     },
@@ -615,7 +615,7 @@
       "name": "Baltušis Draudimas",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23518,
       "city": "LT02_kaunas",
       "tier": "body"
     },
@@ -642,7 +642,7 @@
       "name": "Kairys Žemės ūkis Transportas",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23772,
       "city": "LT01_vilnius",
       "tier": "body"
     },
@@ -741,7 +741,7 @@
       "name": "Pakalniškis Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22894,
       "city": "LT02_klaipeda",
       "tier": "body"
     },
@@ -777,7 +777,7 @@
       "name": "Bagdonas Grupė",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24912,
       "city": "LT02_siauliai",
       "tier": "body"
     },
@@ -822,7 +822,7 @@
       "name": "Mačiulis Žemės ūkis",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24724,
       "city": "LT02_siauliai",
       "tier": "body"
     },
