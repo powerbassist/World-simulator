@@ -355,6 +355,7 @@ func _check_every_panel_registered_and_reachable() -> void:
 			_fail("'%s' is no longer registered at all" % id)
 
 	for id in registered:
+		windows.close_all()  # from the map: a scene left showing refuses a tab opened after it (by design)
 		windows.open(id)
 		if not windows.is_open(id):
 			_fail("opening '%s' did not show it" % id)

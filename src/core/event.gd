@@ -340,7 +340,9 @@ const KNOWN_KEYS := [
 	"speaker", "speaker_line",
 ]
 
-const CHOICE_KEYS := ["id", "label", "summary", "effects", "default", "arms"]
+const CHOICE_KEYS := ["id", "label", "summary", "short", "effects", "default", "arms"]
+## The longest `short` label: it is the text of a 180 px button at the largest text size (V5.3).
+const SHORT_MAX := 16
 
 
 static func _extract_choices(d: Dictionary, event_id: String, filename: String, errors: Array[String], tax_keys: Array, spending_keys: Array, bloc_keys: Array, sector_keys: Array) -> Array:
@@ -382,6 +384,14 @@ static func _extract_choices(d: Dictionary, event_id: String, filename: String, 
 			errors.append("%s: %s missing or invalid string field 'summary' -- a button with no consequence written beside it is a coin toss" % [filename, path])
 			choice_summary = ""
 
+		# V5.3: an OPTIONAL button label, shorter than `label`, for the decision page's 180 px
+		# button (the full label heads its card). Absent reads as no short: the page falls back
+		# to the label (strings.gd choice_short).
+		var short = entry.get("short", "")
+		if typeof(short) != TYPE_STRING or (short as String).length() > SHORT_MAX:
+			errors.append("%s: %s 'short' must be a string of at most %d characters" % [filename, path, SHORT_MAX])
+			short = ""
+
 		var is_default := bool(entry.get("default", false))
 		if is_default:
 			defaults += 1
@@ -422,6 +432,7 @@ static func _extract_choices(d: Dictionary, event_id: String, filename: String, 
 			"id": cid,
 			"label": label,
 			"summary": choice_summary,
+			"short": short,
 			"effects": effects,
 			"is_default": is_default,
 			"arms": arms,

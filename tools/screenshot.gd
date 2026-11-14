@@ -49,6 +49,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pause-menu
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step m-money
 ##       (the offer of money: m-money, m-left, m-taken; the affair: m-affair, m-no, m-yes, m-end)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --file event
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing crowded --folder-file event   (or: request)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --file request
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation DEU --book-visit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
@@ -401,6 +404,10 @@ var _months := 0
 ## first one's offered days; --audience books its first free day and reaches it, so
 ## the scene is up.
 var _request := ""
+## V5.3 screen 3: --file event | request opens the docked file page (--file request needs --request).
+var _file := ""
+## --folder-file event | request: the folder (--briefing crowded) on that file's page.
+var _folder_file := ""
 ## V5.2d, with --interrupt: the crisis's card carries its speaker (Speakers.resolve at
 ## delivery), so the frame shows the face, name and line under the title.
 var _speaker := false
@@ -737,6 +744,10 @@ func _stage_briefing() -> void:
 		preload("res://src/ui/audience_driver.gd").refresh(_main)
 	Driver._games[_main.get_instance_id()]["pending"] = {}
 	Driver.open(_main, {})
+	if _folder_file != "":
+		var Folder := load("res://src/ui/folder_driver.gd")
+		var line := {"kind": "crisis", "subject": String(_main._loader.events[0].id)} if _folder_file == "event" 			else {"kind": "request", "subject": String(load("res://src/sim/audiences.gd").pending(ns)[0]["id"])}
+		Folder.go(_main, line)
 
 
 func _stage_the_outliner() -> void:
@@ -1071,6 +1082,10 @@ func _init() -> void:
 			_broken_word = true
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
+		elif args[i] == "--folder-file" and i + 1 < args.size():
+			_folder_file = args[i + 1]
+		elif args[i] == "--file" and i + 1 < args.size():
+			_file = args[i + 1]
 		elif args[i] == "--audience-step" and i + 1 < args.size():
 			_audience_step = args[i + 1]
 			_request = "--audience"
@@ -1198,6 +1213,8 @@ func _process(_delta: float) -> bool:
 			_main._windows.mark_all_dirty()
 		if _request != "":
 			_stage_requests()
+		if _file != "":
+			_stage_a_file()
 		if _audience_step != "":
 			_stage_audience_step()
 		if _phone != "":
@@ -2433,6 +2450,26 @@ func _firm_by_id(loader, nation_id: String, firm_id: String):
 ## second widget: main.gd connects both clock signals in `_ready()`, so this is the
 ## path a played game takes, day resolution and all. U6a's dispatch runs here too,
 ## which no hand-rolled month loop ever exercised.
+## --file event: the wheat-failure decision on the desk and its docked page; --file request (with --request):
+## the first request's page.
+func _stage_a_file() -> void:
+	var Files := load("res://src/ui/files_driver.gd")
+	var InboxFiles := load("res://src/ui/inbox_files.gd")
+	if _file == "event":
+		var ns = _main._state.player()
+		var ev = load("res://src/sim/events.gd").event_by_id(_main._loader, "com_wheat_failure")
+		var entry := {"event_id": String(ev.id), "event_name": ev.event_name, "months_left": 4, "severity": 1,
+			"category": ev.category, "interrupt": false, "speaker": "FRA_chief_grainval"}
+		ns.event_queue.append(entry)
+		load("res://src/ui/desk_cards.gd").push(_main, ev, entry)
+	for file in InboxFiles.list(_main._hud.inbox):
+		var is_event: bool = _main._event_cards.has(String(file["id"]))
+		if is_event == (_file == "event"):
+			Files.activated(_main, String(file["id"]))
+			return
+	printerr("--file %s: no such file on the desk" % _file)
+
+
 func _stage_requests() -> void:
 	var Audiences := load("res://src/sim/audiences.gd")
 	var Driver := load("res://src/ui/audience_driver.gd")

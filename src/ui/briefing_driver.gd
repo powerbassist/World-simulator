@@ -63,6 +63,7 @@ static func register(main) -> void:
 	_games[main.get_instance_id()] = game
 	card.go_pressed.connect(func(i: int) -> void: go(main, i))
 	card.closed.connect(func() -> void: close(main))
+	preload("res://src/ui/folder_driver.gd").attach(main, card)
 	# The two verbs block 0 added where a Go lands (2.4); the panels only ask.
 	main._agenda_panel.open_requested.connect(func(tab: String) -> void: main._windows.open(tab))
 	main._polling_panel.calm_requested.connect(func(tab: String, bloc: String) -> void: _open_laws_or(main, tab, bloc))
@@ -132,6 +133,7 @@ static func open(main, report: Dictionary) -> void:
 	main._clock.paused = true
 	var shown := view(main, ranked["lines"], report, game["also"])
 	game["card"].show_view(shown)
+	preload("res://src/ui/folder_driver.gd").refresh(main)
 	# Pre-gate B2: the chief speaks when the situation is not the one he last spoke
 	# in, or a row is new; otherwise the caption shows, silent. Each show turns that
 	# situation's line, so no caption repeats the last one shown for it.
@@ -361,6 +363,8 @@ static func go(main, index: int) -> void:
 	if game.is_empty() or index < 0 or index >= all.size():
 		return
 	var line: Dictionary = all[index]
+	if preload("res://src/ui/folder_driver.gd").go(main, line):
+		return
 	var target := target_of(line)
 	# Go keeps the clock paused (pre-gate B5: resumed at speed, a request booked for
 	# the next day opened its audience over the Go's target); the player resumes it
