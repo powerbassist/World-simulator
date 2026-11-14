@@ -527,7 +527,7 @@
       "name": "Daníelsson Verslun",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24444,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -644,7 +644,7 @@
       "name": "Viðarsson Orka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24463,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -698,7 +698,7 @@
       "name": "Bragadóttir Efni",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24242,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -716,7 +716,7 @@
       "name": "Mýrdal Orka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23841,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -734,7 +734,7 @@
       "name": "Mýrdal Iðnaður",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23819,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -752,7 +752,7 @@
       "name": "Finnsson Tryggingar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23050,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -761,7 +761,7 @@
       "name": "Pálsson Iðnaður",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23375,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -779,7 +779,7 @@
       "name": "Jökulsson Samstæða",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22673,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -833,7 +833,7 @@
       "name": "Ásgeirsdóttir Flutningar Efni",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23617,
       "city": "IS00_reykjavik",
       "tier": "body"
     },

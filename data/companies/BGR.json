@@ -489,7 +489,7 @@
       "name": "Todorov Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24370,
       "city": "BG34_sliven",
       "tier": "body"
     },
@@ -498,7 +498,7 @@
       "name": "Penev Materiali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22729,
       "city": "BG34_stara_zagora",
       "tier": "body"
     },
@@ -525,7 +525,7 @@
       "name": "Chervenkov Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24440,
       "city": "BG31_pleven",
       "tier": "body"
     },
@@ -534,7 +534,7 @@
       "name": "Mihov Zemedelie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23526,
       "city": "BG41_sofia",
       "tier": "body"
     },
@@ -633,7 +633,7 @@
       "name": "Vulkov Stroitelstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24423,
       "city": "BG41_sofia",
       "tier": "body"
     },
@@ -642,7 +642,7 @@
       "name": "Kojuharov Zastrahovane",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22895,
       "city": "BG33_varna",
       "tier": "body"
     },
@@ -669,7 +669,7 @@
       "name": "Mihov Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23968,
       "city": "BG42_plovdiv",
       "tier": "body"
     },
@@ -678,7 +678,7 @@
       "name": "Varbanov Stroitelstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22846,
       "city": "BG31_pleven",
       "tier": "body"
     },
@@ -705,7 +705,7 @@
       "name": "Hristov Materiali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23843,
       "city": "BG41_pernik",
       "tier": "body"
     },
@@ -723,7 +723,7 @@
       "name": "Ignatov Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24631,
       "city": "BG42_plovdiv",
       "tier": "body"
     },
@@ -786,7 +786,7 @@
       "name": "Miladinov Energija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23872,
       "city": "BG41_sofia",
       "tier": "body"
     },
@@ -795,7 +795,7 @@
       "name": "Varbanov Materiali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24228,
       "city": "BG34_burgas",
       "tier": "body"
     },
@@ -813,7 +813,7 @@
       "name": "Dimitrov Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24569,
       "city": "BG34_burgas",
       "tier": "body"
     },
@@ -858,7 +858,7 @@
       "name": "Yanev Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23727,
       "city": "BG41_pernik",
       "tier": "body"
     },

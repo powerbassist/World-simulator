@@ -515,7 +515,7 @@
       "name": "Hruška Poľnohospodárstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23169,
       "city": "SK01_petrzalka",
       "tier": "body"
     },
@@ -533,7 +533,7 @@
       "name": "Gašpar Doprava",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24960,
       "city": "SK01_bratislava",
       "tier": "body"
     },
@@ -542,7 +542,7 @@
       "name": "Vlček Poľnohospodárstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24607,
       "city": "SK04_presov",
       "tier": "body"
     },
@@ -551,7 +551,7 @@
       "name": "Sokol Stavebníctvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24023,
       "city": "SK02_trencin",
       "tier": "body"
     },
@@ -623,7 +623,7 @@
       "name": "Estok Poistenie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24364,
       "city": "SK01_bratislava",
       "tier": "body"
     },
@@ -632,7 +632,7 @@
       "name": "Cipov Stavebníctvo Skupina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23066,
       "city": "SK01_bratislava",
       "tier": "body"
     },
@@ -677,7 +677,7 @@
       "name": "Palárik Priemysel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22907,
       "city": "SK02_trencin",
       "tier": "body"
     },
@@ -740,7 +740,7 @@
       "name": "Jambor Materiály",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24097,
       "city": "SK04_kosice",
       "tier": "body"
     },
@@ -749,7 +749,7 @@
       "name": "Mojžiš Priemysel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23118,
       "city": "SK01_bratislava",
       "tier": "body"
     },
@@ -794,7 +794,7 @@
       "name": "Rezeik Materiály",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23269,
       "city": "SK04_kosice",
       "tier": "body"
     },
@@ -830,7 +830,7 @@
       "name": "Jánoš Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22851,
       "city": "SK03_banska_bystrica",
       "tier": "body"
     },
@@ -848,7 +848,7 @@
       "name": "Ihrík Priemysel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22820,
       "city": "SK04_kosice",
       "tier": "body"
     },
@@ -866,7 +866,7 @@
       "name": "Klimko Stavebníctvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23453,
       "city": "SK02_trencin",
       "tier": "body"
     },
@@ -875,7 +875,7 @@
       "name": "Cabaj Poľnohospodárstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23324,
       "city": "SK03_banska_bystrica",
       "tier": "body"
     }
