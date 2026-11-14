@@ -14,6 +14,7 @@ extends SceneTree
 ## and fires nothing, which would make this test pass against a panel whose
 ## signals were never connected. See docs/engine-decision.md.
 
+const Division = preload("res://src/sim/division.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
@@ -146,6 +147,8 @@ func _move_a_lever() -> void:
 
 func _commit() -> void:
 	_panel._on_commit()
+	# Commit tables the finance bill; the books move at its division.
+	Division.divide(_state, _loader)
 
 	if absf(float(_state.player().spending_pct_gdp["health"]) - _health_after) > 0.001:
 		_fail("commit did not apply the pending health rate: %s" % _state.player().spending_pct_gdp["health"])

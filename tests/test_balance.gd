@@ -28,6 +28,9 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const Budget = preload("res://src/sim/budget.gd")
+## The regime's budget is a finance bill since docs/design/finance-bill.md: tabled in
+## month 1 and, if defeated, tabled again each month (tools/balance_probe.gd's rule).
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
@@ -438,10 +441,10 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 	state.year = START_YEAR
 	state.month = 1
 
-	if not pending.is_empty():
-		Budget.commit(state, pending)
-
 	var ns = state.player()
+	var bill := FinanceBill.from_pending(ns, pending)
+	if not bill.is_empty():
+		FinanceBill.table(state, _loader, bill)
 	var problems: Array[String] = []
 	var elections: Array = []
 	var all_results: Array = []
@@ -476,9 +479,14 @@ func _play(pending: Dictionary, months: int, dissolve_at_month: int = -1, nation
 		# repeated (it never ticked Diplomacy or Defence). The regime's commands
 		# ride the step hook, in the slot they had: after the systems, before the
 		# vote.
-		var report := WorldMonth.tick_month(state, _loader, func(step: String, after: bool, _report: Dictionary) -> void:
+		var report := WorldMonth.tick_month(state, _loader, func(step: String, after: bool, step_report: Dictionary) -> void:
+			var division: Dictionary = step_report.get("division", {}) if after and step == "Division" else {}
+			if bool(division.get("finance", false)) and bool(division["passed"]):
+				bill.clear()
 			if after or step != "Elections":
 				return
+			if not bill.is_empty() and ns.tabled_bill.is_empty():
+				FinanceBill.table(state, _loader, bill)
 			if i + 1 == dissolve_at_month:
 				Dissolution.dissolve(state, ns)
 

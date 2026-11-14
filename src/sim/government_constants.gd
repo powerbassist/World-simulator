@@ -77,6 +77,11 @@ const FORCE_COOLDOWN_MONTHS := 12
 ## government are the numbers that would already have voted the bill down.
 const FORCE_HOSTILITY_BONUS := 0.35
 
+## The formation method whose constitution lets a government force a bill (Article
+## 49.3): read by Government.can_force() and by the finance bill's forcing, which skips
+## the cooldown (docs/design/finance-bill.md section 4). A field in data, never an id.
+const FORCE_FORMATION := "presidential_appointment"
+
 ## Applied to every bloc when a bill is forced through, whether or not the
 ## censure motion that follows carries. Without a cost on use, Article 49.3 is
 ## strictly dominant: a government that can cover the censure threshold would

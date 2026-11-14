@@ -45,20 +45,23 @@ func _run() -> void:
 	_check_diplomatic_act_answers()
 
 
-## Committing a real lever change must answer with a card naming the deficit.
+## Committing a real lever change tables the finance bill (docs/design/finance-bill.md)
+## and must answer with a card saying so and when it is voted.
 func _check_budget_commit_answers() -> void:
 	var before_count: int = _main._hud.inbox.card_count()
 	var panel = _main._budget_panel
-	panel._pending["income_tax"] = 25.0
+	panel._pending["spending_pct_gdp"]["health"] = float(_main._state.player().spending_pct_gdp["health"]) + 1.0
 	panel._on_commit()
 	if _main._hud.inbox.card_count() != before_count + 1:
 		_fail("a committed budget pushed no acknowledgment card")
 		return
 	var text := _stack_text()
-	if not text.contains("BUDGET COMMITTED"):
+	if not text.contains("FINANCE BILL TABLED"):
 		_fail("the budget card is not titled for the verb: '%s'" % text)
-	if not text.to_lower().contains("deficit"):
-		_fail("the budget card does not name the deficit: '%s'" % text)
+	if not text.to_lower().contains("month's end"):
+		_fail("the budget card does not say when the bill is voted: '%s'" % text)
+	# The bill holds the month's slot: divide it, so the law check below meets an empty one.
+	_divide()
 
 
 ## Proposing a law must answer with a card titled with the law and carrying the

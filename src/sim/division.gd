@@ -23,6 +23,10 @@ const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
+## The finance bill divides through its own reading (docs/design/finance-bill.md); it
+## preloads Legislature and never this file, so the branch below is no cycle.
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 
 
 ## The tabled bill divides: its result is written to ns.last_law_result, as
@@ -37,6 +41,8 @@ static func divide(state, loader) -> Dictionary:
 		return {}
 	var tabled: Dictionary = ns.tabled_bill
 	ns.tabled_bill = {}
+	if FinanceBillLaw.is_finance(String(tabled.get("law_id", ""))):
+		return FinanceBill.divide(state, loader, ns, tabled)
 	var party_list: Array = loader.parties.get(ns.id, [])
 	var law = Legislature.open_law(state, ns, loader, String(tabled.get("law_id", "")))
 	if law == null:
@@ -121,6 +127,9 @@ static func divide(state, loader) -> Dictionary:
 static func forecast(state, ns, loader) -> Dictionary:
 	if ns.tabled_bill.is_empty():
 		return {}
+	var finance = FinanceBillLaw.tabled(ns)
+	if finance != null:
+		return {} if bool(ns.tabled_bill.get("forced", false)) else FinanceBill.resolve(ns, loader.parties.get(ns.id, []), finance)
 	var law = Legislature.open_law(state, ns, loader, String(ns.tabled_bill.get("law_id", "")))
 	if law == null:
 		return {}

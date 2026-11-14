@@ -28,8 +28,6 @@ const Budget = preload("res://src/sim/budget.gd")
 const Government = preload("res://src/sim/government.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
-const DK = preload("res://src/sim/discipline_constants.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
 ## V1.4b, for REGULATION_BURDEN_MAX alone. Not companies.gd: this file writes the
 ## burden and never reads what it costs, so the dependency stops at the clamp.
 const CK = preload("res://src/sim/companies_constants.gd")
@@ -59,6 +57,7 @@ const Bills = preload("res://src/sim/bills.gd")
 ## V5.2 b+ R2: the tabled bill's vote day. Calendar preloads nothing, so no cycle.
 const Calendar = preload("res://src/sim/calendar.gd")
 const FrontPage = preload("res://src/sim/front_page.gd")
+const ForcePrice = preload("res://src/sim/force_price.gd")
 
 
 ## Reset every nation's legislature state. Runs for all ten, same as
@@ -1376,13 +1375,6 @@ static func refused(ns, law_id: String, majority: String, flag: String) -> Dicti
 	return result
 
 
-static func _by_id(party_list: Array) -> Dictionary:
-	var by_id := {}
-	for party in party_list:
-		by_id[party.id] = party
-	return by_id
-
-
 ## Article 49.3. The bill is adopted with no vote taken, which is why every seat
 ## tally below is zero -- there was no division. What the government pays for it
 ## is a censure motion resolved at FORCE_HOSTILITY_BONUS, and the risk is real
@@ -1425,32 +1417,9 @@ static func _force(state, ns, party_list: Array, law, loader) -> Dictionary:
 	# later.
 	ns.force_cooldown_months = GK.FORCE_COOLDOWN_MONTHS
 
-	var by_id := _by_id(party_list)
-
-	# Bypassing the assembly costs something whether or not the censure motion
-	# carries. Without this, a government that can cover the threshold would
-	# force every bill it could not win, for free.
-	Government.penalise_blocs(ns, GK.FORCE_BLOC_PENALTY)
-
-	# The second price of the article, and the one paid in the chamber rather
-	# than in the polls: a government that goes over its own majority's head
-	# finds that majority less willing the next time it asks. Applied before the
-	# censure motion resolves, because the insult is the reason for the motion.
-	Discipline.penalise(ns, ns.coalition_party_ids, DK.FORCE_DISCIPLINE_PENALTY, by_id)
-
-	# Resolved against the government the bill was forced through for, and
-	# before any collapse re-forms it, so the vote reads the coalition that
-	# actually did the forcing.
-	var censure := Government.resolve_censure(ns, party_list, true)
-	Discipline.penalise_rebellions(ns, censure["party_rebels"], by_id)
-	if censure["carried"]:
-		Government.fall(ns, party_list, censure)
-		# Cabinet.seat() is called here rather than from inside government.gd
-		# itself -- Cabinet depends on Government (cohesion(), penalise_blocs()),
-		# so the reverse would be a preload() cycle. See docs/cabinet-model.md.
-		Cabinet.seat(ns, party_list)
-
-	ns.last_censure = censure
+	# The article's price and its censure motion: one function the finance bill's
+	# forcing shares (src/sim/force_price.gd), so the two cannot drift.
+	var censure := ForcePrice.charge(ns, party_list)
 	result["censure"] = censure
 	ns.last_law_result = result
 	# V5.2d: the article's front-page moments (a bill carried, a government felled).

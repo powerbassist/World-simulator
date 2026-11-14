@@ -24,6 +24,8 @@ extends PanelContainer
 ## idioms, not a second way to move a rate.
 
 const Budget = preload("res://src/sim/budget.gd")
+## Commit tables the rates into the finance bill (docs/design/finance-bill.md).
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
@@ -299,10 +301,9 @@ func _on_revert() -> void:
 
 func _on_commit() -> void:
 	var before := Trends.snapshot_now(_state)
-	var pending := _pending.duplicate()
-	Budget.commit(_state, _pending)
+	var tabling := FinanceBill.table(_state, _loader, FinanceBill.from_pending(_state.player(), _pending))
 	_on_revert()
-	committed.emit(before, pending)
+	committed.emit(before, tabling)
 
 
 ## What this tab's Commit would book, or nothing while no rate stands away from

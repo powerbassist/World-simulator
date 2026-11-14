@@ -19,6 +19,7 @@ extends RefCounted
 ## Legislature._law_by_id() moved here (and grew the ownership branch) so the bill
 ## and the lookup that finds it again live in one file.
 
+const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const Law = preload("res://src/core/law.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
@@ -61,6 +62,11 @@ static func open(state, ns, loader) -> Array:
 	var out: Array = loader.laws + Law.composed_register(ns)
 	for company in Companies.majors_of(loader, ns.id):
 		out.append_array(_bills_for(state, ns, loader, company))
+	# The tabled finance bill, a law like any other to every reader of the register
+	# (docs/design/finance-bill.md section 2); built from the register, never stored.
+	var finance = FinanceBillLaw.tabled(ns)
+	if finance != null:
+		out.append(finance)
 	return out
 
 
