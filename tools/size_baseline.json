@@ -1,7 +1,7 @@
 {
  "_note": "Code lines per src/ file over 300, the most each may hold. Lowered by `python tools/check_size.py --update` in the change that shrinks a file; never raised (tools/check_size.py).",
  "code_lines": {
-  "src/core/game_state.gd": 392,
+  "src/core/game_state.gd": 379,
   "src/core/law.gd": 411,
   "src/core/nation.gd": 544,
   "src/sim/commodities.gd": 338,
