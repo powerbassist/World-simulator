@@ -10,7 +10,11 @@
       "headcount": 15400,
       "city": "UKH_ipswich",
       "tier": "major",
-      "chief_id": "GBR_chief_wexley"
+      "chief_id": "GBR_chief_wexley",
+      "products": [
+        "cereals",
+        "sugar"
+      ]
     },
     {
       "id": "GBR_northaven",
@@ -20,7 +24,11 @@
       "headcount": 17134,
       "city": "UKM_aberdeen",
       "tier": "major",
-      "chief_id": "GBR_chief_northaven"
+      "chief_id": "GBR_chief_northaven",
+      "products": [
+        "meat",
+        "vegetables"
+      ]
     },
     {
       "id": "GBR_ashcombe",
@@ -30,7 +38,11 @@
       "headcount": 100000,
       "city": "UKG_birmingham",
       "tier": "major",
-      "chief_id": "GBR_chief_ashcombe"
+      "chief_id": "GBR_chief_ashcombe",
+      "products": [
+        "machinery",
+        "vehicles"
+      ]
     },
     {
       "id": "GBR_tarnbridge",
@@ -40,7 +52,11 @@
       "headcount": 15675,
       "city": "UKE_sheffield",
       "tier": "major",
-      "chief_id": "GBR_chief_tarnbridge"
+      "chief_id": "GBR_chief_tarnbridge",
+      "products": [
+        "chemicals",
+        "plastics"
+      ]
     },
     {
       "id": "GBR_merlyn_propulsion",
@@ -50,7 +66,11 @@
       "headcount": 21900,
       "city": "UKF_derby",
       "tier": "major",
-      "chief_id": "GBR_chief_merlyn_propulsion"
+      "chief_id": "GBR_chief_merlyn_propulsion",
+      "products": [
+        "aircraft",
+        "ships"
+      ]
     },
     {
       "id": "GBR_sterling_mutual",
@@ -60,7 +80,10 @@
       "headcount": 70800,
       "city": "UKI_london",
       "tier": "major",
-      "chief_id": "GBR_chief_sterling_mutual"
+      "chief_id": "GBR_chief_sterling_mutual",
+      "products": [
+        "finance"
+      ]
     },
     {
       "id": "GBR_ravenhill",
@@ -70,7 +93,10 @@
       "headcount": 318756,
       "city": "UKD_manchester",
       "tier": "major",
-      "chief_id": "GBR_chief_ravenhill"
+      "chief_id": "GBR_chief_ravenhill",
+      "products": [
+        "retail"
+      ]
     },
     {
       "id": "GBR_haldane_grocers",
@@ -80,7 +106,10 @@
       "headcount": 145000,
       "city": "UKI_london",
       "tier": "major",
-      "chief_id": "GBR_chief_haldane_grocers"
+      "chief_id": "GBR_chief_haldane_grocers",
+      "products": [
+        "retail"
+      ]
     }
   ],
   "body": [

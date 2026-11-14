@@ -10,7 +10,10 @@
       "headcount": 5710,
       "city": "DEF_kiel",
       "tier": "major",
-      "chief_id": "DEU_chief_nordfeld"
+      "chief_id": "DEU_chief_nordfeld",
+      "products": [
+        "dairy"
+      ]
     },
     {
       "id": "DEU_bauerhof",
@@ -20,7 +23,11 @@
       "headcount": 8260,
       "city": "DE9_hannover",
       "tier": "major",
-      "chief_id": "DEU_chief_bauerhof"
+      "chief_id": "DEU_chief_bauerhof",
+      "products": [
+        "cereals",
+        "meat"
+      ]
     },
     {
       "id": "DEU_zuckerland_sudmark",
@@ -30,7 +37,10 @@
       "headcount": 4855,
       "city": "DE1_mannheim",
       "tier": "major",
-      "chief_id": "DEU_chief_zuckerland_sudmark"
+      "chief_id": "DEU_chief_zuckerland_sudmark",
+      "products": [
+        "sugar"
+      ]
     },
     {
       "id": "DEU_fleischkontor_westmark",
@@ -40,7 +50,10 @@
       "headcount": 3807,
       "city": "DEA_muenster",
       "tier": "major",
-      "chief_id": "DEU_chief_fleischkontor_westmark"
+      "chief_id": "DEU_chief_fleischkontor_westmark",
+      "products": [
+        "meat"
+      ]
     },
     {
       "id": "DEU_rheinwerk",
@@ -50,7 +63,11 @@
       "headcount": 293338,
       "city": "DEA_duesseldorf",
       "tier": "major",
-      "chief_id": "DEU_chief_rheinwerk"
+      "chief_id": "DEU_chief_rheinwerk",
+      "products": [
+        "steel",
+        "machinery"
+      ]
     },
     {
       "id": "DEU_kellermann",
@@ -60,7 +77,10 @@
       "headcount": 114741,
       "city": "DE1_stuttgart",
       "tier": "major",
-      "chief_id": "DEU_chief_kellermann"
+      "chief_id": "DEU_chief_kellermann",
+      "products": [
+        "cars"
+      ]
     },
     {
       "id": "DEU_elektrowerk_siedel",
@@ -70,7 +90,12 @@
       "headcount": 86401,
       "city": "DE2_munich",
       "tier": "major",
-      "chief_id": "DEU_chief_elektrowerk_siedel"
+      "chief_id": "DEU_chief_elektrowerk_siedel",
+      "products": [
+        "electronics",
+        "rail_equipment",
+        "medical_equipment"
+      ]
     },
     {
       "id": "DEU_alpenmobil_ag",
@@ -80,7 +105,11 @@
       "headcount": 89490,
       "city": "DE2_munich",
       "tier": "major",
-      "chief_id": "DEU_chief_alpenmobil_ag"
+      "chief_id": "DEU_chief_alpenmobil_ag",
+      "products": [
+        "cars",
+        "vehicles"
+      ]
     },
     {
       "id": "DEU_hanseatische",
@@ -90,7 +119,10 @@
       "headcount": 40104,
       "city": "DE6_hamburg",
       "tier": "major",
-      "chief_id": "DEU_chief_hanseatische"
+      "chief_id": "DEU_chief_hanseatische",
+      "products": [
+        "finance"
+      ]
     },
     {
       "id": "DEU_vollmar",
@@ -100,7 +132,10 @@
       "headcount": 218783,
       "city": "DEA_essen",
       "tier": "major",
-      "chief_id": "DEU_chief_vollmar"
+      "chief_id": "DEU_chief_vollmar",
+      "products": [
+        "retail"
+      ]
     },
     {
       "id": "DEU_eisenstrang_verkehr",
@@ -110,7 +145,10 @@
       "headcount": 214047,
       "city": "DE3_berlin",
       "tier": "major",
-      "chief_id": "DEU_chief_eisenstrang_verkehr"
+      "chief_id": "DEU_chief_eisenstrang_verkehr",
+      "products": [
+        "transport_services"
+      ]
     },
     {
       "id": "DEU_telenord_kommunikation",
@@ -120,7 +158,10 @@
       "headcount": 74550,
       "city": "DEA_bonn",
       "tier": "major",
-      "chief_id": "DEU_chief_telenord_kommunikation"
+      "chief_id": "DEU_chief_telenord_kommunikation",
+      "products": [
+        "telecom"
+      ]
     },
     {
       "id": "DEU_nordlicht_luftfahrt",
@@ -130,7 +171,10 @@
       "headcount": 66336,
       "city": "DEA_koeln",
       "tier": "major",
-      "chief_id": "DEU_chief_nordlicht_luftfahrt"
+      "chief_id": "DEU_chief_nordlicht_luftfahrt",
+      "products": [
+        "transport_services"
+      ]
     }
   ],
   "body": [

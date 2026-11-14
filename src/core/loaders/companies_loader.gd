@@ -127,6 +127,18 @@ static func validate_companies(loader) -> void:
 				loader.errors.append("companies/%s.json: major '%s' carries no chief_id -- a champion with no face is the count-is-the-design rule half-built" % [nation_id, company.id])
 			if company.tier == "body" and company.chief_id != "":
 				loader.errors.append("companies/%s.json: body firm '%s' carries a chief_id -- the body has no faces" % [nation_id, company.id])
+			# V5.3 a, screen 5: a product line resolves against the goods register
+			# (loaded before this runs) and sits in the firm's own sector, or the Sectors
+			# tab would list a good its maker's tab does not show. Majors only.
+			if company.tier == "body" and not company.products.is_empty():
+				loader.errors.append("companies/%s.json: body firm '%s' carries products -- the body has no product line" % [nation_id, company.id])
+			for good_id in company.products:
+				if not loader.commodity_goods.has(good_id):
+					loader.errors.append("companies/%s.json: firm '%s' product '%s' is not a good in commodities/goods.json" % [nation_id, company.id, good_id])
+					continue
+				var good_sector: String = CompaniesK.GOOD_CATEGORY_SECTOR.get(String(loader.commodity_goods[good_id].get("category", "")), "industry")
+				if good_sector != company.sector:
+					loader.errors.append("companies/%s.json: firm '%s' (%s) makes '%s', a good of %s" % [nation_id, company.id, company.sector, good_id, good_sector])
 			if company.chief_id != "":
 				var chief = people_by_id.get(company.chief_id)
 				if chief == null:

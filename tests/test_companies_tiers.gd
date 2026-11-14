@@ -30,6 +30,8 @@ const Companies = preload("res://src/sim/companies.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
+const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
+const CompanyScript = preload("res://src/core/company.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -51,6 +53,7 @@ func _init() -> void:
 		_test_register_scale()
 		_test_body_bands()
 		_test_body_touched_roundtrip()
+		_test_product_lines()
 	_finish()
 
 
@@ -406,6 +409,55 @@ func _test_body_touched_roundtrip() -> void:
 	if not fresh.nations["FRA"].companies.has(body.id):
 		return
 	_fail("an untouched body firm held a register entry -- the sparse design leaked")
+
+
+## V5.3 a, screen 5: every major of the four playable nations names what it makes, as
+## good ids in its own sector (the Sectors tabs list a good under its maker's tab), a
+## raw or farm good only where the nation produces it (endowments.json), and the body
+## names none. The loader's three refusals are driven on the live register and undone.
+func _test_product_lines() -> void:
+	var endowed: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/commodities/endowments.json"))["goods"]
+	for nation_id in ["FRA", "DEU", "GBR", "POL"]:
+		for company in _loader.companies[nation_id]:
+			if company.tier == "body":
+				if not company.products.is_empty():
+					_fail("body firm %s carries a product line" % company.id)
+				continue
+			if company.products.is_empty():
+				_fail("major %s names no product line" % company.id)
+			for good_id in company.products:
+				var category := String(_loader.commodity_goods[good_id].get("category", ""))
+				var shares: Dictionary = endowed.get(good_id, {}).get("shares", {})
+				if (category == "raw" or category == "agri") and not shares.has(nation_id):
+					_fail("%s makes %s, which %s does not produce (endowments.json)" % [company.id, good_id, nation_id])
+	var major = _loader_company("FRA_verdelis")
+	var body = null
+	for c in _loader.companies["FRA"]:
+		if c.tier == "body":
+			body = c
+			break
+	var kept: Array[String] = major.products.duplicate()
+	for case in [[major, ["aircraft"], "makes 'aircraft'"], [major, ["no_such_good"], "is not a good"],
+			[body, ["wine"], "carries products"]]:
+		var firm = case[0]
+		var products: Array[String] = []
+		products.assign(case[1])
+		firm.products = products
+		_loader.errors.clear()
+		CompaniesLoader.validate_companies(_loader)
+		if not ", ".join(_loader.errors).contains(String(case[2])):
+			_fail("validate_companies did not refuse %s on %s: %s" % [str(case[1]), firm.id, _loader.errors])
+		firm.products = [] as Array[String]
+	major.products = kept
+	_loader.errors.clear()
+	CompaniesLoader.validate_companies(_loader)
+	if not _loader.errors.is_empty():
+		_fail("the register did not validate clean once restored: %s" % [_loader.errors])
+	var errors: Array[String] = []
+	CompanyScript.from_dict({"id": "FRA_x", "name": "X", "sector": "industry", "share": 0.05,
+			"headcount": 1000, "city": "FR1_paris", "products": []}, 0, "FRA.json", errors)
+	if errors.is_empty():
+		_fail("from_dict accepted an empty products array")
 
 
 func _loader_company(company_id: String):

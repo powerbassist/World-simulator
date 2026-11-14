@@ -10,7 +10,10 @@
       "headcount": 17500,
       "city": "FRI_bordeaux",
       "tier": "major",
-      "chief_id": "FRA_chief_verdelis"
+      "chief_id": "FRA_chief_verdelis",
+      "products": [
+        "wine"
+      ]
     },
     {
       "id": "FRA_grainval",
@@ -20,7 +23,11 @@
       "headcount": 15600,
       "city": "FRB_orleans",
       "tier": "major",
-      "chief_id": "FRA_chief_grainval"
+      "chief_id": "FRA_chief_grainval",
+      "products": [
+        "cereals",
+        "sugar"
+      ]
     },
     {
       "id": "FRA_laitis_cooperative",
@@ -30,7 +37,10 @@
       "headcount": 9104,
       "city": "FR1_paris",
       "tier": "major",
-      "chief_id": "FRA_chief_laitis_cooperative"
+      "chief_id": "FRA_chief_laitis_cooperative",
+      "products": [
+        "dairy"
+      ]
     },
     {
       "id": "FRA_aurignac",
@@ -40,7 +50,10 @@
       "headcount": 56000,
       "city": "FRJ_toulouse",
       "tier": "major",
-      "chief_id": "FRA_chief_aurignac"
+      "chief_id": "FRA_chief_aurignac",
+      "products": [
+        "aircraft"
+      ]
     },
     {
       "id": "FRA_sevrenne",
@@ -50,7 +63,11 @@
       "headcount": 129800,
       "city": "FRC_besancon",
       "tier": "major",
-      "chief_id": "FRA_chief_sevrenne"
+      "chief_id": "FRA_chief_sevrenne",
+      "products": [
+        "cars",
+        "vehicles"
+      ]
     },
     {
       "id": "FRA_lumenor",
@@ -60,7 +77,11 @@
       "headcount": 151135,
       "city": "FR1_paris",
       "tier": "major",
-      "chief_id": "FRA_chief_lumenor"
+      "chief_id": "FRA_chief_lumenor",
+      "products": [
+        "machinery",
+        "electronics"
+      ]
     },
     {
       "id": "FRA_calorex_energies",
@@ -70,7 +91,11 @@
       "headcount": 35880,
       "city": "FR1_courbevoie",
       "tier": "major",
-      "chief_id": "FRA_chief_calorex_energies"
+      "chief_id": "FRA_chief_calorex_energies",
+      "products": [
+        "refined_fuels",
+        "natural_gas"
+      ]
     },
     {
       "id": "FRA_meridienne",
@@ -80,7 +105,10 @@
       "headcount": 71000,
       "city": "FR1_paris",
       "tier": "major",
-      "chief_id": "FRA_chief_meridienne"
+      "chief_id": "FRA_chief_meridienne",
+      "products": [
+        "finance"
+      ]
     },
     {
       "id": "FRA_halbert",
@@ -90,7 +118,10 @@
       "headcount": 177822,
       "city": "FRE_lille",
       "tier": "major",
-      "chief_id": "FRA_chief_halbert"
+      "chief_id": "FRA_chief_halbert",
+      "products": [
+        "retail"
+      ]
     },
     {
       "id": "FRA_transhexa",
@@ -100,7 +131,10 @@
       "headcount": 217000,
       "city": "FR1_saint_denis",
       "tier": "major",
-      "chief_id": "FRA_chief_transhexa"
+      "chief_id": "FRA_chief_transhexa",
+      "products": [
+        "transport_services"
+      ]
     }
   ],
   "body": [

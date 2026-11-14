@@ -10,7 +10,10 @@
       "headcount": 4859,
       "city": "PL41_poznan",
       "tier": "major",
-      "chief_id": "POL_chief_zboze_wielkopolskie"
+      "chief_id": "POL_chief_zboze_wielkopolskie",
+      "products": [
+        "cereals"
+      ]
     },
     {
       "id": "POL_sady_lubelskie",
@@ -20,7 +23,10 @@
       "headcount": 4273,
       "city": "PL81_lublin",
       "tier": "major",
-      "chief_id": "POL_chief_sady_lubelskie"
+      "chief_id": "POL_chief_sady_lubelskie",
+      "products": [
+        "vegetables"
+      ]
     },
     {
       "id": "POL_pasze_warmia",
@@ -30,7 +36,11 @@
       "headcount": 6715,
       "city": "PL62_olsztyn",
       "tier": "major",
-      "chief_id": "POL_chief_pasze_warmia"
+      "chief_id": "POL_chief_pasze_warmia",
+      "products": [
+        "cereals",
+        "meat"
+      ]
     },
     {
       "id": "POL_przetwory_podlaskie",
@@ -40,7 +50,10 @@
       "headcount": 2778,
       "city": "PL84_bialystok",
       "tier": "major",
-      "chief_id": "POL_chief_przetwory_podlaskie"
+      "chief_id": "POL_chief_przetwory_podlaskie",
+      "products": [
+        "dairy"
+      ]
     },
     {
       "id": "POL_kopalnia_miedzi",
@@ -50,7 +63,11 @@
       "headcount": 34421,
       "city": "PL72_kielce",
       "tier": "major",
-      "chief_id": "POL_chief_kopalnia_miedzi"
+      "chief_id": "POL_chief_kopalnia_miedzi",
+      "products": [
+        "copper_ore",
+        "copper"
+      ]
     },
     {
       "id": "POL_huta_wisla",
@@ -60,7 +77,11 @@
       "headcount": 41441,
       "city": "PL22_katowice",
       "tier": "major",
-      "chief_id": "POL_chief_huta_wisla"
+      "chief_id": "POL_chief_huta_wisla",
+      "products": [
+        "steel",
+        "coke"
+      ]
     },
     {
       "id": "POL_stocznia_gdanska",
@@ -70,7 +91,10 @@
       "headcount": 24561,
       "city": "PL63_gdansk",
       "tier": "major",
-      "chief_id": "POL_chief_stocznia_gdanska"
+      "chief_id": "POL_chief_stocznia_gdanska",
+      "products": [
+        "ships"
+      ]
     },
     {
       "id": "POL_tabor_nowy",
@@ -80,7 +104,10 @@
       "headcount": 66563,
       "city": "PL71_lodz",
       "tier": "major",
-      "chief_id": "POL_chief_tabor_nowy"
+      "chief_id": "POL_chief_tabor_nowy",
+      "products": [
+        "rail_equipment"
+      ]
     },
     {
       "id": "POL_bank_kongresowy",
@@ -90,7 +117,10 @@
       "headcount": 38655,
       "city": "PL91_warsaw",
       "tier": "major",
-      "chief_id": "POL_chief_bank_kongresowy"
+      "chief_id": "POL_chief_bank_kongresowy",
+      "products": [
+        "finance"
+      ]
     },
     {
       "id": "POL_siec_baltyk",
@@ -100,7 +130,10 @@
       "headcount": 85204,
       "city": "PL42_szczecin",
       "tier": "major",
-      "chief_id": "POL_chief_siec_baltyk"
+      "chief_id": "POL_chief_siec_baltyk",
+      "products": [
+        "retail"
+      ]
     },
     {
       "id": "POL_siec_wielkopolska",
@@ -110,7 +143,10 @@
       "headcount": 55856,
       "city": "PL41_ostrow_wielkopolski",
       "tier": "major",
-      "chief_id": "POL_chief_siec_wielkopolska"
+      "chief_id": "POL_chief_siec_wielkopolska",
+      "products": [
+        "retail"
+      ]
     },
     {
       "id": "POL_sklepy_zachodnie",
@@ -120,7 +156,10 @@
       "headcount": 26500,
       "city": "PL41_poznan",
       "tier": "major",
-      "chief_id": "POL_chief_sklepy_zachodnie"
+      "chief_id": "POL_chief_sklepy_zachodnie",
+      "products": [
+        "retail"
+      ]
     }
   ],
   "body": [
