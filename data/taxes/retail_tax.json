@@ -1,0 +1,51 @@
+{
+  "id": "retail_tax",
+  "name": "Retail turnover tax",
+  "summary": "A tax on the turnover of the largest retailers.",
+  "rate_meaning": "% of retail turnover, top band",
+  "who_pays": [
+    "business"
+  ],
+  "base_share": 0.092248,
+  "erosion": 0.55,
+  "zero_ref_pct": 1.4,
+  "rate_range_pct": [
+    0.0,
+    3.0
+  ],
+  "demand_multiplier": 0.4,
+  "opinion_scale_pp": 1.12,
+  "bloc_salience": {
+    "business": 0.03
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "POL": 0.1291
+    },
+    "rate": {
+      "POL": 1.4
+    },
+    "year": {
+      "POL": "2025"
+    },
+    "provenance": {
+      "POL": "read_in_source"
+    },
+    "sources": {
+      "POL": "NIK P/26/001, podatek od sprzedazy detalicznej (0.8 % / 1.4 %)"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: corporate. Proposed values, Systems to accept or strike."
+  }
+}

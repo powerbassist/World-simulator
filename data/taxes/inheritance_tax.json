@@ -1,0 +1,68 @@
+{
+  "id": "inheritance_tax",
+  "name": "Inheritance tax",
+  "summary": "A tax on estates and large gifts, above an allowance.",
+  "rate_meaning": "top marginal rate",
+  "who_pays": [
+    "pensioners",
+    "business"
+  ],
+  "base_share": 0.007208,
+  "erosion": 0.5,
+  "zero_ref_pct": 40.0,
+  "rate_range_pct": [
+    0.0,
+    60.0
+  ],
+  "demand_multiplier": 0.25,
+  "opinion_scale_pp": 32.0,
+  "bloc_salience": {
+    "pensioners": 0.03,
+    "business": 0.01
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "FRA": 0.7182,
+      "DEU": 0.3576,
+      "GBR": 0.2906,
+      "POL": 0.0188
+    },
+    "rate": {
+      "FRA": 45.0,
+      "DEU": 50.0,
+      "GBR": 40.0,
+      "POL": 20.0
+    },
+    "year": {
+      "FRA": "2024",
+      "DEU": "2025",
+      "GBR": "2025-26",
+      "POL": "2025"
+    },
+    "provenance": {
+      "FRA": "yield read_in_source; top rate 45 % (direct line) from the notes",
+      "DEU": "read_in_source",
+      "GBR": "read_in_source",
+      "POL": "read_in_source"
+    },
+    "sources": {
+      "FRA": "budget annex: 16.0 inheritance + 4.9 gifts",
+      "DEU": "BMF 2025, Erbschaftsteuer (7-50 %)",
+      "GBR": "HMRC receipts Table 2, inheritance tax",
+      "POL": "MF local-budget report 2025 (3-20 % by kinship group)"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: between wealth and capital_gains. Proposed values, Systems to accept or strike."
+  }
+}
