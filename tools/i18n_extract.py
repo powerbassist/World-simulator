@@ -342,9 +342,11 @@ def unwired_texts():
 
 
 def tokens(text):
-    """What a translation must keep of its English: the %-placeholders in order, and the
-    `{{variables}}` and glossary mark ids as sets of counts (a language may move them)."""
-    return (PLACEHOLDER.findall(text), sorted(TEMPLATE_VAR.findall(text)), sorted(GLOSSARY_MARK.findall(text)))
+    """What a translation must keep of its English: the %-placeholders in order, the
+    `{{variables}}` and glossary mark ids as sets of counts (a language may move them), and
+    the number of `[/g]` closing marks (a lost one shows the rest of the line as a term)."""
+    return (PLACEHOLDER.findall(text), sorted(TEMPLATE_VAR.findall(text)), sorted(GLOSSARY_MARK.findall(text)),
+            text.count("[/g]"))
 
 
 def line_callers(line):
@@ -640,6 +642,7 @@ def selftest():
     check("variable kept", problems({"k": "Hi {{president}}"}, {"k": "Salut {{president}}"})[2], [])
     check("variable lost", problems({"k": "Hi {{president}}"}, {"k": "Salut {{président}}"})[2], ["k"])
     check("mark lost", problems({"k": "The [g=deficit]deficit[/g] grows"}, {"k": "Le déficit croît"})[2], ["k"])
+    check("closing mark lost", problems({"k": "The [g=deficit]deficit[/g] grows"}, {"k": "Le [g=deficit]déficit croît"})[2], ["k"])
     check("mark kept, moved", problems({"k": "[g=gdp]GDP[/g] and [g=deficit]deficit[/g]"},
                                        {"k": "[g=deficit]déficit[/g] et [g=gdp]PIB[/g]"})[2], [])
     # The new sources must find text in the real data, or a wrong path counts nothing.
