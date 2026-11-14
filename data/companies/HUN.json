@@ -44,7 +44,7 @@
     },
     {
       "id": "HUN_czutor_mezogazdasag",
-      "name": "Czutor Mezőgazdaság",
+      "name": "Czutor Csoport",
       "sector": "industry",
       "share": 0.055,
       "headcount": 39149,
@@ -54,7 +54,7 @@
     },
     {
       "id": "HUN_albertfalusi_szallitas",
-      "name": "Albertfalusi Szállítás",
+      "name": "Albertfalusi Energia",
       "sector": "industry",
       "share": 0.0571,
       "headcount": 48689,
@@ -64,7 +64,7 @@
     },
     {
       "id": "HUN_racz_anyagok",
-      "name": "Rácz Anyagok",
+      "name": "Rácz Biztosítás",
       "sector": "services",
       "share": 0.0285,
       "headcount": 32654,
@@ -74,7 +74,7 @@
     },
     {
       "id": "HUN_hegedus_ipar",
-      "name": "Hegedűs Ipar",
+      "name": "Hegedűs Kereskedelem",
       "sector": "services",
       "share": 0.0546,
       "headcount": 91762,
@@ -94,7 +94,7 @@
     },
     {
       "id": "HUN_lendvai_energia",
-      "name": "Lendvai Energia",
+      "name": "Lendvai Kereskedelem",
       "sector": "services",
       "share": 0.0486,
       "headcount": 92728,
@@ -136,7 +136,7 @@
   "body": [
     {
       "id": "HUN_balogh_anyagok",
-      "name": "Balogh Anyagok",
+      "name": "Balogh Csoport",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2392,
@@ -163,7 +163,7 @@
     },
     {
       "id": "HUN_zana_epitoipar",
-      "name": "Zana Építőipar",
+      "name": "Zana Kereskedelem",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2610,
@@ -181,7 +181,7 @@
     },
     {
       "id": "HUN_csepregi_anyagok",
-      "name": "Csepregi Anyagok",
+      "name": "Csepregi Mezőgazdaság",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2246,
@@ -190,7 +190,7 @@
     },
     {
       "id": "HUN_hegedus_biztositas",
-      "name": "Hegedűs Biztosítás",
+      "name": "Hegedűs Mezőgazdaság",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2246,
@@ -199,7 +199,7 @@
     },
     {
       "id": "HUN_nagydani_epitoipar",
-      "name": "Nagydani Építőipar",
+      "name": "Nagydani Mezőgazdaság",
       "sector": "agriculture",
       "share": 0.0243,
       "headcount": 2035,
@@ -217,7 +217,7 @@
     },
     {
       "id": "HUN_albertfalusi_mezogazdasag_mezogazdasag",
-      "name": "Albertfalusi Mezőgazdaság Mezőgazdaság",
+      "name": "Albertfalusi Mezőgazdaság",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2211,
@@ -226,7 +226,7 @@
     },
     {
       "id": "HUN_izso_ipar",
-      "name": "Izsó Ipar",
+      "name": "Izsó Kereskedelem",
       "sector": "agriculture",
       "share": 0.0208,
       "headcount": 1556,
@@ -235,7 +235,7 @@
     },
     {
       "id": "HUN_nemeth_energia",
-      "name": "Németh Energia",
+      "name": "Németh Csoport",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2575,
@@ -244,7 +244,7 @@
     },
     {
       "id": "HUN_voros_epitoipar",
-      "name": "Vörös Építőipar",
+      "name": "Vörös Csoport",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2670,
@@ -262,7 +262,7 @@
     },
     {
       "id": "HUN_papp_logisztika",
-      "name": "Papp Logisztika",
+      "name": "Papp Csoport",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2582,
@@ -289,7 +289,7 @@
     },
     {
       "id": "HUN_meszaros_biztositas",
-      "name": "Mészáros Biztosítás",
+      "name": "Mészáros Mezőgazdaság",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2662,
@@ -298,7 +298,7 @@
     },
     {
       "id": "HUN_fabian_szallitas",
-      "name": "Fábián Szállítás",
+      "name": "Fábián Csoport",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20751,
@@ -307,7 +307,7 @@
     },
     {
       "id": "HUN_madarasz_mezogazdasag",
-      "name": "Madarász Mezőgazdaság",
+      "name": "Madarász Csoport",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21059,
@@ -316,7 +316,7 @@
     },
     {
       "id": "HUN_rekettyes_biztositas",
-      "name": "Rekettyés Biztosítás",
+      "name": "Rekettyés Csoport",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21472,
@@ -334,7 +334,7 @@
     },
     {
       "id": "HUN_pinter_logisztika",
-      "name": "Pintér Logisztika",
+      "name": "Pintér Energia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19950,
@@ -343,7 +343,7 @@
     },
     {
       "id": "HUN_kalotai_kereskedelem",
-      "name": "Kalotai Kereskedelem",
+      "name": "Kalotai Építőipar",
       "sector": "industry",
       "share": 0.0134,
       "headcount": 8883,
@@ -370,7 +370,7 @@
     },
     {
       "id": "HUN_halasz_biztositas",
-      "name": "Halász Biztosítás",
+      "name": "Halász Építőipar",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18282,
@@ -379,7 +379,7 @@
     },
     {
       "id": "HUN_zsak_mezogazdasag",
-      "name": "Zsak Mezőgazdaság",
+      "name": "Zsak Anyagok",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19230,
@@ -433,7 +433,7 @@
     },
     {
       "id": "HUN_erdos_biztositas",
-      "name": "Erdős Biztosítás",
+      "name": "Erdős Építőipar",
       "sector": "industry",
       "share": 0.024,
       "headcount": 14961,
@@ -451,7 +451,7 @@
     },
     {
       "id": "HUN_dudink_mezogazdasag",
-      "name": "Dudink Mezőgazdaság",
+      "name": "Dudink Csoport",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19008,
@@ -460,7 +460,7 @@
     },
     {
       "id": "HUN_halasz_szallitas",
-      "name": "Halász Szállítás",
+      "name": "Halász Energia",
       "sector": "industry",
       "share": 0.0148,
       "headcount": 9359,
@@ -478,7 +478,7 @@
     },
     {
       "id": "HUN_erdos_mezogazdasag",
-      "name": "Erdős Mezőgazdaság",
+      "name": "Erdős Energia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21312,
@@ -487,7 +487,7 @@
     },
     {
       "id": "HUN_nemeth_logisztika",
-      "name": "Németh Logisztika",
+      "name": "Németh Ipar",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18240,
@@ -496,7 +496,7 @@
     },
     {
       "id": "HUN_madarasz_biztositas",
-      "name": "Madarász Biztosítás",
+      "name": "Madarász Anyagok",
       "sector": "industry",
       "share": 0.0188,
       "headcount": 13209,
@@ -505,7 +505,7 @@
     },
     {
       "id": "HUN_csepregi_logisztika",
-      "name": "Csepregi Logisztika",
+      "name": "Csepregi Anyagok",
       "sector": "industry",
       "share": 0.0292,
       "headcount": 19192,
@@ -514,7 +514,7 @@
     },
     {
       "id": "HUN_nagypal_mezogazdasag_csoport",
-      "name": "Nagypál Mezőgazdaság Csoport",
+      "name": "Nagypál Csoport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24259,
@@ -523,10 +523,10 @@
     },
     {
       "id": "HUN_meszaros_energia",
-      "name": "Mészáros Energia",
+      "name": "Mészáros Kereskedelem",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23897,
       "city": "HU11_budapest",
       "tier": "body"
     },
@@ -541,10 +541,10 @@
     },
     {
       "id": "HUN_nagydani_energia",
-      "name": "Nagydani Energia",
+      "name": "Nagydani Logisztika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22737,
       "city": "HU22_szombathely",
       "tier": "body"
     },
@@ -568,16 +568,16 @@
     },
     {
       "id": "HUN_szilagyi_ipar_energia",
-      "name": "Szilágyi Ipar Energia",
+      "name": "Szilágyi Kereskedelem",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24892,
       "city": "HU12_erd",
       "tier": "body"
     },
     {
       "id": "HUN_kiraly_mezogazdasag",
-      "name": "Király Mezőgazdaság",
+      "name": "Király Logisztika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23229,
@@ -586,10 +586,10 @@
     },
     {
       "id": "HUN_galgoczy_epitoipar",
-      "name": "Galgóczy Építőipar",
+      "name": "Galgóczy Biztosítás",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22879,
       "city": "HU33_kecskemet",
       "tier": "body"
     },
@@ -604,7 +604,7 @@
     },
     {
       "id": "HUN_zsak_epitoipar",
-      "name": "Zsak Építőipar",
+      "name": "Zsak Csoport",
       "sector": "services",
       "share": 0.011,
       "headcount": 16828,
@@ -613,7 +613,7 @@
     },
     {
       "id": "HUN_takacs_ipar",
-      "name": "Takács Ipar",
+      "name": "Takács Szállítás",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24199,
@@ -622,7 +622,7 @@
     },
     {
       "id": "HUN_papp_mezogazdasag",
-      "name": "Papp Mezőgazdaság",
+      "name": "Papp Biztosítás",
       "sector": "services",
       "share": 0.01,
       "headcount": 16316,
@@ -634,13 +634,13 @@
       "name": "Vörös Szállítás",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22859,
       "city": "HU11_budapest",
       "tier": "body"
     },
     {
       "id": "HUN_petofi_epitoipar",
-      "name": "Petőfi Építőipar",
+      "name": "Petőfi Kereskedelem",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23201,
@@ -649,7 +649,7 @@
     },
     {
       "id": "HUN_erdelyi_ipar",
-      "name": "Erdélyi Ipar",
+      "name": "Erdélyi Logisztika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24139,
@@ -661,7 +661,7 @@
       "name": "Orosz Csoport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24379,
       "city": "HU33_szeged",
       "tier": "body"
     },
@@ -670,7 +670,7 @@
       "name": "Vörös Logisztika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24945,
       "city": "HU32_debrecen",
       "tier": "body"
     },
@@ -685,7 +685,7 @@
     },
     {
       "id": "HUN_kiraly_energia",
-      "name": "Király Energia",
+      "name": "Király Biztosítás",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22853,
@@ -694,7 +694,7 @@
     },
     {
       "id": "HUN_fabian_energia",
-      "name": "Fábián Energia",
+      "name": "Fábián Biztosítás",
       "sector": "services",
       "share": 0.0146,
       "headcount": 21968,
@@ -712,19 +712,19 @@
     },
     {
       "id": "HUN_jakabfi_energia",
-      "name": "Jakabfi Energia",
+      "name": "Jakabfi Logisztika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24235,
       "city": "HU22_szombathely",
       "tier": "body"
     },
     {
       "id": "HUN_zsoldos_ipar",
-      "name": "Zsoldos Ipar",
+      "name": "Zsoldos Csoport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23970,
       "city": "HU11_budapest",
       "tier": "body"
     },
@@ -748,7 +748,7 @@
     },
     {
       "id": "HUN_veghseo_mezogazdasag",
-      "name": "Véghseő Mezőgazdaság",
+      "name": "Véghseő Szállítás",
       "sector": "services",
       "share": 0.0136,
       "headcount": 19571,
@@ -757,7 +757,7 @@
     },
     {
       "id": "HUN_foldes_energia",
-      "name": "Földes Energia",
+      "name": "Földes Csoport",
       "sector": "services",
       "share": 0.014,
       "headcount": 19895,
@@ -766,10 +766,10 @@
     },
     {
       "id": "HUN_takacs_epitoipar",
-      "name": "Takács Építőipar",
+      "name": "Takács Biztosítás",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22904,
       "city": "HU32_debrecen",
       "tier": "body"
     },
@@ -778,16 +778,16 @@
       "name": "Töröksz Logisztika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23815,
       "city": "HU11_budapest",
       "tier": "body"
     },
     {
       "id": "HUN_orosz_mezogazdasag",
-      "name": "Orosz Mezőgazdaság",
+      "name": "Orosz Szállítás",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22897,
       "city": "HU11_budapest",
       "tier": "body"
     },
@@ -802,7 +802,7 @@
     },
     {
       "id": "HUN_tamasi_epitoipar",
-      "name": "Tamási Építőipar",
+      "name": "Tamási Kereskedelem",
       "sector": "services",
       "share": 0.0156,
       "headcount": 21759,
@@ -811,7 +811,7 @@
     },
     {
       "id": "HUN_lukacsovics_ipar",
-      "name": "Lukacsovics Ipar",
+      "name": "Lukacsovics Logisztika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24647,
@@ -820,7 +820,7 @@
     },
     {
       "id": "HUN_foldes_anyagok",
-      "name": "Földes Anyagok",
+      "name": "Földes Szállítás",
       "sector": "services",
       "share": 0.0129,
       "headcount": 20171,
@@ -850,22 +850,22 @@
       "name": "Zsak Logisztika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23866,
       "city": "HU31_miskolc",
       "tier": "body"
     },
     {
       "id": "HUN_zsoldos_epitoipar",
-      "name": "Zsoldos Építőipar",
+      "name": "Zsoldos Szállítás",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24427,
       "city": "HU33_kecskemet",
       "tier": "body"
     },
     {
       "id": "HUN_dudas_epitoipar",
-      "name": "Dudás Építőipar",
+      "name": "Dudás Csoport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23261,
@@ -874,16 +874,16 @@
     },
     {
       "id": "HUN_batori_ipar",
-      "name": "Bátori Ipar",
+      "name": "Bátori Logisztika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24037,
       "city": "HU33_szeged",
       "tier": "body"
     },
     {
       "id": "HUN_erdos_anyagok",
-      "name": "Erdős Anyagok",
+      "name": "Erdős Biztosítás",
       "sector": "services",
       "share": 0.013,
       "headcount": 21133,
@@ -901,7 +901,7 @@
     },
     {
       "id": "HUN_tamasi_anyagok",
-      "name": "Tamási Anyagok",
+      "name": "Tamási Szállítás",
       "sector": "services",
       "share": 0.0057,
       "headcount": 9153,

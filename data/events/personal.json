@@ -27,6 +27,7 @@
         {
           "id": "give_the_portfolio",
           "label": "Give her the ministry",
+          "short": "Give ministry",
           "summary": "The appointment is deserved and reads as exactly what it is: a debt paid in public. The ring of advisers who expected the post for one of their own will make sure the reading spreads.",
           "effects": {
             "society": {
@@ -45,6 +46,7 @@
         {
           "id": "a_chairmanship",
           "label": "Offer the chairmanship instead",
+          "short": "Offer a chair",
           "summary": "A development agency gavel, a staff, and none of the votes. It is a real thing and it is not the thing, and she will take it, because taking it is loyal too.",
           "effects": {
             "society": {
@@ -63,6 +65,7 @@
         {
           "id": "pass_over",
           "label": "Pass her over again",
+          "short": "Pass her over",
           "summary": "The backbench question becomes a backbench answer: loyalty is what you spend when you have nothing else. She keeps voting with you, and stops defending you for free.",
           "default": true,
           "effects": {
@@ -105,6 +108,7 @@
         {
           "id": "confront",
           "label": "Call the rival in",
+          "short": "Call rival in",
           "summary": "The conversation is private and the warning is not: the next attributed quote ends a career. The profiles stop, and the archive now has a villain, which is half the way to a martyr.",
           "effects": {
             "bloc_offset": {
@@ -120,6 +124,7 @@
         {
           "id": "open_the_books",
           "label": "Publish the government's attendance record",
+          "short": "Publish records",
           "summary": "Every minister's votes, absences and interviews, in one table, on the theory that sunlight makes everyone look equally occupied. Some of the eleven sources are exposed by their own numbers; so are three of yours.",
           "effects": {
             "society": {
@@ -171,6 +176,7 @@
         {
           "id": "expel",
           "label": "Expel and contest the seat",
+          "short": "Expel",
           "summary": "The machinery moves against the defector within the week, and the constituency gets a by-election it did not ask for. The base rallies -- its first rally in a year -- and the swing in one seat is watched from every other.",
           "effects": {
             "bloc_offset": {
@@ -245,6 +251,7 @@
         {
           "id": "change_course",
           "label": "Change the policy he named",
+          "short": "Change course",
           "summary": "The stricken programme is un-stricken by Wednesday, at a cost the finance ministry has been refusing for a year. The elder announces, magnanimously, that the party listens; the finance ministry announces nothing and invoices everything.",
           "effects": {
             "spending_pct_gdp": {
@@ -263,6 +270,7 @@
         {
           "id": "platform_him",
           "label": "Give him the conference stage",
+          "short": "Give him a stage",
           "summary": "He speaks, the hall loves him, and the clip runs all weekend with the government's logo behind him. It costs nothing tonight; the policy he named is now the party's named grievance, and he keeps the receipt.",
           "effects": {
             "bloc_offset": {
@@ -278,6 +286,7 @@
         {
           "id": "decline",
           "label": "Let the invitation lapse",
+          "short": "Let it lapse",
           "summary": "He speaks anyway, unchaired, to a hall that came for him. The party learns that its own elders answer to no one, and the clip runs all weekend without the logo.",
           "default": true,
           "effects": {
@@ -313,6 +322,7 @@
         {
           "id": "appoint_loyalist",
           "label": "Appoint the loyalist",
+          "short": "Name loyalist",
           "summary": "The one who has never briefed against anyone, including you, is competent the way a safe pair of hands is competent. The other two factions learn that the price of loyalty is a ministry, and the price of disloyalty is waiting.",
           "effects": {
             "society": {
@@ -331,6 +341,7 @@
         {
           "id": "appoint_rival",
           "label": "Appoint the strongest rival",
+          "short": "Name the rival",
           "summary": "The one who wanted it is the one who can do it, and giving it to them takes the argument out of the factions' mouths. It also hands a platform to the person best placed to use one.",
           "effects": {
             "bloc_offset": {
@@ -346,6 +357,7 @@
         {
           "id": "leave_open",
           "label": "Leave the post unfilled",
+          "short": "Leave it open",
           "summary": "The portfolio is run out of your own office 'for the rest of the quarter', which is how the last permanent vacancy is still run four years on. The factions suspend their count and keep their candidates warm.",
           "default": true,
           "effects": {
@@ -387,6 +399,7 @@
         {
           "id": "sack",
           "label": "Dismiss the minister",
+          "short": "Dismiss",
           "summary": "The conditionals stop and the backbenches count what ambition costs. The minister becomes, overnight, the leadership question's answer, with a constituency, a grievance and a great deal of time.",
           "effects": {
             "bloc_offset": {
@@ -402,6 +415,7 @@
         {
           "id": "promote",
           "label": "Promote them out of reach",
+          "short": "Promote away",
           "summary": "A senior post, a real budget, and the front bench's collective eye upon them: ambition with something to lose. The newspapers lose a story and the minister loses the time to give interviews.",
           "effects": {
             "society": {
@@ -420,6 +434,7 @@
         {
           "id": "starve_it",
           "label": "Starve it of comment",
+          "short": "Say nothing",
           "summary": "No denial, no dismissal, no quote. The story runs on its own oxygen for a fortnight and finds most of it; the minister's allies note that the government bleeds and call it calm.",
           "default": true,
           "effects": {
@@ -453,6 +468,7 @@
         {
           "id": "conciliate",
           "label": "Offer the reconciliation post",
+          "short": "Offer a post",
           "summary": "The post that was his before it was anyone else's is offered back, through an intermediary, with the words 'unfinished business' left hanging. He takes it, and the grudge goes with him into the building -- which is better than it outside.",
           "effects": {
             "society": {
@@ -471,6 +487,7 @@
         {
           "id": "force_out",
           "label": "Accept the resignation he keeps drafting",
+          "short": "Take resignation",
           "summary": "The letter is in the drawer and everyone knows it. The government is rid of a running sore, and the backbenches learn the reshuffle's grades are permanent; two others start drafting.",
           "effects": {
             "bloc_offset": {
@@ -528,6 +545,7 @@
         {
           "id": "call_contest",
           "label": "Call the contest and win it",
+          "short": "Call the contest",
           "summary": "Naming the day takes the letter's anonymity away: the forty must sign or scatter. Win, and the question is settled for a term at the price of a campaign fought in public against your own side; lose, and the letter was right.",
           "effects": {
             "bloc_offset": {
@@ -543,6 +561,7 @@
         {
           "id": "buy_the_forty",
           "label": "Buy the forty back",
+          "short": "Buy them back",
           "summary": "Committee chairs, a promise on the programme, one ministry quietly enlarged. The letters stop within the month, at a price the cabinet office will spend the rest of the term declining to publish.",
           "effects": {
             "society": {
@@ -594,6 +613,7 @@
         {
           "id": "publish_now",
           "label": "Publish the real list tonight",
+          "short": "Publish tonight",
           "summary": "The ambiguity was the leak's whole market; take it away and the versions die by morning. The cabinet you announce three days early spends those three days governing its own disappointments instead of the country.",
           "effects": {
             "society": {
@@ -612,6 +632,7 @@
         {
           "id": "deny_all",
           "label": "Deny every version, including the true one",
+          "short": "Deny everything",
           "summary": "The denials are flat, blanket and, in one case, untrue. It gets you to Thursday with the building's attention intact and its belief in anything the office says spent.",
           "effects": {
             "bloc_offset": {
@@ -627,6 +648,7 @@
         {
           "id": "delay",
           "label": "Postpone the reshuffle",
+          "short": "Postpone it",
           "summary": "Thursday becomes 'when the list is right', the versions multiply, and every minister governs the next month with a campaign for survival running underneath. The country gets a government at half its attention.",
           "default": true,
           "effects": {
@@ -661,6 +683,7 @@
         {
           "id": "buy_silence",
           "label": "Buy the extracts back",
+          "short": "Buy extracts",
           "summary": "The publisher's price is met through an intermediary, which is how these things are always met, and the manuscript goes into a safe. The book will out; the deal will out sooner.",
           "effects": {
             "society": {
@@ -679,6 +702,7 @@
         {
           "id": "pre_buttle",
           "label": "Brief against the book first",
+          "short": "Strike first",
           "summary": "The counter-narrative is seeded with three friendly writers before the extracts run: the deputy's version of March was not the building's. The book lands on a battlefield you chose, and the deputy's publishers have noticed the coordination.",
           "effects": {
             "society": {

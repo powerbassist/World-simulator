@@ -603,3 +603,10 @@ const NEGOTIATE_WALK := 0.5
 ## the purchases after a seller walks, the sale after the buyers do (the parent's call 1
 ## on Negotiate: a cooldown, as a settlement's, two years; per side by its #280 ruling).
 const NEGOTIATE_WALK_COOLDOWN_MONTHS := 24
+
+## V5.3 a, screen 5 (the goods): which economic sector a good's category belongs to,
+## the split the Sectors tabs draw -- farm goods are Agriculture, services goods are
+## Services, and every other category (raw, energy, intermediate, capital, consumer) is
+## Industry. A major's product line must sit in its own sector by this table, or the
+## firm would fall under no chip in its own tab. A category absent here is Industry.
+const GOOD_CATEGORY_SECTOR := {"agri": "agriculture", "services": "services"}

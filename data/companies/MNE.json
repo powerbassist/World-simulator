@@ -24,7 +24,7 @@
     },
     {
       "id": "MNE_jovovic_trgovina",
-      "name": "Jovović Trgovina",
+      "name": "Jovović Građevina",
       "sector": "industry",
       "share": 0.0569,
       "headcount": 29548,
@@ -34,7 +34,7 @@
     },
     {
       "id": "MNE_baosic_trgovina",
-      "name": "Baošić Trgovina",
+      "name": "Baošić Industrija",
       "sector": "industry",
       "share": 0.0666,
       "headcount": 59060,
@@ -114,7 +114,7 @@
     },
     {
       "id": "MNE_durisic_materijali",
-      "name": "Đurišić Materijali",
+      "name": "Đurišić Trgovina",
       "sector": "services",
       "share": 0.038,
       "headcount": 53551,
@@ -124,7 +124,7 @@
     },
     {
       "id": "MNE_boskovic_gradevina",
-      "name": "Bošković Građevina",
+      "name": "Bošković Saobraćaj",
       "sector": "services",
       "share": 0.0286,
       "headcount": 57615,
@@ -136,7 +136,7 @@
   "body": [
     {
       "id": "MNE_baosic_saobracaj",
-      "name": "Baošić Saobraćaj",
+      "name": "Baošić Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2477,
@@ -145,7 +145,7 @@
     },
     {
       "id": "MNE_tomasevic_gradevina",
-      "name": "Tomašević Građevina",
+      "name": "Tomašević Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2418,
@@ -163,7 +163,7 @@
     },
     {
       "id": "MNE_scepanovic_osiguranje",
-      "name": "Šćepanović Osiguranje",
+      "name": "Šćepanović Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2643,
@@ -172,7 +172,7 @@
     },
     {
       "id": "MNE_boskovic_materijali",
-      "name": "Bošković Materijali",
+      "name": "Bošković Poljoprivreda",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2627,
@@ -181,7 +181,7 @@
     },
     {
       "id": "MNE_dragovic_gradevina",
-      "name": "Dragović Građevina",
+      "name": "Dragović Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2492,
@@ -208,7 +208,7 @@
     },
     {
       "id": "MNE_cerovic_gradevina",
-      "name": "Cerović Građevina",
+      "name": "Cerović Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2565,
@@ -235,7 +235,7 @@
     },
     {
       "id": "MNE_vujovic_logistika",
-      "name": "Vujović Logistika",
+      "name": "Vujović Trgovina",
       "sector": "agriculture",
       "share": 0.0249,
       "headcount": 2013,
@@ -244,7 +244,7 @@
     },
     {
       "id": "MNE_nikcevic_logistika",
-      "name": "Nikčević Logistika",
+      "name": "Nikčević Poljoprivreda",
       "sector": "agriculture",
       "share": 0.0175,
       "headcount": 1491,
@@ -253,7 +253,7 @@
     },
     {
       "id": "MNE_durisic_logistika",
-      "name": "Đurišić Logistika",
+      "name": "Đurišić Poljoprivreda",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2548,
@@ -271,7 +271,7 @@
     },
     {
       "id": "MNE_boskovic_saobracaj_gradevina",
-      "name": "Bošković Saobraćaj Građevina",
+      "name": "Bošković Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2523,
@@ -280,7 +280,7 @@
     },
     {
       "id": "MNE_zecevic_industrija",
-      "name": "Zečević Industrija",
+      "name": "Zečević Poljoprivreda",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2232,
@@ -307,7 +307,7 @@
     },
     {
       "id": "MNE_vucinic_osiguranje",
-      "name": "Vučinić Osiguranje",
+      "name": "Vučinić Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21474,
@@ -316,7 +316,7 @@
     },
     {
       "id": "MNE_durisic_trgovina",
-      "name": "Đurišić Trgovina",
+      "name": "Đurišić Energija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18998,
@@ -334,7 +334,7 @@
     },
     {
       "id": "MNE_cerovic_saobracaj",
-      "name": "Cerović Saobraćaj",
+      "name": "Cerović Građevina",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19130,
@@ -361,7 +361,7 @@
     },
     {
       "id": "MNE_scepanovic_osiguranje_trgovina",
-      "name": "Šćepanović Osiguranje Trgovina",
+      "name": "Šćepanović Industrija",
       "sector": "industry",
       "share": 0.0294,
       "headcount": 20731,
@@ -370,7 +370,7 @@
     },
     {
       "id": "MNE_jovovic_logistika",
-      "name": "Jovović Logistika",
+      "name": "Jovović Grupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18950,
@@ -379,7 +379,7 @@
     },
     {
       "id": "MNE_raickovic_trgovina",
-      "name": "Raičković Trgovina",
+      "name": "Raičković Materijali",
       "sector": "industry",
       "share": 0.0119,
       "headcount": 8460,
@@ -397,7 +397,7 @@
     },
     {
       "id": "MNE_nikcevic_trgovina",
-      "name": "Nikčević Trgovina",
+      "name": "Nikčević Energija",
       "sector": "industry",
       "share": 0.0277,
       "headcount": 18246,
@@ -406,7 +406,7 @@
     },
     {
       "id": "MNE_stanisic_logistika",
-      "name": "Stanišić Logistika",
+      "name": "Stanišić Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20466,
@@ -424,7 +424,7 @@
     },
     {
       "id": "MNE_jovovic_industrija_poljoprivreda",
-      "name": "Jovović Industrija Poljoprivreda",
+      "name": "Jovović Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19028,
@@ -469,7 +469,7 @@
     },
     {
       "id": "MNE_raickovic_poljoprivreda",
-      "name": "Raičković Poljoprivreda",
+      "name": "Raičković Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19494,
@@ -496,7 +496,7 @@
     },
     {
       "id": "MNE_cerovic_osiguranje",
-      "name": "Cerović Osiguranje",
+      "name": "Cerović Energija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21581,
@@ -505,16 +505,16 @@
     },
     {
       "id": "MNE_cerovic_materijali",
-      "name": "Cerović Materijali",
+      "name": "Cerović Saobraćaj",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23390,
       "city": "ME00_niksic",
       "tier": "body"
     },
     {
       "id": "MNE_ivanovic_poljoprivreda",
-      "name": "Ivanović Poljoprivreda",
+      "name": "Ivanović Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23929,
@@ -523,10 +523,10 @@
     },
     {
       "id": "MNE_gazivoda_industrija_trgovina",
-      "name": "Gazivoda Industrija Trgovina",
+      "name": "Gazivoda Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24826,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -541,10 +541,10 @@
     },
     {
       "id": "MNE_durisic_energija_energija",
-      "name": "Đurišić Energija Energija",
+      "name": "Đurišić Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23125,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -562,7 +562,7 @@
       "name": "Perović Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24894,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -586,7 +586,7 @@
     },
     {
       "id": "MNE_vucinic_poljoprivreda",
-      "name": "Vučinić Poljoprivreda",
+      "name": "Vučinić Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23873,
@@ -595,7 +595,7 @@
     },
     {
       "id": "MNE_perovic_energija_saobracaj",
-      "name": "Perović Energija Saobraćaj",
+      "name": "Perović Trgovina",
       "sector": "services",
       "share": 0.0128,
       "headcount": 19710,
@@ -604,16 +604,16 @@
     },
     {
       "id": "MNE_perovic_energija_materijali",
-      "name": "Perović Energija Materijali",
+      "name": "Perović Osiguranje Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23261,
       "city": "ME00_niksic",
       "tier": "body"
     },
     {
       "id": "MNE_kovacevic_poljoprivreda",
-      "name": "Kovačević Poljoprivreda",
+      "name": "Kovačević Saobraćaj",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24866,
@@ -622,7 +622,7 @@
     },
     {
       "id": "MNE_tomasevic_industrija",
-      "name": "Tomašević Industrija",
+      "name": "Tomašević Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22782,
@@ -631,7 +631,7 @@
     },
     {
       "id": "MNE_vujovic_poljoprivreda",
-      "name": "Vujović Poljoprivreda",
+      "name": "Vujović Saobraćaj",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24303,
@@ -649,7 +649,7 @@
     },
     {
       "id": "MNE_cerovic_industrija_energija",
-      "name": "Cerović Industrija Energija",
+      "name": "Cerović Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24818,
@@ -667,7 +667,7 @@
     },
     {
       "id": "MNE_mijatovic_materijali",
-      "name": "Mijatović Materijali",
+      "name": "Mijatović Saobraćaj",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24685,
@@ -676,7 +676,7 @@
     },
     {
       "id": "MNE_kovacevic_energija",
-      "name": "Kovačević Energija",
+      "name": "Kovačević Grupa",
       "sector": "services",
       "share": 0.0097,
       "headcount": 15822,
@@ -685,7 +685,7 @@
     },
     {
       "id": "MNE_stanisic_industrija_osiguranje",
-      "name": "Stanišić Industrija Osiguranje",
+      "name": "Stanišić Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24317,
@@ -694,7 +694,7 @@
     },
     {
       "id": "MNE_durisic_industrija",
-      "name": "Đurišić Industrija",
+      "name": "Đurišić Grupa",
       "sector": "services",
       "share": 0.0068,
       "headcount": 10031,
@@ -712,7 +712,7 @@
     },
     {
       "id": "MNE_ivanovic_trgovina_materijali",
-      "name": "Ivanović Trgovina Materijali",
+      "name": "Ivanović Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22764,
@@ -721,7 +721,7 @@
     },
     {
       "id": "MNE_lakic_materijali",
-      "name": "Lakić Materijali",
+      "name": "Lakić Grupa",
       "sector": "services",
       "share": 0.0119,
       "headcount": 17522,
@@ -739,16 +739,16 @@
     },
     {
       "id": "MNE_scepanovic_materijali",
-      "name": "Šćepanović Materijali",
+      "name": "Šćepanović Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23088,
       "city": "ME00_podgorica",
       "tier": "body"
     },
     {
       "id": "MNE_popovic_gradevina",
-      "name": "Popović Građevina",
+      "name": "Popović Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23980,
@@ -775,7 +775,7 @@
     },
     {
       "id": "MNE_tomasevic_gradevina_logistika",
-      "name": "Tomašević Građevina Logistika",
+      "name": "Tomašević Trgovina",
       "sector": "services",
       "share": 0.0139,
       "headcount": 19737,
@@ -784,10 +784,10 @@
     },
     {
       "id": "MNE_radulovic_grupa_energija",
-      "name": "Radulović Grupa Energija",
+      "name": "Radulović Trgovina",
       "sector": "services",
       "share": 0.0163,
-      "headcount": 25000,
+      "headcount": 23467,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -802,7 +802,7 @@
     },
     {
       "id": "MNE_jovovic_materijali",
-      "name": "Jovović Materijali",
+      "name": "Jovović Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23774,
@@ -814,13 +814,13 @@
       "name": "Vučinić Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23498,
       "city": "ME00_podgorica",
       "tier": "body"
     },
     {
       "id": "MNE_durisic_gradevina",
-      "name": "Đurišić Građevina",
+      "name": "Đurišić Saobraćaj",
       "sector": "services",
       "share": 0.0114,
       "headcount": 17957,
@@ -829,7 +829,7 @@
     },
     {
       "id": "MNE_popovic_poljoprivreda",
-      "name": "Popović Poljoprivreda",
+      "name": "Popović Logistika",
       "sector": "services",
       "share": 0.0136,
       "headcount": 21572,
@@ -838,7 +838,7 @@
     },
     {
       "id": "MNE_lakic_energija_gradevina",
-      "name": "Lakić Energija Građevina",
+      "name": "Lakić Logistika",
       "sector": "services",
       "share": 0.0165,
       "headcount": 24782,
@@ -847,7 +847,7 @@
     },
     {
       "id": "MNE_perovic_poljoprivreda_trgovina",
-      "name": "Perović Poljoprivreda Trgovina",
+      "name": "Perović Logistika Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24793,
@@ -856,7 +856,7 @@
     },
     {
       "id": "MNE_mijatovic_industrija",
-      "name": "Mijatović Industrija",
+      "name": "Mijatović Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23392,
@@ -865,7 +865,7 @@
     },
     {
       "id": "MNE_kalezic_trgovina_poljoprivreda",
-      "name": "Kalezić Trgovina Poljoprivreda",
+      "name": "Kalezić Osiguranje",
       "sector": "services",
       "share": 0.01,
       "headcount": 14835,

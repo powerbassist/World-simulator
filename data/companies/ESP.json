@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "ESP_aranda_transportes",
-      "name": "Aranda Transportes",
+      "name": "Aranda Comercial",
       "sector": "agriculture",
       "share": 0.2593,
       "headcount": 17826,
@@ -14,7 +14,7 @@
     },
     {
       "id": "ESP_arriaga_construccion",
-      "name": "Arriaga Construcción",
+      "name": "Arriaga Grupo",
       "sector": "agriculture",
       "share": 0.1735,
       "headcount": 13580,
@@ -24,7 +24,7 @@
     },
     {
       "id": "ESP_aranda_seguros",
-      "name": "Aranda Seguros",
+      "name": "Aranda Industrias",
       "sector": "industry",
       "share": 0.0716,
       "headcount": 48052,
@@ -64,7 +64,7 @@
     },
     {
       "id": "ESP_figueroa_industrias",
-      "name": "Figueroa Industrias",
+      "name": "Figueroa Logística",
       "sector": "services",
       "share": 0.0663,
       "headcount": 79300,
@@ -125,7 +125,7 @@
     },
     {
       "id": "ESP_villalobos_logistica",
-      "name": "Villalobos Logística",
+      "name": "Villalobos Grupo",
       "sector": "agriculture",
       "share": 0.0193,
       "headcount": 1453,
@@ -143,7 +143,7 @@
     },
     {
       "id": "ESP_uribarri_materiales",
-      "name": "Uribarri Materiales",
+      "name": "Uribarri Comercial",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2302,
@@ -161,7 +161,7 @@
     },
     {
       "id": "ESP_ibanez_transportes",
-      "name": "Ibáñez Transportes",
+      "name": "Ibáñez Agro",
       "sector": "agriculture",
       "share": 0.0211,
       "headcount": 1549,
@@ -179,7 +179,7 @@
     },
     {
       "id": "ESP_grijalba_industrias",
-      "name": "Grijalba Industrias",
+      "name": "Grijalba Grupo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2636,
@@ -197,7 +197,7 @@
     },
     {
       "id": "ESP_quesada_seguros",
-      "name": "Quesada Seguros",
+      "name": "Quesada Comercial",
       "sector": "agriculture",
       "share": 0.0096,
       "headcount": 717,
@@ -224,7 +224,7 @@
     },
     {
       "id": "ESP_vadillo_industrias",
-      "name": "Vadillo Industrias",
+      "name": "Vadillo Comercial",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2614,
@@ -233,7 +233,7 @@
     },
     {
       "id": "ESP_bembibre_construccion",
-      "name": "Bembibre Construcción",
+      "name": "Bembibre Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2243,
@@ -260,7 +260,7 @@
     },
     {
       "id": "ESP_arriaga_industrias",
-      "name": "Arriaga Industrias",
+      "name": "Arriaga Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2218,
@@ -269,7 +269,7 @@
     },
     {
       "id": "ESP_villalobos_seguros",
-      "name": "Villalobos Seguros",
+      "name": "Villalobos Energía",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20460,
@@ -278,7 +278,7 @@
     },
     {
       "id": "ESP_aranda_grupo_agro",
-      "name": "Aranda Grupo Agro",
+      "name": "Aranda Grupo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20198,
@@ -287,7 +287,7 @@
     },
     {
       "id": "ESP_jove_seguros",
-      "name": "Jové Seguros",
+      "name": "Jové Grupo",
       "sector": "industry",
       "share": 0.0194,
       "headcount": 11807,
@@ -296,7 +296,7 @@
     },
     {
       "id": "ESP_etxebarria_seguros",
-      "name": "Etxebarria Seguros",
+      "name": "Etxebarria Grupo",
       "sector": "industry",
       "share": 0.0172,
       "headcount": 11948,
@@ -314,7 +314,7 @@
     },
     {
       "id": "ESP_huertas_logistica",
-      "name": "Huertas Logística",
+      "name": "Huertas Grupo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21574,
@@ -332,7 +332,7 @@
     },
     {
       "id": "ESP_gutierre_logistica",
-      "name": "Gutierre Logística",
+      "name": "Gutierre Materiales",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22101,
@@ -341,7 +341,7 @@
     },
     {
       "id": "ESP_mendive_logistica",
-      "name": "Mendive Logística",
+      "name": "Mendive Energía",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21932,
@@ -350,7 +350,7 @@
     },
     {
       "id": "ESP_gutierre_transportes",
-      "name": "Gutierre Transportes",
+      "name": "Gutierre Energía",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20019,
@@ -368,7 +368,7 @@
     },
     {
       "id": "ESP_arriaga_agro_seguros",
-      "name": "Arriaga Agro Seguros",
+      "name": "Arriaga Materiales",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20117,
@@ -377,7 +377,7 @@
     },
     {
       "id": "ESP_villalobos_comercial",
-      "name": "Villalobos Comercial",
+      "name": "Villalobos Industrias",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18989,
@@ -386,7 +386,7 @@
     },
     {
       "id": "ESP_jove_seguros_industrias",
-      "name": "Jové Seguros Industrias",
+      "name": "Jové Industrias",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20360,
@@ -404,7 +404,7 @@
     },
     {
       "id": "ESP_navarrete_agro",
-      "name": "Navarrete Agro",
+      "name": "Navarrete Grupo",
       "sector": "industry",
       "share": 0.0173,
       "headcount": 10806,
@@ -422,7 +422,7 @@
     },
     {
       "id": "ESP_delgado_transportes",
-      "name": "Delgado Transportes",
+      "name": "Delgado Industrias",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18938,
@@ -458,7 +458,7 @@
     },
     {
       "id": "ESP_montalban_seguros",
-      "name": "Montalbán Seguros",
+      "name": "Montalbán Construcción",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21144,
@@ -467,7 +467,7 @@
     },
     {
       "id": "ESP_noguero_seguros",
-      "name": "Noguero Seguros",
+      "name": "Noguero Industrias",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18889,
@@ -476,7 +476,7 @@
     },
     {
       "id": "ESP_herranz_agro",
-      "name": "Herranz Agro",
+      "name": "Herranz Energía",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21692,
@@ -485,7 +485,7 @@
     },
     {
       "id": "ESP_escalante_energia",
-      "name": "Escalante Energía",
+      "name": "Escalante Transportes",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24564,
@@ -497,7 +497,7 @@
       "name": "Cadalso Logística",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24983,
       "city": "ES30_fuenlabrada",
       "tier": "body"
     },
@@ -515,7 +515,7 @@
       "name": "Ocejo Grupo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23673,
       "city": "ES30_madrid",
       "tier": "body"
     },
@@ -530,7 +530,7 @@
     },
     {
       "id": "ESP_sanchidrian_materiales",
-      "name": "Sanchidrián Materiales",
+      "name": "Sanchidrián Seguros",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24930,
@@ -548,19 +548,19 @@
     },
     {
       "id": "ESP_castejon_construccion",
-      "name": "Castejón Construcción",
+      "name": "Castejón Logística",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24758,
       "city": "ES11_a_coruna",
       "tier": "body"
     },
     {
       "id": "ESP_barcelo_agro",
-      "name": "Barceló Agro",
+      "name": "Cuadrado Transportes",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24064,
       "city": "ES13_santander",
       "tier": "body"
     },
@@ -578,25 +578,25 @@
       "name": "Noguero Transportes",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23065,
       "city": "ES30_madrid",
       "tier": "body"
     },
     {
       "id": "ESP_domenech_materiales",
-      "name": "Domenech Materiales",
+      "name": "Domenech Seguros",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24740,
       "city": "ES62_murcia",
       "tier": "body"
     },
     {
       "id": "ESP_uribarri_construccion",
-      "name": "Uribarri Construcción",
+      "name": "Uribarri Logística",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23707,
       "city": "ES21_gasteiz_vitoria",
       "tier": "body"
     },
@@ -623,7 +623,7 @@
       "name": "Bembibre Grupo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23509,
       "city": "ES22_pamplona",
       "tier": "body"
     },
@@ -632,13 +632,13 @@
       "name": "Vadillo Transportes Seguros",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24264,
       "city": "ES52_alcoy",
       "tier": "body"
     },
     {
       "id": "ESP_herranz_construccion",
-      "name": "Herranz Construcción",
+      "name": "Herranz Logística",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23349,
@@ -647,16 +647,16 @@
     },
     {
       "id": "ESP_gutierre_materiales_logistica",
-      "name": "Gutierre Materiales Logística",
+      "name": "Gutierre Logística",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24723,
       "city": "ES51_barcelona",
       "tier": "body"
     },
     {
       "id": "ESP_iturbe_industrias",
-      "name": "Iturbe Industrias",
+      "name": "Iturbe Transportes",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24083,
@@ -665,7 +665,7 @@
     },
     {
       "id": "ESP_ferrandiz_construccion_materiales",
-      "name": "Ferrándiz Construcción Materiales",
+      "name": "Ferrándiz Logística",
       "sector": "services",
       "share": 0.0155,
       "headcount": 24609,
@@ -677,13 +677,13 @@
       "name": "Rueda Logística",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24345,
       "city": "ES51_barcelona",
       "tier": "body"
     },
     {
       "id": "ESP_barcelo_seguros",
-      "name": "Barceló Seguros",
+      "name": "Ibarrola Seguros",
       "sector": "services",
       "share": 0.0125,
       "headcount": 17510,
@@ -701,7 +701,7 @@
     },
     {
       "id": "ESP_villalobos_agro_materiales",
-      "name": "Villalobos Agro Materiales",
+      "name": "Villalobos Comercial",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23278,
@@ -710,7 +710,7 @@
     },
     {
       "id": "ESP_herranz_energia_materiales",
-      "name": "Herranz Energía Materiales",
+      "name": "Herranz Grupo",
       "sector": "services",
       "share": 0.0111,
       "headcount": 15624,
@@ -722,13 +722,13 @@
       "name": "Lizárraga Transportes",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22816,
       "city": "ES61_sevilla",
       "tier": "body"
     },
     {
       "id": "ESP_montalban_materiales",
-      "name": "Montalbán Materiales",
+      "name": "Montalbán Comercial",
       "sector": "services",
       "share": 0.0124,
       "headcount": 20203,
@@ -746,7 +746,7 @@
     },
     {
       "id": "ESP_barcelo_logistica",
-      "name": "Barceló Logística",
+      "name": "Rentero Logística",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24906,
@@ -755,7 +755,7 @@
     },
     {
       "id": "ESP_gutierre_construccion_seguros",
-      "name": "Gutierre Construcción Seguros",
+      "name": "Gutierre Seguros",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23834,
@@ -767,13 +767,13 @@
       "name": "Etxebarria Comercial",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22654,
       "city": "ES30_madrid",
       "tier": "body"
     },
     {
       "id": "ESP_gutierre_industrias",
-      "name": "Gutierre Industrias",
+      "name": "Gutierre Comercial",
       "sector": "services",
       "share": 0.007,
       "headcount": 10856,
@@ -785,13 +785,13 @@
       "name": "Higuera Grupo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24931,
       "city": "ES52_castello_de_la_plana",
       "tier": "body"
     },
     {
       "id": "ESP_barcelo_industrias_industrias",
-      "name": "Barceló Industrias Industrias",
+      "name": "Cadalso Grupo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23130,
@@ -800,7 +800,7 @@
     },
     {
       "id": "ESP_ferrandiz_industrias",
-      "name": "Ferrándiz Industrias",
+      "name": "Ferrándiz Comercial",
       "sector": "services",
       "share": 0.0161,
       "headcount": 22812,
@@ -809,16 +809,16 @@
     },
     {
       "id": "ESP_villalobos_materiales",
-      "name": "Villalobos Materiales",
+      "name": "Villalobos Seguros",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23738,
       "city": "ES24_zaragoza",
       "tier": "body"
     },
     {
       "id": "ESP_vadillo_energia_comercial",
-      "name": "Vadillo Energía Comercial",
+      "name": "Vadillo Transportes",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24372,
@@ -827,7 +827,7 @@
     },
     {
       "id": "ESP_ferrandiz_construccion",
-      "name": "Ferrándiz Construcción",
+      "name": "Ferrándiz Transportes",
       "sector": "services",
       "share": 0.0125,
       "headcount": 20071,
@@ -836,7 +836,7 @@
     },
     {
       "id": "ESP_huertas_construccion",
-      "name": "Huertas Construcción",
+      "name": "Huertas Comercial",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22886,
@@ -854,7 +854,7 @@
     },
     {
       "id": "ESP_vallespin_agro",
-      "name": "Vallespín Agro",
+      "name": "Vallespín Transportes",
       "sector": "services",
       "share": 0.0116,
       "headcount": 17368,
@@ -863,7 +863,7 @@
     },
     {
       "id": "ESP_rentero_construccion",
-      "name": "Rentero Construcción",
+      "name": "Rentero Transportes",
       "sector": "services",
       "share": 0.0057,
       "headcount": 8038,

@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "HRV_radic_promet",
-      "name": "Radić Promet",
+      "name": "Radić Trgovina",
       "sector": "agriculture",
       "share": 0.2723,
       "headcount": 27258,
@@ -14,7 +14,7 @@
     },
     {
       "id": "HRV_radic_osiguranje",
-      "name": "Radić Osiguranje",
+      "name": "Radić Poljoprivreda",
       "sector": "agriculture",
       "share": 0.1849,
       "headcount": 19737,
@@ -34,7 +34,7 @@
     },
     {
       "id": "HRV_babic_promet",
-      "name": "Babić Promet",
+      "name": "Babić Graditeljstvo",
       "sector": "industry",
       "share": 0.102,
       "headcount": 70782,
@@ -115,7 +115,7 @@
     },
     {
       "id": "HRV_starcevic_energija",
-      "name": "Starčević Energija",
+      "name": "Starčević Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2344,
@@ -124,7 +124,7 @@
     },
     {
       "id": "HRV_crnkovic_osiguranje",
-      "name": "Crnković Osiguranje",
+      "name": "Crnković Poljoprivreda",
       "sector": "agriculture",
       "share": 0.0239,
       "headcount": 1985,
@@ -133,7 +133,7 @@
     },
     {
       "id": "HRV_saric_osiguranje",
-      "name": "Šarić Osiguranje",
+      "name": "Šarić Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2388,
@@ -151,7 +151,7 @@
     },
     {
       "id": "HRV_horvat_materijali",
-      "name": "Horvat Materijali",
+      "name": "Horvat Poljoprivreda",
       "sector": "agriculture",
       "share": 0.0144,
       "headcount": 1126,
@@ -160,7 +160,7 @@
     },
     {
       "id": "HRV_drazenovic_energija",
-      "name": "Draženović Energija",
+      "name": "Draženović Poljoprivreda",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2488,
@@ -169,7 +169,7 @@
     },
     {
       "id": "HRV_roglic_graditeljstvo",
-      "name": "Roglić Graditeljstvo",
+      "name": "Roglić Poljoprivreda",
       "sector": "agriculture",
       "share": 0.017,
       "headcount": 1326,
@@ -178,7 +178,7 @@
     },
     {
       "id": "HRV_lukic_materijali",
-      "name": "Lukić Materijali",
+      "name": "Lukić Poljoprivreda",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2306,
@@ -196,7 +196,7 @@
     },
     {
       "id": "HRV_grubisic_materijali",
-      "name": "Grubišić Materijali",
+      "name": "Grubišić Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2208,
@@ -205,7 +205,7 @@
     },
     {
       "id": "HRV_roglic_promet",
-      "name": "Roglić Promet",
+      "name": "Roglić Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2532,
@@ -214,7 +214,7 @@
     },
     {
       "id": "HRV_horvat_osiguranje",
-      "name": "Horvat Osiguranje",
+      "name": "Horvat Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2192,
@@ -223,7 +223,7 @@
     },
     {
       "id": "HRV_tomljanovic_graditeljstvo",
-      "name": "Tomljanović Graditeljstvo",
+      "name": "Tomljanović Poljoprivreda",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2618,
@@ -241,7 +241,7 @@
     },
     {
       "id": "HRV_eric_logistika",
-      "name": "Erić Logistika",
+      "name": "Erić Materijali",
       "sector": "industry",
       "share": 0.0168,
       "headcount": 10226,
@@ -250,7 +250,7 @@
     },
     {
       "id": "HRV_grcic_poljoprivreda",
-      "name": "Grčić Poljoprivreda",
+      "name": "Grčić Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22081,
@@ -286,7 +286,7 @@
     },
     {
       "id": "HRV_andric_poljoprivreda",
-      "name": "Andrić Poljoprivreda",
+      "name": "Andrić Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21437,
@@ -313,7 +313,7 @@
     },
     {
       "id": "HRV_maric_poljoprivreda",
-      "name": "Marić Poljoprivreda",
+      "name": "Marić Materijali",
       "sector": "industry",
       "share": 0.0205,
       "headcount": 14149,
@@ -331,7 +331,7 @@
     },
     {
       "id": "HRV_matosevic_logistika",
-      "name": "Matošević Logistika",
+      "name": "Matošević Graditeljstvo",
       "sector": "industry",
       "share": 0.0203,
       "headcount": 12418,
@@ -349,7 +349,7 @@
     },
     {
       "id": "HRV_klanjcic_promet",
-      "name": "Klanjčić Promet",
+      "name": "Klanjčić Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20112,
@@ -367,7 +367,7 @@
     },
     {
       "id": "HRV_ninic_logistika",
-      "name": "Ninić Logistika",
+      "name": "Ninić Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19040,
@@ -403,7 +403,7 @@
     },
     {
       "id": "HRV_simic_logistika",
-      "name": "Šimić Logistika",
+      "name": "Šimić Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19097,
@@ -412,7 +412,7 @@
     },
     {
       "id": "HRV_eric_trgovina_promet",
-      "name": "Erić Trgovina Promet",
+      "name": "Erić Graditeljstvo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19965,
@@ -439,7 +439,7 @@
     },
     {
       "id": "HRV_maric_industrija",
-      "name": "Marić Industrija",
+      "name": "Marić Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24293,
@@ -448,10 +448,10 @@
     },
     {
       "id": "HRV_rman_graditeljstvo",
-      "name": "Rman Graditeljstvo",
+      "name": "Rman Promet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24188,
       "city": "HR06_varazdin",
       "tier": "body"
     },
@@ -466,7 +466,7 @@
     },
     {
       "id": "HRV_nikolic_poljoprivreda",
-      "name": "Nikolić Poljoprivreda",
+      "name": "Nikolić Promet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23455,
@@ -484,7 +484,7 @@
     },
     {
       "id": "HRV_pavkovic_materijali",
-      "name": "Pavković Materijali",
+      "name": "Pavković Trgovina",
       "sector": "services",
       "share": 0.0142,
       "headcount": 21509,
@@ -502,7 +502,7 @@
     },
     {
       "id": "HRV_ninic_energija",
-      "name": "Ninić Energija",
+      "name": "Ninić Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22755,
@@ -511,25 +511,25 @@
     },
     {
       "id": "HRV_srakocic_graditeljstvo",
-      "name": "Srakočić Graditeljstvo",
+      "name": "Srakočić Promet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23973,
       "city": "HR02_osijek",
       "tier": "body"
     },
     {
       "id": "HRV_jelavic_energija",
-      "name": "Jelavić Energija",
+      "name": "Jelavić Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24313,
       "city": "HR03_split",
       "tier": "body"
     },
     {
       "id": "HRV_andelic_industrija",
-      "name": "Anđelić Industrija",
+      "name": "Anđelić Trgovina",
       "sector": "services",
       "share": 0.0069,
       "headcount": 11361,
@@ -538,7 +538,7 @@
     },
     {
       "id": "HRV_simic_energija",
-      "name": "Šimić Energija",
+      "name": "Šimić Promet",
       "sector": "services",
       "share": 0.0095,
       "headcount": 13731,
@@ -547,7 +547,7 @@
     },
     {
       "id": "HRV_dujella_poljoprivreda",
-      "name": "Dujella Poljoprivreda",
+      "name": "Dujella Promet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23423,
@@ -565,7 +565,7 @@
     },
     {
       "id": "HRV_andelic_energija",
-      "name": "Anđelić Energija",
+      "name": "Anđelić Logistika",
       "sector": "services",
       "share": 0.0116,
       "headcount": 18446,
@@ -574,7 +574,7 @@
     },
     {
       "id": "HRV_tomic_graditeljstvo",
-      "name": "Tomić Graditeljstvo",
+      "name": "Tomić Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23597,
@@ -592,7 +592,7 @@
     },
     {
       "id": "HRV_jurisic_materijali",
-      "name": "Jurišić Materijali",
+      "name": "Jurišić Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24920,
@@ -601,7 +601,7 @@
     },
     {
       "id": "HRV_pandzic_energija",
-      "name": "Pandžić Energija",
+      "name": "Pandžić Osiguranje",
       "sector": "services",
       "share": 0.013,
       "headcount": 18452,
@@ -613,13 +613,13 @@
       "name": "Živković Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23191,
       "city": "HR02_osijek",
       "tier": "body"
     },
     {
       "id": "HRV_rman_industrija",
-      "name": "Rman Industrija",
+      "name": "Rman Trgovina",
       "sector": "services",
       "share": 0.0135,
       "headcount": 19430,
@@ -628,25 +628,25 @@
     },
     {
       "id": "HRV_zupan_energija",
-      "name": "Župan Energija",
+      "name": "Župan Promet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22895,
       "city": "HR05_zagreb",
       "tier": "body"
     },
     {
       "id": "HRV_lukic_logistika_materijali",
-      "name": "Lukić Logistika Materijali",
+      "name": "Lukić Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24822,
       "city": "HR05_zagreb",
       "tier": "body"
     },
     {
       "id": "HRV_dujella_industrija",
-      "name": "Dujella Industrija",
+      "name": "Dujella Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23832,
@@ -655,16 +655,16 @@
     },
     {
       "id": "HRV_nikolic_materijali",
-      "name": "Nikolić Materijali",
+      "name": "Nikolić Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24682,
       "city": "HR05_zagreb",
       "tier": "body"
     },
     {
       "id": "HRV_oreski_poljoprivreda",
-      "name": "Oreski Poljoprivreda",
+      "name": "Oreski Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24733,
@@ -673,7 +673,7 @@
     },
     {
       "id": "HRV_rman_energija",
-      "name": "Rman Energija",
+      "name": "Rman Logistika",
       "sector": "services",
       "share": 0.0102,
       "headcount": 15924,
@@ -682,7 +682,7 @@
     },
     {
       "id": "HRV_vignjevic_poljoprivreda",
-      "name": "Vignjević Poljoprivreda",
+      "name": "Vignjević Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24891,
@@ -691,10 +691,10 @@
     },
     {
       "id": "HRV_vukasovic_osiguranje_materijali",
-      "name": "Vukasović Osiguranje Materijali",
+      "name": "Vukasović Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22877,
       "city": "HR03_split",
       "tier": "body"
     },
@@ -703,13 +703,13 @@
       "name": "Anđelić Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24815,
       "city": "HR02_osijek",
       "tier": "body"
     },
     {
       "id": "HRV_cindric_materijali",
-      "name": "Cindrić Materijali",
+      "name": "Cindrić Promet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22863,
@@ -727,16 +727,16 @@
     },
     {
       "id": "HRV_roglic_trgovina_industrija",
-      "name": "Roglić Trgovina Industrija",
+      "name": "Roglić Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24750,
       "city": "HR03_rijeka",
       "tier": "body"
     },
     {
       "id": "HRV_perisic_energija",
-      "name": "Perišić Energija",
+      "name": "Perišić Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23284,
@@ -754,7 +754,7 @@
     },
     {
       "id": "HRV_frkanovic_graditeljstvo",
-      "name": "Frkanović Graditeljstvo",
+      "name": "Frkanović Promet",
       "sector": "services",
       "share": 0.0051,
       "headcount": 7566,
@@ -784,7 +784,7 @@
       "name": "Matošević Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23419,
       "city": "HR03_zadar",
       "tier": "body"
     },
@@ -817,7 +817,7 @@
     },
     {
       "id": "HRV_drazenovic_materijali",
-      "name": "Draženović Materijali",
+      "name": "Draženović Grupa",
       "sector": "services",
       "share": 0.0046,
       "headcount": 6833,

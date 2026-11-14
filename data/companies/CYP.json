@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "CYP_ktorides_ylika",
-      "name": "Ktorides Ylika",
+      "name": "Ktorides Georgia",
       "sector": "agriculture",
       "share": 0.2442,
       "headcount": 23127,
@@ -14,7 +14,7 @@
     },
     {
       "id": "CYP_neophytou_asfaliseis",
-      "name": "Neophytou Asfaliseis",
+      "name": "Neophytou Emporio",
       "sector": "agriculture",
       "share": 0.2277,
       "headcount": 15400,
@@ -24,7 +24,7 @@
     },
     {
       "id": "CYP_kyprianou_metafora",
-      "name": "Kyprianou Metafora",
+      "name": "Kyprianou Viomichania",
       "sector": "industry",
       "share": 0.0346,
       "headcount": 31105,
@@ -34,7 +34,7 @@
     },
     {
       "id": "CYP_mouskos_metafora",
-      "name": "Mouskos Metafora",
+      "name": "Mouskos Energeia",
       "sector": "industry",
       "share": 0.0501,
       "headcount": 38040,
@@ -44,7 +44,7 @@
     },
     {
       "id": "CYP_vassiliou_metafora",
-      "name": "Vassiliou Metafora",
+      "name": "Vassiliou Ylika",
       "sector": "industry",
       "share": 0.0339,
       "headcount": 30732,
@@ -104,7 +104,7 @@
     },
     {
       "id": "CYP_loizou_kataskeves",
-      "name": "Loizou Kataskeves",
+      "name": "Loizou Emporio",
       "sector": "services",
       "share": 0.0458,
       "headcount": 54827,
@@ -114,7 +114,7 @@
     },
     {
       "id": "CYP_lombardos_kataskeves",
-      "name": "Lombardos Kataskeves",
+      "name": "Lombardos Omilos",
       "sector": "services",
       "share": 0.0359,
       "headcount": 57864,
@@ -124,7 +124,7 @@
     },
     {
       "id": "CYP_yiangou_kataskeves",
-      "name": "Yiangou Kataskeves",
+      "name": "Yiangou Asfaliseis",
       "sector": "services",
       "share": 0.0622,
       "headcount": 104633,
@@ -145,7 +145,7 @@
     },
     {
       "id": "CYP_vrahimi_asfaliseis",
-      "name": "Vrahimi Asfaliseis",
+      "name": "Vrahimi Georgia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2478,
@@ -163,7 +163,7 @@
     },
     {
       "id": "CYP_neophytides_logistiki",
-      "name": "Neophytides Logistiki",
+      "name": "Neophytides Georgia",
       "sector": "agriculture",
       "share": 0.0249,
       "headcount": 2029,
@@ -172,7 +172,7 @@
     },
     {
       "id": "CYP_eleftheriou_viomichania",
-      "name": "Eleftheriou Viomichania",
+      "name": "Eleftheriou Omilos",
       "sector": "agriculture",
       "share": 0.0134,
       "headcount": 1128,
@@ -181,7 +181,7 @@
     },
     {
       "id": "CYP_dimitriou_energeia",
-      "name": "Dimitriou Energeia",
+      "name": "Dimitriou Georgia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2237,
@@ -199,7 +199,7 @@
     },
     {
       "id": "CYP_hadjikyriacos_viomichania",
-      "name": "Hadjikyriacos Viomichania",
+      "name": "Hadjikyriacos Georgia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2261,
@@ -208,7 +208,7 @@
     },
     {
       "id": "CYP_theocharous_ylika",
-      "name": "Theocharous Ylika",
+      "name": "Theocharous Omilos",
       "sector": "agriculture",
       "share": 0.0296,
       "headcount": 2414,
@@ -217,7 +217,7 @@
     },
     {
       "id": "CYP_ioannou_viomichania",
-      "name": "Ioannou Viomichania",
+      "name": "Ioannou Emporio",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2529,
@@ -235,7 +235,7 @@
     },
     {
       "id": "CYP_hadjigeorgiou_energeia",
-      "name": "Hadjigeorgiou Energeia",
+      "name": "Hadjigeorgiou Emporio",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2197,
@@ -253,7 +253,7 @@
     },
     {
       "id": "CYP_liasides_metafora",
-      "name": "Liasides Metafora",
+      "name": "Liasides Georgia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2308,
@@ -289,7 +289,7 @@
     },
     {
       "id": "CYP_yiangou_viomichania_georgia",
-      "name": "Yiangou Viomichania Georgia",
+      "name": "Yiangou Viomichania",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20531,
@@ -298,7 +298,7 @@
     },
     {
       "id": "CYP_chrysostomou_emporio",
-      "name": "Chrysostomou Emporio",
+      "name": "Chrysostomou Energeia",
       "sector": "industry",
       "share": 0.0116,
       "headcount": 7510,
@@ -316,7 +316,7 @@
     },
     {
       "id": "CYP_georgiou_asfaliseis",
-      "name": "Georgiou Asfaliseis",
+      "name": "Georgiou Omilos",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21617,
@@ -334,7 +334,7 @@
     },
     {
       "id": "CYP_orphanides_metafora",
-      "name": "Orphanides Metafora",
+      "name": "Orphanides Energeia",
       "sector": "industry",
       "share": 0.0188,
       "headcount": 13518,
@@ -388,7 +388,7 @@
     },
     {
       "id": "CYP_loizou_georgia",
-      "name": "Loizou Georgia",
+      "name": "Loizou Ylika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21491,
@@ -397,7 +397,7 @@
     },
     {
       "id": "CYP_mavrommatis_asfaliseis",
-      "name": "Mavrommatis Asfaliseis",
+      "name": "Mavrommatis Omilos",
       "sector": "industry",
       "share": 0.0213,
       "headcount": 13578,
@@ -406,7 +406,7 @@
     },
     {
       "id": "CYP_theocharous_viomichania_georgia",
-      "name": "Theocharous Viomichania Georgia",
+      "name": "Theocharous Viomichania",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20956,
@@ -415,7 +415,7 @@
     },
     {
       "id": "CYP_orphanides_georgia",
-      "name": "Orphanides Georgia",
+      "name": "Orphanides Viomichania",
       "sector": "industry",
       "share": 0.0117,
       "headcount": 8495,
@@ -433,7 +433,7 @@
     },
     {
       "id": "CYP_andreou_georgia",
-      "name": "Andreou Georgia",
+      "name": "Andreou Kataskeves",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19521,
@@ -451,7 +451,7 @@
     },
     {
       "id": "CYP_tsiakkouris_logistiki",
-      "name": "Tsiakkouris Logistiki",
+      "name": "Tsiakkouris Viomichania",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19087,
@@ -460,7 +460,7 @@
     },
     {
       "id": "CYP_oikonomou_emporio",
-      "name": "Oikonomou Emporio",
+      "name": "Oikonomou Energeia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18921,
@@ -487,7 +487,7 @@
     },
     {
       "id": "CYP_soteriou_metafora",
-      "name": "Soteriou Metafora",
+      "name": "Soteriou Viomichania",
       "sector": "industry",
       "share": 0.0242,
       "headcount": 16140,
@@ -499,7 +499,7 @@
       "name": "Papadopoulos Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22900,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -526,7 +526,7 @@
       "name": "Mavrommatis Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24510,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -568,7 +568,7 @@
     },
     {
       "id": "CYP_rossides_ylika",
-      "name": "Rossides Ylika",
+      "name": "Rossides Asfaliseis",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24582,
@@ -586,7 +586,7 @@
     },
     {
       "id": "CYP_alambritis_metafora_kataskeves",
-      "name": "Alambritis Metafora Kataskeves",
+      "name": "Alambritis Metafora",
       "sector": "services",
       "share": 0.0065,
       "headcount": 9405,
@@ -598,7 +598,7 @@
       "name": "Bambos Asfaliseis",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24976,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -613,7 +613,7 @@
     },
     {
       "id": "CYP_mouskos_georgia",
-      "name": "Mouskos Georgia",
+      "name": "Mouskos Asfaliseis",
       "sector": "services",
       "share": 0.0159,
       "headcount": 24099,
@@ -625,7 +625,7 @@
       "name": "Demetriades Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24464,
       "city": "CY00_larnaca",
       "tier": "body"
     },
@@ -640,7 +640,7 @@
     },
     {
       "id": "CYP_georgiou_georgia",
-      "name": "Georgiou Georgia",
+      "name": "Georgiou Emporio",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22657,
@@ -649,7 +649,7 @@
     },
     {
       "id": "CYP_hadjigeorgiou_georgia",
-      "name": "Hadjigeorgiou Georgia",
+      "name": "Hadjigeorgiou Logistiki",
       "sector": "services",
       "share": 0.0103,
       "headcount": 15503,
@@ -658,7 +658,7 @@
     },
     {
       "id": "CYP_mavrommatis_energeia_asfaliseis",
-      "name": "Mavrommatis Energeia Asfaliseis",
+      "name": "Mavrommatis Asfaliseis",
       "sector": "services",
       "share": 0.0133,
       "headcount": 21721,
@@ -667,10 +667,10 @@
     },
     {
       "id": "CYP_oikonomou_ylika",
-      "name": "Oikonomou Ylika",
+      "name": "Oikonomou Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24638,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -694,7 +694,7 @@
     },
     {
       "id": "CYP_vassiliou_ylika",
-      "name": "Vassiliou Ylika",
+      "name": "Vassiliou Emporio",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24114,
@@ -712,7 +712,7 @@
     },
     {
       "id": "CYP_rossides_georgia_ylika",
-      "name": "Rossides Georgia Ylika",
+      "name": "Rossides Logistiki",
       "sector": "services",
       "share": 0.007,
       "headcount": 10719,
@@ -730,7 +730,7 @@
     },
     {
       "id": "CYP_fylaktou_ylika",
-      "name": "Fylaktou Ylika",
+      "name": "Fylaktou Logistiki",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24334,
@@ -748,7 +748,7 @@
     },
     {
       "id": "CYP_soteriou_georgia",
-      "name": "Soteriou Georgia",
+      "name": "Soteriou Logistiki",
       "sector": "services",
       "share": 0.0164,
       "headcount": 24814,
@@ -757,7 +757,7 @@
     },
     {
       "id": "CYP_rossides_viomichania",
-      "name": "Rossides Viomichania",
+      "name": "Rossides Omilos",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24067,
@@ -766,10 +766,10 @@
     },
     {
       "id": "CYP_hadjikyriacos_kataskeves",
-      "name": "Hadjikyriacos Kataskeves",
+      "name": "Hadjikyriacos Asfaliseis",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22716,
       "city": "CY00_strovolos",
       "tier": "body"
     },
@@ -778,16 +778,16 @@
       "name": "Loizou Omilos",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23995,
       "city": "CY00_larnaca",
       "tier": "body"
     },
     {
       "id": "CYP_neophytides_ylika",
-      "name": "Neophytides Ylika",
+      "name": "Neophytides Logistiki",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23252,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -802,19 +802,19 @@
     },
     {
       "id": "CYP_vrahimi_energeia_viomichania",
-      "name": "Vrahimi Energeia Viomichania",
+      "name": "Vrahimi Logistiki",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24187,
       "city": "CY00_limassol",
       "tier": "body"
     },
     {
       "id": "CYP_trimithiotis_georgia_metafora",
-      "name": "Trimithiotis Georgia Metafora",
+      "name": "Trimithiotis Metafora",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24414,
       "city": "CY00_limassol",
       "tier": "body"
     },
@@ -823,13 +823,13 @@
       "name": "Orphanides Logistiki",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24142,
       "city": "CY00_strovolos",
       "tier": "body"
     },
     {
       "id": "CYP_polykarpou_ylika",
-      "name": "Polykarpou Ylika",
+      "name": "Polykarpou Omilos",
       "sector": "services",
       "share": 0.0075,
       "headcount": 11570,
@@ -841,13 +841,13 @@
       "name": "Dimitriou Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23463,
       "city": "CY00_larnaca",
       "tier": "body"
     },
     {
       "id": "CYP_neophytou_energeia",
-      "name": "Neophytou Energeia",
+      "name": "Neophytou Metafora",
       "sector": "services",
       "share": 0.0078,
       "headcount": 12151,
