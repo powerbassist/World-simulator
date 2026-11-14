@@ -41,6 +41,7 @@ tests=(
   tests/test_goal_read.gd
   tests/test_bill_verbs.gd
   tests/test_order_paper.gd
+  tests/test_law_filters.gd
   tests/test_tax_library.gd
   tests/test_amendment.gd
   tests/test_transition.gd

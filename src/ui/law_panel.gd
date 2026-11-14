@@ -16,7 +16,6 @@ extends PanelContainer
 ## random number. src/sim/ never learns a forecast exists.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
-const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
@@ -97,7 +96,6 @@ func _ready() -> void:
 	root.add_child(_title)
 	_paper.changed.connect(mark_dirty)
 	root.add_child(_paper)
-	root.add_child(PanelCharts.new(self, PanelCharts.SEATS))
 
 	_result_box = VBoxContainer.new()
 	root.add_child(_result_box)

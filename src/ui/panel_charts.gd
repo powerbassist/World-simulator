@@ -53,6 +53,11 @@ func _init(panel: Control, kind: int) -> void:
 	name = "Charts"  # i18n: ok
 
 
+## The drawing now, for a caller that shows it outside the tree (a tooltip is built, shown and freed).
+func draw_now() -> void:
+	_build(_panel.get("_state"))
+
+
 func _process(_delta: float) -> void:
 	if not is_visible_in_tree():
 		return
