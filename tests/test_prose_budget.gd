@@ -77,7 +77,7 @@ const TOTAL_PENDING := {
 ## (the parent's call): the Tax Code lists every kind in force, France 5 -> 15 rows
 ## (#336, the tax library's data); names of the player's own levers, no new prose; the
 ## screen-4 build (laws B) redraws the Tax Code and brings it back down. One of the
-## nineteen words is the File tab's (#338), measured on the same merge.
+## nineteen words is the File tab's (#333), measured on the same merge.
 const TOTAL_SUM_CEILING := 2970
 const TOTAL_SUM_TARGET := 3600
 

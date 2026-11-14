@@ -136,6 +136,10 @@ def main() -> int:
                     off_band.append("%s %s: modelled %.4f vs real %.4f %% of GDP (ratio %.2f)" % (kid, n, modelled, real[n], ratio))
             else:
                 print("%-22s %-4s %10.4g %-7s %10.4f %10s %7s  %s" % (kid, n, rate, src, modelled, "-", "-", prov.get(n, "no real yield in the reference")))
+                # A researched kind in force with no yield would pass the band unmeasured
+                # (QA #336 T2); today's five are moved from the model, not researched here.
+                if args.band is not None and kid not in FIVE:
+                    off_band.append("%s %s: in force with no real yield, so the band cannot measure it" % (kid, n))
 
     print("")
     print("revenue explained by the kinds in force (9.3's guard: must not exceed tax_revenue_pct_gdp):")

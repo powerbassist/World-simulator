@@ -36,7 +36,8 @@
     "yield_pct_gdp": {
       "DEU": 0.0691,
       "GBR": 0.4268,
-      "POL": 0.4088
+      "POL": 0.4088,
+      "FRA": 0.1632
     },
     "rate": {
       "DEU": 100.0,
@@ -48,20 +49,20 @@
       "DEU": "2025",
       "GBR": "2025-26",
       "POL": "2025",
-      "FRA": ""
+      "FRA": "undated"
     },
     "provenance": {
       "DEU": "read_in_source",
       "GBR": "read_in_source",
       "POL": "read_in_source",
-      "FRA": "not_verified"
+      "FRA": "search_summary"
     },
     "sources": {
       "DEU": "BMF 2025, sum of the five alcohol duty lines",
       "GBR": "HMRC receipts Table 2, sum of four alcohol duty columns",
       "POL": "NIK P/26/001, spirits + beer + wine excise",
-      "FRA": "no verified yield (4-5 bn EUR in a search summary)"
+      "FRA": "4-5 bn EUR a year in a search summary, undated; the midpoint 4.75 bn EUR is used (QA #336 T2)"
     },
-    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: vat (an excise on consumption). Proposed values, Systems to accept or strike."
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: vat (an excise on consumption). Proposed values, Systems to accept or strike. France's yield is the search summary's midpoint; the library base_share stays the median of the three nations with a yield read in the source, and France carries its own override."
   }
 }

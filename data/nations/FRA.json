@@ -130,6 +130,7 @@
     },
     "tax_base_share": {
       "air_passenger_tax": 0.002149,
+      "alcohol_duty": 0.001632,
       "digital_services_tax": 0.009,
       "inheritance_tax": 0.01596,
       "transactions_tax": 0.1145
