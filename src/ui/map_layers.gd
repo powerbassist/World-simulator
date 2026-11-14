@@ -16,6 +16,7 @@ extends RefCounted
 ## is the control the player is looking at.
 
 const Trade = preload("res://src/sim/trade.gd")
+const GoodsRead = preload("res://src/sim/goods_read.gd")
 const ForeignPolicy = preload("res://src/sim/foreign_policy.gd")
 const Diplomacy = preload("res://src/sim/diplomacy.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
@@ -624,31 +625,11 @@ static func production_share(state, nation_id: String) -> float:
 	return float(_value_added(state.nations[nation_id])) / world
 
 
-## The value of what a nation buys from abroad over the value of everything it
-## wants, both at the live price. VALUE rather than a unit count, and that is a
-## measurement's call: a tonne of ore and a tonne of semiconductors are not
-## comparable quantities, and an unweighted count of units would report a nation
-## that imports only cheap ore perfectly as dependent as one that imports only
-## aircraft. The live price is what makes the two commensurable.
-##
-## Defined on what the nation BOUGHT (the positive half of `trade`) rather than on
-## what it wants and did not make, so the figure answers the question the layer's
-## name asks: what actually crossed a border to get here. `maxf(0.0, ...)` because
-## `trade` is signed -- a negative entry is a sale and belongs on the export side
-## of the panel, not in a dependency reading.
+## The value of what a nation buys from abroad over the value of everything it wants,
+## at the live price: the sim's read (src/sim/goods_read.gd, V5.3 e PR B), which the
+## goods screen shares.
 static func import_dependency(state, nation_id: String) -> float:
-	var cs: Dictionary = state.nations[nation_id].commodity_state
-	if cs.is_empty():
-		return 0.0
-	var want := 0.0
-	var bought := 0.0
-	for good_id in (cs["demand"] as Dictionary).keys():
-		var price := float(cs["price"].get(String(good_id), 0.0))
-		want += float(cs["demand"][good_id]) * price
-		bought += maxf(0.0, float(cs["trade"].get(String(good_id), 0.0))) * price
-	if want <= 0.0:
-		return 0.0
-	return clampf(bought / want, 0.0, 1.0)
+	return GoodsRead.import_dependency(state, nation_id)
 
 
 static func _value_added(ns) -> float:

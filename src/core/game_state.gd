@@ -900,6 +900,16 @@ var foreign_acts: Array[Dictionary] = []
 ## copied. `foreign_acts`' split exactly.
 var unrest_acts: Array[Dictionary] = []
 
+## V5.3 e PR B (docs/design/finance-bill.md section 13, call 5 (a)): the world price over
+## the last twelve months, {good_id: [EUR per unit, oldest first]}. ONE copy here, not one
+## per nation, because every nation's `commodity_state` holds the same vector. Written
+## by src/sim/goods_read.gd at WorldMonth's Commodities step and read only by screens:
+## nothing in the sim reads it back. A new game starts empty and the reader says how many
+## months it holds. EARNS NO SAVE_VERSION BUMP (absent reads as nothing held yet, the
+## truth about an older save) and is not carried by duplicate_state(): a projection has
+## no past (tests/test_state_copy.gd's NOT_COPIED).
+var commodity_price_history := {}
+
 ## Problems found while building the state. Surfaced the same way the loader's
 ## are — loudly, naming the nation and the field.
 var errors: Array[String] = []
@@ -1404,6 +1414,7 @@ func to_dict() -> Dictionary:
 		"recent_effects": recent_effects,
 		"foreign_acts": foreign_acts,
 		"unrest_acts": unrest_acts,
+		"commodity_price_history": commodity_price_history,
 	}
 
 
@@ -1582,11 +1593,7 @@ static func from_dict(d: Dictionary):
 			"months_total": int(fight.get("months_total", 0)),
 		})
 
-	var hist: Array = d.get("history", [])
-	var typed_hist: Array[Dictionary] = []
-	for entry in hist:
-		typed_hist.append(entry as Dictionary)
-	gs.history = typed_hist
+	gs.history.assign(d.get("history", []))
 
 	# A decision's figure with no "before" reading moves by NAN -- Trends' "no
 	# data", which the Overview filters with is_nan(). JSON cannot hold NAN: the
@@ -1601,20 +1608,12 @@ static func from_dict(d: Dictionary):
 	# Absent, this reads as an empty list, which is CORRECT rather than silently
 	# wrong -- a version-11 save's nine could not act. It is `measures`' case at
 	# V1.3c, and it is not what earned SAVE_VERSION 12; diplo_months_to_act is.
-	var acts: Array = d.get("foreign_acts", [])
-	var typed_acts: Array[Dictionary] = []
-	for entry in acts:
-		typed_acts.append(entry as Dictionary)
-	gs.foreign_acts = typed_acts
+	gs.foreign_acts.assign(d.get("foreign_acts", []))
 
 	# Absent, this reads as an empty list, which is CORRECT rather than silently wrong --
 	# a version-17 save's unions could not act. `foreign_acts`' case directly above, and
 	# like it this is not what earned SAVE_VERSION 18; unrest_pct and the cooldown are.
-	var strikes: Array = d.get("unrest_acts", [])
-	var typed_strikes: Array[Dictionary] = []
-	for entry in strikes:
-		typed_strikes.append(entry as Dictionary)
-	gs.unrest_acts = typed_strikes
+	gs.unrest_acts.assign(d.get("unrest_acts", []))
 
 	# Absent, this reads as "nothing booked" -- correct for every version-13 save,
 	# because those games had no diary to book into. `measures`' case at V1.3c,
@@ -1622,11 +1621,7 @@ static func from_dict(d: Dictionary):
 	# here: save_manager.gd carries clock.day at the payload's top level and
 	# main.gd re-mirrors it, so a second copy in this dict would be two records of
 	# one fact. tests/test_save_load.gd asserts both halves.
-	var appts: Array = d.get("appointments", [])
-	var typed_appts: Array[Dictionary] = []
-	for entry in appts:
-		typed_appts.append(entry as Dictionary)
-	gs.appointments = typed_appts
+	gs.appointments.assign(d.get("appointments", []))
 
 	# Absent, every pair reads as never having met, which is true of every
 	# version-27 save -- those games could not gate a verb on a meeting. Re-floated
@@ -1637,4 +1632,6 @@ static func from_dict(d: Dictionary):
 	for pair_key in met.keys():
 		gs.met_months[pair_key] = int(met[pair_key])
 
+	# Deep, because to_dict() hands out the live ring (the commodity register's aliasing pin).
+	gs.commodity_price_history = (d.get("commodity_price_history", {}) as Dictionary).duplicate(true)
 	return gs

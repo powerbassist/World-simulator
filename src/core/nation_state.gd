@@ -1549,6 +1549,13 @@ var sector_drift := {}
 ## shape. absent_ok, no bump: no older save holds an opinion.
 var measure_opinion := {}
 
+# --- The regions screen's sample (V5.3 e PR B) -------------------------------------
+## {region_id: {unemployment, gdp_per_head, migration}}, twelve months each, oldest first:
+## src/sim/region_sample.gd writes it at the Migration step, src/sim/region_read.gd reads
+## it, and nothing in the sim reads it back. absent_ok, no bump: absent reads as nothing
+## sampled yet, which is the truth about an older save, and a new game starts empty.
+var region_history := {}
+
 # --- Regional development funds (V5.3 a) -------------------------------------------
 ## One row per fund opened, running or ended -- {id, region_id, eur_bn_per_year,
 ## years, started, months_left, pts, bloc_offset, status, closed}, months absolute.
