@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "MLT_xuereb_insurance",
-      "name": "Xuereb Insurance",
+      "name": "Xuereb Trading",
       "sector": "agriculture",
       "share": 0.1411,
       "headcount": 9366,
@@ -14,7 +14,7 @@
     },
     {
       "id": "MLT_tonna_logistics",
-      "name": "Tonna Logistics",
+      "name": "Tonna Trading",
       "sector": "agriculture",
       "share": 0.2613,
       "headcount": 21642,
@@ -64,7 +64,7 @@
     },
     {
       "id": "MLT_azzopardi_construction",
-      "name": "Azzopardi Construction",
+      "name": "Azzopardi Logistics",
       "sector": "services",
       "share": 0.0318,
       "headcount": 49393,
@@ -126,7 +126,7 @@
   "body": [
     {
       "id": "MLT_emanuel_transport",
-      "name": "Emanuel Transport",
+      "name": "Emanuel Agri",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2577,
@@ -135,7 +135,7 @@
     },
     {
       "id": "MLT_farrugia_materials",
-      "name": "Farrugia Materials",
+      "name": "Farrugia Agri",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2351,
@@ -153,7 +153,7 @@
     },
     {
       "id": "MLT_naudi_industries",
-      "name": "Naudi Industries",
+      "name": "Naudi Group",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2659,
@@ -162,7 +162,7 @@
     },
     {
       "id": "MLT_portelli_transport",
-      "name": "Portelli Transport",
+      "name": "Portelli Trading",
       "sector": "agriculture",
       "share": 0.0267,
       "headcount": 2125,
@@ -171,7 +171,7 @@
     },
     {
       "id": "MLT_incorvaja_construction",
-      "name": "Incorvaja Construction",
+      "name": "Incorvaja Agri",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2343,
@@ -180,7 +180,7 @@
     },
     {
       "id": "MLT_demartino_logistics",
-      "name": "DeMartino Logistics",
+      "name": "DeMartino Trading",
       "sector": "agriculture",
       "share": 0.0253,
       "headcount": 2211,
@@ -189,7 +189,7 @@
     },
     {
       "id": "MLT_attard_materials",
-      "name": "Attard Materials",
+      "name": "Attard Agri",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2469,
@@ -207,7 +207,7 @@
     },
     {
       "id": "MLT_navarro_industries",
-      "name": "Navarro Industries",
+      "name": "Navarro Trading",
       "sector": "agriculture",
       "share": 0.0237,
       "headcount": 2006,
@@ -234,7 +234,7 @@
     },
     {
       "id": "MLT_buhagiar_logistics",
-      "name": "Buhagiar Logistics",
+      "name": "Buhagiar Trading",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2564,
@@ -243,7 +243,7 @@
     },
     {
       "id": "MLT_haber_insurance",
-      "name": "Haber Insurance",
+      "name": "Haber Group",
       "sector": "agriculture",
       "share": 0.0125,
       "headcount": 973,
@@ -252,7 +252,7 @@
     },
     {
       "id": "MLT_buhagiar_industries",
-      "name": "Buhagiar Industries",
+      "name": "Buhagiar Group",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2214,
@@ -261,7 +261,7 @@
     },
     {
       "id": "MLT_wettinger_logistics",
-      "name": "Wettinger Logistics",
+      "name": "Wettinger Agri",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2287,
@@ -270,7 +270,7 @@
     },
     {
       "id": "MLT_sultana_transport",
-      "name": "Sultana Transport",
+      "name": "Sultana Trading",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2275,
@@ -279,7 +279,7 @@
     },
     {
       "id": "MLT_incorvaja_transport",
-      "name": "Incorvaja Transport",
+      "name": "Incorvaja Materials",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20547,
@@ -288,7 +288,7 @@
     },
     {
       "id": "MLT_zammit_agri",
-      "name": "Zammit Agri",
+      "name": "Zammit Industries",
       "sector": "industry",
       "share": 0.0226,
       "headcount": 16410,
@@ -297,7 +297,7 @@
     },
     {
       "id": "MLT_grima_logistics",
-      "name": "Grima Logistics",
+      "name": "Grima Group",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21603,
@@ -315,7 +315,7 @@
     },
     {
       "id": "MLT_camilleri_insurance",
-      "name": "Camilleri Insurance",
+      "name": "Camilleri Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18225,
@@ -324,7 +324,7 @@
     },
     {
       "id": "MLT_wettinger_transport",
-      "name": "Wettinger Transport",
+      "name": "Wettinger Energy",
       "sector": "industry",
       "share": 0.0139,
       "headcount": 8951,
@@ -351,7 +351,7 @@
     },
     {
       "id": "MLT_sciberras_agri",
-      "name": "Sciberras Agri",
+      "name": "Sciberras Materials",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19771,
@@ -360,7 +360,7 @@
     },
     {
       "id": "MLT_vella_transport",
-      "name": "Vella Transport",
+      "name": "Vella Group",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20314,
@@ -369,7 +369,7 @@
     },
     {
       "id": "MLT_wettinger_trading",
-      "name": "Wettinger Trading",
+      "name": "Wettinger Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20703,
@@ -378,7 +378,7 @@
     },
     {
       "id": "MLT_pace_agri",
-      "name": " Pace Agri",
+      "name": " Pace Construction",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20687,
@@ -396,7 +396,7 @@
     },
     {
       "id": "MLT_debono_agri",
-      "name": "Debono Agri",
+      "name": "Debono Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19350,
@@ -405,7 +405,7 @@
     },
     {
       "id": "MLT_serracino_inglott_insurance",
-      "name": "Serracino-Inglott Insurance",
+      "name": "Serracino-Inglott Group",
       "sector": "industry",
       "share": 0.0228,
       "headcount": 15785,
@@ -414,7 +414,7 @@
     },
     {
       "id": "MLT_fenech_insurance",
-      "name": "Fenech Insurance",
+      "name": "Fenech Industries",
       "sector": "industry",
       "share": 0.0147,
       "headcount": 10291,
@@ -423,7 +423,7 @@
     },
     {
       "id": "MLT_haber_trading",
-      "name": "Haber Trading",
+      "name": "Haber Construction",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19614,
@@ -432,7 +432,7 @@
     },
     {
       "id": "MLT_sciberras_insurance",
-      "name": "Sciberras Insurance",
+      "name": "Sciberras Energy",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18845,
@@ -441,7 +441,7 @@
     },
     {
       "id": "MLT_magro_agri",
-      "name": "Magro Agri",
+      "name": "Magro Group",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18849,
@@ -459,7 +459,7 @@
     },
     {
       "id": "MLT_said_insurance",
-      "name": "Said Insurance",
+      "name": "Said Construction",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21057,
@@ -468,7 +468,7 @@
     },
     {
       "id": "MLT_magro_construction",
-      "name": "Magro Construction",
+      "name": "Magro Trading",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22712,
@@ -477,7 +477,7 @@
     },
     {
       "id": "MLT_vassallo_construction",
-      "name": "Vassallo Construction",
+      "name": "Vassallo Logistics",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23786,
@@ -486,7 +486,7 @@
     },
     {
       "id": "MLT_wettinger_energy_energy",
-      "name": "Wettinger Energy",
+      "name": "Wettinger Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23973,
@@ -495,7 +495,7 @@
     },
     {
       "id": "MLT_hili_industries",
-      "name": "Hili Industries",
+      "name": "Hili Group",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23240,
@@ -513,7 +513,7 @@
     },
     {
       "id": "MLT_haber_agri",
-      "name": "Haber Agri",
+      "name": "Haber Transport",
       "sector": "services",
       "share": 0.0133,
       "headcount": 21002,
@@ -531,7 +531,7 @@
     },
     {
       "id": "MLT_hili_materials",
-      "name": "Hili Materials",
+      "name": "Hili Trading",
       "sector": "services",
       "share": 0.009,
       "headcount": 12549,
@@ -540,7 +540,7 @@
     },
     {
       "id": "MLT_fenech_group_energy",
-      "name": "Fenech Group Energy",
+      "name": "Fenech Group",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23051,
@@ -558,7 +558,7 @@
     },
     {
       "id": "MLT_serracino_inglott_industries",
-      "name": "Serracino-Inglott Industries",
+      "name": "Serracino-Inglott Trading",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23686,
@@ -567,7 +567,7 @@
     },
     {
       "id": "MLT_gambin_energy",
-      "name": "Gambin Energy",
+      "name": "Gambin Trading",
       "sector": "services",
       "share": 0.0121,
       "headcount": 19175,
@@ -585,7 +585,7 @@
     },
     {
       "id": "MLT_tonna_materials",
-      "name": "Tonna Materials",
+      "name": "Tonna Transport",
       "sector": "services",
       "share": 0.015,
       "headcount": 22420,
@@ -594,7 +594,7 @@
     },
     {
       "id": "MLT_magro_materials",
-      "name": "Magro Materials",
+      "name": "Magro Logistics",
       "sector": "services",
       "share": 0.0067,
       "headcount": 10852,
@@ -603,7 +603,7 @@
     },
     {
       "id": "MLT_caruana_industries",
-      "name": "Caruana Industries",
+      "name": "Caruana Trading",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23861,
@@ -612,7 +612,7 @@
     },
     {
       "id": "MLT_cassar_industries",
-      "name": "Cassar Industries",
+      "name": "Cassar Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24381,
@@ -639,7 +639,7 @@
     },
     {
       "id": "MLT_caruana_agri",
-      "name": "Caruana Agri",
+      "name": "Caruana Group",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23052,
@@ -657,7 +657,7 @@
     },
     {
       "id": "MLT_incorvaja_industries",
-      "name": "Incorvaja Industries",
+      "name": "Incorvaja Insurance",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23338,
@@ -666,7 +666,7 @@
     },
     {
       "id": "MLT_ebejer_industries",
-      "name": "Ebejer Industries",
+      "name": "Ebejer Group",
       "sector": "services",
       "share": 0.0082,
       "headcount": 11228,
@@ -675,7 +675,7 @@
     },
     {
       "id": "MLT_xuereb_materials_logistics",
-      "name": "Xuereb Materials Logistics",
+      "name": "Xuereb Logistics",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23902,
@@ -684,7 +684,7 @@
     },
     {
       "id": "MLT_cremona_agri",
-      "name": "Cremona Agri",
+      "name": "Cremona Transport",
       "sector": "services",
       "share": 0.0142,
       "headcount": 21600,
@@ -702,7 +702,7 @@
     },
     {
       "id": "MLT_borg_industries",
-      "name": "Borg Industries",
+      "name": "Borg Transport",
       "sector": "services",
       "share": 0.0142,
       "headcount": 20484,
@@ -738,7 +738,7 @@
     },
     {
       "id": "MLT_demartino_agri",
-      "name": "DeMartino Agri",
+      "name": "DeMartino Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24821,
@@ -756,7 +756,7 @@
     },
     {
       "id": "MLT_azzopardi_transport_industries",
-      "name": "Azzopardi Transport Industries",
+      "name": "Azzopardi Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23530,
@@ -765,7 +765,7 @@
     },
     {
       "id": "MLT_jones_construction",
-      "name": "Jones Construction",
+      "name": "Jones Group",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24377,
@@ -810,7 +810,7 @@
     },
     {
       "id": "MLT_mamo_industries",
-      "name": "Mamo Industries",
+      "name": "Mamo Trading",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24893,
@@ -819,7 +819,7 @@
     },
     {
       "id": "MLT_falzon_materials",
-      "name": "Falzon Materials",
+      "name": "Falzon Trading",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22532,
@@ -828,7 +828,7 @@
     },
     {
       "id": "MLT_fiorini_industries",
-      "name": "Fiorini Industries",
+      "name": "Fiorini Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23618,
@@ -837,7 +837,7 @@
     },
     {
       "id": "MLT_agius_industries",
-      "name": "Agius Industries",
+      "name": "Agius Transport",
       "sector": "services",
       "share": 0.0127,
       "headcount": 19912,

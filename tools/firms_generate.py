@@ -616,11 +616,10 @@ def gen_body(rng: random.Random, nation: str, major_cov: dict, cities: list,
     return body
 
 
-# V5.3 a, screen 5 (Interface's finding). Which sectors a corporate word may name,
-# for the four playable nations only -- their body is what the Sectors tabs list. A
-# word absent here fits every sector ("Groupe", "AG"). The other 37 lists are
-# untagged: they keep the doubled-word fix below and nothing else, until a nation
-# of theirs becomes playable.
+# V5.3 a, screen 5 (Interface's finding). Which sectors a corporate word may name. A
+# word absent here fits every sector ("Groupe", "AG"). The four playable nations are
+# tagged word by word below; the other 37 lists are tagged by SLOT after it, because
+# each of them writes the same ten meanings in one of two orders.
 AGRI, IND, SERV = "agriculture", "industry", "services"
 SUFFIX_SECTORS = {
     "FRA": {"Industries": {IND}, "Distribution": {AGRI, SERV}, "Coopérative": {AGRI},
@@ -636,6 +635,17 @@ SUFFIX_SECTORS = {
             "Logistyka": {SERV}, "Rolnictwo": {AGRI}},
 }
 
+
+# The ten meanings of a CORP_SUFFIX list, in the order 35 of the 37 write them
+# (industry, group, trade, energy, transport, insurance, construction, logistics,
+# agriculture, materials); ESP and ITA put agriculture and materials before
+# logistics and construction. None is the group word, which fits every sector.
+_SLOTS_A = [{IND}, None, {AGRI, SERV}, {IND}, {SERV}, {SERV}, {IND}, {SERV}, {AGRI}, {IND}]
+_SLOTS_B = [{IND}, None, {AGRI, SERV}, {IND}, {SERV}, {SERV}, {AGRI}, {IND}, {SERV}, {IND}]
+for _nation, _words in CORP_SUFFIX.items():
+    if _nation not in SUFFIX_SECTORS:
+        _slots = _SLOTS_B if _nation in ("ESP", "ITA") else _SLOTS_A
+        SUFFIX_SECTORS[_nation] = {w: t for w, t in zip(_words, _slots) if t is not None}
 
 # Words a repair may use that the generator never draws (adding them to CORP_SUFFIX
 # would change rng.choice's range and so every later draw): a sector whose own words
@@ -655,7 +665,7 @@ def tidy_names(nation: str, firms: list, taken: set) -> None:
 
     - a corporate word written twice ("Laroussi Coopérative Coopérative", the
       collision fallback drawing its two suffixes independently);
-    - in the four playable nations, a word of another sector ("Chauviré Agro" in
+    - a word of another sector ("Chauviré Agro" in
       services, "Beaufour Énergie Industries" in services).
 
     The repair keeps the words that fit, once each; when that name is taken it tries
@@ -843,6 +853,12 @@ def main() -> int:
             body = gen_body(rng, nation, major_cov, cities, used_slugs)
             taken = {f["name"] for f in majors + body}
             tidy_names(nation, body, taken)
+            # The 37 generated nations' majors were drawn by the same suffix rule
+            # ("Absil Verzekering" in industry); the four authored nations' majors
+            # are hand-written and left alone. After the body, so a repaired major
+            # name is checked against every body name.
+            if nation not in AUTHORED:
+                tidy_names(nation, majors, taken)
             retire_brand_surnames(nation, body, taken)
 
         # --- write the companies file ----------------------------------------

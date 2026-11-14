@@ -24,7 +24,7 @@
     },
     {
       "id": "LVA_petersons_apdrosinasana",
-      "name": "Pētersons Apdrošināšana",
+      "name": "Pētersons Enerģētika",
       "sector": "industry",
       "share": 0.0808,
       "headcount": 56336,
@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "LVA_aigars_energetika",
-      "name": "Aigars Enerģētika",
+      "name": "Aigars Lauksaimniecība",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2549,
@@ -125,7 +125,7 @@
     },
     {
       "id": "LVA_straume_logistika",
-      "name": "Straume Loģistika",
+      "name": "Straume Grupa",
       "sector": "agriculture",
       "share": 0.0292,
       "headcount": 2433,
@@ -152,7 +152,7 @@
     },
     {
       "id": "LVA_zarins_rupnieciba",
-      "name": "Zariņš Rūpniecība",
+      "name": "Zariņš Grupa",
       "sector": "agriculture",
       "share": 0.0222,
       "headcount": 1625,
@@ -161,7 +161,7 @@
     },
     {
       "id": "LVA_baldzens_logistika",
-      "name": "Baldzēns Loģistika",
+      "name": "Baldzēns Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2252,
@@ -170,7 +170,7 @@
     },
     {
       "id": "LVA_vilks_materiali",
-      "name": "Vilks Materiāli",
+      "name": "Vilks Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2386,
@@ -179,7 +179,7 @@
     },
     {
       "id": "LVA_celmins_buvnieciba",
-      "name": "Celmiņš Būvniecība",
+      "name": "Celmiņš Lauksaimniecība",
       "sector": "agriculture",
       "share": 0.02,
       "headcount": 1464,
@@ -215,7 +215,7 @@
     },
     {
       "id": "LVA_fogels_buvnieciba",
-      "name": "Fogels Būvniecība",
+      "name": "Fogels Grupa",
       "sector": "agriculture",
       "share": 0.0295,
       "headcount": 2235,
@@ -224,7 +224,7 @@
     },
     {
       "id": "LVA_rubenis_materiali",
-      "name": "Rubenis Materiāli",
+      "name": "Rubenis Grupa",
       "sector": "agriculture",
       "share": 0.0276,
       "headcount": 2294,
@@ -233,7 +233,7 @@
     },
     {
       "id": "LVA_zarins_buvnieciba",
-      "name": "Zariņš Būvniecība",
+      "name": "Zariņš Tirdzniecība",
       "sector": "agriculture",
       "share": 0.0223,
       "headcount": 1738,
@@ -242,7 +242,7 @@
     },
     {
       "id": "LVA_salcevics_logistika",
-      "name": "Salcevičs Loģistika",
+      "name": "Salcevičs Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2326,
@@ -251,7 +251,7 @@
     },
     {
       "id": "LVA_eglitis_rupnieciba",
-      "name": "Eglītis Rūpniecība",
+      "name": "Eglītis Lauksaimniecība",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2669,
@@ -278,7 +278,7 @@
     },
     {
       "id": "LVA_vagners_logistika",
-      "name": "Vagners Loģistika",
+      "name": "Vagners Enerģētika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18618,
@@ -287,7 +287,7 @@
     },
     {
       "id": "LVA_lemanis_transports_rupnieciba",
-      "name": "Lēmanis Transports Rūpniecība",
+      "name": "Lēmanis Enerģētika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21502,
@@ -296,7 +296,7 @@
     },
     {
       "id": "LVA_freimanis_transports",
-      "name": "Freimanis Transports",
+      "name": "Freimanis Materiāli",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19024,
@@ -314,7 +314,7 @@
     },
     {
       "id": "LVA_mazpanaks_lauksaimnieciba",
-      "name": "Mazpanāks Lauksaimniecība",
+      "name": "Mazpanāks Būvniecība",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19624,
@@ -323,7 +323,7 @@
     },
     {
       "id": "LVA_baldzens_transports",
-      "name": "Baldzēns Transports",
+      "name": "Baldzēns Būvniecība",
       "sector": "industry",
       "share": 0.0144,
       "headcount": 9284,
@@ -341,7 +341,7 @@
     },
     {
       "id": "LVA_grasis_transports",
-      "name": "Grasis Transports",
+      "name": "Grasis Rūpniecība",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21015,
@@ -368,7 +368,7 @@
     },
     {
       "id": "LVA_huns_logistika",
-      "name": "Hūns Loģistika",
+      "name": "Hūns Enerģētika",
       "sector": "industry",
       "share": 0.0274,
       "headcount": 17291,
@@ -377,7 +377,7 @@
     },
     {
       "id": "LVA_jansons_apdrosinasana",
-      "name": "Jansons Apdrošināšana",
+      "name": "Jansons Rūpniecība",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19610,
@@ -422,7 +422,7 @@
     },
     {
       "id": "LVA_grasis_lauksaimnieciba",
-      "name": "Grasis Lauksaimniecība",
+      "name": "Grasis Enerģētika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20510,
@@ -431,7 +431,7 @@
     },
     {
       "id": "LVA_zuravlovs_transports",
-      "name": "Zuravļovs Transports",
+      "name": "Zuravļovs Materiāli",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20294,
@@ -467,7 +467,7 @@
     },
     {
       "id": "LVA_ikaunieks_energetika",
-      "name": "Ikaunieks Enerģētika",
+      "name": "Ikaunieks Loģistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24093,
@@ -485,7 +485,7 @@
     },
     {
       "id": "LVA_balins_lauksaimnieciba",
-      "name": "Bāliņš Lauksaimniecība",
+      "name": "Bāliņš Transports",
       "sector": "services",
       "share": 0.0154,
       "headcount": 22477,
@@ -494,7 +494,7 @@
     },
     {
       "id": "LVA_aizsilnieks_materiali",
-      "name": "Aizsilnieks Materiāli",
+      "name": "Aizsilnieks Transports",
       "sector": "services",
       "share": 0.0159,
       "headcount": 21993,
@@ -530,7 +530,7 @@
     },
     {
       "id": "LVA_berzins_lauksaimnieciba",
-      "name": "Bērziņš Lauksaimniecība",
+      "name": "Bērziņš Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24985,
@@ -539,7 +539,7 @@
     },
     {
       "id": "LVA_jansonis_buvnieciba",
-      "name": "Jansonis Būvniecība",
+      "name": "Jansonis Transports",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24057,
@@ -548,7 +548,7 @@
     },
     {
       "id": "LVA_mednis_lauksaimnieciba",
-      "name": "Mednis Lauksaimniecība",
+      "name": "Mednis Loģistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24970,
@@ -557,7 +557,7 @@
     },
     {
       "id": "LVA_egle_materiali",
-      "name": "Egle Materiāli",
+      "name": "Egle Transports",
       "sector": "services",
       "share": 0.0117,
       "headcount": 18876,
@@ -566,7 +566,7 @@
     },
     {
       "id": "LVA_fricbergs_buvnieciba",
-      "name": "Fricbergs Būvniecība",
+      "name": "Fricbergs Transports",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23087,
@@ -575,7 +575,7 @@
     },
     {
       "id": "LVA_celms_energetika",
-      "name": "Celms Enerģētika",
+      "name": "Celms Transports",
       "sector": "services",
       "share": 0.0155,
       "headcount": 22516,
@@ -584,7 +584,7 @@
     },
     {
       "id": "LVA_repenko_materiali",
-      "name": "Repenko Materiāli",
+      "name": "Repenko Tirdzniecība",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24786,
@@ -629,7 +629,7 @@
     },
     {
       "id": "LVA_zeltins_materiali",
-      "name": "Zeltiņš Materiāli",
+      "name": "Zeltiņš Tirdzniecība",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23623,
@@ -638,7 +638,7 @@
     },
     {
       "id": "LVA_gailitis_energetika",
-      "name": "Gailītis Enerģētika",
+      "name": "Gailītis Apdrošināšana",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22722,
@@ -656,7 +656,7 @@
     },
     {
       "id": "LVA_baldzens_materiali",
-      "name": "Baldzēns Materiāli",
+      "name": "Baldzēns Apdrošināšana",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22659,
@@ -665,7 +665,7 @@
     },
     {
       "id": "LVA_fricbergs_lauksaimnieciba",
-      "name": "Fricbergs Lauksaimniecība",
+      "name": "Fricbergs Tirdzniecība",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23305,
@@ -683,7 +683,7 @@
     },
     {
       "id": "LVA_kroders_buvnieciba",
-      "name": "Kroders Būvniecība",
+      "name": "Kroders Tirdzniecība",
       "sector": "services",
       "share": 0.0135,
       "headcount": 18931,
@@ -701,7 +701,7 @@
     },
     {
       "id": "LVA_zakis_materiali",
-      "name": "Zaķis Materiāli",
+      "name": "Zaķis Transports",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24289,
@@ -710,7 +710,7 @@
     },
     {
       "id": "LVA_aizsilnieks_lauksaimnieciba",
-      "name": "Aizsilnieks Lauksaimniecība",
+      "name": "Aizsilnieks Apdrošināšana",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23624,
@@ -719,7 +719,7 @@
     },
     {
       "id": "LVA_ulmanis_energetika",
-      "name": "Ulmanis Enerģētika",
+      "name": "Ulmanis Grupa",
       "sector": "services",
       "share": 0.01,
       "headcount": 15701,
@@ -728,7 +728,7 @@
     },
     {
       "id": "LVA_zuravlovs_lauksaimnieciba",
-      "name": "Zuravļovs Lauksaimniecība",
+      "name": "Zuravļovs Grupa",
       "sector": "services",
       "share": 0.0141,
       "headcount": 21623,
@@ -737,7 +737,7 @@
     },
     {
       "id": "LVA_vagners_transports_energetika",
-      "name": "Vagners Transports Enerģētika",
+      "name": "Vagners Transports",
       "sector": "services",
       "share": 0.0082,
       "headcount": 11344,
@@ -764,7 +764,7 @@
     },
     {
       "id": "LVA_ozolins_materiali",
-      "name": "Ozolins Materiāli",
+      "name": "Ozolins Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23216,
@@ -773,7 +773,7 @@
     },
     {
       "id": "LVA_mucenieks_energetika",
-      "name": "Mucenieks Enerģētika",
+      "name": "Mucenieks Transports",
       "sector": "services",
       "share": 0.006,
       "headcount": 9166,
@@ -836,7 +836,7 @@
     },
     {
       "id": "LVA_briedis_materiali",
-      "name": "Briedis Materiāli",
+      "name": "Briedis Apdrošināšana",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22532,
