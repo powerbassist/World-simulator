@@ -1,12 +1,12 @@
 ~ start
 Prime Minister Terborg: Mr President, breakfast in the Netherlands is a matter of efficiency. Shall we say our sins quickly and eat our cheese in peace?
-- Raise the Rotterdam port rules => port
-- Raise the sea wall and flood funds => sea
-- Raise the farm nitrogen cuts => nitrogen
+- Raise the Rotterdam port rules [#id:port] => port
+- Raise the sea wall and flood funds [#id:sea] => sea
+- Raise the farm nitrogen cuts [#id:nitrogen] => nitrogen
 ~ port
 Prime Minister Terborg: Rotterdam is Europe's front door, and it wishes the neighbours would stop leaving muddy boots on the mat.
-- Offer a shared customs window => customs
-- Offer to share the Le Havre berths => berths
+- Offer a shared customs window [#id:customs] => customs
+- Offer to share the Le Havre berths [#id:berths] => berths
 ~ customs
 Prime Minister Terborg: A shared customs window. Smugglers will hate it. Accountants will adore it.
 => END
@@ -15,8 +15,8 @@ Prime Minister Terborg: Berths at Le Havre, yes. We are friendly competitors, an
 => END
 ~ sea
 Prime Minister Terborg: The sea is always patient, and so are we. But patience is expensive, and I would rather share the cost.
-- Offer French engineers for the delta works => delta
-- Offer a joint resilience fund => resilience
+- Offer French engineers for the delta works [#id:delta] => delta
+- Offer a joint resilience fund [#id:resilience] => resilience
 ~ delta
 Prime Minister Terborg: French engineers, on Dutch dikes. The water will not know the difference, and neither will the invoices.
 => END
@@ -25,8 +25,8 @@ Prime Minister Terborg: A resilience fund. I am told it is the word of the decad
 => END
 ~ nitrogen
 Prime Minister Terborg: The farmers parked their tractors on the motorway for a week, and I have not been popular since.
-- Sympathise with the farmers => farmers
-- Back the nitrogen cuts => cuts
+- Sympathise with the farmers [#id:farmers] => farmers
+- Back the nitrogen cuts [#id:cuts] => cuts
 ~ farmers
 Prime Minister Terborg: Kind of you. My farmers will remember, and so will my environment minister, with less warmth.
 => END
