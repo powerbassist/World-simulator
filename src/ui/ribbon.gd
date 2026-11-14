@@ -200,6 +200,14 @@ func _day_x(year: int, month: int, day: int) -> float:
 	return span.x + (span.y - span.x) * (float(day) - 0.5) / float(days)
 
 
+## Which of the three segments an absolute month (year * 12 + month) falls in, -1 outside.
+## A due read a month ago is still in `_items` for the frame between the day tick and the
+## next refresh: it must be skipped, not drawn at a negative index (test_briefing_go).
+func _index_of(abs_month: int) -> int:
+	var index := abs_month - (int(_state.year) * 12 + int(_state.month))
+	return index if index >= 0 and index < SHARES.size() else -1
+
+
 ## The month `offset` after today's, as {year, month}.
 func _month_at(offset: int) -> Dictionary:
 	var index := int(_state.year) * 12 + int(_state.month) - 1 + offset
@@ -222,7 +230,9 @@ func _rebuild_chips() -> void:
 	for due in (_items["dues"] as Array):
 		var month := (int(due["abs_month"]) - 1) % 12 + 1
 		var year := floori((int(due["abs_month"]) - 1) / 12.0)
-		var index := int(due["abs_month"]) - (int(_state.year) * 12 + int(_state.month))
+		var index := _index_of(int(due["abs_month"]))
+		if index < 0:
+			continue
 		var span := _segment(index)
 		wanted.append({"x": span.y - 4.0, "right": true, "text": Items.due_text(due),
 			"icon": "res://assets/icons/material/%s.svg" % ("person" if due["kind"] == "request" else "mail"), "warn": true,
@@ -343,8 +353,9 @@ func _draw_cells() -> void:
 				_hatch(rect)
 	# The deadlines: a WARN tick on the line at the month's end.
 	for due in (_items.get("dues", []) as Array):
-		var index := int(due["abs_month"]) - (int(_state.year) * 12 + int(_state.month))
-		_cells.draw_rect(Rect2(_segment(index).y - 4.0, LINE_Y - 9, 2, 20), UiTheme.WARN)
+		var index := _index_of(int(due["abs_month"]))
+		if index >= 0:
+			_cells.draw_rect(Rect2(_segment(index).y - 4.0, LINE_Y - 9, 2, 20), UiTheme.WARN)
 
 
 func _draw_number(font: Font, font_size: int, x: float, text: String, colour: Color) -> void:

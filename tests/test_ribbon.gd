@@ -107,6 +107,15 @@ func _run() -> void:
 	if not main_text.contains("_hud.ribbon.mark_dirty()"):
 		_fail("main.gd never marks the ribbon dirty -- a booking would not appear on the line")
 
+	# A due read last month is still in the horizon's items for the frame between the day tick
+	# and its refresh: it has no segment (-1) and is neither chipped nor drawn (test_briefing_go
+	# caught the negative index as a script error).
+	var this_month: int = int(_main._state.year) * 12 + int(_main._state.month)
+	if ribbon._index_of(this_month - 6) != -1 or ribbon._index_of(this_month + 3) != -1:
+		_fail("a month outside the horizon's three has a segment")
+	if ribbon._index_of(this_month) != 0 or ribbon._index_of(this_month + 2) != 2:
+		_fail("this month and the one two after are not segments 0 and 2")
+
 	# The tooltip resolves from the REGISTER, not from its own memory: book a
 	# visit through the sim, ask the ribbon for the day, and the name it
 	# prints must be the booked act's. Delivered by feeding the input handler
