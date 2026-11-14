@@ -95,7 +95,7 @@ func _stage_every_reading_at_its_widest() -> void:
 	}
 	for id in StripReadings.ORDER:
 		var value: Label = bar._figure_values[id]
-		value.get_parent().visible = true
+		bar.figure_box(id).visible = not StripReadings.OFF_STRIP.has(id)
 		value.text = widest[id]
 	# Staging, not the check: the values were set behind the strip's back.
 	bar.refit()
@@ -114,7 +114,7 @@ func _check_strip_folds_by_priority() -> void:
 		_fail("doubled readings fit a %.0f px slot without folding -- the premise is wrong" % slot)
 		return
 	# The folded ones are exactly the last of ORDER, in order.
-	var tail: Array = StripReadings.ORDER.slice(StripReadings.ORDER.size() - folded.size())
+	var tail: Array = StripReadings.ON_STRIP.slice(StripReadings.ON_STRIP.size() - folded.size())
 	if folded != tail:
 		_fail("the strip folded %s, not the lowest-priority tail %s" % [str(folded), str(tail)])
 	if not bar._more.visible or bar._more.text != "+%d" % folded.size():

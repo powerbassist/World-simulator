@@ -49,12 +49,12 @@ func _ready() -> void:
 	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(column)
 
-	# The title bar across the top: history, where you are, the clock, save and
-	# the menu.
+	# The title bar across the top: history, where you are, save and the menu. The
+	# clock is not here since the V5.3 bar rebuild: it sits at the left end of the
+	# horizon, beside the days it counts.
 	title_bar = TitleBar.new()
 	column.add_child(title_bar)
 	clock_cluster = ClockCluster.new()
-	title_bar.add_clock(clock_cluster)
 
 	var row := _ignore(HBoxContainer.new())
 	row.add_theme_constant_override("separation", 0)
@@ -121,6 +121,7 @@ func _ready() -> void:
 	ribbon = Ribbon.new()
 	ribbon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right.add_child(ribbon)
+	ribbon.add_clock(clock_cluster)
 
 
 ## A loaded game's state, rebound to the furniture that keeps one: the ribbon's month,

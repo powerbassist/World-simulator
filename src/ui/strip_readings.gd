@@ -62,6 +62,20 @@ const ORDER: Array[String] = [
 	"assembly", "election", "programme", "desk", "europe", "commodities",
 ]
 
+## V5.3's bar rebuild (the author picked bar C): ORDER stays the whole register; what the
+## strip DRAWS is three sets. The standing figures, left-aligned; the CHIPS, which show
+## on the right only when something waits (gate H6, "some info useless": a "— clear"
+## taking a slot says nothing); and the two that moved -- approval to the portrait
+## card's own figure, the vote to the horizon -- which are still READ here (their tips
+## and their tests) but not drawn on the strip.
+const ON_STRIP: Array[String] = ["deficit", "gdp", "unemployment", "inflation", "unrest", "assembly"]
+const CHIPS: Array[String] = ["desk", "europe", "programme", "commodities"]
+const OFF_STRIP: Array[String] = ["approval", "election"]
+
+## A chip's resting words: a reading that says one of these has nothing waiting.
+static func is_resting(r: Dictionary) -> bool:
+	return not bool(r["visible"]) or [Strings.t("— clear"), Strings.t("— covered"), NOTHING].has(String(r["text"]))
+
 ## B10 (playtest 2026-09-16): "Budget balance", not "Deficit" -- the value is
 ## signed, and "DEFICIT +10.50%" was a live contradiction on screen.
 const CAPTIONS := {

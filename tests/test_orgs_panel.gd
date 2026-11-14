@@ -421,16 +421,18 @@ func _check_the_europe_figure() -> void:
 	var outside = _fresh()
 	outside.player().orgs.clear()
 	var bar := _bar_for(outside)
-	if bar._figure_values["europe"].get_parent().visible:
+	if bar.figure_box("europe").visible:
 		_fail("the Europe figure shows for a player in no council org")
 	_drop(bar)
 
 	# Nothing: clear.
 	var clear = _fresh()
 	bar = _bar_for(clear)
-	if not bar._figure_values["europe"].get_parent().visible:
-		_fail("the Europe figure is hidden for a council member")
-	elif String(bar._figure_values["europe"].text) != "— clear":
+	# V5.3: a chip shows only while something waits, so a clear Europe reads "— clear"
+	# in its label but takes no slot on the strip.
+	if bar.figure_box("europe").visible:
+		_fail("a clear Europe takes a slot on the strip (gate H6: '— clear' says nothing)")
+	if String(bar._figure_values["europe"].text) != "— clear":
 		_fail("an untroubled member reads '%s', not '— clear'" % bar._figure_values["europe"].text)
 	_drop(bar)
 

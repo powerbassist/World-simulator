@@ -27,6 +27,7 @@ const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const MoodIcon = preload("res://src/ui/mood_icon.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const President = preload("res://src/sim/president.gd")
+const StripReadings = preload("res://src/ui/strip_readings.gd")
 
 ## Its height only since V5.1-c2.3: the card heads the sidebar and takes the
 ## sidebar's width, and its 268 px floor would have widened the sidebar past the
@@ -73,6 +74,12 @@ func _ready() -> void:
 
 	_approval_label = Label.new()
 	_approval_label.theme_type_variation = UiTheme.HERO
+	# V5.3 (the bar rebuild): approval left the figure strip, and its reason -- which issues
+	# weigh on it -- left with it, so the card keeps the tip. Read on hover, not every day.
+	_approval_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	_approval_label.mouse_entered.connect(func() -> void:
+		if _state != null and _state.player() != null:
+			_approval_label.tooltip_text = String(StripReadings.read("approval", _state, _loader)["tip"]))
 	approval_row.add_child(_approval_label)
 
 	# V5.1-0c. The mood, beside the number it reads from.

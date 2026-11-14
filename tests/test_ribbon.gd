@@ -122,15 +122,15 @@ func _run() -> void:
 		_fail("fixture booking was refused: %s" % String(result["error"]))
 	ribbon.mark_dirty()
 	var cells: Array = Calendar.day_cells(state, int(state.year), int(state.month))
-	var cell_w: float = ribbon._cells.size.x / cells.size()
-	var motion := InputEventMouseMotion.new()
-	motion.position = Vector2(15 * cell_w + 1.0, 5.0)
-	ribbon._on_cells_input(motion)
-	var tip: String = String(ribbon._cells.tooltip_text)
-	if tip.is_empty():
-		_fail("hovering a booked day left the tooltip empty -- the ribbon cannot name what occupies it")
-	if not tip.contains("State Visit"):
-		_fail("tooltip said '%s' -- it did not name the booked act" % tip)
+	# The horizon draws the booking as a chip on its meeting day, named by the act, from
+	# the register (horizon_items.gd), not from its own memory.
+	ribbon._process(0.0)
+	var named := false
+	for chip in ribbon._chips:
+		if String(chip.tooltip_text).contains("State Visit"):
+			named = true
+	if not named:
+		_fail("the booked state visit has no chip on the horizon -- it cannot name what occupies the day")
 
 	# And a booking paints TWO kinds of day: the meeting solid, the legs
 	# travel. The drawn pixels are the screenshot pass's; the CELLS the draw

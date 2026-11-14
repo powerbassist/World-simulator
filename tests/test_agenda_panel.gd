@@ -250,7 +250,7 @@ func _check_the_bar_reads_the_derived_pair(panel, state, ns, loader) -> void:
 ## percentage up top, the row in the Overview's programme section.
 func _check_the_other_surfaces_read_the_register(panel, state, ns, loader) -> void:
 	_main._update_top_bar()
-	if not _main._top_bar._figure_values["programme"].get_parent().visible:
+	if not _main._top_bar.figure_box("programme").visible:
 		_fail("the top bar's programme figure is hidden with a live programme on the register")
 	var terms: Dictionary = Programme.terms_of(loader, String(ns.programme[0]["entry_id"]))
 	# The name is in the reading's tip since V5.1-d1b: as its caption the strip cut it.
@@ -332,7 +332,7 @@ func _check_a_conclusion_pushes_a_card(panel, state, ns, loader) -> void:
 		_fail("the campaign panel's programme line does not read the completion")
 
 	_main._update_top_bar()
-	if _main._top_bar._figure_values["programme"].get_parent().visible:
+	if _main._top_bar.figure_box("programme").visible:
 		_fail("the top bar still shows a programme with nothing live on the register")
 
 

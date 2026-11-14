@@ -150,6 +150,7 @@
    "tests/test_trade.gd",
    "tests/test_council.gd",
    "tests/test_ribbon.gd",
+   "tests/test_horizon_items.gd",
    "tests/test_people.gd",
    "tests/test_division_terms.gd",
    "tests/test_address.gd",
