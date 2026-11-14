@@ -154,7 +154,7 @@
     },
     {
       "id": "NOR_sandvik_materialer",
-      "name": "Sandvik Gruppen",
+      "name": "Mjelde Gruppen",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2417,
@@ -172,7 +172,7 @@
     },
     {
       "id": "NOR_sandvik_handel_industri",
-      "name": "Sandvik Handel",
+      "name": "Engebretsen Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2511,
@@ -235,7 +235,7 @@
     },
     {
       "id": "NOR_sandvik_forsikring",
-      "name": "Sandvik Gruppen Landbruk",
+      "name": "Ulvestad Gruppen Landbruk",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2444,
@@ -280,7 +280,7 @@
     },
     {
       "id": "NOR_sandvik_landbruk",
-      "name": "Sandvik Bygg",
+      "name": "Eidsvåg Bygg",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19901,

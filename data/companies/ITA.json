@@ -181,7 +181,7 @@
     },
     {
       "id": "ITA_dell_orto_logistica",
-      "name": "Dell'Orto Gruppo",
+      "name": "Natalicchio Gruppo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2611,
@@ -280,7 +280,7 @@
     },
     {
       "id": "ITA_ferruzzi_agro",
-      "name": "Ferruzzi Agro",
+      "name": "Palminteri Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2332,
@@ -370,7 +370,7 @@
     },
     {
       "id": "ITA_ferruzzi_commercio",
-      "name": "Ferruzzi Materiali",
+      "name": "Lombrosio Materiali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18690,
@@ -649,7 +649,7 @@
     },
     {
       "id": "ITA_ferretti_materiali",
-      "name": "Ferretti Logistica",
+      "name": "Imbruglia Logistica",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23718,

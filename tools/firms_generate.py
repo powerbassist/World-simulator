@@ -719,23 +719,33 @@ def tidy_names(nation: str, firms: list, taken: set) -> None:
 # (docs/fictionalization.md: no real company's name). A person may keep the surname;
 # a firm may not. Not in tools/banned_names.txt, because name_ok() reads that list AT
 # DRAW TIME and a refusal there redraws -- shifting the stream for the whole nation.
-# Here the swap happens after the draw: QA's TAKE on #349 ("Schwarzkopf Gruppe").
-BRAND_SURNAMES = {"Schwarzkopf"}
+# Here the swap happens after the draw: QA's TAKE on #349 ("Schwarzkopf Gruppe"), then
+# QA's TAKE on #354 (the six from Sandvik to Dell'Orto); the last four are the
+# borderline cases QA would have left -- each is a firm's name in its own country
+# ("Fuchs Gruppe", "Kohler Gruppe"), and a swap costs nothing.
+BRAND_SURNAMES = {"Schwarzkopf", "Sandvik", "Barceló", "Beijer", "Ferruzzi", "Ferretti",
+                  "Dell'Orto", "Fuchs", "Egger", "Kohler", "Leventis"}
 
 
 def retire_brand_surnames(nation: str, firms: list, taken: set) -> None:
-    """Draw-free: a body firm named after a BRAND_SURNAMES surname takes another
-    surname of the nation's pool, ordered by a hash of the firm id, its corporate
-    words kept and its id unchanged; the new name stays unique."""
+    """Draw-free: a firm named after a BRAND_SURNAMES surname, wherever the surname
+    stands ("Sandvik Gruppen", "Bank Sandvik"), takes another surname of the nation's
+    pool, ordered by a hash of the firm id, its other words kept and its id unchanged;
+    the new name stays unique."""
     pool = [s for s in surname_pool(nation) if s not in BRAND_SURNAMES]
     for firm in firms:
-        surname = next((b for b in BRAND_SURNAMES if firm["name"].startswith(b + " ")), None)
-        if surname is None:
+        words = firm["name"].split(" ")
+        at = next((i for i, w in enumerate(words) if w in BRAND_SURNAMES), -1)
+        if at < 0:
             continue
-        words = firm["name"][len(surname):]
         order = sorted(pool, key=lambda s: hashlib.sha256(("%s:%s" % (firm["id"], s)).encode("utf-8")).digest())
         taken.discard(firm["name"])
-        new_name = next((s + words for s in order if s + words not in taken and name_ok(s + words)), None)
+        new_name = None
+        for surname in order:
+            candidate = " ".join(words[:at] + [surname] + words[at + 1:])
+            if candidate not in taken and name_ok(candidate):
+                new_name = candidate
+                break
         if new_name is None:
             raise SystemExit("retire_brand_surnames: no unique name for %s" % firm["id"])
         taken.add(new_name)
@@ -859,6 +869,7 @@ def main() -> int:
             # name is checked against every body name.
             if nation not in AUTHORED:
                 tidy_names(nation, majors, taken)
+                retire_brand_surnames(nation, majors, taken)
             retire_brand_surnames(nation, body, taken)
 
         # --- write the companies file ----------------------------------------

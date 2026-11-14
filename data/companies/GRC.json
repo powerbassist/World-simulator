@@ -315,7 +315,7 @@
     },
     {
       "id": "GRC_leventis_energeia",
-      "name": "Leventis Energeia",
+      "name": "Nikolaidis Energeia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22163,
@@ -396,7 +396,7 @@
     },
     {
       "id": "GRC_leventis_metafora",
-      "name": "Leventis Omilos",
+      "name": "Roussos Omilos",
       "sector": "industry",
       "share": 0.0259,
       "headcount": 15914,
@@ -567,7 +567,7 @@
     },
     {
       "id": "GRC_leventis_kataskeves",
-      "name": "Leventis Emporio",
+      "name": "Triantafyllou Emporio",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22613,

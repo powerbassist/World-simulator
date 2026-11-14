@@ -557,7 +557,7 @@
     },
     {
       "id": "ESP_barcelo_agro",
-      "name": "Barceló Transportes",
+      "name": "Cuadrado Transportes",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24064,
@@ -683,7 +683,7 @@
     },
     {
       "id": "ESP_barcelo_seguros",
-      "name": "Barceló Seguros",
+      "name": "Ibarrola Seguros",
       "sector": "services",
       "share": 0.0125,
       "headcount": 17510,
@@ -746,7 +746,7 @@
     },
     {
       "id": "ESP_barcelo_logistica",
-      "name": "Barceló Logística",
+      "name": "Rentero Logística",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24906,
@@ -791,7 +791,7 @@
     },
     {
       "id": "ESP_barcelo_industrias_industrias",
-      "name": "Barceló Grupo",
+      "name": "Cadalso Grupo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23130,

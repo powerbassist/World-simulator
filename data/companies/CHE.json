@@ -24,7 +24,7 @@
     },
     {
       "id": "CHE_fuchs_energie",
-      "name": "Fuchs Energie",
+      "name": "Lüthi Energie",
       "sector": "industry",
       "share": 0.0501,
       "headcount": 31234,
@@ -74,7 +74,7 @@
     },
     {
       "id": "CHE_fuchs_gruppe",
-      "name": "Fuchs Gruppe",
+      "name": "Isler Gruppe",
       "sector": "services",
       "share": 0.0422,
       "headcount": 60926,
@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "CHE_fuchs_industrie_industrie",
-      "name": "Fuchs Handel",
+      "name": "Daenzer Handel",
       "sector": "agriculture",
       "share": 0.0202,
       "headcount": 1650,
@@ -359,7 +359,7 @@
     },
     {
       "id": "CHE_egger_transport",
-      "name": "Egger Industrie",
+      "name": "Thönen Industrie",
       "sector": "industry",
       "share": 0.0199,
       "headcount": 14173,
@@ -602,7 +602,7 @@
     },
     {
       "id": "CHE_kohler_werkstoffe",
-      "name": "Kohler Gruppe",
+      "name": "Portmann Gruppe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24216,

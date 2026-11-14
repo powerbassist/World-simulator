@@ -54,7 +54,7 @@
     },
     {
       "id": "SWE_beijer_handel",
-      "name": "Beijer Energi",
+      "name": "Lindgren Energi",
       "sector": "industry",
       "share": 0.0453,
       "headcount": 37653,
@@ -459,7 +459,7 @@
     },
     {
       "id": "SWE_beijer_material_gruppen",
-      "name": "Beijer Material Gruppen",
+      "name": "Mårtensson Material Gruppen",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20039,
@@ -693,7 +693,7 @@
     },
     {
       "id": "SWE_beijer_industri",
-      "name": "Beijer Gruppen",
+      "name": "Cassel Gruppen",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23943,
