@@ -67,8 +67,16 @@ func _check_budget_commit_answers() -> void:
 
 
 ## Withdrawing the finance bill (QA's T1 on #331) frees the slot and answers with a card.
+## The verb shows only while a finance bill is tabled: no dead button, and the Tax Code's
+## prose budget (test_prose_budget) is read with no bill in the slot.
 func _check_withdraw_answers() -> void:
+	_main._tax_panel._refresh()
+	if _main._tax_panel._withdraw_button.visible:
+		_fail("'Withdraw the bill' shows with no finance bill tabled")
 	FinanceBill.table(_main._state, _main._loader, {"tax_rates_pct": {"income": 5.0}})
+	_main._tax_panel._refresh()
+	if not _main._tax_panel._withdraw_button.visible:
+		_fail("'Withdraw the bill' is hidden while a finance bill is tabled")
 	var before_count: int = _main._hud.inbox.card_count()
 	for child in _main._tax_panel.find_children("*", "Button", true, false):
 		if (child as Button).text == tr("Withdraw the bill"):

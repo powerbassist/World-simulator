@@ -23,7 +23,6 @@ extends PanelContainer
 ## panel's verb and its per-key lever maxima; the brief asked for the house
 ## idioms, not a second way to move a rate.
 
-const Budget = preload("res://src/sim/budget.gd")
 ## Commit tables the rates into the finance bill (docs/design/finance-bill.md).
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const C = preload("res://src/sim/economy_constants.gd")
@@ -86,6 +85,7 @@ var _bases_box: VBoxContainer
 var _dirty := true
 var _close_button: Button
 var _commit_button: Button
+var _withdraw_button: Button
 ## V5.3 a + b (docs/design/v5.3-ab.md 4.1): each row's yield on the books as they
 ## stand and its balance effect once moved, and the strip that says what Commit
 ## books -- read in the tab where the rate is made. `_effects` is the panel's own
@@ -213,10 +213,11 @@ func _build_buttons() -> Control:
 
 	# QA's T1 on #331: the tabled finance bill taken back before its vote, answered like
 	# Commit. Here alone: the Budget sits at the size cap, and screen 4 shows the bill.
-	var withdraw := Button.new()
-	withdraw.text = tr("Withdraw the bill")
-	withdraw.pressed.connect(func(): committed.emit(Trends.snapshot_now(_state), FinanceBill.withdraw(_state)))
-	row.add_child(withdraw)
+	# Shown only while a finance bill is tabled (_refresh), so it is never a dead verb.
+	_withdraw_button = Button.new()
+	_withdraw_button.text = tr("Withdraw the bill")
+	_withdraw_button.pressed.connect(func(): committed.emit(Trends.snapshot_now(_state), FinanceBill.withdraw(_state)))
+	row.add_child(_withdraw_button)
 
 	_close_button = Button.new()
 	_close_button.text = tr("Close (X)")
@@ -412,6 +413,7 @@ func _lever_text(key: String) -> String:
 
 func _refresh() -> void:
 	_ensure_rows()
+	_withdraw_button.visible = FinanceBill.FinanceBillLaw.tabled(_state.player()) != null
 	for key in _lever_keys():
 		_lever_values[key].text = _lever_text(String(key))
 	if _now_books.is_empty():
