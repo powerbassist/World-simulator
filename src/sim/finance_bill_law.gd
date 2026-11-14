@@ -23,7 +23,14 @@ static func id_for(state) -> String:
 	return PREFIX + str(int(state.year) * 12 + int(state.month))
 
 
-## The register's finance bill as a Law, or null when the register holds none.
+## A finance bill by id alone, for its name: no register, so no position (Bills.by_id).
+static func named(law_id: String):
+	return Law.composed_from_dict({"id": law_id, "name": FK.BILL_NAME, "theme": "tax", "majority": "simple", "origin": "player"})
+
+
+## The register's finance bill as a Law, or null when the register holds none. Not listed
+## in Bills.open: the law list's forecast reads the law whip, and this bill's reading is
+## FinanceBill.resolve()'s (the review of #331).
 static func tabled(ns):
 	var entry: Dictionary = ns.tabled_bill
 	if not is_finance(String(entry.get("law_id", ""))):

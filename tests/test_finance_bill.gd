@@ -58,7 +58,7 @@ func _init() -> void:
 	_check_the_second_chamber_is_skipped()
 	_check_the_position_follows_the_size_and_the_anchors()
 	_check_the_forecast_is_the_division()
-	_check_the_tabled_bill_is_an_open_law()
+	_check_the_bill_is_named_and_not_listed()
 	_check_the_tabled_bill_survives_a_save()
 	_finish()
 
@@ -366,17 +366,24 @@ func _check_the_forecast_is_the_division() -> void:
 			_fail("forecast: %s %s is not the division's %s" % [key, forecast.get(key), result.get(key)])
 
 
-func _check_the_tabled_bill_is_an_open_law() -> void:
+## Named by id for every surface that titles a bill after its division (the card read
+## "finance:24313" before the review of #331), and never listed among the open laws,
+## whose forecast bar reads the law whip rather than this bill's reading.
+func _check_the_bill_is_named_and_not_listed() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	FinanceBill.table(state, _loader, MANAGED)
 	var id := String(ns.tabled_bill["law_id"])
-	if Legislature.open_law(state, ns, _loader, id) == null:
-		_fail("open: the tabled finance bill is not found among the open bills")
-	ns.tabled_bill = {}
 	for law in Bills.open(state, ns, _loader):
 		if String(law.id).begins_with(FinanceBillLaw.PREFIX):
-			_fail("open: a finance bill is listed with none tabled")
+			_fail("open: the finance bill is listed among the open laws")
+	Division.divide(state, _loader)
+	var named = Bills.by_id(_loader, id)
+	if named == null or String(named.law_name) != FK.BILL_NAME:
+		_fail("named: the divided finance bill has no name by its id: %s" % [named])
+	var forced := FinanceBill.table(_new_state(), _loader, MANAGED, true)
+	if not (forced.get("forecast", {"x": 1}) as Dictionary).is_empty():
+		_fail("forced: a forced tabling forecasts a vote that never happens: %s" % [forced["forecast"]])
 
 
 func _check_the_tabled_bill_survives_a_save() -> void:

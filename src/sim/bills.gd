@@ -32,6 +32,11 @@ const OWNERSHIP_PREFIX := "ownership:"
 static func by_id(loader, law_id: String):
 	if loader == null or law_id == "":
 		return null
+	# A finance bill is named here, for every surface that titles a bill by its id (the
+	# division's card, the diary, the news) after the register has let it go. Its
+	# position needs the register: the reading is FinanceBillLaw.tabled(ns)'s, never this.
+	if FinanceBillLaw.is_finance(law_id):
+		return FinanceBillLaw.named(law_id)
 	for law in loader.laws:
 		if law.id == law_id:
 			return law
@@ -62,11 +67,6 @@ static func open(state, ns, loader) -> Array:
 	var out: Array = loader.laws + Law.composed_register(ns)
 	for company in Companies.majors_of(loader, ns.id):
 		out.append_array(_bills_for(state, ns, loader, company))
-	# The tabled finance bill, a law like any other to every reader of the register
-	# (docs/design/finance-bill.md section 2); built from the register, never stored.
-	var finance = FinanceBillLaw.tabled(ns)
-	if finance != null:
-		out.append(finance)
 	return out
 
 

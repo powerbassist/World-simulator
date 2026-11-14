@@ -89,7 +89,8 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 	}
 	var tabling: Dictionary = ns.tabled_bill.duplicate(true)
 	tabling["tabled"] = true
-	tabling["forecast"] = resolve(ns, loader.parties.get(ns.id, []), FinanceBillLaw.tabled(ns))
+	# A forced bill is never divided: no vote to forecast (Division.forecast's rule).
+	tabling["forecast"] = {} if bool(ns.tabled_bill["forced"]) else resolve(ns, loader.parties.get(ns.id, []), FinanceBillLaw.tabled(ns))
 	return tabling
 
 
