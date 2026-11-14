@@ -23,6 +23,9 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 const Division = preload("res://src/sim/division.gd")
+const BillQueue = preload("res://src/sim/bill_queue.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
+const Bills = preload("res://src/sim/bills.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -43,6 +46,7 @@ func _process(_delta: float) -> bool:
 		_check_struck()
 		_check_division_sting()
 		_check_referendum_sting()
+		_check_queue_cards()
 		_check_forced_fall_sting()
 		_finish()
 		return true
@@ -272,6 +276,35 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL: %s" % f)
 	quit(1)
+
+
+## V5.3 e PR 2: the queue's heads at the close, through main's own Division hook. A head
+## refused at promotion is dropped and the player told why on a card of its own (the slot
+## may already hold the next, so the Legislature's last-result line is hidden); the head
+## tabled behind it gets the tabling's card, which its division later sets in place.
+func _check_queue_cards() -> void:
+	var state = _main._state
+	var ns = state.player()
+	Division.divide(state, _main._loader)
+	var law = null
+	for l in Legislature.available(ns, Bills.open(state, ns, _main._loader)):
+		if not l.constitutional:
+			law = l
+			break
+	if law == null:
+		_fail("premise: no open ordinary law for the queue")
+		return
+	var inbox = _main._hud.inbox
+	var name: String = Strings.law_name(law)
+	var before := _titled(inbox, name).size()
+	ns.bill_queue = [{"finance": {"tax_rates_pct": {"vat": 25.0}}}, {"law_id": law.id}]
+	var report := {"division": {}, "queue": BillQueue.promote(state, _main._loader)}
+	_main._on_month_step("Division", true, report, state.year, state.month)
+	if not _inbox_says(inbox, "Dropped from the queue") or not _inbox_says(inbox, "outside its range"):
+		_fail("a queued bill refused at promotion left no card saying why")
+	if _titled(inbox, name).size() != before + 1 or not _inbox_says(inbox, "Tabled"):
+		_fail("the queued law tabled at promotion got no tabling card")
+	ns.tabled_bill = {}  # the 49.3 check after this one presses on an empty slot
 
 
 ## #223 QA D10: a 49.3 through the Legislature panel's own propose path -- one

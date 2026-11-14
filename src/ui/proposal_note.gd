@@ -41,6 +41,17 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 			return Strings.t("A bill is already before the Assembly.")
 		if bool(result.get("referendum_in_flight", false)):
 			return Strings.t("A referendum is already in flight.")
+		# V5.3 e PR 2: the reasons a queued bill meets at promotion, months after the press.
+		if bool(result.get("unavailable", false)):
+			return Strings.t("The bill is no longer open to the Assembly.")
+		if bool(result.get("autumn", false)):
+			return Strings.t("A tax is created or abolished only in the autumn finance bill.")
+		if bool(result.get("kind", false)):
+			return Strings.t("The bill changes a tax that is not in force.")
+		if bool(result.get("range", false)):
+			return Strings.t("A tax rate would land outside its range.")
+		if bool(result.get("forced", false)):
+			return Strings.t("The government cannot force this bill now.")
 		return Strings.t("The assembly would not take it.")
 	if bool(result.get("withdrawn", false)):
 		return Strings.t("Withdrawn.")
@@ -90,10 +101,29 @@ static func remember(main, law_id: String, card: String) -> void:
 	_tabled[main.get_instance_id()] = {"law_id": law_id, "card": card}
 
 
-## The division at the close (WorldMonth's Division step): its verdict set in place
-## on the card the tabling pushed, raised as the news it is. A new card only when
-## that one is gone: dismissed, or a load.
+## The close's Division step: the month's verdict, then the queue's heads tabled behind it.
 static func card_division(main, report: Dictionary) -> void:
+	_card_verdict(main, report)
+	card_queue(main, report)
+
+
+## V5.3 e PR 2: each head the queue promoted at this close (report `queue`). A refused
+## one is dropped, so its card is the player's only word of it: the slot may already hold
+## the next bill, which hides the Legislature's last-result line. A tabled or forced one
+## gets the card a press would have pushed, which its division then sets in place.
+static func card_queue(main, report: Dictionary) -> void:
+	for result in report.get("queue", []):
+		var law_id := String(result.get("law_id", ""))
+		var title := Strings.law_name(main._law_panel._find_law(law_id), law_id)
+		if bool(result.get("refused", false)):
+			ResultTone.push(main._hud.inbox, title, Strings.t("Dropped from the queue: %s") % body(result), ResultTone.BLOCKED)
+		else:
+			push(main, title, result)
+
+
+## The division at the close: its verdict set in place on the card the tabling pushed,
+## raised as the news it is. A new card only when that one is gone: dismissed, or a load.
+static func _card_verdict(main, report: Dictionary) -> void:
 	card_ownership_refusal(main)
 	var result: Dictionary = report.get("division", {})
 	if result.is_empty():
