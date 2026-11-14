@@ -130,6 +130,9 @@ func _check_one_budget_text_at_a_time() -> void:
 	var second := BillQueue.add(state, {"finance": {"tax_rates_pct": {"income": 1.0}}})
 	if not bool(first.get("queued", false)) or bool(second.get("queued", false)) or not bool(second.get("finance_queued", false)):
 		_fail("add: a second finance bill was queued beside the first: %s / %s" % [first, second])
+	var direct := FinanceBill.table(state, _loader, {"tax_rates_pct": {"income": 1.0}})
+	if bool(direct.get("tabled", false)) or not bool(direct.get("finance_queued", false)) or not state.player().tabled_bill.is_empty():
+		_fail("table: a finance bill was tabled beside the queued one: %s" % [direct])
 	var tabled = _new_state()
 	FinanceBill.table(tabled, _loader, MANAGED)
 	var behind := BillQueue.add(tabled, {"finance": {"tax_rates_pct": {"income": 1.0}}})
@@ -152,7 +155,8 @@ func _check_remove_and_move_reorder_the_queue() -> void:
 		order.append(String(entry["law_id"]))
 	if order != [ids[2], ids[0], ids[1]]:
 		_fail("move: 2 to 0 reads %s" % [order])
-	if not BillQueue.remove(state, 1) or ns.bill_queue.size() != 2 or String(ns.bill_queue[1]["law_id"]) != ids[1]:
+	if not BillQueue.remove(state, 1) or ns.bill_queue.size() != 2 or String(ns.bill_queue[0]["law_id"]) != ids[2] \
+			or String(ns.bill_queue[1]["law_id"]) != ids[1]:
 		_fail("remove: removing the second left %s" % [ns.bill_queue])
 	if BillQueue.remove(state, 5) or BillQueue.move(state, 0, 2) or BillQueue.move(state, -1, 0):
 		_fail("remove/move: an index outside the queue was accepted")

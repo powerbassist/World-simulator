@@ -48,6 +48,8 @@ static func body(result: Dictionary, parties: Array = []) -> String:
 			return Strings.t("A tax is created or abolished only in the autumn finance bill.")
 		if bool(result.get("kind", false)):
 			return Strings.t("The bill changes a tax that is not in force.")
+		if bool(result.get("finance_queued", false)):
+			return Strings.t("A finance bill is already queued.")
 		if bool(result.get("range", false)):
 			return Strings.t("A tax rate would land outside its range.")
 		if bool(result.get("forced", false)):

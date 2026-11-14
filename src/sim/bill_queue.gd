@@ -45,7 +45,8 @@ static func add(state, entry: Dictionary) -> Dictionary:
 		return {"queued": false, "refused": true, "full": true}
 	var held: Array = [ns.tabled_bill] + ns.bill_queue
 	for other in held:
-		if entry.has("finance") and (other.has("finance") or FinanceBillLaw.is_finance(String(other.get("law_id", "")))):
+		# A tabled finance bill carries its deltas under "finance", as a queued one does.
+		if entry.has("finance") and other.has("finance"):
 			return {"queued": false, "refused": true, "finance_queued": true}
 		if not entry.has("finance") and String(other.get("law_id", "")) == String(entry.get("law_id", "")):
 			return {"queued": false, "refused": true, "already_queued": true}

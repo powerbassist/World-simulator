@@ -74,6 +74,11 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 	var held: Dictionary = ns.tabled_bill
 	if not held.is_empty() and not FinanceBillLaw.is_finance(String(held.get("law_id", ""))):
 		return {"tabled": false, "refused": true, "already_tabled": true}
+	# One budget text at a time (section 10): a finance bill waiting in the queue is the
+	# year's text, so the slot takes no second one beside it. Promotion pops its entry first.
+	for entry in ns.bill_queue:
+		if entry.has("finance"):
+			return {"tabled": false, "refused": true, "finance_queued": true}
 	if force and ns.formation_method != GK.FORCE_FORMATION:
 		return {"tabled": false, "refused": true, "forced": true}
 	var merged: Dictionary = (held.get("finance", {}) as Dictionary).duplicate(true)
