@@ -13,6 +13,7 @@ const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const Law = preload("res://src/core/law.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
+const LawCategory = preload("res://src/core/law_category.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Party = preload("res://src/core/party.gd")
 const PoliticalSystem = preload("res://src/core/political_system.gd")
@@ -117,6 +118,7 @@ static func load_laws(loader, laws_dir: String) -> void:
 				continue
 			var law = Law.from_dict(entry, fname, loader.errors, C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys())
 			law.magnitude = LawMagnitude.parse(entry, law.id, law.constitutional, fname, loader.errors)
+			loader.law_category[law.id] = LawCategory.parse(entry, law.id, fname, loader.errors)
 			if law.id != "":
 				if seen_ids.has(law.id):
 					loader.errors.append("%s: duplicate law id '%s'" % [fname, law.id])

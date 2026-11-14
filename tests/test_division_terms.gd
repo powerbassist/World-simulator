@@ -277,7 +277,7 @@ func _check_the_loader_reads_a_magnitude() -> void:
 func _check_a_row_carries_its_magnitude_through_the_loader() -> void:
 	var dir := "user://test_division_terms_laws"
 	DirAccess.make_dir_recursive_absolute(dir)
-	var row: Dictionary = {"id": "sized_bill", "name": "Sized bill", "theme": "social", "summary": "A row for this test.",
+	var row: Dictionary = {"id": "sized_bill", "name": "Sized bill", "theme": "social", "category": "welfare_health", "summary": "A row for this test.",
 		"position": {"economic": 0.0, "social": 0.0}, "majority": "simple", "cooldown_months": 12, "once": false,
 		"effects": {"bloc_offset": {"workers": 0.01}}, "magnitude": {"value": 40, "reference": 40, "unit": "lycees"}}
 	var file := FileAccess.open(dir.path_join("laws.json"), FileAccess.WRITE)

@@ -4,6 +4,7 @@
       "id": "test_fixture_bad_amendment",
       "name": "Test Fixture Bad Amendment",
       "theme": "institutional",
+      "category": "constitution",
       "summary": "Names a censure_rule its own declared system does not permit -- must fail to load.",
       "constitutional": true,
       "systems": ["semi_presidential_republic"],

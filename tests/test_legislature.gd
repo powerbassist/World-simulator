@@ -21,6 +21,8 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
+const LawCategory = preload("res://src/core/law_category.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -47,6 +49,7 @@ func _init() -> void:
 		return
 
 	_check_template_count_and_themes()
+	_check_every_law_has_one_category()
 	_check_extra_law_is_data_only_edit()
 	_check_vote_follows_assembly_composition()
 	_check_majority_boundaries()
@@ -87,6 +90,24 @@ func _check_template_count_and_themes() -> void:
 	for theme in ["tax", "labour", "social", "institutional", "business"]:
 		if not themes.has(theme):
 			_fail("no law template found with theme '%s'" % theme)
+
+
+## H12: every authored law sits on exactly one shelf of LawCategory.KEYS, every shelf
+## holds at least four laws, and every shelf has its own shown word (not the id).
+func _check_every_law_has_one_category() -> void:
+	var shelves := {}
+	for law in _loader.laws:
+		var category := LawCategory.of(_loader, law.id)
+		if not LawCategory.KEYS.has(category):
+			_fail("%s has no category from the list: '%s'" % [law.id, category])
+		shelves[category] = int(shelves.get(category, 0)) + 1
+	for key in LawCategory.KEYS:
+		if int(shelves.get(key, 0)) < 4:
+			_fail("category %s holds %d laws, fewer than four" % [key, int(shelves.get(key, 0))])
+		if not Labels.LAW_CATEGORY.has(key):
+			_fail("category %s has no shown word in Labels.LAW_CATEGORY" % key)
+	if LawCategory.of(_loader, "no_such_law") != "":
+		_fail("a law the loader never read has a category")
 
 
 ## Adding a seventeenth law requires only a data/laws/ edit — a separate laws
