@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "NLD_manders_industrie",
-      "name": "Manders Industrie",
+      "name": "Manders Landbouw",
       "sector": "agriculture",
       "share": 0.2711,
       "headcount": 27297,
@@ -44,7 +44,7 @@
     },
     {
       "id": "NLD_meulenkamp_transport",
-      "name": "Meulenkamp Transport",
+      "name": "Meulenkamp Materialen",
       "sector": "industry",
       "share": 0.0571,
       "headcount": 37800,
@@ -84,7 +84,7 @@
     },
     {
       "id": "NLD_groenleer_landbouw",
-      "name": "Groenleer Landbouw",
+      "name": "Groenleer Logistiek",
       "sector": "services",
       "share": 0.0243,
       "headcount": 43567,
@@ -94,7 +94,7 @@
     },
     {
       "id": "NLD_meulenkamp_energie",
-      "name": "Meulenkamp Energie",
+      "name": "Meulenkamp Handel",
       "sector": "services",
       "share": 0.0581,
       "headcount": 82686,
@@ -106,7 +106,7 @@
   "body": [
     {
       "id": "NLD_tuinstra_energie",
-      "name": "Tuinstra Energie",
+      "name": "Tuinstra Handel",
       "sector": "agriculture",
       "share": 0.0197,
       "headcount": 1645,
@@ -115,7 +115,7 @@
     },
     {
       "id": "NLD_quist_bouw",
-      "name": "Quist Bouw",
+      "name": "Quist Groep",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2192,
@@ -133,7 +133,7 @@
     },
     {
       "id": "NLD_lammers_transport",
-      "name": "Lammers Transport",
+      "name": "Lammers Landbouw",
       "sector": "agriculture",
       "share": 0.0102,
       "headcount": 789,
@@ -142,7 +142,7 @@
     },
     {
       "id": "NLD_coenen_materialen",
-      "name": "Coenen Materialen",
+      "name": "Coenen Groep",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2434,
@@ -178,7 +178,7 @@
     },
     {
       "id": "NLD_ijsendoorn_materialen",
-      "name": "IJsendoorn Materialen",
+      "name": "IJsendoorn Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2336,
@@ -187,7 +187,7 @@
     },
     {
       "id": "NLD_eversdijk_logistiek",
-      "name": "Eversdijk Logistiek",
+      "name": "Eversdijk Handel",
       "sector": "agriculture",
       "share": 0.022,
       "headcount": 1649,
@@ -196,7 +196,7 @@
     },
     {
       "id": "NLD_bergkamp_materialen",
-      "name": "Bergkamp Materialen",
+      "name": "Bergkamp Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2592,
@@ -214,7 +214,7 @@
     },
     {
       "id": "NLD_regter_verzekeringen",
-      "name": "Regter Verzekeringen",
+      "name": "Regter Groep",
       "sector": "agriculture",
       "share": 0.0279,
       "headcount": 2347,
@@ -223,7 +223,7 @@
     },
     {
       "id": "NLD_hofstede_bouw",
-      "name": "Hofstede Bouw",
+      "name": "Hofstede Groep",
       "sector": "agriculture",
       "share": 0.0271,
       "headcount": 2106,
@@ -232,7 +232,7 @@
     },
     {
       "id": "NLD_aaldering_energie",
-      "name": "Aaldering Energie",
+      "name": "Aaldering Landbouw",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2668,
@@ -241,7 +241,7 @@
     },
     {
       "id": "NLD_nieuwhof_handel",
-      "name": "Nieuwhof Handel",
+      "name": "Nieuwhof Bouw",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21382,
@@ -259,7 +259,7 @@
     },
     {
       "id": "NLD_oldenkamp_logistiek",
-      "name": "Oldenkamp Logistiek",
+      "name": "Oldenkamp Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20097,
@@ -277,7 +277,7 @@
     },
     {
       "id": "NLD_manders_transport_energie",
-      "name": "Manders Transport Energie",
+      "name": "Manders Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19598,
@@ -286,7 +286,7 @@
     },
     {
       "id": "NLD_poolman_logistiek",
-      "name": "Poolman Logistiek",
+      "name": "Poolman Materialen",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18429,
@@ -295,7 +295,7 @@
     },
     {
       "id": "NLD_sloots_transport",
-      "name": "Sloots Transport",
+      "name": "Sloots Bouw",
       "sector": "industry",
       "share": 0.0217,
       "headcount": 14482,
@@ -304,7 +304,7 @@
     },
     {
       "id": "NLD_lammers_verzekeringen",
-      "name": "Lammers Verzekeringen",
+      "name": "Lammers Materialen",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19099,
@@ -322,7 +322,7 @@
     },
     {
       "id": "NLD_meulenkamp_logistiek_handel",
-      "name": "Meulenkamp Logistiek Handel",
+      "name": "Meulenkamp Groep",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21476,
@@ -340,7 +340,7 @@
     },
     {
       "id": "NLD_hofstede_handel",
-      "name": "Hofstede Handel",
+      "name": "Hofstede Bouw",
       "sector": "industry",
       "share": 0.0236,
       "headcount": 14685,
@@ -349,7 +349,7 @@
     },
     {
       "id": "NLD_notten_handel",
-      "name": "Notten Handel",
+      "name": "Notten Materialen",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19727,
@@ -367,7 +367,7 @@
     },
     {
       "id": "NLD_manders_transport",
-      "name": "Manders Transport",
+      "name": "Manders Bouw",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21355,
@@ -394,7 +394,7 @@
     },
     {
       "id": "NLD_bergkamp_transport",
-      "name": "Bergkamp Transport",
+      "name": "Bergkamp Groep",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18265,
@@ -403,7 +403,7 @@
     },
     {
       "id": "NLD_hofland_verzekeringen",
-      "name": "Hofland Verzekeringen",
+      "name": "Hofland Materialen",
       "sector": "industry",
       "share": 0.0164,
       "headcount": 11692,
@@ -412,7 +412,7 @@
     },
     {
       "id": "NLD_rietdijk_handel",
-      "name": "Rietdijk Handel",
+      "name": "Rietdijk Materialen",
       "sector": "industry",
       "share": 0.0197,
       "headcount": 12959,
@@ -421,7 +421,7 @@
     },
     {
       "id": "NLD_hofstee_landbouw",
-      "name": "Hofstee Landbouw",
+      "name": "Hofstee Energie",
       "sector": "industry",
       "share": 0.0242,
       "headcount": 15732,
@@ -430,7 +430,7 @@
     },
     {
       "id": "NLD_franken_transport_industrie",
-      "name": "Franken Transport Industrie",
+      "name": "Franken Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19030,
@@ -448,7 +448,7 @@
     },
     {
       "id": "NLD_rensink_landbouw",
-      "name": "Rensink Landbouw",
+      "name": "Rensink Industrie",
       "sector": "industry",
       "share": 0.0196,
       "headcount": 12116,
@@ -475,7 +475,7 @@
     },
     {
       "id": "NLD_bergkamp_industrie",
-      "name": "Bergkamp Industrie",
+      "name": "Bergkamp Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24545,
@@ -484,7 +484,7 @@
     },
     {
       "id": "NLD_oldenkamp_industrie_energie",
-      "name": "Oldenkamp Industrie Energie",
+      "name": "Oldenkamp Transport",
       "sector": "services",
       "share": 0.015,
       "headcount": 23003,
@@ -493,7 +493,7 @@
     },
     {
       "id": "NLD_grootveld_bouw",
-      "name": "Grootveld Bouw",
+      "name": "Grootveld Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23620,
@@ -502,7 +502,7 @@
     },
     {
       "id": "NLD_ouweneel_industrie",
-      "name": "Ouweneel Industrie",
+      "name": "Ouweneel Logistiek",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23572,
@@ -511,7 +511,7 @@
     },
     {
       "id": "NLD_notten_bouw",
-      "name": "Notten Bouw",
+      "name": "Notten Transport",
       "sector": "services",
       "share": 0.0106,
       "headcount": 17278,
@@ -529,7 +529,7 @@
     },
     {
       "id": "NLD_vissers_landbouw",
-      "name": "Vissers Landbouw",
+      "name": "Vissers Verzekeringen",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23387,
@@ -556,7 +556,7 @@
     },
     {
       "id": "NLD_hofstede_industrie",
-      "name": "Hofstede Industrie",
+      "name": "Hofstede Logistiek",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23300,
@@ -574,7 +574,7 @@
     },
     {
       "id": "NLD_regter_materialen",
-      "name": "Regter Materialen",
+      "name": "Regter Verzekeringen",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24688,
@@ -592,7 +592,7 @@
     },
     {
       "id": "NLD_zandbergen_bouw",
-      "name": "Zandbergen Bouw",
+      "name": "Zandbergen Groep",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24786,
@@ -601,7 +601,7 @@
     },
     {
       "id": "NLD_bergsma_energie",
-      "name": "Bergsma Energie",
+      "name": "Bergsma Groep",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24786,
@@ -610,7 +610,7 @@
     },
     {
       "id": "NLD_hofstee_industrie",
-      "name": "Hofstee Industrie",
+      "name": "Hofstee Verzekeringen",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22524,
@@ -628,7 +628,7 @@
     },
     {
       "id": "NLD_ijsselmuiden_materialen",
-      "name": "IJsselmuiden Materialen",
+      "name": "IJsselmuiden Logistiek",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24247,
@@ -646,7 +646,7 @@
     },
     {
       "id": "NLD_notten_industrie",
-      "name": "Notten Industrie",
+      "name": "Notten Verzekeringen",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24763,
@@ -682,7 +682,7 @@
     },
     {
       "id": "NLD_linthorst_landbouw",
-      "name": "Linthorst Landbouw",
+      "name": "Linthorst Logistiek",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24588,
@@ -700,7 +700,7 @@
     },
     {
       "id": "NLD_manders_materialen",
-      "name": "Manders Materialen",
+      "name": "Manders Groep",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23247,
@@ -727,7 +727,7 @@
     },
     {
       "id": "NLD_bakhuis_materialen",
-      "name": "Bakhuis Materialen",
+      "name": "Bakhuis Groep",
       "sector": "services",
       "share": 0.0152,
       "headcount": 22410,
@@ -745,7 +745,7 @@
     },
     {
       "id": "NLD_zweers_landbouw",
-      "name": "Zweers Landbouw",
+      "name": "Zweers Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24523,
@@ -763,7 +763,7 @@
     },
     {
       "id": "NLD_ijsendoorn_bouw",
-      "name": "IJsendoorn Bouw",
+      "name": "IJsendoorn Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24339,
@@ -772,7 +772,7 @@
     },
     {
       "id": "NLD_schuiling_industrie",
-      "name": "Schuiling Industrie",
+      "name": "Schuiling Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24935,
@@ -781,7 +781,7 @@
     },
     {
       "id": "NLD_aaldering_bouw",
-      "name": "Aaldering Bouw",
+      "name": "Aaldering Groep",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24977,
@@ -790,7 +790,7 @@
     },
     {
       "id": "NLD_eerden_materialen",
-      "name": "Eerden Materialen",
+      "name": "Eerden Groep",
       "sector": "services",
       "share": 0.0108,
       "headcount": 17009,
@@ -799,7 +799,7 @@
     },
     {
       "id": "NLD_eversdijk_bouw",
-      "name": "Eversdijk Bouw",
+      "name": "Eversdijk Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23849,
@@ -808,7 +808,7 @@
     },
     {
       "id": "NLD_rensink_energie",
-      "name": "Rensink Energie",
+      "name": "Rensink Handel",
       "sector": "services",
       "share": 0.0143,
       "headcount": 20923,
@@ -817,7 +817,7 @@
     },
     {
       "id": "NLD_regter_landbouw",
-      "name": "Regter Landbouw",
+      "name": "Regter Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22754,
@@ -826,7 +826,7 @@
     },
     {
       "id": "NLD_nieuwhof_transport_materialen",
-      "name": "Nieuwhof Transport Materialen",
+      "name": "Nieuwhof Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23953,
@@ -835,7 +835,7 @@
     },
     {
       "id": "NLD_landsman_landbouw",
-      "name": "Landsman Landbouw",
+      "name": "Landsman Groep",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23742,

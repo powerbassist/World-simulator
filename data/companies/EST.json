@@ -14,7 +14,7 @@
     },
     {
       "id": "EST_harma_ehitus",
-      "name": "Härma Ehitus",
+      "name": "Härma Kaubandus",
       "sector": "agriculture",
       "share": 0.2263,
       "headcount": 24521,
@@ -24,7 +24,7 @@
     },
     {
       "id": "EST_oja_kaubandus",
-      "name": "Oja Kaubandus",
+      "name": "Oja Ehitus",
       "sector": "industry",
       "share": 0.0489,
       "headcount": 26114,
@@ -34,7 +34,7 @@
     },
     {
       "id": "EST_nommik_kindlustus",
-      "name": "Nõmmik Kindlustus",
+      "name": "Nõmmik Tööstus",
       "sector": "industry",
       "share": 0.0781,
       "headcount": 59637,
@@ -44,7 +44,7 @@
     },
     {
       "id": "EST_claudt_kaubandus",
-      "name": "Claudt Kaubandus",
+      "name": "Claudt Materjalid",
       "sector": "industry",
       "share": 0.0779,
       "headcount": 62221,
@@ -64,7 +64,7 @@
     },
     {
       "id": "EST_allik_materjalid",
-      "name": "Allik Materjalid",
+      "name": "Allik Transport",
       "sector": "services",
       "share": 0.0221,
       "headcount": 40986,
@@ -94,7 +94,7 @@
     },
     {
       "id": "EST_nirgi_pollumajandus",
-      "name": "Nirgi Põllumajandus",
+      "name": "Nirgi Logistika",
       "sector": "services",
       "share": 0.0251,
       "headcount": 29114,
@@ -104,7 +104,7 @@
     },
     {
       "id": "EST_hallik_energia",
-      "name": "Hallik Energia",
+      "name": "Hallik Kaubandus",
       "sector": "services",
       "share": 0.0443,
       "headcount": 75078,
@@ -114,7 +114,7 @@
     },
     {
       "id": "EST_grents_ehitus",
-      "name": "Grents Ehitus",
+      "name": "Grents Kindlustus",
       "sector": "services",
       "share": 0.0276,
       "headcount": 52584,
@@ -144,7 +144,7 @@
     },
     {
       "id": "EST_deemant_materjalid",
-      "name": "Deemant Materjalid",
+      "name": "Deemant Põllumajandus",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2577,
@@ -162,7 +162,7 @@
     },
     {
       "id": "EST_valk_materjalid",
-      "name": "Valk Materjalid",
+      "name": "Valk Põllumajandus",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2196,
@@ -171,7 +171,7 @@
     },
     {
       "id": "EST_fjodorov_toostus",
-      "name": "Fjodorov Tööstus",
+      "name": "Fjodorov Kaubandus",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2550,
@@ -180,7 +180,7 @@
     },
     {
       "id": "EST_halliste_logistika",
-      "name": "Halliste Logistika",
+      "name": "Halliste Grupp",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2386,
@@ -198,7 +198,7 @@
     },
     {
       "id": "EST_claudt_toostus",
-      "name": "Claudt Tööstus",
+      "name": "Claudt Grupp",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2421,
@@ -207,7 +207,7 @@
     },
     {
       "id": "EST_nirgi_materjalid",
-      "name": "Nirgi Materjalid",
+      "name": "Nirgi Grupp",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2202,
@@ -216,7 +216,7 @@
     },
     {
       "id": "EST_aarma_logistika",
-      "name": "Aarma Logistika",
+      "name": "Aarma Kaubandus",
       "sector": "agriculture",
       "share": 0.0192,
       "headcount": 1567,
@@ -225,7 +225,7 @@
     },
     {
       "id": "EST_oobik_materjalid",
-      "name": "Ööbik Materjalid",
+      "name": "Ööbik Grupp",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2292,
@@ -234,7 +234,7 @@
     },
     {
       "id": "EST_jaanson_toostus",
-      "name": "Jaanson Tööstus",
+      "name": "Jaanson Kaubandus",
       "sector": "agriculture",
       "share": 0.0236,
       "headcount": 2036,
@@ -243,7 +243,7 @@
     },
     {
       "id": "EST_gerassimov_toostus",
-      "name": "Gerassimov Tööstus",
+      "name": "Gerassimov Kaubandus",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2392,
@@ -261,7 +261,7 @@
     },
     {
       "id": "EST_mets_energia",
-      "name": "Mets Energia",
+      "name": "Mets Kaubandus",
       "sector": "agriculture",
       "share": 0.014,
       "headcount": 1221,
@@ -270,7 +270,7 @@
     },
     {
       "id": "EST_blomfeldt_pollumajandus",
-      "name": "Blomfeldt Põllumajandus",
+      "name": "Blomfeldt Ehitus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18477,
@@ -279,7 +279,7 @@
     },
     {
       "id": "EST_salu_transport",
-      "name": "Salu Transport",
+      "name": "Salu Grupp",
       "sector": "industry",
       "share": 0.0256,
       "headcount": 17314,
@@ -306,7 +306,7 @@
     },
     {
       "id": "EST_kalm_transport",
-      "name": "Kalm Transport",
+      "name": "Kalm Tööstus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18480,
@@ -324,7 +324,7 @@
     },
     {
       "id": "EST_ikkonen_pollumajandus",
-      "name": "Ikkonen Põllumajandus",
+      "name": "Ikkonen Tööstus",
       "sector": "industry",
       "share": 0.0142,
       "headcount": 8829,
@@ -333,7 +333,7 @@
     },
     {
       "id": "EST_parts_transport",
-      "name": "Parts Transport",
+      "name": "Parts Tööstus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20683,
@@ -351,7 +351,7 @@
     },
     {
       "id": "EST_hallik_logistika_materjalid",
-      "name": "Hallik Logistika Materjalid",
+      "name": "Hallik Materjalid",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19897,
@@ -378,7 +378,7 @@
     },
     {
       "id": "EST_oopik_transport",
-      "name": "Ööpik Transport",
+      "name": "Ööpik Energia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21395,
@@ -387,7 +387,7 @@
     },
     {
       "id": "EST_nirgi_kaubandus",
-      "name": "Nirgi Kaubandus",
+      "name": "Nirgi Materjalid",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21300,
@@ -396,7 +396,7 @@
     },
     {
       "id": "EST_made_transport",
-      "name": "Made Transport",
+      "name": "Made Grupp",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20422,
@@ -423,7 +423,7 @@
     },
     {
       "id": "EST_fjodorov_kindlustus",
-      "name": "Fjodorov Kindlustus",
+      "name": "Fjodorov Energia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18544,
@@ -432,7 +432,7 @@
     },
     {
       "id": "EST_gerassimov_pollumajandus",
-      "name": "Gerassimov Põllumajandus",
+      "name": "Gerassimov Grupp",
       "sector": "industry",
       "share": 0.0234,
       "headcount": 15135,
@@ -441,7 +441,7 @@
     },
     {
       "id": "EST_tammet_transport",
-      "name": "Tammet Transport",
+      "name": "Tammet Tööstus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18826,
@@ -450,7 +450,7 @@
     },
     {
       "id": "EST_teder_logistika",
-      "name": "Teder Logistika",
+      "name": "Teder Grupp",
       "sector": "industry",
       "share": 0.0148,
       "headcount": 10771,
@@ -459,7 +459,7 @@
     },
     {
       "id": "EST_halliste_kaubandus",
-      "name": "Halliste Kaubandus",
+      "name": "Halliste Tööstus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20935,
@@ -468,7 +468,7 @@
     },
     {
       "id": "EST_sade_transport",
-      "name": "Säde Transport",
+      "name": "Säde Grupp",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18541,
@@ -495,7 +495,7 @@
     },
     {
       "id": "EST_oopik_toostus",
-      "name": "Ööpik Tööstus",
+      "name": "Ööpik Kaubandus",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23091,
@@ -504,7 +504,7 @@
     },
     {
       "id": "EST_harma_pollumajandus",
-      "name": "Härma Põllumajandus",
+      "name": "Härma Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23008,
@@ -549,7 +549,7 @@
     },
     {
       "id": "EST_valk_energia_kaubandus",
-      "name": "Valk Energia Kaubandus",
+      "name": "Valk Kaubandus",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23699,
@@ -567,7 +567,7 @@
     },
     {
       "id": "EST_allik_ehitus",
-      "name": "Allik Ehitus",
+      "name": "Allik Grupp",
       "sector": "services",
       "share": 0.0141,
       "headcount": 20103,
@@ -594,7 +594,7 @@
     },
     {
       "id": "EST_hallik_pollumajandus",
-      "name": "Hallik Põllumajandus",
+      "name": "Hallik Kindlustus",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24210,
@@ -612,7 +612,7 @@
     },
     {
       "id": "EST_aarma_ehitus",
-      "name": "Aarma Ehitus",
+      "name": "Aarma Kindlustus",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23572,
@@ -639,7 +639,7 @@
     },
     {
       "id": "EST_orav_materjalid",
-      "name": "Orav Materjalid",
+      "name": "Orav Grupp",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24542,
@@ -657,7 +657,7 @@
     },
     {
       "id": "EST_mandmaa_ehitus",
-      "name": "Mändmaa Ehitus",
+      "name": "Mändmaa Grupp",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23408,
@@ -711,7 +711,7 @@
     },
     {
       "id": "EST_ikkonen_ehitus",
-      "name": "Ikkonen Ehitus",
+      "name": "Ikkonen Logistika",
       "sector": "services",
       "share": 0.0126,
       "headcount": 18800,
@@ -729,7 +729,7 @@
     },
     {
       "id": "EST_tammeorg_materjalid",
-      "name": "Tammeorg Materjalid",
+      "name": "Tammeorg Transport",
       "sector": "services",
       "share": 0.015,
       "headcount": 22086,
@@ -738,7 +738,7 @@
     },
     {
       "id": "EST_hallik_ehitus",
-      "name": "Hallik Ehitus",
+      "name": "Hallik Grupp",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24721,
@@ -756,7 +756,7 @@
     },
     {
       "id": "EST_lillemae_ehitus",
-      "name": "Lillemäe Ehitus",
+      "name": "Lillemäe Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22985,
@@ -783,7 +783,7 @@
     },
     {
       "id": "EST_oun_materjalid",
-      "name": "Õun Materjalid",
+      "name": "Õun Kindlustus",
       "sector": "services",
       "share": 0.0139,
       "headcount": 21484,
@@ -792,7 +792,7 @@
     },
     {
       "id": "EST_bernstein_energia",
-      "name": "Bernstein Energia",
+      "name": "Bernstein Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24268,
@@ -810,7 +810,7 @@
     },
     {
       "id": "EST_nirgi_energia",
-      "name": "Nirgi Energia",
+      "name": "Nirgi Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22445,
@@ -828,7 +828,7 @@
     },
     {
       "id": "EST_ilves_ehitus",
-      "name": "Ilves Ehitus",
+      "name": "Ilves Kindlustus",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24483,
@@ -846,7 +846,7 @@
     },
     {
       "id": "EST_grents_energia",
-      "name": "Grents Energia",
+      "name": "Grents Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24730,
@@ -873,7 +873,7 @@
     },
     {
       "id": "EST_teder_materjalid",
-      "name": "Teder Materjalid",
+      "name": "Teder Kaubandus",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23930,

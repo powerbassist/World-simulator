@@ -18,6 +18,7 @@ extends SceneTree
 ## end in their own full stop, so every one read "... of GDP.." on screen.
 
 const BriefingUi = preload("res://src/ui/briefing.gd")
+const BriefingSections = preload("res://src/ui/briefing_sections.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -50,7 +51,7 @@ func _open_briefing() -> void:
 	var laws: Array = _main._loader.laws
 	var pick = null
 	for law in laws:
-		if BriefingUi.effect_lines(law.effects, _main._state.player()).size() >= 2:
+		if BriefingSections.effect_lines(law.effects, _main._state.player()).size() >= 2:
 			pick = law
 			break
 	if pick == null:

@@ -6,7 +6,7 @@ extends SceneTree
 ## V5.3 b, step 5 (docs/design/v5.3-ab.md 2.2, 4.3, 4.4): the two decisions on an open bill,
 ## driven through the real panel with real clicks. The grade picker: a row with no size shows
 ## nothing; a chip re-reads the forecast, the row's bar and the strip at that size; the grade
-## reaches Legislature.propose through the briefing, and the strip's money is what the bill
+## reaches Legislature.propose from the sheet, and the strip's money is what the bill
 ## then books. The address: its button stands beside a tabled bill's greyed verbs; the strip
 ## says what the division then does, seat for seat; the bar the player reads moves (QA's merge
 ## gate on the UI); the diary's refusal is read before the press.
@@ -78,10 +78,8 @@ func _process(_delta: float) -> bool:
 			_check_the_pick_survives_a_refresh()
 			_check_the_grades_offered()
 			_check_the_referendum_route_takes_no_grade()
+			_check_the_sheet_reads_the_grade()
 			_press(_propose())
-		28:
-			_check_the_briefing_reads_the_grade()
-			_main._briefing.propose_requested.emit(_main._briefing._law)
 		34:
 			_check_the_grade_reached_the_sim()
 			_check_the_address_stands_beside_a_tabled_bill()
@@ -328,26 +326,24 @@ func _check_the_referendum_route_takes_no_grade() -> void:
 		_fail("a row with no size carries a grade")
 
 
-func _check_the_briefing_reads_the_grade() -> void:
-	if not _main._briefing.visible:
-		_fail("Propose did not open the briefing")
-		return
-	if not is_same(_main._briefing._law, _law):
-		_fail("the briefing must carry the row, never a graded copy: the sim grades it once")
+## The sheet says the size and carries the graded bill's forecast, and Propose divides from it with no popup in between.
+func _check_the_sheet_reads_the_grade() -> void:
+	if _main._briefing.visible:
+		_fail("the briefing popup is open over the sheet")
 	var all := PackedStringArray()
-	var stack: Array = [_main._briefing]
+	var stack: Array = [_list()._detail]
 	while not stack.is_empty():
 		var n: Node = stack.pop_back()
-		if n is Label or n is RichTextLabel:
+		if n is Label or n is RichTextLabel or n is Button:
 			all.append(String(n.text))
 		stack.append_array(n.get_children())
 	var text := " | ".join(all)
 	if "400 lycees" not in text:
-		_fail("the briefing does not say the size")
+		_fail("the sheet does not say the size")
 	var graded = LawMagnitude.scaled(_law, 10.0)
 	var band: float = _main._law_panel.forecast_band(_ns(), _law.id)
 	if _main._law_panel.forecast_text(_ns(), _parties(), graded, band) not in text:
-		_fail("the briefing's forecast is not the graded bill's")
+		_fail("the sheet's forecast is not the graded bill's")
 
 
 func _check_the_grade_reached_the_sim() -> void:

@@ -45,7 +45,7 @@ extends Control
 ## (nation_at_screen_point, pan_by, zoom_by, center_on_lonlat,
 ## visible_lonlat_rect) rather than only reachable through _gui_input, so a
 ## headless test and the minimap can drive them directly -- the same reason
-## law_panel.gd exposes _on_propose() instead of only a button signal.
+## law_panel.gd exposes run_proposal() instead of only a button signal.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")

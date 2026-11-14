@@ -14,7 +14,7 @@
     },
     {
       "id": "XKX_hasani_energjia",
-      "name": "Hasani Energjia",
+      "name": "Hasani Bujqësia",
       "sector": "agriculture",
       "share": 0.2402,
       "headcount": 22861,
@@ -44,7 +44,7 @@
     },
     {
       "id": "XKX_kastrati_transporti",
-      "name": "Kastrati Transporti",
+      "name": "Kastrati Energjia",
       "sector": "industry",
       "share": 0.062,
       "headcount": 31716,
@@ -64,7 +64,7 @@
     },
     {
       "id": "XKX_kelmendi_materialet",
-      "name": "Kelmendi Materialet",
+      "name": "Kelmendi Transporti",
       "sector": "services",
       "share": 0.0304,
       "headcount": 34264,
@@ -126,7 +126,7 @@
   "body": [
     {
       "id": "XKX_vokshi_logjistika",
-      "name": "Vokshi Logjistika",
+      "name": "Vokshi Grupi",
       "sector": "agriculture",
       "share": 0.0152,
       "headcount": 1233,
@@ -135,7 +135,7 @@
     },
     {
       "id": "XKX_kryeziu_industria",
-      "name": "Kryeziu Industria",
+      "name": "Kryeziu Grupi",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2200,
@@ -144,7 +144,7 @@
     },
     {
       "id": "XKX_gjoshi_industria",
-      "name": "Gjoshi Industria",
+      "name": "Gjoshi Bujqësia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2235,
@@ -162,7 +162,7 @@
     },
     {
       "id": "XKX_zeka_energjia",
-      "name": "Zeka Energjia",
+      "name": "Zeka Tregtia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2451,
@@ -180,7 +180,7 @@
     },
     {
       "id": "XKX_sopi_sigurimet",
-      "name": "Sopi Sigurimet",
+      "name": "Sopi Bujqësia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2348,
@@ -189,7 +189,7 @@
     },
     {
       "id": "XKX_jakupi_sigurimet",
-      "name": "Jakupi Sigurimet",
+      "name": "Jakupi Tregtia",
       "sector": "agriculture",
       "share": 0.0266,
       "headcount": 2148,
@@ -216,7 +216,7 @@
     },
     {
       "id": "XKX_vokshi_industria",
-      "name": "Vokshi Industria",
+      "name": "Vokshi Bujqësia",
       "sector": "agriculture",
       "share": 0.0265,
       "headcount": 1942,
@@ -234,7 +234,7 @@
     },
     {
       "id": "XKX_bajrami_industria",
-      "name": "Bajrami Industria",
+      "name": "Bajrami Bujqësia",
       "sector": "agriculture",
       "share": 0.0111,
       "headcount": 928,
@@ -243,7 +243,7 @@
     },
     {
       "id": "XKX_kelmendi_sigurimet",
-      "name": "Kelmendi Sigurimet",
+      "name": "Kelmendi Tregtia",
       "sector": "agriculture",
       "share": 0.0291,
       "headcount": 2588,
@@ -252,7 +252,7 @@
     },
     {
       "id": "XKX_vokshi_bujqesia_industria",
-      "name": "Vokshi Bujqësia Industria",
+      "name": "Vokshi Grupi Tregtia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2374,
@@ -261,7 +261,7 @@
     },
     {
       "id": "XKX_kryeziu_energjia",
-      "name": "Kryeziu Energjia",
+      "name": "Kryeziu Tregtia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2486,
@@ -270,7 +270,7 @@
     },
     {
       "id": "XKX_istrefi_tregtia",
-      "name": "Istrefi Tregtia",
+      "name": "Istrefi Ndërtimi",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18262,
@@ -279,7 +279,7 @@
     },
     {
       "id": "XKX_shala_bujqesia",
-      "name": "Shala Bujqësia",
+      "name": "Shala Energjia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22091,
@@ -297,7 +297,7 @@
     },
     {
       "id": "XKX_aliu_tregtia",
-      "name": "Aliu Tregtia",
+      "name": "Aliu Industria",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18640,
@@ -315,7 +315,7 @@
     },
     {
       "id": "XKX_gjoshi_logjistika",
-      "name": "Gjoshi Logjistika",
+      "name": "Gjoshi Energjia",
       "sector": "industry",
       "share": 0.0233,
       "headcount": 16706,
@@ -369,7 +369,7 @@
     },
     {
       "id": "XKX_kryeziu_bujqesia",
-      "name": "Kryeziu Bujqësia",
+      "name": "Kryeziu Ndërtimi",
       "sector": "industry",
       "share": 0.0258,
       "headcount": 15880,
@@ -378,7 +378,7 @@
     },
     {
       "id": "XKX_rexhepi_bujqesia",
-      "name": "Rexhepi Bujqësia",
+      "name": "Rexhepi Ndërtimi",
       "sector": "industry",
       "share": 0.0272,
       "headcount": 19882,
@@ -414,7 +414,7 @@
     },
     {
       "id": "XKX_bytyqi_logjistika",
-      "name": "Bytyqi Logjistika",
+      "name": "Bytyqi Materialet",
       "sector": "industry",
       "share": 0.0254,
       "headcount": 16762,
@@ -432,7 +432,7 @@
     },
     {
       "id": "XKX_shala_transporti",
-      "name": "Shala Transporti",
+      "name": "Shala Materialet",
       "sector": "industry",
       "share": 0.0129,
       "headcount": 8155,
@@ -441,7 +441,7 @@
     },
     {
       "id": "XKX_sopi_tregtia",
-      "name": "Sopi Tregtia",
+      "name": "Sopi Ndërtimi",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19965,
@@ -450,7 +450,7 @@
     },
     {
       "id": "XKX_hasani_transporti",
-      "name": "Hasani Transporti",
+      "name": "Hasani Industria",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20170,
@@ -459,7 +459,7 @@
     },
     {
       "id": "XKX_shala_industria_tregtia",
-      "name": "Shala Industria Tregtia",
+      "name": "Shala Industria",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19974,
@@ -486,7 +486,7 @@
     },
     {
       "id": "XKX_kelmendi_energjia",
-      "name": "Kelmendi Energjia",
+      "name": "Kelmendi Logjistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22637,
@@ -495,7 +495,7 @@
     },
     {
       "id": "XKX_tahiri_materialet",
-      "name": "Tahiri Materialet",
+      "name": "Tahiri Tregtia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24612,
@@ -504,7 +504,7 @@
     },
     {
       "id": "XKX_pllana_energjia",
-      "name": "Pllana Energjia",
+      "name": "Pllana Logjistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24798,
@@ -513,7 +513,7 @@
     },
     {
       "id": "XKX_rrustemi_energjia",
-      "name": "Rrustemi Energjia",
+      "name": "Rrustemi Sigurimet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24909,
@@ -522,7 +522,7 @@
     },
     {
       "id": "XKX_kastrati_industria",
-      "name": "Kastrati Industria",
+      "name": "Kastrati Logjistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23817,
@@ -549,7 +549,7 @@
     },
     {
       "id": "XKX_bajrami_materialet",
-      "name": "Bajrami Materialet",
+      "name": "Bajrami Transporti",
       "sector": "services",
       "share": 0.0104,
       "headcount": 16140,
@@ -576,7 +576,7 @@
     },
     {
       "id": "XKX_dobruna_ndertimi_ndertimi",
-      "name": "Dobruna Bujqësia",
+      "name": "Dobruna Transporti",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24755,
@@ -585,7 +585,7 @@
     },
     {
       "id": "XKX_bajrami_industria_grupi",
-      "name": "Bajrami Industria Grupi",
+      "name": "Bajrami Grupi",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23546,
@@ -612,7 +612,7 @@
     },
     {
       "id": "XKX_rexhepi_energjia",
-      "name": "Rexhepi Energjia",
+      "name": "Rexhepi Logjistika",
       "sector": "services",
       "share": 0.0151,
       "headcount": 23625,
@@ -639,7 +639,7 @@
     },
     {
       "id": "XKX_bytyqi_ndertimi",
-      "name": "Bytyqi Ndërtimi",
+      "name": "Bytyqi Logjistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24687,
@@ -657,7 +657,7 @@
     },
     {
       "id": "XKX_zeka_bujqesia_tregtia",
-      "name": "Zeka Bujqësia Tregtia",
+      "name": "Zeka Transporti",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23001,
@@ -666,7 +666,7 @@
     },
     {
       "id": "XKX_dobruna_grupi_ndertimi",
-      "name": "Dobruna Grupi Ndërtimi",
+      "name": "Dobruna Grupi",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23941,
@@ -702,7 +702,7 @@
     },
     {
       "id": "XKX_dauti_materialet",
-      "name": "Dauti Materialet",
+      "name": "Dauti Sigurimet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24416,
@@ -711,7 +711,7 @@
     },
     {
       "id": "XKX_aliu_materialet",
-      "name": "Aliu Materialet",
+      "name": "Aliu Sigurimet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24558,
@@ -720,7 +720,7 @@
     },
     {
       "id": "XKX_bajrami_energjia",
-      "name": "Bajrami Energjia",
+      "name": "Bajrami Logjistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24758,
@@ -729,7 +729,7 @@
     },
     {
       "id": "XKX_kastrati_ndertimi",
-      "name": "Kastrati Ndërtimi",
+      "name": "Kastrati Grupi",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23724,
@@ -738,7 +738,7 @@
     },
     {
       "id": "XKX_rexhepi_energjia_industria",
-      "name": "Rexhepi Energjia Industria",
+      "name": "Rexhepi Sigurimet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24546,
@@ -747,7 +747,7 @@
     },
     {
       "id": "XKX_istrefi_ndertimi_transporti",
-      "name": "Istrefi Ndërtimi Transporti",
+      "name": "Istrefi Transporti",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22695,
@@ -756,7 +756,7 @@
     },
     {
       "id": "XKX_bytyqi_energjia",
-      "name": "Bytyqi Energjia",
+      "name": "Bytyqi Tregtia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22784,
@@ -774,7 +774,7 @@
     },
     {
       "id": "XKX_kastrati_grupi_bujqesia",
-      "name": "Kastrati Grupi Bujqësia",
+      "name": "Kastrati Tregtia",
       "sector": "services",
       "share": 0.0143,
       "headcount": 20653,
@@ -810,7 +810,7 @@
     },
     {
       "id": "XKX_kastrati_tregtia_energjia",
-      "name": "Kastrati Tregtia Energjia",
+      "name": "Kastrati Logjistika Sigurimet",
       "sector": "services",
       "share": 0.0104,
       "headcount": 14836,
@@ -828,7 +828,7 @@
     },
     {
       "id": "XKX_aliu_bujqesia_logjistika",
-      "name": "Aliu Bujqësia Logjistika",
+      "name": "Aliu Logjistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24775,

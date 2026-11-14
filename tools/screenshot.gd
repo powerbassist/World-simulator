@@ -33,6 +33,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade --text 130 --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade-tabled --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sheet-polls --open legislature   (the law sheet, polls open)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --law-filter taxes: --open legislature   (shelf:words)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --queue --open legislature   (a bill in the slot, two queued; --queue-full: three; --queue-menu: a queued place's plate)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address-again --open legislature
@@ -551,6 +552,8 @@ var _queue := ""
 var _law_filter := ""
 ## The Bills tab's goal panel with its list read through: --goals [deficit|unemployment|bloc].
 var _goals := ""
+## The law sheet with its polls open ("Poll it" pressed on every law): --sheet-polls.
+var _sheet_polls := false
 ## A poll on a bill: "poll" (bought, out), "poll-arrived" or "poll-address".
 var _poll := ""
 
@@ -1072,6 +1075,8 @@ func _init() -> void:
 			_law_verbs = String(args[i]).trim_prefix("--")
 		elif args[i] == "--goals" and i + 1 < args.size():
 			_goals = String(args[i + 1])
+		elif args[i] == "--sheet-polls":
+			_sheet_polls = true
 		elif args[i] == "--law-filter" and i + 1 < args.size():
 			_law_filter = String(args[i + 1])
 		elif args[i] in ["--queue", "--queue-full", "--queue-menu"]:
@@ -1409,6 +1414,9 @@ func _apply_view() -> void:
 		_stage_the_queue()
 	if _goals != "":
 		_stage_the_goals()
+	if _sheet_polls:
+		for law in _main._loader.laws:
+			preload("res://src/ui/law_sheet.gd")._open[String(law.id)] = true
 	if _law_filter != "":
 		_main._law_panel._laws._filters.set_filter(_law_filter.get_slice(":", 0), _law_filter.get_slice(":", 1))
 	if _poll != "":

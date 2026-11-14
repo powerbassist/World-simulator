@@ -14,7 +14,7 @@
     },
     {
       "id": "LUX_erpelding_logistique",
-      "name": "Erpelding Logistique",
+      "name": "Erpelding Groupe",
       "sector": "agriculture",
       "share": 0.2624,
       "headcount": 19089,
@@ -34,7 +34,7 @@
     },
     {
       "id": "LUX_bintner_agriculture",
-      "name": "Bintner Agriculture",
+      "name": "Bintner Groupe",
       "sector": "industry",
       "share": 0.0282,
       "headcount": 24361,
@@ -44,7 +44,7 @@
     },
     {
       "id": "LUX_reiffers_assurances",
-      "name": "Reiffers Assurances",
+      "name": "Reiffers Énergie",
       "sector": "industry",
       "share": 0.041,
       "headcount": 26554,
@@ -54,7 +54,7 @@
     },
     {
       "id": "LUX_nickels_agriculture",
-      "name": "Nickels Agriculture",
+      "name": "Nickels Énergie",
       "sector": "industry",
       "share": 0.0545,
       "headcount": 45609,
@@ -114,7 +114,7 @@
     },
     {
       "id": "LUX_erpelding_industrie",
-      "name": "Erpelding Industrie",
+      "name": "Erpelding Logistique",
       "sector": "services",
       "share": 0.0269,
       "headcount": 52970,
@@ -126,7 +126,7 @@
   "body": [
     {
       "id": "LUX_herrmann_agriculture_transport",
-      "name": "Herrmann Agriculture Transport",
+      "name": "Herrmann Agriculture",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2650,
@@ -135,7 +135,7 @@
     },
     {
       "id": "LUX_federspiel_materiaux",
-      "name": "Federspiel Matériaux",
+      "name": "Federspiel Agriculture",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2660,
@@ -144,7 +144,7 @@
     },
     {
       "id": "LUX_engel_construction",
-      "name": "Engel Construction",
+      "name": "Engel Groupe",
       "sector": "agriculture",
       "share": 0.0181,
       "headcount": 1557,
@@ -153,7 +153,7 @@
     },
     {
       "id": "LUX_krier_construction",
-      "name": "Krier Construction",
+      "name": "Krier Agriculture",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2263,
@@ -171,7 +171,7 @@
     },
     {
       "id": "LUX_weber_transport",
-      "name": "Weber Transport",
+      "name": "Weber Groupe",
       "sector": "agriculture",
       "share": 0.0268,
       "headcount": 2344,
@@ -198,7 +198,7 @@
     },
     {
       "id": "LUX_clemens_assurances",
-      "name": "Clemens Assurances",
+      "name": "Clemens Agriculture",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2540,
@@ -207,7 +207,7 @@
     },
     {
       "id": "LUX_zimmer_construction",
-      "name": "Zimmer Construction",
+      "name": "Zimmer Commerce",
       "sector": "agriculture",
       "share": 0.0108,
       "headcount": 961,
@@ -216,7 +216,7 @@
     },
     {
       "id": "LUX_wagner_construction",
-      "name": "Wagner Construction",
+      "name": "Wagner Commerce",
       "sector": "agriculture",
       "share": 0.0248,
       "headcount": 2101,
@@ -234,7 +234,7 @@
     },
     {
       "id": "LUX_bintz_transport",
-      "name": "Bintz Transport",
+      "name": "Bintz Commerce",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2277,
@@ -243,7 +243,7 @@
     },
     {
       "id": "LUX_massard_energie",
-      "name": "Massard Énergie",
+      "name": "Massard Commerce",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2545,
@@ -261,7 +261,7 @@
     },
     {
       "id": "LUX_weiler_transport",
-      "name": "Weiler Transport",
+      "name": "Weiler Commerce",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2323,
@@ -270,7 +270,7 @@
     },
     {
       "id": "LUX_zenner_logistique",
-      "name": "Zenner Logistique",
+      "name": "Zenner Groupe",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2412,
@@ -279,7 +279,7 @@
     },
     {
       "id": "LUX_graas_assurances",
-      "name": "Graas Assurances",
+      "name": "Graas Agriculture",
       "sector": "agriculture",
       "share": 0.0257,
       "headcount": 2139,
@@ -288,7 +288,7 @@
     },
     {
       "id": "LUX_elschner_transport",
-      "name": "Elschner Transport",
+      "name": "Elschner Énergie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19070,
@@ -306,7 +306,7 @@
     },
     {
       "id": "LUX_greisch_agriculture",
-      "name": "Greisch Agriculture",
+      "name": "Greisch Industrie",
       "sector": "industry",
       "share": 0.0176,
       "headcount": 11059,
@@ -324,7 +324,7 @@
     },
     {
       "id": "LUX_greisch_logistique",
-      "name": "Greisch Logistique",
+      "name": "Greisch Construction",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18271,
@@ -333,7 +333,7 @@
     },
     {
       "id": "LUX_rippinger_commerce",
-      "name": "Rippinger Commerce",
+      "name": "Rippinger Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19131,
@@ -351,7 +351,7 @@
     },
     {
       "id": "LUX_jacoby_logistique",
-      "name": "Jacoby Logistique",
+      "name": "Jacoby Matériaux",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21040,
@@ -369,7 +369,7 @@
     },
     {
       "id": "LUX_kirpach_assurances",
-      "name": "Kirpach Assurances",
+      "name": "Kirpach Groupe",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21653,
@@ -378,7 +378,7 @@
     },
     {
       "id": "LUX_zenner_commerce",
-      "name": "Zenner Commerce",
+      "name": "Zenner Industrie",
       "sector": "industry",
       "share": 0.0094,
       "headcount": 6872,
@@ -387,7 +387,7 @@
     },
     {
       "id": "LUX_weber_assurances",
-      "name": "Weber Assurances",
+      "name": "Weber Énergie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21415,
@@ -396,7 +396,7 @@
     },
     {
       "id": "LUX_schwartz_logistique",
-      "name": "Schwartz Logistique",
+      "name": "Schwartz Matériaux",
       "sector": "industry",
       "share": 0.022,
       "headcount": 13769,
@@ -405,7 +405,7 @@
     },
     {
       "id": "LUX_backes_assurances",
-      "name": "Backes Assurances",
+      "name": "Backes Matériaux",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21952,
@@ -414,7 +414,7 @@
     },
     {
       "id": "LUX_backes_agriculture",
-      "name": "Backes Agriculture",
+      "name": "Backes Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21983,
@@ -423,7 +423,7 @@
     },
     {
       "id": "LUX_herrmann_logistique",
-      "name": "Herrmann Logistique",
+      "name": "Herrmann Matériaux",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19028,
@@ -432,7 +432,7 @@
     },
     {
       "id": "LUX_engel_commerce",
-      "name": "Engel Commerce",
+      "name": "Engel Énergie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19849,
@@ -441,7 +441,7 @@
     },
     {
       "id": "LUX_kesseler_assurances",
-      "name": "Kesseler Assurances",
+      "name": "Kesseler Groupe",
       "sector": "industry",
       "share": 0.015,
       "headcount": 10178,
@@ -450,7 +450,7 @@
     },
     {
       "id": "LUX_herrmann_commerce_energie",
-      "name": "Herrmann Commerce Énergie",
+      "name": "Herrmann Énergie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21293,
@@ -459,7 +459,7 @@
     },
     {
       "id": "LUX_bintner_transport",
-      "name": "Bintner Transport",
+      "name": "Bintner Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21699,
@@ -477,7 +477,7 @@
     },
     {
       "id": "LUX_kesseler_commerce",
-      "name": "Kesseler Commerce",
+      "name": "Kesseler Énergie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22144,
@@ -504,7 +504,7 @@
     },
     {
       "id": "LUX_deltour_industrie",
-      "name": "Deltour Industrie",
+      "name": "Deltour Commerce",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24976,
@@ -513,7 +513,7 @@
     },
     {
       "id": "LUX_oth_agriculture",
-      "name": "Oth Agriculture",
+      "name": "Oth Commerce",
       "sector": "services",
       "share": 0.0093,
       "headcount": 14239,
@@ -558,7 +558,7 @@
     },
     {
       "id": "LUX_nickels_materiaux",
-      "name": "Nickels Matériaux",
+      "name": "Nickels Groupe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22784,
@@ -567,7 +567,7 @@
     },
     {
       "id": "LUX_frantz_agriculture",
-      "name": "Frantz Agriculture",
+      "name": "Frantz Transport",
       "sector": "services",
       "share": 0.0069,
       "headcount": 10366,
@@ -576,7 +576,7 @@
     },
     {
       "id": "LUX_erpelding_agriculture",
-      "name": "Erpelding Agriculture",
+      "name": "Erpelding Transport",
       "sector": "services",
       "share": 0.0065,
       "headcount": 9806,
@@ -594,7 +594,7 @@
     },
     {
       "id": "LUX_putz_industrie",
-      "name": "Pütz Industrie",
+      "name": "Pütz Assurances",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24537,
@@ -612,7 +612,7 @@
     },
     {
       "id": "LUX_greisch_industrie_agriculture",
-      "name": "Greisch Industrie Agriculture",
+      "name": "Greisch Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23667,
@@ -621,7 +621,7 @@
     },
     {
       "id": "LUX_leidenbach_materiaux",
-      "name": "Leidenbach Matériaux",
+      "name": "Leidenbach Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22820,
@@ -630,7 +630,7 @@
     },
     {
       "id": "LUX_bintner_materiaux_industrie",
-      "name": "Bintner Matériaux Industrie",
+      "name": "Bintner Transport",
       "sector": "services",
       "share": 0.0143,
       "headcount": 19626,
@@ -648,7 +648,7 @@
     },
     {
       "id": "LUX_pfeffer_construction",
-      "name": "Pfeffer Construction",
+      "name": "Pfeffer Groupe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24532,
@@ -693,7 +693,7 @@
     },
     {
       "id": "LUX_schmit_agriculture",
-      "name": "Schmit Agriculture",
+      "name": "Schmit Commerce",
       "sector": "services",
       "share": 0.0062,
       "headcount": 9196,
@@ -702,7 +702,7 @@
     },
     {
       "id": "LUX_elschner_construction",
-      "name": "Elschner Construction",
+      "name": "Elschner Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24993,
@@ -711,7 +711,7 @@
     },
     {
       "id": "LUX_mertens_industrie",
-      "name": "Mertens Industrie",
+      "name": "Mertens Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23508,
@@ -720,7 +720,7 @@
     },
     {
       "id": "LUX_reiffers_energie_energie",
-      "name": "Reiffers Énergie",
+      "name": "Reiffers Groupe",
       "sector": "services",
       "share": 0.0144,
       "headcount": 19934,
@@ -756,7 +756,7 @@
     },
     {
       "id": "LUX_oestreicher_industrie",
-      "name": "Oestreicher Industrie",
+      "name": "Oestreicher Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23932,
@@ -774,7 +774,7 @@
     },
     {
       "id": "LUX_kesseler_industrie",
-      "name": "Kesseler Industrie",
+      "name": "Kesseler Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22688,
@@ -801,7 +801,7 @@
     },
     {
       "id": "LUX_graas_energie",
-      "name": "Graas Énergie",
+      "name": "Graas Transport",
       "sector": "services",
       "share": 0.0117,
       "headcount": 19264,
@@ -810,7 +810,7 @@
     },
     {
       "id": "LUX_nies_materiaux",
-      "name": "Nies Matériaux",
+      "name": "Nies Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22738,
@@ -819,7 +819,7 @@
     },
     {
       "id": "LUX_mertens_energie",
-      "name": "Mertens Énergie",
+      "name": "Mertens Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23289,
@@ -828,7 +828,7 @@
     },
     {
       "id": "LUX_theisen_energie",
-      "name": "Theisen Énergie",
+      "name": "Theisen Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24762,
@@ -846,7 +846,7 @@
     },
     {
       "id": "LUX_caspary_construction",
-      "name": "Caspary Construction",
+      "name": "Caspary Assurances",
       "sector": "services",
       "share": 0.013,
       "headcount": 19693,
@@ -855,7 +855,7 @@
     },
     {
       "id": "LUX_schmit_construction",
-      "name": "Schmit Construction",
+      "name": "Schmit Assurances",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23456,
@@ -864,7 +864,7 @@
     },
     {
       "id": "LUX_hansen_construction",
-      "name": "Hansen Construction",
+      "name": "Hansen Assurances",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22638,
@@ -873,7 +873,7 @@
     },
     {
       "id": "LUX_junge_materiaux",
-      "name": "Junge Matériaux",
+      "name": "Junge Logistique",
       "sector": "services",
       "share": 0.015,
       "headcount": 21014,

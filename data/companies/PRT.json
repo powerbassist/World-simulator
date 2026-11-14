@@ -14,7 +14,7 @@
     },
     {
       "id": "PRT_almeirim_seguros",
-      "name": "Almeirim Seguros",
+      "name": "Almeirim Agricultura",
       "sector": "agriculture",
       "share": 0.1766,
       "headcount": 12735,
@@ -94,7 +94,7 @@
     },
     {
       "id": "PRT_aguiar_agricultura",
-      "name": "Aguiar Agricultura",
+      "name": "Aguiar Grupo",
       "sector": "services",
       "share": 0.02,
       "headcount": 36245,
@@ -104,7 +104,7 @@
     },
     {
       "id": "PRT_pina_materiais",
-      "name": "Pina Materiais",
+      "name": "Pina Grupo",
       "sector": "services",
       "share": 0.02,
       "headcount": 24775,
@@ -126,7 +126,7 @@
   "body": [
     {
       "id": "PRT_duarte_construcao",
-      "name": "Duarte Construção",
+      "name": "Duarte Grupo",
       "sector": "agriculture",
       "share": 0.0167,
       "headcount": 1304,
@@ -135,7 +135,7 @@
     },
     {
       "id": "PRT_nogueira_construcao",
-      "name": "Nogueira Construção",
+      "name": "Nogueira Grupo",
       "sector": "agriculture",
       "share": 0.0231,
       "headcount": 1689,
@@ -153,7 +153,7 @@
     },
     {
       "id": "PRT_narciso_construcao",
-      "name": "Narciso Construção",
+      "name": "Narciso Grupo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2579,
@@ -171,7 +171,7 @@
     },
     {
       "id": "PRT_leitao_materiais",
-      "name": "Leitão Materiais",
+      "name": "Leitão Agricultura",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2503,
@@ -180,7 +180,7 @@
     },
     {
       "id": "PRT_freitas_industrias",
-      "name": "Freitas Indústrias",
+      "name": "Freitas Comércio",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2330,
@@ -189,7 +189,7 @@
     },
     {
       "id": "PRT_barreto_energia",
-      "name": "Barreto Energia",
+      "name": "Barreto Grupo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2393,
@@ -198,7 +198,7 @@
     },
     {
       "id": "PRT_mascarenhas_comercio_construcao",
-      "name": "Mascarenhas Comércio Construção",
+      "name": "Mascarenhas Comércio",
       "sector": "agriculture",
       "share": 0.0159,
       "headcount": 1357,
@@ -207,7 +207,7 @@
     },
     {
       "id": "PRT_rebelo_silva_logistica",
-      "name": "Rebelo-Silva Logística",
+      "name": "Rebelo-Silva Comércio",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2445,
@@ -216,7 +216,7 @@
     },
     {
       "id": "PRT_guerra_seguros",
-      "name": "Guerra Seguros",
+      "name": "Guerra Agricultura",
       "sector": "agriculture",
       "share": 0.0158,
       "headcount": 1376,
@@ -225,7 +225,7 @@
     },
     {
       "id": "PRT_sequeira_seguros",
-      "name": "Sequeira Seguros",
+      "name": "Sequeira Agricultura",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2267,
@@ -243,7 +243,7 @@
     },
     {
       "id": "PRT_cordeiro_logistica",
-      "name": "Cordeiro Logística",
+      "name": "Cordeiro Agricultura",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2353,
@@ -270,7 +270,7 @@
     },
     {
       "id": "PRT_meireles_construcao",
-      "name": "Meireles Construção",
+      "name": "Meireles Grupo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2210,
@@ -288,7 +288,7 @@
     },
     {
       "id": "PRT_tondela_transportes",
-      "name": "Tondela Transportes",
+      "name": "Tondela Materiais",
       "sector": "industry",
       "share": 0.0231,
       "headcount": 17046,
@@ -297,7 +297,7 @@
     },
     {
       "id": "PRT_durao_agricultura",
-      "name": "Durão Agricultura",
+      "name": "Durão Grupo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19251,
@@ -306,7 +306,7 @@
     },
     {
       "id": "PRT_ramos_transportes",
-      "name": "Ramos Transportes",
+      "name": "Ramos Energia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19271,
@@ -315,7 +315,7 @@
     },
     {
       "id": "PRT_delgado_transportes",
-      "name": "Delgado Transportes",
+      "name": "Delgado Grupo",
       "sector": "industry",
       "share": 0.0197,
       "headcount": 12775,
@@ -333,7 +333,7 @@
     },
     {
       "id": "PRT_sequeira_logistica",
-      "name": "Sequeira Logística",
+      "name": "Sequeira Materiais",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21514,
@@ -342,7 +342,7 @@
     },
     {
       "id": "PRT_vilar_seguros",
-      "name": "Vilar Seguros",
+      "name": "Vilar Energia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21940,
@@ -351,7 +351,7 @@
     },
     {
       "id": "PRT_goncalves_transportes",
-      "name": "Gonçalves Transportes",
+      "name": "Gonçalves Energia",
       "sector": "industry",
       "share": 0.0223,
       "headcount": 16469,
@@ -360,7 +360,7 @@
     },
     {
       "id": "PRT_leitao_materiais_transportes",
-      "name": "Leitão Materiais Transportes",
+      "name": "Leitão Materiais",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18961,
@@ -369,7 +369,7 @@
     },
     {
       "id": "PRT_rebelo_silva_agricultura",
-      "name": "Rebelo-Silva Agricultura",
+      "name": "Rebelo-Silva Energia",
       "sector": "industry",
       "share": 0.0192,
       "headcount": 11913,
@@ -378,7 +378,7 @@
     },
     {
       "id": "PRT_paiva_transportes",
-      "name": "Paiva Transportes",
+      "name": "Paiva Grupo",
       "sector": "industry",
       "share": 0.0136,
       "headcount": 10027,
@@ -387,7 +387,7 @@
     },
     {
       "id": "PRT_hipolito_logistica",
-      "name": "Hipólito Logística",
+      "name": "Hipólito Energia",
       "sector": "industry",
       "share": 0.0252,
       "headcount": 15685,
@@ -396,7 +396,7 @@
     },
     {
       "id": "PRT_freitas_comercio_grupo",
-      "name": "Freitas Comércio Grupo",
+      "name": "Freitas Grupo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20049,
@@ -414,7 +414,7 @@
     },
     {
       "id": "PRT_rebelo_logistica",
-      "name": " Rebelo Logística",
+      "name": " Rebelo Materiais",
       "sector": "industry",
       "share": 0.0174,
       "headcount": 11483,
@@ -423,7 +423,7 @@
     },
     {
       "id": "PRT_rebelo_silva_transportes",
-      "name": "Rebelo-Silva Transportes",
+      "name": "Rebelo-Silva Grupo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18796,
@@ -468,7 +468,7 @@
     },
     {
       "id": "PRT_durao_seguros",
-      "name": "Durão Seguros",
+      "name": "Durão Construção",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19247,
@@ -477,7 +477,7 @@
     },
     {
       "id": "PRT_bettencourt_logistica",
-      "name": "Bettencourt Logística",
+      "name": "Bettencourt Construção",
       "sector": "industry",
       "share": 0.0192,
       "headcount": 14074,
@@ -522,7 +522,7 @@
     },
     {
       "id": "PRT_nogueira_industrias",
-      "name": "Nogueira Indústrias",
+      "name": "Nogueira Seguros",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22619,
@@ -540,7 +540,7 @@
     },
     {
       "id": "PRT_freitas_agricultura",
-      "name": "Freitas Agricultura",
+      "name": "Freitas Transportes",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22795,
@@ -549,7 +549,7 @@
     },
     {
       "id": "PRT_sampaio_agricultura",
-      "name": "Sampaio Agricultura",
+      "name": "Sampaio Comércio",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24778,
@@ -567,7 +567,7 @@
     },
     {
       "id": "PRT_pina_industrias",
-      "name": "Pina Indústrias",
+      "name": "Pina Seguros",
       "sector": "services",
       "share": 0.0108,
       "headcount": 17125,
@@ -585,7 +585,7 @@
     },
     {
       "id": "PRT_godinho_industrias",
-      "name": "Godinho Indústrias",
+      "name": "Godinho Seguros",
       "sector": "services",
       "share": 0.0074,
       "headcount": 10296,
@@ -594,7 +594,7 @@
     },
     {
       "id": "PRT_simoes_construcao",
-      "name": "Simões Construção",
+      "name": "Simões Logística",
       "sector": "services",
       "share": 0.0113,
       "headcount": 16384,
@@ -603,7 +603,7 @@
     },
     {
       "id": "PRT_aguiar_construcao",
-      "name": "Aguiar Construção",
+      "name": "Aguiar Transportes",
       "sector": "services",
       "share": 0.013,
       "headcount": 18622,
@@ -612,7 +612,7 @@
     },
     {
       "id": "PRT_trindade_industrias",
-      "name": "Trindade Indústrias",
+      "name": "Trindade Logística",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24307,
@@ -630,7 +630,7 @@
     },
     {
       "id": "PRT_nogueira_agricultura",
-      "name": "Nogueira Agricultura",
+      "name": "Nogueira Comércio",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24934,
@@ -639,7 +639,7 @@
     },
     {
       "id": "PRT_ourique_agricultura",
-      "name": "Ourique Agricultura",
+      "name": "Ourique Grupo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23533,
@@ -666,7 +666,7 @@
     },
     {
       "id": "PRT_cordeiro_construcao",
-      "name": "Cordeiro Construção",
+      "name": "Cordeiro Logística",
       "sector": "services",
       "share": 0.0103,
       "headcount": 16985,
@@ -693,7 +693,7 @@
     },
     {
       "id": "PRT_trindade_materiais",
-      "name": "Trindade Materiais",
+      "name": "Trindade Grupo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24896,
@@ -702,7 +702,7 @@
     },
     {
       "id": "PRT_mendes_industrias",
-      "name": "Mendes Indústrias",
+      "name": "Mendes Comércio",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24949,
@@ -711,7 +711,7 @@
     },
     {
       "id": "PRT_lamego_construcao",
-      "name": "Lamego Construção",
+      "name": "Lamego Grupo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22418,
@@ -720,7 +720,7 @@
     },
     {
       "id": "PRT_tondela_industrias_seguros",
-      "name": "Tondela Indústrias Seguros",
+      "name": "Tondela Seguros",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22968,
@@ -738,7 +738,7 @@
     },
     {
       "id": "PRT_sampaio_industrias",
-      "name": "Sampaio Indústrias",
+      "name": "Sampaio Seguros",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24291,
@@ -747,7 +747,7 @@
     },
     {
       "id": "PRT_nogueira_materiais_transportes",
-      "name": "Nogueira Materiais Transportes",
+      "name": "Nogueira Transportes",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23930,
@@ -783,7 +783,7 @@
     },
     {
       "id": "PRT_almeirim_seguros_agricultura",
-      "name": "Almeirim Seguros Agricultura",
+      "name": "Almeirim Grupo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24470,
@@ -810,7 +810,7 @@
     },
     {
       "id": "PRT_correia_agricultura_transportes",
-      "name": "Correia Agricultura Transportes",
+      "name": "Correia Transportes",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23633,
@@ -837,7 +837,7 @@
     },
     {
       "id": "PRT_abreu_industrias",
-      "name": "Abreu Indústrias",
+      "name": "Abreu Transportes",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24210,
@@ -855,7 +855,7 @@
     },
     {
       "id": "PRT_aguiar_energia_energia",
-      "name": "Aguiar Energia",
+      "name": "Aguiar Seguros",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24851,
@@ -864,7 +864,7 @@
     },
     {
       "id": "PRT_escobar_materiais",
-      "name": "Escobar Materiais",
+      "name": "Escobar Grupo",
       "sector": "services",
       "share": 0.0081,
       "headcount": 12379,
@@ -882,7 +882,7 @@
     },
     {
       "id": "PRT_figueiredo_agricultura",
-      "name": "Figueiredo Agricultura",
+      "name": "Figueiredo Comércio",
       "sector": "services",
       "share": 0.0148,
       "headcount": 21684,

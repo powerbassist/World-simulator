@@ -50,7 +50,15 @@ Characters (`WorldMonth`'s "Audiences" step):
    a challenge makes -- pre-gate B, RECORD 10), asks with probability
    `REQUEST_HAZARD x (0.5 + standing)`, drawn from
    `Cycle.unit_pair(person, "audience_request", month)`. A grudge silences no one:
-   the declined go on asking.
+   the declined go on asking about what they want month by month (a meter's level, a
+   programme entry). **A holding asks once (the author's rule (d), 2026-11-14):** a want
+   for a post or a region's fund, once its request ends refused (declined, lapsed, a
+   no-show), is not asked again on the hazard until its object turns -- served (the
+   fund opens, the post is given) clears the mark, so losing it again re-arms the ask.
+   A reshuffle that moves or vacates a post turns it as well: its wanters may ask once
+   more (the invitation above), marked or not; the mark still holds on the hazard. A
+   request whose want is served by the time it would lapse closes `overtaken`, unpriced
+   (#357).
 4. **The month-3 guarantee** (pre-gate B, the parent's decision on QA's call; B1's
    amendment). If the draw has brought none of the nation's own people by the lane's
    second month (`NationState.audience_lane_start` stamps the first), then in the third

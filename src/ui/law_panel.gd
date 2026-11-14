@@ -53,13 +53,11 @@ const FORECAST_UNCERTAIN_BAND := 0.15
 ## month has actually elapsed against it, which a failed vote changes nothing
 ## to distinguish -- an entry that shows "nothing moved" is still correct.
 signal proposed(before: Dictionary, law_name: String, result: Dictionary)
-## V4.2 T5. Propose now OPENS THE BRIEFING rather than dividing on the press:
-## a bill briefing the player can read -- channels, landed price, the polls
-## they can commission -- before the division is what the whole popup exists
-## for, and the division itself is the briefing's verb (main.gd routes its
-## propose_requested back into run_proposal() below). One propose path, one
-## card path; this signal only asks for the popup.
+## Asks for the briefing popup: the bills the sheet does not carry (an ownership bill's button).
+## The sheet's own Propose divides at once (run_proposal below), its price and polls inline.
 signal brief_requested(law)
+## A poll bought from the sheet: the baseline and the label, the briefing's `polled` contract.
+signal polled(before: Dictionary, label: String)
 ## V5.2 b+ (R3): the chamber's own Dissolve, the Politics one's twin (dissolve_button.gd).
 signal dissolved(before: Dictionary)
 
@@ -503,16 +501,8 @@ func _on_endorse(bill_id: String) -> void:
 	_dirty = true
 
 
-## V4.2 T5. The press opens the briefing; the division happens from the
-## briefing's own verb, routed back into run_proposal() below. A bill the
-## player can read before the vote -- and commission a poll on before it --
-## is the whole of what the briefing is for.
-func _on_propose(law) -> void:
-	brief_requested.emit(law)
-
-
-## The division itself. Public because the briefing's verb lands here through
-## main.gd -- one propose path (this body), one card path (the `proposed`
+## The division itself. Public because the sheet's Propose and the briefing's both land here
+## (the latter through main.gd) -- one propose path (this body), one card path (the `proposed`
 ## handler in main.gd), whichever surface pressed the button. The forced and
 ## referendum routes come through it too: when Referendum kept a body of its
 ## own it forgot to redraw, and the panel kept the old result's buttons (V5.0d).

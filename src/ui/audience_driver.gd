@@ -40,7 +40,10 @@ static func register(main) -> void:
 	# beside the other desk surfaces (briefing_driver.gd is at its size ceiling).
 	preload("res://src/ui/files_driver.gd").register(main)
 	# V5.3 screen 4: a budget line or a tax rate row of the goal panel is set on the Budget tab.
-	main._law_panel.find_child("Goals", true, false).go_requested.connect(main._windows.open)
+	main._law_panel.find_child("Goals", true, false).go_requested.connect(func(id: String, focus: String) -> void:
+		main._windows.open(id)
+		if focus != "":
+			main._tax_panel.focus_kind(focus))
 	var lane := RequestLane.new()
 	lane.attach(main._hud.inbox)
 	var scene := AudienceScene.new()

@@ -87,9 +87,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 	# The authored leadership edges, walked once: the leaf law keeps party.gd
 	# out of this file, so the loader's own parties array supplies the edges
 	# every leader read below needs.
-	var authored_leaders := {}
-	for party in loader.parties.get(state.player_nation_id, []):
-		authored_leaders[party.id] = party.leader_person_id
+	var authored_leaders := WantTerms.authored_leaders(loader, state.player_nation_id)
 
 	var people: Array = Staff.cast(loader, state.player_nation_id)
 	# The person OBJECTS by id, for the two trait gates that are a property of
@@ -212,12 +210,15 @@ static func _decay_grudges(ns, by_id: Dictionary) -> void:
 ## The flip memory keeps its own meaning (the last read), because loyalty still
 ## pulses on the TURN: a want that turns served is one loyalty pulse.
 ##
-## REGISTER KEY GRAMMAR (both keys live in the sixth register, both bool):
+## REGISTER KEY GRAMMAR (three keys live in the sixth register, all bool):
 ##   "<person_id>|<object>"   the last served read -- the flip memory
 ##   "<person_id>|!<object>"  the latch: served at least once, ever
+##   "<person_id>|?<object>"  rule (d): a holding refused, not to be asked again until
+##                            it turns (refuse_holding writes it, a served read clears it)
 ## The latch is an OR, so it never un-sets, and no third register and no
-## SAVE_VERSION move were needed to carry it. `!` is safe as a separator
-## because a want object is `family:target` and never carries one.
+## SAVE_VERSION move were needed to carry it or the refusal mark (absent reads "not
+## refused"). `!` and `?` are safe as separators because a want object is
+## `family:target` and never carries either.
 static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dictionary) -> void:
 	for want in person.wants:
 		var stance := String(want["stance"])
@@ -229,6 +230,7 @@ static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dict
 		var latch_key: String = String(person.id) + "|!" + object
 		var latched: bool = bool(ns.person_want_state.get(latch_key, served))
 		ns.person_want_state[latch_key] = latched or served
+		if served: ns.person_want_state.erase(WantTerms.refused_key(String(person.id), object))  # rule (d): a turn re-arms
 		if served and not prev:
 			_adjust_loyalty(ns, person.id, CK.LOYALTY_WANT_SERVED)
 		elif not served and (latched if WantTerms.is_standing(object) else prev):
@@ -636,6 +638,15 @@ static func refusal_grudge(ns, person, grudge: float, ceiling: float = CK.GRUDGE
 		return 0.0 if grudge > 0.0 else grudge
 	var room := maxf(0.0, ceiling - float(ns.person_grudges.get(person.id, 0.0)))
 	return minf(grudge * grudge_intake(person), room)
+
+
+## Rule (d) (WantTerms.refused_key): a holding want refused asks no more until it turns.
+## Only a want this nation's person holds is marked (a chief's plant, an invited price or a
+## visiting head's ask is no want _settle_wants could ever clear); a standing want is not.
+## Written here, the register's one writer.
+static func refuse_holding(ns, person, object: String) -> void:
+	if _of_nation(ns, person) and not WantTerms.is_standing(object) and person.wants.any(func(w): return String(w["object"]) == object):
+		ns.person_want_state[WantTerms.refused_key(String(person.id), object)] = true
 
 
 ## V5.2b. The price of a refusal -- a declined, delegated or lapsed request, a

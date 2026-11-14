@@ -14,7 +14,7 @@
     },
     {
       "id": "BLR_charnou_materyialy",
-      "name": "Charnou Materyialy",
+      "name": "Charnou Ahra",
       "sector": "agriculture",
       "share": 0.2099,
       "headcount": 19439,
@@ -24,7 +24,7 @@
     },
     {
       "id": "BLR_marozau_transpart",
-      "name": "Marozau Transpart",
+      "name": "Marozau Budaunitstva",
       "sector": "industry",
       "share": 0.0588,
       "headcount": 47830,
@@ -84,7 +84,7 @@
     },
     {
       "id": "BLR_naumenka_enierhietyka",
-      "name": "Naumenka Enierhietyka",
+      "name": "Naumenka Hrupa",
       "sector": "services",
       "share": 0.0404,
       "headcount": 73891,
@@ -94,7 +94,7 @@
     },
     {
       "id": "BLR_prakopovich_materyialy",
-      "name": "Prakopovich Materyialy",
+      "name": "Prakopovich Transpart",
       "sector": "services",
       "share": 0.0252,
       "headcount": 42115,
@@ -124,7 +124,7 @@
     },
     {
       "id": "BLR_hurynovich_materyialy",
-      "name": "Hurynovich Materyialy",
+      "name": "Hurynovich Transpart",
       "sector": "services",
       "share": 0.0587,
       "headcount": 116125,
@@ -134,7 +134,7 @@
     },
     {
       "id": "BLR_shautsou_ahra",
-      "name": "Shautsou Ahra",
+      "name": "Shautsou Strakhavannie",
       "sector": "services",
       "share": 0.0591,
       "headcount": 91744,
@@ -146,7 +146,7 @@
   "body": [
     {
       "id": "BLR_tsimashenka_budaunitstva",
-      "name": "Tsimashenka Budaunitstva",
+      "name": "Tsimashenka Hrupa",
       "sector": "agriculture",
       "share": 0.0156,
       "headcount": 1304,
@@ -155,7 +155,7 @@
     },
     {
       "id": "BLR_vasilevich_strakhavannie",
-      "name": "Vasilevich Strakhavannie",
+      "name": "Vasilevich Hrupa",
       "sector": "agriculture",
       "share": 0.0147,
       "headcount": 1171,
@@ -173,7 +173,7 @@
     },
     {
       "id": "BLR_dashkevich_budaunitstva",
-      "name": "Dashkevich Budaunitstva",
+      "name": "Dashkevich Hrupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2435,
@@ -191,7 +191,7 @@
     },
     {
       "id": "BLR_dashkevich_materyialy",
-      "name": "Dashkevich Materyialy",
+      "name": "Dashkevich Ahra",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2396,
@@ -200,7 +200,7 @@
     },
     {
       "id": "BLR_hrytsuk_strakhavannie",
-      "name": "Hrytsuk Strakhavannie",
+      "name": "Hrytsuk Ahra",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2520,
@@ -209,7 +209,7 @@
     },
     {
       "id": "BLR_kuzniatsou_prom",
-      "name": "Kuzniatsou Prom",
+      "name": "Kuzniatsou Handal",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2296,
@@ -218,7 +218,7 @@
     },
     {
       "id": "BLR_dashkevich_strakhavannie_budaunitstva",
-      "name": "Dashkevich Strakhavannie Budaunitstva",
+      "name": "Dashkevich Handal Ahra",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2262,
@@ -227,7 +227,7 @@
     },
     {
       "id": "BLR_astapenka_materyialy",
-      "name": "Astapenka Materyialy",
+      "name": "Astapenka Ahra",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2499,
@@ -236,7 +236,7 @@
     },
     {
       "id": "BLR_astapenka_strakhavannie_lahistyka",
-      "name": "Astapenka Strakhavannie Lahistyka",
+      "name": "Astapenka Hrupa",
       "sector": "agriculture",
       "share": 0.0152,
       "headcount": 1244,
@@ -245,7 +245,7 @@
     },
     {
       "id": "BLR_dashkevich_strakhavannie",
-      "name": "Dashkevich Strakhavannie",
+      "name": "Dashkevich Hrupa Handal",
       "sector": "agriculture",
       "share": 0.022,
       "headcount": 1659,
@@ -263,7 +263,7 @@
     },
     {
       "id": "BLR_prakopovich_budaunitstva",
-      "name": "Prakopovich Budaunitstva",
+      "name": "Prakopovich Handal",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2504,
@@ -272,7 +272,7 @@
     },
     {
       "id": "BLR_hurynovich_strakhavannie",
-      "name": "Hurynovich Strakhavannie",
+      "name": "Hurynovich Ahra",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2235,
@@ -290,7 +290,7 @@
     },
     {
       "id": "BLR_zaitsau_prom",
-      "name": "Zaitsau Prom",
+      "name": "Zaitsau Hrupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2190,
@@ -299,7 +299,7 @@
     },
     {
       "id": "BLR_hrytsuk_lahistyka",
-      "name": "Hrytsuk Lahistyka",
+      "name": "Hrytsuk Hrupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18987,
@@ -317,7 +317,7 @@
     },
     {
       "id": "BLR_rabchonak_lahistyka",
-      "name": "Rabchonak Lahistyka",
+      "name": "Rabchonak Enierhietyka",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20780,
@@ -326,7 +326,7 @@
     },
     {
       "id": "BLR_kavaliou_transpart",
-      "name": "Kavaliou Transpart",
+      "name": "Kavaliou Enierhietyka",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20278,
@@ -335,7 +335,7 @@
     },
     {
       "id": "BLR_zaitsau_ahra",
-      "name": "Zaitsau Ahra",
+      "name": "Zaitsau Enierhietyka",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22104,
@@ -344,7 +344,7 @@
     },
     {
       "id": "BLR_dashkevich_ahra_materyialy",
-      "name": "Dashkevich Ahra Materyialy",
+      "name": "Dashkevich Materyialy",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20411,
@@ -380,7 +380,7 @@
     },
     {
       "id": "BLR_karpenka_strakhavannie",
-      "name": "Karpenka Strakhavannie",
+      "name": "Karpenka Prom",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18426,
@@ -389,7 +389,7 @@
     },
     {
       "id": "BLR_astapenka_transpart",
-      "name": "Astapenka Transpart",
+      "name": "Astapenka Enierhietyka",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19492,
@@ -398,7 +398,7 @@
     },
     {
       "id": "BLR_kuzniatsou_ahra",
-      "name": "Kuzniatsou Ahra",
+      "name": "Kuzniatsou Hrupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18323,
@@ -425,7 +425,7 @@
     },
     {
       "id": "BLR_malinouski_ahra",
-      "name": "Malinouski Ahra",
+      "name": "Malinouski Materyialy",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21473,
@@ -434,7 +434,7 @@
     },
     {
       "id": "BLR_vasilevich_ahra",
-      "name": "Vasilevich Ahra",
+      "name": "Vasilevich Enierhietyka",
       "sector": "industry",
       "share": 0.0181,
       "headcount": 12672,
@@ -443,7 +443,7 @@
     },
     {
       "id": "BLR_hrytsuk_handal",
-      "name": "Hrytsuk Handal",
+      "name": "Hrytsuk Materyialy",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21204,
@@ -461,7 +461,7 @@
     },
     {
       "id": "BLR_malinouski_lahistyka",
-      "name": "Malinouski Lahistyka",
+      "name": "Malinouski Prom",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20916,
@@ -479,7 +479,7 @@
     },
     {
       "id": "BLR_pashkevich_handal",
-      "name": "Pashkevich Handal",
+      "name": "Pashkevich Hrupa",
       "sector": "industry",
       "share": 0.013,
       "headcount": 9251,
@@ -488,7 +488,7 @@
     },
     {
       "id": "BLR_zhuk_transpart",
-      "name": "Zhuk Transpart",
+      "name": "Zhuk Materyialy",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19165,
@@ -497,7 +497,7 @@
     },
     {
       "id": "BLR_prakopovich_ahra",
-      "name": "Prakopovich Ahra",
+      "name": "Prakopovich Prom",
       "sector": "industry",
       "share": 0.0177,
       "headcount": 12202,
@@ -515,7 +515,7 @@
     },
     {
       "id": "BLR_hurynovich_prom",
-      "name": "Hurynovich Prom",
+      "name": "Hurynovich Lahistyka",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24203,
@@ -524,7 +524,7 @@
     },
     {
       "id": "BLR_sakalou_materyialy",
-      "name": "Sakalou Materyialy",
+      "name": "Sakalou Strakhavannie",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22690,
@@ -533,7 +533,7 @@
     },
     {
       "id": "BLR_yakaulevich_enierhietyka_enierhietyka",
-      "name": "Yakaulevich Enierhietyka",
+      "name": "Yakaulevich Hrupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24254,
@@ -542,7 +542,7 @@
     },
     {
       "id": "BLR_kuzniatsou_enierhietyka",
-      "name": "Kuzniatsou Enierhietyka",
+      "name": "Kuzniatsou Strakhavannie",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24308,
@@ -587,7 +587,7 @@
     },
     {
       "id": "BLR_bialou_materyialy",
-      "name": "Bialou Materyialy",
+      "name": "Bialou Strakhavannie",
       "sector": "services",
       "share": 0.0134,
       "headcount": 19724,
@@ -614,7 +614,7 @@
     },
     {
       "id": "BLR_kuzmich_prom",
-      "name": "Kuzmich Prom",
+      "name": "Kuzmich Strakhavannie",
       "sector": "services",
       "share": 0.0143,
       "headcount": 19923,
@@ -632,7 +632,7 @@
     },
     {
       "id": "BLR_kazlou_materyialy",
-      "name": "Kazlou Materyialy",
+      "name": "Kazlou Lahistyka",
       "sector": "services",
       "share": 0.0095,
       "headcount": 13238,
@@ -641,7 +641,7 @@
     },
     {
       "id": "BLR_kuzmich_budaunitstva",
-      "name": "Kuzmich Budaunitstva",
+      "name": "Kuzmich Handal",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22748,
@@ -659,7 +659,7 @@
     },
     {
       "id": "BLR_dashkevich_prom",
-      "name": "Dashkevich Prom",
+      "name": "Dashkevich Lahistyka",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24177,
@@ -668,7 +668,7 @@
     },
     {
       "id": "BLR_astapenka_enierhietyka_strakhavannie",
-      "name": "Astapenka Enierhietyka Strakhavannie",
+      "name": "Astapenka Strakhavannie",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24641,
@@ -677,7 +677,7 @@
     },
     {
       "id": "BLR_ramanchuk_ahra",
-      "name": "Ramanchuk Ahra",
+      "name": "Ramanchuk Strakhavannie",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23320,
@@ -686,7 +686,7 @@
     },
     {
       "id": "BLR_kuzniatsou_budaunitstva_hrupa",
-      "name": "Kuzniatsou Budaunitstva Hrupa",
+      "name": "Kuzniatsou Lahistyka",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23671,
@@ -731,7 +731,7 @@
     },
     {
       "id": "BLR_zhuk_budaunitstva",
-      "name": "Zhuk Budaunitstva",
+      "name": "Zhuk Transpart",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24700,
@@ -740,7 +740,7 @@
     },
     {
       "id": "BLR_baranau_materyialy",
-      "name": "Baranau Materyialy",
+      "name": "Baranau Hrupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24944,
@@ -776,7 +776,7 @@
     },
     {
       "id": "BLR_talkachou_materyialy",
-      "name": "Talkachou Materyialy",
+      "name": "Talkachou Transpart",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23041,
@@ -785,7 +785,7 @@
     },
     {
       "id": "BLR_bialou_budaunitstva",
-      "name": "Bialou Budaunitstva",
+      "name": "Bialou Hrupa",
       "sector": "services",
       "share": 0.0128,
       "headcount": 17399,
@@ -794,7 +794,7 @@
     },
     {
       "id": "BLR_kuzniatsou_budaunitstva",
-      "name": "Kuzniatsou Budaunitstva",
+      "name": "Kuzniatsou Transpart",
       "sector": "services",
       "share": 0.0138,
       "headcount": 20694,
@@ -803,7 +803,7 @@
     },
     {
       "id": "BLR_kuzmich_enierhietyka",
-      "name": "Kuzmich Enierhietyka",
+      "name": "Kuzmich Transpart",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22943,
@@ -812,7 +812,7 @@
     },
     {
       "id": "BLR_prakopovich_prom_enierhietyka",
-      "name": "Prakopovich Prom Enierhietyka",
+      "name": "Prakopovich Hrupa",
       "sector": "services",
       "share": 0.0085,
       "headcount": 12422,
@@ -821,7 +821,7 @@
     },
     {
       "id": "BLR_pashkevich_strakhavannie_prom",
-      "name": "Pashkevich Strakhavannie Prom",
+      "name": "Pashkevich Strakhavannie",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22692,
@@ -830,7 +830,7 @@
     },
     {
       "id": "BLR_marozau_materyialy",
-      "name": "Marozau Materyialy",
+      "name": "Marozau Handal",
       "sector": "services",
       "share": 0.0117,
       "headcount": 17119,
@@ -839,7 +839,7 @@
     },
     {
       "id": "BLR_tsimashenka_materyialy",
-      "name": "Tsimashenka Materyialy",
+      "name": "Tsimashenka Strakhavannie",
       "sector": "services",
       "share": 0.0087,
       "headcount": 13333,
@@ -848,7 +848,7 @@
     },
     {
       "id": "BLR_valadzko_enierhietyka",
-      "name": "Valadzko Enierhietyka",
+      "name": "Valadzko Transpart",
       "sector": "services",
       "share": 0.0033,
       "headcount": 4566,
@@ -857,7 +857,7 @@
     },
     {
       "id": "BLR_naumenka_prom",
-      "name": "Naumenka Prom",
+      "name": "Naumenka Transpart",
       "sector": "services",
       "share": 0.0072,
       "headcount": 11724,

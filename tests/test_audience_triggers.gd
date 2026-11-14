@@ -34,6 +34,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const Phone = preload("res://src/sim/phone.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
@@ -60,6 +61,7 @@ func _init() -> void:
 	_check_only_the_players_reshuffle_is_stamped()
 	_check_an_office_want_asks_after_a_reshuffle()
 	_check_a_served_office_want_does_not_ask()
+	_check_a_refused_wanter_is_invited_only_when_their_post_moves()
 	_check_a_visitor_under_a_french_measure_asks()
 	_check_a_visitor_costs_rapport_only()
 	_check_visitors_have_their_own_cap()
@@ -189,6 +191,31 @@ func _check_an_office_want_asks_after_a_reshuffle() -> void:
 		arrived = arrived or (String(row["person_id"]) == asker["id"] and String(row["object"]) == asker["object"])
 	if not arrived:
 		_fail("the invited %s did not reach the lane: %s" % [asker["id"], report["arrived"]])
+
+
+## Gameplay's card A3 on #357: a reshuffle that moves or vacates a post turns it, so its
+## wanters are invited once more, refusal mark or not; a reshuffle of another post invites
+## nobody, and the mark still keeps the refused want off the monthly hazard.
+func _check_a_refused_wanter_is_invited_only_when_their_post_moves() -> void:
+	var state = _game()
+	var ns = state.player()
+	var asker := _office_wanter(ns, false)
+	if asker.is_empty():
+		_fail("no France person has an unserved portfolio want to stage the refusal")
+		return
+	var person = _loader.person_by_id[asker["id"]]
+	Characters.refuse_holding(ns, person, String(asker["object"]))
+	if not WantTerms.refused(ns, String(person.id), String(asker["object"])):
+		_fail("premise: the refusal was not marked")
+	ns.reshuffle_month = _now(state) - 1
+	ns.reshuffle_portfolio = String(asker["object"]).substr("office:portfolio:".length())
+	if String(_invited(state, ns).get(asker["id"], "")) != asker["object"]:
+		_fail("the refused wanter of the moved post was not invited")
+	ns.reshuffle_portfolio = "no_such_portfolio"
+	if _invited(state, ns).has(asker["id"]):
+		_fail("a refused wanter was invited by a reshuffle of another post")
+	if String(Audiences._unserved(ns, person, METERS, _leaders()).get("object", "")) == asker["object"]:
+		_fail("the refused want is back on the monthly hazard")
 
 
 ## A person whose party already holds the portfolio they want is not invited.

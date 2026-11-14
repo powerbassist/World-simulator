@@ -44,7 +44,7 @@
     },
     {
       "id": "ROU_cirstea_logistica",
-      "name": "Cîrstea Logistică",
+      "name": "Cîrstea Energie",
       "sector": "industry",
       "share": 0.0255,
       "headcount": 16420,
@@ -64,7 +64,7 @@
     },
     {
       "id": "ROU_hurmuzache_agricultura",
-      "name": "Hurmuzache Agricultură",
+      "name": "Hurmuzache Asigurări",
       "sector": "services",
       "share": 0.0532,
       "headcount": 61857,
@@ -126,7 +126,7 @@
   "body": [
     {
       "id": "ROU_balcescu_materiale",
-      "name": "Bălcescu Materiale",
+      "name": "Bălcescu Grup",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2656,
@@ -135,7 +135,7 @@
     },
     {
       "id": "ROU_dumitresc_industrie",
-      "name": "Dumitresc Industrie",
+      "name": "Dumitresc Grup",
       "sector": "agriculture",
       "share": 0.0284,
       "headcount": 2307,
@@ -162,7 +162,7 @@
     },
     {
       "id": "ROU_bratianu_energie",
-      "name": "Brătianu Energie",
+      "name": "Brătianu Agricultură",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2309,
@@ -171,7 +171,7 @@
     },
     {
       "id": "ROU_fundeni_energie",
-      "name": "Fundeni Energie",
+      "name": "Fundeni Grup",
       "sector": "agriculture",
       "share": 0.0281,
       "headcount": 2093,
@@ -180,7 +180,7 @@
     },
     {
       "id": "ROU_hurmuzache_materiale",
-      "name": "Hurmuzache Materiale",
+      "name": "Hurmuzache Grup",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2470,
@@ -189,7 +189,7 @@
     },
     {
       "id": "ROU_diaconescu_industrie",
-      "name": "Diaconescu Industrie",
+      "name": "Diaconescu Grup",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2475,
@@ -207,7 +207,7 @@
     },
     {
       "id": "ROU_falcoianu_transport",
-      "name": "Fălcoianu Transport",
+      "name": "Fălcoianu Grup",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2341,
@@ -225,7 +225,7 @@
     },
     {
       "id": "ROU_cirstea_energie",
-      "name": "Cîrstea Energie",
+      "name": "Cîrstea Comerț",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2305,
@@ -243,7 +243,7 @@
     },
     {
       "id": "ROU_titulescu_energie",
-      "name": "Titulescu Energie",
+      "name": "Titulescu Grup",
       "sector": "agriculture",
       "share": 0.0287,
       "headcount": 2448,
@@ -252,7 +252,7 @@
     },
     {
       "id": "ROU_mavrocordat_logistica",
-      "name": "Mavrocordat Logistică",
+      "name": "Mavrocordat Grup",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2215,
@@ -261,7 +261,7 @@
     },
     {
       "id": "ROU_rosalescu_transport",
-      "name": "Rosalescu Transport",
+      "name": "Rosalescu Comerț",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2460,
@@ -279,7 +279,7 @@
     },
     {
       "id": "ROU_negruzzi_logistica",
-      "name": "Negruzzi Logistică",
+      "name": "Negruzzi Grup",
       "sector": "agriculture",
       "share": 0.019,
       "headcount": 1431,
@@ -288,7 +288,7 @@
     },
     {
       "id": "ROU_racovita_asigurari",
-      "name": "Racoviță Asigurări",
+      "name": "Racoviță Comerț",
       "sector": "agriculture",
       "share": 0.0178,
       "headcount": 1337,
@@ -297,7 +297,7 @@
     },
     {
       "id": "ROU_petrescu_agricultura",
-      "name": "Petrescu Agricultură",
+      "name": "Petrescu Construcții",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20716,
@@ -324,7 +324,7 @@
     },
     {
       "id": "ROU_turculet_transport",
-      "name": "Turculet Transport",
+      "name": "Turculet Energie",
       "sector": "industry",
       "share": 0.0257,
       "headcount": 18707,
@@ -333,7 +333,7 @@
     },
     {
       "id": "ROU_titulescu_comert",
-      "name": "Titulescu Comerț",
+      "name": "Titulescu Industrie",
       "sector": "industry",
       "share": 0.0264,
       "headcount": 16177,
@@ -351,7 +351,7 @@
     },
     {
       "id": "ROU_pallade_transport",
-      "name": "Pallade Transport",
+      "name": "Pallade Materiale",
       "sector": "industry",
       "share": 0.0264,
       "headcount": 18512,
@@ -378,7 +378,7 @@
     },
     {
       "id": "ROU_dumitresc_industrie_industrie",
-      "name": "Dumitresc Transport",
+      "name": "Dumitresc Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20051,
@@ -396,7 +396,7 @@
     },
     {
       "id": "ROU_voda_transport",
-      "name": "Vodă Transport",
+      "name": "Vodă Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18246,
@@ -405,7 +405,7 @@
     },
     {
       "id": "ROU_negruzzi_comert",
-      "name": "Negruzzi Comerț",
+      "name": "Negruzzi Energie",
       "sector": "industry",
       "share": 0.0255,
       "headcount": 17163,
@@ -414,7 +414,7 @@
     },
     {
       "id": "ROU_diaconescu_energie_asigurari",
-      "name": "Diaconescu Energie Asigurări",
+      "name": "Diaconescu Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21099,
@@ -423,7 +423,7 @@
     },
     {
       "id": "ROU_ureche_logistica",
-      "name": "Ureche Logistică",
+      "name": "Ureche Construcții",
       "sector": "industry",
       "share": 0.015,
       "headcount": 10075,
@@ -432,7 +432,7 @@
     },
     {
       "id": "ROU_zamfirescu_asigurari",
-      "name": "Zamfirescu Asigurări",
+      "name": "Zamfirescu Grup",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18254,
@@ -441,7 +441,7 @@
     },
     {
       "id": "ROU_manescu_agricultura",
-      "name": "Mănescu Agricultură",
+      "name": "Mănescu Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20843,
@@ -450,7 +450,7 @@
     },
     {
       "id": "ROU_cantacuzino_asigurari",
-      "name": "Cantacuzino Asigurări",
+      "name": "Cantacuzino Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21919,
@@ -459,7 +459,7 @@
     },
     {
       "id": "ROU_ilie_transport",
-      "name": "Ilie Transport",
+      "name": "Ilie Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19109,
@@ -468,7 +468,7 @@
     },
     {
       "id": "ROU_negulescu_agricultura",
-      "name": "Negulescu Agricultură",
+      "name": "Negulescu Construcții",
       "sector": "industry",
       "share": 0.0283,
       "headcount": 18526,
@@ -477,7 +477,7 @@
     },
     {
       "id": "ROU_jalea_logistica",
-      "name": "Jalea Logistică",
+      "name": "Jalea Construcții",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20473,
@@ -531,7 +531,7 @@
     },
     {
       "id": "ROU_lupescu_constructii",
-      "name": "Lupescu Construcții",
+      "name": "Lupescu Grup",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23907,
@@ -558,7 +558,7 @@
     },
     {
       "id": "ROU_kogalniceanu_constructii",
-      "name": "Kogălniceanu Construcții",
+      "name": "Kogălniceanu Logistică",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24955,
@@ -585,7 +585,7 @@
     },
     {
       "id": "ROU_carp_materiale",
-      "name": "Carp Materiale",
+      "name": "Carp Comerț",
       "sector": "services",
       "share": 0.0159,
       "headcount": 23773,
@@ -594,7 +594,7 @@
     },
     {
       "id": "ROU_petrescu_industrie",
-      "name": "Petrescu Industrie",
+      "name": "Petrescu Comerț",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23563,
@@ -612,7 +612,7 @@
     },
     {
       "id": "ROU_ilie_constructii",
-      "name": "Ilie Construcții",
+      "name": "Ilie Asigurări",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23033,
@@ -630,7 +630,7 @@
     },
     {
       "id": "ROU_mavrocordat_industrie",
-      "name": "Mavrocordat Industrie",
+      "name": "Mavrocordat Asigurări",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24170,
@@ -639,7 +639,7 @@
     },
     {
       "id": "ROU_golescu_industrie",
-      "name": "Golescu Industrie",
+      "name": "Golescu Logistică",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23524,
@@ -657,7 +657,7 @@
     },
     {
       "id": "ROU_zamfirescu_agricultura",
-      "name": "Zamfirescu Agricultură",
+      "name": "Zamfirescu Logistică",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22917,
@@ -675,7 +675,7 @@
     },
     {
       "id": "ROU_tanasescu_industrie",
-      "name": "Tănăsescu Industrie",
+      "name": "Tănăsescu Logistică",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23755,
@@ -693,7 +693,7 @@
     },
     {
       "id": "ROU_lupescu_energie",
-      "name": "Lupescu Energie",
+      "name": "Lupescu Asigurări",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24545,
@@ -756,7 +756,7 @@
     },
     {
       "id": "ROU_petrescu_grup_energie",
-      "name": "Petrescu Grup Energie",
+      "name": "Petrescu Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23837,
@@ -765,7 +765,7 @@
     },
     {
       "id": "ROU_balcescu_constructii",
-      "name": "Bălcescu Construcții",
+      "name": "Bălcescu Comerț",
       "sector": "services",
       "share": 0.0095,
       "headcount": 14103,
@@ -774,7 +774,7 @@
     },
     {
       "id": "ROU_turculet_constructii",
-      "name": "Turculet Construcții",
+      "name": "Turculet Grup",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22697,
@@ -783,7 +783,7 @@
     },
     {
       "id": "ROU_titulescu_agricultura",
-      "name": "Titulescu Agricultură",
+      "name": "Titulescu Logistică",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23526,
@@ -801,7 +801,7 @@
     },
     {
       "id": "ROU_titulescu_materiale",
-      "name": "Titulescu Materiale",
+      "name": "Titulescu Asigurări",
       "sector": "services",
       "share": 0.0118,
       "headcount": 18916,
@@ -846,7 +846,7 @@
     },
     {
       "id": "ROU_manescu_logistica_agricultura",
-      "name": "Mănescu Logistică Agricultură",
+      "name": "Mănescu Logistică",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24297,
@@ -855,7 +855,7 @@
     },
     {
       "id": "ROU_enescu_agricultura",
-      "name": "Enescu Agricultură",
+      "name": "Enescu Grup",
       "sector": "services",
       "share": 0.0098,
       "headcount": 15493,
@@ -864,7 +864,7 @@
     },
     {
       "id": "ROU_tanasescu_asigurari_industrie",
-      "name": "Tănăsescu Asigurări Industrie",
+      "name": "Tănăsescu Asigurări",
       "sector": "services",
       "share": 0.0124,
       "headcount": 17098,
@@ -891,7 +891,7 @@
     },
     {
       "id": "ROU_zamfirescu_materiale",
-      "name": "Zamfirescu Materiale",
+      "name": "Zamfirescu Comerț",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23000,
@@ -900,7 +900,7 @@
     },
     {
       "id": "ROU_hurmuzache_constructii",
-      "name": "Hurmuzache Construcții",
+      "name": "Hurmuzache Logistică",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22815,
@@ -909,7 +909,7 @@
     },
     {
       "id": "ROU_ghica_energie",
-      "name": "Ghica Energie",
+      "name": "Ghica Asigurări",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23071,
@@ -918,7 +918,7 @@
     },
     {
       "id": "ROU_bradeanu_constructii",
-      "name": "Brădeanu Construcții",
+      "name": "Brădeanu Asigurări",
       "sector": "services",
       "share": 0.0157,
       "headcount": 24308,

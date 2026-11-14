@@ -27,6 +27,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Lies = preload("res://src/sim/lies.gd")
@@ -254,9 +255,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 	President.prune_judged(ns, now)
 	if ns.commitments.is_empty():
 		return out
-	var leaders := {}
-	for party in loader.parties.get(ns.id, []):
-		leaders[party.id] = party.leader_person_id
+	var leaders := WantTerms.authored_leaders(loader, ns.id)
 	for row in President.take_commitments_due(ns, now):
 		var verdict := CommitmentJudge.verdict(state, ns, loader, row, meters, leaders)
 		out[verdict].append(row)

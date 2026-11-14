@@ -36,7 +36,7 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame == 3:
 		_main._windows.open("legislature")
-		_goals().go_requested.connect(func(id: String) -> void: _went.append(id))
+		_goals().go_requested.connect(func(id: String, focus: String) -> void: _went.append([id, focus]))
 		return false
 	if _frame < 4:
 		return false
@@ -187,7 +187,7 @@ func _check_a_press() -> void:
 		by_kind[(press.get_child(0).get_child(0) as Label).text] = press
 	if by_kind.has("Budget"):
 		(by_kind["Budget"] as Button).pressed.emit()
-		if _went != ["budget"]:
+		if _went != [["budget", ""]]:
 			_fail("a budget row's press asked for %s, not the Budget tab" % [_went])
 		if not _main._windows.is_open("budget"):
 			_fail("the wiring did not open the Budget tab for a budget row")
@@ -195,6 +195,21 @@ func _check_a_press() -> void:
 		_fail("no budget line among the deficit's measures")
 	# QA's ML on #358: a law row's press must MOVE the selection to that law -- pick one that is not
 	# the selection already (the list always holds one), and read the sheet's own name back.
+	# A TAX row opens the Tax Code on that tax's own row (the parent's ruling on QA's TAKE), not the Budget.
+	if by_kind.has("Tax"):
+		_went.clear()
+		_main._windows.open("legislature")
+		(by_kind["Tax"] as Button).pressed.emit()
+		var kind := String(_went[0][1]) if _went.size() == 1 else ""
+		if _went.size() != 1 or _went[0][0] != "tax" or kind == "":
+			_fail("a tax row's press asked for %s, not the Tax Code on that tax" % [_went])
+		elif not _main._windows.is_open("tax"):
+			_fail("a tax row's press did not open the Tax Code")
+		elif _main.get_viewport().gui_get_focus_owner() != _main._tax_panel._sliders.get(kind):
+			_fail("a tax row's press did not put the cursor on %s's own slider" % kind)
+		_main._windows.open("legislature")
+	else:
+		_fail("no tax rate among the deficit's measures")
 	var list = _main._law_panel._laws
 	var current := String(Strings.law_name(_main._law_panel._find_law(list.selected_id())))
 	var law_row: Button = null

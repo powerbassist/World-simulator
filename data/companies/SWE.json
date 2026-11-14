@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "SWE_drakenberg_transport",
-      "name": "Drakenberg Transport",
+      "name": "Drakenberg Handel",
       "sector": "agriculture",
       "share": 0.2593,
       "headcount": 16826,
@@ -14,7 +14,7 @@
     },
     {
       "id": "SWE_tegner_transport",
-      "name": "Tegnér Transport",
+      "name": "Tegnér Handel",
       "sector": "agriculture",
       "share": 0.2007,
       "headcount": 17245,
@@ -54,7 +54,7 @@
     },
     {
       "id": "SWE_beijer_handel",
-      "name": "Beijer Handel",
+      "name": "Lindgren Energi",
       "sector": "industry",
       "share": 0.0453,
       "headcount": 37653,
@@ -74,7 +74,7 @@
     },
     {
       "id": "SWE_bergstrom_bygg",
-      "name": "Bergström Bygg",
+      "name": "Bergström Gruppen",
       "sector": "services",
       "share": 0.0733,
       "headcount": 87637,
@@ -126,7 +126,7 @@
   "body": [
     {
       "id": "SWE_molander_forsakring",
-      "name": "Molander Försäkring",
+      "name": "Molander Gruppen",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2340,
@@ -135,7 +135,7 @@
     },
     {
       "id": "SWE_kallstrom_bygg",
-      "name": "Källström Bygg",
+      "name": "Källström Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2395,
@@ -162,7 +162,7 @@
     },
     {
       "id": "SWE_quarnstrom_logistik",
-      "name": "Quarnström Logistik",
+      "name": "Quarnström Gruppen",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2436,
@@ -180,7 +180,7 @@
     },
     {
       "id": "SWE_norin_logistik",
-      "name": "Norin Logistik",
+      "name": "Norin Lantbruk",
       "sector": "agriculture",
       "share": 0.0157,
       "headcount": 1313,
@@ -189,7 +189,7 @@
     },
     {
       "id": "SWE_gyllenhammar_logistik",
-      "name": "Gyllenhammar Logistik",
+      "name": "Gyllenhammar Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2350,
@@ -198,7 +198,7 @@
     },
     {
       "id": "SWE_hellstrom_bygg",
-      "name": "Hellström Bygg",
+      "name": "Hellström Lantbruk",
       "sector": "agriculture",
       "share": 0.0143,
       "headcount": 1107,
@@ -207,7 +207,7 @@
     },
     {
       "id": "SWE_bergstrom_industri",
-      "name": "Bergström Industri",
+      "name": "Bergström Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2283,
@@ -234,7 +234,7 @@
     },
     {
       "id": "SWE_norin_transport",
-      "name": "Norin Transport",
+      "name": "Norin Gruppen",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2283,
@@ -243,7 +243,7 @@
     },
     {
       "id": "SWE_jansson_energi",
-      "name": "Jansson Energi",
+      "name": "Jansson Gruppen",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2365,
@@ -252,7 +252,7 @@
     },
     {
       "id": "SWE_dahlgren_industri",
-      "name": "Dahlgren Industri",
+      "name": "Dahlgren Gruppen",
       "sector": "agriculture",
       "share": 0.0268,
       "headcount": 1956,
@@ -261,7 +261,7 @@
     },
     {
       "id": "SWE_krook_transport",
-      "name": "Krook Transport",
+      "name": "Krook Lantbruk",
       "sector": "agriculture",
       "share": 0.0158,
       "headcount": 1302,
@@ -288,7 +288,7 @@
     },
     {
       "id": "SWE_mansson_transport",
-      "name": "Månsson Transport",
+      "name": "Månsson Industri",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19549,
@@ -297,7 +297,7 @@
     },
     {
       "id": "SWE_hofsten_lantbruk",
-      "name": "Hofsten Lantbruk",
+      "name": "Hofsten Industri",
       "sector": "industry",
       "share": 0.0252,
       "headcount": 16125,
@@ -315,7 +315,7 @@
     },
     {
       "id": "SWE_ingves_handel",
-      "name": "Ingves Handel",
+      "name": "Ingves Gruppen",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20035,
@@ -324,7 +324,7 @@
     },
     {
       "id": "SWE_stolpe_logistik",
-      "name": "Stolpe Logistik",
+      "name": "Stolpe Bygg",
       "sector": "industry",
       "share": 0.0168,
       "headcount": 10527,
@@ -360,7 +360,7 @@
     },
     {
       "id": "SWE_odelberg_logistik",
-      "name": "Odelberg Logistik",
+      "name": "Odelberg Industri",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18465,
@@ -378,7 +378,7 @@
     },
     {
       "id": "SWE_cronstrand_transport",
-      "name": "Cronstrand Transport",
+      "name": "Cronstrand Industri",
       "sector": "industry",
       "share": 0.0278,
       "headcount": 17415,
@@ -387,7 +387,7 @@
     },
     {
       "id": "SWE_norin_transport_material",
-      "name": "Norin Transport Material",
+      "name": "Norin Material",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20272,
@@ -396,7 +396,7 @@
     },
     {
       "id": "SWE_lundquist_logistik",
-      "name": "Lundquist Logistik",
+      "name": "Lundquist Energi",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20586,
@@ -450,7 +450,7 @@
     },
     {
       "id": "SWE_almgren_lantbruk",
-      "name": "Almgren Lantbruk",
+      "name": "Almgren Gruppen",
       "sector": "industry",
       "share": 0.0231,
       "headcount": 15289,
@@ -459,7 +459,7 @@
     },
     {
       "id": "SWE_beijer_material_gruppen",
-      "name": "Beijer Material Gruppen",
+      "name": "Mårtensson Material Gruppen",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20039,
@@ -486,7 +486,7 @@
     },
     {
       "id": "SWE_almgren_bygg",
-      "name": "Almgren Bygg",
+      "name": "Almgren Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23117,
@@ -495,7 +495,7 @@
     },
     {
       "id": "SWE_rylander_lantbruk",
-      "name": "Rylander Lantbruk",
+      "name": "Rylander Logistik",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23428,
@@ -513,7 +513,7 @@
     },
     {
       "id": "SWE_reutersward_industri",
-      "name": "Reuterswärd Industri",
+      "name": "Reuterswärd Logistik",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23491,
@@ -531,7 +531,7 @@
     },
     {
       "id": "SWE_akerlund_energi",
-      "name": "Åkerlund Energi",
+      "name": "Åkerlund Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22760,
@@ -558,7 +558,7 @@
     },
     {
       "id": "SWE_gullbrandsson_industri",
-      "name": "Gullbrandsson Industri",
+      "name": "Gullbrandsson Logistik",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23845,
@@ -576,7 +576,7 @@
     },
     {
       "id": "SWE_dahlgren_lantbruk",
-      "name": "Dahlgren Lantbruk",
+      "name": "Dahlgren Logistik",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22763,
@@ -585,7 +585,7 @@
     },
     {
       "id": "SWE_cronholm_lantbruk",
-      "name": "Cronholm Lantbruk",
+      "name": "Cronholm Transport",
       "sector": "services",
       "share": 0.0067,
       "headcount": 9482,
@@ -612,7 +612,7 @@
     },
     {
       "id": "SWE_sorvik_industri",
-      "name": "Sörvik Industri",
+      "name": "Sörvik Gruppen",
       "sector": "services",
       "share": 0.0117,
       "headcount": 18964,
@@ -630,7 +630,7 @@
     },
     {
       "id": "SWE_falkengard_industri",
-      "name": "Falkengård Industri",
+      "name": "Falkengård Gruppen",
       "sector": "services",
       "share": 0.0142,
       "headcount": 22087,
@@ -639,7 +639,7 @@
     },
     {
       "id": "SWE_tegner_forsakring_industri",
-      "name": "Tegnér Försäkring Industri",
+      "name": "Tegnér Försäkring",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24588,
@@ -648,7 +648,7 @@
     },
     {
       "id": "SWE_rask_bygg",
-      "name": "Rask Bygg",
+      "name": "Rask Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24238,
@@ -657,7 +657,7 @@
     },
     {
       "id": "SWE_persson_material",
-      "name": "Persson Material",
+      "name": "Persson Försäkring",
       "sector": "services",
       "share": 0.0159,
       "headcount": 24962,
@@ -675,7 +675,7 @@
     },
     {
       "id": "SWE_lindgren_industri",
-      "name": "Lindgren Industri",
+      "name": "Lindgren Handel",
       "sector": "services",
       "share": 0.0157,
       "headcount": 24132,
@@ -684,7 +684,7 @@
     },
     {
       "id": "SWE_mansson_lantbruk",
-      "name": "Månsson Lantbruk",
+      "name": "Månsson Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22508,
@@ -693,7 +693,7 @@
     },
     {
       "id": "SWE_beijer_industri",
-      "name": "Beijer Industri",
+      "name": "Cassel Gruppen",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23943,
@@ -711,7 +711,7 @@
     },
     {
       "id": "SWE_kallstrom_energi",
-      "name": "Källström Energi",
+      "name": "Källström Försäkring",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22628,
@@ -720,7 +720,7 @@
     },
     {
       "id": "SWE_quarnstrom_energi",
-      "name": "Quarnström Energi",
+      "name": "Quarnström Logistik",
       "sector": "services",
       "share": 0.0104,
       "headcount": 17108,
@@ -738,7 +738,7 @@
     },
     {
       "id": "SWE_palsson_bygg",
-      "name": "Pålsson Bygg",
+      "name": "Pålsson Handel",
       "sector": "services",
       "share": 0.0082,
       "headcount": 12058,
@@ -765,7 +765,7 @@
     },
     {
       "id": "SWE_reutersward_bygg_transport",
-      "name": "Reuterswärd Bygg Transport",
+      "name": "Reuterswärd Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23261,
@@ -810,7 +810,7 @@
     },
     {
       "id": "SWE_isberg_bygg",
-      "name": "Isberg Bygg",
+      "name": "Isberg Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24130,
@@ -837,7 +837,7 @@
     },
     {
       "id": "SWE_ohman_material",
-      "name": "Öhman Material",
+      "name": "Öhman Handel",
       "sector": "services",
       "share": 0.0071,
       "headcount": 10285,

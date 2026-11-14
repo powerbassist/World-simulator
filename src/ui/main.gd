@@ -359,7 +359,6 @@ func _ready() -> void:
 	# below -- the panel does not exist yet at this point in _ready().)
 	_briefing = Briefing.new()
 	_stack.add(ScreenStack.SCENE, _briefing, false, _briefing.hide)
-	_briefing.hide()
 	_briefing.propose_requested.connect(func(law):
 		_briefing.hide()
 		_law_panel.run_proposal(law)
@@ -390,9 +389,10 @@ func _ready() -> void:
 	_windows.register("legislature", tr("Bills"), _law_panel, KEY_L, ICONS + "gavel.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.dissolved.connect(_government_panel.dissolved.emit)
-	# V4.2 T5. Propose opens the briefing; the division comes back through
-	# run_proposal() from the briefing's own verb, so the path below is still
-	# the one propose path in the game.
+	_law_panel.polled.connect(_briefing.polled.emit)  # the sheet's polls book the same baseline the popup's do
+	# The sheet's Propose divides at once (law_panel.run_proposal). The briefing popup is for the bills
+	# the sheet does not carry -- an ownership bill, a tax draft -- and its Propose comes back through
+	# run_proposal() too, so there is still one propose path in the game.
 	_law_panel.brief_requested.connect(func(law):
 		_briefing.open_for_law(law, _state, _loader, _law_panel._laws.grade(law))
 		_briefing.show()

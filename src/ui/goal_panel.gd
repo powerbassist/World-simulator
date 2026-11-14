@@ -12,7 +12,8 @@ extends VBoxContainer
 ## sliced), kept for the month, and RANKED live at each redraw, so a bill tabled since greys the
 ## rows that can no longer be tabled.
 
-signal go_requested(window_id: String)
+## `focus` names a tax kind to put the cursor on in the window opened ("" for none).
+signal go_requested(window_id: String, focus: String)
 
 const GoalRead = preload("res://src/sim/goal_read.gd")
 const GoalRows = preload("res://src/ui/goal_rows.gd")
@@ -178,10 +179,13 @@ func _pick_goal(picked: String) -> void:
 	_stamp = ""
 
 
-## A row pressed: a law opens its sheet beside the list; a budget line or a tax rate is set on
-## the Budget tab, which is where its lever lives.
+## A row pressed: a law opens its sheet beside the list; a budget line is set on the Budget tab and a
+## tax rate in the Tax Code, on that tax's own row (the parent's ruling on QA's TAKE, #358).
 func _pick(measure: Dictionary) -> void:
 	if String(measure["kind"]) == "law":
 		_list.select(String(measure["id"]))
 	else:
-		go_requested.emit("budget")
+		if String(measure["kind"]) == "rate":
+			go_requested.emit("tax", String(measure["key"]))
+		else:
+			go_requested.emit("budget", "")
