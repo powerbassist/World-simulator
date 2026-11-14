@@ -38,6 +38,8 @@ tests=(
   tests/test_finance_bill.gd
   tests/test_finance_autumn.gd
   tests/test_bill_queue.gd
+  tests/test_bill_verbs.gd
+  tests/test_order_paper.gd
   tests/test_tax_library.gd
   tests/test_amendment.gd
   tests/test_transition.gd

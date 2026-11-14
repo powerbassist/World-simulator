@@ -107,9 +107,9 @@ func _check_draw_is_deterministic_and_covering() -> void:
 	var errs: Array[String] = []
 	for i in 2:
 		pool.append(Summit.from_dict(
-			"~ start\nA: Line.\n- One => One\n- Two => Two\n~ One\nA: One. => END\n~ Two\nA: Two. => END\n",
+			"~ start\nA: Line.\n- One [#id:one] => One\n- Two [#id:two] => Two\n~ One\nA: One. => END\n~ Two\nA: Two. => END\n",
 			"ESP", "ESP_syn%d" % i,
-			{"name": "S%d" % i, "summary": "s", "effects": {"One": {}, "Two": {}}},
+			{"name": "S%d" % i, "summary": "s", "effects": {"one": {}, "two": {}}},
 			"syn%d" % i, errs,
 			["income_tax", "vat"], ["health", "defence"], ["business", "workers"],
 			["agriculture", "industry", "services"]
@@ -160,7 +160,7 @@ func _check_content_compiles() -> void:
 ## response behind it, a response with no price, and a channel that is not
 ## one. Each must land in the errors list, by the exact clause written for it.
 func _check_sidecar_contract_refuses_bad_content() -> void:
-	var dialogue := "~ start\nA: Line.\n- Sign it => Sign it\n- Refuse => Refuse\n~ Sign it\nA: Signed. => END\n~ Refuse\nA: Refused. => END\n"
+	var dialogue := "~ start\nA: Line.\n- Sign it [#id:sign] => Sign it\n- Refuse [#id:refuse] => Refuse\n~ Sign it\nA: Signed. => END\n~ Refuse\nA: Refused. => END\n"
 	var tax := ["income_tax", "vat"]
 	var spend := ["health", "education", "defence", "pensions", "infrastructure"]
 	var bloc := ["business", "workers", "rural", "urban", "students", "pensioners"]
@@ -170,7 +170,7 @@ func _check_sidecar_contract_refuses_bad_content() -> void:
 	# refusal, not about this test's own failure list.
 	var errs: Array[String] = []
 	Summit.from_dict(dialogue, "DEU", "X1",
-		{"name": "n", "summary": "s", "effects": {"Not offered": {"bloc_offset": {"business": 0.1}}}},
+		{"name": "n", "summary": "s", "effects": {"not_offered": {"bloc_offset": {"business": 0.1}}}},
 		"X1", errs, tax, spend, bloc, sectors)
 	if errs.is_empty():
 		_fail("a price with no response behind it was accepted")
@@ -179,24 +179,37 @@ func _check_sidecar_contract_refuses_bad_content() -> void:
 	# is the one that must pass clean.
 	errs = []
 	Summit.from_dict(dialogue, "DEU", "X2",
-		{"name": "n", "summary": "s", "effects": {"Sign it": {}, "Refuse": {}}},
+		{"name": "n", "summary": "s", "effects": {"sign": {}, "refuse": {}}},
 		"X2", errs, tax, spend, bloc, sectors)
 	if not errs.is_empty():
 		_fail("a complete sidecar was refused: %s" % [errs])
 
 	errs = []
 	Summit.from_dict(dialogue, "DEU", "X3",
-		{"name": "n", "summary": "s", "effects": {"Sign it": {"relations": 5.0}}},
+		{"name": "n", "summary": "s", "effects": {"sign": {"relations": 5.0}}},
 		"X3", errs, tax, spend, bloc, sectors)
 	if errs.is_empty():
 		_fail("a channel no law or event choice could reach (relations) was accepted -- pair state has one writer with an actor behind it, and a summit is neither")
 
 	errs = []
 	Summit.from_dict(dialogue, "DEU", "X4",
-		{"name": "n", "summary": "s", "effects": {"Refuse": {}}},
+		{"name": "n", "summary": "s", "effects": {"refuse": {}}},
 		"X4", errs, tax, spend, bloc, sectors)
 	if errs.is_empty():
 		_fail("a response offered with no price at all was accepted")
+
+	# V5.3 screen 4: a response with no stable id is refused (a choice priced by its text loses
+	# its effects the day it is translated), and so are two responses sharing one id.
+	errs = []
+	Summit.from_dict("~ start\nA: Line.\n- Sign it => Sign it\n~ Sign it\nA: Signed. => END\n", "DEU", "X7",
+		{"name": "n", "summary": "s", "effects": {"Sign it": {}}}, "X7", errs, tax, spend, bloc, sectors)
+	if not errs.any(func(e): return String(e).contains("[#id:")):
+		_fail("a response with no [#id:...] was accepted, or refused for another reason: %s" % [errs])
+	errs = []
+	Summit.from_dict("~ start\nA: Line.\n- Sign it [#id:same] => Sign it\n- Refuse [#id:same] => Refuse\n~ Sign it\nA: Signed. => END\n~ Refuse\nA: Refused. => END\n",
+		"DEU", "X8", {"name": "n", "summary": "s", "effects": {"same": {}}}, "X8", errs, tax, spend, bloc, sectors)
+	if not errs.any(func(e): return String(e).contains("two responses carry the id")):
+		_fail("two responses with one id were accepted: %s" % [errs])
 
 
 ## The ephemeris. A summit is a scene, not a register: nothing new on
@@ -299,10 +312,10 @@ func _check_arrival_chain_by_source() -> void:
 ## Dictionary does, so "the default fires on absence" is tested by rebuilding
 ## the dict WITHOUT the key, the established pattern.
 func _check_scene_field() -> void:
-	var dialogue := "~ start\nA: Line.\n- Sign it => Sign it\n~ Sign it\nA: Signed. => END\n"
+	var dialogue := "~ start\nA: Line.\n- Sign it [#id:sign] => Sign it\n~ Sign it\nA: Signed. => END\n"
 	var errs: Array[String] = []
 	var s = Summit.from_dict(dialogue, "DEU", "X5",
-		{"name": "n", "summary": "s", "scene": "nightclub", "effects": {"Sign it": {}}},
+		{"name": "n", "summary": "s", "scene": "nightclub", "effects": {"sign": {}}},
 		"X5", errs,
 		["income_tax", "vat"], ["health", "defence"], ["business", "workers"],
 		["agriculture", "industry", "services"])
@@ -314,7 +327,7 @@ func _check_scene_field() -> void:
 	# Absent key -> the default. Same fixture minus the key.
 	errs = []
 	var s2 = Summit.from_dict(dialogue, "DEU", "X6",
-		{"name": "n", "summary": "s", "effects": {"Sign it": {}}},
+		{"name": "n", "summary": "s", "effects": {"sign": {}}},
 		"X6", errs,
 		["income_tax", "vat"], ["health", "defence"], ["business", "workers"],
 		["agriculture", "industry", "services"])
