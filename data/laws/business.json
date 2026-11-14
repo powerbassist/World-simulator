@@ -8,6 +8,7 @@
       "id": "emissions_standards",
       "name": "Industrial Emissions Standards",
       "theme": "business",
+      "category": "energy_environment",
       "summary": "Binding emissions limits on industrial plant, enforced by inspection and fines.",
       "position": {
         "economic": -0.45,
@@ -35,6 +36,7 @@
       "id": "workplace_safety_act",
       "name": "Workplace Safety Act",
       "theme": "business",
+      "category": "work",
       "summary": "Mandatory safety standards, inspection rights and employer liability on the factory floor.",
       "position": {
         "economic": -0.55,
@@ -61,6 +63,7 @@
       "id": "banking_conduct_rules",
       "name": "Banking Conduct Rules",
       "theme": "business",
+      "category": "business",
       "summary": "Capital requirements, a duty of care to depositors, and a cap on retail lending charges.",
       "position": {
         "economic": -0.5,
@@ -89,6 +92,7 @@
       "id": "competition_enforcement",
       "name": "Competition Enforcement Act",
       "theme": "business",
+      "category": "business",
       "summary": "An empowered competition authority with the power to break up dominant firms and block mergers.",
       "position": {
         "economic": -0.2,
@@ -116,6 +120,7 @@
       "id": "farm_standards_act",
       "name": "Farm Standards Act",
       "theme": "business",
+      "category": "farming",
       "summary": "Animal welfare, pesticide and traceability standards on agricultural production.",
       "position": {
         "economic": -0.35,
@@ -142,6 +147,7 @@
       "id": "industrial_deregulation",
       "name": "Industrial Deregulation Act",
       "theme": "business",
+      "category": "business",
       "summary": "Repeal of accumulated industrial rules: lighter inspection, faster consent, fewer reporting duties.",
       "position": {
         "economic": 0.6,
@@ -169,6 +175,7 @@
       "id": "financial_deregulation",
       "name": "Financial Services Deregulation",
       "theme": "business",
+      "category": "business",
       "summary": "Lighter capital rules and a simplified conduct regime for banks and insurers.",
       "position": {
         "economic": 0.7,
@@ -201,6 +208,7 @@
       "id": "grid_connection_reform",
       "name": "Grid Connection Reform",
       "theme": "business",
+      "category": "energy_environment",
       "summary": "Fast-track connections for new plant, and a connection queue that finally moves.",
       "position": {
         "economic": 0.5,
@@ -220,6 +228,7 @@
       "id": "data_centre_planning_act",
       "name": "Data Centre Planning Act",
       "theme": "business",
+      "category": "business",
       "summary": "Priority consent for data infrastructure and the substations behind it.",
       "position": {
         "economic": 0.55,
@@ -238,6 +247,7 @@
       "id": "short_let_licensing_act",
       "name": "Short-Let Licensing Act",
       "theme": "business",
+      "category": "housing",
       "summary": "A licence and an annual nights cap for holiday lets in the cities.",
       "position": {
         "economic": -0.35,
@@ -256,6 +266,7 @@
       "id": "procurement_preference_act",
       "name": "Local Preference Procurement Act",
       "theme": "business",
+      "category": "business",
       "summary": "Public contracts to prefer domestic suppliers wherever one is able to bid.",
       "position": {
         "economic": -0.1,
@@ -275,6 +286,7 @@
       "id": "retail_hours_liberalisation",
       "name": "Retail Hours Liberalisation",
       "theme": "business",
+      "category": "business",
       "summary": "Let the shops decide when to open, Sundays included.",
       "position": {
         "economic": 0.6,
@@ -293,6 +305,7 @@
       "id": "insolvency_rescue_reform",
       "name": "Insolvency Rescue Reform",
       "theme": "business",
+      "category": "business",
       "summary": "Keep firms trading through a restructuring instead of liquidating them at the first hiccup.",
       "position": {
         "economic": 0.35,
@@ -311,6 +324,7 @@
       "id": "platform_commission_cap",
       "name": "Platform Commission Cap",
       "theme": "business",
+      "category": "business",
       "summary": "Cap what delivery platforms may charge the restaurants they deliver for.",
       "position": {
         "economic": -0.4,
@@ -329,6 +343,7 @@
       "id": "right_to_repair_act",
       "name": "Right to Repair Act",
       "theme": "business",
+      "category": "business",
       "summary": "Spare parts and repair manuals available for ten years after the last unit sold.",
       "position": {
         "economic": -0.25,
@@ -347,6 +362,7 @@
       "id": "single_market_standards_act",
       "name": "Single Market Standards Act",
       "theme": "business",
+      "category": "europe_migration",
       "summary": "Adopt the Union's product standards wholesale, and keep the market access that comes with them.",
       "position": {
         "economic": -0.15,
@@ -366,6 +382,7 @@
       "id": "planning_liberalisation_act",
       "name": "Planning Liberalisation Act",
       "theme": "business",
+      "category": "housing",
       "summary": "A presumption in favour of consent, and a statutory clock on every planning decision.",
       "position": {
         "economic": 0.6,
@@ -385,6 +402,7 @@
       "id": "algorithmic_management_rules",
       "name": "Workplace Algorithm Rules",
       "theme": "business",
+      "category": "work",
       "summary": "A human being reviews every automated decision about hiring, pay and dismissal.",
       "position": {
         "economic": -0.45,

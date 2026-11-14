@@ -207,6 +207,8 @@ var events: Array[GameEvent] = []
 var summits := {}
 
 var laws: Array[Law] = []
+## Law id -> its shelf in the statute book (src/core/law_category.gd), authored rows only.
+var law_category: Dictionary = {}
 var political_systems: Dictionary = {}  # String id -> PoliticalSystem
 var scenarios: Dictionary = {}  # String id -> Scenario
 
@@ -313,6 +315,7 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	pledges.clear()
 	programme.clear()
 	laws.clear()
+	law_category.clear()
 	political_systems.clear()
 	scenarios.clear()
 	diplomatic_actions.clear()

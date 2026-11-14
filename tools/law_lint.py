@@ -38,6 +38,9 @@ written against the band and not the band against the content):
                losers, and different laws' losers differ; a bloc that is only
                ever hurt (or only ever paid) is an authored faction, not an
                electorate.
+  CATEGORY     every law carries one category from law_category.gd's KEYS,
+               and every category holds at least 4 laws: a shelf with one or
+               two books on it is a mis-filed law, not a category (H12).
   SCHEMA       the loader's own checks, re-derived here: ids unique and
                snake_case, themes valid, positions in range, effect keys and
                enums valid, the three anti-double-count pairs, majority/
@@ -58,6 +61,11 @@ SYSTEMS_DIR = ROOT / "data" / "political-systems"
 # --- The schema's own vocabulary, restated from src/ -------------------------
 # law.gd THEME_KEYS
 THEME_KEYS = ["tax", "labour", "social", "institutional", "business"]
+# law_category.gd KEYS, and the fewest laws a category may hold
+CATEGORY_KEYS = ["taxes", "work", "welfare_health", "education_culture", "housing",
+                 "energy_environment", "business", "farming", "justice_transparency",
+                 "constitution", "elections", "media", "europe_migration"]
+CATEGORY_MIN = 4
 # economy_constants TAX_KEYS / SPENDING_KEYS / SECTOR_TREND
 TAX_KEYS = ["income", "corporate", "vat", "capital_gains", "wealth"]
 SPENDING_KEYS = ["health", "education", "defence", "pensions", "infrastructure"]
@@ -197,6 +205,8 @@ def check_schema(fname: str, law: dict, rep: Report, seen_ids: dict,
     theme = law.get("theme")
     if theme not in THEME_KEYS:
         rep.fail("%s: %s theme must be one of %s" % (where, lid, THEME_KEYS))
+    if law.get("category") not in CATEGORY_KEYS:
+        rep.fail("%s: %s category must be one of %s" % (where, lid, CATEGORY_KEYS))
 
     pos = law.get("position")
     if not isinstance(pos, dict) or "economic" not in pos or "social" not in pos:
@@ -511,6 +521,17 @@ def main() -> int:
     if not (TOTAL_MIN <= total <= TOTAL_MAX):
         rep.fail("statute book carries %d laws, outside [%d, %d]"
                  % (total, TOTAL_MIN, TOTAL_MAX))
+
+    shelves = {key: 0 for key in CATEGORY_KEYS}
+    for _fname, law in laws:
+        if law.get("category") in shelves:
+            shelves[law["category"]] += 1
+    rep.note("")
+    rep.note("per-category counts (at least %d each):" % CATEGORY_MIN)
+    for key in CATEGORY_KEYS:
+        rep.note("  %-20s %3d" % (key, shelves[key]))
+        if shelves[key] < CATEGORY_MIN:
+            rep.fail("category %s holds %d laws, fewer than %d" % (key, shelves[key], CATEGORY_MIN))
 
     check_spread(themed, rep, args.theme)
 
