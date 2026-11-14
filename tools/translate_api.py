@@ -81,10 +81,38 @@ def _git(args):
     return subprocess.run(["git"] + args, cwd=ROOT, capture_output=True, text=True, encoding="utf-8").stdout
 
 
-def data_tree_clean():
-    """'' when every file under data/ is tracked and unmodified, else the first offenders."""
-    dirty = [line for line in _git(["status", "--porcelain", "--untracked-files=all", "--", "data"]).splitlines() if line.strip()]
+def tree_clean(paths):
+    """'' when every file under `paths` is tracked and unmodified, else the first offenders."""
+    dirty = [line for line in _git(["status", "--porcelain", "--untracked-files=all", "--"] + paths).splitlines() if line.strip()]
     return "; ".join(dirty[:5])
+
+
+def credential_refusal(env):
+    """Why a real run may not start with this environment ('' when it may). Names only: no
+    value is read or printed. The run is billed to the author's API account, so it needs
+    ANTHROPIC_API_KEY, and goes to Anthropic itself: a base URL elsewhere (a local router)
+    would carry the text and the key there and make list-price cost a guess, and a bare
+    ANTHROPIC_AUTH_TOKEN is another account's (the app's) credential."""
+    if env.get("ANTHROPIC_BASE_URL", "").strip():
+        return "ANTHROPIC_BASE_URL is set: unset it for this run (the drafts go to api.anthropic.com only)"
+    if not env.get("ANTHROPIC_API_KEY", "").strip():
+        return "ANTHROPIC_API_KEY is not set: export the API key in the shell that runs this"
+    if env.get("ANTHROPIC_AUTH_TOKEN", "").strip():
+        return "ANTHROPIC_AUTH_TOKEN is set beside the key: unset it for this run, so only the API key is used"
+    return ""
+
+
+def skill_refusal(skill):
+    """Why the skill file may not be the system prompt ('' when it may): it must be a
+    tracked file of this repo, unmodified, and not under tools/private/."""
+    rel = os.path.relpath(os.path.abspath(skill), ROOT).replace(os.sep, "/")
+    if rel.startswith("..") or rel.startswith("tools/private/"):
+        return "the skill must be a file of this repo, outside tools/private/"
+    if not _git(["ls-files", "--", rel]).strip():
+        return "the skill %s is not tracked" % rel
+    if tree_clean([rel]):
+        return "the skill %s has uncommitted changes" % rel
+    return ""
 
 
 def callers_of(table):
@@ -211,6 +239,7 @@ def run(client, model, lang, lang_name, table, system_text, cap, limit=0, out=pr
     spent = 0.0
     sent = 0
     stopped = ""
+    unbilled_worst = 0.0
     system = [{"type": "text", "text": system_text, "cache_control": {"type": "ephemeral"}}]
     for keys in groups:
         heads = {k.split(".", 1)[0] for k in keys}
@@ -223,6 +252,9 @@ def run(client, model, lang, lang_name, table, system_text, cap, limit=0, out=pr
             response = client.messages.create(model=model, max_tokens=MAX_TOKENS, system=system,
                                               messages=[{"role": "user", "content": user_text}])
         except Exception as err:  # the SDK's typed errors; classified, never printed raw
+            # A failed request may still have been billed (a timeout after the model ran):
+            # its worst case is owed until the console says otherwise.
+            unbilled_worst = worst_case_usd(model, system_text, user_text)
             why = stop_reason_of_error(err)
             if why == "billing":
                 stopped = "billing error (credit balance or payment): stopped, nothing more sent"
@@ -257,6 +289,7 @@ def run(client, model, lang, lang_name, table, system_text, cap, limit=0, out=pr
     work["_rejected"] = rejected
     work["_meta"] = {"model": model, "table": table, "requests": sent, "groups": len(groups),
                      "drafted": len(drafts), "rejected": len(rejected), "cost_usd": round(spent, 4),
+                     "failed_request_worst_usd": round(unbilled_worst, 4),
                      "cap_usd": cap, "stopped": stopped,
                      "when": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")}
     return work
@@ -379,6 +412,21 @@ def selftest():
         fake = Fake([answer_all() for _ in groups])
         work = run(fake, "claude-opus-5-5", "fr", "French", "glossary", "SKILL", 0.01, out=quiet, rows=rows)
         check("tiny cap sends nothing", fake.calls, 0)
+    check("skill outside the repo refused", skill_refusal(os.path.join(os.path.dirname(ROOT), "x.md")) != "", True)
+    check("private skill refused", skill_refusal(os.path.join(ROOT, "tools", "private", "x.md")) != "", True)
+    check("tracked skill accepted", skill_refusal(os.path.join(ROOT, ".gitattributes")), "")
+    check("base url refused", credential_refusal({"ANTHROPIC_BASE_URL": "http://localhost:20128", "ANTHROPIC_API_KEY": "k"}) != "", True)
+    check("no key refused", credential_refusal({"ANTHROPIC_AUTH_TOKEN": "t"}) != "", True)
+    check("token beside key refused", credential_refusal({"ANTHROPIC_API_KEY": "k", "ANTHROPIC_AUTH_TOKEN": "t"}) != "", True)
+    check("key alone accepted", credential_refusal({"ANTHROPIC_API_KEY": "k"}), "")
+    secret = "sk-ant-api03-SELFTEST-NOT-A-KEY"
+    check("a refusal never prints a value", any(secret in credential_refusal(e) for e in (
+        {"ANTHROPIC_BASE_URL": secret, "ANTHROPIC_API_KEY": secret}, {"ANTHROPIC_AUTH_TOKEN": secret},
+        {"ANTHROPIC_API_KEY": secret, "ANTHROPIC_AUTH_TOKEN": secret})), False)
+    # A failed request leaves its worst case owed.
+    fake = Fake([Err(500, "api_error", "timeout")])
+    work = run(fake, "claude-opus-5-5", "fr", "French", "glossary", "SKILL", HARD_CAP_USD, out=lambda *_a: None, rows=rows)
+    check("failed request owed", work["_meta"]["failed_request_worst_usd"] > 0, True)
     # Arguments.
     check("refuses an out path in data/", main(["--table", "glossary", "--skill", __file__,
                                                 "--out", os.path.join(ROOT, "data", "x.json"), "--dry-run"]), 2)
@@ -431,19 +479,34 @@ def main(argv):
         worst = sum(worst_case_usd(model, system_text, json.dumps({k: rows[k]["en"] for k in g}, ensure_ascii=False)) for g in groups)
         print("dry run: nothing sent. Worst case of every request, uncached: %.2f USD" % worst)
         return 0
-    dirty = data_tree_clean()
+    sources = ["data"] + (["src/ui"] if table == "ui" else [])
+    dirty = tree_clean(sources)
     if dirty:
-        print("refused: data/ has untracked or modified files (only tracked text may go out): %s" % dirty)
+        print("refused: %s has untracked or modified files (only tracked text may go out): %s" % (" and ".join(sources), dirty))
+        return 2
+    why = skill_refusal(skill) or credential_refusal(os.environ)
+    if why:
+        print("refused: " + why)
         return 2
     import anthropic  # only for a real run: the selftest and a dry run need no SDK
 
-    client = anthropic.Anthropic(max_retries=2)
+    # No SDK retries: a retried request can be billed twice with neither copy's usage in
+    # hand, which would make the cap a guess. Any error ends the run instead.
+    client = anthropic.Anthropic(max_retries=0)
+    if client.base_url.host != "api.anthropic.com":
+        print("refused: the client would call %s, not api.anthropic.com" % client.base_url.host)
+        return 2
+    print("calling %s" % client.base_url.host)
     work = run(client, model, lang, lang_name, table, system_text, cap, limit)
     os.makedirs(os.path.dirname(out_abs) or ".", exist_ok=True)
     with open(out_abs, "w", encoding="utf-8", newline="\n") as f:
         f.write(json.dumps(work, ensure_ascii=False, indent=2) + "\n")
     meta = work["_meta"]
-    print("drafted %d, rejected %d, %d requests, cost %.4f USD -> %s" % (meta["drafted"], meta["rejected"], meta["requests"], meta["cost_usd"], out_abs))
+    cost = "%.4f USD" % meta["cost_usd"]
+    if meta["failed_request_worst_usd"]:
+        cost = "at least %.4f USD, at most %.4f USD (the failed request may have been billed)" % (
+            meta["cost_usd"], meta["cost_usd"] + meta["failed_request_worst_usd"])
+    print("drafted %d, rejected %d, %d requests, cost %s -> %s" % (meta["drafted"], meta["rejected"], meta["requests"], cost, out_abs))
     if meta["stopped"]:
         print("STOPPED: " + meta["stopped"])
         return 1

@@ -264,14 +264,20 @@ python tools/i18n_extract.py --apply reports/translate/glossary.json   # after r
   - before a request, its worst case (generous input plus 16 000 output tokens) must still
     fit under the cap, default and maximum 5 USD, or the run stops and sends nothing more;
   - a billing error, such as "credit balance is too low", or an authentication error stops
-    it at once, in one line.
+    it at once, in one line;
+  - the SDK never retries (a retried request could be billed twice), so any error ends the
+    run, and a failed request's worst case is reported as possibly owed.
 
   The cost is printed and kept in the worklist's `_meta`.
 - **Safety:**
   - the key comes from the environment through the SDK, and the script never reads or
-    prints it;
-  - a real run refuses a `data/` tree with untracked or modified files, so only reviewed,
-    tracked text goes out;
+    prints it. A real run needs `ANTHROPIC_API_KEY`, and refuses to start if
+    `ANTHROPIC_BASE_URL` (a local router) or `ANTHROPIC_AUTH_TOKEN` (the app's own
+    credential) is set beside it. The text goes to `api.anthropic.com` only, under the API
+    account's key, and the run prints the host it calls;
+  - the skill must be a tracked, unmodified file of the repo, outside `tools/private/`;
+  - a real run refuses a `data/` tree (and `src/ui/` for the `ui` table) with untracked or
+    modified files, so only reviewed, tracked text goes out;
   - `--dry-run` sends nothing and prints the worst-case cost.
 - `--selftest` runs every rule against a fake client (no network, no key, no SDK); CI runs it.
 
