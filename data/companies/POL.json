@@ -681,7 +681,7 @@
       "name": "Zamojski Logistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23634,
       "city": "PL42_szczecin",
       "tier": "body"
     },
@@ -735,7 +735,7 @@
       "name": "Ejsmont Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23153,
       "city": "PL91_warsaw",
       "tier": "body"
     },
@@ -744,7 +744,7 @@
       "name": "Ankwicz Logistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23179,
       "city": "PL91_warsaw",
       "tier": "body"
     },
@@ -798,7 +798,7 @@
       "name": "Wiśniewski Ubezpieczenia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24527,
       "city": "PL41_poznan",
       "tier": "body"
     },
@@ -879,7 +879,7 @@
       "name": "Lipiński Logistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24210,
       "city": "PL51_wroclaw",
       "tier": "body"
     },
@@ -897,7 +897,7 @@
       "name": "Tarnowski Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23444,
       "city": "PL91_warsaw",
       "tier": "body"
     },
@@ -924,7 +924,7 @@
       "name": "Jagniątkowski Logistyka Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24655,
       "city": "PL21_krakow",
       "tier": "body"
     },
@@ -987,7 +987,7 @@
       "name": "Dunin Ubezpieczenia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24083,
       "city": "PL91_warsaw",
       "tier": "body"
     },
@@ -996,7 +996,7 @@
       "name": "Skorobohaty Usługi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23442,
       "city": "PL91_ursynow",
       "tier": "body"
     },
@@ -1023,7 +1023,7 @@
       "name": "Ankwicz Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24408,
       "city": "PL91_warsaw",
       "tier": "body"
     },
@@ -1041,7 +1041,7 @@
       "name": "Piotrowski Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24062,
       "city": "PL51_walbrzych",
       "tier": "body"
     },
@@ -1059,7 +1059,7 @@
       "name": "Chodakowski Logistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24744,
       "city": "PL63_gdansk",
       "tier": "body"
     },
@@ -1077,7 +1077,7 @@
       "name": "Biliński Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23247,
       "city": "PL91_warsaw",
       "tier": "body"
     },
@@ -1140,7 +1140,7 @@
       "name": "Wiśniewski Usługi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24083,
       "city": "PL22_zory",
       "tier": "body"
     }

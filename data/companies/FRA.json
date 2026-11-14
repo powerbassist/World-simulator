@@ -171,7 +171,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2522,
-      "city": "FRK_villeurbanne",
+      "city": "FRI_limoges",
       "tier": "body"
     },
     {
@@ -180,7 +180,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2192,
-      "city": "FRB_orleans",
+      "city": "FRF_metz",
       "tier": "body"
     },
     {
@@ -207,7 +207,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2250,
-      "city": "FR1_champigny_sur_marne",
+      "city": "FR1_aulnay_sous_bois",
       "tier": "body"
     },
     {
@@ -225,7 +225,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2403,
-      "city": "FRD_le_havre",
+      "city": "FRF_reims",
       "tier": "body"
     },
     {
@@ -243,7 +243,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2216,
-      "city": "FRK_villeurbanne",
+      "city": "FRI_limoges",
       "tier": "body"
     },
     {
@@ -261,7 +261,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2244,
-      "city": "FR1_drancy",
+      "city": "FRH_quimper",
       "tier": "body"
     },
     {
@@ -297,7 +297,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2411,
-      "city": "FR1_courbevoie",
+      "city": "FRI_poitiers",
       "tier": "body"
     },
     {
@@ -306,7 +306,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2223,
-      "city": "FRF_metz",
+      "city": "FRC_besancon",
       "tier": "body"
     },
     {
@@ -315,7 +315,7 @@
       "sector": "agriculture",
       "share": 0.0187,
       "headcount": 1529,
-      "city": "FRL_la_seyne_sur_mer",
+      "city": "FRE_villeneuve_d_ascq",
       "tier": "body"
     },
     {
@@ -333,7 +333,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2652,
-      "city": "FRC_dijon",
+      "city": "FRG_angers",
       "tier": "body"
     },
     {
@@ -378,7 +378,7 @@
       "sector": "industry",
       "share": 0.0174,
       "headcount": 11408,
-      "city": "FR1_montreuil",
+      "city": "FRF_mulhouse",
       "tier": "body"
     },
     {
@@ -396,7 +396,7 @@
       "sector": "industry",
       "share": 0.024,
       "headcount": 16200,
-      "city": "FRJ_beziers",
+      "city": "FRE_calais",
       "tier": "body"
     },
     {
@@ -405,7 +405,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20453,
-      "city": "FRF_mulhouse",
+      "city": "FRD_rouen",
       "tier": "body"
     },
     {
@@ -423,7 +423,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20647,
-      "city": "FRK_grenoble",
+      "city": "FRC_dijon",
       "tier": "body"
     },
     {
@@ -432,7 +432,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21416,
-      "city": "FRB_orleans",
+      "city": "FRF_metz",
       "tier": "body"
     },
     {
@@ -441,7 +441,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21899,
-      "city": "FR1_gare",
+      "city": "FR1_rueil_malmaison",
       "tier": "body"
     },
     {
@@ -468,7 +468,7 @@
       "sector": "industry",
       "share": 0.0263,
       "headcount": 18392,
-      "city": "FR1_rueil_malmaison",
+      "city": "FRI_la_rochelle",
       "tier": "body"
     },
     {
@@ -495,7 +495,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 21050,
-      "city": "FR1_cergy_pontoise",
+      "city": "FRD_le_havre",
       "tier": "body"
     },
     {
@@ -513,7 +513,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18985,
-      "city": "FRD_caen",
+      "city": "FRJ_perpignan",
       "tier": "body"
     },
     {
@@ -567,7 +567,7 @@
       "sector": "industry",
       "share": 0.02,
       "headcount": 12440,
-      "city": "FRG_angers",
+      "city": "FRL_toulon",
       "tier": "body"
     },
     {
@@ -594,7 +594,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 22052,
-      "city": "FRB_bourges",
+      "city": "FRI_merignac",
       "tier": "body"
     },
     {
@@ -621,7 +621,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18287,
-      "city": "FRE_lille",
+      "city": "FRJ_montpellier",
       "tier": "body"
     },
     {
@@ -630,7 +630,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23150,
-      "city": "FRE_dunkirk",
+      "city": "FR1_nanterre",
       "tier": "body"
     },
     {
@@ -648,7 +648,7 @@
       "sector": "services",
       "share": 0.0057,
       "headcount": 8166,
-      "city": "FRF_mulhouse",
+      "city": "FRD_rouen",
       "tier": "body"
     },
     {
@@ -665,7 +665,7 @@
       "name": "Zuber Logistique",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23964,
       "city": "FR1_paris",
       "tier": "body"
     },
@@ -674,8 +674,8 @@
       "name": "Chauviré Assurances",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "FR1_argenteuil",
+      "headcount": 23892,
+      "city": "FRF_nancy",
       "tier": "body"
     },
     {
@@ -683,7 +683,7 @@
       "name": "Fermont Groupe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22919,
       "city": "FRC_dijon",
       "tier": "body"
     },
@@ -693,7 +693,7 @@
       "sector": "services",
       "share": 0.0125,
       "headcount": 18309,
-      "city": "FRK_lyon",
+      "city": "FRL_marseille",
       "tier": "body"
     },
     {
@@ -702,7 +702,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23280,
-      "city": "FR1_saint_maur_des_fosses",
+      "city": "FRL_antibes",
       "tier": "body"
     },
     {
@@ -747,7 +747,7 @@
       "sector": "services",
       "share": 0.006,
       "headcount": 9634,
-      "city": "FR1_aulnay_sous_bois",
+      "city": "FR1_colombes",
       "tier": "body"
     },
     {
@@ -773,8 +773,8 @@
       "name": "Turcy Assurances",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "FRF_colmar",
+      "headcount": 22786,
+      "city": "FRB_bourges",
       "tier": "body"
     },
     {
@@ -782,7 +782,7 @@
       "name": "Morlaix Assurances",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23537,
       "city": "FRL_marseille",
       "tier": "body"
     },
@@ -801,7 +801,7 @@
       "sector": "services",
       "share": 0.0058,
       "headcount": 8950,
-      "city": "FR1_cergy_pontoise",
+      "city": "FRD_le_havre",
       "tier": "body"
     },
     {
@@ -809,8 +809,8 @@
       "name": "Lantier Services",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "FRE_calais",
+      "headcount": 23236,
+      "city": "FR1_saint_maur_des_fosses",
       "tier": "body"
     },
     {
@@ -827,7 +827,7 @@
       "name": "Forgues Services",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23515,
       "city": "FR1_paris",
       "tier": "body"
     },
@@ -836,7 +836,7 @@
       "name": "Poncharal Assurances",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23867,
       "city": "FRK_lyon",
       "tier": "body"
     },
@@ -854,7 +854,7 @@
       "name": "Saint-Léger Groupe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23732,
       "city": "FRJ_toulouse",
       "tier": "body"
     },
@@ -864,7 +864,7 @@
       "sector": "services",
       "share": 0.0142,
       "headcount": 22382,
-      "city": "FR1_courbevoie",
+      "city": "FRI_poitiers",
       "tier": "body"
     },
     {
@@ -872,8 +872,8 @@
       "name": "Beaufour Services",
       "sector": "services",
       "share": 0.0159,
-      "headcount": 25000,
-      "city": "FRL_aix_en_provence",
+      "headcount": 24718,
+      "city": "FRK_clermont_ferrand",
       "tier": "body"
     },
     {
@@ -881,8 +881,8 @@
       "name": "Nogaret Assurances",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "FR1_montreuil",
+      "headcount": 22739,
+      "city": "FRD_rouen",
       "tier": "body"
     },
     {
@@ -890,8 +890,8 @@
       "name": "Laroussi Logistique",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "FRK_clermont_ferrand",
+      "headcount": 23810,
+      "city": "FRJ_nimes",
       "tier": "body"
     },
     {
@@ -909,7 +909,7 @@
       "sector": "services",
       "share": 0.0101,
       "headcount": 16188,
-      "city": "FR1_cergy_pontoise",
+      "city": "FRD_le_havre",
       "tier": "body"
     },
     {
@@ -918,7 +918,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24551,
-      "city": "FRL_avignon",
+      "city": "FR1_saint_denis",
       "tier": "body"
     },
     {
@@ -927,7 +927,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24784,
-      "city": "FR1_saint_denis",
+      "city": "FRE_roubaix",
       "tier": "body"
     },
     {
@@ -945,7 +945,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 24181,
-      "city": "FRB_tours",
+      "city": "FRE_amiens",
       "tier": "body"
     },
     {
@@ -962,8 +962,8 @@
       "name": "Larivière Logistique",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "FRI_merignac",
+      "headcount": 22614,
+      "city": "FR1_aubervilliers",
       "tier": "body"
     },
     {
@@ -972,7 +972,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23427,
-      "city": "FRG_angers",
+      "city": "FRL_toulon",
       "tier": "body"
     },
     {
@@ -980,7 +980,7 @@
       "name": "Grandjouan Assurances",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24454,
       "city": "FR1_paris",
       "tier": "body"
     },
@@ -990,7 +990,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22798,
-      "city": "FRL_aix_en_provence",
+      "city": "FRK_clermont_ferrand",
       "tier": "body"
     },
     {
@@ -998,7 +998,7 @@
       "name": "Zuber Transports",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24568,
       "city": "FR1_paris",
       "tier": "body"
     },
@@ -1026,7 +1026,7 @@
       "sector": "services",
       "share": 0.014,
       "headcount": 22508,
-      "city": "FRB_tours",
+      "city": "FRE_amiens",
       "tier": "body"
     },
     {
@@ -1034,7 +1034,7 @@
       "name": "Combret Logistique",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24358,
       "city": "FRE_villeneuve_d_ascq",
       "tier": "body"
     },
@@ -1043,7 +1043,7 @@
       "name": "Poncharal Distribution",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24052,
       "city": "FR1_cergy_pontoise",
       "tier": "body"
     },
@@ -1053,7 +1053,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 22413,
-      "city": "FR1_saint_denis",
+      "city": "FRE_roubaix",
       "tier": "body"
     },
     {
@@ -1061,7 +1061,7 @@
       "name": "Fermont Logistique",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23542,
       "city": "FRG_angers",
       "tier": "body"
     },
@@ -1097,7 +1097,7 @@
       "name": "Périer Assurances",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22830,
       "city": "FRJ_toulouse",
       "tier": "body"
     },
@@ -1133,7 +1133,7 @@
       "name": "Sauvageot Transports",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24380,
       "city": "FR1_paris",
       "tier": "body"
     }

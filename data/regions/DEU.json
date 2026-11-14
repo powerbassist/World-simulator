@@ -842,12 +842,6 @@
           "lonlat": [7.1497, 50.809]
         },
         {
-          "id": "DEA_wattenscheid",
-          "name": "Wattenscheid",
-          "share": 0.004126,
-          "lonlat": [7.1425, 51.4806]
-        },
-        {
           "id": "DEA_bocholt",
           "name": "Bocholt",
           "share": 0.004125,

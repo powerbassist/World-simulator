@@ -508,7 +508,7 @@
       "name": "Cerović Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23390,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -526,7 +526,7 @@
       "name": "Gazivoda Industrija Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24826,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -544,7 +544,7 @@
       "name": "Đurišić Energija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23125,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -562,7 +562,7 @@
       "name": "Perović Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24894,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -607,7 +607,7 @@
       "name": "Perović Energija Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23261,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -742,7 +742,7 @@
       "name": "Šćepanović Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23088,
       "city": "ME00_podgorica",
       "tier": "body"
     },
@@ -787,7 +787,7 @@
       "name": "Radulović Grupa Energija",
       "sector": "services",
       "share": 0.0163,
-      "headcount": 25000,
+      "headcount": 23467,
       "city": "ME00_niksic",
       "tier": "body"
     },
@@ -814,7 +814,7 @@
       "name": "Vučinić Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23498,
       "city": "ME00_podgorica",
       "tier": "body"
     },

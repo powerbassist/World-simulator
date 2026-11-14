@@ -202,7 +202,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2577,
-      "city": "DEA_arnsberg",
+      "city": "DEA_gladbeck",
       "tier": "body"
     },
     {
@@ -292,7 +292,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2347,
-      "city": "DE1_tuebingen",
+      "city": "DE1_esslingen",
       "tier": "body"
     },
     {
@@ -337,7 +337,7 @@
       "sector": "agriculture",
       "share": 0.026,
       "headcount": 1981,
-      "city": "DE2_erlangen",
+      "city": "DE9_hildesheim",
       "tier": "body"
     },
     {
@@ -373,7 +373,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2594,
-      "city": "DEB_trier",
+      "city": "DE2_erlangen",
       "tier": "body"
     },
     {
@@ -526,7 +526,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20332,
-      "city": "DE9_hildesheim",
+      "city": "DEA_moers",
       "tier": "body"
     },
     {
@@ -544,7 +544,7 @@
       "sector": "industry",
       "share": 0.0282,
       "headcount": 18087,
-      "city": "DE7_giessen",
+      "city": "DEA_luenen",
       "tier": "body"
     },
     {
@@ -553,7 +553,7 @@
       "sector": "industry",
       "share": 0.0214,
       "headcount": 14689,
-      "city": "DE9_oldenburg",
+      "city": "DEA_leverkusen",
       "tier": "body"
     },
     {
@@ -634,7 +634,7 @@
       "sector": "industry",
       "share": 0.0164,
       "headcount": 11132,
-      "city": "DEA_iserlohn",
+      "city": "DE1_tuebingen",
       "tier": "body"
     },
     {
@@ -678,7 +678,7 @@
       "name": "Rolfes AG",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24385,
       "city": "DEA_ratingen",
       "tier": "body"
     },
@@ -696,7 +696,7 @@
       "name": "Iserlohe Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23009,
       "city": "DEA_minden",
       "tier": "body"
     },
@@ -706,7 +706,7 @@
       "sector": "services",
       "share": 0.0077,
       "headcount": 12110,
-      "city": "DEA_bocholt",
+      "city": "DEA_detmold",
       "tier": "body"
     },
     {
@@ -750,7 +750,7 @@
       "name": "Pütz Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24011,
       "city": "DE2_munich",
       "tier": "body"
     },
@@ -777,7 +777,7 @@
       "name": "Tschirner Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22665,
       "city": "DEB_mainz",
       "tier": "body"
     },
@@ -804,7 +804,7 @@
       "name": "Suhren AG",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24113,
       "city": "DE1_pforzheim",
       "tier": "body"
     },
@@ -823,7 +823,7 @@
       "sector": "services",
       "share": 0.0095,
       "headcount": 13289,
-      "city": "DEA_dorsten",
+      "city": "DEF_neumuenster",
       "tier": "body"
     },
     {
@@ -831,7 +831,7 @@
       "name": "Isenberg Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23794,
       "city": "DE3_berlin",
       "tier": "body"
     },
@@ -849,7 +849,7 @@
       "name": "Ahrendts Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22682,
       "city": "DEA_herford",
       "tier": "body"
     },
@@ -868,7 +868,7 @@
       "sector": "services",
       "share": 0.0144,
       "headcount": 23537,
-      "city": "DE8_schwerin",
+      "city": "DEB_kaiserslautern",
       "tier": "body"
     },
     {
@@ -885,7 +885,7 @@
       "name": "Suhren Transporte",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24872,
       "city": "DE3_berlin",
       "tier": "body"
     },
@@ -903,7 +903,7 @@
       "name": "Quast Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23430,
       "city": "DE6_hamburg",
       "tier": "body"
     },
@@ -912,7 +912,7 @@
       "name": "Feuerbach Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23189,
       "city": "DED_leipzig",
       "tier": "body"
     },
@@ -976,7 +976,7 @@
       "sector": "services",
       "share": 0.0066,
       "headcount": 9555,
-      "city": "DE1_heilbronn",
+      "city": "DE9_goettingen",
       "tier": "body"
     },
     {
@@ -984,7 +984,7 @@
       "name": "Ehlers Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24579,
       "city": "DE3_berlin",
       "tier": "body"
     },
@@ -993,7 +993,7 @@
       "name": "Schwarzkopf Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22637,
       "city": "DE3_berlin",
       "tier": "body"
     },
@@ -1002,7 +1002,7 @@
       "name": "Isenberg AG",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23652,
       "city": "DE7_marburg_an_der_lahn",
       "tier": "body"
     },
@@ -1020,7 +1020,7 @@
       "name": "Busemann Transporte",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24534,
       "city": "DE1_karlsruhe",
       "tier": "body"
     },
@@ -1048,7 +1048,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23725,
-      "city": "DEA_iserlohn",
+      "city": "DE1_tuebingen",
       "tier": "body"
     },
     {
@@ -1056,8 +1056,8 @@
       "name": "Brinkmann Logistik Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "DE2_regensburg",
+      "headcount": 23045,
+      "city": "DEA_neuss",
       "tier": "body"
     },
     {
@@ -1065,7 +1065,7 @@
       "name": "Grotehusmann Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22921,
       "city": "DEA_essen",
       "tier": "body"
     },
@@ -1074,7 +1074,7 @@
       "name": "Reher AG",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23393,
       "city": "DE3_berlin",
       "tier": "body"
     },
@@ -1083,7 +1083,7 @@
       "name": "Claussen Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23453,
       "city": "DEA_koeln",
       "tier": "body"
     },
@@ -1092,8 +1092,8 @@
       "name": "Mertens Versicherung Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "DE7_kassel",
+      "headcount": 24272,
+      "city": "DE8_rostock",
       "tier": "body"
     },
     {
@@ -1101,7 +1101,7 @@
       "name": "Löbbert Transporte",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24022,
       "city": "DE9_celle",
       "tier": "body"
     },
@@ -1119,7 +1119,7 @@
       "name": "Nienhaus Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24925,
       "city": "DE3_berlin",
       "tier": "body"
     },
@@ -1128,7 +1128,7 @@
       "name": "Vollbrecht Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23638,
       "city": "DEA_koeln",
       "tier": "body"
     },
@@ -1137,7 +1137,7 @@
       "name": "Nolte Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24301,
       "city": "DEF_kiel",
       "tier": "body"
     },
@@ -1146,7 +1146,7 @@
       "name": "Hülsbusch Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24575,
       "city": "DE2_nuremberg",
       "tier": "body"
     },
@@ -1156,7 +1156,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23510,
-      "city": "DE5_bremen",
+      "city": "DED_dresden",
       "tier": "body"
     },
     {

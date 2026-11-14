@@ -517,7 +517,7 @@
       "name": "Frashëri Transporti",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23120,
       "city": "AL03_vlore",
       "tier": "body"
     },
@@ -544,7 +544,7 @@
       "name": "Cani Industria Bujqësia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23409,
       "city": "AL02_tirana",
       "tier": "body"
     },
@@ -562,7 +562,7 @@
       "name": "Qosja Tregtia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23136,
       "city": "AL02_tirana",
       "tier": "body"
     },
@@ -598,7 +598,7 @@
       "name": "Lika Ndërtimi Grupi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23841,
       "city": "AL02_tirana",
       "tier": "body"
     },
@@ -616,7 +616,7 @@
       "name": "Marku Energjia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23192,
       "city": "AL02_elbasan",
       "tier": "body"
     },
@@ -679,7 +679,7 @@
       "name": "Kraja Energjia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23354,
       "city": "AL01_durres",
       "tier": "body"
     },
@@ -724,7 +724,7 @@
       "name": "Frashëri Bujqësia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24349,
       "city": "AL02_elbasan",
       "tier": "body"
     },
@@ -742,7 +742,7 @@
       "name": "Avdia Industria",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24197,
       "city": "AL01_shkoder",
       "tier": "body"
     },
@@ -760,7 +760,7 @@
       "name": "Elezi Grupi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24030,
       "city": "AL02_tirana",
       "tier": "body"
     },
@@ -787,7 +787,7 @@
       "name": "Tafa Industria Materialet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23265,
       "city": "AL01_durres",
       "tier": "body"
     },
@@ -805,7 +805,7 @@
       "name": "Spahiu Bujqësia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24739,
       "city": "AL02_tirana",
       "tier": "body"
     },
@@ -823,7 +823,7 @@
       "name": "Xhafa Bujqësia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24978,
       "city": "AL03_lushnje",
       "tier": "body"
     },
@@ -841,7 +841,7 @@
       "name": "Tafa Grupi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23668,
       "city": "AL02_tirana",
       "tier": "body"
     },
@@ -868,7 +868,7 @@
       "name": "Bardhi Logjistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24628,
       "city": "AL02_tirana",
       "tier": "body"
     },
@@ -886,7 +886,7 @@
       "name": "Gjoka Grupi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23941,
       "city": "AL02_tirana",
       "tier": "body"
     }

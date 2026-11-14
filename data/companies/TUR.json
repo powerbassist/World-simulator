@@ -505,7 +505,7 @@
       "name": "Polat Sanayi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24014,
       "city": "TR4_bursa",
       "tier": "body"
     },
@@ -523,7 +523,7 @@
       "name": "Işık Enerji",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23495,
       "city": "TRC_kiziltepe",
       "tier": "body"
     },
@@ -532,7 +532,7 @@
       "name": "Sarı Taşımacılık",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24828,
       "city": "TR3_oedemis",
       "tier": "body"
     },
@@ -595,7 +595,7 @@
       "name": "Uçar İnşaat",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22711,
       "city": "TR1_istanbul",
       "tier": "body"
     },
@@ -604,7 +604,7 @@
       "name": "Polat Enerji",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23388,
       "city": "TRC_gaziantep",
       "tier": "body"
     },
@@ -640,7 +640,7 @@
       "name": "Aktaş Sanayi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23573,
       "city": "TR3_turgutlu",
       "tier": "body"
     },
@@ -649,7 +649,7 @@
       "name": "Taş Taşımacılık",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24219,
       "city": "TR1_istanbul",
       "tier": "body"
     },
@@ -685,7 +685,7 @@
       "name": "Taş İnşaat Taşımacılık",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24486,
       "city": "TR1_istanbul",
       "tier": "body"
     },
@@ -694,7 +694,7 @@
       "name": "Güneş Grup",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24575,
       "city": "TR1_istanbul",
       "tier": "body"
     },
@@ -703,7 +703,7 @@
       "name": "Erdem Malzeme",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23778,
       "city": "TR3_izmir",
       "tier": "body"
     },
@@ -721,7 +721,7 @@
       "name": "Polat Lojistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23500,
       "city": "TR5_ankara",
       "tier": "body"
     },
@@ -748,7 +748,7 @@
       "name": "Dinçer Sigorta",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24374,
       "city": "TR5_ankara",
       "tier": "body"
     },
@@ -757,7 +757,7 @@
       "name": "Sarı Enerji",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24420,
       "city": "TR5_cankaya",
       "tier": "body"
     },
@@ -766,7 +766,7 @@
       "name": "Çakır Taşımacılık",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23269,
       "city": "TR4_bursa",
       "tier": "body"
     },
@@ -784,7 +784,7 @@
       "name": "Dinçer Lojistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24961,
       "city": "TR3_afyonkarahisar",
       "tier": "body"
     },
@@ -793,7 +793,7 @@
       "name": "Sarı Sanayi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24006,
       "city": "TR1_istanbul",
       "tier": "body"
     },
@@ -811,7 +811,7 @@
       "name": "Uçar Enerji Taşımacılık",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23091,
       "city": "TR5_cankaya",
       "tier": "body"
     },
@@ -829,7 +829,7 @@
       "name": "Coşkun Lojistik Taşımacılık",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24645,
       "city": "TR6_adana",
       "tier": "body"
     }

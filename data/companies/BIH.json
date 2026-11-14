@@ -471,7 +471,7 @@
       "name": "Pašić Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24996,
       "city": "BA01_tuzla",
       "tier": "body"
     },
@@ -480,7 +480,7 @@
       "name": "Pašić Energija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24051,
       "city": "BA01_sarajevo",
       "tier": "body"
     },
@@ -525,7 +525,7 @@
       "name": "Tufek Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24485,
       "city": "BA01_tuzla",
       "tier": "body"
     },
@@ -561,7 +561,7 @@
       "name": "Softić Trgovina Energija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22716,
       "city": "BA02_banja_luka",
       "tier": "body"
     },
@@ -570,7 +570,7 @@
       "name": "Nuhić Energija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24212,
       "city": "BA02_banja_luka",
       "tier": "body"
     },
@@ -624,7 +624,7 @@
       "name": "Mujić Poljoprivreda",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24385,
       "city": "BA01_sarajevo",
       "tier": "body"
     },
@@ -651,7 +651,7 @@
       "name": "Pašić Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23979,
       "city": "BA01_sarajevo",
       "tier": "body"
     },
@@ -660,7 +660,7 @@
       "name": "Zukić Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24320,
       "city": "BA02_banja_luka",
       "tier": "body"
     },
@@ -687,7 +687,7 @@
       "name": "Mujić Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24606,
       "city": "BA01_tuzla",
       "tier": "body"
     },
@@ -759,7 +759,7 @@
       "name": "Halilović Osiguranje Poljoprivreda",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23704,
       "city": "BA01_mostar",
       "tier": "body"
     },
@@ -768,7 +768,7 @@
       "name": "Bešlagić Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24845,
       "city": "BA02_banja_luka",
       "tier": "body"
     },
@@ -795,7 +795,7 @@
       "name": "Fazlić Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24619,
       "city": "BA01_mostar",
       "tier": "body"
     },
@@ -813,7 +813,7 @@
       "name": "Ljubić Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24976,
       "city": "BA02_banja_luka",
       "tier": "body"
     },

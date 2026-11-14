@@ -488,7 +488,7 @@
       "name": "Prem Landwirtschaft",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23745,
       "city": "AT33_innsbruck",
       "tier": "body"
     },
@@ -497,7 +497,7 @@
       "name": "Tragusta Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23247,
       "city": "AT22_graz",
       "tier": "body"
     },
@@ -524,7 +524,7 @@
       "name": "Moser Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24922,
       "city": "AT13_vienna",
       "tier": "body"
     },
@@ -533,7 +533,7 @@
       "name": "Loidl Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23052,
       "city": "AT34_dornbirn",
       "tier": "body"
     },
@@ -542,7 +542,7 @@
       "name": "Gstrein Energie",
       "sector": "services",
       "share": 0.0165,
-      "headcount": 25000,
+      "headcount": 24396,
       "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
@@ -551,7 +551,7 @@
       "name": "Aschauer Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23230,
       "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
@@ -614,7 +614,7 @@
       "name": "Schwarzenberger Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23047,
       "city": "AT34_dornbirn",
       "tier": "body"
     },
@@ -641,7 +641,7 @@
       "name": "Gruber Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23039,
       "city": "AT11_eisenzicken",
       "tier": "body"
     },
@@ -650,7 +650,7 @@
       "name": "Murlasits Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23830,
       "city": "AT13_vienna",
       "tier": "body"
     },
@@ -686,7 +686,7 @@
       "name": "Wurz Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24598,
       "city": "AT31_linz",
       "tier": "body"
     },
@@ -695,7 +695,7 @@
       "name": "Brunner Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23149,
       "city": "AT13_vienna",
       "tier": "body"
     },
@@ -704,7 +704,7 @@
       "name": "Doppler Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24864,
       "city": "AT11_eisenzicken",
       "tier": "body"
     },
@@ -731,7 +731,7 @@
       "name": "Lindorfer Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23466,
       "city": "AT31_linz",
       "tier": "body"
     },
@@ -740,7 +740,7 @@
       "name": "Ebner Landwirtschaft Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22857,
       "city": "AT32_salzburg",
       "tier": "body"
     },
@@ -749,7 +749,7 @@
       "name": "Loidl Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24363,
       "city": "AT22_graz",
       "tier": "body"
     },
@@ -776,7 +776,7 @@
       "name": "Kalcher Bau",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24800,
       "city": "AT13_vienna",
       "tier": "body"
     },
@@ -794,7 +794,7 @@
       "name": "Felbermair Industrie",
       "sector": "services",
       "share": 0.0153,
-      "headcount": 25000,
+      "headcount": 24788,
       "city": "AT13_vienna",
       "tier": "body"
     },
@@ -803,7 +803,7 @@
       "name": "Dienstl Landwirtschaft",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24689,
       "city": "AT34_dornbirn",
       "tier": "body"
     },
@@ -821,7 +821,7 @@
       "name": "Zauner Werkstoffe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24349,
       "city": "AT31_linz",
       "tier": "body"
     },
@@ -830,7 +830,7 @@
       "name": "Birngruber Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23989,
       "city": "AT34_dornbirn",
       "tier": "body"
     },
@@ -866,7 +866,7 @@
       "name": "Reiterer Handel Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24395,
       "city": "AT22_graz",
       "tier": "body"
     },

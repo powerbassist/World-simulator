@@ -507,6 +507,18 @@ def _site_majors(rng: random.Random, majors: list, cities: list) -> None:
         m["city"] = rng.choice(lead)
 
 
+def body_headcount(jobs: int) -> int:
+    """The body's headcount band, with an overshoot of the cap REFLECTED below it
+    rather than clamped onto it. The services share ceiling sits at 0.995 of the cap
+    and the +-10 % jitter pushes about half the firms near it past the cap, so a
+    clamp printed the top eighteen of FRA's services body at 25 000 jobs each
+    (Interface, screen 5; 611 firms across the roster). Reflection spreads them over
+    22 600-25 000 and takes no draw -- the 29 frozen nations share one stream."""
+    if jobs > HEADCOUNT_MAX:
+        jobs = 2 * HEADCOUNT_MAX - jobs
+    return max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs))
+
+
 def gen_body(rng: random.Random, nation: str, major_cov: dict, cities: list,
              used_slugs: set) -> list:
     """The body: counts follow the need each sector has left under the coverage
@@ -557,10 +569,10 @@ def gen_body(rng: random.Random, nation: str, major_cov: dict, cities: list,
                     break
             used_slugs.add(fid)
             jobs = int(round(share * SECTOR_JOBS_PER_SHARE[s] * rng.uniform(0.9, 1.1)))
-            jobs = max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs))
             body.append({
                 "id": fid, "name": name, "sector": s,
-                "share": share, "headcount": jobs, "city": "", "tier": "body",
+                "share": share, "headcount": max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs)),
+                "city": "", "tier": "body", "_jobs": jobs,
             })
     # BODY_MIN_PER_NATION floor: a sector-need-sized body can land at 77-79
     # firms for a nation whose majors already cover generously (CYP, CZE, NLD,
@@ -590,12 +602,17 @@ def gen_body(rng: random.Random, nation: str, major_cov: dict, cities: list,
                     break
             used_slugs.add(fid)
             jobs = int(round(share * SECTOR_JOBS_PER_SHARE[s] * rng.uniform(0.9, 1.1)))
-            jobs = max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs))
             body.append({
                 "id": fid, "name": name, "sector": s,
-                "share": share, "headcount": jobs, "city": "", "tier": "body",
+                "share": share, "headcount": max(HEADCOUNT_MIN, min(HEADCOUNT_MAX, jobs)),
+                "city": "", "tier": "body", "_jobs": jobs,
             })
     allocate_cities(rng, body, cities)
+    # The reflection lands AFTER siting: allocate_cities fills the largest city by
+    # headcount, so a firm sited on the reflected figure would move cities and
+    # reshuffle a nation that never asked (six did, in the first cut of this fix).
+    for firm in body:
+        firm["headcount"] = body_headcount(firm.pop("_jobs"))
     return body
 
 

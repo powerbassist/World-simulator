@@ -507,7 +507,7 @@
       "name": "Deltour Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24976,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -525,7 +525,7 @@
       "name": "Jungblut Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23448,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -534,7 +534,7 @@
       "name": "Massard Groupe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24438,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -543,7 +543,7 @@
       "name": "Junge Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22640,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -552,7 +552,7 @@
       "name": "Krier Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24860,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -588,7 +588,7 @@
       "name": "Pfeffer Assurances",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22613,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -606,7 +606,7 @@
       "name": "Lamesch Logistique",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24512,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -615,7 +615,7 @@
       "name": "Greisch Industrie Agriculture",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23667,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -642,7 +642,7 @@
       "name": "Hess Commerce",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23946,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -651,7 +651,7 @@
       "name": "Pfeffer Construction",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24532,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -687,7 +687,7 @@
       "name": "Reiffers Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23855,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -705,7 +705,7 @@
       "name": "Elschner Construction",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24993,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -714,7 +714,7 @@
       "name": "Mertens Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23508,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -741,7 +741,7 @@
       "name": "Schmit Logistique",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24762,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -750,7 +750,7 @@
       "name": "Nies Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24603,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -777,7 +777,7 @@
       "name": "Kesseler Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22688,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -786,7 +786,7 @@
       "name": "Nickels Assurances Commerce",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23635,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -813,7 +813,7 @@
       "name": "Nies Matériaux",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22738,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -822,7 +822,7 @@
       "name": "Mertens Énergie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23289,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -858,7 +858,7 @@
       "name": "Schmit Construction",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23456,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -867,7 +867,7 @@
       "name": "Hansen Construction",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22638,
       "city": "LU00_luxembourg",
       "tier": "body"
     },
@@ -885,7 +885,7 @@
       "name": "Mertens Commerce",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23268,
       "city": "LU00_luxembourg",
       "tier": "body"
     }

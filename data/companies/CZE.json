@@ -497,7 +497,7 @@
       "name": "Němec Průmysl",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23071,
       "city": "CZ03_ceske_budejovice",
       "tier": "body"
     },
@@ -506,7 +506,7 @@
       "name": "Doležal Energetika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23681,
       "city": "CZ02_kladno",
       "tier": "body"
     },
@@ -551,7 +551,7 @@
       "name": "Zemek Průmysl",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23526,
       "city": "CZ01_prague",
       "tier": "body"
     },
@@ -578,7 +578,7 @@
       "name": "Fojtík Průmysl",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24977,
       "city": "CZ01_prague",
       "tier": "body"
     },
@@ -596,7 +596,7 @@
       "name": "Záruba Doprava",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23062,
       "city": "CZ01_prague",
       "tier": "body"
     },
@@ -614,7 +614,7 @@
       "name": "Tesař Skupina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23946,
       "city": "CZ06_brno_stred",
       "tier": "body"
     },
@@ -677,7 +677,7 @@
       "name": "Fišer Průmysl",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23253,
       "city": "CZ08_ostrava",
       "tier": "body"
     },
@@ -695,7 +695,7 @@
       "name": "Němec Stavebnictví",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23133,
       "city": "CZ08_ostrava",
       "tier": "body"
     },
@@ -704,7 +704,7 @@
       "name": "Beran Zemědělství",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24293,
       "city": "CZ01_stodulky",
       "tier": "body"
     },
@@ -731,7 +731,7 @@
       "name": "Hofman Obchod",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23791,
       "city": "CZ05_hradec_kralove",
       "tier": "body"
     },
@@ -794,7 +794,7 @@
       "name": "Fišer Obchod Průmysl",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24740,
       "city": "CZ05_liberec",
       "tier": "body"
     },
@@ -812,7 +812,7 @@
       "name": "Bartoš Energetika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23270,
       "city": "CZ04_usti_nad_labem",
       "tier": "body"
     },
@@ -821,7 +821,7 @@
       "name": "Žižka Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23987,
       "city": "CZ06_brno_stred",
       "tier": "body"
     },
@@ -857,7 +857,7 @@
       "name": "Hofman Energetika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24579,
       "city": "CZ01_prague",
       "tier": "body"
     },
