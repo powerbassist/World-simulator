@@ -13,6 +13,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Dates = preload("res://src/sim/audience_dates.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 
 
 ## The open requests of this nation's people (`own`), or of the visiting heads.
@@ -78,9 +79,7 @@ static func _served(state, ns, loader, meters: Dictionary, row: Dictionary) -> b
 	var person = loader.person_by_id.get(String(row.get("person_id", "")))
 	if person == null:
 		return false
-	var leaders := {}
-	for party in loader.parties.get(state.player_nation_id, []):
-		leaders[party.id] = party.leader_person_id
+	var leaders := WantTerms.authored_leaders(loader, state.player_nation_id)
 	for want in person.wants:
 		if String(want["object"]) == String(row["object"]) and String(want["stance"]) == String(row["stance"]):
 			return Characters.want_served(ns, person, want, meters, leaders)

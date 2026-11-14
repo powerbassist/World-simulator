@@ -87,9 +87,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 	# The authored leadership edges, walked once: the leaf law keeps party.gd
 	# out of this file, so the loader's own parties array supplies the edges
 	# every leader read below needs.
-	var authored_leaders := {}
-	for party in loader.parties.get(state.player_nation_id, []):
-		authored_leaders[party.id] = party.leader_person_id
+	var authored_leaders := WantTerms.authored_leaders(loader, state.player_nation_id)
 
 	var people: Array = Staff.cast(loader, state.player_nation_id)
 	# The person OBJECTS by id, for the two trait gates that are a property of
