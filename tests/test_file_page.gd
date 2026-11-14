@@ -18,6 +18,8 @@ extends SceneTree
 
 const GameEvent = preload("res://src/core/event.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
+# The tax kinds an event may name are the library's since V5.3 e (#334 removed EconomyK.TAX_KEYS).
+const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const DeskCards = preload("res://src/ui/desk_cards.gd")
 const EffectTags = preload("res://src/ui/effect_tags.gd")
@@ -91,7 +93,7 @@ func _check_short_label() -> void:
 			"effects": {"bloc_offset": {"business": 0.01}}, "default": true},
 		{"id": "b", "label": "B", "summary": "do b", "effects": {"bloc_offset": {"workers": 0.01}}}]}
 	var errs: Array[String] = []
-	var ev = GameEvent.from_dict(raw.duplicate(true), "x.json", errs, EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS,
+	var ev = GameEvent.from_dict(raw.duplicate(true), "x.json", errs, TaxesLoader.FIRST, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS,
 		EconomyK.SECTOR_TREND.keys())
 	if not errs.is_empty():
 		_fail("a valid `short` was refused: %s" % [errs])
@@ -103,7 +105,7 @@ func _check_short_label() -> void:
 	var long_raw := raw.duplicate(true)
 	long_raw["choices"][0]["short"] = "x".repeat(GameEvent.SHORT_MAX + 1)
 	var errs2: Array[String] = []
-	GameEvent.from_dict(long_raw, "x.json", errs2, EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+	GameEvent.from_dict(long_raw, "x.json", errs2, TaxesLoader.FIRST, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
 	if errs2.is_empty():
 		_fail("a `short` past SHORT_MAX (%d) was accepted: it would not fit the 180 px button" % GameEvent.SHORT_MAX)
 
