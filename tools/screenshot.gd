@@ -2159,13 +2159,13 @@ func _fail_a_major() -> void:
 ## shape: the register is the content and the frame is the check that the
 ## panel builds its rows off it.
 func _open_the_tax_code() -> void:
-	_main._windows.open("tax")
+	_main._windows.open("budget")
 	# open() silently no-ops on an unregistered id -- B14's own guard, which the
 	# generic --open path carries and a direct open() call must carry too.
-	if not _main._windows.is_open("tax"):
-		push_error("screenshot: --tax could not open the tax window")
+	if not _main._windows.is_open("budget"):
+		push_error("screenshot: --tax could not open the Budget tab")
 	else:
-		print("--tax: the tax window is open (%d rate rows)" % _main._tax_panel._sliders.size())
+		print("--tax: the Budget tab is open (%d rate rows)" % _main._tax_panel._sliders.size())
 
 
 ## For --moved: health up a point and a half, education down half a point,

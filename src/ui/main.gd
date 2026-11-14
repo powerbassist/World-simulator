@@ -330,22 +330,13 @@ func _ready() -> void:
 	_budget_panel.committed.connect(func(before, tabling):
 		_fiscal_committed(tr("Budget change"), tabling, before))
 
-	# V4.2 T5. The tax levers' new home, in the Economy cluster beside Budget:
-	# the cluster grammar (panel-system.md §16) puts a surface where its
-	# decision lives, and a tax rate is a budget-domain decision -- but a
-	# separate DOMAIN from spending, which is why it is its own window and
-	# not a row. KEY_X was the one letter left. The commit is Budget.commit()
-	# -- the same verb the budget panel sends -- so the demand impulse, the
-	# erosion curve and the books have one entry point however many windows
-	# move a rate.
+	# The tax rates share the Budget tab's ledger (V5.3 screen 4 PR 3a-2; they had a window of their own,
+	# KEY_X, from V4.2 T5): one draft, one Commit -- Budget.commit()'s one entry point -- and the Tax Code
+	# tab and its key retired. The panel is embedded, so the budget panel sets it up and the load path's
+	# registry sweep reaches it through the budget panel's setup().
 	_tax_panel = TaxPanel.new()
-	_windows.register("tax", tr("Tax Code"), _tax_panel, KEY_X, ICONS + "receipt_long.svg")
-	_tax_panel.setup(_state, _loader)
-	# The two finance tabs each print the other's uncommitted draft as one line
-	# with a Go (V5.3 a + b; V4.2's ultra pass 2 merged it into the Budget's
-	# columns). The panels are siblings; this is a reference, not state, and the
-	# load path's setup() sweep leaves it alone.
-	_budget_panel.pair(_tax_panel, _windows)
+	_tax_panel.embedded = true
+	_budget_panel.embed(_tax_panel)  # the Tax Code tab retired into the Budget's ledger (V5.3 screen 4 PR 3a-2)
 	_tax_panel.committed.connect(func(before, tabling):
 		_fiscal_committed(tr("Tax code change"), tabling, before))
 

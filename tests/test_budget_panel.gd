@@ -20,6 +20,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const TaxPanel = preload("res://src/ui/tax_panel.gd")
+const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Relations = preload("res://src/core/relations.gd")
 
 var _failures: Array[String] = []
@@ -50,7 +51,7 @@ func _init() -> void:
 	_panel = BudgetPanel.new()
 	root.add_child(_panel)
 	_tax_panel = TaxPanel.new()
-	root.add_child(_tax_panel)
+	_tax_panel.embedded = true
 
 
 func _process(_delta: float) -> bool:
@@ -71,10 +72,8 @@ func _process(_delta: float) -> bool:
 func _setup() -> void:
 	_panel.setup(_state, _loader)
 	_panel.show()
-	# The ultra pass-2 wiring: main.gd hands the budget panel the tax panel,
-	# whose uncommitted edits ride the proposed column and the projection.
-	_panel.tax_panel = _tax_panel
-	_tax_panel.setup(_state, _loader)
+	# main.gd embeds the tax panel in the Budget's ledger: one draft, one Commit.
+	_panel.embed(_tax_panel)
 	_panel._refresh()
 
 	_revenue_before = _panel._figures["revenue"][1]
@@ -128,10 +127,9 @@ func _move_a_lever() -> void:
 	if absf(float(_state.player().spending_pct_gdp["health"]) - start) > 0.001:
 		_fail("moving a slider mutated live state: health is now %s" % _state.player().spending_pct_gdp["health"])
 
-	# V4.2 ultra pass 2 made an uncommitted TAX edit reach the proposed column (the
-	# panel was blind to it); since V5.3 a + b (the parent's call on #247) the
-	# columns are what THIS tab's Commit books, and the draft is never blind either:
-	# it is the strip's own line, with a Go to the Tax Code.
+	# V5.3 screen 4 PR 3a-2: the tax rates are rows of this ledger, one draft with the
+	# levers, so an uncommitted tax edit IS what this tab's Commit books: it moves the
+	# proposed column and the strip beside the spending levers'.
 	var revenue_before_tax: String = _panel._figures["revenue"][1]
 	var deficit_before_tax: String = _panel._figures["deficit"][1]
 	var income_before: float = float(_state.player().tax_rates_pct["income"])
@@ -139,10 +137,10 @@ func _move_a_lever() -> void:
 	if not _tax_panel._edited_keys.has("income"):
 		_fail("the tax panel's slider edit never reached _edited_keys -- draft() would return empty")
 	_panel._refresh()
-	if _panel._figures["revenue"][1] != revenue_before_tax or _panel._figures["deficit"][1] != deficit_before_tax:
-		_fail("a staged tax edit moved the Budget's columns, which the Budget's Commit does not book")
-	if not _panel._strip.elsewhere_label.is_visible_in_tree() or not _panel._strip.elsewhere_label.text.contains("Tax Code"):
-		_fail("a staged tax edit is silent on the Budget: '%s'" % _panel._strip.elsewhere_label.text)
+	if _panel._figures["revenue"][1] == revenue_before_tax or _panel._figures["deficit"][1] == deficit_before_tax:
+		_fail("a staged tax edit did not reach the Budget's proposed columns, which its Commit books")
+	if not _panel._effects.has(EffectsStrip.COMMIT):
+		_fail("a staged tax edit is silent in the strip: it books nothing there")
 	# The now column is the live position: the panel previews, it does not write.
 	if absf(float(_state.player().tax_rates_pct["income"]) - income_before) > 0.001:
 		_fail("staging the tax edit moved live state: income is now %s" % _state.player().tax_rates_pct["income"])
@@ -154,11 +152,10 @@ func _refused_commit_keeps_the_draft() -> void:
 	var ns = _state.player()
 	ns.tabled_bill = {"law_id": "carbon_levy", "vote_year": 2026, "vote_month": 1, "vote_day": 31}
 	_panel._on_commit()
-	_tax_panel._on_commit()
 	if absf(float(_panel._pending["spending_pct_gdp"]["health"]) - _health_after) > 0.001 or not _panel._edited_keys.has("health"):
 		_fail("a refused Commit erased the Budget's draft")
 	if not _tax_panel._edited_keys.has("income"):
-		_fail("a refused Commit erased the Tax Code's draft")
+		_fail("a refused Commit erased the tax draft")
 	ns.tabled_bill = {}
 
 
@@ -184,6 +181,9 @@ func _withdraw_from_the_tax_code() -> void:
 
 
 func _commit() -> void:
+	# The staged +10 points of income tax are part of the one bill now: drop them, this leg
+	# is about the spending levers landing.
+	_tax_panel.revert()
 	_panel._on_commit()
 	# Commit tables the finance bill; the books move at its division.
 	Division.divide(_state, _loader)

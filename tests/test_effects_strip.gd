@@ -63,7 +63,7 @@ func _init() -> void:
 	_budget_c = BudgetPanel.new()
 	root.add_child(_budget_c)
 	_tax_c = TaxPanel.new()
-	root.add_child(_tax_c)
+	_tax_c.embedded = true
 
 
 func _process(_delta: float) -> bool:
@@ -75,11 +75,8 @@ func _process(_delta: float) -> bool:
 			_tax.setup(_state_t, _loader)
 			_tax.show()
 			_budget_c.setup(_state_c, _loader)
-			_tax_c.setup(_state_c, _loader)
-			_budget_c.tax_panel = _tax_c
-			_tax_c.budget_panel = _budget_c
+			_budget_c.embed(_tax_c)
 			_budget_c.show()
-			_tax_c.show()
 		2:
 			_check_budget_untouched()
 			_check_tax_untouched()
@@ -270,9 +267,9 @@ func _check_tax_rates() -> void:
 		_tax._refresh()
 
 
-## B1 with the other tab's draft pending (the parent's call on #247): each tab
-## shows what ITS Commit books, the other draft is one line priced alone, and
-## nothing of it rides this tab's figures.
+## B1 with both drafts pending (V5.3 screen 4 PR 3a-2): the tax rates are rows of the Budget's
+## own ledger, so one Commit books the one bill -- the strip, the proposed column and the
+## deficit's change cell all read that bill, and what Commit books is what the strip said.
 func _check_both_drafts() -> void:
 	var ns = _state_c.player()
 	# At least one slider step: the slider snaps to the sim's step for the kind (TaxLibrary.step_pct).
@@ -282,11 +279,14 @@ func _check_both_drafts() -> void:
 	_budget_c._sliders["health"].value = float(ns.spending_pct_gdp["health"]) + 1.0
 	_budget_c._refresh()
 	var now := Budget.preview(_state_c, {})
-	var tax_alone := _balance_gain(now, Budget.preview(_state_c, tax_draft))
-	var elsewhere: String = _budget_c._strip.elsewhere_label.text
-	if not elsewhere.contains(EffectsStrip.money_text(tax_alone)) or not _budget_c._strip.elsewhere_label.is_visible_in_tree():
-		_fail("budget: the Tax Code's draft (%s alone) reads '%s'" % [EffectsStrip.money_text(tax_alone), elsewhere])
+	var both := Budget.preview(_state_c, _budget_c._whole())
+	var whole_bn := _balance_gain(now, both)
 	var strip_bn: float = _budget_c._strip.money_bn
+	if absf(strip_bn - whole_bn) > CENT_BN:
+		_fail("budget with a tax draft: the strip says %.4f bn, the whole bill books %.4f bn" % [strip_bn, whole_bn])
+	var tax_alone := _balance_gain(now, Budget.preview(_state_c, tax_draft))
+	if absf(strip_bn - tax_alone) <= CENT_BN:
+		_fail("budget with a tax draft: the strip is the tax alone, the spending lever is not in it")
 	var deficit_cell: Array = _budget_c._figures["deficit"][2]
 	_budget_c._on_commit()
 	_vote(_state_c)
@@ -295,20 +295,8 @@ func _check_both_drafts() -> void:
 		_fail("budget with a tax draft: the strip says %.4f bn, Commit booked %.4f bn" % [strip_bn, booked])
 	if deficit_cell[0] != EffectsStrip.money_text(-booked):
 		_fail("budget with a tax draft: the deficit change reads '%s', Commit booked %s" % [deficit_cell[0], EffectsStrip.money_text(-booked)])
-	# The mirror: a spending lever pending while the Tax Code commits.
-	_budget_c._sliders["education"].value = float(ns.spending_pct_gdp["education"]) - 1.0
-	_tax_c.mark_dirty()
-	_tax_c._refresh()
-	now = Budget.preview(_state_c, {})
-	var spend_alone := _balance_gain(now, Budget.preview(_state_c, _budget_c._pending))
-	if not _tax_c._strip.elsewhere_label.text.contains(EffectsStrip.money_text(spend_alone)):
-		_fail("tax: the Budget's draft (%s alone) reads '%s'" % [EffectsStrip.money_text(spend_alone), _tax_c._strip.elsewhere_label.text])
-	strip_bn = _tax_c._strip.money_bn
-	_tax_c._on_commit()
-	_vote(_state_c)
-	booked = _balance_gain(now, Budget.preview(_state_c, {}))
-	if absf(strip_bn - booked) > CENT_BN:
-		_fail("tax with a spending draft: the strip says %.4f bn, Commit booked %.4f bn" % [strip_bn, booked])
+	if not _tax_c.draft().is_empty():
+		_fail("a Commit left the tax draft standing")
 
 
 func _fail(message: String) -> void:
@@ -332,5 +320,5 @@ func _vote(state) -> void:
 		_fail("the fixture's finance bill was not carried: %s" % [result])
 	# What the game's month-end sweep does: every window hears the state moved, so an
 	# untouched lever re-reads the live register (BudgetPanel._resync_untouched).
-	for panel in [_budget, _tax, _budget_c, _tax_c]:
+	for panel in [_budget, _tax, _budget_c]:
 		panel.mark_dirty()

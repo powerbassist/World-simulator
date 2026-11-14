@@ -79,15 +79,17 @@ var _yield_labels := {}
 var _effects := {}
 var _fx_cache := {}
 var _now_books := {}
-## The Budget window and the window manager, wired by main.gd: the Budget's draft
-## is one line under this tab's strip, with a Go there (the mirror of the
-## Budget's line about this tab's draft). Null until wired; every read guards it.
-var budget_panel = null
-var windows = null
+## V5.3 screen 4 PR 3a-2: the rates live on the Budget tab's ledger, one draft and one Commit
+## (budget_panel.gd embeds this panel). Set BEFORE the panel joins the tree: an embedded panel
+## shows its rows under a section label and its "Withdraw the bill", and none of the window chrome -- strip,
+## Commit, Revert, Close -- because the Budget's own books the whole bill.
+var embedded := false
+var _revert_button: Button
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(720, 480)
+	if not embedded:
+		custom_minimum_size = Vector2(720, 480)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -101,21 +103,21 @@ func _ready() -> void:
 	_title = Label.new()
 	root.add_child(_title)
 	_strip = EffectsStrip.new()
-	_strip.go_pressed.connect(func() -> void:
-		if windows != null:
-			windows.open("budget"))
 	# Its figure beside its caption: the rows below are a third of the window wide.
 	_strip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	root.add_child(_strip)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(scroll)
-
+	# Embedded, the Budget tab's own page scrolls: a second scroll inside it would trap the wheel.
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 12)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(body)
+	if embedded:
+		root.add_child(body)
+	else:
+		var scroll := ScrollContainer.new()
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		root.add_child(scroll)
+		scroll.add_child(body)
 
 	_rates_grid = GridContainer.new()
 	_rates_grid.columns = 5
@@ -129,6 +131,10 @@ func _ready() -> void:
 		_rates_grid.add_child(head)
 
 	root.add_child(_build_buttons())
+	for chrome in [_strip, _commit_button, _revert_button, _close_button] if embedded else []:
+		chrome.hide()
+	if embedded:
+		_title.theme_type_variation = PanelKit.UiTheme.HEADING  # the ledger's section label, as "Spending" is
 
 
 ## One row per live key, built on demand. Called from every path that reads a
@@ -176,10 +182,10 @@ func _build_buttons() -> Control:
 	_commit_button.pressed.connect(_on_commit)
 	row.add_child(_commit_button)
 
-	var revert := Button.new()
-	revert.text = tr("Revert")
-	revert.pressed.connect(_on_revert)
-	row.add_child(revert)
+	_revert_button = Button.new()
+	_revert_button.text = tr("Revert")
+	_revert_button.pressed.connect(_on_revert)
+	row.add_child(_revert_button)
 
 	# QA's T1 on #331: the tabled finance bill taken back before its vote, answered like
 	# Commit. Here alone: the Budget sits at the size cap, and screen 4 shows the bill.
@@ -206,7 +212,7 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	var ns = _state.player()
-	_title.text = tr("TAX CODE — %s") % ns.id
+	_title.text = tr("Taxes in force") if embedded else tr("TAX CODE — %s") % ns.id
 	_on_revert()
 
 
@@ -239,6 +245,11 @@ func _label_for(key: String) -> String:
 	if not KEY_LABELS.has(key):
 		return Strings.row_name("taxes", _state.player().tax_library[key])
 	return tr(String(KEY_LABELS[key]))
+
+
+## The draft dropped back to the books: the Budget's Revert and its commit call it.
+func revert() -> void:
+	_on_revert()
 
 
 func _on_revert() -> void:
@@ -402,14 +413,9 @@ func _refresh() -> void:
 			alone[key]["tax_rates_pct"][key] = _pending_value(String(key))
 	if not alone.is_empty():
 		alone[EffectsStrip.COMMIT] = pending_tax()
-	var spending_draft: Dictionary = budget_panel.draft() if budget_panel != null else {}
-	if not spending_draft.is_empty():
-		alone[EffectsStrip.ELSEWHERE] = spending_draft
 	_effects = EffectsStrip.per_key(_fx_cache, _state, _now_books, alone, alone.get(EffectsStrip.COMMIT, {}), {})
 	EffectsStrip.paint(_effect_labels, _effects)
-	_strip.show_effects(float(_effects.get(EffectsStrip.COMMIT, 0.0)), "", "", _effects.has(EffectsStrip.COMMIT),
-		tr("Spending changes not yet committed: %s a year, in the Budget") % EffectsStrip.money_text(_effects[EffectsStrip.ELSEWHERE])
-		if _effects.has(EffectsStrip.ELSEWHERE) else "", float(_effects.get(EffectsStrip.ELSEWHERE, 0.0)))
+	_strip.show_effects(float(_effects.get(EffectsStrip.COMMIT, 0.0)), "", "", _effects.has(EffectsStrip.COMMIT))
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold

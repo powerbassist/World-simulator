@@ -219,11 +219,11 @@ func _check_the_map_is_reachable_beside_a_domain() -> void:
 ## and the tab, or the nation and the map.
 func _check_breadcrumb_follows_the_tab() -> void:
 	var bar = _main._hud.title_bar
-	_main._windows.open("tax")
+	_main._windows.open("budget")
 	var crumb: String = bar.crumb()
-	for part in [_main._loader.nations[_main._state.player_nation_id].nation_name, _main.tr("Finances"), _main._windows.title("tax")]:
+	for part in [_main._loader.nations[_main._state.player_nation_id].nation_name, _main.tr("Finances"), _main._windows.title("budget")]:
 		if not crumb.contains(part):
-			_fail("with the tax tab open the breadcrumb reads '%s', missing '%s'" % [crumb, part])
+			_fail("with the budget tab open the breadcrumb reads '%s', missing '%s'" % [crumb, part])
 	_main._windows.close_all()
 	crumb = bar.crumb()
 	if not crumb.ends_with(_main.tr("Map")) or crumb.contains(_main.tr("Finances")):
@@ -787,9 +787,9 @@ func _check_a_tax_commit_reaches_the_budget_forecast() -> void:
 	_main._windows.open("budget")
 	_main._budget_panel._process(0.0)
 	forecast.drain()
-	_main._tax_panel._on_commit()
+	_main._budget_panel._on_commit()
 	if not forecast.busy():
-		_fail("a Tax Code commit left the budget's forecast settled on the old rates")
+		_fail("a Budget commit with the tax rates in it left the budget's forecast settled on the old rates")
 	_main._windows.close_all()
 
 

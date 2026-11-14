@@ -57,10 +57,10 @@ const PENDING := {}
 const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "region": 250, "events": 95, "commodities": 210,
 	"companies": 145}
 const TOTAL_PENDING := {
-	"budget": 113, "calendar": 34, "campaign": 140,
+	"budget": 156, "calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 115, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
-	"politics": 123, "projects": 75, "society": 106, "tax": 45,
+	"politics": 123, "projects": 75, "society": 106,
 }
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
@@ -82,7 +82,10 @@ const TOTAL_PENDING := {
 ## and adds the shelf and the search: 2970 -> 2946. Its third (2b), a stated rise 2946 -> 2953, the
 ## parent's call (OK'd on #352): the law sheet carries the briefing's price per bloc (a heading and
 ## the bloc names, 5 words) and "Poll it" (2), the polls themselves folded behind it, 450 on the tab.
-const TOTAL_SUM_CEILING := 2953
+## Screen 4's 3a-2 retires the Tax Code tab into the Budget's ledger: the Budget tab held 113 words and
+## the Tax Code 45, and the page they share counts 156 (the tax title, strip and buttons are gone, a "Taxes in force"
+## label added): 2953 -> 2951, and the tax tab leaves TOTAL_PENDING.
+const TOTAL_SUM_CEILING := 2951
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

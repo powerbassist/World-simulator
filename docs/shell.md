@@ -39,7 +39,6 @@ flowchart LR
   d_parliament --> t_legislature["legislature"]
   sb --> d_finances["Finances"]
   d_finances --> t_budget["budget"]
-  d_finances --> t_tax["tax"]
   d_finances --> t_projects["projects"]
   sb --> d_economy["Economy"]
   d_economy --> t_economy["economy"]

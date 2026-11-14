@@ -15,7 +15,6 @@
   "Agenda": "Feuille de route",
   "Economy": "Économie",
   "Budget": "Budget",
-  "Tax Code": "Code des impôts",
   "Politics": "Politique",
   "Society": "Société",
   "Bills": "Projets de loi",
@@ -745,7 +744,5 @@
   "Balance this year": "Solde cette année",
   "change": "variation",
   "rate": "taux",
-  "yield, bn": "rendement, Md",
-  "Tax changes not yet committed: %s a year, in the Tax Code": "Changements d'impôts non validés : %s par an, dans le Code des impôts",
-  "Spending changes not yet committed: %s a year, in the Budget": "Changements de dépenses non validés : %s par an, dans le Budget"
+  "yield, bn": "rendement, Md"
 }

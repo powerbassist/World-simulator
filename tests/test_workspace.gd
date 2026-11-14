@@ -90,7 +90,7 @@ func _process(_delta: float) -> bool:
 ## (projects is not registered here, so it shows no tab), Economy holds economy.
 ## Plus two windows in no row and one scene.
 func _register() -> void:
-	for id in ["budget", "tax", "economy", "alpha", "beta", "summit"]:
+	for id in ["budget", "projects", "economy", "alpha", "beta", "summit"]:
 		var content := Label.new()
 		content.text = "content of %s" % id
 		content.custom_minimum_size = Vector2(300, 200)
@@ -113,15 +113,15 @@ func _check_tab_switch_keeps_one_open() -> void:
 		_fail("opening budget left %s open" % str(_manager.open_ids()))
 	if not _manager.dock().visible:
 		_fail("opening a tab did not raise the dock")
-	if _manager.tab_ids() != ["budget", "tax"]:
+	if _manager.tab_ids() != ["budget", "projects"]:
 		_fail("Finances shows tabs %s, not its two registered ones" % str(_manager.tab_ids()))
 	if _manager.domain_title() != "Finances":
 		_fail("the budget's domain is titled '%s', not Finances" % _manager.domain_title())
 
-	_manager.open("tax")
-	if _manager.open_ids() != ["tax"]:
+	_manager.open("projects")
+	if _manager.open_ids() != ["projects"]:
 		_fail("switching to the tax tab left %s open" % str(_manager.open_ids()))
-	if _manager.tab_ids() != ["budget", "tax"]:
+	if _manager.tab_ids() != ["budget", "projects"]:
 		_fail("a switch inside Finances changed its tabs to %s" % str(_manager.tab_ids()))
 
 	_manager.open("economy")
@@ -140,11 +140,11 @@ func _check_tab_switch_never_shows_the_map() -> void:
 	_manager.open("budget")
 	var counts: Array = []
 	var watch := func(): counts.append(_manager.open_ids().size())
-	for id in ["budget", "tax", "economy"]:
+	for id in ["budget", "projects", "economy"]:
 		_manager.frame(id).visibility_changed.connect(watch)
-	_manager.open("tax")
+	_manager.open("projects")
 	_manager.open("economy")
-	for id in ["budget", "tax", "economy"]:
+	for id in ["budget", "projects", "economy"]:
 		_manager.frame(id).visibility_changed.disconnect(watch)
 	if counts.has(0):
 		_fail("a tab switch passed through nothing open: %s" % str(counts))
@@ -186,7 +186,7 @@ func _check_a_scene_takes_the_dock() -> void:
 ## open -- from any caller, gated or not -- and back/forward wait for it.
 func _check_a_tab_cannot_displace_a_scene() -> void:
 	_manager.open("budget")
-	_manager.open("tax")
+	_manager.open("projects")
 	_manager.open("summit")
 	_manager.open("economy")
 	if _manager.open_ids() != ["summit"]:
@@ -197,7 +197,7 @@ func _check_a_tab_cannot_displace_a_scene() -> void:
 		_fail("back/forward beside the summit left %s open" % str(_manager.open_ids()))
 	_manager.close("summit")
 	_manager.back()
-	if _manager.open_ids() != ["tax"]:
+	if _manager.open_ids() != ["projects"]:
 		_fail("back after the summit reached %s, not the tab before it" % str(_manager.open_ids()))
 	_manager.close_all()
 
@@ -206,16 +206,16 @@ func _check_a_tab_cannot_displace_a_scene() -> void:
 ## destination cuts the forward path, as a browser does.
 func _check_history_back_forward() -> void:
 	_manager.open("budget")
-	_manager.open("tax")
+	_manager.open("projects")
 	_manager.open("economy")
 	_manager.back()
-	if _manager.open_ids() != ["tax"]:
+	if _manager.open_ids() != ["projects"]:
 		_fail("back from economy reached %s, not tax" % str(_manager.open_ids()))
 	_manager.back()
 	if _manager.open_ids() != ["budget"]:
 		_fail("back from tax reached %s, not budget" % str(_manager.open_ids()))
 	_manager.forward()
-	if _manager.open_ids() != ["tax"]:
+	if _manager.open_ids() != ["projects"]:
 		_fail("forward from budget reached %s, not tax" % str(_manager.open_ids()))
 	_manager.open("alpha")
 	if _manager.can_forward():
@@ -229,7 +229,7 @@ func _check_history_back_forward() -> void:
 
 func _check_history_is_twenty_deep() -> void:
 	for i in 25:
-		_manager.open("budget" if i % 2 == 0 else "tax")
+		_manager.open("budget" if i % 2 == 0 else "projects")
 	var steps := 0
 	while _manager.can_back() and steps < 100:
 		_manager.back()

@@ -45,7 +45,7 @@ func _init() -> void:
 	_panel = BudgetPanel.new()
 	root.add_child(_panel)
 	_tax_panel = TaxPanel.new()
-	root.add_child(_tax_panel)
+	_tax_panel.embedded = true
 
 
 func _process(_delta: float) -> bool:
@@ -53,8 +53,7 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false
 	_panel.setup(_state, _loader)
-	_panel.tax_panel = _tax_panel
-	_tax_panel.setup(_state, _loader)
+	_panel.embed(_tax_panel)
 	_panel.show()
 	var forecast = _panel._forecast
 	_check_the_panel_draws_without_projecting(forecast)

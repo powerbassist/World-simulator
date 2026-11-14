@@ -126,9 +126,9 @@ func _run() -> void:
 	var briefing = _main._briefing
 	var law_panel = _main._law_panel
 
-	# --- (a) The Tax Code window: KEY_X, rows off the register -------------
-	if _main._windows.shortcut("tax") != KEY_X:
-		_fail("the tax panel is not registered on KEY_X")
+	# --- (a) The tax rates, embedded in the Budget's ledger: rows off the register -----
+	if _main._windows.shortcut("tax") != KEY_NONE or _main._windows.title("tax") != "tax":
+		_fail("the Tax Code window is still registered")
 	panel.setup(state, loader)
 	panel._on_revert()
 	panel._refresh()
