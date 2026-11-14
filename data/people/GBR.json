@@ -662,6 +662,10 @@
           "object": "meter:grievance",
           "stance": "demand",
           "below": 44.4
+        },
+        {
+          "object": "region:UKI",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -821,6 +825,10 @@
         {
           "object": "programme:prog_the_border_fund",
           "stance": "oppose"
+        },
+        {
+          "object": "region:UKG",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -840,6 +848,10 @@
         {
           "object": "programme:prog_the_continents_granary",
           "stance": "sponsor"
+        },
+        {
+          "object": "region:UKE",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -1262,6 +1274,12 @@
       "spouse_id": "GBR_marchbanks",
       "social_skill": 0.4,
       "wealth_eur_m": 1.5,
+      "wants": [
+        {
+          "object": "region:UKF",
+          "stance": "want"
+        }
+      ],
       "bench": true
     },
     {

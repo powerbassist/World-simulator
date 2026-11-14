@@ -230,6 +230,10 @@
         {
           "object": "programme:prog_energy_union",
           "stance": "oppose"
+        },
+        {
+          "object": "region:DE5",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -299,6 +303,10 @@
         },
         {
           "object": "office:portfolio:pensions",
+          "stance": "want"
+        },
+        {
+          "object": "region:DE3",
           "stance": "want"
         }
       ],
@@ -451,6 +459,10 @@
         {
           "object": "programme:prog_sworn_offices",
           "stance": "oppose"
+        },
+        {
+          "object": "region:DE6",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -653,6 +665,10 @@
         {
           "object": "programme:prog_the_full_term",
           "stance": "sponsor"
+        },
+        {
+          "object": "region:DEE",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -727,6 +743,10 @@
         {
           "object": "programme:prog_sworn_offices",
           "stance": "sponsor"
+        },
+        {
+          "object": "region:DE8",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -751,6 +771,10 @@
         {
           "object": "programme:prog_free_airwaves",
           "stance": "oppose"
+        },
+        {
+          "object": "region:DEC",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -1070,6 +1094,10 @@
         {
           "object": "programme:prog_the_statesman_term",
           "stance": "oppose"
+        },
+        {
+          "object": "region:DEA",
+          "stance": "want"
         }
       ],
       "bench": true,
