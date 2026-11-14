@@ -276,6 +276,8 @@ func has_tag(id: String) -> bool:
 
 
 func set_body(id: String, body: String) -> void:
+	if _asked.has(id):
+		_asked[id]["body"] = body  # the file page reads what the card now says (QA #333 T2)
 	if _notes.has(id):
 		_notes[id]["body"] = body
 		_show_note(id)

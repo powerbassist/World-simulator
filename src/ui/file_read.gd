@@ -138,6 +138,13 @@ static func _request(main, id: String, request_id: String, file: Dictionary) -> 
 		"price": String(row.get("price", "")), "broken_word": bool(row.get("broken_word", false))}
 
 
+## One whole sentence per stance (a language orders the words itself, so no fragment is joined).
+const STANCE_ASK := {
+	"sponsor": "Sponsors %s", "oppose": "Opposes %s", "want": "Wants %s",  # i18n: msgid
+	"demand": "Demands %s", "defend": "Defends %s",  # i18n: msgid
+}
+
+
 ## What a request asks, as the page's headline: "Opposes The Sworn Offices". A want whose object the register
 ## cannot name (the reader falls back to the raw id) is the plain ask, never "sponsors none".
 static func ask_title(loader, ns, request: Dictionary) -> String:
@@ -145,8 +152,7 @@ static func ask_title(loader, ns, request: Dictionary) -> String:
 	var what := PersonCard.object_text(loader, ns, object, request)
 	if what == "" or what == object or what == object.get_slice(":", object.get_slice_count(":") - 1):
 		return Strings.t("Asks to see you")
-	var text := "%s %s" % [Strings.t(PersonCard.stance_label(String(request.get("stance", "")))), what]
-	return text.left(1).to_upper() + text.substr(1)
+	return Strings.t(String(STANCE_ASK.get(String(request.get("stance", "")), STANCE_ASK["want"]))) % what
 
 
 ## The person's header words: name (linked), party swatch or kind, mood, their line.

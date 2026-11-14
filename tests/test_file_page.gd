@@ -124,6 +124,10 @@ func _check_the_door() -> void:
 		_fail("an enabled answer did not go through the card's own signal: %s" % [pressed])
 	if InboxFiles.press(inbox, asked, 2) or InboxFiles.press(inbox, asked, -1):
 		_fail("an answer index outside the card's was pressed")
+	# QA #333 T2: a body rewritten in place (a council vote moving on, a bill) is what the page reads.
+	inbox.set_body(asked, "A newer body")
+	if String(InboxFiles.of(inbox, asked).get("body", "")) != "A newer body":
+		_fail("the file page still reads the body the card was pushed with, not the one it shows now")
 	inbox.dismiss(asked)
 	if InboxFiles.press(inbox, asked, 1) or not InboxFiles.of(inbox, asked).is_empty():
 		_fail("a gone card is still a file, or can still be pressed")
