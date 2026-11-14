@@ -53,6 +53,7 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const BriefingUi = preload("res://src/ui/briefing.gd")
+const BriefingSections = preload("res://src/ui/briefing_sections.gd")
 const LawPanelUi = preload("res://src/ui/law_panel.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
@@ -151,11 +152,11 @@ func _run() -> void:
 	if _find_button(panel, "Propose a tax") != null:
 		_fail("the Tax Code still offers Propose a tax -- the composed birth is retired")
 
-	# --- (c) The briefing on Propose: channels, price, offended blocs ------
+	# --- (c) The briefing popup (an ownership bill asks for it): channels, price, offended blocs ------
 	var surtax = _law_by_id(loader, "high_earner_surtax")
-	law_panel._on_propose(surtax)
+	law_panel.brief_requested.emit(surtax)
 	if not briefing.visible:
-		_fail("Propose did not open the briefing")
+		_fail("the briefing request did not open the popup")
 	# One effects walk serves rows and attribution: the line the walk builds.
 	if not _live_text_has(briefing, "Raises the income tax rate by 5.0 points."):
 		_fail("the briefing does not name the channel, direction and magnitude")
@@ -225,7 +226,7 @@ func _run() -> void:
 	# The popular poll, on another bill -- each kind once per bill.
 	var carbon = _law_by_id(loader, "carbon_levy")
 	if carbon != null:
-		law_panel._on_propose(carbon)
+		law_panel.brief_requested.emit(carbon)
 		var debt2: float = ns.debt_eur_bn
 		Statute.buy_poll(state, ns, "carbon_levy", "popular")
 		var expected2: float = StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_POPULAR)
@@ -281,7 +282,7 @@ func _run() -> void:
 		_fail("src/sim reads poll_purchases outside the writer: %s" % ", ".join(readers))
 	# The UI half of the pin: the surfaces DO read it -- a pin that cannot
 	# fail when the reader disappears is decoration.
-	for path in ["res://src/ui/briefing.gd", "res://src/ui/law_panel.gd"]:
+	for path in ["res://src/ui/briefing_sections.gd", "res://src/ui/law_panel.gd"]:
 		if not FileAccess.get_file_as_string(path).contains("poll_purchases"):
 			_fail("%s no longer reads the purchase register -- the pins outlived the feature" % path)
 
@@ -455,14 +456,14 @@ func _run() -> void:
 	# burden}. Without the second reading a regulation repeal's "It reverses"
 	# preview printed its heading over zero lines -- silent, misleading by
 	# omission, on the statute book's headline verb.
-	var ledger_lines: Array[String] = BriefingUi.effect_lines({"company": {"industry": -0.3}}, ns)
+	var ledger_lines: Array[String] = BriefingSections.effect_lines({"company": {"industry": -0.3}}, ns)
 	var lifted := false
 	for line in ledger_lines:
 		if line == "Lifts a burden of 0.30 on the Industry sector.":
 			lifted = true
 	if not lifted:
 		_fail("a negated sector burden produced no reversal line: %s" % [ledger_lines])
-	var effects_lines: Array[String] = BriefingUi.effect_lines(
+	var effects_lines: Array[String] = BriefingSections.effect_lines(
 		{"company": {"sector": "industry", "burden": 0.3}}, ns)
 	var imposed := false
 	for line in effects_lines:
@@ -476,7 +477,7 @@ func _run() -> void:
 	# and effect_lines() dropped them, so the preview named every channel but
 	# the one a political-price-bearing repeal most moves. Default stays OFF:
 	# the price section's own walk must not print the price rows a second time.
-	var bloc_lines: Array[String] = BriefingUi.effect_lines(
+	var bloc_lines: Array[String] = BriefingSections.effect_lines(
 		{"bloc_offset": {"business": -0.15}}, ns, true)
 	var bloc_moved := false
 	for line in bloc_lines:
@@ -484,7 +485,7 @@ func _run() -> void:
 			bloc_moved = true
 	if not bloc_moved:
 		_fail("a negated bloc delta produced no reversal line: %s" % [bloc_lines])
-	if not BriefingUi.effect_lines({"bloc_offset": {"business": -0.15}}, ns).is_empty():
+	if not BriefingSections.effect_lines({"bloc_offset": {"business": -0.15}}, ns).is_empty():
 		_fail("bloc_offset leaked into the default walk -- the price section would print its rows twice")
 
 	# (n) The result summary resolves composed laws -- the ultra pass-2 finding:
@@ -565,7 +566,7 @@ func _run() -> void:
 	# and an open briefing kept the discarded GameState (its poll verb wrote
 	# the dead run's books). Driven through the REAL load handler, leg (k)'s
 	# reason: a detach the handler skips is exactly the defect.
-	law_panel._on_propose(_law_by_id(live_loader, "high_earner_surtax"))
+	law_panel.brief_requested.emit(_law_by_id(live_loader, "high_earner_surtax"))
 	if not briefing.visible:
 		_fail("setup: the briefing did not open for the detach leg")
 	var err3: String = SaveManager.save_game(live_state, _main._clock, POLL_SLOT)
