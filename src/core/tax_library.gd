@@ -14,6 +14,7 @@ extends RefCounted
 ## not, and only the autumn finance bill puts it in force or takes it out (section 5).
 
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 
 
 ## Every kind, with this nation's overrides applied. A row is copied only when an
@@ -81,3 +82,24 @@ static func salience_patch(ns, bloc: String) -> Dictionary:
 			if weight > 0.0:
 				patch[issue] = weight
 	return patch
+
+
+## One rate step for `kind`, in its own unit (% or EUR): its rate_range_pct split into
+## TaxK.STEP_DIVISIONS, rounded to the nearest 1, 2 or 5 times a power of ten on a LOG
+## scale. Log, because on a straight scale 7.5 (carbon) and 3.5 (corporate, income) sit
+## exactly halfway between two candidates. The goal read steps by it, and so will the Tax
+## Code slider: one step per kind, defined here once.
+static func step_pct(ns, kind: String) -> float:
+	var span: Array = ns.tax_library[kind]["rate_range_pct"]
+	var raw := (float(span[1]) - float(span[0])) / TaxK.STEP_DIVISIONS
+	var power := pow(10.0, floor(log(raw) / log(10.0)))
+	var best := power
+	for m in [1.0, 2.0, 5.0, 10.0]:
+		if absf(log(m * power / raw)) < absf(log(best / raw)):
+			best = m * power
+	return best
+
+
+## The decimals that show `kind`'s step whole: 2 for 0.05, 1 for 0.2, 0 for 2 or 10.
+static func step_decimals(ns, kind: String) -> int:
+	return maxi(0, -int(floor(log(step_pct(ns, kind)) / log(10.0) + 1e-9)))

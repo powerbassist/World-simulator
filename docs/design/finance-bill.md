@@ -275,3 +275,109 @@ Ranked by the goal's figure, ties by the chance to pass. **A measure tier 1 cann
 - **A cache per month:** tier 1's list and tier 2's baseline are computed once per month and kept; reopening a goal the same month costs nothing. Tier 1's reads do not depend on the goal (one read per measure gives every goal's figure), so one list serves every goal of the month.
 - **Emissions: no read now.** No key is added to `Budget.snapshot`; a pledge on emissions says "run the forecast" as growth does. Later item, not built.
 - **The first run's warm-up** (about 8.7 s against 4.5 s warm): the PR says where the player pays it, measured.
+
+## 12. Spending verbs as rows of the finance bill (screens 5 and 6; spec only)
+
+**The author's call** ("par la loi de finances", screen 5) **and the parent's ruling** (screen 6, the regions card): a sector programme and a regional development fund stop being immediate commands. Each becomes a row of the finance bill: tabled, voted at the month's end, refusable, withdrawable, queued under the queue's rules. Both use one mechanism: a spending verb that becomes a bill row.
+
+**Today (main 9ee5dd36):**
+
+| | the player's command | written at once | its cost |
+|---|---|---|---|
+| a sector programme (`data/investment-actions/`: intensity 0.55 or 1.0 per sector, or End) | `Investment.execute` (`companies_panel._on_invest`) | `sector_investment[sector].intensity`, `bloc_offset` | `investment_bill_pct_gdp`, computed in the Investment step and summed by `Budget.recompute` at the next close |
+| a regional fund (`data/region-actions/fund.json`: 1 % to 3 % of the region's output, for N years) | `RegionFunds.start` / `stop` (`region_fund.gd`, Go / Stop) | a row in `region_funds`, `bloc_offset` | `region_fund_bill_pct_gdp` and a demand impulse, written in the RegionFunds step |
+
+Neither cost is in `spending_pct_gdp` or `tax_rates_pct`, so the bill's own registers do not carry them, and nothing in `FinanceBill` or `FinanceBillLaw` reads them.
+
+**Proposed:**
+- **Two new keys in the bill:**
+  - `"programmes": {sector: action_id}`: an `*_invest` action at one of its stops, or an `end_*` action.
+  - `"funds": {"start": [{region_id, share_pct, years}], "stop": [fund_id]}`.
+  - Amending a tabled bill replaces a sector's action or appends a fund, as a newer rate row replaces the older one.
+- **At tabling,** each row is checked against its own verb's legality on the live state, through `Investment.available` and `RegionFunds.refusal`. If any row fails, the bill is refused `verb`, the same way it is refused for a rate out of range.
+- **At the division,** a carried bill applies its rows through the existing commands (`Investment.execute`, `RegionFunds.start` / `stop`). These stay the appliers, and stay the setup verbs for harnesses, as `Budget.commit` does for rates.
+  - A row that is no longer legal by then is skipped and named in the result; the rest of the bill applies (call 3). Examples: a fund already open in that region, or the open-fund cap reached some other way.
+- **Timing:** the rows apply in the Division step, before the Investment and RegionFunds steps of the same close. Their costs are written in that close and booked at the next close's Budget step, as for a command pressed during the month today. The only change for the player is the wait to the month's end, and the vote.
+- **The political price:** each verb keeps its own `bloc_offset`, which its command writes at the division. The bill's reading adds only the position (call 2).
+- **Queue, withdrawal, save:** a bill with rows is a finance bill, so the existing rules cover it with no new field and no save bump:
+  - the queue's rules: one budget text at a time, promotion, a refused head dropped;
+  - `FinanceBill.withdraw`;
+  - the save, inside `tabled_bill` / `bill_queue`, COPIED and absent_ok.
+- **The UI, minimal here:** the industry card's Invest / End buttons and the fund's Go / Stop table a bill carrying the row. Interface rebuilds screens 5 and 6.
+- **What moves:** nothing, with the harnesses left on the commands (call 4). Balance, density and shadows get compared with `cmp`, base vs tip.
+
+**Calls:**
+1. **The rows' shape** (a, recommended): the two keys above, applied by the existing commands. (b) A generic verb list `[{verb, args}]`, which reads as a second command system.
+2. **The bill's position for a row** (a, recommended): read the row as a rise of the infrastructure line, using the anchor of the twelve infrastructure movers (section 3), sized by its cost a year in % of GDP: a fund's `eur_bn_per_year`, a programme's `Investment.bill_pct_gdp` at its stop. (b) No weight: the row leaves the position where the government already stands.
+3. **A row no longer legal at the division** (a, recommended): skipped and named, the rest applies. (b) The whole bill falls.
+4. **The harnesses** (a, recommended): `balance_probe`'s `industrial_policy` and `managed_then_invest`, `investment_probe`, `region_fund_probe` and the tests stay on the commands as setup, so nothing moves. Their question is about the economy, as with the twenty other probes PR 1 left on `Budget.commit`. (b) The two balance regimes table their programme through the bill. That moves them (a possible defeat, a month's delay, rebels charged) and needs a re-baseline table for the author.
+
+## 13. Reads for screen 5 (the goods) and screen 6 (the regions; spec only)
+
+These are reads over what the sim already computes, with no new rule. Nothing below moves a number.
+
+**Screen 5, the goods table per nation** (each good's price over 12 months, and the nation's trade balance in that good).
+
+What the commodities layer holds per nation today (`ns.commodity_state`, this month only):
+- `price`: the world price per good in EUR per unit; the same vector is copied into every nation;
+- `demand`, `output` and `surplus`, in physical units;
+- `trade`: units per good, positive bought, negative sold;
+- `value_added_eur_bn`, a single figure.
+
+The layer does not feed GDP.
+
+**Missing:**
+- **A price series:** none is kept (`nation_state.gd`: "the register keeps no price history").
+- **A trade balance in EUR per good:** `map_layers.gd` computes `trade x price` on the fly for its import layer, and nothing stores it.
+
+**Proposed:**
+- **A 12-month ring of the world price per good,** written at the Commodities step and kept once, on `GameState` (`commodity_price_history`; absent means empty). One copy is enough because the price vector is the same for every nation (call 5).
+- **A reader `GoodsRead.table(state, ns)`,** one row per good:
+  - the price now;
+  - the series kept so far (as many months as exist; the reader says how many);
+  - this month's trade, in units;
+  - the trade in EUR bn a year: `-trade x price x 12 / 1e9`, the map layer's arithmetic moved into the sim reader, which `map_layers.gd` then calls.
+- **The trade has no series:** only this month's figure exists. A 12-month trade balance would need a second ring, per nation (call 6).
+
+**Screen 6, the regions sheet.**
+
+What exists per region each month:
+- **Stored:** `region_gdp_eur_bn` and `region_pop_share`.
+- **Derived, not stored:**
+  - unemployment (`Regions.unemployment_by_region`);
+  - output per head (`Regions.gdp_per_head_index`);
+  - the growth deviation;
+  - the unrest site (`Unrest.site_report`: region, city, concentration, output index, margin).
+- **Not kept at all:** net migration (it is applied to the population shares in place, so no flow survives) and any per-region history.
+
+**Proposed:**
+- **A 12-month sample per region:** a NationState field `region_history` (DEEP, COPIED, `{}`, absent_ok; absent means nothing sampled yet). Shape: `{region_id: {"unemployment": [...], "gdp_per_head": [...], "migration": [...]}}`, 12 months kept.
+  - `unemployment` and `gdp_per_head` are written at the Regions step, from the readers above.
+  - `migration` is the population share moved by migration that month (`migration.gd`'s `share_delta`, before natural change), converted to persons.
+  - The field is written only: nothing in the sim reads it back.
+- **The other regions' loss, on the fund's strip:** `RegionFunds.estimate` already adds the fund's row to a copy and removes it again. The read takes `Regions.deviation_by_region` with and without the row and gives each other region's change, and their sum. The term sums to zero across regions, so the funded region's gain equals the other regions' combined loss.
+- **The unrest site, its price, and net migration:** one read that assembles:
+  - the site, from `Unrest.site_report` (already a pure read);
+  - what unrest costs today: `unrest_impulse_pct` on demand and `unrest_opinion_load` on approval;
+  - the region's net migration, from the sample above.
+- **The sector priority leaves the screen.** Its rule stays in the sim, unused.
+
+**Calls:**
+
+5. **Where the price ring lives** (a, recommended): world level, once on `GameState`. (b) Per nation: the same 12 vectors stored forty-one times in every save.
+6. **A series for trade** (a, recommended): none for now. The table shows this month's trade against the price series, labelled "this month". (b) A 12-month ring per nation per good: about 60 goods x 12 months x 41 nations in the save.
+7. **Where the region sample lives** (a, recommended): one NationState field as above, written at the Regions and Migration steps. (b) A ring on GameState, keyed by region.
+
+**The parent's go on sections 12 and 13 (2026-11-14): (a) on calls 1 to 7, with riders.**
+- **Two PRs:** PR A the bill rows (programmes and funds), PR B the reads (the price ring, `GoodsRead`, `region_history`, the fund strip's loss to the other regions, the unrest and migration read).
+- **A headless end-to-end test per verb through the bill** (`tests/test_finance_rows.gd`):
+  - tabled, carried, applied at the division, its cost booked;
+  - a refused tabling and a defeated bill apply nothing and write no `bloc_offset`;
+  - a withdrawn bill applies nothing;
+  - a row illegal by the division is skipped and named while the rest applies.
+- **The price ring and `region_history` start empty in a new game.** The reader says how many months it holds, so the screens label the series honestly, with no invented history.
+- **The `absent_ok` verdicts pinned** (`test_nation_fields`, `test_save_load`); no save bump unless a missing field would read wrong.
+- **Nothing moves:** balance, density and shadows compared base vs tip with `cmp` on the probe workflow.
+- **A `changelog.d` fragment in each PR** once #340 (versioning) has merged.
+
+**As built in PR A:** `src/sim/finance_rows.gd` (merge, the legality check at tabling, the rows' cost, the apply at the division); `FinanceBill.table` refuses `verb`; `FinanceBill.divide` applies the rows after the rates and returns `skipped`; `FinanceBillLaw.position` reads `verbs_pct_gdp` as an infrastructure rise. In the UI, the industry card's programme buttons and the fund's Go and Stop now table the row; the fund's refusal line shows a refused tabling.

@@ -34,6 +34,7 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const K = preload("res://src/sim/goal_read_constants.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
 
 ## A pledge's field and the goal that reads it; any other field has no tier-1 read.
 const FIELD_GOALS := {
@@ -43,8 +44,9 @@ const FIELD_GOALS := {
 
 ## Every measure open now, in a fixed order: the laws as the law list scans them, less
 ## any the player has already put forward, then each spending line and each tax kind in
-## force, a step down and a step up, a step that would leave the line below nothing or
-## the kind outside its band left out.
+## force, a step down and a step up (a kind steps by its own TaxLibrary.step_pct), a step
+## that would leave the line below nothing or the kind outside its band (tabling's own
+## range rule, FinanceBill.range_refusal) left out.
 static func measures(state, loader) -> Array:
 	var ns = state.player()
 	var out := []
@@ -55,10 +57,9 @@ static func measures(state, loader) -> Array:
 			if float(ns.spending_pct_gdp.get(key, 0.0)) + step >= 0.0:
 				out.append({"kind": "line", "key": key, "step": step})
 	for kind in ns.tax_rates_pct:
-		var band: Array = ns.tax_library[kind]["rate_range_pct"]
-		for step in [-K.RATE_STEP, K.RATE_STEP]:
-			var landed: float = float(ns.tax_rates_pct[kind]) + step
-			if landed >= float(band[0]) and landed <= float(band[1]):
+		var size := TaxLibrary.step_pct(ns, kind)
+		for step in [-size, size]:
+			if FinanceBill.range_refusal(ns, {"tax_rates_pct": {kind: step}}).is_empty():
 				out.append({"kind": "rate", "key": kind, "step": step})
 	return out
 
@@ -104,7 +105,7 @@ static func read(state, loader, measure: Dictionary) -> Dictionary:
 	}
 
 
-## The law ids open to propose now, in the law list's order: Legislature.available()'s,
+## The law ids open to propose now, each to its law, in the law list's order: Legislature.available()'s,
 ## less the one in the slot and the queued ones (a law already put forward is not a
 ## measure to propose again).
 static func _open_ids(state, loader) -> Dictionary:
@@ -113,7 +114,7 @@ static func _open_ids(state, loader) -> Dictionary:
 	var out := {}
 	for law in Legislature.available(ns, Bills.open(state, ns, loader)):
 		if not held.has(String(law.id)):
-			out[String(law.id)] = true
+			out[String(law.id)] = law
 	return out
 
 
@@ -151,8 +152,9 @@ static func step(list: List) -> void:
 
 ## The rows for `goal` ("deficit", "unemployment", "approval", "bloc:<id>", or
 ## "field:<a pledge's field>"), best first, ties by the chance to pass. A row is
-## {measure, effect, read, sign, passes, cost_bn}; `effect` is signed so that more is
-## better for the goal. A measure tier 1 cannot size for the goal is listed unread with
+## {measure, effect, read, sign, passes, cost_bn, table}; `effect` is signed so that more
+## is better for the goal, and `table` is "" when the measure can be tabled now, else the
+## refusal tabling would give (_table_now()). A measure tier 1 cannot size for the goal is listed unread with
 ## its sign; one with no channel to it at all is left out. A field with no tier-1 read
 ## gives one row, {no_read: true}: run the forecast. A law no longer open NOW is left
 ## out, though it was open when read: the reads are kept for the month, and a law passed,
@@ -182,9 +184,24 @@ static func rank(reads: Array, goal: String, state, loader) -> Array:
 			row["effect"] = 0.0
 			row["sign"] = 1 if float(r["impulse"]) > 0.0 else -1
 			unread.append(row)
+		if row.has("effect"):
+			row["table"] = _table_now(state, loader, r["measure"], open)
 	read_rows.sort_custom(_better)
 	unread.sort_custom(_better)
 	return read_rows + unread
+
+
+## "" when the measure can be tabled now, else the flag tabling would refuse it with:
+## the press's own checks run without writing (Legislature.refusal, FinanceBill.refusal),
+## never a second rule. Read live at each rank, as the open laws are.
+static func _table_now(state, loader, measure: Dictionary, open: Dictionary) -> String:
+	if String(measure["kind"]) == "law":
+		return Legislature.refusal(state, state.player(), loader, open[String(measure["id"])])
+	var why := FinanceBill.refusal(state, loader, {_channel(measure): {String(measure["key"]): float(measure["step"])}})
+	for key in why:
+		if key != "tabled" and key != "refused":
+			return String(key)
+	return ""
 
 
 static func _effect(r: Dictionary, goal: String) -> float:
