@@ -177,14 +177,15 @@ func show_files(files: Array, selected := "") -> void:
 		return
 	_file_button("", tr("This month"))
 	for file in files:
-		var by := String(file.get("by", ""))
-		_file_button(String(file["id"]), "%s%s" % [String(file["title"]), "" if by == "" else "  ·  " + by])  # i18n: row-ok routed by the reader
+		# The name only, so the folder stays under the briefing's word ceiling; the date is on the page and here on hover.
+		_file_button(String(file["id"]), String(file["title"]), String(file.get("by", "")))  # i18n: row-ok routed by the reader
 	select(selected if _file_buttons.has(selected) else "", false)
 
 
-func _file_button(id: String, text: String) -> void:
+func _file_button(id: String, text: String, by := "") -> void:
 	var button := Button.new()
 	button.text = text
+	button.tooltip_text = "" if by == "" else tr("By %s") % by
 	button.theme_type_variation = UiTheme.SUBROW_BUTTON
 	button.toggle_mode = true
 	button.focus_mode = Control.FOCUS_NONE

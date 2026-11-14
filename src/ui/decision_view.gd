@@ -30,7 +30,14 @@ func _ready() -> void:
 	add_child(_body)
 
 
-func setup(main) -> void:
+## The window manager hands every panel `setup(state, loader)` on a load: the file the discarded game
+## showed is gone with it.
+func setup(_state, _loader) -> void:
+	_file_id = ""
+	_dirty = true
+
+
+func attach(main) -> void:
 	_main = main
 	main._hud.inbox.card_dismissed.connect(func(id: String) -> void:
 		if id == _file_id:

@@ -32,7 +32,7 @@ static func build(parent: Control, page: Dictionary, press: Callable, face := FA
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(root)
 	if page.is_empty():
-		PanelKit.line(root, Strings.t("This file has been answered."), PanelKit.Tone.DIM)
+		PanelKit.line(root, Strings.t("Answered."), PanelKit.Tone.DIM)
 		return root
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 16)

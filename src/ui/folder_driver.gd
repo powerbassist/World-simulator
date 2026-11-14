@@ -34,7 +34,7 @@ static func refresh(main, selected := "") -> void:
 	var inbox = main._hud.inbox
 	var files: Array = []
 	for file in InboxFiles.list(inbox):
-		files.append({"id": file["id"], "title": file["title"], "by": FileRead.by_text(main, file, true)})
+		files.append({"id": file["id"], "title": FileRead.list_title(main, file), "by": FileRead.by_text(main, file, true)})
 	card.show_files(files, selected)
 	if card.selected_file() != "":
 		_show(main, card, card.selected_file())

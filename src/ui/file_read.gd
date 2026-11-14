@@ -52,6 +52,17 @@ static func describe(main, file: Dictionary) -> Dictionary:
 		"by_text": "", "by_month": -1, "who": {}, "choices": choices}
 
 
+## The file's name in the folder's list: a request is its person (the page says what they ask), anything
+## else the row's own title.
+static func list_title(main, file: Dictionary) -> String:
+	var request_id := String(AudienceDriver.lane_of(main)._request_of.get(String(file["id"]), ""))
+	if request_id != "":
+		var request := Audiences.request(main._state.player(), request_id)
+		if not request.is_empty():
+			return main._loader.person_name(String(request["person_id"]))
+	return String(file["title"])  # i18n: row-ok routed by the pusher
+
+
 ## Just the deadline text of a file ("" when it has none), without building its page: the
 ## folder's list names every file's date and the page of a request is not cheap.
 static func by_text(main, file: Dictionary, short := false) -> String:
@@ -115,7 +126,7 @@ static func _request(main, id: String, request_id: String, file: Dictionary) -> 
 	for action in (file["actions"] as Array):
 		choices.append(_choice(action, String(action["label"]), "", [], false, String(action.get("tooltip", ""))))  # i18n: row-ok routed by the pusher
 	var last := int(request["deadline_month"]) - 1
-	return {"id": id, "kind": "request", "micro": Strings.t("Request"), "title": String(row["wants"]), "situation": "",
+	return {"id": id, "kind": "request", "micro": Strings.t("Request"), "title": String(row["wants"]).left(1).to_upper() + String(row["wants"]).substr(1), "situation": "",
 		"by_text": _by(last), "by_month": last, "who": who, "choices": choices,
 		"price": String(row.get("price", "")), "broken_word": bool(row.get("broken_word", false))}
 

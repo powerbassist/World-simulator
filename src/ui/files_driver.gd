@@ -19,7 +19,7 @@ static var _views := {}
 static func register(main) -> void:
 	var view := DecisionView.new()
 	main._windows.register(WINDOW, Strings.t("Decision"), view, KEY_NONE, main.ICONS + "mail.svg")
-	view.setup(main)
+	view.attach(main)
 	_views[main.get_instance_id()] = view
 
 

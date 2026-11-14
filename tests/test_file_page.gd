@@ -214,8 +214,15 @@ func _check_a_gone_file() -> void:
 	view._rebuild()
 	var texts := PackedStringArray()
 	_texts(view, texts)
-	if not " ".join(texts).contains(Strings.t("This file has been answered.")):
+	if not " ".join(texts).contains(Strings.t("Answered.")):
 		_fail("a file that is gone does not say so: %s" % [texts])
+	# A load rebinds every panel with setup(state, loader): the file the discarded game showed is gone with it
+	# (test_audience_load and eight more suites broke on a different signature, which this pins by name).
+	view.show_file("card_gone")
+	view.setup(_main._state, _main._loader)
+	if view.file_id() != "":
+		_fail("a load left the docked page on the discarded game's file '%s'" % view.file_id())
+
 	# A page built for {} directly: the empty state is one line, no buttons.
 	var holder := Control.new()
 	FileView.build(holder, {}, func(_i: int) -> void: pass)
