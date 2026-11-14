@@ -274,6 +274,7 @@
    "tests/test_commodities_panel.gd",
    "tests/test_agenda_panel.gd",
    "tests/test_menu.gd",
+   "tests/test_build_info.gd",
    "tests/test_boot_stages.gd",
    "tests/test_map_markers.gd",
    "tests/test_map_network.gd",

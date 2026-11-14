@@ -164,7 +164,7 @@ input_simulate       events:[...]
 
 ## The in-game dev console (V5.1-0b)
 
-F12 in a debug build (or any build started with `--dev-console`) opens a console over the game: an Errors tab fed by Godot's Logger, a `perf` overlay and a command table (`help` lists it). Dev only: a release build builds none of it. The design and the commands are in [[history]] (V5.1-0b).
+F12 in a debug build (or any build started with `--dev-console`) opens a console over the game: an Errors tab fed by Godot's Logger, a `perf` overlay and a command table (`help` lists it; `version` prints the build string, the save format it reads and the engine). Dev only: a release build builds none of it. The design and the commands are in [[history]] (V5.1-0b).
 
 **Driving the game from an agent.** The console node is `/root/Main/DevConsole` and has one method, `run_command(text) -> String`. A running game is not an edited scene, so `node_call_method` (editor-only) cannot reach it; use the runtime channel of `execute_code`, which takes an expression:
 
@@ -191,6 +191,14 @@ python tools/export_windows.py --templates PATH/TO/that/folder --smoke
 `--smoke` then runs two checks, each in a private user dir, each failing on any `ERROR` line: the exe boots headless to the menu and quits (`--quit-after`), and `tools/exe_smoke.gd` runs under the stock engine with the PCK as its main pack (an export template ignores `--script`, measured on 4.7.2): the menu scene, the real New Game boot, a month, a save and load, and a voice clip, a music bed, a portrait, an icon, a font and the summit scenes, all read out of the PCK. The script also audits the PCK's own file list: no `tools/`, `tests/`, `docs/`, `reports/` or dev-console file, and every raw file the game reads is there. Headless throughout, so no window and no cursor.
 
 **Why a stage.** The game reads its icons, audio and summit scenes as bytes or text, never `load()`, and an export keeps an imported file only as its converted form. The script builds a throwaway copy of the tracked tree and sets `importer="keep"` on those `.import` files in the COPY (the webp and jpg already use it), so the committed files do not change. A new asset kind the game reads as bytes needs its extension in `KEEP_EXT` there; the audit fails the build when a raw file is missing. The dev console (`dev_console.gd` and what only it loads) is excluded by the preset's filter; `main.gd` loads it behind `ResourceLoader.exists()`, so its absence is silent, and a release template has no debug build for it anyway.
+
+**The build string.** The stage's `version.json` gets the string the menu corner and the dev console's `version` command show: the bare version when HEAD carries the tag `v<version>` and the stage roots match HEAD (a kit the author plays, cut first -- AGENTS.md "Versions and changelog"), otherwise `dev build <sha> (after <version>)`. The export prints it (`stage: build string ...`) and `exe_smoke.gd` prints it again from the PCK (`exe_smoke: build ...`). A kit's `RELEASE.md` opens with that line and the version's section of `CHANGELOG.md`:
+
+```bash
+python tools/changelog.py notes 0.5.3-gate.3
+```
+
+`python tools/changelog.py --check` (version.json against CHANGELOG.md, every `changelog.d/` fragment) and `--check-pr BASE` (a PR that changes `src/`, `data/` or `assets/` adds a fragment) run in CI; `cut VERSION --label TEXT` is the cut.
 
 ## The probes on GitHub (`.github/workflows/probes.yml`)
 
