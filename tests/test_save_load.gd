@@ -2251,6 +2251,21 @@ func _run_commodity_roundtrip(loader) -> void:
 	elif not (stripped.player().commodity_state as Dictionary).is_empty():
 		_fail("commodity_state stripped from the payload came back non-empty -- from_dict must not re-seed, the seed is Commodities' own")
 
+	# V5.3 e PR B: the world price ring rides the save beside the register (one copy on
+	# GameState), deep on load, and an absent key reads as nothing held -- no bump.
+	state.commodity_price_history = {"steel": [400.0, 432.109375]}
+	var ring = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+	if var_to_str(ring.commodity_price_history) != var_to_str({"steel": [400.0, 432.109375]}):
+		_fail("the price ring did not survive the round trip: %s" % [ring.commodity_price_history])
+	var shared = GameState.from_dict(state.to_dict())
+	shared.commodity_price_history["steel"][0] = -5.0
+	if float(state.commodity_price_history["steel"][0]) == -5.0:
+		_fail("from_dict() shares the price ring with the state it was serialised from")
+	var no_ring: Dictionary = state.to_dict()
+	no_ring.erase("commodity_price_history")
+	if not GameState.from_dict(no_ring).commodity_price_history.is_empty():
+		_fail("an absent price ring did not read as empty")
+
 
 func _run_unknown_version() -> void:
 	SaveManager._ensure_dir()
