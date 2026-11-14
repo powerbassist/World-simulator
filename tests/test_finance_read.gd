@@ -14,6 +14,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const GoalRead = preload("res://src/sim/goal_read.gd")
 const GK = preload("res://src/sim/goal_read_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -66,6 +67,12 @@ func _check_a_draft_reads_what_tabling_would_meet() -> void:
 	for key in ["passed", "yes_seats", "no_seats", "abstain_seats"]:
 		if var_to_str(draft["vote"].get(key)) != var_to_str(forecast.get(key)):
 			_fail("draft: %s reads %s, the tabling forecasts %s" % [key, draft["vote"].get(key), forecast.get(key)])
+	# The drafted text carries the rows' cost only when it has rows (GLM's test-gap pass).
+	var fresh = _state()
+	if FinanceBill.drafted(fresh, _loader, {"tax_rates_pct": {"vat": 1.0}}).has(FinanceRows.COST):
+		_fail("draft: a text of rates alone carries a rows' cost")
+	if not FinanceBill.drafted(fresh, _loader, {"programmes": {"industry": "industrial_renewal"}}).has(FinanceRows.COST):
+		_fail("draft: a text with a programme row carries no rows' cost")
 	# An amendment: the draft is the bill merged with the one already before the Assembly.
 	var amend := {"spending_pct_gdp": {"education": -0.5}}
 	var amended := FinanceRead.draft(state, _loader, amend)
@@ -179,6 +186,12 @@ func _check_the_unset_lines_parts_sum_to_them() -> void:
 	var want_spend := float(ns.other_spending_pct_gdp) * gdp / 100.0
 	if absf(spending - want_spend) > EPS * maxf(1.0, want_spend):
 		_fail("other spending: the parts sum to %s bn, the line holds %s" % [spending, want_spend])
+	# The parts by name: the hover's words key on them.
+	var keys := []
+	for part in parts["revenue"]:
+		keys.append(String(part["key"]))
+	if keys != ["residual", "laws"] or String(parts["spending"][0]["key"]) != "unsplit" or (parts["spending"] as Array).size() != 1:
+		_fail("other parts: the keys read %s / %s" % [keys, parts["spending"]])
 	# A law's own revenue shows as its own part.
 	ns.law_other_revenue_pct_gdp = 0.5
 	Budget.recompute(state, ns)
@@ -188,6 +201,13 @@ func _check_the_unset_lines_parts_sum_to_them() -> void:
 			laws = float(part["bn"])
 	if absf(laws - 0.5 * gdp / 100.0) > 1e-9 * gdp:
 		_fail("other revenue: a law's 0.5 %% of GDP reads %s bn" % laws)
+	# ...and the parts still sum to the line once a law adds to it, the residual unchanged.
+	var total := 0.0
+	for part in FinanceRead.other_parts(ns)["revenue"]:
+		total += float(part["bn"])
+	var line := float(ns.revenue_pct_gdp.get("other", 0.0)) * gdp / 100.0
+	if absf(total - line) > EPS * maxf(1.0, line):
+		_fail("other revenue: with a law in, the parts sum to %s bn, the line holds %s" % [total, line])
 
 
 func _fail(msg: String) -> void:
