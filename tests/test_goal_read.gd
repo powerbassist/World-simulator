@@ -42,6 +42,12 @@ func _init() -> void:
 	_check_the_reads_write_nothing()
 	_check_two_years_is_the_projection_against_the_baseline(state)
 	_check_a_law_closed_mid_month_is_read_as_gone()
+	_check_a_rate_step_reads_through_the_copys_satisfaction(state)
+	_check_the_rank_order()
+	_check_another_game_gets_its_own_list(state, list)
+	_check_the_baseline_is_per_horizon(state)
+	_check_a_law_put_forward_is_not_a_measure()
+	_check_a_law_closed_after_its_read_drops_from_the_rank()
 	_finish()
 
 
@@ -176,7 +182,7 @@ func _check_a_structural_law_reads_its_offset_on_unemployment(state, list) -> vo
 ## A spending step moves unemployment through demand, which tier 1 cannot size: listed,
 ## marked unread, with the sign of the demand impulse it raises.
 func _check_a_demand_step_is_listed_unread_on_unemployment(list) -> void:
-	var rows: Array = GoalRead.rank(list.reads, "unemployment", null, _loader)
+	var rows: Array = GoalRead.rank(list.reads, "unemployment", list.state, _loader)
 	var up := {}
 	for row in rows:
 		var m: Dictionary = row["measure"]
@@ -267,3 +273,125 @@ func _check_a_law_closed_mid_month_is_read_as_gone() -> void:
 				_fail("closed: a law no longer open ranks on %s" % goal)
 	if GoalRead.years_for(null, state, _loader, list.measures[0], 3) != null:
 		_fail("closed: two years were begun for a law no longer open")
+
+
+## QA #342 T1 (G5, G4): a tax step reaches the blocs through satisfaction, read on the COPY
+## (its satisfaction and its weights, which amplify bad news). The reference is Opinion's
+## own functions on an independent copy; the step is large enough that the copy's
+## weights differ from today's, so reading today's weights would read a different figure.
+func _check_a_rate_step_reads_through_the_copys_satisfaction(state) -> void:
+	var ns = state.player()
+	var band: Array = ns.tax_library["vat"]["rate_range_pct"]
+	var step: float = minf(8.0, float(band[1]) - float(ns.tax_rates_pct["vat"]))
+	var measure := {"kind": "rate", "key": "vat", "step": step}
+	var read := GoalRead.read(state, _loader, measure)
+	var sim = state.duplicate_state()
+	var sns = sim.player()
+	Budget.recompute(sim, sns)
+	Budget.commit(sim, {"tax_rates_pct": {"vat": float(ns.tax_rates_pct["vat"]) + step}})
+	Budget.recompute(sim, sns)
+	var sat_now := Opinion.issue_satisfaction(ns)
+	var sat_then := Opinion.issue_satisfaction(sns)
+	var lowered := false
+	var weights_matter := false
+	for bloc in OpinionK.BLOC_KEYS:
+		var today := Opinion.target_of(ns, bloc, sat_now, Opinion.bloc_weights(ns, bloc, sat_now))
+		var want := Opinion.target_of(sns, bloc, sat_then, Opinion.bloc_weights(sns, bloc, sat_then)) - today
+		var todays_weights := Opinion.target_of(sns, bloc, sat_then, Opinion.bloc_weights(ns, bloc, sat_now)) - today
+		if not is_equal_approx(float(read["bloc_target"][bloc]), want):
+			_fail("rate: VAT +%s moves %s's heading by %s, Opinion on the copy says %s" % [step, bloc, read["bloc_target"][bloc], want])
+		if want < 0.0:
+			lowered = true
+		if not is_equal_approx(todays_weights, want):
+			weights_matter = true
+	if not lowered:
+		_fail("rate: premise, VAT +%s lowers no bloc's heading" % step)
+	if not weights_matter:
+		_fail("rate: premise, VAT +%s leaves every bloc's weights as they are today, so the copy's weights are untested" % step)
+
+
+## QA #342 T1 (G1, G2, G8): read rows by effect, best first; the unread after them; among
+## the unread, a rise in demand before a cut; at equal effect and sign, the one that passes.
+func _check_the_rank_order() -> void:
+	var state = _new_state()
+	var rows := {
+		"a": _fake("a", -0.2, 0.0, false), "b": _fake("b", -0.2, 0.0, true), "c": _fake("c", 0.1, 0.0, false),
+		"d": _fake("d", 0.0, 0.5, false), "e": _fake("e", 0.0, -0.5, true), "f": _fake("f", 0.0, 0.5, true),
+	}
+	var reads := [rows["a"], rows["e"], rows["c"], rows["d"], rows["b"], rows["f"]]
+	var got := []
+	for row in GoalRead.rank(reads, "unemployment", state, _loader):
+		got.append(String(row["measure"]["key"]))
+	if got != ["b", "a", "c", "f", "d", "e"]:
+		_fail("order: the unemployment rows rank %s, want [b, a, c, f, d, e]" % [got])
+
+
+func _fake(key: String, unemployment: float, impulse: float, passes: bool) -> Dictionary:
+	var blocs := {}
+	for bloc in OpinionK.BLOC_KEYS:
+		blocs[bloc] = 0.0
+	return {"measure": {"kind": "line", "key": key, "step": 0.5}, "cost_bn": 0.0, "bloc_target": blocs,
+		"unemployment_target": unemployment, "impulse": impulse, "passes": passes, "yes": 0, "no": 0}
+
+
+## QA #342 T1 (G6): a new game starts in the same month every time, so the month alone
+## cannot key the list: another game's list is never handed back.
+func _check_another_game_gets_its_own_list(state, list) -> void:
+	var other = _new_state()
+	if other.year != state.year or other.month != state.month:
+		_fail("cache: premise, the two games are not in the same month")
+	if GoalRead.list_for(list, other, _loader) == list:
+		_fail("cache: another game in the same month was handed this game's list")
+
+
+## QA #342 T1 (G7): a baseline run for one horizon is not shared with another.
+func _check_the_baseline_is_per_horizon(state) -> void:
+	var step := {"kind": "line", "key": "education", "step": GK.SPENDING_STEP}
+	var three = GoalRead.years_for(null, state, _loader, step, 3)
+	var two = GoalRead.years_for(three, state, _loader, step, 2)
+	if two.baseline == three.baseline:
+		_fail("two years: a two-month read reused the three-month baseline")
+
+
+## QA #342 T2: a law in the slot or in the queue is already put forward, so it is not a
+## measure to propose: not listed, read as gone, never ranked, no two years begun.
+func _check_a_law_put_forward_is_not_a_measure() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var list = _full_list(state)
+	var tabled := String(list.measures[0]["id"])
+	var queued := String(list.measures[1]["id"])
+	ns.tabled_bill = {"law_id": tabled, "referendum": false, "vote_year": state.year, "vote_month": state.month, "vote_day": 28}
+	ns.bill_queue = [{"law_id": queued, "scale": 1.0, "referendum": false, "force": false}]
+	for m in GoalRead.measures(state, _loader):
+		if String(m.get("id", "")) in [tabled, queued]:
+			_fail("held: %s is listed as a measure while it is before the Assembly" % m["id"])
+	for id in [tabled, queued]:
+		if not bool(GoalRead.read(state, _loader, {"kind": "law", "id": id}).get("unavailable", false)):
+			_fail("held: %s was read as a measure to propose" % id)
+		if GoalRead.years_for(null, state, _loader, {"kind": "law", "id": id}, 3) != null:
+			_fail("held: two years were begun for %s" % id)
+	for goal in ["deficit", "unemployment", "approval"]:
+		for row in GoalRead.rank(list.reads, goal, state, _loader):
+			if String(row["measure"].get("id", "")) in [tabled, queued]:
+				_fail("held: %s ranks on %s from the month's reads" % [row["measure"]["id"], goal])
+
+
+## QA #342 T2: a law passed or put on cooldown AFTER its read (a mid-month passage, a
+## 49.3) leaves the ranking at once; the month's reads are not re-run.
+func _check_a_law_closed_after_its_read_drops_from_the_rank() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var list = _full_list(state)
+	var ranked := ""
+	for row in GoalRead.rank(list.reads, "approval", state, _loader):
+		if String(row["measure"]["kind"]) == "law":
+			ranked = String(row["measure"]["id"])
+			break
+	if ranked == "":
+		_fail("after: premise, no law ranks on approval")
+		return
+	ns.law_cooldown_months[ranked] = 3
+	for row in GoalRead.rank(list.reads, "approval", state, _loader):
+		if String(row["measure"].get("id", "")) == ranked:
+			_fail("after: %s still ranks once it is closed" % ranked)

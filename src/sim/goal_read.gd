@@ -41,14 +41,15 @@ const FIELD_GOALS := {
 }
 
 
-## Every measure open now, in a fixed order: the laws as the law list scans them, then
-## each spending line and each tax kind in force, a step down and a step up, a step that
-## would leave the line below nothing or the kind outside its band left out.
+## Every measure open now, in a fixed order: the laws as the law list scans them, less
+## any the player has already put forward, then each spending line and each tax kind in
+## force, a step down and a step up, a step that would leave the line below nothing or
+## the kind outside its band left out.
 static func measures(state, loader) -> Array:
 	var ns = state.player()
 	var out := []
-	for law in Legislature.available(ns, Bills.open(state, ns, loader)):
-		out.append({"kind": "law", "id": String(law.id)})
+	for id in _open_ids(state, loader):
+		out.append({"kind": "law", "id": id})
 	for key in EK.SPENDING_KEYS:
 		for step in [-K.SPENDING_STEP, K.SPENDING_STEP]:
 			if float(ns.spending_pct_gdp.get(key, 0.0)) + step >= 0.0:
@@ -63,13 +64,13 @@ static func measures(state, loader) -> Array:
 
 
 ## One measure on a copy: every goal's figure, and the division as it would fall now.
-## A law tabled, passed or put on cooldown since the month's list was built is no longer
-## open: read as gone ({measure, unavailable}), which rank() leaves out.
+## A law tabled, queued, passed or put on cooldown since the month's list was built is no
+## longer open: read as gone ({measure, unavailable}), which rank() leaves out.
 static func read(state, loader, measure: Dictionary) -> Dictionary:
 	var ns = state.player()
 	var law = null
 	if String(measure["kind"]) == "law":
-		law = Legislature.open_law(state, ns, loader, String(measure["id"]))
+		law = _law_if_open(state, loader, String(measure["id"]))
 		if law == null:
 			return {"measure": measure, "unavailable": true}
 	var parties: Array = loader.parties.get(ns.id, [])
@@ -103,6 +104,34 @@ static func read(state, loader, measure: Dictionary) -> Dictionary:
 	}
 
 
+## The law ids open to propose now, in the law list's order: Legislature.available()'s,
+## less the one in the slot and the queued ones (a law already put forward is not a
+## measure to propose again).
+static func _open_ids(state, loader) -> Dictionary:
+	var ns = state.player()
+	var held := _held(ns)
+	var out := {}
+	for law in Legislature.available(ns, Bills.open(state, ns, loader)):
+		if not held.has(String(law.id)):
+			out[String(law.id)] = true
+	return out
+
+
+## The law, when it is open to propose now (_open_ids()'s rule), else null.
+static func _law_if_open(state, loader, law_id: String):
+	if _held(state.player()).has(law_id):
+		return null
+	return Legislature.open_law(state, state.player(), loader, law_id)
+
+
+## The law ids in the slot and in the queue.
+static func _held(ns) -> Dictionary:
+	var held := {String(ns.tabled_bill.get("law_id", "")): true}
+	for entry in ns.bill_queue:
+		held[String(entry.get("law_id", ""))] = true
+	return held
+
+
 static func _channel(measure: Dictionary) -> String:
 	return "spending_pct_gdp" if String(measure["kind"]) == "line" else "tax_rates_pct"
 
@@ -125,17 +154,22 @@ static func step(list: List) -> void:
 ## {measure, effect, read, sign, passes, cost_bn}; `effect` is signed so that more is
 ## better for the goal. A measure tier 1 cannot size for the goal is listed unread with
 ## its sign; one with no channel to it at all is left out. A field with no tier-1 read
-## gives one row, {no_read: true}: run the forecast.
-static func rank(reads: Array, goal: String, _state, _loader) -> Array:
+## gives one row, {no_read: true}: run the forecast. A law no longer open NOW is left
+## out, though it was open when read: the reads are kept for the month, and a law passed,
+## forced, tabled or queued since is checked against the live state here.
+static func rank(reads: Array, goal: String, state, loader) -> Array:
 	if goal.begins_with("field:"):
 		var field := goal.trim_prefix("field:")
 		if not FIELD_GOALS.has(field):
 			return [{"no_read": true, "field": field}]
 		goal = String(FIELD_GOALS[field])
+	var open := _open_ids(state, loader)
 	var read_rows := []
 	var unread := []
 	for r in reads:
 		if bool(r.get("unavailable", false)):
+			continue
+		if String(r["measure"]["kind"]) == "law" and not open.has(String(r["measure"]["id"])):
 			continue
 		var row := {"measure": r["measure"], "passes": r["passes"], "cost_bn": r["cost_bn"], "read": true, "sign": 0}
 		var effect := _effect(r, goal)
@@ -194,7 +228,7 @@ static func list_for(prev, state, loader) -> List:
 static func years_for(prev, state, loader, measure: Dictionary, months: int = K.YEARS_MONTHS) -> Years:
 	var law = null
 	if String(measure["kind"]) == "law":
-		law = Legislature.open_law(state, state.player(), loader, String(measure["id"]))
+		law = _law_if_open(state, loader, String(measure["id"]))
 		if law == null:
 			return null
 	var month := int(state.year) * 12 + int(state.month)
