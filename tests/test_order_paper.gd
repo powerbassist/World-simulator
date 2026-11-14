@@ -45,6 +45,8 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		3:
 			_main._windows.open("legislature")
+		5:
+			_check_the_plates_propose_divides()
 		6:
 			_check_the_paper_is_absent_at_rest()
 			_stage()
@@ -268,6 +270,34 @@ func _check_the_sheet_offers_queue_and_the_go_finds_it() -> void:
 	var go := ActsOn.find(_panel(), _ids[3])
 	if go == null:
 		_fail("the briefing's Go finds no enabled control tagged with the law (a dead end)")
+
+
+## QA's M2 on #352: with the slot empty, the right click's Propose is a press that divides that law
+## (run_proposal), not a request for the briefing popup -- and no test pressed it.
+func _check_the_plates_propose_divides() -> void:
+	var law_row: Button = _panel()._laws._rows.get_children()[0].get_child(0)
+	var law_name := law_row.text
+	var proposed := []
+	var briefed := []
+	_panel().proposed.connect(func(_before, name_of, _result) -> void: proposed.append(name_of), CONNECT_ONE_SHOT)
+	_panel().brief_requested.connect(func(law) -> void: briefed.append(law.id), CONNECT_ONE_SHOT)
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_RIGHT
+	event.pressed = true
+	law_row.gui_input.emit(event)
+	var plate = _plate()
+	var press: Array = _plate_buttons(plate).filter(func(b): return b.text == "Propose") if plate != null else []
+	if press.is_empty() or press[0].disabled:
+		_fail("with the slot empty the plate has no live Propose")
+		return
+	press[0].pressed.emit()
+	if proposed != [law_name]:
+		_fail("the plate's Propose divided %s, not the row's law '%s'" % [proposed, law_name])
+	if not briefed.is_empty():
+		_fail("the plate's Propose asked for the briefing popup")
+	# The staging below starts from an empty slot.
+	_ns().tabled_bill = {}
+	_ns().last_law_result = {}
 
 
 func _check_the_right_click_is_the_same_table() -> void:

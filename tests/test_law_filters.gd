@@ -209,6 +209,12 @@ func _check_the_hemicycle_is_a_hover() -> void:
 	for party in _main._loader.parties[_main._state.player().id]:
 		if not text.contains(String(party.party_name)):
 			_fail("the hovered chamber does not name %s" % party.party_name)
+	# QA on #346: the hover replaced the bar's own counts, so they ride above the chamber.
+	var counts: Dictionary = bar._parts.reduce(func(acc, part): acc[String(part["label"])] = int(part["value"]); return acc, {})
+	for n in counts.values():
+		if not text.contains(str(n)):
+			_fail("the hovered chamber does not carry the forecast count %d: %s" % [n, text.replace("
+", " | ")])
 	tip.free()
 
 

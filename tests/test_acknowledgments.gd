@@ -96,7 +96,7 @@ func _check_law_proposal_answers() -> void:
 	if law == null:
 		_fail("the law fixture workplace_safety_act is not in the loader")
 		return
-	# V4.2 T5: _on_propose opens the bill briefing; the division -- and the
+	# V5.3: the sheet's Propose divides at once; the division -- and the
 	# card this test pins -- is run_proposal(), the verb the briefing's own
 	# button routes into.
 	_main._law_panel.run_proposal(law)
