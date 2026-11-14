@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "NOR_skarstein_bygg",
-      "name": "Skarstein Bygg",
+      "name": "Skarstein Handel",
       "sector": "agriculture",
       "share": 0.28,
       "headcount": 28289,
@@ -54,7 +54,7 @@
     },
     {
       "id": "NOR_nesheim_forsikring",
-      "name": "Nesheim Forsikring",
+      "name": "Nesheim Bygg",
       "sector": "industry",
       "share": 0.0787,
       "headcount": 43758,
@@ -74,7 +74,7 @@
     },
     {
       "id": "NOR_kvamme_industri",
-      "name": "Kvamme Industri",
+      "name": "Kvamme Logistikk",
       "sector": "services",
       "share": 0.0553,
       "headcount": 72821,
@@ -84,7 +84,7 @@
     },
     {
       "id": "NOR_skarstein_landbruk",
-      "name": "Skarstein Landbruk",
+      "name": "Skarstein Logistikk",
       "sector": "services",
       "share": 0.0373,
       "headcount": 49112,
@@ -94,7 +94,7 @@
     },
     {
       "id": "NOR_ulvestad_industri",
-      "name": "Ulvestad Industri",
+      "name": "Ulvestad Handel",
       "sector": "services",
       "share": 0.0427,
       "headcount": 83936,
@@ -124,7 +124,7 @@
     },
     {
       "id": "NOR_myrvold_bygg",
-      "name": "Myrvold Bygg",
+      "name": "Myrvold Forsikring",
       "sector": "services",
       "share": 0.0518,
       "headcount": 96914,
@@ -136,7 +136,7 @@
   "body": [
     {
       "id": "NOR_bakketun_energi",
-      "name": "Bakketun Energi",
+      "name": "Bakketun Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2248,
@@ -145,7 +145,7 @@
     },
     {
       "id": "NOR_engebretsen_forsikring",
-      "name": "Engebretsen Forsikring",
+      "name": "Engebretsen Gruppen",
       "sector": "agriculture",
       "share": 0.0245,
       "headcount": 1926,
@@ -154,7 +154,7 @@
     },
     {
       "id": "NOR_sandvik_materialer",
-      "name": "Sandvik Materialer",
+      "name": "Mjelde Gruppen",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2417,
@@ -163,7 +163,7 @@
     },
     {
       "id": "NOR_isaksen_transport",
-      "name": "Isaksen Transport",
+      "name": "Isaksen Gruppen",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2668,
@@ -172,7 +172,7 @@
     },
     {
       "id": "NOR_sandvik_handel_industri",
-      "name": "Sandvik Handel Industri",
+      "name": "Engebretsen Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2511,
@@ -181,7 +181,7 @@
     },
     {
       "id": "NOR_lysne_transport",
-      "name": "Lysne Transport",
+      "name": "Lysne Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2281,
@@ -199,7 +199,7 @@
     },
     {
       "id": "NOR_ronneberg_materialer",
-      "name": "Rønneberg Materialer",
+      "name": "Rønneberg Landbruk",
       "sector": "agriculture",
       "share": 0.0158,
       "headcount": 1192,
@@ -208,7 +208,7 @@
     },
     {
       "id": "NOR_jordal_materialer",
-      "name": "Jordal Materialer",
+      "name": "Jordal Landbruk",
       "sector": "agriculture",
       "share": 0.0297,
       "headcount": 2258,
@@ -226,7 +226,7 @@
     },
     {
       "id": "NOR_dalsbo_transport",
-      "name": "Dalsbø Transport",
+      "name": "Dalsbø Landbruk",
       "sector": "agriculture",
       "share": 0.0134,
       "headcount": 1182,
@@ -235,7 +235,7 @@
     },
     {
       "id": "NOR_sandvik_forsikring",
-      "name": "Sandvik Forsikring",
+      "name": "Ulvestad Gruppen Landbruk",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2444,
@@ -253,7 +253,7 @@
     },
     {
       "id": "NOR_aasland_forsikring",
-      "name": "Aasland Forsikring",
+      "name": "Aasland Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2313,
@@ -262,7 +262,7 @@
     },
     {
       "id": "NOR_bakketun_materialer",
-      "name": "Bakketun Materialer",
+      "name": "Bakketun Landbruk",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2436,
@@ -271,7 +271,7 @@
     },
     {
       "id": "NOR_hagerup_forsikring",
-      "name": "Hagerup Forsikring",
+      "name": "Hagerup Gruppen",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2480,
@@ -280,7 +280,7 @@
     },
     {
       "id": "NOR_sandvik_landbruk",
-      "name": "Sandvik Landbruk",
+      "name": "Eidsvåg Bygg",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19901,
@@ -316,7 +316,7 @@
     },
     {
       "id": "NOR_lien_handel",
-      "name": "Lien Handel",
+      "name": "Lien Materialer",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18712,
@@ -325,7 +325,7 @@
     },
     {
       "id": "NOR_dalsbo_handel",
-      "name": "Dalsbø Handel",
+      "name": "Dalsbø Industri",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20119,
@@ -334,7 +334,7 @@
     },
     {
       "id": "NOR_myrvold_forsikring",
-      "name": "Myrvold Forsikring",
+      "name": "Myrvold Materialer",
       "sector": "industry",
       "share": 0.0291,
       "headcount": 17696,
@@ -352,7 +352,7 @@
     },
     {
       "id": "NOR_skarstein_forsikring_forsikring",
-      "name": "Skarstein Forsikring",
+      "name": "Skarstein Materialer",
       "sector": "industry",
       "share": 0.0105,
       "headcount": 6896,
@@ -370,7 +370,7 @@
     },
     {
       "id": "NOR_aasland_landbruk",
-      "name": "Aasland Landbruk",
+      "name": "Aasland Industri",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20739,
@@ -388,7 +388,7 @@
     },
     {
       "id": "NOR_vestby_logistikk",
-      "name": "Vestby Logistikk",
+      "name": "Vestby Industri",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19004,
@@ -424,7 +424,7 @@
     },
     {
       "id": "NOR_ronneberg_handel",
-      "name": "Rønneberg Handel",
+      "name": "Rønneberg Materialer",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18591,
@@ -442,7 +442,7 @@
     },
     {
       "id": "NOR_eidsvag_forsikring",
-      "name": "Eidsvåg Forsikring",
+      "name": "Eidsvåg Materialer",
       "sector": "industry",
       "share": 0.0285,
       "headcount": 17843,
@@ -451,7 +451,7 @@
     },
     {
       "id": "NOR_vestby_transport",
-      "name": "Vestby Transport",
+      "name": "Vestby Bygg",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19573,
@@ -460,7 +460,7 @@
     },
     {
       "id": "NOR_aamot_handel",
-      "name": "Aamot Handel",
+      "name": "Aamot Materialer",
       "sector": "industry",
       "share": 0.0162,
       "headcount": 10854,
@@ -469,7 +469,7 @@
     },
     {
       "id": "NOR_fjellstad_transport",
-      "name": "Fjellstad Transport",
+      "name": "Fjellstad Bygg",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19543,
@@ -478,7 +478,7 @@
     },
     {
       "id": "NOR_eidsvag_energi",
-      "name": "Eidsvåg Energi",
+      "name": "Eidsvåg Gruppen",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23520,
@@ -496,7 +496,7 @@
     },
     {
       "id": "NOR_brattli_landbruk",
-      "name": "Brattli Landbruk",
+      "name": "Brattli Forsikring",
       "sector": "services",
       "share": 0.0125,
       "headcount": 19399,
@@ -505,7 +505,7 @@
     },
     {
       "id": "NOR_lien_bygg",
-      "name": "Lien Bygg",
+      "name": "Lien Forsikring",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23993,
@@ -514,7 +514,7 @@
     },
     {
       "id": "NOR_fjellstad_materialer",
-      "name": "Fjellstad Materialer",
+      "name": "Fjellstad Handel",
       "sector": "services",
       "share": 0.0107,
       "headcount": 17605,
@@ -523,7 +523,7 @@
     },
     {
       "id": "NOR_isaksen_industri_logistikk",
-      "name": "Isaksen Industri Logistikk",
+      "name": "Isaksen Logistikk",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24195,
@@ -532,7 +532,7 @@
     },
     {
       "id": "NOR_isaksen_industri_landbruk",
-      "name": "Isaksen Industri Landbruk",
+      "name": "Isaksen Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22879,
@@ -568,7 +568,7 @@
     },
     {
       "id": "NOR_fjellstad_industri",
-      "name": "Fjellstad Industri",
+      "name": "Fjellstad Forsikring",
       "sector": "services",
       "share": 0.0065,
       "headcount": 8795,
@@ -577,7 +577,7 @@
     },
     {
       "id": "NOR_isaksen_landbruk",
-      "name": "Isaksen Landbruk",
+      "name": "Isaksen Handel Forsikring",
       "sector": "services",
       "share": 0.0104,
       "headcount": 15090,
@@ -613,7 +613,7 @@
     },
     {
       "id": "NOR_tangen_energi",
-      "name": "Tangen Energi",
+      "name": "Tangen Forsikring",
       "sector": "services",
       "share": 0.0106,
       "headcount": 14359,
@@ -622,7 +622,7 @@
     },
     {
       "id": "NOR_engebretsen_landbruk",
-      "name": "Engebretsen Landbruk",
+      "name": "Engebretsen Forsikring",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23063,
@@ -631,7 +631,7 @@
     },
     {
       "id": "NOR_ronneberg_forsikring_landbruk",
-      "name": "Rønneberg Forsikring Landbruk",
+      "name": "Rønneberg Forsikring",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24786,
@@ -640,7 +640,7 @@
     },
     {
       "id": "NOR_folkestad_materialer",
-      "name": "Folkestad Materialer",
+      "name": "Folkestad Logistikk",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24262,
@@ -676,7 +676,7 @@
     },
     {
       "id": "NOR_jordal_bygg",
-      "name": "Jordal Bygg",
+      "name": "Jordal Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22722,
@@ -685,7 +685,7 @@
     },
     {
       "id": "NOR_hagerup_landbruk_forsikring",
-      "name": "Hagerup Landbruk Forsikring",
+      "name": "Hagerup Forsikring",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22759,
@@ -712,7 +712,7 @@
     },
     {
       "id": "NOR_hovden_bygg",
-      "name": "Hovden Bygg",
+      "name": "Hovden Gruppen",
       "sector": "services",
       "share": 0.0095,
       "headcount": 13580,
@@ -721,7 +721,7 @@
     },
     {
       "id": "NOR_hagerup_materialer_handel",
-      "name": "Hagerup Materialer Handel",
+      "name": "Hagerup Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24546,
@@ -739,7 +739,7 @@
     },
     {
       "id": "NOR_brattli_energi_landbruk",
-      "name": "Brattli Energi Landbruk",
+      "name": "Brattli Gruppen",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23854,
@@ -766,7 +766,7 @@
     },
     {
       "id": "NOR_brattli_energi",
-      "name": "Brattli Energi",
+      "name": "Brattli Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23702,
@@ -775,7 +775,7 @@
     },
     {
       "id": "NOR_jordal_industri_forsikring",
-      "name": "Jordal Industri Forsikring",
+      "name": "Jordal Forsikring",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22917,
@@ -793,7 +793,7 @@
     },
     {
       "id": "NOR_hagerup_energi",
-      "name": "Hagerup Energi",
+      "name": "Hagerup Logistikk Forsikring",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24935,
@@ -811,7 +811,7 @@
     },
     {
       "id": "NOR_ulvestad_logistikk_bygg",
-      "name": "Ulvestad Logistikk Bygg",
+      "name": "Ulvestad Logistikk",
       "sector": "services",
       "share": 0.0165,
       "headcount": 24839,
@@ -820,7 +820,7 @@
     },
     {
       "id": "NOR_myrvold_energi",
-      "name": "Myrvold Energi",
+      "name": "Myrvold Logistikk",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23811,
@@ -847,7 +847,7 @@
     },
     {
       "id": "NOR_aamot_industri",
-      "name": "Aamot Industri",
+      "name": "Aamot Gruppen",
       "sector": "services",
       "share": 0.0018,
       "headcount": 2523,

@@ -24,7 +24,7 @@
     },
     {
       "id": "ITA_brancadoro_commercio",
-      "name": "Brancadoro Commercio",
+      "name": "Brancadoro Energia",
       "sector": "industry",
       "share": 0.0612,
       "headcount": 52497,
@@ -136,7 +136,7 @@
   "body": [
     {
       "id": "ITA_malpieri_energia",
-      "name": "Malpieri Energia",
+      "name": "Malpieri Commercio",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2624,
@@ -154,7 +154,7 @@
     },
     {
       "id": "ITA_palminteri_costruzioni",
-      "name": "Palminteri Costruzioni",
+      "name": "Palminteri Commercio",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2303,
@@ -163,7 +163,7 @@
     },
     {
       "id": "ITA_rizzetto_assicurazioni",
-      "name": "Rizzetto Assicurazioni",
+      "name": "Rizzetto Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2395,
@@ -181,7 +181,7 @@
     },
     {
       "id": "ITA_dell_orto_logistica",
-      "name": "Dell'Orto Logistica",
+      "name": "Natalicchio Gruppo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2611,
@@ -208,7 +208,7 @@
     },
     {
       "id": "ITA_cuccurullo_logistica",
-      "name": "Cuccurullo Logistica",
+      "name": "Cuccurullo Agro",
       "sector": "agriculture",
       "share": 0.0226,
       "headcount": 1873,
@@ -217,7 +217,7 @@
     },
     {
       "id": "ITA_carafa_logistica",
-      "name": "Carafa Logistica",
+      "name": "Carafa Commercio",
       "sector": "agriculture",
       "share": 0.0154,
       "headcount": 1194,
@@ -226,7 +226,7 @@
     },
     {
       "id": "ITA_ravagnani_materiali",
-      "name": "Ravagnani Materiali",
+      "name": "Ravagnani Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2639,
@@ -235,7 +235,7 @@
     },
     {
       "id": "ITA_brancadoro_energia",
-      "name": "Brancadoro Energia",
+      "name": "Brancadoro Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2633,
@@ -244,7 +244,7 @@
     },
     {
       "id": "ITA_diotallevi_trasporti",
-      "name": "Diotallevi Trasporti",
+      "name": "Diotallevi Commercio",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2595,
@@ -253,7 +253,7 @@
     },
     {
       "id": "ITA_sconfienza_assicurazioni",
-      "name": "Sconfienza Assicurazioni",
+      "name": "Sconfienza Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2395,
@@ -262,7 +262,7 @@
     },
     {
       "id": "ITA_pischedda_assicurazioni",
-      "name": "Pischedda Assicurazioni",
+      "name": "Pischedda Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2441,
@@ -271,7 +271,7 @@
     },
     {
       "id": "ITA_laudomi_energia",
-      "name": "Laudomi Energia",
+      "name": "Laudomi Gruppo",
       "sector": "agriculture",
       "share": 0.0152,
       "headcount": 1216,
@@ -280,7 +280,7 @@
     },
     {
       "id": "ITA_ferruzzi_agro",
-      "name": "Ferruzzi Agro",
+      "name": "Palminteri Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2332,
@@ -298,7 +298,7 @@
     },
     {
       "id": "ITA_marchionni_commercio",
-      "name": "Marchionni Commercio",
+      "name": "Marchionni Materiali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20594,
@@ -316,7 +316,7 @@
     },
     {
       "id": "ITA_diotallevi_logistica",
-      "name": "Diotallevi Logistica",
+      "name": "Diotallevi Gruppo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22134,
@@ -325,7 +325,7 @@
     },
     {
       "id": "ITA_serafini_logistica",
-      "name": "Serafini Logistica",
+      "name": "Serafini Materiali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21946,
@@ -334,7 +334,7 @@
     },
     {
       "id": "ITA_ravagnani_commercio",
-      "name": "Ravagnani Commercio",
+      "name": "Ravagnani Materiali",
       "sector": "industry",
       "share": 0.0131,
       "headcount": 9651,
@@ -352,7 +352,7 @@
     },
     {
       "id": "ITA_albinetti_agro",
-      "name": "Albinetti Agro",
+      "name": "Albinetti Gruppo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22107,
@@ -361,7 +361,7 @@
     },
     {
       "id": "ITA_laudomi_assicurazioni_agro",
-      "name": "Laudomi Assicurazioni Agro",
+      "name": "Laudomi Industrie",
       "sector": "industry",
       "share": 0.0196,
       "headcount": 12865,
@@ -370,7 +370,7 @@
     },
     {
       "id": "ITA_ferruzzi_commercio",
-      "name": "Ferruzzi Commercio",
+      "name": "Lombrosio Materiali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18690,
@@ -388,7 +388,7 @@
     },
     {
       "id": "ITA_aloisio_logistica",
-      "name": "Aloisio Logistica",
+      "name": "Aloisio Materiali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18751,
@@ -415,7 +415,7 @@
     },
     {
       "id": "ITA_nesci_trasporti",
-      "name": "Nesci Trasporti",
+      "name": "Nesci Gruppo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19819,
@@ -424,7 +424,7 @@
     },
     {
       "id": "ITA_sferrazza_commercio",
-      "name": "Sferrazza Commercio",
+      "name": "Sferrazza Industrie",
       "sector": "industry",
       "share": 0.0226,
       "headcount": 16152,
@@ -433,7 +433,7 @@
     },
     {
       "id": "ITA_imbruglia_agro",
-      "name": "Imbruglia Agro",
+      "name": "Imbruglia Energia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18415,
@@ -487,7 +487,7 @@
     },
     {
       "id": "ITA_laudomi_agro",
-      "name": "Laudomi Agro",
+      "name": "Laudomi Materiali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18321,
@@ -496,7 +496,7 @@
     },
     {
       "id": "ITA_gentileschi_industrie",
-      "name": "Gentileschi Industrie",
+      "name": "Gentileschi Assicurazioni",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24508,
@@ -505,7 +505,7 @@
     },
     {
       "id": "ITA_tirabassi_materiali_gruppo",
-      "name": "Tirabassi Materiali Gruppo",
+      "name": "Tirabassi Gruppo",
       "sector": "services",
       "share": 0.0159,
       "headcount": 24785,
@@ -523,7 +523,7 @@
     },
     {
       "id": "ITA_reali_industrie",
-      "name": "Reali Industrie",
+      "name": "Reali Gruppo",
       "sector": "services",
       "share": 0.0139,
       "headcount": 19132,
@@ -532,7 +532,7 @@
     },
     {
       "id": "ITA_gentileschi_gruppo_materiali",
-      "name": "Gentileschi Gruppo Materiali",
+      "name": "Gentileschi Gruppo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23001,
@@ -550,7 +550,7 @@
     },
     {
       "id": "ITA_diotallevi_materiali",
-      "name": "Diotallevi Materiali",
+      "name": "Diotallevi Logistica",
       "sector": "services",
       "share": 0.0105,
       "headcount": 14716,
@@ -559,7 +559,7 @@
     },
     {
       "id": "ITA_dossena_assicurazioni_industrie",
-      "name": "Dossena Assicurazioni Industrie",
+      "name": "Dossena Assicurazioni",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24605,
@@ -568,7 +568,7 @@
     },
     {
       "id": "ITA_ursini_industrie_assicurazioni",
-      "name": "Ursini Industrie Assicurazioni",
+      "name": "Ursini Assicurazioni",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24529,
@@ -586,7 +586,7 @@
     },
     {
       "id": "ITA_orsini_agro",
-      "name": "Orsini Agro",
+      "name": "Orsini Gruppo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24811,
@@ -595,7 +595,7 @@
     },
     {
       "id": "ITA_diotallevi_industrie",
-      "name": "Diotallevi Industrie",
+      "name": "Diotallevi Trasporti",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24561,
@@ -604,7 +604,7 @@
     },
     {
       "id": "ITA_zanolla_industrie",
-      "name": "Zanolla Industrie",
+      "name": "Zanolla Trasporti",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23962,
@@ -622,7 +622,7 @@
     },
     {
       "id": "ITA_nucci_costruzioni",
-      "name": "Nucci Costruzioni",
+      "name": "Nucci Commercio",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24600,
@@ -649,7 +649,7 @@
     },
     {
       "id": "ITA_ferretti_materiali",
-      "name": "Ferretti Materiali",
+      "name": "Imbruglia Logistica",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23718,
@@ -658,7 +658,7 @@
     },
     {
       "id": "ITA_lombrosio_costruzioni",
-      "name": "Lombrosio Costruzioni",
+      "name": "Lombrosio Trasporti",
       "sector": "services",
       "share": 0.0115,
       "headcount": 16155,
@@ -667,7 +667,7 @@
     },
     {
       "id": "ITA_zanolla_trasporti_costruzioni",
-      "name": "Zanolla Trasporti Costruzioni",
+      "name": "Zanolla Commercio",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23540,
@@ -676,7 +676,7 @@
     },
     {
       "id": "ITA_oliverio_energia",
-      "name": "Oliverio Energia",
+      "name": "Oliverio Logistica",
       "sector": "services",
       "share": 0.0094,
       "headcount": 13817,
@@ -694,7 +694,7 @@
     },
     {
       "id": "ITA_sconfienza_energia",
-      "name": "Sconfienza Energia",
+      "name": "Sconfienza Logistica",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23460,
@@ -703,7 +703,7 @@
     },
     {
       "id": "ITA_imperiali_energia",
-      "name": "Imperiali Energia",
+      "name": "Imperiali Gruppo",
       "sector": "services",
       "share": 0.0164,
       "headcount": 24793,
@@ -712,7 +712,7 @@
     },
     {
       "id": "ITA_imperiali_industrie",
-      "name": "Imperiali Industrie",
+      "name": "Imperiali Commercio",
       "sector": "services",
       "share": 0.0093,
       "headcount": 14978,
@@ -721,7 +721,7 @@
     },
     {
       "id": "ITA_marchionni_commercio_energia",
-      "name": "Marchionni Commercio Energia",
+      "name": "Marchionni Commercio",
       "sector": "services",
       "share": 0.0137,
       "headcount": 18870,
@@ -730,7 +730,7 @@
     },
     {
       "id": "ITA_mancuso_agro",
-      "name": "Mancuso Agro",
+      "name": "Mancuso Assicurazioni",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23684,
@@ -748,7 +748,7 @@
     },
     {
       "id": "ITA_gargiulo_costruzioni",
-      "name": "Gargiulo Costruzioni",
+      "name": "Gargiulo Trasporti",
       "sector": "services",
       "share": 0.0164,
       "headcount": 24790,
@@ -766,7 +766,7 @@
     },
     {
       "id": "ITA_ferradini_industrie",
-      "name": "Ferradini Industrie",
+      "name": "Ferradini Assicurazioni",
       "sector": "services",
       "share": 0.0163,
       "headcount": 24633,
@@ -793,7 +793,7 @@
     },
     {
       "id": "ITA_petroselli_energia",
-      "name": "Petroselli Energia",
+      "name": "Petroselli Logistica",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22997,
@@ -811,7 +811,7 @@
     },
     {
       "id": "ITA_quarta_materiali",
-      "name": "Quarta Materiali",
+      "name": "Quarta Gruppo",
       "sector": "services",
       "share": 0.0161,
       "headcount": 24043,
@@ -820,7 +820,7 @@
     },
     {
       "id": "ITA_reali_logistica_materiali",
-      "name": "Reali Logistica Materiali",
+      "name": "Reali Logistica",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23391,
@@ -847,7 +847,7 @@
     },
     {
       "id": "ITA_taddei_costruzioni",
-      "name": "Taddei Costruzioni",
+      "name": "Taddei Assicurazioni",
       "sector": "services",
       "share": 0.0032,
       "headcount": 5050,

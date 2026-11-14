@@ -24,7 +24,7 @@
     },
     {
       "id": "CZE_toman_logistika",
-      "name": "Toman Logistika",
+      "name": "Toman Materiály",
       "sector": "industry",
       "share": 0.1094,
       "headcount": 88920,
@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "CZE_kroupa_logistika",
-      "name": "Kroupa Logistika",
+      "name": "Kroupa Skupina",
       "sector": "agriculture",
       "share": 0.01,
       "headcount": 763,
@@ -134,7 +134,7 @@
     },
     {
       "id": "CZE_marek_stavebnictvi",
-      "name": "Marek Stavebnictví",
+      "name": "Marek Skupina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2642,
@@ -143,7 +143,7 @@
     },
     {
       "id": "CZE_bartos_logistika",
-      "name": "Bartoš Logistika",
+      "name": "Bartoš Skupina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2218,
@@ -161,7 +161,7 @@
     },
     {
       "id": "CZE_cvejn_energetika",
-      "name": "Cvejn Energetika",
+      "name": "Cvejn Obchod",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2308,
@@ -179,7 +179,7 @@
     },
     {
       "id": "CZE_sova_doprava",
-      "name": "Sova Doprava",
+      "name": "Sova Zemědělství",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2542,
@@ -188,7 +188,7 @@
     },
     {
       "id": "CZE_cvejn_materialy",
-      "name": "Cvejn Materiály",
+      "name": "Cvejn Skupina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2376,
@@ -197,7 +197,7 @@
     },
     {
       "id": "CZE_tesar_energetika",
-      "name": "Tesař Energetika",
+      "name": "Tesař Obchod",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2415,
@@ -215,7 +215,7 @@
     },
     {
       "id": "CZE_cisar_prumysl",
-      "name": "Císař Průmysl",
+      "name": "Císař Skupina",
       "sector": "agriculture",
       "share": 0.0158,
       "headcount": 1303,
@@ -233,7 +233,7 @@
     },
     {
       "id": "CZE_uhlir_energetika",
-      "name": "Uhlíř Energetika",
+      "name": "Uhlíř Skupina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2572,
@@ -251,7 +251,7 @@
     },
     {
       "id": "CZE_zemek_materialy",
-      "name": "Zemek Materiály",
+      "name": "Zemek Skupina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2265,
@@ -269,7 +269,7 @@
     },
     {
       "id": "CZE_havlicek_obchod",
-      "name": "Havlíček Obchod",
+      "name": "Havlíček Stavebnictví",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19297,
@@ -278,7 +278,7 @@
     },
     {
       "id": "CZE_fialka_logistika",
-      "name": "Fialka Logistika",
+      "name": "Fialka Energetika",
       "sector": "industry",
       "share": 0.0252,
       "headcount": 18354,
@@ -296,7 +296,7 @@
     },
     {
       "id": "CZE_panek_doprava",
-      "name": "Pánek Doprava",
+      "name": "Pánek Materiály",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19550,
@@ -305,7 +305,7 @@
     },
     {
       "id": "CZE_travnicek_zemedelstvi",
-      "name": "Trávníček Zemědělství",
+      "name": "Trávníček Stavebnictví",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21144,
@@ -314,7 +314,7 @@
     },
     {
       "id": "CZE_fojtik_pojisteni",
-      "name": "Fojtík Pojištění",
+      "name": "Fojtík Skupina",
       "sector": "industry",
       "share": 0.0181,
       "headcount": 11965,
@@ -323,7 +323,7 @@
     },
     {
       "id": "CZE_marek_pojisteni",
-      "name": "Marek Pojištění",
+      "name": "Marek Energetika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18670,
@@ -332,7 +332,7 @@
     },
     {
       "id": "CZE_jilek_pojisteni",
-      "name": "Jílek Pojištění",
+      "name": "Jílek Skupina",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19947,
@@ -350,7 +350,7 @@
     },
     {
       "id": "CZE_sedlacek_zemedelstvi",
-      "name": "Sedláček Zemědělství",
+      "name": "Sedláček Stavebnictví",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19724,
@@ -359,7 +359,7 @@
     },
     {
       "id": "CZE_malecek_doprava",
-      "name": "Maleček Doprava",
+      "name": "Maleček Stavebnictví",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18364,
@@ -368,7 +368,7 @@
     },
     {
       "id": "CZE_vanek_skupina_obchod",
-      "name": "Vaněk Skupina Obchod",
+      "name": "Vaněk Skupina",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20340,
@@ -386,7 +386,7 @@
     },
     {
       "id": "CZE_kopecky_zemedelstvi",
-      "name": "Kopecký Zemědělství",
+      "name": "Kopecký Skupina",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18834,
@@ -404,7 +404,7 @@
     },
     {
       "id": "CZE_duda_doprava",
-      "name": "Duda Doprava",
+      "name": "Duda Energetika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19088,
@@ -422,7 +422,7 @@
     },
     {
       "id": "CZE_nedved_zemedelstvi",
-      "name": "Nedvěd Zemědělství",
+      "name": "Nedvěd Průmysl",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21947,
@@ -431,7 +431,7 @@
     },
     {
       "id": "CZE_zahradka_pojisteni",
-      "name": "Zahrádka Pojištění",
+      "name": "Zahrádka Skupina",
       "sector": "industry",
       "share": 0.0122,
       "headcount": 7924,
@@ -440,7 +440,7 @@
     },
     {
       "id": "CZE_petr_doprava",
-      "name": "Petr Doprava",
+      "name": "Petr Skupina",
       "sector": "industry",
       "share": 0.0184,
       "headcount": 12897,
@@ -449,7 +449,7 @@
     },
     {
       "id": "CZE_cisar_pojisteni",
-      "name": "Císař Pojištění",
+      "name": "Císař Materiály",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22126,
@@ -467,7 +467,7 @@
     },
     {
       "id": "CZE_cvejn_pojisteni",
-      "name": "Cvejn Pojištění",
+      "name": "Cvejn Energetika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20636,
@@ -476,7 +476,7 @@
     },
     {
       "id": "CZE_lukes_stavebnictvi",
-      "name": "Lukeš Stavebnictví",
+      "name": "Lukeš Doprava",
       "sector": "services",
       "share": 0.0063,
       "headcount": 9139,
@@ -494,7 +494,7 @@
     },
     {
       "id": "CZE_nemec_prumysl",
-      "name": "Němec Průmysl",
+      "name": "Němec Pojištění",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23071,
@@ -503,7 +503,7 @@
     },
     {
       "id": "CZE_dolezal_energetika",
-      "name": "Doležal Energetika",
+      "name": "Doležal Obchod",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23681,
@@ -530,7 +530,7 @@
     },
     {
       "id": "CZE_fojtik_logistika_energetika",
-      "name": "Fojtík Logistika Energetika",
+      "name": "Fojtík Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24226,
@@ -548,7 +548,7 @@
     },
     {
       "id": "CZE_zemek_prumysl",
-      "name": "Zemek Průmysl",
+      "name": "Zemek Obchod",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23526,
@@ -566,7 +566,7 @@
     },
     {
       "id": "CZE_musil_prumysl",
-      "name": "Musil Průmysl",
+      "name": "Musil Doprava",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24341,
@@ -575,7 +575,7 @@
     },
     {
       "id": "CZE_fojtik_prumysl",
-      "name": "Fojtík Průmysl",
+      "name": "Fojtík Doprava",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24977,
@@ -584,7 +584,7 @@
     },
     {
       "id": "CZE_malecek_materialy",
-      "name": "Maleček Materiály",
+      "name": "Maleček Skupina",
       "sector": "services",
       "share": 0.0157,
       "headcount": 24217,
@@ -602,7 +602,7 @@
     },
     {
       "id": "CZE_malecek_pojisteni_materialy",
-      "name": "Maleček Pojištění Materiály",
+      "name": "Maleček Pojištění",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23556,
@@ -620,7 +620,7 @@
     },
     {
       "id": "CZE_chmelar_prumysl",
-      "name": "Chmelař Průmysl",
+      "name": "Chmelař Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23968,
@@ -629,7 +629,7 @@
     },
     {
       "id": "CZE_toman_energetika",
-      "name": "Toman Energetika",
+      "name": "Toman Obchod",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24411,
@@ -647,7 +647,7 @@
     },
     {
       "id": "CZE_duda_zemedelstvi",
-      "name": "Duda Zemědělství",
+      "name": "Duda Pojištění",
       "sector": "services",
       "share": 0.0105,
       "headcount": 14290,
@@ -656,7 +656,7 @@
     },
     {
       "id": "CZE_uhlir_stavebnictvi",
-      "name": "Uhlíř Stavebnictví",
+      "name": "Uhlíř Obchod",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24065,
@@ -665,7 +665,7 @@
     },
     {
       "id": "CZE_vavra_energetika",
-      "name": "Vávra Energetika",
+      "name": "Vávra Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24741,
@@ -674,7 +674,7 @@
     },
     {
       "id": "CZE_fiser_prumysl",
-      "name": "Fišer Průmysl",
+      "name": "Fišer Pojištění",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23253,
@@ -692,7 +692,7 @@
     },
     {
       "id": "CZE_nemec_stavebnictvi",
-      "name": "Němec Stavebnictví",
+      "name": "Němec Doprava",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23133,
@@ -701,7 +701,7 @@
     },
     {
       "id": "CZE_beran_zemedelstvi",
-      "name": "Beran Zemědělství",
+      "name": "Beran Pojištění",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24293,
@@ -710,7 +710,7 @@
     },
     {
       "id": "CZE_jires_energetika",
-      "name": "Jireš Energetika",
+      "name": "Jireš Skupina",
       "sector": "services",
       "share": 0.013,
       "headcount": 18088,
@@ -719,7 +719,7 @@
     },
     {
       "id": "CZE_simek_materialy",
-      "name": "Šimek Materiály",
+      "name": "Šimek Obchod",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24572,
@@ -746,7 +746,7 @@
     },
     {
       "id": "CZE_beran_materialy",
-      "name": "Beran Materiály",
+      "name": "Beran Obchod",
       "sector": "services",
       "share": 0.0115,
       "headcount": 15728,
@@ -755,7 +755,7 @@
     },
     {
       "id": "CZE_duda_stavebnictvi",
-      "name": "Duda Stavebnictví",
+      "name": "Duda Skupina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22634,
@@ -764,7 +764,7 @@
     },
     {
       "id": "CZE_kalous_zemedelstvi",
-      "name": "Kalous Zemědělství",
+      "name": "Kalous Doprava",
       "sector": "services",
       "share": 0.0083,
       "headcount": 13568,
@@ -773,7 +773,7 @@
     },
     {
       "id": "CZE_pribyl_zemedelstvi",
-      "name": "Přibyl Zemědělství",
+      "name": "Přibyl Doprava",
       "sector": "services",
       "share": 0.0095,
       "headcount": 13583,
@@ -791,7 +791,7 @@
     },
     {
       "id": "CZE_fiser_obchod_prumysl",
-      "name": "Fišer Obchod Průmysl",
+      "name": "Fišer Obchod",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24740,
@@ -809,7 +809,7 @@
     },
     {
       "id": "CZE_bartos_energetika",
-      "name": "Bartoš Energetika",
+      "name": "Bartoš Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23270,
@@ -854,7 +854,7 @@
     },
     {
       "id": "CZE_hofman_energetika",
-      "name": "Hofman Energetika",
+      "name": "Hofman Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24579,
@@ -863,7 +863,7 @@
     },
     {
       "id": "CZE_malecek_zemedelstvi_zemedelstvi",
-      "name": "Maleček Zemědělství",
+      "name": "Maleček Obchod",
       "sector": "services",
       "share": 0.0124,
       "headcount": 19972,

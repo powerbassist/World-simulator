@@ -24,7 +24,7 @@
     },
     {
       "id": "BIH_mehic_poljoprivreda",
-      "name": "Mehić Poljoprivreda",
+      "name": "Mehić Građevina",
       "sector": "industry",
       "share": 0.0868,
       "headcount": 43955,
@@ -54,7 +54,7 @@
     },
     {
       "id": "BIH_karic_gradevina",
-      "name": "Karić Građevina",
+      "name": "Karić Osiguranje",
       "sector": "services",
       "share": 0.0224,
       "headcount": 42882,
@@ -64,7 +64,7 @@
     },
     {
       "id": "BIH_colic_energija",
-      "name": "Čolić Energija",
+      "name": "Čolić Osiguranje",
       "sector": "services",
       "share": 0.0381,
       "headcount": 58207,
@@ -74,7 +74,7 @@
     },
     {
       "id": "BIH_mujic_energija",
-      "name": "Mujić Energija",
+      "name": "Mujić Logistika",
       "sector": "services",
       "share": 0.0382,
       "headcount": 70793,
@@ -135,7 +135,7 @@
     },
     {
       "id": "BIH_tufek_logistika",
-      "name": "Tufek Logistika",
+      "name": "Tufek Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2643,
@@ -144,7 +144,7 @@
     },
     {
       "id": "BIH_ramic_transport",
-      "name": "Ramić Transport",
+      "name": "Ramić Grupa",
       "sector": "agriculture",
       "share": 0.0263,
       "headcount": 2057,
@@ -153,7 +153,7 @@
     },
     {
       "id": "BIH_vranic_gradevina",
-      "name": "Vranić Građevina",
+      "name": "Vranić Poljoprivreda",
       "sector": "agriculture",
       "share": 0.0181,
       "headcount": 1561,
@@ -171,7 +171,7 @@
     },
     {
       "id": "BIH_nuhic_transport",
-      "name": "Nuhić Transport",
+      "name": "Nuhić Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2620,
@@ -189,7 +189,7 @@
     },
     {
       "id": "BIH_zukic_materijali_osiguranje",
-      "name": "Zukić Materijali Osiguranje",
+      "name": "Zukić Grupa",
       "sector": "agriculture",
       "share": 0.0221,
       "headcount": 1887,
@@ -198,7 +198,7 @@
     },
     {
       "id": "BIH_halilovic_energija",
-      "name": "Halilović Energija",
+      "name": "Halilović Poljoprivreda",
       "sector": "agriculture",
       "share": 0.0143,
       "headcount": 1090,
@@ -225,7 +225,7 @@
     },
     {
       "id": "BIH_halilovic_industrija",
-      "name": "Halilović Industrija",
+      "name": "Halilović Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2464,
@@ -234,7 +234,7 @@
     },
     {
       "id": "BIH_vranic_osiguranje",
-      "name": "Vranić Osiguranje",
+      "name": "Vranić Grupa",
       "sector": "agriculture",
       "share": 0.0274,
       "headcount": 2095,
@@ -243,7 +243,7 @@
     },
     {
       "id": "BIH_efendic_osiguranje",
-      "name": "Efendić Osiguranje",
+      "name": "Efendić Poljoprivreda",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2312,
@@ -252,7 +252,7 @@
     },
     {
       "id": "BIH_softic_energija",
-      "name": "Softić Energija",
+      "name": "Softić Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2263,
@@ -270,7 +270,7 @@
     },
     {
       "id": "BIH_kovac_osiguranje",
-      "name": "Kovač Osiguranje",
+      "name": "Kovač Materijali",
       "sector": "industry",
       "share": 0.0234,
       "headcount": 16948,
@@ -288,7 +288,7 @@
     },
     {
       "id": "BIH_alic_logistika",
-      "name": "Alić Logistika",
+      "name": "Alić Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22095,
@@ -297,7 +297,7 @@
     },
     {
       "id": "BIH_halilovic_osiguranje",
-      "name": "Halilović Osiguranje",
+      "name": "Halilović Građevina",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19290,
@@ -324,7 +324,7 @@
     },
     {
       "id": "BIH_hasanovic_transport",
-      "name": "Hasanović Transport",
+      "name": "Hasanović Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18196,
@@ -351,7 +351,7 @@
     },
     {
       "id": "BIH_imamovic_osiguranje",
-      "name": "Imamović Osiguranje",
+      "name": "Imamović Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19132,
@@ -396,7 +396,7 @@
     },
     {
       "id": "BIH_dedic_poljoprivreda",
-      "name": "Dedić Poljoprivreda",
+      "name": "Dedić Materijali",
       "sector": "industry",
       "share": 0.028,
       "headcount": 18139,
@@ -414,7 +414,7 @@
     },
     {
       "id": "BIH_nuhic_poljoprivreda",
-      "name": "Nuhić Poljoprivreda",
+      "name": "Nuhić Industrija",
       "sector": "industry",
       "share": 0.0237,
       "headcount": 14471,
@@ -423,7 +423,7 @@
     },
     {
       "id": "BIH_efendic_trgovina",
-      "name": "Efendić Trgovina",
+      "name": "Efendić Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21779,
@@ -441,7 +441,7 @@
     },
     {
       "id": "BIH_dedic_trgovina",
-      "name": "Dedić Trgovina",
+      "name": "Dedić Energija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19465,
@@ -468,7 +468,7 @@
     },
     {
       "id": "BIH_pasic_industrija",
-      "name": "Pašić Industrija",
+      "name": "Pašić Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24996,
@@ -477,7 +477,7 @@
     },
     {
       "id": "BIH_pasic_energija",
-      "name": "Pašić Energija",
+      "name": "Pašić Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24051,
@@ -495,7 +495,7 @@
     },
     {
       "id": "BIH_mujic_industrija",
-      "name": "Mujić Industrija",
+      "name": "Mujić Trgovina",
       "sector": "services",
       "share": 0.0165,
       "headcount": 23035,
@@ -513,7 +513,7 @@
     },
     {
       "id": "BIH_karic_industrija",
-      "name": "Karić Industrija",
+      "name": "Karić Grupa",
       "sector": "services",
       "share": 0.0141,
       "headcount": 19193,
@@ -531,7 +531,7 @@
     },
     {
       "id": "BIH_beslagic_energija",
-      "name": "Bešlagić Energija",
+      "name": "Bešlagić Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23700,
@@ -558,7 +558,7 @@
     },
     {
       "id": "BIH_softic_trgovina_energija",
-      "name": "Softić Trgovina Energija",
+      "name": "Softić Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22716,
@@ -567,7 +567,7 @@
     },
     {
       "id": "BIH_nuhic_energija",
-      "name": "Nuhić Energija",
+      "name": "Nuhić Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24212,
@@ -576,7 +576,7 @@
     },
     {
       "id": "BIH_softic_logistika_energija",
-      "name": "Softić Logistika Energija",
+      "name": "Softić Logistika",
       "sector": "services",
       "share": 0.0115,
       "headcount": 18436,
@@ -621,7 +621,7 @@
     },
     {
       "id": "BIH_mujic_poljoprivreda",
-      "name": "Mujić Poljoprivreda",
+      "name": "Mujić Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24385,
@@ -630,7 +630,7 @@
     },
     {
       "id": "BIH_begovic_energija",
-      "name": "Begović Energija",
+      "name": "Begović Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23379,
@@ -648,7 +648,7 @@
     },
     {
       "id": "BIH_pasic_materijali",
-      "name": "Pašić Materijali",
+      "name": "Pašić Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23979,
@@ -657,7 +657,7 @@
     },
     {
       "id": "BIH_zukic_industrija",
-      "name": "Zukić Industrija",
+      "name": "Zukić Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24320,
@@ -666,7 +666,7 @@
     },
     {
       "id": "BIH_topic_energija",
-      "name": "Topić Energija",
+      "name": "Topić Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24997,
@@ -675,7 +675,7 @@
     },
     {
       "id": "BIH_efendic_energija_logistika",
-      "name": "Efendić Energija Logistika",
+      "name": "Efendić Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23992,
@@ -711,7 +711,7 @@
     },
     {
       "id": "BIH_zukic_energija",
-      "name": "Zukić Energija",
+      "name": "Zukić Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23544,
@@ -729,7 +729,7 @@
     },
     {
       "id": "BIH_ljubic_energija",
-      "name": "Ljubić Energija",
+      "name": "Ljubić Grupa",
       "sector": "services",
       "share": 0.0097,
       "headcount": 14611,
@@ -756,7 +756,7 @@
     },
     {
       "id": "BIH_halilovic_osiguranje_poljoprivreda",
-      "name": "Halilović Osiguranje Poljoprivreda",
+      "name": "Halilović Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23704,
@@ -774,7 +774,7 @@
     },
     {
       "id": "BIH_catic_industrija",
-      "name": "Ćatić Industrija",
+      "name": "Ćatić Osiguranje",
       "sector": "services",
       "share": 0.0126,
       "headcount": 17783,
@@ -783,7 +783,7 @@
     },
     {
       "id": "BIH_ramic_industrija",
-      "name": "Ramić Industrija",
+      "name": "Ramić Transport",
       "sector": "services",
       "share": 0.0099,
       "headcount": 15685,
@@ -801,7 +801,7 @@
     },
     {
       "id": "BIH_hasanovic_gradevina",
-      "name": "Hasanović Građevina",
+      "name": "Hasanović Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24025,
@@ -819,7 +819,7 @@
     },
     {
       "id": "BIH_begovic_poljoprivreda_energija",
-      "name": "Begović Poljoprivreda Energija",
+      "name": "Begović Logistika",
       "sector": "services",
       "share": 0.0093,
       "headcount": 13101,
