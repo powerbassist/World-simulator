@@ -162,7 +162,7 @@
     },
     {
       "id": "UKR_panchenko_enerhiia_enerhiia",
-      "name": "Panchenko Enerhiia Enerhiia",
+      "name": "Panchenko Lohistyka",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2242,
@@ -549,7 +549,7 @@
     },
     {
       "id": "UKR_zakharchuk_enerhiia_enerhiia",
-      "name": "Zakharchuk Enerhiia Enerhiia",
+      "name": "Zakharchuk Enerhiia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22652,
@@ -567,7 +567,7 @@
     },
     {
       "id": "UKR_fedorchuk_ahro_ahro",
-      "name": "Fedorchuk Ahro Ahro",
+      "name": "Fedorchuk Ahro",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23924,

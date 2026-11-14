@@ -54,6 +54,7 @@ func _init() -> void:
 		_test_body_bands()
 		_test_body_touched_roundtrip()
 		_test_product_lines()
+		_test_body_names_read_once()
 	_finish()
 
 
@@ -458,6 +459,25 @@ func _test_product_lines() -> void:
 			"headcount": 1000, "city": "FR1_paris", "products": []}, 0, "FRA.json", errors)
 	if errors.is_empty():
 		_fail("from_dict accepted an empty products array")
+
+
+## V5.3 a: the generator's collision fallback drew its two corporate words apart and
+## shipped "Laroussi Coopérative Coopérative" (Interface, screen 5); tools/firms_generate.py's
+## tidy_names repairs it. Pinned here because the generator's own --check runs in no CI
+## job: no firm name repeats a word, and names are unique within a nation.
+func _test_body_names_read_once() -> void:
+	for nation_id in _loader.companies.keys():
+		var seen := {}
+		for company in _loader.companies[nation_id]:
+			var words: PackedStringArray = String(company.company_name).split(" ", false)
+			var once := {}
+			for w in words:
+				once[w] = true
+			if once.size() != words.size():
+				_fail("%s's name '%s' repeats a word" % [company.id, company.company_name])
+			if seen.has(company.company_name):
+				_fail("%s: two firms named '%s'" % [nation_id, company.company_name])
+			seen[company.company_name] = true
 
 
 func _loader_company(company_id: String):

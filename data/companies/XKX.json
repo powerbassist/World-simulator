@@ -576,7 +576,7 @@
     },
     {
       "id": "XKX_dobruna_ndertimi_ndertimi",
-      "name": "Dobruna Ndërtimi Ndërtimi",
+      "name": "Dobruna Bujqësia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -792,7 +792,7 @@
     },
     {
       "id": "XKX_pllana_sigurimet_sigurimet",
-      "name": "Pllana Sigurimet Sigurimet",
+      "name": "Pllana Sigurimet",
       "sector": "services",
       "share": 0.0075,
       "headcount": 10497,

@@ -674,7 +674,7 @@
     },
     {
       "id": "SVN_hribar_materiali_materiali",
-      "name": "Hribar Materiali Materiali",
+      "name": "Hribar Materiali",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -746,7 +746,7 @@
     },
     {
       "id": "SVN_rupnik_industrija_industrija",
-      "name": "Rupnik Industrija Industrija",
+      "name": "Rupnik Industrija",
       "sector": "services",
       "share": 0.0155,
       "headcount": 24081,

@@ -176,7 +176,7 @@
     },
     {
       "id": "FRA_estagnol_transports",
-      "name": "Estagnol Transports",
+      "name": "Estagnol Groupe",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2192,
@@ -185,7 +185,7 @@
     },
     {
       "id": "FRA_turcy_assurances",
-      "name": "Turcy Assurances",
+      "name": "Turcy Agro",
       "sector": "agriculture",
       "share": 0.0265,
       "headcount": 1987,
@@ -194,7 +194,7 @@
     },
     {
       "id": "FRA_noyelle_logistique",
-      "name": "Noyelle Logistique",
+      "name": "Noyelle Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2306,
@@ -203,7 +203,7 @@
     },
     {
       "id": "FRA_clapiers_logistique",
-      "name": "Clapiers Logistique",
+      "name": "Clapiers Agricole",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2250,
@@ -212,7 +212,7 @@
     },
     {
       "id": "FRA_villedary_assurances",
-      "name": "Villedary Assurances",
+      "name": "Villedary Coopérative",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2598,
@@ -248,7 +248,7 @@
     },
     {
       "id": "FRA_pradelles_assurances",
-      "name": "Pradelles Assurances",
+      "name": "Pradelles Agricole",
       "sector": "agriculture",
       "share": 0.0253,
       "headcount": 2035,
@@ -257,7 +257,7 @@
     },
     {
       "id": "FRA_chalandre_assurances",
-      "name": "Chalandre Assurances",
+      "name": "Chalandre Coopérative",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2244,
@@ -266,7 +266,7 @@
     },
     {
       "id": "FRA_rivalland_assurances",
-      "name": "Rivalland Assurances",
+      "name": "Rivalland Agro",
       "sector": "agriculture",
       "share": 0.0135,
       "headcount": 1004,
@@ -284,7 +284,7 @@
     },
     {
       "id": "FRA_pradelles_materiaux",
-      "name": "Pradelles Matériaux",
+      "name": "Pradelles Groupe",
       "sector": "agriculture",
       "share": 0.0269,
       "headcount": 2252,
@@ -302,7 +302,7 @@
     },
     {
       "id": "FRA_sarrazin_transports",
-      "name": "Sarrazin Transports",
+      "name": "Sarrazin Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2223,
@@ -320,7 +320,7 @@
     },
     {
       "id": "FRA_bompard_energie",
-      "name": "Bompard Énergie",
+      "name": "Bompard Agricole",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2672,
@@ -329,7 +329,7 @@
     },
     {
       "id": "FRA_turcy_logistique",
-      "name": "Turcy Logistique",
+      "name": "Turcy Groupe",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2652,
@@ -347,7 +347,7 @@
     },
     {
       "id": "FRA_villedary_transports",
-      "name": "Villedary Transports",
+      "name": "Villedary Agricole",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2361,
@@ -365,7 +365,7 @@
     },
     {
       "id": "FRA_montfaucon_cooperative",
-      "name": "Montfaucon Coopérative",
+      "name": "Montfaucon Énergie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21674,
@@ -374,7 +374,7 @@
     },
     {
       "id": "FRA_yvrard_logistique",
-      "name": "Yvrard Logistique",
+      "name": "Yvrard Énergie",
       "sector": "industry",
       "share": 0.0174,
       "headcount": 11408,
@@ -383,7 +383,7 @@
     },
     {
       "id": "FRA_noyelle_transports",
-      "name": "Noyelle Transports",
+      "name": "Noyelle Groupe",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20273,
@@ -401,7 +401,7 @@
     },
     {
       "id": "FRA_valsergent_distribution",
-      "name": "Valsergent Distribution",
+      "name": "Valsergent Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20453,
@@ -410,7 +410,7 @@
     },
     {
       "id": "FRA_beaufour_transports",
-      "name": "Beaufour Transports",
+      "name": "Beaufour Industries",
       "sector": "industry",
       "share": 0.0189,
       "headcount": 13060,
@@ -419,7 +419,7 @@
     },
     {
       "id": "FRA_fermont_agro",
-      "name": "Fermont Agro",
+      "name": "Fermont Matériaux",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20647,
@@ -437,7 +437,7 @@
     },
     {
       "id": "FRA_grandjouan_distribution",
-      "name": "Grandjouan Distribution",
+      "name": "Grandjouan Mécanique",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21899,
@@ -455,7 +455,7 @@
     },
     {
       "id": "FRA_nogaret_logistique",
-      "name": "Nogaret Logistique",
+      "name": "Nogaret Industries",
       "sector": "industry",
       "share": 0.012,
       "headcount": 8187,
@@ -464,7 +464,7 @@
     },
     {
       "id": "FRA_sauvageot_cooperative",
-      "name": "Sauvageot Coopérative",
+      "name": "Sauvageot Mécanique",
       "sector": "industry",
       "share": 0.0263,
       "headcount": 18392,
@@ -473,7 +473,7 @@
     },
     {
       "id": "FRA_beaufour_distribution",
-      "name": "Beaufour Distribution",
+      "name": "Beaufour Mécanique",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21228,
@@ -482,7 +482,7 @@
     },
     {
       "id": "FRA_pradelles_cooperative",
-      "name": "Pradelles Coopérative",
+      "name": "Pradelles Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18821,
@@ -500,7 +500,7 @@
     },
     {
       "id": "FRA_bompard_logistique",
-      "name": "Bompard Logistique",
+      "name": "Bompard Mécanique",
       "sector": "industry",
       "share": 0.0284,
       "headcount": 19580,
@@ -518,7 +518,7 @@
     },
     {
       "id": "FRA_chassignol_distribution",
-      "name": "Chassignol Distribution",
+      "name": "Chassignol Énergie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20047,
@@ -536,7 +536,7 @@
     },
     {
       "id": "FRA_ollivier_assurances",
-      "name": "Ollivier Assurances",
+      "name": "Ollivier Matériaux",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19256,
@@ -554,7 +554,7 @@
     },
     {
       "id": "FRA_estagnol_cooperative",
-      "name": "Estagnol Coopérative",
+      "name": "Estagnol Énergie",
       "sector": "industry",
       "share": 0.0132,
       "headcount": 8853,
@@ -563,7 +563,7 @@
     },
     {
       "id": "FRA_rochecotte_distribution",
-      "name": "Rochecotte Distribution",
+      "name": "Rochecotte Groupe",
       "sector": "industry",
       "share": 0.02,
       "headcount": 12440,
@@ -572,7 +572,7 @@
     },
     {
       "id": "FRA_pradelles_cooperative_assurances",
-      "name": "Pradelles Coopérative Assurances",
+      "name": "Pradelles Matériaux",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21253,
@@ -581,7 +581,7 @@
     },
     {
       "id": "FRA_richebourg_agro",
-      "name": "Richebourg Agro",
+      "name": "Richebourg Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20285,
@@ -599,7 +599,7 @@
     },
     {
       "id": "FRA_moulinet_agro",
-      "name": "Moulinet Agro",
+      "name": "Moulinet Mécanique",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20644,
@@ -608,7 +608,7 @@
     },
     {
       "id": "FRA_lantier_agro",
-      "name": "Lantier Agro",
+      "name": "Lantier Groupe",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18184,
@@ -617,7 +617,7 @@
     },
     {
       "id": "FRA_montfaucon_distribution_energie",
-      "name": "Montfaucon Distribution Énergie",
+      "name": "Montfaucon Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18287,
@@ -626,7 +626,7 @@
     },
     {
       "id": "FRA_verchere_materiaux",
-      "name": "Verchère Matériaux",
+      "name": "Verchère Groupe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23150,
@@ -635,7 +635,7 @@
     },
     {
       "id": "FRA_fargeas_materiaux",
-      "name": "Fargeas Matériaux",
+      "name": "Fargeas Services",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24205,
@@ -653,7 +653,7 @@
     },
     {
       "id": "FRA_vincendon_logistique_logistique",
-      "name": "Vincendon Logistique Logistique",
+      "name": "Vincendon Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24077,
@@ -662,7 +662,7 @@
     },
     {
       "id": "FRA_zuber_cooperative",
-      "name": "Zuber Coopérative",
+      "name": "Zuber Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -671,7 +671,7 @@
     },
     {
       "id": "FRA_chauvire_agro",
-      "name": "Chauviré Agro",
+      "name": "Chauviré Assurances",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -689,7 +689,7 @@
     },
     {
       "id": "FRA_marchenay_energie",
-      "name": "Marchenay Énergie",
+      "name": "Marchenay Distribution",
       "sector": "services",
       "share": 0.0125,
       "headcount": 18309,
@@ -698,7 +698,7 @@
     },
     {
       "id": "FRA_morlaix_energie",
-      "name": "Morlaix Énergie",
+      "name": "Morlaix Groupe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23280,
@@ -761,7 +761,7 @@
     },
     {
       "id": "FRA_pradelles_materiaux_industries",
-      "name": "Pradelles Matériaux Industries",
+      "name": "Pradelles Distribution",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24312,
@@ -770,7 +770,7 @@
     },
     {
       "id": "FRA_turcy_materiaux",
-      "name": "Turcy Matériaux",
+      "name": "Turcy Assurances",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -788,7 +788,7 @@
     },
     {
       "id": "FRA_griveau_energie",
-      "name": "Griveau Énergie",
+      "name": "Griveau Groupe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24955,
@@ -797,7 +797,7 @@
     },
     {
       "id": "FRA_beaufour_cooperative",
-      "name": "Beaufour Coopérative",
+      "name": "Beaufour Distribution",
       "sector": "services",
       "share": 0.0058,
       "headcount": 8950,
@@ -806,7 +806,7 @@
     },
     {
       "id": "FRA_lantier_industries",
-      "name": "Lantier Industries",
+      "name": "Lantier Services",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -824,7 +824,7 @@
     },
     {
       "id": "FRA_forgues_industries",
-      "name": "Forgues Industries",
+      "name": "Forgues Services",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -860,7 +860,7 @@
     },
     {
       "id": "FRA_sarrazin_materiaux",
-      "name": "Sarrazin Matériaux",
+      "name": "Sarrazin Transports",
       "sector": "services",
       "share": 0.0142,
       "headcount": 22382,
@@ -869,7 +869,7 @@
     },
     {
       "id": "FRA_beaufour_energie_industries",
-      "name": "Beaufour Énergie Industries",
+      "name": "Beaufour Services",
       "sector": "services",
       "share": 0.0159,
       "headcount": 25000,
@@ -878,7 +878,7 @@
     },
     {
       "id": "FRA_nogaret_materiaux_industries",
-      "name": "Nogaret Matériaux Industries",
+      "name": "Nogaret Assurances",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -887,7 +887,7 @@
     },
     {
       "id": "FRA_laroussi_cooperative_cooperative",
-      "name": "Laroussi Coopérative Coopérative",
+      "name": "Laroussi Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -905,7 +905,7 @@
     },
     {
       "id": "FRA_montfaucon_agro",
-      "name": "Montfaucon Agro",
+      "name": "Montfaucon Groupe",
       "sector": "services",
       "share": 0.0101,
       "headcount": 16188,
@@ -923,7 +923,7 @@
     },
     {
       "id": "FRA_beaufour_logistique_cooperative",
-      "name": "Beaufour Logistique Coopérative",
+      "name": "Beaufour Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24784,
@@ -932,7 +932,7 @@
     },
     {
       "id": "FRA_perier_energie",
-      "name": "Périer Énergie",
+      "name": "Périer Distribution",
       "sector": "services",
       "share": 0.0098,
       "headcount": 14503,
@@ -941,7 +941,7 @@
     },
     {
       "id": "FRA_sarrazin_cooperative_agro",
-      "name": "Sarrazin Coopérative Agro",
+      "name": "Sarrazin Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24181,
@@ -977,7 +977,7 @@
     },
     {
       "id": "FRA_grandjouan_materiaux",
-      "name": "Grandjouan Matériaux",
+      "name": "Grandjouan Assurances",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -986,7 +986,7 @@
     },
     {
       "id": "FRA_perecourt_industries",
-      "name": "Pérecourt Industries",
+      "name": "Pérecourt Groupe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22798,
@@ -1004,7 +1004,7 @@
     },
     {
       "id": "FRA_villedieu_materiaux",
-      "name": "Villedieu Matériaux",
+      "name": "Villedieu Distribution",
       "sector": "services",
       "share": 0.0148,
       "headcount": 24226,
@@ -1013,7 +1013,7 @@
     },
     {
       "id": "FRA_clapiers_cooperative",
-      "name": "Clapiers Coopérative",
+      "name": "Clapiers Groupe",
       "sector": "services",
       "share": 0.0148,
       "headcount": 21695,
@@ -1022,7 +1022,7 @@
     },
     {
       "id": "FRA_saint_leger_energie",
-      "name": "Saint-Léger Énergie",
+      "name": "Saint-Léger Services",
       "sector": "services",
       "share": 0.014,
       "headcount": 22508,
@@ -1031,7 +1031,7 @@
     },
     {
       "id": "FRA_combret_industries",
-      "name": "Combret Industries",
+      "name": "Combret Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -1049,7 +1049,7 @@
     },
     {
       "id": "FRA_nogaret_materiaux",
-      "name": "Nogaret Matériaux",
+      "name": "Nogaret Groupe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22413,
@@ -1058,7 +1058,7 @@
     },
     {
       "id": "FRA_fermont_materiaux_materiaux",
-      "name": "Fermont Matériaux Matériaux",
+      "name": "Fermont Logistique",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -1076,7 +1076,7 @@
     },
     {
       "id": "FRA_vivier_agro_transports",
-      "name": "Vivier Agro Transports",
+      "name": "Vivier Transports",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24703,
@@ -1085,7 +1085,7 @@
     },
     {
       "id": "FRA_rivalland_agro_groupe",
-      "name": "Rivalland Agro Groupe",
+      "name": "Rivalland Services",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24584,
@@ -1094,7 +1094,7 @@
     },
     {
       "id": "FRA_perier_industries_energie",
-      "name": "Périer Industries Énergie",
+      "name": "Périer Assurances",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,

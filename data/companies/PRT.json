@@ -828,7 +828,7 @@
     },
     {
       "id": "PRT_bettencourt_grupo_grupo",
-      "name": "Bettencourt Grupo Grupo",
+      "name": "Bettencourt Grupo",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23143,
@@ -855,7 +855,7 @@
     },
     {
       "id": "PRT_aguiar_energia_energia",
-      "name": "Aguiar Energia Energia",
+      "name": "Aguiar Energia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24851,

@@ -613,7 +613,7 @@
     },
     {
       "id": "ALB_marku_energjia_energjia",
-      "name": "Marku Energjia Energjia",
+      "name": "Marku Energjia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,
@@ -649,7 +649,7 @@
     },
     {
       "id": "ALB_zeneli_materialet_materialet",
-      "name": "Zeneli Materialet Materialet",
+      "name": "Zeneli Transporti",
       "sector": "services",
       "share": 0.008,
       "headcount": 11676,
@@ -757,7 +757,7 @@
     },
     {
       "id": "ALB_elezi_grupi_grupi",
-      "name": "Elezi Grupi Grupi",
+      "name": "Elezi Grupi",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,

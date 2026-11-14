@@ -755,7 +755,7 @@
     },
     {
       "id": "SRB_urosevic_grupa_grupa",
-      "name": "Urošević Grupa Grupa",
+      "name": "Urošević Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22491,
@@ -764,7 +764,7 @@
     },
     {
       "id": "SRB_novakovic_gradnja_gradnja",
-      "name": "Novaković Gradnja Gradnja",
+      "name": "Novaković Gradnja",
       "sector": "services",
       "share": 0.0166,
       "headcount": 25000,

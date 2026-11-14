@@ -289,7 +289,7 @@
     },
     {
       "id": "NOR_isaksen_landbruk_landbruk",
-      "name": "Isaksen Landbruk Landbruk",
+      "name": "Isaksen Industri",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20280,
@@ -352,7 +352,7 @@
     },
     {
       "id": "NOR_skarstein_forsikring_forsikring",
-      "name": "Skarstein Forsikring Forsikring",
+      "name": "Skarstein Forsikring",
       "sector": "industry",
       "share": 0.0105,
       "headcount": 6896,
