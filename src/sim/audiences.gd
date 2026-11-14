@@ -362,7 +362,8 @@ static func _may_ask(ns, person, leader: String, now: int) -> bool:
 ## still heard and skipped (Delegation.heard; -1, no month, skips none).
 static func _unserved(ns, person, meters: Dictionary, leaders: Dictionary, now := -1) -> Dictionary:
 	for want in person.wants:
-		if Characters.servable(want) and not WantTerms.refused(ns, String(person.id), String(want["object"])) 				and not Characters.want_served(ns, person, want, meters, leaders) and not Delegation.heard(ns, person.id, want["object"], now):
+		if Characters.servable(want) and not WantTerms.refused(ns, String(person.id), String(want["object"])) \
+				and not Characters.want_served(ns, person, want, meters, leaders) and not Delegation.heard(ns, person.id, want["object"], now):
 			return want
 	return {}
 
