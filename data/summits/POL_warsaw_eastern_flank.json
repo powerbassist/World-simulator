@@ -2,10 +2,10 @@
   "name": "Warsaw, the Eastern Flank",
   "summary": "A map table, a prime minister in shirtsleeves, and an argument about what the eastern border costs and who pays.",
   "effects": {
-    "Offer a French brigade on rotation": {},
-    "Offer a joint arms purchase": {},
-    "Ask how Poland sees the Union's future": {},
-    "Make it permanent": {
+    "brigade": {},
+    "arms": {},
+    "future": {},
+    "permanent": {
       "spending_pct_gdp": {
         "defence": 0.05
       },
@@ -14,7 +14,7 @@
         "business": 0.02
       }
     },
-    "Make it a one-year rotation": {
+    "rotation": {
       "spending_pct_gdp": {
         "defence": 0.03
       },
@@ -23,7 +23,7 @@
         "business": 0.01
       }
     },
-    "Choose French artillery": {
+    "artillery": {
       "spending_pct_gdp": {
         "defence": 0.03
       },
@@ -33,7 +33,7 @@
         "students": -0.02
       }
     },
-    "Choose a shared design": {
+    "shared": {
       "spending_pct_gdp": {
         "defence": 0.02
       },
@@ -41,13 +41,13 @@
         "business": 0.01
       }
     },
-    "Say France wants a stronger union": {
+    "stronger": {
       "bloc_offset": {
         "urban": 0.02,
         "rural": -0.02
       }
     },
-    "Say France wants a looser union": {
+    "looser": {
       "bloc_offset": {
         "rural": 0.02,
         "urban": -0.02

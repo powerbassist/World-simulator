@@ -2,10 +2,10 @@
   "name": "The Vineyard at Harvest",
   "summary": "Grape crates, an olive press, and a premier who wants the south mentioned in every sentence you say.",
   "effects": {
-    "Ask about the migration compact": {},
-    "Ask about the southern railway": {},
-    "Ask about the vintage": {},
-    "Offer shared reception centres": {
+    "migration": {},
+    "railway": {},
+    "vintage": {},
+    "centres": {
       "spending_pct_gdp": {
         "defence": 0.01
       },
@@ -14,7 +14,7 @@
         "urban": 0.02
       }
     },
-    "Offer funding without centres": {
+    "funding": {
       "spending_pct_gdp": {
         "defence": 0.02
       },
@@ -22,7 +22,7 @@
         "rural": 0.01
       }
     },
-    "Pledge French engineering for the Salerno line": {
+    "salerno": {
       "spending_pct_gdp": {
         "infrastructure": 0.04
       },
@@ -31,14 +31,14 @@
         "rural": -0.03
       }
     },
-    "Pledge nothing, only interest": {},
-    "Propose a wine and olive oil pact": {
+    "interest": {},
+    "pact": {
       "bloc_offset": {
         "rural": 0.04,
         "business": 0.01
       }
     },
-    "Raise a glass and say nothing more": {}
+    "glass": {}
   },
   "scene": "garden_park"
 }

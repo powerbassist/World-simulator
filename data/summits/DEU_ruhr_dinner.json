@@ -2,7 +2,7 @@
   "name": "Dinner at the Chancellery",
   "summary": "Venison, plain speaking, and the Rhine. A working dinner with Germany's chancellor, where the agenda is whatever you raise first.",
   "effects": {
-    "Shake on the joint toll": {
+    "shake": {
       "bloc_offset": {
         "business": -0.05,
         "rural": -0.04
@@ -11,12 +11,12 @@
         "infrastructure": 0.02
       }
     },
-    "Leave it for the officials": {
+    "officials": {
       "bloc_offset": {
         "business": -0.02
       }
     },
-    "Fund it generously": {
+    "fund_big": {
       "spending_pct_gdp": {
         "infrastructure": 0.04
       },
@@ -24,9 +24,9 @@
         "business": 0.04
       }
     },
-    "Fund it modestly": {},
-    "Raise the Rhine shipping tolls": {},
-    "Offer a joint grid study": {}
+    "fund_small": {},
+    "raise_tolls": {},
+    "grid_study": {}
   },
   "scene": "state_dinner"
 }

@@ -21,7 +21,10 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const DMConstants = preload("res://addons/dialogue_manager/constants.gd")
 
-signal concluded(summit_id: String, choice_label: String)
+## `choice_id` is the pressed response's stable id (the `[#id:...]` tag on its line in the
+## .dialogue, read from response.tags), the key of the sidecar's effects; "" for a scene with no priced
+## fork on the path. The text the player read is `chosen_label`, for the note that records it.
+signal concluded(summit_id: String, choice_id: String)
 
 var _state
 var _loader
@@ -30,6 +33,8 @@ var _resource: Resource
 var _effects: Dictionary
 var _summit_id: String
 var _choice: String = ""
+## The label of the response pressed, in the language it was read in: for the note, never a key.
+var chosen_label: String = ""
 ## The line after the spoken one on screen -- what Continue walks to. V5.1-d1b2 (QA
 ## on #70): Continue called _advance() with no key, which is the dialogue's START,
 ## so every path's closing line looped back to the opening and no summit ever
@@ -120,6 +125,7 @@ func show_summit(summit: Dictionary) -> void:
 	visiting = String(summit.get("nation_name", ""))
 	_effects = summit.get("effects", {})
 	_choice = ""
+	chosen_label = ""
 	_title.text = String(summit.get("title", tr("A meeting")))
 
 	var manager = _manager()
@@ -178,12 +184,13 @@ func _advance(from_key: String = "") -> void:
 		for response in line.responses:
 			var button := Button.new()
 			button.text = String(response.text)
-			# The choice is recorded at the PRESS, from the response's own
-			# label -- the exact string the sidecar prices -- rather than by
-			# interpreting the compiler's jump ids. What the player pressed is
-			# what concluded() carries, however many beats follow.
+			# The choice is recorded at the PRESS, by the response's STABLE ID -- what the
+			# sidecar prices -- and never by its text, which a translation changes (a
+			# French response would price nothing). The compiler's jump ids are not read:
+			# what the player pressed is what concluded() carries, however many beats follow.
 			button.pressed.connect(func():
-				_choice = String(response.text)
+				_choice = response_id(response)
+				chosen_label = String(response.text)
 				_advance(String(response.next_id))
 			)
 			_choices_box.add_child(button)
@@ -194,6 +201,16 @@ func _advance(from_key: String = "") -> void:
 		_next = String(line.next_id)
 		_continue_button.show()
 		_continue_button.grab_focus()
+
+
+## The stable id a response line carries as `[#id:...]`, "" for one with none (summit.gd refuses
+## those at load). Not the line's static id `[ID:...]`: with one, the addon translates the line by
+## that id, and every response here is translated by its English like every other line.
+static func response_id(response) -> String:
+	for tag in response.tags:
+		if String(tag).begins_with("id:"):
+			return String(tag).substr(3)
+	return ""
 
 
 func _clear_choices() -> void:

@@ -2,28 +2,28 @@
   "name": "Rome, Over the Budget",
   "summary": "A long table, the Bank of Italy's governor at the far end, and a premier asking Paris to read the stability pact generously.",
   "effects": {
-    "Offer to speak for Italy in Brussels": {},
-    "Warn that the rules apply to everyone": {},
-    "Suggest an investment exemption": {},
-    "Make it a favour, no strings": {
+    "speak_for": {},
+    "rules": {},
+    "exemption": {},
+    "favour": {
       "bloc_offset": {
         "business": 0.02,
         "pensioners": -0.02
       }
     },
-    "Ask for Italian votes on your file": {
+    "votes": {
       "bloc_offset": {
         "pensioners": 0.02,
         "business": -0.01
       }
     },
-    "Hold your line on the rules": {
+    "hold": {
       "bloc_offset": {
         "business": 0.03,
         "workers": -0.02
       }
     },
-    "Offer help with the reform plan": {
+    "reform": {
       "spending_pct_gdp": {
         "pensions": 0.02
       },
@@ -32,7 +32,7 @@
         "business": -0.02
       }
     },
-    "Back it as a loophole worth having": {
+    "loophole": {
       "spending_pct_gdp": {
         "infrastructure": 0.03
       },
@@ -41,7 +41,7 @@
         "rural": 0.01
       }
     },
-    "Back it for defence and green only": {
+    "narrow": {
       "spending_pct_gdp": {
         "defence": 0.02
       },
