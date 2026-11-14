@@ -26,6 +26,7 @@ const BootStages = preload("res://src/ui/boot_stages.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Music = preload("res://src/ui/music.gd")
 const Icon = preload("res://src/ui/icon.gd")
+const BuildInfo = preload("res://src/core/build_info.gd")
 
 const SLOT := "__exe_smoke__"
 ## Wall clock, not frames: a stage gets 50 ms a frame, so how many frames the boot needs
@@ -48,6 +49,9 @@ func _initialize() -> void:
 func _run() -> void:
 	_check(not ResourceLoader.exists("res://src/ui/dev_console.gd"), "dev console is not in the PCK")
 	_check(not FileAccess.file_exists("res://tools/os_cursor.gd"), "tools/ is not in the PCK")
+	# The string the menu shows: export_windows.py stamped it into the stage's version.json.
+	print("exe_smoke: build %s" % BuildInfo.text())
+	_check(BuildInfo.read().has("build"), "the PCK's version.json carries the export's build stamp")
 
 	# 1. The menu scene, as the exe boots it.
 	var menu: Node = (load("res://src/ui/menu.tscn") as PackedScene).instantiate()

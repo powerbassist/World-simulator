@@ -22,9 +22,17 @@ The stage also takes project.godot from HEAD, never the working copy: the editor
 rewrites that file per machine (AGENTS.md "Gotchas") and an autoload for an addon that
 is not in the export would break the exe.
 
+THE BUILD STRING. The stage's copy of version.json gets a "build" field, the string the
+menu and the dev console show (src/core/build_info.gd prints it verbatim): the bare
+version when HEAD carries the tag v<version> and the stage roots match HEAD (a kit the
+author plays, cut by tools/changelog.py), otherwise "dev build <sha> (after <version>)".
+A QA kit from an unmerged head therefore never claims to be a release. The tracked
+version.json is never written.
+
 Dev-only: tools/ never ships. Exit 0 only when the PCK passes its own audit.
 """
 import argparse
+import json
 import os
 import re
 import shutil
@@ -40,7 +48,7 @@ EXE_NAME = "NationSimulator.exe"
 # What the exe needs at runtime; everything else (tools/, tests/, docs/, reports/,
 # .obsidian/, the design vault) stays out of the stage altogether.
 STAGE_ROOTS = ("src", "data", "assets", "addons")
-STAGE_FILES = ("export_presets.cfg",)
+STAGE_FILES = ("export_presets.cfg", "version.json")
 # Extensions the game reads as bytes/text (see the docstring). The .ttf is NOT here:
 # ui_theme.gd load()s the imported FontFile first and only falls back to bytes.
 KEEP_EXT = (".ogg", ".svg", ".dialogue")
@@ -99,6 +107,38 @@ def build_stage(stage: Path) -> int:
     return len(files)
 
 
+def build_string(version: str, sha: str, tags, dirty: bool) -> str:
+    """A release only from its own tag and an unmodified tree; anything else says what it is."""
+    if not version:
+        raise ValueError("version.json has no version: run tools/changelog.py --check")
+    if ("v" + version) in tags and not dirty:
+        return version
+    return "dev build %s%s (after %s)" % (sha, " with local changes" if dirty else "", version)
+
+
+def tree_dirty() -> bool:
+    """The stage copies the WORKING files of the tracked tree under these roots (build_stage),
+    so a change there is in the exe even though HEAD carries the tag. Untracked files are
+    never staged, so they do not count (an editor's stray .uid must not demote a kit)."""
+    out = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no", "--", *STAGE_ROOTS, *STAGE_FILES],
+                         cwd=REPO, check=True, capture_output=True, text=True).stdout
+    return bool(out.strip())
+
+
+def stamp_version(stage: Path) -> str:
+    """Write "build" into the STAGE's version.json; return the string."""
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=REPO, check=True, capture_output=True, text=True).stdout
+    path = stage / "version.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    sha = git("rev-parse", "--short=8", "HEAD").strip()
+    tags = git("tag", "--points-at", "HEAD").split()
+    dirty = tree_dirty()
+    data["build"] = build_string(str(data.get("version", "")), sha, tags, dirty)
+    path.write_text(json.dumps(data) + "\n", encoding="utf-8", newline="\n")
+    return data["build"]
+
+
 def flip_to_keep(stage: Path) -> int:
     n = 0
     # Only the game's own folders: addons/dialogue_manager's editor plugin load()s its own
@@ -149,7 +189,7 @@ def audit(pck: Path) -> list[str]:
     for rel in must:
         if rel not in names:
             problems.append("missing raw file: " + rel)
-    for core in ("project.binary", "src/ui/menu.tscn.remap", "src/ui/main.tscn.remap"):
+    for core in ("project.binary", "src/ui/menu.tscn.remap", "src/ui/main.tscn.remap", "version.json"):
         if core not in names:
             problems.append("missing: " + core)
     # The font is the one asset load()ed as a resource, so it ships in its imported form.
@@ -196,6 +236,30 @@ def smoke(godot: str, exe: Path, out: Path) -> int:
         shutil.rmtree(user, ignore_errors=True)
 
 
+def selftest() -> int:
+    """The build string a kit shows: the one decision this script makes for the menu."""
+    cases = [
+        (("0.5.3-gate.3", "ec92a406", ["v0.5.3-gate.3"], False), "0.5.3-gate.3"),
+        (("0.5.3-gate.2", "ec92a406", [], False), "dev build ec92a406 (after 0.5.3-gate.2)"),
+        (("0.5.3-gate.2", "ec92a406", ["v0.5.3-gate.1", "v4-end"], False), "dev build ec92a406 (after 0.5.3-gate.2)"),
+        (("0.5.3-gate.3", "ec92a406", ["v0.5.3-gate.3"], True), "dev build ec92a406 with local changes (after 0.5.3-gate.3)"),
+    ]
+    bad = 0
+    try:
+        build_string("", "ec92a406", [], False)
+        print("SELFTEST FAIL: build_string accepts an empty version")
+        bad += 1
+    except ValueError:
+        pass
+    for args, want in cases:
+        got = build_string(*args)
+        if got != want:
+            print("SELFTEST FAIL: build_string%r = %r, want %r" % (args, got, want))
+            bad += 1
+    print("export_windows selftest: %s" % ("all checks passed" if not bad else "%d failed" % bad))
+    return 1 if bad else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--templates", default=os.environ.get("GODOT_EXPORT_TEMPLATES"),
@@ -204,7 +268,10 @@ def main() -> int:
     ap.add_argument("--out", default=str(REPO / "build"), help="output folder (default build/, gitignored)")
     ap.add_argument("--smoke", action="store_true", help="after the export, boot the exe headless under tools/exe_smoke.gd")
     ap.add_argument("--keep-stage", action="store_true", help="keep the stage folder on success too")
+    ap.add_argument("--selftest", action="store_true", help="check the build string rule and exit")
     a = ap.parse_args()
+    if a.selftest:
+        return selftest()
     if not a.godot:
         sys.exit("no godot on PATH (set $GODOT)")
     if not a.templates or not (Path(a.templates) / TEMPLATE_FILE).is_file():
@@ -237,6 +304,7 @@ def main() -> int:
 
         print("stage: %d tracked files" % build_stage(stage))
         print("stage: %d .import files set to keep" % flip_to_keep(stage))
+        print("stage: build string '%s'" % stamp_version(stage))
 
         # No separate --import: the export's own first scan imports the stage (a second
         # pass over the 4 000 kept files was three minutes of the same work).

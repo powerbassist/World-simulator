@@ -297,6 +297,35 @@ Both confirmed on 4.7.1 and written up in [docs/engine-decision.md](docs/engine-
 
 **A UI session is not finished until `tools/screenshot.gd` has been run windowed** (`--headless` draws nothing, and a green suite says nothing about layout); it takes a flag per staged state, listed in its header, and marks panels dirty the way `main.gd` does.
 
+## Versions and changelog
+
+Three numbers, kept apart:
+
+| number | what | where | changed by |
+|---|---|---|---|
+| build version | SemVer, `0.<tier>.<block>`; a kit the author plays is `0.5.3-gate.N`, the block's close `0.5.3` | `version.json` | a cut, nothing else |
+| save format | `SAVE_VERSION`, an integer | `src/core/game_state.gd` | the PR that breaks the format ("Save format" above) |
+| tier name | V5.3, "a + b", "block 0" | changelog headings, docs | the author |
+
+- **Every PR that changes `src/`, `data/` or `assets/` adds `changelog.d/<branch-slug>.md`**: one
+  line per change a player notices, in the player's words and in English, starting with its
+  group (`Added:` `Changed:` `Deprecated:` `Removed:` `Fixed:` `Security:`), or `None: <why>`. No
+  file or field names, no real person's or firm's name. A save-format bump adds
+  `Changed: Saves from earlier builds no longer load.` CI fails a PR that forgets
+  (`python tools/changelog.py --check-pr`). One file per PR, because children have PRs open at
+  once and a shared `[Unreleased]` block would conflict on every merge.
+- **Nobody edits `CHANGELOG.md` or `version.json` outside a cut.** A cut happens when a kit
+  the AUTHOR plays is ordered: its builder opens a PR that is only
+  `python tools/changelog.py cut 0.5.3-gate.N --label "V5.3 ..."`, the parent merges it and
+  tags the merge commit `v0.5.3-gate.N`, and the kit is exported from that tag. QA's kits
+  from unmerged heads are never cut.
+- **What a build shows** (menu corner, dev console `version`, the kit's `RELEASE.md`):
+  `tools/export_windows.py` stamps it into the stage only -- the bare version from its own
+  tag, otherwise `dev build <sha> (after <version>)`; the editor and the suite read
+  `<version>+dev`. `python tools/changelog.py notes <version>` prints the section a kit's
+  `RELEASE.md` opens with. `docs/history.md` stays the engineering record.
+- `project.godot` carries no version, on purpose: it is per-machine dirty (Gotchas).
+
 ## UI conventions
 
 Styling rule since U3: colours and the type scale come from `ui_theme.gd`, set

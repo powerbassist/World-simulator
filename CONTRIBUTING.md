@@ -15,6 +15,11 @@ Pull requests are welcome once they meet the points below.
   - dependencies go `data → sim → ui`, and `src/sim/` never touches the UI;
   - tuning constants live in `src/sim/*_constants.gd`;
   - new simulation behaviour needs a headless test.
+- **Add a changelog line.** A pull request that changes `src/`, `data/` or `assets/`
+  adds `changelog.d/<your-branch>.md`: one line per change a player notices, each
+  starting with its group (`Added:`, `Changed:`, `Fixed:` ...), or `None: <why>`.
+  Never edit `CHANGELOG.md` or `version.json` yourself (AGENTS.md, "Versions and
+  changelog").
 - **Run the suite.** `bash tools/run_tests.sh` must be green, and so must
   `bash tools/check_names.sh`. CI runs both on your pull request.
 - **No real names.** Every person, party and company in the game is fictional.
