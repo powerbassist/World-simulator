@@ -715,16 +715,17 @@ def tidy_names(nation: str, firms: list, taken: set) -> None:
         firm["name"] = new_name
 
 
-# Surnames in the name pools that are also a real brand once a firm wears them
-# (docs/fictionalization.md: no real company's name). A person may keep the surname;
-# a firm may not. Not in tools/banned_names.txt, because name_ok() reads that list AT
-# DRAW TIME and a refusal there redraws -- shifting the stream for the whole nation.
-# Here the swap happens after the draw: QA's TAKE on #349 ("Schwarzkopf Gruppe"), then
-# QA's TAKE on #354 (the six from Sandvik to Dell'Orto); the last four are the
-# borderline cases QA would have left -- each is a firm's name in its own country
-# ("Fuchs Gruppe", "Kohler Gruppe"), and a swap costs nothing.
-BRAND_SURNAMES = {"Schwarzkopf", "Sandvik", "Barceló", "Beijer", "Ferruzzi", "Ferretti",
-                  "Dell'Orto", "Fuchs", "Egger", "Kohler", "Leventis"}
+# Surnames that read as a real brand once a firm wears them: tools/firm_brand_denylist.json
+# (its note says why they stay in the pools). Swapped out after the draw, never refused
+# at it: name_ok() reads banned_names.txt AT DRAW TIME and a refusal there redraws.
+BRAND_SURNAMES = set(json.loads((ROOT / "tools" / "firm_brand_denylist.json")
+                                .read_text(encoding="utf-8"))["surnames"])
+
+
+def brand_hits(doc: dict) -> list:
+    """Firm names (majors and body) that still carry a denylisted surname."""
+    return [f["name"] for f in doc.get("companies", []) + doc.get("body", [])
+            if any(w in BRAND_SURNAMES for w in f["name"].split(" "))]
 
 
 def retire_brand_surnames(nation: str, firms: list, taken: set) -> None:
@@ -890,6 +891,11 @@ def main() -> int:
             }
         cpath = COMPANIES_DIR / ("%s.json" % nation)
         new_text = companies_text(doc)
+        if brand_hits(doc):
+            # A hand-authored major (the four playable nations) is not swapped by the
+            # generator, so a brand there is a content error to fix by hand.
+            print("BRAND: %s carries %s (tools/firm_brand_denylist.json)" % (cpath, brand_hits(doc)))
+            return 1
         if check_only:
             if not cpath.exists() or cpath.read_text(encoding="utf-8") != new_text:
                 print("DRIFT: %s" % cpath)

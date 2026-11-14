@@ -466,6 +466,11 @@ func _test_product_lines() -> void:
 ## tidy_names repairs it. Pinned here because the generator's own --check runs in no CI
 ## job: no firm name repeats a word, and names are unique within a nation.
 func _test_body_names_read_once() -> void:
+	# No firm wears a surname that reads as a real company (tools/firm_brand_denylist.json):
+	# QA found Schwarzkopf on #349 and six more on #354; this is the gate for the next one.
+	var denylist: Array = JSON.parse_string(FileAccess.get_file_as_string("res://tools/firm_brand_denylist.json"))["surnames"]
+	if denylist.is_empty():
+		_fail("tools/firm_brand_denylist.json read as empty")
 	for nation_id in _loader.companies.keys():
 		var seen := {}
 		for company in _loader.companies[nation_id]:
@@ -475,6 +480,9 @@ func _test_body_names_read_once() -> void:
 				once[w] = true
 			if once.size() != words.size():
 				_fail("%s's name '%s' repeats a word" % [company.id, company.company_name])
+			for w in words:
+				if denylist.has(w):
+					_fail("%s's name '%s' carries the brand surname '%s'" % [company.id, company.company_name, w])
 			if seen.has(company.company_name):
 				_fail("%s: two firms named '%s'" % [nation_id, company.company_name])
 			seen[company.company_name] = true
