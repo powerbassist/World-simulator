@@ -3,6 +3,8 @@
   "name": "Share transactions tax",
   "summary": "A small tax on the value of every share bought.",
   "rate_meaning": "% of the transaction value",
+  "unit": "%",
+  "group": "companies_finance",
   "who_pays": [
     "business"
   ],

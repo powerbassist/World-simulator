@@ -3,6 +3,8 @@
   "name": "Capital gains tax",
   "summary": "A tax on the gains made when assets are sold.",
   "rate_meaning": "statutory rate on realised gains",
+  "unit": "%",
+  "group": "wealth_property",
   "who_pays": [
     "workers",
     "pensioners",

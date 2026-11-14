@@ -1,0 +1,16 @@
+{
+  "_note": "Surnames that read as a real company once a firm wears them (docs/fictionalization.md: no real company's name). A PERSON may keep one; a FIRM may not. tools/firms_generate.py swaps any of these out of a firm name after the draw (retire_brand_surnames, draw-free) and its --check fails on a firm name that still carries one; tests/test_companies_tiers.gd fails on the same, so CI stops the next one. They stay in the surname pools on purpose: the pools are drawn by rng.choice, and removing a name shifts every later draw, regenerating whole nations (firms and bench people). Add a brand here, re-run the generator, commit both.",
+  "surnames": [
+    "Barceló",
+    "Beijer",
+    "Dell'Orto",
+    "Egger",
+    "Ferretti",
+    "Ferruzzi",
+    "Fuchs",
+    "Kohler",
+    "Leventis",
+    "Sandvik",
+    "Schwarzkopf"
+  ]
+}

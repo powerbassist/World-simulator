@@ -14,7 +14,7 @@
     },
     {
       "id": "SVN_drnovsek_logistika",
-      "name": "Drnovšek Logistika",
+      "name": "Drnovšek Kmetijstvo",
       "sector": "agriculture",
       "share": 0.1769,
       "headcount": 17454,
@@ -24,7 +24,7 @@
     },
     {
       "id": "SVN_lipnik_logistika",
-      "name": "Lipnik Logistika",
+      "name": "Lipnik Materiali",
       "sector": "industry",
       "share": 0.0735,
       "headcount": 48264,
@@ -64,7 +64,7 @@
     },
     {
       "id": "SVN_dolinsek_gradbenistvo",
-      "name": "Dolinšek Gradbeništvo",
+      "name": "Dolinšek Trgovina",
       "sector": "services",
       "share": 0.058,
       "headcount": 96142,
@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "SVN_pirc_materiali",
-      "name": "Pirc Materiali",
+      "name": "Pirc Kmetijstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2606,
@@ -125,7 +125,7 @@
     },
     {
       "id": "SVN_rebolj_logistika",
-      "name": "Rebolj Logistika",
+      "name": "Rebolj Skupina",
       "sector": "agriculture",
       "share": 0.0213,
       "headcount": 1766,
@@ -134,7 +134,7 @@
     },
     {
       "id": "SVN_cvetreznik_promet",
-      "name": "Cvetrežnik Promet",
+      "name": "Cvetrežnik Trgovina",
       "sector": "agriculture",
       "share": 0.0237,
       "headcount": 1818,
@@ -161,7 +161,7 @@
     },
     {
       "id": "SVN_bajc_promet",
-      "name": "Bajc Promet",
+      "name": "Bajc Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2431,
@@ -170,7 +170,7 @@
     },
     {
       "id": "SVN_lipuscek_logistika",
-      "name": "Lipušček Logistika",
+      "name": "Lipušček Skupina",
       "sector": "agriculture",
       "share": 0.0248,
       "headcount": 1977,
@@ -188,7 +188,7 @@
     },
     {
       "id": "SVN_bavcar_logistika",
-      "name": "Bavčar Logistika",
+      "name": "Bavčar Kmetijstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2311,
@@ -197,7 +197,7 @@
     },
     {
       "id": "SVN_gnamus_zavarovanje",
-      "name": "Gnamuš Zavarovanje",
+      "name": "Gnamuš Trgovina",
       "sector": "agriculture",
       "share": 0.028,
       "headcount": 2051,
@@ -206,7 +206,7 @@
     },
     {
       "id": "SVN_avbelj_industrija",
-      "name": "Avbelj Industrija",
+      "name": "Avbelj Kmetijstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2203,
@@ -215,7 +215,7 @@
     },
     {
       "id": "SVN_avbelj_materiali",
-      "name": "Avbelj Materiali",
+      "name": "Avbelj Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2356,
@@ -224,7 +224,7 @@
     },
     {
       "id": "SVN_rebernik_industrija",
-      "name": "Rebernik Industrija",
+      "name": "Rebernik Skupina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2347,
@@ -233,7 +233,7 @@
     },
     {
       "id": "SVN_ivanko_logistika",
-      "name": "Ivanko Logistika",
+      "name": "Ivanko Trgovina",
       "sector": "agriculture",
       "share": 0.0176,
       "headcount": 1418,
@@ -251,7 +251,7 @@
     },
     {
       "id": "SVN_breg_energija",
-      "name": "Breg Energija",
+      "name": "Breg Kmetijstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2364,
@@ -269,7 +269,7 @@
     },
     {
       "id": "SVN_rupnik_trgovina",
-      "name": "Rupnik Trgovina",
+      "name": "Rupnik Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19586,
@@ -287,7 +287,7 @@
     },
     {
       "id": "SVN_kastelic_logistika",
-      "name": "Kastelic Logistika",
+      "name": "Kastelic Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21513,
@@ -296,7 +296,7 @@
     },
     {
       "id": "SVN_hribar_trgovina",
-      "name": "Hribar Trgovina",
+      "name": "Hribar Materiali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22055,
@@ -305,7 +305,7 @@
     },
     {
       "id": "SVN_ivanko_kmetijstvo",
-      "name": "Ivanko Kmetijstvo",
+      "name": "Ivanko Industrija",
       "sector": "industry",
       "share": 0.0249,
       "headcount": 18286,
@@ -323,7 +323,7 @@
     },
     {
       "id": "SVN_cvetreznik_materiali_kmetijstvo",
-      "name": "Cvetrežnik Materiali Kmetijstvo",
+      "name": "Cvetrežnik Materiali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18443,
@@ -332,7 +332,7 @@
     },
     {
       "id": "SVN_lenarcic_kmetijstvo",
-      "name": "Lenarčič Kmetijstvo",
+      "name": "Lenarčič Gradbeništvo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19113,
@@ -350,7 +350,7 @@
     },
     {
       "id": "SVN_hocevar_kmetijstvo",
-      "name": "Hočevar Kmetijstvo",
+      "name": "Hočevar Industrija",
       "sector": "industry",
       "share": 0.0198,
       "headcount": 13170,
@@ -368,7 +368,7 @@
     },
     {
       "id": "SVN_mavret_promet",
-      "name": "Mavret Promet",
+      "name": "Mavret Energija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19871,
@@ -431,7 +431,7 @@
     },
     {
       "id": "SVN_juvan_kmetijstvo",
-      "name": "Juvan Kmetijstvo",
+      "name": "Juvan Skupina",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22078,
@@ -449,7 +449,7 @@
     },
     {
       "id": "SVN_ocvirk_industrija",
-      "name": "Ocvirk Industrija",
+      "name": "Ocvirk Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23920,
@@ -458,7 +458,7 @@
     },
     {
       "id": "SVN_demsar_energija",
-      "name": "Demšar Energija",
+      "name": "Demšar Logistika",
       "sector": "services",
       "share": 0.0113,
       "headcount": 16047,
@@ -485,7 +485,7 @@
     },
     {
       "id": "SVN_osole_industrija",
-      "name": "Osole Industrija",
+      "name": "Osole Zavarovanje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22531,
@@ -494,7 +494,7 @@
     },
     {
       "id": "SVN_hocevar_energija",
-      "name": "Hočevar Energija",
+      "name": "Hočevar Zavarovanje",
       "sector": "services",
       "share": 0.0147,
       "headcount": 22959,
@@ -503,16 +503,16 @@
     },
     {
       "id": "SVN_kavcic_industrija",
-      "name": "Kavčič Industrija",
+      "name": "Kavčič Zavarovanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23366,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
     {
       "id": "SVN_drnovsek_materiali",
-      "name": "Drnovšek Materiali",
+      "name": "Drnovšek Promet",
       "sector": "services",
       "share": 0.0134,
       "headcount": 19668,
@@ -521,7 +521,7 @@
     },
     {
       "id": "SVN_rebolj_gradbenistvo",
-      "name": "Rebolj Gradbeništvo",
+      "name": "Rebolj Promet",
       "sector": "services",
       "share": 0.016,
       "headcount": 21890,
@@ -542,22 +542,22 @@
       "name": "Avbelj Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22727,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
     {
       "id": "SVN_osole_energija",
-      "name": "Osole Energija",
+      "name": "Osole Logistika",
       "sector": "services",
       "share": 0.0157,
-      "headcount": 25000,
+      "headcount": 24260,
       "city": "SI03_maribor",
       "tier": "body"
     },
     {
       "id": "SVN_vodopivec_industrija",
-      "name": "Vodopivec Industrija",
+      "name": "Vodopivec Trgovina",
       "sector": "services",
       "share": 0.0104,
       "headcount": 15507,
@@ -611,7 +611,7 @@
     },
     {
       "id": "SVN_zorman_kmetijstvo",
-      "name": "Zorman Kmetijstvo",
+      "name": "Zorman Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23535,
@@ -623,22 +623,22 @@
       "name": "Vodopivec Promet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23140,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
     {
       "id": "SVN_vodopija_industrija",
-      "name": "Vodopija Industrija",
+      "name": "Vodopija Skupina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22810,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
     {
       "id": "SVN_breg_gradbenistvo",
-      "name": "Breg Gradbeništvo",
+      "name": "Breg Trgovina",
       "sector": "services",
       "share": 0.0078,
       "headcount": 10801,
@@ -650,7 +650,7 @@
       "name": "Mavret Zavarovanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24204,
       "city": "SI03_maribor",
       "tier": "body"
     },
@@ -674,16 +674,16 @@
     },
     {
       "id": "SVN_hribar_materiali_materiali",
-      "name": "Hribar Materiali Materiali",
+      "name": "Hribar Promet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24007,
       "city": "SI03_maribor",
       "tier": "body"
     },
     {
       "id": "SVN_lenarcic_industrija",
-      "name": "Lenarčič Industrija",
+      "name": "Lenarčič Zavarovanje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23247,
@@ -692,7 +692,7 @@
     },
     {
       "id": "SVN_cvikl_industrija",
-      "name": "Cvikl Industrija",
+      "name": "Cvikl Trgovina",
       "sector": "services",
       "share": 0.0136,
       "headcount": 20482,
@@ -719,16 +719,16 @@
     },
     {
       "id": "SVN_ferfolja_materiali",
-      "name": "Ferfolja Materiali",
+      "name": "Ferfolja Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24142,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
     {
       "id": "SVN_gnamus_energija",
-      "name": "Gnamuš Energija",
+      "name": "Gnamuš Promet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22873,
@@ -740,13 +740,13 @@
       "name": "Ferfolja Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23664,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
     {
       "id": "SVN_rupnik_industrija_industrija",
-      "name": "Rupnik Industrija Industrija",
+      "name": "Rupnik Trgovina",
       "sector": "services",
       "share": 0.0155,
       "headcount": 24081,
@@ -767,22 +767,22 @@
       "name": "Ambrožič Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22739,
       "city": "SI03_maribor",
       "tier": "body"
     },
     {
       "id": "SVN_zorman_gradbenistvo",
-      "name": "Zorman Gradbeništvo",
+      "name": "Zorman Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24095,
       "city": "SI03_maribor",
       "tier": "body"
     },
     {
       "id": "SVN_ambroz_materiali",
-      "name": "Ambrož Materiali",
+      "name": "Ambrož Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24313,
@@ -794,7 +794,7 @@
       "name": "Ivanko Skupina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24330,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
@@ -803,7 +803,7 @@
       "name": "Ilija Zavarovanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24005,
       "city": "SI04_ljubljana",
       "tier": "body"
     },

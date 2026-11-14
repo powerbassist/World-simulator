@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "GRC_manousakis_asfaliseis",
-      "name": "Manousakis Asfaliseis",
+      "name": "Manousakis Emporio",
       "sector": "agriculture",
       "share": 0.199,
       "headcount": 12493,
@@ -74,7 +74,7 @@
     },
     {
       "id": "GRC_galatopoulos_kataskeves",
-      "name": "Galatopoulos Kataskeves",
+      "name": "Galatopoulos Omilos",
       "sector": "services",
       "share": 0.032,
       "headcount": 38625,
@@ -84,7 +84,7 @@
     },
     {
       "id": "GRC_tsangaris_kataskeves",
-      "name": "Tsangaris Kataskeves",
+      "name": "Tsangaris Omilos",
       "sector": "services",
       "share": 0.0627,
       "headcount": 119656,
@@ -126,7 +126,7 @@
   "body": [
     {
       "id": "GRC_hondrokoukis_logistiki",
-      "name": "Hondrokoukis Logistiki",
+      "name": "Hondrokoukis Georgia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2651,
@@ -144,7 +144,7 @@
     },
     {
       "id": "GRC_chrysafis_viomichania",
-      "name": "Chrysafis Viomichania",
+      "name": "Chrysafis Omilos",
       "sector": "agriculture",
       "share": 0.0121,
       "headcount": 1034,
@@ -171,7 +171,7 @@
     },
     {
       "id": "GRC_vagenas_kataskeves",
-      "name": "Vagenas Kataskeves",
+      "name": "Vagenas Omilos",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2203,
@@ -180,7 +180,7 @@
     },
     {
       "id": "GRC_galanis_logistiki",
-      "name": "Galanis Logistiki",
+      "name": "Galanis Georgia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2459,
@@ -189,7 +189,7 @@
     },
     {
       "id": "GRC_ioannidis_energeia",
-      "name": "Ioannidis Energeia",
+      "name": "Ioannidis Omilos",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2400,
@@ -198,7 +198,7 @@
     },
     {
       "id": "GRC_roussos_viomichania",
-      "name": "Roussos Viomichania",
+      "name": "Roussos Georgia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2415,
@@ -207,7 +207,7 @@
     },
     {
       "id": "GRC_nikolareas_energeia",
-      "name": "Nikolareas Energeia",
+      "name": "Nikolareas Georgia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2334,
@@ -225,7 +225,7 @@
     },
     {
       "id": "GRC_nikolareas_metafora",
-      "name": "Nikolareas Metafora",
+      "name": "Nikolareas Omilos",
       "sector": "agriculture",
       "share": 0.025,
       "headcount": 1895,
@@ -243,7 +243,7 @@
     },
     {
       "id": "GRC_reppas_metafora",
-      "name": "Reppas Metafora",
+      "name": "Reppas Omilos",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2531,
@@ -252,7 +252,7 @@
     },
     {
       "id": "GRC_sifneos_asfaliseis",
-      "name": "Sifneos Asfaliseis",
+      "name": "Sifneos Omilos",
       "sector": "agriculture",
       "share": 0.0299,
       "headcount": 2384,
@@ -261,7 +261,7 @@
     },
     {
       "id": "GRC_avgustis_metafora",
-      "name": "Avgustis Metafora",
+      "name": "Avgustis Georgia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2199,
@@ -270,7 +270,7 @@
     },
     {
       "id": "GRC_zolotas_viomichania",
-      "name": "Zolotas Viomichania",
+      "name": "Zolotas Omilos",
       "sector": "agriculture",
       "share": 0.0203,
       "headcount": 1483,
@@ -279,7 +279,7 @@
     },
     {
       "id": "GRC_alexopoulos_asfaliseis",
-      "name": "Alexopoulos Asfaliseis",
+      "name": "Alexopoulos Emporio",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2655,
@@ -288,7 +288,7 @@
     },
     {
       "id": "GRC_stamatakis_logistiki",
-      "name": "Stamatakis Logistiki",
+      "name": "Stamatakis Energeia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20067,
@@ -297,7 +297,7 @@
     },
     {
       "id": "GRC_zafeiriou_emporio",
-      "name": "Zafeiriou Emporio",
+      "name": "Zafeiriou Ylika",
       "sector": "industry",
       "share": 0.0273,
       "headcount": 17196,
@@ -306,7 +306,7 @@
     },
     {
       "id": "GRC_bamichas_metafora",
-      "name": "Bamichas Metafora",
+      "name": "Bamichas Viomichania",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22106,
@@ -315,7 +315,7 @@
     },
     {
       "id": "GRC_leventis_energeia",
-      "name": "Leventis Energeia",
+      "name": "Nikolaidis Energeia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22163,
@@ -342,7 +342,7 @@
     },
     {
       "id": "GRC_chrysafis_logistiki",
-      "name": "Chrysafis Logistiki",
+      "name": "Chrysafis Ylika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21534,
@@ -360,7 +360,7 @@
     },
     {
       "id": "GRC_nikolareas_logistiki_ylika",
-      "name": "Nikolareas Logistiki Ylika",
+      "name": "Nikolareas Ylika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18799,
@@ -387,7 +387,7 @@
     },
     {
       "id": "GRC_iliopoulos_emporio",
-      "name": "Iliopoulos Emporio",
+      "name": "Iliopoulos Energeia",
       "sector": "industry",
       "share": 0.0183,
       "headcount": 12484,
@@ -396,7 +396,7 @@
     },
     {
       "id": "GRC_leventis_metafora",
-      "name": "Leventis Metafora",
+      "name": "Roussos Omilos",
       "sector": "industry",
       "share": 0.0259,
       "headcount": 15914,
@@ -405,7 +405,7 @@
     },
     {
       "id": "GRC_chondros_metafora",
-      "name": "Chondros Metafora",
+      "name": "Chondros Viomichania",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18195,
@@ -414,7 +414,7 @@
     },
     {
       "id": "GRC_zafeiriou_asfaliseis",
-      "name": "Zafeiriou Asfaliseis",
+      "name": "Zafeiriou Kataskeves",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18309,
@@ -450,7 +450,7 @@
     },
     {
       "id": "GRC_vgenopoulos_emporio",
-      "name": "Vgenopoulos Emporio",
+      "name": "Vgenopoulos Viomichania",
       "sector": "industry",
       "share": 0.0211,
       "headcount": 13842,
@@ -459,7 +459,7 @@
     },
     {
       "id": "GRC_galanis_metafora_kataskeves",
-      "name": "Galanis Metafora Kataskeves",
+      "name": "Galanis Kataskeves",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19478,
@@ -477,7 +477,7 @@
     },
     {
       "id": "GRC_alexandris_metafora",
-      "name": "Alexandris Metafora",
+      "name": "Alexandris Kataskeves",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22174,
@@ -495,10 +495,10 @@
     },
     {
       "id": "GRC_eleftheriadis_viomichania",
-      "name": "Eleftheriadis Viomichania",
+      "name": "Eleftheriadis Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23101,
       "city": "EL30_athens",
       "tier": "body"
     },
@@ -507,13 +507,13 @@
       "name": "Oikonomakis Omilos",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24932,
       "city": "EL30_athens",
       "tier": "body"
     },
     {
       "id": "GRC_avgustis_energeia",
-      "name": "Avgustis Energeia",
+      "name": "Avgustis Logistiki",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22438,
@@ -522,10 +522,10 @@
     },
     {
       "id": "GRC_iliopoulos_georgia",
-      "name": "Iliopoulos Georgia",
+      "name": "Iliopoulos Omilos",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23555,
       "city": "EL61_larisa",
       "tier": "body"
     },
@@ -534,22 +534,22 @@
       "name": "Vagenas Logistiki",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24218,
       "city": "EL30_petroupolis",
       "tier": "body"
     },
     {
       "id": "GRC_agapitou_energeia",
-      "name": "Agapitou Energeia",
+      "name": "Agapitou Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23433,
       "city": "EL30_piraeus",
       "tier": "body"
     },
     {
       "id": "GRC_panagopoulos_kataskeves",
-      "name": "Panagopoulos Kataskeves",
+      "name": "Panagopoulos Asfaliseis",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23228,
@@ -567,10 +567,10 @@
     },
     {
       "id": "GRC_leventis_kataskeves",
-      "name": "Leventis Kataskeves",
+      "name": "Triantafyllou Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22613,
       "city": "EL30_peristeri",
       "tier": "body"
     },
@@ -579,25 +579,25 @@
       "name": "Fotopoulos Omilos",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22727,
       "city": "EL52_thessaloniki",
       "tier": "body"
     },
     {
       "id": "GRC_vgenopoulos_georgia",
-      "name": "Vgenopoulos Georgia",
+      "name": "Vgenopoulos Metafora",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23482,
       "city": "EL30_athens",
       "tier": "body"
     },
     {
       "id": "GRC_nikolareas_kataskeves_omilos",
-      "name": "Nikolareas Kataskeves Omilos",
+      "name": "Nikolareas Metafora",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24209,
       "city": "EL30_athens",
       "tier": "body"
     },
@@ -639,7 +639,7 @@
     },
     {
       "id": "GRC_nikolaidis_georgia",
-      "name": "Nikolaidis Georgia",
+      "name": "Nikolaidis Metafora",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22675,
@@ -675,16 +675,16 @@
     },
     {
       "id": "GRC_chrysafis_kataskeves",
-      "name": "Chrysafis Kataskeves",
+      "name": "Chrysafis Asfaliseis",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24505,
       "city": "EL53_kozani",
       "tier": "body"
     },
     {
       "id": "GRC_papalambros_kataskeves",
-      "name": "Papalambros Kataskeves",
+      "name": "Papalambros Metafora",
       "sector": "services",
       "share": 0.0159,
       "headcount": 22028,
@@ -711,7 +711,7 @@
     },
     {
       "id": "GRC_bamichas_energeia",
-      "name": "Bamichas Energeia",
+      "name": "Bamichas Logistiki",
       "sector": "services",
       "share": 0.0057,
       "headcount": 8668,
@@ -720,10 +720,10 @@
     },
     {
       "id": "GRC_zorbos_ylika",
-      "name": "Zorbos Ylika",
+      "name": "Zorbos Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24744,
       "city": "EL30_kallithea",
       "tier": "body"
     },
@@ -732,13 +732,13 @@
       "name": "Dendrinos Logistiki",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23016,
       "city": "EL30_agios_dimitrios",
       "tier": "body"
     },
     {
       "id": "GRC_lambrakis_georgia",
-      "name": "Lambrakis Georgia",
+      "name": "Lambrakis Asfaliseis",
       "sector": "services",
       "share": 0.0082,
       "headcount": 11417,
@@ -756,7 +756,7 @@
     },
     {
       "id": "GRC_nikolareas_viomichania",
-      "name": "Nikolareas Viomichania",
+      "name": "Nikolareas Logistiki",
       "sector": "services",
       "share": 0.0098,
       "headcount": 15746,
@@ -774,7 +774,7 @@
     },
     {
       "id": "GRC_chionidis_energeia",
-      "name": "Chionidis Energeia",
+      "name": "Chionidis Omilos",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24073,
@@ -783,16 +783,16 @@
     },
     {
       "id": "GRC_avgustis_kataskeves",
-      "name": "Avgustis Kataskeves",
+      "name": "Avgustis Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24217,
       "city": "EL63_patra",
       "tier": "body"
     },
     {
       "id": "GRC_agapitou_metafora_ylika",
-      "name": "Agapitou Metafora Ylika",
+      "name": "Agapitou Metafora",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23957,
@@ -810,10 +810,10 @@
     },
     {
       "id": "GRC_rallis_viomichania",
-      "name": "Rallis Viomichania",
+      "name": "Rallis Logistiki",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24781,
       "city": "EL61_trikala",
       "tier": "body"
     },
@@ -822,7 +822,7 @@
       "name": "Sakellaropoulos Metafora",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24079,
       "city": "EL30_nikaia",
       "tier": "body"
     },

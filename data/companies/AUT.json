@@ -14,7 +14,7 @@
     },
     {
       "id": "AUT_kalcher_industrie",
-      "name": "Kalcher Industrie",
+      "name": "Kalcher Handel Gruppe",
       "sector": "agriculture",
       "share": 0.2006,
       "headcount": 20725,
@@ -104,7 +104,7 @@
     },
     {
       "id": "AUT_neumayer_bau",
-      "name": "Neumayer Bau",
+      "name": "Neumayer Transport",
       "sector": "services",
       "share": 0.0483,
       "headcount": 65318,
@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "AUT_felbermair_werkstoffe",
-      "name": "Felbermair Werkstoffe",
+      "name": "Felbermair Landwirtschaft",
       "sector": "agriculture",
       "share": 0.018,
       "headcount": 1484,
@@ -134,7 +134,7 @@
     },
     {
       "id": "AUT_lindorfer_werkstoffe",
-      "name": "Lindorfer Werkstoffe",
+      "name": "Lindorfer Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2479,
@@ -143,7 +143,7 @@
     },
     {
       "id": "AUT_wurz_werkstoffe",
-      "name": "Wurz Werkstoffe",
+      "name": "Wurz Gruppe",
       "sector": "agriculture",
       "share": 0.0218,
       "headcount": 1918,
@@ -152,7 +152,7 @@
     },
     {
       "id": "AUT_gruber_bau",
-      "name": "Gruber Bau",
+      "name": "Gruber Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2602,
@@ -161,7 +161,7 @@
     },
     {
       "id": "AUT_windbichler_bau",
-      "name": "Windbichler Bau",
+      "name": "Windbichler Gruppe",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2541,
@@ -170,7 +170,7 @@
     },
     {
       "id": "AUT_unterberger_industrie",
-      "name": "Unterberger Industrie",
+      "name": "Unterberger Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2201,
@@ -179,7 +179,7 @@
     },
     {
       "id": "AUT_neumayer_logistik",
-      "name": "Neumayer Logistik",
+      "name": "Neumayer Gruppe",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2644,
@@ -197,7 +197,7 @@
     },
     {
       "id": "AUT_kalcher_transport",
-      "name": "Kalcher Transport",
+      "name": "Kalcher Landwirtschaft",
       "sector": "agriculture",
       "share": 0.0191,
       "headcount": 1463,
@@ -206,7 +206,7 @@
     },
     {
       "id": "AUT_dienstl_werkstoffe",
-      "name": "Dienstl Werkstoffe",
+      "name": "Dienstl Gruppe",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2227,
@@ -215,7 +215,7 @@
     },
     {
       "id": "AUT_oberhauser_logistik",
-      "name": "Oberhauser Logistik",
+      "name": "Oberhauser Gruppe",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2500,
@@ -242,7 +242,7 @@
     },
     {
       "id": "AUT_schwarzenberger_versicherung",
-      "name": "Schwarzenberger Versicherung",
+      "name": "Schwarzenberger Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2328,
@@ -260,7 +260,7 @@
     },
     {
       "id": "AUT_dienstl_transport",
-      "name": "Dienstl Transport",
+      "name": "Dienstl Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2196,
@@ -269,7 +269,7 @@
     },
     {
       "id": "AUT_lettner_landwirtschaft",
-      "name": "Lettner Landwirtschaft",
+      "name": "Lettner Werkstoffe",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19412,
@@ -287,7 +287,7 @@
     },
     {
       "id": "AUT_wurz_handel",
-      "name": "Wurz Handel",
+      "name": "Wurz Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19593,
@@ -296,7 +296,7 @@
     },
     {
       "id": "AUT_capesius_landwirtschaft",
-      "name": "Capesius Landwirtschaft",
+      "name": "Capesius Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19443,
@@ -305,7 +305,7 @@
     },
     {
       "id": "AUT_haidinger_logistik",
-      "name": "Haidinger Logistik",
+      "name": "Haidinger Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21371,
@@ -323,7 +323,7 @@
     },
     {
       "id": "AUT_berghammer_versicherung",
-      "name": "Berghammer Versicherung",
+      "name": "Berghammer Energie",
       "sector": "industry",
       "share": 0.0279,
       "headcount": 19543,
@@ -332,7 +332,7 @@
     },
     {
       "id": "AUT_prem_handel",
-      "name": "Prem Handel",
+      "name": "Prem Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20893,
@@ -341,7 +341,7 @@
     },
     {
       "id": "AUT_obritzhauser_transport",
-      "name": "Obritzhauser Transport",
+      "name": "Obritzhauser Werkstoffe",
       "sector": "industry",
       "share": 0.0287,
       "headcount": 18456,
@@ -368,7 +368,7 @@
     },
     {
       "id": "AUT_vollnhofer_logistik",
-      "name": "Vollnhofer Logistik",
+      "name": "Vollnhofer Bau",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19441,
@@ -386,7 +386,7 @@
     },
     {
       "id": "AUT_birngruber_handel",
-      "name": "Birngruber Handel",
+      "name": "Birngruber Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21831,
@@ -395,7 +395,7 @@
     },
     {
       "id": "AUT_obritzhauser_versicherung",
-      "name": "Obritzhauser Versicherung",
+      "name": "Obritzhauser Gruppe",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20469,
@@ -413,7 +413,7 @@
     },
     {
       "id": "AUT_felbermair_transport",
-      "name": "Felbermair Transport",
+      "name": "Felbermair Bau",
       "sector": "industry",
       "share": 0.0143,
       "headcount": 10237,
@@ -422,7 +422,7 @@
     },
     {
       "id": "AUT_lindorfer_transport",
-      "name": "Lindorfer Transport",
+      "name": "Lindorfer Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19405,
@@ -440,7 +440,7 @@
     },
     {
       "id": "AUT_murlasits_versicherung",
-      "name": "Murlasits Versicherung",
+      "name": "Murlasits Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21015,
@@ -449,7 +449,7 @@
     },
     {
       "id": "AUT_gruber_gruppe_handel",
-      "name": "Gruber Gruppe Handel",
+      "name": "Gruber Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20953,
@@ -458,7 +458,7 @@
     },
     {
       "id": "AUT_felbermair_transport_landwirtschaft",
-      "name": "Felbermair Transport Landwirtschaft",
+      "name": "Felbermair Energie",
       "sector": "industry",
       "share": 0.0196,
       "headcount": 12153,
@@ -467,7 +467,7 @@
     },
     {
       "id": "AUT_ebner_handel",
-      "name": "Ebner Handel",
+      "name": "Ebner Gruppe",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20222,
@@ -476,7 +476,7 @@
     },
     {
       "id": "AUT_prem_logistik",
-      "name": "Prem Logistik",
+      "name": "Prem Bau",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19354,
@@ -485,10 +485,10 @@
     },
     {
       "id": "AUT_prem_landwirtschaft",
-      "name": "Prem Landwirtschaft",
+      "name": "Prem Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23745,
       "city": "AT33_innsbruck",
       "tier": "body"
     },
@@ -497,7 +497,7 @@
       "name": "Tragusta Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23247,
       "city": "AT22_graz",
       "tier": "body"
     },
@@ -512,7 +512,7 @@
     },
     {
       "id": "AUT_omann_industrie",
-      "name": "Omann Industrie",
+      "name": "Omann Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23920,
@@ -524,25 +524,25 @@
       "name": "Moser Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24922,
       "city": "AT13_vienna",
       "tier": "body"
     },
     {
       "id": "AUT_loidl_energie",
-      "name": "Loidl Energie",
+      "name": "Loidl Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23052,
       "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
       "id": "AUT_gstrein_energie",
-      "name": "Gstrein Energie",
+      "name": "Gstrein Gruppe",
       "sector": "services",
       "share": 0.0165,
-      "headcount": 25000,
+      "headcount": 24396,
       "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
@@ -551,7 +551,7 @@
       "name": "Aschauer Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23230,
       "city": "AT21_klagenfurt_am_woerthersee",
       "tier": "body"
     },
@@ -575,7 +575,7 @@
     },
     {
       "id": "AUT_hafner_industrie",
-      "name": "Hafner Industrie",
+      "name": "Hafner Logistik",
       "sector": "services",
       "share": 0.0118,
       "headcount": 16039,
@@ -584,7 +584,7 @@
     },
     {
       "id": "AUT_zauner_landwirtschaft",
-      "name": "Zauner Landwirtschaft",
+      "name": "Zauner Handel",
       "sector": "services",
       "share": 0.0156,
       "headcount": 24776,
@@ -602,7 +602,7 @@
     },
     {
       "id": "AUT_ederer_industrie",
-      "name": "Ederer Industrie",
+      "name": "Ederer Versicherung",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23653,
@@ -614,13 +614,13 @@
       "name": "Schwarzenberger Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23047,
       "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
       "id": "AUT_reiterer_werkstoffe",
-      "name": "Reiterer Werkstoffe",
+      "name": "Reiterer Versicherung",
       "sector": "services",
       "share": 0.0107,
       "headcount": 17597,
@@ -629,7 +629,7 @@
     },
     {
       "id": "AUT_gruber_werkstoffe",
-      "name": "Gruber Werkstoffe",
+      "name": "Gruber Logistik",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24241,
@@ -641,7 +641,7 @@
       "name": "Gruber Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23039,
       "city": "AT11_eisenzicken",
       "tier": "body"
     },
@@ -650,13 +650,13 @@
       "name": "Murlasits Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23830,
       "city": "AT13_vienna",
       "tier": "body"
     },
     {
       "id": "AUT_achleitner_bau",
-      "name": "Achleitner Bau",
+      "name": "Achleitner Versicherung",
       "sector": "services",
       "share": 0.0064,
       "headcount": 9374,
@@ -686,7 +686,7 @@
       "name": "Wurz Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24598,
       "city": "AT31_linz",
       "tier": "body"
     },
@@ -695,7 +695,7 @@
       "name": "Brunner Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23149,
       "city": "AT13_vienna",
       "tier": "body"
     },
@@ -704,13 +704,13 @@
       "name": "Doppler Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24864,
       "city": "AT11_eisenzicken",
       "tier": "body"
     },
     {
       "id": "AUT_fraungruber_industrie",
-      "name": "Fraungruber Industrie",
+      "name": "Fraungruber Gruppe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23210,
@@ -719,7 +719,7 @@
     },
     {
       "id": "AUT_kalcher_landwirtschaft_werkstoffe",
-      "name": "Kalcher Landwirtschaft Werkstoffe",
+      "name": "Kalcher Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23696,
@@ -728,19 +728,19 @@
     },
     {
       "id": "AUT_lindorfer_transport_transport",
-      "name": "Lindorfer Transport Transport",
+      "name": "Lindorfer Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23466,
       "city": "AT31_linz",
       "tier": "body"
     },
     {
       "id": "AUT_ebner_landwirtschaft_energie",
-      "name": "Ebner Landwirtschaft Energie",
+      "name": "Ebner Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22857,
       "city": "AT32_salzburg",
       "tier": "body"
     },
@@ -749,13 +749,13 @@
       "name": "Loidl Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24363,
       "city": "AT22_graz",
       "tier": "body"
     },
     {
       "id": "AUT_quendler_industrie",
-      "name": "Quendler Industrie",
+      "name": "Quendler Gruppe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24045,
@@ -764,7 +764,7 @@
     },
     {
       "id": "AUT_unterberger_bau",
-      "name": "Unterberger Bau",
+      "name": "Unterberger Logistik",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24650,
@@ -773,16 +773,16 @@
     },
     {
       "id": "AUT_kalcher_bau",
-      "name": "Kalcher Bau",
+      "name": "Kalcher Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24800,
       "city": "AT13_vienna",
       "tier": "body"
     },
     {
       "id": "AUT_fraungruber_energie",
-      "name": "Fraungruber Energie",
+      "name": "Fraungruber Transport",
       "sector": "services",
       "share": 0.0083,
       "headcount": 13594,
@@ -791,25 +791,25 @@
     },
     {
       "id": "AUT_felbermair_industrie",
-      "name": "Felbermair Industrie",
+      "name": "Felbermair Logistik",
       "sector": "services",
       "share": 0.0153,
-      "headcount": 25000,
+      "headcount": 24788,
       "city": "AT13_vienna",
       "tier": "body"
     },
     {
       "id": "AUT_dienstl_landwirtschaft",
-      "name": "Dienstl Landwirtschaft",
+      "name": "Dienstl Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24689,
       "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
       "id": "AUT_unterberger_energie",
-      "name": "Unterberger Energie",
+      "name": "Unterberger Transport",
       "sector": "services",
       "share": 0.0058,
       "headcount": 9278,
@@ -818,10 +818,10 @@
     },
     {
       "id": "AUT_zauner_werkstoffe",
-      "name": "Zauner Werkstoffe",
+      "name": "Zauner Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24349,
       "city": "AT31_linz",
       "tier": "body"
     },
@@ -830,13 +830,13 @@
       "name": "Birngruber Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23989,
       "city": "AT34_dornbirn",
       "tier": "body"
     },
     {
       "id": "AUT_prem_werkstoffe_bau",
-      "name": "Prem Werkstoffe Bau",
+      "name": "Prem Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22784,
@@ -845,7 +845,7 @@
     },
     {
       "id": "AUT_zauner_bau",
-      "name": "Zauner Bau",
+      "name": "Zauner Logistik",
       "sector": "services",
       "share": 0.0098,
       "headcount": 13460,
@@ -854,7 +854,7 @@
     },
     {
       "id": "AUT_neumayer_handel_bau",
-      "name": "Neumayer Handel Bau",
+      "name": "Neumayer Handel",
       "sector": "services",
       "share": 0.0105,
       "headcount": 15904,
@@ -866,7 +866,7 @@
       "name": "Reiterer Handel Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24395,
       "city": "AT22_graz",
       "tier": "body"
     },

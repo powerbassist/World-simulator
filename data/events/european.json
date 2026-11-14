@@ -27,6 +27,7 @@
         {
           "id": "transpose",
           "label": "Transpose in full",
+          "short": "Transpose all",
           "summary": "The bill goes in as drafted and the meter never starts. The sectors it lands on will spend the term reminding everyone whose signature it carried.",
           "effects": {
             "company": {
@@ -123,6 +124,7 @@
         {
           "id": "take_the_number",
           "label": "Take the scientists' number",
+          "short": "Use the science",
           "summary": "The cut is deeper than the fleet can absorb and the tie-outs are yours to fund. The water gets its years, the inland villages that eat the catch and fear the empty sea approve, and the quay towns get a programme, a ribbon and a grudge.",
           "effects": {
             "spending_pct_gdp": {
@@ -145,6 +147,7 @@
         {
           "id": "review_clause",
           "label": "Concede the review clause",
+          "short": "Concede review",
           "summary": "Nobody moves this year and the fight is booked for the winter after this one, when your delegation will be one seat weaker.",
           "default": true,
           "effects": {
@@ -191,6 +194,7 @@
         {
           "id": "embrace_it",
           "label": "Say yes on the steps",
+          "short": "Say yes",
           "summary": "The photograph is front pages everywhere and yours is the smile in it. The fund is real money with your share waiting at the finance ministers, and the partner who sprang it owns the idea either way.",
           "effects": {
             "bloc_offset": {
@@ -206,6 +210,7 @@
         {
           "id": "veto_it",
           "label": "Kill it before the communiqué",
+          "short": "Kill it",
           "summary": "The word unanimity is said five times before dinner and the proposal dies in the corridor where summits bury things. The partner's staff leaks by midnight that you killed it, and the leak is accurate.",
           "effects": {
             "bloc_offset": {
@@ -220,6 +225,7 @@
         {
           "id": "study_it",
           "label": "Say it needs studying",
+          "short": "Study it",
           "summary": "The study is real and so is the delay. The proposal survives every draft with your footnote on it, and the partner collects the credit for the idea and the patience.",
           "default": true,
           "effects": {
@@ -260,6 +266,7 @@
         {
           "id": "split_it",
           "label": "Split the difference",
+          "short": "Split it",
           "summary": "The pact moves east, the orders move west and both capitals call the exchange a partnership. The border villages that wanted the pact to move at all count it a win; the workers who read the second half of that sentence are yours.",
           "effects": {
             "company": {
@@ -294,6 +301,7 @@
         {
           "id": "to_the_ministers",
           "label": "Let the ministers walk it back",
+          "short": "To the ministers",
           "summary": "The joint statement comes out on Thursday and says nothing with unusual precision. The pact survives in a working group, which is where pacts wait out governments.",
           "default": true,
           "effects": {
@@ -352,6 +360,7 @@
         {
           "id": "refuse_the_condition",
           "label": "Refuse the condition",
+          "short": "Refuse it",
           "summary": "The money stops and the story becomes sovereignty by the weekend. The towns that live on the fund lose it and gain a grievance, and the member who wrote the clause gains the example they wanted.",
           "effects": {
             "society": {
@@ -370,6 +379,7 @@
         {
           "id": "negotiate_wording",
           "label": "Negotiate the wording",
+          "short": "Negotiate words",
           "summary": "A year of footnotes, a fund paid in instalments and a clause that survives every draft. Both ministries claim the delay as a victory, which is the one thing they agree on.",
           "default": true,
           "effects": {
@@ -412,6 +422,7 @@
         {
           "id": "vote_for_withdrawal",
           "label": "Vote for the withdrawal",
+          "short": "Vote withdrawal",
           "summary": "The ingredient goes and the orchards carry it, in yields this season and in labour costs the co-ops price by Friday. The villages downstream, who have asked for the water file for years, count it as a promise kept; the cities that wanted it will buy the fruit anyway.",
           "effects": {
             "company": {
@@ -431,6 +442,7 @@
         {
           "id": "join_the_delay",
           "label": "Join the delaying bloc",
+          "short": "Join the delay",
           "summary": "A two-year transition, a study and a sourcing review, which is the full orchestra of doing nothing. The tractors go home pleased and the water file keeps the ingredient's name in it.",
           "effects": {
             "company": {
@@ -450,6 +462,7 @@
         {
           "id": "abstain",
           "label": "Abstain and let it pass",
+          "short": "Abstain",
           "summary": "The withdrawal carries on the others' votes and the minutes carry your absence. The orchards know who was in the room and so do the cities.",
           "default": true,
           "effects": {
@@ -490,6 +503,7 @@
         {
           "id": "take_to_the_court",
           "label": "Take it to the court",
+          "short": "Go to the court",
           "summary": "The case is strong, the timetable is two years and the queue does not read judgments. The hauliers' association funds the action and the border towns wait for it.",
           "effects": {
             "bloc_offset": {
@@ -505,6 +519,7 @@
         {
           "id": "check_theirs",
           "label": "Check their lorries too",
+          "short": "Check theirs",
           "summary": "Every truck gets the full look and the queue becomes mutual. The hauliers carry both halves of the insult and the partner's minister discovers the word proportionality.",
           "effects": {
             "company": {
@@ -524,6 +539,7 @@
         {
           "id": "keep_the_lane_open",
           "label": "Keep your side open",
+          "short": "Keep it open",
           "summary": "Your booths stay staffed to the minute and the jam stays on their pavement, which is a policy and also a photograph. The crossing towns absorb the difference in silence.",
           "default": true,
           "effects": {
@@ -569,6 +585,7 @@
         {
           "id": "send_the_path",
           "label": "Send the path they asked for",
+          "short": "Send the path",
           "summary": "Two lines down, the pension line and the roads line, and the letter goes back with numbers the ministries have already priced. The answer plays as competence in the salons and as arithmetic in the streets.",
           "effects": {
             "spending_pct_gdp": {
@@ -587,6 +604,7 @@
         {
           "id": "close_at_the_border",
           "label": "Close the gap at the border",
+          "short": "Close at border",
           "summary": "A point on the purchase taxes, which is the quietest instrument and the one everybody pays. The letter is answered and the till receipts answer back for a year.",
           "effects": {
             "tax_rates_pct": {
@@ -604,6 +622,7 @@
         {
           "id": "on_track_letter",
           "label": "Write back that the plan is on track",
+          "short": "Say on track",
           "summary": "The plan is a chart and the chart is a draw. The ministers' reply gives you a season, and the season has a number in it.",
           "default": true,
           "effects": {
@@ -636,6 +655,7 @@
         {
           "id": "fast_track",
           "label": "Put them through in one omnibus",
+          "short": "Pass in one go",
           "summary": "Four hundred measures in one bill and the assembly sitting three weekends to pass what the treaties say is already law. The Commission's file closes on schedule; the assembly's does not close at all.",
           "effects": {
             "spending_pct_gdp": {
@@ -653,6 +673,7 @@
         {
           "id": "transition_periods",
           "label": "Negotiate the transition periods",
+          "short": "Seek transitions",
           "summary": "Eleven of the measures are deferrable under the treaty and you defer the other three hundred and eighty-nine, which takes drafting. The answer satisfies everyone for the season it lasts.",
           "effects": {
             "bloc_offset": {
@@ -668,6 +689,7 @@
         {
           "id": "cherry_pick",
           "label": "Pass the popular half",
+          "short": "Pass the half",
           "summary": "The assembly keeps the measures that read well and schedules the rest for a review nobody diarises. The Commission's meter starts where the schedule ends, which is what it is for.",
           "default": true,
           "effects": {
@@ -708,6 +730,7 @@
         {
           "id": "refer_to_the_court",
           "label": "Send it to the court",
+          "short": "Send to court",
           "summary": "The reference is honest, slow and fatal to the bill's momentum, which its author will bill to you personally. The treaties say what they always said and the court says it again; the provinces, which live on the treaty money, read the delay as caution and approve.",
           "effects": {
             "society": {
@@ -741,6 +764,7 @@
         {
           "id": "amend_in_committee",
           "label": "Amend it in committee",
+          "short": "Amend it",
           "summary": "The bill is hollowed by Thursday and passes on time in name only. Its author calls it surrender, the Commission calls it transposition, and the committee calls it Thursday.",
           "default": true,
           "effects": {

@@ -24,7 +24,7 @@
     },
     {
       "id": "MKD_jovanovski_trgovija",
-      "name": "Jovanovski Trgovija",
+      "name": "Jovanovski Industrija",
       "sector": "industry",
       "share": 0.077,
       "headcount": 56538,
@@ -54,7 +54,7 @@
     },
     {
       "id": "MKD_uzunov_osiguruvanje",
-      "name": "Uzunov Osiguruvanje",
+      "name": "Uzunov Gradežništvo",
       "sector": "industry",
       "share": 0.0438,
       "headcount": 33623,
@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "MKD_dimovski_materijali",
-      "name": "Dimovski Materijali",
+      "name": "Dimovski Trgovija",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2580,
@@ -125,7 +125,7 @@
     },
     {
       "id": "MKD_petrovski_osiguruvanje",
-      "name": "Petrovski Osiguruvanje",
+      "name": "Petrovski Zemjodelstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2406,
@@ -143,7 +143,7 @@
     },
     {
       "id": "MKD_uzunov_industrija",
-      "name": "Uzunov Industrija",
+      "name": "Uzunov Trgovija",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2441,
@@ -152,7 +152,7 @@
     },
     {
       "id": "MKD_velkovski_energetika",
-      "name": "Velkovski Energetika",
+      "name": "Velkovski Zemjodelstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2616,
@@ -161,7 +161,7 @@
     },
     {
       "id": "MKD_angelov_transport",
-      "name": "Angelov Transport",
+      "name": "Angelov Zemjodelstvo",
       "sector": "agriculture",
       "share": 0.0204,
       "headcount": 1652,
@@ -170,7 +170,7 @@
     },
     {
       "id": "MKD_spasovski_transport",
-      "name": "Spasovski Transport",
+      "name": "Spasovski Zemjodelstvo",
       "sector": "agriculture",
       "share": 0.017,
       "headcount": 1296,
@@ -179,7 +179,7 @@
     },
     {
       "id": "MKD_petrovski_energetika",
-      "name": "Petrovski Energetika",
+      "name": "Petrovski Zemjodelstvo Trgovija",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2490,
@@ -197,7 +197,7 @@
     },
     {
       "id": "MKD_ilievski_materijali",
-      "name": "Ilievski Materijali",
+      "name": "Ilievski Trgovija",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2430,
@@ -206,7 +206,7 @@
     },
     {
       "id": "MKD_dimovski_osiguruvanje",
-      "name": "Dimovski Osiguruvanje",
+      "name": "Dimovski Zemjodelstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2328,
@@ -215,7 +215,7 @@
     },
     {
       "id": "MKD_kostovski_materijali",
-      "name": "Kostovski Materijali",
+      "name": "Kostovski Zemjodelstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2242,
@@ -224,7 +224,7 @@
     },
     {
       "id": "MKD_veljanovski_materijali",
-      "name": "Veljanovski Materijali",
+      "name": "Veljanovski Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2668,
@@ -233,7 +233,7 @@
     },
     {
       "id": "MKD_grozdanovski_osiguruvanje",
-      "name": "Grozdanovski Osiguruvanje",
+      "name": "Grozdanovski Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2412,
@@ -242,7 +242,7 @@
     },
     {
       "id": "MKD_kostovski_industrija",
-      "name": "Kostovski Industrija",
+      "name": "Kostovski Trgovija",
       "sector": "agriculture",
       "share": 0.0228,
       "headcount": 1819,
@@ -260,7 +260,7 @@
     },
     {
       "id": "MKD_uzunov_logistika_transport",
-      "name": "Uzunov Logistika Transport",
+      "name": "Uzunov Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19076,
@@ -269,7 +269,7 @@
     },
     {
       "id": "MKD_blazevski_transport",
-      "name": "Blaževski Transport",
+      "name": "Blaževski Energetika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18401,
@@ -278,7 +278,7 @@
     },
     {
       "id": "MKD_ilievski_transport",
-      "name": "Ilievski Transport",
+      "name": "Ilievski Energetika",
       "sector": "industry",
       "share": 0.0155,
       "headcount": 10773,
@@ -287,7 +287,7 @@
     },
     {
       "id": "MKD_lazarevski_transport",
-      "name": "Lazarevski Transport",
+      "name": "Lazarevski Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20888,
@@ -332,7 +332,7 @@
     },
     {
       "id": "MKD_veljanovski_logistika",
-      "name": "Veljanovski Logistika",
+      "name": "Veljanovski Industrija",
       "sector": "industry",
       "share": 0.0298,
       "headcount": 21381,
@@ -341,7 +341,7 @@
     },
     {
       "id": "MKD_popovski_trgovija",
-      "name": "Popovski Trgovija",
+      "name": "Popovski Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20012,
@@ -404,7 +404,7 @@
     },
     {
       "id": "MKD_nedelkovski_logistika",
-      "name": "Nedelkovski Logistika",
+      "name": "Nedelkovski Grupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18451,
@@ -422,7 +422,7 @@
     },
     {
       "id": "MKD_naumovski_osiguruvanje",
-      "name": "Naumovski Osiguruvanje",
+      "name": "Naumovski Energetika",
       "sector": "industry",
       "share": 0.0255,
       "headcount": 17932,
@@ -449,7 +449,7 @@
     },
     {
       "id": "MKD_zafirovski_logistika",
-      "name": "Zafirovski Logistika",
+      "name": "Zafirovski Gradežništvo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20714,
@@ -467,16 +467,16 @@
     },
     {
       "id": "MKD_dimovski_trgovija_gradeznistvo",
-      "name": "Dimovski Trgovija Gradežništvo",
+      "name": "Dimovski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23856,
       "city": "MK00_skopje",
       "tier": "body"
     },
     {
       "id": "MKD_lazarevski_gradeznistvo",
-      "name": "Lazarevski Gradežništvo",
+      "name": "Lazarevski Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23291,
@@ -488,7 +488,7 @@
       "name": "Kocevski Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24394,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -515,7 +515,7 @@
       "name": "Veljanovski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23813,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -524,16 +524,16 @@
       "name": "Kocevski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22677,
       "city": "MK00_kisela_voda",
       "tier": "body"
     },
     {
       "id": "MKD_petrovski_gradeznistvo_transport",
-      "name": "Petrovski Gradežništvo Transport",
+      "name": "Petrovski Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24731,
       "city": "MK00_bitola",
       "tier": "body"
     },
@@ -542,16 +542,16 @@
       "name": "Janevski Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23116,
       "city": "MK00_bitola",
       "tier": "body"
     },
     {
       "id": "MKD_mitrevski_industrija",
-      "name": "Mitrevski Industrija",
+      "name": "Mitrevski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22679,
       "city": "MK00_cair",
       "tier": "body"
     },
@@ -569,13 +569,13 @@
       "name": "Atanasovski Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23781,
       "city": "MK00_prilep",
       "tier": "body"
     },
     {
       "id": "MKD_velkovski_industrija_energetika",
-      "name": "Velkovski Industrija Energetika",
+      "name": "Velkovski Trgovija",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22442,
@@ -584,16 +584,16 @@
     },
     {
       "id": "MKD_dimovski_industrija",
-      "name": "Dimovski Industrija",
+      "name": "Dimovski Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23090,
       "city": "MK00_tetovo",
       "tier": "body"
     },
     {
       "id": "MKD_janevski_energetika",
-      "name": "Janevski Energetika",
+      "name": "Janevski Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24800,
@@ -611,7 +611,7 @@
     },
     {
       "id": "MKD_naumovski_trgovija_trgovija",
-      "name": "Naumovski Trgovija Trgovija",
+      "name": "Naumovski Trgovija",
       "sector": "services",
       "share": 0.0119,
       "headcount": 19542,
@@ -620,28 +620,28 @@
     },
     {
       "id": "MKD_popovski_energetika",
-      "name": "Popovski Energetika",
+      "name": "Popovski Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23467,
       "city": "MK00_skopje",
       "tier": "body"
     },
     {
       "id": "MKD_todorovski_gradeznistvo",
-      "name": "Todorovski Gradežništvo",
+      "name": "Todorovski Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23352,
       "city": "MK00_skopje",
       "tier": "body"
     },
     {
       "id": "MKD_naumovski_industrija",
-      "name": "Naumovski Industrija",
+      "name": "Naumovski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23498,
       "city": "MK00_kumanovo",
       "tier": "body"
     },
@@ -656,7 +656,7 @@
     },
     {
       "id": "MKD_jovanovski_energetika_materijali",
-      "name": "Jovanovski Energetika Materijali",
+      "name": "Jovanovski Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23538,
@@ -674,10 +674,10 @@
     },
     {
       "id": "MKD_ilievski_industrija",
-      "name": "Ilievski Industrija",
+      "name": "Ilievski Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24964,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -692,16 +692,16 @@
     },
     {
       "id": "MKD_bojadziev_materijali",
-      "name": "Bojadžiev Materijali",
+      "name": "Bojadžiev Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24227,
       "city": "MK00_bitola",
       "tier": "body"
     },
     {
       "id": "MKD_grozdanovski_industrija",
-      "name": "Grozdanovski Industrija",
+      "name": "Grozdanovski Logistika",
       "sector": "services",
       "share": 0.0088,
       "headcount": 12343,
@@ -710,7 +710,7 @@
     },
     {
       "id": "MKD_dimovski_gradeznistvo_logistika",
-      "name": "Dimovski Gradežništvo Logistika",
+      "name": "Dimovski Logistika",
       "sector": "services",
       "share": 0.0085,
       "headcount": 11787,
@@ -728,7 +728,7 @@
     },
     {
       "id": "MKD_stefanovski_materijali",
-      "name": "Stefanovski Materijali",
+      "name": "Stefanovski Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24610,
@@ -746,10 +746,10 @@
     },
     {
       "id": "MKD_nedelkovski_energetika",
-      "name": "Nedelkovski Energetika",
+      "name": "Nedelkovski Trgovija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24321,
       "city": "MK00_prilep",
       "tier": "body"
     },
@@ -764,7 +764,7 @@
     },
     {
       "id": "MKD_jovanovski_gradeznistvo",
-      "name": "Jovanovski Gradežništvo",
+      "name": "Jovanovski Osiguruvanje",
       "sector": "services",
       "share": 0.0136,
       "headcount": 21295,
@@ -773,16 +773,16 @@
     },
     {
       "id": "MKD_tasevski_zemjodelstvo",
-      "name": "Tasevski Zemjodelstvo",
+      "name": "Tasevski Trgovija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24446,
       "city": "MK00_skopje",
       "tier": "body"
     },
     {
       "id": "MKD_uzunov_transport_gradeznistvo",
-      "name": "Uzunov Transport Gradežništvo",
+      "name": "Uzunov Transport",
       "sector": "services",
       "share": 0.0139,
       "headcount": 19826,
@@ -794,22 +794,22 @@
       "name": "Cvetanovski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24595,
       "city": "MK00_kumanovo",
       "tier": "body"
     },
     {
       "id": "MKD_kostovski_energetika_materijali",
-      "name": "Kostovski Energetika Materijali",
+      "name": "Kostovski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24434,
       "city": "MK00_skopje",
       "tier": "body"
     },
     {
       "id": "MKD_cvetanovski_materijali",
-      "name": "Cvetanovski Materijali",
+      "name": "Cvetanovski Trgovija",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23124,
@@ -818,10 +818,10 @@
     },
     {
       "id": "MKD_bojadziev_zemjodelstvo",
-      "name": "Bojadžiev Zemjodelstvo",
+      "name": "Bojadžiev Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22976,
       "city": "MK00_cair",
       "tier": "body"
     },

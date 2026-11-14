@@ -54,7 +54,7 @@
     },
     {
       "id": "MDA_turcanu_logistica",
-      "name": "Țurcanu Logistică",
+      "name": "Țurcanu Energie",
       "sector": "industry",
       "share": 0.0868,
       "headcount": 60812,
@@ -135,7 +135,7 @@
     },
     {
       "id": "MDA_ursu_asigurari",
-      "name": "Ursu Asigurări",
+      "name": "Ursu Agricultură",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2592,
@@ -153,7 +153,7 @@
     },
     {
       "id": "MDA_zaharia_materiale_transport",
-      "name": "Zaharia Materiale Transport",
+      "name": "Zaharia Agricultură",
       "sector": "agriculture",
       "share": 0.0211,
       "headcount": 1555,
@@ -171,7 +171,7 @@
     },
     {
       "id": "MDA_morari_materiale",
-      "name": "Morari Materiale",
+      "name": "Morari Agricultură",
       "sector": "agriculture",
       "share": 0.0275,
       "headcount": 2321,
@@ -180,7 +180,7 @@
     },
     {
       "id": "MDA_gaina_asigurari",
-      "name": "Gaină Asigurări",
+      "name": "Gaină Grup",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2360,
@@ -189,7 +189,7 @@
     },
     {
       "id": "MDA_botnaru_constructii",
-      "name": "Botnaru Construcții",
+      "name": "Botnaru Agricultură",
       "sector": "agriculture",
       "share": 0.0222,
       "headcount": 1887,
@@ -198,7 +198,7 @@
     },
     {
       "id": "MDA_ursu_logistica",
-      "name": "Ursu Logistică",
+      "name": "Ursu Grup Agricultură",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2401,
@@ -207,7 +207,7 @@
     },
     {
       "id": "MDA_pascari_energie",
-      "name": "Pascari Energie",
+      "name": "Pascari Agricultură",
       "sector": "agriculture",
       "share": 0.0187,
       "headcount": 1378,
@@ -216,7 +216,7 @@
     },
     {
       "id": "MDA_popa_constructii",
-      "name": "Popa Construcții",
+      "name": "Popa Comerț",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2542,
@@ -234,7 +234,7 @@
     },
     {
       "id": "MDA_popa_asigurari",
-      "name": "Popa Asigurări",
+      "name": "Popa Agricultură",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2387,
@@ -252,7 +252,7 @@
     },
     {
       "id": "MDA_cernei_asigurari",
-      "name": "Cernei Asigurări",
+      "name": "Cernei Comerț",
       "sector": "agriculture",
       "share": 0.0136,
       "headcount": 1112,
@@ -270,7 +270,7 @@
     },
     {
       "id": "MDA_frunza_energie",
-      "name": "Frunză Energie",
+      "name": "Frunză Grup",
       "sector": "agriculture",
       "share": 0.0215,
       "headcount": 1593,
@@ -297,7 +297,7 @@
     },
     {
       "id": "MDA_pascari_comert",
-      "name": "Pascari Comerț",
+      "name": "Pascari Construcții",
       "sector": "industry",
       "share": 0.0183,
       "headcount": 12019,
@@ -306,7 +306,7 @@
     },
     {
       "id": "MDA_spanu_comert",
-      "name": "Spânu Comerț",
+      "name": "Spânu Grup",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20476,
@@ -324,7 +324,7 @@
     },
     {
       "id": "MDA_mereacre_asigurari",
-      "name": "Mereacre Asigurări",
+      "name": "Mereacre Grup",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18328,
@@ -342,7 +342,7 @@
     },
     {
       "id": "MDA_gaina_transport",
-      "name": "Gaină Transport",
+      "name": "Gaină Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20178,
@@ -360,7 +360,7 @@
     },
     {
       "id": "MDA_ursu_materiale_asigurari",
-      "name": "Ursu Materiale Asigurări",
+      "name": "Ursu Construcții",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20868,
@@ -378,7 +378,7 @@
     },
     {
       "id": "MDA_gaina_agricultura",
-      "name": "Gaină Agricultură",
+      "name": "Gaină Construcții",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21677,
@@ -396,7 +396,7 @@
     },
     {
       "id": "MDA_lutcan_asigurari_materiale",
-      "name": "Lutcan Asigurări Materiale",
+      "name": "Lutcan Materiale",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21172,
@@ -414,7 +414,7 @@
     },
     {
       "id": "MDA_croitoru_agricultura",
-      "name": "Croitoru Agricultură",
+      "name": "Croitoru Materiale",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19179,
@@ -468,7 +468,7 @@
     },
     {
       "id": "MDA_morari_logistica",
-      "name": "Morari Logistică",
+      "name": "Morari Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19672,
@@ -477,7 +477,7 @@
     },
     {
       "id": "MDA_rosca_agricultura",
-      "name": "Roșca Agricultură",
+      "name": "Roșca Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20092,
@@ -486,7 +486,7 @@
     },
     {
       "id": "MDA_ursu_comert",
-      "name": "Ursu Comerț",
+      "name": "Ursu Energie",
       "sector": "industry",
       "share": 0.0276,
       "headcount": 17600,
@@ -495,7 +495,7 @@
     },
     {
       "id": "MDA_capatana_asigurari",
-      "name": "Căpățână Asigurări",
+      "name": "Căpățână Materiale",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18698,
@@ -504,10 +504,10 @@
     },
     {
       "id": "MDA_turcanu_energie",
-      "name": "Țurcanu Energie",
+      "name": "Țurcanu Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23625,
       "city": "MD00_tiraspol",
       "tier": "body"
     },
@@ -522,16 +522,16 @@
     },
     {
       "id": "MDA_arnaut_constructii",
-      "name": "Arnăut Construcții",
+      "name": "Arnăut Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23879,
       "city": "MD00_tiraspol",
       "tier": "body"
     },
     {
       "id": "MDA_gaina_transport_materiale",
-      "name": "Gaină Transport Materiale",
+      "name": "Gaină Transport",
       "sector": "services",
       "share": 0.0115,
       "headcount": 17263,
@@ -540,25 +540,25 @@
     },
     {
       "id": "MDA_balan_materiale",
-      "name": "Balan Materiale",
+      "name": "Balan Asigurări",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22914,
       "city": "MD00_bender",
       "tier": "body"
     },
     {
       "id": "MDA_sarbu_constructii",
-      "name": "Sârbu Construcții",
+      "name": "Sârbu Logistică",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22952,
       "city": "MD00_chisinau",
       "tier": "body"
     },
     {
       "id": "MDA_morari_agricultura_grup",
-      "name": "Morari Agricultură Grup",
+      "name": "Morari Logistică",
       "sector": "services",
       "share": 0.0125,
       "headcount": 19784,
@@ -567,25 +567,25 @@
     },
     {
       "id": "MDA_sarbu_industrie",
-      "name": "Sârbu Industrie",
+      "name": "Sârbu Asigurări",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23311,
       "city": "MD00_chisinau",
       "tier": "body"
     },
     {
       "id": "MDA_rusnac_energie",
-      "name": "Rusnac Energie",
+      "name": "Rusnac Asigurări",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24618,
       "city": "MD00_tiraspol",
       "tier": "body"
     },
     {
       "id": "MDA_turcanu_agricultura",
-      "name": "Țurcanu Agricultură",
+      "name": "Țurcanu Asigurări",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24358,
@@ -597,7 +597,7 @@
       "name": "Tăbăcaru Asigurări",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23050,
       "city": "MD00_bender",
       "tier": "body"
     },
@@ -606,16 +606,16 @@
       "name": "Pascari Grup",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23737,
       "city": "MD00_bender",
       "tier": "body"
     },
     {
       "id": "MDA_prodan_constructii",
-      "name": "Prodan Construcții",
+      "name": "Prodan Comerț",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23702,
       "city": "MD00_chisinau",
       "tier": "body"
     },
@@ -639,7 +639,7 @@
     },
     {
       "id": "MDA_sarbu_agricultura",
-      "name": "Sârbu Agricultură",
+      "name": "Sârbu Comerț",
       "sector": "services",
       "share": 0.0143,
       "headcount": 23279,
@@ -648,7 +648,7 @@
     },
     {
       "id": "MDA_pascari_materiale",
-      "name": "Pascari Materiale",
+      "name": "Pascari Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22537,
@@ -675,7 +675,7 @@
     },
     {
       "id": "MDA_mereacre_materiale",
-      "name": "Mereacre Materiale",
+      "name": "Mereacre Transport",
       "sector": "services",
       "share": 0.0093,
       "headcount": 15269,
@@ -687,7 +687,7 @@
       "name": "Tăbăcaru Comerț",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24629,
       "city": "MD00_balti",
       "tier": "body"
     },
@@ -702,10 +702,10 @@
     },
     {
       "id": "MDA_tabacaru_materiale",
-      "name": "Tăbăcaru Materiale",
+      "name": "Tăbăcaru Grup",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22890,
       "city": "MD00_balti",
       "tier": "body"
     },
@@ -714,7 +714,7 @@
       "name": "Morari Comerț",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24080,
       "city": "MD00_tiraspol",
       "tier": "body"
     },
@@ -729,16 +729,16 @@
     },
     {
       "id": "MDA_spanu_energie",
-      "name": "Spânu Energie",
+      "name": "Spânu Asigurări",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24087,
       "city": "MD00_balti",
       "tier": "body"
     },
     {
       "id": "MDA_bivol_agricultura_energie",
-      "name": "Bivol Agricultură Energie",
+      "name": "Bivol Logistică",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23788,
@@ -750,13 +750,13 @@
       "name": "Guțu Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24814,
       "city": "MD00_balti",
       "tier": "body"
     },
     {
       "id": "MDA_ursu_materiale",
-      "name": "Ursu Materiale",
+      "name": "Ursu Asigurări",
       "sector": "services",
       "share": 0.0062,
       "headcount": 9406,
@@ -783,7 +783,7 @@
     },
     {
       "id": "MDA_morari_constructii",
-      "name": "Morari Construcții",
+      "name": "Morari Transport",
       "sector": "services",
       "share": 0.0097,
       "headcount": 15993,
@@ -801,7 +801,7 @@
     },
     {
       "id": "MDA_ursu_industrie_agricultura",
-      "name": "Ursu Industrie Agricultură",
+      "name": "Ursu Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23924,
@@ -819,7 +819,7 @@
     },
     {
       "id": "MDA_morari_industrie_asigurari",
-      "name": "Morari Industrie Asigurări",
+      "name": "Morari Asigurări",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23552,
@@ -828,7 +828,7 @@
     },
     {
       "id": "MDA_mereacre_industrie",
-      "name": "Mereacre Industrie",
+      "name": "Mereacre Asigurări",
       "sector": "services",
       "share": 0.0136,
       "headcount": 20275,
@@ -837,7 +837,7 @@
     },
     {
       "id": "MDA_rosca_comert_comert",
-      "name": "Roșca Comerț Comerț",
+      "name": "Roșca Comerț",
       "sector": "services",
       "share": 0.0113,
       "headcount": 17000,
@@ -846,7 +846,7 @@
     },
     {
       "id": "MDA_zaharia_agricultura_comert",
-      "name": "Zaharia Agricultură Comerț",
+      "name": "Zaharia Comerț",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23584,
