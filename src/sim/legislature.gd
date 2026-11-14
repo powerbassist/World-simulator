@@ -1176,20 +1176,16 @@ static func can_put_to_referendum(ns, law) -> bool:
 	return Referendum.may_choose(ns)
 
 
-## `referendum` is ROUTE B, and it is refused for anything but a constitutional
-## amendment under a constitution that offers the route. A carried division does NOT
-## apply the law: it calls the country, and Legislature.tick_month() settles it
-## REFERENDUM_DELAY_MONTHS later. See docs/referendum-model.md.
-static func propose(state, loader, law, force := false, referendum := false, scale := 1.0) -> Dictionary:
-	var ns = state.player()
-	var party_list: Array = loader.parties.get(ns.id, [])
-
+## Why propose() would refuse `law` now, "" when it would table or force it: its checks
+## in its order, each the flag its refusal carries. Writes nothing, so a reader (the goal
+## read's "can table now") asks the very rule the press meets.
+static func refusal(state, ns, loader, law, force := false, referendum := false, scale := 1.0) -> String:
 	# V5.2 b+ R2. ONE PLAYER BILL TABLED AT A TIME, checked first so the refusal
 	# names the real reason. Article 49.3 is never tabled, so it stays open on
 	# another bill, as in the real procedure; a 49.3 on the tabled bill itself is
 	# refused, since it would apply the law and then divide it again at the close.
 	if not ns.tabled_bill.is_empty() and (not force or String(ns.tabled_bill.get("law_id", "")) == law.id):
-		return refused(ns, law.id, law.majority, "already_tabled")
+		return "already_tabled"
 
 	# THE ACTION MUST STILL BE LEGAL, which the other four player verbs -- the
 	# diplomacy, campaign, pledge and project executors -- each check and this one,
@@ -1208,39 +1204,13 @@ static func propose(state, loader, law, force := false, referendum := false, sca
 	# wrong verdict and the loss of the double-application guard this scan
 	# exists to keep (an unfound law is an unchecked law).
 	if open_law(state, ns, loader, law.id) == null:
-		var unavailable := {
-			"law_id": law.id, "passed": false, "refused": true, "unavailable": true,
-			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
-			"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
-		}
-		ns.last_law_result = unavailable
-		return unavailable
-
+		return "unavailable"
 	if referendum and not can_put_to_referendum(ns, law):
-		var no_route := {
-			"law_id": law.id, "passed": false, "refused": true, "referendum_route": true,
-			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
-			"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
-		}
-		ns.last_law_result = no_route
-		return no_route
-
+		return "referendum_route"
 	if force and law.constitutional:
-		var refused := {
-			"law_id": law.id, "passed": false, "forced": true, "refused": true,
-			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
-			"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
-		}
-		ns.last_law_result = refused
-		return refused
-
+		return "forced"
 	if scale != 1.0 and not LawMagnitude.may_grade(law, scale, referendum):
-		return refused(ns, law.id, law.majority, "not_graded")
-
-	if force:
-		return _force(state, ns, party_list, LawMagnitude.scaled(law, scale), loader)
-
-	var route := takes_route(ns, law, referendum)
+		return "not_graded"
 
 	# ONE REFERENDUM AT A TIME ON THE MANDATORY ROUTE TOO. can_put_to_referendum()
 	# is where is_pending() is checked, and the mandatory branch above never passes
@@ -1248,18 +1218,28 @@ static func propose(state, loader, law, force := false, referendum := false, sca
 	# the route anyway and Referendum.announce() overwrote ns.referendum_pending
 	# wholesale: A's question vanished with no cooldown, no charge and no record.
 	# Latent only because CHE is the sole `mandatory` nation and is not playable.
-	if route and Referendum.is_pending(ns):
-		# Its OWN flag rather than `referendum_route`, which law_panel.gd reads to
-		# print "this constitution has no referendum route for that" -- the opposite
-		# of what happened here, since this branch is only reachable BECAUSE the
-		# constitution has one.
-		var in_flight := {
-			"law_id": law.id, "passed": false, "refused": true, "referendum_in_flight": true,
-			"majority": law.majority, "yes_seats": 0, "no_seats": 0, "abstain_seats": 0,
-			"seats_total": ns.assembly_seats, "party_votes": {}, "party_support": {}, "party_rebels": {},
-		}
-		ns.last_law_result = in_flight
-		return in_flight
+	# Its OWN flag rather than `referendum_route`, which law_panel.gd reads to print
+	# "this constitution has no referendum route for that" -- the opposite of what
+	# happened here, since this branch is only reachable BECAUSE the constitution has
+	# one. A forced bill is never tabled, so it takes no route.
+	if not force and takes_route(ns, law, referendum) and Referendum.is_pending(ns):
+		return "referendum_in_flight"
+	return ""
+
+
+## `referendum` is ROUTE B, and it is refused for anything but a constitutional
+## amendment under a constitution that offers the route. A carried division does NOT
+## apply the law: it calls the country, and Legislature.tick_month() settles it
+## REFERENDUM_DELAY_MONTHS later. See docs/referendum-model.md.
+static func propose(state, loader, law, force := false, referendum := false, scale := 1.0) -> Dictionary:
+	var ns = state.player()
+	var party_list: Array = loader.parties.get(ns.id, [])
+	var why := refusal(state, ns, loader, law, force, referendum, scale)
+	if why != "":
+		return refused(ns, law.id, law.majority, why)
+	if force:
+		return _force(state, ns, party_list, LawMagnitude.scaled(law, scale), loader)
+	var route := takes_route(ns, law, referendum)
 
 	# V5.2 b+ R2. TABLED, NOT DIVIDED. The bill is before the Assembly until the
 	# close that ends the month, where Division.divide() runs what this function

@@ -5,7 +5,7 @@ extends SceneTree
 ## so the frame time it costs is measured beside the budget forecast's own, the gate being
 ## "no worse than the budget forecast already is". Dev-only, never ships.
 ##
-##   APPDATA="$(mktemp -d)" godot --headless --path . --script res://tools/goal_read_frame_probe.gd [-- --warm]
+##   APPDATA="$(mktemp -d)" godot --headless --path . --script res://tools/goal_read_frame_probe.gd
 ##
 ## Each phase runs its units the way budget_forecast.gd's _advance() does: per frame, at
 ## least one unit, then more while FRAME_BUDGET_USEC is left. The figure is the WORK each
@@ -22,7 +22,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const GoalRead = preload("res://src/sim/goal_read.gd")
 const BudgetForecast = preload("res://src/ui/budget_forecast.gd")
-const WorldMonth = preload("res://src/sim/world_month.gd")
+const Net = preload("res://src/sim/network.gd")
 
 var _loader
 var _state
@@ -40,11 +40,10 @@ func _init() -> void:
 	_state = GameState.new_game(_loader, "FRA")
 	_state.year = 2026
 	_state.month = 1
-	# `--warm`: one month ticked on a copy first, as a game that has closed a month has
-	# (the process-wide caches the first projection otherwise fills inside one unit).
-	if OS.get_cmdline_user_args().has("--warm"):
-		WorldMonth.tick_month(_state.duplicate_state(), _loader)
-		print("warm: one month ticked on a copy first")
+	# The distance table warmed as the game warms it at boot (main.gd, behind the loading
+	# screen). Without it the first unit built the ~4.4 s table inside one frame, a freeze
+	# the game never has: the "4.57 s first projection" this probe once reported.
+	Net.warm(_state.region_graph)
 	_job = Budget.projection(_state, {}, 24, _loader)
 
 
