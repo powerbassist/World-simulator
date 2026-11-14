@@ -327,8 +327,8 @@ func _ready() -> void:
 	_budget_panel = BudgetPanel.new()
 	_windows.register("budget", tr("Budget"), _budget_panel, KEY_B, ICONS + "account_balance_wallet.svg")
 	_budget_panel.setup(_state, _loader)
-	_budget_panel.committed.connect(func(before, _pending):
-		_fiscal_committed(tr("Budget change"), tr("Budget committed"), before))
+	_budget_panel.committed.connect(func(before, tabling):
+		_fiscal_committed(tr("Budget change"), tabling, before))
 
 	# V4.2 T5. The tax levers' new home, in the Economy cluster beside Budget:
 	# the cluster grammar (panel-system.md §16) puts a surface where its
@@ -346,8 +346,8 @@ func _ready() -> void:
 	# columns). The panels are siblings; this is a reference, not state, and the
 	# load path's setup() sweep leaves it alone.
 	_budget_panel.pair(_tax_panel, _windows)
-	_tax_panel.committed.connect(func(before, _pending):
-		_fiscal_committed(tr("Tax code change"), tr("Tax code committed"), before))
+	_tax_panel.committed.connect(func(before, tabling):
+		_fiscal_committed(tr("Tax code change"), tabling, before))
 	# A finished draft opens the briefing on itself: the price it was quoted
 	# and the drafting months are what the press just bought.
 	_tax_panel.brief_requested_draft.connect(func(entry, draft_id):
@@ -1064,12 +1064,12 @@ func _unhandled_input(event: InputEvent) -> void:
 					_save_load_panel.mark_dirty()
 
 
-## A fiscal command landed -- the Budget window's or the Tax Code's, both through
-## Budget.commit(). The acknowledgment the playtest found missing: the biggest verb
-## in the game used to answer with one corner number changing (F3).
-func _fiscal_committed(label: String, title: String, before: Dictionary) -> void:
+## A fiscal command landed -- the Budget window's or the Tax Code's, both tabling the one
+## finance bill (docs/design/finance-bill.md). The acknowledgment the playtest found
+## missing (F3): it says the bill waits for the vote, or why it was refused.
+func _fiscal_committed(label: String, tabling: Dictionary, before: Dictionary) -> void:
 	_queue_effect(label, before)
-	_hud.inbox.push(title, tr("Deficit now %s%% of GDP.") % Num.f(float(_state.player().deficit_pct_gdp), 2))
+	_hud.inbox.push(tr("Finance bill withdrawn") if bool(tabling.get("withdrawn", false)) else tr("Finance bill tabled") if bool(tabling.get("tabled", false)) else tr("Finance bill not tabled"), tr("Nothing is voted on it; the books stand as they were.") if bool(tabling.get("withdrawn", false)) else tr("The Assembly votes on it at the month's end; it applies if carried.") if bool(tabling.get("tabled", false)) else tr("No finance bill is tabled, another bill holds this month's slot, or no line moved."))
 	_update_top_bar()
 
 

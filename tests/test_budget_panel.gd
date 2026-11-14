@@ -14,6 +14,8 @@ extends SceneTree
 ## and fires nothing, which would make this test pass against a panel whose
 ## signals were never connected. See docs/engine-decision.md.
 
+const Division = preload("res://src/sim/division.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
@@ -59,6 +61,8 @@ func _process(_delta: float) -> bool:
 		2:
 			_move_a_lever()
 		3:
+			_refused_commit_keeps_the_draft()
+			_withdraw_from_the_tax_code()
 			_commit()
 			_finish()
 	return false
@@ -144,8 +148,45 @@ func _move_a_lever() -> void:
 		_fail("staging the tax edit moved live state: income is now %s" % _state.player().tax_rates_pct["income"])
 
 
+## A law holds the month's slot: Commit is refused (docs/design/finance-bill.md), and the
+## draft the player built must still be there on both tabs, not reverted to live.
+func _refused_commit_keeps_the_draft() -> void:
+	var ns = _state.player()
+	ns.tabled_bill = {"law_id": "carbon_levy", "vote_year": 2026, "vote_month": 1, "vote_day": 31}
+	_panel._on_commit()
+	_tax_panel._on_commit()
+	if absf(float(_panel._pending["spending_pct_gdp"]["health"]) - _health_after) > 0.001 or not _panel._edited_keys.has("health"):
+		_fail("a refused Commit erased the Budget's draft")
+	if not _tax_panel._edited_keys.has("income"):
+		_fail("a refused Commit erased the Tax Code's draft")
+	ns.tabled_bill = {}
+
+
+
+## QA's T1 on #331: the Tax Code's "Withdraw the bill" takes the tabled finance bill back
+## before its vote and answers through `committed`, as Commit does.
+func _withdraw_from_the_tax_code() -> void:
+	var ns = _state.player()
+	FinanceBill.table(_state, _loader, {"tax_rates_pct": {"income": 5.0}})
+	var heard := []
+	_tax_panel.committed.connect(func(_before, result): heard.append(result), CONNECT_ONE_SHOT)
+	var button: Button = null
+	for child in _tax_panel.find_children("*", "Button", true, false):
+		if (child as Button).text == tr("Withdraw the bill"):
+			button = child
+	if button == null:
+		_fail("the Tax Code has no Withdraw the bill button")
+		ns.tabled_bill = {}
+		return
+	button.pressed.emit()
+	if not ns.tabled_bill.is_empty() or heard.is_empty() or not bool((heard[0] as Dictionary).get("withdrawn", false)):
+		_fail("Withdraw the bill did not take the bill back and say so: %s %s" % [ns.tabled_bill, heard])
+
+
 func _commit() -> void:
 	_panel._on_commit()
+	# Commit tables the finance bill; the books move at its division.
+	Division.divide(_state, _loader)
 
 	if absf(float(_state.player().spending_pct_gdp["health"]) - _health_after) > 0.001:
 		_fail("commit did not apply the pending health rate: %s" % _state.player().spending_pct_gdp["health"])

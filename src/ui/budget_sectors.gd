@@ -149,6 +149,9 @@ static func apply_moves(panel) -> void:
 	var ns = panel._state.player()
 	for m in panel._share_moves:
 		Sectors.move_share(ns, panel._loader, String(m["line"]), String(m["from"]), String(m["to"]), float(m["amount"]))
+	# Spent here: an allocation is the executive's, done at Commit whether or not the
+	# finance bill was tabled, and a kept draft must not move the shares twice.
+	panel._share_moves = []
 
 
 static func _sector_row(tile: Control, ns, loader, line: String, sector: Dictionary, share: float, warned: bool) -> void:

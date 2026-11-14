@@ -19,7 +19,9 @@ extends PanelContainer
 const Budget = preload("res://src/sim/budget.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
-const Unrest = preload("res://src/sim/unrest.gd")
+## The Commit verb tables the finance bill (docs/design/finance-bill.md); it applies at
+## the month's close if the Assembly carries it.
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const PanelCharts = preload("res://src/ui/panel_charts.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
@@ -310,14 +312,13 @@ func _on_revert(state_moved := false) -> void:
 
 func _on_commit() -> void:
 	var before := Trends.snapshot_now(_state)
-	# Captured before the commit: _on_revert() clears the levers, and the card
-	# the shell pushes should name what was actually committed, not the
-	# reverted zero.
-	var pending := _pending.duplicate()
-	Budget.commit(_state, _pending)
+	# Tabled before the revert clears the levers; the card the shell pushes reads the
+	# tabling. A refusal (a law holds the month's slot) keeps the draft on the levers.
+	var tabling := FinanceBill.table(_state, _loader, FinanceBill.from_pending(_state.player(), _pending))
 	BudgetSectors.apply_moves(self)
-	_on_revert(true)
-	committed.emit(before, pending)
+	if bool(tabling.get("tabled", false)):
+		_on_revert(true)
+	committed.emit(before, tabling)
 
 
 func _on_lever_changed(value: float, key: String) -> void:

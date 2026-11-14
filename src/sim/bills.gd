@@ -19,6 +19,7 @@ extends RefCounted
 ## Legislature._law_by_id() moved here (and grew the ownership branch) so the bill
 ## and the lookup that finds it again live in one file.
 
+const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const Law = preload("res://src/core/law.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
@@ -31,6 +32,11 @@ const OWNERSHIP_PREFIX := "ownership:"
 static func by_id(loader, law_id: String):
 	if loader == null or law_id == "":
 		return null
+	# A finance bill is named here, for every surface that titles a bill by its id (the
+	# division's card, the diary, the news) after the register has let it go. Its
+	# position needs the register: the reading is FinanceBillLaw.tabled(ns)'s, never this.
+	if FinanceBillLaw.is_finance(law_id):
+		return FinanceBillLaw.named(law_id)
 	for law in loader.laws:
 		if law.id == law_id:
 			return law

@@ -24,7 +24,10 @@ extends SceneTree
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
-const Budget = preload("res://src/sim/budget.gd")
+## Since the finance bill (docs/design/finance-bill.md) a regime's budget is TABLED and
+## voted; a defeated one is tabled again each month until it carries (the parent's call 1).
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
@@ -923,8 +926,11 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 	var ns = state.player()
 	var party_list: Array = loader.parties.get(nation_id, [])
 	var pending := _resolve_pending(ns, delta)
+	# The regime's finance bill: its deltas, the month it carried, the divisions it took.
+	var budget := {"bill": {}, "landed": "", "tries": 0}
 	if not pending.is_empty():
-		Budget.commit(state, pending)
+		budget["bill"] = FinanceBill.from_pending(ns, pending)
+		FinanceBill.table(state, loader, budget["bill"])
 
 	var elections: Array[String] = []
 	var problems: Array[String] = []
@@ -953,6 +959,11 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 				# V5.2 b+ R2: a bill the hook tabled last month divides here, the first
 				# step of this close -- one print for every regime that tables one.
 				var division: Dictionary = step_report["division"]
+				if FinanceBillLaw.is_finance(String(division.get("law_id", ""))):
+					budget["tries"] = int(budget["tries"]) + 1
+					if bool(division["passed"]):
+						budget["landed"] = "%d-%02d" % [year, month]
+						budget["bill"] = {}
 				if not division.is_empty():
 					print("  %d-%02d %s: division '%s' -- %s (yes %d / no %d)" % [
 						year, month, regime_name, String(division["law_id"]), _chamber_verdict(division),
@@ -982,7 +993,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 				return
 
 			# Everything a regime DOES, after the month's systems and before the vote:
-			# the slot it has always had.
+			# the slot it has always had. A defeated budget first: tabled again.
+			if not (budget["bill"] as Dictionary).is_empty() and ns.tabled_bill.is_empty():
+				FinanceBill.table(state, loader, budget["bill"])
 			if i + 1 == agreement_month:
 				_sign_agreement(state, loader, ns, regime_name, year, month)
 
@@ -1012,7 +1025,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 			if i + 1 == migrate_month:
 				_tighten_migration(state, loader, ns, regime_name, year, month)
 			if i + 1 == switch_month:
-				_switch_budget(state, ns, switch_delta, regime_name, year, month)
+				_switch_budget(state, loader, ns, switch_delta, budget, regime_name, year, month)
 			if i + 1 == settle_month:
 				_settle(state, loader, ns, regime_name, year, month)
 			if i + 1 == censor_month:
@@ -1181,6 +1194,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 		"out_of_government": out_of_government,
 		"problems": problems.size(),
 		"unrest_acts": state.unrest_acts.size(),
+		"budget": {"landed": budget["landed"], "tries": budget["tries"]},
 	})
 	if cabinet_shortfall_month > 0:
 		print("  resignations over the run: %d (last: %s)" % [ns.resignations_count, ns.last_resignation])
@@ -1676,13 +1690,16 @@ func _tighten_migration(state, loader, ns, regime_name: String, year: int, month
 ## What a player can actually do and no regime could express: govern well, WIN, and then
 ## spend the second term on a budget that provokes. That is the reachability question,
 ## and it needs a mid-run switch to ask.
-func _switch_budget(state, ns, delta: Dictionary, regime_name: String, year: int, month: int) -> void:
+func _switch_budget(state, loader, ns, delta: Dictionary, budget: Dictionary, regime_name: String, year: int, month: int) -> void:
 	if delta.is_empty():
 		return
 	var pending := _resolve_pending(ns, delta)
 	if pending.is_empty():
 		return
-	Budget.commit(state, pending)
+	# Tabled as a finance bill; the run loop tables it again after a defeat.
+	budget["bill"] = FinanceBill.from_pending(ns, pending)
+	budget["landed"] = ""
+	FinanceBill.table(state, loader, budget["bill"])
 	print("  %d-%02d %s: budget switched mid-run" % [year, month, regime_name])
 
 

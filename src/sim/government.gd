@@ -595,4 +595,4 @@ static func penalise_blocs(ns, amount: float) -> void:
 ## belongs to the French constitution, so it is gated on the formation method
 ## rather than on the nation id -- docs/engine-decision.md Rule 1.
 static func can_force(ns) -> bool:
-	return ns.formation_method == "presidential_appointment" and ns.force_cooldown_months <= 0
+	return ns.formation_method == GK.FORCE_FORMATION and ns.force_cooldown_months <= 0

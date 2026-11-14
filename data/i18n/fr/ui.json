@@ -430,7 +430,6 @@
   "%s of %s": "%s sur %s",
   "It is held for %d months, and overriding them costs %s with every bloc.": "Il est retenu %d mois, et passer outre coûte %s auprès de chaque bloc.",
   "The court struck it down: it reaches %s against a tolerance of %s.": "Le Conseil constitutionnel l'a censuré : il atteint %s pour une tolérance de %s.",
-  "Deficit now %s%% of GDP.": "Déficit actuel : %s %% du PIB.",
   "GDP: EUR %.0fbn   growth %s%%": "PIB : %.0f Md€   croissance %s %%",
   "Unemployment: %s%%": "Chômage : %s %%",
   "Debt: %s%% of GDP": "Dette : %s %% du PIB",

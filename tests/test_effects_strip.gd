@@ -26,6 +26,7 @@ const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const TaxPanel = preload("res://src/ui/tax_panel.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Division = preload("res://src/sim/division.gd")
 
 ## Half a cent of a billion: the shown and the booked figure are one computation
 ## on the same books, so anything past rounding noise is a different number.
@@ -169,6 +170,7 @@ func _check_budget_levers() -> void:
 		var strip_bn: float = _budget._strip.money_bn
 		var before := Budget.preview(_state_b, {})
 		_budget._on_commit()
+		_vote(_state_b)
 		var booked := _balance_gain(before, Budget.preview(_state_b, {}))
 		if is_nan(shown) or absf(shown - booked) > CENT_BN:
 			_fail("budget %s: shown %s bn, booked %.4f bn" % [key, shown, booked])
@@ -203,6 +205,7 @@ func _check_budget_two_levers() -> void:
 	var spending_cell: Array = _budget._figures["spending"][2]
 	var deficit_cell: Array = _budget._figures["deficit"][2]
 	_budget._on_commit()
+	_vote(_state_b)
 	var after := Budget.preview(_state_b, {})
 	var booked := _balance_gain(before, after)
 	if absf(strip_bn - booked) > CENT_BN:
@@ -299,6 +302,7 @@ func _check_tax_rates() -> void:
 		var strip_bn: float = _tax._strip.money_bn
 		var before := Budget.preview(_state_t, {})
 		_tax._on_commit()
+		_vote(_state_t)
 		var booked := _balance_gain(before, Budget.preview(_state_t, {}))
 		if is_zero_approx(booked):
 			_fail("tax %s: the fixture moved nothing on the books; pick a bigger step" % key)
@@ -329,6 +333,7 @@ func _check_both_drafts() -> void:
 	var strip_bn: float = _budget_c._strip.money_bn
 	var deficit_cell: Array = _budget_c._figures["deficit"][2]
 	_budget_c._on_commit()
+	_vote(_state_c)
 	var booked := _balance_gain(now, Budget.preview(_state_c, {}))
 	if absf(strip_bn - booked) > CENT_BN:
 		_fail("budget with a tax draft: the strip says %.4f bn, Commit booked %.4f bn" % [strip_bn, booked])
@@ -344,6 +349,7 @@ func _check_both_drafts() -> void:
 		_fail("tax: the Budget's draft (%s alone) reads '%s'" % [EffectsStrip.money_text(spend_alone), _tax_c._strip.elsewhere_label.text])
 	strip_bn = _tax_c._strip.money_bn
 	_tax_c._on_commit()
+	_vote(_state_c)
 	booked = _balance_gain(now, Budget.preview(_state_c, {}))
 	if absf(strip_bn - booked) > CENT_BN:
 		_fail("tax with a spending draft: the strip says %.4f bn, Commit booked %.4f bn" % [strip_bn, booked])
@@ -361,3 +367,14 @@ func _finish() -> void:
 		for f in _failures:
 			printerr(f)
 		quit(1)
+
+## Commit tables the finance bill (docs/design/finance-bill.md); the books move at
+## its division. The fixture's bills are France's at the start, which carry.
+func _vote(state) -> void:
+	var result: Dictionary = Division.divide(state, _loader)
+	if not result.is_empty() and not bool(result.get("passed", false)):
+		_fail("the fixture's finance bill was not carried: %s" % [result])
+	# What the game's month-end sweep does: every window hears the state moved, so an
+	# untouched lever re-reads the live register (BudgetPanel._resync_untouched).
+	for panel in [_budget, _tax, _budget_c, _tax_c]:
+		panel.mark_dirty()
