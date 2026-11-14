@@ -267,3 +267,9 @@ Ranked by the goal's figure, ties by the chance to pass. **A measure tier 1 cann
 3. **The standard step:** (a, recommended) 0.5 point of GDP on a spending line and 1 point on a tax rate, each way, inside the kind's range; (b) the step the panels' sliders move by.
 4. **Unemployment's figure:** (a, recommended) the structural shift labelled "heading", the demand measures listed with their sign and "not read here", the cycle's size only in tier 2; (b) the closed form of the two-year move (half the shift) printed as "in two years", which re-states the economy's reversion in the reader and is a second copy of a rule.
 5. **Room for the extractions:** `opinion.gd` holds 144 code lines and `economy.gd` 158, both under the 300 cap, so the two byte-identical extractions fit where they are.
+
+**The parent's rulings (2026-11-14):** (a) on calls 1 to 4; call 5 as written (the extractions stay in `opinion.gd` and `economy.gd`). Added:
+- **The frame gate:** one 30 ms copy cannot be sliced, so it is measured: the frame time while tier 1 fills (France) and while one tier-2 run goes, max and p95, beside the budget forecast's own figures. Gate: no worse than the budget forecast already is. If the copy breaks it, the build stops and the numbers go to the parent before any switch to call 2 (b), which would then need a parity test over every law (the nation-only read equal to `apply_effects` on the channels read).
+- **A cache per month:** tier 1's list and tier 2's baseline are computed once per month and kept; reopening a goal the same month costs nothing. Tier 1's reads do not depend on the goal (one read per measure gives every goal's figure), so one list serves every goal of the month.
+- **Emissions: no read now.** No key is added to `Budget.snapshot`; a pledge on emissions says "run the forecast" as growth does. Later item, not built.
+- **The first run's warm-up** (about 8.7 s against 4.5 s warm): the PR says where the player pays it, measured.

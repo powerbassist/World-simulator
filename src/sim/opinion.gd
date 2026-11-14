@@ -144,38 +144,8 @@ static func _tick_nation(ns) -> void:
 		# arrangement, and here it also spares this file a DataLoader it has never had.
 		# Falls back to the global constant, which is what the seven nations with no
 		# data/outlets/ file and every pre-V1.5d save both read.
-		var gain: float = float(ns.framing_gain.get(bloc, K.SALIENCE_GAIN))
-		var weights := salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat, gain, TaxLibrary.salience_patch(ns, bloc))
-
-		var score := 0.0
-		for issue in weights:
-			score += float(weights[issue]) * float(sat.get(issue, 0.0))
-
-		# law_offset is a law's direct opinion effect -- for laws with no budget
-		# footprint and so no issue to be salient about. Combined with `score`
-		# and clamped before scaling, so the target stays inside the same
-		# [10, 90] bound a pure satisfaction score would produce on its own.
-		var law_offset: float = float(ns.bloc_offset.get(bloc, 0.0))
-		# V1.5c. Grievance, charged at the same site and clamped with it for the same
-		# reason. UNIFORM across the six blocs: a general strike inconveniences
-		# everybody, and an authored per-bloc row would be a table with no measurement
-		# behind it. Which blocs GENERATE the grievance is a different question, and
-		# unrest_constants.UNREST_BLOCS answers it out of BLOC_SALIENCE_BASE.
-		#
-		# Here rather than inside issue_satisfaction(), and that placement is the one
-		# thing about this term worth being careful about. Subtracted from `jobs` --
-		# deployment_opinion_load's shape, and the obvious move -- it would land inside
-		# the dictionary Unrest.hardship() reads, closing a same-quantity loop through
-		# the salience simplex that nothing bounds. This site is outside that read by
-		# construction. See unrest_constants.UNREST_OPINION_SCALE for why the term
-		# exists at all: an output-only price was designed, measured, and found unable
-		# to reach a voter in a model that prices rates.
-		var target: float = K.APPROVAL_NEUTRAL + K.time_in_office_offset(int(ns.months_in_term)) \
-			+ competence_credit(ns) \
-			+ programme_credit(ns) \
-			+ K.APPROVAL_SPAN * clampf(
-				score + law_offset - float(ns.unrest_opinion_load), -1.0, 1.0
-			)
+		var weights := bloc_weights(ns, bloc, sat)
+		var target := target_of(ns, bloc, sat, weights)
 		var approval := float(ns.bloc_approval.get(bloc, K.APPROVAL_NEUTRAL))
 		approval += (target - approval) * K.INERTIA_RATE
 		ns.bloc_approval[bloc] = clampf(approval, K.APPROVAL_MIN, K.APPROVAL_MAX)
@@ -186,6 +156,49 @@ static func _tick_nation(ns) -> void:
 
 	ns.issue_salience = national
 	ns.overall_approval_pct = overall_approval(ns)
+
+
+## One bloc's issue weights this month: the salience base, moved by this month's
+## satisfaction at the bloc's framing gain. Opinion's tick and the goal read
+## (src/sim/goal_read.gd) read the one function.
+static func bloc_weights(ns, bloc: String, sat: Dictionary) -> Dictionary:
+	var gain: float = float(ns.framing_gain.get(bloc, K.SALIENCE_GAIN))
+	return salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat, gain, TaxLibrary.salience_patch(ns, bloc))
+
+
+## Where one bloc's approval is heading: the target its approval closes on at
+## INERTIA_RATE a month. Extracted from the tick byte for byte so the goal read can
+## ask it of a copy with a measure applied (docs/design/finance-bill.md section 11).
+static func target_of(ns, bloc: String, sat: Dictionary, weights: Dictionary) -> float:
+	var score := 0.0
+	for issue in weights:
+		score += float(weights[issue]) * float(sat.get(issue, 0.0))
+
+	# law_offset is a law's direct opinion effect -- for laws with no budget
+	# footprint and so no issue to be salient about. Combined with `score`
+	# and clamped before scaling, so the target stays inside the same
+	# [10, 90] bound a pure satisfaction score would produce on its own.
+	var law_offset: float = float(ns.bloc_offset.get(bloc, 0.0))
+	# V1.5c. Grievance, charged at the same site and clamped with it for the same
+	# reason. UNIFORM across the six blocs: a general strike inconveniences
+	# everybody, and an authored per-bloc row would be a table with no measurement
+	# behind it. Which blocs GENERATE the grievance is a different question, and
+	# unrest_constants.UNREST_BLOCS answers it out of BLOC_SALIENCE_BASE.
+	#
+	# Here rather than inside issue_satisfaction(), and that placement is the one
+	# thing about this term worth being careful about. Subtracted from `jobs` --
+	# deployment_opinion_load's shape, and the obvious move -- it would land inside
+	# the dictionary Unrest.hardship() reads, closing a same-quantity loop through
+	# the salience simplex that nothing bounds. This site is outside that read by
+	# construction. See unrest_constants.UNREST_OPINION_SCALE for why the term
+	# exists at all: an output-only price was designed, measured, and found unable
+	# to reach a voter in a model that prices rates.
+	return K.APPROVAL_NEUTRAL + K.time_in_office_offset(int(ns.months_in_term)) \
+		+ competence_credit(ns) \
+		+ programme_credit(ns) \
+		+ K.APPROVAL_SPAN * clampf(
+			score + law_offset - float(ns.unrest_opinion_load), -1.0, 1.0
+		)
 
 
 ## How each issue stands, as a satisfaction in [-1, +1]. Every one is a delta
