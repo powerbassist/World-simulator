@@ -12,6 +12,7 @@ extends SceneTree
 
 const GoalRead = preload("res://src/sim/goal_read.gd")
 const GoalRows = preload("res://src/ui/goal_rows.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -192,14 +193,27 @@ func _check_a_press() -> void:
 			_fail("the wiring did not open the Budget tab for a budget row")
 	else:
 		_fail("no budget line among the deficit's measures")
-	var law_row: Button = by_kind.get("Law")
+	# QA's ML on #358: a law row's press must MOVE the selection to that law -- pick one that is not
+	# the selection already (the list always holds one), and read the sheet's own name back.
+	var list = _main._law_panel._laws
+	var current := String(Strings.law_name(_main._law_panel._find_law(list.selected_id())))
+	var law_row: Button = null
+	var law_name := ""
+	for press in lines:
+		if press.get_child_count() == 0:
+			continue
+		var cells: Array = (press as Button).get_child(0).get_children()
+		if (cells[0] as Label).text == "Law" and (cells[1] as Label).text != current:
+			law_row = press
+			law_name = (cells[1] as Label).text
+			break
 	if law_row == null:
-		_fail("no law among the deficit's measures")
+		_fail("no law row other than the selected one among the deficit's measures")
 		return
 	law_row.pressed.emit()
-	var list = _main._law_panel._laws
-	if list.selected_id() == "":
-		_fail("a law row's press selected nothing")
+	var now := String(Strings.law_name(_main._law_panel._find_law(list.selected_id())))
+	if now != law_name:
+		_fail("a law row's press selected '%s', not the row's law '%s'" % [now, law_name])
 
 
 func _check_the_catalogue() -> void:
