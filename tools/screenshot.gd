@@ -549,6 +549,8 @@ var _law_verbs := ""
 var _queue := ""
 ## The catalogue's shelf and search (V5.3 screen 4): "shelf:words", either side may be empty.
 var _law_filter := ""
+## The Bills tab's goal panel with its list read through: --goals [deficit|unemployment|bloc].
+var _goals := ""
 ## A poll on a bill: "poll" (bought, out), "poll-arrived" or "poll-address".
 var _poll := ""
 
@@ -1068,6 +1070,8 @@ func _init() -> void:
 			_b7 = String(args[i]).trim_prefix("--b7-")
 		elif args[i] in ["--grade", "--grade-tabled", "--address", "--address-again"]:
 			_law_verbs = String(args[i]).trim_prefix("--")
+		elif args[i] == "--goals" and i + 1 < args.size():
+			_goals = String(args[i + 1])
 		elif args[i] == "--law-filter" and i + 1 < args.size():
 			_law_filter = String(args[i + 1])
 		elif args[i] in ["--queue", "--queue-full", "--queue-menu"]:
@@ -1403,6 +1407,8 @@ func _apply_view() -> void:
 		_stage_the_law_verbs()
 	if _queue != "":
 		_stage_the_queue()
+	if _goals != "":
+		_stage_the_goals()
 	if _law_filter != "":
 		_main._law_panel._laws._filters.set_filter(_law_filter.get_slice(":", 0), _law_filter.get_slice(":", 1))
 	if _poll != "":
@@ -4116,3 +4122,21 @@ func _stage_b7() -> void:
 	_main._windows.close_all()
 	_main._hud.inbox.slide_in()
 	print("--b7-%s: event %s, %d inbox cards" % [_b7, String(ev.id), _main._hud.inbox.card_count()])
+
+## --goals: the goal panel (V5.3 screen 4) read through in one go, which the game does a measure a frame,
+## and the named goal picked: "deficit", "unemployment" or "bloc" (the weakest bloc's tile).
+func _stage_the_goals() -> void:
+	_main._windows.open("legislature")
+	var goals = _main._law_panel.find_child("Goals", true, false)
+	var read = preload("res://src/sim/goal_read.gd").list_for(null, _main._state, _main._loader)
+	while not read.done():
+		preload("res://src/sim/goal_read.gd").step(read)
+	goals._read = read
+	goals._rebuild_tiles(_main._state, _main._loader)
+	if _goals == "bloc":
+		goals._pick_goal(String(goals._tiles.get_child(2).goal))
+	elif _goals != "deficit":
+		goals._pick_goal(_goals)
+	# Drawn here, not left to the panel's own frame: a capture takes its picture before one.
+	goals._redraw(_main._law_panel)
+	goals._stamp = goals._signature(_main._state)

@@ -37,7 +37,6 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 const Government = preload("res://src/sim/government.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
-const Labels = preload("res://src/ui/labels.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
@@ -47,6 +46,8 @@ const LawGrade = preload("res://src/ui/law_grade.gd")
 const LawAddress = preload("res://src/ui/law_address.gd")
 const BillActions = preload("res://src/ui/bill_actions.gd")
 const LawFilters = preload("res://src/ui/law_filters.gd")
+const BlocFilter = preload("res://src/ui/law_bloc_filter.gd")
+const GoalPanel = preload("res://src/ui/goal_panel.gd")
 const LawSeatsTip = preload("res://src/ui/law_seats_tip.gd")
 
 ## The forecast's three columns: a for / against pair that reads as opposite, and
@@ -98,6 +99,8 @@ func _init(panel) -> void:
 	left.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left.size_flags_stretch_ratio = 0.6
 	add_child(left)
+	# The goals come first (goal_panel.gd): the balance, unemployment, a bloc, and what moves each.
+	left.add_child(GoalPanel.new(self))
 	_filters = LawFilters.new(_panel.mark_dirty)
 	left.add_child(_filters)
 	var head := HBoxContainer.new()
@@ -184,7 +187,7 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 			child.queue_free()
 	if bloc_filter != "":
 		laws = liked_by(laws, bloc_filter)
-		_filter_row()
+		BlocFilter.row(self)
 	laws = _filters.apply(laws, _panel._loader)
 	_shown = laws
 	if laws.is_empty():
@@ -208,34 +211,9 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 	_build_detail(ns, party_list, chosen)
 
 
-## The laws a bloc likes -- a positive authored price for it -- the most liked
-## first (ties keep the list's own order). The authored price is what the
-## briefing's preview reads too (briefing.gd), so the filter and the bill's own
-## page cannot disagree.
+## The laws a bloc likes, the most liked first (law_bloc_filter.gd).
 static func liked_by(laws: Array, bloc: String) -> Array:
-	var liked := laws.filter(func(law) -> bool: return _offset(law, bloc) > 0.0)
-	var order := range(liked.size())
-	order.sort_custom(func(a: int, b: int) -> bool:
-		return _offset(liked[a], bloc) > _offset(liked[b], bloc) or (_offset(liked[a], bloc) == _offset(liked[b], bloc) and a < b))
-	return order.map(func(i: int): return liked[i])
-
-
-static func _offset(law, bloc: String) -> float:
-	return float((law.effects.get("bloc_offset", {}) as Dictionary).get(bloc, 0.0))
-
-
-func _filter_row() -> void:
-	var row := PanelKit.buttons(_rows)
-	var label := Label.new()
-	label.text = tr("Laws %s like") % Labels.bloc(bloc_filter)
-	label.theme_type_variation = UiTheme.HEADING
-	row.add_child(label)
-	var clear := PanelKit.sized(Button.new())
-	clear.text = tr("Show every law")
-	clear.pressed.connect(func() -> void:
-		bloc_filter = ""
-		_panel.mark_dirty())
-	row.add_child(clear)
+	return BlocFilter.liked_by(laws, bloc)
 
 
 func _row(ns, party_list: Array, law, selected: bool) -> Control:
