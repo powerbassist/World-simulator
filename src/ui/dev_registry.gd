@@ -23,6 +23,8 @@ extends RefCounted
 const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
 const DevCommands = preload("res://src/sim/dev_commands.gd")
 const DevLog = preload("res://src/ui/dev_log.gd")
+const BuildInfo = preload("res://src/core/build_info.gd")
+const GameState = preload("res://src/core/game_state.gd")
 
 const BUSY_MESSAGE := "a month is closing -- try again in a moment"
 const DEFAULT_SLOT := "quick"
@@ -109,7 +111,8 @@ func _init(host: Host) -> void:
 	_add("errors", "[n]", "the latest errors and warnings, with script and line", false, _cmd_errors)
 	_add("perf", "[on|off]", "show or hide the frame-time and month-cost overlay", false, _cmd_perf)
 	_add("clear", "", "clear the console's output", false, _cmd_clear)
-	_add("hint", "reset", "re-arm the one-time glossary note (a run on a real profile spends it)", false, _cmd_hint)
+	_add("version", "", "the build, the save format it reads, the engine", false, _cmd_version)
+	_add("hint", "reset","re-arm the one-time glossary note (a run on a real profile spends it)", false, _cmd_hint)
 
 
 func command_names() -> Array:
@@ -334,6 +337,13 @@ func _cmd_hint(args: Array) -> String:
 		return _usage("hint")
 	GlossaryHint.reset()
 	return "the glossary note shows again on the next game"
+
+
+## What a bug report quotes: the build string the menu shows (src/core/build_info.gd),
+## the save format this build reads, the engine.
+func _cmd_version(_args: Array) -> String:
+	return "%s | save format %d | engine %s" % [
+		BuildInfo.text(), GameState.SAVE_VERSION, Engine.get_version_info()["string"]]
 
 
 func _cmd_clear(_args: Array) -> String:
