@@ -35,6 +35,8 @@ const SHARES: Array[float] = [0.5, 0.25, 0.25]
 const LINE_Y := 40.0
 const LANE_Y := 0.0
 const CHIP_GAP := 6.0
+## The room kept between the month's name, today's mark and a day number.
+const TITLE_GAP := 4.0
 const CLOCK_WIDTH := 480
 const BLOCK_HEIGHT := 6.0
 const ICON_PX := 14
@@ -152,12 +154,7 @@ func _process(_delta: float) -> void:
 	_rebuild_chips()
 	_refresh_vote()
 	_cells.queue_redraw()
-	# The month's name moves aside for today's mark rather than printing under it.
-	var today_x := _day_x(int(_state.year), int(_state.month), int(_state.day))
-	var x := 30.0
-	if today_x > x - 16.0 and today_x < x + _title.get_minimum_size().x + 6.0:
-		x = today_x + 18.0
-	_title.position.x = x
+	_title.position.x = float(_labels()["title"].position.x)
 
 
 ## What the horizon reads, in a handful of integers: the day, the diary's size, the
@@ -308,6 +305,39 @@ func _refresh_vote() -> void:
 	_vote_box.tooltip_text = "\n".join(tip)
 
 
+## --- the labels' layout ------------------------------------------------------
+
+## Where today's mark, this month's name and the day numbers sit, in `_cells` pixels, so
+## drawing, the title's position and the test all read one answer (QA #332 T1: "MARCH"
+## printed over the 8 and the "1" mark clipped the J). The mark never leaves the line's
+## ends; the name moves to the mark's right when they meet; a day number that would touch
+## either is not printed -- the player still has the mark's own number and the diary.
+func _labels() -> Dictionary:
+	var font := _cells.get_theme_default_font()
+	var full := _cells.get_theme_default_font_size()
+	var small := full - 2
+	var today := int(_state.day)
+	var today_x := _day_x(int(_state.year), int(_state.month), today)
+	var mark_w := font.get_string_size(str(today), HORIZONTAL_ALIGNMENT_LEFT, -1, small).x + 10.0
+	var mark := Rect2(clampf(today_x - mark_w / 2.0, 0.0, maxf(_cells.size.x - mark_w, 0.0)), LINE_Y + 5.0, mark_w, full + 4.0)
+	var title_size := _title.get_minimum_size()
+	var title := Rect2(30.0, LINE_Y + 3.0, title_size.x, title_size.y)
+	if title.intersects(mark.grow(TITLE_GAP)):
+		title.position.x = mark.end.x + TITLE_GAP
+	var numbers: Array[Dictionary] = []
+	var days := DateText.days_in(int(_state.month), int(_state.year))
+	for d in [1, 8, 15, 22, 29]:
+		if d > days or d == today:
+			continue
+		var x := _day_x(int(_state.year), int(_state.month), d)
+		var w := font.get_string_size(str(d), HORIZONTAL_ALIGNMENT_LEFT, -1, small).x
+		var box := Rect2(x - w / 2.0 - 3.0, LINE_Y + 5.0, w + 6.0, full + 4.0)
+		if box.intersects(mark.grow(TITLE_GAP)) or box.intersects(title.grow(TITLE_GAP)):
+			continue
+		numbers.append({"rect": box, "text": str(d), "x": x, "width": w})
+	return {"mark": mark, "title": title, "numbers": numbers}
+
+
 ## --- drawing ----------------------------------------------------------------
 
 func _draw_cells() -> void:
@@ -328,16 +358,13 @@ func _draw_cells() -> void:
 			_cells.draw_string(font, Vector2(span.x + 14, LINE_Y + 3 + font_size), DateText.month_long(int(at["month"])).to_upper(),
 				HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 2, UiTheme.TEXT_DIM)
 	# Day numbers: the first of every week of this month, and today, a filled mark.
-	var days := DateText.days_in(int(_state.month), int(_state.year))
-	for d in [1, 8, 15, 22, 29]:
-		if d > days or absi(d - int(_state.day)) <= 1:
-			continue
-		_draw_number(font, font_size, _day_x(int(_state.year), int(_state.month), d), str(d), UiTheme.TEXT_DIM)
+	var layout := _labels()
+	for n in (layout["numbers"] as Array):
+		_cells.draw_string(font, Vector2(float(n["x"]) - float(n["width"]) / 2.0, LINE_Y + 3 + font_size), String(n["text"]),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 2, UiTheme.TEXT_DIM)
 	_cells.draw_rect(Rect2(today_x - 1.0, 0, 2, LINE_Y), UiTheme.accent())
-	var mark := str(int(_state.day))
-	var mark_w := font.get_string_size(mark, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 2).x + 10.0
-	_cells.draw_rect(Rect2(today_x - mark_w / 2.0, LINE_Y + 5, mark_w, font_size + 4), UiTheme.accent())
-	_cells.draw_string(font, Vector2(today_x - mark_w / 2.0 + 5.0, LINE_Y + 3 + font_size), mark, HORIZONTAL_ALIGNMENT_LEFT, -1,
+	_cells.draw_rect(layout["mark"], UiTheme.accent())
+	_cells.draw_string(font, Vector2((layout["mark"] as Rect2).position.x + 5.0, LINE_Y + 3 + font_size), str(int(_state.day)), HORIZONTAL_ALIGNMENT_LEFT, -1,
 		font_size - 2, UiTheme.INK)
 	# Bookings on the line: the meeting solid, its travel days hatched, as the diary draws them.
 	for b in (_items.get("bookings", []) as Array):
@@ -356,11 +383,6 @@ func _draw_cells() -> void:
 		var index := _index_of(int(due["abs_month"]))
 		if index >= 0:
 			_cells.draw_rect(Rect2(_segment(index).y - 4.0, LINE_Y - 9, 2, 20), UiTheme.WARN)
-
-
-func _draw_number(font: Font, font_size: int, x: float, text: String, colour: Color) -> void:
-	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 2).x
-	_cells.draw_string(font, Vector2(x - w / 2.0, LINE_Y + 3 + font_size), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 2, colour)
 
 
 ## One day's width in its month's segment.

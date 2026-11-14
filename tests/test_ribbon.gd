@@ -116,6 +116,23 @@ func _run() -> void:
 	if ribbon._index_of(this_month) != 0 or ribbon._index_of(this_month + 2) != 2:
 		_fail("this month and the one two after are not segments 0 and 2")
 
+	# QA #332 T1: this month's name, today's mark and the day numbers never overlap, for any today
+	# (the name printed over the 8, the "1" mark clipped the J). Read off the one layout the drawing uses.
+	var real_day: int = int(_main._state.day)
+	for day in range(1, 32):
+		_main._state.day = day
+		var lay: Dictionary = ribbon._labels()
+		var name_rect: Rect2 = lay["title"]
+		var mark: Rect2 = lay["mark"]
+		if mark.position.x < 0.0 or mark.end.x > ribbon._cells.size.x + 0.5:
+			_fail("today %d: the mark %s leaves the line (0..%.0f)" % [day, mark, ribbon._cells.size.x])
+		if name_rect.intersects(mark):
+			_fail("today %d: the month's name %s runs under today's mark %s" % [day, name_rect, mark])
+		for n in (lay["numbers"] as Array):
+			if (n["rect"] as Rect2).intersects(name_rect) or (n["rect"] as Rect2).intersects(mark):
+				_fail("today %d: the day number %s overlaps the month's name or today's mark" % [day, n["text"]])
+	_main._state.day = real_day
+
 	# The tooltip resolves from the REGISTER, not from its own memory: book a
 	# visit through the sim, ask the ribbon for the day, and the name it
 	# prints must be the booked act's. Delivered by feeding the input handler
