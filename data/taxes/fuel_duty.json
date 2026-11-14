@@ -1,0 +1,68 @@
+{
+  "id": "fuel_duty",
+  "name": "Fuel duty",
+  "summary": "An excise on every litre of petrol and diesel sold for road use.",
+  "rate_meaning": "EUR per litre of petrol",
+  "who_pays": [
+    "workers",
+    "rural"
+  ],
+  "base_share": 1.492483,
+  "erosion": 0.25,
+  "zero_ref_pct": 0.6,
+  "rate_range_pct": [
+    0.3,
+    0.9
+  ],
+  "demand_multiplier": 0.7,
+  "opinion_scale_pp": 0.5,
+  "bloc_salience": {
+    "workers": 0.02,
+    "rural": 0.04
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": 0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": -0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "FRA": 1.0859,
+      "DEU": 0.8715,
+      "GBR": 0.8429,
+      "POL": 1.0557
+    },
+    "rate": {
+      "FRA": 0.67,
+      "DEU": 0.6545,
+      "GBR": 0.6179,
+      "POL": 0.3606
+    },
+    "year": {
+      "FRA": "2024",
+      "DEU": "2025",
+      "GBR": "2025-26",
+      "POL": "2025"
+    },
+    "provenance": {
+      "FRA": "rate: search_summary of the ecologie.gouv.fr 2024 price report; yield: read_in_source",
+      "DEU": "read_in_source",
+      "GBR": "read_in_source",
+      "POL": "read_in_source"
+    },
+    "sources": {
+      "FRA": "Budget annex Voies et moyens t.1, PLF 2026 (gross, all general government); includes the carbon component",
+      "DEU": "BMF Kassenmäßige Steuereinnahmen 2025, Energiesteuer",
+      "GBR": "HMRC receipts Table 2, fuel duties (52.95p/l)",
+      "POL": "NIK P/26/001, budget part 77, fuel excise (1 529 PLN per 1 000 l)"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: vat (an excise on consumption). Proposed values, Systems to accept or strike."
+  }
+}

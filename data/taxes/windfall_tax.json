@@ -1,0 +1,51 @@
+{
+  "id": "windfall_tax",
+  "name": "Windfall tax",
+  "summary": "A levy on the excess profits of energy producers when prices spike.",
+  "rate_meaning": "% of excess profit",
+  "who_pays": [
+    "business"
+  ],
+  "base_share": 0.002314,
+  "erosion": 0.55,
+  "zero_ref_pct": 35.0,
+  "rate_range_pct": [
+    0.0,
+    90.0
+  ],
+  "demand_multiplier": 0.4,
+  "opinion_scale_pp": 28.0,
+  "bloc_salience": {
+    "business": 0.03
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "GBR": 0.0879
+    },
+    "rate": {
+      "GBR": 38.0
+    },
+    "year": {
+      "GBR": "2025-26"
+    },
+    "provenance": {
+      "GBR": "read_in_source"
+    },
+    "sources": {
+      "GBR": "HMRC receipts Table 2, Energy Profits Levy only"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: corporate. Proposed values, Systems to accept or strike."
+  }
+}

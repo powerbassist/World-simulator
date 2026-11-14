@@ -80,6 +80,11 @@
       "_note": "NO judicial review of primary legislation, and it is the same parliamentary sovereignty that puts government.amendment.rule at 'ordinary_law'. Under s.4 of the Human Rights Act 1998 the Supreme Court may declare an Act incompatible with the Convention, and s.4(6) says that declaration does not affect the Act's validity or continuing operation. UK Parliament, 'Parliamentary sovereignty'; Human Rights Act 1998, s.4.",
       "review": "none"
     },
+    "finance_bill": {
+      "autumn_month": 10,
+      "_source": "HM Treasury Autumn Budget 2026, presented 28 October 2026 with the OBR's Economic and fiscal outlook",
+      "_note": "The month the autumn finance bill may create or abolish a tax (docs/design/finance-bill.md section 5)."
+    },
     "formation": {
       "_source": "authored",
       "_note": "The largest party forms a government; there is no investiture vote. A no confidence motion carries on a simple majority of members present and voting.",
@@ -102,7 +107,26 @@
       "corporate": 25.0,
       "vat": 20.0,
       "capital_gains": 20.0,
-      "wealth": 0.0
+      "wealth": 0.0,
+      "fuel_duty": 0.6179,
+      "carbon_tax": 21.01,
+      "tobacco_duty": 100.0,
+      "alcohol_duty": 100.0,
+      "sugar_drinks_levy": 0.3244,
+      "air_passenger_tax": 9.34,
+      "plastic_packaging_tax": 0.267,
+      "property_tax": 100.0,
+      "inheritance_tax": 40.0,
+      "transactions_tax": 0.5,
+      "digital_services_tax": 2.0,
+      "bank_levy": 0.1,
+      "windfall_tax": 38.0
+    },
+    "tax_base_share": {
+      "air_passenger_tax": 0.01697,
+      "carbon_tax": 0.002927,
+      "tobacco_duty": 0.002597,
+      "transactions_tax": 0.3252
     },
     "spending_pct_gdp": {
       "health": 8.4,

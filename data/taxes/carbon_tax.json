@@ -1,0 +1,60 @@
+{
+  "id": "carbon_tax",
+  "name": "Carbon tax",
+  "summary": "A price on the carbon in heating and transport fuels, outside the EU emissions market.",
+  "rate_meaning": "EUR per tonne of CO2",
+  "who_pays": [
+    "workers",
+    "rural",
+    "business"
+  ],
+  "base_share": 0.004838,
+  "erosion": 0.25,
+  "zero_ref_pct": 45.0,
+  "rate_range_pct": [
+    0.0,
+    150.0
+  ],
+  "demand_multiplier": 0.7,
+  "opinion_scale_pp": 36.0,
+  "bloc_salience": {
+    "workers": 0.01,
+    "rural": 0.03,
+    "business": 0.02
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": 0.0,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.0,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "DEU": 0.3712,
+      "GBR": 0.0615
+    },
+    "rate": {
+      "DEU": 55.0,
+      "GBR": 21.01
+    },
+    "year": {
+      "DEU": "2025",
+      "GBR": "2025-26"
+    },
+    "provenance": {
+      "DEU": "search_summary",
+      "GBR": "rate: search_summary; yield: read_in_source"
+    },
+    "sources": {
+      "DEU": "BEHG national CO2 price 2025",
+      "GBR": "HMRC receipts Table 2, Climate Change Levy incl. Carbon Price Support (the yield is wider than the rate's base)"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: vat (an excise on consumption). Proposed values, Systems to accept or strike."
+  }
+}

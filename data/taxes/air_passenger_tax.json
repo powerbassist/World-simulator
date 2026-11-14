@@ -1,0 +1,63 @@
+{
+  "id": "air_passenger_tax",
+  "name": "Air passenger tax",
+  "summary": "A charge on every passenger flying out, by distance and class.",
+  "rate_meaning": "EUR per short-haul economy passenger",
+  "who_pays": [
+    "urban",
+    "business"
+  ],
+  "base_share": 0.003673,
+  "erosion": 0.25,
+  "zero_ref_pct": 10.0,
+  "rate_range_pct": [
+    0.0,
+    40.0
+  ],
+  "demand_multiplier": 0.7,
+  "opinion_scale_pp": 8.0,
+  "bloc_salience": {
+    "urban": 0.02,
+    "business": 0.01
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": 0.0,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.0,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "FRA": 0.0159,
+      "DEU": 0.0479,
+      "GBR": 0.1585
+    },
+    "rate": {
+      "FRA": 7.4,
+      "DEU": 13.03,
+      "GBR": 9.34
+    },
+    "year": {
+      "FRA": "2024",
+      "DEU": "2025",
+      "GBR": "2025-26"
+    },
+    "provenance": {
+      "FRA": "search_summary",
+      "DEU": "read_in_source",
+      "GBR": "read_in_source"
+    },
+    "sources": {
+      "FRA": "TSBA economy intra-EU 7.40 EUR (from Mar 2025); 2024 yield from a think tank",
+      "DEU": "BMF 2025, Luftverkehrsteuer (13.03 EUR short band from 1 Jul 2026)",
+      "GBR": "HMRC receipts Table 2, Air Passenger Duty (lowest economy band 8 GBP as the notes give it)"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: vat (an excise on consumption). Proposed values, Systems to accept or strike."
+  }
+}

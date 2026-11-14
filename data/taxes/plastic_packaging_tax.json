@@ -1,0 +1,51 @@
+{
+  "id": "plastic_packaging_tax",
+  "name": "Plastic packaging tax",
+  "summary": "A tax on packaging made mostly from new rather than recycled plastic.",
+  "rate_meaning": "EUR per kg of non-recycled plastic packaging",
+  "who_pays": [
+    "business"
+  ],
+  "base_share": 0.032937,
+  "erosion": 0.25,
+  "zero_ref_pct": 0.25,
+  "rate_range_pct": [
+    0.0,
+    1.5
+  ],
+  "demand_multiplier": 0.7,
+  "opinion_scale_pp": 0.2,
+  "bloc_salience": {
+    "business": 0.02
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": 0.0,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.0,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "GBR": 0.0088
+    },
+    "rate": {
+      "GBR": 0.267
+    },
+    "year": {
+      "GBR": "2025-26"
+    },
+    "provenance": {
+      "GBR": "read_in_source"
+    },
+    "sources": {
+      "GBR": "HMRC receipts Table 2, Plastic Packaging Tax (228.82 GBP/t)"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: vat (an excise on consumption). Proposed values, Systems to accept or strike."
+  }
+}

@@ -79,6 +79,11 @@
       "_note": "Trybunal Konstytucyjny, Art. 188: adjudicates the conformity of statutes and ratified international agreements with the Constitution. Konstytucja RP, Art. 188.",
       "review": "constitutional"
     },
+    "finance_bill": {
+      "autumn_month": 9,
+      "_source": "Ustawa o finansach publicznych: the Council of Ministers lays the budget bill before the Sejm by 30 September",
+      "_note": "The month the autumn finance bill may create or abolish a tax (docs/design/finance-bill.md section 5)."
+    },
     "formation": {
       "_source": "authored",
       "_note": "Arts. 154-155: the President appoints a Prime Minister, who must win a confidence vote in the Sejm within 14 days by absolute majority; failing that, the Sejm elects its own Prime Minister by the same bar, and a second failure lets the President shorten the term. The first route is the machinery's investiture. Censure is constructive: Art. 158 requires a motion naming a candidate Prime Minister, carried by absolute majority with at least half the statutory number present and voting by name -- Poland's constructive vote of no confidence. Konstytucja RP, Arts. 154-155, 158.",
@@ -101,7 +106,22 @@
       "corporate": 19.0,
       "vat": 23.0,
       "capital_gains": 19.0,
-      "wealth": 0.0
+      "wealth": 0.0,
+      "fuel_duty": 0.3606,
+      "tobacco_duty": 100.0,
+      "alcohol_duty": 100.0,
+      "sugar_drinks_levy": 0.283,
+      "property_tax": 100.0,
+      "inheritance_tax": 20.0,
+      "high_income_surcharge": 4.0,
+      "bank_levy": 0.44,
+      "retail_tax": 1.4
+    },
+    "tax_base_share": {
+      "fuel_duty": 2.927621,
+      "inheritance_tax": 0.00094,
+      "sugar_drinks_levy": 0.144876,
+      "tobacco_duty": 0.008685
     },
     "spending_pct_gdp": {
       "health": 5.4,

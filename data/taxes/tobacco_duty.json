@@ -1,0 +1,68 @@
+{
+  "id": "tobacco_duty",
+  "name": "Tobacco duty",
+  "summary": "An excise on cigarettes and tobacco, per stick and on the retail price.",
+  "rate_meaning": "index of the 2026 schedule (100 = the law in force)",
+  "who_pays": [
+    "workers",
+    "rural"
+  ],
+  "base_share": 0.004228,
+  "erosion": 0.25,
+  "zero_ref_pct": 100.0,
+  "rate_range_pct": [
+    0.0,
+    200.0
+  ],
+  "demand_multiplier": 0.7,
+  "opinion_scale_pp": 80.0,
+  "bloc_salience": {
+    "workers": 0.02,
+    "rural": 0.01
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": 0.0,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.0,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "FRA": 0.4364,
+      "DEU": 0.4091,
+      "GBR": 0.2597,
+      "POL": 0.8685
+    },
+    "rate": {
+      "FRA": 100.0,
+      "DEU": 100.0,
+      "GBR": 100.0,
+      "POL": 100.0
+    },
+    "year": {
+      "FRA": "2024",
+      "DEU": "2025",
+      "GBR": "2025-26",
+      "POL": "2025"
+    },
+    "provenance": {
+      "FRA": "search_summary",
+      "DEU": "read_in_source",
+      "GBR": "read_in_source",
+      "POL": "read_in_source"
+    },
+    "sources": {
+      "FRA": "tobacco duties 2024 (search summary)",
+      "DEU": "BMF Kassenmäßige Steuereinnahmen 2025, Tabaksteuer",
+      "GBR": "HMRC receipts Table 2, tobacco duties",
+      "POL": "NIK P/26/001, tobacco excise"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: vat (an excise on consumption). Proposed values, Systems to accept or strike."
+  }
+}

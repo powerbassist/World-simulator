@@ -57,8 +57,10 @@ func _init() -> void:
 
 
 func _fra():
-	var state = GameState.new_game(_loader, "FRA")
-	return [state, state.nations["FRA"]]
+	# Italy levies exactly today's five; the four playable nations levy researched kinds too,
+	# which these tests of "a kind in force or not" must not see.
+	var state = GameState.new_game(_loader, "ITA")
+	return [state, state.nations["ITA"]]
 
 
 func _test_the_five_load_first_in_order() -> void:
@@ -142,11 +144,11 @@ func _test_every_row_refusal() -> void:
 	_refuses("an empty name", r)
 	# A new kind with no core slot carries its own weights freely.
 	r = _row()
-	r["id"] = "fuel_duty"
+	r["id"] = "test_levy"
 	r["who_pays"] = ["workers"]
 	r["bloc_salience"] = {"workers": 0.02, "rural": 0.04}
 	errors = []
-	TaxesLoader.parse_row(r, "taxes/fuel_duty.json", errors)
+	TaxesLoader.parse_row(r, "taxes/test_levy.json", errors)
 	if not errors.is_empty():
 		_failures.append("a new kind with its own weights was refused: %s" % [errors])
 
@@ -232,11 +234,11 @@ func _test_a_kind_not_in_force_does_not_renormalise() -> void:
 
 func _sixth(ns, rate: float) -> void:
 	var row := _row()
-	row["id"] = "fuel_duty"
+	row["id"] = "test_levy"
 	row["bloc_salience"] = {"workers": 0.02}
 	row["who_pays"] = ["workers"]
-	ns.tax_library["fuel_duty"] = row
-	ns.tax_rates_pct["fuel_duty"] = rate
+	ns.tax_library["test_levy"] = row
+	ns.tax_rates_pct["test_levy"] = rate
 
 
 func _test_a_new_kind_weighs_outside_the_sum() -> void:
@@ -247,22 +249,22 @@ func _test_a_new_kind_weighs_outside_the_sum() -> void:
 	var before := Opinion.salience_weights(base, Opinion.issue_satisfaction(ns), gain, TaxLibrary.salience_patch(ns, "workers"))
 	_sixth(ns, 8.0)
 	var sat := Opinion.issue_satisfaction(ns)
-	if not sat.has("tax_fuel_duty") or float(sat["tax_fuel_duty"]) >= 0.0:
-		_failures.append("a new kind raised from nothing reads no grievance: %s" % sat.get("tax_fuel_duty"))
+	if not sat.has("tax_test_levy") or float(sat["tax_test_levy"]) >= 0.0:
+		_failures.append("a new kind raised from nothing reads no grievance: %s" % sat.get("tax_test_levy"))
 	var after := Opinion.salience_weights(base, sat, gain, TaxLibrary.salience_patch(ns, "workers"))
 	var total := 0.0
 	for issue in base:
 		total += float(base[issue]) * (1.0 + gain * clampf(-float(sat.get(issue, 0.0)), 0.0, 1.0))
-	var severity := clampf(-float(sat["tax_fuel_duty"]), 0.0, 1.0)
-	if not is_equal_approx(float(after.get("tax_fuel_duty", 0.0)), 0.02 * (1.0 + gain * severity) / total):
-		_failures.append("the new kind weighs %s, not its own weight over the core total" % after.get("tax_fuel_duty"))
+	var severity := clampf(-float(sat["tax_test_levy"]), 0.0, 1.0)
+	if not is_equal_approx(float(after.get("tax_test_levy", 0.0)), 0.02 * (1.0 + gain * severity) / total):
+		_failures.append("the new kind weighs %s, not its own weight over the core total" % after.get("tax_test_levy"))
 	for issue in before:
 		if float(after[issue]) != float(before[issue]):
 			_failures.append("a new kind re-weighted workers' %s" % issue)
 	Budget.recompute(pair[0], ns)
 	var expected := 0.53 * 8.0 * clampf(1.0 - 0.25 * (8.0 - 20.0) / 20.0, EK.EROSION_MIN, EK.EROSION_MAX)
-	if float(ns.revenue_pct_gdp.get("fuel_duty", -1.0)) != expected:
-		_failures.append("the new kind yields %s, not %s on the zero-reference curve" % [ns.revenue_pct_gdp.get("fuel_duty"), expected])
+	if float(ns.revenue_pct_gdp.get("test_levy", -1.0)) != expected:
+		_failures.append("the new kind yields %s, not %s on the zero-reference curve" % [ns.revenue_pct_gdp.get("test_levy"), expected])
 
 
 func _test_an_override_reaches_revenue_and_not_the_library() -> void:

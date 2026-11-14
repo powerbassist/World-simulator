@@ -85,6 +85,11 @@
       "_note": "Bundesverfassungsgericht. Art. 93(1) no. 2 GG: abstract review of a federal statute on application by the Federal Government, a Land government or a quarter of the Bundestag's members. bundesverfassungsgericht.de, 'Abstract judicial review'.",
       "review": "constitutional"
     },
+    "finance_bill": {
+      "autumn_month": 9,
+      "_source": "Bundeshaushaltsordnung, section 30: the federal budget bill goes to the Bundestag, as a rule, in its first sitting week after 1 September",
+      "_note": "The month the autumn finance bill may create or abolish a tax (docs/design/finance-bill.md section 5)."
+    },
     "formation": {
       "_source": "authored",
       "_note": "Chancellor elected by the Bundestag with an absolute majority of the statutory membership (Kanzlermehrheit); removable only by a constructive vote of no confidence that simultaneously elects a successor. Art. 63 and 67 GG; bundestag.de 'Election of the Federal Chancellor'.",
@@ -107,7 +112,20 @@
       "corporate": 29.9,
       "vat": 19.0,
       "capital_gains": 26.0,
-      "wealth": 0.0
+      "wealth": 0.0,
+      "fuel_duty": 0.6545,
+      "carbon_tax": 55.0,
+      "tobacco_duty": 100.0,
+      "alcohol_duty": 100.0,
+      "air_passenger_tax": 13.03,
+      "property_tax": 100.0,
+      "inheritance_tax": 50.0,
+      "high_income_surcharge": 5.5
+    },
+    "tax_base_share": {
+      "alcohol_duty": 0.000691,
+      "high_income_surcharge": 0.054327,
+      "property_tax": 0.003735
     },
     "spending_pct_gdp": {
       "health": 9.5,
