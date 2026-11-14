@@ -144,7 +144,7 @@ func _run() -> void:
 	var with_tips := 0
 	for id in _bar._figure_values.keys():
 		var parts: Array = [_bar._figure_values[id], _bar._figure_captions[id]]
-		if not (parts[0] as Control).get_parent().visible:
+		if not _bar.figure_box(id).visible:
 			continue
 		with_tips += 1
 		if _bar.tip_of(id).is_empty():

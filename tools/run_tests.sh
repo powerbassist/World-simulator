@@ -57,6 +57,7 @@ tests=(
   # bugs this project shipped were silent, and the drawn pixels themselves are
   # the screenshot pass's job, not a raster change-detector in here.
   tests/test_ribbon.gd
+  tests/test_horizon_items.gd
   # test_summits.gd was authored at V2.4b and never added here, so it ran only
   # by hand and went unnoticed for two sessions while SAVE_VERSION moved to 28
   # and then to 29 under its own frozen "!= 27" pin -- test_companies.gd's

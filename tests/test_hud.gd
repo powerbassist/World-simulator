@@ -11,6 +11,7 @@ extends SceneTree
 ## silently needs a test is the whole reason this file exists.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const MoodIcon = preload("res://src/ui/mood_icon.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
@@ -38,6 +39,7 @@ func _process(_delta: float) -> bool:
 	_check_portrait_names_the_player()
 	_check_flag_data_reaches_the_card()
 	_check_mood_reads_the_polled_figure()
+	_check_the_bar_after_the_rebuild()
 	_check_face_is_fixed_and_mood_is_an_icon()
 	_check_inbox()
 	_check_lanes_by_kind()
@@ -158,6 +160,44 @@ func _check_flag_data_reaches_the_card() -> void:
 	var expected = _main._loader.nations[_main._state.player_nation_id]
 	if flag._bands != expected.flag_bands:
 		_fail("the portrait card's flag is not the player nation's")
+
+
+## V5.3 (bar C): the clock is the horizon's, the strip draws the standing figures and
+## only the chips that wait, approval and the vote are drawn elsewhere and keep their
+## tips. What can fail silently: a reading drawn twice, a "- clear" taking a slot again,
+## the approval's reason lost when it left the strip, the date without its weekday.
+func _check_the_bar_after_the_rebuild() -> void:
+	var hud = _main._hud
+	if not hud.ribbon.is_ancestor_of(hud.clock_cluster):
+		_fail("the clock cluster is not in the horizon (ribbon), where the bar rebuild put it")
+	if hud.title_bar.is_ancestor_of(hud.clock_cluster):
+		_fail("the clock cluster is still in the title bar")
+	var bar = _main._top_bar
+	for id in StripReadings.OFF_STRIP:
+		if bar.figure_box(id).visible:
+			_fail("'%s' is drawn on the strip; it lives on the portrait card / the horizon now" % id)
+	for id in StripReadings.ON_STRIP:
+		if not bar.figure_box(id).visible:
+			_fail("the standing figure '%s' is not drawn on the strip" % id)
+	for id in StripReadings.CHIPS:
+		var r: Dictionary = StripReadings.read(id, _main._state, _main._loader)
+		if bar.figure_box(id).visible == StripReadings.is_resting(r):
+			_fail("the '%s' chip is %s while its reading says %s" % [id, "shown" if bar.figure_box(id).visible else "hidden",
+				"resting" if StripReadings.is_resting(r) else "waiting"])
+	# A clear desk takes no slot (gate H6): stated outright, not through the code's own predicate.
+	if _main._state.player().event_queue.is_empty() and bar.figure_box("desk").visible:
+		_fail("an empty desk still shows its '— clear' chip on the strip")
+	# The date carries its weekday (DateText.weekday_full), the hold line is the cluster's own.
+	var date: String = hud.clock_cluster._date_label.text
+	if not RegEx.create_from_string("^[A-Za-z]{3} \\d{2}/\\d{2}/\\d{4}$").search(date):
+		_fail("the clock's date '%s' is not 'Wed 12/08/2026'" % date)
+	# Approval's reason went with it: the portrait card's number answers a hover.
+	var label: Label = hud.portrait_card._approval_label
+	label.mouse_entered.emit()
+	if not String(label.tooltip_text).contains(StripReadings.read("approval", _main._state, _main._loader)["lines"][0]["text"]):
+		_fail("the portrait card's approval has no tip (it lost its reason when it left the strip): '%s'" % label.tooltip_text)
+	if label.mouse_filter == Control.MOUSE_FILTER_IGNORE:
+		_fail("the approval figure ignores the mouse; its tip can never show")
 
 
 ## Three surfaces show approval -- the portrait, the polling panel and the

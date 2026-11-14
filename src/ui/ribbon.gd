@@ -1,40 +1,58 @@
 extends PanelContainer
 
-## The day ribbon, V2.4a — a few committed blocks on an otherwise open line.
+## The horizon -- the bottom plate, V2.4a's day ribbon rebuilt at V5.3 (the author
+## picked bar C of the pictures; gate H5, "the day bar is outdated"). Three calendar
+## months on one line: this month by days with today's playhead, the next two
+## compressed, and on the line the things that are DATED -- what is booked, and what
+## falls due (a request lapsing, a desk decision deciding itself) -- so what pulls the
+## player into next month is always in sight. The clock (date, pause, speeds) sits at
+## its left end and the vote that ends the term at its right.
 ##
-## docs/tiers/v2.md section 4's own call: "a ribbon, not a grid", because thirty
-## equal boxes is the template answer and a president's month is not one. One
-## row of days, travel days HATCHED and the meeting itself solid brass — travel
-## is time you spend without choosing it, and the two marks say so without a
-## word. Not a drawer entry and not a window (V2.1c settled that when it placed
-## this surface): it is furniture, the bottom-most plate, always on.
+## Read-only over sim state like every surface since U2. The dated things are
+## horizon_items.gd's read (the registers already carry them); Calendar.day_cells
+## stays the whole rule about which days a booking occupies, so the horizon and the
+## diary cannot disagree. A due is month-granular in the sim and is drawn at its
+## month's END; a booking is day-exact.
 ##
-## Read-only over sim state like every surface since U2: Calendar.day_cells()
-## is the whole rule about blocks, drawn here without re-derivation, so the
-## ribbon and the diary cannot disagree about what occupies a day. The tooltip
-## names the act from the register by verb_key; the diary prints the richer
-## sentence, and the two share no figure that could round apart.
+## **Names are links.** A person on a chip is marked [p=id]Name[/p], so a hover shows
+## their card (person_tip.gd), the same card every name in the game opens.
 
 const Strings = preload("res://src/ui/strings.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
-const ClockCluster = preload("res://src/ui/clock_cluster.gd")
+const AudienceK = preload("res://src/sim/audience_constants.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const Icon = preload("res://src/ui/icon.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Items = preload("res://src/ui/horizon_items.gd")
+const StripReadings = preload("res://src/ui/strip_readings.gd")
 
-## Cell and strip geometry. The strip is 44px: enough for a day number over a
-## 12px block, small enough to sit under the action bar without becoming a
-## second panel.
-const STRIP_HEIGHT := 44
-const BLOCK_HEIGHT := 12.0
-const MEETING_HEIGHT := 15.0
-const LABEL_WIDTH := 130.0
+## The plate's height (the workspace's dock reads it): one lane of chips, the line, the day
+## numbers. 88 holds the largest text size (130 %) without the plate growing past the dock.
+const STRIP_HEIGHT := 88
+## The months' shares of the line: this month by days, then two compressed.
+const SHARES: Array[float] = [0.5, 0.25, 0.25]
+const LINE_Y := 40.0
+const LANE_Y := 0.0
+const CHIP_GAP := 6.0
+## The room kept between the month's name, today's mark and a day number.
+const TITLE_GAP := 4.0
+const CLOCK_WIDTH := 480
+const BLOCK_HEIGHT := 6.0
+const ICON_PX := 14
 
 var _state
 var _loader
+var _clock_slot: HBoxContainer
 var _cells: Control
 var _title: Label
+var _vote_box: VBoxContainer
+var _vote_value: Label
+var _vote_months: Label
 var _dirty := true
-var _hover_day := -1
+var _signature_seen: Array = []
+var _items := {}
+var _chips: Array[Control] = []
 
 
 func _ready() -> void:
@@ -42,24 +60,67 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(0, STRIP_HEIGHT)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 12
-	row.offset_right = -12
+	row.add_theme_constant_override("separation", 14)
 	add_child(row)
 
-	_title = Label.new()
-	_title.theme_type_variation = UiTheme.MICRO
-	_title.custom_minimum_size = Vector2(LABEL_WIDTH, 0)
-	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	row.add_child(_title)
+	_clock_slot = HBoxContainer.new()
+	_clock_slot.custom_minimum_size = Vector2(CLOCK_WIDTH, 0)
+	_clock_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_clock_slot)
+	row.add_child(_rule())
 
 	_cells = Control.new()
 	_cells.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cells.mouse_filter = Control.MOUSE_FILTER_PASS
+	_cells.clip_contents = true
 	_cells.draw.connect(_draw_cells)
-	_cells.gui_input.connect(_on_cells_input)
+	_cells.resized.connect(func(): _dirty = true)
 	row.add_child(_cells)
+	_title = Label.new()
+	_title.theme_type_variation = UiTheme.MICRO
+	_title.position = Vector2(30, LINE_Y + 3)
+	_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cells.add_child(_title)
+
+	row.add_child(_rule())
+	_vote_box = VBoxContainer.new()
+	_vote_box.add_theme_constant_override("separation", -3)
+	_vote_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_vote_box.mouse_filter = Control.MOUSE_FILTER_PASS
+	row.add_child(_vote_box)
+	var caption := Label.new()
+	caption.text = tr("NEXT VOTE")
+	caption.theme_type_variation = UiTheme.MICRO
+	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_vote_box.add_child(caption)
+	var value_row := HBoxContainer.new()
+	value_row.add_theme_constant_override("separation", 8)
+	value_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_vote_box.add_child(value_row)
+	_vote_value = Label.new()
+	_vote_value.theme_type_variation = UiTheme.FIGURE
+	_vote_value.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	value_row.add_child(_vote_value)
+	_vote_months = Label.new()
+	_vote_months.theme_type_variation = UiTheme.CAPTION
+	_vote_months.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	value_row.add_child(_vote_months)
+
+
+func _rule() -> Control:
+	var rule := ColorRect.new()
+	rule.color = UiTheme.EDGE
+	rule.custom_minimum_size = Vector2(1, 0)
+	rule.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rule
+
+
+## hud.gd builds the clock cluster and hands it here, so main.gd keeps reaching it as
+## `_hud.clock_cluster`.
+func add_clock(cluster: Control) -> void:
+	_clock_slot.add_child(cluster)
+	cluster.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 
 func setup(state, loader) -> void:
@@ -76,11 +137,205 @@ func mark_dirty() -> void:
 
 
 func _process(_delta: float) -> void:
-	if not _dirty or _state == null or not visible:
+	if _state == null or not visible or _cells.size.x < 10.0:
+		return
+	# What the horizon shows changes when a request is answered or a decision made, not
+	# only on the day tick main.gd marks it for: a cheap signature of the registers it
+	# reads, compared each frame, keeps it from showing a lapse that was answered.
+	var signature := _signature()
+	if signature != _signature_seen:
+		_signature_seen = signature
+		_dirty = true
+	if not _dirty:
 		return
 	_dirty = false
-	_title.text = DateText.month_year(_state.month, _state.year).to_upper()
+	_title.text = DateText.month_long(_state.month).to_upper()
+	_items = Items.read(_state, _loader)
+	_rebuild_chips()
+	_refresh_vote()
 	_cells.queue_redraw()
+	_title.position.x = float(_labels()["title"].position.x)
+
+
+## What the horizon reads, in a handful of integers: the day, the diary's size, the
+## desk's, and the requests still waiting with their deadlines.
+func _signature() -> Array:
+	var ns = _state.player()
+	if ns == null:
+		return []
+	var waiting := 0
+	var deadlines := 0
+	for row in ns.audience_requests:
+		if String(row.get("status", "")) == AudienceK.STATUS_PENDING:
+			waiting += 1
+			deadlines += int(row.get("deadline_month", 0))
+	var desk := 0
+	for entry in ns.event_queue:
+		desk += 1 + int(entry.get("months_left", 0))
+	return [int(_state.year), int(_state.month), int(_state.day), _state.appointments.size(), waiting, deadlines, desk]
+
+
+## --- geometry --------------------------------------------------------------
+
+## The span of the line a month index (0 this month, 1, 2) takes, in `_cells` pixels.
+func _segment(index: int) -> Vector2:
+	var width := _cells.size.x
+	var start := 0.0
+	for i in index:
+		start += width * SHARES[i]
+	return Vector2(start, start + width * SHARES[index])
+
+
+## The x of the middle of a day, which may fall in a later month. A date outside the
+## three months has no x (-1).
+func _day_x(year: int, month: int, day: int) -> float:
+	var index := (year * 12 + month) - (int(_state.year) * 12 + int(_state.month))
+	if index < 0 or index >= SHARES.size():
+		return -1.0
+	var span := _segment(index)
+	var days := DateText.days_in(month, year)
+	return span.x + (span.y - span.x) * (float(day) - 0.5) / float(days)
+
+
+## Which of the three segments an absolute month (year * 12 + month) falls in, -1 outside.
+## A due read a month ago is still in `_items` for the frame between the day tick and the
+## next refresh: it must be skipped, not drawn at a negative index (test_briefing_go).
+func _index_of(abs_month: int) -> int:
+	var index := abs_month - (int(_state.year) * 12 + int(_state.month))
+	return index if index >= 0 and index < SHARES.size() else -1
+
+
+## The month `offset` after today's, as {year, month}.
+func _month_at(offset: int) -> Dictionary:
+	var index := int(_state.year) * 12 + int(_state.month) - 1 + offset
+	return {"year": floori(index / 12.0), "month": index % 12 + 1}
+
+
+## --- chips -----------------------------------------------------------------
+
+func _rebuild_chips() -> void:
+	for chip in _chips:
+		chip.queue_free()
+	_chips.clear()
+	var wanted: Array[Dictionary] = []
+	for b in (_items["bookings"] as Array):
+		# A booking's chip sits on its meeting day; its travel days are only the hatch.
+		var x := _day_x(int(b["year"]), int(b["month"]), int(b["day"]))
+		if x >= 0.0:
+			wanted.append({"x": x, "right": false, "text": Items.booking_text(b), "icon": "", "warn": false,
+				"tip": "%s — %s" % [DateText.day_month(int(b["day"]), int(b["month"])), String(b["act"])]})
+	for due in (_items["dues"] as Array):
+		var month := (int(due["abs_month"]) - 1) % 12 + 1
+		var year := floori((int(due["abs_month"]) - 1) / 12.0)
+		var index := _index_of(int(due["abs_month"]))
+		if index < 0:
+			continue
+		var span := _segment(index)
+		wanted.append({"x": span.y - 4.0, "right": true, "text": Items.due_text(due),
+			"icon": "res://assets/icons/material/%s.svg" % ("person" if due["kind"] == "request" else "mail"), "warn": true,
+			"tip": tr("By %s") % DateText.day_month(DateText.days_in(month, year), month)})
+	wanted.sort_custom(func(a, b): return float(a["x"]) < float(b["x"]))
+	var edge := -1.0e9
+	var folded: Array[String] = []
+	for want in wanted:
+		var chip := _chip(want)
+		_cells.add_child(chip)
+		var width := chip.get_combined_minimum_size().x
+		var left := float(want["x"]) - (width if bool(want["right"]) else 8.0)
+		left = clampf(left, 0.0, maxf(_cells.size.x - width, 0.0))
+		if left < edge + CHIP_GAP:
+			folded.append(String(want["tip"]))
+			chip.queue_free()
+			continue
+		chip.position = Vector2(left, LANE_Y)
+		chip.size = Vector2(width, chip.get_combined_minimum_size().y)
+		edge = left + width
+		_chips.append(chip)
+	if not folded.is_empty():
+		var more := _chip({"text": "+%d" % folded.size(), "icon": "", "warn": false, "tip": "\n".join(folded)})
+		_cells.add_child(more)
+		more.position = Vector2(minf(edge + CHIP_GAP, _cells.size.x - 32.0), LANE_Y)
+		more.size = more.get_combined_minimum_size()
+		_chips.append(more)
+
+
+## A plate with a glyph and one line; its words mark a person when one is the whole
+## subject, so the name opens their card.
+func _chip(want: Dictionary) -> Control:
+	var chip := PanelContainer.new()
+	chip.theme_type_variation = UiTheme.PLATE
+	chip.mouse_filter = Control.MOUSE_FILTER_PASS
+	# A chip that links a person has no tooltip of its own: an ancestor's tip would
+	# draw over the person's card (term_text.gd's note).
+	if not String(want["text"]).contains("[p="):
+		chip.tooltip_text = String(want["tip"])
+	var box := HBoxContainer.new()
+	box.add_theme_constant_override("separation", 5)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.add_child(box)
+	if String(want["icon"]) != "":
+		var glyph := TextureRect.new()
+		glyph.texture = Icon.load_icon(String(want["icon"]), UiTheme.WARN if bool(want["warn"]) else UiTheme.TEXT_DIM, ICON_PX)
+		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		glyph.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		box.add_child(glyph)
+	var line := PanelKit.line(box, String(want["text"]), PanelKit.Tone.PLAIN)
+	if line is RichTextLabel:
+		line.autowrap_mode = TextServer.AUTOWRAP_OFF
+		line.mouse_filter = Control.MOUSE_FILTER_PASS
+	elif line is Label:
+		line.autowrap_mode = TextServer.AUTOWRAP_OFF
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return chip
+
+
+func _refresh_vote() -> void:
+	var vote: Dictionary = _items["vote"]
+	if vote.is_empty() or int(vote["months"]) < 0:
+		_vote_box.hide()
+		return
+	_vote_box.show()
+	_vote_value.text = Items.vote_text(vote)
+	_vote_months.text = Strings.tn("%d month", "%d months", int(vote["months"])) % int(vote["months"]) \
+		if int(vote["months"]) > 0 else Strings.t("this month")
+	var lines: Array = StripReadings.read("election", _state, _loader)["lines"]
+	var tip: Array[String] = []
+	for entry in lines:
+		tip.append(String(entry["text"]))
+	_vote_box.tooltip_text = "\n".join(tip)
+
+
+## --- the labels' layout ------------------------------------------------------
+
+## Where today's mark, this month's name and the day numbers sit, in `_cells` pixels, so
+## drawing, the title's position and the test all read one answer (QA #332 T1: "MARCH"
+## printed over the 8 and the "1" mark clipped the J). The mark never leaves the line's
+## ends; the name moves to the mark's right when they meet; a day number that would touch
+## either is not printed -- the player still has the mark's own number and the diary.
+func _labels() -> Dictionary:
+	var font := _cells.get_theme_default_font()
+	var full := _cells.get_theme_default_font_size()
+	var small := full - 2
+	var today := int(_state.day)
+	var today_x := _day_x(int(_state.year), int(_state.month), today)
+	var mark_w := font.get_string_size(str(today), HORIZONTAL_ALIGNMENT_LEFT, -1, small).x + 10.0
+	var mark := Rect2(clampf(today_x - mark_w / 2.0, 0.0, maxf(_cells.size.x - mark_w, 0.0)), LINE_Y + 5.0, mark_w, full + 4.0)
+	var title_size := _title.get_minimum_size()
+	var title := Rect2(30.0, LINE_Y + 3.0, title_size.x, title_size.y)
+	if title.intersects(mark.grow(TITLE_GAP)):
+		title.position.x = mark.end.x + TITLE_GAP
+	var numbers: Array[Dictionary] = []
+	var days := DateText.days_in(int(_state.month), int(_state.year))
+	for d in [1, 8, 15, 22, 29]:
+		if d > days or d == today:
+			continue
+		var x := _day_x(int(_state.year), int(_state.month), d)
+		var w := font.get_string_size(str(d), HORIZONTAL_ALIGNMENT_LEFT, -1, small).x
+		var box := Rect2(x - w / 2.0 - 3.0, LINE_Y + 5.0, w + 6.0, full + 4.0)
+		if box.intersects(mark.grow(TITLE_GAP)) or box.intersects(title.grow(TITLE_GAP)):
+			continue
+		numbers.append({"rect": box, "text": str(d), "x": x, "width": w})
+	return {"mark": mark, "title": title, "numbers": numbers}
 
 
 ## --- drawing ----------------------------------------------------------------
@@ -88,134 +343,67 @@ func _process(_delta: float) -> void:
 func _draw_cells() -> void:
 	if _state == null:
 		return
-	var cells: Array = Calendar.day_cells(_state, _state.year, _state.month)
-	if cells.is_empty():
-		return
-
 	var font := _cells.get_theme_default_font()
 	var font_size := _cells.get_theme_default_font_size()
-	var area: Vector2 = _cells.size
-	var cell_w := area.x / cells.size()
-	var today := int(_state.day)
-
-	for i in cells.size():
-		var cell: Dictionary = cells[i]
-		var day := int(cell["day"])
-		var x := i * cell_w
-		var is_today := day == today
-		var is_past := day < today
-
-		# The open line: a baseline with a small tick per day, dimmer behind
-		# today. A month with nothing booked reads as exactly that, which is
-		# information — the whole argument for a ribbon over a grid.
-		var tick := UiTheme.EDGE
-		if is_past:
-			tick = Color(UiTheme.EDGE, 0.4)
-		_cells.draw_rect(
-			Rect2(x + cell_w * 0.5 - 1.0, area.y - 6.0, 2.0, 4.0), tick
-		)
-
-		var number_color := UiTheme.TEXT_DIM if not is_past else Color(UiTheme.TEXT_DIM, 0.45)
-		if is_today:
-			number_color = UiTheme.accent()
-		_cells.draw_string(
-			font, Vector2(x + cell_w * 0.5 - 8.0, area.y - 12.0), "%02d" % day,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 1, number_color
-		)
-
-		if bool(cell["meeting"]):
-			# Solid brass, the one accent: the meeting is the day you chose.
-			# Slightly taller than a travel cell so a block reads as travelling
-			# TOWARD something even where the two touch.
-			var h := MEETING_HEIGHT
-			_cells.draw_rect(
-				Rect2(x + 2.0, area.y - 10.0 - h, cell_w - 4.0, h), UiTheme.accent()
-			)
-		elif bool(cell["travel"]):
-			# Hatched, not filled: travel is time the journey spends, not time
-			# the president chose. The hatch is drawn as lines rather than a
-			# stylebox pattern because 31 cells redraw only when the day moves.
-			var rect := Rect2(x + 2.0, area.y - 10.0 - BLOCK_HEIGHT, cell_w - 4.0, BLOCK_HEIGHT)
-			_cells.draw_rect(rect, UiTheme.SLATE)
-			var step := 5.0
-			var yy := rect.position.y
-			var y_end := rect.position.y + rect.size.y
-			var xx := rect.position.x - rect.size.y
-			while xx < rect.position.x + rect.size.x:
-				var x0: float = maxf(xx, rect.position.x)
-				var y0: float = yy + (x0 - xx)
-				var x1: float = minf(xx + rect.size.y, rect.position.x + rect.size.x)
-				var y1: float = yy + (x1 - xx)
-				if y1 > y_end:
-					x1 -= y1 - y_end
-					y1 = y_end
-				_cells.draw_line(
-					Vector2(x0, y0), Vector2(x1, y1), UiTheme.EDGE, 1.0
-				)
-				xx += step
-
-		if is_today:
-			# Today's underline, brass, across the whole cell — the mark says
-			# where on the line the president is standing.
-			_cells.draw_rect(
-				Rect2(x + 2.0, area.y - 4.0, cell_w - 4.0, 2.0), UiTheme.accent()
-			)
-		elif _hover_day == day and String(cell["key"]) != "":
-			_cells.draw_rect(
-				Rect2(x + 2.0, area.y - 10.0 - MEETING_HEIGHT, cell_w - 4.0, MEETING_HEIGHT + 8.0),
-				Color(UiTheme.SLATE, 0.5)
-			)
+	var width := _cells.size.x
+	var today_x := _day_x(int(_state.year), int(_state.month), int(_state.day))
+	# The line, dim behind today (what has gone), edge-coloured ahead.
+	_cells.draw_rect(Rect2(0, LINE_Y, width, 2), UiTheme.EDGE)
+	_cells.draw_rect(Rect2(0, LINE_Y, today_x, 2), UiTheme.TEXT_DIM)
+	for i in SHARES.size():
+		var span := _segment(i)
+		if i > 0:
+			_cells.draw_rect(Rect2(span.x, 0, 1, LINE_Y + font_size + 8), UiTheme.EDGE)
+			var at := _month_at(i)
+			_cells.draw_string(font, Vector2(span.x + 14, LINE_Y + 3 + font_size), DateText.month_long(int(at["month"])).to_upper(),
+				HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 2, UiTheme.TEXT_DIM)
+	# Day numbers: the first of every week of this month, and today, a filled mark.
+	var layout := _labels()
+	for n in (layout["numbers"] as Array):
+		_cells.draw_string(font, Vector2(float(n["x"]) - float(n["width"]) / 2.0, LINE_Y + 3 + font_size), String(n["text"]),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 2, UiTheme.TEXT_DIM)
+	_cells.draw_rect(Rect2(today_x - 1.0, 0, 2, LINE_Y), UiTheme.accent())
+	_cells.draw_rect(layout["mark"], UiTheme.accent())
+	_cells.draw_string(font, Vector2((layout["mark"] as Rect2).position.x + 5.0, LINE_Y + 3 + font_size), str(int(_state.day)), HORIZONTAL_ALIGNMENT_LEFT, -1,
+		font_size - 2, UiTheme.INK)
+	# Bookings on the line: the meeting solid, its travel days hatched, as the diary draws them.
+	for b in (_items.get("bookings", []) as Array):
+		var meet := _day_x(int(b["year"]), int(b["month"]), int(b["day"]))
+		if meet < 0.0:
+			continue
+		var cell := _cell_width(int(b["year"]), int(b["month"]))
+		for leg in range(-int(b["travel_days"]), int(b["travel_days"]) + 1):
+			var rect := Rect2(meet + leg * cell - cell / 2.0 + 2.0, LINE_Y - 2.0 - BLOCK_HEIGHT, maxf(cell - 4.0, 2.0), BLOCK_HEIGHT)
+			if leg == 0:
+				_cells.draw_rect(rect, UiTheme.TEXT)
+			else:
+				_hatch(rect)
+	# The deadlines: a WARN tick on the line at the month's end.
+	for due in (_items.get("dues", []) as Array):
+		var index := _index_of(int(due["abs_month"]))
+		if index >= 0:
+			_cells.draw_rect(Rect2(_segment(index).y - 4.0, LINE_Y - 9, 2, 20), UiTheme.WARN)
 
 
-## --- hover ------------------------------------------------------------------
-
-## The tooltip names the booking under the pointer. Resolved from the register
-## by verb_key — the same identity the diary cancels by — so the ribbon cannot
-## invent an act the diary does not know about. Names only; the diary owns the
-## fuller sentence, and no figure is printed in both places.
-func _on_cells_input(event: InputEvent) -> void:
-	if _state == null:
-		return
-	if event is InputEventMouseMotion:
-		var cells: Array = Calendar.day_cells(_state, _state.year, _state.month)
-		if cells.is_empty():
-			return
-		var cell_w := _cells.size.x / cells.size()
-		var idx := int(clampf(event.position.x / cell_w, 0, cells.size() - 1))
-		var cell: Dictionary = cells[idx]
-		if int(cell["day"]) == _hover_day:
-			return
-		_hover_day = int(cell["day"])
-		_cells.queue_redraw()
-		var key := String(cell["key"])
-		if key.is_empty():
-			_cells.tooltip_text = ""
-			return
-		for e in _state.appointments:
-			if Calendar.verb_key(e) == key:
-				_cells.tooltip_text = "%s — %s" % [DateText.day_month(int(e.get("day", 1)), int(e.get("month", 1))), _booking_name(e)]
-				return
-		_cells.tooltip_text = ""
+## One day's width in its month's segment.
+func _cell_width(year: int, month: int) -> float:
+	var index := (year * 12 + month) - (int(_state.year) * 12 + int(_state.month))
+	var span := _segment(clampi(index, 0, SHARES.size() - 1))
+	return (span.y - span.x) / float(DateText.days_in(month, year))
 
 
+## Travel is time the journey spends, not time the president chose: hatched, not
+## filled. Drawn as lines because the cells only redraw when something moves.
+func _hatch(rect: Rect2) -> void:
+	_cells.draw_rect(rect, UiTheme.SLATE)
+	var xx := rect.position.x - rect.size.y
+	while xx < rect.position.x + rect.size.x:
+		var x0: float = maxf(xx, rect.position.x)
+		var x1: float = minf(xx + rect.size.y, rect.position.x + rect.size.x)
+		_cells.draw_line(Vector2(x0, rect.position.y + (x0 - xx)), Vector2(x1, rect.position.y + (x1 - xx)), UiTheme.EDGE, 1.0)
+		xx += 5.0
+
+
+## The act a booking names, in words (the diary's tooltip words).
 func _booking_name(entry: Dictionary) -> String:
-	match String(entry.get("kind", "")):
-		"diplomatic":
-			var action_name := String(entry.get("action_id", ""))
-			var nation = _loader.nations.get(String(entry.get("target_id", "")))
-			if nation != null:
-				for action in _loader.diplomatic_actions:
-					if String(action.id) == String(entry.get("action_id", "")):
-						action_name = Strings.row_name("diplomatic-actions", action)
-						break
-				return "%s — %s" % [action_name, String(nation.nation_name)]
-			return action_name
-		"law":
-			return tr("A law is proposed")
-		"reshuffle":
-			return tr("A portfolio changes hands")
-		"address":
-			return tr("An address to the nation")
-		"audience":
-			return tr("An audience")
-	return String(entry.get("kind", ""))
+	return Items.booking_name(entry, _loader)

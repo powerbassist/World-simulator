@@ -107,6 +107,32 @@ func _run() -> void:
 	if not main_text.contains("_hud.ribbon.mark_dirty()"):
 		_fail("main.gd never marks the ribbon dirty -- a booking would not appear on the line")
 
+	# A due read last month is still in the horizon's items for the frame between the day tick
+	# and its refresh: it has no segment (-1) and is neither chipped nor drawn (test_briefing_go
+	# caught the negative index as a script error).
+	var this_month: int = int(_main._state.year) * 12 + int(_main._state.month)
+	if ribbon._index_of(this_month - 6) != -1 or ribbon._index_of(this_month + 3) != -1:
+		_fail("a month outside the horizon's three has a segment")
+	if ribbon._index_of(this_month) != 0 or ribbon._index_of(this_month + 2) != 2:
+		_fail("this month and the one two after are not segments 0 and 2")
+
+	# QA #332 T1: this month's name, today's mark and the day numbers never overlap, for any today
+	# (the name printed over the 8, the "1" mark clipped the J). Read off the one layout the drawing uses.
+	var real_day: int = int(_main._state.day)
+	for day in range(1, 32):
+		_main._state.day = day
+		var lay: Dictionary = ribbon._labels()
+		var name_rect: Rect2 = lay["title"]
+		var mark: Rect2 = lay["mark"]
+		if mark.position.x < 0.0 or mark.end.x > ribbon._cells.size.x + 0.5:
+			_fail("today %d: the mark %s leaves the line (0..%.0f)" % [day, mark, ribbon._cells.size.x])
+		if name_rect.intersects(mark):
+			_fail("today %d: the month's name %s runs under today's mark %s" % [day, name_rect, mark])
+		for n in (lay["numbers"] as Array):
+			if (n["rect"] as Rect2).intersects(name_rect) or (n["rect"] as Rect2).intersects(mark):
+				_fail("today %d: the day number %s overlaps the month's name or today's mark" % [day, n["text"]])
+	_main._state.day = real_day
+
 	# The tooltip resolves from the REGISTER, not from its own memory: book a
 	# visit through the sim, ask the ribbon for the day, and the name it
 	# prints must be the booked act's. Delivered by feeding the input handler
@@ -122,15 +148,15 @@ func _run() -> void:
 		_fail("fixture booking was refused: %s" % String(result["error"]))
 	ribbon.mark_dirty()
 	var cells: Array = Calendar.day_cells(state, int(state.year), int(state.month))
-	var cell_w: float = ribbon._cells.size.x / cells.size()
-	var motion := InputEventMouseMotion.new()
-	motion.position = Vector2(15 * cell_w + 1.0, 5.0)
-	ribbon._on_cells_input(motion)
-	var tip: String = String(ribbon._cells.tooltip_text)
-	if tip.is_empty():
-		_fail("hovering a booked day left the tooltip empty -- the ribbon cannot name what occupies it")
-	if not tip.contains("State Visit"):
-		_fail("tooltip said '%s' -- it did not name the booked act" % tip)
+	# The horizon draws the booking as a chip on its meeting day, named by the act, from
+	# the register (horizon_items.gd), not from its own memory.
+	ribbon._process(0.0)
+	var named := false
+	for chip in ribbon._chips:
+		if String(chip.tooltip_text).contains("State Visit"):
+			named = true
+	if not named:
+		_fail("the booked state visit has no chip on the horizon -- it cannot name what occupies the day")
 
 	# And a booking paints TWO kinds of day: the meeting solid, the legs
 	# travel. The drawn pixels are the screenshot pass's; the CELLS the draw

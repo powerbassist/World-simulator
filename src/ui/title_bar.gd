@@ -1,8 +1,8 @@
 extends PanelContainer
 
 ## The bar across the top of the screen -- V5.1-c2.3, the BUREAU board's: back
-## and forward over the player's own path, where they are, why the clock is held
-## when it is, the date and the speeds, save and the menu.
+## and forward over the player's own path, where they are, the requests waiting,
+## save and the menu. The date and the speeds left it for the horizon (V5.3).
 ##
 ## The figures are not here. They are the strip under it (top_bar.gd, which
 ## keeps its name and its readings), so this bar never has to fold.
@@ -28,7 +28,6 @@ var _forward: Button
 var _crumb: Label
 var _held: Label
 var _requests: Button
-var _clock_slot: HBoxContainer
 var _windows
 var _nation := ""
 var _where := ""
@@ -73,9 +72,6 @@ func _ready() -> void:
 	_held.hide()
 	row.add_child(_held)
 
-	_clock_slot = HBoxContainer.new()
-	row.add_child(_clock_slot)
-
 	var tools := HBoxContainer.new()
 	tools.add_theme_constant_override("separation", 4)
 	row.add_child(tools)
@@ -83,12 +79,6 @@ func _ready() -> void:
 	save.pressed.connect(func(): save_load_requested.emit())
 	var menu := _button(tools, tr("MENU"), tr("Pause menu (Esc)"))
 	menu.pressed.connect(func(): settings_requested.emit())
-
-
-## hud.gd builds the clock cluster and hands it here, so main.gd keeps reaching it
-## as `_hud.clock_cluster`.
-func add_clock(cluster: Control) -> void:
-	_clock_slot.add_child(cluster)
 
 
 ## The bar follows the window manager itself: every open and every close moves
