@@ -224,3 +224,45 @@ Today `GameState.new_game` sets `other_revenue_pct_gdp = fiscal.tax_revenue_pct_
 1. A refused head: (a, recommended) drop it and try the next, so the slot is used; (b) drop it and leave the slot empty for the month; (c) keep it at the head and leave the slot empty (it may pass the check next month: a referendum in flight ends).
 2. Forcing a queued bill: (a, recommended) the `force` flag rides in the entry and is engaged at promotion, refused then if `Government.can_force` fails; (b) a queued bill cannot be forced, and the player forces from the slot only.
 3. A government falls (dissolution, censure) with bills queued: (a, recommended) the queue survives; the new government's tabling checks run at each promotion; (b) the queue is cleared with the government.
+
+## 11. What moves a goal (the author's laws direction B; spec only, the parent's addendum of 2026-11-14)
+
+**The ask.** For each goal screen 4 offers (the deficit, unemployment, one bloc's support, a programme pledge), a ranked list of every measure that moves it: each open law at its default size, each spending line and each tax rate in force by a standard step, with its effect on the goal in two years, its cost a year and its chance to pass now. A read over the forecasts that exist, never a new rule; no number moves; its cost measured per call (it runs when the player opens a goal, not each frame).
+
+**Measured first** (`tools/private/goal_read_cost.gd`, gitignored; main at f4ee0cb0 plus #339, a game start, one isolated Godot on the author's machine, other sessions' runs beside it, so read the times as an order of size):
+
+| | France | Germany |
+|---|---|---|
+| open laws (the list's law rows) | 115 | 117 |
+| spending lines x 2 steps + kinds in force x 2 steps | 40 | 36 |
+| a measure's books on a copy of the state (`duplicate_state`, apply, `Budget.recompute`) | 30 ms | 29 ms |
+| of which the copy alone | 22 ms | 23 ms |
+| `Budget.preview` of one step | 28 ms | 30 ms |
+| the chance to pass (`resolve_vote` / `FinanceBill.resolve`) | 0.08 ms | 0.09 ms |
+| `Budget.project` 24 months, one run | 8.9 s | 4.4 s |
+
+What the 115 open French laws carry: `bloc_offset` 105, `society` 26, `spending_pct_gdp` 25, `company` 23, `other_revenue_pct_gdp` 13, `potential_growth_pct` 10, `structural_unemployment_pct` 10, `company_ownership` 10, `institutional` 9, `tax_rates_pct` 6. The programme's pledges read `overall_approval_pct` (34 entries), `deficit_pct_gdp` 10, `growth_annual_pct` 10, `unemployment_pct` 8, `debt_to_gdp_pct` 4, `co2e_per_capita_t` 4, `unrest_pct` 2, `terms_served` 2.
+
+**So a two-year run per measure is out:** 155 measures x 4.4 to 8.9 s is 11 to 23 minutes a goal. The proposal is two tiers.
+
+**Tier 1, the list (every measure, when a goal opens):** each measure applied once on a copy, through the appliers the game uses (`Legislature.apply_effects` at the law's default size, `Budget.apply_pending` for a step), and read for:
+- **the deficit:** the books a year at today's economy, `LawGrade.money_bn`'s arithmetic (the sim's own, moved into a sim reader, since `src/ui/` may not be read by the sim). Honest for year one's direct cost; it leaves out what growth gives back and the interest, so it is labelled "a year, at today's economy", never "in two years".
+- **a bloc's support:** where its approval is heading, the opinion target with the measure against the target without (a byte-identical extraction of the target from `Opinion._tick_nation`). The approval closes 25 % of the gap a month (`INERTIA_RATE`), so in two years it sits on the target to within 0.1 %: **honest to two years for a law's `bloc_offset` and a rate's or a line's own issue**, and not for what the measure later does to jobs and prices, which the target reads as they move.
+- **unemployment:** where the structural rate is heading, read the same way (a byte-identical extraction of the structural target from `Economy._update_unemployment`): a law's `structural_unemployment_pct` and the income rate. The gap closes about half in two years (`UNEMP_REVERT` 0.35 a year), and the cycle (spending and taxes through demand, Okun) is not in it at all. **Not honest to two years as a number**; shown as "heading", with the direction and the size of the shift.
+- **a pledge:** read through the goal its field names (deficit, unemployment, approval); a pledge on growth, debt, emissions, unrest or terms has no tier-1 read and says so ("run the forecast").
+- **the chance to pass:** the division as it would fall now (`resolve_vote`, the finance bill's reading for a step), the same forecast the bar shows.
+- **cost a year:** the deficit read, in bn.
+
+Ranked by the goal's figure, ties by the chance to pass. A measure that does not move the goal is left out, not listed at 0.
+
+**Tier 2, one measure's two years (on demand, from its card):** `Budget.project` 24 months with the measure against the run without it (the baseline run once per goal opening and kept for the month), on the off-frame cursor the budget forecast already uses (`budget_forecast.gd`). 4 to 9 s, the honest two-year figure for every goal, growth, debt and emissions included.
+
+**What it costs and where it runs:** tier 1 is 155 copies at about 30 ms, 4.6 s for France, too long for a frame. It runs as a cursor across frames like the budget forecast, the list filling as it goes. Cheaper (call 2): copy only the nation (`ns.duplicate_state()`, the address's road), which would need the read to apply only a law's fiscal, structural and bloc channels, because `apply_effects` reaches the state for a company or an ownership law.
+
+**Nothing moves:** a read on copies; the two extractions are byte-identical refactors, proven by `cmp` on balance, density and shadows base vs tip. The new reader is a sim leaf (`src/sim/goal_read.gd`), tests on a staged nation: a law with a known `bloc_offset` ranks for its bloc and not for the others, a line step's deficit equals `Budget.preview`'s, the chance equals the forecast bar's, a pledge on growth says it has no tier-1 read.
+
+**Calls for the parent:**
+1. **Two tiers** (a, recommended): the list by tier 1, two years on demand for one measure; (b) tier 1 only, every figure labelled "heading", no two-year run; (c) a two-year run per measure, 11 to 23 minutes, which the measurement rules out.
+2. **The copy:** (a, recommended) the full state copy as the game's appliers use it, 4.6 s off the frame; (b) a nation-only copy and a read of a law's fiscal, structural and bloc channels only, about ten times faster but a second road beside `apply_effects` that can drift from it.
+3. **The standard step:** (a, recommended) 0.5 point of GDP on a spending line and 1 point on a tax rate, each way, inside the kind's range; (b) the step the panels' sliders move by.
+4. **Unemployment's figure:** (a, recommended) the structural shift labelled "heading", the cycle only in tier 2; (b) the closed form of the two-year move (half the shift) printed as "in two years", which re-states the economy's reversion in the reader and is a second copy of a rule.
