@@ -37,3 +37,19 @@ static func fund_open(ns, region_id: String) -> bool:
 		if String(row["region_id"]) == region_id and String(row["status"]) == FK.STATUS_OPEN:
 			return true
 	return false
+
+
+## The author's rule (d) (Gameplay's card A2, 2026-11-14): a HOLDING want asks once. Refused --
+## declined, lapsed, a no-show -- its figure asks no more about that object until it turns:
+## served (the fund opens, the post is given), which clears the mark, then lost again. A
+## standing want is not marked: it goes on asking, as the declined always did. The mark lives
+## in `person_want_state` beside the edge-trigger's two keys ("pid|object", "pid|!object") as
+## "pid|?object" (Characters.refuse_holding writes it, the register's one writer); absent reads
+## "not refused", so a save from before the rule re-asks once (absent_ok, no bump).
+static func refused_key(pid: String, object: String) -> String:
+	return pid + "|?" + object
+
+
+static func refused(ns, pid: String, object: String) -> bool:
+	return ns.person_want_state.has(refused_key(pid, object))
+

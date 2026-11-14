@@ -44,6 +44,7 @@ const Delegation = preload("res://src/sim/delegation.gd")
 const Lane = preload("res://src/sim/audience_lane.gd")
 const QuietMonth = preload("res://src/sim/quiet_month.gd")
 const Landings = preload("res://src/sim/request_landings.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 
 
 ## One month of the played nation's lane: what is overdue lapses (priced), who
@@ -55,7 +56,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 	if ns == null:
 		return out
 	var now := _now(state)
-	Lane.close_overtaken(state, ns, now)
+	Lane.close_overtaken(state, ns, now, loader, meters)
 	for row in ns.audience_requests:
 		if not _overdue(row, now):
 			continue
@@ -247,13 +248,7 @@ static func settle(state, ns, loader, request_id: String, outcome: String) -> Di
 ## Pending past its window lapses; an audience booked or held in an earlier
 ## month and never closed is a no-show -- each costs a decline, once.
 static func _overdue(row: Dictionary, now: int) -> bool:
-	match String(row.get("status", "")):
-		K.STATUS_PENDING:
-			return now >= int(row["deadline_month"])
-		K.STATUS_BOOKED, K.STATUS_HELD:
-			var date: Dictionary = row.get("date", {})
-			return int(date.get("year", 0)) * 12 + int(date.get("month", 0)) < now
-	return false
+	return Lane.overdue(row, now)
 
 
 ## Invitations first -- the asks outside the hazard (AudienceTriggers: an entry
@@ -367,7 +362,8 @@ static func _may_ask(ns, person, leader: String, now: int) -> bool:
 ## still heard and skipped (Delegation.heard; -1, no month, skips none).
 static func _unserved(ns, person, meters: Dictionary, leaders: Dictionary, now := -1) -> Dictionary:
 	for want in person.wants:
-		if Characters.servable(want) and not Characters.want_served(ns, person, want, meters, leaders) and not Delegation.heard(ns, person.id, want["object"], now):
+		if Characters.servable(want) and not WantTerms.refused(ns, String(person.id), String(want["object"])) \
+				and not Characters.want_served(ns, person, want, meters, leaders) and not Delegation.heard(ns, person.id, want["object"], now):
 			return want
 	return {}
 
@@ -417,6 +413,7 @@ static func _price(state, ns, loader, row: Dictionary, share: float, rapport: fl
 	var before := President.rapport(ns, pid)
 	President.adjust_rapport(state, ns, loader, pid, rapport)
 	if crossed:
+		Characters.refuse_holding(ns, pid, String(row["object"]))  # rule (d): a holding asks once
 		applied["grudge"] = float(applied["grudge"]) + float(Lies.cross(state, ns, loader, person, int(row.get("arrived_month", 0))).get("grudge", 0.0))
 	applied["rapport"] = President.rapport(ns, pid) - before
 	return applied

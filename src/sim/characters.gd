@@ -229,6 +229,7 @@ static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dict
 		var latch_key: String = String(person.id) + "|!" + object
 		var latched: bool = bool(ns.person_want_state.get(latch_key, served))
 		ns.person_want_state[latch_key] = latched or served
+		if served: ns.person_want_state.erase(WantTerms.refused_key(String(person.id), object))  # rule (d): a turn re-arms
 		if served and not prev:
 			_adjust_loyalty(ns, person.id, CK.LOYALTY_WANT_SERVED)
 		elif not served and (latched if WantTerms.is_standing(object) else prev):
@@ -636,6 +637,13 @@ static func refusal_grudge(ns, person, grudge: float, ceiling: float = CK.GRUDGE
 		return 0.0 if grudge > 0.0 else grudge
 	var room := maxf(0.0, ceiling - float(ns.person_grudges.get(person.id, 0.0)))
 	return minf(grudge * grudge_intake(person), room)
+
+
+## Rule (d) (WantTerms.refused_key): a holding want refused asks no more until it turns. A
+## standing want is left unmarked. Written here, the register's one writer.
+static func refuse_holding(ns, pid: String, object: String) -> void:
+	if not WantTerms.is_standing(object):
+		ns.person_want_state[WantTerms.refused_key(pid, object)] = true
 
 
 ## V5.2b. The price of a refusal -- a declined, delegated or lapsed request, a
