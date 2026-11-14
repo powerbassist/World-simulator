@@ -109,9 +109,20 @@ def build_stage(stage: Path) -> int:
 
 def build_string(version: str, sha: str, tags, dirty: bool) -> str:
     """A release only from its own tag and an unmodified tree; anything else says what it is."""
+    if not version:
+        raise ValueError("version.json has no version: run tools/changelog.py --check")
     if ("v" + version) in tags and not dirty:
         return version
     return "dev build %s%s (after %s)" % (sha, " with local changes" if dirty else "", version)
+
+
+def tree_dirty() -> bool:
+    """The stage copies the WORKING files of the tracked tree under these roots (build_stage),
+    so a change there is in the exe even though HEAD carries the tag. Untracked files are
+    never staged, so they do not count (an editor's stray .uid must not demote a kit)."""
+    out = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no", "--", *STAGE_ROOTS, *STAGE_FILES],
+                         cwd=REPO, check=True, capture_output=True, text=True).stdout
+    return bool(out.strip())
 
 
 def stamp_version(stage: Path) -> str:
@@ -122,9 +133,7 @@ def stamp_version(stage: Path) -> str:
     data = json.loads(path.read_text(encoding="utf-8"))
     sha = git("rev-parse", "--short=8", "HEAD").strip()
     tags = git("tag", "--points-at", "HEAD").split()
-    # The stage copies the WORKING files of these roots (build_stage), so a change there
-    # is in the exe even though HEAD carries the tag.
-    dirty = bool(git("status", "--porcelain", "--", *STAGE_ROOTS, *STAGE_FILES).strip())
+    dirty = tree_dirty()
     data["build"] = build_string(str(data.get("version", "")), sha, tags, dirty)
     path.write_text(json.dumps(data) + "\n", encoding="utf-8", newline="\n")
     return data["build"]
@@ -180,7 +189,7 @@ def audit(pck: Path) -> list[str]:
     for rel in must:
         if rel not in names:
             problems.append("missing raw file: " + rel)
-    for core in ("project.binary", "src/ui/menu.tscn.remap", "src/ui/main.tscn.remap"):
+    for core in ("project.binary", "src/ui/menu.tscn.remap", "src/ui/main.tscn.remap", "version.json"):
         if core not in names:
             problems.append("missing: " + core)
     # The font is the one asset load()ed as a resource, so it ships in its imported form.
@@ -236,6 +245,12 @@ def selftest() -> int:
         (("0.5.3-gate.3", "ec92a406", ["v0.5.3-gate.3"], True), "dev build ec92a406 with local changes (after 0.5.3-gate.3)"),
     ]
     bad = 0
+    try:
+        build_string("", "ec92a406", [], False)
+        print("SELFTEST FAIL: build_string accepts an empty version")
+        bad += 1
+    except ValueError:
+        pass
     for args, want in cases:
         got = build_string(*args)
         if got != want:

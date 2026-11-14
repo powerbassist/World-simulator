@@ -26,6 +26,8 @@ CHANGELOG.md or version.json.
 
 Stdlib only: CI runs it with no install.
 """
+import argparse
+import datetime
 import json
 import re
 import subprocess
@@ -114,6 +116,8 @@ def check(root: Path):
         return errs + ["version.json: %s" % e]
     if not is_semver(version):
         errs.append("version.json: '%s' is not SemVer (no leading v, no +build part)" % version)
+    if not (root / "CHANGELOG.md").is_file():
+        return errs + ["CHANGELOG.md is missing"]
     heads = released((root / "CHANGELOG.md").read_text(encoding="utf-8"))
     if not heads or heads[0][0] != version:
         errs.append("version.json says %s but the newest released heading in CHANGELOG.md is %s"
@@ -281,6 +285,8 @@ def selftest() -> int:
         want(notes(root, "0.5.3-gate.3").startswith("## [0.5.3-gate.3]") and "Old fix" not in notes(root, "0.5.3-gate.3"),
              "notes VERSION prints that section only")
         want(cut(root, "0.5.3-gate.4", "2026-11-15", "") != [], "a cut with no fragment lines fails")
+        (root / "CHANGELOG.md").unlink()
+        want(any("CHANGELOG.md" in e for e in check(root)), "a missing CHANGELOG.md is reported, not a crash")
 
     for f in fails:
         print("SELFTEST FAIL:", f)
@@ -303,8 +309,12 @@ def main() -> int:
     if args[:1] == ["--check-pr"] and len(args) == 2:
         # Two-dot against BASE: in CI the pull request's merge commit has the base as its
         # first parent, so BASE is HEAD^1 and a fetch depth of 2 is enough.
-        changed = _git("diff", "-z", "--name-only", args[1], "HEAD")
-        added = _git("diff", "-z", "--name-only", "--diff-filter=A", args[1], "HEAD", "--", FRAGMENTS)
+        try:
+            changed = _git("diff", "-z", "--name-only", args[1], "HEAD")
+            added = _git("diff", "-z", "--name-only", "--diff-filter=A", args[1], "HEAD", "--", FRAGMENTS)
+        except subprocess.CalledProcessError:
+            print("cannot diff against '%s': not in this clone (CI needs fetch-depth: 2)" % args[1])
+            return 1
         if needs_fragment(changed, added):
             print("this pull request changes src/, data/ or assets/ and adds no %s/<branch>.md:" % FRAGMENTS)
             print("add one line per change a player notices ('Fixed: ...'), or 'None: <why>'.")
@@ -312,11 +322,10 @@ def main() -> int:
         print("changelog fragment: ok")
         return 0
     if args[:1] == ["cut"] and len(args) >= 2:
-        import argparse
         ap = argparse.ArgumentParser(prog="changelog.py cut")
         ap.add_argument("version")
         ap.add_argument("--label", default="", help="the tier name for the heading, e.g. 'V5.3 a + b'")
-        ap.add_argument("--date", default=__import__("datetime").date.today().isoformat())
+        ap.add_argument("--date", default=datetime.date.today().isoformat())
         a = ap.parse_args(args[1:])
         errs = cut(REPO, a.version, a.date, a.label)
         for e in errs:
