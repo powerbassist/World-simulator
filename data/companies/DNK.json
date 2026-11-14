@@ -488,7 +488,7 @@
       "name": "Vestergaard Landbrug",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23267,
       "city": "DK04_arhus",
       "tier": "body"
     },
@@ -497,7 +497,7 @@
       "name": "Reenberg Forsikring",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24845,
       "city": "DK01_copenhagen",
       "tier": "body"
     },
@@ -515,7 +515,7 @@
       "name": "Nexø Energi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23739,
       "city": "DK03_odense",
       "tier": "body"
     },
@@ -533,7 +533,7 @@
       "name": "Nexø Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24647,
       "city": "DK03_vejle",
       "tier": "body"
     },
@@ -560,7 +560,7 @@
       "name": "Skytte Handel Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22831,
       "city": "DK01_copenhagen",
       "tier": "body"
     },
@@ -578,7 +578,7 @@
       "name": "Krogsgaard Landbrug Byggeri",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23763,
       "city": "DK01_copenhagen",
       "tier": "body"
     },
@@ -623,7 +623,7 @@
       "name": "Kjeldgaard Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24459,
       "city": "DK04_randers",
       "tier": "body"
     },
@@ -632,7 +632,7 @@
       "name": "Ottesen Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22893,
       "city": "DK03_odense",
       "tier": "body"
     },
@@ -641,7 +641,7 @@
       "name": "Enevoldsen Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23018,
       "city": "DK01_copenhagen",
       "tier": "body"
     },
@@ -650,7 +650,7 @@
       "name": "Wiborg Energi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23208,
       "city": "DK03_odense",
       "tier": "body"
     },
@@ -668,7 +668,7 @@
       "name": "Reenberg Energi Landbrug",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22629,
       "city": "DK03_odense",
       "tier": "body"
     },
@@ -686,7 +686,7 @@
       "name": "Nørregaard Byggeri",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24252,
       "city": "DK01_frederiksberg",
       "tier": "body"
     },
@@ -695,7 +695,7 @@
       "name": "Poulsen Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24211,
       "city": "DK04_arhus",
       "tier": "body"
     },
@@ -785,7 +785,7 @@
       "name": "Friisberg Industri",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23968,
       "city": "DK04_arhus",
       "tier": "body"
     },
@@ -812,7 +812,7 @@
       "name": "Brorson Transport",
       "sector": "services",
       "share": 0.0165,
-      "headcount": 25000,
+      "headcount": 22840,
       "city": "DK01_copenhagen",
       "tier": "body"
     },
@@ -839,7 +839,7 @@
       "name": "Olesen Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24173,
       "city": "DK04_horsens",
       "tier": "body"
     }

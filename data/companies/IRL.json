@@ -449,7 +449,7 @@
     },
     {
       "id": "IRL_enright_trading_trading",
-      "name": "Enright Trading Trading",
+      "name": "Enright Trading",
       "sector": "industry",
       "share": 0.026,
       "headcount": 17687,
@@ -479,7 +479,7 @@
       "name": "Phelan Trading",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24975,
       "city": "IE06_dublin",
       "tier": "body"
     },
@@ -488,7 +488,7 @@
       "name": "Ronan Agri",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24611,
       "city": "IE06_dublin",
       "tier": "body"
     },
@@ -497,7 +497,7 @@
       "name": "Farrell Logistics",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23609,
       "city": "IE06_dublin",
       "tier": "body"
     },
@@ -515,7 +515,7 @@
       "name": "Nestor Logistics",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22774,
       "city": "IE06_dublin",
       "tier": "body"
     },
@@ -569,7 +569,7 @@
       "name": "Laffan Industries",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23151,
       "city": "IE05_cork",
       "tier": "body"
     },
@@ -578,7 +578,7 @@
       "name": "Comyn Group",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24967,
       "city": "IE05_cork",
       "tier": "body"
     },
@@ -605,7 +605,7 @@
       "name": "Quirke Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24202,
       "city": "IE05_cork",
       "tier": "body"
     },
@@ -614,7 +614,7 @@
       "name": "Daly Materials",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23669,
       "city": "IE05_cork",
       "tier": "body"
     },
@@ -641,7 +641,7 @@
       "name": "Quirke Trading Energy",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23612,
       "city": "IE05_cork",
       "tier": "body"
     },
@@ -668,7 +668,7 @@
       "name": "Enright Trading Agri",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22719,
       "city": "IE05_cork",
       "tier": "body"
     },
@@ -686,7 +686,7 @@
       "name": "Usher Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23567,
       "city": "IE05_limerick",
       "tier": "body"
     },
@@ -695,7 +695,7 @@
       "name": "Gleeson Industries Trading",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23149,
       "city": "IE04_galway",
       "tier": "body"
     },
@@ -713,7 +713,7 @@
       "name": "Ronan Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23673,
       "city": "IE06_dublin",
       "tier": "body"
     },
@@ -722,7 +722,7 @@
       "name": "Gleeson Industries",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24628,
       "city": "IE06_tallaght",
       "tier": "body"
     },
@@ -731,7 +731,7 @@
       "name": "Usher Construction",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23848,
       "city": "IE04_galway",
       "tier": "body"
     },
@@ -785,7 +785,7 @@
       "name": "Yelverton Energy",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22943,
       "city": "IE05_cork",
       "tier": "body"
     },
@@ -812,7 +812,7 @@
       "name": "O'Boyle Construction",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23287,
       "city": "IE06_dublin",
       "tier": "body"
     },
@@ -839,7 +839,7 @@
       "name": "Gantly Logistics",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23523,
       "city": "IE05_waterford",
       "tier": "body"
     },

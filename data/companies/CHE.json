@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "CHE_fuchs_industrie_industrie",
-      "name": "Fuchs Industrie Industrie",
+      "name": "Fuchs Industrie",
       "sector": "agriculture",
       "share": 0.0202,
       "headcount": 1650,
@@ -551,7 +551,7 @@
       "name": "Quaderer Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24669,
       "city": "CH04_zuerich",
       "tier": "body"
     },
@@ -560,7 +560,7 @@
       "name": "Flückiger Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24980,
       "city": "CH04_zuerich",
       "tier": "body"
     },
@@ -632,7 +632,7 @@
       "name": "Gyger Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23406,
       "city": "CH04_winterthur",
       "tier": "body"
     },
@@ -641,7 +641,7 @@
       "name": "Quaderer Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23422,
       "city": "CH05_sankt_gallen",
       "tier": "body"
     },
@@ -650,7 +650,7 @@
       "name": "Gyger Bau",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24359,
       "city": "CH04_zuerich",
       "tier": "body"
     },
@@ -668,7 +668,7 @@
       "name": "Trachsel Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24907,
       "city": "CH04_zuerich",
       "tier": "body"
     },
@@ -686,7 +686,7 @@
       "name": "Thönen Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24607,
       "city": "CH04_zuerich",
       "tier": "body"
     },
@@ -695,7 +695,7 @@
       "name": "Uehlinger Energie Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23398,
       "city": "CH01_geneva",
       "tier": "body"
     },
@@ -731,7 +731,7 @@
       "name": "Abplanalp Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24093,
       "city": "CH06_luzern",
       "tier": "body"
     },
@@ -749,7 +749,7 @@
       "name": "Collenberg Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23461,
       "city": "CH04_winterthur",
       "tier": "body"
     },

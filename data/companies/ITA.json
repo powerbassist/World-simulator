@@ -149,7 +149,7 @@
       "sector": "agriculture",
       "share": 0.0186,
       "headcount": 1622,
-      "city": "ITI1_pisa",
+      "city": "ITI2_terni",
       "tier": "body"
     },
     {
@@ -203,7 +203,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2574,
-      "city": "ITI3_ancona",
+      "city": "ITG2_sassari",
       "tier": "body"
     },
     {
@@ -347,7 +347,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 19615,
-      "city": "ITH3_treviso",
+      "city": "ITF4_brindisi",
       "tier": "body"
     },
     {
@@ -428,7 +428,7 @@
       "sector": "industry",
       "share": 0.0226,
       "headcount": 16152,
-      "city": "ITH5_parma",
+      "city": "ITF4_taranto",
       "tier": "body"
     },
     {
@@ -455,7 +455,7 @@
       "sector": "industry",
       "share": 0.018,
       "headcount": 11260,
-      "city": "ITG1_siracusa",
+      "city": "ITC4_monza",
       "tier": "body"
     },
     {
@@ -508,8 +508,8 @@
       "name": "Tirabassi Materiali Gruppo",
       "sector": "services",
       "share": 0.0159,
-      "headcount": 25000,
-      "city": "ITI1_pisa",
+      "headcount": 24785,
+      "city": "ITI2_terni",
       "tier": "body"
     },
     {
@@ -544,7 +544,7 @@
       "name": "Liguori Assicurazioni",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24221,
       "city": "ITI4_rome",
       "tier": "body"
     },
@@ -562,8 +562,8 @@
       "name": "Dossena Assicurazioni Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "ITH5_piacenza",
+      "headcount": 24605,
+      "city": "ITH1_bolzano",
       "tier": "body"
     },
     {
@@ -571,7 +571,7 @@
       "name": "Ursini Industrie Assicurazioni",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24529,
       "city": "ITI3_fano",
       "tier": "body"
     },
@@ -580,7 +580,7 @@
       "name": "Gentileschi Commercio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24157,
       "city": "ITI4_rome",
       "tier": "body"
     },
@@ -598,7 +598,7 @@
       "name": "Diotallevi Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24561,
       "city": "ITC4_milan",
       "tier": "body"
     },
@@ -607,7 +607,7 @@
       "name": "Zanolla Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23962,
       "city": "ITI4_rome",
       "tier": "body"
     },
@@ -616,7 +616,7 @@
       "name": "Trombetta Gruppo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22788,
       "city": "ITH5_bologna",
       "tier": "body"
     },
@@ -625,7 +625,7 @@
       "name": "Nucci Costruzioni",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24600,
       "city": "ITH5_parma",
       "tier": "body"
     },
@@ -635,7 +635,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23093,
-      "city": "ITC4_monza",
+      "city": "ITF3_salerno",
       "tier": "body"
     },
     {
@@ -643,8 +643,8 @@
       "name": "Pischedda Trasporti",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "ITI1_livorno",
+      "headcount": 24433,
+      "city": "ITH5_reggio_nell_emilia",
       "tier": "body"
     },
     {
@@ -670,7 +670,7 @@
       "name": "Zanolla Trasporti Costruzioni",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23540,
       "city": "ITI4_rome",
       "tier": "body"
     },
@@ -688,7 +688,7 @@
       "name": "Dossena Logistica",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23095,
       "city": "ITI4_rome",
       "tier": "body"
     },
@@ -716,7 +716,7 @@
       "sector": "services",
       "share": 0.0093,
       "headcount": 14978,
-      "city": "ITH3_mestre",
+      "city": "ITH5_rimini",
       "tier": "body"
     },
     {
@@ -796,7 +796,7 @@
       "name": "Petroselli Energia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22997,
       "city": "ITI1_pisa",
       "tier": "body"
     },
@@ -805,7 +805,7 @@
       "name": "Quarantotto Commercio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22703,
       "city": "ITF4_bari",
       "tier": "body"
     },
@@ -832,7 +832,7 @@
       "name": "Aversa Assicurazioni",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24255,
       "city": "ITF3_salerno",
       "tier": "body"
     },
@@ -841,7 +841,7 @@
       "name": "Bandello Gruppo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22958,
       "city": "ITG1_palermo",
       "tier": "body"
     },
@@ -851,7 +851,7 @@
       "sector": "services",
       "share": 0.0032,
       "headcount": 5050,
-      "city": "ITI2_perugia",
+      "city": "ITH2_trento",
       "tier": "body"
     }
   ]

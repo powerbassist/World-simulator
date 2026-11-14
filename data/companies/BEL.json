@@ -185,7 +185,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2529,
-      "city": "BE2_leuven",
+      "city": "BE3_namur",
       "tier": "body"
     },
     {
@@ -239,7 +239,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2475,
-      "city": "BE3_namur",
+      "city": "BE2_brugge",
       "tier": "body"
     },
     {
@@ -302,7 +302,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18630,
-      "city": "BE2_deurne",
+      "city": "BE3_mons",
       "tier": "body"
     },
     {
@@ -320,7 +320,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 18356,
-      "city": "BE3_la_louviere",
+      "city": "BE2_kortrijk",
       "tier": "body"
     },
     {
@@ -374,7 +374,7 @@
       "sector": "industry",
       "share": 0.03,
       "headcount": 20525,
-      "city": "BE2_gent",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -446,7 +446,7 @@
       "sector": "industry",
       "share": 0.0252,
       "headcount": 17019,
-      "city": "BE2_kortrijk",
+      "city": "BE3_tournai",
       "tier": "body"
     },
     {
@@ -535,7 +535,7 @@
       "name": "Lejeune Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23349,
       "city": "BE3_tournai",
       "tier": "body"
     },
@@ -571,7 +571,7 @@
       "name": "Claes Verzekering",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24795,
       "city": "BE1_anderlecht",
       "tier": "body"
     },
@@ -590,7 +590,7 @@
       "sector": "services",
       "share": 0.0152,
       "headcount": 21903,
-      "city": "BE3_namur",
+      "city": "BE2_brugge",
       "tier": "body"
     },
     {
@@ -607,7 +607,7 @@
       "name": "Aelbrecht Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23493,
       "city": "BE2_antwerp",
       "tier": "body"
     },
@@ -617,7 +617,7 @@
       "sector": "services",
       "share": 0.0108,
       "headcount": 17778,
-      "city": "BE2_gent",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
@@ -625,7 +625,7 @@
       "name": "Floor Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23578,
       "city": "BE2_gent",
       "tier": "body"
     },
@@ -688,7 +688,7 @@
       "name": "Jongen Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24807,
       "city": "BE2_gent",
       "tier": "body"
     },
@@ -697,7 +697,7 @@
       "name": "Bertrand Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22976,
       "city": "BE1_brussels",
       "tier": "body"
     },
@@ -706,7 +706,7 @@
       "name": "Olyslagers Bouw Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24199,
       "city": "BE2_antwerp",
       "tier": "body"
     },
@@ -725,7 +725,7 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23632,
-      "city": "BE3_mons",
+      "city": "BE2_leuven",
       "tier": "body"
     },
     {
@@ -733,7 +733,7 @@
       "name": "Ionkheere Landbouw",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24657,
       "city": "BE1_brussels",
       "tier": "body"
     },
@@ -760,7 +760,7 @@
       "name": "Goossens Groep",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22812,
       "city": "BE1_brussels",
       "tier": "body"
     },
@@ -769,7 +769,7 @@
       "name": "Zegers Bouw",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23230,
       "city": "BE1_brussels",
       "tier": "body"
     },
@@ -787,7 +787,7 @@
       "name": "Charlier Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22833,
       "city": "BE2_aalst",
       "tier": "body"
     },
@@ -797,7 +797,7 @@
       "sector": "services",
       "share": 0.0081,
       "headcount": 12489,
-      "city": "BE2_leuven",
+      "city": "BE3_namur",
       "tier": "body"
     },
     {
@@ -814,7 +814,7 @@
       "name": "Vanaerschot Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23097,
       "city": "BE2_antwerp",
       "tier": "body"
     },
@@ -832,8 +832,8 @@
       "name": "Bertrand Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "BE2_deurne",
+      "headcount": 24254,
+      "city": "BE3_mons",
       "tier": "body"
     },
     {
@@ -842,7 +842,7 @@
       "sector": "services",
       "share": 0.0091,
       "headcount": 14265,
-      "city": "BE1_anderlecht",
+      "city": "BE3_liege",
       "tier": "body"
     },
     {
@@ -850,7 +850,7 @@
       "name": "Tanghe Verzekering",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23830,
       "city": "BE1_brussels",
       "tier": "body"
     },
@@ -859,7 +859,7 @@
       "name": "Yserbyt Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24896,
       "city": "BE1_brussels",
       "tier": "body"
     },

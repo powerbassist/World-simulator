@@ -125,12 +125,6 @@
           "lonlat": [2.1897, 48.8765]
         },
         {
-          "id": "FR1_gare",
-          "name": "Gare",
-          "share": 0.006104,
-          "lonlat": [2.3751, 48.8334]
-        },
-        {
           "id": "FR1_saint_maur_des_fosses",
           "name": "Saint-Maur-des-Fossés",
           "share": 0.00609,
@@ -141,12 +135,6 @@
           "name": "Aubervilliers",
           "share": 0.005727,
           "lonlat": [2.3833, 48.9167]
-        },
-        {
-          "id": "FR1_maison_blanche",
-          "name": "Maison Blanche",
-          "share": 0.005193,
-          "lonlat": [2.3508, 48.8259]
         },
         {
           "id": "FR1_drancy",
@@ -690,12 +678,6 @@
           "name": "La Seyne-sur-Mer",
           "share": 0.012055,
           "lonlat": [5.8782, 43.1032]
-        },
-        {
-          "id": "FRL_juan_les_pins",
-          "name": "Juan-les-Pins",
-          "share": 0.011604,
-          "lonlat": [7.1131, 43.5695]
         }
       ]
     },

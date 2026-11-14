@@ -923,12 +923,6 @@
           "lonlat": [12.7224, 41.9936]
         },
         {
-          "id": "ITI4_lido_di_ostia",
-          "name": "Lido di Ostia",
-          "share": 0.014926,
-          "lonlat": [12.2765, 41.7321]
-        },
-        {
           "id": "ITI4_fiumicino",
           "name": "Fiumicino",
           "share": 0.014127,

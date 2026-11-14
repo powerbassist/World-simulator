@@ -470,7 +470,7 @@
       "name": "Stevanović Poljoprivreda",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22797,
       "city": "RS22_nis",
       "tier": "body"
     },
@@ -506,7 +506,7 @@
       "name": "Ristić Gradnja Energija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23961,
       "city": "RS21_cacak",
       "tier": "body"
     },
@@ -533,7 +533,7 @@
       "name": "Gavrilović Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23148,
       "city": "RS22_nis",
       "tier": "body"
     },
@@ -542,7 +542,7 @@
       "name": "Simić Poljoprivreda",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22824,
       "city": "RS22_nis",
       "tier": "body"
     },
@@ -578,7 +578,7 @@
       "name": "Simić Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24583,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -623,7 +623,7 @@
       "name": "Todorović Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24197,
       "city": "RS21_kragujevac",
       "tier": "body"
     },
@@ -668,7 +668,7 @@
       "name": "Tasić Poljoprivreda",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23363,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -695,7 +695,7 @@
       "name": "Milenković Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23509,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -713,7 +713,7 @@
       "name": "Mladenović Logistika Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22625,
       "city": "RS22_nis",
       "tier": "body"
     },
@@ -722,7 +722,7 @@
       "name": "Babić Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24023,
       "city": "RS21_uzice",
       "tier": "body"
     },
@@ -740,7 +740,7 @@
       "name": "Jovanović Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23993,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -755,7 +755,7 @@
     },
     {
       "id": "SRB_urosevic_grupa_grupa",
-      "name": "Urošević Grupa Grupa",
+      "name": "Urošević Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22491,
@@ -764,10 +764,10 @@
     },
     {
       "id": "SRB_novakovic_gradnja_gradnja",
-      "name": "Novaković Gradnja Gradnja",
+      "name": "Novaković Gradnja",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23535,
       "city": "RS22_nis",
       "tier": "body"
     },
@@ -785,7 +785,7 @@
       "name": "Jovanović Energija Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24308,
       "city": "RS22_smederevo",
       "tier": "body"
     },
@@ -794,7 +794,7 @@
       "name": "Janković Energija",
       "sector": "services",
       "share": 0.0156,
-      "headcount": 25000,
+      "headcount": 24974,
       "city": "RS12_zrenjanin",
       "tier": "body"
     },
@@ -812,7 +812,7 @@
       "name": "Bogdanović Osiguranje Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24993,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -821,7 +821,7 @@
       "name": "Novaković Energija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24538,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -839,7 +839,7 @@
       "name": "Kostić Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23248,
       "city": "RS22_smederevo",
       "tier": "body"
     },

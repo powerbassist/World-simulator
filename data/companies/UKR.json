@@ -162,7 +162,7 @@
     },
     {
       "id": "UKR_panchenko_enerhiia_enerhiia",
-      "name": "Panchenko Enerhiia Enerhiia",
+      "name": "Panchenko Lohistyka",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2242,
@@ -534,7 +534,7 @@
       "name": "Havryliuk Torhivlia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22877,
       "city": "UA14_donetsk",
       "tier": "body"
     },
@@ -549,7 +549,7 @@
     },
     {
       "id": "UKR_zakharchuk_enerhiia_enerhiia",
-      "name": "Zakharchuk Enerhiia Enerhiia",
+      "name": "Zakharchuk Enerhiia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22652,
@@ -567,7 +567,7 @@
     },
     {
       "id": "UKR_fedorchuk_ahro_ahro",
-      "name": "Fedorchuk Ahro Ahro",
+      "name": "Fedorchuk Ahro",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23924,
@@ -588,7 +588,7 @@
       "name": "Karpenko Transport",
       "sector": "services",
       "share": 0.0156,
-      "headcount": 25000,
+      "headcount": 24720,
       "city": "UA30_kyiv",
       "tier": "body"
     },
@@ -597,7 +597,7 @@
       "name": "Semeniuk Materialy",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22625,
       "city": "UA63_kharkiv",
       "tier": "body"
     },
@@ -606,7 +606,7 @@
       "name": "Antoniuk Promyslovist",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24534,
       "city": "UA12_dnipro",
       "tier": "body"
     },
@@ -633,7 +633,7 @@
       "name": "Antoniuk Transport Hrupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24253,
       "city": "UA30_kyiv",
       "tier": "body"
     },
@@ -660,7 +660,7 @@
       "name": "Lukashchuk Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22630,
       "city": "UA09_alchevsk",
       "tier": "body"
     },
@@ -678,7 +678,7 @@
       "name": "Stepaniuk Torhivlia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24448,
       "city": "UA18_zhytomyr",
       "tier": "body"
     },
@@ -705,7 +705,7 @@
       "name": "Kostiuk Budivnytstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23038,
       "city": "UA46_lviv",
       "tier": "body"
     },
@@ -750,7 +750,7 @@
       "name": "Lytovchenko Enerhiia",
       "sector": "services",
       "share": 0.0161,
-      "headcount": 25000,
+      "headcount": 24142,
       "city": "UA30_kyiv",
       "tier": "body"
     },
@@ -795,7 +795,7 @@
       "name": "Antoniuk Hrupa Torhivlia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23129,
       "city": "UA12_kryvyy_rih",
       "tier": "body"
     },
@@ -804,7 +804,7 @@
       "name": "Kostiuk Ahro",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23596,
       "city": "UA32_bila_tserkva",
       "tier": "body"
     },
@@ -813,7 +813,7 @@
       "name": "Panchenko Transport Promyslovist",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24178,
       "city": "UA30_kyiv",
       "tier": "body"
     },
@@ -849,7 +849,7 @@
       "name": "Tkachuk Ahro",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23212,
       "city": "UA12_kryvyy_rih",
       "tier": "body"
     },
@@ -867,7 +867,7 @@
       "name": "Nazarenko Ahro",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24498,
       "city": "UA26_ivano_frankivsk",
       "tier": "body"
     },

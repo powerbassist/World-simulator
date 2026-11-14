@@ -2097,9 +2097,12 @@ def assign_cities(index):
             "lat": float(fields[4]),
             "lon": float(fields[5]),
             "population": int(fields[14]),
+            # The commune: GeoNames' admin codes down to admin4, or None where the
+            # source leaves admin4 empty (drop_commune_parts reads it).
+            "commune": tuple(fields[10:14]) if fields[13] else None,
         })
 
-    counts = {"inside": 0, "snapped": 0, "overseas": 0, "subdivisions": 0}
+    counts = {"inside": 0, "snapped": 0, "overseas": 0, "subdivisions": 0, "commune_parts": 0}
     for nid in NATIONS:
         entry = index[nid]
         boxes = []
@@ -2157,6 +2160,7 @@ def assign_cities(index):
                          % (nid, city["name"], lon, lat, near_kept))
 
         counts["subdivisions"] += drop_numbered_subdivisions(entry["kept"])
+        counts["commune_parts"] += drop_commune_parts(entry["kept"])
 
         # V3.3. A region the register cannot name is not the register's object --
         # "a main city plus the sum of the smaller cities under it" -- and the
@@ -2200,6 +2204,37 @@ def drop_numbered_subdivisions(regions):
             match = NUMBERED_SUBDIVISION.match(city["ascii"])
             parent = match.group(1) if match else None
             if parent and names.get(parent, 0) > city["population"]:
+                dropped += 1
+                continue
+            keep.append(city)
+        region["cities"] = keep
+    return dropped
+
+
+def drop_commune_parts(regions):
+    """`Gare` and `Maison Blanche` are quarters of Paris's 13th arrondissement, coded
+    plain `PPL` with no number in their names, so neither the feature filter nor
+    drop_numbered_subdivisions() sees them -- and a body firm shipped in the city of
+    "Gare" (Interface, screen 5, 2026-11-14). What gives them away is the COMMUNE:
+    GeoNames files each under admin4 75056, Paris's own. A place that shares its
+    commune with a larger place of the same region is a part of it, not a city.
+
+    Measured on the 41-nation roster it drops six places and each is a district of a
+    larger one: Gare and Maison Blanche (Paris), Juan-les-Pins (Antibes), Deurne
+    (Antwerp), Wattenscheid (Bochum since 1975) and Lido di Ostia (Rome). A place
+    with no admin4 is never grouped -- an empty code says nothing about a commune.
+    """
+    dropped = 0
+    for region in regions:
+        largest = {}
+        for city in region["cities"]:
+            key = city.get("commune")
+            if key is not None and city["population"] > largest.get(key, -1):
+                largest[key] = city["population"]
+        keep = []
+        for city in region["cities"]:
+            key = city.get("commune")
+            if key is not None and city["population"] < largest[key]:
                 dropped += 1
                 continue
             keep.append(city)
@@ -2784,9 +2819,10 @@ def main():
     print(f"Wrote data/regions/ ({regions} regions, {cities} cities)")
     print(f"Wrote {REGION_GEO_OUT.relative_to(ROOT)} ({len(region_geo['features'])} features)")
     print("  city join: %d inside, %d snapped, %d overseas, %d numbered subdivisions dropped, "
+          "%d commune parts dropped, "
           "%d regions unnamed (residual)"
           % (join["inside"], join["snapped"], join["overseas"], join["subdivisions"],
-             join.get("unnamed", 0)))
+             join["commune_parts"], join.get("unnamed", 0)))
 
 
 def write_geojson(path, collection, indent):

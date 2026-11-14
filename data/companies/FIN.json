@@ -387,7 +387,7 @@
     },
     {
       "id": "FIN_nieminen_liikenne_liikenne",
-      "name": "Nieminen Liikenne Liikenne",
+      "name": "Nieminen Liikenne",
       "sector": "industry",
       "share": 0.0263,
       "headcount": 18771,
@@ -423,7 +423,7 @@
     },
     {
       "id": "FIN_jarvinen_kauppa_kauppa",
-      "name": "Järvinen Kauppa Kauppa",
+      "name": "Järvinen Kauppa",
       "sector": "industry",
       "share": 0.0179,
       "headcount": 11669,
@@ -570,7 +570,7 @@
       "name": "Yrjänä Energia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24260,
       "city": "FI1B_espoo",
       "tier": "body"
     },
@@ -588,7 +588,7 @@
       "name": "Friman Teollisuus",
       "sector": "services",
       "share": 0.0161,
-      "headcount": 25000,
+      "headcount": 23991,
       "city": "FI1B_helsinki",
       "tier": "body"
     },
@@ -624,7 +624,7 @@
       "name": "Silvennoinen Energia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23678,
       "city": "FI1C_turku",
       "tier": "body"
     },
@@ -633,7 +633,7 @@
       "name": "Hakulinen Teollisuus Vakuutus",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24889,
       "city": "FI19_seinaejoki",
       "tier": "body"
     },
@@ -651,7 +651,7 @@
       "name": "Kallio Materiaalit",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24691,
       "city": "FI19_jyvaeskylae",
       "tier": "body"
     },
@@ -684,7 +684,7 @@
     },
     {
       "id": "FIN_degerholm_energia_energia",
-      "name": "Degerholm Energia Energia",
+      "name": "Degerholm Energia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24730,
@@ -696,7 +696,7 @@
       "name": "Kallio Logistiikka",
       "sector": "services",
       "share": 0.0163,
-      "headcount": 25000,
+      "headcount": 23314,
       "city": "FI1C_kouvola",
       "tier": "body"
     },
@@ -714,7 +714,7 @@
       "name": "Nissinen Maatalous",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24504,
       "city": "FI1B_espoo",
       "tier": "body"
     },
@@ -723,7 +723,7 @@
       "name": "Rautavaara Materiaalit",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24950,
       "city": "FI1B_espoo",
       "tier": "body"
     },
@@ -732,7 +732,7 @@
       "name": "Peltomaa Ryhmä",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24967,
       "city": "FI1B_helsinki",
       "tier": "body"
     },
@@ -747,7 +747,7 @@
     },
     {
       "id": "FIN_yrjana_teollisuus_teollisuus",
-      "name": "Yrjänä Teollisuus Teollisuus",
+      "name": "Yrjänä Teollisuus",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23819,
@@ -759,7 +759,7 @@
       "name": "Keränen Energia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23398,
       "city": "FI1B_helsinki",
       "tier": "body"
     },
@@ -804,7 +804,7 @@
       "name": "Fagerlund Liikenne",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22882,
       "city": "FI1D_oulu",
       "tier": "body"
     },
@@ -822,7 +822,7 @@
       "name": "Tolvanen Materiaalit",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23752,
       "city": "FI19_vaasa",
       "tier": "body"
     },
@@ -849,7 +849,7 @@
       "name": "Jokinen Liikenne",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22817,
       "city": "FI1B_helsinki",
       "tier": "body"
     },
@@ -858,7 +858,7 @@
       "name": "Berg Ryhmä",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24284,
       "city": "FI1C_turku",
       "tier": "body"
     },
@@ -876,7 +876,7 @@
       "name": "Moisio Rakennus",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23478,
       "city": "FI1B_vantaa",
       "tier": "body"
     },
@@ -894,7 +894,7 @@
       "name": "Peltomaa Maatalous",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23631,
       "city": "FI19_tampere",
       "tier": "body"
     },
@@ -903,7 +903,7 @@
       "name": "Nieminen Kauppa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22855,
       "city": "FI19_tampere",
       "tier": "body"
     },

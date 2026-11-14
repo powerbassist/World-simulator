@@ -289,7 +289,7 @@
     },
     {
       "id": "NOR_isaksen_landbruk_landbruk",
-      "name": "Isaksen Landbruk Landbruk",
+      "name": "Isaksen Industri",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20280,
@@ -352,7 +352,7 @@
     },
     {
       "id": "NOR_skarstein_forsikring_forsikring",
-      "name": "Skarstein Forsikring Forsikring",
+      "name": "Skarstein Forsikring",
       "sector": "industry",
       "share": 0.0105,
       "headcount": 6896,
@@ -508,7 +508,7 @@
       "name": "Lien Bygg",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23993,
       "city": "NO08_lillestrom",
       "tier": "body"
     },
@@ -535,7 +535,7 @@
       "name": "Isaksen Industri Landbruk",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22879,
       "city": "NO0A_bergen",
       "tier": "body"
     },
@@ -544,7 +544,7 @@
       "name": "Hagerup Logistikk",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23400,
       "city": "NO09_sandefjord",
       "tier": "body"
     },
@@ -553,7 +553,7 @@
       "name": "Grøtteland Gruppen",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24233,
       "city": "NO0A_sandnes",
       "tier": "body"
     },
@@ -625,7 +625,7 @@
       "name": "Engebretsen Landbruk",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23063,
       "city": "NO08_oslo",
       "tier": "body"
     },
@@ -643,7 +643,7 @@
       "name": "Folkestad Materialer",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24262,
       "city": "NO08_oslo",
       "tier": "body"
     },
@@ -652,7 +652,7 @@
       "name": "Grøtteland Logistikk",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23820,
       "city": "NO09_sandefjord",
       "tier": "body"
     },
@@ -679,7 +679,7 @@
       "name": "Jordal Bygg",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22722,
       "city": "NO0A_stavanger",
       "tier": "body"
     },
@@ -688,7 +688,7 @@
       "name": "Hagerup Landbruk Forsikring",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22759,
       "city": "NO08_fredrikstad",
       "tier": "body"
     },
@@ -724,7 +724,7 @@
       "name": "Hagerup Materialer Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24546,
       "city": "NO08_oslo",
       "tier": "body"
     },
@@ -733,7 +733,7 @@
       "name": "Aasland Gruppen",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22981,
       "city": "NO0A_sandnes",
       "tier": "body"
     },
@@ -796,7 +796,7 @@
       "name": "Hagerup Energi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24935,
       "city": "NO08_oslo",
       "tier": "body"
     },

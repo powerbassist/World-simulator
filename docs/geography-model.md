@@ -410,6 +410,15 @@ sweep). Iceland joins the graph through its real ferry (Hirtshals-Seydisfjordur)
 **The volume clause holds without a re-sweep**: 1 373 named cities against V3.3's
 (iii) ceiling of 1 800, at `CITY_MIN_POP` 58 000 held so the 29's cities did not move.
 
+**V5.3 a: 1 367 cities, six districts out.** A body firm shipped in the city of "Gare",
+a quarter of Paris's 13th arrondissement that GeoNames codes plain `PPL` with no number
+in its name, so neither the feature filter nor the numbered-subdivision rule saw it.
+`import_data.drop_commune_parts` drops a place that shares its GeoNames commune
+(admin4) with a larger place of the same region: Gare, Maison Blanche, Juan-les-Pins
+(Antibes), Deurne (Antwerp), Wattenscheid (Bochum) and Lido di Ostia (Rome). Nothing
+else in the register moved: `build_regions()` re-run against the committed sources
+reproduced every other file byte for byte.
+
 **The grade is derived**: `src/core/roster.gd` reads playable / simulated off the
 nation file's one bool and outline off the world register, pinned by `tests/test_roster.gd`.
 
