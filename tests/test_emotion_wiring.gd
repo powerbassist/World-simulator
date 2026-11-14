@@ -198,12 +198,19 @@ func _check_refusals() -> void:
 	_main._companies_panel._on_invest(ns, stale)
 	_main._companies_panel._refresh()
 	_expect_blocked(_main._companies_panel, "a refused sector programme")
+	# QA's T2 on #345: a programme refused because a law holds the slot says THAT, not
+	# "no longer on offer".
+	ns.tabled_bill = {"law_id": String(_loader.laws[0].id), "referendum": false, "vote_year": 2026, "vote_month": 1, "vote_day": 31}
+	_main._companies_panel._on_invest(ns, _loader.investment_actions[0])
+	_main._companies_panel._refresh()
+	_expect_blocked(_main._companies_panel, "a programme refused by a law in the slot", Strings.t("A bill is already before the Assembly."))
+	ns.tabled_bill = {}
 
 
-## A label in `panel` says "refused" in the BLOCKED colour.
-func _expect_blocked(panel: Node, what: String) -> void:
+## A label in `panel` says `needle` ("refused" by default) in the BLOCKED colour.
+func _expect_blocked(panel: Node, what: String, needle := "refused") -> void:
 	for label in panel.find_children("*", "Label", true, false):
-		if (label as Label).text.contains("refused") and label.has_theme_color_override("font_color") \
+		if (label as Label).text.contains(needle) and label.has_theme_color_override("font_color") \
 				and label.get_theme_color("font_color") == ResultTone.TINT[ResultTone.BLOCKED]:
 			return
 	_fail("%s is not said as a BLOCKED line" % what)
