@@ -47,8 +47,8 @@ is: the game writes the French date and the decimal comma itself.
 ## Typography
 
 Use **U+00A0 (non-breaking space)** everywhere French typography wants a space the line
-must not break on. This is the existing French table's convention (185 such spaces): the
-narrow U+202F is not used, so do not introduce it.
+must not break on. This is the existing French table's convention (219 such spaces in `ui.json`): the
+narrow U+202F is not used anywhere, so do not introduce it.
 
 | Where | Write |
 |---|---|
@@ -64,11 +64,11 @@ narrow U+202F is not used, so do not introduce it.
 
 ## Register: vous
 
-**Proposal (the parent rules):** everyone who speaks to the President says *vous*. That
+**Ruled (the parent, 2026-11-14):** everyone who speaks to the President says *vous*. That
 includes the chief of staff, ministers, party leaders, union secretaries, firm chiefs,
 foreign leaders and journalists. It is how the Élysée and every ministry actually speak,
 even between colleagues of thirty years, and the game's existing French already uses *vous*
-(12 rows against 1 *tu*). The only exceptions are the President's spouse and a lover in a
+(29 rows, and no *tu*). The only exceptions are the President's spouse and a lover in a
 private scene (the affair lines): they say *tu*, which is exactly what makes those lines
 private.
 
@@ -254,7 +254,7 @@ and lists any termbase additions it proposes.
 
 ## Sources
 
-- The game's own French table (`data/i18n/fr/ui.json`): its 716 shipped rows set the termbase's
+- The game's own French table (`data/i18n/fr/ui.json`): its 677 shipped rows set the termbase's
   existing words, the U+00A0 convention and the *vous* register.
 - `localize-fr` from i18n-agent/i18nstack (MIT), read as data: its typography table, its rule of
   infinitive buttons and *Aucun* empty states, and its list of calques were the starting
