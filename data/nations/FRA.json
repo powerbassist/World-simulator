@@ -116,7 +116,24 @@
       "corporate": 25.0,
       "vat": 20.0,
       "capital_gains": 30.0,
-      "wealth": 0.0
+      "wealth": 0.0,
+      "fuel_duty": 0.67,
+      "tobacco_duty": 100.0,
+      "alcohol_duty": 100.0,
+      "sugar_drinks_levy": 0.35,
+      "air_passenger_tax": 7.4,
+      "property_tax": 100.0,
+      "inheritance_tax": 45.0,
+      "high_income_surcharge": 4.0,
+      "transactions_tax": 0.4,
+      "digital_services_tax": 3.0
+    },
+    "tax_base_share": {
+      "air_passenger_tax": 0.002149,
+      "alcohol_duty": 0.001632,
+      "digital_services_tax": 0.009,
+      "inheritance_tax": 0.01596,
+      "transactions_tax": 0.1145
     },
     "spending_pct_gdp": {
       "health": 11.0,

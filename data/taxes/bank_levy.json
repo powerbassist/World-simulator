@@ -1,0 +1,56 @@
+{
+  "id": "bank_levy",
+  "name": "Bank levy",
+  "summary": "A yearly levy on the balance sheets of the largest banks.",
+  "rate_meaning": "% of liabilities or assets per year",
+  "who_pays": [
+    "business"
+  ],
+  "base_share": 0.470562,
+  "erosion": 0.55,
+  "zero_ref_pct": 0.2,
+  "rate_range_pct": [
+    0.0,
+    1.0
+  ],
+  "demand_multiplier": 0.4,
+  "opinion_scale_pp": 0.16,
+  "bloc_salience": {
+    "business": 0.03
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "GBR": 0.0494,
+      "POL": 0.1967
+    },
+    "rate": {
+      "GBR": 0.1,
+      "POL": 0.44
+    },
+    "year": {
+      "GBR": "2025-26",
+      "POL": "2025"
+    },
+    "provenance": {
+      "GBR": "rate: search_summary; yield: read_in_source",
+      "POL": "read_in_source"
+    },
+    "sources": {
+      "GBR": "HMRC receipts Table 2, Bank Levy only (surcharge apart)",
+      "POL": "NIK P/26/001, podatek od niektorych instytucji finansowych (0.0366 % a month)"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: corporate. Proposed values, Systems to accept or strike."
+  }
+}

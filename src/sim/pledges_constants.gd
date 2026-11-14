@@ -61,7 +61,7 @@ const PLEDGE_OUTCOME_FIELDS := [
 	"unrest_pct",
 ]
 
-## The player-set half. One entry per economy_constants.TAX_KEYS entry and one per
+## The player-set half. One entry per kind in data/taxes/ and one per
 ## SPENDING_KEYS entry, written out rather than derived because a `const` cannot loop
 ## -- and tests/test_pledges.gd asserts the correspondence BOTH WAYS, so a sixth tax
 ## added at some later session turns a test red rather than silently becoming
@@ -70,6 +70,13 @@ const PLEDGE_OUTCOME_FIELDS := [
 const PLEDGE_RATE_FIELDS := [
 	"tax_income_pct", "tax_corporate_pct", "tax_vat_pct",
 	"tax_capital_gains_pct", "tax_wealth_pct",
+	# The researched kinds of data/taxes/, in library (file-name) order.
+	"tax_air_passenger_tax_pct", "tax_alcohol_duty_pct", "tax_bank_levy_pct",
+	"tax_carbon_tax_pct", "tax_digital_services_tax_pct", "tax_fuel_duty_pct",
+	"tax_high_income_surcharge_pct", "tax_inheritance_tax_pct",
+	"tax_plastic_packaging_tax_pct", "tax_property_tax_pct", "tax_retail_tax_pct",
+	"tax_sugar_drinks_levy_pct", "tax_tobacco_duty_pct", "tax_transactions_tax_pct",
+	"tax_windfall_tax_pct",
 	"spending_health_pct_gdp", "spending_education_pct_gdp",
 	"spending_defence_pct_gdp", "spending_pensions_pct_gdp",
 	"spending_infrastructure_pct_gdp",

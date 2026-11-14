@@ -1,0 +1,72 @@
+{
+  "id": "property_tax",
+  "name": "Property tax",
+  "summary": "A yearly tax on land and buildings, set on their assessed value.",
+  "rate_meaning": "index of the 2026 schedule (100 = the law in force)",
+  "who_pays": [
+    "pensioners",
+    "urban",
+    "rural",
+    "business"
+  ],
+  "base_share": 0.012489,
+  "erosion": 0.1,
+  "zero_ref_pct": 100.0,
+  "rate_range_pct": [
+    0.0,
+    200.0
+  ],
+  "demand_multiplier": 0.5,
+  "opinion_scale_pp": 80.0,
+  "bloc_salience": {
+    "pensioners": 0.03,
+    "urban": 0.02,
+    "rural": 0.02,
+    "business": 0.02
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": 0.0,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.0,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "FRA": 1.4433,
+      "DEU": 0.3735,
+      "GBR": 1.7294,
+      "POL": 1.0545
+    },
+    "rate": {
+      "FRA": 100.0,
+      "DEU": 100.0,
+      "GBR": 100.0,
+      "POL": 100.0
+    },
+    "year": {
+      "FRA": "2024",
+      "DEU": "2025",
+      "GBR": "2025-26",
+      "POL": "2025"
+    },
+    "provenance": {
+      "FRA": "read_in_source",
+      "DEU": "search_summary",
+      "GBR": "read_in_source",
+      "POL": "read_in_source"
+    },
+    "sources": {
+      "FRA": "Cour des comptes / budget annex, taxe foncière (built), local authorities",
+      "DEU": "Grundsteuer 2025",
+      "GBR": "OBR EFO Oct 2026 Table A.5, council tax only (business rates 33.6 bn GBP apart)",
+      "POL": "MF local-budget report 2025, podatek od nieruchomosci"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: its own: an immobile base (low erosion). Proposed values, Systems to accept or strike."
+  }
+}

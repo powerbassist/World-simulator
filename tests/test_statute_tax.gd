@@ -95,13 +95,16 @@ func _test_revenue_lines_are_the_five() -> void:
 	var ns = pair[1]
 	var lines: Dictionary = Budget.revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct, ns.tax_library)
 	var keys: Array = lines.keys()
-	if keys.size() != TaxesLoader.FIRST.size():
-		_fail("revenue_lines() must return exactly the authored five: %s" % [keys])
-		return
-	for i in range(keys.size()):
-		if String(keys[i]) != String(TaxesLoader.FIRST[i]):
-			_fail("revenue_lines() must return the authored five in library order: %s" % [keys])
-			return
+	# The kinds the nation has in force, in library order: today's five first, then the
+	# researched kinds its data levies (France levies more than the five since the tax rows).
+	var expected: Array = []
+	for kind in _loader.taxes:
+		if ns.tax_rates_pct.has(kind):
+			expected.append(kind)
+	if keys.slice(0, TaxesLoader.FIRST.size()) != TaxesLoader.FIRST:
+		_fail("revenue_lines() must open on the authored five in library order: %s" % [keys])
+	if keys != expected:
+		_fail("revenue_lines() must return exactly the kinds in force, in library order: %s, not %s" % [keys, expected])
 
 
 ## The re-deriving pin (the ultra pass-19 finding): the reserved names are

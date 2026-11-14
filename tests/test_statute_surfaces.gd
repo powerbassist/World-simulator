@@ -88,27 +88,27 @@ func _process(_delta: float) -> bool:
 func _check_a_reshaped_code(panel, state) -> void:
 	var ns = state.player()
 	var row: Dictionary = (ns.tax_library["vat"] as Dictionary).duplicate(true)
-	row["id"] = "fuel_duty"
-	row["name"] = "Fuel duty"
+	row["id"] = "test_levy"
+	row["name"] = "Test levy"
 	row["rate_range_pct"] = [0.0, 2.0]
-	ns.tax_library["fuel_duty"] = row
-	ns.tax_rates_pct["fuel_duty"] = 0.7
+	ns.tax_library["test_levy"] = row
+	ns.tax_rates_pct["test_levy"] = 0.7
 	var wealth := float(ns.tax_rates_pct["wealth"])
 	ns.tax_rates_pct.erase("wealth")
 	Budget.recompute(state, ns)
 	panel._refresh()
 	if panel._sliders.has("wealth") and (panel._sliders["wealth"] as Control).is_visible_in_tree():
 		_fail("the Tax Code still shows a row for the abolished wealth tax")
-	if not panel._sliders.has("fuel_duty") or float(panel._sliders["fuel_duty"].max_value) != 2.0:
-		_fail("the Tax Code has no fuel duty row capped by its kind's range")
-	if panel._label_for("fuel_duty") != "Fuel duty":
-		_fail("the born kind reads '%s', not its library name" % panel._label_for("fuel_duty"))
+	if not panel._sliders.has("test_levy") or float(panel._sliders["test_levy"].max_value) != 2.0:
+		_fail("the Tax Code has no test levy row capped by its kind's range")
+	if panel._label_for("test_levy") != "Test levy":
+		_fail("the born kind reads '%s', not its library name" % panel._label_for("test_levy"))
 	_main._budget_panel.mark_dirty()
 	_main._budget_panel._refresh()
 	_main._overview_panel.mark_dirty()
 	_main._overview_panel._refresh()
-	ns.tax_rates_pct.erase("fuel_duty")
-	ns.tax_library.erase("fuel_duty")
+	ns.tax_rates_pct.erase("test_levy")
+	ns.tax_library.erase("test_levy")
 	ns.tax_rates_pct["wealth"] = wealth
 	Budget.recompute(state, ns)
 	panel._refresh()

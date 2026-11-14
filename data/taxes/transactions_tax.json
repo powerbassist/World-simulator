@@ -1,0 +1,56 @@
+{
+  "id": "transactions_tax",
+  "name": "Share transactions tax",
+  "summary": "A small tax on the value of every share bought.",
+  "rate_meaning": "% of the transaction value",
+  "who_pays": [
+    "business"
+  ],
+  "base_share": 0.219864,
+  "erosion": 0.75,
+  "zero_ref_pct": 0.4,
+  "rate_range_pct": [
+    0.0,
+    1.0
+  ],
+  "demand_multiplier": 0.35,
+  "opinion_scale_pp": 0.32,
+  "bloc_salience": {
+    "business": 0.03
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "FRA": 0.0458,
+      "GBR": 0.1626
+    },
+    "rate": {
+      "FRA": 0.4,
+      "GBR": 0.5
+    },
+    "year": {
+      "FRA": "2024",
+      "GBR": "2025-26"
+    },
+    "provenance": {
+      "FRA": "read_in_source",
+      "GBR": "read_in_source"
+    },
+    "sources": {
+      "FRA": "budget annex, TTF (0.3 % in 2024, 0.4 % from 2025)",
+      "GBR": "HMRC receipts Table 2, stamp duty and SDRT on shares"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: capital_gains. Proposed values, Systems to accept or strike."
+  }
+}
