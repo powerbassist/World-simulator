@@ -189,6 +189,10 @@ jobs:
         run: |
           python tools/i18n_extract.py --selftest
           python tools/i18n_extract.py --check
+      # The API translation drafter's gates, cap and stop rules, against a fake client:
+      # no network, no key, no SDK needed.
+      - name: Translation drafter selftest (no network)
+        run: python tools/translate_api.py --selftest
       - name: Every file has a declared licence (REUSE)
         run: |
           pip install --quiet reuse==6.2.0
