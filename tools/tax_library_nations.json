@@ -1,0 +1,73 @@
+{
+  "_note": "PROPOSED fiscal.tax_rates_pct for the four playable nations (finance-bill.md 9.2): today's five unchanged, plus the library kinds really in force at their real rate. Moves into data/nations/*.json once Systems' library loader (PR 1b) lands. France's carbon component stays inside fuel_duty (its yield is in the fuel excise); France's IFI stays at wealth 0 until the 9.3 re-baseline call.",
+  "nations": {
+    "FRA": {
+      "income": 20.0,
+      "corporate": 25.0,
+      "vat": 20.0,
+      "capital_gains": 30.0,
+      "wealth": 0.0,
+      "fuel_duty": 0.67,
+      "tobacco_duty": 100.0,
+      "alcohol_duty": 100.0,
+      "sugar_drinks_levy": 0.35,
+      "air_passenger_tax": 7.4,
+      "property_tax": 100.0,
+      "inheritance_tax": 45.0,
+      "high_income_surcharge": 4.0,
+      "transactions_tax": 0.4,
+      "digital_services_tax": 3.0
+    },
+    "DEU": {
+      "income": 21.0,
+      "corporate": 29.9,
+      "vat": 19.0,
+      "capital_gains": 26.0,
+      "wealth": 0.0,
+      "fuel_duty": 0.6545,
+      "carbon_tax": 55.0,
+      "tobacco_duty": 100.0,
+      "alcohol_duty": 100.0,
+      "air_passenger_tax": 13.03,
+      "property_tax": 100.0,
+      "inheritance_tax": 50.0,
+      "high_income_surcharge": 5.5
+    },
+    "GBR": {
+      "income": 20.0,
+      "corporate": 25.0,
+      "vat": 20.0,
+      "capital_gains": 20.0,
+      "wealth": 0.0,
+      "fuel_duty": 0.6179,
+      "carbon_tax": 21.01,
+      "tobacco_duty": 100.0,
+      "alcohol_duty": 100.0,
+      "sugar_drinks_levy": 0.3244,
+      "air_passenger_tax": 9.34,
+      "plastic_packaging_tax": 0.267,
+      "property_tax": 100.0,
+      "inheritance_tax": 40.0,
+      "transactions_tax": 0.5,
+      "digital_services_tax": 2.0,
+      "bank_levy": 0.1,
+      "windfall_tax": 38.0
+    },
+    "POL": {
+      "income": 17.0,
+      "corporate": 19.0,
+      "vat": 23.0,
+      "capital_gains": 19.0,
+      "wealth": 0.0,
+      "fuel_duty": 0.3606,
+      "tobacco_duty": 100.0,
+      "alcohol_duty": 100.0,
+      "sugar_drinks_levy": 0.283,
+      "property_tax": 100.0,
+      "inheritance_tax": 20.0,
+      "high_income_surcharge": 4.0,
+      "bank_levy": 0.44,
+      "retail_tax": 1.4
+    }
+  }
+}

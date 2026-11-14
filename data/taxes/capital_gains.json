@@ -1,0 +1,46 @@
+{
+  "id": "capital_gains",
+  "name": "Capital gains tax",
+  "summary": "A tax on the gains made when assets are sold.",
+  "rate_meaning": "statutory rate on realised gains",
+  "who_pays": [
+    "workers",
+    "pensioners",
+    "urban",
+    "rural",
+    "business",
+    "students"
+  ],
+  "base_share": 0.02,
+  "erosion": 0.75,
+  "zero_ref_pct": 25.0,
+  "rate_range_pct": [
+    0.0,
+    60.0
+  ],
+  "demand_multiplier": 0.35,
+  "opinion_scale_pp": 4.8,
+  "bloc_salience": {
+    "workers": 0.01,
+    "pensioners": 0.03,
+    "urban": 0.02,
+    "rural": 0.01,
+    "business": 0.05,
+    "students": 0.01
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "moved unchanged from economy_constants, opinion_constants and tax_panel",
+    "_note": "Tuning analogue: today's capital_gains row. The real-yield check for the five is not sourced in this pass."
+  }
+}

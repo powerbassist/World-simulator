@@ -1,0 +1,63 @@
+{
+  "id": "high_income_surcharge",
+  "name": "High-income surcharge",
+  "summary": "Extra points of tax on the very highest incomes.",
+  "rate_meaning": "points added on incomes above the threshold",
+  "who_pays": [
+    "urban",
+    "business"
+  ],
+  "base_share": 0.013537,
+  "erosion": 0.35,
+  "zero_ref_pct": 4.0,
+  "rate_range_pct": [
+    0.0,
+    10.0
+  ],
+  "demand_multiplier": 0.6,
+  "opinion_scale_pp": 3.2,
+  "bloc_salience": {
+    "urban": 0.02,
+    "business": 0.02
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "FRA": 0.0515,
+      "POL": 0.0541,
+      "DEU": 0.2988
+    },
+    "rate": {
+      "FRA": 4.0,
+      "POL": 4.0,
+      "DEU": 5.5
+    },
+    "year": {
+      "FRA": "2025",
+      "POL": "2025",
+      "DEU": "2025"
+    },
+    "provenance": {
+      "FRA": "read_in_source",
+      "POL": "read_in_source",
+      "DEU": "read_in_source"
+    },
+    "sources": {
+      "FRA": "Senate report 760 (2026), CEHR 3 % / 4 %",
+      "POL": "MF answer to interpellation 16116, danina solidarnosciowa 4 % above 1 m PLN",
+      "DEU": "BMF 2025, Solidaritaetszuschlag: 5.5 % OF THE TAX LIABILITY, not points on income (unit mismatch)"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: income. Proposed values, Systems to accept or strike."
+  }
+}

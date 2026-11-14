@@ -1,0 +1,63 @@
+{
+  "id": "sugar_drinks_levy",
+  "name": "Sugar drinks levy",
+  "summary": "A levy on sweetened soft drinks, rising with their sugar content.",
+  "rate_meaning": "EUR per litre, top sugar band",
+  "who_pays": [
+    "workers",
+    "students"
+  ],
+  "base_share": 0.043495,
+  "erosion": 0.25,
+  "zero_ref_pct": 0.3,
+  "rate_range_pct": [
+    0.0,
+    0.6
+  ],
+  "demand_multiplier": 0.7,
+  "opinion_scale_pp": 0.24,
+  "bloc_salience": {
+    "workers": 0.01,
+    "students": 0.01
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": 0.0,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.0,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "Content research 2026-11-14, F:/Dev/autoclaw-out/reports/Tax catalogue four nations.md",
+    "yield_pct_gdp": {
+      "FRA": 0.0152,
+      "GBR": 0.0121,
+      "POL": 0.041
+    },
+    "rate": {
+      "FRA": 0.35,
+      "GBR": 0.3244,
+      "POL": 0.283
+    },
+    "year": {
+      "FRA": "2023",
+      "GBR": "2025-26",
+      "POL": "2024"
+    },
+    "provenance": {
+      "FRA": "search_summary",
+      "GBR": "read_in_source",
+      "POL": "search_summary"
+    },
+    "sources": {
+      "FRA": "rate 35 EUR/hl top band (LFSS 2025 art. 31, search summary; BOFiP BOI-BAREME-000038 to confirm); yield 2023",
+      "GBR": "HMRC receipts Table 2, Soft Drinks Industry Levy (27.8p/l top band)",
+      "POL": "oplata cukrowa, cap 1.2 PLN/l; 2024 yield from a search summary"
+    },
+    "_note": "base_share is the median of yield_pct_gdp / rate over the nations with a yield; GDP is the game's imported.gdp_eur_bn. Tuning analogue: vat (an excise on consumption). Proposed values, Systems to accept or strike."
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "income",
+  "name": "Income tax",
+  "summary": "A tax on the incomes of households, in bands that rise with income.",
+  "rate_meaning": "effective average rate on household income",
+  "who_pays": [
+    "workers",
+    "urban"
+  ],
+  "base_share": 0.5,
+  "erosion": 0.35,
+  "zero_ref_pct": 20.0,
+  "rate_range_pct": [
+    0.0,
+    70.0
+  ],
+  "demand_multiplier": 0.6,
+  "opinion_scale_pp": 24.0,
+  "bloc_salience": {
+    "workers": 0.15,
+    "urban": 0.11
+  },
+  "progressive": true,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "moved unchanged from economy_constants, opinion_constants and tax_panel",
+    "_note": "Tuning analogue: today's income row. The real-yield check for the five is not sourced in this pass."
+  }
+}
