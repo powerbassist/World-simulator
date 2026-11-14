@@ -1069,7 +1069,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## missing (F3): it says the bill waits for the vote, or why it was refused.
 func _fiscal_committed(label: String, tabling: Dictionary, before: Dictionary) -> void:
 	_queue_effect(label, before)
-	_hud.inbox.push(tr("Finance bill tabled") if bool(tabling.get("tabled", false)) else tr("Finance bill not tabled"), tr("The Assembly votes on it at the month's end; it applies if carried.") if bool(tabling.get("tabled", false)) else tr("Another bill holds this month's slot, or no line moved."))
+	_hud.inbox.push(tr("Finance bill withdrawn") if bool(tabling.get("withdrawn", false)) else tr("Finance bill tabled") if bool(tabling.get("tabled", false)) else tr("Finance bill not tabled"), tr("Nothing is voted on it; the books stand as they were.") if bool(tabling.get("withdrawn", false)) else tr("The Assembly votes on it at the month's end; it applies if carried.") if bool(tabling.get("tabled", false)) else tr("No finance bill is tabled, another bill holds this month's slot, or no line moved."))
 	_update_top_bar()
 
 

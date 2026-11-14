@@ -67,6 +67,8 @@ The author's call: a tax is created or abolished only in the autumn finance bill
 
 ## 6. What a failed bill leaves, and what moves
 
+**Withdrawn before the vote** (QA's T1 on #331, the parent's ruling): `FinanceBill.withdraw(state)` frees the slot and writes nothing, so a mistaken bill costs nothing; refused once the division has run. The Tax Code carries "Withdraw the bill" until screen 4 shows the bill (the Budget sits at its size cap).
+
 **A failed finance bill:** the live budget stands unchanged, as France's loi spéciale and Germany's provisional budget roll the previous year's on. No cooldown: the month's slot was the price, and the player may table it again next month. The division's result lands in `ns.last_law_result` with the bill's deltas copied in, so a panel can offer to table it again. Rebellions are charged as on any division.
 
 **At game start (measured, the reading of section 3 with the rebel split, the nine base regimes that table something, in each playable nation; `hands_off` tables nothing):**

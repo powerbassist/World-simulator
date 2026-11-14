@@ -33,7 +33,6 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const FrontPage = preload("res://src/sim/front_page.gd")
 const ForcePrice = preload("res://src/sim/force_price.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
-const TaxK = preload("res://src/sim/tax_constants.gd")
 
 const CHANNELS := ["tax_rates_pct", "spending_pct_gdp"]
 const PROGRESSIVITY := "tax_progressivity"
@@ -92,6 +91,19 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 	# A forced bill is never divided: no vote to forecast (Division.forecast's rule).
 	tabling["forecast"] = {} if bool(ns.tabled_bill["forced"]) else resolve(ns, loader.parties.get(ns.id, []), FinanceBillLaw.tabled(ns))
 	return tabling
+
+
+## Take the tabled finance bill back before its vote (QA's T1 on #331, the parent's
+## ruling): the slot is freed and nothing is written, so a mistaken bill costs nothing.
+## Refused when the register holds no finance bill: none tabled, a law in the slot, or
+## the division already run (it clears the register).
+static func withdraw(state) -> Dictionary:
+	var ns = state.player()
+	var law_id := String(ns.tabled_bill.get("law_id", ""))
+	if not FinanceBillLaw.is_finance(law_id):
+		return {"withdrawn": false, "refused": true}
+	ns.tabled_bill = {}
+	return {"withdrawn": true, "law_id": law_id}
 
 
 ## The division as it would fall on `ns` now: pure, the forecast and the division both
@@ -176,8 +188,7 @@ static func divide(state, loader, ns, tabled: Dictionary) -> Dictionary:
 	return result
 
 
-## The bill's deltas on top of the live register: Budget.apply_pending's shape. The
-## schedule is clamped to its band here, as the panel's control clamps it.
+## The bill's deltas on top of the live register: Budget.apply_pending's shape.
 static func _absolute(ns, bill: Dictionary) -> Dictionary:
 	var pending := {}
 	for channel in CHANNELS:
@@ -187,7 +198,7 @@ static func _absolute(ns, bill: Dictionary) -> Dictionary:
 			for key in bill[channel]:
 				rows[key] = float(register.get(key, 0.0)) + float(bill[channel][key])
 			pending[channel] = rows
+	# The schedule's band is Budget.apply_pending's to clamp, the one writer (QA's M10).
 	if bill.has(PROGRESSIVITY):
-		pending[PROGRESSIVITY] = clampf(float(ns.tax_progressivity) + float(bill[PROGRESSIVITY]),
-			TaxK.PROGRESSIVITY_MIN, TaxK.PROGRESSIVITY_MAX)
+		pending[PROGRESSIVITY] = float(ns.tax_progressivity) + float(bill[PROGRESSIVITY])
 	return pending

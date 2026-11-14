@@ -662,6 +662,8 @@ Since [[finance-bill]] the budget is voted. The Budget's and the Tax Code's Comm
 
 **The reading.** A party reads the bill at its position like a law (`spatial_support`), and a coalition partner adds the censure's whip (its live discipline, less disaffection): the budget is a matter of confidence. The position is the coalition's own, moved toward the size-weighted mean of the lines' anchors (`finance_bill_constants.gd`, each row the authored law that moves that line) by `min(1, size / REF_SIZE)`. The rebel split, pledges and an address's sway count as on any division; rebels are charged to discipline. Measured at the start: France passes all nine regime budgets; every carried one sheds rebels (16 seats on `managed`). Germany, Britain and Poland each fail one or two extremes. A government that is unpopular, worn by forcings or in minority loses budgets.
 
+**Withdrawn.** Until its vote the bill can be taken back (`FinanceBill.withdraw`): the slot is freed and nothing is written.
+
 **What it does not do.** No second chamber: the lower house has the last word on money in the four playable nations; Italy's Senate is a recorded reduction. No court (its reach is 0). No political price at passage (the opinion model prices each line already). No cooldown on a defeat: the month's slot and the rebels are the price.
 
 **Forcing.** Where `government_constants.FORCE_FORMATION` is the nation's formation method, the bill may be tabled forced. It still waits for the close; there the censure is resolved first (`src/sim/force_price.gd`, the price an ordinary 49.3 pays), and the budget applies only if the censure fails. The finance bill neither reads nor writes the 12-month cooldown (Art. 49.3 al. 3 as amended in 2008).

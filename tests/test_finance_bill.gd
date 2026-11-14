@@ -19,6 +19,7 @@ const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const FK = preload("res://src/sim/finance_bill_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const DK = preload("res://src/sim/discipline_constants.gd")
+const TaxK = preload("res://src/sim/tax_constants.gd")
 
 const START_YEAR := 2026
 
@@ -49,6 +50,7 @@ func _init() -> void:
 	_check_an_empty_bill_is_refused()
 	_check_a_carried_bill_applies_at_the_division()
 	_check_the_deltas_ride_on_a_rate_moved_after_tabling()
+	_check_a_progressivity_step_lands_inside_its_band()
 	_check_the_reading_whips_partners_and_not_the_opposition()
 	_check_the_rebels_are_charged_to_discipline()
 	_check_a_failed_bill_leaves_the_books_and_no_cooldown()
@@ -59,6 +61,7 @@ func _init() -> void:
 	_check_the_position_follows_the_size_and_the_anchors()
 	_check_the_forecast_is_the_division()
 	_check_the_bill_is_named_and_not_listed()
+	_check_a_withdrawn_bill_frees_the_slot_and_moves_nothing()
 	_check_the_tabled_bill_survives_a_save()
 	_finish()
 
@@ -192,6 +195,17 @@ func _check_a_carried_bill_applies_at_the_division() -> void:
 		_fail("carried: the applied bill's books differ from Budget.commit's on the same deltas")
 	if not ns.tabled_bill.is_empty() or ns.last_law_result.is_empty():
 		_fail("carried: the register was not cleared or no result was written")
+
+
+## A schedule step past its band lands at the band's edge: Budget.apply_pending clamps it,
+## the one writer (QA's M10 on #331 found the bill's own copy of the clamp redundant).
+func _check_a_progressivity_step_lands_inside_its_band() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	FinanceBill.table(state, _loader, {"tax_progressivity": 5.0})
+	Division.divide(state, _loader)
+	if float(ns.tax_progressivity) != TaxK.PROGRESSIVITY_MAX:
+		_fail("progressivity: a step past the band landed at %s, not %s" % [ns.tax_progressivity, TaxK.PROGRESSIVITY_MAX])
 
 
 func _check_the_deltas_ride_on_a_rate_moved_after_tabling() -> void:
@@ -396,3 +410,29 @@ func _check_the_tabled_bill_survives_a_save() -> void:
 	var deltas: Dictionary = bill.get("finance", {})
 	if not is_equal_approx(float(deltas.get("tax_rates_pct", {}).get("vat", 0.0)), 3.0):
 		_fail("save: the finance bill's deltas did not survive: %s" % [bill])
+
+
+## QA's T1 on #331 (the parent's ruling): a mistaken bill can be taken back before the
+## vote. Withdrawn, the slot is free and the books untouched, the bill can be tabled
+## again; a law's slot and an empty register are refused; nothing divides at the close.
+func _check_a_withdrawn_bill_frees_the_slot_and_moves_nothing() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var rates: Dictionary = ns.tax_rates_pct.duplicate()
+	var deficit := float(ns.deficit_pct_gdp)
+	FinanceBill.table(state, _loader, {"tax_rates_pct": {"income": 5.0}})
+	var out := FinanceBill.withdraw(state)
+	if not bool(out.get("withdrawn", false)) or not ns.tabled_bill.is_empty():
+		_fail("withdraw: the tabled bill was not withdrawn: %s" % [out])
+	if ns.tax_rates_pct != rates or float(ns.deficit_pct_gdp) != deficit or not ns.last_law_result.is_empty():
+		_fail("withdraw: withdrawing wrote to the books or the result")
+	if not Division.divide(state, _loader).is_empty():
+		_fail("withdraw: a withdrawn bill still divided at the close")
+	if bool(FinanceBill.withdraw(state).get("withdrawn", false)):
+		_fail("withdraw: an empty register withdrew something")
+	if not bool(FinanceBill.table(state, _loader, MANAGED).get("tabled", false)):
+		_fail("withdraw: the bill cannot be tabled again after a withdrawal")
+	var law_state = _new_state()
+	Legislature.propose(law_state, _loader, _find_law("carbon_levy"))
+	if bool(FinanceBill.withdraw(law_state).get("withdrawn", false)) or law_state.player().tabled_bill.is_empty():
+		_fail("withdraw: the finance verb withdrew a tabled law")

@@ -211,6 +211,13 @@ func _build_buttons() -> Control:
 	revert.pressed.connect(_on_revert)
 	row.add_child(revert)
 
+	# QA's T1 on #331: the tabled finance bill taken back before its vote, answered like
+	# Commit. Here alone: the Budget sits at the size cap, and screen 4 shows the bill.
+	var withdraw := Button.new()
+	withdraw.text = tr("Withdraw the bill")
+	withdraw.pressed.connect(func(): committed.emit(Trends.snapshot_now(_state), FinanceBill.withdraw(_state)))
+	row.add_child(withdraw)
+
 	_close_button = Button.new()
 	_close_button.text = tr("Close (X)")
 	_close_button.pressed.connect(func(): hide())

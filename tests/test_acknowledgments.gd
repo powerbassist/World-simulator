@@ -14,6 +14,7 @@ extends SceneTree
 ## _ready(), so everything it builds is null. See docs/engine-decision.md.
 
 const Division = preload("res://src/sim/division.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -41,6 +42,7 @@ func _run() -> void:
 		return
 
 	_check_budget_commit_answers()
+	_check_withdraw_answers()
 	_check_law_proposal_answers()
 	_check_diplomatic_act_answers()
 
@@ -62,6 +64,19 @@ func _check_budget_commit_answers() -> void:
 		_fail("the budget card does not say when the bill is voted: '%s'" % text)
 	# The bill holds the month's slot: divide it, so the law check below meets an empty one.
 	_divide()
+
+
+## Withdrawing the finance bill (QA's T1 on #331) frees the slot and answers with a card.
+func _check_withdraw_answers() -> void:
+	FinanceBill.table(_main._state, _main._loader, {"tax_rates_pct": {"income": 5.0}})
+	var before_count: int = _main._hud.inbox.card_count()
+	for child in _main._tax_panel.find_children("*", "Button", true, false):
+		if (child as Button).text == tr("Withdraw the bill"):
+			(child as Button).pressed.emit()
+	if _main._hud.inbox.card_count() != before_count + 1 or not _stack_text().contains("FINANCE BILL WITHDRAWN"):
+		_fail("withdrawing the finance bill pushed no card saying so: '%s'" % _stack_text())
+	if not _main._state.player().tabled_bill.is_empty():
+		_fail("withdrawing the finance bill left it in the slot")
 
 
 ## Proposing a law must answer with a card titled with the law and carrying the

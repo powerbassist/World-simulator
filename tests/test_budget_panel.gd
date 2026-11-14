@@ -15,6 +15,7 @@ extends SceneTree
 ## signals were never connected. See docs/engine-decision.md.
 
 const Division = preload("res://src/sim/division.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
@@ -61,6 +62,7 @@ func _process(_delta: float) -> bool:
 			_move_a_lever()
 		3:
 			_refused_commit_keeps_the_draft()
+			_withdraw_from_the_tax_code()
 			_commit()
 			_finish()
 	return false
@@ -158,6 +160,27 @@ func _refused_commit_keeps_the_draft() -> void:
 	if not _tax_panel._edited_keys.has("income"):
 		_fail("a refused Commit erased the Tax Code's draft")
 	ns.tabled_bill = {}
+
+
+
+## QA's T1 on #331: the Tax Code's "Withdraw the bill" takes the tabled finance bill back
+## before its vote and answers through `committed`, as Commit does.
+func _withdraw_from_the_tax_code() -> void:
+	var ns = _state.player()
+	FinanceBill.table(_state, _loader, {"tax_rates_pct": {"income": 5.0}})
+	var heard := []
+	_tax_panel.committed.connect(func(_before, result): heard.append(result), CONNECT_ONE_SHOT)
+	var button: Button = null
+	for child in _tax_panel.find_children("*", "Button", true, false):
+		if (child as Button).text == tr("Withdraw the bill"):
+			button = child
+	if button == null:
+		_fail("the Tax Code has no Withdraw the bill button")
+		ns.tabled_bill = {}
+		return
+	button.pressed.emit()
+	if not ns.tabled_bill.is_empty() or heard.is_empty() or not bool((heard[0] as Dictionary).get("withdrawn", false)):
+		_fail("Withdraw the bill did not take the bill back and say so: %s %s" % [ns.tabled_bill, heard])
 
 
 func _commit() -> void:
