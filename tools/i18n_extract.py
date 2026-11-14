@@ -301,16 +301,37 @@ def dialogue_text(line):
     return (text.strip() if sep else line) or None
 
 
+def _is_response(line):
+    return line.strip().lstrip("% ").startswith("- ")
+
+
 def dialogue_msgids():
-    """{line text: where} over data/audiences/ and data/summits/ .dialogue files."""
+    """{line text: where} over data/audiences/ and data/summits/ .dialogue files, WITHOUT a
+    summit's responses: summit_panel.gd records the pressed response's text as the choice and
+    the sidecar prices it by its English, so a translated response would lose its effects.
+    They are counted under UNWIRED (summit_responses) until that lookup stops reading text."""
     found = {}
     for folder in ("audiences", "summits"):
         for path in sorted(glob.glob(os.path.join(ROOT, "data", folder, "*.dialogue"))):
             for number, line in enumerate(open(path, encoding="utf-8"), 1):
+                if folder == "summits" and _is_response(line):
+                    continue
                 text = dialogue_text(line)
                 if text and re.search(r"[A-Za-z]{2,}", text):
                     found.setdefault(text, "%s/%s:%d" % (folder, os.path.basename(path), number))
     return found
+
+
+def summit_responses():
+    """The response texts of data/summits/*.dialogue (not translatable yet, see above)."""
+    out = set()
+    for path in sorted(glob.glob(os.path.join(ROOT, "data", "summits", "*.dialogue"))):
+        for line in open(path, encoding="utf-8"):
+            if _is_response(line):
+                text = dialogue_text(line)
+                if text:
+                    out.add(text)
+    return out
 
 
 def headline_texts():
@@ -338,6 +359,7 @@ def unwired_texts():
             doc = json.load(open(path, encoding="utf-8"))
             n += sum(1 for f in fields if isinstance(doc.get(f), str) and doc[f].strip())
         out.append((what, n))
+    out.append(("summit responses (summit_panel.gd prices a choice by its English text)", len(summit_responses())))
     return out
 
 
@@ -652,6 +674,8 @@ def selftest():
         found = sum(1 for key in rows.get(kind, {}) if ("." + field) in key)
         check("%s %s rows found" % (kind, field), found > 0, True)
     check("unwired summits found", all(n > 0 for _what, n in unwired_texts()), True)
+    # A summit response is never a msgid while its effects are keyed by its English text.
+    check("summit responses kept out", bool(summit_responses()) and not (summit_responses() & set(dialogue_msgids())), True)
     for line in bad:
         print("selftest: " + line)
     print("i18n_extract selftest: %s" % ("failed" if bad else "all checks passed"))

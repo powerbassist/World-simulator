@@ -56,7 +56,9 @@ style entry for the audience opening came back French with `{{president}}` and `
 filled. `i18n_extract.py` counts these lines in the `ui` table and reports them apart. Do
 not build a parallel path. **A summit's responses are not safe to translate yet:**
 `summit_panel.gd` looks a choice's effects up by `response.text`, which is the English key
-of the sidecar's `effects`, so a translated response would lose its effects.
+of the sidecar's `effects`, so a translated response would lose its effects. `i18n_extract.py`
+therefore keeps them OUT of the `ui` source (a translation of one fails `--check` as stale)
+and counts them under "no translation path yet" until the lookup stops reading the text.
 
 `i18n_extract.py` also checks every translation keeps its English's `{{variables}}` and
 glossary marks `[g=id]` (as it keeps the `%` placeholders): a headline that lost one is
