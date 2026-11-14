@@ -297,7 +297,9 @@ def dialogue_text(line):
     if not line or line.startswith(("~", "=>", "#")):
         return None
     if line.startswith("- "):
-        return line[2:].split(" =>", 1)[0].strip() or None
+        # A summit's response carries its stable id, `- text [#id:title] => title`: the id is
+        # the sidecar's key and never the translated text, so it is not part of the msgid.
+        return re.sub(r"\s*\[#id:[^\]]*\]", "", line[2:].split(" =>", 1)[0]).strip() or None
     speaker, sep, text = line.partition(": ")
     return (text.strip() if sep else line) or None
 
@@ -307,10 +309,11 @@ def _is_response(line):
 
 
 def dialogue_msgids():
-    """{line text: where} over data/audiences/ and data/summits/ .dialogue files, WITHOUT a
-    summit's responses: summit_panel.gd records the pressed response's text as the choice and
-    the sidecar prices it by its English, so a translated response would lose its effects.
-    They are counted under UNWIRED (summit_responses) until that lookup stops reading text."""
+    """{line text: where} over data/audiences/ and data/summits/ .dialogue files, a summit's
+    responses WITHOUT: the sidecar prices a choice by the response's stable id (`[#id:...]`,
+    summit_panel.gd records response.translation_key), so a translated response keeps its
+    effects, but the 120 responses are not translated yet. They stay counted under UNWIRED
+    (summit_responses) until French reaches them."""
     found = {}
     for folder in ("audiences", "summits"):
         for path in sorted(glob.glob(os.path.join(ROOT, "data", folder, "*.dialogue"))):
@@ -360,7 +363,7 @@ def unwired_texts():
             doc = json.load(open(path, encoding="utf-8"))
             n += sum(1 for f in fields if isinstance(doc.get(f), str) and doc[f].strip())
         out.append((what, n))
-    out.append(("summit responses (summit_panel.gd prices a choice by its English text)", len(summit_responses())))
+    out.append(("summit responses (the French pass has not reached them; their effects are keyed by id, so a translation is safe)", len(summit_responses())))
     return out
 
 
