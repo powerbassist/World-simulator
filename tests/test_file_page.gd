@@ -45,6 +45,7 @@ func _process(_delta: float) -> bool:
 	_check_short_label()
 	_check_the_door()
 	_check_an_event_file()
+	_check_request_titles()
 	_check_a_gone_file()
 	_finish()
 	return true
@@ -206,6 +207,32 @@ func _check_an_event_file() -> void:
 	if not _main._windows.is_open("events"):
 		_fail("a click on a note no longer opens Dispatches")
 	inbox.dismiss(note)
+
+
+## QA #333 T1: a request's headline is its ask in words, never a raw id and never "none". Swept over every want
+## of every person of the played nation, and the one the screenshot flags stage (a want with no target).
+func _check_request_titles() -> void:
+	var ns = _main._state.player()
+	var loader = _main._loader
+	var swept := 0
+	for person in loader.people[String(ns.id)]:
+		for want in person.wants:
+			var request := {"object": String(want["object"]), "stance": String(want["stance"])}
+			for key in want:
+				request[key] = want[key]
+			var title := FileRead.ask_title(loader, ns, request)
+			swept += 1
+			for bad in ["none", "prog_", "office:", ":", "_"]:
+				if title.to_lower().contains(bad):
+					_fail("%s's ask '%s' reads '%s': it shows a raw id or 'none'" % [person.id, want["object"], title])
+			if title == "" or title.left(1) != title.left(1).to_upper():
+				_fail("%s's ask reads '%s': empty or not capitalised" % [person.id, title])
+	if swept < 20:
+		_fail("only %d wants were swept" % swept)
+	if FileRead.ask_title(loader, ns, {"object": "programme:none", "stance": "sponsor"}) != Strings.t("Asks to see you"):
+		_fail("a want with no target does not read as the plain ask")
+	if FileRead.ask_title(loader, ns, {"object": "programme:nothing_like_it", "stance": "oppose"}) != Strings.t("Asks to see you"):
+		_fail("a programme the register cannot name shows its raw id")
 
 
 func _check_a_gone_file() -> void:

@@ -25,6 +25,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
+const RequestLane = preload("res://src/ui/request_lane.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const EffectTags = preload("res://src/ui/effect_tags.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
@@ -123,12 +124,29 @@ static func _request(main, id: String, request_id: String, file: Dictionary) -> 
 	var row := AudienceDriver.row_of(main, request)
 	var who := _who(main, String(request["person_id"]), "")
 	var choices: Array = []
-	for action in (file["actions"] as Array):
-		choices.append(_choice(action, String(action["label"]), "", [], false, String(action.get("tooltip", ""))))  # i18n: row-ok routed by the pusher
+	var actions: Array = file["actions"]
+	for i in actions.size():
+		# An answer carries its price as its tooltip; the call has none (nothing it costs is priced), so
+		# its card says in one line what it is rather than standing empty beside three that speak.
+		var note := String(actions[i].get("tooltip", ""))
+		if note == "" and i == RequestLane.CALL:
+			note = Strings.t("Ring them instead of seeing them.")
+		choices.append(_choice(actions[i], String(actions[i]["label"]), "", [], false, note))  # i18n: row-ok routed by the pusher
 	var last := int(request["deadline_month"]) - 1
-	return {"id": id, "kind": "request", "micro": Strings.t("Request"), "title": String(row["wants"]).left(1).to_upper() + String(row["wants"]).substr(1), "situation": "",
+	return {"id": id, "kind": "request", "micro": Strings.t("Request"), "title": ask_title(main._loader, ns, request), "situation": "",
 		"by_text": _by(last), "by_month": last, "who": who, "choices": choices,
 		"price": String(row.get("price", "")), "broken_word": bool(row.get("broken_word", false))}
+
+
+## What a request asks, as the page's headline: "Opposes The Sworn Offices". A want whose object the register
+## cannot name (the reader falls back to the raw id) is the plain ask, never "sponsors none".
+static func ask_title(loader, ns, request: Dictionary) -> String:
+	var object := String(request.get("object", ""))
+	var what := PersonCard.object_text(loader, ns, object, request)
+	if what == "" or what == object or what == object.get_slice(":", object.get_slice_count(":") - 1):
+		return Strings.t("Asks to see you")
+	var text := "%s %s" % [Strings.t(PersonCard.stance_label(String(request.get("stance", "")))), what]
+	return text.left(1).to_upper() + text.substr(1)
 
 
 ## The person's header words: name (linked), party swatch or kind, mood, their line.
