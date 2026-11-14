@@ -80,6 +80,7 @@ func _init() -> void:
 	_check_a_region_ask_is_a_dated_word_judged_on_the_fund()
 	_check_a_want_served_while_its_request_waits_closes_it_unpriced()
 	_check_a_holding_refused_asks_again_only_after_it_turns()
+	_check_a_held_audience_walked_out_of_stays_a_no_show()
 	_check_a_standing_want_refused_still_asks()
 	_check_a_refusal_of_no_held_want_leaves_no_mark()
 	_check_the_card_names_both_objects()
@@ -441,6 +442,11 @@ func _check_a_want_served_while_its_request_waits_closes_it_unpriced() -> void:
 			if served:
 				if String(row["status"]) != AK.STATUS_OVERTAKEN:
 					_fail("%s: the request reads '%s', not overtaken" % [label, row["status"]])
+				# Closed at its lapse, not the month the want was served (QA's M3 on #357).
+				var date: Dictionary = row.get("date", {})
+				var lapse := int(date.get("year", 0)) * 12 + int(date.get("month", 0)) + 1 if booked else int(row["deadline_month"])
+				if int(row["resolved_month"]) < lapse:
+					_fail("%s: closed at %d, before its lapse at %d" % [label, int(row["resolved_month"]), lapse])
 				if after != before:
 					_fail("%s: a request whose want was served was priced: %s to %s" % [label, before, after])
 				for entry in Calendar.booked(state):
@@ -532,6 +538,35 @@ func _check_a_refusal_of_no_held_want_leaves_no_mark() -> void:
 	Audiences.decline(state, ns, _loader, String(ns.audience_requests[ns.audience_requests.size() - 1]["id"]))
 	if WantTerms.refused(ns, String(person.id), object):
 		_fail("a refusal of an object the person holds no want for was marked")
+
+
+## QA's M1 on #357: an audience the player opened (held) and walked out of stays a priced
+## no-show even when its want is served by then; the served close is for a request never
+## answered.
+func _check_a_held_audience_walked_out_of_stays_a_no_show() -> void:
+	var state = _state()
+	var ns = state.player()
+	var person = _person_with_region_want()
+	var f := {"state": state}
+	Audiences._arrive(ns, person, person.wants[person.wants.size() - 1], _now(f), [])
+	var row: Dictionary = ns.audience_requests[ns.audience_requests.size() - 1]
+	for d in Audiences.offered_dates(state, ns, String(row["id"])):
+		if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, String(row["id"]), d)["ok"]):
+			break
+	if not bool(Audiences.hold(state, ns, _loader, String(row["id"])).get("ok", false)):
+		_fail("held: premise, the audience could not be held")
+		person.wants.pop_back()
+		return
+	_open_fund(state, ns)
+	var pid := String(person.id)
+	var before := float(ns.person_grudges.get(pid, 0.0))
+	while String(row["status"]) == AK.STATUS_HELD and _now(f) < int(row["deadline_month"]) + 3:
+		_month(f)
+		Audiences.tick_month(state, _loader, METERS)
+	if String(row["status"]) != AK.STATUS_LAPSED or float(ns.person_grudges.get(pid, 0.0)) <= before:
+		_fail("held: an audience walked out of reads '%s', grudge %s to %s: it must stay a priced no-show" % [
+			row["status"], before, ns.person_grudges.get(pid, 0.0)])
+	person.wants.pop_back()
 
 
 ## Whether `object` is among the wants the figure may ask about now: Audiences' own pick, with

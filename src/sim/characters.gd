@@ -210,12 +210,15 @@ static func _decay_grudges(ns, by_id: Dictionary) -> void:
 ## The flip memory keeps its own meaning (the last read), because loyalty still
 ## pulses on the TURN: a want that turns served is one loyalty pulse.
 ##
-## REGISTER KEY GRAMMAR (both keys live in the sixth register, both bool):
+## REGISTER KEY GRAMMAR (three keys live in the sixth register, all bool):
 ##   "<person_id>|<object>"   the last served read -- the flip memory
 ##   "<person_id>|!<object>"  the latch: served at least once, ever
+##   "<person_id>|?<object>"  rule (d): a holding refused, not to be asked again until
+##                            it turns (refuse_holding writes it, a served read clears it)
 ## The latch is an OR, so it never un-sets, and no third register and no
-## SAVE_VERSION move were needed to carry it. `!` is safe as a separator
-## because a want object is `family:target` and never carries one.
+## SAVE_VERSION move were needed to carry it or the refusal mark (absent reads "not
+## refused"). `!` and `?` are safe as separators because a want object is
+## `family:target` and never carries either.
 static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dictionary) -> void:
 	for want in person.wants:
 		var stance := String(want["stance"])
