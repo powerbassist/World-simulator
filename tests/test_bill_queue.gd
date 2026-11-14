@@ -278,9 +278,9 @@ func _check_an_autumn_birth_queued_in_september_passes_the_gate() -> void:
 		var state = _new_state("FRA", 9)
 		var ns = state.player()
 		var row: Dictionary = (_loader.taxes["vat"] as Dictionary).duplicate(true)
-		row["id"] = "fuel_duty"
-		ns.tax_library["fuel_duty"] = row
-		BillQueue.add(state, {"finance": {"create": {"fuel_duty": 8.0}}})
+		row["id"] = "test_levy"
+		ns.tax_library["test_levy"] = row
+		BillQueue.add(state, {"finance": {"create": {"test_levy": 8.0}}})
 		state.month = month
 		var report := WorldMonth.tick_month(state, _loader)
 		var queue: Array = report.get("queue", [])
