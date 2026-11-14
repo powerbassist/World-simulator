@@ -22,7 +22,7 @@ const TABLE := [
 	{"id": "presidency", "title": "Presidency", "icon": "account_balance.svg", "tabs": ["overview", "outliner", "events"]},  # i18n: msgid title
 	{"id": "government", "title": "Government", "icon": "groups.svg", "tabs": ["politics", "people"]},  # i18n: msgid title
 	{"id": "parliament", "title": "Parliament", "icon": "gavel.svg", "tabs": ["legislature"]},  # i18n: msgid title
-	{"id": "finances", "title": "Finances", "icon": "payments.svg", "tabs": ["budget", "tax", "projects"]},  # i18n: msgid title
+	{"id": "finances", "title": "Finances", "icon": "payments.svg", "tabs": ["finances", "budget", "tax", "projects"]},  # i18n: msgid title
 	{"id": "economy", "title": "Economy", "icon": "monitoring.svg", "tabs": ["economy", "commodities"]},  # i18n: msgid title
 	{"id": "territory", "title": "Territory", "icon": "map.svg", "tabs": ["region"]},  # i18n: msgid title
 	{"id": "energy", "title": "Energy", "icon": "bolt.svg", "tabs": ["energy"]},  # i18n: msgid title
