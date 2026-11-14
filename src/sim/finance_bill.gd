@@ -68,8 +68,33 @@ static func from_pending(ns, pending: Dictionary) -> Dictionary:
 ## The player's command. Tables `bill` into the month's slot, or amends the finance bill
 ## already there (per key, the newer delta replaces). `force` engages Article 49.3 where
 ## the formation rule allows it, free of the ordinary cooldown; the bill still waits for
-## the close. Refusals write nothing and carry the flag that names them.
+## the close. Refusals write nothing and carry the flag that names them (refusal()).
 static func table(state, loader, bill: Dictionary, force := false) -> Dictionary:
+	var ns = state.player()
+	var why := refusal(state, loader, bill, force)
+	if not why.is_empty():
+		return why
+	var held: Dictionary = ns.tabled_bill
+	var merged := _merged(held, bill)
+	if merged.has(FinanceRows.PROGRAMMES) or merged.has(FinanceRows.FUNDS):
+		merged[FinanceRows.COST] = FinanceRows.cost_pct_gdp(state, loader, ns, merged)
+	var id := String(held.get("law_id", "")) if not held.is_empty() else FinanceBillLaw.id_for(state)
+	ns.tabled_bill = {
+		"law_id": id, "finance": merged, "forced": force or bool(held.get("forced", false)),
+		"vote_year": int(state.year), "vote_month": int(state.month),
+		"vote_day": Calendar.days_in_month(int(state.year), int(state.month)),
+	}
+	var tabling: Dictionary = ns.tabled_bill.duplicate(true)
+	tabling["tabled"] = true
+	# A forced bill is never divided: no vote to forecast (Division.forecast's rule).
+	tabling["forecast"] = {} if bool(ns.tabled_bill["forced"]) else resolve(ns, loader.parties.get(ns.id, []), FinanceBillLaw.tabled(ns))
+	return tabling
+
+
+## Why table() would refuse `bill` now, {} when it would table it: its checks in its
+## order, on the bill merged with the finance bill already tabled. Writes nothing, so a
+## reader (the goal read's "can table now") asks the very rule the press meets.
+static func refusal(state, loader, bill: Dictionary, force := false) -> Dictionary:
 	var ns = state.player()
 	if bill.is_empty():
 		return {"tabled": false, "refused": true, "empty": true}
@@ -83,6 +108,20 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 			return {"tabled": false, "refused": true, "finance_queued": true}
 	if force and ns.formation_method != GK.FORCE_FORMATION:
 		return {"tabled": false, "refused": true, "forced": true}
+	var merged := _merged(held, bill)
+	# Checked on the merged bill, so an amendment cannot re-rate a kind an earlier
+	# tabling abolished.
+	var season := _autumn_refusal(state, loader, ns, merged)
+	if season.is_empty():
+		season = range_refusal(ns, merged)
+	# Section 12: each programme or fund row by its own verb's legality on the live state.
+	if season.is_empty() and FinanceRows.illegal(state, loader, ns, merged):
+		season = {"tabled": false, "refused": true, "verb": true}
+	return season
+
+
+## `bill` merged into the finance bill already tabled: per key, the newer delta replaces.
+static func _merged(held: Dictionary, bill: Dictionary) -> Dictionary:
 	var merged: Dictionary = (held.get("finance", {}) as Dictionary).duplicate(true)
 	for channel in CHANNELS:
 		if bill.has(channel):
@@ -103,29 +142,9 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 			if not gone.has(kind):
 				gone.append(kind)
 		merged[ABOLISH] = gone
+	# Section 12's spending-verb rows: a sector's newer action replaces, a fund row is added once.
 	FinanceRows.merge(merged, bill)
-	# Checked on the merged bill, so an amendment cannot re-rate a kind an earlier
-	# tabling abolished.
-	var season := _autumn_refusal(state, loader, ns, merged)
-	if season.is_empty():
-		season = _range_refusal(ns, merged)
-	if season.is_empty() and FinanceRows.illegal(state, loader, ns, merged):
-		season = {"tabled": false, "refused": true, "verb": true}
-	if not season.is_empty():
-		return season
-	if merged.has(FinanceRows.PROGRAMMES) or merged.has(FinanceRows.FUNDS):
-		merged[FinanceRows.COST] = FinanceRows.cost_pct_gdp(state, loader, ns, merged)
-	var id := String(held.get("law_id", "")) if not held.is_empty() else FinanceBillLaw.id_for(state)
-	ns.tabled_bill = {
-		"law_id": id, "finance": merged, "forced": force or bool(held.get("forced", false)),
-		"vote_year": int(state.year), "vote_month": int(state.month),
-		"vote_day": Calendar.days_in_month(int(state.year), int(state.month)),
-	}
-	var tabling: Dictionary = ns.tabled_bill.duplicate(true)
-	tabling["tabled"] = true
-	# A forced bill is never divided: no vote to forecast (Division.forecast's rule).
-	tabling["forecast"] = {} if bool(ns.tabled_bill["forced"]) else resolve(ns, loader.parties.get(ns.id, []), FinanceBillLaw.tabled(ns))
-	return tabling
+	return merged
 
 
 ## Take the tabled finance bill back before its vote (QA's T1 on #331, the parent's
@@ -289,7 +308,7 @@ static func _autumn_refusal(state, loader, ns, bill: Dictionary) -> Dictionary:
 ## _autumn_refusal, so every row names a kind in force. Checked at tabling, which for a
 ## queued bill is the month it reaches the slot. A rate a law moves between the tabling and
 ## the division is not read again: Budget.apply_pending holds the rate inside its band there.
-static func _range_refusal(ns, bill: Dictionary) -> Dictionary:
+static func range_refusal(ns, bill: Dictionary) -> Dictionary:
 	var rows: Dictionary = bill.get("tax_rates_pct", {})
 	for kind in rows:
 		var span: Array = ns.tax_library[kind]["rate_range_pct"]
