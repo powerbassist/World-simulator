@@ -20,6 +20,7 @@
         {
           "id": "impound_the_cargo",
           "label": "Impound the cargo",
+          "short": "Impound it",
           "summary": "The partner is delighted for a week and the litigation runs for years; every shipper with an awkward manifest starts routing around your ports by the next season.",
           "effects": {
             "company": {
@@ -54,6 +55,7 @@
         {
           "id": "at_anchor",
           "label": "Keep it at anchor",
+          "short": "Hold at anchor",
           "summary": "The ninth day becomes the ninth week. The cargo ages on somebody else's books, the anchorage becomes a landmark, and both navies count your anchorages out of habit.",
           "default": true,
           "effects": {
@@ -87,6 +89,7 @@
         {
           "id": "send_a_minister",
           "label": "Send a minister to repair it",
+          "short": "Send a minister",
           "summary": "A quiet arrival, a long lunch and the ambassador is back inside two months. It reads as contrition to the people who read it at all, and as an errand to the people who cast the vote.",
           "effects": {
             "bloc_offset": {
@@ -102,6 +105,7 @@
         {
           "id": "recall_yours_to_match",
           "label": "Recall yours to match",
+          "short": "Recall ours",
           "summary": "Symmetry is a policy. The [g=embassy]embassies[/g] run on chargés, the treaties run on hold, and the members who cast the vote pay for the minister's plane and call it spine.",
           "effects": {
             "bloc_offset": {
@@ -157,6 +161,7 @@
         {
           "id": "staff_the_crossing",
           "label": "Staff your side of the crossing",
+          "short": "Staff our side",
           "summary": "Fast lanes, extra booths and overtime at the customs post: the queue halves by the high season and the interior line carries the bill for good. The town calls it leadership; the auditor calls it recurrent.",
           "effects": {
             "spending_pct_gdp": {
@@ -174,6 +179,7 @@
         {
           "id": "make_it_a_summit_item",
           "label": "Make it a summit item",
+          "short": "Raise at summit",
           "summary": "The agenda committee buries it under enlargement, but the photocall at the crossing is worth the season. The partner promises a study, which is what promises are called before they are consultations.",
           "effects": {
             "bloc_offset": {
@@ -188,6 +194,7 @@
         {
           "id": "wait_the_season",
           "label": "Wait for their election",
+          "short": "Wait their vote",
           "summary": "The patrols are an incumbent's habit and the incumbent is up in the spring. The town has one season, and it is this one.",
           "default": true,
           "effects": {
@@ -240,6 +247,7 @@
         {
           "id": "refuse_and_say_why",
           "label": "Refuse and say why",
+          "short": "Refuse openly",
           "summary": "The buyer buys from someone whose parliament reads slower. The plant loses a shift, the peace movement calls it a precedent, and the partner's docks keep loading on schedule.",
           "effects": {
             "company": {
@@ -294,6 +302,7 @@
         {
           "id": "table_the_file",
           "label": "Put the file before the assembly",
+          "short": "Table the file",
           "summary": "The page is read into the record and the service loses control of its own paper. The leader survives it or does not, and either way the government was seen to let the light in.",
           "effects": {
             "society": {
@@ -311,6 +320,7 @@
         {
           "id": "seal_the_page",
           "label": "Seal the page for the service",
+          "short": "Seal the page",
           "summary": "The service keeps its file and the government keeps the service's silence, and both of those are debts. The page is reprinted abroad within the week, where it reads even better.",
           "effects": {
             "society": {
@@ -329,6 +339,7 @@
         {
           "id": "to_the_prosecutors",
           "label": "Let the prosecutors have it",
+          "short": "To prosecutors",
           "summary": "The page goes to the office that cannot leak it and cannot hurry. The service calls it procedure, the press calls it a grave, and the leader calls it whatever the verdict says.",
           "default": true,
           "effects": {
@@ -365,6 +376,7 @@
         {
           "id": "open_procurement",
           "label": "Open the procurement they want",
+          "short": "Open procurement",
           "summary": "The concession sits in a sector that does not vote for you, which is the point of choosing it. The list goes back in the drawer and the districts that paid for the drawer's opening send the bill to the next budget.",
           "effects": {
             "company": {
@@ -384,6 +396,7 @@
         {
           "id": "draft_your_own",
           "label": "Draft a list of your own",
+          "short": "Draft our list",
           "summary": "Their districts, your tariffs, same length and tone. The chambers of commerce on both sides write identical letters, and neither list goes away once it has been photographed.",
           "effects": {
             "company": {
@@ -436,6 +449,7 @@
         {
           "id": "send_the_plane",
           "label": "Send the plane and the doctor",
+          "short": "Send the plane",
           "summary": "A humanitarian landing for a prisoner nobody has sentenced: the partner calls it extraction and files it under your name. The family gets a homecoming and every other family with a file gets a queue at your door.",
           "effects": {
             "bloc_offset": {
@@ -450,6 +464,7 @@
         {
           "id": "ask_the_price",
           "label": "Ask what the partner wants for him",
+          "short": "Ask their price",
           "summary": "Every jailer has a list and the price is never printed: a vote postponed, a licence waved through, a quiet month. The contractor comes home and the auditor finds the price two years later, in a different currency.",
           "effects": {
             "society": {
@@ -509,6 +524,7 @@
         {
           "id": "sign_the_twenty",
           "label": "Sign the twenty years",
+          "short": "Sign for twenty",
           "summary": "The rent is real money on a term nobody in the assembly will sit out, and the sovereignty question is settled for a generation by the government that had least choice about it. The region keeps its payroll and the treasury keeps a line it will miss.",
           "effects": {
             "other_revenue_pct_gdp": 0.08,
@@ -525,6 +541,7 @@
         {
           "id": "offer_five",
           "label": "Offer five and price it up",
+          "short": "Offer five",
           "summary": "The delegation needs the base more than the term, which your negotiators establish on the first morning. The rent improves and so does the partner's interest in your politics, at a rate the five years compound.",
           "effects": {
             "other_revenue_pct_gdp": 0.04,
@@ -541,6 +558,7 @@
         {
           "id": "study_the_lease",
           "label": "Study it while the lease runs on",
+          "short": "Study it",
           "summary": "The base runs month to month and the partner runs the bill up in fees, which is a sentence your own ministry wrote once about someone else. The region reads the uncertainty in its orders before the ministry reads it anywhere.",
           "default": true,
           "effects": {
@@ -582,6 +600,7 @@
         {
           "id": "own_the_seat",
           "label": "Say the seat was accepted",
+          "short": "Own the seat",
           "summary": "We talk to everyone plays as statecraft at home and as a licence abroad, and the ministries that wrote the freeze are booking the interpretation. The next freeze has an asterisk where your name was.",
           "effects": {
             "bloc_offset": {
@@ -596,6 +615,7 @@
         {
           "id": "publish_the_complaint",
           "label": "Publish the protocol complaint",
+          "short": "Complain",
           "summary": "The letter to the secretariat goes out within the hour, immediate and undignified, which are also its two defences. The provinces like a government that writes letters, and the photograph keeps running with a caption nobody reads past.",
           "effects": {
             "bloc_offset": {
@@ -611,6 +631,7 @@
         {
           "id": "let_the_picture_speak",
           "label": "Let the picture speak",
+          "short": "Let it speak",
           "summary": "It speaks fluently. By the weekend the freeze has a new member and the caption has your country's name in it.",
           "default": true,
           "effects": {
@@ -644,6 +665,7 @@
         {
           "id": "raise_it_everywhere",
           "label": "Raise it in every room",
+          "short": "Raise it widely",
           "summary": "The foreign ministry raises it, the culture ministry funds the paper it bans, and the homeland returns the compliment in your minority's language. The marches are pleased and the ferries are fuller by autumn.",
           "effects": {
             "society": {
@@ -662,6 +684,7 @@
         {
           "id": "homeland_law",
           "label": "Call it the homeland's law",
+          "short": "Homeland's law",
           "summary": "Correct, and the marches have the photographs of the presses that closed. The petition keeps coming back with more pages, and the pages are all in your language.",
           "effects": {
             "bloc_offset": {
@@ -677,6 +700,7 @@
         {
           "id": "quiet_funding",
           "label": "Fund the paper quietly",
+          "short": "Fund it quietly",
           "summary": "A culture-line grant with no ministry name on it keeps the presses running and the marches off the news. The homeland's ministry knows anyway; that is what the grant is for.",
           "default": true,
           "effects": {

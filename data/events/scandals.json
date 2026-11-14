@@ -24,6 +24,7 @@
         {
           "id": "dismiss",
           "label": "Dismiss the minister",
+          "short": "Dismiss minister",
           "summary": "Decisive, and it disowns your own side. The city reads it as cleaning house; the countryside and business read it as feeding a minister to the press.",
           "effects": {
             "society": {
@@ -58,6 +59,7 @@
         {
           "id": "stonewall",
           "label": "Refuse to comment",
+          "short": "No comment",
           "summary": "The file does not go away and neither does the story.",
           "default": true,
           "effects": {
@@ -92,6 +94,7 @@
         {
           "id": "distance",
           "label": "Distance the government",
+          "short": "Keep distance",
           "summary": "Let the press have it. It is not your list and you say so.",
           "effects": {
             "society": {
@@ -110,6 +113,7 @@
         {
           "id": "defend",
           "label": "Defend the office",
+          "short": "Defend office",
           "summary": "The office is above this. Saying so buys you the people who agree and costs you the people who do not.",
           "effects": {
             "bloc_offset": {
@@ -160,6 +164,7 @@
         {
           "id": "tighten",
           "label": "Tighten the terms",
+          "short": "Tighten terms",
           "summary": "A quieter newsroom, and everybody notices that it went quiet.",
           "effects": {
             "society": {
@@ -176,6 +181,7 @@
         {
           "id": "guarantee",
           "label": "Guarantee its independence",
+          "short": "Guarantee it",
           "summary": "You will be covered as badly as before and you will be seen to have allowed it.",
           "effects": {
             "society": {
@@ -192,6 +198,7 @@
         {
           "id": "roll_over",
           "label": "Renew it unchanged",
+          "short": "Renew as is",
           "summary": "Nobody thanks a government for a decision it did not make.",
           "default": true,
           "effects": {
@@ -226,6 +233,7 @@
         {
           "id": "regularise",
           "label": "Regularise the record",
+          "short": "Regularise",
           "summary": "An amnesty law, passed in a hurry, legalising what the audit found. The accounts close; the question of what they closed over does not.",
           "effects": {
             "society": {
@@ -244,6 +252,7 @@
         {
           "id": "public_funding",
           "label": "Put the parties on the public purse",
+          "short": "Public funding",
           "summary": "A fixed sum per vote, and no more private money anywhere. It buys clean hands at the taxpayer's price, and in the constituencies it reads as politicians paying themselves.",
           "effects": {
             "society": {
@@ -314,6 +323,7 @@
         {
           "id": "publish_the_file",
           "label": "Publish the whole file",
+          "short": "Publish it all",
           "summary": "The memo is damning only in company. Released with the twelve pages around it, it reads as a government doing arithmetic, and the paper loses the story it was keeping warm.",
           "effects": {
             "society": {
@@ -332,6 +342,7 @@
         {
           "id": "ride_it_out",
           "label": "Wait for the news cycle",
+          "short": "Ride it out",
           "summary": "It does not finish on its own; it waits for your next mistake.",
           "default": true,
           "effects": {
@@ -366,6 +377,7 @@
         {
           "id": "prosecute",
           "label": "Prosecute the official",
+          "short": "Prosecute",
           "summary": "The state's case is airtight and the sentence will be a warning to every other official holding a file. The press's case is that this is what the law is for.",
           "effects": {
             "society": {
@@ -384,6 +396,7 @@
         {
           "id": "protect_disclosure",
           "label": "Protect the disclosure",
+          "short": "Protect source",
           "summary": "Publish the review in full and dare the ministry to say which line was untrue. The programme still costs what it costs; only now the assembly prices it with the file open.",
           "effects": {
             "society": {
@@ -403,6 +416,7 @@
         {
           "id": "summary_only",
           "label": "Release the summary",
+          "short": "Summary only",
           "summary": "The conclusions without the tables: enough to say the review exists, never enough to check it against what was said. The official keeps their career and the press keeps the story.",
           "default": true,
           "effects": {
@@ -441,6 +455,7 @@
         {
           "id": "divest",
           "label": "Force the divestment",
+          "short": "Force divestment",
           "summary": "The share goes into a blind trust this week and the minister offers the assembly a full accounting. It is the clean version, and it costs a competent minister a quarter of their attention.",
           "effects": {
             "society": {
@@ -459,6 +474,7 @@
         {
           "id": "stand_by_it",
           "label": "Say the rules were followed",
+          "short": "Defend it",
           "summary": "They were -- the declaration is dated, filed, and read by nobody. You defend the letter of the register, and the register takes the reputation damage with you.",
           "effects": {
             "society": {
@@ -477,6 +493,7 @@
         {
           "id": "quiet_transfer",
           "label": "Move the portfolio",
+          "short": "Move portfolio",
           "summary": "The minister keeps their seat and loses water testing; the contracts keep their signatory. Everyone reads it as exactly what it is.",
           "default": true,
           "effects": {
@@ -514,6 +531,7 @@
         {
           "id": "adopt",
           "label": "Adopt the register",
+          "short": "Adopt it",
           "summary": "Every meeting with a minister, published within a month. The government loses the quiet corridor and keeps the corridor; the lobbying firms lose a business model.",
           "effects": {
             "society": {
@@ -533,6 +551,7 @@
         {
           "id": "gut_it",
           "label": "Take the publication out",
+          "short": "Gut it",
           "summary": "A register that records meetings nobody may read: the bill passes, the corridor stays quiet, and the sponsor's press release writes itself.",
           "effects": {
             "society": {
@@ -551,6 +570,7 @@
         {
           "id": "let_it_die",
           "label": "Let it die in committee",
+          "short": "Let it die",
           "summary": "It has died there twice and the committee knows how. The corridor keeps its silence and the sponsor keeps his grievance.",
           "default": true,
           "effects": {
@@ -588,6 +608,7 @@
         {
           "id": "rescind",
           "label": "Rescind the appointment",
+          "short": "Rescind it",
           "summary": "The post is re-advertised and the panel reformed, and the health agencies run for six months without a director. The minister keeps his job and loses the argument that his family is separate from his office.",
           "effects": {
             "society": {
@@ -606,6 +627,7 @@
         {
           "id": "defend_it",
           "label": "Call him the best candidate",
+          "short": "Defend him",
           "summary": "The defence is true in the way such defences are true: the field was narrow because the field was drawn. You spend the government's credibility on a brother-in-law, and the base notices you paid it for family.",
           "effects": {
             "society": {
@@ -624,6 +646,7 @@
         {
           "id": "refer_it",
           "label": "Send it to the auditors",
+          "short": "Refer to audit",
           "summary": "The appointment stands while the auditors read the minutes. They will take a season, and the story takes a season with it.",
           "default": true,
           "effects": {
@@ -662,6 +685,7 @@
         {
           "id": "publish_all",
           "label": "Publish the claims in full",
+          "short": "Publish claims",
           "summary": "Every member's ledger, online, this week. The government's own side supplies the worst pages, and the clearing of the air is felt in the constituencies as a clearing of the decks.",
           "effects": {
             "society": {
@@ -681,6 +705,7 @@
         {
           "id": "recover_and_cap",
           "label": "Order repayment and cap the allowance",
+          "short": "Repay and cap",
           "summary": "The twenty repay, the allowance drops to a schedule written by the treasury, and the members' anger at the treasury becomes the story's second act. The taxpayer is repaid in full and photographed doing it.",
           "effects": {
             "society": {
@@ -699,6 +724,7 @@
         {
           "id": "quiet_review",
           "label": "Refer the worst twenty",
+          "short": "Refer the worst",
           "summary": "The complaints go to the standards body, which publishes in eighteen months and finds what a newspaper already has. The money mostly stays where it is.",
           "effects": {
             "society": {
@@ -717,6 +743,7 @@
         {
           "id": "bury_it",
           "label": "Sit on the review",
+          "short": "Sit on it",
           "summary": "It is not published; it leaks. The same twenty, the same month, and the government now owns the cover as well as the claims.",
           "default": true,
           "effects": {
@@ -754,6 +781,7 @@
         {
           "id": "independent_inquiry",
           "label": "Appoint an independent judge",
+          "short": "Name a judge",
           "summary": "A serving judge, a mandate that includes the services' own lawyers, and a report the government does not get to see first. It is the only answer that treats the transcripts as what they are, and the services will treat it as a declaration of war.",
           "effects": {
             "society": {
@@ -773,6 +801,7 @@
         {
           "id": "internal_review",
           "label": "Let the services investigate themselves",
+          "short": "Internal review",
           "summary": "The report will be honest as far as its authors can make it, which is further than its readers will believe. The transcripts stay unexplained and the pressroom stays warned.",
           "default": true,
           "effects": {
@@ -793,6 +822,7 @@
         {
           "id": "prosecute_press",
           "label": "Pursue the newspaper",
+          "short": "Sue the paper",
           "summary": "The official charge is receiving state documents; the effect is a defence fund with public sympathy and a pressroom that has learned what this government does with a story it cannot have.",
           "effects": {
             "society": {
@@ -830,6 +860,7 @@
         {
           "id": "close_the_door",
           "label": "Legislate the revolving door shut",
+          "short": "Shut the door",
           "summary": "Two years between office and lobby, on the statute book by autumn. The lobbying firms call it vindictive; the calls it would have caught are the recordings.",
           "effects": {
             "society": {
@@ -848,6 +879,7 @@
         {
           "id": "refer_prosecutors",
           "label": "Hand the file to the prosecutors",
+          "short": "To prosecutors",
           "summary": "What he did may not be a crime; the prosecutors will spend a year establishing which. The fees stop, the story does not.",
           "default": true,
           "effects": {
@@ -867,6 +899,7 @@
         {
           "id": "no_case",
           "label": "Say the law has no case",
+          "short": "Say no case",
           "summary": "True, and now the law is the story: a rules book written by insiders for insiders. You have defended a former colleague with the government's own credibility.",
           "effects": {
             "society": {
@@ -903,6 +936,7 @@
         {
           "id": "refer_courts",
           "label": "Refer it to the courts",
+          "short": "To the courts",
           "summary": "The auditors' file goes to the prosecutors unopened by the government. If the money was what it says it was, the party is embarrassed; if it was not, someone else is in the dock.",
           "effects": {
             "society": {
@@ -921,6 +955,7 @@
         {
           "id": "repay_from_purse",
           "label": "Repay the loans from the public purse",
+          "short": "Repay from purse",
           "summary": "The state settles its own coalition's debts and calls it closing the file. The sum is small; the precedent is not, and the opposition will price the next election on it.",
           "effects": {
             "society": {
@@ -940,6 +975,7 @@
         {
           "id": "dispute_finding",
           "label": "Dispute the auditors' reading",
+          "short": "Dispute it",
           "summary": "The loans were loans, the terms were terms, and the audit office has a political majority. It is a defence that lasts until the lender's next statement, and everyone in the building knows the lender gives statements.",
           "default": true,
           "effects": {
@@ -977,6 +1013,7 @@
         {
           "id": "void_and_reform",
           "label": "Void the drafts and reform the panel",
+          "short": "Void and reform",
           "summary": "The rulebook is written again, by people who have never worked for the industry it binds. The deadline it misses is real, and the association's members will spend the gap explaining 'regulatory uncertainty' to the markets.",
           "effects": {
             "society": {
@@ -999,6 +1036,7 @@
         {
           "id": "amend_lightly",
           "label": "Amend the drafts in the margins",
+          "short": "Amend lightly",
           "summary": "A few clauses tightened, the architecture untouched. The rulebook ships on time with its paternity still legible in every definition.",
           "effects": {
             "society": {
@@ -1021,6 +1059,7 @@
         {
           "id": "adopt_asis",
           "label": "Adopt the rulebook as written",
+          "short": "Adopt as written",
           "summary": "It regulates the industry the way the industry asked to be regulated. The chairman's June move now looks less like a coincidence and more like a title for the whole story.",
           "default": true,
           "effects": {
@@ -1081,6 +1120,7 @@
         {
           "id": "open_tender",
           "label": "Put the contracts to tender",
+          "short": "Open a tender",
           "summary": "The foundation stays, the fees are re-tendered under published rules, and the founders' firm is welcome to bid like anyone else. It will not win, which is the point, and the audit that follows is the cost.",
           "effects": {
             "society": {
@@ -1099,6 +1139,7 @@
         {
           "id": "let_audit_run",
           "label": "Let the auditors read the five years",
+          "short": "Let audit run",
           "summary": "The grant continues at this year's rate while they read. The findings will confirm what the fee schedule already says, at the pace auditors read.",
           "default": true,
           "effects": {
@@ -1136,6 +1177,7 @@
         {
           "id": "block_it",
           "label": "Block the appointment",
+          "short": "Block it",
           "summary": "The bank's board is told the seat stays open and the procedure is rewritten. The treasurer learns the size of your majority on the board, and the bank's next bond issue answers a question nobody asked about politics in its credit file.",
           "effects": {
             "society": {
@@ -1154,6 +1196,7 @@
         {
           "id": "confirm_defend",
           "label": "Confirm her and defend the choice",
+          "short": "Confirm her",
           "summary": "The defence is made once, in a statement about widening boards beyond the usual grey faces, and it is true, which does not survive the treasurer's smile on the evening news.",
           "effects": {
             "society": {
@@ -1172,6 +1215,7 @@
         {
           "id": "confirm_quietly",
           "label": "Let the appointment stand",
+          "short": "Let it stand",
           "summary": "No statement, no defence, and the seat filled by the time anyone asks. It works twice; the third time the question is why it always works.",
           "default": true,
           "effects": {
