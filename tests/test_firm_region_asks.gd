@@ -81,6 +81,7 @@ func _init() -> void:
 	_check_a_want_served_while_its_request_waits_closes_it_unpriced()
 	_check_a_holding_refused_asks_again_only_after_it_turns()
 	_check_a_standing_want_refused_still_asks()
+	_check_a_refusal_of_no_held_want_leaves_no_mark()
 	_check_the_card_names_both_objects()
 	_finish()
 
@@ -455,7 +456,7 @@ func _check_a_want_served_while_its_request_waits_closes_it_unpriced() -> void:
 ## region's fund) asks once; refused -- declined, lapsed, a no-show -- its figure asks no more
 ## about that object until it turns (served, then no longer). A standing want is untouched.
 func _check_a_holding_refused_asks_again_only_after_it_turns() -> void:
-	for how in ["decline", "lapse"]:
+	for how in ["decline", "lapse", "noshow"]:
 		var state = _state()
 		var ns = state.player()
 		var person = _person_with_region_want()
@@ -468,6 +469,15 @@ func _check_a_holding_refused_asks_again_only_after_it_turns() -> void:
 		var row: Dictionary = ns.audience_requests[ns.audience_requests.size() - 1]
 		if how == "decline":
 			Audiences.decline(state, ns, _loader, String(row["id"]))
+		elif how == "noshow":
+			for d in Audiences.offered_dates(state, ns, String(row["id"])):
+				if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, String(row["id"]), d)["ok"]):
+					break
+			if String(row["status"]) != AK.STATUS_BOOKED:
+				_fail("noshow: premise, the request could not be booked")
+			while String(row["status"]) == AK.STATUS_BOOKED:
+				_month(f)
+				Audiences.tick_month(state, _loader, METERS)
 		else:
 			while String(row["status"]) == AK.STATUS_PENDING:
 				_month(f)
@@ -508,6 +518,20 @@ func _check_a_standing_want_refused_still_asks() -> void:
 	if WantTerms.refused(ns, String(person.id), "meter:grievance"):
 		_fail("standing: a refused meter want was marked")
 	person.wants.pop_back()
+
+
+## A refusal of an object the person holds no want for (a chief's plant here) leaves no mark:
+## nothing could ever clear it.
+func _check_a_refusal_of_no_held_want_leaves_no_mark() -> void:
+	var state = _state()
+	var ns = state.player()
+	var person = _person_with_region_want()
+	person.wants.pop_back()
+	var object := "firm:%s" % String(Companies.majors_of(_loader, PLAYER)[0].id)
+	Audiences._arrive(ns, person, {"object": object, "stance": "want"}, int(state.year) * 12 + int(state.month), [])
+	Audiences.decline(state, ns, _loader, String(ns.audience_requests[ns.audience_requests.size() - 1]["id"]))
+	if WantTerms.refused(ns, String(person.id), object):
+		_fail("a refusal of an object the person holds no want for was marked")
 
 
 ## Whether `object` is among the wants the figure may ask about now: Audiences' own pick, with

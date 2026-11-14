@@ -413,7 +413,7 @@ static func _price(state, ns, loader, row: Dictionary, share: float, rapport: fl
 	var before := President.rapport(ns, pid)
 	President.adjust_rapport(state, ns, loader, pid, rapport)
 	if crossed:
-		Characters.refuse_holding(ns, pid, String(row["object"]))  # rule (d): a holding asks once
+		Characters.refuse_holding(ns, person, String(row["object"]))  # rule (d): a holding asks once
 		applied["grudge"] = float(applied["grudge"]) + float(Lies.cross(state, ns, loader, person, int(row.get("arrived_month", 0))).get("grudge", 0.0))
 	applied["rapport"] = President.rapport(ns, pid) - before
 	return applied

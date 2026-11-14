@@ -40,7 +40,8 @@ static func asked_ever(ns) -> bool:
 ## month, so a closure left unanswered has landed by the time its request would lapse).
 ## Any other, when it would lapse with its want served now (Gameplay's read of #351, the
 ## parent's card): the fund opened on the Regions screen, the card left unanswered. Run
-## before the lapses; a request the player already agreed keeps its own close.
+## before the lapses; a request the player already agreed keeps its own close, and an
+## audience already held and walked out of stays a no-show (the player received the person).
 static func close_overtaken(state, ns, now: int, loader = null, meters: Dictionary = {}) -> void:
 	for row in ns.audience_requests:
 		var object := String(row.get("object", ""))
@@ -49,7 +50,8 @@ static func close_overtaken(state, ns, now: int, loader = null, meters: Dictiona
 		if object.begins_with(K.FIRM_PREFIX):
 			if not Closures.announced(ns, object.substr(K.FIRM_PREFIX.length())).is_empty():
 				continue
-		elif loader == null or not overdue(row, now) or String(row.get("agreed", "")) != "" or not _served(state, ns, loader, meters, row):
+		elif loader == null or String(row["status"]) == K.STATUS_HELD or not overdue(row, now) or String(row.get("agreed", "")) != "" \
+				or not _served(state, ns, loader, meters, row):
 			continue
 		if String(row["status"]) == K.STATUS_BOOKED:
 			Calendar.cancel(state, Calendar.verb_key(Dates.entry(row, row["date"])))

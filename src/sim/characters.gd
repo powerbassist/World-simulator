@@ -639,11 +639,13 @@ static func refusal_grudge(ns, person, grudge: float, ceiling: float = CK.GRUDGE
 	return minf(grudge * grudge_intake(person), room)
 
 
-## Rule (d) (WantTerms.refused_key): a holding want refused asks no more until it turns. A
-## standing want is left unmarked. Written here, the register's one writer.
-static func refuse_holding(ns, pid: String, object: String) -> void:
-	if not WantTerms.is_standing(object):
-		ns.person_want_state[WantTerms.refused_key(pid, object)] = true
+## Rule (d) (WantTerms.refused_key): a holding want refused asks no more until it turns.
+## Only a want this nation's person holds is marked (a chief's plant, an invited price or a
+## visiting head's ask is no want _settle_wants could ever clear); a standing want is not.
+## Written here, the register's one writer.
+static func refuse_holding(ns, person, object: String) -> void:
+	if _of_nation(ns, person) and not WantTerms.is_standing(object) and person.wants.any(func(w): return String(w["object"]) == object):
+		ns.person_want_state[WantTerms.refused_key(String(person.id), object)] = true
 
 
 ## V5.2b. The price of a refusal -- a declined, delegated or lapsed request, a
