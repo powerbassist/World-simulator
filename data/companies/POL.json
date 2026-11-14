@@ -10,7 +10,10 @@
       "headcount": 4859,
       "city": "PL41_poznan",
       "tier": "major",
-      "chief_id": "POL_chief_zboze_wielkopolskie"
+      "chief_id": "POL_chief_zboze_wielkopolskie",
+      "products": [
+        "cereals"
+      ]
     },
     {
       "id": "POL_sady_lubelskie",
@@ -20,7 +23,10 @@
       "headcount": 4273,
       "city": "PL81_lublin",
       "tier": "major",
-      "chief_id": "POL_chief_sady_lubelskie"
+      "chief_id": "POL_chief_sady_lubelskie",
+      "products": [
+        "vegetables"
+      ]
     },
     {
       "id": "POL_pasze_warmia",
@@ -30,7 +36,11 @@
       "headcount": 6715,
       "city": "PL62_olsztyn",
       "tier": "major",
-      "chief_id": "POL_chief_pasze_warmia"
+      "chief_id": "POL_chief_pasze_warmia",
+      "products": [
+        "cereals",
+        "meat"
+      ]
     },
     {
       "id": "POL_przetwory_podlaskie",
@@ -40,7 +50,10 @@
       "headcount": 2778,
       "city": "PL84_bialystok",
       "tier": "major",
-      "chief_id": "POL_chief_przetwory_podlaskie"
+      "chief_id": "POL_chief_przetwory_podlaskie",
+      "products": [
+        "dairy"
+      ]
     },
     {
       "id": "POL_kopalnia_miedzi",
@@ -50,7 +63,11 @@
       "headcount": 34421,
       "city": "PL72_kielce",
       "tier": "major",
-      "chief_id": "POL_chief_kopalnia_miedzi"
+      "chief_id": "POL_chief_kopalnia_miedzi",
+      "products": [
+        "copper_ore",
+        "copper"
+      ]
     },
     {
       "id": "POL_huta_wisla",
@@ -60,7 +77,11 @@
       "headcount": 41441,
       "city": "PL22_katowice",
       "tier": "major",
-      "chief_id": "POL_chief_huta_wisla"
+      "chief_id": "POL_chief_huta_wisla",
+      "products": [
+        "steel",
+        "coke"
+      ]
     },
     {
       "id": "POL_stocznia_gdanska",
@@ -70,7 +91,10 @@
       "headcount": 24561,
       "city": "PL63_gdansk",
       "tier": "major",
-      "chief_id": "POL_chief_stocznia_gdanska"
+      "chief_id": "POL_chief_stocznia_gdanska",
+      "products": [
+        "ships"
+      ]
     },
     {
       "id": "POL_tabor_nowy",
@@ -80,7 +104,10 @@
       "headcount": 66563,
       "city": "PL71_lodz",
       "tier": "major",
-      "chief_id": "POL_chief_tabor_nowy"
+      "chief_id": "POL_chief_tabor_nowy",
+      "products": [
+        "rail_equipment"
+      ]
     },
     {
       "id": "POL_bank_kongresowy",
@@ -90,7 +117,10 @@
       "headcount": 38655,
       "city": "PL91_warsaw",
       "tier": "major",
-      "chief_id": "POL_chief_bank_kongresowy"
+      "chief_id": "POL_chief_bank_kongresowy",
+      "products": [
+        "finance"
+      ]
     },
     {
       "id": "POL_siec_baltyk",
@@ -100,7 +130,10 @@
       "headcount": 85204,
       "city": "PL42_szczecin",
       "tier": "major",
-      "chief_id": "POL_chief_siec_baltyk"
+      "chief_id": "POL_chief_siec_baltyk",
+      "products": [
+        "retail"
+      ]
     },
     {
       "id": "POL_siec_wielkopolska",
@@ -110,7 +143,10 @@
       "headcount": 55856,
       "city": "PL41_ostrow_wielkopolski",
       "tier": "major",
-      "chief_id": "POL_chief_siec_wielkopolska"
+      "chief_id": "POL_chief_siec_wielkopolska",
+      "products": [
+        "retail"
+      ]
     },
     {
       "id": "POL_sklepy_zachodnie",
@@ -120,13 +156,16 @@
       "headcount": 26500,
       "city": "PL41_poznan",
       "tier": "major",
-      "chief_id": "POL_chief_sklepy_zachodnie"
+      "chief_id": "POL_chief_sklepy_zachodnie",
+      "products": [
+        "retail"
+      ]
     }
   ],
   "body": [
     {
       "id": "POL_zalewski_logistyka",
-      "name": "Zalewski Logistyka",
+      "name": "Zalewski Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2497,
@@ -135,7 +174,7 @@
     },
     {
       "id": "POL_wojcik_energia",
-      "name": "Wojcik Energia",
+      "name": "Wojcik Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2583,
@@ -144,7 +183,7 @@
     },
     {
       "id": "POL_jablonowski_budownictwo",
-      "name": "Jabłonowski Budownictwo",
+      "name": "Jabłonowski Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2202,
@@ -153,7 +192,7 @@
     },
     {
       "id": "POL_ernestowicz_budownictwo",
-      "name": "Ernestowicz Budownictwo",
+      "name": "Ernestowicz Grupa",
       "sector": "agriculture",
       "share": 0.0179,
       "headcount": 1528,
@@ -180,7 +219,7 @@
     },
     {
       "id": "POL_malinowski_budownictwo",
-      "name": "Malinowski Budownictwo",
+      "name": "Malinowski Agro",
       "sector": "agriculture",
       "share": 0.0179,
       "headcount": 1446,
@@ -198,7 +237,7 @@
     },
     {
       "id": "POL_pulaski_zaklady",
-      "name": "Pułaski Zakłady",
+      "name": "Pułaski Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2567,
@@ -207,7 +246,7 @@
     },
     {
       "id": "POL_galicinski_logistyka",
-      "name": "Galicinski Logistyka",
+      "name": "Galicinski Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2591,
@@ -216,7 +255,7 @@
     },
     {
       "id": "POL_jablonowski_transport",
-      "name": "Jabłonowski Transport",
+      "name": "Jabłonowski Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2365,
@@ -225,7 +264,7 @@
     },
     {
       "id": "POL_barcicki_ubezpieczenia",
-      "name": "Barcicki Ubezpieczenia",
+      "name": "Barcicki Agro",
       "sector": "agriculture",
       "share": 0.0139,
       "headcount": 1178,
@@ -234,7 +273,7 @@
     },
     {
       "id": "POL_dunin_transport",
-      "name": "Dunin Transport",
+      "name": "Dunin Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2594,
@@ -243,7 +282,7 @@
     },
     {
       "id": "POL_jakubowski_transport",
-      "name": "Jakubowski Transport",
+      "name": "Jakubowski Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2660,
@@ -252,7 +291,7 @@
     },
     {
       "id": "POL_kowalczyk_zaklady",
-      "name": "Kowalczyk Zakłady",
+      "name": "Kowalczyk Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2280,
@@ -261,7 +300,7 @@
     },
     {
       "id": "POL_skorobohaty_budownictwo",
-      "name": "Skorobohaty Budownictwo",
+      "name": "Skorobohaty Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2370,
@@ -270,7 +309,7 @@
     },
     {
       "id": "POL_puszet_logistyka",
-      "name": "Puszet Logistyka",
+      "name": "Puszet Rolnictwo",
       "sector": "agriculture",
       "share": 0.0273,
       "headcount": 2310,
@@ -279,7 +318,7 @@
     },
     {
       "id": "POL_skorobohaty_ubezpieczenia",
-      "name": "Skorobohaty Ubezpieczenia",
+      "name": "Skorobohaty Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2388,
@@ -288,7 +327,7 @@
     },
     {
       "id": "POL_cieszkowski_logistyka",
-      "name": "Cieszkowski Logistyka",
+      "name": "Cieszkowski Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2231,
@@ -297,7 +336,7 @@
     },
     {
       "id": "POL_pulaski_przemysl",
-      "name": "Pułaski Przemysł",
+      "name": "Pułaski Agro",
       "sector": "agriculture",
       "share": 0.0278,
       "headcount": 2328,
@@ -306,7 +345,7 @@
     },
     {
       "id": "POL_niemcewicz_ubezpieczenia",
-      "name": "Niemcewicz Ubezpieczenia",
+      "name": "Niemcewicz Rolnictwo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2412,
@@ -315,7 +354,7 @@
     },
     {
       "id": "POL_romanowski_energia",
-      "name": "Romanowski Energia",
+      "name": "Romanowski Grupa",
       "sector": "agriculture",
       "share": 0.0126,
       "headcount": 994,
@@ -324,7 +363,7 @@
     },
     {
       "id": "POL_jablonowski_ubezpieczenia",
-      "name": "Jabłonowski Ubezpieczenia",
+      "name": "Jabłonowski Agro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2479,
@@ -351,7 +390,7 @@
     },
     {
       "id": "POL_skorobohaty_rolnictwo_zaklady",
-      "name": "Skorobohaty Rolnictwo Zakłady",
+      "name": "Skorobohaty Zakłady",
       "sector": "industry",
       "share": 0.0275,
       "headcount": 18960,
@@ -396,7 +435,7 @@
     },
     {
       "id": "POL_jablonowski_rolnictwo",
-      "name": "Jabłonowski Rolnictwo",
+      "name": "Jabłonowski Technika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19766,
@@ -405,7 +444,7 @@
     },
     {
       "id": "POL_sobolewski_handel",
-      "name": "Sobolewski Handel",
+      "name": "Sobolewski Grupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21313,
@@ -441,7 +480,7 @@
     },
     {
       "id": "POL_kowalczyk_ubezpieczenia",
-      "name": "Kowalczyk Ubezpieczenia",
+      "name": "Kowalczyk Zakłady",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20648,
@@ -450,7 +489,7 @@
     },
     {
       "id": "POL_sobolewski_transport",
-      "name": "Sobolewski Transport",
+      "name": "Sobolewski Energia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18467,
@@ -459,7 +498,7 @@
     },
     {
       "id": "POL_tolwinski_rolnictwo",
-      "name": "Tołwiński Rolnictwo",
+      "name": "Tołwiński Technika",
       "sector": "industry",
       "share": 0.0178,
       "headcount": 11585,
@@ -468,7 +507,7 @@
     },
     {
       "id": "POL_jagniatkowski_logistyka_rolnictwo",
-      "name": "Jagniątkowski Logistyka Rolnictwo",
+      "name": "Jagniątkowski Technika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18828,
@@ -477,7 +516,7 @@
     },
     {
       "id": "POL_jablonowski_logistyka",
-      "name": "Jabłonowski Logistyka",
+      "name": "Jabłonowski Zakłady",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20399,
@@ -486,7 +525,7 @@
     },
     {
       "id": "POL_holowinski_transport",
-      "name": "Hołowiński Transport",
+      "name": "Hołowiński Energia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21517,
@@ -495,7 +534,7 @@
     },
     {
       "id": "POL_ankwicz_logistyka",
-      "name": "Ankwicz Logistyka",
+      "name": "Ankwicz Budownictwo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20049,
@@ -522,7 +561,7 @@
     },
     {
       "id": "POL_skorobohaty_logistyka",
-      "name": "Skorobohaty Logistyka",
+      "name": "Skorobohaty Technika",
       "sector": "industry",
       "share": 0.0264,
       "headcount": 19491,
@@ -540,7 +579,7 @@
     },
     {
       "id": "POL_skorobohaty_rolnictwo",
-      "name": "Skorobohaty Rolnictwo",
+      "name": "Skorobohaty Budownictwo",
       "sector": "industry",
       "share": 0.0266,
       "headcount": 16399,
@@ -549,7 +588,7 @@
     },
     {
       "id": "POL_niemcewicz_logistyka_budownictwo",
-      "name": "Niemcewicz Logistyka Budownictwo",
+      "name": "Niemcewicz Grupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20260,
@@ -558,7 +597,7 @@
     },
     {
       "id": "POL_pulaski_rolnictwo",
-      "name": "Pułaski Rolnictwo",
+      "name": "Pułaski Zakłady",
       "sector": "industry",
       "share": 0.0232,
       "headcount": 16835,
@@ -567,7 +606,7 @@
     },
     {
       "id": "POL_iwanski_handel",
-      "name": "Iwański Handel",
+      "name": "Iwański Technika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21767,
@@ -576,7 +615,7 @@
     },
     {
       "id": "POL_kietlicz_ubezpieczenia",
-      "name": "Kietlicz Ubezpieczenia",
+      "name": "Kietlicz Technika",
       "sector": "industry",
       "share": 0.0281,
       "headcount": 19208,
@@ -612,7 +651,7 @@
     },
     {
       "id": "POL_estko_przemysl",
-      "name": "Estko Przemysł",
+      "name": "Estko Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22496,
@@ -621,7 +660,7 @@
     },
     {
       "id": "POL_malinowski_zaklady",
-      "name": "Malinowski Zakłady",
+      "name": "Malinowski Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23714,
@@ -630,7 +669,7 @@
     },
     {
       "id": "POL_sobolewski_budownictwo",
-      "name": "Sobolewski Budownictwo",
+      "name": "Sobolewski Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23732,
@@ -639,16 +678,16 @@
     },
     {
       "id": "POL_zamojski_zaklady",
-      "name": "Zamojski Zakłady",
+      "name": "Zamojski Logistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23634,
       "city": "PL42_szczecin",
       "tier": "body"
     },
     {
       "id": "POL_lasocki_przemysl",
-      "name": "Lasocki Przemysł",
+      "name": "Lasocki Ubezpieczenia",
       "sector": "services",
       "share": 0.006,
       "headcount": 8191,
@@ -657,7 +696,7 @@
     },
     {
       "id": "POL_nieborowski_energia",
-      "name": "Nieborowski Energia",
+      "name": "Nieborowski Handel",
       "sector": "services",
       "share": 0.0131,
       "headcount": 18583,
@@ -693,25 +732,25 @@
     },
     {
       "id": "POL_ejsmont_zaklady",
-      "name": "Ejsmont Zakłady",
+      "name": "Ejsmont Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23153,
       "city": "PL91_warsaw",
       "tier": "body"
     },
     {
       "id": "POL_ankwicz_przemysl",
-      "name": "Ankwicz Przemysł",
+      "name": "Ankwicz Logistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23179,
       "city": "PL91_warsaw",
       "tier": "body"
     },
     {
       "id": "POL_skorobohaty_przemysl",
-      "name": "Skorobohaty Przemysł",
+      "name": "Skorobohaty Ubezpieczenia",
       "sector": "services",
       "share": 0.0137,
       "headcount": 21084,
@@ -720,7 +759,7 @@
     },
     {
       "id": "POL_fijas_przemysl",
-      "name": "Fijas Przemysł",
+      "name": "Fijas Usługi",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23722,
@@ -729,7 +768,7 @@
     },
     {
       "id": "POL_galicinski_przemysl",
-      "name": "Galicinski Przemysł",
+      "name": "Galicinski Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23621,
@@ -738,7 +777,7 @@
     },
     {
       "id": "POL_zalewski_energia",
-      "name": "Zalewski Energia",
+      "name": "Zalewski Usługi",
       "sector": "services",
       "share": 0.0095,
       "headcount": 15279,
@@ -747,7 +786,7 @@
     },
     {
       "id": "POL_horodynski_zaklady",
-      "name": "Horodyński Zakłady",
+      "name": "Horodyński Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23267,
@@ -759,13 +798,13 @@
       "name": "Wiśniewski Ubezpieczenia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24527,
       "city": "PL41_poznan",
       "tier": "body"
     },
     {
       "id": "POL_lewandowicz_przemysl",
-      "name": "Lewandowicz Przemysł",
+      "name": "Lewandowicz Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23715,
@@ -783,7 +822,7 @@
     },
     {
       "id": "POL_kietlicz_zaklady",
-      "name": "Kietlicz Zakłady",
+      "name": "Kietlicz Logistyka",
       "sector": "services",
       "share": 0.0165,
       "headcount": 22942,
@@ -792,7 +831,7 @@
     },
     {
       "id": "POL_niemcewicz_zaklady",
-      "name": "Niemcewicz Zakłady",
+      "name": "Niemcewicz Handel",
       "sector": "services",
       "share": 0.0153,
       "headcount": 24271,
@@ -819,7 +858,7 @@
     },
     {
       "id": "POL_ankwicz_zaklady",
-      "name": "Ankwicz Zakłady",
+      "name": "Ankwicz Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23869,
@@ -840,13 +879,13 @@
       "name": "Lipiński Logistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24210,
       "city": "PL51_wroclaw",
       "tier": "body"
     },
     {
       "id": "POL_rejman_energia",
-      "name": "Rejman Energia",
+      "name": "Rejman Ubezpieczenia",
       "sector": "services",
       "share": 0.0149,
       "headcount": 23227,
@@ -858,13 +897,13 @@
       "name": "Tarnowski Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23444,
       "city": "PL91_warsaw",
       "tier": "body"
     },
     {
       "id": "POL_tarnowski_przemysl",
-      "name": "Tarnowski Przemysł",
+      "name": "Tarnowski Ubezpieczenia",
       "sector": "services",
       "share": 0.0157,
       "headcount": 22274,
@@ -873,7 +912,7 @@
     },
     {
       "id": "POL_zalewski_przemysl",
-      "name": "Zalewski Przemysł",
+      "name": "Zalewski Logistyka",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24770,
@@ -885,13 +924,13 @@
       "name": "Jagniątkowski Logistyka Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24655,
       "city": "PL21_krakow",
       "tier": "body"
     },
     {
       "id": "POL_godlewski_zaklady",
-      "name": "Godlewski Zakłady",
+      "name": "Godlewski Ubezpieczenia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23444,
@@ -900,7 +939,7 @@
     },
     {
       "id": "POL_filipowicz_zaklady",
-      "name": "Filipowicz Zakłady",
+      "name": "Filipowicz Handel",
       "sector": "services",
       "share": 0.0161,
       "headcount": 24338,
@@ -909,7 +948,7 @@
     },
     {
       "id": "POL_kietlicz_przemysl",
-      "name": "Kietlicz Przemysł",
+      "name": "Kietlicz Ubezpieczenia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24679,
@@ -918,7 +957,7 @@
     },
     {
       "id": "POL_wisniewski_zaklady",
-      "name": "Wiśniewski Zakłady",
+      "name": "Wiśniewski Grupa",
       "sector": "services",
       "share": 0.0083,
       "headcount": 13353,
@@ -927,7 +966,7 @@
     },
     {
       "id": "POL_cieszkowski_rolnictwo",
-      "name": "Cieszkowski Rolnictwo",
+      "name": "Cieszkowski Usługi",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22660,
@@ -945,19 +984,19 @@
     },
     {
       "id": "POL_dunin_rolnictwo_zaklady",
-      "name": "Dunin Rolnictwo Zakłady",
+      "name": "Dunin Ubezpieczenia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24083,
       "city": "PL91_warsaw",
       "tier": "body"
     },
     {
       "id": "POL_skorobohaty_energia_grupa",
-      "name": "Skorobohaty Energia Grupa",
+      "name": "Skorobohaty Usługi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23442,
       "city": "PL91_ursynow",
       "tier": "body"
     },
@@ -984,7 +1023,7 @@
       "name": "Ankwicz Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24408,
       "city": "PL91_warsaw",
       "tier": "body"
     },
@@ -1002,13 +1041,13 @@
       "name": "Piotrowski Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24062,
       "city": "PL51_walbrzych",
       "tier": "body"
     },
     {
       "id": "POL_ernestowicz_zaklady",
-      "name": "Ernestowicz Zakłady",
+      "name": "Ernestowicz Transport",
       "sector": "services",
       "share": 0.0088,
       "headcount": 12635,
@@ -1020,7 +1059,7 @@
       "name": "Chodakowski Logistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24744,
       "city": "PL63_gdansk",
       "tier": "body"
     },
@@ -1035,16 +1074,16 @@
     },
     {
       "id": "POL_bilinski_energia",
-      "name": "Biliński Energia",
+      "name": "Biliński Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23247,
       "city": "PL91_warsaw",
       "tier": "body"
     },
     {
       "id": "POL_lasocki_zaklady",
-      "name": "Lasocki Zakłady",
+      "name": "Lasocki Transport",
       "sector": "services",
       "share": 0.0069,
       "headcount": 11033,
@@ -1053,7 +1092,7 @@
     },
     {
       "id": "POL_dunin_przemysl",
-      "name": "Dunin Przemysł",
+      "name": "Dunin Handel",
       "sector": "services",
       "share": 0.0123,
       "headcount": 18432,
@@ -1062,7 +1101,7 @@
     },
     {
       "id": "POL_rejman_zaklady",
-      "name": "Rejman Zakłady",
+      "name": "Rejman Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24292,
@@ -1098,10 +1137,10 @@
     },
     {
       "id": "POL_wisniewski_energia",
-      "name": "Wiśniewski Energia",
+      "name": "Wiśniewski Usługi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24083,
       "city": "PL22_zory",
       "tier": "body"
     }

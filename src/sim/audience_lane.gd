@@ -13,6 +13,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Dates = preload("res://src/sim/audience_dates.gd")
 const Characters = preload("res://src/sim/characters.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 
 
 ## The open requests of this nation's people (`own`), or of the visiting heads.
@@ -40,7 +41,9 @@ static func asked_ever(ns) -> bool:
 ## month, so a closure left unanswered has landed by the time its request would lapse).
 ## Any other, when it would lapse with its want served now (Gameplay's read of #351, the
 ## parent's card): the fund opened on the Regions screen, the card left unanswered. Run
-## before the lapses; a request the player already agreed keeps its own close.
+## before the lapses. Only a request still open (pending or booked, K.OPEN) is read: an
+## audience already held is the lapse loop's, so one walked out of stays a no-show (the
+## player received the person) and an agreement made in it keeps its own close.
 static func close_overtaken(state, ns, now: int, loader = null, meters: Dictionary = {}) -> void:
 	for row in ns.audience_requests:
 		var object := String(row.get("object", ""))
@@ -49,7 +52,8 @@ static func close_overtaken(state, ns, now: int, loader = null, meters: Dictiona
 		if object.begins_with(K.FIRM_PREFIX):
 			if not Closures.announced(ns, object.substr(K.FIRM_PREFIX.length())).is_empty():
 				continue
-		elif loader == null or not overdue(row, now) or String(row.get("agreed", "")) != "" or not _served(state, ns, loader, meters, row):
+		elif loader == null or not overdue(row, now) \
+				or not _served(state, ns, loader, meters, row):
 			continue
 		if String(row["status"]) == K.STATUS_BOOKED:
 			Calendar.cancel(state, Calendar.verb_key(Dates.entry(row, row["date"])))
@@ -76,9 +80,7 @@ static func _served(state, ns, loader, meters: Dictionary, row: Dictionary) -> b
 	var person = loader.person_by_id.get(String(row.get("person_id", "")))
 	if person == null:
 		return false
-	var leaders := {}
-	for party in loader.parties.get(state.player_nation_id, []):
-		leaders[party.id] = party.leader_person_id
+	var leaders := WantTerms.authored_leaders(loader, state.player_nation_id)
 	for want in person.wants:
 		if String(want["object"]) == String(row["object"]) and String(want["stance"]) == String(row["stance"]):
 			return Characters.want_served(ns, person, want, meters, leaders)

@@ -268,9 +268,7 @@ static func _arrivals(state, ns, loader, meters: Dictionary, now: int, arrived: 
 	for invited in AudienceTriggers.chiefs(ns, loader, now):
 		if _may_ask(ns, invited[0], leader, now):
 			_arrive(ns, invited[0], invited[1], now, arrived)
-	var leaders := {}
-	for party in loader.parties.get(state.player_nation_id, []):
-		leaders[party.id] = party.leader_person_id
+	var leaders := WantTerms.authored_leaders(loader, state.player_nation_id)
 	for invited in AudienceTriggers.invitations(state, ns, loader, meters, leaders, now):
 		if open >= K.MAX_PENDING:
 			return
@@ -315,9 +313,7 @@ static func _quiet_call(state, ns, loader, meters: Dictionary, now: int, arrived
 	if Lane.open_count(ns, true) >= K.MAX_PENDING or QuietMonth.asks_in_year(ns, now) >= K.QUIET_ASKS_MAX \
 			or not QuietMonth.quiet(state, ns, loader, now):
 		return
-	var leaders := {}
-	for party in loader.parties.get(state.player_nation_id, []):
-		leaders[party.id] = party.leader_person_id
+	var leaders := WantTerms.authored_leaders(loader, state.player_nation_id)
 	if _call_best(ns, Staff.cast(loader, state.player_nation_id), President.leader_id(ns), meters, leaders, now, arrived, true):
 		var row: Dictionary = ns.audience_requests.back()
 		row["called"] = true
@@ -413,7 +409,7 @@ static func _price(state, ns, loader, row: Dictionary, share: float, rapport: fl
 	var before := President.rapport(ns, pid)
 	President.adjust_rapport(state, ns, loader, pid, rapport)
 	if crossed:
-		Characters.refuse_holding(ns, pid, String(row["object"]))  # rule (d): a holding asks once
+		Characters.refuse_holding(ns, person, String(row["object"]))  # rule (d): a holding asks once
 		applied["grudge"] = float(applied["grudge"]) + float(Lies.cross(state, ns, loader, person, int(row.get("arrived_month", 0))).get("grudge", 0.0))
 	applied["rapport"] = President.rapport(ns, pid) - before
 	return applied

@@ -45,6 +45,7 @@ func _init() -> void:
 	_test_the_five_load_first_in_order()
 	_test_the_five_reproduce_todays_model()
 	_test_every_row_refusal()
+	_test_every_kind_carries_a_unit()
 	_test_every_nation_refusal()
 	_test_a_kind_absent_is_not_in_force()
 	_test_a_kind_not_in_force_does_not_renormalise()
@@ -158,6 +159,18 @@ func _test_every_row_refusal() -> void:
 	r = _row()
 	r["name"] = ""
 	_refuses("an empty name", r)
+	r = _row()
+	r.erase("unit")
+	_refuses("a kind with no unit", r)
+	r = _row()
+	r["unit"] = "percent"
+	_refuses("a unit outside the closed set", r)
+	r = _row()
+	r.erase("group")
+	_refuses("a kind with no group", r)
+	r = _row()
+	r["group"] = "consumption tax"
+	_refuses("a group outside the closed set", r)
 	# A new kind with no core slot carries its own weights freely.
 	r = _row()
 	r["id"] = "test_levy"
@@ -167,6 +180,31 @@ func _test_every_row_refusal() -> void:
 	TaxesLoader.parse_row(r, "taxes/test_levy.json", errors)
 	if not errors.is_empty():
 		_failures.append("a new kind with its own weights was refused: %s" % [errors])
+
+
+## Screen 4: every kind in the library says what its rate is counted in and which base it
+## taxes, each from the closed set the panel reads (TaxesLoader.UNITS, TaxesLoader.GROUPS),
+## every group holds a kind, and the library is the whole of data/taxes.
+func _test_every_kind_carries_a_unit() -> void:
+	var files := 0
+	for f in DirAccess.get_files_at("res://data/taxes"):
+		if String(f).ends_with(".json"):
+			files += 1
+	if _loader.taxes.size() != files or files == 0:
+		_failures.append("the library holds %d kinds for %d files" % [_loader.taxes.size(), files])
+	for id in _loader.taxes:
+		var unit = (_loader.taxes[id] as Dictionary).get("unit")
+		if not TaxesLoader.UNITS.has(unit):
+			_failures.append("tax kind %s carries unit %s, not one of %s" % [id, str(unit), str(TaxesLoader.UNITS)])
+	var filled := {}
+	for id in _loader.taxes:
+		var group = (_loader.taxes[id] as Dictionary).get("group")
+		if not TaxesLoader.GROUPS.has(group):
+			_failures.append("tax kind %s carries group %s, not one of %s" % [id, str(group), str(TaxesLoader.GROUPS)])
+		filled[group] = true
+	for group in TaxesLoader.GROUPS:
+		if not filled.has(group):
+			_failures.append("no tax kind falls in group %s" % group)
 
 
 class FakeLoader:

@@ -46,6 +46,9 @@ static func fund_open(ns, region_id: String) -> bool:
 ## in `person_want_state` beside the edge-trigger's two keys ("pid|object", "pid|!object") as
 ## "pid|?object" (Characters.refuse_holding writes it, the register's one writer); absent reads
 ## "not refused", so a save from before the rule re-asks once (absent_ok, no bump).
+## A reshuffle that moves or vacates a post turns it too (Gameplay's card A3): its wanters
+## are invited once more the month after (AudienceTriggers.invitations), marked or not; the
+## mark still holds on the hazard.
 static func refused_key(pid: String, object: String) -> String:
 	return pid + "|?" + object
 
@@ -53,3 +56,12 @@ static func refused_key(pid: String, object: String) -> String:
 static func refused(ns, pid: String, object: String) -> bool:
 	return ns.person_want_state.has(refused_key(pid, object))
 
+
+## Party id -> its authored leader's person id: the leaders the want ladder's office reads
+## compare against (Characters.want_served's `authored_leaders`). One loop for every reader
+## (the request lane, its overtaken close, the commitments' judge, the want settle).
+static func authored_leaders(loader, nation_id: String) -> Dictionary:
+	var out := {}
+	for party in loader.parties.get(nation_id, []):
+		out[party.id] = party.leader_person_id
+	return out

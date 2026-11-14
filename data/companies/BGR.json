@@ -14,7 +14,7 @@
     },
     {
       "id": "BGR_stefanov_stroitelstvo",
-      "name": "Stefanov Stroitelstvo",
+      "name": "Stefanov Targovija",
       "sector": "agriculture",
       "share": 0.2134,
       "headcount": 16573,
@@ -44,7 +44,7 @@
     },
     {
       "id": "BGR_uzunov_transport",
-      "name": "Uzunov Transport",
+      "name": "Uzunov Stroitelstvo",
       "sector": "industry",
       "share": 0.0435,
       "headcount": 36248,
@@ -54,7 +54,7 @@
     },
     {
       "id": "BGR_chavdarov_zastrahovane",
-      "name": "Chavdarov Zastrahovane",
+      "name": "Chavdarov Materiali",
       "sector": "industry",
       "share": 0.0632,
       "headcount": 36206,
@@ -104,7 +104,7 @@
     },
     {
       "id": "BGR_stefanov_materiali",
-      "name": "Stefanov Materiali",
+      "name": "Stefanov Zastrahovane",
       "sector": "services",
       "share": 0.0506,
       "headcount": 97261,
@@ -126,7 +126,7 @@
   "body": [
     {
       "id": "BGR_hristov_energija",
-      "name": "Hristov Energija",
+      "name": "Hristov Targovija",
       "sector": "agriculture",
       "share": 0.0188,
       "headcount": 1652,
@@ -135,7 +135,7 @@
     },
     {
       "id": "BGR_naydenov_logistika",
-      "name": "Naydenov Logistika",
+      "name": "Naydenov Targovija",
       "sector": "agriculture",
       "share": 0.0153,
       "headcount": 1164,
@@ -144,7 +144,7 @@
     },
     {
       "id": "BGR_angelov_energija",
-      "name": "Angelov Energija",
+      "name": "Angelov Targovija",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2446,
@@ -153,7 +153,7 @@
     },
     {
       "id": "BGR_chervenkov_logistika",
-      "name": "Chervenkov Logistika",
+      "name": "Chervenkov Zemedelie",
       "sector": "agriculture",
       "share": 0.0259,
       "headcount": 2082,
@@ -162,7 +162,7 @@
     },
     {
       "id": "BGR_mihov_transport",
-      "name": "Mihov Transport",
+      "name": "Mihov Targovija",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2564,
@@ -180,7 +180,7 @@
     },
     {
       "id": "BGR_naydenov_materiali",
-      "name": "Naydenov Materiali",
+      "name": "Naydenov Targovija Grupa",
       "sector": "agriculture",
       "share": 0.0205,
       "headcount": 1623,
@@ -189,7 +189,7 @@
     },
     {
       "id": "BGR_banev_industrija",
-      "name": "Banev Industrija",
+      "name": "Banev Zemedelie",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2463,
@@ -207,7 +207,7 @@
     },
     {
       "id": "BGR_tomov_industrija",
-      "name": "Tomov Industrija",
+      "name": "Tomov Targovija",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2244,
@@ -216,7 +216,7 @@
     },
     {
       "id": "BGR_zografski_transport",
-      "name": "Zografski Transport",
+      "name": "Zografski Zemedelie",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2315,
@@ -234,7 +234,7 @@
     },
     {
       "id": "BGR_rizov_logistika",
-      "name": "Rizov Logistika",
+      "name": "Rizov Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2340,
@@ -243,7 +243,7 @@
     },
     {
       "id": "BGR_ivanov_zastrahovane",
-      "name": "Ivanov Zastrahovane",
+      "name": "Ivanov Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2355,
@@ -252,7 +252,7 @@
     },
     {
       "id": "BGR_panayotov_transport",
-      "name": "Panayotov Transport",
+      "name": "Panayotov Targovija",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2231,
@@ -261,7 +261,7 @@
     },
     {
       "id": "BGR_obretenov_materiali",
-      "name": "Obretenov Materiali",
+      "name": "Obretenov Zemedelie",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2519,
@@ -270,7 +270,7 @@
     },
     {
       "id": "BGR_banev_logistika",
-      "name": "Banev Logistika",
+      "name": "Banev Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2241,
@@ -306,7 +306,7 @@
     },
     {
       "id": "BGR_uzunov_logistika",
-      "name": "Uzunov Logistika",
+      "name": "Uzunov Grupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18809,
@@ -342,7 +342,7 @@
     },
     {
       "id": "BGR_elenkov_zastrahovane",
-      "name": "Elenkov Zastrahovane",
+      "name": "Elenkov Industrija",
       "sector": "industry",
       "share": 0.0286,
       "headcount": 17761,
@@ -351,7 +351,7 @@
     },
     {
       "id": "BGR_rusinov_transport",
-      "name": "Rusinov Transport",
+      "name": "Rusinov Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19249,
@@ -360,7 +360,7 @@
     },
     {
       "id": "BGR_enchev_targovija",
-      "name": "Enchev Targovija",
+      "name": "Enchev Energija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20102,
@@ -369,7 +369,7 @@
     },
     {
       "id": "BGR_simeonov_targovija",
-      "name": "Simeonov Targovija",
+      "name": "Simeonov Energija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18542,
@@ -387,7 +387,7 @@
     },
     {
       "id": "BGR_elenkov_targovija",
-      "name": "Elenkov Targovija",
+      "name": "Elenkov Stroitelstvo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22049,
@@ -405,7 +405,7 @@
     },
     {
       "id": "BGR_todorov_targovija",
-      "name": "Todorov Targovija",
+      "name": "Todorov Grupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18496,
@@ -414,7 +414,7 @@
     },
     {
       "id": "BGR_tomov_zastrahovane",
-      "name": "Tomov Zastrahovane",
+      "name": "Tomov Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19983,
@@ -423,7 +423,7 @@
     },
     {
       "id": "BGR_elenkov_zemedelie",
-      "name": "Elenkov Zemedelie",
+      "name": "Elenkov Materiali",
       "sector": "industry",
       "share": 0.0269,
       "headcount": 16540,
@@ -432,7 +432,7 @@
     },
     {
       "id": "BGR_lazarov_transport",
-      "name": "Lazarov Transport",
+      "name": "Lazarov Grupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19522,
@@ -441,7 +441,7 @@
     },
     {
       "id": "BGR_hadjivasilev_zastrahovane",
-      "name": "Hadjivasilev Zastrahovane",
+      "name": "Hadjivasilev Industrija",
       "sector": "industry",
       "share": 0.029,
       "headcount": 20161,
@@ -468,7 +468,7 @@
     },
     {
       "id": "BGR_chervenkov_targovija",
-      "name": "Chervenkov Targovija",
+      "name": "Chervenkov Stroitelstvo",
       "sector": "industry",
       "share": 0.0163,
       "headcount": 11622,
@@ -486,25 +486,25 @@
     },
     {
       "id": "BGR_todorov_industrija",
-      "name": "Todorov Industrija",
+      "name": "Todorov Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24370,
       "city": "BG34_sliven",
       "tier": "body"
     },
     {
       "id": "BGR_penev_materiali",
-      "name": "Penev Materiali",
+      "name": "Penev Targovija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22729,
       "city": "BG34_stara_zagora",
       "tier": "body"
     },
     {
       "id": "BGR_obretenov_energija",
-      "name": "Obretenov Energija",
+      "name": "Obretenov Logistika",
       "sector": "services",
       "share": 0.0113,
       "headcount": 17737,
@@ -525,22 +525,22 @@
       "name": "Chervenkov Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24440,
       "city": "BG31_pleven",
       "tier": "body"
     },
     {
       "id": "BGR_mihov_zemedelie",
-      "name": "Mihov Zemedelie",
+      "name": "Mihov Zastrahovane",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23526,
       "city": "BG41_sofia",
       "tier": "body"
     },
     {
       "id": "BGR_tomov_zemedelie",
-      "name": "Tomov Zemedelie",
+      "name": "Tomov Grupa",
       "sector": "services",
       "share": 0.014,
       "headcount": 20002,
@@ -549,7 +549,7 @@
     },
     {
       "id": "BGR_varbanov_industrija",
-      "name": "Varbanov Industrija",
+      "name": "Varbanov Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24952,
@@ -558,7 +558,7 @@
     },
     {
       "id": "BGR_cholakov_materiali",
-      "name": "Cholakov Materiali",
+      "name": "Cholakov Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22892,
@@ -576,7 +576,7 @@
     },
     {
       "id": "BGR_aleksiev_stroitelstvo",
-      "name": "Aleksiev Stroitelstvo",
+      "name": "Aleksiev Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24208,
@@ -594,7 +594,7 @@
     },
     {
       "id": "BGR_aleksiev_materiali",
-      "name": "Aleksiev Materiali",
+      "name": "Aleksiev Zastrahovane",
       "sector": "services",
       "share": 0.0069,
       "headcount": 10682,
@@ -603,7 +603,7 @@
     },
     {
       "id": "BGR_rusinov_stroitelstvo_transport",
-      "name": "Rusinov Stroitelstvo Transport",
+      "name": "Rusinov Transport",
       "sector": "services",
       "share": 0.0148,
       "headcount": 21428,
@@ -612,7 +612,7 @@
     },
     {
       "id": "BGR_yanev_stroitelstvo",
-      "name": "Yanev Stroitelstvo",
+      "name": "Yanev Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22666,
@@ -621,7 +621,7 @@
     },
     {
       "id": "BGR_naydenov_zemedelie",
-      "name": "Naydenov Zemedelie",
+      "name": "Naydenov Zastrahovane",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23137,
@@ -630,10 +630,10 @@
     },
     {
       "id": "BGR_vulkov_stroitelstvo",
-      "name": "Vulkov Stroitelstvo",
+      "name": "Vulkov Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24423,
       "city": "BG41_sofia",
       "tier": "body"
     },
@@ -642,7 +642,7 @@
       "name": "Kojuharov Zastrahovane",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22895,
       "city": "BG33_varna",
       "tier": "body"
     },
@@ -669,22 +669,22 @@
       "name": "Mihov Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23968,
       "city": "BG42_plovdiv",
       "tier": "body"
     },
     {
       "id": "BGR_varbanov_stroitelstvo",
-      "name": "Varbanov Stroitelstvo",
+      "name": "Varbanov Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22846,
       "city": "BG31_pleven",
       "tier": "body"
     },
     {
       "id": "BGR_radanov_stroitelstvo",
-      "name": "Radanov Stroitelstvo",
+      "name": "Radanov Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23185,
@@ -702,10 +702,10 @@
     },
     {
       "id": "BGR_hristov_materiali",
-      "name": "Hristov Materiali",
+      "name": "Hristov Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23843,
       "city": "BG41_pernik",
       "tier": "body"
     },
@@ -720,10 +720,10 @@
     },
     {
       "id": "BGR_ignatov_industrija",
-      "name": "Ignatov Industrija",
+      "name": "Ignatov Targovija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24631,
       "city": "BG42_plovdiv",
       "tier": "body"
     },
@@ -738,7 +738,7 @@
     },
     {
       "id": "BGR_kolarov_energija",
-      "name": "Kolarov Energija",
+      "name": "Kolarov Zastrahovane",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24116,
@@ -756,7 +756,7 @@
     },
     {
       "id": "BGR_krastev_stroitelstvo",
-      "name": "Krastev Stroitelstvo",
+      "name": "Krastev Logistika",
       "sector": "services",
       "share": 0.0102,
       "headcount": 15606,
@@ -774,7 +774,7 @@
     },
     {
       "id": "BGR_zografski_energija",
-      "name": "Zografski Energija",
+      "name": "Zografski Zastrahovane",
       "sector": "services",
       "share": 0.012,
       "headcount": 16520,
@@ -783,25 +783,25 @@
     },
     {
       "id": "BGR_miladinov_energija",
-      "name": "Miladinov Energija",
+      "name": "Miladinov Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23872,
       "city": "BG41_sofia",
       "tier": "body"
     },
     {
       "id": "BGR_varbanov_materiali",
-      "name": "Varbanov Materiali",
+      "name": "Varbanov Zastrahovane",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24228,
       "city": "BG34_burgas",
       "tier": "body"
     },
     {
       "id": "BGR_naydenov_industrija",
-      "name": "Naydenov Industrija",
+      "name": "Naydenov Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24424,
@@ -810,10 +810,10 @@
     },
     {
       "id": "BGR_dimitrov_industrija",
-      "name": "Dimitrov Industrija",
+      "name": "Dimitrov Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24569,
       "city": "BG34_burgas",
       "tier": "body"
     },
@@ -828,7 +828,7 @@
     },
     {
       "id": "BGR_minev_zemedelie",
-      "name": "Minev Zemedelie",
+      "name": "Minev Targovija",
       "sector": "services",
       "share": 0.0136,
       "headcount": 19142,
@@ -855,10 +855,10 @@
     },
     {
       "id": "BGR_yanev_industrija",
-      "name": "Yanev Industrija",
+      "name": "Yanev Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23727,
       "city": "BG41_pernik",
       "tier": "body"
     },

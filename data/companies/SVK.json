@@ -14,7 +14,7 @@
     },
     {
       "id": "SVK_turcek_doprava",
-      "name": "Turček Doprava",
+      "name": "Turček Obchod",
       "sector": "agriculture",
       "share": 0.223,
       "headcount": 16513,
@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "SVK_estok_materialy",
-      "name": "Estok Materiály",
+      "name": "Estok Obchod",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2246,
@@ -125,7 +125,7 @@
     },
     {
       "id": "SVK_martinak_stavebnictvo",
-      "name": "Martinák Stavebníctvo",
+      "name": "Martinák Skupina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2258,
@@ -134,7 +134,7 @@
     },
     {
       "id": "SVK_fabian_energetika",
-      "name": "Fabian Energetika",
+      "name": "Fabian Obchod",
       "sector": "agriculture",
       "share": 0.0233,
       "headcount": 1718,
@@ -152,7 +152,7 @@
     },
     {
       "id": "SVK_luptak_stavebnictvo",
-      "name": "Lupták Stavebníctvo",
+      "name": "Lupták Poľnohospodárstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2199,
@@ -161,7 +161,7 @@
     },
     {
       "id": "SVK_nadassky_logistika",
-      "name": "Nádašský Logistika",
+      "name": "Nádašský Skupina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2240,
@@ -170,7 +170,7 @@
     },
     {
       "id": "SVK_zigo_priemysel",
-      "name": "Zigo Priemysel",
+      "name": "Zigo Obchod",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2673,
@@ -179,7 +179,7 @@
     },
     {
       "id": "SVK_gaspar_logistika",
-      "name": "Gašpar Logistika",
+      "name": "Gašpar Skupina",
       "sector": "agriculture",
       "share": 0.0203,
       "headcount": 1742,
@@ -188,7 +188,7 @@
     },
     {
       "id": "SVK_mojzis_doprava",
-      "name": "Mojžiš Doprava",
+      "name": "Mojžiš Obchod",
       "sector": "agriculture",
       "share": 0.0106,
       "headcount": 840,
@@ -197,7 +197,7 @@
     },
     {
       "id": "SVK_bertranik_priemysel",
-      "name": "Bertránik Priemysel",
+      "name": "Bertránik Obchod",
       "sector": "agriculture",
       "share": 0.0253,
       "headcount": 1942,
@@ -224,7 +224,7 @@
     },
     {
       "id": "SVK_kostka_energetika",
-      "name": "Kostka Energetika",
+      "name": "Kostka Poľnohospodárstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2596,
@@ -233,7 +233,7 @@
     },
     {
       "id": "SVK_zuffa_energetika",
-      "name": "Žuffa Energetika",
+      "name": "Žuffa Skupina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2394,
@@ -251,7 +251,7 @@
     },
     {
       "id": "SVK_teren_logistika",
-      "name": "Teren Logistika",
+      "name": "Teren Poľnohospodárstvo",
       "sector": "agriculture",
       "share": 0.0185,
       "headcount": 1589,
@@ -260,7 +260,7 @@
     },
     {
       "id": "SVK_labuda_poistenie",
-      "name": "Labuda Poistenie",
+      "name": "Labuda Poľnohospodárstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2603,
@@ -269,7 +269,7 @@
     },
     {
       "id": "SVK_nadassky_materialy_logistika",
-      "name": "Nádašský Materiály Logistika",
+      "name": "Nádašský Poľnohospodárstvo",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2606,
@@ -305,7 +305,7 @@
     },
     {
       "id": "SVK_pupak_obchod",
-      "name": "Pupák Obchod",
+      "name": "Pupák Materiály",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19971,
@@ -314,7 +314,7 @@
     },
     {
       "id": "SVK_durcansky_polnohospodarstvo",
-      "name": "Ďurčanský Poľnohospodárstvo",
+      "name": "Ďurčanský Energetika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22057,
@@ -341,7 +341,7 @@
     },
     {
       "id": "SVK_pupak_doprava",
-      "name": "Pupák Doprava",
+      "name": "Pupák Energetika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21403,
@@ -350,7 +350,7 @@
     },
     {
       "id": "SVK_ferkoly_poistenie",
-      "name": "Ferkoly Poistenie",
+      "name": "Ferkoly Stavebníctvo",
       "sector": "industry",
       "share": 0.0175,
       "headcount": 12391,
@@ -359,7 +359,7 @@
     },
     {
       "id": "SVK_ihrik_doprava",
-      "name": "Ihrík Doprava",
+      "name": "Ihrík Materiály",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21349,
@@ -368,7 +368,7 @@
     },
     {
       "id": "SVK_frano_poistenie",
-      "name": "Fraňo Poistenie",
+      "name": "Fraňo Stavebníctvo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18918,
@@ -377,7 +377,7 @@
     },
     {
       "id": "SVK_cupak_doprava",
-      "name": "Cupák Doprava",
+      "name": "Cupák Stavebníctvo",
       "sector": "industry",
       "share": 0.0242,
       "headcount": 17169,
@@ -386,7 +386,7 @@
     },
     {
       "id": "SVK_pribis_logistika",
-      "name": "Pribiš Logistika",
+      "name": "Pribiš Priemysel",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20223,
@@ -404,7 +404,7 @@
     },
     {
       "id": "SVK_cipov_poistenie",
-      "name": "Cipov Poistenie",
+      "name": "Cipov Energetika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19721,
@@ -431,7 +431,7 @@
     },
     {
       "id": "SVK_martinak_logistika",
-      "name": "Martinák Logistika",
+      "name": "Martinák Energetika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21403,
@@ -440,7 +440,7 @@
     },
     {
       "id": "SVK_novota_logistika",
-      "name": "Novota Logistika",
+      "name": "Novota Priemysel",
       "sector": "industry",
       "share": 0.0195,
       "headcount": 12641,
@@ -467,7 +467,7 @@
     },
     {
       "id": "SVK_mojzis_logistika",
-      "name": "Mojžiš Logistika",
+      "name": "Mojžiš Energetika",
       "sector": "industry",
       "share": 0.0254,
       "headcount": 17712,
@@ -476,7 +476,7 @@
     },
     {
       "id": "SVK_klimko_polnohospodarstvo",
-      "name": "Klimko Poľnohospodárstvo",
+      "name": "Klimko Priemysel",
       "sector": "industry",
       "share": 0.0233,
       "headcount": 15580,
@@ -494,7 +494,7 @@
     },
     {
       "id": "SVK_zigo_doprava",
-      "name": "Zigo Doprava",
+      "name": "Zigo Skupina",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22045,
@@ -512,16 +512,16 @@
     },
     {
       "id": "SVK_hruska_polnohospodarstvo",
-      "name": "Hruška Poľnohospodárstvo",
+      "name": "Hruška Doprava",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23169,
       "city": "SK01_petrzalka",
       "tier": "body"
     },
     {
       "id": "SVK_durcansky_priemysel",
-      "name": "Ďurčanský Priemysel",
+      "name": "Ďurčanský Poistenie",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24626,
@@ -533,31 +533,31 @@
       "name": "Gašpar Doprava",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24960,
       "city": "SK01_bratislava",
       "tier": "body"
     },
     {
       "id": "SVK_vlcek_polnohospodarstvo",
-      "name": "Vlček Poľnohospodárstvo",
+      "name": "Vlček Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24607,
       "city": "SK04_presov",
       "tier": "body"
     },
     {
       "id": "SVK_sokol_stavebnictvo",
-      "name": "Sokol Stavebníctvo",
+      "name": "Sokol Doprava",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24023,
       "city": "SK02_trencin",
       "tier": "body"
     },
     {
       "id": "SVK_jambor_stavebnictvo",
-      "name": "Jambor Stavebníctvo",
+      "name": "Jambor Skupina",
       "sector": "services",
       "share": 0.0139,
       "headcount": 19207,
@@ -593,7 +593,7 @@
     },
     {
       "id": "SVK_erdelyi_stavebnictvo",
-      "name": "Erdélyi Stavebníctvo",
+      "name": "Erdélyi Poistenie",
       "sector": "services",
       "share": 0.0123,
       "headcount": 19334,
@@ -623,16 +623,16 @@
       "name": "Estok Poistenie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24364,
       "city": "SK01_bratislava",
       "tier": "body"
     },
     {
       "id": "SVK_cipov_stavebnictvo_skupina",
-      "name": "Cipov Stavebníctvo Skupina",
+      "name": "Cipov Skupina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23066,
       "city": "SK01_bratislava",
       "tier": "body"
     },
@@ -647,7 +647,7 @@
     },
     {
       "id": "SVK_derer_materialy",
-      "name": "Dérer Materiály",
+      "name": "Dérer Skupina",
       "sector": "services",
       "share": 0.0094,
       "headcount": 14648,
@@ -665,7 +665,7 @@
     },
     {
       "id": "SVK_martinak_obchod_energetika",
-      "name": "Martinák Obchod Energetika",
+      "name": "Martinák Obchod",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24394,
@@ -674,16 +674,16 @@
     },
     {
       "id": "SVK_palarik_priemysel",
-      "name": "Palárik Priemysel",
+      "name": "Palárik Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22907,
       "city": "SK02_trencin",
       "tier": "body"
     },
     {
       "id": "SVK_mojzis_stavebnictvo",
-      "name": "Mojžiš Stavebníctvo",
+      "name": "Mojžiš Skupina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22451,
@@ -701,7 +701,7 @@
     },
     {
       "id": "SVK_estok_energetika_materialy",
-      "name": "Estok Energetika Materiály",
+      "name": "Estok Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23501,
@@ -710,7 +710,7 @@
     },
     {
       "id": "SVK_cupak_materialy",
-      "name": "Cupák Materiály",
+      "name": "Cupák Poistenie",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24761,
@@ -719,7 +719,7 @@
     },
     {
       "id": "SVK_hruska_stavebnictvo",
-      "name": "Hruška Stavebníctvo",
+      "name": "Hruška Poistenie",
       "sector": "services",
       "share": 0.0144,
       "headcount": 22449,
@@ -737,19 +737,19 @@
     },
     {
       "id": "SVK_jambor_materialy",
-      "name": "Jambor Materiály",
+      "name": "Jambor Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24097,
       "city": "SK04_kosice",
       "tier": "body"
     },
     {
       "id": "SVK_mojzis_priemysel",
-      "name": "Mojžiš Priemysel",
+      "name": "Mojžiš Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23118,
       "city": "SK01_bratislava",
       "tier": "body"
     },
@@ -791,16 +791,16 @@
     },
     {
       "id": "SVK_rezeik_materialy",
-      "name": "Rezeik Materiály",
+      "name": "Rezeik Skupina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23269,
       "city": "SK04_kosice",
       "tier": "body"
     },
     {
       "id": "SVK_miklos_energetika",
-      "name": "Mikloš Energetika",
+      "name": "Mikloš Obchod",
       "sector": "services",
       "share": 0.0095,
       "headcount": 14633,
@@ -809,7 +809,7 @@
     },
     {
       "id": "SVK_amtmann_energetika",
-      "name": "Amtmann Energetika",
+      "name": "Amtmann Poistenie",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24065,
@@ -830,13 +830,13 @@
       "name": "Jánoš Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22851,
       "city": "SK03_banska_bystrica",
       "tier": "body"
     },
     {
       "id": "SVK_vranka_stavebnictvo",
-      "name": "Vranka Stavebníctvo",
+      "name": "Vranka Obchod",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23688,
@@ -845,10 +845,10 @@
     },
     {
       "id": "SVK_ihrik_priemysel",
-      "name": "Ihrík Priemysel",
+      "name": "Ihrík Skupina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22820,
       "city": "SK04_kosice",
       "tier": "body"
     },
@@ -863,19 +863,19 @@
     },
     {
       "id": "SVK_klimko_stavebnictvo",
-      "name": "Klimko Stavebníctvo",
+      "name": "Klimko Skupina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23453,
       "city": "SK02_trencin",
       "tier": "body"
     },
     {
       "id": "SVK_cabaj_polnohospodarstvo",
-      "name": "Cabaj Poľnohospodárstvo",
+      "name": "Cabaj Obchod",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23324,
       "city": "SK03_banska_bystrica",
       "tier": "body"
     }

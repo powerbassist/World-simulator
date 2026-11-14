@@ -34,7 +34,7 @@
     },
     {
       "id": "ISL_hauksson_vorustjornun",
-      "name": "Hauksson Vörustjórnun",
+      "name": "Hauksson Orka",
       "sector": "industry",
       "share": 0.0545,
       "headcount": 42655,
@@ -44,7 +44,7 @@
     },
     {
       "id": "ISL_njalsson_flutningar",
-      "name": "Njálsson Flutningar",
+      "name": "Njálsson Byggingar",
       "sector": "industry",
       "share": 0.0351,
       "headcount": 22938,
@@ -74,7 +74,7 @@
     },
     {
       "id": "ISL_valdottir_byggingar",
-      "name": "Valdóttir Byggingar",
+      "name": "Valdóttir Flutningar",
       "sector": "services",
       "share": 0.0299,
       "headcount": 38396,
@@ -104,7 +104,7 @@
     },
     {
       "id": "ISL_njalsson_flutningar_landbunadur",
-      "name": "Njálsson Flutningar Landbúnaður",
+      "name": "Njálsson Flutningar",
       "sector": "services",
       "share": 0.0365,
       "headcount": 69842,
@@ -146,7 +146,7 @@
   "body": [
     {
       "id": "ISL_njalsson_idnadur",
-      "name": "Njálsson Iðnaður",
+      "name": "Njálsson Verslun",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2482,
@@ -155,7 +155,7 @@
     },
     {
       "id": "ISL_runolfsson_tryggingar",
-      "name": "Runólfsson Tryggingar",
+      "name": "Runólfsson Landbúnaður",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2385,
@@ -164,7 +164,7 @@
     },
     {
       "id": "ISL_bragadottir_byggingar",
-      "name": "Bragadóttir Byggingar",
+      "name": "Bragadóttir Landbúnaður",
       "sector": "agriculture",
       "share": 0.0207,
       "headcount": 1576,
@@ -173,7 +173,7 @@
     },
     {
       "id": "ISL_myrdal_efni",
-      "name": "Mýrdal Efni",
+      "name": "Mýrdal Verslun",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2450,
@@ -200,7 +200,7 @@
     },
     {
       "id": "ISL_valdottir_orka",
-      "name": "Valdóttir Orka",
+      "name": "Valdóttir Samstæða",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2569,
@@ -209,7 +209,7 @@
     },
     {
       "id": "ISL_ulfarsson_vorustjornun",
-      "name": "Úlfarsson Vörustjórnun",
+      "name": "Úlfarsson Verslun",
       "sector": "agriculture",
       "share": 0.0257,
       "headcount": 2091,
@@ -227,7 +227,7 @@
     },
     {
       "id": "ISL_finnsson_idnadur",
-      "name": "Finnsson Iðnaður",
+      "name": "Finnsson Landbúnaður",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2490,
@@ -236,7 +236,7 @@
     },
     {
       "id": "ISL_runolfsson_efni",
-      "name": "Runólfsson Efni",
+      "name": "Runólfsson Samstæða",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2203,
@@ -254,7 +254,7 @@
     },
     {
       "id": "ISL_tryggvason_flutningar",
-      "name": "Tryggvason Flutningar",
+      "name": "Tryggvason Verslun",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2269,
@@ -263,7 +263,7 @@
     },
     {
       "id": "ISL_eiriksdottir_vorustjornun",
-      "name": "Eiríksdóttir Vörustjórnun",
+      "name": "Eiríksdóttir Landbúnaður",
       "sector": "agriculture",
       "share": 0.0119,
       "headcount": 989,
@@ -281,7 +281,7 @@
     },
     {
       "id": "ISL_jonsdottir_idnadur",
-      "name": "Jónsdóttir Iðnaður",
+      "name": "Jónsdóttir Landbúnaður",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2281,
@@ -290,7 +290,7 @@
     },
     {
       "id": "ISL_palsson_verslun",
-      "name": "Pálsson Verslun",
+      "name": "Pálsson Efni",
       "sector": "industry",
       "share": 0.0133,
       "headcount": 9271,
@@ -299,7 +299,7 @@
     },
     {
       "id": "ISL_finnsson_verslun",
-      "name": "Finnsson Verslun",
+      "name": "Finnsson Efni",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21379,
@@ -308,7 +308,7 @@
     },
     {
       "id": "ISL_sverrisson_flutningar",
-      "name": "Sverrisson Flutningar",
+      "name": "Sverrisson Byggingar",
       "sector": "industry",
       "share": 0.0121,
       "headcount": 7522,
@@ -326,7 +326,7 @@
     },
     {
       "id": "ISL_sindradottir_tryggingar",
-      "name": "Sindradóttir Tryggingar",
+      "name": "Sindradóttir Samstæða",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22036,
@@ -335,7 +335,7 @@
     },
     {
       "id": "ISL_leifsson_vorustjornun",
-      "name": "Leifsson Vörustjórnun",
+      "name": "Leifsson Iðnaður",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21840,
@@ -353,7 +353,7 @@
     },
     {
       "id": "ISL_grimsson_vorustjornun",
-      "name": "Grímsson Vörustjórnun",
+      "name": "Grímsson Samstæða",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18454,
@@ -362,7 +362,7 @@
     },
     {
       "id": "ISL_sverrisson_landbunadur",
-      "name": "Sverrisson Landbúnaður",
+      "name": "Sverrisson Efni",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21975,
@@ -407,7 +407,7 @@
     },
     {
       "id": "ISL_sverrisson_vorustjornun_landbunadur",
-      "name": "Sverrisson Vörustjórnun Landbúnaður",
+      "name": "Sverrisson Iðnaður",
       "sector": "industry",
       "share": 0.0216,
       "headcount": 13415,
@@ -425,7 +425,7 @@
     },
     {
       "id": "ISL_leifsson_flutningar",
-      "name": "Leifsson Flutningar",
+      "name": "Leifsson Orka",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19162,
@@ -452,7 +452,7 @@
     },
     {
       "id": "ISL_tryggvason_tryggingar",
-      "name": "Tryggvason Tryggingar",
+      "name": "Tryggvason Samstæða",
       "sector": "industry",
       "share": 0.022,
       "headcount": 13462,
@@ -461,7 +461,7 @@
     },
     {
       "id": "ISL_grimsson_flutningar_efni",
-      "name": "Grímsson Flutningar Efni",
+      "name": "Grímsson Efni",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20739,
@@ -470,7 +470,7 @@
     },
     {
       "id": "ISL_egilsson_landbunadur",
-      "name": "Egilsson Landbúnaður",
+      "name": "Egilsson Iðnaður",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18300,
@@ -479,7 +479,7 @@
     },
     {
       "id": "ISL_bragadottir_vorustjornun_orka",
-      "name": "Bragadóttir Vörustjórnun Orka",
+      "name": "Bragadóttir Orka",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20366,
@@ -488,7 +488,7 @@
     },
     {
       "id": "ISL_myrdal_tryggingar",
-      "name": "Mýrdal Tryggingar",
+      "name": "Mýrdal Efni",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20068,
@@ -506,7 +506,7 @@
     },
     {
       "id": "ISL_njalsson_byggingar",
-      "name": "Njálsson Byggingar",
+      "name": "Njálsson Samstæða",
       "sector": "services",
       "share": 0.0137,
       "headcount": 21569,
@@ -515,7 +515,7 @@
     },
     {
       "id": "ISL_asgeirsdottir_landbunadur_flutningar",
-      "name": "Ásgeirsdóttir Landbúnaður Flutningar",
+      "name": "Ásgeirsdóttir Flutningar",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24120,
@@ -527,7 +527,7 @@
       "name": "Daníelsson Verslun",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24444,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -542,7 +542,7 @@
     },
     {
       "id": "ISL_kolbeinsson_byggingar",
-      "name": "Kolbeinsson Byggingar",
+      "name": "Kolbeinsson Tryggingar",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23233,
@@ -578,7 +578,7 @@
     },
     {
       "id": "ISL_ingvarsson_byggingar",
-      "name": "Ingvarsson Byggingar",
+      "name": "Ingvarsson Verslun",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23066,
@@ -587,7 +587,7 @@
     },
     {
       "id": "ISL_asgeirsdottir_idnadur",
-      "name": "Ásgeirsdóttir Iðnaður",
+      "name": "Ásgeirsdóttir Tryggingar",
       "sector": "services",
       "share": 0.0152,
       "headcount": 21419,
@@ -623,7 +623,7 @@
     },
     {
       "id": "ISL_jokulsson_landbunadur",
-      "name": "Jökulsson Landbúnaður",
+      "name": "Jökulsson Vörustjórnun",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24669,
@@ -632,7 +632,7 @@
     },
     {
       "id": "ISL_vidarsson_byggingar_orka",
-      "name": "Viðarsson Byggingar Orka",
+      "name": "Viðarsson Flutningar",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22775,
@@ -641,16 +641,16 @@
     },
     {
       "id": "ISL_vidarsson_orka",
-      "name": "Viðarsson Orka",
+      "name": "Viðarsson Tryggingar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24463,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
     {
       "id": "ISL_kjartansdottir_landbunadur_vorustjornun",
-      "name": "Kjartansdóttir Landbúnaður Vörustjórnun",
+      "name": "Kjartansdóttir Vörustjórnun",
       "sector": "services",
       "share": 0.0096,
       "headcount": 14531,
@@ -668,7 +668,7 @@
     },
     {
       "id": "ISL_oskarsson_byggingar",
-      "name": "Óskarsson Byggingar",
+      "name": "Óskarsson Flutningar",
       "sector": "services",
       "share": 0.0096,
       "headcount": 13427,
@@ -695,16 +695,16 @@
     },
     {
       "id": "ISL_bragadottir_efni",
-      "name": "Bragadóttir Efni",
+      "name": "Bragadóttir Tryggingar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24242,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
     {
       "id": "ISL_grimsson_byggingar",
-      "name": "Grímsson Byggingar",
+      "name": "Grímsson Vörustjórnun",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23321,
@@ -713,10 +713,10 @@
     },
     {
       "id": "ISL_myrdal_orka",
-      "name": "Mýrdal Orka",
+      "name": "Mýrdal Flutningar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23841,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -731,10 +731,10 @@
     },
     {
       "id": "ISL_myrdal_idnadur",
-      "name": "Mýrdal Iðnaður",
+      "name": "Mýrdal Tryggingar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23819,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -752,16 +752,16 @@
       "name": "Finnsson Tryggingar",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23050,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
     {
       "id": "ISL_palsson_idnadur",
-      "name": "Pálsson Iðnaður",
+      "name": "Pálsson Verslun",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23375,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -779,7 +779,7 @@
       "name": "Jökulsson Samstæða",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22673,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -803,7 +803,7 @@
     },
     {
       "id": "ISL_kolbeinsson_landbunadur",
-      "name": "Kolbeinsson Landbúnaður",
+      "name": "Kolbeinsson Verslun",
       "sector": "services",
       "share": 0.011,
       "headcount": 18040,
@@ -812,7 +812,7 @@
     },
     {
       "id": "ISL_oskarsson_efni",
-      "name": "Óskarsson Efni",
+      "name": "Óskarsson Vörustjórnun",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24225,
@@ -830,10 +830,10 @@
     },
     {
       "id": "ISL_asgeirsdottir_flutningar_efni",
-      "name": "Ásgeirsdóttir Flutningar Efni",
+      "name": "Ásgeirsdóttir Samstæða",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23617,
       "city": "IS00_reykjavik",
       "tier": "body"
     },
@@ -848,7 +848,7 @@
     },
     {
       "id": "ISL_palsson_byggingar",
-      "name": "Pálsson Byggingar",
+      "name": "Pálsson Tryggingar",
       "sector": "services",
       "share": 0.0138,
       "headcount": 18643,
@@ -857,7 +857,7 @@
     },
     {
       "id": "ISL_myrdal_byggingar",
-      "name": "Mýrdal Byggingar",
+      "name": "Mýrdal Samstæða Verslun",
       "sector": "services",
       "share": 0.0048,
       "headcount": 7778,

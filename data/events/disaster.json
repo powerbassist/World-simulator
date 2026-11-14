@@ -39,6 +39,7 @@
         {
           "id": "buy_the_front_row",
           "label": "Buy the front row out",
+          "short": "Buy the seafront",
           "summary": "The state buys the seafront street by street and lets the beach have it back. The owners are made whole once; the town loses its postcard, its season and its tax base in the same Gazette.",
           "effects": {
             "spending_pct_gdp": {
@@ -56,6 +57,7 @@
         {
           "id": "old_line",
           "label": "Repair to the old line",
+          "short": "Rebuild as was",
           "summary": "The wall goes back to the height that failed and the argument goes back to the committee that has held it for a decade. The next surge is booked by the tide tables, not the committee.",
           "default": true,
           "effects": {
@@ -90,6 +92,7 @@
         {
           "id": "reforest_the_plan",
           "label": "Reforest to the plan",
+          "short": "Reforest",
           "summary": "Twenty years of trees planted in twelve months of contracts. The hills are green on the schedule, the grazing is closed while it happens, and the grazers are at the ministry by the second month.",
           "effects": {
             "company": {
@@ -112,6 +115,7 @@
         {
           "id": "open_the_hills",
           "label": "Clear the fuel and open the hills",
+          "short": "Clear the hills",
           "summary": "Firebreaks, controlled burns and the hill farms back on land the trees had. The fire service calls it fuel management; the walking clubs call it the end of the woods, and both write to you.",
           "effects": {
             "company": {
@@ -131,6 +135,7 @@
         {
           "id": "let_scrub_decide",
           "label": "Let the scrub decide",
+          "short": "Let scrub decide",
           "summary": "It decides for the fast cheap species and for the next fire's fuel. The valley keeps the view and loses the shade, and the second part is the one the summer proves.",
           "default": true,
           "effects": {
@@ -165,6 +170,7 @@
         {
           "id": "sign_the_order",
           "label": "Sign the order as written",
+          "short": "Sign as written",
           "summary": "The towns keep their water and the fields carry the cut. The harvest comes in smaller by the ministry's own estimate, which the union reads aloud at every market from here to autumn.",
           "effects": {
             "company": {
@@ -184,6 +190,7 @@
         {
           "id": "carry_the_towns",
           "label": "Carry the towns instead",
+          "short": "Carry the towns",
           "summary": "The irrigation holds and the tankers run to the villages the mains were never extended to. The bill lands on the interior line at summer rates and the cities read about it in the same sentence as their taps.",
           "effects": {
             "spending_pct_gdp": {
@@ -235,6 +242,7 @@
         {
           "id": "commission_now",
           "label": "Commission the crossing now",
+          "short": "Build it now",
           "summary": "A design-and-build contract is signed in six weeks on a site the coroner has not released, and the crossing opens in three years. The auditor opens before that, which is the price of the speed.",
           "effects": {
             "spending_pct_gdp": {
@@ -271,6 +279,7 @@
         {
           "id": "wait_inquiry",
           "label": "Wait for the inquiry",
+          "short": "Wait for inquiry",
           "summary": "It reports in fourteen months with three recommendations and a resignation, and the detour is a habit by then. Habits are taxes the valley pays without an invoice.",
           "default": true,
           "effects": {
@@ -305,6 +314,7 @@
         {
           "id": "say_the_state_knew",
           "label": "Say the state knew",
+          "short": "Admit state knew",
           "summary": "The minister reads the inspection history to the cameras, which is either the end of a career or the beginning of a programme. The strengthening starts at the failed reach and the budget line finally exists, with the ministry's initials on it.",
           "effects": {
             "spending_pct_gdp": {
@@ -323,6 +333,7 @@
         {
           "id": "call_it_unprecedented",
           "label": "Call it an unprecedented event",
+          "short": "Unprecedented",
           "summary": "The third-highest flood in a decade is unprecedented in the way the ministry needs it to be. The repairs are patched to the old line and the next inspection is scheduled for after the next flood.",
           "effects": {
             "bloc_offset": {
@@ -337,6 +348,7 @@
         {
           "id": "compensate_and_move",
           "label": "Compensate and move on",
+          "short": "Pay and move on",
           "summary": "The claims are paid from the reserve at the speed reserves pay, and the levee is rebuilt to the height it failed at. The villages are grateful twice: for the money, and later for knowing exactly what the state thinks a village is worth.",
           "default": true,
           "effects": {
@@ -374,6 +386,7 @@
         {
           "id": "pay_the_peak",
           "label": "Pay whatever the peak costs",
+          "short": "Pay the peak",
           "summary": "The interconnects buy from wherever the wind is and the bill is settled in the spring, at the rate a cold week costs when it is bought warm. The hospitals hold their ward temperatures and the operator keeps the receipts.",
           "effects": {
             "spending_pct_gdp": {
@@ -392,6 +405,7 @@
         {
           "id": "hold_the_peak",
           "label": "Ask industry to hold its peak",
+          "short": "Ask industry",
           "summary": "The furnaces cool by roster for twelve nights. The grid holds, the night shifts are paid anyway, and the mills' accountants spend January explaining February to their opposite numbers.",
           "effects": {
             "company": {
@@ -411,6 +425,7 @@
         {
           "id": "price_does_it",
           "label": "Let the price do it",
+          "short": "Let price do it",
           "summary": "The price does it. The old houses with the old boilers find out what a cold week costs at the new tariff, and the mortality register finds out in March.",
           "default": true,
           "effects": {
@@ -445,6 +460,7 @@
         {
           "id": "build_the_drainage",
           "label": "Build the drainage the file named",
+          "short": "Build drainage",
           "summary": "The scheme in the annex is built as drawn, which ends the argument by ending the hill's interest in it. The communes split the maintenance and resume the argument on schedule.",
           "effects": {
             "spending_pct_gdp": {
@@ -462,6 +478,7 @@
         {
           "id": "redraw_the_line",
           "label": "Redraw the line and buy the forty",
+          "short": "Redraw the line",
           "summary": "The hazard line is redrawn honestly and the forty houses are bought at pre-slide values. The village moves up the hill intact, which no plan dared promise, and the old street becomes a meadow with a history.",
           "effects": {
             "spending_pct_gdp": {
@@ -479,6 +496,7 @@
         {
           "id": "watch_the_hill",
           "label": "Clear the road and watch the hill",
+          "short": "Watch the hill",
           "summary": "The road opens in a month with the monitoring stakes in beside it. The geologist's line stays a sentence in an annex until the hill moves again, and the annex is where the forty houses will still be living.",
           "default": true,
           "effects": {
@@ -513,6 +531,7 @@
         {
           "id": "house_the_camps",
           "label": "House the camps before winter",
+          "short": "House the camps",
           "summary": "Modular housing on the parade grounds by the month's end, the army erecting it and the prefect counting it. The camps empty on a schedule, which no disaster plan has ever dared promise.",
           "effects": {
             "spending_pct_gdp": {
@@ -531,6 +550,7 @@
         {
           "id": "condemn_and_clear",
           "label": "Condemn and clear the old town",
+          "short": "Clear old town",
           "summary": "The unsafe orders go out in the week and the demolition goes in by the autumn. The rebuild is a decade and the argument about the facades is a career, and both start in the spring.",
           "effects": {
             "spending_pct_gdp": {
@@ -549,6 +569,7 @@
         {
           "id": "insure_and_improvise",
           "label": "Insure and improvise",
+          "short": "Improvise",
           "summary": "The claims are processed at the speed the claims office has and the camps empty when they empty. The retrofit programme is announced in the spring, funded in the autumn and audited never.",
           "default": true,
           "effects": {
@@ -601,6 +622,7 @@
         {
           "id": "appeal_for_solidarity",
           "label": "Appeal for EU solidarity",
+          "short": "Appeal to the EU",
           "summary": "The Union's solidarity fund answers in nine months, if it answers. The appeal photographs well in the capital; in the valley it reads as a government waiting for Brussels while the cellars are still wet.",
           "effects": {
             "spending_pct_gdp": {
@@ -619,6 +641,7 @@
         {
           "id": "let_the_water_go",
           "label": "Let the water go down first",
+          "short": "Let water fall",
           "summary": "The assessment comes first, the cameras leave, and by the time the plan is ready the money's best use has gone with the water. The valley keeps the mud and the memory.",
           "default": true,
           "effects": {
@@ -659,6 +682,7 @@
         {
           "id": "declare_emergency",
           "label": "Declare a health emergency",
+          "short": "Health emergency",
           "summary": "The wards reopen, the street-by-street visits to the elderly start tomorrow, and the deferrals stop. The health line carries the bill for the rest of the term, and business carries the midday stop.",
           "effects": {
             "spending_pct_gdp": {

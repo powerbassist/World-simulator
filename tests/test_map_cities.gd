@@ -24,7 +24,7 @@ func _nations() -> Array:
 	var ids: Array = _main._loader.nations.keys()
 	ids.sort()
 	return ids
-const EXPECTED_CITIES := 1373  # geography-model.md's volume clause (<= 1 800 cities, V3.3), re-checked at V4.11a2 (41 nations); CITY_MIN_POP 58000 held so the 29's cities stay byte-identical
+const EXPECTED_CITIES := 1367  # geography-model.md's volume clause (<= 1 800 cities, V3.3), re-checked at V4.11a2 (41 nations); CITY_MIN_POP 58000 held so the 29's cities stay byte-identical; V5.3 a: -6, import_data's drop_commune_parts (Gare, Maison Blanche, Juan-les-Pins, Deurne, Wattenscheid, Lido di Ostia are districts)
 
 var _failures: Array[String] = []
 var _main

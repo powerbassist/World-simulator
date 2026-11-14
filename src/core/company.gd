@@ -84,6 +84,14 @@ var tier: String = "major"
 ## CompaniesLoader.validate_companies, the way party ids resolve for people.
 var chief_id: String = ""
 
+## V5.3 a (screen 5, the goods): what a major makes, as good ids from
+## data/commodities/goods.json -- the link from a firm to the goods table, so
+## the Sectors tab can say which of its majors makes a good. Majors only (the
+## body is acted upon and has no line), and every id resolves and falls in the
+## firm's own sector by the goods' category (CompaniesLoader.validate_companies);
+## optional, because only the playable nations' majors carry one yet.
+var products: Array[String] = []
+
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
 	var c := new()
@@ -159,8 +167,19 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 		else:
 			c.chief_id = d["chief_id"]
 
+	if d.has("products"):
+		var raw = d["products"]
+		if typeof(raw) != TYPE_ARRAY or (raw as Array).is_empty():
+			errors.append("%s: %s field 'products' must be a non-empty array of good ids" % [filename, path])
+		else:
+			for g in raw:
+				if typeof(g) != TYPE_STRING or g == "" or c.products.has(g):
+					errors.append("%s: %s products holds a non-string, empty or repeated good id '%s'" % [filename, path, str(g)])
+				else:
+					c.products.append(g)
+
 	for key in d.keys():
-		if key != "id" and key != "name" and key != "sector" and key != "share" 				and key != "headcount" and key != "city" and key != "tier" and key != "chief_id":
+		if key != "id" and key != "name" and key != "sector" and key != "share" 				and key != "headcount" and key != "city" and key != "tier" and key != "chief_id" and key != "products":
 			errors.append("%s: %s has unrecognised field '%s' -- revenue is share x sector output and is never authored, and a firm carries no owner, margin or productivity term" % [
 				filename, path, key
 			])
