@@ -44,6 +44,7 @@
    "tests/test_findable_terms.gd",
    "tests/test_hold_reason.gd",
    "tests/test_region_funds.gd",
+   "tests/test_screen_reads.gd",
    "tests/test_siting.gd",
    "tests/test_energy.gd",
    "tests/test_calendar_panel.gd",
