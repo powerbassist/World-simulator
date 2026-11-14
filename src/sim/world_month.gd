@@ -53,6 +53,7 @@ extends RefCounted
 const Division = preload("res://src/sim/division.gd")
 const BillQueue = preload("res://src/sim/bill_queue.gd")
 const Regions = preload("res://src/sim/regions.gd")
+const GoodsRead = preload("res://src/sim/goods_read.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Commodities = preload("res://src/sim/commodities.gd")
@@ -250,6 +251,8 @@ static func _step(month: Month, step: String) -> Array:
 		# tests/test_commodities.gd holds only Economy < Commodities < Opinion).
 		"Commodities":
 			Commodities.tick_month(state, loader)
+			# V5.3 e PR B: the world price ring the goods screen reads; nothing reads it back.
+			GoodsRead.record(state)
 		"Budget":
 			Budget.tick_month(state)
 		# Between Budget and Opinion, and both halves of that are load-bearing. AFTER

@@ -1,12 +1,12 @@
 ~ start
 Chancellor Vogler: Herr President, my officials have drawn a high-speed line from Strasbourg to Dresden. It is either a bridge between our peoples or the most expensive tunnel in Saxony.
-- Offer to co-finance the line => cofinance
-- Suggest a freight corridor first => freight
-- Ask about Berlin's defence spending instead => defence_ask
+- Offer to co-finance the line [#id:cofinance] => cofinance
+- Suggest a freight corridor first [#id:freight] => freight
+- Ask about Berlin's defence spending instead [#id:defence_ask] => defence_ask
 ~ cofinance
 Chancellor Vogler: Co-financing, from Paris? Then we must decide who owns the sleepers, which is where every European railway has gone to die.
-- Commit French money now => rail_commit
-- Insist on a joint operating company => rail_company
+- Commit French money now [#id:rail_commit] => rail_commit
+- Insist on a joint operating company [#id:rail_company] => rail_company
 ~ rail_commit
 Chancellor Vogler: Then the line will have a groundbreaking, a ribbon, and a French subsidy, in that order of importance.
 => END
@@ -15,8 +15,8 @@ Chancellor Vogler: A joint company. Eighteen months of lawyers, and then a train
 => END
 ~ freight
 Chancellor Vogler: Freight is honest work. Nobody cuts a ribbon for a wagon of steel, but the Ruhr will remember who made it cheaper.
-- Back the freight corridor => freight_yes
-- Keep it to a feasibility paper => freight_paper
+- Back the freight corridor [#id:freight_yes] => freight_yes
+- Keep it to a feasibility paper [#id:freight_paper] => freight_paper
 ~ freight_yes
 Chancellor Vogler: Good. My transport minister will faint, and then she will send you flowers.
 => END
@@ -25,8 +25,8 @@ Chancellor Vogler: A paper. Our officials will each write half and disagree abou
 => END
 ~ defence_ask
 Chancellor Vogler: Berlin spends what the Bundestag permits, which is never what Paris asks. But you may try, between the rivers.
-- Press for a joint procurement pact => procure
-- Drop it and enjoy the journey => drop_it
+- Press for a joint procurement pact [#id:procure] => procure
+- Drop it and enjoy the journey [#id:drop_it] => drop_it
 ~ procure
 Chancellor Vogler: A pact. Our generals would have to share a catalogue. I give it a year before someone claims it was their idea.
 => END
