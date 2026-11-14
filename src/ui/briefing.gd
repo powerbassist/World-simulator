@@ -1,45 +1,20 @@
 extends PanelContainer
 
-## The bill briefing -- V4.2 T5. One popup over a bill the player is about to
-## put to the assembly (opened on Propose, for authored and composed laws
-## alike) or has just drafted (opened by the tax panel's compose flow, where
-## it carries the drafting months). What it says and the ONE source it reads:
+## The bill briefing -- V4.2 T5. One popup over a bill the player is about to put to the
+## assembly or has just drafted (opened by the tax panel's compose flow, where it carries the
+## drafting months). Since V5.3 screen 4 the law sheet holds the same sections inline and
+## divides on its own Propose; this popup remains for the bills the sheet does not carry: a
+## draft, and an ownership bill (bill_button.gd).
 ##
-##   - the channels, direction and magnitude, walked off the bill's effects
-##     dictionary by effect_lines() below -- one walk, and the attribution
-##     sentence at the top is those same lines joined, so the prose and the
-##     rows cannot drift the way two walkers would;
-##   - the bill's political price, per bloc, at the LANDED value --
-##     clampf(value, LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX) -- because the
-##     clamp is what the applier will actually write. T3's sweep recorded that
-##     the derived price can QUOTE past the bound (urban +1.325 on a
-##     half|max spec), so a quoted-but-never-landing figure is displayed only
-##     as a note beside the landed one, never as the number;
-##   - the target, for a repeal draft, with the negated ledger it was shown
-##     at draft time;
-##   - the two commissioned polls: the assembly forecast for the bill (firm
-##     down to ABSTAIN_BAND where the assembly poll was bought) and the
-##     country's bloc read at the poll's margin -- PollNoise's ordinary band,
-##     or displayed_precise's +-1.0 where the popular poll was bought.
-##
-## Reads simulation state and never writes it; the single exception is the
-## two commission buttons, which send player intent back as one explicit
-## command -- Statute.buy_poll(). The division itself is not this panel's:
-## its Propose verb routes through main.gd into law_panel.run_proposal(), so
-## one propose path and one card path survive however the bill was asked for.
+## What it says is briefing_sections.gd's -- the channels, the landed price, the two polls --
+## so the popup and the sheet cannot disagree. Its one verb of its own: Propose routes through
+## main.gd into law_panel.run_proposal(), so one propose path and one card path survive
+## however the bill was asked for.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
-const Labels = preload("res://src/ui/labels.gd")
-const LK = preload("res://src/sim/legislature_constants.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
-const Trends = preload("res://src/ui/trends.gd")
-const Strings = preload("res://src/ui/strings.gd")
-const Num = preload("res://src/ui/num.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
-const Statute = preload("res://src/sim/statute.gd")
-const StatuteK = preload("res://src/sim/statute_constants.gd")
-const PollStrip = preload("res://src/ui/poll_strip.gd")
-const MeasurePolls = preload("res://src/sim/measure_polls.gd")
+const Sections = preload("res://src/ui/briefing_sections.gd")
 
 ## Emitted for the division, and ONLY for the division: main.gd hides the
 ## briefing and calls law_panel.run_proposal(law), whose `proposed` signal
@@ -66,6 +41,7 @@ var _ns = null
 var _party_list: Array = []
 
 var _body: VBoxContainer
+var _sections: Sections = null
 
 
 func _ready() -> void:
@@ -91,6 +67,7 @@ func _ready() -> void:
 	_body.add_theme_constant_override("separation", 12)
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_body)
+	hide()  # main.gd adds it to the screen stack and shows it on a bill's asking
 
 
 ## A bill on the book -- authored, or a composed law past its drafting.
@@ -134,37 +111,30 @@ func detach() -> void:
 	_law = null
 	_draft = {}
 	_bill_key = ""
+	if _sections != null:
+		_sections.detach()
 
 
 func _rebuild() -> void:
 	for child in _body.get_children():
 		child.queue_free()
+	_sections = Sections.new(_state, _loader, _law, _scale, _draft, _bill_key, _rebuild, polled.emit)
 
-	PanelKit.line(_body, tr("BILL BRIEFING — %s") % _bill_name(), PanelKit.Tone.PLAIN)
-
-	# The attribution sentence IS the channel walk -- joined lines, not a
-	# second description of the same effects. A bill that names no channel
-	# (a pure birth, or a pure repeal) prints no sentence: the sections below
-	# say what there is to say. Each line is a whole sentence with its own full
-	# stop, so they are joined by a space and nothing is added (QA #50: ". " plus
-	# a final "." printed every stop twice).
+	PanelKit.line(_body, tr("BILL BRIEFING — %s") % _sections.bill_name(), PanelKit.Tone.PLAIN)
 	if _law != null and _scale != 1.0:
 		PanelKit.line(_body, tr("At %s.") % LawGrade.size_text(_law, _scale), PanelKit.Tone.PLAIN)
-	var effects: Dictionary = _read().effects if _law != null else _draft.get("channels", {})
-	var lines := effect_lines(effects, _ns)
-	if not lines.is_empty():
-		PanelKit.line(_body, " ".join(lines), PanelKit.Tone.PLAIN)
-	var repeal_text := _repeal_line()
-	if repeal_text != "":
-		PanelKit.line(_body, repeal_text, PanelKit.Tone.PLAIN)
-
-	_build_price()
+	_sections.channels(_body)
+	_sections.price(_body)
 
 	if not _draft.is_empty():
 		var months := int(_draft.get("months_left", 0))
 		PanelKit.line(_body, tr_n("In drafting: %d month before it reaches the order paper.", "In drafting: %d months before it reaches the order paper.", months) % months, PanelKit.Tone.PLAIN)
 
-	_build_polls()
+	# The Assembly's read: the same walk the legislature window prints, at the band this bill's purchases buy.
+	var assembly := ""
+	if _law != null:
+		assembly = LawPanel.forecast_text(_ns, _party_list, LawGrade.read(_ns, _law, _scale), LawPanel.forecast_band(_ns, _bill_key))
+	_sections.polls(_body, assembly)
 
 	var buttons := HBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_END
@@ -182,252 +152,3 @@ func _rebuild() -> void:
 	close_btn.text = tr("Close")
 	close_btn.pressed.connect(func(): hide())
 	buttons.add_child(close_btn)
-
-
-## The bill as it reads at the player's grade. _law stays the row: the sim grades it once.
-func _read():
-	return LawGrade.read(_ns, _law, _scale)
-
-
-func _bill_name() -> String:
-	if _law != null:
-		return String(Strings.law_name(_law))
-	return String(_draft.get("name", _bill_key))  # i18n: row-ok a drafted bill's composed name, not a data row
-
-
-## What the bill does to the statue book's target, named for a player who
-## will not know the id. Authored targets come off the loader; a composed
-## target off the register it lives in.
-func _repeal_line() -> String:
-	var target := ""
-	if _law != null:
-		target = String(_law.repeals)
-	elif not _draft.is_empty():
-		target = String(_draft.get("repeals", ""))
-	if target == "":
-		return ""
-	for law in _loader.laws:
-		if String(law.id) == target:
-			return tr("Repeals: %s.") % String(Strings.law_name(law))
-	var custom: Dictionary = _ns.custom_laws.get(target, {})
-	if not custom.is_empty():
-		return tr("Repeals: %s.") % String(custom.get("name", target))  # i18n: row-ok a composed law's name, not a data row
-	return tr("Repeals: %s.") % target
-
-
-## -- The price ---------------------------------------------------------------
-
-## The bill's political price at what the applier will actually WRITE. The
-## derived quote can sit past the +-1.0 clamp (T3's recorded bound), so every
-## figure shown here is the landed one and a quote that exceeded the bound is
-## a note beside it, never the number itself.
-func _build_price() -> void:
-	var section := PanelKit.section(_body, tr("The price"))
-	var price: Dictionary = _read().effects.get("bloc_offset", {}) if _law != null else _draft.get("price", {})
-	if price.is_empty():
-		PanelKit.line(section, tr("The book prices this bill at no bloc directly."), PanelKit.Tone.DIM)
-		return
-
-	var offended: Array = []
-	for bloc in price:
-		var quote := float(price[bloc])
-		var landed := clampf(quote, LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
-		var shown := Num.fs(landed, 2)
-		if absf(quote) > absf(landed) + 0.005:
-			shown += tr("  (priced %s, lands clamped)") % Num.fs(quote, 2)
-		PanelKit.row(section, Labels.bloc(bloc), shown,
-			PanelKit.Tone.BAD if landed < 0.0 else PanelKit.Tone.GOOD)
-		if landed < 0.0:
-			offended.append(Labels.bloc(bloc))
-	if offended.is_empty():
-		PanelKit.line(section, tr("It offends no bloc outright."), PanelKit.Tone.DIM)
-	else:
-		PanelKit.line(section, tr("It offends: %s.") % ", ".join(offended), PanelKit.Tone.PLAIN)
-
-	# The reversal preview is the record of what the player was SHOWN at draft
-	# time -- the passage subtracts the target's LIVE ledger, so these lines
-	# are a briefing, not the mechanism. include_bloc is TRUE here: a negated
-	# ledger carries the bloc deltas the repeal will actually re-apply, and
-	# dropping them showed a preview that named every channel but the one a
-	# political-price-bearing repeal most moves (the ultra pass-2 finding).
-	if not _draft.is_empty():
-		var negated: Dictionary = _draft.get("negated", {})
-		if not negated.is_empty():
-			PanelKit.heading(section, tr("It reverses"))
-			for line in effect_lines(negated, _ns, true):
-				PanelKit.line(section, line, PanelKit.Tone.DIM)
-
-
-## -- The polls ---------------------------------------------------------------
-
-func _build_polls() -> void:
-	var section := PanelKit.section(_body, tr("The polls"))
-
-	# The assembly read. For a law, the same walk the legislature window
-	# prints -- LawPanel's static, so the two windows cannot disagree about a
-	# division -- at the band this bill's purchases buy. A draft has no
-	# division to forecast until it reaches the order paper.
-	if _law != null:
-		var band := LawPanel.forecast_band(_ns, _bill_key)
-		PanelKit.line(section, tr("The Assembly: %s") % LawPanel.forecast_text(
-			_ns, _party_list, _read(), band), PanelKit.Tone.PLAIN)
-	else:
-		PanelKit.line(section, tr("Drafting first; when it completes, the bill waits on your Propose in the Legislature."), PanelKit.Tone.DIM)
-
-	# The country's read: what the player has bought, and the tiers they can buy. A bill that
-	# has reached the order paper keeps its draft's key, the id it carries.
-	PollStrip.build(section, _state, _loader, _bill_key, _on_poll)
-	_build_whip_count(section)
-
-
-## V4.2's priced whip count stays (the parent's ruling on #304): the tiers read the country,
-## and this alone firms the Assembly's forecast for this bill. The sim's own price and refusal.
-func _build_whip_count(section: Control) -> void:
-	var whip := PanelKit.sized(Button.new())
-	whip.name = "AssemblyPoll"  # i18n: ok a node name, found by tests
-	whip.text = tr("Commission an assembly poll — €%s k") % Num.f(StatuteK.poll_cost_eur_bn(StatuteK.POLL_KIND_ASSEMBLY) * 1.0e6, 0)
-	if (_ns.poll_purchases.get(_bill_key, {}) as Dictionary).has(StatuteK.POLL_KIND_ASSEMBLY):
-		whip.disabled = true
-		whip.tooltip_text = tr("Commissioned — the figures it bought are fixed.")
-	else:
-		whip.pressed.connect(_on_whip)
-	section.add_child(whip)
-	# One line, filled only by a refusal: an empty label is no line at all.
-	var refusal := Label.new()
-	refusal.name = "RefusalLine"  # i18n: ok a node name, found by tests
-	refusal.hide()
-	section.add_child(refusal)
-
-
-func _on_whip() -> void:
-	# As _on_poll: a hidden panel's stale signal must not charge the discarded game.
-	if _state == null:
-		return
-	var before := Trends.snapshot_now(_state)
-	var result: Dictionary = Statute.buy_poll(_state, _ns, _bill_key, StatuteK.POLL_KIND_ASSEMBLY)
-	if bool(result.get("refused", false)):
-		var refusal: Label = _body.find_child("RefusalLine", true, false)
-		if refusal != null:
-			refusal.text = String(result.get("refusal", tr("Refused.")))
-			refusal.show()
-		return
-	polled.emit(before, tr("Commissioned an assembly poll: %s") % _bill_name())
-	_rebuild()
-
-
-func _on_poll(tier: String) -> void:
-	# A hidden panel's stale signal must not act: after detach() the state is the discarded
-	# game, and the commission would charge the dead run's debt.
-	if _state == null:
-		return
-	var before := Trends.snapshot_now(_state)
-	if bool(MeasurePolls.commission(_state, _loader, _bill_key, tier)["ok"]):
-		polled.emit(before, tr("Commissioned a poll: %s") % _bill_name())
-	_rebuild()
-
-
-## -- The ONE effects walk ----------------------------------------------------
-
-## Human lines for a bill's channels -- direction and magnitude, one walk
-## over the effects dictionary that both the rows and the attribution
-## sentence read. `bloc_offset` is skipped by default: it is the price, and
-## the price has its own section above -- rendering it here too would print
-## every price row twice. THE ONE EXCEPTION is the reversal walk, which passes
-## `include_bloc`: a negated ledger's bloc deltas are not the price, they are
-## what the repeal re-applies, so the preview renders them as reversal lines
-## rather than dropping the one channel the bill most directly moves (the
-## ultra pass-2 finding). THE SCALAR SHAPES BOTH EXIST HERE: a spec's scalars
-## are bare floats and a negated ledger's are {"": value} keyed by the empty
-## string (legislature.gd's ledger shape), and _scalar_of() reads either, so
-## the reversal preview rides this same walk instead of a second one.
-static func effect_lines(effects: Dictionary, _nation, include_bloc := false) -> Array[String]:
-	var out: Array[String] = []
-	for key in effects.get("tax_rates_pct", {}):
-		var v := float(effects["tax_rates_pct"][key])
-		out.append((Strings.t("Raises %s by %s points.") if v > 0.0 else Strings.t("Lowers %s by %s points.")) % [
-			_tax_label(String(key)), Num.f(absf(v), 1)])
-	for key in effects.get("spending_pct_gdp", {}):
-		var v := float(effects["spending_pct_gdp"][key])
-		out.append((Strings.t("Raises %s spending by %s%% of GDP.") if v > 0.0 else Strings.t("Cuts %s spending by %s%% of GDP.")) % [
-			String(key), Num.f(absf(v), 2)])
-	if effects.has("structural_unemployment_pct"):
-		var v: float = _scalar_of(effects["structural_unemployment_pct"])
-		out.append((Strings.t("Adds %s points of structural unemployment.") if v > 0.0 else Strings.t("Takes %s points of structural unemployment.")) % Num.f(absf(v), 2))
-	if effects.has("potential_growth_pct"):
-		var v: float = _scalar_of(effects["potential_growth_pct"])
-		out.append((Strings.t("Lifts potential growth by %s points a year.") if v > 0.0 else Strings.t("Lowers potential growth by %s points a year.")) % Num.f(absf(v), 2))
-	if effects.has("other_revenue_pct_gdp"):
-		var v: float = _scalar_of(effects["other_revenue_pct_gdp"])
-		out.append((Strings.t("Raises %s%% of GDP in other revenue.") if v > 0.0 else Strings.t("Forgoes %s%% of GDP in other revenue.")) % Num.f(absf(v), 2))
-	if effects.has("company"):
-		var company: Dictionary = effects["company"]
-		# TWO SHAPES, the dual reading _scalar_of() gives the scalars above: a
-		# bill's effects carry {"sector": ..., "burden": ...}, and a negated
-		# ledger carries {sector: delta} keyed by the sector itself
-		# (legislature.gd's ledger shape -- _subtract_ledger's own comment
-		# records that the two differ). Without the second reading, a
-		# regulation repeal's "It reverses" preview dropped the one line it
-		# exists to show.
-		if company.has("sector") and company.has("burden"):
-			var v := absf(float(company.get("burden", 0.0)))
-			if v != 0.0:
-				var up: bool = float(company.get("burden", 0.0)) > 0.0
-				out.append((Strings.t("Imposes a burden of %s on the %s sector.") if up else Strings.t("Lifts a burden of %s on the %s sector.")) % [
-					Num.f(v, 2), Labels.sector(String(company.get("sector", "")))])
-		else:
-			for sector in company:
-				var ledger_v := float(company[sector])
-				if ledger_v != 0.0:
-					out.append((Strings.t("Imposes a burden of %s on the %s sector.") if ledger_v > 0.0 else Strings.t("Lifts a burden of %s on the %s sector.")) % [
-						Num.f(absf(ledger_v), 2), Labels.sector(String(sector))])
-	for term in effects.get("society", {}):
-		var v: float = _scalar_of(effects["society"][term])
-		if v != 0.0:
-			out.append(_society_line(String(term), v))
-	if include_bloc:
-		for bloc in effects.get("bloc_offset", {}):
-			var v := float(effects["bloc_offset"][bloc])
-			if v != 0.0:
-				out.append(Strings.t("Moves the %s bloc's approval price by %s.") % [
-					Labels.bloc(String(bloc)), Num.fs(v, 2)])
-	return out
-
-
-## Authored keys carry prose labels. The player-composed key and its
-## register-read name retired at V5.3 e; a key outside the five (none can
-## land) prints as its id, the spending lines' own fallback.
-static func _tax_label(key: String) -> String:
-	var authored := {
-		"income": Strings.t("the income tax rate"),
-		"corporate": Strings.t("the corporate tax rate"),
-		"vat": "VAT",
-		"capital_gains": Strings.t("the capital gains tax rate"),
-		"wealth": Strings.t("the wealth tax rate"),
-	}
-	return String(authored.get(key, key))
-
-
-## The five society terms, phrased by the stance they name. The SIGN is the
-## direction (law.gd's schema: signed stances -- still true now the repeal verb
-## exists (V4.2): repeal removes whole acts or nothing, it never moves a stance
-## partway), so the phrase map carries the pair and the walker only picks the side.
-static func _society_line(term: String, v: float) -> String:
-	var up := v > 0.0
-	match term:
-		"corruption":
-			return Strings.t("Loosens the anti-corruption stance.") if up else Strings.t("Tightens the anti-corruption stance.")
-		"migration":
-			return Strings.t("Opens migration.") if up else Strings.t("Tightens migration.")
-		"settlement":
-			return Strings.t("Settles with the unions.") if up else Strings.t("Takes a harder line with the unions.")
-		"press_freedom":
-			return Strings.t("Loosens the press laws.") if up else Strings.t("Tightens the press laws.")
-		"judicial_independence":
-			return Strings.t("Strengthens the courts' independence.") if up else Strings.t("Curbs the courts' independence.")
-	return (Strings.t("Raises the %s stance by %s.") if up else Strings.t("Lowers the %s stance by %s.")) % [term, Num.f(absf(v), 2)]
-
-
-static func _scalar_of(value) -> float:
-	if typeof(value) == TYPE_DICTIONARY:
-		return float(value.get("", 0.0))
-	return float(value)

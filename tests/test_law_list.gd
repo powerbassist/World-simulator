@@ -48,6 +48,9 @@ func _process(_delta: float) -> bool:
 		16:
 			if _laws().selected_id() != _target_id:
 				_fail("a refresh dropped the selection (%s, wanted %s)" % [_laws().selected_id(), _target_id])
+			_check_polls_closed()
+			_laws()._detail.find_child("PollIt", true, false).pressed.emit()
+		20:
 			_check_propose()
 			_finish()
 			return true
@@ -157,8 +160,34 @@ func _check_selected() -> void:
 		_fail("the detail does not spell the forecast out")
 
 
+## V5.3 screen 4 PR 2b: the sheet carries the briefing's price and polls inline, a poll bought there
+## books the baseline the popup's does (`polled`), and Propose divides at once -- no popup between.
+func _check_polls_closed() -> void:
+	if not _text(_laws()._detail).to_lower().contains("the price"):
+		_fail("the sheet carries no price section")
+	if _laws()._detail.find_child("AssemblyPoll", true, false) != null:
+		_fail("the polls stand open before 'Poll it' was pressed")
+	if _laws()._detail.find_child("PollIt", true, false) == null:
+		_fail("the sheet has no 'Poll it'")
+
+
 func _check_propose() -> void:
-	_main._law_panel.brief_requested.connect(func(law): _briefed.append(law.id))
+	var panel = _main._law_panel
+	if not _text(_laws()._detail).to_lower().contains("the polls"):
+		_fail("'Poll it' did not open the polls")
+	var whip: Button = _laws()._detail.find_child("AssemblyPoll", true, false)
+	if whip == null:
+		_fail("the sheet has no assembly poll to commission")
+	else:
+		var polled := []
+		panel.polled.connect(func(_before, label): polled.append(label))
+		var debt: float = _main._state.player().debt_eur_bn
+		whip.pressed.emit()
+		if polled.size() != 1 or _main._state.player().debt_eur_bn <= debt:
+			_fail("a poll bought on the sheet booked %d baselines and moved the debt %.6f" % [polled.size(), _main._state.player().debt_eur_bn - debt])
+	panel.brief_requested.connect(func(law): _briefed.append(law.id))
+	var proposed := []
+	panel.proposed.connect(func(_before, law_name, _result): proposed.append(law_name))
 	var propose: Button = null
 	for b in _laws()._detail.find_children("*", "Button", true, false):
 		if (b as Button).text == "Propose":
@@ -167,8 +196,11 @@ func _check_propose() -> void:
 		_fail("the detail has no Propose")
 		return
 	propose.pressed.emit()
-	if _briefed != [_target_id]:
-		_fail("Propose in the detail asked for %s, not the selected law" % [_briefed])
+	var law = panel._find_law(_target_id)
+	if proposed != [Strings.law_name(law)]:
+		_fail("Propose in the detail divided %s, not the selected law" % [proposed])
+	if not _briefed.is_empty():
+		_fail("Propose in the detail still asks for the briefing popup")
 
 
 func _text(node: Node) -> String:

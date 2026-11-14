@@ -439,7 +439,7 @@ func _check_a_detached_briefing_charges_nothing() -> void:
 	var ns = _ns()
 	var debt := float(ns.debt_eur_bn)
 	_main._briefing.detach()
-	_main._briefing._on_poll("deep")
+	_main._briefing._sections._on_poll("deep")
 	if float(ns.debt_eur_bn) != debt:
 		_fail("a stale press after detach charged the dead run")
 

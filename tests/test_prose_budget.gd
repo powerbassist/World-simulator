@@ -54,7 +54,7 @@ const PENDING := {}
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
-const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 443, "region": 250, "events": 95, "commodities": 210,
+const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "region": 250, "events": 95, "commodities": 210,
 	"companies": 145}
 const TOTAL_PENDING := {
 	"budget": 113, "calendar": 34, "campaign": 140,
@@ -79,8 +79,10 @@ const TOTAL_PENDING := {
 ## screen-4 build (laws B) redraws the Tax Code and brings it back down. One of the
 ## nineteen words is the File tab's (#333), measured on the same merge. Screen 4's second PR
 ## takes the hemicycle off the Bills tab (it is the forecast bar's hover now, 520 -> 443 on the tab)
-## and adds the shelf and the search: 2970 -> 2946.
-const TOTAL_SUM_CEILING := 2946
+## and adds the shelf and the search: 2970 -> 2946. Its third (2b), a stated rise 2946 -> 2953, asked
+## of the parent in the PR body: the law sheet carries the briefing's price per bloc (a heading and
+## the bloc names, 5 words) and "Poll it" (2), the polls themselves folded behind it, 450 on the tab.
+const TOTAL_SUM_CEILING := 2953
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
