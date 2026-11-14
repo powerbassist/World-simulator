@@ -252,6 +252,7 @@
    "tests/test_statute_assembly.gd",
    "tests/test_event_content.gd",
    "tests/test_tax.gd",
+   "tests/test_ledger_box.gd",
    "tests/test_party_money.gd",
    "tests/test_pledges.gd",
    "tests/test_events.gd",

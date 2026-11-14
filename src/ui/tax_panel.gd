@@ -26,6 +26,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const LedgerBox = preload("res://src/ui/ledger_box.gd")
 
 ## The one lever that is not a key in `tax_rates_pct`: it sets no rate, has
 ## no base and collects nothing -- budget_panel's PROGRESSIVITY_KEY comment,
@@ -139,29 +140,29 @@ func _ensure_rows() -> void:
 		var name_label := Label.new()
 		name_label.text = _label_for(String(key))
 		name_label.custom_minimum_size.x = 150
+		# What the rate IS, in the library's own words: a tax's unit differs (a percentage, an
+		# index of the schedule in force, euro a litre).
+		if _state.player().tax_library.has(key):
+			var row: Dictionary = _state.player().tax_library[key]
+			name_label.tooltip_text = Strings.row("taxes", String(key), "rate_meaning", String(row.get("rate_meaning", "")))
+			name_label.mouse_filter = Control.MOUSE_FILTER_PASS
 		_rates_grid.add_child(name_label)
 
 		var slider := HSlider.new()
 		slider.min_value = _lever_min(String(key))
 		slider.max_value = _lever_max(String(key))
-		# The budget panel's grain rule, moved with the sliders: a tenth of a
-		# point over a seventy-point span, hundredths where the whole span is
-		# a few points (wealth's stock-scale rate, the bracket index).
-		slider.step = 0.01 if String(key) == "wealth" or String(key) == PROGRESSIVITY_KEY else 0.1
+		# One step per kind, the sim's (TaxLibrary.step_pct: a twentieth of the range, rounded to
+		# 1-2-5); the typed box beside it takes the exact figure. The brackets index is no kind.
+		slider.step = 0.01 if String(key) == PROGRESSIVITY_KEY else TaxLibrary.step_pct(_state.player(), String(key))
 		slider.custom_minimum_size.x = 220
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.value_changed.connect(_on_lever_changed.bind(String(key)))
 		_rates_grid.add_child(slider)
 		_sliders[key] = slider
 
-		# THE RATE AS A NUMBER, the ask this panel exists to answer: the live
-		# figure printed beside its slider, where budget's old grid carried
-		# it too -- the number is the point of the row, not a tooltip on it.
-		var value_label := Label.new()
-		value_label.custom_minimum_size.x = 60
-		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		_rates_grid.add_child(value_label)
-		_lever_values[key] = value_label
+		# THE RATE AS A NUMBER, the ask this panel exists to answer: the figure beside its slider,
+		# which is also the box the player types an exact rate into (ledger_box.gd).
+		_lever_values[key] = LedgerBox.attach(_rates_grid, slider.min_value, slider.max_value, _on_typed.bind(String(key)))
 		_yield_labels[key] = EffectsStrip.cell(_rates_grid)
 		_effect_labels[key] = EffectsStrip.cell(_rates_grid)
 
@@ -309,6 +310,20 @@ func _on_lever_changed(value: float, key: String) -> void:
 	_dirty = true
 
 
+## A rate typed into its box: the drafted rate exactly, the slider only following it.
+func _on_typed(value: float, key: String) -> void:
+	var slider: HSlider = _sliders[key]
+	slider.set_block_signals(true)
+	slider.value = value
+	slider.set_block_signals(false)
+	if key == PROGRESSIVITY_KEY:
+		_pending[PROGRESSIVITY_KEY] = value
+	else:
+		_pending["tax_rates_pct"][key] = value
+	_edited_keys[key] = true
+	_dirty = true
+
+
 func _pending_value(key: String) -> float:
 	if key == PROGRESSIVITY_KEY:
 		return float(_pending.get(PROGRESSIVITY_KEY, TaxK.PROGRESSIVITY_BASE))
@@ -360,17 +375,15 @@ func _resync_untouched() -> void:
 ## figure, which is what "the rate" means -- the player reads it against the
 ## slider's position, not against a unit the label's caption already states.
 func _lever_text(key: String) -> String:
-	var value := _pending_value(key)
-	if key == "wealth" or key == PROGRESSIVITY_KEY:
-		return PanelKit.Num.f(value, 2)
-	return PanelKit.Num.f(value, 1)
+	var places := 2 if key == PROGRESSIVITY_KEY else TaxLibrary.step_decimals(_state.player(), key)
+	return LedgerBox.text(_pending_value(key), places)
 
 
 func _refresh() -> void:
 	_ensure_rows()
 	_withdraw_button.visible = FinanceBill.FinanceBillLaw.tabled(_state.player()) != null
 	for key in _lever_keys():
-		_lever_values[key].text = _lever_text(String(key))
+		LedgerBox.show(_lever_values[key], _lever_text(String(key)))
 	if _now_books.is_empty():
 		_now_books = EffectsStrip.books(_state, {})
 	for key in _lever_keys():

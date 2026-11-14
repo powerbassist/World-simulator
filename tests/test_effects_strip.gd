@@ -247,6 +247,8 @@ func _check_tax_rates() -> void:
 			step = 0.2
 		elif key == TaxPanel.PROGRESSIVITY_KEY:
 			step = (TaxK.PROGRESSIVITY_MAX - TaxK.PROGRESSIVITY_MIN) * 0.1
+		# The slider snaps to the sim's step for the kind (TaxLibrary.step_pct): a smaller move is none.
+		step = maxf(step, slider.step)
 		slider.value = _target(slider.value, slider.min_value, slider.max_value, step)
 		_tax._refresh()
 		var shown: float = float(_tax._effects.get(key, NAN))
@@ -273,7 +275,9 @@ func _check_tax_rates() -> void:
 ## nothing of it rides this tab's figures.
 func _check_both_drafts() -> void:
 	var ns = _state_c.player()
-	var tax_draft := {"tax_rates_pct": {"income": float(ns.tax_rates_pct["income"]) + 2.0}}
+	# At least one slider step: the slider snaps to the sim's step for the kind (TaxLibrary.step_pct).
+	var move := maxf(2.0, _tax_c._sliders["income"].step)
+	var tax_draft := {"tax_rates_pct": {"income": float(ns.tax_rates_pct["income"]) + move}}
 	_tax_c._sliders["income"].value = float(tax_draft["tax_rates_pct"]["income"])
 	_budget_c._sliders["health"].value = float(ns.spending_pct_gdp["health"]) + 1.0
 	_budget_c._refresh()
