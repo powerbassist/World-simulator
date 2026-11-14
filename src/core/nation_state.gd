@@ -850,6 +850,15 @@ var last_law_result := {}
 ## nothing waiting, which is what the absent key reads.
 var tabled_bill := {}
 
+## V5.3 e, PR 2. The queue of three behind the slot (docs/design/finance-bill.md section
+## 10): up to BillQueue.SIZE entries in the player's order, each what a tabling would
+## carry, {law_id, scale, referendum, force} or {finance: deltas, force}. Written only by
+## src/sim/bill_queue.gd; its head is tabled at the close, after the division. absent_ok:
+## an older save had no queue, and an empty one is the truth about it. Starts empty on a
+## new NationState, which is every new game's: legislature.gd, where the slot is reset, is
+## at its size ratchet.
+var bill_queue: Array = []
+
 
 # --- Diplomacy (V1.3a) ---------------------------------------------------------
 

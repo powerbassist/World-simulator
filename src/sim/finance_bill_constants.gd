@@ -39,3 +39,10 @@ const REF_SIZE := 1.0
 
 ## The name a tabled finance bill carries on the law surfaces.
 const BILL_NAME := "Finance bill"  # i18n: msgid
+
+## The range check at tabling (section 10, the parent's ruling on #334's call 2): a rate
+## row's live rate plus its delta may sit this far past its kind's `rate_range_pct` and
+## still table. A panel builds the delta as its target minus the live rate, so the sum
+## can miss a bound the slider itself reached by a rounding step; a point in a billion is
+## far below anything a slider or a row can mean.
+const RANGE_TOLERANCE := 1e-9

@@ -22,6 +22,8 @@ extends RefCounted
 ##
 ## `report` keys, each present once its step has run:
 ##   division          Division.divide's result, {} when nothing was tabled (V5.2 b+ R2)
+##   queue             BillQueue.promote's results, the queue's heads tabled or refused at
+##                     this close, in order; absent when nothing was queued (V5.3 e PR 2)
 ##   history_entry     Budget.snapshot merged with Opinion.snapshot, undated
 ##   character_acts    Characters.tick_month's acts (Array)
 ##   audience_requests Audiences.tick_month's {arrived, lapsed} (V5.2b)
@@ -49,6 +51,7 @@ extends RefCounted
 ## first unit, `after` behind its last.
 
 const Division = preload("res://src/sim/division.gd")
+const BillQueue = preload("res://src/sim/bill_queue.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -200,6 +203,11 @@ static func _step(month: Month, step: String) -> Array:
 			month.report["division"] = division
 			if not division.is_empty():
 				Calendar.settle_tabled(state, String(division["law_id"]), bool(division["passed"]))
+			# V5.3 e PR 2: the slot is free, so the queue's head is tabled for the month
+			# the caller has moved to. No key when nothing was queued.
+			var queue := BillQueue.promote(state, loader)
+			if not queue.is_empty():
+				month.report["queue"] = queue
 		# Before the fade, so a poll reads what the month's division read. The caller has moved
 		# the month already and the day is stale, so the close stands on the first of the new
 		# month: what fell due by then arrives, and what is due later waits for the next close.

@@ -282,6 +282,7 @@ const FIELDS := [
 	["audience_lane_start", SCALAR, VALUE, -1, true],  # pre-gate B: absent stamps at the next tick
 	["act_bloc_offset", DEEP, FLOAT_MAP_TYPED, {}, true],  # V5.2b: absent is acts priced as permanent
 	["tabled_bill", DEEP, COPIED, {}, true],  # V5.2 b+ R2: absent is nothing before the Assembly
+	["bill_queue", DEEP, COPIED, [], true],  # V5.3 e PR 2: absent is nothing queued
 	["processes", DEEP, ROWS, [], true],  # V5.3 a: absent is nothing in progress
 	["sector_shares", DEEP, COPIED, {}, true],  # V5.3 a: absent is nothing moved (overrides only)
 	["sector_factor", DEEP, NOT_SAVED, {}, true],  # V5.3 a: derived, re-derived on load (Sectors.rebuild)

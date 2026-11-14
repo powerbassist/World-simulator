@@ -51,9 +51,25 @@ func _init() -> void:
 	_test_a_new_kind_weighs_outside_the_sum()
 	_test_an_override_reaches_revenue_and_not_the_library()
 	_test_a_rate_for_a_kind_not_in_force_is_skipped()
+	_test_a_landed_rate_stays_inside_its_band()
 	_test_the_library_is_not_saved_and_reattaches()
 	_test_the_chooser_ignores_a_kind_not_in_force()
 	_finish()
+
+
+## Hears the push_error a refusal raises (Godot's Logger, the dev log's own way, src/ui/dev_log.gd).
+class ErrorEar extends Logger:
+	var heard: Array[String] = []
+
+	func _log_error(_function: String, _file: String, _line: int, code: String, rationale: String,
+			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+		heard.append(code + " " + rationale)
+
+	func said(words: String) -> bool:
+		for line in heard:
+			if line.contains(words):
+				return true
+		return false
 
 
 func _fra():
@@ -287,11 +303,29 @@ func _test_a_rate_for_a_kind_not_in_force_is_skipped() -> void:
 	var ns = pair[1]
 	ns.tax_rates_pct.erase("wealth")
 	var impulse := float(ns.demand_impulse_pct)
+	var heard := ErrorEar.new()
+	OS.add_logger(heard)
+	## expects-error: budget: pending rate for tax kind 'wealth', which this nation does not levy -- refused
 	Budget.apply_pending(ns, {"tax_rates_pct": {"wealth": 1.0}})
+	OS.remove_logger(heard)
 	if ns.tax_rates_pct.has("wealth"):
 		_failures.append("a law's rate put a kind in force; only the autumn finance bill may")
 	if float(ns.demand_impulse_pct) != impulse:
 		_failures.append("a skipped rate still raised a demand impulse")
+	# QA's R1 on #334: refused out loud, as an unknown key always was, never in silence.
+	if not heard.said("does not levy"):
+		_failures.append("a rate on a kind not in force was refused without a word")
+
+
+## QA's R2 on #334 (the parent, 2026-11-14): the one fiscal writer holds every rate inside
+## its kind's rate_range_pct, so a law or an event delta cannot carry it past its band; the
+## floor at 0 was the low half of the same rule.
+func _test_a_landed_rate_stays_inside_its_band() -> void:
+	var pair: Array = _fra()
+	var ns = pair[1]
+	Budget.apply_pending(ns, {"tax_rates_pct": {"vat": 45.0, "wealth": 5.0, "income": -3.0}})
+	if float(ns.tax_rates_pct["vat"]) != 40.0 or float(ns.tax_rates_pct["wealth"]) != 3.0 or float(ns.tax_rates_pct["income"]) != 0.0:
+		_failures.append("rates past their band landed as %s, not VAT 40, wealth 3, income 0" % [ns.tax_rates_pct])
 
 
 func _test_the_library_is_not_saved_and_reattaches() -> void:

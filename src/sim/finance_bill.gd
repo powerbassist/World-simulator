@@ -33,6 +33,7 @@ const Calendar = preload("res://src/sim/calendar.gd")
 const FrontPage = preload("res://src/sim/front_page.gd")
 const ForcePrice = preload("res://src/sim/force_price.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
+const FK = preload("res://src/sim/finance_bill_constants.gd")
 
 const CHANNELS := ["tax_rates_pct", "spending_pct_gdp"]
 const PROGRESSIVITY := "tax_progressivity"
@@ -73,6 +74,11 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 	var held: Dictionary = ns.tabled_bill
 	if not held.is_empty() and not FinanceBillLaw.is_finance(String(held.get("law_id", ""))):
 		return {"tabled": false, "refused": true, "already_tabled": true}
+	# One budget text at a time (section 10): a finance bill waiting in the queue is the
+	# year's text, so the slot takes no second one beside it. Promotion pops its entry first.
+	for entry in ns.bill_queue:
+		if entry.has("finance"):
+			return {"tabled": false, "refused": true, "finance_queued": true}
 	if force and ns.formation_method != GK.FORCE_FORMATION:
 		return {"tabled": false, "refused": true, "forced": true}
 	var merged: Dictionary = (held.get("finance", {}) as Dictionary).duplicate(true)
@@ -98,6 +104,8 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 	# Checked on the merged bill, so an amendment cannot re-rate a kind an earlier
 	# tabling abolished.
 	var season := _autumn_refusal(state, loader, ns, merged)
+	if season.is_empty():
+		season = _range_refusal(ns, merged)
 	if not season.is_empty():
 		return season
 	var id := String(held.get("law_id", "")) if not held.is_empty() else FinanceBillLaw.id_for(state)
@@ -262,3 +270,18 @@ static func _autumn_refusal(state, loader, ns, bill: Dictionary) -> Dictionary:
 	for kind in bill.get("tax_rates_pct", {}):
 		ok = ok and ns.tax_rates_pct.has(kind) and not gone.has(kind)
 	return {} if ok else {"tabled": false, "refused": true, "kind": true}
+
+
+## Why the bill's rates may not table (section 10, the parent's ruling on #334's call 2):
+## a rate row whose live rate plus its delta leaves its kind's `rate_range_pct`. Read after
+## _autumn_refusal, so every row names a kind in force. Checked at tabling, which for a
+## queued bill is the month it reaches the slot. A rate a law moves between the tabling and
+## the division is not read again: Budget.apply_pending holds the rate inside its band there.
+static func _range_refusal(ns, bill: Dictionary) -> Dictionary:
+	var rows: Dictionary = bill.get("tax_rates_pct", {})
+	for kind in rows:
+		var span: Array = ns.tax_library[kind]["rate_range_pct"]
+		var rate := float(ns.tax_rates_pct[kind]) + float(rows[kind])
+		if rate < float(span[0]) - FK.RANGE_TOLERANCE or rate > float(span[1]) + FK.RANGE_TOLERANCE:
+			return {"tabled": false, "refused": true, "range": true}
+	return {}
