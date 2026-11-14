@@ -242,6 +242,45 @@ Adding a language: a line in `data/i18n/languages.json` and a `data/i18n/<code>/
 (`--todo <code>` builds the first worklist). The Settings row, the loader and the tests
 pick it up.
 
+## API drafts (`tools/translate_api.py`, the 2026-11-14 pilot)
+
+The Claude API may DRAFT a table's translations; a person reviews every draft before it
+reaches `data/i18n/`. The script never writes there.
+
+```bash
+python tools/translate_api.py --table glossary --skill .claude/skills/french-localization/SKILL.md --out reports/translate/glossary.json --dry-run
+python tools/translate_api.py --table glossary --skill .claude/skills/french-localization/SKILL.md --out reports/translate/glossary.json
+python tools/i18n_extract.py --apply reports/translate/glossary.json   # after review
+```
+
+- **Input:** the extractor's untranslated strings of one table, a row's strings together
+  (or, for `ui`, one source file's), with the table and the `src/ui` files that show it.
+  The language skill is the system prompt, cached.
+- **Gates:** every key answered, and the same tokens as the English (the `%` placeholders,
+  `{{variables}}`, `[g=id]` and `[/g]`). A draft that fails one goes to `_rejected` with
+  the reason, never to a slot `--apply` would write. A group the model declines goes there too.
+- **Money:**
+  - the cost is computed from each response's usage at list price;
+  - before a request, its worst case (generous input plus 16 000 output tokens) must still
+    fit under the cap, default and maximum 5 USD, or the run stops and sends nothing more;
+  - a billing error, such as "credit balance is too low", or an authentication error stops
+    it at once, in one line;
+  - the SDK never retries (a retried request could be billed twice), so any error ends the
+    run, and a failed request's worst case is reported as possibly owed.
+
+  The cost is printed and kept in the worklist's `_meta`.
+- **Safety:**
+  - the key comes from the environment through the SDK, and the script never reads or
+    prints it. A real run needs `ANTHROPIC_API_KEY`, and refuses to start if
+    `ANTHROPIC_BASE_URL` (a local router) or `ANTHROPIC_AUTH_TOKEN` (the app's own
+    credential) is set beside it. The text goes to `api.anthropic.com` only, under the API
+    account's key, and the run prints the host it calls;
+  - the skill must be a tracked, unmodified file of the repo, outside `tools/private/`;
+  - a real run refuses a `data/` tree (and `src/ui/` for the `ui` table) with untracked or
+    modified files, so only reviewed, tracked text goes out;
+  - `--dry-run` sends nothing and prints the worst-case cost.
+- `--selftest` runs every rule against a fake client (no network, no key, no SDK); CI runs it.
+
 ## The HUD must fit in every language
 
 The command bar's drawer is the one HUD piece whose width is not fixed (nine entries with
