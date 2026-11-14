@@ -86,7 +86,8 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 		merged[PROGRESSIVITY] = float(bill[PROGRESSIVITY])
 	if bill.has(CREATE):
 		var born: Dictionary = merged.get(CREATE, {})
-		born.merge(bill[CREATE], true)
+		for kind in bill[CREATE]:
+			born[kind] = float(bill[CREATE][kind])
 		merged[CREATE] = born
 	if bill.has(ABOLISH):
 		var gone: Array = merged.get(ABOLISH, [])

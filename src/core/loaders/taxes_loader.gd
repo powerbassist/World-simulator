@@ -150,7 +150,8 @@ static func _is_num(v) -> bool:
 static func read_nation(n, d: Dictionary, fiscal: Dictionary, filename: String, errors: Array[String]) -> void:
 	var rates = fiscal.get("tax_rates_pct")
 	var shares = fiscal.get("tax_base_share", {})
-	var bill = (d.get("government", {}) as Dictionary).get("finance_bill", {})
+	var government = d.get("government", {})
+	var bill = government.get("finance_bill", {}) if government is Dictionary else {}
 	if typeof(rates) != TYPE_DICTIONARY or typeof(shares) != TYPE_DICTIONARY or typeof(bill) != TYPE_DICTIONARY:
 		errors.append("%s: fiscal.tax_rates_pct, fiscal.tax_base_share and government.finance_bill must be objects" % filename)
 		return

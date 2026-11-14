@@ -57,8 +57,10 @@ static func score_choice(ns, choice: Dictionary) -> float:
 	# shortfall is POSITIVE -- E0's finding): revenue-raising adds, spending subtracts.
 	if float(ns.deficit_pct_gdp) > K.CHOOSER_DEFICIT_FLOOR:
 		var balance_delta := 0.0
+		# Only a kind the nation levies (V5.3 e): Budget.apply_pending skips the rest.
 		for tax_key in effects.get("tax_rates_pct", {}):
-			balance_delta += float(effects["tax_rates_pct"][tax_key])
+			if ns.tax_rates_pct.has(tax_key):
+				balance_delta += float(effects["tax_rates_pct"][tax_key])
 		for spend_key in effects.get("spending_pct_gdp", {}):
 			balance_delta -= float(effects["spending_pct_gdp"][spend_key])
 		score += balance_delta * K.CHOOSER_FISCAL_WEIGHT

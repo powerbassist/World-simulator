@@ -36,13 +36,15 @@ static func attach(ns, n, taxes: Dictionary) -> void:
 	ns.tax_library = for_nation(taxes, n.tax_base_share)
 
 
-## The load half. "" when every nation's kinds in force exist in the library this build
-## ships; otherwise the reason the save is refused: a rate with no model behind it reads
-## as nothing in revenue, which is the bump rule's "reads as something wrong".
+## The load half. "" when every nation's kinds in force, and every kind a tabled autumn
+## bill would put in force, exist in the library this build ships; otherwise the reason
+## the save is refused: a rate with no model behind it reads as nothing in revenue, which
+## is the bump rule's "reads as something wrong".
 static func reattach(state, loader) -> String:
 	for id in state.nations:
 		var ns = state.nations[id]
-		for key in ns.tax_rates_pct:
+		var born: Dictionary = (ns.tabled_bill.get("finance", {}) as Dictionary).get("create", {})
+		for key in ns.tax_rates_pct.keys() + born.keys():
 			if not loader.taxes.has(key):
 				return "%s levies the tax '%s', which this build's data/taxes/ does not define" % [id, key]
 		var n = loader.nations.get(id)

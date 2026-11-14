@@ -16,6 +16,7 @@ const Budget = preload("res://src/sim/budget.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
+const EventChooser = preload("res://src/sim/event_chooser.gd")
 
 ## Today's five as the model carried them before the library (economy_constants,
 ## opinion_constants, the Tax Code's LEVER_MAX, finance_bill_constants.ANCHOR): base,
@@ -51,6 +52,7 @@ func _init() -> void:
 	_test_an_override_reaches_revenue_and_not_the_library()
 	_test_a_rate_for_a_kind_not_in_force_is_skipped()
 	_test_the_library_is_not_saved_and_reattaches()
+	_test_the_chooser_ignores_a_kind_not_in_force()
 	_finish()
 
 
@@ -305,6 +307,20 @@ func _test_the_library_is_not_saved_and_reattaches() -> void:
 	ns.tax_rates_pct["poll_tax"] = 1.0
 	if TaxLibrary.reattach(copy, _loader) == "":
 		_failures.append("a save levying a kind the library lacks was not refused")
+	ns.tax_rates_pct.erase("poll_tax")
+	ns.tabled_bill = {"law_id": "finance:1", "finance": {"create": {"poll_tax": 1.0}}}
+	if TaxLibrary.reattach(copy, _loader) == "":
+		_failures.append("a save whose tabled autumn bill births a kind the library lacks was not refused")
+
+
+func _test_the_chooser_ignores_a_kind_not_in_force() -> void:
+	var ns = _fra()[1]
+	ns.deficit_pct_gdp = 10.0
+	var raise := {"effects": {"tax_rates_pct": {"wealth": 1.0}}}
+	var levied := EventChooser.score_choice(ns, raise)
+	ns.tax_rates_pct.erase("wealth")
+	if EventChooser.score_choice(ns, raise) == levied:
+		_failures.append("the AI chooser credits a raise on a tax the nation does not levy")
 
 
 func _finish() -> void:
