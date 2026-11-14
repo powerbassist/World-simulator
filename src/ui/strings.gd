@@ -181,6 +181,13 @@ static func choice_label(event_id: String, choice: Dictionary) -> String:
 	return row("events", event_id, "choices.%s.label" % String(choice.get("id", "")), String(choice.get("label", "")))
 
 
+## The optional button label (event.gd `short`), "" when the choice has none: the page then
+## uses the full label for its button, never a stand-in word.
+static func choice_short(event_id: String, choice: Dictionary) -> String:
+	var english := String(choice.get("short", ""))
+	return "" if english == "" else row("events", event_id, "choices.%s.short" % String(choice.get("id", "")), english)
+
+
 static func choice_summary(event_id: String, choice: Dictionary) -> String:
 	return row("events", event_id, "choices.%s.summary" % String(choice.get("id", "")), String(choice.get("summary", "")))
 

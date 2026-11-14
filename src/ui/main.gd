@@ -903,7 +903,7 @@ func _wire_hud() -> void:
 		if _industry_news.has_card(id):
 			_windows.open("companies")
 			return
-		_windows.open("events")
+		preload("res://src/ui/files_driver.gd").activated(self, id)
 	)
 
 	# V2.9 + V4.4: a decision card's buttons answer the event THAT CARD names --

@@ -14,6 +14,10 @@ extends PanelContainer
 ## V5.1-0c's bug, where Space forfeited the Agenda.
 
 signal go_pressed(index: int)
+## V5.3 screen 3, the month's folder: a file of the desk selected in the list ("" is the month's
+## own page), and a button of the file's page pressed.
+signal file_selected(id: String)
+signal file_pressed(id: String, index: int)
 signal closed
 ## Emitted when the card goes away: the front page waits for it (front_page.gd).
 signal dismissed
@@ -26,8 +30,12 @@ const MoodBadge = preload("res://src/ui/mood_badge.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Grade = preload("res://src/ui/grade.gd")
+const FileView = preload("res://src/ui/file_view.gd")
 
 const SIZE := Vector2(720, 0)
+## The folder's width, with its list of files: the list and a page of three cards.
+const FOLDER_WIDTH := 1240
+const LIST_WIDTH := 300
 const FACE_PX := 72
 const ICON_PX := 20
 const SPARK_SIZE := Vector2(96, 24)
@@ -42,6 +50,11 @@ var _also: HFlowContainer
 var also_buttons: Array[Button] = []
 var _close: Button
 var go_buttons: Array[Button] = []
+var _files: VBoxContainer
+var _month: VBoxContainer
+var _file_slot: VBoxContainer
+var _file_buttons := {}  # id -> its list button ("" is the month's)
+var _selected := ""
 
 
 func _ready() -> void:
@@ -72,11 +85,31 @@ func _ready() -> void:
 	_line.visible = false
 	said.add_child(_line)
 
-	_rows = PanelKit.section(root, tr("Three priorities"))
+	# The folder: the desk's files in a list at the left (none: the card is as it was), the
+	# month's own page or a file's page at the right.
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 18)
+	root.add_child(body)
+	_files = VBoxContainer.new()
+	_files.custom_minimum_size.x = LIST_WIDTH
+	_files.add_theme_constant_override("separation", 4)
+	_files.hide()
+	body.add_child(_files)
+	var pages := VBoxContainer.new()
+	pages.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pages.add_theme_constant_override("separation", 12)
+	body.add_child(pages)
+	_month = VBoxContainer.new()
+	_month.add_theme_constant_override("separation", 12)
+	pages.add_child(_month)
+	_file_slot = VBoxContainer.new()
+	_file_slot.hide()
+	pages.add_child(_file_slot)
+	_rows = PanelKit.section(_month, tr("Three priorities"))
 	# The parent's rule on #217: an item in its last month the three lines crowded out
 	# is never unshown -- it is here, folded by kind, each with its Go.
-	_also = PanelKit.buttons(root)
-	_effects = PanelKit.section(root, tr("What your choices did"))
+	_also = PanelKit.buttons(_month)
+	_effects = PanelKit.section(_month, tr("What your choices did"))
 	var foot := PanelKit.buttons(root)
 	_close = PanelKit.sized(Button.new())
 	_close.pressed.connect(func() -> void: closed.emit())
@@ -87,7 +120,6 @@ func _ready() -> void:
 ## BriefingDriver.speak plays), face (Texture2D or null), rows: [{icon, title, chip,
 ## held}], effects: [{text, tone, uncertain, spark, tooltip}], close}.
 func show_view(view: Dictionary) -> void:
-	_header.text = String(view.get("header", ""))
 	_name.text = String(view.get("who", ""))
 	_name.visible = not _name.text.is_empty()
 	_line.text = String(view.get("line", ""))
@@ -100,6 +132,23 @@ func show_view(view: Dictionary) -> void:
 	elif _face.has_node("MoodBadge"):
 		# A card reused for a month with no chief must not keep the last one's mood.
 		_face.get_node("MoodBadge").free()
+	show_lines(view, true)
+	for child in _effects.get_children():
+		_effects.remove_child(child)
+		child.queue_free()
+	for effect in view.get("effects", []):
+		_effects.add_child(_effect(effect))
+	select("", false)  # a new month's view opens on the month's own page
+	show()
+	Motion.arrive(self)
+	_close.grab_focus()
+
+
+## The month's lines, their footer and the close button again, the card left as it is: the
+## folder takes an answered file's line off the page (QA #333 T3). The chief's words and the
+## effects stay what they were when he spoke; `arrive` is a new month's (the rows come in).
+func show_lines(view: Dictionary, arrive := false) -> void:
+	_header.text = String(view.get("header", ""))
 	for child in _rows.get_children():
 		_rows.remove_child(child)
 		child.queue_free()
@@ -108,6 +157,8 @@ func show_view(view: Dictionary) -> void:
 	for i in rows.size():
 		var row := _row(rows[i], i)
 		_rows.add_child(row)
+		if not arrive:
+			continue
 		# V5.3-0 4.5: the three come in a beat apart; one new this month pulses.
 		Motion.arrive(row, Motion.STAGGER_S * i)
 		# The wait is a tween the ROW owns, so it dies with the row: a SceneTreeTimer's
@@ -117,16 +168,68 @@ func show_view(view: Dictionary) -> void:
 			var wait := row.create_tween()
 			wait.tween_interval(Motion.STAGGER_S * i + Motion.ARRIVE_S)
 			wait.tween_callback(Callable(Motion, "pulse").bind(row))
-	for child in _effects.get_children():
-		_effects.remove_child(child)
-		child.queue_free()
 	_fill_also(view.get("also", []))
-	for effect in view.get("effects", []):
-		_effects.add_child(_effect(effect))
 	_close.text = String(view.get("close", ""))
-	show()
-	Motion.arrive(self)
-	_close.grab_focus()
+
+
+## The desk's files, [{id, title, by}], in the list at the left; none hides the list and the card
+## is the month's page alone. `selected` is the page shown ("" the month's).
+func show_files(files: Array, selected := "") -> void:
+	for child in _files.get_children():
+		_files.remove_child(child)
+		child.queue_free()
+	_file_buttons.clear()
+	_files.visible = not files.is_empty()
+	custom_minimum_size.x = FOLDER_WIDTH if not files.is_empty() else SIZE.x
+	if files.is_empty():
+		select("", false)
+		return
+	_file_button("", tr("This month"))
+	for file in files:
+		# The name only, so the folder stays under the briefing's word ceiling; the date is on the page and here on hover.
+		_file_button(String(file["id"]), String(file["title"]), String(file.get("by", "")))  # i18n: row-ok routed by the reader
+	select(selected if _file_buttons.has(selected) else "", false)
+
+
+func _file_button(id: String, text: String, by := "") -> void:
+	var button := Button.new()
+	button.text = text
+	button.tooltip_text = "" if by == "" else tr("By %s") % by
+	button.theme_type_variation = UiTheme.SUBROW_BUTTON
+	button.toggle_mode = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.clip_text = true
+	button.pressed.connect(func() -> void: select(id))
+	_files.add_child(button)
+	_file_buttons[id] = button
+
+
+## The page shown: a file's (its page is asked of whoever holds the desk) or the month's.
+func select(id: String, announce := true) -> void:
+	_selected = id
+	for key in _file_buttons:
+		(_file_buttons[key] as Button).button_pressed = key == id
+	_month.visible = id == ""
+	_file_slot.visible = id != ""
+	if id != "" and announce:
+		file_selected.emit(id)
+
+
+## A file's page, built under the list's selection; `press` goes back as file_pressed.
+func show_file_page(id: String, page: Dictionary) -> void:
+	for child in _file_slot.get_children():
+		_file_slot.remove_child(child)
+		child.queue_free()
+	FileView.build(_file_slot, page, func(index: int) -> void: file_pressed.emit(id, index), Vector2(120, 150))
+
+
+func selected_file() -> String:
+	return _selected
+
+
+func set_close_text(text: String) -> void:
+	_close.text = text
 
 
 func _row(row: Dictionary, index: int) -> Control:
@@ -218,6 +321,6 @@ func _input(event: InputEvent) -> void:
 	var key := (event as InputEventKey).keycode
 	if key == KEY_SPACE:
 		get_viewport().set_input_as_handled()
-	elif key >= KEY_1 and key <= KEY_3 and key - KEY_1 < go_buttons.size():
+	elif key >= KEY_1 and key <= KEY_3 and key - KEY_1 < go_buttons.size() and _selected == "":
 		get_viewport().set_input_as_handled()
 		go_pressed.emit(key - KEY_1)

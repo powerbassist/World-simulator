@@ -153,6 +153,8 @@
    "tests/test_council.gd",
    "tests/test_ribbon.gd",
    "tests/test_horizon_items.gd",
+   "tests/test_file_page.gd",
+   "tests/test_folder.gd",
    "tests/test_people.gd",
    "tests/test_division_terms.gd",
    "tests/test_address.gd",
