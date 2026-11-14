@@ -33,6 +33,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade --text 130 --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade-tabled --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --queue --open legislature   (a bill in the slot, two queued; --queue-full: three; --queue-menu: a queued place's plate)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address-again --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --poll --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --poll-arrived --open legislature
@@ -543,6 +544,8 @@ var _b7 := ""
 var _priority := ""
 ## The bill's two decisions (V5.3 b, step 5): "grade", "grade-tabled", "address" or "address-again".
 var _law_verbs := ""
+## The order paper (V5.3 screen 4): "queue", "queue-full" or "queue-menu".
+var _queue := ""
 ## A poll on a bill: "poll" (bought, out), "poll-arrived" or "poll-address".
 var _poll := ""
 
@@ -1062,6 +1065,8 @@ func _init() -> void:
 			_b7 = String(args[i]).trim_prefix("--b7-")
 		elif args[i] in ["--grade", "--grade-tabled", "--address", "--address-again"]:
 			_law_verbs = String(args[i]).trim_prefix("--")
+		elif args[i] in ["--queue", "--queue-full", "--queue-menu"]:
+			_queue = String(args[i]).trim_prefix("--")
 		elif args[i] in ["--poll", "--poll-arrived", "--poll-address"]:
 			_poll = String(args[i]).trim_prefix("--")
 		elif args[i] in ["--priority", "--priority-cap", "--priority-rest"]:
@@ -1389,6 +1394,8 @@ func _apply_view() -> void:
 		_stage_a_priority()
 	if _law_verbs != "":
 		_stage_the_law_verbs()
+	if _queue != "":
+		_stage_the_queue()
 	if _poll != "":
 		_stage_a_poll()
 	if _compose:
@@ -2237,6 +2244,30 @@ func _stage_the_law_verbs() -> void:
 		list._selected = String(laws[1].id)
 		list.address_open = list._selected
 	panel.mark_dirty()
+
+
+## The order paper: the first open ordinary law tabled, two (or three) queued behind it, the next
+## one's sheet selected. "queue-menu" opens the first queued place's plate.
+func _stage_the_queue() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var panel = _main._law_panel
+	var ids: Array = []
+	for law in preload("res://src/sim/legislature.gd").available(ns, preload("res://src/sim/bills.gd").open(state, ns, _main._loader)):
+		if not law.constitutional:
+			ids.append(String(law.id))
+		if ids.size() == 5:
+			break
+	var first = preload("res://src/sim/legislature.gd").open_law(state, ns, _main._loader, ids[0])
+	preload("res://src/sim/legislature.gd").propose(state, _main._loader, first)
+	for i in (3 if _queue == "queue-full" else 2):
+		preload("res://src/sim/bill_queue.gd").add(state, {"law_id": ids[i + 1]})
+	panel._laws._selected = ids[4]
+	panel.mark_dirty()
+	panel._process(0.0)
+	if _queue == "queue-menu":
+		panel._paper.places[1].menu_requested.emit(0)
+		preload("res://src/ui/verb_plate.gd").of(panel).position = Vector2(560, 330)
 
 
 ## Bought today and out; or, with its day forced to today, printed and carded by the poll's
