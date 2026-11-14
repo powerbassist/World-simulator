@@ -45,6 +45,9 @@ const LawColumns = preload("res://src/ui/law_columns.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
 const LawAddress = preload("res://src/ui/law_address.gd")
+const BillActions = preload("res://src/ui/bill_actions.gd")
+const LawFilters = preload("res://src/ui/law_filters.gd")
+const LawSeatsTip = preload("res://src/ui/law_seats_tip.gd")
 
 ## The forecast's three columns: a for / against pair that reads as opposite, and
 ## a grey for the undecided between them (the dataviz method's diverging rule).
@@ -62,6 +65,8 @@ var _rows: VBoxContainer
 var _header: HBoxContainer
 var _detail: VBoxContainer
 var _selected := ""
+## The shelf and the search above the rows (law_filters.gd): built once, so the typed words stay.
+var _filters: LawFilters
 ## V5.3-0 (2.4): the bloc whose liked laws the list shows, "" for every law. Set by
 ## the briefing's bloc Go and the Society panel's "what calms it" row; cleared by
 ## the filter's own button.
@@ -93,6 +98,8 @@ func _init(panel) -> void:
 	left.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left.size_flags_stretch_ratio = 0.6
 	add_child(left)
+	_filters = LawFilters.new(_panel.mark_dirty)
+	left.add_child(_filters)
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 0)
 	left.add_child(head)
@@ -178,12 +185,16 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 	if bloc_filter != "":
 		laws = liked_by(laws, bloc_filter)
 		_filter_row()
+	laws = _filters.apply(laws, _panel._loader)
+	_shown = laws
 	if laws.is_empty():
+		if _filters.is_active():
+			PanelKit.line(_rows, _filters.empty_text(), PanelKit.Tone.PLAIN)
+			return
 		if not ns.tabled_bill.is_empty():
 			PanelKit.line(_rows, tabled_text(ns), PanelKit.Tone.PLAIN)
 		PanelKit.line(_rows, tr("No law is currently proposable."), PanelKit.Tone.PLAIN)
 		return
-	_shown = laws
 	_ns = ns
 	_party_list = party_list
 	LawColumns.header(_header, ns, COLUMNS, NAME_WIDTH, BAR_WIDTH)
@@ -241,6 +252,7 @@ func _row(ns, party_list: Array, law, selected: bool) -> Control:
 	pick.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	pick.custom_minimum_size.x = NAME_WIDTH * UiTheme.text_scale()
 	pick.pressed.connect(select.bind(String(law.id)))
+	pick.gui_input.connect(BillActions.row_input.bind(self, law))
 	row.add_child(pick)
 	pick.tooltip_text = pick.text
 	# Fixed widths, so every row's chips, bar and glyphs stand in the same columns
@@ -284,6 +296,7 @@ func _forecast_bar(ns, party_list: Array, law, width: float) -> Control:
 		{"label": tr("Undecided"), "value": float(counts["undecided"])},
 		{"label": tr("Against"), "value": float(counts["no"])},
 	], {"marker": majority_share(ns, law), "colors": FORECAST_COLORS, "places": 0, "unit": tr(" seats")})
+	bar.hover = LawSeatsTip.build.bind(_panel)
 	bar.custom_minimum_size.x = width
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return bar
@@ -394,21 +407,10 @@ func _verbs(ns, law) -> void:
 		ref.pressed.connect(_panel._on_referendum.bind(law))
 		_panel._offer(ref)
 		row.add_child(ref)
-	# V5.2 b+ R2: one bill before the Assembly at a time -- propose() refuses
-	# `already_tabled` -- so Propose and the referendum route are down with that
-	# reason until it divides, never a press the sim refuses. Article 49.3 adopts
-	# without a vote, is never tabled, and stays open on another bill (the parent's
-	# call on #173): it answers only to its own cooldown -- but not on the tabled
-	# bill itself, which propose() refuses.
-	if not ns.tabled_bill.is_empty():
-		var same := String(ns.tabled_bill.get("law_id", "")) == String(law.id)
-		for verb in row.get_children():
-			if verb.name == "Force" and not same:
-				continue
-			(verb as Button).disabled = true
-			(verb as Button).tooltip_text = tabled_text(ns)
-			if _panel._primary == verb:
-				_panel._primary = null
+	# V5.2 b+ R2 and V5.3 screen 4: one bill before the Assembly at a time, and a queue of three
+	# behind it. The table (bill_verbs.gd) holds Propose and the referendum route down with its
+	# reason, and offers the queue; Article 49.3 answers only to its own cooldown (#173).
+	BillActions.verbs(self, row, ns, law)
 
 
 ## Which bill is before the Assembly and the day it divides (ns.tabled_bill; its

@@ -2,7 +2,7 @@
   "name": "An Evening at the Quirinal",
   "summary": "Dinner with Italy's president, where the wine is excellent and every request has a price the south will name for you.",
   "effects": {
-    "Promise the infrastructure package": {
+    "promise_package": {
       "spending_pct_gdp": {
         "infrastructure": 0.06
       },
@@ -10,8 +10,8 @@
         "rural": -0.03
       }
     },
-    "Offer only goodwill": {},
-    "Propose a restorations fund": {
+    "goodwill": {},
+    "restorations": {
       "spending_pct_gdp": {
         "education": 0.02
       },
@@ -20,9 +20,9 @@
         "business": -0.02
       }
     },
-    "Let the evening end": {},
-    "Ask for their support in the council": {},
-    "Speak only of culture": {}
+    "evening_ends": {},
+    "council_support": {},
+    "culture_only": {}
   },
   "scene": "office_night"
 }

@@ -38,6 +38,10 @@ tests=(
   tests/test_finance_bill.gd
   tests/test_finance_autumn.gd
   tests/test_bill_queue.gd
+  tests/test_goal_read.gd
+  tests/test_bill_verbs.gd
+  tests/test_order_paper.gd
+  tests/test_law_filters.gd
   tests/test_tax_library.gd
   tests/test_amendment.gd
   tests/test_transition.gd
@@ -317,6 +321,7 @@ tests=(
   # has exactly one reader.
   tests/test_regions.gd
   tests/test_region_funds.gd
+  tests/test_screen_reads.gd
   # V2.7: the graph is content, the index is mean-one in output weights, and the
   # leaf takes Dictionaries and preloads nothing but its own constants.
   tests/test_network.gd

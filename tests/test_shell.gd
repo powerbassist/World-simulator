@@ -407,7 +407,7 @@ func _check_panel_content() -> void:
 
 	windows.open("legislature")
 	_main._law_panel._process(0.0)
-	if not _collect_text(_main._law_panel).contains("LEGISLATURE"):
+	if not _collect_text(_main._law_panel).contains("BILLS"):
 		_fail("legislature panel does not render its heading")
 
 	windows.close_all()

@@ -349,7 +349,22 @@ static func _apply_growth_to_sectors(state, ns, target_gdp: float) -> void:
 
 
 static func _update_unemployment(ns, trend: float, growth: float) -> void:
-	ns.structural_unemployment_pct = clampf(
+	ns.structural_unemployment_pct = structural_target(ns)
+
+	var du: float = (
+		-C.OKUN * (growth - trend)
+		+ C.UNEMP_REVERT * (ns.structural_unemployment_pct - ns.unemployment_pct)
+	) / 12.0
+
+	ns.unemployment_pct = clampf(ns.unemployment_pct + du, C.UNEMP_MIN_PCT, C.UNEMP_MAX_PCT)
+
+
+## Where structural unemployment stands for the nation's present rates and offsets:
+## the level the cycle reverts to at UNEMP_REVERT a year. Extracted from the month's
+## update byte for byte so the goal read can ask it of a copy with a measure applied
+## (docs/design/finance-bill.md section 11).
+static func structural_target(ns) -> float:
+	return clampf(
 		ns.start_unemployment_pct
 			+ C.STRUCT_INCOME_BETA * (
 				float(ns.tax_rates_pct.get("income", 0.0))
@@ -367,13 +382,6 @@ static func _update_unemployment(ns, trend: float, growth: float) -> void:
 		C.STRUCT_MIN_PCT,
 		C.STRUCT_MAX_PCT
 	)
-
-	var du: float = (
-		-C.OKUN * (growth - trend)
-		+ C.UNEMP_REVERT * (ns.structural_unemployment_pct - ns.unemployment_pct)
-	) / 12.0
-
-	ns.unemployment_pct = clampf(ns.unemployment_pct + du, C.UNEMP_MIN_PCT, C.UNEMP_MAX_PCT)
 
 
 ## First-order lag toward the shift implied by current infrastructure, education

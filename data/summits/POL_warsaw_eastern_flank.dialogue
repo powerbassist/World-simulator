@@ -1,12 +1,12 @@
 ~ start
 Prime Minister Zawadzki: Mr President, in Warsaw we do not do small talk before the map. The map is the small talk.
-- Offer a French brigade on rotation => brigade
-- Offer a joint arms purchase => arms
-- Ask how Poland sees the Union's future => future
+- Offer a French brigade on rotation [#id:brigade] => brigade
+- Offer a joint arms purchase [#id:arms] => arms
+- Ask how Poland sees the Union's future [#id:future] => future
 ~ brigade
 Prime Minister Zawadzki: A brigade. For the first time in a hundred years France would stand where we stand. I will see that it is photographed.
-- Make it permanent => permanent
-- Make it a one-year rotation => rotation
+- Make it permanent [#id:permanent] => permanent
+- Make it a one-year rotation [#id:rotation] => rotation
 ~ permanent
 Prime Minister Zawadzki: Permanent. My opposition will call it a gift and my generals a miracle.
 => END
@@ -15,8 +15,8 @@ Prime Minister Zawadzki: A rotation is respectable. The troops rotate, the grati
 => END
 ~ arms
 Prime Minister Zawadzki: A joint purchase. Our factories and yours could build in tandem, and our generals could swap their catalogues for once.
-- Choose French artillery => artillery
-- Choose a shared design => shared
+- Choose French artillery [#id:artillery] => artillery
+- Choose a shared design [#id:shared] => shared
 ~ artillery
 Prime Minister Zawadzki: French artillery, a respectable choice, and my Americans will frown into their coffee.
 => END
@@ -25,8 +25,8 @@ Prime Minister Zawadzki: A shared design takes five years. We have, I should say
 => END
 ~ future
 Prime Minister Zawadzki: Poland wants a union that defends, that trades, and that does not lecture us on the sequence.
-- Say France wants a stronger union => stronger
-- Say France wants a looser union => looser
+- Say France wants a stronger union [#id:stronger] => stronger
+- Say France wants a looser union [#id:looser] => looser
 ~ stronger
 Prime Minister Zawadzki: Stronger, then. We shall see whether you mean it when the bill arrives.
 => END
