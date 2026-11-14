@@ -3,6 +3,8 @@
   "name": "Corporate tax",
   "summary": "A tax on the profits of companies.",
   "rate_meaning": "statutory rate on company profits",
+  "unit": "%",
+  "group": "companies_finance",
   "who_pays": [
     "business"
   ],

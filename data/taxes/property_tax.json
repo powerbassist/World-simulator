@@ -3,6 +3,8 @@
   "name": "Property tax",
   "summary": "A yearly tax on land and buildings, set on their assessed value.",
   "rate_meaning": "index of the 2026 schedule (100 = the law in force)",
+  "unit": "index",
+  "group": "wealth_property",
   "who_pays": [
     "pensioners",
     "urban",
