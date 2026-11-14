@@ -2,15 +2,15 @@
   "name": "Breakfast in the Polder",
   "summary": "Cheese, cold air, and a prime minister who thinks every treaty is a land-reclamation project.",
   "effects": {
-    "Raise the Rotterdam port rules": {},
-    "Raise the sea wall and flood funds": {},
-    "Raise the farm nitrogen cuts": {},
-    "Offer a shared customs window": {
+    "port": {},
+    "sea": {},
+    "nitrogen": {},
+    "customs": {
       "bloc_offset": {
         "business": 0.03
       }
     },
-    "Offer to share the Le Havre berths": {
+    "berths": {
       "spending_pct_gdp": {
         "infrastructure": 0.02
       },
@@ -19,7 +19,7 @@
         "workers": 0.01
       }
     },
-    "Offer French engineers for the delta works": {
+    "delta": {
       "spending_pct_gdp": {
         "infrastructure": 0.03
       },
@@ -28,7 +28,7 @@
         "rural": -0.02
       }
     },
-    "Offer a joint resilience fund": {
+    "resilience": {
       "spending_pct_gdp": {
         "infrastructure": 0.02
       },
@@ -36,13 +36,13 @@
         "urban": 0.02
       }
     },
-    "Sympathise with the farmers": {
+    "farmers": {
       "bloc_offset": {
         "rural": 0.04,
         "urban": -0.02
       }
     },
-    "Back the nitrogen cuts": {
+    "cuts": {
       "bloc_offset": {
         "urban": 0.03,
         "rural": -0.04

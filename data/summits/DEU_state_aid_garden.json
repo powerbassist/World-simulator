@@ -2,10 +2,10 @@
   "name": "State Aid in the Garden",
   "summary": "A beer garden, an industrial fund neither side will name first, and two leaders agreeing that the other should stop subsidising.",
   "effects": {
-    "Propose a joint industrial fund": {},
-    "Offer a truce on state aid": {},
-    "Defend French industrial policy": {},
-    "Put the fund into green steel": {
+    "joint_fund": {},
+    "truce": {},
+    "defend": {},
+    "green_steel": {
       "spending_pct_gdp": {
         "infrastructure": 0.03
       },
@@ -15,7 +15,7 @@
         "rural": -0.02
       }
     },
-    "Put the fund into batteries": {
+    "batteries": {
       "spending_pct_gdp": {
         "infrastructure": 0.02
       },
@@ -24,20 +24,20 @@
         "students": 0.02
       }
     },
-    "Sign a written truce": {
+    "truce_signed": {
       "bloc_offset": {
         "business": -0.03,
         "workers": 0.02
       }
     },
-    "Keep it a gentleman's agreement": {},
-    "Say France will not apologise": {
+    "truce_verbal": {},
+    "no_apology": {
       "bloc_offset": {
         "workers": 0.02,
         "business": -0.02
       }
     },
-    "Concede a little on the details": {
+    "concede": {
       "bloc_offset": {
         "business": 0.02,
         "workers": -0.02

@@ -619,8 +619,8 @@ func _ready() -> void:
 	_summit_panel.setup(_state, _loader)
 	# The summit builds no Close of its own: the frame's X is a live exit -- a summit
 	# walked out on applies nothing, which is the ephemeris working, not a bug.
-	_summit_panel.concluded.connect(func(_summit_id, choice_label):
-		_resolve_summit(choice_label)
+	_summit_panel.concluded.connect(func(_summit_id, choice_id):
+		_resolve_summit(choice_id)
 		# The scene is over, so the window goes with it. Nothing closed "summit"
 		# until the V2.8 review -- the id appeared only at register() and open() --
 		# so a played-out summit left a blank plate on screen as its only signal
@@ -1480,12 +1480,12 @@ func _open_summit(target_id: String, arrival_before: Dictionary) -> void:
 ## baseline. An empty choice (the player closed through a path with no priced
 ## fork) applies nothing and says nothing: a conversation happened, and it
 ## changed nothing, which is the honest outcome for one of those.
-func _resolve_summit(choice_label: String) -> void:
-	if choice_label.is_empty(): return
-	var effects: Dictionary = _summit_panel._effects.get(choice_label, {})
+func _resolve_summit(choice_id: String) -> void:
+	if choice_id.is_empty(): return
+	var effects: Dictionary = _summit_panel._effects.get(choice_id, {})
 	if effects.is_empty(): return
 	Legislature.apply_effects(_state, _state.player(), effects, _loader)
-	_queue_effect(tr("Summit: %s") % choice_label, _summit_before)
+	_queue_effect(tr("Summit: %s") % _summit_panel.chosen_label, _summit_before)
 	_update_top_bar()
 
 

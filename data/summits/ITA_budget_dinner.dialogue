@@ -1,12 +1,12 @@
 ~ start
 Premier Bagnasco: The Commission has opened a file on our deficit. I would rather discuss it over dinner than over a spreadsheet.
-- Offer to speak for Italy in Brussels => speak_for
-- Warn that the rules apply to everyone => rules
-- Suggest an investment exemption => exemption
+- Offer to speak for Italy in Brussels [#id:speak_for] => speak_for
+- Warn that the rules apply to everyone [#id:rules] => rules
+- Suggest an investment exemption [#id:exemption] => exemption
 ~ speak_for
 Premier Bagnasco: From Paris, that would carry weight. And, I admit, a debt I would carry in return.
-- Make it a favour, no strings => favour
-- Ask for Italian votes on your file => votes
+- Make it a favour, no strings [#id:favour] => favour
+- Ask for Italian votes on your file [#id:votes] => votes
 ~ favour
 Premier Bagnasco: A favour freely given. I will remember it, and so will my bankers, which is rarer.
 => END
@@ -15,8 +15,8 @@ Premier Bagnasco: An honest trade. Rome will look at your file with great attent
 => END
 ~ rules
 Premier Bagnasco: The rules, yes. They are very good rules, and they were written by countries that did not need them.
-- Hold your line on the rules => hold
-- Offer help with the reform plan => reform
+- Hold your line on the rules [#id:hold] => hold
+- Offer help with the reform plan [#id:reform] => reform
 ~ hold
 Premier Bagnasco: Then I will hold mine as well. We will find, around the cheese, that we agree on the ceiling.
 => END
@@ -25,8 +25,8 @@ Premier Bagnasco: Reform I can sell at home if the money looks like a loan and n
 => END
 ~ exemption
 Premier Bagnasco: An exemption for investment. The northern states will call it a loophole and the southern ones a lifeline.
-- Back it as a loophole worth having => loophole
-- Back it for defence and green only => narrow
+- Back it as a loophole worth having [#id:loophole] => loophole
+- Back it for defence and green only [#id:narrow] => narrow
 ~ loophole
 Premier Bagnasco: A loophole worth having. I will hang that on my wall next to the crucifix.
 => END

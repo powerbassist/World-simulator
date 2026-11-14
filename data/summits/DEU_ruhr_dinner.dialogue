@@ -1,11 +1,11 @@
 ~ start
 Chancellor Vogler: Herr President. The Chancellery kitchen makes a venison you cannot get in Paris, and I paid for it out of my own pocket, so you may trust the compliment.
-- Raise the Rhine shipping tolls => raise_tolls
-- Offer a joint grid study => grid_study
+- Raise the Rhine shipping tolls [#id:raise_tolls] => raise_tolls
+- Offer a joint grid study [#id:grid_study] => grid_study
 ~ raise_tolls
 Chancellor Vogler: Straight to business over the venison. My inland fleet will scream, but a toll we set together is a toll Bonn cannot be blamed for alone.
-- Shake on the joint toll => shake
-- Leave it for the officials => officials
+- Shake on the joint toll [#id:shake] => shake
+- Leave it for the officials [#id:officials] => officials
 ~ shake
 Chancellor Vogler: Then it is done, and we are both poorer in friends and richer in revenue.
 => END
@@ -14,8 +14,8 @@ Chancellor Vogler: The officials will bury it, of course. But they will bury it 
 => END
 ~ grid_study
 Chancellor Vogler: A study! The most honest word in European politics: it costs little, commits nothing, and reads well in both parliaments.
-- Fund it generously => fund_big
-- Fund it modestly => fund_small
+- Fund it generously [#id:fund_big] => fund_big
+- Fund it modestly [#id:fund_small] => fund_small
 ~ fund_big
 Chancellor Vogler: Generosity, from a French budget? My finance ministry will not believe the cable.
 => END
