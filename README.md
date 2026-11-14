@@ -102,9 +102,6 @@ covers which file, and the texts are in [LICENSES/](LICENSES/):
 Commercial use of the code, content or text-generated art needs the author's
 permission. Data sources are credited in [ATTRIBUTION.md](ATTRIBUTION.md).
 
-The screenshots under `docs/screenshots/` show the game's own portraits, so the portrait
-credits above apply to them too.
-
 Every person in the game is fictional. Names and parties are invented, and where a
 portrait was grounded on a photograph of a real politician, that photograph is
 credited, as its licence requires.
