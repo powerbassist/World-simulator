@@ -198,3 +198,21 @@ Today `GameState.new_game` sets `other_revenue_pct_gdp = fiscal.tax_revenue_pct_
 - **The save: a `SAVE_VERSION` bump** at the PR that removes it. `custom_taxes` is `absent_ok: false` today (bump 38), and a save from before the removal can hold a player-made kind with a live rate under its key in `tax_rates_pct` and a `tax|<key>` row in a composed law's ledger. Loaded without the register, that rate has no model behind it: revenue reads it as nothing and the ledger cannot repeal it. A missing model reads as something wrong, so the bump rule applies and such a save is refused, as every superseded save is.
 - **The library itself is not saved.** It is content: `GameState` holds a reference set from the loader at new game and at load, as it does `region_graph`, so a game always reads the library it is loaded with.
 - **Every reader of `C.TAX_KEYS` reads the library's ids instead** (about fifteen sites: the nation, law, event and programme loaders' key checks, `Budget`, `Opinion`, `Pledges`, `Statute`'s channel check, the Tax Code). Statute's composed tax channel retires with the rest: from V5.3 e a rate moves only through a finance bill.
+
+## 10. The queue of three (PR 2; the author's call 2, the parent's rulings of 2026-11-14)
+
+**One vote a month, plus a queue of three bills in an order the player picks.** The slot (`ns.tabled_bill`) is unchanged: one bill divides at the close that ends its month. Beside it, `ns.bill_queue` holds up to three bills waiting for a slot.
+
+- **An entry** is what a tabling would carry, so promotion is a tabling: a law `{"law_id", "scale", "referendum", "force"}` or the finance bill `{"finance": {...deltas, create, abolish}, "force"}`.
+- **The player's verbs** (`BillQueue`, a new leaf): `add` (refused when the queue holds three, when the law is already queued or in the slot, or when a finance bill is already queued or tabled: one budget text at a time), `remove(i)`, `move(i, j)`. They write only the queue: nothing is checked against the Assembly until the bill reaches the slot.
+- **Promotion** runs in `WorldMonth`'s "Division" step, right after `Division.divide`, when the slot is empty: the head is TABLED through the one tabling function that already exists (`Legislature.propose` or `FinanceBill.table`). So every check a tabling makes runs in the month the bill reaches the slot: a law no longer open, a referendum in flight, a constitutional bill forced, and the autumn rule. A birth queued in September reaches the October slot and passes the gate; queued in October, it reaches November and is refused.
+- **A refused head** is dropped from the queue, its refusal written to `last_law_result` as any refusal is, and the next entry is tried, so the month's slot is not wasted (call 1).
+- **The finance bill's rate rows are range-checked at tabling** (the parent's ruling on #334's call 2): each tax row's live rate plus its delta must sit inside its kind's `rate_range_pct`, or the bill is refused (`range`). A birth was already checked.
+- **The save:** `bill_queue` is `DEEP, COPIED, [], absent_ok`. An older save had no queue, and an empty queue is the truth about it. No bump.
+- **What moves:** nothing. No harness regime queues a bill, and an empty queue promotes nothing, so balance, density and shadows must stay cmp-identical (the card's done-when). The range check could refuse a regime's bill only past a kind's ceiling. The `tax_max` regime raises VAT by 15 from France's 20, which leaves it inside VAT's 40; checked at build.
+- **Cleared** at `Legislature.init_nation`, where the slot is cleared.
+
+**Calls for the parent:**
+1. A refused head: (a, recommended) drop it and try the next, so the slot is used; (b) drop it and leave the slot empty for the month; (c) keep it at the head and leave the slot empty (it may pass the check next month: a referendum in flight ends).
+2. Forcing a queued bill: (a, recommended) the `force` flag rides in the entry and is engaged at promotion, refused then if `Government.can_force` fails; (b) a queued bill cannot be forced, and the player forces from the slot only.
+3. A government falls (dissolution, censure) with bills queued: (a, recommended) the queue survives; the new government's tabling checks run at each promotion; (b) the queue is cleared with the government.
