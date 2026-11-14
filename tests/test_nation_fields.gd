@@ -42,10 +42,12 @@ const GameState = preload("res://src/core/game_state.gd")
 ## (their declarations in nation_state.gd have the argument).
 ## Re-pinned at 42 (V5.3 majors) with the SAME count and digest: the bump is on no field,
 ## the firms' size is content a version-41 save would carry from the old roster.
+## Re-pinned at 43 (V5.3 e) one field down: `custom_taxes` is removed with the
+## player-composed tax, and a version-42 save holding a player-made tax is refused.
 const MUST_BUMP_PIN := {
-	"save_version": 42,
-	"count": 170,
-	"md5": "0369e45386d088fd9caf7aa187274dbb",
+	"save_version": 43,
+	"count": 169,
+	"md5": "4ff0598ba588024b3dcbb99f93c3c186",
 }
 
 ## Sentinels per read kind, each in the exact shape and types its reader returns,
@@ -261,8 +263,6 @@ func _sentinel(read: int, declared):
 		Fields.COMMODITY_STATE: return {"capacity": {"steel": 2.0}, "price_index": 1.0}
 		Fields.LAW_LEDGER: return {"law_s": {"channels": {"c": 0.5}, "months": ["m"]}}
 		Fields.DRAFT_BILLS: return {"d": {"law_id": "x", "size": 2.0, "months_left": 3}}
-		Fields.CUSTOM_TAXES:
-			return {"t": {"name": "n", "base_share": 1.0, "erosion": 2.0, "ref_pct": 3.0}}
 		Fields.POLL_PURCHASES: return {"b": {"k": {"month": 3, "cost": 2.0}}}
 		Fields.ASSEMBLY_BILLS:
 			return {"b": {"law_id": "l", "months_left": 2, "backer_firm": "f",

@@ -11,6 +11,7 @@ extends RefCounted
 ## serialisation. Fields are added by the session whose model reads them.
 
 const NationState = preload("res://src/core/nation_state.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
@@ -533,7 +534,8 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ## dictionaries -- absent, the statute book loses acts that are in force);
 ## `ns.custom_taxes` (proposed tax keys' params -- base, erosion and the birth
 ## rate that anchors the erosion curve -- absent, the tax stops yielding at
-## reload while its rate survives in tax_rates_pct, a silent half-tax);
+## reload while its rate survives in tax_rates_pct, a silent half-tax; removed
+## at V5.3 e, see 43 below);
 ## `ns.poll_purchases` (paid polls -- absent, a reload un-buys the
 ## fixed-forecast read and charges the player twice for one number);
 ## `ns.assembly_bills` (private members' bills and lobbying in flight --
@@ -609,7 +611,15 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 ##     (QA's reproduction: FRA_aurignac 882,824 jobs against 56,000 in a new game),
 ##     so the break-up gate and the courtship would read the wrong weights. The
 ##     bump is the loader saying the firms changed. No new field.
-const SAVE_VERSION := 42
+##   * V5.3 e -- 42 -> 43 on the REMOVAL of `ns.custom_taxes` (the player-composed
+##     tax retired for the tax library, docs/design/finance-bill.md 9.4). A
+##     version-42 save can hold a player-made tax: a live rate under its key in
+##     `tax_rates_pct` and a `tax|<key>` row in a composed law's ledger. Loaded
+##     without the register, that rate has no model behind it -- revenue reads it
+##     as nothing, apply_pending() refuses any move of it, and the ledger cannot
+##     repeal it -- so a missing model reads as something wrong and the save is
+##     refused, as every superseded save is.
+const SAVE_VERSION := 43
 
 var save_version: int = SAVE_VERSION
 var player_nation_id: String = ""
@@ -941,7 +951,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 		var party_list: Array = loader.parties.get(id, [])
 		var company_list: Array = loader.companies.get(id, [])
 		var applied = scenario if id == player_id else null
-		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, Orgs.parliament(loader), loader.political_systems, gs.errors, applied, org_base_positions.get(id, {}))
+		gs.nations[id] = _build_nation(loader.nations[id], id == player_id, party_list, company_list, Orgs.parliament(loader), loader.political_systems, gs.errors, applied, org_base_positions.get(id, {}), loader.taxes)
 		# V4.3, and here rather than inside _build_nation() for the Programme
 		# comment's exact reason one level up: the build function takes the
 		# nation's own content and a people register is a second file. Seeds
@@ -1010,7 +1020,7 @@ static func new_game(loader, player_id: String, scenario_id: String = ""):
 ## where that value first enters live state. Everything downstream (discipline,
 ## the coalition, the cabinet, dissolution) then reads the overridden figures
 ## and needs no scenario awareness of its own. See docs/scenario-model.md.
-static func _build_nation(n, is_player: bool, party_list: Array, company_list: Array, parliament, political_systems: Dictionary, errors: Array[String], scenario = null, org_base_positions: Dictionary = {}):
+static func _build_nation(n, is_player: bool, party_list: Array, company_list: Array, parliament, political_systems: Dictionary, errors: Array[String], scenario = null, org_base_positions: Dictionary = {}, taxes: Dictionary = {}):
 	var ns = NationState.new()
 	ns.id = n.id
 	ns.has_budget = is_player
@@ -1068,8 +1078,7 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	# every balance figure this project has quoted against a flat 2.0 depends on it.
 	ns.start_debt_to_gdp_pct = ns.debt_to_gdp_pct()
 
-	ns.tax_rates_pct = n.tax_rates_pct.duplicate(true)
-	ns.start_tax_rates_pct = ns.tax_rates_pct.duplicate(true)
+	TaxLibrary.attach(ns, n, taxes)
 
 	# V2.8. The measured energy baseline, captured before anything can move it -- the
 	# same start/start pair every quantity above keeps, and the reason the deviation
@@ -1096,7 +1105,7 @@ static func _build_nation(n, is_player: bool, party_list: Array, company_list: A
 	ns.other_spending_pct_gdp = n.other_spending_pct_gdp
 
 	# Calibrate the residual so starting revenue equals the authored real figure.
-	var modelled := Budget.modelled_revenue_total(ns.tax_rates_pct, ns.start_tax_rates_pct)
+	var modelled := Budget.modelled_revenue_total(ns.tax_rates_pct, ns.start_tax_rates_pct, ns.tax_library)
 	ns.other_revenue_pct_gdp = n.tax_revenue_pct_gdp - modelled
 	if ns.other_revenue_pct_gdp < 0.0:
 		errors.append(

@@ -71,7 +71,7 @@ const BlocK = preload("res://src/sim/bloc_constants.gd")
 ## poll_noise.gd's NOISE_MAX_PCT: below this a headline move is not a move.
 const NOISE_FLOOR_PCT := 3.0
 
-## One point of VAT, as a share of GDP -- economy_constants.TAX_BASE_SHARE["vat"].
+## One point of VAT, as a share of GDP -- data/taxes/vat.json's base_share.
 ## The anchor the deployment cost is read against: a commitment nobody can feel is
 ## decorative, and one that costs more than the largest tax lever is not thin.
 const VAT_POINT_PCT_GDP := 0.25

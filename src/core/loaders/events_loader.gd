@@ -64,7 +64,7 @@ static func load_events(loader, events_dir: String) -> void:
 			var per_file_errors: Array[String] = []
 			var ev = GameEvent.from_dict(
 				entry, fname, per_file_errors,
-				C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys()
+				loader.taxes.keys(), C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys()
 			)
 			loader.errors.append_array(per_file_errors)
 			if ev.id == "":
@@ -199,7 +199,7 @@ static func load_summits(loader, summits_dir: String) -> void:
 		var per_file_errors: Array[String] = []
 		var summit = Summit.from_dict(
 			text, nation_id, sid, parsed, sid, per_file_errors,
-			C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys()
+			loader.taxes.keys(), C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys()
 		)
 		loader.errors.append_array(per_file_errors)
 		if not loader.summits.has(nation_id):

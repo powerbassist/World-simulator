@@ -22,46 +22,6 @@ const DRAFT_MONTHS_BASE := 2
 const DRAFT_MONTHS_PER_SIZE := 1.0
 const DRAFT_COOLDOWN_MONTHS := 24
 
-## V4.2 T4. What a proposed tax key may carry. These are BIRTH gates at
-## draft() -- content refusals, not clamps: a spec outside them is refused
-## whole, never trimmed to fit, because a clamp would silently re-price the
-## bill the player was shown.
-##
-## The ceiling on `base_share` is wealth's 4.00, the largest base
-## economy_constants.TAX_BASE_SHARE prices -- a net-wealth stock at four times
-## annual output. A proposed base above it is a quantity the revenue model has
-## no shape for, not a bigger tax.
-const NEW_TAX_BASE_SHARE_MAX := 4.0
-## The ceiling on the key's own erosion coefficient. Above 1.0, any rate above
-## the birth rate drives the shared curve's raw value negative and the answer
-## is EROSION_MIN all the way up -- the clamp, not the model, would be setting
-## the number above the reference. The authored five span 0.25 (vat) to 0.80
-## (wealth); 1.0 is the curve-stays-live bound above them.
-const NEW_TAX_EROSION_MAX := 1.0
-## A tax is born at a rate, and the birth rate doubles as the key's erosion
-## reference (the zero-reference rule's own answer: there is no authored
-## "normally levied at" for a key the player invented, so the rate its own
-## bill set is the reference) -- the curve divides by it, so a zero-rate birth
-## has no curve at all. 100 is a percent's ceiling; the authored sliders top
-## at 70, wealth at 3.0 for its stock-scale base.
-const NEW_TAX_RATE_MAX := 100.0
-## The ceiling on the PRODUCT the revenue formula actually reads: base_share
-## x rate. The two caps above bound their fields independently, so base 4.0 x
-## rate 100 = 400 % of GDP could be born -- a yield nothing else in the birth
-## gate brakes (zero drafting size, zero derived bloc price, no salience row).
-## Anchored at wealth's OWN max yield: 4.0 base x 3.0 rate = 12.0, the most
-## the revenue model has ever been asked to price. A product above it is a
-## quantity the model has no shape for, exactly as an over-ceiling base is.
-const NEW_TAX_YIELD_CEILING := 12.0
-## The demand-impulse multiplier a custom key reads in apply_pending()'s
-## level_effect loop, where the authored five read their MULT_TAX rows. The
-## lowest of the five (wealth's 0.25): per-key demand multipliers are authored
-## constants' privilege exactly as the opinion scales are, and the shared
-## default gives a player-proposed key the SMALLEST demand footprint the model
-## has ever charged a tax, so it can never out-lever the authored set by
-## default.
-const CUSTOM_TAX_MULT_DEMAND := 0.25
-
 ## V4.2 T5. The two commissioned polls, priced as a ONE-OFF purchase in EUR bn,
 ## FLAT -- G8 (the V5.1 play gate). V4.2 priced them as a share of GDP, 0.05 %
 ## and 0.04 %: EUR 1.45 bn and 1.16 bn for France, about ten thousand times the

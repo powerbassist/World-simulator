@@ -1,0 +1,42 @@
+{
+  "id": "vat",
+  "name": "Value added tax",
+  "summary": "A tax on consumption, collected at every stage of sale.",
+  "rate_meaning": "statutory standard rate",
+  "who_pays": [
+    "workers",
+    "pensioners",
+    "rural",
+    "students"
+  ],
+  "base_share": 0.53,
+  "erosion": 0.25,
+  "zero_ref_pct": 20.0,
+  "rate_range_pct": [
+    0.0,
+    40.0
+  ],
+  "demand_multiplier": 0.7,
+  "opinion_scale_pp": 16.0,
+  "bloc_salience": {
+    "workers": 0.08,
+    "pensioners": 0.08,
+    "rural": 0.11,
+    "students": 0.1
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": 0.3,
+      "social": 0.0
+    },
+    "down": {
+      "economic": -0.3,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "moved unchanged from economy_constants, opinion_constants and tax_panel",
+    "_note": "Tuning analogue: today's vat row (section 9.1's example). The real-yield check for the five is not sourced in this pass."
+  }
+}

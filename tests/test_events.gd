@@ -181,7 +181,7 @@ func _test_the_interrupt_flag() -> void:
 		]}
 	var errs: Array[String] = []
 	var ev = GameEvent.from_dict(raw.duplicate(true), "x.json", errs,
-		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+		_loader.taxes.keys(), EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
 	if not errs.is_empty() or ev.interrupt:
 		_fail("an event without the flag did not default to non-interrupt (errs=%s)" % [errs])
 
@@ -190,7 +190,7 @@ func _test_the_interrupt_flag() -> void:
 	var with_key: Dictionary = raw.duplicate(true)
 	with_key["interrupt"] = true
 	var ev2 = GameEvent.from_dict(with_key, "x.json", errs2,
-		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+		_loader.taxes.keys(), EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
 	if not ev2.interrupt:
 		_fail("from_dict did not read interrupt: true off the content")
 
@@ -205,7 +205,7 @@ func _test_the_interrupt_flag() -> void:
 	var raw3: Dictionary = raw.duplicate(true)
 	raw3["id"] = "y"
 	var ev3 = GameEvent.from_dict(raw3, "y.json", errs2,
-		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+		_loader.taxes.keys(), EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
 	_announce(state, ev3)
 	if bool(_entry(ns, "y").get("interrupt", false)):
 		_fail("a non-interrupt event's queue entry claims the flag")
@@ -601,7 +601,7 @@ func _make_event(id: String, sited: bool):
 		raw["sited"] = true
 	var errs: Array[String] = []
 	var ev = GameEvent.from_dict(raw, "x.json", errs,
-		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+		_loader.taxes.keys(), EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
 	if not errs.is_empty():
 		_fail("the fixture '%s' did not load: %s" % [id, errs])
 	return ev
@@ -782,7 +782,7 @@ func _validate(d: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	GameEvent.from_dict(
 		d, "test", errors,
-		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS,
+		_loader.taxes.keys(), EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS,
 		EconomyK.SECTOR_TREND.keys()
 	)
 	return errors
@@ -1148,7 +1148,7 @@ func _test_an_ai_fiscal_answer_never_touches_the_players_budget() -> void:
 		]}
 	var errs: Array[String] = []
 	var ev = GameEvent.from_dict(raw, "x.json", errs,
-		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+		_loader.taxes.keys(), EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
 	if not errs.is_empty():
 		_fail("the fiscal fixture did not load: %s" % [errs])
 		return

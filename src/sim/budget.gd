@@ -38,10 +38,6 @@ const TaxK = preload("res://src/sim/tax_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Energy = preload("res://src/sim/energy.gd")
-## V4.2 T4, for CUSTOM_TAX_MULT_DEMAND alone: a composed key reads the shared
-## demand default in apply_pending()'s level_effect loop, where the authored five read
-## their MULT_TAX rows. Constants only, so the dependency stops at the values.
-const StatuteK = preload("res://src/sim/statute_constants.gd")
 ## The ultra pass-1 projection finding, PR 46 finding 6 / PR 47 finding 1 a third
 ## time: project() ticks the assembly's own life too, and the cycle this preload
 ## closes (statute -> legislature -> here) is the one budget -> events ->
@@ -70,16 +66,15 @@ static func tick_month(state) -> void:
 ## returns -- "other" (line 1 below), "tariffs", "dividends". A TAX key
 ## carrying one of these names would yield into a dict slot the next
 ## recompute replaces with an unrelated national quantity: the silent
-## half-tax. Statute.draft()'s birth gate refuses them FROM THIS CONSTANT --
-## one declaration at the writer, and the re-deriving pin in
-## tests/test_statute_tax.gd fails the day a fourth computed line appears
-## without the constant growing.
+## half-tax. Statute.draft()'s birth gate read it until the player-composed
+## tax retired at V5.3 e; it stays as the one declaration a tax id must
+## avoid, and the re-deriving pin in tests/test_statute_tax.gd fails the day
+## a fourth computed line appears without the constant growing.
 const COMPUTED_REVENUE_LINES := ["other", "tariffs", "dividends"]
 
 static func recompute(state, ns) -> void:
 	ns.revenue_pct_gdp = revenue_lines(
-		ns.tax_rates_pct, ns.start_tax_rates_pct, Tax.progressivity_base_factor(ns),
-		ns.custom_taxes
+		ns.tax_rates_pct, ns.start_tax_rates_pct, ns.tax_library, Tax.progressivity_base_factor(ns)
 	)
 	ns.revenue_pct_gdp["other"] = ns.other_revenue_pct_gdp + ns.law_other_revenue_pct_gdp
 	ns.revenue_pct_gdp["tariffs"] = _tariff_revenue(state, ns)
@@ -208,26 +203,22 @@ static func recompute(state, ns) -> void:
 ## calibration, where the deviation is zero by construction) read the same numbers
 ## they always did.
 ##
-## `custom` is V4.2 T4's: the composition machine's params register,
-## `ns.custom_taxes`, passed by every caller that holds an `ns` rather than
-## read off one -- the same reason `ref_rates` is a parameter. A mutable
-## static table of keys would be content in a constants file and shared
-## across all ten nations; the register is per-nation state. The AUTHORED
-## five are unchanged and are computed first, exactly as before, so a call
-## with the default empty dictionary is bit-identical to the pre-T4 one, and
-## a custom key never reaches for an authored table row -- it brings its own
-## base and erosion, and its yield is that base times its rate times the ONE
-## shared erosion curve. modelled_revenue_total() deliberately does NOT grow
-## the parameter: its one caller is new-game calibration, where the register
-## is empty by construction.
+## `kinds` is V5.3 e's: the nation's tax library (ns.tax_library, every kind of
+## data/taxes/ in library order with its own base_share overrides). A line is
+## written for each kind IN FORCE -- a key of `rates` -- and none for a kind absent,
+## in library order, because every sum over this dictionary runs in its order and
+## today's five lead the library in today's order: their arithmetic is the one it
+## always was. V4.2 T4's `custom` parameter retired with the composed birth.
 static func revenue_lines(
-	rates: Dictionary, ref_rates: Dictionary, progressivity_factor: float = 1.0,
-	custom: Dictionary = {}
+	rates: Dictionary, ref_rates: Dictionary, kinds: Dictionary, progressivity_factor: float = 1.0
 ) -> Dictionary:
 	var out := {}
-	for key in C.TAX_KEYS:
-		var rate := float(rates.get(key, 0.0))
-		var yield_pct: float = float(C.TAX_BASE_SHARE[key]) * rate * _erosion(key, rate, ref_rates)
+	for key in kinds:
+		if not rates.has(key):
+			continue
+		var row: Dictionary = kinds[key]
+		var rate := float(rates[key])
+		var yield_pct: float = float(row["base_share"]) * rate * _erosion(row, rate, float(ref_rates.get(key, 0.0)))
 		# V1.6d. A factor on the INCOME LINE ONLY, and the first draft put it inside
 		# _erosion() instead -- which was wrong in a way that measured as zero rather
 		# than as a wrong number, so only tests/test_tax.gd's own check caught it. The
@@ -241,19 +232,10 @@ static func revenue_lines(
 		# SHRINKS THE BASE -- top incomes are the mobile part, and progressivity is what
 		# points the rate at them. Still one coefficient inside the one income line, so
 		# section 6's "without a fourth revenue channel" holds exactly as before.
-		if key == "income":
+		# The row's `progressive` flag since V5.3 e; income's alone in the shipped library.
+		if bool(row["progressive"]):
 			yield_pct *= progressivity_factor
 		out[key] = yield_pct
-	# V4.2 T4. Custom keys APPEND, after the authored five: dictionary order
-	# is every sum's evaluation order in this file, and keeping the authored
-	# keys first is part of what keeps their arithmetic untouched when a
-	# custom key exists. The progressivity factor is income's alone and a
-	# custom key never reads it.
-	for key in custom:
-		var params: Dictionary = custom[key]
-		var custom_rate := float(rates.get(key, 0.0))
-		out[key] = float(params.get("base_share", 0.0)) * custom_rate \
-			* _erosion(key, custom_rate, ref_rates, custom)
 	return out
 
 
@@ -279,12 +261,10 @@ static func _tariff_revenue(state, ns) -> float:
 ## No progressivity argument, and the omission is correct rather than an oversight:
 ## its one caller is GameState's new-game calibration, where the live schedule IS the
 ## starting schedule and the deviation is exactly zero. Passing 1.0 explicitly would
-## claim this function works at any schedule, which it does not. The params register
-## is omitted for the same reason (V4.2 T4): a new game has no custom taxes, and a
-## custom-aware signature would claim this function works at any point in a run.
-static func modelled_revenue_total(rates: Dictionary, ref_rates: Dictionary) -> float:
+## claim this function works at any schedule, which it does not.
+static func modelled_revenue_total(rates: Dictionary, ref_rates: Dictionary, kinds: Dictionary) -> float:
 	var total := 0.0
-	for v in revenue_lines(rates, ref_rates).values():
+	for v in revenue_lines(rates, ref_rates, kinds).values():
 		total += float(v)
 	return total
 
@@ -293,17 +273,9 @@ static func modelled_revenue_total(rates: Dictionary, ref_rates: Dictionary) -> 
 ## move, consumption does not. Clamped so a rate of zero or of 100 still produces
 ## a finite, correctly signed number.
 ##
-## ONE CURVE, TWO SOURCES OF COEFFICIENT AND REFERENCE. The authored keys read
-## the two constants tables exactly as before; a custom key (V4.2 T4, `custom`
-## the params register) brings BOTH from its own birth -- `erosion` from the
-## spec, and `ref_pct` the rate its creating bill set. The zero-reference
-## finding's own shape, working as designed: `start_tax_rates_pct` has no
-## entry for a key that did not exist at new-game, so `ref` reads 0.0 and the
-## per-key reference the curve needs is the one authored "rate this tax is
-## normally levied at" a player-proposed tax has -- the one its own bill set.
-## docs/tax-model.md's sixth-key section records it.
-static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary, custom: Dictionary = {}) -> float:
-	var ref := float(ref_rates.get(key, 0.0))
+## The coefficient and the zero reference are the kind's own row (data/taxes/,
+## V5.3 e); `ref` is the nation's start rate for it, 0 for a kind born in play.
+static func _erosion(row: Dictionary, rate_pct: float, ref: float) -> float:
 	# V1.6d, AND IT IS A BUG FIX RATHER THAN AN ADDITION. This branch returned a flat
 	# 1.0 -- no diminishing returns at all, revenue linear in the rate forever -- which
 	# is correct for a tax nobody has and wrong the moment a player invents one. It was
@@ -316,23 +288,12 @@ static func _erosion(key: String, rate_pct: float, ref_rates: Dictionary, custom
 	# The curve is taken against an absolute reference instead of a relative one, which
 	# is the only thing available when the relative one is zero. Same shape, same
 	# clamps, and it meets the old branch continuously nowhere -- a nation starting at
-	# zero and one starting at its EROSION_ZERO_REF_PCT are different nations, not the
+	# zero and one starting at its zero_ref_pct are different nations, not the
 	# same nation approached from two directions. That table is PER KEY, and it has to
 	# be: an invented capital-gains tax is normally levied around twenty-five points
 	# and an invented wealth tax below one.
-	var effective_ref: float
-	var coefficient: float
-	if C.TAX_KEYS.has(key):
-		effective_ref = ref if ref > 0.0 else float(C.EROSION_ZERO_REF_PCT[key])
-		coefficient = float(C.TAX_EROSION[key])
-	else:
-		# A custom key never reaches for an authored table row -- the same
-		# privilege rule the opinion scales record: the authored fits were
-		# per key against bases the model authored, and a player-proposed key
-		# has none to inherit.
-		var params: Dictionary = custom.get(key, {})
-		coefficient = float(params.get("erosion", 0.0))
-		effective_ref = ref if ref > 0.0 else float(params.get("ref_pct", 0.0))
+	var effective_ref: float = ref if ref > 0.0 else float(row["zero_ref_pct"])
+	var coefficient: float = float(row["erosion"])
 	var raw: float = 1.0 - coefficient * (rate_pct - effective_ref) / effective_ref
 	return clampf(raw, C.EROSION_MIN, C.EROSION_MAX)
 
@@ -360,8 +321,8 @@ static func commit(state, pending: Dictionary) -> void:
 ## "spending_pct_gdp": {...}, "tax_progressivity": float}; any key may be omitted to
 ## leave it unchanged.
 ##
-## The one fiscal WRITER, nation-scoped: the landed-rate floors, the yield gate
-## and the demand impulse, for whoever the effects belong to. `recompute` is the
+## The one fiscal WRITER, nation-scoped: the landed-rate floors, the refusal of a
+## key outside the five and the demand impulse, for whoever the effects belong to. `recompute` is the
 ## caller's, not this function's, because it needs the state -- the tariff line
 ## reads the relations the state holds.
 ##
@@ -373,10 +334,9 @@ static func apply_pending(ns, pending: Dictionary) -> void:
 	var new_rates: Dictionary = ns.tax_rates_pct.duplicate(true)
 	if pending.has("tax_rates_pct"):
 		# THE LANDED-RATE FLOOR (the ultra pass-9 finding's class): a rate is
-		# [0, inf) -- every panel slider floors at 0, the birth gate refuses a
-		# negative birth rate, and the repeal negation floors its removal at
-		# the register (Legislature._budget_removal). This is the one writer
-		# for every other route, so the floor lives here too: a cut bigger
+		# [0, inf) -- every panel slider floors at 0, and the repeal negation
+		# floors its removal at the register (Legislature._budget_removal). This
+		# is the one writer for every other route, so the floor lives here too: a cut bigger
 		# than the live rate (a composed over-cut, a lever passed twice) lands
 		# AT zero -- priced as "cut to zero" -- instead of as a negative
 		# revenue line paying out.
@@ -386,32 +346,16 @@ static func apply_pending(ns, pending: Dictionary) -> void:
 		# a duplicate of the live register, so erasing a key deletes its LIVE
 		# rate (revenue reads 0, the panel row vanishes, the demand impulse
 		# books the erasure as a tax cut) -- the opposite of "refused, and the
-		# register keeps the birth rate". A refused pending write lands
-		# nothing and changes nothing.
+		# register keeps its rate". A refused pending write lands nothing and
+		# changes nothing.
 		for key in pending["tax_rates_pct"]:
-			if C.TAX_KEYS.has(key):
+			if new_rates.has(key):
 				new_rates[key] = maxf(float(pending["tax_rates_pct"][key]), 0.0)
-				continue
-			if not ns.custom_taxes.has(key):
-				push_error("budget: pending rate for tax key '%s' with no params on the register -- refused" % key)
-				continue
-			# THE YIELD GATE, sim-side (the ultra pass-6 finding). The tax panel
-			# matches a born key's slider to its base, but this command channel
-			# is not the panel's alone -- a repeal's negation and a future
-			# bill's tax channels route through apply_effects() into this same
-			# loop -- so the ceiling lives at the ONE writer too, not only at
-			# the control. REFUSAL and not a clamp for the birth gate's own
-			# recorded reason: a clamp would silently re-price the schedule the
-			# caller was shown. Strictly >, matching _validate_new_tax: a
-			# product AT the ceiling (wealth's own 4.0 x 3.0) stays legal.
-			var base_share := float(ns.custom_taxes[key].get("base_share", 0.0))
-			var pending_rate := maxf(float(pending["tax_rates_pct"][key]), 0.0)
-			if base_share * pending_rate > StatuteK.NEW_TAX_YIELD_CEILING:
-				push_error("budget: base %.2f x rate %.1f would yield %.2f of GDP, past the %.1f the revenue model prices -- rate for '%s' refused" % [
-					base_share, pending_rate, base_share * pending_rate,
-					StatuteK.NEW_TAX_YIELD_CEILING, String(key)])
-				continue
-			new_rates[key] = pending_rate
+			elif not ns.tax_library.has(key):
+				push_error("budget: pending rate for tax key '%s', which the tax library does not define -- refused" % key)
+			# A kind of the library NOT in force is skipped without a word: a law's or
+			# an event's rate on a tax this nation does not levy changes nothing, and
+			# only the autumn finance bill puts a kind in force (V5.3 e, section 5).
 
 	var new_spending: Dictionary = ns.spending_pct_gdp.duplicate(true)
 	if pending.has("spending_pct_gdp"):
@@ -441,8 +385,8 @@ static func apply_pending(ns, pending: Dictionary) -> void:
 	var new_factor: float = Tax.base_factor_at(
 		new_progressivity, float(ns.start_tax_progressivity)
 	)
-	var old_revenue := revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct, old_factor, ns.custom_taxes)
-	var new_revenue := revenue_lines(new_rates, ns.start_tax_rates_pct, new_factor, ns.custom_taxes)
+	var old_revenue := revenue_lines(ns.tax_rates_pct, ns.start_tax_rates_pct, ns.tax_library, old_factor)
+	var new_revenue := revenue_lines(new_rates, ns.start_tax_rates_pct, ns.tax_library, new_factor)
 
 	var old_spend: float = ns.player_spending_pct_gdp()
 	var new_spend := 0.0
@@ -450,17 +394,11 @@ static func apply_pending(ns, pending: Dictionary) -> void:
 		new_spend += float(new_spending.get(key, 0.0))
 
 	var level_effect: float = (new_spend - old_spend) * C.MULT_SPENDING
-	for key in C.TAX_KEYS:
-		level_effect -= (float(new_revenue[key]) - float(old_revenue[key])) * float(C.MULT_TAX[key])
-	# V4.2 T4. A composed key's demand read, at the shared default multiplier
-	# (StatuteK.CUSTOM_TAX_MULT_DEMAND -- per-key demand multipliers are
-	# authored constants' privilege, and the default is the smallest footprint
-	# the model has ever charged a tax). The rate deltas here are exactly the
-	# deltas this commit applied above, so the impulse and the books cannot
-	# drift apart the way two separate computations would.
-	for key in ns.custom_taxes:
-		level_effect -= (float(new_revenue.get(key, 0.0)) - float(old_revenue.get(key, 0.0))) \
-			* StatuteK.CUSTOM_TAX_MULT_DEMAND
+	# Each kind's own demand multiplier (data/taxes/, V5.3 e), over the kinds the new
+	# schedule levies: a kind born at this commit entered force at 0 just before it
+	# (FinanceBill), so its old line reads 0 and the whole new yield is the impulse.
+	for key in new_revenue:
+		level_effect -= (float(new_revenue[key]) - float(old_revenue.get(key, 0.0))) * float(ns.tax_library[key]["demand_multiplier"])
 
 	ns.demand_impulse_pct = clampf(
 		ns.demand_impulse_pct + level_effect / C.impulse_level_factor(),

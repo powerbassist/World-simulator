@@ -114,11 +114,11 @@ func _test_content_loads() -> void:
 
 ## pledges_constants.gd writes its rate fields out because a `const` cannot loop. This
 ## is the check that keeps the two lists honest, and it runs BOTH ways -- so a sixth
-## tax added at some later session turns this red rather than becoming silently
+## kind added to data/taxes/ turns this red rather than becoming silently
 ## unpromisable, and a field left here after its key is deleted turns it red too.
 func _test_rate_fields_mirror_the_economy_keys() -> void:
 	var expected: Array = []
-	for key in EconomyK.TAX_KEYS:
+	for key in _loader.taxes:
 		expected.append("tax_%s_pct" % key)
 	for key in EconomyK.SPENDING_KEYS:
 		expected.append("spending_%s_pct_gdp" % key)
@@ -128,7 +128,7 @@ func _test_rate_fields_mirror_the_economy_keys() -> void:
 			_fail("PLEDGE_RATE_FIELDS is missing '%s' -- a rate the player sets that nobody may promise" % f)
 	for f in K.PLEDGE_RATE_FIELDS:
 		if not expected.has(String(f)):
-			_fail("PLEDGE_RATE_FIELDS carries '%s', which no TAX_KEYS or SPENDING_KEYS entry produces" % f)
+			_fail("PLEDGE_RATE_FIELDS carries '%s', which no tax kind or SPENDING_KEYS entry produces" % f)
 
 
 ## The probe deleted it and this is where that stays deleted. Table (c0) measures

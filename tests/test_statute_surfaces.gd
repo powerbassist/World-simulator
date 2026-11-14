@@ -10,10 +10,9 @@ extends SceneTree
 ## exists for:
 ##
 ##   (a) the Tax Code window on KEY_X, one row per live key off the
-##       ns.tax_rates_pct REGISTER -- a composed key appears when it exists,
-##       and no hand-written roster decides what the player can move;
-##   (b) "Propose a tax" opening the birth flow, the draft landing in the
-##       in-tray, and the briefing carrying its drafting months;
+##       ns.tax_rates_pct REGISTER;
+##   (b) no "Propose a tax" any more (the composed birth retired at V5.3 e);
+##       the draft briefing's drafting months are pinned in (c)'s clamp leg;
 ##   (c) the briefing on Propose naming channels, direction, magnitude and
 ##       the LANDED price's offended blocs;
 ##   (d) both paid polls: bought once per bill, cost to the purchase register
@@ -58,9 +57,8 @@ const LawPanelUi = preload("res://src/ui/law_panel.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const Statute = preload("res://src/sim/statute.gd")
-const StatuteK = preload("res://src/sim/statute_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
-const C = preload("res://src/sim/economy_constants.gd")
+const StatuteK = preload("res://src/sim/statute_constants.gd")
 
 const POLL_SLOT := "__test_poll_surfaces__"
 
@@ -81,6 +79,39 @@ func _process(_delta: float) -> bool:
 	_run()
 	_finish()
 	return false
+
+
+## V5.3 e: the panels on a tax code that is not today's five -- a sixth kind in force (as
+## Content's rows will put one) and the wealth tax abolished. The Tax Code shows one row per
+## kind in force, the born kind named by its library row and capped by its range; the
+## Budget and the overview refresh on it without a missing-key error. Restored after.
+func _check_a_reshaped_code(panel, state) -> void:
+	var ns = state.player()
+	var row: Dictionary = (ns.tax_library["vat"] as Dictionary).duplicate(true)
+	row["id"] = "fuel_duty"
+	row["name"] = "Fuel duty"
+	row["rate_range_pct"] = [0.0, 2.0]
+	ns.tax_library["fuel_duty"] = row
+	ns.tax_rates_pct["fuel_duty"] = 0.7
+	var wealth := float(ns.tax_rates_pct["wealth"])
+	ns.tax_rates_pct.erase("wealth")
+	Budget.recompute(state, ns)
+	panel._refresh()
+	if panel._sliders.has("wealth") and (panel._sliders["wealth"] as Control).is_visible_in_tree():
+		_fail("the Tax Code still shows a row for the abolished wealth tax")
+	if not panel._sliders.has("fuel_duty") or float(panel._sliders["fuel_duty"].max_value) != 2.0:
+		_fail("the Tax Code has no fuel duty row capped by its kind's range")
+	if panel._label_for("fuel_duty") != "Fuel duty":
+		_fail("the born kind reads '%s', not its library name" % panel._label_for("fuel_duty"))
+	_main._budget_panel.mark_dirty()
+	_main._budget_panel._refresh()
+	_main._overview_panel.mark_dirty()
+	_main._overview_panel._refresh()
+	ns.tax_rates_pct.erase("fuel_duty")
+	ns.tax_library.erase("fuel_duty")
+	ns.tax_rates_pct["wealth"] = wealth
+	Budget.recompute(state, ns)
+	panel._refresh()
 
 
 func _run() -> void:
@@ -110,81 +141,15 @@ func _run() -> void:
 			_fail("the rate row for '%s' prints '%s', which is not a number" % [key, text])
 	if float(panel._sliders["income"].max_value) != 70.0:
 		_fail("the income slider lost its authored ceiling")
-	if not is_equal_approx(float(panel._sliders["wealth"].max_value), C.WEALTH_RATE_MAX_PCT):
+	if not is_equal_approx(float(panel._sliders["wealth"].max_value), float(ns.tax_library["wealth"]["rate_range_pct"][1])):
 		_fail("the wealth slider must read the model bound, not a copied number")
 
-	# A composed key appears when it exists -- staged exactly as apply()
-	# writes it (params + rate), and never by an edit to the panel.
-	ns.custom_taxes["carbon"] = {
-		"name": "The Carbon Levy", "base_share": 0.06, "erosion": 0.7, "ref_pct": 25.0}
-	ns.tax_rates_pct["carbon"] = 25.0
-	panel.mark_dirty()
-	panel._refresh()
-	if _slider_count(panel) != base_rows + 1:
-		_fail("a staged composed key built no row -- the scan is not off the register")
-	if not _live_text_has(panel, "The Carbon Levy"):
-		_fail("the composed key's row is not named off the params register")
-	if float(panel._sliders["carbon"].max_value) != StatuteK.NEW_TAX_RATE_MAX:
-		_fail("a low-base born key (0.06) lost its full rate range -- the max is matched to the BASE (12.0 / 0.06 = 200), so minf keeps NEW_TAX_RATE_MAX the cap")
-	# THE OTHER SIDE OF THAT RULE (the ultra pass-6 finding): a HIGH base pulls
-	# the max DOWN to its own yield bound. The old fallback offered 100 points
-	# on every born key, so a base-4.0 key was one drag from a 400-of-GDP
-	# yield the ceiling's own rationale declares unpriceable -- the slider must
-	# top at 12.0 / 4.0 = 3.0.
-	ns.custom_taxes["heavy"] = {
-		"name": "The Stock Levy", "base_share": 4.0, "erosion": 0.8, "ref_pct": 3.0}
-	ns.tax_rates_pct["heavy"] = 3.0
-	panel.mark_dirty()
-	panel._refresh()
-	if not is_equal_approx(float(panel._sliders["heavy"].max_value),
-			StatuteK.NEW_TAX_YIELD_CEILING / 4.0):
-		_fail("a base-4.0 born key's slider tops at %s, expected 3.0 -- the product gate" % panel._sliders["heavy"].max_value)
-	# THE COMMIT GATE is sim-side, because the panel is not the only writer: a
-	# rate the slider can no longer produce is still REFUSED at Budget.commit
-	# (push_error + skip, never a silent clamp), and the register keeps the
-	# birth rate.
-	var heavy_rate: float = float(ns.tax_rates_pct["heavy"])
-	## expects-error: budget: base .* rate for 'heavy' refused
-	Budget.commit(state, {"tax_rates_pct": {"heavy": 100.0}})
-	if not is_equal_approx(float(ns.tax_rates_pct["heavy"]), heavy_rate):
-		_fail("an over-ceiling commit applied the rate -- it must refuse, not clamp")
-	# Strictly >, like the birth gate: the anchor product (4.0 x 3.0 = 12.0)
-	# commits, so the gate bounds the product and not the act of committing.
-	Budget.commit(state, {"tax_rates_pct": {"heavy": 3.0}})
-	if not is_equal_approx(float(ns.tax_rates_pct["heavy"]), 3.0):
-		_fail("a rate AT the product ceiling must still commit, got %s" % ns.tax_rates_pct["heavy"])
-	ns.custom_taxes.erase("heavy")
-	ns.tax_rates_pct.erase("heavy")
-	panel.mark_dirty()
-	panel._refresh()
+	_check_a_reshaped_code(panel, state)
 
-	# --- (b) "Propose a tax" opens the birth flow and drafts ---------------
-	_press(_find_button(panel, "Propose a tax"))
-	if not panel._compose._compose_box.visible:
-		_fail("Propose a tax did not open the composition flow")
-	panel._compose._draft_name.text = "The Digital Levy"
-	panel._compose._draft_key.text = "digital"
-	panel._compose._base_slider.value = 0.3
-	panel._compose._erosion_slider.value = 0.5
-	panel._compose._rate_slider.value = 12.0
-	var debt_before_draft: float = ns.debt_eur_bn
-	panel._compose._on_draft()
-	if ns.draft_bills.is_empty():
-		_fail("the draft button drafted nothing")
-	if not briefing.visible:
-		_fail("an accepted draft did not open the briefing")
-	# A pure birth names no channel: zero drafting size, two base months.
-	if not _live_text_has(briefing, "In drafting: 2 months"):
-		_fail("the draft briefing does not carry the drafting months")
-	if not _live_text_has(briefing, "no bloc directly"):
-		_fail("a zero-price bill's briefing does not say so")
-	if absf(ns.debt_eur_bn - debt_before_draft) > 1e-9:
-		_fail("drafting a bill moved money -- only a passed poll or act may")
-	# The refusal is the panel's to show, verbatim from the machine.
-	panel._compose._draft_key.text = "income"
-	panel._compose._on_draft()
-	if not panel._compose._refusal.visible:
-		_fail("a refused draft showed no refusal line")
+	# The player-composed tax retired at V5.3 e (the tax library replaces it):
+	# the Tax Code no longer offers to invent one.
+	if _find_button(panel, "Propose a tax") != null:
+		_fail("the Tax Code still offers Propose a tax -- the composed birth is retired")
 
 	# --- (c) The briefing on Propose: channels, price, offended blocs ------
 	var surtax = _law_by_id(loader, "high_earner_surtax")
@@ -223,6 +188,8 @@ func _run() -> void:
 		var entry: Dictionary = ns.draft_bills[String(quoted["draft_id"])]
 		var quote: float = float(entry["price"].get("urban", 0.0))
 		briefing.open_for_draft(entry, String(quoted["draft_id"]), state, loader)
+		if not _live_text_has(briefing, "In drafting:"):
+			_fail("the draft briefing does not carry the drafting months")
 		if absf(quote) <= LK.BLOC_OFFSET_MAX:
 			_fail("the clamp leg's spec no longer quotes past the bound (urban %.2f) -- rewrite it, do not drop the pin" % quote)
 		elif not _live_text_has(briefing, "%+.2f" % clampf(quote, LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)):
@@ -533,7 +500,7 @@ func _run() -> void:
 		"theme": "labour", "summary": "",
 		"position": {"economic": 0.0, "social": 0.0},
 		"majority": "simple", "cooldown_months": 24, "once": false,
-		"effects": {"other_revenue_pct_gdp": 0.2}, "new_tax": {},
+		"effects": {"other_revenue_pct_gdp": 0.2},
 		"repeals": "", "composed": true, "origin": "player",
 	}
 	live_ns.last_law_result = {

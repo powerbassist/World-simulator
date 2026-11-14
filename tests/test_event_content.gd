@@ -76,7 +76,6 @@ func _check_lint_vocabulary() -> void:
 		"ON_ACTIONS": EventsK.ON_ACTIONS,
 		"PRECONDITION_FIELDS": LegislatureK.PRECONDITION_FIELDS,
 		"PRECONDITION_OPS": LegislatureK.PRECONDITION_OPS,
-		"TAX_KEYS": EconomyK.TAX_KEYS,
 		"SPENDING_KEYS": EconomyK.SPENDING_KEYS,
 		"BLOC_KEYS": OpinionK.BLOC_KEYS,
 		# V5.2d: the speaker schema the lint restates from src/core/event_speaker.gd.
@@ -104,6 +103,11 @@ func _check_lint_vocabulary() -> void:
 		if found != want:
 			_fail("event_lint.py %s %s differs from its source list %s" % [name, found, want])
 	_check_lint_bloc_size(text)
+	# TAX_KEYS left the pairs at V5.3 e: the lint reads data/taxes/ itself, as the
+	# loader does, so there is no restated list to drift. What stays pinned is that it
+	# still reads the directory rather than growing a literal again.
+	if not text.contains("\nTAX_KEYS = sorted(") or not text.contains("\"data\" / \"taxes\""):
+		_fail("event_lint.py no longer derives TAX_KEYS from data/taxes/")
 
 
 ## BLOC_SIZE is a dictionary, so the list loop above cannot hold it. The lint's

@@ -228,7 +228,7 @@ func _table_a_reachability() -> void:
 	for key in ["capital_gains", "wealth"]:
 		var start_state = _new_state("FRA")
 		var top_state = _new_state("FRA")
-		var top: float = C.WEALTH_RATE_MAX_PCT if key == "wealth" else 60.0
+		var top: float = _wealth_max() if key == "wealth" else 60.0
 		Budget.commit(top_state, {"tax_rates_pct": {key: top}})
 		print("%-16s %10.2f %10.2f %12.4f %12.4f" % [
 			key,
@@ -412,7 +412,7 @@ func _table_d_kill_switch() -> void:
 		"redistributive, reachable": _offset_of(_reachable_budget()),
 		"redistributive, every lever": _offset_of({
 			"tax_progressivity": K.PROGRESSIVITY_MAX,
-			"tax_rates_pct": {"capital_gains": 45.0, "wealth": C.WEALTH_RATE_MAX_PCT},
+			"tax_rates_pct": {"capital_gains": 45.0, "wealth": _wealth_max()},
 		}),
 	}
 	for label in offsets:
@@ -443,7 +443,7 @@ func _table_e_the_clamp() -> void:
 	var unclamped: float = (
 		K.GINI_PROGRESSIVITY_BETA * (K.PROGRESSIVITY_MAX - K.PROGRESSIVITY_BASE)
 		+ float(K.GINI_RATE_BETA["capital_gains"]) * 60.0
-		+ float(K.GINI_RATE_BETA["wealth"]) * C.WEALTH_RATE_MAX_PCT
+		+ float(K.GINI_RATE_BETA["wealth"]) * _wealth_max()
 	)
 	var reachable = _new_state("FRA")
 	Budget.commit(reachable, _reachable_budget())
@@ -484,7 +484,7 @@ func _table_f_the_scales() -> void:
 
 	print("BOUNDARY CHECK, before the band. opinion.gd prices every tax in POINTS OF RATE,")
 	print("and TAX_BASE_SHARE puts wealth's base at %.2f against income's %.2f -- a stock" % [
-		float(C.TAX_BASE_SHARE["wealth"]), float(C.TAX_BASE_SHARE["income"]),
+		float(_loader.taxes["wealth"]["base_share"]), float(_loader.taxes["income"]["base_share"]),
 	])
 	print("against a flow. One shared scale is a units error and not a tuning choice, so")
 	print("the question is which value and never whether.")
@@ -508,20 +508,20 @@ func _table_f_the_scales() -> void:
 	print("the reachable upward span:")
 	print("")
 	var income_span: float = 70.0 - 20.0
-	var ratio: float = OK.TAX_SCALE_PP / income_span
-	print("  %.1f / %.1f = %.4f" % [OK.TAX_SCALE_PP, income_span, ratio])
+	var ratio: float = _shared_scale() / income_span
+	print("  %.1f / %.1f = %.4f" % [_shared_scale(), income_span, ratio])
 	print("")
 	print("%-16s %10s %10s %12s %12s %10s" % [
 		"tax", "start", "ceiling", "span up", "fitted", "shipped",
 	])
 	print("-".repeat(74))
 	for key in ["capital_gains", "wealth"]:
-		var ceiling: float = C.WEALTH_RATE_MAX_PCT if key == "wealth" else 60.0
+		var ceiling: float = _wealth_max() if key == "wealth" else 60.0
 		var start_rate: float = float(_new_state("FRA").player().start_tax_rates_pct[key])
 		var span: float = ceiling - start_rate
 		print("%-16s %10.2f %10.2f %12.2f %12.4f %10.3f" % [
 			key, start_rate, ceiling, span, span * ratio,
-			float(OK.TAX_SCALE_PP_BY_KEY.get(key, OK.TAX_SCALE_PP)),
+			float(_loader.taxes[key]["opinion_scale_pp"]),
 		])
 	print("-".repeat(74))
 	print("")
@@ -533,7 +533,7 @@ func _table_f_the_scales() -> void:
 	print("The three S5 measured take no entry, so the constant S5 measured still")
 	print("describes them exactly:")
 	for key in ["income", "corporate", "vat"]:
-		print("  %-12s override present: %s" % [key, OK.TAX_SCALE_PP_BY_KEY.has(key)])
+		print("  %-12s override present: %s" % [key, float(_loader.taxes[key]["opinion_scale_pp"]) != _shared_scale()])
 
 
 # --- (g) the two issue keys ----------------------------------------------------------
@@ -623,7 +623,7 @@ func _table_h_the_deficit_span() -> void:
 	var ceil_state = _new_state("FRA")
 	Budget.commit(floor_state, {"tax_rates_pct": {"capital_gains": 0.0, "wealth": 0.0}})
 	Budget.commit(ceil_state, {"tax_rates_pct": {
-		"capital_gains": 60.0, "wealth": C.WEALTH_RATE_MAX_PCT,
+		"capital_gains": 60.0, "wealth": _wealth_max(),
 	}})
 	var swing: float = (
 		floor_state.player().deficit_pct_gdp - ceil_state.player().deficit_pct_gdp
@@ -644,6 +644,18 @@ func _table_h_the_deficit_span() -> void:
 
 
 # --- helpers -------------------------------------------------------------------------
+
+## The wealth lever's ceiling: data/taxes/wealth.json's rate_range_pct top since V5.3 e
+## (economy_constants.WEALTH_RATE_MAX_PCT before it, same 3.0).
+func _wealth_max() -> float:
+	return float(_loader.taxes["wealth"]["rate_range_pct"][1])
+
+
+## V1.6d's shared opinion scale, opinion_constants.TAX_SCALE_PP until V5.3 e moved every
+## scale into data/taxes/: the value corporate and VAT still carry (16.0), so "override
+## present" below reads as a scale that differs from it.
+func _shared_scale() -> float:
+	return float(_loader.taxes["corporate"]["opinion_scale_pp"])
 
 func _reachable_budget() -> Dictionary:
 	return {

@@ -63,7 +63,6 @@ static func read_value(read: int, raw, declared):
 		F.COMMODITY_STATE: return Readers.commodity_state(raw)
 		F.LAW_LEDGER: return Readers.law_ledger(raw)
 		F.DRAFT_BILLS: return Readers.draft_bills(raw)
-		F.CUSTOM_TAXES: return Readers.custom_taxes(raw)
 		F.POLL_PURCHASES: return Readers.poll_purchases(raw)
 		F.ASSEMBLY_BILLS: return Readers.assembly_bills(raw)
 		F.HELD_BILLS: return Readers.held_bills(raw)

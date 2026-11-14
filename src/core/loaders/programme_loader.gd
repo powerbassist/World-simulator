@@ -257,5 +257,5 @@ static func extract_programme_effects(loader, raw, owner_id: String, filename: S
 			])
 
 	return Law.extract_shared_effects(
-		raw, owner_id, filename, errors, C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys()
+		raw, owner_id, filename, errors, loader.taxes.keys(), C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys()
 	)

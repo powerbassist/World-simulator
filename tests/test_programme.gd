@@ -158,7 +158,7 @@ func _test_the_register_sweep() -> void:
 				continue
 			var errs: Array[String] = []
 			LawK.extract_shared_effects(entry[key], id, "sweep", errs,
-				EconK.TAX_KEYS, EconK.SPENDING_KEYS, OpiK.BLOC_KEYS, EconK.SECTOR_TREND.keys())
+				_loader.taxes.keys(), EconK.SPENDING_KEYS, OpiK.BLOC_KEYS, EconK.SECTOR_TREND.keys())
 			if not errs.is_empty():
 				_fail("%s.%s does not pass extract_shared_effects: %s" % [id, key, errs])
 		if not Programme.progress_of(fresh.player(), entry).has("current_value"):

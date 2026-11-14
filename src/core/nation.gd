@@ -6,6 +6,7 @@ extends RefCounted
 ## the schema and the import script's ownership boundary on `imported`.
 
 const C = preload("res://src/sim/economy_constants.gd")
+const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 
 const CycleK = preload("res://src/sim/cycle_constants.gd")
 
@@ -128,8 +129,8 @@ const KNOWN_ELECTION_SYSTEMS: Array[String] = ["pr_dhondt", "pr_national", "fptp
 
 ## Moved from data_loader.gd's now-deleted _load_policy_defaults() at V1.2a,
 ## when starting fiscal policy moved from the one shared policy_defaults.json
-## into each nation's own fiscal block.
-const MAX_TAX_RATE_PCT := 100.0
+## into each nation's own fiscal block. A tax rate's bound is its kind's
+## rate_range_pct since V5.3 e (src/core/loaders/taxes_loader.gd).
 const MAX_SPENDING_PCT_GDP := 100.0
 
 ## How a government is assembled, and what it takes to bring one down. Both are
@@ -388,7 +389,13 @@ var tax_revenue_pct_gdp: float = 0.0
 ## data/policy_defaults.json; see the _note on FRA.json's fiscal block for the
 ## sourcing and derivation of the other nine. GameState._build_nation() reads
 ## these instead of a loader-wide defaults argument.
-var tax_rates_pct: Dictionary = {}          # income, corporate, vat
+## V5.3 e: the kinds in force (a key listed is in force, one absent is not), each a
+## data/taxes/ id; the base_share overrides for kinds in force; the month the autumn
+## finance bill may create or abolish a kind (0: no autumn gate). Read by
+## TaxesLoader.read_nation(), checked against the library by validate_nations().
+var tax_rates_pct: Dictionary = {}
+var tax_base_share: Dictionary = {}
+var finance_autumn_month: int = 0
 var spending_pct_gdp: Dictionary = {}       # health, education, defence, pensions, infrastructure
 var other_spending_pct_gdp: float = 0.0
 
@@ -643,11 +650,7 @@ static func from_dict(d: Dictionary, filename: String, errors: Array[String]):
 	n.tax_revenue_pct_gdp = _extract_float(fiscal, "tax_revenue_pct_gdp", "fiscal.tax_revenue_pct_gdp", filename, errors)
 	_check_range_float(n.tax_revenue_pct_gdp, 0.0, 100.0, "fiscal.tax_revenue_pct_gdp", filename, errors)
 
-	var rates: Dictionary = _extract_dict(fiscal, "tax_rates_pct", filename, errors)
-	for key in C.TAX_KEYS:
-		var rate := _extract_float(rates, key, "fiscal.tax_rates_pct.%s" % key, filename, errors)
-		_check_range_float(rate, 0.0, MAX_TAX_RATE_PCT, "fiscal.tax_rates_pct.%s" % key, filename, errors)
-		n.tax_rates_pct[key] = rate
+	TaxesLoader.read_nation(n, d, fiscal, filename, errors)
 
 	var spending: Dictionary = _extract_dict(fiscal, "spending_pct_gdp", filename, errors)
 	for key in C.SPENDING_KEYS:

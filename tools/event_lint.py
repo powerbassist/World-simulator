@@ -99,8 +99,9 @@ SCALAR_EFFECT_KEYS = [
     "structural_unemployment_pct", "potential_growth_pct", "other_revenue_pct_gdp",
 ]
 EFFECT_CHANNELS = ["tax_rates_pct", "spending_pct_gdp", "bloc_offset", "company", "society"]
-# economy_constants TAX_KEYS / SPENDING_KEYS / SECTOR_TREND
-TAX_KEYS = ["income", "corporate", "vat", "capital_gains", "wealth"]
+# The tax library's kinds (data/taxes/<id>.json, V5.3 e), then economy_constants'
+# SPENDING_KEYS / SECTOR_TREND
+TAX_KEYS = sorted(p.stem for p in (Path(__file__).resolve().parent.parent / "data" / "taxes").glob("*.json"))
 SPENDING_KEYS = ["health", "education", "defence", "pensions", "infrastructure"]
 SECTORS = ["agriculture", "industry", "services"]
 # opinion_constants BLOC_KEYS, and BLOC_SIZE -- the weights ARE the sizes, which

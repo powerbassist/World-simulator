@@ -5,21 +5,9 @@ extends RefCounted
 
 ## Where a line's change sits on the two axes, per channel, key and direction: the
 ## authored law that moves that line, its position verbatim. A bill's position is the
-## coalition's own, moved toward the size-weighted mean of these. V5.3 e moves each row
-## into its kind's file in data/taxes/ (section 9's `finance_anchor`).
+## coalition's own, moved toward the size-weighted mean of these. A tax kind's rows moved
+## into its file in data/taxes/ at V5.3 e (section 9's `finance_anchor`).
 const ANCHOR := {
-	"tax_rates_pct": {
-		# high_earner_surtax (-0.6 on +5.0 income); a cut mirrors it.
-		"income": {"up": {"economic": -0.6, "social": 0.0}, "down": {"economic": 0.6, "social": 0.0}},
-		# corporate_tax_cut (+0.6 on -5.0); a rise mirrors it.
-		"corporate": {"up": {"economic": -0.6, "social": 0.0}, "down": {"economic": 0.6, "social": 0.0}},
-		# vat_consolidation (+0.3 on +2.0): a consumption tax reads right of centre.
-		"vat": {"up": {"economic": 0.3, "social": 0.0}, "down": {"economic": -0.3, "social": 0.0}},
-		# capital_gains_surtax (-0.5 on +3.0).
-		"capital_gains": {"up": {"economic": -0.5, "social": 0.0}, "down": {"economic": 0.5, "social": 0.0}},
-		# wealth_levy (-0.7 on +0.3).
-		"wealth": {"up": {"economic": -0.7, "social": 0.0}, "down": {"economic": 0.7, "social": 0.0}},
-	},
 	"spending_pct_gdp": {
 		# health_service_reform (-0.3 / -0.1); a cut mirrors it.
 		"health": {"up": {"economic": -0.3, "social": -0.1}, "down": {"economic": 0.3, "social": 0.1}},
@@ -36,8 +24,8 @@ const ANCHOR := {
 	},
 }
 
-## A composed tax key has no row: it reads income's, the anchor row of statute's
-## CHANNEL_PRICE too.
+## A tax key with no library row reads income's, the anchor row of statute's CHANNEL_PRICE
+## too. The tax anchors themselves are each kind's `finance_anchor` in data/taxes/ (V5.3 e).
 const FALLBACK_TAX_KEY := "income"
 
 ## Progressivity is an index in [0, 2]; it reads income's row, a full-range move

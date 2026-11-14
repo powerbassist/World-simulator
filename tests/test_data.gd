@@ -7,6 +7,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const C = preload("res://src/sim/economy_constants.gd")
+const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 
 func _init() -> void:
 	var failures: Array[String] = []
@@ -36,7 +37,9 @@ func _init() -> void:
 
 		# V1.2a: starting fiscal policy is per-nation, not read from a single
 		# shared policy_defaults.json -- every nation must carry its own.
-		for key in C.TAX_KEYS:
+		# Every shipped nation levies the five; the library allows a nation to omit a
+		# kind, and the first file that does will edit this line.
+		for key in TaxesLoader.FIRST:
 			if not n.tax_rates_pct.has(key):
 				failures.append("%s: fiscal.tax_rates_pct missing '%s'" % [id, key])
 		for key in C.SPENDING_KEYS:

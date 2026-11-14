@@ -250,7 +250,7 @@ func _transfer_table(loader) -> void:
 	print("[%.2f, %.2f]. One tax point is about 0.50%% of GDP" % [
 		BK.CONTRIBUTION_MIN_PCT_GDP, BK.CONTRIBUTION_MAX_PCT_GDP,
 	])
-	print("(economy_constants.TAX_BASE_SHARE), and the budget panel prints a line to")
+	print("(the tax library rows' base_share, data/taxes/), and the budget panel prints a line to")
 	print("one decimal, so under %.2f%% of GDP it reads as nothing at all." % TRANSFER_LEGIBLE_PCT_GDP)
 	print("")
 	print("%-6s %8s %10s %12s %12s %10s   %s" % [

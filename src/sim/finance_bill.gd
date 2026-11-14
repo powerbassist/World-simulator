@@ -36,6 +36,10 @@ const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 
 const CHANNELS := ["tax_rates_pct", "spending_pct_gdp"]
 const PROGRESSIVITY := "tax_progressivity"
+## V5.3 e, the autumn rule (section 5): {kind: rate} put in force from nothing, and
+## [kind] taken out of force. Only a bill tabled in its nation's autumn month carries them.
+const CREATE := "create"
+const ABOLISH := "abolish"
 
 
 ## The panels' absolute pending values (Budget.commit's shape) as a bill of deltas
@@ -80,6 +84,22 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 			merged[channel] = rows
 	if bill.has(PROGRESSIVITY):
 		merged[PROGRESSIVITY] = float(bill[PROGRESSIVITY])
+	if bill.has(CREATE):
+		var born: Dictionary = merged.get(CREATE, {})
+		for kind in bill[CREATE]:
+			born[kind] = float(bill[CREATE][kind])
+		merged[CREATE] = born
+	if bill.has(ABOLISH):
+		var gone: Array = merged.get(ABOLISH, [])
+		for kind in bill[ABOLISH]:
+			if not gone.has(kind):
+				gone.append(kind)
+		merged[ABOLISH] = gone
+	# Checked on the merged bill, so an amendment cannot re-rate a kind an earlier
+	# tabling abolished.
+	var season := _autumn_refusal(state, loader, ns, merged)
+	if not season.is_empty():
+		return season
 	var id := String(held.get("law_id", "")) if not held.is_empty() else FinanceBillLaw.id_for(state)
 	ns.tabled_bill = {
 		"law_id": id, "finance": merged, "forced": force or bool(held.get("forced", false)),
@@ -179,7 +199,16 @@ static func divide(state, loader, ns, tabled: Dictionary) -> Dictionary:
 			by_id[party.id] = party
 		Discipline.penalise_rebellions(ns, result["party_rebels"], by_id)
 	if result["passed"]:
+		# A born kind enters force at 0 with no start rate, so apply_pending prices its rate
+		# as a rise from nothing on the zero-reference curve; an abolished one is cut to 0
+		# there (its lost revenue booked as an impulse) and only then leaves force.
+		for kind in bill.get(CREATE, {}):
+			ns.tax_rates_pct[kind] = 0.0
+			ns.start_tax_rates_pct.erase(kind)
 		Budget.apply_pending(ns, _absolute(ns, bill))
+		for kind in bill.get(ABOLISH, []):
+			ns.tax_rates_pct.erase(kind)
+			ns.start_tax_rates_pct.erase(kind)
 		Budget.recompute(state, ns)
 	result["finance_bill"] = bill.duplicate(true)
 	ns.last_law_result = result
@@ -198,7 +227,38 @@ static func _absolute(ns, bill: Dictionary) -> Dictionary:
 			for key in bill[channel]:
 				rows[key] = float(register.get(key, 0.0)) + float(bill[channel][key])
 			pending[channel] = rows
+	var taxes: Dictionary = pending.get("tax_rates_pct", {})
+	for kind in bill.get(CREATE, {}):
+		taxes[kind] = float(bill[CREATE][kind])
+	for kind in bill.get(ABOLISH, []):
+		taxes[kind] = 0.0
+	if not taxes.is_empty():
+		pending["tax_rates_pct"] = taxes
 	# The schedule's band is Budget.apply_pending's to clamp, the one writer (QA's M10).
 	if bill.has(PROGRESSIVITY):
 		pending[PROGRESSIVITY] = float(ns.tax_progressivity) + float(bill[PROGRESSIVITY])
 	return pending
+
+
+## Why the bill may not table, as table()'s refusal, or {} when it may. Births and
+## abolitions only in the nation's autumn month (none for a nation whose data lists no
+## month); a born kind exists in the library, is not in force and starts inside its
+## range; an abolished kind is in force; and no rate row names a kind that is not in
+## force once the bill applies, which would be a birth outside the gate.
+static func _autumn_refusal(state, loader, ns, bill: Dictionary) -> Dictionary:
+	var born: Dictionary = bill.get(CREATE, {})
+	var gone: Array = bill.get(ABOLISH, [])
+	var autumn := int(loader.nations[ns.id].finance_autumn_month)
+	if (not born.is_empty() or not gone.is_empty()) and (autumn == 0 or autumn != int(state.month)):
+		return {"tabled": false, "refused": true, "autumn": true}
+	var ok := true
+	for kind in born:
+		var row: Dictionary = ns.tax_library.get(kind, {})
+		var rate := float(born[kind])
+		ok = ok and not row.is_empty() and not ns.tax_rates_pct.has(kind) and not gone.has(kind) \
+			and rate >= float(row["rate_range_pct"][0]) and rate <= float(row["rate_range_pct"][1])
+	for kind in gone:
+		ok = ok and ns.tax_rates_pct.has(kind)
+	for kind in bill.get("tax_rates_pct", {}):
+		ok = ok and ns.tax_rates_pct.has(kind) and not gone.has(kind)
+	return {} if ok else {"tabled": false, "refused": true, "kind": true}
