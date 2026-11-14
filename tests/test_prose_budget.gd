@@ -79,8 +79,8 @@ const TOTAL_PENDING := {
 ## screen-4 build (laws B) redraws the Tax Code and brings it back down. One of the
 ## nineteen words is the File tab's (#333), measured on the same merge. Screen 4's second PR
 ## takes the hemicycle off the Bills tab (it is the forecast bar's hover now, 520 -> 443 on the tab)
-## and adds the shelf and the search: 2970 -> 2946. Its third (2b), a stated rise 2946 -> 2953, asked
-## of the parent in the PR body: the law sheet carries the briefing's price per bloc (a heading and
+## and adds the shelf and the search: 2970 -> 2946. Its third (2b), a stated rise 2946 -> 2953, the
+## parent's call (OK'd on #352): the law sheet carries the briefing's price per bloc (a heading and
 ## the bloc names, 5 words) and "Poll it" (2), the polls themselves folded behind it, 450 on the tab.
 const TOTAL_SUM_CEILING := 2953
 const TOTAL_SUM_TARGET := 3600
