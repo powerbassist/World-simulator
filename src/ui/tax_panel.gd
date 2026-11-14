@@ -142,7 +142,7 @@ func _ensure_rows() -> void:
 		_rates_grid.add_child(name_label)
 
 		var slider := HSlider.new()
-		slider.min_value = 0.0
+		slider.min_value = _lever_min(String(key))
 		slider.max_value = _lever_max(String(key))
 		# The budget panel's grain rule, moved with the sliders: a tenth of a
 		# point over a seventy-point span, hundredths where the whole span is
@@ -217,6 +217,15 @@ func _lever_keys() -> Array:
 		keys.append_array(TaxLibrary.in_force(ns))
 	keys.append(PROGRESSIVITY_KEY)
 	return keys
+
+
+## A tax kind's floor is its band's low end, as its ceiling is the high end: a lever that
+## reached below it would draft a rate the finance bill refuses (`range`, #339) and keep
+## the refused draft on the levers. The brackets index keeps its floor of 0.
+func _lever_min(key: String) -> float:
+	if LEVER_MAX.has(key):
+		return 0.0
+	return float(_state.player().tax_library[key]["rate_range_pct"][0])
 
 
 func _lever_max(key: String) -> float:
