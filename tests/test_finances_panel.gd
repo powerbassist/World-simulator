@@ -15,12 +15,16 @@ const FinanceBooks = preload("res://src/ui/finance_books.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceStacks = preload("res://src/ui/finance_stacks.gd")
+const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
 var _loader
 var _state
 var _panel
 var _frame := 0
+var _main
 
 
 func _init() -> void:
@@ -46,6 +50,25 @@ func _process(_delta: float) -> bool:
 			_check_the_picture()
 			_check_the_rows()
 			_check_the_foot()
+			_check_the_colours_and_order()
+			_check_the_surplus_has_no_bad_mark()
+			_check_a_fold_opens_and_redraws()
+			_check_the_stamp_and_the_forecast_redraw()
+			_check_who_pays_is_a_hover_at_130()
+			# QA's MO / MD on #359: end to end through the game's own wiring.
+			_main = load("res://src/ui/main.tscn").instantiate()
+			root.add_child(_main)
+		6:
+			_main._windows.open("finances")
+		9:
+			_main._state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
+			_main._windows.frame("finances")._content.mark_dirty()
+			_main._windows.frame("finances")._content._stamp = ""
+		12:
+			_press_open_the_bill_through_main()
+		14:
+			if not _main._windows.is_open("legislature"):
+				_fail("Open the bill, pressed on the Finances tab, did not open the Bills tab")
 			_finish()
 	return false
 
@@ -146,6 +169,115 @@ func _check_the_foot() -> void:
 	if not _panel._footer.visible or _panel.primary_action() == null:
 		_fail("a finance bill before the Assembly is not said at the foot")
 	_state.player().tabled_bill = {}
+
+
+## GLM's test-gap list (reviewed against the tree): a part's colour follows the part, not its rank, and
+## the spending stack lists its lines largest first.
+func _check_the_colours_and_order() -> void:
+	var book := FinanceBooks.read(_state)
+	var parts: Array = _panel._revenue_parts()
+	for group in book["groups"]:
+		var found := parts.filter(func(p) -> bool: return String(p["label"]) == FinanceRows.group_name(String(group["id"])))
+		if found.is_empty() or found[0]["color"] != FinanceRows.group_color(String(group["id"])):
+			_fail("group %s is not drawn in its own colour" % group["id"])
+	if FinanceRows.group_color(TaxesLoader.GROUPS[0]) == FinanceRows.group_color(TaxesLoader.GROUPS[1]):
+		_fail("two groups share a colour")
+	var spend: Array = _panel._spending_parts()
+	var lines := spend.slice(0, 5)
+	for i in range(1, lines.size()):
+		if float(lines[i]["value"]) > float(lines[i - 1]["value"]):
+			_fail("the spending stack's lines are not largest first")
+
+
+## A surplus has no deficit mark: the word is hidden, the figure stays.
+func _check_the_surplus_has_no_bad_mark() -> void:
+	var surplus := FinanceStacks.new()
+	root.add_child(surplus)
+	surplus.setup([{"label": "in", "value": 100.0, "color": Color.WHITE}], [{"label": "out", "value": 80.0, "color": Color.WHITE}], -20.0)
+	if surplus._word.visible or not surplus._figure.visible or surplus._word.text != "Surplus":
+		_fail("a surplus draws the deficit's word or loses its figure")
+	surplus.queue_free()
+
+
+## A press on a group's fold line shows its folded kinds at once (no wait for the day to turn).
+func _check_a_fold_opens_and_redraws() -> void:
+	var book := FinanceBooks.read(_state)
+	var folded_group = null
+	for group in book["groups"]:
+		if not (group["folded"] as Array).is_empty():
+			folded_group = group
+			break
+	if folded_group == null:
+		_fail("premise: France folds no kind")
+		return
+	var name_of := String(_state.player().tax_library[String(folded_group["folded"][0]["id"])]["name"])
+	if _text_of(_panel._revenue_box).contains(name_of):
+		_fail("premise: a folded kind is already shown: %s" % name_of)
+	var fold: Button = null
+	for b in _panel._revenue_box.find_children("*", "Button", true, false):
+		if (b as Button).text.contains("other kind"):
+			fold = b
+			break
+	if fold == null:
+		_fail("a group with folded kinds offers no fold line")
+		return
+	fold.pressed.emit()
+	_panel._process(0.0)
+	if not _text_of(_panel._revenue_box).contains(name_of):
+		_fail("a press on the fold line did not show %s" % name_of)
+	_panel._open_groups.clear()
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+## The page re-reads when the slot changes (not only when a test resets the stamp), and the forecast's
+## `settled` dirties it.
+func _check_the_stamp_and_the_forecast_redraw() -> void:
+	_panel._process(0.0)
+	if _panel._footer.visible:
+		_fail("premise: the foot is up with no bill")
+	_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
+	_panel._dirty = true
+	_panel._process(0.0)
+	if not _panel._footer.visible:
+		_fail("the page did not re-read when a bill was tabled")
+	var heard := []
+	_panel.go_requested.connect(func(window_id: String) -> void: heard.append(window_id), CONNECT_ONE_SHOT)
+	_panel.primary_action().pressed.emit()
+	if heard != ["legislature"]:
+		_fail("Open the bill asked for %s, not the Bills tab" % [heard])
+	_state.player().tabled_bill = {}
+	_panel._dirty = false
+	_panel._forecast.settled.emit()
+	if not _panel._dirty:
+		_fail("the forecast's settled signal does not dirty the page")
+	_panel._process(0.0)
+
+
+func _check_who_pays_is_a_hover_at_130() -> void:
+	UiTheme.set_text_scale(1.3)
+	_panel._dirty = true
+	_panel._process(0.0)
+	var text := _text_of(_panel._revenue_box)
+	var tips: Array = _panel._revenue_box.find_children("*", "HBoxContainer", true, false).filter(func(n) -> bool: return String(n.tooltip_text).begins_with("Paid by:"))
+	UiTheme.set_text_scale(1.0)
+	if tips.is_empty():
+		_fail("at 130 % who pays is not a hover on the row")
+	if text.contains("Workers, Pensioners") or text.contains("Pensioners, Urban"):
+		_fail("at 130 % who pays is still a caption on the row")
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+func _press_open_the_bill_through_main() -> void:
+	var page = _main._windows.frame("finances")._content
+	var button = page.primary_action()
+	if button == null:
+		_fail("a finance bill is tabled and the Finances tab offers no way to open it")
+		return
+	if _main._windows.is_open("legislature"):
+		_fail("premise: the Bills tab is already the open one")
+	button.pressed.emit()
 
 
 func _fail(message: String) -> void:
