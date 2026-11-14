@@ -47,8 +47,24 @@ rows that carry an `id` is walked by id, so an event choice is
 Which fields are prose is one table, `TRANSLATABLE` at the top of
 `tools/i18n_extract.py`. People, parties, outlets, firms and places are proper nouns
 and are not in it; a language that wants them adds the kind and the field there.
-`data/summits/*.dialogue` go through `dialogue_manager`'s own translation mechanism
-(`translations_pot_files` in `project.godot`) -- do not build a parallel path for them.
+**Dialogue lines** (`data/audiences/*.dialogue`, `data/summits/*.dialogue`) go through
+`dialogue_manager`'s own mechanism: with no `[ID:]` on a line, it calls `tr()` on the
+line's English text, `{{variables}}` still in it, and fills them afterwards. The one
+Translation installed is `ui.json`'s, so **a line's French is an entry of `ui.json`, keyed
+by its English** (a response `- text => title` the same). Measured 2026-11-14: a `ui.json`-
+style entry for the audience opening came back French with `{{president}}` and `{{ask}}`
+filled. `i18n_extract.py` counts these lines in the `ui` table and reports them apart. Do
+not build a parallel path. **A summit's responses are not safe to translate yet:**
+`summit_panel.gd` looks a choice's effects up by `response.text`, which is the English key
+of the sidecar's `effects`, so a translated response would lose its effects. `i18n_extract.py`
+therefore keeps them OUT of the `ui` source (a translation of one fails `--check` as stale)
+and counts them under "no translation path yet" until the lookup stops reading the text.
+
+`i18n_extract.py` also checks every translation keeps its English's `{{variables}}` and
+glossary marks `[g=id]` (as it keeps the `%` placeholders): a headline that lost one is
+dropped silently, a mark that lost its id shows its brackets. Player text with no path
+to a translation yet (summit names and summaries today) is counted under "no translation
+path yet", never a `--check` failure.
 
 The accessor is `Strings.row(kind, id, field, english) -> String`: the table's entry
 if the current language has one, else `english`. **Every display of a row's text goes
@@ -207,7 +223,8 @@ length or with an empty form, and checks the placeholders of every form against 
 `--apply` writes every filled slot into `data/i18n/<lang>/ui.json` (the `ui` group) or
 `data/i18n/<lang>/<kind>.json` (a `rows` group); entries already in a table are kept and
 a filled slot overwrites its key; an empty slot is skipped. It **refuses**, and names, a
-slot whose placeholders (`%d %s %.1f ...`) differ from the English in kind or order, and a
+slot whose placeholders (`%d %s %.1f ...`) differ from the English in kind or order, or
+whose `{{variables}}` or `[g=id]` marks differ from the English's, and a
 key whose English has gone away (stale). Exit 1 if it refused anything.
 
 `# i18n: msgid` on a line of a const table marks it for the extractor: the literals that

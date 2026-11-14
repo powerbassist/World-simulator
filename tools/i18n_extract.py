@@ -20,9 +20,24 @@ THE SOURCES are the ENGLISH itself, in two places:
          whose rows also hold ids and numbers); `# i18n: msgid last` only the last literal of
          the line (a ["id", "Text"] pair). The table is data/i18n/<lang>/ui.json:
          {msgid: translation}.
-  ROWS   the translatable fields of the rows in data/<kind>/*.json (TRANSLATABLE below),
-         keyed `<id>.<field>`; nested choices as `<event id>.choices.<choice id>.label`.
-         The table is data/i18n/<lang>/<kind>.json. The English stays in the row.
+  ROWS   the translatable fields of the rows in data/<kind>/*.json or data/<kind>.json
+         (TRANSLATABLE below), keyed `<id>.<field>`; nested choices as
+         `<event id>.choices.<choice id>.label`. The table is data/i18n/<lang>/<kind>.json.
+         The English stays in the row.
+  LINES  every spoken line and every response of data/audiences/*.dialogue and
+         data/summits/*.dialogue. DialogueManager translates a line by tr() of its own
+         English text, so a line is a UI msgid: its French goes in ui.json, and the report
+         counts it apart ("dialogue lines").
+  HEADLINES  data/headlines/*.json, {id: {answer: {tone: text}}}, read through
+         Strings.row("headlines", "<id>.<answer>", tone): the table is
+         data/i18n/<lang>/headlines.json, keyed `<id>.<answer>.<tone>`.
+
+The report also lists player text with NO path to a translation yet (UNWIRED below):
+counted so a translator knows it is there, never a --check failure.
+
+A translation must keep its English's tokens: the %-placeholders in order, every
+`{{variable}}` and every glossary mark `[g=id]`. A broken one is a placeholder
+mismatch, which --check fails and --apply refuses.
 
 There is no English table: English is the source (docs/localisation.md says why).
 
@@ -54,6 +69,12 @@ WRAPPED = re.compile(r"(?<![A-Za-z0-9_])(?:tr|Strings\.t)\($")
 MARKER = re.compile(r"# i18n: msgid((?: \w+)*)\s*$")
 # A placeholder is % IMMEDIATELY followed by its conversion: a French "50 % du PIB" holds none.
 PLACEHOLDER = re.compile(r"%[-+#0]*\d*(?:\.\d+)?[sdfxXc%]")
+# A `{{variable}}` a line or a headline fills at runtime, and a glossary mark's id
+# (`[g=id]word[/g]`, PanelKit.rich): a translation must keep the same ones. A headline
+# whose French lost one is dropped silently (headlines.gd), a mark that lost its id
+# shows its brackets.
+TEMPLATE_VAR = re.compile(r"\{\{\s*(\w+)\s*\}\}")
+GLOSSARY_MARK = re.compile(r"\[g=([^\]\s]+)\]")
 # tr_n( or Strings.tn( ending the text before the SINGULAR of a plural msgid.
 PLURAL_WRAPPED = re.compile(r"(?<![A-Za-z0-9_])(?:tr_n|Strings\.tn)\($")
 
@@ -79,7 +100,24 @@ TRANSLATABLE = {
     "orgs": ["name", "summary"],
     # V5.1-c, the glossary the tooltips read (docs/design/glossary-tooltips.md).
     "glossary": ["term", "definition", "body"],
+    # V5.3: the sectors a budget line funds (budget_sectors.gd, sector_warning_view.gd).
+    # Their `summary` is not shown anywhere yet, so it is not counted.
+    "domains": ["name", "quantity.unit"],
+    # The archetypes' voiced lines, shown as the subtitle (audience_voice.gd,
+    # briefing_driver.gd); the clip itself stays in its recorded language.
+    "voices": ["lines.*"],
+    # The power plant catalogue, data/energy-sources.json (energy_panel.gd).
+    "energy-sources": ["name"],
+    # V5.3 e, the tax library (data/taxes/, tax_panel.gd): no rows until it merges.
+    "taxes": ["name"],
 }
+
+# Player text that has no path to a translation yet: (what, glob, fields). Counted in
+# the report so a translator sees it; adding a path is a UI change, then its kind moves
+# to TRANSLATABLE.
+UNWIRED = [
+    ("summit names and summaries (summit_panel.gd shows them raw)", "data/summits/*.json", ["name", "summary"]),
+]
 
 # How src/ui displays a row field (V5.1b3): the Strings accessors, read off the source
 # so `--check` can fail a field nobody shows -- "240/240 translated" once meant 0 on
@@ -98,7 +136,8 @@ CALLER_ANY = re.compile(r"Strings\.(\w+)\(")
 LEADING_LITERAL = re.compile(r"^\s*\"([^\"]*)\"")
 # The list a kind's rows sit in, per file: laws.json holds {"laws": [...]}; a file
 # whose top level is a single row (orgs) is read as one.
-ROW_LISTS = {"laws": "laws", "events": "events", "programme": "programme", "glossary": "terms"}
+ROW_LISTS = {"laws": "laws", "events": "events", "programme": "programme", "glossary": "terms",
+             "domains": "sectors", "voices": "archetypes", "energy-sources": "sources"}
 
 
 def literals(line):
@@ -209,7 +248,11 @@ def _dig(row, parts):
             if part == "*" and isinstance(node, list):
                 for item in node:
                     if isinstance(item, dict) and "id" in item:
-                        nxt.append((path + str(item["id"]) + ".", item))
+                        nxt.append((path + str(item["id"]) + ("" if last else "."), item))
+            elif part == "*" and isinstance(node, dict):
+                for key, item in node.items():
+                    if not str(key).startswith("_"):
+                        nxt.append((path + str(key) + ("" if last else "."), item))
             elif isinstance(node, dict) and part in node:
                 nxt.append((path + part + ("" if last else "."), node[part]))
         results = nxt
@@ -223,7 +266,10 @@ def row_texts():
     for kind, fields in TRANSLATABLE.items():
         texts = {}
         seen = {}
-        for path in sorted(glob.glob(os.path.join(ROOT, "data", kind, "*.json"))):
+        paths = sorted(glob.glob(os.path.join(ROOT, "data", kind, "*.json")))
+        if os.path.isfile(os.path.join(ROOT, "data", kind + ".json")):
+            paths.append(os.path.join(ROOT, "data", kind + ".json"))
+        for path in paths:
             doc = json.load(open(path, encoding="utf-8"))
             for row in _rows_of(kind, doc):
                 if "id" not in row:
@@ -239,6 +285,91 @@ def row_texts():
         if texts:
             out[kind] = texts
     return out, duplicates
+
+
+def dialogue_text(line):
+    """The translatable text of one .dialogue line: what a speaker says (`Name: text`,
+    `% ` for a random variant) or a response (`- text => title`); None for a title, a
+    jump or a blank line. DialogueManager hands that text, untouched, to tr()."""
+    line = line.strip()
+    if line.startswith("% "):
+        line = line[2:].strip()
+    if not line or line.startswith(("~", "=>", "#")):
+        return None
+    if line.startswith("- "):
+        return line[2:].split(" =>", 1)[0].strip() or None
+    speaker, sep, text = line.partition(": ")
+    return (text.strip() if sep else line) or None
+
+
+def _is_response(line):
+    return line.strip().lstrip("% ").startswith("- ")
+
+
+def dialogue_msgids():
+    """{line text: where} over data/audiences/ and data/summits/ .dialogue files, WITHOUT a
+    summit's responses: summit_panel.gd records the pressed response's text as the choice and
+    the sidecar prices it by its English, so a translated response would lose its effects.
+    They are counted under UNWIRED (summit_responses) until that lookup stops reading text."""
+    found = {}
+    for folder in ("audiences", "summits"):
+        for path in sorted(glob.glob(os.path.join(ROOT, "data", folder, "*.dialogue"))):
+            for number, line in enumerate(open(path, encoding="utf-8"), 1):
+                if folder == "summits" and _is_response(line):
+                    continue
+                text = dialogue_text(line)
+                if text and re.search(r"[A-Za-z]{2,}", text):
+                    found.setdefault(text, "%s/%s:%d" % (folder, os.path.basename(path), number))
+    return found
+
+
+def summit_responses():
+    """The response texts of data/summits/*.dialogue (not translatable yet, see above)."""
+    out = set()
+    for path in sorted(glob.glob(os.path.join(ROOT, "data", "summits", "*.dialogue"))):
+        for line in open(path, encoding="utf-8"):
+            if _is_response(line):
+                text = dialogue_text(line)
+                if text:
+                    out.add(text)
+    return out
+
+
+def headline_texts():
+    """{"<id>.<answer>.<tone>": english} over data/headlines/*.json."""
+    out = {}
+    for path in sorted(glob.glob(os.path.join(ROOT, "data", "headlines", "*.json"))):
+        for hid, answers in json.load(open(path, encoding="utf-8")).items():
+            if hid.startswith("_") or not isinstance(answers, dict):
+                continue
+            for answer, tones in answers.items():
+                if not isinstance(tones, dict):
+                    continue
+                for tone, text in tones.items():
+                    if isinstance(text, str) and text.strip():
+                        out["%s.%s.%s" % (hid, answer, tone)] = text
+    return out
+
+
+def unwired_texts():
+    """[(what, number of strings)] of UNWIRED: player text with no translation path yet."""
+    out = []
+    for what, pattern, fields in UNWIRED:
+        n = 0
+        for path in sorted(glob.glob(os.path.join(ROOT, pattern))):
+            doc = json.load(open(path, encoding="utf-8"))
+            n += sum(1 for f in fields if isinstance(doc.get(f), str) and doc[f].strip())
+        out.append((what, n))
+    out.append(("summit responses (summit_panel.gd prices a choice by its English text)", len(summit_responses())))
+    return out
+
+
+def tokens(text):
+    """What a translation must keep of its English: the %-placeholders in order, the
+    `{{variables}}` and glossary mark ids as sets of counts (a language may move them), and
+    the number of `[/g]` closing marks (a lost one shows the rest of the line as a term)."""
+    return (PLACEHOLDER.findall(text), sorted(TEMPLATE_VAR.findall(text)), sorted(GLOSSARY_MARK.findall(text)),
+            text.count("[/g]"))
 
 
 def line_callers(line):
@@ -261,6 +392,10 @@ def line_callers(line):
             out.append((lit[0].group(1), "name" if fn == "row_name" else "summary"))
         elif fn == "row" and len(lit) > 2 and lit[0] and lit[2]:
             out.append((lit[0].group(1), lit[2].group(1).replace("%s", "*")))
+        elif fn == "row" and lit and lit[0]:
+            # A field picked at runtime (headlines.gd's tone): a display site of the kind,
+            # with no field it could be checked against.
+            out.append((lit[0].group(1), "?"))
         elif fn == "noun" and len(lit) > 5 and lit[0] and lit[2] and lit[5]:
             out.append((lit[0].group(1), "effects.%s.%s" % (lit[2].group(1), lit[5].group(1))))
     return out
@@ -343,10 +478,16 @@ def plural_forms(lang):
 
 
 def sources():
-    """([(table name, {key: english})] UI first, duplicate row ids, {plural msgid: English plural})."""
+    """([(table name, {key: english})] UI first, duplicate row ids, {plural msgid: English plural}).
+    The ui table holds the src/ui msgids AND the dialogue lines (one Translation serves both)."""
     rows, duplicates = row_texts()
     ui, plurals = ui_msgids()
-    return [("ui", {k: k for k in ui})] + sorted(rows.items()), duplicates, plurals
+    ui_all = {k: k for k in ui}
+    ui_all.update({k: k for k in dialogue_msgids()})
+    headlines = headline_texts()
+    if headlines:
+        rows["headlines"] = headlines
+    return [("ui", ui_all)] + sorted(rows.items()), duplicates, plurals
 
 
 def problems(source, table, plurals=None, forms=2):
@@ -368,7 +509,7 @@ def problems(source, table, plurals=None, forms=2):
             if not str(form).strip():
                 empty.append(k)
                 break
-            if PLACEHOLDER.findall(source[k]) != PLACEHOLDER.findall(str(form)):
+            if tokens(source[k]) != tokens(str(form)):
                 holders.append(k)
                 break
     return stale, sorted(empty), sorted(holders), sorted(shape)
@@ -455,8 +596,8 @@ def apply_worklist(path):
                 if not text:
                     continue
                 values = [_edges(source[key], text)]
-            if any(PLACEHOLDER.findall(source[key]) != PLACEHOLDER.findall(v) for v in values):
-                print("refused (placeholders differ from the English): %s/%s" % (name, key))
+            if any(tokens(source[key]) != tokens(v) for v in values):
+                print("refused (placeholders, {{variables}} or [g=] marks differ from the English): %s/%s" % (name, key))
                 refused += 1
                 continue
             table[key] = values if plural else values[0]
@@ -511,6 +652,31 @@ def selftest():
         'PanelKit.line(body, Strings.row("bloc-proposals", String(p.get("proposal_id", "")), "summary", String(p.get("summary", ""))))'),
         [("bloc-proposals", "summary")])
     check("caller through PanelKit", line_callers('x = PanelKit.Strings.row_summary("orgs", org)'), [("orgs", "summary")])
+    check("caller with a runtime field", line_callers('Strings.row("headlines", "%s.%s" % [id, a], tone, english)'), [("headlines", "?")])
+    # The dialogue syntax the files use: a variant, a speaker, a response, a title, a jump.
+    check("dialogue variant", dialogue_text("% {{name}}: Thank you, {{president}}."), "Thank you, {{president}}.")
+    check("dialogue variant, no speaker", dialogue_text("% The room falls quiet."), "The room falls quiet.")
+    check("dialogue speaker", dialogue_text("Chancellor Vogler: Freight is honest work."), "Freight is honest work.")
+    check("dialogue response", dialogue_text("- Offer to co-finance the line => cofinance"), "Offer to co-finance the line")
+    check("dialogue title", dialogue_text("~ lever_argue_success"), None)
+    check("dialogue jump", dialogue_text("=> END"), None)
+    check("dict star", _dig({"id": "a", "lines": {"greet": "Hi", "_note": "x"}}, ["lines", "*"]), [("lines.greet", "Hi")])
+    # A lost {{variable}} or glossary mark is a mismatch like a lost %d.
+    check("variable kept", problems({"k": "Hi {{president}}"}, {"k": "Salut {{president}}"})[2], [])
+    check("variable lost", problems({"k": "Hi {{president}}"}, {"k": "Salut {{président}}"})[2], ["k"])
+    check("mark lost", problems({"k": "The [g=deficit]deficit[/g] grows"}, {"k": "Le déficit croît"})[2], ["k"])
+    check("closing mark lost", problems({"k": "The [g=deficit]deficit[/g] grows"}, {"k": "Le [g=deficit]déficit croît"})[2], ["k"])
+    check("mark kept, moved", problems({"k": "[g=gdp]GDP[/g] and [g=deficit]deficit[/g]"},
+                                       {"k": "[g=deficit]déficit[/g] et [g=gdp]PIB[/g]"})[2], [])
+    # The new sources must find text in the real data, or a wrong path counts nothing.
+    check("dialogue lines found", len(dialogue_msgids()) > 0, True)
+    check("headlines found", len(headline_texts()) > 0, True)
+    for kind, field in (("domains", "name"), ("domains", "quantity.unit"), ("voices", "lines."), ("energy-sources", "name")):
+        found = sum(1 for key in rows.get(kind, {}) if ("." + field) in key)
+        check("%s %s rows found" % (kind, field), found > 0, True)
+    check("unwired summits found", all(n > 0 for _what, n in unwired_texts()), True)
+    # A summit response is never a msgid while its effects are keyed by its English text.
+    check("summit responses kept out", bool(summit_responses()) and not (summit_responses() & set(dialogue_msgids())), True)
     for line in bad:
         print("selftest: " + line)
     print("i18n_extract selftest: %s" % ("failed" if bad else "all checks passed"))
@@ -531,6 +697,7 @@ def main(argv):
     bad = 0
     tables, duplicates, plurals = sources()
     callers = display_callers()
+    lines = dialogue_msgids()
     for lang in languages():
         print("== %s" % lang)
         for name, source in tables:
@@ -539,6 +706,9 @@ def main(argv):
             stale, empty, holders, shape = problems(source, table, plurals if name == "ui" else {}, plural_forms(lang))
             shown = "" if name == "ui" else "   callers %d" % sum(n for (kind, _f), n in callers.items() if kind == name)
             print("  %-20s %5d / %-5d translated   stale %d, empty %d, placeholder mismatch %d, plural shape %d%s" % (name, done, len(source), len(stale), len(empty), len(holders), len(shape), shown))
+            if name == "ui":
+                said = sum(1 for k in lines if k in table)
+                print("    of which dialogue lines %5d / %-5d translated   (data/audiences, data/summits)" % (said, len(lines)))
             for label, items in (("stale", stale), ("empty", empty), ("placeholders", holders), ("plural shape", shape)):
                 for key in items[:5]:
                     print("      %s: %s" % (label, key))
@@ -549,6 +719,8 @@ def main(argv):
         for field in uncalled(name, source, callers):
             print("no display caller -- %s %s (nothing in src/ui shows it through Strings)" % (name, field))
             bad += 1
+    for what, n in unwired_texts():
+        print("no translation path yet -- %d strings: %s" % (n, what))
     for line in duplicates:
         print("duplicate row id -- %s" % line)
     bad += len(duplicates)
