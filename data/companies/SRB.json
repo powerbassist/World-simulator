@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "SRB_grujic_osiguranje",
-      "name": "Grujić Osiguranje",
+      "name": "Grujić Trgovina",
       "sector": "agriculture",
       "share": 0.111,
       "headcount": 11459,
@@ -34,7 +34,7 @@
     },
     {
       "id": "SRB_novakovic_trgovina",
-      "name": "Novaković Trgovina",
+      "name": "Novaković Energija",
       "sector": "industry",
       "share": 0.0665,
       "headcount": 43733,
@@ -125,7 +125,7 @@
     },
     {
       "id": "SRB_mladenovic_osiguranje",
-      "name": "Mladenović Osiguranje",
+      "name": "Mladenović Grupa",
       "sector": "agriculture",
       "share": 0.0244,
       "headcount": 1938,
@@ -134,7 +134,7 @@
     },
     {
       "id": "SRB_pavlovic_gradnja",
-      "name": "Pavlović Gradnja",
+      "name": "Pavlović Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2263,
@@ -143,7 +143,7 @@
     },
     {
       "id": "SRB_pavlovic_osiguranje",
-      "name": "Pavlović Osiguranje",
+      "name": "Pavlović Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2256,
@@ -152,7 +152,7 @@
     },
     {
       "id": "SRB_crnobrnja_energija",
-      "name": "Crnobrnja Energija",
+      "name": "Crnobrnja Grupa",
       "sector": "agriculture",
       "share": 0.0209,
       "headcount": 1613,
@@ -161,7 +161,7 @@
     },
     {
       "id": "SRB_stevanovic_logistika",
-      "name": "Stevanović Logistika",
+      "name": "Stevanović Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2533,
@@ -170,7 +170,7 @@
     },
     {
       "id": "SRB_ilic_materijali",
-      "name": "Ilić Materijali",
+      "name": "Ilić Poljoprivreda",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2488,
@@ -179,7 +179,7 @@
     },
     {
       "id": "SRB_ilic_gradnja",
-      "name": "Ilić Gradnja",
+      "name": "Ilić Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2340,
@@ -215,7 +215,7 @@
     },
     {
       "id": "SRB_jovanovic_materijali",
-      "name": "Jovanović Materijali",
+      "name": "Jovanović Grupa",
       "sector": "agriculture",
       "share": 0.0241,
       "headcount": 2006,
@@ -224,7 +224,7 @@
     },
     {
       "id": "SRB_crnobrnja_materijali",
-      "name": "Crnobrnja Materijali",
+      "name": "Crnobrnja Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2467,
@@ -233,7 +233,7 @@
     },
     {
       "id": "SRB_tasic_gradnja",
-      "name": "Tasić Gradnja",
+      "name": "Tasić Grupa",
       "sector": "agriculture",
       "share": 0.0119,
       "headcount": 945,
@@ -242,7 +242,7 @@
     },
     {
       "id": "SRB_obradovic_transport",
-      "name": "Obradović Transport",
+      "name": "Obradović Trgovina",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2641,
@@ -251,7 +251,7 @@
     },
     {
       "id": "SRB_krstic_industrija",
-      "name": "Krstić Industrija",
+      "name": "Krstić Grupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2516,
@@ -278,7 +278,7 @@
     },
     {
       "id": "SRB_gavrilovic_trgovina",
-      "name": "Gavrilović Trgovina",
+      "name": "Gavrilović Grupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20002,
@@ -296,7 +296,7 @@
     },
     {
       "id": "SRB_vukovic_osiguranje",
-      "name": "Vuković Osiguranje",
+      "name": "Vuković Industrija",
       "sector": "industry",
       "share": 0.0256,
       "headcount": 16194,
@@ -305,7 +305,7 @@
     },
     {
       "id": "SRB_ristic_logistika",
-      "name": "Ristić Logistika",
+      "name": "Ristić Materijali",
       "sector": "industry",
       "share": 0.0292,
       "headcount": 18124,
@@ -332,7 +332,7 @@
     },
     {
       "id": "SRB_tasic_trgovina",
-      "name": "Tasić Trgovina",
+      "name": "Tasić Gradnja",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21407,
@@ -341,7 +341,7 @@
     },
     {
       "id": "SRB_crnobrnja_transport",
-      "name": "Crnobrnja Transport",
+      "name": "Crnobrnja Industrija",
       "sector": "industry",
       "share": 0.0221,
       "headcount": 15367,
@@ -359,7 +359,7 @@
     },
     {
       "id": "SRB_simic_trgovina",
-      "name": "Simić Trgovina",
+      "name": "Simić Materijali",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19973,
@@ -368,7 +368,7 @@
     },
     {
       "id": "SRB_pavlovic_transport",
-      "name": "Pavlović Transport",
+      "name": "Pavlović Industrija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18167,
@@ -386,7 +386,7 @@
     },
     {
       "id": "SRB_bogdanovic_logistika",
-      "name": "Bogdanović Logistika",
+      "name": "Bogdanović Materijali",
       "sector": "industry",
       "share": 0.0187,
       "headcount": 13812,
@@ -395,7 +395,7 @@
     },
     {
       "id": "SRB_despotovic_transport",
-      "name": "Despotović Transport",
+      "name": "Despotović Grupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22132,
@@ -404,7 +404,7 @@
     },
     {
       "id": "SRB_acimovic_trgovina_logistika",
-      "name": "Aćimović Trgovina Logistika",
+      "name": "Aćimović Materijali",
       "sector": "industry",
       "share": 0.016,
       "headcount": 9909,
@@ -431,7 +431,7 @@
     },
     {
       "id": "SRB_ristic_poljoprivreda",
-      "name": "Ristić Poljoprivreda",
+      "name": "Ristić Energija",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19078,
@@ -440,7 +440,7 @@
     },
     {
       "id": "SRB_kostic_poljoprivreda",
-      "name": "Kostić Poljoprivreda",
+      "name": "Kostić Energija",
       "sector": "industry",
       "share": 0.0219,
       "headcount": 13766,
@@ -449,7 +449,7 @@
     },
     {
       "id": "SRB_ristic_osiguranje",
-      "name": "Ristić Osiguranje",
+      "name": "Ristić Gradnja",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20138,
@@ -458,7 +458,7 @@
     },
     {
       "id": "SRB_mladenovic_industrija_logistika",
-      "name": "Mladenović Industrija Logistika",
+      "name": "Mladenović Industrija",
       "sector": "industry",
       "share": 0.0234,
       "headcount": 16279,
@@ -467,16 +467,16 @@
     },
     {
       "id": "SRB_stevanovic_poljoprivreda",
-      "name": "Stevanović Poljoprivreda",
+      "name": "Stevanović Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22797,
       "city": "RS22_nis",
       "tier": "body"
     },
     {
       "id": "SRB_vasiljevic_gradnja_energija",
-      "name": "Vasiljević Gradnja Energija",
+      "name": "Vasiljević Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24097,
@@ -494,7 +494,7 @@
     },
     {
       "id": "SRB_stevanovic_energija",
-      "name": "Stevanović Energija",
+      "name": "Stevanović Osiguranje",
       "sector": "services",
       "share": 0.0085,
       "headcount": 13678,
@@ -503,16 +503,16 @@
     },
     {
       "id": "SRB_ristic_gradnja_energija",
-      "name": "Ristić Gradnja Energija",
+      "name": "Ristić Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23961,
       "city": "RS21_cacak",
       "tier": "body"
     },
     {
       "id": "SRB_despotovic_gradnja",
-      "name": "Despotović Gradnja",
+      "name": "Despotović Osiguranje",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24462,
@@ -521,7 +521,7 @@
     },
     {
       "id": "SRB_zivkovic_energija",
-      "name": "Živković Energija",
+      "name": "Živković Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22653,
@@ -530,25 +530,25 @@
     },
     {
       "id": "SRB_gavrilovic_materijali",
-      "name": "Gavrilović Materijali",
+      "name": "Gavrilović Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23148,
       "city": "RS22_nis",
       "tier": "body"
     },
     {
       "id": "SRB_simic_poljoprivreda",
-      "name": "Simić Poljoprivreda",
+      "name": "Simić Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22824,
       "city": "RS22_nis",
       "tier": "body"
     },
     {
       "id": "SRB_gavrilovic_energija",
-      "name": "Gavrilović Energija",
+      "name": "Gavrilović Logistika",
       "sector": "services",
       "share": 0.0165,
       "headcount": 22385,
@@ -557,7 +557,7 @@
     },
     {
       "id": "SRB_urosevic_gradnja",
-      "name": "Urošević Gradnja",
+      "name": "Urošević Trgovina",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23947,
@@ -566,7 +566,7 @@
     },
     {
       "id": "SRB_obradovic_industrija_materijali",
-      "name": "Obradović Industrija Materijali",
+      "name": "Obradović Osiguranje",
       "sector": "services",
       "share": 0.0085,
       "headcount": 12613,
@@ -578,13 +578,13 @@
       "name": "Simić Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24583,
       "city": "RS11_belgrade",
       "tier": "body"
     },
     {
       "id": "SRB_vasiljevic_poljoprivreda",
-      "name": "Vasiljević Poljoprivreda",
+      "name": "Vasiljević Osiguranje",
       "sector": "services",
       "share": 0.0072,
       "headcount": 11297,
@@ -602,7 +602,7 @@
     },
     {
       "id": "SRB_novakovic_materijali",
-      "name": "Novaković Materijali",
+      "name": "Novaković Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24902,
@@ -620,10 +620,10 @@
     },
     {
       "id": "SRB_todorovic_materijali",
-      "name": "Todorović Materijali",
+      "name": "Todorović Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24197,
       "city": "RS21_kragujevac",
       "tier": "body"
     },
@@ -656,7 +656,7 @@
     },
     {
       "id": "SRB_filipovic_materijali",
-      "name": "Filipović Materijali",
+      "name": "Filipović Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23895,
@@ -665,10 +665,10 @@
     },
     {
       "id": "SRB_tasic_poljoprivreda",
-      "name": "Tasić Poljoprivreda",
+      "name": "Tasić Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23363,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -692,10 +692,10 @@
     },
     {
       "id": "SRB_milenkovic_industrija",
-      "name": "Milenković Industrija",
+      "name": "Milenković Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23509,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -713,7 +713,7 @@
       "name": "Mladenović Logistika Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22625,
       "city": "RS22_nis",
       "tier": "body"
     },
@@ -722,13 +722,13 @@
       "name": "Babić Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24023,
       "city": "RS21_uzice",
       "tier": "body"
     },
     {
       "id": "SRB_urosevic_industrija",
-      "name": "Urošević Industrija",
+      "name": "Urošević Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22771,
@@ -740,7 +740,7 @@
       "name": "Jovanović Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23993,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -755,7 +755,7 @@
     },
     {
       "id": "SRB_urosevic_grupa_grupa",
-      "name": "Urošević Grupa Grupa",
+      "name": "Urošević Grupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22491,
@@ -764,16 +764,16 @@
     },
     {
       "id": "SRB_novakovic_gradnja_gradnja",
-      "name": "Novaković Gradnja Gradnja",
+      "name": "Novaković Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23535,
       "city": "RS22_nis",
       "tier": "body"
     },
     {
       "id": "SRB_bogdanovic_gradnja",
-      "name": "Bogdanović Gradnja",
+      "name": "Bogdanović Transport",
       "sector": "services",
       "share": 0.0134,
       "headcount": 18785,
@@ -782,25 +782,25 @@
     },
     {
       "id": "SRB_jovanovic_energija_industrija",
-      "name": "Jovanović Energija Industrija",
+      "name": "Jovanović Osiguranje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24308,
       "city": "RS22_smederevo",
       "tier": "body"
     },
     {
       "id": "SRB_jankovic_energija",
-      "name": "Janković Energija",
+      "name": "Janković Osiguranje",
       "sector": "services",
       "share": 0.0156,
-      "headcount": 25000,
+      "headcount": 24974,
       "city": "RS12_zrenjanin",
       "tier": "body"
     },
     {
       "id": "SRB_crnobrnja_gradnja",
-      "name": "Crnobrnja Gradnja",
+      "name": "Crnobrnja Logistika",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23418,
@@ -812,16 +812,16 @@
       "name": "Bogdanović Osiguranje Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24993,
       "city": "RS11_belgrade",
       "tier": "body"
     },
     {
       "id": "SRB_novakovic_energija",
-      "name": "Novaković Energija",
+      "name": "Novaković Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24538,
       "city": "RS11_belgrade",
       "tier": "body"
     },
@@ -836,10 +836,10 @@
     },
     {
       "id": "SRB_kostic_materijali",
-      "name": "Kostić Materijali",
+      "name": "Kostić Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23248,
       "city": "RS22_smederevo",
       "tier": "body"
     },

@@ -14,7 +14,7 @@
     },
     {
       "id": "UKR_havryliuk_promyslovist",
-      "name": "Havryliuk Promyslovist",
+      "name": "Havryliuk Ahro",
       "sector": "agriculture",
       "share": 0.2232,
       "headcount": 17642,
@@ -104,7 +104,7 @@
     },
     {
       "id": "UKR_yurchenko_enerhiia",
-      "name": "Yurchenko Enerhiia",
+      "name": "Yurchenko Transport",
       "sector": "services",
       "share": 0.0332,
       "headcount": 50476,
@@ -135,7 +135,7 @@
     },
     {
       "id": "UKR_ostapenko_strakhuvannia",
-      "name": "Ostapenko Strakhuvannia",
+      "name": "Ostapenko Hrupa",
       "sector": "agriculture",
       "share": 0.0182,
       "headcount": 1581,
@@ -144,7 +144,7 @@
     },
     {
       "id": "UKR_yatsenko_enerhiia",
-      "name": "Yatsenko Enerhiia",
+      "name": "Yatsenko Torhivlia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2227,
@@ -153,7 +153,7 @@
     },
     {
       "id": "UKR_panchenko_enerhiia",
-      "name": "Panchenko Enerhiia",
+      "name": "Panchenko Hrupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2424,
@@ -162,7 +162,7 @@
     },
     {
       "id": "UKR_panchenko_enerhiia_enerhiia",
-      "name": "Panchenko Enerhiia Enerhiia",
+      "name": "Panchenko Ahro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2242,
@@ -180,7 +180,7 @@
     },
     {
       "id": "UKR_danyliuk_transport",
-      "name": "Danyliuk Transport",
+      "name": "Danyliuk Ahro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2644,
@@ -189,7 +189,7 @@
     },
     {
       "id": "UKR_pavliuk_promyslovist",
-      "name": "Pavliuk Promyslovist",
+      "name": "Pavliuk Ahro",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2654,
@@ -198,7 +198,7 @@
     },
     {
       "id": "UKR_rudenko_transport",
-      "name": "Rudenko Transport",
+      "name": "Rudenko Hrupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2606,
@@ -207,7 +207,7 @@
     },
     {
       "id": "UKR_rudenko_budivnytstvo",
-      "name": "Rudenko Budivnytstvo",
+      "name": "Rudenko Torhivlia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2493,
@@ -216,7 +216,7 @@
     },
     {
       "id": "UKR_demchenko_materialy",
-      "name": "Demchenko Materialy",
+      "name": "Demchenko Hrupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2398,
@@ -225,7 +225,7 @@
     },
     {
       "id": "UKR_moroziuk_strakhuvannia",
-      "name": "Moroziuk Strakhuvannia",
+      "name": "Moroziuk Hrupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2337,
@@ -234,7 +234,7 @@
     },
     {
       "id": "UKR_stepaniuk_budivnytstvo",
-      "name": "Stepaniuk Budivnytstvo",
+      "name": "Stepaniuk Hrupa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2564,
@@ -243,7 +243,7 @@
     },
     {
       "id": "UKR_stepaniuk_strakhuvannia_promyslovist",
-      "name": "Stepaniuk Strakhuvannia Promyslovist",
+      "name": "Stepaniuk Torhivlia Ahro",
       "sector": "agriculture",
       "share": 0.0233,
       "headcount": 1705,
@@ -252,7 +252,7 @@
     },
     {
       "id": "UKR_klymchuk_budivnytstvo",
-      "name": "Klymchuk Budivnytstvo",
+      "name": "Klymchuk Ahro",
       "sector": "agriculture",
       "share": 0.0181,
       "headcount": 1377,
@@ -261,7 +261,7 @@
     },
     {
       "id": "UKR_stepaniuk_transport",
-      "name": "Stepaniuk Transport",
+      "name": "Stepaniuk Ahro Torhivlia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2626,
@@ -270,7 +270,7 @@
     },
     {
       "id": "UKR_karpenko_strakhuvannia",
-      "name": "Karpenko Strakhuvannia",
+      "name": "Karpenko Torhivlia",
       "sector": "agriculture",
       "share": 0.022,
       "headcount": 1753,
@@ -279,7 +279,7 @@
     },
     {
       "id": "UKR_pavliuk_strakhuvannia",
-      "name": "Pavliuk Strakhuvannia",
+      "name": "Pavliuk Promyslovist",
       "sector": "industry",
       "share": 0.0251,
       "headcount": 16993,
@@ -288,7 +288,7 @@
     },
     {
       "id": "UKR_zakharchuk_lohistyka",
-      "name": "Zakharchuk Lohistyka",
+      "name": "Zakharchuk Materialy",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19757,
@@ -324,7 +324,7 @@
     },
     {
       "id": "UKR_moroziuk_ahro",
-      "name": "Moroziuk Ahro",
+      "name": "Moroziuk Budivnytstvo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18159,
@@ -333,7 +333,7 @@
     },
     {
       "id": "UKR_havryliuk_ahro",
-      "name": "Havryliuk Ahro",
+      "name": "Havryliuk Hrupa",
       "sector": "industry",
       "share": 0.0298,
       "headcount": 21185,
@@ -351,7 +351,7 @@
     },
     {
       "id": "UKR_ostapenko_torhivlia",
-      "name": "Ostapenko Torhivlia",
+      "name": "Ostapenko Promyslovist",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18210,
@@ -360,7 +360,7 @@
     },
     {
       "id": "UKR_nazarenko_strakhuvannia",
-      "name": "Nazarenko Strakhuvannia",
+      "name": "Nazarenko Hrupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19665,
@@ -369,7 +369,7 @@
     },
     {
       "id": "UKR_zakharchuk_strakhuvannia",
-      "name": "Zakharchuk Strakhuvannia",
+      "name": "Zakharchuk Enerhiia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20539,
@@ -378,7 +378,7 @@
     },
     {
       "id": "UKR_antoniuk_torhivlia",
-      "name": "Antoniuk Torhivlia",
+      "name": "Antoniuk Hrupa",
       "sector": "industry",
       "share": 0.0107,
       "headcount": 7500,
@@ -396,7 +396,7 @@
     },
     {
       "id": "UKR_panchenko_torhivlia",
-      "name": "Panchenko Torhivlia",
+      "name": "Panchenko Promyslovist",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18782,
@@ -405,7 +405,7 @@
     },
     {
       "id": "UKR_tkachuk_torhivlia",
-      "name": "Tkachuk Torhivlia",
+      "name": "Tkachuk Hrupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20122,
@@ -414,7 +414,7 @@
     },
     {
       "id": "UKR_fedorchuk_transport",
-      "name": "Fedorchuk Transport",
+      "name": "Fedorchuk Hrupa",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18421,
@@ -486,7 +486,7 @@
     },
     {
       "id": "UKR_fedorchuk_ahro_materialy",
-      "name": "Fedorchuk Ahro Materialy",
+      "name": "Fedorchuk Budivnytstvo",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18278,
@@ -504,7 +504,7 @@
     },
     {
       "id": "UKR_vasylenko_enerhiia",
-      "name": "Vasylenko Enerhiia",
+      "name": "Vasylenko Transport",
       "sector": "services",
       "share": 0.0094,
       "headcount": 13302,
@@ -534,7 +534,7 @@
       "name": "Havryliuk Torhivlia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22877,
       "city": "UA14_donetsk",
       "tier": "body"
     },
@@ -549,7 +549,7 @@
     },
     {
       "id": "UKR_zakharchuk_enerhiia_enerhiia",
-      "name": "Zakharchuk Enerhiia Enerhiia",
+      "name": "Zakharchuk Lohistyka",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22652,
@@ -558,7 +558,7 @@
     },
     {
       "id": "UKR_karpenko_budivnytstvo",
-      "name": "Karpenko Budivnytstvo",
+      "name": "Karpenko Lohistyka",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24343,
@@ -567,7 +567,7 @@
     },
     {
       "id": "UKR_fedorchuk_ahro_ahro",
-      "name": "Fedorchuk Ahro Ahro",
+      "name": "Fedorchuk Torhivlia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23924,
@@ -576,7 +576,7 @@
     },
     {
       "id": "UKR_ivaniuk_strakhuvannia_ahro",
-      "name": "Ivaniuk Strakhuvannia Ahro",
+      "name": "Ivaniuk Strakhuvannia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22552,
@@ -588,31 +588,31 @@
       "name": "Karpenko Transport",
       "sector": "services",
       "share": 0.0156,
-      "headcount": 25000,
+      "headcount": 24720,
       "city": "UA30_kyiv",
       "tier": "body"
     },
     {
       "id": "UKR_semeniuk_materialy",
-      "name": "Semeniuk Materialy",
+      "name": "Semeniuk Strakhuvannia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22625,
       "city": "UA63_kharkiv",
       "tier": "body"
     },
     {
       "id": "UKR_antoniuk_promyslovist",
-      "name": "Antoniuk Promyslovist",
+      "name": "Antoniuk Lohistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24534,
       "city": "UA12_dnipro",
       "tier": "body"
     },
     {
       "id": "UKR_karpenko_materialy",
-      "name": "Karpenko Materialy",
+      "name": "Karpenko Strakhuvannia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22856,
@@ -633,7 +633,7 @@
       "name": "Antoniuk Transport Hrupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24253,
       "city": "UA30_kyiv",
       "tier": "body"
     },
@@ -660,13 +660,13 @@
       "name": "Lukashchuk Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22630,
       "city": "UA09_alchevsk",
       "tier": "body"
     },
     {
       "id": "UKR_tkachuk_promyslovist",
-      "name": "Tkachuk Promyslovist",
+      "name": "Tkachuk Torhivlia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24507,
@@ -678,7 +678,7 @@
       "name": "Stepaniuk Torhivlia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24448,
       "city": "UA18_zhytomyr",
       "tier": "body"
     },
@@ -693,7 +693,7 @@
     },
     {
       "id": "UKR_stepaniuk_promyslovist_ahro",
-      "name": "Stepaniuk Promyslovist Ahro",
+      "name": "Stepaniuk Transport",
       "sector": "services",
       "share": 0.0078,
       "headcount": 11819,
@@ -702,16 +702,16 @@
     },
     {
       "id": "UKR_kostiuk_budivnytstvo",
-      "name": "Kostiuk Budivnytstvo",
+      "name": "Kostiuk Lohistyka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23038,
       "city": "UA46_lviv",
       "tier": "body"
     },
     {
       "id": "UKR_rudenko_ahro",
-      "name": "Rudenko Ahro",
+      "name": "Rudenko Transport",
       "sector": "services",
       "share": 0.0074,
       "headcount": 10143,
@@ -729,7 +729,7 @@
     },
     {
       "id": "UKR_babiak_enerhiia",
-      "name": "Babiak Enerhiia",
+      "name": "Babiak Torhivlia",
       "sector": "services",
       "share": 0.0121,
       "headcount": 19438,
@@ -747,10 +747,10 @@
     },
     {
       "id": "UKR_lytovchenko_enerhiia",
-      "name": "Lytovchenko Enerhiia",
+      "name": "Lytovchenko Torhivlia",
       "sector": "services",
       "share": 0.0161,
-      "headcount": 25000,
+      "headcount": 24142,
       "city": "UA30_kyiv",
       "tier": "body"
     },
@@ -774,7 +774,7 @@
     },
     {
       "id": "UKR_demchenko_ahro",
-      "name": "Demchenko Ahro",
+      "name": "Demchenko Strakhuvannia",
       "sector": "services",
       "share": 0.0108,
       "headcount": 17519,
@@ -783,7 +783,7 @@
     },
     {
       "id": "UKR_danyliuk_budivnytstvo",
-      "name": "Danyliuk Budivnytstvo",
+      "name": "Danyliuk Hrupa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22703,
@@ -795,31 +795,31 @@
       "name": "Antoniuk Hrupa Torhivlia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23129,
       "city": "UA12_kryvyy_rih",
       "tier": "body"
     },
     {
       "id": "UKR_kostiuk_ahro",
-      "name": "Kostiuk Ahro",
+      "name": "Kostiuk Hrupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23596,
       "city": "UA32_bila_tserkva",
       "tier": "body"
     },
     {
       "id": "UKR_panchenko_transport_promyslovist",
-      "name": "Panchenko Transport Promyslovist",
+      "name": "Panchenko Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24178,
       "city": "UA30_kyiv",
       "tier": "body"
     },
     {
       "id": "UKR_fedorchuk_budivnytstvo_strakhuvannia",
-      "name": "Fedorchuk Budivnytstvo Strakhuvannia",
+      "name": "Fedorchuk Lohistyka",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22908,
@@ -828,7 +828,7 @@
     },
     {
       "id": "UKR_ivaniuk_promyslovist",
-      "name": "Ivaniuk Promyslovist",
+      "name": "Ivaniuk Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23374,
@@ -846,16 +846,16 @@
     },
     {
       "id": "UKR_tkachuk_ahro",
-      "name": "Tkachuk Ahro",
+      "name": "Tkachuk Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23212,
       "city": "UA12_kryvyy_rih",
       "tier": "body"
     },
     {
       "id": "UKR_ostapenko_materialy",
-      "name": "Ostapenko Materialy",
+      "name": "Ostapenko Lohistyka",
       "sector": "services",
       "share": 0.012,
       "headcount": 19201,
@@ -864,16 +864,16 @@
     },
     {
       "id": "UKR_nazarenko_ahro",
-      "name": "Nazarenko Ahro",
+      "name": "Nazarenko Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24498,
       "city": "UA26_ivano_frankivsk",
       "tier": "body"
     },
     {
       "id": "UKR_stepaniuk_ahro",
-      "name": "Stepaniuk Ahro",
+      "name": "Stepaniuk Lohistyka",
       "sector": "services",
       "share": 0.0132,
       "headcount": 21630,

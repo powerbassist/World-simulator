@@ -3,6 +3,8 @@
   "name": "Plastic packaging tax",
   "summary": "A tax on packaging made mostly from new rather than recycled plastic.",
   "rate_meaning": "EUR per kg of non-recycled plastic packaging",
+  "unit": "EUR/kg",
+  "group": "energy_environment",
   "who_pays": [
     "business"
   ],

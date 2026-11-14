@@ -84,7 +84,7 @@
     },
     {
       "id": "LTU_zadeikis_statyba",
-      "name": "Žadeikis Statyba",
+      "name": "Žadeikis Prekyba",
       "sector": "services",
       "share": 0.0356,
       "headcount": 50799,
@@ -144,7 +144,7 @@
     },
     {
       "id": "LTU_fokas_transportas",
-      "name": "Fokas Transportas",
+      "name": "Fokas Žemės ūkis",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2260,
@@ -162,7 +162,7 @@
     },
     {
       "id": "LTU_zadeikis_pramone",
-      "name": "Žadeikis Pramonė",
+      "name": "Žadeikis Grupė",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2402,
@@ -189,7 +189,7 @@
     },
     {
       "id": "LTU_maciulis_energetika",
-      "name": "Mačiulis Energetika",
+      "name": "Mačiulis Grupė",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2600,
@@ -198,7 +198,7 @@
     },
     {
       "id": "LTU_simkus_pramone",
-      "name": "Simkus Pramonė",
+      "name": "Simkus Žemės ūkis",
       "sector": "agriculture",
       "share": 0.0222,
       "headcount": 1772,
@@ -207,7 +207,7 @@
     },
     {
       "id": "LTU_rastenis_transportas",
-      "name": "Rastenis Transportas",
+      "name": "Rastenis Žemės ūkis",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2334,
@@ -225,7 +225,7 @@
     },
     {
       "id": "LTU_noreika_statyba",
-      "name": "Noreika Statyba",
+      "name": "Noreika Prekyba",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2260,
@@ -234,7 +234,7 @@
     },
     {
       "id": "LTU_burokas_logistika",
-      "name": "Burokas Logistika",
+      "name": "Burokas Grupė",
       "sector": "agriculture",
       "share": 0.0154,
       "headcount": 1355,
@@ -252,7 +252,7 @@
     },
     {
       "id": "LTU_zadeikis_medziagos",
-      "name": "Žadeikis Medžiagos",
+      "name": "Žadeikis Žemės ūkis",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2384,
@@ -261,7 +261,7 @@
     },
     {
       "id": "LTU_zaborskis_transportas",
-      "name": "Zaborskis Transportas",
+      "name": "Zaborskis Prekyba",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2286,
@@ -270,7 +270,7 @@
     },
     {
       "id": "LTU_norkunas_logistika",
-      "name": "Norkūnas Logistika",
+      "name": "Norkūnas Energetika",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21582,
@@ -315,7 +315,7 @@
     },
     {
       "id": "LTU_ciurlionis_logistika",
-      "name": "Čiurlionis Logistika",
+      "name": "Čiurlionis Medžiagos",
       "sector": "industry",
       "share": 0.0265,
       "headcount": 16796,
@@ -324,7 +324,7 @@
     },
     {
       "id": "LTU_paulauskas_draudimas",
-      "name": "Paulauskas Draudimas",
+      "name": "Paulauskas Pramonė",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21167,
@@ -333,7 +333,7 @@
     },
     {
       "id": "LTU_zilys_transportas_prekyba",
-      "name": "Žilys Transportas Prekyba",
+      "name": "Žilys Grupė",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20955,
@@ -369,7 +369,7 @@
     },
     {
       "id": "LTU_adamkevicius_zemes_ukis",
-      "name": "Adamkevičius Žemės ūkis",
+      "name": "Adamkevičius Medžiagos",
       "sector": "industry",
       "share": 0.0265,
       "headcount": 19494,
@@ -414,7 +414,7 @@
     },
     {
       "id": "LTU_ivanauskas_prekyba",
-      "name": "Ivanauskas Prekyba",
+      "name": "Ivanauskas Medžiagos",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20420,
@@ -432,7 +432,7 @@
     },
     {
       "id": "LTU_cirtautas_logistika",
-      "name": "Cirtautas Logistika",
+      "name": "Cirtautas Statyba",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19501,
@@ -441,7 +441,7 @@
     },
     {
       "id": "LTU_gaska_transportas",
-      "name": "Gaška Transportas",
+      "name": "Gaška Medžiagos",
       "sector": "industry",
       "share": 0.0141,
       "headcount": 10415,
@@ -450,7 +450,7 @@
     },
     {
       "id": "LTU_laukaitis_zemes_ukis",
-      "name": "Laukaitis Žemės ūkis",
+      "name": "Laukaitis Pramonė",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19857,
@@ -504,10 +504,10 @@
     },
     {
       "id": "LTU_paulauskas_statyba_medziagos",
-      "name": "Paulauskas Statyba Medžiagos",
+      "name": "Paulauskas Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23619,
       "city": "LT01_vilnius",
       "tier": "body"
     },
@@ -516,7 +516,7 @@
       "name": "Simkus Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24534,
       "city": "LT02_panevezys",
       "tier": "body"
     },
@@ -540,16 +540,16 @@
     },
     {
       "id": "LTU_dvariakis_pramone",
-      "name": "Dvariakis Pramonė",
+      "name": "Dvariakis Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23167,
       "city": "LT02_klaipeda",
       "tier": "body"
     },
     {
       "id": "LTU_gudauskas_statyba",
-      "name": "Gudauskas Statyba",
+      "name": "Gudauskas Draudimas",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24628,
@@ -558,7 +558,7 @@
     },
     {
       "id": "LTU_adomavicius_statyba",
-      "name": "Adomavičius Statyba",
+      "name": "Adomavičius Transportas",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24830,
@@ -567,7 +567,7 @@
     },
     {
       "id": "LTU_navickas_statyba",
-      "name": "Navickas Statyba",
+      "name": "Navickas Transportas",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23664,
@@ -585,16 +585,16 @@
     },
     {
       "id": "LTU_uleckas_pramone",
-      "name": "Uleckas Pramonė",
+      "name": "Uleckas Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24183,
       "city": "LT02_kaunas",
       "tier": "body"
     },
     {
       "id": "LTU_urbanavicius_statyba",
-      "name": "Urbanavičius Statyba",
+      "name": "Urbanavičius Prekyba",
       "sector": "services",
       "share": 0.0141,
       "headcount": 20432,
@@ -615,7 +615,7 @@
       "name": "Baltušis Draudimas",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23518,
       "city": "LT02_kaunas",
       "tier": "body"
     },
@@ -639,10 +639,10 @@
     },
     {
       "id": "LTU_kairys_zemes_ukis_transportas",
-      "name": "Kairys Žemės ūkis Transportas",
+      "name": "Kairys Transportas",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23772,
       "city": "LT01_vilnius",
       "tier": "body"
     },
@@ -657,7 +657,7 @@
     },
     {
       "id": "LTU_gudauskas_energetika",
-      "name": "Gudauskas Energetika",
+      "name": "Gudauskas Grupė",
       "sector": "services",
       "share": 0.0081,
       "headcount": 11937,
@@ -666,7 +666,7 @@
     },
     {
       "id": "LTU_matulis_medziagos",
-      "name": "Matulis Medžiagos",
+      "name": "Matulis Draudimas",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24813,
@@ -675,7 +675,7 @@
     },
     {
       "id": "LTU_lukosevicius_pramone",
-      "name": "Lukoševičius Pramonė",
+      "name": "Lukoševičius Prekyba",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23687,
@@ -684,7 +684,7 @@
     },
     {
       "id": "LTU_kuprevicius_pramone",
-      "name": "Kuprevičius Pramonė",
+      "name": "Kuprevičius Transportas",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24509,
@@ -693,7 +693,7 @@
     },
     {
       "id": "LTU_cepas_energetika_draudimas",
-      "name": "Čepas Energetika Draudimas",
+      "name": "Čepas Draudimas",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24378,
@@ -702,7 +702,7 @@
     },
     {
       "id": "LTU_jurgutis_medziagos",
-      "name": "Jurgutis Medžiagos",
+      "name": "Jurgutis Draudimas",
       "sector": "services",
       "share": 0.0081,
       "headcount": 11939,
@@ -711,7 +711,7 @@
     },
     {
       "id": "LTU_cirtautas_energetika",
-      "name": "Cirtautas Energetika",
+      "name": "Cirtautas Prekyba",
       "sector": "services",
       "share": 0.0139,
       "headcount": 22199,
@@ -741,13 +741,13 @@
       "name": "Pakalniškis Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22894,
       "city": "LT02_klaipeda",
       "tier": "body"
     },
     {
       "id": "LTU_kazlauskas_zemes_ukis",
-      "name": "Kazlauskas Žemės ūkis",
+      "name": "Kazlauskas Prekyba",
       "sector": "services",
       "share": 0.0066,
       "headcount": 8970,
@@ -777,7 +777,7 @@
       "name": "Bagdonas Grupė",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24912,
       "city": "LT02_siauliai",
       "tier": "body"
     },
@@ -810,7 +810,7 @@
     },
     {
       "id": "LTU_tumenas_energetika",
-      "name": "Tumėnas Energetika",
+      "name": "Tumėnas Prekyba",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24944,
@@ -819,16 +819,16 @@
     },
     {
       "id": "LTU_maciulis_zemes_ukis",
-      "name": "Mačiulis Žemės ūkis",
+      "name": "Mačiulis Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24724,
       "city": "LT02_siauliai",
       "tier": "body"
     },
     {
       "id": "LTU_sakalauskas_medziagos",
-      "name": "Sakalauskas Medžiagos",
+      "name": "Sakalauskas Draudimas",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24246,

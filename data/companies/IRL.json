@@ -4,7 +4,7 @@
   "companies": [
     {
       "id": "IRL_kavanagh_materials",
-      "name": "Kavanagh Materials",
+      "name": "Kavanagh Trading",
       "sector": "agriculture",
       "share": 0.28,
       "headcount": 22429,
@@ -14,7 +14,7 @@
     },
     {
       "id": "IRL_enright_logistics",
-      "name": "Enright Logistics",
+      "name": "Enright Agri",
       "sector": "agriculture",
       "share": 0.1683,
       "headcount": 13863,
@@ -54,7 +54,7 @@
     },
     {
       "id": "IRL_gantly_transport",
-      "name": "Gantly Transport",
+      "name": "Gantly Energy",
       "sector": "industry",
       "share": 0.0837,
       "headcount": 43106,
@@ -94,7 +94,7 @@
     },
     {
       "id": "IRL_henchy_agri",
-      "name": "Henchy Agri",
+      "name": "Henchy Group",
       "sector": "services",
       "share": 0.0617,
       "headcount": 105322,
@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "IRL_bermingham_construction",
-      "name": "Bermingham Construction",
+      "name": "Bermingham Agri",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2578,
@@ -125,7 +125,7 @@
     },
     {
       "id": "IRL_tobin_materials",
-      "name": "Tobin Materials",
+      "name": "Tobin Agri",
       "sector": "agriculture",
       "share": 0.0167,
       "headcount": 1370,
@@ -134,7 +134,7 @@
     },
     {
       "id": "IRL_o_keeffe_construction",
-      "name": "O'Keeffe Construction",
+      "name": "O'Keeffe Group",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2251,
@@ -143,7 +143,7 @@
     },
     {
       "id": "IRL_nugent_transport",
-      "name": "Nugent Transport",
+      "name": "Nugent Agri",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2667,
@@ -161,7 +161,7 @@
     },
     {
       "id": "IRL_nolan_energy_logistics",
-      "name": "Nolan Energy Logistics",
+      "name": "Nolan Group",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2658,
@@ -170,7 +170,7 @@
     },
     {
       "id": "IRL_ronayne_energy",
-      "name": "Ronayne Energy",
+      "name": "Ronayne Group",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2209,
@@ -179,7 +179,7 @@
     },
     {
       "id": "IRL_daly_construction",
-      "name": "Daly Construction",
+      "name": "Daly Trading",
       "sector": "agriculture",
       "share": 0.0187,
       "headcount": 1548,
@@ -188,7 +188,7 @@
     },
     {
       "id": "IRL_griffey_materials",
-      "name": "Griffey Materials",
+      "name": "Griffey Trading",
       "sector": "agriculture",
       "share": 0.0276,
       "headcount": 2066,
@@ -197,7 +197,7 @@
     },
     {
       "id": "IRL_kavanagh_transport",
-      "name": "Kavanagh Transport",
+      "name": "Kavanagh Group",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2370,
@@ -206,7 +206,7 @@
     },
     {
       "id": "IRL_corballis_construction",
-      "name": "Corballis Construction",
+      "name": "Corballis Trading",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2517,
@@ -224,7 +224,7 @@
     },
     {
       "id": "IRL_zealand_transport",
-      "name": "Zealand Transport",
+      "name": "Zealand Agri",
       "sector": "agriculture",
       "share": 0.0215,
       "headcount": 1685,
@@ -233,7 +233,7 @@
     },
     {
       "id": "IRL_igoe_construction",
-      "name": "Igoe Construction",
+      "name": "Igoe Agri",
       "sector": "agriculture",
       "share": 0.0274,
       "headcount": 2013,
@@ -242,7 +242,7 @@
     },
     {
       "id": "IRL_mulvihill_construction",
-      "name": "Mulvihill Construction",
+      "name": "Mulvihill Trading",
       "sector": "agriculture",
       "share": 0.0208,
       "headcount": 1701,
@@ -251,7 +251,7 @@
     },
     {
       "id": "IRL_egan_materials",
-      "name": "Egan Materials",
+      "name": "Egan Trading",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2570,
@@ -269,7 +269,7 @@
     },
     {
       "id": "IRL_laffan_agri",
-      "name": "Laffan Agri",
+      "name": "Laffan Construction",
       "sector": "industry",
       "share": 0.0199,
       "headcount": 14209,
@@ -287,7 +287,7 @@
     },
     {
       "id": "IRL_macdermott_trading",
-      "name": "MacDermott Trading",
+      "name": "MacDermott Materials",
       "sector": "industry",
       "share": 0.0159,
       "headcount": 9882,
@@ -296,7 +296,7 @@
     },
     {
       "id": "IRL_bermingham_trading",
-      "name": "Bermingham Trading",
+      "name": "Bermingham Group",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18451,
@@ -314,7 +314,7 @@
     },
     {
       "id": "IRL_younge_insurance",
-      "name": "Younge Insurance",
+      "name": "Younge Industries",
       "sector": "industry",
       "share": 0.0243,
       "headcount": 15765,
@@ -332,7 +332,7 @@
     },
     {
       "id": "IRL_ronan_logistics",
-      "name": "Ronan Logistics",
+      "name": "Ronan Group",
       "sector": "industry",
       "share": 0.0243,
       "headcount": 15364,
@@ -359,7 +359,7 @@
     },
     {
       "id": "IRL_woulfe_agri",
-      "name": "Woulfe Agri",
+      "name": "Woulfe Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20111,
@@ -377,7 +377,7 @@
     },
     {
       "id": "IRL_tobin_transport",
-      "name": "Tobin Transport",
+      "name": "Tobin Materials",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21992,
@@ -404,7 +404,7 @@
     },
     {
       "id": "IRL_macdermott_agri",
-      "name": "MacDermott Agri",
+      "name": "MacDermott Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20096,
@@ -413,7 +413,7 @@
     },
     {
       "id": "IRL_fitzgerald_trading",
-      "name": "Fitzgerald Trading",
+      "name": "Fitzgerald Industries",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20502,
@@ -422,7 +422,7 @@
     },
     {
       "id": "IRL_o_boyle_transport",
-      "name": "O'Boyle Transport",
+      "name": "O'Boyle Materials",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18644,
@@ -440,7 +440,7 @@
     },
     {
       "id": "IRL_bermingham_construction_insurance",
-      "name": "Bermingham Construction Insurance",
+      "name": "Bermingham Construction",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18206,
@@ -449,7 +449,7 @@
     },
     {
       "id": "IRL_enright_trading_trading",
-      "name": "Enright Trading Trading",
+      "name": "Enright Energy",
       "sector": "industry",
       "share": 0.026,
       "headcount": 17687,
@@ -458,7 +458,7 @@
     },
     {
       "id": "IRL_swords_industries",
-      "name": "Swords Industries",
+      "name": "Swords Insurance",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24105,
@@ -467,7 +467,7 @@
     },
     {
       "id": "IRL_ronayne_agri",
-      "name": "Ronayne Agri",
+      "name": "Ronayne Transport",
       "sector": "services",
       "share": 0.0145,
       "headcount": 22486,
@@ -479,16 +479,16 @@
       "name": "Phelan Trading",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24975,
       "city": "IE06_dublin",
       "tier": "body"
     },
     {
       "id": "IRL_ronan_agri",
-      "name": "Ronan Agri",
+      "name": "Ronan Trading",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24611,
       "city": "IE06_dublin",
       "tier": "body"
     },
@@ -497,7 +497,7 @@
       "name": "Farrell Logistics",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23609,
       "city": "IE06_dublin",
       "tier": "body"
     },
@@ -515,13 +515,13 @@
       "name": "Nestor Logistics",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22774,
       "city": "IE06_dublin",
       "tier": "body"
     },
     {
       "id": "IRL_o_boyle_energy",
-      "name": "O'Boyle Energy",
+      "name": "O'Boyle Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24536,
@@ -548,7 +548,7 @@
     },
     {
       "id": "IRL_phelan_industries",
-      "name": "Phelan Industries",
+      "name": "Phelan Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23877,
@@ -566,10 +566,10 @@
     },
     {
       "id": "IRL_laffan_industries",
-      "name": "Laffan Industries",
+      "name": "Laffan Trading",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23151,
       "city": "IE05_cork",
       "tier": "body"
     },
@@ -578,13 +578,13 @@
       "name": "Comyn Group",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24967,
       "city": "IE05_cork",
       "tier": "body"
     },
     {
       "id": "IRL_corballis_energy",
-      "name": "Corballis Energy",
+      "name": "Corballis Group",
       "sector": "services",
       "share": 0.0095,
       "headcount": 13798,
@@ -593,7 +593,7 @@
     },
     {
       "id": "IRL_nugent_construction",
-      "name": "Nugent Construction",
+      "name": "Nugent Transport",
       "sector": "services",
       "share": 0.005,
       "headcount": 7855,
@@ -605,22 +605,22 @@
       "name": "Quirke Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24202,
       "city": "IE05_cork",
       "tier": "body"
     },
     {
       "id": "IRL_daly_materials",
-      "name": "Daly Materials",
+      "name": "Daly Group",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23669,
       "city": "IE05_cork",
       "tier": "body"
     },
     {
       "id": "IRL_younge_materials",
-      "name": "Younge Materials",
+      "name": "Younge Logistics",
       "sector": "services",
       "share": 0.0118,
       "headcount": 17372,
@@ -638,16 +638,16 @@
     },
     {
       "id": "IRL_quirke_trading_energy",
-      "name": "Quirke Trading Energy",
+      "name": "Quirke Trading",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23612,
       "city": "IE05_cork",
       "tier": "body"
     },
     {
       "id": "IRL_o_keeffe_agri",
-      "name": "O'Keeffe Agri",
+      "name": "O'Keeffe Logistics",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24431,
@@ -656,7 +656,7 @@
     },
     {
       "id": "IRL_healy_agri",
-      "name": "Healy Agri",
+      "name": "Healy Insurance",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24819,
@@ -665,16 +665,16 @@
     },
     {
       "id": "IRL_enright_trading_agri",
-      "name": "Enright Trading Agri",
+      "name": "Enright Trading",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22719,
       "city": "IE05_cork",
       "tier": "body"
     },
     {
       "id": "IRL_barry_construction",
-      "name": "Barry Construction",
+      "name": "Barry Logistics",
       "sector": "services",
       "share": 0.0125,
       "headcount": 18640,
@@ -686,16 +686,16 @@
       "name": "Usher Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23567,
       "city": "IE05_limerick",
       "tier": "body"
     },
     {
       "id": "IRL_gleeson_industries_trading",
-      "name": "Gleeson Industries Trading",
+      "name": "Gleeson Trading",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23149,
       "city": "IE04_galway",
       "tier": "body"
     },
@@ -713,31 +713,31 @@
       "name": "Ronan Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23673,
       "city": "IE06_dublin",
       "tier": "body"
     },
     {
       "id": "IRL_gleeson_industries",
-      "name": "Gleeson Industries",
+      "name": "Gleeson Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24628,
       "city": "IE06_tallaght",
       "tier": "body"
     },
     {
       "id": "IRL_usher_construction",
-      "name": "Usher Construction",
+      "name": "Usher Insurance",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23848,
       "city": "IE04_galway",
       "tier": "body"
     },
     {
       "id": "IRL_daly_agri_insurance",
-      "name": "Daly Agri Insurance",
+      "name": "Daly Insurance",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23317,
@@ -755,7 +755,7 @@
     },
     {
       "id": "IRL_mulvihill_agri",
-      "name": "Mulvihill Agri",
+      "name": "Mulvihill Logistics",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24669,
@@ -764,7 +764,7 @@
     },
     {
       "id": "IRL_timmons_construction",
-      "name": "Timmons Construction",
+      "name": "Timmons Group",
       "sector": "services",
       "share": 0.011,
       "headcount": 16108,
@@ -782,16 +782,16 @@
     },
     {
       "id": "IRL_yelverton_energy",
-      "name": "Yelverton Energy",
+      "name": "Yelverton Group",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22943,
       "city": "IE05_cork",
       "tier": "body"
     },
     {
       "id": "IRL_tyrrell_energy",
-      "name": "Tyrrell Energy",
+      "name": "Tyrrell Transport",
       "sector": "services",
       "share": 0.0094,
       "headcount": 13507,
@@ -809,16 +809,16 @@
     },
     {
       "id": "IRL_o_boyle_construction",
-      "name": "O'Boyle Construction",
+      "name": "O'Boyle Trading",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23287,
       "city": "IE06_dublin",
       "tier": "body"
     },
     {
       "id": "IRL_gantly_materials",
-      "name": "Gantly Materials",
+      "name": "Gantly Group",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22495,
@@ -839,13 +839,13 @@
       "name": "Gantly Logistics",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23523,
       "city": "IE05_waterford",
       "tier": "body"
     },
     {
       "id": "IRL_laffan_trading_construction",
-      "name": "Laffan Trading Construction",
+      "name": "Laffan Logistics",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24493,

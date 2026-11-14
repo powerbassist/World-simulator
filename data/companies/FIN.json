@@ -74,7 +74,7 @@
     },
     {
       "id": "FIN_sihvonen_rakennus",
-      "name": "Sihvonen Rakennus",
+      "name": "Sihvonen Vakuutus",
       "sector": "services",
       "share": 0.0251,
       "headcount": 45269,
@@ -84,7 +84,7 @@
     },
     {
       "id": "FIN_rasanen_rakennus",
-      "name": "Räsänen Rakennus",
+      "name": "Räsänen Logistiikka",
       "sector": "services",
       "share": 0.0252,
       "headcount": 50554,
@@ -94,7 +94,7 @@
     },
     {
       "id": "FIN_rasanen_materiaalit",
-      "name": "Räsänen Materiaalit",
+      "name": "Räsänen Liikenne",
       "sector": "services",
       "share": 0.0334,
       "headcount": 38017,
@@ -144,7 +144,7 @@
     },
     {
       "id": "FIN_ojala_teollisuus",
-      "name": "Ojala Teollisuus",
+      "name": "Ojala Kauppa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2288,
@@ -162,7 +162,7 @@
     },
     {
       "id": "FIN_peltomaa_teollisuus",
-      "name": "Peltomaa Teollisuus",
+      "name": "Peltomaa Kauppa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2418,
@@ -189,7 +189,7 @@
     },
     {
       "id": "FIN_vaisanen_teollisuus",
-      "name": "Väisänen Teollisuus",
+      "name": "Väisänen Kauppa",
       "sector": "agriculture",
       "share": 0.0276,
       "headcount": 2176,
@@ -234,7 +234,7 @@
     },
     {
       "id": "FIN_degerholm_ryhma_liikenne",
-      "name": "Degerholm Ryhmä Liikenne",
+      "name": "Degerholm Kauppa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2197,
@@ -252,7 +252,7 @@
     },
     {
       "id": "FIN_yrjana_logistiikka",
-      "name": "Yrjänä Logistiikka",
+      "name": "Yrjänä Kauppa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2208,
@@ -261,7 +261,7 @@
     },
     {
       "id": "FIN_peltomaa_logistiikka",
-      "name": "Peltomaa Logistiikka",
+      "name": "Peltomaa Kauppa Ryhmä",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2513,
@@ -279,7 +279,7 @@
     },
     {
       "id": "FIN_partanen_liikenne",
-      "name": "Partanen Liikenne",
+      "name": "Partanen Kauppa",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2657,
@@ -288,7 +288,7 @@
     },
     {
       "id": "FIN_jarvinen_logistiikka",
-      "name": "Järvinen Logistiikka",
+      "name": "Järvinen Teollisuus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20438,
@@ -324,7 +324,7 @@
     },
     {
       "id": "FIN_blomqvist_vakuutus",
-      "name": "Blomqvist Vakuutus",
+      "name": "Blomqvist Ryhmä",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21037,
@@ -333,7 +333,7 @@
     },
     {
       "id": "FIN_friman_vakuutus",
-      "name": "Friman Vakuutus",
+      "name": "Friman Materiaalit",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20506,
@@ -351,7 +351,7 @@
     },
     {
       "id": "FIN_ekelund_maatalous",
-      "name": "Ekelund Maatalous",
+      "name": "Ekelund Energia",
       "sector": "industry",
       "share": 0.0224,
       "headcount": 15513,
@@ -369,7 +369,7 @@
     },
     {
       "id": "FIN_peltomaa_liikenne",
-      "name": "Peltomaa Liikenne",
+      "name": "Peltomaa Rakennus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18846,
@@ -378,7 +378,7 @@
     },
     {
       "id": "FIN_akerman_maatalous",
-      "name": "Åkerman Maatalous",
+      "name": "Åkerman Materiaalit",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20010,
@@ -387,7 +387,7 @@
     },
     {
       "id": "FIN_nieminen_liikenne_liikenne",
-      "name": "Nieminen Liikenne Liikenne",
+      "name": "Nieminen Materiaalit",
       "sector": "industry",
       "share": 0.0263,
       "headcount": 18771,
@@ -396,7 +396,7 @@
     },
     {
       "id": "FIN_riekkinen_liikenne",
-      "name": "Riekkinen Liikenne",
+      "name": "Riekkinen Teollisuus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20690,
@@ -423,7 +423,7 @@
     },
     {
       "id": "FIN_jarvinen_kauppa_kauppa",
-      "name": "Järvinen Kauppa Kauppa",
+      "name": "Järvinen Ryhmä",
       "sector": "industry",
       "share": 0.0179,
       "headcount": 11669,
@@ -441,7 +441,7 @@
     },
     {
       "id": "FIN_nurmi_kauppa",
-      "name": "Nurmi Kauppa",
+      "name": "Nurmi Teollisuus",
       "sector": "industry",
       "share": 0.0253,
       "headcount": 17107,
@@ -450,7 +450,7 @@
     },
     {
       "id": "FIN_silvennoinen_vakuutus",
-      "name": "Silvennoinen Vakuutus",
+      "name": "Silvennoinen Ryhmä",
       "sector": "industry",
       "share": 0.0114,
       "headcount": 7989,
@@ -459,7 +459,7 @@
     },
     {
       "id": "FIN_salonen_teollisuus_vakuutus",
-      "name": "Salonen Teollisuus Vakuutus",
+      "name": "Salonen Teollisuus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21955,
@@ -477,7 +477,7 @@
     },
     {
       "id": "FIN_heinonen_liikenne",
-      "name": "Heinonen Liikenne",
+      "name": "Heinonen Energia",
       "sector": "industry",
       "share": 0.0159,
       "headcount": 11191,
@@ -486,7 +486,7 @@
     },
     {
       "id": "FIN_sihvonen_kauppa",
-      "name": "Sihvonen Kauppa",
+      "name": "Sihvonen Teollisuus",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19656,
@@ -513,7 +513,7 @@
     },
     {
       "id": "FIN_mannerkoski_rakennus",
-      "name": "Mannerkoski Rakennus",
+      "name": "Mannerkoski Liikenne",
       "sector": "services",
       "share": 0.0148,
       "headcount": 24206,
@@ -531,7 +531,7 @@
     },
     {
       "id": "FIN_grell_materiaalit",
-      "name": "Grell Materiaalit",
+      "name": "Grell Liikenne",
       "sector": "services",
       "share": 0.0136,
       "headcount": 20548,
@@ -540,7 +540,7 @@
     },
     {
       "id": "FIN_heikkila_vakuutus_rakennus",
-      "name": "Heikkilä Vakuutus Rakennus",
+      "name": "Heikkilä Vakuutus",
       "sector": "services",
       "share": 0.0161,
       "headcount": 24999,
@@ -549,7 +549,7 @@
     },
     {
       "id": "FIN_forsman_materiaalit_kauppa",
-      "name": "Forsman Materiaalit Kauppa",
+      "name": "Forsman Kauppa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24659,
@@ -567,10 +567,10 @@
     },
     {
       "id": "FIN_yrjana_energia",
-      "name": "Yrjänä Energia",
+      "name": "Yrjänä Logistiikka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24260,
       "city": "FI1B_espoo",
       "tier": "body"
     },
@@ -585,10 +585,10 @@
     },
     {
       "id": "FIN_friman_teollisuus",
-      "name": "Friman Teollisuus",
+      "name": "Friman Liikenne",
       "sector": "services",
       "share": 0.0161,
-      "headcount": 25000,
+      "headcount": 23991,
       "city": "FI1B_helsinki",
       "tier": "body"
     },
@@ -612,7 +612,7 @@
     },
     {
       "id": "FIN_virtanen_materiaalit",
-      "name": "Virtanen Materiaalit",
+      "name": "Virtanen Kauppa",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22467,
@@ -621,25 +621,25 @@
     },
     {
       "id": "FIN_silvennoinen_energia",
-      "name": "Silvennoinen Energia",
+      "name": "Silvennoinen Kauppa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23678,
       "city": "FI1C_turku",
       "tier": "body"
     },
     {
       "id": "FIN_hakulinen_teollisuus_vakuutus",
-      "name": "Hakulinen Teollisuus Vakuutus",
+      "name": "Hakulinen Vakuutus",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24889,
       "city": "FI19_seinaejoki",
       "tier": "body"
     },
     {
       "id": "FIN_aalberg_materiaalit",
-      "name": "Aalberg Materiaalit",
+      "name": "Aalberg Ryhmä",
       "sector": "services",
       "share": 0.0059,
       "headcount": 9383,
@@ -648,16 +648,16 @@
     },
     {
       "id": "FIN_kallio_materiaalit",
-      "name": "Kallio Materiaalit",
+      "name": "Kallio Liikenne",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24691,
       "city": "FI19_jyvaeskylae",
       "tier": "body"
     },
     {
       "id": "FIN_yrjana_rakennus",
-      "name": "Yrjänä Rakennus",
+      "name": "Yrjänä Vakuutus",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22764,
@@ -684,7 +684,7 @@
     },
     {
       "id": "FIN_degerholm_energia_energia",
-      "name": "Degerholm Energia Energia",
+      "name": "Degerholm Logistiikka",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24730,
@@ -696,7 +696,7 @@
       "name": "Kallio Logistiikka",
       "sector": "services",
       "share": 0.0163,
-      "headcount": 25000,
+      "headcount": 23314,
       "city": "FI1C_kouvola",
       "tier": "body"
     },
@@ -711,19 +711,19 @@
     },
     {
       "id": "FIN_nissinen_maatalous",
-      "name": "Nissinen Maatalous",
+      "name": "Nissinen Liikenne",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24504,
       "city": "FI1B_espoo",
       "tier": "body"
     },
     {
       "id": "FIN_rautavaara_materiaalit",
-      "name": "Rautavaara Materiaalit",
+      "name": "Rautavaara Vakuutus",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24950,
       "city": "FI1B_espoo",
       "tier": "body"
     },
@@ -732,7 +732,7 @@
       "name": "Peltomaa Ryhmä",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24967,
       "city": "FI1B_helsinki",
       "tier": "body"
     },
@@ -747,7 +747,7 @@
     },
     {
       "id": "FIN_yrjana_teollisuus_teollisuus",
-      "name": "Yrjänä Teollisuus Teollisuus",
+      "name": "Yrjänä Ryhmä",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23819,
@@ -756,10 +756,10 @@
     },
     {
       "id": "FIN_keranen_energia",
-      "name": "Keränen Energia",
+      "name": "Keränen Vakuutus",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23398,
       "city": "FI1B_helsinki",
       "tier": "body"
     },
@@ -774,7 +774,7 @@
     },
     {
       "id": "FIN_silvennoinen_maatalous",
-      "name": "Silvennoinen Maatalous",
+      "name": "Silvennoinen Vakuutus",
       "sector": "services",
       "share": 0.0102,
       "headcount": 16374,
@@ -804,7 +804,7 @@
       "name": "Fagerlund Liikenne",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22882,
       "city": "FI1D_oulu",
       "tier": "body"
     },
@@ -819,16 +819,16 @@
     },
     {
       "id": "FIN_tolvanen_materiaalit",
-      "name": "Tolvanen Materiaalit",
+      "name": "Tolvanen Liikenne",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23752,
       "city": "FI19_vaasa",
       "tier": "body"
     },
     {
       "id": "FIN_lepisto_maatalous",
-      "name": "Lepistö Maatalous",
+      "name": "Lepistö Kauppa",
       "sector": "services",
       "share": 0.0082,
       "headcount": 13025,
@@ -837,7 +837,7 @@
     },
     {
       "id": "FIN_peltomaa_energia_liikenne",
-      "name": "Peltomaa Energia Liikenne",
+      "name": "Peltomaa Liikenne",
       "sector": "services",
       "share": 0.0133,
       "headcount": 21171,
@@ -849,7 +849,7 @@
       "name": "Jokinen Liikenne",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22817,
       "city": "FI1B_helsinki",
       "tier": "body"
     },
@@ -858,7 +858,7 @@
       "name": "Berg Ryhmä",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24284,
       "city": "FI1C_turku",
       "tier": "body"
     },
@@ -873,16 +873,16 @@
     },
     {
       "id": "FIN_moisio_rakennus",
-      "name": "Moisio Rakennus",
+      "name": "Moisio Logistiikka",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23478,
       "city": "FI1B_vantaa",
       "tier": "body"
     },
     {
       "id": "FIN_tiihonen_teollisuus_vakuutus",
-      "name": "Tiihonen Teollisuus Vakuutus",
+      "name": "Tiihonen Vakuutus",
       "sector": "services",
       "share": 0.0076,
       "headcount": 10266,
@@ -891,10 +891,10 @@
     },
     {
       "id": "FIN_peltomaa_maatalous",
-      "name": "Peltomaa Maatalous",
+      "name": "Peltomaa Vakuutus",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23631,
       "city": "FI19_tampere",
       "tier": "body"
     },
@@ -903,13 +903,13 @@
       "name": "Nieminen Kauppa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22855,
       "city": "FI19_tampere",
       "tier": "body"
     },
     {
       "id": "FIN_kallio_teollisuus",
-      "name": "Kallio Teollisuus",
+      "name": "Kallio Vakuutus",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22965,

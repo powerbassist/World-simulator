@@ -44,7 +44,7 @@
     },
     {
       "id": "BEL_absil_verzekering",
-      "name": "Absil Verzekering",
+      "name": "Absil Energie",
       "sector": "industry",
       "share": 0.0557,
       "headcount": 32659,
@@ -74,7 +74,7 @@
     },
     {
       "id": "BEL_fransen_landbouw",
-      "name": "Fransen Landbouw",
+      "name": "Fransen Logistiek",
       "sector": "services",
       "share": 0.0319,
       "headcount": 63100,
@@ -94,7 +94,7 @@
     },
     {
       "id": "BEL_simonis_industrie",
-      "name": "Simonis Industrie",
+      "name": "Simonis Logistiek",
       "sector": "services",
       "share": 0.0646,
       "headcount": 112992,
@@ -104,7 +104,7 @@
     },
     {
       "id": "BEL_hoet_energie",
-      "name": "Hoet Energie",
+      "name": "Hoet Handel",
       "sector": "services",
       "share": 0.0659,
       "headcount": 112194,
@@ -114,7 +114,7 @@
     },
     {
       "id": "BEL_jongen_industrie",
-      "name": "Jongen Industrie",
+      "name": "Jongen Transport",
       "sector": "services",
       "share": 0.0281,
       "headcount": 42335,
@@ -136,7 +136,7 @@
   "body": [
     {
       "id": "BEL_coolsaet_verzekering",
-      "name": "Coolsaet Verzekering",
+      "name": "Coolsaet Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2637,
@@ -154,7 +154,7 @@
     },
     {
       "id": "BEL_mortelmans_industrie",
-      "name": "Mortelmans Industrie",
+      "name": "Mortelmans Groep",
       "sector": "agriculture",
       "share": 0.0099,
       "headcount": 849,
@@ -181,11 +181,11 @@
     },
     {
       "id": "BEL_mortelmans_transport",
-      "name": "Mortelmans Transport",
+      "name": "Mortelmans Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2529,
-      "city": "BE2_leuven",
+      "city": "BE3_namur",
       "tier": "body"
     },
     {
@@ -199,7 +199,7 @@
     },
     {
       "id": "BEL_flore_materialen",
-      "name": "Floré Materialen",
+      "name": "Floré Groep",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2515,
@@ -208,7 +208,7 @@
     },
     {
       "id": "BEL_merchiers_bouw",
-      "name": "Merchiers Bouw",
+      "name": "Merchiers Groep",
       "sector": "agriculture",
       "share": 0.0215,
       "headcount": 1831,
@@ -217,7 +217,7 @@
     },
     {
       "id": "BEL_baelden_industrie",
-      "name": "Baelden Industrie",
+      "name": "Baelden Landbouw",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2275,
@@ -226,7 +226,7 @@
     },
     {
       "id": "BEL_elst_verzekering",
-      "name": "Elst Verzekering",
+      "name": "Elst Handel",
       "sector": "agriculture",
       "share": 0.0198,
       "headcount": 1536,
@@ -239,7 +239,7 @@
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2475,
-      "city": "BE3_namur",
+      "city": "BE2_brugge",
       "tier": "body"
     },
     {
@@ -253,7 +253,7 @@
     },
     {
       "id": "BEL_vanassche_verzekering",
-      "name": "Vanassche Verzekering",
+      "name": "Vanassche Landbouw",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2525,
@@ -262,7 +262,7 @@
     },
     {
       "id": "BEL_luyten_energie",
-      "name": "Luyten Energie",
+      "name": "Luyten Landbouw",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2459,
@@ -271,7 +271,7 @@
     },
     {
       "id": "BEL_olyslagers_industrie",
-      "name": "Olyslagers Industrie",
+      "name": "Olyslagers Landbouw",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2382,
@@ -280,7 +280,7 @@
     },
     {
       "id": "BEL_absil_transport",
-      "name": "Absil Transport",
+      "name": "Absil Handel",
       "sector": "agriculture",
       "share": 0.0266,
       "headcount": 2068,
@@ -289,7 +289,7 @@
     },
     {
       "id": "BEL_ectors_logistiek",
-      "name": "Ectors Logistiek",
+      "name": "Ectors Bouw",
       "sector": "industry",
       "share": 0.025,
       "headcount": 17529,
@@ -298,11 +298,11 @@
     },
     {
       "id": "BEL_puelinckx_transport",
-      "name": "Puelinckx Transport",
+      "name": "Puelinckx Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18630,
-      "city": "BE2_deurne",
+      "city": "BE3_mons",
       "tier": "body"
     },
     {
@@ -316,16 +316,16 @@
     },
     {
       "id": "BEL_dujardin_handel",
-      "name": "Dujardin Handel",
+      "name": "Dujardin Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18356,
-      "city": "BE3_la_louviere",
+      "city": "BE2_kortrijk",
       "tier": "body"
     },
     {
       "id": "BEL_guerin_transport",
-      "name": "Guerin Transport",
+      "name": "Guerin Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21854,
@@ -343,7 +343,7 @@
     },
     {
       "id": "BEL_seghers_verzekering",
-      "name": "Seghers Verzekering",
+      "name": "Seghers Energie",
       "sector": "industry",
       "share": 0.0223,
       "headcount": 14616,
@@ -352,7 +352,7 @@
     },
     {
       "id": "BEL_renard_handel",
-      "name": "Renard Handel",
+      "name": "Renard Bouw",
       "sector": "industry",
       "share": 0.0106,
       "headcount": 7694,
@@ -361,7 +361,7 @@
     },
     {
       "id": "BEL_zion_handel",
-      "name": "Zion Handel",
+      "name": "Zion Groep",
       "sector": "industry",
       "share": 0.0249,
       "headcount": 18390,
@@ -370,16 +370,16 @@
     },
     {
       "id": "BEL_jongen_transport",
-      "name": "Jongen Transport",
+      "name": "Jongen Groep",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20525,
-      "city": "BE2_gent",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
       "id": "BEL_hausman_logistiek",
-      "name": "Hausman Logistiek",
+      "name": "Hausman Materialen",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18696,
@@ -397,7 +397,7 @@
     },
     {
       "id": "BEL_ectors_transport",
-      "name": "Ectors Transport",
+      "name": "Ectors Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19000,
@@ -406,7 +406,7 @@
     },
     {
       "id": "BEL_luyten_verzekering",
-      "name": "Luyten Verzekering",
+      "name": "Luyten Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21790,
@@ -424,7 +424,7 @@
     },
     {
       "id": "BEL_zion_logistiek",
-      "name": "Zion Logistiek",
+      "name": "Zion Materialen",
       "sector": "industry",
       "share": 0.0107,
       "headcount": 6952,
@@ -433,7 +433,7 @@
     },
     {
       "id": "BEL_timmermans_logistiek",
-      "name": "Timmermans Logistiek",
+      "name": "Timmermans Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21917,
@@ -442,16 +442,16 @@
     },
     {
       "id": "BEL_elst_logistiek_industrie",
-      "name": "Elst Logistiek Industrie",
+      "name": "Elst Industrie",
       "sector": "industry",
       "share": 0.0252,
       "headcount": 17019,
-      "city": "BE2_kortrijk",
+      "city": "BE3_tournai",
       "tier": "body"
     },
     {
       "id": "BEL_boonen_verzekering",
-      "name": "Boonen Verzekering",
+      "name": "Boonen Materialen",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21538,
@@ -487,7 +487,7 @@
     },
     {
       "id": "BEL_janssens_verzekering",
-      "name": "Janssens Verzekering",
+      "name": "Janssens Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21961,
@@ -505,7 +505,7 @@
     },
     {
       "id": "BEL_ionkheere_handel",
-      "name": "Ionkheere Handel",
+      "name": "Ionkheere Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21681,
@@ -535,13 +535,13 @@
       "name": "Lejeune Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23349,
       "city": "BE3_tournai",
       "tier": "body"
     },
     {
       "id": "BEL_noppe_energie",
-      "name": "Noppe Energie",
+      "name": "Noppe Logistiek",
       "sector": "services",
       "share": 0.0093,
       "headcount": 14383,
@@ -550,7 +550,7 @@
     },
     {
       "id": "BEL_janssens_bouw",
-      "name": "Janssens Bouw",
+      "name": "Janssens Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24600,
@@ -559,7 +559,7 @@
     },
     {
       "id": "BEL_merchiers_materialen",
-      "name": "Merchiers Materialen",
+      "name": "Merchiers Logistiek",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24858,
@@ -571,13 +571,13 @@
       "name": "Claes Verzekering",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24795,
       "city": "BE1_anderlecht",
       "tier": "body"
     },
     {
       "id": "BEL_boonen_handel_materialen",
-      "name": "Boonen Handel Materialen",
+      "name": "Boonen Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24519,
@@ -586,11 +586,11 @@
     },
     {
       "id": "BEL_fransen_energie",
-      "name": "Fransen Energie",
+      "name": "Fransen Verzekering",
       "sector": "services",
       "share": 0.0152,
       "headcount": 21903,
-      "city": "BE3_namur",
+      "city": "BE2_brugge",
       "tier": "body"
     },
     {
@@ -607,7 +607,7 @@
       "name": "Aelbrecht Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23493,
       "city": "BE2_antwerp",
       "tier": "body"
     },
@@ -617,15 +617,15 @@
       "sector": "services",
       "share": 0.0108,
       "headcount": 17778,
-      "city": "BE2_gent",
+      "city": "BE2_antwerp",
       "tier": "body"
     },
     {
       "id": "BEL_floor_industrie",
-      "name": "Floor Industrie",
+      "name": "Floor Logistiek",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23578,
       "city": "BE2_gent",
       "tier": "body"
     },
@@ -685,10 +685,10 @@
     },
     {
       "id": "BEL_jongen_energie",
-      "name": "Jongen Energie",
+      "name": "Jongen Logistiek",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24807,
       "city": "BE2_gent",
       "tier": "body"
     },
@@ -697,16 +697,16 @@
       "name": "Bertrand Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22976,
       "city": "BE1_brussels",
       "tier": "body"
     },
     {
       "id": "BEL_olyslagers_bouw_transport",
-      "name": "Olyslagers Bouw Transport",
+      "name": "Olyslagers Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24199,
       "city": "BE2_antwerp",
       "tier": "body"
     },
@@ -725,15 +725,15 @@
       "sector": "services",
       "share": 0.0166,
       "headcount": 23632,
-      "city": "BE3_mons",
+      "city": "BE2_leuven",
       "tier": "body"
     },
     {
       "id": "BEL_ionkheere_landbouw",
-      "name": "Ionkheere Landbouw",
+      "name": "Ionkheere Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24657,
       "city": "BE1_brussels",
       "tier": "body"
     },
@@ -760,22 +760,22 @@
       "name": "Goossens Groep",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22812,
       "city": "BE1_brussels",
       "tier": "body"
     },
     {
       "id": "BEL_zegers_bouw",
-      "name": "Zegers Bouw",
+      "name": "Zegers Groep",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23230,
       "city": "BE1_brussels",
       "tier": "body"
     },
     {
       "id": "BEL_de_backer_landbouw",
-      "name": "De Backer Landbouw",
+      "name": "De Backer Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22897,
@@ -784,20 +784,20 @@
     },
     {
       "id": "BEL_charlier_energie",
-      "name": "Charlier Energie",
+      "name": "Charlier Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22833,
       "city": "BE2_aalst",
       "tier": "body"
     },
     {
       "id": "BEL_piret_materialen",
-      "name": "Piret Materialen",
+      "name": "Piret Groep",
       "sector": "services",
       "share": 0.0081,
       "headcount": 12489,
-      "city": "BE2_leuven",
+      "city": "BE3_namur",
       "tier": "body"
     },
     {
@@ -811,10 +811,10 @@
     },
     {
       "id": "BEL_vanaerschot_energie",
-      "name": "Vanaerschot Energie",
+      "name": "Vanaerschot Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23097,
       "city": "BE2_antwerp",
       "tier": "body"
     },
@@ -829,11 +829,11 @@
     },
     {
       "id": "BEL_bertrand_industrie",
-      "name": "Bertrand Industrie",
+      "name": "Bertrand Verzekering",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
-      "city": "BE2_deurne",
+      "headcount": 24254,
+      "city": "BE3_mons",
       "tier": "body"
     },
     {
@@ -842,7 +842,7 @@
       "sector": "services",
       "share": 0.0091,
       "headcount": 14265,
-      "city": "BE1_anderlecht",
+      "city": "BE3_liege",
       "tier": "body"
     },
     {
@@ -850,16 +850,16 @@
       "name": "Tanghe Verzekering",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23830,
       "city": "BE1_brussels",
       "tier": "body"
     },
     {
       "id": "BEL_yserbyt_industrie",
-      "name": "Yserbyt Industrie",
+      "name": "Yserbyt Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24896,
       "city": "BE1_brussels",
       "tier": "body"
     },
@@ -883,7 +883,7 @@
     },
     {
       "id": "BEL_mortelmans_landbouw",
-      "name": "Mortelmans Landbouw",
+      "name": "Mortelmans Logistiek",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23050,

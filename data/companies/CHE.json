@@ -24,7 +24,7 @@
     },
     {
       "id": "CHE_fuchs_energie",
-      "name": "Fuchs Energie",
+      "name": "Lüthi Energie",
       "sector": "industry",
       "share": 0.0501,
       "headcount": 31234,
@@ -34,7 +34,7 @@
     },
     {
       "id": "CHE_jenni_handel",
-      "name": "Jenni Handel",
+      "name": "Jenni Gruppe",
       "sector": "industry",
       "share": 0.0599,
       "headcount": 45039,
@@ -74,7 +74,7 @@
     },
     {
       "id": "CHE_fuchs_gruppe",
-      "name": "Fuchs Gruppe",
+      "name": "Isler Gruppe",
       "sector": "services",
       "share": 0.0422,
       "headcount": 60926,
@@ -84,7 +84,7 @@
     },
     {
       "id": "CHE_schnyder_landwirtschaft",
-      "name": "Schnyder Landwirtschaft",
+      "name": "Schnyder Gruppe",
       "sector": "services",
       "share": 0.0393,
       "headcount": 78244,
@@ -116,7 +116,7 @@
   "body": [
     {
       "id": "CHE_fuchs_industrie_industrie",
-      "name": "Fuchs Industrie Industrie",
+      "name": "Daenzer Handel",
       "sector": "agriculture",
       "share": 0.0202,
       "headcount": 1650,
@@ -125,7 +125,7 @@
     },
     {
       "id": "CHE_dappen_bau",
-      "name": "Däppen Bau",
+      "name": "Däppen Gruppe",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2298,
@@ -143,7 +143,7 @@
     },
     {
       "id": "CHE_rickenbacher_versicherung",
-      "name": "Rickenbacher Versicherung",
+      "name": "Rickenbacher Handel",
       "sector": "agriculture",
       "share": 0.021,
       "headcount": 1650,
@@ -152,7 +152,7 @@
     },
     {
       "id": "CHE_stucki_industrie",
-      "name": "Stucki Industrie",
+      "name": "Stucki Landwirtschaft",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2512,
@@ -188,7 +188,7 @@
     },
     {
       "id": "CHE_luthi_bau",
-      "name": "Lüthi Bau",
+      "name": "Lüthi Gruppe",
       "sector": "agriculture",
       "share": 0.0205,
       "headcount": 1610,
@@ -197,7 +197,7 @@
     },
     {
       "id": "CHE_christen_energie",
-      "name": "Christen Energie",
+      "name": "Christen Landwirtschaft",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2513,
@@ -215,7 +215,7 @@
     },
     {
       "id": "CHE_schurch_bau",
-      "name": "Schürch Bau",
+      "name": "Schürch Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2359,
@@ -233,7 +233,7 @@
     },
     {
       "id": "CHE_isler_logistik",
-      "name": "Isler Logistik",
+      "name": "Isler Landwirtschaft",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2276,
@@ -242,7 +242,7 @@
     },
     {
       "id": "CHE_amstutz_logistik",
-      "name": "Amstutz Logistik",
+      "name": "Amstutz Handel",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2265,
@@ -251,7 +251,7 @@
     },
     {
       "id": "CHE_reber_bau",
-      "name": "Reber Bau",
+      "name": "Reber Landwirtschaft",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2289,
@@ -260,7 +260,7 @@
     },
     {
       "id": "CHE_giezendanner_landwirtschaft",
-      "name": "Giezendanner Landwirtschaft",
+      "name": "Giezendanner Industrie",
       "sector": "industry",
       "share": 0.0299,
       "headcount": 19604,
@@ -278,7 +278,7 @@
     },
     {
       "id": "CHE_uehlinger_landwirtschaft",
-      "name": "Uehlinger Landwirtschaft",
+      "name": "Uehlinger Energie",
       "sector": "industry",
       "share": 0.0164,
       "headcount": 10162,
@@ -296,7 +296,7 @@
     },
     {
       "id": "CHE_uehlinger_logistik",
-      "name": "Uehlinger Logistik",
+      "name": "Uehlinger Werkstoffe",
       "sector": "industry",
       "share": 0.0195,
       "headcount": 12505,
@@ -341,7 +341,7 @@
     },
     {
       "id": "CHE_quaderer_logistik",
-      "name": "Quaderer Logistik",
+      "name": "Quaderer Industrie",
       "sector": "industry",
       "share": 0.0147,
       "headcount": 9144,
@@ -350,7 +350,7 @@
     },
     {
       "id": "CHE_kaser_transport",
-      "name": "Käser Transport",
+      "name": "Käser Bau",
       "sector": "industry",
       "share": 0.0184,
       "headcount": 11410,
@@ -359,7 +359,7 @@
     },
     {
       "id": "CHE_egger_transport",
-      "name": "Egger Transport",
+      "name": "Thönen Industrie",
       "sector": "industry",
       "share": 0.0199,
       "headcount": 14173,
@@ -377,7 +377,7 @@
     },
     {
       "id": "CHE_grubenmann_versicherung",
-      "name": "Grubenmann Versicherung",
+      "name": "Grubenmann Bau",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21842,
@@ -386,7 +386,7 @@
     },
     {
       "id": "CHE_nussbaumer_landwirtschaft",
-      "name": "Nussbaumer Landwirtschaft",
+      "name": "Nussbaumer Gruppe",
       "sector": "industry",
       "share": 0.03,
       "headcount": 21178,
@@ -395,7 +395,7 @@
     },
     {
       "id": "CHE_schnyder_handel_logistik",
-      "name": "Schnyder Handel Logistik",
+      "name": "Schnyder Bau",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19728,
@@ -413,7 +413,7 @@
     },
     {
       "id": "CHE_lorz_versicherung",
-      "name": "Lorz Versicherung",
+      "name": "Lorz Energie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20053,
@@ -440,7 +440,7 @@
     },
     {
       "id": "CHE_grubenmann_transport",
-      "name": "Grubenmann Transport",
+      "name": "Grubenmann Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 22174,
@@ -467,7 +467,7 @@
     },
     {
       "id": "CHE_eichenberger_energie_handel",
-      "name": "Eichenberger Energie Handel",
+      "name": "Eichenberger Industrie",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19593,
@@ -476,7 +476,7 @@
     },
     {
       "id": "CHE_imfeld_bau",
-      "name": "Imfeld Bau",
+      "name": "Imfeld Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23632,
@@ -512,7 +512,7 @@
     },
     {
       "id": "CHE_portmann_industrie",
-      "name": "Portmann Industrie",
+      "name": "Portmann Transport",
       "sector": "services",
       "share": 0.0076,
       "headcount": 10355,
@@ -521,7 +521,7 @@
     },
     {
       "id": "CHE_wyss_bau",
-      "name": "Wyss Bau",
+      "name": "Wyss Gruppe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23851,
@@ -539,7 +539,7 @@
     },
     {
       "id": "CHE_niederer_bau",
-      "name": "Niederer Bau",
+      "name": "Niederer Logistik",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22617,
@@ -551,7 +551,7 @@
       "name": "Quaderer Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24669,
       "city": "CH04_zuerich",
       "tier": "body"
     },
@@ -560,7 +560,7 @@
       "name": "Flückiger Versicherung",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24980,
       "city": "CH04_zuerich",
       "tier": "body"
     },
@@ -575,7 +575,7 @@
     },
     {
       "id": "CHE_eichenberger_bau",
-      "name": "Eichenberger Bau",
+      "name": "Eichenberger Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24026,
@@ -584,7 +584,7 @@
     },
     {
       "id": "CHE_schurch_industrie",
-      "name": "Schürch Industrie",
+      "name": "Schürch Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24907,
@@ -602,7 +602,7 @@
     },
     {
       "id": "CHE_kohler_werkstoffe",
-      "name": "Kohler Werkstoffe",
+      "name": "Portmann Gruppe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24216,
@@ -620,7 +620,7 @@
     },
     {
       "id": "CHE_meile_werkstoffe",
-      "name": "Meile Werkstoffe",
+      "name": "Meile Versicherung",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24053,
@@ -632,7 +632,7 @@
       "name": "Gyger Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23406,
       "city": "CH04_winterthur",
       "tier": "body"
     },
@@ -641,22 +641,22 @@
       "name": "Quaderer Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23422,
       "city": "CH05_sankt_gallen",
       "tier": "body"
     },
     {
       "id": "CHE_gyger_bau",
-      "name": "Gyger Bau",
+      "name": "Gyger Gruppe",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24359,
       "city": "CH04_zuerich",
       "tier": "body"
     },
     {
       "id": "CHE_amstutz_industrie",
-      "name": "Amstutz Industrie",
+      "name": "Amstutz Versicherung",
       "sector": "services",
       "share": 0.0064,
       "headcount": 10371,
@@ -668,7 +668,7 @@
       "name": "Trachsel Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24907,
       "city": "CH04_zuerich",
       "tier": "body"
     },
@@ -683,19 +683,19 @@
     },
     {
       "id": "CHE_thonen_energie",
-      "name": "Thönen Energie",
+      "name": "Thönen Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24607,
       "city": "CH04_zuerich",
       "tier": "body"
     },
     {
       "id": "CHE_uehlinger_energie_transport",
-      "name": "Uehlinger Energie Transport",
+      "name": "Uehlinger Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23398,
       "city": "CH01_geneva",
       "tier": "body"
     },
@@ -719,7 +719,7 @@
     },
     {
       "id": "CHE_quaderer_handel_energie",
-      "name": "Quaderer Handel Energie",
+      "name": "Quaderer Gruppe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23417,
@@ -731,7 +731,7 @@
       "name": "Abplanalp Logistik",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24093,
       "city": "CH06_luzern",
       "tier": "body"
     },
@@ -749,13 +749,13 @@
       "name": "Collenberg Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23461,
       "city": "CH04_winterthur",
       "tier": "body"
     },
     {
       "id": "CHE_reber_industrie",
-      "name": "Reber Industrie",
+      "name": "Reber Transport",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22585,
@@ -764,7 +764,7 @@
     },
     {
       "id": "CHE_joller_energie",
-      "name": "Joller Energie",
+      "name": "Joller Gruppe",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22955,
@@ -791,7 +791,7 @@
     },
     {
       "id": "CHE_nussbaumer_bau",
-      "name": "Nussbaumer Bau",
+      "name": "Nussbaumer Handel",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23854,
@@ -818,7 +818,7 @@
     },
     {
       "id": "CHE_luscher_bau",
-      "name": "Lüscher Bau",
+      "name": "Lüscher Transport",
       "sector": "services",
       "share": 0.0163,
       "headcount": 24496,
@@ -827,7 +827,7 @@
     },
     {
       "id": "CHE_isler_bau",
-      "name": "Isler Bau",
+      "name": "Isler Transport",
       "sector": "services",
       "share": 0.0076,
       "headcount": 10826,

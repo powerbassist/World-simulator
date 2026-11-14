@@ -24,7 +24,7 @@
     },
     {
       "id": "ALB_marku_logjistika",
-      "name": "Marku Logjistika",
+      "name": "Marku Materialet",
       "sector": "industry",
       "share": 0.0593,
       "headcount": 33742,
@@ -44,7 +44,7 @@
     },
     {
       "id": "ALB_lika_bujqesia",
-      "name": "Lika Bujqësia",
+      "name": "Lika Ndërtimi",
       "sector": "industry",
       "share": 0.0475,
       "headcount": 36010,
@@ -64,7 +64,7 @@
     },
     {
       "id": "ALB_bardhi_energjia",
-      "name": "Bardhi Energjia",
+      "name": "Bardhi Grupi",
       "sector": "services",
       "share": 0.0216,
       "headcount": 36068,
@@ -74,7 +74,7 @@
     },
     {
       "id": "ALB_gjini_bujqesia",
-      "name": "Gjini Bujqësia",
+      "name": "Gjini Transporti Tregtia",
       "sector": "services",
       "share": 0.0303,
       "headcount": 39376,
@@ -94,7 +94,7 @@
     },
     {
       "id": "ALB_cani_ndertimi",
-      "name": "Cani Ndërtimi",
+      "name": "Cani Logjistika",
       "sector": "services",
       "share": 0.0535,
       "headcount": 95031,
@@ -145,7 +145,7 @@
     },
     {
       "id": "ALB_kapllani_materialet",
-      "name": "Kapllani Materialet",
+      "name": "Kapllani Grupi",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2640,
@@ -154,7 +154,7 @@
     },
     {
       "id": "ALB_kraja_sigurimet",
-      "name": "Kraja Sigurimet",
+      "name": "Kraja Tregtia",
       "sector": "agriculture",
       "share": 0.026,
       "headcount": 1956,
@@ -163,7 +163,7 @@
     },
     {
       "id": "ALB_zeneli_materialet",
-      "name": "Zeneli Materialet",
+      "name": "Zeneli Grupi",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2439,
@@ -172,7 +172,7 @@
     },
     {
       "id": "ALB_zeneli_industria",
-      "name": "Zeneli Industria",
+      "name": "Zeneli Tregtia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2405,
@@ -181,7 +181,7 @@
     },
     {
       "id": "ALB_nushi_industria",
-      "name": "Nushi Industria",
+      "name": "Nushi Tregtia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2381,
@@ -199,7 +199,7 @@
     },
     {
       "id": "ALB_lika_energjia",
-      "name": "Lika Energjia",
+      "name": "Lika Tregtia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2396,
@@ -208,7 +208,7 @@
     },
     {
       "id": "ALB_vata_transporti",
-      "name": "Vata Transporti",
+      "name": "Vata Grupi",
       "sector": "agriculture",
       "share": 0.0284,
       "headcount": 2080,
@@ -217,7 +217,7 @@
     },
     {
       "id": "ALB_tafa_ndertimi",
-      "name": "Tafa Ndërtimi",
+      "name": "Tafa Bujqësia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2254,
@@ -226,7 +226,7 @@
     },
     {
       "id": "ALB_bregu_industria",
-      "name": "Bregu Industria",
+      "name": "Bregu Grupi",
       "sector": "agriculture",
       "share": 0.0211,
       "headcount": 1673,
@@ -235,7 +235,7 @@
     },
     {
       "id": "ALB_prifti_ndertimi",
-      "name": "Prifti Ndërtimi",
+      "name": "Prifti Bujqësia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2228,
@@ -244,7 +244,7 @@
     },
     {
       "id": "ALB_tafa_sigurimet",
-      "name": "Tafa Sigurimet",
+      "name": "Tafa Tregtia",
       "sector": "agriculture",
       "share": 0.0123,
       "headcount": 1033,
@@ -253,7 +253,7 @@
     },
     {
       "id": "ALB_cela_energjia",
-      "name": "Çela Energjia",
+      "name": "Çela Tregtia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2530,
@@ -262,7 +262,7 @@
     },
     {
       "id": "ALB_bregu_materialet",
-      "name": "Bregu Materialet",
+      "name": "Bregu Bujqësia",
       "sector": "agriculture",
       "share": 0.03,
       "headcount": 2266,
@@ -271,7 +271,7 @@
     },
     {
       "id": "ALB_gjini_materialet",
-      "name": "Gjini Materialet",
+      "name": "Gjini Tregtia",
       "sector": "agriculture",
       "share": 0.0173,
       "headcount": 1529,
@@ -280,7 +280,7 @@
     },
     {
       "id": "ALB_marku_transporti",
-      "name": "Marku Transporti",
+      "name": "Marku Industria",
       "sector": "industry",
       "share": 0.0247,
       "headcount": 17043,
@@ -289,7 +289,7 @@
     },
     {
       "id": "ALB_sinani_transporti",
-      "name": "Sinani Transporti",
+      "name": "Sinani Ndërtimi",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18835,
@@ -298,7 +298,7 @@
     },
     {
       "id": "ALB_dibra_sigurimet",
-      "name": "Dibra Sigurimet",
+      "name": "Dibra Materialet",
       "sector": "industry",
       "share": 0.0296,
       "headcount": 18171,
@@ -307,7 +307,7 @@
     },
     {
       "id": "ALB_pepa_sigurimet",
-      "name": "Pepa Sigurimet",
+      "name": "Pepa Grupi",
       "sector": "industry",
       "share": 0.0299,
       "headcount": 20906,
@@ -316,7 +316,7 @@
     },
     {
       "id": "ALB_vata_tregtia",
-      "name": "Vata Tregtia",
+      "name": "Vata Energjia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18528,
@@ -343,7 +343,7 @@
     },
     {
       "id": "ALB_kapllani_transporti",
-      "name": "Kapllani Transporti",
+      "name": "Kapllani Industria",
       "sector": "industry",
       "share": 0.03,
       "headcount": 20268,
@@ -352,7 +352,7 @@
     },
     {
       "id": "ALB_sinani_logjistika",
-      "name": "Sinani Logjistika",
+      "name": "Sinani Materialet",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19511,
@@ -388,7 +388,7 @@
     },
     {
       "id": "ALB_gjini_bujqesia_industria",
-      "name": "Gjini Bujqësia Industria",
+      "name": "Gjini Grupi",
       "sector": "industry",
       "share": 0.0276,
       "headcount": 18412,
@@ -397,7 +397,7 @@
     },
     {
       "id": "ALB_pepa_transporti",
-      "name": "Pepa Transporti",
+      "name": "Pepa Energjia",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19962,
@@ -451,7 +451,7 @@
     },
     {
       "id": "ALB_gjini_materialet_bujqesia",
-      "name": "Gjini Materialet Bujqësia",
+      "name": "Gjini Materialet",
       "sector": "industry",
       "share": 0.03,
       "headcount": 19681,
@@ -469,7 +469,7 @@
     },
     {
       "id": "ALB_vata_sigurimet",
-      "name": "Vata Sigurimet",
+      "name": "Vata Industria",
       "sector": "industry",
       "share": 0.0122,
       "headcount": 8431,
@@ -487,7 +487,7 @@
     },
     {
       "id": "ALB_dibra_ndertimi_logjistika",
-      "name": "Dibra Ndërtimi Logjistika",
+      "name": "Dibra Ndërtimi",
       "sector": "industry",
       "share": 0.0138,
       "headcount": 8857,
@@ -496,7 +496,7 @@
     },
     {
       "id": "ALB_sinani_logjistika_transporti",
-      "name": "Sinani Logjistika Transporti",
+      "name": "Sinani Grupi",
       "sector": "industry",
       "share": 0.03,
       "headcount": 18870,
@@ -505,7 +505,7 @@
     },
     {
       "id": "ALB_laci_ndertimi",
-      "name": "Laçi Ndërtimi",
+      "name": "Laçi Grupi",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22581,
@@ -517,7 +517,7 @@
       "name": "Frashëri Transporti",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23120,
       "city": "AL03_vlore",
       "tier": "body"
     },
@@ -532,7 +532,7 @@
     },
     {
       "id": "ALB_marku_bujqesia",
-      "name": "Marku Bujqësia",
+      "name": "Marku Transporti",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23519,
@@ -541,16 +541,16 @@
     },
     {
       "id": "ALB_cani_industria_bujqesia",
-      "name": "Cani Industria Bujqësia",
+      "name": "Cani Sigurimet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23409,
       "city": "AL02_tirana",
       "tier": "body"
     },
     {
       "id": "ALB_zeneli_bujqesia",
-      "name": "Zeneli Bujqësia",
+      "name": "Zeneli Logjistika",
       "sector": "services",
       "share": 0.0068,
       "headcount": 10202,
@@ -562,13 +562,13 @@
       "name": "Qosja Tregtia",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23136,
       "city": "AL02_tirana",
       "tier": "body"
     },
     {
       "id": "ALB_pepa_industria",
-      "name": "Pepa Industria",
+      "name": "Pepa Tregtia",
       "sector": "services",
       "share": 0.0132,
       "headcount": 19315,
@@ -586,7 +586,7 @@
     },
     {
       "id": "ALB_gjoka_ndertimi",
-      "name": "Gjoka Ndërtimi",
+      "name": "Gjoka Tregtia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 22503,
@@ -595,16 +595,16 @@
     },
     {
       "id": "ALB_lika_ndertimi_grupi",
-      "name": "Lika Ndërtimi Grupi",
+      "name": "Lika Grupi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23841,
       "city": "AL02_tirana",
       "tier": "body"
     },
     {
       "id": "ALB_duka_ndertimi",
-      "name": "Duka Ndërtimi",
+      "name": "Duka Transporti",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24828,
@@ -613,10 +613,10 @@
     },
     {
       "id": "ALB_marku_energjia_energjia",
-      "name": "Marku Energjia Energjia",
+      "name": "Marku Sigurimet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23192,
       "city": "AL02_elbasan",
       "tier": "body"
     },
@@ -631,7 +631,7 @@
     },
     {
       "id": "ALB_sinani_energjia",
-      "name": "Sinani Energjia",
+      "name": "Sinani Tregtia",
       "sector": "services",
       "share": 0.016,
       "headcount": 23794,
@@ -649,7 +649,7 @@
     },
     {
       "id": "ALB_zeneli_materialet_materialet",
-      "name": "Zeneli Materialet Materialet",
+      "name": "Zeneli Transporti",
       "sector": "services",
       "share": 0.008,
       "headcount": 11676,
@@ -658,7 +658,7 @@
     },
     {
       "id": "ALB_pepa_materialet",
-      "name": "Pepa Materialet",
+      "name": "Pepa Sigurimet",
       "sector": "services",
       "share": 0.0103,
       "headcount": 16010,
@@ -676,10 +676,10 @@
     },
     {
       "id": "ALB_kraja_energjia",
-      "name": "Kraja Energjia",
+      "name": "Kraja Transporti",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23354,
       "city": "AL01_durres",
       "tier": "body"
     },
@@ -712,7 +712,7 @@
     },
     {
       "id": "ALB_gjini_ndertimi",
-      "name": "Gjini Ndërtimi",
+      "name": "Gjini Transporti",
       "sector": "services",
       "share": 0.0121,
       "headcount": 18653,
@@ -721,16 +721,16 @@
     },
     {
       "id": "ALB_frasheri_bujqesia",
-      "name": "Frashëri Bujqësia",
+      "name": "Frashëri Sigurimet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24349,
       "city": "AL02_elbasan",
       "tier": "body"
     },
     {
       "id": "ALB_gjini_energjia",
-      "name": "Gjini Energjia",
+      "name": "Gjini Sigurimet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23849,
@@ -739,16 +739,16 @@
     },
     {
       "id": "ALB_avdia_industria",
-      "name": "Avdia Industria",
+      "name": "Avdia Logjistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24197,
       "city": "AL01_shkoder",
       "tier": "body"
     },
     {
       "id": "ALB_bregu_energjia",
-      "name": "Bregu Energjia",
+      "name": "Bregu Transporti",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24150,
@@ -757,10 +757,10 @@
     },
     {
       "id": "ALB_elezi_grupi_grupi",
-      "name": "Elezi Grupi Grupi",
+      "name": "Elezi Grupi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24030,
       "city": "AL02_tirana",
       "tier": "body"
     },
@@ -784,10 +784,10 @@
     },
     {
       "id": "ALB_tafa_industria_materialet",
-      "name": "Tafa Industria Materialet",
+      "name": "Tafa Logjistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23265,
       "city": "AL01_durres",
       "tier": "body"
     },
@@ -802,10 +802,10 @@
     },
     {
       "id": "ALB_spahiu_bujqesia",
-      "name": "Spahiu Bujqësia",
+      "name": "Spahiu Logjistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24739,
       "city": "AL02_tirana",
       "tier": "body"
     },
@@ -820,10 +820,10 @@
     },
     {
       "id": "ALB_xhafa_bujqesia",
-      "name": "Xhafa Bujqësia",
+      "name": "Xhafa Logjistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24978,
       "city": "AL03_lushnje",
       "tier": "body"
     },
@@ -841,13 +841,13 @@
       "name": "Tafa Grupi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23668,
       "city": "AL02_tirana",
       "tier": "body"
     },
     {
       "id": "ALB_gjini_industria",
-      "name": "Gjini Industria",
+      "name": "Gjini Logjistika",
       "sector": "services",
       "share": 0.0095,
       "headcount": 14400,
@@ -856,7 +856,7 @@
     },
     {
       "id": "ALB_vata_bujqesia",
-      "name": "Vata Bujqësia",
+      "name": "Vata Tregtia",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24023,
@@ -868,13 +868,13 @@
       "name": "Bardhi Logjistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24628,
       "city": "AL02_tirana",
       "tier": "body"
     },
     {
       "id": "ALB_bardhi_tregtia_energjia",
-      "name": "Bardhi Tregtia Energjia",
+      "name": "Bardhi Sigurimet",
       "sector": "services",
       "share": 0.0166,
       "headcount": 24679,
@@ -886,7 +886,7 @@
       "name": "Gjoka Grupi",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23941,
       "city": "AL02_tirana",
       "tier": "body"
     }
