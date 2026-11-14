@@ -36,6 +36,7 @@ const LK = preload("res://src/sim/lever_constants.gd")
 const Offers = preload("res://src/sim/offers.gd")
 const AudienceTriggers = preload("res://src/sim/audience_triggers.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 const President = preload("res://src/sim/president.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
@@ -77,6 +78,11 @@ func _init() -> void:
 	_check_a_region_is_served_while_a_fund_is_open()
 	_check_a_region_denied_is_charged_once()
 	_check_a_region_ask_is_a_dated_word_judged_on_the_fund()
+	_check_a_want_served_while_its_request_waits_closes_it_unpriced()
+	_check_a_holding_refused_asks_again_only_after_it_turns()
+	_check_a_held_audience_walked_out_of_stays_a_no_show()
+	_check_a_standing_want_refused_still_asks()
+	_check_a_refusal_of_no_held_want_leaves_no_mark()
 	_check_the_card_names_both_objects()
 	_finish()
 
@@ -401,6 +407,184 @@ func _check_a_region_ask_is_a_dated_word_judged_on_the_fund() -> void:
 	if (judged["kept"] as Array).size() != 1:
 		_fail("a word on a region with a fund open was not kept: %s" % [judged])
 	person.wants.pop_back()
+
+
+## Gameplay's read of #351, follow-up 2 (the parent's card): a request whose want the player
+## served while it waited (the fund opened on the Regions screen, the card left unanswered)
+## closes as `overtaken`, unpriced, as a chief's does, and frees its day; one still unserved
+## lapses at a decline's price, as before.
+func _check_a_want_served_while_its_request_waits_closes_it_unpriced() -> void:
+	for served in [true, false]:
+		for booked in [false, true]:
+			var state = _state()
+			var ns = state.player()
+			var person = _person_with_region_want()
+			var f := {"state": state}
+			var arrived := []
+			Audiences._arrive(ns, person, person.wants[person.wants.size() - 1], _now(f), arrived)
+			var row: Dictionary = ns.audience_requests[ns.audience_requests.size() - 1]
+			if booked:
+				for d in Audiences.offered_dates(state, ns, String(row["id"])):
+					if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, String(row["id"]), d)["ok"]):
+						break
+				if String(row["status"]) != AK.STATUS_BOOKED:
+					_fail("served: the request could not be booked")
+			if served:
+				_open_fund(state, ns)
+			var pid := String(person.id)
+			var before := [float(ns.person_grudges.get(pid, 0.0)), float(ns.person_loyalty.get(pid, 0.0)), President.rapport(ns, pid)]
+			var out := {"lapsed": []}
+			while String(row["status"]) in [AK.STATUS_PENDING, AK.STATUS_BOOKED] and _now(f) < int(row["deadline_month"]) + 3:
+				_month(f)
+				out = Audiences.tick_month(state, _loader, METERS)
+			var after := [float(ns.person_grudges.get(pid, 0.0)), float(ns.person_loyalty.get(pid, 0.0)), President.rapport(ns, pid)]
+			var label := "%s, %s" % ["served" if served else "unserved", "booked" if booked else "pending"]
+			if served:
+				if String(row["status"]) != AK.STATUS_OVERTAKEN:
+					_fail("%s: the request reads '%s', not overtaken" % [label, row["status"]])
+				# Closed at its lapse, not the month the want was served (QA's M3 on #357).
+				var date: Dictionary = row.get("date", {})
+				var lapse := int(date.get("year", 0)) * 12 + int(date.get("month", 0)) + 1 if booked else int(row["deadline_month"])
+				if int(row["resolved_month"]) < lapse:
+					_fail("%s: closed at %d, before its lapse at %d" % [label, int(row["resolved_month"]), lapse])
+				if after != before:
+					_fail("%s: a request whose want was served was priced: %s to %s" % [label, before, after])
+				for entry in Calendar.booked(state):
+					if String(entry.get("kind", "")) == CalK.KIND_AUDIENCE and String(entry.get("action_id", "")) == String(row["id"]):
+						_fail("%s: the overtaken audience kept its day" % label)
+			else:
+				if String(row["status"]) != AK.STATUS_LAPSED or float(after[0]) <= float(before[0]):
+					_fail("%s: the request reads '%s', grudge %s to %s: an unserved lapse must still cost" % [label, row["status"], before[0], after[0]])
+			person.wants.pop_back()
+
+
+## The author's rule (d) (Gameplay's card A2, 2026-11-14): a HOLDING want (an office, a
+## region's fund) asks once; refused -- declined, lapsed, a no-show -- its figure asks no more
+## about that object until it turns (served, then no longer). A standing want is untouched.
+func _check_a_holding_refused_asks_again_only_after_it_turns() -> void:
+	for how in ["decline", "lapse", "noshow"]:
+		var state = _state()
+		var ns = state.player()
+		var person = _person_with_region_want()
+		var want: Dictionary = person.wants[person.wants.size() - 1]
+		var f := {"state": state}
+		var object := String(want["object"])
+		if not _asks_about(ns, person, object):
+			_fail("%s: premise, the region is not among what the figure would ask" % how)
+		Audiences._arrive(ns, person, want, _now(f), [])
+		var row: Dictionary = ns.audience_requests[ns.audience_requests.size() - 1]
+		if how == "decline":
+			Audiences.decline(state, ns, _loader, String(row["id"]))
+		elif how == "noshow":
+			for d in Audiences.offered_dates(state, ns, String(row["id"])):
+				if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, String(row["id"]), d)["ok"]):
+					break
+			if String(row["status"]) != AK.STATUS_BOOKED:
+				_fail("noshow: premise, the request could not be booked")
+			while String(row["status"]) == AK.STATUS_BOOKED:
+				_month(f)
+				Audiences.tick_month(state, _loader, METERS)
+		else:
+			while String(row["status"]) == AK.STATUS_PENDING:
+				_month(f)
+				Audiences.tick_month(state, _loader, METERS)
+		if not WantTerms.refused(ns, String(person.id), object):
+			_fail("%s: a refused region ask left no mark" % how)
+		if _asks_about(ns, person, object):
+			_fail("%s: the figure would ask about the refused region again" % how)
+		# The mark rides the save in the want register; absent (an older save) reads "not refused".
+		var loaded = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
+		if not WantTerms.refused(loaded.player(), String(person.id), object):
+			_fail("%s: the refusal mark did not survive the save" % how)
+		# The object turns: the fund opens (served, the mark goes), then ends.
+		var id := _open_fund(state, ns)
+		Characters._settle_wants(ns, person, METERS, {})
+		if WantTerms.refused(ns, String(person.id), object):
+			_fail("%s: a region served kept its refusal mark" % how)
+		RegionFunds.stop(state, ns, id)
+		Characters._settle_wants(ns, person, METERS, {})
+		if not _asks_about(ns, person, object):
+			_fail("%s: once the fund ended, the figure would still not ask" % how)
+		person.wants.pop_back()
+
+
+func _check_a_standing_want_refused_still_asks() -> void:
+	var state = _state()
+	var ns = state.player()
+	var leader := String(_loader.nations[PLAYER].leader_person_id)
+	var person = null
+	for p in _loader.people.get(PLAYER, []):
+		if String(p.id) != leader:
+			person = p
+			break
+	var want := {"object": "meter:grievance", "stance": "oppose"}
+	person.wants.append(want)
+	Audiences._arrive(ns, person, want, int(state.year) * 12 + int(state.month), [])
+	Audiences.decline(state, ns, _loader, String(ns.audience_requests[ns.audience_requests.size() - 1]["id"]))
+	if WantTerms.refused(ns, String(person.id), "meter:grievance"):
+		_fail("standing: a refused meter want was marked")
+	person.wants.pop_back()
+
+
+## A refusal of an object the person holds no want for (a chief's plant here) leaves no mark:
+## nothing could ever clear it.
+func _check_a_refusal_of_no_held_want_leaves_no_mark() -> void:
+	var state = _state()
+	var ns = state.player()
+	var person = _person_with_region_want()
+	person.wants.pop_back()
+	var object := "firm:%s" % String(Companies.majors_of(_loader, PLAYER)[0].id)
+	Audiences._arrive(ns, person, {"object": object, "stance": "want"}, int(state.year) * 12 + int(state.month), [])
+	Audiences.decline(state, ns, _loader, String(ns.audience_requests[ns.audience_requests.size() - 1]["id"]))
+	if WantTerms.refused(ns, String(person.id), object):
+		_fail("a refusal of an object the person holds no want for was marked")
+
+
+## QA's M1 on #357: an audience the player opened (held) and walked out of stays a priced
+## no-show even when its want is served by then; the served close is for a request never
+## answered.
+func _check_a_held_audience_walked_out_of_stays_a_no_show() -> void:
+	var state = _state()
+	var ns = state.player()
+	var person = _person_with_region_want()
+	var f := {"state": state}
+	Audiences._arrive(ns, person, person.wants[person.wants.size() - 1], _now(f), [])
+	var row: Dictionary = ns.audience_requests[ns.audience_requests.size() - 1]
+	for d in Audiences.offered_dates(state, ns, String(row["id"])):
+		if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, String(row["id"]), d)["ok"]):
+			break
+	if not bool(Audiences.hold(state, ns, _loader, String(row["id"])).get("ok", false)):
+		_fail("held: premise, the audience could not be held")
+		person.wants.pop_back()
+		return
+	_open_fund(state, ns)
+	var pid := String(person.id)
+	var before := float(ns.person_grudges.get(pid, 0.0))
+	while String(row["status"]) == AK.STATUS_HELD and _now(f) < int(row["deadline_month"]) + 3:
+		_month(f)
+		Audiences.tick_month(state, _loader, METERS)
+	if String(row["status"]) != AK.STATUS_LAPSED or float(ns.person_grudges.get(pid, 0.0)) <= before:
+		_fail("held: an audience walked out of reads '%s', grudge %s to %s: it must stay a priced no-show" % [
+			row["status"], before, ns.person_grudges.get(pid, 0.0)])
+	person.wants.pop_back()
+
+
+## Whether `object` is among the wants the figure may ask about now: Audiences' own pick, with
+## every earlier unserved want of the figure set aside, then the list put back exactly.
+func _asks_about(ns, person, object: String) -> bool:
+	var original: Array = person.wants.duplicate()
+	var found := false
+	while true:
+		var want: Dictionary = Audiences._unserved(ns, person, METERS, {})
+		if want.is_empty():
+			break
+		if String(want["object"]) == object:
+			found = true
+			break
+		person.wants.erase(want)
+	person.wants.clear()
+	person.wants.append_array(original)
+	return found
 
 
 func _check_the_card_names_both_objects() -> void:
