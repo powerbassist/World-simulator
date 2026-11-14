@@ -12,9 +12,13 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Division = preload("res://src/sim/division.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
+const Budget = preload("res://src/sim/budget.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
+const SaveManager = preload("res://src/core/save_manager.gd")
+const Clock = preload("res://src/core/clock.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -34,6 +38,7 @@ func _init() -> void:
 	_test_a_carried_birth_puts_the_kind_in_force()
 	_test_a_carried_abolition_takes_the_kind_out()
 	_test_a_birth_moves_the_bill_position()
+	_test_a_reshaped_tax_code_runs_a_year_and_reloads()
 	_finish()
 
 
@@ -157,6 +162,51 @@ func _test_a_birth_moves_the_bill_position() -> void:
 	var cut := FinanceBillLaw.position(ns, {"tax_rates_pct": {"vat": -float(ns.tax_rates_pct["vat"])}})
 	if abolished != cut:
 		_failures.append("an abolition reads %s, not a cut to zero %s" % [abolished, cut])
+
+
+## The whole machine, not one division: a sixth kind in the library (as Content's rows
+## will ship), born in October beside the wealth tax's abolition, then twelve months of
+## the game's own tick order and a save and a load through SaveManager. Every reader
+## that still assumed exactly the five would crash or drop the born kind here.
+func _test_a_reshaped_tax_code_runs_a_year_and_reloads() -> void:
+	var loader = DataLoader.new()
+	loader.load_all()
+	var row: Dictionary = (loader.taxes["vat"] as Dictionary).duplicate(true)
+	row["id"] = "fuel_duty"
+	row["bloc_salience"] = {"workers": 0.02}
+	row["who_pays"] = ["workers"]
+	loader.taxes["fuel_duty"] = row
+	var state = GameState.new_game(loader, "FRA")
+	state.year = 2026
+	state.month = 10
+	var ns = state.player()
+	FinanceBill.table(state, loader, {"create": {"fuel_duty": 8.0}, "abolish": ["wealth"]})
+	if not bool(Division.divide(state, loader).get("passed", false)):
+		_failures.append("year: the October bill did not carry")
+		return
+	for i in 12:
+		WorldMonth.tick_month(state, loader)
+	if not ns.tax_rates_pct.has("fuel_duty") or ns.tax_rates_pct.has("wealth") 			or float(ns.revenue_pct_gdp.get("fuel_duty", 0.0)) <= 0.0 or ns.revenue_pct_gdp.has("wealth"):
+		_failures.append("year: after twelve months the code reads %s, revenue %s" % [ns.tax_rates_pct, ns.revenue_pct_gdp.keys()])
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = 1
+	var err := SaveManager.save_game(state, clock, "autumn_reshaped")
+	clock.free()
+	if err != "":
+		_failures.append("year: the save failed: %s" % err)
+		return
+	var got: Dictionary = SaveManager.load_game("autumn_reshaped", loader)
+	if not bool(got.get("ok", false)):
+		_failures.append("year: the load was refused: %s" % got.get("error"))
+		return
+	var back = got["state"].player()
+	if back.tax_rates_pct != ns.tax_rates_pct or not back.tax_library.has("fuel_duty"):
+		_failures.append("year: the reloaded code reads %s" % [back.tax_rates_pct])
+	Budget.recompute(got["state"], back)
+	if float(back.revenue_pct_gdp.get("fuel_duty", 0.0)) != float(ns.revenue_pct_gdp["fuel_duty"]):
+		_failures.append("year: the reloaded born kind yields %s, not %s" % [back.revenue_pct_gdp.get("fuel_duty"), ns.revenue_pct_gdp["fuel_duty"]])
 
 
 func _finish() -> void:

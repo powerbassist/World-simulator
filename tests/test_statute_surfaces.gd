@@ -57,6 +57,7 @@ const LawPanelUi = preload("res://src/ui/law_panel.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const Statute = preload("res://src/sim/statute.gd")
+const Budget = preload("res://src/sim/budget.gd")
 const StatuteK = preload("res://src/sim/statute_constants.gd")
 
 const POLL_SLOT := "__test_poll_surfaces__"
@@ -78,6 +79,39 @@ func _process(_delta: float) -> bool:
 	_run()
 	_finish()
 	return false
+
+
+## V5.3 e: the panels on a tax code that is not today's five -- a sixth kind in force (as
+## Content's rows will put one) and the wealth tax abolished. The Tax Code shows one row per
+## kind in force, the born kind named by its library row and capped by its range; the
+## Budget and the overview refresh on it without a missing-key error. Restored after.
+func _check_a_reshaped_code(panel, state) -> void:
+	var ns = state.player()
+	var row: Dictionary = (ns.tax_library["vat"] as Dictionary).duplicate(true)
+	row["id"] = "fuel_duty"
+	row["name"] = "Fuel duty"
+	row["rate_range_pct"] = [0.0, 2.0]
+	ns.tax_library["fuel_duty"] = row
+	ns.tax_rates_pct["fuel_duty"] = 0.7
+	var wealth := float(ns.tax_rates_pct["wealth"])
+	ns.tax_rates_pct.erase("wealth")
+	Budget.recompute(state, ns)
+	panel._refresh()
+	if panel._sliders.has("wealth") and (panel._sliders["wealth"] as Control).is_visible_in_tree():
+		_fail("the Tax Code still shows a row for the abolished wealth tax")
+	if not panel._sliders.has("fuel_duty") or float(panel._sliders["fuel_duty"].max_value) != 2.0:
+		_fail("the Tax Code has no fuel duty row capped by its kind's range")
+	if panel._label_for("fuel_duty") != "Fuel duty":
+		_fail("the born kind reads '%s', not its library name" % panel._label_for("fuel_duty"))
+	_main._budget_panel.mark_dirty()
+	_main._budget_panel._refresh()
+	_main._overview_panel.mark_dirty()
+	_main._overview_panel._refresh()
+	ns.tax_rates_pct.erase("fuel_duty")
+	ns.tax_library.erase("fuel_duty")
+	ns.tax_rates_pct["wealth"] = wealth
+	Budget.recompute(state, ns)
+	panel._refresh()
 
 
 func _run() -> void:
@@ -109,6 +143,8 @@ func _run() -> void:
 		_fail("the income slider lost its authored ceiling")
 	if not is_equal_approx(float(panel._sliders["wealth"].max_value), float(ns.tax_library["wealth"]["rate_range_pct"][1])):
 		_fail("the wealth slider must read the model bound, not a copied number")
+
+	_check_a_reshaped_code(panel, state)
 
 	# The player-composed tax retired at V5.3 e (the tax library replaces it):
 	# the Tax Code no longer offers to invent one.
