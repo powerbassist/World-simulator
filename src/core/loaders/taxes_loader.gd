@@ -24,6 +24,11 @@ const FIRST := ["income", "corporate", "vat", "capital_gains", "wealth"]
 ## parses (section 9.1).
 static var _id_regex := RegEx.create_from_string("^[a-z0-9_]{2,24}$")
 
+## What a kind's rate is counted in, for the tax panel's figures (screen 4): a closed set
+## of codes, not prose -- the panel words and formats them. "pt" is points on top of
+## another rate (the high-income surcharge); "index" a schedule against today's (100).
+const UNITS := ["%", "pt", "index", "EUR/l", "EUR/kg", "EUR/t", "EUR/passenger"]
+
 
 static func load_taxes(loader, dir: String) -> void:
 	var da := DirAccess.open(dir)
@@ -70,6 +75,8 @@ static func parse_row(d: Dictionary, fname: String, errors: Array[String]) -> Di
 	for key in ["name", "summary", "rate_meaning"]:
 		if typeof(d.get(key)) != TYPE_STRING or String(d[key]).strip_edges() == "":
 			errors.append("%s: '%s' must be a non-empty string" % [fname, key])
+	if not UNITS.has(d.get("unit")):
+		errors.append("%s: 'unit' must be one of %s" % [fname, str(UNITS)])
 	# Strictly positive where the model divides or multiplies a yield by the field: a zero
 	# base is a kind that yields nothing, a zero reference or scale a division by zero.
 	for key in ["base_share", "zero_ref_pct", "opinion_scale_pp"]:

@@ -3,6 +3,7 @@
   "name": "Bank levy",
   "summary": "A yearly levy on the balance sheets of the largest banks.",
   "rate_meaning": "% of liabilities or assets per year",
+  "unit": "%",
   "who_pays": [
     "business"
   ],

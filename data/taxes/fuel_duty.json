@@ -3,6 +3,7 @@
   "name": "Fuel duty",
   "summary": "An excise on every litre of petrol and diesel sold for road use.",
   "rate_meaning": "EUR per litre of petrol",
+  "unit": "EUR/l",
   "who_pays": [
     "workers",
     "rural"

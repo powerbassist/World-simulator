@@ -3,6 +3,7 @@
   "name": "Value added tax",
   "summary": "A tax on consumption, collected at every stage of sale.",
   "rate_meaning": "statutory standard rate",
+  "unit": "%",
   "who_pays": [
     "workers",
     "pensioners",

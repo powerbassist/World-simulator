@@ -3,6 +3,7 @@
   "name": "Income tax",
   "summary": "A tax on the incomes of households, in bands that rise with income.",
   "rate_meaning": "effective average rate on household income",
+  "unit": "%",
   "who_pays": [
     "workers",
     "urban"

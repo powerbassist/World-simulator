@@ -3,6 +3,7 @@
   "name": "Net wealth tax",
   "summary": "An annual tax on large net fortunes, above a high threshold.",
   "rate_meaning": "top rate on net wealth per year",
+  "unit": "%",
   "who_pays": [
     "workers",
     "pensioners",

@@ -3,6 +3,7 @@
   "name": "Air passenger tax",
   "summary": "A charge on every passenger flying out, by distance and class.",
   "rate_meaning": "EUR per short-haul economy passenger",
+  "unit": "EUR/passenger",
   "who_pays": [
     "urban",
     "business"

@@ -3,6 +3,7 @@
   "name": "Sugar drinks levy",
   "summary": "A levy on sweetened soft drinks, rising with their sugar content.",
   "rate_meaning": "EUR per litre, top sugar band",
+  "unit": "EUR/l",
   "who_pays": [
     "workers",
     "students"

@@ -3,6 +3,7 @@
   "name": "High-income surcharge",
   "summary": "Extra points of tax on the very highest incomes.",
   "rate_meaning": "points added on incomes above the threshold",
+  "unit": "pt",
   "who_pays": [
     "urban",
     "business"
