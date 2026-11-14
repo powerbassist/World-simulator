@@ -1,12 +1,12 @@
 ~ start
 Prime Minister Terborg: We eat on the water so that nobody can leave early. Tonight the subject is the rules of the digital economy, and I intend to win.
-- Back a European digital levy => levy
-- Back light-touch regulation => light
-- Raise the Amsterdam tax rulings => rulings
+- Back a European digital levy [#id:levy] => levy
+- Back light-touch regulation [#id:light] => light
+- Raise the Amsterdam tax rulings [#id:rulings] => rulings
 ~ levy
 Prime Minister Terborg: A levy on the giants. Nice idea, stalled in every capital, by me among others.
-- Push for a one percent levy => one_pct
-- Push for a smaller, quicker one => smaller
+- Push for a one percent levy [#id:one_pct] => one_pct
+- Push for a smaller, quicker one [#id:smaller] => smaller
 ~ one_pct
 Prime Minister Terborg: One percent. The giants will lobby, my ministry will lobby harder against it, and the boat will not sink.
 => END
@@ -15,8 +15,8 @@ Prime Minister Terborg: Smaller, quicker. A quick compromise is a rare bird in t
 => END
 ~ light
 Prime Minister Terborg: Light touch. Europeans regulate first and innovate later. I would reverse the order for at least one cycle.
-- Offer a regulatory sandbox => sandbox
-- Offer an innovation fund => innov
+- Offer a regulatory sandbox [#id:sandbox] => sandbox
+- Offer an innovation fund [#id:innov] => innov
 ~ sandbox
 Prime Minister Terborg: A sandbox. Startups love sand, and so do lawyers, who sell shovels.
 => END
@@ -25,8 +25,8 @@ Prime Minister Terborg: An innovation fund. Money in a fund is a promise. Let us
 => END
 ~ rulings
 Prime Minister Terborg: Our tax rulings have been called a loophole. I prefer to call them a competitive advantage that the Commission dislikes.
-- Demand they be ended => ended
-- Accept them if profits are taxed where earned => earned
+- Demand they be ended [#id:ended] => ended
+- Accept them if profits are taxed where earned [#id:earned] => earned
 ~ ended
 Prime Minister Terborg: Ended? The Treasury will weep, and the city of The Hague will ask who forgot to thank it.
 => END
