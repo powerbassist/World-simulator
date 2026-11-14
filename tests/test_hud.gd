@@ -184,6 +184,9 @@ func _check_the_bar_after_the_rebuild() -> void:
 		if bar.figure_box(id).visible == StripReadings.is_resting(r):
 			_fail("the '%s' chip is %s while its reading says %s" % [id, "shown" if bar.figure_box(id).visible else "hidden",
 				"resting" if StripReadings.is_resting(r) else "waiting"])
+	# A clear desk takes no slot (gate H6): stated outright, not through the code's own predicate.
+	if _main._state.player().event_queue.is_empty() and bar.figure_box("desk").visible:
+		_fail("an empty desk still shows its '— clear' chip on the strip")
 	# The date carries its weekday (DateText.weekday_full), the hold line is the cluster's own.
 	var date: String = hud.clock_cluster._date_label.text
 	if not RegEx.create_from_string("^[A-Za-z]{3} \\d{2}/\\d{2}/\\d{4}$").search(date):
