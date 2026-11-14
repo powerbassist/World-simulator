@@ -8,3 +8,4 @@ Changed: Every window that dims the game now also blurs it.
 Changed: Saves from earlier builds no longer load.
 Removed: You can no longer propose a tax of your own from the Tax Code.
 Removed: The audience screen no longer offers Argue, Pressure or a lie.
+Added: France, Germany, Britain and Poland now levy the taxes they really levy, at their real rates, with fifteen new kinds such as fuel duty, carbon tax and inheritance tax that you can see and move in the Tax Code.
