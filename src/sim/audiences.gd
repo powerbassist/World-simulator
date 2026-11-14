@@ -55,7 +55,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 	if ns == null:
 		return out
 	var now := _now(state)
-	Lane.close_overtaken(state, ns, now)
+	Lane.close_overtaken(state, ns, now, loader, meters)
 	for row in ns.audience_requests:
 		if not _overdue(row, now):
 			continue
@@ -247,13 +247,7 @@ static func settle(state, ns, loader, request_id: String, outcome: String) -> Di
 ## Pending past its window lapses; an audience booked or held in an earlier
 ## month and never closed is a no-show -- each costs a decline, once.
 static func _overdue(row: Dictionary, now: int) -> bool:
-	match String(row.get("status", "")):
-		K.STATUS_PENDING:
-			return now >= int(row["deadline_month"])
-		K.STATUS_BOOKED, K.STATUS_HELD:
-			var date: Dictionary = row.get("date", {})
-			return int(date.get("year", 0)) * 12 + int(date.get("month", 0)) < now
-	return false
+	return Lane.overdue(row, now)
 
 
 ## Invitations first -- the asks outside the hazard (AudienceTriggers: an entry

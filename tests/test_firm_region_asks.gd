@@ -77,6 +77,7 @@ func _init() -> void:
 	_check_a_region_is_served_while_a_fund_is_open()
 	_check_a_region_denied_is_charged_once()
 	_check_a_region_ask_is_a_dated_word_judged_on_the_fund()
+	_check_a_want_served_while_its_request_waits_closes_it_unpriced()
 	_check_the_card_names_both_objects()
 	_finish()
 
@@ -401,6 +402,50 @@ func _check_a_region_ask_is_a_dated_word_judged_on_the_fund() -> void:
 	if (judged["kept"] as Array).size() != 1:
 		_fail("a word on a region with a fund open was not kept: %s" % [judged])
 	person.wants.pop_back()
+
+
+## Gameplay's read of #351, follow-up 2 (the parent's card): a request whose want the player
+## served while it waited (the fund opened on the Regions screen, the card left unanswered)
+## closes as `overtaken`, unpriced, as a chief's does, and frees its day; one still unserved
+## lapses at a decline's price, as before.
+func _check_a_want_served_while_its_request_waits_closes_it_unpriced() -> void:
+	for served in [true, false]:
+		for booked in [false, true]:
+			var state = _state()
+			var ns = state.player()
+			var person = _person_with_region_want()
+			var f := {"state": state}
+			var arrived := []
+			Audiences._arrive(ns, person, person.wants[person.wants.size() - 1], _now(f), arrived)
+			var row: Dictionary = ns.audience_requests[ns.audience_requests.size() - 1]
+			if booked:
+				for d in Audiences.offered_dates(state, ns, String(row["id"])):
+					if bool(d["free"]) and bool(Audiences.book(state, ns, _loader, String(row["id"]), d)["ok"]):
+						break
+				if String(row["status"]) != AK.STATUS_BOOKED:
+					_fail("served: the request could not be booked")
+			if served:
+				_open_fund(state, ns)
+			var pid := String(person.id)
+			var before := [float(ns.person_grudges.get(pid, 0.0)), float(ns.person_loyalty.get(pid, 0.0)), President.rapport(ns, pid)]
+			var out := {"lapsed": []}
+			while String(row["status"]) in [AK.STATUS_PENDING, AK.STATUS_BOOKED] and _now(f) < int(row["deadline_month"]) + 3:
+				_month(f)
+				out = Audiences.tick_month(state, _loader, METERS)
+			var after := [float(ns.person_grudges.get(pid, 0.0)), float(ns.person_loyalty.get(pid, 0.0)), President.rapport(ns, pid)]
+			var label := "%s, %s" % ["served" if served else "unserved", "booked" if booked else "pending"]
+			if served:
+				if String(row["status"]) != AK.STATUS_OVERTAKEN:
+					_fail("%s: the request reads '%s', not overtaken" % [label, row["status"]])
+				if after != before:
+					_fail("%s: a request whose want was served was priced: %s to %s" % [label, before, after])
+				for entry in Calendar.booked(state):
+					if String(entry.get("kind", "")) == CalK.KIND_AUDIENCE and String(entry.get("action_id", "")) == String(row["id"]):
+						_fail("%s: the overtaken audience kept its day" % label)
+			else:
+				if String(row["status"]) != AK.STATUS_LAPSED or float(after[0]) <= float(before[0]):
+					_fail("%s: the request reads '%s', grudge %s to %s: an unserved lapse must still cost" % [label, row["status"], before[0], after[0]])
+			person.wants.pop_back()
 
 
 func _check_the_card_names_both_objects() -> void:
