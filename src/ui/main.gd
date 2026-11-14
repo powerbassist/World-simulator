@@ -387,7 +387,7 @@ func _ready() -> void:
 	_polling_panel.setup(_state, _loader)
 
 	_law_panel = LawPanel.new()
-	_windows.register("legislature", tr("Legislature"), _law_panel, KEY_L, ICONS + "gavel.svg")
+	_windows.register("legislature", tr("Bills"), _law_panel, KEY_L, ICONS + "gavel.svg")
 	_law_panel.setup(_state, _loader)
 	_law_panel.dissolved.connect(_government_panel.dissolved.emit)
 	# V4.2 T5. Propose opens the briefing; the division comes back through

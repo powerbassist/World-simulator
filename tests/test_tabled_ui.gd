@@ -134,6 +134,10 @@ func _check_legislature() -> void:
 			if verb.disabled != not Government.can_force(ns):
 				_fail("49.3 is %s while a bill is tabled" % ("down" if verb.disabled else "live past its cooldown"))
 			continue
+		# V5.3 screen 4: Queue and Take out write the queue behind the slot, never a tabling
+		# (bill_queue.gd), so they are the verbs a held slot leaves live (test_order_paper.gd).
+		if verb.name == "Queue" or verb.name == "TakeOut":
+			continue
 		# The address is a word to the country, not a bill: the tabled bill is what it is for.
 		if verb.has_meta(LawAddress.FOLD_META) or verb.has_meta(LawAddress.GO_META):
 			continue
