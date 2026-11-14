@@ -27,6 +27,7 @@
         {
           "id": "settle_at_the_table",
           "label": "Settle at the table",
+          "short": "Settle at table",
           "summary": "The pay scale and the roster go to arbitration together and the trains run on Friday. The settlement lands above the inflation number, and every other union has read it.",
           "effects": {
             "society": {
@@ -48,6 +49,7 @@
         {
           "id": "minimum_service",
           "label": "Impose a minimum service",
+          "short": "Minimum service",
           "summary": "The law says one train in three and the law is obeyed exactly. The cities move slowly for a month and the grievance banks where grievances bank.",
           "effects": {
             "bloc_offset": {
@@ -63,6 +65,7 @@
         {
           "id": "let_it_run",
           "label": "Let it find its length",
+          "short": "Let it run",
           "summary": "Nobody moves and the strike finds its own length, which is a number neither side controls.",
           "default": true,
           "effects": {
@@ -104,6 +107,7 @@
         {
           "id": "concede_the_third_line",
           "label": "Concede the third line",
+          "short": "Give the third",
           "summary": "The third line -- the one about next year's payment -- is conceded in a car park interview. The blockade lifts by nightfall, and the farm unions learn what the car park is for.",
           "effects": {
             "company": {
@@ -137,6 +141,7 @@
         {
           "id": "let_the_queue_decide",
           "label": "Offer talks without a date",
+          "short": "Talks, no date",
           "summary": "Talks are offered without a date and the produce goes off in the vans. The cities learn where food is priced before the government learns where the votes are.",
           "default": true,
           "effects": {
@@ -170,6 +175,7 @@
         {
           "id": "open_negotiations",
           "label": "Open negotiations",
+          "short": "Negotiate",
           "summary": "The rector is sent in with a mandate and the halls empty by the weekend. The fees review gains a student seat, which costs the treasury nothing this year.",
           "effects": {
             "bloc_offset": {
@@ -199,6 +205,7 @@
         {
           "id": "wait_for_exams",
           "label": "Wait for the exams",
+          "short": "Wait for exams",
           "summary": "Nothing is conceded and nothing is cleared. The occupation outlasts the news cycle and the fees review outlasts the occupation.",
           "default": true,
           "effects": {
@@ -238,6 +245,7 @@
         {
           "id": "curfew_and_sweep",
           "label": "Order a curfew and sweep",
+          "short": "Impose curfew",
           "summary": "A curfew, mass arrests and the courts sitting through the weekend. The streets are quiet by Sunday and the estate's account with the state is re-priced for a generation.",
           "effects": {
             "society": {
@@ -256,6 +264,7 @@
         {
           "id": "pull_back_and_talk",
           "label": "Pull the patrols back and talk",
+          "short": "Pull back, talk",
           "summary": "The patrols withdraw to the ring and the mothers' association does the negotiating the ministry cannot. It works slower than the curfew would and holds longer, probably.",
           "effects": {
             "society": {
@@ -274,6 +283,7 @@
         {
           "id": "call_it_criminality",
           "label": "Call it criminality",
+          "short": "Call it crime",
           "summary": "The word is used at the podium and the nights decide their own length.",
           "default": true,
           "effects": {
@@ -332,6 +342,7 @@
         {
           "id": "arbitration_now",
           "label": "Send it to arbitration",
+          "short": "To arbitration",
           "summary": "Both sides go to arbitration and the wards return under protest. The award arrives in nine weeks, backdated, and nobody has to take responsibility for it.",
           "effects": {
             "society": {
@@ -349,6 +360,7 @@
         {
           "id": "hold_the_budget_line",
           "label": "Hold the budget line",
+          "short": "Hold the line",
           "summary": "There is no money this year and the strike outlasts the answer. The agencies invoice, and the deficit pays them.",
           "default": true,
           "effects": {
@@ -382,6 +394,7 @@
         {
           "id": "rebate_the_hauliers",
           "label": "Rebate the hauliers",
+          "short": "Rebate hauliers",
           "summary": "Licensed hauliers get a rebate at the depot and the lorries move. Every other road user asks on what principle, and the answer is: on this one.",
           "effects": {
             "company": {
@@ -400,6 +413,7 @@
         {
           "id": "release_the_reserves",
           "label": "Release the reserves",
+          "short": "Release reserves",
           "summary": "The strategic reserve is released to the distributors and the price eases by the width of a headline. The structural fact stays exactly where it was.",
           "default": true,
           "effects": {
@@ -415,6 +429,7 @@
         {
           "id": "name_the_speculators",
           "label": "Name the speculators",
+          "short": "Name speculators",
           "summary": "The trading houses are named at the podium and an inquiry is promised. The price falls two days later for reasons already in train, and the podium keeps the credit.",
           "effects": {
             "bloc_offset": {
@@ -472,6 +487,7 @@
         {
           "id": "phase_it_over_two_years",
           "label": "Phase it over two years",
+          "short": "Phase it in",
           "summary": "The award is split across two budgets and both sides declare the shape of a victory. The marking resumes; the next dispute is already scheduled.",
           "effects": {
             "spending_pct_gdp": {
@@ -493,6 +509,7 @@
         {
           "id": "substitute_and_wait",
           "label": "Substitute and wait",
+          "short": "Cover and wait",
           "summary": "Supervisors are drafted, the exams sit, and the pay talks resume when the government has a number it likes. The profession's diary has a long memory.",
           "default": true,
           "effects": {
@@ -534,6 +551,7 @@
         {
           "id": "acquire_and_convert",
           "label": "Acquire and convert",
+          "short": "Buy and convert",
           "summary": "The blocks are taken into the city's housing stock at a price a court will argue about, and the squatters get keys they already hold. The owners' association discovers the courts too.",
           "effects": {
             "spending_pct_gdp": {
@@ -566,6 +584,7 @@
         {
           "id": "tolerate_the_blocks",
           "label": "Tolerate the blocks",
+          "short": "Tolerate them",
           "summary": "Nothing is decided and the blocks hold their population. The city gains a neighbourhood that owes it nothing and watches it closely.",
           "default": true,
           "effects": {
@@ -623,6 +642,7 @@
         {
           "id": "commission_the_review",
           "label": "Commission a review",
+          "short": "Order a review",
           "summary": "A review is commissioned, reporting after the election season, with the index frozen until it does. The boulevard empties politely and the federations' letters acquire a lawyer's patience.",
           "effects": {
             "bloc_offset": {
@@ -671,6 +691,7 @@
         {
           "id": "settle_at_the_table",
           "label": "Send it to mediation",
+          "short": "To mediation",
           "summary": "The roster and the automation clause go to mediation and the cranes move by the weekend. The settlement is noticed in every depot in the country.",
           "effects": {
             "society": {
@@ -693,6 +714,7 @@
         {
           "id": "legislate_the_minimums",
           "label": "Legislate the minimums",
+          "short": "Set minimums",
           "summary": "A minimum-moves law goes to the assembly and the unions call a day of action against it. The stacks clear by decree of their own backlog.",
           "effects": {
             "bloc_offset": {
@@ -708,6 +730,7 @@
         {
           "id": "let_the_queues_grow",
           "label": "Let the queues grow",
+          "short": "Let queues grow",
           "summary": "The rulebook is enforced to the letter and the letter is long. The exporters book through a neighbour's ports and some of them do not come back.",
           "default": true,
           "effects": {
@@ -769,6 +792,7 @@
         {
           "id": "partial",
           "label": "Concede the smaller half",
+          "short": "Concede half",
           "summary": "Cheaper, and it buys proportionately less.",
           "effects": {
             "society": {

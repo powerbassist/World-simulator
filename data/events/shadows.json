@@ -37,6 +37,7 @@
         {
           "id": "accountable",
           "label": "Open the accounts",
+          "short": "Open accounts",
           "summary": "You publish the ledgers yourself and admit the money was badly judged. It costs you pride and a banker's friendship, but it takes the story away from your enemy.",
           "effects": {
             "society": {
@@ -72,6 +73,7 @@
         {
           "id": "silence",
           "label": "Wait out the series",
+          "short": "Wait it out",
           "summary": "You let the instalments run and hope readers tire. They do not tire.",
           "effects": {
             "bloc_offset": {
@@ -200,6 +202,7 @@
         {
           "id": "accountable",
           "label": "Explain the arrangement",
+          "short": "Explain it",
           "summary": "You confirm the arrangement, explain why you thought it proper, and promise that such favours will be written down in future. It costs pride and a few allies but takes the secret away from the paper.",
           "effects": {
             "society": {
@@ -235,6 +238,7 @@
         {
           "id": "silence",
           "label": "Let the sources talk",
+          "short": "Let them talk",
           "summary": "You say nothing and let the paper keep digging. It keeps digging.",
           "default": true,
           "effects": {
@@ -301,6 +305,7 @@
         {
           "id": "deny",
           "label": "Fight the inquiry",
+          "short": "Fight inquiry",
           "summary": "Your lawyers contest the summons and hint at political motive behind the case. Hardliners approve, and the bench takes note of the enemy it has made.",
           "effects": {
             "society": {
@@ -403,6 +408,7 @@
         {
           "id": "silence",
           "label": "Trust the ministry",
+          "short": "Trust ministry",
           "summary": "You leave the ministry to explain its own paperwork. It explains it badly.",
           "effects": {
             "bloc_offset": {
@@ -452,6 +458,7 @@
         {
           "id": "accountable",
           "label": "Publish the books",
+          "short": "Publish books",
           "summary": "You order the party to restate its accounts and name the donor. The treasurer resigns, a patron walks, and the clean pages blunt the story.",
           "effects": {
             "society": {
@@ -469,6 +476,7 @@
         {
           "id": "deny",
           "label": "Blame the bookkeeper",
+          "short": "Blame bookkeeper",
           "summary": "You call it clerical error and note the opposition's own opaque books. The base enjoys the counterattack, and the auditors stand by their finding.",
           "effects": {
             "society": {
@@ -553,6 +561,7 @@
         {
           "id": "deny",
           "label": "Dismiss the finding",
+          "short": "Dismiss finding",
           "summary": "You call the gap an accounting artefact unworthy of the court's ink. Loyalists repeat it, and the court repeats its report.",
           "effects": {
             "society": {
@@ -620,6 +629,7 @@
         {
           "id": "accountable",
           "label": "Confirm and explain",
+          "short": "Confirm it",
           "summary": "You acknowledge the favour and lay out why it was proper. It admits the story into the record and strips him of exclusivity.",
           "effects": {
             "society": {
@@ -637,6 +647,7 @@
         {
           "id": "deny",
           "label": "Question his motive",
+          "short": "Question motive",
           "summary": "You cast him as a scorned contractor trading grudges. True enough, but he has receipts, and grudges with paperwork age well.",
           "effects": {
             "society": {
@@ -655,6 +666,7 @@
         {
           "id": "silence",
           "label": "Grant no platform",
+          "short": "No platform",
           "summary": "You ignore him and hope his audience drifts. His audience grows.",
           "effects": {
             "bloc_offset": {
@@ -706,6 +718,7 @@
         {
           "id": "accountable",
           "label": "Pre-empt the leak",
+          "short": "Pre-empt leak",
           "summary": "You disclose the arrangement before publication and submit to any review. It burns the associate's plot and several of your own bridges.",
           "effects": {
             "society": {
@@ -804,6 +817,7 @@
         {
           "id": "deny",
           "label": "Dispute the account",
+          "short": "Dispute account",
           "summary": "You describe the interview as embellished and embittered. It rallies defenders, and invites a listener with a diary to come forward.",
           "effects": {
             "bloc_offset": {
@@ -817,6 +831,7 @@
         {
           "id": "silence",
           "label": "Decline all comment",
+          "short": "No comment",
           "summary": "Your office issues nothing beyond no comment. The interview circulates.",
           "effects": {
             "bloc_offset": {
