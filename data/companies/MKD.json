@@ -470,7 +470,7 @@
       "name": "Dimovski Trgovija Gradežništvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23856,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -488,7 +488,7 @@
       "name": "Kocevski Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24394,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -515,7 +515,7 @@
       "name": "Veljanovski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23813,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -524,7 +524,7 @@
       "name": "Kocevski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22677,
       "city": "MK00_kisela_voda",
       "tier": "body"
     },
@@ -533,7 +533,7 @@
       "name": "Petrovski Gradežništvo Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24731,
       "city": "MK00_bitola",
       "tier": "body"
     },
@@ -542,7 +542,7 @@
       "name": "Janevski Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23116,
       "city": "MK00_bitola",
       "tier": "body"
     },
@@ -551,7 +551,7 @@
       "name": "Mitrevski Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22679,
       "city": "MK00_cair",
       "tier": "body"
     },
@@ -569,7 +569,7 @@
       "name": "Atanasovski Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23781,
       "city": "MK00_prilep",
       "tier": "body"
     },
@@ -587,7 +587,7 @@
       "name": "Dimovski Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23090,
       "city": "MK00_tetovo",
       "tier": "body"
     },
@@ -611,7 +611,7 @@
     },
     {
       "id": "MKD_naumovski_trgovija_trgovija",
-      "name": "Naumovski Trgovija Trgovija",
+      "name": "Naumovski Trgovija",
       "sector": "services",
       "share": 0.0119,
       "headcount": 19542,
@@ -623,7 +623,7 @@
       "name": "Popovski Energetika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23467,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -632,7 +632,7 @@
       "name": "Todorovski Gradežništvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23352,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -641,7 +641,7 @@
       "name": "Naumovski Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23498,
       "city": "MK00_kumanovo",
       "tier": "body"
     },
@@ -677,7 +677,7 @@
       "name": "Ilievski Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24964,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -695,7 +695,7 @@
       "name": "Bojadžiev Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24227,
       "city": "MK00_bitola",
       "tier": "body"
     },
@@ -749,7 +749,7 @@
       "name": "Nedelkovski Energetika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24321,
       "city": "MK00_prilep",
       "tier": "body"
     },
@@ -776,7 +776,7 @@
       "name": "Tasevski Zemjodelstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24446,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -794,7 +794,7 @@
       "name": "Cvetanovski Osiguruvanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24595,
       "city": "MK00_kumanovo",
       "tier": "body"
     },
@@ -803,7 +803,7 @@
       "name": "Kostovski Energetika Materijali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24434,
       "city": "MK00_skopje",
       "tier": "body"
     },
@@ -821,7 +821,7 @@
       "name": "Bojadžiev Zemjodelstvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22976,
       "city": "MK00_cair",
       "tier": "body"
     },

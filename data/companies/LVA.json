@@ -461,7 +461,7 @@
       "name": "Vilks Transports",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24689,
       "city": "LV00_liepaja",
       "tier": "body"
     },
@@ -515,7 +515,7 @@
       "name": "Fogels Loģistika Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23029,
       "city": "LV00_liepaja",
       "tier": "body"
     },
@@ -524,7 +524,7 @@
       "name": "Skujins Transports",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23667,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -533,7 +533,7 @@
       "name": "Bērziņš Lauksaimniecība",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24985,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -542,7 +542,7 @@
       "name": "Jansonis Būvniecība",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24057,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -605,7 +605,7 @@
       "name": "Briedis Tirdzniecība",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23148,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -650,7 +650,7 @@
       "name": "Ozolspārnis Apdrošināšana",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24472,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -668,7 +668,7 @@
       "name": "Fricbergs Lauksaimniecība",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23305,
       "city": "LV00_liepaja",
       "tier": "body"
     },
@@ -695,7 +695,7 @@
       "name": "Vagners Grupa",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24706,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
@@ -704,7 +704,7 @@
       "name": "Zaķis Materiāli",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24289,
       "city": "LV00_daugavpils",
       "tier": "body"
     },
@@ -767,7 +767,7 @@
       "name": "Ozolins Materiāli",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23216,
       "city": "LV00_riga",
       "tier": "body"
     },
@@ -785,7 +785,7 @@
       "name": "Krastiņš Loģistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24604,
       "city": "LV00_liepaja",
       "tier": "body"
     },
@@ -821,7 +821,7 @@
       "name": "Lācis Apdrošināšana",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24465,
       "city": "LV00_daugavpils",
       "tier": "body"
     },

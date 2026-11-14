@@ -506,7 +506,7 @@
       "name": "Kavčič Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23366,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
@@ -542,7 +542,7 @@
       "name": "Avbelj Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22727,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
@@ -551,7 +551,7 @@
       "name": "Osole Energija",
       "sector": "services",
       "share": 0.0157,
-      "headcount": 25000,
+      "headcount": 24260,
       "city": "SI03_maribor",
       "tier": "body"
     },
@@ -623,7 +623,7 @@
       "name": "Vodopivec Promet",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23140,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
@@ -632,7 +632,7 @@
       "name": "Vodopija Industrija",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22810,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
@@ -650,7 +650,7 @@
       "name": "Mavret Zavarovanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24204,
       "city": "SI03_maribor",
       "tier": "body"
     },
@@ -674,10 +674,10 @@
     },
     {
       "id": "SVN_hribar_materiali_materiali",
-      "name": "Hribar Materiali Materiali",
+      "name": "Hribar Materiali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24007,
       "city": "SI03_maribor",
       "tier": "body"
     },
@@ -722,7 +722,7 @@
       "name": "Ferfolja Materiali",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24142,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
@@ -740,13 +740,13 @@
       "name": "Ferfolja Trgovina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23664,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
     {
       "id": "SVN_rupnik_industrija_industrija",
-      "name": "Rupnik Industrija Industrija",
+      "name": "Rupnik Industrija",
       "sector": "services",
       "share": 0.0155,
       "headcount": 24081,
@@ -767,7 +767,7 @@
       "name": "Ambrožič Logistika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22739,
       "city": "SI03_maribor",
       "tier": "body"
     },
@@ -776,7 +776,7 @@
       "name": "Zorman Gradbeništvo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24095,
       "city": "SI03_maribor",
       "tier": "body"
     },
@@ -794,7 +794,7 @@
       "name": "Ivanko Skupina",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24330,
       "city": "SI04_ljubljana",
       "tier": "body"
     },
@@ -803,7 +803,7 @@
       "name": "Ilija Zavarovanje",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24005,
       "city": "SI04_ljubljana",
       "tier": "body"
     },

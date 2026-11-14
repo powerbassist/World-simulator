@@ -120,3 +120,12 @@ const GINI_RATE_BETA := {
 ## the number and the escalation trigger has fired. tools/tax_probe.gd table (e) reports
 ## the peak against it.
 const GINI_POLICY_MAX_PT := 8.60
+
+
+## V5.3 e (the parent's ruling of 2026-11-14 on #342): one rate step per tax kind, read by
+## the goal read and the Tax Code slider -- a range divided into about this many steps,
+## rounded to 1, 2 or 5 (TaxLibrary.step_pct). Twenty gives VAT's 0-40 % a 2-point step and
+## the fuel duty's 0.3-0.9 EUR a 0.02 step; a fixed one-point step left every kind whose
+## whole range is under a point wide (fuel duty, bank levy, sugar levy, transactions tax)
+## with no step at all.
+const STEP_DIVISIONS := 20.0

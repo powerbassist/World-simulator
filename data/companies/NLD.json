@@ -478,7 +478,7 @@
       "name": "Bergkamp Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24545,
       "city": "NL33_rotterdam",
       "tier": "body"
     },
@@ -496,7 +496,7 @@
       "name": "Grootveld Bouw",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23620,
       "city": "NL33_rotterdam",
       "tier": "body"
     },
@@ -595,7 +595,7 @@
       "name": "Zandbergen Bouw",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24786,
       "city": "NL33_rotterdam",
       "tier": "body"
     },
@@ -631,7 +631,7 @@
       "name": "IJsselmuiden Materialen",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24247,
       "city": "NL33_rotterdam",
       "tier": "body"
     },
@@ -640,7 +640,7 @@
       "name": "Everts Handel",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24572,
       "city": "NL33_rotterdam",
       "tier": "body"
     },
@@ -649,7 +649,7 @@
       "name": "Notten Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24763,
       "city": "NL41_eindhoven",
       "tier": "body"
     },
@@ -685,7 +685,7 @@
       "name": "Linthorst Landbouw",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24588,
       "city": "NL31_zeist",
       "tier": "body"
     },
@@ -703,7 +703,7 @@
       "name": "Manders Materialen",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23247,
       "city": "NL33_rotterdam",
       "tier": "body"
     },
@@ -712,7 +712,7 @@
       "name": "Grootveld Logistiek",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22794,
       "city": "NL41_s_hertogenbosch",
       "tier": "body"
     },
@@ -721,7 +721,7 @@
       "name": "IJpelaar Transport",
       "sector": "services",
       "share": 0.0164,
-      "headcount": 25000,
+      "headcount": 22947,
       "city": "NL22_apeldoorn",
       "tier": "body"
     },
@@ -757,7 +757,7 @@
       "name": "Pronk Verzekeringen",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24737,
       "city": "NL33_rotterdam",
       "tier": "body"
     },
@@ -766,7 +766,7 @@
       "name": "IJsendoorn Bouw",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24339,
       "city": "NL32_purmerend",
       "tier": "body"
     },
@@ -775,7 +775,7 @@
       "name": "Schuiling Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24935,
       "city": "NL33_vlaardingen",
       "tier": "body"
     },
@@ -802,7 +802,7 @@
       "name": "Eversdijk Bouw",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23849,
       "city": "NL33_vlaardingen",
       "tier": "body"
     },
@@ -820,7 +820,7 @@
       "name": "Regter Landbouw",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22754,
       "city": "NL41_tilburg",
       "tier": "body"
     },

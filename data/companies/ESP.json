@@ -497,7 +497,7 @@
       "name": "Cadalso Logística",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24983,
       "city": "ES30_fuenlabrada",
       "tier": "body"
     },
@@ -515,7 +515,7 @@
       "name": "Ocejo Grupo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23673,
       "city": "ES30_madrid",
       "tier": "body"
     },
@@ -551,7 +551,7 @@
       "name": "Castejón Construcción",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24758,
       "city": "ES11_a_coruna",
       "tier": "body"
     },
@@ -560,7 +560,7 @@
       "name": "Barceló Agro",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24064,
       "city": "ES13_santander",
       "tier": "body"
     },
@@ -578,7 +578,7 @@
       "name": "Noguero Transportes",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23065,
       "city": "ES30_madrid",
       "tier": "body"
     },
@@ -587,7 +587,7 @@
       "name": "Domenech Materiales",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24740,
       "city": "ES62_murcia",
       "tier": "body"
     },
@@ -596,7 +596,7 @@
       "name": "Uribarri Construcción",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23707,
       "city": "ES21_gasteiz_vitoria",
       "tier": "body"
     },
@@ -623,7 +623,7 @@
       "name": "Bembibre Grupo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23509,
       "city": "ES22_pamplona",
       "tier": "body"
     },
@@ -632,7 +632,7 @@
       "name": "Vadillo Transportes Seguros",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24264,
       "city": "ES52_alcoy",
       "tier": "body"
     },
@@ -650,7 +650,7 @@
       "name": "Gutierre Materiales Logística",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24723,
       "city": "ES51_barcelona",
       "tier": "body"
     },
@@ -677,7 +677,7 @@
       "name": "Rueda Logística",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24345,
       "city": "ES51_barcelona",
       "tier": "body"
     },
@@ -722,7 +722,7 @@
       "name": "Lizárraga Transportes",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22816,
       "city": "ES61_sevilla",
       "tier": "body"
     },
@@ -767,7 +767,7 @@
       "name": "Etxebarria Comercial",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22654,
       "city": "ES30_madrid",
       "tier": "body"
     },
@@ -785,13 +785,13 @@
       "name": "Higuera Grupo",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24931,
       "city": "ES52_castello_de_la_plana",
       "tier": "body"
     },
     {
       "id": "ESP_barcelo_industrias_industrias",
-      "name": "Barceló Industrias Industrias",
+      "name": "Barceló Industrias",
       "sector": "services",
       "share": 0.0166,
       "headcount": 23130,
@@ -812,7 +812,7 @@
       "name": "Villalobos Materiales",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23738,
       "city": "ES24_zaragoza",
       "tier": "body"
     },

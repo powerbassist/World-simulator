@@ -507,7 +507,7 @@
       "name": "Țurcanu Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23625,
       "city": "MD00_tiraspol",
       "tier": "body"
     },
@@ -525,7 +525,7 @@
       "name": "Arnăut Construcții",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23879,
       "city": "MD00_tiraspol",
       "tier": "body"
     },
@@ -543,7 +543,7 @@
       "name": "Balan Materiale",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22914,
       "city": "MD00_bender",
       "tier": "body"
     },
@@ -552,7 +552,7 @@
       "name": "Sârbu Construcții",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22952,
       "city": "MD00_chisinau",
       "tier": "body"
     },
@@ -570,7 +570,7 @@
       "name": "Sârbu Industrie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23311,
       "city": "MD00_chisinau",
       "tier": "body"
     },
@@ -579,7 +579,7 @@
       "name": "Rusnac Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24618,
       "city": "MD00_tiraspol",
       "tier": "body"
     },
@@ -597,7 +597,7 @@
       "name": "Tăbăcaru Asigurări",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23050,
       "city": "MD00_bender",
       "tier": "body"
     },
@@ -606,7 +606,7 @@
       "name": "Pascari Grup",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23737,
       "city": "MD00_bender",
       "tier": "body"
     },
@@ -615,7 +615,7 @@
       "name": "Prodan Construcții",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23702,
       "city": "MD00_chisinau",
       "tier": "body"
     },
@@ -687,7 +687,7 @@
       "name": "Tăbăcaru Comerț",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24629,
       "city": "MD00_balti",
       "tier": "body"
     },
@@ -705,7 +705,7 @@
       "name": "Tăbăcaru Materiale",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22890,
       "city": "MD00_balti",
       "tier": "body"
     },
@@ -714,7 +714,7 @@
       "name": "Morari Comerț",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24080,
       "city": "MD00_tiraspol",
       "tier": "body"
     },
@@ -732,7 +732,7 @@
       "name": "Spânu Energie",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24087,
       "city": "MD00_balti",
       "tier": "body"
     },
@@ -750,7 +750,7 @@
       "name": "Guțu Transport",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24814,
       "city": "MD00_balti",
       "tier": "body"
     },
@@ -837,7 +837,7 @@
     },
     {
       "id": "MDA_rosca_comert_comert",
-      "name": "Roșca Comerț Comerț",
+      "name": "Roșca Comerț",
       "sector": "services",
       "share": 0.0113,
       "headcount": 17000,

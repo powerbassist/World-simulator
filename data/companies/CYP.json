@@ -499,7 +499,7 @@
       "name": "Papadopoulos Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22900,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -526,7 +526,7 @@
       "name": "Mavrommatis Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24510,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -598,7 +598,7 @@
       "name": "Bambos Asfaliseis",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24976,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -625,7 +625,7 @@
       "name": "Demetriades Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24464,
       "city": "CY00_larnaca",
       "tier": "body"
     },
@@ -670,7 +670,7 @@
       "name": "Oikonomou Ylika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24638,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -769,7 +769,7 @@
       "name": "Hadjikyriacos Kataskeves",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 22716,
       "city": "CY00_strovolos",
       "tier": "body"
     },
@@ -778,7 +778,7 @@
       "name": "Loizou Omilos",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23995,
       "city": "CY00_larnaca",
       "tier": "body"
     },
@@ -787,7 +787,7 @@
       "name": "Neophytides Ylika",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23252,
       "city": "CY00_nicosia",
       "tier": "body"
     },
@@ -805,7 +805,7 @@
       "name": "Vrahimi Energeia Viomichania",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24187,
       "city": "CY00_limassol",
       "tier": "body"
     },
@@ -814,7 +814,7 @@
       "name": "Trimithiotis Georgia Metafora",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24414,
       "city": "CY00_limassol",
       "tier": "body"
     },
@@ -823,7 +823,7 @@
       "name": "Orphanides Logistiki",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 24142,
       "city": "CY00_strovolos",
       "tier": "body"
     },
@@ -841,7 +841,7 @@
       "name": "Dimitriou Emporio",
       "sector": "services",
       "share": 0.0166,
-      "headcount": 25000,
+      "headcount": 23463,
       "city": "CY00_larnaca",
       "tier": "body"
     },
