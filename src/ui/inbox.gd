@@ -67,6 +67,7 @@ var _empty := {}     # lane -> the Label it shows with no row
 var _cards := {}     # id -> PanelContainer
 var _bodies := {}    # id -> Label, so a body can be rewritten in place
 var _lane_of := {}   # id -> lane
+var _asked := {}     # id -> {title, body, actions}: what a decision or request row asks, for the file page
 var _notes := {}     # id -> {title, body, head, count, open, more}: a NOTES row's group and fold
 var _next_id := 0
 var _slid := false
@@ -231,6 +232,8 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	_cards[id] = card
 	_bodies[id] = body_label
 	_lane_of[id] = lane
+	if not actions.is_empty() or lane != NOTES:
+		_asked[id] = {"title": title, "body": body, "actions": actions}
 	_empty[lane].hide()
 	_clear_notes.visible = _rows[NOTES].get_child_count() > 0
 	if _notes.has(id):
@@ -350,6 +353,7 @@ func dismiss(id: String) -> void:
 	_cards.erase(id)
 	_bodies.erase(id)
 	_lane_of.erase(id)
+	_asked.erase(id)
 	_notes.erase(id)
 	_rows[lane].remove_child(card)
 	card.queue_free()

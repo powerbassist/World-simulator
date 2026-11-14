@@ -206,6 +206,16 @@ func _check(c: Dictionary) -> void:
 	if String(c["subject"]) == "":
 		_fail("%s: premise, the fixture named no subject" % label)
 		return
+	# V5.3 screen 3: a Go on a FILE (a crisis, a decision, a request) selects the file's page in the
+	# month's folder and keeps the folder up, the clock paused; it does not close.
+	if ["crisis", "decision", "request"].has(kind):
+		var card = BriefingDriver.card_of(_main)
+		if not card.visible or card.selected_file() == "":
+			_fail("%s: Go did not select the file's page in the folder (visible %s, page '%s')" % [label, card.visible, card.selected_file()])
+		if not _main._clock.paused:
+			_fail("%s: Go in the folder resumed the clock" % label)
+		BriefingDriver.close(_main)
+		return
 	if BriefingDriver.card_of(_main).visible:
 		_fail("%s: Go did not close the briefing" % label)
 	# Pre-gate B5: Go keeps the clock paused, so a next-day audience cannot take the
@@ -400,8 +410,10 @@ func _check_footer() -> void:
 		_fail("two crowded-out requests are not one footer group '2 requests': %s" % str(card.also_buttons.map(func(b): return b.text)))
 		return
 	card.also_buttons[0].pressed.emit()
-	if not _main._windows.is_open("calendar") or ActsOn.find(_main._hud.inbox, "%s|f0" % pid) == null:
-		_fail("the footer's Go did not land on the request's card")
+	# V5.3 screen 3: the footer's Go on a request group selects that request's file in the folder.
+	if not card.visible or card.selected_file() != AudienceDriver.lane_of(_main).card_of("%s|f0" % pid):
+		_fail("the footer's Go did not land on the request's file in the folder (page '%s')" % card.selected_file())
+	BriefingDriver.close(_main)
 	card.show_view(BriefingDriver.view(_main, lines, {}, []))
 	if card._also.visible:
 		_fail("an empty footer is shown")

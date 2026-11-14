@@ -89,7 +89,9 @@ KNOWN_KEYS = [
     # V5.2d: who brings the event, and their line -- check_speaker below.
     "speaker", "speaker_line",
 ]
-CHOICE_KEYS = ["id", "label", "summary", "effects", "default", "arms"]
+CHOICE_KEYS = ["id", "label", "summary", "short", "effects", "default", "arms"]
+# event.gd SHORT_MAX: the optional `short` is a 180 px button's text at the largest text size.
+SHORT_MAX = 16
 # law.gd SCALAR_EFFECT_KEYS, and its SHARED_EFFECT_CHANNELS minus `institutional`
 # -- the one channel an event choice may not write (Emergency powers, tiered
 # Someday; from_dict refuses it by name and this lint repeats the name).
@@ -226,6 +228,10 @@ def check_choice(fname: str, ev_id: str, choice: dict, rep: Report) -> None:
     for field in ("label", "summary"):
         if not isinstance(choice.get(field), str) or not choice.get(field):
             rep.fail("%s: %s: missing or empty '%s'" % (where, path, field))
+
+    short = choice.get("short")
+    if short is not None and (not isinstance(short, str) or not short or len(short) > SHORT_MAX):
+        rep.fail("%s: %s: 'short' must be a non-empty string of at most %d characters (the 180 px button's text)" % (where, path, SHORT_MAX))
 
     effects = choice.get("effects")
     if not isinstance(effects, dict) or not effects:
