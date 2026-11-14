@@ -195,11 +195,15 @@ func _check_regions() -> void:
 
 
 func _check_seats() -> void:
-	var charts := _charts("legislature")
+	# V5.3 screen 4: the chamber left the page; it is the forecast bar's hover (law_seats_tip.gd).
+	if _charts("legislature") != null:
+		_fail("the Bills tab still draws the chamber on the page")
+	var tip: Control = preload("res://src/ui/law_seats_tip.gd").build(_main._law_panel)
 	# R6: the assembly is a hemicycle, one dot per seat.
-	var stacks := _all(charts, ChartHemicycle) if charts != null else []
+	var stacks := _all(tip, ChartHemicycle)
 	if stacks.size() != 1 or not stacks[0].has_marker():
-		_fail("the legislature has no hemicycle with its majority marked")
+		_fail("the hovered chamber has no hemicycle with its majority marked")
+		tip.free()
 		return
 	var ns = _main._state.player()
 	# Seated left to right as an assembly sits: the economic axis plus half the
@@ -219,6 +223,7 @@ func _check_seats() -> void:
 		seats += float(p["value"])
 	if int(seats) != int(ns.assembly_seats):
 		_fail("the seat share counts %d seats, the assembly has %d" % [int(seats), ns.assembly_seats])
+	tip.free()
 
 
 ## QA on #93: a load swaps the panel's state for another game; one with the same

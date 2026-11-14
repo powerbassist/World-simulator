@@ -54,7 +54,7 @@ const PENDING := {}
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
-const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 520, "region": 250, "events": 95, "commodities": 210,
+const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 443, "region": 250, "events": 95, "commodities": 210,
 	"companies": 145}
 const TOTAL_PENDING := {
 	"budget": 113, "calendar": 34, "campaign": 140,
@@ -77,8 +77,10 @@ const TOTAL_PENDING := {
 ## (the parent's call): the Tax Code lists every kind in force, France 5 -> 15 rows
 ## (#336, the tax library's data); names of the player's own levers, no new prose; the
 ## screen-4 build (laws B) redraws the Tax Code and brings it back down. One of the
-## nineteen words is the File tab's (#333), measured on the same merge.
-const TOTAL_SUM_CEILING := 2970
+## nineteen words is the File tab's (#333), measured on the same merge. Screen 4's second PR
+## takes the hemicycle off the Bills tab (it is the forecast bar's hover now, 520 -> 443 on the tab)
+## and adds the shelf and the search: 2970 -> 2946.
+const TOTAL_SUM_CEILING := 2946
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
