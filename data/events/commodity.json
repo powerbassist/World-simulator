@@ -20,6 +20,7 @@
         {
           "id": "freeze_the_tariff",
           "label": "Freeze the household tariff",
+          "short": "Freeze tariff",
           "summary": "The utility eats the spread and the state lends it the difference at a rate the next government inherits. The pensioners' bills hold and the debt office adds a line it did not have.",
           "effects": {
             "spending_pct_gdp": {
@@ -38,6 +39,7 @@
         {
           "id": "let_it_move",
           "label": "Let the tariff move",
+          "short": "Let it move",
           "summary": "The price does what prices do and the state sends pensioners a cheque in March, when the coldest bills are already paid. The market calls it discipline and the kitchen tables call it February.",
           "effects": {
             "spending_pct_gdp": {
@@ -56,6 +58,7 @@
         {
           "id": "be_understanding",
           "label": "Ask the utilities to be understanding",
+          "short": "Ask for patience",
           "summary": "They are understanding for one quarter, with interest. The bill arrives whole in April, with the operator's apology attached.",
           "default": true,
           "effects": {
@@ -89,6 +92,7 @@
         {
           "id": "carry_the_millers",
           "label": "Carry the millers' bill",
+          "short": "Carry millers",
           "summary": "The state stands between the world price and the flour price for the season, and the co-ops plant on the strength of it. The treasury owns a subsidy with a harvest's name on it, which is a habit that outlives harvests.",
           "effects": {
             "company": {
@@ -108,6 +112,7 @@
         {
           "id": "pay_world_price",
           "label": "Pay the world price and pass it on",
+          "short": "Pass it on",
           "summary": "Flour costs what flour costs and the baker's sign explains it daily. The farm gate does well out of somebody else's drought, which the town reads as a tax with wheat on it.",
           "effects": {
             "bloc_offset": {
@@ -123,6 +128,7 @@
         {
           "id": "wait_southern",
           "label": "Wait for the southern harvest",
+          "short": "Wait for harvest",
           "summary": "It is eleven weeks out and the bakers' arithmetic says four. The price does the talking until then, and it is not using words.",
           "default": true,
           "effects": {
@@ -156,6 +162,7 @@
         {
           "id": "pool_the_orders",
           "label": "Pool the orders with the other buyers",
+          "short": "Pool the orders",
           "summary": "Six buyers signing one contract is a monopsony until the producer reads it as one, which they do within the month. The price softens by a fifth and the relationship learns that it is a hostage too.",
           "effects": {
             "company": {
@@ -175,6 +182,7 @@
         {
           "id": "underwrite_the_plant",
           "label": "Underwrite the plant's input bill",
+          "short": "Back the plant",
           "summary": "The difference between the contract price and the spot price is paid from the infrastructure line for as long as the letter says. The factories keep their shifts and the ministry keeps a chart of what loyalty costs.",
           "effects": {
             "company": {
@@ -197,6 +205,7 @@
         {
           "id": "let_contracts_reroll",
           "label": "Let the contracts reprice",
+          "short": "Let them reprice",
           "summary": "The spot market reprices and the car factories reprice with it, quarterly. The mines are no closer and the transition plan loses a season it does not get back.",
           "default": true,
           "effects": {
@@ -230,6 +239,7 @@
         {
           "id": "buy_the_queue",
           "label": "Buy the cargo out of turn",
+          "short": "Jump the queue",
           "summary": "A season's dressing at this spring's price, paid against the farm credit line the state stands behind. The co-op plants on time and the treasury owns a hedging story it will still be telling in five years.",
           "effects": {
             "company": {
@@ -249,6 +259,7 @@
         {
           "id": "ration_by_holding",
           "label": "Ration by holding",
+          "short": "Ration by farm",
           "summary": "The co-op allocates by holding size, which the big farms call collectivism and the small ones call the first fair spring in years. The yields carry the argument in September, one way or the other.",
           "effects": {
             "company": {
@@ -268,6 +279,7 @@
         {
           "id": "market_rations",
           "label": "Let the market do the rationing",
+          "short": "Market rations",
           "summary": "It does, by price. The dressing goes to whoever can carry a spring on margins, and the smallholdings go to whoever can carry an autumn.",
           "default": true,
           "effects": {
@@ -301,6 +313,7 @@
         {
           "id": "pay_the_long_way",
           "label": "Pay the long way round",
+          "short": "Go the long way",
           "summary": "Fourteen extra days at sea on every barrel, on the freight bill the refineries pass through by August. The pumps hold, the hauliers hold, and the fare is in everything that moves.",
           "effects": {
             "company": {
@@ -320,6 +333,7 @@
         {
           "id": "open_the_terminals",
           "label": "Open the strategic terminals to the spot market",
+          "short": "Open terminals",
           "summary": "The berths the navy keeps for the navy open to whoever pays the dues. The queue shortens by the weekend and the base commander's letter arrives after the decision, as letters do.",
           "effects": {
             "company": {
@@ -339,6 +353,7 @@
         {
           "id": "let_the_queue_clear",
           "label": "Let the queue clear",
+          "short": "Let it clear",
           "summary": "Inspection seasons end. The price peaks where the queues are longest and the blame settles where the terminals are, which is here.",
           "default": true,
           "effects": {
@@ -372,6 +387,7 @@
         {
           "id": "buy_the_year_forward",
           "label": "Buy the year forward",
+          "short": "Buy forward",
           "summary": "A year of wire at a price that hurts once instead of monthly. The smelters keep their bookings and the treasury keeps a contract it will be congratulated for and never thanked for.",
           "effects": {
             "company": {
@@ -391,6 +407,7 @@
         {
           "id": "stretch_the_grid",
           "label": "Stretch the grid programme",
+          "short": "Stretch the grid",
           "summary": "The interconnect slips a year and the build season absorbs what the mine does not deliver. The commissioning dates move in one paragraph and are noticed by nobody but the contractors, who bid accordingly.",
           "effects": {
             "spending_pct_gdp": {
@@ -409,6 +426,7 @@
         {
           "id": "bid_at_the_spot",
           "label": "Bid at the spot and complain",
+          "short": "Buy at spot",
           "summary": "Everyone bids, the price answers, and the programme pays it because stopping is dearer. The strike fund in the producer country receives, in effect, a small levy on your electricity meter.",
           "default": true,
           "effects": {
@@ -441,6 +459,7 @@
         {
           "id": "absorb_it",
           "label": "Absorb it in the budget",
+          "short": "Absorb it",
           "summary": "The infrastructure line is raised to pay the spread, and the world price is left to remember its manners in its own time. The bills hold, the debt holds the difference, and nobody thanks a subsidy for not happening.",
           "effects": {
             "spending_pct_gdp": {
@@ -459,6 +478,7 @@
         {
           "id": "pass_it_through",
           "label": "Let it pass through",
+          "short": "Pass it through",
           "summary": "The price reaches the shelf in one hop, which is at least honest. The exporters and the farms like the world as it is; the pensioners price it weekly.",
           "effects": {
             "bloc_offset": {
@@ -474,6 +494,7 @@
         {
           "id": "inquiry_into_margins",
           "label": "Announce an inquiry into the margins",
+          "short": "Probe margins",
           "summary": "There is always a middleman and one of them is in your coalition. The inquiry reports after the price has settled, into margins that have moved on.",
           "default": true,
           "effects": {
@@ -509,6 +530,7 @@
         {
           "id": "protect_the_makers",
           "label": "Take the mills in hand",
+          "short": "Take the mills",
           "summary": "The state takes the input allocation for industry into its own hands, with a rulebook attached, and the rulebook is a standing load on the sector. The mill workers like the attention; the owners, who have to file for it, and the farms, who are asked to wait, do not.",
           "effects": {
             "company": {
@@ -528,6 +550,7 @@
         {
           "id": "free_the_channel",
           "label": "Free the import channel",
+          "short": "Free imports",
           "summary": "The duties on the inputs come off and the customs line gives up the revenue, which was the point. The mills buy at the world price and the farms meet the world's mills.",
           "effects": {
             "company": {
@@ -548,6 +571,7 @@
         {
           "id": "let_margins_close",
           "label": "Let the margins close",
+          "short": "Let margins shut",
           "summary": "The weak close, the strong buy their orders back cheaper in the spring, and the federation's next visit is about the closures. The region reads it in the wage figures first.",
           "default": true,
           "effects": {

@@ -3,6 +3,8 @@
   "name": "Inheritance tax",
   "summary": "A tax on estates and large gifts, above an allowance.",
   "rate_meaning": "top marginal rate",
+  "unit": "%",
+  "group": "wealth_property",
   "who_pays": [
     "pensioners",
     "business"

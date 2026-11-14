@@ -67,6 +67,7 @@
         {
           "id": "regret_and_review",
           "label": "Regret and announce a task force",
+          "short": "Set a task force",
           "summary": "The closure proceeds and a task force is announced, with a remit and no budget. The town reads the remit, and the town knows what a remit is worth.",
           "default": true,
           "effects": {
@@ -100,6 +101,7 @@
         {
           "id": "inquiry_and_rules",
           "label": "Order an inquiry and rewrite the rules",
+          "short": "Order an inquiry",
           "summary": "A public inquiry with the power to name, and the inspection regime rewritten before it reports. The federation calls it precaution; the town calls it Tuesday.",
           "effects": {
             "company": {
@@ -118,6 +120,7 @@
         {
           "id": "the_families_first",
           "label": "Put the families first",
+          "short": "Families first",
           "summary": "The compensation fund is opened before the cameras ask and the state fronts it. The inquiry happens later, on the company's schedule.",
           "effects": {
             "spending_pct_gdp": {
@@ -136,6 +139,7 @@
         {
           "id": "leave_it_to_the_courts",
           "label": "Leave it to the courts",
+          "short": "Leave to courts",
           "summary": "The law takes its course at the law's speed and the insurers answer the town. The question of who knew becomes the question of what can be proven.",
           "default": true,
           "effects": {
@@ -191,6 +195,7 @@
         {
           "id": "claw_back_the_aid",
           "label": "Claw back the aid",
+          "short": "Claw back aid",
           "summary": "The aid is clawed back and the plant's owner discovers the relocation clause nobody had read aloud. The letter is answered with a receipt.",
           "effects": {
             "company": {
@@ -250,6 +255,7 @@
         {
           "id": "impose_the_duties",
           "label": "Impose the duties",
+          "short": "Impose duties",
           "summary": "Provisional duties go on within the month and the works' order book breathes. The tariff is paid at the building site, which is the whole of the argument against it.",
           "effects": {
             "company": {
@@ -269,6 +275,7 @@
         {
           "id": "refer_to_the_union",
           "label": "Refer it to the Commission",
+          "short": "Refer to the EU",
           "summary": "The file goes to the Commission, which is where files go to be read slowly. The works hang on for the two years the instrument takes.",
           "effects": {
             "bloc_offset": {
@@ -317,6 +324,7 @@
         {
           "id": "cap_the_industrial_tariff",
           "label": "Cap the industrial tariff",
+          "short": "Cap the tariff",
           "summary": "The tariff is capped for industry until spring and the gap is wired from the budget. Households read the word industry carefully and find themselves absent from it.",
           "effects": {
             "spending_pct_gdp": {
@@ -353,6 +361,7 @@
         {
           "id": "let_the_price_clear",
           "label": "Let the price clear",
+          "short": "Let price clear",
           "summary": "The price does what prices do and the shutdown list becomes a schedule. The market calls it discipline, from inside a heated office.",
           "default": true,
           "effects": {
@@ -404,6 +413,7 @@
         {
           "id": "descope_the_plant",
           "label": "Descope the plant",
+          "short": "Shrink the plant",
           "summary": "The build is cut back to what the first tranches bought and the opening is redefined as a phase. Half a flagship is still an address.",
           "effects": {
             "spending_pct_gdp": {
@@ -422,6 +432,7 @@
         {
           "id": "freeze_the_review",
           "label": "Freeze it pending review",
+          "short": "Freeze it",
           "summary": "The second tranche is frozen pending a review, and the review reports after the constructor's solvency hearing. The site keeps its cranes and its weeds.",
           "default": true,
           "effects": {
@@ -455,6 +466,7 @@
         {
           "id": "underwrite_the_conversion",
           "label": "Underwrite the conversion",
+          "short": "Back conversion",
           "summary": "The money is found and the clauses are the best that can be had against that board. The plants convert, and the country owns a share of a car park in exchange.",
           "effects": {
             "spending_pct_gdp": {
@@ -536,6 +548,7 @@
         {
           "id": "send_in_the_mediator",
           "label": "Send in the mediator",
+          "short": "Send a mediator",
           "summary": "A mediator with a railway background is sent in and both sides are given the weekend to accept the format. It has worked before, which is the entire argument for it.",
           "effects": {
             "society": {
@@ -554,6 +567,7 @@
         {
           "id": "back_the_operators",
           "label": "Back the operators",
+          "short": "Back operators",
           "summary": "The operators' reading of the contracts is upheld and the crews return to the new roster. The port runs, and the federation owes the government a memory.",
           "effects": {
             "bloc_offset": {
@@ -603,6 +617,7 @@
         {
           "id": "allocate_by_decree",
           "label": "Allocate by decree",
+          "short": "Allocate by law",
           "summary": "The allocation is drafted in the ministry and the champions are served first. The order books are protected and every firm not on the list has read the list.",
           "effects": {
             "company": {
@@ -640,6 +655,7 @@
         {
           "id": "queue_like_everyone",
           "label": "Queue like everybody else",
+          "short": "Wait in line",
           "summary": "The state queues with the rest and says so. The stoppages arrive on the suppliers' order instead of the ministry's.",
           "default": true,
           "effects": {
@@ -697,6 +713,7 @@
         {
           "id": "wall_of_tariffs",
           "label": "Build the tariff wall",
+          "short": "Raise tariffs",
           "summary": "A tariff wall goes up around the sector and the works get two years of protected prices to restructure in. The building trade pays for the two years and says so at every site hut.",
           "effects": {
             "company": {
@@ -716,6 +733,7 @@
         {
           "id": "managed_decline",
           "label": "Manage the decline",
+          "short": "Manage decline",
           "summary": "The state funds the pensions, regrades the site and calls it a transition. It is the honest plan, and the town will be honest about it for forty years.",
           "default": true,
           "effects": {
@@ -750,6 +768,7 @@
         {
           "id": "block_the_bid",
           "label": "Oppose the bid in public",
+          "short": "Oppose the bid",
           "summary": "The government declares against the bid and sends the ministry to find its grounds overnight. The bidder's lawyers stay busy and the markets price a review into every premium; whether the deal is actually stopped is decided in the companies panel.",
           "effects": {
             "bloc_offset": {
@@ -780,6 +799,7 @@
         {
           "id": "refer_and_delay",
           "label": "Call for a review",
+          "short": "Call a review",
           "summary": "The government says the bid deserves a review with no deadline, and commits to nothing else. Both boards hate the answer, which is how the desk likes its answers; the companies panel is where the bid is actually decided.",
           "default": true,
           "effects": {
@@ -815,6 +835,7 @@
         {
           "id": "take_it_public",
           "label": "Back a public takeover",
+          "short": "Back a takeover",
           "summary": "The government announces it will stand behind a public vehicle for the operating plants, and the infrastructure line is raised to meet it. Whether the state ends up holding the plants is settled in the companies panel; the announcement and the bill are now.",
           "effects": {
             "spending_pct_gdp": {
@@ -833,6 +854,7 @@
         {
           "id": "rescue_the_plants",
           "label": "Back a rescue of the plants",
+          "short": "Rescue plants",
           "summary": "The government says the plants, not the group, are worth saving, and a smaller sum goes to the infrastructure line to show it. The suppliers learn the difference between a firm and its factories; the rescue itself is a decision for the companies panel.",
           "effects": {
             "spending_pct_gdp": {
@@ -891,6 +913,7 @@
         {
           "id": "deregulate",
           "label": "Lift the sector's burden",
+          "short": "Lift the burden",
           "summary": "The rules come off industry. What was protecting somebody stops protecting them.",
           "effects": {
             "company": {
@@ -909,6 +932,7 @@
         {
           "id": "protect",
           "label": "Underwrite the plants",
+          "short": "Back the plants",
           "summary": "Conditions attached and money behind them. Industry keeps the payroll and loses the freedom.",
           "effects": {
             "company": {
@@ -930,6 +954,7 @@
         {
           "id": "let_it_go",
           "label": "Let the market decide",
+          "short": "Let it go",
           "summary": "It decides.",
           "default": true,
           "effects": {
@@ -970,6 +995,7 @@
         {
           "id": "ration",
           "label": "Order rolling cuts",
+          "short": "Order cuts",
           "summary": "Share the dark evenly. Industry carries its share, the hospitals keep their light, and everybody remembers the evening the state rationed electricity.",
           "default": true,
           "effects": {
@@ -985,6 +1011,7 @@
         {
           "id": "emergency_fuel",
           "label": "Buy fuel on the spot market",
+          "short": "Buy spot fuel",
           "summary": "Whatever the price is, it is cheaper than the dark. The debt takes it, and the markets read the wire as fast as the cities read the light.",
           "effects": {
             "spending_pct_gdp": {
@@ -1001,6 +1028,7 @@
         {
           "id": "blame_abroad",
           "label": "Blame the imports",
+          "short": "Blame imports",
           "summary": "The interconnects failed and they failed from the other side of the border. True enough to say; your neighbours will hear it exactly that way.",
           "effects": {
             "bloc_offset": {
