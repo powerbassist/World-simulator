@@ -20,6 +20,9 @@ var _unit := ""
 var _markers: Array = []
 var _places := -1
 var _colors: Array = ChartStyle.SERIES
+## A tooltip drawn by the caller (a Control it builds on hover), shown over the segment text: the
+## Bills tab hangs the Assembly's seats here, since the bar is where a vote is read (V5.3 screen 4).
+var hover: Callable = Callable()
 
 
 func setup(parts: Array, opts := {}) -> void:
@@ -84,6 +87,10 @@ func has_marker() -> bool:
 
 func marker_count() -> int:
 	return _markers.size()
+
+
+func _make_custom_tooltip(_for_text: String) -> Object:
+	return hover.call() if hover.is_valid() else null
 
 
 func _get_tooltip(at: Vector2) -> String:
