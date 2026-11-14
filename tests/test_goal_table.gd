@@ -15,6 +15,7 @@ const GoalRead = preload("res://src/sim/goal_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Bills = preload("res://src/sim/bills.gd")
+const Investment = preload("res://src/sim/investment.gd")
 
 ## The step every kind of data/taxes/ gets, against its rate_range_pct today. Written out
 ## rather than re-derived, so a change to the rule or to a range shows up here by name.
@@ -47,6 +48,7 @@ func _init() -> void:
 	_check_a_rate_moved_since_the_list_reads_range()
 	_check_a_kind_taken_out_of_force_reads_kind()
 	_check_the_refusals_are_tablings_own()
+	_check_a_tabled_row_no_longer_open_reads_verb()
 	_finish()
 
 
@@ -239,3 +241,23 @@ func _check_the_refusals_are_tablings_own() -> void:
 	var res := Legislature.propose(state, _loader, law)
 	if why != "already_tabled" or not bool(res.get(why, false)):
 		_fail("parity: refusal() says '%s', propose() %s" % [why, res.keys()])
+
+
+## Section 12's rows ride the same refusal: a finance bill already tabled with a programme row
+## that is no longer open (the sector's programme started another way since) makes any budget
+## step an amendment tabling would refuse, `verb`.
+func _check_a_tabled_row_no_longer_open_reads_verb() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var list = GoalRead.list_for(null, state, _loader)
+	while not list.done():
+		GoalRead.step(list)
+	if not bool(FinanceBill.table(state, _loader, {"programmes": {"industry": "reindustrialisation"}}).get("tabled", false)):
+		_fail("verb: premise, the programme row was not tabled")
+		return
+	for action in _loader.investment_actions:
+		if String(action.id) == "industrial_renewal":
+			Investment.execute(state, ns, _loader.investment_actions, action)
+	var row := _row(GoalRead.rank(list.reads, "deficit", state, _loader), "rate")
+	if row.is_empty() or String(row["table"]) != "verb":
+		_fail("verb: a budget step beside a row no longer open reads '%s'" % row.get("table", "<no row>"))
