@@ -43,6 +43,7 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -327,17 +328,16 @@ func _build_ledger(ns) -> void:
 	PanelKit.row(_body, tr("Trend bought"), tr("%s %%/yr") % Num.fs(Investment.national_trend_shift_pct(ns), 3))
 
 
-## U4's contract, `_on_act()`'s shape exactly: the baseline is captured BEFORE the
-## command, so the delta measures the month the programme started against the month
-## before it.
-func _on_invest(ns, action) -> void:
-	var before := Trends.snapshot_now(_state)
-	var result := Investment.execute(_state, ns, _loader.investment_actions, action)
+## V5.3 e (docs/design/finance-bill.md section 12, the author's "par la loi de finances"):
+## a programme is a row of the finance bill, tabled here and started at the month's end
+## if the bill carries. Nothing changes until then, so no trend card is pushed; screen 5
+## (Interface) shows the bill.
+func _on_invest(_ns, action) -> void:
+	var sector := String(action.effects.get("investment", {}).get("sector", ""))
+	var tabling := FinanceBill.table(_state, _loader, {"programmes": {sector: String(action.id)}})
 	_dirty = true
 	# RF7: a refusal takes the company actions' BLOCKED line (_last_refusal).
-	_last_refusal = "" if result.get("applied", false) else tr("%s refused -- it is no longer on offer.") % Strings.row_name("investment-actions", action)
-	if _last_refusal == "":
-		acted.emit(before, Strings.row_name("investment-actions", action))
+	_last_refusal = "" if tabling.get("tabled", false) else tr("%s refused -- it is no longer on offer.") % Strings.row_name("investment-actions", action)
 
 
 ## Disabled with the sim's reason when the arm would refuse it (CompanyVerb, G1).

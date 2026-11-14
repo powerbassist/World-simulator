@@ -21,6 +21,7 @@ extends SceneTree
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
+const Division = preload("res://src/sim/division.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -59,6 +60,10 @@ func _process(_delta: float) -> bool:
 			_check_problem(_regions[0])
 			_check_strip(_regions[0])
 			_press(_with_meta("go"))
+		7:
+			# V5.3 e (finance-bill.md section 12): Go tabled a row of the finance bill; it
+			# opens at the division at the month's end.
+			_divide_the_bill("start")
 		8:
 			_check_started(_regions[0])
 			_check_budget_row()
@@ -75,6 +80,8 @@ func _process(_delta: float) -> bool:
 			_press(_region_button(_regions[1]))
 		16:
 			_press(_with_meta("fund_id"))
+		17:
+			_divide_the_bill("stop")
 		18:
 			_check_stopped(_regions[1])
 			_finish()
@@ -278,6 +285,17 @@ func _check_stopped(region) -> void:
 
 
 # -- helpers --
+
+## The press tabled the row and opened or stopped nothing yet; the division applies it.
+func _divide_the_bill(side: String) -> void:
+	var ns = _main._state.player()
+	var rows: Array = (ns.tabled_bill.get("finance", {}) as Dictionary).get("funds", {}).get(side, [])
+	if rows.size() != 1:
+		_fail("%s pressed: the finance bill does not carry the fund's row: %s" % [side, ns.tabled_bill])
+	if side == "start" and not RegionFunds.open_funds(ns).is_empty():
+		_fail("Go pressed: the fund opened before the vote")
+	Division.divide(_main._state, _main._loader)
+	_panel.mark_dirty()
 
 func _region_button(region):
 	for b in _panel.find_children("*", "Button", true, false):
