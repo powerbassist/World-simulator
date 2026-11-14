@@ -53,6 +53,9 @@ var _open_region := ""
 ## The development fund's two sums (region_fund.gd), held across rebuilds.
 var _fund_share := 0.0
 var _fund_years := 0
+## The last Go or Stop the finance bill refused, said under it across the rebuild the press
+## asks for ("" once a press tables, or another region opens).
+var _fund_refusal := ""
 ## The sector priority's pick, "line|sector" (region_priority.gd), held across rebuilds.
 var _priority_pick := ""
 var _about_open := false
@@ -234,6 +237,7 @@ func _region_line(ns, regions: Array, region, access: Dictionary, site_count: in
 ## sites there, each with a Go; its largest cities, each opening in place.
 func _pick(region_id: String) -> void:
 	_open_region = "" if _open_region == region_id else region_id
+	_fund_refusal = ""
 	_refocus = region_id
 	if _open_region != "" and _map != null:
 		var city = _largest_city(region_id)

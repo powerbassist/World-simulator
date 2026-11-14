@@ -44,6 +44,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -336,8 +337,15 @@ func _on_invest(_ns, action) -> void:
 	var sector := String(action.effects.get("investment", {}).get("sector", ""))
 	var tabling := FinanceBill.table(_state, _loader, {"programmes": {sector: String(action.id)}})
 	_dirty = true
-	# RF7: a refusal takes the company actions' BLOCKED line (_last_refusal).
-	_last_refusal = "" if tabling.get("tabled", false) else tr("%s refused -- it is no longer on offer.") % Strings.row_name("investment-actions", action)
+	# RF7: a refusal takes the company actions' BLOCKED line (_last_refusal). The row's own
+	# refusal names the programme; any other (a law in the slot, a finance bill queued, a
+	# rate out of range) is the bill's, said as every tabling says it (QA's T2 on #345).
+	if tabling.get("tabled", false):
+		_last_refusal = ""
+	elif tabling.get("verb", false):
+		_last_refusal = tr("%s refused -- it is no longer on offer.") % Strings.row_name("investment-actions", action)
+	else:
+		_last_refusal = ProposalNote.body(tabling)
 
 
 ## Disabled with the sim's reason when the arm would refuse it (CompanyVerb, G1).

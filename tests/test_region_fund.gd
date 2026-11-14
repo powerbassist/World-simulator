@@ -59,30 +59,45 @@ func _process(_delta: float) -> bool:
 		6:
 			_check_problem(_regions[0])
 			_check_strip(_regions[0])
+			# QA's T2 on #345: a Go refused while a law holds the slot says why, a frame on.
+			_main._state.player().tabled_bill = {"law_id": String(_main._loader.laws[0].id), "referendum": false,
+				"vote_year": 2026, "vote_month": 1, "vote_day": 31}
 			_press(_with_meta("go"))
 		7:
+			_check_refused("refusal")
+			_main._state.player().tabled_bill = {}
+			_press(_with_meta("go"))
+		8:
 			# V5.3 e (finance-bill.md section 12): Go tabled a row of the finance bill; it
 			# opens at the division at the month's end.
 			_divide_the_bill("start")
-		8:
+		9:
 			_check_started(_regions[0])
 			_check_budget_row()
 			_fill_to_the_cap()
 			_press(_region_button(_regions[0]))
-		10:
+		11:
 			_press(_region_button(_regions[3]))
-		12:
+		13:
 			_check_cap()
 			_move_a_sum()
-		14:
+		15:
 			_check_redrawn()
 			_press(_region_button(_regions[3]))
 			_press(_region_button(_regions[1]))
-		16:
-			_press(_with_meta("fund_id"))
 		17:
-			_divide_the_bill("stop")
+			# QA's T2 on #345: a Stop pressed while a law holds the slot says why.
+			_main._state.player().tabled_bill = {"law_id": String(_main._loader.laws[0].id), "referendum": false,
+				"vote_year": 2026, "vote_month": 1, "vote_day": 31}
+			_press(_with_meta("fund_id"))
 		18:
+			# A frame on, after the redraw the press asked for: the line is still there.
+			_check_refused("stop_refusal")
+			_main._state.player().tabled_bill = {}
+			_press(_with_meta("fund_id"))
+		19:
+			_divide_the_bill("stop")
+		20:
 			_check_stopped(_regions[1])
 			_finish()
 	return false
@@ -275,6 +290,15 @@ func _check_redrawn() -> void:
 	var money := Strings.t("%s bn") % Num.f(eur, EffectsStrip.MONEY_PLACES)
 	if not beside.contains(money):
 		_fail("redraw: the money beside the slider did not follow the level to %s %%: '%s', the sim's %s" % [top, beside, money])
+
+
+func _check_refused(meta: String) -> void:
+	var line = _with_meta(meta)
+	var want := Strings.t("A bill is already before the Assembly.")
+	if line == null or (line as Label).text != want:
+		_fail("%s: no line says why (%s)" % [meta, line.text if line != null else "<none>"])
+	if not (_main._state.player().tabled_bill.get("finance", {}) as Dictionary).is_empty():
+		_fail("%s: the refused press tabled the row anyway" % meta)
 
 
 ## Stop on a running fund closes it, and the row said whom it angers before.

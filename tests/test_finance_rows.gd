@@ -38,7 +38,10 @@ func _init() -> void:
 	_check_a_programme_through_the_bill()
 	_check_a_fund_through_the_bill()
 	_check_a_fund_stopped_through_the_bill()
+	_check_a_row_not_open_now_refuses_the_tabling()
 	_check_an_illegal_row_refuses_the_tabling()
+	_check_an_amendment_replaces_a_programme_and_adds_a_fund_once()
+	_check_a_programme_no_longer_on_offer_is_skipped_and_named()
 	_check_a_defeated_bill_applies_no_row()
 	_check_a_withdrawn_bill_applies_no_row()
 	_check_a_row_illegal_at_the_division_is_skipped_and_named()
@@ -125,9 +128,70 @@ func _check_a_fund_stopped_through_the_bill() -> void:
 		_fail("stop: the carried bill left the fund running")
 
 
+## QA's T1 on #345 (F1): real actions, each only not open NOW, so it is the refusal that
+## answers and not a crash on a missing action further down the tabling.
+func _check_a_row_not_open_now_refuses_the_tabling() -> void:
+	var running = _new_state()
+	Investment.execute(running, running.player(), _loader.investment_actions, _action("industrial_renewal"))
+	var cases := [
+		["an end with no programme running", _new_state(), {"programmes": {"industry": "end_industrial_programme"}}],
+		["a second programme on a running one", running, {"programmes": {"industry": "reindustrialisation"}}],
+	]
+	for case in cases:
+		var state = case[1]
+		var ns = state.player()
+		var blocs: Dictionary = ns.bloc_offset.duplicate()
+		var got := FinanceBill.table(state, _loader, case[2])
+		if bool(got.get("tabled", false)) or not bool(got.get("verb", false)):
+			_fail("not open: %s was tabled: %s" % [case[0], got])
+		if not ns.tabled_bill.is_empty() or ns.bloc_offset != blocs:
+			_fail("not open: %s wrote something" % case[0])
+
+
+func _action(action_id: String):
+	for action in _loader.investment_actions:
+		if String(action.id) == action_id:
+			return action
+	return null
+
+
+## QA's T1 on #345 (F3, F4): an amendment's newer action replaces a sector's older one, and
+## a fund start tabled twice is carried once.
+func _check_an_amendment_replaces_a_programme_and_adds_a_fund_once() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var rule := _fund_rule()
+	var start := {"region_id": _region(state), "share_pct": float(rule["share_pct"][0]), "years": int(rule["years"][0])}
+	FinanceBill.table(state, _loader, {"programmes": {"industry": "industrial_renewal"}, "funds": {"start": [start]}})
+	FinanceBill.table(state, _loader, {"programmes": {"industry": "reindustrialisation"}, "funds": {"start": [start]}})
+	var bill: Dictionary = ns.tabled_bill.get("finance", {})
+	if String(bill.get("programmes", {}).get("industry", "")) != "reindustrialisation":
+		_fail("amend: the sector kept %s, not the newer action" % bill.get("programmes", {}).get("industry", ""))
+	if (bill.get("funds", {}).get("start", []) as Array).size() != 1:
+		_fail("amend: the same fund start is carried %d times" % (bill.get("funds", {}).get("start", []) as Array).size())
+
+
+## QA's T1 on #345 (F5): a programme no longer on offer by the division (one started in the
+## sector another way) is skipped and named; the bill's rate still applies.
+func _check_a_programme_no_longer_on_offer_is_skipped_and_named() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var vat := float(ns.tax_rates_pct["vat"])
+	FinanceBill.table(state, _loader, {"tax_rates_pct": {"vat": 1.0}, "programmes": {"industry": "reindustrialisation"}})
+	Investment.execute(state, ns, _loader.investment_actions, _action("industrial_renewal"))
+	var result := Division.divide(state, _loader)
+	if not bool(result.get("passed", false)):
+		_fail("skipped programme: the staged bill did not carry (stage broken)")
+		return
+	var skipped: Array = result.get("skipped", [])
+	if skipped.size() != 1 or String(skipped[0].get("programme", "")) != "industry" or String(skipped[0].get("action_id", "")) != "reindustrialisation":
+		_fail("skipped programme: not named: %s" % [skipped])
+	if Investment.intensity_of(ns, "industry") != 0.55 or not is_equal_approx(float(ns.tax_rates_pct["vat"]), vat + 1.0):
+		_fail("skipped programme: the running programme changed, or the rest did not apply")
+
+
 func _check_an_illegal_row_refuses_the_tabling() -> void:
 	var cases := {
-		"an end with no programme running": {"programmes": {"industry": "end_industrial_programme"}},
 		"an action of another sector": {"programmes": {"industry": "farm_modernisation"}},
 		"an action that does not exist": {"programmes": {"industry": "no_such_programme"}},
 		"a fund in no region": {"funds": {"start": [{"region_id": "atlantis", "share_pct": 1.0, "years": 2}]}},

@@ -69,10 +69,15 @@ static func _running(panel, box: Control, ns, row: Dictionary) -> void:
 	var stop := PanelKit.sized(Button.new())
 	stop.text = Strings.t("Stop")
 	stop.set_meta("fund_id", String(row["id"]))
-	stop.pressed.connect(func() -> void:
-		FinanceBill.table(panel._state, panel._loader, {"funds": {"stop": [String(row["id"])]}})
-		panel.mark_dirty())
 	flow.add_child(stop)
+	# A refused Stop says why, as a refused Go does (QA's T2 on #345: a law in the slot
+	# made the press do nothing, silently).
+	var refusal := PanelKit.plain_line(box, String(panel._fund_refusal))
+	refusal.set_meta("stop_refusal", true)
+	refusal.visible = String(panel._fund_refusal) != ""
+	ResultTone.tint(refusal, ResultTone.BLOCKED)
+	stop.pressed.connect(func() -> void:
+		_pressed(panel, FinanceBill.table(panel._state, panel._loader, {"funds": {"stop": [String(row["id"])]}})))
 	PanelKit.plain_line(flow, Strings.tn("%s a year, %d month left.", "%s a year, %d months left.", months) % [
 		EffectsStrip.money_text(-float(row["eur_bn_per_year"])), months], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	# What the money has done: the figure the month it began against now. A fund opened
@@ -133,23 +138,28 @@ static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
 		panel._fund_years = int(v)
 		redraw.call())
 	go.pressed.connect(func() -> void:
-		var tabling := FinanceBill.table(panel._state, panel._loader, {"funds": {"start": [
-			{"region_id": String(region.id), "share_pct": float(panel._fund_share), "years": int(panel._fund_years)}]}})
-		panel.mark_dirty()
-		if not bool(tabling.get("tabled", false)):
-			refusal.text = ProposalNote.body(tabling))
+		_pressed(panel, FinanceBill.table(panel._state, panel._loader, {"funds": {"start": [
+			{"region_id": String(region.id), "share_pct": float(panel._fund_share), "years": int(panel._fund_years)}]}})))
 	redraw.call()
 
 
-## The strip, the Go and the refusal line for the sums the controls hold now.
+## A Go or a Stop pressed: its refusal kept on the panel, so the line still says it after
+## the rebuild the press asks for (a line set on the old controls was wiped by it).
+static func _pressed(panel, tabling: Dictionary) -> void:
+	panel._fund_refusal = "" if bool(tabling.get("tabled", false)) else ProposalNote.body(tabling)
+	panel.mark_dirty()
+
+
+## The strip, the Go and the refusal line for the sums the controls hold now: the sim's
+## reason the sums cannot open, else the last press's refusal.
 static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void:
 	var share := float(panel._fund_share)
 	var years := int(panel._fund_years)
 	var est: Dictionary = RegionFunds.estimate(panel._state, ns, panel._loader, String(region.id), share, years)
 	var ok := bool(est.get("ok", false))
 	go.disabled = not ok
-	refusal.text = "" if ok else Strings.t(String(est.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
-	refusal.visible = not ok
+	refusal.text = String(panel._fund_refusal) if ok else Strings.t(String(est.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
+	refusal.visible = refusal.text != ""
 	strip.visible = ok
 	if not ok:
 		return
