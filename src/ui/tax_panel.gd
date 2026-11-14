@@ -302,7 +302,9 @@ func _on_revert() -> void:
 func _on_commit() -> void:
 	var before := Trends.snapshot_now(_state)
 	var tabling := FinanceBill.table(_state, _loader, FinanceBill.from_pending(_state.player(), _pending))
-	_on_revert()
+	# A refusal (a law holds the month's slot) keeps the draft on the levers.
+	if bool(tabling.get("tabled", false)):
+		_on_revert()
 	committed.emit(before, tabling)
 
 

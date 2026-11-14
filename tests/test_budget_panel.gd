@@ -60,6 +60,7 @@ func _process(_delta: float) -> bool:
 		2:
 			_move_a_lever()
 		3:
+			_refused_commit_keeps_the_draft()
 			_commit()
 			_finish()
 	return false
@@ -143,6 +144,20 @@ func _move_a_lever() -> void:
 	# The now column is the live position: the panel previews, it does not write.
 	if absf(float(_state.player().tax_rates_pct["income"]) - income_before) > 0.001:
 		_fail("staging the tax edit moved live state: income is now %s" % _state.player().tax_rates_pct["income"])
+
+
+## A law holds the month's slot: Commit is refused (docs/design/finance-bill.md), and the
+## draft the player built must still be there on both tabs, not reverted to live.
+func _refused_commit_keeps_the_draft() -> void:
+	var ns = _state.player()
+	ns.tabled_bill = {"law_id": "carbon_levy", "vote_year": 2026, "vote_month": 1, "vote_day": 31}
+	_panel._on_commit()
+	_tax_panel._on_commit()
+	if absf(float(_panel._pending["spending_pct_gdp"]["health"]) - _health_after) > 0.001 or not _panel._edited_keys.has("health"):
+		_fail("a refused Commit erased the Budget's draft")
+	if not _tax_panel._edited_keys.has("income"):
+		_fail("a refused Commit erased the Tax Code's draft")
+	ns.tabled_bill = {}
 
 
 func _commit() -> void:

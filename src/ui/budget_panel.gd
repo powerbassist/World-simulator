@@ -313,10 +313,11 @@ func _on_revert(state_moved := false) -> void:
 func _on_commit() -> void:
 	var before := Trends.snapshot_now(_state)
 	# Tabled before the revert clears the levers; the card the shell pushes reads the
-	# tabling (tabled, or refused while a law holds the month's slot).
+	# tabling. A refusal (a law holds the month's slot) keeps the draft on the levers.
 	var tabling := FinanceBill.table(_state, _loader, FinanceBill.from_pending(_state.player(), _pending))
 	BudgetSectors.apply_moves(self)
-	_on_revert(true)
+	if bool(tabling.get("tabled", false)):
+		_on_revert(true)
 	committed.emit(before, tabling)
 
 
