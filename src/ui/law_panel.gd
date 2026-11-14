@@ -39,6 +39,8 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const LawVerdict = preload("res://src/ui/law_verdict.gd")
 const LawList = preload("res://src/ui/law_list.gd")
+const LawCensure = preload("res://src/ui/law_censure.gd")
+const OrderPaper = preload("res://src/ui/order_paper.gd")
 const DissolveButton = preload("res://src/ui/dissolve_button.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
@@ -67,6 +69,7 @@ var _loader
 var _title: Label
 var _list: VBoxContainer
 var _laws: LawList
+var _paper := OrderPaper.new()
 var _result_box: VBoxContainer
 var _dirty := true
 var _close_button: Button
@@ -92,6 +95,8 @@ func _ready() -> void:
 
 	_title = Label.new()
 	root.add_child(_title)
+	_paper.changed.connect(mark_dirty)
+	root.add_child(_paper)
 	root.add_child(PanelCharts.new(self, PanelCharts.SEATS))
 
 	_result_box = VBoxContainer.new()
@@ -131,7 +136,7 @@ func hide_close_button() -> void:
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
-	_title.text = tr("LEGISLATURE — %s") % _loader.nation_name(_state.player().id)
+	_title.text = tr("BILLS — %s") % _loader.nation_name(_state.player().id)
 	_dirty = true
 
 
@@ -152,6 +157,7 @@ func _refresh() -> void:
 		return
 	_primary = null
 	_dissolve.sync(_state, ns)
+	_paper.refresh(_state, _loader, _find_law)
 
 	for child in _result_box.get_children():
 		child.queue_free()
@@ -221,7 +227,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 		if result.get("refused", false):
 			PanelKit.line(box, tr("Article 49.3 is not available."), PanelKit.Tone.PLAIN)
 			return box
-		box.add_child(_build_censure_summary(result.get("censure", {})))
+		box.add_child(LawCensure.box(_state, _loader, result.get("censure", {})))
 		return box
 
 	# And a moot release had no division either -- the verdict line above already
@@ -269,7 +275,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 		PanelKit.line(box, tr("The court struck it down: it reaches %s against a tolerance of %s.") % [
 			Num.f(float(result.get("reach", 0.0)), 2), Num.f(float(result.get("tolerance", 0.0)), 2)], PanelKit.Tone.PLAIN)
 
-	var rebellion := _rebellion_text(result.get("party_rebels", {}))
+	var rebellion := LawCensure.rebellion_text(_state, _loader, result.get("party_rebels", {}))
 	if rebellion != "":
 		PanelKit.line(box, rebellion, PanelKit.Tone.PLAIN)
 
@@ -282,72 +288,6 @@ func _build_result_summary(result: Dictionary) -> Control:
 			PanelKit.line(box, tr("Voted against: %s") % ", ".join(opposed), PanelKit.Tone.PLAIN)
 
 	return box
-
-
-## What the assembly did about being bypassed. Names the parties that moved to
-## censure, so a survived 49.3 still tells the player who came after them.
-func _build_censure_summary(censure: Dictionary) -> Control:
-	var box := VBoxContainer.new()
-	if censure.is_empty():
-		return box
-
-	var ns = _state.player()
-
-	PanelKit.line(box, tr("Adopted without a vote under Article 49.3."), PanelKit.Tone.PLAIN)
-
-	PanelKit.line(box, tr("Censure motion: %d for · %d against · %d abstained, of %d seats (needs %d)") % [
-		censure["for_seats"], censure["against_seats"], censure["abstain_seats"],
-		censure["seats_total"], censure["threshold"],
-	], PanelKit.Tone.PLAIN)
-
-	var verdict := Label.new()
-	if censure["carried"]:
-		verdict.text = tr("CENSURED. %s falls; %s %s now heads the government.") % [
-			_loader.person_name(censure["pm_person_id"]), ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
-		]
-	else:
-		verdict.text = tr("The motion failed. %s %s survives and the law stands.") % [
-			ns.head_of_government_title, _loader.person_name(ns.pm_person_id)
-		]
-	box.add_child(verdict)
-
-	var movers := PackedStringArray()
-	for party in _loader.parties.get(ns.id, []):
-		if censure["party_votes"].get(party.id, "") == "for":
-			movers.append(party.party_name)
-	if not movers.is_empty():
-		PanelKit.line(box, tr("Moved to censure: %s") % ", ".join(movers), PanelKit.Tone.PLAIN)
-
-	var rebellion := _rebellion_text(censure.get("party_rebels", {}))
-	if rebellion != "":
-		PanelKit.line(box, rebellion, PanelKit.Tone.PLAIN)
-
-	# Distinct from the line above on purpose: that one is members who ignored
-	# their party, this one is parties that walked. Only the second is expelled.
-	var defectors: Array = censure["defectors"]
-	if not defectors.is_empty():
-		PanelKit.line(box, tr_n("%d coalition party voted to censure and is out of government.", "%d coalition parties voted to censure and are out of government.", defectors.size()) % defectors.size(), PanelKit.Tone.PLAIN)
-
-	return box
-
-
-## Who ignored their own party's line, and by how much. The payoff line of the
-## whole discipline model -- the player is told which benches they have lost, by
-## name, at the moment it costs them a vote.
-func _rebellion_text(party_rebels: Dictionary) -> String:
-	if party_rebels.is_empty():
-		return ""
-	var parts := PackedStringArray()
-	var total := 0
-	for party in _loader.parties.get(_state.player().id, []):
-		var rebels: int = int(party_rebels.get(party.id, 0))
-		if rebels <= 0:
-			continue
-		total += rebels
-		parts.append("%d %s" % [rebels, party.party_name])
-	if parts.is_empty():
-		return ""
-	return tr("%d seats broke ranks: %s.") % [total, ", ".join(parts)]
 
 
 ## A constitutional amendment reads its OWN nation's real threshold rather

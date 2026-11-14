@@ -7,11 +7,14 @@ extends RefCounted
 ## docs/tiers/v2.md section 4 and docs/calendar-model.md.
 ##
 ## The sidecar carries the EFFECTS and the .dialogue carries the SCENE, and the
-## join is the response LABEL: every response in the dialogue must have an
-## effects entry with exactly that text, and every effects entry must name a
-## response the dialogue actually offers. Validated at load, loudly -- a scene
-## that offers a choice nothing prices, or prices a choice nothing offers, is
-## the unread `refused_by_partner` waiting to ship.
+## join is the response's STABLE ID: every response line ends `- text [#id:title] => title`
+## (a dialogue_manager tag, which the panel reads back from response.tags; NOT its static
+## line id `[ID:...]`, which would make the addon translate the line by the id), every response in the dialogue must have an effects entry
+## under exactly that id, and every effects entry must name a response the dialogue
+## actually offers. Never the text: the text is what a translation changes, and a choice
+## priced by its English would silently lose its effects in French. Validated at load,
+## loudly -- a scene that offers a choice nothing prices, or prices a choice nothing
+## offers, is the unread `refused_by_partner` waiting to ship.
 
 const Law = preload("res://src/core/law.gd")
 
@@ -21,7 +24,7 @@ var summit_name: String = ""
 var summary: String = ""
 var dialogue_text: String = ""
 
-## {response label -> effects dict in Legislature.apply_effects() channels}.
+## {response id -> effects dict in Legislature.apply_effects() channels}.
 var effects: Dictionary = {}
 
 ## Which backdrop the portrait system (src/ui/portrait.gd) stages behind the
@@ -77,13 +80,13 @@ static func from_dict(
 		errors.append("%s: effects must be a non-empty object -- every response the scene offers has to land somewhere" % filename)
 		return s
 
-	# The labels the dialogue offers, parsed minimally: dialogue_manager's
-	# response syntax is `- text => target` at the start of a line. The load
-	# check does not compile -- the game compiles at draw time -- it only needs
-	# the SET of labels, and a line-level scan is exact for the subset of the
-	# syntax this content uses. If summit content ever grows conditions or
-	# nested jumps, this check grows with it and says so here.
+	# The response ids the dialogue offers, parsed minimally: dialogue_manager's response
+	# syntax is `- text [#id:id] => target` at the start of a line. The load check does not
+	# compile -- the game compiles at draw time -- it only needs the SET of ids, and a
+	# line-level scan is exact for the subset of the syntax this content uses. If summit
+	# content ever grows conditions or nested jumps, this check grows with it and says so here.
 	var labels: Array[String] = []
+	var tag := RegEx.create_from_string("\\[#id:([^\\]\\s]+)\\]")
 	for line in s.dialogue_text.split("\n"):
 		var trimmed := line.strip_edges()
 		if not trimmed.begins_with("- "):
@@ -92,13 +95,20 @@ static func from_dict(
 		var arrow := label.rfind("=>")
 		if arrow != -1:
 			label = label.substr(0, arrow)
-		labels.append(label.strip_edges())
+		var found := tag.search(label)
+		if found == null:
+			errors.append("%s: the response '%s' has no [#id:...] -- a choice is priced by a stable id, never by its text, which a translation changes" % [filename, label.strip_edges()])
+			continue
+		var response_id := found.get_string(1)
+		if labels.has(response_id):
+			errors.append("%s: two responses carry the id '%s'" % [filename, response_id])
+		labels.append(response_id)
 
 	if labels.is_empty():
 		errors.append("%s: the dialogue offers no responses -- a scene with no choice is a letter, not a summit" % filename)
 
-	# The TOP-LEVEL keys are response LABELS; the effect CHANNELS sit inside
-	# each label's object, exactly as an event choice's effects do. Extracted
+	# The TOP-LEVEL keys are response IDS; the effect CHANNELS sit inside
+	# each id's object, exactly as an event choice's effects do. Extracted
 	# per label through the shared extractor so the validation cannot drift
 	# from what apply_effects() will actually do with it.
 	var extracted: Dictionary = {}

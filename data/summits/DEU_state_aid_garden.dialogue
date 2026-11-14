@@ -1,12 +1,12 @@
 ~ start
 Chancellor Vogler: Our carmakers say yours are being fed by the state. Yours say the same of ours. The honest summary is that we are both right.
-- Propose a joint industrial fund => joint_fund
-- Offer a truce on state aid => truce
-- Defend French industrial policy => defend
+- Propose a joint industrial fund [#id:joint_fund] => joint_fund
+- Offer a truce on state aid [#id:truce] => truce
+- Defend French industrial policy [#id:defend] => defend
 ~ joint_fund
 Chancellor Vogler: A fund we both pay into and neither controls. It has the elegance of a marriage of convenience.
-- Put the fund into green steel => green_steel
-- Put the fund into batteries => batteries
+- Put the fund into green steel [#id:green_steel] => green_steel
+- Put the fund into batteries [#id:batteries] => batteries
 ~ green_steel
 Chancellor Vogler: Steel. The Ruhr will weep with joy and the Lorraine will ask why it was not consulted.
 => END
@@ -15,8 +15,8 @@ Chancellor Vogler: Batteries, then. The only thing Europe imports more of than g
 => END
 ~ truce
 Chancellor Vogler: A truce is cheap to announce and costly to keep. I will keep it for exactly as long as you do.
-- Sign a written truce => truce_signed
-- Keep it a gentleman's agreement => truce_verbal
+- Sign a written truce [#id:truce_signed] => truce_signed
+- Keep it a gentleman's agreement [#id:truce_verbal] => truce_verbal
 ~ truce_signed
 Chancellor Vogler: In writing, then. Let the lawyers on both sides learn what it means to lose a hobby.
 => END
@@ -25,8 +25,8 @@ Chancellor Vogler: A handshake, over a beer. The best treaties are those a minis
 => END
 ~ defend
 Chancellor Vogler: You defend it well. I would defend it too, if it were mine, and I would ask the Commission not to look.
-- Say France will not apologise => no_apology
-- Concede a little on the details => concede
+- Say France will not apologise [#id:no_apology] => no_apology
+- Concede a little on the details [#id:concede] => concede
 ~ no_apology
 Chancellor Vogler: Then we will keep arguing, which is something we do well and, on balance, usefully.
 => END
