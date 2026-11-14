@@ -22,6 +22,7 @@ const NationSelectPanel = preload("res://src/ui/nation_select_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const LoadingScreen = preload("res://src/ui/loading_screen.gd")
 const SoundBed = preload("res://src/ui/sound_bed.gd")
+const BuildInfo = preload("res://src/core/build_info.gd")
 
 ## The nation the menu plate builds its throwaway month-0 state around. FRA is
 ## the premise nation, and the plate reads only content that is identical for
@@ -85,6 +86,7 @@ func _ready() -> void:
 	_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_build_scrim())
 	add_child(_build_menu())
+	add_child(_build_version_line())
 	# V4.9c. The front door's bed. Rendered on a worker, so the menu's first
 	# frame (tools/menu_boot_probe.gd's number) pays nothing for it.
 	_bed = SoundBed.start(self, "menu")
@@ -183,6 +185,22 @@ func _build_menu() -> Control:
 	_add_entry(column, tr("Quit"), func(): get_tree().quit())
 
 	return center
+
+
+## The build a player is running, bottom-right: what a play-gate note quotes so a report
+## names its build (AGENTS.md, "Versions and changelog"). A version string, not prose, so
+## it is never translated.
+func _build_version_line() -> Label:
+	var label := Label.new()
+	label.name = "BuildVersion"
+	label.text = BuildInfo.text()
+	label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	label.theme_type_variation = UiTheme.CAPTION
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 16)
+	label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	label.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	return label
 
 
 func _add_entry(column: VBoxContainer, text: String, action: Callable) -> Button:
