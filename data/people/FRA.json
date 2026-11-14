@@ -532,7 +532,7 @@
           "stance": "oppose"
         },
         {
-          "object": "region:FR1",
+          "object": "region:FRJ",
           "stance": "want"
         }
       ],
@@ -1207,7 +1207,7 @@
           "stance": "sponsor"
         },
         {
-          "object": "region:FRJ",
+          "object": "region:FRD",
           "stance": "want"
         }
       ],
@@ -1394,7 +1394,7 @@
       "wealth_eur_m": 0.9,
       "wants": [
         {
-          "object": "region:FRD",
+          "object": "region:FRF",
           "stance": "want"
         }
       ],

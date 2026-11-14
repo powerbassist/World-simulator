@@ -664,7 +664,7 @@
           "below": 44.4
         },
         {
-          "object": "region:UKI",
+          "object": "region:UKG",
           "stance": "want"
         }
       ],
@@ -827,7 +827,7 @@
           "stance": "oppose"
         },
         {
-          "object": "region:UKG",
+          "object": "region:UKE",
           "stance": "want"
         }
       ],
@@ -850,7 +850,7 @@
           "stance": "sponsor"
         },
         {
-          "object": "region:UKE",
+          "object": "region:UKF",
           "stance": "want"
         }
       ],
@@ -1276,7 +1276,7 @@
       "wealth_eur_m": 1.5,
       "wants": [
         {
-          "object": "region:UKF",
+          "object": "region:UKC",
           "stance": "want"
         }
       ],

@@ -306,7 +306,7 @@
           "stance": "want"
         },
         {
-          "object": "region:DE3",
+          "object": "region:DE6",
           "stance": "want"
         }
       ],
@@ -461,7 +461,7 @@
           "stance": "oppose"
         },
         {
-          "object": "region:DE6",
+          "object": "region:DEE",
           "stance": "want"
         }
       ],
@@ -667,7 +667,7 @@
           "stance": "sponsor"
         },
         {
-          "object": "region:DEE",
+          "object": "region:DE8",
           "stance": "want"
         }
       ],
@@ -745,7 +745,7 @@
           "stance": "sponsor"
         },
         {
-          "object": "region:DE8",
+          "object": "region:DEC",
           "stance": "want"
         }
       ],
@@ -773,7 +773,7 @@
           "stance": "oppose"
         },
         {
-          "object": "region:DEC",
+          "object": "region:DEA",
           "stance": "want"
         }
       ],
@@ -1096,7 +1096,7 @@
           "stance": "oppose"
         },
         {
-          "object": "region:DEA",
+          "object": "region:DE7",
           "stance": "want"
         }
       ],
