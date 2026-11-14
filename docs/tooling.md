@@ -236,6 +236,14 @@ The tables are `probe-shadows-<side>/shadows-<side>.json`, `probe-balance-<side>
 
 **Changing it.** The jobs check out the probed commit, not the workflow's, so all of the workflow's logic is inline. The merge job rebuilds what the end of `tools/shadows_parallel.py`'s `main()` writes: keep the two in step. The regime list (`SHADOWS_REGIMES`) must match `shadows_parallel.py`'s default `--regimes`, and the merge job fails when it does not.
 
+## A prepared save for a staged gate (`tools/gate_save.gd`)
+
+`tools/gate_save.gd` makes the save a staged play gate starts from: a nation played N months through the game's own month (`WorldMonth.tick_month`) under the balance probe's `managed` budget, every card on the desk answered the way the probe's `soft` rule answers it, written as an ordinary save slot (#314). `--make --months=33 --nation=FRA --out=PATH` builds it, `--verify --in=PATH --more=6` proves it loads and ticks on, and `--verify-main` loads it through `main.gd`'s own load handler. Run it under an isolated user dir (`APPDATA="$(mktemp -d)"`): it writes to `user://saves/` first and reads no player's save. The save carries the save version of the build that made it, so rebuild it after a bump.
+
+## French drafts through the API (`tools/translate_api.py`)
+
+`tools/translate_api.py` drafts French for ONE table through the Claude API, dev-only and never shipped (#337). It reads what `tools/i18n_extract.py --todo fr` lists as untranslated, sends each row's strings with their context and the language skill, and writes a worklist that `i18n_extract.py --apply` reads: a reviewer edits it, the tool never writes into `data/i18n/`. Every answer must keep the English's tokens (`%` placeholders, `{{variables}}`, `[g=id]` and `[/g]`), or it goes to `_rejected`. The spend is capped (default and maximum 5 USD), checked before every request, and a billing or authentication error stops the run at once. The key is read by the SDK from the environment and never by the script. `python tools/translate_api.py --selftest` needs no network.
+
 ## Godot docs MCP
 
 [Nihilantropy/godot-mcp-docs](https://github.com/Nihilantropy/godot-mcp-docs) — the full official Godot documentation, served locally. Two tools: `get_documentation_tree` and `get_documentation_file`.
