@@ -328,42 +328,12 @@ const ISSUE_LABEL := {
 ## Deltas that saturate an issue's satisfaction at full strength.
 const JOBS_SCALE_PP := 3.0        # points of unemployment
 const GROWTH_SCALE_PP := 4.0      # points of growth away from trend
-const TAX_SCALE_PP := 16.0        # points of a tax rate — the default, see below
 const SPEND_SCALE_PP := 6.0       # points of GDP on a spending line
 
-## V1.6d. PER-KEY OVERRIDES on TAX_SCALE_PP, for the taxes whose rate is not on the
-## same scale as income's.
-##
-## Sparse on purpose, exactly like BLOC_SALIENCE_BASE below: a tax with no entry here
-## reads the shared constant above. V3.0 deliberately ends the table's income
-## abstention — the agency sweep's B1 lever IS income's rate scale (8.0 -> 24.0,
-## the fiscal re-weight, see docs/opinion-model.md) — so corporate and VAT still
-## ride the default and income no longer does. The wealth and capital_gains
-## entries keep their S10-fitted values: their fits were per-key against their
-## own reachable spans, and nothing this session measured moved them.
-##
-## THE SESSION WOULD RATHER NOT HAVE ADDED THIS, and what forced it is arithmetic
-## rather than taste. opinion.gd prices every tax by `for key in C.TAX_KEYS`, in POINTS
-## OF RATE, and economy_constants.TAX_BASE_SHARE puts the wealth base at 4.00 against
-## income's 0.50 -- so one point of wealth rate is eight points of income tax in
-## revenue and the whole reachable wealth lever is three points wide. Shared, an 8.0
-## scale makes the largest wealth tax in Europe read as three eighths of a satisfaction
-## and the issue is politically almost invisible; the alternative was to express the
-## wealth rate on the 0-70 scale with a tiny base share, which makes the number the
-## player sets not a wealth-tax rate in any real sense. The units are honest and the
-## table pays for it. See docs/tax-model.md section 2.
-##
-## `capital_gains` is here for a much weaker reason and is a genuine judgement rather
-## than a forced move: headline capital-gains rates swing further than income rates do
-## -- the roster spans 0.0 to 31.0 where income spans 15.0 to 24.0 -- so a rate change
-## that would be a revolution in income tax is an ordinary budget in this one.
-##
-## SWEPT, and the band and tiebreaker are pre-committed in tools/tax_probe.gd's header.
-const TAX_SCALE_PP_BY_KEY := {
-	"income": 24.0,
-	"capital_gains": 4.80,
-	"wealth": 0.48,
-}
+## A tax kind's rate scale is its library row's `opinion_scale_pp` since V5.3 e
+## (data/taxes/): V1.6d's TAX_SCALE_PP default (16) and its per-key overrides (income 24,
+## capital gains 4.80, wealth 0.48) moved there unchanged. Why wealth's scale is a
+## fiftieth of income's: docs/tax-model.md section 2.
 
 ## Points of GDP of deficit. Widened from S5's 3.0 during the S10 balance pass:
 ## at 3.0 the issue saturated at ±1 on a three-point move, so a deficit two

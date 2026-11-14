@@ -10,9 +10,10 @@ extends SceneTree
 ## Band B1 (spec section 9): for every lever and every rate, the change printed
 ## before Commit equals the difference between Budget.preview() with nothing
 ## pending right after the commit and right before it, in the same month, to the
-## cent; GOOD only on a balance gain. One fixture per lever and per rate, a born
-## key included. The booked figure is computed here from the two previews, never
-## through the strip's own arithmetic, so a strip that priced the wrong books
+## cent; GOOD only on a balance gain. One fixture per lever and per rate (the
+## born-key fixture retired with the player-composed tax at V5.3 e). The booked
+## figure is computed here from the two previews, never through the strip's own
+## arithmetic, so a strip that priced the wrong books
 ## fails rather than agreeing with itself.
 ##
 ## Driven a frame at a time: a Range outside the tree emits nothing (AGENTS.md).
@@ -87,10 +88,10 @@ func _process(_delta: float) -> bool:
 			_check_budget_levers()
 			_check_budget_two_levers()
 		4:
-			_stage_born_key()
+			_tax.mark_dirty()
+			_tax._refresh()
 		5:
 			_check_tax_yields()
-			_check_born_key_named_commit()
 			_check_tax_rates()
 			_check_both_drafts()
 			_finish()
@@ -223,21 +224,6 @@ func _check_budget_two_levers() -> void:
 		_fail("budget: the change cells are toned %s / %s, not on the balance's sign" % [spending_cell[1], deficit_cell[1]])
 
 
-## A key the composition machine has born, staged on the register the way
-## Legislature._register_new_tax writes it, so the scan gives it a row.
-func _stage_born_key() -> void:
-	var ns = _state_t.player()
-	ns.custom_taxes["carbon"] = {"name": "Carbon levy", "base_share": 0.5, "erosion": 0.4, "ref_pct": 4.0}
-	ns.tax_rates_pct["carbon"] = 4.0
-	# A born key may be named "commit" or "elsewhere" (Statute takes any 2-24
-	# lowercase letters): its row must not collide with the strip's own figures.
-	ns.custom_taxes["commit"] = {"name": "Commit levy", "base_share": 0.5, "erosion": 0.4, "ref_pct": 2.0}
-	ns.tax_rates_pct["commit"] = 2.0
-	Budget.recompute(_state_t, ns)
-	_tax.mark_dirty()
-	_tax._refresh()
-
-
 ## Each row's yield now: its own revenue line on the books as they stand this
 ## instant (a copy committed with nothing pending -- preview's own body).
 func _check_tax_yields() -> void:
@@ -250,40 +236,6 @@ func _check_tax_yields() -> void:
 			_fail("tax %s: the yield reads '%s', the books say %s" % [key, _tax._yield_labels[key].text, want])
 	if _tax._yield_labels[TaxPanel.PROGRESSIVITY_KEY].text != "—":
 		_fail("tax: the brackets row has no base and should yield an em dash")
-
-
-## The born keys named "commit" and "elsewhere", each moved with another draft:
-## its cell prints its own effect, never the strip's (review pass 1 on #247).
-func _check_born_key_named_commit() -> void:
-	var ns = _state_t.player()
-	var one := {"tax_rates_pct": {"commit": float(ns.tax_rates_pct["commit"]) + 1.0}}
-	var alone := _balance_gain(Budget.preview(_state_t, {}), Budget.preview(_state_t, one))
-	_tax._sliders["commit"].value = float(one["tax_rates_pct"]["commit"])
-	_tax._sliders["income"].value = float(ns.tax_rates_pct["income"]) + 2.0
-	_tax._refresh()
-	if _tax._effect_labels["commit"].text != EffectsStrip.money_text(alone):
-		_fail("tax: the born key 'commit' reads '%s', its own effect is %s" % [
-			_tax._effect_labels["commit"].text, EffectsStrip.money_text(alone)])
-	_tax._on_revert()
-	_tax._refresh()
-	# The mirror for "elsewhere" (QA's K2 on #247): it is priced only while the
-	# Budget holds a draft, so the paired tabs carry it.
-	var nc = _state_c.player()
-	nc.custom_taxes["elsewhere"] = {"name": "Elsewhere levy", "base_share": 0.5, "erosion": 0.4, "ref_pct": 2.0}
-	nc.tax_rates_pct["elsewhere"] = 2.0
-	Budget.recompute(_state_c, nc)
-	_tax_c.mark_dirty()
-	_budget_c.mark_dirty()
-	var two := {"tax_rates_pct": {"elsewhere": 3.0}}
-	var own := _balance_gain(Budget.preview(_state_c, {}), Budget.preview(_state_c, two))
-	_tax_c._sliders["elsewhere"].value = 3.0
-	_budget_c._sliders["health"].value = float(nc.spending_pct_gdp["health"]) + 1.0
-	_tax_c._refresh()
-	if _tax_c._effect_labels["elsewhere"].text != EffectsStrip.money_text(own):
-		_fail("tax: the born key 'elsewhere' reads '%s', its own effect is %s" % [
-			_tax_c._effect_labels["elsewhere"].text, EffectsStrip.money_text(own)])
-	_tax_c._on_revert()
-	_budget_c._on_revert()
 
 
 func _check_tax_rates() -> void:

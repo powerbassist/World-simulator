@@ -39,6 +39,7 @@ const PoliticsLoader = preload("res://src/core/loaders/politics_loader.gd")
 const DiplomacyLoader = preload("res://src/core/loaders/diplomacy_loader.gd")
 const GeoLoader = preload("res://src/core/loaders/geo_loader.gd")
 const EventsLoader = preload("res://src/core/loaders/events_loader.gd")
+const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 
 
 ## Read through DataLoader by the surfaces; declared beside its validator.
@@ -131,6 +132,12 @@ var transition_rule: Dictionary = {}
 ## V5.3 a: line -> {line, sectors} (data/domains/<line>.json; DomainsLoader). Empty
 ## when the folder is absent: every read then falls back to the line's total.
 var domains: Dictionary = {}
+
+## data/taxes/<id>.json -- V5.3 e, the tax library (docs/design/finance-bill.md section 9):
+## {id: row} in library order, today's five first. Loaded before the nations, whose
+## kinds in force are checked against it, and before the laws, events and programme,
+## whose tax effects name its ids. See src/core/loaders/taxes_loader.gd.
+var taxes: Dictionary = {}
 
 
 ## nation id -> Array[Outlet], in authored file order. Absent for the same reason
@@ -292,7 +299,7 @@ var region_fund_rule: Dictionary = {}
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world", voices_path := "res://data/voices/archetypes.json", domains_dir := "res://data/domains", industry_dir := "res://data/industry", region_fund_path := "res://data/region-actions/fund.json") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world", voices_path := "res://data/voices/archetypes.json", domains_dir := "res://data/domains", industry_dir := "res://data/industry", region_fund_path := "res://data/region-actions/fund.json", taxes_dir := "res://data/taxes") -> void:
 	nations.clear()
 	party_funding.clear()
 	parties.clear()
@@ -331,7 +338,9 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	closure_rule = {}
 	transition_rule = {}
 	domains.clear()
+	taxes.clear()
 	errors = []
+	TaxesLoader.load_taxes(self, taxes_dir)
 
 	var da := DirAccess.open(nations_dir)
 	if da == null:
@@ -368,6 +377,8 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 			nations[nation.id] = nation
 			if not purse.is_empty():
 				party_funding[nation.id] = purse
+
+	TaxesLoader.validate_nations(self)
 
 	# People before parties, because PoliticsLoader.load_parties() resolves each party's
 	# leader_person_id against the register and a reference cannot be checked
@@ -482,6 +493,9 @@ func _validate_energy_sources() -> void:
 
 
 func _load_events(events_dir: String) -> void:
+	# Events name tax kinds, so a loader used for its events alone needs the library.
+	if taxes.is_empty():
+		TaxesLoader.load_taxes(self, "res://data/taxes")
 	EventsLoader.load_events(self, events_dir)
 
 

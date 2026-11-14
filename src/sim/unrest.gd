@@ -55,6 +55,7 @@ extends RefCounted
 const K = preload("res://src/sim/unrest_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
 # V1.6d, and the fifth preload rather than a reverse edge. tax.gd is a LEAF --
 # it preloads two constants files and nothing else -- so this adds no cycle and no
@@ -138,8 +139,8 @@ static func tick_month(state) -> void:
 static func unrest_target(ns) -> float:
 	var sat: Dictionary = Opinion.issue_satisfaction(ns)
 	return clampf(
-		K.UNREST_MAX * hardship(sat)
-		- K.RELIEF_SCALE * relief(sat)
+		K.UNREST_MAX * hardship(sat, ns)
+		- K.RELIEF_SCALE * relief(sat, ns)
 		+ K.INEQUALITY_BETA * inequality_deviation(ns)
 		- K.SETTLEMENT_BETA * float(ns.settlement_stance)
 		# V1.5d, and the MINUS is the term: press_freedom is negative when the press is
@@ -176,8 +177,10 @@ static func unrest_target(ns) -> float:
 ## amplifies the issue a bloc is actually suffering on, so a country angry about one
 ## thing is angrier than the flat weights would say. That is the same amplification the
 ## polling panel and the result screen already show the player, reused rather than
-## re-derived.
-static func hardship(sat: Dictionary) -> float:
+## re-derived. `ns` is V5.3 e's: a nation's tax kinds against the core salience table
+## (TaxLibrary.salience_patch), the same patch Opinion reads; a caller with a bare
+## satisfaction dictionary reads the core table alone.
+static func hardship(sat: Dictionary, ns = null) -> float:
 	var total := 0.0
 	var share_sum := 0.0
 	for bloc in K.UNREST_BLOCS:
@@ -193,7 +196,8 @@ static func hardship(sat: Dictionary) -> float:
 		# right one on the merits: framing is about what the electorate NOTICES, and
 		# this term is about what two rows of it actually SUFFER.
 		var weights: Dictionary = Opinion.salience_weights(
-			OpinionK.BLOC_SALIENCE_BASE[bloc], sat, OpinionK.SALIENCE_GAIN
+			OpinionK.BLOC_SALIENCE_BASE[bloc], sat, OpinionK.SALIENCE_GAIN,
+			TaxLibrary.salience_patch(ns, bloc) if ns != null else {}
 		)
 		var row := 0.0
 		for issue in weights:
@@ -227,13 +231,14 @@ static func hardship(sat: Dictionary) -> float:
 ##
 ## Exactly 0.0 for a fresh game — every satisfaction is exactly zero — so the
 ## idle path every band reads against cannot move because this term exists.
-static func relief(sat: Dictionary) -> float:
+static func relief(sat: Dictionary, ns = null) -> float:
 	var total := 0.0
 	var share_sum := 0.0
 	for bloc in K.UNREST_BLOCS:
 		var size: float = float(OpinionK.BLOC_SIZE.get(bloc, 0.0))
 		var weights: Dictionary = Opinion.salience_weights(
-			OpinionK.BLOC_SALIENCE_BASE[bloc], sat, OpinionK.SALIENCE_GAIN
+			OpinionK.BLOC_SALIENCE_BASE[bloc], sat, OpinionK.SALIENCE_GAIN,
+			TaxLibrary.salience_patch(ns, bloc) if ns != null else {}
 		)
 		var row := 0.0
 		for issue in weights:

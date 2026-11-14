@@ -46,7 +46,7 @@ written against the band and not the band against the content):
                enums valid, the three anti-double-count pairs, majority/
                constitutional coherence, the preconditions whitelist with
                unrest_pct >=-only, authored entries carrying none of the
-               runtime-only fields (repeals/composed/new_tax/origin).
+               runtime-only fields (repeals/composed/origin).
 """
 import argparse
 import json
@@ -66,8 +66,9 @@ CATEGORY_KEYS = ["taxes", "work", "welfare_health", "education_culture", "housin
                  "energy_environment", "business", "farming", "justice_transparency",
                  "constitution", "elections", "media", "europe_migration"]
 CATEGORY_MIN = 4
-# economy_constants TAX_KEYS / SPENDING_KEYS / SECTOR_TREND
-TAX_KEYS = ["income", "corporate", "vat", "capital_gains", "wealth"]
+# The tax library's kinds (data/taxes/<id>.json, V5.3 e), then economy_constants'
+# SPENDING_KEYS / SECTOR_TREND
+TAX_KEYS = sorted(p.stem for p in (Path(__file__).resolve().parent.parent / "data" / "taxes").glob("*.json"))
 SPENDING_KEYS = ["health", "education", "defence", "pensions", "infrastructure"]
 SECTORS = ["agriculture", "industry", "services"]
 # opinion_constants BLOC_KEYS
@@ -116,8 +117,8 @@ RULE_ENUMS = {
     "amendment_rule": KNOWN_AMENDMENT_RULES,
 }
 # Runtime-only fields from_dict() never reads: authored content cannot claim
-# them (law.gd's own docstrings say so on repeals/composed/new_tax/origin).
-RUNTIME_ONLY_FIELDS = ["repeals", "composed", "new_tax", "origin"]
+# them (law.gd's own docstrings say so on repeals/composed/origin).
+RUNTIME_ONLY_FIELDS = ["repeals", "composed", "origin"]
 # A system transition must write the whole institutional state -- law.gd
 # SYSTEM_CHANGE_REQUIRED_KEYS, plus head_of_state checked separately there.
 SYSTEM_CHANGE_REQUIRED_KEYS = [

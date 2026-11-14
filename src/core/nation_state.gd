@@ -124,7 +124,8 @@ var population: float = 0.0
 ## unchanged from their starting values so one code path serves both.
 var has_budget: bool = false
 
-var tax_rates_pct := {}          # income, corporate, vat, capital_gains, wealth
+## V5.3 e: a key is a tax kind IN FORCE (data/taxes/<id>.json); a kind absent is not.
+var tax_rates_pct := {}
 var spending_pct_gdp := {}       # health, education, defence, pensions, infrastructure
 var start_tax_rates_pct := {}
 var start_spending_pct_gdp := {}
@@ -775,9 +776,8 @@ var law_cooldown_months := {}
 var law_ledger := {}
 
 ## V4.2 T2. The composition machine's in-tray: draft id -> the parked spec
-## ({name, position, channels, new_tax, repeals, negated, size, price,
-## months_left}). Written by Statute.draft() and counted down by
-## Statute.tick_month(), and by nothing else. Entries are NEVER erased --
+## ({name, position, channels, repeals, negated, size, price, months_left}).
+## Written by Statute.draft() and counted down by Statute.tick_month(), and by nothing else. Entries are NEVER erased --
 ## the id scheme reads .size(), so a deleted entry could hand a later draft
 ## an id some earlier law already carries; the in-tray read
 ## (Statute.drafts()) filters on months_left instead, and the record of what
@@ -803,26 +803,6 @@ var draft_bills := {}
 ## book are gone from it, and the accumulators they move would read as
 ## unauthored drift. Absence reads empty, no error.
 var custom_laws := {}
-
-## V4.2 T4. The params of the tax keys the composition machine has BORN:
-## key -> {"name", "base_share", "erosion", "ref_pct"}. The rate lives in
-## `tax_rates_pct` like any tax's; this register is what makes the key YIELD
-## -- `base_share` prices the line, `erosion` is the key's own coefficient on
-## the shared curve, and `ref_pct` is the rate the key was BORN at, which is
-## its erosion reference: the zero-reference rule's own answer, since the tax
-## did not exist at new-game and `start_tax_rates_pct` has no entry for it,
-## so the one authored "rate this tax is normally levied at" (tax-model §2's
-## definition) is the one its creating bill set.
-##
-## EARNS ITS PLACE ON THE 38 BUMP game_state.gd's comment already argues:
-## absent, the rate survives in tax_rates_pct while the yield stops -- a
-## silent half-tax. Absence READS empty with no error, the law_ledger
-## contract. ONE WRITER: Legislature.apply()'s registration step, which runs
-## BEFORE the passage's effects so commit() sees a keyed tax and not a
-## pending rate with nothing behind it. Repeal of the creating bill removes
-## the RATE and deliberately leaves the entry: the tax exists at rate 0, the
-## way an authored tax nobody charges does.
-var custom_taxes := {}
 
 ## V4.2 T5. The polls the player has PAID for: bill key -> kind ->
 ## {"month": absolute month, "cost": EUR bn}. Written by Statute.buy_poll()
@@ -1536,6 +1516,12 @@ var sector_shares := {}
 ## path re-derives it (Sectors.rebuild) from `sector_shares` and data/domains/, so a
 ## save cannot disagree with the rows. Copied deep, so a projection keeps it.
 var sector_factor := {}
+## V5.3 e: every kind of the tax library (data/taxes/), in library order, with this
+## nation's base_share overrides applied (src/core/tax_library.gd). Content: not saved,
+## attached at new game and re-attached at load. Copied deep like every container, so a
+## projection owns it (the field table's rule); nothing writes through it, since a birth
+## or an abolition changes the keys of tax_rates_pct, never this.
+var tax_library := {}
 ## sector id -> {region_id, pts, months_left, ends, factor}: the region the player put
 ## first for it, the term its money adds to that region's growth deviation (pts, fixed
 ## when set; Sectors.set_priority, one per sector; regions.gd reads pts x factor), the

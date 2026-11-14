@@ -55,6 +55,8 @@ call, recorded as such by the pass that refuted the finding.
 
 ### Composed bills cannot move a born key's rate
 
+Moot since V5.3 e: the player-composed tax was retired in favour of the tax library ([[finance-bill]] §9.4).
+
 The composition channel validates tax keys against the authored five, so a
 later bill cannot carry `tax_rates_pct` for a custom key; the Tax Code slider
 is the only lever. `commit()` already applies whatever it is sent. **Trigger:**

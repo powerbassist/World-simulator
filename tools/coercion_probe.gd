@@ -154,7 +154,7 @@ func _revenue_table(loader) -> void:
 	print("base it is levied on and yield has an INTERIOR MAXIMUM in severity, at")
 	print("1/(2*BITE) = %.3f. Nothing authors that curve." % (1.0 / (2.0 * CK.MEASURE_TRADE_BITE)))
 	print("")
-	print("Floors: one tax point is ~0.50%% of GDP (economy_constants.TAX_BASE_SHARE),")
+	print("Floors: one tax point is ~0.50%% of GDP (the tax library rows' base_share, data/taxes/),")
 	print("and the budget panel prints a line to one decimal, so under %.2f%% of GDP" % REVENUE_LEGIBLE_PCT_GDP)
 	print("the line reads as zero.")
 

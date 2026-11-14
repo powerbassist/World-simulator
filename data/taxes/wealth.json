@@ -1,0 +1,44 @@
+{
+  "id": "wealth",
+  "name": "Net wealth tax",
+  "summary": "An annual tax on large net fortunes, above a high threshold.",
+  "rate_meaning": "top rate on net wealth per year",
+  "who_pays": [
+    "workers",
+    "pensioners",
+    "urban",
+    "rural",
+    "business"
+  ],
+  "base_share": 4.0,
+  "erosion": 0.8,
+  "zero_ref_pct": 0.5,
+  "rate_range_pct": [
+    0.0,
+    3.0
+  ],
+  "demand_multiplier": 0.25,
+  "opinion_scale_pp": 0.48,
+  "bloc_salience": {
+    "workers": 0.01,
+    "pensioners": 0.02,
+    "urban": 0.01,
+    "rural": 0.02,
+    "business": 0.06
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.7,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.7,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "moved unchanged from economy_constants, opinion_constants and tax_panel",
+    "_note": "Tuning analogue: today's wealth row. The real-yield check for the five is not sourced in this pass."
+  }
+}

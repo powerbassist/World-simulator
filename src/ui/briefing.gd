@@ -340,12 +340,12 @@ func _on_poll(tier: String) -> void:
 ## are bare floats and a negated ledger's are {"": value} keyed by the empty
 ## string (legislature.gd's ledger shape), and _scalar_of() reads either, so
 ## the reversal preview rides this same walk instead of a second one.
-static func effect_lines(effects: Dictionary, ns, include_bloc := false) -> Array[String]:
+static func effect_lines(effects: Dictionary, _nation, include_bloc := false) -> Array[String]:
 	var out: Array[String] = []
 	for key in effects.get("tax_rates_pct", {}):
 		var v := float(effects["tax_rates_pct"][key])
 		out.append((Strings.t("Raises %s by %s points.") if v > 0.0 else Strings.t("Lowers %s by %s points.")) % [
-			_tax_label(String(key), ns), Num.f(absf(v), 1)])
+			_tax_label(String(key)), Num.f(absf(v), 1)])
 	for key in effects.get("spending_pct_gdp", {}):
 		var v := float(effects["spending_pct_gdp"][key])
 		out.append((Strings.t("Raises %s spending by %s%% of GDP.") if v > 0.0 else Strings.t("Cuts %s spending by %s%% of GDP.")) % [
@@ -393,10 +393,10 @@ static func effect_lines(effects: Dictionary, ns, include_bloc := false) -> Arra
 	return out
 
 
-## Authored keys carry prose labels; a composed key's name lives on the
-## params register its birth wrote -- the register is the label's source, so
-## a key the machine invents is never named by a table here.
-static func _tax_label(key: String, ns) -> String:
+## Authored keys carry prose labels. The player-composed key and its
+## register-read name retired at V5.3 e; a key outside the five (none can
+## land) prints as its id, the spending lines' own fallback.
+static func _tax_label(key: String) -> String:
 	var authored := {
 		"income": Strings.t("the income tax rate"),
 		"corporate": Strings.t("the corporate tax rate"),
@@ -404,10 +404,7 @@ static func _tax_label(key: String, ns) -> String:
 		"capital_gains": Strings.t("the capital gains tax rate"),
 		"wealth": Strings.t("the wealth tax rate"),
 	}
-	if authored.has(key):
-		return String(authored[key])
-	var params: Dictionary = ns.custom_taxes.get(key, {})
-	return Strings.t("%s's rate") % String(params.get("name", key))  # i18n: row-ok a composed tax's name, not a data row
+	return String(authored.get(key, key))
 
 
 ## The five society terms, phrased by the stance they name. The SIGN is the

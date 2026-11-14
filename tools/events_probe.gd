@@ -832,7 +832,7 @@ func _hook_fixture(hook: String):
 		raw["exposure"] = {"route": "press", "kinds": ["personal_wealth"]}
 	var errors: Array[String] = []
 	var ev = GameEvent.from_dict(raw, "events_probe fixture", errors,
-		EconomyK.TAX_KEYS, EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
+		_loader.taxes.keys(), EconomyK.SPENDING_KEYS, OpinionK.BLOC_KEYS, EconomyK.SECTOR_TREND.keys())
 	if not errors.is_empty():
 		printerr("the %s fixture did not load: %s" % [hook, errors])
 		return null

@@ -67,7 +67,7 @@ const RUN_MONTHS := 168
 const SHIFT_CANDIDATES := [0.0005, 0.0010, 0.0020, 0.0040, 0.0080]
 
 ## Swept for (P2). One tax point is worth roughly 0.50 % of GDP
-## (economy_constants.TAX_BASE_SHARE), which is the anchor the cost table reads
+## (the tax library rows' base_share, data/taxes/), which is the anchor the cost table reads
 ## against.
 const GROWTH_BETA_CANDIDATES := [0.10, 0.20, 0.30, 0.50, 0.80]
 

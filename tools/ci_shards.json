@@ -63,7 +63,9 @@
    "tests/test_i18n_lint.gd",
    "tests/test_i18n_fit.gd",
    "tests/test_date_text.gd",
-   "tests/test_i18n_rows_lint.gd"
+   "tests/test_i18n_rows_lint.gd",
+   "tests/test_finance_autumn.gd",
+   "tests/test_tax_library.gd"
   ],
   [
    "tests/test_industry_closure.gd",

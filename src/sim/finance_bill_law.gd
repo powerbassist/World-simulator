@@ -64,6 +64,11 @@ static func position(ns, bill: Dictionary) -> Dictionary:
 	for channel in ["tax_rates_pct", "spending_pct_gdp"]:
 		for key in bill.get(channel, {}):
 			rows.append([channel, String(key), float(bill[channel][key]), float(SK.CHANNEL_COST[channel])])
+	# V5.3 e: a birth reads as its kind's rise from nothing, an abolition as a cut to zero.
+	for kind in bill.get("create", {}):
+		rows.append(["tax_rates_pct", String(kind), float(bill["create"][kind]), float(SK.CHANNEL_COST["tax_rates_pct"])])
+	for kind in bill.get("abolish", []):
+		rows.append(["tax_rates_pct", String(kind), -float(ns.tax_rates_pct.get(kind, 0.0)), float(SK.CHANNEL_COST["tax_rates_pct"])])
 	if bill.has("tax_progressivity"):
 		rows.append(["tax_rates_pct", FK.FALLBACK_TAX_KEY, float(bill["tax_progressivity"]) * FK.PROGRESSIVITY_INCOME_POINTS,
 			float(SK.CHANNEL_COST["tax_rates_pct"])])
@@ -71,9 +76,12 @@ static func position(ns, bill: Dictionary) -> Dictionary:
 		var value: float = row[2]
 		if value == 0.0:
 			continue
-		var table: Dictionary = FK.ANCHOR[row[0]]
+		# A tax kind's anchor is its library row's (V5.3 e); a spending line's is FK's.
+		var spend: bool = row[0] == "spending_pct_gdp"
+		var table: Dictionary = FK.ANCHOR[row[0]] if spend else ns.tax_library
 		var key: String = row[1] if table.has(row[1]) else FK.FALLBACK_TAX_KEY
-		var anchor: Dictionary = table[key]["up" if value > 0.0 else "down"]
+		var sides: Dictionary = table[key] if spend else table[key]["finance_anchor"]
+		var anchor: Dictionary = sides["up" if value > 0.0 else "down"]
 		var weight: float = absf(value) * float(row[3])
 		econ += weight * float(anchor["economic"])
 		social += weight * float(anchor["social"])

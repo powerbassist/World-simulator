@@ -441,6 +441,9 @@ row above: the grain a player moves it in is a bracket notch, which is hundredth
 
 ## 13. The sixth key, overturned at the rule (V4.2)
 
+> [!note] Retired at V5.3 e
+> The player-composed tax below (`ns.custom_taxes`, `Statute`'s `new_tax`, the Tax Code's "Propose a tax") was retired at V5.3 e in favour of the tax library ([[finance-bill]] §9.4); this section is the record of what V4.2 built.
+
 V1.6d refused a sixth tax key — [[v1]] §6's "brackets WITHIN income, not further keys"
 — and `nation_state.gd`'s `tax_progressivity` block recorded the refusal. Both halves of
 that record were right for what V1.6d was asked to build, and the statute book's

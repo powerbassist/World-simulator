@@ -36,7 +36,7 @@ enum { NONE, SCALAR, DEEP }
 enum {
 	NOT_SAVED, VALUE, COPIED, FLOAT_MAP, INT_MAP, STRING_MAP, SORTED_STRINGS, ROWS,
 	FLOAT_MAP_TYPED, STRING_MAP_TYPED, BOOL_MAP_TYPED, PLEDGES, PROGRAMME,
-	COMMODITY_STATE, LAW_LEDGER, DRAFT_BILLS, CUSTOM_TAXES, POLL_PURCHASES,
+	COMMODITY_STATE, LAW_LEDGER, DRAFT_BILLS, POLL_PURCHASES,
 	ASSEMBLY_BILLS, HELD_BILLS,
 }
 
@@ -176,7 +176,6 @@ const FIELDS := [
 	["law_ledger", DEEP, LAW_LEDGER, {}, false],  # bump 38
 	["draft_bills", DEEP, DRAFT_BILLS, {}, false],  # bump 38
 	["custom_laws", DEEP, COPIED, {}, false],  # bump 38
-	["custom_taxes", DEEP, CUSTOM_TAXES, {}, false],  # bump 38
 	["poll_purchases", DEEP, POLL_PURCHASES, {}, false],  # bump 38
 	["assembly_bills", DEEP, ASSEMBLY_BILLS, {}, false],  # bump 38
 	["last_law_result", DEEP, COPIED, {}, false],
@@ -286,6 +285,7 @@ const FIELDS := [
 	["processes", DEEP, ROWS, [], true],  # V5.3 a: absent is nothing in progress
 	["sector_shares", DEEP, COPIED, {}, true],  # V5.3 a: absent is nothing moved (overrides only)
 	["sector_factor", DEEP, NOT_SAVED, {}, true],  # V5.3 a: derived, re-derived on load (Sectors.rebuild)
+	["tax_library", DEEP, NOT_SAVED, {}, true],  # V5.3 e: content, re-attached on load (TaxLibrary.reattach)
 	["sector_priorities", DEEP, COPIED, {}, true],  # V5.3 a: absent is no priority
 	["sector_priority_rest", DEEP, COPIED, {}, true],  # V5.3 a: absent is no wait
 	["sector_drift", DEEP, COPIED, {}, true],  # V5.3 a + b: absent is a drift that begins next month

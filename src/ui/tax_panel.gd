@@ -2,35 +2,29 @@ extends PanelContainer
 
 ## The tax code -- V4.2 T5. The tier's own sentence is why this surface exists
 ## and why budget_panel.gd no longer carries these rows: tax comes out of the
-## Budget panel into its own place. Five authored rates, the brackets lever,
-## every key the composition machine has BORN, and the one flow that births a
-## new one.
+## Budget panel into its own place. Five authored rates and the brackets lever.
+## The player-composed tax (V4.2 T4's "Propose a tax" flow and its born-key
+## rows) retired at V5.3 e, in favour of the tax library.
 ##
-## THE SCAN IS OFF THE REGISTER. The rows are `ns.tax_rates_pct`'s keys --
-## authored five plus any composed key, in that order -- and nothing else: a
-## hand-written key list is this repo's banned failure class, because the key
-## a list does not know is a rate the player can move nowhere. The labels are
-## the only table here: display names keyed BY live keys, with a composed
-## key's name read off the params register its birth wrote. Rows are BUILT
-## from the scan and not from a const: at _ready() no state exists to scan,
-## so the grid fills on the first refresh after setup() and a key born
-## mid-session appears on the next dirty sweep, never by an edit here.
+## THE SCAN IS OFF THE REGISTER. The rows are the nation's tax kinds in force
+## (V5.3 e, data/taxes/), in library order. Rows are BUILT from the scan and not from a const:
+## at _ready() no state exists to scan, so the grid fills on the first refresh
+## after setup().
 ##
 ## Reads simulation state and never writes it. The single exception is the
-## Commit button and the draft button, which send player intent back as
-## explicit commands -- Budget.commit() and Statute.draft(). Pending slider
+## Commit button, which sends player intent back as an explicit command --
+## the finance bill's tabling. Pending slider
 ## positions live here, not in the simulation. The commit reuses the budget
 ## panel's verb and its per-key lever maxima; the brief asked for the house
 ## idioms, not a second way to move a rate.
 
 ## Commit tables the rates into the finance bill (docs/design/finance-bill.md).
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
-const C = preload("res://src/sim/economy_constants.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
-const SK = preload("res://src/sim/statute_constants.gd")
-const TaxCompose = preload("res://src/ui/tax_compose.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 
 ## The one lever that is not a key in `tax_rates_pct`: it sets no rate, has
@@ -39,9 +33,9 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 ## same reason it always did.
 const PROGRESSIVITY_KEY := "tax_progressivity"
 
-## Display names for the AUTHORED keys, keyed by live key -- presence is the
-## register's question, this table only answers "what is it called". A
-## composed key is named by the params register instead (see _label_for()).
+## Display names for today's five, keyed by live key -- presence is the register's
+## question, this table only answers "what is it called". A kind the table lacks
+## shows its library row's name (V5.3 e).
 const KEY_LABELS := {
 	"income": "Income tax",  # i18n: msgid
 	"corporate": "Corporate tax",  # i18n: msgid
@@ -51,27 +45,13 @@ const KEY_LABELS := {
 	PROGRESSIVITY_KEY: "Income brackets",  # i18n: msgid
 }
 
-## Per-key slider ceilings -- the budget panel's LEVER_MAX rows for the tax
-## side, moved with the levers. `wealth` reads the model bound, so the control
-## and economy_constants cannot drift apart (tests/test_tax.gd asserts that
-## identity). A COMPOSED key has no authored row: its ceiling is MATCHED TO ITS
-## BASE in _lever_max() -- the model prices the PRODUCT base_share x rate, and
-## the birth gate admits only pairs under NEW_TAX_YIELD_CEILING, so the slider
-## may not offer a product the ceiling's own rationale declares unpriceable.
+## The brackets lever's ceiling. A tax kind's is its library row's `rate_range_pct`
+## (V5.3 e): the slider, the loader's range check and the finance bill read one bound.
 const LEVER_MAX := {
-	"income": 70.0,
-	"corporate": 70.0,
-	"vat": 40.0,
-	"capital_gains": 60.0,
-	"wealth": C.WEALTH_RATE_MAX_PCT,
 	PROGRESSIVITY_KEY: TaxK.PROGRESSIVITY_MAX,
 }
 
 signal committed(before: Dictionary, pending: Dictionary)
-
-## The compose flow's product, opened by main.gd in the briefing: the parked
-## draft (ns.draft_bills' own entry) and the id it will carry as a law.
-signal brief_requested_draft(entry: Dictionary, draft_id: String)
 
 var _state
 var _loader
@@ -81,7 +61,6 @@ var _sliders := {}
 var _lever_values := {}
 var _title: Label
 var _rates_grid: GridContainer
-var _bases_box: VBoxContainer
 var _dirty := true
 var _close_button: Button
 var _commit_button: Button
@@ -104,8 +83,6 @@ var _now_books := {}
 ## Budget's line about this tab's draft). Null until wired; every read guards it.
 var budget_panel = null
 var windows = null
-## The compose flow (tax_compose.gd), held for the tests that drive it.
-var _compose
 
 
 func _ready() -> void:
@@ -150,19 +127,11 @@ func _ready() -> void:
 		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		_rates_grid.add_child(head)
 
-	_bases_box = VBoxContainer.new()
-	_bases_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_child(_bases_box)
-
-	_compose = TaxCompose.new(self)
-	body.add_child(_compose)
-
 	root.add_child(_build_buttons())
 
 
 ## One row per live key, built on demand. Called from every path that reads a
-## slider, because the register can grow under the panel (a birth law passes
-## mid-session) and a key with no row is a rate the player cannot move.
+## slider, because no state exists at _ready() to build the rows from.
 func _ensure_rows() -> void:
 	for key in _lever_keys():
 		if _sliders.has(key):
@@ -240,20 +209,12 @@ func setup(state, loader) -> void:
 	_on_revert()
 
 
-## The register, in reading order: the authored five always, then any key the
-## machine has born, in the register's own order. NO HAND-WRITTEN LIST: the
-## register is the whole roster of rows, which is what makes a composed key
-## appear the tick its bill passes rather than the session a list learns it.
+## The register, in reading order: the authored five the nation carries.
 func _lever_keys() -> Array:
 	var ns = _state.player()
 	var keys: Array = []
 	if ns != null:
-		for key in C.TAX_KEYS:
-			if ns.tax_rates_pct.has(key):
-				keys.append(key)
-		for key in ns.tax_rates_pct:
-			if not keys.has(key):
-				keys.append(key)
+		keys.append_array(TaxLibrary.in_force(ns))
 	keys.append(PROGRESSIVITY_KEY)
 	return keys
 
@@ -261,28 +222,13 @@ func _lever_keys() -> Array:
 func _lever_max(key: String) -> float:
 	if LEVER_MAX.has(key):
 		return float(LEVER_MAX[key])
-	# THE BORN KEY'S OWN CEILING (the ultra pass-6 finding): the slider max is
-	# matched to the key's base, because the yield the revenue model prices is
-	# the PRODUCT base_share x rate and the birth gate admits only pairs under
-	# NEW_TAX_YIELD_CEILING. A 100-point slider on a base-4.0 key offered
-	# exactly the product the ceiling exists to refuse -- two clicks from a
-	# legal birth to a 400 %-of-GDP yield. minf keeps NEW_TAX_RATE_MAX as the
-	# absolute cap, so a LOW-base birth keeps its full range (12.0 / 0.06 = 200
-	# caps at 100); the 0.01 floor is divide-by-zero armour for a payload with
-	# no base behind it, not a tuned bound.
-	var ns = _state.player()
-	if ns == null:
-		return SK.NEW_TAX_RATE_MAX
-	var params: Dictionary = ns.custom_taxes.get(key, {})
-	return minf(SK.NEW_TAX_RATE_MAX, SK.NEW_TAX_YIELD_CEILING / maxf(float(params.get("base_share", 0.0)), 0.01))
+	return float(_state.player().tax_library[key]["rate_range_pct"][1])
 
 
 func _label_for(key: String) -> String:
-	if KEY_LABELS.has(key):
-		return tr(String(KEY_LABELS[key]))
-	var ns = _state.player()
-	var params: Dictionary = ns.custom_taxes.get(key, {})
-	return String(params.get("name", key))  # i18n: row-ok a composed tax's name, not a data row
+	if not KEY_LABELS.has(key):
+		return Strings.row_name("taxes", _state.player().tax_library[key])
+	return tr(String(KEY_LABELS[key]))
 
 
 func _on_revert() -> void:
@@ -442,29 +388,6 @@ func _refresh() -> void:
 	_strip.show_effects(float(_effects.get(EffectsStrip.COMMIT, 0.0)), "", "", _effects.has(EffectsStrip.COMMIT),
 		tr("Spending changes not yet committed: %s a year, in the Budget") % EffectsStrip.money_text(_effects[EffectsStrip.ELSEWHERE])
 		if _effects.has(EffectsStrip.ELSEWHERE) else "", float(_effects.get(EffectsStrip.ELSEWHERE, 0.0)))
-	_fill_bases()
-
-
-## What a born key sits on and how its curve behaves -- the params register's
-## own numbers, so a composed rate row is readable without the bill that
-## birthed it. Rebuilt per refresh, so a key that appears mid-session needs
-## no wiring here -- the scan above is the only roster this panel keeps.
-func _fill_bases() -> void:
-	for child in _bases_box.get_children():
-		child.queue_free()
-	var ns = _state.player()
-	var customs: Array = []
-	for key in ns.tax_rates_pct:
-		if ns.custom_taxes.has(key):
-			customs.append(key)
-	if customs.is_empty():
-		return
-	PanelKit.heading(_bases_box, tr("Born keys"))
-	for key in customs:
-		var params: Dictionary = ns.custom_taxes[key]
-		PanelKit.line(_bases_box, tr("%s — base %s%% of GDP, erosion %s, born at %s. Its rate sits in the grid above.") % [
-			String(params.get("name", key)), PanelKit.Num.f(float(params.get("base_share", 0.0)), 2),  # i18n: row-ok a composed tax's name, not a data row
-			PanelKit.Num.f(float(params.get("erosion", 0.0)), 2), PanelKit.Num.f(float(params.get("ref_pct", 0.0)), 1)], PanelKit.Tone.DIM)
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold

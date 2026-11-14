@@ -24,6 +24,7 @@ const Projects = preload("res://src/sim/projects.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const Coercion = preload("res://src/sim/coercion.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
 
 
 static func _ensure_dir() -> void:
@@ -152,6 +153,12 @@ static func load_game(slot: String, loader = null) -> Dictionary:
 
 	var state = GameState.from_dict(parsed["game_state"])
 	if loader != null:
+		# V5.3 e: the tax library is content too, re-attached per nation with its
+		# overrides; a save levying a kind this build does not define is refused, since
+		# its rate would have no model behind it.
+		var lacking := TaxLibrary.reattach(state, loader)
+		if lacking != "":
+			return {"ok": false, "error": "save '%s': %s -- refusing to load it" % [slot, lacking]}
 		# The region register is CONTENT on the loader and is not serialised, so the
 		# load path re-attaches it -- NationState.eu_member's shape, one level up.
 		state.regions = loader.regions

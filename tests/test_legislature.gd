@@ -565,7 +565,7 @@ func _check_the_company_channel_refuses_what_it_must() -> void:
 				"majority": "simple", "effects": cases[label],
 			},
 			"test_legislature.gd", errors,
-			EK.TAX_KEYS, EK.SPENDING_KEYS, OpinionK.BLOC_KEYS, sectors
+			_loader.taxes.keys(), EK.SPENDING_KEYS, OpinionK.BLOC_KEYS, sectors
 		)
 		if errors.is_empty():
 			_fail("a law with %s loaded without an error" % label)
@@ -579,7 +579,7 @@ func _check_the_company_channel_refuses_what_it_must() -> void:
 			"effects": {"company": {"sector": "services", "burden": -0.25}},
 		},
 		"test_legislature.gd", ok,
-		EK.TAX_KEYS, EK.SPENDING_KEYS, OpinionK.BLOC_KEYS, sectors
+		_loader.taxes.keys(), EK.SPENDING_KEYS, OpinionK.BLOC_KEYS, sectors
 	)
 	if not ok.is_empty():
 		_fail("a valid deregulation law was refused: %s" % [ok])

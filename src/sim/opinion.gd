@@ -17,6 +17,7 @@ extends RefCounted
 
 const K = preload("res://src/sim/opinion_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
 ## V1.5a. Read-only, and one-way: society.gd does not preload this file, so the
 ## quality stock cannot see the opinion it moves. That is what keeps the double count
@@ -144,7 +145,7 @@ static func _tick_nation(ns) -> void:
 		# Falls back to the global constant, which is what the seven nations with no
 		# data/outlets/ file and every pre-V1.5d save both read.
 		var gain: float = float(ns.framing_gain.get(bloc, K.SALIENCE_GAIN))
-		var weights := salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat, gain)
+		var weights := salience_weights(K.BLOC_SALIENCE_BASE[bloc], sat, gain, TaxLibrary.salience_patch(ns, bloc))
 
 		var score := 0.0
 		for issue in weights:
@@ -181,7 +182,7 @@ static func _tick_nation(ns) -> void:
 
 		var size := float(K.BLOC_SIZE[bloc])
 		for issue in weights:
-			national[issue] = float(national[issue]) + size * float(weights[issue])
+			national[issue] = float(national.get(issue, 0.0)) + size * float(weights[issue])
 
 	ns.issue_salience = national
 	ns.overall_approval_pct = overall_approval(ns)
@@ -196,40 +197,19 @@ static func issue_satisfaction(ns) -> Dictionary:
 	sat["jobs"] = _scaled(ns.start_unemployment_pct - ns.unemployment_pct, K.JOBS_SCALE_PP)
 	sat["growth"] = _scaled(ns.growth_annual_pct - ns.trend_annual_pct, K.GROWTH_SCALE_PP)
 
-	# V1.6d: the scale is per key, and sparse. A tax with no TAX_SCALE_PP_BY_KEY entry
-	# reads the shared constant; V3.0 put income on its own key (24.0, the fiscal
-	# re-weight's lever) and moved the shared default to 16.0, so corporate and VAT
-	# remain identical through this loop while income does not; `wealth` and
-	# `capital_gains` are not on income's rate scale and the table says why. This
-	# loop is also why a TAX_KEYS entry cannot quietly skip ISSUE_KEYS -- it would
-	# write a satisfaction with no salience row anywhere to read it, which is the
-	# number-nothing-reads failure docs/diplomacy-model.md names.
-	for key in C.TAX_KEYS:
+	# One issue per tax kind IN FORCE, at the kind's own `opinion_scale_pp` (data/taxes/,
+	# V5.3 e; V1.6d's per-key scales and V3.0's 24 for income moved there unchanged:
+	# `wealth` and `capital_gains` are not on income's rate scale). A kind not in force
+	# writes no satisfaction: it is no issue, and salience_weights() gives it no weight.
+	# A kind born in play has no start rate, so its rate from nothing is the grievance.
+	for key in TaxLibrary.in_force(ns):
 		var d_rate: float = (
 			float(ns.tax_rates_pct.get(key, 0.0))
 			- float(ns.start_tax_rates_pct.get(key, 0.0))
 		)
 		sat["tax_%s" % key] = _scaled(
-			-d_rate, float(K.TAX_SCALE_PP_BY_KEY.get(key, K.TAX_SCALE_PP))
+			-d_rate, float(ns.tax_library[key]["opinion_scale_pp"])
 		)
-	# V4.2 T4. A COMPOSED key prices here, off the params register, at the
-	# SHARED TAX_SCALE_PP -- and never at a TAX_SCALE_PP_BY_KEY entry: the
-	# table's fits were per key against the reachable spans of taxes the model
-	# authored, so a per-key override for a player-proposed key is authored
-	# constants' privilege and is not built (the recorded bound, not an
-	# omission to fix later). The start reads 0.0 by construction -- the
-	# zero-reference rule; the tax did not exist at new-game. THE BOUND WORTH
-	# NAMING: no bloc's authored salience table carries a row for a key that
-	# did not exist when it was written, so this satisfaction reaches approval
-	# through the economy the tax moves -- the demand impulse, then jobs and
-	# growth -- and not through a weight of its own. docs/tax-model.md's
-	# sixth-key section records both halves.
-	for key in ns.custom_taxes:
-		var d_custom: float = (
-			float(ns.tax_rates_pct.get(key, 0.0))
-			- float(ns.start_tax_rates_pct.get(key, 0.0))
-		)
-		sat["tax_%s" % key] = _scaled(-d_custom, float(K.TAX_SCALE_PP))
 
 	for key in C.SPENDING_KEYS:
 		var d_spend: float = (
@@ -441,7 +421,16 @@ static func programme_credit(ns) -> float:
 ## only the docs enforce is one an author breaks by not reading them. Every caller now
 ## states which gain it wants out loud, and tests/test_unrest.gd reads unrest.gd to
 ## check it still says SALIENCE_GAIN.
-static func salience_weights(base: Dictionary, sat: Dictionary, gain: float) -> Dictionary:
+##
+## `patch` is V5.3 e's (TaxLibrary.salience_patch: the nation's tax kinds against this
+## core table) and the parent's ruling 2 of 2026-11-14 as code: NO renormalisation. A
+## core tax issue the nation does not levy is set to 0 AFTER the division, its share
+## left in the total, so the bloc's other issues keep their weights; a kind in force
+## the core table has no slot for weighs its own library weight over the same total,
+## outside the normalised sum. Renormalising instead would lift every other business
+## weight 25.5 % on an abolished corporate tax. Empty for a nation levying exactly the
+## five, so its weights are bit-identical to the core table's.
+static func salience_weights(base: Dictionary, sat: Dictionary, gain: float, patch: Dictionary = {}) -> Dictionary:
 	var weights := {}
 	var total := 0.0
 	for issue in base:
@@ -455,6 +444,9 @@ static func salience_weights(base: Dictionary, sat: Dictionary, gain: float) -> 
 
 	for issue in weights:
 		weights[issue] = float(weights[issue]) / total
+	for issue in patch:
+		var extra_severity: float = clampf(-float(sat.get(issue, 0.0)), 0.0, 1.0)
+		weights[issue] = 0.0 if base.has(issue) else float(patch[issue]) * (1.0 + gain * extra_severity) / total
 	return weights
 
 

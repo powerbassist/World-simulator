@@ -187,21 +187,6 @@ static func draft_bills(raw) -> Dictionary:
 	return out
 
 
-## V4.2 T4: the four params are three floats and a name, and a payload key that
-## is not one of them has no business in a register the revenue lines iterate.
-static func custom_taxes(raw) -> Dictionary:
-	var out := {}
-	for tax_key in raw:
-		var params: Dictionary = raw[tax_key]
-		out[String(tax_key)] = {
-			"name": String(params.get("name", "")),
-			"base_share": float(params.get("base_share", 0.0)),
-			"erosion": float(params.get("erosion", 0.0)),
-			"ref_pct": float(params.get("ref_pct", 0.0)),
-		}
-	return out
-
-
 ## V4.2 T5: month and cost are the two fields a record of money spent keeps.
 static func poll_purchases(raw) -> Dictionary:
 	var out := {}

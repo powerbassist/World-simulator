@@ -348,12 +348,6 @@ func _ready() -> void:
 	_budget_panel.pair(_tax_panel, _windows)
 	_tax_panel.committed.connect(func(before, tabling):
 		_fiscal_committed(tr("Tax code change"), tabling, before))
-	# A finished draft opens the briefing on itself: the price it was quoted
-	# and the drafting months are what the press just bought.
-	_tax_panel.brief_requested_draft.connect(func(entry, draft_id):
-		_briefing.open_for_draft(entry, draft_id, _state, _loader)
-		_briefing.show()
-	)
 
 	# V4.2 T5. The bill briefing, over every bill the player can put to the
 	# assembly. Not a window in the registry: it is not a surface the player

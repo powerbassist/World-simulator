@@ -16,9 +16,6 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const LawConditions = preload("res://src/sim/law_conditions.gd")
-# V4.2. The yield ceiling lives here (a constants leaf -- no cycle: statute.gd
-# preloads this file, and this file preloads only its constants and leaves).
-const StatuteK = preload("res://src/sim/statute_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 ## V4.2. The composed-law factory: the legality scan reads ns.custom_laws
 ## through Law.composed_register() because statute.gd preloads THIS file (the
@@ -77,13 +74,9 @@ static func init_nation(ns) -> void:
 	ns.law_cooldown_months = {}
 	ns.law_ledger = {}
 	# V4.2 T2. The composition registers, the same rule: whatever WRITES a
-	# field resets it, and both are written in statute.gd. V4.2 T4 adds the
-	# params register beside them -- written in THIS file's apply() birth
-	# step, so it resets here with its fellow registers and not in
-	# statute.gd's own init (there is none; the tick is stateless).
+	# field resets it, and both are written in statute.gd.
 	ns.draft_bills = {}
 	ns.custom_laws = {}
-	ns.custom_taxes = {}
 	# V4.2 T5. The paid-poll register, the same rule: its only writer is
 	# statute.buy_poll(), so it resets beside the registers that writer's
 	# machine owns and not in any file that merely reads it.
@@ -448,26 +441,6 @@ static func available(ns, all_laws: Array) -> Array:
 		# its own repealer here.
 		if law.repeals != "" and not ns.law_ledger.has(law.repeals):
 			continue
-		# THE YIELD-CAP OFFER GATE, the ultra pass-17 finding: a birth act is
-		# repeatable by design (once:false, no passage cooldown), but the
-		# revenue model prices at most NEW_TAX_YIELD_CEILING / base of a born
-		# key -- the same cap the tax panel's slider has carried since the
-		# pass-14 round. A re-passage whose pending product would exceed the
-		# cap changes nothing the model can price, so the act is not offered:
-		# the _already_in_force shape ("a button that changes nothing is not
-		# offered"), which also stops the direct propose route, whose legality
-		# scan is this very list. The yield gate in Budget.apply_pending stays
-		# as the backstop for routes that bypass this filter.
-		var birth: Dictionary = law.new_tax
-		var birth_key := String(birth.get("key", ""))
-		if not birth.is_empty() and ns.custom_taxes.has(birth_key):
-			# The birth's per-passage DELTA rides the effects (statute.gd's
-			# compose merges it into tax_rates_pct); new_tax carries only the
-			# registration params.
-			var base: float = maxf(float(ns.custom_taxes[birth_key].get("base_share", 0.0)), 0.01)
-			var pending_rate: float = float(ns.tax_rates_pct.get(birth_key, 0.0)) 				+ float(law.effects.get("tax_rates_pct", {}).get(birth_key, 0.0))
-			if base * pending_rate > StatuteK.NEW_TAX_YIELD_CEILING:
-				continue
 		if not _constitution_allows(ns, law):
 			continue
 		if _already_in_force(ns, law):
@@ -713,13 +686,6 @@ static func resolve_vote(ns, party_list: Array, law, referendum := false, suppor
 static func apply(state, ns, law, loader) -> void:
 	if law.repeals != "":
 		_subtract_ledger(state, ns, loader, law.repeals)
-	# V4.2 T4. A BIRTH registers its params BEFORE the rate moves, and this is
-	# the ONE registration site: the rate's own application runs through
-	# apply_effects() -> Budget.apply_pending, which refuses a pending rate whose
-	# key has no params behind it -- so a birth that applied its rate first
-	# would be refused by its own applier. One writer, one registration site.
-	if not law.new_tax.is_empty():
-		_register_new_tax(ns, law)
 	var before := _effect_snapshot(ns, law.effects)
 	apply_effects(state, ns, law.effects, loader)
 	_record_ledger(state, ns, law, before, _effect_snapshot(ns, law.effects))
@@ -823,35 +789,6 @@ static func _ledger_merge(into: Dictionary, from: Dictionary) -> void:
 			var keyed: Dictionary = from[channel]
 			for sub_key in keyed:
 				_ledger_add(into, channel, sub_key, float(keyed[sub_key]))
-
-
-## V4.2 T4. The ONE writer of ns.custom_taxes: a birth's params move onto the
-## register in the shape the revenue lines and the save round-trip read --
-## {name, base_share, erosion, ref_pct}. The Law's carrier holds `key` too
-## (it names what to register); the ENTRY does not store it, because the
-## register is keyed by it and a copy inside would be a second answer. The
-## guard's remaining job is the UNNAMED key, refused loudly -- a birth with no
-## key cannot be registered. An ALREADY-REGISTERED key is a QUIET no-op (the
-## ultra pass-4 finding): composed birth laws are once:false by design
-## (statute.gd's _compose), so a second passage of the same act is ordinary
-## play -- the existing params entry wins (an overwrite would silently
-## re-price a tax already on the books) and the rate re-adds through
-## apply_effects() like any repeatable tax law. Typed field by field, the
-## exact shape from_dict() rebuilds, so a live register and a loaded one
-## cannot differ in shape.
-static func _register_new_tax(ns, law) -> void:
-	var key := String(law.new_tax.get("key", ""))
-	if key == "":
-		push_error("legislature: birth of tax key '%s' refused -- unnamed" % key)
-		return
-	if ns.custom_taxes.has(key):
-		return
-	ns.custom_taxes[key] = {
-		"name": String(law.new_tax.get("name", "")),
-		"base_share": float(law.new_tax.get("base_share", 0.0)),
-		"erosion": float(law.new_tax.get("erosion", 0.0)),
-		"ref_pct": float(law.new_tax.get("ref_pct", 0.0)),
-	}
 
 
 ## The ledger entry's realized channels for one law, {} when none --
@@ -979,8 +916,7 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 ## THE BUDGET FLOOR, the ultra pass-8 finding: the two budget channels have no
 ## clamp -- commit() writes them verbatim and every UI writer floors its slider
 ## at 0.0 -- so a repeal's negation must never land a NEGATIVE rate, a state
-## the birth gate's own words refuse ("a negative birth rate is not a rate")
-## and the revenue model turns into an unpriced payout. The formula floors the
+## the revenue model turns into an unpriced payout. The formula floors the
 ## RESULTING RATE at zero through both directions: a raise-removal lands what
 ## the register holds (current 0, recorded +5 -> 0 removal), and a
 ## cut-restoration passes whole (recorded -5, current 20 -> +5, back to 25).

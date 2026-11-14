@@ -360,7 +360,7 @@ func _check_the_position_follows_the_size_and_the_anchors() -> void:
 	# A VAT rise as big as the reference size reads wholly as VAT's anchor.
 	var points := FK.REF_SIZE / 0.2
 	var big := FinanceBillLaw.position(ns, {"tax_rates_pct": {"vat": points}})
-	var anchor: Dictionary = FK.ANCHOR["tax_rates_pct"]["vat"]["up"]
+	var anchor: Dictionary = ns.tax_library["vat"]["finance_anchor"]["up"]
 	if not is_equal_approx(float(big["economic"]), float(anchor["economic"])) or not is_equal_approx(float(big["social"]), float(anchor["social"])):
 		_fail("position: a reference-size VAT rise does not sit at its anchor: %s vs %s" % [big, anchor])
 	var half := FinanceBillLaw.position(ns, {"tax_rates_pct": {"vat": points / 2.0}})

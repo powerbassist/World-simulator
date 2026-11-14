@@ -116,7 +116,7 @@ static func load_laws(loader, laws_dir: String) -> void:
 			if typeof(entry) != TYPE_DICTIONARY:
 				loader.errors.append("%s: laws[%d] is not an object" % [fname, i])
 				continue
-			var law = Law.from_dict(entry, fname, loader.errors, C.TAX_KEYS, C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys())
+			var law = Law.from_dict(entry, fname, loader.errors, loader.taxes.keys(), C.SPENDING_KEYS, OpinionK.BLOC_KEYS, C.SECTOR_TREND.keys())
 			law.magnitude = LawMagnitude.parse(entry, law.id, law.constitutional, fname, loader.errors)
 			loader.law_category[law.id] = LawCategory.parse(entry, law.id, fname, loader.errors)
 			if law.id != "":

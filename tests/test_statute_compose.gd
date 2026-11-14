@@ -5,11 +5,8 @@ extends SceneTree
 ## The load-bearing pins:
 ##   - REFUSALS: an empty channel set, an unknown channel (bloc_offset and
 ##     institutional alike -- the price is the machine's, the settings are
-##     authored content's), a position outside [-1, 1], an over-budget size,
-##     and a new_tax key colliding with the authored five. T2's interim
-##     refusal of a VALID new_tax is GONE -- T4 wired the params register, so
-##     acceptance is the pin here and the full birth lifecycle is
-##     tests/test_statute_tax.gd's;
+##     authored content's), a position outside [-1, 1] and an over-budget
+##     size (V4.2 T4's tax birth retired at V5.3 e);
 ##   - THE BUDGET IS ARITHMETIC: size sums CHANNEL_COST over the spec's
 ##     magnitudes, months = DRAFT_MONTHS_BASE + size x DRAFT_MONTHS_PER_SIZE
 ##     (rounded up), and the derived price is NON-EMPTY -- the all-upside
@@ -122,30 +119,8 @@ func _test_refusals() -> void:
 	if bool(r.get("ok", true)):
 		_fail("an over-budget size (40 points x 0.2 = 8.0 of 6.0) must be refused")
 
-	var colliding := base.duplicate()
-	colliding["channels"] = {"tax_rates_pct": {"income": 1.0}}
-	colliding["new_tax"] = {"key": "vat", "base_share": 0.05, "erosion": 0.7, "rate": 10.0}
-	r = Statute.draft(gs, ns, _loader, colliding)
-	if bool(r.get("ok", true)):
-		_fail("a new_tax key colliding with the authored five must be refused")
-	if String(r.get("refusal", "")).find("already exists") == -1:
-		_fail("the collision refusal must name the collision, not a generic refusal: '%s'" % r.get("refusal", ""))
-
 	if not ns.draft_bills.is_empty():
 		_fail("a refused draft must not park anything")
-
-	# V4.2 T4. A VALID new_tax DRAFTS -- T2's interim refusal ("not offered
-	# yet") is gone because T4 wired the params register; T3's sweep had
-	# already held the bands this rides behind. The full birth lifecycle is
-	# tests/test_statute_tax.gd's.
-	var birth := base.duplicate()
-	birth["channels"] = {"tax_rates_pct": {"income": 1.0}}
-	birth["new_tax"] = {"key": "carbon", "name": "The Carbon Levy", "base_share": 0.06, "erosion": 0.7, "rate": 25.0}
-	r = Statute.draft(gs, ns, _loader, birth)
-	if not bool(r.get("ok", false)):
-		_fail("a VALID new_tax must draft now that T4 wired the params register: %s" % r.get("refusal", ""))
-	if not ns.draft_bills.has(String(r.get("draft_id", ""))):
-		_fail("the accepted birth must park under its id")
 
 
 func _test_one_channel_spec() -> void:

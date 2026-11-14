@@ -1,0 +1,36 @@
+{
+  "id": "corporate",
+  "name": "Corporate tax",
+  "summary": "A tax on the profits of companies.",
+  "rate_meaning": "statutory rate on company profits",
+  "who_pays": [
+    "business"
+  ],
+  "base_share": 0.18,
+  "erosion": 0.55,
+  "zero_ref_pct": 25.0,
+  "rate_range_pct": [
+    0.0,
+    70.0
+  ],
+  "demand_multiplier": 0.4,
+  "opinion_scale_pp": 16.0,
+  "bloc_salience": {
+    "business": 0.25
+  },
+  "progressive": false,
+  "finance_anchor": {
+    "up": {
+      "economic": -0.6,
+      "social": 0.0
+    },
+    "down": {
+      "economic": 0.6,
+      "social": 0.0
+    }
+  },
+  "reference": {
+    "_source": "moved unchanged from economy_constants, opinion_constants and tax_panel",
+    "_note": "Tuning analogue: today's corporate row. The real-yield check for the five is not sourced in this pass."
+  }
+}

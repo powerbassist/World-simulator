@@ -89,6 +89,11 @@
         "month": 5
       }
     },
+    "finance_bill": {
+      "autumn_month": 10,
+      "_source": "Loi organique relative aux lois de finances (LOLF), art. 39: the projet de loi de finances is tabled by the first Tuesday of October",
+      "_note": "The month the autumn finance bill may create or abolish a tax (docs/design/finance-bill.md section 5)."
+    },
     "formation": {
       "_source": "authored",
       "_note": "President appoints the Prime Minister; there is no investiture vote. A motion de censure carries only with an absolute majority of the members (289 of 577) -- abstentions and absences count as against. Art. 49 of the 1958 Constitution; connexionfrance.com 'What is a motion de censure'.",

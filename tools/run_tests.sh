@@ -36,6 +36,8 @@ tests=(
   tests/test_election_panel.gd
   tests/test_legislature.gd
   tests/test_finance_bill.gd
+  tests/test_finance_autumn.gd
+  tests/test_tax_library.gd
   tests/test_amendment.gd
   tests/test_transition.gd
   tests/test_scenario.gd

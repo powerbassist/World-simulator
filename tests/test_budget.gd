@@ -33,6 +33,7 @@ const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const DefenceK = preload("res://src/sim/defence_constants.gd")
 const Relations = preload("res://src/core/relations.gd")
 const C = preload("res://src/sim/economy_constants.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -105,10 +106,10 @@ func _check_france_unchanged_by_v1_2a() -> void:
 		_fail("FRA's starting tax rates moved: %s" % [fra.tax_rates_pct])
 
 	# Erosion is centred on the nation's own start, so at new-game it must be
-	# exactly 1.0 -- the modelled revenue line is then TAX_BASE_SHARE * rate,
+	# exactly 1.0 -- the modelled revenue line is then the kind's base_share * rate,
 	# nothing else, checked to float precision.
-	for key in C.TAX_KEYS:
-		var expected: float = float(C.TAX_BASE_SHARE[key]) * float(fra.tax_rates_pct[key])
+	for key in TaxLibrary.in_force(fra):
+		var expected: float = float(fra.tax_library[key]["base_share"]) * float(fra.tax_rates_pct[key])
 		var actual: float = float(fra.revenue_pct_gdp[key])
 		if absf(actual - expected) > 1e-9:
 			_fail("FRA's %s revenue line is %.9f, expected erosion-free %.9f at new-game" % [key, actual, expected])

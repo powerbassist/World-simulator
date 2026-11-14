@@ -517,6 +517,11 @@ func _test_unrest_preloads_are_exactly_these() -> void:
 		"res://src/sim/siting.gd",
 		"res://src/sim/regions.gd",
 		"res://src/sim/migration.gd",
+		# V5.3 e: the tax library's salience patch, so a tax the nation levies beyond
+		# the core table (or a core one it abolished) reaches the grievance the way it
+		# reaches approval. It preloads only opinion_constants.gd; the closure walk
+		# below checks it cannot reach economy.gd.
+		"res://src/core/tax_library.gd",
 	]
 	for line in src.split("\n"):
 		if not line.strip_edges().begins_with("const"):
@@ -641,6 +646,7 @@ func _test_the_place_adds_no_reverse_edge() -> void:
 		"res://src/sim/siting.gd",
 		"res://src/sim/regions.gd",
 		"res://src/sim/migration.gd",
+		"res://src/core/tax_library.gd",
 	]
 	while not queue.is_empty():
 		var path := String(queue.pop_back())

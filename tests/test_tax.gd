@@ -26,6 +26,8 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const TaxPanel = preload("res://src/ui/tax_panel.gd")
+const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
 
 const START_YEAR := 2026
 
@@ -60,22 +62,17 @@ func _init() -> void:
 	_finish()
 
 
-## Five keys, and every table keyed by tax has all five. A missing entry is a crash at the
-## first tick rather than a wrong number, but the check is cheap and it is the one that
-## catches a sixth tax added to TAX_KEYS alone.
+## The authored five, each with its library row. The per-key tables this check once held
+## equal (base share, erosion, multiplier, zero reference) are one row per kind in
+## data/taxes/ since V5.3 e, and TaxesLoader.parse_row refuses a row missing any of them
+## -- tests/test_tax_library.gd pins that refusal.
 func _check_five_taxes_and_the_tables_agree() -> void:
-	if C.TAX_KEYS.size() != 5:
-		_fail("TAX_KEYS has %d entries -- docs/tiers/v1.md section 6's target is five taxes" % C.TAX_KEYS.size())
-	for key in C.TAX_KEYS:
-		if not C.TAX_BASE_SHARE.has(key):
-			_fail("economy_constants.TAX_BASE_SHARE has no entry for the tax '%s'" % key)
-		if not C.TAX_EROSION.has(key):
-			_fail("economy_constants.TAX_EROSION has no entry for the tax '%s'" % key)
-		if not C.MULT_TAX.has(key):
-			_fail("economy_constants.MULT_TAX has no entry for the tax '%s'" % key)
-		if not C.EROSION_ZERO_REF_PCT.has(key):
-			_fail("economy_constants.EROSION_ZERO_REF_PCT has no entry for the tax '%s'" % key)
-		# opinion.gd writes sat["tax_%s"] for every TAX_KEYS entry, so a key with no
+	if TaxesLoader.FIRST.size() != 5:
+		_fail("TaxesLoader.FIRST has %d entries -- docs/tiers/v1.md section 6's target is five taxes" % TaxesLoader.FIRST.size())
+	for key in TaxesLoader.FIRST:
+		if not _loader.taxes.has(key):
+			_fail("the tax library has no row for the authored tax '%s'" % key)
+		# opinion.gd writes sat["tax_%s"] for every core kind in force, so a key with no
 		# ISSUE_KEYS entry is a satisfaction nothing reads -- docs/diplomacy-model.md's
 		# named failure. This is the check that makes "add the tax but not the issue"
 		# impossible to do quietly.
@@ -140,7 +137,7 @@ func _check_brackets_write_no_revenue_line() -> void:
 	for forbidden in ["progressivity", "tax_progressivity", "brackets"]:
 		if ns.revenue_pct_gdp.has(forbidden):
 			_fail("committing a bracket change created a '%s' revenue line -- section 6's 'without a fourth revenue channel' is broken" % forbidden)
-	if ns.revenue_pct_gdp.size() != C.TAX_KEYS.size() + 3:
+	if ns.revenue_pct_gdp.size() != TaxLibrary.in_force(ns).size() + 3:
 		_fail("the revenue dictionary has %d lines against five taxes plus other, tariffs and dividends" % ns.revenue_pct_gdp.size())
 
 
@@ -159,7 +156,7 @@ func _check_brackets_cost_revenue_through_the_base() -> void:
 	if not (steep_income < flat_income):
 		_fail("a steeper income schedule collected %.4f against a flatter one's %.4f -- the base price is missing or backwards" % [steep_income, flat_income])
 
-	for key in C.TAX_KEYS:
+	for key in TaxLibrary.in_force(flat.player()):
 		if key == "income":
 			continue
 		if float(steep.player().revenue_pct_gdp[key]) != float(flat.player().revenue_pct_gdp[key]):
@@ -228,33 +225,39 @@ func _check_progressivity_is_bounded() -> void:
 		_fail("a state carrying an out-of-band schedule was not clamped on read")
 
 
-## The model bound and the control cannot drift apart. tax_panel.LEVER_MAX reads
-## economy_constants.WEALTH_RATE_MAX_PCT rather than authoring 3.0 a second time, and this
-## is the check that keeps it that way. V4.2 T5 moved the tax levers off
-## budget_panel into their own surface, so the identity moved with them -- and
-## the old panel staying clean of tax keys is pinned beside it, so a lever
-## cannot quietly grow back in two places.
+## The model bound and the control cannot drift apart. Since V5.3 e a tax kind's slider
+## reads its library row's rate_range_pct ceiling, so the check is that tax_panel.LEVER_MAX
+## carries no kind's ceiling of its own: a copied number there would shadow the row (the
+## live slider against the row is tests/test_statute_surfaces.gd's). V4.2 T5 moved the
+## tax levers off budget_panel into their own surface, so the identity moved with them --
+## and the old panel staying clean of tax keys is pinned beside it, so a lever cannot
+## quietly grow back in two places.
 func _check_the_wealth_lever_matches_the_model_bound() -> void:
-	if float(TaxPanel.LEVER_MAX["wealth"]) != C.WEALTH_RATE_MAX_PCT:
-		_fail("the wealth slider runs to %.2f against a model bound of %.2f" % [float(TaxPanel.LEVER_MAX["wealth"]), C.WEALTH_RATE_MAX_PCT])
+	for key in _loader.taxes:
+		if TaxPanel.LEVER_MAX.has(key):
+			_fail("tax_panel.LEVER_MAX copies the '%s' ceiling its library row owns" % key)
 	if float(TaxPanel.LEVER_MAX[TaxPanel.PROGRESSIVITY_KEY]) != K.PROGRESSIVITY_MAX:
 		_fail("the bracket slider and PROGRESSIVITY_MAX disagree")
-	for key in C.TAX_KEYS:
+	for key in _loader.taxes:
 		if BudgetPanel.LEVER_MAX.has(key) or BudgetPanel.LEVER_LABELS.has(key):
 			_fail("budget_panel still carries the '%s' tax lever the Tax Code window owns" % key)
 
 
 ## THE UNITS DECISION, PINNED. A wealth rate is not on income's scale -- its whole
-## reachable span is three points against income's seventy -- so sharing TAX_SCALE_PP
-## would make the largest wealth tax in Europe read as a fraction of a satisfaction. The
-## check is that the wealth scale sits well inside the reachable lever, so a real wealth
-## tax can actually saturate its issue.
+## reachable span is three points against income's seventy -- so sharing the 0-70 taxes'
+## scale would make the largest wealth tax in Europe read as a fraction of a satisfaction.
+## The check is that the wealth scale sits well inside the reachable lever, so a real
+## wealth tax can actually saturate its issue. Each scale is its kind's `opinion_scale_pp`
+## since V5.3 e; corporate and VAT's common value is V1.6d's old shared default.
 func _check_the_wealth_scale_is_not_incomes() -> void:
-	var scale: float = float(OpinionK.TAX_SCALE_PP_BY_KEY.get("wealth", OpinionK.TAX_SCALE_PP))
-	if scale >= C.WEALTH_RATE_MAX_PCT:
-		_fail("the wealth issue saturates at %.2f points against a lever that only reaches %.2f -- it can never saturate" % [scale, C.WEALTH_RATE_MAX_PCT])
-	if scale == OpinionK.TAX_SCALE_PP:
-		_fail("the wealth issue shares income's rate scale, which is the units error TAX_SCALE_PP_BY_KEY exists to fix")
+	var wealth: Dictionary = _loader.taxes["wealth"]
+	var scale: float = float(wealth["opinion_scale_pp"])
+	var ceiling: float = float(wealth["rate_range_pct"][1])
+	var shared: float = float(_loader.taxes["corporate"]["opinion_scale_pp"])
+	if scale >= ceiling:
+		_fail("the wealth issue saturates at %.2f points against a lever that only reaches %.2f -- it can never saturate" % [scale, ceiling])
+	if scale == shared:
+		_fail("the wealth issue shares the 0-70 taxes' rate scale, which is the units error its own scale exists to fix")
 	# And the remaining S5 measured must be untouched by the table existing at all.
 	# V3.0 deliberately ends this for `income`: the agency probe (V2.9b F1)
 	# measured the fiscal pain against the public_finances credit and income's
@@ -262,12 +265,12 @@ func _check_the_wealth_scale_is_not_incomes() -> void:
 	# docs/opinion-model.md and BALANCE_PLAN.md's band table. Corporate and vat
 	# remain on the shared constant, and the bar for adding a key stays what it
 	# was: a per-key override must carry its own measured scale, not a taste.
-	for key in ["corporate", "vat"]:
-		if OpinionK.TAX_SCALE_PP_BY_KEY.has(key):
-			_fail("'%s' gained a per-key scale override, so the constant S5 measured no longer describes it" % key)
-	if float(OpinionK.TAX_SCALE_PP_BY_KEY.get("income", OpinionK.TAX_SCALE_PP)) <= OpinionK.TAX_SCALE_PP:
-		_fail("income's per-key scale (%s) does not exceed the shared constant (%s) — the V3.0 re-weight made income pain WEAKER than the S5 default, not stronger" % [
-			OpinionK.TAX_SCALE_PP_BY_KEY.get("income", OpinionK.TAX_SCALE_PP), OpinionK.TAX_SCALE_PP])
+	if float(_loader.taxes["vat"]["opinion_scale_pp"]) != shared:
+		_fail("corporate and VAT no longer share one scale, so the constant S5 measured no longer describes both")
+	var income_scale: float = float(_loader.taxes["income"]["opinion_scale_pp"])
+	if income_scale <= shared:
+		_fail("income's scale (%s) does not exceed the shared one (%s) — the V3.0 re-weight made income pain WEAKER than the S5 default, not stronger" % [
+			income_scale, shared])
 
 
 ## THE DISCHARGE. All three of section 6's instruments must move the effective index, and
@@ -322,7 +325,7 @@ func _check_the_clamp_is_slack_on_a_reachable_budget() -> void:
 	var state = _new_state("FRA")
 	Budget.commit(state, {
 		"tax_progressivity": K.PROGRESSIVITY_MAX,
-		"tax_rates_pct": {"capital_gains": 60.0, "wealth": C.WEALTH_RATE_MAX_PCT},
+		"tax_rates_pct": {"capital_gains": 60.0, "wealth": float(_loader.taxes["wealth"]["rate_range_pct"][1])},
 	})
 	var offset := absf(Tax.gini_policy_offset(state.player()))
 	if offset >= K.GINI_POLICY_MAX_PT:
