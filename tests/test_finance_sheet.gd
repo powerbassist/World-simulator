@@ -121,6 +121,8 @@ func _check_the_sheet_lists_only_the_changed_rows() -> void:
 	if sheet == null or not sheet.visible:
 		_fail("pressing Review did not open the sheet")
 		return
+	if _panel.get_viewport().gui_get_focus_owner() != _node("SheetTable"):
+		_fail("the sheet's Table does not take the keyboard when the sheet opens")
 	var rows := sheet.find_children("SheetRow_*", "", true, false)
 	if rows.size() != 3:
 		_fail("the sheet lists %d rows for a draft of 3" % rows.size())
@@ -257,6 +259,8 @@ func _check_closing_keeps_the_draft() -> void:
 	(_node("SheetClose") as Button).pressed.emit()
 	if _sheet().visible:
 		_fail("Close did not close the sheet")
+	if _panel.get_viewport().gui_get_focus_owner() != _node("Review"):
+		_fail("closing the sheet does not give the keyboard back to the footer's Review")
 	if _panel.shared_draft().count() != 3:
 		_fail("closing the sheet lost the draft (%d rows left)" % _panel.shared_draft().count())
 

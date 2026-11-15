@@ -311,3 +311,10 @@ func _verbs(tabled: bool, refusal: String, forced: bool) -> void:
 		withdraw.flat = true
 		withdraw.pressed.connect(withdraw_pressed.emit)
 		row.add_child(withdraw)
+
+
+## The keyboard lands on the act when the sheet opens (the player came from the footer's button, which the sheet covers).
+func focus_primary() -> void:
+	var table := find_child("SheetTable", true, false) as Button
+	if table != null and not table.disabled:
+		table.grab_focus()

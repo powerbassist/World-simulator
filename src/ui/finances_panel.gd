@@ -285,10 +285,14 @@ func shared_draft() -> FinanceDraft:
 func _open_sheet() -> void:
 	_sheet.show()
 	_sheet.refresh()
+	_sheet.focus_primary()
 
 
 func _close_sheet() -> void:
 	_sheet.hide()
+	var review := _foot.find_child("Review", true, false) as Button
+	if review != null and review.is_visible_in_tree():
+		review.grab_focus()
 
 
 func _on_discard() -> void:
