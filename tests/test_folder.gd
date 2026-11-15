@@ -49,7 +49,8 @@ func _process(_delta: float) -> bool:
 
 func _open_folder() -> ChiefBriefing:
 	BriefingDriver._games[_main.get_instance_id()]["pending"] = {}
-	BriefingDriver.open(_main, {})
+	BriefingDriver.month_end(_main, {})
+	BriefingDriver.read(_main)  # G1: the folder is the read the player opens
 	return BriefingDriver.card_of(_main)
 
 

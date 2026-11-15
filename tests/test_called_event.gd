@@ -12,7 +12,7 @@ extends SceneTree
 ## to the briefing on its default.
 ##
 ## The called event lands in the QuietEvent step, after the Events step whose hook cards
-## the month's arrivals, so its card comes at the month's end (BriefingDriver.open, with
+## the month's arrivals, so its card comes at the month's end (BriefingDriver.month_end, with
 ## the Regions arrival): checked through that door too.
 
 const Events = preload("res://src/sim/events.gd")

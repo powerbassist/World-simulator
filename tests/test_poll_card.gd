@@ -64,7 +64,6 @@ func _process(_delta: float) -> bool:
 	_step += 1
 	match _step:
 		1:
-			preload("res://src/ui/briefing_driver.gd").suppressed = true
 			_main._clock.set_process(false)
 			_wait = 3
 		2:

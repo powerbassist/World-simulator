@@ -2,21 +2,18 @@ extends RefCounted
 
 ## The monthly briefing's wiring -- V5.3-0, docs/design/v5.3-0-readability.md 2.2.
 ## Static over main, as phone_driver.gd is: the card (chief_briefing.gd) to the
-## ranking (priorities.gd), the hold, the hold order and the Go table.
+## ranking (priorities.gd), the chief's mark and caption, and the Go table.
 ##
-## **The hold order** (2.2's table): an election result owns the pause first, and
-## the briefing opens on its dismissal (or not at all after a defeat); the
-## term-start offer, an interrupt and a holding card keep their own holds, and the
-## briefing never releases them -- its closing button reads "Next: ..." and opens
-## the surface that still holds, so dismissing it never leaves the player before a
-## clock that does not move (GLM's finding 5). The front page waits for this card
-## as it waits for the count's plate (plate_for).
+## **G1, the chief off the clock** (chief-briefing-brief.md; the author, 2026-11-15:
+## "Jamais"): a month end never opens the card and never pauses. month_end() ranks the
+## month, keeps it, puts the month's consequence cards and sector notes in the inbox,
+## names the first line on the mark in the title bar and, when he has something new,
+## drops his line under it as a caption. The Messages setting "only when new" went with
+## the hold. The card opens only when the player asks (the mark, read()): that read
+## holds the clock while it is up, outside the modal budget, until G2 retires it.
 ##
-## **The author's call 2** ("Réglage « si nouveau »"): with Messages' "Only when
-## something is new", a month whose three are all last month's three does not stop.
-##
-## A Go closes the card by the same rule as Continue, then opens its target (OPINION:
-## a Go that left the clock paused would strand a pause the clock line cannot name).
+## Under the invited read the old hold order stands: an interrupt or the term-start
+## offer still holding is named by the closing button ("Next: ..."), which opens it.
 
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
@@ -29,8 +26,6 @@ const Music = preload("res://src/ui/music.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
 const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
-const MessageSettings = preload("res://src/ui/message_settings.gd")
-const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Events = preload("res://src/sim/events.gd")
@@ -40,6 +35,7 @@ const Voices = preload("res://src/core/voices.gd")
 const Voice = preload("res://src/ui/voice.gd")
 const Staff = preload("res://src/sim/staff.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const ChiefMarkView = preload("res://src/ui/chief_mark_view.gd")
 
 ## The chief has three lines a situation (#226: 4 chiefs x 3 situations x 3).
 const CHIEF_VARIANTS := 3
@@ -49,10 +45,6 @@ const LINE_CARD := Voice.CHIEF_CARD
 const SPOKEN := "spoken"  # i18n: ok a meta key
 
 static var _games := {}
-## A test seam: a test of another surface drives whole months and would otherwise
-## meet the briefing's dimmed card over what it clicks. The briefing's own tests
-## leave it false.
-static var suppressed := false
 
 
 static func register(main) -> void:
@@ -70,6 +62,11 @@ static func register(main) -> void:
 	main._polling_panel.calm_requested.connect(func(tab: String, bloc: String) -> void: _open_laws_or(main, tab, bloc))
 	main._hud.inbox.card_action.connect(func(id: String, _i: int) -> void:  # V5.3 B7: a bill card's Go
 		if main._assembly_news.take_go(id): _open_laws_or(main, "legislature", ""))
+	# G1: the mark opens the read; an answered file ranks the month again, so the mark
+	# never names a file that is gone (the brief's "no stale line").
+	main._hud.title_bar.chief_pressed.connect(func() -> void: read(main))
+	main._hud.inbox.card_closed.connect(func(_id: String) -> void: ChiefMarkView.refresh(main, true))
+	main._hud.inbox.card_dismissed.connect(func(_id: String) -> void: ChiefMarkView.refresh(main, true))
 
 
 static func card_of(main) -> ChiefBriefing:
@@ -82,30 +79,33 @@ static func showing(main) -> bool:
 
 
 ## The Elections step's front page waits for what owns the screen after the count:
-## the briefing when it will open this month, else the count's plate, else nothing.
+## the count's plate, else nothing -- the briefing no longer opens by itself (G1). The
+## month's report is kept here for after_election, which runs on the plate's dismissal.
 static func plate_for(main, report: Dictionary) -> Control:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
+	if not game.is_empty():
+		game["report"] = report
 	var results: Array = report.get("election_results", [])
-	if not game.is_empty() and _will_show(main, game, report):
-		return game["card"]
 	return null if results.is_empty() else main._election_panel
 
 
 ## _finish_month's tail on a month with no result on screen: the term start first
-## (its hold and card are the briefing's priority 1), then the briefing.
+## (its hold and card are the briefing's priority 1), then the month's ranking.
 static func finish_month(main, report: Dictionary) -> void:
 	main._enforce_term_start_programme()
-	open(main, report)
+	month_end(main, report)
 
 
 ## The count's plate dismissed after a win: the same tail, on the month it closed.
 static func after_election(main) -> void:
 	main._enforce_term_start_programme()
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
-	open(main, game.get("report", {}))
+	month_end(main, game.get("report", {}))
 
 
-static func open(main, report: Dictionary) -> void:
+## The month's tail (G1): B7's calls, the month ranked and kept, its cards and sector
+## notes in the inbox, the mark named, and the caption when he speaks. Never a pause.
+static func month_end(main, report: Dictionary) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	var ns = main._state.player() if main._state != null else null
 	var cards: Array = game.get("month_cards", [])
@@ -114,42 +114,36 @@ static func open(main, report: Dictionary) -> void:
 		RegionArrival.check(main)
 		preload("res://src/ui/desk_cards.gd").card_called(main)  # B7: the quiet-month call comes after the Events hook
 		preload("res://src/ui/council_cards.gd").check(main)  # B7: a treaty at home, a division the player swings
-	# The month's crossings: a line on the card, or a note when the card is not shown or
-	# ranked them out (they have no deadline, so its footer does not catch them either).
+	# The month's consequence cards and its crossings go to the inbox every month: no card
+	# says them on its own now (the brief's "What must hold": as on a month not shown).
 	var slipped: Array = [] if ns == null else SectorWarningView.note_cards(ns, main._loader, int(main._state.year) * 12 + int(main._state.month))
-	if game.is_empty() or ns == null or not bool(ns.in_government) or not _will_show(main, game, report):
-		# A month the briefing does not show keeps its consequence cards in the inbox.
-		for card in cards + slipped:
-			ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
+	cards = preload("res://src/ui/effects_ledger.gd").drop_default_echo(cards)
+	for card in cards + slipped:
+		ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
+	if game.is_empty() or ns == null or not bool(ns.in_government) or not _rank_month(main, game, report):
+		ChiefMarkView.clear(main)
 		return
 	var ranked: Dictionary = game["pending"]
 	game["pending"] = {}
-	if not (ranked["lines"] as Array).any(func(l): return String(l["kind"]) == "sector"):
-		for card in slipped:
-			ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
+	# The memory the month was ranked FROM: a re-rank goes through it again, so novelty
+	# stays the month's (the brief's "novelty stays monthly").
+	game["memory_before"] = game["memory"]
 	game["memory"] = ranked["memory"]
 	game["lines"] = ranked["lines"]
 	game["also"] = ranked.get("also_due", [])
-	game["was_running"] = game["was_running"] or not main._clock.paused
-	main._clock.paused = true
-	var shown := view(main, ranked["lines"], report, game["also"])
-	game["card"].show_view(shown)
-	preload("res://src/ui/folder_driver.gd").refresh(main)
-	# Pre-gate B2: the chief speaks when the situation is not the one he last spoke
-	# in, or a row is new; otherwise the caption shows, silent. Each show turns that
-	# situation's line, so no caption repeats the last one shown for it.
+	# Pre-gate B2: the chief speaks when the situation is not the one he last spoke in,
+	# or a row is new; otherwise he is silent. Each show turns that situation's line.
 	var situation := Priorities.situation(ranked["lines"])
 	var speaks := situation != String(game["said_in"]) or bool(ranked.get("new", false))
 	game["said_in"] = situation
 	game["turns"][situation] = _turn(main, situation) + 1
+	ChiefMarkView.refresh(main)
 	if speaks:
-		speak_once(main, shown, game["card"], "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)])
-	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
+		ChiefMarkView.speak(main, "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)])
 
 
-## A month's consequence card (effects_ledger.gd, a desk card decided for you),
-## held for open(): the briefing says what the month decided on a month it shows
-## (spec 3.3), so the card goes to the inbox only on a month it does not.
+## A month's consequence card (effects_ledger.gd, a desk card decided for you), held
+## for month_end(), which puts it in the inbox with the month's other notes.
 static func hold_card(main, card: Dictionary) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	if card.is_empty():
@@ -160,10 +154,11 @@ static func hold_card(main, card: Dictionary) -> void:
 	game["month_cards"] = game.get("month_cards", []) + [card]
 
 
-## Ranks this month once (cached until the card opens) and says whether it opens.
-static func _will_show(main, game: Dictionary, report: Dictionary) -> bool:
+## Ranks this month once (cached until month_end takes it); false when there is nothing
+## to rank (no player, out of government).
+static func _rank_month(main, game: Dictionary, report: Dictionary) -> bool:
 	var state = main._state
-	if suppressed or state == null or state.player() == null or not bool(state.player().in_government):
+	if state == null or state.player() == null or not bool(state.player().in_government):
 		return false
 	# A load or a new game is a new state: novelty starts over (2.3).
 	if int(game["state_id"]) != state.get_instance_id():
@@ -174,24 +169,12 @@ static func _will_show(main, game: Dictionary, report: Dictionary) -> bool:
 		game["turns"] = {}
 	var now := int(state.year) * 12 + int(state.month)
 	if game["pending"].is_empty() or int(game["pending"].get("month", -1)) != now:
-		var last: Array = game["memory"].get("last", [])
-		game["pending"] = Priorities.rank(state, main._loader, {"memory": game["memory"],
-			"held_events": _held_events(main), "programme_held": main._paused_for_programme
-				or not preload("res://src/sim/programme.gd").available(state, state.player(), main._loader).is_empty()})
+		game["pending"] = ChiefMarkView.rank(main, game["memory"])
 		game["pending"]["month"] = now
-		# V5.3-0 (d): the month's band, from this ranking whether or not the card shows.
+		# V5.3-0 (d): the month's band, from this ranking.
 		Music.follow(main, Priorities.situation(game["pending"]["lines"]), Trends.months_to_vote(state, state.player()),
 			state.get_instance_id())
-		# New: a real priority last month's three did not name. A standing read is
-		# never new -- a quiet month does not stop under the setting (call 2).
-		for l in game["pending"]["lines"]:
-			l["fresh"] = not bool(l["standing"]) and not last.any(func(p): return p["kind"] == l["kind"] and p["subject"] == l["subject"])
-		game["pending"]["new"] = game["pending"]["lines"].any(func(l): return bool(l["fresh"]))
 	game["report"] = report
-	if MessageSettings.briefing_new_only(SettingsPanel.CONFIG_PATH) and not bool(game["pending"]["new"]):
-		# Skipped, but the month is remembered: next month compares with this one.
-		game["memory"] = game["pending"]["memory"]
-		return false
 	return true
 
 
@@ -281,10 +264,10 @@ static func speak_once(main: Node, shown: Dictionary, card: CanvasItem, key: Str
 
 ## Under `main`, where the desk's arriving speakers talk too. A messenger's line
 ## under way, or waiting behind its sting, is never cut and never talked over: the
-## chief waits for it in Voice's queue and speaks when it ends, if `card` is still
-## up. Closing the card cancels the wait; nothing replays later (the parent's TAKE 1
-## on #229 -- an arrival month is a tense or crisis one, so dropping the line
-## silenced the chief exactly when it mattered).
+## chief waits for it in Voice's queue and speaks when it ends, if `card` -- his
+## caption since G1 -- is still up. Nothing replays later (the parent's TAKE 1 on #229
+## -- an arrival month is a tense or crisis one, so dropping the line silenced the
+## chief exactly when it mattered).
 static func speak(main: Node, shown: Dictionary, card: CanvasItem) -> void:
 	Voice.speak_queued(main, String(shown.get("clip", "")), LINE_CARD, card)
 
@@ -312,24 +295,37 @@ static func _holding_event(main) -> String:
 	return ""
 
 
+## The read the player asked for (G1: the mark, until G2 makes it the Presidency page's
+## lead): the month ranked again from its own memory, then today's card, holding the
+## clock while it is up -- outside the modal budget, since the player opened it.
+## `rerank` false shows the lines as they stand (a test stages them).
+static func read(main, rerank := true) -> void:
+	var game: Dictionary = _games.get(main.get_instance_id(), {})
+	if game.is_empty() or game["card"].visible or main._state == null or main._state.player() == null:
+		return
+	if rerank:
+		ChiefMarkView.rerank(main)
+	game["was_running"] = not main._clock.paused
+	main._clock.paused = true
+	game["card"].show_view(view(main, game["lines"], game.get("report", {}), game["also"]))
+	preload("res://src/ui/folder_driver.gd").refresh(main)
+	# A request the read names, on a line, in the footer or folded into a line's "+N
+	# more", has been SEEN under #207's rule (the parent's calls on QA's #218 finding and
+	# RECORD): its arrival's slowdown gives the player's speed back, unless they picked
+	# one since (_seen's own rule). Never opened, AudienceDriver's own rule stands.
+	for entry in (game["lines"] as Array) + (game.get("also", []) as Array):
+		for named in [entry] + (entry.get("folded", []) as Array):
+			if String(named.get("kind", "")) == "request":
+				AudienceDriver._seen(main, String(named["subject"]))
+	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
+
+
 static func close(main) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	if game.is_empty() or not game["card"].visible:
 		return
 	game["card"].hide()
-	# The parent's rules on #229: a line the chief has started plays to its end; one
-	# still waiting behind a messenger is cancelled with the card (the gate would
-	# too, unless the next month's card were up before the messenger ended).
-	Voice.drop(main, LINE_CARD)
 	game["card"].dismissed.emit()
-	# A request the card named, on a line, in the footer or folded into a line's
-	# "+N more", has been SEEN under #207's rule (the parent's calls on QA's #218
-	# finding and RECORD): its arrival's slowdown gives the player's speed back,
-	# unless they picked one since (_seen's own rule).
-	for entry in (game["lines"] as Array) + (game.get("also", []) as Array):
-		for named in [entry] + (entry.get("folded", []) as Array):
-			if String(named.get("kind", "")) == "request":
-				AudienceDriver._seen(main, String(named["subject"]))
 	var held := _holding_event(main)
 	if bool(game["was_running"]) and held.is_empty() and not main._paused_for_programme:
 		main._clock.paused = false
@@ -342,10 +338,10 @@ static func close(main) -> void:
 	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
 
 
-## After a load (QA's RECORD on #218, PhoneDriver.after_load's rule): the card of
-## the discarded game comes down, and the clock it paused and the lines it named
-## belong to that game, so they go too (novelty starts over by _will_show's
-## state_id). No `dismissed`: nothing of the discarded game waits on it now.
+## After a load (QA's RECORD on #218, PhoneDriver.after_load's rule): the card, the mark
+## and the caption of the discarded game come down, and the clock it paused and the
+## lines it named belong to that game, so they go too (novelty starts over by
+## _rank_month's state_id). No `dismissed`: nothing of the discarded game waits on it.
 static func after_load(main) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	if game.is_empty():
@@ -355,6 +351,7 @@ static func after_load(main) -> void:
 	game["was_running"] = false
 	game["lines"] = []
 	game["also"] = []
+	ChiefMarkView.clear(main)
 
 
 ## Go: close by Continue's rule, then open the line's target (2.4's table).

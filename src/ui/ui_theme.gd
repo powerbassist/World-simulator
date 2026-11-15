@@ -124,6 +124,7 @@ const TITLE_BAR := "TitleBar"             ## a floating window's grab handle
 const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
 const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-row
 const REQUESTS_BUTTON := "RequestsButton" ## the title bar's "requests waiting" mark (V5.2 pre-gate)
+const CHIEF_MARK := "ChiefMark"           ## the chief's mark beside it (G1): a raised plate, no tone of its own
 const OPTION_CHECK := "OptionCheck"       ## an option on a verb, not a verb (V5.2 close R4: the audience's Lie)
 
 ## The accent in force: the played nation's, set by apply() and read by everything
@@ -451,6 +452,14 @@ static func _buttons(theme: Theme) -> void:
 	theme.set_stylebox("focus", REQUESTS_BUTTON, _button_box(Color(0, 0, 0, 0), WARN))
 	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
 		theme.set_color(state, REQUESTS_BUTTON, WARN)
+
+	# G1: the chief's mark is neither identity nor status -- a raised SLATE plate on its
+	# EDGE hairline; its chip carries the tone when a line is due now.
+	theme.set_type_variation(CHIEF_MARK, "Button")  # i18n: ok
+	theme.set_stylebox("normal", CHIEF_MARK, _button_box(SLATE, EDGE))
+	theme.set_stylebox("hover", CHIEF_MARK, _button_box(SLATE.lightened(0.10), EDGE))
+	theme.set_stylebox("pressed", CHIEF_MARK, _button_box(SLATE.lightened(0.16), EDGE))
+	theme.set_stylebox("focus", CHIEF_MARK, _button_box(Color(0, 0, 0, 0), EDGE))
 
 	# V5.2 close R4: an option ON a verb, not a verb (option_check_style.gd says why).
 	OptionCheckStyle.apply(theme, OPTION_CHECK, [_button_box(Color(0, 0, 0, 0)), _button_box(SLATE),

@@ -3,45 +3,38 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_briefing_clock.gd
 ## Non-zero exit on any failure.
 ##
-## V5.3-0, band RF4 observed rather than derived (QA's RECORD on #217): the game's
-## own clock, running at the player's speed in real frames, crosses a month
-## boundary, and
-##   - the monthly briefing opens and the clock is paused: the date does not move
-##     across frames while the card is up;
-##   - a real click on Continue (press and release frames apart) resumes the clock
-##     at the speed it had when the card opened (a request's arrival may have slowed
-##     it to 1 by its own rule, audience_driver.gd -- and if the card names that
-##     request, Continue gives the arrival's speed back, below), and the date moves
-##     again;
-##   - with Messages' "Only when something is new", a month whose three are last
-##     month's three crosses its boundary without stopping. Which month that is
-##     depends on the sim's arrivals, so the test crosses boundaries until the
-##     ranking says "nothing new" (up to QUIET_TRIES), and checks that one; every
-##     month it crosses that has something new must hold;
-##   - a request the card NAMES counts as seen (#207's rule, the parent's call on
-##     QA's #218 finding): its arrival slowed the clock from 3 to 1 by
-##     AudienceDriver's own rule, and a real click on Continue gives 3 back --
-##     with the request on a line, and in the footer only; a speed the player
-##     picked after the arrival (2) is kept; and folded into another request's
-##     "+N more" (the parent's call on QA's RECORD). The mutant that drops BriefingDriver.
-##     close's _seen loop leaves the clock at 1: red.
+## G1, the chief off the clock (chief-briefing-brief.md; the author: "Jamais"). The
+## game's own clock, running at the player's speed in real frames, crosses month
+## boundaries, and
+##   - a month end never pauses for the chief: the briefing's card stays down, the
+##     clock keeps running, the date moves on, and the clock line names no briefing;
+##   - the month's ranking is still stored, and the chief's mark in the title bar
+##     names its first line (title and deadline chip);
+##   - when he speaks, his line is a caption under the mark (no dim, no key), and the
+##     voice he says it in is gated on the caption, not on the card;
+##   - a real click on the mark opens the read he was asked for: it holds the clock
+##     while it is open, the clock line says so, and a real click on Continue gives
+##     the speed back;
+##   - a request the read NAMES counts as seen when the read opens (#207's rule): its
+##     arrival slowed the clock from 3 to 1 by AudienceDriver's own rule, and the
+##     closed read leaves 3 -- on a line, in the footer, folded into another
+##     request's "+N more"; a speed the player picked after the arrival (2) is kept.
 
 const Click = preload("res://tests/click.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
+const HoldReason = preload("res://src/ui/hold_reason.gd")
+const PriorityWords = preload("res://src/ui/priority_words.gd")
 const Voice = preload("res://src/ui/voice.gd")
 const Programme = preload("res://src/sim/programme.gd")
-const MessageSettings = preload("res://src/ui/message_settings.gd")
-const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const AudK = preload("res://src/sim/audience_constants.gd")
 
 const SPEED := 4
 const TIMEOUT_FRAMES := 900
-const HELD_FRAMES := 30
-const QUIET_TRIES := 8
-## The speed before the arrival, and the cases: where the card names the request,
-## the speed picked by hand after the arrival (0: none), the speed Continue leaves.
+const RUN_FRAMES := 30
+## Month ends crossed with the clock running before the mark is clicked.
+const BOUNDARIES := 3
 const ARRIVAL_FROM := 3
 const SEEN_CASES := [["line", 0, 3], ["footer", 0, 3], ["line", 2, 2], ["folded", 0, 3]]
 
@@ -50,10 +43,10 @@ var _main
 var _frame := 0
 var _phase := ""
 var _since := 0
+var _month := 0
+var _crossed := 0
 var _date := Vector3i()
 var _card
-var _speed := 0
-var _tries := 0
 var _case := 0
 
 
@@ -76,77 +69,52 @@ func _process(_delta: float) -> bool:
 		return true
 	match _phase:
 		"to_boundary":
-			if _card.visible and not _main._month_runner.running():
-				# V5.3-0 (e): the card that opened says its chief's line, under main.
-				var said: Node = _main.get_node_or_null(Voice.NODE)
-				if said == null or (said as AudioStreamPlayer).stream == null 						or String(said.get_meta("card", "")) != BriefingDriver.LINE_CARD:
-					_fail("the briefing opened and its chief said nothing (main's voice: %s)" % (
-						said.get_meta("card", "") if said != null else "none"))
+			if int(_main._clock.month) != _month and not _main._month_runner.running():
+				_check_month_end()
 				_date = _today()
-				_speed = _expected_speed()
-				_go("held")
-		"held":
-			if not _main._clock.paused:
-				_fail("the briefing is up and the clock runs")
-			if _today() != _date:
-				_fail("the date moved under the briefing: %s -> %s" % [_date, _today()])
-			if _since >= HELD_FRAMES:
-				_quiet_desk()
-				# A second chief line still waiting when Continue is pressed (rule 2): the
-				# chief is held busy, since no player plays headless.
-				(_main.get_node(Voice.NODE) as AudioStreamPlayer).set_meta("pending", true)
-				Voice.speak_queued(_main, "res://waiting.ogg", BriefingDriver.LINE_CARD, _card)
-				if not _queued_chief():
-					_fail("precondition: the second chief line did not queue")
-				Click.half(_main.get_viewport(), _card._close, true)
-				_go("release")
-		"release":
-			Click.half(_main.get_viewport(), _card._close, false)
-			_go("resumed")
-		"resumed":
-			if _since == 2:
-				if _card.visible:
-					_fail("Continue did not close the briefing")
-				# The parent's rules on #229: the line that started plays to its end (1); the
-				# one still waiting is cancelled with the card (2).
-				var said := _main.get_node(Voice.NODE) as AudioStreamPlayer
-				if String(said.get_meta("card", "")) != BriefingDriver.LINE_CARD or said.stream == null:
-					_fail("Continue cut the chief's line that had started")
-				if _queued_chief():
-					_fail("Continue left the chief's waiting line in the queue")
-				said.set_meta("pending", false)
-				if _main._clock.paused:
-					_fail("Continue did not resume the clock (holds: decision %s, programme %s)" % [
-						_main._decision_holds_clock(), _main._paused_for_programme])
-				if _main._clock.speed != _speed:
-					_fail("the clock resumed at speed %d, not the %d it had" % [_main._clock.speed, _speed])
-			elif _today() != _date:
-				_quiet_month()
-				_go("quiet")
-		"quiet":
-			if _main._month_runner.running() or int(_main._clock.month) == _date.y:
+				_go("running")
+		"running":
+			# The clock runs on after the month end: the date moves (the timeout fails it).
+			if _today() == _date or _since < RUN_FRAMES:
 				return false
-			var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
-			var fresh := bool(game["pending"].get("new", true))
-			_tries += 1
-			if fresh:
-				if not _card.visible:
-					_fail("'Only when something is new' skipped a month with something new")
-				if _tries >= QUIET_TRIES:
-					_fail("premise: %d months crossed, none without something new" % _tries)
-					_finish()
-					return true
-				BriefingDriver.close(_main)
-				_main._clock.paused = false
-				_quiet_month()
-				_go("quiet")
+			_crossed += 1
+			if _crossed < BOUNDARIES:
+				_quiet_desk()
+				_month = int(_main._clock.month)
+				_last_day()
+				_go("to_boundary")
+				return false
+			Click.half(_main.get_viewport(), _mark(), true)
+			_go("mark_release")
+		"mark_release":
+			Click.half(_main.get_viewport(), _mark(), false)
+			_go("read")
+		"read":
+			if _since < 2:
+				return false
+			if not _card.visible:
+				_fail("a click on the chief's mark did not open his read")
+			if not _main._clock.paused:
+				_fail("the read the player opened does not hold the clock")
+			# The speed Continue gives back: the clock's under the read (opening it counts
+			# a named request as seen, which may already have given an arrival's speed back).
+			_speed_before_read = _main._clock.speed
+			if HoldReason.show(_main) != tr("Paused: the monthly briefing."):
+				_fail("the clock line under the read: '%s'" % HoldReason.show(_main))
+			Click.half(_main.get_viewport(), _card._close, true)
+			_go("close_release")
+		"close_release":
+			Click.half(_main.get_viewport(), _card._close, false)
+			_go("closed")
+		"closed":
+			if _since < 2:
 				return false
 			if _card.visible:
-				_fail("'Only when something is new' held a month that repeats the last")
-			if _main._clock.paused and not _main._decision_holds_clock() and not _main._paused_for_programme:
-				_fail("the quiet month's boundary paused the clock")
-			print("quiet month found after %d boundaries" % _tries)
-			_set_new_only(false)
+				_fail("Continue did not close the read")
+			if _main._clock.paused:
+				_fail("Continue did not give the clock back")
+			if _main._clock.speed != _speed_before_read:
+				_fail("the clock resumed at %d, not the %d it had" % [_main._clock.speed, _speed_before_read])
 			_seen_case()
 		"seen_press":
 			Click.half(_main.get_viewport(), _card._close, true)
@@ -159,9 +127,9 @@ func _process(_delta: float) -> bool:
 				return false
 			var c: Array = SEEN_CASES[_case]
 			if _card.visible:
-				_fail("Continue did not close the briefing (case %s)" % str(c))
+				_fail("Continue did not close the read (case %s)" % str(c))
 			if _main._clock.speed != int(c[2]):
-				_fail("a request named on the card's %s, hand speed %d: the clock left at speed %d, not %d" % [
+				_fail("a request named on the read's %s, hand speed %d: the clock left at speed %d, not %d" % [
 					c[0], c[1], _main._clock.speed, c[2]])
 			_case += 1
 			if _case >= SEEN_CASES.size():
@@ -169,6 +137,45 @@ func _process(_delta: float) -> bool:
 				return true
 			_seen_case()
 	return false
+
+
+var _speed_before_read := 0
+
+
+## What every month end must leave: no card, no pause, the ranking kept and named.
+func _check_month_end() -> void:
+	if _card.visible:
+		_fail("month %d: the briefing opened by itself" % _main._clock.month)
+	if _main._clock.paused and not _main._decision_holds_clock() and not _main._paused_for_programme:
+		_fail("month %d: the month end paused the clock for the chief" % _main._clock.month)
+	if HoldReason.show(_main) != "":
+		_fail("month %d: the clock line says '%s'" % [_main._clock.month, HoldReason.show(_main)])
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	var lines: Array = game.get("lines", [])
+	var mark = _mark()
+	if not mark.visible:
+		_fail("month %d: no chief's mark in the title bar" % _main._clock.month)
+	if lines.is_empty():
+		_fail("month %d: the month's ranking was not stored" % _main._clock.month)
+	else:
+		var want := PriorityWords.title(lines[0], _main._state, _main._loader)
+		if mark.title_text() != want:
+			_fail("month %d: the mark says '%s', the first line is '%s'" % [_main._clock.month, mark.title_text(), want])
+		if mark.chip_text() != PriorityWords.chip(lines[0], _main._state):
+			_fail("month %d: the mark's chip '%s'" % [_main._clock.month, mark.chip_text()])
+	# The first month always speaks (no situation said yet): his line is the caption.
+	if _crossed == 0:
+		var caption = _main._hud.chief_caption
+		if not caption.visible or caption.text().is_empty():
+			_fail("the chief spoke and no caption showed his line")
+		var said: Node = _main.get_node_or_null(Voice.NODE)
+		if said == null or String(said.get_meta("card", "")) != BriefingDriver.LINE_CARD:
+			_fail("the chief's caption showed and his voice did not play (main's voice: %s)" % (
+				said.get_meta("card", "") if said != null else "none"))
+
+
+func _mark():
+	return _main._hud.title_bar.chief_mark
 
 
 func _start() -> void:
@@ -181,33 +188,21 @@ func _start() -> void:
 	_quiet_desk()
 	_main._windows.close_all()
 	_main._clock.set_speed(SPEED)
+	_month = int(_main._clock.month)
 	_last_day()
 	_main._clock.paused = false
 	_go("to_boundary")
 
 
-## The speed Continue should leave: the clock's, or -- when the card names a request
-## the clock was slowed for, and nobody picked a speed since -- the arrival's.
-func _expected_speed() -> int:
-	var ad: Dictionary = AudienceDriver._games[_main.get_instance_id()]
-	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
-	if _main._clock.speed == 1 and int(ad["resume_speed"]) > 1:
-		for line in (game["lines"] as Array) + (game.get("also", []) as Array):
-			for entry in [line] + (line.get("folded", []) as Array):
-				if String(entry["kind"]) == "request" and ad["slowed_for"].has(String(entry["subject"])):
-					print("the boundary's card names an arrival: Continue restores %d" % int(ad["resume_speed"]))
-					return int(ad["resume_speed"])
-	return _main._clock.speed
-
-
 ## One case: a request arrives at speed ARRIVAL_FROM (AudienceDriver slows to 1), the
-## player may pick a speed, and the month's card names it on a line or in the footer.
+## player may pick a speed, and the read names it on a line or in the footer.
 func _seen_case() -> void:
 	var c: Array = SEEN_CASES[_case]
 	_quiet_desk()
 	var state = _main._state
 	var now := int(state.year) * 12 + int(state.month)
 	var rid := "%s|seen%d" % [String(_main._loader.people[String(state.player().id)][0].id), _case]
+	_main._clock.paused = false
 	_main._clock.set_speed(ARRIVAL_FROM)
 	AudienceDriver._slow_for(_main, [{"id": rid}])
 	if _main._clock.speed != 1:
@@ -217,25 +212,13 @@ func _seen_case() -> void:
 	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
 	var cand := Priorities._cand("request", rid, now + 1, 1.0, 1.0, now)
 	if String(c[0]) == "folded":
-		# The line names another request; the slowed one is its "+1 more".
 		var line := Priorities._cand("request", rid + "_other", now + 1, 1.0, 1.0, now)
 		Priorities._fold_into(line, cand)
 		cand = line
 	game["lines"] = [] if String(c[0]) == "footer" else [cand]
 	game["also"] = [cand] if String(c[0]) == "footer" else []
-	game["was_running"] = true
-	_main._clock.paused = true
-	_card.show_view(BriefingDriver.view(_main, game["lines"], {}, game["also"]))
+	BriefingDriver.read(_main, false)  # the lines as staged, not ranked again
 	_go("seen_press")
-
-
-## No arrival holds the clock in this test: the hold under test is the briefing's.
-func _queued_chief() -> bool:
-	var player: Node = _main.get_node(Voice.NODE)
-	for entry in player.get_meta(Voice.QUEUE, []):
-		if String(entry["card"]) == BriefingDriver.LINE_CARD:
-			return true
-	return false
 
 
 func _quiet_desk() -> void:
@@ -243,34 +226,13 @@ func _quiet_desk() -> void:
 	ns.event_queue.clear()
 	ns.audience_requests.clear()
 	_main._unseen_events.clear()
-
-
-## The next boundary repeats this month's three: the setting on, and the memory
-## of the last briefing what the next ranking will find.
-func _quiet_month() -> void:
-	_set_new_only(true)
-	_quiet_desk()
-	var ns = _main._state.player()
-	ns.commitments.clear()
-	ns.person_grudges.clear()
-	ns.tabled_bill = {}
-	# V5.3 B7: the quiet-month call fills a month with nothing arrived (a person, then
-	# a minor event). Held off -- its asks cap filled with visitors, every event
-	# category quiet -- so the next month can truly bring nothing new.
+	# V5.3 B7's quiet-month call would bring a visitor or a minor event: held off, so
+	# no arrival holds the clock -- the hold under test is the chief's.
 	var now: int = int(_main._state.year) * 12 + int(_main._state.month)
 	for i in AudK.QUIET_ASKS_MAX:
 		ns.audience_asked_month["ZZZ_hold%d" % i] = now
 	for ev in _main._loader.events:
 		ns.event_category_quiet[ev.category] = 3
-	_date = _today()
-	_last_day()
-
-
-func _set_new_only(on: bool) -> void:
-	var cfg := ConfigFile.new()
-	cfg.load(SettingsPanel.CONFIG_PATH)
-	cfg.set_value(MessageSettings.SECTION, MessageSettings.BRIEFING_NEW_ONLY_KEY, on)
-	cfg.save(SettingsPanel.CONFIG_PATH)
 
 
 func _last_day() -> void:
@@ -288,8 +250,6 @@ func _go(phase: String) -> void:
 
 
 func _finish() -> void:
-	# The suite's tests share one user dir per run: put the setting back.
-	_set_new_only(false)
 	for f in _failures:
 		printerr("FAIL: %s" % f)
 	if _failures.is_empty():

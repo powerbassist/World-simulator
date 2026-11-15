@@ -292,8 +292,8 @@ func _check_arrival() -> void:
 		_fail("arrival: the note comes again the month after")
 
 
-## The crossings are always said: a line on the card, or a note when the card ranked them
-## out or is not shown at all.
+## The crossings are always said in the inbox (G1: no card opens by itself to say them),
+## whether the month ranks them on a line, ranks them out, or there is no briefing.
 func _check_note_wired() -> void:
 	var state = _main._state
 	var ns = state.player()
@@ -302,21 +302,22 @@ func _check_note_wired() -> void:
 	var title := Strings.t("Sectors slipping").to_upper()
 	var standing := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")]
 	var open_with := func(lines: Array) -> void:
-		# A new state re-ranks and would throw these lines away (_will_show).
+		# A new state re-ranks and would throw these lines away (_rank_month).
 		game["state_id"] = state.get_instance_id()
 		game["pending"] = {"month": now, "lines": lines, "memory": {}, "also_due": []}
-		BriefingDriver.open(_main, {})
-		BriefingDriver.close(_main)
+		BriefingDriver.month_end(_main, {})
 	open_with.call(standing + [Priorities._standing("majority", "seats")])
 	if not _shows(_main._hud.inbox, title):
 		_fail("note: a crossing the briefing ranked out does not reach the inbox")
 	for id in (_main._hud.inbox._notes as Dictionary).keys():
 		_main._hud.inbox.dismiss(id)
 	open_with.call(standing + [Priorities._cand("sector", "health|hospitals", -1, 6.0, 1.0, now, false)])
-	if _shows_live(_main._hud.inbox, title):
-		_fail("note: a crossing on the card is said again in the inbox")
+	if not _shows_live(_main._hud.inbox, title):
+		_fail("note: a crossing ranked on a line does not reach the inbox")
+	for id in (_main._hud.inbox._notes as Dictionary).keys():
+		_main._hud.inbox.dismiss(id)
 	ns.in_government = false
-	BriefingDriver.open(_main, {})
+	BriefingDriver.month_end(_main, {})
 	ns.in_government = true
 	if not _shows_live(_main._hud.inbox, title):
 		_fail("note: a month with no briefing does not put the crossings in the inbox")

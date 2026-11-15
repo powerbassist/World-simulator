@@ -339,26 +339,25 @@ func _set_votes(ns, national: int, ep: int) -> void:
 
 
 ## Pre-gate B2: the chief SPEAKS only when the situation is not the one he last
-## spoke in, or a row is new; otherwise the caption shows, silent. The caption never
-## repeats the line it showed last time for one situation (QA heard the same tense
-## line every three months: the rotation followed the month, not the situation).
-## Through open() on months set up by hand, so the situation is the test's.
+## spoke in, or a row is new; otherwise he is silent -- since G1 no caption either (the
+## caption under his mark IS his spoken line). A spoken line never repeats the one he
+## said last time for one situation (QA heard the same tense line every three months:
+## the rotation followed the month, not the situation). Through month_end() on months
+## set up by hand, so the situation is the test's.
 func _check_speaks_on_change() -> void:
-	# The briefing opens every month here, whatever a parallel test writes to the
-	# shared settings file (QA's TAKE on #230).
-	BriefingDriver.MessageSettings.forced_new_only = false
 	var state = _main._state
 	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
-	var tense := Priorities._standing("budget", "balance")
+	var tense := Priorities._cand("request", "x|1", 0, 6.0, 1.0, 0)
 	tense["held"] = true  # a held surface plays tense (2.6)
-	var calm := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")]
+	var calm := [Priorities._standing("election", "national", 99999)]
 	# [lines, a row new, speaks]
 	var months := [[calm, false, true], [calm, false, false], [calm, true, true], [calm, false, false],
 		[[tense], false, true], [[tense], false, false], [calm, false, true]]
 	var player := _main.get_node_or_null(BriefingDriver.Voice.NODE) as AudioStreamPlayer
+	var caption_plate = _main._hud.chief_caption
 	var last := {}
 	var start := int(state.year) * 12 + int(state.month)
-	# The game's first open: no state change resets the months set up below.
+	# The game's first month: no state change resets the months set up below.
 	game["state_id"] = state.get_instance_id()
 	for i in months.size():
 		var now: int = start + 1 + i
@@ -368,22 +367,25 @@ func _check_speaks_on_change() -> void:
 		game["pending"] = {"month": now, "lines": lines, "memory": {}, "new": months[i][1]}
 		if player != null:
 			BriefingDriver.Voice.stop(_main)
-		BriefingDriver.open(_main, {})
+		caption_plate.clear()
+		BriefingDriver.month_end(_main, {})
 		player = _main.get_node_or_null(BriefingDriver.Voice.NODE) as AudioStreamPlayer
 		var spoke := player != null and player.stream != null
 		var situation := Priorities.situation(lines)
-		var caption := String(BriefingDriver.card_of(_main)._line.text)
+		var caption := String(caption_plate.text())
+		if BriefingDriver.card_of(_main).visible:
+			_fail("month %d: the month end opened the card" % i)
 		if spoke != bool(months[i][2]):
 			_fail("month %d (%s, new %s): the chief %s" % [i, situation, months[i][1], "spoke" if spoke else "was silent"])
-		if caption == "":
-			_fail("month %d: no caption" % i)
-		if last.get(situation, "") == caption:
-			_fail("month %d: the same %s line twice in a row: %s" % [i, situation, caption])
-		last[situation] = caption
-		BriefingDriver.close(_main)
+		if (caption != "") != bool(months[i][2]):
+			_fail("month %d: a caption '%s' when the chief %s" % [i, caption, "spoke" if months[i][2] else "was silent"])
+		if caption != "":
+			if last.get(situation, "") == caption:
+				_fail("month %d: the same %s line twice in a row: %s" % [i, situation, caption])
+			last[situation] = caption
+	caption_plate.clear()
 	if player != null:
 		BriefingDriver.Voice.stop(_main)
-	BriefingDriver.MessageSettings.forced_new_only = null
 
 
 ## The footer (the parent's rule on #217): crowded-out items in their last month,

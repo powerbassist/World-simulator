@@ -12,6 +12,7 @@ extends RefCounted
 ## presentation memory like the rest of the briefing's, so a load starts it over.
 
 const K = preload("res://src/ui/priorities_constants.gd")
+const Priorities = preload("res://src/ui/priorities.gd")
 
 
 ## `lines` as Priorities._pick chose them, `cands` in its rank order (it sorts them);
@@ -42,3 +43,21 @@ static func _third(lines: Array, cands: Array, now: int, shown: Dictionary) -> v
 			best_age = age
 	if best != null:
 		lines[2] = best
+
+
+## The parent's rule on Systems' RF2 finding (#217): an item in its last month is
+## never unshown. Three lines stay three; whatever dated item they crowded out in its
+## last month (a request that lapses next month, a card's last month, a promise
+## judged now) goes to the card's footer, "Also due this month", in rank order.
+static func also_due(lines: Array, all: Array, now: int) -> Array:
+	var shown := {}
+	for l in lines:
+		shown[Priorities._key(l)] = true
+	var out: Array = []
+	for c in all:
+		var left := int(c["deadline_month"]) - now
+		if bool(c["standing"]) or int(c["deadline_month"]) < 0 or left < 0 or left > 1 or shown.has(Priorities._key(c)):
+			continue
+		shown[Priorities._key(c)] = true
+		out.append(c)
+	return out

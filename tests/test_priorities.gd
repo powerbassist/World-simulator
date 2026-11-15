@@ -32,7 +32,7 @@ func _initialize() -> void:
 	_loader = DataLoader.new()
 	_loader.load_all()
 	for nation in PLAYABLE:
-		_check_always_three(nation)
+		_check_never_filler(nation)
 	_check_fog()
 	_check_noise_and_move()
 	_check_held_first()
@@ -62,7 +62,7 @@ func _advance(state) -> void:
 		state.year += 1
 
 
-func _check_always_three(nation: String) -> void:
+func _check_never_filler(nation: String) -> void:
 	var state = _new(nation)
 	var memory := {}
 	var repeats := 0
@@ -77,8 +77,13 @@ func _check_always_three(nation: String) -> void:
 		var kinds := {}
 		for l in lines:
 			kinds[l["kind"]] = true
-		if lines.size() != 3 or kinds.size() != 3:
+		# G1, RF1 as "never a filler line": at most three, of as many kinds, no standing
+		# read among real ones; a month with none real is the vote alone, or nothing.
+		if lines.size() > 3 or kinds.size() != lines.size():
 			_fail("%s month %d: %d lines of %d kinds: %s" % [nation, i + 1, lines.size(), kinds.size(), _names(lines)])
+		var standing: Array = lines.filter(func(l): return bool(l["standing"]))
+		if not standing.is_empty() and (lines.size() > 1 or int(standing[0]["deadline_month"]) < 0):
+			_fail("%s month %d: a filler line: %s" % [nation, i + 1, _names(lines)])
 		var shared := 0
 		for l in lines:
 			for p in last:
@@ -224,25 +229,26 @@ func _check_no_damping() -> void:
 		_fail("a request lapsing next month was damped or dropped: %s then %s" % [str(a), str(b)])
 
 
-## The same quiet state twelve months running: the standing reads give way to one
-## another under novelty, so the three are not the same three every month.
+## G1: a quiet month is one sentence naming the next dated thing -- the vote, its one
+## line -- and with no vote scheduled, nothing at all (no standing read pads it).
 func _check_quiet_rotates() -> void:
 	var state = _new("FRA")
 	var ns = state.player()
 	ns.event_queue.clear()
 	ns.audience_requests.clear()
 	ns.person_grudges.clear()
-	var memory := {}
-	var last := ""
-	var repeats := 0
-	for i in 12:
-		var r: Dictionary = Priorities.rank(state, _loader, {"memory": memory, "programme_held": false})
-		memory = r["memory"]
-		var key := ",".join(r["lines"].map(_name))
-		repeats += 1 if key == last else 0
-		last = key
-	if repeats > 2:
-		_fail("a quiet month repeats its three lines %d times of 11" % repeats)
+	ns.commitments.clear()
+	ns.tabled_bill = {}
+	ns.draft_bills.clear()
+	var r: Dictionary = Priorities.rank(state, _loader, {"programme_held": false})
+	var real: Array = r["lines"].filter(func(l): return not bool(l["standing"]))
+	if real.is_empty():
+		if r["lines"].size() != 1 or String(r["lines"][0]["kind"]) != "election":
+			_fail("a quiet month is not the vote alone: %s" % _names(r["lines"]))
+		elif not Priorities.quiet(r["lines"]):
+			_fail("the vote alone is not read as a quiet month")
+	else:
+		print("quiet month premise: real lines remain (%s); the vote-alone case is unchecked here" % _names(real))
 
 
 ## 2.6 and 4.3 (RF9's rule): a crisis line is a crisis, a held one tense, an

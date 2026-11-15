@@ -14,12 +14,15 @@ extends PanelContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Domains = preload("res://src/ui/domains.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const ChiefMark = preload("res://src/ui/chief_mark.gd")
 
 signal back_requested
 signal forward_requested
 signal save_load_requested
 signal settings_requested
 signal requests_pressed
+## G1: the chief's mark clicked -- main's briefing driver opens his read.
+signal chief_pressed
 
 const HEIGHT := 58
 
@@ -28,6 +31,7 @@ var _forward: Button
 var _crumb: Label
 var _held: Label
 var _requests: Button
+var chief_mark: ChiefMark
 var _windows
 var _nation := ""
 var _where := ""
@@ -56,6 +60,12 @@ func _ready() -> void:
 	_crumb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_crumb.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	row.add_child(_crumb)
+
+	# G1: the chief's mark, left of the requests: the month's first priority, read
+	# while the clock runs (he no longer stops it to say so).
+	chief_mark = ChiefMark.new()
+	row.add_child(chief_mark)
+	chief_mark.pressed.connect(func(): chief_pressed.emit())
 
 	# V5.2b: the "requests waiting" mark by the clock. A request never holds the
 	# clock, so the mark is the clock's only word about them (decision-surfaces.md).

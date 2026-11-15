@@ -9,15 +9,16 @@ extends RefCounted
 ## (PollNoise), a person only once Feelings gives their grudge the word "hostile". A
 ## briefing that named a hidden threat would leak the fog.
 ##
-## **Exactly three, of three kinds.** Held surfaces take their slots first (an
+## **At most three, of three kinds, never a filler** (G1: "Exactly three, always" padded a
+## quiet month with reads that were no priorities). Held surfaces take their slots first (an
 ## interrupt, a major card, a minor card in its last month, the term-start offer):
 ## without that a minor card in its last month (6 x 1.0 x 0.75 = 4.5) loses to an
 ## election three months away (9 x 0.7 = 6.3) and the briefing names three things
-## while the clock waits on a fourth (GLM's finding 2). The score fills the rest.
-## Five standing reads (the election or term end, the majority, the weakest polled
-## bloc, the budget, unrest) exist in every state at weight 1, so the three always
-## fill; the spec names three of them, and the two more are what lets a quiet month
-## rotate under the novelty rule instead of printing the same three lines (OPINION).
+## while the clock waits on a fourth (GLM's finding 2). The score fills the rest, from
+## real candidates only. The five standing reads (the election or term end, the majority,
+## the weakest polled bloc, the budget, unrest) are still built -- the footer and the
+## probe read them -- but a line is one only when nothing real is left: the next dated
+## one, the vote, alone; with no vote scheduled, no line at all.
 ##
 ## **Memory is the caller's.** rank() returns the memory to hand back next month
 ## (last month's lines, each trend's onset, the unrest readings): presentation memory,
@@ -42,7 +43,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const Campaign = preload("res://src/sim/campaign.gd")
 
 
-## {lines: exactly three {kind, subject, deadline_month (-1: none), score, u, m,
+## {lines: zero to three {kind, subject, deadline_month (-1: none), score, u, m,
 ## held, standing, more, go: {tab, subject}}, memory: what to pass back next month,
 ## qualified: the kinds that had a candidate, also_due: the crowded-out items in
 ## their last month, same shape as a line}.
@@ -78,35 +79,25 @@ static func rank(state, loader, opts := {}) -> Dictionary:
 		if bool(c["trend"]):
 			next_onsets[_key(c)] = int(onsets.get(_key(c), now))
 	memory["onsets"] = next_onsets
-	var lines := _pick(held, cands, memory.get("last", []), now)
-	preload("res://src/ui/priority_rotation.gd").rotate(lines, cands, memory, now)  # B7, RF2: an unseen kind takes line 3
-	var also_due := _also_due(lines, held + cands, now)
+	# G1 (chief-briefing-brief.md 3.1): never a filler line. A standing read fills no slot;
+	# a month with no real priority is one line, the next dated thing (the vote).
+	var real: Array = cands.filter(func(c): return not bool(c["standing"]))
+	var lines := _pick(held, real, memory.get("last", []), now)
+	preload("res://src/ui/priority_rotation.gd").rotate(lines, real, memory, now)  # B7, RF2: an unseen kind takes line 3
+	if lines.is_empty():
+		for c in cands:
+			if bool(c["standing"]) and int(c["deadline_month"]) >= 0:
+				lines.append(c)
+				break
+	var also_due := preload("res://src/ui/priority_rotation.gd").also_due(lines, held + cands, now)
 	memory["last"] = lines.map(func(l): return {"kind": l["kind"], "subject": l["subject"], "u": l["u"], "m": l["m"]})
 	# `qualified`: every kind that had a candidate this month, held included, in row
 	# order -- RF2's "every kind that qualifies appears at least once" (Systems' probe).
 	var seen := {}
-	for c in held + cands:
+	for c in held + real:  # G1: a standing read is no priority, so it qualifies no kind
 		seen[String(c["kind"])] = true
 	return {"lines": lines, "memory": memory, "qualified": K.KINDS.filter(func(k): return seen.has(k)),
 		"also_due": also_due}
-
-
-## The parent's rule on Systems' RF2 finding (#217): an item in its last month is
-## never unshown. Three lines stay three; whatever dated item they crowded out in its
-## last month (a request that lapses next month, a card's last month, a promise
-## judged now) goes to the card's footer, "Also due this month", in rank order.
-static func _also_due(lines: Array, all: Array, now: int) -> Array:
-	var shown := {}
-	for l in lines:
-		shown[_key(l)] = true
-	var out: Array = []
-	for c in all:
-		var left := int(c["deadline_month"]) - now
-		if bool(c["standing"]) or int(c["deadline_month"]) < 0 or left < 0 or left > 1 or shown.has(_key(c)):
-			continue
-		shown[_key(c)] = true
-		out.append(c)
-	return out
 
 
 ## Whether every line is a standing read: the card's "A quiet month".
