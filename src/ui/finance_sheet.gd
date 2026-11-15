@@ -159,12 +159,16 @@ func _vote_day() -> int:
 	return DateText.days_in(int(_state.month), int(_state.year))
 
 
-## The four figures: what the draft does to each side a year, and the deficit before and after. A spending rise
-## is bad news and a revenue rise good, as the footer and the editors tone them.
+## The four figures: what the bill does to each side a year, and the deficit before (the books today, no bill) and
+## after (the whole bill passed). EVERY figure on the sheet describes the bill the vote will decide: the rows already
+## at vote with the new ones merged (an amendment), the same as the seat forecast beside it; the changed-rows list
+## alone is the new rows. A refused draft has no merged text, so its figures are the new rows'. A spending rise is
+## bad news and a revenue rise good, as the footer and the editors tone them.
 func _totals() -> void:
-	var moves: Dictionary = _price.moves(_draft.pending())
+	var whole := _whole_pending()
+	var moves: Dictionary = _price.moves(whole)
 	var now: Dictionary = _price.now()
-	var after: Dictionary = _price.after(_draft.pending())
+	var after: Dictionary = _price.after(whole)
 	var deficit_now := float(now["deficit_pct_gdp"]) * float(now["gdp_eur_bn"]) / 100.0
 	var deficit_after := float(after["deficit_pct_gdp"]) * float(after["gdp_eur_bn"]) / 100.0
 	var line := HBoxContainer.new()
@@ -175,6 +179,13 @@ func _totals() -> void:
 	PanelKit.figure(line, "%s → %s" % [Num.f(deficit_now, 0), Num.f(deficit_after, 0)], Strings.t("Deficit, bn"),
 		EffectsStrip.money_tone(deficit_now - deficit_after))
 	PanelKit.figure(line, Num.f(float(after["deficit_pct_gdp"]), 2) + " %", Strings.t("Deficit, % of GDP"))
+
+
+## The bill the vote decides, as the pricing's pending: the tabled rows merged with the draft (FinanceBill.drafted).
+func _whole_pending() -> Dictionary:
+	if String(_read["refusal"]) != "":
+		return _draft.pending()
+	return FinanceBill.absolute(_state.player(), FinanceBill.drafted(_state, _loader, _draft.bill()))
 
 
 func _rows() -> void:

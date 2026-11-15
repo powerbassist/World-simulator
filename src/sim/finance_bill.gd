@@ -265,6 +265,11 @@ static func divide(state, loader, ns, tabled: Dictionary) -> Dictionary:
 	return result
 
 
+## The same, public: a reader that prices a whole bill (the sheet's totals) asks the very conversion division applies.
+static func absolute(ns, bill: Dictionary) -> Dictionary:
+	return _absolute(ns, bill)
+
+
 ## The bill's deltas on top of the live register: Budget.apply_pending's shape.
 static func _absolute(ns, bill: Dictionary) -> Dictionary:
 	var pending := {}

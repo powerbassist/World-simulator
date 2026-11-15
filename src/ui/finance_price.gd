@@ -11,7 +11,7 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 
 ## How many pendings are kept: a drag moves one row a frame, and the row's own and the whole draft's differ
 ## only when two rows are moved.
-const KEEP := 4
+const KEEP := 12
 
 var _state
 var _stamp := ""
