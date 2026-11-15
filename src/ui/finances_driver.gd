@@ -13,3 +13,6 @@ static func register(main) -> void:
 	main._windows.register("finances", Strings.t("Books"), panel, KEY_NONE, main.ICONS + "payments.svg")
 	panel.setup(main._state, main._loader)
 	panel.go_requested.connect(main._windows.open)
+	# The one fiscal command the page sends (a bill tabled, added to or withdrawn): the shell's card and effect baseline.
+	panel.committed.connect(func(before: Dictionary, tabling: Dictionary) -> void:
+		main._fiscal_committed(Strings.t("Finance bill"), tabling, before))

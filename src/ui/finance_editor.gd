@@ -69,6 +69,10 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	var unit := FinanceRows.unit_text(String(ns.tax_library[key]["unit"])) if channel == FinanceDraft.TAX else Strings.t(" % of GDP")
 	var now := PanelKit.plain_line(self, Strings.t("Now %s") % (LedgerBox.text(_draft.live(channel, key), decimals) + unit), PanelKit.Tone.DIM)
 	now.name = "Now"  # i18n: ok a node name, found by tests
+	if channel == FinanceDraft.TAX:
+		# What the rate is a rate OF (the data's own words): the hover on the figure, not a sentence on the page.
+		now.tooltip_text = Strings.row("taxes", key, "rate_meaning", String(ns.tax_library[key].get("rate_meaning", "")))
+		now.mouse_filter = Control.MOUSE_FILTER_PASS
 	var made := _lever(self, step, _lo, _hi, decimals, unit, channel, key, "Box")  # i18n: ok a node name, found by tests
 	_slider = made[0]
 	_box = made[1]
@@ -145,7 +149,7 @@ func _sync() -> void:
 		_effect.theme_type_variation = ""
 		return
 	var gain: float = _price.balance_bn(own)
-	_effect.text = Strings.t("Books %s a year.") % EffectsStrip.money_text(gain)
+	_effect.text = Strings.t("Balance: %s a year.") % EffectsStrip.money_text(gain)
 	_effect.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
 
 

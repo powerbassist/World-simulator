@@ -237,7 +237,7 @@ static func _name_cell(row: Control, text: String, id: String, width: float, ctx
 		return locked
 	var button := Button.new()
 	button.text = text
-	button.flat = true
+	button.theme_type_variation = UiTheme.SUBROW_BUTTON
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.toggle_mode = true
 	button.button_pressed = String(ctx["open"]) == id

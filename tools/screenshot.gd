@@ -2161,17 +2161,17 @@ func _fail_a_major() -> void:
 	entry["rescue_months_left"] = IndustryK.RESCUE_WINDOW_MONTHS
 
 
-## V4.2 close-out, for --tax. No state to stage -- _open_the_partition()'s
-## shape: the register is the content and the frame is the check that the
-## panel builds its rows off it.
+## V4.2 close-out, for --tax. The tax rows live on the Books page since V5.3 Finances slice 2: it opens with
+## the VAT row's editor open (the register is the content, and the frame checks that the row builds off it).
 func _open_the_tax_code() -> void:
-	_main._windows.open("tax")
+	_main._windows.open("finances")
 	# open() silently no-ops on an unregistered id -- B14's own guard, which the
 	# generic --open path carries and a direct open() call must carry too.
-	if not _main._windows.is_open("tax"):
-		push_error("screenshot: --tax could not open the tax window")
+	if not _main._windows.is_open("finances"):
+		push_error("screenshot: --tax could not open the Books page")
 	else:
-		print("--tax: the tax window is open (%d rate rows)" % _main._tax_panel._sliders.size())
+		_main._windows.frame("finances")._content.open_row("tax_rates_pct", "vat")
+		print("--tax: the Books page is open, the VAT row's editor open")
 
 
 ## For --moved: health up a point and a half, education down half a point,
@@ -2370,9 +2370,13 @@ func _move_the_levers() -> void:
 	var ns = _main._state.player()
 	_main._budget_panel._sliders["health"].value = float(ns.spending_pct_gdp["health"]) + 1.5
 	_main._budget_panel._sliders["education"].value = float(ns.spending_pct_gdp["education"]) - 0.5
-	_main._tax_panel._sliders["income"].value = float(ns.tax_rates_pct["income"]) + 2.0
-	_main._tax_panel._sliders["vat"].value = float(ns.tax_rates_pct["vat"]) - 1.0
-	print("--moved: health +1.5, education -0.5, income +2, vat -1 (uncommitted)")
+	var page = _main._windows.frame("finances")._content
+	page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
+	page._draft.set_value("tax_rates_pct", "vat", float(ns.tax_rates_pct["vat"]) - 1.0)
+	page._paint(ns)
+	page._forecast.drain()
+	page._paint(ns)
+	print("--moved: health +1.5, education -0.5 (Budget tab), income +2, vat -1 (Books page draft), uncommitted")
 
 
 ## V4.2 close-out, for --compose. The draft goes through Statute.draft()

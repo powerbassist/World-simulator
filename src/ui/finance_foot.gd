@@ -36,9 +36,9 @@ func _ready() -> void:
 	_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD
 	add_child(_text)
-	_withdraw = _button("Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed)
+	_withdraw = _button("Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed)  # i18n: ok a node name
 	_open = _button("OpenBill", Strings.t("Open the bill"), open_pressed)
-	_table = _button("Table", Strings.t("Table the changes"), table_pressed)
+	_table = _button("Table", Strings.t("Table the changes"), table_pressed)  # i18n: ok a node name
 	visible = false
 
 

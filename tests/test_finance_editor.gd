@@ -17,6 +17,9 @@ const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const FinancePrice = preload("res://src/ui/finance_price.gd")
+const Budget = preload("res://src/sim/budget.gd")
+const LedgerBox = preload("res://src/ui/ledger_box.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
@@ -57,6 +60,13 @@ func _process(_delta: float) -> bool:
 			_check_the_brackets_are_a_lever_of_income()
 			_check_a_refusal_disables_the_button_and_says_why()
 			_check_table_locks_the_rows_and_withdraw_frees_them()
+			_check_another_row_and_a_reopen_keep_the_draft()
+			_check_a_refused_table_keeps_the_draft()
+			_check_an_amendment_adds_to_the_tabled_bill()
+			_check_a_spending_line_stops_at_zero()
+			_check_the_brackets_are_priced_end_to_end()
+			_check_a_state_move_reaches_an_open_editor()
+			_check_the_price_cache_reprices_after_eviction()
 			_check_a_go_opens_the_folded_row()
 			_finish()
 	return false
@@ -251,6 +261,121 @@ func _check_table_locks_the_rows_and_withdraw_frees_them() -> void:
 	_panel._process(0.0)
 	if _panel._foot.visible:
 		_fail("the footer stays up with nothing drafted and nothing tabled")
+
+
+## Opening another row rebuilds the page: the draft rides it, and a reopened row shows the draft against today.
+func _check_another_row_and_a_reopen_keep_the_draft() -> void:
+	var vat := FinanceRows.row_id(FinanceDraft.TAX, "vat")
+	_open(vat)
+	var slider: HSlider = _editor()._slider
+	var live := float(_state.player().tax_rates_pct["vat"])
+	slider.value = live + slider.step
+	_open(FinanceRows.row_id(FinanceDraft.TAX, "income"))
+	if _panel._draft.count() != 1 or not (_panel._ctx["cells"][vat][0] as Label).text.contains(" to "):
+		_fail("opening another row lost the draft or its figure: %d rows" % _panel._draft.count())
+	_open(vat)
+	if not is_equal_approx(_editor()._slider.value, live + slider.step):
+		_fail("a reopened row's slider shows %s, not the draft %s" % [_editor()._slider.value, live + slider.step])
+	if not _editor().get_node("Now").text.contains(LedgerBox.text(live, TaxLibrary.step_decimals(_state.player(), "vat"))):
+		_fail("a reopened row's 'Now' is not today's rate: '%s'" % _editor().get_node("Now").text)
+	_panel._draft.revert()
+
+
+## A refusal at the press keeps the draft on the rows and still answers (committed, not tabled).
+func _check_a_refused_table_keeps_the_draft() -> void:
+	var ns = _state.player()
+	ns.tabled_bill = {"law_id": "some_law", "vote_year": 2026, "vote_month": 1, "vote_day": 31}
+	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
+	var heard := []
+	_panel.committed.connect(func(_before: Dictionary, tabling: Dictionary) -> void: heard.append(tabling), CONNECT_ONE_SHOT)
+	_panel._on_table()
+	if heard.size() != 1 or bool(heard[0].get("tabled", true)):
+		_fail("a refused table did not answer as refused: %s" % [heard])
+	if _panel._draft.count() != 1:
+		_fail("a refused table cleared the draft")
+	ns.tabled_bill = {}
+	_panel._draft.revert()
+
+
+## A bill already before the Assembly takes the next draft as an amendment: both rows end up in it.
+func _check_an_amendment_adds_to_the_tabled_bill() -> void:
+	var ns = _state.player()
+	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
+	_panel._on_table()
+	_panel._draft.set_value(FinanceDraft.TAX, "income", float(ns.tax_rates_pct["income"]) + 1.0)
+	_panel._dirty = true
+	_panel._process(0.0)
+	if _panel._foot.get_node("Table").text != Strings.t("Add to the bill"):
+		_fail("the button does not say it adds to the bill: '%s'" % _panel._foot.get_node("Table").text)
+	_panel._foot.get_node("Table").pressed.emit()
+	var rows: Dictionary = ns.tabled_bill.get("finance", {}).get("tax_rates_pct", {})
+	if not rows.has("vat") or not rows.has("income"):
+		_fail("the amendment is not in the bill: %s" % [ns.tabled_bill])
+	if not _panel._draft.is_empty():
+		_fail("the draft stands after an amendment")
+	_panel._foot.get_node("Withdraw").pressed.emit()
+	_panel._process(0.0)
+
+
+## A line near zero stops at zero, never below it.
+func _check_a_spending_line_stops_at_zero() -> void:
+	_open(FinanceRows.row_id(FinanceDraft.SPENDING, "defence"))
+	if _editor()._slider.min_value != 0.0:
+		_fail("a spending line's floor is %s" % _editor()._slider.min_value)
+	var box: LineEdit = _editor()._box
+	box.text = "-1"
+	box.text_submitted.emit(box.text)
+	if _panel._draft.value(FinanceDraft.SPENDING, "defence") != 0.0:
+		_fail("a typed -1 drafts %s" % _panel._draft.value(FinanceDraft.SPENDING, "defence"))
+	_panel._draft.revert()
+
+
+## The brackets alone are a priced draft: the effect line, the footer's count.
+func _check_the_brackets_are_priced_end_to_end() -> void:
+	_open(FinanceRows.row_id(FinanceDraft.TAX, "income"))
+	var box: LineEdit = _editor().find_child("BracketsBox", true, false)
+	box.text = str(float(_state.player().tax_progressivity) + 0.3)
+	box.text_submitted.emit(box.text)
+	_panel._process(0.0)
+	if _panel._draft.count() != 1 or _editor().get_node("Effect").text == "":
+		_fail("a brackets-only draft has no effect line: %d rows '%s'" % [_panel._draft.count(), _editor().get_node("Effect").text])
+	if not _panel._foot._text.text.contains("1 change"):
+		_fail("the footer does not count the brackets: '%s'" % _panel._foot._text.text)
+	_panel._draft.revert()
+
+
+## A law moving a rate the same day: the sweep's mark_dirty re-reads the books and the open editor.
+func _check_a_state_move_reaches_an_open_editor() -> void:
+	var ns = _state.player()
+	var vat := FinanceRows.row_id(FinanceDraft.TAX, "vat")
+	_open(vat)
+	var live := float(ns.tax_rates_pct["vat"])
+	ns.tax_rates_pct["vat"] = live + 2.0
+	_panel.mark_dirty()
+	_panel._process(0.0)
+	var places := TaxLibrary.step_decimals(ns, "vat")
+	if not _editor().get_node("Now").text.contains(LedgerBox.text(live + 2.0, places)):
+		_fail("after a same-day move the editor still says '%s'" % _editor().get_node("Now").text)
+	if not (_panel._ctx["cells"][vat][0] as Label).text.contains(LedgerBox.text(live + 2.0, places)):
+		_fail("after a same-day move the row still says '%s'" % (_panel._ctx["cells"][vat][0] as Label).text)
+	ns.tax_rates_pct["vat"] = live
+	_panel.mark_dirty()
+	_panel._process(0.0)
+
+
+## The price cache keeps four: a fifth pushes the first out, and asking for it again prices it afresh.
+func _check_the_price_cache_reprices_after_eviction() -> void:
+	var price := FinancePrice.new()
+	price.setup(_state)
+	var vat := float(_state.player().tax_rates_pct["vat"])
+	var pendings := []
+	for i in range(1, 6):
+		pendings.append({FinanceDraft.TAX: {"vat": vat + float(i)}})
+		price.after(pendings[i - 1])
+	var again: Dictionary = price.after(pendings[0])
+	var fresh: Dictionary = Budget.preview(_state, pendings[0])
+	if not is_equal_approx(float(again["deficit_pct_gdp"]), float(fresh["deficit_pct_gdp"])):
+		_fail("an evicted pending is not priced afresh")
 
 
 func _check_a_go_opens_the_folded_row() -> void:

@@ -118,6 +118,8 @@ func setup(state, loader) -> void:
 
 func mark_dirty() -> void:
 	_price.reset()
+	# A law, an event or a summit moved the register: the books are read again, not kept for the day.
+	_stamp = ""
 	_dirty = true
 
 
@@ -160,6 +162,10 @@ func _refresh(ns) -> void:
 
 ## What changes without a rebuild: the rows' figures, the footer, the line about the draft and the ranges.
 func _paint(ns) -> void:
+	# Before the first build there are no rows to repaint: the rebuild (and its own paint) comes first.
+	if _ctx.is_empty():
+		_dirty = true
+		return
 	_paint_due = false
 	FinanceRows.paint_rates(_ctx)
 	_foot.refresh(_state, _loader, _draft, _price)

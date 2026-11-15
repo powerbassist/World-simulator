@@ -49,9 +49,7 @@ const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
 const BudgetPanel = preload("res://src/ui/budget_panel.gd")
-## V4.2 T5. The Tax Code window (the budget panel's tax levers moved there)
-## and the bill briefing both surfaces open over a bill.
-const TaxPanel = preload("res://src/ui/tax_panel.gd")
+## V4.2 T5. The bill briefing, over every bill the player can put to the Assembly.
 const Briefing = preload("res://src/ui/briefing.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const ElectionPanel = preload("res://src/ui/election_panel.gd")
@@ -154,7 +152,6 @@ var _term_card_id := ""
 var _overview_panel
 var _economy_panel
 var _budget_panel
-var _tax_panel
 var _briefing
 var _polling_panel
 var _election_panel
@@ -330,24 +327,9 @@ func _ready() -> void:
 	_budget_panel.committed.connect(func(before, tabling):
 		_fiscal_committed(tr("Budget change"), tabling, before))
 
-	# V4.2 T5. The tax levers' new home, in the Economy cluster beside Budget:
-	# the cluster grammar (panel-system.md §16) puts a surface where its
-	# decision lives, and a tax rate is a budget-domain decision -- but a
-	# separate DOMAIN from spending, which is why it is its own window and
-	# not a row. KEY_X was the one letter left. The commit is Budget.commit()
-	# -- the same verb the budget panel sends -- so the demand impulse, the
-	# erosion curve and the books have one entry point however many windows
-	# move a rate.
-	_tax_panel = TaxPanel.new()
-	_windows.register("tax", tr("Tax Code"), _tax_panel, KEY_X, ICONS + "receipt_long.svg")
-	_tax_panel.setup(_state, _loader)
-	# The two finance tabs each print the other's uncommitted draft as one line
-	# with a Go (V5.3 a + b; V4.2's ultra pass 2 merged it into the Budget's
-	# columns). The panels are siblings; this is a reference, not state, and the
-	# load path's setup() sweep leaves it alone.
-	_budget_panel.pair(_tax_panel, _windows)
-	_tax_panel.committed.connect(func(before, tabling):
-		_fiscal_committed(tr("Tax code change"), tabling, before))
+	# The tax rates are set on the Books page (finances_panel.gd, V5.3 screen 4): the Tax Code tab and its
+	# KEY_X retired with its rows. The Budget tab stays for the sector tiles (budget_sectors.gd), until the
+	# Sectors screen takes them.
 
 	# V4.2 T5. The bill briefing, over every bill the player can put to the
 	# assembly. Not a window in the registry: it is not a surface the player

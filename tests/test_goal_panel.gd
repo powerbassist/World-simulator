@@ -187,26 +187,28 @@ func _check_a_press() -> void:
 		by_kind[(press.get_child(0).get_child(0) as Label).text] = press
 	if by_kind.has("Budget"):
 		(by_kind["Budget"] as Button).pressed.emit()
-		if _went != [["budget", ""]]:
-			_fail("a budget row's press asked for %s, not the Budget tab" % [_went])
-		if not _main._windows.is_open("budget"):
-			_fail("the wiring did not open the Budget tab for a budget row")
+		if _went.size() != 1 or _went[0][0] != "finances" or not String(_went[0][1]).begins_with("spending_pct_gdp:"):
+			_fail("a budget row's press asked for %s, not the Books page on that line" % [_went])
+		if not _main._windows.is_open("finances"):
+			_fail("the wiring did not open the Books page for a budget row")
 	else:
 		_fail("no budget line among the deficit's measures")
 	# QA's ML on #358: a law row's press must MOVE the selection to that law -- pick one that is not
 	# the selection already (the list always holds one), and read the sheet's own name back.
-	# A TAX row opens the Tax Code on that tax's own row (the parent's ruling on QA's TAKE), not the Budget.
+	# A TAX row opens the Books page on that tax's own row (the parent's ruling on QA's TAKE), not the Budget.
 	if by_kind.has("Tax"):
 		_went.clear()
 		_main._windows.open("legislature")
 		(by_kind["Tax"] as Button).pressed.emit()
 		var kind := String(_went[0][1]) if _went.size() == 1 else ""
-		if _went.size() != 1 or _went[0][0] != "tax" or kind == "":
-			_fail("a tax row's press asked for %s, not the Tax Code on that tax" % [_went])
-		elif not _main._windows.is_open("tax"):
-			_fail("a tax row's press did not open the Tax Code")
-		elif _main.get_viewport().gui_get_focus_owner() != _main._tax_panel._sliders.get(kind):
-			_fail("a tax row's press did not put the cursor on %s's own slider" % kind)
+		var page = _main._windows.frame("finances")._content
+		page._process(0.0)
+		if _went.size() != 1 or _went[0][0] != "finances" or not kind.begins_with("tax_rates_pct:"):
+			_fail("a tax row's press asked for %s, not the Books page on that tax" % [_went])
+		elif not _main._windows.is_open("finances"):
+			_fail("a tax row's press did not open the Books page")
+		elif page._editor == null or page._editor.key != kind.get_slice(":", 1):
+			_fail("a tax row's press did not open %s's own editor" % kind)
 		_main._windows.open("legislature")
 	else:
 		_fail("no tax rate among the deficit's measures")
@@ -232,7 +234,7 @@ func _check_a_press() -> void:
 
 
 func _check_the_catalogue() -> void:
-	# The budget row's press went to the Budget tab (the driver's wiring), so come back.
+	# The budget row's press went to the Books page (the driver's wiring), so come back.
 	_main._windows.open("legislature")
 	var goals = _goals()
 	var modes: HBoxContainer = goals.get_child(1)
