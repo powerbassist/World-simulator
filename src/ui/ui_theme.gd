@@ -63,8 +63,6 @@ const ACCENT_FALLBACK := Color(0.361, 0.616, 0.922)  ## #5C9DEB
 ## (U3's lesson), which is why a window body stays fully opaque.
 const PLATE_ALPHA := 0.97
 
-## A scrollbar's width, which in Godot is its stylebox's own minimum size.
-
 # -- Type scale ---------------------------------------------------------------
 
 ## One family, Archivo (variable, SIL OFL), cut by axis rather than by file: the

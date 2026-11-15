@@ -4,35 +4,48 @@ extends SceneTree
 ## Non-zero exit on any failure.
 ##
 ## The author, 2026-11-15: "sliders in some panels are too close from the text", then "scroll bar": a scrolled
-## panel's text sat flush against its vertical scroll bar. ScrollContainer's scrollbar_v_separation does nothing in
-## 4.7.2, so the gap is part of the theme's bars (ScrollBars.SCROLL_GAP_PX): one place, every panel. Pinned: the
-## vertical bar is that much wider than its drawn width, the content a ScrollContainer gives its child is that much
-## narrower than with a bare bar, the horizontal bar has the same gap above it, and the gap is not zero.
+## panel's text sat flush against its vertical scroll bar. In Godot 4.7 the space between a ScrollContainer's
+## VERTICAL bar and its content is `scrollbar_h_separation` (the horizontal bar's is `scrollbar_v_separation`), set
+## once in the theme (ScrollBars.SCROLL_GAP_PX): one place, every panel. QA's TAKE on #366: the first version set
+## the wrong constant and the bar's own boxes carried the gap, which widened the bar's input area.
+##
+## Pinned THROUGH THE LAYOUT, not through the constant: the content a themed ScrollContainer gives its child is
+## exactly the gap narrower than the same container with the constant at 0, the vertical bar stays where it was, the
+## bar's own width is untouched, and the gap is not zero. Setting SCROLL_GAP_PX to 0 therefore fails the width check.
+## The engine's own limit is pinned too: a child whose minimum width is wider than the container gets no gap.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const ScrollBars = preload("res://src/ui/scroll_bars.gd")
 
+const VIEW := Vector2(300, 200)
+## What a gap must be at least, whatever the constant says: the layout check cannot pass by both sides being 0.
+const MIN_GAP := 4.0
+
 var _failures: Array[String] = []
 var _frame := 0
-var _vertical: ScrollContainer
-var _tall: Control
+var _themed: ScrollContainer
+var _bare: ScrollContainer
+var _wide: ScrollContainer
 
 
 func _init() -> void:
 	var theme := UiTheme.build()
-	_vertical = _scroller(theme, Vector2(10, 1000), ScrollContainer.SCROLL_MODE_DISABLED)
-	_vertical.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_tall = _vertical.get_child(0)
+	var bare := UiTheme.build()
+	bare.set_constant("scrollbar_h_separation", "ScrollContainer", 0)
+	_themed = _scroller(theme, Vector2(10, 1000))
+	_bare = _scroller(bare, Vector2(10, 1000))
+	# A child with a minimum width wider than the view: the engine adds no gap there (4.7 docs, scrollbar_h_separation).
+	_wide = _scroller(theme, Vector2(900, 1000))
+	_wide.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 
 
-func _scroller(theme: Theme, content: Vector2, _unused: int) -> ScrollContainer:
+func _scroller(theme: Theme, content: Vector2) -> ScrollContainer:
 	var scroller := ScrollContainer.new()
 	scroller.theme = theme
-	scroller.size = Vector2(300, 200)
+	scroller.size = VIEW
 	var child := Control.new()
 	child.custom_minimum_size = content
 	child.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	child.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroller.add_child(child)
 	root.add_child(scroller)
 	return scroller
@@ -43,18 +56,19 @@ func _process(_delta: float) -> bool:
 	if _frame == 4:
 		if ScrollBars.SCROLL_GAP_PX < 4.0:
 			_fail("the scroll gap is %s px: the text is back against the bar" % ScrollBars.SCROLL_GAP_PX)
-		# The gap is drawn as nothing, not as a fatter bar: the track and the grabber sit back inside their old width.
-		var theme := UiTheme.build()
-		for part in ["scroll", "grabber", "grabber_highlight", "grabber_pressed"]:
-			var box := theme.get_stylebox(part, "VScrollBar") as StyleBoxFlat
-			if box == null or not is_equal_approx(box.expand_margin_left, -ScrollBars.SCROLL_GAP_PX):
-				_fail("the vertical bar's '%s' is not drawn back inside its gap" % part)
-		var bar := _vertical.get_v_scroll_bar()
-		var want := ScrollBars.BAR_WIDTH_PX + ScrollBars.SCROLL_GAP_PX
-		if absf(bar.get_combined_minimum_size().x - want) > 0.5:
-			_fail("the vertical bar is %s px wide, the drawn bar plus its gap is %s" % [bar.get_combined_minimum_size().x, want])
-		if absf(_tall.size.x - (300.0 - want)) > 0.5:
-			_fail("the text column is %s px wide beside the bar, %s with the gap" % [_tall.size.x, 300.0 - want])
+		var themed_child: Control = _themed.get_child(0)
+		var bare_child: Control = _bare.get_child(0)
+		var narrower := bare_child.size.x - themed_child.size.x
+		if narrower < MIN_GAP or absf(narrower - ScrollBars.SCROLL_GAP_PX) > 0.5:
+			_fail("the content is %s px narrower than with no gap, the gap is %s" % [narrower, ScrollBars.SCROLL_GAP_PX])
+		var themed_bar := _themed.get_v_scroll_bar()
+		var bare_bar := _bare.get_v_scroll_bar()
+		if absf(themed_bar.position.x - bare_bar.position.x) > 0.5:
+			_fail("the gap moved the vertical bar from x=%s to x=%s" % [bare_bar.position.x, themed_bar.position.x])
+		if absf(themed_bar.get_combined_minimum_size().x - ScrollBars.BAR_WIDTH_PX) > 0.5:
+			_fail("the vertical bar is %s px wide, it is drawn %s" % [themed_bar.get_combined_minimum_size().x, ScrollBars.BAR_WIDTH_PX])
+		if absf(_wide.get_child(0).size.x - _wide.get_child(0).get_combined_minimum_size().x) > 0.5:
+			_fail("a child wider than its view was given a gap anyway")
 		_finish()
 	return false
 
