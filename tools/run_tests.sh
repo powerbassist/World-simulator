@@ -191,6 +191,8 @@ tests=(
   tests/test_event_chain_loader.gd
   tests/test_credit.gd
   tests/test_tax.gd
+  tests/test_finances_panel.gd
+  tests/test_goal_panel.gd
   tests/test_sectors.gd
   tests/test_projects.gd
   tests/test_campaign.gd

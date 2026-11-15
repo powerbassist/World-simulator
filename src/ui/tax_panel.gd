@@ -166,6 +166,21 @@ func _ensure_rows() -> void:
 		_effect_labels[key] = EffectsStrip.cell(_rates_grid)
 
 
+## The cursor on one tax's own slider, scrolled into view: where a goal-panel row sends the player. The
+## window must be open first (a hidden control takes no focus).
+func focus_kind(kind: String) -> void:
+	_ensure_rows()
+	var slider: HSlider = _sliders.get(kind)
+	if slider == null:
+		return
+	var scroll := slider.get_parent()
+	while scroll != null and not (scroll is ScrollContainer):
+		scroll = scroll.get_parent()
+	if scroll != null:
+		(scroll as ScrollContainer).ensure_control_visible(slider)
+	slider.grab_focus()
+
+
 func _build_buttons() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_END
