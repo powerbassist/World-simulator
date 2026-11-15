@@ -68,7 +68,8 @@ func moves(pending: Dictionary) -> Dictionary:
 ## FinanceBill.absolute) plus the programmes' and funds' yearly cost, which the vote counts as spending
 ## (FinanceRows.COST, pct of GDP) and Budget.preview does not know. `refused` (a draft tabling would refuse has no
 ## merged text) prices the draft's own rows. {spending_bn, revenue_bn, deficit_now_bn, deficit_after_bn,
-## deficit_after_pct}: the moves each side a year, the deficit today (no bill) and with the whole bill passed.
+## deficit_after_pct, pending}: the moves each side a year, the deficit today (no bill) and with the whole bill passed,
+## and the pending it was priced on (the ranges forecast is fed the same).
 func whole(loader, draft, refused: bool) -> Dictionary:
 	var pending: Dictionary = draft.pending()
 	var cost_pct := 0.0
@@ -87,6 +88,7 @@ func whole(loader, draft, refused: bool) -> Dictionary:
 		"deficit_now_bn": float(a["deficit_pct_gdp"]) * float(a["gdp_eur_bn"]) / 100.0,
 		"deficit_after_bn": deficit_after,
 		"deficit_after_pct": deficit_after / gdp * 100.0 if gdp > 0.0 else 0.0,
+		"pending": pending,
 	}
 
 
