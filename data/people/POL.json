@@ -426,6 +426,10 @@
         {
           "object": "programme:prog_the_open_door",
           "stance": "sponsor"
+        },
+        {
+          "object": "region:PL81",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -1045,6 +1049,10 @@
         {
           "object": "programme:prog_the_presidents_ledger",
           "stance": "oppose"
+        },
+        {
+          "object": "region:PL82",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -1153,6 +1161,10 @@
         },
         {
           "object": "office:party_leadership:stronnictwo_ziemi",
+          "stance": "want"
+        },
+        {
+          "object": "region:PL61",
           "stance": "want"
         }
       ],
