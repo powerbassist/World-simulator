@@ -216,11 +216,15 @@ func _paint(ns) -> void:
 		_put_sheet_away()
 	_sheet.refresh()
 	var drafted: bool = not _draft.is_empty()
-	_forecast.want(_draft.pending(), drafted)
+	# One screen, one figure (the parent's ruling after #368): the ranges forecast and the deficit line price the same whole
+	# bill as the footer and the sheet (FinancePrice.whole), not the new rows alone.
+	var whole := {}
 	if drafted:
-		var after: Dictionary = _price.after(_draft.pending())
+		whole = _price.whole(_loader, _draft, String(FinanceRead.draft(_state, _loader, _draft.bill())["refusal"]) != "")
+	_forecast.want(whole["pending"] if drafted else _draft.pending(), drafted)
+	if drafted:
 		_with.text = Strings.t("With your changes, the ranges above included: deficit %s bn (%s %% of GDP).") % [
-			Num.f(float(after["deficit_pct_gdp"]) * float(after["gdp_eur_bn"]) / 100.0, 0), Num.f(float(after["deficit_pct_gdp"]), 2)]
+			Num.f(float(whole["deficit_after_bn"]), 0), Num.f(float(whole["deficit_after_pct"]), 2)]
 	else:
 		_with.text = ""
 	for child in _ranges.get_children():
