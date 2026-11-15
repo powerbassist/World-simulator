@@ -1628,7 +1628,10 @@ func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -
 
 	var best := ""
 	var best_output := -1.0
-	for company in Companies.firms_of(loader, ns.id):
+	# The largest MAJOR (V5.3 PR 3): since the body firms joined the roster the largest
+	# firm by output was a body firm the rescue verb refuses (FRA_verchere_materiaux,
+	# DEU_rolfes_ag), so this regime had aided nobody in three of the four nations.
+	for company in Companies.majors_of(loader, ns.id):
 		var out: float = Companies.output_eur_bn(ns, company)
 		if out > best_output:
 			best_output = out
