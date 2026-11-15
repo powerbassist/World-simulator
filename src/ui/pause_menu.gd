@@ -9,8 +9,8 @@ extends PanelContainer
 ## and swaps the scene. Quit is the one exception, because there is no state to
 ## coordinate on the way out.
 ##
-## Built in code, like every other panel here -- see budget_panel.gd's
-## placement note.
+## Built in code, like every other panel here; placement is the owner's
+## (window_manager.gd's register()).
 
 signal resumed
 signal save_load_requested

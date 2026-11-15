@@ -57,7 +57,7 @@ var _previous := {}
 
 
 func _ready() -> void:
-	# Placement is the owner's job — see the note in budget_panel.gd.
+	# Placement is the owner's job (window_manager.gd's register()).
 	custom_minimum_size = Vector2(560, 460)
 
 	var margin := MarginContainer.new()
@@ -108,7 +108,7 @@ func _build_footer() -> Control:
 	return row
 
 
-## Docked-tab mode -- see budget_panel.gd's hide_close_button() for why.
+## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).
 func hide_close_button() -> void:
 	_close_button.hide()
 

@@ -48,6 +48,7 @@ func _process(_delta: float) -> bool:
 			_main._windows.open("finances")
 			_panel = _main._windows.frame("finances")._content
 			_check_quiet_unit()
+			_check_an_off_grid_restore()
 			_stage_all_warned()
 			_open_row()
 		4:
@@ -147,7 +148,8 @@ func _check_the_chip() -> void:
 	for id in why:
 		most = maxf(most, SectorWarnings.restore_pct_gdp(ns, _main._loader, LINE, String(id)))
 	var live := float(ns.spending_pct_gdp[LINE])
-	var target := minf(live + most, _panel._editor._hi)
+	var step: float = _panel._editor.LINE_STEP
+	var target := minf(snappedf(ceilf((live + most) / step - 0.0001) * step, step), _panel._editor._hi)
 	var chip = _with_meta("raise_line", LINE)
 	if chip == null or chip.disabled:
 		_fail("raise: no live chip")
@@ -156,8 +158,35 @@ func _check_the_chip() -> void:
 	if (chip as Button).text != want:
 		_fail("raise: the chip reads '%s', the largest restore inside the slider's reach is '%s'" % [(chip as Button).text, want])
 	(chip as Button).pressed.emit()
-	if absf(_panel._draft.value(FinanceDraft.SPENDING, LINE) - target) > 0.001:
-		_fail("raise: the shared draft holds %s, the chip named %s" % [_panel._draft.value(FinanceDraft.SPENDING, LINE), target])
+	_check_the_chip_writes_its_figure(want)
+	_panel._draft.revert()
+
+
+## QA's T2 on #373: the draft holds exactly the figure the chip names, on the slider's grid, and the editor's box reads it
+## (it once wrote 11.4876 under "Raise to 11.5 %").
+func _check_the_chip_writes_its_figure(named: String) -> void:
+	var held: float = _panel._draft.value(FinanceDraft.SPENDING, LINE)
+	var step: float = _panel._editor.LINE_STEP
+	if named != Strings.t("Raise to %s %%") % Num.f(held, 1) or not is_equal_approx(held, snappedf(held, step)):
+		_fail("raise: the chip named '%s', the shared draft holds %s" % [named, held])
+	if String(_panel._editor._box.text) != Num.f(held, 1):
+		_fail("raise: the editor's box reads '%s', the chip wrote %s" % [_panel._editor._box.text, Num.f(held, 1)])
+
+
+## A restore that lands between two steps of the slider (France's health at 1.15 times the drift's base: +1.65 points):
+## the chip names the next step and writes it, not 12.65.
+func _check_an_off_grid_restore() -> void:
+	var ns = _main._state.player()
+	ns.sector_drift["base_gdp_per_head"] = float(ns.gdp_eur_bn) / float(ns.population) * 1.15
+	_panel._draft.revert()
+	_open_row()
+	var chip = _with_meta("raise_line", LINE)
+	if chip == null:
+		_fail("off-grid restore: no chip")
+		return
+	var named: String = (chip as Button).text
+	(chip as Button).pressed.emit()
+	_check_the_chip_writes_its_figure(named)
 	_panel._draft.revert()
 
 

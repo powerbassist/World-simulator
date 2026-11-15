@@ -58,17 +58,19 @@ var _draft
 var _line := ""
 ## Moves the editor's slider to a figure (the editor writes the draft and says it moved).
 var _raise_to: Callable
-## The highest figure the editor's slider reaches.
+## The highest figure the editor's slider reaches, and its step: the chip names a figure on the slider's grid.
 var _hi := 0.0
+var _step := 0.1
 
 
-func setup(state, loader, draft, line: String, raise_to: Callable, hi: float) -> void:
+func setup(state, loader, draft, line: String, raise_to: Callable, hi: float, step: float) -> void:
 	_state = state
 	_loader = loader
 	_draft = draft
 	_line = line
 	_raise_to = raise_to
 	_hi = hi
+	_step = step
 	add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	refresh()
 
@@ -176,7 +178,9 @@ func _chip(dns, why_of: Dictionary) -> void:
 	if need <= 0.0:
 		return
 	var drafted_pct := float(dns.spending_pct_gdp.get(_line, 0.0))
-	var target := minf(drafted_pct + need, _hi)
+	# Up to the next step of the slider (QA's T2 on #373: 11.4876 was written under "Raise to 11.5 %"), so the figure the
+	# chip names is the one it writes and the row, the box and the sheet read.
+	var target := minf(snappedf(ceilf((drafted_pct + need) / _step - 0.0001) * _step, _step), _hi)
 	if target <= drafted_pct:
 		return  # the slider's reach is spent: its caption says where it ends
 	var chip := PanelKit.sized(Button.new())

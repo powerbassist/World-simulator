@@ -10,8 +10,8 @@ extends PanelContainer
 ## there is one place to edit when a source is added and no way for the two
 ## copies to drift apart.
 ##
-## Built in code, like every other panel here -- see budget_panel.gd's
-## placement note.
+## Built in code, like every other panel here; placement is the owner's
+## (window_manager.gd's register()).
 
 signal closed
 

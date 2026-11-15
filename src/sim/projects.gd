@@ -431,8 +431,8 @@ static func _read_field(state, ns, field: String, project_id: String) -> float:
 ##
 ## IT DOES NOT GO THROUGH Budget.commit(), AND THAT IS DELIBERATE RATHER THAN
 ## CONVENIENT -- V1.6e's escape from docs/tax-model.md section 11's live bug,
-## inherited whole. budget_panel.gd refreshes from a `_pending` captured in setup(),
-## so anything committing a budget outside that panel's own sliders leaves it stale
+## inherited whole. the Budget tab (retired at Finances slice 5) refreshed from a `_pending`
+## captured in setup(), so anything committing a budget outside its own sliders left it stale
 ## and offering to undo the commit. Writing an own register and letting the cost
 ## arrive as a computed line means this verb cannot meet that bug at all.
 ##

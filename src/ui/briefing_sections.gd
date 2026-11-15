@@ -18,7 +18,7 @@ extends RefCounted
 ## Reads simulation state and never writes it; the single exception is the two commission
 ## buttons, which send player intent back as one explicit command -- Statute.buy_poll() or
 ## MeasurePolls.commission(). The host owns the redraw (`rebuild`) and the purchase's
-## baseline (`polled`, budget_panel.gd's `committed` contract).
+## baseline (`polled`, finances_panel.gd's `committed` contract).
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Labels = preload("res://src/ui/labels.gd")

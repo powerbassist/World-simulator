@@ -302,7 +302,7 @@ static func ledger(parent: Control, rows: Array) -> GridContainer:
 ## Read a figure out of a snapshot. **A key that is not there is an em dash and
 ## an error, never a zero.**
 ##
-## `Budget.snapshot()` never carried `gini_effective`, `budget_panel.gd` read it
+## `Budget.snapshot()` never carried `gini_effective`, the Budget tab (retired at Finances slice 5) read it
 ## with `.get(key, 0.0)`, and the row printed a confident `0.00` against a live
 ## 31.80 for a whole session. A default that hides a missing key is worse than a
 ## crash, because a crash gets fixed and a plausible number gets quoted. An

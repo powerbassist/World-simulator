@@ -111,7 +111,7 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	if channel == FinanceDraft.SPENDING and FinanceSectors.has_sectors(loader, key):
 		_tile = FinanceSectors.new()
 		add_child(_tile)
-		_tile.setup(state, loader, draft, key, func(target: float) -> void: _write(channel, key, target), _hi)
+		_tile.setup(state, loader, draft, key, func(target: float) -> void: _write(channel, key, target), _hi, LINE_STEP)
 		_tile.changed.connect(moved.emit)
 	if channel == FinanceDraft.TAX:
 		var yields: Dictionary = FinanceRead.step_yields(ns).get(key, {})

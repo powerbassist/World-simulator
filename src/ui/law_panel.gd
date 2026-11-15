@@ -48,7 +48,7 @@ const DissolveButton = preload("res://src/ui/dissolve_button.gd")
 const FORECAST_UNCERTAIN_BAND := 0.15
 
 ## Carries the pre-vote baseline (Trends.snapshot_now()) and the law's name --
-## same reasoning as budget_panel.gd's committed signal. Emitted whether the
+## same reasoning as finances_panel.gd's committed signal. Emitted whether the
 ## bill passed or not; main.gd only queues an effect worth measuring once a
 ## month has actually elapsed against it, which a failed vote changes nothing
 ## to distinguish -- an entry that shows "nothing moved" is still correct.
@@ -124,7 +124,7 @@ func _build_footer() -> Control:
 	return row
 
 
-## Docked-tab mode -- see budget_panel.gd's hide_close_button() for why.
+## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).
 func hide_close_button() -> void:
 	_close_button.hide()
 

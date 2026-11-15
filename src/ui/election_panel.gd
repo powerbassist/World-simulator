@@ -69,7 +69,7 @@ var _ticked := 0
 
 
 func _ready() -> void:
-	# Placement is the owner's job — see the note in budget_panel.gd. Same bug
+	# Placement is the owner's job (window_manager.gd's register()). Same bug
 	# class: a preset in _ready() lands this in the corner before it has a size.
 	# 860x600, V2.9: this is the one result screen in the game, carrying the
 	# verdict, the attribution and the seat bars -- 640 was the budget panel's

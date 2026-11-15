@@ -236,6 +236,13 @@ func _check_rows_and_moves_footer() -> void:
 		_fail("rows and a move: the footer does not say the move applies now (%s)" % said)
 	if (_panel._draft.bill().get("spending_pct_gdp", {}) as Dictionary).size() != 1 or _panel._draft.bill().has("moves"):
 		_fail("rows and a move: the bill is not the one rate row (%s)" % [_panel._draft.bill()])
+	# QA's T3 on #373: the sheet's Table books the move too, so the sheet says it as the footer does.
+	_panel._sheet.show()
+	_panel._sheet.refresh()
+	var line = _panel._sheet.find_child("SheetMoves", true, false)
+	if line == null or not (line as Label).text.contains("now; the rest is voted on"):
+		_fail("rows and a move: the sheet does not say the move applies now (%s)" % [line.text if line != null else "<none>"])
+	_panel._sheet.hide()
 
 
 ## The forecast's want carries the drafted moves, with the lever when there is one.

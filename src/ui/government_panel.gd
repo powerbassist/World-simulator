@@ -8,11 +8,11 @@ extends PanelContainer
 ## schedule boundary, and the censure motion and Article 49.3 are the next
 ## session's work. See docs/government-model.md.
 ##
-## Built in code, like the other panels -- see budget_panel.gd's placement note.
+## Built in code, like the other panels; placement is the owner's (window_manager.gd's register()).
 
 signal closed
 
-## Carries the pre-command baseline, the same shape budget_panel.gd's
+## Carries the pre-command baseline, the same shape finances_panel.gd's
 ## `committed` and law_panel.gd's `proposed` use, so main.gd's effect-queueing
 ## treats a dissolution the same way it treats any other player command.
 signal dissolved(before: Dictionary)
@@ -183,7 +183,7 @@ func setup(state, loader) -> void:
 	_dirty = true
 
 
-## Docked-tab mode -- see budget_panel.gd's hide_close_button() for why.
+## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).
 func hide_close_button() -> void:
 	_close_button.hide()
 
