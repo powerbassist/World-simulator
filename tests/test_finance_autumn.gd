@@ -42,6 +42,7 @@ func _init() -> void:
 	_test_autumn_open_reads_the_gate()
 	_test_preview_prices_a_birth_as_the_division_lands_it()
 	_test_preview_prices_an_abolition_as_the_division_lands_it()
+	_test_preview_prices_a_whole_bill_as_the_division_lands_it()
 	_finish()
 
 
@@ -283,6 +284,34 @@ func _test_preview_prices_an_abolition_as_the_division_lands_it() -> void:
 	var landed := Budget.snapshot(state)
 	if priced != landed:
 		_failures.append("abolition preview: priced %s, the vote landed %s" % [_diff(priced, landed), _diff(landed, priced)])
+
+
+## The whole text at once (the GLM gap pass's items 2, 8, 1 and 3): a rate, a spending
+## line, the schedule, a birth and an abolition read what the vote lands; the programme and
+## fund rows are the reader's to add (FinanceRows.COST), so they move nothing here; and the
+## price is the bill's, whatever the month (the gate is autumn_open's to say).
+func _test_preview_prices_a_whole_bill_as_the_division_lands_it() -> void:
+	var state = _state("FRA", 10)
+	var bill := {
+		"tax_rates_pct": {"vat": 1.0}, "spending_pct_gdp": {"health": -0.5}, "tax_progressivity": 0.1,
+		"create": {"bank_levy": 0.5}, "abolish": ["capital_gains"],
+	}
+	var priced := FinanceBill.preview(state, bill)
+	var with_rows := bill.duplicate(true)
+	with_rows["programmes"] = {"energy": "any_action"}
+	if FinanceBill.preview(state, with_rows) != priced:
+		_failures.append("whole preview: a programme row moved the books preview() reads")
+	if FinanceBill.preview(_state("FRA", 9), bill) != priced:
+		_failures.append("whole preview: the same bill reads other books in September")
+	if not bool(FinanceBill.table(state, _loader, bill).get("tabled", false)):
+		_failures.append("whole preview: the October bill was refused")
+		return
+	if not bool(Division.divide(state, _loader).get("passed", false)):
+		_failures.append("whole preview: the October bill did not carry")
+		return
+	var landed := Budget.snapshot(state)
+	if priced != landed:
+		_failures.append("whole preview: priced %s, the vote landed %s" % [_diff(priced, landed), _diff(landed, priced)])
 
 
 ## The keys of `a` whose value differs in `b`, for a readable failure.
