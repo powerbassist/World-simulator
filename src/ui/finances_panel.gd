@@ -39,6 +39,13 @@ const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
 const PROJECTION_MONTHS := 24
+## The ranges row has a FIXED height: the figure and up to two caption lines. A caption that re-wraps when
+## "computing ..." becomes a figure (a figure's column is as wide as its widest line) must not move the rows under
+## it: the page jumped 13 px on every draft move and the next click opened the wrong editor (QA's B1 on #363). The
+## captions are the same with and without a draft for the same reason ("with your changes" is the line below).
+const RANGES_CAPTION_LINES := 2
+const RANGES_FIGURE_LINE := 1.8
+const RANGES_CAPTION_LINE := 1.5
 
 var _state
 var _loader
@@ -59,6 +66,9 @@ var _ctx := {}
 var _editor: FinanceEditor
 var _focus_wanted := false
 var _paint_due := true
+## The text size and the language the rows were built at: a change rebuilds them (QA's B2 on #363).
+var _scale_built := 1.0
+var _language_built := ""
 var _forecast := Forecast.new()
 var _book := {}
 var _stamp := ""
@@ -127,7 +137,14 @@ func mark_dirty() -> void:
 
 
 func _process(_delta: float) -> void:
-	if _state == null or not is_visible_in_tree() or (not _dirty and not _paint_due):
+	if _state == null or not is_visible_in_tree():
+		return
+	if not is_equal_approx(UiTheme.text_scale(), _scale_built) or Strings.language() != _language_built:
+		_scale_built = UiTheme.text_scale()
+		_language_built = Strings.language()
+		_stamp = ""
+		_dirty = true
+	if not _dirty and not _paint_due:
 		return
 	var ns = _state.player()
 	if ns == null:
@@ -179,13 +196,15 @@ func _paint(ns) -> void:
 		_dirty = true
 		return
 	_paint_due = false
+	var scale := UiTheme.text_scale()
+	_ranges.custom_minimum_size.y = ranges_height(scale)
 	FinanceRows.paint_rates(_ctx)
 	_foot.refresh(_state, _loader, _draft, _price)
 	var drafted: bool = not _draft.is_empty()
 	_forecast.want(_draft.pending(), drafted)
 	if drafted:
 		var after: Dictionary = _price.after(_draft.pending())
-		_with.text = Strings.t("With your changes: deficit %s bn (%s %% of GDP).") % [
+		_with.text = Strings.t("With your changes, the ranges above included: deficit %s bn (%s %% of GDP).") % [
 			Num.f(float(after["deficit_pct_gdp"]) * float(after["gdp_eur_bn"]) / 100.0, 0), Num.f(float(after["deficit_pct_gdp"]), 2)]
 	else:
 		_with.text = ""
@@ -195,7 +214,7 @@ func _paint(ns) -> void:
 	var rows: Dictionary = _forecast.rows(ns)
 	for entry in [["proj_growth", Strings.t("Growth, 2 years")], ["proj_unemployment", Strings.t("Unemployment, 2 years")], ["proj_debt", Strings.t("Debt, 2 years")]]:
 		var pair: Array = rows.get(entry[0], ["…", "…"])
-		PanelKit.figure(_ranges, String(pair[1] if drafted else pair[0]), Strings.t("%s, with your changes") % entry[1] if drafted else entry[1])
+		PanelKit.figure(_ranges, String(pair[1] if drafted else pair[0]), entry[1])
 
 
 ## The sentence the page is for. Its figures are FIGURE-sized, the rest LEAD, as the brief asks.
@@ -253,6 +272,11 @@ func _on_discard() -> void:
 	_open_id = ""
 	_stamp = ""
 	_dirty = true
+
+
+## The ranges row's height at a text size.
+static func ranges_height(scale: float) -> float:
+	return ceilf((UiTheme.SIZE_FIGURE * RANGES_FIGURE_LINE + RANGES_CAPTION_LINES * UiTheme.SIZE_SMALL * RANGES_CAPTION_LINE + 8.0) * scale)
 
 
 ## A draft move: the figures repaint in place, the rows stay where they are.

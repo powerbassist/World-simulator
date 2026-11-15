@@ -29,6 +29,7 @@ var _loader
 var _state
 var _panel
 var _frame := 0
+var _rows_y := 0.0
 
 
 func _init() -> void:
@@ -48,6 +49,8 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		1:
 			_panel.show()
+			# The docked width: wraps (the ranges' captions) only match the game's at about this size.
+			_panel.size = Vector2(1240, 820)
 			for nation in ["FRA", "GBR", "DEU", "POL"]:
 				_check_opening_every_row_drafts_nothing(nation)
 			_state = GameState.new_game(_loader, "FRA")
@@ -80,14 +83,50 @@ func _process(_delta: float) -> bool:
 			_check_withdraw_keeps_the_draft()
 			_check_a_budget_lever_of_a_tabled_line_is_locked()
 			_check_a_go_opens_the_folded_row()
+			_panel._open_id = ""
+			_panel._stamp = ""
+			_panel._dirty = true
+			_panel._process(0.0)
+			_panel._forecast.state_changed()
+			_panel._paint(_state.player())
+		4:
+			_rows_y = _revenue_row_y()
+			_panel._forecast.drain()
+			_panel._paint(_state.player())
+		5:
+			if absf(_revenue_row_y() - _rows_y) > 0.5:
+				_fail("the rows moved %s px when the forecast settled (QA's B1)" % (_revenue_row_y() - _rows_y))
+			if _panel._ranges.size.y < FinancesPanel.ranges_height(1.0) - 0.5:
+				_fail("the ranges row is %s px, its fixed height is %s" % [_panel._ranges.size.y, FinancesPanel.ranges_height(1.0)])
+			# The first draft move, "computing ..." again, then settled: the rows stay where they were.
+			_panel._draft.set_value(FinanceDraft.TAX, "income", float(_state.player().tax_rates_pct["income"]) + 2.0)
+			_panel._paint(_state.player())
+		6:
+			if absf(_revenue_row_y() - _rows_y) > 0.5:
+				_fail("the rows moved %s px on the first draft move" % (_revenue_row_y() - _rows_y))
+			_panel._forecast.drain()
+			_panel._paint(_state.player())
+		7:
+			if absf(_revenue_row_y() - _rows_y) > 0.5:
+				_fail("the rows moved %s px when the drafted forecast settled" % (_revenue_row_y() - _rows_y))
+			_panel._draft.revert()
+			_panel._paint(_state.player())
+		8:
+			if absf(_revenue_row_y() - _rows_y) > 0.5:
+				_fail("the rows moved %s px when the draft was dropped" % (_revenue_row_y() - _rows_y))
 			_panel.open_row(FinanceDraft.TAX, "vat")
 			_panel._process(0.0)
-		5:
+		10:
 			# The Go puts the cursor on that row's own slider (a frame after the build).
 			if _panel._editor == null or root.gui_get_focus_owner() != _panel._editor._slider:
 				_fail("a Go did not put the cursor on the row's slider")
 			_finish()
 	return false
+
+
+## The y of the first revenue row, on screen: what a click lands on.
+func _revenue_row_y() -> float:
+	return (_panel._revenue_box.get_child(0) as Control).global_position.y
 
 
 func _open(id: String) -> void:
@@ -571,9 +610,10 @@ func _check_the_hover_follows_the_figure_at_130() -> void:
 	var UiTheme = preload("res://src/ui/ui_theme.gd")
 	var ns = _state.player()
 	UiTheme.set_text_scale(1.3)
-	_panel._stamp = ""
-	_panel._dirty = true
+	# No manual dirty mark: a text-size change in Settings rebuilds the page by itself (QA's B2).
 	_panel._process(0.0)
+	if _panel._ctx["wide"] or not String(_panel._lead.text).contains("font_size=%d" % int(round(UiTheme.SIZE_LEAD * 1.3))):
+		_fail("a text-size change did not rebuild the page at 130 %%: wide %s, lead '%s'" % [_panel._ctx["wide"], _panel._lead.text])
 	var id := FinanceRows.row_id(FinanceDraft.SPENDING, "health")
 	var cell: Label = _panel._ctx["cells"][id][0]
 	var row: Control = cell.get_parent()
@@ -590,9 +630,9 @@ func _check_the_hover_follows_the_figure_at_130() -> void:
 	if row.tooltip_text != cell.text:
 		_fail("after Discard the hover reads '%s', the figure '%s'" % [row.tooltip_text, cell.text])
 	UiTheme.set_text_scale(1.0)
-	_panel._stamp = ""
-	_panel._dirty = true
 	_panel._process(0.0)
+	if not _panel._ctx["wide"] or not String(_panel._lead.text).contains("font_size=%d" % UiTheme.SIZE_LEAD):
+		_fail("back at 100 %% the page kept its 130 %% build: lead '%s'" % _panel._lead.text)
 
 
 ## C3 on #363: Withdraw is there whenever a bill is at vote, and withdrawing keeps what the player is drafting.
