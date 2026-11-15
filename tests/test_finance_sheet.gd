@@ -17,7 +17,10 @@ const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const Government = preload("res://src/sim/government.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -52,12 +55,16 @@ func _process(_delta: float) -> bool:
 			_check_the_totals_are_the_footers()
 			_check_the_seats_are_the_forecast()
 			_check_the_words_are_counted()
+			_check_the_deficit_runs_from_now_to_after()
+			_check_the_chips_follow_the_direction()
+			_check_a_ticked_force_survives_a_draft_move()
 			_check_a_draft_move_repaints_the_open_sheet()
 			_check_closing_keeps_the_draft()
 			_check_france_may_force_and_says_the_censure()
 			_check_table_from_the_sheet_tables_the_draft()
 			_check_forcing_writes_a_forced_bill()
 			_check_withdraw_only_while_a_bill_is_at_vote()
+			_check_a_refusal_downs_table_and_the_force_box()
 			_check_britain_has_no_forcing()
 		5:
 			return _finish()
@@ -142,6 +149,77 @@ func _check_the_totals_are_the_footers() -> void:
 			_fail("the %s row does not show its own balance" % entry[0])
 
 
+## The deficit runs from today's books to the draft's, and a rise is the bad way.
+func _check_the_deficit_runs_from_now_to_after() -> void:
+	var price := FinancePrice.new()
+	price.setup(_state)
+	var now := price.now()
+	var after := price.after(_panel.shared_draft().pending())
+	var want := "%s → %s" % [Num.f(float(now["deficit_pct_gdp"]) * float(now["gdp_eur_bn"]) / 100.0, 0), Num.f(float(after["deficit_pct_gdp"]) * float(after["gdp_eur_bn"]) / 100.0, 0)]
+	if not _text_of(_sheet()).contains(want):
+		_fail("the deficit figure is not '%s'" % want)
+
+
+## A rise in a spending line pleases the blocs that weigh it, a rise in a tax angers its payers; four payers are three chips and "+1".
+func _check_the_chips_follow_the_direction() -> void:
+	var health := _text_of(_sheet().find_child("SheetRow_spending_pct_gdp_health", true, false))
+	var weights: Array = FinanceRead.line_blocs(_state, _loader, "health")["weights"]
+	if weights.is_empty() or not health.contains("▲ " + Strings.t("%s for") % Labels.bloc(String(weights[0][0]))):
+		_fail("a spending rise does not please the blocs that weigh the line: %s" % health)
+	if health.contains("▼"):
+		_fail("a spending rise angers someone on the sheet: %s" % health)
+	var vat := _sheet().find_child("SheetRow_tax_rates_pct_vat", true, false)
+	var payers: Array = _state.player().tax_library["vat"]["who_pays"]
+	var angered := vat.find_children("*", "Label", true, false).filter(func(n: Node) -> bool: return (n as Label).text.begins_with("▼"))
+	if angered.size() != mini(payers.size(), 3):
+		_fail("a tax rise shows %d payer chips, wanted %d of %d" % [angered.size(), mini(payers.size(), 3), payers.size()])
+	if payers.size() > 3 and not _text_of(vat).contains("+%d" % (payers.size() - 3)):
+		_fail("the chips past three are not counted")
+	if _text_of(vat).contains("▲"):
+		_fail("a tax rise pleases someone on the sheet")
+
+
+func _check_a_ticked_force_survives_a_draft_move() -> void:
+	_open_sheet()
+	_settle()
+	var force := _node("Force") as CheckBox
+	force.button_pressed = true
+	var draft = _panel.shared_draft()
+	draft.set_value(FinanceDraft.SPENDING, "defence", draft.live(FinanceDraft.SPENDING, "defence") + 0.5)
+	_panel._on_moved()
+	_settle()
+	var again := _node("Force") as CheckBox
+	if again == null or not again.button_pressed:
+		_fail("a draft move cleared the ticked force box")
+	if not _text_of(_sheet()).to_lower().contains("without a vote"):
+		_fail("a draft move put the division back under a ticked force box")
+	draft.set_value(FinanceDraft.SPENDING, "defence", draft.live(FinanceDraft.SPENDING, "defence"))
+	_panel._on_moved()
+	again.button_pressed = false
+	_settle()
+
+
+func _check_a_refusal_downs_table_and_the_force_box() -> void:
+	_panel._on_withdraw()
+	_draft_three()
+	_state.player().tabled_bill = {"law_id": "workplace_safety_act", "vote_year": _state.year, "vote_month": _state.month, "vote_day": 28}
+	_panel._process(0.0)
+	_open_sheet()
+	_panel._sheet._stamp = ""
+	_settle()
+	var table := _node("SheetTable") as Button
+	if table == null or not table.disabled:
+		_fail("another bill holds the slot and the sheet's Table is still up")
+	if not _text_of(_sheet()).contains("Another bill holds this month's slot."):
+		_fail("a refused sheet does not say why")
+	var force := _node("Force") as CheckBox
+	if force != null and force.is_visible_in_tree():
+		_fail("a refused draft offers a forced passage")
+	_state.player().tabled_bill = {}
+	_panel.shared_draft().revert()
+	_panel._sheet.hide()
+
+
 ## The sheet's visible words on the picture's draft, for the PR's prose delta (the prose budget counts a tab at rest).
 func _check_the_words_are_counted() -> void:
 	var words := 0
@@ -193,6 +271,11 @@ func _check_france_may_force_and_says_the_censure() -> void:
 	force.button_pressed = true
 	_settle()
 	var text := _text_of(_sheet())
+	var censure: Dictionary = Government.resolve_censure(_state.player(), _loader.parties.get("FRA", []), true)
+	if not text.contains("%d seats would move" % int(censure["for_seats"])) or not text.contains("%d are needed" % Government.censure_seats(_state.player())):
+		_fail("the censure line does not carry the Government window's tally")
+	if text.contains("It survives") != not bool(censure["carried"]):
+		_fail("the censure outcome is not the resolver's")
 	if not text.to_lower().contains("without a vote"):
 		_fail("a forced bill does not say it is adopted without a vote")
 	if not text.contains("censure") and not text.contains("Censure"):
