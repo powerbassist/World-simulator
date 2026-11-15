@@ -265,6 +265,13 @@ static func divide(state, loader, ns, tabled: Dictionary) -> Dictionary:
 	return result
 
 
+## The same, public: a reader that prices a whole bill asks the very conversion division applies to the rates, the
+## spending lines, the schedule, the births and the abolitions. The programme and fund rows are not in it: division
+## applies those by their own verbs (FinanceRows.apply), and a reader prices their yearly cost (FinanceRows.COST).
+static func absolute(ns, bill: Dictionary) -> Dictionary:
+	return _absolute(ns, bill)
+
+
 ## The bill's deltas on top of the live register: Budget.apply_pending's shape.
 static func _absolute(ns, bill: Dictionary) -> Dictionary:
 	var pending := {}

@@ -81,12 +81,15 @@ func refresh(state, loader, draft, price) -> void:
 		_text.text = Strings.t("A finance bill is before the Assembly: it divides on %s.") % DateText.day_month(
 			int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))
 		return
-	var moves: Dictionary = price.moves(draft.pending())
-	var text: String = Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
-		Strings.t("spending %s, revenue %s a year") % [EffectsStrip.money_text(float(moves["spending_bn"])), EffectsStrip.money_text(float(moves["revenue_bn"]))] + " · " + \
-		Strings.t("the Assembly divides on %s") % DateText.day_month(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
 	var read: Dictionary = FinanceRead.draft(state, loader, draft.bill())
 	var refusal := String(read["refusal"])
+	# The same pricing as the sheet (FinancePrice.whole): the bill the vote decides. On an amendment the count is the
+	# new rows but the money is the whole bill's, and the sentence says so.
+	var whole: Dictionary = price.whole(loader, draft, refusal != "")
+	var money := Strings.t("the whole bill: spending %s, revenue %s a year") if tabled != null else Strings.t("spending %s, revenue %s a year")
+	var text: String = Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
+		money % [EffectsStrip.money_text(float(whole["spending_bn"])), EffectsStrip.money_text(float(whole["revenue_bn"]))] + " · " + \
+		Strings.t("the Assembly divides on %s") % DateText.day_month(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
 	_table.text = Strings.t("Add to the bill") if tabled != null else Strings.t("Table the changes")
 	_table.disabled = refusal != ""
 	if refusal != "":

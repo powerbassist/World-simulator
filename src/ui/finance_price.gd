@@ -7,11 +7,14 @@ extends RefCounted
 ## state itself (engine-decision.md rule 2); a day later is another state.
 
 const Budget = preload("res://src/sim/budget.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const SimRows = preload("res://src/sim/finance_rows.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 
 ## How many pendings are kept: a drag moves one row a frame, and the row's own and the whole draft's differ
-## only when two rows are moved.
-const KEEP := 4
+## only when two rows are moved. The sheet prices each changed row alone and then the whole bill on every rebuild, so
+## the cache holds a dozen (4 evicted a row it was about to ask for again).
+const KEEP := 12
 
 var _state
 var _stamp := ""
@@ -57,6 +60,33 @@ func moves(pending: Dictionary) -> Dictionary:
 		"spending_bn": EffectsStrip.moved_bn(a, b, "total_spending_pct_gdp"),
 		"revenue_bn": EffectsStrip.moved_bn(a, b, "total_revenue_pct_gdp"),
 		"balance_bn": EffectsStrip.balance_bn(a, b),
+	}
+
+
+## The WHOLE bill the vote will decide, priced once for every surface that says it (the footer's sentence and the
+## sheet's figures, so they cannot drift): the rows at vote merged with the draft (FinanceBill.drafted, converted by
+## FinanceBill.absolute) plus the programmes' and funds' yearly cost, which the vote counts as spending
+## (FinanceRows.COST, pct of GDP) and Budget.preview does not know. `refused` (a draft tabling would refuse has no
+## merged text) prices the draft's own rows. {spending_bn, revenue_bn, deficit_now_bn, deficit_after_bn,
+## deficit_after_pct}: the moves each side a year, the deficit today (no bill) and with the whole bill passed.
+func whole(loader, draft, refused: bool) -> Dictionary:
+	var pending: Dictionary = draft.pending()
+	var cost_pct := 0.0
+	if not refused:
+		var merged := FinanceBill.drafted(_state, loader, draft.bill())
+		pending = FinanceBill.absolute(_state.player(), merged)
+		cost_pct = float(merged.get(SimRows.COST, 0.0))
+	var a := now()
+	var b := after(pending)
+	var gdp := float(b["gdp_eur_bn"])
+	var extra := cost_pct * gdp / 100.0
+	var deficit_after := float(b["deficit_pct_gdp"]) * gdp / 100.0 + extra
+	return {
+		"spending_bn": EffectsStrip.moved_bn(a, b, "total_spending_pct_gdp") + extra,
+		"revenue_bn": EffectsStrip.moved_bn(a, b, "total_revenue_pct_gdp"),
+		"deficit_now_bn": float(a["deficit_pct_gdp"]) * float(a["gdp_eur_bn"]) / 100.0,
+		"deficit_after_bn": deficit_after,
+		"deficit_after_pct": deficit_after / gdp * 100.0 if gdp > 0.0 else 0.0,
 	}
 
 

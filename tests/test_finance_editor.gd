@@ -434,9 +434,13 @@ func _check_the_price_cache_reprices_after_eviction() -> void:
 	price.setup(_state)
 	var vat := float(_state.player().tax_rates_pct["vat"])
 	var pendings := []
-	for i in range(1, 6):
-		pendings.append({FinanceDraft.TAX: {"vat": vat + float(i)}})
-		price.after(pendings[i - 1])
+	# One more than the cache keeps: the first is evicted, and a full cache must not answer for it (QA's K3 on #368).
+	for i in range(1, FinancePrice.KEEP + 2):
+		pendings.append({FinanceDraft.TAX: {"vat": vat + float(i) * 0.1}})
+		# Each answer is its own pending's, the one asked of a FULL cache included (a full cache must evict, not answer).
+		var asked: Dictionary = price.after(pendings[i - 1])
+		if not is_equal_approx(float(asked["deficit_pct_gdp"]), float(Budget.preview(_state, pendings[i - 1])["deficit_pct_gdp"])):
+			_fail("pending %d is priced as another pending (a full cache answered for it)" % i)
 	var again: Dictionary = price.after(pendings[0])
 	var fresh: Dictionary = Budget.preview(_state, pendings[0])
 	if not is_equal_approx(float(again["deficit_pct_gdp"]), float(fresh["deficit_pct_gdp"])):
