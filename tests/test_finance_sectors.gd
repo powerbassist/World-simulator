@@ -91,6 +91,7 @@ func _process(_delta: float) -> bool:
 			_check_rows_and_moves_footer()
 			_check_forecast_carries(1, true)
 			_check_a_refused_tabling_books_the_move()
+			_check_a_tabled_bill_books_the_move()
 		28:
 			_check_picks_survive_a_rebuild()
 			_check_a_tabled_bill_with_moves_only()
@@ -301,6 +302,27 @@ func _check_a_tabled_bill_with_moves_only() -> void:
 		_fail("a bill at vote and a move: the footer reads '%s' / '%s'" % [(_panel._foot.get_node("Table") as Button).text, said])
 	_panel._draft.revert()
 	ns.tabled_bill = {}
+
+
+## QA's T1 on #373: a row and a move, the bill TABLED: the bill is in the slot and the move is booked at once, as the footer
+## promised ("N share moves apply now").
+func _check_a_tabled_bill_books_the_move() -> void:
+	var ns = _main._state.player()
+	ns.tabled_bill = {}
+	_panel._draft.revert()
+	_panel._draft.set_value(FinanceDraft.SPENDING, LINE, float(ns.spending_pct_gdp[LINE]) + 0.5)
+	_panel._draft.add_move(LINE, "primary_care", "hospitals", 0.01)
+	var before := Sectors.shares(ns, _main._loader, LINE)
+	_panel._on_table()
+	var after := Sectors.shares(ns, _main._loader, LINE)
+	if ns.tabled_bill.is_empty():
+		_fail("tabled with a move: no bill in the slot")
+	if absf(float(after["hospitals"]) - float(before["hospitals"]) - 0.01) > 0.0001:
+		_fail("tabled with a move: the move was not booked (%s -> %s)" % [before, after])
+	if _panel._draft.has_moves():
+		_fail("tabled with a move: the booked move stays in the draft")
+	ns.tabled_bill = {}
+	_panel._draft.revert()
 
 
 ## A line with a sector slipping: marked while closed, its reason once and one raise chip once open.
