@@ -33,6 +33,7 @@ func _init() -> void:
 	_check_untouched_follows_live_edited_stays(state, draft)
 	_check_the_brackets_ride_as_a_scalar(state, draft)
 	_check_the_bill_tables(state, loader, draft)
+	_check_births_and_abolitions(loader)
 	_finish()
 
 
@@ -51,6 +52,69 @@ func _check_untouched_drafts_nothing(loader, nation: String) -> void:
 			_fail("%s: the draft reads %s differently from the register" % [nation, key])
 	if not draft.is_empty() or draft.bill() != {} or draft.pending() != {}:
 		_fail("%s: an untouched draft is not empty: bill %s" % [nation, draft.bill()])
+
+
+## V5.3 screen 4, slice 4: a kind put in force and a kind abolished are rows of the draft that are NOT rate deltas.
+## Tabling refuses a rate row on a kind not in force or being abolished, so the bill the draft writes carries them under
+## their own keys: "create" {kind: rate} and "abolish" [kind], and the priceable-now pending holds neither.
+func _check_births_and_abolitions(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	state.month = int(loader.nations["FRA"].finance_autumn_month)
+	var ns = state.player()
+	var draft := FinanceDraft.new()
+	draft.setup(state)
+	var born := ""
+	for kind in ns.tax_library:
+		if not ns.tax_rates_pct.has(kind):
+			born = String(kind)
+			break
+	if born == "":
+		_fail("setup: France has no kind outside the books to put in force")
+		return
+	var rate: float = float(ns.tax_library[born]["rate_range_pct"][1]) / 2.0
+	draft.set_create(born, rate)
+	if not draft.is_created(born) or draft.count() != 1 or draft.is_empty():
+		_fail("a kind put in force is not a row of the draft")
+	var row: Dictionary = draft.rows()[0]
+	if String(row["key"]) != born or not bool(row.get("birth", false)) or float(row["draft"]) != rate or float(row["live"]) != 0.0:
+		_fail("the birth row is not {kind, live 0, draft the rate, birth}: %s" % [row])
+	if draft.pending() != {}:
+		_fail("a birth is in the priceable-now pending: %s" % [draft.pending()])
+	var bill: Dictionary = draft.bill()
+	if bill != {FinanceBill.CREATE: {born: rate}}:
+		_fail("the birth's bill is not just its create key: %s" % [bill])
+	var gone := "tobacco_duty"
+	if not ns.tax_rates_pct.has(gone):
+		_fail("setup: %s is not in force" % gone)
+		return
+	draft.set_value(FinanceDraft.TAX, gone, float(ns.tax_rates_pct[gone]) + 1.0)
+	draft.toggle_abolish(gone)
+	if not draft.is_abolished(gone) or draft.count() != 2:
+		_fail("an abolished kind is not a row (count %d)" % draft.count())
+	if draft.is_moved(FinanceDraft.TAX, gone):
+		_fail("an abolished kind is still a rate edit")
+	var abolish_rows: Array = draft.rows().filter(func(r: Dictionary) -> bool: return String(r["channel"]) == FinanceDraft.ABOLISH)
+	if abolish_rows.size() != 1 or String(abolish_rows[0]["key"]) != gone or float(abolish_rows[0]["live"]) != float(ns.tax_rates_pct[gone]) or float(abolish_rows[0]["draft"]) != 0.0:
+		_fail("the abolish row is not {kind, live its rate, draft 0}: %s" % [abolish_rows])
+	if draft.pending().has(FinanceDraft.TAX):
+		_fail("an abolished kind's old rate edit survives in the pending: %s" % [draft.pending()])
+	bill = draft.bill()
+	if bill != {FinanceBill.CREATE: {born: rate}, FinanceBill.ABOLISH: [gone]}:
+		_fail("the bill is not the create and abolish keys alone: %s" % [bill])
+	var tabling := FinanceBill.table(state, loader, bill)
+	if not bool(tabling.get("tabled", false)):
+		_fail("the autumn bill the draft writes is refused: %s" % [tabling])
+	draft.toggle_abolish(gone)
+	if draft.is_abolished(gone) or draft.count() != 1:
+		_fail("keeping an abolished kind does not take it out of the draft")
+	draft.clear_create(born)
+	if draft.is_created(born) or not draft.is_empty() or draft.bill() != {}:
+		_fail("taking a birth back leaves something in the draft: %s" % [draft.bill()])
+	draft.set_create(born, rate)
+	draft.toggle_abolish(gone)
+	draft.revert()
+	if not draft.is_empty() or draft.bill() != {}:
+		_fail("revert leaves a birth or an abolition behind")
 
 
 func _check_a_moved_row_is_a_delta(state, draft) -> void:

@@ -18,11 +18,19 @@ const SPENDING := "spending_pct_gdp"
 const TAX := "tax_rates_pct"
 ## The brackets lever sets no rate: a scalar riding the pending, the bill's own key.
 const BRACKETS := "tax_progressivity"
+## The autumn bill's two kinds of row (slice 4): a kind put in force and a kind abolished. They are rows of the
+## draft, never rate deltas: tabling refuses a rate row on a kind not in force or being abolished, so the bill
+## carries them under their own keys (FinanceBill.CREATE, FinanceBill.ABOLISH) and the priceable-now pending
+## holds neither (the pricing of a birth is its own read).
+const ABOLISH := "abolish"
 
 var _state
 ## {channel: {key: absolute value}}, the rows the player touched.
 var _edited := {SPENDING: {}, TAX: {}}
 var _brackets = null
+## Kinds put in force (their rate is in _edited[TAX], read and written like any rate row) and kinds abolished.
+var _created := {}
+var _abolished: Array = []
 
 
 func setup(state) -> void:
@@ -33,6 +41,36 @@ func setup(state) -> void:
 func revert() -> void:
 	_edited = {SPENDING: {}, TAX: {}}
 	_brackets = null
+	_created = {}
+	_abolished = []
+
+
+## A kind not in force is put in force at `rate` (the editor's slider then moves it like any rate).
+func set_create(kind: String, rate: float) -> void:
+	_created[kind] = true
+	(_edited[TAX] as Dictionary)[kind] = rate
+
+
+func clear_create(kind: String) -> void:
+	_created.erase(kind)
+	(_edited[TAX] as Dictionary).erase(kind)
+
+
+func is_created(kind: String) -> bool:
+	return _created.has(kind)
+
+
+## A kind in force is abolished, or kept after all. Any rate edit on it is dropped: it is no rate row any more.
+func toggle_abolish(kind: String) -> void:
+	if _abolished.has(kind):
+		_abolished.erase(kind)
+		return
+	_abolished.append(kind)
+	(_edited[TAX] as Dictionary).erase(kind)
+
+
+func is_abolished(kind: String) -> bool:
+	return _abolished.has(kind)
 
 
 ## The player's input on one row. `channel` is SPENDING or TAX; the brackets have their own call.
@@ -61,6 +99,8 @@ func value(channel: String, key: String) -> float:
 
 
 func is_moved(channel: String, key: String) -> bool:
+	if channel == TAX and _created.has(key):
+		return true
 	if channel == BRACKETS:
 		return _brackets != null and not is_equal_approx(float(_brackets), live(BRACKETS, ""))
 	return (_edited[channel] as Dictionary).has(key) and not is_equal_approx(value(channel, key), live(channel, key))
@@ -72,9 +112,14 @@ func rows() -> Array:
 	for channel in [SPENDING, TAX]:
 		for key in (_edited[channel] as Dictionary):
 			if is_moved(channel, String(key)):
-				out.append({"channel": channel, "key": String(key), "live": live(channel, String(key)), "draft": value(channel, String(key))})
+				var row := {"channel": channel, "key": String(key), "live": live(channel, String(key)), "draft": value(channel, String(key))}
+				if channel == TAX and _created.has(key):
+					row["birth"] = true
+				out.append(row)
 	if is_moved(BRACKETS, ""):
 		out.append({"channel": BRACKETS, "key": "", "live": live(BRACKETS, ""), "draft": value(BRACKETS, "")})
+	for kind in _abolished:
+		out.append({"channel": ABOLISH, "key": String(kind), "live": live(TAX, String(kind)), "draft": 0.0})
 	return out
 
 
@@ -92,6 +137,8 @@ func pending() -> Dictionary:
 	for row in rows():
 		match String(row["channel"]):
 			SPENDING, TAX:
+				if row.get("birth", false):
+					continue
 				if not out.has(row["channel"]):
 					out[row["channel"]] = {}
 				out[row["channel"]][row["key"]] = float(row["draft"])
@@ -102,4 +149,22 @@ func pending() -> Dictionary:
 
 ## The finance bill's rows: the deltas against the live register (FinanceBill.from_pending's contract).
 func bill() -> Dictionary:
-	return FinanceBill.from_pending(_state.player(), pending())
+	var out := FinanceBill.from_pending(_state.player(), pending())
+	if not _created.is_empty():
+		out[FinanceBill.CREATE] = births()
+	if not _abolished.is_empty():
+		out[FinanceBill.ABOLISH] = _abolished.duplicate()
+	return out
+
+
+## The kinds put in force: {kind: rate}.
+func births() -> Dictionary:
+	var out := {}
+	for kind in _created:
+		out[kind] = float((_edited[TAX] as Dictionary).get(kind, 0.0))
+	return out
+
+
+## The kinds abolished.
+func abolitions() -> Array:
+	return _abolished.duplicate()
