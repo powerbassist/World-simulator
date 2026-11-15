@@ -242,27 +242,59 @@ static func divide(state, loader, ns, tabled: Dictionary) -> Dictionary:
 			by_id[party.id] = party
 		Discipline.penalise_rebellions(ns, result["party_rebels"], by_id)
 	if result["passed"]:
-		# A born kind enters force at 0 with no start rate, so apply_pending prices its rate
-		# as a rise from nothing on the zero-reference curve; an abolished one is cut to 0
-		# there (its lost revenue booked as an impulse) and only then leaves force.
-		for kind in bill.get(CREATE, {}):
-			ns.tax_rates_pct[kind] = 0.0
-			ns.start_tax_rates_pct.erase(kind)
-		Budget.apply_pending(ns, _absolute(ns, bill))
+		_land(ns, bill)
 		# Section 12: the verb rows through their own commands; one no longer legal is
 		# skipped and named (call 3), the rest of the bill stands.
 		var skipped := FinanceRows.apply(state, loader, ns, bill)
 		if not skipped.is_empty():
 			result["skipped"] = skipped
-		for kind in bill.get(ABOLISH, []):
-			ns.tax_rates_pct.erase(kind)
-			ns.start_tax_rates_pct.erase(kind)
+		_retire(ns, bill)
 		Budget.recompute(state, ns)
 	result["finance_bill"] = bill.duplicate(true)
 	ns.last_law_result = result
 	if bool(result.get("forced", false)):
 		FrontPage.note_forced(state, ns, result)
 	return result
+
+
+## The books the instant the finance text `bill` is carried, on a copy: Budget.preview()'s
+## shape, through division's own steps (_land, _retire), so a born kind is priced from
+## nothing as the vote lands it, where Budget.preview() refuses a rate on a kind not in
+## force. `bill` is the merged text (drafted()'s), deltas. Not here: the programme and fund
+## rows (division applies them by their verbs; a reader adds FinanceRows.COST, as for
+## absolute() below), the vote and the autumn gate (refusal() and autumn_open() say those).
+static func preview(state, bill: Dictionary) -> Dictionary:
+	var sim = state.duplicate_state()
+	var ns = sim.player()
+	_land(ns, bill)
+	_retire(ns, bill)
+	Budget.recompute(sim, ns)
+	return Budget.snapshot(sim)
+
+
+## Whether the nation's autumn month is now: a bill may create or abolish a tax only then
+## (section 5), never in a nation whose data lists no month. _autumn_refusal's gate.
+static func autumn_open(state, loader) -> bool:
+	var autumn := int(loader.nations[state.player().id].finance_autumn_month)
+	return autumn != 0 and autumn == int(state.month)
+
+
+## A carried bill's rates, spending and schedule land. A born kind enters force at 0 with
+## no start rate first, so apply_pending prices its rate as a rise from nothing on the
+## zero-reference curve; an abolished one is cut to 0 there (its lost revenue booked as an
+## impulse) and leaves force only at _retire.
+static func _land(ns, bill: Dictionary) -> void:
+	for kind in bill.get(CREATE, {}):
+		ns.tax_rates_pct[kind] = 0.0
+		ns.start_tax_rates_pct.erase(kind)
+	Budget.apply_pending(ns, _absolute(ns, bill))
+
+
+## The abolished kinds leave force, once _land has cut them to 0.
+static func _retire(ns, bill: Dictionary) -> void:
+	for kind in bill.get(ABOLISH, []):
+		ns.tax_rates_pct.erase(kind)
+		ns.start_tax_rates_pct.erase(kind)
 
 
 ## The same, public: a reader that prices a whole bill asks the very conversion division applies to the rates, the
@@ -303,8 +335,7 @@ static func _absolute(ns, bill: Dictionary) -> Dictionary:
 static func _autumn_refusal(state, loader, ns, bill: Dictionary) -> Dictionary:
 	var born: Dictionary = bill.get(CREATE, {})
 	var gone: Array = bill.get(ABOLISH, [])
-	var autumn := int(loader.nations[ns.id].finance_autumn_month)
-	if (not born.is_empty() or not gone.is_empty()) and (autumn == 0 or autumn != int(state.month)):
+	if (not born.is_empty() or not gone.is_empty()) and not autumn_open(state, loader):
 		return {"tabled": false, "refused": true, "autumn": true}
 	var ok := true
 	for kind in born:
