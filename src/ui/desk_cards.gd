@@ -201,7 +201,7 @@ static func guard_lapses(main, ns) -> void:
 
 ## V5.3 B7: the card for a minor event the quiet-month call brought. The call is
 ## WorldMonth's QuietEvent step, after the Events step whose hook (card_events) cards
-## the month's arrivals, so the month's end cards it here (BriefingDriver.open, beside
+## the month's arrivals, so the month's end cards it here (BriefingDriver.month_end, beside
 ## the Regions arrival). An arrival in every way but the hold: in the unseen set as
 ## quiet, its card and sting by the player's bands, its speaker's line. Only in the
 ## month it came (Systems' `arrived` stamp): a card the player dismissed is not put up

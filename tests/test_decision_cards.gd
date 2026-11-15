@@ -230,7 +230,7 @@ func _check_settled_cards_go() -> void:
 
 
 
-## The month's end runs the check (BriefingDriver.open, beside the Regions arrival).
+## The month's end runs the check (BriefingDriver.month_end, beside the Regions arrival).
 func _check_month_end_checks() -> void:
 	var org = _player_council()
 	if org == null:

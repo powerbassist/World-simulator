@@ -31,7 +31,9 @@ extends SceneTree
 ## The holds are DERIVED here at the default settings, from the same registers
 ## main.gd reads (it cannot run headless), in the spec's hold order (2.2):
 ##   election   the month's election results (one panel);
-##   briefing   every month the player is still in office;
+##   briefing   never since G1 (the chief off the clock: his mark and caption do not
+##              hold; the read the player opens is outside the budget) -- kept in the
+##              table at 0 so a run shows it;
 ##   programme  Programme.available() at the boundary (the term-start offer);
 ##   interrupt  each interrupt-flagged arrival;
 ##   major      each arrival of severity 2 or more (it holds on arrival);
@@ -47,7 +49,8 @@ extends SceneTree
 ## band (MusicBand.step, with Trends.months_to_vote for the campaign). Both files
 ## are Interface's (block 0 a) and are loaded at run time, so this probe parses
 ## before they exist; until they do those three print NOT MEASURED and do not pass.
-##   RF1  every briefing: 3 lines of 3 different kinds;
+##   RF1  every month (G1, "never a filler line"): at most 3 lines of as many kinds, no
+##        standing read among real ones -- a quiet month is the vote alone, or none;
 ##   RF2  over the first 60 months, at most 25 % of months repeat last month's
 ##        three (kinds and subjects) and a mean overlap of at most 1.5 lines;
 ##        every month, a held surface holds a line, a dated line inside
@@ -430,8 +433,7 @@ func _holds(state, ns, row: Dictionary, report: Dictionary, minor_held: Dictiona
 	if not results.is_empty():
 		holds.append("election")
 		defeated = bool(ElectionVerdict.read(results, ns)["defeated"])
-	if not defeated:
-		holds.append("briefing")
+	# G1: the month end never holds for the chief (`defeated` still ends the run below).
 	var programme := not Programme.available(state, ns, _loader).is_empty()
 	if programme:
 		holds.append("programme")
@@ -564,7 +566,9 @@ func _rf1(rows: Array) -> Dictionary:
 		var kinds := {}
 		for l in row["lines"]:
 			kinds[l["kind"]] = true
-		if (row["lines"] as Array).size() != 3 or kinds.size() != 3:
+		var lines: Array = row["lines"]
+		var standing := lines.filter(func(l): return bool(l["standing"]))
+		if lines.size() > 3 or kinds.size() != lines.size() 				or (not standing.is_empty() and (lines.size() > 1 or int(standing[0]["deadline_month"]) < 0)):
 			bad.append("%d-%02d" % [row["year"], row["month"]])
 	return {"briefings": briefed.size(), "bad": bad, "pass": not briefed.is_empty() and bad.is_empty()}
 
@@ -701,7 +705,7 @@ func _print_run(run: Dictionary) -> void:
 	if run.has("rf1"):
 		var rf1: Dictionary = run["rf1"]
 		var rf2: Dictionary = run["rf2"]
-		print("    RF1 %s: %d briefings, %d not three kinds %s" % [
+		print("    RF1 %s: %d months ranked, %d with a filler line %s" % [
 			"PASS" if bool(rf1["pass"]) else "FAIL", int(rf1["briefings"]), (rf1["bad"] as Array).size(), JSON.stringify(rf1["bad"])])
 		print("    RF2 %s over %d months: repeats %.0f %%, mean overlap %.2f, held missed %d, damped near %d, lapsed unshown %d; qualified never shown %s; kinds %s" % [
 			"PASS" if bool(rf2["pass"]) else "FAIL", int(rf2["months"]), 100.0 * float(rf2["repeat_share"]),

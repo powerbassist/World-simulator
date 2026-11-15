@@ -157,6 +157,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing calm
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark   (G1: the month end, the mark and his caption, no card)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark --briefing crowded --lang fr --text 130
 ##     (also tense: a request lapsing next month; crisis: an interrupt on the desk;
 ##     crowded: the interrupt and three requests lapsing, so the footer shows)
 ##
@@ -657,6 +659,7 @@ var _polls_closed := false
 ## V5.1-d1b2 (G9): the head of government's card, pinned as a click on the name pins it.
 var _person_card := false
 var _briefing := ""  # V5.3-0: the monthly briefing card, in a situation (calm, tense, crisis)
+var _chief_mark := false  # G1: the month end only -- the mark and the caption, the read left closed
 ## V5.2 pre-gate B (RECORD 5), --rapport X: the card's person carries rapport X.
 var _rapport := 0.0
 ## V5.1-d4, --box ID / --verbs ID: the country box a left click opens on ID, or the
@@ -737,9 +740,10 @@ var _main
 ## V4.8b, for --outliner. Writes the registers the outliner reads, the way
 ## tests/test_outliner.gd stages them, so the frame is the window with every
 ## section populated.
-## The monthly briefing as the month's end opens it: the term's programme chosen
-## first (its offer would hold a line of its own), then the situation's cause, then
-## the card through its driver.
+## The monthly briefing: the term's programme chosen first (its offer would hold a line
+## of its own), then the situation's cause, then the month's end through its driver
+## (G1: the mark and the caption), then -- unless --chief-mark -- the read the player
+## opens from the mark.
 func _stage_briefing() -> void:
 	var Driver = preload("res://src/ui/briefing_driver.gd")
 	var state = _main._state
@@ -766,7 +770,9 @@ func _stage_briefing() -> void:
 				asking -= 1
 		preload("res://src/ui/audience_driver.gd").refresh(_main)
 	Driver._games[_main.get_instance_id()]["pending"] = {}
-	Driver.open(_main, {})
+	Driver.month_end(_main, {})
+	if not _chief_mark:
+		Driver.read(_main)
 	if _folder_file != "":
 		var Folder := load("res://src/ui/folder_driver.gd")
 		var line := {"kind": "crisis", "subject": String(_main._loader.events[0].id)} if _folder_file == "event" 			else {"kind": "request", "subject": String(load("res://src/sim/audiences.gd").pending(ns)[0]["id"])}
@@ -1048,6 +1054,9 @@ func _init() -> void:
 			_polls_closed = true
 		elif args[i] == "--person-card":
 			_person_card = true
+		elif args[i] == "--chief-mark":
+			_chief_mark = true
+			_briefing = "calm" if _briefing == "" else _briefing
 		elif args[i] == "--briefing":
 			_briefing = args[i + 1] if i + 1 < args.size() and not args[i + 1].begins_with("--") else "calm"
 		elif args[i] == "--rapport" and i + 1 < args.size():

@@ -105,7 +105,7 @@ func _ready() -> void:
 	_file_slot = VBoxContainer.new()
 	_file_slot.hide()
 	pages.add_child(_file_slot)
-	_rows = PanelKit.section(_month, tr("Three priorities"))
+	_rows = PanelKit.section(_month, tr("Priorities"))  # G1: zero to three, never padded
 	# The parent's rule on #217: an item in its last month the three lines crowded out
 	# is never unshown -- it is here, folded by kind, each with its Go.
 	_also = PanelKit.buttons(_month)
