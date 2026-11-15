@@ -37,6 +37,7 @@ var _failures: Array[String] = []
 var _main
 var _frame := 0
 var _major
+var _second
 var _panel
 
 
@@ -127,8 +128,20 @@ func _stage_closure() -> void:
 	var ids: Array = Pending.window_ids(state, _main._loader)
 	if ids.count("companies") != 1:
 		_fail("the pending ids carry 'companies' %d times for one item" % ids.count("companies"))
-	_main._hud.sidebar.show_pending(ids)
-	preload("res://src/ui/sectors_shell.gd").refresh_marks(_main)
+	# A second item, in another sector (QA's T1 on #378): ONE id per item, so the
+	# Sectors row counts the items, 2, not the window, 1.
+	for company in Companies.majors_of(_main._loader, ns.id):
+		if String(company.sector) == "agriculture":
+			_second = company
+			break
+	Closures._announce(ns, _second, ns.companies[_second.id], 0.2, _main._loader.closure_rule, state.year * 12 + state.month)
+	ids = Pending.window_ids(state, _main._loader)
+	if ids.count("companies") != 2:
+		_fail("two items carry 'companies' %d times in the pending ids" % ids.count("companies"))
+	preload("res://src/ui/sectors_shell.gd").show_pending(_main)
+	var pill: Label = _main._hud.sidebar._pills.get("sectors")
+	if pill == null or pill.text != "2" or not pill.visible:
+		_fail("the Sectors row reads '%s' for two waiting items" % (pill.text if pill != null else "none"))
 
 
 func _check_industry_tab() -> void:
@@ -264,6 +277,7 @@ func _check_shortage() -> void:
 ## the tab's hourglass and count, and the sidebar's.
 func _clear_closure() -> void:
 	(_main._state.player().companies[_major.id] as Dictionary).erase("closure")
+	(_main._state.player().companies[_second.id] as Dictionary).erase("closure")
 	_main._update_top_bar()
 	_main._windows.open("sector_industry")
 
