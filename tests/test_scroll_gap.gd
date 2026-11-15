@@ -43,6 +43,12 @@ func _process(_delta: float) -> bool:
 	if _frame == 4:
 		if ScrollBars.SCROLL_GAP_PX < 4.0:
 			_fail("the scroll gap is %s px: the text is back against the bar" % ScrollBars.SCROLL_GAP_PX)
+		# The gap is drawn as nothing, not as a fatter bar: the track and the grabber sit back inside their old width.
+		var theme := UiTheme.build()
+		for part in ["scroll", "grabber", "grabber_highlight", "grabber_pressed"]:
+			var box := theme.get_stylebox(part, "VScrollBar") as StyleBoxFlat
+			if box == null or not is_equal_approx(box.expand_margin_left, -ScrollBars.SCROLL_GAP_PX):
+				_fail("the vertical bar's '%s' is not drawn back inside its gap" % part)
 		var bar := _vertical.get_v_scroll_bar()
 		var want := ScrollBars.BAR_WIDTH_PX + ScrollBars.SCROLL_GAP_PX
 		if absf(bar.get_combined_minimum_size().x - want) > 0.5:
