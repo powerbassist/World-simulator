@@ -284,10 +284,13 @@ func _table_c_growth_sweep() -> void:
 			"in band" if impulse >= 0.05 and impulse <= 0.60 else "OUT"])
 
 
-## Design's P5 (design-card1-aid-price.md, section 5): each major of the four playable
-## nations aided ALONE at full intensity for TERM_MONTHS through the game's own month,
-## against the same game unaided. GDP held per aid euro = the GDP the aided run made
-## over the term above its twin, over the aid it paid. Pass: 0.55 to 0.85 for every one.
+## Design's P5 (design-card1-aid-price.md, sections 5 and 8): each major of the four
+## playable nations aided ALONE at full intensity for TERM_MONTHS through the game's own
+## month, against the same game unaided. The band's quantity: the GDP gap at the last
+## month over the aid paid in the term's last year (GDP level held per euro of aid a
+## year); pass 0.55 to 0.85 for every one. Beside it the term's ratio (GDP over the term
+## above the twin / aid over the term), the unemployment gap at the end, the majors failed
+## in each run and the aided run's peak firm impulse, for the outliers' diagnosis.
 ## Run on its own: --aid-deal (about 50 runs of 60 months).
 func _aid_deal() -> bool:
 	var rescue = _subsidise_action(1.0)
@@ -299,32 +302,44 @@ func _aid_deal() -> bool:
 			var aided := _gdp_path(nation_id, String(company.id), rescue)
 			var gain := 0.0
 			for m in TERM_MONTHS:
-				gain += (float(aided[0][m]) - float(twin[0][m])) / 12.0
-			var paid: float = aided[1]
-			var per_euro: float = gain / paid if paid > 0.0 else 0.0
-			worst = minf(worst, per_euro)
-			best = maxf(best, per_euro)
-			print("aid_deal %s %-26s paid %7.3f bn, GDP held %7.3f bn, %.3f per euro %s" % [nation_id, String(company.id),
-				paid, gain, per_euro, "" if per_euro >= 0.55 and per_euro <= 0.85 else "OUT"])
+				gain += (float(aided["gdp"][m]) - float(twin["gdp"][m])) / 12.0
+			var level: float = float(aided["gdp"][TERM_MONTHS - 1]) - float(twin["gdp"][TERM_MONTHS - 1])
+			var per_year: float = level / float(aided["last_year"]) if float(aided["last_year"]) > 0.0 else 0.0
+			var per_term: float = gain / float(aided["paid"]) if float(aided["paid"]) > 0.0 else 0.0
+			worst = minf(worst, per_year)
+			best = maxf(best, per_year)
+			print("aid_deal %s %-26s level/aid-year %6.3f %3s | term %6.3f | paid %7.3f bn | unemp %+.3f pt | failed %d vs %d | peak impulse %.3f" % [
+				nation_id, String(company.id), per_year, "" if per_year >= 0.55 and per_year <= 0.85 else "OUT", per_term,
+				float(aided["paid"]), float(aided["unemp"]) - float(twin["unemp"]), int(aided["failed"]), int(twin["failed"]), float(aided["peak"])])
 	var ok := worst >= 0.55 and best <= 0.85
-	print("aid_deal: per euro %.3f to %.3f, P5 %s" % [worst, best, "PASS" if ok else "FAIL"])
+	print("aid_deal: level held per aid euro a year %.3f to %.3f, P5 %s" % [worst, best, "PASS" if ok else "FAIL"])
 	return ok
 
 
-## [monthly GDP (EUR bn a year) over TERM_MONTHS, aid paid EUR bn]: `company_id` aided at
-## the first month ("" for none), then the game's own month.
-func _gdp_path(nation_id: String, company_id: String, rescue) -> Array:
+## {gdp: monthly GDP (EUR bn a year) over TERM_MONTHS, paid, last_year (aid EUR bn over the
+## term and over its last year), unemp (at the end), failed (majors failed at the end),
+## peak (firm impulse)}: `company_id` aided at the first month ("" for none).
+func _gdp_path(nation_id: String, company_id: String, rescue) -> Dictionary:
 	var state = _new_state(nation_id)
 	var ns = state.player()
 	if company_id != "":
 		Companies.execute(state, ns, _loader.company_actions, rescue, company_id, _loader)
-	var path := []
-	var paid := 0.0
+	var out := {"gdp": [], "paid": 0.0, "last_year": 0.0, "peak": 0.0}
 	for m in TERM_MONTHS:
 		WorldMonth.tick_month(state, _loader)
-		path.append(float(ns.gdp_eur_bn))
-		paid += float(ns.subsidy_bill_pct_gdp) * float(ns.gdp_eur_bn) / 100.0 / 12.0
-	return [path, paid]
+		out["gdp"].append(float(ns.gdp_eur_bn))
+		var month_aid: float = float(ns.subsidy_bill_pct_gdp) * float(ns.gdp_eur_bn) / 100.0 / 12.0
+		out["paid"] = float(out["paid"]) + month_aid
+		if m >= TERM_MONTHS - 12:
+			out["last_year"] = float(out["last_year"]) + month_aid
+		out["peak"] = maxf(float(out["peak"]), absf(float(ns.firm_impulse_pct)))
+	out["unemp"] = float(ns.unemployment_pct)
+	var failed := 0
+	for company in Companies.majors_of(_loader, nation_id):
+		if bool((ns.companies.get(company.id, {}) as Dictionary).get("failed", false)):
+			failed += 1
+	out["failed"] = failed
+	return out
 
 
 # --- (d) P3: the kill switch ----------------------------------------------------
