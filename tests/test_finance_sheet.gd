@@ -64,6 +64,7 @@ func _process(_delta: float) -> bool:
 			_check_table_from_the_sheet_tables_the_draft()
 			_check_forcing_writes_a_forced_bill()
 			_check_withdraw_only_while_a_bill_is_at_vote()
+			_check_an_emptied_draft_puts_the_sheet_away()
 			_check_a_refusal_downs_table_and_the_force_box()
 			_check_britain_has_no_forcing()
 		5:
@@ -201,6 +202,25 @@ func _check_a_ticked_force_survives_a_draft_move() -> void:
 	_settle()
 
 
+## QA's K4 on #367: a draft emptied behind an open sheet (a row dragged back, the Budget's Revert) is not a sheet of
+## "0 changed rows": the paint puts it away, and the keyboard it held is let go (no footer verb with nothing drafted).
+func _check_an_emptied_draft_puts_the_sheet_away() -> void:
+	_draft_three()
+	_panel._process(0.0)
+	_open_sheet()
+	_settle()
+	if _panel.get_viewport().gui_get_focus_owner() != _node("SheetTable"):
+		_fail("setup: the sheet's Table has the keyboard")
+	_panel.shared_draft().revert()
+	_panel._on_moved()
+	_settle()
+	if _sheet().visible:
+		_fail("a draft emptied behind the open sheet leaves it open")
+	var held: Control = _panel.get_viewport().gui_get_focus_owner()
+	if held != null and not held.is_visible_in_tree():
+		_fail("the keyboard stays on a hidden control after the sheet is put away")
+
+
 func _check_a_refusal_downs_table_and_the_force_box() -> void:
 	_panel._on_withdraw()
 	_draft_three()
@@ -217,6 +237,8 @@ func _check_a_refusal_downs_table_and_the_force_box() -> void:
 	var force := _node("Force") as CheckBox
 	if force != null and force.is_visible_in_tree():
 		_fail("a refused draft offers a forced passage")
+	if _panel.get_viewport().gui_get_focus_owner() != _node("SheetClose"):
+		_fail("a refused sheet does not hand the keyboard to Close")
 	_state.player().tabled_bill = {}
 	_panel.shared_draft().revert()
 	_panel._sheet.hide()
@@ -256,7 +278,9 @@ func _check_a_draft_move_repaints_the_open_sheet() -> void:
 
 
 func _check_closing_keeps_the_draft() -> void:
-	(_node("SheetClose") as Button).pressed.emit()
+	var close := _node("SheetClose") as Button
+	close.grab_focus()  # a press takes the focus
+	close.pressed.emit()
 	if _sheet().visible:
 		_fail("Close did not close the sheet")
 	if _panel.get_viewport().gui_get_focus_owner() != _node("Review"):

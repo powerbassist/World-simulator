@@ -87,7 +87,12 @@ func refresh() -> void:
 	if stamp == _stamp:
 		return
 	_stamp = stamp
+	# A rebuild frees the control the keyboard is on: it comes back to the act (or the way out) rather than vanish.
+	var held := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	var had_focus: bool = held != null and is_ancestor_of(held)
 	_build()
+	if had_focus:
+		focus_primary()
 
 
 func _build() -> void:
@@ -318,3 +323,5 @@ func focus_primary() -> void:
 	var table := find_child("SheetTable", true, false) as Button
 	if table != null and not table.disabled:
 		table.grab_focus()
+	else:
+		(find_child("SheetClose", true, false) as Button).grab_focus()  # a refused draft: the way out

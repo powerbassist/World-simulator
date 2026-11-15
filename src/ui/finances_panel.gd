@@ -213,7 +213,7 @@ func _paint(ns) -> void:
 	_foot.refresh(_state, _loader, _draft, _price)
 	# A sheet with nothing to say (the draft discarded or tabled) is put away; one with a draft follows it.
 	if _draft.is_empty():
-		_sheet.hide()
+		_put_sheet_away()
 	_sheet.refresh()
 	var drafted: bool = not _draft.is_empty()
 	_forecast.want(_draft.pending(), drafted)
@@ -289,10 +289,27 @@ func _open_sheet() -> void:
 
 
 func _close_sheet() -> void:
+	_put_sheet_away()
+
+
+## The sheet goes (Close, a tabling, a draft emptied behind it). If the keyboard was in it, it goes to the footer's verb
+## that is there now -- the Review button while rows are drafted, else the bill's "Open the bill" -- and is let go
+## when the footer has none, never left on a hidden control.
+func _put_sheet_away() -> void:
+	if not _sheet.visible:
+		return
+	var held: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	var had_focus: bool = held != null and _sheet.is_ancestor_of(held)
 	_sheet.hide()
+	if not had_focus:
+		return
+	_foot.refresh(_state, _loader, _draft, _price)
 	var review := _foot.find_child("Review", true, false) as Button
-	if review != null and review.is_visible_in_tree():
-		review.grab_focus()
+	var next: Control = review if review != null and review.is_visible_in_tree() else _foot.primary_action()
+	if next != null:
+		next.grab_focus()
+	else:
+		held.release_focus()
 
 
 func _on_discard() -> void:
@@ -354,7 +371,7 @@ func _on_table(force := false) -> void:
 	# A refusal keeps the draft on the rows; a tabled bill clears it.
 	if bool(tabling.get("tabled", false)):
 		_draft.revert()
-		_sheet.hide()
+		_put_sheet_away()
 		_open_id = ""
 		_stamp = ""
 		_dirty = true
