@@ -803,5 +803,20 @@
   "With your changes, the ranges above included: deficit %s bn (%s %% of GDP).": "Avec vos modifications, fourchettes ci-dessus comprises : déficit de %s Md€ (%s %% du PIB).",
   "Growth, 2 years": "Croissance, 2 ans",
   "Debt, 2 years": "Dette, 2 ans",
-  "Revenue is %s bn and spending %s bn: the deficit is %s bn (%s %% of GDP). Debt stands at %s %% of GDP.": "Les recettes sont de %s Md€ et les dépenses de %s Md€ : le déficit est de %s Md€ (%s %% du PIB). La dette s'élève à %s %% du PIB."
+  "Revenue is %s bn and spending %s bn: the deficit is %s bn (%s %% of GDP). Debt stands at %s %% of GDP.": "Les recettes sont de %s Md€ et les dépenses de %s Md€ : le déficit est de %s Md€ (%s %% du PIB). La dette s'élève à %s %% du PIB.",
+  "Abolished in the bill: it leaves the books.": "Supprimé dans le projet de loi : il sort des comptes.",
+  "Keep it": "Le conserver",
+  "Not in force yet": "Pas encore en vigueur",
+  "Take it back": "Retirer la création",
+  "Abolish this tax": "Supprimer cet impôt",
+  "creation of %s": "création de %s",
+  "abolition of %s": "suppression de %s",
+  "A tax is created or abolished only in the autumn month.": "Un impôt ne se crée ou ne se supprime qu'au mois d'automne.",
+  "Creation": "Création",
+  "Put in force": "Mettre en vigueur",
+  "abolish": "à supprimer",
+  "new, at %s": "nouveau, à %s",
+  "Abolition of %s": "Suppression de %s",
+  "Creation of %s": "Création de %s",
+  "The autumn month is over: its creations and abolitions were taken out of the draft.": "Le mois d'automne est passé : ses créations et suppressions ont été retirées du projet."
 }
