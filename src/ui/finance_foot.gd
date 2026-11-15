@@ -90,6 +90,14 @@ func refresh(state, loader, draft, price) -> void:
 	var text: String = Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
 		money % [EffectsStrip.money_text(float(whole["spending_bn"])), EffectsStrip.money_text(float(whole["revenue_bn"]))] + " · " + \
 		Strings.t("the Assembly divides on %s") % DateText.day_month(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
+	# The autumn bill's rows are named in the sentence (their price waits on the sim's read of a birth).
+	var autumn: Array = []
+	for kind in draft.births():
+		autumn.append(Strings.t("creation of %s") % Strings.row_name("taxes", ns.tax_library[kind]))
+	for kind in draft.abolitions():
+		autumn.append(Strings.t("abolition of %s") % Strings.row_name("taxes", ns.tax_library[kind]))
+	if not autumn.is_empty():
+		text += " · " + ", ".join(autumn)
 	_table.text = Strings.t("Add to the bill") if tabled != null else Strings.t("Table the changes")
 	_table.disabled = refusal != ""
 	if refusal != "":

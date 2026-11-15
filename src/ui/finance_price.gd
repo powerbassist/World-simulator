@@ -75,7 +75,12 @@ func whole(loader, draft, refused: bool) -> Dictionary:
 	var cost_pct := 0.0
 	if not refused:
 		var merged := FinanceBill.drafted(_state, loader, draft.bill())
-		pending = FinanceBill.absolute(_state.player(), merged)
+		# A kind put in force cannot be priced by Budget.preview (it logs an error and prices nothing): the births are left
+		# out here until the sim's own read prices a bill with them (FinanceBill.preview), and the sheet says nothing of
+		# their money.
+		var priced := merged.duplicate(true)
+		priced.erase(FinanceBill.CREATE)
+		pending = FinanceBill.absolute(_state.player(), priced)
 		cost_pct = float(merged.get(SimRows.COST, 0.0))
 	var a := now()
 	var b := after(pending)

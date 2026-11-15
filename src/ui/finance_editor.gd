@@ -15,6 +15,8 @@ extends VBoxContainer
 ## tax carries a second lever, its brackets (the brief's call 4: a setting of that row, not a seventeenth tax).
 
 signal moved
+## A verb that changes what the page lists (put in force taken back, a tax abolished or kept): the page rebuilds.
+signal structure_changed
 
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
@@ -37,6 +39,8 @@ const LINE_SPAN := 5.0
 
 var channel := ""
 var key := ""
+## The autumn bill is open (FinanceBill.autumn_open, read by the page): an in-force kind may be abolished.
+var autumn := false
 var _state
 var _draft
 var _price
@@ -70,7 +74,13 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 		_lo = maxf(0.0, at - LINE_SPAN)
 		_hi = minf(LINE_MAX, at + LINE_SPAN)
 	var unit := FinanceRows.unit_text(String(ns.tax_library[key]["unit"])) if channel == FinanceDraft.TAX else Strings.t(" % of GDP")
-	var now := PanelKit.plain_line(self, Strings.t("Now %s") % (LedgerBox.text(_draft.live(channel, key), decimals) + unit), PanelKit.Tone.DIM)
+	var in_force: bool = channel != FinanceDraft.TAX or ns.tax_rates_pct.has(key)
+	if channel == FinanceDraft.TAX and in_force and autumn and _draft.is_abolished(key):
+		# An abolished kind has no rate to set: the editor says so and offers the way back.
+		PanelKit.plain_line(self, Strings.t("Abolished in the bill: it leaves the books."), PanelKit.Tone.BAD)
+		_verb(Strings.t("Keep it"), "KeepTax", func() -> void: _draft.toggle_abolish(key))  # i18n: ok a node name
+		return
+	var now := PanelKit.plain_line(self, Strings.t("Now %s") % (LedgerBox.text(_draft.live(channel, key), decimals) + unit) if in_force else Strings.t("Not in force yet"), PanelKit.Tone.DIM)
 	now.name = "Now"  # i18n: ok a node name, found by tests
 	if channel == FinanceDraft.TAX:
 		# What the rate is a rate OF (the data's own words): the hover on the figure, not a sentence on the page.
@@ -90,11 +100,27 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	_effect.name = "Effect"  # i18n: ok a node name, found by tests
 	for line in _who_lines(state, loader):
 		PanelKit.plain_line(self, line, PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_WORD
+	if channel == FinanceDraft.TAX and not in_force and _draft.is_created(key):
+		_verb(Strings.t("Take it back"), "TakeBack", func() -> void: _draft.clear_create(key))  # i18n: ok a node name
+	elif channel == FinanceDraft.TAX and autumn and in_force and ns.tax_library[key].has("rate_range_pct"):
+		_verb(Strings.t("Abolish this tax"), "AbolishTax", func() -> void: _draft.toggle_abolish(key))  # i18n: ok a node name
 	if channel == FinanceDraft.TAX:
 		var yields: Dictionary = FinanceRead.step_yields(ns).get(key, {})
 		if yields.has("up_bn"):
 			PanelKit.plain_line(self, Strings.t("One step (%s): %s a year.") % [LedgerBox.text(float(yields["step"]), decimals) + unit.strip_edges(), EffectsStrip.money_text(float(yields["up_bn"]))], PanelKit.Tone.DIM)
 	_sync()
+
+
+## A verb of the autumn bill under the row's figures: it changes the draft, and the page rebuilds.
+func _verb(text: String, node_name: String, change: Callable) -> void:
+	var button := PanelKit.sized(Button.new())
+	button.name = node_name
+	button.text = text
+	button.flat = true
+	button.pressed.connect(func() -> void:
+		change.call()
+		structure_changed.emit())
+	add_child(button)
 
 
 ## One lever on a line: the slider, then the box that takes the exact figure.
@@ -139,6 +165,8 @@ func _write(lever_channel: String, lever_key: String, value: float) -> void:
 
 ## Slider, box and effect line from the draft (a refresh from outside lands here too, and writes nothing).
 func _sync() -> void:
+	if _slider == null:
+		return
 	var ns = _state.player()
 	var places := TaxLibrary.step_decimals(ns, key) if channel == FinanceDraft.TAX else 1
 	var value: float = _draft.value(channel, key)
@@ -200,4 +228,5 @@ func _who_lines(state, loader) -> Array:
 
 ## The slider the player's cursor goes to (the goal panel's Go lands here).
 func focus_lever() -> void:
-	_slider.grab_focus()
+	if _slider != null:
+		_slider.grab_focus()

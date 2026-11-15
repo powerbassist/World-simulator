@@ -33,6 +33,7 @@ const FinanceFoot = preload("res://src/ui/finance_foot.gd")
 const FinanceSheet = preload("res://src/ui/finance_sheet.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const FinanceAutumn = preload("res://src/ui/finance_autumn.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -182,8 +183,8 @@ func _refresh(ns) -> void:
 			box.remove_child(child)
 			child.queue_free()
 	_editor = null
-	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": _tabled_rows(ns), "cells": {}, "editor": _make_editor, "wide": wide,
-		"parts": FinanceRead.other_parts(ns)}
+	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": FinanceAutumn.tabled_rows(ns), "cells": {}, "editor": _make_editor, "wide": wide,
+		"parts": FinanceRead.other_parts(ns), "autumn": FinanceAutumn.open(_state, _loader), "on_create": _on_create}
 	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, wide, _ctx)
 	FinanceRows.spending(_spending_box, _book, _ctx)
 	_stacks.setup(_revenue_parts(), _spending_parts(), float(_book["deficit_bn"]))
@@ -335,10 +336,28 @@ func _on_moved() -> void:
 
 func _make_editor(channel: String, key: String) -> Control:
 	var editor := FinanceEditor.new()
+	editor.autumn = FinanceAutumn.open(_state, _loader)
 	editor.setup(_state, _loader, _draft, _price, channel, key)
 	editor.moved.connect(_on_moved)
+	editor.structure_changed.connect(_on_structure_changed)
 	_editor = editor
 	return editor
+
+
+## "Put in force" pressed on a kind outside the books: it enters the draft at its smallest sensible rate (the kind's own
+## step, inside its range) with its editor open.
+func _on_create(kind: String) -> void:
+	var ns = _state.player()
+	_draft.set_create(kind, FinanceAutumn.default_rate(ns, kind))
+	_open_id = FinanceRows.row_id(FinanceDraft.TAX, kind)
+	_focus_wanted = true
+	_dirty = true
+
+
+## An editor's verb changed what the page lists (a birth taken back, a kind abolished or kept).
+func _on_structure_changed() -> void:
+	_paint_due = true
+	_dirty = true
 
 
 ## A row's name pressed: its editor opens under it, or closes if it was the open one.
@@ -353,20 +372,10 @@ func open_row(channel: String, key: String) -> void:
 		_open_groups[String(_state.player().tax_library[key]["group"])] = true
 	var id := FinanceRows.row_id(channel, key)
 	# A row at vote opens no editor: leave nothing behind that would open it, and take the focus, once it is withdrawn.
-	var locked: bool = _state != null and _state.player() != null and _tabled_rows(_state.player()).has(id)
+	var locked: bool = _state != null and _state.player() != null and FinanceAutumn.tabled_rows(_state.player()).has(id)
 	_open_id = "" if locked else id
 	_focus_wanted = not locked
 	_dirty = true
-
-
-## The tabled bill's rows as {row id: delta}: those rows are at vote, and locked.
-func _tabled_rows(ns) -> Dictionary:
-	var out := {}
-	var finance: Dictionary = ns.tabled_bill.get("finance", {})
-	for channel in [FinanceDraft.TAX, FinanceDraft.SPENDING]:
-		for key in finance.get(channel, {}):
-			out[FinanceRows.row_id(channel, String(key))] = float(finance[channel][key])
-	return out
 
 
 func _on_table(force := false) -> void:

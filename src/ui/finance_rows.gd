@@ -14,6 +14,7 @@ const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
@@ -90,7 +91,12 @@ static func revenue(box: Control, book: Dictionary, state, loader, open_groups: 
 			else:
 				box.add_child(_fold_button(folded, toggle.bind(gid)))
 		var absent: Array = group["not_in_force"]
-		if not absent.is_empty():
+		if not absent.is_empty() and bool(ctx.get("autumn", false)):
+			# The autumn bill may put a kind in force: each is a row with its verb (a kind already in the draft is an
+			# ordinary kind row with its editor, and one at vote is locked as every row at vote is).
+			for kind in absent:
+				_birth_row(box, ns, String(kind), wide, ctx)
+		elif not absent.is_empty():
 			var names := ", ".join(absent.map(func(k) -> String: return Strings.row_name("taxes", ns.tax_library[k])))
 			var month := int(loader.nations[ns.id].finance_autumn_month)
 			var line := PanelKit.plain_line(box, Strings.t("Not in force, creatable in %s: %s") % [DateText.month_long(month), names], PanelKit.Tone.DIM)
@@ -200,7 +206,12 @@ static func _kind_row(ns, kind: Dictionary, wide: bool, ctx: Dictionary) -> Cont
 	name.tooltip_text = name.text
 	var at_vote: bool = (ctx["tabled"] as Dictionary).has(id)
 	if wide:
-		var caption := _cell(row, Strings.t("At vote") if at_vote else who, UiTheme.CAPTION, 120.0)
+		var tag := who
+		if at_vote:
+			tag = Strings.t("At vote")
+		elif (ctx["draft"] as FinanceDraft).is_created(String(kind["id"])):
+			tag = Strings.t("Creation")
+		var caption := _cell(row, tag, UiTheme.CAPTION, 120.0)
 		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	else:
@@ -233,6 +244,31 @@ static func _fold_button(folded: Array, on_press: Callable) -> Control:
 ## tests name a row by.
 static func row_id(channel: String, key: String) -> String:
 	return "%s:%s" % [channel, key]
+
+
+## A kind not in force, in the autumn: its name and the verb that puts it in force. In the draft already, or at vote, it is
+## a kind row like any other (no rate yet, no yield).
+static func _birth_row(box: Control, ns, kind: String, wide: bool, ctx: Dictionary) -> void:
+	var id := row_id(FinanceDraft.TAX, kind)
+	var tax: Dictionary = ns.tax_library[kind]
+	if (ctx["draft"] as FinanceDraft).is_created(kind) or (ctx["tabled"] as Dictionary).has(id):
+		_kind_with_editor(box, ns, {"id": kind, "rate": 0.0, "yield_bn": 0.0, "unit": String(tax["unit"]), "who": tax.get("who_pays", []),
+			"decimals": TaxLibrary.step_decimals(ns, kind)}, wide, ctx)
+		return
+	var row := _row()
+	var gap := Control.new()
+	gap.custom_minimum_size.x = SWATCH + 8.0
+	row.add_child(gap)
+	var name := _cell(row, Strings.row_name("taxes", tax), UiTheme.CAPTION, NAME_WIDTH)
+	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name.tooltip_text = Strings.row_summary("taxes", tax)
+	var put := PanelKit.sized(Button.new())
+	put.name = "PutInForce_" + kind  # i18n: ok a node name, found by tests
+	put.text = Strings.t("Put in force")
+	put.flat = true
+	put.pressed.connect((ctx["on_create"] as Callable).bind(kind))
+	row.add_child(put)
+	box.add_child(row)
 
 
 ## A row with its editor under it while it is the open one.
@@ -287,7 +323,11 @@ static func paint_rates(ctx: Dictionary) -> void:
 		var places := 1 if spending else int(cell[4])
 		var was := LedgerBox.text(live, places)
 		var unit := "" if spending else unit_text(String(cell[5]))
-		if target == live:
+		if channel == FinanceDraft.TAX and draft.is_abolished(key):
+			label.text = Strings.t("abolish")
+		elif channel == FinanceDraft.TAX and (draft.is_created(key) or (tabled.has(id) and live == 0.0)):
+			label.text = Strings.t("new, at %s") % (LedgerBox.text(target, places) + unit)
+		elif target == live:
 			label.text = Strings.t("%s %%") % Num.f(live, 1) if spending else was + unit
 		elif spending:
 			label.text = Strings.t("from %s to %s %%") % [was, LedgerBox.text(target, places)]
