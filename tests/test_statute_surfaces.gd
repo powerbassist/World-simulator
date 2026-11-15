@@ -122,13 +122,14 @@ func _run() -> void:
 	var state = _main._state
 	var loader = _main._loader
 	var ns = state.player()
-	var panel = _main._tax_panel
+	# The Tax Code tab retired (V5.3 Finances slice 2): its panel class is driven standalone here until it goes.
+	var panel = preload("res://src/ui/tax_panel.gd").new()
+	_main.add_child(panel)
+	panel.hide()  # as the window it stood in was, closed: the abolished-wealth check below reads a hidden page
 	var briefing = _main._briefing
 	var law_panel = _main._law_panel
 
-	# --- (a) The Tax Code window: KEY_X, rows off the register -------------
-	if _main._windows.shortcut("tax") != KEY_X:
-		_fail("the tax panel is not registered on KEY_X")
+	# --- (a) The tax panel class: rows off the register --------------------
 	panel.setup(state, loader)
 	panel._on_revert()
 	panel._refresh()

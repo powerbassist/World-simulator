@@ -65,6 +65,7 @@ func _process(_delta: float) -> bool:
 			_main._windows.frame("finances")._content.mark_dirty()
 			_main._windows.frame("finances")._content._stamp = ""
 		12:
+			_pin_the_budget_seam_on_main()
 			_press_open_the_bill_through_main()
 		14:
 			if not _main._windows.is_open("legislature"):
@@ -160,13 +161,13 @@ func _check_the_rows() -> void:
 
 
 func _check_the_foot() -> void:
-	if _panel._footer.visible:
+	if _panel._foot.visible:
 		_fail("the foot offers a bill with none before the Assembly")
 	_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
 	_panel._stamp = ""
 	_panel._dirty = true
 	_panel._process(0.0)
-	if not _panel._footer.visible or _panel.primary_action() == null:
+	if not _panel._foot.visible or _panel.primary_action() == null:
 		_fail("a finance bill before the Assembly is not said at the foot")
 	_state.player().tabled_bill = {}
 
@@ -231,15 +232,15 @@ func _check_a_fold_opens_and_redraws() -> void:
 
 
 ## The page re-reads when the slot changes (not only when a test resets the stamp), and the forecast's
-## `settled` dirties it.
+## `settled` repaints its figures in place (never a rebuild).
 func _check_the_stamp_and_the_forecast_redraw() -> void:
 	_panel._process(0.0)
-	if _panel._footer.visible:
+	if _panel._foot.visible:
 		_fail("premise: the foot is up with no bill")
 	_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
 	_panel._dirty = true
 	_panel._process(0.0)
-	if not _panel._footer.visible:
+	if not _panel._foot.visible:
 		_fail("the page did not re-read when a bill was tabled")
 	var heard := []
 	_panel.go_requested.connect(func(window_id: String) -> void: heard.append(window_id), CONNECT_ONE_SHOT)
@@ -248,9 +249,12 @@ func _check_the_stamp_and_the_forecast_redraw() -> void:
 		_fail("Open the bill asked for %s, not the Bills tab" % [heard])
 	_state.player().tabled_bill = {}
 	_panel._dirty = false
+	_panel._paint_due = false
 	_panel._forecast.settled.emit()
-	if not _panel._dirty:
-		_fail("the forecast's settled signal does not dirty the page")
+	if not _panel._paint_due:
+		_fail("the forecast's settled signal does not repaint the page")
+	if _panel._dirty:
+		_fail("the forecast's settled signal rebuilds the rows (it would drop a slider being held)")
 	_panel._process(0.0)
 
 
@@ -267,6 +271,18 @@ func _check_who_pays_is_a_hover_at_130() -> void:
 		_fail("at 130 % who pays is still a caption on the row")
 	_panel._dirty = true
 	_panel._process(0.0)
+
+
+## QA's T2 on #363: the driver hands the Budget the page's ONE draft. Dropping that line must turn something red.
+func _pin_the_budget_seam_on_main() -> void:
+	var page = _main._windows.frame("finances")._content
+	var budget = _main._budget_panel
+	var live := float(_main._state.player().spending_pct_gdp["health"])
+	budget._sliders["health"].value = live + 1.0
+	if not page._draft.is_moved("spending_pct_gdp", "health"):
+		_fail("a Budget lever move on main did not reach the Books page's draft")
+	page._draft.revert()
+	budget._on_revert()
 
 
 func _press_open_the_bill_through_main() -> void:

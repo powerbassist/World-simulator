@@ -13,3 +13,8 @@ static func register(main) -> void:
 	main._windows.register("finances", Strings.t("Books"), panel, KEY_NONE, main.ICONS + "payments.svg")
 	panel.setup(main._state, main._loader)
 	panel.go_requested.connect(main._windows.open)
+	# The Budget tab's levers write the same draft (budget_shared.gd), until the Sectors screen takes them.
+	main._budget_panel.shared = panel.shared_draft()
+	# The one fiscal command the page sends (a bill tabled, added to or withdrawn): the shell's card and effect baseline.
+	panel.committed.connect(func(before: Dictionary, tabling: Dictionary) -> void:
+		main._fiscal_committed(Strings.t("Finance bill"), tabling, before))
