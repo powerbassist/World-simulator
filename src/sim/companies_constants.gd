@@ -141,15 +141,20 @@ const RESCUE_BAILOUT_PRICE_SHARE := 0.25
 
 # --- What a subsidy costs -----------------------------------------------------
 
-## Points of GDP per year for one firm subsidised at full intensity.
-##
-## Anchored against the tax lines it sits beside on the same budget panel:
-## economy_constants.TAX_BASE_SHARE makes one point of VAT worth 0.53 % of GDP and
-## one point of income tax 0.50 %, so ONE TAX POINT IS ROUGHLY HALF A PERCENT OF
-## GDP. Subsidising one national champion should cost appreciably less than a tax
-## point -- it is one firm, not a fiscal programme -- and subsidising the whole
-## register should cost more than one and be a visible choice.
-const SUBSIDY_COST_PCT_GDP := 0.30
+## The share of a firm's payroll a year one firm subsidised at full intensity costs
+## (V5.3 PR 3, the author's call 4 of 2026-11-14: aid priced BY THE FIRM, never of
+## GDP). The industrial subsidy's 0.6 reads 3 % a year and the strategic rescue's 1.0
+## reads 5 %, the figures Interface's pictures drew and the author picked. It replaced
+## SUBSIDY_COST_PCT_GDP, 0.30 % of GDP per firm whatever its size: France's 5.2 bn a
+## year on a firm worth 3.5 bn.
+const AID_PAYROLL_SHARE := 0.05
+
+## Compensation of employees as a share of GDP, the payroll the aid is a share of,
+## spread over the employed (Demography.labour_force less the unemployed). Eurostat's
+## national accounts put the EU's compensation of employees at about half of GDP (47
+## to 52 % across the roster's large economies, 2023); France reads about 50 000 EUR a
+## job at this share, the 52 000 the industry pictures stood in.
+const COMPENSATION_SHARE_OF_GDP := 0.50
 
 ## Hard clamp on the whole subsidy bill, points of GDP.
 ##

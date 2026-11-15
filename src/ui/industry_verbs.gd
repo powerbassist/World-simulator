@@ -17,6 +17,7 @@ extends RefCounted
 ## live register. No formula is copied here.
 
 const Companies = preload("res://src/sim/companies.gd")
+const CompaniesAid = preload("res://src/sim/companies_aid.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
@@ -92,7 +93,7 @@ static func money_line(state, loader, ns, company, action, est: Dictionary) -> A
 		return [caption, EffectsStrip.range_text(lo, hi), hi]
 	var preview: Array = Companies.preview(state, ns, loader.company_actions, action, String(company.id), loader)
 	var once := -float((preview[1] as Dictionary).get("price_eur_bn", 0.0))
-	var yearly := -(Companies.subsidy_bill_pct_gdp(preview[0]) - Companies.subsidy_bill_pct_gdp(ns)) * float(ns.gdp_eur_bn) / 100.0
+	var yearly := -(CompaniesAid.subsidy_bill_pct_gdp(preview[0], loader) - CompaniesAid.subsidy_bill_pct_gdp(ns, loader)) * float(ns.gdp_eur_bn) / 100.0
 	if absf(yearly) >= 0.05 and absf(once) >= 0.05:
 		return [caption, Strings.t("%s once, %s a year") % [EffectsStrip.money_text(once), EffectsStrip.money_text(yearly)], yearly]
 	if absf(yearly) >= 0.05:

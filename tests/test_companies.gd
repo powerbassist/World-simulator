@@ -41,6 +41,8 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Processes = preload("res://src/sim/processes.gd")
+const Demography = preload("res://src/sim/demography.gd")
+const CompaniesAid = preload("res://src/sim/companies_aid.gd")
 
 const PLAYER := "FRA"
 ## Two industrial rivals of unequal labour intensity. The pair the jobs channel is
@@ -70,6 +72,7 @@ func _init() -> void:
 	_test_subsidy_moves_share_to_the_subsidised_firm()
 	_test_headcount_follows_share_not_output()
 	_test_bill_reaches_the_budget()
+	_test_aid_scales_with_the_firm()
 	_test_impulse_reaches_growth()
 	_test_withdraw_stops_the_bill_and_keeps_the_share()
 	_test_verb_refuses_when_unavailable()
@@ -301,12 +304,41 @@ func _test_bill_reaches_the_budget() -> void:
 	Companies.tick_month(state, _loader)
 	Budget.recompute(state, ns)
 
-	if not is_equal_approx(ns.subsidy_bill_pct_gdp, K.SUBSIDY_COST_PCT_GDP):
-		_fail("one full-intensity subsidy billed %s, expected %s" % [
-			str(ns.subsidy_bill_pct_gdp), str(K.SUBSIDY_COST_PCT_GDP)
+	# PR 3, the author's call 4 (2026-11-14): aid is priced BY THE FIRM, a share of its
+	# payroll a year (5 % at full intensity, so the 0.6 subsidy reads 3 %), the payroll its
+	# live jobs at the nation's compensation per job (a share of GDP over the employed).
+	var company = _company(BIG)
+	var employed: float = Demography.labour_force(ns) * (1.0 - ns.unemployment_pct / 100.0)
+	var per_job: float = K.COMPENSATION_SHARE_OF_GDP * ns.gdp_eur_bn * 1e9 / employed
+	var payroll: float = Companies.headcount(ns, company) * per_job / 1e9
+	var expected: float = 100.0 * K.AID_PAYROLL_SHARE * payroll / ns.gdp_eur_bn
+	if not is_equal_approx(ns.subsidy_bill_pct_gdp, expected):
+		_fail("one full-intensity subsidy billed %s, expected %s (5 %% of payroll)" % [
+			str(ns.subsidy_bill_pct_gdp), str(expected)
 		])
+	if not is_equal_approx(CompaniesAid.payroll_eur_bn(ns, company), payroll):
+		_fail("payroll_eur_bn reads %s, want %s" % [CompaniesAid.payroll_eur_bn(ns, company), payroll])
+	if not is_equal_approx(CompaniesAid.per_year(ns, company, 0.6), 0.03 * payroll):
+		_fail("the 0.6 subsidy is not 3 %% of the payroll a year")
+	# The brief's absurdity: a subsidy cost 5.2 bn a year on a 3.5 bn firm.
+	if CompaniesAid.per_year(ns, company, 1.0) >= 0.1 * Companies.value_eur_bn(ns, company):
+		_fail("a full rescue costs %s bn a year on a firm worth %s bn" % [
+			CompaniesAid.per_year(ns, company, 1.0), Companies.value_eur_bn(ns, company)])
 	if ns.deficit_pct_gdp <= deficit_before:
 		_fail("the subsidy bill did not widen the deficit")
+
+
+## Priced by the firm, so a bigger payroll costs more: the old bill was one figure of GDP
+## whatever the firm.
+func _test_aid_scales_with_the_firm() -> void:
+	var ns = _new_state().nations[PLAYER]
+	var big = _company(BIG)
+	var rival = _company(RIVAL)
+	var a := CompaniesAid.per_year(ns, big, 1.0)
+	var b := CompaniesAid.per_year(ns, rival, 1.0)
+	if (Companies.headcount(ns, big) > Companies.headcount(ns, rival)) != (a > b) or a == b:
+		_fail("aid does not follow the payroll: %s jobs -> %s bn, %s jobs -> %s bn" % [
+			Companies.headcount(ns, big), a, Companies.headcount(ns, rival), b])
 
 
 func _test_impulse_reaches_growth() -> void:

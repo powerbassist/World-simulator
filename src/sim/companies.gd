@@ -74,6 +74,8 @@ const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Walk = preload("res://src/sim/companies_walk.gd")
 const Roster = preload("res://src/sim/companies_roster.gd")
+## V5.3 PR 3: what aid costs, priced by the firm (the subsidy bill's writer reads it).
+const Aid = preload("res://src/sim/companies_aid.gd")
 
 
 ## Seeds the live register from content: every MAJOR starts at its authored share
@@ -506,18 +508,6 @@ static func _tick_shares(ns, loader) -> void:
 
 # --- The two channels into the economy ------------------------------------------
 
-## Points of GDP per year. Read by Budget.recompute() as a computed spending line,
-## NOT as a sixth entry in economy_constants.SPENDING_KEYS -- that list is keyed
-## 1:1 to cabinet portfolios, so a sixth line is a sixth minister, and
-## docs/tiers/v1.md section 6 rules it out. V1.3c's tariff revenue and V1.3g's
-## deployment bill both took this route first.
-static func subsidy_bill_pct_gdp(ns) -> float:
-	var bill := 0.0
-	for company_id in ns.companies.keys():
-		bill += K.SUBSIDY_COST_PCT_GDP * subsidy_of(ns, String(company_id))
-	return minf(bill, K.SUBSIDY_BILL_MAX_PCT_GDP)
-
-
 ## The fifth additive term in the growth equation, %/yr. Scaled by the firm's own
 ## weight in the economy, which is what makes WHICH FIRM a decision rather than a
 ## label: subsidising a national champion moves the country, subsidising a
@@ -640,7 +630,7 @@ static func dividend_revenue_pct_gdp(ns, loader) -> float:
 ## content already enforces -- and it would hide a bug rather than prevent one if a
 ## later session lets the nine hold firms.
 static func _recompute_prices(ns, loader) -> void:
-	ns.subsidy_bill_pct_gdp = subsidy_bill_pct_gdp(ns)
+	ns.subsidy_bill_pct_gdp = Aid.subsidy_bill_pct_gdp(ns, loader)
 	ns.firm_impulse_pct = firm_impulse_pct(ns, loader)
 	ns.firm_jobs_offset_pct = firm_jobs_offset_pct(ns, loader)
 	ns.dividend_revenue_pct_gdp = dividend_revenue_pct_gdp(ns, loader)
