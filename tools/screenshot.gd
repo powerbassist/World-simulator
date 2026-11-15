@@ -497,6 +497,8 @@ var _tax := false
 ## --books-draft: a draft on it; --books-tabled: a finance bill before the Assembly; --books-refused: another bill holds the slot.
 var _books_row := ""
 var _books_draft := false
+## --books-sheet: the bill's sheet open over the Books page on the picture's draft (health +1.5, education -0.5, VAT +2).
+var _books_sheet := false
 var _books_tabled := false
 var _books_refused := false
 
@@ -960,6 +962,8 @@ func _init() -> void:
 			_tax = true
 		elif args[i] == "--books" and i + 1 < args.size():
 			_books_row = args[i + 1]
+		elif args[i] == "--books-sheet":
+			_books_sheet = true
 		elif args[i] == "--books-draft":
 			_books_draft = true
 		elif args[i] == "--books-tabled":
@@ -1391,7 +1395,7 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
-	if _books_row != "" or _books_draft or _books_tabled or _books_refused:
+	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_sheet:
 		_stage_the_books()
 	if _moved:
 		_move_the_levers()
@@ -2207,11 +2211,18 @@ func _stage_the_books() -> void:
 		page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
 		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
 		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
+	if _books_sheet:
+		page._draft.set_value("tax_rates_pct", "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
+		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
+		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
 	page._stamp = ""
 	page._dirty = true
 	page._process(0.0)
 	page._forecast.drain()
 	page._process(0.0)
+	if _books_sheet:
+		page._open_sheet()
+		page._sheet.refresh()
 	print("--books: row '%s', draft %s, tabled %s, refused %s" % [_books_row, _books_draft, _books_tabled, _books_refused])
 
 
