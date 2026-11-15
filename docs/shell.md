@@ -40,7 +40,6 @@ flowchart LR
   sb --> d_finances["Finances"]
   d_finances --> t_finances["finances"]
   d_finances --> t_budget["budget"]
-  d_finances --> t_tax["tax"]
   d_finances --> t_projects["projects"]
   sb --> d_economy["Economy"]
   d_economy --> t_economy["economy"]
