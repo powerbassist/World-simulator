@@ -26,7 +26,6 @@ const FinanceStacks = preload("res://src/ui/finance_stacks.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
-const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceEditor = preload("res://src/ui/finance_editor.gd")
 const FinanceFoot = preload("res://src/ui/finance_foot.gd")
@@ -38,7 +37,6 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
-const DateText = preload("res://src/ui/date_text.gd")
 
 const PROJECTION_MONTHS := 24
 ## The ranges row has a FIXED height: the figure and up to two caption lines. A caption that re-wraps when
@@ -139,6 +137,7 @@ func setup(state, loader) -> void:
 	_sheet.hide()
 	_open_id = ""
 	_stamp = ""
+	_autumn_dropped = false  # a load is another game's draft: its note is not this one's
 	_dirty = true
 
 
@@ -358,11 +357,12 @@ func _on_create(kind: String) -> void:
 	_draft.set_create(kind, FinanceAutumn.default_rate(ns, kind))
 	_open_id = FinanceRows.row_id(FinanceDraft.TAX, kind)
 	_focus_wanted = true
-	_dirty = true
+	_on_structure_changed()
 
 
 ## An editor's verb changed what the page lists (a birth taken back, a kind abolished or kept).
 func _on_structure_changed() -> void:
+	_autumn_dropped = false
 	_paint_due = true
 	_dirty = true
 

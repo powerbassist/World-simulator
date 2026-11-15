@@ -281,6 +281,27 @@ func _check_the_autumn_rows_leave_when_the_month_ends() -> void:
 	_panel._paint(ns)
 	if _panel._with.text.contains("autumn month is over"):
 		_fail("the note outlives the player's next move")
+	# QA's T1 on #371 (the play): the note leaves with ANY change to the draft, not only a slider's, and with a load.
+	for how in ["put in force", "an editor's verb", "a load"]:
+		draft.revert()
+		draft.set_create(_absent, 0.2)
+		_state.month = autumn_month + 1
+		_panel._paint(ns)
+		if not _panel._with.text.contains("autumn month is over"):
+			_fail("premise (%s): the sweep left no note" % how)
+		_state.month = autumn_month
+		match how:
+			"put in force":
+				_panel._on_create(_absent)
+			"an editor's verb":
+				_panel._on_structure_changed()
+			"a load":
+				_panel.setup(_state, _loader)
+		_panel._paint_due = true
+		_panel._dirty = true
+		_panel._process(0.0)
+		if _panel._with.text.contains("autumn month is over"):
+			_fail("the note outlives %s" % how)
 	_state.month = autumn_month
 	draft.revert()
 
