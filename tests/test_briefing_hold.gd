@@ -29,6 +29,7 @@ const RequestLane = preload("res://src/ui/request_lane.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
 
 const CONSEQUENCE := "G1 consequence note"
+const ECHO := "G1 echo of a lapse"
 
 var _failures: Array[String] = []
 var _main
@@ -96,6 +97,8 @@ func _start() -> void:
 	ns.event_queue.clear()
 	_main._unseen_events.clear()
 	BriefingDriver.hold_card(_main, {"title": CONSEQUENCE, "body": "x", "tone": ""})
+	# A month only the clock decided: the ledger's echo of the lapse card stays out.
+	BriefingDriver.hold_card(_main, {"title": ECHO, "body": "Since then", "tone": "", "since": "Since then"})
 	_main._clock.paused = false
 	var state = _main._state
 	var next: int = int(state.year) * 12 + int(state.month) + 1
@@ -114,6 +117,8 @@ func _check_month_end() -> void:
 		_fail("the month end left no chief's mark")
 	if not _shows(_main._hud.inbox, CONSEQUENCE.to_upper()) and not _shows(_main._hud.inbox, CONSEQUENCE):
 		_fail("the month's consequence card is not in the inbox")
+	if _shows(_main._hud.inbox, ECHO.to_upper()) or _shows(_main._hud.inbox, ECHO):
+		_fail("the ledger's echo of a lapse reached the inbox beside the lapse card")
 
 
 func _check_opened() -> void:

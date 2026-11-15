@@ -117,6 +117,7 @@ static func month_end(main, report: Dictionary) -> void:
 	# The month's consequence cards and its crossings go to the inbox every month: no card
 	# says them on its own now (the brief's "What must hold": as on a month not shown).
 	var slipped: Array = [] if ns == null else SectorWarningView.note_cards(ns, main._loader, int(main._state.year) * 12 + int(main._state.month))
+	cards = preload("res://src/ui/effects_ledger.gd").drop_default_echo(cards)
 	for card in cards + slipped:
 		ResultTone.mark(main._hud.inbox, main._hud.inbox.push(card["title"], card["body"]), String(card.get("tone", "")))
 	if game.is_empty() or ns == null or not bool(ns.in_government) or not _rank_month(main, game, report):

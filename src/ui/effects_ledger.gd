@@ -69,7 +69,8 @@ static func record(state, pending: Array, history_entry: Dictionary, year: int, 
 	if inbox != null:
 		ResultTone.mark(inbox, inbox.push(title, body), tone)
 	pending.clear()
-	return {"title": title, "body": body, "tone": tone}
+	# `since`: a month only the clock decided, whose lapse cards say the same thing (G1).
+	return {"title": title, "body": body, "tone": tone, "since": body if names.is_empty() else ""}
 
 
 ## After a load (someday.md C6, the parent's ruling): the inbox puts back what the
@@ -105,3 +106,13 @@ static func card_body(effect: Dictionary) -> String:
 		var m: Dictionary = ranked[i]
 		parts.append("%s %s" % [String(m["label"]), Trends.change_text(float(m["change"]), String(m["unit"]))])  # i18n: row-ok Trends translates its labels
 	return Strings.t("Since then: %s.") % " · ".join(parts)
+
+
+## One card a lapse (G1): no briefing opens by itself to say a month any more, so its
+## cards reach the inbox -- and a month only the clock decided would say its lapse twice,
+## the desk's "Decided for you" (the month it lapsed) and this ledger's "This month,
+## decided for you" (the month after, with its "Since then"). The ledger's goes; its
+## figures stay in RecentEffects (the Dispatches ledger) and in the read's "What your
+## choices did". A month the player decided keeps its card.
+static func drop_default_echo(cards: Array) -> Array:
+	return cards.filter(func(c): return String(c.get("since", "")) == "")

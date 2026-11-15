@@ -30,11 +30,13 @@ extends SceneTree
 
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
-## The inbox at month 12, spec 3.5's target (170). One stated rise, 170 -> 216 (G1,
-## chief-briefing-brief.md "What must hold"): no card opens by itself to say the month's
-## consequence, so its card ("This month, decided for you", 46 words) is in the inbox
-## every month; G2 moves it to the Presidency page's part 5.
-const INBOX_CEILING := 216
+## The inbox at month 12, spec 3.5's target (170). One stated rise, 170 -> 196 (G1,
+## chief-briefing-brief.md "What must hold"; the parent's ruling: cut first, state the
+## rest): no briefing opens by itself to say a month, so its cards reach the inbox. Of
+## the 46 words that came, the ledger's echo of a lapse (20) is cut
+## (EffectsLedger.drop_default_echo); the desk's "Decided for you" (26) is the rest.
+## G2 moves the month's cards to the Presidency page's part 5.
+const INBOX_CEILING := 196
 ## Spec 3.5: the monthly briefing card, in each situation tools/screenshot.gd stages.
 const BRIEFING_CEILING := 90
 
@@ -94,8 +96,8 @@ const TOTAL_PENDING := {
 ## the Books row: 3089 -> 2597 (the two "N parts" lines of the Books included).
 ## One stated rise, 2597 -> 2612 (the parent's ruling on slice 5): the Budget's revenue-against-spending chart and its Gini row
 ## moved to Economy as they were (113 -> 128 there), so nothing the Budget showed was lost with it.
-## One stated rise, 2612 -> 2658 (G1): the inbox's, above -- nothing else moved.
-const TOTAL_SUM_CEILING := 2658
+## One stated rise, 2612 -> 2638 (G1): the inbox's, above -- nothing else moved.
+const TOTAL_SUM_CEILING := 2638
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
