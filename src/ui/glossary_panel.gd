@@ -76,6 +76,11 @@ static func entry_ids() -> Array:
 	var words := {}
 	for id in Glossary.ids():
 		words[String(id)] = Glossary.term(String(id))
+	return order_ids(words)
+
+
+## `words` ({id: shown word}) in the tab's order: accents folded, then the raw word, then the id.
+static func order_ids(words: Dictionary) -> Array:
 	var ids: Array = words.keys()
 	# The id breaks a tie: sort_custom is not stable, and two calls must agree.
 	ids.sort_custom(func(a, b) -> bool:
@@ -104,7 +109,7 @@ static func fold(word: String) -> String:
 ## The heading letter of a word: its first character without its accent, upper-cased; "#" for one that
 ## is not a letter.
 static func letter_of(word: String) -> String:
-	var first := fold(word.substr(0, 1))
+	var first := fold(word).substr(0, 1)
 	return "#" if first.is_empty() or first.to_lower() == first.to_upper() else first.to_upper()
 
 

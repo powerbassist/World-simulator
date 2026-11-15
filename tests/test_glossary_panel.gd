@@ -75,6 +75,23 @@ func _check_the_order() -> void:
 			_fail("letter_of('%s') is '%s', not '%s'" % [pair[0], GlossaryPanel.letter_of(pair[0]), pair[1]])
 	if GlossaryPanel.fold("Éléphant") != "Elephant" or GlossaryPanel.fold("zèbre") != "zebre" or GlossaryPanel.fold("Œuvre") != "Oeuvre" or GlossaryPanel.FOLD_FROM.length() != GlossaryPanel.FOLD_TO.length():
 		_fail("fold leaves a diacritic")
+	# The order folds accents too (QA's F2): an Édit sits among the E words, not after the Z ones; the same call the
+	# tab makes, on words with accents in first place, and the live French glossary in order and letters.
+	var synthetic := {"a": "Édit", "b": "Echo", "c": "Eau", "d": "Zèbre", "e": "Zebra"}
+	if GlossaryPanel.order_ids(synthetic) != ["c", "b", "a", "e", "d"]:
+		_fail("accented words are ordered %s, not among their plain-letter neighbours" % [GlossaryPanel.order_ids(synthetic)])
+	if GlossaryPanel.letter_of("Œuvre") != "O":
+		_fail("letter_of('Œuvre') is '%s', not 'O'" % GlossaryPanel.letter_of("Œuvre"))
+	Strings.set_language("fr")
+	var french: Array = GlossaryPanel.entry_ids()
+	for i in range(1, french.size()):
+		if GlossaryPanel.fold(Glossary.term(french[i - 1])).naturalnocasecmp_to(GlossaryPanel.fold(Glossary.term(french[i]))) > 0:
+			_fail("French: '%s' is listed before '%s'" % [Glossary.term(french[i - 1]), Glossary.term(french[i])])
+	var french_letters: Array = GlossaryPanel.letters()
+	for i in range(1, french_letters.size()):
+		if String(french_letters[i - 1]).naturalnocasecmp_to(String(french_letters[i])) >= 0:
+			_fail("French: the letters are not ascending or repeat: %s" % [french_letters])
+	Strings.set_language("en")
 	# The tooltip's two lines read in French (they went through tr() but had no row).
 	Strings.set_language("fr")
 	for pair in [["Your value: %s", "Votre valeur : %s"], ["See also: %s", "Voir aussi : %s"], ["Your value: %s (%s)", "Votre valeur : %s (%s)"]]:
