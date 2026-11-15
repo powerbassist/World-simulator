@@ -751,5 +751,24 @@
   "Tax changes not yet committed: %s a year, in the Tax Code": "Changements d'impôts non validés : %s par an, dans le Code des impôts",
   "Spending changes not yet committed: %s a year, in the Budget": "Changements de dépenses non validés : %s par an, dans le Budget",
   "A voice from the regions": "Une voix des régions",
-  "%s, on the fund for %s: \"We asked for it for years and the government delivered. Now it has to bring jobs.\"": "%s, sur le fonds ouvert en région %s : « Nous le demandions depuis des années, et le gouvernement l'a fait. Reste à ce qu'il apporte des emplois. »"
+  "%s, on the fund for %s: \"We asked for it for years and the government delivered. Now it has to bring jobs.\"": "%s, sur le fonds ouvert en région %s : « Nous le demandions depuis des années, et le gouvernement l'a fait. Reste à ce qu'il apporte des emplois. »",
+  "Review the bill": "Examiner le texte",
+  "Finance bill · %s": "Projet de loi de finances · %s",
+  "The Assembly divides on %s": "L'Assemblée vote le %s",
+  "Deficit, bn": "Déficit, Md€",
+  "Deficit, % of GDP": "Déficit, % du PIB",
+  "%d changed row": [
+    "%d ligne modifiée",
+    "%d lignes modifiées"
+  ],
+  "Adopted without a vote. A censure motion follows: %d seats would move against the government, %d are needed.": "Adopté sans vote. Une motion de censure s'ensuit : %d sièges se rallieraient à la censure, il en faut %d.",
+  "It survives: the bill is adopted.": "La motion est rejetée : le texte est adopté.",
+  "It falls: the government goes and the bill with it.": "La motion est adoptée : le gouvernement tombe, et le texte avec lui.",
+  "Forcing costs standing with every bloc and with your own majority.": "Recourir au 49.3 coûte du crédit auprès de chaque bloc et de votre propre majorité.",
+  "Assembly, if it divided now": "Si l'Assemblée votait maintenant",
+  "%d of your seats rebel.": "Frondeurs dans votre camp : %d.",
+  "It carries.": "Le texte est adopté.",
+  "It falls.": "Le texte est rejeté.",
+  "Force it through (49.3)": "Recourir au 49.3",
+  "Table and force it": "Déposer et recourir au 49.3"
 }
