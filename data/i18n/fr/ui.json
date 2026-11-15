@@ -777,7 +777,7 @@
   "One step (%s): %s a year.": "Un cran (%s) : %s par an.",
   "Balance: %s a year.": "Solde : %s par an.",
   "Paid by: %s": "Payé par : %s",
-  "For: %s": "Bénéficiaires : %s",
+  "For: %s": "Pour : %s",
   "One step (%s pt of GDP): %s a year. %s": "Un cran (%s pt de PIB) : %s par an. %s",
   "Discard the changes": "Annuler les modifications",
   "Withdraw the bill": "Retirer le texte",
