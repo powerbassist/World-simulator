@@ -324,11 +324,10 @@ func _put_sheet_away() -> void:
 
 
 func _on_discard() -> void:
-	_autumn_dropped = false
 	_draft.revert()
 	_open_id = ""
 	_stamp = ""
-	_dirty = true
+	_on_structure_changed()  # the note goes with the draft, and the rows are built again
 
 
 ## The ranges row's height at a text size.

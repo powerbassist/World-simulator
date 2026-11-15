@@ -124,7 +124,11 @@ static func drafted(state, loader, draft):
 ## The sector's mark, name, bar, share, quantity and trend.
 func _sector_row(dns, sector: Dictionary, share: float, warned: bool) -> void:
 	var id := String(sector["id"])
-	var row := PanelKit.buttons(self)
+	# Two lines, not one: the column the row sits in is narrow, and "5.34 per 1 000 inhabitants, need-adjusted" is the long
+	# part, so it wraps under the mark, the bar and the share instead of running out of the page.
+	var cell := VBoxContainer.new()
+	add_child(cell)
+	var row := PanelKit.buttons(cell)
 	var name := PanelKit.plain_line(row, Strings.t("%s (!)") % SectorWarningView.sector_name(sector) if warned else SectorWarningView.sector_name(sector), PanelKit.Tone.PLAIN)
 	if warned:
 		ResultTone.tint(name, ResultTone.RISKY)
@@ -139,11 +143,12 @@ func _sector_row(dns, sector: Dictionary, share: float, warned: bool) -> void:
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(bar)
 	name.set_meta("bar", bar)
-	PanelKit.plain_line(row, Strings.t("%s %% · %s %s") % [Num.f(100.0 * share, 0),
-		quantity_text(Sectors.quantity(dns, _loader, _line, id)), unit_text(sector)], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
+	PanelKit.plain_line(row, Strings.t("%s %%") % Num.f(100.0 * share, 0), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var trend := SectorWarnings.trend(dns, id)
 	if trend.size() >= 2:
 		ChartKit.spark(row, PackedFloat64Array(trend), []).custom_minimum_size = SPARK_SIZE
+	var figure := PanelKit.plain_line(cell, Strings.t("%s %s") % [quantity_text(Sectors.quantity(dns, _loader, _line, id)), unit_text(sector)], PanelKit.Tone.DIM)
+	figure.autowrap_mode = TextServer.AUTOWRAP_WORD
 
 
 ## Each slipping sector's reason once with the sectors it names, then the raise as one chip.
@@ -199,7 +204,9 @@ func _verb(dns, sectors: Array, why_of: Dictionary) -> void:
 		aim_pick(_draft, dns, _loader, _line, sectors, why_of, String(why_of.keys()[0]))
 	if float(pick.get("amount", 0.0)) <= 0.0:
 		pick["amount"] = STEP
-	var picks := PanelKit.buttons(self)
+	# A flow, so the three pickers and the slider wrap under each other where the column is narrow (130 % text).
+	var picks := HFlowContainer.new()
+	add_child(picks)
 	PanelKit.plain_line(picks, Strings.t("Move"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var from := _picker(picks, sectors, String(pick["from"]), "from")
 	PanelKit.plain_line(picks, Strings.t("to"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -217,8 +224,7 @@ func _verb(dns, sectors: Array, why_of: Dictionary) -> void:
 	shown.autowrap_mode = TextServer.AUTOWRAP_OFF
 	var strip := EffectsStrip.new()
 	strip.set_meta("sectors", true)
-	strip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	strip.custom_minimum_size.x = 520
+	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(strip)
 	var move := PanelKit.sized(Button.new())
 	move.text = Strings.t("Draft the move")

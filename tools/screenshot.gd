@@ -64,6 +64,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --bill-refused --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books spending_pct_gdp:health --books-move   (a share move drafted; add --books-draft for rows beside it)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --slipping --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --sectors --slipping --open budget
@@ -499,6 +500,7 @@ var _books_row := ""
 var _books_draft := false
 ## --books-sheet: the bill's sheet open over the Books page on the picture's draft (health +1.5, education -0.5, VAT +2).
 var _books_sheet := false
+var _books_move := false
 ## --books-autumn: the autumn month, Books page: a creation (plastic packaging tax) and an abolition (sugar drinks levy) drafted; with --books-sheet the sheet open on them.
 var _books_autumn := false
 var _books_tabled := false
@@ -968,6 +970,8 @@ func _init() -> void:
 			_books_autumn = true
 		elif args[i] == "--books-sheet":
 			_books_sheet = true
+		elif args[i] == "--books-move":
+			_books_move = true
 		elif args[i] == "--books-draft":
 			_books_draft = true
 		elif args[i] == "--books-tabled":
@@ -1400,7 +1404,7 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
-	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_sheet or _books_autumn:
+	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_sheet or _books_autumn or _books_move:
 		_stage_the_books()
 	if _moved:
 		_move_the_levers()
@@ -1410,6 +1414,7 @@ func _apply_view() -> void:
 		var drifting = _main._state.player()
 		drifting.sector_drift["base_gdp_per_head"] = float(drifting.gdp_eur_bn) / float(drifting.population) * 1.5
 		drifting.sector_drift["history"] = {"hospitals": [5.34, 5.3, 5.22, 5.1, 4.9, 4.7, 4.45]}
+		_main._windows.mark_all_dirty()  # the Books page reads the drift when it is built: build it again with the staged drift
 	if _sectors:
 		_main._windows.frame("finances")._content.open_row("spending_pct_gdp", "health")
 		_main._windows.frame("finances")._content.mark_dirty()
@@ -2222,6 +2227,9 @@ func _stage_the_books() -> void:
 		page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
 		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
 		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
+	if _books_move:
+		# A share move drafted (Finances slice 5): the footer's "Apply the moves" (alone) or beside the rows of --books-draft.
+		page._draft.add_move("health", "hospitals", "prevention", 0.02)
 	if _books_sheet:
 		page._draft.set_value("tax_rates_pct", "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
 		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)

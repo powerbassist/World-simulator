@@ -114,7 +114,7 @@ func _check_tile() -> void:
 		if row == null:
 			_fail("tile: no row for %s" % id)
 			continue
-		var text := _text_under(row.get_parent())
+		var text := _text_under(row.get_parent().get_parent())
 		var raw := Sectors.quantity(ns, loader, LINE, id)
 		var q := Num.f(raw, 2 if absf(raw) < 10.0 else 1)
 		if not text.contains(q):
