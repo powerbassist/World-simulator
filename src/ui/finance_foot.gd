@@ -57,6 +57,8 @@ func _ready() -> void:
 
 func _button(node_name: String, label: String, signal_out: Signal) -> Button:
 	var button := PanelKit.sized(Button.new())
+	# A long sentence (three lines with the autumn rows) must not stretch the verbs to its height.
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.name = node_name  # i18n: ok a node name, found by tests
 	button.text = label
 	button.pressed.connect(signal_out.emit)

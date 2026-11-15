@@ -20,6 +20,7 @@ signal structure_changed
 
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
@@ -181,11 +182,13 @@ func _sync() -> void:
 		_brackets.set_block_signals(false)
 		LedgerBox.show(_brackets_box, LedgerBox.text(level, 2))
 	var own := _own_pending()
-	if own.is_empty():
+	var born: bool = channel == FinanceDraft.TAX and _draft.is_created(key)
+	if own.is_empty() and not born:
 		_effect.text = ""
 		_effect.theme_type_variation = ""
 		return
-	var gain: float = _price.balance_bn(own)
+	# A kind put in force is priced as a bill of its one row: Budget.preview refuses a rate on a kind not in force.
+	var gain: float = _price.bill_balance_bn({FinanceBill.CREATE: {key: value}}) if born else _price.balance_bn(own)
 	_effect.text = Strings.t("Balance: %s a year.") % EffectsStrip.money_text(gain)
 	_effect.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
 

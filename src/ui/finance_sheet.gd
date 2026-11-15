@@ -206,7 +206,7 @@ func _row(list: Control, row: Dictionary) -> void:
 	var unit := Strings.t(" % of GDP")
 	var label := ""
 	# The autumn bill's two rows: a kind put in force (from nothing to its rate) and a kind abolished (its rate to nothing).
-	# Neither carries a balance or who is for and against until the sim's own read prices a bill with births.
+	# Each is priced as a bill of its one row (FinanceBill.preview); neither names who is for and against.
 	var autumn_row: bool = channel == FinanceDraft.ABOLISH or bool(row.get("birth", false))
 	match channel:
 		FinanceDraft.SPENDING:
@@ -227,12 +227,17 @@ func _row(list: Control, row: Dictionary) -> void:
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# The figures are one line each: a wrapped "11 → 12 % of GDP" in a tight row is a column of single words.
 	PanelKit.plain_line(line, "%s → %s%s" % [LedgerBox.text(float(row["live"]), places), LedgerBox.text(float(row["draft"]), places), unit], PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
+	var gain: float
+	if channel == FinanceDraft.ABOLISH:
+		gain = _price.bill_balance_bn({FinanceBill.ABOLISH: [key]})
+	elif autumn_row:
+		gain = _price.bill_balance_bn({FinanceBill.CREATE: {key: row["draft"]}})
+	else:
+		gain = _price.balance_bn({channel: {key: row["draft"]}} if channel != FinanceDraft.BRACKETS else {channel: row["draft"]})
+	var effect := PanelKit.plain_line(line, EffectsStrip.money_text(gain), PanelKit.Tone.PLAIN)
+	effect.autowrap_mode = TextServer.AUTOWRAP_OFF
+	effect.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
 	if not autumn_row:
-		var own := {channel: {key: row["draft"]}} if channel != FinanceDraft.BRACKETS else {channel: row["draft"]}
-		var gain: float = _price.balance_bn(own)
-		var effect := PanelKit.plain_line(line, EffectsStrip.money_text(gain), PanelKit.Tone.PLAIN)
-		effect.autowrap_mode = TextServer.AUTOWRAP_OFF
-		effect.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
 		_chips(box, channel, key, float(row["draft"]) > float(row["live"]))
 	list.add_child(box)
 

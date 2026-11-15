@@ -10,13 +10,6 @@ const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 
 
-## Whether the autumn bill is open: a tax may be put in force or abolished only in the nation's autumn month. ONE place,
-## to be replaced by the sim's own read (FinanceBill.autumn_open) when Systems lands it: the page must not hold a rule.
-static func open(state, loader) -> bool:
-	var month := int(loader.nations[state.player().id].finance_autumn_month)
-	return month > 0 and month == int(state.month)
-
-
 ## The rate a kind put in force enters the draft at: its own step, inside its range (the smallest sensible one).
 static func default_rate(ns, kind: String) -> float:
 	var span: Array = ns.tax_library[kind]["rate_range_pct"]

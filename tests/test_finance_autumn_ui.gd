@@ -13,6 +13,12 @@ const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Budget = preload("res://src/sim/budget.gd")
+const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const Num = preload("res://src/ui/num.gd")
+const TaxLibrary = preload("res://src/core/tax_library.gd")
+const FinancePrice = preload("res://src/ui/finance_price.gd")
+const LedgerBox = preload("res://src/ui/ledger_box.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -46,6 +52,7 @@ func _process(_delta: float) -> bool:
 			_check_a_birth_is_a_row_named_everywhere()
 			_check_taking_a_birth_back()
 			_check_an_abolition()
+			_check_births_and_abolitions_are_priced()
 			_check_a_bill_at_vote_locks_its_births()
 		5:
 			return _finish()
@@ -79,6 +86,8 @@ func _check_no_verbs_outside_the_autumn() -> void:
 		_fail("outside the autumn the page does not say when a kind can be created")
 	_panel._on_open("tax_rates_pct:vat")
 	_rebuild()
+	if _node("Now") == null or not (_node("Now") as Label).text.begins_with("Now "):
+		_fail("an in-force kind's editor does not read 'Now ...'")
 	if _node("AbolishTax") != null:
 		_fail("a tax can be abolished outside the autumn month")
 	_panel._on_open("tax_rates_pct:vat")
@@ -106,6 +115,8 @@ func _check_a_birth_is_a_row_named_everywhere() -> void:
 		_fail("Put in force did not open the kind's editor (%s)" % _panel._open_id)
 	if _node("TakeBack") == null:
 		_fail("a kind in the draft has no way back")
+	if _node("Now") == null or (_node("Now") as Label).text != "Not in force yet":
+		_fail("a kind outside the books does not read 'Not in force yet'")
 	var name: String = Strings.row_name("taxes", _state.player().tax_library[_absent])
 	_panel._paint(_state.player())
 	if not String(_panel._foot._text.text).contains("creation of " + name):
@@ -153,6 +164,9 @@ func _check_an_abolition() -> void:
 		_fail("Abolish this tax did not put the kind in the draft")
 	if _node("KeepTax") == null:
 		_fail("an abolished kind has no way back")
+	# An abolished kind's editor holds no slider: a refresh and a focus request on it must be harmless.
+	_panel._editor.focus_lever()
+	_panel._editor._sync()
 	var cell := _panel._ctx["cells"]["tax_rates_pct:tobacco_duty"][0] as Label
 	_panel._paint(_state.player())
 	if cell.text != "abolish":
@@ -166,6 +180,75 @@ func _check_an_abolition() -> void:
 	draft.revert()
 
 
+## The sim's own read prices a bill with births (FinanceBill.preview; Budget.preview refuses an unborn kind): the sheet's
+## totals, its deficit and each autumn row's balance are that preview's, the birth and the abolition included.
+func _check_births_and_abolitions_are_priced() -> void:
+	var ns = _state.player()
+	var draft = _panel.shared_draft()
+	draft.revert()
+	var born := ""
+	var rate := 0.0
+	var now: Dictionary = Budget.preview(_state, {})
+	for kind in ns.tax_library:
+		if ns.tax_rates_pct.has(kind):
+			continue
+		var r: float = float(ns.tax_library[kind]["rate_range_pct"][1]) / 2.0
+		if absf(EffectsStrip.balance_bn(now, FinanceBill.preview(_state, {"create": {kind: r}}))) > 0.2:
+			born = String(kind)
+			rate = r
+			break
+	if born == "":
+		_fail("setup: no kind outside the books moves the balance by 0.2 bn at half its range")
+		return
+	draft.set_create(born, rate)
+	draft.toggle_abolish("tobacco_duty")
+	_panel._on_moved()
+	_panel._open_sheet()
+	_panel._sheet._stamp = ""
+	_panel._paint(ns)
+	var merged := FinanceBill.drafted(_state, _loader, draft.bill())
+	var after: Dictionary = FinanceBill.preview(_state, merged)
+	var sheet := _text_of(_panel._sheet)
+	var revenue := EffectsStrip.money_text(EffectsStrip.moved_bn(now, after, "total_revenue_pct_gdp"))
+	if not sheet.contains(revenue):
+		_fail("the sheet's revenue is not the whole autumn bill's %s" % revenue)
+	var arrow := "%s → %s" % [Num.f(float(now["deficit_pct_gdp"]) * float(now["gdp_eur_bn"]) / 100.0, 0), Num.f(float(after["deficit_pct_gdp"]) * float(after["gdp_eur_bn"]) / 100.0, 0)]
+	if not sheet.contains(arrow):
+		_fail("the sheet's deficit leaves the autumn rows out: wanted '%s'" % arrow)
+	var birth_row: Node = _panel._sheet.find_child("SheetRow_tax_rates_pct_" + born, true, false)
+	var birth_gain := EffectsStrip.money_text(EffectsStrip.balance_bn(now, FinanceBill.preview(_state, {"create": {born: rate}})))
+	if birth_row == null or not _text_of(birth_row).contains(birth_gain):
+		_fail("the creation row does not show its own balance %s" % birth_gain)
+	var gone_row: Node = _panel._sheet.find_child("SheetRow_abolish_tobacco_duty", true, false)
+	var gone_gain := EffectsStrip.money_text(EffectsStrip.balance_bn(now, FinanceBill.preview(_state, {"abolish": ["tobacco_duty"]})))
+	if gone_row == null or not _text_of(gone_row).contains(gone_gain):
+		_fail("the abolition row does not show its own balance %s" % gone_gain)
+	var gone_live := float(ns.tax_rates_pct["tobacco_duty"])
+	var places := TaxLibrary.step_decimals(ns, "tobacco_duty")
+	if gone_row == null or not _text_of(gone_row).contains("%s → %s" % [LedgerBox.text(gone_live, places), LedgerBox.text(0.0, places)]):
+		_fail("the abolition row does not read its rate to nothing")
+	# The ranges forecast is fed the bill without the kind put in force (it cannot take one) and with the abolition as a cut to 0.
+	var fed: Dictionary = _panel._price.whole(_loader, draft, false)["pending"]
+	var fed_taxes: Dictionary = fed.get("tax_rates_pct", {})
+	if fed_taxes.has(born) or float(fed_taxes.get("tobacco_duty", -1.0)) != 0.0:
+		_fail("the forecast's pending is not the bill less the birth, the abolition as 0: %s" % [fed_taxes])
+	_panel._sheet.hide()
+	draft.revert()
+	# The cache answers for the bill asked, never for another (two bills, then the first again).
+	var price := FinancePrice.new()
+	price.setup(_state)
+	for bill in [{"create": {born: rate}}, {"abolish": ["tobacco_duty"]}, {"create": {born: rate}}]:
+		var got: Dictionary = price.after_bill(bill)
+		if not is_equal_approx(float(got["deficit_pct_gdp"]), float(FinanceBill.preview(_state, bill)["deficit_pct_gdp"])):
+			_fail("the bill cache answered a bill with another's books: %s" % [bill])
+	# Past its keep, an evicted bill is priced afresh and a full cache never answers for another bill.
+	for i in range(1, FinancePrice.KEEP + 3):
+		var bill := {"create": {born: rate * (0.1 + 0.01 * float(i))}}
+		var got: Dictionary = price.after_bill(bill)
+		if not is_equal_approx(float(got["deficit_pct_gdp"]), float(FinanceBill.preview(_state, bill)["deficit_pct_gdp"])):
+			_fail("bill %d past the cache's keep is priced as another bill" % i)
+
+
 func _check_a_bill_at_vote_locks_its_births() -> void:
 	var ns = _state.player()
 	var tabled := FinanceBill.table(_state, _loader, {"create": {_absent: float(ns.tax_library[_absent]["rate_range_pct"][1]) / 2.0}})
@@ -177,6 +260,24 @@ func _check_a_bill_at_vote_locks_its_births() -> void:
 		_fail("a kind at vote can be put in force again")
 	if not (_panel._ctx["tabled"] as Dictionary).has("tax_rates_pct:" + _absent):
 		_fail("a birth at vote is not a locked row")
+	var birth_cell := _panel._ctx["cells"]["tax_rates_pct:" + _absent][0] as Label
+	_panel._paint(ns)
+	if not birth_cell.text.begins_with("new, at"):
+		_fail("a birth at vote reads '%s', not 'new, at ...'" % birth_cell.text)
+	_panel._on_withdraw()
+	# An abolition at vote is a locked row too: its editor never opens and its figure reads from the rate to nothing.
+	var abolished := FinanceBill.table(_state, _loader, {"abolish": ["tobacco_duty"]})
+	if not bool(abolished.get("tabled", false)):
+		_fail("setup: the abolition does not table: %s" % [abolished])
+		return
+	_panel.open_row("tax_rates_pct", "tobacco_duty")
+	_rebuild()
+	if _panel._open_id != "":
+		_fail("an abolition at vote opened its editor")
+	var abolish_cell := _panel._ctx["cells"]["tax_rates_pct:tobacco_duty"][0] as Label
+	_panel._paint(ns)
+	if not abolish_cell.text.contains("0"):
+		_fail("an abolition at vote reads '%s'" % abolish_cell.text)
 	_panel._on_withdraw()
 
 

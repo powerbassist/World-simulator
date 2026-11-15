@@ -63,37 +63,52 @@ func moves(pending: Dictionary) -> Dictionary:
 	}
 
 
+## The books with the finance text `bill` carried, on a copy, through the sim's own landing (FinanceBill.preview): the
+## only pricing that takes a kind put in force, which Budget.preview refuses. `bill` is the merged text (deltas).
+func after_bill(bill: Dictionary) -> Dictionary:
+	_check()
+	var key := "bill:" + var_to_str(bill)
+	if _kept.has(key):
+		return _kept[key]
+	if _kept.size() >= KEEP:
+		_kept.erase(_kept.keys()[0])
+	_kept[key] = FinanceBill.preview(_state, bill)
+	return _kept[key]
+
+
+## The balance a bill of one row books a year (a kind put in force, a kind abolished), EUR bn, a gain positive.
+func bill_balance_bn(bill: Dictionary) -> float:
+	return EffectsStrip.balance_bn(now(), after_bill(bill))
+
+
 ## The WHOLE bill the vote will decide, priced once for every surface that says it (the footer's sentence and the
-## sheet's figures, so they cannot drift): the rows at vote merged with the draft (FinanceBill.drafted, converted by
-## FinanceBill.absolute) plus the programmes' and funds' yearly cost, which the vote counts as spending
-## (FinanceRows.COST, pct of GDP) and Budget.preview does not know. `refused` (a draft tabling would refuse has no
-## merged text) prices the draft's own rows. {spending_bn, revenue_bn, deficit_now_bn, deficit_after_bn,
+## sheet's figures, so they cannot drift): the rows at vote merged with the draft (FinanceBill.drafted), priced by
+## FinanceBill.preview (births and abolitions included), plus the programmes' and funds' yearly cost, which the vote
+## counts as spending (FinanceRows.COST, pct of GDP) and the preview does not apply. `refused` (a draft tabling would
+## refuse has no merged text) prices the draft's own rows. {spending_bn, revenue_bn, deficit_now_bn, deficit_after_bn,
 ## deficit_after_pct, pending}: the moves each side a year, the deficit today (no bill) and with the whole bill passed,
-## and the pending it was priced on (the ranges forecast is fed the same).
+## and the Budget-shaped pending the ranges forecast is fed (the same bill, less the births, which that forecast cannot
+## take).
 func whole(loader, draft, refused: bool) -> Dictionary:
-	var pending: Dictionary = draft.pending()
+	var bill: Dictionary = draft.bill()
 	var cost_pct := 0.0
 	if not refused:
-		var merged := FinanceBill.drafted(_state, loader, draft.bill())
-		# A kind put in force cannot be priced by Budget.preview (it logs an error and prices nothing): the births are left
-		# out here until the sim's own read prices a bill with them (FinanceBill.preview), and the sheet says nothing of
-		# their money.
-		var priced := merged.duplicate(true)
-		priced.erase(FinanceBill.CREATE)
-		pending = FinanceBill.absolute(_state.player(), priced)
-		cost_pct = float(merged.get(SimRows.COST, 0.0))
+		bill = FinanceBill.drafted(_state, loader, bill)
+		cost_pct = float(bill.get(SimRows.COST, 0.0))
 	var a := now()
-	var b := after(pending)
+	var b := after_bill(bill)
 	var gdp := float(b["gdp_eur_bn"])
 	var extra := cost_pct * gdp / 100.0
 	var deficit_after := float(b["deficit_pct_gdp"]) * gdp / 100.0 + extra
+	var forecast_bill := bill.duplicate(true)
+	forecast_bill.erase(FinanceBill.CREATE)
 	return {
 		"spending_bn": EffectsStrip.moved_bn(a, b, "total_spending_pct_gdp") + extra,
 		"revenue_bn": EffectsStrip.moved_bn(a, b, "total_revenue_pct_gdp"),
 		"deficit_now_bn": float(a["deficit_pct_gdp"]) * float(a["gdp_eur_bn"]) / 100.0,
 		"deficit_after_bn": deficit_after,
 		"deficit_after_pct": deficit_after / gdp * 100.0 if gdp > 0.0 else 0.0,
-		"pending": pending,
+		"pending": FinanceBill.absolute(_state.player(), forecast_bill),
 	}
 
 

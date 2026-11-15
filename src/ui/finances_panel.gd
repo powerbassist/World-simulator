@@ -184,7 +184,7 @@ func _refresh(ns) -> void:
 			child.queue_free()
 	_editor = null
 	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": FinanceAutumn.tabled_rows(ns), "cells": {}, "editor": _make_editor, "wide": wide,
-		"parts": FinanceRead.other_parts(ns), "autumn": FinanceAutumn.open(_state, _loader), "on_create": _on_create}
+		"parts": FinanceRead.other_parts(ns), "autumn": FinanceBill.autumn_open(_state, _loader), "on_create": _on_create}
 	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, wide, _ctx)
 	FinanceRows.spending(_spending_box, _book, _ctx)
 	_stacks.setup(_revenue_parts(), _spending_parts(), float(_book["deficit_bn"]))
@@ -218,7 +218,8 @@ func _paint(ns) -> void:
 	_sheet.refresh()
 	var drafted: bool = not _draft.is_empty()
 	# One screen, one figure (the parent's ruling after #368): the ranges forecast and the deficit line price the same whole
-	# bill as the footer and the sheet (FinancePrice.whole), not the new rows alone.
+	# bill as the footer and the sheet (FinancePrice.whole), not the new rows alone. The ranges forecast cannot take a kind
+	# put in force nor a tabled programme's or fund's cost: its debt range is the whole bill less those two.
 	var whole := {}
 	if drafted:
 		whole = _price.whole(_loader, _draft, String(FinanceRead.draft(_state, _loader, _draft.bill())["refusal"]) != "")
@@ -336,7 +337,7 @@ func _on_moved() -> void:
 
 func _make_editor(channel: String, key: String) -> Control:
 	var editor := FinanceEditor.new()
-	editor.autumn = FinanceAutumn.open(_state, _loader)
+	editor.autumn = FinanceBill.autumn_open(_state, _loader)
 	editor.setup(_state, _loader, _draft, _price, channel, key)
 	editor.moved.connect(_on_moved)
 	editor.structure_changed.connect(_on_structure_changed)
