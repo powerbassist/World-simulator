@@ -31,6 +31,12 @@ var _brackets = null
 ## Kinds put in force (their rate is in _edited[TAX], read and written like any rate row) and kinds abolished.
 var _created := {}
 var _abolished: Array = []
+## Share moves, [{line, from, to, amount}] in the order drafted (slice 5). NOT rows of the bill: a move costs no
+## money and needs no vote, so it applies the moment the footer's verb is pressed (Sectors.move_share), whatever the
+## tabling answers. The draft only holds them, so the tile, the footer and the forecast all count the same ones.
+var _moves: Array = []
+## The move verb's picks (from, to, how much), kept here so a rebuild of the page does not reset them.
+var pick := {}
 
 
 func setup(state) -> void:
@@ -43,6 +49,7 @@ func revert() -> void:
 	_brackets = null
 	_created = {}
 	_abolished = []
+	_moves = []
 
 
 ## A kind not in force is put in force at `rate` (the editor's slider then moves it like any rate).
@@ -145,6 +152,29 @@ func pending() -> Dictionary:
 			BRACKETS:
 				out[BRACKETS] = float(row["draft"])
 	return out
+
+
+## A share move drafted: the line, the sector paying, the sector gaining and the share (a fraction of the line).
+func add_move(line: String, from_id: String, to_id: String, amount: float) -> void:
+	_moves.append({"line": line, "from": from_id, "to": to_id, "amount": amount})
+
+
+func moves() -> Array:
+	return _moves.duplicate(true)
+
+
+func has_moves() -> bool:
+	return not _moves.is_empty()
+
+
+## The moves are spent (booked, or put away with the draft): the rows stay.
+func clear_moves() -> void:
+	_moves = []
+
+
+## Nothing drafted at all, rows and moves alike (is_empty() is the BILL's: no row, whatever the moves).
+func is_clean() -> bool:
+	return is_empty() and _moves.is_empty()
 
 
 ## The finance bill's rows: the deltas against the live register (FinanceBill.from_pending's contract).

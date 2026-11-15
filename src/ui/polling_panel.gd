@@ -191,8 +191,8 @@ func _build_calm(ns, current: Dictionary) -> void:
 			weakest = bloc
 	var row := PanelKit.buttons(box)
 	var spend := PanelKit.sized(Button.new())
-	spend.text = tr("Budget")
-	spend.pressed.connect(func() -> void: calm_requested.emit("budget", ""))
+	spend.text = tr("Books")
+	spend.pressed.connect(func() -> void: calm_requested.emit("finances", ""))
 	row.add_child(ActsOn.tag(spend, ["unrest"]))
 	var laws := PanelKit.sized(Button.new())
 	laws.text = tr("Laws %s like") % Labels.bloc(weakest)

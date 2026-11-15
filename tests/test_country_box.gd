@@ -187,7 +187,7 @@ func _check_review_pass_1() -> void:
 		_fail("a right click on Germany retargeted the open file on Italy to %s" % _main._nation_panel._nation_id)
 	_main._windows.close_all()
 	_main._map_view.nation_clicked.emit("DEU")
-	_main._windows.open("budget")
+	_main._windows.open("finances")
 	if _box.visible:
 		_fail("opening a tab left the country box over it")
 	_main._windows.close_all()

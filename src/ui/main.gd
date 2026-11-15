@@ -48,7 +48,6 @@ const CampaignChest = preload("res://src/ui/campaign_chest.gd")
 const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
-const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 ## V4.2 T5. The bill briefing, over every bill the player can put to the Assembly.
 const Briefing = preload("res://src/ui/briefing.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
@@ -151,7 +150,6 @@ var _programme_card_id := ""
 var _term_card_id := ""
 var _overview_panel
 var _economy_panel
-var _budget_panel
 var _briefing
 var _polling_panel
 var _election_panel
@@ -319,17 +317,8 @@ func _ready() -> void:
 	_windows.register("economy", tr("Economy"), _economy_panel, KEY_E, ICONS + "monitoring.svg")
 	_economy_panel.setup(_state, _loader)
 
-	# These panels each build their own Close button for the life they had before U2
-	# docked them; register() takes it away, since the frame's X is the real one.
-	_budget_panel = BudgetPanel.new()
-	_windows.register("budget", tr("Budget"), _budget_panel, KEY_B, ICONS + "account_balance_wallet.svg")
-	_budget_panel.setup(_state, _loader)
-	_budget_panel.committed.connect(func(before, tabling):
-		_fiscal_committed(tr("Budget change"), tabling, before))
-
-	# The tax rates are set on the Books page (finances_panel.gd, V5.3 screen 4): the Tax Code tab and its
-	# KEY_X retired with its rows. The Budget tab stays for the sector tiles (budget_sectors.gd), until the
-	# Sectors screen takes them.
+	# The spending lines, their sectors and the tax rates are set on the Books page (finances_panel.gd, V5.3 screen 4
+	# and slice 5): the Budget tab and the Tax Code tab retired with their rows, and the Budget's B key opens the Books.
 
 	# V4.2 T5. The bill briefing, over every bill the player can put to the
 	# assembly. Not a window in the registry: it is not a surface the player
@@ -1045,7 +1034,13 @@ func _unhandled_input(event: InputEvent) -> void:
 ## missing (F3): it says the bill waits for the vote, or why it was refused.
 func _fiscal_committed(label: String, tabling: Dictionary, before: Dictionary) -> void:
 	_queue_effect(label, before)
-	_hud.inbox.push(tr("Finance bill withdrawn") if bool(tabling.get("withdrawn", false)) else tr("Finance bill tabled") if bool(tabling.get("tabled", false)) else tr("Finance bill not tabled"), tr("Nothing is voted on it; the books stand as they were.") if bool(tabling.get("withdrawn", false)) else tr("The Assembly votes on it at the month's end; it applies if carried.") if bool(tabling.get("tabled", false)) else tr("No finance bill is tabled, another bill holds this month's slot, or no line moved."))
+	var moves := int(tabling.get("moves", 0))
+	# Share moves alone (Finances slice 5): no bill was put; they took effect at once, with no vote.
+	if not bool(tabling.get("rows", true)):
+		_hud.inbox.push(Strings.tn("Share move applied", "Share moves applied", moves), tr("The shares moved at once; no vote was needed."))
+		_update_top_bar()
+		return
+	_hud.inbox.push(tr("Finance bill withdrawn") if bool(tabling.get("withdrawn", false)) else tr("Finance bill tabled") if bool(tabling.get("tabled", false)) else tr("Finance bill not tabled"), tr("Nothing is voted on it; the books stand as they were.") if bool(tabling.get("withdrawn", false)) else tr("The Assembly votes on it at the month's end; it applies if carried.") if bool(tabling.get("tabled", false)) else tr("No finance bill is tabled, another bill holds this month's slot, or no line moved.") + (" " + Strings.tn("%d share move was applied all the same.", "%d share moves were applied all the same.", moves) % moves if moves > 0 else ""))
 	_update_top_bar()
 
 

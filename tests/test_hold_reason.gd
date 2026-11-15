@@ -40,7 +40,7 @@ func _check_a_hold_says_why() -> void:
 	var ns = _main._state.player()
 	_main._paused_for_programme = false
 	_main._windows.close_all()
-	_main._windows.open("budget")
+	_main._windows.open("finances")
 	if not inbox.visible:
 		_fail("premise: the inbox is not already up over the tab")
 	var ev = null

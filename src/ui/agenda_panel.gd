@@ -33,7 +33,7 @@ signal open_requested(tab_id: String)
 ## rule; an economy goal is moved by the budget's levers, an institutional or a
 ## society goal by a law).
 const ResultTone = preload("res://src/ui/result_tone.gd")
-const GROUP_TAB := {"economy": "budget", "europe": "diplomacy", "institutions": "legislature",
+const GROUP_TAB := {"economy": "finances", "europe": "diplomacy", "institutions": "legislature",
 	"office": "politics", "society": "legislature"}  # i18n: ok tab ids
 
 const Programme = preload("res://src/sim/programme.gd")

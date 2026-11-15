@@ -12,6 +12,11 @@ extends HBoxContainer
 ##
 ## "Withdraw the bill" is there whenever a bill is at vote, drafted or not, and it keeps the draft (never stranded).
 ##
+## SHARE MOVES (slice 5, Gameplay's ruling) ride the draft but not the bill: a move costs nothing and needs no vote, so
+## it applies the moment the verb is pressed. Moves alone: the verb reads "Apply the moves" and the sentence says they
+## take effect now, with no vote. Moves with rows: "Table the changes", and one more line says how many apply now and
+## when the rest is voted. A refused tabling still books the moves (the shell's card says so).
+##
 ## A button that the rule would refuse is never a dead verb: it is disabled and the refusal is said in words
 ## beside it, read from FinanceRead.draft, which asks the very rule tabling meets. A draft can be dropped
 ## ("Discard the changes"): the Budget's Revert is gone with its tab.
@@ -71,17 +76,27 @@ func refresh(state, loader, draft, price) -> void:
 	var ns = state.player()
 	var tabled = FinanceBillLaw.tabled(ns)
 	var drafted: bool = not draft.is_empty()
-	visible = drafted or tabled != null
-	_table.visible = drafted
-	_discard.visible = drafted
+	var moves: int = draft.moves().size()
+	visible = drafted or moves > 0 or tabled != null
+	_table.visible = drafted or moves > 0
+	_discard.visible = drafted or moves > 0
 	_review.visible = drafted
 	_open.visible = not drafted and tabled != null
 	_withdraw.visible = tabled != null
 	if not visible:
 		return
-	if not drafted:
-		_text.text = Strings.t("A finance bill is before the Assembly: it divides on %s.") % DateText.day_month(
+	var before_vote := ""
+	if tabled != null:
+		before_vote = Strings.t("A finance bill is before the Assembly: it divides on %s.") % DateText.day_month(
 			int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))
+	if not drafted and moves > 0:
+		_table.text = Strings.t("Apply the moves")
+		_table.disabled = false
+		_text.text = Strings.tn("%d share move takes effect now, with no vote.", "%d share moves take effect now, with no vote.", moves) % moves + \
+			("\n" + before_vote if tabled != null else "")
+		return
+	if not drafted:
+		_text.text = before_vote
 		return
 	var read: Dictionary = FinanceRead.draft(state, loader, draft.bill())
 	var refusal := String(read["refusal"])
@@ -102,12 +117,16 @@ func refresh(state, loader, draft, price) -> void:
 		text += " · " + ", ".join(autumn)
 	_table.text = Strings.t("Add to the bill") if tabled != null else Strings.t("Table the changes")
 	_table.disabled = refusal != ""
+	var now_line := ""
+	if moves > 0:
+		now_line = "\n" + Strings.tn("%d share move applies now; the rest is voted on %s.", "%d share moves apply now; the rest is voted on %s.", moves) % [
+			moves, DateText.day_month(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))]
 	if refusal != "":
-		_text.text = text + "\n" + reason(refusal)
+		_text.text = text + "\n" + reason(refusal) + now_line
 		return
 	var vote: Dictionary = read["vote"]
 	_text.text = text + "\n" + Strings.t("Forecast now: %d for, %d against, %d undecided of %d.") % [
-		int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"]), int(vote["seats_total"])]
+		int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"]), int(vote["seats_total"])] + now_line
 
 
 ## The refusal in words, for a page with no queue verb: another bill in the slot is said as it is.

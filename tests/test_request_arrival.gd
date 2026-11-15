@@ -45,7 +45,7 @@ func _process(_delta: float) -> bool:
 			_check_slows_on_arrival()
 			_check_lapse_alone_keeps_speed()
 			# A tab open and the inbox put away: the mark is the way back.
-			_main._windows.open("budget")
+			_main._windows.open("finances")
 		5:
 			_main._hud.inbox.slide_out()
 			_target = _main._hud.title_bar._requests

@@ -26,10 +26,11 @@ const FinanceStacks = preload("res://src/ui/finance_stacks.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
-const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceEditor = preload("res://src/ui/finance_editor.gd")
 const FinanceFoot = preload("res://src/ui/finance_foot.gd")
+const FinanceMoves = preload("res://src/ui/finance_moves.gd")
+const FinanceSectors = preload("res://src/ui/finance_sectors.gd")
 const FinanceSheet = preload("res://src/ui/finance_sheet.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const Trends = preload("res://src/ui/trends.gd")
@@ -38,7 +39,6 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
-const DateText = preload("res://src/ui/date_text.gd")
 
 const PROJECTION_MONTHS := 24
 ## The ranges row has a FIXED height: the figure and up to two caption lines. A caption that re-wraps when
@@ -186,7 +186,7 @@ func _refresh(ns) -> void:
 			child.queue_free()
 	_editor = null
 	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": FinanceAutumn.tabled_rows(ns), "cells": {}, "editor": _make_editor, "wide": wide,
-		"parts": FinanceRead.other_parts(ns), "autumn": FinanceBill.autumn_open(_state, _loader), "on_create": _on_create}
+		"parts": FinanceRead.other_parts(ns), "autumn": FinanceBill.autumn_open(_state, _loader), "on_create": _on_create, "slipping": FinanceSectors.slipping(ns, _loader)}
 	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, wide, _ctx)
 	FinanceRows.spending(_spending_box, _book, _ctx)
 	_stacks.setup(_revenue_parts(), _spending_parts(), float(_book["deficit_bn"]))
@@ -229,7 +229,7 @@ func _paint(ns) -> void:
 	var whole := {}
 	if drafted:
 		whole = _price.whole(_loader, _draft, String(FinanceRead.draft(_state, _loader, _draft.bill())["refusal"]) != "")
-	_forecast.want(whole["pending"] if drafted else _draft.pending(), drafted)
+	_forecast.want(FinanceMoves.wanted(whole["pending"] if drafted else _draft.pending(), _draft), drafted or _draft.has_moves())
 	var note := Strings.t("The autumn month is over: its creations and abolitions were taken out of the draft.") + " " if _autumn_dropped else ""
 	_with.text = note + (Strings.t("With your changes, the ranges above included: deficit %s bn (%s %% of GDP).") % [
 		Num.f(float(whole["deficit_after_bn"]), 0), Num.f(float(whole["deficit_after_pct"]), 2)] if drafted else "")
@@ -239,7 +239,7 @@ func _paint(ns) -> void:
 	var rows: Dictionary = _forecast.rows(ns)
 	for entry in [["proj_growth", Strings.t("Growth, 2 years")], ["proj_unemployment", Strings.t("Unemployment, 2 years")], ["proj_debt", Strings.t("Debt, 2 years")]]:
 		var pair: Array = rows.get(entry[0], ["…", "…"])
-		PanelKit.figure(_ranges, String(pair[1] if drafted else pair[0]), entry[1])
+		PanelKit.figure(_ranges, String(pair[1] if drafted or _draft.has_moves() else pair[0]), entry[1])
 
 
 ## The sentence the page is for. Its figures are FIGURE-sized, the rest LEAD, as the brief asks.
@@ -387,15 +387,15 @@ func open_row(channel: String, key: String) -> void:
 
 func _on_table(force := false) -> void:
 	var before := Trends.snapshot_now(_state)
-	var tabling := FinanceBill.table(_state, _loader, _draft.bill(), force)
+	var tabling := FinanceMoves.table(_state, _loader, _draft, force)
+	_stamp = ""
+	_dirty = true
 	# A refusal keeps the draft on the rows; a tabled bill clears it.
 	if bool(tabling.get("tabled", false)):
 		_autumn_dropped = false
 		_draft.revert()
 		_put_sheet_away()
 		_open_id = ""
-		_stamp = ""
-		_dirty = true
 	committed.emit(before, tabling)
 
 

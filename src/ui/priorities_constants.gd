@@ -76,5 +76,5 @@ const UNSEEN_MONTHS := 12
 ## desk card raised in the inbox, or "person" for the person card.
 const GO_TAB := {"crisis": "inbox", "decision": "inbox", "plant": "companies", "election": "campaign",
 	"bill": "legislature", "majority": "politics", "commitment": "calendar",
-	"request": "calendar", "programme": "agenda", "sector": "budget", "bloc": "legislature",
-	"budget": "budget", "unrest": "society", "person": "people"}  # i18n: ok tab ids
+	"request": "calendar", "programme": "agenda", "sector": "finances", "bloc": "legislature",
+	"budget": "finances", "unrest": "society", "person": "people"}  # i18n: ok tab ids

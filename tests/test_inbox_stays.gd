@@ -43,7 +43,7 @@ func _check() -> void:
 		_fail("premise: on the bare map the inbox is not docked there (visible %s, slid %s)" % [inbox.visible, inbox.is_slid()])
 		return
 
-	windows.open("budget")
+	windows.open("finances")
 	if not inbox.visible or not inbox.is_slid():
 		_fail("opening a tab took the inbox away (visible %s, slid %s)" % [inbox.visible, inbox.is_slid()])
 	windows.open("politics")

@@ -175,10 +175,10 @@ func _check_commands_land_where_the_players_do(console) -> void:
 	if not _a._clock.paused:
 		_fail("pause on did not take with a scene up")
 	_a._election_panel.hide()
-	console.run_command("open budget")
-	if not _a._windows.is_open("budget"):
-		_fail("open budget did not open the window")
-	if not console.run_command("open nonsense").contains("budget"):
+	console.run_command("open finances")
+	if not _a._windows.is_open("finances"):
+		_fail("open finances did not open the window")
+	if not console.run_command("open nonsense").contains("finances"):
 		_fail("open of an unknown panel should list the ids")
 	if not console.run_command("person %s" % _a._loader.person_by_id.keys()[0]).contains("party"):
 		_fail("person printed nothing useful")

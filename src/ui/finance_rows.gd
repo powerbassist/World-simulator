@@ -14,6 +14,7 @@ const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -111,8 +112,12 @@ static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
 		var row := _row()
 		row.add_child(_swatch(line_color(String(line["key"]))))
 		var id := row_id(FinanceDraft.SPENDING, String(line["key"]))
-		var name := _name_cell(row, Labels.portfolio(String(line["key"])), id, SPENDING_NAME_WIDTH, ctx)
+		# A line with a sector slipping says so while closed: a warning on a closed row is unseen (the Budget's mark).
+		var shown := Labels.portfolio(String(line["key"]))
+		var name := _name_cell(row, Strings.t("%s (!)") % shown if (ctx.get("slipping", []) as Array).has(String(line["key"])) else shown, id, SPENDING_NAME_WIDTH, ctx)
 		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		# What a briefing's Go on the deficit lands on (acts_on.gd): any line's slider acts on the balance.
+		ActsOn.tag(name, ["deficit", "balance"])
 		var pct := _cell(row, "", UiTheme.CAPTION, PCT_WIDTH)
 		# At 130 % the pane has no room for the figure beside the name: it is the row's hover (who-pays does the same).
 		pct.visible = bool(ctx["wide"])
