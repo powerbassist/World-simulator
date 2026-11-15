@@ -76,6 +76,8 @@ func _check_a_fund_opened_makes_its_figure_speak_once() -> void:
 	var person = f[0]
 	Characters.tick_month(state, _loader, METERS)  # the want settles unserved first
 	_open(state, f[1])
+	# A standing of its own, so the size is read off the figure's standing and not a default.
+	ns.person_standing[person.id] = 0.7
 	var before: Dictionary = ns.bloc_offset.duplicate()
 	var acts_before: Dictionary = ns.act_bloc_offset.duplicate()
 	var acts: Array = Characters.tick_month(state, _loader, METERS)
@@ -94,6 +96,12 @@ func _check_a_fund_opened_makes_its_figure_speak_once() -> void:
 			_fail("speak: %s's acts' share grew %s, the voice is %s" % [bloc, grew, want])
 		if float(ns.bloc_offset[bloc]) <= float(before.get(bloc, 0.0)):
 			_fail("speak: %s's offset did not rise" % bloc)
+	# Only the briefing's two blocs: any other bloc's share only fades.
+	for bloc in ns.act_bloc_offset:
+		if not CK.BRIEF_BLOCS.has(bloc):
+			var other := float(ns.act_bloc_offset[bloc]) - float(acts_before.get(bloc, 0.0)) * CK.ACT_OFFSET_MONTHLY_KEEP
+			if absf(other) > 1e-9:
+				_fail("speak: the voice moved %s's share by %s" % [bloc, other])
 	# Once: the next month, the fund still open, nothing more.
 	if _spoke(Characters.tick_month(state, _loader, METERS), String(person.id)):
 		_fail("speak: the figure spoke again the month after")
