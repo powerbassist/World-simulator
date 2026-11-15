@@ -19,6 +19,7 @@ extends HBoxContainer
 signal table_pressed
 signal discard_pressed
 signal open_pressed
+signal review_pressed
 signal withdraw_pressed
 
 const FinanceRead = preload("res://src/sim/finance_read.gd")
@@ -34,6 +35,7 @@ var _text: Label
 var _table: Button
 var _discard: Button
 var _open: Button
+var _review: Button
 var _withdraw: Button
 
 
@@ -47,6 +49,8 @@ func _ready() -> void:
 	_withdraw = _button("Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed)  # i18n: ok a node name
 	_withdraw.flat = true  # quiet: the draft's verb beside it is the one that carries the weight
 	_open = _button("OpenBill", Strings.t("Open the bill"), open_pressed)
+	_review = _button("Review", Strings.t("Review the bill"), review_pressed)  # i18n: ok a node name
+	_review.flat = true  # the sheet is the act's detail, the footer's own verb stays the loud one
 	_table = _button("Table", Strings.t("Table the changes"), table_pressed)  # i18n: ok a node name
 	visible = false
 
@@ -68,6 +72,7 @@ func refresh(state, loader, draft, price) -> void:
 	visible = drafted or tabled != null
 	_table.visible = drafted
 	_discard.visible = drafted
+	_review.visible = drafted
 	_open.visible = not drafted and tabled != null
 	_withdraw.visible = tabled != null
 	if not visible:
@@ -85,7 +90,7 @@ func refresh(state, loader, draft, price) -> void:
 	_table.text = Strings.t("Add to the bill") if tabled != null else Strings.t("Table the changes")
 	_table.disabled = refusal != ""
 	if refusal != "":
-		_text.text = text + "\n" + _reason(refusal)
+		_text.text = text + "\n" + reason(refusal)
 		return
 	var vote: Dictionary = read["vote"]
 	_text.text = text + "\n" + Strings.t("Forecast now: %d for, %d against, %d undecided of %d.") % [
@@ -93,7 +98,7 @@ func refresh(state, loader, draft, price) -> void:
 
 
 ## The refusal in words, for a page with no queue verb: another bill in the slot is said as it is.
-func _reason(flag: String) -> String:
+static func reason(flag: String) -> String:
 	if flag == "already_tabled":
 		return Strings.t("Another bill holds this month's slot.")
 	return GoalRows.reason_text(flag)

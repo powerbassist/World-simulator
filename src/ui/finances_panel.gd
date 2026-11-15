@@ -30,6 +30,7 @@ const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceEditor = preload("res://src/ui/finance_editor.gd")
 const FinanceFoot = preload("res://src/ui/finance_foot.gd")
+const FinanceSheet = preload("res://src/ui/finance_sheet.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -55,6 +56,7 @@ var _stacks: FinanceStacks
 var _revenue_box: VBoxContainer
 var _spending_box: VBoxContainer
 var _foot: FinanceFoot
+var _sheet: FinanceSheet
 var _scroll: ScrollContainer
 var _with: Label
 var _draft := FinanceDraft.new()
@@ -113,6 +115,13 @@ func _ready() -> void:
 	_foot.open_pressed.connect(go_requested.emit.bind("legislature"))
 	_foot.withdraw_pressed.connect(_on_withdraw)
 	_foot.discard_pressed.connect(_on_discard)
+	_foot.review_pressed.connect(_open_sheet)
+	# The bill's sheet lies over the page's right side (a PanelContainer stacks its children, and the sheet shrinks to the end).
+	_sheet = FinanceSheet.new()
+	add_child(_sheet)
+	_sheet.table_pressed.connect(_on_table)
+	_sheet.withdraw_pressed.connect(_on_withdraw)
+	_sheet.close_pressed.connect(_close_sheet)
 	add_child(_forecast)
 	_forecast.settled.connect(func() -> void: _paint_due = true)
 
@@ -123,6 +132,8 @@ func setup(state, loader) -> void:
 	_forecast.setup(state, loader, PROJECTION_MONTHS)
 	_draft.setup(state)
 	_price.setup(state)
+	_sheet.setup(state, loader, _draft, _price)
+	_sheet.hide()
 	_open_id = ""
 	_stamp = ""
 	_dirty = true
@@ -200,6 +211,10 @@ func _paint(ns) -> void:
 	_ranges.custom_minimum_size.y = ranges_height(scale)
 	FinanceRows.paint_rates(_ctx)
 	_foot.refresh(_state, _loader, _draft, _price)
+	# A sheet with nothing to say (the draft discarded or tabled) is put away; one with a draft follows it.
+	if _draft.is_empty():
+		_sheet.hide()
+	_sheet.refresh()
 	var drafted: bool = not _draft.is_empty()
 	_forecast.want(_draft.pending(), drafted)
 	if drafted:
@@ -267,6 +282,15 @@ func shared_draft() -> FinanceDraft:
 	return _draft
 
 
+func _open_sheet() -> void:
+	_sheet.show()
+	_sheet.refresh()
+
+
+func _close_sheet() -> void:
+	_sheet.hide()
+
+
 func _on_discard() -> void:
 	_draft.revert()
 	_open_id = ""
@@ -320,12 +344,13 @@ func _tabled_rows(ns) -> Dictionary:
 	return out
 
 
-func _on_table() -> void:
+func _on_table(force := false) -> void:
 	var before := Trends.snapshot_now(_state)
-	var tabling := FinanceBill.table(_state, _loader, _draft.bill())
+	var tabling := FinanceBill.table(_state, _loader, _draft.bill(), force)
 	# A refusal keeps the draft on the rows; a tabled bill clears it.
 	if bool(tabling.get("tabled", false)):
 		_draft.revert()
+		_sheet.hide()
 		_open_id = ""
 		_stamp = ""
 		_dirty = true
