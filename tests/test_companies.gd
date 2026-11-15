@@ -304,26 +304,34 @@ func _test_bill_reaches_the_budget() -> void:
 	Companies.tick_month(state, _loader)
 	Budget.recompute(state, ns)
 
-	# PR 3, the author's call 4 (2026-11-14): aid is priced BY THE FIRM, a share of its
-	# payroll a year (5 % at full intensity, so the 0.6 subsidy reads 3 %), the payroll its
-	# live jobs at the nation's compensation per job (a share of GDP over the employed).
+	# PR 3, the author's calls (2026-11-14, 2026-11-15): aid is priced BY THE FIRM, a share
+	# of its payroll a year (50 % at full intensity, so the 0.6 subsidy reads 30 %), the
+	# payroll its live jobs at the nation's compensation per job (a share of GDP over the
+	# employed).
 	var company = _company(BIG)
 	var employed: float = Demography.labour_force(ns) * (1.0 - ns.unemployment_pct / 100.0)
 	var per_job: float = K.COMPENSATION_SHARE_OF_GDP * ns.gdp_eur_bn * 1e9 / employed
 	var payroll: float = Companies.headcount(ns, company) * per_job / 1e9
 	var expected: float = 100.0 * K.AID_PAYROLL_SHARE * payroll / ns.gdp_eur_bn
 	if not is_equal_approx(ns.subsidy_bill_pct_gdp, expected):
-		_fail("one full-intensity subsidy billed %s, expected %s (5 %% of payroll)" % [
+		_fail("one full-intensity subsidy billed %s, expected %s (50 %% of payroll)" % [
 			str(ns.subsidy_bill_pct_gdp), str(expected)
 		])
 	if not is_equal_approx(CompaniesAid.payroll_eur_bn(ns, company), payroll):
 		_fail("payroll_eur_bn reads %s, want %s" % [CompaniesAid.payroll_eur_bn(ns, company), payroll])
-	if not is_equal_approx(CompaniesAid.per_year(ns, company, 0.6), 0.03 * payroll):
-		_fail("the 0.6 subsidy is not 3 %% of the payroll a year")
-	# The brief's absurdity: a subsidy cost 5.2 bn a year on a 3.5 bn firm.
-	if CompaniesAid.per_year(ns, company, 1.0) >= 0.1 * Companies.value_eur_bn(ns, company):
-		_fail("a full rescue costs %s bn a year on a firm worth %s bn" % [
-			CompaniesAid.per_year(ns, company, 1.0), Companies.value_eur_bn(ns, company)])
+	if not is_equal_approx(CompaniesAid.per_year(ns, company, 0.6), 0.30 * payroll):
+		_fail("the 0.6 subsidy is not 30 %% of the payroll a year")
+	# Design's F5: the price read per job, against the design card's France figure (about
+	# 25 000 EUR a job a year for a full rescue). The old rule read 0.30 % of GDP whatever
+	# the firm: about 49 000 EUR a job here, 5.2 bn a year on a 3.5 bn firm elsewhere.
+	var per_job_rescue: float = CompaniesAid.per_year(ns, company, 1.0) * 1e9 / Companies.headcount(ns, company)
+	if per_job_rescue < 20000.0 or per_job_rescue > 30000.0:
+		_fail("a full rescue costs %d EUR a job a year in France, not about 25 000" % int(per_job_rescue))
+	# The author's pick: growth follows the money at the budget's own path, so with no
+	# sector burden the firm impulse is the aid bill at GAP_CLOSE x MULT_SPENDING.
+	var impulse: float = Companies.firm_impulse_pct(ns, _loader)
+	if not is_equal_approx(impulse, EK.GAP_CLOSE * EK.MULT_SPENDING * ns.subsidy_bill_pct_gdp):
+		_fail("the firm impulse reads %s, not the bill %s at the budget's spending path" % [impulse, ns.subsidy_bill_pct_gdp])
 	if ns.deficit_pct_gdp <= deficit_before:
 		_fail("the subsidy bill did not widen the deficit")
 

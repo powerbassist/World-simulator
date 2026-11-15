@@ -48,6 +48,7 @@ const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const CompaniesAid = preload("res://src/sim/companies_aid.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
@@ -286,8 +287,15 @@ const CALENDAR_REGIMES := {
 ## and the jobs channel with the gap in labour intensity between it and the rival it
 ## takes share from. Left standing for the rest of the run, so the bill this regime
 ## reaches is the reachable worst case the clamp is measured against.
+##
+## V5.3 PR 3 (Design's card 1, section 5, the author's pick of 2026-11-15): two more, so
+## the aid price is measured where it bites. `_all` aids every major at the rescue's 1.0
+## from month 6 (the price must show: P1); `_cheapest` aids the three majors with the
+## smallest payroll at the subsidy's 0.6 (the political credit must not be a bargain: P3).
 const COMPANY_REGIMES := {
 	"managed_subsidises": {"budget": REGIMES["managed"], "subsidy_month": 6},
+	"managed_subsidises_all": {"budget": REGIMES["managed"], "subsidy_month": 6, "subsidy_pick": "all"},
+	"managed_subsidises_cheapest": {"budget": REGIMES["managed"], "subsidy_month": 6, "subsidy_pick": "cheapest"},
 }
 
 
@@ -1573,7 +1581,34 @@ func _serve_regions(state, loader, ns, run: Dictionary, regime_name: String, yea
 		state.day = day
 
 
+## The two V5.3 PR 3 regimes: "all" aids every major at the rescue's 1.0, "cheapest" the
+## three majors with the smallest payroll at the subsidy's 0.6 (Design's card 1).
+func _subsidise_many(state, loader, ns, regime_name: String, year: int, month: int, pick: String) -> void:
+	var want := 1.0 if pick == "all" else 0.6
+	var action = null
+	for a in loader.company_actions:
+		var terms: Dictionary = a.effects.get("company", {})
+		if String(terms.get("op", "")) == "subsidise" and is_equal_approx(float(terms.get("intensity", 0.0)), want):
+			action = a
+	if action == null:
+		printerr("  no 'subsidise' company action at intensity %.1f is authored" % want)
+		return
+	var majors: Array = Companies.majors_of(loader, ns.id)
+	if pick == "cheapest":
+		majors.sort_custom(func(x, y) -> bool: return CompaniesAid.payroll_eur_bn(ns, x) < CompaniesAid.payroll_eur_bn(ns, y))
+		majors = majors.slice(0, 3)
+	var done := 0
+	for company in majors:
+		if bool(Companies.execute(state, ns, loader.company_actions, action, String(company.id), loader)["applied"]):
+			done += 1
+	print("  %d-%02d %s: aided %d of %d majors at intensity %.1f" % [year, month, regime_name, done, majors.size(), want])
+
+
 func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var pick := String(COMPANY_REGIMES.get(regime_name, {}).get("subsidy_pick", ""))
+	if pick != "":
+		_subsidise_many(state, loader, ns, regime_name, year, month, pick)
+		return
 	var action = null
 	for a in loader.company_actions:
 		if String(a.effects.get("company", {}).get("op", "")) != "subsidise":

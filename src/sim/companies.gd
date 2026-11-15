@@ -537,23 +537,21 @@ static func _tick_shares(ns, loader) -> void:
 static func firm_impulse_pct(ns, loader) -> float:
 	if ns.gdp_eur_bn <= 0.0:
 		return 0.0
-	var subsidised := 0.0
 	var burdened := 0.0
 	# Walk.priced(): the firms this walk could price, in roster order; every one it
 	# leaves out adds exactly 0.0 (V5.0c2, the argument is that file's header).
 	for company in Walk.priced(ns, firms_of(loader, ns.id)):
-		var intensity := subsidy_of(ns, company.id)
 		var burden := regulation_burden_of(ns, company.sector)
-		if intensity == 0.0 and burden == 0.0:
+		if burden == 0.0:
 			continue
 		# Read through the LIVE share, so a subsidy that grew a firm also raises what
 		# regulating its sector costs. That interaction is the point of running both
 		# verbs against one register rather than two.
 		var gdp_share: float = output_eur_bn(ns, company) / ns.gdp_eur_bn
-		subsidised += intensity * gdp_share / K.GDP_SHARE_REFERENCE
 		burdened += burden * gdp_share / K.GDP_SHARE_REFERENCE
 	return clampf(
-		K.SUBSIDY_GROWTH_BETA * subsidised - K.REGULATION_GROWTH_BETA * burdened,
+		# V5.3 PR 3: aid's growth follows the money, the budget's own spending path.
+		EK.GAP_CLOSE * EK.MULT_SPENDING * Aid.subsidy_bill_pct_gdp(ns, loader) - K.REGULATION_GROWTH_BETA * burdened,
 		-K.FIRM_IMPULSE_MAX_PCT, K.FIRM_IMPULSE_MAX_PCT
 	)
 

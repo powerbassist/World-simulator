@@ -58,6 +58,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
+const CompaniesAid = preload("res://src/sim/companies_aid.gd")
 
 const PLAYABLE := ["FRA", "DEU", "GBR"]
 const TERM_MONTHS := 60
@@ -69,8 +70,6 @@ const SHIFT_CANDIDATES := [0.0005, 0.0010, 0.0020, 0.0040, 0.0080]
 ## Swept for (P2). One tax point is worth roughly 0.50 % of GDP
 ## (the tax library rows' base_share, data/taxes/), which is the anchor the cost table reads
 ## against.
-const GROWTH_BETA_CANDIDATES := [0.10, 0.20, 0.30, 0.50, 0.80]
-
 var _loader
 
 
@@ -83,6 +82,9 @@ func _init() -> void:
 		return
 
 	var args := OS.get_cmdline_user_args()
+	if args.has("--aid-deal"):
+		quit(0 if _aid_deal() else 1)
+		return
 	if args.has("--processes"):
 		var json_path := ""
 		for arg in args:
@@ -263,37 +265,66 @@ func _rival_floors(ns, target_id: String) -> Dictionary:
 
 # --- (c) P2: how much growth a subsidy buys -------------------------------------
 
-## The impulse at full intensity, per candidate beta, for the largest firm of each
-## playable nation. Band: 0.05 to 0.60 %/yr.
+## The impulse with EVERY major of the nation at full intensity, under the shipped rule
+## (V5.3 PR 3: growth follows the aid bill, GAP_CLOSE x MULT_SPENDING x the bill as
+## billed). Band (Design's card, section 5): 0.05 to 0.60 %/yr for a whole register.
 func _table_c_growth_sweep() -> void:
-	print("\n=== (c) P2: growth impulse at intensity 1.0 on the largest firm, by SUBSIDY_GROWTH_BETA ===")
-	print("     band 0.05-0.60 %%/yr. shipped value: %s" % str(K.SUBSIDY_GROWTH_BETA))
-	print("%-10s %10s %10s %10s %10s" % ["beta", "FRA", "DEU", "GBR", "verdict"])
+	print("
+=== (c) P2: growth impulse, every major at 1.0, shipped rule (bill x GAP_CLOSE x MULT_SPENDING) ===")
+	print("%-6s %12s %12s %10s" % ["nation", "bill %GDP", "impulse", "verdict"])
+	var rescue = _subsidise_action(1.0)
+	for nation_id in ["FRA", "DEU", "GBR", "POL"]:
+		var state = _new_state(nation_id)
+		var ns = state.player()
+		for company in Companies.majors_of(_loader, nation_id):
+			Companies.execute(state, ns, _loader.company_actions, rescue, String(company.id), _loader)
+		var bill: float = CompaniesAid.subsidy_bill_pct_gdp(ns, _loader)
+		var impulse: float = Companies.firm_impulse_pct(ns, _loader)
+		print("%-6s %11.3f%% %11.3f%% %10s" % [nation_id, bill, impulse,
+			"in band" if impulse >= 0.05 and impulse <= 0.60 else "OUT"])
 
-	for beta in GROWTH_BETA_CANDIDATES:
-		var impulses: Array[float] = []
-		for nation_id in PLAYABLE:
-			var state = _new_state(nation_id)
-			var ns = state.player()
-			var target := _largest(state, ns)
-			var gdp_share := 0.0
-			for company in Companies.firms_of(_loader, nation_id):
-				if company.id == target:
-					gdp_share = Companies.output_eur_bn(ns, company) / ns.gdp_eur_bn
-			impulses.append(beta * gdp_share / K.GDP_SHARE_REFERENCE)
 
-		var worst: float = impulses.min()
-		var best: float = impulses.max()
-		var verdict := "in band"
-		if best < 0.05:
-			verdict = "BELOW FLOOR"
-		elif worst > 0.60:
-			verdict = "TOO LARGE"
-		elif worst < 0.05 or best > 0.60:
-			verdict = "split"
-		print("%-10s %9.3f%% %9.3f%% %9.3f%% %10s" % [
-			str(beta), impulses[0], impulses[1], impulses[2], verdict,
-		])
+## Design's P5 (design-card1-aid-price.md, section 5): each major of the four playable
+## nations aided ALONE at full intensity for TERM_MONTHS through the game's own month,
+## against the same game unaided. GDP held per aid euro = the GDP the aided run made
+## over the term above its twin, over the aid it paid. Pass: 0.55 to 0.85 for every one.
+## Run on its own: --aid-deal (about 50 runs of 60 months).
+func _aid_deal() -> bool:
+	var rescue = _subsidise_action(1.0)
+	var worst := INF
+	var best := -INF
+	for nation_id in ["FRA", "DEU", "GBR", "POL"]:
+		var twin := _gdp_path(nation_id, "", rescue)
+		for company in Companies.majors_of(_loader, nation_id):
+			var aided := _gdp_path(nation_id, String(company.id), rescue)
+			var gain := 0.0
+			for m in TERM_MONTHS:
+				gain += (float(aided[0][m]) - float(twin[0][m])) / 12.0
+			var paid: float = aided[1]
+			var per_euro: float = gain / paid if paid > 0.0 else 0.0
+			worst = minf(worst, per_euro)
+			best = maxf(best, per_euro)
+			print("aid_deal %s %-26s paid %7.3f bn, GDP held %7.3f bn, %.3f per euro %s" % [nation_id, String(company.id),
+				paid, gain, per_euro, "" if per_euro >= 0.55 and per_euro <= 0.85 else "OUT"])
+	var ok := worst >= 0.55 and best <= 0.85
+	print("aid_deal: per euro %.3f to %.3f, P5 %s" % [worst, best, "PASS" if ok else "FAIL"])
+	return ok
+
+
+## [monthly GDP (EUR bn a year) over TERM_MONTHS, aid paid EUR bn]: `company_id` aided at
+## the first month ("" for none), then the game's own month.
+func _gdp_path(nation_id: String, company_id: String, rescue) -> Array:
+	var state = _new_state(nation_id)
+	var ns = state.player()
+	if company_id != "":
+		Companies.execute(state, ns, _loader.company_actions, rescue, company_id, _loader)
+	var path := []
+	var paid := 0.0
+	for m in TERM_MONTHS:
+		WorldMonth.tick_month(state, _loader)
+		path.append(float(ns.gdp_eur_bn))
+		paid += float(ns.subsidy_bill_pct_gdp) * float(ns.gdp_eur_bn) / 100.0 / 12.0
+	return [path, paid]
 
 
 # --- (d) P3: the kill switch ----------------------------------------------------

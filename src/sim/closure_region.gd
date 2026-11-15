@@ -7,7 +7,7 @@ extends RefCounted
 ## jobs over its region's labour force onto that region, the people-weighted mean
 ## taken back from every region (the nation's rate stays Economy's, which already
 ## counts the jobs through firm_jobs_offset_pct), into ns.region_closure_pts; Regions
-## adds it and halves it (region_constants.CLOSURE_HALF_LIFE_MONTHS). move() is the
+## adds it and fades it (economy_constants.CLOSURE_ABSORB_MONTHS, a mean life). move() is the
 ## strip's read, through the game's own unemployment_by_region, before and after.
 
 const Region = preload("res://src/core/region.gd")

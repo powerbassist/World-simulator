@@ -262,9 +262,9 @@ static func _national_production_mix(ns, region_list: Array) -> Dictionary:
 ## claimed the opposite until the V2.8 review, which is the wrong thing to believe
 ## when deciding whether a rate can be raised.
 static func tick_month(ns, region_list: Array, growth: float, access: Dictionary, sites: Dictionary) -> float:
-	# V5.3 PR 3 (c): a closure's lift halves over CLOSURE_HALF_LIFE_MONTHS; a spent one leaves.
+	# V5.3 PR 3 (c): a closure's lift fades, mean life CLOSURE_ABSORB_MONTHS; a spent one leaves.
 	for id in ns.region_closure_pts.keys():
-		var pts: float = float(ns.region_closure_pts[id]) * pow(0.5, 1.0 / float(C.CLOSURE_HALF_LIFE_MONTHS))
+		var pts: float = float(ns.region_closure_pts[id]) * (1.0 - 1.0 / float(C.CLOSURE_ABSORB_MONTHS))
 		if absf(pts) < 1e-6:
 			ns.region_closure_pts.erase(id)
 		else:
