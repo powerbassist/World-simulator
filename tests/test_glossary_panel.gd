@@ -13,6 +13,7 @@ const Glossary = preload("res://src/ui/glossary.gd")
 const GlossaryPanel = preload("res://src/ui/glossary_panel.gd")
 const TermText = preload("res://src/ui/term_text.gd")
 const Domains = preload("res://src/ui/domains.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -68,6 +69,18 @@ func _check_the_order() -> void:
 			_fail("the letters are not ascending: %s" % [letters])
 	if GlossaryPanel.letter_of("approval") != "A" or GlossaryPanel.letter_of("") != "#" or GlossaryPanel.letter_of("49.3") != "#":
 		_fail("letter_of misgroups a word")
+	# French terms: an accent does not make a letter of its own (the A-Z bar had an E and an É).
+	for pair in [["Économie", "E"], ["école", "E"], ["Çedille", "C"], ["Ôter", "O"]]:
+		if GlossaryPanel.letter_of(pair[0]) != pair[1]:
+			_fail("letter_of('%s') is '%s', not '%s'" % [pair[0], GlossaryPanel.letter_of(pair[0]), pair[1]])
+	if GlossaryPanel.fold("Éléphant") != "Elephant" or GlossaryPanel.fold("zèbre") != "zebre" or GlossaryPanel.fold("Œuvre") != "Oeuvre" or GlossaryPanel.FOLD_FROM.length() != GlossaryPanel.FOLD_TO.length():
+		_fail("fold leaves a diacritic")
+	# The tooltip's two lines read in French (they went through tr() but had no row).
+	Strings.set_language("fr")
+	for pair in [["Your value: %s", "Votre valeur : %s"], ["See also: %s", "Voir aussi : %s"], ["Your value: %s (%s)", "Votre valeur : %s (%s)"]]:
+		if Strings.t(pair[0]) != pair[1]:
+			_fail("'%s' reads '%s' in French" % [pair[0], Strings.t(pair[0])])
+	Strings.set_language("en")
 
 
 func _check_it_is_a_tab_in_a_domain() -> void:

@@ -18,8 +18,8 @@ const Strings = preload("res://src/ui/strings.gd")
 ## entry is a section of its own, so a term is marked at its own line and its See-also
 ## marks every entry it lists (a list, not prose: TermText.cap).
 ##
-## French is parked: the order and the letters are by the raw first character, with
-## no accent folding.
+## The order and the letters fold accents ("École" is under E, between "Echo" and "Édit"), so the A-Z bar
+## has one E, never an E and an É; a tie on the folded word falls to the raw word, then the id.
 
 var _dirty := true
 var _scroll: ScrollContainer
@@ -79,15 +79,32 @@ static func entry_ids() -> Array:
 	var ids: Array = words.keys()
 	# The id breaks a tie: sort_custom is not stable, and two calls must agree.
 	ids.sort_custom(func(a, b) -> bool:
-		var order := String(words[a]).naturalnocasecmp_to(String(words[b]))
+		var order := fold(String(words[a])).naturalnocasecmp_to(fold(String(words[b])))
+		if order == 0:
+			order = String(words[a]).naturalnocasecmp_to(String(words[b]))
 		return order < 0 if order != 0 else String(a) < String(b))
 	return ids
 
 
-## The heading letter of a word: its first character, upper-cased; "#" for one that
+## The accented Latin letters and what they fold to. Not TextServer.strip_diacritics: it raises an ICU
+## "U_STRING_NOT_TERMINATED_WARNING" error line on some strings, which the suite counts as a failure.
+const FOLD_FROM := "àáâãäåçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ"
+const FOLD_TO := "aaaaaaceeeeiiiinooooouuuuyyAAAAAACEEEEIIIINOOOOOUUUUY"
+
+
+## A word without its diacritics, for the order and the letters ("œ" is "oe").
+static func fold(word: String) -> String:
+	var out := ""
+	for i in word.length():
+		var at := FOLD_FROM.find(word[i])
+		out += FOLD_TO[at] if at >= 0 else word[i]
+	return out.replace("œ", "oe").replace("Œ", "Oe")
+
+
+## The heading letter of a word: its first character without its accent, upper-cased; "#" for one that
 ## is not a letter.
 static func letter_of(word: String) -> String:
-	var first := word.substr(0, 1)
+	var first := fold(word.substr(0, 1))
 	return "#" if first.is_empty() or first.to_lower() == first.to_upper() else first.to_upper()
 
 
