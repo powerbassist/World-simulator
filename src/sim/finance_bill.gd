@@ -75,9 +75,7 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 	if not why.is_empty():
 		return why
 	var held: Dictionary = ns.tabled_bill
-	var merged := _merged(held, bill)
-	if merged.has(FinanceRows.PROGRAMMES) or merged.has(FinanceRows.FUNDS):
-		merged[FinanceRows.COST] = FinanceRows.cost_pct_gdp(state, loader, ns, merged)
+	var merged := drafted(state, loader, bill)
 	var id := String(held.get("law_id", "")) if not held.is_empty() else FinanceBillLaw.id_for(state)
 	ns.tabled_bill = {
 		"law_id": id, "finance": merged, "forced": force or bool(held.get("forced", false)),
@@ -89,6 +87,17 @@ static func table(state, loader, bill: Dictionary, force := false) -> Dictionary
 	# A forced bill is never divided: no vote to forecast (Division.forecast's rule).
 	tabling["forecast"] = {} if bool(ns.tabled_bill["forced"]) else resolve(ns, loader.parties.get(ns.id, []), FinanceBillLaw.tabled(ns))
 	return tabling
+
+
+## The finance text table() would write for `bill` now: merged with the finance bill
+## already tabled, the rows' cost a year on it. Pure; read only when refusal() is empty
+## (a row no longer legal has no cost). FinanceRead.draft reads the division from it.
+static func drafted(state, loader, bill: Dictionary) -> Dictionary:
+	var ns = state.player()
+	var merged := _merged(ns.tabled_bill, bill)
+	if merged.has(FinanceRows.PROGRAMMES) or merged.has(FinanceRows.FUNDS):
+		merged[FinanceRows.COST] = FinanceRows.cost_pct_gdp(state, loader, ns, merged)
+	return merged
 
 
 ## Why table() would refuse `bill` now, {} when it would table it: its checks in its
