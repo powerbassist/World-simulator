@@ -71,6 +71,11 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-back --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-walked --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open sector_agriculture
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --open sector_industry
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open sector_services
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --closure --open sector_agriculture
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --closure --open sector_agriculture
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --text 130 --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
@@ -1433,6 +1438,8 @@ func _apply_view() -> void:
 		preload("res://src/sim/closures.gd")._announce(ns, major, ns.companies[major.id], 0.2,
 			_main._loader.closure_rule, _main._state.year * 12 + _main._state.month)
 		_main._companies_panel.mark_dirty()
+		_main._update_top_bar()  # the sidebar's count and the sector tab's hourglass
+		_main._windows.mark_all_dirty()
 	if _fund:
 		_stage_a_fund()
 	if _region_arrival:

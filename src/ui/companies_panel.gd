@@ -187,7 +187,7 @@ func _refresh() -> void:
 		return
 	_primary = null
 
-	_title.text = tr("Industry")
+	_title.text = tr("Every sector")
 
 	for child in _body.get_children():
 		child.queue_free()

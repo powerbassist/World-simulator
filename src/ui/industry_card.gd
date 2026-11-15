@@ -16,11 +16,8 @@ extends RefCounted
 ## panel's (they survive its rebuilds); this file only draws them.
 
 const Companies = preload("res://src/sim/companies.gd")
-const Industry = preload("res://src/sim/industry.gd")
 const Economy = preload("res://src/sim/economy.gd")
-const Processes = preload("res://src/sim/processes.gd")
-const Closures = preload("res://src/sim/closures.gd")
-const Pending = preload("res://src/ui/pending.gd")
+const SectorNeeds = preload("res://src/ui/sector_needs.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -84,22 +81,11 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	_body(panel, card, ns, sector, body)
 
 
-## A bid, a failing major or a process's ask in this sector: the card says so
-## while closed.
+## A bid, a failing major, a process's ask or a closure in this sector: the card says
+## so while closed. SectorNeeds is the one reader the sector tabs count with.
 static func _waiting(state, ns, loader, sector: String) -> bool:
-	var ids: Array = []
-	var bid: Dictionary = Industry.pending_bid(state, ns, loader)
-	if not bid.is_empty():
-		ids.append(String(bid["company_id"]))
-	for failure in Industry.failing(state, ns, loader):
-		ids.append(String(failure["company_id"]))
-	for row in Processes.asks(ns):
-		ids.append(String(row["company_id"]))
-	for row in Closures.open(ns):
-		if Pending.closure_waits(row):
-			ids.append(String(row["company_id"]))
-	for company in Companies.firms_in_sector(loader, ns.id, sector):
-		if ids.has(String(company.id)):
+	for item in SectorNeeds.items(state, loader, ns):
+		if String(item["sector"]) == sector:
 			return true
 	return false
 
