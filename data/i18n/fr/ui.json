@@ -779,7 +779,6 @@
   "Debt service": "Charge de la dette",
   "Interest on the debt: it follows the debt and the rates the markets ask.": "Intérêts de la dette : ils suivent la dette et les taux exigés par les marchés.",
   "Other spending": "Autres dépenses",
-  "Not detailed in the game yet: everything the state spends that none of the five lines sets, kept as one figure.": "Pas encore détaillé dans le jeu : tout ce que l'État dépense hors des cinq lignes, regroupé en un seul chiffre.",
   "At vote": "Au vote",
   "%d other kind, %s bn": [
     "%d autre impôt, %s Md€",
@@ -788,7 +787,6 @@
   "At vote: withdraw the bill to change it.": "Au vote : retirez le texte pour le modifier.",
   "from %s to %s %%": "de %s à %s %%",
   "from %s to %s": "de %s à %s",
-  "Not detailed in the game yet. %s bn of it is revenue no rate here sets (social contributions, local taxes), and %s bn is what laws in force add.": "Pas encore détaillé dans le jeu. %s Md€ sont des recettes qu'aucun taux ne fixe ici (cotisations sociales, impôts locaux), et %s Md€ viennent des lois en vigueur.",
   "Consumption": "Consommation",
   "Income": "Revenus",
   "Companies and finance": "Entreprises et finance",
