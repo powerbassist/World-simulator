@@ -32,7 +32,7 @@ const SPENDING_NAME_WIDTH := 130.0
 const RATE_WIDTH := 100.0
 ## A spending line's figure ("from 11.0 to 12.5 %"): the name button takes the rest, never this. The unit is the
 ## column's heading (% of GDP), so the figure stays short enough for the pane at 130 % text.
-const PCT_WIDTH := 96.0
+const PCT_WIDTH := 124.0
 const FIGURE_WIDTH := 64.0
 const SWATCH := 10.0
 
@@ -266,8 +266,6 @@ static func paint_rates(ctx: Dictionary) -> void:
 		var label: Label = cell[0]
 		if not is_instance_valid(label):
 			continue
-		if not label.visible:
-			(label.get_parent() as Control).tooltip_text = label.text
 		var channel := String(cell[1])
 		var key := String(cell[2])
 		var live := float(cell[3])
@@ -286,6 +284,9 @@ static func paint_rates(ctx: Dictionary) -> void:
 			label.text = Strings.t("from %s to %s %%") % [was, LedgerBox.text(target, places)]
 		else:
 			label.text = Strings.t("from %s to %s") % [was, LedgerBox.text(target, places) + unit]
+		# Written after the figure, never before: at 130 % the figure is the row's hover.
+		if not label.visible:
+			(label.get_parent() as Control).tooltip_text = label.text
 
 
 ## What the unset revenue holds, as the model keeps it (FinanceRead.other_parts): the part set when the game

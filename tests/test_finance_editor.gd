@@ -76,6 +76,7 @@ func _process(_delta: float) -> bool:
 			_check_a_sweep_waits_for_the_hand()
 			_check_the_unset_lines_say_what_they_hold()
 			_check_the_budget_writes_the_one_draft()
+			_check_the_hover_follows_the_figure_at_130()
 			_check_a_go_opens_the_folded_row()
 			_panel.open_row(FinanceDraft.TAX, "vat")
 			_panel._process(0.0)
@@ -424,11 +425,15 @@ func _check_a_tabled_row_never_opens() -> void:
 		_panel._process(0.0)
 		if _editor() != null:
 			_fail("a row at vote (%s) opened an editor" % pair[1])
+	# QA's T4 on #363: a Go on a locked row leaves nothing behind, so a withdrawal opens and focuses nothing.
+	if _panel._open_id != "" or _panel._focus_wanted:
+		_fail("a Go on a row at vote left _open_id '%s' / _focus_wanted %s behind" % [_panel._open_id, _panel._focus_wanted])
 	ns.tabled_bill = {}
-	_panel._open_id = ""
 	_panel._stamp = ""
 	_panel._dirty = true
 	_panel._process(0.0)
+	if _editor() != null:
+		_fail("a withdrawn bill reopened the row a Go had asked for while it was locked")
 
 
 func FinanceBill_table(_ns, bill: Dictionary) -> void:
@@ -553,6 +558,36 @@ func _check_the_budget_writes_the_one_draft() -> void:
 	if not _panel._draft.is_empty():
 		_fail("the Budget's Revert left the shared draft")
 	budget.queue_free()
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+## At 130 % a spending line's figure is the row's hover (QA's T1 on #363): it reads what the figure reads, after
+## every change, never the paint before.
+func _check_the_hover_follows_the_figure_at_130() -> void:
+	var UiTheme = preload("res://src/ui/ui_theme.gd")
+	var ns = _state.player()
+	UiTheme.set_text_scale(1.3)
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+	var id := FinanceRows.row_id(FinanceDraft.SPENDING, "health")
+	var cell: Label = _panel._ctx["cells"][id][0]
+	var row: Control = cell.get_parent()
+	if cell.visible:
+		_fail("premise: the spending figure is shown beside the name at 130 %")
+	if row.tooltip_text != cell.text:
+		_fail("after the build the hover reads '%s', the figure '%s'" % [row.tooltip_text, cell.text])
+	_panel._draft.set_value(FinanceDraft.SPENDING, "health", float(ns.spending_pct_gdp["health"]) + 1.0)
+	_panel._paint(ns)
+	if not cell.text.begins_with("from") or row.tooltip_text != cell.text:
+		_fail("after a move the hover reads '%s', the figure '%s'" % [row.tooltip_text, cell.text])
+	_panel._draft.revert()
+	_panel._paint(ns)
+	if row.tooltip_text != cell.text:
+		_fail("after Discard the hover reads '%s', the figure '%s'" % [row.tooltip_text, cell.text])
+	UiTheme.set_text_scale(1.0)
 	_panel._stamp = ""
 	_panel._dirty = true
 	_panel._process(0.0)

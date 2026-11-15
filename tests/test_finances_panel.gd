@@ -65,6 +65,7 @@ func _process(_delta: float) -> bool:
 			_main._windows.frame("finances")._content.mark_dirty()
 			_main._windows.frame("finances")._content._stamp = ""
 		12:
+			_pin_the_budget_seam_on_main()
 			_press_open_the_bill_through_main()
 		14:
 			if not _main._windows.is_open("legislature"):
@@ -270,6 +271,18 @@ func _check_who_pays_is_a_hover_at_130() -> void:
 		_fail("at 130 % who pays is still a caption on the row")
 	_panel._dirty = true
 	_panel._process(0.0)
+
+
+## QA's T2 on #363: the driver hands the Budget the page's ONE draft. Dropping that line must turn something red.
+func _pin_the_budget_seam_on_main() -> void:
+	var page = _main._windows.frame("finances")._content
+	var budget = _main._budget_panel
+	var live := float(_main._state.player().spending_pct_gdp["health"])
+	budget._sliders["health"].value = live + 1.0
+	if not page._draft.is_moved("spending_pct_gdp", "health"):
+		_fail("a Budget lever move on main did not reach the Books page's draft")
+	page._draft.revert()
+	budget._on_revert()
 
 
 func _press_open_the_bill_through_main() -> void:

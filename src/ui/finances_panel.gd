@@ -278,8 +278,11 @@ func _on_open(id: String) -> void:
 func open_row(channel: String, key: String) -> void:
 	if channel == FinanceDraft.TAX and _state != null and _state.player() != null and _state.player().tax_library.has(key):
 		_open_groups[String(_state.player().tax_library[key]["group"])] = true
-	_open_id = FinanceRows.row_id(channel, key)
-	_focus_wanted = true
+	var id := FinanceRows.row_id(channel, key)
+	# A row at vote opens no editor: leave nothing behind that would open it, and take the focus, once it is withdrawn.
+	var locked: bool = _state != null and _state.player() != null and _tabled_rows(_state.player()).has(id)
+	_open_id = "" if locked else id
+	_focus_wanted = not locked
 	_dirty = true
 
 
