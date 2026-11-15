@@ -20,6 +20,11 @@ const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Negotiation = preload("res://src/sim/negotiation.gd")
 const NK = preload("res://src/sim/companies_constants.gd")
+const ClosureRegion = preload("res://src/sim/closure_region.gd")
+const Regions = preload("res://src/sim/regions.gd")
+const EK = preload("res://src/sim/economy_constants.gd")
+const Region = preload("res://src/core/region.gd")
+const Demography = preload("res://src/sim/demography.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -79,6 +84,8 @@ func _init() -> void:
 	_test_the_fall_picks_by_jobs()
 	_test_the_bloc_move_scales_with_the_plant()
 	_test_a_plant_is_thousands_of_jobs()
+	_test_a_landed_closure_moves_its_region()
+	_test_the_region_term_halves_and_saves()
 	_finish()
 
 
@@ -106,6 +113,75 @@ func _test_a_plant_is_thousands_of_jobs() -> void:
 	var median: float = jobs[jobs.size() / 2]
 	if median < 5000.0:
 		_fail("a closure at France's median major cuts %d jobs, not five thousand" % int(median))
+
+
+## The game's own regional unemployment, every region, now.
+func _by_region(state) -> Dictionary:
+	var ns = state.player()
+	var list: Array = state.regions.get(ns.id, [])
+	return Regions.unemployment_by_region(ns, list, Regions.accessibility_for(ns, list, state.region_graph),
+		state.project_sited_pct.get(ns.id, {}))
+
+
+## V5.3 PR 3 (c), the strip's read: a landed closure moves its own region's unemployment
+## by its jobs over the region's labour force, the other regions give the same people-
+## weighted amount back (the nation's rate is Economy's, unchanged), and
+## ClosureRegion.move() says beforehand exactly what the landing writes.
+func _test_a_landed_closure_moves_its_region() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	if String(row.get("status", "")) != "announced":
+		_fail("region: no closure announced to read")
+		return
+	var list: Array = state.regions[ns.id]
+	var region = Region.region_of_city(list, String(row["city_id"]))
+	var move := ClosureRegion.move(state, ns, row)
+	var before := _by_region(state)
+	if not bool(move.get("ok", false)) or region == null or String(move["region_id"]) != String(region.id):
+		_fail("region: the read names %s, the plant's city is in %s" % [move, region.id if region != null else "none"])
+		return
+	if not is_equal_approx(float(move["before_pct"]), float(before[region.id])):
+		_fail("region: the read's before %s is not the game's %s" % [move["before_pct"], before[region.id]])
+	for i in range(CK.ANSWER_MONTHS):
+		_month(state)
+	if String(row["status"]) != "closed":
+		_fail("region: the closure did not land")
+		return
+	var after := _by_region(state)
+	if not is_equal_approx(float(after[region.id]), float(move["after_pct"])):
+		_fail("region: the read promised %s, the landing wrote %s" % [move["after_pct"], after[region.id]])
+	var share := float(ns.region_pop_share[region.id])
+	var total := 0.0
+	for other in list:
+		total += float(ns.region_pop_share.get(other.id, 0.0))
+	var lift := 100.0 * float(row["jobs"]) / (Demography.labour_force(ns) * share)
+	if not is_equal_approx(float(after[region.id]) - float(before[region.id]), lift * (1.0 - share / total)):
+		_fail("region: the region moved %s, not its jobs over its labour force less the nation's mean" % (float(after[region.id]) - float(before[region.id])))
+	var weighted := 0.0
+	for other in list:
+		weighted += float(ns.region_pop_share.get(other.id, 0.0)) * (float(after[other.id]) - float(before[other.id]))
+	if absf(weighted) > 1e-9:
+		_fail("region: the regions' people-weighted move is %s, not 0 (the nation's rate is Economy's)" % weighted)
+
+
+## The term halves over EK.CLOSURE_HALF_LIFE_MONTHS of Regions' month (absorbed as the
+## region's people find work or leave), and a save carries it.
+func _test_the_region_term_halves_and_saves() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var list: Array = state.regions[ns.id]
+	ns.region_closure_pts = {String(list[0].id): 0.4, String(list[1].id): -0.1}
+	for i in range(EK.CLOSURE_HALF_LIFE_MONTHS):
+		Regions.tick_month(ns, list, 0.0, {}, {})
+	if not is_equal_approx(float(ns.region_closure_pts[String(list[0].id)]), 0.2):
+		_fail("region: the term reads %s after its half-life, not 0.2" % ns.region_closure_pts[String(list[0].id)])
+	var back = GameState.from_dict(state.to_dict()).player()
+	if back.region_closure_pts != ns.region_closure_pts:
+		_fail("region: the term did not survive a save: %s" % [back.region_closure_pts])
 
 
 func _rule() -> Dictionary:

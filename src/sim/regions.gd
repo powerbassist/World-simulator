@@ -262,6 +262,13 @@ static func _national_production_mix(ns, region_list: Array) -> Dictionary:
 ## claimed the opposite until the V2.8 review, which is the wrong thing to believe
 ## when deciding whether a rate can be raised.
 static func tick_month(ns, region_list: Array, growth: float, access: Dictionary, sites: Dictionary) -> float:
+	# V5.3 PR 3 (c): a closure's lift halves over CLOSURE_HALF_LIFE_MONTHS; a spent one leaves.
+	for id in ns.region_closure_pts.keys():
+		var pts: float = float(ns.region_closure_pts[id]) * pow(0.5, 1.0 / float(C.CLOSURE_HALF_LIFE_MONTHS))
+		if absf(pts) < 1e-6:
+			ns.region_closure_pts.erase(id)
+		else:
+			ns.region_closure_pts[id] = pts
 	if ns.region_gdp_eur_bn.is_empty():
 		return ns.gdp_eur_bn * C.monthly_factor(growth)
 
@@ -357,8 +364,10 @@ static func unemployment_by_region(ns, region_list: Array, access: Dictionary, s
 	for region in region_list:
 		if out.has(region.id):
 			continue
+		# V5.3 PR 3 (c): a landed plant closure's lift, netted out of the nation's mean.
 		out[region.id] = clampf(
-			ns.unemployment_pct * region.unemployment_rel - C.OKUN * float(deviations.get(region.id, 0.0)),
+			ns.unemployment_pct * region.unemployment_rel - C.OKUN * float(deviations.get(region.id, 0.0))
+				+ float(ns.region_closure_pts.get(region.id, 0.0)),
 			C.UNEMP_MIN_PCT,
 			C.UNEMP_MAX_PCT
 		)

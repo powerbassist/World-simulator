@@ -160,3 +160,10 @@ static func impulse_level_factor() -> float:
 ## -100 so a clamped-but-extreme growth rate can never produce a NaN.
 static func monthly_factor(annual_pct: float) -> float:
 	return pow(1.0 + maxf(annual_pct, -95.0) / 100.0, 1.0 / 12.0)
+
+## V5.3 PR 3 (c): the months over which a landed plant closure's lift on its region's
+## unemployment halves (ns.region_closure_pts, booked by src/sim/closure_region.gd).
+## Blanchard and Katz (1992, "Regional Evolutions") find a state's relative
+## unemployment back near normal five to seven years after a shock, as its people find
+## work or leave: a half-life of two years.
+const CLOSURE_HALF_LIFE_MONTHS := 24
