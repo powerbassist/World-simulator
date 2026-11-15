@@ -14,6 +14,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
@@ -66,6 +67,8 @@ func _process(_delta: float) -> bool:
 			_check_withdraw_only_while_a_bill_is_at_vote()
 			_check_an_emptied_draft_puts_the_sheet_away()
 			_check_a_refusal_downs_table_and_the_force_box()
+			_check_an_amendment_prices_the_whole_bill()
+			_check_a_tabled_programme_is_priced_in_the_whole_bill()
 			_check_britain_has_no_forcing()
 		5:
 			return _finish()
@@ -219,6 +222,89 @@ func _check_an_emptied_draft_puts_the_sheet_away() -> void:
 	var held: Control = _panel.get_viewport().gui_get_focus_owner()
 	if held != null and not held.is_visible_in_tree():
 		_fail("the keyboard stays on a hidden control after the sheet is put away")
+
+
+## The parent's ruling on #367 and QA's T1, T2, T4 on #368: on an amendment every figure on the sheet AND the footer's
+## money describes the bill the vote decides (the rows at vote merged with the new ones, and a programme's yearly
+## cost, which the vote counts as spending), through one pricing (FinancePrice.whole); the changed-rows list is the
+## new rows alone. The expected figures here are built another way: the merged text's absolute pending priced by
+## price.moves, plus the merged text's own cost.
+func _check_an_amendment_prices_the_whole_bill() -> void:
+	_amend({"tax_rates_pct": {"vat": 2.0}, "spending_pct_gdp": {"defence": 0.5}})
+	var draft = _panel.shared_draft()
+	var price := FinancePrice.new()
+	price.setup(_state)
+	var merged := FinanceBill.drafted(_state, _loader, draft.bill())
+	var whole := FinanceBill.absolute(_state.player(), merged)
+	var want := price.moves(whole)
+	var new_only := price.moves(draft.pending())
+	if is_equal_approx(float(want["spending_bn"]), float(new_only["spending_bn"])) or is_equal_approx(float(want["revenue_bn"]), float(new_only["revenue_bn"])):
+		_fail("setup: the whole bill and the new rows alone price the same")
+	_check_scope(want, price, whole)
+	var rows := _sheet().find_children("SheetRow_*", "", true, false)
+	if rows.size() != 1 or _sheet().find_child("SheetRow_tax_rates_pct_vat", true, false) != null:
+		_fail("an amendment's changed-rows list is not the new rows alone (%d rows)" % rows.size())
+	_unamend()
+
+
+## A tabled programme's yearly cost is spending in the vote (FinanceBillLaw), so it is spending on the sheet and in
+## the footer, and in the deficit after.
+func _check_a_tabled_programme_is_priced_in_the_whole_bill() -> void:
+	_amend({"programmes": {"industry": "industrial_renewal"}})
+	var draft = _panel.shared_draft()
+	var price := FinancePrice.new()
+	price.setup(_state)
+	var merged := FinanceBill.drafted(_state, _loader, draft.bill())
+	var cost_bn := float(merged.get("verbs_pct_gdp", 0.0)) * float(_state.player().gdp_eur_bn) / 100.0
+	if cost_bn <= 0.0:
+		_fail("setup: the tabled programme has no yearly cost")
+	var want := price.moves(FinanceBill.absolute(_state.player(), merged))
+	want["spending_bn"] = float(want["spending_bn"]) + cost_bn
+	_check_scope(want, price, FinanceBill.absolute(_state.player(), merged), cost_bn)
+	_unamend()
+
+
+## Table `tabled` first, then draft Health +1.5 on top and open the sheet.
+func _amend(tabled: Dictionary) -> void:
+	_panel._on_withdraw()
+	_panel.shared_draft().revert()
+	FinanceBill.table(_state, _loader, tabled)
+	var draft = _panel.shared_draft()
+	draft.set_value(FinanceDraft.SPENDING, "health", draft.live(FinanceDraft.SPENDING, "health") + 1.5)
+	_panel._on_moved()
+	_panel._process(0.0)
+	_open_sheet()
+	_panel._sheet._stamp = ""
+	_settle()
+
+
+func _unamend() -> void:
+	_panel._on_withdraw()
+	_panel.shared_draft().revert()
+	_panel._sheet.hide()
+
+
+## The sheet's totals, its deficit and the footer's money are `want`; the seats are the merged bill's.
+func _check_scope(want: Dictionary, price: FinancePrice, whole: Dictionary, extra_bn := 0.0) -> void:
+	var now: Dictionary = price.now()
+	var after: Dictionary = price.after(whole)
+	var gdp := float(after["gdp_eur_bn"])
+	var deficit_now := float(now["deficit_pct_gdp"]) * float(now["gdp_eur_bn"]) / 100.0
+	var deficit_after := float(after["deficit_pct_gdp"]) * gdp / 100.0 + extra_bn
+	var arrow := "%s → %s" % [Num.f(deficit_now, 0), Num.f(deficit_after, 0)]
+	var sheet := _text_of(_sheet())
+	var money := [EffectsStrip.money_text(float(want["spending_bn"])), EffectsStrip.money_text(float(want["revenue_bn"]))]
+	for figure in money:
+		if not sheet.contains(figure):
+			_fail("the sheet lacks the whole bill's %s" % figure)
+	if not sheet.contains(arrow):
+		_fail("the sheet's deficit is not today -> the whole bill: wanted '%s'" % arrow)
+	var foot: String = _panel._foot._text.text
+	if not foot.contains("the whole bill") or not foot.contains(money[0]) or not foot.contains(money[1]):
+		_fail("the footer does not carry the sheet's money (%s / %s): %s" % [money[0], money[1], foot])
+	var vote: Dictionary = FinanceRead.draft(_state, _loader, _panel.shared_draft().bill())["vote"]
+	if not sheet.contains(str(int(vote["yes_seats"]))):
+		_fail("the amendment's seats are not the merged bill's")
 
 
 func _check_a_refusal_downs_table_and_the_force_box() -> void:

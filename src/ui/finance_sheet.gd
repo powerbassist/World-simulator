@@ -159,22 +159,23 @@ func _vote_day() -> int:
 	return DateText.days_in(int(_state.month), int(_state.year))
 
 
-## The four figures: what the draft does to each side a year, and the deficit before and after. A spending rise
-## is bad news and a revenue rise good, as the footer and the editors tone them.
+## The four figures: what the bill does to each side a year, and the deficit before (the books today, no bill) and
+## after (the whole bill passed). EVERY figure on the sheet describes the bill the vote will decide: the rows already
+## at vote with the new ones merged (an amendment), the same as the seat forecast beside it; the changed-rows list
+## alone is the new rows. A refused draft has no merged text, so its figures are the new rows'. A spending rise is
+## bad news and a revenue rise good, as the footer and the editors tone them.
 func _totals() -> void:
-	var moves: Dictionary = _price.moves(_draft.pending())
-	var now: Dictionary = _price.now()
-	var after: Dictionary = _price.after(_draft.pending())
-	var deficit_now := float(now["deficit_pct_gdp"]) * float(now["gdp_eur_bn"]) / 100.0
-	var deficit_after := float(after["deficit_pct_gdp"]) * float(after["gdp_eur_bn"]) / 100.0
+	var whole: Dictionary = _price.whole(_loader, _draft, String(_read["refusal"]) != "")
+	var deficit_now := float(whole["deficit_now_bn"])
+	var deficit_after := float(whole["deficit_after_bn"])
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 22)
 	_body.add_child(line)
-	PanelKit.figure(line, EffectsStrip.money_text(float(moves["spending_bn"])), Strings.t("Spending"), EffectsStrip.money_tone(-float(moves["spending_bn"])))
-	PanelKit.figure(line, EffectsStrip.money_text(float(moves["revenue_bn"])), Strings.t("Revenue"), EffectsStrip.money_tone(float(moves["revenue_bn"])))
+	PanelKit.figure(line, EffectsStrip.money_text(float(whole["spending_bn"])), Strings.t("Spending"), EffectsStrip.money_tone(-float(whole["spending_bn"])))
+	PanelKit.figure(line, EffectsStrip.money_text(float(whole["revenue_bn"])), Strings.t("Revenue"), EffectsStrip.money_tone(float(whole["revenue_bn"])))
 	PanelKit.figure(line, "%s → %s" % [Num.f(deficit_now, 0), Num.f(deficit_after, 0)], Strings.t("Deficit, bn"),
 		EffectsStrip.money_tone(deficit_now - deficit_after))
-	PanelKit.figure(line, Num.f(float(after["deficit_pct_gdp"]), 2) + " %", Strings.t("Deficit, % of GDP"))
+	PanelKit.figure(line, Num.f(float(whole["deficit_after_pct"]), 2) + " %", Strings.t("Deficit, % of GDP"))
 
 
 func _rows() -> void:
