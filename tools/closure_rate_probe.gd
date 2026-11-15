@@ -22,7 +22,7 @@ extends SceneTree
 ##   --answer=rescue   every closure answered by the rescue the month it is announced: the
 ##                     parent's ruling on #294, read beside the idle run, and the bill;
 ## and each number of the rule can be tried without editing the data:
-##   --chance=X --slope=X --reference=X --cooldown=N --fall=X --nation=FRA
+##   --chance=X --slope=X --reference=X --cooldown=N --fall=X --cut=X --nation=FRA
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -33,7 +33,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Closures = preload("res://src/sim/closures.gd")
 
-const RULE_ARGS := {"--fall=": "fall", "--chance=": "monthly_chance", "--slope=": "gap_slope", "--reference=": "reference_fall"}
+const RULE_ARGS := {"--fall=": "fall", "--cut=": "cut", "--chance=": "monthly_chance", "--slope=": "gap_slope", "--reference=": "reference_fall"}
 ## Points of GDP a month: 0.6 a year, so its impulse settles near
 ## MULT_SPENDING x 0.05 / (1 - IMPULSE_DECAY) = 0.45 %/yr.
 const STIMULUS_PTS := 0.05

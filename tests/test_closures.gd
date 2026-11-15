@@ -78,12 +78,13 @@ func _init() -> void:
 	_test_always_rescuing_pays_for_every_plant()
 	_test_the_fall_picks_by_jobs()
 	_test_the_bloc_move_scales_with_the_plant()
+	_test_a_plant_is_thousands_of_jobs()
 	_finish()
 
 
 ## The stand-ins as shipped in data/industry/closures.json, pinned as literals.
 const SHIPPED_COOLDOWN := 12
-const SHIPPED_CHANCE := 0.18
+const SHIPPED_CHANCE := 0.05  # V5.3 PR 3, fewer and larger (was 0.18)
 const SHIPPED_REFERENCE := 0.10
 const SHIPPED_SLOPE := 0.35
 
@@ -93,6 +94,18 @@ func _new_state():
 	state.year = 2026
 	state.month = 3
 	return state
+
+
+## V5.3 PR 3, the author's call 3 (2026-11-14): closures fewer and LARGER, thousands of
+## jobs. The shipped cut on France's median major (71 000 jobs) is a plant of at least
+## five thousand: 5 680 at 0.08, where the old 0.03 cut 2 130.
+func _test_a_plant_is_thousands_of_jobs() -> void:
+	var ns = _new_state().player()
+	var jobs: Array = _majors(ns).map(func(c) -> float: return Companies.headcount(ns, c) * float(_rule()["cut"]))
+	jobs.sort()
+	var median: float = jobs[jobs.size() / 2]
+	if median < 5000.0:
+		_fail("a closure at France's median major cuts %d jobs, not five thousand" % int(median))
 
 
 func _rule() -> Dictionary:
