@@ -359,7 +359,7 @@ static func stops(layer_id: String) -> Array:
 ## IMPORT_DEPENDENCY the two commodity layers are the first on this map where the
 ## viewer's own nation carries a real value -- it is one of the world's producers
 ## and buyers like any other, so swatch()/value()/value_text() fall through to the
-## ramp for it (pinned in tests/test_commodities_panel.gd). Its own function rather
+## ramp for it (pinned in tests/test_commodities_panel.gd, the layer's pins). Its own function rather
 ## than an `==` at the seven call sites in this file because map_view.gd draws it
 ## differently as well as filling it differently.
 static func is_viewer(viewer_id: String, nation_id: String) -> bool:

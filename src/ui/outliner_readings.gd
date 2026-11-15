@@ -1,6 +1,6 @@
 extends RefCounted
 
-const CommoditiesPanel = preload("res://src/ui/commodities_panel.gd")
+const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -138,11 +138,11 @@ static func _goods(ns, loader) -> Array:
 	var rows: Array = []
 	if loader == null or ns.commodity_state.is_empty():
 		return rows
-	for item in CommoditiesPanel.shortages(ns, loader.commodity_goods.keys()):
+	for item in SectorGoods.shortages(ns, loader.commodity_goods.keys()):
 		var good = loader.commodity_goods.get(item["id"])
 		rows.append(_row(Strings.t("%s — %.0f%% of demand") % [
 			String(good.name) if good != null else String(item["id"]), float(item["coverage"]) * 100.0],
-			PanelKit.Tone.BAD, "commodities"))
+			PanelKit.Tone.BAD, SectorGoods.tab_of_good(loader, String(item["id"]))))
 	return rows
 
 

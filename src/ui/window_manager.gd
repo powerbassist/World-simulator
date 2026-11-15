@@ -47,6 +47,7 @@ const DOCK_BOTTOM := Ribbon.STRIP_HEIGHT
 ## How many destinations back and forward remember -- a session's worth of
 ## wandering, not its whole history.
 const HISTORY_DEPTH := 20
+const HOURGLASS := "res://assets/icons/ui/hourglass.svg"
 ## The manager's group: a panel that hands work to another (the companies panel's
 ## "Table a bill" to the Legislature's briefing) finds it here, not through main.gd.
 const GROUP := "window_manager"
@@ -62,6 +63,7 @@ var _glyph: TextureRect
 var _domain_label: Label
 var _tab_row: HBoxContainer
 var _domain := ""       # the open domain's id (a window in no row is its own)
+var _tab_counts := {}   # tab id -> items waiting on the player (V5.3 screen 5)
 
 ## Destinations, "" for the map. The cursor is the one on screen.
 var _history: Array[String] = []
@@ -410,6 +412,25 @@ func _show_domain_of(id: String) -> void:
 		button.set_meta("tab", tab)
 		button.pressed.connect(open.bind(String(tab)))
 		_tab_row.add_child(button)
+	_mark_counts()
+
+
+## A tab with something waiting on the player wears the hourglass and the count
+## (V5.3 screen 5: the sector tabs). A STATUS mark, the attention tone, never the
+## accent; the count is the words, so it is never colour alone. Kept, so a domain
+## built later picks it up; refreshed on the per-day pending pass.
+func set_tab_counts(counts: Dictionary) -> void:
+	_tab_counts = counts.duplicate()
+	_mark_counts()
+
+
+func _mark_counts() -> void:
+	for button in _tab_row.get_children():
+		var tab := String(button.get_meta("tab"))
+		var count := int(_tab_counts.get(tab, 0))
+		button.text = title(tab).to_upper() + ("  %d" % count if count > 0 else "")  # i18n: row-ok translated by the caller (main's register())
+		button.icon = Icon.load_icon(HOURGLASS, UiTheme.WARN, 14) if count > 0 else null
+		button.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 
 ## The open tab's button wears the pressed state -- the accent, "you are here".

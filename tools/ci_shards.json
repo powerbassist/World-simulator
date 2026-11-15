@@ -7,6 +7,7 @@
    "tests/test_finance_sectors.gd",
    "tests/test_finance_of_which.gd",
    "tests/test_industry_tab.gd",
+   "tests/test_sectors_panel.gd",
    "tests/test_region_priority.gd",
    "tests/test_region_arrival.gd",
    "tests/test_called_event.gd",

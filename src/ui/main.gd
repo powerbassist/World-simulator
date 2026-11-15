@@ -41,7 +41,7 @@ const OutlinerPanel = preload("res://src/ui/outliner_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const RegionPanel = preload("res://src/ui/region_panel.gd")
-const CommoditiesPanel = preload("res://src/ui/commodities_panel.gd")
+const SectorsShell = preload("res://src/ui/sectors_shell.gd")
 const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
 const CampaignChest = preload("res://src/ui/campaign_chest.gd")
@@ -68,7 +68,6 @@ const WindowManager = preload("res://src/ui/window_manager.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
 const DEV_CONSOLE := "res://src/ui/dev_console.gd"
 const Domains = preload("res://src/ui/domains.gd")
-const Pending = preload("res://src/ui/pending.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Sound = preload("res://src/ui/sound.gd")
 const Music = preload("res://src/ui/music.gd")
@@ -163,7 +162,8 @@ var _people_panel
 var _companies_panel
 var _projects_panel
 var _region_panel
-var _commodities_panel
+## The sector tabs of the Sectors domain, by sector id (V5.3 screen 5).
+var _sector_panels := {}
 var _energy_panel
 var _campaign_panel
 var _agenda_panel
@@ -460,7 +460,8 @@ func _ready() -> void:
 	# sector programmes beside the firm register, so "Companies" had stopped being
 	# what the surface is about. The id stays "companies" because it is what
 	# domains.gd and tools/screenshot.gd --open both address.
-	_windows.register("companies", tr("Industry"), _companies_panel, KEY_I, ICONS + "factory.svg")
+	# V5.3 screen 5: the Sectors domain's overview; its verbs stay here until slice 2.
+	_windows.register("companies", tr("Overview"), _companies_panel, KEY_I, ICONS + "factory.svg")
 	_companies_panel.setup(_state, _loader)
 	# The same three lines _law_panel.proposed and _nation_panel.acted get. A
 	# subsidy is a player command with a domestic price and a budget line, so it
@@ -493,24 +494,14 @@ func _ready() -> void:
 	_region_panel.setup(_state, _loader)
 	_region_panel.attach(_windows, _map_view)
 
-	# V4.6. Task 4's read-only surface over the commodity layer, in the Economy
-	# cluster beside the region and city registers -- panel-system.md §16's rule
-	# that a cluster is the domain of the decision, and this is the same one: what
-	# the country makes, wants and buys in is an economic reading, not a
-	# diplomatic one. Read-only (no acted signal, people_panel's shape): Task 4
-	# ships no verb, so there is nothing here a button could do, and the two map
-	# modes are reached through the legend's own switcher because they are
-	# registry entries -- a second mode control on this panel would be the
-	# hand-written list V2.1a spent a block deleting.
-	#
-	# KEY_H rather than a mnemonic: C is the Diary, K the Agenda, M the map clear,
-	# S the save dialog and G Politics, so every letter this window's name
-	# suggests was already taken. H was free and is used for nothing else, which
-	# is the whole criterion -- the drawer's tooltip and the key press both read
-	# it off this one call.
-	_commodities_panel = CommoditiesPanel.new()
-	_windows.register("commodities", tr("Commodities"), _commodities_panel, KEY_H, ICONS + "inventory_2.svg")
-	_commodities_panel.setup(_state, _loader)
+	# V5.3 screen 5 (the author's C): one read-only tab per modelled sector, beside the
+	# overview. The Commodities window retired into them: its goods are each tab's
+	# "What it makes", its shortage line the rows' "short" mark.
+	# One register() per tab, the id a literal: the strip's and the outliner's tests read
+	# the registered windows off these calls.
+	_windows.register("sector_agriculture", Labels.sector("agriculture"), SectorsShell.tab(self, "agriculture"), KEY_NONE, ICONS + "factory.svg")
+	_windows.register("sector_industry", Labels.sector("industry"), SectorsShell.tab(self, "industry"), KEY_NONE, ICONS + "factory.svg")
+	_windows.register("sector_services", Labels.sector("services"), SectorsShell.tab(self, "services"), KEY_NONE, ICONS + "factory.svg")
 
 	# V2.8. KEY_F for fuel: E is Economy, N is Dispatches and G is Politics, so the
 	# obvious letters were gone. The key rides register() itself -- V2.1c deleted the
@@ -1833,7 +1824,8 @@ func _update_top_bar() -> void:
 		# also STOPS pending when the player answers it, and every command in this
 		# file already ends by calling this function -- so the mark clears on the
 		# press rather than a month later.
-		_hud.sidebar.show_pending(Pending.window_ids(_state, _loader, _messages))
+		# Screen 5: the sector tabs' marks with it (sectors_shell.gd).
+		SectorsShell.show_pending(self)
 		# V5.1-c2.3. Why the clock is not running, in the title bar: a decision
 		# holding it is the case a player must not have to guess.
 		_hud.title_bar.set_held(tr("A decision is waiting") if _decision_holds_clock() else "")

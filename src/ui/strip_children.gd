@@ -19,7 +19,7 @@ extends RefCounted
 const Labels = preload("res://src/ui/labels.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Trends = preload("res://src/ui/trends.gd")
-const CommoditiesPanel = preload("res://src/ui/commodities_panel.gd")
+const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Programme = preload("res://src/sim/programme.gd")
@@ -201,7 +201,7 @@ static func _short(ns, loader) -> Dictionary:
 	if loader == null:
 		return {}
 	var lines: Array = []
-	for row in CommoditiesPanel.shortages(ns, loader.commodity_goods.keys()):
+	for row in SectorGoods.shortages(ns, loader.commodity_goods.keys()):
 		var good = loader.commodity_goods.get(row["id"])
 		lines.append(Strings.t("%s: %.0f%% of demand") % [
 			String(good.name) if good != null else String(row["id"]), float(row["coverage"]) * 100.0])
