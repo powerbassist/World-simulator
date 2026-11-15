@@ -859,6 +859,7 @@ var tabled_bill := {}
 ## at its size ratchet.
 var bill_queue: Array = []
 
+
 # --- Diplomacy (V1.3a) ---------------------------------------------------------
 
 ## "action_id|TARGET" -> months remaining before that action can be used against
@@ -1562,7 +1563,11 @@ var region_history := {}
 ## `pts` into the growth deviation. absent_ok, no bump: no save before V5.3 a could
 ## hold a fund, so absent reads "no fund", the truth.
 var region_funds: Array[Dictionary] = []
-var region_closure_pts := {}  # V5.3 PR 3: a closure's lift per region (closure_region.gd); absent_ok
+## V5.3 PR 3 (c): {region_id: points} a landed plant closure adds to that region's
+## unemployment, the people-weighted mean netted out of every region; booked by
+## src/sim/closure_region.gd, read and faded by src/sim/regions.gd. absent_ok, no bump:
+## absent reads "no closure has landed", the truth for every older save.
+var region_closure_pts := {}
 ## The open funds' bill, % of GDP, rewritten by RegionFunds.tick_month() every month
 ## and read by Budget a month behind (project_bill_pct_gdp's case). absent_ok: the
 ## next tick rewrites it.
