@@ -347,6 +347,13 @@ func _test_aid_scales_with_the_firm() -> void:
 	if (Companies.headcount(ns, big) > Companies.headcount(ns, rival)) != (a > b) or a == b:
 		_fail("aid does not follow the payroll: %s jobs -> %s bn, %s jobs -> %s bn" % [
 			Companies.headcount(ns, big), a, Companies.headcount(ns, rival), b])
+	# The bill bills the verb's own intensity (mutant A4: a bill at 1.0 for every aided firm).
+	var state = _new_state()
+	var ns2 = state.nations[PLAYER]
+	Companies.execute(state, ns2, _loader.company_actions, _action("industrial_subsidy"), RIVAL, _loader)
+	var want: float = 100.0 * CompaniesAid.per_year(ns2, rival, 0.6) / ns2.gdp_eur_bn
+	if not is_equal_approx(CompaniesAid.subsidy_bill_pct_gdp(ns2, _loader), want):
+		_fail("the 0.6 subsidy bills %s %% of GDP, not %s" % [CompaniesAid.subsidy_bill_pct_gdp(ns2, _loader), want])
 
 
 func _test_impulse_reaches_growth() -> void:
