@@ -197,8 +197,7 @@ func _check_wired() -> void:
 	game["state_id"] = state.get_instance_id()
 	game["pending"] = {"month": state.year * 12 + state.month, "memory": {}, "also_due": [],
 		"lines": [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest"), Priorities._standing("majority", "seats")]}
-	BriefingDriver.open(_main, {})
-	BriefingDriver.close(_main)
+	BriefingDriver.month_end(_main, {})
 	if _card() == null:
 		_fail("wired: the month's end does not bring the card")
 	_main._hud.inbox.dismiss(_card_id())
