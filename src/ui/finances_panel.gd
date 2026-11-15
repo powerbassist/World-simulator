@@ -69,6 +69,8 @@ var _ctx := {}
 var _editor: FinanceEditor
 var _focus_wanted := false
 var _paint_due := true
+## The autumn rows were taken out of the draft when the month ended: said on the deficit line until the player acts.
+var _autumn_dropped := false
 ## The text size and the language the rows were built at: a change rebuilds them (QA's B2 on #363).
 var _scale_built := 1.0
 var _language_built := ""
@@ -210,6 +212,10 @@ func _paint(ns) -> void:
 	_paint_due = false
 	var scale := UiTheme.text_scale()
 	_ranges.custom_minimum_size.y = ranges_height(scale)
+	if FinanceAutumn.sweep(_state, _loader, _draft):
+		_autumn_dropped = true
+		_open_id = ""
+		_dirty = true
 	FinanceRows.paint_rates(_ctx)
 	_foot.refresh(_state, _loader, _draft, _price)
 	# A sheet with nothing to say (the draft discarded or tabled) is put away; one with a draft follows it.
@@ -224,11 +230,9 @@ func _paint(ns) -> void:
 	if drafted:
 		whole = _price.whole(_loader, _draft, String(FinanceRead.draft(_state, _loader, _draft.bill())["refusal"]) != "")
 	_forecast.want(whole["pending"] if drafted else _draft.pending(), drafted)
-	if drafted:
-		_with.text = Strings.t("With your changes, the ranges above included: deficit %s bn (%s %% of GDP).") % [
-			Num.f(float(whole["deficit_after_bn"]), 0), Num.f(float(whole["deficit_after_pct"]), 2)]
-	else:
-		_with.text = ""
+	var note := Strings.t("The autumn month is over: its creations and abolitions were taken out of the draft.") + " " if _autumn_dropped else ""
+	_with.text = note + (Strings.t("With your changes, the ranges above included: deficit %s bn (%s %% of GDP).") % [
+		Num.f(float(whole["deficit_after_bn"]), 0), Num.f(float(whole["deficit_after_pct"]), 2)] if drafted else "")
 	for child in _ranges.get_children():
 		_ranges.remove_child(child)
 		child.queue_free()
@@ -319,6 +323,7 @@ func _put_sheet_away() -> void:
 
 
 func _on_discard() -> void:
+	_autumn_dropped = false
 	_draft.revert()
 	_open_id = ""
 	_stamp = ""
@@ -332,6 +337,7 @@ static func ranges_height(scale: float) -> float:
 
 ## A draft move: the figures repaint in place, the rows stay where they are.
 func _on_moved() -> void:
+	_autumn_dropped = false
 	_paint_due = true
 
 
@@ -384,6 +390,7 @@ func _on_table(force := false) -> void:
 	var tabling := FinanceBill.table(_state, _loader, _draft.bill(), force)
 	# A refusal keeps the draft on the rows; a tabled bill clears it.
 	if bool(tabling.get("tabled", false)):
+		_autumn_dropped = false
 		_draft.revert()
 		_put_sheet_away()
 		_open_id = ""

@@ -92,7 +92,7 @@ func refresh(state, loader, draft, price) -> void:
 	var text: String = Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
 		money % [EffectsStrip.money_text(float(whole["spending_bn"])), EffectsStrip.money_text(float(whole["revenue_bn"]))] + " · " + \
 		Strings.t("the Assembly divides on %s") % DateText.day_month(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
-	# The autumn bill's rows are named in the sentence (their price waits on the sim's read of a birth).
+	# The autumn bill's rows are named in the sentence (their money is in the totals, priced by FinanceBill.preview).
 	var autumn: Array = []
 	for kind in draft.births():
 		autumn.append(Strings.t("creation of %s") % Strings.row_name("taxes", ns.tax_library[kind]))
@@ -114,6 +114,8 @@ func refresh(state, loader, draft, price) -> void:
 static func reason(flag: String) -> String:
 	if flag == "already_tabled":
 		return Strings.t("Another bill holds this month's slot.")
+	if flag == "autumn":
+		return Strings.t("A tax is created or abolished only in the autumn month.")
 	return GoalRows.reason_text(flag)
 
 

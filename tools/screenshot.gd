@@ -499,7 +499,7 @@ var _books_row := ""
 var _books_draft := false
 ## --books-sheet: the bill's sheet open over the Books page on the picture's draft (health +1.5, education -0.5, VAT +2).
 var _books_sheet := false
-## --books-autumn: the autumn month, Books page: a creation (plastic packaging tax) and an abolition (tobacco duty) drafted; with --books-sheet the sheet open on them.
+## --books-autumn: the autumn month, Books page: a creation (plastic packaging tax) and an abolition (sugar drinks levy) drafted; with --books-sheet the sheet open on them.
 var _books_autumn := false
 var _books_tabled := false
 var _books_refused := false

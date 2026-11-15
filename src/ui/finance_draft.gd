@@ -157,6 +157,17 @@ func bill() -> Dictionary:
 	return out
 
 
+## The autumn rows go (the month is over): every birth and abolition leaves the draft, the ordinary rows stay.
+## Returns whether anything left.
+func drop_autumn() -> bool:
+	var had := not _created.is_empty() or not _abolished.is_empty()
+	for kind in _created:
+		(_edited[TAX] as Dictionary).erase(kind)
+	_created = {}
+	_abolished = []
+	return had
+
+
 ## The kinds put in force: {kind: rate}.
 func births() -> Dictionary:
 	var out := {}

@@ -17,6 +17,8 @@ const Budget = preload("res://src/sim/budget.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Num = preload("res://src/ui/num.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
+const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const FinanceFoot = preload("res://src/ui/finance_foot.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
 
@@ -53,6 +55,7 @@ func _process(_delta: float) -> bool:
 			_check_taking_a_birth_back()
 			_check_an_abolition()
 			_check_births_and_abolitions_are_priced()
+			_check_the_autumn_rows_leave_when_the_month_ends()
 			_check_a_bill_at_vote_locks_its_births()
 		5:
 			return _finish()
@@ -223,6 +226,10 @@ func _check_births_and_abolitions_are_priced() -> void:
 	var gone_gain := EffectsStrip.money_text(EffectsStrip.balance_bn(now, FinanceBill.preview(_state, {"abolish": ["tobacco_duty"]})))
 	if gone_row == null or not _text_of(gone_row).contains(gone_gain):
 		_fail("the abolition row does not show its own balance %s" % gone_gain)
+	# Neither autumn row names who is for and against: no chip under a creation or an abolition.
+	for autumn_row in [birth_row, gone_row]:
+		if autumn_row != null and (_text_of(autumn_row).contains("▲") or _text_of(autumn_row).contains("▼")):
+			_fail("an autumn row carries for/against chips: %s" % _text_of(autumn_row))
 	var gone_live := float(ns.tax_rates_pct["tobacco_duty"])
 	var places := TaxLibrary.step_decimals(ns, "tobacco_duty")
 	if gone_row == null or not _text_of(gone_row).contains("%s → %s" % [LedgerBox.text(gone_live, places), LedgerBox.text(0.0, places)]):
@@ -247,6 +254,35 @@ func _check_births_and_abolitions_are_priced() -> void:
 		var got: Dictionary = price.after_bill(bill)
 		if not is_equal_approx(float(got["deficit_pct_gdp"]), float(FinanceBill.preview(_state, bill)["deficit_pct_gdp"])):
 			_fail("bill %d past the cache's keep is priced as another bill" % i)
+
+
+## QA's T1 on #371: a draft with autumn rows must not outlive the autumn month (nothing would reach them to take them back
+## and tabling refuses them as "autumn"): when the month ends they leave the draft, the ordinary rows stay, the page says so
+## and the refusal, if it is ever shown, names the autumn.
+func _check_the_autumn_rows_leave_when_the_month_ends() -> void:
+	var ns = _state.player()
+	var autumn_month := int(_state.month)
+	var draft = _panel.shared_draft()
+	draft.revert()
+	draft.set_create(_absent, 0.2)
+	draft.toggle_abolish("sugar_drinks_levy")
+	draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 0.5)
+	_state.month = autumn_month + 1
+	_panel._paint(ns)
+	if not draft.births().is_empty() or not draft.abolitions().is_empty():
+		_fail("the autumn rows outlived the autumn month: %s" % [draft.bill()])
+	if draft.count() != 1:
+		_fail("the ordinary row did not stay (%d rows)" % draft.count())
+	if not _panel._with.text.contains("autumn month is over"):
+		_fail("the page does not say the autumn rows were taken out: %s" % _panel._with.text)
+	if not FinanceFoot.reason("autumn").contains("autumn month"):
+		_fail("a refusal for the autumn does not name the month")
+	_panel._on_moved()
+	_panel._paint(ns)
+	if _panel._with.text.contains("autumn month is over"):
+		_fail("the note outlives the player's next move")
+	_state.month = autumn_month
+	draft.revert()
 
 
 func _check_a_bill_at_vote_locks_its_births() -> void:
@@ -276,8 +312,11 @@ func _check_a_bill_at_vote_locks_its_births() -> void:
 		_fail("an abolition at vote opened its editor")
 	var abolish_cell := _panel._ctx["cells"]["tax_rates_pct:tobacco_duty"][0] as Label
 	_panel._paint(ns)
-	if not abolish_cell.text.contains("0"):
-		_fail("an abolition at vote reads '%s'" % abolish_cell.text)
+	var rate_now := float(ns.tax_rates_pct["tobacco_duty"])
+	var places := TaxLibrary.step_decimals(ns, "tobacco_duty")
+	var want_cell: String = Strings.t("from %s to %s") % [LedgerBox.text(rate_now, places), LedgerBox.text(0.0, places) + FinanceRows.unit_text(String(ns.tax_library["tobacco_duty"]["unit"]))]
+	if abolish_cell.text != want_cell:
+		_fail("an abolition at vote reads '%s', wanted '%s'" % [abolish_cell.text, want_cell])
 	_panel._on_withdraw()
 
 
