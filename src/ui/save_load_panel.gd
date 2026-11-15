@@ -6,7 +6,7 @@ extends PanelContainer
 ## Doesn't touch SaveManager itself -- like every other panel it reads state
 ## and never writes it (docs/engine-decision.md Rule 2). Saving and loading
 ## are commands that go back to main.gd via signal, same shape
-## Budget.commit()/BudgetPanel.committed uses; main.gd is the one place that
+## Budget.commit()/FinancesPanel.committed uses; main.gd is the one place that
 ## owns both the GameState and the Clock, which loading has to replace/rewind
 ## together.
 ##

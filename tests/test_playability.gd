@@ -922,7 +922,6 @@ func _check_no_panel_can_destroy_its_window() -> void:
 		"calendar": "_calendar_panel",
 		"companies": "_companies_panel",
 		"people": "_people_panel",
-		"budget": "_budget_panel",
 		"politics": "_government_panel",
 		"society": "_polling_panel",
 		"legislature": "_law_panel",
@@ -973,7 +972,6 @@ func _check_council_vote_leaves_a_record() -> void:
 	# State the comparison rather than asserting the presence alone: this check is
 	# about bloc_panel matching the other six, so it has to know they still exist.
 	for pair in [
-		["_budget_panel", "committed"],
 		["_law_panel", "proposed"],
 		["_nation_panel", "acted"],
 		["_companies_panel", "acted"],

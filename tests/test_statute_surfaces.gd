@@ -82,39 +82,6 @@ func _process(_delta: float) -> bool:
 	return false
 
 
-## V5.3 e: the panels on a tax code that is not today's five -- a sixth kind in force (as
-## Content's rows will put one) and the wealth tax abolished. The Tax Code shows one row per
-## kind in force, the born kind named by its library row and capped by its range; the
-## Budget and the overview refresh on it without a missing-key error. Restored after.
-func _check_a_reshaped_code(panel, state) -> void:
-	var ns = state.player()
-	var row: Dictionary = (ns.tax_library["vat"] as Dictionary).duplicate(true)
-	row["id"] = "test_levy"
-	row["name"] = "Test levy"
-	row["rate_range_pct"] = [0.0, 2.0]
-	ns.tax_library["test_levy"] = row
-	ns.tax_rates_pct["test_levy"] = 0.7
-	var wealth := float(ns.tax_rates_pct["wealth"])
-	ns.tax_rates_pct.erase("wealth")
-	Budget.recompute(state, ns)
-	panel._refresh()
-	if panel._sliders.has("wealth") and (panel._sliders["wealth"] as Control).is_visible_in_tree():
-		_fail("the Tax Code still shows a row for the abolished wealth tax")
-	if not panel._sliders.has("test_levy") or float(panel._sliders["test_levy"].max_value) != 2.0:
-		_fail("the Tax Code has no test levy row capped by its kind's range")
-	if panel._label_for("test_levy") != "Test levy":
-		_fail("the born kind reads '%s', not its library name" % panel._label_for("test_levy"))
-	_main._budget_panel.mark_dirty()
-	_main._budget_panel._refresh()
-	_main._overview_panel.mark_dirty()
-	_main._overview_panel._refresh()
-	ns.tax_rates_pct.erase("test_levy")
-	ns.tax_library.erase("test_levy")
-	ns.tax_rates_pct["wealth"] = wealth
-	Budget.recompute(state, ns)
-	panel._refresh()
-
-
 func _run() -> void:
 	if _main._state == null:
 		_fail("main scene did not build a GameState")
@@ -122,36 +89,11 @@ func _run() -> void:
 	var state = _main._state
 	var loader = _main._loader
 	var ns = state.player()
-	# The Tax Code tab retired (V5.3 Finances slice 2): its panel class is driven standalone here until it goes.
-	var panel = preload("res://src/ui/tax_panel.gd").new()
-	_main.add_child(panel)
-	panel.hide()  # as the window it stood in was, closed: the abolished-wealth check below reads a hidden page
 	var briefing = _main._briefing
 	var law_panel = _main._law_panel
 
-	# --- (a) The tax panel class: rows off the register --------------------
-	panel.setup(state, loader)
-	panel._on_revert()
-	panel._refresh()
-	var base_rows: int = ns.tax_rates_pct.size() + 1  # the brackets lever
-	if _slider_count(panel) != base_rows:
-		_fail("expected %d lever rows off the register + brackets, found %d" % [base_rows, _slider_count(panel)])
-	# THE RATE AS A NUMBER: every row prints a figure that parses as one.
-	for key in panel._lever_keys():
-		var text := String(panel._lever_values[key].text)
-		if text.contains("—") or not text.is_valid_float():
-			_fail("the rate row for '%s' prints '%s', which is not a number" % [key, text])
-	if float(panel._sliders["income"].max_value) != 70.0:
-		_fail("the income slider lost its authored ceiling")
-	if not is_equal_approx(float(panel._sliders["wealth"].max_value), float(ns.tax_library["wealth"]["rate_range_pct"][1])):
-		_fail("the wealth slider must read the model bound, not a copied number")
-
-	_check_a_reshaped_code(panel, state)
-
-	# The player-composed tax retired at V5.3 e (the tax library replaces it):
-	# the Tax Code no longer offers to invent one.
-	if _find_button(panel, "Propose a tax") != null:
-		_fail("the Tax Code still offers Propose a tax -- the composed birth is retired")
+	# (a) and (b), the Tax Code panel's rows and the reshaped code, went with the panel (Finances slice 5): the Books rows are pinned by
+	# test_finances_panel.gd and test_finance_editor.gd.
 
 	# --- (c) The briefing popup (an ownership bill asks for it): channels, price, offended blocs ------
 	var surtax = _law_by_id(loader, "high_earner_surtax")
@@ -649,10 +591,6 @@ func _law_by_id(loader, id: String):
 		if String(law.id) == id:
 			return law
 	return null
-
-
-func _slider_count(panel) -> int:
-	return panel._sliders.size()
 
 
 ## The pin's shape, the test_characters/test_commodities scan idiom pointed at

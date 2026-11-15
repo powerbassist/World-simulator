@@ -13,7 +13,7 @@ extends PanelContainer
 ## (Diplomacy.execute) and the panel still never writes state itself; see
 ## docs/engine-decision.md Rule 2 and docs/diplomacy-model.md.
 ##
-## Built in code, like the other panels -- see budget_panel.gd's placement note.
+## Built in code, like the other panels; placement is the owner's (window_manager.gd's register()).
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")

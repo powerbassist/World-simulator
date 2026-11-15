@@ -24,8 +24,6 @@ const K = preload("res://src/sim/tax_constants.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Unrest = preload("res://src/sim/unrest.gd")
-const BudgetPanel = preload("res://src/ui/budget_panel.gd")
-const TaxPanel = preload("res://src/ui/tax_panel.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 
@@ -51,7 +49,6 @@ func _init() -> void:
 	_check_the_zero_rate_erosion_bites()
 	_check_the_base_factor_has_one_formula()
 	_check_progressivity_is_bounded()
-	_check_the_wealth_lever_matches_the_model_bound()
 	_check_the_wealth_scale_is_not_incomes()
 	_check_the_policy_offset_moves_both_ways()
 	_check_the_offset_is_blind_to_what_section_6_does_not_own()
@@ -223,24 +220,6 @@ func _check_progressivity_is_bounded() -> void:
 	ns.tax_progressivity = 500.0
 	if Tax.progressivity(ns) != K.PROGRESSIVITY_MAX:
 		_fail("a state carrying an out-of-band schedule was not clamped on read")
-
-
-## The model bound and the control cannot drift apart. Since V5.3 e a tax kind's slider
-## reads its library row's rate_range_pct ceiling, so the check is that tax_panel.LEVER_MAX
-## carries no kind's ceiling of its own: a copied number there would shadow the row (the
-## live slider against the row is tests/test_statute_surfaces.gd's). V4.2 T5 moved the
-## tax levers off budget_panel into their own surface, so the identity moved with them --
-## and the old panel staying clean of tax keys is pinned beside it, so a lever cannot
-## quietly grow back in two places.
-func _check_the_wealth_lever_matches_the_model_bound() -> void:
-	for key in _loader.taxes:
-		if TaxPanel.LEVER_MAX.has(key):
-			_fail("tax_panel.LEVER_MAX copies the '%s' ceiling its library row owns" % key)
-	if float(TaxPanel.LEVER_MAX[TaxPanel.PROGRESSIVITY_KEY]) != K.PROGRESSIVITY_MAX:
-		_fail("the bracket slider and PROGRESSIVITY_MAX disagree")
-	for key in _loader.taxes:
-		if BudgetPanel.LEVER_MAX.has(key) or BudgetPanel.LEVER_LABELS.has(key):
-			_fail("budget_panel still carries the '%s' tax lever the Tax Code window owns" % key)
 
 
 ## THE UNITS DECISION, PINNED. A wealth rate is not on income's scale -- its whole

@@ -51,10 +51,11 @@ func _run() -> void:
 ## and must answer with a card saying so and when it is voted.
 func _check_budget_commit_answers() -> void:
 	var before_count: int = _main._hud.inbox.card_count()
-	var panel = _main._budget_panel
-	# Through the lever, as a player does: it is a row of the one draft the Budget's Commit tables.
-	panel._sliders["health"].value = float(_main._state.player().spending_pct_gdp["health"]) + 1.0
-	panel._on_commit()
+	_main._windows.open("finances")
+	var page = _main._windows.frame("finances")._content
+	# Through the draft, as the row's slider writes it: the footer's Table tables the one draft.
+	page.shared_draft().set_value("spending_pct_gdp", "health", float(_main._state.player().spending_pct_gdp["health"]) + 1.0)
+	page._on_table()
 	if _main._hud.inbox.card_count() != before_count + 1:
 		_fail("a committed budget pushed no acknowledgment card")
 		return

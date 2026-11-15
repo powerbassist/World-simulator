@@ -22,15 +22,15 @@ extends RefCounted
 
 const Sectors = preload("res://src/sim/sectors.gd")
 const DK = preload("res://src/sim/domains_constants.gd")
-const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
+const FinanceSectors = preload("res://src/ui/finance_sectors.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const IndustryVerbs = preload("res://src/ui/industry_verbs.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
-const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 
 
 ## The section, at the end of `box` (the opened region). Nothing without sector data.
@@ -144,8 +144,8 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label, free: L
 		return
 	var unit := _unit(panel._loader, line, sector_id)
 	var quantity := Strings.t("%s, here %s -> %s %s; other regions %s.") % [_name(panel._loader, line, sector_id),
-		BudgetSectors.quantity_text(float(est["region_before"])), BudgetSectors.quantity_text(float(est["region_after"])), unit,
-		BudgetSectors.quantity_text(float(est["others_after"]))]
+		FinanceSectors.quantity_text(float(est["region_before"])), FinanceSectors.quantity_text(float(est["region_after"])), unit,
+		FinanceSectors.quantity_text(float(est["others_after"]))]
 	var rest := int(est["rest_months"])
 	if first != "" and first != String(region.id):
 		quantity = Strings.tn("Takes it from %s, which then waits %d month.", "Takes it from %s, which then waits %d months.", rest) % [
@@ -171,12 +171,12 @@ static func _sector(loader, line: String, sector_id: String) -> Dictionary:
 ## then the sector's, since two lines may name a sector alike.
 static func _name(loader, line: String, sector_id: String) -> String:
 	var s := _sector(loader, line, sector_id)
-	return Strings.t("%s: %s") % [Strings.t(String(BudgetPanel.LEVER_LABELS.get(line, line))),
+	return Strings.t("%s: %s") % [Labels.portfolio(line),
 		Strings.row("domains", sector_id, "name", String(s.get("name", sector_id)))]
 
 
 static func _unit(loader, line: String, sector_id: String) -> String:
-	return BudgetSectors.unit_text(_sector(loader, line, sector_id))
+	return FinanceSectors.unit_text(_sector(loader, line, sector_id))
 
 
 static func _region_name(panel, ns, region_id: String) -> String:

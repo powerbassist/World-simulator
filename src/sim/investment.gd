@@ -290,9 +290,9 @@ static func _read_field(state, ns, field: String, sector: String) -> float:
 ## and record the result for the panel to read. Companies.execute()'s shape.
 ##
 ## IT DOES NOT GO THROUGH Budget.commit(), AND THAT IS DELIBERATE RATHER THAN
-## CONVENIENT. docs/tax-model.md section 11 records a live bug: budget_panel.gd
-## refreshes from a `_pending` captured in setup(), so anything that commits a
-## budget outside that panel's own sliders leaves it stale and offering to undo the
+## CONVENIENT. docs/tax-model.md section 11 records a live bug: the Budget tab (retired at
+## V5.3 Finances slice 5) refreshed from a `_pending` captured in setup(), so anything that committed a
+## budget outside its own sliders left it stale and offering to undo the
 ## commit. The obvious alternative shape for this lever -- three more sliders on the
 ## budget panel -- walks straight into it. Writing an own register and letting the
 ## cost arrive as a computed line means this verb cannot meet that bug at all.

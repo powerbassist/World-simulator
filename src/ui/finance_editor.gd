@@ -22,6 +22,7 @@ const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const FinanceSectors = preload("res://src/ui/finance_sectors.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -52,6 +53,8 @@ var _brackets: HSlider
 var _brackets_box: LineEdit
 var _lo := 0.0
 var _hi := 0.0
+## A spending line's sectors (slice 5), drawn from the draft again whenever the slider moves.
+var _tile: FinanceSectors
 
 
 func setup(state, loader, draft, price, row_channel: String, row_key: String) -> void:
@@ -105,6 +108,11 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 		_verb(Strings.t("Take it back"), "TakeBack", func() -> void: _draft.clear_create(key))  # i18n: ok a node name
 	elif channel == FinanceDraft.TAX and autumn and in_force and ns.tax_library[key].has("rate_range_pct"):
 		_verb(Strings.t("Abolish this tax"), "AbolishTax", func() -> void: _draft.toggle_abolish(key))  # i18n: ok a node name
+	if channel == FinanceDraft.SPENDING and FinanceSectors.has_sectors(loader, key):
+		_tile = FinanceSectors.new()
+		add_child(_tile)
+		_tile.setup(state, loader, draft, key, func(target: float) -> void: _write(channel, key, target), _hi, LINE_STEP)
+		_tile.changed.connect(moved.emit)
 	if channel == FinanceDraft.TAX:
 		var yields: Dictionary = FinanceRead.step_yields(ns).get(key, {})
 		if yields.has("up_bn"):
@@ -161,6 +169,8 @@ func _write(lever_channel: String, lever_key: String, value: float) -> void:
 	else:
 		_draft.set_value(lever_channel, lever_key, clampf(value, _lo, _hi))
 	_sync()
+	if _tile != null:
+		_tile.refresh()
 	moved.emit()
 
 

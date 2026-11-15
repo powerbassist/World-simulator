@@ -244,13 +244,17 @@ func _watch() -> bool:
 
 ## The seventh month. The budget tab is open in the workspace and the briefing
 ## for a bill is open over it, both in reach of the pointer (V5.1-c2.2: the
-## budget is docked and its Commit sits at its right end, clear of the centred
+## Books page is docked and its footer verb sits at its right end, clear of the centred
 ## briefing); then real time reaches the 1st
 ## and, while the month closes, the player commits the budget, proposes the
 ## bill, pauses, picks speed 3 and asks for the save/load dialog -- in that order,
 ## the clicks first so no dialog they summon covers them on the replay.
 func _prepare_under_fire() -> void:
-	_b._windows.open("budget")
+	_b._windows.open("finances")
+	# A row drafted on the Books page: its footer's "Table the changes" is what the player commits (Finances slice 5).
+	var page = _b._windows.frame("finances")._content
+	page.shared_draft().set_value("spending_pct_gdp", "health", float(_b._state.player().spending_pct_gdp["health"]) + 1.0)
+	page._dirty = true
 	var law = _b._loader.laws[0]
 	_law_name = String(law.law_name)
 	_b._briefing.open_for_law(law, _b._state, _b._loader)
@@ -260,7 +264,7 @@ func _prepare_under_fire() -> void:
 
 
 func _aim_and_fire() -> bool:
-	var commit: Button = _b._budget_panel._commit_button
+	var commit: Button = _b._windows.frame("finances")._content._foot.get_node("Table")
 	var propose := _find_button(_b._briefing, "Propose the bill")
 	if propose == null:
 		_fail("premise: the briefing has no 'Propose the bill' button")
@@ -307,7 +311,7 @@ func _aim_and_fire() -> bool:
 func _watch_under_fire() -> bool:
 	if _b._month_runner.running():
 		var labels := _effect_labels()
-		if labels.has("Budget change") or labels.has(_law_name):
+		if labels.has("Finance bill") or labels.has(_law_name):
 			_fail("a command given while the month closed was applied mid-month: %s" % [labels])
 			return _finish()
 		if _b._clock.speed != _speed_before or _b._save_load_panel.visible:
@@ -321,15 +325,15 @@ func _watch_under_fire() -> bool:
 	if String(_at_month_end["dump"]) != _dump(_bare):
 		_fail("the month closed under fire is not the month tick_month() runs on a bare state")
 	var labels_then: Array = _at_month_end["effects"]
-	if labels_then.has("Budget change") or labels_then.has(_law_name):
+	if labels_then.has("Finance bill") or labels_then.has(_law_name):
 		_fail("at the month's end a command given during it was already applied: %s" % [labels_then])
 	if int(_at_month_end["speed"]) != _speed_before or bool(_at_month_end["save_dialog"]):
 		_fail("at the month's end a key given during it was already acted on")
 
 	# After it: every command, once.
 	var labels_now := _effect_labels()
-	if labels_now.count("Budget change") != 1:
-		_fail("the budget commit given during the month landed %d times after it, not once" % labels_now.count("Budget change"))
+	if labels_now.count("Finance bill") != 1:
+		_fail("the budget commit given during the month landed %d times after it, not once" % labels_now.count("Finance bill"))
 	if labels_now.count(_law_name) != 1:
 		_fail("the bill proposed during the month landed %d times after it, not once" % labels_now.count(_law_name))
 	if _b._clock.speed != 3:

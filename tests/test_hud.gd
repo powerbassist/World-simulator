@@ -102,7 +102,7 @@ func _check_icons_load() -> void:
 	var host := Control.new()
 	UiTheme.apply(host, Color("#2596FF"))
 	var sidebar = _main._hud.sidebar
-	sidebar.show_pending(["budget"])
+	sidebar.show_pending(["finances"])
 	var pill: Label = sidebar._pills["finances"]
 	if not pill.visible:
 		_fail("a pending budget did not show a count on Finances")

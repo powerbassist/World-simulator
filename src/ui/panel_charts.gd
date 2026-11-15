@@ -11,9 +11,9 @@ extends VBoxContainer
 ## current state, never a series computed here:
 ##   OVERVIEW  the term in four small multiples: approval (the polls), growth,
 ##             deficit, unemployment;
-##   ECONOMY   growth, unemployment and debt over the last ten years of history;
-##   BUDGET    where the committed money goes, one stacked share; then revenue
-##             against spending over the term (V5.2 b+);
+##   ECONOMY   growth, unemployment and debt over the last ten years of history; then
+##             revenue against spending over the term (V5.2 b+, moved from the Budget
+##             tab with it at Finances slice 5);
 ##   SOCIETY   approval over the term (the polls), then each bloc's; then what the
 ##             country is thinking about, as bars (V5.2 b+);
 ##   SEATS     the assembly by party, with the majority marked;
@@ -27,13 +27,12 @@ const ChartStyle = preload("res://src/ui/chart_style.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
-const C = preload("res://src/sim/economy_constants.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Regions = preload("res://src/sim/regions.gd")
 
-enum { OVERVIEW, ECONOMY, BUDGET, SOCIETY, SEATS, REGIONS }
+enum { OVERVIEW, ECONOMY, SOCIETY, SEATS, REGIONS }
 
 ## Ten years: a decade of monthly history is as far back as a reader compares.
 const ECONOMY_MONTHS := 120
@@ -82,8 +81,6 @@ func _signature_of(state) -> String:
 	var ns = state.player()
 	var game := "%d/" % state.get_instance_id()
 	match _kind:
-		BUDGET:
-			return game + str(ns.spending_pct_gdp, ns.total_spending_pct_gdp, ns.debt_service_pct_gdp, state.history.size())
 		SEATS:
 			return game + str(ns.seats_by_party)
 	return game + "%d/%d" % [state.history.size(), int(ns.months_in_term)]
@@ -104,8 +101,6 @@ func _build(state) -> void:
 			_line(grid, Strings.t("Growth"), ChartSeries.values(years, "growth_annual_pct"), years, {"unit": "%", "zero": true})
 			_line(grid, Strings.t("Unemployment"), ChartSeries.values(years, "unemployment_pct"), years, {"unit": "%"})
 			_line(grid, Strings.t("Debt"), ChartSeries.values(years, "debt_to_gdp_pct"), years, {"unit": Strings.t("% of GDP")})
-		BUDGET:
-			ChartKit.stack(self, Strings.t("Where the money goes, % of GDP"), _spending_parts(state.player()))
 			# The gap between the two lines is the deficit, month by month: the one
 			# figure the strip prints, drawn as what makes it.
 			var term := ChartSeries.term_window(state)
@@ -161,22 +156,6 @@ func _grid(columns: int) -> GridContainer:
 func _line(parent: Control, title: String, values: PackedFloat64Array, entries: Array, opts: Dictionary) -> void:
 	var box := ChartKit.line(parent, title, [{"label": title, "values": values}], ChartSeries.months(entries), opts)
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-
-## The five spending lines in their own order, then debt interest and the rest of
-## the state, so the bar is the whole of spending and its parts add up.
-func _spending_parts(ns) -> Array:
-	var labels: Dictionary = _panel.get_script().get_script_constant_map().get("LEVER_LABELS", {})
-	var parts: Array = []
-	var named := 0.0
-	for key in C.SPENDING_KEYS:
-		var v := float(ns.spending_pct_gdp.get(key, 0.0))
-		named += v
-		parts.append({"label": Strings.t(String(labels.get(key, key))), "value": v})
-	parts.append({"label": Strings.t("Debt interest"), "value": float(ns.debt_service_pct_gdp)})
-	named += float(ns.debt_service_pct_gdp)
-	parts.append({"label": Strings.t("Everything else"), "value": maxf(float(ns.total_spending_pct_gdp) - named, 0.0)})
-	return parts
 
 
 ## Parties in the data's order, a party without seats included, so a party keeps

@@ -15,6 +15,7 @@ extends RefCounted
 const Budget = preload("res://src/sim/budget.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const FinanceOfWhich = preload("res://src/ui/finance_of_which.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 
@@ -39,6 +40,7 @@ static func read(state) -> Dictionary:
 		"service_bn": float(now["debt_service_pct_gdp"]) / 100.0 * gdp,
 	}
 	out["deficit_bn"] = float(out["spending_bn"]) - float(out["revenue_bn"])
+	out["of_which"] = FinanceOfWhich.read(now)
 	var lines := []
 	var lines_bn := 0.0
 	for key in EK.SPENDING_KEYS:

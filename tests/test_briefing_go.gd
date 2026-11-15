@@ -158,7 +158,7 @@ func _plan() -> Array:
 	# #288: a sector slipping: its Go opens the line, on the raise.
 	cases.append({"kind": "sector", "setup": func() -> String:
 		ns.sector_drift["base_gdp_per_head"] = float(ns.gdp_eur_bn) / float(ns.population) * 1.5
-		_main._budget_panel.mark_dirty()
+		_main._windows.mark_all_dirty()
 		return "health|hospitals"})
 	# A live entry: chosen now, its "Work on it" is the verb.
 	cases.append({"kind": "programme", "setup": func() -> String:
@@ -274,7 +274,7 @@ func _check(c: Dictionary) -> void:
 		var row: Button = laws._rows.get_child(laws._rows.get_child_count() - 1).get_child(0)
 		if not row.button_pressed or laws.selected_id() != picked:
 			_fail("bloc: picking a law under the filter did not select it")
-		_main._windows.open("budget")
+		_main._windows.open("finances")
 		if laws.bloc_filter != "":
 			_fail("bloc: the filter outlived the tab")
 

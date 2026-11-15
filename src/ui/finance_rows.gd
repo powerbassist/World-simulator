@@ -14,6 +14,8 @@ const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
+const FinanceOfWhich = preload("res://src/ui/finance_of_which.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -102,6 +104,7 @@ static func revenue(box: Control, book: Dictionary, state, loader, open_groups: 
 			var line := PanelKit.plain_line(box, Strings.t("Not in force, creatable in %s: %s") % [DateText.month_long(month), names], PanelKit.Tone.DIM)
 			line.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_header(box, MUTED, Strings.t("Other revenue"), bn_text(float(book["other_revenue_bn"])), Strings.t("not set here"), _other_revenue_tip(ctx))
+	FinanceOfWhich.build(box, book["of_which"]["revenue"], "other_revenue", ctx)
 
 
 ## The spending column: the five lines, then the debt service and what no line sets.
@@ -111,8 +114,12 @@ static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
 		var row := _row()
 		row.add_child(_swatch(line_color(String(line["key"]))))
 		var id := row_id(FinanceDraft.SPENDING, String(line["key"]))
-		var name := _name_cell(row, Labels.portfolio(String(line["key"])), id, SPENDING_NAME_WIDTH, ctx)
+		# A line with a sector slipping says so while closed: a warning on a closed row is unseen (the Budget's mark).
+		var shown := Labels.portfolio(String(line["key"]))
+		var name := _name_cell(row, Strings.t("%s (!)") % shown if (ctx.get("slipping", []) as Array).has(String(line["key"])) else shown, id, SPENDING_NAME_WIDTH, ctx)
 		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		# What a briefing's Go on the deficit lands on (acts_on.gd): any line's slider acts on the balance.
+		ActsOn.tag(name, ["deficit", "balance"])
 		var pct := _cell(row, "", UiTheme.CAPTION, PCT_WIDTH)
 		# At 130 % the pane has no room for the figure beside the name: it is the row's hover (who-pays does the same).
 		pct.visible = bool(ctx["wide"])
@@ -126,7 +133,8 @@ static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
 	_header(box, SERVICE, Strings.t("Debt service"), bn_text(float(book["service_bn"])), Strings.t("not set here"),
 		Strings.t("Interest on the debt: it follows the debt and the rates the markets ask."))
 	_header(box, MUTED, Strings.t("Other spending"), bn_text(float(book["other_spending_bn"])), Strings.t("not set here"),
-		Strings.t("Not detailed in the game yet: everything the state spends that none of the five lines sets, kept as one figure."))
+		Strings.t("Everything the state spends that none of the five lines sets. The parts that are not zero are listed under it (the Union, deployments, subsidies and the like); the rest of the authored figure is not split."))
+	FinanceOfWhich.build(box, book["of_which"]["spending"], "other_spending", ctx)
 
 
 static func _row() -> HBoxContainer:
@@ -342,5 +350,5 @@ static func paint_rates(ctx: Dictionary) -> void:
 ## begins so that revenue equals the nation's real figure, and what the laws in force add.
 static func _other_revenue_tip(ctx: Dictionary) -> String:
 	var parts: Array = ctx["parts"]["revenue"]
-	return Strings.t("Not detailed in the game yet. %s bn of it is revenue no rate here sets (social contributions, local taxes), and %s bn is what laws in force add.") % [
+	return Strings.t("%s bn of it is revenue no rate here sets (social contributions, local taxes), and %s bn is what laws in force add. Tariffs and dividends are listed under it when there are any; the rest is not split.") % [
 		Num.f(float(parts[0]["bn"]), 0), Num.f(float(parts[1]["bn"]), 1)]

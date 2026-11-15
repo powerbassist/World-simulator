@@ -9,7 +9,7 @@ extends PanelContainer
 ## This is deliberately dumb. It holds no game state, never reads GameState, and
 ## its content is whatever Control it was handed. That is what let U2's docked
 ## panels become windows and then tabs without one of them being edited:
-## budget_panel.gd still builds the same tree it built when it was a tab in U2.
+## the Budget tab built the same tree it built as a tab in U2 until it retired (Finances slice 5).
 ##
 ## The page is the plate, not the dock: the fold mark is the page's own variation,
 ## so it says which tab has its verb out of sight.

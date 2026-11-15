@@ -19,8 +19,8 @@ extends PanelContainer
 ## Persisted to user://settings.cfg with the engine's own ConfigFile. Settings
 ## that reset on every launch are not settings.
 ##
-## Built in code, like every other panel here -- see budget_panel.gd's
-## placement note.
+## Built in code, like every other panel here; placement is the owner's
+## (window_manager.gd's register()).
 
 signal closed
 
@@ -381,7 +381,7 @@ func _add_row(grid: GridContainer, label_text: String, options: Array) -> Option
 	for option in options:
 		button.add_item(str(option))
 	# item_selected rather than a Range signal, so this panel is drivable from a
-	# headless test without the frame dance budget_panel.gd needs -- see the
+	# headless test without the frame dance a slider panel needs -- see the
 	# Control-outside-the-tree gotcha in docs/engine-decision.md.
 	button.item_selected.connect(func(_index: int): _save_and_apply())
 	grid.add_child(button)

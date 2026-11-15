@@ -14,7 +14,6 @@ extends RefCounted
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
-const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 
 ## At most this many tags a choice; the rest fold into one "+N" whose title lists them.
 const TAG_MAX := 4
@@ -66,7 +65,7 @@ static func _others(key: String, value) -> Array[Dictionary]:
 				out.append(_society(String(term), float(value[term])))
 		"spending_pct_gdp":
 			for lever in value:
-				var label: String = Strings.t(String(BudgetPanel.LEVER_LABELS.get(lever, lever)))
+				var label: String = Labels.portfolio(String(lever))
 				out.append({"text": (Strings.t("%s spending up") if float(value[lever]) > 0.0 else Strings.t("%s spending down")) % label, "tone": 0})
 		"tax_rates_pct":
 			for tax in value:

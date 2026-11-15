@@ -22,6 +22,7 @@ const ResultTone = preload("res://src/ui/result_tone.gd")
 const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
 const RegionArrival = preload("res://src/ui/region_arrival.gd")
+const FinanceSectors = preload("res://src/ui/finance_sectors.gd")
 const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const Music = preload("res://src/ui/music.gd")
@@ -396,7 +397,7 @@ static func go(main, index: int) -> void:
 			main._companies_panel._scroll.scroll_vertical = 0
 		"sector":
 			main._windows.open(tab)
-			SectorWarningView.aim(main._budget_panel, subject)
+			FinanceSectors.aim(main._windows.frame(tab)._content, subject)
 		"commitment" when tab == "calendar":
 			# The Diary on the due day (2.4): a word is judged as its month begins,
 			# so its mark and its Call are on the first.
@@ -430,7 +431,7 @@ static func target_of(line: Dictionary) -> Dictionary:
 	if object.begins_with("office:"):
 		return {"tab": "politics", "acts_on": "seats"}
 	if object.begins_with("meter:"):
-		return {"tab": "budget", "acts_on": "balance"}
+		return {"tab": "finances", "acts_on": "balance"}
 	return {"tab": "calendar", "acts_on": subject}
 
 

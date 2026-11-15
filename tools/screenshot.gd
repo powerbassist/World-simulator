@@ -64,6 +64,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --bill-refused --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books spending_pct_gdp:health --books-move   (a share move drafted; add --books-draft for rows beside it)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --slipping --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --sectors --slipping --open budget
@@ -499,6 +500,7 @@ var _books_row := ""
 var _books_draft := false
 ## --books-sheet: the bill's sheet open over the Books page on the picture's draft (health +1.5, education -0.5, VAT +2).
 var _books_sheet := false
+var _books_move := false
 ## --books-autumn: the autumn month, Books page: a creation (plastic packaging tax) and an abolition (sugar drinks levy) drafted; with --books-sheet the sheet open on them.
 var _books_autumn := false
 var _books_tabled := false
@@ -968,6 +970,8 @@ func _init() -> void:
 			_books_autumn = true
 		elif args[i] == "--books-sheet":
 			_books_sheet = true
+		elif args[i] == "--books-move":
+			_books_move = true
 		elif args[i] == "--books-draft":
 			_books_draft = true
 		elif args[i] == "--books-tabled":
@@ -1064,7 +1068,8 @@ func _init() -> void:
 			# the mid-count frame is the point of the capture.
 			Motion.override = 1
 		elif args[i] == "--open" and i + 1 < args.size():
-			_open = args[i + 1]
+			# The Budget tab retired into the Books page (Finances slice 5): its old flag opens the page that holds its rows.
+			_open = "finances" if args[i + 1] == "budget" else args[i + 1]
 		elif args[i] == "--moved":
 			_moved = true
 		elif args[i] == "--industry":
@@ -1227,9 +1232,9 @@ func _process(_delta: float) -> bool:
 		_apply_view()
 	# Two frames ahead: the panel states what it proposes, the projections run to
 	# the end, and the settled panel redraws in time for the capture.
-	if _frame == _frames_wanted - 2 and not _menu and not _forecast_computing 			and _main._windows.is_open("budget"):
-		_main._budget_panel._process(0.0)
-		_main._budget_panel._forecast.drain()
+	if _frame == _frames_wanted - 2 and not _menu and not _forecast_computing 			and _main._windows.is_open("finances"):
+		_main._windows.frame("finances")._content._process(0.0)
+		_main._windows.frame("finances")._content._forecast.drain()
 	# One frame ahead: real time reaches the 1st, and the capture lands while the
 	# month is still closing (it takes ten frames or more).
 	if _month_closing and _frame == _frames_wanted - 1 and not _menu:
@@ -1399,7 +1404,7 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
-	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_sheet or _books_autumn:
+	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_sheet or _books_autumn or _books_move:
 		_stage_the_books()
 	if _moved:
 		_move_the_levers()
@@ -1409,9 +1414,10 @@ func _apply_view() -> void:
 		var drifting = _main._state.player()
 		drifting.sector_drift["base_gdp_per_head"] = float(drifting.gdp_eur_bn) / float(drifting.population) * 1.5
 		drifting.sector_drift["history"] = {"hospitals": [5.34, 5.3, 5.22, 5.1, 4.9, 4.7, 4.45]}
+		_main._windows.mark_all_dirty()  # the Books page reads the drift when it is built: build it again with the staged drift
 	if _sectors:
-		_main._budget_panel._open_line = "health"
-		_main._budget_panel.mark_dirty()
+		_main._windows.frame("finances")._content.open_row("spending_pct_gdp", "health")
+		_main._windows.frame("finances")._content.mark_dirty()
 	if _closure:
 		var ns = _main._state.player()
 		var major = Companies.majors_of(_main._loader, ns.id)[0]
@@ -1918,8 +1924,8 @@ func _soak_the_rich() -> void:
 	# Fixing it properly is a design call this session is not the place for -- what
 	# happens to a player's half-finished edits when a law lands underneath them? -- so
 	# the tool re-syncs and the bug is written down. See docs/tax-model.md section 11.
-	if _main._budget_panel != null:
-		_main._budget_panel.setup(_main._state, _main._loader)
+	if _main._windows.frame("finances") != null:
+		_main._windows.frame("finances")._content.setup(_main._state, _main._loader)
 
 
 func _overheat_the_economy() -> void:
@@ -2221,6 +2227,9 @@ func _stage_the_books() -> void:
 		page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
 		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
 		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
+	if _books_move:
+		# A share move drafted (Finances slice 5): the footer's "Apply the moves" (alone) or beside the rows of --books-draft.
+		page._draft.add_move("health", "hospitals", "prevention", 0.02)
 	if _books_sheet:
 		page._draft.set_value("tax_rates_pct", "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
 		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
@@ -2430,9 +2439,9 @@ func _stage_the_industry_tab() -> void:
 
 func _move_the_levers() -> void:
 	var ns = _main._state.player()
-	_main._budget_panel._sliders["health"].value = float(ns.spending_pct_gdp["health"]) + 1.5
-	_main._budget_panel._sliders["education"].value = float(ns.spending_pct_gdp["education"]) - 0.5
 	var page = _main._windows.frame("finances")._content
+	page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
+	page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
 	page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
 	page._draft.set_value("tax_rates_pct", "vat", float(ns.tax_rates_pct["vat"]) - 1.0)
 	page._paint(ns)

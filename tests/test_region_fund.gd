@@ -221,12 +221,13 @@ func _live_since():
 ## The Budget's table: the fund's bill on its own line once the month has booked it.
 func _check_budget_row() -> void:
 	RegionFunds.tick_month(_main._state)
-	var budget = _main._budget_panel
-	budget.mark_dirty()
-	budget._refresh()
-	var cells: Array = budget._figures.get("region_funds", [])
-	if cells.is_empty() or String(cells[0]) == "—":
-		_fail("budget: no regional fund line with a fund running (%s)" % [cells])
+	# The Books name the fund's bill among the parts no row sets (Finances slice 5: the Budget's "of which regional aid").
+	var parts: Dictionary = preload("res://src/ui/finance_of_which.gd").read(preload("res://src/sim/budget.gd").preview(_main._state, {}))
+	var named := false
+	for part in parts["spending"]:
+		named = named or String(part["part"]) == "regional aid"
+	if not named:
+		_fail("books: no regional aid part with a fund running (%s)" % [parts["spending"]])
 
 
 ## Two more funds elsewhere: three are open, the cap.

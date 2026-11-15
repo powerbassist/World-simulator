@@ -225,8 +225,8 @@ func _texts(ns, path: Array) -> Dictionary:
 
 
 ## V1.6a. A PROJECTION IS EXACT AND A FORECAST IS NOT, and these three rows print the
-## second while the model computes the first. (Moved here from budget_panel.gd with
-## the rows at V5.1-0a, verbatim.)
+## second while the model computes the first. (Moved here from the Budget tab with
+## the rows at V5.1-0a, verbatim; the Books page reads it since that tab retired.)
 ##
 ## Budget.project() runs the real model on a copy, so the number it returns is what will
 ## happen to the last digit -- tests/test_budget.gd asserts it to 1e-9, and V1.6a's

@@ -82,8 +82,8 @@ func setup(state, loader, draft, price) -> void:
 func refresh() -> void:
 	if not visible or _state == null:
 		return
-	var stamp := "%s|%d|%d|%d|%s|%s|%s" % [var_to_str(_draft.pending()), _state.year, _state.month, _state.day,
-		str(_state.player().tabled_bill), UiTheme.text_scale(), Strings.language()]
+	var stamp := "%s|%d|%d|%d|%s|%s|%s|%d" % [var_to_str(_draft.pending()), _state.year, _state.month, _state.day,
+		str(_state.player().tabled_bill), UiTheme.text_scale(), Strings.language(), _draft.moves().size()]
 	if stamp == _stamp:
 		return
 	_stamp = stamp
@@ -153,6 +153,11 @@ func _head(ns, tabled: bool) -> void:
 		month = int(ns.tabled_bill.get("vote_month", month))
 	var tag := PanelKit.plain_line(_body, Strings.t("The Assembly divides on %s") % DateText.day_month(day, month), PanelKit.Tone.DIM)
 	tag.theme_type_variation = UiTheme.WARN_TEXT
+	# Table books the drafted share moves at once, whatever the vote (slice 5): the sheet says so, as the footer does.
+	var moves: int = _draft.moves().size()
+	if moves > 0:
+		PanelKit.plain_line(_body, Strings.tn("%d share move applies now; the rest is voted on %s.", "%d share moves apply now; the rest is voted on %s.", moves) % [
+			moves, DateText.day_month(day, month)], PanelKit.Tone.DIM).name = "SheetMoves"  # i18n: ok a node name
 
 
 func _vote_day() -> int:

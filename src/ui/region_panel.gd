@@ -112,7 +112,7 @@ func attach(windows, map) -> void:
 	_map = map
 
 
-## Docked-tab mode -- see budget_panel.gd's hide_close_button() for why.
+## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).
 func hide_close_button() -> void:
 	_close_button.hide()
 

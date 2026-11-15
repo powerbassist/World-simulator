@@ -19,7 +19,7 @@ extends PanelContainer
 ## explicit command (Orgs.cast_vote), and nothing here writes GameState. See
 ## docs/engine-decision.md Rule 2 and docs/orgs-model.md.
 ##
-## Built in code, like the other panels -- see budget_panel.gd's placement note.
+## Built in code, like the other panels; placement is the owner's (window_manager.gd's register()).
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")

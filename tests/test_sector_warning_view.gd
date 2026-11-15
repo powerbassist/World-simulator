@@ -3,20 +3,19 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_sector_warning_view.gd
 ## Non-zero exit on any failure.
 ##
-## V5.3 a + b, band B7, #288's reads on the Budget's tile: a warned sector carries a mark
-## and its reason (the sim's), its trend draws, its unit says it is adjusted for need, and
-## the tile offers the answer that exists: one raise for the line, priced by the Budget's
-## own books (B1: what Commit books), a move only while a sector can pay. A crossing ranks
-## in the briefing and, on a month with none, folds into one note.
+## V5.3 a + b, band B7, #288's reads, on the Books' opened spending row since Finances slice 5: a warned sector carries a
+## mark and its reason (the sim's), its trend draws, its unit says it is adjusted for need, and the row answers with the
+## answer that exists: ONE raise chip for the line (the editor's own slider moved to the figure that restores the worst
+## sector, as far as the slider reaches), a move only while a sector can pay, aimed as a Go aims it. A crossing ranks in
+## the briefing and, on a month with none, folds into one note.
 ##
-## Driven through the real controls a frame apart (AGENTS.md: a Control built but not shown
-## fails silently).
+## Driven through the real controls a frame apart (AGENTS.md: a Control built but not shown fails silently).
 
 const Sectors = preload("res://src/sim/sectors.gd")
 const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
 const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
-const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
-const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const FinanceSectors = preload("res://src/ui/finance_sectors.gd")
+const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const ChartLine = preload("res://src/ui/chart_line.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const PK = preload("res://src/ui/priorities_constants.gd")
@@ -34,10 +33,7 @@ var _failures: Array[String] = []
 var _main
 var _panel
 var _frame := 0
-var _price := 0.0
-var _target := 0.0
 var _gdp_base := 0.0
-var _most := 0.0
 
 
 func _init() -> void:
@@ -49,52 +45,36 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	match _frame:
 		2:
-			_panel = _main._budget_panel
-			_main._windows.open("budget")
+			_main._windows.open("finances")
+			_panel = _main._windows.frame("finances")._content
 			_check_quiet_unit()
+			_check_an_off_grid_restore()
 			_stage_all_warned()
-			_press(_with_meta("line", LINE))
+			_open_row()
 		4:
 			_check_all_warned()
-			_press(_with_meta("raise_line", LINE))
-		6:
-			_check_drafted()
-			_check_span_spent()
-			_panel._on_revert(false)
-		8:
-			_drag_the_lever()
-		10:
-			_check_price_on_a_draft()
-			_panel._on_revert(false)
-			_stage_uneven_needs()
-		12:
-			_check_uncapped()
-			_press(_with_meta("raise_line", LINE))
-		14:
-			_check_marks(false, "a drafted restore")
-			_check_largest_restored()
-			_panel._on_revert(false)
-		16:
-			_check_marks(true, "Revert")
+			_check_the_chip()
 			_stage_no_payer()
-		18:
+			_open_row()
+		6:
 			_check_no_payer()
 			_stage_one_cut()
-		20:
+			_open_row()
+		8:
 			_check_one_cut()
-			_press(_with_meta("line", LINE))
-		22:
-			# Off the donor: only opening the tile may aim it. _check_one_cut already aimed.
-			_panel._move_from = "hospitals"
-			_panel._move_to = "primary_care"
-			_press(_with_meta("line", LINE))
-		24:
-			_check_toggle_aims()
 			_check_floor_cannot_pay()
 			_check_arrival()
 			_check_note_wired()
 			_finish()
 	return false
+
+
+## The page rebuilt around the open row: a Go's focus on the slider would keep the rows, so the test lets go of it.
+func _open_row() -> void:
+	_panel.get_viewport().gui_release_focus()
+	_panel.mark_dirty()
+	_panel.open_row(FinanceDraft.SPENDING, LINE)
+	_panel._process(0.0)
 
 
 ## Before any drift: the unit says it is adjusted for need, and nothing is marked.
@@ -103,8 +83,8 @@ func _check_quiet_unit() -> void:
 	var ns = _main._state.player()
 	if SectorWarningView.warned(ns, _main._loader, LINE).size() != 0:
 		_fail("premise: a sector warns on day one")
-	if BudgetSectors.unit_text(s) != Strings.t("%s, need-adjusted") % Strings.row("domains", String(s["id"]), "quantity.unit", String(s["quantity"]["unit"])):
-		_fail("unit: '%s' does not say it is adjusted for need" % BudgetSectors.unit_text(s))
+	if FinanceSectors.unit_text(s) != Strings.t("%s, need-adjusted") % Strings.row("domains", String(s["id"]), "quantity.unit", String(s["quantity"]["unit"])):
+		_fail("unit: '%s' does not say it is adjusted for need" % FinanceSectors.unit_text(s))
 
 
 ## Money per head well below the drift's base: every sector of every line warns, by income.
@@ -114,7 +94,6 @@ func _stage_all_warned() -> void:
 	ns.sector_drift["base_gdp_per_head"] = _gdp_base * 2.0
 	# One sample on a second sector: a trend needs two.
 	ns.sector_drift["history"] = {"hospitals": [5.3, 5.2, 5.1, 5.0], "prevention": [5.0]}
-	_panel.mark_dirty()
 
 
 func _check_all_warned() -> void:
@@ -131,21 +110,24 @@ func _check_all_warned() -> void:
 		var tone: Variant = said.get_theme_color("font_color") if said.has_theme_color_override("font_color") else null
 		if tone != ResultTone.TINT[ResultTone.RISKY]:
 			_fail("mark: the reason wears %s" % tone)
-	var toggle = _with_meta("line", LINE)
-	if toggle == null or not (toggle as Button).text.contains("(!)"):
-		_fail("mark: the line's toggle does not say a sector is slipping (%s)" % [toggle.text if toggle != null else "<none>"])
+	var row_name: Button = null
+	for b in _panel._spending_box.find_children("*", "Button", true, false):
+		if (b as Button).text.begins_with(Strings.t("Health")):
+			row_name = b
+	if row_name == null or not row_name.text.contains("(!)"):
+		_fail("mark: the closed row does not say a sector is slipping (%s)" % [row_name.text if row_name != null else "<none>"])
 	var name_label := _sector_label("hospitals")
 	if name_label == null or not name_label.text.contains("(!)"):
 		_fail("mark: the warned row is not marked (%s)" % [name_label.text if name_label != null else "<none>"])
 	var spark := 0
-	for node in _panel._sector_box.find_children("*", "", true, false):
+	for node in _panel._spending_box.find_children("*", "", true, false):
 		if node.get_script() == ChartLine:
 			spark += 1
 	if spark != 1:
 		_fail("trend: %d sparklines, one sector has a history" % spark)
 	# Each reason once, whatever the number of sectors it names.
 	var lines := 0
-	for node in _panel._sector_box.find_children("*", "Label", true, false):
+	for node in _panel._spending_box.find_children("*", "Label", true, false):
 		if String(node.get_meta("sector_warning", "")) == SectorWarnings.REASON_INCOME and not _gone(node):
 			lines += 1
 	if lines != 1:
@@ -154,133 +136,58 @@ func _check_all_warned() -> void:
 	var move = _with_meta("move", "move")
 	if move == null or move.disabled:
 		_fail("verb: every sector warned, and the move the sim accepts is not live")
-	if _text_under(_panel._sector_box).contains(Strings.t("No sector of this line can pay.")):
+	if _text_under(_panel._spending_box).contains(Strings.t("No sector of this line can pay.")):
 		_fail("verb: 'cannot pay' said where the sim accepts a move")
-	# The donor is warned too, and its strip says so: that is the tradeoff.
-	var from := SectorWarningView.name_of(_main._loader, LINE, String(_panel._move_from))
-	var slipping: String = Strings.t("Slipping too: %s.") % from
-	var strips := []
-	for node in _panel._sector_box.find_children("*", "", true, false):
-		if node.has_meta("sectors") and not _gone(node):
-			strips.append(_text_under(node))
-	if strips.size() != 1 or not String(strips[0]).contains(slipping):
-		_fail("verb: the move's strip does not say its donor is slipping (%s): %s" % [slipping, strips])
-	var go = _with_meta("raise_line", LINE)
-	if go == null or go.disabled:
-		_fail("verb: no live raise")
-		return
-	var strip = _raise_strip()
-	if strip == null:
-		_fail("verb: no strip prices the raise")
-		return
-	_price = float(strip.money_bn)
-	if _price >= 0.0:
-		_fail("verb: the raise reads as no cost (%s)" % _price)
-	if not (strip.money_label as Label).text.contains(EffectsStrip.money_text(_price)):
-		_fail("verb: the strip's money reads '%s'" % strip.money_label.text)
+
+
+## The raise is one chip: the largest restore of those warned, as far as the editor's slider reaches, and it writes the draft.
+func _check_the_chip() -> void:
+	var ns = _main._state.player()
+	var why := SectorWarningView.warned(ns, _main._loader, LINE)
 	var most := 0.0
 	for id in why:
 		most = maxf(most, SectorWarnings.restore_pct_gdp(ns, _main._loader, LINE, String(id)))
-	var drafted := float(ns.spending_pct_gdp[LINE])
-	_target = minf(drafted + most, _panel.lever_span(LINE).y)
-	# This stage is capped by the span: the words must not claim the figures come back.
-	var capped: String = Strings.t("Up %s points of GDP, part of the way; the rest takes a second Commit.") % Num.f(_target - drafted, 1)
-	if not _text_under(strip).contains(capped):
-		_fail("verb: the capped raise does not say so ('%s')" % _text_under(strip))
-
-
-## Drafted, not booked: the lever moved, the Budget's own figure is the strip's price (B1).
-func _check_drafted() -> void:
-	var ns = _main._state.player()
-	if absf(float(_panel._pending["spending_pct_gdp"][LINE]) - _target) > 0.0001 or absf(float(_panel._sliders[LINE].value) - _target) > 0.2:
-		_fail("raise: the lever reads %s, the raise is %s" % [_panel._pending["spending_pct_gdp"][LINE], _target])
-	if absf(float(ns.spending_pct_gdp[LINE]) - _target) < 0.0001:
-		_fail("raise: booked at the press, not drafted")
-	if absf(float(_panel._effects.get(LINE, 0.0)) - _price) > 0.005:
-		_fail("raise: priced %s, the lever's own figure is %s" % [_price, _panel._effects.get(LINE, 0.0)])
-
-
-## The capped raise drafted, the sectors still warned: the tile says why no verb is left.
-func _check_span_spent() -> void:
-	if _with_meta("raise_line", LINE) != null:
-		_fail("span: a raise is offered past the span")
-	if not _text_under(_panel._sector_box).contains(Strings.t("This line can rise no further in this Commit.")):
-		_fail("span: nothing says the line can rise no further ('%s')" % _text_under(_panel._sector_box))
-
-
-## A lever dragged by hand, a point up, the sectors still warned.
-func _drag_the_lever() -> void:
-	var live := float(_main._state.player().spending_pct_gdp[LINE])
-	_panel._on_lever_changed(live + 1.0, LINE)
-
-
-## The strip prices what the raise adds to the draft, in step with the points it says.
-func _check_price_on_a_draft() -> void:
-	var state = _main._state
-	var ns = state.player()
-	var strip = _raise_strip()
-	if strip == null:
-		_fail("draft: no raise left on a dragged lever")
-		return
 	var live := float(ns.spending_pct_gdp[LINE])
-	var alone := func(value: float) -> Dictionary:
-		var spending: Dictionary = ns.spending_pct_gdp.duplicate()
-		spending[LINE] = value
-		return {"spending_pct_gdp": spending}
-	var want := EffectsStrip.balance_bn(Budget.preview(state, alone.call(live + 1.0)), Budget.preview(state, alone.call(_target)))
-	if absf(float(strip.money_bn) - want) > 0.05:
-		_fail("draft: the raise reads %s on a dragged lever, it adds %s" % [strip.money_bn, want])
-	if not _text_under(strip).contains(Num.f(_target - (live + 1.0), 1)):
-		_fail("draft: the points do not count from the draft ('%s')" % _text_under(strip))
+	var step: float = _panel._editor.LINE_STEP
+	var target := minf(snappedf(ceilf((live + most) / step - 0.0001) * step, step), _panel._editor._hi)
+	var chip = _with_meta("raise_line", LINE)
+	if chip == null or chip.disabled:
+		_fail("raise: no live chip")
+		return
+	var want: String = Strings.t("Raise to %s %%") % Num.f(target, 1)
+	if (chip as Button).text != want:
+		_fail("raise: the chip reads '%s', the largest restore inside the slider's reach is '%s'" % [(chip as Button).text, want])
+	(chip as Button).pressed.emit()
+	_check_the_chip_writes_its_figure(want)
+	_panel._draft.revert()
 
 
-## A smaller fall with one sector's share moved away: a restore inside the span, and not
-## the same for each sector warned (they share a need rate, so a share is what parts them).
-func _stage_uneven_needs() -> void:
+## QA's T2 on #373: the draft holds exactly the figure the chip names, on the slider's grid, and the editor's box reads it
+## (it once wrote 11.4876 under "Raise to 11.5 %").
+func _check_the_chip_writes_its_figure(named: String) -> void:
+	var held: float = _panel._draft.value(FinanceDraft.SPENDING, LINE)
+	var step: float = _panel._editor.LINE_STEP
+	if named != Strings.t("Raise to %s %%") % Num.f(held, 1) or not is_equal_approx(held, snappedf(held, step)):
+		_fail("raise: the chip named '%s', the shared draft holds %s" % [named, held])
+	if String(_panel._editor._box.text) != Num.f(held, 1):
+		_fail("raise: the editor's box reads '%s', the chip wrote %s" % [_panel._editor._box.text, Num.f(held, 1)])
+
+
+## A restore that lands between two steps of the slider (France's health at 1.15 times the drift's base: +1.65 points):
+## the chip names the next step and writes it, not 12.65.
+func _check_an_off_grid_restore() -> void:
 	var ns = _main._state.player()
-	ns.sector_drift["base_gdp_per_head"] = _gdp_base * 1.1
-	Sectors.move_share(ns, _main._loader, LINE, "hospitals", "primary_care", 0.05)
-	_panel.mark_dirty()
-
-
-func _check_uncapped() -> void:
-	var ns = _main._state.player()
-	var why := SectorWarningView.warned(ns, _main._loader, LINE)
-	_most = 0.0
-	var least := INF
-	for id in why:
-		var restore := SectorWarnings.restore_pct_gdp(ns, _main._loader, LINE, String(id))
-		_most = maxf(_most, restore)
-		least = minf(least, restore)
-	if why.size() < 2 or _most - least < 0.01:
-		_fail("premise: the warned sectors' restores do not differ (%d warned, %s to %s)" % [why.size(), least, _most])
-	var drafted := float(ns.spending_pct_gdp[LINE])
-	if drafted + _most >= _panel.lever_span(LINE).y:
-		_fail("premise: the restore is capped by the span")
-	var said: String = Strings.t("Up %s points of GDP restores the figures; its other sectors gain too.") % Num.f(_most, 1)
-	if not _text_under(_raise_strip()).contains(said):
-		_fail("verb: an uncapped raise does not say it restores ('%s')" % _text_under(_raise_strip()))
-
-
-## The largest restore, not the smallest: every warned sector comes back.
-func _check_largest_restored() -> void:
-	var ns = _main._state.player()
-	var want := float(ns.spending_pct_gdp[LINE]) + _most
-	if absf(float(_panel._pending["spending_pct_gdp"][LINE]) - want) > 0.0001:
-		_fail("raise: the lever reads %s, the largest restore is %s" % [_panel._pending["spending_pct_gdp"][LINE], want])
-
-
-## The marks follow the draft, on the toggle and on the row, and come back with Revert.
-func _check_marks(marked: bool, when: String) -> void:
-	var ns = _main._state.player()
-	if SectorWarningView.warned(ns, _main._loader, LINE).is_empty():
-		_fail("premise: the live nation is not warned (%s)" % when)
-	var toggle = _with_meta("line", LINE)
-	if toggle == null or (toggle as Button).text.contains("(!)") != marked:
-		_fail("mark: after %s the toggle reads '%s'" % [when, toggle.text if toggle != null else "<none>"])
-	var row := _sector_label("hospitals")
-	if row == null or row.text.contains("(!)") != marked:
-		_fail("mark: after %s the row reads '%s'" % [when, row.text if row != null else "<none>"])
+	ns.sector_drift["base_gdp_per_head"] = float(ns.gdp_eur_bn) / float(ns.population) * 1.15
+	_panel._draft.revert()
+	_open_row()
+	var chip = _with_meta("raise_line", LINE)
+	if chip == null:
+		_fail("off-grid restore: no chip")
+		return
+	var named: String = (chip as Button).text
+	(chip as Button).pressed.emit()
+	_check_the_chip_writes_its_figure(named)
+	_panel._draft.revert()
 
 
 ## Every sector at the move's floor: the one place "cannot pay" is true. No verb; the raise
@@ -292,30 +199,17 @@ func _stage_no_payer() -> void:
 	for s in Sectors.sectors_of(_main._loader, LINE):
 		shares[String(s["id"])] = DK.MIN_SHARE
 	ns.sector_shares[LINE] = shares
-	_panel.mark_dirty()
 
 
 func _check_no_payer() -> void:
 	var ns = _main._state.player()
-	if not _text_under(_panel._sector_box).contains(Strings.t("No sector of this line can pay.")):
-		_fail("no payer: nothing says no sector can pay ('%s')" % _text_under(_panel._sector_box))
+	if not _text_under(_panel._spending_box).contains(Strings.t("No sector of this line can pay.")):
+		_fail("no payer: nothing says no sector can pay ('%s')" % _text_under(_panel._spending_box))
 	if _with_meta("move", "move") != null:
 		_fail("no payer: a move is offered that the sim refuses")
 	if _with_meta("raise_line", LINE) == null:
 		_fail("no payer: the raise is gone")
 	ns.sector_shares.erase(LINE)
-
-
-## Opened by its toggle, the move aims as a Go does: from a sector that can pay.
-func _check_toggle_aims() -> void:
-	var ns = _main._state.player()
-	var why := SectorWarningView.warned(ns, _main._loader, LINE)
-	var from := SectorWarningView.donor(ns, _main._loader, LINE, Sectors.sectors_of(_main._loader, LINE), why, "hospitals")
-	if _panel._open_line != LINE or _panel._move_to != "hospitals" or _panel._move_from != from:
-		_fail("toggle: the move reads %s -> %s on '%s', the warned sector is hospitals and a donor %s" % [_panel._move_from, _panel._move_to, _panel._open_line, from])
-	# The donor it picked is not warned, so its strip does not call it slipping.
-	if from == "" or _text_under(_panel._sector_box).contains(Strings.t("Slipping too: %s.") % SectorWarningView.name_of(_main._loader, LINE, from)):
-		_fail("verb: an un-warned donor is said to be slipping ('%s')" % from)
 
 
 ## A sector at the floor is no donor, un-warned or not (the sim's refusal).
@@ -341,7 +235,6 @@ func _stage_one_cut() -> void:
 	ns.sector_drift["base_gdp_per_head"] = _gdp_base
 	for i in 8:
 		Sectors.move_share(ns, _main._loader, LINE, "hospitals", "prevention", 0.1)
-	_panel.mark_dirty()
 
 
 func _check_one_cut() -> void:
@@ -351,16 +244,18 @@ func _check_one_cut() -> void:
 		_fail("premise: hospitals is not warned for a cut (%s)" % [why])
 		return
 	if _with_meta("sector_warning", SectorWarnings.REASON_CUT) == null:
-		_fail("mark: the cut's reason is not on the tile")
+		_fail("mark: the cut's reason is not on the row")
 	if _with_meta("move", "move") == null:
 		_fail("verb: a sector can pay, and no move is offered")
 	if _with_meta("raise_line", LINE) == null:
 		_fail("verb: a move does not replace the raise")
-	# The Go's aim: the move points at the warned sector, from one that can pay.
+	# The Go's aim: the move points at the warned sector, from one that can pay, and the row opens.
 	var from := SectorWarningView.donor(ns, _main._loader, LINE, Sectors.sectors_of(_main._loader, LINE), why, "hospitals")
-	SectorWarningView.aim(_panel, SectorWarningView.subject_of(LINE, "hospitals"))
-	if from == "" or _panel._move_to != "hospitals" or _panel._move_from != from or _panel._open_line != LINE:
-		_fail("aim: the move reads %s -> %s on %s, a donor is %s" % [_panel._move_from, _panel._move_to, _panel._open_line, from])
+	_panel._draft.pick = {}
+	FinanceSectors.aim(_panel, SectorWarningView.subject_of(LINE, "hospitals"))
+	var pick: Dictionary = _panel._draft.pick
+	if from == "" or pick.get("to", "") != "hospitals" or pick.get("from", "") != from or _panel._open_id != "spending_pct_gdp:" + LINE:
+		_fail("aim: the move reads %s -> %s on '%s', a donor is %s" % [pick.get("from", ""), pick.get("to", ""), _panel._open_id, from])
 
 
 ## A crossing this month: it ranks among the priorities, and folds into one note.
@@ -444,22 +339,15 @@ func _shows(node: Node, text: String) -> bool:
 # -- helpers --
 
 func _sector_label(id: String) -> Label:
-	for node in _panel._sector_box.find_children("*", "Label", true, false):
-		if String(node.get_meta("sector", "")) == id and not _gone(node):
-			return node
-	return null
-
-
-func _raise_strip():
-	for node in _panel._sector_box.find_children("*", "", true, false):
-		if node.has_meta("raise_strip") and not _gone(node):
+	for node in _panel._spending_box.find_children("*", "Label", true, false):
+		if node.has_meta("sector") and String(node.get_meta("sector")) == id and not _gone(node):
 			return node
 	return null
 
 
 func _with_meta(key: String, value: String):
-	for node in _panel.find_children("*", "", true, false):
-		if node.has_meta(key) and String(node.get_meta(key)) == value and not _gone(node) and (node as Control).is_visible_in_tree():
+	for node in _panel._spending_box.find_children("*", "", true, false):
+		if node.has_meta(key) and str(node.get_meta(key)) == value and (node as Control).is_visible_in_tree():
 			return node
 	return null
 

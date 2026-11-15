@@ -15,7 +15,6 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
-const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 
 ## The rows shown before "Show all": the best few are what the player acts on, and a list of every
 ## measure on the page is the text the author asked to be rid of (tests/test_prose_budget.gd).
@@ -107,7 +106,7 @@ static func _name_of(measure: Dictionary, ns, find_law: Callable) -> String:
 			var id := String(measure["id"])
 			return Strings.law_name(find_law.call(id), id)
 		"line":
-			return Strings.t("%s %s pt of GDP") % [Strings.t(BudgetPanel.LEVER_LABELS[String(measure["key"])]), Num.fs(float(measure["step"]), 1)]
+			return Strings.t("%s %s pt of GDP") % [Labels.portfolio(String(measure["key"])), Num.fs(float(measure["step"]), 1)]
 	var kind := String(measure["key"])
 	return "%s %s" % [Strings.row_name("taxes", ns.tax_library[kind]), Num.fs(float(measure["step"]), TaxLibrary.step_decimals(ns, kind))]
 

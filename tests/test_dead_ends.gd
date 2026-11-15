@@ -41,7 +41,6 @@ func _process(_delta: float) -> bool:
 	_check_programme_caption()
 	_check_no_dash_value()
 	_check_executive_wording()
-	_check_lever_span()
 	_check_no_signed_zero_service()
 	_finish()
 	return true
@@ -100,38 +99,6 @@ func _check_executive_wording() -> void:
 	if text.contains("of the vote."):
 		_fail("the executive verdict still reads as a share that carried the office")
 	panel.hide()
-
-
-## V5.1-d1b3, the parent's call on QA's #69 finding: the ±5 span stays (the author
-## approved it), but the knob reads as the LEVEL -- Education 5.5 and Pensions 14.5
-## must not sit in one place -- the span's ends are marked on the track, and a drag
-## past one stops there with a cue, not silently.
-func _check_lever_span() -> void:
-	var panel = _main._budget_panel
-	_main._windows.open("budget")
-	panel._process(0.0)
-	var ns = _main._state.player()
-	var ratios := {}
-	for key in panel._sliders:
-		var slider: HSlider = panel._sliders[key]
-		var live: float = float(ns.spending_pct_gdp.get(key, 0.0))
-		if slider.min_value != 0.0 or slider.max_value != float(panel.LEVER_MAX[key]):
-			_fail("the %s lever's track is [%.1f, %.1f], not the line's whole range" % [key, slider.min_value, slider.max_value])
-		ratios[key] = slider.ratio
-		var span: Vector2 = panel.lever_span(key)
-		if not is_equal_approx(span.x, maxf(0.0, live - panel.LEVER_SPAN)) or not is_equal_approx(span.y, minf(float(panel.LEVER_MAX[key]), live + panel.LEVER_SPAN)):
-			_fail("the %s lever's span is %s around %.1f" % [key, span, live])
-	if ratios.has("education") and ratios.has("pensions") and is_equal_approx(float(ratios["education"]), float(ratios["pensions"])):
-		_fail("Education and Pensions knobs sit in one place: the knob does not read the level")
-	var health: HSlider = panel._sliders["health"]
-	var top: float = panel.lever_span("health").y
-	health.value = top + 4.0
-	if not is_equal_approx(health.value, top):
-		_fail("a drag past the span's end went to %.1f, not the end %.1f" % [health.value, top])
-	if not panel.lever_cued("health"):
-		_fail("a drag past the span's end stopped silently: no cue")
-	panel._on_revert()
-	_main._windows.close_all()
 
 
 func _check_no_signed_zero_service() -> void:

@@ -41,7 +41,7 @@ const BRIEFING_CEILING := 90
 const BUDGET := {
 	"legislature": 80, "orgs": 300, "agenda": 40, "campaign": 40, "energy": 20,
 	"politics": 30, "region": 20, "commodities": 10, "projects": 20, "economy": 40,
-	"overview": 30, "diplomacy": 20, "budget": 0, "society": 10,
+	"overview": 30, "diplomacy": 20, "society": 10,
 	"events": 20, "people": 10, "companies": 10, "calendar": 10,
 	"outliner": 10,
 }
@@ -57,8 +57,8 @@ const PENDING := {}
 const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95, "commodities": 210,
 	"companies": 145}
 const TOTAL_PENDING := {
-	"budget": 113, "calendar": 34, "campaign": 140,
-	"diplomacy": 22, "economy": 115, "energy": 118,
+	"calendar": 34, "campaign": 140,
+	"diplomacy": 22, "economy": 128, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106,
 }
@@ -88,7 +88,11 @@ const TOTAL_PENDING := {
 ## Slice 2 retires the Tax Code (45 words, its tab and its X key) into the Books rows, whose editors are closed
 ## at rest and add nothing counted here: 3134 -> 3089. The Budget (113) stays for its sector tiles until the
 ## Sectors screen takes them, so A's net is Books 181 + Budget 113 = 294 against the 339 it began from.
-const TOTAL_SUM_CEILING := 3089
+## Finances slice 5: the Budget tab (113) went with its sector tiles, which now answer, opened, to SECTOR_TILE_CEILING under
+## the Books row: 3089 -> 2597 (the two "N parts" lines of the Books included).
+## One stated rise, 2597 -> 2612 (the parent's ruling on slice 5): the Budget's revenue-against-spending chart and its Gini row
+## moved to Economy as they were (113 -> 128 there), so nothing the Budget showed was lost with it.
+const TOTAL_SUM_CEILING := 2612
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
@@ -262,21 +266,21 @@ func _sweep_briefing(main, fixture: String) -> void:
 
 ## A6: the health line's tile on the Budget, opened with its verb and strip.
 func _sweep_sector_tile(main) -> void:
-	var panel = main._budget_panel
-	main._windows.open("budget", true)
-	panel._open_line = "health"
+	var panel = main._windows.frame("finances")._content
+	main._windows.open("finances", true)
+	panel._open_id = "spending_pct_gdp:health"
 	panel.mark_dirty()
 	await process_frame
 	await process_frame
 	var total := 0
-	for node in _visible_text_nodes(panel._sector_box):
+	for node in _visible_text_nodes(panel._editor):
 		total += _words(_text_of(node)).size()
-	print("prose: sector tile (health, opened) %d words" % total)
+	print("prose: opened spending row (health, editor + sectors) %d words" % total)
 	if total == 0:
-		_fail("sector tile: the health tile drew nothing")
+		_fail("opened spending row: the health row drew nothing")
 	if total > SECTOR_TILE_CEILING:
-		_fail("sector tile: %d visible words, the ceiling is %d (A6)" % [total, SECTOR_TILE_CEILING])
-	panel._open_line = ""
+		_fail("opened spending row: %d visible words, the ceiling is %d (A6)" % [total, SECTOR_TILE_CEILING])
+	panel._open_id = ""
 	main._windows.close_all()
 
 
@@ -313,20 +317,20 @@ func _sweep_warned_tile(main) -> void:
 	var ns = main._state.player()
 	var had: Dictionary = (ns.sector_drift as Dictionary).duplicate(true)
 	ns.sector_drift["base_gdp_per_head"] = float(ns.gdp_eur_bn) / float(ns.population) * 1.5
-	var panel = main._budget_panel
-	main._windows.open("budget", true)
-	panel._open_line = "health"
+	var panel = main._windows.frame("finances")._content
+	main._windows.open("finances", true)
+	panel._open_id = "spending_pct_gdp:health"
 	panel.mark_dirty()
 	await process_frame
 	await process_frame
 	var total := 0
-	for node in _visible_text_nodes(panel._sector_box):
+	for node in _visible_text_nodes(panel._editor):
 		total += _words(_text_of(node)).size()
-	print("prose: sector tile (health, all warned) %d words" % total)
+	print("prose: opened spending row (health, all warned: editor + marks + chip + verb + strip) %d words" % total)
 	if total > SECTOR_TILE_CEILING:
-		_fail("sector tile, warned: %d visible words, the ceiling is %d (A6)" % [total, SECTOR_TILE_CEILING])
+		_fail("opened spending row, warned: %d visible words, the ceiling is %d (A6)" % [total, SECTOR_TILE_CEILING])
 	ns.sector_drift = had
-	panel._open_line = ""
+	panel._open_id = ""
 	panel.mark_dirty()
 	main._windows.close_all()
 

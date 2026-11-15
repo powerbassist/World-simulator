@@ -34,6 +34,7 @@ func _init() -> void:
 	_check_the_brackets_ride_as_a_scalar(state, draft)
 	_check_the_bill_tables(state, loader, draft)
 	_check_births_and_abolitions(loader)
+	_check_share_moves(loader)
 	_finish()
 
 
@@ -185,6 +186,27 @@ func _check_the_bill_tables(state, loader, draft) -> void:
 	if not bool(tabling.get("tabled", false)):
 		_fail("the draft's bill was refused: %s" % [tabling])
 	draft.revert()
+
+
+## V5.3 screen 4, slice 5: a share move is a row of the page's draft but NOT of the bill (a move is instant, no vote).
+## It leaves the bill and the priceable pending alone, it is not a changed row of the sheet, and a Discard drops it.
+func _check_share_moves(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	var draft := FinanceDraft.new()
+	draft.setup(state)
+	if not draft.is_clean() or draft.has_moves():
+		_fail("share moves: an untouched draft is not clean")
+	draft.add_move("health", "hospitals", "prevention", 0.02)
+	if not draft.has_moves() or draft.moves().size() != 1 or draft.is_clean():
+		_fail("share moves: a drafted move is not held (%s)" % [draft.moves()])
+	if not draft.is_empty() or draft.bill() != {} or draft.pending() != {} or draft.count() != 0:
+		_fail("share moves: a move leaked into the bill (bill %s, pending %s)" % [draft.bill(), draft.pending()])
+	draft.set_value(FinanceDraft.TAX, "vat", float(state.player().tax_rates_pct["vat"]) + 1.0)
+	if draft.is_empty() or draft.moves().size() != 1 or draft.bill().has("moves"):
+		_fail("share moves: rates and a move together are not both held, apart (%s)" % [draft.bill()])
+	draft.revert()
+	if draft.has_moves() or not draft.is_clean():
+		_fail("share moves: Discard left the move behind")
 
 
 func _fail(message: String) -> void:

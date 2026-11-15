@@ -81,16 +81,15 @@ func _process(_delta: float) -> bool:
 	_check_content_survives_close()
 	_check_a_panel_with_no_verb_never_wears_the_fold_mark()
 	# Opened here and measured after a frame of layout, in stage 3.
-	_manager.open("budget")
+	_manager.open("finances")
 	_stage = 1
 	return false
 
 
-## Real tab ids, so the domain table places them: Finances holds budget and projects
-## (the Books tab is not registered here, so it shows no tab), Economy holds economy.
+## Real tab ids, so the domain table places them: Finances holds the Books page and projects, Economy holds economy.
 ## Plus two windows in no row and one scene.
 func _register() -> void:
-	for id in ["budget", "projects", "economy", "alpha", "beta", "summit"]:
+	for id in ["finances", "projects", "economy", "alpha", "beta", "summit"]:
 		var content := Label.new()
 		content.text = "content of %s" % id
 		content.custom_minimum_size = Vector2(300, 200)
@@ -108,12 +107,12 @@ func _check_closed_at_start() -> void:
 
 
 func _check_tab_switch_keeps_one_open() -> void:
-	_manager.open("budget")
-	if _manager.open_ids() != ["budget"]:
+	_manager.open("finances")
+	if _manager.open_ids() != ["finances"]:
 		_fail("opening budget left %s open" % str(_manager.open_ids()))
 	if not _manager.dock().visible:
 		_fail("opening a tab did not raise the dock")
-	if _manager.tab_ids() != ["budget", "projects"]:
+	if _manager.tab_ids() != ["finances", "projects"]:
 		_fail("Finances shows tabs %s, not its two registered ones" % str(_manager.tab_ids()))
 	if _manager.domain_title() != "Finances":
 		_fail("the budget's domain is titled '%s', not Finances" % _manager.domain_title())
@@ -121,7 +120,7 @@ func _check_tab_switch_keeps_one_open() -> void:
 	_manager.open("projects")
 	if _manager.open_ids() != ["projects"]:
 		_fail("switching to the tax tab left %s open" % str(_manager.open_ids()))
-	if _manager.tab_ids() != ["budget", "projects"]:
+	if _manager.tab_ids() != ["finances", "projects"]:
 		_fail("a switch inside Finances changed its tabs to %s" % str(_manager.tab_ids()))
 
 	_manager.open("economy")
@@ -137,14 +136,14 @@ func _check_tab_switch_keeps_one_open() -> void:
 ## The new tab shows before the old one hides, so nothing watching visibility
 ## (the screen stack, c2.3's sidebar mark) ever sees the bare map mid-switch.
 func _check_tab_switch_never_shows_the_map() -> void:
-	_manager.open("budget")
+	_manager.open("finances")
 	var counts: Array = []
 	var watch := func(): counts.append(_manager.open_ids().size())
-	for id in ["budget", "projects", "economy"]:
+	for id in ["finances", "projects", "economy"]:
 		_manager.frame(id).visibility_changed.connect(watch)
 	_manager.open("projects")
 	_manager.open("economy")
-	for id in ["budget", "projects", "economy"]:
+	for id in ["finances", "projects", "economy"]:
 		_manager.frame(id).visibility_changed.disconnect(watch)
 	if counts.has(0):
 		_fail("a tab switch passed through nothing open: %s" % str(counts))
@@ -165,7 +164,7 @@ func _check_a_window_in_no_row_is_its_own_domain() -> void:
 ## A scene displaces the open tab and wears no tabs of its own; closing it
 ## leaves the map, and it is not a step back can return to.
 func _check_a_scene_takes_the_dock() -> void:
-	_manager.open("budget")
+	_manager.open("finances")
 	_manager.open("summit")
 	if _manager.open_ids() != ["summit"]:
 		_fail("the summit shares the dock with %s" % str(_manager.open_ids()))
@@ -185,7 +184,7 @@ func _check_a_scene_takes_the_dock() -> void:
 ## the dock only by its own close (its Continue, Escape, Back to the map); a tab
 ## open -- from any caller, gated or not -- and back/forward wait for it.
 func _check_a_tab_cannot_displace_a_scene() -> void:
-	_manager.open("budget")
+	_manager.open("finances")
 	_manager.open("projects")
 	_manager.open("summit")
 	_manager.open("economy")
@@ -205,14 +204,14 @@ func _check_a_tab_cannot_displace_a_scene() -> void:
 ## The map is a destination: back from it returns to the last tab, and a new
 ## destination cuts the forward path, as a browser does.
 func _check_history_back_forward() -> void:
-	_manager.open("budget")
+	_manager.open("finances")
 	_manager.open("projects")
 	_manager.open("economy")
 	_manager.back()
 	if _manager.open_ids() != ["projects"]:
 		_fail("back from economy reached %s, not tax" % str(_manager.open_ids()))
 	_manager.back()
-	if _manager.open_ids() != ["budget"]:
+	if _manager.open_ids() != ["finances"]:
 		_fail("back from tax reached %s, not budget" % str(_manager.open_ids()))
 	_manager.forward()
 	if _manager.open_ids() != ["projects"]:
@@ -229,7 +228,7 @@ func _check_history_back_forward() -> void:
 
 func _check_history_is_twenty_deep() -> void:
 	for i in 25:
-		_manager.open("budget" if i % 2 == 0 else "projects")
+		_manager.open("finances" if i % 2 == 0 else "projects")
 	var steps := 0
 	while _manager.can_back() and steps < 100:
 		_manager.back()
@@ -313,7 +312,7 @@ func _check_the_fold_mark_clears() -> void:
 ## sidebar's right edge, 1240 wide, under the strip, and the map uncovered to its
 ## right (test_shell.gd hit-tests that half in the real scene).
 func _check_workspace_docks_left() -> void:
-	_manager.open("budget")
+	_manager.open("finances")
 	var rect: Rect2 = _manager.dock().get_global_rect()
 	if not is_equal_approx(rect.position.x, WindowManager.DOCK_LEFT):
 		_fail("the dock's left edge is at %.0f, not the sidebar's %.0f" % [rect.position.x, WindowManager.DOCK_LEFT])
@@ -323,7 +322,7 @@ func _check_workspace_docks_left() -> void:
 		_fail("the dock ends at %.0f and leaves no map to its right" % rect.end.x)
 	if not is_equal_approx(rect.position.y, WindowManager.DOCK_TOP):
 		_fail("the dock's top is at %.0f, not under the strip at %.0f" % [rect.position.y, WindowManager.DOCK_TOP])
-	var page: Control = _manager.frame("budget")
+	var page: Control = _manager.frame("finances")
 	if page.get_global_rect().end.x > rect.end.x + 0.5 or page.size.x < rect.size.x - 40.0:
 		_fail("the open page (%s) does not fill the dock (%s)" % [str(page.get_global_rect()), str(rect)])
 	_manager.close_all()

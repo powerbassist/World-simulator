@@ -22,7 +22,7 @@ const Sections = preload("res://src/ui/briefing_sections.gd")
 signal propose_requested(law)
 
 ## Emitted when a poll commission lands, carrying the pre-purchase baseline
-## and the label -- budget_panel.gd's `committed` contract. The refusal path
+## and the label -- finances_panel.gd's `committed` contract. The refusal path
 ## emits nothing; the briefing shows the refusal itself.
 signal polled(before: Dictionary, label: String)
 
