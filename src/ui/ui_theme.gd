@@ -1,5 +1,6 @@
 extends RefCounted
 
+const ScrollBars = preload("res://src/ui/scroll_bars.gd")
 const OptionCheckStyle = preload("res://src/ui/option_check_style.gd")
 const AccentRule = preload("res://src/ui/accent_rule.gd")
 
@@ -63,7 +64,6 @@ const ACCENT_FALLBACK := Color(0.361, 0.616, 0.922)  ## #5C9DEB
 const PLATE_ALPHA := 0.97
 
 ## A scrollbar's width, which in Godot is its stylebox's own minimum size.
-const BAR_WIDTH_PX := 10.0
 
 # -- Type scale ---------------------------------------------------------------
 
@@ -206,7 +206,7 @@ static func build() -> Theme:
 	_rich(theme)
 	_buttons(theme)
 	_progress(theme)
-	_scrollbars(theme)
+	ScrollBars.apply(theme, INK, EDGE, TEXT_DIM)
 	_sliders(theme)
 	return theme
 
@@ -474,31 +474,6 @@ static func _progress(theme: Theme) -> void:
 	theme.set_stylebox("fill", "ProgressBar", fill)
 
 
-## Every floating panel sits inside a ScrollContainer, so nothing is unreachable --
-## and the scrollbar that says so was once the engine default, a light grey slab,
-## which is most of why five screenshot passes photographed a panel at the top of a
-## body nobody could tell was scrolling.
-##
-## The grabber is EDGE -- the hairline colour, the quietest thing in the palette
-## that is still visible -- and it brightens on hover like every other control. It
-## does NOT take the accent: the accent says where you are, not that you can scroll.
-static func _scrollbars(theme: Theme) -> void:
-	for type in ["VScrollBar", "HScrollBar"]:
-		# The content margins are the BAR'S WIDTH and not decoration: a StyleBoxFlat
-		# with none has a minimum size of zero, so a first version of this theming
-		# gave the scrollbar a colour and a width of 0px and it vanished everywhere.
-		var track := StyleBoxFlat.new()
-		track.bg_color = Color(INK.r, INK.g, INK.b, 0.6)
-		track.set_corner_radius_all(2)
-		track.content_margin_left = BAR_WIDTH_PX / 2.0
-		track.content_margin_right = BAR_WIDTH_PX / 2.0
-		theme.set_stylebox("scroll", type, track)
-
-		theme.set_stylebox("grabber", type, _grabber_box(EDGE))
-		theme.set_stylebox("grabber_highlight", type, _grabber_box(EDGE.lightened(0.25)))
-		theme.set_stylebox("grabber_pressed", type, _grabber_box(TEXT_DIM))
-
-
 ## Every slider (the budget's, the tax's, a fund's): the engine default draws no track
 ## on graphite, so a slider read as a lone dot beside its value (the fund's frame,
 ## #316). The track is EDGE, the hairline; the part behind the grabber is the accent,
@@ -511,15 +486,6 @@ static func _sliders(theme: Theme) -> void:
 		bar.content_margin_top = 2
 		bar.content_margin_bottom = 2
 		theme.set_stylebox(part[0], "HSlider", bar)
-
-
-static func _grabber_box(bg: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = bg
-	box.set_corner_radius_all(2)
-	box.content_margin_left = BAR_WIDTH_PX / 2.0
-	box.content_margin_right = BAR_WIDTH_PX / 2.0
-	return box
 
 
 static func _button_box(bg: Color, border := Color(0, 0, 0, 0)) -> StyleBoxFlat:
