@@ -29,7 +29,10 @@ static func refresh(main, rerank := false) -> void:
 	var lines: Array = game.get("lines", [])
 	var chief = Staff.chief_of(main._loader, String(state.player().id))
 	var face: Texture2D = Portrait.texture_for(String(chief.id)) if chief != null else null
-	var tip := Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id)) if chief != null else ""
+	var who := Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id)) if chief != null else ""
+	# What a click does, said on the mark itself (the ux-copy pass: the face alone did not).
+	var tip := "%s
+%s" % [who, Strings.t("Click to open the month's briefing.")] if who != "" else Strings.t("Click to open the month's briefing.")
 	if lines.is_empty():
 		main._hud.title_bar.chief_mark.show_line(face, Strings.t("A quiet month"), "", false, tip)
 		return
