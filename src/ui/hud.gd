@@ -26,6 +26,7 @@ const Inbox = preload("res://src/ui/inbox.gd")
 const MapLegend = preload("res://src/ui/map_legend.gd")
 const Ribbon = preload("res://src/ui/ribbon.gd")
 const FrontPage = preload("res://src/ui/front_page.gd")
+const ChiefCaption = preload("res://src/ui/chief_caption.gd")
 
 const EDGE_MARGIN := 14
 
@@ -38,6 +39,7 @@ var inbox
 var map_legend
 var ribbon
 var front_page
+var chief_caption
 
 
 func _ready() -> void:
@@ -122,6 +124,11 @@ func _ready() -> void:
 	ribbon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right.add_child(ribbon)
 	ribbon.add_clock(clock_cluster)
+
+	# G1: the chief's caption, laid over everything under the title bar and outside
+	# every container, so showing it moves nothing (it ignores the mouse).
+	chief_caption = ChiefCaption.new()
+	add_child(chief_caption)
 
 
 ## A loaded game's state, rebound to the furniture that keeps one: the ribbon's month,
