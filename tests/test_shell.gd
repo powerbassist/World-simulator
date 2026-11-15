@@ -219,11 +219,11 @@ func _check_the_map_is_reachable_beside_a_domain() -> void:
 ## and the tab, or the nation and the map.
 func _check_breadcrumb_follows_the_tab() -> void:
 	var bar = _main._hud.title_bar
-	_main._windows.open("tax")
+	_main._windows.open("finances")
 	var crumb: String = bar.crumb()
-	for part in [_main._loader.nations[_main._state.player_nation_id].nation_name, _main.tr("Finances"), _main._windows.title("tax")]:
+	for part in [_main._loader.nations[_main._state.player_nation_id].nation_name, _main.tr("Finances"), _main._windows.title("finances")]:
 		if not crumb.contains(part):
-			_fail("with the tax tab open the breadcrumb reads '%s', missing '%s'" % [crumb, part])
+			_fail("with the books tab open the breadcrumb reads '%s', missing '%s'" % [crumb, part])
 	_main._windows.close_all()
 	crumb = bar.crumb()
 	if not crumb.ends_with(_main.tr("Map")) or crumb.contains(_main.tr("Finances")):
@@ -778,8 +778,7 @@ func _check_the_month_left_every_closed_panel_dirty() -> void:
 		_fail("the budget forecast began a projection with its window shut")
 
 
-## V5.1-0a review pass 1: the Tax Code window commits through Budget.commit()
-## too, and the budget window's forecast -- projected off the frame, kept until
+## V5.1-0a review pass 1: the Books page tables through FinanceBill too, and the budget window's forecast -- projected off the frame, kept until
 ## a change of state -- must hear of it, or it shows the pre-commit budget's
 ## future while the books beside it show the new one.
 func _check_a_tax_commit_reaches_the_budget_forecast() -> void:
@@ -787,9 +786,12 @@ func _check_a_tax_commit_reaches_the_budget_forecast() -> void:
 	_main._windows.open("budget")
 	_main._budget_panel._process(0.0)
 	forecast.drain()
-	_main._tax_panel._on_commit()
+	_main._windows.open("finances")
+	var page = _main._windows.frame("finances")._content
+	page._draft.set_value("tax_rates_pct", "income", float(_main._state.player().tax_rates_pct["income"]) + 1.0)
+	page._on_table()
 	if not forecast.busy():
-		_fail("a Tax Code commit left the budget's forecast settled on the old rates")
+		_fail("a Books page commit left the budget's forecast settled on the old rates")
 	_main._windows.close_all()
 
 

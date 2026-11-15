@@ -179,13 +179,11 @@ func _pick_goal(picked: String) -> void:
 	_stamp = ""
 
 
-## A row pressed: a law opens its sheet beside the list; a budget line is set on the Budget tab and a
-## tax rate in the Tax Code, on that tax's own row (the parent's ruling on QA's TAKE, #358).
+## A row pressed: a law opens its sheet beside the list; a budget line or a tax rate is set on the Books
+## page, on that row's own editor (the parent's ruling on QA's TAKE, #358; V5.3 Finances slice 2).
 func _pick(measure: Dictionary) -> void:
 	if String(measure["kind"]) == "law":
 		_list.select(String(measure["id"]))
 	else:
-		if String(measure["kind"]) == "rate":
-			go_requested.emit("tax", String(measure["key"]))
-		else:
-			go_requested.emit("budget", "")
+		var channel := "tax_rates_pct" if String(measure["kind"]) == "rate" else "spending_pct_gdp"
+		go_requested.emit("finances", "%s:%s" % [channel, String(measure["key"])])

@@ -42,7 +42,7 @@ const BUDGET := {
 	"legislature": 80, "orgs": 300, "agenda": 40, "campaign": 40, "energy": 20,
 	"politics": 30, "region": 20, "commodities": 10, "projects": 20, "economy": 40,
 	"overview": 30, "diplomacy": 20, "budget": 0, "society": 10,
-	"events": 20, "people": 10, "companies": 10, "calendar": 10, "tax": 10,
+	"events": 20, "people": 10, "companies": 10, "calendar": 10,
 	"outliner": 10,
 }
 ## The tabs 0b has not reached yet, held at what they measured before it started
@@ -60,7 +60,7 @@ const TOTAL_PENDING := {
 	"budget": 113, "calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 115, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
-	"politics": 123, "projects": 75, "society": 106, "tax": 45,
+	"politics": 123, "projects": 75, "society": 106,
 }
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
@@ -85,7 +85,10 @@ const TOTAL_PENDING := {
 ## Finances direction A, slice 1 (the author picked "A, à l'échelle"): the Books tab is new and stands
 ## BESIDE the Budget (113) and the Tax Code (45) until slice 2 retires both into it: 2953 -> 3134 (+181,
 ## the parent's OK on #359, with the condition that slice 2 states the net for the whole of A).
-const TOTAL_SUM_CEILING := 3134
+## Slice 2 retires the Tax Code (45 words, its tab and its X key) into the Books rows, whose editors are closed
+## at rest and add nothing counted here: 3134 -> 3089. The Budget (113) stays for its sector tiles until the
+## Sectors screen takes them, so A's net is Books 181 + Budget 113 = 294 against the 339 it began from.
+const TOTAL_SUM_CEILING := 3089
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

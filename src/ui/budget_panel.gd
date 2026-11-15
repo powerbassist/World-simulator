@@ -28,6 +28,7 @@ const Forecast = preload("res://src/ui/budget_forecast.gd")
 const Ledger = preload("res://src/ui/budget_ledger.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
+const BudgetShared = preload("res://src/ui/budget_shared.gd")
 
 const PROJECTION_MONTHS := 24
 
@@ -71,6 +72,9 @@ var _loader
 ## one separate line under the strip, with a Go to that tab. A sibling reference,
 ## not state; null until wired, and every read guards it.
 var tax_panel = null
+## The Books page's ONE draft (finance_draft.gd), wired by finances_driver.gd: the levers read and write it, so the
+## Budget and the Books rows are never two pendings (V5.3 Finances slice 2; this tab retires with the Sectors screen).
+var shared = null
 ## The window manager, for that line's Go; null until main.gd wires it.
 var windows = null
 var _pending := {"spending_pct_gdp": {}}
@@ -149,6 +153,7 @@ func _ready() -> void:
 
 	root.add_child(PanelCharts.new(self, PanelCharts.BUDGET))
 	root.add_child(_build_buttons())
+	visibility_changed.connect(func() -> void: _dirty = true)
 	add_child(_forecast)
 	_forecast.settled.connect(func(): _dirty = true)
 
@@ -276,9 +281,7 @@ func hide_close_button() -> void:
 func _lever_keys() -> Array:
 	# The five spending keys only, since V4.2 T5: the tax side (five rates,
 	# the brackets lever, the born keys) lives on the Tax Code window now.
-	var keys: Array = []
-	keys.append_array(C.SPENDING_KEYS)
-	return keys
+	return C.SPENDING_KEYS.duplicate()
 
 
 ## `loader` since V1.3b: Budget.project() needs it to drift relations the way the
@@ -303,6 +306,7 @@ func _on_revert(state_moved := false) -> void:
 		_set_lever(key, _pending_value(key))
 	_edited_keys.clear()
 	_share_moves = []
+	BudgetShared.revert(self)
 	# mark_dirty() for a commit (V5.1-0a review pass 1): the forecast keeps its
 	# projection until told the state moved. A plain Revert moved none, so the
 	# forecast on screen stands -- re-projecting it was ~5 s of work (D14, V5.1-d2).
@@ -314,7 +318,7 @@ func _on_commit() -> void:
 	var before := Trends.snapshot_now(_state)
 	# Tabled before the revert clears the levers; the card the shell pushes reads the
 	# tabling. A refusal (a law holds the month's slot) keeps the draft on the levers.
-	var tabling := FinanceBill.table(_state, _loader, FinanceBill.from_pending(_state.player(), _pending))
+	var tabling := FinanceBill.table(_state, _loader, BudgetShared.bill(self))
 	BudgetSectors.apply_moves(self)
 	if bool(tabling.get("tabled", false)):
 		_on_revert(true)
@@ -329,6 +333,7 @@ func _on_lever_changed(value: float, key: String) -> void:
 		_cue_until[key] = Time.get_ticks_msec() + CUE_MS
 		get_tree().create_timer(CUE_MS / 1000.0).timeout.connect(_sliders[key].queue_redraw)
 	_pending["spending_pct_gdp"][key] = value
+	BudgetShared.write(self, key, value)
 	# This lever is now the player's; mark_dirty() must stop re-syncing THIS one.
 	_edited_keys[key] = true
 	_lever_moved = true
@@ -383,6 +388,7 @@ func _resync_untouched() -> void:
 	var ns = _state.player()
 	if ns == null or _sliders.is_empty():
 		return
+	BudgetShared.pull(self)
 	for key in _lever_keys():
 		if _edited_keys.has(key):
 			continue
@@ -428,15 +434,6 @@ func _lever_text(key: String) -> String:
 	return "%s%%" % PanelKit.Num.f(_pending_value(key), 1)
 
 
-## The two finance tabs, each told of the other and of the window manager (for
-## the draft line's Go): one call, so main.gd wires the pair in one line.
-func pair(tax, window_manager) -> void:
-	tax_panel = tax
-	tax.budget_panel = self
-	windows = window_manager
-	tax.windows = window_manager
-
-
 ## What this tab's Commit would book, or nothing while no lever stands away from
 ## its live value -- read by the Tax Code for its line about this draft.
 func draft() -> Dictionary:
@@ -448,6 +445,7 @@ func draft() -> Dictionary:
 
 
 func _refresh() -> void:
+	BudgetShared.pull(self)
 	_figures.clear()
 	for key in _lever_keys():
 		_lever_values[key].text = _lever_text(key)

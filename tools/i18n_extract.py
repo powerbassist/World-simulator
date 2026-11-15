@@ -109,7 +109,7 @@ TRANSLATABLE = {
     # The power plant catalogue, data/energy-sources.json (energy_panel.gd).
     "energy-sources": ["name"],
     # V5.3 e, the tax library (data/taxes/, tax_panel.gd): no rows until it merges.
-    "taxes": ["name"],
+    "taxes": ["name", "rate_meaning"],
 }
 
 # Player text that has no path to a translation yet: (what, glob, fields). Counted in

@@ -493,6 +493,12 @@ var _failing := false
 ## on this list it stages NOTHING and only opens the window; the frame's claim
 ## is the rate-as-number rows, which is the panel's whole reason for existing.
 var _tax := false
+## --books ROW: the Books page with that row's editor open ("tax_rates_pct:income", "spending_pct_gdp:health");
+## --books-draft: a draft on it; --books-tabled: a finance bill before the Assembly; --books-refused: another bill holds the slot.
+var _books_row := ""
+var _books_draft := false
+var _books_tabled := false
+var _books_refused := false
 
 ## V5.3 a + b (docs/design/v5.3-ab.md 4.1). Moves two spending levers and two tax
 ## rates, uncommitted, so a frame of the Budget (--open budget) or the Tax Code
@@ -952,6 +958,14 @@ func _init() -> void:
 			_failing = true
 		elif args[i] == "--tax":
 			_tax = true
+		elif args[i] == "--books" and i + 1 < args.size():
+			_books_row = args[i + 1]
+		elif args[i] == "--books-draft":
+			_books_draft = true
+		elif args[i] == "--books-tabled":
+			_books_tabled = true
+		elif args[i] == "--books-refused":
+			_books_refused = true
 		elif args[i] == "--compose":
 			_compose = true
 		elif args[i] == "--pmb":
@@ -1377,6 +1391,8 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
+	if _books_row != "" or _books_draft or _books_tabled or _books_refused:
+		_stage_the_books()
 	if _moved:
 		_move_the_levers()
 	if _industry:
@@ -2161,17 +2177,42 @@ func _fail_a_major() -> void:
 	entry["rescue_months_left"] = IndustryK.RESCUE_WINDOW_MONTHS
 
 
-## V4.2 close-out, for --tax. No state to stage -- _open_the_partition()'s
-## shape: the register is the content and the frame is the check that the
-## panel builds its rows off it.
+## V4.2 close-out, for --tax. The tax rows live on the Books page since V5.3 Finances slice 2: it opens with
+## the VAT row's editor open (the register is the content, and the frame checks that the row builds off it).
 func _open_the_tax_code() -> void:
-	_main._windows.open("tax")
+	_main._windows.open("finances")
 	# open() silently no-ops on an unregistered id -- B14's own guard, which the
 	# generic --open path carries and a direct open() call must carry too.
-	if not _main._windows.is_open("tax"):
-		push_error("screenshot: --tax could not open the tax window")
+	if not _main._windows.is_open("finances"):
+		push_error("screenshot: --tax could not open the Books page")
 	else:
-		print("--tax: the tax window is open (%d rate rows)" % _main._tax_panel._sliders.size())
+		_main._windows.frame("finances")._content.open_row("tax_rates_pct", "vat")
+		print("--tax: the Books page is open, the VAT row's editor open")
+
+
+## For --books*: the Books page in the states of slice 2 (an open row, a draft, a bill at vote, a refusal).
+func _stage_the_books() -> void:
+	var FinanceBill = preload("res://src/sim/finance_bill.gd")
+	var ns = _main._state.player()
+	_main._windows.open("finances")
+	var page = _main._windows.frame("finances")._content
+	page._process(0.0)
+	if _books_tabled:
+		FinanceBill.table(_main._state, _main._loader, {"tax_rates_pct": {"vat": 2.0}, "spending_pct_gdp": {"health": 0.5}})
+	if _books_refused:
+		ns.tabled_bill = {"law_id": "workplace_safety_act", "vote_year": _main._state.year, "vote_month": _main._state.month, "vote_day": 28}
+	if _books_row != "":
+		page.open_row(_books_row.get_slice(":", 0), _books_row.get_slice(":", 1))
+	if _books_draft or _books_refused:
+		page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
+		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
+		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
+	page._stamp = ""
+	page._dirty = true
+	page._process(0.0)
+	page._forecast.drain()
+	page._process(0.0)
+	print("--books: row '%s', draft %s, tabled %s, refused %s" % [_books_row, _books_draft, _books_tabled, _books_refused])
 
 
 ## For --moved: health up a point and a half, education down half a point,
@@ -2370,9 +2411,13 @@ func _move_the_levers() -> void:
 	var ns = _main._state.player()
 	_main._budget_panel._sliders["health"].value = float(ns.spending_pct_gdp["health"]) + 1.5
 	_main._budget_panel._sliders["education"].value = float(ns.spending_pct_gdp["education"]) - 0.5
-	_main._tax_panel._sliders["income"].value = float(ns.tax_rates_pct["income"]) + 2.0
-	_main._tax_panel._sliders["vat"].value = float(ns.tax_rates_pct["vat"]) - 1.0
-	print("--moved: health +1.5, education -0.5, income +2, vat -1 (uncommitted)")
+	var page = _main._windows.frame("finances")._content
+	page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
+	page._draft.set_value("tax_rates_pct", "vat", float(ns.tax_rates_pct["vat"]) - 1.0)
+	page._paint(ns)
+	page._forecast.drain()
+	page._paint(ns)
+	print("--moved: health +1.5, education -0.5 (Budget tab), income +2, vat -1 (Books page draft), uncommitted")
 
 
 ## V4.2 close-out, for --compose. The draft goes through Statute.draft()
