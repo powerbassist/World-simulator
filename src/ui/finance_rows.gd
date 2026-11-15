@@ -161,11 +161,19 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 		gap.custom_minimum_size.x = SWATCH
 		row.add_child(gap)
 	var label := _cell(row, name, UiTheme.HEADING, 0.0)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if note != "":
+	# A header's name is what the column is read by: it keeps its own width, and the note gives way (it fills what is
+	# left and is trimmed, or at 130 % is the row's hover), never "Other spend..." (QA's T1 on #366, once the scroll
+	# bar's gap took 8 px at 130 %).
+	label.clip_text = false
+	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	if note != "" and UiTheme.text_scale() < 1.2:
 		var caption := _cell(row, note, UiTheme.CAPTION, 0.0)
-		caption.clip_text = false
-		caption.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	else:
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if note != "":
+			tip = note if tip == "" else note + ". " + tip
 	var figure := _cell(row, total, "", FIGURE_WIDTH)
 	figure.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	if tip != "":
@@ -194,6 +202,7 @@ static func _kind_row(ns, kind: Dictionary, wide: bool, ctx: Dictionary) -> Cont
 	if wide:
 		var caption := _cell(row, Strings.t("At vote") if at_vote else who, UiTheme.CAPTION, 120.0)
 		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	else:
 		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.tooltip_text = Strings.t("Paid by: %s") % who

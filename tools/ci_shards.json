@@ -60,6 +60,7 @@
    "tests/test_workspace.gd",
    "tests/test_panel_kit.gd",
    "tests/test_ui_theme.gd",
+   "tests/test_scroll_gap.gd",
    "tests/test_balance.gd",
    "tests/test_i18n_lint.gd",
    "tests/test_i18n_fit.gd",
