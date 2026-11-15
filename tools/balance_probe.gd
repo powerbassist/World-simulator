@@ -69,6 +69,11 @@ const Migration = preload("res://src/sim/migration.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Energy = preload("res://src/sim/energy.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
+const Levers = preload("res://src/sim/levers.gd")
+const Shadows = preload("res://src/sim/shadows.gd")
+const Deal = preload("res://src/sim/deal.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
+const RegionFunds = preload("res://src/sim/region_funds.gd")
 
 ## The largest share of the +-SHIFT_MAX_PCT potential-shift budget that trade
 ## openness may claim on its own. Half: openness shares that budget with
@@ -533,6 +538,23 @@ const REFERENDUM_REGIMES := {
 	"managed_reforms_the_ballot": {"budget": REGIMES["managed"], "referendum_month": -1, "electoral_month": 6},
 }
 
+## V5.3 e (Gameplay's read of #351, the parent's card 1): the player who SERVES the regional
+## wants, which no other regime does -- every other row is a president who answers no one and
+## opens no fund. From `regional_month`, `managed`'s budget plus:
+##   - three development funds kept open (the cap) in the regions the nation's people's
+##     `region:` wants name, at the rule's lowest share and longest term; a slot freed by a
+##     fund that ends goes to the next wanted region in turn, so with more wants than slots
+##     the regions take turns;
+##   - every `region:` request booked on its first free offered day and, that month, held and
+##     granted (Deal.grant: the dated word; money on the table refused first, as the audience
+##     probe's A5 player does).
+## Through the player's own verbs only (RegionFunds.start, Audiences.book, Deal.open/grant),
+## never by writing a register. A DEU row too: seven wants on three slots.
+const REGIONAL_REGIMES := {
+	"managed_serves_the_regions": {"budget": REGIMES["managed"], "regional_month": 6},
+	"managed_serves_the_regions_deu": {"budget": REGIMES["managed"], "regional_month": 6, "nation_id": "DEU"},
+}
+
 ## V1.8. THE ONLY THING THAT VARIES ACROSS THESE THREE IS WHETHER THE PLAYER OPENS
 ## THE WINDOW, which is what docs/pledge-model.md's own regime pair failed to hold: it
 ## differed in two things at once and needed a third regime to separate them. Here the
@@ -823,6 +845,15 @@ func _init() -> void:
 			-1, -1, -1, -1, int(regime["referendum_month"]), int(regime["electoral_month"])
 		)
 
+	for name in REGIONAL_REGIMES.keys():
+		if not _want(name):
+			continue
+		var regime: Dictionary = REGIONAL_REGIMES[name]
+		_run(
+			String(regime.get("nation_id", nation_id)), name, regime["budget"], -1, -1, -1, "", -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, {}, -1,
+			-1, -1, -1, -1, -1, -1, "", "", -1, -1, "", 0, int(regime["regional_month"])
+		)
+
 	# One name, one regime: a name two families shared would run twice here and
 	# be ambiguous to the sharded runner.
 	var seen := {}
@@ -908,7 +939,7 @@ func _resolve_pending(ns, delta: Dictionary) -> Dictionary:
 
 
 func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_month: int = -1, cabinet_shortfall_month: int = -1, amend_month: int = -1, amendment_id: String = "", agreement_month: int = -1, tariff_month: int = -1, pact_month: int = -1, deploy_month: int = -1, book_month: int = -1, subsidy_month: int = -1, regulate_month: int = -1, nationalise_month: int = -1, corrupt_month: int = -1, migrate_month: int = -1, settle_month: int = -1, switch_month: int = -1, switch_delta: Dictionary = {}, censor_month: int = -1, invest_month: int = -1, build_month: int = -1, campaign_month: int = -1, pledge_month: int = -1, referendum_month: int = -1, electoral_month: int = -1, answer_events: String = "", chamber_kind: String = "", campaign_tour_month: int = -1,
-		energy_month: int = -1, energy_action_id: String = "", energy_repeat_months: int = 0) -> void:
+		energy_month: int = -1, energy_action_id: String = "", energy_repeat_months: int = 0, regional_month: int = -1) -> void:
 	var loader := DataLoader.new()
 	loader.load_all()
 	if not loader.errors.is_empty():
@@ -1034,6 +1065,8 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 				_invest(state, loader, ns, regime_name, year, month)
 			if i + 1 == build_month:
 				_break_ground(state, loader, ns, regime_name, year, month)
+			if regional_month > 0 and i + 1 >= regional_month:
+				_serve_regions(state, loader, ns, run, regime_name, year, month)
 
 			# V2.8's two regimes, on the same cadence the plan wrote for them: an order
 			# at `energy_month`, repeated at the source's own build length, so a
@@ -1497,6 +1530,49 @@ func _sign_agreement(state, loader, ns, regime_name: String, year: int, month: i
 ## harness nothing about the channel this session added to the budget.
 ## V1.4a. Subsidises the largest firm by output at the harshest authored intensity
 ## and leaves it standing for the rest of the run.
+## REGIONAL_REGIMES' month: the funds kept at the cap in the wanted regions, in turn, and the
+## regional requests booked, then held and granted in the month of their day.
+func _serve_regions(state, loader, ns, run: Dictionary, regime_name: String, year: int, month: int) -> void:
+	var wanted: Array = []
+	for person in loader.people.get(ns.id, []):
+		for want in person.wants:
+			var object := String(want["object"])
+			if object.begins_with("region:") and not wanted.has(object.substr(7)):
+				wanted.append(object.substr(7))
+	var rule: Dictionary = RegionFunds.limits(loader)
+	if not wanted.is_empty() and not rule.is_empty():
+		var tried := 0
+		while RegionFunds.open_funds(ns).size() < int(rule["max_open"]) and tried < wanted.size():
+			var region_id := String(wanted[int(run.get("region_turn", 0)) % wanted.size()])
+			run["region_turn"] = int(run.get("region_turn", 0)) + 1
+			tried += 1
+			var opened := RegionFunds.start(state, ns, loader, region_id, float(rule["share_pct"][0]), int(rule["years"][1]))
+			if bool(opened.get("ok", false)):
+				print("  %d-%02d %s: fund opened in %s" % [year, month, regime_name, region_id])
+	for row in ns.audience_requests.duplicate():
+		if not String(row.get("object", "")).begins_with("region:"):
+			continue
+		var id := String(row["id"])
+		if String(row["status"]) == "pending":
+			for d in Audiences.offered_dates(state, ns, id):
+				if bool(d["free"]) and bool(Audiences.book(state, ns, loader, id, d).get("ok", false)):
+					break
+		var date: Dictionary = row.get("date", {})
+		if String(row["status"]) != "booked" or int(date.get("year", 0)) != year or int(date.get("month", 0)) != month:
+			continue
+		var day := int(state.day)
+		state.day = int(date.get("day", 1))
+		var session: Dictionary = Deal.open(state, ns, loader, id)
+		if not session.is_empty():
+			if not Shadows.offer(ns, session).is_empty():
+				Shadows.refuse_offer(state, ns, loader, session)
+			var granted: Dictionary = Deal.grant(state, ns, loader, session)
+			print("  %d-%02d %s: %s's ask about %s %s" % [year, month, regime_name, String(row["person_id"]),
+				String(row["object"]), "granted" if bool(granted.get("ok", false)) else "refused: %s" % String(granted.get("error", ""))])
+			Levers.close(state, ns, loader, session)
+		state.day = day
+
+
 func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
 	var action = null
 	for a in loader.company_actions:
