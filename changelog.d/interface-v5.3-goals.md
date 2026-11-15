@@ -1,0 +1,1 @@
+Added: The Bills page opens on the goals you are judged on (the deficit, unemployment, a bloc, your promises) and lists what would move the one you pick, best first, with whether the Assembly would pass it and, greyed, why something cannot be tabled now; the old list of laws is one press away.

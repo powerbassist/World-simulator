@@ -37,6 +37,8 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		3:
 			_main._windows.open("legislature")
+			# The page opens on the goals (goal_panel.gd); this test is about the catalogue under it.
+			_main._law_panel.find_child("Goals", true, false)._set_mode(false)
 		6:
 			_check_rows()
 			_press(true)
