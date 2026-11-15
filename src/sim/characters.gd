@@ -51,6 +51,7 @@ const CK = preload("res://src/sim/character_act_constants.gd")
 const CharacterSeed = preload("res://src/sim/character_seed.gd")
 const Staff = preload("res://src/sim/staff.gd")
 const WantTerms = preload("res://src/sim/want_terms.gd")
+const BlocVoice = preload("res://src/sim/bloc_voice.gd")
 
 
 ## Seed the people of ONE nation (new_game calls it for the player's, the only
@@ -108,8 +109,9 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 
 	# Wants settle, priced on satisfaction the DERIVED reads give. Only an
 	# UNSATISFIED want moves a person, and only by the amount the band allows.
+	var speakers: Array = []
 	for person in people:
-		_settle_wants(ns, person, meters, authored_leaders)
+		_settle_wants(ns, person, meters, authored_leaders, speakers)
 
 	# The acts, in CK.ACT_KEYS order for determinism, each gated on its own
 	# threshold read. One act per person per month -- a person mid-defection
@@ -123,6 +125,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Array:
 				continue
 			if _fire_act(state, ns, loader, person, act_key, meters, acts, authored_leaders):
 				acted[person.id] = true
+	BlocVoice.speak_for(state, ns, loader, speakers, acted, acts, brief_magnitude, _act)
 	book_act_offsets(ns, before)
 	return acts
 
@@ -219,7 +222,7 @@ static func _decay_grudges(ns, by_id: Dictionary) -> void:
 ## SAVE_VERSION move were needed to carry it or the refusal mark (absent reads "not
 ## refused"). `!` and `?` are safe as separators because a want object is
 ## `family:target` and never carries either.
-static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dictionary) -> void:
+static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dictionary, speakers: Array = []) -> void:
 	for want in person.wants:
 		var stance := String(want["stance"])
 		var object := String(want["object"])
@@ -233,6 +236,7 @@ static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dict
 		if served: ns.person_want_state.erase(WantTerms.refused_key(String(person.id), object))  # rule (d): a turn re-arms
 		if served and not prev:
 			_adjust_loyalty(ns, person.id, CK.LOYALTY_WANT_SERVED)
+			if object.begins_with("region:"): speakers.append([person, object.substr(7)])  # a fund opened: they speak (BlocVoice)
 		elif not served and (latched if WantTerms.is_standing(object) else prev):
 			_adjust_grudge(ns, person, CK.GRUDGE_WANT_DENIED * WantTerms.denial_factor(person, object))
 
@@ -446,10 +450,7 @@ static func brief_magnitude(person, standing: float) -> float:
 ## and passed a positive constant to penalise_blocs, which ADDED approval for
 ## an act of betrayal (the review's C1).
 static func _brief_blocs(magnitude: float) -> Dictionary:
-	var out := {}
-	for bloc in CK.BRIEF_BLOCS:
-		out[bloc] = magnitude
-	return out
+	return BlocVoice.blocs(magnitude)
 
 
 ## Standing-weighted price multiplier: the act of a person nobody rates costs

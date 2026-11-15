@@ -248,6 +248,14 @@ const PRICE_BRIEF := -0.15
 ## inline so a fourth bloc-carrying read finds the list instead of restating it.
 const BRIEF_BLOCS := ["workers", "students"]
 
+## V5.3 e (the author's "Construire le discours"; Gameplay's regions brief, section 5b): a
+## figure whose region a fund opens in speaks for the government, at this share of their
+## briefing's size, on the same blocs (src/sim/bloc_voice.gd). A labelled STAND-IN, one half:
+## the brief's two clauses bound it -- one voice moves a bloc's printed figure by a point or
+## more, three in one month stay under the acts band (0.50) -- and by hand, at the figures'
+## starting weight, the interval is about 0.18 to 0.79 of a briefing.
+const SPEAK_SHARE := 0.5
+
 # --- Trait factors ---------------------------------------------------------------------
 
 ## The faithful person's factor on a grudge PULSE from betrayal: halved -- they
