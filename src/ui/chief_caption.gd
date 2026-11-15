@@ -43,14 +43,25 @@ func say(line: String, anchor: Control, seconds := 0.0) -> void:
 		return
 	_line.text = line
 	var width := WIDTH_PX * UiTheme.text_scale()
+	# An autowrapped Label measures its height at its CURRENT width: at 0 it wraps every
+	# character and the plate ran down the screen (the first windowed frame did). So the
+	# label gets its width before the plate is measured, and is measured again once laid out.
+	var box := get_theme_stylebox("panel")
+	var inner := width - (box.get_minimum_size().x if box != null else 0.0)
+	_line.custom_minimum_size.x = inner
+	_line.size = Vector2(inner, 0)
 	custom_minimum_size.x = width
-	size = Vector2(width, 0)
-	reset_size()
-	_place(anchor)
-	# The mark was just filled and is laid out at the end of the frame: place again then.
-	_place.call_deferred(anchor)
+	_settle(anchor)
+	# The mark was just filled and is laid out at the end of the frame: settle again then.
+	_settle.call_deferred(anchor)
 	show()
 	_timer.start(seconds if seconds > 0.0 else reading_seconds(line))
+
+
+func _settle(anchor: Control) -> void:
+	size = Vector2(custom_minimum_size.x, 0)
+	reset_size()
+	_place(anchor)
 
 
 func _place(anchor: Control) -> void:
