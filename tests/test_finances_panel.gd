@@ -58,6 +58,21 @@ func _process(_delta: float) -> bool:
 			# QA's MO / MD on #359: end to end through the game's own wiring.
 			_main = load("res://src/ui/main.tscn").instantiate()
 			root.add_child(_main)
+		4:
+			# The docked page at 130 %: laid out a frame before the clip check reads it (QA's T1 on #366: the scroll bar's
+			# gap took 8 px from the books' columns and "Other spending" read "Other spend...").
+			UiTheme.set_text_scale(1.3)
+			_panel.theme = UiTheme.build()  # the game's fonts: a bare panel measures the engine default
+			_panel._dirty = true
+			_panel._process(0.0)
+			# The narrowest the page can be laid out: every column at its minimum, which is where a name is cut.
+			_panel.size = Vector2(_panel.get_combined_minimum_size().x, 820)
+		5:
+			_check_no_name_is_clipped_at_130()
+			UiTheme.set_text_scale(1.0)
+			_panel.theme = null
+			_panel._dirty = true
+			_panel._process(0.0)
 		6:
 			_main._windows.open("finances")
 		9:
@@ -256,6 +271,30 @@ func _check_the_stamp_and_the_forecast_redraw() -> void:
 	if _panel._dirty:
 		_fail("the forecast's settled signal rebuilds the rows (it would drop a slider being held)")
 	_panel._process(0.0)
+
+
+## No header or row name on the books is cut to an ellipsis at 130 % text: a Label that clips and whose text is wider
+## than the box it was given says "Other spend...". The names are what the page is read by; the figures and notes
+## around them may be tighter.
+func _check_no_name_is_clipped_at_130() -> void:
+	var clipped := []
+	for box in [_panel._revenue_box, _panel._spending_box]:
+		for node in box.find_children("*", "", true, false):
+			if not (node is Label or node is Button):
+				continue
+			var label = node
+			if not label.is_visible_in_tree() or not label.clip_text or label.text == "":
+				continue
+			# The label's own measure of its text, as it would draw it (variation fonts and tracking included).
+			label.clip_text = false
+			label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+			var need: float = label.get_minimum_size().x
+			label.clip_text = true
+			label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			if need > label.size.x + 0.5:
+				clipped.append("%s (%.0f of %.0f px)" % [label.text, need, label.size.x])
+	if not clipped.is_empty():
+		_fail("at 130 %% the books clip: %s" % ", ".join(clipped))
 
 
 func _check_who_pays_is_a_hover_at_130() -> void:
