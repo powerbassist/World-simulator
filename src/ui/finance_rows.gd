@@ -30,6 +30,9 @@ const GROUP_NAME := {
 const NAME_WIDTH := 215.0
 const SPENDING_NAME_WIDTH := 130.0
 const RATE_WIDTH := 100.0
+## A spending line's figure ("from 11.0 to 12.5 %"): the name button takes the rest, never this. The unit is the
+## column's heading (% of GDP), so the figure stays short enough for the pane at 130 % text.
+const PCT_WIDTH := 96.0
 const FIGURE_WIDTH := 64.0
 const SWATCH := 10.0
 
@@ -92,30 +95,32 @@ static func revenue(box: Control, book: Dictionary, state, loader, open_groups: 
 			var month := int(loader.nations[ns.id].finance_autumn_month)
 			var line := PanelKit.plain_line(box, Strings.t("Not in force, creatable in %s: %s") % [DateText.month_long(month), names], PanelKit.Tone.DIM)
 			line.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_header(box, MUTED, Strings.t("Other revenue"), bn_text(float(book["other_revenue_bn"])), Strings.t("not set here"),
-		Strings.t("Revenue no tax in force on this page accounts for."))
+	_header(box, MUTED, Strings.t("Other revenue"), bn_text(float(book["other_revenue_bn"])), Strings.t("not set here"), _other_revenue_tip(ctx))
 
 
 ## The spending column: the five lines, then the debt service and what no line sets.
 static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
-	_header(box, Color.TRANSPARENT, Strings.t("Spending"), bn_text(float(book["spending_bn"])), "")
+	_header(box, Color.TRANSPARENT, Strings.t("Spending"), bn_text(float(book["spending_bn"])), Strings.t("lines in % of GDP"))
 	for line in book["lines"]:
 		var row := _row()
 		row.add_child(_swatch(line_color(String(line["key"]))))
 		var id := row_id(FinanceDraft.SPENDING, String(line["key"]))
 		var name := _name_cell(row, Labels.portfolio(String(line["key"])), id, SPENDING_NAME_WIDTH, ctx)
 		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var pct := _cell(row, "", UiTheme.CAPTION, 0.0)
+		var pct := _cell(row, "", UiTheme.CAPTION, PCT_WIDTH)
+		# At 130 % the pane has no room for the figure beside the name: it is the row's hover (who-pays does the same).
+		pct.visible = bool(ctx["wide"])
+		row.mouse_filter = Control.MOUSE_FILTER_PASS
 		pct.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		(ctx["cells"] as Dictionary)[id] = [pct, FinanceDraft.SPENDING, String(line["key"]), float(line["pct"])]
 		_cell(row, bn_text(float(line["bn"])), "", FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		box.add_child(row)
-		if String(ctx["open"]) == id:
+		if String(ctx["open"]) == id and not (ctx["tabled"] as Dictionary).has(id):
 			box.add_child((ctx["editor"] as Callable).call(FinanceDraft.SPENDING, String(line["key"])))
 	_header(box, SERVICE, Strings.t("Debt service"), bn_text(float(book["service_bn"])), Strings.t("not set here"),
 		Strings.t("Interest on the debt: it follows the debt and the rates the markets ask."))
 	_header(box, MUTED, Strings.t("Other spending"), bn_text(float(book["other_spending_bn"])), Strings.t("not set here"),
-		Strings.t("Everything the state spends that none of the five lines sets."))
+		Strings.t("Not detailed in the game yet: everything the state spends that none of the five lines sets, kept as one figure."))
 
 
 static func _row() -> HBoxContainer:
@@ -224,7 +229,8 @@ static func row_id(channel: String, key: String) -> String:
 ## A row with its editor under it while it is the open one.
 static func _kind_with_editor(box: Control, ns, kind: Dictionary, wide: bool, ctx: Dictionary) -> void:
 	box.add_child(_kind_row(ns, kind, wide, ctx))
-	if String(ctx["open"]) == row_id(FinanceDraft.TAX, String(kind["id"])):
+	var id := row_id(FinanceDraft.TAX, String(kind["id"]))
+	if String(ctx["open"]) == id and not (ctx["tabled"] as Dictionary).has(id):
 		box.add_child((ctx["editor"] as Callable).call(FinanceDraft.TAX, String(kind["id"])))
 
 
@@ -260,6 +266,8 @@ static func paint_rates(ctx: Dictionary) -> void:
 		var label: Label = cell[0]
 		if not is_instance_valid(label):
 			continue
+		if not label.visible:
+			(label.get_parent() as Control).tooltip_text = label.text
 		var channel := String(cell[1])
 		var key := String(cell[2])
 		var live := float(cell[3])
@@ -273,8 +281,16 @@ static func paint_rates(ctx: Dictionary) -> void:
 		var was := LedgerBox.text(live, places)
 		var unit := "" if spending else unit_text(String(cell[5]))
 		if target == live:
-			label.text = Strings.t("%s %% of GDP") % Num.f(live, 1) if spending else was + unit
+			label.text = Strings.t("%s %%") % Num.f(live, 1) if spending else was + unit
 		elif spending:
-			label.text = Strings.t("%s to %s %% of GDP") % [was, LedgerBox.text(target, places)]
+			label.text = Strings.t("from %s to %s %%") % [was, LedgerBox.text(target, places)]
 		else:
-			label.text = Strings.t("%s to %s") % [was, LedgerBox.text(target, places) + unit]
+			label.text = Strings.t("from %s to %s") % [was, LedgerBox.text(target, places) + unit]
+
+
+## What the unset revenue holds, as the model keeps it (FinanceRead.other_parts): the part set when the game
+## begins so that revenue equals the nation's real figure, and what the laws in force add.
+static func _other_revenue_tip(ctx: Dictionary) -> String:
+	var parts: Array = ctx["parts"]["revenue"]
+	return Strings.t("Not detailed in the game yet. %s bn of it is revenue no rate here sets (social contributions, local taxes), and %s bn is what laws in force add.") % [
+		Num.f(float(parts[0]["bn"]), 0), Num.f(float(parts[1]["bn"]), 1)]

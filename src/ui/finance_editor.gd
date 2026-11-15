@@ -9,7 +9,9 @@ extends VBoxContainer
 ## It writes the page's ONE draft (finance_draft.gd) on the player's input and nowhere else: opening a row, a
 ## refresh or a re-sync never drafts it, so an off-grid rate (0.6545) stays in the register. The slider's grid
 ## is the sim's (TaxLibrary.step_pct); a spending line keeps the Budget's tenth of a point and its five-point
-## reach either side of today (LEVER_SPAN, the author's d1b3), which the box is held to as well. The income
+## reach either side of today (LEVER_SPAN, the author's d1b3): the TRACK is the line's whole range, so the knob
+## reads as the level (d1b3's own reason), a drag or a typed figure past the reach stops at it, and the reach is
+## what the caption beside the box says. The income
 ## tax carries a second lever, its brackets (the brief's call 4: a setting of that row, not a seventeenth tax).
 
 signal moved
@@ -26,6 +28,7 @@ const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
+const GK = preload("res://src/sim/goal_read_constants.gd")
 
 ## A spending line's step, ceiling and reach either side of its value today, in points of GDP.
 const LINE_STEP := 0.1
@@ -73,18 +76,20 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 		# What the rate is a rate OF (the data's own words): the hover on the figure, not a sentence on the page.
 		now.tooltip_text = Strings.row("taxes", key, "rate_meaning", String(ns.tax_library[key].get("rate_meaning", "")))
 		now.mouse_filter = Control.MOUSE_FILTER_PASS
-	var made := _lever(self, step, _lo, _hi, decimals, unit, channel, key, "Box")  # i18n: ok a node name, found by tests
+	var track_lo := _lo if channel == FinanceDraft.TAX else 0.0
+	var track_hi := _hi if channel == FinanceDraft.TAX else LINE_MAX
+	var made := _lever(self, step, track_lo, track_hi, decimals, "Box", _lo, _hi)  # i18n: ok a node name, found by tests
 	_slider = made[0]
 	_box = made[1]
 	if channel == FinanceDraft.TAX and key == _income_key(ns):
-		var brackets := _lever(self, 0.01, 0.0, float(TaxK.PROGRESSIVITY_MAX), 2, "", FinanceDraft.BRACKETS, "", "BracketsBox")  # i18n: ok a node name, found by tests
-		PanelKit.plain_line(self, Strings.t("Income brackets: how steeply the rate climbs with income."), PanelKit.Tone.DIM)
+		PanelKit.plain_line(self, Strings.t("Income brackets"), PanelKit.Tone.DIM)
+		var brackets := _lever(self, 0.01, 0.0, float(TaxK.PROGRESSIVITY_MAX), 2, "BracketsBox", 0.0, float(TaxK.PROGRESSIVITY_MAX), FinanceDraft.BRACKETS, "")  # i18n: ok a node name, found by tests
 		_brackets = brackets[0]
 		_brackets_box = brackets[1]
 	_effect = PanelKit.plain_line(self, "", PanelKit.Tone.PLAIN)
 	_effect.name = "Effect"  # i18n: ok a node name, found by tests
-	var who := PanelKit.plain_line(self, _who_text(state, loader), PanelKit.Tone.DIM)
-	who.autowrap_mode = TextServer.AUTOWRAP_WORD
+	for line in _who_lines(state, loader):
+		PanelKit.plain_line(self, line, PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_WORD
 	if channel == FinanceDraft.TAX:
 		var yields: Dictionary = FinanceRead.step_yields(ns).get(key, {})
 		if yields.has("up_bn"):
@@ -93,7 +98,11 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 
 
 ## One lever on a line: the slider, then the box that takes the exact figure.
-func _lever(parent: Control, step: float, lo: float, hi: float, decimals: int, unit: String, lever_channel: String, lever_key: String, box_name: String) -> Array:
+func _lever(parent: Control, step: float, lo: float, hi: float, decimals: int, box_name: String, reach_lo: float, reach_hi: float,
+		lever_channel := "", lever_key := "") -> Array:
+	if lever_channel == "":
+		lever_channel = channel
+		lever_key = key
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 8)
 	var slider := HSlider.new()
@@ -108,10 +117,10 @@ func _lever(parent: Control, step: float, lo: float, hi: float, decimals: int, u
 	slider.set_block_signals(false)
 	slider.value_changed.connect(func(value: float) -> void: _write(lever_channel, lever_key, value))
 	line.add_child(slider)
-	var box := LedgerBox.attach(line, lo, hi, func(value: float) -> void: _write(lever_channel, lever_key, value))
+	var box := LedgerBox.attach(line, reach_lo, reach_hi, func(value: float) -> void: _write(lever_channel, lever_key, value))
 	box.name = box_name
 	var caption := Label.new()
-	caption.text = Strings.t("%s to %s") % [Num.f(lo, decimals), Num.f(hi, decimals)]
+	caption.text = Strings.t("%s to %s") % [Num.f(reach_lo, decimals), Num.f(reach_hi, decimals)]
 	caption.theme_type_variation = UiTheme.CAPTION
 	line.add_child(caption)
 	parent.add_child(line)
@@ -169,16 +178,24 @@ func _income_key(ns) -> String:
 	return "income" if ns.tax_library.has("income") else ""
 
 
-## Who the row is for: a tax's payers (the data), a spending line's blocs (what Opinion weighs for its issue,
-## read once when the row opens: ~30 ms).
-func _who_text(state, loader) -> String:
+## Who the row is for: a tax's payers (the data); a spending line's blocs (what Opinion weighs for its issue) and
+## what one step of it does to each (the net, in words: at a game's start a rise angers nearly every bloc, because
+## the deficit it adds is counted). One FinanceRead.line_blocs call when the row opens (~30 ms).
+func _who_lines(state, loader) -> Array:
 	if channel == FinanceDraft.TAX:
 		var paid: Array = state.player().tax_library[key].get("who_pays", [])
-		return Strings.t("Paid by: %s") % ", ".join(paid.map(func(b) -> String: return Labels.bloc(String(b))))
-	var weights: Array = FinanceRead.line_blocs(state, loader, key)["weights"]
-	if weights.is_empty():
-		return ""
-	return Strings.t("For: %s") % ", ".join(weights.map(func(pair: Array) -> String: return Labels.bloc(String(pair[0]))))
+		return [Strings.t("Paid by: %s") % ", ".join(paid.map(func(b) -> String: return Labels.bloc(String(b))))]
+	var read: Dictionary = FinanceRead.line_blocs(state, loader, key)
+	var out := []
+	var weights: Array = read["weights"]
+	if not weights.is_empty():
+		out.append(Strings.t("For: %s") % ", ".join(weights.map(func(pair: Array) -> String: return Labels.bloc(String(pair[0])))))
+	var offsets := {}
+	for pair in read["gains"] + read["loses"]:
+		offsets[pair[0]] = pair[1]
+	var cost: float = GK.SPENDING_STEP * float(state.player().gdp_eur_bn) / 100.0
+	out.append(Strings.t("One step (%s pt of GDP): %s a year. %s") % [Num.f(GK.SPENDING_STEP, 1), EffectsStrip.money_text(-cost), EffectsStrip.who_text(offsets)])
+	return out
 
 
 ## The slider the player's cursor goes to (the goal panel's Go lands here).

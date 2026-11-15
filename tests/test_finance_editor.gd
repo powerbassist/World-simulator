@@ -17,6 +17,7 @@ const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
@@ -67,7 +68,21 @@ func _process(_delta: float) -> bool:
 			_check_the_brackets_are_priced_end_to_end()
 			_check_a_state_move_reaches_an_open_editor()
 			_check_the_price_cache_reprices_after_eviction()
+			_check_spending_rows_are_priced()
+			_check_a_tabled_row_never_opens()
+			_check_discard_drops_the_draft()
+			_check_the_footer_says_the_forecast()
+			_check_leaving_an_untouched_off_grid_row_drafts_nothing()
+			_check_a_sweep_waits_for_the_hand()
+			_check_the_unset_lines_say_what_they_hold()
+			_check_the_budget_writes_the_one_draft()
 			_check_a_go_opens_the_folded_row()
+			_panel.open_row(FinanceDraft.TAX, "vat")
+			_panel._process(0.0)
+		5:
+			# The Go puts the cursor on that row's own slider (a frame after the build).
+			if _panel._editor == null or root.gui_get_focus_owner() != _panel._editor._slider:
+				_fail("a Go did not put the cursor on the row's slider")
 			_finish()
 	return false
 
@@ -121,8 +136,16 @@ func _check_the_slider_grid_and_range() -> void:
 	_open(FinanceRows.row_id(FinanceDraft.SPENDING, "health"))
 	var live := float(ns.spending_pct_gdp["health"])
 	var line: HSlider = _editor()._slider
-	if not is_equal_approx(line.min_value, maxf(0.0, live - 5.0)) or not is_equal_approx(line.max_value, live + 5.0):
-		_fail("a spending line's reach is %s to %s around %s" % [line.min_value, line.max_value, live])
+	# The track is the line's whole range (the knob reads as the level); the reach is what a drag may take.
+	if not is_equal_approx(line.min_value, 0.0) or not is_equal_approx(line.max_value, 30.0):
+		_fail("a spending line's track is %s to %s, not 0 to 30" % [line.min_value, line.max_value])
+	if not is_equal_approx(_editor()._lo, maxf(0.0, live - 5.0)) or not is_equal_approx(_editor()._hi, live + 5.0):
+		_fail("a spending line's reach is %s to %s around %s" % [_editor()._lo, _editor()._hi, live])
+	line.value = 30.0
+	if not is_equal_approx(_panel._draft.value(FinanceDraft.SPENDING, "health"), live + 5.0):
+		_fail("a drag past the reach drafts %s, not the reach's end" % _panel._draft.value(FinanceDraft.SPENDING, "health"))
+	if not is_equal_approx(line.value, live + 5.0):
+		_fail("the knob stays past the reach at %s" % line.value)
 	_panel._open_groups.clear()
 	_panel._draft.revert()
 
@@ -219,7 +242,7 @@ func _check_a_refusal_disables_the_button_and_says_why() -> void:
 	var table: Button = _panel._foot.get_node("Table")
 	if not table.disabled:
 		_fail("the button is live while another bill holds the slot")
-	if not _panel._foot._text.text.contains("queue it"):
+	if not _panel._foot._text.text.contains("Another bill holds"):
 		_fail("the refusal is not said in words: '%s'" % _panel._foot._text.text)
 	ns.tabled_bill = {}
 	_panel._draft.revert()
@@ -376,6 +399,163 @@ func _check_the_price_cache_reprices_after_eviction() -> void:
 	var fresh: Dictionary = Budget.preview(_state, pendings[0])
 	if not is_equal_approx(float(again["deficit_pct_gdp"]), float(fresh["deficit_pct_gdp"])):
 		_fail("an evicted pending is not priced afresh")
+
+
+## A drafted spending row is priced (the old Budget priced the whole five-line dict): Health 1.5 points of GDP
+## is 1.5 % of GDP a year.
+func _check_spending_rows_are_priced() -> void:
+	var ns = _state.player()
+	_panel._draft.set_value(FinanceDraft.SPENDING, "health", float(ns.spending_pct_gdp["health"]) + 1.5)
+	var moves: Dictionary = _panel._price.moves(_panel._draft.pending())
+	var want: float = 1.5 * float(ns.gdp_eur_bn) / 100.0
+	if absf(float(moves["spending_bn"]) - want) > 1.0:
+		_fail("Health +1.5 points moves spending by %s bn, GDP says %s" % [moves["spending_bn"], want])
+	if float(moves["balance_bn"]) >= 0.0:
+		_fail("a rise in spending books a gain: %s" % moves["balance_bn"])
+	_panel._draft.revert()
+
+
+## A row at vote opens no editor, whoever asks (the goal panel's Go included).
+func _check_a_tabled_row_never_opens() -> void:
+	var ns = _state.player()
+	FinanceBill_table(ns, {"tax_rates_pct": {"vat": 1.0}, "spending_pct_gdp": {"health": 0.5}})
+	for pair in [[FinanceDraft.TAX, "vat"], [FinanceDraft.SPENDING, "health"]]:
+		_panel.open_row(pair[0], pair[1])
+		_panel._process(0.0)
+		if _editor() != null:
+			_fail("a row at vote (%s) opened an editor" % pair[1])
+	ns.tabled_bill = {}
+	_panel._open_id = ""
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+func FinanceBill_table(_ns, bill: Dictionary) -> void:
+	var tabling: Dictionary = preload("res://src/sim/finance_bill.gd").table(_state, _loader, bill)
+	if not bool(tabling.get("tabled", false)):
+		_fail("the premise bill was refused: %s" % [tabling])
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+func _check_discard_drops_the_draft() -> void:
+	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(_state.player().tax_rates_pct["vat"]) + 2.0)
+	_panel._dirty = true
+	_panel._process(0.0)
+	var discard: Button = _panel._foot.get_node("Discard")
+	if not discard.visible:
+		_fail("a draft has no way to be dropped")
+	discard.pressed.emit()
+	_panel._process(0.0)
+	if not _panel._draft.is_empty() or _panel._foot.visible:
+		_fail("Discard left the draft or the footer up")
+
+
+## The price before he tables: the footer's second line is the very division FinanceRead.draft meets.
+func _check_the_footer_says_the_forecast() -> void:
+	var ns = _state.player()
+	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
+	_panel._dirty = true
+	_panel._process(0.0)
+	var vote: Dictionary = preload("res://src/sim/finance_read.gd").draft(_state, _loader, _panel._draft.bill())["vote"]
+	var want := "%d for, %d against, %d undecided of %d" % [int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"]), int(vote["seats_total"])]
+	if not _panel._foot._text.text.contains(want):
+		_fail("the footer does not say '%s': '%s'" % [want, _panel._foot._text.text])
+	_panel._draft.revert()
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+## Focus in and out of an untouched row whose figure the box rounds drafts nothing and rewrites no rate.
+func _check_leaving_an_untouched_off_grid_row_drafts_nothing() -> void:
+	var ns = _state.player()
+	var was := float(ns.tax_rates_pct["income"])
+	ns.tax_rates_pct["income"] = 21.4567
+	_panel.mark_dirty()
+	_panel._process(0.0)
+	_open(FinanceRows.row_id(FinanceDraft.TAX, "income"))
+	var box: LineEdit = _editor()._box
+	box.focus_exited.emit()
+	if not _panel._draft.is_empty() or _panel._draft.bill() != {}:
+		_fail("leaving an untouched off-grid row drafted it: %s" % [_panel._draft.bill()])
+	ns.tax_rates_pct["income"] = was
+	_panel.mark_dirty()
+	_panel._process(0.0)
+
+
+## A sweep while the player's hand is on the open row repaints and does not rebuild; once the hand leaves, it does.
+func _check_a_sweep_waits_for_the_hand() -> void:
+	_open(FinanceRows.row_id(FinanceDraft.TAX, "vat"))
+	var slider: HSlider = _editor()._slider
+	slider.grab_focus()
+	if root.gui_get_focus_owner() != slider:
+		_fail("premise: the slider did not take the focus")
+		return
+	var first := slider.get_instance_id()
+	_panel.mark_dirty()
+	_panel._process(0.0)
+	if _editor() == null or _editor()._slider.get_instance_id() != first:
+		_fail("a sweep rebuilt the slider under the player's hand")
+	slider.release_focus()
+	_panel._process(0.0)
+	if _editor()._slider.get_instance_id() == first:
+		_fail("the rebuild never came once the hand left")
+
+
+## The two unset lines say what the model keeps in them, in the sim's own parts.
+func _check_the_unset_lines_say_what_they_hold() -> void:
+	var tips := []
+	for node in _panel._spending_box.find_children("*", "HBoxContainer", true, false) + _panel._revenue_box.find_children("*", "HBoxContainer", true, false):
+		if (node as Control).tooltip_text != "":
+			tips.append((node as Control).tooltip_text)
+	var said := 0
+	for tip in tips:
+		if String(tip).contains("Not detailed in the game yet"):
+			said += 1
+	if said != 2:
+		_fail("the two unset lines do not both say they are not detailed yet: %s" % [tips])
+
+
+## The Budget tab and the Books rows are ONE pending set: a lever moved on one shows on the other, Commit tables the
+## whole draft, Revert drops it (the parent's condition: no second pending).
+func _check_the_budget_writes_the_one_draft() -> void:
+	var ns = _state.player()
+	var budget := BudgetPanel.new()
+	root.add_child(budget)
+	budget.setup(_state, _loader)
+	budget.shared = _panel.shared_draft()
+	budget.show()
+	var health := float(ns.spending_pct_gdp["health"])
+	var education := float(ns.spending_pct_gdp["education"])
+	# A row moved on the Books page shows on the Budget's lever.
+	_panel._draft.set_value(FinanceDraft.SPENDING, "health", health + 1.0)
+	budget._process(0.0)
+	if not is_equal_approx(budget._sliders["health"].value, health + 1.0) or not budget._edited_keys.has("health"):
+		_fail("a Books row did not reach the Budget's lever: %s" % budget._sliders["health"].value)
+	# A lever moved on the Budget is a row of the shared draft.
+	budget._sliders["education"].value = education - 0.5
+	if not is_equal_approx(_panel._draft.value(FinanceDraft.SPENDING, "education"), education - 0.5):
+		_fail("a Budget lever did not reach the shared draft")
+	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 1.0)
+	# Commit tables the one draft: both sides of it.
+	budget._on_commit()
+	var finance: Dictionary = ns.tabled_bill.get("finance", {})
+	if not finance.get("spending_pct_gdp", {}).has("health") or not finance.get("spending_pct_gdp", {}).has("education") or not finance.get("tax_rates_pct", {}).has("vat"):
+		_fail("the Budget's Commit did not table the whole draft: %s" % [finance])
+	if not _panel._draft.is_empty():
+		_fail("the draft stands after the Budget's Commit")
+	ns.tabled_bill = {}
+	# Revert drops it.
+	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 1.0)
+	budget._on_revert()
+	if not _panel._draft.is_empty():
+		_fail("the Budget's Revert left the shared draft")
+	budget.queue_free()
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
 
 
 func _check_a_go_opens_the_folded_row() -> void:

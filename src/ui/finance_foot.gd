@@ -7,11 +7,15 @@ extends HBoxContainer
 ## bill"). With nothing drafted and a bill before the Assembly it says so and offers that bill's sheet and its
 ## withdrawal. Nothing drafted and nothing tabled: the footer is not there.
 ##
+## The player sees the effect AND the price before he tables (the parent's ruling, G4): the sentence carries the
+## draft's totals and, on the next line, how the Assembly would divide on it now (FinanceRead.draft's vote).
+##
 ## A button that the rule would refuse is never a dead verb: it is disabled and the refusal is said in words
-## beside it (the goal panel's own wording, GoalRows.reason_text), read from FinanceRead.draft, which asks the
-## very rule tabling meets.
+## beside it, read from FinanceRead.draft, which asks the very rule tabling meets. A draft can be dropped
+## ("Discard the changes"): the Budget's Revert is gone with its tab.
 
 signal table_pressed
+signal discard_pressed
 signal open_pressed
 signal withdraw_pressed
 
@@ -26,6 +30,7 @@ const DateText = preload("res://src/ui/date_text.gd")
 
 var _text: Label
 var _table: Button
+var _discard: Button
 var _open: Button
 var _withdraw: Button
 
@@ -36,6 +41,7 @@ func _ready() -> void:
 	_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD
 	add_child(_text)
+	_discard = _button("Discard", Strings.t("Discard the changes"), discard_pressed)  # i18n: ok a node name
 	_withdraw = _button("Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed)  # i18n: ok a node name
 	_open = _button("OpenBill", Strings.t("Open the bill"), open_pressed)
 	_table = _button("Table", Strings.t("Table the changes"), table_pressed)  # i18n: ok a node name
@@ -58,6 +64,7 @@ func refresh(state, loader, draft, price) -> void:
 	var drafted: bool = not draft.is_empty()
 	visible = drafted or tabled != null
 	_table.visible = drafted
+	_discard.visible = drafted
 	_open.visible = not drafted and tabled != null
 	_withdraw.visible = not drafted and tabled != null
 	if not visible:
@@ -70,10 +77,23 @@ func refresh(state, loader, draft, price) -> void:
 	var text: String = Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
 		Strings.t("spending %s, revenue %s a year") % [EffectsStrip.money_text(float(moves["spending_bn"])), EffectsStrip.money_text(float(moves["revenue_bn"]))] + " · " + \
 		Strings.t("the Assembly divides on %s") % DateText.day_month(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
-	var refusal := String(FinanceRead.draft(state, loader, draft.bill())["refusal"])
+	var read: Dictionary = FinanceRead.draft(state, loader, draft.bill())
+	var refusal := String(read["refusal"])
 	_table.text = Strings.t("Add to the bill") if tabled != null else Strings.t("Table the changes")
 	_table.disabled = refusal != ""
-	_text.text = text if refusal == "" else text + "\n" + GoalRows.reason_text(refusal)
+	if refusal != "":
+		_text.text = text + "\n" + _reason(refusal)
+		return
+	var vote: Dictionary = read["vote"]
+	_text.text = text + "\n" + Strings.t("Forecast now: %d for, %d against, %d undecided of %d.") % [
+		int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"]), int(vote["seats_total"])]
+
+
+## The refusal in words, for a page with no queue verb: another bill in the slot is said as it is.
+func _reason(flag: String) -> String:
+	if flag == "already_tabled":
+		return Strings.t("Another bill holds this month's slot.")
+	return GoalRows.reason_text(flag)
 
 
 ## The control the page exists to let the player press: the draft's verb, else the bill's sheet.

@@ -493,6 +493,12 @@ var _failing := false
 ## on this list it stages NOTHING and only opens the window; the frame's claim
 ## is the rate-as-number rows, which is the panel's whole reason for existing.
 var _tax := false
+## --books ROW: the Books page with that row's editor open ("tax_rates_pct:income", "spending_pct_gdp:health");
+## --books-draft: a draft on it; --books-tabled: a finance bill before the Assembly; --books-refused: another bill holds the slot.
+var _books_row := ""
+var _books_draft := false
+var _books_tabled := false
+var _books_refused := false
 
 ## V5.3 a + b (docs/design/v5.3-ab.md 4.1). Moves two spending levers and two tax
 ## rates, uncommitted, so a frame of the Budget (--open budget) or the Tax Code
@@ -952,6 +958,14 @@ func _init() -> void:
 			_failing = true
 		elif args[i] == "--tax":
 			_tax = true
+		elif args[i] == "--books" and i + 1 < args.size():
+			_books_row = args[i + 1]
+		elif args[i] == "--books-draft":
+			_books_draft = true
+		elif args[i] == "--books-tabled":
+			_books_tabled = true
+		elif args[i] == "--books-refused":
+			_books_refused = true
 		elif args[i] == "--compose":
 			_compose = true
 		elif args[i] == "--pmb":
@@ -1377,6 +1391,8 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
+	if _books_row != "" or _books_draft or _books_tabled or _books_refused:
+		_stage_the_books()
 	if _moved:
 		_move_the_levers()
 	if _industry:
@@ -2172,6 +2188,31 @@ func _open_the_tax_code() -> void:
 	else:
 		_main._windows.frame("finances")._content.open_row("tax_rates_pct", "vat")
 		print("--tax: the Books page is open, the VAT row's editor open")
+
+
+## For --books*: the Books page in the states of slice 2 (an open row, a draft, a bill at vote, a refusal).
+func _stage_the_books() -> void:
+	var FinanceBill = preload("res://src/sim/finance_bill.gd")
+	var ns = _main._state.player()
+	_main._windows.open("finances")
+	var page = _main._windows.frame("finances")._content
+	page._process(0.0)
+	if _books_tabled:
+		FinanceBill.table(_main._state, _main._loader, {"tax_rates_pct": {"vat": 2.0}, "spending_pct_gdp": {"health": 0.5}})
+	if _books_refused:
+		ns.tabled_bill = {"law_id": "workplace_safety_act", "vote_year": _main._state.year, "vote_month": _main._state.month, "vote_day": 28}
+	if _books_row != "":
+		page.open_row(_books_row.get_slice(":", 0), _books_row.get_slice(":", 1))
+	if _books_draft or _books_refused:
+		page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
+		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
+		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
+	page._stamp = ""
+	page._dirty = true
+	page._process(0.0)
+	page._forecast.drain()
+	page._process(0.0)
+	print("--books: row '%s', draft %s, tabled %s, refused %s" % [_books_row, _books_draft, _books_tabled, _books_refused])
 
 
 ## For --moved: health up a point and a half, education down half a point,

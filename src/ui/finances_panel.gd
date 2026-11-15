@@ -24,6 +24,7 @@ const FinanceBooks = preload("res://src/ui/finance_books.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceStacks = preload("res://src/ui/finance_stacks.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
+const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
@@ -101,6 +102,7 @@ func _ready() -> void:
 	_foot.table_pressed.connect(_on_table)
 	_foot.open_pressed.connect(go_requested.emit.bind("legislature"))
 	_foot.withdraw_pressed.connect(_on_withdraw)
+	_foot.discard_pressed.connect(_on_discard)
 	add_child(_forecast)
 	_forecast.settled.connect(func() -> void: _paint_due = true)
 
@@ -118,6 +120,7 @@ func setup(state, loader) -> void:
 
 func mark_dirty() -> void:
 	_price.reset()
+	_forecast.state_changed()
 	# A law, an event or a summit moved the register: the books are read again, not kept for the day.
 	_stamp = ""
 	_dirty = true
@@ -129,12 +132,14 @@ func _process(_delta: float) -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
-	if not _dirty:
+	# A hand on the open row's slider or box keeps its row: the books are rebuilt when it leaves, never under it
+	# (a sweep at speed 3 would free the slider mid-drag and the box mid-typing).
+	if not _dirty or _editor_busy():
 		_paint(ns)
 		return
 	_dirty = false
 	# The books are read once a day and when the slot changes: a read is two copies of the state.
-	var stamp := "%d|%d|%d|%s|%s" % [_state.year, _state.month, _state.day, str(ns.tabled_bill), _open_id]
+	var stamp := "%d|%d|%d|%s" % [_state.year, _state.month, _state.day, str(ns.tabled_bill)]
 	if stamp != _stamp:
 		_stamp = stamp
 		_book = FinanceBooks.read(_state)
@@ -149,15 +154,22 @@ func _refresh(ns) -> void:
 			box.remove_child(child)
 			child.queue_free()
 	_editor = null
-	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": _tabled_rows(ns), "cells": {}, "editor": _make_editor}
+	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": _tabled_rows(ns), "cells": {}, "editor": _make_editor, "wide": wide,
+		"parts": FinanceRead.other_parts(ns)}
 	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, wide, _ctx)
 	FinanceRows.spending(_spending_box, _book, _ctx)
 	_stacks.setup(_revenue_parts(), _spending_parts(), float(_book["deficit_bn"]))
 	_paint(ns)
 	if _focus_wanted and _editor != null:
 		_focus_wanted = false
-		_editor.focus_lever.call_deferred()
-		_scroll.ensure_control_visible.call_deferred(_editor)
+		_focus_editor.call_deferred(_editor)
+
+
+## The Go's landing, a frame after the build: the editor may have been rebuilt or closed since (a stale one is skipped).
+func _focus_editor(editor: FinanceEditor) -> void:
+	if is_instance_valid(editor) and editor.is_inside_tree() and _scroll.is_ancestor_of(editor):
+		_scroll.ensure_control_visible(editor)
+		editor.focus_lever()
 
 
 ## What changes without a rebuild: the rows' figures, the footer, the line about the draft and the ranges.
@@ -223,6 +235,26 @@ func _toggle_group(group_id: String) -> void:
 	_dirty = true
 
 
+## Whether the player's hand is on the open row: the focus is inside its editor.
+func _editor_busy() -> bool:
+	if _editor == null or not is_instance_valid(_editor) or not is_inside_tree():
+		return false
+	var held := get_viewport().gui_get_focus_owner()
+	return held != null and _editor.is_ancestor_of(held)
+
+
+## The page's ONE draft: the Budget tab's levers read and write it too (no second pending set).
+func shared_draft() -> FinanceDraft:
+	return _draft
+
+
+func _on_discard() -> void:
+	_draft.revert()
+	_open_id = ""
+	_stamp = ""
+	_dirty = true
+
+
 ## A draft move: the figures repaint in place, the rows stay where they are.
 func _on_moved() -> void:
 	_paint_due = true
@@ -248,7 +280,6 @@ func open_row(channel: String, key: String) -> void:
 		_open_groups[String(_state.player().tax_library[key]["group"])] = true
 	_open_id = FinanceRows.row_id(channel, key)
 	_focus_wanted = true
-	_stamp = ""
 	_dirty = true
 
 
