@@ -49,6 +49,7 @@ const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const CompaniesAid = preload("res://src/sim/companies_aid.gd")
+const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
@@ -975,7 +976,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 	var problems: Array[String] = []
 	# A Dictionary, not a float: the step hook below is a lambda, and a lambda
 	# captures a local by value.
-	var run := {"peak_unrest": 0.0}
+	var run := {"peak_unrest": 0.0, "peak_aid_bill": 0.0, "peak_firm_impulse": 0.0}
 	var out_of_government := ""
 
 	var year := START_YEAR
@@ -1011,6 +1012,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 				return
 			if after and step == "Unrest":
 				run["peak_unrest"] = maxf(float(run["peak_unrest"]), float(ns.unrest_pct))
+				# V5.3 PR 3, Design's P4: the aid bill's and the firm impulse's peaks.
+				run["peak_aid_bill"] = maxf(float(run["peak_aid_bill"]), float(ns.subsidy_bill_pct_gdp))
+				run["peak_firm_impulse"] = maxf(float(run["peak_firm_impulse"]), absf(float(ns.firm_impulse_pct)))
 				return
 			if after and step == "Events":
 				# V1.8. Answered ON ARRIVAL rather than at some month before the
@@ -1230,6 +1234,9 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 	print("  unrest: peak %.2f, ended at %.2f, acts %d (threshold %.1f)" % [
 		float(run["peak_unrest"]), ns.unrest_pct, state.unrest_acts.size(), UnrestK.UNREST_THRESHOLD_PCT,
 	])
+	if subsidy_month > 0:
+		print("  aid: peak bill %.3f %% of GDP (clamp %.2f), peak firm impulse %.3f %%/yr (clamp %.2f)" % [
+			float(run["peak_aid_bill"]), CompaniesK.SUBSIDY_BILL_MAX_PCT_GDP, float(run["peak_firm_impulse"]), CompaniesK.FIRM_IMPULSE_MAX_PCT])
 	_runs.append({
 		"regime": regime_name, "nation": nation_id,
 		"out_of_government": out_of_government,
