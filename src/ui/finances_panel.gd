@@ -6,17 +6,31 @@ extends PanelContainer
 ## by line on the right, the deficit the spending stack's overhang (finance_stacks.gd). The rows beside
 ## the stacks name and size every part (finance_rows.gd); a bill before the Assembly is said at the foot.
 ##
-## Slice 1 READS the books; the Budget and Tax Code tabs still set them. Slice 2 puts the row editor in
-## this page (one draft, one bill) and retires those two tabs. Reads the state, writes nothing; the
-## two-year ranges are the budget forecast's own (budget_forecast.gd, off the frame).
+## Slice 2 makes the rows the controls: a row's name opens its editor (finance_editor.gd) under it, every
+## moved row is part of ONE draft (finance_draft.gd), and the footer (finance_foot.gd) tables that draft as the
+## month's finance bill. The Budget and Tax Code tabs are gone. The page reads the state and writes nothing
+## but that one command; the two-year ranges are the budget forecast's own (budget_forecast.gd, off the frame).
+##
+## WHEN IT REBUILDS: the books are rebuilt when their structure changes (a day, a bill, a row opened, a fold),
+## never on a draft move, which only repaints the figures in place -- a rebuild would drop the slider the
+## player is holding and the box they are typing in.
 
 signal go_requested(window_id: String)
+## The fiscal command landed (a bill tabled, added to, or withdrawn): main's acknowledgment and effect
+## baseline, as the Budget's and the Tax Code's Commit had (Trends.snapshot_now taken before it).
+signal committed(before: Dictionary, tabling: Dictionary)
 
 const FinanceBooks = preload("res://src/ui/finance_books.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceStacks = preload("res://src/ui/finance_stacks.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
+const FinanceDraft = preload("res://src/ui/finance_draft.gd")
+const FinanceEditor = preload("res://src/ui/finance_editor.gd")
+const FinanceFoot = preload("res://src/ui/finance_foot.gd")
+const FinancePrice = preload("res://src/ui/finance_price.gd")
+const Trends = preload("res://src/ui/trends.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -32,8 +46,18 @@ var _ranges: HBoxContainer
 var _stacks: FinanceStacks
 var _revenue_box: VBoxContainer
 var _spending_box: VBoxContainer
-var _footer: HBoxContainer
-var _footer_text: Label
+var _foot: FinanceFoot
+var _scroll: ScrollContainer
+var _with: Label
+var _draft := FinanceDraft.new()
+var _price := FinancePrice.new()
+## The row whose editor is open ("channel:key", "" none), the cells the rows kept to repaint in place, and
+## the editor built for the open row.
+var _open_id := ""
+var _ctx := {}
+var _editor: FinanceEditor
+var _focus_wanted := false
+var _paint_due := true
 var _forecast := Forecast.new()
 var _book := {}
 var _stamp := ""
@@ -54,14 +78,15 @@ func _ready() -> void:
 	_ranges = HBoxContainer.new()
 	_ranges.add_theme_constant_override("separation", 40)
 	root.add_child(_ranges)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
+	_with = PanelKit.plain_line(root, "", PanelKit.Tone.DIM)
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(_scroll)
 	var books := HBoxContainer.new()
 	books.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	books.add_theme_constant_override("separation", 14)
-	scroll.add_child(books)
+	_scroll.add_child(books)
 	_revenue_box = VBoxContainer.new()
 	_revenue_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	books.add_child(_revenue_box)
@@ -71,42 +96,43 @@ func _ready() -> void:
 	_spending_box = VBoxContainer.new()
 	_spending_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	books.add_child(_spending_box)
-	_footer = HBoxContainer.new()
-	_footer.add_theme_constant_override("separation", 16)
-	root.add_child(_footer)
-	_footer_text = Label.new()
-	_footer_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_footer.add_child(_footer_text)
-	var open := PanelKit.sized(Button.new())
-	open.name = "OpenBill"  # i18n: ok a node name, found by tests
-	open.text = Strings.t("Open the bill")
-	open.pressed.connect(go_requested.emit.bind("legislature"))
-	_footer.add_child(open)
+	_foot = FinanceFoot.new()
+	root.add_child(_foot)
+	_foot.table_pressed.connect(_on_table)
+	_foot.open_pressed.connect(go_requested.emit.bind("legislature"))
+	_foot.withdraw_pressed.connect(_on_withdraw)
 	add_child(_forecast)
-	_forecast.settled.connect(mark_dirty)
+	_forecast.settled.connect(func() -> void: _paint_due = true)
 
 
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_forecast.setup(state, loader, PROJECTION_MONTHS)
+	_draft.setup(state)
+	_price.setup(state)
+	_open_id = ""
 	_stamp = ""
 	_dirty = true
 
 
 func mark_dirty() -> void:
+	_price.reset()
 	_dirty = true
 
 
 func _process(_delta: float) -> void:
-	if not _dirty or _state == null or not is_visible_in_tree():
+	if _state == null or not is_visible_in_tree() or (not _dirty and not _paint_due):
 		return
-	_dirty = false
 	var ns = _state.player()
 	if ns == null:
 		return
+	if not _dirty:
+		_paint(ns)
+		return
+	_dirty = false
 	# The books are read once a day and when the slot changes: a read is two copies of the state.
-	var stamp := "%d|%d|%d|%s" % [_state.year, _state.month, _state.day, str(ns.tabled_bill)]
+	var stamp := "%d|%d|%d|%s|%s" % [_state.year, _state.month, _state.day, str(ns.tabled_bill), _open_id]
 	if stamp != _stamp:
 		_stamp = stamp
 		_book = FinanceBooks.read(_state)
@@ -115,25 +141,43 @@ func _process(_delta: float) -> void:
 
 func _refresh(ns) -> void:
 	_lead.text = _sentence()
-	for child in _ranges.get_children():
-		_ranges.remove_child(child)
-		child.queue_free()
-	var rows: Dictionary = _forecast.rows(ns)
-	for entry in [["proj_growth", Strings.t("Growth, 2 years")], ["proj_unemployment", Strings.t("Unemployment, 2 years")], ["proj_debt", Strings.t("Debt, 2 years")]]:
-		PanelKit.figure(_ranges, String(rows.get(entry[0], ["…", "…"])[0]), entry[1])
 	var wide := UiTheme.text_scale() < 1.2
 	for box in [_revenue_box, _spending_box]:
 		for child in box.get_children():
 			box.remove_child(child)
 			child.queue_free()
-	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, wide)
-	FinanceRows.spending(_spending_box, _book)
+	_editor = null
+	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": _tabled_rows(ns), "cells": {}, "editor": _make_editor}
+	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, wide, _ctx)
+	FinanceRows.spending(_spending_box, _book, _ctx)
 	_stacks.setup(_revenue_parts(), _spending_parts(), float(_book["deficit_bn"]))
-	var tabled = FinanceBillLaw.tabled(ns)
-	_footer.visible = tabled != null
-	if tabled != null:
-		_footer_text.text = Strings.t("A finance bill is before the Assembly: it divides on %s.") % DateText.day_month(
-			int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))
+	_paint(ns)
+	if _focus_wanted and _editor != null:
+		_focus_wanted = false
+		_editor.focus_lever.call_deferred()
+		_scroll.ensure_control_visible.call_deferred(_editor)
+
+
+## What changes without a rebuild: the rows' figures, the footer, the line about the draft and the ranges.
+func _paint(ns) -> void:
+	_paint_due = false
+	FinanceRows.paint_rates(_ctx)
+	_foot.refresh(_state, _loader, _draft, _price)
+	var drafted: bool = not _draft.is_empty()
+	_forecast.want(_draft.pending(), drafted)
+	if drafted:
+		var after: Dictionary = _price.after(_draft.pending())
+		_with.text = Strings.t("With your changes: deficit %s bn (%s %% of GDP).") % [
+			Num.f(float(after["deficit_pct_gdp"]) * float(after["gdp_eur_bn"]) / 100.0, 0), Num.f(float(after["deficit_pct_gdp"]), 2)]
+	else:
+		_with.text = ""
+	for child in _ranges.get_children():
+		_ranges.remove_child(child)
+		child.queue_free()
+	var rows: Dictionary = _forecast.rows(ns)
+	for entry in [["proj_growth", Strings.t("Growth, 2 years")], ["proj_unemployment", Strings.t("Unemployment, 2 years")], ["proj_debt", Strings.t("Debt, 2 years")]]:
+		var pair: Array = rows.get(entry[0], ["…", "…"])
+		PanelKit.figure(_ranges, String(pair[1] if drafted else pair[0]), Strings.t("%s, with your changes") % entry[1] if drafted else entry[1])
 
 
 ## The sentence the page is for. Its figures are FIGURE-sized, the rest LEAD, as the brief asks.
@@ -173,6 +217,65 @@ func _toggle_group(group_id: String) -> void:
 	_dirty = true
 
 
-## The control this page exists to let the player press: the bill, once one is before the Assembly.
+## A draft move: the figures repaint in place, the rows stay where they are.
+func _on_moved() -> void:
+	_paint_due = true
+
+
+func _make_editor(channel: String, key: String) -> Control:
+	var editor := FinanceEditor.new()
+	editor.setup(_state, _loader, _draft, _price, channel, key)
+	editor.moved.connect(_on_moved)
+	_editor = editor
+	return editor
+
+
+## A row's name pressed: its editor opens under it, or closes if it was the open one.
+func _on_open(id: String) -> void:
+	_open_id = "" if _open_id == id else id
+	_dirty = true
+
+
+## Where a goal panel's Go lands: that row, open, its slider focused. A folded kind opens its group.
+func open_row(channel: String, key: String) -> void:
+	if channel == FinanceDraft.TAX and _state != null and _state.player() != null and _state.player().tax_library.has(key):
+		_open_groups[String(_state.player().tax_library[key]["group"])] = true
+	_open_id = FinanceRows.row_id(channel, key)
+	_focus_wanted = true
+	_stamp = ""
+	_dirty = true
+
+
+## The tabled bill's rows as {row id: delta}: those rows are at vote, and locked.
+func _tabled_rows(ns) -> Dictionary:
+	var out := {}
+	var finance: Dictionary = ns.tabled_bill.get("finance", {})
+	for channel in [FinanceDraft.TAX, FinanceDraft.SPENDING]:
+		for key in finance.get(channel, {}):
+			out[FinanceRows.row_id(channel, String(key))] = float(finance[channel][key])
+	return out
+
+
+func _on_table() -> void:
+	var before := Trends.snapshot_now(_state)
+	var tabling := FinanceBill.table(_state, _loader, _draft.bill())
+	# A refusal keeps the draft on the rows; a tabled bill clears it.
+	if bool(tabling.get("tabled", false)):
+		_draft.revert()
+		_open_id = ""
+		_stamp = ""
+		_dirty = true
+	committed.emit(before, tabling)
+
+
+func _on_withdraw() -> void:
+	var before := Trends.snapshot_now(_state)
+	var result := FinanceBill.withdraw(_state)
+	_stamp = ""
+	_dirty = true
+	committed.emit(before, result)
+
+
+## The control this page exists to let the player press: the draft's verb, else the bill's sheet.
 func primary_action() -> Control:
-	return _footer.get_node("OpenBill") if _footer.visible else null
+	return _foot.primary_action()
