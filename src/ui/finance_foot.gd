@@ -57,6 +57,8 @@ func _ready() -> void:
 
 func _button(node_name: String, label: String, signal_out: Signal) -> Button:
 	var button := PanelKit.sized(Button.new())
+	# A long sentence (three lines with the autumn rows) must not stretch the verbs to its height.
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.name = node_name  # i18n: ok a node name, found by tests
 	button.text = label
 	button.pressed.connect(signal_out.emit)
@@ -90,6 +92,14 @@ func refresh(state, loader, draft, price) -> void:
 	var text: String = Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
 		money % [EffectsStrip.money_text(float(whole["spending_bn"])), EffectsStrip.money_text(float(whole["revenue_bn"]))] + " · " + \
 		Strings.t("the Assembly divides on %s") % DateText.day_month(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
+	# The autumn bill's rows are named in the sentence (their money is in the totals, priced by FinanceBill.preview).
+	var autumn: Array = []
+	for kind in draft.births():
+		autumn.append(Strings.t("creation of %s") % Strings.row_name("taxes", ns.tax_library[kind]))
+	for kind in draft.abolitions():
+		autumn.append(Strings.t("abolition of %s") % Strings.row_name("taxes", ns.tax_library[kind]))
+	if not autumn.is_empty():
+		text += " · " + ", ".join(autumn)
 	_table.text = Strings.t("Add to the bill") if tabled != null else Strings.t("Table the changes")
 	_table.disabled = refusal != ""
 	if refusal != "":
@@ -104,6 +114,8 @@ func refresh(state, loader, draft, price) -> void:
 static func reason(flag: String) -> String:
 	if flag == "already_tabled":
 		return Strings.t("Another bill holds this month's slot.")
+	if flag == "autumn":
+		return Strings.t("A tax is created or abolished only in the autumn month.")
 	return GoalRows.reason_text(flag)
 
 

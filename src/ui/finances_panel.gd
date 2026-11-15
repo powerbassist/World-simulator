@@ -26,18 +26,17 @@ const FinanceStacks = preload("res://src/ui/finance_stacks.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
-const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceEditor = preload("res://src/ui/finance_editor.gd")
 const FinanceFoot = preload("res://src/ui/finance_foot.gd")
 const FinanceSheet = preload("res://src/ui/finance_sheet.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const Trends = preload("res://src/ui/trends.gd")
+const FinanceAutumn = preload("res://src/ui/finance_autumn.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
-const DateText = preload("res://src/ui/date_text.gd")
 
 const PROJECTION_MONTHS := 24
 ## The ranges row has a FIXED height: the figure and up to two caption lines. A caption that re-wraps when
@@ -68,6 +67,8 @@ var _ctx := {}
 var _editor: FinanceEditor
 var _focus_wanted := false
 var _paint_due := true
+## The autumn rows were taken out of the draft when the month ended: said on the deficit line until the player acts.
+var _autumn_dropped := false
 ## The text size and the language the rows were built at: a change rebuilds them (QA's B2 on #363).
 var _scale_built := 1.0
 var _language_built := ""
@@ -136,6 +137,7 @@ func setup(state, loader) -> void:
 	_sheet.hide()
 	_open_id = ""
 	_stamp = ""
+	_autumn_dropped = false  # a load is another game's draft: its note is not this one's
 	_dirty = true
 
 
@@ -182,8 +184,8 @@ func _refresh(ns) -> void:
 			box.remove_child(child)
 			child.queue_free()
 	_editor = null
-	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": _tabled_rows(ns), "cells": {}, "editor": _make_editor, "wide": wide,
-		"parts": FinanceRead.other_parts(ns)}
+	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": FinanceAutumn.tabled_rows(ns), "cells": {}, "editor": _make_editor, "wide": wide,
+		"parts": FinanceRead.other_parts(ns), "autumn": FinanceBill.autumn_open(_state, _loader), "on_create": _on_create}
 	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, wide, _ctx)
 	FinanceRows.spending(_spending_box, _book, _ctx)
 	_stacks.setup(_revenue_parts(), _spending_parts(), float(_book["deficit_bn"]))
@@ -209,6 +211,10 @@ func _paint(ns) -> void:
 	_paint_due = false
 	var scale := UiTheme.text_scale()
 	_ranges.custom_minimum_size.y = ranges_height(scale)
+	if FinanceAutumn.sweep(_state, _loader, _draft):
+		_autumn_dropped = true
+		_open_id = ""
+		_dirty = true
 	FinanceRows.paint_rates(_ctx)
 	_foot.refresh(_state, _loader, _draft, _price)
 	# A sheet with nothing to say (the draft discarded or tabled) is put away; one with a draft follows it.
@@ -217,16 +223,15 @@ func _paint(ns) -> void:
 	_sheet.refresh()
 	var drafted: bool = not _draft.is_empty()
 	# One screen, one figure (the parent's ruling after #368): the ranges forecast and the deficit line price the same whole
-	# bill as the footer and the sheet (FinancePrice.whole), not the new rows alone.
+	# bill as the footer and the sheet (FinancePrice.whole), not the new rows alone. The ranges forecast cannot take a kind
+	# put in force nor a tabled programme's or fund's cost: its debt range is the whole bill less those two.
 	var whole := {}
 	if drafted:
 		whole = _price.whole(_loader, _draft, String(FinanceRead.draft(_state, _loader, _draft.bill())["refusal"]) != "")
 	_forecast.want(whole["pending"] if drafted else _draft.pending(), drafted)
-	if drafted:
-		_with.text = Strings.t("With your changes, the ranges above included: deficit %s bn (%s %% of GDP).") % [
-			Num.f(float(whole["deficit_after_bn"]), 0), Num.f(float(whole["deficit_after_pct"]), 2)]
-	else:
-		_with.text = ""
+	var note := Strings.t("The autumn month is over: its creations and abolitions were taken out of the draft.") + " " if _autumn_dropped else ""
+	_with.text = note + (Strings.t("With your changes, the ranges above included: deficit %s bn (%s %% of GDP).") % [
+		Num.f(float(whole["deficit_after_bn"]), 0), Num.f(float(whole["deficit_after_pct"]), 2)] if drafted else "")
 	for child in _ranges.get_children():
 		_ranges.remove_child(child)
 		child.queue_free()
@@ -317,6 +322,7 @@ func _put_sheet_away() -> void:
 
 
 func _on_discard() -> void:
+	_autumn_dropped = false
 	_draft.revert()
 	_open_id = ""
 	_stamp = ""
@@ -330,15 +336,35 @@ static func ranges_height(scale: float) -> float:
 
 ## A draft move: the figures repaint in place, the rows stay where they are.
 func _on_moved() -> void:
+	_autumn_dropped = false
 	_paint_due = true
 
 
 func _make_editor(channel: String, key: String) -> Control:
 	var editor := FinanceEditor.new()
+	editor.autumn = FinanceBill.autumn_open(_state, _loader)
 	editor.setup(_state, _loader, _draft, _price, channel, key)
 	editor.moved.connect(_on_moved)
+	editor.structure_changed.connect(_on_structure_changed)
 	_editor = editor
 	return editor
+
+
+## "Put in force" pressed on a kind outside the books: it enters the draft at its smallest sensible rate (the kind's own
+## step, inside its range) with its editor open.
+func _on_create(kind: String) -> void:
+	var ns = _state.player()
+	_draft.set_create(kind, FinanceAutumn.default_rate(ns, kind))
+	_open_id = FinanceRows.row_id(FinanceDraft.TAX, kind)
+	_focus_wanted = true
+	_on_structure_changed()
+
+
+## An editor's verb changed what the page lists (a birth taken back, a kind abolished or kept).
+func _on_structure_changed() -> void:
+	_autumn_dropped = false
+	_paint_due = true
+	_dirty = true
 
 
 ## A row's name pressed: its editor opens under it, or closes if it was the open one.
@@ -353,20 +379,10 @@ func open_row(channel: String, key: String) -> void:
 		_open_groups[String(_state.player().tax_library[key]["group"])] = true
 	var id := FinanceRows.row_id(channel, key)
 	# A row at vote opens no editor: leave nothing behind that would open it, and take the focus, once it is withdrawn.
-	var locked: bool = _state != null and _state.player() != null and _tabled_rows(_state.player()).has(id)
+	var locked: bool = _state != null and _state.player() != null and FinanceAutumn.tabled_rows(_state.player()).has(id)
 	_open_id = "" if locked else id
 	_focus_wanted = not locked
 	_dirty = true
-
-
-## The tabled bill's rows as {row id: delta}: those rows are at vote, and locked.
-func _tabled_rows(ns) -> Dictionary:
-	var out := {}
-	var finance: Dictionary = ns.tabled_bill.get("finance", {})
-	for channel in [FinanceDraft.TAX, FinanceDraft.SPENDING]:
-		for key in finance.get(channel, {}):
-			out[FinanceRows.row_id(channel, String(key))] = float(finance[channel][key])
-	return out
 
 
 func _on_table(force := false) -> void:
@@ -374,6 +390,7 @@ func _on_table(force := false) -> void:
 	var tabling := FinanceBill.table(_state, _loader, _draft.bill(), force)
 	# A refusal keeps the draft on the rows; a tabled bill clears it.
 	if bool(tabling.get("tabled", false)):
+		_autumn_dropped = false
 		_draft.revert()
 		_put_sheet_away()
 		_open_id = ""

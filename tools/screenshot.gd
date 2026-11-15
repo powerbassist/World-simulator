@@ -499,6 +499,8 @@ var _books_row := ""
 var _books_draft := false
 ## --books-sheet: the bill's sheet open over the Books page on the picture's draft (health +1.5, education -0.5, VAT +2).
 var _books_sheet := false
+## --books-autumn: the autumn month, Books page: a creation (plastic packaging tax) and an abolition (sugar drinks levy) drafted; with --books-sheet the sheet open on them.
+var _books_autumn := false
 var _books_tabled := false
 var _books_refused := false
 
@@ -962,6 +964,8 @@ func _init() -> void:
 			_tax = true
 		elif args[i] == "--books" and i + 1 < args.size():
 			_books_row = args[i + 1]
+		elif args[i] == "--books-autumn":
+			_books_autumn = true
 		elif args[i] == "--books-sheet":
 			_books_sheet = true
 		elif args[i] == "--books-draft":
@@ -1395,7 +1399,7 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
-	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_sheet:
+	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_sheet or _books_autumn:
 		_stage_the_books()
 	if _moved:
 		_move_the_levers()
@@ -2198,9 +2202,15 @@ func _open_the_tax_code() -> void:
 func _stage_the_books() -> void:
 	var FinanceBill = preload("res://src/sim/finance_bill.gd")
 	var ns = _main._state.player()
+	if _books_autumn:
+		_main._state.month = int(_main._loader.nations[ns.id].finance_autumn_month)
 	_main._windows.open("finances")
 	var page = _main._windows.frame("finances")._content
 	page._process(0.0)
+	if _books_autumn:
+		page._draft.set_create("plastic_packaging_tax", 0.6)
+		page._draft.toggle_abolish("sugar_drinks_levy")
+		page._open_id = "tax_rates_pct:plastic_packaging_tax"
 	if _books_tabled:
 		FinanceBill.table(_main._state, _main._loader, {"tax_rates_pct": {"vat": 2.0}, "spending_pct_gdp": {"health": 0.5}})
 	if _books_refused:

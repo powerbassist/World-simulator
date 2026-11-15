@@ -261,6 +261,7 @@
    "tests/test_finance_draft.gd",
    "tests/test_finance_editor.gd",
    "tests/test_finance_sheet.gd",
+   "tests/test_finance_autumn_ui.gd",
    "tests/test_goal_panel.gd",
    "tests/test_party_money.gd",
    "tests/test_pledges.gd",
