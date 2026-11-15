@@ -39,6 +39,9 @@ func _init() -> void:
 	_test_a_carried_abolition_takes_the_kind_out()
 	_test_a_birth_moves_the_bill_position()
 	_test_a_reshaped_tax_code_runs_a_year_and_reloads()
+	_test_autumn_open_reads_the_gate()
+	_test_preview_prices_a_birth_as_the_division_lands_it()
+	_test_preview_prices_an_abolition_as_the_division_lands_it()
 	_finish()
 
 
@@ -208,6 +211,87 @@ func _test_a_reshaped_tax_code_runs_a_year_and_reloads() -> void:
 	Budget.recompute(got["state"], back)
 	if float(back.revenue_pct_gdp.get("test_levy", 0.0)) != float(ns.revenue_pct_gdp["test_levy"]):
 		_failures.append("year: the reloaded born kind yields %s, not %s" % [back.revenue_pct_gdp.get("test_levy"), ns.revenue_pct_gdp["test_levy"]])
+
+
+## The gate table() applies, as a question a screen can ask before offering a birth.
+func _test_autumn_open_reads_the_gate() -> void:
+	if not FinanceBill.autumn_open(_state("FRA", 10), _loader):
+		_failures.append("autumn_open: France's October reads closed")
+	if FinanceBill.autumn_open(_state("FRA", 9), _loader):
+		_failures.append("autumn_open: France's September reads open")
+	for month in range(1, 13):
+		if FinanceBill.autumn_open(_state("ITA", month), _loader):
+			_failures.append("autumn_open: Italy, with no autumn month, reads open in month %d" % month)
+			return
+
+
+## What a reader would see change if preview() wrote through to the live state.
+func _fingerprint(state) -> String:
+	var ns = state.player()
+	return JSON.stringify([state.to_dict(), ns.tax_library, ns.revenue_pct_gdp, ns.tax_rates_pct,
+		ns.start_tax_rates_pct, ns.demand_impulse_pct])
+
+
+## The births road (the card of 2026-11-15, Interface's Finances slice 4): a kind France
+## does not levy, priced by preview(), reads what the vote then lands. Before preview()
+## the only road was Budget.preview(), which refuses the rate out loud (an ERROR line the
+## runner fails) and prices nothing.
+func _test_preview_prices_a_birth_as_the_division_lands_it() -> void:
+	var state = _state("FRA", 10)
+	var ns = state.player()
+	if ns.tax_rates_pct.has("bank_levy") or not ns.tax_library.has("bank_levy"):
+		_failures.append("birth preview: the fixture needs bank_levy in France's library and not in force")
+		return
+	var bill := {"create": {"bank_levy": 0.5}}
+	var kept := bill.duplicate(true)
+	var before := _fingerprint(state)
+	var priced := FinanceBill.preview(state, bill)
+	if _fingerprint(state) != before or bill != kept:
+		_failures.append("birth preview: the live state or the bill moved under preview()")
+	if float(priced.get("total_revenue_pct_gdp", 0.0)) <= float(Budget.snapshot(state)["total_revenue_pct_gdp"]):
+		_failures.append("birth preview: the born kind adds no revenue")
+	if not bool(FinanceBill.table(state, _loader, bill).get("tabled", false)):
+		_failures.append("birth preview: the October birth was refused")
+		return
+	if not bool(Division.divide(state, _loader).get("passed", false)):
+		_failures.append("birth preview: the October birth did not carry")
+		return
+	var landed := Budget.snapshot(state)
+	if priced != landed:
+		_failures.append("birth preview: priced %s, the vote landed %s" % [_diff(priced, landed), _diff(landed, priced)])
+
+
+## An abolition: preview() reads what the vote lands, kind erased from force included. A
+## kind levied at the start and read by the Gini offset (Tax.gini_policy_offset reads the
+## rate against the start rate), so a kind left in force at 0 would read a cut of 30 points
+## where the vote lands no kind at all: the erase is visible in the snapshot.
+func _test_preview_prices_an_abolition_as_the_division_lands_it() -> void:
+	var state = _state("FRA", 10)
+	var ns = state.player()
+	if float(ns.start_tax_rates_pct.get("capital_gains", 0.0)) <= 0.0:
+		_failures.append("abolition preview: the fixture needs capital_gains levied at France's start")
+		return
+	var bill := {"abolish": ["capital_gains"]}
+	var before := _fingerprint(state)
+	var priced := FinanceBill.preview(state, bill)
+	if _fingerprint(state) != before:
+		_failures.append("abolition preview: the live state moved under preview()")
+	FinanceBill.table(state, _loader, bill)
+	if not bool(Division.divide(state, _loader).get("passed", false)):
+		_failures.append("abolition preview: abolishing the wealth tax did not carry")
+		return
+	var landed := Budget.snapshot(state)
+	if priced != landed:
+		_failures.append("abolition preview: priced %s, the vote landed %s" % [_diff(priced, landed), _diff(landed, priced)])
+
+
+## The keys of `a` whose value differs in `b`, for a readable failure.
+func _diff(a: Dictionary, b: Dictionary) -> Dictionary:
+	var out := {}
+	for key in a:
+		if not b.has(key) or b[key] != a[key]:
+			out[key] = a[key]
+	return out
 
 
 func _finish() -> void:
