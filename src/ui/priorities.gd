@@ -94,7 +94,7 @@ static func rank(state, loader, opts := {}) -> Dictionary:
 	# `qualified`: every kind that had a candidate this month, held included, in row
 	# order -- RF2's "every kind that qualifies appears at least once" (Systems' probe).
 	var seen := {}
-	for c in held + cands:
+	for c in held + real:  # G1: a standing read is no priority, so it qualifies no kind
 		seen[String(c["kind"])] = true
 	return {"lines": lines, "memory": memory, "qualified": K.KINDS.filter(func(k): return seen.has(k)),
 		"also_due": also_due}
