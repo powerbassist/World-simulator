@@ -386,6 +386,10 @@
         {
           "object": "programme:prog_jobs_first",
           "stance": "oppose"
+        },
+        {
+          "object": "region:FRE",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -526,6 +530,10 @@
         {
           "object": "programme:prog_the_civil_register",
           "stance": "oppose"
+        },
+        {
+          "object": "region:FRJ",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -1197,6 +1205,10 @@
         {
           "object": "programme:prog_clean_hands",
           "stance": "sponsor"
+        },
+        {
+          "object": "region:FRD",
+          "stance": "want"
         }
       ],
       "bench": true,
@@ -1380,6 +1392,12 @@
       "spouse_id": "FRA_moucron",
       "social_skill": 0.68,
       "wealth_eur_m": 0.9,
+      "wants": [
+        {
+          "object": "region:FRF",
+          "stance": "want"
+        }
+      ],
       "bench": true
     },
     {
