@@ -82,7 +82,7 @@ func _process(_delta: float) -> bool:
 			return false
 		"open":
 			if _open_frame < 0:
-				_game._windows.open("budget")
+				_game._windows.open("finances")
 				_open_frame = _frame
 				_open_started = Time.get_ticks_msec()
 				_shoot("open_1_opened")
@@ -93,7 +93,7 @@ func _process(_delta: float) -> bool:
 			# capturing the tween's first step and calling it settled.
 			if _frame >= _open_frame + 20 and Time.get_ticks_msec() - _open_started > int(Motion.OPEN_S * 1000.0) + 200:
 				_shoot("open_3_settled")
-				_game._windows.close("budget")
+				_game._windows.close("finances")
 				_phase = "layer"
 			return false
 		"layer":
@@ -165,9 +165,9 @@ func _shoot(name: String) -> void:
 		print("motion_frames: %s at frame %d, map blend %.2f" % [name, _frame, _game._map_view._layer_blend])
 	elif name.begins_with("night_"):
 		print("motion_frames: %s at frame %d, ticker '%s'" % [name, _frame, _game._election_panel._ticker.text])
-	elif _game != null and _game._windows._frames.has("budget"):
-		var f: Control = _game._windows._frames["budget"]
-		print("motion_frames: %s at frame %d, budget window alpha %.2f scale %.3f" % [name, _frame, f.modulate.a, f.scale.x])
+	elif _game != null and _game._windows._frames.has("finances"):
+		var f: Control = _game._windows._frames["finances"]
+		print("motion_frames: %s at frame %d, books window alpha %.2f scale %.3f" % [name, _frame, f.modulate.a, f.scale.x])
 	var image := root.get_texture().get_image()
 	var path := ProjectSettings.globalize_path(OUT_DIR.path_join(name + ".png"))
 	image.save_png(path)

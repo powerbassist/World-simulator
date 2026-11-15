@@ -186,7 +186,7 @@ func _refresh(ns) -> void:
 			child.queue_free()
 	_editor = null
 	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": FinanceAutumn.tabled_rows(ns), "cells": {}, "editor": _make_editor, "wide": wide,
-		"parts": FinanceRead.other_parts(ns), "autumn": FinanceBill.autumn_open(_state, _loader), "on_create": _on_create, "slipping": FinanceSectors.slipping(ns, _loader)}
+		"parts": FinanceRead.other_parts(ns), "autumn": FinanceBill.autumn_open(_state, _loader), "on_create": _on_create, "slipping": FinanceSectors.slipping(ns, _loader), "open_groups": _open_groups, "toggle": _toggle_group}
 	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, wide, _ctx)
 	FinanceRows.spending(_spending_box, _book, _ctx)
 	_stacks.setup(_revenue_parts(), _spending_parts(), float(_book["deficit_bn"]))

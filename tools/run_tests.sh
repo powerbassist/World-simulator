@@ -11,6 +11,7 @@ tests=(
   tests/test_budget.gd
   tests/test_effects_strip.gd
   tests/test_finance_sectors.gd
+  tests/test_finance_of_which.gd
   tests/test_industry_tab.gd
   tests/test_industry_closure.gd
   tests/test_region_fund.gd

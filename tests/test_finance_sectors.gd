@@ -92,6 +92,8 @@ func _process(_delta: float) -> bool:
 			_check_forecast_carries(1, true)
 			_check_a_refused_tabling_books_the_move()
 		28:
+			_check_picks_survive_a_rebuild()
+			_check_a_tabled_bill_with_moves_only()
 			_check_a_warned_line()
 		30:
 			_press(_with_meta("raise_line", LINE))
@@ -249,9 +251,13 @@ func _check_forecast_carries(moves: int, with_rate: bool) -> void:
 func _check_a_refused_tabling_books_the_move() -> void:
 	var ns = _main._state.player()
 	var before := Sectors.shares(ns, _main._loader, LINE)
-	# A tax put in force outside the autumn month is a bill tabling refuses.
-	_panel._draft.set_create("plastic_packaging_tax", 0.6)
+	# A rate outside its kind's band is a bill tabling refuses (and a page's paint keeps it: it sweeps only the autumn rows).
+	_panel._draft.set_value(FinanceDraft.TAX, "income", 95.0)
 	var moves: Array = _panel._draft.moves()
+	_panel._process(0.0)
+	var held: String = _panel._foot._text.text
+	if not (_panel._foot.get_node("Table") as Button).disabled or not held.contains("now; the rest is voted on"):
+		_fail("a refusal with a move: the verb is live or the move's line is gone (%s)" % held)
 	_panel._on_table()
 	var after := Sectors.shares(ns, _main._loader, LINE)
 	var m: Dictionary = moves[0]
@@ -266,6 +272,35 @@ func _check_a_refused_tabling_books_the_move() -> void:
 	if not ns.tabled_bill.is_empty():
 		_fail("refused tabling: a bill was tabled all the same (%s)" % [ns.tabled_bill])
 	_panel._draft.revert()
+
+
+## The picks live in the draft: a slider moved above the tile redraws it and the from, to and amount stand.
+func _check_picks_survive_a_rebuild() -> void:
+	_panel._draft.revert()
+	_panel.open_row(FinanceDraft.SPENDING, LINE)
+	_panel._process(0.0)
+	_pick("primary_care", "hospitals", 0.03)
+	var slider: HSlider = _panel._editor._slider
+	slider.value = slider.value + slider.step
+	var from: OptionButton = _with_meta("from", "from")
+	var to: OptionButton = _with_meta("to", "to")
+	var amount: HSlider = _with_meta("amount", "amount")
+	if from == null or String(from.get_item_metadata(from.selected)) != "primary_care" or String(to.get_item_metadata(to.selected)) != "hospitals" or absf(amount.value - 0.03) > 0.0001:
+		_fail("picks: a slider move reset the verb's picks")
+	_panel._draft.revert()
+
+
+## A bill before the Assembly and only a move drafted: the move's verb, and the bill's own sentence beside it.
+func _check_a_tabled_bill_with_moves_only() -> void:
+	var ns = _main._state.player()
+	FinanceBill.table(_main._state, _main._loader, {"tax_rates_pct": {"vat": 1.0}})
+	_panel._draft.add_move(LINE, "primary_care", "hospitals", 0.01)
+	_panel._process(0.0)
+	var said: String = _panel._foot._text.text
+	if (_panel._foot.get_node("Table") as Button).text != Strings.t("Apply the moves") or not said.contains("finance bill is before the Assembly".to_lower().left(0) + "A finance bill is before the Assembly"):
+		_fail("a bill at vote and a move: the footer reads '%s' / '%s'" % [(_panel._foot.get_node("Table") as Button).text, said])
+	_panel._draft.revert()
+	ns.tabled_bill = {}
 
 
 ## A line with a sector slipping: marked while closed, its reason once and one raise chip once open.

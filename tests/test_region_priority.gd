@@ -19,7 +19,7 @@ const Regions = preload("res://src/sim/regions.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 const DK = preload("res://src/sim/domains_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
-const BudgetSectors = preload("res://src/ui/budget_sectors.gd")
+const FinanceSectors = preload("res://src/ui/finance_sectors.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const RegionPriority = preload("res://src/ui/region_priority.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -199,7 +199,7 @@ func _check_strip(region, pick: Array) -> void:
 	if absf(float(strip.money_bn)) > 0.0:
 		_fail("priority strip: money %s bn, a priority costs nothing" % strip.money_bn)
 	var text := _text_under(strip)
-	for want in [BudgetSectors.quantity_text(float(est["region_after"])), BudgetSectors.quantity_text(float(est["others_after"])),
+	for want in [FinanceSectors.quantity_text(float(est["region_after"])), FinanceSectors.quantity_text(float(est["others_after"])),
 			Num.f(float(est["unemployment_now"]), 1), Num.f(float(est["unemployment_after"]), 1)]:
 		if not text.contains(want):
 			_fail("priority strip: '%s' does not carry %s (the sim's estimate)" % [text, want])

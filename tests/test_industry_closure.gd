@@ -214,16 +214,13 @@ func _check_rescue() -> void:
 	if not (line as Label).text.contains(money + " a year") or (city != null and not (line as Label).text.contains(String(city.city_name))):
 		_fail("rescue: '%s' does not carry %s a year in %s" % [line.text, money, city.city_name if city != null else "?"])
 	Closures.tick_month(state, _main._loader)
-	var budget = _main._budget_panel
-	budget.mark_dirty()
-	budget._refresh()
-	var cells: Array = budget._figures.get("rescues", [])
-	if cells.is_empty() or String(cells[0]) == "—":
-		_fail("budget: no plant rescue line with a rescue billed (%s)" % [cells])
-	# Its change cell (QA's H6 on #279): an em dash with nothing proposed, the shape
-	# CHANGE_ROWS gives; a row missing from it carries an empty cell.
-	elif cells.size() < 3 or String((cells[2] as Array)[0]) != "—":
-		_fail("budget: the plant rescue line has no change cell (%s)" % [cells])
+	# The Books name the rescue's bill among the parts no row sets (Finances slice 5: the Budget's "of which plant rescues").
+	var parts: Dictionary = preload("res://src/ui/finance_of_which.gd").read(preload("res://src/sim/budget.gd").snapshot(state))
+	var named := false
+	for part in parts["spending"]:
+		named = named or String(part["part"]) == "plant rescues"
+	if not named:
+		_fail("books: no plant rescue part with a rescue billed (%s)" % [parts["spending"]])
 	# QA's H1/H2/H3: the rescue alone (the searching closure ended), a few months into
 	# its term; the strip still drawn, the months counted down, the jobs printed.
 	var first = Companies.majors_of(_main._loader, ns.id)[0]

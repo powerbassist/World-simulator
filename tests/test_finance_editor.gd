@@ -559,10 +559,10 @@ func _check_the_unset_lines_say_what_they_hold() -> void:
 			tips.append((node as Control).tooltip_text)
 	var said := 0
 	for tip in tips:
-		if String(tip).contains("Not detailed in the game yet"):
+		if String(tip).contains("not split"):
 			said += 1
 	if said != 2:
-		_fail("the two unset lines do not both say they are not detailed yet: %s" % [tips])
+		_fail("the two unset lines do not both say what is not split: %s" % [tips])
 
 
 ## At 130 % a spending line's figure is the row's hover (QA's T1 on #363): it reads what the figure reads, after

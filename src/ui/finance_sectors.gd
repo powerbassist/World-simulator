@@ -185,6 +185,8 @@ func _chip(dns, why_of: Dictionary) -> void:
 
 ## The verb: from, to, how much, the strip, Move and the refusal line.
 func _verb(dns, sectors: Array, why_of: Dictionary) -> void:
+	if sectors.size() < 2:
+		return  # a line of one sector has no share to move
 	var pick: Dictionary = _draft.pick
 	var fresh := not _has(sectors, String(pick.get("from", ""))) or not _has(sectors, String(pick.get("to", "")))
 	if not _has(sectors, String(pick.get("from", ""))):
@@ -197,8 +199,6 @@ func _verb(dns, sectors: Array, why_of: Dictionary) -> void:
 		aim_pick(_draft, dns, _loader, _line, sectors, why_of, String(why_of.keys()[0]))
 	if float(pick.get("amount", 0.0)) <= 0.0:
 		pick["amount"] = STEP
-	if sectors.size() < 2:
-		return  # a line of one sector has no share to move
 	var picks := PanelKit.buttons(self)
 	PanelKit.plain_line(picks, Strings.t("Move"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var from := _picker(picks, sectors, String(pick["from"]), "from")

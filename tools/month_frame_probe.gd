@@ -122,7 +122,9 @@ func _step(clock: Node) -> bool:
 			_answer_pauses(clock)
 			if _boundaries >= _months_wanted and _month_window_left == 0:
 				clock.paused = true
-				_main._windows.open("budget")
+				_main._windows.open("finances")
+				# The Budget tab's lever is the opened Books row's slider now (Finances slice 5).
+				_main._windows.frame("finances")._content.open_row("spending_pct_gdp", "health")
 				_frame_label = "open"
 				_phase = "budget_open"
 				_phase_left = SETTLE_FRAMES
@@ -130,7 +132,7 @@ func _step(clock: Node) -> bool:
 			if _forecast_settled():
 				_phase_left -= 1
 			if _phase_left <= 0:
-				_slider = _main._budget_panel._sliders[_main._budget_panel._lever_keys()[0]]
+				_slider = _main._windows.frame("finances")._content._editor._slider
 				_phase = "drag"
 		"drag":
 			_slider.value = _slider.value + _slider.step
@@ -223,7 +225,7 @@ func _arm(keep_open: bool) -> void:
 ## The forecast's own "still computing" flag where the panel has one (V5.1-0a),
 ## else settled once the panel has redrawn -- the base computed it in the frame.
 func _forecast_settled() -> bool:
-	var panel = _main._budget_panel
+	var panel = _main._windows.frame("finances")._content
 	if "_forecast" in panel:
 		return not panel._forecast.busy() and not panel._dirty
 	return not panel._dirty
