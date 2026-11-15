@@ -236,7 +236,7 @@ static func _settle_wants(ns, person, meters: Dictionary, authored_leaders: Dict
 		if served: ns.person_want_state.erase(WantTerms.refused_key(String(person.id), object))  # rule (d): a turn re-arms
 		if served and not prev:
 			_adjust_loyalty(ns, person.id, CK.LOYALTY_WANT_SERVED)
-			if object.begins_with("region:"): speakers.append(person)  # a fund opened: they speak (BlocVoice)
+			if object.begins_with("region:"): speakers.append([person, object.substr(7)])  # a fund opened: they speak (BlocVoice)
 		elif not served and (latched if WantTerms.is_standing(object) else prev):
 			_adjust_grudge(ns, person, CK.GRUDGE_WANT_DENIED * WantTerms.denial_factor(person, object))
 

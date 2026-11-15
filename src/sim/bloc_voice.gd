@@ -27,15 +27,16 @@ static func blocs(magnitude: float) -> Dictionary:
 	return out
 
 
-## The month's speeches: each figure in `speakers` (their region want turned served this month)
-## speaks unless hostile or already acting. `brief_size` is Characters.brief_magnitude; `act`
+## The month's speeches: each [figure, region id] in `speakers` (the figure's region want turned
+## served this month) speaks unless hostile or already acting; the act names the region. `brief_size` is Characters.brief_magnitude; `act`
 ## builds the act row (Characters._act). Writes through the applier, as a briefing does.
 static func speak_for(state, ns, loader, speakers: Array, acted: Dictionary, acts: Array,
 		brief_size: Callable, act: Callable) -> void:
-	for person in speakers:
+	for pair in speakers:
+		var person = pair[0]
 		if acted.has(person.id) or float(ns.person_grudges.get(person.id, 0.0)) >= CK.GRUDGE_BRIEF_THRESHOLD:
 			continue
 		var size: float = -CK.SPEAK_SHARE * float(brief_size.call(person, float(ns.person_standing.get(person.id, 0.0))))
 		Legislature.apply_effects(state, ns, {"bloc_offset": blocs(size)}, loader)
 		acted[person.id] = true
-		acts.append(act.call(state, "speak_for", person.id, {}))
+		acts.append(act.call(state, "speak_for", person.id, {"region": String(pair[1])}))

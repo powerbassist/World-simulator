@@ -59,9 +59,10 @@ func _open(state, region_id: String) -> void:
 		_fail("premise: the fund did not open: %s" % [opened])
 
 
-func _spoke(acts: Array, pid: String) -> bool:
+func _spoke(acts: Array, pid: String, region := "") -> bool:
 	for act in acts:
-		if String(act["act"]) == "speak_for" and String(act["person_id"]) == pid:
+		if String(act["act"]) == "speak_for" and String(act["person_id"]) == pid \
+				and (region == "" or String(act["detail"].get("region", "")) == region):
 			return true
 	return false
 
@@ -81,8 +82,8 @@ func _check_a_fund_opened_makes_its_figure_speak_once() -> void:
 	var before: Dictionary = ns.bloc_offset.duplicate()
 	var acts_before: Dictionary = ns.act_bloc_offset.duplicate()
 	var acts: Array = Characters.tick_month(state, _loader, METERS)
-	if not _spoke(acts, String(person.id)):
-		_fail("speak: the figure did not speak the month its fund opened: %s" % [acts])
+	if not _spoke(acts, String(person.id), String(f[1])):
+		_fail("speak: the figure did not speak, naming the region, the month its fund opened: %s" % [acts])
 		return
 	var want := -CK.SPEAK_SHARE * Characters.brief_magnitude(person, float(ns.person_standing.get(person.id, 0.0)))
 	if want <= 0.0:
