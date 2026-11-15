@@ -260,6 +260,11 @@ func card_character_acts(acts: Array) -> void:
 			"brief_against":
 				title = tr("A leak")
 				body = tr("%s briefs against the government.") % who
+			# V5.3 e: a figure whose region a fund opened in speaks for the government
+			# (src/sim/bloc_voice.gd). Content words the line.
+			"speak_for":
+				title = tr("A voice for the government")
+				body = tr("%s speaks for the government.") % who
 		_stack.push(title, body)
 
 

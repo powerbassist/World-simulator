@@ -82,6 +82,7 @@ tests=(
   tests/test_address.gd
   tests/test_deal.gd
   tests/test_firm_region_asks.gd
+  tests/test_bloc_voice.gd
   tests/test_measure_polls.gd
   tests/test_start_regard.gd
   tests/test_audiences.gd

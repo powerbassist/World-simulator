@@ -69,6 +69,12 @@ func _check_leaf_property() -> void:
 	_check_preloads("characters.gd", [
 		"character_constants.gd", "character_act_constants.gd",
 		"government.gd", "legislature.gd", "staff.gd", "character_seed.gd", "president.gd", "want_terms.gd",
+		"bloc_voice.gd",
+	])
+	# V5.3 e: the voice on the briefing's blocs, split out at the cap: its constants and the one
+	# applier characters.gd already reads, no system of the month.
+	_check_preloads("bloc_voice.gd", [
+		"character_act_constants.gd", "legislature.gd",
 	])
 	# Split out of characters.gd at its line cap, so held to more than it: constants alone.
 	_check_preloads("want_terms.gd", [
