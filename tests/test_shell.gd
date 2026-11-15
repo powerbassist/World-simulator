@@ -196,7 +196,7 @@ func _check_map_is_the_background() -> void:
 ## with a domain open and see what the pointer reaches. A dock that grew across
 ## the screen, or a holder behind it that eats clicks, fails silently.
 func _check_the_map_is_reachable_beside_a_domain() -> void:
-	_main._windows.open("budget")
+	_main._windows.open("finances")
 	# The inbox that rode over the tab (V5.1-d1a, G1) is put away: the claim is
 	# that the dock and its holder leave the strip to the map.
 	_main._hud.inbox.slide_out()
@@ -233,12 +233,12 @@ func _check_breadcrumb_follows_the_tab() -> void:
 ## Back and forward are the title bar's, and they walk the window manager's path.
 func _check_title_bar_walks_the_history() -> void:
 	var bar = _main._hud.title_bar
-	_main._windows.open("budget")
+	_main._windows.open("finances")
 	_main._windows.open("economy")
 	if not bar._back.visible or bar._back.disabled:
 		_fail("with a step behind, the title bar's back is not live")
 	bar.back_requested.emit()
-	if not _main._windows.is_open("budget"):
+	if not _main._windows.is_open("finances"):
 		_fail("the title bar's back did not return to the budget (open: %s)" % str(_main._windows.open_ids()))
 	if bar._forward.disabled:
 		_fail("after a step back, forward is not live")
@@ -252,7 +252,7 @@ func _check_title_bar_walks_the_history() -> void:
 ## (V5.1-c2.1): back, a click on a nation or a sidebar entry under a summit would
 ## open a tab and close the summit.
 func _check_chrome_is_inert_under_a_scene() -> void:
-	_main._windows.open("budget")
+	_main._windows.open("finances")
 	_main._windows.open("summit")
 	_main._hud.title_bar.back_requested.emit()
 	if not _main._windows.is_open("summit"):
@@ -330,7 +330,7 @@ func _collect_solid_containers(node: Node, path: String) -> Array:
 ## list -- V2.1a derives the real set from the registry, and this exists so a
 ## registry that silently loses a panel still turns something red.
 const FOUNDING_PANELS: Array[String] = [
-	"overview", "economy", "budget", "politics", "society", "legislature", "diplomacy",
+	"overview", "economy", "finances", "politics", "society", "legislature", "diplomacy",
 ]
 
 
@@ -385,14 +385,6 @@ func _check_panel_content() -> void:
 	for heading in ["ECONOMY", "LABOUR", "PUBLIC FINANCES", "OUTPUT BY SECTOR"]:
 		if not economy_text.contains(heading):
 			_fail("economy panel has no '%s' section: %s" % [heading, economy_text])
-
-	windows.open("budget")
-	_main._budget_panel._process(0.0)
-	if not _collect_text(_main._budget_panel).contains("BUDGET"):
-		_fail("budget panel does not render its heading")
-	# The frame provides the close button now; the panel's own stays hidden.
-	if _main._budget_panel._close_button.visible:
-		_fail("budget panel shows its own Close button beside the frame's")
 
 	windows.open("politics")
 	_main._government_panel._process(0.0)
@@ -469,7 +461,7 @@ func _check_keyboard_still_reaches_every_panel() -> void:
 
 	# U2's six letters, which are the only ones a player already knows. Named
 	# here as a FLOOR the way FOUNDING_PANELS is, not as the list of bindings.
-	for pair in [[KEY_O, "overview"], [KEY_B, "budget"], [KEY_L, "legislature"]]:
+	for pair in [[KEY_O, "overview"], [KEY_B, "finances"], [KEY_L, "legislature"]]:
 		if windows.id_for_key(int(pair[0])) != String(pair[1]):
 			_fail("key %s no longer opens '%s'" % [OS.get_keycode_string(int(pair[0])), pair[1]])
 
@@ -592,7 +584,7 @@ func _check_save_dialog_traps_hotkeys() -> void:
 		return
 
 	_press(KEY_B)
-	if _main._windows.is_open("budget"):
+	if _main._windows.is_open("finances"):
 		_fail("a panel hotkey opened a window while the save dialog was visible")
 	_main._windows.close_all()
 
@@ -736,7 +728,7 @@ func _begin_a_month_with_every_window_shut() -> bool:
 	_main._windows.close_all()
 	# Nothing in flight before the month: the forecast's projection is drained,
 	# so a job found after it began with its window shut.
-	_main._budget_panel._forecast.drain()
+	_main._windows.frame("finances")._content._forecast.drain()
 	var clock: Node = _main.get_node("Clock")
 	# The engine must not advance days on its own; real time is handed in below,
 	# one day of it, as test_month_runner.gd's B game takes its month.
@@ -774,7 +766,7 @@ func _check_the_month_left_every_closed_panel_dirty() -> void:
 	# is_visible_in_tree()), and the forecast test reaches it only through the
 	# panel's own hide(), which a `visible` gate passes too -- P2's exact trap.
 	# The month made "now" due; with the window shut it must not begin.
-	if not _main._windows.is_open("budget") and _main._budget_panel._forecast._job != null:
+	if not _main._windows.is_open("finances") and _main._windows.frame("finances")._content._forecast._job != null:
 		_fail("the budget forecast began a projection with its window shut")
 
 
@@ -782,9 +774,9 @@ func _check_the_month_left_every_closed_panel_dirty() -> void:
 ## a change of state -- must hear of it, or it shows the pre-commit budget's
 ## future while the books beside it show the new one.
 func _check_a_tax_commit_reaches_the_budget_forecast() -> void:
-	var forecast = _main._budget_panel._forecast
-	_main._windows.open("budget")
-	_main._budget_panel._process(0.0)
+	var forecast = _main._windows.frame("finances")._content._forecast
+	_main._windows.open("finances")
+	_main._windows.frame("finances")._content._process(0.0)
 	forecast.drain()
 	_main._windows.open("finances")
 	var page = _main._windows.frame("finances")._content
@@ -801,9 +793,9 @@ func _check_a_tax_commit_reaches_the_budget_forecast() -> void:
 ## books and forecast until a sweep, so the next lever move was credited with the
 ## command's effect. Asked of one command that sweeps nothing of its own.
 func _check_any_command_reaches_the_budget_forecast() -> void:
-	var forecast = _main._budget_panel._forecast
-	_main._windows.open("budget")
-	_main._budget_panel._process(0.0)
+	var forecast = _main._windows.frame("finances")._content._forecast
+	_main._windows.open("finances")
+	_main._windows.frame("finances")._content._process(0.0)
 	forecast.drain()
 	_main._companies_panel.acted.emit(Budget.snapshot(_main._state), "A subsidy")
 	if not forecast.busy():

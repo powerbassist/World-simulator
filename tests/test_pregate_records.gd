@@ -68,7 +68,7 @@ func _check_titles() -> void:
 	var name: String = _main._loader.nation_name(id)
 	if name == id:
 		_fail("premise: the loader has no name for %s" % id)
-	for panel in [_main._budget_panel, _main._polling_panel, _main._law_panel]:
+	for panel in [_main._polling_panel, _main._law_panel]:
 		var title: String = panel._title.text
 		if not title.ends_with("— " + name):
 			_fail("RECORD 1: a title reads '%s', not the nation's name %s" % [title, name])

@@ -27,7 +27,7 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 
 ## Which of main.gd's panels each window id is.
 const PANELS := {"overview": "_overview_panel", "economy": "_economy_panel", "society": "_polling_panel",
-	"budget": "_budget_panel", "legislature": "_law_panel", "region": "_region_panel"}
+	"legislature": "_law_panel", "region": "_region_panel"}
 
 var _failures: Array[String] = []
 var _main
@@ -60,10 +60,9 @@ func _process(_delta: float) -> bool:
 			_check_lines("society", 7)
 			_check_society_polls()
 			_check_issues()
-			_main._windows.open("budget")
-		13:
-			_check_budget()
 			_main._windows.open("legislature")
+		13:
+			pass
 		15:
 			_check_seats()
 			_main._windows.open("region")
@@ -138,28 +137,6 @@ func _check_society_polls() -> void:
 		if absf(values[i] - poll) > 1e-9:
 			_fail("society plots %.3f for %d-%d, not the poll published (%.3f)" % [values[i], e["year"], e["month"], poll])
 			return
-
-
-func _check_budget() -> void:
-	var charts := _charts("budget")
-	var flows := _all(charts, ChartLine) if charts != null else []
-	var last: Dictionary = _main._state.history[-1]
-	if flows.size() != 1 or flows[0]._series.size() != 2:
-		_fail("the budget has no revenue-against-spending line (%d line charts)" % flows.size())
-	else:
-		var ends := [float(flows[0]._series[0]["values"][-1]), float(flows[0]._series[1]["values"][-1])]
-		if absf(ends[0] - float(last["total_revenue_pct_gdp"])) > 1e-9 or absf(ends[1] - float(last["total_spending_pct_gdp"])) > 1e-9:
-			_fail("the budget's line ends at %s, not the history's revenue and spending" % [ends])
-	var stacks := _all(charts, ChartStack) if charts != null else []
-	if stacks.size() != 1:
-		_fail("the budget has %d stacked shares, not one" % stacks.size())
-		return
-	var ns = _main._state.player()
-	var total := 0.0
-	for p in stacks[0]._parts:
-		total += float(p["value"])
-	if absf(total - float(ns.total_spending_pct_gdp)) > 0.05:
-		_fail("the spending parts add to %.2f %% of GDP, spending is %.2f" % [total, ns.total_spending_pct_gdp])
 
 
 ## Society's bars are the live salience of the issues it lists, in points.

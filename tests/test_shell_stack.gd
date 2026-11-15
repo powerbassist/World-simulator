@@ -39,7 +39,10 @@ func _process(_delta: float) -> bool:
 			_finish()
 			return false
 		_main._windows.close_all()
-		_main._windows.open("budget")
+		_main._windows.open("finances")
+		# A row drafted so the Books footer shows its verb (Finances slice 5: it stands where the Budget's Commit did).
+		var page = _main._windows.frame("finances")._content
+		page.shared_draft().set_value("spending_pct_gdp", "health", float(_main._state.player().spending_pct_gdp["health"]) + 1.0)
 		return false
 	if _frame == 3:
 		_click_commit()
@@ -64,7 +67,7 @@ func _process(_delta: float) -> bool:
 	_check_space_waits_under_a_scene()
 	# Review pass 1: a grab_focus after the click's release is code's, and holds.
 	_click_commit()
-	_main._budget_panel._commit_button.grab_focus()
+	_commit_button().grab_focus()
 	return false
 
 
@@ -72,8 +75,12 @@ func _process(_delta: float) -> bool:
 ## pause key -- pressed Commit again instead of reaching main.gd's unhandled input.
 ## A click leaves no focus on the button it pressed; a button the KEYBOARD reached
 ## keeps it (Tab, the arrow keys), because that is how the keyboard path works.
+func _commit_button() -> Button:
+	return _main._windows.frame("finances")._content._foot.get_node("Table")
+
+
 func _click_commit() -> void:
-	var commit: Button = _main._budget_panel._commit_button
+	var commit: Button = _commit_button()
 	var point: Vector2 = commit.get_global_rect().get_center()
 	for pressed in [true, false]:
 		var click := InputEventMouseButton.new()
@@ -85,7 +92,7 @@ func _click_commit() -> void:
 
 
 func _check_code_focus_after_a_click_stays() -> void:
-	var commit: Button = _main._budget_panel._commit_button
+	var commit: Button = _commit_button()
 	if _main.get_viewport().gui_get_focus_owner() != commit:
 		_fail("a grab_focus made after a click's release was taken away as if the click had made it")
 	commit.release_focus()
@@ -93,7 +100,7 @@ func _check_code_focus_after_a_click_stays() -> void:
 
 ## (A frame after _click_commit(): the release is deferred out of the focus signal.)
 func _check_a_click_parks_no_focus_on_a_button() -> void:
-	var commit: Button = _main._budget_panel._commit_button
+	var commit: Button = _commit_button()
 	var viewport: Viewport = _main.get_viewport()
 	var owner := viewport.gui_get_focus_owner()
 	if owner == commit:
@@ -108,8 +115,10 @@ func _check_a_click_parks_no_focus_on_a_button() -> void:
 ## away from it -- a lever below must not move on an arrow key the player meant
 ## for the menu -- and gives it back where it was when the screen goes.
 func _check_focus_returns_below() -> void:
-	var budget: Control = _main._budget_panel
-	var lever := _first_focusable(budget)
+	var budget: Control = _main._windows.frame("finances")._content
+	# A spending row of the Books, the control a lever was (Finances slice 5).
+	var rows: Array = budget._spending_box.find_children("*", "Button", true, false)
+	var lever: Control = null if rows.is_empty() else rows[0]
 	if lever == null:
 		_fail("the open budget has no focusable control to test focus with")
 		return
@@ -132,7 +141,7 @@ func _check_focus_returns_below() -> void:
 func _check_escape_pops_the_top() -> void:
 	var stack = _main._stack
 	_main._windows.close_all()
-	_main._windows.open("budget")
+	_main._windows.open("finances")
 	# V5.1-d1a (G1): the inbox the map showed rides over the tab, a layer of its own.
 	if not _main._hud.inbox.is_slid() or stack.top() != ScreenStack.INBOX:
 		_fail("the inbox did not ride over the budget as the INBOX layer (top %d)" % stack.top())
@@ -150,17 +159,17 @@ func _check_escape_pops_the_top() -> void:
 	_press(KEY_ESCAPE)
 	if _main._briefing.visible:
 		_fail("second Escape did not close the briefing")
-	if not _main._windows.is_open("budget") or stack.top() != ScreenStack.INBOX:
+	if not _main._windows.is_open("finances") or stack.top() != ScreenStack.INBOX:
 		_fail("second Escape reached below the briefing (top %d)" % stack.top())
 
 	_press(KEY_ESCAPE)
-	if _main._hud.inbox.visible or not _main._windows.is_open("budget"):
+	if _main._hud.inbox.visible or not _main._windows.is_open("finances"):
 		_fail("third Escape did not put the inbox away, the budget kept")
 	if stack.top() != ScreenStack.WORKSPACE:
 		_fail("third Escape reached below the inbox (top %d)" % stack.top())
 
 	_press(KEY_ESCAPE)
-	if _main._windows.is_open("budget"):
+	if _main._windows.is_open("finances"):
 		_fail("fourth Escape did not put the budget away")
 	if stack.top() != ScreenStack.MAP:
 		_fail("four Escapes over four layers left top %d, not the map" % stack.top())
@@ -184,7 +193,7 @@ func _check_hotkeys_only_below_scenes() -> void:
 	if stack.top() != ScreenStack.SCENE:
 		_fail("the summit is not a scene (top %d)" % stack.top())
 	_press(KEY_B)
-	if _main._windows.is_open("budget"):
+	if _main._windows.is_open("finances"):
 		_fail("a panel hotkey opened the budget under the summit")
 	if not _main._windows.is_open("summit"):
 		_fail("a panel hotkey closed the summit")
@@ -196,7 +205,7 @@ func _check_hotkeys_only_below_scenes() -> void:
 
 	_main._windows.close("summit")
 	_press(KEY_B)
-	if not _main._windows.is_open("budget"):
+	if not _main._windows.is_open("finances"):
 		_fail("with the summit gone, B no longer opens the budget")
 	if not stack.accepts_hotkeys():
 		_fail("the stack refuses hotkeys with only a domain open")
@@ -213,7 +222,7 @@ func _check_placement_is_a_layer() -> void:
 	if stack.top() != ScreenStack.PLACEMENT:
 		_fail("an armed placement is not the top layer (top %d)" % stack.top())
 	_press(KEY_B)
-	if _main._windows.is_open("budget"):
+	if _main._windows.is_open("finances"):
 		_fail("a panel hotkey opened a window while a placement was armed")
 	_press(KEY_ESCAPE)
 	if _main._armed_energy_action != "":
@@ -272,22 +281,22 @@ func _check_arrival_under_a_scene() -> void:
 func _check_holding_arrival_slides_in() -> void:
 	var stack = _main._stack
 	var inbox = _main._hud.inbox
-	_stage_interrupt_with("budget")
-	if not _main._windows.is_open("budget"):
+	_stage_interrupt_with("finances")
+	if not _main._windows.is_open("finances"):
 		_fail("a holding arrival closed the open tab")
 	if not inbox.visible or not inbox.is_slid():
 		_fail("a holding arrival over a tab did not slide the inbox in")
 	if stack.top() != ScreenStack.INBOX or not stack.accepts_hotkeys():
 		_fail("a slid inbox is not the INBOX layer (top %d) with the keys live" % stack.top())
 	_press(KEY_ESCAPE)
-	if inbox.visible or not _main._windows.is_open("budget"):
+	if inbox.visible or not _main._windows.is_open("finances"):
 		_fail("Escape did not slide the inbox back over the open tab")
 	_clear_interrupt()
 
 
 ## A note is news, not a question: it waits in the inbox, which stays away.
 func _check_a_note_does_not_slide_in() -> void:
-	_main._windows.open("budget")
+	_main._windows.open("finances")
 	_main._hud.inbox.slide_out()  # put away (G1: it rode over the tab)
 	_main._hud.inbox.push("A note", "body")
 	if _main._hud.inbox.visible:
@@ -298,7 +307,7 @@ func _check_a_note_does_not_slide_in() -> void:
 ## Answering slides the inbox back: the tab it came over is the player's again.
 func _check_answer_slides_back() -> void:
 	var inbox = _main._hud.inbox
-	var card: String = _stage_interrupt_with("budget")
+	var card: String = _stage_interrupt_with("finances")
 	var answer: Button = null
 	for button in inbox._cards[card].find_children("*", "Button", true, false):
 		if button.text != "X":
@@ -308,7 +317,7 @@ func _check_answer_slides_back() -> void:
 		_fail("the decision row has no answer to press")
 	else:
 		answer.pressed.emit()
-		if inbox.visible or not _main._windows.is_open("budget"):
+		if inbox.visible or not _main._windows.is_open("finances"):
 			_fail("answering did not slide the inbox back over the open tab")
 	_clear_interrupt()
 
@@ -319,7 +328,7 @@ func _check_answer_slides_back() -> void:
 ## hold at the default pause band.
 func _check_an_ordinary_hold_slides_in() -> void:
 	var clock: Node = _main.get_node("Clock")
-	_stage_with("budget", ["ratings_letter"])
+	_stage_with("finances", ["ratings_letter"])
 	if not clock.paused:
 		_fail("ratings_letter did not hold the clock at the default pause band")
 	if not _main._hud.inbox.is_slid():
@@ -331,12 +340,12 @@ func _check_an_ordinary_hold_slides_in() -> void:
 ## still held the clock. It stays until nothing holds.
 func _check_answer_keeps_the_inbox_while_one_holds() -> void:
 	var inbox = _main._hud.inbox
-	var cards: Dictionary = _stage_with("budget", ["blackout_night", "ratings_letter"])
+	var cards: Dictionary = _stage_with("finances", ["blackout_night", "ratings_letter"])
 	_answer(String(cards.get("blackout_night", "")))
 	if not inbox.is_slid():
 		_fail("answering one decision slid the inbox away while another holds the clock")
 	_answer(String(cards.get("ratings_letter", "")))
-	if inbox.visible or not _main._windows.is_open("budget"):
+	if inbox.visible or not _main._windows.is_open("finances"):
 		_fail("answering the last holding decision did not slide the inbox back")
 	_clear_interrupt()
 

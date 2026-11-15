@@ -388,8 +388,7 @@ func open_row(channel: String, key: String) -> void:
 func _on_table(force := false) -> void:
 	var before := Trends.snapshot_now(_state)
 	var tabling := FinanceMoves.table(_state, _loader, _draft, force)
-	_stamp = ""
-	_dirty = true
+	mark_dirty()  # a tabling and a booked move both change what the books and the forecast stand on
 	# A refusal keeps the draft on the rows; a tabled bill clears it.
 	if bool(tabling.get("tabled", false)):
 		_autumn_dropped = false

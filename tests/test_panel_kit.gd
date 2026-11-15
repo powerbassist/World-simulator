@@ -231,7 +231,7 @@ func _panel_variable_names() -> Array[String]:
 	for id in _main._windows.panel_ids():
 		out.append("_%s_panel" % id)
 	# The variable names main.gd actually uses, where they differ from the window id.
-	out.append_array(["_overview_panel", "_economy_panel", "_budget_panel", "_polling_panel",
+	out.append_array(["_overview_panel", "_economy_panel", "_polling_panel",
 		"_law_panel", "_nation_panel", "_government_panel", "_bloc_panel", "_calendar_panel",
 		"_people_panel", "_companies_panel", "_projects_panel", "_campaign_panel",
 		"_events_panel", "_region_panel"])

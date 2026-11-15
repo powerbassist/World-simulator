@@ -17,7 +17,6 @@ const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
-const BudgetPanel = preload("res://src/ui/budget_panel.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
@@ -78,10 +77,8 @@ func _process(_delta: float) -> bool:
 			_check_leaving_an_untouched_off_grid_row_drafts_nothing()
 			_check_a_sweep_waits_for_the_hand()
 			_check_the_unset_lines_say_what_they_hold()
-			_check_the_budget_writes_the_one_draft()
 			_check_the_hover_follows_the_figure_at_130()
 			_check_withdraw_keeps_the_draft()
-			_check_a_budget_lever_of_a_tabled_line_is_locked()
 			_check_a_go_opens_the_folded_row()
 			_panel._open_id = ""
 			_panel._stamp = ""
@@ -568,46 +565,6 @@ func _check_the_unset_lines_say_what_they_hold() -> void:
 		_fail("the two unset lines do not both say they are not detailed yet: %s" % [tips])
 
 
-## The Budget tab and the Books rows are ONE pending set: a lever moved on one shows on the other, Commit tables the
-## whole draft, Revert drops it (the parent's condition: no second pending).
-func _check_the_budget_writes_the_one_draft() -> void:
-	var ns = _state.player()
-	var budget := BudgetPanel.new()
-	root.add_child(budget)
-	budget.setup(_state, _loader)
-	budget.shared = _panel.shared_draft()
-	budget.show()
-	var health := float(ns.spending_pct_gdp["health"])
-	var education := float(ns.spending_pct_gdp["education"])
-	# A row moved on the Books page shows on the Budget's lever.
-	_panel._draft.set_value(FinanceDraft.SPENDING, "health", health + 1.0)
-	budget._process(0.0)
-	if not is_equal_approx(budget._sliders["health"].value, health + 1.0) or not budget._edited_keys.has("health"):
-		_fail("a Books row did not reach the Budget's lever: %s" % budget._sliders["health"].value)
-	# A lever moved on the Budget is a row of the shared draft.
-	budget._sliders["education"].value = education - 0.5
-	if not is_equal_approx(_panel._draft.value(FinanceDraft.SPENDING, "education"), education - 0.5):
-		_fail("a Budget lever did not reach the shared draft")
-	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 1.0)
-	# Commit tables the one draft: both sides of it.
-	budget._on_commit()
-	var finance: Dictionary = ns.tabled_bill.get("finance", {})
-	if not finance.get("spending_pct_gdp", {}).has("health") or not finance.get("spending_pct_gdp", {}).has("education") or not finance.get("tax_rates_pct", {}).has("vat"):
-		_fail("the Budget's Commit did not table the whole draft: %s" % [finance])
-	if not _panel._draft.is_empty():
-		_fail("the draft stands after the Budget's Commit")
-	ns.tabled_bill = {}
-	# Revert drops it.
-	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 1.0)
-	budget._on_revert()
-	if not _panel._draft.is_empty():
-		_fail("the Budget's Revert left the shared draft")
-	budget.queue_free()
-	_panel._stamp = ""
-	_panel._dirty = true
-	_panel._process(0.0)
-
-
 ## At 130 % a spending line's figure is the row's hover (QA's T1 on #363): it reads what the figure reads, after
 ## every change, never the paint before.
 func _check_the_hover_follows_the_figure_at_130() -> void:
@@ -657,46 +614,6 @@ func _check_withdraw_keeps_the_draft() -> void:
 	if not _panel._foot.get_node("Table").visible or _panel._foot.get_node("Withdraw").visible:
 		_fail("after the withdrawal the footer should offer the draft's verb alone")
 	_panel._draft.revert()
-	_panel._dirty = true
-	_panel._process(0.0)
-
-
-## C1 on #363: one rule on both tabs. A line in the tabled bill is locked on the Budget's lever too, and a Budget
-## move cannot replace the tabled delta.
-func _check_a_budget_lever_of_a_tabled_line_is_locked() -> void:
-	var ns = _state.player()
-	var budget := BudgetPanel.new()
-	root.add_child(budget)
-	budget.setup(_state, _loader)
-	budget.shared = _panel.shared_draft()
-	budget.show()
-	var live := float(ns.spending_pct_gdp["health"])
-	FinanceBill_table(ns, {"spending_pct_gdp": {"health": 0.5}})
-	budget._process(0.0)
-	var slider: HSlider = budget._sliders["health"]
-	if slider.editable or slider.tooltip_text == "":
-		_fail("the Budget's lever of a line at vote is not locked: editable %s, hover '%s'" % [slider.editable, slider.tooltip_text])
-	if not budget._sliders["education"].editable:
-		_fail("a line that is not at vote was locked")
-	slider.value = live + 2.0
-	if _panel._draft.is_moved(FinanceDraft.SPENDING, "health"):
-		_fail("a Budget move on a line at vote reached the draft")
-	budget._on_commit()
-	var tabled: Dictionary = ns.tabled_bill.get("finance", {}).get("spending_pct_gdp", {})
-	if not is_equal_approx(float(tabled.get("health", 0.0)), 0.5):
-		_fail("a Budget move replaced the tabled delta: %s" % [tabled])
-	budget._process(0.0)
-	if not is_equal_approx(slider.value, live):
-		_fail("the locked lever kept the refused move: %s" % slider.value)
-	ns.tabled_bill = {}
-	_panel._draft.revert()
-	budget._process(0.0)
-	budget._dirty = true
-	budget._process(0.0)
-	if not slider.editable:
-		_fail("the Budget's lever stayed locked after the bill left")
-	budget.queue_free()
-	_panel._stamp = ""
 	_panel._dirty = true
 	_panel._process(0.0)
 
