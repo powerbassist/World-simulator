@@ -54,7 +54,8 @@ func _process(_delta: float) -> bool:
 			_check_lines("overview", 4)
 			_main._windows.open("economy")
 		9:
-			_check_lines("economy", 3)
+			_check_lines("economy", 4)
+			_check_revenue_against_spending()
 			_main._windows.open("society")
 		11:
 			_check_lines("society", 7)
@@ -122,6 +123,20 @@ func _check_lines(id: String, want: int) -> void:
 			drawn += 1
 	if lines.size() != want or drawn != want:
 		_fail("%s holds %d line charts, %d with a line, after four months (want %d)" % [id, lines.size(), drawn, want])
+
+
+## Moved here with the Budget tab (Finances slice 5): the term's revenue against its spending, two series, ending at the
+## history's last month.
+func _check_revenue_against_spending() -> void:
+	var charts := _charts("economy")
+	var flows: Array = _all(charts, ChartLine).filter(func(c) -> bool: return c._series.size() == 2) if charts != null else []
+	var last: Dictionary = _main._state.history[-1]
+	if flows.size() != 1:
+		_fail("the economy has no revenue-against-spending line (%d two-series charts)" % flows.size())
+		return
+	var ends := [float(flows[0]._series[0]["values"][-1]), float(flows[0]._series[1]["values"][-1])]
+	if absf(ends[0] - float(last["total_revenue_pct_gdp"])) > 1e-9 or absf(ends[1] - float(last["total_spending_pct_gdp"])) > 1e-9:
+		_fail("the revenue-against-spending line ends at %s, not the history's revenue and spending" % [ends])
 
 
 func _check_society_polls() -> void:

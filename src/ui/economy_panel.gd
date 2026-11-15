@@ -21,6 +21,7 @@ const UnrestK = preload("res://src/sim/unrest_constants.gd")
 ## derives it live rather than storing one. Nothing is written back.
 const Unrest = preload("res://src/sim/unrest.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
+const Tax = preload("res://src/sim/tax.gd")
 const Credit = preload("res://src/sim/credit.gd")
 const EconomyK = preload("res://src/sim/economy_constants.gd")
 const Regions = preload("res://src/sim/regions.gd")
@@ -182,6 +183,9 @@ func _refresh() -> void:
 	PanelKit.line(_labour, tr("Inflation %s%%, %s since the start.") % [
 		Num.f(ns.inflation_pct, 1), Num.fs(Inflation.inflation_deviation(ns), 2),
 	])
+	# The Budget tab's Gini row, kept when that tab went (Finances slice 5): never silent, because every game has an
+	# index from the first frame, so a line shown only once it moved would hide the level the policy offset is read against.
+	PanelKit.line(_labour, tr("Inequality (Gini) %s.") % Num.f(float(ns.gini_index) + Tax.gini_policy_offset(ns), 2))
 
 	# V1.5c, beside the dependency ratio for the reason the comment above gives: a
 	# grievance is a fact about the COUNTRY, so it belongs in the column that reports

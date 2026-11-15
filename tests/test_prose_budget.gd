@@ -58,7 +58,7 @@ const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "financ
 	"companies": 145}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
-	"diplomacy": 22, "economy": 115, "energy": 118,
+	"diplomacy": 22, "economy": 128, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
 	"politics": 123, "projects": 75, "society": 106,
 }
@@ -90,7 +90,9 @@ const TOTAL_PENDING := {
 ## Sectors screen takes them, so A's net is Books 181 + Budget 113 = 294 against the 339 it began from.
 ## Finances slice 5: the Budget tab (113) went with its sector tiles, which now answer, opened, to SECTOR_TILE_CEILING under
 ## the Books row: 3089 -> 2597 (the two "N parts" lines of the Books included).
-const TOTAL_SUM_CEILING := 2597
+## One stated rise, 2597 -> 2612 (the parent's ruling on slice 5): the Budget's revenue-against-spending chart and its Gini row
+## moved to Economy as they were (113 -> 128 there), so nothing the Budget showed was lost with it.
+const TOTAL_SUM_CEILING := 2612
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
