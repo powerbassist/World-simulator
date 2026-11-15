@@ -15,6 +15,8 @@ const GameState = preload("res://src/core/game_state.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const CK = preload("res://src/sim/character_act_constants.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
+const BlocVoice = preload("res://src/sim/bloc_voice.gd")
+const WorldNews = preload("res://src/ui/world_news.gd")
 
 const METERS := {"press_freedom": 50.0, "judicial_independence": 50.0, "grievance": 30.0}
 
@@ -33,6 +35,8 @@ func _init() -> void:
 	_check_a_hostile_figure_does_not_speak()
 	_check_an_office_served_does_not_speak()
 	_check_the_voice_fades_with_the_acts()
+	_check_a_figure_who_already_acted_does_not_speak()
+	_check_the_news_card_names_the_region()
 	_finish()
 
 
@@ -163,6 +167,60 @@ func _check_the_voice_fades_with_the_acts() -> void:
 	var next := float(ns.act_bloc_offset.get("workers", 0.0))
 	if share <= 0.0 or next >= share:
 		_fail("fade: the workers' share went %s then %s; the voice should fade" % [share, next])
+
+
+## QA's T1 on #365: the figure's one act of the month -- one who already acted is silent.
+func _check_a_figure_who_already_acted_does_not_speak() -> void:
+	var f := _figure()
+	var state = _state()
+	var ns = state.player()
+	var person = f[0]
+	var before: Dictionary = ns.bloc_offset.duplicate()
+	var acts: Array = []
+	BlocVoice.speak_for(state, ns, _loader, [[person, f[1]]], {person.id: true}, acts,
+		Characters.brief_magnitude, Characters._act)
+	if not acts.is_empty() or ns.bloc_offset != before:
+		_fail("acted: a figure who already acted this month also spoke: %s" % [acts])
+	# The control: the same call with the act free speaks.
+	BlocVoice.speak_for(state, ns, _loader, [[person, f[1]]], {}, acts, Characters.brief_magnitude, Characters._act)
+	if acts.size() != 1:
+		_fail("acted: premise, the same figure with its act free did not speak")
+
+
+## QA's T2 on #365: the player's card -- its own title, the region by its map name, never its id.
+func _check_the_news_card_names_the_region() -> void:
+	var f := _figure()
+	var state = _state()
+	var stack := CardStack.new()
+	var news := WorldNews.new()
+	news.setup(state, _loader, stack)
+	stack.pushed.clear()  # setup's own teaching note
+	news.card_character_acts([{"act": "speak_for", "person_id": String(f[0].id), "detail": {"region": f[1]},
+		"year": 2026, "month": 3}])
+	var name := ""
+	for r in _loader.regions["FRA"]:
+		if String(r.id) == f[1]:
+			name = String(r.region_name)
+	if stack.pushed.size() != 1:
+		_fail("card: %d cards for one voice" % stack.pushed.size())
+		return
+	var card: Array = stack.pushed[0]
+	if String(card[0]) != tr("A voice from the regions"):
+		_fail("card: the voice's card is titled '%s'" % card[0])
+	if name == "" or name == f[1] or not String(card[1]).contains(name) or String(card[1]).contains("%s " % f[1]):
+		_fail("card: the body does not name %s by its map name: '%s'" % [f[1], card[1]])
+
+
+## The card column's one call, recorded.
+class CardStack extends RefCounted:
+	var pushed: Array = []
+
+	func push(title: String, body: String) -> String:
+		pushed.append([title, body])
+		return str(pushed.size())
+
+	func keep_whole(_id) -> void:
+		pass
 
 
 func _fail(msg: String) -> void:
