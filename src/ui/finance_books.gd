@@ -40,7 +40,7 @@ static func read(state) -> Dictionary:
 		"service_bn": float(now["debt_service_pct_gdp"]) / 100.0 * gdp,
 	}
 	out["deficit_bn"] = float(out["spending_bn"]) - float(out["revenue_bn"])
-	out["of_which"] = FinanceOfWhich.read(Budget.snapshot(state))
+	out["of_which"] = FinanceOfWhich.read(now)
 	var lines := []
 	var lines_bn := 0.0
 	for key in EK.SPENDING_KEYS:

@@ -222,7 +222,7 @@ func _live_since():
 func _check_budget_row() -> void:
 	RegionFunds.tick_month(_main._state)
 	# The Books name the fund's bill among the parts no row sets (Finances slice 5: the Budget's "of which regional aid").
-	var parts: Dictionary = preload("res://src/ui/finance_of_which.gd").read(preload("res://src/sim/budget.gd").snapshot(_main._state))
+	var parts: Dictionary = preload("res://src/ui/finance_of_which.gd").read(preload("res://src/sim/budget.gd").preview(_main._state, {}))
 	var named := false
 	for part in parts["spending"]:
 		named = named or String(part["part"]) == "regional aid"

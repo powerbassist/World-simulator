@@ -215,7 +215,7 @@ func _check_rescue() -> void:
 		_fail("rescue: '%s' does not carry %s a year in %s" % [line.text, money, city.city_name if city != null else "?"])
 	Closures.tick_month(state, _main._loader)
 	# The Books name the rescue's bill among the parts no row sets (Finances slice 5: the Budget's "of which plant rescues").
-	var parts: Dictionary = preload("res://src/ui/finance_of_which.gd").read(preload("res://src/sim/budget.gd").snapshot(state))
+	var parts: Dictionary = preload("res://src/ui/finance_of_which.gd").read(preload("res://src/sim/budget.gd").preview(state, {}))
 	var named := false
 	for part in parts["spending"]:
 		named = named or String(part["part"]) == "plant rescues"

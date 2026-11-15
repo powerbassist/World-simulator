@@ -72,7 +72,7 @@ func _of_which_buttons(box: Control) -> Array:
 ## Nothing imposed, nothing deployed, nothing subsidised, no membership: no line at all (a part at zero is never listed).
 func _check_a_quiet_game_lists_nothing() -> void:
 	var ns = _state.player()
-	var snap := Budget.snapshot(_state)
+	var snap := Budget.preview(_state, {})
 	var read := FinanceOfWhich.read(snap)
 	_panel._stamp = ""
 	_panel._dirty = true
@@ -86,7 +86,7 @@ func _check_a_quiet_game_lists_nothing() -> void:
 
 ## The Union's contribution is a part for a member: shut, one line naming it; opened, its figure.
 func _check_the_union_shut_then_open() -> void:
-	var read := FinanceOfWhich.read(Budget.snapshot(_state))
+	var read := FinanceOfWhich.read(Budget.preview(_state, {}))
 	var union := false
 	for p in read["spending"]:
 		if String(p["part"]) == "the Union":
