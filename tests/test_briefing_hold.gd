@@ -191,6 +191,9 @@ func _check_no_stale_line() -> void:
 	if not named or String(game["lines"][0]["subject"]) != rid:
 		_fail("premise: the request due now is not the first line (%s)" % str((game["lines"] as Array).map(func(l): return l["subject"])))
 		return
+	# A line due this month wears the WARN tone on its chip, with its words (GLM's gap 5).
+	if mark._chip.theme_type_variation != preload("res://src/ui/ui_theme.gd").WARN_TEXT:
+		_fail("the mark's chip for a line due now is not WARN ('%s')" % mark._chip.theme_type_variation)
 	var before: String = mark.title_text()
 	var turns: Dictionary = (game["turns"] as Dictionary).duplicate()
 	var card_id := String(AudienceDriver.lane_of(_main).card_of(rid))
@@ -203,6 +206,12 @@ func _check_no_stale_line() -> void:
 		_fail("the mark still names the declined request: '%s'" % before)
 	if game["turns"] != turns:
 		_fail("answering a file turned the chief's line: %s -> %s" % [turns, game["turns"]])
+	# A month with no line at all (no vote dated, nothing real): the mark says so, no chip
+	# (GLM's gap 3).
+	game["lines"] = []
+	preload("res://src/ui/chief_mark_view.gd").refresh(_main)
+	if mark.title_text() != tr("A quiet month") or mark.chip_text() != "":
+		_fail("a month with no line: the mark reads '%s' / '%s'" % [mark.title_text(), mark.chip_text()])
 
 
 func _check_key_go() -> void:
