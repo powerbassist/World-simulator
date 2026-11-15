@@ -818,5 +818,60 @@
   "new, at %s": "nouveau, à %s",
   "Abolition of %s": "Suppression de %s",
   "Creation of %s": "Création de %s",
-  "The autumn month is over: its creations and abolitions were taken out of the draft.": "Le mois d'automne est passé : ses créations et suppressions ont été retirées du projet."
+  "The autumn month is over: its creations and abolitions were taken out of the draft.": "Le mois d'automne est passé : ses créations et suppressions ont été retirées du projet.",
+  "Apply the moves": "Appliquer les déplacements",
+  "%d share move takes effect now, with no vote.": [
+    "%d déplacement de part prend effet immédiatement, sans vote.",
+    "%d déplacements de part prennent effet immédiatement, sans vote."
+  ],
+  "%d share move applies now; the rest is voted on %s.": [
+    "%d déplacement de part s'applique dès maintenant ; le reste est voté le %s.",
+    "%d déplacements de part s'appliquent dès maintenant ; le reste est voté le %s."
+  ],
+  "of which %s: %s bn": "dont %s : %s Md€",
+  "%d part": [
+    "%d élément",
+    "%d éléments"
+  ],
+  "of which: %s": "dont : %s",
+  "the Union": "l'Union",
+  "deployments": "déploiements",
+  "subsidies": "subventions",
+  "investment": "investissement",
+  "public works": "travaux publics",
+  "regional aid": "aides régionales",
+  "plant rescues": "sauvetages de sites",
+  "energy": "énergie",
+  "tariffs": "droits de douane",
+  "dividends": "dividendes",
+  "Everything the state spends that none of the five lines sets. The parts that are not zero are listed under it (the Union, deployments, subsidies and the like); the rest of the authored figure is not split.": "Tout ce que l'État dépense sans qu'aucune des cinq lignes ne le fixe. Les parts non nulles sont listées dessous (l'Union, les déploiements, les subventions et autres) ; le reste du chiffre de départ n'est pas réparti.",
+  "%s bn of it is revenue no rate here sets (social contributions, local taxes), and %s bn is what laws in force add. Tariffs and dividends are listed under it when there are any; the rest is not split.": "%s Md€ sont des recettes qu'aucun taux ne fixe ici (cotisations sociales, impôts locaux), et %s Md€ viennent des lois en vigueur. Les droits de douane et les dividendes sont listés dessous quand il y en a ; le reste n'est pas réparti.",
+  "No sector of this line can pay.": "Aucun secteur de cette ligne ne peut payer.",
+  "Raise to %s %%": "Porter à %s %%",
+  "Move": "Déplacement",
+  "to": "vers",
+  "Draft the move": "Préparer le déplacement",
+  "%d point of the line": [
+    "%d point de la ligne",
+    "%d points de la ligne"
+  ],
+  "Slipping too: %s.": "En recul aussi : %s.",
+  "Treasury": "Trésor",
+  "Effect on %s, for the same money: %s %%.": "Effet sur %s, à budget constant : %s %%.",
+  "%s, need-adjusted": "%s, corrigé des besoins",
+  "the health service's quality": "la qualité du service de santé",
+  "the pensions' quality": "la qualité des retraites",
+  "trend growth": "la croissance tendancielle",
+  "military capability": "la capacité militaire",
+  "Inequality (Gini) %s.": "Inégalités (Gini) %s.",
+  "Share move applied": [
+    "Déplacement de part appliqué",
+    "Déplacements de part appliqués"
+  ],
+  "The shares moved at once; no vote was needed.": "Les parts ont été déplacées immédiatement ; aucun vote n'était nécessaire.",
+  "%d share move was applied all the same.": [
+    "%d déplacement de part a été appliqué malgré tout.",
+    "%d déplacements de part ont été appliqués malgré tout."
+  ],
+  "%s: the figures have slipped. See the Books.": "%s : les chiffres ont reculé. Consultez les Comptes."
 }
