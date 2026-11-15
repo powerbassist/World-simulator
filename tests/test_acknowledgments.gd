@@ -52,7 +52,8 @@ func _run() -> void:
 func _check_budget_commit_answers() -> void:
 	var before_count: int = _main._hud.inbox.card_count()
 	var panel = _main._budget_panel
-	panel._pending["spending_pct_gdp"]["health"] = float(_main._state.player().spending_pct_gdp["health"]) + 1.0
+	# Through the lever, as a player does: it is a row of the one draft the Budget's Commit tables.
+	panel._sliders["health"].value = float(_main._state.player().spending_pct_gdp["health"]) + 1.0
 	panel._on_commit()
 	if _main._hud.inbox.card_count() != before_count + 1:
 		_fail("a committed budget pushed no acknowledgment card")
