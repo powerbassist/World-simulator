@@ -31,8 +31,9 @@ static func refresh(main, rerank := false) -> void:
 	var face: Texture2D = Portrait.texture_for(String(chief.id)) if chief != null else null
 	var who := Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id)) if chief != null else ""
 	# What a click does, said on the mark itself (the ux-copy pass: the face alone did not).
-	var tip := "%s
-%s" % [who, Strings.t("Click to open the month's briefing.")] if who != "" else Strings.t("Click to open the month's briefing.")
+	var tip := Strings.t("Click to open the month's briefing.")
+	if who != "":
+		tip = "\n".join(PackedStringArray([who, tip]))
 	if lines.is_empty():
 		main._hud.title_bar.chief_mark.show_line(face, Strings.t("A quiet month"), "", false, tip)
 		return
