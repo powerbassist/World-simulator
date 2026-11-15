@@ -750,5 +750,7 @@
   "rate": "taux",
   "yield, bn": "rendement, Md",
   "Tax changes not yet committed: %s a year, in the Tax Code": "Changements d'impôts non validés : %s par an, dans le Code des impôts",
-  "Spending changes not yet committed: %s a year, in the Budget": "Changements de dépenses non validés : %s par an, dans le Budget"
+  "Spending changes not yet committed: %s a year, in the Budget": "Changements de dépenses non validés : %s par an, dans le Budget",
+  "A voice from the regions": "Une voix des régions",
+  "%s, on the fund for %s: \"We asked for it for years and the government delivered. Now it has to bring jobs.\"": "%s, sur le fonds ouvert en région %s : « Nous le demandions depuis des années, et le gouvernement l'a fait. Reste à ce qu'il apporte des emplois. »"
 }

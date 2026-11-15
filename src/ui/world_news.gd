@@ -260,6 +260,15 @@ func card_character_acts(acts: Array) -> void:
 			"brief_against":
 				title = tr("A leak")
 				body = tr("%s briefs against the government.") % who
+			# V5.3 e: a figure whose region a fund opened in speaks for the government
+			# (src/sim/bloc_voice.gd); Content's line, the region named as it is on the map.
+			"speak_for":
+				var region := String(detail.get("region", ""))
+				for r in _loader.regions.get(String(_state.player_nation_id), []):
+					if String(r.id) == region:
+						region = String(r.region_name)
+				title = tr("A voice from the regions")
+				body = tr("%s, on the fund for %s: \"We asked for it for years and the government delivered. Now it has to bring jobs.\"") % [who, region]
 		_stack.push(title, body)
 
 
