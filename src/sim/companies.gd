@@ -547,8 +547,7 @@ static func firm_impulse_pct(ns, loader) -> float:
 		# Read through the LIVE share, so a subsidy that grew a firm also raises what
 		# regulating its sector costs. That interaction is the point of running both
 		# verbs against one register rather than two.
-		var gdp_share: float = output_eur_bn(ns, company) / ns.gdp_eur_bn
-		burdened += burden * gdp_share / K.GDP_SHARE_REFERENCE
+		burdened += burden * (output_eur_bn(ns, company) / ns.gdp_eur_bn) / K.GDP_SHARE_REFERENCE
 	return clampf(
 		# V5.3 PR 3: aid's growth follows the money, the budget's own spending path.
 		EK.GAP_CLOSE * EK.MULT_SPENDING * Aid.subsidy_bill_pct_gdp(ns, loader) - K.REGULATION_GROWTH_BETA * burdened,
@@ -967,6 +966,8 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	# subsidy bill's one-month lag exists to avoid.
 	ns.debt_eur_bn += price
 
+	# V5.3 PR 3, the author's answer (2): an aid verb's credit follows the firm's jobs.
+	var credit := Aid.bloc_credit(ns, loader, company_id, entry, String(terms.get("op", "")))
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
 		# CLAMPED, like every other writer of this register (legislature.gd,
 		# diplomacy.gd, government.gd, pledges.gd, referendum.gd). Written bare until
@@ -975,7 +976,7 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 		# BLOC_OFFSET_MAX, i.e. it assumes a bound this line did not enforce.
 		ns.bloc_offset[bloc_id] = clampf(
 			float(ns.bloc_offset.get(bloc_id, 0.0))
-			+ float(action.effects["bloc_offset"][bloc_id]),
+			+ credit * float(action.effects["bloc_offset"][bloc_id]),
 			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 		)
 
