@@ -10,6 +10,8 @@ extends HBoxContainer
 ## The player sees the effect AND the price before he tables (the parent's ruling, G4): the sentence carries the
 ## draft's totals and, on the next line, how the Assembly would divide on it now (FinanceRead.draft's vote).
 ##
+## "Withdraw the bill" is there whenever a bill is at vote, drafted or not, and it keeps the draft (never stranded).
+##
 ## A button that the rule would refuse is never a dead verb: it is disabled and the refusal is said in words
 ## beside it, read from FinanceRead.draft, which asks the very rule tabling meets. A draft can be dropped
 ## ("Discard the changes"): the Budget's Revert is gone with its tab.
@@ -43,6 +45,7 @@ func _ready() -> void:
 	add_child(_text)
 	_discard = _button("Discard", Strings.t("Discard the changes"), discard_pressed)  # i18n: ok a node name
 	_withdraw = _button("Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed)  # i18n: ok a node name
+	_withdraw.flat = true  # quiet: the draft's verb beside it is the one that carries the weight
 	_open = _button("OpenBill", Strings.t("Open the bill"), open_pressed)
 	_table = _button("Table", Strings.t("Table the changes"), table_pressed)  # i18n: ok a node name
 	visible = false
@@ -66,7 +69,7 @@ func refresh(state, loader, draft, price) -> void:
 	_table.visible = drafted
 	_discard.visible = drafted
 	_open.visible = not drafted and tabled != null
-	_withdraw.visible = not drafted and tabled != null
+	_withdraw.visible = tabled != null
 	if not visible:
 		return
 	if not drafted:

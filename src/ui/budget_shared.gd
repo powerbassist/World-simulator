@@ -8,13 +8,20 @@ extends RefCounted
 ## the glue, in its own file because that one is at its size ceiling.
 
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 const CHANNEL := "spending_pct_gdp"
 
 
-## A lever the player moved here, into the shared draft.
+## Whether a line is a row of the finance bill before the Assembly: locked, as on the Books page, until the bill is
+## withdrawn (a newer delta would REPLACE the tabled one when the draft is tabled as an amendment).
+static func locked(panel, key: String) -> bool:
+	return (panel._state.player().tabled_bill.get("finance", {}).get(CHANNEL, {}) as Dictionary).has(key)
+
+
+## A lever the player moved here, into the shared draft; a locked line takes nothing (the next pull puts the lever back).
 static func write(panel, key: String, value: float) -> void:
-	if panel.shared != null:
+	if panel.shared != null and not locked(panel, key):
 		panel.shared.set_value(CHANNEL, key, value)
 
 
@@ -37,6 +44,9 @@ static func pull(panel) -> void:
 	if panel.shared == null or panel._sliders.is_empty() or panel._state == null or panel._state.player() == null:
 		return
 	for key in panel._lever_keys():
+		var held := locked(panel, String(key))
+		panel._sliders[key].editable = not held
+		panel._sliders[key].tooltip_text = Strings.t("At vote: withdraw the bill to change it.") if held else ""
 		var value: float = panel.shared.value(CHANNEL, String(key))
 		if not is_equal_approx(value, panel._pending_value(String(key))):
 			panel._pending[CHANNEL][key] = value

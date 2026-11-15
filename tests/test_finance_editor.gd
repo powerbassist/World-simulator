@@ -77,6 +77,8 @@ func _process(_delta: float) -> bool:
 			_check_the_unset_lines_say_what_they_hold()
 			_check_the_budget_writes_the_one_draft()
 			_check_the_hover_follows_the_figure_at_130()
+			_check_withdraw_keeps_the_draft()
+			_check_a_budget_lever_of_a_tabled_line_is_locked()
 			_check_a_go_opens_the_folded_row()
 			_panel.open_row(FinanceDraft.TAX, "vat")
 			_panel._process(0.0)
@@ -588,6 +590,68 @@ func _check_the_hover_follows_the_figure_at_130() -> void:
 	if row.tooltip_text != cell.text:
 		_fail("after Discard the hover reads '%s', the figure '%s'" % [row.tooltip_text, cell.text])
 	UiTheme.set_text_scale(1.0)
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+## C3 on #363: Withdraw is there whenever a bill is at vote, and withdrawing keeps what the player is drafting.
+func _check_withdraw_keeps_the_draft() -> void:
+	var ns = _state.player()
+	FinanceBill_table(ns, {"tax_rates_pct": {"vat": 1.0}})
+	_panel._draft.set_value(FinanceDraft.TAX, "income", float(ns.tax_rates_pct["income"]) + 1.0)
+	_panel._dirty = true
+	_panel._process(0.0)
+	if not _panel._foot.get_node("Withdraw").visible or not _panel._foot.get_node("Table").visible:
+		_fail("with a draft and a bill at vote the footer must offer both Withdraw and the draft's verb")
+	_panel._foot.get_node("Withdraw").pressed.emit()
+	if not ns.tabled_bill.is_empty():
+		_fail("Withdraw did not take the bill back with a draft standing")
+	if _panel._draft.count() != 1:
+		_fail("withdrawing the bill dropped the draft: %d rows" % _panel._draft.count())
+	_panel._process(0.0)
+	if not _panel._foot.get_node("Table").visible or _panel._foot.get_node("Withdraw").visible:
+		_fail("after the withdrawal the footer should offer the draft's verb alone")
+	_panel._draft.revert()
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+## C1 on #363: one rule on both tabs. A line in the tabled bill is locked on the Budget's lever too, and a Budget
+## move cannot replace the tabled delta.
+func _check_a_budget_lever_of_a_tabled_line_is_locked() -> void:
+	var ns = _state.player()
+	var budget := BudgetPanel.new()
+	root.add_child(budget)
+	budget.setup(_state, _loader)
+	budget.shared = _panel.shared_draft()
+	budget.show()
+	var live := float(ns.spending_pct_gdp["health"])
+	FinanceBill_table(ns, {"spending_pct_gdp": {"health": 0.5}})
+	budget._process(0.0)
+	var slider: HSlider = budget._sliders["health"]
+	if slider.editable or slider.tooltip_text == "":
+		_fail("the Budget's lever of a line at vote is not locked: editable %s, hover '%s'" % [slider.editable, slider.tooltip_text])
+	if not budget._sliders["education"].editable:
+		_fail("a line that is not at vote was locked")
+	slider.value = live + 2.0
+	if _panel._draft.is_moved(FinanceDraft.SPENDING, "health"):
+		_fail("a Budget move on a line at vote reached the draft")
+	budget._on_commit()
+	var tabled: Dictionary = ns.tabled_bill.get("finance", {}).get("spending_pct_gdp", {})
+	if not is_equal_approx(float(tabled.get("health", 0.0)), 0.5):
+		_fail("a Budget move replaced the tabled delta: %s" % [tabled])
+	budget._process(0.0)
+	if not is_equal_approx(slider.value, live):
+		_fail("the locked lever kept the refused move: %s" % slider.value)
+	ns.tabled_bill = {}
+	_panel._draft.revert()
+	budget._process(0.0)
+	budget._dirty = true
+	budget._process(0.0)
+	if not slider.editable:
+		_fail("the Budget's lever stayed locked after the bill left")
+	budget.queue_free()
 	_panel._stamp = ""
 	_panel._dirty = true
 	_panel._process(0.0)
