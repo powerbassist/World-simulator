@@ -103,7 +103,7 @@ func fill_of(region_id: String) -> Color:
 
 
 func label_of(region_id: String) -> String:
-	return String((_tint.get(region_id, {}) as Dictionary).get("label", ""))
+	return String((_tint.get(region_id, {}) as Dictionary).get("label", ""))  # i18n: row-ok built through Num and Strings in region_tint.gd
 
 
 ## A pan or a zoom moves the map's transform: redraw only then.

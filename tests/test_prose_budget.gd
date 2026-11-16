@@ -107,7 +107,9 @@ const TOTAL_PENDING := {
 ## State's verbs with their prices and, for aid, its price a job and in tax points), cut first (the
 ## sheet does not repeat the sector or name the chief): 2700 -> 2846, stated; the three tabs at
 ## 122 / 148 / 135, their month-12 count.
-const TOTAL_SUM_CEILING := 2846
+## Screen 6, slice 2: +2, the Regions rail's chip row ("Map" and its three measures,
+## "12 months" being two words), stated: 2846 -> 2848.
+const TOTAL_SUM_CEILING := 2848
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
