@@ -56,7 +56,19 @@ func _init() -> void:
 	add_theme_constant_override("separation", 4)
 
 
+## Rework 1: the People roster's office rows carry the verbs (roster_verbs.gd) and keep
+## this file for the confirm card, the price and the effect: compact builds no picker,
+## only the refusal line; `reassign()` and `dismiss()` are its doors.
+var compact := false
+
+
 func _ready() -> void:
+	if compact:
+		_status = Label.new()
+		_status.theme_type_variation = UiTheme.CAPTION
+		_status.autowrap_mode = TextServer.AUTOWRAP_WORD
+		add_child(_status)
+		return
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	add_child(row)
@@ -90,6 +102,8 @@ func _ready() -> void:
 func sync(state, loader) -> void:
 	_state = state
 	_loader = loader
+	if compact:
+		return
 	var ns = state.player()
 	var keep := _party_ids[_party.selected] if _party.selected >= 0 and _party.selected < _party_ids.size() else ""
 	_party.clear()
@@ -119,11 +133,14 @@ func _selected() -> String:
 
 
 func _on_reassign() -> void:
-	var portfolio := _selected()
 	var i := _party.selected
-	if portfolio == "" or i < 0 or i >= _party_ids.size():
+	if _selected() == "" or i < 0 or i >= _party_ids.size():
 		return
-	var party_id := _party_ids[i]
+	reassign(_selected(), _party_ids[i])
+
+
+## Give `portfolio` to `party_id`: at once into a vacancy, else on the confirm card.
+func reassign(portfolio: String, party_id: String) -> void:
 	var run := func() -> Dictionary: return Removal.reassign(_state, _loader, portfolio, party_id)
 	var from := String(_state.player().cabinet.get(portfolio, ""))
 	if from == "" or from == party_id:
@@ -133,9 +150,12 @@ func _on_reassign() -> void:
 
 
 func _on_dismiss() -> void:
-	var portfolio := _selected()
-	if portfolio == "":
-		return
+	if _selected() != "":
+		dismiss(_selected())
+
+
+## The holder of `portfolio` out, on the confirm card with the removal's price.
+func dismiss(portfolio: String) -> void:
 	var run := func() -> Dictionary: return Removal.dismiss(_state, _loader, portfolio)
 	_ask(portfolio, "", Strings.t("Dismiss %s's minister for %s?") % [_name(String(_state.player().cabinet.get(portfolio, ""))), Labels.portfolio(portfolio)],
 		tr("Dismiss"), run)

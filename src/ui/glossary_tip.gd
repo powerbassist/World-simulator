@@ -87,8 +87,10 @@ func setup(state, loader) -> void:
 
 
 ## A marked name (term_text.gd): hovered, clicked, left -- person_tip.gd's card.
-func person_enter(person_id: String, anchor: Rect2) -> void:
-	_people.enter(person_id, anchor)
+## `above`: the card sits over `anchor` rather than under it (the People roster, whose
+## focused line has its verbs right below).
+func person_enter(person_id: String, anchor: Rect2, above := false) -> void:
+	_people.enter(person_id, anchor, above)
 
 
 func person_leave() -> void:

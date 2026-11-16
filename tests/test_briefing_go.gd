@@ -28,6 +28,7 @@ const Programme = preload("res://src/sim/programme.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Person = preload("res://src/core/person.gd")
+const President = preload("res://src/sim/president.gd")
 const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 
 var _failures: Array[String] = []
@@ -476,7 +477,8 @@ func _desk(severity: int, interrupt: bool, index: int) -> String:
 
 func _person(ns, loader) -> String:
 	for person in loader.people[String(ns.id)]:
-		if String(person.kind) != "chief_of_staff" and String(person.id) != String(ns.cabinet.get("head_of_state", "")):
+		# Never the president: no priority names them, and the People roster leaves them out.
+		if String(person.kind) != "chief_of_staff" and String(person.id) != President.leader_id(ns):
 			return String(person.id)
 	return ""
 
