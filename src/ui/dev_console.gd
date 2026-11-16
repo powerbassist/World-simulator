@@ -348,11 +348,11 @@ class MainHost extends DevRegistry.Host:
 	func load_game(slot: String) -> String:
 		if not SaveManager.valid_slot_name(slot) or not SaveManager.list_slots().has(slot):
 			return "no save in slot '%s'" % slot
-		var live = main._state
-		main._on_load_requested(slot)
-		# A load that fails leaves the live game in place and says so on the save
-		# screen; the console must not report it as done.
-		return "" if main._state != live else "the save in '%s' would not load -- the save screen says why" % slot
+		# A load rebuilds the game (game_reload.gd): the new main carries its own console. One
+		# that fails leaves this main in place and says so on the save screen; the console must
+		# not report it as done.
+		var next = main._on_load_requested(slot)
+		return "" if next != main else "the save in '%s' would not load -- the save screen says why" % slot
 
 	## The way an arrival from the month's tick is noticed: the card, the sting, the
 	## pause the message settings ask for.

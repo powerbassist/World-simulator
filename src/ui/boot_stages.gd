@@ -24,6 +24,7 @@ const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const President = preload("res://src/sim/president.gd")
 const Net = preload("res://src/sim/network.gd")
+const GameReload = preload("res://src/ui/game_reload.gd")
 
 const GAME_SCENE := "res://src/ui/main.tscn"
 
@@ -128,11 +129,17 @@ func step(budget_usec: int) -> bool:
 			if not _loader.errors.is_empty():
 				_skip_to_enter()
 		"world":
-			# The game node's own pending_player_id, not nation_id: a load
-			# passes no nation, and main.gd's default is what a direct boot
-			# would have built the throwaway state around.
-			_state = GameState.new_game(_loader, game.pending_player_id, scenario_id)
-			President.seed_draws(_state, randi())
+			# A load boots straight into the save's nation (game_reload.gd): no throwaway France
+			# game first. A save that does not read falls back to a new game and keeps the slot,
+			# so main's own load path says why on the save screen.
+			var saved: Dictionary = GameReload.read(load_slot, _loader) if not load_slot.is_empty() else {}
+			if not saved.is_empty():
+				_state = saved["state"]
+				game.pending_save = saved
+				game.pending_load_slot = ""
+			else:
+				_state = GameState.new_game(_loader, game.pending_player_id, scenario_id)
+				President.seed_draws(_state, randi())
 			_advance()
 			if not _state.errors.is_empty():
 				_skip_to_enter()

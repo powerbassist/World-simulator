@@ -75,17 +75,19 @@ func _process(_delta: float) -> bool:
 			panel._game.fund_refusal = "refused in the old game"
 			panel._game.measure = "change"
 			_main._map_view.pan_by(Vector2(-300.0, 120.0))
-			_main._on_load_requested(SLOT)
-			# Read after the load: a load gives the panel a NEW state (#391 second pass 2, T6).
-			var g = panel._game
+			_main = _main._on_load_requested(SLOT)
+			# A load rebuilds the game (game_reload.gd): the player lands on the map, and the
+			# Regions tab of the new main is a new panel with a new state.
+			_main._windows.open("region")
+			var g = _main._windows.content("region")._game
 			if g.open_region != "" or g.fund_share != 0.0 or g.fund_years != 0 or g.fund_refusal != "":
 				_fail("the old game's open region or fund sums survive the load")
 			if g.measure != "jobless":
 				_fail("the old game's map measure '%s' survives the load" % g.measure)
 		7:
 			if not _main._windows.is_open("region"):
-				_fail("the premise failed: the load closed the Regions tab")
-			_check_framed("a load with the Regions tab open")
+				_fail("the premise failed: the Regions tab did not open after the load")
+			_check_framed("the Regions tab opened after a load")
 			_check_overlay_follows_the_load()
 			_check_enclave_not_painted()
 			_check_enclave_split_keeps_both_halves()
