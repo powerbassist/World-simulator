@@ -174,6 +174,12 @@ func _load(main, slot: String):
 		_fail("the main that asked for the load is still in the tree after it")
 	if next.get_parent() != parent:
 		_fail("the rebuilt main is not where the old one was")
+	# The drivers' per-main entries go with the main they were made for (pass 1, a leak per load).
+	var id: int = main.get_instance_id()
+	for driver in [preload("res://src/ui/audience_driver.gd"), preload("res://src/ui/briefing_driver.gd"),
+			preload("res://src/ui/phone_driver.gd")]:
+		if driver._games.has(id):
+			_fail("%s keeps the replaced main's entry after a load" % String(driver.resource_path).get_file())
 	return next
 
 

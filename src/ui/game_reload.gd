@@ -30,6 +30,7 @@ static func swap(main: Node, result: Dictionary, slot: String) -> Node:
 	var tree := main.get_tree()
 	var was_current: bool = tree != null and tree.current_scene == main
 	preload("res://src/ui/voice.gd").stop(main)  # the old game's line ends with it
+	_forget_main(main)
 	parent.remove_child(main)
 	parent.add_child(fresh)
 	parent.move_child(fresh, index)
@@ -37,6 +38,17 @@ static func swap(main: Node, result: Dictionary, slot: String) -> Node:
 		tree.current_scene = fresh
 	main.queue_free()
 	return fresh
+
+
+## The drivers keep one entry per main, keyed by its instance id: the old main's would outlive it
+## (its lane, its session, callables bound to it), one game's worth per load.
+static func _forget_main(main: Node) -> void:
+	var id := main.get_instance_id()
+	for driver in [preload("res://src/ui/audience_driver.gd"), preload("res://src/ui/briefing_driver.gd"),
+			preload("res://src/ui/phone_driver.gd"), preload("res://src/ui/poll_card.gd")]:
+		driver._games.erase(id)
+	preload("res://src/ui/files_driver.gd")._views.erase(id)
+	preload("res://src/ui/council_cards.gd")._told.erase(id)
 
 
 ## A save read for a main to boot from: {state, day, slot}, or {} when it does not read (the

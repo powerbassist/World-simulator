@@ -125,12 +125,3 @@ func announce() -> void:
 ## A card this module pushed, by id: the route opens the Industry window for it.
 func has_card(card_id: String) -> bool:
 	return _industry_card_firms.has(card_id)
-
-
-## The discarded game's memories, at a load (main.gd's load path says why).
-func forget() -> void:
-	_announced_bids.clear()
-	_announced_failures.clear()
-	_bid_cards.clear()
-	_failure_cards.clear()
-	_industry_card_firms.clear()
