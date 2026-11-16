@@ -237,6 +237,7 @@
    "tests/test_dev_console_game.gd",
    "tests/test_orgs_panel.gd",
    "tests/test_settings_language.gd",
+   "tests/test_interface_size.gd",
    "tests/test_i18n_rows.gd"
   ],
   [

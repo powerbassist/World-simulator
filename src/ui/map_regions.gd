@@ -37,6 +37,10 @@ var selected := ""
 ## (regions_shell.gd sets it).
 var _bounds := Rect2()
 var fit_rect := Rect2()
+## When set, fit() asks it for fit_rect from the canvas it is about to frame on: the
+## canvas grows with the interface size (settings_panel.gd), so a rect fixed at setup
+## would frame the 1080p one.
+var fit_rect_source := Callable()
 ## region id -> its cities' lon/lat: a figure's chip steps off them (regions_shell.gd sets it).
 var _avoid := {}
 ## region id -> that region's own rings, holes included (its entry of loader.region_rings):
@@ -56,6 +60,34 @@ func _init() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hide()
+
+
+## The interface size (interface_size.gd) changes the canvas under the map: shown, the
+## overlay frames the nation again on the new one. Only on a FACTOR change -- a plain
+## resize (F11 at the same factor, a maximize, an edge drag) keeps the player's view,
+## map_view.gd's _fit_zoom() rule -- and never while `view_held` says a region or a
+## city is open: that view is the player's too. A method of this node rather than a
+## lambda in regions_shell.gd: the root viewport outlives the game scene, and a
+## connection to a freed node's method goes with it.
+var view_held := Callable()
+var _factor := 1.0
+
+
+func _ready() -> void:
+	_factor = get_tree().root.content_scale_factor
+	get_viewport().size_changed.connect(_on_canvas_resized)
+
+
+func _on_canvas_resized() -> void:
+	var factor := get_tree().root.content_scale_factor
+	if is_equal_approx(factor, _factor):
+		return
+	_factor = factor
+	if not visible or not fit_rect_source.is_valid():
+		return
+	if view_held.is_valid() and bool(view_held.call()):
+		return
+	request_fit()
 
 
 ## `rings` is region id -> Array[PackedVector2Array] in lon/lat (loader.region_features);
@@ -255,6 +287,8 @@ func _fit_if_pending() -> void:
 ## Frame the nation in fit_rect: zoom so its box fills nine tenths of the rect, then pan its
 ## centre to the rect's, through the map's own zoom and pan (which clamp as they always do).
 func fit() -> void:
+	if fit_rect_source.is_valid() and is_inside_tree():
+		fit_rect = fit_rect_source.call(get_viewport_rect().size)
 	if _map == null or fit_rect.size == Vector2.ZERO or _bounds.size == Vector2.ZERO:
 		return
 	var a: Vector2 = _map.lonlat_to_screen(_bounds.position.x, _bounds.end.y)
