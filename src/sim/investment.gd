@@ -289,7 +289,8 @@ static func refusal_reason(state, ns, _loader, action) -> String:
 static func _reason(cond: Dictionary) -> String:
 	match String(cond["field"]):
 		"investment_active":
-			return "a programme already runs in this sector" if is_zero_approx(float(cond["value"])) 				else "no programme runs in this sector"
+			return "a programme already runs in this sector" if is_zero_approx(float(cond["value"])) \
+				else "no programme runs in this sector"
 		"investment_count": return "too many programmes already run"
 		"deficit_pct_gdp": return "the deficit does not allow it"
 		"debt_to_gdp_pct": return "the debt does not allow it"
