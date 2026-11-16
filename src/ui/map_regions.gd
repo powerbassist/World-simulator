@@ -62,17 +62,32 @@ func _init() -> void:
 	hide()
 
 
-## The canvas changes size with the window and the interface size (F11, a drag, a
-## Settings change): shown, the overlay frames the nation again on the new canvas. A
-## method of this node rather than a lambda in regions_shell.gd: the root viewport
-## outlives the game scene, and a connection to a freed node's method goes with it.
+## The interface size (interface_size.gd) changes the canvas under the map: shown, the
+## overlay frames the nation again on the new one. Only on a FACTOR change -- a plain
+## resize (F11 at the same factor, a maximize, an edge drag) keeps the player's view,
+## map_view.gd's _fit_zoom() rule -- and never while `view_held` says a region or a
+## city is open: that view is the player's too. A method of this node rather than a
+## lambda in regions_shell.gd: the root viewport outlives the game scene, and a
+## connection to a freed node's method goes with it.
+var view_held := Callable()
+var _factor := 1.0
+
+
 func _ready() -> void:
+	_factor = get_tree().root.content_scale_factor
 	get_viewport().size_changed.connect(_on_canvas_resized)
 
 
 func _on_canvas_resized() -> void:
-	if visible and fit_rect_source.is_valid():
-		request_fit()
+	var factor := get_tree().root.content_scale_factor
+	if is_equal_approx(factor, _factor):
+		return
+	_factor = factor
+	if not visible or not fit_rect_source.is_valid():
+		return
+	if view_held.is_valid() and bool(view_held.call()):
+		return
+	request_fit()
 
 
 ## `rings` is region id -> Array[PackedVector2Array] in lon/lat (loader.region_features);

@@ -24,6 +24,8 @@ static func panel(main) -> Control:
 	main._map_view.add_child(overlay)
 	tab._overlay = overlay
 	overlay.fit_rect_source = fit_rect_for
+	overlay.view_held = func() -> bool:
+		return String(tab._game.open_region) != "" or String(tab._game.city_id) != ""
 	bind(main, overlay)
 	# A load re-runs every registered panel's setup() (main.gd's _on_load_requested), and
 	# Continue is a load over the default game: the overlay follows it there, or a save of

@@ -59,20 +59,33 @@ func _process(_delta: float) -> bool:
 			_check_open()
 			_check_jobless_tint()
 			_press_measure("per_head")
-		6:
-			_check_per_head()
-			_click_map(_countryside(WORST))
-			# The canvas changing size with the tab open (F11, a drag, the interface size)
-			# frames the nation again: fit() reads the live canvas through fit_rect_source.
+			# A plain resize at the same interface size keeps the player's view (F11, a
+			# maximize, an edge drag): map_view.gd's _fit_zoom() rule.
 			_overlay.fit_rect = Rect2()
 			_main.get_viewport().size_changed.emit()
-		8:
+		5:
+			if _overlay.fit_rect != Rect2():
+				_fail("a resize at the same interface size framed the nation again: the player's view is lost")
+			# The interface size changing the canvas frames the nation again on the new one.
+			root.content_scale_factor = 0.8
+			_main.get_viewport().size_changed.emit()
+		6:
 			if _overlay.fit_rect != RegionsShell.fit_rect_for(_main.get_viewport_rect().size):
-				_fail("a canvas size change with the Regions tab open did not frame the nation again (%s)" % _overlay.fit_rect)
+				_fail("an interface size change with the Regions tab open did not frame the nation again (%s)" % _overlay.fit_rect)
+			_check_per_head()
+			_click_map(_countryside(WORST))
+		8:
 			if String(_panel._game.open_region) != WORST:
 				_fail("a click in the region's countryside opened '%s', not %s" % [_panel._game.open_region, WORST])
 			if String(_overlay.selected) != WORST:
 				_fail("the open region is not ringed on the map (selected '%s')" % _overlay.selected)
+			# With a region open the view is the player's: a factor change does not reframe.
+			_overlay.fit_rect = Rect2()
+			root.content_scale_factor = 1.0
+			_main.get_viewport().size_changed.emit()
+		9:
+			if _overlay.fit_rect != Rect2():
+				_fail("an interface size change reframed the nation over an open region")
 			_main._windows.open("economy")
 		10:
 			if _overlay.visible:
