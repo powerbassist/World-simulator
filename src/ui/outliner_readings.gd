@@ -141,7 +141,7 @@ static func _goods(ns, loader) -> Array:
 	for item in SectorGoods.shortages(ns, loader.commodity_goods.keys()):
 		var good = loader.commodity_goods.get(item["id"])
 		rows.append(_row(Strings.t("%s — %.0f%% of demand") % [
-			String(good.name) if good != null else String(item["id"]), float(item["coverage"]) * 100.0],
+			Strings.row_name("goods", good) if good != null else String(item["id"]), float(item["coverage"]) * 100.0],
 			PanelKit.Tone.BAD, SectorGoods.tab_of_good(loader, String(item["id"]))))
 	return rows
 

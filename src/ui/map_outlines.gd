@@ -47,7 +47,7 @@ static func profile_of(loader, id: String) -> String:
 		return float(a[0]) > float(b[0]) if a[0] != b[0] else String(a[1]) < String(b[1]))
 	var parts: Array[String] = []
 	for row in rows.slice(0, TOP_GOODS):
-		parts.append("%s %s" % [String(loader.commodity_goods[row[1]].get("name", row[1])), _percent(float(row[0]))])  # i18n: row-ok not in TRANSLATABLE: a good's name
+		parts.append("%s %s" % [Strings.row_name("goods", loader.commodity_goods[row[1]]), _percent(float(row[0]))])
 	return Strings.t("Outline · %s of world output") % " · ".join(parts)
 
 
