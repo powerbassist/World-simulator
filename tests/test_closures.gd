@@ -87,6 +87,7 @@ func _init() -> void:
 	_test_a_landed_closure_moves_its_region()
 	_test_the_region_term_fades_and_saves()
 	_test_two_closures_add_up_in_their_region()
+	_test_both_region_reads_carry_the_closure()
 	_test_closing_by_answer_moves_the_region()
 	_finish()
 
@@ -187,6 +188,43 @@ func _test_the_region_term_fades_and_saves() -> void:
 	var back = GameState.from_dict(state.to_dict()).player()
 	if back.region_closure_pts != ns.region_closure_pts:
 		_fail("region: the term did not survive a save: %s" % [back.region_closure_pts])
+
+
+## The retro review's T1 (#380): Regions.unemployment_pct(), read by the region sheet,
+## the table, the tint, problem(), the fund strip and Migration, lacked the closure term
+## unemployment_by_region() adds, so the closure card said 8.1 -> 8.6 % and the region
+## sheet still read 8.1. With a closure booked, both reads agree in every region; and
+## ClosureRegion.move() reads the closure without writing the register.
+func _test_both_region_reads_carry_the_closure() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var list: Array = state.regions[ns.id]
+	var access := Regions.accessibility_for(ns, list, state.region_graph)
+	var sites: Dictionary = state.project_sited_pct.get(ns.id, {})
+	ClosureRegion.book(ns, list, String(list[0].cities[0].id), 6000.0)
+	var by := Regions.unemployment_by_region(ns, list, access, sites)
+	for region in list:
+		var one := Regions.unemployment_pct(ns, list, region.id, access, sites)
+		if not is_equal_approx(one, float(by[region.id])):
+			_fail("region reads: %s reads %s alone and %s in the batch, with a closure booked" % [region.id, one, by[region.id]])
+	var kept := JSON.stringify(ns.region_closure_pts)
+	var held: Dictionary = ns.region_closure_pts
+	ClosureRegion.move(state, ns, {"city_id": String(list[1].cities[0].id), "jobs": 4000.0})
+	if not is_same(ns.region_closure_pts, held) or JSON.stringify(ns.region_closure_pts) != kept:
+		_fail("region reads: ClosureRegion.move() swapped or wrote the register")
+	# A swap that puts the register back leaves nothing to see afterwards, so the read's
+	# own code is held to it (the parent's pass 2 on #390): move() names no register.
+	var source := FileAccess.get_file_as_string("res://src/sim/closure_region.gd")
+	var body := source.substr(source.find("static func move("))
+	if body.contains("region_closure_pts") or body.contains("book("):
+		_fail("region reads: ClosureRegion.move() touches the register (a swap or a book)")
+	# A second closure in the booked region: the read adds its lift to the booked one
+	# (GLM gap 3), as booking it would.
+	var city := String(list[0].cities[0].id)
+	var priced := ClosureRegion.move(state, ns, {"city_id": city, "jobs": 3000.0})
+	ClosureRegion.book(ns, list, city, 3000.0)
+	if not is_equal_approx(float(priced["after_pct"]), float(Regions.unemployment_by_region(ns, list, access, sites)[String(priced["region_id"])])):
+		_fail("region reads: a second closure's read %s is not its booking %s" % [priced["after_pct"], Regions.unemployment_by_region(ns, list, access, sites)[String(priced["region_id"])]])
 
 
 ## Two closures in one region add up (GLM gap pass, item 6): the register sums, it does
