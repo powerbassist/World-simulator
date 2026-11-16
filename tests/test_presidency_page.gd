@@ -19,6 +19,9 @@ extends SceneTree
 ## 7. The Outliner retired: no "outliner" window, O opens the page (one key a window), the Presidency
 ##    domain holds the page and Dispatches.
 ##
+## (3) below: a second window taking Q must be refused, and says so.
+## expects-error: window 'probe' takes key Q, which 'overview' already has
+##
 ## Driven a frame at a time via extends SceneTree (a Control outside the tree has
 ## not run _ready()).
 
@@ -100,6 +103,11 @@ func _process(_delta: float) -> bool:
 	_check_the_government_reads()
 	_check_the_words()
 	_check_go()
+	# After the word ceilings: these run months on, past the state the ceilings are read at.
+	_check_concluded_chosen_mark()
+	_check_the_spoken_line_month()
+	_check_a_clashing_key_is_refused()
+	_check_open_now_clicks_and_redraws()
 	_start_leak_check()
 	return false
 
@@ -127,9 +135,12 @@ func _check_the_outliner_retired() -> void:
 func _check_the_fresh_term() -> void:
 	var ns = _main._state.player()
 	var expected: int = Campaign.months_to_election(_main._state, ns)
-	var head: String = _text(_page._term_head)
-	if not head.contains(str(expected)):
-		_fail("the term's heading does not count %d months to the vote: %s" % [expected, head])
+	var head: String = _page._term_head.text
+	var vote := Trends.vote_date(ns)
+	var said := tr("Past year · %s until the presidential vote, %s") if bool(ns.has_executive) else tr("Past year · %s until the assembly vote, %s")
+	var want := said % [Trends.months_text(expected), preload("res://src/ui/date_text.gd").month_year(vote.y, vote.x)]
+	if head != want:
+		_fail("the term's heading reads '%s', expected '%s' (%d months to the vote)" % [head, want, expected])
 	var past: Array = TermReads.past(_main._state)
 	if past.size() > 1:
 		_fail("a fresh game has %d months of history, so this check proves nothing" % past.size())
@@ -177,8 +188,10 @@ func _check_the_programme_lanes() -> void:
 		_fail("a goal with a clock names no deadline month")
 	_check_the_goal_tip(lane)
 	var asked: Array = []
-	_page.window_requested.connect(func(id: String) -> void: asked.append(id))
+	var cb := func(id: String) -> void: asked.append(id)
+	_page.window_requested.connect(cb)
 	(_page._goal_doors[0] as Button).pressed.emit()
+	_page.window_requested.disconnect(cb)
 	if asked.size() != 1 or String(asked[0]) == "":
 		_fail("a programme lane's door asked for %s" % [asked])
 
@@ -562,6 +575,91 @@ func _check_the_chiefs_line_is_the_spoken_one() -> void:
 	if spoken != said:
 		_fail("the page's chief line '%s' is not the one he spoke this month '%s'" % [said, spoken])
 	_check_lead_tooltips()
+
+
+## QA (2) on #401: a goal concluded N months ago keeps the index it was chosen at, however
+## many months pass (months_live stops at the conclusion).
+func _check_concluded_chosen_mark() -> void:
+	var state = _main._state
+	var ns = state.player()
+	if TermReads.past(state).size() < 8:
+		_advance_months(8 - TermReads.past(state).size())
+	var past: Array = TermReads.past(state)
+	if ns.programme.is_empty() or past.size() < 8:
+		_fail("the concluded-mark check needs a programme and 8 months of history (has %d)" % past.size())
+		return
+	var entry: Dictionary = ns.programme[0]
+	var saved := entry.duplicate()
+	entry["status"] = ProgrammeK.STATUS_COMPLETE
+	entry["months_live"] = 2
+	entry["concluded_term"] = int(ns.terms_served)
+	entry["concluded_term_month"] = int(ns.months_in_term) - 3
+	var chosen := int(TermReads.goal_lanes(state, _main._loader)[0]["chosen"])
+	var want := past.size() - 1 - (2 + 3)
+	if chosen != want:
+		_fail("a goal chosen 5 months ago (2 live, concluded 3 ago) marks index %d, expected %d" % [chosen, want])
+	ns.programme[0] = saved
+
+
+## QA (1) on #401: a month end where the chief speaks puts that line on the page; in the
+## next month, before its end, the page carries no line (he has not spoken in it).
+func _check_the_spoken_line_month() -> void:
+	var game: Dictionary = BriefingDriver._games.get(_main.get_instance_id(), {})
+	game["said_in"] = "a situation he never spoke in"  # month_end's rule: a new situation speaks
+	_advance_months(1)
+	var spoken := String(game.get("spoken_line", ""))
+	if spoken.is_empty():
+		_fail("a month end that speaks stored no line for the page")
+		return
+	if _page._said.text != spoken:
+		_fail("the page's chief line '%s' is not the one he spoke '%s'" % [_page._said.text, spoken])
+	# The next month, before its end: same lines, no new speech.
+	var month := int(_main._state.month)
+	_main._state.month = month % 12 + 1
+	ChiefMarkView.refresh(_main)
+	_draw()
+	if not _page._said.text.is_empty():
+		_fail("the page still shows last month's line '%s' in a month he has not spoken in" % _page._said.text)
+	_main._state.month = month
+	ChiefMarkView.refresh(_main)
+
+
+## QA (3) on #401: a second window taking a key already held, as its extra key, is refused.
+func _check_a_clashing_key_is_refused() -> void:
+	var probe := Control.new()
+	_main._windows.register("probe", "probe", probe, KEY_NONE, "", [KEY_Q])
+	if _main._windows.id_for_key(KEY_Q) != "overview":
+		_fail("a second window took Q from the page: Q opens '%s'" % _main._windows.id_for_key(KEY_Q))
+
+
+## The outliner's old checks, on its rows here: a release or a right click opens nothing,
+## and a refresh after the state moves redraws (a firm gone leaves the list).
+func _check_open_now_clicks_and_redraws() -> void:
+	_draw()
+	if _page._open_rows.is_empty():
+		return
+	var asked: Array = []
+	var cb := func(id: String) -> void: asked.append(id)
+	_page.window_requested.connect(cb)
+	var words: Label = (_page._open_rows[0] as Button).get_parent().get_child(0)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	words.gui_input.emit(release)
+	var right := InputEventMouseButton.new()
+	right.button_index = MOUSE_BUTTON_RIGHT
+	right.pressed = true
+	words.gui_input.emit(right)
+	_page.window_requested.disconnect(cb)
+	if not asked.is_empty():
+		_fail("a release or a right click on an open-now row opened %s" % [asked])
+	# A redraw after mark_dirty builds the rows again from the register (a frozen list would keep
+	# showing a firm that is gone): the old row nodes leave the page.
+	var old_row: Button = _page._open_rows[0]
+	_page.mark_dirty()
+	_page._process(0.0)
+	if _page._open_rows.has(old_row) or not old_row.get_parent().get_parent() == null and not old_row.is_queued_for_deletion():
+		_fail("open now did not rebuild its rows after mark_dirty")
 
 
 # --- helpers ----------------------------------------------------------------

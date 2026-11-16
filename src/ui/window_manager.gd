@@ -155,8 +155,8 @@ func register(id: String, title: String, content: Control, key: int = KEY_NONE, 
 			push_error("window '%s' takes key %s, which '%s' already has" % [
 				id, OS.get_keycode_string(int(k)), id_for_key(int(k)),
 			])
-	for k in also:
-		_also_keys[int(k)] = id
+		elif also.has(k):
+			_also_keys[int(k)] = id  # a held key stays its first window's
 	_keys[id] = key
 	_icons[id] = icon_path
 	_titles[id] = title
