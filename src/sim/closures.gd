@@ -77,6 +77,7 @@ const Characters = preload("res://src/sim/characters.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const NK = preload("res://src/sim/companies_constants.gd")
 const Negotiation = preload("res://src/sim/negotiation.gd")
+const ClosureRegion = preload("res://src/sim/closure_region.gd")
 
 const ANNOUNCED := "announced"
 const SEARCHING := "searching"
@@ -93,7 +94,7 @@ static func tick_month(state, loader) -> void:
 	tick_rescues(state)
 	var majors: Array = Companies.majors_of(loader, ns.id)
 	for company in majors:
-		_resolve(ns, company, rule, now)
+		_resolve(ns, company, rule, now, state.regions.get(ns.id, []))
 	# Every major's window, the falls past the threshold gathered by sector: the rule
 	# fires per sector, or each real major added would add closures.
 	var falling := {}
@@ -321,7 +322,7 @@ static func answer(state, ns, loader, closure_id: String, answer_id: String) -> 
 	row["answer"] = answer_id
 	match String(picked["kind"]):
 		"close":
-			_cut(ns, found["company"], found["entry"], row, loader.closure_rule, now)
+			_cut(ns, found["company"], found["entry"], row, loader.closure_rule, now, state.regions.get(ns.id, []))
 		"buyer", "negotiate":
 			if String(row["status"]) == OFFERED:
 				return {"ok": true}
@@ -345,7 +346,7 @@ static func answer(state, ns, loader, closure_id: String, answer_id: String) -> 
 
 # --- The machine ----------------------------------------------------------------------
 
-static func _resolve(ns, company, rule: Dictionary, now: int) -> void:
+static func _resolve(ns, company, rule: Dictionary, now: int, regions: Array) -> void:
 	var entry: Dictionary = ns.companies.get(company.id, {})
 	var row: Dictionary = entry.get("closure", {})
 	var status := String(row.get("status", ""))
@@ -355,7 +356,7 @@ static func _resolve(ns, company, rule: Dictionary, now: int) -> void:
 	if _gone(entry):
 		_end(row, "void", now)
 	elif status == ANNOUNCED and now >= int(row["due"]):
-		_cut(ns, company, entry, row, rule, now)
+		_cut(ns, company, entry, row, rule, now, regions)
 	elif status == OFFERED and now >= int(row["due"]):
 		# A buyer that came back sells at the old sweetener unless the player closed.
 		ns.debt_eur_bn += float(row["back_sweetener_eur_bn"])
@@ -365,7 +366,7 @@ static func _resolve(ns, company, rule: Dictionary, now: int) -> void:
 		if int(row["months_left"]) > 0:
 			return
 		if Cycle.unit("closure|%s|buyer" % String(row["id"]), now) >= K.BUYER_CHANCE:
-			_cut(ns, company, entry, row, rule, now)
+			_cut(ns, company, entry, row, rule, now, regions)
 			return
 		match _answer_counter(row, now):
 			"back":
@@ -376,7 +377,7 @@ static func _resolve(ns, company, rule: Dictionary, now: int) -> void:
 				row["due"] = now + 1
 				row.erase("answer")
 			"walked":
-				_cut(ns, company, entry, row, rule, now)
+				_cut(ns, company, entry, row, rule, now, regions)
 			_:
 				ns.debt_eur_bn += float(row.get("sweetener_eur_bn", 0.0))
 				_end(row, "sold", now)
@@ -453,11 +454,12 @@ static func _announce(ns, company, entry: Dictionary, fall: float, rule: Diction
 ## is an act, not a standing condition (the parent's TAKE 2 on #251): what it wrote is
 ## booked through Characters.book_act_offsets on the share that fades (#104's
 ## half-life), as every act's offset is.
-static func _cut(ns, company, entry: Dictionary, row: Dictionary, rule: Dictionary, now: int) -> void:
+static func _cut(ns, company, entry: Dictionary, row: Dictionary, rule: Dictionary, now: int, regions: Array) -> void:
 	entry["share"] = Companies.share_of_company(ns, company) * (1.0 - float(rule["cut"]))
 	# The record names where the jobs went: a relocation since the announcement
 	# moved the payroll the cut removes.
 	row["city_id"] = Companies.live_city_of(ns, company)
+	ClosureRegion.book(ns, regions, String(row["city_id"]), float(row["jobs"]))
 	var offsets := _plant_offsets(rule, row)
 	var before: Dictionary = (ns.bloc_offset as Dictionary).duplicate()
 	for bloc in offsets:

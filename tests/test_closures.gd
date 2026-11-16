@@ -20,6 +20,11 @@ const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const Negotiation = preload("res://src/sim/negotiation.gd")
 const NK = preload("res://src/sim/companies_constants.gd")
+const ClosureRegion = preload("res://src/sim/closure_region.gd")
+const Regions = preload("res://src/sim/regions.gd")
+const EK = preload("res://src/sim/economy_constants.gd")
+const Region = preload("res://src/core/region.gd")
+const Demography = preload("res://src/sim/demography.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -78,12 +83,17 @@ func _init() -> void:
 	_test_always_rescuing_pays_for_every_plant()
 	_test_the_fall_picks_by_jobs()
 	_test_the_bloc_move_scales_with_the_plant()
+	_test_a_plant_is_thousands_of_jobs()
+	_test_a_landed_closure_moves_its_region()
+	_test_the_region_term_fades_and_saves()
+	_test_two_closures_add_up_in_their_region()
+	_test_closing_by_answer_moves_the_region()
 	_finish()
 
 
 ## The stand-ins as shipped in data/industry/closures.json, pinned as literals.
 const SHIPPED_COOLDOWN := 12
-const SHIPPED_CHANCE := 0.18
+const SHIPPED_CHANCE := 0.05  # V5.3 PR 3, fewer and larger (was 0.18)
 const SHIPPED_REFERENCE := 0.10
 const SHIPPED_SLOPE := 0.35
 
@@ -93,6 +103,125 @@ func _new_state():
 	state.year = 2026
 	state.month = 3
 	return state
+
+
+## V5.3 PR 3, the author's call 3 (2026-11-14): closures fewer and LARGER, thousands of
+## jobs. The shipped cut on France's median major (71 000 jobs) is a plant of at least
+## five thousand: 5 680 at 0.08, where the old 0.03 cut 2 130.
+func _test_a_plant_is_thousands_of_jobs() -> void:
+	var ns = _new_state().player()
+	var jobs: Array = _majors(ns).map(func(c) -> float: return Companies.headcount(ns, c) * float(_rule()["cut"]))
+	jobs.sort()
+	var median: float = jobs[jobs.size() / 2]
+	if median < 5000.0:
+		_fail("a closure at France's median major cuts %d jobs, not five thousand" % int(median))
+
+
+## The game's own regional unemployment, every region, now.
+func _by_region(state) -> Dictionary:
+	var ns = state.player()
+	var list: Array = state.regions.get(ns.id, [])
+	return Regions.unemployment_by_region(ns, list, Regions.accessibility_for(ns, list, state.region_graph),
+		state.project_sited_pct.get(ns.id, {}))
+
+
+## V5.3 PR 3 (c), the strip's read: a landed closure moves its own region's unemployment
+## by its jobs over the region's labour force, the other regions give the same people-
+## weighted amount back (the nation's rate is Economy's, unchanged), and
+## ClosureRegion.move() says beforehand exactly what the landing writes.
+func _test_a_landed_closure_moves_its_region() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	if String(row.get("status", "")) != "announced":
+		_fail("region: no closure announced to read")
+		return
+	var list: Array = state.regions[ns.id]
+	var region = Region.region_of_city(list, String(row["city_id"]))
+	var move := ClosureRegion.move(state, ns, row)
+	var before := _by_region(state)
+	if not bool(move.get("ok", false)) or region == null or String(move["region_id"]) != String(region.id):
+		_fail("region: the read names %s, the plant's city is in %s" % [move, region.id if region != null else "none"])
+		return
+	if not is_equal_approx(float(move["before_pct"]), float(before[region.id])):
+		_fail("region: the read's before %s is not the game's %s" % [move["before_pct"], before[region.id]])
+	for i in range(CK.ANSWER_MONTHS):
+		_month(state)
+	if String(row["status"]) != "closed":
+		_fail("region: the closure did not land")
+		return
+	var after := _by_region(state)
+	if not is_equal_approx(float(after[region.id]), float(move["after_pct"])):
+		_fail("region: the read promised %s, the landing wrote %s" % [move["after_pct"], after[region.id]])
+	var share := float(ns.region_pop_share[region.id])
+	var total := 0.0
+	for other in list:
+		total += float(ns.region_pop_share.get(other.id, 0.0))
+	var lift := 100.0 * float(row["jobs"]) / (Demography.labour_force(ns) * share)
+	if not is_equal_approx(float(after[region.id]) - float(before[region.id]), lift * (1.0 - share / total)):
+		_fail("region: the region moved %s, not its jobs over its labour force less the nation's mean" % (float(after[region.id]) - float(before[region.id])))
+	var weighted := 0.0
+	for other in list:
+		weighted += float(ns.region_pop_share.get(other.id, 0.0)) * (float(after[other.id]) - float(before[other.id]))
+	if absf(weighted) > 1e-9:
+		_fail("region: the regions' people-weighted move is %s, not 0 (the nation's rate is Economy's)" % weighted)
+
+
+## The term fades at 1/EK.CLOSURE_ABSORB_MONTHS a month of Regions' month (absorbed as
+## the region's people find work or leave), a spent entry leaves, and a save carries it.
+func _test_the_region_term_fades_and_saves() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var list: Array = state.regions[ns.id]
+	ns.region_closure_pts = {String(list[0].id): 0.4, String(list[1].id): -0.1, String(list[2].id): 5e-7}
+	for i in range(EK.CLOSURE_ABSORB_MONTHS):
+		Regions.tick_month(ns, list, 0.0, {}, {})
+	var want := 0.4 * pow(1.0 - 1.0 / float(EK.CLOSURE_ABSORB_MONTHS), EK.CLOSURE_ABSORB_MONTHS)
+	if not is_equal_approx(float(ns.region_closure_pts[String(list[0].id)]), want):
+		_fail("region: the term reads %s after its mean life, not %s" % [ns.region_closure_pts[String(list[0].id)], want])
+	if ns.region_closure_pts.has(String(list[2].id)):
+		_fail("region: a spent term (under 1e-6) stayed on the register")
+	var back = GameState.from_dict(state.to_dict()).player()
+	if back.region_closure_pts != ns.region_closure_pts:
+		_fail("region: the term did not survive a save: %s" % [back.region_closure_pts])
+
+
+## Two closures in one region add up (GLM gap pass, item 6): the register sums, it does
+## not keep the last.
+func _test_two_closures_add_up_in_their_region() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var list: Array = state.regions[ns.id]
+	var city: String = String(list[0].cities[0].id)
+	var one := ClosureRegion.pts_of(ns, list, city, 3000.0)
+	ClosureRegion.book(ns, list, city, 3000.0)
+	ClosureRegion.book(ns, list, city, 3000.0)
+	if not is_equal_approx(float(ns.region_closure_pts[String(list[0].id)]), 2.0 * float(one[String(list[0].id)])):
+		_fail("region: two closures read %s, not twice one" % ns.region_closure_pts[String(list[0].id)])
+
+
+## The player's own "close" answer lands the plant through the same cut, so it books its
+## region too (GLM gap pass, item 8: only the due-month path was tested).
+func _test_closing_by_answer_moves_the_region() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	if String(row.get("status", "")) != "announced":
+		_fail("region by answer: no closure announced")
+		return
+	var move := ClosureRegion.move(state, ns, row)
+	var got := Closures.answer(state, ns, _loader, String(row["id"]), "close")
+	if String(row["status"]) != "closed":
+		_fail("region by answer: 'close' did not land the plant: %s" % [got])
+		return
+	if not is_equal_approx(float(_by_region(state)[String(move["region_id"])]), float(move["after_pct"])):
+		_fail("region by answer: the region reads %s, the read promised %s" % [_by_region(state)[String(move["region_id"])], move["after_pct"]])
 
 
 func _rule() -> Dictionary:
@@ -1064,10 +1193,11 @@ func _test_the_fall_picks_by_jobs() -> void:
 ## A landed closure's bloc move scales with the plant's jobs: the rule's -0.02 is the
 ## move of a plant of `reference_jobs` (a stand-in, data), so a small plant moves the
 ## workers less than a large one. The strip shows the move that lands. Literals: the
-## parent's ruling restores #251's cooldown and move.
+## parent's ruling restores #251's cooldown and move; V5.3 PR 3 moves the reference to
+## the new mean plant (6 700 jobs), so the mean closure still moves #251's -0.02.
 func _test_the_bloc_move_scales_with_the_plant() -> void:
-	if float((_rule()["bloc_offset"] as Dictionary)["workers"]) != -0.02 or float(_rule()["reference_jobs"]) != 2500.0:
-		_fail("the rule reads workers %s and reference jobs %s, not #251's -0.02 at 2500" % [
+	if float((_rule()["bloc_offset"] as Dictionary)["workers"]) != -0.02 or float(_rule()["reference_jobs"]) != 6700.0:
+		_fail("the rule reads workers %s and reference jobs %s, not #251's -0.02 at the mean plant, 6700" % [
 			_rule()["bloc_offset"], _rule()["reference_jobs"]])
 	var moves: Array = []
 	for scale in [1.0, 2.0]:
@@ -1078,7 +1208,7 @@ func _test_the_bloc_move_scales_with_the_plant() -> void:
 		_falling(ns, firm, 2.0 * float(_rule()["fall"]))
 		_month(state)
 		var row := _row(ns, String(firm.id))
-		var want := -0.02 * float(row["jobs"]) / 2500.0
+		var want := -0.02 * float(row["jobs"]) / 6700.0
 		var strip: Dictionary = Closures.answers(state, ns, _loader, String(row["id"]))[0]
 		var before := float(ns.bloc_offset.get("workers", 0.0))
 		Closures.answer(state, ns, _loader, String(row["id"]), "close")

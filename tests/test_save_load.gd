@@ -2729,7 +2729,10 @@ func _run_companies_roundtrip(loader) -> void:
 	# truth about every save that predates the machine.
 	const LIVE_KEYS := ["share", "subsidy", "state_share", "city", "failed",
 		"rescue_months_left", "bid_bidder", "bid_price_eur_bn", "bid_months_left",
-		"subsidy_shadow", "subsidy_lapsed_month", "owner", "courted", "board_chair"]
+		"subsidy_shadow", "subsidy_lapsed_month", "owner", "courted", "board_chair",
+		# V5.3 PR 3: the aid's granted credit factor, handed back at the withdrawal;
+		# absent reads 1.0, what every grant before PR 3 received.
+		"aid_credit"]
 	for entry in (dict["nations"]["FRA"] as Dictionary)["companies"].values():
 		for key in (entry as Dictionary).keys():
 			if not LIVE_KEYS.has(key):

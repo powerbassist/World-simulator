@@ -47,6 +47,8 @@ const Natural = preload("res://src/sim/commodities_natural.gd")
 const CK = preload("res://src/sim/commodity_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const CoK = preload("res://src/sim/companies_constants.gd")
+const EcK = preload("res://src/sim/economy_constants.gd")
+const CompaniesAid = preload("res://src/sim/companies_aid.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const Walk = preload("res://src/sim/companies_walk.gd")
 const Industry = preload("res://src/sim/industry.gd")
@@ -284,17 +286,15 @@ func _compare_walks(probe, loader, label: String) -> void:
 func _old_walks(ns, loader) -> Array:
 	var impulse := 0.0
 	if ns.gdp_eur_bn > 0.0:
-		var subsidised := 0.0
 		var burdened := 0.0
 		for company in Companies.firms_of(loader, ns.id):
-			var intensity := Companies.subsidy_of(ns, company.id)
 			var burden := Companies.regulation_burden_of(ns, company.sector)
-			if intensity == 0.0 and burden == 0.0:
+			if burden == 0.0:
 				continue
 			var gdp_share: float = Companies.output_eur_bn(ns, company) / ns.gdp_eur_bn
-			subsidised += intensity * gdp_share / CoK.GDP_SHARE_REFERENCE
 			burdened += burden * gdp_share / CoK.GDP_SHARE_REFERENCE
-		impulse = clampf(CoK.SUBSIDY_GROWTH_BETA * subsidised - CoK.REGULATION_GROWTH_BETA * burdened,
+		# V5.3 PR 3: the aid term reads the bill (its own walk is the full roster already).
+		impulse = clampf(EcK.GAP_CLOSE * EcK.MULT_SPENDING * CompaniesAid.subsidy_bill_pct_gdp(ns, loader) - CoK.REGULATION_GROWTH_BETA * burdened,
 			-CoK.FIRM_IMPULSE_MAX_PCT, CoK.FIRM_IMPULSE_MAX_PCT)
 	var jobs := 0.0
 	var labour_force: float = Demography.labour_force(ns)

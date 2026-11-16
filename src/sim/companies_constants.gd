@@ -141,15 +141,22 @@ const RESCUE_BAILOUT_PRICE_SHARE := 0.25
 
 # --- What a subsidy costs -----------------------------------------------------
 
-## Points of GDP per year for one firm subsidised at full intensity.
-##
-## Anchored against the tax lines it sits beside on the same budget panel:
-## economy_constants.TAX_BASE_SHARE makes one point of VAT worth 0.53 % of GDP and
-## one point of income tax 0.50 %, so ONE TAX POINT IS ROUGHLY HALF A PERCENT OF
-## GDP. Subsidising one national champion should cost appreciably less than a tax
-## point -- it is one firm, not a fiscal programme -- and subsidising the whole
-## register should cost more than one and be a visible choice.
-const SUBSIDY_COST_PCT_GDP := 0.30
+## The share of a firm's payroll a year one firm subsidised at full intensity costs
+## (V5.3 PR 3, the author's calls of 2026-11-14 and 2026-11-15: aid priced BY THE FIRM,
+## never of GDP; his pick of Design's option 1, .superpowers/sdd/design-card1-aid-price.md).
+## The industrial subsidy's 0.6 reads 30 % a year and the strategic rescue's 1.0 reads
+## 50 %, about 15 000 and 25 000 EUR a job in France. It replaced SUBSIDY_COST_PCT_GDP,
+## 0.30 % of GDP per firm whatever its size (5.2 bn a year on a firm worth 3.5 bn). At 5 %,
+## the figure first drawn, every one of the playable nations' 43 majors bought more GDP
+## per euro than the budget does: aid was never a decision.
+const AID_PAYROLL_SHARE := 0.50
+
+## Compensation of employees as a share of GDP, the payroll the aid is a share of,
+## spread over the employed (Demography.labour_force less the unemployed). Eurostat's
+## national accounts put the EU's compensation of employees at about half of GDP (47
+## to 52 % across the roster's large economies, 2023); France reads about 50 000 EUR a
+## job at this share, the 52 000 the industry pictures stood in.
+const COMPENSATION_SHARE_OF_GDP := 0.50
 
 ## Hard clamp on the whole subsidy bill, points of GDP.
 ##
@@ -251,13 +258,11 @@ const SHARE_MAX := 0.60
 ## bit-identical across all fourteen existing regimes with the whole firm register
 ## live.
 ##
-## THE PROBE'S SECOND CORRECTION, from 0.30. Set from tools/companies_probe.gd
-## table (c) against a band of 0.05-0.60 %/yr fixed before the sweep ran; 0.30 put
-## France and Britain at 0.71 and 0.72, over the ceiling. The ceiling is the half
-## that was doing work: a subsidy to ONE FIRM must not out-punch a whole budget,
-## whose demand impulse runs to several points, and 0.30 had one firm worth more
-## than a percentage point of every tax at once.
-const SUBSIDY_GROWTH_BETA := 0.20
+## SUBSIDY_GROWTH_BETA (0.20) WAS HERE, the subsidy's growth term scaled by the firm's
+## output. V5.3 PR 3 (the author's pick of 2026-11-15) made the growth follow the money
+## instead: Companies.firm_impulse_pct reads the aid bill as billed, at the budget's own
+## GAP_CLOSE x MULT_SPENDING, so a euro of aid buys what a euro of spending does and no
+## firm is a better deal than another. The regulation term below keeps its weighting.
 
 ## The size of an ordinary national champion, as a share of GDP. France's largest
 ## authored firm sits near this by construction, so the ratio above is near 1.0

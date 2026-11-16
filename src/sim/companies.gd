@@ -74,6 +74,8 @@ const DK = preload("res://src/sim/diplomacy_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const Walk = preload("res://src/sim/companies_walk.gd")
 const Roster = preload("res://src/sim/companies_roster.gd")
+## V5.3 PR 3: what aid costs, priced by the firm (the subsidy bill's writer reads it).
+const Aid = preload("res://src/sim/companies_aid.gd")
 
 
 ## Seeds the live register from content: every MAJOR starts at its authored share
@@ -506,18 +508,6 @@ static func _tick_shares(ns, loader) -> void:
 
 # --- The two channels into the economy ------------------------------------------
 
-## Points of GDP per year. Read by Budget.recompute() as a computed spending line,
-## NOT as a sixth entry in economy_constants.SPENDING_KEYS -- that list is keyed
-## 1:1 to cabinet portfolios, so a sixth line is a sixth minister, and
-## docs/tiers/v1.md section 6 rules it out. V1.3c's tariff revenue and V1.3g's
-## deployment bill both took this route first.
-static func subsidy_bill_pct_gdp(ns) -> float:
-	var bill := 0.0
-	for company_id in ns.companies.keys():
-		bill += K.SUBSIDY_COST_PCT_GDP * subsidy_of(ns, String(company_id))
-	return minf(bill, K.SUBSIDY_BILL_MAX_PCT_GDP)
-
-
 ## The fifth additive term in the growth equation, %/yr. Scaled by the firm's own
 ## weight in the economy, which is what makes WHICH FIRM a decision rather than a
 ## label: subsidising a national champion moves the country, subsidising a
@@ -547,23 +537,20 @@ static func subsidy_bill_pct_gdp(ns) -> float:
 static func firm_impulse_pct(ns, loader) -> float:
 	if ns.gdp_eur_bn <= 0.0:
 		return 0.0
-	var subsidised := 0.0
 	var burdened := 0.0
 	# Walk.priced(): the firms this walk could price, in roster order; every one it
 	# leaves out adds exactly 0.0 (V5.0c2, the argument is that file's header).
 	for company in Walk.priced(ns, firms_of(loader, ns.id)):
-		var intensity := subsidy_of(ns, company.id)
 		var burden := regulation_burden_of(ns, company.sector)
-		if intensity == 0.0 and burden == 0.0:
+		if burden == 0.0:
 			continue
 		# Read through the LIVE share, so a subsidy that grew a firm also raises what
 		# regulating its sector costs. That interaction is the point of running both
 		# verbs against one register rather than two.
-		var gdp_share: float = output_eur_bn(ns, company) / ns.gdp_eur_bn
-		subsidised += intensity * gdp_share / K.GDP_SHARE_REFERENCE
-		burdened += burden * gdp_share / K.GDP_SHARE_REFERENCE
+		burdened += burden * (output_eur_bn(ns, company) / ns.gdp_eur_bn) / K.GDP_SHARE_REFERENCE
 	return clampf(
-		K.SUBSIDY_GROWTH_BETA * subsidised - K.REGULATION_GROWTH_BETA * burdened,
+		# V5.3 PR 3: aid's growth follows the money, the budget's own spending path.
+		EK.GAP_CLOSE * EK.MULT_SPENDING * Aid.subsidy_bill_pct_gdp(ns, loader) - K.REGULATION_GROWTH_BETA * burdened,
 		-K.FIRM_IMPULSE_MAX_PCT, K.FIRM_IMPULSE_MAX_PCT
 	)
 
@@ -640,7 +627,7 @@ static func dividend_revenue_pct_gdp(ns, loader) -> float:
 ## content already enforces -- and it would hide a bug rather than prevent one if a
 ## later session lets the nine hold firms.
 static func _recompute_prices(ns, loader) -> void:
-	ns.subsidy_bill_pct_gdp = subsidy_bill_pct_gdp(ns)
+	ns.subsidy_bill_pct_gdp = Aid.subsidy_bill_pct_gdp(ns, loader)
 	ns.firm_impulse_pct = firm_impulse_pct(ns, loader)
 	ns.firm_jobs_offset_pct = firm_jobs_offset_pct(ns, loader)
 	ns.dividend_revenue_pct_gdp = dividend_revenue_pct_gdp(ns, loader)
@@ -979,6 +966,8 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 	# subsidy bill's one-month lag exists to avoid.
 	ns.debt_eur_bn += price
 
+	# V5.3 PR 3, the author's answer (2): an aid verb's credit follows the firm's jobs.
+	var credit := Aid.bloc_credit(ns, loader, company_id, entry, String(terms.get("op", "")))
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
 		# CLAMPED, like every other writer of this register (legislature.gd,
 		# diplomacy.gd, government.gd, pledges.gd, referendum.gd). Written bare until
@@ -987,7 +976,7 @@ static func execute(state, ns, all_actions: Array, action, company_id: String, l
 		# BLOC_OFFSET_MAX, i.e. it assumes a bound this line did not enforce.
 		ns.bloc_offset[bloc_id] = clampf(
 			float(ns.bloc_offset.get(bloc_id, 0.0))
-			+ float(action.effects["bloc_offset"][bloc_id]),
+			+ credit * float(action.effects["bloc_offset"][bloc_id]),
 			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
 		)
 

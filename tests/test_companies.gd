@@ -41,6 +41,8 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Processes = preload("res://src/sim/processes.gd")
+const Demography = preload("res://src/sim/demography.gd")
+const CompaniesAid = preload("res://src/sim/companies_aid.gd")
 
 const PLAYER := "FRA"
 ## Two industrial rivals of unequal labour intensity. The pair the jobs channel is
@@ -70,6 +72,9 @@ func _init() -> void:
 	_test_subsidy_moves_share_to_the_subsidised_firm()
 	_test_headcount_follows_share_not_output()
 	_test_bill_reaches_the_budget()
+	_test_aid_scales_with_the_firm()
+	_test_aid_credit_follows_the_jobs()
+	_test_net_jobs_read()
 	_test_impulse_reaches_growth()
 	_test_withdraw_stops_the_bill_and_keeps_the_share()
 	_test_verb_refuses_when_unavailable()
@@ -301,12 +306,141 @@ func _test_bill_reaches_the_budget() -> void:
 	Companies.tick_month(state, _loader)
 	Budget.recompute(state, ns)
 
-	if not is_equal_approx(ns.subsidy_bill_pct_gdp, K.SUBSIDY_COST_PCT_GDP):
-		_fail("one full-intensity subsidy billed %s, expected %s" % [
-			str(ns.subsidy_bill_pct_gdp), str(K.SUBSIDY_COST_PCT_GDP)
+	# PR 3, the author's calls (2026-11-14, 2026-11-15): aid is priced BY THE FIRM, a share
+	# of its payroll a year (50 % at full intensity, so the 0.6 subsidy reads 30 %), the
+	# payroll its live jobs at the nation's compensation per job (a share of GDP over the
+	# employed).
+	var company = _company(BIG)
+	var employed: float = Demography.labour_force(ns) * (1.0 - ns.unemployment_pct / 100.0)
+	var per_job: float = K.COMPENSATION_SHARE_OF_GDP * ns.gdp_eur_bn * 1e9 / employed
+	var payroll: float = Companies.headcount(ns, company) * per_job / 1e9
+	var expected: float = 100.0 * K.AID_PAYROLL_SHARE * payroll / ns.gdp_eur_bn
+	if not is_equal_approx(ns.subsidy_bill_pct_gdp, expected):
+		_fail("one full-intensity subsidy billed %s, expected %s (50 %% of payroll)" % [
+			str(ns.subsidy_bill_pct_gdp), str(expected)
 		])
+	if not is_equal_approx(CompaniesAid.payroll_eur_bn(ns, company), payroll):
+		_fail("payroll_eur_bn reads %s, want %s" % [CompaniesAid.payroll_eur_bn(ns, company), payroll])
+	if not is_equal_approx(CompaniesAid.per_year(ns, company, 0.6), 0.30 * payroll):
+		_fail("the 0.6 subsidy is not 30 %% of the payroll a year")
+	# Design's F5: the price read per job, against the design card's France figure (about
+	# 25 000 EUR a job a year for a full rescue). The old rule read 0.30 % of GDP whatever
+	# the firm: about 49 000 EUR a job here, 5.2 bn a year on a 3.5 bn firm elsewhere.
+	var per_job_rescue: float = CompaniesAid.per_year(ns, company, 1.0) * 1e9 / Companies.headcount(ns, company)
+	if per_job_rescue < 20000.0 or per_job_rescue > 30000.0:
+		_fail("a full rescue costs %d EUR a job a year in France, not about 25 000" % int(per_job_rescue))
+	# The author's pick: growth follows the money at the budget's own path, so with no
+	# sector burden the firm impulse is the aid bill at GAP_CLOSE x MULT_SPENDING.
+	var impulse: float = Companies.firm_impulse_pct(ns, _loader)
+	if not is_equal_approx(impulse, EK.GAP_CLOSE * EK.MULT_SPENDING * ns.subsidy_bill_pct_gdp):
+		_fail("the firm impulse reads %s, not the bill %s at the budget's spending path" % [impulse, ns.subsidy_bill_pct_gdp])
 	if ns.deficit_pct_gdp <= deficit_before:
 		_fail("the subsidy bill did not widen the deficit")
+
+
+## The author's answer (2) of 2026-11-16, Design's F1: an aid verb's political credit is
+## its bloc offsets times the firm's live jobs over the nation's largest major's, at most
+## 1, and the withdrawal hands back the factor that was granted (absent: 1.0, what every
+## grant before PR 3 received).
+func _test_aid_credit_follows_the_jobs() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	var majors: Array = Companies.majors_of(_loader, PLAYER)
+	var top := 0.0
+	var small = null
+	for c in majors:
+		top = maxf(top, Companies.headcount(ns, c))
+		if small == null or Companies.headcount(ns, c) < Companies.headcount(ns, small):
+			small = c
+	var factor: float = Companies.headcount(ns, small) / top
+	var offsets: Dictionary = _action("industrial_subsidy").effects["bloc_offset"]
+	var before := float(ns.bloc_offset.get("workers", 0.0))
+	Companies.execute(state, ns, _loader.company_actions, _action("industrial_subsidy"), String(small.id), _loader)
+	var moved := float(ns.bloc_offset.get("workers", 0.0)) - before
+	if not is_equal_approx(moved, float(offsets["workers"]) * factor):
+		_fail("aid credit: the smallest major moved workers %s, not %s x %s" % [moved, offsets["workers"], factor])
+	# The firm's jobs move after the grant; the hand-back is the factor granted.
+	(ns.companies[String(small.id)] as Dictionary)["share"] = 2.0 * Companies.share_of_company(ns, small)
+	before = float(ns.bloc_offset.get("workers", 0.0))
+	Companies.execute(state, ns, _loader.company_actions, _action("withdraw_support"), String(small.id), _loader)
+	var back := float(ns.bloc_offset.get("workers", 0.0)) - before
+	var hand: Dictionary = _action("withdraw_support").effects["bloc_offset"]
+	if not is_equal_approx(back, float(hand["workers"]) * factor):
+		_fail("aid credit: the withdrawal handed back %s, not the granted factor's %s" % [back, float(hand["workers"]) * factor])
+	# The largest major takes the whole credit.
+	var state2 = _new_state()
+	var ns2 = state2.nations[PLAYER]
+	var biggest = majors[0]
+	for c in majors:
+		if Companies.headcount(ns2, c) > Companies.headcount(ns2, biggest):
+			biggest = c
+	before = float(ns2.bloc_offset.get("workers", 0.0))
+	Companies.execute(state2, ns2, _loader.company_actions, _action("industrial_subsidy"), String(biggest.id), _loader)
+	if not is_equal_approx(float(ns2.bloc_offset.get("workers", 0.0)) - before, float(offsets["workers"])):
+		_fail("aid credit: the largest major did not take the whole credit")
+	# A grant from before PR 3 carries no aid_credit: its withdrawal hands back in full.
+	var state3 = _new_state()
+	var ns3 = state3.nations[PLAYER]
+	Companies.execute(state3, ns3, _loader.company_actions, _action("industrial_subsidy"), String(small.id), _loader)
+	(ns3.companies[String(small.id)] as Dictionary).erase("aid_credit")
+	before = float(ns3.bloc_offset.get("workers", 0.0))
+	Companies.execute(state3, ns3, _loader.company_actions, _action("withdraw_support"), String(small.id), _loader)
+	if not is_equal_approx(float(ns3.bloc_offset.get("workers", 0.0)) - before, float(hand["workers"])):
+		_fail("aid credit: an older grant (no aid_credit) did not hand back in full")
+	# A rescue of a FAILING major is credited on the restored firm, not the failed one's 0.
+	var state4 = _new_state()
+	var ns4 = state4.nations[PLAYER]
+	var entry: Dictionary = ns4.companies[String(small.id)]
+	entry["failed"] = true
+	entry["share"] = 0.0
+	entry["rescue_months_left"] = 3
+	before = float(ns4.bloc_offset.get("workers", 0.0))
+	var done := Companies.execute(state4, ns4, _loader.company_actions, _action("strategic_rescue"), String(small.id), _loader)
+	if bool(done.get("applied", false)) and float(entry.get("aid_credit", 0.0)) <= 0.0:
+		_fail("aid credit: a failing major's rescue was credited at %s, read before the restore" % entry.get("aid_credit"))
+	if not bool(done.get("applied", false)):
+		_fail("aid credit: the rescue of a failing major was refused: %s" % [done])
+
+
+## The author's answer (3): the firm sheet shows the jobs an aid verb moves before the
+## commit, the firm's gain and its rivals' loss once the share has stopped moving. Read
+## on a copy; Germany's Hanseatische, the lean firm whose aid costs jobs on net.
+func _test_net_jobs_read() -> void:
+	var state = GameState.new_game(_loader, "DEU")
+	var ns = state.player()
+	var firm = null
+	for c in Companies.majors_of(_loader, "DEU"):
+		if String(c.id) == "DEU_hanseatische":
+			firm = c
+	var kept := JSON.stringify(ns.to_dict())
+	var read: Dictionary = CompaniesAid.net_jobs(state, ns, _loader, _action("strategic_rescue"), firm)
+	if JSON.stringify(ns.to_dict()) != kept:
+		_fail("net jobs: the read wrote the nation")
+	if float(read["gained"]) <= 0.0 or float(read["lost_at_rivals"]) <= 0.0 			or not is_equal_approx(float(read["net"]), float(read["gained"]) - float(read["lost_at_rivals"])) or float(read["net"]) >= 0.0:
+		_fail("net jobs: Hanseatische reads %s; want a gain, a larger loss at its rivals, a negative net" % [read])
+	# The share endpoint, not a month's step: a full rescue moves share for years.
+	if int(read["months"]) <= 12 or int(read["months"]) >= CompaniesAid.NET_JOBS_MAX_MONTHS:
+		_fail("net jobs: the read stopped after %d months, not at the share's endpoint" % int(read["months"]))
+
+
+## Priced by the firm, so a bigger payroll costs more: the old bill was one figure of GDP
+## whatever the firm.
+func _test_aid_scales_with_the_firm() -> void:
+	var ns = _new_state().nations[PLAYER]
+	var big = _company(BIG)
+	var rival = _company(RIVAL)
+	var a := CompaniesAid.per_year(ns, big, 1.0)
+	var b := CompaniesAid.per_year(ns, rival, 1.0)
+	if (Companies.headcount(ns, big) > Companies.headcount(ns, rival)) != (a > b) or a == b:
+		_fail("aid does not follow the payroll: %s jobs -> %s bn, %s jobs -> %s bn" % [
+			Companies.headcount(ns, big), a, Companies.headcount(ns, rival), b])
+	# The bill bills the verb's own intensity (mutant A4: a bill at 1.0 for every aided firm).
+	var state = _new_state()
+	var ns2 = state.nations[PLAYER]
+	Companies.execute(state, ns2, _loader.company_actions, _action("industrial_subsidy"), RIVAL, _loader)
+	var want: float = 100.0 * CompaniesAid.per_year(ns2, rival, 0.6) / ns2.gdp_eur_bn
+	if not is_equal_approx(CompaniesAid.subsidy_bill_pct_gdp(ns2, _loader), want):
+		_fail("the 0.6 subsidy bills %s %% of GDP, not %s" % [CompaniesAid.subsidy_bill_pct_gdp(ns2, _loader), want])
 
 
 func _test_impulse_reaches_growth() -> void:

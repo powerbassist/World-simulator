@@ -48,6 +48,8 @@ const CoercionK = preload("res://src/sim/coercion_constants.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const CompaniesAid = preload("res://src/sim/companies_aid.gd")
+const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
@@ -286,8 +288,15 @@ const CALENDAR_REGIMES := {
 ## and the jobs channel with the gap in labour intensity between it and the rival it
 ## takes share from. Left standing for the rest of the run, so the bill this regime
 ## reaches is the reachable worst case the clamp is measured against.
+##
+## V5.3 PR 3 (Design's card 1, section 5, the author's pick of 2026-11-15): two more, so
+## the aid price is measured where it bites. `_all` aids every major at the rescue's 1.0
+## from month 6 (the price must show: P1); `_cheapest` aids the three majors with the
+## smallest payroll at the subsidy's 0.6 (the political credit must not be a bargain: P3).
 const COMPANY_REGIMES := {
 	"managed_subsidises": {"budget": REGIMES["managed"], "subsidy_month": 6},
+	"managed_subsidises_all": {"budget": REGIMES["managed"], "subsidy_month": 6, "subsidy_pick": "all"},
+	"managed_subsidises_cheapest": {"budget": REGIMES["managed"], "subsidy_month": 6, "subsidy_pick": "cheapest"},
 }
 
 
@@ -967,7 +976,7 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 	var problems: Array[String] = []
 	# A Dictionary, not a float: the step hook below is a lambda, and a lambda
 	# captures a local by value.
-	var run := {"peak_unrest": 0.0}
+	var run := {"peak_unrest": 0.0, "peak_aid_bill": 0.0, "min_firm_impulse": 0.0, "max_firm_impulse": 0.0}
 	var out_of_government := ""
 
 	var year := START_YEAR
@@ -1003,6 +1012,10 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 				return
 			if after and step == "Unrest":
 				run["peak_unrest"] = maxf(float(run["peak_unrest"]), float(ns.unrest_pct))
+				# V5.3 PR 3, Design's P4: the aid bill's and the firm impulse's peaks.
+				run["peak_aid_bill"] = maxf(float(run["peak_aid_bill"]), float(ns.subsidy_bill_pct_gdp))
+				run["min_firm_impulse"] = minf(float(run["min_firm_impulse"]), float(ns.firm_impulse_pct))
+				run["max_firm_impulse"] = maxf(float(run["max_firm_impulse"]), float(ns.firm_impulse_pct))
 				return
 			if after and step == "Events":
 				# V1.8. Answered ON ARRIVAL rather than at some month before the
@@ -1222,6 +1235,13 @@ func _run(nation_id: String, regime_name: String, delta: Dictionary, dissolve_mo
 	print("  unrest: peak %.2f, ended at %.2f, acts %d (threshold %.1f)" % [
 		float(run["peak_unrest"]), ns.unrest_pct, state.unrest_acts.size(), UnrestK.UNREST_THRESHOLD_PCT,
 	])
+	if subsidy_month > 0:
+		# Signed: the firm impulse is the aid term less the regulation term, so its two
+		# parts are printed apart (Design's question 4: an absolute peak read the regulation).
+		print("  aid: peak bill %.3f %% of GDP (clamp %.2f), its growth term %.3f %%/yr; firm impulse %+.3f to %+.3f %%/yr (clamp %.2f)" % [
+			float(run["peak_aid_bill"]), CompaniesK.SUBSIDY_BILL_MAX_PCT_GDP,
+			C.GAP_CLOSE * C.MULT_SPENDING * float(run["peak_aid_bill"]),
+			float(run["min_firm_impulse"]), float(run["max_firm_impulse"]), CompaniesK.FIRM_IMPULSE_MAX_PCT])
 	_runs.append({
 		"regime": regime_name, "nation": nation_id,
 		"out_of_government": out_of_government,
@@ -1573,7 +1593,34 @@ func _serve_regions(state, loader, ns, run: Dictionary, regime_name: String, yea
 		state.day = day
 
 
+## The two V5.3 PR 3 regimes: "all" aids every major at the rescue's 1.0, "cheapest" the
+## three majors with the smallest payroll at the subsidy's 0.6 (Design's card 1).
+func _subsidise_many(state, loader, ns, regime_name: String, year: int, month: int, pick: String) -> void:
+	var want := 1.0 if pick == "all" else 0.6
+	var action = null
+	for a in loader.company_actions:
+		var terms: Dictionary = a.effects.get("company", {})
+		if String(terms.get("op", "")) == "subsidise" and is_equal_approx(float(terms.get("intensity", 0.0)), want):
+			action = a
+	if action == null:
+		printerr("  no 'subsidise' company action at intensity %.1f is authored" % want)
+		return
+	var majors: Array = Companies.majors_of(loader, ns.id)
+	if pick == "cheapest":
+		majors.sort_custom(func(x, y) -> bool: return CompaniesAid.payroll_eur_bn(ns, x) < CompaniesAid.payroll_eur_bn(ns, y))
+		majors = majors.slice(0, 3)
+	var done := 0
+	for company in majors:
+		if bool(Companies.execute(state, ns, loader.company_actions, action, String(company.id), loader)["applied"]):
+			done += 1
+	print("  %d-%02d %s: aided %d of %d majors at intensity %.1f" % [year, month, regime_name, done, majors.size(), want])
+
+
 func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -> void:
+	var pick := String(COMPANY_REGIMES.get(regime_name, {}).get("subsidy_pick", ""))
+	if pick != "":
+		_subsidise_many(state, loader, ns, regime_name, year, month, pick)
+		return
 	var action = null
 	for a in loader.company_actions:
 		if String(a.effects.get("company", {}).get("op", "")) != "subsidise":
@@ -1586,7 +1633,10 @@ func _subsidise(state, loader, ns, regime_name: String, year: int, month: int) -
 
 	var best := ""
 	var best_output := -1.0
-	for company in Companies.firms_of(loader, ns.id):
+	# The largest MAJOR (V5.3 PR 3): since the body firms joined the roster the largest
+	# firm by output was a body firm the rescue verb refuses (FRA_verchere_materiaux,
+	# DEU_rolfes_ag), so this regime had aided nobody in three of the four nations.
+	for company in Companies.majors_of(loader, ns.id):
 		var out: float = Companies.output_eur_bn(ns, company)
 		if out > best_output:
 			best_output = out

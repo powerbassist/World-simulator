@@ -30,6 +30,8 @@ extends SceneTree
 
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
 const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
+const Events = preload("res://src/sim/events.gd")
+const DeskCards = preload("res://src/ui/desk_cards.gd")
 ## The inbox at month 12, spec 3.5's target (170). One stated rise, 170 -> 196 (G1,
 ## chief-briefing-brief.md "What must hold"; the parent's ruling: cut first, state the
 ## rest): no briefing opens by itself to say a month, so its cards reach the inbox. Of
@@ -161,6 +163,7 @@ func _initialize() -> void:
 		if BriefingDriver.showing(main):
 			BriefingDriver.close(main)
 			await process_frame
+	_stage_desk(main)
 	windows.mark_all_dirty()
 	await _sweep(main, "month 12")
 	await _sweep_inbox(main)
@@ -172,6 +175,46 @@ func _initialize() -> void:
 	await _sweep_warned_tile(main)
 	_report()
 	quit(1 if not _failures.is_empty() else 0)
+
+
+## The desk at month 12, STAGED (V5.3 PR 3, the parent's ruling of 2026-11-16). The
+## months run through the game's own hook, so which event cards stand open at month 12
+## followed the sim's path: PR 3's rarer closures left one more card open ("The harvest
+## that failed over there") and the events, inbox and crisis briefing passed their
+## ceilings with no word of new text. The budget measures the surfaces, so the desk is
+## cleared and this named set opened on purpose: exactly the cards main's path left
+## open (student_occupation, two months left, its speaker), so the ceilings stand as
+## they were and still measure an event card in the tab and in the inbox.
+const STAGED_DESK := [{"event_id": "student_occupation", "months_left": 2, "speaker": "FRA_chauvire"}]
+
+
+func _stage_desk(main) -> void:
+	var ns = main._state.player()
+	var month_index: int = main._state.year * 12 + main._state.month
+	var desk: Array[Dictionary] = []
+	for card in STAGED_DESK:
+		var ev = Events.event_by_id(main._loader, String(card["event_id"]))
+		desk.append({"event_id": ev.id, "event_name": ev.event_name, "months_left": int(card["months_left"]),
+			"interrupt": bool(ev.interrupt), "severity": int(ev.severity), "category": ev.category,
+			"arrived": month_index, "speaker": String(card["speaker"])})
+	ns.event_queue = desk
+	# The inbox and the clock keep their own record of the desk: a card left from the
+	# path is dismissed and forgotten, a staged card missing is pushed, both through the
+	# game's own DeskCards, so the inbox shows exactly the staged set.
+	var staged := {}
+	for entry in desk:
+		staged[String(entry["event_id"])] = entry
+	var shown := {}
+	for card_id in main._event_cards.keys().duplicate():
+		var event_id := String(main._event_cards[card_id])
+		if staged.has(event_id):
+			shown[event_id] = true
+		else:
+			DeskCards.dismiss(main, event_id)
+			main._unseen_events.erase(event_id)
+	for event_id in staged:
+		if not shown.has(event_id):
+			DeskCards.push(main, Events.event_by_id(main._loader, String(event_id)), staged[event_id])
 
 
 func _sweep(main, stage: String) -> void:
