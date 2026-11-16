@@ -87,11 +87,16 @@ func _check_open() -> void:
 		_fail("Lille draws at %s, outside the map's free rect %s: the nation is not framed" % [at, _overlay.fit_rect])
 	# QA's T1 on #384: the figures read on a real screen -- the body size at least, a bold
 	# figure face, each on its own ink chip, and no chip over one of the region's cities.
-	if _overlay.LABEL_SIZE < UiTheme.SIZE_BASE:
-		_fail("the map figures are drawn at %d, under the body size %d" % [_overlay.LABEL_SIZE, UiTheme.SIZE_BASE])
+	if _overlay.label_size() < roundi(UiTheme.SIZE_BASE * UiTheme.text_scale()):
+		_fail("the map figures are drawn at %d, under the body size %d" % [_overlay.label_size(), UiTheme.SIZE_BASE])
 	if _overlay.label_font() != UiTheme.map_figure_face():
 		_fail("the map figures are not drawn in the bold figure face")
 	var map = _main._map_view
+	var placed: Array = _overlay.label_rects().values()
+	for i in placed.size():
+		for j in range(i + 1, placed.size()):
+			if (placed[i] as Rect2).intersects(placed[j]):
+				_fail("two figure chips overlap: %s and %s" % [placed[i], placed[j]])
 	for id in _overlay.label_rects():
 		var chip: Rect2 = _overlay.label_rects()[id]
 		for city in _overlay.avoid_points(id):

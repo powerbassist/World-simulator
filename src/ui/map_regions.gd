@@ -84,12 +84,19 @@ func avoid_points(region_id: String) -> Array:
 	return _avoid.get(region_id, [])
 
 
+## The figure's size on screen: the body size under the player's text size (Settings), as the
+## panels' type scales.
+func label_size() -> int:
+	return int(round(LABEL_SIZE * UiTheme.text_scale()))
+
+
 func label_font() -> Font:
 	return UiTheme.map_figure_face()
 
 
 ## Each labelled region's chip on screen now: centred on the region's label point, then
-## stepped below, above, or two below it, the first place that covers none of its cities.
+## stepped below, above, two below or two above it, the first place that covers none of its
+## cities and no chip already placed (at a 130 % text size, neighbours' chips overlapped).
 func label_rects() -> Dictionary:
 	var out := {}
 	if _map == null:
@@ -100,14 +107,16 @@ func label_rects() -> Dictionary:
 		if text == "":
 			continue
 		var at: Vector2 = _map.lonlat_to_screen((_shapes[id]["at"] as Vector2).x, (_shapes[id]["at"] as Vector2).y)
-		var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE) + CHIP_PAD * 2.0
+		var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size()) + CHIP_PAD * 2.0
 		var cities: Array = []
 		for ll: Vector2 in _avoid.get(id, []):
 			cities.append(_map.lonlat_to_screen(ll.x, ll.y))
 		var chip := Rect2(at - size * 0.5, size)
-		for step in [0.0, 1.0, -1.0, 2.0]:
+		for step in [0.0, 1.0, -1.0, 2.0, -2.0]:
 			var tried := Rect2(at - size * 0.5 + Vector2(0.0, step * (size.y + 4.0)), size)
-			if not cities.any(func(c: Vector2) -> bool: return tried.grow(2.0).has_point(c)):
+			var on_city := cities.any(func(c: Vector2) -> bool: return tried.grow(2.0).has_point(c))
+			var on_chip := out.values().any(func(r: Rect2) -> bool: return tried.grow(2.0).intersects(r))
+			if not on_city and not on_chip:
 				chip = tried
 				break
 		out[id] = chip
@@ -185,8 +194,8 @@ func _draw() -> void:
 		var chip: Rect2 = chips[id]
 		draw_rect(chip, Color(UiTheme.INK, CHIP_ALPHA))
 		draw_rect(chip, UiTheme.EDGE, false, 1.0)
-		var baseline := Vector2(chip.position.x + CHIP_PAD.x, chip.position.y + CHIP_PAD.y + font.get_ascent(LABEL_SIZE))
-		draw_string(font, baseline, label_of(id), HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, UiTheme.TEXT)
+		var baseline := Vector2(chip.position.x + CHIP_PAD.x, chip.position.y + CHIP_PAD.y + font.get_ascent(label_size()))
+		draw_string(font, baseline, label_of(id), HORIZONTAL_ALIGNMENT_LEFT, -1, label_size(), UiTheme.TEXT)
 
 
 static func _box(ring: PackedVector2Array) -> Rect2:
