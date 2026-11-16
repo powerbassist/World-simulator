@@ -95,7 +95,9 @@ def main(argv: list[str]) -> int:
         # turn into a forced split or a hand edit of the JSON.
         vacated = sorted(((v, p) for p, v in baseline.items() if p not in sizes), reverse=True)
         for p, (code, _total) in sizes.items():
-            if code <= max_for(p):
+            # A listed file stays listed until it is under the flat 300, not the folder's
+            # 400: dropping it here would hand a 340-line panel headroom to grow back.
+            if code <= (NEW_FILE_MAX if p in baseline else max_for(p)):
                 continue
             if p in baseline and code > baseline[p]:
                 print("refusing to raise %s from %d to %d code lines -- split it instead"
@@ -111,8 +113,8 @@ def main(argv: list[str]) -> int:
                 print("%s takes over %s's allowance (a move)" % (p, moved_from))
             new[p] = code
         BASELINE.write_text(json.dumps({
-            "_note": "Code lines per src/ file over its folder's new-file maximum (300; 400 under "
-                     "src/ui), the most each may hold. Lowered by "
+            "_note": "Code lines per src/ file over 300 (the flat new-file maximum; src/ui's is 400 "
+                     "for new files), the most each may hold. Lowered by "
                      "`python tools/check_size.py --update` in the change that shrinks a file; "
                      "never raised (tools/check_size.py).",
             "code_lines": new,

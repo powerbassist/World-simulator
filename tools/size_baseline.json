@@ -1,5 +1,5 @@
 {
- "_note": "Code lines per src/ file over 300, the most each may hold. Lowered by `python tools/check_size.py --update` in the change that shrinks a file; never raised (tools/check_size.py).",
+ "_note": "Code lines per src/ file over 300 (the flat new-file maximum; src/ui's is 400 for new files), the most each may hold. Lowered by `python tools/check_size.py --update` in the change that shrinks a file; never raised (tools/check_size.py).",
  "code_lines": {
   "src/core/game_state.gd": 379,
   "src/core/law.gd": 411,
