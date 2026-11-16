@@ -29,7 +29,7 @@ signal reassigned(before: Dictionary, title: String)
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
-const PersonCard = preload("res://src/ui/person_card.gd")
+const TermText = preload("res://src/ui/term_text.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const RosterRows = preload("res://src/ui/roster_rows.gd")
 const RosterLine = preload("res://src/ui/roster_line.gd")
@@ -49,7 +49,6 @@ var _title: Label
 var _search: LineEdit
 var _chips: HFlowContainer
 var _close_button: Button
-var _card
 var _verbs := CabinetVerbs.new()
 var _chip := "needs"
 ## The focused line: ["person" | "office", id], or [] for none.
@@ -106,12 +105,9 @@ func _ready() -> void:
 		reassigned.emit(before, title)
 		_dirty = true)
 	root.add_child(_verbs)
-	# The hover card rides its own layer, over the scroll and every window (person_card.gd).
-	var layer := CanvasLayer.new()
-	layer.layer = 10
-	add_child(layer)
-	_card = PersonCard.new()
-	layer.add_child(_card)
+	# The person card is the one every name opens (person_tip.gd, in the glossary layer:
+	# themed, plated); the roster asks it to sit above the hovered line (QA's H1 on #388:
+	# a private card on a bare CanvasLayer drew unthemed and over the focused verbs).
 	scroll.get_v_scroll_bar().value_changed.connect(func(_v): _hide_card())
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
@@ -299,20 +295,17 @@ func _land() -> void:
 				return
 
 
-## The card at the cursor, clamped to the viewport, after show_for has filled it.
-func _show_card(person_id: String) -> void:
-	var vp := get_viewport()
-	if _card == null or vp == null or not _loader.person_by_id.has(person_id):
+## The shared card above the hovered line, at the pointer's column.
+func _show_card(person_id: String, line: Control) -> void:
+	var layer = get_tree().get_first_node_in_group(TermText.GROUP) if is_inside_tree() else null
+	if layer == null or not _loader.person_by_id.has(person_id):
 		return
-	_card.show_for(person_id, _loader, _state.player(), Vector2.ZERO)
-	var pos := vp.get_mouse_position() + Vector2(18, 12)
-	var card_size: Vector2 = _card.get_combined_minimum_size()
-	var vp_size := vp.get_visible_rect().size
-	pos.x = minf(pos.x, maxf(vp_size.x - card_size.x - 8.0, 8.0))
-	pos.y = minf(pos.y, maxf(vp_size.y - card_size.y - 8.0, 8.0))
-	_card.position = pos
+	var rect := line.get_global_rect()
+	rect.position.x = get_viewport().get_mouse_position().x
+	layer.person_enter(person_id, rect, true)
 
 
 func _hide_card() -> void:
-	if _card != null:
-		_card.hide_card()
+	var layer = get_tree().get_first_node_in_group(TermText.GROUP) if is_inside_tree() else null
+	if layer != null:
+		layer.person_leave()

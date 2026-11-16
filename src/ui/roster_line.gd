@@ -41,7 +41,7 @@ static func heads(parent: Control, texts: Array) -> Control:
 
 
 ## `meta` is [key, id] ("person" or "office"); `cells` [{text, tone}] in COLS order, the
-## first with a "sub" line under the name. `face_id` "" draws no face. `hover` (id),
+## first with a "sub" line under the name. `face_id` "" draws no face. `hover` (id, line),
 ## `unhover` (), `pick` (), `menu` () are the panel's.
 static func build(parent: Control, meta: Array, face_id: String, feel: Dictionary, cells: Array, picked: bool,
 		hover: Callable, unhover: Callable, pick: Callable, menu: Callable) -> Control:
@@ -108,7 +108,7 @@ static func build(parent: Control, meta: Array, face_id: String, feel: Dictionar
 	# A test (and nothing else) drives the line by its tagged wrapper.
 	wrap.gui_input.connect(on_input)
 	var hover_id := face_id if face_id != "" else String(meta[1])
-	press.mouse_entered.connect(func() -> void: hover.call(hover_id))
+	press.mouse_entered.connect(func() -> void: hover.call(hover_id, press))
 	press.mouse_exited.connect(func() -> void: unhover.call())
 	return wrap
 
