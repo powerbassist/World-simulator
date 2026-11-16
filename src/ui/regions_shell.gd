@@ -12,6 +12,7 @@ extends RefCounted
 const RegionPanel = preload("res://src/ui/region_panel.gd")
 const MapRegions = preload("res://src/ui/map_regions.gd")
 const Region = preload("res://src/core/region.gd")
+const Migration = preload("res://src/sim/migration.gd")
 
 
 static func panel(main) -> Control:
@@ -24,9 +25,16 @@ static func panel(main) -> Control:
 	for region in main._loader.regions.get(main._state.player_nation_id, []):
 		ids.append(String(region.id))
 	overlay.setup(main._map_view, ids, main._loader.region_features)
+	# Each region's largest city: its marker is the one a figure must not cover (QA's T1 on
+	# #384, Paris under Ile-de-France's figure). Every city would leave a dense region no place.
+	var ns = main._state.player()
 	var cities := {}
-	for region in main._loader.regions.get(main._state.player_nation_id, []):
-		cities[String(region.id)] = region.cities.map(func(c) -> Vector2: return c.lonlat)
+	for region in main._loader.regions.get(ns.id, []):
+		var largest = null
+		for c in region.cities:
+			if largest == null or Migration.city_population(ns, region.id, c.id) > Migration.city_population(ns, region.id, largest.id):
+				largest = c
+		cities[String(region.id)] = [] if largest == null else [largest.lonlat]
 	overlay.set_avoid(cities)
 	tab._overlay = overlay
 	var w = main._windows

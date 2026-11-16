@@ -94,14 +94,25 @@ func label_font() -> Font:
 	return UiTheme.map_figure_face()
 
 
-## Each labelled region's chip on screen now: centred on the region's label point, then
-## stepped below, above, two below or two above it, the first place that covers none of its
-## cities and no chip already placed (at a 130 % text size, neighbours' chips overlapped).
+## Each labelled region's chip on screen now: centred on the region's label point, else the
+## first of STEPS (in half chips) that covers none of its cities and no chip
+## already placed (at a 130 % text size, neighbours' chips overlapped) AND keeps its centre
+## inside the region's own rings -- a chip stepped into a neighbour reads as the neighbour's
+## figure (QA's T2 on #384). If no step fits, the centred chip stays: over a city is wrong but
+## unambiguous, in the wrong region is not.
+## In half chips: a small region (Ile-de-France at the framed zoom is barely two chips wide)
+## has no room for a whole chip's step, so the near places come first.
+const STEPS := [Vector2(0, 1), Vector2(0, -1), Vector2(1, 0), Vector2(-1, 0), Vector2(1, 1),
+	Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1), Vector2(0, 2), Vector2(0, -2), Vector2(2, 0),
+	Vector2(-2, 0), Vector2(2, 2), Vector2(-2, 2), Vector2(2, -2), Vector2(-2, -2), Vector2(0, 3), Vector2(0, -3)]
+
+
 func label_rects() -> Dictionary:
 	var out := {}
 	if _map == null:
 		return out
 	var font := label_font()
+	var to_lonlat := _screen_transform().affine_inverse()
 	for id in _shapes:
 		var text := label_of(id)
 		if text == "":
@@ -111,16 +122,31 @@ func label_rects() -> Dictionary:
 		var cities: Array = []
 		for ll: Vector2 in _avoid.get(id, []):
 			cities.append(_map.lonlat_to_screen(ll.x, ll.y))
-		var chip := Rect2(at - size * 0.5, size)
-		for step in [0.0, 1.0, -1.0, 2.0, -2.0]:
-			var tried := Rect2(at - size * 0.5 + Vector2(0.0, step * (size.y + 4.0)), size)
+		var centred := Rect2(at - size * 0.5, size)
+		var chip := centred
+		for step: Vector2 in [Vector2.ZERO] + STEPS:
+			var tried := Rect2(centred.position + step * (size + Vector2(4.0, 4.0)) * 0.5, size)
 			var on_city := cities.any(func(c: Vector2) -> bool: return tried.grow(2.0).has_point(c))
 			var on_chip := out.values().any(func(r: Rect2) -> bool: return tried.grow(2.0).intersects(r))
-			if not on_city and not on_chip:
+			if not on_city and not on_chip and inside(id, to_lonlat * tried.get_center()):
 				chip = tried
 				break
 		out[id] = chip
 	return out
+
+
+## Whether a lon/lat point lies in the region's own rings.
+func inside(region_id: String, lonlat: Vector2) -> bool:
+	for ring: PackedVector2Array in _shapes.get(region_id, {}).get("rings", []):
+		if ring.size() >= 3 and Geometry2D.is_point_in_polygon(lonlat, ring):
+			return true
+	return false
+
+
+## lon/lat -> screen, the map's own transform read off two of its points.
+func _screen_transform() -> Transform2D:
+	var origin: Vector2 = _map.lonlat_to_screen(0.0, 0.0)
+	return Transform2D(_map.lonlat_to_screen(1.0, 0.0) - origin, _map.lonlat_to_screen(0.0, 1.0) - origin, origin)
 
 
 func set_tint(rows: Dictionary) -> void:
@@ -173,10 +199,7 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if _map == null:
 		return
-	var origin: Vector2 = _map.lonlat_to_screen(0.0, 0.0)
-	var x_axis: Vector2 = _map.lonlat_to_screen(1.0, 0.0) - origin
-	var y_axis: Vector2 = _map.lonlat_to_screen(0.0, 1.0) - origin
-	var t := Transform2D(x_axis, y_axis, origin)
+	var t := _screen_transform()
 	for id in _shapes:
 		var fill := fill_of(id)
 		if fill.a > 0.0:

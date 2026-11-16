@@ -17,6 +17,7 @@ extends SceneTree
 
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const Region = preload("res://src/core/region.gd")
 const RegionPanel = preload("res://src/ui/region_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Num = preload("res://src/ui/num.gd")
@@ -42,6 +43,7 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	match _frame:
 		2:
+			_check_in_region_rule()
 			_panel = _main._windows.content("region")
 			_overlay = _panel.get("_overlay")
 			if _overlay == null:
@@ -91,20 +93,64 @@ func _check_open() -> void:
 		_fail("the map figures are drawn at %d, under the body size %d" % [_overlay.label_size(), UiTheme.SIZE_BASE])
 	if _overlay.label_font() != UiTheme.map_figure_face():
 		_fail("the map figures are not drawn in the bold figure face")
-	var map = _main._map_view
-	var placed: Array = _overlay.label_rects().values()
-	for i in placed.size():
-		for j in range(i + 1, placed.size()):
-			if (placed[i] as Rect2).intersects(placed[j]):
-				_fail("two figure chips overlap: %s and %s" % [placed[i], placed[j]])
-	for id in _overlay.label_rects():
-		var chip: Rect2 = _overlay.label_rects()[id]
-		for city in _overlay.avoid_points(id):
-			if chip.has_point(map.lonlat_to_screen(city.x, city.y)):
-				_fail("%s's figure chip %s sits on one of its cities" % [id, chip])
+	# The chips at the default text size and at the larger ones, where they crowd.
+	for scale in [1.0, 1.3, 1.6]:
+		UiTheme.set_text_scale(scale)
+		_check_chips(scale)
+	UiTheme.set_text_scale(1.0)
 	var regions: Array = _main._loader.regions.get(_main._state.player().id, [])
 	if _overlay.drawn_count() < regions.size() - 1:
 		_fail("the overlay draws %d of %d regions" % [_overlay.drawn_count(), regions.size()])
+
+
+## The in-region rule on a shape built to need it: region A is four degrees wide and one
+## tall, drawn at 20 px a degree (80 x 20 px, shorter than a chip), with its largest city at
+## its centre, and region B sits under it. Any vertical step leaves A; a step into B would
+## read as B's figure. The chip must step sideways and keep its centre in A.
+class FakeMap:
+	func lonlat_to_screen(lon: float, lat: float) -> Vector2:
+		return Vector2(400.0 + lon * 20.0, 400.0 - lat * 20.0)
+
+
+func _check_in_region_rule() -> void:
+	var MapRegions = load("res://src/ui/map_regions.gd")
+	var probe = MapRegions.new()
+	root.add_child(probe)
+	var a := PackedVector2Array([Vector2(0, 0), Vector2(4, 0), Vector2(4, 1), Vector2(0, 1)])
+	var b := PackedVector2Array([Vector2(0, -3), Vector2(4, -3), Vector2(4, 0), Vector2(0, 0)])
+	probe.setup(FakeMap.new(), ["A", "B"], {"A": [a], "B": [b]})
+	probe.set_avoid({"A": [Vector2(2.0, 0.5)]})
+	probe.set_tint({"A": {"tone": UiTheme.BAD, "label": "▲ 9.5 %"}})
+	var chip: Rect2 = probe.label_rects().get("A", Rect2())
+	var map := FakeMap.new()
+	var centre := chip.get_center()
+	var lonlat := Vector2((centre.x - 400.0) / 20.0, (400.0 - centre.y) / 20.0)
+	if not probe.inside("A", lonlat):
+		_fail("the in-region rule: A's chip is centred at %s, outside A" % lonlat)
+	if chip.has_point(map.lonlat_to_screen(2.0, 0.5)):
+		_fail("the in-region rule: A's chip stayed on its city though a place inside A was free")
+	probe.queue_free()
+
+
+## No two chips overlap, none covers its region's largest city, and each is centred inside
+## its own region (QA's T2 on #384: a chip stepped into a neighbour reads as the neighbour's).
+func _check_chips(scale: float) -> void:
+	var map = _main._map_view
+	var chips: Dictionary = _overlay.label_rects()
+	var placed: Array = chips.values()
+	for i in placed.size():
+		for j in range(i + 1, placed.size()):
+			if (placed[i] as Rect2).intersects(placed[j]):
+				_fail("text %d %%: two figure chips overlap: %s and %s" % [roundi(scale * 100.0), placed[i], placed[j]])
+	for id in chips:
+		var chip: Rect2 = chips[id]
+		for city in _overlay.avoid_points(id):
+			if chip.has_point(map.lonlat_to_screen(city.x, city.y)):
+				_fail("text %d %%: %s's figure chip %s sits on its largest city" % [roundi(scale * 100.0), id, chip])
+		var centre: Vector2 = map._screen_to_lonlat(chip.get_center())
+		var home := Region.region_at_lonlat(_main._loader.region_rings, centre.x, centre.y)
+		if home != String(id):
+			_fail("text %d %%: %s's figure chip is centred in '%s', not in its own region" % [roundi(scale * 100.0), id, home])
 
 
 ## Jobless against the nation: the worst region well over it reads BAD with its glyph,
