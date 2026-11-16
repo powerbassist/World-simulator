@@ -14,6 +14,7 @@ const Staff = preload("res://src/sim/staff.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
 ## main's meta while a re-rank waits for the frame's end (follow()).
 const RERANK_QUEUED := "chief_rerank_queued"
 
@@ -33,7 +34,7 @@ static func refresh(main, rerank := false) -> void:
 	var face: Texture2D = Portrait.texture_for(String(chief.id)) if chief != null else null
 	var who := Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id)) if chief != null else ""
 	# What a click does, said on the mark itself (the ux-copy pass: the face alone did not).
-	var tip := Strings.t("Click to open the month's briefing.")
+	var tip := Strings.t("Click to open the Presidency page.")
 	if who != "":
 		tip = "\n".join(PackedStringArray([who, tip]))
 	_push_read(main, lines, who, face, chief)
@@ -117,14 +118,11 @@ static func queue_rerank(main) -> void:
 		_rerank_queued.bind(main).call_deferred()
 
 
-## Not under an open read: its Go buttons index the lines it shows (it ranks again when it opens, and its close
-## queues one, BriefingDriver.close).
 static func _rerank_queued(main) -> void:
 	if not is_instance_valid(main):
 		return
 	main.remove_meta(RERANK_QUEUED)
-	var card = BriefingDriver.card_of(main)
-	refresh(main, card == null or not card.visible)
+	refresh(main, true)
 
 
 ## A load: the ranking's memory and report go with the discarded game (left, the first card closed after the load
@@ -174,19 +172,26 @@ static func _push_read(main, lines: Array, who: String, face: Texture2D, _chief)
 		return
 	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
 	var said := String(game.get("spoken_line", "")) if String(game.get("spoken_key", "")) == month_key(main) else ""
-	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said})
+	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said,
+		"also": also_groups(main, lines.size(), game.get("also", [])),
+		"effects": BriefingEffects.lines(main._state, main._loader, game.get("report", {}))})
 
 
-## The page's Go on its lead row `index` (rework 2, slice 1). A line about a desk file selects
-## that file in the month's folder, which only shows on the invited read, so the read opens
-## first, as it stands (no re-rank: the row's index is the stored line's); until G2 retires
-## the plate, that is where a file is answered. Any other line goes where the briefing's Go does.
+## The footer's groups, folded by kind, each Go its first item's (an index past the lines into
+## lines + also, the Go table's own index): [{text, index}].
+static func also_groups(main, offset: int, also: Array) -> Array:
+	var groups: Array = []
+	var by_kind := {}
+	for i in also.size():
+		var kind := String(also[i]["kind"])
+		if not by_kind.has(kind):
+			by_kind[kind] = {"items": [], "index": offset + i}
+			groups.append(by_kind[kind])
+		by_kind[kind]["items"].append(also[i])
+	return groups.map(func(g): return {"text": PriorityWords.group(g["items"], main._state, main._loader), "index": g["index"]})
+
+
+## The page's Go on its lead row `index`: the briefing's own Go table (a desk file opens on the
+## Folder tab, G2).
 static func page_go(main, index: int) -> void:
-	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
-	var all: Array = (game.get("lines", []) as Array) + (game.get("also", []) as Array)
-	if index >= 0 and index < all.size():
-		var file := String(preload("res://src/ui/folder_driver.gd").file_of(main, all[index]))
-		# Only a file still on the desk: a stale one would open the read and close it again.
-		if file != "" and not preload("res://src/ui/inbox_files.gd").of(main._hud.inbox, file).is_empty():
-			BriefingDriver.read(main, false)
 	BriefingDriver.go(main, index)

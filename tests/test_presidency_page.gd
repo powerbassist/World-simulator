@@ -107,6 +107,7 @@ func _process(_delta: float) -> bool:
 	_check_the_government_reads()
 	_check_the_words()
 	_check_go()
+	_check_also_due_and_the_effects()
 	# After the word ceilings: these run months on, past the state the ceilings are read at.
 	_check_concluded_chosen_mark()
 	_check_the_spoken_line_month()
@@ -384,19 +385,50 @@ func _check_go() -> void:
 	_page.go_requested.disconnect(spy)
 	if said != [last]:
 		_fail("row %d's Go asked for %s" % [last, said])
-	BriefingDriver.close(_main)
 	_draw()
-	var file := String(preload("res://src/ui/folder_driver.gd").file_of(_main, lines[0]))
+	var file := BriefingDriver.file_of(_main, lines[0])
 	var target := String(BriefingDriver.target_of(lines[0])["tab"])
 	_buttons(_page._lead_rows[0])[0].pressed.emit()
 	if file != "":
-		# A desk file is answered in the month's folder (until G2): the Go shows that file, never nothing.
-		var card = BriefingDriver.card_of(_main)
-		if not card.visible or card.selected_file() != file:
-			_fail("the first Go (a desk file) did not show its file '%s' in the folder" % file)
-		BriefingDriver.close(_main)
+		# G2: a desk file is answered on the Folder tab, the Go shows that file there, never nothing.
+		_main._events_panel._refresh()
+		if not _main._windows.is_open("events") or _main._events_panel.selected() != "file:" + file:
+			_fail("the first Go (a desk file) did not show its file '%s' on the Folder" % file)
 	elif not _main._windows.is_open(target) and target != "overview":
 		_fail("the first Go did not open '%s'" % target)
+	_main._windows.open("overview")
+
+
+## The plate's two other jobs, carried by the page (G2): an item in its last month the lines crowded
+## out is shown under the lead with its Go (the parent's rule on #217), and the month's booked effects
+## open part 5 (the plate's "What your choices did").
+func _check_also_due_and_the_effects() -> void:
+	var game: Dictionary = BriefingDriver._games.get(_main.get_instance_id(), {})
+	var saved_also: Array = game.get("also", [])
+	var saved_report: Dictionary = game.get("report", {})
+	game["also"] = [{"kind": "commitment", "subject": "x|y|meter:balance", "deadline_month": 0, "standing": false,
+		"held": false, "go": {"tab": "calendar"}}]
+	game["report"] = {"history_entry": {}}
+	ChiefMarkView.refresh(_main)
+	_draw()
+	var lead := _text(_page._lead_box)
+	if not lead.contains("Also due this month:"):
+		_fail("an item the lines crowded out is not under the lead ('Also due this month:' missing)")
+	var said: Array = []
+	var spy := func(i: int) -> void: said.append(i)
+	_page.go_requested.connect(spy)
+	for b in _buttons(_page._lead_box):
+		if not _page._lead_rows.any(func(row): return row.is_ancestor_of(b)) and b != _page._count_doors["files"] \
+				and b != _page._count_doors["requests"]:
+			b.pressed.emit()
+	_page.go_requested.disconnect(spy)
+	if said != [(game.get("lines", []) as Array).size()]:
+		_fail("the footer's Go did not ask for its item's index past the lines: %s" % [said])
+	game["also"] = saved_also
+	game["report"] = saved_report
+	ChiefMarkView.refresh(_main)
+	if not FileAccess.get_file_as_string("res://src/ui/chief_mark_view.gd").contains("BriefingEffects.lines("):
+		_fail("the page's read no longer carries the month's booked effects (BriefingEffects.lines)")
 
 
 ## The hinge: the past year ends at the seam (today), the future half ends at the vote.

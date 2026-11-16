@@ -198,6 +198,7 @@ func _fill_lead(ns) -> void:
 		PanelKit.line(_rows_box, tr("Nothing presses this month."))
 	for i in lines.size():
 		_lead_rows.append(_lead_row(lines[i], i))
+	PresidencyRows.also_due(_rows_box, _read.get("also", []), go_requested.emit)
 	_count_doors["files"].text = tr_n("%d file to answer", "%d files to answer", ns.event_queue.size()) % ns.event_queue.size()
 	var waiting := Audiences.waiting_count(ns)
 	_count_doors["requests"].text = tr_n("%d request waiting", "%d requests waiting", waiting) % waiting
@@ -455,6 +456,9 @@ func _door_row(parent: Control, text: String, tone: int, window: String) -> Butt
 
 func _fill_decided() -> void:
 	_clear(_decided_box)
+	# The month's booked effects first (the retired plate's "What your choices did"), then the ledger.
+	for effect in _read.get("effects", []):
+		_decided_box.add_child(PresidencyRows.choice_effect(effect))
 	var entries: Array = _state.recent_effects
 	if entries.is_empty():
 		PanelKit.line(_decided_box, tr("Nothing committed yet this game."))

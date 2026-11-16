@@ -49,6 +49,8 @@ signal card_closed(id: String)
 signal card_action(id: String, index: int)
 ## V5.1-c3.2: the inbox came over an open tab (true) or went back (false).
 signal slid(shown: bool)
+## Rework 2 S2: the News line pressed -- main opens the Folder's news group.
+signal news_pressed
 
 ## The board's dock, beside the 1240 px workspace in the 1920 reference.
 const WIDTH := 440
@@ -74,6 +76,11 @@ var _slid := false
 ## V5.3-0 gate G9 ("no clear all button for notes"): beside the NOTES heading, shown
 ## while a note stands. Notes only -- a decision is never cleared in bulk.
 var _clear_notes: Button
+## Rework 2 S2: the News line, and the notes landed since the player last read them in the Folder.
+## Every landing counts, a note grouped with its twin and one past the cap too, so the line
+## moves the day a note lands (presidency-page-brief.md: "A note still signals its arrival").
+var _news: Button
+var _unseen := 0
 
 
 ## Built in _init, not _ready: U5a's column worked before it was in a tree (the
@@ -116,6 +123,17 @@ func _init() -> void:
 		heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		head.add_child(heading)
 		if lane == NOTES:
+			# Rework 2 S2: the notes are read in the Folder's news group; here they are one line
+			# that says how many landed since the player last read them, and opens them.
+			heading.hide()
+			_news = Button.new()
+			_news.name = "NewsLine"  # i18n: ok a node name, found by tests
+			_news.theme_type_variation = UiTheme.SUBROW_BUTTON
+			_news.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			_news.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			_news.tooltip_text = tr("Read the news in the Folder.")
+			_news.pressed.connect(func() -> void: news_pressed.emit())
+			head.add_child(_news)
 			_clear_notes = PanelKit.sized(Button.new())
 			_clear_notes.name = "ClearNotes"  # i18n: ok a node name, found by tests
 			_clear_notes.text = tr("Clear all")
@@ -134,6 +152,9 @@ func _init() -> void:
 		rows.add_theme_constant_override("separation", 6)
 		lanes.add_child(rows)
 		_rows[lane] = rows
+	_rows[NOTES].hide()
+	_empty[NOTES].hide()
+	_show_news()
 
 
 ## Returns the row's id, so the caller can dismiss it later without having
@@ -151,6 +172,7 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 		for other in _notes:
 			if _notes[other]["title"] == title and _notes[other]["body"] == body:
 				_group(other)
+				_landed()
 				return other
 
 	var card := PanelContainer.new()
@@ -238,6 +260,7 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	_clear_notes.visible = _rows[NOTES].get_child_count() > 0
 	if _notes.has(id):
 		_show_note(id)
+		_landed()
 
 	if lane == NOTES:
 		var notes := rows.get_child_count()
@@ -359,7 +382,7 @@ func dismiss(id: String) -> void:
 	_notes.erase(id)
 	_rows[lane].remove_child(card)
 	card.queue_free()
-	_empty[lane].visible = _rows[lane].get_child_count() == 0
+	_empty[lane].visible = lane != NOTES and _rows[lane].get_child_count() == 0
 	_clear_notes.visible = _rows[NOTES].get_child_count() > 0
 	card_dismissed.emit(id)
 
@@ -440,6 +463,42 @@ func lane_count(lane: String) -> int:
 func clear() -> void:
 	for id in _cards.keys():
 		dismiss(id)
+	news_seen()
+
+
+## The notes as the Folder lists them, newest first: {id, title, body, count}.
+func notes() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for card in _rows[NOTES].get_children():
+		var id := _id_of(card)
+		if _notes.has(id):
+			out.append({"id": id, "title": _notes[id]["title"], "body": _notes[id]["body"], "count": _notes[id]["count"]})
+	return out
+
+
+func news_count() -> int:
+	return _unseen
+
+
+func news_line() -> Button:
+	return _news
+
+
+## The news read in the Folder: the line goes back to naming none.
+func news_seen() -> void:
+	_unseen = 0
+	_show_news()
+
+
+func _landed() -> void:
+	_unseen += 1
+	_show_news()
+	if is_inside_tree():
+		Motion.pulse(_news)
+
+
+func _show_news() -> void:
+	_news.text = tr("News: %d") % _unseen
 
 
 ## Every note, each as the player's own X (card_closed, then dismissed).
@@ -448,6 +507,7 @@ func clear_notes() -> void:
 		if _lane_of[id] == NOTES:
 			card_closed.emit(id)
 			dismiss(id)
+	news_seen()
 
 
 func _id_of(card: Control) -> String:

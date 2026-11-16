@@ -1,508 +1,391 @@
 extends PanelContainer
 
-## Dispatches -- V1.8's one new surface, and the last of the V1 tier.
+## The Folder -- rework 2 S2, G2 (presidency-page-brief.md, "The folder"): V1.8's Dispatches,
+## renamed by the author ("Dossier (Recommended)") and rebuilt on the month's folder's own pieces,
+## a list at the left and the chosen item's page (file_view.gd) at the right. Three groups:
 ##
-## Reads simulation state and content, writes neither: the verb goes back as an
-## explicit command through `acted`, which is the shape Budget.commit() set and
-## companies_panel.gd, projects_panel.gd and campaign_panel.gd all follow.
+##   To answer  every file of the inbox (inbox_files.gd: an event, a request, a treaty, a vote,
+##              a bill, a fund), and every desk entry with NO card -- an arrival its popup setting
+##              kept quiet, or a card closed with its X. Dispatches was the one place those were
+##              answered, so the Folder lists them too, or they would lapse unseen.
+##   Decided    the ledger, whole: what was decided "including the ones that were made by the
+##              clock". A ledger of forced choices has to show which of them the clock made, so a
+##              default says "No answer given" and is never dressed as a decision.
+##   News       the inbox's notes; the inbox itself shows them as one line, "News: N" (inbox.gd).
 ##
-## NOT MODAL, unlike the election result screen and the censure plate, and that is the
-## design rather than a convenience. A crisis the player CAN ignore and pay for is the
-## whole of "forces a response under time pressure"; a modal removes the choice by
-## removing the option of not making it, which would turn the deadline into a dialogue
-## box. The card in the message column is the interruption, this window is where the
-## decision lives, and both can be left alone.
+## NEVER PAUSES (the author, 2026-11-15: "Jamais"; "Page ancrée, horloge qui tourne"). V1.8's
+## reason still holds and is now the only rule: a crisis the player can ignore and pay for is the
+## whole of the deadline, and a surface that stopped time to ask would remove the choice of not
+## answering. A file's answer goes through Inbox.press, the card's own door, so main.gd's handler
+## and the request lane keep every rule they had; a desk entry with no card answers by id through
+## `acted`, V1.8's own path (main.gd), the U4 baseline taken before the command.
 ##
-## TWO SECTIONS AND THE LEDGER IS THE SECOND ONE. What is on the desk is the decision;
-## what was decided is the record of every decision before it, including the ones that
-## were made by the clock. docs/pledge-model.md's own screenshot pass found a live
-## promise that never said what it had cost -- the one figure that section existed to be
-## a ledger of -- and this panel is the same kind of ledger, so it carries the record
-## rather than only the question.
+## Reads GameState and the inbox, writes neither.
 
 signal closed
-## (before_snapshot, label) -- the same pair projects_panel.acted and law_panel.proposed
-## emit, so answering an event earns a U4 decision delta on the terms a subsidy, a law
-## and a project already do.
+## (before_snapshot, label): projects_panel.acted's pair, for a desk entry with no card.
 signal acted(before, label)
 
 const Events = preload("res://src/sim/events.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
-const Government = preload("res://src/sim/government.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
-const Labels = preload("res://src/ui/labels.gd")
-const EventArt = preload("res://src/ui/event_art.gd")
-const Grade = preload("res://src/ui/grade.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
-const SpeakerRow = preload("res://src/ui/speaker_row.gd")
+const FileRead = preload("res://src/ui/file_read.gd")
+const FileView = preload("res://src/ui/file_view.gd")
+const InboxFiles = preload("res://src/ui/inbox_files.gd")
+
+const ANSWER := "answer"
+const DECIDED := "decided"
+const NEWS := "news"
+## The list's width, the folder's own (it was chief_briefing.gd's LIST_WIDTH).
+const LIST_WIDTH := 300
 
 var _state
 var _loader
+var _main
 var _dirty := true
 var _messages := {}  # V4.8c: the FEED band filters the ledger; empty = defaults
 
 var _title: Label
-var _body: VBoxContainer
-## projects_panel.gd's reason, and here it applies at BOTH ends: the pending block is at
-## the top and the ledger is at the bottom, so V1.6e's screenshot correction has a
-## direction per flag rather than per panel. tools/screenshot.gd drives these; nothing
-## in the game does.
-var _scroll: ScrollContainer
-var _pin_bottom := false
+var _list: VBoxContainer
+var _page: VBoxContainer
 var _close_button: Button
-
-## V5.3-0 (b), R10 ("dispatches menu is fucked", then "pas tres élégant comme
-## menu"): each desk entry is ONE card -- the plate as a strip, the title, a
-## category and countdown chip, the messenger -- and its choices are buttons that
-## open their own authored text on select, with Choose under it. Three summaries
-## printed whole above three buttons were 72 of the tab's 187 words at month 12;
-## the player reads the one they are weighing. The ledger is a timeline: the
-## date and the matter, then what was decided, its meaning on hover.
-## event id -> the choice id whose text is open, "" for none. Presentation only:
-## a load or a new desk entry starts closed.
-var _picked := {}
-
-## The first enabled verb this panel built on its last refresh. See primary_action().
+## The item shown: "file:<card id>", "desk:<event id>", "record:<ledger index>", "note:<card id>".
+var _selected := ""
+## A group asked for (the News line) before the list exists: its first item is chosen at the build.
+var _wanted_group := ""
+var _groups := {ANSWER: [], DECIDED: [], NEWS: []}
+var _buttons := {}  # key -> its list button
+## The first enabled answer on the page (tab_page.gd's fold contract).
 var _primary: Control = null
-## The choice toggle just pressed ("event|choice"): the rebuild refocuses it.
-var _refocus := ""
 
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(520, 560)
-
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
-
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
-	margin.add_child(root)
-
+	var root := PanelKit.padded(self, 16, 10)
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD
 	root.add_child(_title)
-
-	_scroll = ScrollContainer.new()
-	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(_scroll)
-
-	# The right gutter is companies_panel.gd's fix inherited: a ScrollContainer draws
-	# its bar OVER the content, and the right-aligned figures in PanelKit.row() run underneath
-	# it without one.
-	var gutter := MarginContainer.new()
-	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	gutter.add_theme_constant_override("margin_right", 14)
-	_scroll.add_child(gutter)
-
-	_body = VBoxContainer.new()
-	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_theme_constant_override("separation", 6)
-	gutter.add_child(_body)
-
-	_close_button = Button.new()
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 18)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(body)
+	_list = VBoxContainer.new()
+	_list.custom_minimum_size.x = LIST_WIDTH
+	_list.add_theme_constant_override("separation", 2)
+	body.add_child(_list)
+	body.add_child(VSeparator.new())
+	_page = VBoxContainer.new()
+	_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_page.add_theme_constant_override("separation", 10)
+	body.add_child(_page)
+	_close_button = PanelKit.sized(Button.new())
 	_close_button.text = tr("Close")
-	_close_button.pressed.connect(func(): closed.emit())
+	_close_button.pressed.connect(func() -> void: closed.emit())
 	root.add_child(_close_button)
 
 
 func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
+	_selected = ""
 	_dirty = true
 
 
-## V4.8c. The player's message settings; main.gd hands them in at boot and again
-## whenever the settings screen closes.
+## The inbox and the registers a file's page reads (file_read.gd reads main's).
+func attach(main) -> void:
+	_main = main
+
+
+## V4.8c. The player's message settings; main.gd hands them in at boot and on every close of the
+## settings screen.
 func set_messages(messages: Dictionary) -> void:
 	_messages = messages
 	_dirty = true
-
-
-## A STANDING FLAG rather than a one-shot scroll, projects_panel.gd's own correction:
-## _refresh() rebuilds every child, so a scroll position set before the next rebuild is
-## undone by it.
-func scroll_to_bottom() -> void:
-	_pin_bottom = true
-	_dirty = true
-
-
-func _apply_bottom() -> void:
-	if _scroll == null:
-		return
-	await get_tree().process_frame
-	_scroll.scroll_vertical = int(_scroll.get_v_scroll_bar().max_value)
 
 
 func hide_close_button() -> void:
 	_close_button.hide()
 
 
-func _process(_delta: float) -> void:
-	if not _dirty or not is_visible_in_tree() or _state == null:
-		return
-	_dirty = false
-	_refresh()
-
-
 func mark_dirty() -> void:
 	_dirty = true
 
 
+func _process(_delta: float) -> void:
+	if _dirty and is_visible_in_tree() and _state != null:
+		_refresh()
+
+
+## The groups' keys as the list last showed them: {answer, decided, news}.
+func groups() -> Dictionary:
+	return _groups
+
+
+func selected() -> String:
+	return _selected
+
+
+func select(key: String) -> void:
+	_selected = key
+	_wanted_group = ""
+	_dirty = true
+	if _list != null and _main != null:
+		_refresh()
+
+
+## An inbox file's page (a priority's Go, briefing_driver.gd).
+func show_file(card_id: String) -> void:
+	select("file:" + card_id)
+
+
+## A group's first item (the inbox's News line asks for NEWS).
+func show_group(group: String) -> void:
+	_selected = ""
+	_wanted_group = group
+	_dirty = true
+
+
+## The answer `index` of the file shown. Stays on the tab, the clock as the player left it.
+func press(index: int) -> void:
+	if _selected.begins_with("file:"):
+		InboxFiles.press(_main._hud.inbox, _selected.trim_prefix("file:"), index)
+	elif _selected.begins_with("desk:"):
+		var ev = Events.event_by_id(_loader, _selected.trim_prefix("desk:"))
+		if ev != null and index >= 0 and index < ev.choices.size():
+			_on_choose(ev, ev.choices[index])
+	_dirty = true
+
+
 func _refresh() -> void:
-	var ns = _state.player()
-	if ns == null:
+	_dirty = false
+	var ns = _state.player() if _state != null else null
+	if ns == null or _main == null:
 		return
-	_primary = null
+	_title.text = tr("FOLDER — %s") % DateText.month_year(int(_state.month), int(_state.year))
+	_read_groups(ns)
+	var keys: Array = _groups[ANSWER] + _groups[DECIDED] + _groups[NEWS]
+	if _wanted_group != "" and not (_groups[_wanted_group] as Array).is_empty():
+		_selected = String(_groups[_wanted_group][0])
+	elif not keys.has(_selected):
+		# A file gone while shown (answered, lapsed, a load): the next thing waiting, else the last decision.
+		_selected = String((_groups[ANSWER] + _groups[DECIDED] + [""])[0])
+	_wanted_group = ""
+	if _selected.begins_with("note:"):
+		_main._hud.inbox.news_seen()
+	_build_list(ns)
+	_build_page(ns)
 
-	_title.text = tr("Dispatches")
 
-	for child in _body.get_children():
-		child.queue_free()
-
-	_build_pending(ns)
-	_build_ledger(ns)
-
-	if _pin_bottom:
-		_apply_bottom()
-
-
-# --- On the desk -------------------------------------------------------------------
-
-func _build_pending(ns) -> void:
-	PanelKit.heading(_body, tr("On your desk"))
-
-	# An open choice is kept only for an entry still on the desk: one answered, or
-	# gone with a load, starts closed if its event comes back.
-	var live := {}
+func _read_groups(ns) -> void:
+	var answer: Array = []
+	var carded := {}
+	for file in InboxFiles.list(_main._hud.inbox):
+		answer.append("file:" + String(file["id"]))
+	for card_id in _main._event_cards:
+		if InboxFiles.of(_main._hud.inbox, String(card_id)).size() > 0:
+			carded[String(_main._event_cards[card_id])] = true
 	for entry in ns.event_queue:
-		live[String(entry.get("event_id", ""))] = true
-	for id in _picked.keys():
-		if not live.has(id):
-			_picked.erase(id)
+		var event_id := String(entry.get("event_id", ""))
+		if not carded.has(event_id) and Events.event_by_id(_loader, event_id) != null:
+			answer.append("desk:" + event_id)
+	var decided: Array = []
+	for i in range(ns.event_history.size() - 1, -1, -1):  # newest first
+		if _shown(ns.event_history[i]):
+			decided.append("record:%d" % i)
+	_groups = {ANSWER: answer, DECIDED: decided,
+		NEWS: _main._hud.inbox.notes().map(func(n): return "note:" + String(n["id"]))}
 
-	# V4.4: the desk is a queue, ordered worst-first by the machine, and the panel
-	# prints every entry -- a Dispatches window that showed only the head would
-	# answer four deadlines with one clock's worth of information. Each entry
-	# carries its own countdown and its own answer route (Events.answer, by id),
-	# which is what keeps the buttons on the row they name.
+
+## V4.8c: the FEED band per category, on the ledger only (the desk shows every entry whatever
+## the settings say). Severity is the event's own; the record does not carry it.
+func _shown(record: Dictionary) -> bool:
+	var ev = Events.event_by_id(_loader, String(record.get("event_id", "")))
+	var severity := int(ev.severity) if ev != null else EventsK.SEVERITY_MAX
+	return MessageSettings.allows(_messages, String(record.get("category", "")), severity, "feed")
+
+
+# --- the list ------------------------------------------------------------------------
+
+func _build_list(ns) -> void:
+	_clear(_list)
+	_buttons.clear()
+	_group_head(tr("To answer"), _groups[ANSWER].size())
+	if _groups[ANSWER].is_empty():
+		PanelKit.line(_list, _quiet_desk(ns))
+	for key in _groups[ANSWER]:
+		_item(key, _answer_title(key), _answer_date(key))
+	_group_head(tr("Decided"), _groups[DECIDED].size())
+	if ns.event_history.is_empty():
+		PanelKit.line(_list, tr("Nothing has come up yet."))
+	for key in _groups[DECIDED]:
+		var record: Dictionary = ns.event_history[int(String(key).trim_prefix("record:"))]
+		_item(key, Strings.record_event_name(record), DateText.month_year(int(record.get("month", 1)), int(record.get("year", 0))))
+	# A hidden row is COUNTED, never silent: a ledger that shrank with nothing saying why reads as lost history.
+	var hidden: int = ns.event_history.size() - _groups[DECIDED].size()
+	if hidden > 0:
+		PanelKit.line(_list, tr_n("%d record hidden by your message settings.", "%d records hidden by your message settings.", hidden) % hidden)
+	_group_head(tr("News"), _groups[NEWS].size())
+	if _groups[NEWS].is_empty():
+		PanelKit.line(_list, tr("No news yet."))
+	for note in _main._hud.inbox.notes():
+		_item("note:" + String(note["id"]), String(note["title"]), "" if int(note["count"]) == 1 else "×%d" % int(note["count"]))  # i18n: row-ok a note's title, routed by its pusher
+
+
+func _group_head(text: String, count: int) -> void:
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 8)
+	_list.add_child(head)
+	PanelKit.heading(head, text)
+	if count > 0:
+		var n := Label.new()
+		n.text = str(count)
+		n.theme_type_variation = UiTheme.MICRO
+		head.add_child(n)
+
+
+## Two states give an empty desk and they are not the same, so the caption names which
+## (projects_panel.gd's correction: an empty list must not read as a closed gate).
+func _quiet_desk(ns) -> String:
 	var longest_quiet := 0
 	for category in ns.event_category_quiet:
 		longest_quiet = maxi(longest_quiet, int(ns.event_category_quiet[category]))
-
-	if ns.event_queue.is_empty():
-		# Two states reach this line and they are not the same, so the caption names
-		# which one -- projects_panel.gd's own correction, where a player who could not
-		# tell an empty list from a closed gate would read the lever as broken.
-		if longest_quiet > 0:
-			var closed_ago: int = EventsK.CATEGORY_QUIET_MONTHS - longest_quiet
-			if closed_ago <= 0:
-				PanelKit.line(_body, tr("Nothing today. The last matter closed this month."))
-			else:
-				PanelKit.line(_body, tr_n("Nothing today. The last matter closed %d month ago.", "Nothing today. The last matter closed %d months ago.", closed_ago) % closed_ago)
-		else:
-			PanelKit.line(_body, tr("Nothing today."))
-		return
-
-	for entry in ns.event_queue:
-		_build_entry(ns, entry)
+	if longest_quiet <= 0:
+		return tr("Nothing today.")
+	var closed_ago: int = EventsK.CATEGORY_QUIET_MONTHS - longest_quiet
+	if closed_ago <= 0:
+		return tr("Nothing today. The last matter closed this month.")
+	return tr_n("Nothing today. The last matter closed %d month ago.", "Nothing today. The last matter closed %d months ago.", closed_ago) % closed_ago
 
 
-## One desk entry: the crisis, the clock on it, the menu. The severity tag rides the
-## title line because it is the queue's own ordering made visible -- the player who
-## cannot see why this row sits above that one is the player who trusts the order
-## for no reason.
-func _build_entry(ns, entry: Dictionary) -> void:
-	var ev = Events.event_by_id(_loader, String(entry.get("event_id", "")))
-	if ev == null:
-		return
-
-	# A sited crisis names its place -- read off the register, which carries the
-	# name because every reader of it (this panel, the calendar, the card) is a
-	# leaf over pending state (V3.5).
-	var title: String = Strings.row_name("events", ev)
-	var where := String(entry.get("region_name", ""))
-	if where != "":
-		title = "%s — %s" % [title, where]
-
-	# The plate above the title line: category art keyed by severity band, the
-	# variant picked stably from the event's own id -- the same plate the
-	# arrival card carries, so one crisis reads as one story in both places.
-	# Missing art is silent (the lenient precedent): the entry is a line again,
-	# never a hole where a header would have been.
-	var card := PanelContainer.new()
-	card.theme_type_variation = UiTheme.PLATE
-	_body.add_child(card)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
-	card.add_child(box)
-	var art := EventArt.plate_texture(ev.category, int(entry.get("severity", 1)), ev.id)
-	if art != null:
-		var header := TextureRect.new()
-		header.texture = art
-		header.custom_minimum_size = Vector2(0, 64)
-		header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		header.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		header.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		box.add_child(Grade.apply(header))
-
-	var head := Label.new()
-	head.text = title
-	head.theme_type_variation = UiTheme.LEAD
-	head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(head)
-
-	# The chips: the category and its severity, then the clock. The deadline in the
-	# same units the register holds and the diary prints -- two surfaces reporting
-	# one fact in two units is how they come to disagree (U6c). NEUTRAL until the
-	# last month: a deadline is not good news at any distance.
-	var chips := HBoxContainer.new()
-	chips.add_theme_constant_override("separation", 12)
-	box.add_child(chips)
-	var tag := Label.new()
-	tag.text = "%s · %d/%d" % [Labels.event_category(String(ev.category)), int(entry.get("severity", 1)), EventsK.SEVERITY_MAX]
-	tag.tooltip_text = tr("The category, and its severity out of %d.") % EventsK.SEVERITY_MAX
-	tag.mouse_filter = Control.MOUSE_FILTER_PASS
-	tag.theme_type_variation = UiTheme.MICRO
-	chips.add_child(tag)
-	var left := int(entry.get("months_left", 0))
-	var clock := Label.new()
-	clock.text = tr_n("%d month left", "%d months left", left) % left
-	clock.theme_type_variation = UiTheme.BAD_TEXT if left <= 1 else UiTheme.CAPTION
-	chips.add_child(clock)
-
-	var who := _subject_label(ns, ev)
-	if who != "":
-		var who_label := Label.new()
-		who_label.text = who
-		who_label.theme_type_variation = UiTheme.MICRO
-		box.add_child(who_label)
-
-	# V5.2d: who brings it, the same face the decision card carries, so one crisis
-	# has one messenger in both places it is read. The narrator adds nothing.
-	var face = SpeakerRow.build(_loader, ev, entry, _state.player())
-	if face != null:
-		box.add_child(face)
-
-	PanelKit.rich(box, Strings.row_summary("events", ev))
-
-	for choice in ev.choices:
-		_build_choice(box, ev, choice)
+func _answer_title(key: String) -> String:
+	if key.begins_with("desk:"):
+		return Strings.row_name("events", Events.event_by_id(_loader, key.trim_prefix("desk:")))
+	return FileRead.list_title(_main, InboxFiles.of(_main._hud.inbox, key.trim_prefix("file:")))
 
 
-## One option: its button opens what it does, and Choose under that does it.
-##
-## The summary is printed on select rather than left in a tooltip, unlike
-## projects_panel.gd's verb buttons: an event has a clock on it, and a consequence
-## the player has to hover to discover is one they will not discover. But it is
-## printed for the option being weighed, not for all three at once (R10).
-func _build_choice(box: Control, ev, choice: Dictionary) -> void:
-	var block := VBoxContainer.new()
-	block.add_theme_constant_override("separation", 2)
-	var choice_id := String(choice.get("id", ""))
-	var open := String(_picked.get(ev.id, "")) == choice_id
+func _answer_date(key: String) -> String:
+	if key.begins_with("desk:"):
+		return String(FileRead.desk_entry(_main, key.trim_prefix("desk:")).get("by_text", ""))
+	return FileRead.by_text(_main, InboxFiles.of(_main._hud.inbox, key.trim_prefix("file:")), true)
 
+
+## One item: its name, which opens its page, and its date beside it.
+func _item(key: String, text: String, date: String) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	_list.add_child(row)
 	var button := Button.new()
-	# The default is named as such on its own button. Without it the one option that
-	# will happen anyway looks like the other two, and the player cannot tell which
-	# way silence falls -- which is the only thing the deadline is about.
-	button.text = "%s%s" % [
-		Strings.choice_label(ev.id, choice),
-		tr("  (if you say nothing)") if bool(choice.get("is_default", false)) else "",
-	]
+	button.text = text
+	button.tooltip_text = text
+	button.theme_type_variation = UiTheme.SUBROW_BUTTON
 	button.toggle_mode = true
-	button.button_pressed = open
+	button.button_pressed = key == _selected
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	var key := "%s|%s" % [ev.id, choice_id]
-	button.pressed.connect(func():
-		_picked[ev.id] = "" if open else choice_id
-		_refocus = key
-		_dirty = true)
-	if _primary == null and not button.disabled:
-		_primary = button
-	block.add_child(button)
-	var focus_to: Control = button
-
-	if open:
-		var detail := VBoxContainer.new()
-		detail.add_theme_constant_override("separation", 4)
-		var margin := MarginContainer.new()
-		margin.add_theme_constant_override("margin_left", 12)
-		margin.add_child(detail)
-		block.add_child(margin)
-		PanelKit.rich(detail, Strings.choice_summary(ev.id, choice))
-		var choose := PanelKit.sized(Button.new())
-		choose.text = tr("Choose")
-		choose.pressed.connect(func(): _on_choose(ev, choice))
-		detail.add_child(choose)
-		focus_to = choose
-		# The open option's Choose stands in for its own toggle only, so the first
-		# entry on the desk keeps the primary verb (primary_action()'s build order).
-		if _primary == button:
-			_primary = choose
-	# The toggle's rebuild freed the focused button: focus lands on the opened
-	# option's Choose, or back on the closed toggle, so the keyboard keeps its place.
-	if _refocus == key:
-		_refocus = ""
-		focus_to.call_deferred("grab_focus")
-
-	box.add_child(block)
+	button.clip_text = true
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.pressed.connect(select.bind(key))
+	row.add_child(button)
+	_buttons[key] = button
+	if date != "":
+		var when := Label.new()
+		when.text = date
+		when.theme_type_variation = UiTheme.CAPTION
+		when.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(when)
 
 
-## U4's contract, projects_panel._on_act()'s shape exactly: the baseline is captured
-## BEFORE the command, so the delta measures the month the choice was made against the
-## month before it.
-func _on_choose(ev, choice: Dictionary) -> void:
-	var before := Trends.snapshot_now(_state)
-	# answer() by id, not choose() on the head: with several entries on the desk
-	# the button must answer ITS row -- a panel whose buttons resolved whatever
-	# sat on top would be a panel that answered the wrong crisis on purpose.
-	var record := Events.answer(_state, _loader, ev.id, String(choice.get("id", "")))
-	if record.is_empty():
-		return
-	_picked.erase(ev.id)
-	_dirty = true
-	acted.emit(before, "%s: %s" % [Strings.row_name("events", ev), Strings.choice_label(ev.id, choice)])
+# --- the page ------------------------------------------------------------------------
+
+func _build_page(ns) -> void:
+	_clear(_page)
+	_primary = null
+	if _selected.begins_with("file:"):
+		var id := _selected.trim_prefix("file:")
+		FileView.build(_page, FileRead.describe(_main, InboxFiles.of(_main._hud.inbox, id)), press)
+	elif _selected.begins_with("desk:"):
+		FileView.build(_page, FileRead.desk_entry(_main, _selected.trim_prefix("desk:")), press)
+	elif _selected.begins_with("record:"):
+		_record_page(ns.event_history[int(_selected.trim_prefix("record:"))])
+	elif _selected.begins_with("note:"):
+		_note_page(_selected.trim_prefix("note:"))
+	for button in _page.find_children("*", "Button", true, false):
+		if not (button as Button).disabled:
+			_primary = button
+			break
 
 
-## The person behind the office, resolved HERE and never in src/sim/.
-##
-## U6b's rule verbatim -- a law names an office and the nation's own data names who
-## holds it -- so an event's content carries `subject_office` and this file is the only
-## thing in the project that turns it into a name. That is what keeps "no mechanism on a
-## person" true by construction: there is no field on a person for a mechanism to hang
-## off, and no id crosses into the simulation.
-func _subject_label(ns, ev) -> String:
-	if not ev.has_subject():
-		return ""
-	var person_id := ""
-	var office := ""
-	match ev.subject_office:
-		"head_of_government":
-			person_id = ns.pm_person_id
-			office = ns.head_of_government_title if ns.head_of_government_title != "" else tr("Head of government")
-		"head_of_state":
-			person_id = ns.head_of_state_person_id
-			office = ns.head_of_state_title if ns.head_of_state_title != "" else tr("Head of state")
-		"largest_party_leader":
-			var party_list: Array = _loader.parties.get(ns.id, [])
-			var largest := Government.largest_party_id(ns, party_list)
-			for party in party_list:
-				if party.id == largest:
-					# Override first, the panel's own read (people_panel.gd):
-					# a fired challenge deposed the authored leader, and this
-					# line naming the deposed person is the resurrected-rival
-					# class in a second surface.
-					person_id = String(ns.party_leader_override.get(party.id, party.leader_person_id))
-					office = tr("%s, leader") % party.party_name
-					break
-	var who: String = _loader.person_name(person_id)
-	if who == "":
-		return office
-	return "%s — %s" % [who, office]
-
-
-# --- The ledger --------------------------------------------------------------------
-
-func _build_ledger(ns) -> void:
-	PanelKit.heading(_body, tr("Your decisions"))
-	if ns.event_history.is_empty():
-		PanelKit.line(_body, tr("Nothing has come up yet."))
-		return
-	# V4.8c: the FEED band per category. Only the ledger is filtered -- the desk
-	# above is where a decision is answered, so it shows every entry whatever the
-	# settings say. Severity is the event's own (the record does not carry it).
-	# A hidden row is COUNTED, never silent: a ledger that shrank with nothing
-	# saying why reads as lost history.
-	var hidden := 0
-	for record in ns.event_history:
-		var ev = Events.event_by_id(_loader, String(record.get("event_id", "")))
-		var severity := int(ev.severity) if ev != null else EventsK.SEVERITY_MAX
-		if not MessageSettings.allows(_messages, String(record.get("category", "")), severity, "feed"):
-			hidden += 1
-			continue
-		_build_record(record)
-	if hidden > 0:
-		PanelKit.line(_body, tr_n("%d record hidden by your message settings.", "%d records hidden by your message settings.", hidden) % hidden)
-
-
-func _build_record(record: Dictionary) -> void:
-	var block := VBoxContainer.new()
-	block.add_theme_constant_override("separation", 2)
-
-	# The place, for a sited event: the record carries the name because a past
-	# act's site cannot be re-derived once the shares have moved (V2.6b1).
+## A decision as the ledger keeps it: the matter, its date, what was decided and what it meant.
+func _record_page(record: Dictionary) -> void:
+	# The place, for a sited event: the record carries the name because a past act's site
+	# cannot be re-derived once the shares have moved (V2.6b1).
 	var heading := Strings.record_event_name(record)
 	var where := String(record.get("region_name", ""))
 	if where != "":
 		heading = "%s — %s" % [heading, where]
-
-	PanelKit.line(block, "%04d-%02d  %s" % [
-		int(record.get("year", 0)), int(record.get("month", 0)),
-		heading,
-	], PanelKit.Tone.PLAIN)
-
+	PanelKit.heading(_page, DateText.month_year(int(record.get("month", 1)), int(record.get("year", 0))))
+	var title := Label.new()
+	title.text = heading
+	title.theme_type_variation = UiTheme.FIGURE
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_page.add_child(title)
 	var answer := Label.new()
-	# A DEFAULT IS NOT A CHOICE AND THE LEDGER SAYS SO. Printing "Say nothing" beside a
-	# month the player never opened this window would read as a decision they made, and
-	# the one thing a ledger of forced choices has to be able to show is which of them
-	# the clock made instead.
+	answer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# A DEFAULT IS NOT A CHOICE AND THE LEDGER SAYS SO: "Say nothing" beside a month the player
+	# never answered would read as a decision they made.
 	if bool(record.get("defaulted", false)):
 		answer.text = tr("No answer given — %s") % Strings.record_choice_label(record)
 		answer.theme_type_variation = UiTheme.BAD_TEXT
 	else:
 		answer.text = Strings.record_choice_label(record)
-		answer.theme_type_variation = UiTheme.CAPTION
-	block.add_child(answer)
-
-	# WHAT IT MEANT, and the first captured frame is why this line exists.
-	# docs/pledge-model.md's own screenshot pass found a live promise that never said
-	# what it had cost -- the one figure that section existed to be a ledger of -- and
-	# the ledger here had the same shape: it named the button and not the consequence.
-	#
-	# DERIVED FROM THE CONTENT rather than stored with the record, which is the whole
-	# reason it is affordable: the choice's own summary round-trips through
-	# data/events/, so tests/test_save_load.gd's assertion that a serialised entry
-	# carries three keys and nothing else survives intact. V1.4a's discipline, and
-	# U6c's "the site belongs to the nation" one surface on.
-	# V5.3-0 (b): the meaning rides the answer's hover -- the timeline reads down
-	# the dates and the decisions, the consequence one point away.
-	var what := _choice_summary(record)
-	if what != "":
-		answer.tooltip_text = PanelKit.TermText.plain(what)
-		answer.mouse_filter = Control.MOUSE_FILTER_PASS
-		# QA on #220: a hover is mouse-only. The answer takes keyboard focus, and its
-		# meaning shows under it while it holds focus -- the line is the focus mark.
-		answer.focus_mode = Control.FOCUS_ALL
-		var meaning := PanelKit.plain_line(block, answer.tooltip_text, PanelKit.Tone.DIM)
-		meaning.visible = false
-		answer.focus_entered.connect(func() -> void: meaning.visible = true)
-		answer.focus_exited.connect(func() -> void: meaning.visible = false)
-
-	_body.add_child(block)
-
-
-## The authored sentence that sat above the button, looked up by id. Empty when the
-## content no longer defines the event -- a save older than a content change is a legal
-## state, and a ledger row that loses its footnote is better than one that cannot draw.
-func _choice_summary(record: Dictionary) -> String:
+		answer.theme_type_variation = UiTheme.LEAD
+	_page.add_child(answer)
+	# WHAT IT MEANT, derived from the content rather than stored with the record (a serialised entry
+	# keeps its few keys), and empty when the content no longer defines the event.
 	var ev = Events.event_by_id(_loader, String(record.get("event_id", "")))
-	if ev == null:
-		return ""
-	var choice: Dictionary = ev.choice_by_id(String(record.get("choice_id", "")))
-	return Strings.choice_summary(ev.id, choice)
+	if ev != null:
+		var what := Strings.choice_summary(ev.id, ev.choice_by_id(String(record.get("choice_id", ""))))
+		if what != "":
+			PanelKit.rich(_page, what)
 
 
-## The control this panel exists to let the player press -- V2.1a's fold contract,
-## declared here at V2.1b.
-##
-## The choices are rebuilt on every refresh, so this is the first one in build
-## order rather than a member held from _ready(). Null when nothing is pending,
-## which is most months -- the panel is then the ledger of what was decided.
+func _note_page(id: String) -> void:
+	for note in _main._hud.inbox.notes():
+		if String(note["id"]) != id:
+			continue
+		var title := Label.new()
+		title.text = String(note["title"])  # i18n: row-ok a note's title, routed by its pusher
+		title.theme_type_variation = UiTheme.FIGURE
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_page.add_child(title)
+		if int(note["count"]) > 1:
+			PanelKit.line(_page, tr_n("Came %d time.", "Came %d times.", int(note["count"])) % int(note["count"]))
+		PanelKit.rich(_page, String(note["body"]), PanelKit.Tone.PLAIN)  # i18n: row-ok a note's body, routed by its pusher
+
+
+## U4's contract, projects_panel._on_act()'s shape: the baseline is captured BEFORE the command.
+## answer() by id, never choose() on the head: with several entries on the desk the answer must be
+## THIS entry's.
+func _on_choose(ev, choice: Dictionary) -> void:
+	var before := Trends.snapshot_now(_state)
+	var record := Events.answer(_state, _loader, ev.id, String(choice.get("id", "")))
+	if record.is_empty():
+		return
+	_dirty = true
+	acted.emit(before, "%s: %s" % [Strings.row_name("events", ev), Strings.choice_label(ev.id, choice)])
+
+
+func _clear(box: Control) -> void:
+	for child in box.get_children():
+		box.remove_child(child)
+		child.queue_free()
+
+
+## The control this panel exists to let the player press (V2.1a's fold contract): the first
+## enabled answer on the page, null when the page asks nothing.
 func primary_action() -> Control:
 	return _primary

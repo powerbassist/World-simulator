@@ -30,7 +30,7 @@ const REGISTER := {
 	"request lapsed": "res://src/ui/audience_driver.gd",
 	"programme conclusions": "res://src/ui/agenda_panel.gd",
 	"diary booking refused": "res://src/ui/calendar_panel.gd",
-	"briefing lines": "res://src/ui/chief_briefing.gd",
+	"briefing lines": "res://src/ui/presidency_rows.gd",
 	"audience": "res://src/ui/audience_talks.gd",
 	"phone": "res://src/ui/phone_driver.gd",
 	"company action refused": "res://src/ui/companies_panel.gd",

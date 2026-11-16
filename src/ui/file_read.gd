@@ -53,6 +53,18 @@ static func describe(main, file: Dictionary) -> Dictionary:
 		"by_text": "", "by_month": -1, "who": {}, "choices": choices}
 
 
+## A desk entry with no inbox card (its popup kept quiet by the player's settings, or its card closed
+## with the X) as a page, {} when it has left the desk: the Folder is where it is answered (rework 2 S2).
+static func desk_entry(main, event_id: String) -> Dictionary:
+	var ev = Events.event_by_id(main._loader, event_id)
+	if ev == null:
+		return {}
+	var answers: Array = []
+	answers.resize(ev.choices.size())
+	answers.fill({})
+	return _event(main, "", event_id, {"actions": answers})
+
+
 ## The file's name in the folder's list: a request is its person (the page says what they ask), anything
 ## else the row's own title.
 static func list_title(main, file: Dictionary) -> String:

@@ -544,7 +544,7 @@ func _ready() -> void:
 	# and the reason it is a window rather than a modal is in the panel's own header:
 	# a crisis the player can ignore and pay for is the whole of the deadline.
 	_events_panel = EventsPanel.new()
-	_windows.register("events", tr("Dispatches"), _events_panel, KEY_N, ICONS + "mail.svg")
+	_windows.register("events", tr("Folder"), _events_panel, KEY_N, ICONS + "mail.svg")
 	_events_panel.setup(_state, _loader)
 	_events_panel.set_messages(_messages)
 	_events_panel.acted.connect(func(before, label):
