@@ -17,6 +17,18 @@ static func tab(main, sector: String) -> Control:
 	var panel = SectorPanel.new(sector)
 	panel.setup(main._state, main._loader)
 	panel.go_firm.connect(open_firm.bind(main))
+	# Slice 2: the sheet's commands earn a decision delta, as the overview's do.
+	panel.acted.connect(func(before, label) -> void:
+		main._queue_effect(label, before)
+		main._update_top_bar())
+	# The phone's scripts are loaded at the call, not preloaded: a preload here closed a
+	# script cycle that crashed the engine at exit (exit 139 after every test, found by bisecting).
+	panel.call_requested.connect(func(pid: String) -> void:
+		var talks = load("res://src/ui/audience_talks.gd")
+		load("res://src/ui/phone_driver.gd").open_call(main, pid, talks.gossip_people(main, pid)))
+	panel.map_requested.connect(func(lonlat: Vector2) -> void:
+		main._windows.close_all()
+		main._map_view.center_on_lonlat(lonlat.x, lonlat.y))
 	main._sector_panels[sector] = panel
 	return panel
 

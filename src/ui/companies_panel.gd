@@ -38,23 +38,18 @@ signal closed
 ## law and a diplomatic action already do.
 signal acted(before, label)
 
-const Processes = preload("res://src/sim/processes.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
-const Trends = preload("res://src/ui/trends.gd")
 const Investment = preload("res://src/sim/investment.gd")
-const FinanceBill = preload("res://src/sim/finance_bill.gd")
-const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
-const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const IndustryCard = preload("res://src/ui/industry_card.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
-const Closures = preload("res://src/sim/closures.gd")
+const FirmCommands = preload("res://src/ui/firm_commands.gd")
 
 var _state
 var _loader
@@ -329,23 +324,9 @@ func _build_ledger(ns) -> void:
 	PanelKit.row(_body, tr("Trend bought"), tr("%s %%/yr") % Num.fs(Investment.national_trend_shift_pct(ns), 3))
 
 
-## V5.3 e (docs/design/finance-bill.md section 12, the author's "par la loi de finances"):
-## a programme is a row of the finance bill, tabled here and started at the month's end
-## if the bill carries. Nothing changes until then, so no trend card is pushed; screen 5
-## (Interface) shows the bill.
+## A programme is a finance-bill row (firm_commands.gd, shared with the sector tabs).
 func _on_invest(_ns, action) -> void:
-	var sector := String(action.effects.get("investment", {}).get("sector", ""))
-	var tabling := FinanceBill.table(_state, _loader, {"programmes": {sector: String(action.id)}})
-	_dirty = true
-	# RF7: a refusal takes the company actions' BLOCKED line (_last_refusal). The row's own
-	# refusal names the programme; any other (a law in the slot, a finance bill queued, a
-	# rate out of range) is the bill's, said as every tabling says it (QA's T2 on #345).
-	if tabling.get("tabled", false):
-		_last_refusal = ""
-	elif tabling.get("verb", false):
-		_last_refusal = tr("%s refused -- it is no longer on offer.") % Strings.row_name("investment-actions", action)
-	else:
-		_last_refusal = ProposalNote.body(tabling)
+	FirmCommands.invest(self, action)
 
 
 ## Disabled with the sim's reason when the arm would refuse it (CompanyVerb, G1).
@@ -357,35 +338,13 @@ func _action_button(ns, company, action) -> Button:
 	return button
 
 
-## The baseline is captured BEFORE the command, so the decision delta measures the
-## month the subsidy started against the month before it -- U4's contract, and the
-## reason `acted` carries a snapshot rather than a label alone.
+## The firm commands live in firm_commands.gd, shared with the sector tabs' sheets.
 func _on_act(ns, company, action) -> void:
-	if action.irreversible:
-		_confirm = CompanyVerb.ask(self, _confirm, _state, _loader, ns, company, action, _act.bind(ns, company, action))
-		return
-	_act(ns, company, action)
+	FirmCommands.act(self, ns, company, action)
 
 
 func _act(ns, company, action) -> void:
-	var before := Trends.snapshot_now(_state)
-	# V5.3 a: an ownership or structure verb opens its process (processes.gd).
-	var result := Processes.execute(_state, ns, _loader, action, company.id)
-	if not result.get("applied", false):
-		# The refusal is the panel's to show -- the verb arms' own words. The
-		# reason (an exhausted executive pool, no major left to absorb a
-		# split) is the sim's, verbatim; a refusal with none reads as refused
-		# plainly rather than silently.
-		var reason := String(result.get("reason", ""))
-		_last_refusal = tr("%s refused%s") % [Strings.row_name("company-actions", action), " -- %s" % Strings.t(reason) if reason != "" else "."]  # i18n: row-ok the sim's reason, its English the msgid
-		_dirty = true
-		# Asked on a card: the refusal answers there, in sight (#152's RECORD 1).
-		if action.irreversible and _confirm != null:
-			_confirm.tell(_last_refusal)
-		return
-	_last_refusal = ""
-	_dirty = true
-	acted.emit(before, "%s: %s" % [Strings.row_name("company-actions", action), company.company_name])
+	FirmCommands.run(self, ns, company, action)
 
 
 ## Opens `key` in the slot named `field` (a card, a firm, a body list, the ledger),
@@ -409,42 +368,16 @@ func _restore_focus() -> void:
 			return
 
 
-## Stop on an In progress row: the sim's own verb (Processes.stop), its price read
-## on the row before the press. The baseline before it, as every verb here.
 func _on_stop(process_id: String, what: String) -> void:
-	var before := Trends.snapshot_now(_state)
-	var result: Dictionary = Processes.stop(_state, _state.player(), _loader, process_id)
-	_dirty = true
-	if not bool(result.get("ok", false)):
-		_last_refusal = tr("Stop refused -- %s") % Strings.t(String(result.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
-		return
-	_last_refusal = ""
-	acted.emit(before, tr("Stopped: %s") % what)
+	FirmCommands.stop(self, process_id, what)
 
 
-## An answer to a stage's ask (#248): Processes.answer(), the sim's own verb --
-## walking away and stopping run the stop at once, the rest land at the stage's end.
 func _on_answer(process_id: String, answer_id: String, what: String) -> void:
-	var before := Trends.snapshot_now(_state)
-	var result: Dictionary = Processes.answer(_state, _state.player(), _loader, process_id, answer_id)
-	_dirty = true
-	if not bool(result.get("ok", false)):
-		_last_refusal = tr("Answer refused -- %s") % Strings.t(String(result.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
-		return
-	_last_refusal = ""
-	acted.emit(before, tr("Answered: %s") % what)
+	FirmCommands.answer(self, process_id, answer_id, what)
 
 
-## An answer to a plant closure (#251): Closures.answer(), the sim's own verb.
 func _on_closure(closure_id: String, answer_id: String, what: String) -> void:
-	var before := Trends.snapshot_now(_state)
-	var result: Dictionary = Closures.answer(_state, _state.player(), _loader, closure_id, answer_id)
-	_dirty = true
-	if not bool(result.get("ok", false)):
-		_last_refusal = tr("Answer refused -- %s") % Strings.t(String(result.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
-		return
-	_last_refusal = ""
-	acted.emit(before, tr("Answered: %s") % what)
+	FirmCommands.closure(self, closure_id, answer_id, what)
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract.

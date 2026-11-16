@@ -7,6 +7,7 @@ extends RefCounted
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Closures = preload("res://src/sim/closures.gd")
+const ClosureRegion = preload("res://src/sim/closure_region.gd")
 const Region = preload("res://src/core/region.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const CounterChips = preload("res://src/ui/counter_chips.gd")
@@ -103,6 +104,11 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 		return
 	if not offered and row.has("window_months"):
 		PanelKit.plain_line(box, reason(row), PanelKit.Tone.PLAIN)
+	# The region the jobs leave (screen 5 slice 2, PR 3's ClosureRegion.move): its
+	# unemployment now, and the moment the plant shuts.
+	var region := region_line(state, loader, ns, row)
+	if region != "":
+		PanelKit.plain_line(box, region, PanelKit.Tone.PLAIN).set_meta("closure_region", String(row["id"]))
 	var flow := PanelKit.buttons(box)
 	var what := "%s, %s" % [firm, place]
 	var answers := Closures.answers(state, ns, loader, String(row["id"]))
@@ -136,6 +142,19 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 	if not counters.is_empty():
 		CounterChips.build(box, String(row["id"]), counters, _strip, make, "closure_answer")
 	PanelKit.plain_line(box, Strings.t("Unanswered, the plant is sold at the old price.") if offered else Strings.t("Unanswered, the plant closes."))
+
+
+## "Bourgogne-Franche-Comté unemployment 6.6 % -> 7.4 % when it shuts." "" when the
+## plant's city has no region (ClosureRegion.move's {ok: false}).
+static func region_line(state, loader, ns, row: Dictionary) -> String:
+	var move: Dictionary = ClosureRegion.move(state, ns, row)
+	if not bool(move.get("ok", false)):
+		return ""
+	var name := String(move["region_id"])
+	for region in loader.regions.get(ns.id, []):
+		if String(region.id) == name:
+			name = String(region.region_name)
+	return Strings.t("%s unemployment %s %% → %s %% when it shuts.") % [name, Num.f(float(move["before_pct"]), 1), Num.f(float(move["after_pct"]), 1)]
 
 
 ## [text, gain]: a close books nothing; a buyer search its losses now and the

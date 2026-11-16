@@ -68,6 +68,9 @@ func _process(_delta: float) -> bool:
 			_clear_closure()
 		11:
 			_check_marks_cleared()
+			# The scene goes a frame before the quit: its text shapes are freed, not leaked.
+			_main.queue_free()
+		13:
 			_finish()
 			return true
 	return false
@@ -231,12 +234,16 @@ func _press_go() -> void:
 	_fail("the needs-you row has no Go for %s" % _major.id)
 
 
+## Slice 2: a closure's Answer selects its firm on the tab's sheet, where it is answered;
+## the overview's route (go_firm) stays for a bid, a failing major or an ask, and still
+## opens the firm there.
 func _check_go_landed() -> void:
-	if not _main._windows.is_open("companies"):
-		_fail("Go did not open the overview")
+	if not _main._windows.is_open("sector_industry") or _panel._firm_id != String(_major.id):
+		_fail("a closure's Answer selected '%s' on the sheet, not %s" % [_panel._firm_id, _major.id])
+	preload("res://src/ui/sectors_shell.gd").open_firm("industry", String(_major.id), _main)
 	var companies = _main._companies_panel
-	if companies._open_sector != "industry" or companies._open_firm != String(_major.id):
-		_fail("Go opened sector '%s', firm '%s'" % [companies._open_sector, companies._open_firm])
+	if not _main._windows.is_open("companies") or companies._open_sector != "industry" or companies._open_firm != String(_major.id):
+		_fail("go_firm opened sector '%s', firm '%s'" % [companies._open_sector, companies._open_firm])
 
 
 ## A good covered under the line says so on its sector's row, and the strip's Go aims

@@ -34,6 +34,9 @@ const REGISTER := {
 	"audience": "res://src/ui/audience_talks.gd",
 	"phone": "res://src/ui/phone_driver.gd",
 	"company action refused": "res://src/ui/companies_panel.gd",
+	# Screen 5 slice 2: the commands write the refusal; the sheet tones it.
+	"company action refused, the commands": ["res://src/ui/firm_commands.gd", "panel._last_refusal ="],
+	"company action refused, the sheet": "res://src/ui/firm_sheet.gd",
 	"organisation act refused": "res://src/ui/orgs_panel.gd",
 	"campaign programme outcome": "res://src/ui/campaign_programme.gd",
 	"campaign stopped for money": "res://src/ui/campaign_chest.gd",
