@@ -49,6 +49,9 @@ func _process(_delta: float) -> bool:
 	_check_go_opens_the_file()
 	_check_the_news_line()
 	_check_the_inbox_stays_while_a_request_waits()
+	_check_go_on_a_crisis_with_no_card()
+	_check_nothing_to_answer_shows_the_news()
+	_check_a_queued_rerank_runs_once()
 	_finish()
 	return true
 
@@ -284,6 +287,12 @@ func _check_the_news_line() -> void:
 		_fail("the News line did not open the Folder's news (selected '%s')" % _panel().selected())
 	if inbox.news_count() != 0:
 		_fail("the news read on the Folder still counts %d" % inbox.news_count())
+	# A note that came twice says so on its page, once.
+	var twice: String = inbox.push("Twice", "Said again.")
+	inbox.push("Twice", "Said again.")
+	_panel().select("note:" + twice)
+	if not _texts(_panel()._page).contains("Came 2 times."):
+		_fail("a note grouped with its twin does not say it came twice")
 	_clear_desk()
 
 
@@ -311,6 +320,52 @@ func _check_the_inbox_stays_while_a_request_waits() -> void:
 		_fail("answering the last thing in the inbox left it over the tab")
 	_main._windows.close_all()
 	_clear_desk()
+
+
+## GLM gap 2: a crisis line whose card is gone (its X) or never came (its popup kept quiet): the Go opens
+## the Folder on its desk entry, never nothing.
+func _check_go_on_a_crisis_with_no_card() -> void:
+	_clear_desk()
+	var bare := _event(1, false)
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	game["lines"] = [{"kind": "crisis", "subject": bare, "go": {"tab": "events"}, "held": false, "standing": false,
+		"deadline_month": -1}]
+	game["also"] = []
+	BriefingDriver.go(_main, 0)
+	_panel()._refresh()
+	if not _main._windows.is_open("events") or _panel().selected() != "desk:" + bare:
+		_fail("a Go on a crisis with no card did not open its desk entry (selected '%s')" % _panel().selected())
+	_clear_desk()
+
+
+## GLM gap 4: nothing to answer and nothing decided yet, but news: the page shows the newest note, not a blank.
+func _check_nothing_to_answer_shows_the_news() -> void:
+	_clear_desk()
+	var ns = _main._state.player()
+	var history: Array = ns.event_history.duplicate(true)
+	ns.event_history.clear()
+	_main._hud.inbox.push("A strike", "The dockers stop.")
+	_panel().select("")
+	_open_tab()
+	if not _panel().selected().begins_with("note:"):
+		_fail("with nothing to answer or decided the Folder shows no page (selected '%s')" % _panel().selected())
+	ns.event_history = history
+	_clear_desk()
+
+
+## GLM gap 10: a re-rank run early for its queue (a caller that needs the read now) leaves the deferred
+## call nothing to do: it would rank over the lines set since.
+func _check_a_queued_rerank_runs_once() -> void:
+	var ChiefMarkView = preload("res://src/ui/chief_mark_view.gd")
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	ChiefMarkView.queue_rerank(_main)
+	ChiefMarkView._rerank_queued(_main)  # run early
+	var staged := [{"kind": "staged", "subject": "x", "standing": true, "held": false, "deadline_month": -1}]
+	game["lines"] = staged
+	ChiefMarkView._rerank_queued(_main)  # the deferred call, at the frame's end
+	if game["lines"] != staged:
+		_fail("the deferred re-rank ran a second time for one queue and ranked over the lines set since")
+	game["lines"] = []
 
 
 func _texts(node: Node) -> String:

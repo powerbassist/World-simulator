@@ -172,8 +172,9 @@ func _refresh() -> void:
 	if _wanted_group != "" and not (_groups[_wanted_group] as Array).is_empty():
 		_selected = String(_groups[_wanted_group][0])
 	elif not keys.has(_selected):
-		# A file gone while shown (answered, lapsed, a load): the next thing waiting, else the last decision.
-		_selected = String((_groups[ANSWER] + _groups[DECIDED] + [""])[0])
+		# A file gone while shown (answered, lapsed, a load): the next thing waiting, else the last decision,
+		# else the newest news -- never a blank page beside a list that has something.
+		_selected = String((_groups[ANSWER] + _groups[DECIDED] + _groups[NEWS] + [""])[0])
 	_wanted_group = ""
 	if _selected.begins_with("note:"):
 		_main._hud.inbox.news_seen()
