@@ -61,6 +61,14 @@ static func close_overtaken(state, ns, now: int, loader = null, meters: Dictiona
 		row["resolved_month"] = now
 
 
+## The last month an answer is taken: overdue() below lapses a pending request AS its
+## deadline month begins, so the month before is the last one (QA's pre-gate B TAKE 1:
+## "Answer by AUG" lapsed on 1 AUG). Every surface that dates a request reads this one
+## rule (#388's TAKE 1: the People roster had re-derived it a month late).
+static func answer_by(row: Dictionary) -> int:
+	return int(row["deadline_month"]) - 1
+
+
 ## Pending past its window lapses; an audience booked or held in an earlier month and never
 ## closed is a no-show (Audiences' lapse loop and close_overtaken() read this one rule).
 static func overdue(row: Dictionary, now: int) -> bool:

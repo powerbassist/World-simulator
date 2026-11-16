@@ -62,11 +62,15 @@ static func register(main) -> void:
 	lane.seen.connect(func(id: String) -> void: _seen(main, id))
 	lane.delegate_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
 	lane.decline_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))
-	main._calendar_panel._grid.booked.connect(func(id: String, date: Dictionary) -> void:
+	var book := func(id: String, date: Dictionary) -> void:
 		var result := Audiences.book(main._state, main._state.player(), main._loader, id, date)
 		game["booking_for"] = ""
 		_answer(main, id, result)
-		_seen(main, id))
+		_seen(main, id)
+	main._calendar_panel._grid.booked.connect(book)
+	# Rework 1: the People roster's See books the same way, on the request's first free day.
+	main._people_panel.see_requested.connect(book)
+	main._people_panel.reassigned.connect(func(before: Dictionary, title: String) -> void: main._queue_effect(title, before))
 	# A Go left without a day -- the Diary closed under it -- ends the player's action
 	# as surely as a booking does.
 	main._windows.closed.connect(func(id: String) -> void:
@@ -101,9 +105,6 @@ static func register(main) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
 	main._calendar_panel._grid.call_requested.connect(func(pid: String) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
-	main._people_panel.answer_requested.connect(func(id: String) -> void:
-		main._hud.inbox.slide_in()
-		main._hud.inbox.raise_card(lane_of(main).card_of(id)))
 	main._hud.title_bar.requests_pressed.connect(func() -> void: open_oldest(main))
 
 
@@ -150,10 +151,8 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 	var loader = main._loader
 	var id := String(request["id"])
 	var answers := Audiences.answers(main._state, ns, loader, id)
-	# The last month an answer is taken: the sim lapses a pending request AS its
-	# deadline month begins (Audiences._overdue), so the card names the month
-	# before (QA's pre-gate B TAKE 1: "Answer by AUG" lapsed on 1 AUG).
-	var last := int(request["deadline_month"]) - 1
+	# The last month an answer is taken (Audiences.answer_by, the one rule).
+	var last := Audiences.answer_by(request)
 	# c1c rule 1: a person holding something on the president takes a refusal as a
 	# broken word; the price already counts it (decline_price), the card says why.
 	var price := Audiences.decline_price(ns, loader, id)

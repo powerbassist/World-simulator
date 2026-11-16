@@ -78,7 +78,7 @@ static func by_text(main, file: Dictionary, short := false) -> String:
 	if request_id != "":
 		var request := Audiences.request(main._state.player(), request_id)
 		if not request.is_empty():
-			return _by(int(request["deadline_month"]) - 1, short)
+			return _by(Audiences.answer_by(request), short)
 	return ""
 
 
@@ -132,7 +132,7 @@ static func _request(main, id: String, request_id: String, file: Dictionary) -> 
 		if note == "" and i == RequestLane.CALL:
 			note = Strings.t("Ring them instead of seeing them.")
 		choices.append(_choice(actions[i], String(actions[i]["label"]), "", [], false, note))  # i18n: row-ok routed by the pusher
-	var last := int(request["deadline_month"]) - 1
+	var last := Audiences.answer_by(request)
 	return {"id": id, "kind": "request", "micro": Strings.t("Request"), "title": ask_title(main._loader, ns, request), "situation": "",
 		"by_text": _by(last), "by_month": last, "who": who, "choices": choices,
 		"price": String(row.get("price", "")), "broken_word": bool(row.get("broken_word", false))}

@@ -288,7 +288,7 @@ func _entries(year: int, month: int) -> Dictionary:
 	# A request lapses as its deadline month begins (Audiences._overdue), so the
 	# last day to answer is the end of the month before -- the card's "Answer by".
 	for row in Audiences.pending(ns):
-		if int(row["deadline_month"]) - 1 == abs_month:
+		if Audiences.answer_by(row) == abs_month:
 			_add(out, Calendar.days_in_month(year, month), {"text": Strings.t("Last day to answer %s") % _loader.person_name(String(row["person_id"])),
 				"mark": "deadline", "cancel": ""})
 	return out

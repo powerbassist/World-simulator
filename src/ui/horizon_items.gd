@@ -53,7 +53,7 @@ static func read(state, loader) -> Dictionary:
 	(out["bookings"] as Array).sort_custom(func(a, b): return int(a["ordinal"]) < int(b["ordinal"]))
 	var dues := {}
 	for row in Audiences.pending(ns):
-		_due(dues, "request", int(row["deadline_month"]) - 1, now, loader.person_name(String(row["person_id"])), String(row["person_id"]))
+		_due(dues, "request", Audiences.answer_by(row), now, loader.person_name(String(row["person_id"])), String(row["person_id"]))
 	for entry in ns.event_queue:
 		var ev = Events.event_by_id(loader, String(entry.get("event_id", "")))
 		_due(dues, "decision", now + int(entry.get("months_left", 0)) - 1, now, Strings.row_name("events", ev) if ev != null else "", "")

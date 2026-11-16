@@ -38,7 +38,7 @@ const Shadows = preload("res://src/sim/shadows.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
 const Removal = preload("res://src/sim/removal.gd")
-const PeopleNow = preload("res://src/ui/people_now.gd")
+const RosterRows = preload("res://src/ui/roster_rows.gd")
 const Lies = preload("res://src/sim/lies.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
@@ -1051,9 +1051,10 @@ func _check_the_people_panel_reads_no_pledge_as_a_promise() -> void:
 		_fail("the fixture's pledge was refused")
 		return
 	ns.audience_requests.clear()
-	var said := str(PeopleNow.chosen(f["state"], _loader, func(_person) -> String: return ""))
-	if said.contains(Strings.t("A promise falls due")):
-		_fail("the president owes nothing here, and the panel says a promise falls due")
+	# Rework 1: the roster's "you owe" column and its need rank read the president's words only.
+	for row in RosterRows.rows(f["state"], _loader, "", ""):
+		if String(row["id"]) == String(f["person_id"]) and (String(row["owe"]) != "—" or int(row["rank"]) == RosterRows.Need.DUE):
+			_fail("the president owes nothing here, and the roster says he does: %s" % row)
 
 
 ## Interface's "their word: X broke it" reads this: what they owed, judged, kept apart from the
