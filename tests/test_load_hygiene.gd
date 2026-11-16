@@ -51,12 +51,19 @@ func _process(_delta: float) -> bool:
 			_save_in_april_then_wander_to_march()
 		5:
 			_premise()
+			_main._clock.set_speed(3)  # the player's speed rides the load (#396 pass 2, T2)
 			_main = _load(_main, SLOT)
 		9:
 			_check_cards()
 			_check_load_rebuilds_the_decisions_lane()
 			_check_load_restores_the_consequence_card()
 			_check_ribbon()
+			if int(_main._clock.speed) != 3:
+				_fail("a load at speed 3 opened the rebuilt game at speed %d" % int(_main._clock.speed))
+			# The loaded game's music band is set at once, not at its first month end (T1).
+			var music = _main.get_node_or_null("Music")
+			if music == null or (music.band_state as Dictionary).is_empty():
+				_fail("after a load the music has no band: the bed stays silent until a month ends")
 			_cleanup()
 		11:
 			_act_in_the_france_game()

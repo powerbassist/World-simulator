@@ -145,10 +145,14 @@ static func speak(parent: Node, path: String, delay_s := 0.0, card_id := "") -> 
 	var token := int(player.get_meta("token", 0)) + 1
 	player.set_meta("token", token)
 	player.set_meta("pending", true)
+	# A weak reference, not the player: a load frees it with its main before the delay is out, and
+	# a lambda that captured it is called on a freed object (#396 pass 2, T4).
+	var ref: WeakRef = weakref(player)
 	parent.get_tree().create_timer(delay_s).timeout.connect(func():
-		if is_instance_valid(player) and int(player.get_meta("token", 0)) == token:
-			player.set_meta("pending", false)
-			player.play())
+		var waiting := ref.get_ref() as AudioStreamPlayer
+		if waiting != null and int(waiting.get_meta("token", 0)) == token:
+			waiting.set_meta("pending", false)
+			waiting.play())
 
 
 ## Says `path` now if `parent`'s player is free, else after the lines already

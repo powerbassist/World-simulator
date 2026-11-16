@@ -24,7 +24,7 @@ const GAME_SCENE := "res://src/ui/main.tscn"
 static func swap(main: Node, result: Dictionary, slot: String) -> Node:
 	var fresh: Node = load(GAME_SCENE).instantiate()
 	fresh.pending_loader = main._loader
-	fresh.pending_save = {"state": result["state"], "day": int(result["day"]), "slot": slot}
+	fresh.pending_save = handoff(result, slot, int(main._clock.speed))
 	var parent := main.get_parent()
 	var index := main.get_index()
 	var tree := main.get_tree()
@@ -57,7 +57,27 @@ static func read(slot: String, loader) -> Dictionary:
 	var result: Dictionary = preload("res://src/core/save_manager.gd").load_game(slot, loader)
 	if not bool(result.get("ok", false)):
 		return {}
-	return {"state": result["state"], "day": int(result["day"]), "slot": slot}
+	return handoff(result, slot)
+
+
+## The ONE handoff a main boots from a save with, built here for every load (menu, test, in game)
+## so the paths cannot diverge (#396 pass 2, T2): the state, the saved day, the slot, and the speed
+## the player was running at (0 for a boot, which keeps the clock's own).
+static func handoff(result: Dictionary, slot: String, speed := 0) -> Dictionary:
+	return {"state": result["state"], "day": int(result["day"]), "slot": slot, "speed": speed}
+
+
+## A main built from a save takes its date from it, opens paused at the speed it was handed, and
+## mirrors today into the state for the diary (a booking for today reads as past otherwise).
+static func set_clock(main) -> void:
+	var clock = main._clock
+	clock.year = main._state.year
+	clock.month = main._state.month
+	clock.day = int(main.pending_save["day"])
+	clock.paused = true
+	if int(main.pending_save.get("speed", 0)) > 0:
+		clock.set_speed(int(main.pending_save["speed"]))
+	main._state.day = clock.day
 
 
 ## Per-game state some UI files keep in a static rather than on a node (QA's RECORD on #396). A
@@ -79,6 +99,14 @@ static func after_load(main) -> void:
 	main._assembly_news.forget(main._state.player().last_law_result)
 	# The desk's rows back in the inbox and the latest consequence card (C6).
 	preload("res://src/ui/desk_cards.gd").restore_after_load(main)
+	# The month's music from the loaded game's own situation, as its month ends would set it: the old
+	# main's Music node went with it, and nothing else plays a band before the first month end
+	# (#396 pass 2, T1).
+	var ns = main._state.player()
+	if ns != null and bool(ns.in_government):
+		var ranked: Dictionary = preload("res://src/ui/chief_mark_view.gd").rank(main, {})
+		preload("res://src/ui/music.gd").follow(main, preload("res://src/ui/priorities.gd").situation(ranked["lines"]),
+			preload("res://src/ui/trends.gd").months_to_vote(main._state, ns), main._state.get_instance_id())
 	# V2.4b: an interrupt crisis pending in the save stops the clock again.
 	main._enforce_interrupt()
 	main._note_holds_for_pause_menu()

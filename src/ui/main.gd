@@ -253,13 +253,7 @@ func _ready() -> void:
 		_state.year = _clock.year
 		_state.month = _clock.month
 	else:
-		# A loaded game sets the clock, not the other way round, and opens paused.
-		_clock.year = _state.year
-		_clock.month = _state.month
-		_clock.day = int(pending_save["day"])
-		_clock.paused = true
-		# The diary's mirror of today, or a booking for today reads as past until the clock runs.
-		_state.day = _clock.day
+		GameReload.set_clock(self)  # a loaded game sets the clock, not the other way round
 
 	# Three layers, back to front -- U5a's whole structural change. U2 made the
 	# map one tab among seven; here it is the background the game is played on,

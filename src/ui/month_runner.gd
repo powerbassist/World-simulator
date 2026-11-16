@@ -108,8 +108,17 @@ func _process(_delta: float) -> void:
 	_clock.release()
 	var events := _deferred
 	_deferred = []
+	_replay(events)
+
+
+## The input the player gave while the month closed, in order. A replayed click can load a game,
+## which rebuilds it (game_reload.gd): this runner leaves the tree with the main that owned it, and
+## the rest of the input was that game's (#396 pass 2, T3).
+func _replay(events: Array[InputEvent]) -> void:
 	replaying = true
 	for event in events:
+		if not is_inside_tree():
+			break
 		get_viewport().push_input(event, true)
 	replaying = false
 
