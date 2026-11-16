@@ -944,7 +944,7 @@
   ],
   "Change": "Évolution",
   "Open": "Ouvrir",
-  "Go": "Aller",
+  "Go": "Y aller",
   "Stop": "Arrêter",
   "Map": "Carte",
   "%s pt": "%s pt",
@@ -979,5 +979,8 @@
   "About these figures": "À propos de ces chiffres",
   "Links between regions": "Liaisons entre régions",
   "%d by land · %d by sea": "%d terrestres · %d maritimes",
-  "Least connected": "Région la moins reliée"
+  "Least connected": "Région la moins reliée",
+  "Pleases %s.": "Plaît à : %s.",
+  "Angers %s.": "Irrite : %s.",
+  "Back to the map": "Retour à la carte"
 }
