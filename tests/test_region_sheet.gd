@@ -169,7 +169,7 @@ func _check_nobody() -> void:
 func _check_strip(region_id: String) -> void:
 	var ns = _main._state.player()
 	var est: Dictionary = RegionFunds.estimate(_main._state, ns, _main._loader, region_id,
-		float(_panel._fund_share), int(_panel._fund_years))
+		float(_panel._game.fund_share), int(_panel._game.fund_years))
 	var strip = null
 	for node in _panel.find_children("*", "", true, false):
 		if node.get_script() == EffectsStrip and (node as Control).is_visible_in_tree():

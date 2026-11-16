@@ -20,6 +20,7 @@ tests=(
   tests/test_region_fund.gd
   tests/test_region_sheet.gd
   tests/test_region_map.gd
+  tests/test_region_load.gd
   tests/test_region_arrival.gd
   tests/test_called_event.gd
   tests/test_decision_cards.gd
@@ -46,6 +47,7 @@ tests=(
   tests/test_goal_table.gd
   tests/test_finance_read.gd
   tests/test_finance_rows.gd
+  tests/test_investment_refusal.gd
   tests/test_bill_verbs.gd
   tests/test_order_paper.gd
   tests/test_law_filters.gd
