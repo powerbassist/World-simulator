@@ -343,20 +343,30 @@ static func shares_of(ns, region_list: Array) -> Dictionary:
 static func unemployment_pct(ns, region_list: Array, region_id: String, access: Dictionary, sites: Dictionary) -> float:
 	for region in region_list:
 		if region.id == region_id:
-			return clampf(
-				ns.unemployment_pct * region.unemployment_rel - C.OKUN * trend_deviation_pct(ns, region_list, region_id, access, sites),
-				C.UNEMP_MIN_PCT,
-				C.UNEMP_MAX_PCT
-			)
+			return _rate(ns, region, trend_deviation_pct(ns, region_list, region_id, access, sites), {})
 	return ns.unemployment_pct
+
+
+## The one regional unemployment formula both reads share (the retro review's T1 on
+## #380: unemployment_pct() had lost the closure term this added): the national rate by
+## the region's relative, the Okun term on its deviation, a landed closure's lift
+## (ns.region_closure_pts, V5.3 PR 3) and `extra`, a lift not booked yet that a read
+## prices (ClosureRegion.move), clamped.
+static func _rate(ns, region, deviation: float, extra: Dictionary) -> float:
+	return clampf(
+		ns.unemployment_pct * region.unemployment_rel - C.OKUN * deviation
+			+ float(ns.region_closure_pts.get(region.id, 0.0)) + float(extra.get(region.id, 0.0)),
+		C.UNEMP_MIN_PCT,
+		C.UNEMP_MAX_PCT
+	)
 
 
 ## unemployment_pct() for every region of a nation in one pass -- V5.0c's tick
 ## lever, because Migration and Unrest ask it for every region of every nation. The
 ## deviations come from deviation_by_region() in one call, so each region's figure
 ## is the same float unemployment_pct() returns (tests/test_regions.gd pins the two
-## equal).
-static func unemployment_by_region(ns, region_list: Array, access: Dictionary, sites: Dictionary) -> Dictionary:
+## equal). `extra`: a lift not booked yet, {region_id: points}, for a read that prices one.
+static func unemployment_by_region(ns, region_list: Array, access: Dictionary, sites: Dictionary, extra: Dictionary = {}) -> Dictionary:
 	var out: Dictionary = {}
 	if region_list.is_empty():
 		return out
@@ -364,13 +374,7 @@ static func unemployment_by_region(ns, region_list: Array, access: Dictionary, s
 	for region in region_list:
 		if out.has(region.id):
 			continue
-		# V5.3 PR 3 (c): a landed plant closure's lift, netted out of the nation's mean.
-		out[region.id] = clampf(
-			ns.unemployment_pct * region.unemployment_rel - C.OKUN * float(deviations.get(region.id, 0.0))
-				+ float(ns.region_closure_pts.get(region.id, 0.0)),
-			C.UNEMP_MIN_PCT,
-			C.UNEMP_MAX_PCT
-		)
+		out[region.id] = _rate(ns, region, float(deviations.get(region.id, 0.0)), extra)
 	return out
 
 

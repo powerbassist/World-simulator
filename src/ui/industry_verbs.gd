@@ -68,7 +68,7 @@ static func build(panel, parent: Control, ns, company) -> void:
 		var strip := EffectsStrip.new()
 		detail.add_child(strip)
 		strip.show_lines(String(money[0]), String(money[1]), float(money[2]),
-			EffectsStrip.who_text(AidWords.offsets(loader, ns, company, action)),
+			EffectsStrip.who_text(AidWords.offsets(state, loader, ns, company, action)),
 			when_text(action, est))
 		# The jobs the aid moves, before the press (PR 3's net_jobs, on a copy).
 		if AidWords.is_aid(action):

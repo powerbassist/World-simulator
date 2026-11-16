@@ -50,15 +50,17 @@ static func caption(loader, ns, company, action) -> String:
 
 
 ## The action's bloc offsets as the press would book them (CompaniesAid.bloc_credit's
-## rule, read without its write): aid times the firm's credit factor now; a withdrawal
+## rule, read without its write): aid times the factor execute() would grant
+## (CompaniesAid.granted_credit, the verb on a copy: a failed major's rescue is credited
+## on the restored firm, the retro review's T2 on #380); a withdrawal
 ## times the factor the grant kept on the entry (`aid_credit`, absent 1.0, QA's T1 on
 ## #381); any other verb as it is.
-static func offsets(loader, ns, company, action) -> Dictionary:
+static func offsets(state, loader, ns, company, action) -> Dictionary:
 	var raw: Dictionary = action.effects.get("bloc_offset", {})
 	var op := String(action.effects.get("company", {}).get("op", ""))
 	var factor := 1.0
 	if op == "subsidise":
-		factor = CompaniesAid.credit_factor(ns, loader, String(company.id))
+		factor = CompaniesAid.granted_credit(state, ns, loader, action, String(company.id))
 	elif op == "withdraw":
 		factor = float((ns.companies.get(String(company.id), {}) as Dictionary).get("aid_credit", 1.0))
 	else:

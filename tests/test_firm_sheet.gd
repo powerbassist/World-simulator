@@ -142,7 +142,7 @@ func _check_focused_strip() -> void:
 		if float(pair[1]) >= 100.0 and not expected.contains(figure):
 			_fail("the net jobs line '%s' does not carry %s" % [expected, figure])
 	var factor := CompaniesAid.credit_factor(ns, _main._loader, String(_major.id))
-	var scaled := AidWords.offsets(_main._loader, ns, _major, action)
+	var scaled := AidWords.offsets(_main._state, _main._loader, ns, _major, action)
 	var raw: Dictionary = action.effects["bloc_offset"]
 	for bloc in raw:
 		if absf(float(scaled[bloc]) - float(raw[bloc]) * factor) > 1e-9:
@@ -166,7 +166,7 @@ func _check_granted() -> void:
 	# The withdrawal's blocs as the press books them (QA's T1 on #381): the grant kept its
 	# credit on the entry, and a preview on a copy books exactly what the strip prints.
 	var withdraw = _action("withdraw_support")
-	var shown := AidWords.offsets(_main._loader, ns, _major, withdraw)
+	var shown := AidWords.offsets(_main._state, _main._loader, ns, _major, withdraw)
 	var copy = Companies.preview(_main._state, ns, _main._loader.company_actions, withdraw, String(_major.id), _main._loader)[0]
 	for bloc in withdraw.effects["bloc_offset"]:
 		var booked := float(copy.bloc_offset.get(bloc, 0.0)) - float(ns.bloc_offset.get(bloc, 0.0))

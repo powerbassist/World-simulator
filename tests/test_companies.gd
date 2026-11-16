@@ -74,6 +74,7 @@ func _init() -> void:
 	_test_bill_reaches_the_budget()
 	_test_aid_scales_with_the_firm()
 	_test_aid_credit_follows_the_jobs()
+	_test_the_strip_prices_the_credit_execute_books()
 	_test_net_jobs_read()
 	_test_impulse_reaches_growth()
 	_test_withdraw_stops_the_bill_and_keeps_the_share()
@@ -400,6 +401,33 @@ func _test_aid_credit_follows_the_jobs() -> void:
 		_fail("aid credit: a failing major's rescue was credited at %s, read before the restore" % entry.get("aid_credit"))
 	if not bool(done.get("applied", false)):
 		_fail("aid credit: the rescue of a failing major was refused: %s" % [done])
+
+
+## The retro review's T2 (#380): a failed major in its rescue window reads 0 live jobs,
+## so a strip pricing the credit on live headcount showed no bloc move while execute()
+## restores the firm first and books its credit. granted_credit() runs the verb on a copy
+## and reads the factor execute() writes; the live state is not touched.
+func _test_the_strip_prices_the_credit_execute_books() -> void:
+	var state = _new_state()
+	var ns = state.nations[PLAYER]
+	var firm = _company(RIVAL)
+	var entry: Dictionary = ns.companies[RIVAL]
+	entry["failed"] = true
+	entry["share"] = 0.0
+	entry["rescue_months_left"] = 3
+	var kept := JSON.stringify(ns.to_dict())
+	var priced := CompaniesAid.granted_credit(state, ns, _loader, _action("strategic_rescue"), RIVAL)
+	if JSON.stringify(ns.to_dict()) != kept:
+		_fail("granted credit: the read wrote the nation")
+	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), RIVAL, _loader)
+	if priced <= 0.0 or not is_equal_approx(priced, float(entry.get("aid_credit", -1.0))):
+		_fail("granted credit: the strip priced %s, execute booked %s" % [priced, entry.get("aid_credit")])
+	# A healthy firm: the read is the live factor.
+	var state2 = _new_state()
+	var ns2 = state2.nations[PLAYER]
+	if not is_equal_approx(CompaniesAid.granted_credit(state2, ns2, _loader, _action("industrial_subsidy"), RIVAL),
+			CompaniesAid.credit_factor(ns2, _loader, RIVAL)):
+		_fail("granted credit: a healthy firm's read is not its live factor")
 
 
 ## The author's answer (3): the firm sheet shows the jobs an aid verb moves before the
