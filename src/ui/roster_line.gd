@@ -47,6 +47,9 @@ static func build(parent: Control, meta: Array, face_id: String, feel: Dictionar
 		hover: Callable, unhover: Callable, pick: Callable, menu: Callable) -> Control:
 	var wrap := MarginContainer.new()
 	wrap.set_meta(String(meta[0]), String(meta[1]))
+	# The button under the cells takes the pointer; the wrapper must not take an event
+	# the button leaves (a right click) a second time.
+	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(wrap)
 	var press := Button.new()
 	press.theme_type_variation = UiTheme.SUBROW_BUTTON

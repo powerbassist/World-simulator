@@ -33,6 +33,7 @@ const President = preload("res://src/sim/president.gd")
 const PresidentK = preload("res://src/sim/president_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Staff = preload("res://src/sim/staff.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
 
 ## The chips, in reading order: id, label. "needs" is the default view.
 const CHIPS := [
@@ -157,7 +158,8 @@ static func _row(state, loader, ns, pid: String) -> Dictionary:
 			row["booked"] = true
 			row["wants"] = Strings.t("Sees you on %s about %s") % [DateText.day_month(int(d["day"]), int(d["month"])), about]
 		else:
-			row["wants"] = Strings.t("Asks to see you about %s, lapses %s") % [about, Words.when(int(request["deadline_month"]))]
+			# The inbox card's own date (Audiences.answer_by), never a second reading of it.
+			row["wants"] = Strings.t("Asks to see you about %s, answer by %s") % [about, Words.when(Audiences.answer_by(request))]
 			row["wants_tone"] = UiTheme.WARN_TEXT
 	else:
 		var want := _first_unserved(state, loader, ns, person)
@@ -227,7 +229,7 @@ static func _party_of(loader, ns, party_id: String):
 static func _open_request(ns, pid: String) -> Dictionary:
 	for row in ns.audience_requests:
 		if String(row.get("person_id", "")) == pid and AK.OPEN.has(String(row.get("status", ""))):
-			return preload("res://src/sim/audiences.gd").request(ns, String(row["id"]))
+			return Audiences.request(ns, String(row["id"]))
 	return {}
 
 

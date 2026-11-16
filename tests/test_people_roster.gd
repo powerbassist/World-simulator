@@ -32,6 +32,7 @@ extends SceneTree
 ## shown fails silently).
 
 const RosterRows = preload("res://src/ui/roster_rows.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const RosterVerbs = preload("res://src/ui/roster_verbs.gd")
 const President = preload("res://src/sim/president.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
@@ -83,6 +84,10 @@ func _process(_delta: float) -> bool:
 			_panel.mark_dirty()
 		12:
 			_check_call_greyed()
+			_panel._search.text = Labels.portfolio("defence")
+			_panel._refresh()
+			_check_office_found()
+			_panel._search.text = ""
 			_press(_chip("needs"))
 		14:
 			_click(_row("person", String(_asker.id)))
@@ -141,8 +146,13 @@ func _check_order() -> void:
 	if rows.is_empty() or String(rows[0]["id"]) != String(_asker.id):
 		_fail("the roster does not lead with the person asking to see you: %s" % str(rows.slice(0, 2)))
 		return
-	if not String(rows[0]["wants"]).contains(_lapse_text()):
-		_fail("the asker's row does not say when the request lapses: '%s'" % rows[0]["wants"])
+	# #388 TAKE 1: the roster dates the request as the inbox card does (Audiences.answer_by),
+	# never a month later (the deadline month itself, when the request has already lapsed).
+	var card := AudienceDriver.row_of(_main, Audiences.request(_main._state.player(), _request))
+	if not String(rows[0]["wants"]).contains(String(card["by"])):
+		_fail("the roster's date is not the inbox card's '%s': '%s'" % [card["by"], rows[0]["wants"]])
+	if String(rows[0]["wants"]).contains(_lapse_text()):
+		_fail("the roster dates the request a month late (%s): '%s'" % [_lapse_text(), rows[0]["wants"]])
 	var president := President.leader_id(ns)
 	for chip in RosterRows.CHIPS:
 		for row in RosterRows.rows(_main._state, _main._loader, String(chip[0]), ""):
@@ -275,6 +285,16 @@ func _check_call_greyed() -> void:
 		return
 	if not _why().to_lower().contains(Strings.t("you have spoken this month already").to_lower()):
 		_fail("the greyed Call does not give the phone's reason: '%s'" % _why())
+
+
+## #388 TAKE 2: the search box says "an office" -- typing one lists its row.
+func _check_office_found() -> void:
+	if _row("office", "defence") == null:
+		_fail("a search for '%s' lists no office row" % _panel._search.text)
+	if _row("office", "health") != null:
+		_fail("a search for '%s' lists the health office too" % _panel._search.text)
+	if _text().contains(Strings.t("Nobody of that name, party or office.")):
+		_fail("a search that found an office still says nobody matches")
 
 
 func _check_booked() -> void:
@@ -412,6 +432,7 @@ func _check_dismiss_asks() -> void:
 # --- helpers -------------------------------------------------------------------------
 
 const Strings = preload("res://src/ui/strings.gd")
+const Labels = preload("res://src/ui/labels.gd")
 
 
 func _row(kind: String, id: String):

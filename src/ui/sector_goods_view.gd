@@ -26,7 +26,7 @@ static func build(panel, parent: Control, ns) -> void:
 	var chips := PanelKit.buttons(section)
 	_chip(panel, chips, "", Strings.t("All · %d") % shown.size())
 	for row in shown:
-		_chip(panel, chips, String(row["good_id"]), String(row["name"]))  # i18n: row-ok a good's name: the goods register has no translation table yet
+		_chip(panel, chips, String(row["good_id"]), String(row["name"]))  # i18n: row-ok a good's name, translated in SectorGoods.rows()
 	var grid := GridContainer.new()
 	grid.columns = 4
 	grid.add_theme_constant_override("h_separation", PanelKit.COLUMN_SEPARATION)
@@ -59,7 +59,7 @@ static func _chip(panel, parent: Control, good_id: String, text: String) -> void
 
 static func _good_row(grid: GridContainer, row: Dictionary) -> void:
 	var name_box := PanelKit.buttons(grid)
-	PanelKit.plain_line(name_box, String(row["name"]), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF  # i18n: row-ok a good's name, as above
+	PanelKit.plain_line(name_box, String(row["name"]), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF  # i18n: row-ok a good's name, translated in SectorGoods.rows()
 	if bool(row["short"]):
 		var short := PanelKit.plain_line(name_box, Strings.t("short"), PanelKit.Tone.PLAIN)
 		short.theme_type_variation = UiTheme.WARN_TEXT
