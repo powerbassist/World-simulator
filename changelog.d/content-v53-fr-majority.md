@@ -1,0 +1,1 @@
+Added: The Majority tab (government type, censure, dissolution, amendment and election rules, partners, the second chamber and the court) and the People tab's Dismiss, Government, The bench and Activists now read in French.
