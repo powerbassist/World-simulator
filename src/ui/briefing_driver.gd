@@ -384,8 +384,8 @@ static func go(main, index: int) -> void:
 			_open_laws_or(main, tab, subject)
 		"bill":
 			_open_laws_or(main, tab, "")  # every law, so the tabled line shows
-		# A person's row; the majority and an office word land on the office rows ("seats").
-		"person", "majority", "commitment" when tab == "people":
+		# A person's row; an office word lands on the office rows ("seats").
+		"person", "commitment" when tab == "people":
 			main._windows.open(tab)
 			main._people_panel.focus(String(target["acts_on"]))
 		"plant":

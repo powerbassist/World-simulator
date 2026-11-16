@@ -122,7 +122,9 @@ func _process(_delta: float) -> bool:
 		32:
 			# The majority's Go from a group that lists no office: focus("seats") brings them back.
 			_panel.focus("seats")
+			_press_partner_link()
 		34:
+			_check_partner_link_landed()
 			if _row("office", "health") == null:
 				_fail("focus('seats') did not bring the office rows back from the press group")
 			var owner = _panel.get_viewport().gui_get_focus_owner()
@@ -372,8 +374,10 @@ func _check_politics_retired() -> void:
 	for tab in PKs.GO_TAB.values():
 		if String(tab) == "politics":
 			_fail("a briefing Go still lands on Politics: %s" % str(PKs.GO_TAB))
-	if String(PKs.GO_TAB.get("majority", "")) != "people":
-		_fail("the majority's Go does not land on the office rows: %s" % PKs.GO_TAB.get("majority", ""))
+	# One problem, one home (the parent's ruling on #389): the briefing's majority Go and the
+	# strip's troubled assembly figure open the same tab, Majority.
+	if String(PKs.GO_TAB.get("majority", "")) != "majority":
+		_fail("the majority's Go does not open the Majority tab: %s" % PKs.GO_TAB.get("majority", ""))
 	var office_go: Dictionary = load("res://src/ui/briefing_driver.gd").target_of(
 		{"kind": "commitment", "subject": "promise|x|office:portfolio:health", "go": {"tab": ""}})
 	if String(office_go["tab"]) != "people" or String(office_go["acts_on"]) != "seats":
@@ -386,8 +390,8 @@ func _check_politics_retired() -> void:
 	ns.is_minority = true
 	var reading: Dictionary = load("res://src/ui/strip_readings.gd")._assembly(ns)
 	ns.is_minority = was
-	if String(reading["alert_window"]) != "majority":
-		_fail("the troubled assembly figure opens '%s', not the Majority tab" % reading["alert_window"])
+	if String(reading["alert_window"]) != String(PKs.GO_TAB.get("majority", "")):
+		_fail("the troubled assembly figure opens '%s', the briefing's majority Go '%s'" % [reading["alert_window"], PKs.GO_TAB.get("majority", "")])
 
 
 ## Politics' cabinet table said a party held under its d'Hondt share (docs/cabinet-model.md:
@@ -423,6 +427,33 @@ func _check_shorted_share() -> void:
 		return  # its only office was the one taken: no row is left to say it
 	if said != Strings.t("Holds %d of its %d offices") % [held, entitled]:
 		_fail("a party held under its share does not say so: '%s'" % said)
+
+
+## On the Majority tab, a partner's line leads to its offices in People (the verb lives there).
+var _partner := ""
+
+
+func _press_partner_link() -> void:
+	var majority = _main._government_panel
+	_main._windows.open("majority")
+	majority._refresh()
+	for button in majority.find_children("*", "Button", true, false):
+		if button.has_meta("party") and not (button as Button).disabled:
+			_partner = String(button.get_meta("party"))
+			(button as Button).pressed.emit()
+			return
+	_fail("no partner line on the Majority tab leads to its offices")
+
+
+func _check_partner_link_landed() -> void:
+	if _partner == "":
+		return
+	if not _main._windows.is_open("people"):
+		_fail("a partner's line did not open People")
+	var picked: Array = _panel._picked
+	var ns = _main._state.player()
+	if picked.size() != 2 or String(picked[0]) != "office" or String(ns.cabinet.get(String(picked[1]), "")) != _partner:
+		_fail("a partner's line did not focus one of its offices: %s (party %s)" % [picked, _partner])
 
 
 func _check_filled() -> void:

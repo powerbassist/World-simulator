@@ -22,10 +22,14 @@ signal closed
 ## `committed` and law_panel.gd's `proposed` use, so main.gd's effect-queueing
 ## treats a dissolution the same way it treats any other player command.
 signal dissolved(before: Dictionary)
+## A partner's line pressed: its offices, in People, where the cabinet's verbs live
+## (the parent's ruling on #389: the majority has one home, this tab, and a line to the verb).
+signal offices_requested(party_id: String)
 
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const DissolveButton = preload("res://src/ui/dissolve_button.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
@@ -349,10 +353,17 @@ func _build_partner_table(ns) -> Control:
 			continue
 		var party = by_id[pid]
 
-		var name_label := Label.new()
-		name_label.text = party.party_name
+		var name_label := Button.new()
+		name_label.theme_type_variation = UiTheme.SUBROW_BUTTON
+		name_label.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		name_label.text = party.party_name  # i18n: row-ok a party's shown name
 		if pid == ns.pm_party_id:
 			name_label.text += "  (%s)" % ns.head_of_government_title
+		name_label.tooltip_text = tr("Its offices, in People: reshuffle there.")
+		name_label.set_meta("party", String(pid))
+		# The briefing's majority Go lands on this tab: a partner's line leads to the verb.
+		ActsOn.tag(name_label, ["seats"])
+		name_label.pressed.connect(offices_requested.emit.bind(String(pid)))
 		grid.add_child(name_label)
 
 		grid.add_child(_right(str(int(ns.seats_by_party.get(pid, 0)))))

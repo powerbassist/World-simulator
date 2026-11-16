@@ -155,11 +155,18 @@ func focus(person_id: String) -> void:
 
 
 ## The majority's Go: the view that lists the offices.
-func show_offices() -> void:
+## `party_id` (a partner's line on the Majority tab): its first office focused instead.
+func show_offices(party_id := "") -> void:
 	if _chip != "government":
 		_chip = "needs"
 	_search.text = ""
 	focused = "seats"  # _land puts the keyboard on the first office line
+	for f in CK.PORTFOLIO_KEYS:
+		if party_id != "" and String(_state.player().cabinet.get(f, "")) == party_id:
+			focused = ""
+			_picked = ["office", f]
+			_refocus = true
+			break
 	_dirty = true
 
 
