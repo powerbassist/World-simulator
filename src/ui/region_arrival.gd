@@ -86,12 +86,9 @@ static func _on_go(card: String, _index: int, main) -> void:
 	var cards: Dictionary = (_told.get(main.get_instance_id(), {}) as Dictionary).get("cards", {})
 	if not cards.has(card):
 		return
-	var panel = main._windows.content("region")
-	main._windows.open("region")
-	# The panel's own pick: it refocuses the row, so a region low in the list comes into
-	# view, and centres the map. A pick on the open region would close it.
-	panel._game.open_region = ""
-	panel._pick(String(cards[card]))
-	panel.mark_dirty()
+	# The panel's one way in: out of any city, the sheet open, its row in view, the map centred.
+	# Refused (a scene holds the screen): the card stays for later.
+	if not main._windows.content("region").open_region_at(String(cards[card])):
+		return
 	cards.erase(card)
 	main._hud.inbox.dismiss(card)
