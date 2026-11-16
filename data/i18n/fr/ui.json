@@ -1113,7 +1113,7 @@
   "barely": "à peine",
   "%s, due %s": "%s, échéance : %s",
   "Sees you on %s about %s": "Vous voit le %s. Sujet : %s",
-  "Answer by %s: %s": "Répondre avant %s : %s",
+  "Answer by %s: %s": "Répondre d'ici %s : %s",
   "Party leader": "Chef de parti",
   "Vacant since %s": "Vacant depuis %s",
   "Counts half until you fill it": "Compte pour moitié tant qu'il est vacant",
@@ -1134,5 +1134,7 @@
   "Fill with %s": "Pourvoir avec : %s",
   "Give it to %s": "Confier à : %s",
   "loyal": "fidèle",
-  "ready to resign": "sur le point de démissionner"
+  "ready to resign": "sur le point de démissionner",
+  "Answer by %s": "Répondre d'ici %s",
+  "Answer by %s.": "Répondre d'ici %s."
 }
