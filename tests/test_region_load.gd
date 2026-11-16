@@ -53,7 +53,15 @@ func _process(_delta: float) -> bool:
 				_cleanup()
 				_finish()
 				return true
+			# The discarded game's open region and fund sums, which must not survive the load.
+			var panel = _main._windows.content("region")
+			panel._open_region = "FRE"
+			panel._fund_share = 0.3
+			panel._fund_years = 4
+			panel._fund_refusal = "refused in the old game"
 			_main._on_load_requested(SLOT)
+			if panel._open_region != "" or panel._fund_share != 0.0 or panel._fund_years != 0 or panel._fund_refusal != "":
+				_fail("the old game's open region or fund sums survive the load")
 		4:
 			_main._windows.open("region")
 		6:

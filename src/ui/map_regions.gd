@@ -298,6 +298,8 @@ static func _fill_pieces(polygons: Array, rings: Array) -> Array:
 		return rings
 	var out: Array = []
 	for polygon in polygons:
+		if (polygon as Array).is_empty():
+			continue
 		var pieces: Array = [polygon[0]]
 		for h in range(1, (polygon as Array).size()):
 			var hole: PackedVector2Array = polygon[h]

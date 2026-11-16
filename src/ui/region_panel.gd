@@ -126,6 +126,9 @@ func show_city(city_id: String) -> void:
 	# The player clicked the city where the map is: framing the nation on this open would
 	# jump the map away from the cross they just pressed (the retro review's item 12).
 	_keep_view = not is_visible_in_tree()
+	# Consumed by the open that follows in the same call; an open refused (a scene up) must
+	# not leave it set for a later one.
+	set_deferred("_keep_view", false)
 
 
 ## A city opened from the map is a visit: the tab comes back on the regions, not
