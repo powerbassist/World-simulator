@@ -92,10 +92,10 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --referendum --open legislature
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open politics
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open majority
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --court --open legislature
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open politics
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open majority
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --city
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diverge
@@ -1411,10 +1411,10 @@ func _apply_view() -> void:
 				_main._law_panel.run_proposal(law)
 				break
 	if _dismiss_confirm:
-		var verbs = _main._government_panel._cabinet_verbs
+		# Rework 1: the removal's card is the People roster's (an office row's Dismiss).
+		var verbs = _main._people_panel._verbs
 		verbs.sync(_main._state, _main._loader)
-		verbs.select_portfolio("defence")
-		verbs._on_dismiss()
+		verbs.dismiss("defence")
 	if _dissolve_confirm:
 		var button = _main._government_panel._dissolve_button
 		button.sync(_main._state, _main._state.player())

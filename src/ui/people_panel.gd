@@ -35,6 +35,7 @@ const RosterRows = preload("res://src/ui/roster_rows.gd")
 const RosterLine = preload("res://src/ui/roster_line.gd")
 const RosterVerbs = preload("res://src/ui/roster_verbs.gd")
 const CabinetVerbs = preload("res://src/ui/cabinet_verbs.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const VerbPlate = preload("res://src/ui/verb_plate.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 
@@ -101,7 +102,6 @@ func _ready() -> void:
 	_body.add_theme_constant_override("separation", 2)
 	scroll.add_child(_body)
 	# The removal's confirm card, its price and its refusal line (cabinet_verbs.gd).
-	_verbs.compact = true
 	_verbs.reassigned.connect(func(before: Dictionary, title: String) -> void:
 		reassigned.emit(before, title)
 		_dirty = true)
@@ -144,10 +144,21 @@ func mark_dirty() -> void:
 ## The briefing's person Go: their line focused, in a group that lists them, and the
 ## keyboard on its first verb (a Go lands on a verb).
 func focus(person_id: String) -> void:
+	if not _loader.person_by_id.has(person_id):
+		show_offices()  # the majority's Go: "seats", the office rows
+		return
 	focused = person_id
 	_picked = ["person", person_id]
 	_search.text = ""
 	_chip = _chip_of(person_id)
+	_dirty = true
+
+
+## The majority's Go: the view that lists the offices.
+func show_offices() -> void:
+	if _chip != "government":
+		_chip = "needs"
+	_search.text = ""
 	_dirty = true
 
 
@@ -218,11 +229,13 @@ func _offices() -> void:
 		var leader := String(row["leader_id"])
 		var name := tr("Vacant") if bool(row["vacant"]) else String(row["party"])
 		var sub := String(row["party"]) if bool(row["vacant"]) else (tr("Led by %s, %s") % [_loader.person_name(leader), row["seats"]])
-		RosterLine.build(_body, ["office", f], leader, {}, [
+		var line := RosterLine.build(_body, ["office", f], leader, {}, [
 			{"text": name, "sub": sub, "tone": UiTheme.BAD_TEXT if bool(row["vacant"]) else ""}, {"text": row["office"]},
 			{"text": row["feels"], "tone": row["feels_tone"]}, {"text": row["delivers"], "tone": row["delivers_tone"]},
 			{"text": row["owe"], "tone": row["owe_tone"]}, {"text": "—", "tone": UiTheme.CAPTION}],
 			picked, _show_card, _hide_card, _pick.bind("office", f), _menu.bind("office", row))
+		# The briefing's majority Go lands here: an office's verbs are the reshuffle.
+		ActsOn.tag(line.get_child(0), ["seats"])
 		if picked:
 			RosterVerbs.strip(_body, RosterVerbs.for_office(_state, _loader, row, _verbs), RosterLine.FACE.x + 20)
 

@@ -189,13 +189,6 @@ func _check_agrees_with_politics(panel, state) -> void:
 		by_id[p.id] = p
 
 	var text := _text_of(panel)
-	var gov_text := ""
-	_main._windows.open("politics")
-	_main._government_panel.mark_dirty()
-	_main._government_panel._refresh()
-	for node in _walk(_main._government_panel):
-		if node is Label:
-			gov_text += node.text + "\n"
 
 	for f in CK.PORTFOLIO_KEYS:
 		var pid: String = String(ns.cabinet.get(f, ""))
@@ -204,8 +197,6 @@ func _check_agrees_with_politics(panel, state) -> void:
 		var holder: String = String(by_id[pid].party_name)
 		if not text.contains(holder):
 			_fail("People does not name '%s', which holds %s" % [holder, f])
-		if not gov_text.contains(holder):
-			_fail("Politics does not name '%s', which holds %s -- the two surfaces disagree" % [holder, f])
 
 
 ## A vacancy has to read as one. U6b cut the minister bench, so this column names

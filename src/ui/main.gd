@@ -342,12 +342,9 @@ func _ready() -> void:
 	)
 
 	_government_panel = GovernmentPanel.new()
-	_windows.register("politics", tr("Politics"), _government_panel, KEY_G, ICONS + "groups.svg")
+	_windows.register("majority", tr("Majority"), _government_panel, KEY_G, ICONS + "groups.svg")
 	_government_panel.setup(_state, _loader)
 	_government_panel.dissolved.connect(func(before): _queue_effect(tr("Dissolution called"), before))
-	_government_panel.reassigned.connect(func(before, title):
-		_queue_effect(title, before)  # cabinet_verbs.gd names it: reassigned or dismissed
-	)
 
 	_polling_panel = PollingPanel.new()
 	_windows.register("society", tr("Society"), _polling_panel, KEY_P, ICONS + "forum.svg")
@@ -359,7 +356,6 @@ func _ready() -> void:
 	_law_panel = LawPanel.new()
 	_windows.register("legislature", tr("Bills"), _law_panel, KEY_L, ICONS + "gavel.svg")
 	_law_panel.setup(_state, _loader)
-	_law_panel.dissolved.connect(_government_panel.dissolved.emit)
 	_law_panel.polled.connect(_briefing.polled.emit)  # the sheet's polls book the same baseline the popup's do
 	# The sheet's Propose divides at once (law_panel.run_proposal). The briefing popup is for the bills
 	# the sheet does not carry -- an ownership bill, a tax draft -- and its Propose comes back through

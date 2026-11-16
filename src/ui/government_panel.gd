@@ -3,6 +3,12 @@ extends PanelContainer
 ## The government panel V1.1a adds -- who is in the government, how close it is
 ## to the line that can bring it down, and how dependable each partner is.
 ##
+## Rework 1, slice 2: Parliament > Majority (the window id "majority"). The cabinet
+## left for People's office rows (roster_rows.gd), where its verbs sit on each office;
+## this tab keeps the seats, the majority, censure and 49.3, the partners and the
+## opposition, the folded constitution, and Dissolve -- its one home (Bills carried a
+## twin until then: the author's "button disolve should be in parliament ?").
+##
 ## Reads simulation state and never writes it. There is no player command here
 ## yet: forming a government is something Elections and Government do at a
 ## schedule boundary, and the censure motion and Article 49.3 are the next
@@ -17,20 +23,12 @@ signal closed
 ## treats a dissolution the same way it treats any other player command.
 signal dissolved(before: Dictionary)
 
-## Carries the pre-command baseline for a cabinet reassignment -- the same
-## shape `dissolved` above uses, so main.gd's effect-queueing treats a
-## reshuffle the same way it treats any other player command.
-signal reassigned(before: Dictionary, title: String)
-
 const Government = preload("res://src/sim/government.gd")
 const Discipline = preload("res://src/sim/discipline.gd")
 const DissolveButton = preload("res://src/ui/dissolve_button.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
-const Cabinet = preload("res://src/sim/cabinet.gd")
-const CabinetVerbs = preload("res://src/ui/cabinet_verbs.gd")
-const CK = preload("res://src/sim/cabinet_constants.gd")
 const GK = preload("res://src/sim/government_constants.gd")
 const K = preload("res://src/sim/election_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
@@ -127,7 +125,6 @@ var _state
 var _loader
 var _title: RichTextLabel
 var _body: VBoxContainer
-var _cabinet_verbs := CabinetVerbs.new()
 var _dirty := true
 var _close_button: Button
 var _dissolve_button: DissolveButton
@@ -156,13 +153,6 @@ func _ready() -> void:
 	_dissolve_button = DissolveButton.new()
 	_dissolve_button.dissolved.connect(_on_dissolved)
 	root.add_child(_dissolve_button)
-
-	# V5.2 b+ R4: Reassign and Dismiss, with the removal's price (cabinet_verbs.gd).
-	_cabinet_verbs.reassigned.connect(func(before: Dictionary, title: String) -> void:
-		reassigned.emit(before, title)
-		_dirty = true)
-	root.add_child(_cabinet_verbs)
-
 
 	_body = VBoxContainer.new()
 	_body.add_theme_constant_override("separation", 4)
@@ -260,8 +250,6 @@ func _refresh() -> void:
 	PanelKit.heading(_body, tr("In government"))
 	_body.add_child(_build_partner_table(ns))
 
-	PanelKit.heading(_body, tr("Cabinet"))
-	_body.add_child(_build_cabinet_table(ns))
 	if ns.resignations_count > 0:
 		var last: Dictionary = ns.last_resignation
 		var last_party := ""
@@ -272,7 +260,6 @@ func _refresh() -> void:
 		PanelKit.line(_body, tr("Ministers resigned this run: %d (last: %s over %s)") % [
 			ns.resignations_count, last_party, tr(PORTFOLIO_LABEL.get(last.get("portfolio", ""), last.get("portfolio", "")))
 		], PanelKit.Tone.PLAIN)
-	_cabinet_verbs.sync(_state, _loader)
 
 	var outside: Array[String] = []
 	for party in _loader.parties.get(ns.id, []):
@@ -396,65 +383,6 @@ func _build_partner_table(ns) -> Control:
 	return grid
 
 
-## One row per portfolio: holder, effectiveness against the neutral 100% a
-## party of average skill and perfect affinity would deliver, and whether the
-## holder is short of its d'Hondt entitlement -- the condition that makes a
-## resignation reachable. See docs/cabinet-model.md.
-func _build_cabinet_table(ns) -> Control:
-	var grid := GridContainer.new()
-	grid.columns = 4
-	grid.add_theme_constant_override("h_separation", 16)
-
-	for header in ["portfolio", "holder", "effectiveness", "entitlement"]:
-		var label := Label.new()
-		label.text = header
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if header in ["portfolio", "holder"] else HORIZONTAL_ALIGNMENT_RIGHT
-		label.custom_minimum_size.x = 140 if header in ["portfolio", "holder"] else 100
-		label.theme_type_variation = UiTheme.CAPTION
-		grid.add_child(label)
-
-	var by_id := {}
-	for party in _loader.parties.get(ns.id, []):
-		by_id[party.id] = party
-
-	var held := {}
-	for f in ns.cabinet:
-		var pid: String = String(ns.cabinet[f])
-		if pid != "":
-			held[pid] = int(held.get(pid, 0)) + 1
-
-	for f in CK.PORTFOLIO_KEYS:
-		PanelKit.line(grid, tr(PORTFOLIO_LABEL.get(f, f)), PanelKit.Tone.PLAIN)
-
-		var pid: String = String(ns.cabinet.get(f, ""))
-		var holder_label := Label.new()
-		if pid == "" or not by_id.has(pid):
-			holder_label.text = tr("VACANT")
-			holder_label.theme_type_variation = UiTheme.BAD_TEXT
-		else:
-			holder_label.text = by_id[pid].party_name
-		grid.add_child(holder_label)
-
-		var eff := Cabinet.effectiveness(ns, f)
-		var eff_cell := _right("%.0f%%" % (eff * 100.0))
-		if eff > 1.0:
-			eff_cell.theme_type_variation = UiTheme.GOOD_TEXT
-		elif eff < 1.0:
-			eff_cell.theme_type_variation = UiTheme.BAD_TEXT
-		grid.add_child(eff_cell)
-
-		var entitlement_cell := _right("")
-		if pid != "" and by_id.has(pid):
-			var ent := int(ns.cabinet_entitlement.get(pid, 0))
-			var h := int(held.get(pid, 0))
-			if h < ent:
-				entitlement_cell.text = tr("%d of %d") % [h, ent]
-				entitlement_cell.theme_type_variation = UiTheme.BAD_TEXT
-		grid.add_child(entitlement_cell)
-
-	return grid
-
-
 ## Seats the coalition would lose on the worst bill for it -- one its partners
 ## are whipped hardest to support and like least. The whip's full pull is the
 ## coalition bonus, so that bonus is the strain; see docs/discipline-model.md.
@@ -479,18 +407,11 @@ func _right(text: String) -> Label:
 	return label
 
 
-## The control this panel exists to let the player press -- V2.1a's fold contract.
-##
-## Both verbs are built once in _ready() and live for the session, so unlike the
-## action panels there is nothing to re-find on a refresh. Dissolve first because
-## it is first in the layout and the rule is "the first verb", not "the most
-## important one" -- a panel whose FIRST verb has scrolled off is already a panel
-## whose verbs are hidden, and deciding which of two is more important is a
-## judgement this contract does not need to make.
-##
-## Falls through to Reassign where the nation's dissolution rule hides Dissolve
-## outright, which is six of the ten.
+## The control this panel exists to let the player press -- V2.1a's fold contract:
+## Dissolve, built once in _ready() above the readout. None where the nation's rule
+## hides it outright (six of the ten); the cabinet's Reassign, the old fallback, is an
+## office row's verb in People since rework 1.
 func primary_action() -> Control:
 	if _dissolve_button != null and _dissolve_button.visible:
 		return _dissolve_button
-	return _cabinet_verbs.reassign_button
+	return null

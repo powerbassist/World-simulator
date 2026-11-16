@@ -37,7 +37,7 @@ func _init() -> void:
 func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame == 2:
-		_main._windows.open("politics")
+		_main._windows.open("majority")
 	elif _frame == 5:
 		_check(_main._government_panel, "article_49_3", "Politics")
 		_main._windows.open("society")

@@ -59,11 +59,7 @@ func _process(_delta: float) -> bool:
 		4:
 			_check_eroded_discipline_is_visible()
 		5:
-			_check_cabinet_entitled_reading()
-		6:
-			_check_cabinet_shorted_reading()
-		7:
-			_check_cabinet_vacant_reading()
+			_check_no_cabinet()
 		8:
 			_check_dissolve_button()
 			_check_the_republic_plate()
@@ -201,77 +197,15 @@ func _check_eroded_discipline_is_visible() -> void:
 		])
 
 
-## V1.1d: a fully entitled cabinet -- five portfolios, five distinct holders,
-## none vacant, none flagged short of entitlement. Reformed fresh because the
-## prior frame eroded discipline and reassigned the coalition by hand.
-func _check_cabinet_entitled_reading() -> void:
-	var ns = _state.player()
-	var party_list: Array = _loader.parties.get("FRA", [])
-	Government.form(ns, party_list)
-	Cabinet.seat(ns, party_list)
-
+## Rework 1, slice 2: the cabinet left this tab for People's office rows
+## (tests/test_people_roster.gd reads them); the Majority tab names no portfolio.
+func _check_no_cabinet() -> void:
 	var text := _refresh_text()
-	if not text.to_lower().contains("cabinet"):
-		_fail("panel has no Cabinet section: %s" % text)
 	for f in CK.PORTFOLIO_KEYS:
-		var label: String = _panel.PORTFOLIO_LABEL.get(f, f)
-		if not text.contains(label):
-			_fail("cabinet table omits portfolio '%s': %s" % [label, text])
-	if text.contains("VACANT"):
-		_fail("a freshly seated cabinet reads a vacancy: %s" % text)
-	for f in CK.PORTFOLIO_KEYS:
-		if String(ns.cabinet.get(f, "")) == "":
-			_fail("portfolio '%s' is unseated after a fresh seat() call" % f)
-
-
-## A party held below its d'Hondt entitlement must read as short on the panel,
-## with the entitlement cell naming held-against-entitled -- the condition
-## docs/cabinet-model.md ties to a reachable resignation.
-func _check_cabinet_shorted_reading() -> void:
-	var ns = _state.player()
-	var target := ""
-	for pid in ns.coalition_party_ids:
-		if int(ns.cabinet_entitlement.get(pid, 0)) > 0:
-			target = pid
-			break
-	if target == "":
-		_fail("no coalition party is entitled to a portfolio -- cannot test the shorted reading")
-		return
-
-	var held_portfolio := ""
-	for f in CK.PORTFOLIO_KEYS:
-		if String(ns.cabinet.get(f, "")) == target:
-			held_portfolio = f
-			ns.cabinet[f] = ""
-			break
-	if held_portfolio == "":
-		_fail("'%s' is entitled but holds no portfolio -- seat() did not distribute entitlement" % target)
-		return
-
-	var text := _refresh_text()
-	var entitled: int = int(ns.cabinet_entitlement.get(target, 0))
-	var expected := "%d of %d" % [entitled - 1, entitled]
-	if not text.contains(expected):
-		_fail("shorted party's entitlement cell does not read '%s': %s" % [expected, text])
-
-	# Restore for later frames.
-	ns.cabinet[held_portfolio] = target
-
-
-## A vacant portfolio reads VACANT rather than an empty cell -- silent
-## vacancies are exactly the kind of failure docs/opinion-model.md's own
-## standard for a game model rejects.
-func _check_cabinet_vacant_reading() -> void:
-	var ns = _state.player()
-	var f: String = CK.PORTFOLIO_KEYS[0]
-	var previous_holder: String = String(ns.cabinet.get(f, ""))
-	ns.cabinet[f] = ""
-
-	var text := _refresh_text()
-	if not text.contains("VACANT"):
-		_fail("an empty portfolio does not read VACANT: %s" % text)
-
-	ns.cabinet[f] = previous_holder
+		if text.contains(String(load("res://src/ui/labels.gd").portfolio(f))):
+			_fail("the Majority tab still lists the portfolio '%s'" % f)
+	if _panel.find_child("CabinetVerbs", true, false) != null:
+		_fail("the Majority tab still carries the cabinet's verbs")
 
 
 ## V1.1c: the dissolve button reads three ways, the same precedent Article
