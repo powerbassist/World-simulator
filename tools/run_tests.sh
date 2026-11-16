@@ -19,6 +19,7 @@ tests=(
   tests/test_region_fund.gd
   tests/test_region_sheet.gd
   tests/test_region_map.gd
+  tests/test_region_load.gd
   tests/test_region_arrival.gd
   tests/test_called_event.gd
   tests/test_decision_cards.gd

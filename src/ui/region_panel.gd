@@ -62,6 +62,10 @@ var _refocus := ""
 ## Screen 6, slice 2: the map overlay this tab tints (map_regions.gd, set by regions_shell.gd),
 ## and the measure the rail's chips picked.
 var _overlay
+## Re-binds the overlay to the nation a setup() brings (regions_shell.gd sets it).
+var rebind: Callable
+## show_city() opens the tab where the map already is: the next open does not frame the nation.
+var _keep_view := false
 var _measure := "jobless"
 var _body: VBoxContainer
 var _back_button: Button
@@ -100,6 +104,8 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	if rebind.is_valid():
+		rebind.call()
 
 
 func attach(windows, map) -> void:
@@ -117,6 +123,9 @@ func hide_close_button() -> void:
 func show_city(city_id: String) -> void:
 	_city_id = city_id
 	_dirty = true
+	# The player clicked the city where the map is: framing the nation on this open would
+	# jump the map away from the cross they just pressed (the retro review's item 12).
+	_keep_view = not is_visible_in_tree()
 
 
 ## A city opened from the map is a visit: the tab comes back on the regions, not
@@ -125,8 +134,9 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and _overlay != null:
 		_overlay.visible = is_visible_in_tree()
 		# The map is the screen: the nation framed beside the dock each time the tab opens.
-		if _overlay.visible:
+		if _overlay.visible and not _keep_view:
 			_overlay.call_deferred("fit")
+		_keep_view = false
 	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree() and _city_id != "":
 		_city_id = ""
 		_dirty = true

@@ -82,6 +82,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-arrival
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet change --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --text 130 --open region

@@ -21,6 +21,29 @@ static func panel(main) -> Control:
 	tab.attach(main._windows, main._map_view)
 	var overlay = MapRegions.new()
 	main._map_view.add_child(overlay)
+	tab._overlay = overlay
+	var w = main._windows
+	overlay.fit_rect = Rect2(w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"]), w.DOCK_TOP,
+		w.DOCK_WIDTH - float(w.DOCK_WIDTHS["region"]), 1080.0 - w.DOCK_TOP - w.DOCK_BOTTOM)
+	bind(main, overlay)
+	# A load re-runs every registered panel's setup() (main.gd's _on_load_requested), and
+	# Continue is a load over the default game: the overlay follows it there, or a save of
+	# another nation kept the startup nation's regions (the retro review's item 1).
+	tab.rebind = func(): bind(main, overlay)
+	main._map_view.region_picker = func(lonlat: Vector2) -> String:
+		if not tab.is_visible_in_tree():
+			return ""
+		var id := Region.region_at_lonlat(main._loader.region_rings, lonlat.x, lonlat.y)
+		for region in main._loader.regions.get(main._state.player_nation_id, []):
+			if String(region.id) == id:
+				return id
+		return ""
+	main._map_view.region_clicked.connect(tab.open_region)
+	return tab
+
+
+## The overlay's regions, holes and avoided cities, from the nation main._state plays.
+static func bind(main, overlay) -> void:
 	var ids: Array = []
 	for region in main._loader.regions.get(main._state.player_nation_id, []):
 		ids.append(String(region.id))
@@ -39,14 +62,3 @@ static func panel(main) -> Control:
 				largest = c
 		cities[String(region.id)] = [] if largest == null else [largest.lonlat]
 	overlay.set_avoid(cities)
-	tab._overlay = overlay
-	var w = main._windows
-	overlay.fit_rect = Rect2(w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"]), w.DOCK_TOP,
-		w.DOCK_WIDTH - float(w.DOCK_WIDTHS["region"]), 1080.0 - w.DOCK_TOP - w.DOCK_BOTTOM)
-	main._map_view.region_picker = func(lonlat: Vector2) -> String:
-		if not tab.is_visible_in_tree():
-			return ""
-		var id := Region.region_at_lonlat(main._loader.region_rings, lonlat.x, lonlat.y)
-		return id if ids.has(id) else ""
-	main._map_view.region_clicked.connect(tab.open_region)
-	return tab
