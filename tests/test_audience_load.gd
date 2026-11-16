@@ -141,17 +141,22 @@ func _console():
 	return null
 
 
+var _old_main
+
 func _load() -> void:
 	_before = _main._state
-	_main._on_load_requested(SLOT)
+	_old_main = _main
+	_main = _main._on_load_requested(SLOT)
 
 
 func _check_loaded() -> void:
 	if _main._state == _before:
 		_fail("premise: the load did not replace the game")
 		return
-	if String(Audiences.request(_before.player(), _request).get("status", "")) != "declined":
-		_fail("the discarded game's audience was left unclosed: %s" % Audiences.request(_before.player(), _request))
+	# A load rebuilds the game (game_reload.gd): the scene that hosted the audience is gone with
+	# the main that held it, so the discarded game's request is not closed, it is dropped.
+	if is_instance_valid(_old_main) and _old_main.is_inside_tree():
+		_fail("the main that hosted the audience is still in the tree after the load")
 	if _main._windows.is_open("audience") or AudienceDriver.scene_of(_main).visiting != "":
 		_fail("the scene stayed up over the loaded game")
 	if not AudienceDriver._games[_main.get_instance_id()]["session"].is_empty():

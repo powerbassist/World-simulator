@@ -85,7 +85,10 @@ func _process(_delta: float) -> bool:
 			var error := SaveManager.save_game(_main._state, _main._clock, SLOT)
 			if error != "":
 				_fail("could not save: %s" % error)
-			_main._on_load_requested(SLOT)
+			_main = _main._on_load_requested(SLOT)
+			# A load rebuilds the game (game_reload.gd): the tabs to read are the new main's.
+			_panel = _main._windows.content(TAB)
+			companies = _main._windows.content("companies")
 			_check_load_forgets()
 			if companies._last_refusal != "" or companies._open_sector != "" or companies._open_firm != "" 					or companies._open_body != "" or companies._open_ledger != "" or companies._focus_verb != "":
 				_fail("a load keeps the discarded game's Companies picks or refusal")

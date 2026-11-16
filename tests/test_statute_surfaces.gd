@@ -335,7 +335,7 @@ func _run() -> void:
 		_main._assembly_news._assembly_cards["ghost_bill"] = "card_ghost"
 		_main._assembly_news._assembly_result_month = 42
 		_main._assembly_news._assembly_release_month = 43
-		_main._on_load_requested(POLL_SLOT)
+		_main = _main._on_load_requested(POLL_SLOT)
 		SaveManager.delete_slot(POLL_SLOT)
 		# The load drops the discarded game's whole stack (V5.1-a2), so the count the
 		# first month must NOT move is the one the load itself left, not the count
@@ -385,7 +385,7 @@ func _run() -> void:
 		if err3 != "":
 			_fail("the load leg's release save failed: %s" % err3)
 		else:
-			_main._on_load_requested(POLL_SLOT)
+			_main = _main._on_load_requested(POLL_SLOT)
 			SaveManager.delete_slot(POLL_SLOT)
 			if int(_main._assembly_news._assembly_release_month) != loaded_stamp:
 				_fail("the load path did not seed the release memory from the loaded release (memory %s, register %s)" % [
@@ -435,9 +435,12 @@ func _run() -> void:
 	# _find_law scanned the loader only, so every composed division, held bill
 	# and referendum printed the raw draft_NNNN id on the panel that lists the
 	# laws. Staged in the register's own to_save_dict shape (the machine's).
-	# The LIVE state: leg (k)'s load rebounded every panel to the loaded game.
+	# The LIVE state: leg (k)'s load rebuilt the game (game_reload.gd), so the panels and the
+	# briefing are the new main's.
 	var live_state = _main._state
 	var live_loader = _main._loader
+	law_panel = _main._law_panel
+	briefing = _main._briefing
 	var live_ns = live_state.player()
 	live_ns.custom_laws["draft_424242"] = {
 		"id": "draft_424242", "name": "The Composed Namesake Act",
@@ -516,8 +519,14 @@ func _run() -> void:
 	if err3 != "":
 		_fail("the detach leg's save failed: %s" % err3)
 	else:
-		_main._on_load_requested(POLL_SLOT)
+		var old_briefing = briefing
+		_main = _main._on_load_requested(POLL_SLOT)
 		SaveManager.delete_slot(POLL_SLOT)
+		# A load rebuilds the game: the briefing that was open is gone with the old main, and the
+		# new main's own briefing holds nothing of the discarded game.
+		if is_instance_valid(old_briefing) and old_briefing.is_inside_tree():
+			_fail("the briefing open before the load is still in the tree after it")
+		briefing = _main._briefing
 		if briefing.visible:
 			_fail("the briefing stayed open across a load -- a dead popup still answers clicks")
 		if briefing._state != null:

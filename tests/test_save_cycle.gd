@@ -142,7 +142,7 @@ func _play_and_save() -> bool:
 	# the loaded game's next History step wrote it into its own recent_effects,
 	# against the old game's baseline, and the next save kept it.
 	_game._queue_effect("A decision after the save", Trends.snapshot_now(state))
-	_game._on_load_requested(SLOT)
+	_game = _game._on_load_requested(SLOT)
 	if not _game._pending_effects.is_empty():
 		_fail("an in-game load kept %d decision(s) queued from the discarded game" % _game._pending_effects.size())
 	return true

@@ -288,7 +288,7 @@ func _call_then_load() -> void:
 	PhoneDriver.open_call(_main, _asker, [])
 	if not PhoneDriver.dialog_of(_main).visible:
 		_fail("premise: the call did not open before the load")
-	_main._on_load_requested(SLOT)
+	_main = _main._on_load_requested(SLOT)
 
 
 func _check_loaded() -> void:

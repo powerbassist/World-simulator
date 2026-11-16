@@ -82,8 +82,28 @@ func _process(_delta: float) -> bool:
 		2:
 			_check_no_interrupt()
 			_check_dismiss_hushes()
-			return _finish()
+			_free_a_line_before_it_starts()
+			_phase = 3
+		3:
+			# Past the delay: the timer fires on a freed player and must do nothing (an ERROR
+			# line here is what the suite runner fails, #396 pass 2, T4).
+			if Time.get_ticks_msec() > _freed_at + 600:
+				return _finish()
 	return false
+
+
+## #396 pass 2 (T4): a load rebuilds the game, freeing the player a line waiting out the
+## arrival's sting delay belongs to. The delayed start must not reach for it.
+var _freed_at := 0
+
+func _free_a_line_before_it_starts() -> void:
+	var host := Node.new()
+	root.add_child(host)
+	Voice.speak(host, "res://" + FIXTURE, 0.2)
+	if host.get_node_or_null(Voice.NODE) == null:
+		_failures.append("premise: no delayed line was set up to free")
+	host.free()
+	_freed_at = Time.get_ticks_msec()
 
 
 ## A line in progress is not cut off by the next one (review pass 1: the lapse guard

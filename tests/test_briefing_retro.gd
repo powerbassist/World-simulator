@@ -92,7 +92,7 @@ func _process(_delta: float) -> bool:
 			_game()["report"] = {"stale": true}
 			# T3: a consequence card held for the old game's month end.
 			_game()["month_cards"] = [{"title": "old game", "body": "old game"}]
-			_main._on_load_requested(SLOT)
+			_main = _main._on_load_requested(SLOT)
 		11:
 			_check_load_forgets_the_ranking()
 			_game()["lines"] = [STALE]
