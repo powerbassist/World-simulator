@@ -14,6 +14,7 @@ tests=(
   tests/test_finance_of_which.gd
   tests/test_industry_tab.gd
   tests/test_sectors_panel.gd
+  tests/test_sectors_retro.gd
   tests/test_firm_sheet.gd
   tests/test_industry_closure.gd
   tests/test_region_fund.gd
@@ -314,6 +315,7 @@ tests=(
   tests/test_prose_budget.gd
   tests/test_priorities.gd
   tests/test_briefing_hold.gd
+  tests/test_briefing_retro.gd
   tests/test_briefing_effects.gd
   tests/test_briefing_go.gd
   tests/test_briefing_clock.gd

@@ -71,6 +71,10 @@ var _focus_verb := ""
 var _confirm
 var _last_refusal := ""
 var _prog_pick := -1
+## The programme's slider is held: a rebuild under the drag would free it (sector_programme.gd).
+var _dragging := false
+## The programme's control a keyboard step left focused, "slider" or "box": its rebuild hands the focus on.
+var _prog_focus := ""
 
 
 func _init(sector_id := "") -> void:
@@ -115,10 +119,25 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	# A setup() after the first is a load: the discarded game's picks go with it (the retro review's item 7). The confirm
+	# card stays: it sits on the screen stack once and is re-armed by each ask (CompanyVerb.ask).
+	_good_filter = ""
+	_firm_id = ""
+	_focus_verb = ""
+	_last_refusal = ""
+	_prog_pick = -1
+	_dragging = false
+	_prog_focus = ""
 
 
 func mark_dirty() -> void:
 	_dirty = true
+
+
+## A tab hidden under a held slider never sees the release: the hold ends with it, or the tab stays frozen.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree():
+		_dragging = false
 
 
 func hide_close_button() -> void:
@@ -126,7 +145,7 @@ func hide_close_button() -> void:
 
 
 func _process(_delta: float) -> void:
-	if not _dirty or not is_visible_in_tree() or _state == null:
+	if not _dirty or _dragging or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
 	_refresh()
