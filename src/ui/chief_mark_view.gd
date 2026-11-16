@@ -127,6 +127,7 @@ static func _rerank_queued(main) -> void:
 ## from no memory, so its mark is up at once, not blank until its first month end (#393 pass 2, T2).
 static func after_load(main, game: Dictionary) -> void:
 	game.erase("report")
+	game.erase("month_cards")  # held for the discarded game's month end (a load from the pause menu)
 	game["pending"] = {}
 	game["memory_before"] = {}
 	main._hud.chief_caption.clear()

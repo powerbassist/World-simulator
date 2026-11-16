@@ -115,11 +115,14 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	name.autowrap_mode = TextServer.AUTOWRAP_OFF
 	name.set_meta("programme_name", sector)
 	# Under a mouse drag the rebuild waits for the release: the price and the name follow live.
+	# 4.7.2 emits value_changed on every left press, moved or not, and on a drag that comes
+	# back to its start: while held, the readouts follow and the pick waits for the release.
 	slider.value_changed.connect(func(v: float) -> void:
 		panel._prog_focus = "slider" if slider.has_focus() else ""
 		if panel._dragging:
 			box.set_value_no_signal(float(prices[int(v)]))
 			name.text = _stop_name(list, int(v))
+			return
 		_pick(panel, int(v)))
 	# A keyboard step or an arrow rebuilt the tab and freed the focused control: the new one takes it.
 	if panel._prog_focus != "":
