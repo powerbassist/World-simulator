@@ -284,8 +284,10 @@ func _toggle_group(group_id: String) -> void:
 func _editor_busy() -> bool:
 	if _editor == null or not is_instance_valid(_editor) or not is_inside_tree():
 		return false
+	# A verb button the click left focused is no hand on the row: it held the rebuild off, the button stayed up after
+	# Abolish and a second click took it back (the retro review's item 4).
 	var held := get_viewport().gui_get_focus_owner()
-	return held != null and _editor.is_ancestor_of(held)
+	return held != null and _editor.is_ancestor_of(held) and not held.has_meta("verb")
 
 
 ## The page's ONE draft: the Budget tab's levers read and write it too (no second pending set).
@@ -346,7 +348,8 @@ func _make_editor(channel: String, key: String) -> Control:
 	editor.autumn = FinanceBill.autumn_open(_state, _loader)
 	editor.setup(_state, _loader, _draft, _price, channel, key)
 	editor.moved.connect(_on_moved)
-	editor.structure_changed.connect(_on_structure_changed)
+	# The verb pressed is freed by the rebuild: the keyboard lands back on the rebuilt editor.
+	editor.structure_changed.connect(_on_structure_changed.bind(true))
 	_editor = editor
 	return editor
 
@@ -357,12 +360,13 @@ func _on_create(kind: String) -> void:
 	var ns = _state.player()
 	_draft.set_create(kind, FinanceAutumn.default_rate(ns, kind))
 	_open_id = FinanceRows.row_id(FinanceDraft.TAX, kind)
-	_focus_wanted = true
-	_on_structure_changed()
+	_on_structure_changed(true)
 
 
-## An editor's verb changed what the page lists (a birth taken back, a kind abolished or kept).
-func _on_structure_changed() -> void:
+## An editor's verb changed what the page lists (a birth taken back, a kind abolished or kept); `focus` sends the keyboard
+## to the rebuilt editor.
+func _on_structure_changed(focus := false) -> void:
+	_focus_wanted = _focus_wanted or focus
 	_autumn_dropped = false
 	_paint_due = true
 	_dirty = true

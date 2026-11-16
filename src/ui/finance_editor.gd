@@ -126,6 +126,7 @@ func _verb(text: String, node_name: String, change: Callable) -> void:
 	button.name = node_name
 	button.text = text
 	button.flat = true
+	button.set_meta("verb", true)  # the panel's _editor_busy(): a focused verb does not hold the rebuild
 	button.pressed.connect(func() -> void:
 		change.call()
 		structure_changed.emit())
@@ -243,3 +244,9 @@ func _who_lines(state, loader) -> Array:
 func focus_lever() -> void:
 	if _slider != null:
 		_slider.grab_focus()
+		return
+	# An abolished kind has no slider: its way back takes the keyboard.
+	for child in get_children():
+		if child is Button:
+			(child as Button).grab_focus()
+			return

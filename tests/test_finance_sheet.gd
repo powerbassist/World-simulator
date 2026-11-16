@@ -16,6 +16,7 @@ const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
+const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Government = preload("res://src/sim/government.gd")
@@ -60,6 +61,7 @@ func _process(_delta: float) -> bool:
 			_check_the_chips_follow_the_direction()
 			_check_a_ticked_force_survives_a_draft_move()
 			_check_a_draft_move_repaints_the_open_sheet()
+			_check_an_abolition_repaints_the_open_sheet()
 			_check_closing_keeps_the_draft()
 			_check_france_may_force_and_says_the_censure()
 			_check_table_from_the_sheet_tables_the_draft()
@@ -372,6 +374,36 @@ func _check_a_draft_move_repaints_the_open_sheet() -> void:
 	_settle()
 	if _sheet().find_child("SheetRow_spending_pct_gdp_defence", true, false) != null:
 		_fail("a row dragged back to its live value stays on the sheet")
+
+
+## The retro review's item 2: the sheet's stamp hashed the priceable rows alone, so an abolition (or a new tax)
+## drafted with the sheet open never reached it, and Table tabled rows the player had not been shown.
+func _check_an_abolition_repaints_the_open_sheet() -> void:
+	var draft = _panel.shared_draft()
+	var kind := ""
+	for key in _state.player().tax_rates_pct:
+		if String(key) != "vat" and float(_state.player().tax_rates_pct[key]) > 0.0:
+			kind = String(key)
+			break
+	var row_name := "SheetRow_" + FinanceRows.row_id(FinanceDraft.ABOLISH, kind).replace(":", "_")
+	# The autumn month, or the panel's sweep takes the abolition out of the draft.
+	var month := int(_state.month)
+	_state.month = int(_loader.nations[_state.player().id].finance_autumn_month)
+	_panel._on_moved()
+	_settle()
+	draft.toggle_abolish(kind)
+	_panel._on_moved()
+	_settle()
+	if _sheet().find_child(row_name, true, false) == null:
+		_fail("an abolition drafted while the sheet is open does not reach it (%s)" % kind)
+	draft.toggle_abolish(kind)
+	_panel._on_moved()
+	_settle()
+	if _sheet().find_child(row_name, true, false) != null:
+		_fail("an abolition taken back stays on the open sheet (%s)" % kind)
+	_state.month = month
+	_panel._on_moved()
+	_settle()
 
 
 func _check_closing_keeps_the_draft() -> void:

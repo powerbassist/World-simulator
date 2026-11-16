@@ -82,7 +82,9 @@ func setup(state, loader, draft, price) -> void:
 func refresh() -> void:
 	if not visible or _state == null:
 		return
-	var stamp := "%s|%d|%d|%d|%s|%s|%s|%d" % [var_to_str(_draft.pending()), _state.year, _state.month, _state.day,
+	# The whole bill, births and abolitions with the priced rows: hashing pending() alone left an autumn row
+	# drafted with the sheet open off it, and Table tabled what the player had not been shown.
+	var stamp := "%s|%d|%d|%d|%s|%s|%s|%d" % [var_to_str(_draft.bill()), _state.year, _state.month, _state.day,
 		str(_state.player().tabled_bill), UiTheme.text_scale(), Strings.language(), _draft.moves().size()]
 	if stamp == _stamp:
 		return

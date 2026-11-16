@@ -54,6 +54,7 @@ func _process(_delta: float) -> bool:
 			_check_a_birth_is_a_row_named_everywhere()
 			_check_taking_a_birth_back()
 			_check_an_abolition()
+			_check_a_clicked_verb_rebuilds_at_once()
 			_check_births_and_abolitions_are_priced()
 			_check_the_autumn_rows_leave_when_the_month_ends()
 			_check_a_bill_at_vote_locks_its_births()
@@ -181,6 +182,36 @@ func _check_an_abolition() -> void:
 	if draft.is_abolished("tobacco_duty"):
 		_fail("Keep it left the kind abolished")
 	draft.revert()
+
+
+## The retro review's item 4: a click gives the verb button the keyboard, and a focus inside the open editor read as
+## "a hand on the lever", so the page never rebuilt: the button stayed up, a second click un-abolished the kind.
+func _check_a_clicked_verb_rebuilds_at_once() -> void:
+	var draft = _panel.shared_draft()
+	draft.revert()
+	if _panel._open_id != "tax_rates_pct:tobacco_duty":
+		_panel._on_open("tax_rates_pct:tobacco_duty")
+	_rebuild()
+	var abolish := _node("AbolishTax") as Button
+	if abolish == null:
+		_fail("the autumn offers no way to abolish a kind in force")
+		return
+	abolish.grab_focus()  # a click takes the focus
+	abolish.pressed.emit()
+	_panel._process(0.0)
+	if _node("KeepTax") == null:
+		_fail("a clicked Abolish does not rebuild its editor: no way back shown")
+	elif _panel._editor != null:
+		_panel._editor.focus_lever()
+		if _panel.get_viewport().gui_get_focus_owner() != _node("KeepTax"):
+			_fail("after Abolish the keyboard does not land on Keep it")
+	var again := _node("AbolishTax") as Button
+	if again != null and is_instance_valid(again) and again.is_visible_in_tree():
+		again.pressed.emit()
+		if not draft.is_abolished("tobacco_duty"):
+			_fail("a second click on the still-shown Abolish took the abolition back")
+	draft.revert()
+	_rebuild()
 
 
 ## The sim's own read prices a bill with births (FinanceBill.preview; Budget.preview refuses an unborn kind): the sheet's
