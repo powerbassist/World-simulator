@@ -212,6 +212,13 @@ func _test_both_region_reads_carry_the_closure() -> void:
 	ClosureRegion.move(state, ns, {"city_id": String(list[1].cities[0].id), "jobs": 4000.0})
 	if not is_same(ns.region_closure_pts, held) or JSON.stringify(ns.region_closure_pts) != kept:
 		_fail("region reads: ClosureRegion.move() swapped or wrote the register")
+	# A second closure in the booked region: the read adds its lift to the booked one
+	# (GLM gap 3), as booking it would.
+	var city := String(list[0].cities[0].id)
+	var priced := ClosureRegion.move(state, ns, {"city_id": city, "jobs": 3000.0})
+	ClosureRegion.book(ns, list, city, 3000.0)
+	if not is_equal_approx(float(priced["after_pct"]), float(Regions.unemployment_by_region(ns, list, access, sites)[String(priced["region_id"])])):
+		_fail("region reads: a second closure's read %s is not its booking %s" % [priced["after_pct"], Regions.unemployment_by_region(ns, list, access, sites)[String(priced["region_id"])]])
 
 
 ## Two closures in one region add up (GLM gap pass, item 6): the register sums, it does

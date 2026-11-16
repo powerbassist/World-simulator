@@ -43,6 +43,7 @@ const Bills = preload("res://src/sim/bills.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Demography = preload("res://src/sim/demography.gd")
 const CompaniesAid = preload("res://src/sim/companies_aid.gd")
+const AidWords = preload("res://src/ui/aid_words.gd")
 
 const PLAYER := "FRA"
 ## Two industrial rivals of unequal labour intensity. The pair the jobs channel is
@@ -422,6 +423,17 @@ func _test_the_strip_prices_the_credit_execute_books() -> void:
 	Companies.execute(state, ns, _loader.company_actions, _action("strategic_rescue"), RIVAL, _loader)
 	if priced <= 0.0 or not is_equal_approx(priced, float(entry.get("aid_credit", -1.0))):
 		_fail("granted credit: the strip priced %s, execute booked %s" % [priced, entry.get("aid_credit")])
+	# The strip itself (GLM gap 5): AidWords.offsets books what execute() booked.
+	var state3 = _new_state()
+	var ns3 = state3.nations[PLAYER]
+	var e3: Dictionary = ns3.companies[RIVAL]
+	e3["failed"] = true
+	e3["share"] = 0.0
+	e3["rescue_months_left"] = 3
+	var shown: Dictionary = AidWords.offsets(state3, _loader, ns3, firm, _action("strategic_rescue"))
+	var raw: Dictionary = _action("strategic_rescue").effects["bloc_offset"]
+	if not is_equal_approx(float(shown["workers"]), float(raw["workers"]) * priced):
+		_fail("granted credit: the strip shows workers %s, not %s x %s" % [shown["workers"], raw["workers"], priced])
 	# A healthy firm: the read is the live factor.
 	var state2 = _new_state()
 	var ns2 = state2.nations[PLAYER]
