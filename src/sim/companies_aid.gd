@@ -72,8 +72,9 @@ static func bloc_credit(ns, loader, company_id: String, entry: Dictionary, op: S
 ## copy (Companies.preview) and the factor execute() itself writes there. The retro
 ## review's T2 on #380: a failed major in its rescue window reads 0 live jobs, so
 ## credit_factor() on the live state priced no bloc move, while execute() restores the
-## firm before it books the credit. The live state is not written. A refused verb (no
-## grant on the copy) reads credit_factor().
+## firm before it books the credit. The live state is not written. A verb the copy
+## refused reads the entry's earlier grant if it has one (a firm already aided, whose
+## verb is not offered), else credit_factor().
 static func granted_credit(state, ns, loader, action, company_id: String) -> float:
 	var copy = Companies.preview(state, ns, loader.company_actions, action, company_id, loader)[0]
 	var entry: Dictionary = copy.companies.get(company_id, {})

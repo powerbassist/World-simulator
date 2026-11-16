@@ -364,8 +364,8 @@ static func _rate(ns, region, deviation: float, extra: Dictionary) -> float:
 ## unemployment_pct() for every region of a nation in one pass -- V5.0c's tick
 ## lever, because Migration and Unrest ask it for every region of every nation. The
 ## deviations come from deviation_by_region() in one call, so each region's figure
-## is the same float unemployment_pct() returns (tests/test_regions.gd pins the two
-## equal). `extra`: a lift not booked yet, {region_id: points}, for a read that prices one.
+## is the same float unemployment_pct() returns (tests/test_tick_levers.gd pins the two
+## equal, and tests/test_closures.gd with a closure booked). `extra`: a lift not booked yet, {region_id: points}, for a read that prices one.
 static func unemployment_by_region(ns, region_list: Array, access: Dictionary, sites: Dictionary, extra: Dictionary = {}) -> Dictionary:
 	var out: Dictionary = {}
 	if region_list.is_empty():
