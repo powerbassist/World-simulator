@@ -15,6 +15,11 @@ extends PanelContainer
 ## and keeps the newest NOTES_MAX, the oldest going first: news the player has
 ## not read is worth more than news that has sat there.
 ##
+## **Rework 2 S2: the notes are read in the Folder** (presidency-page-brief.md, "a note
+## still arrives; it stops being a card that asks nothing"). Their cards are kept here
+## as the store the Folder's news group reads (notes()), hidden; the lane shows one
+## line, "News: N", the notes landed since the player last read them, which opens them.
+##
 ## The lanes scroll inside the dock, so a column of tall rows can no longer run
 ## off the bottom of the screen (someday: "the overlay message column has no
 ## bound", V5.1-0c). Newest first in every lane.
@@ -25,7 +30,7 @@ extends PanelContainer
 ## goes in the title, so six identical leaks are one row. A new body is new news (a
 ## tally, a default, a second person's leak) and keeps its own row. And a note over
 ## FOLD_MIN characters shows the whole sentences that fit, the rest behind More,
-## which opens it in place -- a click on the card itself already goes to
+## which opens it in place -- a click on the card itself already went to
 ## Dispatches, and the body's TermText takes the hover for its glossary plates, so
 ## neither could be the bubble. A short note is never folded: a division or a
 ## tally is data, not prose; and a glossary mark is never folded away.

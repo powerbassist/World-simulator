@@ -891,8 +891,9 @@ func _wire_hud() -> void:
 		_unseen_events.erase(event_id)
 		_hud.inbox.dismiss(id)
 		_resume_if_decision_settled()
-		# Nothing holds now: the tab is the player's again.
-		if not _decision_holds_clock(): _hud.inbox.slide_out()
+		# Nothing left to answer: the tab is the player's again. A waiting request keeps it up (requests never
+		# hold the clock, so "unless a decision holds" hid them; the parent's call on rework 2 S2).
+		if _hud.inbox.lane_count(_hud.inbox.DECISIONS) + _hud.inbox.lane_count(_hud.inbox.REQUESTS) == 0: _hud.inbox.slide_out()
 		_update_top_bar()
 		_windows.mark_all_dirty()
 	)

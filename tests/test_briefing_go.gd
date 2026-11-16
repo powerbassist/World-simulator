@@ -7,15 +7,16 @@ extends SceneTree
 ## on a verb. For each kind: a fixture state where the line's subject is real (an
 ## event on the desk, a request on its card, a tabled bill, a live programme entry,
 ## a hostile person), the line built with the ranker's own constructor (the ranking
-## itself is test_priorities.gd's), the card shown through the driver's view, and
-## its Go pressed by a real click, press and release frames apart. Then: the target
-## tab is open and an ENABLED, shown control carries the subject (acts_on.gd).
+## itself is test_priorities.gd's), the line put on the Presidency page's lead (G2: the
+## plate is retired, the page is the read), and its Go pressed by a real click, press and
+## release frames apart. Then: the target tab is open and an ENABLED, shown control
+## carries the subject (acts_on.gd); a desk file opens on the Folder tab.
 ##
 ## The one named exception (the parent's call on RF3): a tabled bill has no verb
 ## until the Assembly divides, so its Go is checked to show the tabled line.
 ##
-## The Go is also checked to close the card, and the chief of staff's face, name and
-## line to fill the card from a person record of kind chief_of_staff (a fixture until
+## The Go is also checked to leave the clock as the player had it, and the chief of staff's
+## name to fill the read from a person record of kind chief_of_staff (a fixture until
 ## Content's records are on main).
 
 const Click = preload("res://tests/click.gd")
@@ -30,6 +31,7 @@ const Closures = preload("res://src/sim/closures.gd")
 const Person = preload("res://src/core/person.gd")
 const President = preload("res://src/sim/president.gd")
 const PhoneDriver = preload("res://src/ui/phone_driver.gd")
+const ChiefMarkView = preload("res://src/ui/chief_mark_view.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -61,7 +63,7 @@ func _process(_delta: float) -> bool:
 		0:
 			if _cases.is_empty():
 				_check_footer()
-				_check_go_keeps_pause()
+				_check_go_keeps_the_clock()
 				_check_speaks_on_change()
 				_finish()
 				return true
@@ -191,17 +193,29 @@ func _show(c: Dictionary) -> void:
 	var lines := [line, Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")]
 	if c["kind"] == "budget" or c["kind"] == "unrest":
 		lines = [line, Priorities._standing("majority", "seats"), Priorities._standing("bloc", "workers")]
-	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
-	game["lines"] = lines
-	# The briefing paused a running clock, as a month boundary does (pre-gate B5).
-	game["was_running"] = true
+	_put_on_the_page(lines, [])
+	# A paused clock, so nothing arrives over the target in the frames the click takes.
 	_main._clock.paused = true
-	BriefingDriver.card_of(_main).show_view(BriefingDriver.view(_main, lines, {}))
 	c["target"] = BriefingDriver.target_of(line)
 
 
+## The read as the page draws it: the staged lines, after any re-rank already queued (it would rank
+## over them), pushed and drawn.
+func _put_on_the_page(lines: Array, also: Array) -> void:
+	if _main.has_meta(ChiefMarkView.RERANK_QUEUED):
+		ChiefMarkView._rerank_queued(_main)
+	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
+	game["lines"] = lines
+	game["also"] = also
+	game["memory_before"] = game.get("memory_before", {})
+	ChiefMarkView.refresh(_main)
+	_main._windows.open("overview")
+	_main._overview_panel.mark_dirty()
+	_main._overview_panel._process(0.0)
+
+
 func _go_button() -> Control:
-	return BriefingDriver.card_of(_main).go_buttons[0]
+	return _main._overview_panel._lead_rows[0].find_children("*", "Button", true, false)[0]
 
 
 func _check(c: Dictionary) -> void:
@@ -212,22 +226,17 @@ func _check(c: Dictionary) -> void:
 	if String(c["subject"]) == "":
 		_fail("%s: premise, the fixture named no subject" % label)
 		return
-	# V5.3 screen 3: a Go on a FILE (a crisis, a decision, a request) selects the file's page in the
-	# month's folder and keeps the folder up, the clock paused; it does not close.
+	# G2: a Go on a FILE (a crisis, a decision, a request) opens the Folder tab on that file's page.
 	if ["crisis", "decision", "request"].has(kind):
-		var card = BriefingDriver.card_of(_main)
-		if not card.visible or card.selected_file() == "":
-			_fail("%s: Go did not select the file's page in the folder (visible %s, page '%s')" % [label, card.visible, card.selected_file()])
+		_main._events_panel._refresh()
+		var shown: String = _main._events_panel.selected()
+		if not _main._windows.is_open("events") or not (shown.begins_with("file:") or shown.begins_with("desk:")):
+			_fail("%s: Go did not open the Folder on the file (page '%s')" % [label, shown])
 		if not _main._clock.paused:
-			_fail("%s: Go in the folder resumed the clock" % label)
-		BriefingDriver.close(_main)
+			_fail("%s: Go changed the clock" % label)
 		return
-	if BriefingDriver.card_of(_main).visible:
-		_fail("%s: Go did not close the briefing" % label)
-	# Pre-gate B5: Go keeps the clock paused, so a next-day audience cannot take the
-	# screen from the Go's target; the player resumes with Space or the clock.
 	if not _main._clock.paused:
-		_fail("%s: Go resumed the clock" % label)
+		_fail("%s: Go changed the clock" % label)
 	if tab == "inbox":
 		if not _main._hud.inbox.visible:
 			_fail("%s: Go did not bring up the inbox" % label)
@@ -285,29 +294,20 @@ func _check(c: Dictionary) -> void:
 			_fail("bloc: the filter outlived the tab")
 
 
-## Pre-gate B5 with nothing else holding the clock (the cases above leave a crisis
-## interrupt pending, which holds it anyway): Go keeps it paused, Continue resumes.
-func _check_go_keeps_pause() -> void:
+## G2: Go never touches the clock -- a running clock runs on after it (the page that holds the Go
+## never paused it, and the plate's "Go keeps the pause" went with the plate).
+func _check_go_keeps_the_clock() -> void:
 	var ns = _main._state.player()
 	ns.event_queue.clear()
 	ns.audience_requests.clear()
 	_main._unseen_events.clear()
 	_main._paused_for_programme = false
-	for verb in ["go", "continue"]:
-		var lines := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")]
-		var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
-		game["lines"] = lines
-		game["was_running"] = true
-		_main._clock.paused = true
-		BriefingDriver.card_of(_main).show_view(BriefingDriver.view(_main, lines, {}))
-		if verb == "go":
-			BriefingDriver.go(_main, 0)
-			if not _main._clock.paused:
-				_fail("Go resumed the clock (pre-gate B5)")
-		else:
-			BriefingDriver.close(_main)
-			if _main._clock.paused:
-				_fail("premise: Continue did not resume the clock, so something else holds it")
+	_put_on_the_page([Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest")], [])
+	_main._clock.paused = false
+	BriefingDriver.go(_main, 0)
+	if _main._clock.paused:
+		_fail("a Go paused a running clock")
+	_main._clock.paused = true
 
 
 ## Final pre-gate TAKE 1 (RF3): the European election is a line only while the
@@ -379,8 +379,6 @@ func _check_speaks_on_change() -> void:
 		var spoke := player != null and player.stream != null
 		var situation := Priorities.situation(lines)
 		var caption := String(caption_plate.text())
-		if BriefingDriver.card_of(_main).visible:
-			_fail("month %d: the month end opened the card" % i)
 		if spoke != bool(months[i][2]):
 			_fail("month %d (%s, new %s): the chief %s" % [i, situation, months[i][1], "spoke" if spoke else "was silent"])
 		if (caption != "") != bool(months[i][2]):
@@ -409,21 +407,20 @@ func _check_footer() -> void:
 		also.append(Priorities._cand("request", id, now + 1, 5.0, 1.0, now))
 	AudienceDriver.refresh(_main)
 	var lines := [Priorities._standing("budget", "balance"), Priorities._standing("unrest", "unrest"), Priorities._standing("majority", "seats")]
-	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
-	game["lines"] = lines
-	game["also"] = also
-	var card = BriefingDriver.card_of(_main)
-	card.show_view(BriefingDriver.view(_main, lines, {}, also))
-	if card.also_buttons.size() != 1 or not String(card.also_buttons[0].text).contains("2"):
-		_fail("two crowded-out requests are not one footer group '2 requests': %s" % str(card.also_buttons.map(func(b): return b.text)))
+	_put_on_the_page(lines, also)
+	var page = _main._overview_panel
+	var footer: Array = page._rows_box.find_children("*", "Button", true, false).filter(
+		func(b): return not page._lead_rows.any(func(row): return row.is_ancestor_of(b)))
+	if footer.size() != 1 or not String(footer[0].text).contains("2"):
+		_fail("two crowded-out requests are not one footer group '2 requests': %s" % str(footer.map(func(b): return b.text)))
 		return
-	card.also_buttons[0].pressed.emit()
-	# V5.3 screen 3: the footer's Go on a request group selects that request's file in the folder.
-	if not card.visible or card.selected_file() != AudienceDriver.lane_of(_main).card_of("%s|f0" % pid):
-		_fail("the footer's Go did not land on the request's file in the folder (page '%s')" % card.selected_file())
-	BriefingDriver.close(_main)
-	card.show_view(BriefingDriver.view(_main, lines, {}, []))
-	if card._also.visible:
+	footer[0].pressed.emit()
+	# G2: the footer's Go on a request group opens that request's file on the Folder.
+	_main._events_panel._refresh()
+	if _main._events_panel.selected() != "file:" + AudienceDriver.lane_of(_main).card_of("%s|f0" % pid):
+		_fail("the footer's Go did not land on the request's file on the Folder (page '%s')" % _main._events_panel.selected())
+	_put_on_the_page(lines, [])
+	if _texts(page._rows_box).contains("Also due"):
 		_fail("an empty footer is shown")
 
 
@@ -432,10 +429,11 @@ func _check_chief() -> void:
 	var loader = _main._loader
 	var nid := String(_main._state.player().id)
 	var lines := [Priorities._standing("budget", "balance")]
-	if BriefingDriver.Staff.chief_of(loader, nid) == null:
-		var bare: Dictionary = BriefingDriver.view(_main, lines, {})
-		if String(bare["who"]) != "" or String(bare["line"]) != "":
-			_fail("with no chief of staff the card still names one")
+	var Staff = preload("res://src/sim/staff.gd")
+	if Staff.chief_of(loader, nid) == null:
+		_put_on_the_page(lines, [])
+		if String(_main._overview_panel._read.get("who", "")) != "":
+			_fail("with no chief of staff the read still names one")
 		var chief := Person.new()
 		chief.id = "%s_chief_fixture" % nid
 		chief.person_name = "Fixture Chief"
@@ -443,22 +441,24 @@ func _check_chief() -> void:
 		chief.voice = "chief_%s" % nid.to_lower()
 		loader.people[nid].append(chief)
 		loader.person_by_id[chief.id] = chief
-	var view: Dictionary = BriefingDriver.view(_main, lines, {})
-	if not String(view["who"]).contains("chief of staff"):
-		_fail("the chief's name is not on the card: '%s'" % view["who"])
-	if String(view["line"]) == "":
-		_fail("the chief says nothing (voice '%s')" % BriefingDriver.Staff.chief_of(loader, nid).voice)
-	var a := String(BriefingDriver.chief_said(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 10)["text"])
-	var b := String(BriefingDriver.chief_said(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 11)["text"])
+	_put_on_the_page(lines, [])
+	var who := String(_main._overview_panel._read.get("who", ""))
+	if not who.contains("chief of staff"):
+		_fail("the chief's name is not on the read: '%s'" % who)
+	var chief_id := String(Staff.chief_of(loader, nid).id)
+	if String(BriefingDriver.chief_said(loader, chief_id, "calm", 0)["text"]) == "":
+		_fail("the chief says nothing (voice '%s')" % Staff.chief_of(loader, nid).voice)
+	var a := String(BriefingDriver.chief_said(loader, chief_id, "calm", 10)["text"])
+	var b := String(BriefingDriver.chief_said(loader, chief_id, "calm", 11)["text"])
 	if a == b:
 		_fail("the chief's line repeats two months running: '%s'" % a)
 	# #229 QA TAKE 2 (E2): a load during the chief's line ends it -- the old game's
 	# chief never talks over the loaded one.
-	var said: Dictionary = BriefingDriver.chief_said(loader, String(BriefingDriver.Staff.chief_of(loader, nid).id), "calm", 10)
+	var said: Dictionary = BriefingDriver.chief_said(loader, chief_id, "calm", 10)
 	if String(said["clip"]) == "":
 		_fail("premise: the chief's calm line has no clip")
 		return
-	BriefingDriver.speak(_main, said, BriefingDriver.card_of(_main))
+	BriefingDriver.speak(_main, said, _main._hud.title_bar.chief_mark)
 	var player := _main.get_node_or_null(BriefingDriver.Voice.NODE) as AudioStreamPlayer
 	if player == null or player.stream == null or String(player.get_meta("card", "")) != BriefingDriver.LINE_CARD:
 		_fail("premise: the chief's line did not start under main")
@@ -519,3 +519,12 @@ func _finish() -> void:
 
 func _fail(message: String) -> void:
 	_failures.append(message)
+
+
+func _texts(node: Node) -> String:
+	var out := ""
+	for child in node.get_children():
+		if child is Label or child is Button:
+			out += String(child.text) + "\n"
+		out += _texts(child)
+	return out

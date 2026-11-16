@@ -313,7 +313,7 @@ func _build_page(ns) -> void:
 		_record_page(ns.event_history[int(_selected.trim_prefix("record:"))])
 	elif _selected.begins_with("note:"):
 		_note_page(_selected.trim_prefix("note:"))
-	for button in _page.find_children("*", "Button", true, false):
+	for button in _page.find_children("*", "Button", true, false):  # i18n: ok a class name
 		if not (button as Button).disabled:
 			_primary = button
 			break

@@ -27,6 +27,8 @@ const HEIGHTS := {Kind.HEAD: 18.0, Kind.APPROVAL: 96.0, Kind.GOAL: 40.0, Kind.NO
 const POLL_SPAN := 20.0
 ## The past half's left margin, px at text size 100 %: the approval ticks sit in it, clear of the line.
 const LEFT := 24.0
+## The past half's width in snapshots, the reader's own (term_reads.gd).
+const PAST_MONTHS: int = preload("res://src/ui/term_reads.gd").PAST_MONTHS
 
 var kind := Kind.NOTE
 var _past := 0            # how many months the past half holds (PAST_MONTHS once a year is in)
@@ -75,7 +77,7 @@ func seam_x() -> float:
 ## The x of the past snapshot `i` (0 the oldest of a full year, PAST_MONTHS - 1 today).
 func past_x(i: int) -> float:
 	var left := LEFT * UiTheme.text_scale()
-	return left + (seam_x() - left) * float(i) / 11.0
+	return left + (seam_x() - left) * float(i) / float(PAST_MONTHS - 1)
 
 
 ## The x of `m` months after today.
@@ -91,12 +93,12 @@ func _fs() -> int:
 	return roundi(UiTheme.SIZE_MICRO * UiTheme.text_scale())
 
 
-## The values laid on the past half, newest at the seam: a short history sits at its right end,
-## and a field history did not always carry starts at `first` (its index among the snapshots).
-func _past_points(values: PackedFloat64Array, top: float, bottom: float, first := -1) -> PackedVector2Array:
+## The values laid on the past half, newest at the seam: a short history (a field history did not
+## always carry starts late) sits at its right end.
+func _past_points(values: PackedFloat64Array, top: float, bottom: float) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	var n := values.size()
-	var start := 12 - n if first < 0 else 12 - _past + first
+	var start := PAST_MONTHS - n
 	for i in n:
 		out.append(Vector2(past_x(start + i), _y(values[i], top, bottom)))
 	return out
@@ -127,7 +129,7 @@ func _draw_head(font: Font, fs: int) -> void:
 		if (months.size() - 1 - i) % 3 != 0 or i == months.size() - 1:
 			continue
 		var ym: Array = months[i]
-		draw_string(font, Vector2(past_x(12 - months.size() + i), base),
+		draw_string(font, Vector2(past_x(PAST_MONTHS - months.size() + i), base),
 			DateText.month_year(int(ym[1]), int(ym[0])).to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
 	draw_string(font, Vector2(seam_x() + 4.0, base), tr("TODAY"), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.accent())
 	var today: Array = _data.get("today", [2000, 1])
@@ -177,10 +179,10 @@ func _draw_goal(font: Font, fs: int) -> void:
 	draw_dashed_line(Vector2(0.0, goal_y), Vector2(seam_x(), goal_y), UiTheme.TEXT_DIM, 1.0, 4.0)
 	var values: PackedFloat64Array = _data.get("values", PackedFloat64Array())
 	if values.size() >= 2:
-		draw_polyline(_past_points(values, top, bottom, int(_data.get("first", -1))), UiTheme.TEXT, 2.0, true)
+		draw_polyline(_past_points(values, top, bottom), UiTheme.TEXT, 2.0, true)
 	var chosen := int(_data.get("chosen", -1))
 	if chosen >= 0:
-		var cx := past_x(12 - _past + chosen)
+		var cx := past_x(PAST_MONTHS - _past + chosen)
 		draw_line(Vector2(cx, 2.0), Vector2(cx, size.y - 2.0), UiTheme.TEXT_DIM, 1.0)
 	var mid := size.y * 0.5
 	var due := int(_data.get("due", -1))

@@ -321,7 +321,7 @@ static func deployment_opinion_load(state, ns) -> float:
 ## Cached rather than called, and the reason is the preload graph rather than
 ## speed: budget.gd and opinion.gd reading Defence directly is an edge each, and
 ## opinion.gd's issue_satisfaction(ns) would stop being pure-on-ns -- which
-## elections.gd's attribution and overview_panel.gd both depend on.
+## elections.gd's attribution and presidency_rows.gd both depend on.
 ##
 ## Gated on has_budget, bloc.gd:114's shape. The REGISTERS are not gated: an
 ## AI-to-AI pact is world state like a measure, and the map and the nation panel

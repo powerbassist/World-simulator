@@ -120,14 +120,8 @@ static func movements(state, months := TREND_MONTHS) -> Array[Dictionary]:
 	return out
 
 
-## The figure moving worst, or {} when nothing has moved enough to be worth
-## saying. Same row shape movements() returns.
-static func worst(state, months := TREND_MONTHS) -> Dictionary:
-	return worst_of(movements(state, months))
-
-
-## Same selection worst() makes, factored out so a caller holding an already
-## -built movements() array (decision effects, U4) does not recompute it.
+## The figure moving worst among `rows` (movements()' shape), or {} when nothing has moved
+## enough to be worth saying.
 static func worst_of(rows: Array[Dictionary]) -> Dictionary:
 	var found := {}
 	for row in rows:

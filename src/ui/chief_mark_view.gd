@@ -113,13 +113,17 @@ static func follow(main) -> void:
 
 
 static func queue_rerank(main) -> void:
+	if main._overview_panel != null:
+		main._overview_panel.await_read()
 	if not main.has_meta(RERANK_QUEUED):
 		main.set_meta(RERANK_QUEUED, true)
 		_rerank_queued.bind(main).call_deferred()
 
 
+## Once per queue: a re-rank already run for it (a caller that needs the read now runs it early) leaves
+## the deferred call nothing to do, or it would rank over what was set since.
 static func _rerank_queued(main) -> void:
-	if not is_instance_valid(main):
+	if not is_instance_valid(main) or not main.has_meta(RERANK_QUEUED):
 		return
 	main.remove_meta(RERANK_QUEUED)
 	refresh(main, true)
@@ -167,12 +171,13 @@ static func clear(main) -> void:
 ## The Presidency page's lead is this read (rework 2, "one ranking"): the same lines the mark
 ## names, the chief's face and name, and the line he spoke at this month's end (speak()), none
 ## in a month he kept silent: month_end's rule, never a second one.
-static func _push_read(main, lines: Array, who: String, face: Texture2D, _chief) -> void:
+static func _push_read(main, lines: Array, who: String, face: Texture2D, chief) -> void:
 	if main._overview_panel == null:
 		return
 	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
 	var said := String(game.get("spoken_line", "")) if String(game.get("spoken_key", "")) == month_key(main) else ""
 	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said,
+		"feel": preload("res://src/ui/feelings.gd").of(main._state.player(), String(chief.id)) if chief != null else {},
 		"also": also_groups(main, lines.size(), game.get("also", [])),
 		"effects": BriefingEffects.lines(main._state, main._loader, game.get("report", {}))})
 

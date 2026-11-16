@@ -39,8 +39,6 @@ const DeskCards = preload("res://src/ui/desk_cards.gd")
 ## (EffectsLedger.drop_default_echo); the desk's "Decided for you" (26) is the rest.
 ## G2 moves the month's cards to the Presidency page's part 5.
 const INBOX_CEILING := 196
-## Spec 3.5: the monthly briefing card, in each situation tools/screenshot.gd stages.
-const BRIEFING_CEILING := 90
 
 ## The ceilings, sys 8+ words per tab (the note's "Budget sys 8+" column). Orgs is
 ## the note's 60 per organisation, for France's five.
@@ -167,23 +165,18 @@ func _initialize() -> void:
 	# V5.3-0 (b), spec 3.5: the months run through the game's own month hook, not a
 	# bare tick_month, so the inbox, the Agenda and Dispatches stand in their played
 	# state (a bare tick left Dispatches at 14 words against 187 in play). The clock
-	# is not running, so the month runs whole, now (month_runner.gd). The monthly
-	# briefing opens as in play and is closed unread: a month it shows says the
-	# consequence card in its place (spec 3.3), so the inbox does not carry it.
+	# is not running, so the month runs whole, now (month_runner.gd). G2: the chief's
+	# plate is retired (his read is the Presidency page, whose ceilings are
+	# test_presidency_page.gd's), so nothing opens over the months.
 	for i in 12:
 		var next: int = main._state.year * 12 + main._state.month + 1
 		var year := floori((next - 1) / 12.0)
 		main._on_month_elapsed(year, next - year * 12)
 		await process_frame
-		if BriefingDriver.showing(main):
-			BriefingDriver.close(main)
-			await process_frame
 	_stage_desk(main)
 	windows.mark_all_dirty()
 	await _sweep(main, "month 12")
 	await _sweep_inbox(main)
-	for fixture in ["calm", "tense", "crisis"]:
-		await _sweep_briefing(main, fixture)
 	await _sweep_industry_card(main)
 	await _sweep_closure_card(main)
 	await _sweep_sector_tile(main)
@@ -286,50 +279,6 @@ func _sweep_inbox(main) -> void:
 	if total > INBOX_CEILING:
 		_fail("inbox (month 12): %d visible words, the ceiling is %d" % [total, INBOX_CEILING])
 	inbox.slide_out()
-
-
-## Spec 3.5: the briefing card, staged as tools/screenshot.gd's --briefing does --
-## calm as the month left it, tense with a request waiting, crisis with an
-## interrupt on the desk -- each at or under BRIEFING_CEILING visible words.
-func _sweep_briefing(main, fixture: String) -> void:
-	var state = main._state
-	var ns = state.player()
-	var now := int(state.year) * 12 + int(state.month)
-	if fixture == "crisis":
-		var ev = main._loader.events[0]
-		var entry := {"event_id": String(ev.id), "event_name": ev.event_name, "months_left": 2,
-			"interrupt": true, "severity": 3, "category": ev.category}
-		ns.event_queue.append(entry)
-		preload("res://src/ui/desk_cards.gd").push(main, ev, entry)
-	if fixture == "tense":
-		for person in main._loader.people[String(ns.id)]:
-			if String(person.kind) == "politician" and String(person.id) != preload("res://src/sim/president.gd").leader_id(ns):
-				ns.audience_requests.append({"id": "%s|%d" % [person.id, now], "person_id": String(person.id),
-					"object": "programme:none", "stance": "sponsor", "arrived_month": now - 1, "deadline_month": now + 1,
-					"status": "pending", "date": {}, "resolved_month": -1})
-				break
-		preload("res://src/ui/audience_driver.gd").refresh(main)
-	BriefingDriver._games[main.get_instance_id()]["pending"] = {}
-	BriefingDriver.month_end(main, {})
-	BriefingDriver.read(main)  # G1: the card opens when the player asks
-	await process_frame
-	await process_frame
-	var card: Control = BriefingDriver.card_of(main)
-	if not card.visible:
-		_fail("briefing (%s): premise, the card did not open" % fixture)
-		return
-	var total := 0
-	for node in _visible_text_nodes(card):
-		var words := _words(_text_of(node))
-		total += words.size()
-		if _dump.has("briefing"):
-			print("dump briefing (%s) %3d %s: %s" % [fixture, words.size(), node.get_class(), _text_of(node).left(90).replace("
-", " / ")])
-	print("prose budget  briefing (%-6s)              all words %5d  ceiling %d" % [fixture, total, BRIEFING_CEILING])
-	if total > BRIEFING_CEILING:
-		_fail("briefing (%s): %d visible words, the ceiling is %d" % [fixture, total, BRIEFING_CEILING])
-	BriefingDriver.close(main)
-	await process_frame
 
 
 ## A6: the health line's tile on the Budget, opened with its verb and strip.

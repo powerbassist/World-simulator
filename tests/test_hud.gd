@@ -436,8 +436,8 @@ func _check_card_is_an_answer_surface() -> void:
 	stack.push("No actions here", "Plain card.")
 	for card in stack.get_children():
 		for b in card.find_children("*", "Button", true, false):
-			# The NOTES lane's own Clear all (G9) is the lane's, not a card's.
-			if b.text != "X" and b.name != "ClearNotes":
+			# The NOTES lane's own Clear all (G9) and News line (rework 2 S2) are the lane's, not a card's.
+			if b.text != "X" and b.name != "ClearNotes" and b.name != "NewsLine":
 				_fail("a card with no actions rendered an extra button '%s'" % b.text)
 	stack.clear()
 

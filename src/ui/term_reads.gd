@@ -56,8 +56,7 @@ static func ahead(state) -> int:
 
 ## One lane per entry of this term's programme, in register order:
 ## {id, name, status, fraction, values (the judged figure over `past`), goal, chosen (the
-## index in `past` where it was chosen, -1 when before the window), first (the index in `past` of
-## the first value: a field history did not always carry starts late), due (months ahead to its
+## index in `past` where it was chosen, -1 when before the window), due (months ahead to its
 ## deadline, -1 once concluded), due_text, tip (now, goal and clock in words: the gutter's
 ## table twin of what the lane draws), tab (where its goal is moved)}.
 static func goal_lanes(state, loader) -> Array:
@@ -85,7 +84,6 @@ static func goal_lanes(state, loader) -> Array:
 			"status": String(entry["status"]),
 			"fraction": _fraction(state, terms, String(entry["status"])),
 			"values": values,
-			"first": entries.size() - values.size(),
 			"goal": float(terms.get("goal_value", 0.0)),
 			"chosen": chosen if chosen >= 0 else -1,
 			"due": due,

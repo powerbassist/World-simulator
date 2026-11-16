@@ -108,6 +108,7 @@ func _process(_delta: float) -> bool:
 	_check_the_words()
 	_check_go()
 	_check_also_due_and_the_effects()
+	_check_one_build_per_command()
 	# After the word ceilings: these run months on, past the state the ceilings are read at.
 	_check_concluded_chosen_mark()
 	_check_the_spoken_line_month()
@@ -397,6 +398,22 @@ func _check_go() -> void:
 	elif not _main._windows.is_open(target) and target != "overview":
 		_fail("the first Go did not open '%s'" % target)
 	_main._windows.open("overview")
+
+
+## #401 pass 2, RECORD 11: a command sweeps every panel and queues the chief's re-rank for the frame's
+## end. The page builds ONCE, after the re-rank: a build in the sweep's frame drew the lead the command
+## had just made stale, then built again when the read landed.
+func _check_one_build_per_command() -> void:
+	_draw()
+	var before: int = _page.builds
+	_main._windows.mark_all_dirty()  # a command's sweep: dirtied queues the re-rank
+	_page._process(0.0)  # the sweep's own frame
+	if _page.builds != before:
+		_fail("the page built in the sweep's frame, before the chief's re-rank landed (a stale lead)")
+	_flush_rerank()  # the frame's end
+	_page._process(0.0)
+	if _page.builds != before + 1:
+		_fail("one command built the page %d times, not once" % (_page.builds - before))
 
 
 ## The plate's two other jobs, carried by the page (G2): an item in its last month the lines crowded
@@ -732,8 +749,15 @@ func _check_the_line_survives_a_load() -> void:
 
 func _draw() -> void:
 	_main._windows.open("overview")
+	_flush_rerank()
 	_page.mark_dirty()
 	_page._process(0.0)
+
+
+## The frame's end, where a queued re-rank runs (call_deferred): this test steps no frame between.
+func _flush_rerank() -> void:
+	if _main.has_meta(ChiefMarkView.RERANK_QUEUED):
+		ChiefMarkView._rerank_queued(_main)
 
 
 func _advance_months(months: int) -> void:

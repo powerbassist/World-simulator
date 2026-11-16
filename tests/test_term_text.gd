@@ -145,11 +145,15 @@ func _check_the_sinks_mark_terms() -> void:
 	if not String(body.text).contains("term:deficit") or body.get_parsed_text() != "The deficit grew.":
 		_fail("set_body bypassed the marking: %s" % body.text)
 	inbox.queue_free()
-	var source := FileAccess.get_file_as_string("res://src/ui/events_panel.gd")
-	for sink in ['PanelKit.rich(box, Strings.row_summary("events", ev))',
-			'PanelKit.rich(detail, Strings.choice_summary(ev.id, choice))']:
-		if not source.contains(sink):
-			_fail("events_panel.gd no longer prints its text through a rich line: %s" % sink)
+	# G2: the Folder (events_panel.gd) draws a desk file through file_view.gd, whose situation goes
+	# through PanelKit.line (a TermText when it carries a mark), and a record's meaning as a rich line.
+	var sinks := {"res://src/ui/events_panel.gd": ["PanelKit.rich(_page, what)"],
+		"res://src/ui/file_view.gd": ['PanelKit.line(head, String(page["situation"]), PanelKit.Tone.DIM)']}
+	for path in sinks:
+		var source := FileAccess.get_file_as_string(path)
+		for sink in sinks[path]:
+			if not source.contains(sink):
+				_fail("%s no longer prints its text through a rich line: %s" % [path, sink])
 	_check_the_row_sinks()
 
 
@@ -159,7 +163,7 @@ func _check_the_sinks_mark_terms() -> void:
 ## summary shown there reads its words without the tags.
 func _check_the_row_sinks() -> void:
 	var sinks := {
-		"res://src/ui/events_panel.gd": ["answer.tooltip_text = PanelKit.TermText.plain(what)"],
+		"res://src/ui/events_panel.gd": ["PanelKit.rich(_page, what)"],
 		"res://src/ui/law_sheet.gd": ["PanelKit.rich(box, Strings.law_summary(law), PanelKit.Tone.PLAIN)"],
 		"res://src/ui/programme_picker.gd": ['PanelKit.rich(block, Strings.row_summary("programme", terms))'],
 		"res://src/ui/campaign_panel.gd": ['button.tooltip_text = PanelKit.TermText.plain(Strings.row_summary("pledges", action))'],

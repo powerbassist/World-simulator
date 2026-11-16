@@ -18,7 +18,6 @@ extends SceneTree
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const AudienceScene = preload("res://src/ui/audience_scene.gd")
-const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
 const PhoneDialog = preload("res://src/ui/phone_dialog.gd")
 const ElectionVerdict = preload("res://src/ui/election_verdict.gd")
 const NationPanel = preload("res://src/ui/nation_panel.gd")
@@ -81,8 +80,6 @@ func _init() -> void:
 	_scene = AudienceScene.new()
 	_scene.size = Vector2(1120, 630)
 	root.add_child(_scene)
-	_chief = ChiefBriefing.new()
-	root.add_child(_chief)
 	_phone = PhoneDialog.new()
 	root.add_child(_phone)
 
@@ -142,13 +139,17 @@ func _check_audience() -> void:
 		_fail("the close did not give the farewell: '%s'" % spoken.text)
 
 
+## G2: the chief's read is the Presidency page's lead, and his mood rides its face.
 func _check_chief() -> void:
-	_chief.show_view({"header": "March", "who": "The chief", "line": "", "rows": [], "feel": FEEL, "close": "Continue"})
-	if not _chief._face.has_node("MoodBadge"):
-		_fail("the chief's briefing wears no mood badge for a view with feelings")
-	_chief.show_view({"header": "April", "rows": [], "close": "Continue"})
-	if _chief._face.has_node("MoodBadge"):
-		_fail("a briefing with no chief kept the last one's badge")
+	var page = _main._overview_panel
+	page.set_read({"lines": [], "who": "The chief", "feel": FEEL})
+	page._fill_lead(_main._state.player())
+	if not page._face.has_node("MoodBadge"):
+		_fail("the chief's read wears no mood badge for a read with feelings")
+	page.set_read({"lines": []})
+	page._fill_lead(_main._state.player())
+	if page._face.has_node("MoodBadge"):
+		_fail("a read with no chief kept the last one's badge")
 
 
 func _check_verdicts() -> void:

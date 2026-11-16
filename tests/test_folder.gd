@@ -48,6 +48,7 @@ func _process(_delta: float) -> bool:
 	_check_read_opens_the_page()
 	_check_go_opens_the_file()
 	_check_the_news_line()
+	_check_the_inbox_stays_while_a_request_waits()
 	_finish()
 	return true
 
@@ -283,6 +284,32 @@ func _check_the_news_line() -> void:
 		_fail("the News line did not open the Folder's news (selected '%s')" % _panel().selected())
 	if inbox.news_count() != 0:
 		_fail("the news read on the Folder still counts %d" % inbox.news_count())
+	_clear_desk()
+
+
+## The parent's call on S2 (QA, in play): after an answer the inbox stays over the tab while a decision
+## or a request is still in it; it slides out only once it holds neither (or the player puts it away).
+## Requests never hold the clock, so the old rule ("unless a decision holds the clock") hid waiting ones.
+func _check_the_inbox_stays_while_a_request_waits() -> void:
+	_clear_desk()
+	var inbox = _main._hud.inbox
+	_main._windows.open("finances")
+	var carded := _event(0)
+	_request()
+	inbox.slide_in()
+	if not inbox.is_slid():
+		_fail("premise: the inbox did not slide over the tab")
+		return
+	inbox.card_action.emit(carded, 0)  # the card's own button
+	if not inbox.is_slid():
+		_fail("answering a decision slid the inbox away with a request still waiting")
+	_clear_desk()
+	carded = _event(0)
+	inbox.slide_in()
+	inbox.card_action.emit(carded, 0)
+	if inbox.is_slid():
+		_fail("answering the last thing in the inbox left it over the tab")
+	_main._windows.close_all()
 	_clear_desk()
 
 

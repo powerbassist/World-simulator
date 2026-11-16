@@ -928,7 +928,7 @@ var military_capability: float = 0.0
 ## read from here rather than called for. Cached because of the preload graph
 ## rather than for speed: budget.gd and opinion.gd reading Defence directly is an
 ## edge each, and Opinion.issue_satisfaction(ns) would stop being pure-on-ns, which
-## elections.gd's attribution and overview_panel.gd both rely on.
+## elections.gd's attribution and presidency_rows.gd both rely on.
 ##
 ## Neither earns a save bump on its own — both are recomputed from the registers on
 ## the first tick after a load — but they are serialised anyway so a save read back
