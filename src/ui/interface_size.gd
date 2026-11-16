@@ -71,14 +71,20 @@ static func index_in(cfg: ConfigFile) -> int:
 static func apply(window: Window) -> void:
 	if window == null:
 		return
+	_index = index()
 	if not window.size_changed.is_connected(refit.bind(window)):
 		window.size_changed.connect(refit.bind(window))
 	refit(window)
 
 
+## The row as apply() last read it: refit() runs on every size_changed, a drag emits
+## many, and the file only changes through the Settings screen, which calls apply().
+static var _index := DEFAULT_INDEX
+
+
 ## Guarded: assigning the factor resizes the viewport, which can emit size_changed
 ## again; the second call finds the factor already right and stops.
 static func refit(window: Window) -> void:
-	var f := factor(index(), window.size)
+	var f := factor(_index, window.size)
 	if not is_equal_approx(window.content_scale_factor, f):
 		window.content_scale_factor = f

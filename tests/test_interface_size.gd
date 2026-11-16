@@ -175,6 +175,8 @@ func _check_listener() -> void:
 	cfg.load(SettingsPanel.CONFIG_PATH)
 	cfg.set_value("display", "interface_size_index", 3)
 	cfg.save(SettingsPanel.CONFIG_PATH)
+	InterfaceSize.apply(root)
+	root.content_scale_factor = 1.0
 	InterfaceSize.refit(root)
 	_expect("80 % kept through a size change", root.content_scale_factor, 0.8)
 	_check_region_fit_source()

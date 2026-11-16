@@ -15,6 +15,7 @@ extends SceneTree
 ## Driven a frame apart through the real map click (press and release on the region's
 ## screen point, map_view's own _gui_input).
 
+const RegionsShell = preload("res://src/ui/regions_shell.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Region = preload("res://src/core/region.gd")
@@ -61,7 +62,13 @@ func _process(_delta: float) -> bool:
 		6:
 			_check_per_head()
 			_click_map(_countryside(WORST))
+			# The canvas changing size with the tab open (F11, a drag, the interface size)
+			# frames the nation again: fit() reads the live canvas through fit_rect_source.
+			_overlay.fit_rect = Rect2()
+			_main.get_viewport().size_changed.emit()
 		8:
+			if _overlay.fit_rect != RegionsShell.fit_rect_for(_main.get_viewport_rect().size):
+				_fail("a canvas size change with the Regions tab open did not frame the nation again (%s)" % _overlay.fit_rect)
 			if String(_panel._game.open_region) != WORST:
 				_fail("a click in the region's countryside opened '%s', not %s" % [_panel._game.open_region, WORST])
 			if String(_overlay.selected) != WORST:
