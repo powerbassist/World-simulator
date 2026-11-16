@@ -35,6 +35,8 @@ var _stale_ids: Array[String] = []
 var _desk_event := ""
 ## A main that never played, loading the same Germany save (the general guard's yardstick).
 var _fresh
+## The People tab's removal confirm card, asked in the France game.
+var _confirm
 
 
 func _init() -> void:
@@ -99,6 +101,16 @@ func _act_in_the_france_game() -> void:
 		for person in _main._loader.people.get(String(ns.id), []):
 			people.focus(String(person.id))
 			break
+		# A removal asked and left on its confirm card: its question is the old game's. (The
+		# tab's refresh syncs its verbs; the tab is not open here.)
+		people._verbs.sync(_main._state, _main._loader)
+		for portfolio in ns.cabinet:
+			if String(ns.cabinet[portfolio]) != "":
+				people._verbs.dismiss(String(portfolio))
+				break
+		_confirm = people._verbs._confirm
+		if _confirm == null or not _confirm.visible:
+			_fail("premise: no removal confirm card up in the France game")
 
 
 func _save_another_nation() -> void:
@@ -119,6 +131,8 @@ func _check_no_panel_keeps_the_old_game() -> void:
 	if _main._state.player_nation_id != "DEU" or _fresh._state.player_nation_id != "DEU":
 		_fail("premise: a load did not land on Germany")
 		return
+	if _confirm != null and is_instance_valid(_confirm) and _confirm.visible:
+		_fail("the old game's removal confirm card is still up after a load")
 	var caught := 0
 	for i in played.size():
 		var a: Dictionary = _plain_fields(played[i])
@@ -145,9 +159,20 @@ func _plain_fields(panel: Object, prefix := "") -> Dictionary:
 		var value = panel.get(String(prop["name"]))
 		if _plain(value):
 			out[prefix + String(prop["name"])] = value
+		elif value is Dictionary or value is Array:
+			# A container holding an object (a callable, a node): its size and plain keys.
+			out[prefix + String(prop["name"])] = _shape(value)
 		elif prefix == "" and (value is RefCounted or (value is Node and panel.is_ancestor_of(value))) 				and value.get_script() != null and String(value.get_script().resource_path).begins_with("res://src/ui/"):
 			out.merge(_plain_fields(value, String(prop["name"]) + "."))
 	return out
+
+
+func _shape(v) -> Dictionary:
+	var keys: Array = []
+	if v is Dictionary:
+		keys = (v as Dictionary).keys().filter(func(k) -> bool: return _plain(k))
+		keys.sort()
+	return {"#size": (v as Dictionary).size() if v is Dictionary else (v as Array).size(), "#keys": keys}
 
 
 func _plain(v) -> bool:

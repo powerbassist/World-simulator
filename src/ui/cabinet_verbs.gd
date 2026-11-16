@@ -62,6 +62,17 @@ func sync(state, loader) -> void:
 	_loader = loader
 
 
+## A load: a removal asked in the discarded game is not answered in the loaded one -- its card
+## comes down unanswered (a Yes would have run the old question against the new cabinet),
+## and its refusal line goes with it.
+func forget() -> void:
+	_asked = {}
+	if _confirm != null:
+		_confirm.hide()
+	if _status != null:
+		_refused("")
+
+
 func status_text() -> String:
 	return _status.text
 
