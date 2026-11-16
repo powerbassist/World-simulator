@@ -333,7 +333,8 @@ static func paint_rates(ctx: Dictionary) -> void:
 		var unit := "" if spending else unit_text(String(cell[5]))
 		if channel == FinanceDraft.TAX and draft.is_abolished(key):
 			label.text = Strings.t("abolish")
-		elif channel == FinanceDraft.TAX and (draft.is_created(key) or (tabled.has(id) and live == 0.0)):
+		# A birth at vote is a kind not in force; one in force at 0 % (the wealth tax) raised is a rate row (retro item 11).
+		elif channel == FinanceDraft.TAX and (draft.is_created(key) or (tabled.has(id) and not draft.in_force(key))):
 			label.text = Strings.t("new, at %s") % (LedgerBox.text(target, places) + unit)
 		elif target == live:
 			label.text = Strings.t("%s %%") % Num.f(live, 1) if spending else was + unit

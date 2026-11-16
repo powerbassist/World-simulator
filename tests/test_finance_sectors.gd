@@ -74,6 +74,10 @@ func _process(_delta: float) -> bool:
 			_check_moved("hospitals", "prevention", 0.02)
 			if _panel._draft.has_moves():
 				_fail("Discard: the drafted move is still in the draft")
+			# Discard closes the open row (its _open_id goes): the row is opened again for the next draft. Before #392 a
+			# focus left in the tile held that rebuild off and the stale editor stayed up.
+			_panel._on_open("spending_pct_gdp:health")
+			_panel._process(0.0)
 			# Prevention stands at about 0.051: a first draft takes it to 0.021.
 			_pick("prevention", "hospitals", 0.03)
 		20:
@@ -262,6 +266,7 @@ func _check_a_refused_tabling_books_the_move() -> void:
 	# A rate outside its kind's band is a bill tabling refuses (and a page's paint keeps it: it sweeps only the autumn rows).
 	_panel._draft.set_value(FinanceDraft.TAX, "income", 95.0)
 	var moves: Array = _panel._draft.moves()
+	_panel._paint_due = true  # the draft moved behind the page's back (no editor signal): ask for the paint
 	_panel._process(0.0)
 	var held: String = _panel._foot._text.text
 	if not (_panel._foot.get_node("Table") as Button).disabled or not held.contains("now; the rest is voted on"):
