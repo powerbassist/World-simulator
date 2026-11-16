@@ -96,6 +96,10 @@ signal map_point_picked(lon: float, lat: float)
 ## A plant glyph was clicked -- V2.8. main.gd opens the Energy window on it, the
 ## project marker's route one pass over.
 signal plant_clicked(plant_id: String)
+## Screen 6: a region of the player's clicked while region_picker answers for the point.
+signal region_clicked(region_id: String)
+## lon/lat -> region id or "": set by the regions shell while the Regions tab is open.
+var region_picker := Callable()
 
 ## PLACEMENT MODE IS EXCLUSIVE AND SINGLE-SHOT. Exclusive because a click meant to
 ## site a station must not also open the nation panel -- one press, one thing.
@@ -768,17 +772,12 @@ func nation_at_screen_point(screen_pos: Vector2) -> String:
 ## outline can be read but never clicked or selected. The per-ring boxes are
 ## built in setup() from the same arrays.
 func _outline_at_lonlat(pt: Vector2) -> String:
-	for id in _world_polygons.keys():
-		var polys: Array = _world_polygons[id]
-		var boxes: Array = _ring_boxes_world[id]
-		for r in range(polys.size()):
-			var box: Rect2 = boxes[r]
-			if box.size.x < 0.0 or not box.has_point(pt):
-				continue
-			var ring: PackedVector2Array = polys[r]
-			if ring.size() >= 3 and Geometry2D.is_point_in_polygon(pt, ring):
-				return id
-	return ""
+	return MapOutlines.at_lonlat(_world_polygons, _ring_boxes_world, pt)
+
+
+## Screen 6 (map_regions.gd): the map's own transform for an overlay drawn in lon/lat.
+func lonlat_to_screen(lon: float, lat: float) -> Vector2:
+	return _lonlat_to_screen(lon, lat)
 
 
 ## V2.6b1. The city list is NOT static, and the comment that used to sit on it said
@@ -986,8 +985,13 @@ func _gui_input(event: InputEvent) -> void:
 							if city != "":
 								city_clicked.emit(city)
 							else:
-								var id := nation_at_screen_point(event.position)
-								if id != "":
+								# Screen 6: while the Regions tab is open, a region of the player's answers
+								# before its nation (region_picker is the regions shell's, "" when off).
+								var region := String(region_picker.call(_screen_to_lonlat(event.position))) if region_picker.is_valid() else ""
+								var id := nation_at_screen_point(event.position) if region == "" else ""
+								if region != "":
+									region_clicked.emit(region)
+								elif id != "":
 									nation_clicked.emit(id)
 				# CLEARED UNCONDITIONALLY, outside the click branch above --
 				# U5a's window frame did the same with its drag. Nested one tab deeper

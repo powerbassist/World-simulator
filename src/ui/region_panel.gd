@@ -28,6 +28,7 @@ const Num = preload("res://src/ui/num.gd")
 const TerritorySites = preload("res://src/ui/territory_sites.gd")
 const TerritoryCity = preload("res://src/ui/territory_city.gd")
 const RegionSheet = preload("res://src/ui/region_sheet.gd")
+const RegionTint = preload("res://src/ui/region_tint.gd")
 
 ## The figure columns, px at text size 100 %: per head, jobless, sites.
 const COLUMNS := [86.0, 76.0, 56.0]
@@ -58,13 +59,18 @@ var _title: Label
 ## The toggle just pressed: its rebuild freed the focused button, so the new one
 ## with this key takes focus and the keyboard keeps its place.
 var _refocus := ""
+## Screen 6, slice 2: the map overlay this tab tints (map_regions.gd, set by regions_shell.gd),
+## and the measure the rail's chips picked.
+var _overlay
+var _measure := "jobless"
 var _body: VBoxContainer
 var _back_button: Button
 var _close_button: Button
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(560, 640)
+	# The dock is narrow for this tab (window_manager.gd DOCK_WIDTHS): the map is the screen.
+	custom_minimum_size = Vector2(440, 640)
 	var root := PanelKit.padded(self, 16, 10)
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD
@@ -116,6 +122,11 @@ func show_city(city_id: String) -> void:
 ## A city opened from the map is a visit: the tab comes back on the regions, not
 ## on the last city clicked (a Berlin cross would otherwise answer "Territory").
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and _overlay != null:
+		_overlay.visible = is_visible_in_tree()
+		# The map is the screen: the nation framed beside the dock each time the tab opens.
+		if _overlay.visible:
+			_overlay.call_deferred("fit")
 	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree() and _city_id != "":
 		_city_id = ""
 		_dirty = true
@@ -167,12 +178,41 @@ func _refresh() -> void:
 	var regions: Array = _loader.regions.get(ns.id, [])
 	var access: Dictionary = Regions.accessibility_for(ns, regions, _state.region_graph)
 	var sites: Dictionary = TerritorySites.by_region(ns, _loader)
+	_chips()
 	_body.add_child(_column_heads())
 	for region in worst_first(_state, ns, regions, access):
 		_body.add_child(_region_line(ns, regions, region, access, (sites.get(region.id, []) as Array).size()))
 		if region.id == _open_region:
 			_body.add_child(_opened(ns, regions, region, access, sites.get(region.id, [])))
 	_about(ns, regions)
+	if _overlay != null:
+		_overlay.set_tint(RegionTint.rows(_state, ns, regions, access, _measure))
+		_overlay.select(_open_region)
+
+
+## The map's measure, one chip each; the 12-month chip waits until the sample holds two months.
+func _chips() -> void:
+	var row := PanelKit.buttons(_body)
+	PanelKit.plain_line(row, tr("Map"), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
+	var held := not (RegionTint.changes(_state.player(), _loader.regions.get(_state.player().id, []))["here"] as Dictionary).is_empty()
+	for measure in RegionTint.MEASURES:
+		var chip := PanelKit.sized(Button.new())
+		chip.text = RegionTint.label(measure)
+		chip.toggle_mode = true
+		chip.button_pressed = measure == _measure
+		chip.set_meta("measure", measure)
+		chip.disabled = measure == "change" and not held
+		chip.tooltip_text = tr("No change yet: the regions are sampled once a month.") if chip.disabled else ""
+		chip.pressed.connect(func() -> void: _measure = measure; _dirty = true)
+		row.add_child(chip)
+
+
+## The map's click (regions_shell.gd): open the region's sheet without moving the map.
+func open_region(region_id: String) -> void:
+	_city_id = ""
+	_open_region = region_id
+	_fund_refusal = ""
+	_dirty = true
 
 
 ## Screen 6: the regions worst first, by the problem's own ratio (Regions.problem, the worse

@@ -10,6 +10,7 @@
    "tests/test_sectors_panel.gd",
    "tests/test_firm_sheet.gd",
    "tests/test_region_sheet.gd",
+   "tests/test_region_map.gd",
    "tests/test_region_arrival.gd",
    "tests/test_called_event.gd",
    "tests/test_decision_cards.gd",

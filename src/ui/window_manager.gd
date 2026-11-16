@@ -41,6 +41,9 @@ signal closed(id: String)
 ## so the chrome and the dock cannot drift apart.
 const DOCK_LEFT := Sidebar.WIDTH
 const DOCK_WIDTH := 1240.0
+## Screen 6, direction A: a tab whose place is the map docks narrow, so the nation stays on
+## the map to its right (the Regions tab tints it). Every other tab takes DOCK_WIDTH.
+const DOCK_WIDTHS := {"region": 500.0}
 const DOCK_TOP := TitleBar.HEIGHT + TopBar.BAR_HEIGHT
 const DOCK_BOTTOM := Ribbon.STRIP_HEIGHT
 
@@ -187,6 +190,7 @@ func open(id: String, quiet: bool = false) -> void:
 	var dock_was_up: bool = _dock.visible
 
 	_show_domain_of(id)
+	_dock.offset_right = DOCK_LEFT + float(DOCK_WIDTHS.get(id, DOCK_WIDTH))
 	# Filling the body again, whatever band a probe imposed with fit_within().
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.show()

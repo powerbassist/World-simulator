@@ -10,6 +10,23 @@ const Strings = preload("res://src/ui/strings.gd")
 const TOP_GOODS := 3
 
 
+## V4.11c. The outline under a lon/lat point, or "", over the outline register and its
+## per-ring boxes (map_view.gd builds both in setup()). Moved here from map_view.gd at
+## screen 6, which is at its size ratchet.
+static func at_lonlat(polygons: Dictionary, ring_boxes: Dictionary, pt: Vector2) -> String:
+	for id in polygons.keys():
+		var polys: Array = polygons[id]
+		var boxes: Array = ring_boxes[id]
+		for r in range(polys.size()):
+			var box: Rect2 = boxes[r]
+			if box.size.x < 0.0 or not box.has_point(pt):
+				continue
+			var ring: PackedVector2Array = polys[r]
+			if ring.size() >= 3 and Geometry2D.is_point_in_polygon(pt, ring):
+				return id
+	return ""
+
+
 static func name_of(loader, id: String) -> String:
 	return String(loader.outlines.get(id, {}).get("name", ""))  # i18n: row-ok not in TRANSLATABLE: a country outside the roster
 

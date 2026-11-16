@@ -25,7 +25,6 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
-const IndustryVerbs = preload("res://src/ui/industry_verbs.gd")
 const RegionVoice = preload("res://src/ui/region_voice.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
@@ -138,8 +137,9 @@ static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
 	var strip := EffectsStrip.new()
 	# The Industry strip's reading measure: the money beside its caption, not at the
 	# window's far edge (the first frame).
-	strip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	strip.custom_minimum_size.x = IndustryVerbs.STRIP_WIDTH
+	# Screen 6: the dock is narrow for this tab, so the strip takes its width rather than
+	# the Industry strip's fixed measure, which overflowed it (the first map frame).
+	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_child(strip)
 	var go := PanelKit.sized(Button.new())
 	# Not "Go": the opened region's sites already carry a Go, which opens their tab.

@@ -20,6 +20,7 @@ const Migration = preload("res://src/sim/migration.gd")
 const CK = preload("res://src/sim/character_act_constants.gd")
 const RegionFund = preload("res://src/ui/region_fund.gd")
 const RegionVoice = preload("res://src/ui/region_voice.gd")
+const RegionTint = preload("res://src/ui/region_tint.gd")
 const WantTerms = preload("res://src/sim/want_terms.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
@@ -67,26 +68,12 @@ static func build(panel, box: Control, ns, region, regions: Array, access: Dicti
 ## regions' own, weighted by their people, so the two figures are one measure. Said only once
 ## the sample holds two months: a change of one month is not a change.
 static func _trend(box: Control, ns, regions: Array, region_id: String) -> void:
+	var moved := RegionTint.changes(ns, regions)
+	if not (moved["here"] as Dictionary).has(region_id):
+		return
 	var held := RegionRead.months_held(ns)
-	if held < 2:
-		return
-	var weight := 0.0
-	var nation := 0.0
-	var here := 0.0
-	for region in regions:
-		var series: Array = ns.region_history.get(String(region.id), {}).get("unemployment", [])
-		if series.size() < 2:
-			continue
-		var change := float(series[-1]) - float(series[0])
-		var w := Migration.region_share(ns, region.id)
-		nation += change * w
-		weight += w
-		if String(region.id) == region_id:
-			here = change
-	if weight <= 0.0:
-		return
 	var text := Strings.tn("Jobless over %d month: %s points here, %s in the nation.", "Jobless over %d months: %s points here, %s in the nation.", held) % [
-		held, Num.fs(here, 1), Num.fs(nation / weight, 1)]
+		held, Num.fs(float(moved["here"][region_id]), 1), Num.fs(float(moved["nation"]), 1)]
 	PanelKit.plain_line(box, text, PanelKit.Tone.DIM).set_meta("trend", true)
 
 
@@ -116,6 +103,9 @@ static func _voice(box: Control, ns, loader, region_id: String) -> void:
 			text = Strings.t("%s wants a development fund here. Open one and %s speaks for you once: %s +%s points, half of it gone in %d months.") % [
 				person.person_name, person.person_name, RegionVoice.blocs_text(), Num.f(float(v["points"]), 1), CK.ACT_OFFSET_HALF_LIFE_MONTHS]
 		var label := PanelKit.plain_line(row, text, PanelKit.Tone.PLAIN)
+		# Wrapped in the narrow dock: a label in an HBox is as wide as its text otherwise.
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.custom_minimum_size.x = 1
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.set_meta("voice", true)
 
