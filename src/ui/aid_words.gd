@@ -49,13 +49,20 @@ static func caption(loader, ns, company, action) -> String:
 	return Strings.t("%s € a job · %s tax point") % [CompanyVerb.thousands(roundf(per_year * 1e9 / jobs / 100.0) * 100.0), Num.f(per_year / point, 2)]
 
 
-## The action's bloc offsets as the grant would book them: times the firm's credit factor
-## for aid, as they are for any other verb.
+## The action's bloc offsets as the press would book them (CompaniesAid.bloc_credit's
+## rule, read without its write): aid times the firm's credit factor now; a withdrawal
+## times the factor the grant kept on the entry (`aid_credit`, absent 1.0, QA's T1 on
+## #381); any other verb as it is.
 static func offsets(loader, ns, company, action) -> Dictionary:
 	var raw: Dictionary = action.effects.get("bloc_offset", {})
-	if not is_aid(action):
+	var op := String(action.effects.get("company", {}).get("op", ""))
+	var factor := 1.0
+	if op == "subsidise":
+		factor = CompaniesAid.credit_factor(ns, loader, String(company.id))
+	elif op == "withdraw":
+		factor = float((ns.companies.get(String(company.id), {}) as Dictionary).get("aid_credit", 1.0))
+	else:
 		return raw
-	var factor := CompaniesAid.credit_factor(ns, loader, String(company.id))
 	var out := {}
 	for bloc in raw:
 		out[bloc] = float(raw[bloc]) * factor

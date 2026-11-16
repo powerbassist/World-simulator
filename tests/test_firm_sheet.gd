@@ -25,6 +25,7 @@ const AidWords = preload("res://src/ui/aid_words.gd")
 const SectorProgramme = preload("res://src/ui/sector_programme.gd")
 const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const Num = preload("res://src/ui/num.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -95,8 +96,11 @@ func _check_default_and_closure() -> void:
 	var move: Dictionary = ClosureRegion.move(_main._state, ns, Closures.announced(ns, _major.id))
 	if region.is_empty():
 		_fail("the sheet's closure has no region line (move: %s)" % move)
-	elif not String(region[0].text).contains(Num.f(float(move["after_pct"]), 1)):
-		_fail("the region line '%s' does not say %s %%" % [region[0].text, Num.f(float(move["after_pct"]), 1)])
+	else:
+		# Before, then after (QA's T2 on #381): the order is the sentence's meaning.
+		var arrow := "%s %% → %s %%" % [Num.f(float(move["before_pct"]), 1), Num.f(float(move["after_pct"]), 1)]
+		if not String(region[0].text).contains(arrow):
+			_fail("the region line '%s' does not read '%s'" % [region[0].text, arrow])
 
 
 ## The subsidy's caption: the sim's per-year price over the firm's jobs, and over one point
@@ -131,6 +135,12 @@ func _check_focused_strip() -> void:
 		_fail("the focused subsidy does not say the jobs it moves: '%s'" % expected)
 	elif not lines[0].is_visible_in_tree():
 		_fail("the net jobs line is built but not shown with the subsidy focused")
+	# The figures against the sim's, signed (QA's T3 on #381): gained +, lost at rivals -.
+	var moved: Dictionary = CompaniesAid.net_jobs(_main._state, ns, _main._loader, action, _major)
+	for pair in [["+", float(moved["gained"])], ["−", float(moved["lost_at_rivals"])]]:
+		var figure: String = String(pair[0]) + CompanyVerb.thousands(absf(roundf(float(pair[1]) / 100.0) * 100.0))
+		if float(pair[1]) >= 100.0 and not expected.contains(figure):
+			_fail("the net jobs line '%s' does not carry %s" % [expected, figure])
 	var factor := CompaniesAid.credit_factor(ns, _main._loader, String(_major.id))
 	var scaled := AidWords.offsets(_main._loader, ns, _major, action)
 	var raw: Dictionary = action.effects["bloc_offset"]
@@ -153,6 +163,15 @@ func _check_granted() -> void:
 		_fail("the sheet's Go did not grant the subsidy")
 	if _acted != 1:
 		_fail("the grant emitted acted %d times" % _acted)
+	# The withdrawal's blocs as the press books them (QA's T1 on #381): the grant kept its
+	# credit on the entry, and a preview on a copy books exactly what the strip prints.
+	var withdraw = _action("withdraw_support")
+	var shown := AidWords.offsets(_main._loader, ns, _major, withdraw)
+	var copy = Companies.preview(_main._state, ns, _main._loader.company_actions, withdraw, String(_major.id), _main._loader)[0]
+	for bloc in withdraw.effects["bloc_offset"]:
+		var booked := float(copy.bloc_offset.get(bloc, 0.0)) - float(ns.bloc_offset.get(bloc, 0.0))
+		if absf(booked - float(shown[bloc])) > 1e-6:
+			_fail("withdraw's %s: the strip says %s, the press books %s" % [bloc, shown[bloc], booked])
 
 
 func _pick_programme(stop: int) -> void:
