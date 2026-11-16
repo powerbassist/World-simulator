@@ -116,7 +116,10 @@ const TOTAL_PENDING := {
 ## played state against a ceiling of 170 (the parent's, card G): 2794 -> 2770; then 2770 -> 2779, a stated rise
 ## (the parent's ruling: every government read the Overview showed stays on the page, 139 of 170).
 ## #401 pass 2 (section titles kept in Open now, the vote named, censure and 49.3 split): 2779 -> 2777.
-const TOTAL_SUM_CEILING := 2777
+## The void pass, a stated rise of 12 (2794 -> 2806 before #401's merge, 2777 -> 2789 after; the parent accepted it at pass 2): the
+## Decision tab after an answer lists what is still on the desk (its heading and the open files'
+## titles, 9 at month 12) and the empty Agenda names its next step, "Plan the campaign" (3).
+const TOTAL_SUM_CEILING := 2789
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

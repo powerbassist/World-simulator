@@ -58,7 +58,7 @@ var _previous := {}
 
 func _ready() -> void:
 	# Placement is the owner's job (window_manager.gd's register()).
-	custom_minimum_size = Vector2(560, 460)
+	custom_minimum_size = Vector2(560, 0)  # the dock sets the height (tab_page.gd wanted_height)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -170,12 +170,12 @@ func _refresh() -> void:
 			"%.0f%%" % current[bloc],
 			_change_text(bloc, current[bloc]),
 		])
-	PanelKit.ledger(PanelKit.section(_body, tr("Approval by bloc")), bloc_rows)
+	var blocs := PanelKit.ledger(PanelKit.section(_body, tr("Approval by bloc")), bloc_rows)
 
 	var issue_rows: Array = []
 	for entry in Opinion.top_issues(ns, TOP_ISSUE_COUNT):
 		issue_rows.append([K.ISSUE_LABEL[entry[0]], "%.0f%%" % (float(entry[1]) * 100.0)])
-	PanelKit.ledger(PanelKit.section(_body, tr("What the country is thinking about")), issue_rows)
+	PanelKit.ledger(PanelKit.section(_body, tr("What the country is thinking about")), issue_rows, blocs)
 	_build_calm(ns, current)
 
 

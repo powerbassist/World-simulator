@@ -57,7 +57,7 @@ var _scroll: ScrollContainer = null
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(600, 720)
+	custom_minimum_size = Vector2(600, 0)  # the dock sets the height (tab_page.gd wanted_height)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

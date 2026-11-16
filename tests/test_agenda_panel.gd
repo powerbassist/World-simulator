@@ -366,6 +366,22 @@ func _check_mid_term_says_when_the_next_programme_opens(panel, state, ns, loader
 			ClockCluster.MONTH_NAMES[when.y - 1], when.x, text])
 	if not text.to_lower().contains("next term"):
 		_fail("the mid-term Agenda does not name the next term: '%s'" % text)
+	# The void pass (c): the empty Agenda names its one next step, the campaign, where the pledges
+	# are; the press asks the window manager for that tab (the Agenda's own open_requested).
+	var go: Button = null
+	for node in _walk(panel):
+		if node is Button and not node.is_queued_for_deletion() and String(node.text) == Strings.t("Plan the campaign"):
+			go = node
+	if go == null:
+		_fail("the mid-term Agenda with no programme offers no next step")
+	else:
+		var asked: Array[String] = []
+		var record := func(tab: String) -> void: asked.append(tab)
+		panel.open_requested.connect(record)
+		go.pressed.emit()
+		panel.open_requested.disconnect(record)
+		if asked != ["campaign"]:
+			_fail("'Plan the campaign' asked for %s, not the campaign tab" % [asked])
 
 	# A nation with no scheduled vote must not print a month it does not have.
 	ns.next_election_year = 0

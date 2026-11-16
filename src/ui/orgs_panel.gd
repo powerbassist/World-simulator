@@ -72,12 +72,10 @@ var _open_sections: Dictionary = {}
 
 
 func _ready() -> void:
-	# 620 rather than the 420 this shipped with, and the screenshot pass is why: at
-	# 420 the window sized to its minimum and THE BUDGET fell below the fold, so the
-	# one section telling the player what membership costs was reachable only by
-	# scrolling a panel that did not look scrollable. Well inside U5a's ~886px
-	# usable band, which is the ceiling a window must not grow through.
-	custom_minimum_size = Vector2(460, 620)
+	# No height floor (#400 pass 2): it was the floating window's, raised each time a verb fell below
+	# a window that sized to it. The dock now sizes the plate to the content, up to the dock
+	# (tab_page.gd wanted_height), and the page scrolls past that with its fold mark.
+	custom_minimum_size = Vector2(460, 0)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

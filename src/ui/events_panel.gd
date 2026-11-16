@@ -65,7 +65,7 @@ var _primary: Control = null
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(520, 560)
+	custom_minimum_size = Vector2(520, 0)  # the dock sets the height (tab_page.gd wanted_height)
 	var root := PanelKit.padded(self, 16, 10)
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD
