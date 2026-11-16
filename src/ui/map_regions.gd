@@ -14,6 +14,7 @@ extends Control
 ## Never takes the mouse: the click is map_view's (its region_picker), so a drag still pans.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Region = preload("res://src/core/region.gd")
 
 ## The fill's opacity: a tint over the ground, the map still readable under it.
 const FILL_ALPHA := 0.42
@@ -37,10 +38,17 @@ var _bounds := Rect2()
 var fit_rect := Rect2()
 ## region id -> its cities' lon/lat: a figure's chip steps off them (regions_shell.gd sets it).
 var _avoid := {}
-## lon/lat -> region id, hole-aware (regions_shell.gd sets it); inside() reads it.
-var picker := Callable()
+## region id -> that region's own rings, holes included (its entry of loader.region_rings):
+## inside() tests ONE region against them. Without an entry, the drawn outer rings.
+var _holed := {}
 ## The grid a region whose centroid lies outside it is searched on for an anchor.
 const ANCHOR_GRID := 16
+## label_rects() memo: the chips are laid out once per zoom, text size and tint; a pan only
+## moves them (QA's T4 on #384: the layout ran in every pan frame).
+var _layout_key := []
+var _layout_origin := Vector2.ZERO
+var _layout := {}
+var _layout_rev := 0
 
 
 func _init() -> void:
@@ -49,9 +57,12 @@ func _init() -> void:
 	hide()
 
 
-## `rings` is region id -> Array[PackedVector2Array] in lon/lat (loader.region_features).
-func setup(map, region_ids: Array, rings: Dictionary) -> void:
+## `rings` is region id -> Array[PackedVector2Array] in lon/lat (loader.region_features);
+## `holed` the same regions' every ring (loader.region_rings' shape, holes kept).
+func setup(map, region_ids: Array, rings: Dictionary, holed := {}) -> void:
 	_map = map
+	_holed = holed
+	_layout_rev += 1
 	_shapes.clear()
 	for id in region_ids:
 		var verts := PackedVector2Array()
@@ -77,11 +88,15 @@ func setup(map, region_ids: Array, rings: Dictionary) -> void:
 		var mesh := ArrayMesh.new()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		_shapes[String(id)] = {"mesh": mesh, "at": at, "rings": rings.get(id, [])}
+	# The figure points are static geometry: found once, here, never in a frame.
+	for id in _shapes:
+		_anchor(id)
 	queue_redraw()
 
 
 func set_avoid(points: Dictionary) -> void:
 	_avoid = points
+	_layout_rev += 1
 
 
 func avoid_points(region_id: String) -> Array:
@@ -112,9 +127,23 @@ const STEPS := [Vector2(0, 1), Vector2(0, -1), Vector2(1, 0), Vector2(-1, 0), Ve
 
 
 func label_rects() -> Dictionary:
-	var out := {}
 	if _map == null:
-		return out
+		return {}
+	var t := _screen_transform()
+	var key := [t.x, t.y, label_size(), _layout_rev]
+	if key != _layout_key:
+		_layout = _lay_out()
+		_layout_key = key
+		_layout_origin = t.origin
+	var shift := t.origin - _layout_origin
+	var out := {}
+	for id in _layout:
+		out[id] = Rect2((_layout[id] as Rect2).position + shift, (_layout[id] as Rect2).size)
+	return out
+
+
+func _lay_out() -> Dictionary:
+	var out := {}
 	var font := label_font()
 	var to_lonlat := _screen_transform().affine_inverse()
 	for id in _shapes:
@@ -140,13 +169,13 @@ func label_rects() -> Dictionary:
 	return out
 
 
-## Whether a lon/lat point lies in the region. Through `picker` (regions_shell.gd's
-## Region.region_at_lonlat over loader.region_rings, the click's own test) when set, because
-## the drawn rings are outer rings only: Berlin is a hole in Brandenburg, Warsaw in
-## Mazowieckie, and an outer-ring test files their points under the host (QA's T3 on #384).
+## Whether a lon/lat point lies in the region: Region.contains() over the region's OWN rings,
+## holes kept, because the drawn rings are outer rings only -- Berlin is a hole in Brandenburg,
+## Warsaw in Mazowieckie, and an outer-ring test files their points under the host (QA's T3 on
+## #384). One region's rings, never Europe's (QA's T4: region_at_lonlat cost 1.4 ms a call).
 func inside(region_id: String, lonlat: Vector2) -> bool:
-	if picker.is_valid():
-		return String(picker.call(lonlat)) == region_id
+	if _holed.has(region_id):
+		return Region.contains(_holed[region_id], lonlat.x, lonlat.y)
 	for ring: PackedVector2Array in _shapes.get(region_id, {}).get("rings", []):
 		if ring.size() >= 3 and Geometry2D.is_point_in_polygon(lonlat, ring):
 			return true
@@ -185,6 +214,7 @@ func _screen_transform() -> Transform2D:
 
 func set_tint(rows: Dictionary) -> void:
 	_tint = rows
+	_layout_rev += 1
 	queue_redraw()
 
 

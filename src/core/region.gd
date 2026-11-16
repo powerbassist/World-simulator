@@ -272,6 +272,13 @@ static func region_at_lonlat(rings: Dictionary, lon: float, lat: float) -> Strin
 	return ""
 
 
+## Whether the point is in ONE region, given that region's own rings (an entry of
+## loader.region_rings), holes included -- the map's figures ask this of their own region
+## only, where region_at_lonlat() scans every region in Europe (1.4 ms a call, QA's T4 on #384).
+static func contains(polygons: Array, lon: float, lat: float) -> bool:
+	return _contains(polygons, lon, lat)
+
+
 ## Inside the outer ring of some polygon and inside NONE of its holes.
 ##
 ## THE HOLE TEST IS LOAD-BEARING AND ITS FAILURE IS SILENT. An enclave's own polygon

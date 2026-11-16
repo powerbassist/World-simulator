@@ -94,6 +94,7 @@ func _check_open() -> void:
 		_fail("the map figures are drawn at %d, under the body size %d" % [_overlay.label_size(), UiTheme.SIZE_BASE])
 	if _overlay.label_font() != UiTheme.map_figure_face():
 		_fail("the map figures are not drawn in the bold figure face")
+	_check_budget()
 	# The chips at the default text size and at the larger ones, where they crowd.
 	for scale in [1.0, 1.3, 1.6]:
 		UiTheme.set_text_scale(scale)
@@ -133,21 +134,17 @@ func _check_in_region_rule() -> void:
 	probe.queue_free()
 	# QA's T3 on #384: a hole. H is a square with C, a smaller square, cut out of its middle
 	# (Berlin in Brandenburg); the drawn rings are outer rings only, so H's centroid lies in C.
-	# Answered through the hole-aware picker, H's figure is centred in H, not on C.
+	# Tested against H's own rings with C as its hole, H's figure is centred in H, not on C.
 	var holed = MapRegions.new()
 	root.add_child(holed)
 	var h := PackedVector2Array([Vector2(0, 0), Vector2(6, 0), Vector2(6, 6), Vector2(0, 6)])
 	var c := PackedVector2Array([Vector2(2, 2), Vector2(4, 2), Vector2(4, 4), Vector2(2, 4)])
-	holed.setup(FakeMap.new(), ["H", "C"], {"H": [h], "C": [c]})
-	holed.picker = func(ll: Vector2) -> String:
-		if Geometry2D.is_point_in_polygon(ll, c):
-			return "C"
-		return "H" if Geometry2D.is_point_in_polygon(ll, h) else ""
+	holed.setup(FakeMap.new(), ["H", "C"], {"H": [h], "C": [c]}, {"H": [[h, c]], "C": [[c]]})
 	holed.set_tint({"H": {"tone": UiTheme.BAD, "label": "▲ 9.5 %"}})
 	var at: Rect2 = holed.label_rects().get("H", Rect2())
 	var mid := Vector2((at.get_center().x - 400.0) / 20.0, (400.0 - at.get_center().y) / 20.0)
-	if String(holed.picker.call(mid)) != "H":
-		_fail("the hole rule: H's chip is centred at %s, in '%s', not in H" % [mid, holed.picker.call(mid)])
+	if Geometry2D.is_point_in_polygon(mid, c) or not Geometry2D.is_point_in_polygon(mid, h):
+		_fail("the hole rule: H's chip is centred at %s, not in H" % mid)
 	holed.queue_free()
 
 
@@ -166,14 +163,46 @@ func _check_anchors_all_nations() -> void:
 			continue
 		var probe = MapRegions.new()
 		root.add_child(probe)
-		probe.setup(FakeMap.new(), ids, loader.region_features)
-		probe.picker = func(ll: Vector2) -> String: return Region.region_at_lonlat(loader.region_rings, ll.x, ll.y)
+		var holed := {}
+		for id in ids:
+			holed[id] = loader.region_rings.get(id, [])
+		probe.setup(FakeMap.new(), ids, loader.region_features, holed)
 		for id in ids:
 			var point: Vector2 = probe._anchor(id)
 			var home := Region.region_at_lonlat(loader.region_rings, point.x, point.y)
 			if home != id:
 				_fail("%s: %s's figure point %s lies in '%s'" % [nation, id, point, home])
 		probe.queue_free()
+
+
+## QA's T4 on #384: the chips are laid out in the frame a pan or zoom draws. A fresh layout
+## (a new zoom or tint) over France stays well inside the G2 frame budget, and a pan reuses
+## the layout itself, no point test at all. The all-Europe point test this replaced took
+## 1.4 ms a call, 17 ms a layout (its mutant fails here). The median of five, generous against
+## a loaded runner: what it catches is that order.
+const LAYOUT_BUDGET_MS := 6.0
+
+
+func _check_budget() -> void:
+	var fresh: Array = []
+	for i in 5:
+		_overlay.set_tint(_overlay._tint)
+		var t0 := Time.get_ticks_usec()
+		_overlay.label_rects()
+		fresh.append((Time.get_ticks_usec() - t0) / 1000.0)
+	fresh.sort()
+	print("test_region_map: a fresh layout of France's figures, median %.3f ms" % fresh[2])
+	if float(fresh[2]) > LAYOUT_BUDGET_MS:
+		_fail("a fresh layout of the map's figures takes %.2f ms, over %.1f" % [fresh[2], LAYOUT_BUDGET_MS])
+	var laid: Dictionary = _overlay._layout
+	var before: Rect2 = _overlay.label_rects().values()[0]
+	_main._map_view.pan_by(Vector2(3, 0))
+	var after: Rect2 = _overlay.label_rects().values()[0]
+	_main._map_view.pan_by(Vector2(-3, 0))
+	if not is_same(laid, _overlay._layout):
+		_fail("a pan laid the map's figures out again instead of moving them")
+	if not after.position.is_equal_approx(before.position + Vector2(3, 0)):
+		_fail("a pan of 3 px moved a figure from %s to %s" % [before.position, after.position])
 
 
 ## No two chips overlap, none covers its region's largest city, and each is centred inside

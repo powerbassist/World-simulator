@@ -24,7 +24,10 @@ static func panel(main) -> Control:
 	var ids: Array = []
 	for region in main._loader.regions.get(main._state.player_nation_id, []):
 		ids.append(String(region.id))
-	overlay.setup(main._map_view, ids, main._loader.region_features)
+	var holed := {}
+	for id in ids:
+		holed[id] = main._loader.region_rings.get(id, [])
+	overlay.setup(main._map_view, ids, main._loader.region_features, holed)
 	# Each region's largest city: its marker is the one a figure must not cover (QA's T1 on
 	# #384, Paris under Ile-de-France's figure). Every city would leave a dense region no place.
 	var ns = main._state.player()
@@ -36,8 +39,6 @@ static func panel(main) -> Control:
 				largest = c
 		cities[String(region.id)] = [] if largest == null else [largest.lonlat]
 	overlay.set_avoid(cities)
-	overlay.picker = func(lonlat: Vector2) -> String:
-		return Region.region_at_lonlat(main._loader.region_rings, lonlat.x, lonlat.y)
 	tab._overlay = overlay
 	var w = main._windows
 	overlay.fit_rect = Rect2(w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"]), w.DOCK_TOP,
