@@ -63,38 +63,47 @@ func _process(_delta: float) -> bool:
 			_main._windows.mark_all_dirty()
 		5:
 			_check_reranked("a command's sweep of the windows")
+			# #393 last pass 2, T1: a programme put in the finance bill is a command too.
+			_game()["lines"] = [STALE]
+			var sector = _main._windows.content("sector_industry")
+			var list: Array = preload("res://src/ui/sector_programme.gd").stops(_main._loader, "industry")
+			preload("res://src/ui/firm_commands.gd").invest(sector, list[list.size() - 1]["action"])
+		6:
+			_check_reranked("a programme put in the finance bill")
 			# Under an open read the re-rank waits (its Go buttons index the lines shown); the
 			# read's close runs it, or a file answered from the folder stays named on the mark.
 			BriefingDriver.read(_main)
 			_game()["lines"] = [STALE]
 			_main._windows.mark_all_dirty()
-		6:
+		7:
 			if not (_game()["lines"] as Array).has(STALE):
 				_fail("premise: the re-rank ran under the open read")
 			BriefingDriver.close(_main)
-		7:
+		8:
 			_check_reranked("closing the read after a command under it")
 			var error := SaveManager.save_game(_main._state, _main._clock, SLOT)
 			if error != "":
 				_fail("could not save: %s" % error)
 				return _end()
-		8:
+		9:
 			# The discarded game's ranking, which must not come back after the load.
 			_game()["memory_before"] = {"last": [STALE]}
 			_game()["lines"] = [STALE]
 			_game()["report"] = {"stale": true}
+			# T3: a consequence card held for the old game's month end.
+			_game()["month_cards"] = [{"title": "old game", "body": "old game"}]
 			_main._on_load_requested(SLOT)
-		10:
+		11:
 			_check_load_forgets_the_ranking()
 			_game()["lines"] = [STALE]
 			_main._hud.inbox.card_closed.emit("__any__")
-		11:
+		12:
 			_check_reranked("a card closed after a load")
 			if not _main._hud.title_bar.chief_mark.visible:
 				_fail("a card closed after a load took the loaded game's mark down")
 			_cleanup()
 			_main.queue_free()
-		13:
+		14:
 			_finish()
 			return true
 	return false
@@ -135,6 +144,8 @@ func _check_queued_line_outlives_the_caption() -> void:
 ## its first line at once (not blank until the month's end), and nothing of the old ranking.
 func _check_load_forgets_the_ranking() -> void:
 	var game := _game()
+	if game.has("month_cards"):
+		_fail("a load keeps the discarded game's held consequence cards")
 	if game.has("report") or game.get("memory_before", null) != {}:
 		_fail("a load keeps the discarded game's ranking memory or report")
 	if (game.get("lines", []) as Array).has(STALE):

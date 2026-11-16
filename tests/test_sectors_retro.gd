@@ -109,9 +109,10 @@ func _check_trade_caption() -> void:
 	if grid == null:
 		_fail("premise: the industry tab has no goods table")
 		return
+	# The figure is this month's trade times twelve: a pace, said as one (#393 last pass 2, T4).
 	var caption := (grid.get_child(2) as Label).text
-	if caption.contains("month") or not caption.contains("year"):
-		_fail("the trade column reads '%s' over a figure a year" % caption)
+	if caption != Strings.t("Trade, yearly pace"):
+		_fail("the trade column reads '%s', not its yearly pace" % caption)
 
 
 func _check_filter_off_the_rows() -> void:
@@ -202,6 +203,9 @@ func _check_unmoved_drag_picks_nothing() -> void:
 		return
 	_panel._prog_pick = -1
 	slider.drag_started.emit()
+	# 4.7.2 emits value_changed on every left press, moved or not (range.cpp), and on a drag
+	# that comes back to its start (#393 last pass 2, T2).
+	slider.value_changed.emit(slider.value)
 	slider.drag_ended.emit(false)
 	if _panel._prog_pick != -1:
 		_fail("a press on the slider that moved nothing picked stop %d" % _panel._prog_pick)
