@@ -134,8 +134,9 @@ func _check_no_panel_keeps_the_old_game() -> void:
 
 
 ## A panel's script variables whose values are plain data (no Object anywhere inside), and
-## those of a UI-owned state object it holds (a script under src/ui/ that is not a Node, as
-## region_panel.gd's RegionState), named "holder.field". The game's own objects are not UI's.
+## those of a UI-owned helper it holds (a script under src/ui/: a state object, as
+## region_panel.gd's RegionState, or a node of its own subtree, as people_panel.gd's CabinetVerbs -- not main, not the map), named
+## "holder.field". The game's own objects are not UI's.
 func _plain_fields(panel: Object, prefix := "") -> Dictionary:
 	var out := {}
 	for prop in panel.get_property_list():
@@ -144,7 +145,7 @@ func _plain_fields(panel: Object, prefix := "") -> Dictionary:
 		var value = panel.get(String(prop["name"]))
 		if _plain(value):
 			out[prefix + String(prop["name"])] = value
-		elif prefix == "" and value is RefCounted and value.get_script() != null 				and String(value.get_script().resource_path).begins_with("res://src/ui/"):
+		elif prefix == "" and (value is RefCounted or (value is Node and panel.is_ancestor_of(value))) 				and value.get_script() != null and String(value.get_script().resource_path).begins_with("res://src/ui/"):
 			out.merge(_plain_fields(value, String(prop["name"]) + "."))
 	return out
 
