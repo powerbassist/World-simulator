@@ -46,6 +46,10 @@ const PresidencyRows = preload("res://src/ui/presidency_rows.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const ChiefMarkView = preload("res://src/ui/chief_mark_view.gd")
+const SaveManager = preload("res://src/core/save_manager.gd")
+const Priorities = preload("res://src/ui/priorities.gd")
+const Staff = preload("res://src/sim/staff.gd")
+const SLOT := "__test_presidency_page__"
 
 const DAYS_PER_MONTH := 31
 ## The re-declared ceilings (card G; the parent accepted 170 / 60, 2026-11-16): the
@@ -108,6 +112,7 @@ func _process(_delta: float) -> bool:
 	_check_the_spoken_line_month()
 	_check_a_clashing_key_is_refused()
 	_check_open_now_clicks_and_redraws()
+	_check_the_line_survives_a_load()
 	_start_leak_check()
 	return false
 
@@ -660,6 +665,35 @@ func _check_open_now_clicks_and_redraws() -> void:
 	_page._process(0.0)
 	if _page._open_rows.has(old_row) or not old_row.get_parent().get_parent() == null and not old_row.is_queued_for_deletion():
 		_fail("open now did not rebuild its rows after mark_dirty")
+
+
+## The parent's TAKE on #401 (QA's lead 2): saved at a month end and loaded, the lead carries
+## the chief's line for the month's situation -- speak()'s line, with no voice -- not nothing
+## until the next month end. Through main's real load (a rebuilt main, #396).
+func _check_the_line_survives_a_load() -> void:
+	var error := SaveManager.save_game(_main._state, _main._clock, SLOT)
+	if error != "":
+		_fail("could not save: %s" % error)
+		return
+	var next = _main._on_load_requested(SLOT)
+	if next == null or next == _main:
+		_fail("the load handed back no new main")
+		return
+	_main = next
+	_page = _main._overview_panel
+	_draw()
+	var game: Dictionary = BriefingDriver._games.get(_main.get_instance_id(), {})
+	var lines: Array = game.get("lines", [])
+	var chief = Staff.chief_of(_main._loader, String(_main._state.player().id))
+	var situation := Priorities.situation(lines)
+	var want := String(BriefingDriver.chief_said(_main._loader, String(chief.id), situation, BriefingDriver._turn(_main, situation))["text"])
+	if _page._said.text.is_empty():
+		_fail("after a load the lead shows no line from the chief until the next month end")
+	elif _page._said.text != want:
+		_fail("after a load the lead says '%s', speak()'s line for '%s' is '%s'" % [_page._said.text, situation, want])
+	for path in [SaveManager._path_for(SLOT), SaveManager._path_for(SLOT) + SaveManager.TEMP_SUFFIX]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
 
 
 # --- helpers ----------------------------------------------------------------

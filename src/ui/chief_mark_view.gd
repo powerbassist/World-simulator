@@ -137,6 +137,26 @@ static func after_load(main, game: Dictionary) -> void:
 	game["memory_before"] = {}
 	main._hud.chief_caption.clear()
 	refresh(main, true)
+	_restore_line(main, game)
+
+
+## After a load the page's lead carries his line for the loaded month's situation (#401 pass 2,
+## QA's lead 2): speak()'s line, worked out again the way speak() does it, with no voice and no
+## caption. Nothing is saved for it, so no save field: the same rule, recomputed.
+static func _restore_line(main, game: Dictionary) -> void:
+	var ns = main._state.player() if main._state != null else null
+	var chief = Staff.chief_of(main._loader, String(ns.id)) if ns != null else null
+	if chief == null or not bool(ns.in_government):
+		return
+	var situation := Priorities.situation(game.get("lines", []))
+	game["spoken_line"] = String(BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))["text"])
+	game["spoken_key"] = month_key(main)
+	refresh(main)
+
+
+## The key a month's speech is stored under: the game and the month (month_end's speak key).
+static func month_key(main) -> String:
+	return "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)]
 
 
 static func clear(main) -> void:
@@ -153,8 +173,7 @@ static func _push_read(main, lines: Array, who: String, face: Texture2D, _chief)
 	if main._overview_panel == null:
 		return
 	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
-	var key := "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)]
-	var said := String(game.get("spoken_line", "")) if String(game.get("spoken_key", "")) == key else ""
+	var said := String(game.get("spoken_line", "")) if String(game.get("spoken_key", "")) == month_key(main) else ""
 	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said})
 
 
