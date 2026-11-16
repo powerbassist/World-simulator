@@ -271,6 +271,8 @@ var _sample_ledger: GridContainer
 var _wide_row: HBoxContainer
 var _wide_ledger: GridContainer
 var _narrow_row: HBoxContainer
+## A host built narrower than the measure (the 260 px person card) asks for no measure.
+var _card_row: HBoxContainer
 const NARROW_HOST := 456.0
 
 
@@ -298,6 +300,11 @@ func _build_kit_samples() -> void:
 	narrow.position = Vector2(0, 600)
 	_host.add_child(narrow)
 	_narrow_row = PanelKit.row(narrow, "Unnamed - extra-regio and overseas", "12.4%")
+	var card := VBoxContainer.new()
+	card.custom_minimum_size = Vector2(260, 0)
+	card.position = Vector2(600, 600)
+	_host.add_child(card)
+	_card_row = PanelKit.row(card, "Standing", "0.42", PanelKit.Tone.PLAIN, 0.0)
 
 	_sample_ledger = PanelKit.ledger(_sample_root, [
 		["Health", "0.19%", "0.19% (6 bn) (1 building)"],
@@ -318,6 +325,8 @@ func _check_rows_keep_a_readable_measure() -> void:
 		_fail("a row's value ends %.0f px from its caption's start" % (value.get_global_rect().end.x - _wide_row.get_global_rect().position.x))
 	if _narrow_row.size.x > NARROW_HOST + 0.5:
 		_fail("a row in a %.0f px host is %.0f px wide: it overflows the Regions dock" % [NARROW_HOST, _narrow_row.size.x])
+	if _card_row.size.x > 260.5:
+		_fail("a row asked for no measure in a 260 px card is %.0f px wide: it widens the card" % _card_row.size.x)
 	if _wide_ledger.size.x > _wide_ledger.get_combined_minimum_size().x + 0.5:
 		_fail("a two-row ledger stretches to %.0f px in a 1240 px page, past its %.0f px of columns" % [
 			_wide_ledger.size.x, _wide_ledger.get_combined_minimum_size().x])

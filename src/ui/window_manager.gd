@@ -198,7 +198,6 @@ func open(id: String, quiet: bool = false) -> void:
 
 	_show_domain_of(id)
 	_dock.offset_right = DOCK_LEFT + dock_width(id)
-	_dock.offset_bottom = -DOCK_BOTTOM  # full height until the page has measured itself (_process)
 	# Filling the body again, whatever band a probe imposed with fit_within().
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.show()
@@ -210,6 +209,7 @@ func open(id: String, quiet: bool = false) -> void:
 			_hide_page(other_id)
 	_mark_content_dirty(page)
 	_mark_tabs(id)
+	_fit_dock()  # sized on the frame it opens, not one frame later: no full-height flash
 
 	if not already_open:
 		# V4.9a. The dock rises when it comes up from the map; a tab switch is
@@ -260,7 +260,6 @@ func content(id: String) -> Control:
 	return _pages[id]._content if _pages.has(id) else null
 
 
-## The tab's page: its scroll, its content and its fold mark.
 ## The width the dock takes for a tab: its own (Regions), else its domain's, else DOCK_WIDTH. A
 ## narrowed domain grows with the text size, up to DOCK_WIDTH: at 130 % the Agenda's offer list cut
 ## its right-hand column at 800 px (the void pass's frames).
@@ -275,26 +274,26 @@ static func dock_width(id: String) -> float:
 ## The void pass (d), the author's call ("oui"): a page shorter than the dock is a plate as tall as
 ## its content over the map, not a full-height page with a blank bottom. Re-read every frame the
 ## dock is up, because a panel rebuilds on its own dirty flag and nothing signals its new height.
+## The width is re-read here too, so a text size changed with a narrowed tab open takes at once.
 func _process(_delta: float) -> void:
-	if not _dock.visible:
-		return
+	if _dock.visible:
+		_fit_dock()
+
+
+func _fit_dock() -> void:
 	var full: float = size.y - DOCK_TOP - DOCK_BOTTOM
 	var want := full
 	for id in _pages:
 		var page: TabPage = _pages[id]
-		if page.visible and not Domains.is_scene(id):
-			var page_height: float = page.wanted_height()
+		if page.visible:
+			_dock.offset_right = DOCK_LEFT + dock_width(id)
+			var page_height: float = -1.0 if Domains.is_scene(id) else page.wanted_height()
 			if page_height >= 0.0:
-				want = minf(full, _header_height() + page_height)
-	var bottom := -DOCK_BOTTOM - maxf(0.0, full - want)
-	if not is_equal_approx(_dock.offset_bottom, bottom):
-		_dock.offset_bottom = bottom
+				want = minf(full, (_dock.get_child(0) as Control).get_combined_minimum_size().y + page_height)
+	_dock.offset_bottom = -DOCK_BOTTOM - maxf(0.0, full - want)
 
 
-func _header_height() -> float:
-	return (_dock.get_child(0) as Control).get_combined_minimum_size().y
-
-
+## The tab's page: its scroll, its content and its fold mark.
 func frame(id: String):
 	return _pages.get(id, null)
 

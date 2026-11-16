@@ -213,11 +213,16 @@ static func sized(button: Button) -> Button:
 ## Caption left, value right, the value carrying the tone. The single commonest
 ## shape in this interface: eleven panels build it, and until now each built it
 ## itself.
-static func row(parent: Control, left: String, right: String, tone := Tone.PLAIN) -> HBoxContainer:
+##
+## `measure` is the row's width (ROW_MEASURE); 0 keeps the row as wide as its host, for a host built
+## narrower than the measure (a 260 px person card, a 300 px answer column's effects strip), where the
+## floor would widen the card instead of joining caption and value.
+static func row(parent: Control, left: String, right: String, tone := Tone.PLAIN, measure := ROW_MEASURE) -> HBoxContainer:
 	var line_box := HBoxContainer.new()
 	line_box.add_theme_constant_override("separation", COLUMN_SEPARATION)
-	line_box.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	line_box.custom_minimum_size.x = ROW_MEASURE
+	if measure > 0.0:
+		line_box.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		line_box.custom_minimum_size.x = measure
 
 	var key := Label.new()
 	key.text = left
