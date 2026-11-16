@@ -898,5 +898,21 @@
   "slower than the nation": "plus lent que la nation",
   "keeping pace": "au rythme de la nation",
   "ahead of the nation": "en avance sur la nation",
-  "%s %% a year against %s %% for the nation.": "%s %% par an contre %s %% pour la nation."
+  "%s %% a year against %s %% for the nation.": "%s %% par an contre %s %% pour la nation.",
+  "Jobs here %s, at rivals %s: net %s in %d month.": [
+    "Emplois ici %s, chez les concurrents %s : net %s en %d mois.",
+    "Emplois ici %s, chez les concurrents %s : net %s en %d mois."
+  ],
+  "%s unemployment %s %% → %s %% when it shuts.": "%s, chômage %s %% → %s %% à la fermeture.",
+  "Worth": "Valeur",
+  "State": "État",
+  "Its plant closure": "Fermeture de son site",
+  "The State's verbs": "Les actions de l'État",
+  "Show on the map": "Voir sur la carte",
+  "bn a year": "Md€ par an",
+  "No programme": "Aucun programme",
+  "In the finance bill: %s, voted at the month's end.": "Dans le projet de loi de finances : %s, voté à la fin du mois.",
+  "Voted with the finance bill at the month's end.": "Voté avec le projet de loi de finances à la fin du mois.",
+  "Put it in the finance bill": "Inscrire à la loi de finances",
+  "%s € a job · %s tax point": "%s € par emploi · %s point d'impôt"
 }
