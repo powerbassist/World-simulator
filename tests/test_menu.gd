@@ -18,6 +18,7 @@ extends SceneTree
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
+const InterfaceSize = preload("res://src/ui/interface_size.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const Clock = preload("res://src/core/clock.gd")
 const LoadingScreen = preload("res://src/ui/loading_screen.gd")
@@ -271,8 +272,11 @@ func _check_settings() -> void:
 		_fail("text size saved but not applied: the type scale is at %s, expected %s" % [
 			UiTheme.text_scale(), expected
 		])
-	if not is_equal_approx(root.content_scale_factor, 1.0):
-		_fail("the retired interface scale left the window at %s" % root.content_scale_factor)
+	# The interface size row (interface_size.gd), Auto here: whatever its rule gives this
+	# window, not a bare 1.0 that holds only because headless Auto happens to be 1.0.
+	var interface: float = InterfaceSize.factor(InterfaceSize.index(), root.size, InterfaceSize.screen_dpi())
+	if not is_equal_approx(root.content_scale_factor, interface):
+		_fail("the interface size left the window at %s, its rule gives %s" % [root.content_scale_factor, interface])
 
 	# A second panel reads the file, not the first panel's memory -- which is
 	# what the next launch will do.

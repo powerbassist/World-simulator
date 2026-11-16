@@ -189,6 +189,34 @@ func _check_listener() -> void:
 	_expect("80 % kept through a size change", root.content_scale_factor, 0.8)
 	_check_region_fit_source()
 	_check_click_through_scale()
+	# Last: run before the click check, its embedded Window (even freed) made that click
+	# miss (measured, cause not chased).
+	_check_refit_density()
+
+
+## refit() itself reads the density, not only factor(): a 1440p window on a dense screen
+## stays at 1.0, on a desk monitor it gets 0.75. A plain Window sized by hand stands in
+## for the root one, whose size headless does not let a test choose.
+func _check_refit_density() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SettingsPanel.CONFIG_PATH)
+	cfg.set_value("display", InterfaceSize.KEY, InterfaceSize.AUTO_INDEX)
+	cfg.save(SettingsPanel.CONFIG_PATH)
+	var window := Window.new()
+	root.add_child(window)
+	window.size = Vector2i(2560, 1440)
+	InterfaceSize.dpi_override = 215
+	InterfaceSize.apply(window)
+	_expect("refit on a dense 1440p screen (215 dpi)", window.content_scale_factor, 1.0)
+	InterfaceSize.dpi_override = 109
+	InterfaceSize.refit(window)
+	_expect("refit on a 27in 1440p monitor (109 dpi)", window.content_scale_factor, 0.75)
+	InterfaceSize.dpi_override = -1
+	# Freed now, not queued: an embedded Window left up for the frame takes the next
+	# check's click.
+	window.size_changed.disconnect(InterfaceSize.refit.bind(window))
+	root.remove_child(window)
+	window.free()
 
 
 ## The overlay asks the live canvas when it frames, not the rect set when the tab was

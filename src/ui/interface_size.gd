@@ -88,6 +88,17 @@ static func apply(window: Window) -> void:
 	refit(window)
 
 
+## The density refit() reads: the main window's screen, or `dpi_override` when a test
+## sets it (headless reports 72, so the dense branch is otherwise unreachable there).
+static var dpi_override := -1
+
+
+static func screen_dpi() -> int:
+	if dpi_override >= 0:
+		return dpi_override
+	return DisplayServer.screen_get_dpi(DisplayServer.SCREEN_OF_MAIN_WINDOW)
+
+
 ## The row as apply() last read it: refit() runs on every size_changed, a drag emits
 ## many, and the file only changes through the Settings screen, which calls apply().
 static var _index := DEFAULT_INDEX
@@ -98,6 +109,6 @@ static var _index := DEFAULT_INDEX
 ## here, every time, rather than cached: a move to another screen (F11 on it, a resize
 ## there, a Settings save) refits with that screen's dpi.
 static func refit(window: Window) -> void:
-	var f := factor(_index, window.size, DisplayServer.screen_get_dpi(DisplayServer.SCREEN_OF_MAIN_WINDOW))
+	var f := factor(_index, window.size, screen_dpi())
 	if not is_equal_approx(window.content_scale_factor, f):
 		window.content_scale_factor = f
