@@ -497,7 +497,7 @@ func _ready() -> void:
 	_windows.register("sector_industry", Labels.sector("industry"), SectorsShell.tab(self, "industry"), KEY_NONE, ICONS + "factory.svg")
 	_windows.register("sector_services", Labels.sector("services"), SectorsShell.tab(self, "services"), KEY_NONE, ICONS + "factory.svg")
 
-	# V2.8. KEY_F for fuel: E is Economy, N is Dispatches and G is Politics, so the
+	# V2.8. KEY_F for fuel: E is Economy, N is Dispatches and G is the Majority tab (Politics until rework 1), so the
 	# obvious letters were gone. The key rides register() itself -- V2.1c deleted the
 	# seventh hand-written list of panel ids to get here, and the drawer's tooltip
 	# reads the letter off the registry rather than restating it.

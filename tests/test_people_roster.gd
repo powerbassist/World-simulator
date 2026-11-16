@@ -19,9 +19,10 @@ extends SceneTree
 ##     the row then says when; a person with no request has See greyed with the reason;
 ##     a call already made this month greys Call with the phone's own words;
 ##   - slice 2: Politics retires. Government is one page (People); the majority lives in
-##     Parliament's "Majority" tab beside Bills, Dissolve only there; every Go that
-##     landed on Politics lands on the office rows (the majority, an office word) or on
-##     the Majority tab (the strip's assembly figure, the Agenda's office entries);
+##     Parliament's "Majority" tab beside Bills, Dissolve only there; the briefing's
+##     majority Go, the strip's assembly figure and the Agenda's office entries open
+##     Majority, whose partner lines lead to their offices in People; an office word's Go
+##     lands on the office rows;
 ##   - the cabinet's readings moved with it: a party short of its share says so;
 ##   - a vacant office offers Fill, and Dismiss on it is greyed with Removal's reason;
 ##     Fill seats a party at once; a held office offers the OTHER parties and a Dismiss
@@ -127,18 +128,31 @@ func _process(_delta: float) -> bool:
 				_fail("a refusal said about one office stays up after another line is focused: '%s'" % _panel._verbs.status_text())
 			_press(_chip("press"))
 		34:
-			# The majority's Go from a group that lists no office: focus("seats") brings them back.
+			# An office word's Go from a group that lists no office: focus("seats") brings them
+			# back (its own frame: the partner's line below must not mask it, #389 pass 2 T5).
+			_panel._verbs._refused("this portfolio changed hands too recently to change again")
 			_panel.focus("seats")
-			_press_partner_link()
 		36:
-			_check_partner_link_landed()
 			if _row("office", "health") == null:
 				_fail("focus('seats') did not bring the office rows back from the press group")
 			var owner = _panel.get_viewport().gui_get_focus_owner()
 			if owner == null or not owner.has_meta("line") or not owner.get_parent().has_meta("office"):
-				_fail("the majority's Go leaves the keyboard off the office rows: %s" % owner)
-			_main.queue_free()
+				_fail("an office word's Go leaves the keyboard off the office rows: %s" % owner)
+			# T3: a Go is a new pick, so a refusal said about another line goes.
+			if _panel._verbs.status_text() != "":
+				_fail("focus('seats') keeps a refusal said about another line: '%s'" % _panel._verbs.status_text())
+			# T2: the line the keyboard lands on is scrolled into view.
+			if not (_panel._body.get_parent() as ScrollContainer).follow_focus:
+				_fail("the roster's scroll does not follow the keyboard: a landed line can sit below view")
+			_press_partner_link()
 		38:
+			_check_partner_link_landed()
+			_focus_a_partner_and_refresh()
+		40:
+			_check_partner_focus_survived()
+			_check_partner_without_office()
+			_main.queue_free()
+		42:
 			_finish()
 			return true
 	return false
@@ -601,6 +615,69 @@ func _check_partner_link_landed() -> void:
 	var ns = _main._state.player()
 	if picked.size() != 2 or String(picked[0]) != "office" or String(ns.cabinet.get(String(picked[1]), "")) != _partner:
 		_fail("a partner's line did not focus one of its offices: %s (party %s)" % [picked, _partner])
+
+
+## #389 pass 2 T4: the Majority tab rebuilds its partner lines on every refresh; the
+## keyboard on one stays on it.
+var _focused_party := ""
+
+
+func _focus_a_partner_and_refresh() -> void:
+	var majority = _main._government_panel
+	_main._windows.open("majority")
+	majority._refresh()
+	for button in majority.find_children("*", "Button", true, false):
+		if button.has_meta("party") and not (button as Button).disabled:
+			_focused_party = String(button.get_meta("party"))
+			(button as Button).grab_focus()
+			break
+	if _focused_party == "":
+		_fail("premise: no partner line to focus")
+		return
+	majority.mark_dirty()
+	majority._refresh()
+
+
+## A frame on, the old lines are freed: the keyboard must be on the new one.
+func _check_partner_focus_survived() -> void:
+	if _focused_party == "":
+		return
+	var owner = _main._government_panel.get_viewport().gui_get_focus_owner()
+	if owner == null or not owner.has_meta("party") or String(owner.get_meta("party")) != _focused_party:
+		_fail("a Majority refresh drops the keyboard off the partner line it was on: %s" % owner)
+
+
+## #389 pass 2 T1: a partner holding no office says so and leads to no other party's office.
+func _check_partner_without_office() -> void:
+	var ns = _main._state.player()
+	var majority = _main._government_panel
+	var empty := ""
+	var keeper := ""
+	for pid in ns.coalition_party_ids:
+		if String(pid) != String(ns.pm_party_id):
+			empty = String(pid)
+		else:
+			keeper = String(pid)
+	if empty == "" or keeper == "":
+		_fail("premise: no second government party")
+		return
+	var cabinet: Dictionary = ns.cabinet.duplicate()
+	for f in ns.cabinet.keys():
+		if String(ns.cabinet[f]) == empty:
+			ns.cabinet[f] = keeper
+	majority._refresh()
+	var line: Button = null
+	for button in majority.find_children("*", "Button", true, false):
+		if button.has_meta("party") and String(button.get_meta("party")) == empty:
+			line = button
+	if line == null or not line.disabled or line.tooltip_text == "":
+		_fail("a partner holding no office is not a greyed line that says why: %s" % line)
+	_panel._picked = []
+	_panel.show_offices(empty)
+	if _panel.focused == "seats" or not _panel._picked.is_empty():
+		_fail("People lands on another party's office for a partner holding none: %s" % [_panel._picked])
+	ns.cabinet = cabinet
+	majority._refresh()
 
 
 func _check_filled() -> void:

@@ -277,10 +277,10 @@ var _outliner := false
 ## band pickers under the display rows) is judged at 1080 rather than argued.
 var _settings := false
 
-## V5.2 b+ (the #135 follow-up). The Dissolve card up, asked by the Politics button.
+## V5.2 b+ (the #135 follow-up). The Dissolve card up, asked by the Majority tab's button.
 var _dissolve_confirm := false
 
-## V5.2 b+ R4. The Dismiss card up over Politics, its price in R11's words.
+## V5.2 b+ R4. The Dismiss card up (an office row's Dismiss in People), its price in R11's words.
 var _dismiss_confirm := false
 
 ## V5.2 d. The front-page card up over a hand-fed entry (the sim's trigger is

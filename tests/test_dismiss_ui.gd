@@ -121,6 +121,14 @@ func _process(_delta: float) -> bool:
 				_fail("a refused dismissal is not greyed with why: '%s' (the sim: '%s')" % [said, why])
 			if _card().is_visible_in_tree():
 				_fail("a refused dismissal opened the card")
+			# #389 pass 2 T5: the door itself refuses too (a press that reached it anyway):
+			# no card, and the sim's reason on the refusal line.
+			if dismiss != null:
+				dismiss.pressed.emit()
+			if _card().is_visible_in_tree():
+				_fail("a press on the refused Dismiss opened the card")
+			if why != "" and not String(_verbs.status_text()).to_lower().contains(why.to_lower()):
+				_fail("a press on the refused Dismiss does not say why: '%s' (the sim: '%s')" % [_verbs.status_text(), why])
 			_check_diary_booking()
 			return _end()
 	return false

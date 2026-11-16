@@ -95,6 +95,8 @@ func _ready() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# A Go or a partner's line lands the keyboard on a line that may sit below view.
+	scroll.follow_focus = true
 	root.add_child(scroll)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -141,8 +143,9 @@ func mark_dirty() -> void:
 ## keyboard on its first verb (a Go lands on a verb).
 func focus(person_id: String) -> void:
 	if not _loader.person_by_id.has(person_id):
-		show_offices()  # the majority's Go: "seats", the office rows
+		show_offices()  # an office word's Go: "seats", the office rows
 		return
+	_verbs._refused("")  # a new pick: a refusal said about another line goes
 	focused = person_id
 	_picked = ["person", person_id]
 	_search.text = ""
@@ -150,16 +153,18 @@ func focus(person_id: String) -> void:
 	_dirty = true
 
 
-## The majority's Go: the view that lists the offices.
-## `party_id` (a partner's line on the Majority tab): its first office focused instead.
+## An office word's Go (briefing_driver.gd): the view that lists the offices, the
+## keyboard on the first. `party_id` (a partner's line on the Majority tab): that party's
+## first office focused instead; a party holding none focuses nothing (its line on
+## Majority is greyed and says so).
 func show_offices(party_id := "") -> void:
 	if _chip != "government":
 		_chip = "needs"
 	_search.text = ""
-	focused = "seats"  # _land puts the keyboard on the first office line
+	_verbs._refused("")  # a new pick: a refusal said about another line goes
+	focused = "seats" if party_id == "" else ""  # _land puts the keyboard on the first office line
 	for f in CK.PORTFOLIO_KEYS:
 		if party_id != "" and String(_state.player().cabinet.get(f, "")) == party_id:
-			focused = ""
 			_picked = ["office", f]
 			_refocus = true
 			break
@@ -248,7 +253,7 @@ func _offices(query := "") -> bool:
 			{"text": row["feels"], "tone": row["feels_tone"]}, {"text": row["delivers"], "tone": row["delivers_tone"]},
 			{"text": row["owe"], "tone": row["owe_tone"]}, {"text": "—", "tone": UiTheme.CAPTION}],
 			picked, _show_card, _hide_card, _pick.bind("office", f), _menu.bind("office", row))
-		# The briefing's majority Go lands here: an office's verbs are the reshuffle.
+		# An office word's Go lands here: an office's verbs are the reshuffle.
 		ActsOn.tag(line.get_child(0), ["seats"])
 		if picked:
 			RosterVerbs.strip(_body, RosterVerbs.for_office(_state, _loader, row, _verbs), RosterLine.FACE.x + 20)

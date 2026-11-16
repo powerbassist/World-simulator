@@ -38,17 +38,11 @@ const K = preload("res://src/sim/election_constants.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const RepublicPlate = preload("res://src/ui/republic_plate.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
 const Num = preload("res://src/ui/num.gd")
-
-## Longest human label for a portfolio -- the panel names the spending line the
-## player already knows from the Budget tab, not the internal key.
-const PORTFOLIO_LABEL := {
-	"health": "Health", "education": "Education", "defence": "Defence",  # i18n: msgid
-	"pensions": "Pensions", "infrastructure": "Infrastructure",  # i18n: msgid
-}
 
 ## Longest human label for each formation method. The panel names the rule the
 ## player is actually governing under rather than the enum, so a Frenchman is
@@ -153,7 +147,7 @@ func _ready() -> void:
 	# exactly. Ordering can, and it fixes it structurally -- the verb stays reachable
 	# whatever the body grows to, where 39px of headroom would have been one added
 	# row from failing again.
-	# V5.2 b+ (R3): the one Dissolve button, the Legislature's too (dissolve_button.gd).
+	# V5.2 b+ (R3): the one Dissolve button (dissolve_button.gd); its one home since rework 1.
 	_dissolve_button = DissolveButton.new()
 	_dissolve_button.dissolved.connect(_on_dissolved)
 	root.add_child(_dissolve_button)
@@ -203,6 +197,9 @@ func _refresh() -> void:
 
 	_title.set_marked("%s %s — %s" % [ns.head_of_government_title, PanelKit.person(ns.pm_person_id, _loader.person_name(ns.pm_person_id)), n.chamber_name])
 
+	# The partner lines are rebuilt below: the keyboard on one goes back to it (#389 pass 2).
+	var focus = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	var had_party: String = String(focus.get_meta("party")) if focus != null and is_ancestor_of(focus) and focus.has_meta("party") else ""
 	for child in _body.get_children():
 		if child == _plate:
 			_body.remove_child(_plate)
@@ -252,7 +249,11 @@ func _refresh() -> void:
 	_plate.fill(ns, _loader, PLATE_LABELS, _upper_phrase(ns), _court_phrase(ns))
 
 	PanelKit.heading(_body, tr("In government"))
-	_body.add_child(_build_partner_table(ns))
+	var partners := _build_partner_table(ns)
+	_body.add_child(partners)
+	for line in partners.get_children():
+		if had_party != "" and line.has_meta("party") and String(line.get_meta("party")) == had_party:
+			(line as Control).grab_focus()
 
 	if ns.resignations_count > 0:
 		var last: Dictionary = ns.last_resignation
@@ -262,7 +263,7 @@ func _refresh() -> void:
 				if party.id == String(last.get("party_id", "")):
 					last_party = party.party_name
 		PanelKit.line(_body, tr("Ministers resigned this run: %d (last: %s over %s)") % [
-			ns.resignations_count, last_party, tr(PORTFOLIO_LABEL.get(last.get("portfolio", ""), last.get("portfolio", "")))
+			ns.resignations_count, last_party, Labels.portfolio(String(last.get("portfolio", "")))
 		], PanelKit.Tone.PLAIN)
 
 	var outside: Array[String] = []
@@ -360,6 +361,10 @@ func _build_partner_table(ns) -> Control:
 		if pid == ns.pm_party_id:
 			name_label.text += "  (%s)" % ns.head_of_government_title
 		name_label.tooltip_text = tr("Its offices, in People: reshuffle there.")
+		# A partner holding no office has no line in People to lead to: greyed, saying so.
+		if not ns.cabinet.values().has(pid):
+			name_label.disabled = true
+			name_label.tooltip_text = tr("It holds no office in the government.")
 		name_label.set_meta("party", String(pid))
 		# The briefing's majority Go lands on this tab: a partner's line leads to the verb.
 		ActsOn.tag(name_label, ["seats"])

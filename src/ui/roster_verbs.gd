@@ -56,7 +56,7 @@ static func first_free(state, request_id: String) -> Dictionary:
 	return {}
 
 
-## `verbs` is the panel's cabinet_verbs.gd (compact): its reassign() and dismiss().
+## `verbs` is the panel's cabinet_verbs.gd: its reassign() and dismiss().
 static func for_office(state, loader, row: Dictionary, verbs) -> Array:
 	var ns = state.player()
 	var portfolio := String(row["portfolio"])
