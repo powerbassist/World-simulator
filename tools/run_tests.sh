@@ -454,6 +454,7 @@ tests=(
   # V5.1b: the localisation plumbing -- tables, the switch, row keys, the lint, the fit sweep.
   tests/test_strings.gd
   tests/test_settings_language.gd
+  tests/test_interface_size.gd
   tests/test_i18n_lint.gd
   tests/test_i18n_fit.gd
   tests/test_date_text.gd

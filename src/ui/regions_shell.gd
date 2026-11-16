@@ -13,6 +13,7 @@ const RegionPanel = preload("res://src/ui/region_panel.gd")
 const MapRegions = preload("res://src/ui/map_regions.gd")
 const Region = preload("res://src/core/region.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
 
 
 static func panel(main) -> Control:
@@ -22,9 +23,9 @@ static func panel(main) -> Control:
 	var overlay = MapRegions.new()
 	main._map_view.add_child(overlay)
 	tab._overlay = overlay
-	var w = main._windows
-	overlay.fit_rect = Rect2(w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"]), w.DOCK_TOP,
-		w.DOCK_WIDTH - float(w.DOCK_WIDTHS["region"]), 1080.0 - w.DOCK_TOP - w.DOCK_BOTTOM)
+	overlay.fit_rect_source = fit_rect_for
+	overlay.view_held = func() -> bool:
+		return String(tab._game.open_region) != "" or String(tab._game.city_id) != ""
 	bind(main, overlay)
 	# A load re-runs every registered panel's setup() (main.gd's _on_load_requested), and
 	# Continue is a load over the default game: the overlay follows it there, or a save of
@@ -66,3 +67,16 @@ static func bind(main, overlay) -> void:
 				largest = c
 		cities[String(region.id)] = [] if largest == null else [largest.lonlat]
 	overlay.set_avoid(cities)
+
+
+## The map the Regions tab frames the nation in, on a canvas of `view` logical px: right
+## of the narrow dock, left of the inbox's strip, between the strip of figures and the
+## day ribbon. At 1920x1080 it is the rect it always was (the strip right of the
+## 1240 dock); a bigger canvas (settings_panel.gd's interface size) widens and
+## heightens it with the map rather than stopping at 1080.
+static func fit_rect_for(view: Vector2) -> Rect2:
+	var w = WindowManager
+	var left: float = w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"])
+	# The inbox's strip, measured at the reference: what the 1240 dock leaves of 1920.
+	var strip: float = 1920.0 - (w.DOCK_LEFT + w.DOCK_WIDTH)
+	return Rect2(left, w.DOCK_TOP, view.x - strip - left, view.y - w.DOCK_TOP - w.DOCK_BOTTOM)

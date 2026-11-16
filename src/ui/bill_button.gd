@@ -6,7 +6,7 @@ extends RefCounted
 ## through the Legislature: the one propose path (brief_requested -> main's briefing
 ## -> run_proposal). The Legislature is found through the window manager's group, so
 ## main.gd and law_panel.gd (both at their size baselines) are untouched. Its own
-## file because companies_panel.gd sits at the 300-line ceiling.
+## file because companies_panel.gd is long enough already (tools/check_size.py).
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")

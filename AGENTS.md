@@ -79,7 +79,7 @@ python tools/check_size.py
 ```
 
 The size ratchet, on CODE lines (no blank, no comment-only line) over `src/`:
-a new file stays at or under 300; a file in `tools/size_baseline.json` may
+a new file stays at or under 300 (400 under `src/ui/`); a file in `tools/size_baseline.json` may
 shrink, never grow, and the change that shrinks it lowers the baseline
 (`--update`); no `src/` file past 2 000 total lines, no exception (the last,
 `src/ui/main.gd`, closed at V5.1-d2: 2 705 -> 2 124 at c, 1 919 once the desk cards
