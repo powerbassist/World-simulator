@@ -188,6 +188,7 @@ extends SceneTree
 
 const Relations = preload("res://src/core/relations.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const InterfaceSize = preload("res://src/ui/interface_size.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const OsCursor = preload("res://tools/os_cursor.gd")
@@ -1206,6 +1207,9 @@ func _init() -> void:
 			_main.pending_player_id = _play
 	root.add_child(_main)
 	OsCursor.quiet_window()  # the menu's _ready applied the saved window mode just now
+	# The interface size, as the menu applies it at boot: main.tscn booted directly has no
+	# menu, and without this a 2560x1440 frame shows the 1080p canvas x1.33.
+	InterfaceSize.apply(root)
 
 
 ## V5.1-0b. The dev console's states, staged through its own run_command() the way
@@ -1354,7 +1358,8 @@ func _write_frame(path: String, note: String) -> bool:
 		quit(1)
 		return false
 	var suffix := " (%s)" % note if note != "" else ""
-	print("wrote %s (%dx%d)%s" % [ProjectSettings.globalize_path(path), image.get_width(), image.get_height(), suffix])
+	print("wrote %s (%dx%d, interface %s, canvas %s)%s" % [ProjectSettings.globalize_path(path), image.get_width(), image.get_height(),
+		root.content_scale_factor, root.get_visible_rect().size, suffix])
 	return true
 
 

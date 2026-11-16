@@ -36,6 +36,10 @@ var selected := ""
 ## (the map right of the narrow dock, left of the inbox: regions_shell.gd sets it).
 var _bounds := Rect2()
 var fit_rect := Rect2()
+## When set, fit() asks it for fit_rect from the canvas it is about to frame on: the
+## canvas grows with the interface size (settings_panel.gd), so a rect fixed at setup
+## would frame the 1080p one.
+var fit_rect_source := Callable()
 ## region id -> its cities' lon/lat: a figure's chip steps off them (regions_shell.gd sets it).
 var _avoid := {}
 ## region id -> that region's own rings, holes included (its entry of loader.region_rings):
@@ -226,6 +230,8 @@ func select(region_id: String) -> void:
 ## Frame the nation in fit_rect: zoom so its box fills nine tenths of the rect, then pan its
 ## centre to the rect's, through the map's own zoom and pan (which clamp as they always do).
 func fit() -> void:
+	if fit_rect_source.is_valid() and is_inside_tree():
+		fit_rect = fit_rect_source.call(get_viewport_rect().size)
 	if _map == null or fit_rect.size == Vector2.ZERO or _bounds.size == Vector2.ZERO:
 		return
 	var a: Vector2 = _map.lonlat_to_screen(_bounds.position.x, _bounds.end.y)

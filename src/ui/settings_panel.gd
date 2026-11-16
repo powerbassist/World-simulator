@@ -30,6 +30,7 @@ const Labels = preload("res://src/ui/labels.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const WindowMode = preload("res://src/ui/window_mode.gd")
+const InterfaceSize = preload("res://src/ui/interface_size.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
 const CONFIG_PATH := "user://settings.cfg"
 
@@ -61,7 +62,8 @@ const DEFAULT_FULLSCREEN := true
 ## at the 1920 reference. It REPLACED the interface scale (content_scale_factor
 ## 85-130 %; the parent's call, 2026-10-22): at 130 % that shrank the reference
 ## to 1477 px and the docked workspace left 5 px of map. An old `ui_scale_index`
-## in settings.cfg is ignored; 85 % ("more map") may come back if it is missed.
+## in settings.cfg is ignored. "More map" came back below 100 % as the interface size
+## (interface_size.gd), which grows the canvas instead of shrinking it.
 const TEXT_SCALES: Array[float] = [0.9, 1.0, 1.15, 1.3]
 const DEFAULT_TEXT_INDEX := 1
 
@@ -101,6 +103,7 @@ var _foreign_news_button: OptionButton
 var _applied_resolution := -1
 var _resolution_button: OptionButton
 var _text_button: OptionButton
+var _interface_button: OptionButton
 var _ambient_button: OptionButton
 var _sound_button: OptionButton
 var _voice_button: OptionButton
@@ -182,8 +185,8 @@ static func _apply(window: Window, fullscreen: bool, resolution_index: int, forc
 	if bool(plan["set_size"]):
 		window.size = RESOLUTIONS[clampi(resolution_index, 0, RESOLUTIONS.size() - 1)]
 	WindowMode.note_applied()
-	# The retired interface scale's factor, back to 1 for a player who had set it.
-	window.content_scale_factor = 1.0
+	# Last, for the comment above: the factor is a node property too.
+	InterfaceSize.apply(window)
 
 
 ## The "news of other countries" switch, read once per settings revision rather
@@ -253,6 +256,7 @@ func _save_and_apply() -> void:
 	cfg.set_value("display", "fullscreen", fullscreen)
 	cfg.set_value("display", "resolution_index", resolution_index)
 	cfg.set_value("display", "text_scale_index", _text_button.selected)
+	cfg.set_value("display", InterfaceSize.KEY, _interface_button.selected)
 	cfg.set_value("audio", "enabled", sound_on)
 	cfg.set_value("audio", "ambient", ambient_on)
 	cfg.set_value("audio", "voice", _voice_button.selected)
@@ -335,6 +339,7 @@ func _build() -> void:
 	_fullscreen_button = _add_row(grid, tr("Window (F11)"), [tr("Windowed"), tr("Fullscreen")])
 	_resolution_button = _add_row(grid, tr("Resolution"), _resolution_labels())
 	_text_button = _add_row(grid, tr("Text size"), _percent_labels(TEXT_SCALES))
+	_interface_button = _add_row(grid, tr("Interface size"), _interface_labels())
 	_sound_button = _add_row(grid, tr("Sound"), [tr("Off"), tr("On")])
 	_ambient_button = _add_row(grid, tr("Ambience"), [tr("Off"), tr("On")])
 	_voice_button = _add_row(grid, tr("Voices"), [tr("Off"), tr("Quiet"), tr("Normal"), tr("Loud")])
@@ -450,6 +455,12 @@ func _percent_labels(scales: Array[float]) -> Array:
 	return labels
 
 
+## Auto first, then the steps as percentages.
+func _interface_labels() -> Array:
+	var steps: Array[float] = InterfaceSize.SIZES.slice(InterfaceSize.AUTO_INDEX + 1)
+	return [tr("Auto")] + _percent_labels(steps)
+
+
 static func _text_index(cfg: ConfigFile) -> int:
 	return clampi(int(cfg.get_value("display", "text_scale_index", DEFAULT_TEXT_INDEX)), 0, TEXT_SCALES.size() - 1)
 
@@ -468,6 +479,7 @@ func _load_into_controls() -> void:
 	_resolution_button.select(clampi(int(cfg.get_value("display", "resolution_index", DEFAULT_RESOLUTION_INDEX)), 0, RESOLUTIONS.size() - 1))
 	_applied_resolution = _resolution_button.selected
 	_text_button.select(_text_index(cfg))
+	_interface_button.select(InterfaceSize.index_in(cfg))
 	_sound_button.select(1 if bool(cfg.get_value("audio", "enabled", DEFAULT_SOUND)) else 0)
 	_ambient_button.select(1 if bool(cfg.get_value("audio", "ambient", DEFAULT_AMBIENT)) else 0)
 	_voice_button.select(voice_level())
