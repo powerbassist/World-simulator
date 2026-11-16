@@ -24,6 +24,7 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const AidWords = preload("res://src/ui/aid_words.gd")
 
 ## The focused verb's strip, in px: about sixty characters of body text a line.
 const STRIP_WIDTH := 520
@@ -47,6 +48,10 @@ static func build(panel, parent: Control, ns, company) -> void:
 		money_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		money_label.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(float(money[2])))
 		selector.set_meta("money_label", money_label)
+		# Aid, said as the player weighs it (screen 5 slice 2): a job's price, a tax point's share.
+		if AidWords.is_aid(action):
+			var aid := PanelKit.plain_line(row, AidWords.caption(loader, ns, company, action))
+			aid.autowrap_mode = TextServer.AUTOWRAP_OFF
 		var why := CompanyVerb.refusal(state, loader, ns, company, action)
 		if why != "":
 			var line := PanelKit.plain_line(parent, Strings.t(why))  # i18n: row-ok the sim's reason, its English the msgid
@@ -63,8 +68,13 @@ static func build(panel, parent: Control, ns, company) -> void:
 		var strip := EffectsStrip.new()
 		detail.add_child(strip)
 		strip.show_lines(String(money[0]), String(money[1]), float(money[2]),
-			EffectsStrip.who_text(action.effects.get("bloc_offset", {})),
+			EffectsStrip.who_text(AidWords.offsets(loader, ns, company, action)),
 			when_text(action, est))
+		# The jobs the aid moves, before the press (PR 3's net_jobs, on a copy).
+		if AidWords.is_aid(action):
+			var moved := AidWords.net_jobs_line(state, loader, ns, company, action)
+			if moved != "":
+				PanelKit.plain_line(detail, moved, PanelKit.Tone.PLAIN).set_meta("net_jobs", id)
 		var go := PanelKit.sized(Button.new())
 		go.text = Strings.t("Go")
 		go.set_meta("go", true)

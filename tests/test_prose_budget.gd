@@ -62,7 +62,7 @@ const PENDING := {}
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
 const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
-	"companies": 145, "sector_agriculture": 80, "sector_industry": 100, "sector_services": 90}
+	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 128, "energy": 118,
@@ -103,7 +103,11 @@ const TOTAL_PENDING := {
 ## Screen 5, slice 1 (the author's C): the Commodities tab retires into three sector tabs (76, 98
 ## and 85 at rest: a head, the goods each sector makes, its majors), cut first (no Needs you
 ## section when nothing waits, the lead does not repeat the verdict tag): 2638 -> 2700, stated.
-const TOTAL_SUM_CEILING := 2700
+## Screen 5, slice 2: each sector tab gains its firm sheet (a firm's head and three figures, the
+## State's verbs with their prices and, for aid, its price a job and in tax points), cut first (the
+## sheet does not repeat the sector or name the chief): 2700 -> 2846, stated; the three tabs at
+## 122 / 148 / 135, their month-12 count.
+const TOTAL_SUM_CEILING := 2846
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

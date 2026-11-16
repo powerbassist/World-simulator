@@ -1,20 +1,27 @@
 extends PanelContainer
 
-## One sector's tab in the Sectors domain -- V5.3 screen 5, slice 1, the author's pick
-## C ("les produits"). Read only: the head (verdict, lead sentence, four figures), what
-## waits on the player in this sector, what the sector makes good by good, its majors.
-## The verbs (the programme through the finance bill, the firm sheet, a right click)
-## are slice 2; until then a Needs you row's Go opens the overview (the window
-## "companies") with the firm opened, where today's answers live.
+## One sector's tab in the Sectors domain -- V5.3 screen 5, the author's pick C ("les
+## produits"). Left: the head (verdict, lead sentence, four figures) and the sector's
+## programme as a finance-bill row (sector_programme.gd), what waits on the player, what
+## the sector makes good by good (sector_goods_view.gd), its majors. Right: the selected
+## firm's sheet (firm_sheet.gd) with its file and the State's verbs (slice 2).
+##
+## A major or a closure's Answer selects its firm on the sheet; a right click on a firm
+## opens its verbs with their prices, the call to its chief and the map. A bid, a failing
+## major or a process's ask is still answered on the overview (the window "companies"):
+## Answer opens it there with the firm opened.
 ##
 ## Every figure is a reader's (SectorRead, SectorGoods, SectorNeeds); what the pictures
 ## staged without one is cut: a major's 12-month change (the sim keeps no series per
 ## firm) and "smaller firms" as a good's maker (body firms carry no products).
 
 signal go_firm(sector: String, company_id: String)
+## (before_snapshot, label): a command acted (firm_commands.gd), main's decision delta.
+signal acted(before, label)
+signal call_requested(person_id: String)
+signal map_requested(lonlat: Vector2)
 
 const SectorRead = preload("res://src/ui/sector_read.gd")
-const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const SectorNeeds = preload("res://src/ui/sector_needs.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Closures = preload("res://src/sim/closures.gd")
@@ -25,6 +32,17 @@ const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
+const FirmCommands = preload("res://src/ui/firm_commands.gd")
+const FirmSheet = preload("res://src/ui/firm_sheet.gd")
+const SectorProgramme = preload("res://src/ui/sector_programme.gd")
+const SectorGoodsView = preload("res://src/ui/sector_goods_view.gd")
+const IndustryVerbs = preload("res://src/ui/industry_verbs.gd")
+const VerbPlate = preload("res://src/ui/verb_plate.gd")
+const Strings = preload("res://src/ui/strings.gd")
+const Processes = preload("res://src/sim/processes.gd")
+
+## The sheet's width in px: the picture's right column.
+const SHEET_WIDTH := 440
 
 const FACE := Vector2(28, 38)
 ## The verdict's tag tone: a status, so a fixed tone and its words, never the accent.
@@ -44,6 +62,15 @@ var _dirty := true
 var _body: VBoxContainer
 ## The good the chips filter the table to, "" for all of them.
 var _good_filter := ""
+var _sheet: VBoxContainer
+## The firm on the sheet, "" for the default (the first waiting, else the first major).
+var _firm_id := ""
+## firm_commands.gd's state: the focused verb, the card an irreversible verb asks on, the
+## last refusal, the programme stop picked on the slider (-1: as it stands).
+var _focus_verb := ""
+var _confirm
+var _last_refusal := ""
+var _prog_pick := -1
 
 
 func _init(sector_id := "") -> void:
@@ -56,20 +83,32 @@ func _ready() -> void:
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_%s" % side, 16)
 	add_child(margin)
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 16)
+	margin.add_child(columns)
+	_body = _column(columns, Control.SIZE_EXPAND_FILL)
+	_sheet = _column(columns, Control.SIZE_FILL)
+	_sheet.custom_minimum_size.x = SHEET_WIDTH
+
+
+## A scrolling column: EXPAND vertically, so the page fills the dock (tab_page.
+## _scrolls_inside) and each list scrolls inside its own pane.
+func _column(parent: Control, horizontal: int) -> VBoxContainer:
 	var scroll := ScrollContainer.new()
-	# EXPAND: the page then fills the dock (tab_page._scrolls_inside), lists scroll inside.
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = horizontal
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	margin.add_child(scroll)
+	parent.add_child(scroll)
 	# The bar draws over the content: the right-aligned figures keep clear of it.
 	var gutter := MarginContainer.new()
 	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gutter.add_theme_constant_override("margin_right", 14)
 	scroll.add_child(gutter)
-	_body = VBoxContainer.new()
-	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_theme_constant_override("separation", 14)
-	gutter.add_child(_body)
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 14)
+	gutter.add_child(box)
+	return box
 
 
 func setup(state, loader) -> void:
@@ -97,12 +136,15 @@ func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
-	for child in _body.get_children():
+	for child in _body.get_children() + _sheet.get_children():
 		child.queue_free()
 	_head(ns)
 	_needs(ns)
-	_goods(ns)
+	SectorGoodsView.build(self, _body, ns)
 	_majors(ns)
+	var company = _selected(ns)
+	if company != null:
+		FirmSheet.build(self, _sheet, ns, company)
 
 
 func _head(ns) -> void:
@@ -126,6 +168,7 @@ func _head(ns) -> void:
 	PanelKit.figure(figures, CompanyVerb.thousands(float(reading["jobs"])), tr("Jobs"))
 	PanelKit.figure(figures, tr("%s %%") % Num.fs(float(reading["trend"]), 1), tr("Trend a year"))
 	PanelKit.figure(figures, tr("%s %%") % Num.f(float(reading["of_gdp"]), 1), tr("Of GDP"))
+	SectorProgramme.build(self, box, ns, sector)
 
 
 func _needs(ns) -> void:
@@ -157,8 +200,13 @@ func _needs(ns) -> void:
 		go.text = tr("Answer")
 		go.set_meta("go_firm", String(item["company_id"]))
 		var company_id := String(item["company_id"])
-		go.pressed.connect(func() -> void: go_firm.emit(sector, company_id))
+		# A closure is answered on the sheet; the rest on the overview, until they move here.
+		if String(item["kind"]) == "closure":
+			go.pressed.connect(_select.bind(company_id))
+		else:
+			go.pressed.connect(func() -> void: go_firm.emit(sector, company_id))
 		row.add_child(go)
+		row.gui_input.connect(_right_click.bind(company))
 
 
 func _need_line(ns, item: Dictionary) -> String:
@@ -170,73 +218,6 @@ func _need_line(ns, item: Dictionary) -> String:
 	if city == null:
 		return tr("Closes a plant · %s jobs") % jobs
 	return tr("Closes its %s plant · %s jobs") % [String(city.city_name), jobs]
-
-
-func _goods(ns) -> void:
-	var all: Array = SectorGoods.rows_all(_state, _loader, ns, sector)
-	var section := PanelKit.section(_body, tr("What it makes"))
-	if all.is_empty():
-		PanelKit.plain_line(section, tr("Nothing in the goods register is made here yet."))
-		return
-	var shown: Array = all.slice(0, SectorGoods.MAX_ROWS)
-	var chips := PanelKit.buttons(section)
-	_chip(chips, "", tr("All · %d") % shown.size())
-	for row in shown:
-		_chip(chips, String(row["good_id"]), String(row["name"]))  # i18n: row-ok a good's name: the goods register has no translation table yet
-	var grid := GridContainer.new()
-	grid.columns = 4
-	grid.add_theme_constant_override("h_separation", PanelKit.COLUMN_SEPARATION)
-	section.add_child(grid)
-	var months := int(shown[0]["months"])
-	for caption in ["", tr("Price, %d months") % months if months >= 2 else tr("Price"), tr("Trade, this month"), tr("Made by")]:
-		var head := Label.new()
-		head.text = caption
-		head.theme_type_variation = UiTheme.CAPTION
-		grid.add_child(head)
-	for row in shown:
-		if _good_filter != "" and _good_filter != String(row["good_id"]):
-			continue
-		_good_row(grid, row)
-	if all.size() > shown.size():
-		PanelKit.plain_line(section, tr_n("and %d more good", "and %d more goods", all.size() - shown.size()) % (all.size() - shown.size()))
-
-
-func _chip(parent: Control, good_id: String, text: String) -> void:
-	var chip := PanelKit.sized(Button.new())
-	chip.text = text
-	chip.toggle_mode = true
-	chip.button_pressed = _good_filter == good_id
-	chip.set_meta("good", good_id)
-	chip.pressed.connect(func() -> void:
-		_good_filter = good_id
-		_dirty = true)
-	parent.add_child(chip)
-
-
-func _good_row(grid: GridContainer, row: Dictionary) -> void:
-	var name_box := PanelKit.buttons(grid)
-	PanelKit.plain_line(name_box, String(row["name"]), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF  # i18n: row-ok a good's name, as above
-	if bool(row["short"]):
-		var short := PanelKit.plain_line(name_box, tr("short"), PanelKit.Tone.PLAIN)
-		short.theme_type_variation = UiTheme.WARN_TEXT
-	var change := float(row["change"])
-	var price := Label.new()
-	price.text = PanelKit.MISSING if is_nan(change) else tr("%s %%") % Num.fs(change, 1)
-	grid.add_child(price)
-	var trade := float(row["trade_eur_bn_year"])
-	var trade_label := Label.new()
-	if absf(trade) < 0.05:
-		trade_label.text = PanelKit.MISSING
-	else:
-		trade_label.text = (tr("surplus %s bn") if trade > 0.0 else tr("deficit %s bn")) % Num.f(absf(trade), 1)
-		trade_label.theme_type_variation = UiTheme.GOOD_TEXT if trade > 0.0 else UiTheme.BAD_TEXT
-	grid.add_child(trade_label)
-	var makers := PackedStringArray()
-	for company in row["makers"]:
-		makers.append(company.company_name)
-	var made_by := Label.new()
-	made_by.text = ", ".join(makers) if not makers.is_empty() else PanelKit.MISSING
-	grid.add_child(made_by)
 
 
 func _majors(ns) -> void:
@@ -259,7 +240,15 @@ func _majors(ns) -> void:
 		var words := VBoxContainer.new()
 		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cell.add_child(words)
-		PanelKit.plain_line(words, company.company_name, PanelKit.Tone.PLAIN)
+		var pick := PanelKit.sized(Button.new())
+		pick.flat = true
+		pick.toggle_mode = true
+		pick.text = company.company_name
+		pick.button_pressed = _selected(ns) == company
+		pick.set_meta("firm", String(company.id))
+		pick.pressed.connect(_select.bind(String(company.id)))
+		words.add_child(pick)
+		cell.gui_input.connect(_right_click.bind(company))
 		var city = Region.find_city(_loader.regions.get(ns.id, []), Companies.live_city_of(ns, company))
 		var jobs := tr("%s jobs") % CompanyVerb.thousands(Companies.headcount(ns, company))
 		PanelKit.plain_line(words, jobs if city == null else "%s · %s" % [String(city.city_name), jobs])
@@ -273,3 +262,72 @@ func _firm(company_id: String):
 		if String(company.id) == company_id:
 			return company
 	return null
+
+
+## The firm on the sheet: the one picked, else the first waiting in this sector, else
+## the first major.
+func _selected(ns):
+	# A firm picked and since gone (failed, broken up) falls back to the default.
+	if _firm_id != "" and _firm(_firm_id) != null:
+		return _firm(_firm_id)
+	for item in SectorNeeds.items(_state, _loader, ns):
+		if String(item["sector"]) == sector:
+			return _firm(String(item["company_id"]))
+	for company in Companies.firms_in_sector(_loader, ns.id, sector):
+		if Companies.is_major(company):
+			return company
+	return null
+
+
+func _select(company_id: String) -> void:
+	_firm_id = company_id
+	_focus_verb = ""
+	_last_refusal = ""
+	_dirty = true
+
+
+## The right click on a firm (H14): its verbs with their prices (a press selects the firm
+## and focuses the verb on the sheet), the call to its chief, the map.
+func _right_click(event: InputEvent, company) -> void:
+	var press := event as InputEventMouseButton
+	if press == null or not press.pressed or press.button_index != MOUSE_BUTTON_RIGHT:
+		return
+	var plate = VerbPlate.of(self)
+	if plate != null:
+		plate.open(self, menu_items(company))
+
+
+func menu_items(company) -> Array:
+	var ns = _state.player()
+	var id := String(company.id)
+	var items: Array = []
+	for action in Companies.available(_state, ns, _loader.company_actions, id, _loader):
+		var est: Dictionary = Processes.estimate(_state, ns, _loader, action, id) if Processes.is_process(action) else {}
+		var money: Array = IndustryVerbs.money_line(_state, _loader, ns, company, action, est)
+		var why := CompanyVerb.refusal(_state, _loader, ns, company, action)
+		var verb := String(action.id)
+		items.append({"text": "%s · %s" % [Strings.row_name("company-actions", action), String(money[1])],
+			"enabled": why == "", "reason": Strings.t(why) if why != "" else "",  # i18n: row-ok the sim's reason, its English the msgid
+			"call": func() -> void:
+				_select(id)
+				_focus_verb = verb})
+	var chief: String = _loader.person_name(String(company.chief_id))
+	if chief != "":
+		items.append({"text": tr("Call %s") % chief, "enabled": true, "call": func() -> void: call_requested.emit(String(company.chief_id))})
+	var city = Region.find_city(_loader.regions.get(ns.id, []), Companies.live_city_of(ns, company))
+	if city != null:
+		items.append({"text": tr("Show on the map"), "enabled": true, "call": func() -> void: map_requested.emit(city.lonlat)})
+	return items
+
+
+# The commands, shared with the overview (firm_commands.gd).
+func _on_act(ns, company, action) -> void:
+	FirmCommands.act(self, ns, company, action)
+
+
+func _on_closure(closure_id: String, answer_id: String, what: String) -> void:
+	FirmCommands.closure(self, closure_id, answer_id, what)
+
+
+func _on_invest(_ns, action) -> void:
+	FirmCommands.invest(self, action)
