@@ -54,6 +54,7 @@
    "tests/test_energy.gd",
    "tests/test_calendar_panel.gd",
    "tests/test_people_panel.gd",
+   "tests/test_people_roster.gd",
    "tests/test_message_settings.gd",
    "tests/test_window_mode.gd",
    "tests/test_motion.gd",
