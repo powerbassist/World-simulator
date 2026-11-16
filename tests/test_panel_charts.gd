@@ -13,8 +13,8 @@ extends SceneTree
 ##
 ## V5.2 b+ (gate b: "les graphiques m'aident ... pourrai s'etendre a d'autres
 ## panneaux"): the Budget also draws revenue against spending over the term, Society
-## what the country is thinking about as bars, and Regions each region's share of
-## output -- every value the history's or the state's, never computed here.
+## what the country is thinking about as bars (Regions' share-of-output bars left at
+## screen 6) -- every value the history's or the state's, never computed here.
 
 const ChartLine = preload("res://src/ui/chart_line.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
@@ -22,7 +22,6 @@ const ChartHemicycle = preload("res://src/ui/chart_hemicycle.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const ChartBars = preload("res://src/ui/chart_bars.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
-const Regions = preload("res://src/sim/regions.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 
 ## Which of main.gd's panels each window id is.
@@ -166,24 +165,12 @@ func _check_issues() -> void:
 		_fail("the issues bars do not lead with the most salient issue's share: %s" % [bars[0]._rows])
 
 
-## Regions: one bar per region, each its share of the nation's output -- the named
-## regions, which the panel says carry most but not all of it.
+## Regions: the share-of-output bars left the tab at screen 6 (Gameplay's regions brief,
+## section 3's cut list): the region's own sheet and the map say where it stands.
 func _check_regions() -> void:
 	var charts := _charts("region")
-	var bars := _all(charts, ChartBars) if charts != null else []
-	if bars.size() != 1:
-		_fail("regions has %d bar charts, not the output one" % bars.size())
-		return
-	var ns = _main._state.player()
-	var regions: Array = _main._loader.regions.get(ns.id, [])
-	if bars[0]._rows.size() != regions.size():
-		_fail("the output bars hold %d rows, want %d regions" % [bars[0]._rows.size(), regions.size()])
-		return
-	for i in regions.size():
-		var want: float = Regions.share_of(ns, regions[i].id) * 100.0
-		if absf(float(bars[0]._rows[i]["value"]) - want) > 1e-9:
-			_fail("%s's bar reads %.3f %%, its share of output is %.3f" % [regions[i].region_name, float(bars[0]._rows[i]["value"]), want])
-			return
+	if charts != null and not _all(charts, ChartBars).is_empty():
+		_fail("the regions tab still draws the share-of-output bars")
 
 
 func _check_seats() -> void:

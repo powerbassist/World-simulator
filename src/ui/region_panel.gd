@@ -21,17 +21,13 @@ signal closed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
-const PanelCharts = preload("res://src/ui/panel_charts.gd")
-const Labels = preload("res://src/ui/labels.gd")
-const Companies = preload("res://src/sim/companies.gd")
 const Region = preload("res://src/core/region.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Num = preload("res://src/ui/num.gd")
 const TerritorySites = preload("res://src/ui/territory_sites.gd")
 const TerritoryCity = preload("res://src/ui/territory_city.gd")
-const RegionFund = preload("res://src/ui/region_fund.gd")
-const RegionPriority = preload("res://src/ui/region_priority.gd")
+const RegionSheet = preload("res://src/ui/region_sheet.gd")
 
 ## The figure columns, px at text size 100 %: per head, jobless, sites.
 const COLUMNS := [86.0, 76.0, 56.0]
@@ -56,13 +52,9 @@ var _fund_years := 0
 ## The last Go or Stop the finance bill refused, said under it across the rebuild the press
 ## asks for ("" once a press tables, or another region opens).
 var _fund_refusal := ""
-## The sector priority's pick, "line|sector" (region_priority.gd), held across rebuilds.
-var _priority_pick := ""
 var _about_open := false
 
 var _title: Label
-## The regions' share chart: the nation's, so it stands down while a city is open.
-var _chart: Control
 ## The toggle just pressed: its rebuild freed the focused button, so the new one
 ## with this key takes focus and the keyboard keeps its place.
 var _refocus := ""
@@ -77,9 +69,6 @@ func _ready() -> void:
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD
 	root.add_child(_title)
-	# V5.2 b+: each region's share of the output, drawn (panel_charts.gd).
-	_chart = PanelCharts.new(self, PanelCharts.REGIONS)
-	root.add_child(_chart)
 
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -164,7 +153,6 @@ func _refresh() -> void:
 		child.queue_free()
 	var found: Dictionary = TerritoryCity.find(_loader, _city_id) if _city_id != "" else {}
 	var title := TerritoryCity.build(_body, _state, _loader, found) if not found.is_empty() else ""
-	_chart.visible = title == ""
 	if title != "":
 		_title.text = title
 		_back_button.show()
@@ -180,11 +168,28 @@ func _refresh() -> void:
 	var access: Dictionary = Regions.accessibility_for(ns, regions, _state.region_graph)
 	var sites: Dictionary = TerritorySites.by_region(ns, _loader)
 	_body.add_child(_column_heads())
-	for region in regions:
+	for region in worst_first(_state, ns, regions, access):
 		_body.add_child(_region_line(ns, regions, region, access, (sites.get(region.id, []) as Array).size()))
 		if region.id == _open_region:
 			_body.add_child(_opened(ns, regions, region, access, sites.get(region.id, [])))
 	_about(ns, regions)
+
+
+## Screen 6: the regions worst first, by the problem's own ratio (Regions.problem, the worse
+## of jobless and output per head against the nation); ties keep the data's order. The
+## map's rail reads the same order, so the worst region is named first wherever it is read.
+static func worst_first(state, ns, regions: Array, access: Dictionary) -> Array:
+	var sited: Dictionary = state.project_sited_pct.get(ns.id, {})
+	var keyed: Array = []
+	for i in regions.size():
+		var region = regions[i]
+		var ratio := float(Regions.problem(ns, regions, region.id, access, sited, Migration.region_share(ns, region.id))["ratio"])
+		keyed.append([ratio, i, region])
+	keyed.sort_custom(func(a, b) -> bool: return a[0] > b[0] or (a[0] == b[0] and a[1] < b[1]))
+	var out: Array = []
+	for k in keyed:
+		out.append(k[2])
+	return out
 
 
 func _column_heads() -> HBoxContainer:
@@ -249,17 +254,8 @@ func _pick(region_id: String) -> void:
 func _opened(ns, regions: Array, region, access: Dictionary, sites: Array) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
-	# V5.3 a + b (spec 3.3): the region's one problem first, then its two verbs.
-	RegionFund.build(self, box, ns, region, regions, access)
-	RegionPriority.build(self, box, ns, region)
-	var jobs := 0.0
-	for city in region.cities:
-		jobs += Companies.headcount_in_city(ns, _loader, city.id)
-	PanelKit.row(box, tr("People"), PanelKit.pop_text(float(ns.population) * Migration.region_share(ns, region.id)))
-	PanelKit.row(box, tr("Share of the output"), "%s%%" % Num.f(Regions.share_of(ns, region.id) * 100.0, 1))
-	PanelKit.row(box, tr("Main sector"), _dominant(region))
-	PanelKit.row(box, tr("Named jobs"), PanelKit.pop_text(jobs) if jobs > 0.0 else "0")
-	PanelKit.row(box, tr("Reach"), "%s×" % Num.f(float(access.get(region.id, 1.0)), 2))
+	# Screen 6: one sheet -- what is wrong, who speaks for it, what is happening, the fund.
+	RegionSheet.build(self, box, ns, region, regions, access)
 	if not sites.is_empty():
 		PanelKit.heading(box, tr("Your sites here"))
 		for site in sites:
@@ -362,14 +358,3 @@ func _cell(text: String, variation: String, width: float) -> Label:
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return label
 
-
-## The mix, as one word: the largest of the three shares -- services almost
-## everywhere, which is the honest answer rather than a flaw in the label.
-func _dominant(region) -> String:
-	var best: String = ""
-	var best_share: float = -1.0
-	for key in region.sector_mix.keys():
-		if float(region.sector_mix[key]) > best_share:
-			best_share = float(region.sector_mix[key])
-			best = key
-	return "%s %s%%" % [Labels.sector(best), Num.f(best_share * 100.0, 0)]

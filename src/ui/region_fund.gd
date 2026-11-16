@@ -16,40 +16,60 @@ extends RefCounted
 ## The two sums live on the panel (`_fund_share`, `_fund_years`), so a rebuild keeps
 ## them; a drag redraws only the strip, never the panel, so the slider keeps the mouse.
 
-const Regions = preload("res://src/sim/regions.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 ## V5.3 e (section 12): Go and Stop table rows of the finance bill, applied at the month's end.
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
-const Migration = preload("res://src/sim/migration.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
-const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const IndustryVerbs = preload("res://src/ui/industry_verbs.gd")
+const RegionVoice = preload("res://src/ui/region_voice.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 
-## The problem line, then the fund, at the top of `box` (the opened region).
-static func build(panel, box: Control, ns, region, regions: Array, access: Dictionary) -> void:
-	var state = panel._state
-	var sited: Dictionary = state.project_sited_pct.get(ns.id, {})
-	var p: Dictionary = Regions.problem(ns, regions, region.id, access, sited, Migration.region_share(ns, region.id))
-	var line := PanelKit.plain_line(box, problem_text(p), PanelKit.Tone.PLAIN)
-	line.set_meta("problem", true)
-	# The tone follows the ratio as printed: "1.0 times" is never flagged.
-	if float(p["ratio"]) >= 1.05:
-		line.theme_type_variation = UiTheme.WARN_TEXT
+## The fund, under the sheet's problem line and voice (region_sheet.gd).
+static func build(panel, box: Control, ns, region, _regions: Array, _access: Dictionary) -> void:
 	var rule := RegionFunds.limits(panel._loader)
 	if rule.is_empty():
 		return
 	PanelKit.heading(box, Strings.t("Development fund"))
 	for row in RegionFunds.open_funds(ns):
 		if String(row["region_id"]) == String(region.id):
+			if in_bill(ns, "stop", String(row["id"])):
+				_in_bill_line(box, ns, Strings.t("Stopping it is in the finance bill: it divides on %s."))
+				return
 			_running(panel, box, ns, row)
 			return
+	# QA's T3 on #383: a press tables a row and the sheet said nothing. Once the fund is a row of
+	# the tabled bill, the sheet says so with the vote's date, and there is no Go to press twice.
+	if in_bill(ns, "start", String(region.id)):
+		_in_bill_line(box, ns, Strings.t("The fund is in the finance bill: it divides on %s."))
+		return
 	_verb(panel, box, ns, region, rule)
+
+
+## Whether the tabled finance bill carries a fund row on `side`: a start names its region, a
+## stop its fund's id (FinanceRows' rows, as table() merged them).
+static func in_bill(ns, side: String, key: String) -> bool:
+	var funds: Dictionary = (ns.tabled_bill.get("finance", {}) as Dictionary).get("funds", {})
+	for row in funds.get(side, []):
+		if (side == "start" and String(row.get("region_id", "")) == key) or (side == "stop" and String(row) == key):
+			return true
+	return false
+
+
+## The bill's line, its vote date read off the tabled register, and the verb greyed in its place.
+static func _in_bill_line(box: Control, ns, text: String) -> void:
+	var bill: Dictionary = ns.tabled_bill
+	var when := DateText.day_month(int(bill.get("vote_day", 1)), int(bill.get("vote_month", 1)))
+	PanelKit.plain_line(box, text % when, PanelKit.Tone.PLAIN).set_meta("in_bill", true)
+	var greyed := PanelKit.sized(Button.new())
+	greyed.text = Strings.t("In the finance bill")
+	greyed.disabled = true
+	PanelKit.buttons(box).add_child(greyed)
 
 
 ## "Unemployment 11.2 %, 1.5 times the nation's 7.4 %." / "Output per head 82 % of the
@@ -164,11 +184,19 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void
 	if not ok:
 		return
 	var eur := float(est["eur_bn_per_year"])
+	# The figure's voice leads who it moves (brief 5b): the one channel a region's size does
+	# not dilute. The other regions' loss is the tradeoff's hidden half (#316's RECORD 3): the
+	# fund moves growth between regions, it adds none.
+	var who := EffectsStrip.who_text(est["bloc_offset"])
+	for v in RegionVoice.of(ns, panel._loader, String(region.id)):
+		if not bool(v["hostile"]):
+			who = Strings.t("%s speaks for you: %s +%s points.") % [v["person"].person_name, RegionVoice.blocs_text(), Num.f(float(v["points"]), 1)] + " " + who
 	strip.show_lines(Strings.t("Treasury"),
 		Strings.tn("%s a year for %d year", "%s a year for %d years", years) % [EffectsStrip.money_text(-eur), years], -eur,
-		EffectsStrip.who_text(est["bloc_offset"]),
-		Strings.t("Unemployment here: %s %% now, %s %% with the fund. Paid from next month; the lift to demand reverses when it ends.") % [
-			Num.f(float(est["unemployment_now"]), 1), Num.f(float(est["unemployment_after"]), 1)])
+		who,
+		Strings.t("Unemployment here: %s %% now, %s %% with the fund. The other regions lose %s of output a year. Paid from next month; the lift to demand reverses when it ends.") % [
+			Num.f(float(est["unemployment_now"]), 1), Num.f(float(est["unemployment_after"]), 1),
+			Strings.t("%s bn") % Num.f(absf(float(est.get("others_eur_bn", 0.0))), EffectsStrip.MONEY_PLACES)])
 
 
 ## The share beside its slider, with the money it costs a year at that level, unsigned

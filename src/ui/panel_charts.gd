@@ -17,7 +17,6 @@ extends VBoxContainer
 ##   SOCIETY   approval over the term (the polls), then each bloc's; then what the
 ##             country is thinking about, as bars (V5.2 b+);
 ##   SEATS     the assembly by party, with the majority marked;
-##   REGIONS   each region's share of the nation's output, as bars (V5.2 b+).
 ## V5.2 b+ added the last three at the author's gate b: the charts "sont plus
 ## digestes que des chiffres bruts seul, et pourrai s'etendre a d'autres panneaux".
 
@@ -30,9 +29,8 @@ const Labels = preload("res://src/ui/labels.gd")
 const K = preload("res://src/sim/opinion_constants.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
-const Regions = preload("res://src/sim/regions.gd")
 
-enum { OVERVIEW, ECONOMY, SOCIETY, SEATS, REGIONS }
+enum { OVERVIEW, ECONOMY, SOCIETY, SEATS }
 
 ## Ten years: a decade of monthly history is as far back as a reader compares.
 const ECONOMY_MONTHS := 120
@@ -131,12 +129,6 @@ func _build(state) -> void:
 			for entry in Opinion.top_issues(state.player(), count):
 				issues.append({"label": Strings.t(String(K.ISSUE_LABEL[entry[0]])), "value": float(entry[1]) * 100.0})
 			ChartKit.bars(self, Strings.t("What the country is thinking about, %"), issues, {"unit": "%"})
-		REGIONS:
-			var ns = state.player()
-			var rows: Array = []
-			for region in _panel.get("_loader").regions.get(ns.id, []):
-				rows.append({"label": String(region.region_name), "value": Regions.share_of(ns, region.id) * 100.0})
-			ChartKit.bars(self, Strings.t("Share of output, %"), rows, {"unit": "%"})
 		SEATS:
 			var ns = state.player()
 			var seated := _seat_parts(ns, _panel.get("_loader"))
