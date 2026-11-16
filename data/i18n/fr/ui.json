@@ -914,5 +914,70 @@
   "In the finance bill: %s, voted at the month's end.": "Dans le projet de loi de finances : %s, voté à la fin du mois.",
   "Voted with the finance bill at the month's end.": "Voté avec le projet de loi de finances à la fin du mois.",
   "Put it in the finance bill": "Inscrire à la loi de finances",
-  "%s € a job · %s tax point": "%s € par emploi · %s point d'impôt"
+  "%s € a job · %s tax point": "%s € par emploi · %s point d'impôt",
+  "Stopping it is in the finance bill: it divides on %s.": "Y mettre fin figure dans le projet de loi de finances : le vote a lieu le %s.",
+  "The fund is in the finance bill: it divides on %s.": "Le fonds figure dans le projet de loi de finances : le vote a lieu le %s.",
+  "In the finance bill": "Dans le projet de loi de finances",
+  "%s speaks for you: %s +%s points.": "%s parle pour vous : %s +%s points.",
+  "Unemployment here: %s %% now, %s %% with the fund. The other regions lose %s of output a year. Paid from next month; the lift to demand reverses when it ends.": "Chômage ici : %s %% aujourd'hui, %s %% avec le fonds. Les autres régions perdent %s de production par an. Versé dès le mois prochain ; l'effet de relance sur la demande s'inverse à l'arrêt du fonds.",
+  "No change yet: the regions are sampled once a month.": "Aucune évolution pour l'instant : les régions sont relevées une fois par mois.",
+  "Who speaks for it": "Qui parle pour elle",
+  "Happening here": "Ce qui s'y passe",
+  "Jobless over %d month: %s points here, %s in the nation.": [
+    "Chômage sur %d mois : %s points ici, %s dans le pays.",
+    "Chômage sur %d mois : %s points ici, %s dans le pays."
+  ],
+  "Nobody speaks for this region.": "Personne ne parle pour cette région.",
+  "%s asked for a development fund here, and it runs.": "%s a demandé un fonds de développement ici, et il est en cours.",
+  "%s wants a development fund here, but bears you a grudge and would not speak for you.": "%s veut un fonds de développement ici, mais vous en veut et ne parlerait pas pour vous.",
+  "%s wants a development fund here. If the finance bill passes, %s speaks for you once: %s +%s points, half of it gone in %d months.": "%s veut un fonds de développement ici. Si le projet de loi de finances passe, %s parlera pour vous une fois : %s +%s points, dont la moitié disparaît en %d mois.",
+  "%s wants a development fund here. Open one and %s speaks for you once: %s +%s points, half of it gone in %d months.": "%s veut un fonds de développement ici. Ouvrez-en un et %s parlera pour vous une fois : %s +%s points, dont la moitié disparaît en %d mois.",
+  "Unrest gathers in %s, and weighs on your approval.": "Les tensions montent (%s) et pèsent sur votre popularité.",
+  "Where unrest would land: %s. None this month.": "Où les tensions éclateraient : %s. Aucune ce mois-ci.",
+  "%s people left for other regions in %d month.": [
+    "%s habitants sont partis vers d'autres régions en %d mois.",
+    "%s habitants sont partis vers d'autres régions en %d mois."
+  ],
+  "%s people came from other regions in %d month.": [
+    "%s habitants sont arrivés d'autres régions en %d mois.",
+    "%s habitants sont arrivés d'autres régions en %d mois."
+  ],
+  "Change": "Évolution",
+  "Open": "Ouvrir",
+  "Go": "Aller",
+  "Stop": "Arrêter",
+  "Map": "Carte",
+  "%s pt": "%s pt",
+  "Development fund": "Fonds de développement",
+  "Unemployment %s %%, %s times the nation's %s %%.": "Chômage à %s %%, soit %s fois les %s %% du pays.",
+  "Output per head %s %% of the nation's.": "Production par habitant : %s %% de celle du pays.",
+  "%s a year, %d month left.": [
+    "%s par an, %d mois restant.",
+    "%s par an, %d mois restants."
+  ],
+  "Unemployment here since it began: %s -> %s %%.": "Chômage ici depuis l'ouverture : %s -> %s %%.",
+  "%d year": [
+    "%d an",
+    "%d ans"
+  ],
+  "Start the fund": "Lancer le fonds",
+  "%s a year for %d year": [
+    "%s par an pendant %d an",
+    "%s par an pendant %d ans"
+  ],
+  "%s %% of the region's output a year": "%s %% de la production de la région par an",
+  "%s %% of the region's output: %s a year": "%s %% de la production de la région : %s par an",
+  "All regions": "Toutes les régions",
+  "Regions of %s": "Régions : %s",
+  "Output per head, against the nation's.": "Production par habitant, par rapport au pays.",
+  "Unemployment.": "Chômage.",
+  "Your public works, plants and campaign sites here.": "Vos travaux publics, usines et sites de campagne dans la région.",
+  "Jobless": "Chômage",
+  "Sites": "Sites",
+  "Your sites here": "Vos sites ici",
+  "Largest cities": "Plus grandes villes",
+  "About these figures": "À propos de ces chiffres",
+  "Links between regions": "Liaisons entre régions",
+  "%d by land · %d by sea": "%d terrestres · %d maritimes",
+  "Least connected": "Région la moins reliée"
 }
