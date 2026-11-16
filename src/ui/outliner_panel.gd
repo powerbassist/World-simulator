@@ -29,7 +29,7 @@ var _close_button: Button
 
 func _ready() -> void:
 	# Narrow and short: a margin note, not a report. Inside U5a's ~886 px band.
-	custom_minimum_size = Vector2(400, 360)
+	custom_minimum_size = Vector2(400, 0)  # the dock sets the height (tab_page.gd wanted_height)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

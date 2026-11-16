@@ -261,14 +261,14 @@ func content(id: String) -> Control:
 
 
 ## The width the dock takes for a tab: its own (Regions), else its domain's, else DOCK_WIDTH. A
-## narrowed domain grows with the text size, up to DOCK_WIDTH: at 130 % the Agenda's offer list cut
-## its right-hand column at 800 px (the void pass's frames).
+## narrowed domain grows with a larger text, up to DOCK_WIDTH (at 130 % the Agenda's offer list cut
+## its right-hand column at 800 px), and never shrinks with a smaller one: its fixed parts do not.
 static func dock_width(id: String) -> float:
 	if DOCK_WIDTHS.has(id):
 		return float(DOCK_WIDTHS[id])
 	if not DOMAIN_WIDTHS.has(Domains.domain_of(id)):
 		return DOCK_WIDTH
-	return minf(DOCK_WIDTH, float(DOMAIN_WIDTHS[Domains.domain_of(id)]) * UiTheme.text_scale())
+	return minf(DOCK_WIDTH, float(DOMAIN_WIDTHS[Domains.domain_of(id)]) * maxf(1.0, UiTheme.text_scale()))
 
 
 ## The void pass (d), the author's call ("oui"): a page shorter than the dock is a plate as tall as
@@ -289,7 +289,7 @@ func _fit_dock() -> void:
 			_dock.offset_right = DOCK_LEFT + dock_width(id)
 			var page_height: float = -1.0 if Domains.is_scene(id) else page.wanted_height()
 			if page_height >= 0.0:
-				want = minf(full, (_dock.get_child(0) as Control).get_combined_minimum_size().y + page_height)
+				want = minf(full, ceilf((_dock.get_child(0) as Control).get_combined_minimum_size().y + page_height))
 	_dock.offset_bottom = -DOCK_BOTTOM - maxf(0.0, full - want)
 
 

@@ -63,9 +63,13 @@ const COLUMN_SEPARATION := 12
 const BUTTON_SEPARATION := 6
 ## The width a caption-and-value row takes (the void audit of 2026-11-16, shape 3: in a 1 240 px
 ## page a caption sat at the left and its value 1 000 px away at the right, and the eye could not
-## join them). A row is this wide, or wider for content that needs it; never the page's width.
-## 440 fits the narrowest host a row has, the Regions dock (500 less its plate and gutter).
+## join them). A row fills its host up to this, or up to its stack's widest row; never the page.
 const ROW_MEASURE := 440.0
+## On a row: the measure it asked for. On a stack: its rows already share one (`_share_measure`).
+const MEASURE_META := &"row_measure"
+const MEASURED_META := &"rows_measured"
+## On a ledger: the ledgers it shares a caption column with (`ledger()`'s `align`).
+const ALIGNED_META := &"ledgers_aligned"
 
 ## `delta()` will go this far looking for a decimal place that shows movement
 ## before it gives up and prints the zero honestly. Four is past every unit in
@@ -200,6 +204,19 @@ static func buttons(parent: Control) -> HFlowContainer:
 	return flow
 
 
+## T5 (#400 pass 2): the rows of one stack take one width, the widest row's or the measure, so their
+## values line up in a language or a text size where one caption outgrows the measure. Read before
+## each sort of the stack: a row's own minimum is its text's, which a refresh changes.
+static func _share_measure(stack: Container) -> void:
+	var width := 0.0
+	for child in stack.get_children():
+		if child is Control and (child as Control).visible and child.has_meta(MEASURE_META):
+			width = maxf(width, maxf(float(child.get_meta(MEASURE_META)), (child as Control).get_minimum_size().x))
+	for child in stack.get_children():
+		if child is Control and child.has_meta(MEASURE_META) and (child as Control).custom_maximum_size.x != width:
+			(child as Control).custom_maximum_size.x = width
+
+
 ## An action button the size of its label. A Button added straight to a vertical
 ## box FILLS the box's width -- the V5.1 gate's "le boutton est super large": Dissolve
 ## and every energy order were 1 200 px slabs. Shrinking to the start keeps it a
@@ -214,15 +231,18 @@ static func sized(button: Button) -> Button:
 ## shape in this interface: eleven panels build it, and until now each built it
 ## itself.
 ##
-## `measure` is the row's width (ROW_MEASURE); 0 keeps the row as wide as its host, for a host built
-## narrower than the measure (a 260 px person card, a 300 px answer column's effects strip), where the
-## floor would widen the card instead of joining caption and value.
+## `measure` is the row's width (ROW_MEASURE), a cap and not a floor (#400 pass 2, T3: a 440 px floor
+## put a sideways bar under the Regions rows in a 438 px host); 0 keeps the row as wide as its host,
+## for a card built narrower than the measure (a 260 px person card, a 300 px effects strip).
 static func row(parent: Control, left: String, right: String, tone := Tone.PLAIN, measure := ROW_MEASURE) -> HBoxContainer:
 	var line_box := HBoxContainer.new()
 	line_box.add_theme_constant_override("separation", COLUMN_SEPARATION)
 	if measure > 0.0:
-		line_box.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		line_box.custom_minimum_size.x = measure
+		line_box.custom_maximum_size.x = measure
+		line_box.set_meta(MEASURE_META, measure)
+		if parent is Container and not parent.has_meta(MEASURED_META):
+			parent.set_meta(MEASURED_META, true)
+			(parent as Container).pre_sort_children.connect(_share_measure.bind(parent))
 
 	var key := Label.new()
 	key.text = left
@@ -277,7 +297,10 @@ static func figure(parent: Control, value: String, caption: String, tone := Tone
 ## pair past the frame -- and the number was right the whole time, which is what
 ## made it hard to see. A grid cannot do that: it has one width per column and
 ## the panel's own minimum carries it, where the fold contract can find it.
-static func ledger(parent: Control, rows: Array) -> GridContainer:
+##
+## `align`: a ledger this one shares its caption column with (#400 pass 2, T5), for two ledgers in
+## sibling sections whose values should start at one x -- Society's blocs and issues.
+static func ledger(parent: Control, rows: Array, align: GridContainer = null) -> GridContainer:
 	var columns := 2
 	for entry in rows:
 		columns = maxi(columns, (entry as Array).size())
@@ -307,7 +330,27 @@ static func ledger(parent: Control, rows: Array) -> GridContainer:
 			grid.add_child(label)
 
 	parent.add_child(grid)
+	if align != null:
+		var group: Array = align.get_meta(ALIGNED_META, [align])
+		group.append(grid)
+		for member in group:
+			(member as Control).set_meta(ALIGNED_META, group)
+			if not (member as GridContainer).pre_sort_children.is_connected(_share_captions):
+				(member as GridContainer).pre_sort_children.connect(_share_captions.bind(member))
 	return grid
+
+
+## The aligned ledgers' caption columns are as wide as the widest caption of any of them.
+static func _share_captions(grid: GridContainer) -> void:
+	var group: Array = (grid.get_meta(ALIGNED_META, []) as Array).filter(func(g) -> bool: return is_instance_valid(g))
+	var width := 0.0
+	for member in group:
+		for i in range(0, (member as Node).get_child_count(), (member as GridContainer).columns):
+			width = maxf(width, ((member as Node).get_child(i) as Control).get_minimum_size().x)
+	for member in group:
+		var head := (member as Node).get_child(0) as Control
+		if head != null and head.custom_minimum_size.x != width:
+			head.custom_minimum_size.x = width
 
 
 # -- Formatting ---------------------------------------------------------------

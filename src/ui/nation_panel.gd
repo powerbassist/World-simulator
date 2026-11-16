@@ -59,24 +59,10 @@ var _close_button: Button
 
 
 func _ready() -> void:
-	# 780 rather than the 360 this shipped with, and the V1.3e screenshot pass is
-	# why: at 360 the window sized to its minimum and EVERY DIPLOMATIC ACTION
-	# BUTTON fell below the fold, so the eight verbs this panel exists for were
-	# reachable only by scrolling a panel that does not look scrollable. The panel
-	# had grown a relations score, a trade share, an agreement line and two measure
-	# lines since V1.3a set that height, and no test can see a fold.
-	#
-	# Exactly the failure docs/bloc-model.md records for the bloc panel's own
-	# budget section one session earlier. Well inside U5a's ~886px usable band,
-	# which is the ceiling a window must not grow through.
-	# 860 rather than V1.3e's 780, and V1.3g's screenshot pass is why: the four
-	# defence verbs took the list from ten rows to fourteen, and `Lift Sanctions`
-	# fell off the panel entirely while `Impose Sanctions` sat on the clip line.
-	# The same failure V1.3e recorded here one session earlier, at the same panel,
-	# for the same reason -- a list that grows with the block while the height does
-	# not. Height ALONE could not fix it: four rows are ~136px and the U5a ceiling is
-	# ~886, so this is 80px of height plus the two tightenings below.
-	custom_minimum_size = Vector2(420, 860)
+	# No height floor (#400 pass 2): it was the floating window's, raised each time a verb fell below
+	# a window that sized to it. The dock now sizes the plate to the content, up to the dock
+	# (tab_page.gd wanted_height), and the page scrolls past that with its fold mark.
+	custom_minimum_size = Vector2(420, 0)
 
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

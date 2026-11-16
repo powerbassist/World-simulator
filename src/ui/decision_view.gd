@@ -91,7 +91,9 @@ func _still_on_the_desk(inbox) -> void:
 	_body.add_child(column)
 	for file in rest:
 		var open := PanelKit.sized(Button.new())
-		open.text = String(file["title"])
+		open.text = FileRead.list_title(_main, file)
 		var id := String(file["id"])
-		open.pressed.connect(func() -> void: show_file(id))
+		# Where the card's own click goes (main.gd's card_activated route, #400 pass 2 T4): the term's
+		# programme to the Agenda, an industry card to its tab, a file to this page.
+		open.pressed.connect(func() -> void: _main._hud.inbox.card_activated.emit(id))
 		column.add_child(open)

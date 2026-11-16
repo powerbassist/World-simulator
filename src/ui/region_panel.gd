@@ -63,7 +63,7 @@ var _close_button: Button
 
 func _ready() -> void:
 	# The dock is narrow for this tab (window_manager.gd DOCK_WIDTHS): the map is the screen.
-	custom_minimum_size = Vector2(440, 640)
+	custom_minimum_size = Vector2(440, 0)  # the dock sets the height (tab_page.gd wanted_height)
 	var root := PanelKit.padded(self, 16, 10)
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD

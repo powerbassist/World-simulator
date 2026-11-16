@@ -97,6 +97,7 @@ func _process(_delta: float) -> bool:
 	_check_content_survives_close()
 	_check_a_panel_with_no_verb_never_wears_the_fold_mark()
 	_check_dock_width_follows_the_domain()
+	_check_wanted_height_shapes()
 	# Opened here and measured after a frame of layout, in stage 3.
 	_manager.open("finances")
 	_stage = 1
@@ -350,8 +351,69 @@ func _check_dock_width_follows_the_domain() -> void:
 	UiTheme.set_text_scale(1.3)
 	if not is_equal_approx(WindowManager.dock_width("agenda"), 1040.0) or not is_equal_approx(WindowManager.dock_width("finances"), WindowManager.DOCK_WIDTH):
 		_fail("at text 130 the Agenda docks %.0f and Finances %.0f, not 1040 and 1240" % [WindowManager.dock_width("agenda"), WindowManager.dock_width("finances")])
+	# #400 pass 2 T6: a smaller text never narrows it -- the dock's fixed parts (tabs, padding, the
+	# offer's columns) do not shrink with the text.
+	UiTheme.set_text_scale(0.9)
+	if not is_equal_approx(WindowManager.dock_width("agenda"), 800.0):
+		_fail("at text 90 the Agenda docks %.0f, narrower than its 800" % WindowManager.dock_width("agenda"))
 	UiTheme.set_text_scale(1.0)
 	_manager.close_all()
+
+
+## #400 pass 2, T2: a page's wanted height is its content shown whole, scrolls unscrolled. Summed
+## only DOWN a column, the tallest of a row (two scrolls side by side were summed: 800 for a 500 px
+## page), and never on top of a height floor that already holds the scroll (the mid-term Agenda's
+## ~300 px of blank under its last line).
+func _check_wanted_height_shapes() -> void:
+	var TabPage = load("res://src/ui/tab_page.gd")
+	var shapes := {
+		"header, scroll, footer": [_column([_box(50.0), _scroll_of(300.0), _box(40.0)]), -1.0],
+		"two scrolls side by side": [_row([_scroll_of(300.0), _scroll_of(500.0)]), 500.0],
+		"a scroll beside a static column": [_row([_scroll_of(500.0), _box(400.0)]), 500.0],
+		"a 520 px floor over a 340 px column": [_column([_box(40.0), _scroll_of(300.0)], 520.0), 520.0],
+	}
+	for name in shapes:
+		var content: Control = shapes[name][0]
+		var page = TabPage.new()
+		_manager.add_child(page)
+		page.setup(content)
+		var want: float = shapes[name][1]
+		if want < 0.0:
+			# The column's own minimum (header, footer, separations) with the scroll shown whole.
+			want = content.get_combined_minimum_size().y + 300.0 - content.get_child(1).get_combined_minimum_size().y
+		var plate: float = page.get_theme_stylebox("panel").get_minimum_size().y
+		var got: float = page.wanted_height() - plate
+		if absf(got - want) > 1.0:
+			_fail("a page of %s wants %.0f px of content height, not %.0f" % [name, got, want])
+		page.free()
+
+
+func _box(height: float) -> Control:
+	var box := Control.new()
+	box.custom_minimum_size = Vector2(100, height)
+	return box
+
+
+func _scroll_of(height: float) -> ScrollContainer:
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_box(height))
+	return scroll
+
+
+func _column(children: Array, floor_height := 0.0) -> VBoxContainer:
+	var column := VBoxContainer.new()
+	column.custom_minimum_size.y = floor_height
+	for child in children:
+		column.add_child(child)
+	return column
+
+
+func _row(children: Array) -> HBoxContainer:
+	var line := HBoxContainer.new()
+	for child in children:
+		line.add_child(child)
+	return line
 
 
 ## (d), the author's call: a page whose content is shorter than the dock is a plate as tall as its

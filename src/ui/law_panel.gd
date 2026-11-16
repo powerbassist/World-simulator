@@ -82,7 +82,7 @@ var _endorse_refusal := ""
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(760, 560)
+	custom_minimum_size = Vector2(760, 0)  # the dock sets the height (tab_page.gd wanted_height)
 
 	var root := PanelKit.padded(self, 16, 12)
 

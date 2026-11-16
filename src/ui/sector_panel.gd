@@ -82,7 +82,7 @@ func _init(sector_id := "") -> void:
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(560, 560)
+	custom_minimum_size = Vector2(560, 0)  # the dock sets the height (tab_page.gd wanted_height)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_%s" % side, 16)
