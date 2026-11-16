@@ -203,6 +203,26 @@ def selftest() -> int:
                          {old_sim: 500, "src/sim/old2.gd": 400})
     expect("two vacated allowances cover the two newcomers, best fit",
            new == {"src/sim/moved.gd": 500, new_sim: 370})
+    # Best fit: the smallest vacated allowance that still covers the newcomer.
+    new, msgs = plan_update({"src/sim/n.gd": (380, 380)}, {"src/sim/old500.gd": 500, "src/sim/old400.gd": 400})
+    expect("best fit takes the 400, not the 500",
+           new == {"src/sim/n.gd": 380} and msgs == ["src/sim/n.gd takes over src/sim/old400.gd's allowance (a move)"])
+    # Largest newcomer first: with one allowance of 500 the 480 is served and the 350 is the
+    # one refused (smallest-first would serve the 350 and refuse the 480).
+    new, msgs = plan_update({"src/sim/big.gd": (480, 480), "src/sim/small.gd": (350, 350)},
+                            {"src/sim/old500.gd": 500})
+    expect("the big move is not starved by a small one",
+           new is None and len(msgs) == 1 and "src/sim/small.gd" in msgs[0])
+    # Longest prefix wins, whatever the table's order (a test-local nested table).
+    saved = dict(NEW_FILE_MAX_BY_FOLDER)
+    try:
+        NEW_FILE_MAX_BY_FOLDER.clear()
+        NEW_FILE_MAX_BY_FOLDER.update({"src/ui/": 400, "src/ui/big/": 500})
+        expect("nested prefix: the longer wins", max_for("src/ui/big/x.gd") == 500)
+        expect("nested prefix: the shorter still applies", max_for("src/ui/x.gd") == 400)
+    finally:
+        NEW_FILE_MAX_BY_FOLDER.clear()
+        NEW_FILE_MAX_BY_FOLDER.update(saved)
     new, _ = plan_update({sim: (700, 700)}, {}, init=True)
     expect("--init admits what stands", new == {sim: 700})
     expect("note names the maxima", "300" in baseline_note() and "400" in baseline_note())
