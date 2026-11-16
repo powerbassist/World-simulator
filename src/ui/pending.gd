@@ -31,9 +31,7 @@ const Campaign = preload("res://src/sim/campaign.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const CouncilK = preload("res://src/sim/council_constants.gd")
 const Programme = preload("res://src/sim/programme.gd")
-const Industry = preload("res://src/sim/industry.gd")
-const Processes = preload("res://src/sim/processes.gd")
-const Closures = preload("res://src/sim/closures.gd")
+const SectorNeeds = preload("res://src/ui/sector_needs.gd")
 const Statute = preload("res://src/sim/statute.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 
@@ -103,10 +101,10 @@ static func window_ids(state, loader, messages := {}) -> Array:
 	# V4.7b: the autonomy machine's two answerable states -- a foreign bid with
 	# a window, a failing major with a rescue window. Both are "awaits THE
 	# PLAYER" by the file's own test: each lapses to a committed outcome if
-	# ignored, and the verbs that answer live on the companies window.
-	# V5.3 a + b (#248): a process stage's ask lapses to its default the same way.
-	if not Industry.pending_bid(state, ns, loader).is_empty() or not Industry.failing(state, ns, loader).is_empty() \
-			or not Processes.asks(ns).is_empty() or _closure_waiting(ns):
+	# ignored. V5.3 a + b (#248): a process stage's ask lapses the same way.
+	# Screen 5 (slice 1): ONE id per item, so the Sectors row counts the items, not
+	# the window; the answers still live on the overview (companies) until slice 2.
+	for _item in SectorNeeds.items(state, loader, ns):
 		out.append("companies")
 
 	return out
@@ -122,15 +120,14 @@ static func _events_waiting(ns, messages: Dictionary) -> bool:
 	return false
 
 
-## A plant closure waiting on its answer (#251): it lapses to the plant closing,
-## the same "awaits the player" test as a bid or a failing major.
+## An announced closure, or a buyer that came back (#285) until it is answered once.
+static func closure_waits(row: Dictionary) -> bool:
+	return SectorNeeds.closure_waits(row)
+
+
+## A plant closure waiting on its answer (#251); the items themselves are SectorNeeds'.
 static func _closure_waiting(ns) -> bool:
-	for row in Closures.open(ns):
+	for row in SectorNeeds.Closures.open(ns):
 		if closure_waits(row):
 			return true
 	return false
-
-
-## An announced closure, or a buyer that came back (#285) until it is answered once.
-static func closure_waits(row: Dictionary) -> bool:
-	return String(row["status"]) == Closures.ANNOUNCED or (String(row["status"]) == Closures.OFFERED and not row.has("answer"))

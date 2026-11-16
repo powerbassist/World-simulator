@@ -3,55 +3,22 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_commodities_panel.gd
 ## Non-zero exit on any failure.
 ##
-## V4.6, Task 4 -- the read-only surface over the commodity layer. Loads the real
-## main scene and drives it a frame at a time, the house shape: a Control outside
-## the tree has not run _ready(), so everything it builds is null.
-## (docs/engine-decision.md.)
+## V4.6, Task 4's pins over the commodity layer, kept when the Commodities window
+## retired into the Sectors domain (V5.3 screen 5, slice 1): its goods are each sector
+## tab's "What it makes", its shortage line SectorGoods' (read by the tabs, the strip and
+## the outliner). What this file still pins:
 ##
-## What this file pins, in the order it checks them:
+##   - THE SCANNER RULES over the files that read the layer now.
+##   - IT READS AND NEVER WRITES: a source scan of the readers for an indexed write into
+##     the register (commodities.gd is its one writer), and a deep-equality check across
+##     a sector tab's refresh.
+##   - THE SHORTAGE FLIP, BOTH SIDES OF THE THRESHOLD, with two negative controls.
+##   - THE TWO MAP MODES, registry entries the legend's switcher grows on its own.
 ##
-##   - REGISTRATION BY THE REGISTRY. The window exists, the frame exists, the
-##     drawer reaches it from a cluster, and its key is its own -- the four
-##     separate hand-written lists V2.1a spent a whole block deleting is exactly
-##     the class this replaces.
-##   - THE SCANNER RULES HOLD over the files this task writes: the new panel
-##     names PanelKit (so it builds through the kit's primitives rather than
-##     eighteen private rows), and none of them holds a literal naming three or
-##     more panels.
-##   - MONTH 0 RENDERS. `commodity_state` exists from `new_game`, so the panel
-##     has something to say on the first frame of a new game -- the never-silent
-##     rule. An empty register would render as a bare title.
-##   - IT READS AND NEVER WRITES. Both ways: a source scan for an indexed write
-##     into the register (commodities.gd is its one writer), and a deep-equality
-##     check across a refresh, which catches a write the scan's shape misses.
-##   - THE SHORTAGE FLIP, BOTH SIDES OF THE THRESHOLD. Covered exactly at the
-##     threshold is not a shortage and a hair under it is: V1.5d's and V1.5c's
-##     rule that a boundary has to be tested on both sides or it is not a
-##     boundary. The negative control (a fully covered good, and a good nobody
-##     wants) is checked beside it, so a line that printed unconditionally fails.
-##   - THE TREE RENDERS. Every recipe in the register appears as its own line,
-##     keyed by recipe id (the unique discriminator -- three outputs carry more
-##     than one route), so a content pack that grows is drawn without an edit
-##     here and a by-output collapse cannot hide a route.
-##   - THE TWO MAP MODES. They are REGISTRY entries, so the legend's switcher
-##     must have grown their toggles without a legend edit, and the map view's
-##     own layer flag must take them -- writing nothing back into sim state.
-##
-## The panel spec, the shortage threshold and the map modes live in
-## docs/commodities-model.md; the measured basis for both ramp domains and the
-## threshold is recorded at the constants that carry them.
+## The shortage threshold and the map modes live in docs/commodities-model.md.
 
-const DataLoader = preload("res://src/core/data_loader.gd")
+const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const MapLayers = preload("res://src/ui/map_layers.gd")
-
-## U5a's usable band, the bound test_people_panel.gd and test_calendar_panel.gd
-## check.
-const USABLE_BAND_PX := 886.0
-
-## The categories the panel groups its ledger by, from the loader's own list --
-## authored here as the seven a reader expects, so a category silently dropped
-## fails rather than renders as six groups and no complaint.
-const EXPECTED_CATEGORIES := ["raw", "agri", "energy", "intermediate", "capital", "consumer", "services"]
 
 var _failures: Array[String] = []
 var _main
@@ -77,64 +44,19 @@ func _run() -> void:
 	if _main._state == null:
 		_fail("main scene did not build a GameState")
 		return
-	if _main._commodities_panel == null:
-		_fail("main scene did not build a commodities panel")
+	var panel = _main._sector_panels.get("industry")
+	if panel == null:
+		_fail("main scene did not build the industry tab, the goods' home")
 		return
-
-	var panel = _main._commodities_panel
 	var state = _main._state
-
-	_check_registered_and_reachable()
-	_check_fits_the_band(panel)
 	_check_scanner_rules()
-
-	_main._windows.open("commodities")
+	_main._windows.open("sector_industry")
 	panel.mark_dirty()
 	panel._refresh()
-
-	_check_month_zero_renders(panel, state)
 	_check_hover_sentences(state)
-	_check_no_label_is_blank(panel)
 	_check_reads_and_never_writes(panel, state)
-	_check_shortage_flip(panel, state)
-	# The tree is folded behind "What makes what" since V5.3-0 (b): open it.
-	panel._tree_open = true
-	panel._refresh()
-	_check_tree_renders(panel)
+	_check_shortage_flip(state)
 	_check_map_modes(panel, state)
-
-
-func _check_registered_and_reachable() -> void:
-	if not _main._windows.is_open("commodities"):
-		_main._windows.open("commodities")
-	if _main._windows.frame("commodities") == null:
-		_fail("no window frame registered under the id 'commodities'")
-
-	# Its key must be its own -- register() push_errors on a collision, but a
-	# collision that pushed an error and kept the first window's key would leave
-	# this window unreachable by keyboard and the suite green.
-	var key: int = _main._windows.shortcut("commodities")
-	if key == KEY_NONE:
-		_fail("the commodities window has no shortcut")
-	else:
-		for id in _main._windows.panel_ids():
-			if id != "commodities" and _main._windows.shortcut(id) == key:
-				_fail("the commodities window shares key %s with '%s'" % [
-					OS.get_keycode_string(key), id])
-
-	# V5.1-c2.3: the sidebar's route, the only one -- the domain that holds the
-	# tab is listed, and the tab is one of its tabs.
-	var Domains = load("res://src/ui/domains.gd")
-	var domain: String = Domains.domain_of("commodities")
-	if not _main._hud.sidebar.entry_ids().has(domain) or not Domains.tabs(domain, _main._windows.panel_ids()).has("commodities"):
-		_fail("the sidebar does not reach 'commodities' (domain '%s') -- the panel is unreachable without it" % domain)
-
-
-func _check_fits_the_band(panel) -> void:
-	if panel.custom_minimum_size.y > USABLE_BAND_PX:
-		_fail("the commodities panel opens at %.0fpx, past U5a's %.0fpx usable band" % [
-			panel.custom_minimum_size.y, USABLE_BAND_PX,
-		])
 
 
 ## The two scanner rules test_panel_kit.gd enforces globally, asserted here on the
@@ -145,13 +67,13 @@ func _check_scanner_rules() -> void:
 	for id in _main._windows.panel_ids():
 		names.append("_%s_panel" % id)
 
-	for path in ["res://src/ui/commodities_panel.gd", "res://src/ui/map_layers.gd"]:
+	for path in ["res://src/ui/sector_goods.gd", "res://src/ui/sector_panel.gd", "res://src/ui/map_layers.gd"]:
 		var source := FileAccess.get_file_as_string(path)
 		if source.is_empty():
 			_fail("could not read %s" % path)
 			continue
-		if path.ends_with("commodities_panel.gd") and not source.contains("PanelKit"):
-			_fail("commodities_panel.gd builds its rows without the kit")
+		if path.ends_with("sector_panel.gd") and not source.contains("PanelKit"):
+			_fail("sector_panel.gd builds its rows without the kit")
 		var worst := 0
 		for opener in [["[", "]"], ["{", "}"]]:
 			for chunk in source.split(opener[0]):
@@ -167,62 +89,25 @@ func _check_scanner_rules() -> void:
 			_fail("%s names %d panels in one literal -- that is a list, and the registry already knows them" % [path, worst])
 
 
-## The register is seeded by new_game, so the panel is meaningful on the first
-## frame of a new game with nothing ticked. The title is the only thing that
-## renders from content alone, so a panel that renders nothing else is one whose
-## read path is guarded on a quantity that does not exist yet.
-func _check_month_zero_renders(panel, state) -> void:
-	var text := _text_of(panel)
-	if text.strip_edges().is_empty():
-		_fail("the commodities panel renders nothing at all at month 0")
-		return
-	# Month 0 is the state we were asked about; the category checks below hold
-	# whether or not the clock has been ticked, which is the property that matters
-	# (the register is seeded by new_game, not by the first tick).
-	for category in EXPECTED_CATEGORIES:
-		if not text.contains(category.to_upper()):
-			_fail("the panel has no '%s' group at month 0: %s" % [category.to_upper(), text.substr(0, 400)])
-			return
-
-
-## The characteristic failure of a panel whose job is resolution.
-## V5.3-0 (b): the balance is one table now, a category a row of its own whose
-## figure cells are blank by design -- those cells are skipped, every other label
-## must still say something.
-func _check_no_label_is_blank(panel) -> void:
-	var by_design := {}
-	for grid in _walk(panel._body):
-		if grid is GridContainer:
-			var cells: Array = grid.get_children()
-			for i in range(0, cells.size(), grid.columns):
-				var head := String((cells[i] as Label).text)
-				if head != "" and head == head.to_upper() and DataLoader.COMMODITY_CATEGORIES.any(func(c): return String(c).to_upper() == head):
-					for j in range(i + 1, mini(i + grid.columns, cells.size())):
-						by_design[cells[j]] = true
-	for node in _walk(panel._body):
-		if node is Label and not by_design.has(node) and String(node.text).strip_edges() == "":
-			_fail("the commodities panel renders an EMPTY label -- an unresolved id prints nothing and leaves the row looking fine")
-			return
-
-
 ## Both halves. The scan catches the shape commodities.gd's own single-writer pin
 ## reads; the deep comparison catches a write nobody thought of (a cache stuffed
 ## back into the register, a default seeded into it). The test itself may write --
 ## only the panel may not.
 func _check_reads_and_never_writes(panel, state) -> void:
-	var source := FileAccess.get_file_as_string("res://src/ui/commodities_panel.gd")
-	if source.is_empty():
-		_fail("could not read src/ui/commodities_panel.gd")
-	else:
+	for path in ["res://src/ui/sector_goods.gd", "res://src/ui/sector_panel.gd"]:
+		var source := FileAccess.get_file_as_string(path)
+		if source.is_empty():
+			_fail("could not read %s" % path)
+			continue
 		for raw_line in source.split("\n"):
 			var line := String(raw_line)
 			var hash_at := line.find("#")
 			if hash_at != -1:
 				line = line.substr(0, hash_at)
 			if line.contains("commodity_state[") and (line.contains("] =") or line.contains(".erase(")):
-				_fail("commodities_panel.gd writes commodity_state -- the UI reads sim state, it never writes it: %s" % line.strip_edges())
+				_fail("%s writes commodity_state" % path + " -- the UI reads sim state, it never writes it: " + line.strip_edges())
 			if line.contains("Commodities.tick_month("):
-				_fail("commodities_panel.gd ticks the simulation -- the month belongs to main.gd")
+				_fail(path + " ticks the simulation -- the month belongs to main.gd")
 
 	var before: Dictionary = state.player().commodity_state.duplicate(true)
 	panel.mark_dirty()
@@ -244,7 +129,7 @@ func _check_reads_and_never_writes(panel, state) -> void:
 ## heading up for those and the negative control read as a panel defect. Zeroing
 ## every want first makes the register have exactly one thing to say, which is
 ## what makes each side of the flip unambiguous.
-func _check_shortage_flip(panel, state) -> void:
+func _check_shortage_flip(state) -> void:
 	var ns = state.player()
 	var cs: Dictionary = ns.commodity_state
 	var goods: Array = _loader_goods()
@@ -252,70 +137,34 @@ func _check_shortage_flip(panel, state) -> void:
 		_fail("the register carries %d goods, so this fixture proves nothing" % goods.size())
 		return
 	var good_id := String(goods[0])
-	var threshold: float = panel.SHORTAGE_COVERAGE
-
+	var threshold: float = SectorGoods.SHORTAGE_COVERAGE
 	var keep: Dictionary = cs.duplicate(true)
 	for gid in goods:
 		cs["demand"][gid] = 0.0
 		cs["output"][gid] = 0.0
 		cs["trade"][gid] = 0.0
-
 	# EXACTLY at the threshold: covered, and so not a shortage.
 	cs["demand"][good_id] = 100.0
 	cs["output"][good_id] = 100.0 * threshold
-	panel.mark_dirty()
-	panel._refresh()
-	if _text_of(panel).contains(panel.SHORTAGE_HEADING):
+	if not SectorGoods.shortages(ns, goods).is_empty():
 		_fail("a good covered at exactly %.0f%% of its want reads as a shortage -- the edge is on the wrong side" % (threshold * 100.0))
-
-	# A hair under it: a shortage, and the line must NAME the good.
+	# A hair under it: a shortage, and it names the good.
 	cs["output"][good_id] = 100.0 * threshold - 1.0
-	panel.mark_dirty()
-	panel._refresh()
-	var under := _text_of(panel)
-	if not under.contains(panel.SHORTAGE_HEADING):
-		_fail("a good covered at %.1f%% of its want does not appear as a shortage" % (100.0 * (threshold - 0.01)))
-	elif not under.contains(_good_name(good_id)):
-		_fail("the shortage line does not name '%s', the good that is short" % good_id)
-
+	var short: Array = SectorGoods.shortages(ns, goods)
+	if short.size() != 1 or String(short[0]["id"]) != good_id:
+		_fail("a good covered at %.1f%% of its want reads %s, expected '%s' alone" % [100.0 * (threshold - 0.01), short, good_id])
 	# Fully covered: the negative control on the other side of the flip.
 	cs["output"][good_id] = 100.0
-	panel.mark_dirty()
-	panel._refresh()
-	if _text_of(panel).contains(panel.SHORTAGE_HEADING):
-		_fail("a fully covered good still reads as a shortage -- the line prints unconditionally")
-
-	# Zero demand: a good nobody wants is never short, however little is made of
-	# it. This is the control that would catch a denominator guarded the wrong way.
+	if not SectorGoods.shortages(ns, goods).is_empty():
+		_fail("a fully covered good still reads as a shortage")
+	# Zero demand: a good nobody wants is never short, however little is made of it.
 	cs["demand"][good_id] = 0.0
 	cs["output"][good_id] = 0.0
-	panel.mark_dirty()
-	panel._refresh()
-	if _text_of(panel).contains(panel.SHORTAGE_HEADING):
+	if not SectorGoods.shortages(ns, goods).is_empty():
 		_fail("a good nobody wants reads as a shortage when nothing is made of it -- a zero denominator is not a total shortfall")
-
 	cs["demand"] = keep["demand"]
 	cs["output"] = keep["output"]
 	cs["trade"] = keep["trade"]
-	panel.mark_dirty()
-	panel._refresh()
-
-
-## The tree, drawn. One line per RECIPE, keyed by recipe id -- the unique
-## discriminator: three outputs carry more than one route, so checking the
-## output's NAME (the first version of this check) stayed green while a route
-## rendered nowhere and a by-output map silently collapsed four recipes into two
-## lines. Each expected line is rebuilt from the recipe through the panel's own
-## formatters, so the check tracks the panel's format rather than a second copy
-## of it; a collapsed tree misses at least one rebuilt line and fails.
-func _check_tree_renders(panel) -> void:
-	var text := _text_of(panel)
-	for recipe_id in (_main._loader.commodity_recipes.keys() as Array):
-		var recipe: Dictionary = _main._loader.commodity_recipes[recipe_id]
-		var line: String = "%s  <-  %s" % [_good_name(String(recipe.output)), panel._inputs_text(recipe)]
-		if not text.contains(line):
-			_fail("the tree does not draw recipe '%s' as a line -- expected '%s'" % [recipe_id, line])
-			return
 
 
 ## The two modes are REGISTRY entries, which is the whole design: the switcher is
@@ -440,25 +289,10 @@ func _label_text_of(node) -> String:
 	return out
 
 
-func _good_name(good_id: String) -> String:
-	var good = _main._loader.commodity_goods.get(good_id)
-	return String(good.name) if good != null else good_id
-
-
 func _loader_goods() -> Array:
 	var out: Array = _main._loader.commodity_goods.keys()
 	out.sort()
 	return out
-
-
-## Scoped to the panel, never to the scene root -- a walk from the root would pass
-## against the action bar's own labels and prove nothing.
-func _text_of(panel) -> String:
-	var text := ""
-	for node in _walk(panel):
-		if node is Label:
-			text += node.text + "\n"
-	return text
 
 
 ## Finding 7's test leg: the zero-dependency hover must be a COMPLETE sentence.

@@ -23,10 +23,13 @@ const TABLE := [
 	{"id": "government", "title": "Government", "icon": "groups.svg", "tabs": ["politics", "people"]},  # i18n: msgid title
 	{"id": "parliament", "title": "Parliament", "icon": "gavel.svg", "tabs": ["legislature"]},  # i18n: msgid title
 	{"id": "finances", "title": "Finances", "icon": "payments.svg", "tabs": ["finances", "projects"]},  # i18n: msgid title
-	{"id": "economy", "title": "Economy", "icon": "monitoring.svg", "tabs": ["economy", "commodities"]},  # i18n: msgid title
+	{"id": "economy", "title": "Economy", "icon": "monitoring.svg", "tabs": ["economy"]},  # i18n: msgid title
 	{"id": "territory", "title": "Territory", "icon": "map.svg", "tabs": ["region"]},  # i18n: msgid title
 	{"id": "energy", "title": "Energy", "icon": "bolt.svg", "tabs": ["energy"]},  # i18n: msgid title
-	{"id": "industry", "title": "Industry", "icon": "factory.svg", "tabs": ["companies"]},  # i18n: msgid title
+	# V5.3 screen 5: who makes the economy, sector by sector; the overview keeps the
+	# window id "companies" (screenshot.gd --open and the tests address it), and the
+	# Commodities tab retired into the sector tabs' goods.
+	{"id": "sectors", "title": "Sectors", "icon": "factory.svg", "tabs": ["companies", "sector_agriculture", "sector_industry", "sector_services"]},  # i18n: msgid title
 	{"id": "diplomacy", "title": "Diplomacy", "icon": "public.svg", "tabs": ["diplomacy", "orgs"]},  # i18n: msgid title
 	{"id": "opinion", "title": "Opinion", "icon": "campaign.svg", "tabs": ["society", "campaign"]},  # i18n: msgid title
 	{"id": "social", "title": "Social", "icon": "diversity_3.svg", "tabs": []},  # i18n: msgid title

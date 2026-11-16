@@ -25,7 +25,7 @@ const NOTHING := "—"  # i18n: ok a glyph
 const Trends = preload("res://src/ui/trends.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
-const CommoditiesPanel = preload("res://src/ui/commodities_panel.gd")
+const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
@@ -439,8 +439,8 @@ static func _europe(state, ns) -> Dictionary:
 static func _commodities(ns, loader) -> Dictionary:
 	if ns.commodity_state.is_empty() or loader == null:
 		return _reading(NOTHING, "", false)
-	var short: Array = CommoditiesPanel.shortages(ns, loader.commodity_goods.keys())
-	var bar := CommoditiesPanel.SHORTAGE_COVERAGE * 100.0
+	var short: Array = SectorGoods.shortages(ns, loader.commodity_goods.keys())
+	var bar := SectorGoods.SHORTAGE_COVERAGE * 100.0
 	if short.is_empty():
 		return _reading(Strings.t("— covered"), Strings.t("Every good above %.0f%% of the month's demand.") % bar)
 	var worst_id := String(short[0]["id"])
@@ -449,7 +449,7 @@ static func _commodities(ns, loader) -> Dictionary:
 	var name := String(good.name) if good != null else worst_id
 	return _reading_lines("%s %.0f%%" % [name, worst * 100.0], [_line(
 		Strings.t("%s covers %.0f%% of the month's demand -- the shortage line is %.0f%%.") % [name, worst * 100.0, bar],
-		"short")], true, "commodities")
+		"short")], true, SectorGoods.tab_of_good(loader, worst_id))
 
 
 ## ▲/▼ beside a figure; nothing for NAN or a move under Trends' own snap.

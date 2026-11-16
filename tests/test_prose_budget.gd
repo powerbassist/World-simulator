@@ -46,10 +46,11 @@ const BRIEFING_CEILING := 90
 ## the note's 60 per organisation, for France's five.
 const BUDGET := {
 	"legislature": 80, "orgs": 300, "agenda": 40, "campaign": 40, "energy": 20,
-	"politics": 30, "region": 20, "commodities": 10, "projects": 20, "economy": 40,
+	"politics": 30, "region": 20, "projects": 20, "economy": 40,
 	"overview": 30, "diplomacy": 20, "society": 10,
 	"events": 20, "people": 10, "companies": 10, "calendar": 10,
 	"outliner": 10,
+	"sector_agriculture": 10, "sector_industry": 10, "sector_services": 10,
 }
 ## The tabs 0b has not reached yet, held at what they measured before it started
 ## (dc515826 + #93) so they cannot grow while they wait; each PR that trims one
@@ -60,8 +61,8 @@ const PENDING := {}
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
-const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95, "commodities": 210,
-	"companies": 145}
+const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
+	"companies": 145, "sector_agriculture": 80, "sector_industry": 100, "sector_services": 90}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 128, "energy": 118,
@@ -99,7 +100,10 @@ const TOTAL_PENDING := {
 ## One stated rise, 2597 -> 2612 (the parent's ruling on slice 5): the Budget's revenue-against-spending chart and its Gini row
 ## moved to Economy as they were (113 -> 128 there), so nothing the Budget showed was lost with it.
 ## One stated rise, 2612 -> 2638 (G1): the inbox's, above -- nothing else moved.
-const TOTAL_SUM_CEILING := 2638
+## Screen 5, slice 1 (the author's C): the Commodities tab retires into three sector tabs (76, 98
+## and 85 at rest: a head, the goods each sector makes, its majors), cut first (no Needs you
+## section when nothing waits, the lead does not repeat the verdict tag): 2638 -> 2700, stated.
+const TOTAL_SUM_CEILING := 2700
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
