@@ -27,6 +27,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const IndustryVerbs = preload("res://src/ui/industry_verbs.gd")
 const RegionVoice = preload("res://src/ui/region_voice.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 
 ## The fund, under the sheet's problem line and voice (region_sheet.gd).
@@ -37,9 +38,38 @@ static func build(panel, box: Control, ns, region, _regions: Array, _access: Dic
 	PanelKit.heading(box, Strings.t("Development fund"))
 	for row in RegionFunds.open_funds(ns):
 		if String(row["region_id"]) == String(region.id):
+			if in_bill(ns, "stop", String(row["id"])):
+				_in_bill_line(box, ns, Strings.t("Stopping it is in the finance bill: it divides on %s."))
+				return
 			_running(panel, box, ns, row)
 			return
+	# QA's T3 on #383: a press tables a row and the sheet said nothing. Once the fund is a row of
+	# the tabled bill, the sheet says so with the vote's date, and there is no Go to press twice.
+	if in_bill(ns, "start", String(region.id)):
+		_in_bill_line(box, ns, Strings.t("The fund is in the finance bill: it divides on %s."))
+		return
 	_verb(panel, box, ns, region, rule)
+
+
+## Whether the tabled finance bill carries a fund row on `side`: a start names its region, a
+## stop its fund's id (FinanceRows' rows, as table() merged them).
+static func in_bill(ns, side: String, key: String) -> bool:
+	var funds: Dictionary = (ns.tabled_bill.get("finance", {}) as Dictionary).get("funds", {})
+	for row in funds.get(side, []):
+		if (side == "start" and String(row.get("region_id", "")) == key) or (side == "stop" and String(row) == key):
+			return true
+	return false
+
+
+## The bill's line, its vote date read off the tabled register, and the verb greyed in its place.
+static func _in_bill_line(box: Control, ns, text: String) -> void:
+	var bill: Dictionary = ns.tabled_bill
+	var when := DateText.day_month(int(bill.get("vote_day", 1)), int(bill.get("vote_month", 1)))
+	PanelKit.plain_line(box, text % when, PanelKit.Tone.PLAIN).set_meta("in_bill", true)
+	var greyed := PanelKit.sized(Button.new())
+	greyed.text = Strings.t("In the finance bill")
+	greyed.disabled = true
+	PanelKit.buttons(box).add_child(greyed)
 
 
 ## "Unemployment 11.2 %, 1.5 times the nation's 7.4 %." / "Output per head 82 % of the

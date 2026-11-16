@@ -24,13 +24,17 @@ const CK = preload("res://src/sim/character_act_constants.gd")
 const OK = preload("res://src/sim/opinion_constants.gd")
 const RegionRead = preload("res://src/sim/region_read.gd")
 const Migration = preload("res://src/sim/migration.gd")
+const BlocVoice = preload("res://src/sim/bloc_voice.gd")
 const Domains = preload("res://src/ui/domains.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 ## A region a figure wants, and one nobody wants (France's data: Delcour wants FRE).
 const WANTED := "FRE"
+## Another region a figure wants (Fermont), where a fund is opened to read the running voice.
+const RUNNING := "FRJ"
 const UNWANTED := "FRB"
 
 var _failures: Array[String] = []
@@ -72,8 +76,21 @@ func _process(_delta: float) -> bool:
 			_press(_region_button(UNWANTED))
 		12:
 			_check_nobody()
-			_main.queue_free()
+			_main._state.player().person_grudges.erase(_wanter(WANTED).id)
+			_press(_region_button(WANTED))
 		14:
+			_check_voice_booked()
+			_press(_with_meta("go"))
+		16:
+			_press_if_live(_with_meta("go"))
+		18:
+			_check_in_bill()
+			RegionFunds.start(_main._state, _main._state.player(), _main._loader, RUNNING, 1.0, 2)
+			_press(_region_button(RUNNING))
+		20:
+			_check_running_voice()
+			_main.queue_free()
+		22:
 			_finish()
 			return true
 	return false
@@ -231,6 +248,55 @@ func _check_hostile() -> void:
 	for node in _panel.find_children("*", "", true, false):
 		if node.get_script() == EffectsStrip and (node as Control).is_visible_in_tree() and _text_under(node).contains(person.person_name):
 			_fail("hostile figure: the strip still counts %s's voice" % person.person_name)
+
+
+## QA's T2 on #383: the printed points are what the sim books. BlocVoice.speak_for, run for the
+## region's figure on the live state, moves each briefing bloc's offset by points / span.
+func _check_voice_booked() -> void:
+	var ns = _main._state.player()
+	var person = _wanter(WANTED)
+	var line = _with_meta("voice")
+	var before: Dictionary = ns.bloc_offset.duplicate()
+	BlocVoice.speak_for(_main._state, ns, _main._loader, [[person, WANTED]], {}, [],
+		func(p, standing: float) -> float: return Characters.brief_magnitude(p, standing),
+		func(_s, _k, _pid, _d) -> Dictionary: return {})
+	for bloc in CK.BRIEF_BLOCS:
+		var booked := (float(ns.bloc_offset.get(bloc, 0.0)) - float(before.get(bloc, 0.0))) * OK.APPROVAL_SPAN
+		if booked <= 0.0 or line == null or not _text_of(line).contains("+" + Num.f(booked, 1)):
+			_fail("%s: the sim books %s points, the sheet says '%s'" % [bloc, Num.f(booked, 1), _text_of(line) if line != null else "<none>"])
+
+
+## QA's T3 on #383: the press tables the fund once; the sheet says it is in the bill, with the
+## vote's date, and no live Go is left to add a second row.
+func _check_in_bill() -> void:
+	var ns = _main._state.player()
+	var starts: Array = (ns.tabled_bill.get("finance", {}) as Dictionary).get("funds", {}).get("start", [])
+	var here := starts.filter(func(row) -> bool: return String(row.get("region_id", "")) == WANTED)
+	if here.size() != 1:
+		_fail("two presses left %d start rows for %s in the bill" % [here.size(), WANTED])
+	var line = _with_meta("in_bill")
+	if line == null or not _text_of(line).contains(DateText.day_month(int(ns.tabled_bill["vote_day"]), int(ns.tabled_bill["vote_month"]))):
+		_fail("the sheet does not say the fund is in the bill with its vote date: '%s'" % (_text_of(line) if line != null else "<none>"))
+	var go = _with_meta("go")
+	if go != null and not (go as Button).disabled:
+		_fail("a live Start the fund is still on the sheet with the fund in the bill")
+	var voice = _with_meta("voice")
+	if voice == null or not _text_of(voice).contains(Strings.t("If the finance bill passes")):
+		_fail("the voice line does not wait on the bill: '%s'" % (_text_of(voice) if voice != null else "<none>"))
+
+
+## QA's T1 on #383: a fund runs there, so the want is served; the sheet promises no voice.
+func _check_running_voice() -> void:
+	var person = _wanter(RUNNING)
+	var line = _with_meta("voice")
+	var want := Strings.t("%s asked for a development fund here, and it runs.") % person.person_name
+	if line == null or _text_of(line).strip_edges() != want:
+		_fail("a running fund in %s: the voice line reads '%s'" % [RUNNING, _text_of(line) if line != null else "<none>"])
+
+
+func _press_if_live(button) -> void:
+	if button != null and not (button as Button).disabled:
+		(button as Button).pressed.emit()
 
 
 # -- helpers --
