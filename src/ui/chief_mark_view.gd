@@ -65,12 +65,24 @@ static func rank(main, memory: Dictionary) -> Dictionary:
 	var state = main._state
 	var last: Array = memory.get("last", [])
 	var ranked := Priorities.rank(state, main._loader, {"memory": memory,
-		"held_events": BriefingDriver._held_events(main), "programme_held": main._paused_for_programme
+		"held_events": _held_events(main), "programme_held": main._paused_for_programme
 			or not preload("res://src/sim/programme.gd").available(state, state.player(), main._loader).is_empty()})
 	for l in ranked["lines"]:
 		l["fresh"] = not bool(l["standing"]) and not last.any(func(p): return p["kind"] == l["kind"] and p["subject"] == l["subject"])
 	ranked["new"] = ranked["lines"].any(func(l): return bool(l["fresh"]))
 	return ranked
+
+
+## The event ids that hold the clock now: main's unseen arrivals and an interrupt (the ranking's "held" lines).
+static func _held_events(main) -> Array:
+	var out: Array = []
+	for event_id in main._unseen_events:
+		if bool(main._unseen_events[event_id]):
+			out.append(String(event_id))
+	for entry in main._state.player().event_queue:
+		if bool(entry.get("interrupt", false)) and not out.has(String(entry.get("event_id", ""))):
+			out.append(String(entry.get("event_id", "")))
+	return out
 
 
 ## His line for the month's situation as the caption under the mark, said aloud once a
@@ -180,7 +192,8 @@ static func _push_read(main, lines: Array, who: String, face: Texture2D, chief) 
 	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said,
 		"feel": preload("res://src/ui/feelings.gd").of(main._state.player(), String(chief.id)) if chief != null else {},
 		"also": also_groups(main, lines.size(), game.get("also", [])),
-		"effects": _month_effects(main, game)})
+		"effects": _month_effects(main, game),
+		"to_answer": preload("res://src/ui/events_panel.gd").answer_keys(main).size()})
 
 
 ## The month's booked effects (the retired plate's "What your choices did"), worked out once a month: they

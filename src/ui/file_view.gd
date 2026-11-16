@@ -59,6 +59,9 @@ static func build(parent: Control, page: Dictionary, press: Callable, face := FA
 	title.theme_type_variation = UiTheme.FIGURE
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	head.add_child(title)
+	# T13: who the matter is about, by office and name (the old Dispatches subject line).
+	if String(page.get("subject", "")) != "":
+		PanelKit.line(head, String(page["subject"]), PanelKit.Tone.PLAIN)
 	if String(page["situation"]) != "":
 		PanelKit.line(head, String(page["situation"]), PanelKit.Tone.DIM)
 	if not who.is_empty() and String(who["quote"]) != "":
@@ -118,17 +121,16 @@ static func _card(choice: Dictionary, index: int, press: Callable) -> Control:
 		label.text = "%s %s" % ["▲" if int(tag["tone"]) > 0 else ("▼" if int(tag["tone"]) < 0 else "•"), String(tag["text"])]  # i18n: ok glyph and a worded tag
 		label.theme_type_variation = UiTheme.GOOD_SMALL if int(tag["tone"]) > 0 else (UiTheme.BAD_SMALL if int(tag["tone"]) < 0 else UiTheme.CAPTION)
 		tags.add_child(label)
+	# T5: the whole consequence before the answer (most summaries run past one sentence).
 	var note := String(choice["note"])
 	if note != "":
-		var line := PanelKit.plain_line(column, _first_sentence(note), PanelKit.Tone.DIM)
-		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		PanelKit.rich(column, note).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var button := PanelKit.sized(Button.new())
 	button.text = short if short != "" else String(choice["words"])
 	button.custom_minimum_size.x = BUTTON_WIDTH
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.disabled = bool(choice["disabled"])
 	button.tooltip_text = String(choice["tip"])
-	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(func() -> void: press.call(index))
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -136,9 +138,3 @@ static func _card(choice: Dictionary, index: int, press: Callable) -> Control:
 	column.add_child(button)
 	return card
 
-
-## The note's first sentence: the rest of a choice's summary is the long form the desk card
-## already prints, and the card's job is to be read at a glance.
-static func _first_sentence(text: String) -> String:
-	var cut := text.find(". ")
-	return text if cut < 0 else text.substr(0, cut + 1)

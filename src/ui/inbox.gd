@@ -85,7 +85,12 @@ var _clear_notes: Button
 ## Every landing counts, a note grouped with its twin and one past the cap too, so the line
 ## moves the day a note lands (presidency-page-brief.md: "A note still signals its arrival").
 var _news: Button
-var _unseen := 0
+## Rework 2 S2, #403 pass 2 T7: the notes read in the Folder (id -> true); the line counts the plain notes there
+## that are not, so a note taken away, Clear all, or a twin landing again all move it.
+var _read := {}
+## #403 pass 2 T2: notes that carry a deadline or a route (the term's countdown, a takeover bid, a firm in
+## difficulty) stay cards here, above the News line's hidden store; only plain news folds into the line.
+var _kept: VBoxContainer
 
 
 ## Built in _init, not _ready: U5a's column worked before it was in a tree (the
@@ -159,6 +164,10 @@ func _init() -> void:
 		_rows[lane] = rows
 	_rows[NOTES].hide()
 	_empty[NOTES].hide()
+	_kept = VBoxContainer.new()
+	_kept.add_theme_constant_override("separation", 6)
+	lanes.add_child(_kept)
+	lanes.move_child(_kept, _rows[NOTES].get_index())
 	_show_news()
 
 
@@ -318,7 +327,8 @@ func set_body(id: String, body: String) -> void:
 func _group(id: String) -> void:
 	var note: Dictionary = _notes[id]
 	note["count"] = int(note["count"]) + 1
-	_rows[NOTES].move_child(_cards[id], 0)
+	_read.erase(id)  # news again
+	_cards[id].get_parent().move_child(_cards[id], 0)
 	Motion.pulse(_cards[id])
 	_show_note(id)
 
@@ -385,10 +395,12 @@ func dismiss(id: String) -> void:
 	_lane_of.erase(id)
 	_asked.erase(id)
 	_notes.erase(id)
-	_rows[lane].remove_child(card)
+	_read.erase(id)
+	card.get_parent().remove_child(card)
 	card.queue_free()
 	_empty[lane].visible = lane != NOTES and _rows[lane].get_child_count() == 0
-	_clear_notes.visible = _rows[NOTES].get_child_count() > 0
+	_clear_notes.visible = _rows[NOTES].get_child_count() + _kept.get_child_count() > 0
+	_show_news()
 	card_dismissed.emit(id)
 
 
@@ -398,7 +410,7 @@ func dismiss(id: String) -> void:
 func raise_card(id: String) -> void:
 	if not _cards.has(id):
 		return
-	_rows[_lane_of[id]].move_child(_cards[id], 0)
+	_cards[id].get_parent().move_child(_cards[id], 0)
 	Motion.pulse(_cards[id])
 
 
@@ -477,33 +489,49 @@ func notes() -> Array[Dictionary]:
 	for card in _rows[NOTES].get_children():
 		var id := _id_of(card)
 		if _notes.has(id):
-			out.append({"id": id, "title": _notes[id]["title"], "body": _notes[id]["body"], "count": _notes[id]["count"]})
+			var tag: Label = card.get_child(0).get_node_or_null("ResultTone")
+			out.append({"id": id, "title": _notes[id]["title"], "body": _notes[id]["body"], "count": _notes[id]["count"],
+				"tag": tag.text if tag != null else "", "tag_variation": String(tag.theme_type_variation) if tag != null else ""})
 	return out
 
 
+## A note made a card that stays (it carries a deadline or a route); returns the id, so a pusher keeps it in one line.
+func keep_card(id: String) -> String:
+	if _notes.has(id) and _cards[id].get_parent() == _rows[NOTES]:
+		_rows[NOTES].remove_child(_cards[id])
+		_kept.add_child(_cards[id])
+		_kept.move_child(_cards[id], 0)
+		_show_news()
+	return id
+
+
 func news_count() -> int:
-	return _unseen
+	var n := 0
+	for card in _rows[NOTES].get_children():
+		if not _read.has(_id_of(card)):
+			n += 1
+	return n
 
 
 func news_line() -> Button:
 	return _news
 
 
-## The news read in the Folder: the line goes back to naming none.
+## The news read in the Folder: every plain note there is read.
 func news_seen() -> void:
-	_unseen = 0
+	for card in _rows[NOTES].get_children():
+		_read[_id_of(card)] = true
 	_show_news()
 
 
 func _landed() -> void:
-	_unseen += 1
 	_show_news()
 	if is_inside_tree():
 		Motion.pulse(_news)
 
 
 func _show_news() -> void:
-	_news.text = tr("News: %d") % _unseen
+	_news.text = tr("News: %d") % news_count()
 
 
 ## Every note, each as the player's own X (card_closed, then dismissed).

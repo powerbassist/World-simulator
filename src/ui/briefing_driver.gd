@@ -152,17 +152,6 @@ static func _rank_month(main, game: Dictionary, report: Dictionary) -> bool:
 	return true
 
 
-## The event ids that hold the clock now: main's unseen arrivals and an interrupt.
-static func _held_events(main) -> Array:
-	var out: Array = []
-	for event_id in main._unseen_events:
-		if bool(main._unseen_events[event_id]):
-			out.append(String(event_id))
-	for entry in main._state.player().event_queue:
-		if bool(entry.get("interrupt", false)) and not out.has(String(entry.get("event_id", ""))):
-			out.append(String(entry.get("event_id", "")))
-	return out
-
 
 ## How many cards this game has shown in `situation` (open() turns it): the line's
 ## rotation index. By situation, not by month: a month index repeated a line every

@@ -54,8 +54,14 @@ var _title: Label
 var _list: VBoxContainer
 var _page: VBoxContainer
 var _close_button: Button
-## The item shown: "file:<card id>", "desk:<event id>", "record:<ledger index>", "note:<card id>".
+## The item shown: "file:<card id>", "desk:<event id>", "record:<event|year|month|choice>", "note:<card id>".
+## Keyed by what the item is, never by its place in a list: a new record or file never turns the page
+## shown into another (#403 pass 2 T3; a click there would have answered the other).
 var _selected := ""
+## The event the shown file or desk entry is about, kept after it leaves the desk: its record is its page then.
+var _shown_event := ""
+## The shown file lapsed while open: its record says the clock answered it.
+var _lapsed := false
 ## A group asked for (the News line) before the list exists: its first item is chosen at the build.
 var _wanted_group := ""
 var _groups := {ANSWER: [], DECIDED: [], NEWS: []}
@@ -133,6 +139,7 @@ func selected() -> String:
 func select(key: String) -> void:
 	_selected = key
 	_wanted_group = ""
+	_lapsed = false
 	_dirty = true
 	# A note the player picks is the news read; one shown by the fallback or a rebuild is not (pass 1).
 	if key.begins_with("note:") and _main != null:
@@ -169,6 +176,9 @@ func _refresh() -> void:
 	var ns = _state.player() if _state != null else null
 	if ns == null or _main == null:
 		return
+	# T4: the rebuild frees the focused item; the keyboard gets the shown item back.
+	var owner := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	var had_focus := owner != null and is_ancestor_of(owner)
 	_title.text = tr("FOLDER — %s") % DateText.month_year(int(_state.month), int(_state.year))
 	_read_groups(ns)
 	var keys: Array = _groups[ANSWER] + _groups[DECIDED] + _groups[NEWS]
@@ -177,31 +187,60 @@ func _refresh() -> void:
 		if _wanted_group == NEWS:
 			_main._hud.inbox.news_seen()  # the News line pressed: the player came for the news
 	elif not keys.has(_selected):
-		# A file gone while shown (answered, lapsed, a load): the next thing waiting, else the last decision,
-		# else the newest news -- never a blank page beside a list that has something.
-		_selected = String((_groups[ANSWER] + _groups[DECIDED] + _groups[NEWS] + [""])[0])
+		_selected = _follow(ns)
 	_wanted_group = ""
 	_build_list(ns)
 	_build_page(ns)
+	if had_focus and _buttons.has(_selected):
+		(_buttons[_selected] as Button).grab_focus()
+
+
+## Where the page goes when what it showed left its list. A file or desk entry about an event follows the
+## matter -- to its desk entry while it is on the desk, to its record once decided (the clock's answer says
+## so) -- and is never swapped for the next file. Any other file keeps its page ("Answered."). Nothing
+## shown yet, or a record or note gone: the next thing waiting, else the last decision, else the news.
+func _follow(ns) -> String:
+	if _selected.begins_with("file:") or _selected.begins_with("desk:"):
+		if _shown_event == "":
+			return _selected
+		if ns.event_queue.any(func(e): return String(e.get("event_id", "")) == _shown_event):
+			return "desk:" + _shown_event
+		for record in ns.event_history:  # newest first
+			if String(record.get("event_id", "")) == _shown_event:
+				_lapsed = bool(record.get("defaulted", false))
+				return _record_key(record)
+		return _selected
+	return String((_groups[ANSWER] + _groups[DECIDED] + _groups[NEWS] + [""])[0])
+
+
+static func _record_key(record: Dictionary) -> String:
+	return "record:%s|%d|%d|%s" % [String(record.get("event_id", "")), int(record.get("year", 0)), int(record.get("month", 0)),
+		String(record.get("choice_id", ""))]
 
 
 func _read_groups(ns) -> void:
+	var decided: Array = []
+	for record in ns.event_history:  # newest first: Events.answer pushes to the front
+		if _shown(record):
+			decided.append(_record_key(record))
+	_groups = {ANSWER: answer_keys(_main), DECIDED: decided,
+		NEWS: _main._hud.inbox.notes().map(func(n): return "note:" + String(n["id"]))}
+
+
+## "To answer", the one count of what waits (the Presidency page's door reads it too, #403 pass 2 T11): every
+## file of the inbox, then every desk entry with no card.
+static func answer_keys(main) -> Array:
 	var answer: Array = []
 	var carded := {}  # event ids whose card is still a file of the inbox
-	for file in InboxFiles.list(_main._hud.inbox):
+	for file in InboxFiles.list(main._hud.inbox):
 		answer.append("file:" + String(file["id"]))
-		if _main._event_cards.has(file["id"]):
-			carded[String(_main._event_cards[file["id"]])] = true
-	for entry in ns.event_queue:
+		if main._event_cards.has(file["id"]):
+			carded[String(main._event_cards[file["id"]])] = true
+	for entry in main._state.player().event_queue:
 		var event_id := String(entry.get("event_id", ""))
-		if not carded.has(event_id) and Events.event_by_id(_loader, event_id) != null:
+		if not carded.has(event_id) and Events.event_by_id(main._loader, event_id) != null:
 			answer.append("desk:" + event_id)
-	var decided: Array = []
-	for i in range(ns.event_history.size() - 1, -1, -1):  # newest first
-		if _shown(ns.event_history[i]):
-			decided.append("record:%d" % i)
-	_groups = {ANSWER: answer, DECIDED: decided,
-		NEWS: _main._hud.inbox.notes().map(func(n): return "note:" + String(n["id"]))}
+	return answer
 
 
 ## V4.8c: the FEED band per category, on the ledger only (the desk shows every entry whatever
@@ -225,9 +264,9 @@ func _build_list(ns) -> void:
 	_group_head(tr("Decided"), _groups[DECIDED].size())
 	if ns.event_history.is_empty():
 		PanelKit.line(_list, tr("Nothing has come up yet."))
-	for key in _groups[DECIDED]:
-		var record: Dictionary = ns.event_history[int(String(key).trim_prefix("record:"))]
-		_item(key, Strings.record_event_name(record), DateText.month_year(int(record.get("month", 1)), int(record.get("year", 0))))
+	for record in ns.event_history:
+		if _groups[DECIDED].has(_record_key(record)):
+			_item(_record_key(record), Strings.record_event_name(record), DateText.month_year(int(record.get("month", 1)), int(record.get("year", 0))))
 	# A hidden row is COUNTED, never silent: a ledger that shrank with nothing saying why reads as lost history.
 	var hidden: int = ns.event_history.size() - _groups[DECIDED].size()
 	if hidden > 0:
@@ -312,13 +351,27 @@ func _item(key: String, text: String, date: String) -> void:
 func _build_page(ns) -> void:
 	_clear(_page)
 	_primary = null
+	if not _selected.begins_with("file:") and not _selected.begins_with("desk:"):
+		_shown_event = ""
 	if _selected.begins_with("file:"):
 		var id := _selected.trim_prefix("file:")
+		if _main._event_cards.has(id):
+			_shown_event = String(_main._event_cards[id])
 		FileView.build(_page, FileRead.describe(_main, InboxFiles.of(_main._hud.inbox, id)), press)
+		# T10: the term's programme is a file with no answer of its own; until S3 its choice is on the Agenda.
+		if id == String(_main._programme_card_id) and not InboxFiles.of(_main._hud.inbox, id).is_empty():
+			var go := PanelKit.sized(Button.new())
+			go.text = tr("Choose it on the Agenda")
+			go.pressed.connect(func() -> void: _main._windows.open("agenda"))
+			_page.add_child(go)
 	elif _selected.begins_with("desk:"):
-		FileView.build(_page, FileRead.desk_entry(_main, _selected.trim_prefix("desk:")), press)
+		_shown_event = _selected.trim_prefix("desk:")
+		FileView.build(_page, FileRead.desk_entry(_main, _shown_event), press)
 	elif _selected.begins_with("record:"):
-		_record_page(ns.event_history[int(_selected.trim_prefix("record:"))])
+		for record in ns.event_history:
+			if _record_key(record) == _selected:
+				_record_page(record)
+				break
 	elif _selected.begins_with("note:"):
 		_note_page(_selected.trim_prefix("note:"))
 	for button in _page.find_children("*", "Button", true, false):  # i18n: ok a class name
@@ -348,6 +401,8 @@ func _record_page(record: Dictionary) -> void:
 	if bool(record.get("defaulted", false)):
 		answer.text = tr("No answer given — %s") % Strings.record_choice_label(record)
 		answer.theme_type_variation = UiTheme.BAD_TEXT
+		if _lapsed:
+			PanelKit.line(_page, tr("It lapsed while it was open: the clock answered it."))
 	else:
 		answer.text = Strings.record_choice_label(record)
 		answer.theme_type_variation = UiTheme.LEAD
@@ -372,6 +427,13 @@ func _note_page(id: String) -> void:
 		_page.add_child(title)
 		if int(note["count"]) > 1:
 			PanelKit.line(_page, tr_n("Came %d time.", "Came %d times.", int(note["count"])) % int(note["count"]))
+		# T6: its good / bad / uncertain word, as the card wore it (words, never the colour alone).
+		if String(note.get("tag", "")) != "":
+			var tag := Label.new()
+			tag.text = String(note["tag"])  # i18n: row-ok ResultTone's word, translated there
+			tag.uppercase = true
+			tag.theme_type_variation = String(note["tag_variation"])
+			_page.add_child(tag)
 		PanelKit.rich(_page, String(note["body"]), PanelKit.Tone.PLAIN)  # i18n: row-ok a note's body, routed by its pusher
 
 

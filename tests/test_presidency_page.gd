@@ -109,6 +109,8 @@ func _process(_delta: float) -> bool:
 	_check_go()
 	_check_also_due_and_the_effects()
 	_check_one_build_per_command()
+	_check_the_fold_counts_what_it_holds()
+	_check_one_files_count()
 	# After the word ceilings: these run months on, past the state the ceilings are read at.
 	_check_concluded_chosen_mark()
 	_check_the_spoken_line_month()
@@ -228,8 +230,9 @@ func _check_the_counts() -> void:
 	var ns = _main._state.player()
 	var files: Button = _page._count_doors["files"]
 	var requests: Button = _page._count_doors["requests"]
-	if not files.text.begins_with(str(ns.event_queue.size())):
-		_fail("the files door reads '%s', the desk holds %d" % [files.text, ns.event_queue.size()])
+	var to_answer: int = (load("res://src/ui/events_panel.gd").answer_keys(_main) as Array).size()
+	if not files.text.begins_with(str(to_answer)):
+		_fail("the files door reads '%s', the Folder lists %d to answer" % [files.text, to_answer])
 	if not requests.text.begins_with(str(Audiences.waiting_count(ns))):
 		_fail("the requests door reads '%s', %d wait" % [requests.text, Audiences.waiting_count(ns)])
 	var asked: Array = []
@@ -418,6 +421,40 @@ func _check_one_build_per_command() -> void:
 	_page._process(0.0)
 	if _page.builds != before + 1:
 		_fail("one command built the page %d times, not once" % (_page.builds - before))
+
+
+## #403 pass 2 T8: the fold's label counts what it holds (the month's booked effects and the past decisions),
+## and "Nothing committed yet" only when it holds neither.
+func _check_the_fold_counts_what_it_holds() -> void:
+	var recent: Array = _main._state.recent_effects
+	var saved: Array = recent.duplicate(true)
+	recent.clear()
+	_page.set_read({"lines": [], "effects": [{"text": "A booked line.", "tone": "good"}]})
+	_page._fill_decided()
+	if not _page._decided_toggle.text.contains("(1)") or _labels(_page._decided_box).contains("Nothing committed yet"):
+		_fail("a fold holding one booked line reads '%s' / '%s'" % [_page._decided_toggle.text, _labels(_page._decided_box)])
+	_page.set_read({"lines": []})
+	_page._fill_decided()
+	if not _page._decided_toggle.text.contains("(0)") or not _labels(_page._decided_box).contains("Nothing committed yet"):
+		_fail("an empty fold does not say so: '%s'" % _page._decided_toggle.text)
+	recent.append_array(saved)
+	ChiefMarkView.refresh(_main)
+
+
+## #403 pass 2 T11: one count -- the files door counts what the Folder's "To answer" lists.
+func _check_one_files_count() -> void:
+	var ns = _main._state.player()
+	var queue: Array = ns.event_queue.duplicate(true)
+	var ev = _main._loader.events[0]
+	ns.event_queue.append({"event_id": String(ev.id), "event_name": ev.event_name, "months_left": 3, "severity": 1,
+		"category": ev.category})  # a desk entry with no card
+	_main._hud.inbox.push("A fund", "Hauts-de-France asks.", [{"label": "Open"}])  # a file that is no event
+	ChiefMarkView.refresh(_main)
+	_draw()
+	var want: int = (load("res://src/ui/events_panel.gd").answer_keys(_main) as Array).size()
+	if not String(_page._count_doors["files"].text).begins_with(str(want)):
+		_fail("the files door reads '%s', the Folder lists %d to answer" % [_page._count_doors["files"].text, want])
+	ns.event_queue = queue
 
 
 ## The plate's two other jobs, carried by the page (G2): an item in its last month the lines crowded
@@ -795,6 +832,17 @@ func _words(text: String) -> int:
 
 
 ## Visible text only, skipping nodes queued for deletion and hidden branches.
+## Every label's words under `node`, shown or not (the fold is collapsed).
+func _labels(node: Node) -> String:
+	var out := ""
+	for child in node.get_children():
+		if child is Label and not child.is_queued_for_deletion():
+			out += String(child.text) + "
+"
+		out += _labels(child)
+	return out
+
+
 func _text(node) -> String:
 	if node == null or node.is_queued_for_deletion():
 		return ""

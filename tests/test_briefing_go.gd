@@ -194,6 +194,7 @@ func _show(c: Dictionary) -> void:
 	if c["kind"] == "budget" or c["kind"] == "unrest":
 		lines = [line, Priorities._standing("majority", "seats"), Priorities._standing("bloc", "workers")]
 	_put_on_the_page(lines, [])
+	c["line"] = line
 	# A paused clock, so nothing arrives over the target in the frames the click takes.
 	_main._clock.paused = true
 	c["target"] = BriefingDriver.target_of(line)
@@ -230,8 +231,10 @@ func _check(c: Dictionary) -> void:
 	if ["crisis", "decision", "request"].has(kind):
 		_main._events_panel._refresh()
 		var shown: String = _main._events_panel.selected()
-		if not _main._windows.is_open("events") or not (shown.begins_with("file:") or shown.begins_with("desk:")):
-			_fail("%s: Go did not open the Folder on the file (page '%s')" % [label, shown])
+		var card := BriefingDriver.file_of(_main, c["line"])
+		var want := ("file:" + card) if card != "" else ("desk:" + String(c["subject"]))
+		if not _main._windows.is_open("events") or shown != want:
+			_fail("%s: Go did not open the Folder on its own file (page '%s', want '%s')" % [label, shown, want])
 		if not _main._clock.paused:
 			_fail("%s: Go changed the clock" % label)
 		return

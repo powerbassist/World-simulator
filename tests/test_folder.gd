@@ -28,6 +28,11 @@ const Events = preload("res://src/sim/events.gd")
 var _failures: Array[String] = []
 var _main
 var _frame := 0
+## The real-clock lapse (#403 pass 2 T3): "" until the synchronous checks are done.
+var _phase := ""
+var _lapse_card := ""
+var _lapse_event := ""
+var _since := 0
 
 
 func _init() -> void:
@@ -39,6 +44,8 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 3:
 		return false
+	if _phase == "lapse":
+		return _lapse_step()
 	_check_no_scene_plate()
 	_check_the_groups()
 	_check_an_answer_keeps_the_clock()
@@ -52,8 +59,17 @@ func _process(_delta: float) -> bool:
 	_check_go_on_a_crisis_with_no_card()
 	_check_nothing_to_answer_shows_the_news()
 	_check_a_queued_rerank_runs_once()
-	_finish()
-	return true
+	_check_the_decided_order()
+	_check_a_note_with_a_deadline_stays_a_card()
+	_check_the_keyboard_answers()
+	_check_the_whole_consequence()
+	_check_a_note_says_its_tone()
+	_check_the_news_count_is_the_unread()
+	_check_the_inbox_stays_only_for_answers()
+	_check_the_programme_file_goes_to_the_agenda()
+	_check_the_subject_line()
+	_start_the_lapse()
+	return false
 
 
 func _panel():
@@ -211,6 +227,8 @@ func _check_a_request_on_the_tab() -> void:
 	_clear_desk()
 
 
+## #403 pass 2 T3: the page never silently becomes another file (a click there would answer it). A card taken
+## away while its matter is still on the desk follows the matter to its desk entry.
 func _check_a_file_gone_while_shown() -> void:
 	_clear_desk()
 	var first := _event(0)
@@ -219,14 +237,13 @@ func _check_a_file_gone_while_shown() -> void:
 	_panel().select("file:" + first)
 	_main._hud.inbox.dismiss(first)
 	_panel()._refresh()
-	if _panel().selected() == "file:" + first:
-		_fail("a file that is gone left its page on screen")
-	if _panel().selected() != "file:" + second:
-		_fail("a gone file's selection did not move to the next file (selected '%s')" % _panel().selected())
+	if _panel().selected() == "file:" + second:
+		_fail("a file that went while shown was swapped for the next file")
+	if _panel().selected() != "desk:" + String(_main._loader.events[0].id):
+		_fail("a card gone while its matter is on the desk did not follow it (selected '%s')" % _panel().selected())
 	_clear_desk()
 
 
-## The read is the Presidency page now: it opens the page and never pauses.
 func _check_read_opens_the_page() -> void:
 	_clear_desk()
 	_main._windows.close("events")
@@ -270,13 +287,14 @@ func _check_the_news_line() -> void:
 	inbox.push("A strike", "The dockers stop.")
 	if inbox.news_count() != 1 or not inbox.news_line().text.contains("1"):
 		_fail("a note landing did not move the News line (%d, '%s')" % [inbox.news_count(), inbox.news_line().text])
-	inbox.push("A strike", "The dockers stop.")  # its twin: grouped, one row
-	if inbox.news_count() != 2:
-		_fail("a note grouped with its twin did not move the News count (%d)" % inbox.news_count())
+	inbox.news_seen()
+	inbox.push("A strike", "The dockers stop.")  # its twin, after it was read: grouped, unread again
+	if inbox.news_count() != 1:
+		_fail("a note read, then grouped with its twin, is not unread again (%d)" % inbox.news_count())
 	for i in Inbox.NOTES_MAX + 2:
 		inbox.push("Note %d" % i, "Body %d." % i)
-	if inbox.news_count() != Inbox.NOTES_MAX + 4:
-		_fail("notes past the lane's cap did not move the News count (%d)" % inbox.news_count())
+	if inbox.news_count() != Inbox.NOTES_MAX:
+		_fail("past the lane's cap the News count is not the unread notes there (%d of %d)" % [inbox.news_count(), Inbox.NOTES_MAX])
 	# Decisions and requests keep their lanes.
 	var asked := _request()
 	if asked == "" or inbox.lane_of(asked) != Inbox.REQUESTS or not inbox._rows[Inbox.REQUESTS].visible:
@@ -377,6 +395,232 @@ func _check_a_queued_rerank_runs_once() -> void:
 	if game["lines"] != staged:
 		_fail("the deferred re-rank ran a second time for one queue and ranked over the lines set since")
 	game["lines"] = []
+
+
+## #403 pass 2 T1: newest first, in the order the sim keeps (Events.answer pushes to the front).
+func _check_the_decided_order() -> void:
+	_clear_desk()
+	var ns = _main._state.player()
+	var first = _main._loader.events[0]
+	var second = _main._loader.events[1]
+	_event(0, false)
+	_event(1, false)
+	Events.answer(_main._state, _main._loader, String(first.id), String(first.choices[0]["id"]))
+	Events.answer(_main._state, _main._loader, String(second.id), String(second.choices[0]["id"]))
+	_open_tab()
+	var decided: Array = _panel().groups().get("decided", [])
+	if decided.is_empty() or not String(decided[0]).contains(String(second.id)):
+		_fail("'Decided' does not open on the newest answer (%s first)" % [decided.slice(0, 2)])
+	# A record keeps its page when a newer one lands (keyed by the record, not its place).
+	_panel().select(String(decided[0]))
+	var shown: String = _panel().selected()
+	ns.event_history.push_front({"event_id": "zz_newer", "event_name": "Newer", "choice_id": "", "choice_label": "x",
+		"year": int(_main._state.year), "month": int(_main._state.month), "defaulted": false})
+	_panel()._refresh()
+	if _panel().selected() != shown or not _texts(_panel()._page).contains(preload("res://src/ui/strings.gd").row_name("events", second)):
+		_fail("a record shown became another when a newer one landed (now '%s')" % _panel().selected())
+	ns.event_history.remove_at(0)
+	_clear_desk()
+
+
+## #403 pass 2 T2: a note that carries a deadline or a route (the term's countdown, a takeover bid, a firm in
+## difficulty) stays a card; only plain news folds into the News line.
+func _check_a_note_with_a_deadline_stays_a_card() -> void:
+	_clear_desk()
+	_main._windows.close_all()  # the inbox on the map
+	var inbox = _main._hud.inbox
+	var kept: String = inbox.keep_card(inbox.push("Your term", "Sixteen months to the vote."))
+	inbox.push("A strike", "The dockers stop.")
+	if not inbox._cards[kept].is_visible_in_tree():
+		_fail("a note with a deadline is not a card in the inbox")
+	if inbox.news_count() != 1:
+		_fail("a kept card counts in the News line (%d)" % inbox.news_count())
+	for path in ["res://src/ui/industry_news.gd", "res://src/ui/main.gd"]:
+		if not FileAccess.get_file_as_string(path).contains("keep_card("):
+			_fail("%s no longer keeps its deadline cards up" % path)
+	_clear_desk()
+
+
+## #403 pass 2 T4: the keyboard answers -- the answer buttons take focus, and a pick in the list keeps it.
+func _check_the_keyboard_answers() -> void:
+	_clear_desk()
+	var bare := _event(1, false)
+	_open_tab()
+	var item: Button = _panel()._buttons.get("desk:" + bare)
+	if item == null:
+		_fail("premise: the desk entry has no list button")
+		return
+	item.grab_focus()
+	item.pressed.emit()
+	var owner: Control = _main.get_viewport().gui_get_focus_owner()
+	if owner == null or not _panel().is_ancestor_of(owner):
+		_fail("a pick in the Folder's list lost the keyboard focus")
+	var answers: Array = _panel()._page.find_children("*", "Button", true, false)
+	if answers.is_empty() or answers.any(func(b): return (b as Button).focus_mode == Control.FOCUS_NONE):
+		_fail("an answer button on the Folder takes no keyboard focus")
+	_main.get_viewport().gui_release_focus()
+	_clear_desk()
+
+
+## #403 pass 2 T5: a choice's whole consequence before the answer, not its first sentence.
+func _check_the_whole_consequence() -> void:
+	_clear_desk()
+	var Strings = preload("res://src/ui/strings.gd")
+	var n := -1
+	for i in _main._loader.events.size():
+		var ev = _main._loader.events[i]
+		if Strings.choice_summary(ev.id, ev.choices[0]).count(". ") >= 1:
+			n = i
+			break
+	if n < 0:
+		_fail("premise: no event has a choice summary of two sentences")
+		return
+	var bare := _event(n, false)
+	_open_tab()
+	_panel().select("desk:" + bare)
+	var ev = _main._loader.events[n]
+	var whole: String = preload("res://src/ui/panel_kit.gd").TermText.plain(Strings.choice_summary(ev.id, ev.choices[0]))
+	if not _texts(_panel()._page).contains(whole):
+		_fail("the page shows less than the choice's whole consequence: '%s'" % whole.left(60))
+	_clear_desk()
+
+
+## #403 pass 2 T6: a note's good / bad word is on its page, words and not colour alone.
+func _check_a_note_says_its_tone() -> void:
+	_clear_desk()
+	var ResultTone = preload("res://src/ui/result_tone.gd")
+	var id: String = ResultTone.push(_main._hud.inbox, "Carried", "The bill passed.", ResultTone.GOOD)
+	_open_tab()
+	_panel().select("note:" + id)
+	var word := preload("res://src/ui/strings.gd").t(String(ResultTone.TAG[ResultTone.GOOD][1]))
+	if not _texts(_panel()._page).contains(word):
+		_fail("a note's '%s' word is not on its page" % word)
+	_clear_desk()
+
+
+## #403 pass 2 T7: the count is the unread notes there -- a note taken away by code, Clear all, a News press
+## with nothing to read.
+func _check_the_news_count_is_the_unread() -> void:
+	_clear_desk()
+	var inbox = _main._hud.inbox
+	var a: String = inbox.push("A strike", "The dockers stop.")
+	inbox.push("A leak", "A memo reaches the press.")
+	inbox.dismiss(a)
+	if inbox.news_count() != 1:
+		_fail("a note taken away by code still counts (%d)" % inbox.news_count())
+	inbox.clear_notes()
+	if inbox.news_count() != 0:
+		_fail("Clear all left a News count (%d)" % inbox.news_count())
+	inbox.news_line().pressed.emit()
+	_panel()._refresh()
+	if inbox.news_count() != 0 or not _main._windows.is_open("events"):
+		_fail("a News press with nothing to read left a count or opened nothing")
+	_clear_desk()
+
+
+## #403 pass 2 T9: the inbox stays after an answer only while a row asks one (a decision or a request), not for
+## the programme's card or an Open row.
+func _check_the_inbox_stays_only_for_answers() -> void:
+	_clear_desk()
+	var inbox = _main._hud.inbox
+	_main._windows.open("finances")
+	inbox.push("Choose the programme", "The term starts.", [], null, true)
+	inbox.push("A fund", "Hauts-de-France asks.", [{"label": "Open"}])
+	var carded := _event(0)
+	inbox.slide_in()
+	inbox.card_action.emit(carded, 0)
+	if inbox.is_slid():
+		_fail("the inbox stayed over the tab for rows that ask no answer")
+	_main._windows.close_all()
+	_clear_desk()
+
+
+## #403 pass 2 T10: the term's programme card, a file with no answer of its own, opens the Agenda (until S3).
+func _check_the_programme_file_goes_to_the_agenda() -> void:
+	_clear_desk()
+	var inbox = _main._hud.inbox
+	var saved: String = _main._programme_card_id
+	_main._programme_card_id = inbox.push("Choose the programme", "The term starts.", [], null, true)
+	_open_tab()
+	_panel().select("file:" + _main._programme_card_id)
+	var go: Button = null
+	for b in _panel()._page.find_children("*", "Button", true, false):
+		go = b
+	if go == null:
+		_fail("the programme's file has no way to the Agenda")
+	else:
+		go.pressed.emit()
+		if not _main._windows.is_open("agenda"):
+			_fail("the programme file's button did not open the Agenda")
+	_main._programme_card_id = saved
+	_main._windows.close_all()
+	_clear_desk()
+
+
+## #403 pass 2 T13: an event about an office names its holder on the page (the old Dispatches subject line).
+func _check_the_subject_line() -> void:
+	_clear_desk()
+	var ns = _main._state.player()
+	var n := -1
+	for i in _main._loader.events.size():
+		if String(_main._loader.events[i].subject_office) == "head_of_government":
+			n = i
+			break
+	if n < 0:
+		_fail("premise: no event is about the head of government")
+		return
+	var bare := _event(n, false)
+	_open_tab()
+	_panel().select("desk:" + bare)
+	var who: String = _main._loader.person_name(String(ns.pm_person_id))
+	var want: String = who if who != "" else String(ns.head_of_government_title)
+	if want == "" or not _texts(_panel()._page).contains(want):
+		_fail("the page of an event about the head of government does not name them ('%s')" % want)
+	_clear_desk()
+
+
+## #403 pass 2 T3, on the real clock: a file shown when its deadline passes shows its own record, says the clock
+## answered it, and is never swapped for another file.
+func _start_the_lapse() -> void:
+	_clear_desk()
+	_main._paused_for_programme = false
+	_lapse_card = _event(0, true, 1)
+	_event(1, true, 3)
+	_lapse_event = String(_main._loader.events[0].id)
+	_open_tab()
+	_panel().select("file:" + _lapse_card)
+	var clock: Node = _main.get_node("Clock")
+	clock.day = clock._days_in_month(clock.month, clock.year)
+	clock.paused = false
+	clock.set_speed(4)
+	_phase = "lapse"
+	_since = 0
+
+
+func _lapse_step() -> bool:
+	_since += 1
+	var ns = _main._state.player()
+	var gone: bool = not ns.event_queue.any(func(e): return String(e.get("event_id", "")) == _lapse_event)
+	if not gone or _main._month_runner.running():
+		if _since > 1200:
+			_fail("the lapse never came (date %d-%d)" % [_main._clock.year, _main._clock.month])
+			_finish()
+			return true
+		if _main._clock.paused:
+			_main._clock.paused = false  # an arrival may hold it; the lapse is the clock's
+		return false
+	_main._clock.paused = true
+	_panel()._refresh()
+	var shown: String = _panel().selected()
+	if shown.begins_with("file:") and shown != "file:" + _lapse_card:
+		_fail("a file that lapsed while shown was swapped for another file ('%s')" % shown)
+	if not shown.begins_with("record:") or not shown.contains(_lapse_event):
+		_fail("a file that lapsed while shown does not show its own record (selected '%s')" % shown)
+	var text := _texts(_panel()._page)
+	if not text.contains("No answer given") or not text.contains("lapsed"):
+		_fail("the lapsed file's record does not say the clock answered it: '%s'" % text.left(160))
+	_finish()
+	return true
 
 
 func _texts(node: Node) -> String:

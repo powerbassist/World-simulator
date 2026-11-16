@@ -331,7 +331,7 @@ func _days(month: int, year: int) -> int:
 
 
 func _buttons(node: Node, out: Array[Button]) -> void:
-	if node is Button and (node as Button).get_parent() != null and not String((node as Button).text).is_empty() and (node as Button).focus_mode == Control.FOCUS_NONE \
+	if node is Button and (node as Button).get_parent() != null and not String((node as Button).text).is_empty() \
 			and (node as Button).custom_minimum_size.x == FileView.BUTTON_WIDTH:
 		out.append(node)
 	for child in node.get_children():

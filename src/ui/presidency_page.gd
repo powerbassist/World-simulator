@@ -220,7 +220,9 @@ func _fill_lead(ns) -> void:
 	for i in lines.size():
 		_lead_rows.append(_lead_row(lines[i], i))
 	PresidencyRows.also_due(_rows_box, _read.get("also", []), go_requested.emit)
-	_count_doors["files"].text = tr_n("%d file to answer", "%d files to answer", ns.event_queue.size()) % ns.event_queue.size()
+	# One count, the Folder's "To answer" (#403 pass 2 T11), pushed with the read.
+	var files := int(_read.get("to_answer", ns.event_queue.size()))
+	_count_doors["files"].text = tr_n("%d file to answer", "%d files to answer", files) % files
 	var waiting := Audiences.waiting_count(ns)
 	_count_doors["requests"].text = tr_n("%d request waiting", "%d requests waiting", waiting) % waiting
 	_count_doors["requests"].disabled = waiting == 0  # no request: nothing to open
@@ -465,7 +467,7 @@ func _fill_decided() -> void:
 	for effect in _read.get("effects", []):
 		_decided_box.add_child(PresidencyRows.choice_effect(effect))
 	var entries: Array = _state.recent_effects
-	if entries.is_empty():
+	if entries.is_empty() and (_read.get("effects", []) as Array).is_empty():
 		PanelKit.line(_decided_box, tr("Nothing committed yet this game."))
 	for i in mini(DECISIONS_SHOWN, entries.size()):
 		_decided_box.add_child(PresidencyRows.effect_row(entries[i]))
@@ -473,7 +475,9 @@ func _fill_decided() -> void:
 
 
 func _fold_text() -> String:
-	return ("▾ " if _decided_box.visible else "▸ ") + tr("What your decisions did (%d)") % (_state.recent_effects.size() if _state != null else 0)  # i18n: ok the fold's glyph
+	# What the fold holds, both lists (#403 pass 2 T8).
+	var held: int = (_read.get("effects", []) as Array).size() + (mini(DECISIONS_SHOWN, _state.recent_effects.size()) if _state != null else 0)
+	return ("▾ " if _decided_box.visible else "▸ ") + tr("What your decisions did (%d)") % held  # i18n: ok the fold's glyph
 
 
 ## A label on one line: in an HBox a wrapping label is given no width and stacks its words one

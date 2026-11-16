@@ -29,6 +29,7 @@ const RequestLane = preload("res://src/ui/request_lane.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const EffectTags = preload("res://src/ui/effect_tags.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
+const Government = preload("res://src/sim/government.gd")
 
 
 ## The page's dictionary for `file` (an InboxFiles row), {} for a gone one.
@@ -134,7 +135,35 @@ static func _event(main, id: String, event_id: String, file: Dictionary) -> Dict
 		choices.append(_choice(actions[i], Strings.choice_label(ev.id, choice), Strings.choice_short(ev.id, choice),
 			EffectTags.of(choice), bool(choice.get("is_default", false)), Strings.choice_summary(ev.id, choice)))
 	return {"id": id, "kind": "event", "micro": Strings.t("Decision"), "title": title, "situation": Strings.row_summary("events", ev),
-		"by_text": _by(last), "by_month": last, "who": who, "choices": choices}
+		"by_text": _by(last), "by_month": last, "who": who, "choices": choices, "subject": subject_of(main, ev)}
+
+
+## The person an event is about, resolved HERE and never in src/sim/ (U6b's rule: an event names an office,
+## the nation's own data names who holds it), as "name -- office", the office alone when nobody holds it.
+static func subject_of(main, ev) -> String:
+	if not ev.has_subject():
+		return ""
+	var ns = main._state.player()
+	var person_id := ""
+	var office := ""
+	match String(ev.subject_office):
+		"head_of_government":
+			person_id = String(ns.pm_person_id)
+			office = String(ns.head_of_government_title) if String(ns.head_of_government_title) != "" else Strings.t("Head of government")
+		"head_of_state":
+			person_id = String(ns.head_of_state_person_id)
+			office = String(ns.head_of_state_title) if String(ns.head_of_state_title) != "" else Strings.t("Head of state")
+		"largest_party_leader":
+			var party_list: Array = main._loader.parties.get(ns.id, [])
+			var largest := Government.largest_party_id(ns, party_list)
+			for party in party_list:
+				if party.id == largest:
+					# The override first: a fired challenge deposed the authored leader (people_panel.gd's read).
+					person_id = String(ns.party_leader_override.get(party.id, party.leader_person_id))
+					office = Strings.t("%s, leader") % party.party_name
+					break
+	var who: String = main._loader.person_name(person_id)
+	return office if who == "" else "%s — %s" % [who, office]
 
 
 static func _request(main, id: String, request_id: String, file: Dictionary) -> Dictionary:
