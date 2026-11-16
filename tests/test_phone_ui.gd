@@ -19,6 +19,7 @@ extends SceneTree
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const Phone = preload("res://src/sim/phone.gd")
+const Strings = preload("res://src/ui/strings.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 const HoldReason = preload("res://src/ui/hold_reason.gd")
@@ -70,15 +71,22 @@ func _process(_delta: float) -> bool:
 		15:
 			_check_hung_up()
 			_main._windows.open("people")
+			# The default view lists only who needs you; the politicians' group lists people.
+			_main._people_panel._pick_chip("politicians")
 		19:
 			_target = _people_row()
 			_click(true, MOUSE_BUTTON_RIGHT)
 		23:
+			# The press focused the line and the roster rebuilt under it: release on the new one.
+			_target = _people_row()
 			_click(false, MOUSE_BUTTON_RIGHT)
 		25:
+			# Rework 1: a right click on a roster line opens its verbs; Call is one of them.
+			_press_plate_call()
+		27:
 			_check_people_call()
 			_call_then_load()
-		27:
+		29:
 			_check_loaded()
 			_finish()
 			return true
@@ -235,19 +243,32 @@ func _check_hung_up() -> void:
 		_fail("after the month's call the card's Call is not refused with the sim's reason: '%s'" % why)
 
 
-## The second person's row (the first is the president, whom the sim does not
-## cover): a row that answers a right click. V5.2 b+ put the offices in columns, so
-## the rows are found anywhere under the body, in reading order.
+## A person's line on the roster (rework 1): its press target, the button under the cells.
 func _people_row() -> Control:
-	var rows: Array = _main._people_panel._body.find_children("*", "HBoxContainer", true, false).filter(
-		func(c): return not c.gui_input.get_connections().is_empty())
-	return rows[1] if rows.size() > 1 else null
+	for node in _main._people_panel._body.find_children("*", "Button", true, false):
+		var wrap: Node = node.get_parent()
+		if node.has_meta("line") and wrap.has_meta("person"):
+			return node
+	return null
+
+
+## The right click's plate is up with the line's verbs: press its Call.
+func _press_plate_call() -> void:
+	var plate = _main.find_child("VerbPlate", true, false)
+	if plate == null or not plate.visible:
+		_fail("a right click on a person in People did not open its verbs")
+		return
+	for button in plate.find_children("*", "Button", true, false):
+		if (button as Button).text.begins_with(Strings.t("Call: no day, worse odds").get_slice(":", 0)):
+			(button as Button).pressed.emit()
+			return
+	_fail("the right click's verbs offer no Call")
 
 
 func _check_people_call() -> void:
 	var dialog = PhoneDriver.dialog_of(_main)
 	if dialog == null or not dialog.visible:
-		_fail("a right click on a person in People did not open a call")
+		_fail("the roster's Call did not open a call")
 		return
 	var pid := String(PhoneDriver._games[_main.get_instance_id()]["person_id"])
 	var o := Phone.options(_main._state, _main._state.player(), _main._loader, pid)
