@@ -40,7 +40,7 @@ const PeoplePanel = preload("res://src/ui/people_panel.gd")
 const OutlinerPanel = preload("res://src/ui/outliner_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
-const RegionPanel = preload("res://src/ui/region_panel.gd")
+const RegionsShell = preload("res://src/ui/regions_shell.gd")
 const SectorsShell = preload("res://src/ui/sectors_shell.gd")
 const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
@@ -489,10 +489,8 @@ func _ready() -> void:
 	# country belong where that decision will live. Read-only -- no verb exists on
 	# a region until §5 -- so no acted signal, people_panel's shape rather than
 	# projects_panel's.
-	_region_panel = RegionPanel.new()
+	_region_panel = RegionsShell.panel(self)
 	_windows.register("region", tr("Regions"), _region_panel, KEY_T, ICONS + "map.svg")
-	_region_panel.setup(_state, _loader)
-	_region_panel.attach(_windows, _map_view)
 
 	# V5.3 screen 5 (the author's C): one read-only tab per modelled sector, beside the
 	# overview. The Commodities window retired into them: its goods are each tab's

@@ -15,8 +15,8 @@
   "src/ui/campaign_panel.gd": 340,
   "src/ui/election_panel.gd": 308,
   "src/ui/government_panel.gd": 317,
-  "src/ui/main.gd": 906,
-  "src/ui/map_view.gd": 879,
+  "src/ui/main.gd": 904,
+  "src/ui/map_view.gd": 876,
   "src/ui/overview_panel.gd": 380
  }
 }

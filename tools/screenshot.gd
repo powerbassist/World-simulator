@@ -81,6 +81,10 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-arrival
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet change --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --text 130 --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-cards
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-cards --text 130
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-lapse
@@ -545,6 +549,9 @@ var _walked := false
 ## With --walked: a bill on that firm adopted inside the hold: its one card in the inbox.
 var _bill_refused := false
 var _fund := false
+## Screen 6 (the author's direction A): the worst region's sheet open beside the tinted map.
+## --region-sheet [measure]: the measure the map's chips pick, "jobless" when none follows.
+var _region_sheet := ""
 var _fund_cap := false
 ## With --fund: the region with the running fund opened, its line since it began.
 var _fund_running := false
@@ -1093,6 +1100,9 @@ func _init() -> void:
 			_walked = true
 		elif args[i] == "--bill-refused":
 			_bill_refused = true
+		elif args[i] == "--region-sheet":
+			var next := String(args[i + 1]) if i + 1 < args.size() else ""
+			_region_sheet = next if not next.begins_with("--") and next != "" else "jobless"
 		elif args[i] == "--fund":
 			_fund = true
 		elif args[i] == "--fund-cap":
@@ -1431,6 +1441,8 @@ func _apply_view() -> void:
 		_main._windows.mark_all_dirty()
 	if _fund:
 		_stage_a_fund()
+	if _region_sheet != "":
+		_stage_the_region_sheet()
 	if _region_arrival:
 		preload("res://src/ui/region_arrival.gd").check(_main)
 	if _b7 != "":
@@ -2300,6 +2312,17 @@ func _stage_a_walk() -> void:
 		preload("res://src/sim/legislature.gd").apply_effects(state, ns,
 			{"company_ownership": {"company_id": String(major.id), "action_id": "full_nationalisation"}}, _main._loader)
 		preload("res://src/ui/proposal_note.gd").card_ownership_refusal(_main)
+
+
+func _stage_the_region_sheet() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var regions: Array = _main._loader.regions.get(ns.id, [])
+	var access: Dictionary = Regions.accessibility_for(ns, regions, state.region_graph)
+	var panel = _main._windows.content("region")
+	panel._open_region = String(panel.worst_first(state, ns, regions, access)[0].id)
+	panel._measure = _region_sheet
+	panel.mark_dirty()
 
 
 func _stage_a_fund() -> void:
