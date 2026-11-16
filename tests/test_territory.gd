@@ -118,7 +118,7 @@ func _check_city() -> void:
 		_fail("a city button did not open the city in place")
 	if _panel._title.text != _city_name():
 		_fail("the city view is titled '%s'" % _panel._title.text)
-	_city_id = _panel._city_id
+	_city_id = _panel._game.city_id
 
 
 func _city_name() -> String:

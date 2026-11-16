@@ -259,13 +259,10 @@ func _ready() -> void:
 		_windows.open("projects")
 	)
 	# V2.2b, the register's own route. The cross names the city; the panel says
-	# everything else about it. show_city() BEFORE open(), _on_nation_clicked's
-	# order, so the content settles before the window sizes itself around it.
-	# Same "registered further down" note as above applies.
-	_map_view.city_clicked.connect(func(city_id: String):
-		_region_panel.show_city(city_id)
-		_windows.open("region")
-	)
+	# everything else about it. open_city() sets the city BEFORE it opens the tab,
+	# _on_nation_clicked's order, so the content settles before the window sizes
+	# itself around it. Same "registered further down" note as above applies.
+	_map_view.city_clicked.connect(func(city_id: String): _region_panel.open_city(city_id))
 
 	# V3.4. Above the map and below the windows: the flows are drawn ON the map,
 	# and a panel the player opened must still cover them. Its mouse filter is
