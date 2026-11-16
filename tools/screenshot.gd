@@ -126,6 +126,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick hover --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick hover --text 130 --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-pick vacant --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --text 130 --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --lang fr --open people
