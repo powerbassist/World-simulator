@@ -71,44 +71,47 @@ func _process(_delta: float) -> bool:
 			_check_see_offered()
 			_check_see_day_at_press()
 			_check_second_click_keeps_focus()
+			_hover_focused_line()
+		9:
+			_check_card_plate_and_place()
 			# The chips are the filter: the quiet one is listed under theirs.
 			_press(_chip("regions"))
-		8:
-			_click(_row("person", String(_quiet.id)))
 		10:
+			_click(_row("person", String(_quiet.id)))
+		12:
 			_check_see_greyed()
 			_main._state.player().phone_calls[String(_quiet.id)] = _now()
 			_panel.mark_dirty()
-		12:
+		14:
 			_check_call_greyed()
 			_panel._search.text = Labels.portfolio("defence")
 			_panel._refresh()
 			_check_office_found()
 			_panel._search.text = ""
 			_press(_chip("needs"))
-		14:
-			_click(_row("person", String(_asker.id)))
 		16:
-			_press(_verb("see"))
+			_click(_row("person", String(_asker.id)))
 		18:
+			_press(_verb("see"))
+		20:
 			_check_booked()
 			Cabinet.vacate(_main._state, "health")
 			_panel.mark_dirty()
-		20:
-			_click(_row("office", "health"))
 		22:
+			_click(_row("office", "health"))
+		24:
 			_check_vacant_verbs()
 			_press(_verb("fill"))
-		24:
+		26:
 			_check_filled()
 			_click(_row("office", "education"))
-		26:
+		28:
 			_check_held_verbs()
 			_press(_verb("dismiss"))
-		28:
+		30:
 			_check_dismiss_asks()
 			_main.queue_free()
-		30:
+		32:
 			_finish()
 			return true
 	return false
@@ -360,6 +363,37 @@ func _check_second_click_keeps_focus() -> void:
 	press.button_pressed = false  # what a second click on a toggle does
 	if not press.button_pressed:
 		_fail("a second click un-presses the focused line")
+
+
+## QA's H1 on #388 (real-window play): the hover card had no plate and a foreign face
+## (it rode a bare CanvasLayer, outside the theme) and sat on the focused line's verbs.
+## The roster now shows the ONE person card (the glossary layer's), above the line.
+func _hover_focused_line() -> void:
+	var line = _row("person", String(_asker.id))
+	if line == null:
+		_fail("premise: no asker line to hover")
+		return
+	(line.get_child(0) as Button).mouse_entered.emit()
+
+
+func _check_card_plate_and_place() -> void:
+	var layer = _main.get_tree().get_first_node_in_group(preload("res://src/ui/term_text.gd").GROUP)
+	if layer == null or not layer.person_card_visible():
+		_fail("hovering a roster line does not open the shared person card")
+		return
+	var card: Control = layer._people._card
+	var plate = card.get_theme_stylebox("panel")
+	if not (plate is StyleBoxFlat) or (plate as StyleBoxFlat).bg_color.a < 0.8:
+		_fail("the person card has no near-opaque plate: %s" % plate)
+	var face = card.get_theme_font("font", "Label")
+	if face != _panel.get_theme_font("font", "Label"):
+		_fail("the person card draws in another face than the panel's")
+	var strip = _panel.find_child("VerbWhy", true, false)
+	if strip != null and card.get_global_rect().intersects((strip.get_parent() as Control).get_global_rect()):
+		_fail("the person card covers the focused line's verbs: card %s, strip %s" % [card.get_global_rect(), (strip.get_parent() as Control).get_global_rect()])
+	if card.get_global_rect().intersects(_row("person", String(_asker.id)).get_global_rect()):
+		_fail("the person card covers the line it is about")
+	(_row("person", String(_asker.id)).get_child(0) as Button).mouse_exited.emit()
 
 
 func _check_see_greyed() -> void:
