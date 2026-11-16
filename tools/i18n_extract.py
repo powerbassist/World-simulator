@@ -110,6 +110,8 @@ TRANSLATABLE = {
     "energy-sources": ["name"],
     # V5.3 e, the tax library (data/taxes/, tax_panel.gd): no rows until it merges.
     "taxes": ["name", "rate_meaning"],
+    # The goods register, data/commodities/goods.json (the Industry tab, the outliner, the strip).
+    "goods": ["name"],
 }
 
 # Player text that has no path to a translation yet: (what, glob, fields). Counted in
@@ -137,7 +139,9 @@ LEADING_LITERAL = re.compile(r"^\s*\"([^\"]*)\"")
 # The list a kind's rows sit in, per file: laws.json holds {"laws": [...]}; a file
 # whose top level is a single row (orgs) is read as one.
 ROW_LISTS = {"laws": "laws", "events": "events", "programme": "programme", "glossary": "terms",
-             "domains": "sectors", "voices": "archetypes", "energy-sources": "sources"}
+             "domains": "sectors", "voices": "archetypes", "energy-sources": "sources", "goods": "goods"}
+# A kind whose file is not data/<kind>.json or data/<kind>/*.json.
+SOURCE_FILES = {"goods": "commodities/goods.json"}
 
 
 def literals(line):
@@ -269,6 +273,8 @@ def row_texts():
         paths = sorted(glob.glob(os.path.join(ROOT, "data", kind, "*.json")))
         if os.path.isfile(os.path.join(ROOT, "data", kind + ".json")):
             paths.append(os.path.join(ROOT, "data", kind + ".json"))
+        if kind in SOURCE_FILES:
+            paths.append(os.path.join(ROOT, "data", SOURCE_FILES[kind]))
         for path in paths:
             doc = json.load(open(path, encoding="utf-8"))
             for row in _rows_of(kind, doc):

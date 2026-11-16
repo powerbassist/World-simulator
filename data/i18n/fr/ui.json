@@ -982,5 +982,9 @@
   "Least connected": "Région la moins reliée",
   "Pleases %s.": "Plaît à : %s.",
   "Angers %s.": "Irrite : %s.",
-  "Back to the map": "Retour à la carte"
+  "Back to the map": "Retour à la carte",
+  "Table a bill: %s": "Déposer un projet de loi : %s",
+  "Now: %s%% of GDP (%.0f Bn).": "Aujourd'hui : %s %% du PIB (%.0f Md€).",
+  "Debt %.0f Bn, %.0f%% of GDP, %s over %d months.": "Dette : %.0f Md€, %.0f %% du PIB, %s sur %d mois.",
+  "%.0f Bn%s": "%.0f Md€%s"
 }

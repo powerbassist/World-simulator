@@ -21,6 +21,7 @@ extends RefCounted
 
 const GoodsRead = preload("res://src/sim/goods_read.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 ## Categories that are not industry's, by the sector they belong to.
 const SECTOR_OF_CATEGORY := {"agri": "agriculture", "services": "services"}
@@ -80,7 +81,7 @@ static func rows_all(state, loader, ns, sector: String) -> Array:
 			continue
 		var good = loader.commodity_goods.get(good_id)
 		out.append({
-			"good_id": good_id, "name": String(good.name), "change": price_change(row["series"]),
+			"good_id": good_id, "name": Strings.row_name("goods", good), "change": price_change(row["series"]),
 			"months": int(row["months"]), "trade_eur_bn_year": float(row["trade_eur_bn_year"]),
 			"makers": makers.get(good_id, []), "short": short,
 			"rank": major_order.find(good_id), "value": made * float(row["price"]),

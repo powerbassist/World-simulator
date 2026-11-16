@@ -204,5 +204,5 @@ static func _short(ns, loader) -> Dictionary:
 	for row in SectorGoods.shortages(ns, loader.commodity_goods.keys()):
 		var good = loader.commodity_goods.get(row["id"])
 		lines.append(Strings.t("%s: %.0f%% of demand") % [
-			String(good.name) if good != null else String(row["id"]), float(row["coverage"]) * 100.0])
+			Strings.row_name("goods", good) if good != null else String(row["id"]), float(row["coverage"]) * 100.0])
 	return _out(Strings.t("Short of demand"), lines)
