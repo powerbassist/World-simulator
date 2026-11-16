@@ -5,7 +5,9 @@ AGENTS.md's rule 3 says split it then; this makes "then" a CI failure rather tha
 a judgement re-made each block. Counted on CODE lines -- no blank line, no line
 that is only a comment -- because comments are the house style, not a second job.
 
-  src/**/*.gd   a new file stays at or under NEW_FILE_MAX code lines; a file in
+  src/**/*.gd   a new file stays at or under its folder's maximum (NEW_FILE_MAX:
+                300 code lines, 400 under src/ui -- panels are long by grammar, a
+                sim or core module that long is two jobs); a file in
                 tools/size_baseline.json may shrink and never grow, and the
                 baseline must be lowered (--update) in the change that shrinks
                 it, so the ratchet only ever turns one way; no file past
@@ -34,9 +36,19 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 BASELINE = REPO / "tools" / "size_baseline.json"
 NEW_FILE_MAX = 300
+# Per-folder override of the new-file maximum, by path prefix. The baseline rule is
+# unchanged: a listed file may shrink and never grow.
+NEW_FILE_MAX_BY_FOLDER = {"src/ui/": 400}
 TOTAL_MAX = 2000
 # The single named exception, until V5.1c dissolves it (docs/tiers/v5.md).
 TOTAL_EXCEPTIONS: dict[str, str] = {}  # main.gd's closed at V5.1-d2 (the desk cards moved out)
+
+
+def max_for(path: str) -> int:
+    for prefix, limit in NEW_FILE_MAX_BY_FOLDER.items():
+        if path.startswith(prefix):
+            return limit
+    return NEW_FILE_MAX
 
 
 def code_lines(text: str) -> int:
@@ -83,7 +95,7 @@ def main(argv: list[str]) -> int:
         # turn into a forced split or a hand edit of the JSON.
         vacated = sorted(((v, p) for p, v in baseline.items() if p not in sizes), reverse=True)
         for p, (code, _total) in sizes.items():
-            if code <= NEW_FILE_MAX:
+            if code <= max_for(p):
                 continue
             if p in baseline and code > baseline[p]:
                 print("refusing to raise %s from %d to %d code lines -- split it instead"
@@ -93,18 +105,19 @@ def main(argv: list[str]) -> int:
                 moved_from = next((q for v, q in vacated if v >= code), None)
                 if moved_from is None:
                     print("refusing to admit %s at %d code lines: a new file stays at or under %d"
-                          % (p, code, NEW_FILE_MAX), file=sys.stderr)
+                          % (p, code, max_for(p)), file=sys.stderr)
                     return 1
                 vacated = [(v, q) for v, q in vacated if q != moved_from]
                 print("%s takes over %s's allowance (a move)" % (p, moved_from))
             new[p] = code
         BASELINE.write_text(json.dumps({
-            "_note": "Code lines per src/ file over %d, the most each may hold. Lowered by "
+            "_note": "Code lines per src/ file over its folder's new-file maximum (300; 400 under "
+                     "src/ui), the most each may hold. Lowered by "
                      "`python tools/check_size.py --update` in the change that shrinks a file; "
-                     "never raised (tools/check_size.py)." % NEW_FILE_MAX,
+                     "never raised (tools/check_size.py).",
             "code_lines": new,
         }, indent=1, sort_keys=True) + "\n", encoding="utf-8")
-        print("size baseline: %d files over %d code lines" % (len(new), NEW_FILE_MAX))
+        print("size baseline: %d files over their folder's maximum" % len(new))
         return 0
 
     failures = []
@@ -117,9 +130,9 @@ def main(argv: list[str]) -> int:
                 failures.append("%s shrank to %d code lines from %d: lower the baseline "
                                 "(python tools/check_size.py --update) so it cannot grow back"
                                 % (p, code, baseline[p]))
-        elif code > NEW_FILE_MAX:
+        elif code > max_for(p):
             failures.append("%s has %d code lines: a file not in the baseline stays at or under %d"
-                            % (p, code, NEW_FILE_MAX))
+                            % (p, code, max_for(p)))
         if total > TOTAL_MAX and p not in TOTAL_EXCEPTIONS:
             failures.append("%s has %d total lines, past %d: split it by job"
                             % (p, total, TOTAL_MAX))
