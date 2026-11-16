@@ -18,6 +18,11 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 ## The fill's opacity: a tint over the ground, the map still readable under it.
 const FILL_ALPHA := 0.42
 const RING_WIDTH := 3.0
+## The figure on each region (QA's T1 on #384): the body size in the bold figure face, on an
+## ink chip with an edge hairline, so the road and rail lines cannot run through the digits.
+const LABEL_SIZE := UiTheme.SIZE_BASE
+const CHIP_PAD := Vector2(6, 3)
+const CHIP_ALPHA := 0.88
 
 ## region id -> {mesh: ArrayMesh, at: Vector2 (lon/lat of the label)}
 var _shapes := {}
@@ -30,6 +35,8 @@ var selected := ""
 ## (the map right of the narrow dock, left of the inbox: regions_shell.gd sets it).
 var _bounds := Rect2()
 var fit_rect := Rect2()
+## region id -> its cities' lon/lat: a figure's chip steps off them (regions_shell.gd sets it).
+var _avoid := {}
 
 
 func _init() -> void:
@@ -67,6 +74,44 @@ func setup(map, region_ids: Array, rings: Dictionary) -> void:
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		_shapes[String(id)] = {"mesh": mesh, "at": at, "rings": rings.get(id, [])}
 	queue_redraw()
+
+
+func set_avoid(points: Dictionary) -> void:
+	_avoid = points
+
+
+func avoid_points(region_id: String) -> Array:
+	return _avoid.get(region_id, [])
+
+
+func label_font() -> Font:
+	return UiTheme.map_figure_face()
+
+
+## Each labelled region's chip on screen now: centred on the region's label point, then
+## stepped below, above, or two below it, the first place that covers none of its cities.
+func label_rects() -> Dictionary:
+	var out := {}
+	if _map == null:
+		return out
+	var font := label_font()
+	for id in _shapes:
+		var text := label_of(id)
+		if text == "":
+			continue
+		var at: Vector2 = _map.lonlat_to_screen((_shapes[id]["at"] as Vector2).x, (_shapes[id]["at"] as Vector2).y)
+		var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE) + CHIP_PAD * 2.0
+		var cities: Array = []
+		for ll: Vector2 in _avoid.get(id, []):
+			cities.append(_map.lonlat_to_screen(ll.x, ll.y))
+		var chip := Rect2(at - size * 0.5, size)
+		for step in [0.0, 1.0, -1.0, 2.0]:
+			var tried := Rect2(at - size * 0.5 + Vector2(0.0, step * (size.y + 4.0)), size)
+			if not cities.any(func(c: Vector2) -> bool: return tried.grow(2.0).has_point(c)):
+				chip = tried
+				break
+		out[id] = chip
+	return out
 
 
 func set_tint(rows: Dictionary) -> void:
@@ -134,18 +179,14 @@ func _draw() -> void:
 			var pts := t * ring
 			pts.append(pts[0])
 			draw_polyline(pts, UiTheme.accent(), RING_WIDTH, true)
-	var font := UiTheme.map_face()
-	if font == null:
-		return
-	for id in _shapes:
-		var text := label_of(id)
-		if text == "":
-			continue
-		var p: Vector2 = t * (_shapes[id]["at"] as Vector2)
-		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_MAP + 3).x
-		var at := p - Vector2(w * 0.5, 0.0)
-		draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_MAP + 3, 4, UiTheme.INK)
-		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.SIZE_MAP + 3, UiTheme.TEXT)
+	var font := label_font()
+	var chips := label_rects()
+	for id in chips:
+		var chip: Rect2 = chips[id]
+		draw_rect(chip, Color(UiTheme.INK, CHIP_ALPHA))
+		draw_rect(chip, UiTheme.EDGE, false, 1.0)
+		var baseline := Vector2(chip.position.x + CHIP_PAD.x, chip.position.y + CHIP_PAD.y + font.get_ascent(LABEL_SIZE))
+		draw_string(font, baseline, label_of(id), HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, UiTheme.TEXT)
 
 
 static func _box(ring: PackedVector2Array) -> Rect2:

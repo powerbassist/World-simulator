@@ -137,6 +137,7 @@ static var _accent: Color = ACCENT_FALLBACK
 static var _text_scale := 1.0
 static var _archivo: FontFile
 static var _map_face: Font
+static var _map_figure_face: Font
 
 
 ## The accent a flag resolves to -- accent_rule.gd's floors over the flag's bands,
@@ -158,6 +159,15 @@ static func map_face() -> Font:
 	if _map_face == null:
 		_map_face = _face(WEIGHT_BODY, 0, false, WIDTH_MAP)
 	return _map_face if _map_face != null else ThemeDB.fallback_font
+
+
+## Screen 6: the figure printed on a region of the map (map_regions.gd) -- bold, tabular, the
+## body width, because a place name's narrow face read "95%" for "9.5 %" on a real screen
+## (QA's T1 on #384). One cached object, asked every frame.
+static func map_figure_face() -> Font:
+	if _map_figure_face == null:
+		_map_figure_face = _face(WEIGHT_BOLD, 0, true)
+	return _map_figure_face if _map_figure_face != null else ThemeDB.fallback_font
 
 
 ## The theme for a played nation: its flag's accent, by the rule.

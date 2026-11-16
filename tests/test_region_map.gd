@@ -85,6 +85,18 @@ func _check_open() -> void:
 	var at: Vector2 = _main._map_view.lonlat_to_screen(LILLE.x, LILLE.y)
 	if not _overlay.fit_rect.has_point(at):
 		_fail("Lille draws at %s, outside the map's free rect %s: the nation is not framed" % [at, _overlay.fit_rect])
+	# QA's T1 on #384: the figures read on a real screen -- the body size at least, a bold
+	# figure face, each on its own ink chip, and no chip over one of the region's cities.
+	if _overlay.LABEL_SIZE < UiTheme.SIZE_BASE:
+		_fail("the map figures are drawn at %d, under the body size %d" % [_overlay.LABEL_SIZE, UiTheme.SIZE_BASE])
+	if _overlay.label_font() != UiTheme.map_figure_face():
+		_fail("the map figures are not drawn in the bold figure face")
+	var map = _main._map_view
+	for id in _overlay.label_rects():
+		var chip: Rect2 = _overlay.label_rects()[id]
+		for city in _overlay.avoid_points(id):
+			if chip.has_point(map.lonlat_to_screen(city.x, city.y)):
+				_fail("%s's figure chip %s sits on one of its cities" % [id, chip])
 	var regions: Array = _main._loader.regions.get(_main._state.player().id, [])
 	if _overlay.drawn_count() < regions.size() - 1:
 		_fail("the overlay draws %d of %d regions" % [_overlay.drawn_count(), regions.size()])

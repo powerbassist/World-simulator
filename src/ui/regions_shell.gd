@@ -24,6 +24,10 @@ static func panel(main) -> Control:
 	for region in main._loader.regions.get(main._state.player_nation_id, []):
 		ids.append(String(region.id))
 	overlay.setup(main._map_view, ids, main._loader.region_features)
+	var cities := {}
+	for region in main._loader.regions.get(main._state.player_nation_id, []):
+		cities[String(region.id)] = region.cities.map(func(c) -> Vector2: return c.lonlat)
+	overlay.set_avoid(cities)
 	tab._overlay = overlay
 	var w = main._windows
 	overlay.fit_rect = Rect2(w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"]), w.DOCK_TOP,

@@ -32,7 +32,8 @@ const NONE := Color(0, 0, 0, 0)
 static func label(measure: String) -> String:
 	match measure:
 		"per_head": return Strings.t("Per head")
-		"change": return Strings.t("12 months")
+		# Not "12 months": the sample holds fewer early on, and the sheet says how many.
+		"change": return Strings.t("Change")
 	return Strings.t("Jobless")
 
 
