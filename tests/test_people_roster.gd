@@ -286,6 +286,8 @@ func _check_office_found() -> void:
 		_fail("a search for '%s' lists no office row" % _panel._search.text)
 	if _row("office", "health") != null:
 		_fail("a search for '%s' lists the health office too" % _panel._search.text)
+	if _text().contains(Strings.t("Nobody of that name, party or office.")):
+		_fail("a search that found an office still says nobody matches")
 
 
 func _check_booked() -> void:

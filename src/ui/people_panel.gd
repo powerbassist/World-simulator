@@ -168,6 +168,8 @@ func _pick_chip(chip: String) -> void:
 func _refresh() -> void:
 	if _state.player() == null:
 		return
+	# The lines under the pointer are about to be freed: their card goes with them.
+	_hide_card()
 	_verbs.sync(_state, _loader)
 	for chip in _chips.get_children():
 		(chip as Button).set_pressed_no_signal(String(chip.get_meta("chip")) == _chip and _search.text.strip_edges() == "")
@@ -177,8 +179,10 @@ func _refresh() -> void:
 	var query := _search.text.strip_edges()
 	if query != "":
 		var found := RosterRows.rows(_state, _loader, "", query)
-		_offices(query)
-		_group(tr("Matches (%d)") % found.size(), found, tr("Nobody of that name, party or office."))
+		# "Nobody" only when no office matched either (pass 1 on #388).
+		var none := tr("Nobody of that name, party or office.") if not _offices(query) else ""
+		if not found.is_empty() or none != "":
+			_group(tr("Matches (%d)") % found.size(), found, none)
 	elif _chip == "needs":
 		_group(tr("Needs you"), RosterRows.rows(_state, _loader, "needs", ""), tr("Nobody waits on you this month."))
 		_offices()
@@ -211,11 +215,12 @@ func _group(title: String, rows: Array, empty: String) -> void:
 
 
 ## The office rows; a search (`query`) keeps those whose office, party or leader match it.
-func _offices(query := "") -> void:
+## Whether any row was drawn.
+func _offices(query := "") -> bool:
 	var rows := RosterRows.offices(_state, _loader).filter(func(r) -> bool:
 		return query == "" or ("%s %s %s" % [r["office"], r["party"], _loader.person_name(String(r["leader_id"]))]).to_lower().contains(query.to_lower()))
 	if rows.is_empty():
-		return
+		return false
 	PanelKit.heading(_body, tr("The government: %d offices") % rows.size())
 	for row in rows:
 		var f := String(row["portfolio"])
@@ -230,6 +235,7 @@ func _offices(query := "") -> void:
 			picked, _show_card, _hide_card, _pick.bind("office", f), _menu.bind("office", row))
 		if picked:
 			RosterVerbs.strip(_body, RosterVerbs.for_office(_state, _loader, row, _verbs), RosterLine.FACE.x + 20)
+	return true
 
 
 func _person_items(row: Dictionary) -> Array:
@@ -241,6 +247,7 @@ func _pick(kind: String, id: String) -> void:
 	if _picked == [kind, id]:
 		return
 	_picked = [kind, id]
+	_verbs._refused("")  # a refusal said about another line is not this one's
 	_refocus = true
 	_dirty = true
 
