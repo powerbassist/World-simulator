@@ -1083,5 +1083,9 @@
   "%d to %d %% odds it is ordered.": "%d à %d %% de chances qu'il soit ordonné.",
   "Takes effect at once.": "Prend effet immédiatement.",
   "Call %s": "Appeler %s",
-  "Sectors slipping": "Secteurs en recul"
+  "Sectors slipping": "Secteurs en recul",
+  "Table a bill: %s": "Déposer un projet de loi : %s",
+  "Now: %s%% of GDP (%.0f Bn).": "Aujourd'hui : %s %% du PIB (%.0f Md€).",
+  "Debt %.0f Bn, %.0f%% of GDP, %s over %d months.": "Dette : %.0f Md€, %.0f %% du PIB, %s sur %d mois.",
+  "%.0f Bn%s": "%.0f Md€%s"
 }

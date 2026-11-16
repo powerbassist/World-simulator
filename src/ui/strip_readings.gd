@@ -446,7 +446,7 @@ static func _commodities(ns, loader) -> Dictionary:
 	var worst_id := String(short[0]["id"])
 	var worst := float(short[0]["coverage"])
 	var good = loader.commodity_goods.get(worst_id)
-	var name := String(good.name) if good != null else worst_id
+	var name := Strings.row_name("goods", good) if good != null else worst_id
 	return _reading_lines("%s %.0f%%" % [name, worst * 100.0], [_line(
 		Strings.t("%s covers %.0f%% of the month's demand -- the shortage line is %.0f%%.") % [name, worst * 100.0, bar],
 		"short")], true, SectorGoods.tab_of_good(loader, worst_id))
