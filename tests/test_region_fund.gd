@@ -12,8 +12,8 @@ extends SceneTree
 ## shows on its region with a Stop. The Budget's table carries the fund's bill on a
 ## line of its own (region_fund_bill_pct_gdp), not on the public works line.
 ##
-## The fund's strip is the one without the "priority" meta: the sector priority
-## (region_priority.gd) draws its own strip under it.
+## The sector priority left the screen at screen 6 (the regions card's ruling); the
+## "priority" meta filter below is kept harmless.
 ##
 ## Driven through the real controls a frame apart (AGENTS.md: a Control built but
 ## not shown fails silently).

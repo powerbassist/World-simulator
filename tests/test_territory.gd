@@ -105,7 +105,8 @@ func _check_rows() -> void:
 
 func _check_opened() -> void:
 	var text := _text(_panel._body)
-	for word in ["People", "Main sector", "Your sites here", "Largest cities"]:
+	# Screen 6: the sheet's figures carry People; Main sector, Reach and Named jobs left with the old rows.
+	for word in ["People", "Who speaks for it", "Your sites here", "Largest cities"]:
 		if not text.to_upper().contains(word.to_upper()):
 			_fail("the opened region does not show '%s'" % word)
 	if _button_named("Go") == null:

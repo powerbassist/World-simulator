@@ -84,9 +84,6 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-cards
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-cards --text 130
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-lapse
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority --open region
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority-cap --open region
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --priority-rest --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
@@ -557,12 +554,6 @@ var _region_arrival := false
 ## or the called event lapsed to its note (--b7-lapse).
 var _b7 := ""
 
-## V5.3 a (spec 3.3 (a) 1, #267): the same opened region with its sector priority.
-## --priority: the region holds its first sector, the picker on the second, its
-## strip live. --priority-cap: it holds two, the picker on a third, the verb greyed
-## with the cap's line. --priority-rest: it held the second and ended it, the picker
-## on it, greyed with the rest's line and the month it is free again.
-var _priority := ""
 ## The bill's two decisions (V5.3 b, step 5): "grade", "grade-tabled", "address" or "address-again".
 var _law_verbs := ""
 ## The order paper (V5.3 screen 4): "queue", "queue-full" or "queue-menu".
@@ -1124,8 +1115,6 @@ func _init() -> void:
 			_queue = String(args[i]).trim_prefix("--")
 		elif args[i] in ["--poll", "--poll-arrived", "--poll-address"]:
 			_poll = String(args[i]).trim_prefix("--")
-		elif args[i] in ["--priority", "--priority-cap", "--priority-rest"]:
-			_priority = String(args[i]).trim_prefix("--")
 		elif args[i] == "--forecast-computing":
 			_forecast_computing = true
 		elif args[i] == "--month-closing":
@@ -1452,8 +1441,6 @@ func _apply_view() -> void:
 		_stage_a_buyer_walked()
 	if _walked:
 		_stage_a_walk()
-	if _priority != "":
-		_stage_a_priority()
 	if _law_verbs != "":
 		_stage_the_law_verbs()
 	if _queue != "":
@@ -2401,33 +2388,6 @@ func _stage_a_poll() -> void:
 		panel.mark_dirty()
 	else:
 		panel.brief_requested.emit(law)
-
-
-func _stage_a_priority() -> void:
-	var sectors = preload("res://src/sim/sectors.gd")
-	var state = _main._state
-	var ns = state.player()
-	var loader = _main._loader
-	var region = null
-	for r in loader.regions.get(ns.id, []):
-		if region == null and preload("res://src/sim/regions.gd").output_eur_bn(ns, r.id) > 0.0:
-			region = r
-	var picks: Array = []
-	for line in loader.domains:
-		for s in sectors.sectors_of(loader, String(line)):
-			picks.append([String(line), String(s["id"])])
-	sectors.set_priority(state, ns, loader, picks[0][0], picks[0][1], region.id)
-	var picked: Array = picks[1]
-	if _priority == "priority-cap":
-		sectors.set_priority(state, ns, loader, picks[1][0], picks[1][1], region.id)
-		picked = picks[2]
-	elif _priority == "priority-rest":
-		sectors.set_priority(state, ns, loader, picks[1][0], picks[1][1], region.id)
-		sectors.clear_priority(state, ns, picks[1][1])
-	var panel = _main._windows.content("region")
-	panel._open_region = String(region.id)
-	panel._priority_pick = "%s|%s" % picked
-	panel.mark_dirty()
 
 
 func _stage_the_industry_tab() -> void:
