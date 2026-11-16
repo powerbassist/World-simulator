@@ -566,7 +566,7 @@ var _region_sheet := ""
 ## --region-about: the Regions tab with its About rows unfolded (#400 pass 2: the rows in the
 ## narrowest host a row has).
 var _region_about := false
-## --save-load: the Save/Load dialog with eight saved games, enough for its list's scroll bar.
+## --save-load: the Save/Load dialog with ten real saved games, enough for its list's scroll bar.
 var _save_load := false
 ## Rework 1, --people-pick first | vacant | hover: the People roster with a line focused and
 ## its verbs under it -- the first line of "Needs you", or the health office left vacant;
@@ -1474,10 +1474,11 @@ func _apply_view() -> void:
 	if _region_sheet != "":
 		_stage_the_region_sheet()
 	if _save_load:
+		# Real saves (real date stamps), in the run's own user dir: "quicksave", a 64-letter name and eight more.
+		for slot in ["quicksave", "a".repeat(64)] + range(8).map(func(n: int) -> String: return "sauvegarde rapide du mandat %d" % n):
+			_main._on_save_requested(slot)
+		_main._save_load_panel.mark_dirty()
 		_main._save_load_panel.show()
-		for n in 8:
-			_main._save_load_panel._slot_list.add_child(_main._save_load_panel._build_slot_row("sauvegarde rapide du mandat %d" % n))
-		_main._save_load_panel.set_process(false)
 	if _region_about:
 		_main._windows.content("region")._about_open = true
 		_main._windows.content("region").mark_dirty()

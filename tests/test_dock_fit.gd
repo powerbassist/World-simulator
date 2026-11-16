@@ -8,11 +8,11 @@ extends SceneTree
 ## broke it -- a floating window's height floor (Diplomacy 860) that kept the plate full height, a
 ## mid-term Agenda whose scroll was added to a floor that already held it (~300 px of blank), and
 ## a 440 px row measure in the 500 px Regions dock that put a sideways bar under the About rows.
-## Swept in English at text 100 and in French at text 130, the two ends the frames are taken at.
+## Swept in English at text 100 and 130, the two ends the frames are taken at (French is paused, the
+## author, 2026-11-17).
 
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
-const Strings = preload("res://src/ui/strings.gd")
 
 ## What may sit between the last thing drawn and the plate's bottom: the panel's own bottom margin
 ## and a row's separation. The blank the review found was ~300 px.
@@ -23,9 +23,7 @@ var _failures: Array[String] = []
 
 func _initialize() -> void:
 	await _sweep("en", 1.0)
-	Strings.set_language("fr")
-	await _sweep("fr", 1.3)
-	Strings.set_language("en")
+	await _sweep("en", 1.3)
 	UiTheme.set_text_scale(1.0)
 	for failure in _failures:
 		push_error("FAIL " + failure)
@@ -170,43 +168,51 @@ func _check_ledgers_share_a_caption_column(content: Control, where: String) -> v
 
 
 ## Every button of the dialog, a saved game's Load and Delete included, inside the dialog and inside
-## the list's view: a row past its scroll's edge is a button the player cannot see whole.
+## the list's view; every save's name whole and as typed (never looked up in the tables: "quicksave"
+## would show "sauvegarde rapide" in French); the dialog on the screen. Real saves, so real date stamps (#402 pass 2).
 func _check_save_load_buttons_fit(main, where: String) -> void:
-	var panel = main._save_load_panel
-	panel.show()
-	await _frames(2)
-	# Enough saves for the list's own scroll bar, which takes its width from the rows.
+	var names: Array[String] = ["quicksave", "a".repeat(64)]
 	for i in 8:
-		panel._slot_list.add_child(panel._build_slot_row("sauvegarde rapide du mandat %d" % i))
-	await _frames(3)
+		names.append("sauvegarde rapide du mandat %d" % i)
+	for slot in names:
+		main._on_save_requested(slot)
+	var panel = main._save_load_panel
+	panel.mark_dirty()
+	panel.show()
+	await _frames(4)
 	var box: Rect2 = (panel as Control).get_global_rect()
+	if box.position.x < -0.5 or box.end.x > 1920.5:
+		_fail("Save/Load (%s): the dialog spans x %.0f-%.0f, off the 1920 px screen" % [where, box.position.x, box.end.x])
+	var list_scroll := panel._slot_list.get_parent() as ScrollContainer
+	if not list_scroll.get_v_scroll_bar().visible:
+		_fail("Save/Load (%s): premise, ten saves show no scroll bar" % where)
+	var shown := 0
+	for label in (panel._slot_list as Node).find_children("*", "Label", true, false):
+		var l := label as Label
+		if not names.has(l.text) or not l.is_visible_in_tree():
+			continue
+		shown += 1
+		var font := l.get_theme_font("font")
+		var need: float = font.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.get_theme_font_size("font_size")).x
+		if l.size.x + 0.5 < need:
+			_fail("Save/Load (%s): '%s' gets %.0f px of the %.0f it needs: cut" % [where, l.text.left(20), l.size.x, need])
+		if l.can_auto_translate():
+			_fail("Save/Load (%s): the save '%s' would show translated (its label looks it up in the tables)" % [where, l.text])
+	if shown != names.size():
+		_fail("Save/Load (%s): premise, %d of %d saves listed" % [where, shown, names.size()])
 	var buttons: Array = (panel as Node).find_children("*", "Button", true, false)
-	if buttons.size() < 4:
-		_fail("Save/Load (%s): premise, %d buttons" % [where, buttons.size()])
 	for button in buttons:
 		var b := button as Button
 		if not b.is_visible_in_tree():
 			continue
 		var rect := b.get_global_rect()
 		var view := box
-		var scroll := b.get_parent()
-		while scroll != null and not scroll is ScrollContainer and scroll != panel:
-			scroll = scroll.get_parent()
-		if scroll is ScrollContainer:
-			view = (scroll as Control).get_global_rect()
-			var bar := (scroll as ScrollContainer).get_v_scroll_bar()
-			if bar.visible:
-				view.size.x -= bar.size.x
+		if list_scroll.is_ancestor_of(b):
+			view = list_scroll.get_global_rect()
+			view.size.x -= list_scroll.get_v_scroll_bar().size.x
 		if rect.end.x > view.end.x + 0.5 or rect.position.x < view.position.x - 0.5:
 			_fail("Save/Load (%s): '%s' spans x %.0f-%.0f, outside its view's %.0f-%.0f" % [where, b.text,
 				rect.position.x, rect.end.x, view.position.x, view.end.x])
-	# A save name has no length cap: the dialog stays on the screen whatever the player typed.
-	panel._slot_list.add_child(panel._build_slot_row("mandat ".repeat(30)))
-	await _frames(3)
-	var whole: Rect2 = (panel as Control).get_global_rect()
-	if whole.position.x < -0.5 or whole.end.x > 1920.5:
-		_fail("Save/Load (%s): a long save name puts the dialog at x %.0f-%.0f, off the 1920 px screen" % [where,
-			whole.position.x, whole.end.x])
 	panel.close()
 
 

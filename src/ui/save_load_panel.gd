@@ -22,6 +22,10 @@ signal closed
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const SaveManager = preload("res://src/core/save_manager.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+
+## A save name's widest, at text 100: SaveManager's 64 characters of ordinary letters fit.
+const NAME_MAX_PX := 520.0
 
 var _name_field: LineEdit
 var _status: Label
@@ -70,8 +74,8 @@ func _ready() -> void:
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	# No sideways scroll: the dialog widens to its widest saved game instead (QA's play, French at
-	# 130 %: with enough saves for the list's bar, "Supprimer" sat past the edge, out of sight).
+	# No sideways scroll: the dialog widens to its widest saved game instead, a name up to NAME_MAX_PX
+	# (QA's play, French at 130 %: with enough saves for the list's bar, "Supprimer" sat past the edge).
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
 
@@ -148,12 +152,15 @@ func _build_slot_row(slot: String) -> Control:
 
 	var name_label := Label.new()
 	name_label.text = slot
+	# The player's own words, never looked up in the tables ("quicksave" stays "quicksave" in French).
+	name_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# A save name has no length cap and the list no longer scrolls sideways: a long one trims, whole
-	# on the hover, so the dialog keeps its width (#402's pass 1).
+	# Shown whole up to NAME_MAX_PX (SaveManager caps a name at 64 characters, which fits); past it, of
+	# the widest letters only, it trims and the hover has it whole (#402 pass 2, chief_mark's _fit).
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	name_label.tooltip_text = slot
 	name_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	name_label.ready.connect(_fit_name.bind(name_label))
 	row.add_child(name_label)
 
 	# B16: a slot list without dates cannot tell quicksave from quicksave -- the
@@ -179,6 +186,14 @@ func _build_slot_row(slot: String) -> Control:
 	row.add_child(_build_delete_button(slot))
 
 	return row
+
+
+## A name's width is its text's up to the cap, read once its theme (and the text size) applies.
+func _fit_name(label: Label) -> void:
+	var font := label.get_theme_font("font")
+	var px := label.get_theme_font_size("font_size")
+	var want: float = font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x if font != null else 0.0
+	label.custom_minimum_size.x = minf(ceilf(want), NAME_MAX_PX * UiTheme.text_scale())
 
 
 ## Deleting is destructive and this game has no undo, no trash and no second
