@@ -378,6 +378,28 @@ func _test_aid_credit_follows_the_jobs() -> void:
 	Companies.execute(state2, ns2, _loader.company_actions, _action("industrial_subsidy"), String(biggest.id), _loader)
 	if not is_equal_approx(float(ns2.bloc_offset.get("workers", 0.0)) - before, float(offsets["workers"])):
 		_fail("aid credit: the largest major did not take the whole credit")
+	# A grant from before PR 3 carries no aid_credit: its withdrawal hands back in full.
+	var state3 = _new_state()
+	var ns3 = state3.nations[PLAYER]
+	Companies.execute(state3, ns3, _loader.company_actions, _action("industrial_subsidy"), String(small.id), _loader)
+	(ns3.companies[String(small.id)] as Dictionary).erase("aid_credit")
+	before = float(ns3.bloc_offset.get("workers", 0.0))
+	Companies.execute(state3, ns3, _loader.company_actions, _action("withdraw_support"), String(small.id), _loader)
+	if not is_equal_approx(float(ns3.bloc_offset.get("workers", 0.0)) - before, float(hand["workers"])):
+		_fail("aid credit: an older grant (no aid_credit) did not hand back in full")
+	# A rescue of a FAILING major is credited on the restored firm, not the failed one's 0.
+	var state4 = _new_state()
+	var ns4 = state4.nations[PLAYER]
+	var entry: Dictionary = ns4.companies[String(small.id)]
+	entry["failed"] = true
+	entry["share"] = 0.0
+	entry["rescue_months_left"] = 3
+	before = float(ns4.bloc_offset.get("workers", 0.0))
+	var done := Companies.execute(state4, ns4, _loader.company_actions, _action("strategic_rescue"), String(small.id), _loader)
+	if bool(done.get("applied", false)) and float(entry.get("aid_credit", 0.0)) <= 0.0:
+		_fail("aid credit: a failing major's rescue was credited at %s, read before the restore" % entry.get("aid_credit"))
+	if not bool(done.get("applied", false)):
+		_fail("aid credit: the rescue of a failing major was refused: %s" % [done])
 
 
 ## The author's answer (3): the firm sheet shows the jobs an aid verb moves before the
