@@ -65,6 +65,7 @@ func _process(_delta: float) -> bool:
 
 	_check_the_kit_uses_variations_and_not_overrides()
 	_check_a_ledger_is_one_measurement()
+	_check_rows_keep_a_readable_measure()
 	_check_the_fold_is_visible_to_this_harness()
 	_check_a_panel_reports_the_height_it_draws()
 	_check_the_legislature_list_fills_the_dock()
@@ -265,6 +266,12 @@ func _check_the_dirty_sweep_is_derived() -> void:
 
 var _sample_root: VBoxContainer
 var _sample_ledger: GridContainer
+## The void pass (a): a row and a ledger in a page as wide as the widest dock, and a row with a long
+## caption in the narrowest host a row has (the Regions dock, 500 less its plate).
+var _wide_row: HBoxContainer
+var _wide_ledger: GridContainer
+var _narrow_row: HBoxContainer
+const NARROW_HOST := 456.0
 
 
 func _build_kit_samples() -> void:
@@ -281,11 +288,39 @@ func _build_kit_samples() -> void:
 
 	# One short value and one very long one in the same column: the shape that
 	# ran budget_panel's proposed column off the window edge at V1.6f.
+	var wide := VBoxContainer.new()
+	wide.custom_minimum_size = Vector2(1240, 0)
+	_host.add_child(wide)
+	_wide_row = PanelKit.row(wide, "Party money", "€48.00 m")
+	_wide_ledger = PanelKit.ledger(wide, [["Per head", "4.01"], ["Since the term began", "+0.001"]])
+	var narrow := VBoxContainer.new()
+	narrow.custom_minimum_size = Vector2(NARROW_HOST, 0)
+	narrow.position = Vector2(0, 600)
+	_host.add_child(narrow)
+	_narrow_row = PanelKit.row(narrow, "Unnamed - extra-regio and overseas", "12.4%")
+
 	_sample_ledger = PanelKit.ledger(_sample_root, [
 		["Health", "0.19%", "0.19% (6 bn) (1 building)"],
 		["Defence", "2.00%", "2.0%"],
 		["Education", "0.50%", "0.5%"],
 	])
+
+
+## The void audit's shape 3 (2026-11-16): a caption at the left of a 1 240 px page and its value at
+## the right, 1 000 px apart, so the eye could not join them. A row is a readable measure wide
+## (PanelKit.ROW_MEASURE), grows only for content that needs more, and never past a narrow host;
+## a ledger is as wide as its columns.
+func _check_rows_keep_a_readable_measure() -> void:
+	if _wide_row.size.x > PanelKit.ROW_MEASURE + 0.5:
+		_fail("a row in a 1240 px page is %.0f px wide, past the %.0f px measure" % [_wide_row.size.x, PanelKit.ROW_MEASURE])
+	var value: Control = _wide_row.get_child(1)
+	if value.get_global_rect().end.x - _wide_row.get_global_rect().position.x > PanelKit.ROW_MEASURE + 0.5:
+		_fail("a row's value ends %.0f px from its caption's start" % (value.get_global_rect().end.x - _wide_row.get_global_rect().position.x))
+	if _narrow_row.size.x > NARROW_HOST + 0.5:
+		_fail("a row in a %.0f px host is %.0f px wide: it overflows the Regions dock" % [NARROW_HOST, _narrow_row.size.x])
+	if _wide_ledger.size.x > _wide_ledger.get_combined_minimum_size().x + 0.5:
+		_fail("a two-row ledger stretches to %.0f px in a 1240 px page, past its %.0f px of columns" % [
+			_wide_ledger.size.x, _wide_ledger.get_combined_minimum_size().x])
 
 
 ## AGENTS.md's styling rule since U3, restated for the kit: colours and the type

@@ -55,15 +55,49 @@ func setup(content: Control) -> void:
 func _process(_delta: float) -> void:
 	if not visible:
 		return
-	if not _fill_decided:
-		_fill_decided = true
-		if _scrolls_inside(_content):
-			_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_decide_fill()
 	var now := primary_action_below_fold()
 	if now == _folded:
 		return
 	_folded = now
 	theme_type_variation = UiTheme.PLATE_FOLDED if now else UiTheme.PLATE
+
+
+func _decide_fill() -> void:
+	if not _fill_decided:
+		_fill_decided = true
+		if _scrolls_inside(_content):
+			_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+
+## The height this page needs to show all of its content without scrolling (the void pass, (d)):
+## the plate's own margins and the panel's minimum. A panel with its own scroll built to take the
+## height left (below) reports a minimum without what that scroll holds, so each such scroll adds
+## the height of its content beyond its own minimum -- the panels stack their scrolls in columns,
+## so the sum is the height they would take unscrolled. The window manager caps it at the dock.
+func wanted_height() -> float:
+	if _content == null:
+		return -1.0
+	_decide_fill()
+	var plate := get_theme_stylebox("panel")
+	var height: float = _content.get_combined_minimum_size().y + (plate.get_minimum_size().y if plate != null else 0.0)
+	if _content.size_flags_vertical & Control.SIZE_EXPAND:
+		height += _scrolled_away(_content)
+	return height
+
+
+static func _scrolled_away(node: Node) -> float:
+	var extra := 0.0
+	for child in node.get_children():
+		if not (child is Control) or not (child as Control).visible:
+			continue
+		if child is ScrollContainer and (child as Control).size_flags_vertical & Control.SIZE_EXPAND:
+			var inner: Control = (child as ScrollContainer).get_child(0) as Control
+			if inner != null:
+				extra += maxf(0.0, inner.get_combined_minimum_size().y - (child as Control).get_combined_minimum_size().y)
+			continue
+		extra += _scrolled_away(child)
+	return extra
 
 
 ## QA #54 RECORD, the Legislature list that stopped two thirds down the dock -- and

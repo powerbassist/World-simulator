@@ -112,7 +112,10 @@ const TOTAL_PENDING := {
 ## Rework 1 (People + cabinet, direction A): People is one roster (122 at rest, from the
 ## old groups and cards) and Politics, retired, comes back as Parliament's Majority tab
 ## without the cabinet table (123 -> 97): 2848 -> 2794.
-const TOTAL_SUM_CEILING := 2794
+## The void pass, a stated rise 2794 -> 2806 (the author's picks, for the parent's pass 2): the
+## Decision tab after an answer lists what is still on the desk (its heading and the open files'
+## titles, 9 at month 12) and the empty Agenda names its next step, "Plan the campaign" (3).
+const TOTAL_SUM_CEILING := 2806
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

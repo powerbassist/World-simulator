@@ -61,6 +61,11 @@ const COLUMN_SEPARATION := 12
 
 ## Between two buttons of one row of verbs, across and between its lines.
 const BUTTON_SEPARATION := 6
+## The width a caption-and-value row takes (the void audit of 2026-11-16, shape 3: in a 1 240 px
+## page a caption sat at the left and its value 1 000 px away at the right, and the eye could not
+## join them). A row is this wide, or wider for content that needs it; never the page's width.
+## 440 fits the narrowest host a row has, the Regions dock (500 less its plate and gutter).
+const ROW_MEASURE := 440.0
 
 ## `delta()` will go this far looking for a decimal place that shows movement
 ## before it gives up and prints the zero honestly. Four is past every unit in
@@ -211,6 +216,8 @@ static func sized(button: Button) -> Button:
 static func row(parent: Control, left: String, right: String, tone := Tone.PLAIN) -> HBoxContainer:
 	var line_box := HBoxContainer.new()
 	line_box.add_theme_constant_override("separation", COLUMN_SEPARATION)
+	line_box.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	line_box.custom_minimum_size.x = ROW_MEASURE
 
 	var key := Label.new()
 	key.text = left
@@ -274,7 +281,8 @@ static func ledger(parent: Control, rows: Array) -> GridContainer:
 	grid.columns = columns
 	grid.add_theme_constant_override("h_separation", COLUMN_SEPARATION)
 	grid.add_theme_constant_override("v_separation", ROW_SEPARATION)
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# As wide as its columns, not the page (the void pass): the values sit beside their captions.
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 
 	for entry in rows:
 		var cells: Array = entry

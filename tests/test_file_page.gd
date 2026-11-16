@@ -249,6 +249,29 @@ func _check_a_gone_file() -> void:
 	_texts(view, texts)
 	if not " ".join(texts).contains(Strings.t("Answered.")):
 		_fail("a file that is gone does not say so: %s" % [texts])
+	# The void pass (c), the author's pick "Encore sur ton bureau": after an answer the page lists
+	# what is still on the desk, one button per open file, and a press opens it here.
+	var open_files: Array = InboxFiles.list(_main._hud.inbox)
+	if open_files.is_empty():
+		_fail("premise: no open file on the desk to list")
+	elif not " ".join(texts).to_lower().contains(Strings.t("Still on your desk").to_lower()):
+		_fail("an answered page does not say what is still on the desk: %s" % [texts])
+	else:
+		var listed: Array = view.find_children("*", "Button", true, false).filter(
+				func(b) -> bool: return not (b as Node).is_queued_for_deletion())
+		if listed.size() != open_files.size():
+			_fail("an answered page lists %d files, the desk holds %d" % [listed.size(), open_files.size()])
+		elif not listed.is_empty():
+			listed[0].pressed.emit()
+			if view.file_id() != String(open_files[0]["id"]):
+				_fail("pressing a listed file opened '%s', not '%s'" % [view.file_id(), open_files[0]["id"]])
+	view.show_file("card_gone")
+	_main._hud.inbox.clear()
+	view._rebuild()
+	texts = PackedStringArray()
+	_texts(view, texts)
+	if not " ".join(texts).contains(Strings.t("Nothing else waits on your signature.")):
+		_fail("an answered page with an empty desk does not say so: %s" % [texts])
 	# A load rebinds every panel with setup(state, loader): the file the discarded game showed is gone with it
 	# (test_audience_load and eight more suites broke on a different signature, which this pins by name).
 	view.show_file("card_gone")

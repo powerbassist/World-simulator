@@ -63,6 +63,22 @@ func _process(_delta: float) -> bool:
 	if _stage == 3:
 		_check_the_fold_mark_clears()
 		_check_workspace_docks_left()
+		# The void pass (d): a short page's plate hugs it. Measured after a frame of layout.
+		_manager.open("agenda")
+		_stage = 4
+		return false
+	if _stage == 4:
+		_check_a_short_page_hugs_its_content("agenda")
+		_manager.open("diplomacy")
+		_stage = 45
+		return false
+	if _stage == 45:
+		_check_a_short_page_hugs_its_content("diplomacy")
+		_manager.open("tall")
+		_stage = 5
+		return false
+	if _stage == 5:
+		_check_a_tall_page_takes_the_whole_dock()
 		_finish()
 		return false
 
@@ -80,6 +96,7 @@ func _process(_delta: float) -> bool:
 	_check_history_is_twenty_deep()
 	_check_content_survives_close()
 	_check_a_panel_with_no_verb_never_wears_the_fold_mark()
+	_check_dock_width_follows_the_domain()
 	# Opened here and measured after a frame of layout, in stage 3.
 	_manager.open("finances")
 	_stage = 1
@@ -89,12 +106,22 @@ func _process(_delta: float) -> bool:
 ## Real tab ids, so the domain table places them: Finances holds the Books page and projects, Economy holds economy.
 ## Plus two windows in no row and one scene.
 func _register() -> void:
-	for id in ["finances", "projects", "economy", "alpha", "beta", "summit"]:
+	for id in ["finances", "projects", "economy", "alpha", "beta", "summit", "agenda", "calendar", "diplomacy", "orgs",
+			"energy"]:
 		var content := Label.new()
 		content.text = "content of %s" % id
 		content.custom_minimum_size = Vector2(300, 200)
+		var page: Control = content
+		if id == "diplomacy":
+			# Built the way the Agenda, Diplomacy and Energy panels are: a scroll that takes the
+			# height left (EXPAND), holding content shorter than the dock.
+			page = VBoxContainer.new()
+			var scroll := ScrollContainer.new()
+			scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			page.add_child(scroll)
+			scroll.add_child(content)
 		_contents[id] = content
-		_manager.register(id, id.to_upper(), content)
+		_manager.register(id, id.to_upper(), page)
 
 
 ## Nothing is open and the dock is down: a dock left visible with no tab in it
@@ -305,6 +332,46 @@ func _check_the_fold_mark_clears() -> void:
 	page._process(0.0)
 	if page.theme_type_variation != UiTheme.PLATE:
 		_fail("the fold mark did not come off, the page wears '%s'" % page.theme_type_variation)
+	_manager.close_all()
+
+
+## The void pass (b), the author's call: ONE width per domain, from its widest tab's full state, so
+## the header and "Back to the map" never move between sibling tabs; a short domain leaves the map
+## beside it.
+func _check_dock_width_follows_the_domain() -> void:
+	var want := {"agenda": 800.0, "calendar": 800.0, "diplomacy": 760.0, "orgs": 760.0, "energy": 980.0,
+		"finances": WindowManager.DOCK_WIDTH, "projects": WindowManager.DOCK_WIDTH, "economy": WindowManager.DOCK_WIDTH}
+	for id in want:
+		_manager.open(id)
+		var width: float = _manager.dock().get_global_rect().size.x
+		if not is_equal_approx(width, float(want[id])) or not is_equal_approx(width, WindowManager.dock_width(id)):
+			_fail("the %s tab docks %.0f wide, not %.0f" % [id, width, float(want[id])])
+	# A narrowed domain grows with the text size, never past DOCK_WIDTH (the Agenda's offer at 130 %).
+	UiTheme.set_text_scale(1.3)
+	if not is_equal_approx(WindowManager.dock_width("agenda"), 1040.0) or not is_equal_approx(WindowManager.dock_width("finances"), WindowManager.DOCK_WIDTH):
+		_fail("at text 130 the Agenda docks %.0f and Finances %.0f, not 1040 and 1240" % [WindowManager.dock_width("agenda"), WindowManager.dock_width("finances")])
+	UiTheme.set_text_scale(1.0)
+	_manager.close_all()
+
+
+## (d), the author's call: a page whose content is shorter than the dock is a plate as tall as its
+## content over the map, not a full-height page with a blank bottom.
+func _check_a_short_page_hugs_its_content(id: String) -> void:
+	var dock: Rect2 = _manager.dock().get_global_rect()
+	var full: float = BOUNDS.y - WindowManager.DOCK_TOP - WindowManager.DOCK_BOTTOM
+	if dock.size.y > full - 200.0:
+		_fail("a 200 px page (%s) sits in a %.0f px dock: the plate did not hug its content" % [id, dock.size.y])
+	var content: Rect2 = (_contents[id] as Control).get_global_rect()
+	if content.end.y > dock.end.y + 0.5:
+		_fail("the hugging plate (%s) cuts its content (%s)" % [str(dock), str(content)])
+	_manager.close_all()
+
+
+func _check_a_tall_page_takes_the_whole_dock() -> void:
+	var dock: Rect2 = _manager.dock().get_global_rect()
+	var full: float = BOUNDS.y - WindowManager.DOCK_TOP - WindowManager.DOCK_BOTTOM
+	if not is_equal_approx(dock.size.y, full):
+		_fail("a page taller than the dock got a %.0f px dock, not the whole %.0f" % [dock.size.y, full])
 	_manager.close_all()
 
 

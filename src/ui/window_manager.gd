@@ -46,6 +46,11 @@ const DOCK_WIDTH := 1240.0
 ## Screen 6, direction A: a tab whose place is the map docks narrow, so the nation stays on
 ## the map to its right (the Regions tab tints it). Every other tab takes DOCK_WIDTH.
 const DOCK_WIDTHS := {"region": 500.0}
+## The void pass (the author's call, 2026-11-16: "une largeur par domaine"): a domain whose widest
+## tab, in its fullest state, needs less than DOCK_WIDTH docks narrower, so the map shows beside it.
+## One width for every tab of a domain, so the header and "Back to the map" never move on a switch.
+## Read at 1.0 and 0.75 (#398) with French, the term-start offer, a nation's file and the Diary.
+const DOMAIN_WIDTHS := {"agenda": 800.0, "diplomacy": 760.0, "energy": 980.0}
 const DOCK_TOP := TitleBar.HEIGHT + TopBar.BAR_HEIGHT
 const DOCK_BOTTOM := Ribbon.STRIP_HEIGHT
 
@@ -192,7 +197,8 @@ func open(id: String, quiet: bool = false) -> void:
 	var dock_was_up: bool = _dock.visible
 
 	_show_domain_of(id)
-	_dock.offset_right = DOCK_LEFT + float(DOCK_WIDTHS.get(id, DOCK_WIDTH))
+	_dock.offset_right = DOCK_LEFT + dock_width(id)
+	_dock.offset_bottom = -DOCK_BOTTOM  # full height until the page has measured itself (_process)
 	# Filling the body again, whatever band a probe imposed with fit_within().
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.show()
@@ -255,6 +261,40 @@ func content(id: String) -> Control:
 
 
 ## The tab's page: its scroll, its content and its fold mark.
+## The width the dock takes for a tab: its own (Regions), else its domain's, else DOCK_WIDTH. A
+## narrowed domain grows with the text size, up to DOCK_WIDTH: at 130 % the Agenda's offer list cut
+## its right-hand column at 800 px (the void pass's frames).
+static func dock_width(id: String) -> float:
+	if DOCK_WIDTHS.has(id):
+		return float(DOCK_WIDTHS[id])
+	if not DOMAIN_WIDTHS.has(Domains.domain_of(id)):
+		return DOCK_WIDTH
+	return minf(DOCK_WIDTH, float(DOMAIN_WIDTHS[Domains.domain_of(id)]) * UiTheme.text_scale())
+
+
+## The void pass (d), the author's call ("oui"): a page shorter than the dock is a plate as tall as
+## its content over the map, not a full-height page with a blank bottom. Re-read every frame the
+## dock is up, because a panel rebuilds on its own dirty flag and nothing signals its new height.
+func _process(_delta: float) -> void:
+	if not _dock.visible:
+		return
+	var full: float = size.y - DOCK_TOP - DOCK_BOTTOM
+	var want := full
+	for id in _pages:
+		var page: TabPage = _pages[id]
+		if page.visible and not Domains.is_scene(id):
+			var page_height: float = page.wanted_height()
+			if page_height >= 0.0:
+				want = minf(full, _header_height() + page_height)
+	var bottom := -DOCK_BOTTOM - maxf(0.0, full - want)
+	if not is_equal_approx(_dock.offset_bottom, bottom):
+		_dock.offset_bottom = bottom
+
+
+func _header_height() -> float:
+	return (_dock.get_child(0) as Control).get_combined_minimum_size().y
+
+
 func frame(id: String):
 	return _pages.get(id, null)
 

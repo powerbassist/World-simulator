@@ -151,6 +151,13 @@ func _refresh() -> void:
 		_build_register(ns, _body)
 		if Programme.this_term(ns).is_empty():
 			PanelKit.line(_body, _unset_text(ns))
+			# The void pass: the one next step, where the pledges are. Not at a term's start: there the
+			# Campaign sends the player back here.
+			if not Programme.is_term_start(ns):
+				var go := PanelKit.sized(Button.new())
+				go.text = tr("Plan the campaign")
+				go.pressed.connect(func() -> void: open_requested.emit("campaign"))
+				PanelKit.buttons(_body).add_child(go)
 		return
 
 	_offer_seen_term = int(ns.terms_served)

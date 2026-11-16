@@ -14,6 +14,8 @@ extends MarginContainer
 const FileRead = preload("res://src/ui/file_read.gd")
 const FileView = preload("res://src/ui/file_view.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 var _main
 var _file_id := ""
@@ -72,3 +74,24 @@ func _rebuild() -> void:
 	FileView.build(_body, page, func(index: int) -> void:
 		InboxFiles.press(inbox, _file_id, index)
 		_dirty = true)
+	if page.is_empty():
+		_still_on_the_desk(inbox)
+
+
+## After an answer (the void pass, the author's pick "Encore sur ton bureau"): the page says what is
+## still on the desk, one button per open file that opens it here, or that nothing waits.
+func _still_on_the_desk(inbox) -> void:
+	var rest := InboxFiles.list(inbox)
+	if rest.is_empty():
+		PanelKit.line(_body, Strings.t("Nothing else waits on your signature."), PanelKit.Tone.DIM)
+		return
+	PanelKit.heading(_body, Strings.t("Still on your desk"))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", PanelKit.BUTTON_SEPARATION)
+	_body.add_child(column)
+	for file in rest:
+		var open := PanelKit.sized(Button.new())
+		open.text = String(file["title"])
+		var id := String(file["id"])
+		open.pressed.connect(func() -> void: show_file(id))
+		column.add_child(open)

@@ -20,9 +20,9 @@ const WindowManager = preload("res://src/ui/window_manager.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Companies = preload("res://src/sim/companies.gd")
 
-## 1920x1080 is the layout base (stretch canvas_items); this is the width of the
-## docked workspace a tab fills (V5.1-c2.2).
-const BAND := WindowManager.DOCK_WIDTH
+## 1920x1080 is the layout base (stretch canvas_items); a tab fills the docked workspace, whose
+## width is its domain's since the void pass (WindowManager.dock_width: 800 for the Agenda, 760 for
+## Diplomacy, 980 for Energy, 1240 elsewhere), so each tab is held to its own.
 const EXPANSION := 0.35
 ## The HUD's lower row (legend + portrait, the command bar with its drawer, the clock)
 ## and the top bar sit in the 1920 px layout less the HUD's 14 px edge margins.
@@ -75,10 +75,11 @@ func _sweep(language: String) -> void:
 		if not _widths.has(id):
 			_widths[id] = {}
 		_widths[id][language] = need
-		if need > BAND:
+		var band: float = WindowManager.dock_width(id)
+		if need > band:
 			var baseline: float = _widths[id].get("en", 0.0)
-			if language == "en" or baseline <= BAND:
-				_fail("window '%s' needs %.0f px under %s, more than the %.0f px a window may take" % [id, need, language, BAND])
+			if language == "en" or baseline <= band:
+				_fail("window '%s' needs %.0f px under %s, more than the %.0f px its dock gives" % [id, need, language, band])
 		windows.close(id, true)
 	await _check_hud(main, language)
 	await _check_briefing(main, language)
