@@ -922,7 +922,7 @@ func _check_no_panel_can_destroy_its_window() -> void:
 		"calendar": "_calendar_panel",
 		"companies": "_companies_panel",
 		"people": "_people_panel",
-		"politics": "_government_panel",
+		"majority": "_government_panel",
 		"society": "_polling_panel",
 		"legislature": "_law_panel",
 	}
@@ -952,7 +952,8 @@ func _check_no_panel_can_destroy_its_window() -> void:
 
 # V8. Every other player command carries a signal main.gd turns into a U4 effect
 # delta -- budget `committed`, law `proposed`, diplomacy and companies `acted`,
-# government `dissolved` and `reassigned`. bloc_panel carried only `closed`, so a
+# government `dissolved`, people `reassigned` (rework 1: the cabinet's verbs moved
+# to the People roster). bloc_panel carried only `closed`, so a
 # council vote, binding on the player whichever way it goes, never reached the one
 # surface built to say what you did.
 func _check_council_vote_leaves_a_record() -> void:
@@ -976,7 +977,7 @@ func _check_council_vote_leaves_a_record() -> void:
 		["_nation_panel", "acted"],
 		["_companies_panel", "acted"],
 		["_government_panel", "dissolved"],
-		["_government_panel", "reassigned"],
+		["_people_panel", "reassigned"],
 	]:
 		var panel = _main.get(pair[0])
 		if panel != null and not panel.has_signal(pair[1]):

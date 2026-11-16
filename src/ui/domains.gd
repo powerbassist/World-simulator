@@ -20,8 +20,10 @@ const ICONS := "res://assets/icons/material/"
 const TABLE := [
 	{"id": "agenda", "title": "Agenda", "icon": "event.svg", "tabs": ["agenda", "calendar"]},  # i18n: msgid title
 	{"id": "presidency", "title": "Presidency", "icon": "account_balance.svg", "tabs": ["overview", "outliner", "events"]},  # i18n: msgid title
-	{"id": "government", "title": "Government", "icon": "groups.svg", "tabs": ["politics", "people"]},  # i18n: msgid title
-	{"id": "parliament", "title": "Parliament", "icon": "gavel.svg", "tabs": ["legislature"]},  # i18n: msgid title
+	# Rework 1: Government is one page, People (the offices are its first group); the
+	# majority's arithmetic and Dissolve live in Parliament's Majority tab.
+	{"id": "government", "title": "Government", "icon": "groups.svg", "tabs": ["people"]},  # i18n: msgid title
+	{"id": "parliament", "title": "Parliament", "icon": "gavel.svg", "tabs": ["legislature", "majority"]},  # i18n: msgid title
 	{"id": "finances", "title": "Finances", "icon": "payments.svg", "tabs": ["finances", "projects"]},  # i18n: msgid title
 	{"id": "economy", "title": "Economy", "icon": "monitoring.svg", "tabs": ["economy"]},  # i18n: msgid title
 	{"id": "territory", "title": "Regions", "icon": "map.svg", "tabs": ["region"]},  # i18n: msgid title

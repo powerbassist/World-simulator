@@ -16,9 +16,8 @@ extends SceneTree
 ##   - NO LABEL IS EMPTY. This panel's whole job is resolving ids to names, so its
 ##     characteristic failure is a row that renders with a blank right-hand side.
 ##     That is invisible to any assertion that only checks a row exists.
-##   - IT AGREES WITH THE POLITICS PANEL about who holds a portfolio. The two
-##     surfaces overlap on exactly one column and both read ns.cabinet, so a
-##     disagreement means one of them has started deriving it separately.
+##   - IT NAMES EVERY OFFICE'S HOLDER, read off ns.cabinet: since rework 1 the roster's
+##     office rows are the cabinet's one surface (Politics retired).
 ##   - V5.2 b+ (R5, gate b: "people panel is messy and unreadable"): A ROW READS
 ##     AS ONE LINE. A person's cells sit side by side under fixed columns, never a
 ##     label at one edge and its value 900px away.
@@ -53,7 +52,7 @@ func _process(_delta: float) -> bool:
 		return false  # let the scene's _ready() run
 	if _frame == 2:
 		_run()
-		# The checks above opened Politics beside it; the layout check reads People.
+		# The checks above switched groups; the layout check reads People.
 		_main._windows.open("people")
 		return false
 	if _frame < 5:
@@ -84,7 +83,7 @@ func _run() -> void:
 	_check_chips(panel)
 	_check_no_label_is_blank(panel)
 	_check_names_are_resolved(panel, state)
-	_check_agrees_with_politics(panel, state)
+	_check_names_every_holder(panel, state)
 	_check_vacancy_reads_as_vacant(panel, state)
 	_check_side_words(panel, state)
 	_check_chief_shown(panel, state)
@@ -182,20 +181,13 @@ func _check_names_are_resolved(panel, state) -> void:
 ## The one column both surfaces print. Both read ns.cabinet, so they cannot
 ## disagree unless one of them has started deriving the holder independently --
 ## which is the divergence this project's registers exist to prevent.
-func _check_agrees_with_politics(panel, state) -> void:
+func _check_names_every_holder(panel, state) -> void:
 	var ns = state.player()
 	var by_id := {}
 	for p in _main._loader.parties.get(ns.id, []):
 		by_id[p.id] = p
 
 	var text := _text_of(panel)
-	var gov_text := ""
-	_main._windows.open("politics")
-	_main._government_panel.mark_dirty()
-	_main._government_panel._refresh()
-	for node in _walk(_main._government_panel):
-		if node is Label:
-			gov_text += node.text + "\n"
 
 	for f in CK.PORTFOLIO_KEYS:
 		var pid: String = String(ns.cabinet.get(f, ""))
@@ -204,8 +196,6 @@ func _check_agrees_with_politics(panel, state) -> void:
 		var holder: String = String(by_id[pid].party_name)
 		if not text.contains(holder):
 			_fail("People does not name '%s', which holds %s" % [holder, f])
-		if not gov_text.contains(holder):
-			_fail("Politics does not name '%s', which holds %s -- the two surfaces disagree" % [holder, f])
 
 
 ## A vacancy has to read as one. U6b cut the minister bench, so this column names

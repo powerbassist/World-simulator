@@ -4,7 +4,8 @@ extends SceneTree
 ## Non-zero exit on any failure.
 ##
 ## V5.2 b+ R4's interface half (docs/design/v5.2-bplus-spec.md "R4"; Systems'
-## #142 built the command): Government > Politics carries Dismiss beside Reassign.
+## #142 built the command). Since rework 1 an office row of the People roster carries
+## Dismiss beside Give it to, under the focused line.
 ##   - a real click on Dismiss asks first, naming the party and its leader's
 ##     feeling after the pulse in R11's words, and changes nothing;
 ##   - Dismiss on the card vacates the office and reaches main's effect queue;
@@ -42,18 +43,25 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	match _frame:
 		3:
-			_main._windows.open("politics")
+			_main._windows.open("people")
 		6:
-			_verbs = _main._government_panel.find_child("CabinetVerbs", true, false)
-			if _verbs == null or not _verbs.is_visible_in_tree():
-				_fail("Politics has no cabinet verbs on screen")
-				return _end()
+			_verbs = _main._people_panel._verbs
 			_pick_portfolio()
 			if _portfolio == "":
 				return _end()
-			_target = _verbs.find_child("Dismiss", true, false) as Control
+			_target = _line(_portfolio)
 			_press(true)
+		7:
+			# The press focused the line and the roster rebuilt: release on the new one.
+			_target = _line(_portfolio)
+			_press(false)
 		9:
+			_target = _dismiss()
+			if _target == null:
+				_fail("the focused office offers no Dismiss")
+				return _end()
+			_press(true)
+		10:
 			_press(false)
 		12:
 			var card := _card()
@@ -100,17 +108,27 @@ func _process(_delta: float) -> bool:
 			# Titled as what happened (the parent's call 3): nothing was reassigned.
 			if not str(_main._pending_effects).contains("Minister dismissed") or str(_main._pending_effects).contains("Cabinet reassigned"):
 				_fail("the dismissal did not reach main's effect queue as a dismissal: %s" % [_main._pending_effects])
-			_verbs.select_portfolio(_portfolio)
-			_target = _verbs.find_child("Dismiss", true, false) as Control
-			_press(true)
 		21:
-			_press(false)
-		24:
+			# The office is vacant now: its Dismiss is greyed BEFORE the press, with the
+			# sim's reason on the line (the roster reads Removal.why_not).
+			var why := Removal.why_not(_main._state, _main._state.player(), _portfolio, "")
+			var dismiss = _dismiss()
+			var said := ""
+			var line = _main._people_panel.find_child("VerbWhy", true, false)
+			if line != null:
+				said = (line as Label).text.to_lower()
+			if why == "" or dismiss == null or not dismiss.disabled or not said.contains(why.to_lower()):
+				_fail("a refused dismissal is not greyed with why: '%s' (the sim: '%s')" % [said, why])
 			if _card().is_visible_in_tree():
 				_fail("a refused dismissal opened the card")
-			var why := Removal.why_not(_main._state, _main._state.player(), _portfolio, "")
-			if why == "" or not String(_verbs.status_text()).contains(why):
-				_fail("a refused dismissal does not say why: '%s' (the sim: '%s')" % [_verbs.status_text(), why])
+			# #389 pass 2 T5: the door itself refuses too (a press that reached it anyway):
+			# no card, and the sim's reason on the refusal line.
+			if dismiss != null:
+				dismiss.pressed.emit()
+			if _card().is_visible_in_tree():
+				_fail("a press on the refused Dismiss opened the card")
+			if why != "" and not String(_verbs.status_text()).to_lower().contains(why.to_lower()):
+				_fail("a press on the refused Dismiss does not say why: '%s' (the sim: '%s')" % [_verbs.status_text(), why])
 			_check_diary_booking()
 			return _end()
 	return false
@@ -155,7 +173,6 @@ func _pick_portfolio() -> void:
 				_portfolio = portfolio
 				_party = pid
 				_leader = leader
-				_verbs.select_portfolio(portfolio)
 				return
 	_fail("premise: every portfolio is held by the president's own party")
 
@@ -219,3 +236,18 @@ func _end() -> bool:
 			printerr("FAIL: %s" % f)
 		quit(1)
 	return true
+
+
+## The office's line on the roster: its press target.
+func _line(portfolio: String) -> Control:
+	for node in _main._people_panel._body.find_children("*", "Button", true, false):
+		if node.has_meta("line") and String(node.get_meta("line")) == portfolio and node.get_parent().has_meta("office"):
+			return node
+	return null
+
+
+func _dismiss():
+	for node in _main._people_panel._body.find_children("*", "Button", true, false):
+		if node.has_meta("verb") and String(node.get_meta("verb")) == "dismiss":
+			return node
+	return null

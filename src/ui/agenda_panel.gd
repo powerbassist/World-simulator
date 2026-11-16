@@ -34,7 +34,7 @@ signal open_requested(tab_id: String)
 ## society goal by a law).
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const GROUP_TAB := {"economy": "finances", "europe": "diplomacy", "institutions": "legislature",
-	"office": "politics", "society": "legislature"}  # i18n: ok tab ids
+	"office": "majority", "society": "legislature"}  # i18n: ok tab ids
 
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")

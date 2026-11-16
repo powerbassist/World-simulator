@@ -71,6 +71,10 @@ static func register(main) -> void:
 	# Rework 1: the People roster's See books the same way, on the request's first free day.
 	main._people_panel.see_requested.connect(book)
 	main._people_panel.reassigned.connect(func(before: Dictionary, title: String) -> void: main._queue_effect(title, before))
+	# Rework 1: a partner's line on the Majority tab opens its offices in People.
+	main._government_panel.offices_requested.connect(func(party_id: String) -> void:
+		main._windows.open("people")
+		main._people_panel.show_offices(party_id))
 	# A Go left without a day -- the Diary closed under it -- ends the player's action
 	# as surely as a booking does.
 	main._windows.closed.connect(func(id: String) -> void:

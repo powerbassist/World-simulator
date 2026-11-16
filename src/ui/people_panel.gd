@@ -35,6 +35,7 @@ const RosterRows = preload("res://src/ui/roster_rows.gd")
 const RosterLine = preload("res://src/ui/roster_line.gd")
 const RosterVerbs = preload("res://src/ui/roster_verbs.gd")
 const CabinetVerbs = preload("res://src/ui/cabinet_verbs.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const VerbPlate = preload("res://src/ui/verb_plate.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 
@@ -94,13 +95,14 @@ func _ready() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# A Go or a partner's line lands the keyboard on a line that may sit below view.
+	scroll.follow_focus = true
 	root.add_child(scroll)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body.add_theme_constant_override("separation", 2)
 	scroll.add_child(_body)
 	# The removal's confirm card, its price and its refusal line (cabinet_verbs.gd).
-	_verbs.compact = true
 	_verbs.reassigned.connect(func(before: Dictionary, title: String) -> void:
 		reassigned.emit(before, title)
 		_dirty = true)
@@ -140,10 +142,32 @@ func mark_dirty() -> void:
 ## The briefing's person Go: their line focused, in a group that lists them, and the
 ## keyboard on its first verb (a Go lands on a verb).
 func focus(person_id: String) -> void:
+	if not _loader.person_by_id.has(person_id):
+		show_offices()  # an office word's Go: "seats", the office rows
+		return
+	_verbs._refused("")  # a new pick: a refusal said about another line goes
 	focused = person_id
 	_picked = ["person", person_id]
 	_search.text = ""
 	_chip = _chip_of(person_id)
+	_dirty = true
+
+
+## An office word's Go (briefing_driver.gd): the view that lists the offices, the
+## keyboard on the first. `party_id` (a partner's line on the Majority tab): that party's
+## first office focused instead; a party holding none focuses nothing (its line on
+## Majority is greyed and says so).
+func show_offices(party_id := "") -> void:
+	if _chip != "government":
+		_chip = "needs"
+	_search.text = ""
+	_verbs._refused("")  # a new pick: a refusal said about another line goes
+	focused = "seats" if party_id == "" else ""  # _land puts the keyboard on the first office line
+	for f in CK.PORTFOLIO_KEYS:
+		if party_id != "" and String(_state.player().cabinet.get(f, "")) == party_id:
+			_picked = ["office", f]
+			_refocus = true
+			break
 	_dirty = true
 
 
@@ -224,11 +248,13 @@ func _offices(query := "") -> bool:
 		var leader := String(row["leader_id"])
 		var name := tr("Vacant") if bool(row["vacant"]) else String(row["party"])
 		var sub := String(row["party"]) if bool(row["vacant"]) else (tr("Led by %s, %s") % [_loader.person_name(leader), row["seats"]])
-		RosterLine.build(_body, ["office", f], leader, {}, [
+		var line := RosterLine.build(_body, ["office", f], leader, {}, [
 			{"text": name, "sub": sub, "tone": UiTheme.BAD_TEXT if bool(row["vacant"]) else ""}, {"text": row["office"]},
 			{"text": row["feels"], "tone": row["feels_tone"]}, {"text": row["delivers"], "tone": row["delivers_tone"]},
 			{"text": row["owe"], "tone": row["owe_tone"]}, {"text": "—", "tone": UiTheme.CAPTION}],
 			picked, _show_card, _hide_card, _pick.bind("office", f), _menu.bind("office", row))
+		# An office word's Go lands here: an office's verbs are the reshuffle.
+		ActsOn.tag(line.get_child(0), ["seats"])
 		if picked:
 			RosterVerbs.strip(_body, RosterVerbs.for_office(_state, _loader, row, _verbs), RosterLine.FACE.x + 20)
 	return true
@@ -260,9 +286,10 @@ func _menu(kind: String, row: Dictionary) -> void:
 ## keyboard on its line.
 func _land() -> void:
 	if focused != "":
+		var seats := focused == "seats"
 		focused = ""
 		for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
-			if button.has_meta("verb") and not (button as Button).disabled:
+			if (ActsOn.acts_on(button, "seats") if seats else button.has_meta("verb")) and not (button as Button).disabled:
 				(button as Button).grab_focus()
 				return
 	if _refocus:
