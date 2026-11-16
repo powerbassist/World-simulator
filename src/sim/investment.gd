@@ -254,19 +254,48 @@ static func available(state, ns, all_actions: Array) -> Array:
 static func _preconditions_met(state, ns, action) -> bool:
 	var sector := String(action.effects.get("investment", {}).get("sector", ""))
 	for cond in action.preconditions:
-		var actual: float = _read_field(state, ns, cond["field"], sector)
-		var value: float = cond["value"]
-		var ok: bool
-		match cond["op"]:
-			"<": ok = actual < value
-			"<=": ok = actual <= value
-			">": ok = actual > value
-			">=": ok = actual >= value
-			"==": ok = is_equal_approx(actual, value)
-			_: ok = false
-		if not ok:
+		if not _holds(state, ns, cond, sector):
 			return false
 	return true
+
+
+static func _holds(state, ns, cond: Dictionary, sector: String) -> bool:
+	var actual: float = _read_field(state, ns, cond["field"], sector)
+	var value: float = cond["value"]
+	match cond["op"]:
+		"<": return actual < value
+		"<=": return actual <= value
+		">": return actual > value
+		">=": return actual >= value
+		"==": return is_equal_approx(actual, value)
+	return false
+
+
+## Why execute() would refuse `action` now, "" when it would apply it (the parent's card of
+## 2026-11-16: a disabled verb shows the sim's own reason, as Companies.refusal_reason
+## does). execute()'s two gates in its order: the sector's programme register, then each
+## precondition, the first that fails named by its field. English, the UI's msgid.
+## `_loader` keeps the signature of the other refusal reads.
+static func refusal_reason(state, ns, _loader, action) -> String:
+	var sector := String(action.effects.get("investment", {}).get("sector", ""))
+	if not ns.sector_investment.has(sector):
+		return "this nation runs no programme register for this sector"
+	for cond in action.preconditions:
+		if not _holds(state, ns, cond, sector):
+			return _reason(cond)
+	return ""
+
+
+static func _reason(cond: Dictionary) -> String:
+	match String(cond["field"]):
+		"investment_active":
+			return "a programme already runs in this sector" if is_zero_approx(float(cond["value"])) 				else "no programme runs in this sector"
+		"investment_count": return "too many programmes already run"
+		"deficit_pct_gdp": return "the deficit does not allow it"
+		"debt_to_gdp_pct": return "the debt does not allow it"
+		"unemployment_pct": return "unemployment does not allow it"
+		"overall_approval_pct": return "approval does not allow it"
+	return "the conditions for this programme are not met"
 
 
 ## `investment_active` is about the sector the action names; everything else is the
