@@ -1,4 +1,4 @@
-Fixed: The goods table's trade column now says the figure is a year at this month's pace.
+Fixed: The goods table's trade column now says its figure is a year's trade.
 Fixed: A goods filter on a good that left the table no longer empties it.
 Fixed: Dragging a sector's programme slider no longer drops the drag halfway.
 Fixed: "Put it in the finance bill" says why it is unavailable while a programme already runs.

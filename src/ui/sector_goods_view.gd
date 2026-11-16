@@ -35,7 +35,7 @@ static func build(panel, parent: Control, ns) -> void:
 	grid.add_theme_constant_override("h_separation", PanelKit.COLUMN_SEPARATION)
 	section.add_child(grid)
 	var months := int(shown[0]["months"])
-	for caption in ["", Strings.t("Price, %d months") % months if months >= 2 else Strings.t("Price"), Strings.t("Trade, a year at this pace"), Strings.t("Made by")]:
+	for caption in ["", Strings.t("Price, %d months") % months if months >= 2 else Strings.t("Price"), Strings.t("Trade, a year"), Strings.t("Made by")]:
 		var head := Label.new()
 		head.text = caption
 		head.theme_type_variation = UiTheme.CAPTION

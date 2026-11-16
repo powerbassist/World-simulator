@@ -93,7 +93,7 @@ static func speak(main, key: String) -> void:
 static func follow_answers(main) -> void:
 	for panel in main._windows.panels():
 		if panel.has_signal("acted"):
-			panel.acted.connect(func(_before, _label) -> void: refresh(main, true))
+			panel.acted.connect(func(_before = null, _label = null, _result = null) -> void: refresh(main, true))  # acted carries 2 or 3 args
 
 
 ## A load: the ranking's memory and report go with the discarded game. Left, the first card closed after the load
