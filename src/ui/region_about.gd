@@ -3,7 +3,7 @@ extends RefCounted
 ## The Regions tab's folded "About these figures" (region_panel.gd's toggle opens it): what the
 ## register names of the nation's people and output, and how the regions link. Both residuals
 ## are derived, so these rows cannot disagree with the table above them. Its own file because
-## region_panel.gd is at the 300-code-line ratchet.
+## region_panel.gd is near its size ceiling (tools/check_size.py).
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Region = preload("res://src/core/region.gd")
