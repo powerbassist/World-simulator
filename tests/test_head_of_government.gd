@@ -90,7 +90,7 @@ func _check_poland_names_the_sim_pm() -> void:
 	_expect_names("Poland's Diplomacy file", _file_text("POL"), staged_name, authored_name)
 
 	var people = _main._people_panel
-	people._open["abroad"] = true
+	people._pick_chip("abroad")
 	people._refresh()
 	_expect_names("the People tab's Abroad list", _text_of(people), staged_name, authored_name)
 

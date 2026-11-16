@@ -28,7 +28,7 @@ const President = preload("res://src/sim/president.gd")
 const LawPanel = preload("res://src/ui/law_panel.gd")
 const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
-const PeopleNow = preload("res://src/ui/people_now.gd")
+const RosterRows = preload("res://src/ui/roster_rows.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
@@ -246,8 +246,8 @@ func _check_a_pledge_is_not_your_word() -> void:
 	for line in Priorities.rank(state, _loader, {"held_events": [], "programme_held": false})["lines"]:
 		if String(line["kind"]) == "commitment" and String(line["subject"]).begins_with("pledge|"):
 			_fail("briefing: a pledge ranks as the president's commitment (%s)" % line["subject"])
-	for entry in PeopleNow.chosen(state, _loader, func(_pid) -> String: return "left"):
-		if String(entry["id"]) == String(person.id) and String(entry["reason"]) == Strings.t("A promise falls due"):
+	for entry in RosterRows.rows(state, _loader, "", ""):
+		if String(entry["id"]) == String(person.id) and (String(entry["owe"]) != "—" or int(entry["rank"]) == RosterRows.Need.DUE):
 			_fail("people: a pledge reads as a promise of the player's falling due")
 	var seat := FakeMain.new()
 	seat._state = state

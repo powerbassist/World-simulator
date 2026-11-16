@@ -1,160 +1,114 @@
 extends PanelContainer
 
-## Who the president actually deals with -- U6b's surface, rebuilt at V4.3
-## around the character layer (docs/people-model.md 14).
+## People -- rework 1 (Gameplay's people-cabinet brief; the author's direction A, "le
+## tableau"). The decision this page carries: WHO GETS MY DAYS THIS MONTH. One roster,
+## sorted by who needs the president (roster_rows.gd), a word before every figure, chips
+## and a search box to pick a group, and the government as the first group, one row per
+## portfolio, a vacant office marked with what a vacancy does.
 ##
-## Reads simulation state and content, and never writes either. **There is no
-## button on this panel and that is a design decision, not an omission.** Every
-## act involving a person already has a home: a state visit is on the Diplomacy
-## panel, a reshuffle on Politics, a booking on the Diary. A panel with no
-## interactive control also cannot repeat the fold nation_panel.gd has paid for
-## twice (V1.3e, V1.3g) -- a second button narrows an autowrapping label, the wrap
-## grows the row, and the panel walks off the bottom of the window.
+## V4.3's page had no button "by design": every act on a person lived elsewhere, and the
+## gate read it as "people panel is messy and unreadable" and "refusé m'a rien coûté en
+## apparence". The verbs now sit on the focused row, on a right click and on focus
+## (roster_verbs.gd), each greyed with the sim's own reason; after an act the row itself
+## changes (the request's date, a seat marked vacant).
 ##
-## V4.3's register is 1595 people and a flat list would be a wall nobody
-## scrolls, so the panel GROUPS BY KIND (the political cast, the bench by kind)
-## and inside a group sorts by STANDING -- the register's own weight, so the
-## people the player's decisions have moved sit at the top of their group
-## without a single hand-written name in this file. Wants print as one line
-## each with their DERIVED satisfaction read (never stored), which is the
-## whole point of a want: what it wants, and whether the world is giving it.
+## Only the open group is built: "Needs you" and the government by default, a chip's
+## group or a search's matches otherwise -- never the whole register.
 ##
-## Where it stops: People says WHO and WHAT THEY WANT, Politics says what
-## they do -- seats, effectiveness, standing, cohabitation. The single
-## overlap is the cabinet holder column, and both surfaces read `ns.cabinet`
-## so they cannot disagree. No competence, discipline or any other number
-## appears beside a name here: all of them belong to the PARTY, and printing
-## one next to a person would imply the person carries it. See
-## docs/people-model.md.
-##
-## V5.3-0 (2.4) breaks the no-button rule once, on purpose: the briefing's person Go
-## lands on a "Call" for the one person it names, in a row of its own at the top
-## (focus()), because a Go must land on a verb. One row, one button: the fold
-## above cannot happen to it.
+## Reads simulation state; the commands are the sim's (Audiences.book through the Diary's
+## path, the phone, Removal through cabinet_verbs.gd).
 
 signal closed
-## V5.2b b3: a right click on a person asks to call them (phone_driver.gd). Not a
-## button: this panel keeps none (above), and a click has no width to fold.
+## A right click or the Call verb asks to call them (phone_driver.gd).
 signal call_requested(person_id: String)
-## A "Who matters now" card that asks to see you was clicked: raise its request card.
-signal answer_requested(request_id: String)
+## See: book the request on its first free offered day, the Diary's own path.
+signal see_requested(request_id: String, date: Dictionary)
+## A reshuffle or a dismissal, carrying the pre-command baseline (the effect card).
+signal reassigned(before: Dictionary, title: String)
 
-const CK = preload("res://src/sim/cabinet_constants.gd")
-const CharacterK = preload("res://src/sim/character_constants.gd")
-const Judiciary = preload("res://src/sim/judiciary.gd")
-const Characters = preload("res://src/sim/characters.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
-const ActsOn = preload("res://src/ui/acts_on.gd")
-const Portrait = preload("res://src/ui/portrait.gd")
-const PersonCard = preload("res://src/ui/person_card.gd")
-const Staff = preload("res://src/sim/staff.gd")
-const Num = preload("res://src/ui/num.gd")
-const PeopleNow = preload("res://src/ui/people_now.gd")
-const PeopleHeads = preload("res://src/ui/people_heads.gd")
-const President = preload("res://src/sim/president.gd")
+const Strings = preload("res://src/ui/strings.gd")
+const TermText = preload("res://src/ui/term_text.gd")
+const Feelings = preload("res://src/ui/feelings.gd")
+const RosterRows = preload("res://src/ui/roster_rows.gd")
+const RosterLine = preload("res://src/ui/roster_line.gd")
+const RosterVerbs = preload("res://src/ui/roster_verbs.gd")
+const CabinetVerbs = preload("res://src/ui/cabinet_verbs.gd")
+const VerbPlate = preload("res://src/ui/verb_plate.gd")
+const CK = preload("res://src/sim/cabinet_constants.gd")
 
-## The face a row carries, at the row's own scale: 22px beside 14px captions
-## reads as a face, and 30px of height is under two rows of separation.
-const FACE_SIZE := Vector2(22, 30)
+const HEADS := ["Person", "Holds", "Feels", "Wants now", "You owe", "Known"]  # i18n: msgid
 
-## How many of each group's list the panel prints before the group folds
-## behind its count -- the bench is 47-49 per nation and a group that prints
-## itself whole is the wall the grouping exists to prevent. The top of the
-## group by STANDING prints first, so the visible head is the people the
-## game has actually moved.
-const GROUP_HEAD := 8
-## V5.2 b+ (R5, gate b: "people panel is messy and unreadable"). A row is one
-## line read left to right: fixed columns for the name, the side and the figure,
-## so a value sits beside its name and not at the far edge of a 1 200 px dock.
-const COL_NAME := 230
-const COL_SIDE := 210
-const COL_FIGURE := 70
-## The executive and the cabinet stand beside the parties, each this wide.
-const COL_BLOCK := 540
-
-## The kind groups in reading order, with the labels a player reads. The
-## order is the CAST's order: the political register first, then the bench
-## from closest to power (politicians, regional figures) outward (press,
-## unions, courts, activism).
-const KIND_ORDER := [
-	["politician", "The politicians"],  # i18n: msgid last
-	["regional_figure", "Regional figures"],  # i18n: msgid last
-	["press_owner", "Press owners"],  # i18n: msgid last
-	["union_leader", "Union leaders"],  # i18n: msgid last
-	["judge", "The bench"],  # i18n: msgid last
-	["activist", "Activists"],  # i18n: msgid last
-]
-
-## The want voice lives on person_card.gd (STANCE_LABEL / object_text) -- the
-## shared table this file's old comment promised and the card now supplies.
 var _state
 var _loader
 var _dirty := true
-
-var _title: Label
 var _body: VBoxContainer
+var _title: Label
+var _search: LineEdit
+var _chips: HFlowContainer
 var _close_button: Button
-var _ns
-var _card
-var _card_layer: CanvasLayer
-## V5.3-0 (b), 3.4: a group shows its rows only when open; the political cast is
-## open by default, the bench and abroad fold behind their counts. The table sorts
-## by one column, the standing by default.
-var _open := {"politician": true}
-## The meta a fold or sort head carries: the two kinds of button the read-only rule
-## admits (tests/test_people_panel.gd), each alone in its row or among fixed cells.
-const HEAD_META := "people_head"
-var _sort := "standing"
-## The toggle just pressed: its rebuild freed the focused button, so the new one
-## with this key takes focus and the keyboard keeps its place.
-var _refocus := ""
+var _verbs := CabinetVerbs.new()
+var _chip := "needs"
+## The focused line: ["person" | "office", id], or [] for none.
+var _picked: Array = []
+## The focused line takes the keyboard back after the rebuild that freed it.
+var _refocus := false
+## The briefing's person Go lands on that person's first verb.
+var focused := ""
 
 
 func _ready() -> void:
-	# 700 for the register-growth reason the file's old comment carried: this
-	# panel has no verb, so the only affordance is the scrollbar, and a window
-	# short for no reason is one the player resizes by hand every time. Well
-	# inside U5a's ~886px band.
 	custom_minimum_size = Vector2(460, 700)
-
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
-
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
-	margin.add_child(root)
-
+	var root := PanelKit.padded(self, 16, 10)
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD
+	_title.text = tr("Who gets your days this month?")
 	root.add_child(_title)
-
+	var tools := HBoxContainer.new()
+	tools.add_theme_constant_override("separation", 12)
+	root.add_child(tools)
+	_chips = HFlowContainer.new()
+	_chips.add_theme_constant_override("h_separation", 6)
+	_chips.add_theme_constant_override("v_separation", 6)
+	_chips.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tools.add_child(_chips)
+	for chip in RosterRows.CHIPS:
+		var button := PanelKit.sized(Button.new())
+		button.text = tr(String(chip[1]))
+		button.toggle_mode = true
+		button.set_meta("chip", String(chip[0]))
+		button.pressed.connect(_pick_chip.bind(String(chip[0])))
+		_chips.add_child(button)
+	_search = LineEdit.new()
+	_search.placeholder_text = tr("A name, a party, an office")
+	_search.custom_minimum_size.x = 240 * UiTheme.text_scale()
+	_search.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_search.clear_button_enabled = true
+	_search.text_changed.connect(func(_t: String) -> void: _dirty = true)
+	tools.add_child(_search)
+	var heads: Array = []
+	for head in HEADS:
+		heads.append(tr(head).to_upper())
+	RosterLine.heads(root, heads)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
-
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_theme_constant_override("separation", 4)
+	_body.add_theme_constant_override("separation", 2)
 	scroll.add_child(_body)
-
-	# The hover card rides its own CanvasLayer so it floats above the scroll
-	# and every sibling window -- the card's own contract (person_card.gd):
-	# built once, shown by whoever names the person, MOUSE_FILTER_IGNORE so it
-	# never eats the pointer the row is still tracking. Configured AFTER
-	# add_child -- a Control outside the tree is half-dead, its _ready unset.
-	_card_layer = CanvasLayer.new()
-	_card_layer.layer = 10
-	add_child(_card_layer)
-	_card = PersonCard.new()
-	_card_layer.add_child(_card)
-	# A card left open while the rows scroll away from under it would point at
-	# a row that moved; the scroll hides it the moment the content moves.
-	scroll.get_v_scroll_bar().value_changed.connect(func(_v): _hide_person_card())
-
+	# The removal's confirm card, its price and its refusal line (cabinet_verbs.gd).
+	_verbs.compact = true
+	_verbs.reassigned.connect(func(before: Dictionary, title: String) -> void:
+		reassigned.emit(before, title)
+		_dirty = true)
+	root.add_child(_verbs)
+	# The person card is the one every name opens (person_tip.gd, in the glossary layer:
+	# themed, plated); the roster asks it to sit above the hovered line (QA's H1 on #388:
+	# a private card on a bare CanvasLayer drew unthemed and over the focused verbs).
+	scroll.get_v_scroll_bar().value_changed.connect(func(_v): _hide_card())
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
@@ -183,321 +137,159 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
-func _refresh() -> void:
-	var ns = _state.player()
-	if ns == null:
-		return
-	var nation = _loader.nations.get(ns.id)
-	if nation == null:
-		return
-
-	_ns = ns
-	_title.text = tr("The people of %s") % nation.nation_name
-
-	for child in _body.get_children():
-		child.queue_free()
-
-	# The offices beside the parties: two short lists side by side read at a glance,
-	# where one under the other made a page of them.
-	PeopleNow.build(_body, _state, _loader, func(p): return _party_or_kind_line(ns, p),
-		_show_person_card, _hide_person_card, call_requested.emit, answer_requested.emit)
-	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 40)
-	_body.add_child(top)
-	var offices := _block(top)
-	_build_focus()
-	_build_executive(ns, offices)
-	_build_cabinet(ns, offices)
-	_build_parties(ns, _block(top))
-	_build_character_groups(ns)
-	_build_abroad(ns)
-
-
-## The person the briefing named, shown first with a Call; "" for none.
-var focused := ""
-
-
-## Like the Legislature's bloc filter, the focus is a Go's: leaving the tab drops it.
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree():
-		focused = ""
-
-
+## The briefing's person Go: their line focused, in a group that lists them, and the
+## keyboard on its first verb (a Go lands on a verb).
 func focus(person_id: String) -> void:
 	focused = person_id
-	mark_dirty()
+	_picked = ["person", person_id]
+	_search.text = ""
+	_chip = _chip_of(person_id)
+	_dirty = true
 
 
-func _build_focus() -> void:
-	if focused == "" or not _loader.person_by_id.has(focused):
+func _chip_of(person_id: String) -> String:
+	for chip in RosterRows.CHIPS:
+		for row in RosterRows.rows(_state, _loader, String(chip[0]), ""):
+			if String(row["id"]) == person_id:
+				return String(chip[0])
+	return "needs"
+
+
+func _pick_chip(chip: String) -> void:
+	_chip = chip
+	_search.text = ""
+	_dirty = true
+
+
+func _refresh() -> void:
+	if _state.player() == null:
 		return
-	var row := PanelKit.buttons(_body)
-	_body.move_child(row, 0)
-	var who := Label.new()
-	who.text = _name_of(focused)
-	who.theme_type_variation = UiTheme.LEAD
-	row.add_child(who)
-	var call := PanelKit.sized(Button.new())
-	call.text = tr("Call")
-	var pid := focused
-	call.pressed.connect(func() -> void: call_requested.emit(pid))
-	row.add_child(ActsOn.tag(call, [pid]))
+	# The lines under the pointer are about to be freed: their card goes with them.
+	_hide_card()
+	_verbs.sync(_state, _loader)
+	for chip in _chips.get_children():
+		(chip as Button).set_pressed_no_signal(String(chip.get_meta("chip")) == _chip and _search.text.strip_edges() == "")
+	for child in _body.get_children():
+		_body.remove_child(child)
+		child.queue_free()
+	var query := _search.text.strip_edges()
+	if query != "":
+		var found := RosterRows.rows(_state, _loader, "", query)
+		# "Nobody" only when no office matched either (pass 1 on #388).
+		var none := tr("Nobody of that name, party or office.") if not _offices(query) else ""
+		if not found.is_empty() or none != "":
+			_group(tr("Matches (%d)") % found.size(), found, none)
+	elif _chip == "needs":
+		_group(tr("Needs you"), RosterRows.rows(_state, _loader, "needs", ""), tr("Nobody waits on you this month."))
+		_offices()
+		PanelKit.line(_body, tr("The rest: pick a group above."))
+	elif _chip == "government":
+		_offices()
+		_group(tr("The government's people"), RosterRows.rows(_state, _loader, "government", ""), "")
+	else:
+		for chip in RosterRows.CHIPS:
+			if String(chip[0]) == _chip:
+				var rows := RosterRows.rows(_state, _loader, _chip, "")
+				_group("%s (%d)" % [tr(String(chip[1])), rows.size()], rows, "")
+	_land.call_deferred()
 
 
-func _block(parent: Control) -> VBoxContainer:
-	var block := VBoxContainer.new()
-	block.custom_minimum_size.x = COL_BLOCK
-	block.add_theme_constant_override("separation", 4)
-	parent.add_child(block)
-	return block
+func _group(title: String, rows: Array, empty: String) -> void:
+	PanelKit.heading(_body, title)
+	if rows.is_empty() and empty != "":
+		PanelKit.line(_body, empty)
+	var ns = _state.player()
+	for row in rows:
+		var pid := String(row["id"])
+		var picked := _picked == ["person", pid]
+		RosterLine.build(_body, ["person", pid], pid, Feelings.of(ns, pid), [
+			{"text": row["name"], "sub": row["side"]}, {"text": row["holds"]}, {"text": row["feels"], "tone": row["feels_tone"]},  # i18n: row-ok the roster reader's own row, its words already resolved
+			{"text": row["wants"], "tone": row["wants_tone"]}, {"text": row["owe"]}, {"text": row["known"], "tone": UiTheme.CAPTION}],
+			picked, _show_card, _hide_card, _pick.bind("person", pid), _menu.bind("person", row))
+		if picked:
+			RosterVerbs.strip(_body, _person_items(row), RosterLine.FACE.x + 20)
 
 
-## The two offices the player deals with daily. Both are live state rather than
-## content: an amendment can change the head of state, and a censure changes the
-## head of government, so this reads NationState and not the nation file.
-func _build_executive(ns, parent: Control) -> void:
-	PanelKit.heading(parent, tr("The executive"))
-	_person_line(parent, ns.head_of_state_person_id, [[ns.head_of_state_title, COL_SIDE, UiTheme.CAPTION], [_name_of(ns.head_of_state_person_id)]])
-	if bool(ns.has_executive):
-		_chief_line(ns, parent)
-	_person_line(parent, ns.pm_person_id, [[ns.head_of_government_title, COL_SIDE, UiTheme.CAPTION], [_name_of(ns.pm_person_id)]])
-	if not bool(ns.has_executive):
-		_chief_line(ns, parent)
+## The office rows; a search (`query`) keeps those whose office, party or leader match it.
+## Whether any row was drawn.
+func _offices(query := "") -> bool:
+	var rows := RosterRows.offices(_state, _loader).filter(func(r) -> bool:
+		return query == "" or ("%s %s %s" % [r["office"], r["party"], _loader.person_name(String(r["leader_id"]))]).to_lower().contains(query.to_lower()))
+	if rows.is_empty():
+		return false
+	PanelKit.heading(_body, tr_n("The government: %d office", "The government: %d offices", rows.size()) % rows.size())
+	for row in rows:
+		var f := String(row["portfolio"])
+		var picked := _picked == ["office", f]
+		var leader := String(row["leader_id"])
+		var name := tr("Vacant") if bool(row["vacant"]) else String(row["party"])
+		var sub := String(row["party"]) if bool(row["vacant"]) else (tr("Led by %s, %s") % [_loader.person_name(leader), row["seats"]])
+		RosterLine.build(_body, ["office", f], leader, {}, [
+			{"text": name, "sub": sub, "tone": UiTheme.BAD_TEXT if bool(row["vacant"]) else ""}, {"text": row["office"]},
+			{"text": row["feels"], "tone": row["feels_tone"]}, {"text": row["delivers"], "tone": row["delivers_tone"]},
+			{"text": row["owe"], "tone": row["owe_tone"]}, {"text": "—", "tone": UiTheme.CAPTION}],
+			picked, _show_card, _hide_card, _pick.bind("office", f), _menu.bind("office", row))
+		if picked:
+			RosterVerbs.strip(_body, RosterVerbs.for_office(_state, _loader, row, _verbs), RosterLine.FACE.x + 20)
+	return true
 
 
-## V5.3-0: the chief of staff serves the played office, so their line sits right
-## under its holder (the parent's call on #216: shown, never hidden, the kind as a
-## word). Staff is no kind group of the cast below: this is their one line.
-func _chief_line(ns, parent: Control) -> void:
-	var chief = Staff.chief_of(_loader, String(ns.id))
-	if chief != null:
-		_person_line(parent, String(chief.id), [[tr(PersonCard.KIND_LABEL["chief_of_staff"]), COL_SIDE, UiTheme.CAPTION], [chief.person_name]])
+func _person_items(row: Dictionary) -> Array:
+	return RosterVerbs.for_person(_state, _loader, row, see_requested.emit, call_requested.emit)
 
 
-## Named ministers do not exist, and this is where that shows. U6b's own probe
-## measured a five-deep shadow bench per party and found the player meets 6-13
-## distinct people in fourteen years -- roughly a fifth of what the bench would
-## cost to author -- so the bench was cut before it was written and a portfolio
-## still names the PARTY that holds it. docs/people-model.md §3.
-func _build_cabinet(ns, parent: Control) -> void:
-	PanelKit.heading(parent, tr("The cabinet"))
-	var by_id := {}
-	for p in _loader.parties.get(ns.id, []):
-		by_id[p.id] = p
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 24)
-	parent.add_child(grid)
-	for f in CK.PORTFOLIO_KEYS:
-		var pid: String = String(ns.cabinet.get(f, ""))
-		_cell(grid, tr(PersonCard.PORTFOLIO_LABEL.get(f, f)), 0, UiTheme.CAPTION)
-		if pid == "" or not by_id.has(pid):
-			_cell(grid, tr("VACANT"), 0, UiTheme.BAD_TEXT)
-		else:
-			_cell(grid, String(by_id[pid].party_name), 0)
-
-
-func _build_parties(ns, parent: Control) -> void:
-	PanelKit.heading(parent, tr("The parties"))
-	for p in _loader.parties.get(ns.id, []):
-		var seats := int(ns.seats_by_party.get(p.id, 0))
-		var leader: String = String(ns.party_leader_override.get(p.id, p.leader_person_id))
-		_person_line(parent, leader, [[String(p.party_name), COL_SIDE], [_name_of(leader), COL_SIDE, UiTheme.CAPTION],
-			[tr_n("%d seat", "%d seats", seats) % seats, COL_FIGURE, "", HORIZONTAL_ALIGNMENT_RIGHT]])
-
-
-## V4.3's body: the character register, grouped by kind, sorted by standing,
-## head of each group visible and the rest behind the count. The leader
-## override the parties section reads is the same register this builds from,
-## so a challenge moves both surfaces in the same month.
-func _build_character_groups(ns) -> void:
-	var people: Array = _loader.people.get(ns.id, [])
-	var by_kind: Dictionary = {}
-	for person in people:
-		if not by_kind.has(person.kind):
-			by_kind[person.kind] = []
-		by_kind[person.kind].append(person)
-
-	for entry in KIND_ORDER:
-		var kind: String = entry[0]
-		var label: String = tr(entry[1])
-		var group: Array = by_kind.get(kind, [])
-		if group.is_empty():
-			continue
-		# Standing first by default: the group's visible head is the people whose
-		# weight the game has moved, and a name's position is earned, not authored.
-		group.sort_custom(PeopleHeads.sorter(self, ns))
-		if not PeopleHeads.fold(self, kind, "%s (%d)" % [label, group.size()]):
-			continue
-		PeopleHeads.sort_row(self)
-		var shown := 0
-		for person in group:
-			if shown >= GROUP_HEAD:
-				var rest: int = group.size() - GROUP_HEAD
-				PanelKit.line(_body, tr("… and %d more") % rest, PanelKit.Tone.DIM)
-				break
-			_person_row(ns, person)
-			shown += 1
-
-
-## One person of the character layer, one line: the face, the name, the party
-## edge (or the kind's own line), the standing, and the wants as a count -- denied
-## ones in the alert tone. The wants' own words are on the hover card (V5.2 b+,
-## R5): a line per want under every name was the red wall the author could not read.
-func _person_row(ns, person) -> void:
-	var standing := float(ns.person_standing.get(person.id, 0.0))
-	var denied := 0
-	for want in person.wants:
-		if not _want_served(ns, person, want):
-			denied += 1
-	# The wants as a figure under "Wants served", served of all (V5.3-0 (b): "2 of 3
-	# denied" on every row was words); the sentence is the cell's tooltip.
-	var wants := "—"
-	var tip := ""
-	if not person.wants.is_empty():
-		wants = "%d/%d" % [person.wants.size() - denied, person.wants.size()]
-		tip = tr("%d of %d denied") % [denied, person.wants.size()] if denied > 0 \
-			else tr("%d of %d served") % [person.wants.size(), person.wants.size()]
-	var row := _person_line(_body, person.id, [[person.person_name, COL_NAME], [_party_or_kind_line(ns, person), COL_SIDE, UiTheme.CAPTION],
-		[Num.f(standing, 2) if standing >= 0.05 else "—", COL_FIGURE, UiTheme.CAPTION, HORIZONTAL_ALIGNMENT_RIGHT],
-		[wants, COL_FIGURE, UiTheme.BAD_TEXT if denied > 0 else UiTheme.CAPTION, HORIZONTAL_ALIGNMENT_RIGHT]])
-	var cell: Control = row.get_child(row.get_child_count() - 1)
-	cell.tooltip_text = tip
-	cell.mouse_filter = Control.MOUSE_FILTER_PASS
-
-
-## The affiliation line: the party the person sits in (override first, the
-## authored edge second), the party they lead, or the kind as a word where there
-## is no party -- a judge's row says "Judge" and not an empty string.
-func _party_or_kind_line(ns, person) -> String:
-	var party_id: String = String(ns.person_party_override.get(person.id, person.party_id))
-	if party_id != "":
-		for p in _loader.parties.get(ns.id, []):
-			if p.id == party_id:
-				return String(p.party_name)
-		return party_id
-	# QA on #143: a leader the data gives no party_id sits in the party they lead
-	# (Characters' read: the override, else the authored edge).
-	for p in _loader.parties.get(ns.id, []):
-		if Characters.party_leader(ns, p.id, {p.id: p.leader_person_id}) == String(person.id):
-			return String(p.party_name)
-	return tr(PersonCard.KIND_LABEL.get(person.kind, person.kind))
-
-
-## One want's DERIVED satisfaction read, the machine's own (Characters.want_satisfied,
-## the public door the Programme.this_term precedent set), so the panel cannot
-## disagree with the machine about whether a want is served -- a hand-kept copy here
-## once diverged inside its own PR (the review's I1). An opposed want is served
-## when the thing it opposes is not.
-func _want_served(ns, person, want: Dictionary) -> bool:
-	var served := Characters.want_satisfied(ns, person, want, _meters(ns), _authored_leaders())
-	return not served if String(want["stance"]) == "oppose" else served
-
-
-## The meter hand-in, matching what main.gd hands Characters.tick_month
-## (judicial independence through the same derived read) so the panel's read
-## and the machine's price see one world.
-func _meters(ns) -> Dictionary:
-	return {
-		"grievance": float(ns.unrest_pct),
-		"press_freedom": float(ns.press_freedom),
-		"judicial_independence": float(Judiciary.independence_deviation(ns)),
-	}
-
-
-## The authored leadership edges, in the shape tick_month builds them: the
-## machine's want_satisfied takes the same dict the month tick walks.
-func _authored_leaders() -> Dictionary:
-	var leaders := {}
-	for party in _loader.parties.get(_state.player_nation_id, []):
-		leaders[party.id] = party.leader_person_id
-	return leaders
-
-
-## Everyone the Diplomacy panel can point at. Their titles are live state too --
-## another nation's head of state can change while the player is not looking,
-## which is exactly the sort of thing a roster is for.
-func _build_abroad(ns) -> void:
-	if not PeopleHeads.fold(self, "abroad", tr("Abroad (%d)") % (_state.nations.size() - 1)):
+## A line pressed, clicked or right-clicked: it becomes the focused one.
+func _pick(kind: String, id: String) -> void:
+	if _picked == [kind, id]:
 		return
-	var ids: Array = _state.nations.keys()
-	ids.sort()
-	for id in ids:
-		if String(id) == ns.id or not _loader.nations.has(id):
-			continue
-		var other = _state.nations[id]  # the sim's leader, not the nation file's
-		var who := President.leader_id(other)
-		_person_line(_body, who, [[String(_loader.nations[id].nation_name), COL_NAME], ["%s %s" % [President.leader_title(other), _name_of(who)]]])
+	_picked = [kind, id]
+	_verbs._refused("")  # a refusal said about another line is not this one's
+	_refocus = true
+	_dirty = true
 
 
-## A person's line -- V2.3's face in front, then one Label per cell: [text, width
-## (0: as wide as its text), theme variation, alignment]. The wall this panel became
-## (two executives, every party leader, nine foreign heads of state) is exactly the
-## "wall of generated images" docs/tiers/v2.md §3's duotone rule exists for, which
-## is why this panel is where the faces landed: a face beside a name is identity
-## content, a face beside every mention is wallpaper. No person ("") is a column
-## header: no face, no card.
-func _person_line(parent: Control, person_id: String, cells: Array) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	parent.add_child(row)
-	var face: Control = Portrait.framed_for(person_id, FACE_SIZE) if person_id != "" else Control.new()
-	face.custom_minimum_size = FACE_SIZE
-	row.add_child(face)
-	for cell in cells:
-		_cell(row, String(cell[0]), int(cell[1]) if cell.size() > 1 else 0, String(cell[2]) if cell.size() > 2 else "",
-			int(cell[3]) if cell.size() > 3 else HORIZONTAL_ALIGNMENT_LEFT)
-	if person_id == "":
-		return row
-	# The hover surface: every row names a person, and the card is that name's
-	# one annotation (person_card.gd's contract) -- its wants included. The
-	# signals live on the row, not the face: a face-sized target inside a
-	# row-sized hover is a target the player keeps missing.
-	row.mouse_entered.connect(_show_person_card.bind(person_id))
-	row.mouse_exited.connect(_hide_person_card)
-	row.gui_input.connect(func(event: InputEvent) -> void:
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-			call_requested.emit(person_id))
-	return row
-
-
-func _cell(parent: Control, text: String, width: int, variation := "", align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
-	var label := Label.new()
-	label.text = text  # i18n: row-ok every caller hands a translated or resolved string
-	label.custom_minimum_size.x = width
-	label.horizontal_alignment = align
-	label.theme_type_variation = variation
-	# A fixed column trims rather than pushing the row's next cell out of line; a
-	# text-sized cell must not, or its minimum shrinks to the ellipsis.
-	if width > 0:
-		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	parent.add_child(label)
-	return label
-
-
-## Show the card at the cursor, clamped to the viewport. Position is computed
-## AFTER show_for so the card's minimum size (and therefore the clamp) is the
-## filled card's, not the empty shell's.
-func _show_person_card(person_id: String) -> void:
-	if _card == null or _ns == null or _loader == null:
+## The right click's plate: the same items as the strip.
+func _menu(kind: String, row: Dictionary) -> void:
+	var plate = VerbPlate.of(self)
+	if plate == null:
 		return
-	var vp := get_viewport()
-	if vp == null:
+	plate.open(self, _person_items(row) if kind == "person" else RosterVerbs.for_office(_state, _loader, row, _verbs))
+
+
+## After a rebuild: a Go lands on the focused person's first live verb; a pick keeps the
+## keyboard on its line.
+func _land() -> void:
+	if focused != "":
+		focused = ""
+		for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
+			if button.has_meta("verb") and not (button as Button).disabled:
+				(button as Button).grab_focus()
+				return
+	if _refocus:
+		_refocus = false
+		for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
+			if button.has_meta("line") and String(button.get_meta("line")) == String(_picked[1]):
+				(button as Button).grab_focus()
+				return
+
+
+## The shared card above the hovered line, at the pointer's column.
+func _show_card(person_id: String, line: Control) -> void:
+	var layer = get_tree().get_first_node_in_group(TermText.GROUP) if is_inside_tree() else null
+	if layer == null or not _loader.person_by_id.has(person_id):
 		return
-	_card.show_for(person_id, _loader, _ns, Vector2.ZERO)
-	var pos := vp.get_mouse_position() + Vector2(18, 12)
-	var card_size: Vector2 = _card.get_combined_minimum_size()
-	var vp_size := vp.get_visible_rect().size
-	pos.x = minf(pos.x, maxf(vp_size.x - card_size.x - 8.0, 8.0))
-	pos.y = minf(pos.y, maxf(vp_size.y - card_size.y - 8.0, 8.0))
-	_card.position = pos
+	# The focused line's verbs sit right under it: the card keeps clear of both, above
+	# them, or under the verbs where there is no room above (QA's H1 on #388).
+	var rect := line.get_global_rect()
+	var wrap := line.get_parent()
+	var next: Node = wrap.get_parent().get_child(wrap.get_index() + 1) if wrap.get_index() + 1 < wrap.get_parent().get_child_count() else null
+	if next is Control and next.has_meta("strip"):
+		rect = rect.merge((next as Control).get_global_rect())
+	rect.position.x = get_viewport().get_mouse_position().x
+	layer.person_enter(person_id, rect, true)
 
 
-func _hide_person_card() -> void:
-	if _card != null:
-		_card.hide_card()
-
-
-func _name_of(person_id: String) -> String:
-	var who: String = _loader.person_name(person_id)
-	return who if who != "" else "—"
+func _hide_card() -> void:
+	var layer = get_tree().get_first_node_in_group(TermText.GROUP) if is_inside_tree() else null
+	if layer != null:
+		layer.person_leave()
