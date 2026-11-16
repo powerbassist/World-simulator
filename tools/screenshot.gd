@@ -123,6 +123,11 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step talk
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step answered
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-pick vacant --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --text 130 --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --lang fr --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --front-page   (or: --front-page one)
@@ -552,6 +557,9 @@ var _fund := false
 ## Screen 6 (the author's direction A): the worst region's sheet open beside the tinted map.
 ## --region-sheet [measure]: the measure the map's chips pick, "jobless" when none follows.
 var _region_sheet := ""
+## Rework 1, --people-pick first | vacant: the People roster with a line focused and its
+## verbs under it -- the first line of "Needs you", or the health office left vacant.
+var _people_pick := ""
 var _fund_cap := false
 ## With --fund: the region with the running fund opened, its line since it began.
 var _fund_running := false
@@ -1079,6 +1087,8 @@ func _init() -> void:
 			# V4.9b: the count is motion, so this flag alone turns it back on --
 			# the mid-count frame is the point of the capture.
 			Motion.override = 1
+		elif args[i] == "--people-pick" and i + 1 < args.size():
+			_people_pick = args[i + 1]
 		elif args[i] == "--open" and i + 1 < args.size():
 			# The Budget tab retired into the Books page (Finances slice 5): its old flag opens the page that holds its rows.
 			_open = "finances" if args[i + 1] == "budget" else args[i + 1]
@@ -1550,6 +1560,8 @@ func _apply_view() -> void:
 			push_error("screenshot: --open '%s' matched no registered window; valid ids: %s" % [
 				_open, ", ".join(PackedStringArray(_main._windows.panel_ids())),
 			])
+	if _people_pick != "":
+		_stage_a_people_pick()
 	# After --open: the domain's first tab replaces whatever --open opened.
 	if _domain != "":
 		_main._hud.sidebar.navigate.emit(_domain)
@@ -2312,6 +2324,19 @@ func _stage_a_walk() -> void:
 		preload("res://src/sim/legislature.gd").apply_effects(state, ns,
 			{"company_ownership": {"company_id": String(major.id), "action_id": "full_nationalisation"}}, _main._loader)
 		preload("res://src/ui/proposal_note.gd").card_ownership_refusal(_main)
+
+
+func _stage_a_people_pick() -> void:
+	var panel = _main._people_panel
+	if _people_pick == "vacant":
+		preload("res://src/sim/cabinet.gd").vacate(_main._state, "health")
+		panel._pick("office", "health")
+		return
+	var rows: Array = preload("res://src/ui/roster_rows.gd").rows(_main._state, _main._loader, "needs", "")
+	if rows.is_empty():
+		push_error("screenshot: --people-pick first found nobody who needs you (add --request)")
+		return
+	panel._pick("person", String(rows[0]["id"]))
 
 
 func _stage_the_region_sheet() -> void:
