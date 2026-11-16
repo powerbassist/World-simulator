@@ -41,7 +41,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --poll-arrived --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --poll-address --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip approval:1
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --outliner --open outliner
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --outliner --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip deficit:1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --settings
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
@@ -272,7 +272,7 @@ var _hover_outline := ""
 var _tip := ""
 ## V4.8b. Stage one thing pinned in each outliner section (a running pinned
 ## programme entry, a failing major, a good short of demand, people with a
-## grudge), so --open outliner photographs the window with every section drawn.
+## grudge), so --open overview photographs the Presidency page's Open now with every section drawn.
 var _outliner := false
 
 ## V4.8c. The settings screen up over the game, so the MESSAGES grid (thirty-six

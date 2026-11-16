@@ -262,18 +262,19 @@ func _check_the_other_surfaces_read_the_register(panel, state, ns, loader) -> vo
 	if not String(_main._top_bar._figure_values["programme"].text).ends_with("%"):
 		_fail("the top-bar strip carries no progress percentage: '%s'" % _main._top_bar._figure_values["programme"].text)
 
+	# Rework 2: the Presidency page's term draws one lane per entry (test_presidency_page.gd).
 	var overview = _main._overview_panel
 	_open_window_of(overview)
 	overview.mark_dirty()
 	overview._process(0.0)
 	var text := ""
-	for node in _walk(overview._programme_box):
+	for node in _walk(overview._term_box):
 		if node is Label:
 			text += String(node.text) + " "
-	if overview._programme_box.get_child_count() == 0:
-		_fail("the overview's programme section drew nothing")
+	if overview._goal_doors.is_empty():
+		_fail("the Presidency page's term drew no programme lane")
 	if not text.contains(String(terms["name"])):
-		_fail("the overview's programme section does not name the entry: %s" % text)
+		_fail("the Presidency page's programme lane does not name the entry: %s" % text)
 
 	# The Campaign panel's promises line -- docs/programme-model.md section 4's
 	# shared read: the surface that runs the run-up must not leave the player

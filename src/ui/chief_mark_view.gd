@@ -36,6 +36,7 @@ static func refresh(main, rerank := false) -> void:
 	var tip := Strings.t("Click to open the month's briefing.")
 	if who != "":
 		tip = "\n".join(PackedStringArray([who, tip]))
+	_push_read(main, lines, who, face, chief)
 	if lines.is_empty():
 		main._hud.title_bar.chief_mark.show_line(face, Strings.t("A quiet month"), "", false, tip)
 		return
@@ -82,6 +83,10 @@ static func speak(main, key: String) -> void:
 		return
 	var situation := Priorities.situation(game["lines"])
 	var said := BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))
+	# The page's lead shows this line, and only this month's (#401 pass 2 T7): one speak rule.
+	game["spoken_line"] = String(said["text"])
+	game["spoken_key"] = key
+	refresh(main)
 	var caption = main._hud.chief_caption
 	caption.say(String(said["text"]), main._hud.title_bar.chief_mark)
 	# Gated on the mark, not the caption: the caption hides on its reading timer, and a line queued behind a longer
@@ -132,8 +137,56 @@ static func after_load(main, game: Dictionary) -> void:
 	game["memory_before"] = {}
 	main._hud.chief_caption.clear()
 	refresh(main, true)
+	_restore_line(main, game)
+
+
+## After a load the page's lead carries his line for the loaded month's situation (#401 pass 2,
+## QA's lead 2): speak()'s line, worked out again the way speak() does it, with no voice and no
+## caption. Nothing is saved for it, so no save field: the same rule, recomputed.
+static func _restore_line(main, game: Dictionary) -> void:
+	var ns = main._state.player() if main._state != null else null
+	var chief = Staff.chief_of(main._loader, String(ns.id)) if ns != null else null
+	if chief == null or not bool(ns.in_government):
+		return
+	var situation := Priorities.situation(game.get("lines", []))
+	game["spoken_line"] = String(BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))["text"])
+	game["spoken_key"] = month_key(main)
+	refresh(main)
+
+
+## The key a month's speech is stored under: the game and the month (month_end's speak key).
+static func month_key(main) -> String:
+	return "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)]
 
 
 static func clear(main) -> void:
 	main._hud.title_bar.chief_mark.clear()
 	main._hud.chief_caption.clear()
+	if main._overview_panel != null:
+		main._overview_panel.set_read({})
+
+
+## The Presidency page's lead is this read (rework 2, "one ranking"): the same lines the mark
+## names, the chief's face and name, and the line he spoke at this month's end (speak()), none
+## in a month he kept silent: month_end's rule, never a second one.
+static func _push_read(main, lines: Array, who: String, face: Texture2D, _chief) -> void:
+	if main._overview_panel == null:
+		return
+	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
+	var said := String(game.get("spoken_line", "")) if String(game.get("spoken_key", "")) == month_key(main) else ""
+	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said})
+
+
+## The page's Go on its lead row `index` (rework 2, slice 1). A line about a desk file selects
+## that file in the month's folder, which only shows on the invited read, so the read opens
+## first, as it stands (no re-rank: the row's index is the stored line's); until G2 retires
+## the plate, that is where a file is answered. Any other line goes where the briefing's Go does.
+static func page_go(main, index: int) -> void:
+	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
+	var all: Array = (game.get("lines", []) as Array) + (game.get("also", []) as Array)
+	if index >= 0 and index < all.size():
+		var file := String(preload("res://src/ui/folder_driver.gd").file_of(main, all[index]))
+		# Only a file still on the desk: a stale one would open the read and close it again.
+		if file != "" and not preload("res://src/ui/inbox_files.gd").of(main._hud.inbox, file).is_empty():
+			BriefingDriver.read(main, false)
+	BriefingDriver.go(main, index)

@@ -25,7 +25,7 @@ const Opinion = preload("res://src/sim/opinion.gd")
 const PollNoise = preload("res://src/ui/poll_noise.gd")
 
 ## Which of main.gd's panels each window id is.
-const PANELS := {"overview": "_overview_panel", "economy": "_economy_panel", "society": "_polling_panel",
+const PANELS := {"economy": "_economy_panel", "society": "_polling_panel",
 	"legislature": "_law_panel", "region": "_region_panel"}
 
 var _failures: Array[String] = []
@@ -42,15 +42,13 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	match _frame:
 		3:
-			_main._windows.open("overview")
+			_main._windows.open("economy")
 		5:
 			_check_fresh()
 			var console = _console()
 			if console != null:
 				console.run_command("skip 4")
-			_main._windows.open("overview")
-		7:
-			_check_lines("overview", 4)
+			_main._windows.open("society")
 			_main._windows.open("economy")
 		9:
 			_check_lines("economy", 4)
@@ -99,9 +97,9 @@ func _all(node: Node, script: Script) -> Array:
 
 
 func _check_fresh() -> void:
-	var charts := _charts("overview")
+	var charts := _charts("economy")
 	if charts == null:
-		_fail("the overview has no charts")
+		_fail("the economy has no charts")
 		return
 	if _main._state.history.size() >= 2:
 		return  # a new game with history already: nothing to say about the empty case
@@ -213,19 +211,19 @@ func _load_a_twin() -> void:
 	var twin = _main._state.get_script().from_dict(_main._state.to_dict())
 	for entry in twin.history:
 		entry["unemployment_pct"] = 30.0
-	_main._overview_panel.setup(twin, _main._loader)
-	_main._windows.open("overview")
+	_main._economy_panel.setup(twin, _main._loader)
+	_main._windows.open("economy")
 
 
 func _check_the_twin() -> void:
-	var charts := _charts("overview")
+	var charts := _charts("economy")
 	for line in _all(charts, ChartLine):
 		if String(line._series[0]["label"]) == "Unemployment":
 			var values: PackedFloat64Array = line._series[0]["values"]
 			if values.is_empty() or absf(values[-1] - 30.0) > 1e-9:
 				_fail("after loading a game of the same length the Unemployment line still ends at %s, not the loaded 30" % [values[-1] if not values.is_empty() else "nothing"])
 			return
-	_fail("the overview has no Unemployment line after a load")
+	_fail("the economy has no Unemployment line after a load")
 
 
 func _fail(message: String) -> void:

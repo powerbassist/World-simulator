@@ -426,7 +426,7 @@ tests=(
   tests/test_map_ownership.gd
   tests/test_load_hygiene.gd
   tests/test_accent_rule.gd
-  tests/test_overview_panel.gd
+  tests/test_presidency_page.gd
   tests/test_save_load.gd
   # The test audit: a PLAYED game through the disk -- the reflective walk over
   # a state nobody hand-built, no NAN in the save, and twelve months after the
