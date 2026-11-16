@@ -342,12 +342,9 @@ func _ready() -> void:
 	)
 
 	_government_panel = GovernmentPanel.new()
-	_windows.register("politics", tr("Politics"), _government_panel, KEY_G, ICONS + "groups.svg")
+	_windows.register("majority", tr("Majority"), _government_panel, KEY_G, ICONS + "groups.svg")
 	_government_panel.setup(_state, _loader)
 	_government_panel.dissolved.connect(func(before): _queue_effect(tr("Dissolution called"), before))
-	_government_panel.reassigned.connect(func(before, title):
-		_queue_effect(title, before)  # cabinet_verbs.gd names it: reassigned or dismissed
-	)
 
 	_polling_panel = PollingPanel.new()
 	_windows.register("society", tr("Society"), _polling_panel, KEY_P, ICONS + "forum.svg")
@@ -359,7 +356,6 @@ func _ready() -> void:
 	_law_panel = LawPanel.new()
 	_windows.register("legislature", tr("Bills"), _law_panel, KEY_L, ICONS + "gavel.svg")
 	_law_panel.setup(_state, _loader)
-	_law_panel.dissolved.connect(_government_panel.dissolved.emit)
 	_law_panel.polled.connect(_briefing.polled.emit)  # the sheet's polls book the same baseline the popup's do
 	# The sheet's Propose divides at once (law_panel.run_proposal). The briefing popup is for the bills
 	# the sheet does not carry -- an ownership bill, a tax draft -- and its Propose comes back through
@@ -501,7 +497,7 @@ func _ready() -> void:
 	_windows.register("sector_industry", Labels.sector("industry"), SectorsShell.tab(self, "industry"), KEY_NONE, ICONS + "factory.svg")
 	_windows.register("sector_services", Labels.sector("services"), SectorsShell.tab(self, "services"), KEY_NONE, ICONS + "factory.svg")
 
-	# V2.8. KEY_F for fuel: E is Economy, N is Dispatches and G is Politics, so the
+	# V2.8. KEY_F for fuel: E is Economy, N is Dispatches and G is the Majority tab (Politics until rework 1), so the
 	# obvious letters were gone. The key rides register() itself -- V2.1c deleted the
 	# seventh hand-written list of panel ids to get here, and the drawer's tooltip
 	# reads the letter off the registry rather than restating it.

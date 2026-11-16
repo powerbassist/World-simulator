@@ -59,7 +59,7 @@ func _check_surfaces() -> void:
 	var loader = _main._loader
 	var ns = _main._state.player()
 	_expect_link(_main._nation_panel, President.leader_id(_main._state.nations["DEU"]), "the Diplomacy window's leader")
-	_main._windows.open("politics")
+	_main._windows.open("majority")
 	_main._government_panel._process(0.0)
 	_expect_link(_main._government_panel, String(ns.pm_person_id), "the Politics window's head of government")
 	# Shown only where the head of state is not the executive (not France's president).

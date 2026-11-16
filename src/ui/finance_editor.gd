@@ -16,7 +16,8 @@ extends VBoxContainer
 
 signal moved
 ## A verb that changes what the page lists (put in force taken back, a tax abolished or kept): the page rebuilds.
-signal structure_changed
+## `keyed`: the verb was pressed from the keyboard (its place lands on the rebuilt editor), not by the mouse.
+signal structure_changed(keyed: bool)
 
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
@@ -51,6 +52,8 @@ var _box: LineEdit
 var _effect: Label
 var _brackets: HSlider
 var _brackets_box: LineEdit
+## The editor's verb (Abolish, Keep it, Take it back): focus_lever's landing when there is no slider.
+var _last_verb: Button
 var _lo := 0.0
 var _hi := 0.0
 ## A spending line's sectors (slice 5), drawn from the draft again whenever the slider moves.
@@ -126,9 +129,14 @@ func _verb(text: String, node_name: String, change: Callable) -> void:
 	button.name = node_name
 	button.text = text
 	button.flat = true
+	# gui_input comes before the button's own handling: the press that fires is the last event it saw.
+	button.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton or event is InputEventKey or event is InputEventJoypadButton:
+			button.set_meta(&"keyed", not event is InputEventMouseButton))
 	button.pressed.connect(func() -> void:
 		change.call()
-		structure_changed.emit())
+		structure_changed.emit(bool(button.get_meta(&"keyed", false))))
+	_last_verb = button
 	add_child(button)
 
 
@@ -243,3 +251,7 @@ func _who_lines(state, loader) -> Array:
 func focus_lever() -> void:
 	if _slider != null:
 		_slider.grab_focus()
+		return
+	# An abolished kind has no slider: its way back takes the keyboard.
+	if _last_verb != null:
+		_last_verb.grab_focus()

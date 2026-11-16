@@ -56,7 +56,7 @@ static func first_free(state, request_id: String) -> Dictionary:
 	return {}
 
 
-## `verbs` is the panel's cabinet_verbs.gd (compact): its reassign() and dismiss().
+## `verbs` is the panel's cabinet_verbs.gd: its reassign() and dismiss().
 static func for_office(state, loader, row: Dictionary, verbs) -> Array:
 	var ns = state.player()
 	var portfolio := String(row["portfolio"])
@@ -77,8 +77,9 @@ static func for_office(state, loader, row: Dictionary, verbs) -> Array:
 			"enabled": why == "", "reason": Strings.t(why) if why != "" else "",  # i18n: row-ok Removal's reason, its English the msgid
 			"call": func() -> void: verbs.reassign(portfolio, to), "acts_on": ["seats"]})
 	var out := Removal.why_not(state, ns, portfolio, "")
+	# Live, the hover says what it does (Politics' old Dismiss did); greyed, why not.
 	items.append({"id": "dismiss", "text": Strings.t("Dismiss"), "enabled": out == "",
-		"reason": Strings.t(out) if out != "" else "",  # i18n: row-ok Removal's reason, its English the msgid
+		"reason": Strings.t(out) if out != "" else Strings.t("The holder goes at once; the office stays vacant until you fill it."),  # i18n: row-ok Removal's reason, its English the msgid
 		"call": func() -> void: verbs.dismiss(portfolio), "acts_on": ["seats"]})
 	return items
 

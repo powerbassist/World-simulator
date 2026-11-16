@@ -92,10 +92,10 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pledge --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --referendum --open legislature
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open politics
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --electoral --open majority
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --court --open legislature
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open politics
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --senate --open majority
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --city
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diverge
@@ -130,6 +130,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-pick vacant --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --text 130 --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --lang fr --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open majority
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --open majority
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --front-page   (or: --front-page one)
@@ -275,10 +277,10 @@ var _outliner := false
 ## band pickers under the display rows) is judged at 1080 rather than argued.
 var _settings := false
 
-## V5.2 b+ (the #135 follow-up). The Dissolve card up, asked by the Politics button.
+## V5.2 b+ (the #135 follow-up). The Dissolve card up, asked by the Majority tab's button.
 var _dissolve_confirm := false
 
-## V5.2 b+ R4. The Dismiss card up over Politics, its price in R11's words.
+## V5.2 b+ R4. The Dismiss card up (an office row's Dismiss in People), its price in R11's words.
 var _dismiss_confirm := false
 
 ## V5.2 d. The front-page card up over a hand-fed entry (the sim's trigger is
@@ -1414,10 +1416,10 @@ func _apply_view() -> void:
 				_main._law_panel.run_proposal(law)
 				break
 	if _dismiss_confirm:
-		var verbs = _main._government_panel._cabinet_verbs
+		# Rework 1: the removal's card is the People roster's (an office row's Dismiss).
+		var verbs = _main._people_panel._verbs
 		verbs.sync(_main._state, _main._loader)
-		verbs.select_portfolio("defence")
-		verbs._on_dismiss()
+		verbs.dismiss("defence")
 	if _dissolve_confirm:
 		var button = _main._government_panel._dissolve_button
 		button.sync(_main._state, _main._state.player())

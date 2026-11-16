@@ -1,9 +1,9 @@
 extends Button
 
-## The Dissolve verb, one button with two homes -- V5.2 b+ (R3, gate b: "button
-## disolve should be in parliament ? i looked in parliament but was in gov").
-## Government > Politics has carried it since V1.1c; the Legislature carries the
-## same button now, read off the same rule, so the two cannot disagree.
+## The Dissolve verb -- V5.2 b+ (R3, gate b: "button disolve should be in parliament ?
+## i looked in parliament but was in gov"). Government > Politics carried it from V1.1c
+## and the Legislature a twin from V5.2 b+; since rework 1 it has ONE home, Parliament >
+## Majority (government_panel.gd), and Bills carries none.
 ##
 ## Three ways, as V1.1c set them: absent where the rule forbids the command
 ## outright, disabled with the sim's reason where it does not apply right now, and

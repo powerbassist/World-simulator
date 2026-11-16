@@ -108,7 +108,7 @@ func _check_default_and_closure() -> void:
 func _check_aid_words() -> void:
 	var ns = _main._state.player()
 	var action = _action("industrial_subsidy")
-	var expected := AidWords.caption(_main._loader, ns, _major, action)
+	var expected := AidWords.caption(_main._state, _main._loader, ns, _major, action)
 	var per_year := CompaniesAid.per_year(ns, _major, 0.6)
 	var point := float(_main._loader.taxes["income"]["base_share"]) * float(ns.gdp_eur_bn) / 100.0
 	if not expected.contains(Num.f(per_year / point, 2)):
@@ -141,8 +141,9 @@ func _check_focused_strip() -> void:
 		var figure: String = String(pair[0]) + CompanyVerb.thousands(absf(roundf(float(pair[1]) / 100.0) * 100.0))
 		if float(pair[1]) >= 100.0 and not expected.contains(figure):
 			_fail("the net jobs line '%s' does not carry %s" % [expected, figure])
-	var factor := CompaniesAid.credit_factor(ns, _main._loader, String(_major.id))
-	var scaled := AidWords.offsets(_main._loader, ns, _major, action)
+	# The factor execute() would book (granted_credit), not the live read (pass 2 on #390).
+	var factor := CompaniesAid.granted_credit(_main._state, ns, _main._loader, action, String(_major.id))
+	var scaled := AidWords.offsets(_main._state, _main._loader, ns, _major, action)
 	var raw: Dictionary = action.effects["bloc_offset"]
 	for bloc in raw:
 		if absf(float(scaled[bloc]) - float(raw[bloc]) * factor) > 1e-9:
@@ -166,7 +167,7 @@ func _check_granted() -> void:
 	# The withdrawal's blocs as the press books them (QA's T1 on #381): the grant kept its
 	# credit on the entry, and a preview on a copy books exactly what the strip prints.
 	var withdraw = _action("withdraw_support")
-	var shown := AidWords.offsets(_main._loader, ns, _major, withdraw)
+	var shown := AidWords.offsets(_main._state, _main._loader, ns, _major, withdraw)
 	var copy = Companies.preview(_main._state, ns, _main._loader.company_actions, withdraw, String(_major.id), _main._loader)[0]
 	for bloc in withdraw.effects["bloc_offset"]:
 		var booked := float(copy.bloc_offset.get(bloc, 0.0)) - float(ns.bloc_offset.get(bloc, 0.0))
