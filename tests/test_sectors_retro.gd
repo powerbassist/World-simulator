@@ -57,6 +57,7 @@ func _process(_delta: float) -> bool:
 		10:
 			_check_drag_end_rebuilds()
 			_check_disabled_go_says_why()
+			_check_hidden_mid_drag_releases()
 			_panel._good_filter = "x"
 			_panel._firm_id = "x"
 			_panel._prog_pick = 1
@@ -149,6 +150,17 @@ func _check_disabled_go_says_why() -> void:
 			_fail("'Put it in the finance bill' is disabled and nothing says why")
 	ns.sector_investment["industry"] = before
 	_panel._prog_pick = -1
+
+
+## A tab hidden while its slider is held never sees the release: it must not stay frozen.
+func _check_hidden_mid_drag_releases() -> void:
+	for node in _panel.find_children("*", "HSlider", true, false):
+		if node.has_meta("programme"):
+			(node as HSlider).drag_started.emit()
+	_main._windows.open("companies")
+	_main._windows.open(TAB)
+	if _panel._dragging:
+		_fail("a tab hidden under a held slider stays frozen (no rebuild until a load)")
 
 
 func _check_load_forgets() -> void:

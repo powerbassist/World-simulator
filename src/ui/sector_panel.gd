@@ -117,11 +117,11 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
-	# A setup() after the first is a load: the discarded game's picks go with it (the retro review's item 7).
+	# A setup() after the first is a load: the discarded game's picks go with it (the retro review's item 7). The confirm
+	# card stays: it sits on the screen stack once and is re-armed by each ask (CompanyVerb.ask).
 	_good_filter = ""
 	_firm_id = ""
 	_focus_verb = ""
-	_confirm = null
 	_last_refusal = ""
 	_prog_pick = -1
 	_dragging = false
@@ -129,6 +129,12 @@ func setup(state, loader) -> void:
 
 func mark_dirty() -> void:
 	_dirty = true
+
+
+## A tab hidden under a held slider never sees the release: the hold ends with it, or the tab stays frozen.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree():
+		_dragging = false
 
 
 func hide_close_button() -> void:
