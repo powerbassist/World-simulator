@@ -101,18 +101,19 @@ static func _say_again(main, text: String) -> void:
 ## manager's one sweep (its `dirtied`), and an inbox card closed or dismissed changes what holds the clock without one.
 ## Coalesced: a command that sweeps twice, or closes a card as it sweeps, ranks once, at the frame's end.
 static func follow(main) -> void:
-	main._windows.dirtied.connect(_queue_rerank.bind(main))
-	main._hud.inbox.card_closed.connect(_queue_rerank.bind(main).unbind(1))
-	main._hud.inbox.card_dismissed.connect(_queue_rerank.bind(main).unbind(1))
+	main._windows.dirtied.connect(queue_rerank.bind(main))
+	main._hud.inbox.card_closed.connect(queue_rerank.bind(main).unbind(1))
+	main._hud.inbox.card_dismissed.connect(queue_rerank.bind(main).unbind(1))
 
 
-static func _queue_rerank(main) -> void:
+static func queue_rerank(main) -> void:
 	if not main.has_meta(RERANK_QUEUED):
 		main.set_meta(RERANK_QUEUED, true)
 		_rerank_queued.bind(main).call_deferred()
 
 
-## Not under an open read: its Go buttons index the lines it shows (it ranks again when it opens).
+## Not under an open read: its Go buttons index the lines it shows (it ranks again when it opens, and its close
+## queues one, BriefingDriver.close).
 static func _rerank_queued(main) -> void:
 	if not is_instance_valid(main):
 		return

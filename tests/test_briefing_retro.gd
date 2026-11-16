@@ -22,7 +22,7 @@ const Programme = preload("res://src/sim/programme.gd")
 
 const SLOT := "__test_briefing_retro__"
 ## A line no ranking makes: still there after an answer, the mark was not re-ranked.
-const STALE := {"kind": "stale", "subject": "stale", "standing": false, "held": false}
+const STALE := {"kind": "stale", "subject": "stale", "standing": false, "held": false, "deadline_month": -1, "more": 0}
 
 var _failures: Array[String] = []
 var _main
@@ -63,27 +63,38 @@ func _process(_delta: float) -> bool:
 			_main._windows.mark_all_dirty()
 		5:
 			_check_reranked("a command's sweep of the windows")
+			# Under an open read the re-rank waits (its Go buttons index the lines shown); the
+			# read's close runs it, or a file answered from the folder stays named on the mark.
+			BriefingDriver.read(_main)
+			_game()["lines"] = [STALE]
+			_main._windows.mark_all_dirty()
+		6:
+			if not (_game()["lines"] as Array).has(STALE):
+				_fail("premise: the re-rank ran under the open read")
+			BriefingDriver.close(_main)
+		7:
+			_check_reranked("closing the read after a command under it")
 			var error := SaveManager.save_game(_main._state, _main._clock, SLOT)
 			if error != "":
 				_fail("could not save: %s" % error)
 				return _end()
-		6:
+		8:
 			# The discarded game's ranking, which must not come back after the load.
 			_game()["memory_before"] = {"last": [STALE]}
 			_game()["lines"] = [STALE]
 			_game()["report"] = {"stale": true}
 			_main._on_load_requested(SLOT)
-		8:
+		10:
 			_check_load_forgets_the_ranking()
 			_game()["lines"] = [STALE]
 			_main._hud.inbox.card_closed.emit("__any__")
-		9:
+		11:
 			_check_reranked("a card closed after a load")
 			if not _main._hud.title_bar.chief_mark.visible:
 				_fail("a card closed after a load took the loaded game's mark down")
 			_cleanup()
 			_main.queue_free()
-		11:
+		13:
 			_finish()
 			return true
 	return false

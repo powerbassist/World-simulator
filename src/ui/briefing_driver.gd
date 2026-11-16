@@ -325,6 +325,7 @@ static func close(main) -> void:
 		return
 	game["card"].hide()
 	game["card"].dismissed.emit()
+	ChiefMarkView.queue_rerank(main)  # a command under the read was not ranked (ChiefMarkView.follow)
 	var held := _holding_event(main)
 	if bool(game["was_running"]) and held.is_empty() and not main._paused_for_programme:
 		main._clock.paused = false
