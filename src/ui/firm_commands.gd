@@ -26,6 +26,13 @@ static func invest(panel, action) -> void:
 	var sector := String(action.effects.get("investment", {}).get("sector", ""))
 	var tabling := FinanceBill.table(panel._state, panel._loader, {"programmes": {sector: String(action.id)}})
 	panel._dirty = true
+	# No trend card, but the state moved: the windows' one sweep, which the chief's mark
+	# re-ranks on (ChiefMarkView.follow). The panel holds no route to it: its ancestor does.
+	var windows: Node = panel
+	while windows != null and not windows.has_method("mark_all_dirty"):
+		windows = windows.get_parent()
+	if windows != null:
+		windows.mark_all_dirty()
 	# RF7: the row's own refusal names the programme; any other (a law in the slot, a
 	# finance bill queued, a rate out of range) is the bill's, said as every tabling says it.
 	if tabling.get("tabled", false):

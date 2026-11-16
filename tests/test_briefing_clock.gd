@@ -11,7 +11,7 @@ extends SceneTree
 ##   - the month's ranking is still stored, and the chief's mark in the title bar
 ##     names its first line (title and deadline chip);
 ##   - when he speaks, his line is a caption under the mark (no dim, no key), and the
-##     voice he says it in is gated on the caption, not on the card;
+##     voice he says it in is gated on his mark, not on the card (the caption hides on a timer);
 ##   - a real click on the mark opens the read he was asked for: it holds the clock
 ##     while it is open, the clock line says so, and a real click on Continue gives
 ##     the speed back;

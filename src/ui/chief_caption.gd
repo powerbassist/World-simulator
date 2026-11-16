@@ -5,7 +5,8 @@ extends PanelContainer
 ## under the mark for the length of it, over the running clock: no dim, no key, and
 ## the mouse goes through it to whatever it covers (the right end of the figure strip
 ## for a few seconds -- a figure there is still read on the map's own plates).
-## voice.gd requires the line on screen while it is said; this is where it is.
+## voice.gd requires the line on screen while it is said; this is where it is. A line
+## queued behind a messenger starts after this caption's timer: ChiefMarkView puts it back.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
