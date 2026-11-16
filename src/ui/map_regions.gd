@@ -32,8 +32,9 @@ var _tint := {}
 var _map
 var _last_key := []
 var selected := ""
-## The regions' lon/lat box, and the screen rect the map frames them in when the tab opens
-## (the map right of the narrow dock, left of the inbox: regions_shell.gd sets it).
+## The regions' lon/lat box, and the screen rect the map frames them in (fit(): the tab's
+## open, a load, "All regions") -- the map right of the narrow dock, left of the inbox
+## (regions_shell.gd sets it).
 var _bounds := Rect2()
 var fit_rect := Rect2()
 ## region id -> its cities' lon/lat: a figure's chip steps off them (regions_shell.gd sets it).
@@ -64,16 +65,19 @@ func setup(map, region_ids: Array, rings: Dictionary, holed := {}) -> void:
 	_holed = holed
 	_layout_rev += 1
 	_shapes.clear()
+	# A re-bind after a load is another nation: its box, not the old one merged with it.
+	_bounds = Rect2()
 	for id in region_ids:
 		var verts := PackedVector2Array()
 		var best_area := -1.0
 		var at := Vector2.ZERO
-		for ring: PackedVector2Array in rings.get(id, []):
-			var tri := Geometry2D.triangulate_polygon(ring)
-			if tri.is_empty():
-				continue
+		# The fill from the region's own polygons, holes cut out (Berlin is a hole in
+		# Brandenburg: a fill from the outer ring painted the host's tint under the city's).
+		for piece: PackedVector2Array in _fill_pieces(holed.get(id, []), rings.get(id, [])):
+			var tri := Geometry2D.triangulate_polygon(piece)
 			for i in tri:
-				verts.append(ring[i])
+				verts.append(piece[i])
+		for ring: PackedVector2Array in rings.get(id, []):
 			var box := _box(ring)
 			if box.get_area() > best_area:
 				best_area = box.get_area()
@@ -223,6 +227,31 @@ func select(region_id: String) -> void:
 	queue_redraw()
 
 
+## The one framing owner (#391 pass 2): the tab's open, a load and "All regions" ask for the
+## nation framed after this frame's layout; anything that centres the map itself (a region's
+## pick, the arrival card's Open, a city opened where the map is) cancels it, and must do so
+## AFTER the open that requested it (the open's visibility change is the request). Pending
+## only until the deferred call runs.
+var _fit_pending := false
+
+
+func request_fit() -> void:
+	if not _fit_pending:
+		_fit_pending = true
+		call_deferred("_fit_if_pending")
+
+
+func cancel_fit() -> void:
+	_fit_pending = false
+
+
+func _fit_if_pending() -> void:
+	# Not once the tab has closed again in the same frame: the map is the player's then.
+	if _fit_pending and visible:
+		fit()
+	_fit_pending = false
+
+
 ## Frame the nation in fit_rect: zoom so its box fills nine tenths of the rect, then pan its
 ## centre to the rect's, through the map's own zoom and pan (which clamp as they always do).
 func fit() -> void:
@@ -283,6 +312,53 @@ func _draw() -> void:
 		draw_rect(chip, UiTheme.EDGE, false, 1.0)
 		var baseline := Vector2(chip.position.x + CHIP_PAD.x, chip.position.y + CHIP_PAD.y + font.get_ascent(label_size()))
 		draw_string(font, baseline, label_of(id), HORIZONTAL_ALIGNMENT_LEFT, -1, label_size(), UiTheme.TEXT)
+
+
+## The polygons a region's fill is triangulated from: each of its polygons (an outer ring
+## then its holes, loader.region_rings' shape) with the holes cut out, or the outer `rings`
+## alone when the region has no holed entry. Geometry2D.clip_polygons() hands an enclosed hole
+## back as a second, reversed polygon rather than cutting it, so each piece is first split by
+## a vertical line through the hole: in either half the hole reaches the edge and clips away.
+static func _fill_pieces(polygons: Array, rings: Array) -> Array:
+	if polygons.is_empty():
+		return rings
+	var out: Array = []
+	for polygon in polygons:
+		if (polygon as Array).is_empty():
+			continue
+		var pieces: Array = [polygon[0]]
+		for h in range(1, (polygon as Array).size()):
+			var hole: PackedVector2Array = polygon[h]
+			if hole.size() < 3:
+				continue
+			var x := _box(hole).get_center().x
+			var halves: Array = []
+			for piece: PackedVector2Array in pieces:
+				var box := _box(piece).grow(1.0)
+				halves.append_array(Geometry2D.intersect_polygons(piece, _rect_ring(Rect2(box.position, Vector2(x - box.position.x, box.size.y)))))
+				halves.append_array(Geometry2D.intersect_polygons(piece, _rect_ring(Rect2(Vector2(x, box.position.y), Vector2(box.end.x - x, box.size.y)))))
+			pieces = []
+			for half: PackedVector2Array in halves:
+				pieces.append_array(_solid(Geometry2D.clip_polygons(half, hole)))
+		out.append_array(pieces)
+	return out
+
+
+## A clip's outer polygons: a hole comes back wound the other way from its boundary, which is
+## the largest polygon of the result.
+static func _solid(polygons: Array) -> Array:
+	if polygons.size() < 2:
+		return polygons
+	var largest: PackedVector2Array = polygons[0]
+	for p: PackedVector2Array in polygons:
+		if _box(p).get_area() > _box(largest).get_area():
+			largest = p
+	var clockwise := Geometry2D.is_polygon_clockwise(largest)
+	return polygons.filter(func(p: PackedVector2Array) -> bool: return Geometry2D.is_polygon_clockwise(p) == clockwise)
+
+
+static func _rect_ring(r: Rect2) -> PackedVector2Array:
+	return PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)])
 
 
 static func _box(ring: PackedVector2Array) -> Rect2:
