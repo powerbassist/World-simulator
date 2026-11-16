@@ -11,6 +11,9 @@ extends PanelContainer
 
 signal confirmed
 
+## Every card's group: a load closes them all at once (close_all), whatever verb asked.
+const GROUP := "confirm_card"
+
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ScreenStack = preload("res://src/ui/screen_stack.gd")
 
@@ -31,8 +34,16 @@ static func on_stack(from: Node):
 	return card
 
 
+## A load: every card still asking comes down unanswered. Its question was asked of the
+## discarded game; a Yes would run that verb against the loaded one.
+static func close_all(from: Node) -> void:
+	for card in from.get_tree().get_nodes_in_group(GROUP):
+		(card as Control).hide()
+
+
 func _ready() -> void:
 	name = "ConfirmCard"  # i18n: ok a node name, found by tests
+	add_to_group(GROUP)
 	custom_minimum_size = Vector2(360, 0)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

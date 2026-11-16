@@ -169,6 +169,8 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	if _dissolve_button != null:
+		_dissolve_button.forget()  # a setup() after the first is a load
 
 
 ## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).

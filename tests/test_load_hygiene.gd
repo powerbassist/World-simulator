@@ -111,6 +111,21 @@ func _act_in_the_france_game() -> void:
 		_confirm = people._verbs._confirm
 		if _confirm == null or not _confirm.visible:
 			_fail("premise: no removal confirm card up in the France game")
+	# Two more confirms from other verbs, each on its own card: the Assembly's dissolution and
+	# an irreversible firm verb. A load closes every one, whatever asked it (the load's own
+	# ConfirmCard.close_all, not each verb's).
+	var dissolve = _main._government_panel._dissolve_button
+	dissolve.sync(_main._state, ns)
+	dissolve.pressed.emit()
+	if companies != null:
+		var firms: Array = preload("res://src/sim/companies.gd").firms_of(_main._loader, ns.id)
+		for action in _main._loader.company_actions:
+			if bool(action.irreversible) and not firms.is_empty():
+				preload("res://src/ui/firm_commands.gd").act(companies, ns, firms[0], action)
+				break
+	var up: Array = _main.find_children("ConfirmCard", "", true, false).filter(func(c) -> bool: return (c as Control).visible)
+	if up.size() < 3:
+		_fail("premise: %d confirm cards up before the load, not the removal's, the dissolution's and the firm verb's" % up.size())
 
 
 func _save_another_nation() -> void:

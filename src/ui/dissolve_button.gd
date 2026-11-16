@@ -40,6 +40,11 @@ func _init() -> void:
 	ActsOn.tag(self, ["seats"])
 
 
+## A load: the question asked of the discarded game goes (its card is closed by the load).
+func forget() -> void:
+	_asked_due = 0
+
+
 func sync(state, ns) -> void:
 	_state = state
 	visible = not NO_COMMAND.has(String(ns.dissolution_rule))

@@ -235,6 +235,8 @@ static func card_called(main) -> void:
 ## answered only from Dispatches), and the latest consequence card (C6).
 static func restore_after_load(main) -> void:
 	Voice.stop(main)  # the previous game's line ends with it
+	# Every verb's open question too, here because main.gd's load path is at its size ratchet.
+	preload("res://src/ui/confirm_card.gd").close_all(main)
 	for entry in main._state.player().event_queue:
 		push(main, Events.event_by_id(main._loader, String(entry.get("event_id", ""))), entry)
 	EffectsLedger.restore_card(main._state, main._hud.inbox)
