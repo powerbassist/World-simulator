@@ -134,6 +134,7 @@ static func _rerank_queued(main) -> void:
 ## from no memory, so its mark is up at once, not blank until its first month end (#393 pass 2, T2).
 static func after_load(main, game: Dictionary) -> void:
 	game.erase("report")
+	game.erase("effects")
 	game.erase("month_cards")  # held for the discarded game's month end (a load from the pause menu)
 	game["pending"] = {}
 	game["memory_before"] = {}
@@ -179,7 +180,16 @@ static func _push_read(main, lines: Array, who: String, face: Texture2D, chief) 
 	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said,
 		"feel": preload("res://src/ui/feelings.gd").of(main._state.player(), String(chief.id)) if chief != null else {},
 		"also": also_groups(main, lines.size(), game.get("also", [])),
-		"effects": BriefingEffects.lines(main._state, main._loader, game.get("report", {}))})
+		"effects": _month_effects(main, game)})
+
+
+## The month's booked effects (the retired plate's "What your choices did"), worked out once a month: they
+## change only at the month's end, and a read is pushed on every re-rank (pass 1 on #403).
+static func _month_effects(main, game: Dictionary) -> Array:
+	if String(game.get("effects_for", "")) != month_key(main) or not game.has("effects"):
+		game["effects"] = BriefingEffects.lines(main._state, main._loader, game.get("report", {}))
+		game["effects_for"] = month_key(main)
+	return game["effects"]
 
 
 ## The footer's groups, folded by kind, each Go its first item's (an index past the lines into

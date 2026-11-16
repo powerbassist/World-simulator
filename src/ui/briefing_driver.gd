@@ -148,6 +148,7 @@ static func _rank_month(main, game: Dictionary, report: Dictionary) -> bool:
 		Music.follow(main, Priorities.situation(game["pending"]["lines"]), Trends.months_to_vote(state, state.player()),
 			state.get_instance_id())
 	game["report"] = report
+	game.erase("effects")  # the month's booked effects are read from this report (ChiefMarkView._month_effects)
 	return true
 
 

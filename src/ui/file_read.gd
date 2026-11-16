@@ -65,6 +65,15 @@ static func desk_entry(main, event_id: String) -> Dictionary:
 	return _event(main, "", event_id, {"actions": answers})
 
 
+## A desk entry's deadline for the Folder's list, short ("" once it has left the desk), without its page.
+static func desk_by_text(main, event_id: String) -> String:
+	var now := int(main._state.year) * 12 + int(main._state.month)
+	for entry in main._state.player().event_queue:
+		if String(entry.get("event_id", "")) == event_id:
+			return _by(now + int(entry.get("months_left", 0)) - 1, true)
+	return ""
+
+
 ## The file's name in the folder's list: a request is its person (the page says what they ask), anything
 ## else the row's own title.
 static func list_title(main, file: Dictionary) -> String:

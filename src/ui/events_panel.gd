@@ -134,6 +134,9 @@ func select(key: String) -> void:
 	_selected = key
 	_wanted_group = ""
 	_dirty = true
+	# A note the player picks is the news read; one shown by the fallback or a rebuild is not (pass 1).
+	if key.begins_with("note:") and _main != null:
+		_main._hud.inbox.news_seen()
 	if _list != null and _main != null:
 		_refresh()
 
@@ -171,25 +174,24 @@ func _refresh() -> void:
 	var keys: Array = _groups[ANSWER] + _groups[DECIDED] + _groups[NEWS]
 	if _wanted_group != "" and not (_groups[_wanted_group] as Array).is_empty():
 		_selected = String(_groups[_wanted_group][0])
+		if _wanted_group == NEWS:
+			_main._hud.inbox.news_seen()  # the News line pressed: the player came for the news
 	elif not keys.has(_selected):
 		# A file gone while shown (answered, lapsed, a load): the next thing waiting, else the last decision,
 		# else the newest news -- never a blank page beside a list that has something.
 		_selected = String((_groups[ANSWER] + _groups[DECIDED] + _groups[NEWS] + [""])[0])
 	_wanted_group = ""
-	if _selected.begins_with("note:"):
-		_main._hud.inbox.news_seen()
 	_build_list(ns)
 	_build_page(ns)
 
 
 func _read_groups(ns) -> void:
 	var answer: Array = []
-	var carded := {}
+	var carded := {}  # event ids whose card is still a file of the inbox
 	for file in InboxFiles.list(_main._hud.inbox):
 		answer.append("file:" + String(file["id"]))
-	for card_id in _main._event_cards:
-		if InboxFiles.of(_main._hud.inbox, String(card_id)).size() > 0:
-			carded[String(_main._event_cards[card_id])] = true
+		if _main._event_cards.has(file["id"]):
+			carded[String(_main._event_cards[file["id"]])] = true
 	for entry in ns.event_queue:
 		var event_id := String(entry.get("event_id", ""))
 		if not carded.has(event_id) and Events.event_by_id(_loader, event_id) != null:
@@ -276,7 +278,7 @@ func _answer_title(key: String) -> String:
 
 func _answer_date(key: String) -> String:
 	if key.begins_with("desk:"):
-		return String(FileRead.desk_entry(_main, key.trim_prefix("desk:")).get("by_text", ""))
+		return FileRead.desk_by_text(_main, key.trim_prefix("desk:"))
 	return FileRead.by_text(_main, InboxFiles.of(_main._hud.inbox, key.trim_prefix("file:")), true)
 
 

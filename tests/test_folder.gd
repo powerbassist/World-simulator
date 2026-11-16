@@ -349,6 +349,17 @@ func _check_nothing_to_answer_shows_the_news() -> void:
 	_open_tab()
 	if not _panel().selected().begins_with("note:"):
 		_fail("with nothing to answer or decided the Folder shows no page (selected '%s')" % _panel().selected())
+	# Pass 1 finding: shown by the fallback, or rebuilt under a shown note, it is not the player reading
+	# the news: the count waits for the News line or a note picked in the list.
+	if _main._hud.inbox.news_count() != 1:
+		_fail("the Folder's fallback to a note reset the News count (%d)" % _main._hud.inbox.news_count())
+	_main._hud.inbox.push("A leak", "A memo reaches the press.")
+	_panel()._refresh()
+	if _main._hud.inbox.news_count() != 2:
+		_fail("a rebuild under a shown note reset the News count (%d)" % _main._hud.inbox.news_count())
+	_panel().select("note:" + String(_main._hud.inbox.notes()[0]["id"]))
+	if _main._hud.inbox.news_count() != 0:
+		_fail("a note picked in the list did not count the news read (%d)" % _main._hud.inbox.news_count())
 	ns.event_history = history
 	_clear_desk()
 
