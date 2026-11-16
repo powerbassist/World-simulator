@@ -111,6 +111,17 @@ func _act_in_the_france_game() -> void:
 		_confirm = people._verbs._confirm
 		if _confirm == null or not _confirm.visible:
 			_fail("premise: no removal confirm card up in the France game")
+		# A chip other than the default pressed, a name typed in the search, a refusal left on
+		# the verbs (QA's TAKE on #396: no act reached these three resets).
+		for button in people._chips.get_children():
+			if String(button.get_meta("chip", "")) != "needs":
+				button.pressed.emit()
+				break
+		people._search.text = "old game"
+		people._search.text_changed.emit("old game")
+		people._verbs._refused("Refused in the old game.")
+		if people._chip == "needs" or people._verbs.status_text() == "":
+			_fail("premise: the People tab's chip or refusal did not take")
 	# Two more confirms from other verbs, each on its own card: the Assembly's dissolution and
 	# an irreversible firm verb. A load closes every one, whatever asked it (the load's own
 	# ConfirmCard.close_all, not each verb's).
@@ -153,6 +164,11 @@ func _check_no_panel_keeps_the_old_game() -> void:
 			_fail("a confirm card asked in the old game is still up after a load (%s)" % card.get_path())
 	if _confirm == null or not is_instance_valid(_confirm):
 		_fail("premise: the removal's confirm card is gone")
+	# Two of the People tab's are a node's text, not a script variable: read them directly.
+	for side in [[_main, "the played game"], [_fresh, "a fresh game"]]:
+		var people = side[0]._windows.content("people")
+		if people._search.text != "" or people._verbs.status_text() != "":
+			_fail("after a load in %s the People tab keeps search '%s', refusal '%s'" % [side[1], people._search.text, people._verbs.status_text()])
 	var caught := 0
 	for i in played.size():
 		var a: Dictionary = _plain_fields(played[i])
