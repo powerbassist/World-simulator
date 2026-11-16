@@ -57,6 +57,11 @@ static func build(parent: Control, meta: Array, face_id: String, feel: Dictionar
 	press.button_pressed = picked
 	press.focus_mode = Control.FOCUS_ALL
 	press.set_meta("line", String(meta[1]))
+	# A line is un-focused only by focusing another (a rebuild): a second click on the
+	# focused one must not un-press it (pass 2 on #388).
+	press.toggled.connect(func(on: bool) -> void:
+		if not on:
+			press.set_pressed_no_signal(true))
 	wrap.add_child(press)
 	var pad := MarginContainer.new()
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -74,8 +79,10 @@ static func build(parent: Control, meta: Array, face_id: String, feel: Dictionar
 	else:
 		face = Control.new()
 	face.custom_minimum_size = FACE
-	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(face)
+	# The portrait's own parts stop the pointer (pass 2 on #388: a click on the face was
+	# dead and the card hid): every cell over the press target lets it through.
+	_let_through(face)
 	var first: Dictionary = cells[0]
 	var name := VBoxContainer.new()
 	name.add_theme_constant_override("separation", 0)
@@ -104,6 +111,13 @@ static func build(parent: Control, meta: Array, face_id: String, feel: Dictionar
 	press.mouse_entered.connect(func() -> void: hover.call(hover_id))
 	press.mouse_exited.connect(func() -> void: unhover.call())
 	return wrap
+
+
+static func _let_through(node: Node) -> void:
+	if node is Control:
+		(node as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		_let_through(child)
 
 
 static func _cells_box() -> HBoxContainer:

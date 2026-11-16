@@ -221,7 +221,7 @@ func _offices(query := "") -> bool:
 		return query == "" or ("%s %s %s" % [r["office"], r["party"], _loader.person_name(String(r["leader_id"]))]).to_lower().contains(query.to_lower()))
 	if rows.is_empty():
 		return false
-	PanelKit.heading(_body, tr("The government: %d offices") % rows.size())
+	PanelKit.heading(_body, tr_n("The government: %d office", "The government: %d offices", rows.size()) % rows.size())
 	for row in rows:
 		var f := String(row["portfolio"])
 		var picked := _picked == ["office", f]

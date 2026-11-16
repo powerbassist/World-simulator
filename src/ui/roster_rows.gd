@@ -95,7 +95,11 @@ static func _pool(state, loader, chip: String) -> Array:
 	if chip != "abroad":
 		for person in loader.people.get(String(ns.id), []):
 			var pid := String(person.id)
-			if pid == president or String(person.kind) == "executive":
+			if pid == president:
+				continue
+			# Firm chiefs stay in Sectors -- except on "Needs you" and in a search: one who
+			# asks to see the president counts in the title bar's requests (pass 2 on #388).
+			if String(person.kind) == "executive" and not (chip == "" or chip == "needs"):
 				continue
 			if _in_chip(ns, loader, person, chip, leaders):
 				out.append(pid)
@@ -252,6 +256,21 @@ static func _first_unserved(state, loader, ns, person) -> Dictionary:
 	return {}
 
 
+## The month `portfolio` fell vacant, or -1 unknown: the latest of the events that empty
+## an office -- a dismissal (Removal's stamp), a reshuffle that left it empty
+## (Cabinet.vacate's), a resignation (ns.last_resignation) -- since a stamp is never
+## cleared when the office is filled again (pass 2 on #388: a two-year-old dismissal
+## dated a fresh resignation).
+static func _vacated(ns, portfolio: String) -> int:
+	var at := int(ns.portfolio_removed_month.get(portfolio, -1))
+	if String(ns.reshuffle_portfolio) == portfolio:
+		at = maxi(at, int(ns.reshuffle_month))
+	var resigned: Dictionary = ns.last_resignation
+	if String(resigned.get("portfolio", "")) == portfolio:
+		at = maxi(at, int(resigned.get("year", 0)) * 12 + int(resigned.get("month", 0)))
+	return at
+
+
 ## One row per portfolio: {portfolio, office, party_id, party, leader_id, vacant,
 ## delivers, delivers_tone, feels, feels_tone, owe, owe_tone, seats}.
 static func offices(state, loader) -> Array:
@@ -268,9 +287,8 @@ static func offices(state, loader) -> Array:
 			"vacant": party == null, "delivers": "", "delivers_tone": "", "feels": "", "feels_tone": "", "owe": "—", "owe_tone": "",
 			"seats": "—"}
 		if party == null:
-			var since = ns.portfolio_removed_month.get(f)
-			# A resignation leaves no stamp: then the line says nothing more than Vacant.
-			row["party"] = Strings.t("Vacant since %s") % Words.when(int(since)) if since != null else ""
+			var since := _vacated(ns, f)
+			row["party"] = Strings.t("Vacant since %s") % Words.when(since) if since >= 0 else ""
 			row["delivers"] = Strings.t("Counts half until you fill it")
 			row["delivers_tone"] = UiTheme.BAD_TEXT
 			out.append(row)
@@ -306,7 +324,7 @@ static func offices(state, loader) -> Array:
 		var ent := int(ns.cabinet_entitlement.get(party.id, 0))
 		var has := int(held.get(String(party.id), 0))
 		if has < ent:
-			row["owe"] = Strings.t("Holds %d of its %d offices") % [has, ent]
+			row["owe"] = Strings.tn("Holds %d of its %d office", "Holds %d of its %d offices", ent) % [has, ent]
 			row["owe_tone"] = UiTheme.WARN_TEXT
 		out.append(row)
 	return out
