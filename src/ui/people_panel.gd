@@ -177,6 +177,7 @@ func _refresh() -> void:
 	var query := _search.text.strip_edges()
 	if query != "":
 		var found := RosterRows.rows(_state, _loader, "", query)
+		_offices(query)
 		_group(tr("Matches (%d)") % found.size(), found, tr("Nobody of that name, party or office."))
 	elif _chip == "needs":
 		_group(tr("Needs you"), RosterRows.rows(_state, _loader, "needs", ""), tr("Nobody waits on you this month."))
@@ -209,8 +210,12 @@ func _group(title: String, rows: Array, empty: String) -> void:
 			RosterVerbs.strip(_body, _person_items(row), RosterLine.FACE.x + 20)
 
 
-func _offices() -> void:
-	var rows := RosterRows.offices(_state, _loader)
+## The office rows; a search (`query`) keeps those whose office, party or leader match it.
+func _offices(query := "") -> void:
+	var rows := RosterRows.offices(_state, _loader).filter(func(r) -> bool:
+		return query == "" or ("%s %s %s" % [r["office"], r["party"], _loader.person_name(String(r["leader_id"]))]).to_lower().contains(query.to_lower()))
+	if rows.is_empty():
+		return
 	PanelKit.heading(_body, tr("The government: %d offices") % rows.size())
 	for row in rows:
 		var f := String(row["portfolio"])

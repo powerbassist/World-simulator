@@ -151,10 +151,8 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 	var loader = main._loader
 	var id := String(request["id"])
 	var answers := Audiences.answers(main._state, ns, loader, id)
-	# The last month an answer is taken: the sim lapses a pending request AS its
-	# deadline month begins (Audiences._overdue), so the card names the month
-	# before (QA's pre-gate B TAKE 1: "Answer by AUG" lapsed on 1 AUG).
-	var last := int(request["deadline_month"]) - 1
+	# The last month an answer is taken (Audiences.answer_by, the one rule).
+	var last := Audiences.answer_by(request)
 	# c1c rule 1: a person holding something on the president takes a refusal as a
 	# broken word; the price already counts it (decline_price), the card says why.
 	var price := Audiences.decline_price(ns, loader, id)
