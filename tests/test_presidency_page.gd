@@ -50,6 +50,7 @@ var _failures: Array[String] = []
 var _main
 var _page
 var _frame := 0
+var _orphans_before := -1
 
 
 func _init() -> void:
@@ -60,6 +61,12 @@ func _init() -> void:
 func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 2:
+		return false
+	if _leak_frame > 0:
+		# Two frames on: the rebuilt rows' queue_free has run; what is left orphaned leaked.
+		if _orphans_before >= 0 and _frame >= _leak_frame + 2:
+			_check_no_leak()
+			_finish()
 		return false
 	_page = _main._overview_panel
 	if _page == null or String(_page.get_script().resource_path) != "res://src/ui/presidency_page.gd":
@@ -81,7 +88,7 @@ func _process(_delta: float) -> bool:
 	_check_the_government_reads()
 	_check_the_words()
 	_check_go()
-	_finish()
+	_start_leak_check()
 	return false
 
 
@@ -153,6 +160,7 @@ func _check_the_programme_lanes() -> void:
 		_fail("a goal without a clock says '%s' at its deadline, not 'judged at the vote'" % lane["due_text"])
 	elif timeout > 0 and String(lane["due_text"]).is_empty():
 		_fail("a goal with a clock names no deadline month")
+	_check_the_goal_tip(lane)
 	var asked: Array = []
 	_page.window_requested.connect(func(id: String) -> void: asked.append(id))
 	(_page._goal_doors[0] as Button).pressed.emit()
@@ -365,6 +373,39 @@ func _check_the_lane_geometry() -> void:
 	if not is_equal_approx(lane.future_x(40), 400.0 - TermLane.PAD) or not is_equal_approx(lane.future_x(0), lane.seam_x()):
 		_fail("the future half does not run from the seam to the vote: %s .. %s" % [lane.future_x(0), lane.future_x(40)])
 	lane.queue_free()
+
+
+## Pass 1 (#401): every refresh rebuilds the lanes; nothing it replaces may stay orphaned.
+var _leak_frame := 0
+
+
+func _start_leak_check() -> void:
+	_draw()
+	_leak_frame = _frame
+	await process_frame
+	await process_frame
+	_orphans_before = int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+	for _i in 3:
+		_page.mark_dirty()
+		_page._process(0.0)
+	_leak_frame = _frame
+
+
+func _check_no_leak() -> void:
+	var after := int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+	if after > _orphans_before:
+		_fail("three refreshes left %d orphan nodes behind (%d -> %d)" % [after - _orphans_before, _orphans_before, after])
+
+
+## The goal lane's figures are on the page as words, the chart kit's table rule: now, the goal, the clock.
+func _check_the_goal_tip(lane: Dictionary) -> void:
+	var tip := String(lane.get("tip", ""))
+	if not tip.contains(Num.f(float(lane["goal"]), 2)):
+		_fail("the goal lane's words do not name its goal %s: '%s'" % [Num.f(float(lane["goal"]), 2), tip])
+	var door: Button = _page._goal_doors[0]
+	var gutter: Control = door.get_parent().get_child(0)
+	if gutter.tooltip_text != tip:
+		_fail("the goal lane's gutter does not carry its now / goal / clock words")
 
 
 # --- helpers ----------------------------------------------------------------

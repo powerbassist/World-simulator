@@ -246,7 +246,7 @@ func _fill_term(ns) -> void:
 	for e in past:
 		months.append([int(e.get("year", 0)), int(e.get("month", 0))])
 	var head := _lane_row(null, "")
-	head.get_child(1).replace_by(_lane(TermLane.Kind.HEAD, past.size(), ahead,
+	_set_plot(head, _lane(TermLane.Kind.HEAD, past.size(), ahead,
 		{"months": months, "today": [int(_state.year), int(_state.month)]}))
 	_fill_approval(past, ahead)
 	var lanes: Array = TermReads.goal_lanes(_state, _loader)
@@ -256,7 +256,7 @@ func _fill_term(ns) -> void:
 		var to_choose := not Programme.available(_state, ns, _loader).is_empty()
 		var gutter := _gutter(tr("Programme"), tr("To choose") if to_choose else tr("None this term"))
 		var row := _lane_row(gutter, "agenda" if to_choose else "")
-		row.get_child(1).replace_by(_lane(TermLane.Kind.NOTE, past.size(), ahead, {"text":
+		_set_plot(row, _lane(TermLane.Kind.NOTE, past.size(), ahead, {"text":
 			tr("One goal, judged at the vote.") if to_choose else ""}))
 	_fill_majority(ns)
 	_fill_state(ns)
@@ -277,7 +277,7 @@ func _fill_approval(past: Array, ahead: int) -> void:
 	elif values.size() < 2:
 		PanelKit.plain_line(gutter, tr("Fills in as the months pass."))
 	_approval_lane = _lane_row(gutter, "society")
-	_approval_lane.get_child(1).replace_by(_lane(TermLane.Kind.APPROVAL, past.size(), ahead, {"values": values}))
+	_set_plot(_approval_lane, _lane(TermLane.Kind.APPROVAL, past.size(), ahead, {"values": values}))
 
 
 func _fill_goal(lane: Dictionary, past: int, ahead: int) -> void:
@@ -299,7 +299,9 @@ func _fill_goal(lane: Dictionary, past: int, ahead: int) -> void:
 	var gutter := VBoxContainer.new()
 	gutter.add_theme_constant_override("separation", 0)
 	var name := _one_line(PanelKit.plain_line(gutter, String(lane["name"]), PanelKit.Tone.PLAIN), true)  # i18n: row-ok term_reads routes it through Strings.row
-	name.tooltip_text = name.text
+	name.tooltip_text = String(lane["tip"])
+	gutter.tooltip_text = String(lane["tip"])
+	gutter.mouse_filter = Control.MOUSE_FILTER_PASS
 	var bar_row := HBoxContainer.new()
 	gutter.add_child(bar_row)
 	var bar := ProgressBar.new()
@@ -312,7 +314,7 @@ func _fill_goal(lane: Dictionary, past: int, ahead: int) -> void:
 	bar_row.add_child(bar)
 	_one_line(PanelKit.plain_line(bar_row, word, tone))
 	var row := _lane_row(gutter, String(lane["tab"]))
-	row.get_child(1).replace_by(_lane(TermLane.Kind.GOAL, past, ahead, lane))
+	_set_plot(row, _lane(TermLane.Kind.GOAL, past, ahead, lane))
 	_goal_doors.append(row.get_child(2))
 
 
@@ -323,7 +325,7 @@ func _fill_majority(ns) -> void:
 	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for part in PresidencyRows.majority(ns, _loader):
 		PanelKit.plain_line(line, String(part[0]), int(part[1]))
-	row.get_child(1).replace_by(line)
+	_set_plot(row, line)
 	_majority_door = row.get_child(2)
 
 
@@ -335,7 +337,16 @@ func _fill_state(ns) -> void:
 		_door_row(lines, String(read[0]), int(read[1]), String(read[2]))
 	# Each line is its own door (defence and services open different tabs): no lane door.
 	var row := _lane_row(_gutter(tr("The state"), ""), "")
-	row.get_child(1).replace_by(lines)
+	_set_plot(row, lines)
+
+
+## The lane's plot in place of its placeholder. replace_by() does not free the node it
+## replaces (Node.replace_by, 4.7: "the replaced node is not automatically freed"), and the
+## page rebuilds every lane on each refresh.
+func _set_plot(row: HBoxContainer, plot: Control) -> void:
+	var placeholder := row.get_child(1)
+	placeholder.replace_by(plot)
+	placeholder.free()
 
 
 ## A lane: [gutter | plot (a placeholder the caller replaces) | door]. `window` "" draws no door.

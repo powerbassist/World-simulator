@@ -91,12 +91,14 @@ func _fs() -> int:
 	return roundi(UiTheme.SIZE_MICRO * UiTheme.text_scale())
 
 
-## The values laid on the past half, newest at the seam: a short history sits at its right end.
-func _past_points(values: PackedFloat64Array, top: float, bottom: float) -> PackedVector2Array:
+## The values laid on the past half, newest at the seam: a short history sits at its right end,
+## and a field history did not always carry starts at `first` (its index among the snapshots).
+func _past_points(values: PackedFloat64Array, top: float, bottom: float, first := -1) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	var n := values.size()
+	var start := 12 - n if first < 0 else 12 - _past + first
 	for i in n:
-		out.append(Vector2(past_x(12 - n + i), _y(values[i], top, bottom)))
+		out.append(Vector2(past_x(start + i), _y(values[i], top, bottom)))
 	return out
 
 
@@ -175,7 +177,7 @@ func _draw_goal(font: Font, fs: int) -> void:
 	draw_dashed_line(Vector2(0.0, goal_y), Vector2(seam_x(), goal_y), UiTheme.TEXT_DIM, 1.0, 4.0)
 	var values: PackedFloat64Array = _data.get("values", PackedFloat64Array())
 	if values.size() >= 2:
-		draw_polyline(_past_points(values, top, bottom), UiTheme.TEXT, 2.0, true)
+		draw_polyline(_past_points(values, top, bottom, int(_data.get("first", -1))), UiTheme.TEXT, 2.0, true)
 	var chosen := int(_data.get("chosen", -1))
 	if chosen >= 0:
 		var cx := past_x(12 - _past + chosen)

@@ -24,6 +24,8 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
+const StripReadings = preload("res://src/ui/strip_readings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## The past half: the last year of polls, the span a reader compares a term against.
 const PAST_MONTHS := 12
@@ -54,8 +56,10 @@ static func ahead(state) -> int:
 
 ## One lane per entry of this term's programme, in register order:
 ## {id, name, status, fraction, values (the judged figure over `past`), goal, chosen (the
-## index in `past` where it was chosen, -1 when before the window), due (months ahead to its
-## deadline, -1 once concluded), due_text, tab (where its goal is moved)}.
+## index in `past` where it was chosen, -1 when before the window), first (the index in `past` of
+## the first value: a field history did not always carry starts late), due (months ahead to its
+## deadline, -1 once concluded), due_text, tip (now, goal and clock in words: the gutter's
+## table twin of what the lane draws), tab (where its goal is moved)}.
 static func goal_lanes(state, loader) -> Array:
 	var ns = state.player()
 	var entries := past(state)
@@ -72,16 +76,19 @@ static func goal_lanes(state, loader) -> Array:
 		if live:
 			due = to_vote if timeout <= 0 else mini(maxi(timeout - months_live, 0), to_vote)
 		var chosen := entries.size() - 1 - months_live
+		var values: PackedFloat64Array = approval(entries) if field == APPROVAL_FIELD else ChartSeries.values(entries, field)
 		out.append({
 			"id": id,
 			"name": Strings.row("programme", id, "name", String(terms.get("name", id))),
 			"status": String(entry["status"]),
 			"fraction": _fraction(ns, terms),
-			"values": approval(entries) if field == APPROVAL_FIELD else ChartSeries.values(entries, field),
+			"values": values,
+			"first": entries.size() - values.size(),
 			"goal": float(terms.get("goal_value", 0.0)),
 			"chosen": chosen if chosen >= 0 else -1,
 			"due": due,
 			"due_text": _due_text(state, terms, due, live),
+			"tip": _tip(ns, terms, entry),
 			"tab": String(AgendaPanel.GROUP_TAB.get(String(terms.get("group", "")), "agenda")),
 		})
 	return out
@@ -92,6 +99,18 @@ static func _fraction(ns, terms: Dictionary) -> float:
 		return 0.0
 	var read: Dictionary = Programme.progress_of(ns, terms)
 	return PanelKit.progress_fraction(float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
+
+
+## Now, the goal and the clock, in the Overview's words (its programme row's tooltip), so the
+## strip, the Agenda and the page word one deadline one way.
+static func _tip(ns, terms: Dictionary, entry: Dictionary) -> String:
+	if terms.is_empty():
+		return ""
+	var read: Dictionary = Programme.progress_of(ns, terms)
+	var tip := Strings.t("now %s · goal %s") % [Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2)]
+	if String(entry["status"]) == ProgrammeK.STATUS_ACTIVE:
+		tip += " · " + StripReadings.programme_clock_text(terms, entry)
+	return tip
 
 
 ## The deadline's words at its mark: the month it falls, or "judged at the vote".

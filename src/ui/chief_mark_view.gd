@@ -161,6 +161,9 @@ static func _push_read(main, lines: Array, who: String, face: Texture2D, chief) 
 static func page_go(main, index: int) -> void:
 	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
 	var all: Array = (game.get("lines", []) as Array) + (game.get("also", []) as Array)
-	if index >= 0 and index < all.size() and preload("res://src/ui/folder_driver.gd").file_of(main, all[index]) != "":
-		BriefingDriver.read(main, false)
+	if index >= 0 and index < all.size():
+		var file := String(preload("res://src/ui/folder_driver.gd").file_of(main, all[index]))
+		# Only a file still on the desk: a stale one would open the read and close it again.
+		if file != "" and not preload("res://src/ui/inbox_files.gd").of(main._hud.inbox, file).is_empty():
+			BriefingDriver.read(main, false)
 	BriefingDriver.go(main, index)
