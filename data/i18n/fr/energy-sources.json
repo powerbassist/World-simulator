@@ -1,0 +1,8 @@
+{
+  "nuclear_epr.name": "Réacteur à eau pressurisée",
+  "gas_ccgt.name": "Centrale à gaz à cycle combiné",
+  "coal_plant.name": "Centrale au charbon",
+  "wind_onshore.name": "Parc éolien terrestre",
+  "solar_park.name": "Parc solaire",
+  "hydro_scheme.name": "Aménagement hydroélectrique"
+}
