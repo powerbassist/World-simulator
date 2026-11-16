@@ -188,6 +188,18 @@ func _check_refused_city_open_stores_nothing() -> void:
 		_fail("premise: the tab opened over a scene")
 	if String(panel._game.city_id) != before:
 		_fail("a city open refused under a scene stored '%s' for the next open" % panel._game.city_id)
+	# The arrival card's Open refused the same way: the card stays for later, nothing opens.
+	var cards: Dictionary = RegionArrival._told[_main.get_instance_id()]["cards"]
+	cards["__test_card_refused__"] = _arrival_region
+	panel._game.open_region = ""
+	scene.show()
+	RegionArrival._on_go("__test_card_refused__", 0, _main)
+	scene.hide()
+	if not cards.has("__test_card_refused__"):
+		_fail("an arrival card's Open refused under a scene dropped the card")
+	if String(panel._game.open_region) != "" or _main._windows.is_open("region"):
+		_fail("an arrival card's Open refused under a scene still opened '%s'" % panel._game.open_region)
+	cards.erase("__test_card_refused__")
 
 
 func _arrival_from_a_city() -> void:

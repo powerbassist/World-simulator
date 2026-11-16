@@ -135,10 +135,8 @@ func open_city(city_id: String) -> bool:
 ## A region's sheet from outside the tab (the arrival card's Open): out of any city, the sheet
 ## open (never toggled shut), its row in view, the map on its largest city.
 func open_region_at(region_id: String) -> bool:
-	var before := String(_game.city_id)
-	_game.city_id = ""
+	_game.city_id = ""  # a hidden tab already holds none (_notification): nothing to put back
 	if not _open():
-		_game.city_id = before
 		return false
 	_game.open_region = region_id
 	_game.fund_refusal = ""
