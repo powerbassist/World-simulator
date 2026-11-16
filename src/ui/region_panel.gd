@@ -21,7 +21,6 @@ signal closed
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
-const Region = preload("res://src/core/region.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const Num = preload("res://src/ui/num.gd")
@@ -29,6 +28,8 @@ const TerritorySites = preload("res://src/ui/territory_sites.gd")
 const TerritoryCity = preload("res://src/ui/territory_city.gd")
 const RegionSheet = preload("res://src/ui/region_sheet.gd")
 const RegionTint = preload("res://src/ui/region_tint.gd")
+const RegionState = preload("res://src/ui/region_state.gd")
+const RegionAbout = preload("res://src/ui/region_about.gd")
 
 ## The figure columns, px at text size 100 %: per head, jobless, sites.
 const COLUMNS := [86.0, 76.0, 56.0]
@@ -43,26 +44,18 @@ var _pin_frames := 0
 ## main's window manager and map, for a site's Go and a region's centring (attach()).
 var _windows
 var _map
-## "" is the region list; a city id is that city's detail.
-var _city_id := ""
-## The region opened under its row, "" for none.
-var _open_region := ""
-## The development fund's two sums (region_fund.gd), held across rebuilds.
-var _fund_share := 0.0
-var _fund_years := 0
-## The last Go or Stop the finance bill refused, said under it across the rebuild the press
-## asks for ("" once a press tables, or another region opens).
-var _fund_refusal := ""
+## What a load discards: the open region, the city, the fund's sums, the map's measure.
+var _game = RegionState.new()
 var _about_open := false
 
 var _title: Label
 ## The toggle just pressed: its rebuild freed the focused button, so the new one
 ## with this key takes focus and the keyboard keeps its place.
 var _refocus := ""
-## Screen 6, slice 2: the map overlay this tab tints (map_regions.gd, set by regions_shell.gd),
-## and the measure the rail's chips picked.
+## Screen 6, slice 2: the map overlay this tab tints (map_regions.gd, set by regions_shell.gd).
 var _overlay
-var _measure := "jobless"
+## Re-binds the overlay to the nation a setup() brings (regions_shell.gd sets it).
+var rebind: Callable
 var _body: VBoxContainer
 var _back_button: Button
 var _close_button: Button
@@ -87,7 +80,7 @@ func _ready() -> void:
 
 	_back_button = PanelKit.sized(Button.new())
 	_back_button.text = tr("All regions")
-	_back_button.pressed.connect(func(): _city_id = ""; _dirty = true)
+	_back_button.pressed.connect(_all_regions)
 	_back_button.hide()
 	root.add_child(_back_button)
 	_close_button = Button.new()
@@ -100,6 +93,11 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	# A setup() after the first is a load: the discarded game's picks go with it -- a new state,
+	# so a field added later cannot survive one.
+	_game = RegionState.new()
+	if rebind.is_valid():
+		rebind.call()
 
 
 func attach(windows, map) -> void:
@@ -112,11 +110,55 @@ func hide_close_button() -> void:
 	_close_button.hide()
 
 
-## The map's route: any nation's city answers. show_city() before the window
-## opens, so the content settles before the window sizes itself around it.
+## A city's detail in place, the tab already up (its "Largest cities" buttons).
 func show_city(city_id: String) -> void:
-	_city_id = city_id
+	_game.city_id = city_id
 	_dirty = true
+
+
+## The tab's two ways in from outside it. The city's cross on the map (main.gd): the city's
+## detail, the map left where the player clicked -- framing the nation would jump it away
+## from the cross (the retro review's item 12). The city is set before the open, so the
+## content settles before the window sizes itself, and put back if the open is refused (a
+## scene holds the screen). The open's queued fit is cancelled AFTER it (map_regions.gd).
+func open_city(city_id: String) -> bool:
+	var before := String(_game.city_id)
+	show_city(city_id)
+	if not _open():
+		_game.city_id = before
+		return false
+	if _overlay != null:
+		_overlay.cancel_fit()
+	return true
+
+
+## A region's sheet from outside the tab (the arrival card's Open): out of any city, the sheet
+## open (never toggled shut), its row in view, the map on its largest city.
+func open_region_at(region_id: String) -> bool:
+	_game.city_id = ""  # a hidden tab already holds none (_notification): nothing to put back
+	if not _open():
+		return false
+	_game.open_region = region_id
+	_game.fund_refusal = ""
+	_refocus = region_id
+	_centre_on(region_id)
+	_dirty = true
+	return true
+
+
+func _open() -> bool:
+	_windows.open("region")
+	return _windows.is_open("region")
+
+
+## Back from a city to the list: the open region's city centred again, else the nation framed.
+func _all_regions() -> void:
+	_game.city_id = ""
+	_dirty = true
+	if _game.open_region != "":
+		_centre_on(_game.open_region)
+	elif _overlay != null:
+		_overlay.request_fit()
 
 
 ## A city opened from the map is a visit: the tab comes back on the regions, not
@@ -124,11 +166,12 @@ func show_city(city_id: String) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and _overlay != null:
 		_overlay.visible = is_visible_in_tree()
-		# The map is the screen: the nation framed beside the dock each time the tab opens.
+		# The map is the screen: the nation framed beside the dock each time the tab opens,
+		# unless what opened it centres the map itself (map_regions.gd's request_fit()).
 		if _overlay.visible:
-			_overlay.call_deferred("fit")
-	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree() and _city_id != "":
-		_city_id = ""
+			_overlay.request_fit()
+	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree() and _game.city_id != "":
+		_game.city_id = ""
 		_dirty = true
 
 
@@ -162,13 +205,13 @@ func _refresh() -> void:
 	for child in _body.get_children():
 		_body.remove_child(child)
 		child.queue_free()
-	var found: Dictionary = TerritoryCity.find(_loader, _city_id) if _city_id != "" else {}
+	var found: Dictionary = TerritoryCity.find(_loader, _game.city_id) if _game.city_id != "" else {}
 	var title := TerritoryCity.build(_body, _state, _loader, found) if not found.is_empty() else ""
 	if title != "":
 		_title.text = title
 		_back_button.show()
 		return
-	_city_id = ""
+	_game.city_id = ""
 	_back_button.hide()
 	var ns = _state.player()
 	var nation = _loader.nations.get(ns.id) if ns != null else null
@@ -182,12 +225,12 @@ func _refresh() -> void:
 	_body.add_child(_column_heads())
 	for region in worst_first(_state, ns, regions, access):
 		_body.add_child(_region_line(ns, regions, region, access, (sites.get(region.id, []) as Array).size()))
-		if region.id == _open_region:
+		if region.id == _game.open_region:
 			_body.add_child(_opened(ns, regions, region, access, sites.get(region.id, [])))
 	_about(ns, regions)
 	if _overlay != null:
-		_overlay.set_tint(RegionTint.rows(_state, ns, regions, access, _measure))
-		_overlay.select(_open_region)
+		_overlay.set_tint(RegionTint.rows(_state, ns, regions, access, _game.measure))
+		_overlay.select(_game.open_region)
 
 
 ## The map's measure, one chip each; the 12-month chip waits until the sample holds two months.
@@ -199,19 +242,19 @@ func _chips() -> void:
 		var chip := PanelKit.sized(Button.new())
 		chip.text = RegionTint.label(measure)
 		chip.toggle_mode = true
-		chip.button_pressed = measure == _measure
+		chip.button_pressed = measure == _game.measure
 		chip.set_meta("measure", measure)
 		chip.disabled = measure == "change" and not held
 		chip.tooltip_text = tr("No change yet: the regions are sampled once a month.") if chip.disabled else ""
-		chip.pressed.connect(func() -> void: _measure = measure; _dirty = true)
+		chip.pressed.connect(func() -> void: _game.measure = measure; _dirty = true)
 		row.add_child(chip)
 
 
 ## The map's click (regions_shell.gd): open the region's sheet without moving the map.
 func open_region(region_id: String) -> void:
-	_city_id = ""
-	_open_region = region_id
-	_fund_refusal = ""
+	_game.city_id = ""
+	_game.open_region = region_id
+	_game.fund_refusal = ""
 	_dirty = true
 
 
@@ -258,7 +301,7 @@ func _region_line(ns, regions: Array, region, access: Dictionary, site_count: in
 	pick.theme_type_variation = UiTheme.SUBROW_BUTTON
 	pick.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	pick.toggle_mode = true
-	pick.button_pressed = region.id == _open_region
+	pick.button_pressed = region.id == _game.open_region
 	pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pick.clip_text = true
 	pick.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -281,14 +324,22 @@ func _region_line(ns, regions: Array, region, access: Dictionary, site_count: in
 ## A region opened: the map centred on its largest city; its figures; the player's
 ## sites there, each with a Go; its largest cities, each opening in place.
 func _pick(region_id: String) -> void:
-	_open_region = "" if _open_region == region_id else region_id
-	_fund_refusal = ""
+	_game.open_region = "" if _game.open_region == region_id else region_id
+	_game.fund_refusal = ""
 	_refocus = region_id
-	if _open_region != "" and _map != null:
-		var city = _largest_city(region_id)
-		if city != null:
-			_map.center_on_lonlat(city.lonlat.x, city.lonlat.y)
+	if _game.open_region != "":
+		_centre_on(region_id)
 	_dirty = true
+
+
+## The map on the region's largest city; a framing queued this frame is dropped.
+func _centre_on(region_id: String) -> void:
+	var city = _largest_city(region_id) if _map != null else null
+	if city == null:
+		return
+	if _overlay != null:
+		_overlay.cancel_fit()
+	_map.center_on_lonlat(city.lonlat.x, city.lonlat.y)
 
 
 func _opened(ns, regions: Array, region, access: Dictionary, sites: Array) -> Control:
@@ -320,9 +371,7 @@ func _opened(ns, regions: Array, region, access: Dictionary, sites: Array) -> Co
 	return margin
 
 
-## The partition and the network, folded: what the register names of the nation's
-## people and output, and how the regions link. Both residuals are derived, so
-## these rows cannot disagree with the table above.
+## The partition and the network, folded (region_about.gd draws the rows).
 func _about(ns, regions: Array) -> void:
 	var toggle := PanelKit.sized(Button.new())
 	toggle.text = tr("About these figures")
@@ -335,43 +384,7 @@ func _about(ns, regions: Array) -> void:
 		toggle.call_deferred("grab_focus")
 	if not _about_open:
 		return
-	var named := 0.0
-	var named_gdp := 0.0
-	for region in regions:
-		named += Migration.region_share(ns, region.id)
-		named_gdp += region.gdp_share
-	# maxf: the named shares are a live partition the flow moves every month, and
-	# a nation whose register names all of itself can land a hair past 1.0.
-	PanelKit.row(_body, tr("Named share of the population"), "%s%%" % Num.f(named * 100.0, 1))
-	PanelKit.row(_body, tr("Unnamed — extra-regio and overseas"), "%s%%" % Num.f(maxf(0.0, 1.0 - named) * 100.0, 1))
-	PanelKit.row(_body, tr("Named share of output"), "%s%%" % Num.f(named_gdp * 100.0, 1))
-	PanelKit.row(_body, tr("Unnamed output — extra-regio"), "%s%%" % Num.f(Region.national_gdp_residual(regions) * 100.0, 1))
-	# V2.7, never silent: every region has a place on the graph, read off the edges
-	# because the line also says which links are water.
-	var land := 0
-	var sea := 0
-	var degrees := {}
-	for region in regions:
-		degrees[region.id] = 0
-	for edge in (_state.region_graph.get("edges", []) as Array):
-		var a := String(edge[0])
-		var b := String(edge[1])
-		if not degrees.has(a) and not degrees.has(b):
-			continue
-		if String(edge[3]) == "sea":
-			sea += 1
-		else:
-			land += 1
-		for end in [a, b]:
-			if degrees.has(end):
-				degrees[end] = int(degrees[end]) + 1
-	var least = null
-	for region in regions:
-		if least == null or int(degrees[region.id]) < int(degrees[least.id]):
-			least = region
-	PanelKit.row(_body, tr("Links between regions"), tr("%d by land · %d by sea") % [land, sea])
-	if least != null:
-		PanelKit.row(_body, tr("Least connected"), "%s (%d)" % [least.region_name, int(degrees[least.id])])
+	RegionAbout.rows(_body, _state, ns, regions)
 
 
 func _cities_by_size(ns, region) -> Array:

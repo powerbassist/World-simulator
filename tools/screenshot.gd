@@ -82,6 +82,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-arrival
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet change --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --text 130 --open region
@@ -658,7 +659,7 @@ var _consequence := false
 ## whole point. --region proves the Region panel builds and its five-column
 ## ledger fits. --city drives the map's own route end to end -- centred and
 ## zoomed past CITY_MIN_ZOOM on Paris, the cross hovered so the frame carries the
-## hover label, and the City panel opened through show_city() exactly as main.gd's
+## hover label, and the City panel opened through open_city() exactly as main.gd's
 ## click lambda does it.
 var _region := false
 var _city := false
@@ -2369,8 +2370,8 @@ func _stage_the_region_sheet() -> void:
 	var regions: Array = _main._loader.regions.get(ns.id, [])
 	var access: Dictionary = Regions.accessibility_for(ns, regions, state.region_graph)
 	var panel = _main._windows.content("region")
-	panel._open_region = String(panel.worst_first(state, ns, regions, access)[0].id)
-	panel._measure = _region_sheet
+	panel._game.open_region = String(panel.worst_first(state, ns, regions, access)[0].id)
+	panel._game.measure = _region_sheet
 	panel.mark_dirty()
 
 
@@ -2387,7 +2388,7 @@ func _stage_a_fund() -> void:
 	for i in ([1, 2, 3] if _fund_cap else [1]):
 		funds.start(state, ns, loader, named[i].id, low, 2)
 	var panel = _main._windows.content("region")
-	panel._open_region = String(named[1 if _fund_running else 0].id)
+	panel._game.open_region = String(named[1 if _fund_running else 0].id)
 	panel.mark_dirty()
 
 
@@ -3787,8 +3788,7 @@ func _point_at_the_capital() -> void:
 	view.zoom_by(2.0, view.size / 2.0)
 	view._hovered_city = "FR1_paris"
 	view.queue_redraw()
-	_main._region_panel.show_city("FR1_paris")
-	_main._windows.open("region")
+	_main._region_panel.open_city("FR1_paris")
 
 
 ## V1.7c. A referendum called and left in flight, so the law panel's pending block is

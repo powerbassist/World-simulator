@@ -58,8 +58,8 @@ func _process(_delta: float) -> bool:
 			_press_go()
 		9:
 			var panel = _main._windows.content("region")
-			if not _main._windows.is_open("region") or _card() != null or String(panel._open_region) != String(_worst["region"].id):
-				_fail("an older card: its Go did not land (tab open %s, card up %s, region '%s')" % [_main._windows.is_open("region"), _card() != null, panel._open_region])
+			if not _main._windows.is_open("region") or _card() != null or String(panel._game.open_region) != String(_worst["region"].id):
+				_fail("an older card: its Go did not land (tab open %s, card up %s, region '%s')" % [_main._windows.is_open("region"), _card() != null, panel._game.open_region])
 			_finish()
 	return false
 
@@ -150,8 +150,8 @@ func _check_go_landed() -> void:
 	if not _main._windows.is_open("region"):
 		_fail("Go: the Territory tab is not open")
 	var panel = _main._windows.content("region")
-	if String(panel._open_region) != String(_worst["region"].id):
-		_fail("Go: the tab opened '%s', the card named %s" % [panel._open_region, _worst["region"].id])
+	if String(panel._game.open_region) != String(_worst["region"].id):
+		_fail("Go: the tab opened '%s', the card named %s" % [panel._game.open_region, _worst["region"].id])
 	if _card() != null:
 		_fail("Go: the card is still up")
 	# The pick's own refocus: a region low in the list comes into view.

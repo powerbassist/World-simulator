@@ -62,8 +62,8 @@ func _process(_delta: float) -> bool:
 			_check_per_head()
 			_click_map(_countryside(WORST))
 		8:
-			if String(_panel._open_region) != WORST:
-				_fail("a click in the region's countryside opened '%s', not %s" % [_panel._open_region, WORST])
+			if String(_panel._game.open_region) != WORST:
+				_fail("a click in the region's countryside opened '%s', not %s" % [_panel._game.open_region, WORST])
 			if String(_overlay.selected) != WORST:
 				_fail("the open region is not ringed on the map (selected '%s')" % _overlay.selected)
 			_main._windows.open("economy")
