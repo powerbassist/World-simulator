@@ -23,6 +23,7 @@ extends SceneTree
 const Click = preload("res://tests/click.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
+const ChiefMarkView = preload("res://src/ui/chief_mark_view.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const RequestLane = preload("res://src/ui/request_lane.gd")
@@ -205,6 +206,9 @@ func _check_no_stale_line() -> void:
 	if card_id == "" or not InboxFiles.press(_main._hud.inbox, card_id, RequestLane.DECLINE):
 		_fail("premise: the request could not be declined in the inbox (card '%s')" % card_id)
 		return
+	# The re-rank runs at the frame's end (ChiefMarkView.follow): run it now.
+	if _main.has_meta(ChiefMarkView.RERANK_QUEUED):
+		ChiefMarkView._rerank_queued(_main)
 	if (game["lines"] as Array).any(func(l): return String(l["subject"]) == rid):
 		_fail("the declined request is still among the month's lines")
 	if mark.title_text() == before:
@@ -241,20 +245,24 @@ func _check_key_go() -> void:
 
 
 ## QA's RECORD on #218: a load with the read up kept the discarded game's card and its
-## was_running. The load's own restore path brings it all down: the read, the mark and
-## the caption.
+## was_running. The load's own restore path brings down the read and the caption; the mark
+## is the loaded game's, ranked at the load from no memory (#393 pass 2, T2).
 func _check_after_load() -> void:
 	var game: Dictionary = BriefingDriver._games[_main.get_instance_id()]
 	_main._clock.paused = false
 	BriefingDriver.read(_main)
 	if not _card.visible:
 		_fail("premise: the read did not open before the load")
+	game["lines"] = [{"kind": "stale", "subject": "stale", "standing": false, "held": false}]
 	preload("res://src/ui/desk_cards.gd").restore_after_load(_main)
-	if _card.visible or bool(game["was_running"]) or not (game["lines"] as Array).is_empty():
-		_fail("a load left the discarded game's briefing (card %s, was_running %s, lines %d)" % [
-			_card.visible, game["was_running"], (game["lines"] as Array).size()])
-	if _main._hud.title_bar.chief_mark.visible or _main._hud.chief_caption.visible:
-		_fail("a load left the discarded game's mark or caption up")
+	var fresh: Array = preload("res://src/ui/chief_mark_view.gd").rank(_main, {})["lines"]
+	if _card.visible or bool(game["was_running"]) or (game["lines"] as Array).size() != fresh.size() 			or (game["lines"] as Array).any(func(l): return String(l["kind"]) == "stale"):
+		_fail("a load left the discarded game's briefing (card %s, was_running %s, lines %d of %d)" % [
+			_card.visible, game["was_running"], (game["lines"] as Array).size(), fresh.size()])
+	if _main._hud.chief_caption.visible:
+		_fail("a load left the discarded game's caption up")
+	if bool(_main._state.player().in_government) and not _main._hud.title_bar.chief_mark.visible:
+		_fail("after a load the loaded game's mark is blank")
 
 
 func _shows(node: Node, text: String) -> bool:

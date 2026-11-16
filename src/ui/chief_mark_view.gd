@@ -14,6 +14,8 @@ const Staff = preload("res://src/sim/staff.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const Strings = preload("res://src/ui/strings.gd")
+## main's meta while a re-rank waits for the frame's end (follow()).
+const RERANK_QUEUED := "chief_rerank_queued"
 
 
 ## The mark from the month's first line; `rerank` ranks the month again first.
@@ -70,8 +72,9 @@ static func rank(main, memory: Dictionary) -> Dictionary:
 
 
 ## His line for the month's situation as the caption under the mark, said aloud once a
-## month (`key`), the voice gated on the caption: it waits behind a messenger only while
-## the caption is up.
+## month (`key`). The voice is gated on the mark, which stays up for the month: a line
+## queued behind a longer messenger's clip outlives the caption's reading timer, so the
+## caption comes back when the line starts (heard, so on screen: chief_caption.gd).
 static func speak(main, key: String) -> void:
 	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
 	var chief = Staff.chief_of(main._loader, String(main._state.player().id))
@@ -81,8 +84,53 @@ static func speak(main, key: String) -> void:
 	var said := BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))
 	var caption = main._hud.chief_caption
 	caption.say(String(said["text"]), main._hud.title_bar.chief_mark)
+	# Gated on the mark, not the caption: the caption hides on its reading timer, and a line queued behind a longer
+	# messenger's clip was dropped with it (the retro review's item 13).
 	if caption.visible:
-		BriefingDriver.speak_once(main, said, caption, key)
+		BriefingDriver.speak_once(main, said, main._hud.title_bar.chief_mark, key, _say_again.bind(main, String(said["text"])))
+
+
+## The queued line starts: its caption back under the mark (a bound static, no lambda: the queue outlives frames).
+static func _say_again(main, text: String) -> void:
+	if is_instance_valid(main) and main.is_inside_tree():
+		main._hud.chief_caption.say(text, main._hud.title_bar.chief_mark)
+
+
+## What re-ranks the mark, or it names a file that is gone (the retro review's item 14, #393 pass 2 T1): every player
+## command -- a dispatch, an audience's Grant or End, a law tabled, the programme, the phone -- ends in the window
+## manager's one sweep (its `dirtied`), and an inbox card closed or dismissed changes what holds the clock without one.
+## Coalesced: a command that sweeps twice, or closes a card as it sweeps, ranks once, at the frame's end.
+static func follow(main) -> void:
+	main._windows.dirtied.connect(queue_rerank.bind(main))
+	main._hud.inbox.card_closed.connect(queue_rerank.bind(main).unbind(1))
+	main._hud.inbox.card_dismissed.connect(queue_rerank.bind(main).unbind(1))
+
+
+static func queue_rerank(main) -> void:
+	if not main.has_meta(RERANK_QUEUED):
+		main.set_meta(RERANK_QUEUED, true)
+		_rerank_queued.bind(main).call_deferred()
+
+
+## Not under an open read: its Go buttons index the lines it shows (it ranks again when it opens, and its close
+## queues one, BriefingDriver.close).
+static func _rerank_queued(main) -> void:
+	if not is_instance_valid(main):
+		return
+	main.remove_meta(RERANK_QUEUED)
+	var card = BriefingDriver.card_of(main)
+	refresh(main, card == null or not card.visible)
+
+
+## A load: the ranking's memory and report go with the discarded game (left, the first card closed after the load
+## re-ranked from them and put that game's mark back up: the retro review's item 5). The loaded game is ranked now
+## from no memory, so its mark is up at once, not blank until its first month end (#393 pass 2, T2).
+static func after_load(main, game: Dictionary) -> void:
+	game.erase("report")
+	game["pending"] = {}
+	game["memory_before"] = {}
+	main._hud.chief_caption.clear()
+	refresh(main, true)
 
 
 static func clear(main) -> void:
