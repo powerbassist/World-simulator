@@ -104,12 +104,6 @@ func follow(windows, nation_name: String) -> void:
 	show_where("")
 
 
-## A loaded game may be another nation.
-func set_nation(nation_name: String) -> void:
-	_nation = nation_name
-	show_where(_where)
-
-
 ## The nation, then the domain and the tab -- or the map.
 func show_where(id: String) -> void:
 	_where = id
