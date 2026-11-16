@@ -21,6 +21,7 @@ const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceFoot = preload("res://src/ui/finance_foot.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
+const Click = preload("res://tests/click.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -28,6 +29,7 @@ var _state
 var _panel
 var _frame := 0
 var _absent := ""
+var _abolish_button: Button
 
 
 func _init() -> void:
@@ -58,9 +60,83 @@ func _process(_delta: float) -> bool:
 			_check_births_and_abolitions_are_priced()
 			_check_the_autumn_rows_leave_when_the_month_ends()
 			_check_a_bill_at_vote_locks_its_births()
+			# Pass 2's T1 and T3 on #392: a real mouse click on Abolish, frames apart, then Space.
+			_mouse_abolish_start()
+		4:
+			# A frame after the build: the containers have placed the button.
+			if _abolish_button != null:
+				Click.half(_panel.get_viewport(), _abolish_button, true)
 		5:
+			if is_instance_valid(_abolish_button):
+				Click.half(_panel.get_viewport(), _abolish_button, false)
+		7:
+			_panel.get_viewport().push_input(_space(true), true)
+			_panel.get_viewport().push_input(_space(false), true)
+		9:
+			_check_space_after_a_mouse_abolish()
+			_check_a_sweep_rebuilds_under_a_held_slider()
+		11:
 			return _finish()
 	return false
+
+
+func _space(down: bool) -> InputEventKey:
+	var key := InputEventKey.new()
+	key.keycode = KEY_SPACE
+	key.physical_keycode = KEY_SPACE
+	key.pressed = down
+	return key
+
+
+func _mouse_abolish_start() -> void:
+	_panel.shared_draft().revert()
+	if _panel._open_id != "tax_rates_pct:tobacco_duty":
+		_panel._on_open("tax_rates_pct:tobacco_duty")
+	_rebuild()
+	_abolish_button = _node("AbolishTax") as Button
+	if _abolish_button == null:
+		_fail("setup: no Abolish to click")
+		return
+
+
+## A mouse press hands the keyboard to nothing: code focus on the rebuilt "Keep it" made the next Space press it, and
+## the abolition went silently (before the PR, Space paused the clock).
+func _check_space_after_a_mouse_abolish() -> void:
+	var draft = _panel.shared_draft()
+	if _node("KeepTax") == null:
+		_fail("after a mouse click on Abolish and a Space, no abolition stands (the click missed or Space took it back)")
+	elif not draft.is_abolished("tobacco_duty"):
+		_fail("Space after a mouse click on Abolish took the abolition back")
+	var held: Control = _panel.get_viewport().gui_get_focus_owner()
+	if held != null and _panel.is_ancestor_of(held):
+		_fail("a mouse click on Abolish left code focus on %s" % held.name)
+	draft.revert()
+	_rebuild()
+
+
+## Pass 2's T2: the keyboard on a slider held every rebuild, so after the autumn month the editor still offered Abolish.
+func _check_a_sweep_rebuilds_under_a_held_slider() -> void:
+	var draft = _panel.shared_draft()
+	if _panel._open_id != "tax_rates_pct:vat":
+		_panel._on_open("tax_rates_pct:vat")
+	_rebuild()
+	if _panel._editor == null or _panel._editor._slider == null:
+		_fail("setup: VAT's editor has no slider")
+		return
+	_panel._editor._slider.grab_focus()
+	draft.toggle_abolish("tobacco_duty")
+	var autumn := int(_state.month)
+	_state.month = autumn % 12 + 1
+	_panel._paint_due = true
+	_panel._process(0.0)
+	_panel._process(0.0)
+	if _node("AbolishTax") != null:
+		_fail("past the autumn month a held slider kept the editor offering Abolish")
+	if draft.is_abolished("tobacco_duty"):
+		_fail("the sweep left the abolition in the draft")
+	_state.month = autumn
+	draft.revert()
+	_rebuild()
 
 
 func _rebuild() -> void:
@@ -200,11 +276,12 @@ func _check_a_clicked_verb_rebuilds_at_once() -> void:
 	if abolish == null:
 		_fail("the autumn offers no way to abolish a kind in force")
 		return
-	abolish.grab_focus()  # a click takes the focus
+	abolish.grab_focus()  # the focus a press leaves on the verb
+	abolish.gui_input.emit(_space(true))  # a KEYBOARD press: the last event the verb saw
 	abolish.pressed.emit()
-	# QA's RECORD on #392: the verb's press asks for the keyboard on the rebuilt editor (the button it was on is freed).
+	# QA's RECORD on #392: a keyed press asks for the keyboard on the rebuilt editor (the button it was on is freed).
 	if not _panel._focus_wanted:
-		_fail("a pressed verb does not send the keyboard to the rebuilt editor")
+		_fail("a keyed verb does not send the keyboard to the rebuilt editor")
 	_panel._process(0.0)
 	if _node("KeepTax") == null:
 		_fail("a clicked Abolish does not rebuild its editor: no way back shown")

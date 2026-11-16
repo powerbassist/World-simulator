@@ -68,6 +68,8 @@ var _open_id := ""
 var _ctx := {}
 var _editor: FinanceEditor
 var _focus_wanted := false
+## A structure change (a verb, the autumn sweep) rebuilds on the next frame even under a held lever.
+var _rebuild_now := false
 var _paint_due := true
 ## The autumn rows were taken out of the draft when the month ended: said on the deficit line until the player acts.
 var _autumn_dropped := false
@@ -166,10 +168,12 @@ func _process(_delta: float) -> void:
 		return
 	# A hand on the open row's slider or box keeps its row: the books are rebuilt when it leaves, never under it
 	# (a sweep at speed 3 would free the slider mid-drag and the box mid-typing).
-	if not _dirty or _editor_busy():
+	var held: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	if not _dirty or (held != null and is_instance_valid(_editor) and _editor.is_ancestor_of(held) and not _rebuild_now):
 		_paint(ns)
 		return
 	_dirty = false
+	_rebuild_now = false
 	# The books are read once a day and when the slot changes: a read is two copies of the state.
 	var stamp := "%d|%d|%d|%s" % [_state.year, _state.month, _state.day, str(ns.tabled_bill)]
 	if stamp != _stamp:
@@ -216,9 +220,9 @@ func _paint(ns) -> void:
 	var scale := UiTheme.text_scale()
 	_ranges.custom_minimum_size.y = ranges_height(scale)
 	if FinanceAutumn.sweep(_state, _loader, _draft):
-		_autumn_dropped = true
 		_open_id = ""
-		_dirty = true
+		_on_structure_changed()
+		_autumn_dropped = true
 	FinanceRows.paint_rates(_ctx)
 	_foot.refresh(_state, _loader, _draft, _price)
 	# A sheet with nothing to say (the draft discarded or tabled) is put away; one with a draft follows it.
@@ -282,16 +286,6 @@ func _toggle_group(group_id: String) -> void:
 	_dirty = true
 
 
-## Whether the player's hand is on the open row: the focus is inside its editor.
-func _editor_busy() -> bool:
-	if _editor == null or not is_instance_valid(_editor) or not is_inside_tree():
-		return false
-	# A verb button the click left focused is no hand on the row: it held the rebuild off, the button stayed up after
-	# Abolish and a second click took it back (the retro review's item 4).
-	var held := get_viewport().gui_get_focus_owner()
-	return held != null and _editor.is_ancestor_of(held) and not held.has_meta("verb")
-
-
 ## The page's ONE draft: the Budget tab's levers read and write it too (no second pending set).
 func shared_draft() -> FinanceDraft:
 	return _draft
@@ -351,7 +345,7 @@ func _make_editor(channel: String, key: String) -> Control:
 	editor.setup(_state, _loader, _draft, _price, channel, key)
 	editor.moved.connect(_on_moved)
 	# The verb pressed is freed by the rebuild: the keyboard lands back on the rebuilt editor.
-	editor.structure_changed.connect(_on_structure_changed.bind(true))
+	editor.structure_changed.connect(_on_structure_changed)
 	_editor = editor
 	return editor
 
@@ -367,8 +361,12 @@ func _on_create(kind: String) -> void:
 
 ## An editor's verb changed what the page lists (a birth taken back, a kind abolished or kept); `focus` sends the keyboard
 ## to the rebuilt editor.
+## A verb's press rebuilds at once, under a focus it left on itself (the retro review's item 4: the page never rebuilt,
+## Abolish stayed up and a second click took it back); `focus` is a KEYBOARD press, whose place lands on the rebuilt
+## editor. A mouse press does not: code focus there would make the next Space press the new verb (pass 2's T1).
 func _on_structure_changed(focus := false) -> void:
 	_focus_wanted = _focus_wanted or focus
+	_rebuild_now = true
 	_autumn_dropped = false
 	_paint_due = true
 	_dirty = true
