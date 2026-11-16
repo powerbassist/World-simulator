@@ -39,6 +39,10 @@ const Defence = preload("res://src/sim/defence.gd")
 const Society = preload("res://src/sim/society.gd")
 const SocietyK = preload("res://src/sim/society_constants.gd")
 const Num = preload("res://src/ui/num.gd")
+const PresidencyRows = preload("res://src/ui/presidency_rows.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ProgrammeK = preload("res://src/sim/programme_constants.gd")
+const ChiefMarkView = preload("res://src/ui/chief_mark_view.gd")
 
 const DAYS_PER_MONTH := 31
 ## The re-declared ceilings (card G; the parent accepted 170 / 60, 2026-11-16): the
@@ -76,11 +80,19 @@ func _process(_delta: float) -> bool:
 
 	_check_the_outliner_retired()
 	_check_the_lane_geometry()
+	_check_majority_tones()
+	_check_nothing_moved_one_line()
 	_draw()
 	_check_the_fresh_term()
+	_check_every_lane_keeps_its_door_space()
+	_check_the_vote_is_named()
+	_check_no_dead_requests_door()
 	_check_the_programme_lanes()
+	_check_concluded_goals()
+	_check_approval_goal_is_polled()
 	_advance_months(2)
 	_check_one_ranking()
+	_check_the_chiefs_line_is_the_spoken_one()
 	_check_the_counts()
 	_check_open_now()
 	_check_the_fold()
@@ -100,6 +112,9 @@ func _check_the_outliner_retired() -> void:
 		_fail("main.gd still registers the outliner")
 	if not src.contains("_windows.register(\"overview\", tr(\"Overview\"), _overview_panel, KEY_O"):
 		_fail("O does not open the Presidency page")
+	# T10 (#401 pass 2): Q, the Outliner's key, opens the page too (plan S1).
+	if _main._windows.id_for_key(KEY_Q) != "overview":
+		_fail("Q opens '%s', not the Presidency page" % _main._windows.id_for_key(KEY_Q))
 	var tabs: Array = []
 	for row in Domains.TABLE:
 		if String(row["id"]) == "presidency":
@@ -245,9 +260,13 @@ func _check_open_now() -> void:
 		if bool(r["visible"]):
 			expected.append_array(r["rows"])
 	var shown: Array = _page._open_rows
-	if shown.size() != mini(expected.size(), _page.OPEN_ROWS):
-		_fail("open now draws %d rows, the register has %d (cap %d)" % [shown.size(), expected.size(), _page.OPEN_ROWS])
+	if shown.size() != expected.size():
+		_fail("open now draws %d rows, the register has %d (each section capped by its own +N more)" % [shown.size(), expected.size()])
 		return
+	for section in OutlinerReadings.SECTIONS:
+		var r: Dictionary = OutlinerReadings.read(section, _main._state, _main._loader)
+		if section != "agenda" and bool(r["visible"]) and not _text(_page._open_box).contains(String(r["title"])):
+			_fail("open now drops the section title '%s'" % r["title"])
 	for i in shown.size():
 		var asked: Array = []
 		var cb := func(id: String) -> void: asked.append(id)
@@ -406,6 +425,143 @@ func _check_the_goal_tip(lane: Dictionary) -> void:
 	var gutter: Control = door.get_parent().get_child(0)
 	if gutter.tooltip_text != tip:
 		_fail("the goal lane's gutter does not carry its now / goal / clock words")
+
+
+## T2: a lane without a door keeps the door's space, so every plot is one width and the
+## head's TODAY and VOTE sit over the seam and the diamond of the lanes below.
+func _check_every_lane_keeps_its_door_space() -> void:
+	for row in _term_box_rows():
+		var door: Control = row.get_child(2)
+		if not door.visible:
+			_fail("a lane hides its door, so its plot is wider than the others")
+			return
+
+
+func _term_box_rows() -> Array:
+	var out: Array = []
+	for child in _page._term_box.get_children():
+		if child is HBoxContainer and not child.is_queued_for_deletion():
+			out.append(child)
+	return out
+
+
+## T4: the term's heading names which vote it counts to (Society counts the assembly's).
+func _check_the_vote_is_named() -> void:
+	var ns = _main._state.player()
+	var which := tr("presidential") if bool(ns.has_executive) else tr("assembly")
+	if not _text(_page._term_head).contains(which):
+		_fail("the term's heading does not name the vote: %s" % _text(_page._term_head))
+
+
+## T9: no count door that does nothing; a cut lead title keeps its full text as a tooltip.
+func _check_no_dead_requests_door() -> void:
+	var ns = _main._state.player()
+	var requests: Button = _page._count_doors["requests"]
+	if Audiences.waiting_count(ns) == 0 and not requests.disabled:
+		_fail("'0 requests waiting' is a live button that opens nothing")
+
+
+func _check_lead_tooltips() -> void:
+	for row in _page._lead_rows:
+		for child in row.get_children():
+			if child is Label and child.size_flags_horizontal == Control.SIZE_EXPAND_FILL and child.tooltip_text != child.text:
+				_fail("a lead title that can be cut has no full-text tooltip: '%s'" % child.text)
+
+
+## T6: the censure result and 49.3 are two reads, each with its own tone.
+func _check_majority_tones() -> void:
+	var ns = _main._state.player()
+	var parts: Array = PresidencyRows.majority(ns, _main._loader)
+	var censure := ""
+	var article := ""
+	for part in parts:
+		if String(part[0]).contains("49.3"):
+			article = String(part[0])
+			if String(part[0]).contains(Strings.t("A censure motion would fail: %d of %d.").substr(0, 10)):
+				_fail("the censure and 49.3 share one line: '%s'" % part[0])
+		elif String(part[0]).begins_with(Strings.t("A censure motion would fail: %d of %d.").substr(0, 10)):
+			censure = String(part[0])
+			if int(part[1]) != PanelKit.Tone.GOOD and int(part[1]) != PanelKit.Tone.BAD:
+				_fail("the censure verdict carries no tone of its own")
+	if ns.formation_method == "presidential_appointment" and (article == "" or censure == ""):
+		_fail("the majority's censure and 49.3 are not two lines: %s" % [parts])
+
+
+## T5: "nothing moved" sits on one line in its row, never wrapped one letter wide.
+func _check_nothing_moved_one_line() -> void:
+	var row: Control = PresidencyRows.effect_row({"label": "x", "month": 1, "year": 2026, "movements": []})
+	root.add_child(row)
+	for child in row.get_children():
+		if child is Label and child.text == Strings.t("nothing moved") and child.autowrap_mode != TextServer.AUTOWRAP_OFF:
+			_fail("'nothing moved' wraps inside its row")
+	row.queue_free()
+
+
+## T3: a concluded goal's chosen mark stays where it was chosen, and its bar is its verdict.
+func _check_concluded_goals() -> void:
+	var ns = _main._state.player()
+	if ns.programme.is_empty():
+		return
+	var entry: Dictionary = ns.programme[0]
+	var saved := entry.duplicate()
+	entry["status"] = ProgrammeK.STATUS_FAIL
+	entry["months_live"] = 1
+	entry["concluded_term"] = int(ns.terms_served)
+	entry["concluded_term_month"] = int(ns.months_in_term)
+	var lanes: Array = TermReads.goal_lanes(_main._state, _main._loader)
+	var before := int(lanes[0]["chosen"])
+	ns.months_in_term = int(ns.months_in_term) + 1
+	_main._state.history.append(_main._state.history[-1].duplicate() if not _main._state.history.is_empty() else {})
+	lanes = TermReads.goal_lanes(_main._state, _main._loader)
+	if before >= 0 and int(lanes[0]["chosen"]) > before:
+		_fail("a concluded goal's chosen mark slid from %d to %d as the months passed" % [before, lanes[0]["chosen"]])
+	_draw()
+	for bar in _page._term_box.find_children("*", "ProgressBar", true, false):
+		if bar.is_queued_for_deletion():
+			continue
+		if not is_zero_approx(float(bar.value)):
+			_fail("a missed goal's bar shows %.2f, not empty" % float(bar.value))
+	_main._state.history.pop_back()
+	ns.months_in_term = int(ns.months_in_term) - 1
+	ns.programme[0] = saved
+	_draw()
+
+
+## T8: an approval goal reads the polls in its bar and its words, never the true approval.
+func _check_approval_goal_is_polled() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var entry_id := ""
+	for e in _main._loader.programme:
+		if String(e.get("current_value", "")) == TermReads.APPROVAL_FIELD:
+			entry_id = String(e["id"])
+			break
+	if entry_id == "":
+		_fail("no approval goal in the programme content to check")
+		return
+	ns.programme.append({"entry_id": entry_id, "chosen_term": int(ns.terms_served), "months_live": 0,
+		"status": ProgrammeK.STATUS_ACTIVE, "concluded_term": -1, "concluded_term_month": -1})
+	var lane: Dictionary = TermReads.goal_lanes(state, _main._loader)[-1]
+	var polled := Num.f(TermReads.approval_now(state), 2)
+	if not String(lane["tip"]).contains(polled):
+		_fail("an approval goal's words read '%s', not the poll %s" % [lane["tip"], polled])
+	ns.programme.pop_back()
+
+
+## T7: the page shows the line the chief spoke at the month's end, and a re-rank does not change it.
+func _check_the_chiefs_line_is_the_spoken_one() -> void:
+	_draw()
+	var said: String = _page._said.text
+	ChiefMarkView.refresh(_main, true)
+	_draw()
+	if _page._said.text != said:
+		_fail("a mid-month re-rank changed the chief's line on the page from '%s' to '%s'" % [said, _page._said.text])
+	var game: Dictionary = BriefingDriver._games.get(_main.get_instance_id(), {})
+	var key := "%d:%d" % [_main._state.get_instance_id(), int(_main._state.year) * 12 + int(_main._state.month)]
+	var spoken := String(game.get("spoken_line", "")) if String(game.get("spoken_key", "")) == key else ""
+	if spoken != said:
+		_fail("the page's chief line '%s' is not the one he spoke this month '%s'" % [said, spoken])
+	_check_lead_tooltips()
 
 
 # --- helpers ----------------------------------------------------------------

@@ -41,8 +41,6 @@ const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 
-## Open now: the outliner's rows, at most this many (the brief's six).
-const OPEN_ROWS := 6
 ## What the country wants: the two issues the Overview kept.
 const TOP_ISSUE_COUNT := 2
 ## Past decisions under the fold (the Overview's U4 number).
@@ -203,6 +201,7 @@ func _fill_lead(ns) -> void:
 	_count_doors["files"].text = tr_n("%d file to answer", "%d files to answer", ns.event_queue.size()) % ns.event_queue.size()
 	var waiting := Audiences.waiting_count(ns)
 	_count_doors["requests"].text = tr_n("%d request waiting", "%d requests waiting", waiting) % waiting
+	_count_doors["requests"].disabled = waiting == 0  # no request: nothing to open
 
 
 func _lead_row(line: Dictionary, index: int) -> Control:
@@ -216,6 +215,7 @@ func _lead_row(line: Dictionary, index: int) -> Control:
 	row.add_child(icon)
 	var title := _one_line(PanelKit.plain_line(row, PriorityWords.title(line, _state, _loader), PanelKit.Tone.PLAIN), true)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.tooltip_text = title.text  # the whole title when the dock cuts it
 	var chip := PriorityWords.chip(line, _state)
 	if bool(line.get("held", false)):
 		# A held line says so in words, never by its colour alone (the briefing's rule).
@@ -240,8 +240,11 @@ func _fill_term(ns) -> void:
 	var past: Array = TermReads.past(_state)
 	var ahead := TermReads.ahead(_state)
 	var vote := Trends.vote_date(ns)
-	_term_head.text = tr("Past year · vote %s · %s") % [
-		DateText.month_year(vote.y, vote.x), Trends.months_text(ahead)]
+	# Named (V5.2-0b): Society counts the assembly's vote, so an unnamed count reads as a contradiction.
+	if bool(ns.has_executive):
+		_term_head.text = tr("Past year · %s until the presidential vote, %s") % [Trends.months_text(ahead), DateText.month_year(vote.y, vote.x)]
+	else:
+		_term_head.text = tr("Past year · %s until the assembly vote, %s") % [Trends.months_text(ahead), DateText.month_year(vote.y, vote.x)]
 	var months: Array = []
 	for e in past:
 		months.append([int(e.get("year", 0)), int(e.get("month", 0))])
@@ -365,7 +368,13 @@ func _lane_row(gutter: Control, window: String) -> HBoxContainer:
 	door.flat = true
 	door.text = "›"  # i18n: ok a glyph
 	door.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	door.visible = window != ""
+	# A lane without a door keeps the door's space, so every plot is one width and the head's
+	# TODAY and VOTE sit over the seam and the diamond of every lane below (#401 pass 2 T2).
+	if window == "":
+		door.disabled = true
+		door.focus_mode = Control.FOCUS_NONE
+		door.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		door.modulate = Color.TRANSPARENT
 	door.tooltip_text = tr("Open")
 	door.pressed.connect(func() -> void: window_requested.emit(window))
 	row.add_child(door)
@@ -400,9 +409,10 @@ func _fill_open() -> void:
 		var r: Dictionary = OutlinerReadings.read(section, _state, _loader)
 		if not bool(r["visible"]):
 			continue
+		# Each section keeps its title and its own cap ("+N more", the register's ROW_CAP).
+		var title := PanelKit.plain_line(_open_box, String(r["title"]))
+		title.theme_type_variation = UiTheme.MICRO
 		for row in (r["rows"] as Array):
-			if _open_rows.size() >= OPEN_ROWS:
-				return
 			_open_rows.append(_door_row(_open_box, String(row["text"]), int(row["tone"]), String(row["window"])))
 	if _open_rows.is_empty():
 		PanelKit.line(_open_box, tr("Nothing pinned."))

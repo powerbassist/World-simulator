@@ -59,6 +59,7 @@ const GROUP := "window_manager"
 
 var _pages := {}        # id -> TabPage
 var _keys := {}         # id -> keycode, KEY_NONE for a window with no shortcut
+var _also_keys := {}    # keycode -> id, a window's second key (register's `also`)
 var _icons := {}        # id -> Material Symbols path, "" for a window with no icon yet
 var _titles := {}       # id -> the title its tab shows
 
@@ -146,11 +147,16 @@ func _build_header() -> Control:
 ## domain row wears in the header. Both are here rather than in a table in
 ## main.gd, because a table in main.gd is what the keycode table WAS -- six of
 ## fourteen surfaces, the rest with no key at all.
-func register(id: String, title: String, content: Control, key: int = KEY_NONE, icon_path: String = "") -> void:
-	if key != KEY_NONE and id_for_key(key) != "":
-		push_error("window '%s' takes key %s, which '%s' already has" % [
-			id, OS.get_keycode_string(key), id_for_key(key),
-		])
+## `also` keys toggle the window too: a surface that took over a retired window keeps its key
+## (rework 2: the Presidency page answers O and the Outliner's Q).
+func register(id: String, title: String, content: Control, key: int = KEY_NONE, icon_path: String = "", also: Array = []) -> void:
+	for k in [key] + also:
+		if int(k) != KEY_NONE and id_for_key(int(k)) != "":
+			push_error("window '%s' takes key %s, which '%s' already has" % [
+				id, OS.get_keycode_string(int(k)), id_for_key(int(k)),
+			])
+	for k in also:
+		_also_keys[int(k)] = id
 	_keys[id] = key
 	_icons[id] = icon_path
 	_titles[id] = title
@@ -305,7 +311,7 @@ func id_for_key(key: int) -> String:
 	for id in _keys.keys():
 		if int(_keys[id]) == key:
 			return String(id)
-	return ""
+	return String(_also_keys.get(key, ""))
 
 
 ## The panels themselves, unwrapped from their pages.

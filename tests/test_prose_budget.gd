@@ -117,7 +117,8 @@ const TOTAL_PENDING := {
 ## Rework 2, slice 1: the Overview (127) and the Outliner (23) became one Presidency page, 130 at its
 ## played state against a ceiling of 170 (the parent's, card G): 2794 -> 2770; then 2770 -> 2779, a stated rise
 ## (the parent's ruling: every government read the Overview showed stays on the page, 139 of 170).
-const TOTAL_SUM_CEILING := 2779
+## #401 pass 2 (section titles kept in Open now, the vote named, censure and 49.3 split): 2779 -> 2777.
+const TOTAL_SUM_CEILING := 2777
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

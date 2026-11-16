@@ -314,7 +314,7 @@ func _ready() -> void:
 	# order dashboard.gd's add_tab() enforced by doing both itself.
 	# Rework 2: the Presidency page (the Overview and the Outliner as one), still "overview".
 	_overview_panel = PresidencyPage.new()
-	_windows.register("overview", tr("Overview"), _overview_panel, KEY_O, ICONS + "dashboard.svg")
+	_windows.register("overview", tr("Overview"), _overview_panel, KEY_O, ICONS + "dashboard.svg", [KEY_Q])
 	_overview_panel.setup(_state, _loader)
 	_overview_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
 	_overview_panel.go_requested.connect(func(i: int): preload("res://src/ui/chief_mark_view.gd").page_go(self, i))

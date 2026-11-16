@@ -40,23 +40,20 @@ static func majority(ns, loader) -> Array:
 	var seats := "%d / %d %s" % [int(ns.coalition_seats), int(ns.assembly_seats), Strings.t("seats held")]
 	var out: Array = [["%s · %s" % [seats, Strings.t("%s — a majority needs more than %d.") % [
 		word.substr(0, 1).to_upper() + word.substr(1), Government.majority_seats(ns)]], PanelKit.Tone.PLAIN]]
-	var parts: Array = []
-	var tone := PanelKit.Tone.DIM
 	if ns.censure_rule == "none" or loader == null:
-		parts.append(Strings.t("No censure procedure."))
+		out.append([Strings.t("No censure procedure."), PanelKit.Tone.DIM])
 	else:
+		# The Overview's tones: a censure that would fail is good news, one that would carry bad.
 		var censure: Dictionary = Government.resolve_censure(ns, loader.parties.get(ns.id, []), false)
 		var carried := bool(censure["carried"])
 		var said := Strings.t("A censure motion would carry: %d of %d.") if carried else Strings.t("A censure motion would fail: %d of %d.")
-		parts.append(said % [int(censure["for_seats"]), int(censure["threshold"])])
-		tone = PanelKit.Tone.BAD if carried else PanelKit.Tone.DIM
+		out.append([said % [int(censure["for_seats"]), int(censure["threshold"])], PanelKit.Tone.BAD if carried else PanelKit.Tone.GOOD])
 	# Only where the constitution has it: a nation without it says nothing rather than "unavailable".
 	if ns.formation_method == "presidential_appointment":
 		if Government.can_force(ns):
-			parts.append(Strings.t("Article 49.3 available."))
+			out.append([Strings.t("Article 49.3 available."), PanelKit.Tone.DIM])
 		else:
-			parts.append(Strings.t("Article 49.3 in %s.") % Trends.months_text(int(ns.force_cooldown_months)))
-	out.append([" · ".join(PackedStringArray(parts)), tone])
+			out.append([Strings.t("Article 49.3 in %s.") % Trends.months_text(int(ns.force_cooldown_months)), PanelKit.Tone.DIM])
 	return out
 
 
@@ -108,7 +105,8 @@ static func effect_row(effect: Dictionary) -> Control:
 	row.add_child(label)
 	var ranked: Array = EffectsLedger.moved(effect)
 	if ranked.is_empty():
-		PanelKit.line(row, Strings.t("nothing moved"))
+		# One line: a wrapping label in an HBox is given no width and stacks one letter wide.
+		PanelKit.plain_line(row, Strings.t("nothing moved")).autowrap_mode = TextServer.AUTOWRAP_OFF
 	for i in mini(EFFECT_FIGURES_SHOWN, ranked.size()):
 		var m: Dictionary = ranked[i]
 		var figure := Label.new()

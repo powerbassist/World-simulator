@@ -75,38 +75,50 @@ static func goal_lanes(state, loader) -> Array:
 		var due := -1
 		if live:
 			due = to_vote if timeout <= 0 else mini(maxi(timeout - months_live, 0), to_vote)
-		var chosen := entries.size() - 1 - months_live
+		# months_live stops at the conclusion: the months since are the term's months past it.
+		var months_ago := months_live if live else months_live + maxi(int(ns.months_in_term) - int(entry["concluded_term_month"]), 0)
+		var chosen := entries.size() - 1 - months_ago
 		var values: PackedFloat64Array = approval(entries) if field == APPROVAL_FIELD else ChartSeries.values(entries, field)
 		out.append({
 			"id": id,
 			"name": Strings.row("programme", id, "name", String(terms.get("name", id))),
 			"status": String(entry["status"]),
-			"fraction": _fraction(ns, terms),
+			"fraction": _fraction(state, terms, String(entry["status"])),
 			"values": values,
 			"first": entries.size() - values.size(),
 			"goal": float(terms.get("goal_value", 0.0)),
 			"chosen": chosen if chosen >= 0 else -1,
 			"due": due,
 			"due_text": _due_text(state, terms, due, live),
-			"tip": _tip(ns, terms, entry),
+			"tip": _tip(state, terms, entry),
 			"tab": String(AgendaPanel.GROUP_TAB.get(String(terms.get("group", "")), "agenda")),
 		})
 	return out
 
 
-static func _fraction(ns, terms: Dictionary) -> float:
-	if terms.is_empty():
-		return 0.0
-	var read: Dictionary = Programme.progress_of(ns, terms)
+## The bar is the verdict once there is one: delivered full, missed or overtaken empty; a live
+## goal reads its figure, through the polls when the figure is approval.
+static func _fraction(state, terms: Dictionary, status: String) -> float:
+	if terms.is_empty() or status != ProgrammeK.STATUS_ACTIVE:
+		return 1.0 if status == ProgrammeK.STATUS_COMPLETE else 0.0
+	var read: Dictionary = _progress(state, terms)
 	return PanelKit.progress_fraction(float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
+
+
+## Programme.progress_of, with approval read as the poll the player was shown (this file's rule).
+static func _progress(state, terms: Dictionary) -> Dictionary:
+	var read: Dictionary = Programme.progress_of(state.player(), terms)
+	if String(terms.get("current_value", "")) == APPROVAL_FIELD:
+		read["current_value"] = approval_now(state)
+	return read
 
 
 ## Now, the goal and the clock, in the Overview's words (its programme row's tooltip), so the
 ## strip, the Agenda and the page word one deadline one way.
-static func _tip(ns, terms: Dictionary, entry: Dictionary) -> String:
+static func _tip(state, terms: Dictionary, entry: Dictionary) -> String:
 	if terms.is_empty():
 		return ""
-	var read: Dictionary = Programme.progress_of(ns, terms)
+	var read: Dictionary = _progress(state, terms)
 	var tip := Strings.t("now %s · goal %s") % [Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2)]
 	if String(entry["status"]) == ProgrammeK.STATUS_ACTIVE:
 		tip += " · " + StripReadings.programme_clock_text(terms, entry)

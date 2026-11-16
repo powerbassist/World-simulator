@@ -83,6 +83,10 @@ static func speak(main, key: String) -> void:
 		return
 	var situation := Priorities.situation(game["lines"])
 	var said := BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))
+	# The page's lead shows this line, and only this month's (#401 pass 2 T7): one speak rule.
+	game["spoken_line"] = String(said["text"])
+	game["spoken_key"] = key
+	refresh(main)
 	var caption = main._hud.chief_caption
 	caption.say(String(said["text"]), main._hud.title_bar.chief_mark)
 	# Gated on the mark, not the caption: the caption hides on its reading timer, and a line queued behind a longer
@@ -143,14 +147,14 @@ static func clear(main) -> void:
 
 
 ## The Presidency page's lead is this read (rework 2, "one ranking"): the same lines the mark
-## names, the chief's face and name, and his line only when the month names something new.
-static func _push_read(main, lines: Array, who: String, face: Texture2D, chief) -> void:
+## names, the chief's face and name, and the line he spoke at this month's end (speak()), none
+## in a month he kept silent: month_end's rule, never a second one.
+static func _push_read(main, lines: Array, who: String, face: Texture2D, _chief) -> void:
 	if main._overview_panel == null:
 		return
-	var said := ""
-	if chief != null and lines.any(func(l): return bool(l.get("fresh", false))):
-		var situation := Priorities.situation(lines)
-		said = String(BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))["text"])
+	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
+	var key := "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)]
+	var said := String(game.get("spoken_line", "")) if String(game.get("spoken_key", "")) == key else ""
 	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said})
 
 
