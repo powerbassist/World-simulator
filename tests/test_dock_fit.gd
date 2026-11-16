@@ -75,6 +75,10 @@ func _sweep(language: String, text_scale: float) -> void:
 	await _open(windows, "society")
 	_check_ledgers_share_a_caption_column(windows.content("society")._body, where + ", Society")
 
+	# The Save/Load dialog (QA's real-window play, French 130: "Supprimer" cut at the dialog's edge).
+	windows.close_all()
+	await _check_save_load_buttons_fit(main, where)
+
 	main.queue_free()
 	await process_frame
 
@@ -163,6 +167,40 @@ func _check_ledgers_share_a_caption_column(content: Control, where: String) -> v
 		_fail("%s: premise, %d ledgers" % [where, ends.size()])
 	elif ends.max() - ends.min() > 0.5:
 		_fail("%s: the ledgers' caption columns end at %s, their values do not line up" % [where, ends])
+
+
+## Every button of the dialog, a saved game's Load and Delete included, inside the dialog and inside
+## the list's view: a row past its scroll's edge is a button the player cannot see whole.
+func _check_save_load_buttons_fit(main, where: String) -> void:
+	var panel = main._save_load_panel
+	panel.show()
+	await _frames(2)
+	# Enough saves for the list's own scroll bar, which takes its width from the rows.
+	for i in 8:
+		panel._slot_list.add_child(panel._build_slot_row("sauvegarde rapide du mandat %d" % i))
+	await _frames(3)
+	var box: Rect2 = (panel as Control).get_global_rect()
+	var buttons: Array = (panel as Node).find_children("*", "Button", true, false)
+	if buttons.size() < 4:
+		_fail("Save/Load (%s): premise, %d buttons" % [where, buttons.size()])
+	for button in buttons:
+		var b := button as Button
+		if not b.is_visible_in_tree():
+			continue
+		var rect := b.get_global_rect()
+		var view := box
+		var scroll := b.get_parent()
+		while scroll != null and not scroll is ScrollContainer and scroll != panel:
+			scroll = scroll.get_parent()
+		if scroll is ScrollContainer:
+			view = (scroll as Control).get_global_rect()
+			var bar := (scroll as ScrollContainer).get_v_scroll_bar()
+			if bar.visible:
+				view.size.x -= bar.size.x
+		if rect.end.x > view.end.x + 0.5 or rect.position.x < view.position.x - 0.5:
+			_fail("Save/Load (%s): '%s' spans x %.0f-%.0f, outside its view's %.0f-%.0f" % [where, b.text,
+				rect.position.x, rect.end.x, view.position.x, view.end.x])
+	panel.close()
 
 
 ## A PanelKit.row: an HBox of a caption Label and a value Label.

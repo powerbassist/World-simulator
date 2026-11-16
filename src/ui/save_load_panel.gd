@@ -70,6 +70,9 @@ func _ready() -> void:
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# No sideways scroll: the dialog widens to its widest saved game instead (QA's play, French at
+	# 130 %: with enough saves for the list's bar, "Supprimer" sat past the edge, out of sight).
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
 
 	_slot_list = VBoxContainer.new()
