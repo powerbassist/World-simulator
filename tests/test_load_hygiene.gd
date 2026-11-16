@@ -23,12 +23,18 @@ extends SceneTree
 const SaveManager = preload("res://src/core/save_manager.gd")
 
 const SLOT := "__test_load_hygiene__"
+const OTHER_SLOT := "__test_load_hygiene_deu__"
+const GameState = preload("res://src/core/game_state.gd")
+## Fields that are not a game's: a repaint flag, set by every load's setup() either way.
+const IGNORED := {"_dirty": true}
 
 var _failures: Array[String] = []
 var _main
 var _frame := 0
 var _stale_ids: Array[String] = []
 var _desk_event := ""
+## A main that never played, loading the same Germany save (the general guard's yardstick).
+var _fresh
 
 
 func _init() -> void:
@@ -50,8 +56,119 @@ func _process(_delta: float) -> bool:
 			_check_load_restores_the_consequence_card()
 			_check_ribbon()
 			_cleanup()
+		11:
+			_act_in_the_france_game()
+			_save_another_nation()
+		13:
+			_main._on_load_requested(OTHER_SLOT)
+			_fresh = load("res://src/ui/main.tscn").instantiate()
+			root.add_child(_fresh)
+		16:
+			_fresh._on_load_requested(OTHER_SLOT)
+		20:
+			_check_no_panel_keeps_the_old_game()
+			_cleanup()
 			_finish()
 	return false
+
+
+## The general guard (the parent's card after #391/#393, 2026-11-16): a load leaving one
+## panel's per-game state behind was fixed six times, one panel at a time. Here the player
+## acts in a France game -- a region opened, a programme stop picked, a goods filter, a firm
+## verb refused, a person picked -- and then loads a Germany save through main's real load
+## path. A second main that never played loads the same save. Every REGISTERED panel (the
+## window manager's registry, as the load's own setup() sweep walks it) must then hold the
+## same plain values in both: any difference is a field the load kept from the old game.
+## Object references (the state, nodes, textures) are not compared: they are always new.
+func _act_in_the_france_game() -> void:
+	var w = _main._windows
+	var ns = _main._state.player()
+	var regions: Array = _main._loader.regions.get(ns.id, [])
+	if not regions.is_empty():
+		w.content("region").open_region(String(regions[0].id))
+	var sector = w.content("sector_industry")
+	if sector != null:
+		preload("res://src/ui/sector_programme.gd")._pick(sector, 1)
+		sector._good_filter = "__a_good_of_the_old_game__"
+		sector._last_refusal = "refused in the old game"
+	var companies = w.content("companies")
+	if companies != null:
+		companies._last_refusal = "refused in the old game"
+	var people = w.content("people")
+	if people != null:
+		for person in _main._loader.people.get(String(ns.id), []):
+			people.focus(String(person.id))
+			break
+
+
+func _save_another_nation() -> void:
+	var other = GameState.new_game(_main._loader, "DEU", "")
+	other.year = _main._clock.year
+	other.month = _main._clock.month
+	var error := SaveManager.save_game(other, _main._clock, OTHER_SLOT)
+	if error != "":
+		_fail("could not save the Germany game: %s" % error)
+
+
+func _check_no_panel_keeps_the_old_game() -> void:
+	var played: Array = _main._windows.panels()
+	var fresh: Array = _fresh._windows.panels()
+	if played.size() != fresh.size() or played.is_empty():
+		_fail("premise: the two mains register %d and %d panels" % [played.size(), fresh.size()])
+		return
+	if _main._state.player_nation_id != "DEU" or _fresh._state.player_nation_id != "DEU":
+		_fail("premise: a load did not land on Germany")
+		return
+	var caught := 0
+	for i in played.size():
+		var a: Dictionary = _plain_fields(played[i])
+		var b: Dictionary = _plain_fields(fresh[i])
+		for field in a:
+			if IGNORED.has(field) or not b.has(field):
+				continue
+			if not _same(a[field], b[field]):
+				caught += 1
+				_fail("%s keeps %s = %s from the old game after a load (a fresh game's load: %s)" % [
+					String(played[i].get_script().resource_path).get_file(), field, _short(a[field]), _short(b[field])])
+	print("load hygiene: %d registered panels compared, %d stale fields" % [played.size(), caught])
+
+
+## A panel's script variables whose values are plain data (no Object anywhere inside), and
+## those of a UI-owned state object it holds (a script under src/ui/ that is not a Node, as
+## region_panel.gd's RegionState), named "holder.field". The game's own objects are not UI's.
+func _plain_fields(panel: Object, prefix := "") -> Dictionary:
+	var out := {}
+	for prop in panel.get_property_list():
+		if not (int(prop["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE):
+			continue
+		var value = panel.get(String(prop["name"]))
+		if _plain(value):
+			out[prefix + String(prop["name"])] = value
+		elif prefix == "" and value is RefCounted and value.get_script() != null 				and String(value.get_script().resource_path).begins_with("res://src/ui/"):
+			out.merge(_plain_fields(value, String(prop["name"]) + "."))
+	return out
+
+
+func _plain(v) -> bool:
+	match typeof(v):
+		TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING, TYPE_STRING_NAME, TYPE_VECTOR2, TYPE_VECTOR2I, TYPE_COLOR, TYPE_RECT2:
+			return true
+		TYPE_ARRAY:
+			return (v as Array).all(func(x) -> bool: return _plain(x))
+		TYPE_DICTIONARY:
+			return (v as Dictionary).keys().all(func(k) -> bool: return _plain(k)) and (v as Dictionary).values().all(func(x) -> bool: return _plain(x))
+	return false
+
+
+func _same(a, b) -> bool:
+	if typeof(a) == TYPE_FLOAT and typeof(b) == TYPE_FLOAT:
+		return is_equal_approx(a, b)
+	return typeof(a) == typeof(b) and a == b
+
+
+func _short(v) -> String:
+	var text := str(v)
+	return text if text.length() <= 80 else text.substr(0, 77) + "..."
 
 
 func _save_in_april_then_wander_to_march() -> void:
@@ -154,7 +271,8 @@ func _check_ribbon() -> void:
 
 
 func _cleanup() -> void:
-	for p in [SaveManager._path_for(SLOT), SaveManager._path_for(SLOT) + SaveManager.TEMP_SUFFIX]:
+	for p in [SaveManager._path_for(SLOT), SaveManager._path_for(SLOT) + SaveManager.TEMP_SUFFIX,
+			SaveManager._path_for(OTHER_SLOT), SaveManager._path_for(OTHER_SLOT) + SaveManager.TEMP_SUFFIX]:
 		if FileAccess.file_exists(p):
 			DirAccess.remove_absolute(p)
 
