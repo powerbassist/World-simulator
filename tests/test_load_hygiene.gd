@@ -63,7 +63,11 @@ func _process(_delta: float) -> bool:
 			_save_another_nation()
 		13:
 			_main._on_load_requested(OTHER_SLOT)
+			# The fresh main boots straight into the loaded nation (QA's TAKE on #396): booted on
+			# France as the played one was, a value a panel caches at its FIRST setup would read
+			# France in both mains and pass.
 			_fresh = load("res://src/ui/main.tscn").instantiate()
+			_fresh.pending_player_id = "DEU"
 			root.add_child(_fresh)
 		16:
 			_fresh._on_load_requested(OTHER_SLOT)
@@ -81,7 +85,12 @@ func _process(_delta: float) -> bool:
 ## path. A second main that never played loads the same save. Every REGISTERED panel (the
 ## window manager's registry, as the load's own setup() sweep walks it) must then hold the
 ## same plain values in both: any difference is a field the load kept from the old game.
-## Object references (the state, nodes, textures) are not compared: they are always new.
+## Object references (nodes, textures) are not compared as values: they are always new. A reference
+## to a GameState or the loader is checked instead: it must be that main's own (_foreign_refs).
+##
+## Outside the guard, on purpose (QA's RECORDs on #396): static variables (counter_chips._picked,
+## law_sheet._open, ...), fields of types _plain() does not list (Packed*Array, Vector3i, NodePath),
+## and helpers deeper than one level below a panel.
 func _act_in_the_france_game() -> void:
 	var w = _main._windows
 	var ns = _main._state.player()
@@ -89,15 +98,21 @@ func _act_in_the_france_game() -> void:
 	if not regions.is_empty():
 		w.content("region").open_region(String(regions[0].id))
 	var sector = w.content("sector_industry")
-	if sector != null:
+	if sector == null:
+		_fail("premise: no sector_industry panel to act in")
+	else:
 		preload("res://src/ui/sector_programme.gd")._pick(sector, 1)
 		sector._good_filter = "__a_good_of_the_old_game__"
 		sector._last_refusal = "refused in the old game"
 	var companies = w.content("companies")
-	if companies != null:
+	if companies == null:
+		_fail("premise: no companies panel to act in")
+	else:
 		companies._last_refusal = "refused in the old game"
 	var people = w.content("people")
-	if people != null:
+	if people == null:
+		_fail("premise: no people panel to act in")
+	else:
 		for person in _main._loader.people.get(String(ns.id), []):
 			people.focus(String(person.id))
 			break
@@ -157,6 +172,12 @@ func _check_no_panel_keeps_the_old_game() -> void:
 	if _main._state.player_nation_id != "DEU" or _fresh._state.player_nation_id != "DEU":
 		_fail("premise: a load did not land on Germany")
 		return
+	# A helper still holding the discarded game's state or loader: every reference to a
+	# GameState or the loader must be that main's own (QA's TAKE on #396).
+	for side in [_main, _fresh]:
+		for panel in side._windows.panels():
+			for stale in _foreign_refs(panel, side):
+				_fail("%s holds %s from another game after a load" % [String(panel.get_script().resource_path).get_file(), stale])
 	# Any confirm card, not only the one asked here: a question asked in the old game is not
 	# answered in the loaded one (the cards sit on the screen stack, outside the panels).
 	for card in _main.find_children("ConfirmCard", "", true, false):
@@ -200,6 +221,26 @@ func _plain_fields(panel: Object, prefix := "") -> Dictionary:
 			out[prefix + String(prop["name"])] = _shape(value)
 		elif prefix == "" and (value is RefCounted or (value is Node and panel.is_ancestor_of(value))) 				and value.get_script() != null and String(value.get_script().resource_path).begins_with("res://src/ui/"):
 			out.merge(_plain_fields(value, String(prop["name"]) + "."))
+	return out
+
+
+## The fields of a panel, and of the UI-owned helpers it holds (walked the way _plain_fields walks
+## them), that reference a GameState or a loader other than `main`'s own.
+func _foreign_refs(panel: Object, main, prefix := "") -> Array[String]:
+	var out: Array[String] = []
+	for prop in panel.get_property_list():
+		if not (int(prop["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE):
+			continue
+		var value = panel.get(String(prop["name"]))
+		if not (value is Object) or not is_instance_valid(value) or value.get_script() == null:
+			continue
+		var script: Script = value.get_script()
+		if script == main._state.get_script() and not is_same(value, main._state):
+			out.append(prefix + String(prop["name"]) + " (a GameState)")
+		elif script == main._loader.get_script() and not is_same(value, main._loader):
+			out.append(prefix + String(prop["name"]) + " (a loader)")
+		elif prefix == "" and (value is RefCounted or (value is Node and panel.is_ancestor_of(value))) 				and String(script.resource_path).begins_with("res://src/ui/"):
+			out.append_array(_foreign_refs(value, main, String(prop["name"]) + "."))
 	return out
 
 

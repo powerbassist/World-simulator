@@ -130,6 +130,7 @@ func setup(state, loader) -> void:
 	if _search != null:
 		_search.text = ""
 	_verbs.forget()
+	_verbs.sync(state, loader)  # the verbs never keep the discarded game's state, even unread
 
 
 ## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).
