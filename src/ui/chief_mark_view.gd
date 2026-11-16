@@ -36,6 +36,7 @@ static func refresh(main, rerank := false) -> void:
 	var tip := Strings.t("Click to open the month's briefing.")
 	if who != "":
 		tip = "\n".join(PackedStringArray([who, tip]))
+	_push_read(main, lines, who, face, chief)
 	if lines.is_empty():
 		main._hud.title_bar.chief_mark.show_line(face, Strings.t("A quiet month"), "", false, tip)
 		return
@@ -137,3 +138,29 @@ static func after_load(main, game: Dictionary) -> void:
 static func clear(main) -> void:
 	main._hud.title_bar.chief_mark.clear()
 	main._hud.chief_caption.clear()
+	if main._overview_panel != null:
+		main._overview_panel.set_read({})
+
+
+## The Presidency page's lead is this read (rework 2, "one ranking"): the same lines the mark
+## names, the chief's face and name, and his line only when the month names something new.
+static func _push_read(main, lines: Array, who: String, face: Texture2D, chief) -> void:
+	if main._overview_panel == null:
+		return
+	var said := ""
+	if chief != null and lines.any(func(l): return bool(l.get("fresh", false))):
+		var situation := Priorities.situation(lines)
+		said = String(BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))["text"])
+	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said})
+
+
+## The page's Go on its lead row `index` (rework 2, slice 1). A line about a desk file selects
+## that file in the month's folder, which only shows on the invited read, so the read opens
+## first, as it stands (no re-rank: the row's index is the stored line's); until G2 retires
+## the plate, that is where a file is answered. Any other line goes where the briefing's Go does.
+static func page_go(main, index: int) -> void:
+	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
+	var all: Array = (game.get("lines", []) as Array) + (game.get("also", []) as Array)
+	if index >= 0 and index < all.size() and preload("res://src/ui/folder_driver.gd").file_of(main, all[index]) != "":
+		BriefingDriver.read(main, false)
+	BriefingDriver.go(main, index)

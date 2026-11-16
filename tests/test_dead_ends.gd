@@ -110,7 +110,7 @@ func _check_no_signed_zero_service() -> void:
 	panel.mark_dirty()
 	panel._process(0.0)
 	if _text_of(panel).contains("-0.00"):
-		_fail("the Overview prints a signed zero: a delivery that rounds to nothing")
+		_fail("the Presidency page prints a signed zero: a delivery that rounds to nothing")
 	ns.service_quality[key] = float(ns.start_service_quality.get(key, 0.0))
 	_main._windows.close_all()
 

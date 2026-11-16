@@ -19,7 +19,7 @@ const ICONS := "res://assets/icons/material/"
 ## In sidebar order. `title` is an English msgid: the caller wraps it in tr().
 const TABLE := [
 	{"id": "agenda", "title": "Agenda", "icon": "event.svg", "tabs": ["agenda", "calendar"]},  # i18n: msgid title
-	{"id": "presidency", "title": "Presidency", "icon": "account_balance.svg", "tabs": ["overview", "outliner", "events"]},  # i18n: msgid title
+	{"id": "presidency", "title": "Presidency", "icon": "account_balance.svg", "tabs": ["overview", "events"]},  # i18n: msgid title
 	# Rework 1: Government is one page, People (the offices are its first group); the
 	# majority's arithmetic and Dissolve live in Parliament's Majority tab.
 	{"id": "government", "title": "Government", "icon": "groups.svg", "tabs": ["people"]},  # i18n: msgid title

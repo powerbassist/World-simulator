@@ -37,7 +37,6 @@ const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const DeskCards = preload("res://src/ui/desk_cards.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
-const OutlinerPanel = preload("res://src/ui/outliner_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const RegionsShell = preload("res://src/ui/regions_shell.gd")
@@ -71,7 +70,7 @@ const Domains = preload("res://src/ui/domains.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Sound = preload("res://src/ui/sound.gd")
 const Music = preload("res://src/ui/music.gd")
-const OverviewPanel = preload("res://src/ui/overview_panel.gd")
+const PresidencyPage = preload("res://src/ui/presidency_page.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
@@ -297,9 +296,13 @@ func _ready() -> void:
 	# the tree, and a Control outside the tree has not run _ready(), so every
 	# label setup() writes to is still null -- AGENTS.md's gotcha, and the same
 	# order dashboard.gd's add_tab() enforced by doing both itself.
-	_overview_panel = OverviewPanel.new()
+	# Rework 2: the Presidency page (the Overview and the Outliner as one), still "overview".
+	_overview_panel = PresidencyPage.new()
 	_windows.register("overview", tr("Overview"), _overview_panel, KEY_O, ICONS + "dashboard.svg")
 	_overview_panel.setup(_state, _loader)
+	_overview_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
+	_overview_panel.go_requested.connect(func(i: int): preload("res://src/ui/chief_mark_view.gd").page_go(self, i))
+	_overview_panel.requests_requested.connect(func(): AudienceDriver.open_oldest(self))
 
 	# V4.1. The government's programme: the one window where a programme is
 	# chosen and tracked (docs/programme-model.md §4). In the State cluster
@@ -434,14 +437,6 @@ func _ready() -> void:
 	_windows.register("people", tr("People"), _people_panel, KEY_R, ICONS + "person.svg")
 	_people_panel.setup(_state, _loader)
 
-	# V4.8b. What is pinned -- the agenda, firms in trouble, goods short, people
-	# who are against the term -- as one register-driven list. A window rather
-	# than a HUD plate (moving a plate moves the frames the 826 px band is
-	# measured against); a row opens the window that answers it.
-	var outliner_panel := OutlinerPanel.new()  # local: nothing else reads it
-	_windows.register("outliner", tr("Outliner"), outliner_panel, KEY_Q, ICONS + "checklist.svg")
-	outliner_panel.setup(_state, _loader)
-	outliner_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
 	_windows.register("glossary", tr("Glossary"), preload("res://src/ui/glossary_panel.gd").new(), KEY_NONE, ICONS + "menu_book.svg")  # V5.1-d3: reads Glossary alone, no setup
 
 	# V1.4a. In the Economy cluster rather than the World one: a firm is a domestic
