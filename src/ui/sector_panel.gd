@@ -247,6 +247,9 @@ func _majors(ns) -> void:
 		pick.button_pressed = _selected(ns) == company
 		pick.set_meta("firm", String(company.id))
 		pick.pressed.connect(_select.bind(String(company.id)))
+		# The name is the largest target and stops the event before the cell: it answers
+		# the right click itself (QA's play of #381).
+		pick.gui_input.connect(_right_click.bind(company))
 		words.add_child(pick)
 		cell.gui_input.connect(_right_click.bind(company))
 		var city = Region.find_city(_loader.regions.get(ns.id, []), Companies.live_city_of(ns, company))

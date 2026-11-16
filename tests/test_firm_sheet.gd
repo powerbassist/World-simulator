@@ -218,6 +218,19 @@ func _check_typed_box_snaps() -> void:
 
 
 func _check_menu() -> void:
+	# A right click on a major's NAME opens the plate (QA's play of #381: only the face did).
+	var plate = preload("res://src/ui/verb_plate.gd").of(_panel)
+	plate.hide()
+	for button in _panel.find_children("*", "Button", true, false):
+		if String(button.get_meta("firm", "")) == String(_major.id):
+			var click := InputEventMouseButton.new()
+			click.button_index = MOUSE_BUTTON_RIGHT
+			click.pressed = true
+			button.gui_input.emit(click)
+	if plate == null or not plate.visible:
+		_fail("a right click on %s's name opens no plate" % _major.company_name)
+	elif plate != null:
+		plate.hide()
 	var ns = _main._state.player()
 	var items: Array = _panel.menu_items(_major)
 	var texts := []
