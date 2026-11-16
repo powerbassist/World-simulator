@@ -125,6 +125,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick hover --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-pick vacant --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --text 130 --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --lang fr --open people
@@ -557,8 +558,9 @@ var _fund := false
 ## Screen 6 (the author's direction A): the worst region's sheet open beside the tinted map.
 ## --region-sheet [measure]: the measure the map's chips pick, "jobless" when none follows.
 var _region_sheet := ""
-## Rework 1, --people-pick first | vacant: the People roster with a line focused and its
-## verbs under it -- the first line of "Needs you", or the health office left vacant.
+## Rework 1, --people-pick first | vacant | hover: the People roster with a line focused and
+## its verbs under it -- the first line of "Needs you", or the health office left vacant;
+## hover is the first line focused AND its person card up, as a pointer resting on it puts it.
 var _people_pick := ""
 var _fund_cap := false
 ## With --fund: the region with the running fund opened, its line since it began.
@@ -2337,6 +2339,20 @@ func _stage_a_people_pick() -> void:
 		push_error("screenshot: --people-pick first found nobody who needs you (add --request)")
 		return
 	panel._pick("person", String(rows[0]["id"]))
+	if _people_pick == "hover":
+		_hover_the_pick(String(rows[0]["id"]))
+
+
+## The roster rebuilds a frame on; then the pointer "rests" on the line: the panel's own
+## hover path (the card takes the pointer's column, the OS cursor's in a windowed run).
+func _hover_the_pick(person_id: String) -> void:
+	for i in 3:
+		await process_frame
+	var panel = _main._people_panel
+	for node in panel._body.find_children("*", "Button", true, false):
+		if node.has_meta("line") and String(node.get_meta("line")) == person_id:
+			panel._show_card(person_id, node)
+			return
 
 
 func _stage_the_region_sheet() -> void:

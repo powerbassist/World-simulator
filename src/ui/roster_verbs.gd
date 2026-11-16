@@ -88,6 +88,7 @@ static func for_office(state, loader, row: Dictionary, verbs) -> Array:
 static func strip(parent: Control, items: Array, indent: float) -> Control:
 	var box := HBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
+	box.set_meta("strip", true)
 	parent.add_child(box)
 	var pad := Control.new()
 	pad.custom_minimum_size.x = indent

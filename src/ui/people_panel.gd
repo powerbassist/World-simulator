@@ -278,7 +278,13 @@ func _show_card(person_id: String, line: Control) -> void:
 	var layer = get_tree().get_first_node_in_group(TermText.GROUP) if is_inside_tree() else null
 	if layer == null or not _loader.person_by_id.has(person_id):
 		return
+	# The focused line's verbs sit right under it: the card keeps clear of both, above
+	# them, or under the verbs where there is no room above (QA's H1 on #388).
 	var rect := line.get_global_rect()
+	var wrap := line.get_parent()
+	var next: Node = wrap.get_parent().get_child(wrap.get_index() + 1) if wrap.get_index() + 1 < wrap.get_parent().get_child_count() else null
+	if next is Control and next.has_meta("strip"):
+		rect = rect.merge((next as Control).get_global_rect())
 	rect.position.x = get_viewport().get_mouse_position().x
 	layer.person_enter(person_id, rect, true)
 
