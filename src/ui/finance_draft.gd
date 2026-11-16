@@ -80,6 +80,11 @@ func is_abolished(kind: String) -> bool:
 	return _abolished.has(kind)
 
 
+## Whether the kind is in the register now (a rate of 0 % is in force: it is no birth).
+func in_force(kind: String) -> bool:
+	return _state.player().tax_rates_pct.has(kind)
+
+
 ## The player's input on one row. `channel` is SPENDING or TAX; the brackets have their own call.
 func set_value(channel: String, key: String, value: float) -> void:
 	(_edited[channel] as Dictionary)[key] = value

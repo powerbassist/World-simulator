@@ -49,7 +49,7 @@ func _process(_delta: float) -> bool:
 			_main._windows.open("legislature")
 		6:
 			_check_legislature()
-			_main._windows.open("politics")
+			_main._windows.open("people")
 		9:
 			_check_dismiss_card()
 			var state = _main._state
@@ -169,7 +169,8 @@ func _check_legislature() -> void:
 ## tabled bill's division, and the card says so.
 func _check_dismiss_card() -> void:
 	var ns = _main._state.player()
-	var verbs = _main._government_panel.find_child("CabinetVerbs", true, false)
+	# Rework 1: the removal's price is the People roster's (its cabinet_verbs.gd).
+	var verbs = _main._people_panel._verbs
 	var president := President.leader_id(ns)
 	for portfolio in CK.PORTFOLIO_KEYS:
 		var pid := String(ns.cabinet.get(portfolio, ""))

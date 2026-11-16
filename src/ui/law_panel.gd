@@ -40,7 +40,6 @@ const LawVerdict = preload("res://src/ui/law_verdict.gd")
 const LawList = preload("res://src/ui/law_list.gd")
 const LawCensure = preload("res://src/ui/law_censure.gd")
 const OrderPaper = preload("res://src/ui/order_paper.gd")
-const DissolveButton = preload("res://src/ui/dissolve_button.gd")
 
 ## Wider than legislature_constants.ABSTAIN_BAND (0.05) on purpose -- the real
 ## vote resolves exactly off the same support() value, but the forecast blurs
@@ -58,8 +57,6 @@ signal proposed(before: Dictionary, law_name: String, result: Dictionary)
 signal brief_requested(law)
 ## A poll bought from the sheet: the baseline and the label, the briefing's `polled` contract.
 signal polled(before: Dictionary, label: String)
-## V5.2 b+ (R3): the chamber's own Dissolve, the Politics one's twin (dissolve_button.gd).
-signal dissolved(before: Dictionary)
 
 var _state
 var _loader
@@ -70,7 +67,6 @@ var _paper := OrderPaper.new()
 var _result_box: VBoxContainer
 var _dirty := true
 var _close_button: Button
-var _dissolve := DissolveButton.new()
 
 ## The first enabled verb this panel built on its last refresh. See primary_action().
 var _primary: Control = null
@@ -113,8 +109,6 @@ func _ready() -> void:
 func _build_footer() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_END
-	row.add_child(_dissolve)
-	_dissolve.dissolved.connect(dissolved.emit)
 
 	_close_button = Button.new()
 	_close_button.text = tr("Close (L)")
@@ -152,7 +146,6 @@ func _refresh() -> void:
 	if ns == null:
 		return
 	_primary = null
-	_dissolve.sync(_state, ns)
 	_paper.refresh(_state, _loader, _find_law)
 
 	for child in _result_box.get_children():

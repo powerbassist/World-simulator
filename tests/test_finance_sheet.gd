@@ -16,6 +16,7 @@ const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
+const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Government = preload("res://src/sim/government.gd")
@@ -60,6 +61,8 @@ func _process(_delta: float) -> bool:
 			_check_the_chips_follow_the_direction()
 			_check_a_ticked_force_survives_a_draft_move()
 			_check_a_draft_move_repaints_the_open_sheet()
+			_check_an_abolition_repaints_the_open_sheet()
+			_check_a_birth_rate_change_repaints_the_open_sheet()
 			_check_closing_keeps_the_draft()
 			_check_france_may_force_and_says_the_censure()
 			_check_table_from_the_sheet_tables_the_draft()
@@ -372,6 +375,74 @@ func _check_a_draft_move_repaints_the_open_sheet() -> void:
 	_settle()
 	if _sheet().find_child("SheetRow_spending_pct_gdp_defence", true, false) != null:
 		_fail("a row dragged back to its live value stays on the sheet")
+
+
+## The retro review's item 2: the sheet's stamp hashed the priceable rows alone, so an abolition (or a new tax)
+## drafted with the sheet open never reached it, and Table tabled rows the player had not been shown.
+func _check_an_abolition_repaints_the_open_sheet() -> void:
+	var draft = _panel.shared_draft()
+	var kind := ""
+	for key in _state.player().tax_rates_pct:
+		if String(key) != "vat" and float(_state.player().tax_rates_pct[key]) > 0.0:
+			kind = String(key)
+			break
+	var row_name := "SheetRow_" + FinanceRows.row_id(FinanceDraft.ABOLISH, kind).replace(":", "_")
+	# The autumn month, or the panel's sweep takes the abolition out of the draft.
+	var month := int(_state.month)
+	_state.month = int(_loader.nations[_state.player().id].finance_autumn_month)
+	_panel._on_moved()
+	_settle()
+	draft.toggle_abolish(kind)
+	_panel._on_moved()
+	_settle()
+	if _sheet().find_child(row_name, true, false) == null:
+		_fail("an abolition drafted while the sheet is open does not reach it (%s)" % kind)
+	draft.toggle_abolish(kind)
+	_panel._on_moved()
+	_settle()
+	if _sheet().find_child(row_name, true, false) != null:
+		_fail("an abolition taken back stays on the open sheet (%s)" % kind)
+	_state.month = month
+	_panel._on_moved()
+	_settle()
+
+
+## Pass 2's T3 on #392: a new tax's rate moved with the sheet open reaches it (a birth is no pending() row either).
+func _check_a_birth_rate_change_repaints_the_open_sheet() -> void:
+	var draft = _panel.shared_draft()
+	var ns = _state.player()
+	var kind := ""
+	for k in ns.tax_library:
+		if not ns.tax_rates_pct.has(k) and ns.tax_library[k].has("rate_range_pct"):
+			kind = String(k)
+			break
+	if kind == "":
+		_fail("premise: every kind is in force")
+		return
+	var month := int(_state.month)
+	_state.month = int(_loader.nations[ns.id].finance_autumn_month)
+	_panel._on_moved()
+	_settle()
+	var span: Array = ns.tax_library[kind]["rate_range_pct"]
+	draft.set_create(kind, float(span[0]) + (float(span[1]) - float(span[0])) * 0.25)
+	_panel._on_moved()
+	_settle()
+	var row_name := "SheetRow_" + FinanceRows.row_id(FinanceDraft.TAX, kind).replace(":", "_")
+	var row := _sheet().find_child(row_name, true, false)
+	if row == null:
+		_fail("a birth drafted while the sheet is open does not reach it (%s)" % kind)
+	else:
+		var before := _text_of(row)
+		draft.set_value(FinanceDraft.TAX, kind, float(span[0]) + (float(span[1]) - float(span[0])) * 0.75)
+		_panel._on_moved()
+		_settle()
+		var now := _sheet().find_child(row_name, true, false)
+		if now == null or _text_of(now) == before:
+			_fail("a new tax's rate moved while the sheet is open does not repaint it (%s)" % kind)
+	draft.clear_create(kind)
+	_state.month = month
+	_panel._on_moved()
+	_settle()
 
 
 func _check_closing_keeps_the_draft() -> void:
