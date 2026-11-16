@@ -228,11 +228,15 @@ func _test_the_interrupt_flag() -> void:
 	file.close()
 	if not text.contains("func _enforce_interrupt()"):
 		_fail("main.gd has no _enforce_interrupt -- the reversal is not wired")
+	# A load rebuilds the game (game_reload.gd); its after_load() is the load path's last step.
+	var reload := FileAccess.open("res://src/ui/game_reload.gd", FileAccess.READ)
+	var reload_text := reload.get_as_text()
+	reload.close()
 	var in_load := false
 	var load_raises := false
-	for line in text.split("
+	for line in reload_text.split("
 "):
-		if line.begins_with("func _on_load_requested"):
+		if line.begins_with("static func after_load"):
 			in_load = true
 		elif in_load and line.begins_with("func "):
 			break

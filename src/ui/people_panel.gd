@@ -121,16 +121,6 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
-	# A setup() after the first is a load: the discarded game's picked line, its refusal and an
-	# unanswered removal go with it (tests/test_load_hygiene.gd's guard caught them surviving).
-	focused = ""
-	_picked = []
-	_chip = "needs"
-	_refocus = false
-	if _search != null:
-		_search.text = ""
-	_verbs.forget()
-	_verbs.sync(state, loader)  # the verbs never keep the discarded game's state, even unread
 
 
 ## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).

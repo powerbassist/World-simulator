@@ -62,14 +62,6 @@ func sync(state, loader) -> void:
 	_loader = loader
 
 
-## A load: the removal asked in the discarded game and its refusal line go. (Its card is
-## closed by the load itself, ConfirmCard.close_all, with every other verb's.)
-func forget() -> void:
-	_asked = {}
-	if _status != null:
-		_refused("")
-
-
 func status_text() -> String:
 	return _status.text
 

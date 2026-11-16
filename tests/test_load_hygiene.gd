@@ -51,7 +51,7 @@ func _process(_delta: float) -> bool:
 			_save_in_april_then_wander_to_march()
 		5:
 			_premise()
-			_main._on_load_requested(SLOT)
+			_main = _load(_main, SLOT)
 		9:
 			_check_cards()
 			_check_load_rebuilds_the_decisions_lane()
@@ -62,7 +62,7 @@ func _process(_delta: float) -> bool:
 			_act_in_the_france_game()
 			_save_another_nation()
 		13:
-			_main._on_load_requested(OTHER_SLOT)
+			_main = _load(_main, OTHER_SLOT)
 			# The fresh main boots straight into the loaded nation (QA's TAKE on #396): booted on
 			# France as the played one was, a value a panel caches at its FIRST setup would read
 			# France in both mains and pass.
@@ -70,7 +70,7 @@ func _process(_delta: float) -> bool:
 			_fresh.pending_player_id = "DEU"
 			root.add_child(_fresh)
 		16:
-			_fresh._on_load_requested(OTHER_SLOT)
+			_fresh = _load(_fresh, OTHER_SLOT)
 		20:
 			_check_no_panel_keeps_the_old_game()
 			_cleanup()
@@ -88,9 +88,9 @@ func _process(_delta: float) -> bool:
 ## Object references (nodes, textures) are not compared as values: they are always new. A reference
 ## to a GameState or the loader is checked instead: it must be that main's own (_foreign_refs).
 ##
-## Outside the guard, on purpose (QA's RECORDs on #396): static variables (counter_chips._picked,
-## law_sheet._open, ...), fields of types _plain() does not list (Packed*Array, Vector3i, NodePath),
-## and helpers deeper than one level below a panel.
+## Outside the field walk, on purpose (QA's RECORDs on #396): fields of types _plain() does not list
+## (Packed*Array, Vector3i, NodePath) and helpers deeper than one level below a panel. Since a load
+## rebuilds the game, those are new objects anyway; the three per-game statics are checked by name.
 func _act_in_the_france_game() -> void:
 	var w = _main._windows
 	var ns = _main._state.player()
@@ -149,9 +149,32 @@ func _act_in_the_france_game() -> void:
 			if bool(action.irreversible) and not firms.is_empty():
 				preload("res://src/ui/firm_commands.gd").act(companies, ns, firms[0], action)
 				break
+	# Per-game state some panels keep in a static (QA's RECORD on #396): set here, empty after.
+	preload("res://src/ui/counter_chips.gd")._picked["__old__"] = "old"
+	preload("res://src/ui/law_sheet.gd")._open["__old__"] = true
+	preload("res://src/ui/poll_strip.gd")._picked["__old__"] = "old"
 	var up: Array = _main.find_children("ConfirmCard", "", true, false).filter(func(c) -> bool: return (c as Control).visible)
 	if up.size() < 3:
 		_fail("premise: %d confirm cards up before the load, not the removal's, the dissolution's and the firm verb's" % up.size())
+
+
+## A load REBUILDS the game (the author's call, 2026-11-16: "la solution 2"): main's load hands
+## back a new main built from the save, and the one that asked is out of the tree and freed. Every
+## check after a load reads the main it returned.
+var _old_mains: Array = []
+
+func _load(main, slot: String):
+	var parent: Node = main.get_parent()
+	var next = main._on_load_requested(slot)
+	if next == null or next == main:
+		_fail("a load of '%s' did not hand back a new main" % slot)
+		return main
+	_old_mains.append(main)
+	if main.get_parent() != null:
+		_fail("the main that asked for the load is still in the tree after it")
+	if next.get_parent() != parent:
+		_fail("the rebuilt main is not where the old one was")
+	return next
 
 
 func _save_another_nation() -> void:
@@ -180,11 +203,17 @@ func _check_no_panel_keeps_the_old_game() -> void:
 				_fail("%s holds %s from another game after a load" % [String(panel.get_script().resource_path).get_file(), stale])
 	# Any confirm card, not only the one asked here: a question asked in the old game is not
 	# answered in the loaded one (the cards sit on the screen stack, outside the panels).
-	for card in _main.find_children("ConfirmCard", "", true, false):
-		if (card as Control).visible:
+	for card in root.find_children("ConfirmCard", "", true, false):
+		if (card as Control).visible and card.is_inside_tree():
 			_fail("a confirm card asked in the old game is still up after a load (%s)" % card.get_path())
-	if _confirm == null or not is_instance_valid(_confirm):
-		_fail("premise: the removal's confirm card is gone")
+	for old in _old_mains:
+		if is_instance_valid(old) and old.is_inside_tree():
+			_fail("a main from before a load is still in the tree")
+	for holder in [[preload("res://src/ui/counter_chips.gd")._picked, "counter_chips._picked"],
+			[preload("res://src/ui/law_sheet.gd")._open, "law_sheet._open"],
+			[preload("res://src/ui/poll_strip.gd")._picked, "poll_strip._picked"]]:
+		if (holder[0] as Dictionary).has("__old__"):
+			_fail("%s keeps the old game's entry after a load" % holder[1])
 	# Two of the People tab's are a node's text, not a script variable: read them directly.
 	for side in [[_main, "the played game"], [_fresh, "a fresh game"]]:
 		var people = side[0]._windows.content("people")
@@ -317,19 +346,15 @@ func _premise() -> void:
 		_fail("premise: the stack holds %d cards, fewer than the %d staged" % [_main._hud.inbox.card_count(), _stale_ids.size()])
 
 
+## The staged cards were the old main's: a load rebuilds the game, so its inbox is a new one (whose
+## card ids start over, so ids say nothing) and none of the staged texts is in it.
 func _check_cards() -> void:
-	var stack = _main._hud.inbox
-	for id in _stale_ids:
-		if stack._cards.has(id):
-			_fail("card '%s' of the discarded game survived the load" % id)
-	if stack.card_count() > 0:
-		var left: Array[String] = []
-		for id in stack._cards.keys():
-			left.append(String(id))
-		# A loaded game may raise its own cards (a pending crisis); none of the staged ones.
-		for id in left:
-			if _stale_ids.has(id):
-				_fail("stale card %s is still in the stack" % id)
+	var inbox = _main._hud.inbox
+	for id in inbox._cards.keys():
+		var text := _text(inbox._cards[id])
+		for staged in ["You hold Germany until FEB 2029", "A firm of the discarded game.", "Decide."]:
+			if text.contains(staged):
+				_fail("the discarded game's card '%s' survived the load" % staged)
 
 
 func _check_load_rebuilds_the_decisions_lane() -> void:

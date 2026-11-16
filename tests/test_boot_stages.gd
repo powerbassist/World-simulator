@@ -9,6 +9,8 @@ extends SceneTree
 const BootStages = preload("res://src/ui/boot_stages.gd")
 const Net = preload("res://src/sim/network.gd")
 
+const SaveManager = preload("res://src/core/save_manager.gd")
+const SAVED_SLOT := "__test_boot_stages_deu__"
 const HANDLED := ["scene", "data", "world", "network", "enter"]
 const TIMEOUT_FRAMES := 4000
 
@@ -59,9 +61,39 @@ func _process(_delta: float) -> bool:
 					_fail("a warm network table took more than one step on a second boot")
 				return false
 			_check_load_ready()
+			# A save that reads: the boot goes straight into it (game_reload.gd), no France first.
+			var error: String = SaveManager.save_game(_game._state, _game._clock, SAVED_SLOT)
+			if error != "":
+				_fail("could not write the Germany save: %s" % error)
+				_report()
+				return true
+			_boot = BootStages.new("", "", SAVED_SLOT)
+			_phase = "saved"
+			return false
+		"saved":
+			if not _boot.ready_to_enter():
+				_boot.step(50_000)
+				return false
+			_check_saved_load_ready()
+			SaveManager.delete_slot(SAVED_SLOT)
 			_report()
 			return true
 	return false
+
+
+## A menu load of a save that reads boots straight into the save's nation: the state the game is
+## handed is the save's, the slot is spent, and no throwaway game of main's default nation is built.
+func _check_saved_load_ready() -> void:
+	var game: Node = _boot.game
+	if game.pending_save.is_empty():
+		_fail("a load boot of a readable save handed the game no save")
+	elif not is_same(game.pending_save["state"], game.pending_state):
+		_fail("a load boot built a state beside the save's")
+	if game.pending_load_slot != "":
+		_fail("a load boot of a readable save left slot '%s' for main to load again" % game.pending_load_slot)
+	if game.pending_state == null or game.pending_state.player_nation_id != "DEU":
+		_fail("a load boot of a Germany save built a game for '%s'" % (game.pending_state.player_nation_id if game.pending_state != null else "nothing"))
+	game.free()
 
 
 func _check_table() -> void:
@@ -127,8 +159,8 @@ func _check_load_ready() -> void:
 	var game: Node = _boot.game
 	if game.pending_load_slot != "__no_such_slot__":
 		_fail("a load boot carries slot '%s'" % game.pending_load_slot)
-	# No nation from the menu on a load: the throwaway state is built around
-	# main.gd's own default, as a direct boot builds it.
+	# A save that does not read: the boot falls back to a new game around main.gd's own default
+	# and keeps the slot, so main's load path says why on the save screen.
 	if game.pending_state.player_nation_id != game.DEFAULT_PLAYER_NATION_ID:
 		_fail("a load boot built its throwaway state for '%s', expected main.gd's default" % game.pending_state.player_nation_id)
 	game.free()

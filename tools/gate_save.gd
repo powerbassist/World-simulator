@@ -177,7 +177,7 @@ func _process(_delta: float) -> bool:
 		return false
 	_frames += 1
 	if _frames == 3:
-		_main._on_load_requested("gate_verify")
+		_main = _main._on_load_requested("gate_verify")
 	elif _frames == 8:
 		var st = _main._state
 		var ok: bool = st != null and String(st.player_nation_id) == "FRA" and st.save_version == GameState.SAVE_VERSION
