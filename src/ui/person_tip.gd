@@ -78,6 +78,7 @@ func _show(person_id: String, anchor: Rect2, above := false) -> void:
 		await get_tree().process_frame
 		await get_tree().process_frame
 		if shown == _shown and _card.visible:
+			_card.reset_size()
 			_place(anchor, true)
 
 
