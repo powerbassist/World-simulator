@@ -151,7 +151,8 @@ func _check_people_panel_contract() -> void:
 	if panel._loader != loader or panel._state != state:
 		_fail("people_panel.setup() did not take the state and loader it was handed")
 	# The source half: the panel reads loader.people, never a name literal.
-	var src := FileAccess.get_file_as_string("res://src/ui/people_panel.gd")
+	# Rework 1: the panel lists through its reader, roster_rows.gd.
+	var src := FileAccess.get_file_as_string("res://src/ui/people_panel.gd") + FileAccess.get_file_as_string("res://src/ui/roster_rows.gd")
 	if not src.contains("loader.people") and not src.contains("_loader.people"):
 		_fail("people_panel.gd does not read the people register -- what is it listing?")
 

@@ -352,6 +352,7 @@ tests=(
   tests/test_nation_panel.gd
   tests/test_calendar_panel.gd
   tests/test_people_panel.gd
+  tests/test_people_roster.gd
   # V4.6's read-only commodity surface: the panel registers and renders at month
   # 0, the shortage alert flips on its threshold, and the two map modes are
   # registry entries the switcher grows without a legend edit. Registered at

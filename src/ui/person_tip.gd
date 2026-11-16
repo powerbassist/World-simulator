@@ -35,9 +35,9 @@ func setup(state, loader) -> void:
 	close()
 
 
-func enter(person_id: String, anchor: Rect2) -> void:
+func enter(person_id: String, anchor: Rect2, above := false) -> void:
 	if not _pinned:
-		_show(person_id, anchor)
+		_show(person_id, anchor, above)
 
 
 func leave() -> void:
@@ -64,13 +64,35 @@ func is_pinned() -> bool:
 	return _pinned and is_open()
 
 
-func _show(person_id: String, anchor: Rect2) -> void:
+func _show(person_id: String, anchor: Rect2, above := false) -> void:
 	if _state == null or _loader == null or _state.player() == null:
 		return
 	_card.show_for(person_id, _loader, _state.player(), Vector2.ZERO)
+	_place(anchor, above)
+	if above:
+		# The card settles to its true height two frames on (person_card.gd): its bottom
+		# goes back to the anchor's top then, so it never hangs over the line.
+		_shown += 1
+		var shown := _shown
+		await get_tree().process_frame
+		await get_tree().process_frame
+		await get_tree().process_frame
+		if shown == _shown and _card.visible:
+			_card.reset_size()
+			_place(anchor, true)
+
+
+var _shown := 0
+
+
+func _place(anchor: Rect2, above: bool) -> void:
 	var at := anchor.position + OFFSET
 	var card_size: Vector2 = _card.get_combined_minimum_size()
 	var room := get_viewport_rect().size
+	if above:
+		at.y = anchor.position.y - card_size.y - EDGE
+		if at.y < EDGE:
+			at.y = anchor.end.y + EDGE  # no room above: under it, as every other name
 	at.x = minf(at.x, maxf(room.x - card_size.x - EDGE, EDGE))
 	at.y = minf(at.y, maxf(room.y - card_size.y - EDGE, EDGE))
 	_card.position = at

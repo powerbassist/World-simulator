@@ -87,6 +87,12 @@ static func pending(ns) -> Array[Dictionary]:
 	return out
 
 
+## The last month a request can be answered (audience_lane.gd's rule), for every
+## surface that dates one.
+static func answer_by(row: Dictionary) -> int:
+	return Lane.answer_by(row)
+
+
 static func waiting_count(ns) -> int:
 	return pending(ns).size()
 
