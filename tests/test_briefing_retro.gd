@@ -51,6 +51,10 @@ func _process(_delta: float) -> bool:
 				_fail("could not save: %s" % error)
 				return _end()
 		4:
+			# The discarded game's ranking, which must not come back after the load.
+			_game()["memory_before"] = {"last": [STALE]}
+			_game()["lines"] = [STALE]
+			_game()["report"] = {"stale": true}
 			_main._on_load_requested(SLOT)
 		6:
 			_check_load_forgets_the_ranking()
@@ -81,6 +85,9 @@ func _check_queued_line_outlives_the_caption() -> void:
 	Voice._next(_main, player, player.get_node(Voice.WAIT))
 	if String(player.get_meta("card", "")) != BriefingDriver.LINE_CARD:
 		_fail("the chief's line queued behind another voice was dropped when his caption hid")
+	# #393 pass 2, T3: heard, so on screen -- the caption comes back when the queued line starts.
+	if not _main._hud.chief_caption.visible or _main._hud.chief_caption.text() == "":
+		_fail("the chief's queued line is heard with no caption on screen")
 	player.stop()
 	player.set_meta("pending", false)
 
@@ -97,13 +104,22 @@ func _check_answers_outside_the_inbox_rerank() -> void:
 		_fail("a request declined in the lane did not re-rank the chief's mark")
 
 
+## #393 pass 2, T2: the loaded game is ranked at the load from no memory, so the mark names
+## its first line at once (not blank until the month's end), and nothing of the old ranking.
 func _check_load_forgets_the_ranking() -> void:
 	var game := _game()
-	if game.has("memory_before") or game.has("report"):
+	if game.has("report") or game.get("memory_before", null) != {}:
 		_fail("a load keeps the discarded game's ranking memory or report")
+	if (game.get("lines", []) as Array).has(STALE):
+		_fail("a load keeps the discarded game's lines")
+	if not bool(_main._state.player().in_government):
+		_fail("premise: the loaded player is out of government")
+		return
+	if not _main._hud.title_bar.chief_mark.visible:
+		_fail("after a load the chief's mark is blank until the month's end")
 	_main._hud.inbox.card_closed.emit("__any__")
-	if _main._hud.title_bar.chief_mark.visible:
-		_fail("a card closed after a load put the discarded game's mark back up")
+	if (game.get("lines", []) as Array).has(STALE) or not _main._hud.title_bar.chief_mark.visible:
+		_fail("a card closed after a load re-ranked from the discarded game")
 
 
 func _end() -> bool:

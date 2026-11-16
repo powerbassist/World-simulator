@@ -87,10 +87,11 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	# The tab rebuilds on a pick, which freed the slider under a drag (the retro review's item 8): while it is held,
 	# the pick is kept and the rebuild waits for the release (Slider.drag_started comes before its value_changed).
 	slider.drag_started.connect(func() -> void: panel._dragging = true)
-	slider.drag_ended.connect(func(_changed: bool) -> void:
+	# A press that moved nothing picks nothing: the stop "as it stands" stays unpicked.
+	slider.drag_ended.connect(func(changed: bool) -> void:
 		panel._dragging = false
-		_pick(panel, int(slider.value)))
-	slider.value_changed.connect(func(v: float) -> void: _pick(panel, int(v)))
+		if changed:
+			_pick(panel, int(slider.value)))
 	row.add_child(slider)
 	var prices: Array = []
 	for i in list.size():
@@ -105,11 +106,25 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	box.set_meta("programme_box", sector)
 	# The typed price snaps to the nearest stop: the programmes are the data's, not a dial.
 	# An arrow's nudge (one step) moves to the next stop that way, or it would snap back.
-	box.value_changed.connect(func(v: float) -> void: _pick(panel, snap_stop(prices, pick, v, box.step)))
+	box.value_changed.connect(func(v: float) -> void:
+		panel._prog_focus = "box" if box.get_line_edit().has_focus() else ""
+		_pick(panel, snap_stop(prices, pick, v, box.step)))
 	row.add_child(box)
 	var action = list[pick]["action"]
-	var name := PanelKit.plain_line(row, Strings.row_name("investment-actions", action) if pick > 0 else Strings.t("No programme"), PanelKit.Tone.PLAIN)
+	var name := PanelKit.plain_line(row, _stop_name(list, pick), PanelKit.Tone.PLAIN)
 	name.autowrap_mode = TextServer.AUTOWRAP_OFF
+	name.set_meta("programme_name", sector)
+	# Under a mouse drag the rebuild waits for the release: the price and the name follow live.
+	slider.value_changed.connect(func(v: float) -> void:
+		panel._prog_focus = "slider" if slider.has_focus() else ""
+		if panel._dragging:
+			box.set_value_no_signal(float(prices[int(v)]))
+			name.text = _stop_name(list, int(v))
+		_pick(panel, int(v)))
+	# A keyboard step or an arrow rebuilt the tab and freed the focused control: the new one takes it.
+	if panel._prog_focus != "":
+		(slider if panel._prog_focus == "slider" else box.get_line_edit()).call_deferred("grab_focus")
+		panel._prog_focus = ""
 	if queued >= 0:
 		PanelKit.plain_line(parent, Strings.t("In the finance bill: %s, voted at the month's end.") % Strings.row_name("investment-actions", list[queued]["action"]))
 	if pick == now or pick == queued:
@@ -150,6 +165,10 @@ static func nearest(prices: Array, v: float) -> int:
 		if absf(float(prices[i]) - v) < absf(float(prices[best]) - v):
 			best = i
 	return best
+
+
+static func _stop_name(list: Array, i: int) -> String:
+	return Strings.row_name("investment-actions", list[i]["action"]) if i > 0 else Strings.t("No programme")
 
 
 static func _pick(panel, i: int) -> void:

@@ -73,6 +73,8 @@ var _last_refusal := ""
 var _prog_pick := -1
 ## The programme's slider is held: a rebuild under the drag would free it (sector_programme.gd).
 var _dragging := false
+## The programme's control a keyboard step left focused, "slider" or "box": its rebuild hands the focus on.
+var _prog_focus := ""
 
 
 func _init(sector_id := "") -> void:
@@ -125,6 +127,7 @@ func setup(state, loader) -> void:
 	_last_refusal = ""
 	_prog_pick = -1
 	_dragging = false
+	_prog_focus = ""
 
 
 func mark_dirty() -> void:

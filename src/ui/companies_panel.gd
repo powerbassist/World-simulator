@@ -139,6 +139,14 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	# A setup() after the first is a load: the discarded game's open rows and refusal go with it, as sector_panel's do.
+	_last_refusal = ""
+	_open_sector = ""
+	_open_firm = ""
+	_open_body = ""
+	_open_ledger = ""
+	_focus_verb = ""
+	_refocus = []
 
 
 ## Pins the scroll to the bottom, for tools/screenshot.gd. A panel whose body always

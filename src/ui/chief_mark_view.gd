@@ -70,8 +70,9 @@ static func rank(main, memory: Dictionary) -> Dictionary:
 
 
 ## His line for the month's situation as the caption under the mark, said aloud once a
-## month (`key`), the voice gated on the caption: it waits behind a messenger only while
-## the caption is up.
+## month (`key`). The voice is gated on the mark, which stays up for the month: a line
+## queued behind a longer messenger's clip outlives the caption's reading timer, so the
+## caption comes back when the line starts (heard, so on screen: chief_caption.gd).
 static func speak(main, key: String) -> void:
 	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
 	var chief = Staff.chief_of(main._loader, String(main._state.player().id))
@@ -82,9 +83,15 @@ static func speak(main, key: String) -> void:
 	var caption = main._hud.chief_caption
 	caption.say(String(said["text"]), main._hud.title_bar.chief_mark)
 	# Gated on the mark, not the caption: the caption hides on its reading timer, and a line queued behind a longer
-	# messenger's clip was dropped with it (the retro review's item 13). The mark stays up for the month.
+	# messenger's clip was dropped with it (the retro review's item 13).
 	if caption.visible:
-		BriefingDriver.speak_once(main, said, main._hud.title_bar.chief_mark, key)
+		BriefingDriver.speak_once(main, said, main._hud.title_bar.chief_mark, key, _say_again.bind(main, String(said["text"])))
+
+
+## The queued line starts: its caption back under the mark (a bound static, no lambda: the queue outlives frames).
+static func _say_again(main, text: String) -> void:
+	if is_instance_valid(main) and main.is_inside_tree():
+		main._hud.chief_caption.say(text, main._hud.title_bar.chief_mark)
 
 
 ## A file answered outside the inbox (a dispatch in its window) re-ranks the mark too, or it names a file that is gone
@@ -96,13 +103,15 @@ static func follow_answers(main) -> void:
 			panel.acted.connect(func(_before = null, _label = null, _result = null) -> void: refresh(main, true))  # acted carries 2 or 3 args
 
 
-## A load: the ranking's memory and report go with the discarded game. Left, the first card closed after the load
-## re-ranked from them and put that game's mark back up (the retro review's item 5); the loaded game's first month
-## end ranks afresh.
-static func forget(game: Dictionary) -> void:
-	game.erase("memory_before")
+## A load: the ranking's memory and report go with the discarded game (left, the first card closed after the load
+## re-ranked from them and put that game's mark back up: the retro review's item 5). The loaded game is ranked now
+## from no memory, so its mark is up at once, not blank until its first month end (#393 pass 2, T2).
+static func after_load(main, game: Dictionary) -> void:
 	game.erase("report")
 	game["pending"] = {}
+	game["memory_before"] = {}
+	main._hud.chief_caption.clear()
+	refresh(main, true)
 
 
 static func clear(main) -> void:

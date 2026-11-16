@@ -256,21 +256,21 @@ static func chief_line_ids() -> Array:
 
 ## The card's line said aloud once a card: `key` names the month (and the game), so
 ## a card opened again on the same month does not say it twice (the parent's TAKE 3).
-static func speak_once(main: Node, shown: Dictionary, card: CanvasItem, key: String) -> void:
+static func speak_once(main: Node, shown: Dictionary, card: CanvasItem, key: String, on_start := Callable()) -> void:
 	if String(card.get_meta(SPOKEN, "")) == key:
 		return
 	card.set_meta(SPOKEN, key)
-	speak(main, shown, card)
+	speak(main, shown, card, on_start)
 
 
 ## Under `main`, where the desk's arriving speakers talk too. A messenger's line
 ## under way, or waiting behind its sting, is never cut and never talked over: the
-## chief waits for it in Voice's queue and speaks when it ends, if `card` -- his
-## caption since G1 -- is still up. Nothing replays later (the parent's TAKE 1 on #229
-## -- an arrival month is a tense or crisis one, so dropping the line silenced the
-## chief exactly when it mattered).
-static func speak(main: Node, shown: Dictionary, card: CanvasItem) -> void:
-	Voice.speak_queued(main, String(shown.get("clip", "")), LINE_CARD, card)
+## chief waits for it in Voice's queue and speaks when it ends, if `card` -- his mark
+## since #393, which stays up for the month -- is still shown; `on_start` puts his caption
+## back as he starts. Nothing replays later (the parent's TAKE 1 on #229 -- an arrival
+## month is a tense or crisis one, so dropping the line silenced the chief when it mattered).
+static func speak(main: Node, shown: Dictionary, card: CanvasItem, on_start := Callable()) -> void:
+	Voice.speak_queued(main, String(shown.get("clip", "")), LINE_CARD, card, on_start)
 
 
 ## "Continue", or "Next: ..." naming the surface that still holds the clock.
@@ -352,8 +352,7 @@ static func after_load(main) -> void:
 	game["was_running"] = false
 	game["lines"] = []
 	game["also"] = []
-	ChiefMarkView.forget(game)
-	ChiefMarkView.clear(main)
+	ChiefMarkView.after_load(main, game)
 
 
 ## Go: close by Continue's rule, then open the line's target (2.4's table).

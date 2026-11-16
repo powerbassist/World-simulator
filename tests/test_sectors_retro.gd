@@ -30,6 +30,7 @@ var _frame := 0
 var _slider: HSlider
 ## A freed Object compares equal to null: whether a slider was found is kept apart.
 var _found := false
+var _drag_value := -1
 
 
 func _init() -> void:
@@ -53,11 +54,30 @@ func _process(_delta: float) -> bool:
 		8:
 			_check_drag_kept_its_slider()
 			if is_instance_valid(_slider):
+				# Captured before the release: the rebuild frees the slider, and a check that
+				# returned on a freed slider never asserted (#393 pass 2, T8).
+				_drag_value = int(_slider.value)
 				_slider.drag_ended.emit(true)
 		10:
 			_check_drag_end_rebuilds()
 			_check_disabled_go_says_why()
 			_check_hidden_mid_drag_releases()
+			_check_unmoved_drag_picks_nothing()
+			_step_focused("slider")
+		12:
+			_check_focus_kept("slider")
+			_step_focused("box")
+		14:
+			_check_focus_kept("box")
+			_check_live_readouts()
+		16:
+			var companies = _main._windows.content("companies")
+			companies._last_refusal = "refused in the old game"
+			companies._open_sector = "x"
+			companies._open_firm = "x"
+			companies._open_body = "x"
+			companies._open_ledger = "x"
+			companies._focus_verb = "x"
 			_panel._good_filter = "x"
 			_panel._firm_id = "x"
 			_panel._prog_pick = 1
@@ -67,9 +87,11 @@ func _process(_delta: float) -> bool:
 				_fail("could not save: %s" % error)
 			_main._on_load_requested(SLOT)
 			_check_load_forgets()
+			if companies._last_refusal != "" or companies._open_sector != "" or companies._open_firm != "" 					or companies._open_body != "" or companies._open_ledger != "" or companies._focus_verb != "":
+				_fail("a load keeps the discarded game's Companies picks or refusal")
 			_cleanup()
 			_main.queue_free()
-		12:
+		18:
 			_finish()
 			return true
 	return false
@@ -120,10 +142,10 @@ func _check_drag_kept_its_slider() -> void:
 
 
 func _check_drag_end_rebuilds() -> void:
-	if not _found or not is_instance_valid(_slider):
+	if not _found:
 		return
-	if _panel._prog_pick != int(_slider.value):
-		_fail("the drag's end did not keep the picked stop (%d, slider at %d)" % [_panel._prog_pick, int(_slider.value)])
+	if _panel._prog_pick != _drag_value:
+		_fail("the drag's end did not keep the picked stop (%d, slider at %d)" % [_panel._prog_pick, _drag_value])
 	if is_instance_valid(_slider) and not _slider.is_queued_for_deletion():
 		_fail("the drag's end did not rebuild the tab for the picked stop")
 
@@ -141,7 +163,9 @@ func _check_disabled_go_says_why() -> void:
 			go = node
 	if go == null:
 		_fail("premise: no 'Put it in the finance bill' for another stop")
-	elif go.disabled:
+	elif not go.disabled:
+		_fail("premise: 'Put it in the finance bill' is open while a programme runs")
+	else:
 		var said := false
 		for node in _panel.find_children("*", "Label", true, false):
 			if (node as Label).has_meta("programme_refusal") and (node as Label).text != "":
@@ -161,6 +185,71 @@ func _check_hidden_mid_drag_releases() -> void:
 	_main._windows.open(TAB)
 	if _panel._dragging:
 		_fail("a tab hidden under a held slider stays frozen (no rebuild until a load)")
+
+
+func _programme(meta: String) -> Control:
+	for node in _panel.find_children("*", "", true, false):
+		if node.has_meta(meta) and not (node as Node).is_queued_for_deletion():
+			return node
+	return null
+
+
+## T4: a press and release that moved nothing picks nothing (the stop "as it stands" stays).
+func _check_unmoved_drag_picks_nothing() -> void:
+	var slider := _programme("programme") as HSlider
+	if slider == null:
+		_fail("premise: no programme slider to press")
+		return
+	_panel._prog_pick = -1
+	slider.drag_started.emit()
+	slider.drag_ended.emit(false)
+	if _panel._prog_pick != -1:
+		_fail("a press on the slider that moved nothing picked stop %d" % _panel._prog_pick)
+	if _panel._dragging:
+		_fail("a release that moved nothing left the tab held")
+
+
+## T5: a keyboard step (or a SpinBox arrow) rebuilds the tab; the new control takes the focus.
+func _step_focused(which: String) -> void:
+	if which == "slider":
+		var slider := _programme("programme") as HSlider
+		slider.grab_focus()
+		slider.value = slider.value + 1.0 if slider.value < slider.max_value else slider.value - 1.0
+	else:
+		var box := _programme("programme_box") as SpinBox
+		box.get_line_edit().grab_focus()
+		box.value = box.value + box.step
+
+
+func _check_focus_kept(which: String) -> void:
+	var owner: Control = _panel.get_viewport().gui_get_focus_owner()
+	var ok := false
+	if owner != null and _panel.is_ancestor_of(owner):
+		ok = owner.has_meta("programme") if which == "slider" else (owner.get_parent() is SpinBox and owner.get_parent().has_meta("programme_box"))
+	if not ok:
+		_fail("a keyboard step on the programme's %s lost the focus to %s" % [which, owner])
+
+
+## T5: under a mouse drag the tab does not rebuild, so the price and the stop's name follow live.
+func _check_live_readouts() -> void:
+	var slider := _programme("programme") as HSlider
+	var box := _programme("programme_box") as SpinBox
+	var name := _programme("programme_name") as Label
+	if slider == null or box == null or name == null:
+		_fail("the programme row has no price box or no stop name to follow the drag")
+		return
+	var ns = _main._state.player()
+	var list: Array = SectorProgramme.stops(_main._loader, "industry")
+	var to := 0 if int(slider.value) != 0 else 1
+	slider.drag_started.emit()
+	slider.value = to
+	var want := SectorProgramme.price(_main._state, _main._loader, ns, list, "industry", to)
+	if absf(box.value - want) > 0.011:
+		_fail("under a drag the price stays %s, not the dragged stop's %s" % [box.value, want])
+	var word := Strings.row_name("investment-actions", list[to]["action"]) if to > 0 else Strings.t("No programme")
+	if name.text != word:
+		_fail("under a drag the stop's name reads '%s', not '%s'" % [name.text, word])
+	slider.drag_ended.emit(true)
 
 
 func _check_load_forgets() -> void:
