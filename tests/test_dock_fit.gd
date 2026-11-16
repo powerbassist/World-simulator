@@ -200,6 +200,13 @@ func _check_save_load_buttons_fit(main, where: String) -> void:
 		if rect.end.x > view.end.x + 0.5 or rect.position.x < view.position.x - 0.5:
 			_fail("Save/Load (%s): '%s' spans x %.0f-%.0f, outside its view's %.0f-%.0f" % [where, b.text,
 				rect.position.x, rect.end.x, view.position.x, view.end.x])
+	# A save name has no length cap: the dialog stays on the screen whatever the player typed.
+	panel._slot_list.add_child(panel._build_slot_row("mandat ".repeat(30)))
+	await _frames(3)
+	var whole: Rect2 = (panel as Control).get_global_rect()
+	if whole.position.x < -0.5 or whole.end.x > 1920.5:
+		_fail("Save/Load (%s): a long save name puts the dialog at x %.0f-%.0f, off the 1920 px screen" % [where,
+			whole.position.x, whole.end.x])
 	panel.close()
 
 

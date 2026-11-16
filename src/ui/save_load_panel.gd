@@ -149,6 +149,11 @@ func _build_slot_row(slot: String) -> Control:
 	var name_label := Label.new()
 	name_label.text = slot
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# A save name has no length cap and the list no longer scrolls sideways: a long one trims, whole
+	# on the hover, so the dialog keeps its width (#402's pass 1).
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.tooltip_text = slot
+	name_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.add_child(name_label)
 
 	# B16: a slot list without dates cannot tell quicksave from quicksave -- the
