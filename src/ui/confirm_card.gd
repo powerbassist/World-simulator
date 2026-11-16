@@ -38,7 +38,10 @@ static func on_stack(from: Node):
 ## discarded game; a Yes would run that verb against the loaded one.
 static func close_all(from: Node) -> void:
 	for card in from.get_tree().get_nodes_in_group(GROUP):
-		(card as Control).hide()
+		if from.is_ancestor_of(card):
+			(card as Control).hide()
+			# An asker's closure over the discarded game (CompanyVerb keeps one): not kept alive.
+			card.remove_meta(&"run")
 
 
 func _ready() -> void:
