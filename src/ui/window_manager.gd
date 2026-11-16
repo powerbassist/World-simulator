@@ -33,6 +33,8 @@ const Sound = preload("res://src/ui/sound.gd")
 
 signal opened(id: String)
 signal closed(id: String)
+## mark_all_dirty() ran: the state moved (every player command sweeps here; ChiefMarkView re-ranks on it).
+signal dirtied
 
 ## The board's geometry at the 1920x1080 reference: the dock starts at the
 ## sidebar's right edge and is 1240 wide, which leaves the 448px strip of map
@@ -324,6 +326,7 @@ func mark_all_dirty() -> void:
 	for panel in panels():
 		if panel.has_method("mark_dirty"):
 			panel.mark_dirty()
+	dirtied.emit()
 
 
 ## Back to the map. One close cue, and one step of history.

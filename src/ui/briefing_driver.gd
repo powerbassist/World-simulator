@@ -65,9 +65,7 @@ static func register(main) -> void:
 	# G1: the mark opens the read; an answered file ranks the month again, so the mark
 	# never names a file that is gone (the brief's "no stale line").
 	main._hud.title_bar.chief_pressed.connect(func() -> void: read(main))
-	main._hud.inbox.card_closed.connect(func(_id: String) -> void: ChiefMarkView.refresh(main, true))
-	main._hud.inbox.card_dismissed.connect(func(_id: String) -> void: ChiefMarkView.refresh(main, true))
-	ChiefMarkView.follow_answers(main)
+	ChiefMarkView.follow(main)
 
 
 static func card_of(main) -> ChiefBriefing:

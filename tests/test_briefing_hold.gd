@@ -23,6 +23,7 @@ extends SceneTree
 const Click = preload("res://tests/click.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
+const ChiefMarkView = preload("res://src/ui/chief_mark_view.gd")
 const PriorityWords = preload("res://src/ui/priority_words.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const RequestLane = preload("res://src/ui/request_lane.gd")
@@ -205,6 +206,9 @@ func _check_no_stale_line() -> void:
 	if card_id == "" or not InboxFiles.press(_main._hud.inbox, card_id, RequestLane.DECLINE):
 		_fail("premise: the request could not be declined in the inbox (card '%s')" % card_id)
 		return
+	# The re-rank runs at the frame's end (ChiefMarkView.follow): run it now.
+	if _main.has_meta(ChiefMarkView.RERANK_QUEUED):
+		ChiefMarkView._rerank_queued(_main)
 	if (game["lines"] as Array).any(func(l): return String(l["subject"]) == rid):
 		_fail("the declined request is still among the month's lines")
 	if mark.title_text() == before:

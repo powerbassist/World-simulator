@@ -8,7 +8,8 @@ extends SceneTree
 ##     on its reading timer, so a long messenger's clip silenced the chief. It is gated on
 ##     the mark, which stays up for the month;
 ##   - item 14: the mark re-ranked only when an inbox card closed, so a dispatch answered
-##     in its window (or a request declined in the lane) left the mark naming it;
+##     in its window (or a request declined in the lane) left the mark naming it. Since #393
+##     pass 2 (T1) every command re-ranks through the window manager's one sweep;
 ##   - item 5: a load kept the discarded game's ranking memory and report, so the first card
 ##     closed after it re-ranked from them and put the old game's mark back up.
 ## Driven through main.gd's real handlers, a frame at a time.
@@ -45,25 +46,52 @@ func _process(_delta: float) -> bool:
 				_fail("premise: a month end stored no ranking")
 				return _end()
 			_check_queued_line_outlives_the_caption()
-			_check_answers_outside_the_inbox_rerank()
+			# The re-rank waits for the frame's end (one per frame, #393 pass 2 T1): each answer
+			# is checked the frame after.
+			_game()["lines"] = [STALE]
+			_main._events_panel.acted.emit({}, "an answer in Dispatches")
+		3:
+			_check_reranked("an answer in the Dispatches window")
+			_game()["lines"] = [STALE]
+			var lane = preload("res://src/ui/audience_driver.gd")._games[_main.get_instance_id()]["lane"]
+			lane.decline_requested.emit("__no_such_request__")
+		4:
+			_check_reranked("a request declined in the lane")
+			# The one sink every command reaches (an audience's Grant, Counter, Money, End, the phone,
+			# a law tabled, a budget committed): the window manager's sweep.
+			_game()["lines"] = [STALE]
+			_main._windows.mark_all_dirty()
+		5:
+			_check_reranked("a command's sweep of the windows")
 			var error := SaveManager.save_game(_main._state, _main._clock, SLOT)
 			if error != "":
 				_fail("could not save: %s" % error)
 				return _end()
-		4:
+		6:
 			# The discarded game's ranking, which must not come back after the load.
 			_game()["memory_before"] = {"last": [STALE]}
 			_game()["lines"] = [STALE]
 			_game()["report"] = {"stale": true}
 			_main._on_load_requested(SLOT)
-		6:
+		8:
 			_check_load_forgets_the_ranking()
+			_game()["lines"] = [STALE]
+			_main._hud.inbox.card_closed.emit("__any__")
+		9:
+			_check_reranked("a card closed after a load")
+			if not _main._hud.title_bar.chief_mark.visible:
+				_fail("a card closed after a load took the loaded game's mark down")
 			_cleanup()
 			_main.queue_free()
-		8:
+		11:
 			_finish()
 			return true
 	return false
+
+
+func _check_reranked(what: String) -> void:
+	if (_game().get("lines", []) as Array).has(STALE):
+		_fail("%s did not re-rank the chief's mark" % what)
 
 
 func _game() -> Dictionary:
@@ -92,18 +120,6 @@ func _check_queued_line_outlives_the_caption() -> void:
 	player.set_meta("pending", false)
 
 
-func _check_answers_outside_the_inbox_rerank() -> void:
-	_game()["lines"] = [STALE]
-	_main._events_panel.acted.emit({}, "an answer in Dispatches")
-	if (_game()["lines"] as Array).has(STALE):
-		_fail("an answer in the Dispatches window did not re-rank the chief's mark")
-	_game()["lines"] = [STALE]
-	var lane = preload("res://src/ui/audience_driver.gd")._games[_main.get_instance_id()]["lane"]
-	lane.decline_requested.emit("__no_such_request__")
-	if (_game()["lines"] as Array).has(STALE):
-		_fail("a request declined in the lane did not re-rank the chief's mark")
-
-
 ## #393 pass 2, T2: the loaded game is ranked at the load from no memory, so the mark names
 ## its first line at once (not blank until the month's end), and nothing of the old ranking.
 func _check_load_forgets_the_ranking() -> void:
@@ -117,9 +133,6 @@ func _check_load_forgets_the_ranking() -> void:
 		return
 	if not _main._hud.title_bar.chief_mark.visible:
 		_fail("after a load the chief's mark is blank until the month's end")
-	_main._hud.inbox.card_closed.emit("__any__")
-	if (game.get("lines", []) as Array).has(STALE) or not _main._hud.title_bar.chief_mark.visible:
-		_fail("a card closed after a load re-ranked from the discarded game")
 
 
 func _end() -> bool:

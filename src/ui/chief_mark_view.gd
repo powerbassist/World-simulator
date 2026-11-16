@@ -14,6 +14,8 @@ const Staff = preload("res://src/sim/staff.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const Strings = preload("res://src/ui/strings.gd")
+## main's meta while a re-rank waits for the frame's end (follow()).
+const RERANK_QUEUED := "chief_rerank_queued"
 
 
 ## The mark from the month's first line; `rerank` ranks the month again first.
@@ -94,13 +96,29 @@ static func _say_again(main, text: String) -> void:
 		main._hud.chief_caption.say(text, main._hud.title_bar.chief_mark)
 
 
-## A file answered outside the inbox (a dispatch in its window) re-ranks the mark too, or it names a file that is gone
-## (the retro review's item 14; a request answered in the lane goes through AudienceDriver._answer). Connected after
-## the panels' own handlers: theirs act first.
-static func follow_answers(main) -> void:
-	for panel in main._windows.panels():
-		if panel.has_signal("acted"):
-			panel.acted.connect(func(_before = null, _label = null, _result = null) -> void: refresh(main, true))  # acted carries 2 or 3 args
+## What re-ranks the mark, or it names a file that is gone (the retro review's item 14, #393 pass 2 T1): every player
+## command -- a dispatch, an audience's Grant or End, a law tabled, the programme, the phone -- ends in the window
+## manager's one sweep (its `dirtied`), and an inbox card closed or dismissed changes what holds the clock without one.
+## Coalesced: a command that sweeps twice, or closes a card as it sweeps, ranks once, at the frame's end.
+static func follow(main) -> void:
+	main._windows.dirtied.connect(_queue_rerank.bind(main))
+	main._hud.inbox.card_closed.connect(_queue_rerank.bind(main).unbind(1))
+	main._hud.inbox.card_dismissed.connect(_queue_rerank.bind(main).unbind(1))
+
+
+static func _queue_rerank(main) -> void:
+	if not main.has_meta(RERANK_QUEUED):
+		main.set_meta(RERANK_QUEUED, true)
+		_rerank_queued.bind(main).call_deferred()
+
+
+## Not under an open read: its Go buttons index the lines it shows (it ranks again when it opens).
+static func _rerank_queued(main) -> void:
+	if not is_instance_valid(main):
+		return
+	main.remove_meta(RERANK_QUEUED)
+	var card = BriefingDriver.card_of(main)
+	refresh(main, card == null or not card.visible)
 
 
 ## A load: the ranking's memory and report go with the discarded game (left, the first card closed after the load
