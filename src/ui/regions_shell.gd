@@ -36,6 +36,8 @@ static func panel(main) -> Control:
 				largest = c
 		cities[String(region.id)] = [] if largest == null else [largest.lonlat]
 	overlay.set_avoid(cities)
+	overlay.picker = func(lonlat: Vector2) -> String:
+		return Region.region_at_lonlat(main._loader.region_rings, lonlat.x, lonlat.y)
 	tab._overlay = overlay
 	var w = main._windows
 	overlay.fit_rect = Rect2(w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"]), w.DOCK_TOP,

@@ -130,6 +130,24 @@ func _check_in_region_rule() -> void:
 	if chip.has_point(map.lonlat_to_screen(2.0, 0.5)):
 		_fail("the in-region rule: A's chip stayed on its city though a place inside A was free")
 	probe.queue_free()
+	# QA's T3 on #384: a hole. H is a square with C, a smaller square, cut out of its middle
+	# (Berlin in Brandenburg); the drawn rings are outer rings only, so H's centroid lies in C.
+	# Answered through the hole-aware picker, H's figure is centred in H, not on C.
+	var holed = MapRegions.new()
+	root.add_child(holed)
+	var h := PackedVector2Array([Vector2(0, 0), Vector2(6, 0), Vector2(6, 6), Vector2(0, 6)])
+	var c := PackedVector2Array([Vector2(2, 2), Vector2(4, 2), Vector2(4, 4), Vector2(2, 4)])
+	holed.setup(FakeMap.new(), ["H", "C"], {"H": [h], "C": [c]})
+	holed.picker = func(ll: Vector2) -> String:
+		if Geometry2D.is_point_in_polygon(ll, c):
+			return "C"
+		return "H" if Geometry2D.is_point_in_polygon(ll, h) else ""
+	holed.set_tint({"H": {"tone": UiTheme.BAD, "label": "▲ 9.5 %"}})
+	var at: Rect2 = holed.label_rects().get("H", Rect2())
+	var mid := Vector2((at.get_center().x - 400.0) / 20.0, (400.0 - at.get_center().y) / 20.0)
+	if String(holed.picker.call(mid)) != "H":
+		_fail("the hole rule: H's chip is centred at %s, in '%s', not in H" % [mid, holed.picker.call(mid)])
+	holed.queue_free()
 
 
 ## No two chips overlap, none covers its region's largest city, and each is centred inside

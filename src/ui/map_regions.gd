@@ -37,6 +37,10 @@ var _bounds := Rect2()
 var fit_rect := Rect2()
 ## region id -> its cities' lon/lat: a figure's chip steps off them (regions_shell.gd sets it).
 var _avoid := {}
+## lon/lat -> region id, hole-aware (regions_shell.gd sets it); inside() reads it.
+var picker := Callable()
+## The grid a region whose centroid lies outside it is searched on for an anchor.
+const ANCHOR_GRID := 16
 
 
 func _init() -> void:
@@ -117,7 +121,8 @@ func label_rects() -> Dictionary:
 		var text := label_of(id)
 		if text == "":
 			continue
-		var at: Vector2 = _map.lonlat_to_screen((_shapes[id]["at"] as Vector2).x, (_shapes[id]["at"] as Vector2).y)
+		var anchor := _anchor(id)
+		var at: Vector2 = _map.lonlat_to_screen(anchor.x, anchor.y)
 		var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size()) + CHIP_PAD * 2.0
 		var cities: Array = []
 		for ll: Vector2 in _avoid.get(id, []):
@@ -135,12 +140,41 @@ func label_rects() -> Dictionary:
 	return out
 
 
-## Whether a lon/lat point lies in the region's own rings.
+## Whether a lon/lat point lies in the region. Through `picker` (regions_shell.gd's
+## Region.region_at_lonlat over loader.region_rings, the click's own test) when set, because
+## the drawn rings are outer rings only: Berlin is a hole in Brandenburg, Warsaw in
+## Mazowieckie, and an outer-ring test files their points under the host (QA's T3 on #384).
 func inside(region_id: String, lonlat: Vector2) -> bool:
+	if picker.is_valid():
+		return String(picker.call(lonlat)) == region_id
 	for ring: PackedVector2Array in _shapes.get(region_id, {}).get("rings", []):
 		if ring.size() >= 3 and Geometry2D.is_point_in_polygon(lonlat, ring):
 			return true
 	return false
+
+
+## The point a region's figure is centred on: its largest ring's centroid, or, when that falls
+## outside the region (Brandenburg's centroid is in Berlin), the grid point of its box inside
+## the region nearest the centroid. Geometry only, so it is found once.
+func _anchor(region_id: String) -> Vector2:
+	var shape: Dictionary = _shapes[region_id]
+	if shape.has("anchor"):
+		return shape["anchor"]
+	var centroid: Vector2 = shape["at"]
+	var best := centroid
+	if not inside(region_id, centroid):
+		var box := Rect2()
+		for ring: PackedVector2Array in shape["rings"]:
+			box = _box(ring) if box.size == Vector2.ZERO else box.merge(_box(ring))
+		var best_d := INF
+		for i in range(1, ANCHOR_GRID):
+			for j in range(1, ANCHOR_GRID):
+				var p := box.position + box.size * Vector2(float(i), float(j)) / float(ANCHOR_GRID)
+				if inside(region_id, p) and p.distance_to(centroid) < best_d:
+					best_d = p.distance_to(centroid)
+					best = p
+	shape["anchor"] = best
+	return best
 
 
 ## lon/lat -> screen, the map's own transform read off two of its points.
