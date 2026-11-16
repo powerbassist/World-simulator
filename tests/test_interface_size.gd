@@ -75,6 +75,14 @@ func _check_rule() -> void:
 	_expect("Auto at 1920x1920 (headless)", InterfaceSize.factor(auto, Vector2i(1920, 1920)), 1.0)
 	_expect("Auto at 2240x1260", InterfaceSize.factor(auto, Vector2i(2240, 1260)), 1080.0 / 1260.0)
 	_expect("Auto with no size yet", InterfaceSize.factor(auto, Vector2i.ZERO), 1.0)
+	# Density (the author's "Pixels + densite"): a normal desk monitor shrinks, a dense
+	# laptop panel keeps 1.0 and lets the stretch make the UI bigger.
+	_expect("Auto, 27in 1440p (109 dpi)", InterfaceSize.factor(auto, Vector2i(2560, 1440), 109), 0.75)
+	_expect("Auto, 32in 4K (140 dpi)", InterfaceSize.factor(auto, Vector2i(3840, 2160), 140), 0.75)
+	_expect("Auto, 14in 2560x1600 (215 dpi)", InterfaceSize.factor(auto, Vector2i(2560, 1600), 215), 1.0)
+	_expect("Auto at the dense cut", InterfaceSize.factor(auto, Vector2i(2560, 1440), InterfaceSize.DENSE_DPI), 1.0)
+	_expect("Auto just under the cut", InterfaceSize.factor(auto, Vector2i(2560, 1440), InterfaceSize.DENSE_DPI - 1), 0.75)
+	_expect("75 % on a dense screen is still 75 %", InterfaceSize.factor(4, Vector2i(2560, 1600), 215), 0.75)
 	# The manual steps are the factor, whatever the window.
 	var steps := {1: 1.0, 2: 0.9, 3: 0.8, 4: 0.75}
 	for index in steps.keys():
@@ -150,7 +158,7 @@ func _check_row() -> void:
 	button.select(InterfaceSize.AUTO_INDEX)
 	_panel._save_and_apply()
 	_expect("Auto applied back", root.content_scale_factor,
-		InterfaceSize.factor(InterfaceSize.AUTO_INDEX, root.size))
+		InterfaceSize.factor(InterfaceSize.AUTO_INDEX, root.size, DisplayServer.screen_get_dpi()))
 
 
 ## Auto follows the window: F11, a maximize or a drag changes the size, and the root
@@ -169,7 +177,7 @@ func _check_listener() -> void:
 	root.content_scale_factor = 0.5
 	InterfaceSize.refit(root)
 	_expect("the refit lands on the rule", root.content_scale_factor,
-		InterfaceSize.factor(InterfaceSize.AUTO_INDEX, root.size))
+		InterfaceSize.factor(InterfaceSize.AUTO_INDEX, root.size, DisplayServer.screen_get_dpi()))
 	# A manual step survives the window moving: a maximize must not snap 80 % back to Auto.
 	var cfg := ConfigFile.new()
 	cfg.load(SettingsPanel.CONFIG_PATH)

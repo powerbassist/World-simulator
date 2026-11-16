@@ -27,22 +27,33 @@ const KEY := "interface_size_index"
 const SIZES: Array[float] = [0.0, 1.0, 0.9, 0.8, 0.75]
 const AUTO_INDEX := 0
 ## Auto by default, and for a settings.cfg written before the row existed: it is
-## exactly 1.0 on a 1080p screen, so nobody below 1440p sees a change.
+## exactly 1.0 on a 1080p screen and on any dense one (DENSE_DPI), so only a large,
+## normal-density screen above 1080p (a desk monitor) sees a change.
 const DEFAULT_INDEX := AUTO_INDEX
 ## Auto's floor: 4K would ask for 0.5, a canvas wider than anything the panels were
 ## laid out for. At 0.75 a 2160p screen shows the UI at 1.5x its 1080p size.
 const AUTO_MIN_FACTOR := 0.75
+## The author's call (2026-11-16, "Pixels + densité"): Auto shrinks only on a
+## normal-density screen. A 27" 1440p desk monitor is about 109 dpi and a 24" 1080p one
+## about 92: there 1080p pixels are a comfortable physical size. A 14" 2560x1600 laptop
+## is about 215 dpi: 1080p pixels there are two thirds the size the OS's own scaling
+## (150 %) intends, so Auto keeps 1.0 and the stretch makes the UI bigger instead. The cut
+## sits between the two families, above the 32" 4K (about 140 dpi) desk monitors.
+## Windows has no DisplayServer.screen_get_scale(), so density is the readable signal.
+const DENSE_DPI := 150
 
 
 ## The factor for a row index and a window size in physical px. Auto undoes the
 ## stretch -- min(w/1920, h/1080) under canvas_items + expand, so 1080/height on a
 ## 16:9 or wider screen, but the width's ratio on a taller one (a 1920x1200 or a
 ## drag-resized 1600x1200 window must not shrink below its 1080p size) -- clamped to
-## [AUTO_MIN_FACTOR, 1.0]. An index the row does not offer reads as Auto.
-static func factor(index: int, window_size: Vector2i) -> float:
+## [AUTO_MIN_FACTOR, 1.0] -- and 1.0 on a screen of DENSE_DPI or more. An index the row
+## does not offer reads as Auto. `dpi` is the window's screen's, passed in so a test
+## can give either kind of screen (headless reports 72).
+static func factor(index: int, window_size: Vector2i, dpi := 96) -> float:
 	if index > AUTO_INDEX and index < SIZES.size():
 		return SIZES[index]
-	if window_size.x <= 0 or window_size.y <= 0:
+	if window_size.x <= 0 or window_size.y <= 0 or dpi >= DENSE_DPI:
 		return 1.0
 	var base := Vector2(
 		float(ProjectSettings.get_setting("display/window/size/viewport_width", 1920)),
@@ -83,8 +94,10 @@ static var _index := DEFAULT_INDEX
 
 
 ## Guarded: assigning the factor resizes the viewport, which can emit size_changed
-## again; the second call finds the factor already right and stops.
+## again; the second call finds the factor already right and stops. The density is read
+## here, every time, rather than cached: a move to another screen (F11 on it, a resize
+## there, a Settings save) refits with that screen's dpi.
 static func refit(window: Window) -> void:
-	var f := factor(_index, window.size)
+	var f := factor(_index, window.size, DisplayServer.screen_get_dpi(DisplayServer.SCREEN_OF_MAIN_WINDOW))
 	if not is_equal_approx(window.content_scale_factor, f):
 		window.content_scale_factor = f
