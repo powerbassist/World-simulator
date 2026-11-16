@@ -658,7 +658,7 @@ var _consequence := false
 ## whole point. --region proves the Region panel builds and its five-column
 ## ledger fits. --city drives the map's own route end to end -- centred and
 ## zoomed past CITY_MIN_ZOOM on Paris, the cross hovered so the frame carries the
-## hover label, and the City panel opened through show_city() exactly as main.gd's
+## hover label, and the City panel opened through open_city() exactly as main.gd's
 ## click lambda does it.
 var _region := false
 var _city := false
@@ -3783,8 +3783,7 @@ func _point_at_the_capital() -> void:
 	view.zoom_by(2.0, view.size / 2.0)
 	view._hovered_city = "FR1_paris"
 	view.queue_redraw()
-	_main._region_panel.show_city("FR1_paris")
-	_main._windows.open("region")
+	_main._region_panel.open_city("FR1_paris")
 
 
 ## V1.7c. A referendum called and left in flight, so the law panel's pending block is

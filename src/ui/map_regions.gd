@@ -32,8 +32,9 @@ var _tint := {}
 var _map
 var _last_key := []
 var selected := ""
-## The regions' lon/lat box, and the screen rect the map frames them in when the tab opens
-## (the map right of the narrow dock, left of the inbox: regions_shell.gd sets it).
+## The regions' lon/lat box, and the screen rect the map frames them in (fit(): the tab's
+## open, a load, "All regions") -- the map right of the narrow dock, left of the inbox
+## (regions_shell.gd sets it).
 var _bounds := Rect2()
 var fit_rect := Rect2()
 ## region id -> its cities' lon/lat: a figure's chip steps off them (regions_shell.gd sets it).
@@ -228,8 +229,9 @@ func select(region_id: String) -> void:
 
 ## The one framing owner (#391 pass 2): the tab's open, a load and "All regions" ask for the
 ## nation framed after this frame's layout; anything that centres the map itself (a region's
-## pick, the arrival card's Open, a city opened where the map is) cancels it, whichever
-## comes first in the frame. Pending only until the deferred call runs.
+## pick, the arrival card's Open, a city opened where the map is) cancels it, and must do so
+## AFTER the open that requested it (the open's visibility change is the request). Pending
+## only until the deferred call runs.
 var _fit_pending := false
 
 

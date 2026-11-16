@@ -76,6 +76,7 @@ func _process(_delta: float) -> bool:
 			panel._game.measure = "change"
 			_main._map_view.pan_by(Vector2(-300.0, 120.0))
 			_main._on_load_requested(SLOT)
+			# Read after the load: a load gives the panel a NEW state (#391 second pass 2, T6).
 			var g = panel._game
 			if g.open_region != "" or g.fund_share != 0.0 or g.fund_years != 0 or g.fund_refusal != "":
 				_fail("the old game's open region or fund sums survive the load")
@@ -124,8 +125,26 @@ func _process(_delta: float) -> bool:
 		20:
 			if _main._map_view.lonlat_to_screen(PARIS.x, PARIS.y).distance_to(_paris_before) > 1.0:
 				_fail("a tab opened and closed in one frame still framed the nation")
+			_check_refused_city_open_stores_nothing()
+			# T1: the tab shows a city, then the arrival card's Open names a region.
+			_main._region_panel.open_city(PARIS_ID)
+			_arrival_from_a_city()
+		23:
+			var panel = _main._windows.content("region")
+			if String(panel._game.city_id) != "" or String(panel._game.open_region) != _arrival_region:
+				_fail("the arrival card's Open over a city left city '%s', region '%s' (wanted %s)" % [panel._game.city_id, panel._game.open_region, _arrival_region])
+			if not String(panel._title.text).begins_with(tr("Regions of %s") % ""):
+				_fail("the arrival card's Open over a city shows '%s', not the regions" % panel._title.text)
+			# T2: a city reached from inside the open region, then "All regions".
+			panel.show_city(String(panel._largest_city(_arrival_region).id))
+		25:
+			_main._windows.content("region")._back_button.pressed.emit()
+		28:
+			var at: Vector2 = _main._map_view.lonlat_to_screen(_arrival_city.x, _arrival_city.y)
+			if at.distance_to(_main._map_view.size / 2.0) > 1.0:
+				_fail("All regions from a city inside %s did not come back to the region (its city at %s, the map's centre %s)" % [_arrival_region, at, _main._map_view.size / 2.0])
 			_main.queue_free()
-		22:
+		30:
 			_finish()
 			return true
 	return false
@@ -154,6 +173,26 @@ func _check_arrival_open_centres() -> void:
 		"cards": {"__test_card__": _arrival_region}, "wired": true}
 	RegionArrival._on_go("__test_card__", 0, _main)
 	_arrival_at = _main._map_view.lonlat_to_screen(_arrival_city.x, _arrival_city.y)
+
+
+## T3: an open refused (a scene holds the screen) stores no city for a later open.
+func _check_refused_city_open_stores_nothing() -> void:
+	var panel = _main._windows.content("region")
+	_main._windows.close_all()
+	var before := String(panel._game.city_id)
+	var scene: Control = _main._windows._pages["summit"]
+	scene.show()
+	panel.open_city(PARIS_ID)
+	scene.hide()
+	if _main._windows.is_open("region"):
+		_fail("premise: the tab opened over a scene")
+	if String(panel._game.city_id) != before:
+		_fail("a city open refused under a scene stored '%s' for the next open" % panel._game.city_id)
+
+
+func _arrival_from_a_city() -> void:
+	RegionArrival._told[_main.get_instance_id()]["cards"]["__test_card_2__"] = _arrival_region
+	RegionArrival._on_go("__test_card_2__", 0, _main)
 
 
 ## Berlin's hole is cut at its box's centre: Brandenburg land just west AND just east of that

@@ -93,8 +93,9 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
-	# A setup() after the first is a load: the discarded game's picks go with it.
-	_game.reset()
+	# A setup() after the first is a load: the discarded game's picks go with it -- a new state,
+	# so a field added later cannot survive one.
+	_game = RegionState.new()
 	if rebind.is_valid():
 		rebind.call()
 
@@ -109,28 +110,56 @@ func hide_close_button() -> void:
 	_close_button.hide()
 
 
-## The map's route: any nation's city answers. show_city() before the window
-## opens, so the content settles before the window sizes itself around it.
+## A city's detail in place, the tab already up (its "Largest cities" buttons).
 func show_city(city_id: String) -> void:
 	_game.city_id = city_id
 	_dirty = true
 
 
-## The map's city cross (main.gd): the city's detail in the tab, and the map left where the
-## player clicked -- framing the nation on this open would jump it away from the cross (the
-## retro review's item 12), so the open's queued fit is cancelled in the same call.
-func open_city(city_id: String) -> void:
+## The tab's two ways in from outside it. The city's cross on the map (main.gd): the city's
+## detail, the map left where the player clicked -- framing the nation would jump it away
+## from the cross (the retro review's item 12). The city is set before the open, so the
+## content settles before the window sizes itself, and put back if the open is refused (a
+## scene holds the screen). The open's queued fit is cancelled AFTER it (map_regions.gd).
+func open_city(city_id: String) -> bool:
+	var before := String(_game.city_id)
 	show_city(city_id)
-	_windows.open("region")
+	if not _open():
+		_game.city_id = before
+		return false
 	if _overlay != null:
 		_overlay.cancel_fit()
+	return true
 
 
-## Back from a city to the list: the nation framed again.
+## A region's sheet from outside the tab (the arrival card's Open): out of any city, the sheet
+## open (never toggled shut), its row in view, the map on its largest city.
+func open_region_at(region_id: String) -> bool:
+	var before := String(_game.city_id)
+	_game.city_id = ""
+	if not _open():
+		_game.city_id = before
+		return false
+	_game.open_region = region_id
+	_game.fund_refusal = ""
+	_refocus = region_id
+	_centre_on(region_id)
+	_dirty = true
+	return true
+
+
+func _open() -> bool:
+	_windows.open("region")
+	return _windows.is_open("region")
+
+
+## Back from a city to the list: the open region's city centred again, else the nation framed.
 func _all_regions() -> void:
 	_game.city_id = ""
 	_dirty = true
-	if _overlay != null:
+	if _game.open_region != "":
+		_centre_on(_game.open_region)
+	elif _overlay != null:
 		_overlay.request_fit()
 
 
@@ -300,13 +329,19 @@ func _pick(region_id: String) -> void:
 	_game.open_region = "" if _game.open_region == region_id else region_id
 	_game.fund_refusal = ""
 	_refocus = region_id
-	if _game.open_region != "" and _map != null:
-		var city = _largest_city(region_id)
-		if city != null:
-			if _overlay != null:
-				_overlay.cancel_fit()
-			_map.center_on_lonlat(city.lonlat.x, city.lonlat.y)
+	if _game.open_region != "":
+		_centre_on(region_id)
 	_dirty = true
+
+
+## The map on the region's largest city; a framing queued this frame is dropped.
+func _centre_on(region_id: String) -> void:
+	var city = _largest_city(region_id) if _map != null else null
+	if city == null:
+		return
+	if _overlay != null:
+		_overlay.cancel_fit()
+	_map.center_on_lonlat(city.lonlat.x, city.lonlat.y)
 
 
 func _opened(ns, regions: Array, region, access: Dictionary, sites: Array) -> Control:
