@@ -46,7 +46,7 @@ func _check() -> void:
 	windows.open("finances")
 	if not inbox.visible or not inbox.is_slid():
 		_fail("opening a tab took the inbox away (visible %s, slid %s)" % [inbox.visible, inbox.is_slid()])
-	windows.open("politics")
+	windows.open("majority")
 	if not inbox.visible or not inbox.is_slid():
 		_fail("a second tab took the inbox away (visible %s, slid %s)" % [inbox.visible, inbox.is_slid()])
 

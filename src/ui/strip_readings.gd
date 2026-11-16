@@ -250,7 +250,7 @@ static func _assembly(ns) -> Dictionary:
 		standing, ns.coalition_seats, ns.assembly_seats, majority,
 	]
 	var troubled: bool = ns.is_cohabitation or ns.is_minority
-	return _reading_lines("%+d" % margin, [_line(tip, "coalition")], true, "politics" if troubled else "")
+	return _reading_lines("%+d" % margin, [_line(tip, "coalition")], true, "majority" if troubled else "")
 
 
 ## Count, not date: the number ticking down is the urgency; the Overview's date

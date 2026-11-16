@@ -1,15 +1,16 @@
 extends VBoxContainer
 
-## The cabinet's two verbs, Government > Politics -- V5.2 b+ R4 (the author: "i
-## cant revoke ministers"; docs/design/v5.2-bplus-spec.md "R4", the command is
-## Systems' Removal). A portfolio and a coalition party picked, then Reassign
-## (the office to that party) or Dismiss (the holder out at once, the office
-## vacant). Taken out of government_panel.gd, which is at its size baseline.
+## The cabinet's removal verbs -- V5.2 b+ R4 (the author: "i cant revoke ministers";
+## docs/design/v5.2-bplus-spec.md "R4", the command is Systems' Removal). Since rework 1
+## the People roster's office rows carry the buttons (roster_verbs.gd) and call this
+## file's two doors, `reassign()` and `dismiss()`; Politics' portfolio and party pickers
+## went with the tab.
 ##
 ## A removal -- Dismiss, or a Reassign that takes the office from a party -- asks
 ## first, on the confirm card: the party, its leader's feeling after the pulse in
 ## R11's words, and the party's loyalty to the government. Filling a vacancy
-## takes from nobody and acts at once. A refusal is the sim's reason, shown.
+## takes from nobody and acts at once. A refusal is the sim's reason, shown on the
+## line this node draws.
 ##
 ## Reads sim state; the commands are Removal's.
 
@@ -17,8 +18,6 @@ extends VBoxContainer
 signal reassigned(before: Dictionary, title: String)
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
-const PanelKit = preload("res://src/ui/panel_kit.gd")
-const ActsOn = preload("res://src/ui/acts_on.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Trends = preload("res://src/ui/trends.gd")
@@ -28,12 +27,7 @@ const Removal = preload("res://src/sim/removal.gd")
 const President = preload("res://src/sim/president.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
-const CK = preload("res://src/sim/cabinet_constants.gd")
 
-var reassign_button: Button
-var _portfolio: OptionButton
-var _party: OptionButton
-var _party_ids: Array[String] = []
 var _status: Label
 var _state
 var _loader
@@ -56,87 +50,20 @@ func _init() -> void:
 	add_theme_constant_override("separation", 4)
 
 
-## Rework 1: the People roster's office rows carry the verbs (roster_verbs.gd) and keep
-## this file for the confirm card, the price and the effect: compact builds no picker,
-## only the refusal line; `reassign()` and `dismiss()` are its doors.
-var compact := false
-
-
 func _ready() -> void:
-	if compact:
-		_status = Label.new()
-		_status.theme_type_variation = UiTheme.CAPTION
-		_status.autowrap_mode = TextServer.AUTOWRAP_WORD
-		add_child(_status)
-		return
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	add_child(row)
-	_portfolio = OptionButton.new()
-	for f in CK.PORTFOLIO_KEYS:
-		_portfolio.add_item(Labels.portfolio(f))
-	row.add_child(_portfolio)
-	_party = OptionButton.new()
-	row.add_child(_party)
-	reassign_button = PanelKit.sized(Button.new())
-	reassign_button.text = tr("Reassign")
-	reassign_button.pressed.connect(_on_reassign)
-	# V5.3-0 RF3: the cabinet's verbs act on the majority (the briefing's "seats" Go).
-	ActsOn.tag(reassign_button, ["seats"])
-	row.add_child(reassign_button)
-	var dismiss := PanelKit.sized(Button.new())
-	dismiss.name = "Dismiss"  # i18n: ok a node name, found by tests
-	dismiss.text = tr("Dismiss")
-	dismiss.tooltip_text = tr("Remove the selected portfolio's holder at once; the office stays vacant until you reassign it.")
-	dismiss.pressed.connect(_on_dismiss)
-	ActsOn.tag(dismiss, ["seats"])
-	row.add_child(dismiss)
 	_status = Label.new()
 	_status.theme_type_variation = UiTheme.CAPTION
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	add_child(_status)
 
 
-## Coalition parties only -- Cabinet refuses everything else. Rebuilt on every
-## refresh: the coalition can change between one election and the next.
 func sync(state, loader) -> void:
 	_state = state
 	_loader = loader
-	if compact:
-		return
-	var ns = state.player()
-	var keep := _party_ids[_party.selected] if _party.selected >= 0 and _party.selected < _party_ids.size() else ""
-	_party.clear()
-	_party_ids.clear()
-	var ordered: Array = ns.coalition_party_ids.duplicate()
-	ordered.sort_custom(func(a, b): return int(ns.seats_by_party.get(a, 0)) > int(ns.seats_by_party.get(b, 0)))
-	for pid in ordered:
-		var party = _party_of(String(pid))
-		if party != null:
-			_party.add_item(String(party.party_name))
-			_party_ids.append(String(pid))
-	if _party_ids.has(keep):
-		_party.select(_party_ids.find(keep))
-
-
-func select_portfolio(portfolio: String) -> void:
-	_portfolio.select(CK.PORTFOLIO_KEYS.find(portfolio))
 
 
 func status_text() -> String:
 	return _status.text
-
-
-func _selected() -> String:
-	var i := _portfolio.selected
-	return CK.PORTFOLIO_KEYS[i] if i >= 0 and i < CK.PORTFOLIO_KEYS.size() else ""
-
-
-func _on_reassign() -> void:
-	var i := _party.selected
-	if _selected() == "" or i < 0 or i >= _party_ids.size():
-		return
-	reassign(_selected(), _party_ids[i])
 
 
 ## Give `portfolio` to `party_id`: at once into a vacancy, else on the confirm card.
@@ -147,11 +74,6 @@ func reassign(portfolio: String, party_id: String) -> void:
 		_act(run, tr("Cabinet reassigned"))
 		return
 	_ask(portfolio, party_id, Strings.t("Give %s to %s, taking it from %s?") % [Labels.portfolio(portfolio), _name(party_id), _name(from)], tr("Reassign"), run)
-
-
-func _on_dismiss() -> void:
-	if _selected() != "":
-		dismiss(_selected())
 
 
 ## The holder of `portfolio` out, on the confirm card with the removal's price.
