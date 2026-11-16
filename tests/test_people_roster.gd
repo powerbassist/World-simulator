@@ -420,7 +420,16 @@ func _check_card_plate_and_place() -> void:
 		_fail("the person card covers the focused line's verbs: card %s, strip %s" % [card.get_global_rect(), (strip.get_parent() as Control).get_global_rect()])
 	if card.get_global_rect().intersects(_row("person", String(_asker.id)).get_global_rect()):
 		_fail("the person card covers the line it is about")
+	# QA's H2 on #388: the card goes when the pointer leaves the line, and when the list
+	# scrolls under it (pass 1's "hover card outliving its line").
 	(_row("person", String(_asker.id)).get_child(0) as Button).mouse_exited.emit()
+	if layer.person_card_visible():
+		_fail("the person card stays up after the pointer left the line")
+	(_row("person", String(_asker.id)).get_child(0) as Button).mouse_entered.emit()
+	var scroll := _panel._body.get_parent() as ScrollContainer
+	scroll.get_v_scroll_bar().value_changed.emit(1.0)
+	if layer.person_card_visible():
+		_fail("the person card stays up after the list scrolled")
 
 
 func _check_see_greyed() -> void:
