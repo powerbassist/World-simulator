@@ -21,6 +21,7 @@ const CK = preload("res://src/sim/character_act_constants.gd")
 const RegionFund = preload("res://src/ui/region_fund.gd")
 const RegionVoice = preload("res://src/ui/region_voice.gd")
 const RegionTint = preload("res://src/ui/region_tint.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -89,8 +90,15 @@ static func _voice(box: Control, ns, loader, region_id: String) -> void:
 		box.add_child(row)
 		row.add_child(Portrait.control_for(String(person.id), FACE))
 		var text: String
-		if bool(v["hostile"]):
+		# QA's T1 on #383: the voice fires when the want TURNS served (Characters._settle_wants),
+		# and a region holds one fund: while one runs, the sheet promises nothing more.
+		if WantTerms.fund_open(ns, region_id):
+			text = Strings.t("%s asked for a development fund here, and it runs.") % person.person_name
+		elif bool(v["hostile"]):
 			text = Strings.t("%s wants a development fund here, but bears you a grudge and would not speak for you.") % person.person_name
+		elif RegionFund.in_bill(ns, "start", region_id):
+			text = Strings.t("%s wants a development fund here. If the finance bill passes, %s speaks for you once: %s +%s points, half of it gone in %d months.") % [
+				person.person_name, person.person_name, RegionVoice.blocs_text(), Num.f(float(v["points"]), 1), CK.ACT_OFFSET_HALF_LIFE_MONTHS]
 		else:
 			text = Strings.t("%s wants a development fund here. Open one and %s speaks for you once: %s +%s points, half of it gone in %d months.") % [
 				person.person_name, person.person_name, RegionVoice.blocs_text(), Num.f(float(v["points"]), 1), CK.ACT_OFFSET_HALF_LIFE_MONTHS]
