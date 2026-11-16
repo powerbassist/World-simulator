@@ -133,8 +133,8 @@ func _check_strip(region) -> void:
 	if strip == null:
 		_fail("opened %s: no fund strip on screen" % region.id)
 		return
-	var share := float(_panel._fund_share)
-	var years := int(_panel._fund_years)
+	var share := float(_panel._game.fund_share)
+	var years := int(_panel._game.fund_years)
 	var est: Dictionary = RegionFunds.estimate(_main._state, ns, _main._loader, region.id, share, years)
 	var eur := float(est.get("eur_bn_per_year", 0.0))
 	if eur <= 0.0 or absf(float(strip.money_bn) + eur) > 0.0001:
@@ -276,7 +276,7 @@ func _check_redrawn() -> void:
 	for node in _panel.find_children("*", "", true, false):
 		if node.get_script() == EffectsStrip and not node.has_meta("priority") and (node as Control).is_visible_in_tree():
 			strip = node
-	var est: Dictionary = RegionFunds.estimate(_main._state, _main._state.player(), _main._loader, _panel._open_region, top, int(_panel._fund_years))
+	var est: Dictionary = RegionFunds.estimate(_main._state, _main._state.player(), _main._loader, _panel._game.open_region, top, int(_panel._game.fund_years))
 	var eur := float(est.get("eur_bn_per_year", 0.0))
 	if strip == null or eur <= 0.0 or absf(float(strip.money_bn) + eur) > 0.0001:
 		_fail("redraw: the strip did not follow the level to %s %%, %s bn (%s)" % [top, eur, strip.money_bn if strip != null else "<none>"])

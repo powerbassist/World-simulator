@@ -30,8 +30,10 @@ static func panel(main) -> Control:
 	# Continue is a load over the default game: the overlay follows it there, or a save of
 	# another nation kept the startup nation's regions (the retro review's item 1).
 	tab.rebind = func():
-		forget(tab)
 		bind(main, overlay)
+		# A load with the tab open: the loaded nation framed, not the discarded one's view.
+		if tab.is_visible_in_tree():
+			overlay.request_fit()
 	main._map_view.region_picker = func(lonlat: Vector2) -> String:
 		if not tab.is_visible_in_tree():
 			return ""
@@ -42,16 +44,6 @@ static func panel(main) -> Control:
 		return ""
 	main._map_view.region_clicked.connect(tab.open_region)
 	return tab
-
-
-## A setup() after the first is a load: the discarded game's open region, city and fund sums
-## go with it (here, as region_panel.gd is at its size limit).
-static func forget(tab) -> void:
-	tab._open_region = ""
-	tab._city_id = ""
-	tab._fund_share = 0.0
-	tab._fund_years = 0
-	tab._fund_refusal = ""
 
 
 ## The overlay's regions, holes and avoided cities, from the nation main._state plays.

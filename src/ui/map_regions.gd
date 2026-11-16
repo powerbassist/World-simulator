@@ -226,6 +226,29 @@ func select(region_id: String) -> void:
 	queue_redraw()
 
 
+## The one framing owner (#391 pass 2): the tab's open, a load and "All regions" ask for the
+## nation framed after this frame's layout; anything that centres the map itself (a region's
+## pick, the arrival card's Open, a city opened where the map is) cancels it, whichever
+## comes first in the frame. Pending only until the deferred call runs.
+var _fit_pending := false
+
+
+func request_fit() -> void:
+	if not _fit_pending:
+		_fit_pending = true
+		call_deferred("_fit_if_pending")
+
+
+func cancel_fit() -> void:
+	_fit_pending = false
+
+
+func _fit_if_pending() -> void:
+	if _fit_pending:
+		_fit_pending = false
+		fit()
+
+
 ## Frame the nation in fit_rect: zoom so its box fills nine tenths of the rect, then pan its
 ## centre to the rect's, through the map's own zoom and pan (which clamp as they always do).
 func fit() -> void:

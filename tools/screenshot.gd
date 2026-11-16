@@ -2365,8 +2365,8 @@ func _stage_the_region_sheet() -> void:
 	var regions: Array = _main._loader.regions.get(ns.id, [])
 	var access: Dictionary = Regions.accessibility_for(ns, regions, state.region_graph)
 	var panel = _main._windows.content("region")
-	panel._open_region = String(panel.worst_first(state, ns, regions, access)[0].id)
-	panel._measure = _region_sheet
+	panel._game.open_region = String(panel.worst_first(state, ns, regions, access)[0].id)
+	panel._game.measure = _region_sheet
 	panel.mark_dirty()
 
 
@@ -2383,7 +2383,7 @@ func _stage_a_fund() -> void:
 	for i in ([1, 2, 3] if _fund_cap else [1]):
 		funds.start(state, ns, loader, named[i].id, low, 2)
 	var panel = _main._windows.content("region")
-	panel._open_region = String(named[1 if _fund_running else 0].id)
+	panel._game.open_region = String(named[1 if _fund_running else 0].id)
 	panel.mark_dirty()
 
 

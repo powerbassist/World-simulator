@@ -90,7 +90,7 @@ static func _on_go(card: String, _index: int, main) -> void:
 	main._windows.open("region")
 	# The panel's own pick: it refocuses the row, so a region low in the list comes into
 	# view, and centres the map. A pick on the open region would close it.
-	panel._open_region = ""
+	panel._game.open_region = ""
 	panel._pick(String(cards[card]))
 	panel.mark_dirty()
 	cards.erase(card)
