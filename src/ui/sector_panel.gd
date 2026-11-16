@@ -71,6 +71,8 @@ var _focus_verb := ""
 var _confirm
 var _last_refusal := ""
 var _prog_pick := -1
+## The programme's slider is held: a rebuild under the drag would free it (sector_programme.gd).
+var _dragging := false
 
 
 func _init(sector_id := "") -> void:
@@ -115,6 +117,14 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	# A setup() after the first is a load: the discarded game's picks go with it (the retro review's item 7).
+	_good_filter = ""
+	_firm_id = ""
+	_focus_verb = ""
+	_confirm = null
+	_last_refusal = ""
+	_prog_pick = -1
+	_dragging = false
 
 
 func mark_dirty() -> void:
@@ -126,7 +136,7 @@ func hide_close_button() -> void:
 
 
 func _process(_delta: float) -> void:
-	if not _dirty or not is_visible_in_tree() or _state == null:
+	if not _dirty or _dragging or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
 	_refresh()
