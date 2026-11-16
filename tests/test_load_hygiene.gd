@@ -131,8 +131,13 @@ func _check_no_panel_keeps_the_old_game() -> void:
 	if _main._state.player_nation_id != "DEU" or _fresh._state.player_nation_id != "DEU":
 		_fail("premise: a load did not land on Germany")
 		return
-	if _confirm != null and is_instance_valid(_confirm) and _confirm.visible:
-		_fail("the old game's removal confirm card is still up after a load")
+	# Any confirm card, not only the one asked here: a question asked in the old game is not
+	# answered in the loaded one (the cards sit on the screen stack, outside the panels).
+	for card in _main.find_children("ConfirmCard", "", true, false):
+		if (card as Control).visible:
+			_fail("a confirm card asked in the old game is still up after a load (%s)" % card.get_path())
+	if _confirm == null or not is_instance_valid(_confirm):
+		_fail("premise: the removal's confirm card is gone")
 	var caught := 0
 	for i in played.size():
 		var a: Dictionary = _plain_fields(played[i])
