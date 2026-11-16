@@ -118,6 +118,11 @@ func _plan() -> Array:
 		_set_votes(ns, now + 40, now + 60)
 		return "national"})
 	cases.append({"kind": "majority", "subject": "seats"})
+	# #389 pass 2 T5: a word on an office lands on People's office rows ("seats").
+	cases.append({"kind": "commitment", "subject": "promise|%s|office:portfolio:health" % pid, "setup": func() -> String:
+		ns.commitments.append({"kind": "promise", "person_id": pid, "object": "office:portfolio:health",
+			"made_month": now, "due_month": now + 2})
+		return "promise|%s|office:portfolio:health" % pid})
 	cases.append({"kind": "commitment", "subject": "promise|%s|meter:unemployment_pct" % pid, "setup": func() -> String:
 		ns.commitments.append({"kind": "promise", "person_id": pid, "object": "meter:unemployment_pct",
 			"made_month": now, "due_month": now + 2})

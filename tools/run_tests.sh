@@ -113,7 +113,7 @@ tests=(
   tests/test_surfaces_people.gd
   # ...and test_cabinet.gd was the THIRD instance, found by the V1.6 playability
   # audit: 55 test files on disk against 54 here. It covers can_assign, assign,
-  # effectiveness and resignations -- a player verb (Politics -> Reassign) and one
+  # effectiveness and resignations -- a player verb (an office row's Give it to, in People) and one
   # of the three bookable diary verbs. It passes, so nothing was hidden by it; what
   # was hidden is that nobody would have known if it stopped passing.
   tests/test_cabinet.gd

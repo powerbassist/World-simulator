@@ -330,7 +330,7 @@ func _collect_solid_containers(node: Node, path: String) -> Array:
 ## list -- V2.1a derives the real set from the registry, and this exists so a
 ## registry that silently loses a panel still turns something red.
 const FOUNDING_PANELS: Array[String] = [
-	"overview", "economy", "finances", "politics", "society", "legislature", "diplomacy",
+	"overview", "economy", "finances", "majority", "society", "legislature", "diplomacy",
 ]
 
 
@@ -386,7 +386,7 @@ func _check_panel_content() -> void:
 		if not economy_text.contains(heading):
 			_fail("economy panel has no '%s' section: %s" % [heading, economy_text])
 
-	windows.open("politics")
+	windows.open("majority")
 	_main._government_panel._process(0.0)
 	var pm_name: String = _main._loader.person_name(ns.pm_person_id)
 	if not _collect_text(_main._government_panel).contains(pm_name):

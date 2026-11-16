@@ -384,9 +384,10 @@ static func go(main, index: int) -> void:
 			_open_laws_or(main, tab, subject)
 		"bill":
 			_open_laws_or(main, tab, "")  # every law, so the tabled line shows
-		"person":
+		# A person's row; an office word lands on the office rows ("seats").
+		"person", "commitment" when tab == "people":
 			main._windows.open(tab)
-			main._people_panel.focus(subject)
+			main._people_panel.focus(String(target["acts_on"]))
 		"plant":
 			# The closure's row heads In progress, the tab's top: a tab left scrolled
 			# down would hide the one month's answer.
@@ -408,7 +409,7 @@ static func go(main, index: int) -> void:
 
 ## Where a line's Go lands: the tab, and the id an enabled control there is tagged
 ## with (acts_on.gd) -- the line's subject, except a commitment, whose verb is the
-## promised thing's own: a programme entry on the Agenda, an office on Politics, a
+## promised thing's own: a programme entry on the Agenda, an office on People's rows, a
 ## figure on the Budget. A tabled bill is RF3's one named exception (the parent's
 ## call): it lands on the Legislature's tabled line, which has no verb until the
 ## Assembly divides.
@@ -426,7 +427,7 @@ static func target_of(line: Dictionary) -> Dictionary:
 	if object.begins_with("programme:"):
 		return {"tab": "agenda", "acts_on": object.trim_prefix("programme:")}
 	if object.begins_with("office:"):
-		return {"tab": "politics", "acts_on": "seats"}
+		return {"tab": "people", "acts_on": "seats"}
 	if object.begins_with("meter:"):
 		return {"tab": "finances", "acts_on": "balance"}
 	return {"tab": "calendar", "acts_on": subject}

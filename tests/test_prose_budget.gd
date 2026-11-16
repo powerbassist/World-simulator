@@ -46,7 +46,7 @@ const BRIEFING_CEILING := 90
 ## the note's 60 per organisation, for France's five.
 const BUDGET := {
 	"legislature": 80, "orgs": 300, "agenda": 40, "campaign": 40, "energy": 20,
-	"politics": 30, "region": 20, "projects": 20, "economy": 40,
+	"majority": 30, "region": 20, "projects": 20, "economy": 40,
 	"overview": 30, "diplomacy": 20, "society": 10,
 	"events": 20, "people": 10, "companies": 10, "calendar": 10,
 	"outliner": 10,
@@ -67,7 +67,7 @@ const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 128, "energy": 118,
 	"orgs": 610, "outliner": 23, "overview": 127,
-	"politics": 123, "projects": 75, "society": 106,
+	"majority": 97, "projects": 75, "society": 106,
 }
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
@@ -109,7 +109,10 @@ const TOTAL_PENDING := {
 ## 122 / 148 / 135, their month-12 count.
 ## Screen 6, slice 2: +2, the Regions rail's chip row ("Map" and its three measures,
 ## "12 months" being two words), stated: 2846 -> 2848.
-const TOTAL_SUM_CEILING := 2848
+## Rework 1 (People + cabinet, direction A): People is one roster (122 at rest, from the
+## old groups and cards) and Politics, retired, comes back as Parliament's Majority tab
+## without the cabinet table (123 -> 97): 2848 -> 2794.
+const TOTAL_SUM_CEILING := 2794
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
