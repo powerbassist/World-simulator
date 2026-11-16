@@ -244,9 +244,10 @@ func cancel_fit() -> void:
 
 
 func _fit_if_pending() -> void:
-	if _fit_pending:
-		_fit_pending = false
+	# Not once the tab has closed again in the same frame: the map is the player's then.
+	if _fit_pending and visible:
 		fit()
+	_fit_pending = false
 
 
 ## Frame the nation in fit_rect: zoom so its box fills nine tenths of the rect, then pan its

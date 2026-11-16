@@ -114,8 +114,18 @@ func _process(_delta: float) -> bool:
 				_fail("the arrival card's Open centred %s, then the tab's framing moved it (%s -> %s)" % [_arrival_region, _arrival_at, after])
 			if String(_main._windows.content("region")._game.open_region) != _arrival_region:
 				_fail("the arrival card's Open did not open %s" % _arrival_region)
-			_main.queue_free()
+			# Opened and closed in one frame: the queued framing must not move a map the
+			# player has back.
+			_main._windows.close_all()
+			_main._map_view.pan_by(Vector2(-120.0, 60.0))
+			_paris_before = _main._map_view.lonlat_to_screen(PARIS.x, PARIS.y)
+			_main._windows.open("region")
+			_main._windows.close_all()
 		20:
+			if _main._map_view.lonlat_to_screen(PARIS.x, PARIS.y).distance_to(_paris_before) > 1.0:
+				_fail("a tab opened and closed in one frame still framed the nation")
+			_main.queue_free()
+		22:
 			_finish()
 			return true
 	return false

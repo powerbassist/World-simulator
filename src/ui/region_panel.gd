@@ -52,8 +52,7 @@ var _title: Label
 ## The toggle just pressed: its rebuild freed the focused button, so the new one
 ## with this key takes focus and the keyboard keeps its place.
 var _refocus := ""
-## Screen 6, slice 2: the map overlay this tab tints (map_regions.gd, set by regions_shell.gd),
-## and the measure the rail's chips picked.
+## Screen 6, slice 2: the map overlay this tab tints (map_regions.gd, set by regions_shell.gd).
 var _overlay
 ## Re-binds the overlay to the nation a setup() brings (regions_shell.gd sets it).
 var rebind: Callable

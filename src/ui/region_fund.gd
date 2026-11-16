@@ -13,8 +13,8 @@ extends RefCounted
 ## and prints RegionFunds.refusal()'s line under it, read before any press (A5's
 ## grammar, the Industry tab's).
 ##
-## The two sums live on the panel's game state (`_game.fund_share`, `fund_years`), so a rebuild keeps
-## them; a drag redraws only the strip, never the panel, so the slider keeps the mouse.
+## The two sums live on the panel's game state (region_state.gd), so a rebuild keeps them;
+## a drag redraws only the strip, never the panel, so the slider keeps the mouse.
 
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 ## V5.3 e (section 12): Go and Stop table rows of the finance bill, applied at the month's end.
