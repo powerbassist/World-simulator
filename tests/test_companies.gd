@@ -434,6 +434,13 @@ func _test_the_strip_prices_the_credit_execute_books() -> void:
 	var raw: Dictionary = _action("strategic_rescue").effects["bloc_offset"]
 	if not is_equal_approx(float(shown["workers"]), float(raw["workers"]) * priced):
 		_fail("granted credit: the strip shows workers %s, not %s x %s" % [shown["workers"], raw["workers"], priced])
+	# Its price line too (the parent's pass 2 on #390): the caption reads 0 live jobs on a
+	# failed major and printed nothing; it is priced on the copy the rescue lands in.
+	var line: String = AidWords.caption(state3, _loader, ns3, firm, _action("strategic_rescue"))
+	Companies.execute(state3, ns3, _loader.company_actions, _action("strategic_rescue"), RIVAL, _loader)
+	var landed: String = AidWords.caption(state3, _loader, ns3, firm, _action("industrial_subsidy"))
+	if line == "" or landed == "":
+		_fail("granted credit: a failing major's rescue row carries no price line (%s / %s)" % [line, landed])
 	# A healthy firm: the read is the live factor.
 	var state2 = _new_state()
 	var ns2 = state2.nations[PLAYER]

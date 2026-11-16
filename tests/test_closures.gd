@@ -212,6 +212,12 @@ func _test_both_region_reads_carry_the_closure() -> void:
 	ClosureRegion.move(state, ns, {"city_id": String(list[1].cities[0].id), "jobs": 4000.0})
 	if not is_same(ns.region_closure_pts, held) or JSON.stringify(ns.region_closure_pts) != kept:
 		_fail("region reads: ClosureRegion.move() swapped or wrote the register")
+	# A swap that puts the register back leaves nothing to see afterwards, so the read's
+	# own code is held to it (the parent's pass 2 on #390): move() names no register.
+	var source := FileAccess.get_file_as_string("res://src/sim/closure_region.gd")
+	var body := source.substr(source.find("static func move("))
+	if body.contains("region_closure_pts") or body.contains("book("):
+		_fail("region reads: ClosureRegion.move() touches the register (a swap or a book)")
 	# A second closure in the booked region: the read adds its lift to the booked one
 	# (GLM gap 3), as booking it would.
 	var city := String(list[0].cities[0].id)

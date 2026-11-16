@@ -7,8 +7,9 @@ extends RefCounted
 ## Every figure is the sim's: the yearly price is CompaniesAid.per_year (a share of the
 ## firm's payroll), the jobs moved are CompaniesAid.net_jobs (on a copy, the share pool run
 ## to its endpoint) and the political credit is the action's bloc offsets times
-## CompaniesAid.credit_factor (aid to a small firm buys a small credit). The UI multiplies
-## the offsets it prints; it does not re-derive the factor.
+## CompaniesAid.granted_credit (the factor execute() books, read on a copy: aid to a small
+## firm buys a small credit). The UI multiplies the offsets it prints; it does not
+## re-derive the factor.
 ##
 ## ONE TAX POINT is a point of income tax: its base_share in data/taxes/income.json, 0.5 %
 ## of GDP (about 14.5 bn in France), the measure the aid card and coercion_constants.gd
@@ -39,11 +40,14 @@ static func tax_point_eur_bn(loader, ns) -> float:
 
 
 ## "15 100 € a job · 0.13 tax point": the aid's yearly price per job the firm holds, and
-## as a share of one tax point. "" for a firm with no jobs.
-static func caption(loader, ns, company, action) -> String:
-	var per_year := CompaniesAid.per_year(ns, company, intensity(action))
-	var jobs := Companies.headcount(ns, company)
-	var point := tax_point_eur_bn(loader, ns)
+## as a share of one tax point. Priced on the copy the verb lands in (Companies.preview):
+## a failed major in its rescue window holds 0 live jobs, and the rescue restores it before
+## it is paid (the parent's pass 2 on #390, T2's twin). "" for a firm with no jobs.
+static func caption(state, loader, ns, company, action) -> String:
+	var copy = Companies.preview(state, ns, loader.company_actions, action, String(company.id), loader)[0]
+	var per_year := CompaniesAid.per_year(copy, company, intensity(action))
+	var jobs := Companies.headcount(copy, company)
+	var point := tax_point_eur_bn(loader, copy)
 	if jobs <= 0.0 or point <= 0.0:
 		return ""
 	return Strings.t("%s € a job · %s tax point") % [CompanyVerb.thousands(roundf(per_year * 1e9 / jobs / 100.0) * 100.0), Num.f(per_year / point, 2)]

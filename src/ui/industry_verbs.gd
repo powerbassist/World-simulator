@@ -50,7 +50,7 @@ static func build(panel, parent: Control, ns, company) -> void:
 		selector.set_meta("money_label", money_label)
 		# Aid, said as the player weighs it (screen 5 slice 2): a job's price, a tax point's share.
 		if AidWords.is_aid(action):
-			var aid := PanelKit.plain_line(row, AidWords.caption(loader, ns, company, action))
+			var aid := PanelKit.plain_line(row, AidWords.caption(state, loader, ns, company, action))
 			aid.autowrap_mode = TextServer.AUTOWRAP_OFF
 		var why := CompanyVerb.refusal(state, loader, ns, company, action)
 		if why != "":

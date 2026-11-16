@@ -82,7 +82,8 @@ static func granted_credit(state, ns, loader, action, company_id: String) -> flo
 
 
 ## The factor an aid granted now would carry: `company_id`'s live jobs over the nation's
-## largest major's, at most 1. Pure; the firm sheet's read for the scaled credit.
+## largest major's, at most 1. Pure; execute()'s grant (bloc_credit) and granted_credit's
+## fallback read it. The firm sheet reads granted_credit, which prices a rescue's restore.
 static func credit_factor(ns, loader, company_id: String) -> float:
 	var top := 0.0
 	var own := 0.0
