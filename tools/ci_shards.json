@@ -283,6 +283,7 @@
    "tests/test_panel_charts.gd",
    "tests/test_prose_budget.gd",
    "tests/test_briefing_hold.gd",
+   "tests/test_briefing_retro.gd",
    "tests/test_briefing_go.gd",
    "tests/test_briefing_clock.gd",
    "tests/test_law_list.gd",

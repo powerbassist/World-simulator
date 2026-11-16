@@ -67,6 +67,7 @@ static func register(main) -> void:
 	main._hud.title_bar.chief_pressed.connect(func() -> void: read(main))
 	main._hud.inbox.card_closed.connect(func(_id: String) -> void: ChiefMarkView.refresh(main, true))
 	main._hud.inbox.card_dismissed.connect(func(_id: String) -> void: ChiefMarkView.refresh(main, true))
+	ChiefMarkView.follow_answers(main)
 
 
 static func card_of(main) -> ChiefBriefing:
@@ -351,6 +352,7 @@ static func after_load(main) -> void:
 	game["was_running"] = false
 	game["lines"] = []
 	game["also"] = []
+	ChiefMarkView.forget(game)
 	ChiefMarkView.clear(main)
 
 

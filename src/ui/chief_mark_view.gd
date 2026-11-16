@@ -81,8 +81,28 @@ static func speak(main, key: String) -> void:
 	var said := BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))
 	var caption = main._hud.chief_caption
 	caption.say(String(said["text"]), main._hud.title_bar.chief_mark)
+	# Gated on the mark, not the caption: the caption hides on its reading timer, and a line queued behind a longer
+	# messenger's clip was dropped with it (the retro review's item 13). The mark stays up for the month.
 	if caption.visible:
-		BriefingDriver.speak_once(main, said, caption, key)
+		BriefingDriver.speak_once(main, said, main._hud.title_bar.chief_mark, key)
+
+
+## A file answered outside the inbox (a dispatch in its window) re-ranks the mark too, or it names a file that is gone
+## (the retro review's item 14; a request answered in the lane goes through AudienceDriver._answer). Connected after
+## the panels' own handlers: theirs act first.
+static func follow_answers(main) -> void:
+	for panel in main._windows.panels():
+		if panel.has_signal("acted"):
+			panel.acted.connect(func(_before, _label) -> void: refresh(main, true))
+
+
+## A load: the ranking's memory and report go with the discarded game. Left, the first card closed after the load
+## re-ranked from them and put that game's mark back up (the retro review's item 5); the loaded game's first month
+## end ranks afresh.
+static func forget(game: Dictionary) -> void:
+	game.erase("memory_before")
+	game.erase("report")
+	game["pending"] = {}
 
 
 static func clear(main) -> void:

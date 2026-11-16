@@ -312,6 +312,7 @@ tests=(
   tests/test_prose_budget.gd
   tests/test_priorities.gd
   tests/test_briefing_hold.gd
+  tests/test_briefing_retro.gd
   tests/test_briefing_effects.gd
   tests/test_briefing_go.gd
   tests/test_briefing_clock.gd

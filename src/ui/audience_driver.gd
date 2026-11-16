@@ -382,4 +382,5 @@ static func _answer(main, request_id: String, result: Dictionary) -> void:
 	elif String(result.get("error", "")) != "":
 		main._hud.inbox.push(Strings.t("The request"), String(result["error"]))  # i18n: row-ok the sim's refusal
 	refresh(main)
+	preload("res://src/ui/chief_mark_view.gd").refresh(main, true)  # the mark names no answered request (retro item 14)
 	main._windows.mark_all_dirty()
