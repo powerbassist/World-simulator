@@ -62,7 +62,9 @@ func _process(_delta: float) -> bool:
 			_panel = _main._people_panel
 			_seed()
 			_check_order()
+			_check_executive_asks()
 			_check_offices()
+			_check_vacant_since()
 			_check_chips()
 			_check_search()
 			_check_politics_retired()
@@ -74,6 +76,8 @@ func _process(_delta: float) -> bool:
 			_click(_row("person", String(_asker.id)))
 		6:
 			_check_see_offered()
+			_check_see_day_at_press()
+			_check_second_click_keeps_focus()
 			# The chips are the filter: the quiet one is listed under theirs.
 			_press(_chip("regions"))
 		8:
@@ -139,6 +143,55 @@ func _process(_delta: float) -> bool:
 
 func _now() -> int:
 	return int(_main._state.year) * 12 + int(_main._state.month)
+
+
+## Pass 2 on #388, TAKE 3: a firm's chief who asks to see the president counts in the
+## title bar's requests, so he is on "Needs you" too (executives are not a chip of their
+## own: firm chiefs stay in Sectors otherwise).
+func _check_executive_asks() -> void:
+	var ns = _main._state.player()
+	var chief = null
+	for person in _main._loader.people[String(ns.id)]:
+		if String(person.kind) == "executive":
+			chief = person
+			break
+	if chief == null:
+		_fail("premise: no executive in the played nation")
+		return
+	var id := "%s|%d" % [chief.id, _now()]
+	ns.audience_requests.append({"id": id, "person_id": String(chief.id), "object": "programme:none",
+		"stance": "sponsor", "arrived_month": _now(), "deadline_month": _now() + 2, "status": "pending", "date": {},
+		"resolved_month": -1})
+	var listed := RosterRows.rows(_main._state, _main._loader, "needs", "").any(func(r): return String(r["id"]) == String(chief.id))
+	ns.audience_requests.pop_back()
+	if not listed:
+		_fail("a firm chief asking to see you is not on Needs you")
+
+
+## Pass 2, TAKE 1: a vacancy dates from the event that made it, here a resignation
+## (ns.last_resignation), not an older dismissal stamp left on the portfolio.
+func _check_vacant_since() -> void:
+	var ns = _main._state.player()
+	var f := "pensions"
+	var held := String(ns.cabinet.get(f, ""))
+	var stamp = ns.portfolio_removed_month.get(f)
+	var resigned: Dictionary = ns.last_resignation
+	ns.cabinet[f] = ""
+	ns.portfolio_removed_month[f] = _now() - 20
+	ns.last_resignation = {"portfolio": f, "party_id": held, "year": int(_main._state.year), "month": int(_main._state.month)}
+	var said := ""
+	for row in RosterRows.offices(_main._state, _main._loader):
+		if String(row["portfolio"]) == f:
+			said = String(row["party"])
+	ns.cabinet[f] = held
+	ns.last_resignation = resigned
+	if stamp == null:
+		ns.portfolio_removed_month.erase(f)
+	else:
+		ns.portfolio_removed_month[f] = stamp
+	var want := Strings.t("Vacant since %s") % preload("res://src/ui/lever_words.gd").when(_now())
+	if said != want:
+		_fail("a vacancy left by a resignation reads '%s', not '%s'" % [said, want])
 
 
 ## A union leader asks to see the president (the bench folds behind its chip, so only
@@ -262,6 +315,14 @@ func _check_default_view() -> void:
 		_fail("the asker has no row on the default view")
 	if _row("person", String(_quiet.id)) != null:
 		_fail("the quiet regional figure is built on the default view: every row was built, not the open group")
+	# Pass 2, TAKE 2: nothing on a line but its press target takes the pointer (the face's
+	# portrait ate the clicks and hid the card).
+	var line = _row("person", String(_asker.id))
+	if line != null:
+		for node in line.find_children("*", "Control", true, false):
+			if node != line.get_child(0) and (node as Control).mouse_filter != Control.MOUSE_FILTER_IGNORE:
+				_fail("a line's %s (%s) takes the pointer from its press target" % [node.name, node.get_class()])
+				break
 	var offices := 0
 	for node in _panel.find_children("*", "Control", true, false):
 		if node.has_meta("office"):
@@ -289,6 +350,45 @@ func _check_see_offered() -> void:
 		_fail("See does not name the day it books: '%s'" % see.text)
 
 
+## Pass 2, TAKE 5: the day See books is read at the press, not when the line was built:
+## a day taken since (here by another appointment) is passed over, never refused.
+func _check_see_day_at_press() -> void:
+	var state = _main._state
+	var row: Dictionary = {}
+	for r in RosterRows.rows(state, _main._loader, "needs", ""):
+		if String(r["id"]) == String(_asker.id):
+			row = r
+	var booked: Array = []
+	var items: Array = RosterVerbs.for_person(state, _main._loader, row, func(id, date): booked.append(date), func(_pid): pass)
+	var first: Dictionary = {}
+	for date in Audiences.offered_dates(state, state.player(), _request):
+		if bool(date.get("free", false)):
+			first = date
+			break
+	if first.is_empty():
+		_fail("premise: no free offered day")
+		return
+	state.appointments.append({"kind": "address", "status": "booked", "year": int(first["year"]), "month": int(first["month"]),
+		"day": int(first["day"]), "travel_days": 0})
+	(items[0]["call"] as Callable).call()
+	state.appointments.pop_back()
+	if booked.size() != 1 or (int(booked[0]["day"]) == int(first["day"]) and int(booked[0]["month"]) == int(first["month"])):
+		_fail("See booked the day it was built with, though that day was taken since: %s" % str(booked))
+
+
+## Pass 2, TAKE 4: clicking the focused line again keeps it focused (a toggle button would
+## un-press it with no rebuild to restore it).
+func _check_second_click_keeps_focus() -> void:
+	var line = _row("person", String(_asker.id))
+	var press: Button = line.get_child(0) if line != null else null
+	if press == null or not press.button_pressed:
+		_fail("premise: the asker's line is not the focused one")
+		return
+	press.button_pressed = false  # what a second click on a toggle does
+	if not press.button_pressed:
+		_fail("a second click un-presses the focused line")
+
+
 func _check_see_greyed() -> void:
 	var see: Button = _verb("see")
 	if see == null or not see.disabled:
@@ -313,6 +413,10 @@ func _check_office_found() -> void:
 		_fail("a search for '%s' lists no office row" % _panel._search.text)
 	if _row("office", "health") != null:
 		_fail("a search for '%s' lists the health office too" % _panel._search.text)
+	# Pass 2, TAKE 6: a count picks its form (one office, not "1 offices").
+	if not _text().to_upper().contains((Strings.tn("The government: %d office", "The government: %d offices", 1) % 1).to_upper() + "
+"):
+		_fail("one office found is not counted as one office: %s" % _text().left(200))
 	if _text().contains(Strings.t("Nobody of that name, party or office.")):
 		_fail("a search that found an office still says nobody matches")
 

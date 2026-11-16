@@ -33,20 +33,27 @@ static func for_person(state, loader, row: Dictionary, see: Callable, call: Call
 	elif bool(row["booked"]):
 		item["reason"] = Strings.t("Already in your diary.")
 	else:
-		var day := {}
-		for date in Audiences.offered_dates(state, ns, request):
-			if bool(date.get("free", false)):
-				day = date
-				break
+		var day := first_free(state, request)
 		if day.is_empty():
 			item["reason"] = Strings.t("None of the days they offer is free in your diary.")
 		else:
 			item["text"] = Strings.t("See them on %s") % DateText.day_month(int(day["day"]), int(day["month"]))
 			item["enabled"] = true
-			item["call"] = func() -> void: see.call(request, day)
+			# Read again at the press: days pass and fill with the tab open (pass 2 on #388).
+			item["call"] = func() -> void:
+				var now := first_free(state, request)
+				see.call(request, now if not now.is_empty() else day)
 	var why := String(Phone.options(state, ns, loader, pid)["why_not"])
 	return [item, {"id": "call", "text": Strings.t("Call: no day, worse odds"), "enabled": why == "",
 		"reason": Strings.t(why) if why != "" else "", "call": func() -> void: call.call(pid), "acts_on": [pid]}]  # i18n: row-ok the phone's reason, its English the msgid
+
+
+## The first offered day the Diary can take, or {}.
+static func first_free(state, request_id: String) -> Dictionary:
+	for date in Audiences.offered_dates(state, state.player(), request_id):
+		if bool(date.get("free", false)):
+			return date
+	return {}
 
 
 ## `verbs` is the panel's cabinet_verbs.gd (compact): its reassign() and dismiss().
