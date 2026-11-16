@@ -44,6 +44,7 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		2:
 			_check_in_region_rule()
+			_check_anchors_all_nations()
 			_panel = _main._windows.content("region")
 			_overlay = _panel.get("_overlay")
 			if _overlay == null:
@@ -148,6 +149,31 @@ func _check_in_region_rule() -> void:
 	if String(holed.picker.call(mid)) != "H":
 		_fail("the hole rule: H's chip is centred at %s, in '%s', not in H" % [mid, holed.picker.call(mid)])
 	holed.queue_free()
+
+
+## The parent's one rule, over the real data: for each playable nation, every region's figure
+## point lies in that region and in no other -- region_at_lonlat over loader.region_rings,
+## every ring of regions.geojson, holes included (Berlin in Brandenburg, Warsaw in Mazowieckie).
+func _check_anchors_all_nations() -> void:
+	var MapRegions = load("res://src/ui/map_regions.gd")
+	var loader = _main._loader
+	for nation in ["FRA", "DEU", "GBR", "POL"]:
+		var ids: Array = []
+		for region in loader.regions.get(nation, []):
+			ids.append(String(region.id))
+		if ids.is_empty():
+			_fail("premise: %s has no regions" % nation)
+			continue
+		var probe = MapRegions.new()
+		root.add_child(probe)
+		probe.setup(FakeMap.new(), ids, loader.region_features)
+		probe.picker = func(ll: Vector2) -> String: return Region.region_at_lonlat(loader.region_rings, ll.x, ll.y)
+		for id in ids:
+			var point: Vector2 = probe._anchor(id)
+			var home := Region.region_at_lonlat(loader.region_rings, point.x, point.y)
+			if home != id:
+				_fail("%s: %s's figure point %s lies in '%s'" % [nation, id, point, home])
+		probe.queue_free()
 
 
 ## No two chips overlap, none covers its region's largest city, and each is centred inside
