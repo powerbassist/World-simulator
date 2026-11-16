@@ -159,6 +159,7 @@ func show_offices() -> void:
 	if _chip != "government":
 		_chip = "needs"
 	_search.text = ""
+	focused = "seats"  # _land puts the keyboard on the first office line
 	_dirty = true
 
 
@@ -277,9 +278,10 @@ func _menu(kind: String, row: Dictionary) -> void:
 ## keyboard on its line.
 func _land() -> void:
 	if focused != "":
+		var seats := focused == "seats"
 		focused = ""
 		for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
-			if button.has_meta("verb") and not (button as Button).disabled:
+			if (ActsOn.acts_on(button, "seats") if seats else button.has_meta("verb")) and not (button as Button).disabled:
 				(button as Button).grab_focus()
 				return
 	if _refocus:

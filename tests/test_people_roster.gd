@@ -125,6 +125,9 @@ func _process(_delta: float) -> bool:
 		34:
 			if _row("office", "health") == null:
 				_fail("focus('seats') did not bring the office rows back from the press group")
+			var owner = _panel.get_viewport().gui_get_focus_owner()
+			if owner == null or not owner.has_meta("line") or not owner.get_parent().has_meta("office"):
+				_fail("the majority's Go leaves the keyboard off the office rows: %s" % owner)
 			_main.queue_free()
 		36:
 			_finish()
