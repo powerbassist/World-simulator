@@ -238,6 +238,11 @@ func _build_list(ns) -> void:
 
 
 func _group_head(text: String, count: int) -> void:
+	if _list.get_child_count() > 0:
+		# A group starts clear of the one above, so its head does not read as the last item's caption.
+		var gap := Control.new()
+		gap.custom_minimum_size.y = 10
+		_list.add_child(gap)
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 8)
 	_list.add_child(head)
