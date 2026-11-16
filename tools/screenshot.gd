@@ -128,6 +128,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-pick vacant --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --text 130 --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --lang fr --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open majority
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --open majority
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --front-page   (or: --front-page one)

@@ -110,8 +110,23 @@ func _process(_delta: float) -> bool:
 			_press(_verb("dismiss"))
 		28:
 			_check_dismiss_asks()
-			_main.queue_free()
+			_panel._verbs._confirm.hide()
+			# A refusal printed for this office (QA's RECORD on #388) ...
+			_panel._verbs._refused("this portfolio changed hands too recently to change again")
+			_click(_row("office", "defence"))
 		30:
+			# ... is not said about the next line focused.
+			if _panel._verbs.status_text() != "":
+				_fail("a refusal said about one office stays up after another line is focused: '%s'" % _panel._verbs.status_text())
+			_press(_chip("press"))
+		32:
+			# The majority's Go from a group that lists no office: focus("seats") brings them back.
+			_panel.focus("seats")
+		34:
+			if _row("office", "health") == null:
+				_fail("focus('seats') did not bring the office rows back from the press group")
+			_main.queue_free()
+		36:
 			_finish()
 			return true
 	return false
@@ -358,11 +373,18 @@ func _check_politics_retired() -> void:
 		_fail("the majority's Go does not land on the office rows: %s" % PKs.GO_TAB.get("majority", ""))
 	var office_go: Dictionary = load("res://src/ui/briefing_driver.gd").target_of(
 		{"kind": "commitment", "subject": "promise|x|office:portfolio:health", "go": {"tab": ""}})
-	if String(office_go["tab"]) != "people":
-		_fail("a word on an office lands on '%s', not the office rows" % office_go["tab"])
-	for tab in load("res://src/ui/agenda_panel.gd").GROUP_TAB.values():
-		if String(tab) == "politics":
-			_fail("an Agenda Go still lands on Politics")
+	if String(office_go["tab"]) != "people" or String(office_go["acts_on"]) != "seats":
+		_fail("a word on an office lands on %s, not the office rows" % str(office_go))
+	if String(load("res://src/ui/agenda_panel.gd").GROUP_TAB.get("office", "")) != "majority":
+		_fail("the Agenda's office entries do not open the Majority tab")
+	# The strip's assembly figure, in trouble, opens the arithmetic: the Majority tab.
+	var ns = _main._state.player()
+	var was: bool = ns.is_minority
+	ns.is_minority = true
+	var reading: Dictionary = load("res://src/ui/strip_readings.gd")._assembly(ns)
+	ns.is_minority = was
+	if String(reading["alert_window"]) != "majority":
+		_fail("the troubled assembly figure opens '%s', not the Majority tab" % reading["alert_window"])
 
 
 ## Politics' cabinet table said a party held under its d'Hondt share (docs/cabinet-model.md:
