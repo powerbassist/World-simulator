@@ -202,6 +202,9 @@ func _check_a_clicked_verb_rebuilds_at_once() -> void:
 		return
 	abolish.grab_focus()  # a click takes the focus
 	abolish.pressed.emit()
+	# QA's RECORD on #392: the verb's press asks for the keyboard on the rebuilt editor (the button it was on is freed).
+	if not _panel._focus_wanted:
+		_fail("a pressed verb does not send the keyboard to the rebuilt editor")
 	_panel._process(0.0)
 	if _node("KeepTax") == null:
 		_fail("a clicked Abolish does not rebuild its editor: no way back shown")
