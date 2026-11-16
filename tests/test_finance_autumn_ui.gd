@@ -152,6 +152,10 @@ func _check_taking_a_birth_back() -> void:
 		_fail("Take it back left the birth in the draft")
 	if _node("PutInForce_" + _absent) == null:
 		_fail("the kind has no Put in force verb after it was taken back")
+	# No editor came back to send the keyboard to: the request dies with the rebuild, or the next row the mouse opens
+	# takes the keyboard unasked.
+	if _panel._focus_wanted:
+		_fail("Take it back leaves a focus request standing with no editor to land on")
 
 
 func _check_an_abolition() -> void:

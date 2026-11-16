@@ -192,9 +192,11 @@ func _refresh(ns) -> void:
 	FinanceRows.spending(_spending_box, _book, _ctx)
 	_stacks.setup(_revenue_parts(), _spending_parts(), float(_book["deficit_bn"]))
 	_paint(ns)
+	# The request is the rebuild's: with no editor to land on (a birth taken back) it dies here, or the next row opened
+	# by the mouse would take the keyboard unasked.
 	if _focus_wanted and _editor != null:
-		_focus_wanted = false
 		_focus_editor.call_deferred(_editor)
+	_focus_wanted = false
 
 
 ## The Go's landing, a frame after the build: the editor may have been rebuilt or closed since (a stale one is skipped).
