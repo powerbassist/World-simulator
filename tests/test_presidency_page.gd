@@ -401,15 +401,19 @@ func _check_go() -> void:
 
 
 ## #401 pass 2, RECORD 11: a command sweeps every panel and queues the chief's re-rank for the frame's
-## end. The page builds ONCE, after the re-rank: a build in the sweep's frame drew the lead the command
+## end. The page builds ONCE, on the re-ranked read: a build in the sweep's frame drew the lead the command
 ## had just made stale, then built again when the read landed.
 func _check_one_build_per_command() -> void:
 	_draw()
 	var before: int = _page.builds
+	var game: Dictionary = BriefingDriver._games.get(_main.get_instance_id(), {})
+	var stale := [Priorities._standing("budget", "balance"), Priorities._standing("budget", "balance")]
+	game["lines"] = stale  # what the command made stale; the re-rank replaces it
+	ChiefMarkView.refresh(_main)  # the page holds that read when the command lands
 	_main._windows.mark_all_dirty()  # a command's sweep: dirtied queues the re-rank
 	_page._process(0.0)  # the sweep's own frame
-	if _page.builds != before:
-		_fail("the page built in the sweep's frame, before the chief's re-rank landed (a stale lead)")
+	if _page._read.get("lines", []) == stale:
+		_fail("the page built on the read the command made stale, before the chief's re-rank")
 	_flush_rerank()  # the frame's end
 	_page._process(0.0)
 	if _page.builds != before + 1:

@@ -54,9 +54,10 @@ var _state
 var _loader
 var _dirty := true
 var _read := {}
-## A re-rank is queued for the frame's end (chief_mark_view.gd): a build now would draw the
-## lead the command just made stale, and build again once the read lands (#401 pass 2, RECORD 11).
-var _awaiting_read := false
+## A re-rank queued for the frame's end (chief_mark_view.gd), run here first when a build comes before
+## it: a build on the old read drew the lead the command had just made stale, then built again once the
+## read landed (#401 pass 2, RECORD 11). Empty when none waits.
+var _read_now := Callable()
 ## Builds since boot: a test counts them.
 var builds := 0
 
@@ -166,18 +167,20 @@ func mark_dirty() -> void:
 ## (chief_mark_view.gd). An empty read is a month not ranked yet.
 func set_read(read: Dictionary) -> void:
 	_read = read
-	_awaiting_read = false
+	_read_now = Callable()
 	_dirty = true
 
 
-## A command swept the panels and the read is re-ranked at the frame's end: hold the build for it.
-func await_read() -> void:
-	_awaiting_read = true
+## A command swept the panels and the read is re-ranked at the frame's end; `rank` runs it now.
+func await_read(rank: Callable) -> void:
+	_read_now = rank
 
 
 func _process(_delta: float) -> void:
-	if not _dirty or _awaiting_read or not is_visible_in_tree() or _state == null or _state.player() == null:
+	if not _dirty or not is_visible_in_tree() or _state == null or _state.player() == null:
 		return
+	if _read_now.is_valid():
+		_read_now.call()  # lands through set_read, so the one build below draws the fresh lead
 	_dirty = false
 	builds += 1
 	_refresh()

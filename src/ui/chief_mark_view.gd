@@ -114,7 +114,7 @@ static func follow(main) -> void:
 
 static func queue_rerank(main) -> void:
 	if main._overview_panel != null:
-		main._overview_panel.await_read()
+		main._overview_panel.await_read(_rerank_queued.bind(main))
 	if not main.has_meta(RERANK_QUEUED):
 		main.set_meta(RERANK_QUEUED, true)
 		_rerank_queued.bind(main).call_deferred()

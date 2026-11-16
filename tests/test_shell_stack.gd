@@ -375,6 +375,9 @@ func _stage_with(tab: String, event_ids: Array) -> Dictionary:
 	ns.event_queue.clear()
 	_main._unseen_events.clear()
 	_main._event_cards.clear()
+	# Rework 2 S2: after an answer the inbox stays while any decision or request is in it, so a row a
+	# check before left behind would keep it up: each staging starts from an empty inbox.
+	_main._hud.inbox.clear()
 	_main._windows.open(tab)
 	var month: int = Events._absolute_month(int(_main._state.year), int(_main._state.month))
 	for event_id in event_ids:
@@ -407,6 +410,9 @@ func _stage_interrupt_with(tab: String) -> String:
 	ns.event_queue.clear()
 	_main._unseen_events.clear()
 	_main._event_cards.clear()
+	# Rework 2 S2: after an answer the inbox stays while any decision or request is in it, so a row a
+	# check before left behind would keep it up: each staging starts from an empty inbox.
+	_main._hud.inbox.clear()
 	_main._windows.open(tab)
 	var month: int = Events._absolute_month(int(_main._state.year), int(_main._state.month))
 	Events.announce(ns, interrupt_ev, month, Events.region_names(ns, _main._loader))
