@@ -79,6 +79,11 @@ func _process(_delta: float) -> bool:
 		return false
 	if _stage == 5:
 		_check_a_tall_page_takes_the_whole_dock()
+		_manager.open("fraction")
+		_stage = 6
+		return false
+	if _stage == 6:
+		_check_a_fractional_page_does_not_scroll()
 		_finish()
 		return false
 
@@ -108,10 +113,11 @@ func _process(_delta: float) -> bool:
 ## Plus two windows in no row and one scene.
 func _register() -> void:
 	for id in ["finances", "projects", "economy", "alpha", "beta", "summit", "agenda", "calendar", "diplomacy", "orgs",
-			"energy"]:
+			"energy", "fraction"]:
 		var content := Label.new()
 		content.text = "content of %s" % id
-		content.custom_minimum_size = Vector2(300, 200)
+		# T7 (#400 pass 2): a page whose wanted height is not a whole pixel.
+		content.custom_minimum_size = Vector2(300, 200.4 if id == "fraction" else 200.0)
 		var page: Control = content
 		if id == "diplomacy":
 			# Built the way the Agenda, Diplomacy and Energy panels are: a scroll that takes the
@@ -371,6 +377,8 @@ func _check_wanted_height_shapes() -> void:
 		"two scrolls side by side": [_row([_scroll_of(300.0), _scroll_of(500.0)]), 500.0],
 		"a scroll beside a static column": [_row([_scroll_of(500.0), _box(400.0)]), 500.0],
 		"a 520 px floor over a 340 px column": [_column([_box(40.0), _scroll_of(300.0)], 520.0), 520.0],
+		# A wrapper (a panel, a margin) shows its children over each other: the tallest growth, not the sum.
+		"two scrolls in one panel": [_panel([_scroll_of(300.0), _scroll_of(500.0)]), -2.0],
 	}
 	for name in shapes:
 		var content: Control = shapes[name][0]
@@ -378,7 +386,9 @@ func _check_wanted_height_shapes() -> void:
 		_manager.add_child(page)
 		page.setup(content)
 		var want: float = shapes[name][1]
-		if want < 0.0:
+		if want == -2.0:
+			want = content.get_minimum_size().y + 500.0 - content.get_child(1).get_combined_minimum_size().y
+		elif want < 0.0:
 			# The column's own minimum (header, footer, separations) with the scroll shown whole.
 			want = content.get_combined_minimum_size().y + 300.0 - content.get_child(1).get_combined_minimum_size().y
 		var plate: float = page.get_theme_stylebox("panel").get_minimum_size().y
@@ -409,6 +419,13 @@ func _column(children: Array, floor_height := 0.0) -> VBoxContainer:
 	return column
 
 
+func _panel(children: Array) -> PanelContainer:
+	var panel := PanelContainer.new()
+	for child in children:
+		panel.add_child(child)
+	return panel
+
+
 func _row(children: Array) -> HBoxContainer:
 	var line := HBoxContainer.new()
 	for child in children:
@@ -426,6 +443,20 @@ func _check_a_short_page_hugs_its_content(id: String) -> void:
 	var content: Rect2 = (_contents[id] as Control).get_global_rect()
 	if content.end.y > dock.end.y + 0.5:
 		_fail("the hugging plate (%s) cuts its content (%s)" % [str(dock), str(content)])
+	_manager.close_all()
+
+
+## T7 (#400 pass 2): a page that wants a fractional height gets a dock at least that tall, and no bar.
+func _check_a_fractional_page_does_not_scroll() -> void:
+	var page = _manager.frame("fraction")
+	var header: float = (_manager.dock().get_child(0) as Control).get_combined_minimum_size().y
+	var dock: Rect2 = _manager.dock().get_global_rect()
+	if dock.size.y < header + page.wanted_height() - 0.001:
+		_fail("a page wanting %.2f px sits in a %.2f px dock body" % [page.wanted_height(), dock.size.y - header])
+	if dock.size.y != floorf(dock.size.y):
+		_fail("the hugging dock is %.2f px tall, not a whole pixel" % dock.size.y)
+	if page._scroll.get_v_scroll_bar().visible:
+		_fail("a page wanting %.2f px shows a vertical bar in its hugging plate" % page.wanted_height())
 	_manager.close_all()
 
 
