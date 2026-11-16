@@ -159,7 +159,9 @@ static func _row(state, loader, ns, pid: String) -> Dictionary:
 			row["wants"] = Strings.t("Sees you on %s about %s") % [DateText.day_month(int(d["day"]), int(d["month"])), about]
 		else:
 			# The inbox card's own date (Audiences.answer_by), never a second reading of it.
-			row["wants"] = Strings.t("Asks to see you about %s, answer by %s") % [about, Words.when(Audiences.answer_by(request))]
+			# Short: the row sits under "Needs you" in the waiting tone, so the ask goes unsaid
+			# (the prose budget's long-sentence ceiling, 10 words on the tab).
+			row["wants"] = Strings.t("Answer by %s: %s") % [Words.when(Audiences.answer_by(request)), about]
 			row["wants_tone"] = UiTheme.WARN_TEXT
 	else:
 		var want := _first_unserved(state, loader, ns, person)
