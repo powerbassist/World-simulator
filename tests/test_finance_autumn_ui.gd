@@ -341,6 +341,30 @@ func _check_the_autumn_rows_leave_when_the_month_ends() -> void:
 	draft.revert()
 
 
+## The retro review's item 11: a kind IN FORCE at 0 % (the wealth tax, kept in sight) raised by a bill at vote read
+## "new, at ..." -- the rows took any tabled row whose live rate is 0 for a birth.
+func _check_a_raise_from_zero_at_vote_is_no_birth(ns) -> void:
+	var kind := ""
+	for k in ns.tax_rates_pct:
+		if is_zero_approx(float(ns.tax_rates_pct[k])) and ns.tax_library[k].has("rate_range_pct"):
+			kind = String(k)
+			break
+	if kind == "":
+		_fail("premise: no kind in force at 0 %")
+		return
+	var step := float(ns.tax_library[kind]["rate_range_pct"][1]) / 4.0
+	var tabled := FinanceBill.table(_state, _loader, {"tax_rates_pct": {kind: step}})
+	if not bool(tabled.get("tabled", false)):
+		_fail("setup: the raise does not table: %s" % [tabled])
+		return
+	_rebuild()
+	var cell := _panel._ctx["cells"]["tax_rates_pct:" + kind][0] as Label
+	_panel._paint(ns)
+	if cell.text.begins_with("new"):
+		_fail("a raise of %s, in force at 0 %%, reads '%s' as if the kind were new" % [kind, cell.text])
+	_panel._on_withdraw()
+
+
 func _check_a_bill_at_vote_locks_its_births() -> void:
 	var ns = _state.player()
 	var tabled := FinanceBill.table(_state, _loader, {"create": {_absent: float(ns.tax_library[_absent]["rate_range_pct"][1]) / 2.0}})
@@ -357,6 +381,7 @@ func _check_a_bill_at_vote_locks_its_births() -> void:
 	if not birth_cell.text.begins_with("new, at"):
 		_fail("a birth at vote reads '%s', not 'new, at ...'" % birth_cell.text)
 	_panel._on_withdraw()
+	_check_a_raise_from_zero_at_vote_is_no_birth(ns)
 	# An abolition at vote is a locked row too: its editor never opens and its figure reads from the rate to nothing.
 	var abolished := FinanceBill.table(_state, _loader, {"abolish": ["tobacco_duty"]})
 	if not bool(abolished.get("tabled", false)):
