@@ -96,12 +96,10 @@ var _close_button: Button
 
 
 func _ready() -> void:
-	# 700, comfortably inside U5a's ~886px usable band. The strip is the only part
-	# whose length is driven by CONTENT COUNT rather than by a fixed list — a
-	# player with thirty bookings has thirty rows — so it is the one thing in this
-	# panel that could grow through the ceiling, and it is inside a ScrollContainer
-	# that takes the slack. Everything below it is a fixed number of rows.
-	custom_minimum_size = Vector2(520, 700)
+	# No height floor (#400 pass 2): it was the floating window's, raised each time a verb fell below
+	# a window that sized to it. The dock now sizes the plate to the content, up to the dock
+	# (tab_page.gd wanted_height), and the page scrolls past that with its fold mark.
+	custom_minimum_size = Vector2(520, 0)
 
 	var root := PanelKit.padded(self, 16, 10)
 

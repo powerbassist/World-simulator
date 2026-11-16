@@ -563,6 +563,9 @@ var _fund := false
 ## Screen 6 (the author's direction A): the worst region's sheet open beside the tinted map.
 ## --region-sheet [measure]: the measure the map's chips pick, "jobless" when none follows.
 var _region_sheet := ""
+## --region-about: the Regions tab with its About rows unfolded (#400 pass 2: the rows in the
+## narrowest host a row has).
+var _region_about := false
 ## Rework 1, --people-pick first | vacant | hover: the People roster with a line focused and
 ## its verbs under it -- the first line of "Needs you", or the health office left vacant;
 ## hover is the first line focused AND its person card up, as a pointer resting on it puts it.
@@ -1117,6 +1120,8 @@ func _init() -> void:
 			_walked = true
 		elif args[i] == "--bill-refused":
 			_bill_refused = true
+		elif args[i] == "--region-about":
+			_region_about = true
 		elif args[i] == "--region-sheet":
 			var next := String(args[i + 1]) if i + 1 < args.size() else ""
 			_region_sheet = next if not next.begins_with("--") and next != "" else "jobless"
@@ -1464,6 +1469,9 @@ func _apply_view() -> void:
 		_stage_a_fund()
 	if _region_sheet != "":
 		_stage_the_region_sheet()
+	if _region_about:
+		_main._windows.content("region")._about_open = true
+		_main._windows.content("region").mark_dirty()
 	if _region_arrival:
 		preload("res://src/ui/region_arrival.gd").check(_main)
 	if _b7 != "":

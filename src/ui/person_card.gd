@@ -221,7 +221,7 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 	# a call write, priced on the request card and shown nowhere after it.
 	var rapport := President.rapport(ns, String(person.id))
 	if grudge >= 0.05 or loyalty != 0.0 or standing >= 0.05 or rapport != 0.0:
-		PanelKit.row(_body, tr("Standing"), Num.f(standing, 2))
+		PanelKit.row(_body, tr("Standing"), Num.f(standing, 2), PanelKit.Tone.PLAIN, 0.0)
 		# R11: a feeling; a relation has its number beside the word, a grudge in the
 		# tooltip. A band with no word (no grudge, an unmoved loyalty) is no row.
 		var feel := Feelings.of(ns, String(person.id))
@@ -229,13 +229,13 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 		for register in ["loyalty", "grudge", "rapport"]:
 			if words[register] != "":
 				if register == "grudge":
-					PanelKit.row(_body, tr(FEELING_LABEL[register]), words[register]).tooltip_text = Feelings.tip(float(feel[register]))
+					PanelKit.row(_body, tr(FEELING_LABEL[register]), words[register], PanelKit.Tone.PLAIN, 0.0).tooltip_text = Feelings.tip(float(feel[register]))
 				else:
-					PanelKit.row(_body, tr(FEELING_LABEL[register]), "%s %s" % [words[register], Feelings.figure(float(feel[register]))])
+					PanelKit.row(_body, tr(FEELING_LABEL[register]), "%s %s" % [words[register], Feelings.figure(float(feel[register]))], PanelKit.Tone.PLAIN, 0.0)
 	# V5.2c: the bond the term has made of them -- a rival or a lover is news.
 	var bond := Feelings.bond_word(String(ns.person_bond.get(person.id, "")))
 	if bond != "":
-		PanelKit.row(_body, tr("Between you"), bond)
+		PanelKit.row(_body, tr("Between you"), bond, PanelKit.Tone.PLAIN, 0.0)
 	# Q2: what the term did to them, dated, while the sim remembers it (twelve
 	# months, Audiences' RESOLVED_KEPT_MONTHS and President's JUDGED_KEPT_MONTHS).
 	for text in dated_lines(loader, ns, String(person.id)):

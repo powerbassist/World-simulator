@@ -55,15 +55,55 @@ func setup(content: Control) -> void:
 func _process(_delta: float) -> void:
 	if not visible:
 		return
-	if not _fill_decided:
-		_fill_decided = true
-		if _scrolls_inside(_content):
-			_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_decide_fill()
 	var now := primary_action_below_fold()
 	if now == _folded:
 		return
 	_folded = now
 	theme_type_variation = UiTheme.PLATE_FOLDED if now else UiTheme.PLATE
+
+
+func _decide_fill() -> void:
+	if not _fill_decided:
+		_fill_decided = true
+		if _scrolls_inside(_content):
+			_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+
+## The height this page needs to show all of its content without scrolling (the void pass, (d)):
+## the plate's own margins and the panel's content with every scroll built to take the height left
+## (below) shown whole. The window manager caps it at the dock.
+func wanted_height() -> float:
+	if _content == null:
+		return -1.0
+	_decide_fill()
+	var plate := get_theme_stylebox("panel")
+	var height: float = _content.get_combined_minimum_size().y
+	if _content.size_flags_vertical & Control.SIZE_EXPAND:
+		height = _unscrolled(_content)
+	return height + (plate.get_minimum_size().y if plate != null else 0.0)
+
+
+## A node's height with its EXPAND scrolls unscrolled (#400 pass 2, T2): a scroll's growth is summed
+## down a column only; a row is as tall as its tallest child; a wrapper (margin, panel) adds its own
+## edges. A height floor counts only as a floor, never added to the content it already holds.
+static func _unscrolled(node: Control) -> float:
+	if node is ScrollContainer:
+		var inner := node.get_child(0) as Control
+		var whole: float = inner.get_combined_minimum_size().y if inner != null else 0.0
+		return maxf(node.get_combined_minimum_size().y, whole) if node.size_flags_vertical & Control.SIZE_EXPAND else node.get_combined_minimum_size().y
+	if not _scrolls_inside(node):
+		return node.get_combined_minimum_size().y
+	var tallest := 0.0
+	var grown := 0.0
+	for child in node.get_children():
+		if child is Control and (child as Control).visible:
+			var whole := _unscrolled(child)
+			tallest = maxf(tallest, whole)
+			var growth: float = whole - (child as Control).get_combined_minimum_size().y
+			grown = grown + growth if node is VBoxContainer else maxf(grown, growth)
+	var content: float = tallest if node is HBoxContainer else node.get_minimum_size().y + grown
+	return maxf(node.custom_minimum_size.y, content)
 
 
 ## QA #54 RECORD, the Legislature list that stopped two thirds down the dock -- and
