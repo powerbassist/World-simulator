@@ -30,7 +30,6 @@ flowchart LR
   d_agenda --> t_calendar["calendar"]
   sb --> d_presidency["Presidency"]
   d_presidency --> t_overview["overview"]
-  d_presidency --> t_outliner["outliner"]
   d_presidency --> t_events["events"]
   sb --> d_government["Government"]
   d_government --> t_people["people"]

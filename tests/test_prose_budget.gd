@@ -47,9 +47,10 @@ const BRIEFING_CEILING := 90
 const BUDGET := {
 	"legislature": 80, "orgs": 300, "agenda": 40, "campaign": 40, "energy": 20,
 	"majority": 30, "region": 20, "projects": 20, "economy": 40,
-	"overview": 30, "diplomacy": 20, "society": 10,
+	# The Presidency page: 30 -> 36, a stated rise (rework 2 S1, the parent's ruling): the Overview's
+	# government reads kept whole (capability, the majority's line, the censure), three 8+ word sentences.
+	"overview": 36, "diplomacy": 20, "society": 10,
 	"events": 20, "people": 10, "companies": 10, "calendar": 10,
-	"outliner": 10,
 	"sector_agriculture": 10, "sector_industry": 10, "sector_services": 10,
 }
 ## The tabs 0b has not reached yet, held at what they measured before it started
@@ -62,11 +63,12 @@ const PENDING := {}
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
 const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
-	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135}
+	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135,
+	"overview": 170}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 128, "energy": 118,
-	"orgs": 610, "outliner": 23, "overview": 127,
+	"orgs": 610,
 	"majority": 97, "projects": 75, "society": 106,
 }
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
@@ -112,7 +114,11 @@ const TOTAL_PENDING := {
 ## Rework 1 (People + cabinet, direction A): People is one roster (122 at rest, from the
 ## old groups and cards) and Politics, retired, comes back as Parliament's Majority tab
 ## without the cabinet table (123 -> 97): 2848 -> 2794.
-const TOTAL_SUM_CEILING := 2794
+## Rework 2, slice 1: the Overview (127) and the Outliner (23) became one Presidency page, 130 at its
+## played state against a ceiling of 170 (the parent's, card G): 2794 -> 2770; then 2770 -> 2779, a stated rise
+## (the parent's ruling: every government read the Overview showed stays on the page, 139 of 170).
+## #401 pass 2 (section titles kept in Open now, the vote named, censure and 49.3 split): 2779 -> 2777.
+const TOTAL_SUM_CEILING := 2777
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

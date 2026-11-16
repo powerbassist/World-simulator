@@ -1,0 +1,135 @@
+extends RefCounted
+
+## What the Presidency page's term draws -- rework 2, direction A (presidency-page-brief.md;
+## the author's "A, le mandat" and "Coupure en deux"). A pure, read-only query over
+## GameState: twelve months back on one side of today, the term to the vote on the other.
+##
+## THE TWO HALVES KEEP THEIR OWN SCALE (the hinge, the author's call): at 58 months to the
+## vote a single linear axis squeezes the past year to a sixth of the width, and the files
+## of the next three months already live in the bar's horizon and the Diary, so the future
+## half draws only what lies beyond them: each programme entry's window and the vote.
+##
+## A PROGRAMME LANE IS THE FIGURE AGAINST ITS GOAL, never a bar on time (the parent's call):
+## progress toward 7 % is not elapsed time. The past half is the figure the entry is judged
+## on (`current_value`, read off GameState.history), the future half its window to the
+## deadline; the gutter prints the progress the Agenda and the strip print.
+
+const ChartSeries = preload("res://src/ui/chart_series.gd")
+const PollNoise = preload("res://src/ui/poll_noise.gd")
+const PollingPanel = preload("res://src/ui/polling_panel.gd")
+const Programme = preload("res://src/sim/programme.gd")
+const ProgrammeK = preload("res://src/sim/programme_constants.gd")
+const Trends = preload("res://src/ui/trends.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Strings = preload("res://src/ui/strings.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
+const StripReadings = preload("res://src/ui/strip_readings.gd")
+const Num = preload("res://src/ui/num.gd")
+
+## The past half: the last year of polls, the span a reader compares a term against.
+const PAST_MONTHS := 12
+## The field the approval lane reads; a programme entry judged on it is drawn as the poll.
+const APPROVAL_FIELD := "overall_approval_pct"
+
+
+## The past half's snapshots, oldest first, at most a year (GameState.history).
+static func past(state) -> Array:
+	return ChartSeries.last(state, PAST_MONTHS)
+
+
+## The approval the player was shown, month by month: the polls, never the truth.
+static func approval(entries: Array) -> PackedFloat64Array:
+	return ChartSeries.polled(entries, APPROVAL_FIELD, PollingPanel.HEADLINE_KEY)
+
+
+## Today's poll, the figure the page prints beside the line.
+static func approval_now(state) -> float:
+	return PollNoise.displayed(PollNoise.poll_id(state.year, state.month), PollingPanel.HEADLINE_KEY,
+		state.player().overall_approval_pct)
+
+
+## Months from today to the player's vote: the one shared query (Trends.months_to_vote).
+static func ahead(state) -> int:
+	return maxi(Trends.months_to_vote(state, state.player()), 0)
+
+
+## One lane per entry of this term's programme, in register order:
+## {id, name, status, fraction, values (the judged figure over `past`), goal, chosen (the
+## index in `past` where it was chosen, -1 when before the window), first (the index in `past` of
+## the first value: a field history did not always carry starts late), due (months ahead to its
+## deadline, -1 once concluded), due_text, tip (now, goal and clock in words: the gutter's
+## table twin of what the lane draws), tab (where its goal is moved)}.
+static func goal_lanes(state, loader) -> Array:
+	var ns = state.player()
+	var entries := past(state)
+	var to_vote := ahead(state)
+	var out: Array = []
+	for entry in Programme.this_term(ns):
+		var id := String(entry["entry_id"])
+		var terms: Dictionary = Programme.terms_of(loader, id)
+		var field := String(terms.get("current_value", ""))
+		var live := String(entry["status"]) == ProgrammeK.STATUS_ACTIVE
+		var months_live := int(entry["months_live"])
+		var timeout := int(terms.get("timeout_months", 0))
+		var due := -1
+		if live:
+			due = to_vote if timeout <= 0 else mini(maxi(timeout - months_live, 0), to_vote)
+		# months_live stops at the conclusion: the months since are the term's months past it.
+		var months_ago := months_live if live else months_live + maxi(int(ns.months_in_term) - int(entry["concluded_term_month"]), 0)
+		var chosen := entries.size() - 1 - months_ago
+		var values: PackedFloat64Array = approval(entries) if field == APPROVAL_FIELD else ChartSeries.values(entries, field)
+		out.append({
+			"id": id,
+			"name": Strings.row("programme", id, "name", String(terms.get("name", id))),
+			"status": String(entry["status"]),
+			"fraction": _fraction(state, terms, String(entry["status"])),
+			"values": values,
+			"first": entries.size() - values.size(),
+			"goal": float(terms.get("goal_value", 0.0)),
+			"chosen": chosen if chosen >= 0 else -1,
+			"due": due,
+			"due_text": _due_text(state, terms, due, live),
+			"tip": _tip(state, terms, entry),
+			"tab": String(AgendaPanel.GROUP_TAB.get(String(terms.get("group", "")), "agenda")),
+		})
+	return out
+
+
+## The bar is the verdict once there is one: delivered full, missed or overtaken empty; a live
+## goal reads its figure, through the polls when the figure is approval.
+static func _fraction(state, terms: Dictionary, status: String) -> float:
+	if terms.is_empty() or status != ProgrammeK.STATUS_ACTIVE:
+		return 1.0 if status == ProgrammeK.STATUS_COMPLETE else 0.0
+	var read: Dictionary = _progress(state, terms)
+	return PanelKit.progress_fraction(float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
+
+
+## Programme.progress_of, with approval read as the poll the player was shown (this file's rule).
+static func _progress(state, terms: Dictionary) -> Dictionary:
+	var read: Dictionary = Programme.progress_of(state.player(), terms)
+	if String(terms.get("current_value", "")) == APPROVAL_FIELD:
+		read["current_value"] = approval_now(state)
+	return read
+
+
+## Now, the goal and the clock, in the Overview's words (its programme row's tooltip), so the
+## strip, the Agenda and the page word one deadline one way.
+static func _tip(state, terms: Dictionary, entry: Dictionary) -> String:
+	if terms.is_empty():
+		return ""
+	var read: Dictionary = _progress(state, terms)
+	var tip := Strings.t("now %s · goal %s") % [Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2)]
+	if String(entry["status"]) == ProgrammeK.STATUS_ACTIVE:
+		tip += " · " + StripReadings.programme_clock_text(terms, entry)
+	return tip
+
+
+## The deadline's words at its mark: the month it falls, or "judged at the vote".
+static func _due_text(state, terms: Dictionary, due: int, live: bool) -> String:
+	if not live:
+		return ""
+	if int(terms.get("timeout_months", 0)) <= 0:
+		return Strings.t("judged at the vote")
+	var month0 := int(state.year) * 12 + int(state.month) - 1 + due
+	return DateText.month_year(month0 % 12 + 1, month0 / 12)

@@ -375,7 +375,7 @@ func _check_panel_content() -> void:
 	windows.open("overview")
 	_main._overview_panel._process(0.0)
 	var overview_text := _collect_text(_main._overview_panel)
-	for heading in ["OVERVIEW", "GOVERNMENT", "NEXT ELECTION", "WHAT THE COUNTRY WANTS", "MOVING"]:
+	for heading in ["OVERVIEW", "THE TERM", "OPEN NOW", "WHAT THE COUNTRY WANTS"]:
 		if not overview_text.contains(heading):
 			_fail("overview panel has no '%s' section: %s" % [heading, overview_text])
 
