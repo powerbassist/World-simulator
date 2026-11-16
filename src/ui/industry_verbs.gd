@@ -50,7 +50,7 @@ static func build(panel, parent: Control, ns, company) -> void:
 		selector.set_meta("money_label", money_label)
 		# Aid, said as the player weighs it (screen 5 slice 2): a job's price, a tax point's share.
 		if AidWords.is_aid(action):
-			var aid := PanelKit.plain_line(row, AidWords.caption(loader, ns, company, action))
+			var aid := PanelKit.plain_line(row, AidWords.caption(state, loader, ns, company, action))
 			aid.autowrap_mode = TextServer.AUTOWRAP_OFF
 		var why := CompanyVerb.refusal(state, loader, ns, company, action)
 		if why != "":
@@ -68,7 +68,7 @@ static func build(panel, parent: Control, ns, company) -> void:
 		var strip := EffectsStrip.new()
 		detail.add_child(strip)
 		strip.show_lines(String(money[0]), String(money[1]), float(money[2]),
-			EffectsStrip.who_text(AidWords.offsets(loader, ns, company, action)),
+			EffectsStrip.who_text(AidWords.offsets(state, loader, ns, company, action)),
 			when_text(action, est))
 		# The jobs the aid moves, before the press (PR 3's net_jobs, on a copy).
 		if AidWords.is_aid(action):

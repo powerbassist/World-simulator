@@ -46,8 +46,10 @@ static func pts_of(ns, region_list: Array, city_id: String, jobs: float) -> Dict
 
 ## The strip's read for the closure `row` (Closures' record: city_id, jobs): {ok,
 ## region_id, before_pct, after_pct, jobs}, the region's unemployment now and the moment
-## the plant shuts, through Regions.unemployment_by_region on the register booked on a
-## copy; {ok: false} for a city in no region. Later months move both with the nation's.
+## the plant shuts, through Regions.unemployment_by_region with
+## the closure's pts_of as an unbooked lift (the register is never written; the retro
+## review's T1 on #380 retired the swap of it); {ok: false} for a city in no region.
+## Later months move both with the nation's.
 static func move(state, ns, row: Dictionary) -> Dictionary:
 	var list: Array = state.regions.get(ns.id, [])
 	var region = Region.region_of_city(list, String(row.get("city_id", "")))
@@ -56,10 +58,7 @@ static func move(state, ns, row: Dictionary) -> Dictionary:
 	var access := Regions.accessibility_for(ns, list, state.region_graph)
 	var sites: Dictionary = state.project_sited_pct.get(ns.id, {})
 	var before := Regions.unemployment_by_region(ns, list, access, sites)
-	var held: Dictionary = ns.region_closure_pts
-	ns.region_closure_pts = held.duplicate()
-	book(ns, list, String(row["city_id"]), float(row["jobs"]))
-	var after := Regions.unemployment_by_region(ns, list, access, sites)
-	ns.region_closure_pts = held
+	var after := Regions.unemployment_by_region(ns, list, access, sites,
+		pts_of(ns, list, String(row["city_id"]), float(row["jobs"])))
 	return {"ok": true, "region_id": String(region.id), "before_pct": float(before[region.id]),
 		"after_pct": float(after[region.id]), "jobs": float(row["jobs"])}

@@ -143,11 +143,14 @@ func _check_unemployment_decomposes() -> void:
 		okun += region.share * float(EK.OKUN) * Regions.trend_deviation_pct(ns, list, region.id, okun_access, {})
 	if absf(okun / weight) > 0.01:
 		_fail("the Okun term's population-weighted mean is %f -- past the measured two-weighting residual" % (okun / weight))
-	# And the read is its own formula: national rate x rel, minus the deviation, in the
-	# national clamp.
+	# And the read is its own formula: national rate x rel, minus the deviation, plus a
+	# landed closure's lift (V5.3 PR 3; booked here so the term is live, the parent's
+	# pass 2 on #390), in the national clamp.
+	ns.region_closure_pts = {String(list[0].id): 0.4, String(list[1].id): -0.05}
 	for region in list:
 		var expect: float = clampf(
-			ns.unemployment_pct * region.unemployment_rel - float(EK.OKUN) * Regions.trend_deviation_pct(ns, list, region.id, okun_access, {}),
+			ns.unemployment_pct * region.unemployment_rel - float(EK.OKUN) * Regions.trend_deviation_pct(ns, list, region.id, okun_access, {})
+				+ float(ns.region_closure_pts.get(region.id, 0.0)),
 			float(EK.UNEMP_MIN_PCT),
 			float(EK.UNEMP_MAX_PCT)
 		)
