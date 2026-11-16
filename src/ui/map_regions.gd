@@ -62,6 +62,19 @@ func _init() -> void:
 	hide()
 
 
+## The canvas changes size with the window and the interface size (F11, a drag, a
+## Settings change): shown, the overlay frames the nation again on the new canvas. A
+## method of this node rather than a lambda in regions_shell.gd: the root viewport
+## outlives the game scene, and a connection to a freed node's method goes with it.
+func _ready() -> void:
+	get_viewport().size_changed.connect(_on_canvas_resized)
+
+
+func _on_canvas_resized() -> void:
+	if visible and fit_rect_source.is_valid():
+		request_fit()
+
+
 ## `rings` is region id -> Array[PackedVector2Array] in lon/lat (loader.region_features);
 ## `holed` the same regions' every ring (loader.region_rings' shape, holes kept).
 func setup(map, region_ids: Array, rings: Dictionary, holed := {}) -> void:

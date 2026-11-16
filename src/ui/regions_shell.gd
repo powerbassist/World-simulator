@@ -24,12 +24,6 @@ static func panel(main) -> Control:
 	main._map_view.add_child(overlay)
 	tab._overlay = overlay
 	overlay.fit_rect_source = fit_rect_for
-	# The canvas changes size with the window and the interface size (F11, a drag, a
-	# Settings change): with the tab open, the nation is framed again on the new canvas.
-	main.get_viewport().size_changed.connect(func():
-		if tab.is_visible_in_tree():
-			overlay.request_fit()
-	)
 	bind(main, overlay)
 	# A load re-runs every registered panel's setup() (main.gd's _on_load_requested), and
 	# Continue is a load over the default game: the overlay follows it there, or a save of
