@@ -205,15 +205,42 @@ func _check_why_these_days(panel, label: String) -> void:
 	var ns = _main._state.player()
 	var rid := String(_ids[0])
 	var who: String = _main._loader.person_name(String(Audiences.request(ns, rid)["person_id"]))
-	var n: int = Audiences.offered_dates(_main._state, ns, rid).size()
-	var want := "%s can see you only on these %d days" % [who, n]
+	# Only the days still open to book are named (a refused one says why on its own button).
+	var n := 0
+	for date in Audiences.offered_dates(_main._state, ns, rid):
+		if bool(date.get("free", true)):
+			n += 1
+	var want := "%s can see you only on 1 day" % who if n == 1 else "%s can see you only on these %d days" % [who, n]
+	var found := false
 	for node in panel._grid.day_list.find_children("*", "Label", true, false):
-		if String((node as Label).text).begins_with(want):
-			return
-	_fail("%s: the day list does not say '%s'" % [label, want])
+		if String((node as Label).text).begins_with("%s can see you" % who):
+			found = String((node as Label).text).begins_with(want)
+			if not found:
+				_fail("%s: the day list says '%s', not '%s'" % [label, (node as Label).text, want])
+			break
+	if n > 0 and not found:
+		_fail("%s: the day list does not say '%s'" % [label, want])
+
+
+## T4: a refused day is not named, a year end shows the years, one day reads in the singular.
+func _check_offer_line_forms() -> void:
+	var grid = _main._calendar_panel._grid
+	var crossing: String = grid._offer_line([
+		{"year": 2026, "month": 12, "day": 30, "free": true},
+		{"year": 2027, "month": 1, "day": 4, "free": true},
+		{"year": 2027, "month": 1, "day": 6, "free": false},
+	], "X")
+	if not crossing.begins_with("X can see you only on these 2 days") or not ("2026" in crossing and "2027" in crossing):
+		_fail("days across a year end read '%s'" % crossing)
+	var one: String = grid._offer_line([{"year": 2026, "month": 3, "day": 5, "free": true}], "X")
+	if not one.begins_with("X can see you only on 1 day:") or "2026" in one:
+		_fail("one day in the year reads '%s'" % one)
+	if grid._offer_line([{"year": 2026, "month": 3, "day": 5, "free": false}], "X") != "":
+		_fail("a request with no day left to book still names its days")
 
 
 func _finish() -> void:
+	_check_offer_line_forms()
 	UiTheme.set_text_scale(1.0)
 	if _checked != _cases.size():
 		_failures.append("premise: %d of %d cases checked" % [_checked, _cases.size()])

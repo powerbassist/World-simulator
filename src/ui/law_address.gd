@@ -21,10 +21,6 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
-const CalendarK = preload("res://src/sim/calendar_constants.gd")
-const DateText = preload("res://src/ui/date_text.gd")
-## Calendar.refusal_reason()'s same-verb refusal, "already booked for <date>".
-const ALREADY_BOOKED := "already booked for"  # i18n: ok matched against the sim's reason, never shown
 
 ## The blocs an address names before it counts the rest (the parent's ruling on #303: a speech
 ## moves every bloc, and six names was the longest line on the page).
@@ -88,23 +84,8 @@ static func build(list, box: Control, ns, law) -> void:
 	box.add_child(go)
 	go.pressed.connect(give.bind(list, law), CONNECT_DEFERRED)
 	if reason != "":
-		PanelKit.plain_line(box, _refusal_text(state, String(law.id), reason))
+		PanelKit.plain_line(box, Strings.t("Not today: %s.") % Strings.t(reason))  # i18n: row-ok the sim's reason, its English the msgid
 		_watch_the_day(list, box, state)
-
-
-## Gate 3 (G3-25): the diary refuses a bill's second address with "already booked for <the
-## day it aired>", which under "Not today" read as a booking ahead on a day gone by. A bill
-## with its address booked this month says that instead; any other refusal is the diary's own.
-static func _refusal_text(state, law_id: String, reason: String) -> String:
-	# Only the diary's same-verb refusal is this bill's own address; a full diary or a taken
-	# day keeps its own words.
-	if not reason.begins_with(ALREADY_BOOKED):
-		return Strings.t("Not today: %s.") % Strings.t(reason)  # i18n: row-ok the sim's reason, its English the msgid
-	for e in state.appointments:
-		if String(e.get("kind", "")) == CalendarK.KIND_ADDRESS and String(e.get("law_id", "")) == law_id \
-				and String(e.get("status", "")) == CalendarK.STATUS_BOOKED:
-			return Strings.t("This bill had its address this month, on %s.") % DateText.day_month_year(int(e["day"]), int(e["month"]), int(e["year"]))
-	return Strings.t("Not today: %s.") % Strings.t(reason)  # i18n: row-ok the sim's reason, its English the msgid
 
 
 static func _watch_the_day(list, box: Control, state) -> void:

@@ -106,6 +106,9 @@ func _ready() -> void:
 
 	_readout = Label.new()
 	_readout.theme_type_variation = UiTheme.FIGURE_LABEL
+	# Wraps inside the plate rather than widening it (gate 3, G3-20): the plate's width is
+	# what keeps it off the land, and a hover must not move it there.
+	_readout.autowrap_mode = TextServer.AUTOWRAP_WORD
 	column.add_child(_readout)
 
 	# The re-show keeps whatever state the last caller handed in; without it the
@@ -194,7 +197,7 @@ func _stop_row(at: float, text: String, trade_even := -1.0, prod_even := -1.0) -
 
 
 ## The player's own NO_VALUE fill, named: the swatch is MapLayers.NO_VALUE itself.
-func _you_row(name: String) -> Control:
+func _you_row(nation: String) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	var swatch := ColorRect.new()
@@ -202,7 +205,7 @@ func _you_row(name: String) -> Control:
 	swatch.custom_minimum_size = SWATCH_SIZE
 	swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(swatch)
-	row.add_child(_row_label(tr("%s (you): no value on this layer") % name))
+	row.add_child(_row_label(tr("%s (you): no value on this layer") % nation))
 	return row
 
 

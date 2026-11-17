@@ -351,7 +351,9 @@ func _render_list(entries: Array, offered: Array) -> void:
 		day_list.add_child(book)
 		# Gate 3 (G3-16): only the person's own days are bookable, and an empty diary read
 		# as broken without the reason beside the button.
-		PanelKit.plain_line(day_list, _offer_line(o["dates"], String(o["person"])), PanelKit.Tone.DIM)
+		var offer := _offer_line(o["dates"], String(o["person"]))
+		if offer != "":
+			PanelKit.plain_line(day_list, offer, PanelKit.Tone.DIM)
 	for e in entries:
 		var row := HBoxContainer.new()
 		day_list.add_child(row)
@@ -373,9 +375,18 @@ func _render_list(entries: Array, offered: Array) -> void:
 			row.add_child(ActsOn.tag(call, [String(e["subject"])]))
 
 
+## The days the person offers that the player can still take (a refused one says why on its
+## own button), with the year when they straddle a year end; "" when none is left.
 func _offer_line(dates: Array, person: String) -> String:
+	var free: Array = dates.filter(func(d: Dictionary) -> bool: return bool(d.get("free", true)))
+	if free.is_empty():
+		return ""
+	var years := {}
+	for date in free:
+		years[int(date["year"])] = true
 	var days := PackedStringArray()
-	for date in dates:
-		days.append(DateText.day_month(int(date["day"]), int(date["month"])))
+	for date in free:
+		days.append(DateText.day_month_year(int(date["day"]), int(date["month"]), int(date["year"])) if years.size() > 1
+			else DateText.day_month(int(date["day"]), int(date["month"])))
 	return tr_n("%s can see you only on %d day: %s.", "%s can see you only on these %d days: %s.", days.size()) % [
 		person, days.size(), ", ".join(days)]
