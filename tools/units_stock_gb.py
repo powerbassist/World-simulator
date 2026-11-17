@@ -7,6 +7,7 @@ tools/units_stock_de.py; every number is a raw cell of a published file.
   python tools/units_stock_gb.py            # prints the table and the self-checks
   python tools/units_stock_gb.py --check    # also fails if data/units/stock/GBR.json differs
   python tools/units_stock_gb.py --write    # rewrites its `stock` and `figures`, keeping `_source`
+  python tools/units_stock_gb.py --refresh   # with any of the above: downloads the DfE zip again (cached in the temp dir)
 
 Britain has no upper-secondary split, so its school type is its own: `secondary_school`, the state-funded
 secondary schools (11 to 18, sixth forms included), with its own figure `secondary_pupils_per_teacher`: pupils
@@ -106,7 +107,10 @@ def england_beds() -> tuple:
             region[item["query"]] = (item["result"] or {}).get("region")
     out = collections.defaultdict(lambda: [0, 0.0])
     for code, total, _ in trusts:
-        gid = REGION[region[postcode[code]]]
+        name = region.get(postcode[code])
+        if name not in REGION:
+            sys.exit("trust %s: postcode %r gave no English region (%r)" % (code, postcode[code], name))
+        gid = REGION[name]
         out[gid][0] += 1
         out[gid][1] += total
     national = next(r[6] for r in sheet if r[5] == "England" and r[1] == "2024-25")
@@ -165,6 +169,8 @@ def hospitals() -> dict:
 def england_schools() -> dict:
     """{region id: (schools, pupils FTE, teachers FTE)} for the state-funded secondary schools, 2025/26."""
     cache = Path(tempfile.gettempdir()) / "dfe_school_workforce_2025.zip"
+    if "--refresh" in sys.argv and cache.exists():   # the cached zip is the release read on the day: --refresh reads it again
+        cache.unlink()
     if not cache.exists():
         req = urllib.request.Request(DFE_ZIP, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=600) as r, open(cache, "wb") as f:
