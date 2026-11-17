@@ -10,6 +10,9 @@ extends VBoxContainer
 ## The state lives here, not in the list: the panel redraws every month and the list rebuilds its
 ## rows, but this widget is built once, so the typed words and the chosen shelf stay.
 
+## A shelf button pressed, before the redraw (law_list.gd ends a bloc's Go on it).
+signal shelf_pressed
+
 const LawCategory = preload("res://src/core/law_category.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -83,7 +86,7 @@ func apply(laws: Array, loader, every_shelf := false) -> Array:
 		counts[key] = int(counts.get(key, 0)) + 1
 	for key in _buttons:
 		var b: Button = _buttons[key]
-		b.text = "%s   %d" % [Labels.law_category(key) if key != DRAFTS else tr("Your drafts"), int(counts.get(key, 0))]
+		b.text = "%s   %d" % [Labels.law_category(key), int(counts.get(key, 0))]
 		b.set_pressed_no_signal(key == category and query == "" and not every_shelf)
 		# A flat button draws no pressed state: the open shelf stands raised, the others flat.
 		b.flat = not b.button_pressed
@@ -132,6 +135,7 @@ func _words_of(law) -> String:
 
 
 func _on_shelf(key: String) -> void:
+	shelf_pressed.emit()
 	category = key
 	query = ""
 	_search.text = ""

@@ -66,7 +66,6 @@ CATEGORY_KEYS = ["taxes", "work", "welfare_health", "education_culture", "housin
                  "energy_environment", "business", "farming", "justice_transparency",
                  "constitution", "elections", "media", "europe_migration"]
 CATEGORY_MIN = 4
-# The tax library's kinds (data/taxes/<id>.json, V5.3 e), then economy_constants'
 # law_verb.gd MAX: the Bills row's verb is one lowercase word
 VERB_MAX = 14
 
@@ -75,6 +74,7 @@ def law_verb_ok(verb) -> bool:
     return isinstance(verb, str) and 0 < len(verb) <= VERB_MAX and verb.isascii() and verb.isalpha() and verb == verb.lower()
 
 
+# The tax library's kinds (data/taxes/<id>.json, V5.3 e), then economy_constants'
 # SPENDING_KEYS / SECTOR_TREND
 TAX_KEYS = sorted(p.stem for p in (Path(__file__).resolve().parent.parent / "data" / "taxes").glob("*.json"))
 SPENDING_KEYS = ["health", "education", "defence", "pensions", "infrastructure"]

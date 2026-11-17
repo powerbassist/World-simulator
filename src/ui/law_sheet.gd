@@ -18,7 +18,7 @@ const ChartKit = preload("res://src/ui/chart_kit.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const LawFilters = preload("res://src/ui/law_filters.gd")
-const LawRow = preload("res://src/ui/law_row.gd")
+const LawShut = preload("res://src/ui/law_shut.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 
@@ -35,7 +35,7 @@ static func build(list, box: VBoxContainer, ns, party_list: Array, law) -> void:
 	var kicker := Label.new()
 	var verb := Strings.law_verb(panel._loader, law)
 	var shelf: String = LawFilters.shelf_of(law, panel._loader)
-	kicker.text = (Labels.law_category(shelf) if shelf != LawFilters.DRAFTS else Strings.t("Your drafts")) + (" · " + verb if verb != "" else "")
+	kicker.text = Labels.law_category(shelf) + (" · " + verb if verb != "" else "")
 	kicker.theme_type_variation = UiTheme.MICRO
 	box.add_child(kicker)
 	var title := Label.new()
@@ -53,21 +53,24 @@ static func build(list, box: VBoxContainer, ns, party_list: Array, law) -> void:
 	var flag: String = list.why(law)
 	if flag != "":
 		var why := Label.new()
-		why.text = LawRow.shut_text(ns, law, flag)
+		why.text = LawShut.text(ns, law, flag)
 		why.theme_type_variation = UiTheme.WARN_TEXT
 		why.autowrap_mode = TextServer.AUTOWRAP_WORD
 		box.add_child(why)
 	LawGrade.build(list, box, ns, law)
 	_vote(list, box, ns, party_list, law)
-	_blocs(box, law)
+	# The price at the size picked: the passage applies the scaled bill, as the vote reads it.
+	_blocs(box, LawGrade.read(ns, law, list.grade(law)))
 	list._verbs(ns, law)
 	# The poll buttons redraw the whole panel: a purchase narrows the forecast on every row too.
 	var sections := Sections.new(panel._state, panel._loader, law, list.grade(law), {}, String(law.id), panel.mark_dirty, panel.polled.emit)
 	# A Callable does not keep a RefCounted alive: the sheet holds the builder its buttons call.
 	box.set_meta("sections", sections)
 	sections.channels(box)
-	LawAddress.build(list, box, ns, law)
-	_polls(list, box, sections, String(law.id))
+	# A shut law has no division to address the country about or to poll: neither is offered.
+	if flag == "":
+		LawAddress.build(list, box, ns, law)
+		_polls(list, box, sections, String(law.id))
 
 
 ## The vote in full: the stacked bar by seats with the line to pass marked, the counts named under
@@ -84,13 +87,20 @@ static func _vote(list, box: VBoxContainer, ns, party_list: Array, law) -> void:
 	var c: Dictionary = list.counts_of(ns, party_list, law)
 	var seats := int(c["yes"]) + int(c["no"]) + int(c["undecided"])
 	var needed := seats_to_pass(list.majority_share(ns, law), seats)
-	var verdict := verdict_of(c, needed, String(law.majority) == "simple")
-	var word := Label.new()
-	word.text = verdict[0]
-	word.theme_type_variation = verdict[1]
-	head.add_child(word)
+	var simple := String(law.majority) == "simple"
+	# A shut law has no division coming, so it gets no verdict on one.
+	if list.why(law) == "":
+		var verdict := verdict_of(c, needed, simple)
+		var word := Label.new()
+		word.text = verdict[0]
+		word.theme_type_variation = verdict[1]
+		head.add_child(word)
 	box.add_child(list._forecast_bar(ns, party_list, law, 0.0, c))
-	PanelKit.line(box, Strings.t("%d for · %d undecided · %d against · %d to pass") % [c["yes"], c["undecided"], c["no"], needed])
+	# The rule as the division applies it: more for than against, or a number of seats.
+	if simple:
+		PanelKit.line(box, Strings.t("%d for · %d undecided · %d against · more for than against") % [c["yes"], c["undecided"], c["no"]])
+	else:
+		PanelKit.line(box, Strings.t("%d for · %d undecided · %d against · %d to pass") % [c["yes"], c["undecided"], c["no"], needed])
 	# A threshold other than more yes than no is said in words (a 3/5, a referendum after).
 	if String(law.majority) != "simple" or law.constitutional:
 		PanelKit.line(box, panel._majority_phrase(ns, law))

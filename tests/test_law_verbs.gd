@@ -127,7 +127,7 @@ func _parties() -> Array:
 
 ## Tags one budget row with a size, as Content will: no row ships one yet.
 func _stage() -> void:
-	for law in _list()._shown:
+	for law in _list()._shown.filter(func(l) -> bool: return _list().why(l) == ""):
 		if _law == null and not (law.effects.get("spending_pct_gdp", {}) as Dictionary).is_empty():
 			_law = law
 		elif _plain == null and (law.effects.get("spending_pct_gdp", {}) as Dictionary).is_empty():
@@ -482,7 +482,8 @@ func _check_a_new_game_drops_the_picks() -> void:
 ## "A verb whose strip cannot be filled from the sim's own numbers is not offered."
 func _check_the_strip_is_not_offered_a_dead_verb() -> void:
 	var seen := 0
-	for law in _list()._shown:
+	# A shut law offers no address at all (pass 2 T5): only the open laws carry a strip.
+	for law in _list()._shown.filter(func(l) -> bool: return _list().why(l) == ""):
 		_list().address_open = String(law.id)
 		_list().select(String(law.id))
 		if _strip_node(LawAddress.STRIP_META) == null:

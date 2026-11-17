@@ -32,7 +32,6 @@ const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
 const LawGate = preload("res://src/sim/law_gate.gd")
 const BillActions = preload("res://src/ui/bill_actions.gd")
-const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const LawFilters = preload("res://src/ui/law_filters.gd")
 const BlocFilter = preload("res://src/ui/law_bloc_filter.gd")
 const LawRow = preload("res://src/ui/law_row.gd")
@@ -77,6 +76,8 @@ func _init(panel) -> void:
 	add_theme_constant_override("separation", 16)
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_filters = LawFilters.new(_panel.mark_dirty)
+	# A shelf pressed under a bloc's Go is the player choosing the shelf: the Go's filter ends.
+	_filters.shelf_pressed.connect(func() -> void: bloc_filter = "")
 	add_child(_filters)
 	var middle := VBoxContainer.new()
 	middle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -169,9 +170,9 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 	_why.clear()
 	var book: Array = []
 	for law in laws:
-		var flag := LawGate.shut(ns, law)
-		if flag != LawGate.CONSTITUTION and LawFilters.shelf_of(law, _panel._loader) != "":
-			_why[String(law.id)] = flag
+		# Another constitution's laws are not this nation's book, whatever else shuts them.
+		if LawGate.constitution_allows(ns, law) and LawFilters.shelf_of(law, _panel._loader) != "":
+			_why[String(law.id)] = LawGate.shut(ns, law)
 			book.append(law)
 	if bloc_filter != "":
 		book = liked_by(book, bloc_filter)
@@ -203,7 +204,7 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 ## "WORK · 13 LAWS · 3 SHUT": what the list holds, above it.
 func _head_text(book: Array) -> String:
 	var shut := book.filter(func(law) -> bool: return why(law) != "").size()
-	var place: String = (Labels.law_category(_filters.category) if _filters.category != LawFilters.DRAFTS else Strings.t("Your drafts")) if _filters.query == "" and bloc_filter == "" else Strings.t("Found")
+	var place: String = Labels.law_category(_filters.category) if _filters.query == "" and bloc_filter == "" else Strings.t("Found")
 	var text := "%s · %s" % [place, Strings.tn("%d law", "%d laws", book.size()) % book.size()]
 	if shut > 0:
 		text += " · " + Strings.t("%d shut") % shut
@@ -323,14 +324,7 @@ func _verbs(ns, law) -> void:
 	# V5.2 b+ R2 and V5.3 screen 4: one bill before the Assembly at a time, and a queue of three
 	# behind it. The table (bill_verbs.gd) holds Propose and the referendum route down with its
 	# reason, and offers the queue; Article 49.3 answers only to its own cooldown (#173).
-	# A shut law (law_gate.gd) takes no verb at all: each is down with the row's own reason.
-	if why(law) != "":
-		for verb in row.get_children():
-			(verb as Button).disabled = true
-			(verb as Button).tooltip_text = LawRow.shut_text(ns, law, why(law))
-			if _panel._primary == verb:
-				_panel._primary = null
-		return
+	# A shut law (law_gate.gd) is a cell of that table too: every verb down with its reason.
 	BillActions.verbs(self, row, ns, law)
 
 

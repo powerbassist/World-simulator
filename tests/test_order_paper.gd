@@ -287,7 +287,7 @@ func _check_the_plates_propose_divides() -> void:
 	event.pressed = true
 	law_row.gui_input.emit(event)
 	var plate = _plate()
-	var press: Array = _plate_buttons(plate).filter(func(b): return b.text == "Propose") if plate != null else []
+	var press: Array = _plate_buttons(plate).filter(func(b): return b.text.begins_with("Propose for ")) if plate != null else []
 	if press.is_empty() or press[0].disabled:
 		_fail("with the slot empty the plate has no live Propose")
 		return
@@ -312,11 +312,10 @@ func _check_the_right_click_is_the_same_table() -> void:
 		_fail("a right click on a law's row opened no plate")
 		return
 	var texts: Array = _plate_buttons(plate).map(func(b): return b.text)
-	if not texts.has("Propose") or not texts.has("Open the sheet") or not texts.any(func(t): return String(t).begins_with("Propose for ") or String(t).begins_with("Take out")):
-		_fail("the plate offers %s; wanted Propose, a queue verb and Open the sheet" % [texts])
-	var propose: Button = _plate_buttons(plate).filter(func(b): return b.text == "Propose")[0]
-	if not propose.disabled or propose.tooltip_text == "":
-		_fail("with a bill in the slot the plate's Propose is not down with a reason")
+	# One verb (pass 2 T2): with a bill in the slot the queue's press is the proposal, alone.
+	var proposes: Array = texts.filter(func(t): return String(t).begins_with("Propose"))
+	if proposes.size() != 1 or not String(proposes[0]).begins_with("Propose for ") or not texts.has("Open the sheet"):
+		_fail("the plate offers %s; wanted one 'Propose for <month>' and Open the sheet" % [texts])
 	plate.hide()
 
 

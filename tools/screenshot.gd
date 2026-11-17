@@ -2478,7 +2478,7 @@ func _stage_the_queue() -> void:
 	preload("res://src/sim/legislature.gd").propose(state, _main._loader, first)
 	for i in (3 if _queue == "queue-full" else 2):
 		preload("res://src/sim/bill_queue.gd").add(state, {"law_id": ids[i + 1]})
-	panel._laws._selected = ids[4]
+	panel._laws.select(ids[4])
 	panel.mark_dirty()
 
 
@@ -2502,8 +2502,8 @@ func _stage_a_poll() -> void:
 		for row in polls.deliver_due(state, int(state.day)):
 			preload("res://src/ui/poll_card.gd").arrived(_main, row)
 	if _poll == "poll-address":
-		panel._laws._selected = String(law.id)
 		panel._laws.address_open = String(law.id)
+		panel._laws.select(String(law.id))
 		panel.mark_dirty()
 	else:
 		panel.brief_requested.emit(law)

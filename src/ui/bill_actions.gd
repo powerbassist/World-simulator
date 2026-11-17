@@ -11,6 +11,7 @@ const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const VerbPlate = preload("res://src/ui/verb_plate.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 ## The sheet buttons' node names, which the tests and the briefing's Go find them by.
 const QUEUE := "Queue"  # i18n: ok a node name
@@ -27,7 +28,7 @@ static func verbs(list, row: Control, ns, law) -> void:
 	var down: String = cells["propose"]
 	if down != "":
 		for verb in row.get_children():
-			if verb.name == "Force" and cells["slot"] == "held" and int(cells["queued"]) < 0:
+			if verb.name == "Force" and cells["slot"] == "held" and int(cells["queued"]) < 0 and String(cells["shut"]) == "":
 				continue
 			(verb as Button).disabled = true
 			(verb as Button).tooltip_text = down
@@ -93,9 +94,10 @@ static func menu(list, law) -> void:
 	if plate == null:
 		return
 	var cells := BillVerbs.cells(panel._state, panel._loader, String(law.id), panel._find_law)
-	var items: Array = [
-		{"text": Strings.t("Propose"), "enabled": cells["propose"] == "", "reason": cells["propose"], "call": panel.run_proposal.bind(law)}]
 	var queue: Dictionary = cells["queue"]
+	# One verb, as on the sheet: while the slot is held the queue's press is the proposal.
+	var items: Array = [] if bool(queue["shown"]) else [
+		{"text": Strings.t("Propose for %s") % DateText.month_long(int(panel._state.month)), "enabled": cells["propose"] == "", "reason": cells["propose"], "call": panel.run_proposal.bind(law)}]
 	if bool(queue["shown"]):
 		items.append({"text": queue["text"], "enabled": queue["enabled"], "reason": queue["reason"], "call": add.bind(list, law)})
 	if bool(cells["unqueue"]["shown"]):

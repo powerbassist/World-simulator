@@ -127,7 +127,10 @@ const TOTAL_PENDING := {
 ## Bills tab, 380 of its 450): every row of the open shelf carries the law's summary, the card's own ask
 ## ("name + verb + summary"), and the shelves name their twelve categories with a count; the goal tiles
 ## and "What moves it" left the tab.
-const TOTAL_SUM_CEILING := 2958
+## Its pass 2, a stated rise 2958 -> 2966 (T11, T15 of the parent's pass): a shut law's precondition names its
+## figure and where it stands ("Needs unemployment at 9.0% or more; it is 7.7% now."), and a simple
+## majority says its rule in words ("more for than against") instead of a seat count.
+const TOTAL_SUM_CEILING := 2966
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

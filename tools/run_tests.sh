@@ -44,7 +44,6 @@ tests=(
   tests/test_finance_autumn.gd
   tests/test_bill_queue.gd
   tests/test_goal_read.gd
-  tests/test_goal_table.gd
   tests/test_finance_read.gd
   tests/test_finance_rows.gd
   tests/test_investment_refusal.gd

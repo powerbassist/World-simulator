@@ -20,6 +20,8 @@ const Bills = preload("res://src/sim/bills.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const LawGate = preload("res://src/sim/law_gate.gd")
+const LawShut = preload("res://src/ui/law_shut.gd")
 
 
 ## The date queue entry `i` divides: {year, month, day}.
@@ -40,15 +42,24 @@ static func queued_at(ns, law_id: String) -> int:
 
 ## The table's cell for `law_id`: {slot: "empty"|"held"|"here", queued: int, propose: String (the
 ## reason Propose is down, "" when it is up), queue: {shown, enabled, text, reason},
-## unqueue: {shown, text}}. `find_law` is the host's lookup of a law by id, for a composed one.
+## unqueue: {shown, text}, shut: the gate's flag, "" for an open law}. `find_law` is the host's lookup of a law by id, for a composed one.
 static func cells(state, loader, law_id: String, find_law := Callable()) -> Dictionary:
 	var ns = state.player()
 	var tabled := String(ns.tabled_bill.get("law_id", ""))
 	var slot := "empty" if ns.tabled_bill.is_empty() else ("here" if tabled == law_id else "held")
 	var at := queued_at(ns, law_id)
-	var out := {"slot": slot, "queued": at, "propose": "",
+	var law = find_law.call(law_id) if find_law.is_valid() else Bills.by_id(loader, law_id)
+	var shut: String = LawGate.shut(ns, law) if law != null and slot != "here" else ""
+	var out := {"slot": slot, "queued": at, "propose": "", "shut": shut,
 		"queue": {"shown": false, "enabled": false, "text": "", "reason": ""},
 		"unqueue": {"shown": false, "text": ""}}
+	# The Bills second pass: a law the Assembly cannot take now (law_gate.gd) takes no press and
+	# no place in the queue; one queued before it shut can still leave the queue.
+	if shut != "":
+		out["propose"] = LawShut.text(ns, law, shut)
+		if at >= 0:
+			out["unqueue"] = {"shown": true, "text": Strings.t("Take out of the queue (%s)") % month_name(state, at)}
+		return out
 	if slot != "empty":
 		out["propose"] = tabled_reason(ns, loader, find_law)
 	if at >= 0:

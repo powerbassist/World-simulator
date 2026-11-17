@@ -127,7 +127,7 @@ func _check_selected() -> void:
 	var summary: String = Strings.law_summary(law)
 	if summary.length() > 20 and not text.contains(summary.left(20)):
 		_fail("the detail does not carry the law's summary: %s" % summary.left(40))
-	if not text.contains("to pass"):
+	if not text.contains(" undecided · "):
 		_fail("the detail does not spell the vote out")
 
 

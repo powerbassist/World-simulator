@@ -63,6 +63,13 @@ func _process(_delta: float) -> bool:
 			_check_a_shelf_press_ends_the_search()
 			_check_a_law_elsewhere_opens_its_shelf()
 			_check_the_verdict_word()
+			_check_a_shut_law_takes_no_press_anywhere()
+			_check_a_queued_law_that_shuts_can_still_leave()
+			_check_a_condition_is_named()
+			_check_the_bloc_chart_reads_the_size_picked()
+			_check_the_rule_is_said_as_the_division_applies_it()
+			_check_a_shelf_press_ends_a_blocs_go()
+			_check_the_shelves_are_the_categories()
 			_finish()
 			return true
 	return false
@@ -97,7 +104,7 @@ func _pick(shelf: String, query: String) -> void:
 ## Every shelf's laws the catalogue lists: open or shut, but never another constitution's.
 func _on_shelf(key: String) -> Array:
 	return _main._loader.laws.filter(func(law) -> bool:
-		return LawCategory.of(_main._loader, String(law.id)) == key and LawGate.shut(_ns(), law) != LawGate.CONSTITUTION
+		return LawCategory.of(_main._loader, String(law.id)) == key and LawGate.constitution_allows(_ns(), law)
 	).map(func(law): return String(law.id))
 
 
@@ -391,6 +398,160 @@ func _check_the_verdict_word() -> void:
 		var want := int(case[2])
 		if LawSheet.seats_to_pass(float(case[0]), int(case[1])) != want:
 			_fail("seats to pass at %s of %d: %d, the division needs %d" % [case[0], case[1], LawSheet.seats_to_pass(float(case[0]), int(case[1])), want])
+
+
+func _first_open(shelf: String):
+	for l in _main._loader.laws:
+		if LawCategory.of(_main._loader, String(l.id)) == shelf and LawGate.shut(_ns(), l) == "" and not l.constitutional:
+			return l
+	return null
+
+
+## pass 2 T1 T2 T5 T7: a shut law is shut on every door -- the verb table the right click reads
+## offers no press and no queue (the slot empty or held), the sheet offers no address and no poll,
+## and draws no verdict on a division that is not coming.
+func _check_a_shut_law_takes_no_press_anywhere() -> void:
+	var BillVerbs = preload("res://src/ui/bill_verbs.gd")
+	var LawAddress = preload("res://src/ui/law_address.gd")
+	var law = _first_open("work")
+	var other = _first_open("housing")
+	_ns().law_cooldown_months[law.id] = 5
+	for held in [false, true]:
+		if held:
+			_ns().tabled_bill = {"law_id": String(other.id), "referendum": false, "vote_year": _main._state.year, "vote_month": _main._state.month, "vote_day": 28}
+		var cells: Dictionary = BillVerbs.cells(_main._state, _main._loader, String(law.id), _main._law_panel._find_law)
+		if String(cells["propose"]) == "" or bool(cells["queue"]["shown"]) or String(cells["shut"]) != LawGate.COOLDOWN:
+			_fail("a shut law (slot held: %s) is offered a press: %s" % [held, cells])
+	_ns().tabled_bill = {}
+	_pick("work", "")
+	_list().select(String(law.id))
+	var detail: Control = _list()._detail
+	if detail.find_child("PollIt", true, false) != null:
+		_fail("a shut law's sheet offers Poll it")
+	for b in detail.find_children("*", "Button", true, false):
+		if b.has_meta(LawAddress.FOLD_META) or b.has_meta(LawAddress.GO_META):
+			_fail("a shut law's sheet offers the address")
+			break
+		if not (b as Button).disabled and String(b.name) in ["Propose", "Force", "Queue"]:
+			_fail("a shut law's sheet leaves %s live" % b.text)
+	var text := _texts(detail)
+	for word in ["passes", "fails", "too close to call"]:
+		if (text + "\n").contains("\n" + word + "\n"):
+			_fail("a shut law's sheet draws the verdict %s" % word)
+	_ns().law_cooldown_months.erase(law.id)
+	_pick("work", "")
+
+
+## pass 2 T6: a law queued and then shut keeps its way out of the queue and its queued line.
+func _check_a_queued_law_that_shuts_can_still_leave() -> void:
+	var BillVerbs = preload("res://src/ui/bill_verbs.gd")
+	var law = _first_open("work")
+	var other = _first_open("housing")
+	_ns().tabled_bill = {"law_id": String(other.id), "referendum": false, "vote_year": _main._state.year, "vote_month": _main._state.month, "vote_day": 28}
+	_ns().bill_queue = [{"law_id": String(law.id), "scale": 1.0, "referendum": false, "force": false}]
+	_ns().law_cooldown_months[law.id] = 5
+	var cells: Dictionary = BillVerbs.cells(_main._state, _main._loader, String(law.id), _main._law_panel._find_law)
+	if not bool(cells["unqueue"]["shown"]):
+		_fail("a queued law that shut lost Take out of the queue")
+	_pick("work", "")
+	var row_text := _texts(_row_of(String(law.id)))
+	if not row_text.contains("Queued for") or not row_text.contains("5 months"):
+		_fail("a queued law that shut does not say both why and that it is queued: %s" % row_text)
+	_list().select(String(law.id))
+	var out: Button = _list()._detail.find_child("TakeOut", true, false)
+	if out == null or out.disabled:
+		_fail("a queued law that shut has no live Take out of the queue on its sheet")
+	_ns().law_cooldown_months.erase(law.id)
+	_ns().bill_queue = []
+	_ns().tabled_bill = {}
+	_pick("work", "")
+
+
+## pass 2 T15: a law shut by its preconditions names the condition and the figure's target.
+func _check_a_condition_is_named() -> void:
+	var law = null
+	for l in _main._loader.laws:
+		if LawGate.shut(_ns(), l) == LawGate.CONDITIONS and String(l.preconditions[0]["field"]) == "unemployment_pct":
+			law = l
+	if law == null:
+		_fail("premise: no law shut by an unemployment condition")
+		return
+	var said: String = preload("res://src/ui/law_shut.gd").text(_ns(), law, LawGate.CONDITIONS)
+	var want: String = preload("res://src/ui/num.gd").f(float(law.preconditions[0]["value"]), 1)
+	if not said.contains("unemployment") or not said.contains(want):
+		_fail("the condition's sentence does not name it: %s" % said)
+
+
+## pass 2 T4: the bloc chart reads the bill at the size picked, as the vote does.
+func _check_the_bloc_chart_reads_the_size_picked() -> void:
+	var law = null
+	for l in _main._loader.laws:
+		if not l.magnitude.is_empty() and LawGate.shut(_ns(), l) == "" and not (l.effects.get("bloc_offset", {}) as Dictionary).is_empty():
+			law = l
+			break
+	if law == null:
+		_fail("premise: no open sized law with a bloc price")
+		return
+	_list().grades[String(law.id)] = 10.0
+	_list().select(String(law.id))
+	var scaled = preload("res://src/ui/law_grade.gd").read(_ns(), law, _list().grade(law))
+	var text := _texts(_list()._detail.find_child("BlocChart", true, false))
+	for bloc in scaled.effects["bloc_offset"]:
+		var landed := clampf(float(scaled.effects["bloc_offset"][bloc]), LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
+		var shown: String = "0" if landed == 0.0 else preload("res://src/ui/num.gd").fs(landed, 2)
+		if not text.contains(shown):
+			_fail("at ten times the size the bloc chart does not print %s for %s" % [shown, bloc])
+	_list().grades.erase(String(law.id))
+	_pick("work", "")
+
+
+## pass 2 T10 T11: a simple majority says more for than against, never a seat count, and a
+## threshold is said in words, never as an id.
+func _check_the_rule_is_said_as_the_division_applies_it() -> void:
+	_pick("work", "")
+	var simple = null
+	for l in _list()._shown:
+		if String(l.majority) == "simple" and _list().why(l) == "":
+			simple = l
+			break
+	if simple == null:
+		_fail("premise: no open simple-majority law on the Work shelf")
+	else:
+		_list().select(String(simple.id))
+		var text := _texts(_list()._detail)
+		if not text.contains("more for than against") or text.contains("to pass"):
+			_fail("a simple-majority law does not say its rule: %s" % text.left(300))
+	for key in ["simple", "absolute", "two_thirds"]:
+		if Labels.majority(key).contains("_"):
+			_fail("the majority %s reads as an id: %s" % [key, Labels.majority(key)])
+	_pick("work", "")
+
+
+## pass 2 T8: a shelf pressed while a bloc's Go filters the list shows the shelf, the Go ended.
+func _check_a_shelf_press_ends_a_blocs_go() -> void:
+	_list().bloc_filter = "workers"
+	_refresh()
+	_filters().shelf_buttons()[LawFilters.SHELVES.find("housing")].pressed.emit()
+	_main._law_panel._process(0.0)
+	if _list().bloc_filter != "":
+		_fail("a shelf pressed under a bloc's Go left the filter on")
+	var want := _on_shelf("housing")
+	want.sort()
+	var shown := _shown_ids()
+	shown.sort()
+	if shown != want:
+		_fail("a shelf pressed under a bloc's Go did not show the shelf")
+	_pick("work", "")
+
+
+## pass 2 T12: the shelves are the categories, every one of them, each once.
+func _check_the_shelves_are_the_categories() -> void:
+	var shelves: Array = LawFilters.SHELVES.duplicate()
+	var keys: Array = LawCategory.KEYS.duplicate()
+	shelves.sort()
+	keys.sort()
+	if shelves != keys:
+		_fail("the shelves %s are not the categories %s" % [shelves, keys])
 
 
 func _fail(message: String) -> void:

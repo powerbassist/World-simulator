@@ -11,7 +11,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
-const LawGate = preload("res://src/sim/law_gate.gd")
+const LawShut = preload("res://src/ui/law_shut.gd")
 const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const BillActions = preload("res://src/ui/bill_actions.gd")
 
@@ -57,13 +57,14 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 	if flag == "":
 		top.add_child(_vote(list, ns, party_list, law))
 	PanelKit.line(row, Strings.law_summary(law))
-	var why := shut_text(ns, law, flag) if flag != "" else _paper_text(list, law)
-	if why != "":
-		var line := Label.new()
-		line.text = why
-		line.theme_type_variation = UiTheme.WARN_TEXT
-		line.autowrap_mode = TextServer.AUTOWRAP_WORD
-		row.add_child(line)
+	# A queued law that has since shut keeps both: why it is shut, and that it is still queued.
+	for why in [LawShut.text(ns, law, flag) if flag != "" else "", _paper_text(list, law)]:
+		if why != "":
+			var line := Label.new()
+			line.text = why
+			line.theme_type_variation = UiTheme.WARN_TEXT
+			line.autowrap_mode = TextServer.AUTOWRAP_WORD
+			row.add_child(line)
 	return row
 
 
@@ -90,27 +91,3 @@ static func _paper_text(list, law) -> String:
 	if int(cells["queued"]) >= 0:
 		return Strings.t("Queued for %s.") % BillVerbs.month_name(panel._state, int(cells["queued"]))
 	return ""
-
-
-## Why the Assembly cannot take `law` now, in the player's words: the gate's flag
-## (law_gate.gd) made a sentence. A flag this table does not know reads as a plain refusal.
-static func shut_text(ns, law, flag: String) -> String:
-	match flag:
-		LawGate.PASSED:
-			return Strings.t("Passed, and it can pass only once.")
-		LawGate.COOLDOWN:
-			var months := int(ns.law_cooldown_months.get(law.id, 0))
-			return Strings.tn("Voted on recently: it can come back in %d month.", "Voted on recently: it can come back in %d months.", months) % months
-		LawGate.NOTHING_TO_REPEAL:
-			return Strings.t("Nothing to repeal: the law it undoes is not in force.")
-		LawGate.IN_FORCE:
-			return Strings.t("Already the rule: the electoral method it sets is in force.")
-		LawGate.REFERENDUM:
-			return Strings.t("Put to the country: the referendum is under way.")
-		LawGate.HELD:
-			return Strings.t("Carried, and held by the second chamber.")
-		LawGate.ASSEMBLY:
-			return Strings.t("The Assembly's own bill: it is already before the Assembly.")
-		LawGate.CONDITIONS:
-			return Strings.t("Its conditions are not met yet.")
-	return Strings.t("The Assembly cannot take it now.")
