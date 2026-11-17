@@ -8,15 +8,18 @@ extends RefCounted
 ##
 ## Every figure is the sim's: a stop's price a year is FinanceRows.cost_pct_gdp (the bill's
 ## own reader of a programme row), its blocs the action's offsets, its legality
-## Investment.available. The press tables the row through FirmCommands.invest.
+## Investment.refusal_reason then FinanceBill.refusal (the read that matches the press). The
+## press tables the row through FirmCommands.invest.
 
 const Investment = preload("res://src/sim/investment.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 
 
 ## The sector's stops in order: [{action, intensity}], the end action first (intensity 0).
@@ -140,16 +143,25 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	var go := PanelKit.sized(Button.new())
 	go.text = Strings.t("Put it in the finance bill")
 	go.set_meta("table_programme", String(action.id))
-	go.disabled = not Investment.available(state, ns, loader.investment_actions).has(action)
+	# The sim's own refusal (Investment.refusal_reason, #397) first, then the bill's (the press tables
+	# through FinanceBill.table, which also refuses a law in the slot, a queued finance bill, the
+	# autumn or a range): a verb that is open is one the press carries (#404 pass 2).
+	var refusal := Investment.refusal_reason(state, ns, loader, action)
+	var tabling: Dictionary = {} if refusal != "" else FinanceBill.refusal(state, loader, {FinanceRows.PROGRAMMES: {sector: String(action.id)}})
+	go.disabled = refusal != "" or bool(tabling.get("refused", false))
 	go.pressed.connect(func() -> void:
 		panel._prog_pick = -1
 		panel._on_invest(ns, action))
 	parent.add_child(go)
-	# A disabled verb says why (the retro review's item 9). Every stop in data asks for no programme running here.
+	# A disabled verb says why (the retro review's item 9): the sim's reason in the tab's sentence (the
+	# firm verbs' "%s refused -- %s"), with the remedy while a programme runs; else the bill's own words.
 	if go.disabled:
-		var why := Strings.t("Not open now: its conditions are not met.")
-		if now > 0:
-			why = Strings.t("A programme already runs here: end it first, then table the new one.")
+		var why := ProposalNote.body(tabling)
+		if refusal != "":
+			var named := Strings.row_name("investment-actions", action)
+			why = Strings.t("%s refused -- %s.") % [named, Strings.t(refusal)]  # i18n: row-ok the sim's reason, its English the msgid
+			if Investment.intensity_of(ns, sector) > 0.0:
+				why = Strings.t("%s refused -- %s: end it first, then table the new one.") % [named, Strings.t(refusal)]  # i18n: row-ok the sim's reason, its English the msgid
 		PanelKit.plain_line(parent, why, PanelKit.Tone.DIM).set_meta("programme_refusal", true)
 
 
