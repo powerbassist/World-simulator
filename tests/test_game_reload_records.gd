@@ -164,9 +164,9 @@ func _check_every_static_is_accounted_for() -> void:
 	for entry in GameReload.MAIN_KEYED_STATICS:
 		accounted["%s.gd:%s" % [entry[0], entry[1]]] = "keyed"
 	var found := {}
+	var rx := RegEx.create_from_string("(?m)^\\s*static var\\s+(\\w+)")
 	for path in _gd_files("res://src/ui"):
 		var text := FileAccess.get_file_as_string(path)
-		var rx := RegEx.create_from_string("(?m)^\\s*static var\\s+(\\w+)")
 		for m in rx.search_all(text):
 			found["%s:%s" % [path.get_file(), m.get_string(1)]] = true
 	for key in found:
