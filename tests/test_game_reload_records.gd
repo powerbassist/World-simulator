@@ -31,9 +31,6 @@ const NOT_PER_GAME := {
 	"glossary.gd:_by_id": "the glossary index over those rows",
 	"glossary.gd:_loaded": "whether the glossary has been read",
 	"glossary_hint.gd:config_path": "where the settings file is (a test points it elsewhere)",
-	"glossary_hint.gd:_shown_in": "this SESSION's hint note; compared by identity and checked with is_instance_valid()",
-	"glossary_hint.gd:_card": "the id of that note",
-	"glossary_hint.gd:term_read": "whether a term plate has opened since the hint (a session fact)",
 	"grade.gd:_material": "the shared photograph grade material",
 	"headlines.gd:_tables": "headline tables read from data/headlines/, a cache",
 	"icon.gd:_width": "a compiled regex",
@@ -87,12 +84,15 @@ var _frame := 0
 var _old_console
 var _old_log
 var _main
+var _menu_exit_id := 0
+const HINT_CFG := "user://__test_game_reload_records_hint.cfg"
+const GlossaryHint = preload("res://src/ui/glossary_hint.gd")
 
 
 func _init() -> void:
 	_check_a_hold_free_save_loads_paused()
 	_check_every_static_is_accounted_for()
-	_check_forget_main_drops_every_keyed_entry()
+	_checkforget_main_drops_every_keyed_entry()
 	_check_reset_statics_clears_every_cleared_static()
 	_main = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_main)
@@ -110,6 +110,13 @@ func _process(_delta: float) -> bool:
 			_old_log = _old_console._log
 			if not _old_log._installed:
 				_fail("(d) the console's Logger is not installed on a live game")
+			# T1: the hint note was shown and read in this game; a load must not bring it back.
+			GlossaryHint.config_path = HINT_CFG
+			GlossaryHint.reset()
+			GlossaryHint.offer(_main._hud.inbox)
+			if GlossaryHint._card == "":
+				_fail("(T1) the hint note was not offered on a profile that has not seen it: the check cannot run")
+			GlossaryHint.term_read = true
 			var error := SaveManager.save_game(_main._state, _main._clock, SLOT)
 			if error != "":
 				_fail("could not save: %s" % error)
@@ -123,7 +130,17 @@ func _process(_delta: float) -> bool:
 				return true
 		6:
 			_check_the_console_follows_the_rebuilt_game()
+			_check_the_hint_is_per_game()
 			SaveManager.delete_slot(SLOT)
+			# T2: a menu exit (the pause menu's "main menu") frees main like a swap does, so its
+			# keyed entries go with it. The scene must be the tree's current one to be freed.
+			_menu_exit_id = _main.get_instance_id()
+			for entry in GameReload.MAIN_KEYED_STATICS:
+				GameReload._static_dict(entry[0], entry[1])[_menu_exit_id] = {"stale": true}
+			current_scene = _main
+			_main._pause_menu.main_menu_requested.emit()
+		10:
+			_check_a_menu_exit_forgets_the_main()
 			_finish()
 	return false
 
@@ -163,6 +180,9 @@ func _check_every_static_is_accounted_for() -> void:
 		accounted["%s.gd:%s" % [entry[0], entry[1]]] = "cleared"
 	for entry in GameReload.MAIN_KEYED_STATICS:
 		accounted["%s.gd:%s" % [entry[0], entry[1]]] = "keyed"
+	for stem in GameReload.RESET_BY_CALL:
+		for name in GameReload.RESET_BY_CALL[stem]:
+			accounted["%s.gd:%s" % [stem, name]] = "reset by forget()"
 	var found := {}
 	var rx := RegEx.create_from_string("(?m)^\\s*static var\\s+(\\w+)")
 	for path in _gd_files("res://src/ui"):
@@ -185,7 +205,7 @@ func _check_every_static_is_accounted_for() -> void:
 
 ## (c) A plain node stands for the old main; every keyed static holds an entry for it and one for
 ## another id, and only the first goes.
-func _check_forget_main_drops_every_keyed_entry() -> void:
+func _checkforget_main_drops_every_keyed_entry() -> void:
 	var names := {}
 	for entry in GameReload.MAIN_KEYED_STATICS:
 		names["%s.%s" % [entry[0], entry[1]]] = true
@@ -198,7 +218,7 @@ func _check_forget_main_drops_every_keyed_entry() -> void:
 		var d: Dictionary = GameReload._static_dict(entry[0], entry[1])
 		d[old.get_instance_id()] = {"stale": true}
 		d[other] = {"kept": true}
-	GameReload._forget_main(old)
+	GameReload.forget_main(old)
 	for entry in GameReload.MAIN_KEYED_STATICS:
 		var d: Dictionary = GameReload._static_dict(entry[0], entry[1])
 		if d.has(old.get_instance_id()):
@@ -233,6 +253,27 @@ func _check_the_console_follows_the_rebuilt_game() -> void:
 		_fail("(d) the rebuilt game's console still points at another main")
 	if console._log == _old_log or not console._log._installed:
 		_fail("(d) the rebuilt game's console has no Logger of its own")
+
+
+## T1: after an in-game load the note stays retired, as after menu > Continue: the old inbox it
+## went into is gone, and a freed object compares equal to null on 4.7.2 only through is_instance_valid.
+func _check_the_hint_is_per_game() -> void:
+	if GlossaryHint._shown_in != null or GlossaryHint._card != "" or GlossaryHint.term_read:
+		_fail("(T1) a load kept the old game's hint note (shown_in=%s card='%s' read=%s)"
+			% [GlossaryHint._shown_in, GlossaryHint._card, GlossaryHint.term_read])
+	GlossaryHint.offer(_main._hud.inbox)
+	if GlossaryHint._card != "":
+		_fail("(T1) the hint note came back in the loaded game after it was read and retired")
+	GlossaryHint.reset()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(HINT_CFG))
+
+
+func _check_a_menu_exit_forgets_the_main() -> void:
+	if is_instance_valid(_main) and _main.is_inside_tree():
+		_fail("(T2) the pause menu's main-menu exit left the game in the tree")
+	for entry in GameReload.MAIN_KEYED_STATICS:
+		if GameReload._static_dict(entry[0], entry[1]).has(_menu_exit_id):
+			_fail("(T2) %s.%s keeps the game's entry after a trip to the menu" % [entry[0], entry[1]])
 
 
 func _gd_files(dir: String) -> Array[String]:

@@ -30,7 +30,6 @@ static func swap(main: Node, result: Dictionary, slot: String) -> Node:
 	var tree := main.get_tree()
 	var was_current: bool = tree != null and tree.current_scene == main
 	preload("res://src/ui/voice.gd").stop(main)  # the old game's line ends with it
-	_forget_main(main)
 	parent.remove_child(main)
 	parent.add_child(fresh)
 	parent.move_child(fresh, index)
@@ -55,7 +54,9 @@ static func _static_dict(stem: String, var_name: String) -> Dictionary:
 	return load("res://src/ui/%s.gd" % stem).get(var_name)
 
 
-static func _forget_main(main: Node) -> void:
+## Called from main's _exit_tree, the one place every way out of a game passes through: a load's
+## swap, the pause menu's and a lost election's trip to the menu, a test freeing it.
+static func forget_main(main: Node) -> void:
 	var id := main.get_instance_id()
 	for entry in MAIN_KEYED_STATICS:
 		_static_dict(entry[0], entry[1]).erase(id)
@@ -96,9 +97,16 @@ static func set_clock(main) -> void:
 const CLEARED_STATICS := [["counter_chips", "_picked"], ["law_sheet", "_open"], ["poll_strip", "_picked"]]
 
 
+## Files whose per-game statics are reset by their own `forget()`: file stem -> the statics it
+## covers (the guard test reads the names).
+const RESET_BY_CALL := {"glossary_hint": ["_shown_in", "_card", "term_read"]}
+
+
 static func reset_statics() -> void:
 	for entry in CLEARED_STATICS:
 		_static_dict(entry[0], entry[1]).clear()
+	for stem in RESET_BY_CALL:
+		load("res://src/ui/%s.gd" % stem).forget()
 
 
 ## What a main built from a save does once every panel is up: the steps that establish the loaded
