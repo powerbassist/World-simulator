@@ -83,13 +83,13 @@ static func _vote(list, box: VBoxContainer, ns, party_list: Array, law) -> void:
 	head.add_child(title)
 	var c: Dictionary = list.counts_of(ns, party_list, law)
 	var seats := int(c["yes"]) + int(c["no"]) + int(c["undecided"])
-	var needed := floori(list.majority_share(ns, law) * seats) + 1
+	var needed := seats_to_pass(list.majority_share(ns, law), seats)
 	var verdict := verdict_of(c, needed, String(law.majority) == "simple")
 	var word := Label.new()
 	word.text = verdict[0]
 	word.theme_type_variation = verdict[1]
 	head.add_child(word)
-	box.add_child(list._forecast_bar(ns, party_list, law, 0.0))
+	box.add_child(list._forecast_bar(ns, party_list, law, 0.0, c))
 	PanelKit.line(box, Strings.t("%d for · %d undecided · %d against · %d to pass") % [c["yes"], c["undecided"], c["no"], needed])
 	# A threshold other than more yes than no is said in words (a 3/5, a referendum after).
 	if String(law.majority) != "simple" or law.constitutional:
@@ -98,6 +98,15 @@ static func _vote(list, box: VBoxContainer, ns, party_list: Array, law) -> void:
 		PanelKit.line(box, Strings.t("%d expected to break ranks.") % c["rebels"])
 	for part in list.after_parts(ns, party_list, law, panel.FORECAST_UNCERTAIN_BAND):
 		PanelKit.line(box, String(part["text"]), PanelKit.Tone.PLAIN)
+
+
+## The yes seats a division needs, read as division_terms.gd reads the bar: more than half is
+## strictly above it, a larger share (two thirds, three fifths) is at or above it.
+static func seats_to_pass(share: float, seats: int) -> int:
+	var bar := share * float(seats)
+	if share <= 0.5:
+		return floori(bar) + 1
+	return ceili(bar - 1e-6)
 
 
 ## The forecast's word and its tone, read off the counts the bar draws: carried only when the

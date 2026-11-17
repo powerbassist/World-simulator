@@ -221,8 +221,10 @@ func counts_of(ns, party_list: Array, law) -> Dictionary:
 
 
 ## For, undecided and against as one bar, the law's majority marked across it.
-func _forecast_bar(ns, party_list: Array, law, width: float) -> Control:
-	var counts := counts_of(ns, party_list, law)
+## `counts`: the caller's counts_of(), when it holds them already.
+func _forecast_bar(ns, party_list: Array, law, width: float, counts := {}) -> Control:
+	if counts.is_empty():
+		counts = counts_of(ns, party_list, law)
 	var bar := ChartStack.new()
 	bar.setup([
 		{"label": tr("For"), "value": float(counts["yes"])},
@@ -326,7 +328,8 @@ func _verbs(ns, law) -> void:
 		for verb in row.get_children():
 			(verb as Button).disabled = true
 			(verb as Button).tooltip_text = LawRow.shut_text(ns, law, why(law))
-		_panel._primary = null
+			if _panel._primary == verb:
+				_panel._primary = null
 		return
 	BillActions.verbs(self, row, ns, law)
 

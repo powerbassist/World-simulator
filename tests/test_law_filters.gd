@@ -232,7 +232,7 @@ func _check_the_verb_comes_from_data() -> void:
 		_fail("a law without a verb shows a word all the same")
 	# The authored field's shape: one lowercase word, or an error at load.
 	var LawVerb = preload("res://src/core/law_verb.gd")
-	for case in [["raises", true], ["Raises", false], ["two words", false], [3, false], ["", false]]:
+	for case in [["raises", true], ["Raises", false], ["two words", false], [3, false], ["", false], ["raises—", false]]:
 		var errors: Array[String] = []
 		var got: String = LawVerb.parse({"verb": case[0]}, "x", "f.json", errors)
 		if (got != "" and errors.is_empty()) != bool(case[1]):
@@ -386,6 +386,11 @@ func _check_the_verdict_word() -> void:
 		var got: String = LawSheet.verdict_of(case[0], int(case[1]), bool(case[2]))[0]
 		if got != String(case[3]):
 			_fail("the verdict of %s at %d reads '%s', not '%s'" % [case[0], case[1], got, case[3]])
+	# The bar, read as the division reads it: more than half is strictly above, two thirds at or above.
+	for case in [[0.5, 577, 289], [0.5, 630, 316], [2.0 / 3.0, 630, 420], [2.0 / 3.0, 577, 385], [0.6, 575, 345]]:
+		var want := int(case[2])
+		if LawSheet.seats_to_pass(float(case[0]), int(case[1])) != want:
+			_fail("seats to pass at %s of %d: %d, the division needs %d" % [case[0], case[1], LawSheet.seats_to_pass(float(case[0]), int(case[1])), want])
 
 
 func _fail(message: String) -> void:

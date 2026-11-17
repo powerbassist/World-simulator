@@ -72,7 +72,7 @@ VERB_MAX = 14
 
 
 def law_verb_ok(verb) -> bool:
-    return isinstance(verb, str) and 0 < len(verb) <= VERB_MAX and verb.isalpha() and verb == verb.lower()
+    return isinstance(verb, str) and 0 < len(verb) <= VERB_MAX and verb.isascii() and verb.isalpha() and verb == verb.lower()
 
 
 # SPENDING_KEYS / SECTOR_TREND

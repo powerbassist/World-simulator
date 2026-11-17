@@ -23,7 +23,8 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 	var row := VBoxContainer.new()
 	row.add_theme_constant_override("separation", 2)
 	row.set_meta("law_id", String(law.id))
-	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	# PASS, not STOP: the row hears its click and the list's scroll still hears the wheel.
+	row.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.gui_input.connect(func(event: InputEvent) -> void:
 		var press := event as InputEventMouseButton
 		if press != null and press.pressed and press.button_index == MOUSE_BUTTON_LEFT:
@@ -71,9 +72,8 @@ static func _vote(list, ns, party_list: Array, law) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 0)
 	box.custom_minimum_size.x = BAR_WIDTH * UiTheme.text_scale()
-	var bar: Control = list._forecast_bar(ns, party_list, law, BAR_WIDTH)
-	box.add_child(bar)
 	var c: Dictionary = list.counts_of(ns, party_list, law)
+	box.add_child(list._forecast_bar(ns, party_list, law, BAR_WIDTH, c))
 	var counts := Label.new()
 	counts.text = Strings.t("%d for · %d against") % [c["yes"], c["no"]]
 	counts.theme_type_variation = UiTheme.CAPTION

@@ -11,7 +11,8 @@ extends RefCounted
 const MAX := 14
 
 
-## A row's verb, "" when it has none; "" and an error when it is not one lowercase word.
+## A row's verb, "" when it has none; "" and an error when it is not one lowercase English word
+## (a to z only: the data is English, a translation goes through data/i18n).
 static func parse(d: Dictionary, law_id: String, filename: String, errors: Array[String]) -> String:
 	if not d.has("verb"):
 		return ""
@@ -25,6 +26,6 @@ static func parse(d: Dictionary, law_id: String, filename: String, errors: Array
 
 static func _letters(word: String) -> bool:
 	for c in word:
-		if not ((c >= "a" and c <= "z") or c.unicode_at(0) > 127):
+		if not (c >= "a" and c <= "z"):
 			return false
 	return true
