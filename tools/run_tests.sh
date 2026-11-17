@@ -401,6 +401,7 @@ tests=(
   tests/test_voice_playback.gd
   tests/test_map_view.gd
   tests/test_map_layers.gd
+  tests/test_legend_clear.gd
   tests/test_top_bar_tiles.gd
   tests/test_map_markers.gd
   tests/test_map_cities.gd

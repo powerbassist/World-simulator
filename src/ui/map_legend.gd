@@ -66,7 +66,12 @@ func _ready() -> void:
 	# Built from MapLayers.ids() and from nothing else, so adding a layer to the
 	# registry adds its toggle here with no edit in this file. That is the
 	# session's stated contract; tests/test_map_layers.gd asserts the count.
-	var toggles := HBoxContainer.new()
+	# One column, not one row (gate 3, G3-20): the six-wide row made a 614 px plate that
+	# sat over Spain and Portugal at the opening camera, so a click aimed at Iberia
+	# switched the layer. Two columns still reached Portugal at text 130 %. Narrow, the
+	# plate stays on the Atlantic at every text size (tests/test_legend_clear.gd); its
+	# rows wrap rather than widen it.
+	var toggles := VBoxContainer.new()
 	toggles.add_theme_constant_override("separation", 2)
 	column.add_child(toggles)
 
@@ -75,6 +80,7 @@ func _ready() -> void:
 		button.theme_type_variation = UiTheme.SUBROW_BUTTON
 		button.toggle_mode = true
 		button.text = MapLayers.label(id).to_upper()
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		var layer_id := String(id)
 		button.pressed.connect(func(): layer_selected.emit(layer_id))
 		toggles.add_child(button)
@@ -100,6 +106,9 @@ func _ready() -> void:
 
 	_readout = Label.new()
 	_readout.theme_type_variation = UiTheme.FIGURE_LABEL
+	# Wraps inside the plate rather than widening it (gate 3, G3-20): the plate's width is
+	# what keeps it off the land, and a hover must not move it there.
+	_readout.autowrap_mode = TextServer.AUTOWRAP_WORD
 	column.add_child(_readout)
 
 	# The re-show keeps whatever state the last caller handed in; without it the
@@ -112,13 +121,16 @@ func _ready() -> void:
 ## control it just addressed.
 var _last_state = null
 var _last_viewer := ""
+var _last_viewer_name := ""
 
 
-func show_layer(layer_id: String, state = null, viewer_id := "") -> void:
+func show_layer(layer_id: String, state = null, viewer_id := "", viewer_name := "") -> void:
 	_layer = String(MapLayers.layer(layer_id)["id"])
 	if state != null:
 		_last_state = state
 		_last_viewer = viewer_id
+	if viewer_name != "":
+		_last_viewer_name = viewer_name
 
 	for id in _buttons.keys():
 		_buttons[id].button_pressed = (id == _layer)
@@ -145,6 +157,10 @@ func show_layer(layer_id: String, state = null, viewer_id := "") -> void:
 		stops = MapLayers.production_stops(prod_even)
 	for stop in stops:
 		_stops.add_child(_stop_row(float(stop["at"]), String(stop["text"]), even, prod_even))
+	# G3-21: a pair layer fills the player's own nation with NO_VALUE (a nation has no pair
+	# with itself), and nothing on the plate said what that navy meant.
+	if MapLayers.is_pair_layer(_layer) and _last_viewer != "":
+		_stops.add_child(_you_row(_last_viewer_name if _last_viewer_name != "" else _last_viewer))
 
 	_caption.text = MapLayers.caption(_layer)
 	show_hover("", null, "")
@@ -176,12 +192,32 @@ func _stop_row(at: float, text: String, trade_even := -1.0, prod_even := -1.0) -
 	swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(swatch)
 
+	row.add_child(_row_label(text))
+	return row
+
+
+## The player's own NO_VALUE fill, named: the swatch is MapLayers.NO_VALUE itself.
+func _you_row(nation: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var swatch := ColorRect.new()
+	swatch.color = MapLayers.NO_VALUE
+	swatch.custom_minimum_size = SWATCH_SIZE
+	swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(swatch)
+	row.add_child(_row_label(tr("%s (you): no value on this layer") % nation))
+	return row
+
+
+## A stop's words wrap in the plate's width rather than set it (G3-20: the plate's width
+## is what keeps it off the land).
+func _row_label(text: String) -> Label:
 	var label := Label.new()
 	label.theme_type_variation = UiTheme.CAPTION
 	label.text = text
-	row.add_child(label)
-
-	return row
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return label
 
 
 ## One key row. The sample carries the hue (not the raw alpha) of the layer it

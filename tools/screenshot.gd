@@ -1666,7 +1666,8 @@ func _apply_view() -> void:
 		# trade frame this tool ever took photographed a ramp legend with no ramp
 		# rows in it, which is not the legend a player sees. Inherited from V1.3f.
 		_main._hud.map_legend.show_layer(
-			_main._map_view.layer(), _main._state, _main._map_view.viewer_id()
+			_main._map_view.layer(), _main._state, _main._map_view.viewer_id(),
+			_main._loader.nation_name(_main._map_view.viewer_id())
 		)
 	# EVERY setup flag above writes sim state behind panels that have already
 	# refreshed, and a panel refreshes once per dirty flag. Hiding a window frame
