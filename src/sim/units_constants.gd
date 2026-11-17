@@ -29,3 +29,28 @@ const STOCK_DIR := "stock"
 ## give its `national` back within this share of it (section 2 as amended; the check
 ## unemployment_rel gets at import). Stand-in.
 const UNIT_LEVEL_TOLERANCE := 0.03
+
+# --- The price (section 4) -----------------------------------------------------
+
+## The range's half-width w around the estimate, by the competence of the minister
+## of the type's line: w = FOG_MAX - (FOG_MAX - FOG_MIN) x competence, a vacant seat
+## at the widest. Stand-ins.
+const UNIT_FOG_MAX := 0.25
+const UNIT_FOG_MIN := 0.08
+
+## Concentration: the units ordered in one region within CONC_MONTHS, beyond
+## CONC_FREE of that region's start stock (in units), raise the unit price there by
+## CONC_SLOPE points per further point of the stock. Stand-ins.
+const UNIT_CONC_MONTHS := 12
+const UNIT_CONC_FREE := 0.05
+const UNIT_CONC_SLOPE := 1.0
+
+## How many programmes may build at once (the five projects do not count). Stand-in.
+const UNIT_PROGRAMMES_MAX_OPEN := 4
+
+# --- The overrun's odds (section 5), fixed at tabling --------------------------
+
+## The type's overrun_odds x (ODDS_BASE - competence), kept between MIN and MAX.
+const UNIT_ODDS_BASE := 1.5
+const UNIT_ODDS_MIN := 0.05
+const UNIT_ODDS_MAX := 0.60

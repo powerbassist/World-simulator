@@ -36,7 +36,7 @@ const NAMES: PackedStringArray = [
 ## The strip reading that already prints the figure: the tooltip shows the same
 ## text, so the two can never disagree.
 const _STRIP := {
-	"headline_poll": "approval", "deficit_pct": "deficit", "gdp": "gdp",
+	"headline_poll": "approval",
 	"unemployment": "unemployment", "inflation": "inflation", "unrest": "unrest",
 	"programme_progress": "programme", "events_waiting": "desk",
 }
@@ -54,6 +54,11 @@ static func value(live: String, state, loader) -> String:
 		return "" if text == StripReadings.NOTHING else text
 	var ns = state.player()
 	match live:
+		# Not the strip's since gate 3: its money is euros a month and its GDP tile is growth.
+		"deficit_pct":
+			return StripReadings.balance_share_text(ns)
+		"gdp":
+			return Strings.t("%s bn") % Num.f(ns.gdp_eur_bn, 0)
 		"debt_pct":
 			return Strings.t("%s%% of GDP") % Num.f(ns.debt_to_gdp_pct(), 1)
 		"credit_yield":

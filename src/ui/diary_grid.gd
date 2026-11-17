@@ -302,9 +302,10 @@ func _offered(year: int, month: int) -> Dictionary:
 	for row in Audiences.pending(ns):
 		var rid := String(row["id"])
 		var past_this_page := false
-		for date in Audiences.offered_dates(_state, ns, rid):
+		var dates: Array = Audiences.offered_dates(_state, ns, rid)
+		for date in dates:
 			if int(date["year"]) == year and int(date["month"]) == month:
-				_add(out, int(date["day"]), {"id": rid, "person_id": String(row["person_id"]), "person": _loader.person_name(String(row["person_id"])), "date": date})
+				_add(out, int(date["day"]), {"id": rid, "person_id": String(row["person_id"]), "person": _loader.person_name(String(row["person_id"])), "date": date, "dates": dates})
 			elif int(date["year"]) * 12 + int(date["month"]) > year * 12 + month:
 				past_this_page = true
 		later += 1 if past_this_page else 0
@@ -348,6 +349,11 @@ func _render_list(entries: Array, offered: Array) -> void:
 		book.tooltip_text = Strings.t(why) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
 		book.pressed.connect(func() -> void: booked.emit(String(o["id"]), date))
 		day_list.add_child(book)
+		# Gate 3 (G3-16): only the person's own days are bookable, and an empty diary read
+		# as broken without the reason beside the button.
+		var offer := _offer_line(o["dates"], String(o["person"]))
+		if offer != "":
+			PanelKit.plain_line(day_list, offer, PanelKit.Tone.DIM)
 	for e in entries:
 		var row := HBoxContainer.new()
 		day_list.add_child(row)
@@ -367,3 +373,20 @@ func _render_list(entries: Array, offered: Array) -> void:
 			var pid := String(e["call"])
 			call.pressed.connect(func() -> void: call_requested.emit(pid))
 			row.add_child(ActsOn.tag(call, [String(e["subject"])]))
+
+
+## The days the person offers that the player can still take (a refused one says why on its
+## own button), with the year when they straddle a year end; "" when none is left.
+func _offer_line(dates: Array, person: String) -> String:
+	var free: Array = dates.filter(func(d: Dictionary) -> bool: return bool(d.get("free", true)))
+	if free.is_empty():
+		return ""
+	var years := {}
+	for date in free:
+		years[int(date["year"])] = true
+	var days := PackedStringArray()
+	for date in free:
+		days.append(DateText.day_month_year(int(date["day"]), int(date["month"]), int(date["year"])) if years.size() > 1
+			else DateText.day_month(int(date["day"]), int(date["month"])))
+	return tr_n("%s can see you only on %d day: %s.", "%s can see you only on these %d days: %s.", days.size()) % [
+		person, days.size(), ", ".join(days)]

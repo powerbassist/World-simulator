@@ -43,7 +43,8 @@ func _initialize() -> void:
 	await _probe("laws", "legislature", loader.laws, "name")
 	await _probe("laws", "legislature", loader.laws, "summary")
 	# An id the panel prints as a word goes through Labels and the UI table.
-	await _probe_label("legislature", "institutional")
+	# The Bills second pass: the shelves are the ids the tab prints as words (Labels.law_category).
+	await _probe_label("legislature", "Welfare and health")
 	await _probe("orgs", "orgs", loader.orgs, "name")
 	_adopt_a_rule(state, loader)
 	await _probe("bloc-proposals", "orgs", _proposals(loader), "name")

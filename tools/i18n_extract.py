@@ -82,7 +82,7 @@ PLURAL_WRAPPED = re.compile(r"(?<![A-Za-z0-9_])(?:tr_n|Strings\.tn)\($")
 # prose. Names of people, parties, outlets, firms and places are proper nouns and are
 # not here; a language that wants them adds the kind and the field to this table.
 TRANSLATABLE = {
-    "laws": ["name", "summary"],
+    "laws": ["name", "summary", "verb"],
     "events": ["name", "summary", "speaker_line", "choices.*.label", "choices.*.summary", "choices.*.short"],
     "programme": ["name", "summary"],
     # The authored NOUN beside the action's imperative name (V5.1b3): "The ground game"
@@ -127,6 +127,7 @@ UNWIRED = [
 CALLER_FIXED = {
     "law_name": [("laws", "name")],
     "law_summary": [("laws", "summary")],
+    "law_verb": [("laws", "verb")],
     "record_event_name": [("events", "name")],
     "choice_label": [("events", "choices.*.label")],
     "record_choice_label": [("events", "choices.*.label")],

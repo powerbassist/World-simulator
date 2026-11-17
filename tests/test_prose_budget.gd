@@ -69,7 +69,7 @@ const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "regi
 	"overview": 170}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
-	"diplomacy": 22, "economy": 128, "energy": 118,
+	"diplomacy": 22, "economy": 130, "energy": 118,
 	"orgs": 610,
 	"majority": 97, "projects": 75, "society": 106,
 }
@@ -123,7 +123,17 @@ const TOTAL_PENDING := {
 ## The void pass, a stated rise of 12 (2794 -> 2806 before #401's merge, 2777 -> 2789 after; the parent accepted it at pass 2): the
 ## Decision tab after an answer lists what is still on the desk (its heading and the open files'
 ## titles, 9 at month 12) and the empty Agenda names its next step, "Plan the campaign" (3).
-const TOTAL_SUM_CEILING := 2789
+## The Bills second pass (the author's pick "A : les rayons"), a stated rise 2789 -> 2958 (+169, all on the
+## Bills tab, 380 of its 450): every row of the open shelf carries the law's summary, the card's own ask
+## ("name + verb + summary"), and the shelves name their twelve categories with a count; the goal tiles
+## and "What moves it" left the tab.
+## Its pass 2, a stated rise 2958 -> 2966 (T11, T15 of the parent's pass): a shut law's precondition names its
+## figure and where it stands ("Needs unemployment at 9.0% or more; it is 7.7% now."), and a simple
+## majority says its rule in words ("more for than against") instead of a seat count.
+## Top bar A (#418 pass 2, T5: Economy prints the bar's own money figure and word, "12.9 bn €"
+## under "deficit, this month", where it printed "-5.30%" under "budget balance"): +2 on
+## Economy, stated: 2966 -> 2968.
+const TOTAL_SUM_CEILING := 2968
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
