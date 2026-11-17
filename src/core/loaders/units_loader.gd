@@ -129,8 +129,7 @@ static func parse_type(loader, parsed, fname: String, errors: Array[String]) -> 
 			errors.append("units/%s: '%s' must be {NATION: EUR million}" % [fname, key])
 			return {}
 		for nation in by_nation:
-			var floor_ok: bool = float(by_nation[nation]) > 0.0 if key == "cost_eur_m" else float(by_nation[nation]) >= 0.0
-			if not loader.nations.has(String(nation)) or not _is_number(by_nation[nation]) or not floor_ok:
+			if not loader.nations.has(String(nation)) or not _is_number(by_nation[nation]) 					or float(by_nation[nation]) < 0.0 or (key == "cost_eur_m" and float(by_nation[nation]) == 0.0):
 				errors.append("units/%s: '%s' has a bad entry for '%s'" % [fname, key, nation])
 				return {}
 	if typeof(d.get("cofinanced")) != TYPE_BOOL:

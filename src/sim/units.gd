@@ -30,6 +30,7 @@ extends RefCounted
 
 const UK = preload("res://src/sim/units_constants.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
+const DK = preload("res://src/sim/domains_constants.gd")
 
 
 static func catalogue(loader) -> Array:
@@ -95,7 +96,7 @@ static func shown_figure(ns, loader, type_id: String, region_id: String) -> floa
 ## Section 3, "by population": N units split by region_pop_share over the regions
 ## that hold the type, largest remainder first (ties to the regions' file order).
 static func fill_by_population(ns, loader, type_id: String, n: int) -> Array:
-	var open := _buildable(ns, loader, type_id)
+	var open := _buildable(ns, loader, type_id) if n > 0 else []
 	var total := 0.0
 	for id in open:
 		total += float(ns.region_pop_share.get(id, 0.0))
@@ -116,7 +117,7 @@ static func fill_by_population(ns, loader, type_id: String, n: int) -> Array:
 ## Section 3, "by need": one unit at a time into the region whose shown figure is
 ## furthest behind the nation's, counting the units already placed, until N.
 static func fill_by_need(ns, loader, type_id: String, n: int) -> Array:
-	var open := _buildable(ns, loader, type_id)
+	var open := _buildable(ns, loader, type_id) if n > 0 else []
 	if open.is_empty():
 		return []
 	var t: Dictionary = loader.unit_types[type_id]
@@ -166,13 +167,19 @@ static func _netted(ns, loader, type_id: String, region_id: String, placed: Dict
 	return own - weighted / weights if weights > 0.0 else own
 
 
+## The gain is linear in the units, so enough of them in one region would take the
+## figure to zero or past it: (1 + netted) is floored at the multiplier floor
+## Sectors already uses (DK.RATIO_FLOOR), never reached by a step the size of a band.
+## 0.0 for an id that is not a capacity type (a project's potential row).
 static func _shown(ns, loader, type_id: String, region_id: String, placed: Dictionary) -> float:
+	if not loader.unit_types.has(type_id):
+		return 0.0
 	var t: Dictionary = loader.unit_types[type_id]
 	var line := String(t["line"])
 	var sector := String(t["sector"])
 	return Sectors.regional_quantity(ns, loader, line, sector, region_id) \
 		* level(loader, ns.id, String(t["figure"]), region_id) \
-		* (1.0 + _netted(ns, loader, type_id, region_id, placed))
+		* maxf(1.0 + _netted(ns, loader, type_id, region_id, placed), DK.RATIO_FLOOR)
 
 
 static func _buildable(ns, loader, type_id: String) -> Array:

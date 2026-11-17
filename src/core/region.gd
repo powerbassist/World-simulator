@@ -211,7 +211,7 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 		if key != "id" and key != "name" and key != "share" and key != "cities" \
 			and key != "gdp_share" and key != "unemployment_rel" and key != "sector_mix" \
 			and key != "natural_change_pct" and key != "cohesion_category":
-			errors.append("%s: %s has unrecognised field '%s' -- a region carries a population share, a GDP share, an unemployment ratio, a sector mix and a natural-change rate, and nothing else; a quantity that MOVES belongs on NationState, not here" % [
+			errors.append("%s: %s has unrecognised field '%s' -- a region carries a population share, a GDP share, an unemployment ratio, a sector mix, a natural-change rate and a cohesion category, and nothing else; a quantity that MOVES belongs on NationState, not here" % [
 				filename, path, key,
 			])
 

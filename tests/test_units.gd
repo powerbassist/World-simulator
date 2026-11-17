@@ -153,7 +153,7 @@ func _test_bad_rows_are_refused() -> void:
 	if UnitsLoader.parse_type(_loader, good, TYPE + ".json", errors).is_empty() or not errors.is_empty():
 		_fail("the good fixture row is refused: %s" % [errors])
 	for case in [["capacity", 0], ["sector", "universities"], ["figure", "graduates_per_1000"],
-			["payoff", "network"], ["overrun_odds", 1.5], ["cost_eur_m", {"FRA": -1}],
+			["payoff", "network"], ["overrun_odds", 1.5], ["cost_eur_m", {"FRA": -1}], ["cost_eur_m", {"FRA": {"x": 1}}], ["cost_eur_m", {"FRA": 0}],
 			["build_months", 0], ["build_months", 12.5], ["id", "other_school"], ["cofinanced", "yes"], ["bloc_offset_per_pop_share", {"nobody": 1.0}]]:
 		var bad := good.duplicate(true)
 		bad[case[0]] = case[1]
@@ -262,6 +262,13 @@ func _test_a_built_unit_lifts_its_region_and_the_nation_holds() -> void:
 	var nation := Sectors.quantity(ns, _loader, "education", "schools")
 	if absf(weighted / people - nation) > 1e-9 * nation:
 		_fail("the regions' weighted mean is %.9f, not the nation's %.9f" % [weighted / people, nation])
+	# The gain is linear: twenty schools on 10000 places would be g = -2; the shown
+	# figure is floored above zero, never zero or below.
+	ns.unit_programmes.assign([_done("p3", UK.OP_BUILD, "FR1", 20)])
+	if Units.shown_figure(ns, _loader, TYPE, "FR1") <= 0.0:
+		_fail("twenty schools take FR1 to %.4f pupils per teacher" % Units.shown_figure(ns, _loader, TYPE, "FR1"))
+	if Units.shown_figure(ns, _loader, "high_speed_rail", "FR1") != 0.0:
+		_fail("a project's potential row reads a regional figure")
 	# A unit still building moves nothing.
 	ns.unit_programmes.assign([_row("p2", UK.OP_BUILD, UK.STATE_BUILDING, "FR1", 2)])
 	if Units.gain(ns, _loader, TYPE, "FR1") != 0.0:
@@ -308,6 +315,8 @@ func _test_fill_by_population() -> void:
 	if biggest != "FR1":
 		_fail("by population puts the most units in %s, not FR1 (the most people)" % biggest)
 	# Two units: the largest remainders, FR1's and FRK's (the second most people).
+	if not Units.fill_by_population(ns, _loader, TYPE, -3).is_empty() or not Units.fill_by_need(ns, _loader, TYPE, 0).is_empty():
+		_fail("a fill of no units places some")
 	var two: Array = Units.fill_by_population(ns, _loader, TYPE, 2)
 	if two != [{"region": "FR1", "units": 1}, {"region": "FRK", "units": 1}]:
 		_fail("by population places two units as %s, not one in FR1 and one in FRK" % [two])
