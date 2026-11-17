@@ -140,17 +140,16 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	var go := PanelKit.sized(Button.new())
 	go.text = Strings.t("Put it in the finance bill")
 	go.set_meta("table_programme", String(action.id))
-	go.disabled = not Investment.available(state, ns, loader.investment_actions).has(action)
+	# The sim's own refusal (Investment.refusal_reason, #397): "" is open, anything else says why not.
+	var refusal := Investment.refusal_reason(state, ns, loader, action)
+	go.disabled = refusal != ""
 	go.pressed.connect(func() -> void:
 		panel._prog_pick = -1
 		panel._on_invest(ns, action))
 	parent.add_child(go)
-	# A disabled verb says why (the retro review's item 9). Every stop in data asks for no programme running here.
+	# A disabled verb says why (the retro review's item 9), in the sim's words.
 	if go.disabled:
-		var why := Strings.t("Not open now: its conditions are not met.")
-		if now > 0:
-			why = Strings.t("A programme already runs here: end it first, then table the new one.")
-		PanelKit.plain_line(parent, why, PanelKit.Tone.DIM).set_meta("programme_refusal", true)
+		PanelKit.plain_line(parent, Strings.t(refusal), PanelKit.Tone.DIM).set_meta("programme_refusal", true)  # i18n: row-ok the sim's reason, its English the msgid
 
 
 ## The stop a typed or nudged price picks: the next stop up or down for a nudge of one

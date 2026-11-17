@@ -19,6 +19,7 @@ const SaveManager = preload("res://src/core/save_manager.gd")
 const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const SectorProgramme = preload("res://src/ui/sector_programme.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Investment = preload("res://src/sim/investment.gd")
 
 const SLOT := "__test_sectors_retro__"
 const TAB := "sector_industry"
@@ -170,14 +171,41 @@ func _check_disabled_go_says_why() -> void:
 	elif not go.disabled:
 		_fail("premise: 'Put it in the finance bill' is open while a programme runs")
 	else:
-		var said := false
-		for node in _panel.find_children("*", "Label", true, false):
-			if (node as Label).has_meta("programme_refusal") and (node as Label).text != "":
-				said = true
-		if not said:
-			_fail("'Put it in the finance bill' is disabled and nothing says why")
+		# The sim's own reason in words (Investment.refusal_reason, #397), not the screen's guess.
+		var want := Strings.t(Investment.refusal_reason(_main._state, ns, _main._loader, list[list.size() - 1]["action"]))
+		if want != Strings.t("a programme already runs in this sector"):
+			_fail("premise: the sim's reason is '%s'" % want)
+		var said := _refusals()
+		if said != [want]:
+			_fail("'Put it in the finance bill' is disabled and says %s, not the sim's '%s'" % [said, want])
+	# No programme runs: a stop is open, and nothing says it is not.
+	ns.sector_investment["industry"] = {"intensity": 0.0, "capital": 0.0}
+	_panel._prog_pick = list.size() - 1
+	_panel._refresh()
+	for node in _panel.find_children("*", "Button", true, false):
+		if node.has_meta("table_programme") and _live(node) and (node as Button).disabled:
+			_fail("'Put it in the finance bill' is disabled with no programme running")
+	if not _refusals().is_empty():
+		_fail("an open programme verb carries a refusal: %s" % [_refusals()])
 	ns.sector_investment["industry"] = before
 	_panel._prog_pick = -1
+
+
+## Not under a row the rebuild freed: queue_free marks the freed node, not its children.
+func _live(node: Node) -> bool:
+	while node != null:
+		if node.is_queued_for_deletion():
+			return false
+		node = node.get_parent()
+	return true
+
+
+func _refusals() -> Array:
+	var out: Array = []
+	for node in _panel.find_children("*", "Label", true, false):
+		if (node as Label).has_meta("programme_refusal") and _live(node):
+			out.append((node as Label).text)
+	return out
 
 
 ## A tab hidden while its slider is held never sees the release: it must not stay frozen.

@@ -352,6 +352,9 @@ var _agenda := false
 ## --agenda alone ticks 48 months with nothing chosen, which photographs the
 ## empty state and none of the rows the block exists to fill.
 var _programme := ""
+## --sector-refusal: Industry runs its first programme and the bigger one is picked, so the
+## refused "Put it in the finance bill" shows the sim's reason (open with --open sector_industry).
+var _sector_refusal := false
 
 ## Which registered window to open before capturing, by the id main.gd registered
 ## it under. Generic rather than a flag per panel: --orgs exists because it has to
@@ -978,6 +981,8 @@ func _init() -> void:
 			_council_frame = String(args[i]).trim_prefix("--council-")
 		elif args[i] == "--agenda":
 			_agenda = true
+		elif args[i] == "--sector-refusal":
+			_sector_refusal = true
 		elif args[i] == "--programme" and i + 1 < args.size():
 			_programme = args[i + 1]
 		elif args[i] == "--defence":
@@ -1416,6 +1421,12 @@ func _apply_view() -> void:
 		_run_the_agenda()
 	if _programme != "":
 		_choose_a_programme()
+	if _sector_refusal:
+		var stops: Array = preload("res://src/ui/sector_programme.gd").stops(_main._loader, "industry")
+		_main._state.player().sector_investment["industry"] = {"intensity": float(stops[1]["intensity"]), "capital": 0.0}
+		var tab = _main._windows.content("sector_industry")
+		tab._prog_pick = stops.size() - 1
+		tab.mark_dirty()
 	if _defence:
 		_stand_up_an_alliance()
 	if _book:
