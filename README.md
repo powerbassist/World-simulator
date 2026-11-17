@@ -96,6 +96,7 @@ covers which file, and the texts are in [LICENSES/](LICENSES/):
 | Code, tools and tests | [PolyForm Noncommercial 1.0.0](LICENSES/PolyForm-Noncommercial-1.0.0.txt): free to use, change and share for any noncommercial purpose |
 | Game content (`data/`), the design vault (`docs/`), and art generated from text alone | [CC BY-NC 4.0](LICENSES/CC-BY-NC-4.0.txt) |
 | The 700 portrait images (140 people, five expressions each) generated from Wikimedia Commons photographs | [CC BY-SA 4.0](LICENSES/CC-BY-SA-4.0.txt), with each source credited in [docs/portrait-attribution.md](docs/portrait-attribution.md) |
+| The construction register's start stock (`data/units/stock/`): public statistics of other publishers | the publishers' own terms, declared file by file in `REUSE.toml` (Licence Ouverte 2.0 and CC BY 4.0 for France, others for the nations that follow), not CC BY-NC 4.0 |
 | The voice clips (`assets/audio/voice/`, made with ElevenLabs) | no open licence: [LicenseRef-ElevenLabs-Output](LICENSES/LicenseRef-ElevenLabs-Output.txt), all rights reserved, used under ElevenLabs' terms |
 | Fonts, icons, `addons/`, the map raster, the five music tracks, the Obsidian plugin bundles | their own licences (OFL-1.1, Apache-2.0, MIT, CC0, public domain, MIT/GPL/AGPL), declared in `REUSE.toml` |
 

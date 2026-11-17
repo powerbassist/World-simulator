@@ -38,6 +38,15 @@ SPDX-FileCopyrightText = "Office for National Statistics"
 SPDX-License-Identifier = "OGL-UK-3.0"
 
 [[annotations]]
+# The French start stock of the construction register (V5.3 c'): lycee enrolment and teachers from the Ministere de l'Education nationale open data portal and hospital establishments from DREES (Licence Ouverte 2.0, Etalab), hospital beds and population from Eurostat (re-use policy, equivalent to CC BY 4.0). The credit is in ATTRIBUTION.md.
+path = [
+  "data/units/stock/FRA.json",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Ministere de l'Education nationale, DREES, Eurostat"
+SPDX-License-Identifier = "etalab-2.0 AND CC-BY-4.0"
+
+[[annotations]]
 # Busts generated from CC BY / CC BY-SA / CC0 / public-domain Wikimedia Commons photographs; credited per image in docs/portrait-attribution.md.
 path = [
   "assets/portraits/*/AUT_aichinger.webp*",
