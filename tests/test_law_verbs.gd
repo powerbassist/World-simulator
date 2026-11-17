@@ -9,10 +9,11 @@ extends SceneTree
 ## reaches Legislature.propose from the sheet, and the strip's money is what the bill
 ## then books. The address: its button stands beside a tabled bill's greyed verbs; the strip
 ## says what the division then does, seat for seat; the bar the player reads moves (QA's merge
-## gate on the UI); the diary's refusal is read before the press.
+## gate on the UI); one address a month (G3-25), said as the month's rule with its date.
 
 const LawGrade = preload("res://src/ui/law_grade.gd")
 const LawAddress = preload("res://src/ui/law_address.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
@@ -100,12 +101,14 @@ func _process(_delta: float) -> bool:
 			_plain.summary = "word ".repeat(1500)
 			_list().select(String(_plain.id))
 		49:
+			_check_another_bill_reads_the_month_rule()
+			_main._state.month += 1
+			_main._state.day = 1
+			_list().select(String(_plain.id))
+		52:
 			_press(_fold())
-		58:
-			_check_the_refusal_is_read_before_the_press()
-			_main._state.day += 1
-		62:
-			_check_the_day_turning_lifts_the_refusal()
+		60:
+			_check_the_month_turning_lifts_the_rule()
 			_check_a_new_game_drops_the_picks()
 			_check_the_strip_is_not_offered_a_dead_verb()
 			_finish()
@@ -445,28 +448,35 @@ func _check_the_bill_addressed_says_so() -> void:
 		_fail("premise: the day is taken")
 
 
-## Another bill, the same day: the fold opens the strip, and the diary's reason stands under a
-## grey button, read before any press.
-func _check_the_refusal_is_read_before_the_press() -> void:
+## Another bill, the same month (G3-25, the author's "Un par mois au total"): no fold, no
+## strip and no grey button, only the month's rule with its date -- read before any press.
+func _check_another_bill_reads_the_month_rule() -> void:
+	if not _in_detail(func(n: Node) -> bool: return n is Button and n.has_meta(LawAddress.FOLD_META)).is_empty():
+		_fail("another bill, the same month, still offers the address's fold")
+	if not _in_detail(func(n: Node) -> bool: return n is Button and n.has_meta(LawAddress.GO_META)).is_empty():
+		_fail("another bill, the same month, shows a grey address button")
+	if _strip_node(LawAddress.STRIP_META) != null:
+		_fail("another bill, the same month, draws the address's strip")
+	var rule: Dictionary = Address.month_rule(_main._state)
+	var date := DateText.day_month_year(int(rule.get("day", 0)), int(rule.get("month", 0)), int(rule.get("year", 0)))
+	if rule.is_empty() or "One address a month" not in _detail_text() or date not in _detail_text():
+		_fail("the month's rule and its date are not on the page: %s" % _detail_text())
+
+
+## The month turns: the fold opens the strip under the long summary, and the button is live
+## and in the column's view.
+func _check_the_month_turning_lifts_the_rule() -> void:
 	if not _fold().has_focus():
 		_fail("the fold's press dropped its focus")
-	if not _air().disabled:
-		_fail("another bill's address, the same day, is offered")
+	if _air().disabled:
+		_fail("the next month, the address is still refused: %s" % _detail_text())
+	if "One address a month" in _detail_text():
+		_fail("the next month, the page still says one address a month")
 	var scroll: ScrollContainer = _list()._detail.get_parent()
 	if scroll.scroll_vertical <= 0:
 		_fail("premise: the column had room, so nothing here tests the scroll")
 	if not scroll.get_global_rect().encloses(_air().get_global_rect()):
 		_fail("the opened strip's button is out of the column's view")
-	var other := Address.refusal(_main._state, String(_plain.id))
-	if other == "" or other not in _detail_text():
-		_fail("the diary's refusal is not on the page: '%s'" % other)
-
-
-func _check_the_day_turning_lifts_the_refusal() -> void:
-	if _air().disabled:
-		_fail("the next day, the address is still refused: %s" % _detail_text())
-	if "Not today" in _detail_text():
-		_fail("the next day, the page still says not today")
 
 
 func _check_a_new_game_drops_the_picks() -> void:
