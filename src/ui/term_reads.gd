@@ -23,9 +23,14 @@ const Trends = preload("res://src/ui/trends.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
-const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Num = preload("res://src/ui/num.gd")
+
+## A programme group's working tab: where the levers that move its goals live (OPINION, V5.3-0 2.4:
+## the data carries no tab, and a goal's group is the closest general rule -- an economy goal is moved
+## by the budget's levers, an institutional or a society goal by a law). It was agenda_panel.gd's.
+const GROUP_TAB := {"economy": "finances", "europe": "diplomacy", "institutions": "legislature",
+	"office": "majority", "society": "legislature"}  # i18n: ok tab ids
 
 ## The past half: the last year of polls, the span a reader compares a term against.
 const PAST_MONTHS := 12
@@ -89,7 +94,7 @@ static func goal_lanes(state, loader) -> Array:
 			"due": due,
 			"due_text": _due_text(state, terms, due, live),
 			"tip": _tip(state, terms, entry),
-			"tab": String(AgendaPanel.GROUP_TAB.get(String(terms.get("group", "")), "agenda")),
+			"tab": String(GROUP_TAB.get(String(terms.get("group", "")), "overview")),
 		})
 	return out
 

@@ -45,7 +45,7 @@ const SectorsShell = preload("res://src/ui/sectors_shell.gd")
 const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
 const CampaignChest = preload("res://src/ui/campaign_chest.gd")
-const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
+const ProgrammeFile = preload("res://src/ui/programme_file.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
 ## V4.2 T5. The bill briefing, over every bill the player can put to the Assembly.
@@ -143,7 +143,7 @@ var _unseen_events := {}      # event id -> whether it holds the clock (below)
 ## Pending.window_ids runs on the per-day path, where a file read is not free.
 var _messages := {}
 ## V4.1. The term-start programme's card and its pause -- the arrival-pause
-## machinery pointed at the agenda. See _enforce_term_start_programme().
+## machinery pointed at the programme. See _enforce_term_start_programme().
 var _paused_for_programme := false
 var _programme_card_id := ""
 ## The opening "Your term" card. Its countdown ages with the clock, so the id
@@ -169,7 +169,6 @@ var _region_panel
 var _sector_panels := {}
 var _energy_panel
 var _campaign_panel
-var _agenda_panel
 var _events_panel
 var _summit_panel
 var _summit_before := {}
@@ -316,18 +315,12 @@ func _ready() -> void:
 	_overview_panel = PresidencyPage.new()
 	_windows.register("overview", tr("Overview"), _overview_panel, KEY_O, ICONS + "dashboard.svg", [KEY_Q])
 	_overview_panel.setup(_state, _loader)
-	_overview_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
+	_overview_panel.window_requested.connect(ProgrammeFile.open_window.bind(self))
 	_overview_panel.go_requested.connect(func(i: int): preload("res://src/ui/chief_mark_view.gd").page_go(self, i))
 	_overview_panel.requests_requested.connect(func(): AudienceDriver.open_oldest(self))
 
-	# V4.1. The government's programme: the one window where a programme is
-	# chosen and tracked (docs/programme-model.md §4). In the State cluster
-	# beside the Overview it frames -- the agenda is what the term is FOR,
-	# which is the sentence the Overview's other columns read against.
-	_agenda_panel = AgendaPanel.new()
-	_windows.register("agenda", tr("Agenda"), _agenda_panel, KEY_K, ICONS + "event.svg")
-	_agenda_panel.setup(_state, _loader)
-	_agenda_panel.programme_chosen.connect(_on_programme_chosen)
+	# V4.1's programme is chosen on the term's first file in the Folder since rework 2 S3 (programme_file.gd)
+	# and tracked as the Presidency page's lane: the Agenda tab retired, the Diary stays in its domain.
 
 	_economy_panel = EconomyPanel.new()
 	_windows.register("economy", tr("Economy"), _economy_panel, KEY_E, ICONS + "monitoring.svg")
@@ -717,7 +710,7 @@ func _ready() -> void:
 	_enforce_term_start_programme()
 
 	# AFTER the enforcement, matching the load path's own order: the programme
-	# card names "agenda" in Pending.window_ids, and at boot the clock is paused
+	# card names the Folder in Pending.window_ids, and at boot the clock is paused
 	# with no month tick to refresh the strip later -- a bar built before the
 	# enforcement would leave the State-cluster mark dark on a decision the
 	# desk is actively holding open.
@@ -768,10 +761,10 @@ func _toggle_pause_by_hand() -> void:
 	# cluster's play, a speed (V5.1-d1a, G4) -- not only by the key.
 	if _stack != null and not _stack.accepts_hotkeys(): return
 	# V5.1-0c. The offer lives only until the clock first runs in a term, so the
-	# press that would forfeit it opens the Agenda instead -- once: when the Agenda
-	# has shown the offer, the next press is the player declining, and runs.
-	if _paused_for_programme and _clock.paused and not _agenda_panel.offer_seen(_state.player()):
-		_windows.open("agenda")
+	# press that would forfeit it opens its file on the Folder instead -- once: when
+	# the Folder has shown the offer, the next press is the player declining, and runs.
+	if _paused_for_programme and _clock.paused and not ProgrammeFile.offer_seen(self):
+		ProgrammeFile.open(self)
 		return
 	_clock.toggle_pause()
 	# V4.9c. By hand only: a pause the game takes (an arrival, the lapse guard)
@@ -857,7 +850,7 @@ func _wire_hud() -> void:
 	# window where that choice is made instead -- the same rule, one card earlier.
 	_hud.inbox.card_activated.connect(func(id: String):
 		if not _programme_card_id.is_empty() and id == _programme_card_id:
-			_windows.open("agenda")
+			ProgrammeFile.open(self)
 			return
 		# V4.7b: an industry card routes to the window where its verbs live.
 		# (Focus-by-firm was deferred twice -- B2 to B3, and B3 shipped its
@@ -1540,7 +1533,7 @@ func _on_stack_top_changed(from: int, to: int) -> void:
 ## V4.1, the term-start enforcement -- the arrival-pause precedent pointed at
 ## the programme. At a term start with the choice still open, the clock does
 ## not run past it: the offer is surfaced as a CARD (the decision-card shape --
-## the Agenda window is the answer surface, and clicking the card opens it,
+## its file on the Folder is the answer surface, and clicking the card opens it,
 ## through the card_activated routing in _wire_hud()), the clock pauses, and
 ## the choice resumes through _on_programme_chosen().
 ##
@@ -1617,7 +1610,7 @@ func _enforce_term_start_programme() -> void:
 	_drop_programme_card()
 	_programme_card_id = _hud.inbox.push(
 		tr("The term's programme"),
-		tr("The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise."),
+		tr("The Folder holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise."),
 		[], null,
 		# Protected: this plain card explains a live clock hold, and a few plain
 		# pushes at a term start would otherwise evict it as the oldest.

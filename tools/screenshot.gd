@@ -113,7 +113,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --perf --frames 120
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --cards 6 --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mood 35
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open overview
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme-file offer   (or: booked)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 18 --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request   (add --broken-word: the askers hold evidence)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
@@ -417,7 +418,7 @@ var _term := ""
 var _term_card := ""
 var _mood := -1.0
 ## --mid-term: seven months into the term with nothing chosen, the page a loaded
-## game shows (the Agenda's "when can I choose" line).
+## game shows (the Presidency page's programme lane, "None this term").
 var _mid_term := false
 ## V5.2-0a, --months N: N real months on the clock first, so the charts have a
 ## history to draw.
@@ -432,6 +433,9 @@ var _file := ""
 ## --folder-file event | request | decided | news: the Folder tab (--briefing crowded) on that file's page,
 ## or on the first item of the decided or news group.
 var _folder_file := ""
+## Rework 2 S3: --programme-file offer | booked: the term's programme file on the Folder, its offer (the
+## term-start hold) or, Choose pressed on its first entry, what was booked.
+var _programme_file := ""
 ## V5.2d, with --interrupt: the crisis's card carries its speaker (Speakers.resolve at
 ## delivery), so the frame shows the face, name and line under the title.
 var _speaker := false
@@ -1176,6 +1180,8 @@ func _init() -> void:
 			_request = args[i] if _request != "--audience" else _request
 		elif args[i] == "--folder-file" and i + 1 < args.size():
 			_folder_file = args[i + 1]
+		elif args[i] == "--programme-file" and i + 1 < args.size():
+			_programme_file = args[i + 1]
 		elif args[i] == "--file" and i + 1 < args.size():
 			_file = args[i + 1]
 		elif args[i] == "--audience-step" and i + 1 < args.size():
@@ -1319,7 +1325,13 @@ func _process(_delta: float) -> bool:
 		if _mid_term:
 			_main._state.player().months_in_term = 7
 			_main._enforce_term_start_programme()
-			_main._agenda_panel.mark_dirty()
+			_main._windows.mark_all_dirty()
+		if _programme_file != "":
+			preload("res://src/ui/programme_file.gd").open(_main)
+			if _programme_file == "booked":
+				_main._events_panel._refresh()
+				_main._events_panel.primary_action().pressed.emit()
+				_main._events_panel.mark_dirty()
 		if _mood >= 0.0:
 			_main._state.player().overall_approval_pct = _mood
 			_main._hud.portrait_card.refresh()

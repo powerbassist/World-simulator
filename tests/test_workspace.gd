@@ -64,11 +64,11 @@ func _process(_delta: float) -> bool:
 		_check_the_fold_mark_clears()
 		_check_workspace_docks_left()
 		# The void pass (d): a short page's plate hugs it. Measured after a frame of layout.
-		_manager.open("agenda")
+		_manager.open("calendar")
 		_stage = 4
 		return false
 	if _stage == 4:
-		_check_a_short_page_hugs_its_content("agenda")
+		_check_a_short_page_hugs_its_content("calendar")
 		_manager.open("diplomacy")
 		_stage = 45
 		return false
@@ -112,7 +112,7 @@ func _process(_delta: float) -> bool:
 ## Real tab ids, so the domain table places them: Finances holds the Books page and projects, Economy holds economy.
 ## Plus two windows in no row and one scene.
 func _register() -> void:
-	for id in ["finances", "projects", "economy", "alpha", "beta", "summit", "agenda", "calendar", "diplomacy", "orgs",
+	for id in ["finances", "projects", "economy", "alpha", "beta", "summit", "calendar", "diplomacy", "orgs",
 			"energy", "fraction"]:
 		var content := Label.new()
 		content.text = "content of %s" % id
@@ -346,22 +346,22 @@ func _check_the_fold_mark_clears() -> void:
 ## the header and "Back to the map" never move between sibling tabs; a short domain leaves the map
 ## beside it.
 func _check_dock_width_follows_the_domain() -> void:
-	var want := {"agenda": 800.0, "calendar": 800.0, "diplomacy": 760.0, "orgs": 760.0, "energy": 980.0,
+	var want := {"calendar": 800.0, "diplomacy": 760.0, "orgs": 760.0, "energy": 980.0,
 		"finances": WindowManager.DOCK_WIDTH, "projects": WindowManager.DOCK_WIDTH, "economy": WindowManager.DOCK_WIDTH}
 	for id in want:
 		_manager.open(id)
 		var width: float = _manager.dock().get_global_rect().size.x
 		if not is_equal_approx(width, float(want[id])) or not is_equal_approx(width, WindowManager.dock_width(id)):
 			_fail("the %s tab docks %.0f wide, not %.0f" % [id, width, float(want[id])])
-	# A narrowed domain grows with the text size, never past DOCK_WIDTH (the Agenda's offer at 130 %).
+	# A narrowed domain grows with the text size, never past DOCK_WIDTH.
 	UiTheme.set_text_scale(1.3)
-	if not is_equal_approx(WindowManager.dock_width("agenda"), 1040.0) or not is_equal_approx(WindowManager.dock_width("finances"), WindowManager.DOCK_WIDTH):
-		_fail("at text 130 the Agenda docks %.0f and Finances %.0f, not 1040 and 1240" % [WindowManager.dock_width("agenda"), WindowManager.dock_width("finances")])
+	if not is_equal_approx(WindowManager.dock_width("calendar"), 1040.0) or not is_equal_approx(WindowManager.dock_width("finances"), WindowManager.DOCK_WIDTH):
+		_fail("at text 130 the Diary docks %.0f and Finances %.0f, not 1040 and 1240" % [WindowManager.dock_width("calendar"), WindowManager.dock_width("finances")])
 	# #400 pass 2 T6: a smaller text never narrows it -- the dock's fixed parts (tabs, padding, the
 	# offer's columns) do not shrink with the text.
 	UiTheme.set_text_scale(0.9)
-	if not is_equal_approx(WindowManager.dock_width("agenda"), 800.0):
-		_fail("at text 90 the Agenda docks %.0f, narrower than its 800" % WindowManager.dock_width("agenda"))
+	if not is_equal_approx(WindowManager.dock_width("calendar"), 800.0):
+		_fail("at text 90 the Diary docks %.0f, narrower than its 800" % WindowManager.dock_width("calendar"))
 	UiTheme.set_text_scale(1.0)
 	_manager.close_all()
 

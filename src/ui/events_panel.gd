@@ -39,6 +39,8 @@ const FileView = preload("res://src/ui/file_view.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceK = preload("res://src/sim/audience_constants.gd")
+const ProgrammeFile = preload("res://src/ui/programme_file.gd")
+const ProgrammePicker = preload("res://src/ui/programme_picker.gd")
 
 const ANSWER := "answer"
 const DECIDED := "decided"
@@ -73,6 +75,11 @@ var _groups := {ANSWER: [], DECIDED: [], NEWS: []}
 var _buttons := {}  # key -> its list button
 ## The first enabled answer on the page (tab_page.gd's fold contract).
 var _primary: Control = null
+## The term's programme file's body (S3): one node for the panel's life, never cleared with the page,
+## so its selection and scroll outlive the page's rebuilds; shown on that file only.
+var _picker
+## The programme card the page last showed: once it leaves, its page is what was booked.
+var _programme_file := ""
 
 
 func _ready() -> void:
@@ -94,6 +101,9 @@ func _ready() -> void:
 	_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_page.add_theme_constant_override("separation", 10)
 	body.add_child(_page)
+	_picker = ProgrammePicker.new(func(entry_id: String) -> void: _main._on_programme_chosen(entry_id))
+	_picker.hide()
+	_page.add_child(_picker)
 	_close_button = PanelKit.sized(Button.new())
 	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func() -> void: closed.emit())
@@ -354,7 +364,11 @@ func _item(key: String, text: String, date: String) -> void:
 # --- the page ------------------------------------------------------------------------
 
 func _build_page(ns) -> void:
-	_clear(_page)
+	for child in _page.get_children():
+		if child != _picker:
+			_page.remove_child(child)
+			child.queue_free()
+	_picker.hide()
 	_primary = null
 	if not _selected.begins_with("file:") and not _selected.begins_with("desk:"):
 		_shown_event = ""
@@ -367,16 +381,16 @@ func _build_page(ns) -> void:
 		if live:
 			_shown_request = String(preload("res://src/ui/audience_driver.gd").lane_of(_main)._request_of.get(id, ""))
 		var request := Audiences.request(ns, _shown_request) if _shown_request != "" and not live else {}
-		if String(request.get("status", "")) == AudienceK.STATUS_LAPSED:
+		if live and ProgrammeFile.is_file(_main, id):
+			_programme_file = id
+			ProgrammeFile.build(_main, _page, _picker)
+			return
+		if id == _programme_file:
+			ProgrammeFile.booked(_main, _page)
+		elif String(request.get("status", "")) == AudienceK.STATUS_LAPSED:
 			PanelKit.line(_page, tr("It lapsed while it was open: the request went unanswered."))
 		else:
 			FileView.build(_page, FileRead.describe(_main, InboxFiles.of(_main._hud.inbox, id)), press)
-		# T10: the term's programme is a file with no answer of its own; until S3 its choice is on the Agenda.
-		if id == String(_main._programme_card_id) and not InboxFiles.of(_main._hud.inbox, id).is_empty():
-			var go := PanelKit.sized(Button.new())
-			go.text = tr("Choose it on the Agenda")
-			go.pressed.connect(func() -> void: _main._windows.open("agenda"))
-			_page.add_child(go)
 	elif _selected.begins_with("desk:"):
 		_shown_event = _selected.trim_prefix("desk:")
 		FileView.build(_page, FileRead.desk_entry(_main, _shown_event), press)
@@ -471,4 +485,5 @@ func _clear(box: Control) -> void:
 ## The control this panel exists to let the player press (V2.1a's fold contract): the first
 ## enabled answer on the page, null when the page asks nothing.
 func primary_action() -> Control:
-	return _primary
+	# The programme file's Choose follows the picker's selection, which changes without a page build.
+	return _picker.primary() if _picker.visible else _primary

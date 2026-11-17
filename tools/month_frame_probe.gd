@@ -243,7 +243,7 @@ func _answer_pauses(clock: Node) -> void:
 	else:
 		var offer: Array = Programme.available(_main._state, ns, _main._loader)
 		if not offer.is_empty():
-			_main._agenda_panel.programme_chosen.emit(String(offer[0]["id"]))
+			_main._on_programme_chosen(String(offer[0]["id"]))
 	clock.paused = false
 	_main._windows.close_all()
 	_frame_label = "answer"

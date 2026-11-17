@@ -43,7 +43,7 @@ const INBOX_CEILING := 196
 ## The ceilings, sys 8+ words per tab (the note's "Budget sys 8+" column). Orgs is
 ## the note's 60 per organisation, for France's five.
 const BUDGET := {
-	"legislature": 80, "orgs": 300, "agenda": 40, "campaign": 40, "energy": 20,
+	"legislature": 80, "orgs": 300, "campaign": 40, "energy": 20,
 	"majority": 30, "region": 20, "projects": 20, "economy": 40,
 	# The Presidency page: 30 -> 36, a stated rise (rework 2 S1, the parent's ruling): the Overview's
 	# government reads kept whole (capability, the majority's line, the censure), three 8+ word sentences.
@@ -60,7 +60,9 @@ const PENDING := {}
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
-const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
+## Rework 2 S3: the Agenda's 400 left with its tab; the Folder on day 1 is the programme file (the
+## picker's 28 names and one entry's text, measured 276), so the Folder's ceiling took 95 -> 300.
+const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 300,
 	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135,
 	"overview": 170}
 const TOTAL_PENDING := {

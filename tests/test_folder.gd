@@ -66,7 +66,6 @@ func _process(_delta: float) -> bool:
 	_check_a_note_says_its_tone()
 	_check_the_news_count_is_the_unread()
 	_check_the_inbox_stays_only_for_answers()
-	_check_the_programme_file_goes_to_the_agenda()
 	_check_the_subject_line()
 	_check_a_lapsed_request_says_so()
 	_check_one_count_on_day_one()
@@ -533,28 +532,6 @@ func _check_the_inbox_stays_only_for_answers() -> void:
 	inbox.card_action.emit(carded, 0)
 	if inbox.is_slid():
 		_fail("the inbox stayed over the tab for rows that ask no answer")
-	_main._windows.close_all()
-	_clear_desk()
-
-
-## #403 pass 2 T10: the term's programme card, a file with no answer of its own, opens the Agenda (until S3).
-func _check_the_programme_file_goes_to_the_agenda() -> void:
-	_clear_desk()
-	var inbox = _main._hud.inbox
-	var saved: String = _main._programme_card_id
-	_main._programme_card_id = inbox.push("Choose the programme", "The term starts.", [], null, true)
-	_open_tab()
-	_panel().select("file:" + _main._programme_card_id)
-	var go: Button = null
-	for b in _panel()._page.find_children("*", "Button", true, false):
-		go = b
-	if go == null:
-		_fail("the programme's file has no way to the Agenda")
-	else:
-		go.pressed.emit()
-		if not _main._windows.is_open("agenda"):
-			_fail("the programme file's button did not open the Agenda")
-	_main._programme_card_id = saved
 	_main._windows.close_all()
 	_clear_desk()
 

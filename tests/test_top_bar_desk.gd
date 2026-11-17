@@ -118,7 +118,9 @@ func _run() -> void:
 		_fail("a major and a minor on the desk and the tooltip says '%s'" % tip)
 
 	# THE MARK AND THE STRIP AGREE. Something on the desk: the events window is
-	# pending. Desk cleared: it is not.
+	# pending. Desk cleared: it is not. The term-start offer marks the Folder too (rework 2 S3,
+	# its file is there), so it is taken off the desk first: this check is about the events.
+	ns.programme_chosen_term = int(ns.terms_served)
 	var ids: Array = Pending.window_ids(state, _loader)
 	if not ids.has("events"):
 		_fail("a loaded desk and pending.gd names no events window: %s" % [ids])

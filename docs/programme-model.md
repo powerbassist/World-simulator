@@ -24,7 +24,7 @@ already share.
 Files: `src/sim/programme.gd` (the leaf) ·
 `src/sim/programme_constants.gd` (whitelists + `PROGRAMME_SPAN` + the two fixed
 pulses) ·
-`data/programme/*.json` (the content) · `src/ui/agenda_panel.gd` (the surface) ·
+`data/programme/*.json` (the content) · `src/ui/programme_file.gd` and `src/ui/programme_picker.gd` (the surface: the term's file on the Folder since rework 2 S3) ·
 `tools/programme_probe.gd` (the sweep) · `tests/test_programme.gd` (the register
 machine) · `tests/test_programme_channel.gd` (the channel and the tick-order
 guarantee) · the credit site in `src/sim/opinion.gd` · this file (the argument).

@@ -400,6 +400,8 @@ func _check_notify_band() -> void:
 		return
 	var ns = _main._state.player()
 	_reset_desk()
+	# The term-start offer marks the Folder too (rework 2 S3): closed here, the band is about the crisis.
+	ns.programme_chosen_term = int(ns.terms_served)
 	Events.announce(ns, ev, _month_index(), Events.region_names(ns, _main._loader))
 	var state = _main._state
 	var loader = _main._loader

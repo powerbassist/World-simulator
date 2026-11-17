@@ -44,13 +44,12 @@ func _sweep(language: String, text_scale: float) -> void:
 	await _open(windows, "diplomacy")
 	_check_hugs(windows, "diplomacy", where, true)
 
-	# The Agenda mid-term with no programme: a line and one button.
 	var ns = main._state.player()
-	ns.programme = []
-	ns.programme_chosen_term = -1
-	ns.months_in_term = 7
-	await _open(windows, "agenda")
-	_check_hugs(windows, "agenda", where, true)
+	# Rework 2 S3: the term's programme file on the Folder fills the dock (its picker list is the one
+	# scroller) and leaves no blank under its last row.
+	preload("res://src/ui/programme_file.gd").open(main)
+	await _open(windows, "events")
+	_check_hugs(windows, "events", where, false)
 
 	# The Sectors overview hugs or fills, but never leaves a blank under its last row.
 	await _open(windows, "companies")

@@ -41,6 +41,7 @@ const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const MoodBadge = preload("res://src/ui/mood_badge.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 
 ## What the country wants: the two issues the Overview kept.
 const TOP_ISSUE_COUNT := 2
@@ -285,7 +286,7 @@ func _fill_term(ns) -> void:
 		var to_choose := not Programme.available(_state, ns, _loader).is_empty()
 		var gutter := _gutter(tr("Programme"), tr("To choose") if to_choose else tr("None this term"))
 		_lane_row(gutter, _lane(TermLane.Kind.NOTE, past.size(), ahead, {"text":
-			tr("One goal, judged at the vote.") if to_choose else ""}), "agenda" if to_choose else "")
+			tr("One goal, judged at the vote.") if to_choose else ""}), "programme" if to_choose else "")
 	_fill_majority(ns)
 	_fill_state(ns)
 
@@ -342,6 +343,8 @@ func _fill_goal(lane: Dictionary, past: int, ahead: int) -> void:
 	_one_line(PanelKit.plain_line(bar_row, word, tone))
 	var row := _lane_row(gutter, _lane(TermLane.Kind.GOAL, past, ahead, lane), String(lane["tab"]))
 	_goal_doors.append(row.get_child(2))
+	# S3: the programme's Go lands here, on the entry's own door (the Agenda's "Work on it" retired).
+	ActsOn.tag(row.get_child(2), [String(lane["id"])])
 
 
 func _fill_majority(ns) -> void:
