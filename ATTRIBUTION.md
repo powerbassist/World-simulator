@@ -108,3 +108,8 @@ The shares and start quantities in `data/domains/*.json`, read on 2026-11-01; ea
 ## Union co-financing (V5.3 c')
 
 `data/units/cofinancing.json` and `tools/cohesion_categories.json` cite Regulation (EU) 2021/1060 (Articles 63, 105, 112), Commission Implementing Decisions (EU) 2021/1130 and 2021/1131 and 2014/99/EU, read on EUR-Lex through the Publications Office of the European Union, and Eurostat `demo_r_d2jan` for population weights. Union legal texts are reused under Commission Decision 2011/833/EU; Eurostat data under its re-use policy (equivalent to CC BY 4.0). Credit: (c) European Union, https://eur-lex.europa.eu and https://ec.europa.eu/eurostat.
+
+## Construction register, France (V5.3 c')
+
+`data/units/stock/FRA.json`: lycee enrolment (datasets `fr-en-lycee_gt-effectifs-niveau-sexe-lv`, `fr-en-lycee_pro-effectifs-niveau-sexe-lv`; last observation 1 October 2025, rentree 2024 rows read) and teacher full-time equivalents (`fr-en-indicateurs_personnels_etablissements2d`; last observation 30 November 2025), from the Ministere de l'Education nationale open data portal (https://data.education.gouv.fr), and the number of health establishments 2021 from DREES, Base ARES, file published 6 February 2023 (https://data.drees.solidarites-sante.gouv.fr), both under the Licence Ouverte 2.0 (Etalab). The figures were changed by the project: summed per region, divided into ratios. Hospital beds (`hlth_rs_bdsrg2`) and population (`demo_r_d2jan`), (c) European Union, 1995-2026, Eurostat, under its re-use policy, were also changed: NUTS 2 regions summed to the game's regions and rates derived. Read 2026-11-17; `tools/units_stock_fr.py --check` re-reads them.
+
