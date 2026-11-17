@@ -40,15 +40,25 @@ static func swap(main: Node, result: Dictionary, slot: String) -> Node:
 	return fresh
 
 
-## The drivers keep one entry per main, keyed by its instance id: the old main's would outlive it
-## (its lane, its session, callables bound to it), one game's worth per load.
+## Statics keyed by a main's instance id (one entry per main): the old main's entry would outlive
+## it (its lane, its session, callables bound to it), one game's worth per load. [file stem in
+## src/ui, static var]. tests/test_game_reload_records.gd walks src/ui for every `static var` and
+## fails one that is in neither this table, CLEARED_STATICS nor its cache allow-list.
+const MAIN_KEYED_STATICS := [
+	["audience_driver", "_games"], ["briefing_driver", "_games"], ["phone_driver", "_games"],
+	["poll_card", "_games"], ["files_driver", "_views"], ["council_cards", "_told"],
+	["proposal_note", "_tabled"], ["proposal_note", "_told"], ["region_arrival", "_told"],
+]
+
+
+static func _static_dict(stem: String, var_name: String) -> Dictionary:
+	return load("res://src/ui/%s.gd" % stem).get(var_name)
+
+
 static func _forget_main(main: Node) -> void:
 	var id := main.get_instance_id()
-	for driver in [preload("res://src/ui/audience_driver.gd"), preload("res://src/ui/briefing_driver.gd"),
-			preload("res://src/ui/phone_driver.gd"), preload("res://src/ui/poll_card.gd")]:
-		driver._games.erase(id)
-	preload("res://src/ui/files_driver.gd")._views.erase(id)
-	preload("res://src/ui/council_cards.gd")._told.erase(id)
+	for entry in MAIN_KEYED_STATICS:
+		_static_dict(entry[0], entry[1]).erase(id)
 
 
 ## A save read for a main to boot from: {state, day, slot}, or {} when it does not read (the
@@ -80,14 +90,15 @@ static func set_clock(main) -> void:
 	main._state.day = clock.day
 
 
-## Per-game state some UI files keep in a static rather than on a node (QA's RECORD on #396). A
-## new main is a new game, so main._ready() clears them, for a load and for a new game alike.
-## The statics keyed by a main's instance id (the drivers' `_games`) need nothing: a new main has
-## a new id.
+## Per-game state some UI files keep in a static rather than on a node (QA's RECORD on #396), NOT
+## keyed by a main: a new main is a new game, so main._ready() clears them, for a load and for a
+## new game alike. [file stem in src/ui, static var].
+const CLEARED_STATICS := [["counter_chips", "_picked"], ["law_sheet", "_open"], ["poll_strip", "_picked"]]
+
+
 static func reset_statics() -> void:
-	preload("res://src/ui/counter_chips.gd")._picked.clear()
-	preload("res://src/ui/law_sheet.gd")._open.clear()
-	preload("res://src/ui/poll_strip.gd")._picked.clear()
+	for entry in CLEARED_STATICS:
+		_static_dict(entry[0], entry[1]).clear()
 
 
 ## What a main built from a save does once every panel is up: the steps that establish the loaded
