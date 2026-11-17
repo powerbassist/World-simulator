@@ -36,6 +36,8 @@ const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const FK = preload("res://src/sim/finance_bill_constants.gd")
 ## The spending-verb rows (section 12): a sector programme, a regional fund.
 const FinanceRows = preload("res://src/sim/finance_rows.gd")
+const UnitBuild = preload("res://src/sim/unit_build.gd")
+const UnitPrice = preload("res://src/sim/unit_price.gd")
 
 const CHANNELS := ["tax_rates_pct", "spending_pct_gdp"]
 const PROGRESSIVITY := "tax_progressivity"
@@ -97,6 +99,19 @@ static func drafted(state, loader, bill: Dictionary) -> Dictionary:
 	var merged := _merged(ns.tabled_bill, bill)
 	if merged.has(FinanceRows.PROGRAMMES) or merged.has(FinanceRows.FUNDS):
 		merged[FinanceRows.COST] = FinanceRows.cost_pct_gdp(state, loader, ns, merged)
+	# V5.3 c': each units row is quoted once, when it is first tabled, and the quote stays
+	# (a reshuffle before the vote changes neither the range nor the odds). Only a legal
+	# text is quoted: the caller reads drafted() after refusal() came back empty.
+	if merged.has(FinanceRows.UNITS) and UnitBuild.refusal(state, ns, loader, merged[FinanceRows.UNITS]) == "":
+		var lines := {}
+		var earlier: Array = []
+		for row in merged[FinanceRows.UNITS]:
+			if not row.has("quote"):
+				row["quote"] = UnitPrice.quote(state, ns, loader, row, earlier)
+			var line := String(loader.unit_types[String(row["type"])]["line"])
+			lines[line] = float(lines.get(line, 0.0)) + float(row["quote"]["line_pct_gdp_year"])
+			earlier.append(row)
+		merged[FinanceRows.UNITS_COST] = lines
 	return merged
 
 
@@ -126,6 +141,9 @@ static func refusal(state, loader, bill: Dictionary, force := false) -> Dictiona
 	# Section 12: each programme or fund row by its own verb's legality on the live state.
 	if season.is_empty() and FinanceRows.illegal(state, loader, ns, merged):
 		season = {"tabled": false, "refused": true, "verb": true}
+		# A units row says why (T10 on #413): the register's own reason, for the sheet.
+		if merged.has(FinanceRows.UNITS):
+			season["reason"] = UnitBuild.refusal(state, ns, loader, merged[FinanceRows.UNITS])
 	return season
 
 

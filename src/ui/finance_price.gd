@@ -94,7 +94,7 @@ func whole(loader, draft, refused: bool) -> Dictionary:
 	var cost_pct := 0.0
 	if not refused:
 		bill = FinanceBill.drafted(_state, loader, bill)
-		cost_pct = float(bill.get(SimRows.COST, 0.0))
+		cost_pct = SimRows.yearly_cost(bill)
 	var a := now()
 	var b := after_bill(bill)
 	var gdp := float(b["gdp_eur_bn"])

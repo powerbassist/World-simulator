@@ -128,7 +128,22 @@ static func ratio(ns, loader, line: String, sector_id: String) -> float:
 	var line_then := float(ns.start_spending_pct_gdp.get(line, 0.0))
 	if line_then <= 0.0:
 		return 1.0
-	return float(ns.spending_pct_gdp.get(line, 0.0)) / line_then * held_ratio(ns, loader, line, sector_id)
+	return effective_spending(ns, loader, line, sector_id) / line_then * held_ratio(ns, loader, line, sector_id)
+
+
+## The line's spending as `sector_id` meets it: the player's lever plus the running cost
+## of the sector's standing units (UnitBuild, keyed by sector, so a school's running cost
+## lifts schools and not the line's other sectors), put at the line's scale (/ the
+## sector's share) so ratio() keeps its one form. The ONE reader of a line's money for a
+## sector (ratio, SectorWarnings.restore_pct_gdp, the priority's money): exactly the
+## lever with no unit standing, so every figure reads as before c'.
+static func effective_spending(ns, loader, line: String, sector_id: String) -> float:
+	var lever := float(ns.spending_pct_gdp.get(line, 0.0))
+	var running := float(ns.unit_running_pct_gdp.get(sector_id, 0.0))
+	if running == 0.0:
+		return lever
+	var share := float(shares(ns, loader, line).get(sector_id, 0.0))
+	return lever + running / share if share > 0.0 else lever
 
 
 ## ratio() with the line at its start level: the share's lever times drift_ratio().
@@ -342,7 +357,7 @@ static func priority_estimate(state, ns, loader, line: String, sector_id: String
 ## The term lasts PRIORITY_MONTHS (`ends`, the strip's end month); `factor`, the share
 ## of it that applies, is _cap()'s, written by whoever sets the row.
 static func _priority_row(state, ns, loader, line: String, sector_id: String, region_id: String) -> Dictionary:
-	var spend := float(ns.spending_pct_gdp.get(line, 0.0)) / 100.0 \
+	var spend := effective_spending(ns, loader, line, sector_id) / 100.0 \
 		* float(shares(ns, loader, line).get(sector_id, 0.0)) * float(ns.gdp_eur_bn)
 	var money := DK.PRIORITY_UPLIFT * float(ns.region_pop_share.get(region_id, 0.0)) / _pop_total(ns) * spend
 	return {"region_id": region_id, "pts": DK.PRIORITY_BETA * 100.0 * money / Regions.output_eur_bn(ns, region_id),

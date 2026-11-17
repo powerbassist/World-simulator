@@ -100,7 +100,7 @@ static func trend(ns, sector_id: String) -> Array:
 ## figure at or above it. The share is held, so the line's other sectors gain too.
 static func restore_pct_gdp(ns, loader, line: String, sector_id: String) -> float:
 	var target := float(ns.start_spending_pct_gdp.get(line, 0.0)) / Sectors.held_ratio(ns, loader, line, sector_id)
-	return maxf(target - float(ns.spending_pct_gdp.get(line, 0.0)), 0.0)
+	return maxf(target - Sectors.effective_spending(ns, loader, line, sector_id), 0.0)
 
 
 ## restore_pct_gdp() as an effect the game's own applier books (Legislature.apply_effects).

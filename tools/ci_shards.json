@@ -51,6 +51,7 @@
    "tests/test_hold_reason.gd",
    "tests/test_region_funds.gd",
    "tests/test_units.gd",
+   "tests/test_unit_programmes.gd",
    "tests/test_screen_reads.gd",
    "tests/test_siting.gd",
    "tests/test_energy.gd",
