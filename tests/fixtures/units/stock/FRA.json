@@ -1,0 +1,273 @@
+{
+  "_source": "test fixture, round numbers, not a source",
+  "stock": [
+    {
+      "region": "FR1",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FR1",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRB",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRB",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRC",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRC",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRD",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRD",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRE",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRE",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRF",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRF",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRG",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRG",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRH",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRH",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRI",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRI",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRJ",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRJ",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRK",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRK",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRL",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRL",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRM",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    }
+  ],
+  "figures": {
+    "fixture_school": {
+      "figure": "fixture_pupils_per_teacher",
+      "national": 16.986037,
+      "levels": [
+        {
+          "region": "FR1",
+          "level": 15.0
+        },
+        {
+          "region": "FRB",
+          "level": 20.0
+        },
+        {
+          "region": "FRC",
+          "level": 15.0
+        },
+        {
+          "region": "FRD",
+          "level": 20.0
+        },
+        {
+          "region": "FRE",
+          "level": 15.0
+        },
+        {
+          "region": "FRF",
+          "level": 20.0
+        },
+        {
+          "region": "FRG",
+          "level": 15.0
+        },
+        {
+          "region": "FRH",
+          "level": 20.0
+        },
+        {
+          "region": "FRI",
+          "level": 15.0
+        },
+        {
+          "region": "FRJ",
+          "level": 20.0
+        },
+        {
+          "region": "FRK",
+          "level": 15.0
+        },
+        {
+          "region": "FRL",
+          "level": 20.0
+        },
+        {
+          "region": "FRM",
+          "level": 15.0
+        }
+      ]
+    },
+    "fixture_hospital": {
+      "figure": "fixture_beds_per_1000",
+      "national": 4.794415,
+      "levels": [
+        {
+          "region": "FR1",
+          "level": 4.0
+        },
+        {
+          "region": "FRB",
+          "level": 6.0
+        },
+        {
+          "region": "FRC",
+          "level": 4.0
+        },
+        {
+          "region": "FRD",
+          "level": 6.0
+        },
+        {
+          "region": "FRE",
+          "level": 4.0
+        },
+        {
+          "region": "FRF",
+          "level": 6.0
+        },
+        {
+          "region": "FRG",
+          "level": 4.0
+        },
+        {
+          "region": "FRH",
+          "level": 6.0
+        },
+        {
+          "region": "FRI",
+          "level": 4.0
+        },
+        {
+          "region": "FRJ",
+          "level": 6.0
+        },
+        {
+          "region": "FRK",
+          "level": 4.0
+        },
+        {
+          "region": "FRL",
+          "level": 6.0
+        },
+        {
+          "region": "FRM",
+          "level": 4.0
+        }
+      ]
+    }
+  }
+}
