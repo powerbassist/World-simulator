@@ -116,6 +116,15 @@ func _test_the_fixture_loads() -> void:
 		_fail("the fixture type did not load: %s" % row)
 	if float(Units.start_capacity(_loader, "FRA", TYPE, "FR1")) != 10000.0:
 		_fail("FR1's start capacity reads %s, not the stock row's 10000" % Units.start_capacity(_loader, "FRA", TYPE, "FR1"))
+	# No data/regions file carries a category yet: every EU member warns once,
+	# a non-member never.
+	var warned := {}
+	for line in _loader.unit_warnings:
+		for nation_id in ["FRA", "DEU", "POL", "GBR"]:
+			if line.contains(" %s is a member" % nation_id):
+				warned[nation_id] = int(warned.get(nation_id, 0)) + 1
+	if int(warned.get("FRA", 0)) != 1 or int(warned.get("DEU", 0)) != 1 or warned.has("GBR"):
+		_fail("the uncategorised-member warnings are %s" % [warned])
 	var rule: Dictionary = _loader.unit_cofinancing.get("eu", {})
 	if float(rule.get("rates", {}).get("transition", 0.0)) != 0.6 or (rule.get("periods", []) as Array).size() != 1:
 		_fail("the co-financing rule did not load: %s" % rule)

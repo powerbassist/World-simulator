@@ -23,5 +23,4 @@ const STATE_DONE := "done"
 
 ## The files of data/units/ that are not catalogue rows.
 const COFINANCING_FILE := "cofinancing.json"
-const COHESION_FILE := "cohesion_categories.json"
 const STOCK_DIR := "stock"

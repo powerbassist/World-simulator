@@ -4,7 +4,8 @@ extends RefCounted
 ## construction register's content. Three kinds of file, Content's facts, each
 ## refused loudly on a bad row:
 ##
-##   data/units/<type_id>.json      one catalogue row per unit type (flat object)
+##   data/units/<type_id>.json      one catalogue row per unit type (flat object):
+##                                  every root *.json but cofinancing.json
 ##   data/units/stock/<NAT>.json    {stock: [{region, type, units, capacity}],
 ##                                   levels: [{region, figure, level}]}
 ##   data/units/cofinancing.json    {organisations: {<org_id>: {rates: {category: rate},
@@ -44,6 +45,7 @@ static func load_units(loader, dir: String) -> void:
 	loader.unit_stock = {}
 	loader.unit_levels = {}
 	loader.unit_cofinancing = {}
+	loader.unit_warnings.clear()
 	loader.unit_potential = potential_rows(loader)
 	var da := DirAccess.open(dir)
 	if da == null:
@@ -51,7 +53,7 @@ static func load_units(loader, dir: String) -> void:
 	var files: Array[String] = []
 	for f in da.get_files():
 		var name := String(f)
-		if name.ends_with(".json") and name != UK.COFINANCING_FILE and name != UK.COHESION_FILE:
+		if name.ends_with(".json") and name != UK.COFINANCING_FILE:
 			files.append(name)
 	files.sort()
 	for fname in files:
@@ -79,6 +81,35 @@ static func load_units(loader, dir: String) -> void:
 		loader.unit_cofinancing = parse_cofinancing(loader, JSON.parse_string(FileAccess.get_file_as_string(cof_path)),
 			UK.COFINANCING_FILE, errors)
 		loader.errors.append_array(errors)
+		warn_uncategorised(loader)
+
+
+## An absent cohesion_category reads as no rate (0 %), the right reading for a region
+## outside the Union's map, so a member nation whose regions ALL lack one would get
+## nothing in silence (the parent's ruling on #409): one warning per such nation and
+## organisation, kept on loader.unit_warnings and printed once. A warning, not a load
+## error, because the categories land in data/regions after this loader does.
+static func warn_uncategorised(loader) -> void:
+	for org_id in loader.unit_cofinancing:
+		var org = loader.orgs_by_id.get(org_id)
+		if org == null:
+			continue
+		var members: Array = org.members.keys()
+		members.sort()
+		for nation_id in members:
+			var regions: Array = loader.regions.get(nation_id, [])
+			if regions.is_empty():
+				continue
+			var any := false
+			for r in regions:
+				if r.cohesion_category != "":
+					any = true
+					break
+			if not any:
+				var line := "units/%s: %s is a member of %s and none of its regions has a cohesion_category -- its co-financing reads 0 %%" % [
+					UK.COFINANCING_FILE, nation_id, org_id]
+				loader.unit_warnings.append(line)
+				push_warning(line)
 
 
 ## One catalogue row, validated against data/domains (its line, sector and figure).

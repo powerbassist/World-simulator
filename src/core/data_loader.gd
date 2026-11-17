@@ -306,6 +306,8 @@ var unit_stock: Dictionary = {}
 var unit_levels: Dictionary = {}
 var unit_cofinancing: Dictionary = {}
 var unit_potential: Array = []
+## UnitsLoader.warn_uncategorised()'s lines: content that loads but would read 0 %.
+var unit_warnings: Array[String] = []
 
 ## Feature id -> Vector2(lon, lat), Natural Earth's own hand-placed label anchor.
 ## Both files contribute; map_view.gd draws labels for the roster only.

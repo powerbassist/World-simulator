@@ -88,7 +88,7 @@ var natural_change_pct: float = 0.0
 ## the rate its co-financing pays on a unit built here. Set by the Union on NUTS 2
 ## regions; a game region made of several takes the category of the part holding
 ## most of its people (tools/import_data.py writes it from
-## data/units/cohesion_categories.json). Empty for a region outside the Union's map,
+## tools/cohesion_categories.json, an importer input). Empty for a region outside the Union's map,
 ## which no co-financing rate reaches.
 var cohesion_category: String = ""
 
