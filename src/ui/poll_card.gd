@@ -40,7 +40,8 @@ static func _on_open(card: String, _index: int, main) -> void:
 	if not cards.has(card):
 		return
 	main._windows.open("legislature")
-	main._law_panel._laws._selected = String(cards[card])
+	# select(), so a law on another shelf opens its shelf (the Bills second pass).
+	main._law_panel._laws.select(String(cards[card]))
 	main._law_panel.mark_dirty()
 	cards.erase(card)
 	main._hud.inbox.dismiss(card)

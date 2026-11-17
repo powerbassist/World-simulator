@@ -153,13 +153,12 @@ func _check_legislature() -> void:
 	if detail.find_child("Propose", true, false) == null:
 		_fail("the detail has no Propose to hold")
 	# But not on the tabled bill itself: propose() refuses a 49.3 on it (#173).
-	var listed := false
-	for law in laws._shown:
-		listed = listed or String(law.id) == String(_law.id)
-	if not listed:
-		_fail("premise: the tabled bill is not on the list to select")
-		return
+	# The tabled bill may stand on another shelf: select() opens it.
 	laws.select(String(_law.id))
+	if laws.selected_id() != String(_law.id):
+		_fail("premise: the tabled bill could not be selected")
+		return
+	detail = laws._detail
 	var force: Button = detail.find_child("Force", true, false)
 	if force == null or not force.disabled or not force.tooltip_text.contains("before the Assembly"):
 		_fail("49.3 on the tabled bill itself is live, or says no reason")
