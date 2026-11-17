@@ -94,6 +94,17 @@ The vault check: unresolved wikilinks, docs the index does not reach, orphans, m
 frontmatter -- over tracked files only. What each Obsidian plugin is for: [docs/vault.md](docs/vault.md).
 
 ```bash
+python tools/ui_map.py --check
+```
+
+Where each screen lives (domain, tab, window id, key, panel file, the screen stack's surfaces):
+`docs/ui-map.md` is GENERATED from the tracked `src/ui/` files. It goes stale when a PR adds,
+renames or re-keys a window (`_windows.register`), changes a domain row in `domains.gd`, adds a
+panel to a screen-stack rank, or changes a hotkey; then run `python tools/ui_map.py --write`.
+CI runs `--check` (last step of the checks job); the local gate (`run_tests.sh`) does NOT, so run it
+yourself. Never edit the page by hand.
+
+```bash
 python tools/check_uids.py
 ```
 
