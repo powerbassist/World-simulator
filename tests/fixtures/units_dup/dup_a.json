@@ -1,0 +1,35 @@
+{
+  "_source": "test fixture, not real numbers",
+  "id": "dup_a",
+  "name": "Fixture school",
+  "summary": "A test school.",
+  "line": "education",
+  "sector": "schools",
+  "figure": {
+    "id": "fixture_pupils_per_teacher",
+    "unit": "pupils per teacher (fixture)",
+    "better": "lower"
+  },
+  "payoff": "capacity",
+  "capacity": {
+    "FRA": 1000
+  },
+  "figure_elasticity": -1.0,
+  "cost_eur_m": {
+    "FRA": 50.0
+  },
+  "build_months": 36,
+  "running_eur_m": {
+    "FRA": 5.0
+  },
+  "staff": 100,
+  "overrun_odds": 0.2,
+  "overrun_share": 0.2,
+  "demolish_months": 12,
+  "demolish_cost_share": 0.1,
+  "cofinanced": true,
+  "band_units": 10,
+  "bloc_offset_per_pop_share": {
+    "workers": 0.1
+  }
+}
