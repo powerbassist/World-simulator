@@ -1,1 +1,0 @@
-Added: In your country's autumn month the Books page lets you put a tax that is not in force into the autumn finance bill, or abolish one that is, from its row. The sheet and the footer name each creation and abolition and price it with the rest of the bill, and a creation or abolition already at vote is locked.

@@ -1,1 +1,0 @@
-Added: A Books tab opens the Finances domain: one sentence for what comes in, what goes out, the deficit and the debt, the two-year ranges, and the books drawn to one scale, revenue by kind of tax on the left and spending by line on the right, the deficit standing as the part of spending above revenue. Small taxes fold into one line, and what no row sets says so.
