@@ -62,10 +62,13 @@ static func start_capacity(loader, nation_id: String, type_id: String, region_id
 	return float((by_region.get(region_id, {}) as Dictionary).get("capacity", 0.0))
 
 
-## The region's figure over the nation's, people-weighted mean 1; 1.0 with no row.
-static func level(loader, nation_id: String, figure: String, region_id: String) -> float:
-	var by_figure: Dictionary = (loader.unit_levels.get(nation_id, {}) as Dictionary).get(figure, {})
-	return float(by_figure.get(region_id, 1.0))
+## The region's level for the type's figure: its sourced figure over the mean of the
+## nation's named regions weighted by the live people x the priority term (T2, T3 on
+## #410), so the people-weighted mean of level x priority term is exactly 1. 1.0 for a
+## type the nation has no level for.
+static func level(ns, loader, type_id: String, region_id: String) -> float:
+	var b := _basis(ns, loader, type_id, {})
+	return float((b["level"] as Dictionary).get(region_id, 1.0))
 
 
 ## n, the units the player's DONE rows built (+) and closed (-) in the region.
@@ -103,14 +106,18 @@ static func fill_by_population(ns, loader, type_id: String, n: int) -> Array:
 	var placed := {}
 	var rest: Array = []
 	var left := n
-	for id in open:
-		var exact := float(n) * float(ns.region_pop_share.get(id, 0.0)) / total if total > 0.0 else 0.0
+	for i in open.size():
+		var id: String = open[i]
+		# No people counted at all (T13 on #410): an equal split, never fewer than N.
+		var share := float(ns.region_pop_share.get(id, 0.0)) / total if total > 0.0 else 1.0 / open.size()
+		var exact := float(n) * share
 		placed[id] = int(floorf(exact))
 		left -= int(placed[id])
-		rest.append([exact - floorf(exact), id])
-	rest.sort_custom(func(a, b): return a[0] > b[0])
+		rest.append([exact - floorf(exact), i, id])
+	# sort_custom is not stable (T12): ties go to the regions' file order.
+	rest.sort_custom(func(a, b): return a[0] > b[0] or (a[0] == b[0] and a[1] < b[1]))
 	for i in mini(left, rest.size()):
-		placed[rest[i][1]] = int(placed[rest[i][1]]) + 1
+		placed[rest[i][2]] = int(placed[rest[i][2]]) + 1
 	return _rows(open, placed)
 
 
@@ -148,23 +155,49 @@ static func _gain(ns, loader, type_id: String, region_id: String, extra: int) ->
 	return float(t["figure_elasticity"]) * float(n) * float(t["capacity"]) / c
 
 
-## The region's gain less the people x level weighted mean of every named region's,
-## `placed` counting units not yet built (the sheet's by-need fill).
 static func _netted(ns, loader, type_id: String, region_id: String, placed: Dictionary) -> float:
 	if not loader.unit_types.has(type_id):
 		return 0.0
-	var figure := String(loader.unit_types[type_id]["figure"])
+	var b := _basis(ns, loader, type_id, placed)
+	return float((b["gain"] as Dictionary).get(region_id, 0.0)) - float(b["mean_gain"])
+
+
+## ONE BASIS (the parent's rule, T2 on #410): the weights are exactly what the screen
+## multiplies, w = people x priority term x level, the level normalised on the same
+## live people x priority term. So the shown figure's people-weighted mean is
+##   q x sum(w x (1 + g - mean_g)) / sum(people) = q x sum(w) / sum(people) = q,
+## the nation's figure, with a priority set, after migration, with units built. The
+## one case it gives way is the floor on (1 + netted) in _shown(): a region whose
+## figure would cross zero is held above it, and the mean no longer balances.
+## `placed` counts units not yet built (the sheet's by-need fill).
+static func _basis(ns, loader, type_id: String, placed: Dictionary) -> Dictionary:
+	var out := {"level": {}, "gain": {}, "mean_gain": 0.0}
+	if not loader.unit_types.has(type_id):
+		return out
+	var t: Dictionary = loader.unit_types[type_id]
+	var raw: Dictionary = (loader.unit_levels.get(ns.id, {}) as Dictionary).get(String(t["figure"]), {})
+	var q := Sectors.quantity(ns, loader, String(t["line"]), String(t["sector"]))
+	var people := 0.0
+	var tilted := 0.0
+	var term := {}
+	for r in loader.regions.get(ns.id, []):
+		var p := float(ns.region_pop_share.get(r.id, 0.0))
+		term[r.id] = Sectors.regional_quantity(ns, loader, String(t["line"]), String(t["sector"]), r.id) / q if q != 0.0 else 1.0
+		people += p
+		tilted += p * float(term[r.id]) * float(raw.get(r.id, 1.0))
+	var norm := tilted / people if people > 0.0 and tilted > 0.0 else 1.0
 	var weighted := 0.0
 	var weights := 0.0
-	var own := 0.0
 	for r in loader.regions.get(ns.id, []):
+		var level := float(raw.get(r.id, 1.0)) / norm if not raw.is_empty() else 1.0
 		var g := _gain(ns, loader, type_id, r.id, int(placed.get(r.id, 0)))
-		var w := float(ns.region_pop_share.get(r.id, 0.0)) * level(loader, ns.id, figure, r.id)
+		var w := float(ns.region_pop_share.get(r.id, 0.0)) * float(term[r.id]) * level
+		out["level"][r.id] = level
+		out["gain"][r.id] = g
 		weighted += w * g
 		weights += w
-		if r.id == region_id:
-			own = g
-	return own - weighted / weights if weights > 0.0 else own
+	out["mean_gain"] = weighted / weights if weights > 0.0 else 0.0
+	return out
 
 
 ## The gain is linear in the units, so enough of them in one region would take the
@@ -175,11 +208,10 @@ static func _shown(ns, loader, type_id: String, region_id: String, placed: Dicti
 	if not loader.unit_types.has(type_id):
 		return 0.0
 	var t: Dictionary = loader.unit_types[type_id]
-	var line := String(t["line"])
-	var sector := String(t["sector"])
-	return Sectors.regional_quantity(ns, loader, line, sector, region_id) \
-		* level(loader, ns.id, String(t["figure"]), region_id) \
-		* maxf(1.0 + _netted(ns, loader, type_id, region_id, placed), DK.RATIO_FLOOR)
+	var b := _basis(ns, loader, type_id, placed)
+	return Sectors.regional_quantity(ns, loader, String(t["line"]), String(t["sector"]), region_id) \
+		* float((b["level"] as Dictionary).get(region_id, 1.0)) \
+		* maxf(1.0 + float((b["gain"] as Dictionary).get(region_id, 0.0)) - float(b["mean_gain"]), DK.RATIO_FLOOR)
 
 
 static func _buildable(ns, loader, type_id: String) -> Array:

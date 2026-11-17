@@ -23,11 +23,12 @@ extends RefCounted
 ## two files. Projects keep their own register; these rows are what the register's
 ## list reads over both.
 ##
-## THE LEVEL IS STORED RELATIVE (section 2): a region's sourced figure over the
-## population-weighted mean of its nation's regions, so the weighted mean is exactly
-## 1 -- the rule Region.unemployment_rel follows, applied here at load because the
-## figure is Content's raw value, not an importer's ratio. The nation's figure in
-## data/domains stays the single truth; the level only places the regions around it.
+## THE LEVEL IS STORED RAW, in the figure's own unit, and made relative at read
+## (Units.level, T3 on #410): over the mean of the nation's regions weighted by the
+## LIVE people and the priority term, the one basis the screen multiplies, so the
+## shown figures' people-weighted mean stays the nation's after migration too. The
+## nation's figure in data/domains stays the single truth; the level only places the
+## regions around it.
 
 const UK = preload("res://src/sim/units_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -46,7 +47,7 @@ static func load_units(loader, dir: String) -> void:
 	loader.unit_levels = {}
 	loader.unit_cofinancing = {}
 	loader.unit_warnings.clear()
-	loader.unit_potential = potential_rows(loader)
+	loader.unit_potential = potential_rows(loader.project_actions)
 	var da := DirAccess.open(dir)
 	if da == null:
 		return
@@ -87,9 +88,10 @@ static func load_units(loader, dir: String) -> void:
 ## An absent cohesion_category reads as no rate (0 %), the right reading for a region
 ## outside the Union's map, so a member nation whose regions ALL lack one would get
 ## nothing in silence (the parent's ruling on #409): one warning per such nation and
-## organisation, kept on loader.unit_warnings and printed once. A warning, not a load
+## organisation with a stock file, kept on loader.unit_warnings and printed once. A warning, not a load
 ## error, because the categories land in data/regions after this loader does.
 static func warn_uncategorised(loader) -> void:
+	loader.unit_warnings.clear()
 	for org_id in loader.unit_cofinancing:
 		var org = loader.orgs_by_id.get(org_id)
 		if org == null:
@@ -97,8 +99,10 @@ static func warn_uncategorised(loader) -> void:
 		var members: Array = org.members.keys()
 		members.sort()
 		for nation_id in members:
+			# Only a nation the register can build in (T6 on #410): no stock file, no
+			# unit to co-finance, nothing to warn about.
 			var regions: Array = loader.regions.get(nation_id, [])
-			if regions.is_empty():
+			if regions.is_empty() or not loader.unit_stock.has(nation_id):
 				continue
 			var any := false
 			for r in regions:
@@ -154,13 +158,20 @@ static func parse_type(loader, parsed, fname: String, errors: Array[String]) -> 
 	if float(d["capacity"]) <= 0.0 or float(d["staff"]) < 0.0 or float(d["figure_elasticity"]) == 0.0:
 		errors.append("units/%s: 'capacity' must be above 0, 'staff' at least 0, 'figure_elasticity' not 0" % fname)
 		return {}
+	# More capacity always improves the figure (T10 on #410): the sign follows `better`.
+	var lower := String(sector["quantity"]["better"]) == "lower"
+	if (float(d["figure_elasticity"]) < 0.0) != lower:
+		errors.append("units/%s: 'figure_elasticity' must be %s for a figure where %s is better" % [
+			fname, "below 0" if lower else "above 0", sector["quantity"]["better"]])
+		return {}
 	for key in ["cost_eur_m", "running_eur_m"]:
 		var by_nation = d.get(key)
 		if typeof(by_nation) != TYPE_DICTIONARY or (by_nation as Dictionary).is_empty():
 			errors.append("units/%s: '%s' must be {NATION: EUR million}" % [fname, key])
 			return {}
 		for nation in by_nation:
-			if not loader.nations.has(String(nation)) or not _is_number(by_nation[nation]) 					or float(by_nation[nation]) < 0.0 or (key == "cost_eur_m" and float(by_nation[nation]) == 0.0):
+			if not loader.nations.has(String(nation)) or not _is_number(by_nation[nation]) \
+					or float(by_nation[nation]) < 0.0 or (key == "cost_eur_m" and float(by_nation[nation]) == 0.0):
 				errors.append("units/%s: '%s' has a bad entry for '%s'" % [fname, key, nation])
 				return {}
 	if typeof(d.get("cofinanced")) != TYPE_BOOL:
@@ -226,26 +237,18 @@ static func parse_stock(loader, nation_id: String, parsed, types: Dictionary, fn
 			errors.append("units/%s: bad level row %s" % [fname, str(row)])
 			return
 		var by_region: Dictionary = raw.get(figure, {})
+		if by_region.has(region):
+			errors.append("units/%s: two level rows for %s, %s" % [fname, region, figure])
+			return
 		by_region[region] = float(row["level"])
 		raw[figure] = by_region
-	var levels := {}
 	for figure in figures:
-		var by_region: Dictionary = raw.get(figure, {})
-		var weighted := 0.0
-		var people := 0.0
 		for region in shares:
-			if not by_region.has(region):
+			if not (raw.get(figure, {}) as Dictionary).has(region):
 				errors.append("units/%s: figure '%s' has no level for region %s" % [fname, figure, region])
 				return
-			weighted += float(shares[region]) * float(by_region[region])
-			people += float(shares[region])
-		var mean := weighted / people
-		var rel := {}
-		for region in by_region:
-			rel[region] = float(by_region[region]) / mean
-		levels[figure] = rel
 	loader.unit_stock[nation_id] = stock
-	loader.unit_levels[nation_id] = levels
+	loader.unit_levels[nation_id] = raw
 
 
 ## The Union's rule (section 6), refused whole on a bad entry. Returns
@@ -267,6 +270,11 @@ static func parse_cofinancing(loader, parsed, fname: String, errors: Array[Strin
 		if typeof(rates) != TYPE_DICTIONARY or (rates as Dictionary).is_empty():
 			errors.append("units/%s: %s has no 'rates'" % [fname, org_id])
 			return {}
+		# Every category priced (T4 on #410): a missing one would read 0 % in silence.
+		for category in Region.COHESION_CATEGORIES:
+			if not (rates as Dictionary).has(category):
+				errors.append("units/%s: %s has no rate for '%s'" % [fname, org_id, category])
+				return {}
 		for category in rates:
 			if String(category).begins_with("_"):
 				continue
@@ -300,12 +308,17 @@ static func parse_cofinancing(loader, parsed, fname: String, errors: Array[Strin
 
 
 ## Section 8: each project's start terms as a `potential` row, quantity 1, no range
-## width and no overrun odds, so nothing about a project changes.
-static func potential_rows(loader) -> Array:
+## width and no overrun odds, so nothing about a project changes. An action whose
+## terms the verb loader refused (T7 on #410) is skipped: that refusal is already a
+## load error there, and a second read of bad terms here would be a script error.
+static func potential_rows(actions: Array) -> Array:
 	var out: Array = []
-	for action in loader.project_actions:
-		var terms: Dictionary = action.effects.get("project", {})
-		if String(terms.get("op", "")) != "start":
+	for action in actions:
+		var terms = action.effects.get("project", {}) if typeof(action.effects) == TYPE_DICTIONARY else {}
+		if typeof(terms) != TYPE_DICTIONARY or String(terms.get("op", "")) != "start" \
+				or typeof(terms.get("project_id")) != TYPE_STRING or String(terms["project_id"]) == "" \
+				or not _is_number(terms.get("build_months")) or not _is_number(terms.get("cost_pct_gdp")) \
+				or not _is_number(terms.get("potential_growth_pct")):
 			continue
 		out.append({"id": String(terms["project_id"]), "name": String(terms.get("project_name", "")),
 			"payoff": UK.PAYOFF_POTENTIAL, "quantity": 1, "build_months": int(terms["build_months"]),
