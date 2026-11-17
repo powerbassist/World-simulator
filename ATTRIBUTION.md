@@ -108,3 +108,7 @@ The shares and start quantities in `data/domains/*.json`, read on 2026-11-01; ea
 ## Construction register, France (V5.3 c')
 
 `data/units/stock/FRA.json`: lycee enrolment (datasets `fr-en-lycee_gt-effectifs-niveau-sexe-lv`, `fr-en-lycee_pro-effectifs-niveau-sexe-lv`) and teacher full-time equivalents (`fr-en-indicateurs_personnels_etablissements2d`), rentree 2024, from the Ministere de l'Education nationale open data portal (https://data.education.gouv.fr), and the number of health establishments 2021 from DREES, Base ARES (https://data.drees.solidarites-sante.gouv.fr), both under the Licence Ouverte 2.0 (Etalab); hospital beds (`hlth_rs_bdsrg2`) and population (`demo_r_d2jan`) from Eurostat under its re-use policy. Read 2026-11-17.
+
+## Construction register, Germany (V5.3 c')
+
+`data/units/stock/DEU.json`: schools, pupils and teachers by Land for school year 2025/26 from the Statistisches Bundesamt (Destatis) Statistischer Bericht 21111 (allgemeinbildende Schulen) and 21121 (berufliche Schulen), and hospitals and set-up beds by Land in 2025 from the Destatis table `eckzahlen-krankenhaeuser`, under the Datenlizenz Deutschland - Namensnennung - Version 2.0 (https://www.govdata.de/dl-de/by-2-0), source credit (c) Statistisches Bundesamt (Destatis), 2026; population (`demo_r_d2jan`) from Eurostat under its re-use policy. Read 2026-11-17.
