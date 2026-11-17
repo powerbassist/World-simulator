@@ -424,6 +424,7 @@ tests=(
   tests/test_ui_fit.gd
   tests/test_map_ownership.gd
   tests/test_load_hygiene.gd
+  tests/test_game_reload_records.gd
   tests/test_accent_rule.gd
   tests/test_presidency_page.gd
   tests/test_save_load.gd

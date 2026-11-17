@@ -40,7 +40,8 @@ static func offer(inbox) -> void:
 		return
 	var cfg := ConfigFile.new()
 	cfg.load(config_path)  # an absent file is a profile that has seen nothing
-	if _shown_in == null and bool(cfg.get_value(SECTION, KEY, false)):
+	# A freed inbox (the discarded game's) is as good as none: it compares unequal to null.
+	if (_shown_in == null or not is_instance_valid(_shown_in)) and bool(cfg.get_value(SECTION, KEY, false)):
 		return
 	if _shown_in == inbox and inbox.lane_of(_card) != "":
 		return
@@ -62,6 +63,15 @@ static func offer(inbox) -> void:
 static func retire() -> void:
 	if term_read and _shown_in != null and is_instance_valid(_shown_in) and _shown_in.lane_of(_card) != "":
 		_shown_in.dismiss(_card)
+
+
+## A new game, or a load, starts with no note of its own: the inbox it went into is gone, and the
+## profile's flag (config) already says it was seen, so it is not offered again this session.
+## game_reload.gd's reset_statics() calls it (RESET_BY_CALL there).
+static func forget() -> void:
+	_shown_in = null
+	_card = ""
+	term_read = false
 
 
 ## Re-arm the note: the next game shows it, as on a profile that never saw it. The

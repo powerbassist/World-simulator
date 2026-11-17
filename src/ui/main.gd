@@ -797,7 +797,7 @@ func _set_speed_by_hand(speed: int) -> void:
 ## V4.9c. The sound set's warm-up is a worker task, and a task the pool was
 ## given must be waited on before the scene that started it goes.
 func _exit_tree() -> void:
-	Sound.settle()
+	Sound.settle(); GameReload.forget_main(self)  # one line: main.gd is at its size baseline
 
 
 ## Every signal the furniture emits, connected in one place. hud.gd builds and
