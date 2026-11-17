@@ -30,7 +30,7 @@ const KEY := "programme"
 
 ## main's instance id -> the term (terms_served) whose offer the Folder has drawn. main.gd's play
 ## guard asks it (V5.1-0c): the first press of a term opens the file, a press after it has shown the
-## offer runs the clock. GameReload._forget_main erases a main's row with the main.
+## offer runs the clock. GameReload.forget_main erases a main's row (MAIN_KEYED_STATICS).
 static var _seen := {}
 
 
