@@ -348,6 +348,9 @@ func _render_list(entries: Array, offered: Array) -> void:
 		book.tooltip_text = Strings.t(why) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
 		book.pressed.connect(func() -> void: booked.emit(String(o["id"]), date))
 		day_list.add_child(book)
+		# Gate 3 (G3-16): only the person's own days are bookable, and an empty diary read
+		# as broken without the reason beside the button.
+		PanelKit.plain_line(day_list, _offer_line(String(o["id"]), String(o["person"])), PanelKit.Tone.DIM)
 	for e in entries:
 		var row := HBoxContainer.new()
 		day_list.add_child(row)
@@ -367,3 +370,11 @@ func _render_list(entries: Array, offered: Array) -> void:
 			var pid := String(e["call"])
 			call.pressed.connect(func() -> void: call_requested.emit(pid))
 			row.add_child(ActsOn.tag(call, [String(e["subject"])]))
+
+
+func _offer_line(request_id: String, person: String) -> String:
+	var days := PackedStringArray()
+	for date in Audiences.offered_dates(_state, _state.player(), request_id):
+		days.append(DateText.day_month(int(date["day"]), int(date["month"])))
+	return tr_n("%s can see you only on %d day: %s.", "%s can see you only on these %d days: %s.", days.size()) % [
+		person, days.size(), ", ".join(days)]

@@ -230,6 +230,7 @@
    "tests/test_save_cycle.gd",
    "tests/test_voice_playback.gd",
    "tests/test_map_layers.gd",
+   "tests/test_legend_clear.gd",
    "tests/test_map_ground.gd",
    "tests/test_map_labels.gd",
    "tests/test_map_plants.gd",

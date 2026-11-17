@@ -106,6 +106,7 @@ func _process(_delta: float) -> bool:
 			_main._state.day += 1
 		62:
 			_check_the_day_turning_lifts_the_refusal()
+			_check_the_addressed_bill_says_when()
 			_check_a_new_game_drops_the_picks()
 			_check_the_strip_is_not_offered_a_dead_verb()
 			_finish()
@@ -463,6 +464,19 @@ func _check_the_day_turning_lifts_the_refusal() -> void:
 		_fail("the next day, the address is still refused: %s" % _detail_text())
 	if "Not today" in _detail_text():
 		_fail("the next day, the page still says not today")
+
+
+## Gate 3 (G3-25): the bill addressed yesterday read "Not today: already booked for <that
+## date>", a "today" against a date gone by. It says the bill had its address this month.
+func _check_the_addressed_bill_says_when() -> void:
+	_list().select(String(_law.id))
+	var text := _detail_text()
+	if Address.refusal(_main._state, String(_law.id)) == "":
+		_fail("premise: the addressed bill is not refused the next day")
+	if "already booked for" in text:
+		_fail("the addressed bill still reads 'already booked for' a past day: %s" % text)
+	if "This bill had its address this month" not in text:
+		_fail("the addressed bill does not say it had its address this month: %s" % text)
 
 
 func _check_a_new_game_drops_the_picks() -> void:

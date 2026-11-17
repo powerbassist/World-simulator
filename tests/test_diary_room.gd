@@ -182,6 +182,7 @@ func _check(c: Dictionary) -> void:
 	if String(c["path"]) == "busy" and panel._grid.day_list.get_child_count() < 2 + int(c["entries"]):
 		_fail("premise: %s: the picked day does not list its entries beside Book here" % label)
 		return
+	_check_why_these_days(panel, label)
 	_checked += 1
 	var at := book.get_global_rect()
 	var scrolls := 0
@@ -196,6 +197,20 @@ func _check(c: Dictionary) -> void:
 		node = node.get_parent()
 	if scrolls < 2:
 		_fail("%s: Book here sits in %d scroll(s), not the day list's and the page's" % [label, scrolls])
+
+
+## Gate 3 (G3-16): "je ne peux choisir la date, alors que mon agenda apparait vide". Only the
+## days the person offers are bookable, and the day list says so beside its Book here.
+func _check_why_these_days(panel, label: String) -> void:
+	var ns = _main._state.player()
+	var rid := String(_ids[0])
+	var who: String = _main._loader.person_name(String(Audiences.request(ns, rid)["person_id"]))
+	var n: int = Audiences.offered_dates(_main._state, ns, rid).size()
+	var want := "%s can see you only on these %d days" % [who, n]
+	for node in panel._grid.day_list.find_children("*", "Label", true, false):
+		if String((node as Label).text).begins_with(want):
+			return
+	_fail("%s: the day list does not say '%s'" % [label, want])
 
 
 func _finish() -> void:
