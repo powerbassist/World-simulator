@@ -72,6 +72,84 @@
       "type": "fixture_school",
       "units": 10,
       "capacity": 10000
+    },
+    {
+      "region": "FR1",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRB",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRC",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRD",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRE",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRF",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRG",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRH",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRI",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRJ",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRK",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRL",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
+    },
+    {
+      "region": "FRM",
+      "type": "fixture_hospital",
+      "units": 5,
+      "capacity": 5000
     }
   ],
   "levels": [
@@ -139,6 +217,71 @@
       "region": "FRM",
       "figure": "pupils_per_teacher",
       "level": 20.0
+    },
+    {
+      "region": "FR1",
+      "figure": "beds_per_1000",
+      "level": 4.0
+    },
+    {
+      "region": "FRB",
+      "figure": "beds_per_1000",
+      "level": 6.0
+    },
+    {
+      "region": "FRC",
+      "figure": "beds_per_1000",
+      "level": 4.0
+    },
+    {
+      "region": "FRD",
+      "figure": "beds_per_1000",
+      "level": 6.0
+    },
+    {
+      "region": "FRE",
+      "figure": "beds_per_1000",
+      "level": 4.0
+    },
+    {
+      "region": "FRF",
+      "figure": "beds_per_1000",
+      "level": 6.0
+    },
+    {
+      "region": "FRG",
+      "figure": "beds_per_1000",
+      "level": 4.0
+    },
+    {
+      "region": "FRH",
+      "figure": "beds_per_1000",
+      "level": 6.0
+    },
+    {
+      "region": "FRI",
+      "figure": "beds_per_1000",
+      "level": 4.0
+    },
+    {
+      "region": "FRJ",
+      "figure": "beds_per_1000",
+      "level": 6.0
+    },
+    {
+      "region": "FRK",
+      "figure": "beds_per_1000",
+      "level": 4.0
+    },
+    {
+      "region": "FRL",
+      "figure": "beds_per_1000",
+      "level": 6.0
+    },
+    {
+      "region": "FRM",
+      "figure": "beds_per_1000",
+      "level": 4.0
     }
   ]
 }

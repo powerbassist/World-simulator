@@ -22,6 +22,7 @@ const RK = preload("res://src/sim/region_constants.gd")
 
 const FIXTURE := "res://tests/fixtures/units"
 const TYPE := "fixture_school"
+const HOSPITAL := "fixture_hospital"
 
 var _loader
 var _failures: Array[String] = []
@@ -52,6 +53,7 @@ func _init() -> void:
 	_test_a_region_with_no_stock_gains_nothing()
 	_test_fill_by_population()
 	_test_fill_by_need_starts_with_the_worst()
+	_test_a_higher_is_better_figure()
 	_test_the_register_is_saved()
 	_finish()
 
@@ -96,10 +98,14 @@ func _test_the_projects_are_potential_rows() -> void:
 				or float(row["potential_growth_pct"]) != float(terms["potential_growth_pct"]) \
 				or float(row["range_width"]) != 0.0 or float(row["overrun_odds"]) != 0.0:
 			_fail("project %s's potential row is not its own terms: %s" % [terms["project_id"], row])
+		if String(row["name"]) != String(terms["project_name"]):
+			_fail("project %s's potential row is named '%s'" % [terms["project_id"], row["name"]])
 	var potential := 0
 	for row in Units.catalogue(_loader):
 		if String(row["payoff"]) == UK.PAYOFF_POTENTIAL:
 			potential += 1
+	if not Units.row(_loader, "no_such_type").is_empty():
+		_fail("an unknown id reads a row")
 	if starts == 0 or potential != starts:
 		_fail("%d projects, %d potential rows" % [starts, potential])
 
@@ -148,7 +154,7 @@ func _test_bad_rows_are_refused() -> void:
 		_fail("the good fixture row is refused: %s" % [errors])
 	for case in [["capacity", 0], ["sector", "universities"], ["figure", "graduates_per_1000"],
 			["payoff", "network"], ["overrun_odds", 1.5], ["cost_eur_m", {"FRA": -1}],
-			["build_months", 0], ["cofinanced", "yes"], ["bloc_offset_per_pop_share", {"nobody": 1.0}]]:
+			["build_months", 0], ["build_months", 12.5], ["id", "other_school"], ["cofinanced", "yes"], ["bloc_offset_per_pop_share", {"nobody": 1.0}]]:
 		var bad := good.duplicate(true)
 		bad[case[0]] = case[1]
 		errors = []
@@ -172,12 +178,33 @@ func _test_bad_rows_are_refused() -> void:
 			{"stock": [{"region": "UKI", "type": TYPE, "units": 1, "capacity": 10}], "levels": full},
 			{"stock": [{"region": "FR1", "type": "nothing", "units": 1, "capacity": 10}], "levels": full},
 			{"stock": [{"region": "FR1", "type": TYPE, "units": -1, "capacity": 10}], "levels": full},
+			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10},
+				{"region": "FR1", "type": TYPE, "units": 2, "capacity": 20}], "levels": full},
+			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}],
+				"levels": full + [{"region": "FRB", "figure": "pupils_per_teacher", "level": 0.0}]},
 			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}],
 				"levels": [{"region": "FR1", "figure": "pupils_per_teacher", "level": 15.0}]}]:
 		errors = []
 		UnitsLoader.parse_stock(_loader, "FRA", stock, types, "stock/FRA.json", errors)
 		if errors.is_empty():
 			_fail("a bad stock file is accepted: %s" % stock)
+	var unpriced := good.duplicate(true)
+	unpriced["cost_eur_m"] = {"DEU": 50.0}
+	errors = []
+	UnitsLoader.parse_stock(_loader, "FRA", fine, {TYPE: unpriced}, "stock/FRA.json", errors)
+	if errors.is_empty():
+		_fail("a stocked type with no price for the nation is accepted")
+	var cof: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE.path_join("cofinancing.json")))
+	for case in [["warn_months", 0], ["periods", []], ["rates", {"rich": 0.5}], ["rates", {"transition": 1.5}]]:
+		var bad := cof.duplicate(true)
+		bad["organisations"]["eu"][case[0]] = case[1]
+		errors = []
+		if not UnitsLoader.parse_cofinancing(_loader, bad, "cofinancing.json", errors).is_empty() or errors.is_empty():
+			_fail("a co-financing rule with %s = %s is accepted" % [case[0], case[1]])
+	var stranger := {"organisations": {"nobody": cof["organisations"]["eu"]}}
+	errors = []
+	if not UnitsLoader.parse_cofinancing(_loader, stranger, "cofinancing.json", errors).is_empty():
+		_fail("a co-financing rule for an unknown organisation is accepted")
 	# The fixture's own file must be put back: parse_stock writes the loader's registers.
 	UnitsLoader.load_units(_loader, FIXTURE)
 
@@ -315,6 +342,27 @@ func _test_fill_by_need_starts_with_the_worst() -> void:
 			_fail("by need fills a region with no stock")
 	if total != 30:
 		_fail("by need places %d units, not 30" % total)
+
+
+## A beds-per-1000 row is behind when it reads LOWER, and a built hospital raises it.
+func _test_a_higher_is_better_figure() -> void:
+	var state = _state()
+	var ns = state.player()
+	var rows: Array = Units.fill_by_need(ns, _loader, HOSPITAL, 1)
+	var worst := ""
+	var low := INF
+	for region in _named(state):
+		var f := Units.shown_figure(ns, _loader, HOSPITAL, region)
+		if f < low:
+			low = f
+			worst = region
+	if rows.size() != 1 or String(rows[0]["region"]) != worst:
+		_fail("by need puts its first hospital in %s, not the fewest beds, %s" % [rows, worst])
+	var before := Units.shown_figure(ns, _loader, HOSPITAL, "FR1")
+	ns.unit_programmes.assign([{"id": "h1", "type": HOSPITAL, "op": UK.OP_BUILD, "state": UK.STATE_DONE,
+		"rows": [{"region": "FR1", "units": 1}]}])
+	if Units.shown_figure(ns, _loader, HOSPITAL, "FR1") <= before:
+		_fail("a built hospital did not raise FR1's beds")
 
 
 func _test_the_register_is_saved() -> void:

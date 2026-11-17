@@ -1,0 +1,29 @@
+{
+  "_source": "test fixture, not real numbers",
+  "id": "fixture_hospital",
+  "name": "Fixture hospital",
+  "summary": "A test hospital.",
+  "line": "health",
+  "sector": "hospitals",
+  "figure": "beds_per_1000",
+  "payoff": "capacity",
+  "capacity": 500,
+  "figure_elasticity": 1.0,
+  "cost_eur_m": {
+    "FRA": 400.0
+  },
+  "build_months": 60,
+  "running_eur_m": {
+    "FRA": 40.0
+  },
+  "staff": 1000,
+  "overrun_odds": 0.3,
+  "overrun_share": 0.3,
+  "demolish_months": 24,
+  "demolish_cost_share": 0.1,
+  "cofinanced": true,
+  "band_units": 3,
+  "bloc_offset_per_pop_share": {
+    "pensioners": 0.1
+  }
+}
