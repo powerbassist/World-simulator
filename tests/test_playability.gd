@@ -1051,18 +1051,22 @@ func _restore_apply_effects_registers(ns, snap: Dictionary) -> void:
 
 ## B10 (playtest 2026-09-16): the figure was titled "DEFICIT" while its value was
 ## signed -- a surplus printed "+2.1%", a deficit "-10.5%", so "DEFICIT +10.50%"
-## sat on screen contradicting itself. The label is a balance now.
+## sat on screen contradicting itself. The label became a balance; since gate 3 (top bar
+## A) the caption is the word again, DEFICIT or SURPLUS this month, and the figure is
+## the month's euros with no sign: the title and the value can only agree.
 func _check_top_bar_budget_balance_label() -> void:
 	var top_bar = _main._top_bar
 	if top_bar == null:
 		_fail("B10: main.gd built no top bar")
 		return
-	var found := false
-	for node in _descendants(top_bar):
-		if node is Label and node.text == "BUDGET BALANCE":
-			found = true
-	if not found:
-		_fail("B10 REGRESSED: the top bar carries no BUDGET BALANCE label -- the deficit figure reverted to its self-contradicting title")
+	var ns = _main._state.player()
+	var want := "DEFICIT, THIS MONTH" if ns.deficit_pct_gdp > 0.0 else "SURPLUS, THIS MONTH"
+	var caption := String(top_bar._figure_captions["deficit"].text)
+	if caption != want:
+		_fail("B10 REGRESSED: the money's caption reads '%s' for a deficit of %.2f %% of GDP" % [caption, ns.deficit_pct_gdp])
+	var value := String(top_bar._figure_values["deficit"].text)
+	if value.begins_with("+") or value.begins_with("-") or value.begins_with("−"):
+		_fail("B10 REGRESSED: the money's figure carries a sign beside its word: '%s'" % value)
 
 
 ## Pass 19 minor: the empty-desk line printed "closed 0 months ago" in the month a

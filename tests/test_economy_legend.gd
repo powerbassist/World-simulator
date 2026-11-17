@@ -71,12 +71,14 @@ func _run() -> void:
 	elif _caption(growth_box).is_empty():
 		_fail("the growth figure has no caption")
 
-	var bar: String = String(StripReadings.read("deficit", _state, _loader)["text"])
+	# Gate 3: the top bar's money is euros a month in words; the panel keeps the balance as a
+	# signed share of GDP, through the one helper the glossary reads too.
+	var bar: String = StripReadings.balance_share_text(ns)
 	var balance_box = _figure_box(bar)
 	if balance_box == null:
-		_fail("the panel's budget balance does not print the top bar's '%s'" % bar)
-	elif not _caption(balance_box).to_lower().begins_with(_panel.tr(StripReadings.CAPTIONS["deficit"]).to_lower()):
-		_fail("the panel's balance is captioned '%s', not the top bar's name" % _caption(balance_box))
+		_fail("the panel's budget balance does not print the share '%s'" % bar)
+	elif not _caption(balance_box).to_lower().begins_with(_panel.tr("budget balance").to_lower()):
+		_fail("the panel's balance is captioned '%s', not 'budget balance'" % _caption(balance_box))
 
 	# No headline figure left bare: every LEAD or FIGURE label holding a digit sits
 	# in a box with a caption.

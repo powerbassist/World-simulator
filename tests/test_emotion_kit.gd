@@ -159,9 +159,11 @@ func _check_figure_flash() -> void:
 	var cases := [
 		["approval up", "approval", "41%", "43%", UiTheme.GOOD],
 		["approval down", "approval", "43%", "41%", UiTheme.BAD],
-		# The strip's own text: the signed balance, Num.fs(-deficit) ("%+.2f").
-		["deficit up", "deficit", "-4.10%", "-4.60%", UiTheme.BAD],
-		["deficit down", "deficit", "-4.60%", "-4.10%", UiTheme.GOOD],
+		# The strip's own text since gate 3: the month's money in euros, its sign in the
+		# caption, so the reading says which way is good (rising_good).
+		["deficit up", "deficit", "12.3 bn €", "13.1 bn €", UiTheme.BAD, false],
+		["deficit down", "deficit", "13.1 bn €", "12.3 bn €", UiTheme.GOOD, false],
+		["surplus up", "deficit", "1.2 bn €", "2.0 bn €", UiTheme.GOOD, true],
 		["a negative growth deeper", "gdp", "-0.4%", "-1.2%", UiTheme.BAD],
 		["unemployment down", "unemployment", "7.4%", "7.1%", UiTheme.GOOD],
 		["no move", "approval", "41%", "41%", Color(0, 0, 0, 0)],
@@ -169,7 +171,7 @@ func _check_figure_flash() -> void:
 		["a figure with no verdict", "assembly", "289", "301", Color(0, 0, 0, 0)],
 	]
 	for c in cases:
-		var got := TopBar.flash_tone(c[1], c[2], c[3])
+		var got := TopBar.flash_tone(c[1], c[2], c[3], c[5] if c.size() > 5 else null)
 		if got != c[4]:
 			_fail("%s flashes %s, expected %s" % [c[0], got, c[4]])
 

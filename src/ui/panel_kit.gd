@@ -39,6 +39,8 @@ const Num = preload("res://src/ui/num.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const TermText = preload("res://src/ui/term_text.gd")
+const ChartLine = preload("res://src/ui/chart_line.gd")
+const MeterBar = preload("res://src/ui/meter_bar.gd")
 
 ## What a panel prints when it does not know. An em dash is not a small number:
 ## it says the figure is absent, where `0.00` says the figure is zero, and the
@@ -459,3 +461,23 @@ static func _variation(tone: Tone, fallback: String) -> String:
 			return UiTheme.CAPTION
 		_:
 			return fallback
+
+
+## V5.3 (gate 3, top bar A): a curve beside a figure the caller already prints -- the trend
+## in the de-emphasis grey, the current month a dot (ChartLine's spark). `min_span` is the
+## narrowest range drawn, in the figure's units, so a calm series reads calm: without it a
+## 0.03-point wobble fills the box like a cliff. No hover: the figure beside it is the value.
+static func spark(parent: Control, values: PackedFloat64Array, min_span := 1.0) -> Control:
+	var chart := ChartLine.new()
+	chart.setup([{"label": "", "values": values}], [], {"spark": true, "min_span": min_span})
+	parent.add_child(chart)
+	return chart
+
+
+## V5.3 (gate 3, top bar A): `value` of `top` as a thin meter with a tick at `mark`, its
+## threshold (meter_bar.gd). The caller prints the figure and names the mark in words.
+static func meter(parent: Control, value: float, top: float, mark: float) -> Control:
+	var bar := MeterBar.new()
+	parent.add_child(bar)
+	bar.setup(value, top, mark)
+	return bar

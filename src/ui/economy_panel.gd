@@ -226,7 +226,7 @@ func _refresh() -> void:
 
 	# G3: the top bar's own text and name -- a signed balance (surplus +) was
 	# captioned "deficit", at one decimal against the bar's two.
-	PanelKit.figure(_finances, String(StripReadings.read("deficit", _state, _loader)["text"]), tr("budget balance"))
+	PanelKit.figure(_finances, StripReadings.balance_share_text(ns), tr("budget balance"))
 	_trend(_finances, "deficit_pct_gdp")
 	PanelKit.line(_finances, tr("Debt %s%% of GDP.") % Num.f(ns.debt_to_gdp_pct(), 1))
 	_trend(_finances, "debt_to_gdp_pct")

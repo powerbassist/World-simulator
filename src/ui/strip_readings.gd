@@ -39,6 +39,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const UnrestK = preload("res://src/sim/unrest_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const StripSeries = preload("res://src/ui/strip_series.gd")
 
 ## Strip order: standing, money, the economy, the country, the assembly, the clock,
 ## the desk, the world. People left at V4.8b: a count of people the term has moved is
@@ -50,8 +51,8 @@ const Num = preload("res://src/ui/num.gd")
 ## V5.3-0 4.5: the figures that flash in a status tone when they move, and
 ## whether rising is good news -- the same calls as Trends' worse_when_rising for
 ## the four it watches. The rest of the strip moves without a verdict. "deficit"
-## is the one that reads the other way from Trends: the strip shows the signed
-## BALANCE (_deficit, surplus +), so rising is good news there (#222 pass 1).
+## is decided by the reading itself since gate 3 (its `rising_good`): the figure is the
+## SIZE of the deficit or of the surplus, so which way is good depends on which it is.
 const GOOD_WHEN_RISING := {
 	"approval": true, "deficit": true, "gdp": true, "unemployment": false,  # i18n: ok reading ids
 	"inflation": false, "unrest": false,  # i18n: ok reading ids
@@ -79,9 +80,9 @@ static func is_resting(r: Dictionary) -> bool:
 ## B10 (playtest 2026-09-16): "Budget balance", not "Deficit" -- the value is
 ## signed, and "DEFICIT +10.50%" was a live contradiction on screen.
 const CAPTIONS := {
-	"approval": "Approval", "deficit": "Budget balance", "gdp": "GDP",  # i18n: msgid
+	"approval": "Approval", "deficit": "Budget balance", "gdp": "Growth, a year",  # i18n: msgid
 	"unemployment": "Unemployment", "inflation": "Inflation", "unrest": "Unrest",  # i18n: msgid
-	"assembly": "Assembly", "election": "Next vote", "programme": "Programme",  # i18n: msgid
+	"assembly": "Majority", "election": "Next vote", "programme": "Programme",  # i18n: msgid
 	"desk": "Desk", "europe": "Europe", "commodities": "Supplies",  # i18n: msgid
 }
 
@@ -184,25 +185,38 @@ static func _approval(state, ns) -> Dictionary:
 ## is one reading in the tier doc, and a second figure for debt would be a number
 ## the player cannot act on apart from the balance that moves it.
 static func _deficit(state, ns) -> Dictionary:
+	# Gate 3 (G3-10, "i dont know if i got positive or negative flux"): the month's money
+	# in euros, named in words -- the sign moved from the figure into its caption.
+	var balance := StripSeries.balance_bn(ns.deficit_pct_gdp, ns.gdp_eur_bn)
 	var debt_change := Trends.delta(state, "debt_to_gdp_pct", WINDOW)
 	var lines: Array = [
-		_line(Strings.t("Surplus is +, deficit is −.")),
+		_line(Strings.t("%s of GDP over a year.") % balance_share_text(ns)),
 		_line(Strings.t("Debt %.0f Bn, %.0f%% of GDP, %s over %d months.") % [
 			ns.debt_eur_bn, ns.debt_to_gdp_pct(), Trends.change_text(debt_change), WINDOW,
 		], "debt"),
 	]
-	return _reading_lines("%s%%" % Num.fs(-ns.deficit_pct_gdp, 2), lines)
+	var r := _reading_lines(Strings.t("%s bn €") % Num.f(absf(balance), 1), lines)
+	r["caption"] = Strings.t("Deficit, this month") if balance < 0.0 else Strings.t("Surplus, this month")
+	# The figure is the size of the deficit or of the surplus: a bigger deficit is bad news.
+	r["rising_good"] = balance >= 0.0
+	return r
 
 
-## The arrow is GDP's own six-month change -- every arrow on the strip means
-## "this figure, over Trends' window", so one glyph never means two things (the
-## review caught a rate-sign arrow beside approval's change arrow).
+## The balance as a signed share of GDP (surplus +), at two decimals: what the strip
+## printed before gate 3, and what Economy and the glossary's "deficit" term still show
+## (a share of GDP is their unit; the strip's is euros a month).
+static func balance_share_text(ns) -> String:
+	return "%s%%" % Num.fs(-ns.deficit_pct_gdp, 2)
+
+
+## Growth on the tile, the GDP level beside its change: the curve under it is growth's.
 static func _gdp(state, ns) -> Dictionary:
-	var tip := Strings.t("Growth %s%% a year, %s over %d months.") % [
-		Num.f(ns.growth_annual_pct, 2),
-		Trends.change_text(Trends.delta(state, "growth_annual_pct", WINDOW)), WINDOW,
+	var tip := Strings.t("GDP %.0f Bn; growth %s over %d months.") % [
+		ns.gdp_eur_bn, Trends.change_text(Trends.delta(state, "growth_annual_pct", WINDOW)), WINDOW,
 	]
-	return _reading(Strings.t("%.0f Bn%s") % [ns.gdp_eur_bn, _arrow(Trends.delta(state, "gdp_eur_bn", WINDOW))], tip)
+	var r := _reading("%s %%" % Num.fs(ns.growth_annual_pct, 1), tip)
+	r["note"] = Strings.t("GDP %s bn") % Num.f(ns.gdp_eur_bn, 0)
+	return r
 
 
 static func _unemployment(state, ns) -> Dictionary:
@@ -228,7 +242,10 @@ static func _unrest(ns) -> Dictionary:
 	var tip := Strings.t("Grievance %.0f of 100. Organised action at %.0f.") % [
 		ns.unrest_pct, UnrestK.UNREST_THRESHOLD_PCT,
 	]
-	return _reading("%.0f" % ns.unrest_pct, tip, true, "economy" if striking else "")
+	var r := _reading("%.0f" % ns.unrest_pct, tip, true, "economy" if striking else "")
+	r["meter"] = {"value": ns.unrest_pct, "top": 100.0, "mark": UnrestK.UNREST_THRESHOLD_PCT}
+	r["note"] = Strings.t("strikes at %.0f") % UnrestK.UNREST_THRESHOLD_PCT
+	return r
 
 
 ## The margin a president reads: seats beyond the bare majority, signed -- "+0" is
@@ -250,7 +267,11 @@ static func _assembly(ns) -> Dictionary:
 		standing, ns.coalition_seats, ns.assembly_seats, majority,
 	]
 	var troubled: bool = ns.is_cohabitation or ns.is_minority
-	return _reading_lines("%+d" % margin, [_line(tip, "coalition")], true, "majority" if troubled else "")
+	var r := _reading_lines("%+d" % margin, [_line(tip, "coalition")], true, "majority" if troubled else "")
+	r["meter"] = {"value": float(ns.coalition_seats), "top": float(ns.assembly_seats), "mark": float(majority + 1)}
+	# The meter shows the share; the note names its mark (the screen's word budget, #237).
+	r["note"] = Strings.t("needs %d") % (majority + 1)
+	return r
 
 
 ## Count, not date: the number ticking down is the urgency; the Overview's date
