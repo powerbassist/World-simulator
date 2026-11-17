@@ -47,7 +47,7 @@ SPDX-FileCopyrightText = "Ministere de l'Education nationale, DREES, Eurostat"
 SPDX-License-Identifier = "etalab-2.0 AND CC-BY-4.0"
 
 [[annotations]]
-# The German start stock of the construction register (V5.3 c'): schools, pupils, teachers and hospitals by Land from the Statistisches Bundesamt (Datenlizenz Deutschland - Namensnennung 2.0), population from Eurostat (re-use policy, equivalent to CC BY 4.0). The credit is in ATTRIBUTION.md.
+# The German start stock of the construction register (V5.3 c'): schools, pupils, teachers and hospitals by Land from the Statistisches Bundesamt (Datenlizenz Deutschland - Namensnennung 2.0). The credit is in ATTRIBUTION.md.
 path = [
   "data/units/stock/DEU.json",
 ]

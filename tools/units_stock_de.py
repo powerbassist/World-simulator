@@ -9,15 +9,14 @@ tools/units_stock_fr.py; every number is a raw cell of a Destatis file.
 
 Sources (read 2026-11-17), described in the file's `_source`:
   schools, pupils, teachers   Destatis Statistischer Bericht 21111 and 21121, school year 2025/26 (xlsx, CSV sheets)
-  hospitals, set-up beds      Destatis table "Krankenhaeuser 2025 nach Traegern und Bundeslaendern" (a live HTML page)
-  population                  Eurostat demo_r_d2jan, 1 January 2025, NUTS 1
+  hospitals, beds, beds per 100 000, general hospitals
+                              Destatis Statistischer Bericht "Grunddaten der Krankenhaeuser - Bundeslaender" (2025),
+                              tables 23111-b02 and 23111-b14 (the beds per head use Destatis's own population)
 The report URLs carry a version number (v=3 here); a replaced report is a new read.
 """
 import gzip
-import html
 import io
 import json
-import re
 import sys
 import urllib.request
 from pathlib import Path
@@ -27,7 +26,8 @@ OUT = ROOT / "data" / "units" / "stock" / "DEU.json"
 BASE = "https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bildung-Forschung-Kultur/Schulen/Publikationen/Downloads-Schulen/"
 GENERAL = BASE + "statistischer-bericht-allgemeinbildende-schulen-2110100267005.xlsx?__blob=publicationFile&v=3"
 VOCATIONAL = BASE + "statistischer-bericht-berufliche-schulen-2110200267005.xlsx?__blob=publicationFile&v=3"
-HOSPITALS = "https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Gesundheit/Krankenhauser/Tabellen/eckzahlen-krankenhaeuser.html"
+HOSPITALS = ("https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Gesundheit/Krankenhauser/Publikationen/Downloads-Krankenhaeuser/"
+             "statistischer-bericht-grunddaten-krankenhaeuser-bundeslaender-2120611257005.xlsx?__blob=publicationFile&v=4")
 LAND = {"Baden-Württemberg": "DE1", "Bayern": "DE2", "Berlin": "DE3", "Brandenburg": "DE4", "Bremen": "DE5",
         "Hamburg": "DE6", "Hessen": "DE7", "Mecklenburg-Vorpommern": "DE8", "Niedersachsen": "DE9",
         "Nordrhein-Westfalen": "DEA", "Rheinland-Pfalz": "DEB", "Saarland": "DEC", "Sachsen": "DED",
@@ -78,60 +78,97 @@ def schools() -> tuple:
     return units, pupils, taught, teachers
 
 
-def hospitals() -> dict:
-    text = html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "|", get(HOSPITALS).decode("utf8", "ignore"))))
-    parts = re.sub(r"(\| ?)+", "|", text).split("|")
-    out = {}
-    for name, gid in LAND.items():
-        i = parts.index(name)
-        out[gid] = (int(re.sub(r"\D", "", parts[i + 1])), int(re.sub(r"\D", "", parts[i + 2])))
-    return out
-
-
-def population() -> dict:
-    d = json.loads(get("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_d2jan"
-                       "?format=JSON&lang=EN&time=2025&sex=T&age=TOTAL"))
-    geo = d["dimension"]["geo"]["category"]["index"]
-    return {g: d["value"][str(i)] for g, i in geo.items() if g in LAND.values()}
+def hospitals() -> tuple:
+    """Per Land from the Destatis report 'Grunddaten der Krankenhaeuser - Bundeslaender' (2025): hospitals,
+    set-up beds and beds per 100 000 inhabitants (table 23111-b02), and the Allgemeine Krankenhaeuser
+    (23111-b14), the general full-service hospitals whose mean size is the catalogue's capacity. The formatted
+    sheets are read, not the csv ones: csv-23111-b02 has no Sachsen-Anhalt rows."""
+    import openpyxl
+    book = openpyxl.load_workbook(io.BytesIO(get(HOSPITALS)), data_only=True)
+    total, beds, per_100k, general_n, general_beds = {}, {}, {}, {}, {}
+    for r in book["23111-b02"].iter_rows(min_row=5, values_only=True):
+        if r[0] == "Deutschland" or r[0] in LAND:
+            total[r[0]], beds[r[0]], per_100k[r[0]] = r[1], r[2], r[3]
+    for r in book["23111-b14"].iter_rows(min_row=5, values_only=True):
+        if r[0] == "Deutschland" or r[0] in LAND:
+            general_n[r[0]], general_beds[r[0]] = r[1], r[6]
+    assert len(total) == 17 and len(general_n) == 17, "a Land is missing from the hospital tables"
+    return total, beds, per_100k, general_n, general_beds
 
 
 def build() -> dict:
     units, pupils, taught, teachers = schools()
-    hosp, pop = hospitals(), population()
-    stock, levels = [], []
+    total, beds, per_100k, general_n, general_beds = hospitals()
+    stock, ratios, bed_levels = [], [], []
+    tp = tt = 0
     for name, gid in LAND.items():
         u = sum(units.get((name, k), 0) for k in KEYS)
         cap = sum(pupils.get((name, k), 0) for k in KEYS)
         paired = [k for k in KEYS if teachers.get((name, k))]  # a type without a teacher figure leaves the level only
-        ratio = sum(taught.get((name, k), 0) for k in paired) / sum(teachers[(name, k)] for k in paired)
-        hu, hb = hosp[gid]
+        p, t = sum(taught.get((name, k), 0) for k in paired), sum(teachers[(name, k)] for k in paired)
+        tp, tt = tp + p, tt + t
         stock.append({"region": gid, "type": "upper_secondary_school", "units": u, "capacity": cap})
-        stock.append({"region": gid, "type": "hospital", "units": hu, "capacity": hb})
-        levels.append({"region": gid, "figure": "pupils_per_teacher", "level": round(ratio, 2)})
-        levels.append({"region": gid, "figure": "beds_per_1000", "level": round(hb / pop[gid] * 1000, 2)})
-    assert sum(r["units"] for r in stock if r["type"] == "hospital") == 1807, "hospitals differ from Destatis's Deutschland row"
-    assert sum(r["capacity"] for r in stock if r["type"] == "hospital") == 468803, "beds differ from Destatis's Deutschland row"
+        stock.append({"region": gid, "type": "hospital", "units": total[name], "capacity": beds[name]})
+        ratios.append({"region": gid, "level": round(p / t, 2)})
+        bed_levels.append({"region": gid, "level": round(per_100k[name] / 100, 2)})
+    assert sum(r["units"] for r in stock if r["type"] == "hospital") == total["Deutschland"] == 1807, "hospitals"
+    assert sum(r["capacity"] for r in stock if r["type"] == "hospital") == beds["Deutschland"] == 468803, "beds"
     for k in KEYS:  # each school type's 16 Laender add up to the Deutschland row
         for table in (units, pupils, teachers):
             land = sum(v for (l, kk), v in table.items() if kk == k and l != "Deutschland")
             nat = table.get(("Deutschland", k))
             # the national Gymnasium teacher row is split in two labels, G8 and the rest
             assert nat is None or nat == land or (k == "gym" and table is teachers), (k, nat, land)
+    figures = {
+        "upper_secondary_school": {"figure": "upper_secondary_pupils_per_teacher", "national": round(tp / tt, 2), "levels": ratios},
+        "hospital": {"figure": "hospital_beds_per_1000", "national": round(per_100k["Deutschland"] / 100, 2), "levels": bed_levels}}
+    capacity = {"upper_secondary_school": round(sum(r["capacity"] for r in stock if r["type"] == "upper_secondary_school")
+                                               / sum(r["units"] for r in stock if r["type"] == "upper_secondary_school")),
+                "hospital": round(general_beds["Deutschland"] / general_n["Deutschland"])}
+    print("catalogue capacity per new unit:", capacity, "(general hospitals", general_n["Deutschland"], "with",
+          general_beds["Deutschland"], "beds)")
     print("schools", sum(r["units"] for r in stock if r["type"] == "upper_secondary_school"),
           "pupils", sum(r["capacity"] for r in stock if r["type"] == "upper_secondary_school"),
-          "| hospitals 1807, beds 468803 (match Destatis)")
-    return {"stock": stock, "levels": levels}
+          "| hospitals 1807, beds 468803 (match Destatis's Deutschland row)")
+    return {"stock": stock, "figures": figures, "capacity": capacity}
+
+
+def check_levels(figures: dict, nation: str = "DEU", tolerance: float = 0.03) -> None:
+    """The loader refuses a file whose levels, weighted by data/regions `share`, miss `national` by over 3 %."""
+    regions = json.loads((ROOT / "data" / "regions" / (nation + ".json")).read_text(encoding="utf8"))["regions"]
+    share = {r["id"]: r["share"] for r in regions}
+    for t, f in figures.items():
+        mean = sum(share[x["region"]] * x["level"] for x in f["levels"]) / sum(share[x["region"]] for x in f["levels"])
+        off = abs(mean / f["national"] - 1)
+        print("level check %s: weighted mean %.3f against national %s (%.1f %%)" % (t, mean, f["national"], off * 100))
+        assert off <= tolerance, t
+
+
+def render(source: str, built: dict) -> str:
+    """The file's text: one row a line, the `_source` kept as it stands."""
+    rows = ",\n".join("    " + json.dumps(r, ensure_ascii=False) for r in built["stock"])
+    figures = []
+    for t, f in built["figures"].items():
+        levels = ",\n".join("      " + json.dumps(r) for r in f["levels"])
+        figures.append('    "%s": {"figure": "%s", "national": %s, "levels": [\n%s\n    ]}' % (t, f["figure"], f["national"], levels))
+    return ('{\n  "_source": ' + json.dumps(source, ensure_ascii=False) + ',\n  "stock": [\n' + rows
+            + '\n  ],\n  "figures": {\n' + ",\n".join(figures) + "\n  }\n}\n")
 
 
 def main() -> int:
     built = build()
+    check_levels(built["figures"])
+    have = json.loads(OUT.read_text(encoding="utf8"))
+    if "--write" in sys.argv:
+        OUT.write_text(render(have["_source"], built), encoding="utf8", newline="\n")
+        return 0
     if "--check" in sys.argv:
-        have = json.loads(OUT.read_text(encoding="utf8"))
-        same = have["stock"] == built["stock"] and have["levels"] == built["levels"]
+        same = have["stock"] == built["stock"] and have.get("figures") == built["figures"]
         print("data/units/stock/DEU.json", "matches" if same else "DIFFERS from", "the sources as read now")
         return 0 if same else 1
-    for r in built["stock"] + built["levels"]:
+    for r in built["stock"]:
         print(r)
+    print(json.dumps(built["figures"], indent=1))
     return 0
 
 

@@ -1,5 +1,5 @@
 {
-  "_source": "Germany, 16 Laender = the 16 game regions (DE1 to DEG). upper_secondary_school: units = schools, capacity = enrolled pupils (not places: no body publishes places), school year 2025/26, Statistisches Bundesamt (Destatis), Statistischer Bericht 'Allgemeinbildende Schulen' (21111, file statistischer-bericht-allgemeinbildende-schulen-2110100267005.xlsx, tables 21111-01, -03, -18) and 'Berufliche Schulen und Schulen des Gesundheitswesens - Grunddaten' (21121, file statistischer-bericht-berufliche-schulen-2110200267005.xlsx, tables 21121-01, -02, -11), public and private. The set of school types is the one that is upper secondary in every Land: Gymnasien (units = all Gymnasien; capacity counts only their Sekundarbereich II pupils, because a Gymnasium also teaches lower secondary), Fachgymnasien, Fachoberschulen, Berufsoberschulen/Technische Oberschulen (Bayern reports no Fachgymnasien; it has Fach- and Berufsoberschulen instead) and Teilzeit-Berufsschulen (the school half of the dual apprenticeship, the counterpart of the French lycee professionnel); Teilzeit-Berufsschule pupils attend part of the week, so they weigh about 58% of the capacity in headcount terms, not in seat terms; capacity (Sekundarbereich II pupils of Gymnasien) and the pupils_per_teacher numerator (all their pupils) are different bases. Berufsfachschulen, Fachschulen, Fachakademien and the prevocational years are left out. Mecklenburg-Vorpommern's Gymnasium teachers are filed under 'Gymnasien (G8)' and are read from there. pupils_per_teacher: all pupils of those school types (every grade) over their teachers, headcount of full- and part-time teachers (Destatis publishes no full-time equivalents in these tables); a school type with no teacher figure in a Land (Brandenburg's Fachgymnasien and Fachoberschulen, Rheinland-Pfalz's Fachoberschulen, Mecklenburg-Vorpommern's Fachoberschulen) is left out of the level only, not out of the stock. hospital: units = hospitals (Krankenhaeuser) and capacity = set-up beds (aufgestellte Betten) per Land in 2025, Destatis table 'Krankenhaeuser 2025 nach Traegern und Bundeslaendern' (https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Gesundheit/Krankenhauser/Tabellen/eckzahlen-krankenhaeuser.html, a live page, last updated 10 September 2026; the 16 rows were copied as read). beds_per_1000 = those beds over the Land's population on 1 January 2025, Eurostat demo_r_d2jan (sex T, age TOTAL, NUTS 1). Self-checks: the 16 Laender sum to Destatis's Deutschland rows for every school type (schools 6 485, pupils 2 236 577 with the Gymnasium Sekundarbereich II count, teachers) and to the national 1 807 hospitals and 468 803 beds. Licence: Datenlizenz Deutschland - Namensnennung - Version 2.0 (Destatis, GENESIS-Online content), Eurostat's re-use policy. Read 2026-11-17. A level is the region's own value in the figure's unit; the loader normalises it.",
+  "_source": "Germany, 16 Laender = the 16 game regions (DE1 to DEG). upper_secondary_school: units = schools, capacity = enrolled pupils (not places: no body publishes places), school year 2025/26, Statistisches Bundesamt (Destatis), Statistischer Bericht 'Allgemeinbildende Schulen' (21111, file statistischer-bericht-allgemeinbildende-schulen-2110100267005.xlsx, tables 21111-01, -03, -18) and 'Berufliche Schulen und Schulen des Gesundheitswesens - Grunddaten' (21121, file statistischer-bericht-berufliche-schulen-2110200267005.xlsx, tables 21121-01, -02, -11), public and private. The set of school types is the one that is upper secondary in every Land: Gymnasien (units = all Gymnasien; capacity counts only their Sekundarbereich II pupils, because a Gymnasium also teaches lower secondary), Fachgymnasien, Fachoberschulen, Berufsoberschulen/Technische Oberschulen (Bayern reports no Fachgymnasien; it has Fach- and Berufsoberschulen instead) and Teilzeit-Berufsschulen (the school half of the dual apprenticeship, the counterpart of the French lycee professionnel); Teilzeit-Berufsschule pupils attend part of the week, so they weigh about 58% of the capacity in headcount terms, not in seat terms; capacity (Sekundarbereich II pupils of Gymnasien) and the pupils_per_teacher numerator (all their pupils) are different bases. Berufsfachschulen, Fachschulen, Fachakademien and the prevocational years are left out. Mecklenburg-Vorpommern's Gymnasium teachers are filed under 'Gymnasien (G8)' and are read from there. upper_secondary_pupils_per_teacher: all pupils of those school types (every grade) over their teachers, headcount of full- and part-time teachers (Destatis publishes no full-time equivalents in these tables); a school type with no teacher figure in a Land (Brandenburg's Fachgymnasien and Fachoberschulen, Rheinland-Pfalz's Fachoberschulen, Mecklenburg-Vorpommern's Fachoberschulen) is left out of the level only, not out of the stock. hospital: units = hospitals (Krankenhaeuser) and capacity = set-up beds (aufgestellte Betten) per Land in 2025, Destatis, Statistischer Bericht 'Grunddaten der Krankenhaeuser - Bundeslaender' (file statistischer-bericht-grunddaten-krankenhaeuser-bundeslaender-2120611257005.xlsx, table 23111-b02, Destatis's own sheet; its csv sheet omits Sachsen-Anhalt and is not used). hospital_beds_per_1000 = the same table's beds per 100 000 inhabitants over 100 (Destatis's population base), its Deutschland row for the national value. The catalogue's capacity for a hospital is the mean of the general hospitals (Allgemeine Krankenhaeuser, table 23111-b14: 420 922 beds in 1 452 hospitals = 290). Self-checks: the 16 Laender sum to Destatis's Deutschland rows for every school type (schools 6 485, pupils 2 236 577 with the Gymnasium Sekundarbereich II count, teachers) and to the national 1 807 hospitals and 468 803 beds. Each type's `figures` entry is its own figure from one table and one scope: `national` for upper_secondary_pupils_per_teacher is the 16 Laender's pupils over their teachers (15.08) and for hospital_beds_per_1000 the Deutschland row (5.61); the levels weighted by the regions' `share` give those back within 0.1 % (the loader's tolerance is 3 %). Licence: Datenlizenz Deutschland - Namensnennung - Version 2.0 (Destatis). Read 2026-11-17. A level is the region's own value in the figure's unit.",
   "stock": [
     {"region": "DE1", "type": "upper_secondary_school", "units": 1033, "capacity": 324249},
     {"region": "DE1", "type": "hospital", "units": 231, "capacity": 52081},
@@ -34,38 +34,42 @@
     {"region": "DEG", "type": "upper_secondary_school", "units": 184, "capacity": 47623},
     {"region": "DEG", "type": "hospital", "units": 46, "capacity": 14899}
   ],
-  "levels": [
-    {"region": "DE1", "figure": "pupils_per_teacher", "level": 14.53},
-    {"region": "DE1", "figure": "beds_per_1000", "level": 4.63},
-    {"region": "DE2", "figure": "pupils_per_teacher", "level": 15.0},
-    {"region": "DE2", "figure": "beds_per_1000", "level": 5.53},
-    {"region": "DE3", "figure": "pupils_per_teacher", "level": 15.18},
-    {"region": "DE3", "figure": "beds_per_1000", "level": 5.47},
-    {"region": "DE4", "figure": "pupils_per_teacher", "level": 12.83},
-    {"region": "DE4", "figure": "beds_per_1000", "level": 5.81},
-    {"region": "DE5", "figure": "pupils_per_teacher", "level": 17.43},
-    {"region": "DE5", "figure": "beds_per_1000", "level": 5.57},
-    {"region": "DE6", "figure": "pupils_per_teacher", "level": 15.47},
-    {"region": "DE6", "figure": "beds_per_1000", "level": 7.0},
-    {"region": "DE7", "figure": "pupils_per_teacher", "level": 14.57},
-    {"region": "DE7", "figure": "beds_per_1000", "level": 5.54},
-    {"region": "DE8", "figure": "pupils_per_teacher", "level": 15.98},
-    {"region": "DE8", "figure": "beds_per_1000", "level": 6.49},
-    {"region": "DE9", "figure": "pupils_per_teacher", "level": 16.13},
-    {"region": "DE9", "figure": "beds_per_1000", "level": 4.96},
-    {"region": "DEA", "figure": "pupils_per_teacher", "level": 15.37},
-    {"region": "DEA", "figure": "beds_per_1000", "level": 6.11},
-    {"region": "DEB", "figure": "pupils_per_teacher", "level": 14.68},
-    {"region": "DEB", "figure": "beds_per_1000", "level": 5.43},
-    {"region": "DEC", "figure": "pupils_per_teacher", "level": 13.97},
-    {"region": "DEC", "figure": "beds_per_1000", "level": 6.3},
-    {"region": "DED", "figure": "pupils_per_teacher", "level": 14.2},
-    {"region": "DED", "figure": "beds_per_1000", "level": 5.91},
-    {"region": "DEE", "figure": "pupils_per_teacher", "level": 16.62},
-    {"region": "DEE", "figure": "beds_per_1000", "level": 6.33},
-    {"region": "DEF", "figure": "pupils_per_teacher", "level": 16.34},
-    {"region": "DEF", "figure": "beds_per_1000", "level": 5.22},
-    {"region": "DEG", "figure": "pupils_per_teacher", "level": 14.77},
-    {"region": "DEG", "figure": "beds_per_1000", "level": 7.09}
-  ]
+  "figures": {
+    "upper_secondary_school": {"figure": "upper_secondary_pupils_per_teacher", "national": 15.08, "levels": [
+      {"region": "DE1", "level": 14.53},
+      {"region": "DE2", "level": 15.0},
+      {"region": "DE3", "level": 15.18},
+      {"region": "DE4", "level": 12.83},
+      {"region": "DE5", "level": 17.43},
+      {"region": "DE6", "level": 15.47},
+      {"region": "DE7", "level": 14.57},
+      {"region": "DE8", "level": 15.98},
+      {"region": "DE9", "level": 16.13},
+      {"region": "DEA", "level": 15.37},
+      {"region": "DEB", "level": 14.68},
+      {"region": "DEC", "level": 13.97},
+      {"region": "DED", "level": 14.2},
+      {"region": "DEE", "level": 16.62},
+      {"region": "DEF", "level": 16.34},
+      {"region": "DEG", "level": 14.77}
+    ]},
+    "hospital": {"figure": "hospital_beds_per_1000", "national": 5.61, "levels": [
+      {"region": "DE1", "level": 4.63},
+      {"region": "DE2", "level": 5.53},
+      {"region": "DE3", "level": 5.46},
+      {"region": "DE4", "level": 5.82},
+      {"region": "DE5", "level": 5.56},
+      {"region": "DE6", "level": 6.98},
+      {"region": "DE7", "level": 5.55},
+      {"region": "DE8", "level": 6.49},
+      {"region": "DE9", "level": 4.97},
+      {"region": "DEA", "level": 6.12},
+      {"region": "DEB", "level": 5.44},
+      {"region": "DEC", "level": 6.31},
+      {"region": "DED", "level": 5.92},
+      {"region": "DEE", "level": 6.36},
+      {"region": "DEF", "level": 5.22},
+      {"region": "DEG", "level": 7.13}
+    ]}
+  }
 }
