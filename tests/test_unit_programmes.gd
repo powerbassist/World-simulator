@@ -49,6 +49,7 @@ func _init() -> void:
 	_test_the_running_cost_moves_the_nation_by_the_lever()
 	_test_a_closure_saves_its_running_cost()
 	_test_the_game_month_runs_it()
+	_test_the_gap_pass_leads()
 	_finish()
 
 
@@ -202,6 +203,9 @@ func _test_the_vote_draws_a_contract_inside_the_range() -> void:
 			break
 		low = minf(low, c)
 		high = maxf(high, c)
+	var bare: Dictionary = UnitBuild.open(state, ns, _loader, _build([{"region": "FRB", "units": 1}]))
+	if float(bare["contract_eur_m"]) <= 0.0:
+		_fail("a row with no quote opens at %s" % bare.get("contract_eur_m"))
 	if low > lo + 0.1 * (hi - lo) or high < hi - 0.1 * (hi - lo):
 		_fail("200 draws span only [%.4f, %.4f] of [%.4f, %.4f]" % [low, high, lo, hi])
 
@@ -277,6 +281,65 @@ func _test_the_game_month_runs_it() -> void:
 	WorldMonth.tick_month(state, _loader)
 	if int(ns.unit_programmes[0]["months_left"]) != 35:
 		_fail("a game month did not advance the build: %s" % ns.unit_programmes[0])
+
+
+## The GLM test-gap pass's leads on #413, each checked against the diff.
+func _test_the_gap_pass_leads() -> void:
+	var state = _state()
+	var ns = state.player()
+	if UnitBuild.refusal(state, ns, _loader, [{"type": TYPE, "op": "gift", "rows": [{"region": "FR1", "units": 1}]}]) == "":
+		_fail("an unknown op is legal")
+	# A closure under way counts toward what stands.
+	ns.unit_programmes.assign([{"id": "d", "type": TYPE, "op": UK.OP_DEMOLISH, "state": UK.STATE_BUILDING,
+		"voted": UnitBuild.now(state), "rows": [{"region": "FR1", "units": 9}]}])
+	if UnitBuild.refusal(state, ns, _loader, [{"type": TYPE, "op": UK.OP_DEMOLISH, "rows": [{"region": "FR1", "units": 2}]}]) == "":
+		_fail("closing 2 more of 10 while 9 are being closed is legal")
+	# A programme voted more than CONC_MONTHS ago no longer counts toward concentration.
+	var fresh := UnitPrice.quote(_state(), _state().player(), _loader, _build([{"region": "FR1", "units": 1}]))
+	ns.unit_programmes.assign([{"id": "o", "type": TYPE, "op": UK.OP_BUILD, "state": UK.STATE_DONE,
+		"voted": UnitBuild.now(state) - UK.UNIT_CONC_MONTHS - 1, "rows": [{"region": "FR1", "units": 3}]}])
+	var stale := UnitPrice.quote(state, ns, _loader, _build([{"region": "FR1", "units": 1}]))
+	if float(stale["estimate_eur_m"]) != float(fresh["estimate_eur_m"]):
+		_fail("an old programme still raises the price: %.4f vs %.4f" % [float(stale["estimate_eur_m"]), float(fresh["estimate_eur_m"])])
+	# An illegal row does not table.
+	state = _state()
+	ns = state.player()
+	var refused := FinanceBill.table(state, _loader, {FinanceRows.UNITS: [_build([{"region": "UKI", "units": 1}])]})
+	if bool(refused.get("tabled", false)) or not ns.tabled_bill.is_empty():
+		_fail("an illegal units row tabled: %s" % refused)
+	# Two rows on one line add up on the bill's line map.
+	var text := FinanceBill.drafted(state, _loader, {FinanceRows.UNITS: [_build([{"region": "FR1", "units": 1}]), _build([{"region": "FRB", "units": 1}])]})
+	var sum := float(text[FinanceRows.UNITS][0]["quote"]["line_pct_gdp_year"]) + float(text[FinanceRows.UNITS][1]["quote"]["line_pct_gdp_year"])
+	if absf(float(text[FinanceRows.UNITS_COST]["education"]) - sum) > 1e-12:
+		_fail("the line map holds %.6f, not the rows' sum %.6f" % [float(text[FinanceRows.UNITS_COST]["education"]), sum])
+	# A row legal at tabling and illegal at the vote is skipped and named.
+	var closing := FinanceBill.drafted(state, _loader, {FinanceRows.UNITS: [{"type": TYPE, "op": UK.OP_DEMOLISH, "rows": [{"region": "FR1", "units": 10}]}]})
+	ns.unit_programmes.assign([{"id": "e", "type": TYPE, "op": UK.OP_DEMOLISH, "state": UK.STATE_DONE,
+		"voted": 0, "rows": [{"region": "FR1", "units": 5}]}])
+	var skipped: Array = FinanceRows.apply(state, _loader, ns, closing)
+	if ns.unit_programmes.size() != 1 or skipped.is_empty() or String(skipped[0].get("units", "")) != TYPE:
+		_fail("a row no longer legal at the vote was not skipped: %s, %d programmes" % [skipped, ns.unit_programmes.size()])
+	# A closure's quote: no range, no odds, a cut of its line.
+	var q := UnitPrice.quote(state, ns, _loader, {"type": TYPE, "op": UK.OP_DEMOLISH, "rows": [{"region": "FRB", "units": 2}]})
+	if float(q["lo_eur_m"]) != float(q["estimate_eur_m"]) or float(q["hi_eur_m"]) != float(q["estimate_eur_m"]) 			or float(q["odds"]) != 0.0 or float(q["width"]) != 0.0 or float(q["line_pct_gdp_year"]) >= 0.0:
+		_fail("a closure's quote has a range, odds or a rise: %s" % q)
+	# The capital term is in the budget, and two lines run side by side.
+	state = _state()
+	ns = state.player()
+	ns.unit_programmes.assign([
+		{"id": "s", "type": TYPE, "op": UK.OP_BUILD, "state": UK.STATE_DONE, "voted": 0, "rows": [{"region": "FR1", "units": 1}]},
+		{"id": "h", "type": "fixture_hospital", "op": UK.OP_BUILD, "state": UK.STATE_DONE, "voted": 0, "rows": [{"region": "FR1", "units": 1}]}])
+	UnitBuild.tick_month(state, _loader)
+	if ns.unit_running_pct_gdp.size() != 2 or absf(ns.unit_running_total_pct_gdp()
+			- float(ns.unit_running_pct_gdp["education"]) - float(ns.unit_running_pct_gdp["health"])) > 1e-15:
+		_fail("two lines' running costs read %s" % ns.unit_running_pct_gdp)
+	ns.unit_bill_pct_gdp = 1.0
+	Budget.recompute(state, ns)
+	var with_bill: float = ns.total_spending_pct_gdp
+	ns.unit_bill_pct_gdp = 0.0
+	Budget.recompute(state, ns)
+	if absf(with_bill - ns.total_spending_pct_gdp - 1.0) > 1e-9:
+		_fail("the capital line is not in the budget: %.6f vs %.6f" % [with_bill, ns.total_spending_pct_gdp])
 
 
 func _fail(message: String) -> void:

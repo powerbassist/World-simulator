@@ -80,8 +80,10 @@ static func standing(ns, loader, type_id: String, region: String) -> int:
 ## The vote carried: the row becomes a programme. Its contract price is drawn once,
 ## uniformly inside the range its quote showed at tabling (Cycle.unit on its id, the
 ## game's seed salted in), so it is inside the range in every run by construction.
+## A row reaching the vote without a quote (built by hand, not through
+## FinanceBill.drafted) is quoted now, so the vote never reads a missing range.
 static func open(state, ns, loader, row: Dictionary) -> Dictionary:
-	var q: Dictionary = row["quote"]
+	var q: Dictionary = row["quote"] if row.has("quote") else UnitPrice.quote(state, ns, loader, row)
 	var id := "%s:%d:%d" % [String(row["type"]), now(state), ns.unit_programmes.size()]
 	var u := Cycle.unit(Cycle.salted("unit|%s|price" % id, int(ns.draw_seed)), 0)
 	var contract := float(q["lo_eur_m"]) + u * (float(q["hi_eur_m"]) - float(q["lo_eur_m"]))
