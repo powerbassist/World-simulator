@@ -41,6 +41,7 @@ const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const MoodBadge = preload("res://src/ui/mood_badge.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 
 ## What the country wants: the two issues the Overview kept.
 const TOP_ISSUE_COUNT := 2
@@ -77,6 +78,9 @@ var _term_head: Label
 var _approval_lane: Control
 var _approval_figure: Label
 var _goal_doors: Array = []
+## S3 pass 2 T4: the programme lane a Go asked for ("" = the first, null = none): focused and scrolled to
+## on the next build, since the build frees the doors the page had.
+var _wanted_goal = null
 var _majority_door: Button
 var _open_box: VBoxContainer
 var _open_rows: Array = []
@@ -164,6 +168,14 @@ func setup(state, loader) -> void:
 
 func mark_dirty() -> void:
 	_dirty = true
+
+
+## A programme Go's landing (T4): the lane of `entry_id` ("" for the programme's first lane) takes the
+## focus and is scrolled into view on the next build -- the page open is not the answer, the lane is.
+func focus_goal(entry_id: String) -> void:
+	_wanted_goal = entry_id
+	_dirty = true
+
 
 
 ## The chief's read, from the month the briefing driver keeps: {lines, who, face, said}
@@ -284,8 +296,13 @@ func _fill_term(ns) -> void:
 	if lanes.is_empty():
 		var to_choose := not Programme.available(_state, ns, _loader).is_empty()
 		var gutter := _gutter(tr("Programme"), tr("To choose") if to_choose else tr("None this term"))
-		_lane_row(gutter, _lane(TermLane.Kind.NOTE, past.size(), ahead, {"text":
-			tr("One goal, judged at the vote.") if to_choose else ""}), "agenda" if to_choose else "")
+		gutter.tooltip_text = (TermReads.unset_rule(ns) + TermReads.record_text(ns, _loader)) if not to_choose else TermReads.record_text(ns, _loader).strip_edges()
+		# T5 (b, c): mid-term the rule and the date it next opens, and the campaign that runs to it.
+		_goal_doors.append(_lane_row(gutter, _lane(TermLane.Kind.NOTE, past.size(), ahead, {"text":
+			tr("One goal, judged at the vote.") if to_choose else TermReads.unset_line(ns)}),
+			"programme" if to_choose else ("" if Programme.is_term_start(ns) else "campaign")).get_child(2))
+	PresidencyRows.land(_goal_doors, _wanted_goal)
+	_wanted_goal = null
 	_fill_majority(ns)
 	_fill_state(ns)
 
@@ -342,6 +359,8 @@ func _fill_goal(lane: Dictionary, past: int, ahead: int) -> void:
 	_one_line(PanelKit.plain_line(bar_row, word, tone))
 	var row := _lane_row(gutter, _lane(TermLane.Kind.GOAL, past, ahead, lane), String(lane["tab"]))
 	_goal_doors.append(row.get_child(2))
+	# S3: the programme's Go lands here, on the entry's own door (the Agenda's "Work on it" retired).
+	ActsOn.tag(row.get_child(2), [String(lane["id"])])
 
 
 func _fill_majority(ns) -> void:

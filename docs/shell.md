@@ -26,7 +26,6 @@ Which tab sits under which sidebar heading is `TABLE` in `src/ui/domains.gd`. Th
 flowchart LR
   sb["Sidebar"]
   sb --> d_agenda["Agenda"]
-  d_agenda --> t_agenda["agenda"]
   d_agenda --> t_calendar["calendar"]
   sb --> d_presidency["Presidency"]
   d_presidency --> t_overview["overview"]

@@ -114,6 +114,10 @@ static func _unscrolled(node: Control) -> float:
 ## on the first visible frame, after the panel's _ready has built its tree.
 static func _scrolls_inside(node: Node) -> bool:
 	for child in node.get_children():
+		# A hidden child scrolls nothing (#405 pass 2 T7: the Folder keeps its programme picker hidden
+		# under every other page; counted, every short note and record stretched to the dock).
+		if child is Control and not (child as Control).visible:
+			continue
 		if child is ScrollContainer:
 			if (child as Control).size_flags_vertical & Control.SIZE_EXPAND:
 				return true

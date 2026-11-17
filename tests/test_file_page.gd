@@ -71,8 +71,8 @@ func _check_desk_buttons(view, listed: Array, open_files: Array) -> void:
 		button.pressed.emit()
 		if String(file["id"]) == String(_main._programme_card_id):
 			saw_programme = true
-			if not _main._windows.is_open("agenda"):
-				_fail("the programme card on the desk did not open the Agenda (open: %s)" % [_main._windows.open_ids()])
+			if not _main._windows.is_open("events") or _main._events_panel.selected() != preload("res://src/ui/programme_file.gd").KEY:
+				_fail("the programme card on the desk did not open its file on the Folder (open: %s)" % [_main._windows.open_ids()])
 		elif view.file_id() != String(file["id"]):
 			_fail("pressing a listed file opened '%s', not '%s'" % [view.file_id(), file["id"]])
 		view.show_file("card_gone")

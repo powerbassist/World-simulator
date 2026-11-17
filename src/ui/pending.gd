@@ -59,14 +59,14 @@ static func window_ids(state, loader, messages := {}) -> Array:
 	# makes it the first thing a president deals with rather than one mark
 	# among many. Nothing offerable, nothing pending.
 	if loader != null and not Programme.available(state, ns, loader).is_empty():
-		out.append("agenda")
+		out.append("events")  # its file on the Folder (rework 2 S3)
 
 	# A crisis with a countdown, which answers itself if nobody answers it.
 	# V4.8c: only a crisis its category's NOTIFY band lets through marks the
 	# window -- or one in its last month, the lapse guard's band, because a
 	# decision about to be answered by default is waiting whatever the settings
 	# say, and an interrupt, which the content says waits until answered.
-	if _events_waiting(ns, messages):
+	if _events_waiting(ns, messages) and not out.has("events"):
 		out.append("events")
 
 	# A vote the country has already been called to. V1.7c. V4.2 T6 extends the

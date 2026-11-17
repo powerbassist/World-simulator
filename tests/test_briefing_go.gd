@@ -130,7 +130,7 @@ func _plan() -> Array:
 			"made_month": now, "due_month": now + 2})
 		return "promise|%s|meter:unemployment_pct" % pid})
 	# Pre-gate RF3 (QA's TAKE): a minister's word on a programme entry the player
-	# does not hold. The Agenda shows only the held programme, so this Go once
+	# does not hold. The Agenda showed only the held programme, so this Go once
 	# landed on nothing; it goes to the Diary on its due day (2.4's table).
 	cases.append({"kind": "commitment", "due_day": true, "setup": func() -> String:
 		var entry := String(loader.programme[-1]["id"])
@@ -263,9 +263,15 @@ func _check(c: Dictionary) -> void:
 	var where: Node = _main._hud.inbox if tab == "inbox" or kind == "request" else _main._windows.content(tab)
 	if where == null or ActsOn.find(where, String(target["acts_on"])) == null:
 		_fail("%s: Go to '%s' found no enabled control acting on '%s'" % [label, tab, target["acts_on"]])
-	if kind == "commitment" and tab == "agenda" and String(c["subject"]).contains("|programme:") \
-			and _main._windows.content("agenda")._picker.selected_id() == String(target["acts_on"]):
+	if kind == "commitment" and tab == "events" and String(c["subject"]).contains("|programme:") \
+			and _main._events_panel._picker.selected_id() == String(target["acts_on"]):
 		_fail("commitment (programme): premise, the promised entry was the selected one")
+	# #405 pass 2 T4: a live programme's Go lands ON its lane -- focused -- not on the page it is already on.
+	if kind == "programme" and tab == "overview":
+		_main._overview_panel._process(0.0)
+		var focused: Control = _main.get_viewport().gui_get_focus_owner()
+		if focused == null or not ActsOn.acts_on(focused, String(target["acts_on"])):
+			_fail("programme: Go did not focus the entry's lane (focus on %s)" % focused)
 	if bool(c.get("far", false)) and ActsOn.find(where, String(target["acts_on"])) is OptionButton:
 		_fail("%s: outside the run-up the Go landed on the site picker" % label)
 	if bool(c.get("due_day", false)):

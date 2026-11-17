@@ -255,7 +255,7 @@ func _cmd_term_start(_args: Array) -> String:
 	if not blocked.is_empty():
 		return blocked
 	if DevCommands.at_term_start(state):
-		return "already at a term start -- the agenda holds the offer"
+		return "already at a term start -- the Folder holds the offer"
 	var ns = state.player()
 	var cap: int = int(ns.term_months) + 1
 	for i in cap:
