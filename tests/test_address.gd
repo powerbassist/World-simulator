@@ -26,6 +26,7 @@ const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const EK = preload("res://src/sim/election_constants.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
+const Clock = preload("res://src/core/clock.gd")
 
 const Division = preload("res://src/sim/division.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
@@ -57,6 +58,7 @@ func _init() -> void:
 	_check_the_game_month_fades_it()
 	_check_the_window_forgets_after_six_months()
 	_check_a_second_address_adds_to_the_first()
+	_check_one_address_per_bill_a_month_on_the_day_path()
 	_check_the_register_survives_a_save()
 	_check_the_term_reads_voters_and_discipline()
 	_check_the_term_moves_seats_through_a_division()
@@ -359,6 +361,46 @@ func _check_the_window_forgets_after_six_months() -> void:
 		_fail("a register with nothing live left is not empty: %s" % [ns.measure_opinion])
 
 
+## G3-25 ("je peux spam adress the nation"): one address per bill per calendar month, on
+## the day path the game runs -- a Clock's day_advanced into DiaryDriver.resolve, main.gd's
+## wiring -- which marks yesterday's booked row and frees the diary's own rule. The month's
+## record is the register's, so the driver cannot clear it; the refusal names the date.
+func _check_one_address_per_bill_a_month_on_the_day_path() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var law = _open_bill(state)
+	var clock := Clock.new()
+	clock.year = 2026
+	clock.month = 3
+	clock.day = 10
+	clock.day_advanced.connect(func(y: int, m: int, d: int) -> void:
+		state.year = y
+		state.month = m
+		state.day = d
+		DiaryDriver.resolve(state, _loader, y, m, d, func(_outcome: Dictionary) -> void: pass))
+	if not bool(Address.give(state, _loader, law.id).get("ok", false)):
+		_fail("the first address was refused")
+	var once: Dictionary = _shift_of(ns, law.id).duplicate()
+	for i in 3:
+		clock.advance_one_day()
+		var why := Address.refusal(state, law.id)
+		if why == "" or not why.contains("10/03/2026"):
+			_fail("day %d: the refusal is '%s', not one naming the 10/03/2026 address" % [state.day, why])
+		if bool(Address.give(state, _loader, law.id).get("ok", false)):
+			_fail("a second address on %d March went through" % state.day)
+	if _shift_of(ns, law.id) != once:
+		_fail("a refused address moved the bill's opinion")
+	while state.month == 3:
+		clock.advance_one_day()
+	if Address.refusal(state, law.id) != "":
+		_fail("in April the bill is still refused: %s" % Address.refusal(state, law.id))
+	var april: Dictionary = Address.give(state, _loader, law.id)
+	# The repeat discount is untouched: the second in the window is worth 0.6.
+	if not bool(april.get("ok", false)) or not is_equal_approx(float(april["worth"]), 0.6):
+		_fail("the April address: %s" % [april])
+	clock.free()
+
+
 ## A second address on one bill adds what it is worth, and restarts the fade.
 func _check_a_second_address_adds_to_the_first() -> void:
 	var state = _new_state()
@@ -370,10 +412,12 @@ func _check_a_second_address_adds_to_the_first() -> void:
 		_fail("the driver had no address to mark")
 	Address.tick_month(state)
 	var faded: Dictionary = _shift_of(ns, law.id).duplicate()
+	# One address per bill a month (G3-25): the second is next month's.
+	state.month = 4
 	state.day = 11
 	var second: Dictionary = Address.give(state, _loader, law.id)
 	if not bool(second.get("ok", false)):
-		_fail("a second address next day: %s" % [second])
+		_fail("a second address next month: %s" % [second])
 		return
 	if not is_equal_approx(float(second["worth"]), 0.6):
 		_fail("the second is worth %.2f" % second["worth"])

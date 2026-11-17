@@ -129,7 +129,7 @@ static func refusal_reason(state, entry: Dictionary) -> String:
 		if String(e.get("status", "")) != K.STATUS_BOOKED:
 			continue
 		if verb_key(e) == key:
-			return "already booked for %s" % _date_text(e)
+			return "already booked for %s" % date_text(e)
 
 	if state.appointments.size() >= K.MAX_APPOINTMENTS:
 		return "the diary is full"
@@ -173,7 +173,7 @@ static func refusal_reason(state, entry: Dictionary) -> String:
 				var free := _add_months(state.year, state.month, left)
 				var first := {"year": int(free["year"]), "month": int(free["month"]), "day": 1}
 				if when < entry_ordinal(first):
-					return "the host received this too recently -- it carries from %s" % _date_text(first)
+					return "the host received this too recently -- it carries from %s" % date_text(first)
 
 		var start_dn := meet_dn - int(entry.get("travel_days", 0))
 		var end_dn := meet_dn + int(entry.get("travel_days", 0))
@@ -185,7 +185,7 @@ static func refusal_reason(state, entry: Dictionary) -> String:
 			)
 			var other_travel := int(e.get("travel_days", 0))
 			if start_dn <= other_meet + other_travel and other_meet - other_travel <= end_dn:
-				return "those days are already taken -- %s" % _date_text(e)
+				return "those days are already taken -- %s" % date_text(e)
 
 	return ""
 
@@ -605,7 +605,7 @@ static func _add_months(year: int, month: int, delta: int) -> Dictionary:
 	return {"year": total / 12, "month": total % 12 + 1}
 
 
-static func _date_text(entry: Dictionary) -> String:
+static func date_text(entry: Dictionary) -> String:
 	return "%02d/%02d/%d" % [
 		int(entry.get("day", 1)), int(entry.get("month", 1)), int(entry.get("year", 0)),
 	]

@@ -77,6 +77,9 @@ static func give(state, loader, law_id: String) -> Dictionary:
 	var law = Legislature.open_law(state, ns, loader, law_id)
 	if law == null:
 		return {"ok": false, "error": "no such bill is open"}
+	var again := _this_month(state, ns, law_id)
+	if again != "":
+		return {"ok": false, "error": again}
 	var booked: Dictionary = Calendar.book(state, _entry(state, law_id))
 	if not bool(booked["ok"]):
 		return booked
@@ -84,6 +87,7 @@ static func give(state, loader, law_id: String) -> Dictionary:
 	var worth_now := worth(ns, now)
 	var moved := shifts(ns, loader.outlets.get(ns.id, []), law, earlier(ns, now))
 	_write(ns, law_id, moved, now)
+	ns.measure_opinion["measures"][law_id]["given_on"] = {"year": int(state.year), "month": int(state.month), "day": int(_entry(state, law_id)["day"])}
 	var price := {}
 	for bloc in moved:
 		if float(moved[bloc]) < 0.0:
@@ -96,7 +100,18 @@ static func give(state, loader, law_id: String) -> Dictionary:
 ## What the diary would say to an address today, "" when it would take it: read before the
 ## press, so a panel never re-derives the rule it is greying a button for.
 static func refusal(state, law_id: String) -> String:
-	return Calendar.refusal_reason(state, _entry(state, law_id))
+	var again := _this_month(state, state.player(), law_id)
+	return again if again != "" else Calendar.refusal_reason(state, _entry(state, law_id))
+
+
+## One address per bill per calendar month (G3-25). Read from the register's own date, never
+## the diary: the day's driver resolves yesterday's booked row, which frees the diary's
+## one-a-day rule from the next morning, and that was the hole. "" when this month is free.
+static func _this_month(state, ns, law_id: String) -> String:
+	var on: Dictionary = ((ns.measure_opinion.get("measures", {}) as Dictionary).get(law_id, {}) as Dictionary).get("given_on", {})
+	if on.is_empty() or int(on["year"]) != int(state.year) or int(on["month"]) != int(state.month):
+		return ""
+	return "this bill was addressed on %s, and a bill gets one address a month" % Calendar.date_text(on)
 
 
 ## Today's row. A stale day past the month's end reads as its last, as the diary's own check does.
