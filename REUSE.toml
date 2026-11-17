@@ -56,6 +56,15 @@ SPDX-FileCopyrightText = ["Statistisches Bundesamt (Destatis)", "Kultusministerk
 SPDX-License-Identifier = "LicenseRef-Destatis-Reproduction AND LicenseRef-KMK-Statistics"
 
 [[annotations]]
+# The British start stock of the construction register (V5.3 c'): schools, pupils, teachers and hospital beds from the Department for Education, NHS England, Public Health Scotland, the Scottish and Welsh Governments, the Department of Health and the Department of Education of Northern Ireland, and ONS population (Open Government Licence v3.0). The credit is in ATTRIBUTION.md.
+path = [
+  "data/units/stock/GBR.json",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Crown copyright: Department for Education, NHS England, Public Health Scotland, Scottish Government, Welsh Government, Department of Health (NI), Department of Education (NI), Office for National Statistics"
+SPDX-License-Identifier = "OGL-UK-3.0"
+
+[[annotations]]
 # Busts generated from CC BY / CC BY-SA / CC0 / public-domain Wikimedia Commons photographs; credited per image in docs/portrait-attribution.md.
 path = [
   "assets/portraits/*/AUT_aichinger.webp*",
