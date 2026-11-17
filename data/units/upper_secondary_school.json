@@ -1,5 +1,5 @@
 {
-  "_source": "Catalogue row of the construction register (docs/design/v5.3-c-register.md). capacity, per nation, in the stock's own unit = the nation's mean enrolment per school in its stock: France 605 (data/units/stock/FRA.json: 2 142 289 enrolled pupils over 3 541 lycees), Germany 141 (data/units/stock/DEU.json: 1 392 662 full-time upper-secondary pupils over 9 854 schools, the count including schools without upper years, so a small figure). STAND-IN numbers, none sourced: every figure marked below is the game's declared placeholder until the author's table of stand-ins (spec section 12). cost_eur_m: stand-in of 0.0575 M EUR per pupil, the middle of the press-release anchor of 52 to 69 M EUR for a lycee of 900 to 1 200 places (not verified); a bounded search for a Cour des comptes or regional council deliberation, the UK DfE National School Delivery Cost Benchmarking and a Landesrechnungshof report found no per-pupil figure. running_eur_m: stand-in of 9 000 EUR per pupil a year. staff: stand-in of 90 jobs. build_months, overrun_odds, overrun_share, demolish_months, demolish_cost_share, band_units: the spec's stand-ins (sections 5, 7, 12). figure_elasticity: -1 by the spec (more places, fewer pupils per teacher). bloc_offset_per_pop_share: stand-in. DEU: the same 0.0575 M EUR per pupil and 9 000 EUR per pupil a year as FRA applied to its 141-pupil unit (8.1 and 1.3 M EUR); a bounded search of the Landesrechnungshof reports found no German benchmark (the Sachsen 2019 report on a new Leipzig Gymnasium and a Niedersachsen table of investment per pupil were the leads, neither read as a raw cell).",
+  "_source": "Catalogue row of the construction register (docs/design/v5.3-c-register.md). capacity, per nation, in the stock's own unit = the nation's mean enrolment per school in its stock: France 605 (data/units/stock/FRA.json: 2 142 289 enrolled pupils over 3 541 lycees), Germany 171 (data/units/stock/DEU.json: the 1 234 011 full-time pupils of the 7 213 schools of the types defined by an upper-secondary track, see that file). The catalogue's `staff` is one number for every nation, the French unit's; it is shown and moves nothing. STAND-IN numbers, none sourced: every figure marked below is the game's declared placeholder until the author's table of stand-ins (spec section 12). cost_eur_m: stand-in of 0.0575 M EUR per pupil, the middle of the press-release anchor of 52 to 69 M EUR for a lycee of 900 to 1 200 places (not verified); a bounded search for a Cour des comptes or regional council deliberation, the UK DfE National School Delivery Cost Benchmarking and a Landesrechnungshof report found no per-pupil figure. running_eur_m: stand-in of 9 000 EUR per pupil a year. staff: stand-in of 90 jobs. build_months, overrun_odds, overrun_share, demolish_months, demolish_cost_share, band_units: the spec's stand-ins (sections 5, 7, 12). figure_elasticity: -1 by the spec (more places, fewer pupils per teacher). bloc_offset_per_pop_share: stand-in. DEU: the same 0.0575 M EUR per pupil and 9 000 EUR per pupil a year as FRA applied to its 171-pupil unit (9.8 and 1.5 M EUR); a bounded search of the Landesrechnungshof reports found no German benchmark (the Sachsen 2019 report on a new Leipzig Gymnasium and a Niedersachsen table of investment per pupil were the leads, neither read as a raw cell).",
   "id": "upper_secondary_school",
   "name": "Upper secondary school",
   "summary": "A lycee or Gymnasium: a school for the last years before university or a trade.",
@@ -8,17 +8,17 @@
   "payoff": "capacity",
   "capacity": {
     "FRA": 605,
-    "DEU": 141
+    "DEU": 171
   },
   "figure_elasticity": -1.0,
   "cost_eur_m": {
     "FRA": 34.8,
-    "DEU": 8.1
+    "DEU": 9.8
   },
   "build_months": 30,
   "running_eur_m": {
     "FRA": 5.4,
-    "DEU": 1.3
+    "DEU": 1.5
   },
   "staff": 90,
   "overrun_odds": 0.15,

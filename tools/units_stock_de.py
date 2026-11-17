@@ -49,7 +49,12 @@ IN_SCOPE = [("general", "Gymnasien*"), ("general", "Schularten mit drei Bildungs
 OUT_OF_SCOPE = [("general", "Abendgymnasien"), ("general", "Kollegs"), ("full", "Berufsvorbereitungsjahr"),
                 ("full", "Berufsgrundbildungsjahr"), ("full", "Berufsaufbauschulen"), ("full", "Fachschulen"),
                 ("full", "Fachakademien/Berufsakademien")]
-SCHOOL_TYPES_GENERAL = ("Gymnasien", "Schularten mit drei Bildungsgängen", "Freie Waldorfschulen")
+# Units are the schools whose type is DEFINED by an upper-secondary track. No table gives the number of
+# comprehensive or Waldorf schools that have upper years (Destatis counts their classes, not their schools), so
+# those two types are left out of `units` while their upper-years pupils stay in `capacity`.
+SCHOOL_TYPES_GENERAL = ("Gymnasien",)
+UNIT_PUPIL_KEYS = [("general", "Gymnasien*"), ("full", "Berufsfachschulen"), ("full", "Berufsober-/Technische Oberschulen"),
+                   ("full", "Fachgymnasien"), ("full", "Fachoberschulen")]
 SCHOOL_TYPES_VOCATIONAL = ("Berufsfachschulen", "Berufsoberschulen/Technische Oberschulen", "Fachgymnasien", "Fachoberschulen")
 
 
@@ -152,9 +157,11 @@ def build() -> dict:
     figures = {
         "upper_secondary_school": {"figure": "upper_secondary_pupils_per_teacher", "national": round(nat_pupils / nat_fte, 2), "levels": ratios},
         "hospital": {"figure": "hospital_beds_per_1000", "national": round(per_100k["Deutschland"] / 100, 2), "levels": bed_levels}}
-    capacity = {"upper_secondary_school": round(school_pupils / school_units_total),
+    unit_pupils = sum(pupils[k]["D"] for k in UNIT_PUPIL_KEYS)  # the pupils of the same school types as `units`
+    capacity = {"upper_secondary_school": round(unit_pupils / school_units_total),
                 "hospital": round(general_beds["Deutschland"] / general_n["Deutschland"])}
     print("catalogue capacity per new unit:", capacity)
+    print("units are schools of the types with a defined upper track:", school_units_total, "with", int(unit_pupils), "pupils")
     print("schools", school_units_total, "full-time upper-secondary pupils", school_pupils, "teacher FTE", round(nat_fte, 1))
     print("left out (national pupils / FTE):")
     for key in OUT_OF_SCOPE:
