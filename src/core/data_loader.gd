@@ -297,13 +297,14 @@ var region_fund_rule: Dictionary = {}
 
 ## V5.3 c' (docs/design/v5.3-c-register.md section 2; UnitsLoader). The catalogue
 ## (type id -> row), the start stock (NAT -> type -> region -> {units, capacity}), the
-## regional level (NAT -> figure -> region -> level over the population-weighted
-## mean), the Union's co-financing rule (org id -> {rates, warn_months, periods}) and
+## regional level (NAT -> type -> region -> level over the type's national figure), the Union's co-financing rule (org id -> {rates, warn_months, periods}) and
 ## the five projects' `potential` rows, built from project_actions. All empty with no
 ## data/units/ but the last.
 var unit_types: Dictionary = {}
 var unit_stock: Dictionary = {}
 var unit_levels: Dictionary = {}
+## NAT -> type -> the type's own national figure at the start (its stock file).
+var unit_national: Dictionary = {}
 var unit_cofinancing: Dictionary = {}
 var unit_potential: Array = []
 ## UnitsLoader.warn_uncategorised()'s lines: content that loads but would read 0 %.

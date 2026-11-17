@@ -5,9 +5,15 @@
   "summary": "A test school.",
   "line": "education",
   "sector": "schools",
-  "figure": "pupils_per_teacher",
+  "figure": {
+    "id": "fixture_pupils_per_teacher",
+    "unit": "pupils per teacher (fixture)",
+    "better": "lower"
+  },
   "payoff": "capacity",
-  "capacity": 1000,
+  "capacity": {
+    "FRA": 1000
+  },
   "figure_elasticity": -1.0,
   "cost_eur_m": {
     "FRA": 50.0

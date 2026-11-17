@@ -100,9 +100,15 @@ static func _moved(ns, loader, line: String) -> Dictionary:
 static func quantity(ns, loader, line: String, sector_id: String) -> float:
 	for s in sectors_of(loader, line):
 		if String(s["id"]) == sector_id:
-			return float(_start(ns, s)["quantity"]) \
-				* pow(maxf(ratio(ns, loader, line, sector_id), DK.RATIO_FLOOR), _signed_elasticity(loader, line, sector_id))
+			return float(_start(ns, s)["quantity"]) * path_factor(ns, loader, line, sector_id)
 	return 0.0
+
+
+## The sector's own path: what its quantity is over its start, ratio() ^ elasticity
+## with the sign of the row's `better`. A unit type rides it (src/sim/units.gd: a
+## type's national figure is its own start x this), so the money on the line moves both.
+static func path_factor(ns, loader, line: String, sector_id: String) -> float:
+	return pow(maxf(ratio(ns, loader, line, sector_id), DK.RATIO_FLOOR), _signed_elasticity(loader, line, sector_id))
 
 
 ## How far quantity() is worse than the sector's start figure, as a share of that

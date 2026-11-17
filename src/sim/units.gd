@@ -1,32 +1,40 @@
 extends RefCounted
 
-## V5.3 c' (docs/design/v5.3-c-register.md): the construction register. Slice A is
-## the reads over the catalogue, the start stock and the player's programmes
-## (`ns.unit_programmes`); later slices add the price, the bill's rows, the overrun
-## ask, the envelope and the arrival.
+## V5.3 c' (docs/design/v5.3-c-register.md): the construction register's reads over
+## the catalogue, the start stock and the player's programmes (`ns.unit_programmes`).
 ##
 ##   catalogue(loader) / row(loader, id)  the unit types, then the five projects as
 ##                                        `potential` rows (UnitsLoader builds them);
 ##   offered(loader, nation, type)        a type is offered where the nation's stock
 ##                                        file names it, nowhere else: one general rule;
-##   gain(ns, loader, type, region)       g = figure_elasticity x n x capacity / C;
-##   netted_gain(...)                     g less its people x level weighted mean;
-##   shown_figure(...)                    the nation's figure x the priority term x
-##                                        the region's level x (1 + the netted gain);
+##   capacity_delta(ns, loader, type, r)  d, the capacity the player added (built units
+##                                        x the type's capacity) less what was closed;
+##   factor(ns, loader, type, r)          f = max(1 + d / C, RATIO_FLOOR) ^ elasticity,
+##                                        Sectors.regional_quantity's form;
+##   netted_factor(...)                   f over its people x level x priority mean;
+##   national_figure(ns, loader, type)    the type's `national` x the sector's own path;
+##   shown_figure(...)                    national figure x level x priority term x
+##                                        netted factor;
 ##   fill_by_need / fill_by_population    the sheet's two ways to place N units.
 ##
-## THE NATION'S FIGURE HAS ONE WRITER (section 3): a unit lifts its own region and
-## the others give a little back, netted with the people x level weights the loader
-## normalised against, so the regions' people-weighted mean stays exactly the
-## nation's figure. The nation's figure itself moves only through the units' running
-## cost on the line (a later slice), by the lever's own path (Sectors.ratio).
+## EACH TYPE ANSWERS ITS OWN FIGURE (section 1, amended 2026-11-17): a lycée's pupils
+## per teacher in upper-secondary schools, not the sector's primary figure, so its
+## national value and its regional levels come from one table, in its stock file. It
+## rides the sector's path: the money on the line moves it as Sectors.ratio moves the
+## sector, and nothing else does (no second channel).
 ##
-## ONLY A DONE ROW MOVES A REGION: a unit still building is capacity nobody has, and a
-## unit still being demolished is capacity still open. With no programme every gain
-## is exactly 0.0 and the shown figure is the priority read x the level, exactly.
+## EVERY RULE READS CAPACITY (section 3): pupils enrolled, beds. The count of
+## establishments is for the screen. Only a DONE row moves a region: capacity still
+## building is capacity nobody has, and capacity still being closed is still open.
+##
+## THE NATION'S FIGURE HAS ONE WRITER: the netting weights are exactly what the screen
+## multiplies, people x level x priority term, the level normalised on the same live
+## people x priority term, and the floor applied to f BEFORE the mean, so the shown
+## figure's people-weighted mean is the type's national figure exactly, a closure to
+## the floor included. With no programme every f is exactly 1.0.
 ##
 ## Rule 1: no nation id anywhere; a nation that differs has a stock file saying so.
-## Rule 2: no UI. pow() (through Sectors.regional_quantity): main thread only.
+## Rule 2: no UI. pow() (here and through Sectors): main thread only.
 
 const UK = preload("res://src/sim/units_constants.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
@@ -58,38 +66,60 @@ static func offered(loader, nation_id: String, type_id: String) -> bool:
 
 ## C, the region's capacity of the type at the start (its stock row), 0 with none.
 static func start_capacity(loader, nation_id: String, type_id: String, region_id: String) -> float:
-	var by_region: Dictionary = (loader.unit_stock.get(nation_id, {}) as Dictionary).get(type_id, {})
-	return float((by_region.get(region_id, {}) as Dictionary).get("capacity", 0.0))
+	return float(_stock_row(loader, nation_id, type_id, region_id).get("capacity", 0.0))
 
 
-## The region's level for the type's figure: its sourced figure over the mean of the
-## nation's named regions weighted by the live people x the priority term (T2, T3 on
-## #410), so the people-weighted mean of level x priority term is exactly 1. 1.0 for a
+## The establishments the stock counts there: shown, never computed with.
+static func start_units(loader, nation_id: String, type_id: String, region_id: String) -> int:
+	return int(_stock_row(loader, nation_id, type_id, region_id).get("units", 0))
+
+
+## The capacity one new unit of the type adds in the nation (the catalogue's, by nation).
+static func unit_capacity(loader, nation_id: String, type_id: String) -> float:
+	return float((loader.unit_types[type_id]["capacity"] as Dictionary).get(nation_id, 0.0))
+
+
+## The region's level: its sourced figure over the national one, normalised on the live
+## people x the priority term, so their people-weighted mean is exactly 1. 1.0 for a
 ## type the nation has no level for.
 static func level(ns, loader, type_id: String, region_id: String) -> float:
-	var b := _basis(ns, loader, type_id, {})
-	return float((b["level"] as Dictionary).get(region_id, 1.0))
+	return float((_basis(ns, loader, type_id, {})["level"] as Dictionary).get(region_id, 1.0))
 
 
-## n, the units the player's DONE rows built (+) and closed (-) in the region.
-static func net_units(ns, type_id: String, region_id: String) -> int:
-	var n := 0
+## d: the capacity the player's DONE rows built (+ units x the type's capacity) and
+## closed (- capacity, a closure is entered in capacity) in the region.
+static func capacity_delta(ns, loader, type_id: String, region_id: String) -> float:
+	var d := 0.0
 	for p in ns.unit_programmes:
 		if String(p.get("type", "")) != type_id or String(p.get("state", "")) != UK.STATE_DONE:
 			continue
-		var sign := -1 if String(p.get("op", "")) == UK.OP_DEMOLISH else 1
 		for r in p.get("rows", []):
 			if String(r.get("region", "")) == region_id:
-				n += sign * int(r.get("units", 0))
-	return n
+				d += row_capacity(ns, loader, p, r)
+	return d
 
 
-static func gain(ns, loader, type_id: String, region_id: String) -> float:
-	return _gain(ns, loader, type_id, region_id, 0)
+## One region row's capacity, signed: + units x capacity for a build, - capacity closed.
+static func row_capacity(ns, loader, programme: Dictionary, r: Dictionary) -> float:
+	if String(programme.get("op", "")) == UK.OP_DEMOLISH:
+		return -float(r.get("capacity", 0.0))
+	return float(r.get("units", 0)) * unit_capacity(loader, ns.id, String(programme["type"]))
 
 
-static func netted_gain(ns, loader, type_id: String, region_id: String) -> float:
-	return _netted(ns, loader, type_id, region_id, {})
+static func factor(ns, loader, type_id: String, region_id: String) -> float:
+	return _factor(ns, loader, type_id, region_id, 0)
+
+
+static func netted_factor(ns, loader, type_id: String, region_id: String) -> float:
+	var b := _basis(ns, loader, type_id, {})
+	return float((b["factor"] as Dictionary).get(region_id, 1.0)) / float(b["mean_factor"])
+
+
+## The type's national figure: its `national` start x the sector's own path.
+static func national_figure(ns, loader, type_id: String) -> float:
+	var t: Dictionary = loader.unit_types[type_id]
+	return float((loader.unit_national.get(ns.id, {}) as Dictionary).get(type_id, 0.0)) \
+		* Sectors.path_factor(ns, loader, String(t["line"]), String(t["sector"]))
 
 
 static func shown_figure(ns, loader, type_id: String, region_id: String) -> float:
@@ -127,8 +157,7 @@ static func fill_by_need(ns, loader, type_id: String, n: int) -> Array:
 	var open := _buildable(ns, loader, type_id) if n > 0 else []
 	if open.is_empty():
 		return []
-	var t: Dictionary = loader.unit_types[type_id]
-	var behind := 1.0 if _better(loader, t) == "lower" else -1.0
+	var behind := 1.0 if String(loader.unit_types[type_id]["figure"]["better"]) == "lower" else -1.0
 	var placed := {}
 	for i in n:
 		var worst := ""
@@ -144,74 +173,67 @@ static func fill_by_need(ns, loader, type_id: String, n: int) -> Array:
 
 # --- internals ---------------------------------------------------------------
 
-static func _gain(ns, loader, type_id: String, region_id: String, extra: int) -> float:
+## f, floored before any mean is taken; exactly 1.0 with nothing built or closed.
+static func _factor(ns, loader, type_id: String, region_id: String, extra_units: int) -> float:
 	var c := start_capacity(loader, ns.id, type_id, region_id)
 	if c <= 0.0:
-		return 0.0
-	var n := net_units(ns, type_id, region_id) + extra
-	if n == 0:
-		return 0.0
-	var t: Dictionary = loader.unit_types[type_id]
-	return float(t["figure_elasticity"]) * float(n) * float(t["capacity"]) / c
+		return 1.0
+	var d := capacity_delta(ns, loader, type_id, region_id) + float(extra_units) * unit_capacity(loader, ns.id, type_id)
+	if d == 0.0:
+		return 1.0
+	return pow(maxf(1.0 + d / c, DK.RATIO_FLOOR), float(loader.unit_types[type_id]["figure_elasticity"]))
 
 
-static func _netted(ns, loader, type_id: String, region_id: String, placed: Dictionary) -> float:
-	if not loader.unit_types.has(type_id):
-		return 0.0
-	var b := _basis(ns, loader, type_id, placed)
-	return float((b["gain"] as Dictionary).get(region_id, 0.0)) - float(b["mean_gain"])
-
-
-## ONE BASIS (the parent's rule, T2 on #410): the weights are exactly what the screen
-## multiplies, w = people x priority term x level, the level normalised on the same
-## live people x priority term. So the shown figure's people-weighted mean is
-##   q x sum(w x (1 + g - mean_g)) / sum(people) = q x sum(w) / sum(people) = q,
-## the nation's figure, with a priority set, after migration, with units built. The
-## one case it gives way is the floor on (1 + netted) in _shown(): a region whose
-## figure would cross zero is held above it, and the mean no longer balances.
-## `placed` counts units not yet built (the sheet's by-need fill).
+## ONE BASIS (the parent's rule, T2 on #410): w = people x priority term x level, the
+## level normalised on the same live people x priority term, so
+##   N x sum(w x f / mean_f) / sum(people) = N x sum(w) / sum(people) = N,
+## the type's national figure, with a priority set, after migration, with units built,
+## at the floor too (the floor is in f, before the mean). `placed` counts units not yet
+## built (the sheet's by-need fill).
 static func _basis(ns, loader, type_id: String, placed: Dictionary) -> Dictionary:
-	var out := {"level": {}, "gain": {}, "mean_gain": 0.0}
+	var out := {"level": {}, "factor": {}, "term": {}, "mean_factor": 1.0}
 	if not loader.unit_types.has(type_id):
 		return out
 	var t: Dictionary = loader.unit_types[type_id]
-	var raw: Dictionary = (loader.unit_levels.get(ns.id, {}) as Dictionary).get(String(t["figure"]), {})
+	var rel: Dictionary = (loader.unit_levels.get(ns.id, {}) as Dictionary).get(type_id, {})
 	var q := Sectors.quantity(ns, loader, String(t["line"]), String(t["sector"]))
 	var people := 0.0
 	var tilted := 0.0
-	var term := {}
 	for r in loader.regions.get(ns.id, []):
 		var p := float(ns.region_pop_share.get(r.id, 0.0))
-		term[r.id] = Sectors.regional_quantity(ns, loader, String(t["line"]), String(t["sector"]), r.id) / q if q != 0.0 else 1.0
+		var term := Sectors.regional_quantity(ns, loader, String(t["line"]), String(t["sector"]), r.id) / q if q != 0.0 else 1.0
+		out["term"][r.id] = term
 		people += p
-		tilted += p * float(term[r.id]) * float(raw.get(r.id, 1.0))
+		tilted += p * term * float(rel.get(r.id, 1.0))
 	var norm := tilted / people if people > 0.0 and tilted > 0.0 else 1.0
 	var weighted := 0.0
 	var weights := 0.0
 	for r in loader.regions.get(ns.id, []):
-		var level := float(raw.get(r.id, 1.0)) / norm if not raw.is_empty() else 1.0
-		var g := _gain(ns, loader, type_id, r.id, int(placed.get(r.id, 0)))
-		var w := float(ns.region_pop_share.get(r.id, 0.0)) * float(term[r.id]) * level
+		var level := float(rel.get(r.id, 1.0)) / norm if not rel.is_empty() else 1.0
+		var f := _factor(ns, loader, type_id, r.id, int(placed.get(r.id, 0)))
+		var w := float(ns.region_pop_share.get(r.id, 0.0)) * float(out["term"][r.id]) * level
 		out["level"][r.id] = level
-		out["gain"][r.id] = g
-		weighted += w * g
+		out["factor"][r.id] = f
+		weighted += w * f
 		weights += w
-	out["mean_gain"] = weighted / weights if weights > 0.0 else 0.0
+	if weights > 0.0 and weighted > 0.0:
+		out["mean_factor"] = weighted / weights
 	return out
 
 
-## The gain is linear in the units, so enough of them in one region would take the
-## figure to zero or past it: (1 + netted) is floored at the multiplier floor
-## Sectors already uses (DK.RATIO_FLOOR), never reached by a step the size of a band.
 ## 0.0 for an id that is not a capacity type (a project's potential row).
 static func _shown(ns, loader, type_id: String, region_id: String, placed: Dictionary) -> float:
 	if not loader.unit_types.has(type_id):
 		return 0.0
-	var t: Dictionary = loader.unit_types[type_id]
 	var b := _basis(ns, loader, type_id, placed)
-	return Sectors.regional_quantity(ns, loader, String(t["line"]), String(t["sector"]), region_id) \
+	return national_figure(ns, loader, type_id) * float((b["term"] as Dictionary).get(region_id, 1.0)) \
 		* float((b["level"] as Dictionary).get(region_id, 1.0)) \
-		* maxf(1.0 + float((b["gain"] as Dictionary).get(region_id, 0.0)) - float(b["mean_gain"]), DK.RATIO_FLOOR)
+		* float((b["factor"] as Dictionary).get(region_id, 1.0)) / float(b["mean_factor"])
+
+
+static func _stock_row(loader, nation_id: String, type_id: String, region_id: String) -> Dictionary:
+	var by_region: Dictionary = (loader.unit_stock.get(nation_id, {}) as Dictionary).get(type_id, {})
+	return by_region.get(region_id, {})
 
 
 static func _buildable(ns, loader, type_id: String) -> Array:
@@ -230,10 +252,3 @@ static func _rows(order: Array, placed: Dictionary) -> Array:
 		if int(placed.get(id, 0)) > 0:
 			out.append({"region": id, "units": int(placed[id])})
 	return out
-
-
-static func _better(loader, t: Dictionary) -> String:
-	for s in Sectors.sectors_of(loader, String(t["line"])):
-		if String(s["id"]) == String(t["sector"]):
-			return String(s["quantity"]["better"])
-	return "higher"

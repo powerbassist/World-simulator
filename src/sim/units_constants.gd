@@ -25,6 +25,11 @@ const STATE_DONE := "done"
 const COFINANCING_FILE := "cofinancing.json"
 const STOCK_DIR := "stock"
 
+## A stock file's levels, weighted by the regions' people (data/regions `share`), must
+## give its `national` back within this share of it (section 2 as amended; the check
+## unemployment_rel gets at import). Stand-in.
+const UNIT_LEVEL_TOLERANCE := 0.03
+
 # --- The price (section 4) -----------------------------------------------------
 
 ## The range's half-width w around the estimate, by the competence of the minister

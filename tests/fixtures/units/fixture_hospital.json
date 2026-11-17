@@ -5,9 +5,15 @@
   "summary": "A test hospital.",
   "line": "health",
   "sector": "hospitals",
-  "figure": "beds_per_1000",
+  "figure": {
+    "id": "fixture_beds_per_1000",
+    "unit": "beds per 1 000 (fixture)",
+    "better": "higher"
+  },
   "payoff": "capacity",
-  "capacity": 500,
+  "capacity": {
+    "FRA": 500
+  },
   "figure_elasticity": 1.0,
   "cost_eur_m": {
     "FRA": 400.0

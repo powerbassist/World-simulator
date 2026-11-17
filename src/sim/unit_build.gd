@@ -55,26 +55,28 @@ static func refusal(state, ns, loader, rows: Array) -> String:
 			var region := String(r.get("region", ""))
 			if not regions.has(region):
 				return "That is not one of this nation's regions."
-			if int(r.get("units", 0)) < 1:
-				return "Each region's row is at least one unit."
 			if Units.start_capacity(loader, ns.id, type_id, region) <= 0.0:
 				return "This region has none of these to build on or close."
+			if op == UK.OP_BUILD and int(r.get("units", 0)) < 1:
+				return "Each region's row is at least one unit."
 			if op == UK.OP_DEMOLISH:
+				# A closure is entered in capacity and cannot exceed what the region holds.
+				if float(r.get("capacity", 0.0)) <= 0.0:
+					return "Each region's row closes some capacity."
 				var key := "%s|%s" % [type_id, region]
-				closing[key] = int(closing.get(key, 0)) + int(r["units"])
-				if int(closing[key]) > standing(ns, loader, type_id, region):
-					return "That closes more units than the region has."
+				closing[key] = float(closing.get(key, 0.0)) + float(r["capacity"])
+				if float(closing[key]) > standing(ns, loader, type_id, region):
+					return "That closes more than the region holds."
 		open += 1
 	if open > UK.UNIT_PROGRAMMES_MAX_OPEN:
 		return "Too many programmes would be under way at once."
 	return ""
 
 
-## The units of the type standing in the region: the start stock and the player's
-## done rows (the units still being closed are counted by refusal()).
-static func standing(ns, loader, type_id: String, region: String) -> int:
-	var by_region: Dictionary = ((loader.unit_stock.get(ns.id, {}) as Dictionary).get(type_id, {}) as Dictionary)
-	return int((by_region.get(region, {}) as Dictionary).get("units", 0)) + Units.net_units(ns, type_id, region)
+## The capacity of the type standing in the region: the start stock and the player's
+## done rows (the capacity still being closed is counted by refusal()).
+static func standing(ns, loader, type_id: String, region: String) -> float:
+	return Units.start_capacity(loader, ns.id, type_id, region) + Units.capacity_delta(ns, loader, type_id, region)
 
 
 ## The vote carried: the row becomes a programme. Its contract price is drawn once,
@@ -121,12 +123,13 @@ static func tick_month(state, loader) -> void:
 		if String(p["state"]) != UK.STATE_DONE or not loader.unit_types.has(String(p["type"])):
 			continue
 		var t: Dictionary = loader.unit_types[String(p["type"])]
-		var sign := -1.0 if String(p["op"]) == UK.OP_DEMOLISH else 1.0
-		var units := 0
+		# Every rule reads capacity: a unit's running cost per unit of its capacity.
+		var capacity := 0.0
 		for r in p["rows"]:
-			units += int(r["units"])
+			capacity += Units.row_capacity(ns, loader, p, r)
 		var line := String(t["line"])
-		running[line] = float(running.get(line, 0.0)) + sign * float(units) * float(t["running_eur_m"].get(ns.id, 0.0))
+		running[line] = float(running.get(line, 0.0)) \
+			+ capacity / Units.unit_capacity(loader, ns.id, String(p["type"])) * float(t["running_eur_m"].get(ns.id, 0.0))
 	for line in running:
 		running[line] = 100.0 * float(running[line]) / gdp_m if gdp_m > 0.0 else 0.0
 	ns.unit_running_pct_gdp = running
@@ -135,4 +138,4 @@ static func tick_month(state, loader) -> void:
 static func _add(closing: Dictionary, p: Dictionary) -> void:
 	for r in p.get("rows", []):
 		var key := "%s|%s" % [String(p["type"]), String(r["region"])]
-		closing[key] = int(closing.get(key, 0)) + int(r["units"])
+		closing[key] = float(closing.get(key, 0.0)) + float(r.get("capacity", 0.0))

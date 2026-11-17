@@ -7,7 +7,7 @@ extends RefCounted
 ##   data/units/<type_id>.json      one catalogue row per unit type (flat object):
 ##                                  every root *.json but cofinancing.json
 ##   data/units/stock/<NAT>.json    {stock: [{region, type, units, capacity}],
-##                                   levels: [{region, figure, level}]}
+##                                   figures: {<type>: {figure, national, levels}}}
 ##   data/units/cofinancing.json    {organisations: {<org_id>: {rates: {category: rate},
 ##                                   warn_months, periods: [{id, first_year, last_year,
 ##                                   pays_until_year, envelope_eur_bn: {NAT: bn}}]}}}
@@ -23,19 +23,18 @@ extends RefCounted
 ## two files. Projects keep their own register; these rows are what the register's
 ## list reads over both.
 ##
-## THE LEVEL IS STORED RAW, in the figure's own unit, and made relative at read
-## (Units.level, T3 on #410): over the mean of the nation's regions weighted by the
-## LIVE people and the priority term, the one basis the screen multiplies, so the
-## shown figures' people-weighted mean stays the nation's after migration too. The
-## nation's figure in data/domains stays the single truth; the level only places the
-## regions around it.
+## EACH TYPE ANSWERS ITS OWN FIGURE (section 1 as amended): its national value and its
+## regional levels come from one table, in its stock file, stored relative to the
+## national value and normalised again at read (Units.level, T3 on #410) over the LIVE
+## people and the priority term, the one basis the screen multiplies. The sector's row
+## in data/domains is untouched: the type rides its path, never its figure.
 
 const UK = preload("res://src/sim/units_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const Region = preload("res://src/core/region.gd")
 
-const TYPE_NUMBERS := ["capacity", "figure_elasticity", "staff", "overrun_odds", "overrun_share",
+const TYPE_NUMBERS := ["figure_elasticity", "staff", "overrun_odds", "overrun_share",
 	"demolish_cost_share"]
 const TYPE_MONTHS := ["build_months", "demolish_months", "band_units"]
 const TYPE_SHARES := ["overrun_odds", "overrun_share", "demolish_cost_share"]
@@ -45,6 +44,7 @@ static func load_units(loader, dir: String) -> void:
 	loader.unit_types = {}
 	loader.unit_stock = {}
 	loader.unit_levels = {}
+	loader.unit_national = {}
 	loader.unit_cofinancing = {}
 	loader.unit_warnings.clear()
 	loader.unit_potential = potential_rows(loader.project_actions)
@@ -57,12 +57,18 @@ static func load_units(loader, dir: String) -> void:
 		if name.ends_with(".json") and name != UK.COFINANCING_FILE:
 			files.append(name)
 	files.sort()
+	# One type per figure in c' (section 3): a second type answering a figure already
+	# taken would show its own gain beside the first's.
+	var figures := {}
 	for fname in files:
 		var errors: Array[String] = []
 		var row := parse_type(loader, JSON.parse_string(FileAccess.get_file_as_string(dir.path_join(fname))), fname, errors)
+		if errors.is_empty() and figures.has(String(row["figure"]["id"])):
+			errors.append("units/%s: figure '%s' is already answered by type '%s'" % [fname, row["figure"]["id"], figures[String(row["figure"]["id"])]])
 		loader.errors.append_array(errors)
 		if errors.is_empty():
 			loader.unit_types[String(row["id"])] = row
+			figures[String(row["figure"]["id"])] = String(row["id"])
 	var stock_dir := dir.path_join(UK.STOCK_DIR)
 	var sd := DirAccess.open(stock_dir)
 	if sd != null:
@@ -116,9 +122,10 @@ static func warn_uncategorised(loader) -> void:
 				push_warning(line)
 
 
-## One catalogue row, validated against data/domains (its line, sector and figure).
-## Public so tests/test_units.gd refuses each bad field on a dictionary with no file.
-## Returns the row ({} with errors appended when it refuses).
+## One catalogue row, validated against data/domains (the line and sector whose path
+## it rides) and against itself (its own figure, section 1 as amended). Public so
+## tests/test_units.gd refuses each bad field on a dictionary with no file. Returns
+## the row ({} with errors appended when it refuses).
 static func parse_type(loader, parsed, fname: String, errors: Array[String]) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		errors.append("units/%s: missing or invalid JSON" % fname)
@@ -136,12 +143,14 @@ static func parse_type(loader, parsed, fname: String, errors: Array[String]) -> 
 		errors.append("units/%s: 'payoff' must be one of %s" % [fname, str(UK.CATALOGUE_PAYOFFS)])
 		return {}
 	var line := String(d.get("line", ""))
-	var sector := _sector(loader, line, String(d.get("sector", "")))
-	if not EK.SPENDING_KEYS.has(line) or sector.is_empty():
+	if not EK.SPENDING_KEYS.has(line) or _sector(loader, line, String(d.get("sector", ""))).is_empty():
 		errors.append("units/%s: 'line' and 'sector' must name a sector of data/domains" % fname)
 		return {}
-	if String(d.get("figure", "")) != String(sector["quantity"]["id"]):
-		errors.append("units/%s: 'figure' must be the sector's quantity, '%s'" % [fname, sector["quantity"]["id"]])
+	# The type's OWN figure (section 1 as amended): {id, unit, better}.
+	var figure = d.get("figure")
+	if typeof(figure) != TYPE_DICTIONARY or typeof(figure.get("id")) != TYPE_STRING or String(figure["id"]) == "" \
+			or typeof(figure.get("unit")) != TYPE_STRING or not ["lower", "higher"].has(String(figure.get("better", ""))):
+		errors.append("units/%s: 'figure' must be {id, unit, better: lower | higher}" % fname)
 		return {}
 	for key in TYPE_NUMBERS + TYPE_MONTHS:
 		if not _is_number(d.get(key)):
@@ -155,23 +164,26 @@ static func parse_type(loader, parsed, fname: String, errors: Array[String]) -> 
 		if float(d[key]) < 0.0 or float(d[key]) > 1.0:
 			errors.append("units/%s: '%s' must be between 0 and 1" % [fname, key])
 			return {}
-	if float(d["capacity"]) <= 0.0 or float(d["staff"]) < 0.0 or float(d["figure_elasticity"]) == 0.0:
-		errors.append("units/%s: 'capacity' must be above 0, 'staff' at least 0, 'figure_elasticity' not 0" % fname)
+	if float(d["staff"]) < 0.0 or float(d["figure_elasticity"]) == 0.0:
+		errors.append("units/%s: 'staff' must be at least 0, 'figure_elasticity' not 0" % fname)
 		return {}
 	# More capacity always improves the figure (T10 on #410): the sign follows `better`.
-	var lower := String(sector["quantity"]["better"]) == "lower"
+	var lower := String(figure["better"]) == "lower"
 	if (float(d["figure_elasticity"]) < 0.0) != lower:
 		errors.append("units/%s: 'figure_elasticity' must be %s for a figure where %s is better" % [
-			fname, "below 0" if lower else "above 0", sector["quantity"]["better"]])
+			fname, "below 0" if lower else "above 0", figure["better"]])
 		return {}
-	for key in ["cost_eur_m", "running_eur_m"]:
+	# By nation: the capacity of one new unit (in the stock's own unit) and what it costs.
+	for key in ["capacity", "cost_eur_m", "running_eur_m"]:
 		var by_nation = d.get(key)
 		if typeof(by_nation) != TYPE_DICTIONARY or (by_nation as Dictionary).is_empty():
-			errors.append("units/%s: '%s' must be {NATION: EUR million}" % [fname, key])
+			errors.append("units/%s: '%s' must be {NATION: number}" % [fname, key])
 			return {}
 		for nation in by_nation:
+			if String(nation).begins_with("_"):
+				continue
 			if not loader.nations.has(String(nation)) or not _is_number(by_nation[nation]) \
-					or float(by_nation[nation]) < 0.0 or (key == "cost_eur_m" and float(by_nation[nation]) == 0.0):
+					or float(by_nation[nation]) < 0.0 or (key != "running_eur_m" and float(by_nation[nation]) == 0.0):
 				errors.append("units/%s: '%s' has a bad entry for '%s'" % [fname, key, nation])
 				return {}
 	if typeof(d.get("cofinanced")) != TYPE_BOOL:
@@ -191,26 +203,31 @@ static func parse_type(loader, parsed, fname: String, errors: Array[String]) -> 
 			row[String(key)] = d[key]
 	for key in TYPE_MONTHS:
 		row[key] = int(d[key])
-	row["capacity"] = float(d["capacity"])
+	for key in ["capacity", "cost_eur_m", "running_eur_m"]:
+		row[key] = _data(d[key])
 	return row
 
 
-## One nation's stock file into loader.unit_stock and loader.unit_levels. Every
-## region is one of the nation's, every type a loaded catalogue row priced for the
-## nation, and every figure of a stocked type has a level for every region (a
-## missing one would place a region nowhere around the nation).
+## One nation's stock file into loader.unit_stock, loader.unit_levels and
+## loader.unit_national (section 2 as amended):
+##   {stock: [{region, type, units, capacity}],
+##    figures: {<type_id>: {figure, national, levels: [{region, level}]}}}
+## Every region is one of the nation's, every type a loaded catalogue row priced and
+## sized for the nation, and every stocked type has its figure: its id, its national
+## value and one level per region, from one table. The levels are stored relative to
+## `national`, and a file whose levels, weighted by the regions' people, do not give
+## `national` back within UNIT_LEVEL_TOLERANCE is refused (unemployment_rel's check).
 static func parse_stock(loader, nation_id: String, parsed, types: Dictionary, fname: String, errors: Array[String]) -> void:
 	if not loader.nations.has(nation_id):
 		errors.append("units/%s: no nation with id '%s'" % [fname, nation_id])
 		return
-	if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("stock")) != TYPE_ARRAY or typeof(parsed.get("levels")) != TYPE_ARRAY:
-		errors.append("units/%s: expected {\"stock\": [...], \"levels\": [...]}" % fname)
+	if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("stock")) != TYPE_ARRAY or typeof(parsed.get("figures")) != TYPE_DICTIONARY:
+		errors.append("units/%s: expected {\"stock\": [...], \"figures\": {...}}" % fname)
 		return
 	var shares := {}
 	for r in loader.regions.get(nation_id, []):
 		shares[r.id] = r.share
 	var stock := {}
-	var figures := {}
 	for row in parsed["stock"]:
 		var region := String(row.get("region", "")) if typeof(row) == TYPE_DICTIONARY else ""
 		var type_id := String(row.get("type", "")) if typeof(row) == TYPE_DICTIONARY else ""
@@ -219,36 +236,55 @@ static func parse_stock(loader, nation_id: String, parsed, types: Dictionary, fn
 				or not _is_number(row.get("capacity")) or float(row["capacity"]) < 0.0:
 			errors.append("units/%s: bad stock row %s" % [fname, str(row)])
 			return
-		if not (types[type_id]["cost_eur_m"] as Dictionary).has(nation_id) or not (types[type_id]["running_eur_m"] as Dictionary).has(nation_id):
-			errors.append("units/%s: type '%s' has no cost or running cost for %s" % [fname, type_id, nation_id])
-			return
+		for key in ["capacity", "cost_eur_m", "running_eur_m"]:
+			if not (types[type_id][key] as Dictionary).has(nation_id):
+				errors.append("units/%s: type '%s' has no '%s' for %s" % [fname, type_id, key, nation_id])
+				return
 		var by_region: Dictionary = stock.get(type_id, {})
 		if by_region.has(region):
 			errors.append("units/%s: two stock rows for %s, %s" % [fname, region, type_id])
 			return
 		by_region[region] = {"units": int(row["units"]), "capacity": float(row["capacity"])}
 		stock[type_id] = by_region
-		figures[String(types[type_id]["figure"])] = true
-	var raw := {}
-	for row in parsed["levels"]:
-		var region := String(row.get("region", "")) if typeof(row) == TYPE_DICTIONARY else ""
-		var figure := String(row.get("figure", "")) if typeof(row) == TYPE_DICTIONARY else ""
-		if not shares.has(region) or not figures.has(figure) or not _is_number(row.get("level")) or float(row["level"]) <= 0.0:
-			errors.append("units/%s: bad level row %s" % [fname, str(row)])
+	var levels := {}
+	var national := {}
+	for type_id in stock:
+		var entry = parsed["figures"].get(type_id)
+		if typeof(entry) != TYPE_DICTIONARY or String(entry.get("figure", "")) != String(types[type_id]["figure"]["id"]) \
+				or not _is_number(entry.get("national")) or float(entry["national"]) <= 0.0 or typeof(entry.get("levels")) != TYPE_ARRAY:
+			errors.append("units/%s: type '%s' needs {figure: '%s', national, levels}" % [fname, type_id, types[type_id]["figure"]["id"]])
 			return
-		var by_region: Dictionary = raw.get(figure, {})
-		if by_region.has(region):
-			errors.append("units/%s: two level rows for %s, %s" % [fname, region, figure])
-			return
-		by_region[region] = float(row["level"])
-		raw[figure] = by_region
-	for figure in figures:
-		for region in shares:
-			if not (raw.get(figure, {}) as Dictionary).has(region):
-				errors.append("units/%s: figure '%s' has no level for region %s" % [fname, figure, region])
+		var raw := {}
+		for row in entry["levels"]:
+			var region := String(row.get("region", "")) if typeof(row) == TYPE_DICTIONARY else ""
+			if not shares.has(region) or not _is_number(row.get("level")) or float(row["level"]) <= 0.0:
+				errors.append("units/%s: bad level row %s for '%s'" % [fname, str(row), type_id])
 				return
+			if raw.has(region):
+				errors.append("units/%s: two level rows for %s, %s" % [fname, region, type_id])
+				return
+			raw[region] = float(row["level"])
+		var weighted := 0.0
+		var people := 0.0
+		for region in shares:
+			if not raw.has(region):
+				errors.append("units/%s: type '%s' has no level for region %s" % [fname, type_id, region])
+				return
+			weighted += float(shares[region]) * float(raw[region])
+			people += float(shares[region])
+		var nat := float(entry["national"])
+		if people > 0.0 and absf(weighted / people - nat) > UK.UNIT_LEVEL_TOLERANCE * nat:
+			errors.append("units/%s: '%s' levels weighted by people give %s, not its national %s" % [fname, type_id, str(weighted / people), str(nat)])
+			return
+		var rel := {}
+		for region in raw:
+			rel[region] = float(raw[region]) / nat
+		levels[type_id] = rel
+		national[type_id] = nat
 	loader.unit_stock[nation_id] = stock
-	loader.unit_levels[nation_id] = raw
+	loader.unit_levels[nation_id] = levels
+	loader.unit_national[nation_id] = national
+
 
 
 ## The Union's rule (section 6), refused whole on a bad entry. Returns

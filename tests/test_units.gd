@@ -121,15 +121,27 @@ func _test_the_projects_are_potential_rows() -> void:
 
 func _test_the_fixture_loads() -> void:
 	var row: Dictionary = Units.row(_loader, TYPE)
-	if row.is_empty() or String(row["payoff"]) != UK.PAYOFF_CAPACITY or float(row["capacity"]) != 1000.0:
+	if row.is_empty() or String(row["payoff"]) != UK.PAYOFF_CAPACITY or Units.unit_capacity(_loader, "FRA", TYPE) != 1000.0:
 		_fail("the fixture type did not load: %s" % row)
-	if float(Units.start_capacity(_loader, "FRA", TYPE, "FR1")) != 10000.0:
-		_fail("FR1's start capacity reads %s, not the stock row's 10000" % Units.start_capacity(_loader, "FRA", TYPE, "FR1"))
+	if float(Units.start_capacity(_loader, "FRA", TYPE, "FR1")) != 10000.0 or Units.start_units(_loader, "FRA", TYPE, "FR1") != 10:
+		_fail("FR1's start stock reads %s capacity, %d units" % [Units.start_capacity(_loader, "FRA", TYPE, "FR1"), Units.start_units(_loader, "FRA", TYPE, "FR1")])
+	if float(_loader.unit_national["FRA"][TYPE]) <= 0.0:
+		_fail("the type's national figure did not load")
 	var rule: Dictionary = _loader.unit_cofinancing.get("eu", {})
 	# The fixture carries `_` labels at every level (Content's stand-in notes): read past, kept out.
 	if float(rule.get("rates", {}).get("transition", 0.0)) != 0.6 or (rule.get("periods", []) as Array).size() != 1 \
 			or (rule["rates"] as Dictionary).has("_note") or (rule["periods"][0]["envelope_eur_bn"] as Dictionary).has("_note"):
 		_fail("the co-financing rule did not load: %s" % rule)
+	# One type per figure (section 3): a second type answering a taken figure is refused.
+	var dup = DataLoader.new()
+	dup.load_all()
+	UnitsLoader.load_units(dup, "res://tests/fixtures/units_dup")
+	var refused := false
+	for e in dup.errors:
+		if String(e).contains("is already answered by type"):
+			refused = true
+	if not refused or dup.unit_types.size() != 1:
+		_fail("two types answering one figure both load: %s" % [dup.errors])
 
 
 ## The member warning (the parent's ruling on #409; T1 and T6 on #410): one line for a
@@ -171,10 +183,8 @@ func _test_a_type_is_offered_only_where_a_stock_file_has_it() -> void:
 		_fail("a potential row is offered as a unit type")
 
 
-## Sections 2 and 3, one basis (T2 and T3 on #410): the level is the region's sourced
-## figure over the mean of the nation's regions weighted by their LIVE people x the
-## priority term, read now, so the people-weighted mean of what the screen shows is
-## exactly the nation's figure, with a priority set, after migration, with units built.
+
+
 func _test_the_level_is_normalised_to_the_people() -> void:
 	var state = _state()
 	var ns = state.player()
@@ -187,13 +197,19 @@ func _test_the_level_is_normalised_to_the_people() -> void:
 	if absf(_people_mean(state, ns, "level") - 1.0) > 1e-12:
 		_fail("after a move of people the weighted level is %.12f, not 1" % _people_mean(state, ns, "level"))
 	# A priority on the sector, units built: the shown figure's people-weighted mean is
-	# the nation's figure.
+	# the type's national figure.
 	Sectors.set_priority(state, ns, _loader, "education", "schools", "FRB")
 	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FR1", 2), _done("p2", UK.OP_BUILD, "FRC", 1)])
-	var nation := Sectors.quantity(ns, _loader, "education", "schools")
+	var nation := Units.national_figure(ns, _loader, TYPE)
 	if absf(_people_mean(state, ns, "shown") - nation) > 1e-12 * nation:
-		_fail("with a priority and units the regions' mean is %.12f, not the nation's %.12f" % [_people_mean(state, ns, "shown"), nation])
-	# A nation the type is not offered to reads the nation's own figure.
+		_fail("with a priority and units the regions' mean is %.12f, not the national %.12f" % [_people_mean(state, ns, "shown"), nation])
+	# At the floor: a region that closed all it held. The floor is in f, before the mean.
+	ns.unit_programmes.assign([_done("p3", UK.OP_DEMOLISH, "FR1", 10000)])
+	if absf(Units.factor(ns, _loader, TYPE, "FR1") - pow(0.01, -1.0)) > 1e-9:
+		_fail("a region that closed all it held reads f = %.6f" % Units.factor(ns, _loader, TYPE, "FR1"))
+	if absf(_people_mean(state, ns, "shown") - nation) > 1e-12 * nation:
+		_fail("at the floor the regions' mean is %.12f, not the national %.12f" % [_people_mean(state, ns, "shown"), nation])
+	# A nation the type is not offered to reads level 1.
 	var gbr = GameState.new_game(_loader, "GBR").player()
 	if Units.level(gbr, _loader, TYPE, "UKI") != 1.0:
 		_fail("a region with no level row reads %s, not 1" % Units.level(gbr, _loader, TYPE, "UKI"))
@@ -220,7 +236,8 @@ func _test_bad_rows_are_refused() -> void:
 	var errors: Array[String] = []
 	if UnitsLoader.parse_type(_loader, good, TYPE + ".json", errors).is_empty() or not errors.is_empty():
 		_fail("the good fixture row is refused: %s" % [errors])
-	for case in [["capacity", 0], ["sector", "universities"], ["figure", "graduates_per_1000"],
+	for case in [["capacity", {"FRA": 0}], ["capacity", 1000], ["sector", "nowhere"], ["figure", "pupils"],
+			["figure", {"id": "x", "unit": "u", "better": "middle"}],
 			["payoff", "network"], ["overrun_odds", 1.5], ["figure_elasticity", 1.0], ["cost_eur_m", {"FRA": -1}], ["cost_eur_m", {"FRA": {"x": 1}}], ["cost_eur_m", {"FRA": 0}],
 			["build_months", 0], ["build_months", 12.5], ["id", "other_school"], ["cofinanced", "yes"], ["bloc_offset_per_pop_share", {"nobody": 1.0}]]:
 		var bad := good.duplicate(true)
@@ -236,46 +253,49 @@ func _test_bad_rows_are_refused() -> void:
 	var types := {TYPE: good}
 	var full: Array = []
 	for r in _loader.regions["FRA"]:
-		full.append({"region": r.id, "figure": "pupils_per_teacher", "level": 15.0})
-	var fine := {"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}], "levels": full}
+		full.append({"region": r.id, "level": 15.0})
+	var fig := {"figure": "fixture_pupils_per_teacher", "national": 15.0, "levels": full}
+	var one := [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}]
+	var fine := {"stock": one, "figures": {TYPE: fig}}
 	errors = []
 	UnitsLoader.parse_stock(_loader, "FRA", fine, types, "stock/FRA.json", errors)
 	if not errors.is_empty():
 		_fail("a good stock file is refused: %s" % [errors])
+	var with_level := func(extra: Array, national: float) -> Dictionary:
+		return {"stock": one, "figures": {TYPE: {"figure": "fixture_pupils_per_teacher", "national": national, "levels": full + extra}}}
 	for stock in [
-			{"stock": [{"region": "UKI", "type": TYPE, "units": 1, "capacity": 10}], "levels": full},
-			{"stock": [{"region": "FR1", "type": "nothing", "units": 1, "capacity": 10}], "levels": full},
-			{"stock": [{"region": "FR1", "type": TYPE, "units": -1, "capacity": 10}], "levels": full},
-			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10},
-				{"region": "FR1", "type": TYPE, "units": 2, "capacity": 20}], "levels": full},
-			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}],
-				"levels": full + [{"region": "FRB", "figure": "pupils_per_teacher", "level": 0.0}]},
-			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}],
-				"levels": full + [{"region": "FRB", "figure": "pupils_per_teacher", "level": 16.0}]},
-			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}],
-				"levels": [{"region": "FR1", "figure": "pupils_per_teacher", "level": 15.0}]}]:
+			{"stock": [{"region": "UKI", "type": TYPE, "units": 1, "capacity": 10}], "figures": {TYPE: fig}},
+			{"stock": [{"region": "FR1", "type": "nothing", "units": 1, "capacity": 10}], "figures": {TYPE: fig}},
+			{"stock": [{"region": "FR1", "type": TYPE, "units": -1, "capacity": 10}], "figures": {TYPE: fig}},
+			{"stock": one + one, "figures": {TYPE: fig}},
+			{"stock": one, "figures": {}},
+			{"stock": one, "figures": {TYPE: {"figure": "pupils_per_teacher", "national": 15.0, "levels": full}}},
+			with_level.call([{"region": "FRB", "level": 0.0}], 15.0),
+			with_level.call([{"region": "FRB", "level": 16.0}], 15.0),
+			with_level.call([], 16.0),
+			{"stock": one, "figures": {TYPE: {"figure": "fixture_pupils_per_teacher", "national": 15.0,
+				"levels": [{"region": "FR1", "level": 15.0}]}}}]:
 		errors = []
 		UnitsLoader.parse_stock(_loader, "FRA", stock, types, "stock/FRA.json", errors)
 		if errors.is_empty():
 			_fail("a bad stock file is accepted: %s" % stock)
+	# Within the tolerance a national a little off the weighted levels loads.
+	errors = []
+	UnitsLoader.parse_stock(_loader, "FRA", with_level.call([], 15.3), types, "stock/FRA.json", errors)
+	if not errors.is_empty():
+		_fail("a national 2 %% off the levels is refused: %s" % [errors])
 	var unpriced := good.duplicate(true)
 	unpriced["cost_eur_m"] = {"DEU": 50.0}
 	errors = []
 	UnitsLoader.parse_stock(_loader, "FRA", fine, {TYPE: unpriced}, "stock/FRA.json", errors)
 	if errors.is_empty():
 		_fail("a stocked type with no price for the nation is accepted")
-	var cof: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE.path_join("cofinancing.json")))
-	for case in [["warn_months", 0], ["periods", []], ["rates", {"rich": 0.5}], ["rates", {"transition": 1.5}],
-			["rates", {"less_developed": 0.8, "transition": 0.6, "transition_former_less_developed": 0.7}]]:
-		var bad := cof.duplicate(true)
-		bad["organisations"]["eu"][case[0]] = case[1]
-		errors = []
-		if not UnitsLoader.parse_cofinancing(_loader, bad, "cofinancing.json", errors).is_empty() or errors.is_empty():
-			_fail("a co-financing rule with %s = %s is accepted" % [case[0], case[1]])
-	var stranger := {"organisations": {"nobody": cof["organisations"]["eu"]}}
+	var unsized := good.duplicate(true)
+	unsized["capacity"] = {"DEU": 1000}
 	errors = []
-	if not UnitsLoader.parse_cofinancing(_loader, stranger, "cofinancing.json", errors).is_empty():
-		_fail("a co-financing rule for an unknown organisation is accepted")
+	UnitsLoader.parse_stock(_loader, "FRA", fine, {TYPE: unsized}, "stock/FRA.json", errors)
+	if errors.is_empty():
+		_fail("a stocked type with no capacity for the nation is accepted")
 	# The fixture's own file must be put back: parse_stock writes the loader's registers.
 	UnitsLoader.load_units(_loader, FIXTURE)
 
@@ -303,66 +323,64 @@ func _test_cohesion_category_is_read_and_checked() -> void:
 func _test_nothing_built_reads_the_nation_times_the_level() -> void:
 	var state = _state()
 	var ns = state.player()
+	var nation := Units.national_figure(ns, _loader, TYPE)
+	if nation != float(_loader.unit_national["FRA"][TYPE]):
+		_fail("at the start the type's national figure is %.6f, not its stock file's %.6f" % [nation, _loader.unit_national["FRA"][TYPE]])
 	for region in _named(state):
-		var want: float = Sectors.regional_quantity(ns, _loader, "education", "schools", region) \
-			* Units.level(ns, _loader, TYPE, region)
-		if Units.netted_gain(ns, _loader, TYPE, region) != 0.0 or Units.shown_figure(ns, _loader, TYPE, region) != want:
+		var want: float = nation * Units.level(ns, _loader, TYPE, region)
+		if Units.netted_factor(ns, _loader, TYPE, region) != 1.0 or Units.shown_figure(ns, _loader, TYPE, region) != want:
 			_fail("%s shows %.6f with nothing built, not %.6f" % [region, Units.shown_figure(ns, _loader, TYPE, region), want])
+	# The type rides the sector's path: more money on the line moves its national figure.
+	ns.spending_pct_gdp["education"] = float(ns.spending_pct_gdp["education"]) * 1.1
+	if Units.national_figure(ns, _loader, TYPE) >= nation:
+		_fail("more money on education did not lower the type's pupils per teacher")
 
 
-## Section 3: g = elasticity x n x capacity / C in the built region, netted against
-## the people x level weighted mean, so the regions' mean stays the nation's figure.
+
+
 func _test_a_built_unit_lifts_its_region_and_the_nation_holds() -> void:
 	var state = _state()
 	var ns = state.player()
 	var before := Units.shown_figure(ns, _loader, TYPE, "FR1")
 	var other_before := Units.shown_figure(ns, _loader, TYPE, "FRB")
 	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FR1", 2)])
-	if absf(Units.gain(ns, _loader, TYPE, "FR1") - (-0.2)) > 1e-12:
-		_fail("two units of 1000 places on 10000 give g = %.6f, not -0.2" % Units.gain(ns, _loader, TYPE, "FR1"))
+	if Units.capacity_delta(ns, _loader, TYPE, "FR1") != 2000.0:
+		_fail("two units of 1000 pupils add %s capacity" % Units.capacity_delta(ns, _loader, TYPE, "FR1"))
+	if absf(Units.factor(ns, _loader, TYPE, "FR1") - 1.0 / 1.2) > 1e-12:
+		_fail("2000 pupils' capacity on 10000 gives f = %.6f, not 1/1.2" % Units.factor(ns, _loader, TYPE, "FR1"))
 	if Units.shown_figure(ns, _loader, TYPE, "FR1") >= before:
 		_fail("FR1's pupils per teacher did not fall: %.4f -> %.4f" % [before, Units.shown_figure(ns, _loader, TYPE, "FR1")])
 	if Units.shown_figure(ns, _loader, TYPE, "FRB") <= other_before:
 		_fail("FRB did not give a little back: %.4f -> %.4f" % [other_before, Units.shown_figure(ns, _loader, TYPE, "FRB")])
-	var weighted := 0.0
-	var people := 0.0
-	for region in _named(state):
-		var p := float(ns.region_pop_share[region])
-		weighted += p * Units.shown_figure(ns, _loader, TYPE, region)
-		people += p
-	var nation := Sectors.quantity(ns, _loader, "education", "schools")
-	if absf(weighted / people - nation) > 1e-9 * nation:
-		_fail("the regions' weighted mean is %.9f, not the nation's %.9f" % [weighted / people, nation])
-	# The gain is linear: twenty schools on 10000 places would be g = -2; the shown
-	# figure is floored above zero, never zero or below.
-	ns.unit_programmes.assign([_done("p3", UK.OP_BUILD, "FR1", 20)])
-	if Units.shown_figure(ns, _loader, TYPE, "FR1") <= 0.0:
-		_fail("twenty schools take FR1 to %.4f pupils per teacher" % Units.shown_figure(ns, _loader, TYPE, "FR1"))
+	var nation := Units.national_figure(ns, _loader, TYPE)
+	if absf(_people_mean(state, ns, "shown") - nation) > 1e-12 * nation:
+		_fail("the regions' weighted mean is %.12f, not the national %.12f" % [_people_mean(state, ns, "shown"), nation])
 	if Units.shown_figure(ns, _loader, "high_speed_rail", "FR1") != 0.0:
 		_fail("a project's potential row reads a regional figure")
 	# A unit still building moves nothing.
 	ns.unit_programmes.assign([_row("p2", UK.OP_BUILD, UK.STATE_BUILDING, "FR1", 2)])
-	if Units.gain(ns, _loader, TYPE, "FR1") != 0.0:
+	if Units.factor(ns, _loader, TYPE, "FR1") != 1.0:
 		_fail("a building unit already lifts its region")
 
 
 func _test_a_closed_unit_reverses_a_built_one() -> void:
 	var state = _state()
 	var ns = state.player()
-	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FR1", 2), _done("p2", UK.OP_DEMOLISH, "FR1", 2)])
-	if Units.net_units(ns, TYPE, "FR1") != 0 or Units.gain(ns, _loader, TYPE, "FR1") != 0.0:
-		_fail("two built and two closed net %d units" % Units.net_units(ns, TYPE, "FR1"))
-	ns.unit_programmes.assign([_done("p2", UK.OP_DEMOLISH, "FR1", 3)])
-	if Units.gain(ns, _loader, TYPE, "FR1") <= 0.0:
-		_fail("closing three schools did not raise FR1's pupils per teacher")
+	# A closure is entered in capacity (section 7): 2000 pupils closed undoes two schools.
+	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FR1", 2), _done("p2", UK.OP_DEMOLISH, "FR1", 2000)])
+	if Units.capacity_delta(ns, _loader, TYPE, "FR1") != 0.0 or Units.factor(ns, _loader, TYPE, "FR1") != 1.0:
+		_fail("two schools built and 2000 pupils closed net %s" % Units.capacity_delta(ns, _loader, TYPE, "FR1"))
+	ns.unit_programmes.assign([_done("p2", UK.OP_DEMOLISH, "FR1", 3000)])
+	if Units.factor(ns, _loader, TYPE, "FR1") <= 1.0:
+		_fail("closing 3000 pupils did not raise FR1's pupils per teacher")
 
 
 func _test_a_region_with_no_stock_gains_nothing() -> void:
 	var state = _state()
 	var ns = state.player()
 	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FRM", 1)])
-	if Units.gain(ns, _loader, TYPE, "FRM") != 0.0:
-		_fail("a region with no stock row gains %.4f" % Units.gain(ns, _loader, TYPE, "FRM"))
+	if Units.factor(ns, _loader, TYPE, "FRM") != 1.0:
+		_fail("a region with no stock row reads f = %.4f" % Units.factor(ns, _loader, TYPE, "FRM"))
 	if Units.start_capacity(_loader, "FRA", TYPE, "FRM") != 0.0:
 		_fail("FRM reads a start capacity with no stock row")
 
@@ -471,7 +489,7 @@ func _test_the_register_is_saved() -> void:
 		_fail("a new game starts with programmes: %s" % [ns.unit_programmes])
 	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FR1", 2)])
 	var back = ns.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
-	if back.unit_programmes.size() != 1 or Units.net_units(back, TYPE, "FR1") != 2:
+	if back.unit_programmes.size() != 1 or Units.capacity_delta(back, _loader, TYPE, "FR1") != 2000.0:
 		_fail("the register did not survive a save: %s" % [back.unit_programmes])
 
 
@@ -479,8 +497,10 @@ func _done(id: String, op: String, region: String, units: int) -> Dictionary:
 	return _row(id, op, UK.STATE_DONE, region, units)
 
 
-func _row(id: String, op: String, state: String, region: String, units: int) -> Dictionary:
-	return {"id": id, "type": TYPE, "op": op, "state": state, "rows": [{"region": region, "units": units}]}
+func _row(id: String, op: String, state: String, region: String, amount: int) -> Dictionary:
+	# A build row counts units; a closure row is entered in capacity (section 7).
+	var r := {"region": region, "capacity": amount} if op == UK.OP_DEMOLISH else {"region": region, "units": amount}
+	return {"id": id, "type": TYPE, "op": op, "state": state, "rows": [r]}
 
 
 func _fail(message: String) -> void:

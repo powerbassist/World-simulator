@@ -12,16 +12,18 @@ extends RefCounted
 ##   capital    the estimate spread evenly over build_months, as % of GDP a year;
 ##   running    units x running_eur_m a year, from the opening, for good.
 ##
-## A closure (op demolish) is priced as its one-off cost, demolish_cost_share of the
-## unit cost, with no range and no odds, and saves the units' running cost.
+## A closure (op demolish) is entered in capacity (section 7 as amended) and priced as
+## demolish_cost_share of the cost of that much new capacity, once, with no range and
+## no odds; it saves the same share of a unit's running cost.
 ##
-## CONCENTRATION: the units of the type ordered in one region within CONC_MONTHS
-## (the programmes voted since, and this row), beyond CONC_FREE of the region's start
-## stock in units, raise the unit price there by CONC_SLOPE points per further point
-## of the stock. Spreading is cheaper; concentrating is faster where it is needed.
+## CONCENTRATION READS CAPACITY: the capacity of the type ordered in one region within
+## CONC_MONTHS (the programmes voted since, and this row), beyond CONC_FREE of the
+## region's start capacity, raises the unit price there by CONC_SLOPE points per further
+## point of it. Spreading is cheaper; concentrating is faster where it is needed.
 
 const UK = preload("res://src/sim/units_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
+const Units = preload("res://src/sim/units.gd")
 
 
 static func now(state) -> int:
@@ -45,17 +47,21 @@ static func quote(state, ns, loader, row: Dictionary, earlier: Array = []) -> Di
 	var t: Dictionary = loader.unit_types[String(row["type"])]
 	var cost := float(t["cost_eur_m"][ns.id])
 	var running := float(t["running_eur_m"][ns.id])
+	var gdp_m := float(ns.gdp_eur_bn) * 1000.0
+	if String(row["op"]) == UK.OP_DEMOLISH:
+		# The capacity closed, as a number of units' worth of new capacity.
+		var worth := 0.0
+		for r in row["rows"]:
+			worth += float(r["capacity"]) / Units.unit_capacity(loader, ns.id, String(row["type"]))
+		var once := worth * cost * float(t["demolish_cost_share"])
+		var months := int(t["demolish_months"])
+		return {"ok": true, "estimate_eur_m": once, "lo_eur_m": once, "hi_eur_m": once, "width": 0.0, "odds": 0.0,
+			"surcharge": {}, "build_months": months, "running_eur_m_year": -worth * running,
+			"capital_pct_gdp_year": 100.0 * once / months * 12.0 / gdp_m,
+			"line_pct_gdp_year": -100.0 * worth * running / gdp_m}
 	var units := 0
 	for r in row["rows"]:
 		units += int(r["units"])
-	var gdp_m := float(ns.gdp_eur_bn) * 1000.0
-	if String(row["op"]) == UK.OP_DEMOLISH:
-		var once := float(units) * cost * float(t["demolish_cost_share"])
-		var months := int(t["demolish_months"])
-		return {"ok": true, "estimate_eur_m": once, "lo_eur_m": once, "hi_eur_m": once, "width": 0.0, "odds": 0.0,
-			"surcharge": {}, "build_months": months, "running_eur_m_year": -float(units) * running,
-			"capital_pct_gdp_year": 100.0 * once / months * 12.0 / gdp_m,
-			"line_pct_gdp_year": -100.0 * float(units) * running / gdp_m}
 	var c := competence(state, ns, loader, String(t["line"]))
 	var width := UK.UNIT_FOG_MAX - (UK.UNIT_FOG_MAX - UK.UNIT_FOG_MIN) * c
 	var surcharge := {}
@@ -75,7 +81,7 @@ static func quote(state, ns, loader, row: Dictionary, earlier: Array = []) -> Di
 
 
 static func _surcharge(state, ns, loader, type_id: String, region: String, units: int, earlier: Array) -> float:
-	var stock := float(((loader.unit_stock.get(ns.id, {}) as Dictionary).get(type_id, {}) as Dictionary).get(region, {}).get("units", 0))
+	var stock := Units.start_capacity(loader, ns.id, type_id, region)
 	if stock <= 0.0:
 		return 0.0
 	var ordered := units
@@ -86,7 +92,7 @@ static func _surcharge(state, ns, loader, type_id: String, region: String, units
 	for row in earlier:
 		if String(row.get("type", "")) == type_id and String(row.get("op", "")) == UK.OP_BUILD:
 			ordered += _units_in(row, region)
-	return UK.UNIT_CONC_SLOPE * maxf(0.0, float(ordered) / stock - UK.UNIT_CONC_FREE)
+	return UK.UNIT_CONC_SLOPE * maxf(0.0, float(ordered) * Units.unit_capacity(loader, ns.id, type_id) / stock - UK.UNIT_CONC_FREE)
 
 
 static func _units_in(row: Dictionary, region: String) -> int:
