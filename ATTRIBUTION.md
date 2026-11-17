@@ -104,3 +104,7 @@ The shares and start quantities in `data/domains/*.json`, read on 2026-11-01; ea
 - NATO, *Defence Expenditure of NATO Countries (2014-2025)*, tables 8a and 8b, 2024 estimates. NATO's guidelines for the external use of its content require credit to NATO and bar sale or advertising use; the project's data licence is non-commercial.
 - OECD (OECD Data Explorer): hospital beds, waiting times and students per teaching staff for the United Kingdom and Poland, credited to the OECD. The OECD's terms for statistical data were not confirmed; the licence for these tables is a standing question in the pull request.
 - Germany's Grundsicherung figure comes from a Deutscher Landkreistag circular of 13 May 2025 reproducing the Federal Ministry of Labour and Social Affairs table; Poland's minimum-pension top-up is ZUS's answer to Wyborcza.biz, as reported by Super Biznes on 16 May 2025. Both are single published figures, marked as estimate and press source in their rows.
+
+## Union co-financing (V5.3 c')
+
+`data/units/cofinancing.json` and `data/units/cohesion_categories.json` cite Regulation (EU) 2021/1060 (Articles 63, 105, 112), Commission Implementing Decisions (EU) 2021/1130 and 2021/1131 and 2014/99/EU, read on EUR-Lex through the Publications Office of the European Union, and Eurostat `demo_r_d2jan` for population weights. Union legal texts are reused under Commission Decision 2011/833/EU; Eurostat data under its re-use policy (equivalent to CC BY 4.0). Credit: (c) European Union, https://eur-lex.europa.eu and https://ec.europa.eu/eurostat.
