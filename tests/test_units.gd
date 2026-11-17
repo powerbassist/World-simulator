@@ -126,7 +126,8 @@ func _test_the_fixture_loads() -> void:
 	if int(warned.get("FRA", 0)) != 1 or int(warned.get("DEU", 0)) != 1 or warned.has("GBR"):
 		_fail("the uncategorised-member warnings are %s" % [warned])
 	var rule: Dictionary = _loader.unit_cofinancing.get("eu", {})
-	if float(rule.get("rates", {}).get("transition", 0.0)) != 0.6 or (rule.get("periods", []) as Array).size() != 1:
+	# The fixture carries `_` labels at every level (Content's stand-in notes): read past, kept out.
+	if float(rule.get("rates", {}).get("transition", 0.0)) != 0.6 or (rule.get("periods", []) as Array).size() != 1 			or (rule["rates"] as Dictionary).has("_note") or (rule["periods"][0]["envelope_eur_bn"] as Dictionary).has("_note"):
 		_fail("the co-financing rule did not load: %s" % rule)
 
 

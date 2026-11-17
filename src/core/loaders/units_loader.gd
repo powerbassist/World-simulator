@@ -255,7 +255,10 @@ static func parse_cofinancing(loader, parsed, fname: String, errors: Array[Strin
 		errors.append("units/%s: expected {\"organisations\": {...}}" % fname)
 		return {}
 	var out := {}
+	# A `_` key is a label for a reader at any level (a stand-in period's note), never data.
 	for org_id in parsed["organisations"]:
+		if String(org_id).begins_with("_"):
+			continue
 		var rule = parsed["organisations"][org_id]
 		if not loader.orgs_by_id.has(String(org_id)) or typeof(rule) != TYPE_DICTIONARY:
 			errors.append("units/%s: '%s' is not an organisation of data/orgs" % [fname, org_id])
@@ -265,6 +268,8 @@ static func parse_cofinancing(loader, parsed, fname: String, errors: Array[Strin
 			errors.append("units/%s: %s has no 'rates'" % [fname, org_id])
 			return {}
 		for category in rates:
+			if String(category).begins_with("_"):
+				continue
 			if not Region.COHESION_CATEGORIES.has(String(category)) or not _is_number(rates[category]) \
 					or float(rates[category]) < 0.0 or float(rates[category]) > 1.0:
 				errors.append("units/%s: %s has a bad rate for '%s'" % [fname, org_id, category])
@@ -280,15 +285,17 @@ static func parse_cofinancing(loader, parsed, fname: String, errors: Array[Strin
 				errors.append("units/%s: %s has a bad period %s" % [fname, org_id, str(p)])
 				return {}
 			for nation in p["envelope_eur_bn"]:
+				if String(nation).begins_with("_"):
+					continue
 				if not loader.nations.has(String(nation)) or not _is_number(p["envelope_eur_bn"][nation]) or float(p["envelope_eur_bn"][nation]) < 0.0:
 					errors.append("units/%s: %s period %s has a bad envelope for '%s'" % [fname, org_id, p["id"], nation])
 					return {}
 			periods.append({"id": String(p["id"]), "first_year": int(p["first_year"]), "last_year": int(p["last_year"]),
-				"pays_until_year": int(p["pays_until_year"]), "envelope_eur_bn": (p["envelope_eur_bn"] as Dictionary).duplicate()})
+				"pays_until_year": int(p["pays_until_year"]), "envelope_eur_bn": _data(p["envelope_eur_bn"])})
 		if periods.is_empty():
 			errors.append("units/%s: %s has no 'periods'" % [fname, org_id])
 			return {}
-		out[String(org_id)] = {"rates": (rates as Dictionary).duplicate(), "warn_months": int(rule["warn_months"]), "periods": periods}
+		out[String(org_id)] = {"rates": _data(rates), "warn_months": int(rule["warn_months"]), "periods": periods}
 	return out
 
 
@@ -312,6 +319,15 @@ static func _sector(loader, line: String, sector_id: String) -> Dictionary:
 		if String(s["id"]) == sector_id:
 			return s
 	return {}
+
+
+## A dictionary without its `_` labels.
+static func _data(d: Dictionary) -> Dictionary:
+	var out := {}
+	for key in d:
+		if not String(key).begins_with("_"):
+			out[key] = d[key]
+	return out
 
 
 static func _is_number(v) -> bool:
