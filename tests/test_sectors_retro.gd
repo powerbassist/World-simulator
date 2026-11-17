@@ -20,6 +20,8 @@ const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const SectorProgramme = preload("res://src/ui/sector_programme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Investment = preload("res://src/sim/investment.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 
 const SLOT := "__test_sectors_retro__"
 const TAB := "sector_industry"
@@ -158,37 +160,59 @@ func _check_drag_end_rebuilds() -> void:
 func _check_disabled_go_says_why() -> void:
 	var ns = _main._state.player()
 	var list: Array = SectorProgramme.stops(_main._loader, "industry")
+	var bigger = list[list.size() - 1]["action"]
 	var before: Dictionary = (ns.sector_investment["industry"] as Dictionary).duplicate()
 	ns.sector_investment["industry"] = {"intensity": float(list[1]["intensity"]), "capital": 0.0}
 	_panel._prog_pick = list.size() - 1
 	_panel._refresh()
-	var go: Button = null
-	for node in _panel.find_children("*", "Button", true, false):
-		if node.has_meta("table_programme"):
-			go = node
+	var go := _go()
 	if go == null:
 		_fail("premise: no 'Put it in the finance bill' for another stop")
 	elif not go.disabled:
 		_fail("premise: 'Put it in the finance bill' is open while a programme runs")
 	else:
-		# The sim's own reason in words (Investment.refusal_reason, #397), not the screen's guess.
-		var want := Strings.t(Investment.refusal_reason(_main._state, ns, _main._loader, list[list.size() - 1]["action"]))
-		if want != Strings.t("a programme already runs in this sector"):
-			_fail("premise: the sim's reason is '%s'" % want)
-		var said := _refusals()
-		if said != [want]:
-			_fail("'Put it in the finance bill' is disabled and says %s, not the sim's '%s'" % [said, want])
+		# The sim's own reason (Investment.refusal_reason, #397) in the tab's sentence, with the remedy
+		# the old line gave (#404 pass 2 T1).
+		var reason := Investment.refusal_reason(_main._state, ns, _main._loader, bigger)
+		if reason != "a programme already runs in this sector":
+			_fail("premise: the sim's reason is '%s'" % reason)
+		var want := Strings.t("%s refused -- %s: end it first, then table the new one.") % [
+			Strings.row_name("investment-actions", bigger), Strings.t(reason)]
+		if _refusals() != [want]:
+			_fail("'Put it in the finance bill' is disabled and says %s, not '%s'" % [_refusals(), want])
 	# No programme runs: a stop is open, and nothing says it is not.
 	ns.sector_investment["industry"] = {"intensity": 0.0, "capital": 0.0}
-	_panel._prog_pick = list.size() - 1
 	_panel._refresh()
-	for node in _panel.find_children("*", "Button", true, false):
-		if node.has_meta("table_programme") and _live(node) and (node as Button).disabled:
-			_fail("'Put it in the finance bill' is disabled with no programme running")
+	go = _go()
+	if go == null:
+		_fail("premise: no 'Put it in the finance bill' with no programme running")
+	elif go.disabled:
+		_fail("'Put it in the finance bill' is disabled with no programme running")
 	if not _refusals().is_empty():
 		_fail("an open programme verb carries a refusal: %s" % [_refusals()])
+	# A finance bill already in the queue (#404 pass 2 T2): the bill refuses the row, so the verb is
+	# shut and says why in the bill's words -- a live button would press into a silent refusal.
+	ns.bill_queue.append({"finance": {}})
+	_panel._refresh()
+	go = _go()
+	var tabling := FinanceBill.refusal(_main._state, _main._loader, {"programmes": {"industry": String(bigger.id)}})
+	if not bool(tabling.get("finance_queued", false)):
+		_fail("premise: a queued finance bill does not refuse the row: %s" % tabling)
+	if go == null or not go.disabled:
+		_fail("'Put it in the finance bill' is open while the bill would refuse it (a finance bill queued)")
+	elif _refusals() != [ProposalNote.body(tabling)]:
+		_fail("the queued-bill refusal says %s, not '%s'" % [_refusals(), ProposalNote.body(tabling)])
+	ns.bill_queue.pop_back()
 	ns.sector_investment["industry"] = before
 	_panel._prog_pick = -1
+	_panel._refresh()
+
+
+func _go() -> Button:
+	for node in _panel.find_children("*", "Button", true, false):
+		if node.has_meta("table_programme") and _live(node):
+			return node
+	return null
 
 
 ## Not under a row the rebuild freed: queue_free marks the freed node, not its children.

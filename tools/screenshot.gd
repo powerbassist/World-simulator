@@ -143,6 +143,10 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme prog_jobs_first --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sector-refusal --open sector_industry
+##     (Industry runs a programme and the bigger one is picked: the refused verb says why)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --save-load
+##     (the Save/Load dialog over ten real saves)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defence --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --summit --open summit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --subsidy --open companies
