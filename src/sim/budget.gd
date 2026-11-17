@@ -23,6 +23,7 @@ const ProcessAsks = preload("res://src/sim/process_asks.gd")
 const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
+const UnitBuild = preload("res://src/sim/unit_build.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 const Closures = preload("res://src/sim/closures.gd")
@@ -181,6 +182,11 @@ static func recompute(state, ns) -> void:
 		# V5.3 a. The plant rescues' line (src/sim/closures.gd, the parent's call 4 on
 		# #277), the fourth that STOPS: a rescue runs its term and ends. A month behind.
 		+ ns.rescue_bill_pct_gdp
+		# V5.3 c'. The unit programmes (src/sim/unit_build.gd): the capital while they
+		# build, and the standing units' running cost, which is the line's own spending
+		# (Sectors.ratio() reads it there). A month behind, as every computed line is.
+		+ ns.unit_bill_pct_gdp
+		+ ns.unit_running_total_pct_gdp()
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -656,6 +662,9 @@ static func _projected_month(job: ProjectionJob) -> Array:
 	# has. V1.3b's repair, made an eighth time rather than rediscovered an eighth
 	# time.
 	units.append(func() -> void: Projects.tick_month(sim, loader))
+	# V5.3 c': in WorldMonth's slot, after Projects, for Projects' reason: a programme's
+	# capital ends and its running cost begins when it opens, inside the window.
+	units.append(func() -> void: UnitBuild.tick_month(sim, loader))
 	# V5.3 a: in WorldMonth's slot, after Projects, for Projects' reason: a fund's
 	# bill and its regional term end when its years do, inside the projected window.
 	units.append(func() -> void: RegionFunds.tick_month(sim))

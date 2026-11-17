@@ -339,6 +339,7 @@ tests=(
   tests/test_regions.gd
   tests/test_region_funds.gd
   tests/test_units.gd
+  tests/test_unit_programmes.gd
   tests/test_screen_reads.gd
   # V2.7: the graph is content, the index is mean-one in output weights, and the
   # leaf takes Dictionaries and preloads nothing but its own constants.

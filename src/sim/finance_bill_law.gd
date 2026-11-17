@@ -73,6 +73,10 @@ static func position(ns, bill: Dictionary) -> Dictionary:
 	# infrastructure line, the anchor of the twelve infrastructure movers.
 	if bill.has("verbs_pct_gdp"):
 		rows.append(["spending_pct_gdp", "infrastructure", float(bill["verbs_pct_gdp"]), float(SK.CHANNEL_COST["spending_pct_gdp"])])
+	# V5.3 c': a unit programme reads as a rise of its own line by its cost a year, a
+	# closure as a cut by the running cost it saves (docs/design/v5.3-c-register.md 4).
+	for line in bill.get("units_pct_gdp", {}):
+		rows.append(["spending_pct_gdp", String(line), float(bill["units_pct_gdp"][line]), float(SK.CHANNEL_COST["spending_pct_gdp"])])
 	if bill.has("tax_progressivity"):
 		rows.append(["tax_rates_pct", FK.FALLBACK_TAX_KEY, float(bill["tax_progressivity"]) * FK.PROGRESSIVITY_INCOME_POINTS,
 			float(SK.CHANNEL_COST["tax_rates_pct"])])

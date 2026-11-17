@@ -293,6 +293,8 @@ const FIELDS := [
 	["region_funds", DEEP, ROWS, [], true],  # V5.3 a: absent is no fund
 	["region_closure_pts", DEEP, FLOAT_MAP, {}, true],  # V5.3 PR 3: absent is no closure landed
 	["unit_programmes", DEEP, ROWS, [], true],  # V5.3 c': absent is no programme
+	["unit_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # V5.3 c': rewritten by the next tick
+	["unit_running_pct_gdp", DEEP, FLOAT_MAP, {}, true],  # V5.3 c': absent is no unit standing
 	["region_history", NONE, COPIED, {}, true],  # V5.3 e PR B: absent is nothing sampled yet; not copied, a projection has no past
 	["region_fund_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
 	["rescue_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # V5.3 a: rewritten by the next tick

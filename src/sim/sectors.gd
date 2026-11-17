@@ -122,7 +122,9 @@ static func ratio(ns, loader, line: String, sector_id: String) -> float:
 	var line_then := float(ns.start_spending_pct_gdp.get(line, 0.0))
 	if line_then <= 0.0:
 		return 1.0
-	return float(ns.spending_pct_gdp.get(line, 0.0)) / line_then * held_ratio(ns, loader, line, sector_id)
+	# V5.3 c': the standing units' running cost is the line's own spending (UnitBuild),
+	# + 0.0 exactly with none, so every figure reads as before.
+	return (float(ns.spending_pct_gdp.get(line, 0.0)) + float(ns.unit_running_pct_gdp.get(line, 0.0))) / line_then 		* held_ratio(ns, loader, line, sector_id)
 
 
 ## ratio() with the line at its start level: the share's lever times drift_ratio().
