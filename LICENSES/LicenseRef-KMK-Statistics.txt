@@ -1,0 +1,10 @@
+Kultusministerkonferenz (KMK), Statistische Veroeffentlichungen
+
+Dokumentation Nr. 248 "Schueler/-innen, Klassen, Lehrkraefte und Absolvierende
+der Schulen 2015 bis 2024" (April 2026) and its Tabellenteil Z state no licence
+or terms of reuse (read 2026-11-17). Its figures are the Statistisches
+Bundesamt's school statistics processed by the Secretariat of the KMK
+("Berechnungen des Sekretariats der Kultusministerkonferenz"). The game uses a
+few published figures as cited facts, with a credit in ATTRIBUTION.md. This
+file records that no terms were found; it is not a licence text issued by the
+KMK, and the question of explicit terms is open (see the pull request).
