@@ -24,3 +24,8 @@ const STATE_DONE := "done"
 ## The files of data/units/ that are not catalogue rows.
 const COFINANCING_FILE := "cofinancing.json"
 const STOCK_DIR := "stock"
+
+## A stock file's levels, weighted by the regions' people (data/regions `share`), must
+## give its `national` back within this share of it (section 2 as amended; the check
+## unemployment_rel gets at import). Stand-in.
+const UNIT_LEVEL_TOLERANCE := 0.03
