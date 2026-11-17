@@ -38,6 +38,16 @@ SPDX-FileCopyrightText = "Office for National Statistics"
 SPDX-License-Identifier = "OGL-UK-3.0"
 
 [[annotations]]
+# The Union's co-financing rules and categories (V5.3 c'): Regulation (EU) 2021/1060 and Commission Implementing Decisions (EU) 2021/1130, 2021/1131 and 2014/99/EU read on EUR-Lex through the Publications Office (reuse under Commission Decision 2011/833/EU, CC BY 4.0), and population weights from Eurostat demo_r_d2jan (Eurostat's re-use policy, equivalent to CC BY 4.0). The credit is in ATTRIBUTION.md.
+path = [
+  "tools/cohesion_categories.json",
+  "data/units/cofinancing.json",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "European Union"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
 # The French start stock of the construction register (V5.3 c'): lycee enrolment and teachers from the Ministere de l'Education nationale open data portal and hospital establishments from DREES (Licence Ouverte 2.0, Etalab), hospital beds and population from Eurostat (re-use policy, equivalent to CC BY 4.0). The credit is in ATTRIBUTION.md.
 path = [
   "data/units/stock/FRA.json",
@@ -54,6 +64,15 @@ path = [
 precedence = "override"
 SPDX-FileCopyrightText = ["Statistisches Bundesamt (Destatis)", "Kultusministerkonferenz (KMK)"]
 SPDX-License-Identifier = "LicenseRef-Destatis-Reproduction AND LicenseRef-KMK-Statistics"
+
+[[annotations]]
+# The British start stock of the construction register (V5.3 c'): schools, pupils, teachers and hospital beds from the Department for Education, NHS England, Public Health Scotland, the Scottish and Welsh Governments, the Department of Health and the Department of Education of Northern Ireland, and ONS population (Open Government Licence v3.0). The credit is in ATTRIBUTION.md.
+path = [
+  "data/units/stock/GBR.json",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Crown copyright: Department for Education, NHS England, Public Health Scotland, Scottish Government, Welsh Government, Department of Health (NI), Department of Education (NI), Office for National Statistics"
+SPDX-License-Identifier = "OGL-UK-3.0"
 
 [[annotations]]
 # Busts generated from CC BY / CC BY-SA / CC0 / public-domain Wikimedia Commons photographs; credited per image in docs/portrait-attribution.md.
