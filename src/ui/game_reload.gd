@@ -49,6 +49,7 @@ static func _forget_main(main: Node) -> void:
 		driver._games.erase(id)
 	preload("res://src/ui/files_driver.gd")._views.erase(id)
 	preload("res://src/ui/council_cards.gd")._told.erase(id)
+	preload("res://src/ui/programme_file.gd")._seen.erase(id)
 
 
 ## A save read for a main to boot from: {state, day, slot}, or {} when it does not read (the

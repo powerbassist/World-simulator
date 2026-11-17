@@ -28,6 +28,7 @@ const REGISTER := {
 	"held month cards": "res://src/ui/briefing_driver.gd",
 	"commitment judged": "res://src/ui/promise_list.gd",
 	"request lapsed": "res://src/ui/audience_driver.gd",
+	"programme conclusions": "res://src/ui/programme_file.gd",
 	"diary booking refused": "res://src/ui/calendar_panel.gd",
 	"briefing lines": "res://src/ui/presidency_rows.gd",
 	"audience": "res://src/ui/audience_talks.gd",

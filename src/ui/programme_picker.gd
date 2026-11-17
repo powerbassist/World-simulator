@@ -102,8 +102,10 @@ func fill(ns, offer: Array) -> void:
 	_ns = ns
 	var filled := "%s|%s|%s|%d" % [",".join(offer.map(func(t): return String(t["id"]))), UiTheme.text_scale(), Strings.language(), int(ns.terms_served)]
 	if filled == _filled:
+		select(_selected)  # pass 2 T11: the rows stay, the detail's read follows the state
 		return
 	_filled = filled
+	_primary = null  # T12: the detail below is freed with the Choose it carried
 	for box in [_rows, _detail]:
 		for child in box.get_children():
 			box.remove_child(child)

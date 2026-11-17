@@ -30,6 +30,8 @@ const Strings = preload("res://src/ui/strings.gd")
 const Domains = preload("res://src/ui/domains.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const ProgrammeFile = preload("res://src/ui/programme_file.gd")
+const ProgrammePicker = preload("res://src/ui/programme_picker.gd")
+const StripReadings = preload("res://src/ui/strip_readings.gd")
 
 ## The Folder's page beside its 300 px list in the full dock (measured, s3 frames): the list column
 ## must leave the detail this much at text 130.
@@ -65,17 +67,29 @@ func _run() -> void:
 	_check_the_term_start_pause_fires(state, ns, loader)
 	_check_the_agenda_tab_is_gone()
 	_check_play_does_not_forfeit_the_offer(state, ns, loader)
+	_check_an_empty_offer_releases_the_hold(state, ns, loader)
+	_check_opening_the_file_leaves_the_clock(state, ns, loader)
 	_check_the_offer_is_built_on_the_file(state, ns, loader)
 	_check_the_picker_survives_a_rebuild()
+	_check_focus_survives_a_rebuild()
+	_check_the_fill_refreshes_its_detail(state, ns, loader)
 	_check_text_130_leaves_the_detail_room(state, ns, loader)
+	_check_past_terms_are_on_the_file(state, ns, loader)
 	_check_the_choice_is_a_command(state, ns, loader)
+	_check_the_booked_page_reads_its_term(state, ns, loader)
 	_check_a_second_choice_refuses(state, ns, loader)
 	_check_the_other_surfaces_read_the_register(state, ns, loader)
 	_check_a_conclusion_pushes_a_card(state, ns, loader)
+	_check_mid_term_says_when_the_next_programme_opens(state, ns, loader)
+	_check_a_reload_forgets_the_guard()
 
 
 func _folder():
 	return _main._events_panel
+
+
+func _forget() -> void:
+	ProgrammeFile._seen.erase(_main.get_instance_id())
 
 
 func _card() -> String:
@@ -116,8 +130,13 @@ func _check_the_agenda_tab_is_gone() -> void:
 		_fail("the Agenda domain holds %s, not the Diary alone" % [Domains.tabs("agenda", _main._windows.panel_ids())])
 	_main._windows.close("events")
 	_main._hud.inbox.card_activated.emit(_card())
-	if not _main._windows.is_open("events") or _folder().selected() != "file:" + _card():
+	if not _main._windows.is_open("events") or _folder().selected() != ProgrammeFile.KEY:
 		_fail("the programme card's click did not open the Folder on its file (page '%s')" % _folder().selected())
+	# The card is not the file: one item for the offer in To answer, never the card beside it.
+	_folder()._refresh()
+	var listed: Array = _folder().groups()[_folder().ANSWER]
+	if not listed.has(ProgrammeFile.KEY) or listed.has("file:" + _card()):
+		_fail("To answer lists %s: the programme file once, not its card" % [listed])
 	_main._windows.close("events")
 
 
@@ -125,14 +144,14 @@ func _check_the_agenda_tab_is_gone() -> void:
 ## while it stands opens the Folder on the programme file and keeps the clock down -- only until
 ## the Folder has SHOWN the offer: the next press, with the Folder closed again, runs.
 func _check_play_does_not_forfeit_the_offer(state, ns, loader) -> void:
-	ProgrammeFile.forget(_main)
+	_forget()
 	if not _main._clock.paused or not _main._paused_for_programme:
 		_fail("the guard check needs the term-start hold up")
 		return
 	_main._toggle_pause_by_hand()
 	if not _main._clock.paused:
 		_fail("the first Space at an unchosen term start ran the clock -- the offer is forfeited by one keypress")
-	if not _main._windows.is_open("events") or _folder().selected() != "file:" + _card():
+	if not _main._windows.is_open("events") or _folder().selected() != ProgrammeFile.KEY:
 		_fail("the first Space did not open the Folder on the programme file (page '%s')" % _folder().selected())
 	if Programme.available(state, ns, loader).is_empty():
 		_fail("the offer vanished without the clock moving")
@@ -146,12 +165,15 @@ func _check_play_does_not_forfeit_the_offer(state, ns, loader) -> void:
 	_main._enforce_term_start_programme()
 	if not _main._clock.paused or not _main._paused_for_programme:
 		_fail("re-enforcing an unchosen term start did not restore the hold")
-	# Pass 1: the card closed with its X while the hold stands. The first Space still reaches the offer
-	# (its file put back), so the second can run -- the clock is never stuck behind a card gone.
-	ProgrammeFile.forget(_main)
+	# Pass 2 T2: the card closed with its X while the hold stands. The file follows the offer, not the
+	# card: it stays in To answer, the first Space reaches it, the second runs.
+	_forget()
 	_main._hud.inbox.dismiss(_card())
+	_folder()._refresh()
+	if not _folder().groups()[_folder().ANSWER].has(ProgrammeFile.KEY):
+		_fail("with the programme card closed, the offer left To answer while it stands")
 	_main._toggle_pause_by_hand()
-	if not _main._clock.paused or not _main._windows.is_open("events") or _folder().selected() != "file:" + _card() or _card() == "":
+	if not _main._clock.paused or not _main._windows.is_open("events") or _folder().selected() != ProgrammeFile.KEY:
 		_fail("with the programme card closed, Space did not open the offer on the Folder (page '%s')" % _folder().selected())
 	_main._windows.close("events")
 	_main._toggle_pause_by_hand()
@@ -163,6 +185,32 @@ func _check_play_does_not_forfeit_the_offer(state, ns, loader) -> void:
 func _open_file() -> void:
 	ProgrammeFile.open(_main)
 	_folder()._refresh()
+
+
+## T13: the hold with nothing left to choose and no card (the offer emptied under it): Space runs the
+## clock rather than opening a page that cannot show the offer.
+func _check_an_empty_offer_releases_the_hold(state, ns, loader) -> void:
+	_forget()
+	var was := int(ns.programme_chosen_term)
+	ns.programme_chosen_term = int(ns.terms_served)  # the offer is empty
+	_main._drop_programme_card()
+	_main._paused_for_programme = true
+	_main._clock.paused = true
+	_main._toggle_pause_by_hand()
+	if _main._clock.paused:
+		_fail("an empty offer with the hold up: Space did not run the clock")
+	ns.programme_chosen_term = was
+	_main._enforce_term_start_programme()
+
+
+## T6 (G2): opening the file is navigation -- the clock stays as the player has it.
+func _check_opening_the_file_leaves_the_clock(state, ns, loader) -> void:
+	_main._clock.paused = false
+	ProgrammeFile.open(_main)
+	if _main._clock.paused:
+		_fail("opening the programme file paused a running clock")
+	_main._windows.close("events")
+	_main._enforce_term_start_programme()
 
 
 ## One row per offered entry and one Choose, under the file's own lead; the page's fold answer is
@@ -187,6 +235,9 @@ func _check_the_offer_is_built_on_the_file(state, ns, loader) -> void:
 		_fail("the file page drew %d Choose buttons; the selected entry's detail carries one" % buttons)
 	if not _text(page).contains(Strings.t("The term's programme")):
 		_fail("the programme file's page lost its title")
+	# T5 (d): the intro keeps its dotted term.
+	if not _walk(page).any(func(n): return n is RichTextLabel and n.is_visible_in_tree() and String(n.text).contains("Delivery is judged")):
+		_fail("the programme file's page lost the intro with its [g=programme] term")
 	var picker = _folder()._picker
 	var last: Button = _walk(page).filter(func(n): return n is Button and n.has_meta("entry")).back()
 	last.pressed.emit()
@@ -225,6 +276,42 @@ func _check_the_picker_survives_a_rebuild() -> void:
 		_fail("coming back to the programme file lost the selection")
 
 
+## T9: a rebuild (each day tick at month 0) keeps focus on the picker row that has it -- the row is the
+## same node -- rather than pulling the keyboard back to the list.
+func _check_focus_survives_a_rebuild() -> void:
+	_open_file()
+	var row: Button = _walk(_folder()._picker._rows).filter(func(n): return n is Button and n.has_meta("entry"))[1]
+	row.grab_focus()
+	if _folder().get_viewport().gui_get_focus_owner() != row:
+		_fail("premise: the picker row did not take the focus")
+	_folder().mark_dirty()
+	_folder()._refresh()
+	if _folder().get_viewport().gui_get_focus_owner() != row:
+		_fail("a rebuild moved the focus off the picker row that held it (now %s)" % _folder().get_viewport().gui_get_focus_owner())
+
+
+## T11 + T12: an equal fill redraws the detail (its read moves with the state), and a fill that empties
+## the list drops the Choose it freed.
+func _check_the_fill_refreshes_its_detail(state, ns, loader) -> void:
+	var picker = _folder()._picker
+	var offer: Array = Programme.available(state, ns, loader)
+	picker.fill(ns, offer)
+	picker.select(String(offer[0]["id"]))
+	var terms: Dictionary = offer[0]
+	var field := String(terms["current_value"])
+	var was: float = float(ns.get(field))
+	ns.set(field, was + 3.0)
+	picker.fill(ns, offer)
+	if not _text(picker._detail).contains(ProgrammePicker.read_text(ns, terms)):
+		_fail("an equal fill left the detail's read stale")
+	ns.set(field, was)
+	picker.fill(ns, [])
+	var primary = picker.primary()
+	if primary != null and (not is_instance_valid(primary) or primary.is_queued_for_deletion()):
+		_fail("a fill that emptied the list left primary() on a freed Choose")
+	picker.fill(ns, offer)
+
+
 ## The fix drawn at the picture step: at text 130 the blocs chip names one bloc and "+N", so the
 ## list column leaves the detail its room on the Folder's page.
 func _check_text_130_leaves_the_detail_room(state, ns, loader) -> void:
@@ -248,6 +335,34 @@ func _check_text_130_leaves_the_detail_room(state, ns, loader) -> void:
 	picker.fill(ns, Programme.available(state, ns, loader))
 
 
+## T5 (a): a past term's verdict on the programme file beside the offer, and in the Presidency
+## programme lane's tooltip.
+func _check_past_terms_are_on_the_file(state, ns, loader) -> void:
+	var offer: Array = Programme.available(state, ns, loader)
+	var terms: Dictionary = offer[0]
+	ns.terms_served = 1
+	ns.programme.append({"entry_id": String(terms["id"]), "status": "complete", "chosen_term": 0, "concluded_term": 0,
+		"months_live": 4, "concluded_term_month": 4})
+	var line := Strings.t("Delivered, term %d.") % 1
+	_folder().mark_dirty()
+	_open_file()
+	if not _text(_folder()._page).contains(line):
+		_fail("the programme file does not show the past term's verdict ('%s'): %s" % [line, _text(_folder()._page)])
+	var overview = _main._overview_panel
+	_main._windows.open("overview")
+	overview.mark_dirty()
+	overview._process(0.0)
+	var tips := ""
+	for n in _walk(overview._term_box):
+		if n is Control:
+			tips += String((n as Control).tooltip_text) + "\n"
+	if not tips.contains(line):
+		_fail("the Presidency programme lane's tooltip does not carry the past term's verdict")
+	ns.programme.pop_back()
+	ns.terms_served = 0
+	_folder().mark_dirty()
+
+
 ## The command path: Choose on the file, main performs Programme.choose(), the clock resumes, the
 ## card is taken back, and the page shows what was booked -- with its way to the programme lane.
 func _check_the_choice_is_a_command(state, ns, loader) -> void:
@@ -255,6 +370,11 @@ func _check_the_choice_is_a_command(state, ns, loader) -> void:
 	if terms.is_empty():
 		_fail("no offered entry carries a deadline -- the fixture needs one")
 		return
+	# T1: an event's page seen first on the Folder; the programme file chosen after must not follow it.
+	var ev = _main._loader.events[0]
+	var Ev = preload("res://src/sim/events.gd")
+	Ev.announce(ns, ev, int(state.year) * 12 + int(state.month), Ev.region_names(ns, _main._loader))
+	_folder().select("desk:" + String(ev.id))
 	_open_file()
 	_folder()._picker.select(String(terms["id"]))
 	var choose: Button = _folder().primary_action()
@@ -270,8 +390,6 @@ func _check_the_choice_is_a_command(state, ns, loader) -> void:
 		_fail("the clock is still paused after the choice -- the choice must resume it")
 	if not _card().is_empty():
 		_fail("the programme card was not dismissed by the choice")
-	if Pending.window_ids(state, loader).has("events") and not Programme.available(state, ns, loader).is_empty():
-		_fail("pending.gd still marks the offer after the term's programme is chosen")
 	var named := false
 	for node in _walk(_main._hud.inbox):
 		if node is Label and String(node.text).contains(String(terms["name"]).to_upper()):
@@ -287,6 +405,11 @@ func _check_the_choice_is_a_command(state, ns, loader) -> void:
 		_fail("after Choose the page does not name the booked entry: '%s'" % text)
 	if not text.contains(Strings.t("The clock runs again.")):
 		_fail("after Choose the page does not say the clock runs again: '%s'" % text)
+	if _folder().selected() != ProgrammeFile.KEY:
+		_fail("after Choose the Folder followed another matter (page '%s'), not the booked programme" % _folder().selected())
+	ns.event_queue.clear()
+	if Pending.window_ids(state, loader).has("events"):
+		_fail("pending.gd still marks the Folder after the term's programme is chosen (nothing else is on the desk)")
 	if _folder()._picker.is_visible_in_tree():
 		_fail("the picker is still up after the choice")
 	var lane: Button = null
@@ -309,6 +432,28 @@ func _check_the_choice_is_a_command(state, ns, loader) -> void:
 		var tab := String(preload("res://src/ui/term_reads.gd").GROUP_TAB[group])
 		if _main._windows.frame(tab) == null:
 			_fail("the %s group's goals open '%s', which no window is" % [group, tab])
+
+
+## T8 + T10: the booked page reads the file's own term -- a later term does not blank it -- and prints the
+## live clock (StripReadings' words); T1 is pinned in the choice check (an event seen before the file).
+func _check_the_booked_page_reads_its_term(state, ns, loader) -> void:
+	var entry: Dictionary = ns.programme[0]
+	var terms: Dictionary = Programme.terms_of(loader, String(entry["entry_id"]))
+	_main._windows.open("events")
+	_folder()._refresh()
+	if not _text(_folder()._page).contains(StripReadings.programme_clock_text(terms, entry)):
+		_fail("the booked page does not print the live clock: %s" % _text(_folder()._page))
+	# A later term, past its own start (so no new offer): the file still reads its own term's booking.
+	ns.terms_served += 1
+	ns.months_in_term = 3
+	_folder().mark_dirty()
+	_folder()._refresh()
+	var later := _text(_folder()._page)
+	if not later.contains(Strings.row_name("programme", terms)):
+		_fail("a later term blanked the booked page of the term it was chosen in: %s" % later)
+	ns.terms_served -= 1
+	ns.months_in_term = 0
+	_folder().mark_dirty()
 
 
 ## The gate is the sim's, and the UI answers the refusal with a card.
@@ -368,6 +513,55 @@ func _check_a_conclusion_pushes_a_card(state, ns, loader) -> void:
 	_main._update_top_bar()
 	if _main._top_bar.figure_box("programme").visible:
 		_fail("the top bar still shows a programme with nothing live on the register")
+	# T10: the booked page reads the verdict once the entry concluded.
+	_main._windows.open("events")
+	_folder().select(ProgrammeFile.KEY)
+	if not _text(_folder()._page).contains(Strings.t("Delivered")):
+		_fail("the booked page does not read the delivered verdict: %s" % _text(_folder()._page))
+
+
+## T5 (b, c): mid-term with nothing chosen, the Presidency page's programme lane says when the next
+## programme opens and has a door to the campaign.
+func _check_mid_term_says_when_the_next_programme_opens(state, ns, loader) -> void:
+	var saved: Array = ns.programme.duplicate(true)
+	var saved_term := int(ns.programme_chosen_term)
+	ns.programme = []
+	ns.programme_chosen_term = -1
+	ns.months_in_term = 7
+	var overview = _main._overview_panel
+	_main._windows.open("overview")
+	overview.mark_dirty()
+	overview._process(0.0)
+	var text := ""
+	for n in _walk(overview._term_box):
+		if n.get("_data") is Dictionary:
+			text += String(n.get("_data").get("text", "")) + "
+"
+	if not text.to_lower().contains("next term"):
+		_fail("the mid-term programme lane does not say when the next term starts: %s" % text)
+	var asked: Array = []
+	var cb := func(id: String) -> void: asked.append(id)
+	overview.window_requested.connect(cb)
+	for n in _walk(overview._term_box):
+		if n is Button and String(n.tooltip_text) == Strings.t("Open") and not (n as Button).disabled:
+			n.pressed.emit()
+	overview.window_requested.disconnect(cb)
+	if not asked.has("campaign"):
+		_fail("the mid-term programme lane has no door to the campaign (doors asked %s)" % [asked])
+	ns.programme = saved
+	ns.programme_chosen_term = saved_term
+	ns.months_in_term = 0
+
+
+## T14: a reload forgets the guard's memory of the old main (GameReload._forget_main).
+func _check_a_reload_forgets_the_guard() -> void:
+	ProgrammeFile.open(_main)
+	_folder()._refresh()
+	var id: int = _main.get_instance_id()
+	ProgrammeFile._seen[id] = 0
+	preload("res://src/ui/game_reload.gd")._forget_main(_main)
+	if ProgrammeFile._seen.has(id):
+		_fail("GameReload._forget_main left the programme guard's memory of the old main")
 
 
 func _deadline_entry(state, ns, loader) -> Dictionary:

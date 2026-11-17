@@ -78,12 +78,15 @@ var _primary: Control = null
 ## The term's programme file's body (S3): one node for the panel's life, never cleared with the page,
 ## so its selection and scroll outlive the page's rebuilds; shown on that file only.
 var _picker
-## The programme card the page last showed: once it leaves, its page is what was booked.
-var _programme_file := ""
+## The term the programme file was last drawn for: once its offer has gone, its page is what that term booked.
+var _programme_term := -1
 
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(520, 0)  # the dock sets the height (tab_page.gd wanted_height)
+	# The programme file's picker is the one scroller; tab_page decides its fill once, on the first page
+	# shown, so the Folder says it here: a short page still hugs (wanted_height counts what is visible).
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var root := PanelKit.padded(self, 16, 10)
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD
@@ -163,9 +166,9 @@ func select(key: String) -> void:
 		_refresh()
 
 
-## An inbox file's page (a priority's Go, briefing_driver.gd).
+## An inbox file's page (a priority's Go, briefing_driver.gd). The programme's card opens its file.
 func show_file(card_id: String) -> void:
-	select("file:" + card_id)
+	select(ProgrammeFile.KEY if ProgrammeFile.is_file(_main, card_id) else "file:" + card_id)
 
 
 ## A group's first item (the inbox's News line asks for NEWS).
@@ -193,7 +196,8 @@ func _refresh() -> void:
 		return
 	# T4: the rebuild frees the focused item; the keyboard gets the shown item back.
 	var owner := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
-	var had_focus := owner != null and is_ancestor_of(owner)
+	# Pass 2 T9: focus on a node the rebuild keeps (the picker's rows) stays where it is.
+	var had_focus: bool = owner != null and is_ancestor_of(owner) and not _picker.is_ancestor_of(owner)
 	_title.text = tr("FOLDER — %s") % DateText.month_year(int(_state.month), int(_state.year))
 	_read_groups(ns)
 	var keys: Array = _groups[ANSWER] + _groups[DECIDED] + _groups[NEWS]
@@ -215,6 +219,8 @@ func _refresh() -> void:
 ## so) -- and is never swapped for the next file. Any other file keeps its page ("Answered."). Nothing
 ## shown yet, or a record or note gone: the next thing waiting, else the last decision, else the news.
 func _follow(ns) -> String:
+	if _selected == ProgrammeFile.KEY:
+		return _selected  # its offer gone: the page is what was booked (T1)
 	if _selected.begins_with("file:") or _selected.begins_with("desk:"):
 		if _shown_event == "":
 			return _selected
@@ -246,8 +252,13 @@ func _read_groups(ns) -> void:
 ## file of the inbox, then every desk entry with no card.
 static func answer_keys(main) -> Array:
 	var answer: Array = []
+	# S3: the term's programme first while its offer stands -- the file, never its card (T2).
+	if not ProgrammeFile.offer(main).is_empty():
+		answer.append(ProgrammeFile.KEY)
 	var carded := {}  # event ids whose card is still a file of the inbox
 	for file in InboxFiles.list(main._hud.inbox):
+		if ProgrammeFile.is_file(main, String(file["id"])):
+			continue
 		answer.append("file:" + String(file["id"]))
 		if main._event_cards.has(file["id"]):
 			carded[String(main._event_cards[file["id"]])] = true
@@ -325,12 +336,16 @@ func _quiet_desk(ns) -> String:
 
 
 func _answer_title(key: String) -> String:
+	if key == ProgrammeFile.KEY:
+		return tr("The term's programme")
 	if key.begins_with("desk:"):
 		return Strings.row_name("events", Events.event_by_id(_loader, key.trim_prefix("desk:")))
 	return FileRead.list_title(_main, InboxFiles.of(_main._hud.inbox, key.trim_prefix("file:")))
 
 
 func _answer_date(key: String) -> String:
+	if key == ProgrammeFile.KEY:
+		return ""
 	if key.begins_with("desk:"):
 		return FileRead.desk_by_text(_main, key.trim_prefix("desk:"))
 	return FileRead.by_text(_main, InboxFiles.of(_main._hud.inbox, key.trim_prefix("file:")), true)
@@ -368,12 +383,20 @@ func _build_page(ns) -> void:
 		if child != _picker:
 			_page.remove_child(child)
 			child.queue_free()
-	_picker.hide()
+	# Hidden only off its own page: hiding it to show it again would drop the focus a row holds (T9).
+	if _selected != ProgrammeFile.KEY or ProgrammeFile.offer(_main).is_empty():
+		_picker.hide()
 	_primary = null
 	if not _selected.begins_with("file:") and not _selected.begins_with("desk:"):
 		_shown_event = ""
 		_shown_request = ""
-	if _selected.begins_with("file:"):
+	if _selected == ProgrammeFile.KEY:
+		if not ProgrammeFile.offer(_main).is_empty():
+			_programme_term = int(ns.terms_served)
+			ProgrammeFile.build(_main, _page, _picker)
+			return
+		ProgrammeFile.booked(_main, _page, _programme_term if _programme_term >= 0 else int(ns.terms_served))
+	elif _selected.begins_with("file:"):
 		var id := _selected.trim_prefix("file:")
 		var live := not InboxFiles.of(_main._hud.inbox, id).is_empty()
 		if _main._event_cards.has(id):
@@ -381,13 +404,7 @@ func _build_page(ns) -> void:
 		if live:
 			_shown_request = String(preload("res://src/ui/audience_driver.gd").lane_of(_main)._request_of.get(id, ""))
 		var request := Audiences.request(ns, _shown_request) if _shown_request != "" and not live else {}
-		if live and ProgrammeFile.is_file(_main, id):
-			_programme_file = id
-			ProgrammeFile.build(_main, _page, _picker)
-			return
-		if id == _programme_file:
-			ProgrammeFile.booked(_main, _page)
-		elif String(request.get("status", "")) == AudienceK.STATUS_LAPSED:
+		if String(request.get("status", "")) == AudienceK.STATUS_LAPSED:
 			PanelKit.line(_page, tr("It lapsed while it was open: the request went unanswered."))
 		else:
 			FileView.build(_page, FileRead.describe(_main, InboxFiles.of(_main._hud.inbox, id)), press)

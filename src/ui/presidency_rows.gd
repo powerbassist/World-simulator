@@ -13,6 +13,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
+const ActsOn = preload("res://src/ui/acts_on.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const Government = preload("res://src/sim/government.gd")
 const Defence = preload("res://src/sim/defence.gd")
@@ -28,6 +29,29 @@ const SPARK_SIZE := Vector2(96, 24)
 
 
 ## Which start this game was begun under, after the nation's name; empty for the standard one.
+## A programme Go's landing on the Presidency page (#405 pass 2 T4): the lane door acting on `entry_id`
+## (the first lane's for ""), focused, and scrolled into view once laid out -- ensure_control_visible
+## does not work on a node added this frame (ScrollContainer's 4.7 page).
+static func land(doors: Array, entry_id) -> void:
+	if entry_id == null:
+		return  # no Go asked for a lane
+	var door: Control = null
+	for d in doors:
+		if door == null or ActsOn.acts_on(d, String(entry_id)):
+			door = d
+	if door == null or not door.is_visible_in_tree():
+		return
+	door.grab_focus()
+	var scroll := door.get_parent()
+	while scroll != null and not scroll is ScrollContainer:
+		scroll = scroll.get_parent()
+	if scroll != null:
+		# A rebuild before the frame ends frees the door: scroll only to a door still under the scroll.
+		door.get_tree().process_frame.connect(func() -> void:
+			if is_instance_valid(door) and is_instance_valid(scroll) and scroll.is_ancestor_of(door):
+				(scroll as ScrollContainer).ensure_control_visible(door), CONNECT_ONE_SHOT)
+
+
 static func start_suffix(state, loader) -> String:
 	if state.scenario_id == "" or loader == null:
 		return ""

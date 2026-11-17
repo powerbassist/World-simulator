@@ -763,9 +763,7 @@ func _toggle_pause_by_hand() -> void:
 	# V5.1-0c. The offer lives only until the clock first runs in a term, so the
 	# press that would forfeit it opens its file on the Folder instead -- once: when
 	# the Folder has shown the offer, the next press is the player declining, and runs.
-	if _paused_for_programme and _clock.paused and not ProgrammeFile.offer_seen(self):
-		ProgrammeFile.open(self)
-		return
+	if _paused_for_programme and _clock.paused and ProgrammeFile.held_press(self): return
 	_clock.toggle_pause()
 	# V4.9c. By hand only: a pause the game takes (an arrival, the lapse guard)
 	# already carries its own sound, the event sting, and a hold that resumes

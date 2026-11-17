@@ -266,6 +266,12 @@ func _check(c: Dictionary) -> void:
 	if kind == "commitment" and tab == "events" and String(c["subject"]).contains("|programme:") \
 			and _main._events_panel._picker.selected_id() == String(target["acts_on"]):
 		_fail("commitment (programme): premise, the promised entry was the selected one")
+	# #405 pass 2 T4: a live programme's Go lands ON its lane -- focused -- not on the page it is already on.
+	if kind == "programme" and tab == "overview":
+		_main._overview_panel._process(0.0)
+		var focused: Control = _main.get_viewport().gui_get_focus_owner()
+		if focused == null or not ActsOn.acts_on(focused, String(target["acts_on"])):
+			_fail("programme: Go did not focus the entry's lane (focus on %s)" % focused)
 	if bool(c.get("far", false)) and ActsOn.find(where, String(target["acts_on"])) is OptionButton:
 		_fail("%s: outside the run-up the Go landed on the site picker" % label)
 	if bool(c.get("due_day", false)):

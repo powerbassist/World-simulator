@@ -45,11 +45,27 @@ func _sweep(language: String, text_scale: float) -> void:
 	_check_hugs(windows, "diplomacy", where, true)
 
 	var ns = main._state.player()
+	# #405 pass 2 T7: the Folder first shown on a short page, so its fill is not decided by the picker.
+	var first: String = main._hud.inbox.push("A first note", "One line.")
+	main._events_panel.select("note:" + first)
+	await _open(windows, "events")
+	_check_hugs(windows, "events", where + ", a first note", true)
+	main._hud.inbox.dismiss(first)
 	# Rework 2 S3: the term's programme file on the Folder fills the dock (its picker list is the one
 	# scroller) and leaves no blank under its last row.
 	preload("res://src/ui/programme_file.gd").open(main)
 	await _open(windows, "events")
 	_check_hugs(windows, "events", where, false)
+	var full: float = 1080.0 - WindowManager.DOCK_TOP - WindowManager.DOCK_BOTTOM
+	if windows.dock().get_global_rect().size.y < full - 0.5:
+		_fail("events (%s): the programme file docks %.0f px of %.0f -- its picker does not take the dock" % [where, windows.dock().get_global_rect().size.y, full])
+	# #405 pass 2 T7: the picker stays in the Folder, hidden, under every other page -- a short note
+	# page still hugs its content rather than stretching to the dock.
+	var note: String = main._hud.inbox.push("A short note", "One line of news.")
+	main._events_panel.select("note:" + note)
+	await _open(windows, "events")
+	_check_hugs(windows, "events", where + ", a note", true)
+	main._hud.inbox.dismiss(note)
 
 	# The Sectors overview hugs or fills, but never leaves a blank under its last row.
 	await _open(windows, "companies")

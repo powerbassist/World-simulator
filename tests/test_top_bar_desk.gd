@@ -120,6 +120,7 @@ func _run() -> void:
 	# THE MARK AND THE STRIP AGREE. Something on the desk: the events window is
 	# pending. Desk cleared: it is not. The term-start offer marks the Folder too (rework 2 S3,
 	# its file is there), so it is taken off the desk first: this check is about the events.
+	var chosen_was := int(ns.programme_chosen_term)
 	ns.programme_chosen_term = int(ns.terms_served)
 	var ids: Array = Pending.window_ids(state, _loader)
 	if not ids.has("events"):
@@ -132,6 +133,7 @@ func _run() -> void:
 	ids = Pending.window_ids(state, _loader)
 	if ids.has("events"):
 		_fail("a clear desk and pending.gd still marks the events window")
+	ns.programme_chosen_term = chosen_was
 
 	# HOVERABLE. A Label defaults to MOUSE_FILTER_IGNORE, so a tooltip on one never
 	# shows -- the hovered control is the box above it. Refresh once more with the

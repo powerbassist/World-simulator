@@ -142,8 +142,8 @@ extends SceneTree
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme prog_jobs_first --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open events
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme prog_jobs_first --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sector-refusal --open sector_industry
 ##     (Industry runs a programme and the bigger one is picked: the refused verb says why)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --save-load

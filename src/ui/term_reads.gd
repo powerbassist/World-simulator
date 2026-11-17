@@ -25,6 +25,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Num = preload("res://src/ui/num.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
 
 ## A programme group's working tab: where the levers that move its goals live (OPINION, V5.3-0 2.4:
 ## the data carries no tab, and a goal's group is the closest general rule -- an economy goal is moved
@@ -93,7 +94,7 @@ static func goal_lanes(state, loader) -> Array:
 			"chosen": chosen if chosen >= 0 else -1,
 			"due": due,
 			"due_text": _due_text(state, terms, due, live),
-			"tip": _tip(state, terms, entry),
+			"tip": _tip(state, terms, entry) + record_text(ns, loader),
 			"tab": String(GROUP_TAB.get(String(terms.get("group", "")), "overview")),
 		})
 	return out
@@ -136,3 +137,48 @@ static func _due_text(state, terms: Dictionary, due: int, live: bool) -> String:
 		return Strings.t("judged at the vote")
 	var month0 := int(state.year) * 12 + int(state.month) - 1 + due
 	return DateText.month_year(month0 % 12 + 1, month0 / 12)
+
+
+## The record of the terms before this one (rework 2 S3: it was the Agenda's register), oldest first:
+## {text, tone} per concluded entry -- its name and its verdict, the tone a ResultTone key ("" when the
+## world overtook it). The programme file shows it beside the offer, the Presidency lane in its tooltip.
+static func past_record(ns, loader) -> Array:
+	var out: Array = []
+	for entry in ns.programme:
+		if int(entry["chosen_term"]) >= int(ns.terms_served):
+			continue
+		var id := String(entry["entry_id"])
+		var name := Strings.row("programme", id, "name", String(Programme.terms_of(loader, id).get("name", id)))
+		var term := int(entry["concluded_term"]) + 1
+		match String(entry["status"]):
+			ProgrammeK.STATUS_COMPLETE:
+				out.append({"text": "%s — %s" % [name, Strings.t("Delivered, term %d.") % term], "tone": ResultTone.GOOD})
+			ProgrammeK.STATUS_FAIL:
+				out.append({"text": "%s — %s" % [name, Strings.t("Missed, term %d.") % term], "tone": ResultTone.BAD})
+			_:
+				out.append({"text": "%s — %s" % [name, Strings.t("Overtaken by the world, term %d.") % term], "tone": ""})
+	return out
+
+
+## The record as a tooltip's tail: "" with no past term, else a line per entry after a break (T5 a).
+static func record_text(ns, loader) -> String:
+	var lines: Array = past_record(ns, loader).map(func(r): return String(r["text"]))
+	return "" if lines.is_empty() else "
+" + "
+".join(lines)
+
+
+## Mid-term with nothing chosen (V5.1-0c, the Agenda's line until S3), in two parts: the rule (a
+## programme is chosen on a term's first day; the lane's tooltip) and the date it next opens (the lane's
+## one drawn line). With no vote scheduled the line is the rule, never a date that does not exist.
+static func unset_rule(ns) -> String:
+	if Programme.is_term_start(ns):
+		return Strings.t("Nothing is offerable this term -- every gate in the book is shut.")
+	return Strings.t("No programme was set this term: one is chosen on a term's first day.")
+
+
+static func unset_line(ns) -> String:
+	var when := Trends.vote_date(ns)
+	if Programme.is_term_start(ns) or when.y < 1 or when.y > DateText.SHORT.size():
+		return unset_rule(ns)
+	return Strings.t("The next term starts after the vote in %s %d.") % [DateText.month(when.y), when.x]

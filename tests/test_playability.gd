@@ -1074,6 +1074,9 @@ func _check_empty_desk_closed_copy() -> void:
 	var saved_quiet: Dictionary = ns.event_category_quiet.duplicate(true)
 	var quiet: int = EventsK.CATEGORY_QUIET_MONTHS
 	ns.event_queue.clear()
+	# The term-start offer is a Folder file of its own (rework 2 S3): an empty desk has it chosen.
+	var chosen_was := int(ns.programme_chosen_term)
+	ns.programme_chosen_term = int(ns.terms_served)
 	var expected := {
 		quiet: "The last matter closed this month.",
 		quiet - 1: "The last matter closed 1 month ago.",
@@ -1093,6 +1096,7 @@ func _check_empty_desk_closed_copy() -> void:
 			_fail("empty desk with %d quiet months left printed no caption" % remaining)
 	ns.event_queue = saved_queue
 	ns.event_category_quiet = saved_quiet
+	ns.programme_chosen_term = chosen_was
 	panel._refresh()
 
 

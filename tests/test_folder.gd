@@ -86,6 +86,8 @@ func _clear_desk() -> void:
 	_main._unseen_events.clear()
 	_main._paused_for_decision = false
 	_main._paused_for_programme = false
+	# The term-start offer is a file of the Folder's own (rework 2 S3): a clear desk has it chosen.
+	ns.programme_chosen_term = int(ns.terms_served)
 
 
 func _open_tab() -> void:

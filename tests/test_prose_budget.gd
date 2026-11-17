@@ -60,9 +60,11 @@ const PENDING := {}
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
-## Rework 2 S3: the Agenda's 400 left with its tab; the Folder on day 1 is the programme file (the
-## picker's 28 names and one entry's text, measured 276), so the Folder's ceiling took 95 -> 300.
-const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 300,
+## Rework 2 S3: the Agenda's 400 left with its tab. Its offer is the Folder's programme file now (the
+## picker's 28 names and one entry's text, measured 276): that page alone answers to PROGRAMME_FILE_TOTAL,
+## every other Folder page to the Folder's own 95 (#405 pass 2 T15).
+const PROGRAMME_FILE_TOTAL := 300
+const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
 	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135,
 	"overview": 170}
 const TOTAL_PENDING := {
@@ -258,6 +260,8 @@ func _sweep(main, stage: String) -> void:
 		_measured[id] = maxi(int(_measured.get(id, 0)), sys8)
 		_totals[id] = maxi(int(_totals.get(id, 0)), total)
 		var total_ceiling := int(TOTAL_PENDING.get(id, TOTAL_BUDGET.get(id, -1)))
+		if id == "events" and main._events_panel.selected() == preload("res://src/ui/programme_file.gd").KEY:
+			total_ceiling = PROGRAMME_FILE_TOTAL
 		if total_ceiling >= 0 and total > total_ceiling:
 			_fail("%s (%s): %d visible words, the ceiling is %d" % [id, stage, total, total_ceiling])
 		var ceiling := int(PENDING.get(id, BUDGET.get(id, -1)))

@@ -264,7 +264,11 @@ static func go(main, index: int) -> void:
 			main._hud.inbox.slide_in()
 			main._hud.inbox.raise_card(AudienceDriver.lane_of(main).card_of(subject))
 		"programme", "commitment" when tab == "events":
-			ProgrammeFile.open(main)  # its file, with every entry's row tagged; the lane once chosen
+			ProgrammeFile.open(main, String(target["acts_on"]))  # its file while the offer stands, else its lane
+		"programme" when tab == "overview":
+			# T4: the live entry's lane, scrolled to and focused -- the page alone would be a dead click.
+			main._windows.open(tab)
+			main._overview_panel.focus_goal(subject)
 		"bloc":
 			_open_laws_or(main, tab, subject)
 		"bill":
