@@ -1576,10 +1576,13 @@ var region_closure_pts := {}
 var unit_programmes: Array[Dictionary] = []
 ## The programmes' two lines, % of GDP a year, rewritten by UnitBuild.tick_month() every
 ## month and read by Budget a month behind (project_bill_pct_gdp's case): the capital
-## paid while they build, and {line: running cost} of the units standing (negative for
+## paid while they build, and {sector: running cost} of the units standing (negative for
 ## a closure of start stock), which Sectors.ratio() adds to the line's spending.
 ## absent_ok: no save before c' holds a programme, so absent is 0 and {}, the truth.
 var unit_bill_pct_gdp: float = 0.0
+## The programmes opened so far, the source of each one's id (T9 on #413: unique for the
+## game). absent_ok: no save before c' opened one, so 0 is the truth.
+var unit_programme_seq: int = 0
 var unit_running_pct_gdp := {}
 ## The open funds' bill, % of GDP, rewritten by RegionFunds.tick_month() every month
 ## and read by Budget a month behind (project_bill_pct_gdp's case). absent_ok: the

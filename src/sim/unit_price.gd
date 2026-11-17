@@ -18,8 +18,9 @@ extends RefCounted
 ##
 ## CONCENTRATION READS CAPACITY: the capacity of the type ordered in one region within
 ## CONC_MONTHS (the programmes voted since, and this row), beyond CONC_FREE of the
-## region's start capacity, raises the unit price there by CONC_SLOPE points per further
-## point of it. Spreading is cheaper; concentrating is faster where it is needed.
+## region's start capacity, raises the price of each further unit there by CONC_SLOPE
+## points per further point of it (_surcharge: marginal, so split-independent). Spreading
+## is cheaper; concentrating is faster where it is needed.
 
 const UK = preload("res://src/sim/units_constants.gd")
 const Cabinet = preload("res://src/sim/cabinet.gd")
@@ -80,11 +81,26 @@ static func quote(state, ns, loader, row: Dictionary, earlier: Array = []) -> Di
 		"capital_pct_gdp_year": capital, "line_pct_gdp_year": capital}
 
 
+## The mean surcharge on this row's `units` in the region. MARGINAL (T1 on #413): the k-th
+## unit ordered there within the window pays CONC_SLOPE x max(0, k x capacity / C -
+## CONC_FREE), so a region's price depends on its whole order and never on how the order is
+## split (one row of 4 = four rows of 1 = four bills of 1 inside the window).
 static func _surcharge(state, ns, loader, type_id: String, region: String, units: int, earlier: Array) -> float:
 	var stock := Units.start_capacity(loader, ns.id, type_id, region)
-	if stock <= 0.0:
+	if stock <= 0.0 or units <= 0:
 		return 0.0
-	var ordered := units
+	var share := Units.unit_capacity(loader, ns.id, type_id) / stock
+	var before := _ordered(state, ns, type_id, region, earlier)
+	var total := 0.0
+	for k in range(before + 1, before + units + 1):
+		total += UK.UNIT_CONC_SLOPE * maxf(0.0, float(k) * share - UK.UNIT_CONC_FREE)
+	return total / float(units)
+
+
+## The units of the type already ordered in the region inside the window: the programmes
+## voted since, and the rows of the same bill before this one.
+static func _ordered(state, ns, type_id: String, region: String, earlier: Array) -> int:
+	var ordered := 0
 	var since := now(state) - UK.UNIT_CONC_MONTHS
 	for p in ns.unit_programmes:
 		if String(p.get("type", "")) == type_id and String(p.get("op", "")) == UK.OP_BUILD and int(p.get("voted", -1)) > since:
@@ -92,7 +108,7 @@ static func _surcharge(state, ns, loader, type_id: String, region: String, units
 	for row in earlier:
 		if String(row.get("type", "")) == type_id and String(row.get("op", "")) == UK.OP_BUILD:
 			ordered += _units_in(row, region)
-	return UK.UNIT_CONC_SLOPE * maxf(0.0, float(ordered) * Units.unit_capacity(loader, ns.id, type_id) / stock - UK.UNIT_CONC_FREE)
+	return ordered
 
 
 static func _units_in(row: Dictionary, region: String) -> int:

@@ -33,9 +33,21 @@ const COST := "verbs_pct_gdp"
 ## `bill`'s rows merged into `merged` (the tabled bill's copy): a sector's newer action
 ## replaces the older; a fund start or stop is appended once.
 static func merge(merged: Dictionary, bill: Dictionary) -> void:
+	# Units rows (T3, T6 on #413): an incoming quote is never trusted -- it is stripped and
+	# drafted() prices the row -- and a row already held (same type, op and rows) is not
+	# added twice, so re-tabling the same text never doubles a programme.
 	if bill.has(UNITS):
 		var list: Array = (merged.get(UNITS, []) as Array).duplicate(true)
-		list.append_array((bill[UNITS] as Array).duplicate(true))
+		for row in bill[UNITS]:
+			var bare: Dictionary = (row as Dictionary).duplicate(true)
+			bare.erase("quote")
+			var held := false
+			for kept in list:
+				if String(kept.get("type", "")) == String(bare.get("type", "")) and String(kept.get("op", "")) == String(bare.get("op", "")) \
+						and kept.get("rows", []) == bare.get("rows", []):
+					held = true
+			if not held:
+				list.append(bare)
 		merged[UNITS] = list
 	if bill.has(PROGRAMMES):
 		var rows: Dictionary = merged.get(PROGRAMMES, {})
@@ -55,6 +67,15 @@ static func merge(merged: Dictionary, bill: Dictionary) -> void:
 
 
 ## Whether any row is illegal on the live state now: true refuses the tabling (`verb`).
+## The rows' cost a year the deficit preview adds (T4 on #413): the verbs' COST and each
+## units line's capital (a closure: the running cost it saves).
+static func yearly_cost(bill: Dictionary) -> float:
+	var total := float(bill.get(COST, 0.0))
+	for line in bill.get(UNITS_COST, {}):
+		total += float(bill[UNITS_COST][line])
+	return total
+
+
 static func illegal(state, loader, ns, bill: Dictionary) -> bool:
 	if bill.has(UNITS) and UnitBuild.refusal(state, ns, loader, bill[UNITS]) != "":
 		return true

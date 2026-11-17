@@ -50,6 +50,8 @@ func _init() -> void:
 	_test_a_closure_saves_its_running_cost()
 	_test_the_game_month_runs_it()
 	_test_the_gap_pass_leads()
+	_test_pass2_takes()
+	_test_a_save_mid_build()
 	_finish()
 
 
@@ -240,8 +242,8 @@ func _test_the_running_cost_moves_the_nation_by_the_lever() -> void:
 		"voted": 0, "rows": [{"region": "FR1", "units": 4}]}])
 	UnitBuild.tick_month(state, _loader)
 	var want: float = 100.0 * 4.0 * 5.0 / 1000.0 / ns.gdp_eur_bn
-	if absf(float(ns.unit_running_pct_gdp.get("education", 0.0)) - want) > 1e-12:
-		_fail("four schools run %.6f %% of GDP, not %.6f" % [float(ns.unit_running_pct_gdp.get("education", 0.0)), want])
+	if absf(float(ns.unit_running_pct_gdp.get("schools", 0.0)) - want) > 1e-12:
+		_fail("four schools run %.6f %% of GDP, not %.6f" % [float(ns.unit_running_pct_gdp.get("schools", 0.0)), want])
 	if Sectors.quantity(ns, _loader, "education", "schools") >= before:
 		_fail("the running cost did not lower the nation's pupils per teacher")
 	var total: float = ns.total_spending_pct_gdp
@@ -266,7 +268,7 @@ func _test_a_closure_saves_its_running_cost() -> void:
 		_fail("a closure bills %.6f %% of GDP, not %.6f" % [ns.unit_bill_pct_gdp, want])
 	for i in 11:
 		UnitBuild.tick_month(state, _loader)
-	if float(ns.unit_running_pct_gdp.get("education", 0.0)) >= 0.0:
+	if float(ns.unit_running_pct_gdp.get("schools", 0.0)) >= 0.0:
 		_fail("a closed school saves no running cost: %s" % ns.unit_running_pct_gdp)
 	if Units.shown_figure(ns, _loader, TYPE, "FR1") <= figure:
 		_fail("closing two schools did not raise FR1's pupils per teacher")
@@ -321,7 +323,8 @@ func _test_the_gap_pass_leads() -> void:
 		_fail("a row no longer legal at the vote was not skipped: %s, %d programmes" % [skipped, ns.unit_programmes.size()])
 	# A closure's quote: no range, no odds, a cut of its line.
 	var q := UnitPrice.quote(state, ns, _loader, {"type": TYPE, "op": UK.OP_DEMOLISH, "rows": [{"region": "FRB", "capacity": 2000}]})
-	if float(q["lo_eur_m"]) != float(q["estimate_eur_m"]) or float(q["hi_eur_m"]) != float(q["estimate_eur_m"]) 			or float(q["odds"]) != 0.0 or float(q["width"]) != 0.0 or float(q["line_pct_gdp_year"]) >= 0.0:
+	if float(q["lo_eur_m"]) != float(q["estimate_eur_m"]) or float(q["hi_eur_m"]) != float(q["estimate_eur_m"]) \
+			or float(q["odds"]) != 0.0 or float(q["width"]) != 0.0 or float(q["line_pct_gdp_year"]) >= 0.0:
 		_fail("a closure's quote has a range, odds or a rise: %s" % q)
 	# The capital term is in the budget, and two lines run side by side.
 	state = _state()
@@ -331,7 +334,7 @@ func _test_the_gap_pass_leads() -> void:
 		{"id": "h", "type": "fixture_hospital", "op": UK.OP_BUILD, "state": UK.STATE_DONE, "voted": 0, "rows": [{"region": "FR1", "units": 1}]}])
 	UnitBuild.tick_month(state, _loader)
 	if ns.unit_running_pct_gdp.size() != 2 or absf(ns.unit_running_total_pct_gdp()
-			- float(ns.unit_running_pct_gdp["education"]) - float(ns.unit_running_pct_gdp["health"])) > 1e-15:
+			- float(ns.unit_running_pct_gdp["schools"]) - float(ns.unit_running_pct_gdp["hospitals"])) > 1e-15:
 		_fail("two lines' running costs read %s" % ns.unit_running_pct_gdp)
 	ns.unit_bill_pct_gdp = 1.0
 	Budget.recompute(state, ns)
@@ -340,6 +343,116 @@ func _test_the_gap_pass_leads() -> void:
 	Budget.recompute(state, ns)
 	if absf(with_bill - ns.total_spending_pct_gdp - 1.0) > 1e-9:
 		_fail("the capital line is not in the budget: %.6f vs %.6f" % [with_bill, ns.total_spending_pct_gdp])
+
+
+## #413 pass 2's TAKEs (review-findings-2026-11-17.md), each pinned.
+func _test_pass2_takes() -> void:
+	var state = _state()
+	var ns = state.player()
+	# T1: the price is on the region's whole order, never on how it is split.
+	var four := float(UnitPrice.quote(state, ns, _loader, _build([{"region": "FR1", "units": 4}]))["estimate_eur_m"])
+	var split := 0.0
+	var earlier: Array = []
+	for i in 4:
+		var row := _build([{"region": "FR1", "units": 1}])
+		split += float(UnitPrice.quote(state, ns, _loader, row, earlier)["estimate_eur_m"])
+		earlier.append(row)
+	if absf(four - split) > 1e-9:
+		_fail("one row of 4 costs %.4f, four rows of 1 cost %.4f" % [four, split])
+	var bills := 0.0
+	for i in 4:
+		var row := _build([{"region": "FR1", "units": 1}])
+		bills += float(UnitPrice.quote(state, ns, _loader, row)["estimate_eur_m"])
+		row["quote"] = UnitPrice.quote(state, ns, _loader, row)
+		UnitBuild.open(state, ns, _loader, row)
+	if absf(four - bills) > 1e-9:
+		_fail("four bills of 1 inside the window cost %.4f, one row of 4 %.4f" % [bills, four])
+	if UnitBuild.refusal(state, _state().player(), _loader, [_build([{"region": "FR1", "units": 1}, {"region": "FR1", "units": 1}])]) == "":
+		_fail("a row naming one region twice is legal")
+	# T8: whole units only.
+	if UnitBuild.refusal(state, _state().player(), _loader, [_build([{"region": "FR1", "units": 1.5}])]) == "":
+		_fail("one and a half schools are legal")
+	# T9: ids are unique for the game.
+	var ids := {}
+	for p in ns.unit_programmes:
+		if ids.has(p["id"]):
+			_fail("two programmes share the id %s" % p["id"])
+		ids[p["id"]] = true
+	if ns.unit_programme_seq != 4:
+		_fail("four programmes opened, the counter reads %d" % ns.unit_programme_seq)
+	# T3 + T6: an incoming quote is stripped and re-priced; re-tabling never doubles.
+	state = _state()
+	ns = state.player()
+	var forged := _build([{"region": "FR1", "units": 2}])
+	forged["quote"] = {"estimate_eur_m": 0.01, "lo_eur_m": 0.01, "hi_eur_m": 0.01, "width": 0.0, "odds": 0.0,
+		"build_months": 1, "line_pct_gdp_year": 0.0, "capital_pct_gdp_year": 0.0, "running_eur_m_year": 0.0, "surcharge": {}}
+	FinanceBill.table(state, _loader, {FinanceRows.UNITS: [forged]})
+	var held: Dictionary = ns.tabled_bill.get("finance", {})
+	if (held.get(FinanceRows.UNITS, []) as Array).size() != 1 or float(held[FinanceRows.UNITS][0]["quote"]["estimate_eur_m"]) <= 1.0:
+		_fail("a forged quote was trusted: %s" % [held.get(FinanceRows.UNITS)])
+	FinanceBill.table(state, _loader, {FinanceRows.UNITS: [_build([{"region": "FR1", "units": 2}])]})
+	if (ns.tabled_bill["finance"][FinanceRows.UNITS] as Array).size() != 1:
+		_fail("re-tabling the same row doubled it: %d rows" % (ns.tabled_bill["finance"][FinanceRows.UNITS] as Array).size())
+	# T4: the deficit preview reads the units' yearly cost.
+	var text: Dictionary = ns.tabled_bill["finance"]
+	if absf(FinanceRows.yearly_cost(text) - float(text[FinanceRows.UNITS_COST]["education"])) > 1e-12:
+		_fail("the preview's yearly cost is %.6f, not the units' %.6f" % [FinanceRows.yearly_cost(text), float(text[FinanceRows.UNITS_COST]["education"])])
+	# T10: a refused units row says why.
+	var refused := FinanceBill.refusal(_state(), _loader, {FinanceRows.UNITS: [_build([{"region": "UKI", "units": 1}])]})
+	if String(refused.get("reason", "")) == "":
+		_fail("a refused units row carries no reason: %s" % refused)
+	# T2: the running cost lifts the type's sector, not the line's others.
+	state = _state()
+	ns = state.player()
+	var unis := Sectors.quantity(ns, _loader, "education", "universities")
+	ns.unit_programmes.assign([{"id": "x", "type": TYPE, "op": UK.OP_BUILD, "state": UK.STATE_DONE, "voted": 0,
+		"rows": [{"region": "FR1", "units": 4}]}])
+	UnitBuild.tick_month(state, _loader)
+	if Sectors.quantity(ns, _loader, "education", "universities") != unis:
+		_fail("a school's running cost moved universities")
+	if Sectors.effective_spending(ns, _loader, "education", "universities") != float(ns.spending_pct_gdp["education"]):
+		_fail("universities read a school's running cost")
+	# T5: the snapshot names both parts.
+	var snap: Dictionary = Budget.snapshot(state)
+	if not snap.has("unit_bill_pct_gdp") or absf(float(snap.get("unit_running_pct_gdp", 0.0)) - ns.unit_running_total_pct_gdp()) > 1e-15:
+		_fail("the snapshot does not name the units' parts: %s" % [snap.get("unit_running_pct_gdp")])
+	# T7: the programme's spending moves demand as a fund's does; nothing moves without one.
+	state = _state()
+	ns = state.player()
+	var impulse: float = ns.demand_impulse_pct
+	UnitBuild.tick_month(state, _loader)
+	if ns.demand_impulse_pct != impulse:
+		_fail("a month with no programme moved demand")
+	FinanceRows.apply(state, _loader, ns, FinanceBill.drafted(state, _loader, {FinanceRows.UNITS: [_build([{"region": "FR1", "units": 2}])]}))
+	UnitBuild.tick_month(state, _loader)
+	if ns.demand_impulse_pct <= impulse:
+		_fail("a programme's capital did not lift demand: %.6f -> %.6f" % [impulse, ns.demand_impulse_pct])
+
+
+## T11: a save mid-build and a tabled bill with units rows come back whole: the build
+## opens in the same month as without the save, and the ints read as ints.
+func _test_a_save_mid_build() -> void:
+	var state = _state()
+	var ns = state.player()
+	FinanceRows.apply(state, _loader, ns, FinanceBill.drafted(state, _loader, {FinanceRows.UNITS: [_build([{"region": "FR1", "units": 2}])]}))
+	FinanceBill.table(state, _loader, {FinanceRows.UNITS: [_build([{"region": "FRB", "units": 1}])]})
+	for i in 10:
+		UnitBuild.tick_month(state, _loader)
+	var back = ns.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
+	if back.unit_programmes.size() != 1 or int(back.unit_programmes[0]["months_left"]) != 26 \
+			or back.unit_programme_seq != 1 or absf(back.unit_bill_pct_gdp - ns.unit_bill_pct_gdp) > 1e-15:
+		_fail("the register came back as %s, seq %d" % [back.unit_programmes, back.unit_programme_seq])
+	var tabled: Array = back.tabled_bill.get("finance", {}).get(FinanceRows.UNITS, [])
+	if tabled.size() != 1 or not (tabled[0] as Dictionary).has("quote"):
+		_fail("the tabled units row did not survive a save: %s" % [tabled])
+	state.nations[ns.id] = back
+	for i in 26:
+		UnitBuild.tick_month(state, _loader)
+	if String(back.unit_programmes[0]["state"]) != UK.STATE_DONE or Units.capacity_delta(back, _loader, TYPE, "FR1") != 2000.0:
+		_fail("the saved build did not open on time: %s" % back.unit_programmes[0])
+	UnitBuild.tick_month(state, _loader)
+	if back.unit_running_pct_gdp.is_empty():
+		_fail("the saved build's running cost did not start")
 
 
 func _fail(message: String) -> void:

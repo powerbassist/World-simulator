@@ -24,6 +24,7 @@ const UK = preload("res://src/sim/units_constants.gd")
 const Units = preload("res://src/sim/units.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
+const C = preload("res://src/sim/economy_constants.gd")
 
 
 static func now(state) -> int:
@@ -51,14 +52,21 @@ static func refusal(state, ns, loader, rows: Array) -> String:
 			return "A programme builds or closes units."
 		if (row.get("rows", []) as Array).is_empty():
 			return "A programme names at least one region."
+		var named := {}
 		for r in row["rows"]:
 			var region := String(r.get("region", ""))
 			if not regions.has(region):
 				return "That is not one of this nation's regions."
+			# One entry per region in a row (T1 on #413): its price is on its whole order.
+			if named.has(region):
+				return "A programme names each region once."
+			named[region] = true
 			if Units.start_capacity(loader, ns.id, type_id, region) <= 0.0:
 				return "This region has none of these to build on or close."
-			if op == UK.OP_BUILD and int(r.get("units", 0)) < 1:
-				return "Each region's row is at least one unit."
+			if op == UK.OP_BUILD:
+				var units := float(r.get("units", 0))
+				if units < 1.0 or units != floorf(units):
+					return "Each region's row is a whole number of units, at least one."
 			if op == UK.OP_DEMOLISH:
 				# A closure is entered in capacity and cannot exceed what the region holds.
 				if float(r.get("capacity", 0.0)) <= 0.0:
@@ -86,7 +94,10 @@ static func standing(ns, loader, type_id: String, region: String) -> float:
 ## FinanceBill.drafted) is quoted now, so the vote never reads a missing range.
 static func open(state, ns, loader, row: Dictionary) -> Dictionary:
 	var q: Dictionary = row["quote"] if row.has("quote") else UnitPrice.quote(state, ns, loader, row)
-	var id := "%s:%d:%d" % [String(row["type"]), now(state), ns.unit_programmes.size()]
+	# Unique for the game (T9 on #413): a saved counter, never the list's size, which a
+	# later prune could reuse.
+	ns.unit_programme_seq += 1
+	var id := "%s:%d" % [String(row["type"]), ns.unit_programme_seq]
 	var u := Cycle.unit(Cycle.salted("unit|%s|price" % id, int(ns.draw_seed)), 0)
 	var contract := float(q["lo_eur_m"]) + u * (float(q["hi_eur_m"]) - float(q["lo_eur_m"]))
 	var months := int(q["build_months"])
@@ -117,6 +128,7 @@ static func tick_month(state, loader) -> void:
 			p["state"] = UK.STATE_DONE
 			p["opened"] = now(state)
 	var gdp_m := float(ns.gdp_eur_bn) * 1000.0
+	var was: float = ns.unit_bill_pct_gdp + ns.unit_running_total_pct_gdp()
 	ns.unit_bill_pct_gdp = 100.0 * paid * 12.0 / gdp_m if paid != 0.0 and gdp_m > 0.0 else 0.0
 	var running := {}
 	for p in ns.unit_programmes:
@@ -127,12 +139,22 @@ static func tick_month(state, loader) -> void:
 		var capacity := 0.0
 		for r in p["rows"]:
 			capacity += Units.row_capacity(ns, loader, p, r)
-		var line := String(t["line"])
-		running[line] = float(running.get(line, 0.0)) \
+		# Keyed by the type's SECTOR (T2 on #413): Sectors.effective_spending lifts that
+		# sector alone, never the line's others.
+		var sector := String(t["sector"])
+		running[sector] = float(running.get(sector, 0.0)) \
 			+ capacity / Units.unit_capacity(loader, ns.id, String(p["type"])) * float(t["running_eur_m"].get(ns.id, 0.0))
-	for line in running:
-		running[line] = 100.0 * float(running[line]) / gdp_m if gdp_m > 0.0 else 0.0
+	for sector in running:
+		running[sector] = 100.0 * float(running[sector]) / gdp_m if gdp_m > 0.0 else 0.0
 	ns.unit_running_pct_gdp = running
+	# The programmes' spending moves demand as a fund's does (RegionFunds.tick_month, T7 on
+	# #413): Budget.commit()'s spending term on the change of both lines, so the start, the
+	# end and GDP's drift telescope and a programme leaves no lasting impulse. No change, no
+	# write: a game with no programme reads the impulse exactly as before c'.
+	var change: float = ns.unit_bill_pct_gdp + ns.unit_running_total_pct_gdp() - was
+	if change != 0.0:
+		ns.demand_impulse_pct = clampf(ns.demand_impulse_pct + change * C.MULT_SPENDING / C.impulse_level_factor(),
+			-C.IMPULSE_MAX_PCT, C.IMPULSE_MAX_PCT)
 
 
 static func _add(closing: Dictionary, p: Dictionary) -> void:

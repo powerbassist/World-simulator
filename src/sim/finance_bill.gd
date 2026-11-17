@@ -141,6 +141,9 @@ static func refusal(state, loader, bill: Dictionary, force := false) -> Dictiona
 	# Section 12: each programme or fund row by its own verb's legality on the live state.
 	if season.is_empty() and FinanceRows.illegal(state, loader, ns, merged):
 		season = {"tabled": false, "refused": true, "verb": true}
+		# A units row says why (T10 on #413): the register's own reason, for the sheet.
+		if merged.has(FinanceRows.UNITS):
+			season["reason"] = UnitBuild.refusal(state, ns, loader, merged[FinanceRows.UNITS])
 	return season
 
 
