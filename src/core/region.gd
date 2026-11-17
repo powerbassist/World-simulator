@@ -84,6 +84,16 @@ var sector_mix: Dictionary = {}
 ## doc records, not a figure.
 var natural_change_pct: float = 0.0
 
+## V5.3 c': the Union's cohesion category (docs/design/v5.3-c-register.md section 2),
+## the rate its co-financing pays on a unit built here. Set by the Union on NUTS 2
+## regions; a game region made of several takes the category of the part holding
+## most of its people (tools/import_data.py writes it from
+## data/units/cohesion_categories.json). Empty for a region outside the Union's map,
+## which no co-financing rate reaches.
+var cohesion_category: String = ""
+
+const COHESION_CATEGORIES := ["less_developed", "transition", "transition_former_less_developed", "more_developed"]
+
 
 static func from_dict(d: Dictionary, index: int, filename: String, errors: Array[String]):
 	var r := new()
@@ -191,10 +201,16 @@ static func from_dict(d: Dictionary, index: int, filename: String, errors: Array
 				filename, path, str(total),
 			])
 
+	if d.has("cohesion_category"):
+		if not COHESION_CATEGORIES.has(String(d["cohesion_category"])):
+			errors.append("%s: %s cohesion_category '%s' must be one of %s" % [filename, path, str(d["cohesion_category"]), str(COHESION_CATEGORIES)])
+		else:
+			r.cohesion_category = String(d["cohesion_category"])
+
 	for key in d.keys():
 		if key != "id" and key != "name" and key != "share" and key != "cities" \
 			and key != "gdp_share" and key != "unemployment_rel" and key != "sector_mix" \
-			and key != "natural_change_pct":
+			and key != "natural_change_pct" and key != "cohesion_category":
 			errors.append("%s: %s has unrecognised field '%s' -- a region carries a population share, a GDP share, an unemployment ratio, a sector mix and a natural-change rate, and nothing else; a quantity that MOVES belongs on NationState, not here" % [
 				filename, path, key,
 			])

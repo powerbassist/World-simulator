@@ -1,0 +1,350 @@
+extends SceneTree
+
+## V5.3 c' slice A (docs/design/v5.3-c-register.md sections 2, 3 and 8): the
+## construction register's data and reads. A catalogue of unit types
+## (data/units/<type>.json), a start stock and a regional level per nation
+## (data/units/stock/<NAT>.json), the Union's co-financing rule
+## (data/units/cofinancing.json), the five projects re-expressed as `potential`
+## rows built at load from data/project-actions (one source, no copy: the
+## parent's ruling, 2026-11-17), and what a region shows once units stand.
+##
+## Content's real data lands on its own branch; this file reads the fixture under
+## tests/fixtures/units/, whose numbers are round and say so, never a source.
+
+const DataLoader = preload("res://src/core/data_loader.gd")
+const GameState = preload("res://src/core/game_state.gd")
+const UnitsLoader = preload("res://src/core/loaders/units_loader.gd")
+const Units = preload("res://src/sim/units.gd")
+const UK = preload("res://src/sim/units_constants.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
+const Region = preload("res://src/core/region.gd")
+const RK = preload("res://src/sim/region_constants.gd")
+
+const FIXTURE := "res://tests/fixtures/units"
+const TYPE := "fixture_school"
+
+var _loader
+var _failures: Array[String] = []
+
+
+func _init() -> void:
+	_loader = DataLoader.new()
+	_loader.load_all()
+	if not _loader.errors.is_empty():
+		_failures.append("data did not load cleanly: %s" % [_loader.errors])
+		_finish()
+		return
+	_test_the_shipped_tree_offers_nothing_until_content_lands()
+	_test_the_projects_are_potential_rows()
+	UnitsLoader.load_units(_loader, FIXTURE)
+	if not _loader.errors.is_empty():
+		_failures.append("the fixture did not load cleanly: %s" % [_loader.errors])
+		_finish()
+		return
+	_test_the_fixture_loads()
+	_test_a_type_is_offered_only_where_a_stock_file_has_it()
+	_test_the_level_is_normalised_to_the_people()
+	_test_bad_rows_are_refused()
+	_test_cohesion_category_is_read_and_checked()
+	_test_nothing_built_reads_the_nation_times_the_level()
+	_test_a_built_unit_lifts_its_region_and_the_nation_holds()
+	_test_a_closed_unit_reverses_a_built_one()
+	_test_a_region_with_no_stock_gains_nothing()
+	_test_fill_by_population()
+	_test_fill_by_need_starts_with_the_worst()
+	_test_the_register_is_saved()
+	_finish()
+
+
+func _state():
+	return GameState.new_game(_loader, "FRA")
+
+
+func _named(state) -> Array:
+	var out: Array = []
+	for r in state.regions.get("FRA", []):
+		if r.id != RK.RESIDUAL_KEY:
+			out.append(String(r.id))
+	return out
+
+
+## No data/units/ in the tree yet: a missing directory is no type at all, never an
+## error, and so the game reads exactly what it read before c' (band U1).
+func _test_the_shipped_tree_offers_nothing_until_content_lands() -> void:
+	if not _loader.unit_types.is_empty() and not DirAccess.dir_exists_absolute("res://data/units"):
+		_fail("no data/units/ yet the loader holds %d types" % _loader.unit_types.size())
+	if not DirAccess.dir_exists_absolute("res://data/units") and Units.offered(_loader, "FRA", TYPE):
+		_fail("a type is offered with no data/units/")
+
+
+## Section 8: each project is a catalogue row of payoff `potential`, quantity 1,
+## its own build months, cost and payoff, no range width and no overrun odds.
+func _test_the_projects_are_potential_rows() -> void:
+	var starts := 0
+	for action in _loader.project_actions:
+		if String(action.effects["project"].get("op", "")) != "start":
+			continue
+		starts += 1
+		var terms: Dictionary = action.effects["project"]
+		var row: Dictionary = Units.row(_loader, String(terms["project_id"]))
+		if row.is_empty():
+			_fail("project %s has no potential row" % terms["project_id"])
+			continue
+		if String(row["payoff"]) != UK.PAYOFF_POTENTIAL or int(row["quantity"]) != 1 \
+				or int(row["build_months"]) != int(terms["build_months"]) \
+				or float(row["cost_pct_gdp"]) != float(terms["cost_pct_gdp"]) \
+				or float(row["potential_growth_pct"]) != float(terms["potential_growth_pct"]) \
+				or float(row["range_width"]) != 0.0 or float(row["overrun_odds"]) != 0.0:
+			_fail("project %s's potential row is not its own terms: %s" % [terms["project_id"], row])
+	var potential := 0
+	for row in Units.catalogue(_loader):
+		if String(row["payoff"]) == UK.PAYOFF_POTENTIAL:
+			potential += 1
+	if starts == 0 or potential != starts:
+		_fail("%d projects, %d potential rows" % [starts, potential])
+
+
+func _test_the_fixture_loads() -> void:
+	var row: Dictionary = Units.row(_loader, TYPE)
+	if row.is_empty() or String(row["payoff"]) != UK.PAYOFF_CAPACITY or float(row["capacity"]) != 1000.0:
+		_fail("the fixture type did not load: %s" % row)
+	if float(Units.start_capacity(_loader, "FRA", TYPE, "FR1")) != 10000.0:
+		_fail("FR1's start capacity reads %s, not the stock row's 10000" % Units.start_capacity(_loader, "FRA", TYPE, "FR1"))
+	var rule: Dictionary = _loader.unit_cofinancing.get("eu", {})
+	if float(rule.get("rates", {}).get("transition", 0.0)) != 0.6 or (rule.get("periods", []) as Array).size() != 1:
+		_fail("the co-financing rule did not load: %s" % rule)
+
+
+func _test_a_type_is_offered_only_where_a_stock_file_has_it() -> void:
+	if not Units.offered(_loader, "FRA", TYPE):
+		_fail("France has a stock file for the type and is not offered it")
+	if Units.offered(_loader, "GBR", TYPE):
+		_fail("Britain has no stock file and is offered the type")
+	if Units.offered(_loader, "FRA", "high_speed_rail"):
+		_fail("a potential row is offered as a unit type")
+
+
+## Section 2: the loader stores each level relative to the nation's, so the
+## population-weighted mean is exactly 1 (the rule unemployment_rel follows).
+func _test_the_level_is_normalised_to_the_people() -> void:
+	var weighted := 0.0
+	var people := 0.0
+	for r in _loader.regions["FRA"]:
+		weighted += r.share * Units.level(_loader, "FRA", "pupils_per_teacher", r.id)
+		people += r.share
+	if absf(weighted / people - 1.0) > 1e-9:
+		_fail("the population-weighted level is %.12f, not 1" % (weighted / people))
+	if Units.level(_loader, "FRA", "pupils_per_teacher", "FRB") <= Units.level(_loader, "FRA", "pupils_per_teacher", "FR1"):
+		_fail("FRB's 20 pupils should read above FR1's 15")
+	# A nation or figure with no level reads the nation's own figure.
+	if Units.level(_loader, "GBR", "pupils_per_teacher", "UKI") != 1.0:
+		_fail("a region with no level row reads %s, not 1" % Units.level(_loader, "GBR", "pupils_per_teacher", "UKI"))
+
+
+func _test_bad_rows_are_refused() -> void:
+	var good: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE.path_join(TYPE + ".json")))
+	var errors: Array[String] = []
+	if UnitsLoader.parse_type(_loader, good, TYPE + ".json", errors).is_empty() or not errors.is_empty():
+		_fail("the good fixture row is refused: %s" % [errors])
+	for case in [["capacity", 0], ["sector", "universities"], ["figure", "graduates_per_1000"],
+			["payoff", "network"], ["overrun_odds", 1.5], ["cost_eur_m", {"FRA": -1}],
+			["build_months", 0], ["cofinanced", "yes"], ["bloc_offset_per_pop_share", {"nobody": 1.0}]]:
+		var bad := good.duplicate(true)
+		bad[case[0]] = case[1]
+		errors = []
+		if not UnitsLoader.parse_type(_loader, bad, TYPE + ".json", errors).is_empty() or errors.is_empty():
+			_fail("a row with %s = %s is accepted" % [case[0], case[1]])
+	var missing := good.duplicate(true)
+	missing.erase("running_eur_m")
+	errors = []
+	if not UnitsLoader.parse_type(_loader, missing, TYPE + ".json", errors).is_empty():
+		_fail("a row without running_eur_m is accepted")
+	var types := {TYPE: good}
+	var full: Array = []
+	for r in _loader.regions["FRA"]:
+		full.append({"region": r.id, "figure": "pupils_per_teacher", "level": 15.0})
+	var fine := {"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}], "levels": full}
+	errors = []
+	UnitsLoader.parse_stock(_loader, "FRA", fine, types, "stock/FRA.json", errors)
+	if not errors.is_empty():
+		_fail("a good stock file is refused: %s" % [errors])
+	for stock in [
+			{"stock": [{"region": "UKI", "type": TYPE, "units": 1, "capacity": 10}], "levels": full},
+			{"stock": [{"region": "FR1", "type": "nothing", "units": 1, "capacity": 10}], "levels": full},
+			{"stock": [{"region": "FR1", "type": TYPE, "units": -1, "capacity": 10}], "levels": full},
+			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}],
+				"levels": [{"region": "FR1", "figure": "pupils_per_teacher", "level": 15.0}]}]:
+		errors = []
+		UnitsLoader.parse_stock(_loader, "FRA", stock, types, "stock/FRA.json", errors)
+		if errors.is_empty():
+			_fail("a bad stock file is accepted: %s" % stock)
+	# The fixture's own file must be put back: parse_stock writes the loader's registers.
+	UnitsLoader.load_units(_loader, FIXTURE)
+
+
+func _test_cohesion_category_is_read_and_checked() -> void:
+	var base: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/regions/FRA.json"))["regions"][0]
+	base.erase("cohesion_category")
+	var errors: Array[String] = []
+	var r = Region.from_dict(base, 0, "test", errors)
+	if r.cohesion_category != "":
+		_fail("a region without the field reads category '%s'" % r.cohesion_category)
+	var with := base.duplicate(true)
+	with["cohesion_category"] = "transition"
+	errors = []
+	r = Region.from_dict(with, 0, "test", errors)
+	if not errors.is_empty() or r.cohesion_category != "transition":
+		_fail("a transition region reads '%s' (%s)" % [r.cohesion_category, errors])
+	with["cohesion_category"] = "rich"
+	errors = []
+	Region.from_dict(with, 0, "test", errors)
+	if errors.is_empty():
+		_fail("an unknown cohesion category is accepted")
+
+
+func _test_nothing_built_reads_the_nation_times_the_level() -> void:
+	var state = _state()
+	var ns = state.player()
+	for region in _named(state):
+		var want: float = Sectors.regional_quantity(ns, _loader, "education", "schools", region) \
+			* Units.level(_loader, "FRA", "pupils_per_teacher", region)
+		if Units.netted_gain(ns, _loader, TYPE, region) != 0.0 or Units.shown_figure(ns, _loader, TYPE, region) != want:
+			_fail("%s shows %.6f with nothing built, not %.6f" % [region, Units.shown_figure(ns, _loader, TYPE, region), want])
+
+
+## Section 3: g = elasticity x n x capacity / C in the built region, netted against
+## the people x level weighted mean, so the regions' mean stays the nation's figure.
+func _test_a_built_unit_lifts_its_region_and_the_nation_holds() -> void:
+	var state = _state()
+	var ns = state.player()
+	var before := Units.shown_figure(ns, _loader, TYPE, "FR1")
+	var other_before := Units.shown_figure(ns, _loader, TYPE, "FRB")
+	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FR1", 2)])
+	if absf(Units.gain(ns, _loader, TYPE, "FR1") - (-0.2)) > 1e-12:
+		_fail("two units of 1000 places on 10000 give g = %.6f, not -0.2" % Units.gain(ns, _loader, TYPE, "FR1"))
+	if Units.shown_figure(ns, _loader, TYPE, "FR1") >= before:
+		_fail("FR1's pupils per teacher did not fall: %.4f -> %.4f" % [before, Units.shown_figure(ns, _loader, TYPE, "FR1")])
+	if Units.shown_figure(ns, _loader, TYPE, "FRB") <= other_before:
+		_fail("FRB did not give a little back: %.4f -> %.4f" % [other_before, Units.shown_figure(ns, _loader, TYPE, "FRB")])
+	var weighted := 0.0
+	var people := 0.0
+	for region in _named(state):
+		var p := float(ns.region_pop_share[region])
+		weighted += p * Units.shown_figure(ns, _loader, TYPE, region)
+		people += p
+	var nation := Sectors.quantity(ns, _loader, "education", "schools")
+	if absf(weighted / people - nation) > 1e-9 * nation:
+		_fail("the regions' weighted mean is %.9f, not the nation's %.9f" % [weighted / people, nation])
+	# A unit still building moves nothing.
+	ns.unit_programmes.assign([_row("p2", UK.OP_BUILD, UK.STATE_BUILDING, "FR1", 2)])
+	if Units.gain(ns, _loader, TYPE, "FR1") != 0.0:
+		_fail("a building unit already lifts its region")
+
+
+func _test_a_closed_unit_reverses_a_built_one() -> void:
+	var state = _state()
+	var ns = state.player()
+	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FR1", 2), _done("p2", UK.OP_DEMOLISH, "FR1", 2)])
+	if Units.net_units(ns, TYPE, "FR1") != 0 or Units.gain(ns, _loader, TYPE, "FR1") != 0.0:
+		_fail("two built and two closed net %d units" % Units.net_units(ns, TYPE, "FR1"))
+	ns.unit_programmes.assign([_done("p2", UK.OP_DEMOLISH, "FR1", 3)])
+	if Units.gain(ns, _loader, TYPE, "FR1") <= 0.0:
+		_fail("closing three schools did not raise FR1's pupils per teacher")
+
+
+func _test_a_region_with_no_stock_gains_nothing() -> void:
+	var state = _state()
+	var ns = state.player()
+	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FRM", 1)])
+	if Units.gain(ns, _loader, TYPE, "FRM") != 0.0:
+		_fail("a region with no stock row gains %.4f" % Units.gain(ns, _loader, TYPE, "FRM"))
+	if Units.start_capacity(_loader, "FRA", TYPE, "FRM") != 0.0:
+		_fail("FRM reads a start capacity with no stock row")
+
+
+func _test_fill_by_population() -> void:
+	var state = _state()
+	var ns = state.player()
+	var rows: Array = Units.fill_by_population(ns, _loader, TYPE, 20)
+	var total := 0
+	var biggest := ""
+	var most := -1
+	for row in rows:
+		total += int(row["units"])
+		if String(row["region"]) == "FRM":
+			_fail("a region with no stock is filled")
+		if int(row["units"]) > most:
+			most = int(row["units"])
+			biggest = String(row["region"])
+	if total != 20:
+		_fail("by population places %d units, not 20" % total)
+	if biggest != "FR1":
+		_fail("by population puts the most units in %s, not FR1 (the most people)" % biggest)
+	# Two units: the largest remainders, FR1's and FRK's (the second most people).
+	var two: Array = Units.fill_by_population(ns, _loader, TYPE, 2)
+	if two != [{"region": "FR1", "units": 1}, {"region": "FRK", "units": 1}]:
+		_fail("by population places two units as %s, not one in FR1 and one in FRK" % [two])
+
+
+## "By need fills the regions whose shown figure is furthest behind the nation's,
+## in that order": a pupils-per-teacher row is behind when it reads HIGHER.
+func _test_fill_by_need_starts_with_the_worst() -> void:
+	var state = _state()
+	var ns = state.player()
+	var rows: Array = Units.fill_by_need(ns, _loader, TYPE, 1)
+	if rows.size() != 1 or int(rows[0]["units"]) != 1:
+		_fail("by need for one unit gives %s" % [rows])
+		return
+	var placed := String(rows[0]["region"])
+	var worst := ""
+	var top := -INF
+	for region in _named(state):
+		if Units.start_capacity(_loader, "FRA", TYPE, region) <= 0.0:
+			continue
+		var f := Units.shown_figure(ns, _loader, TYPE, region)
+		if f > top:
+			top = f
+			worst = region
+	if placed != worst:
+		_fail("by need puts its first unit in %s, not the worst region %s" % [placed, worst])
+	var many: Array = Units.fill_by_need(ns, _loader, TYPE, 30)
+	var total := 0
+	for row in many:
+		total += int(row["units"])
+		if String(row["region"]) == "FRM":
+			_fail("by need fills a region with no stock")
+	if total != 30:
+		_fail("by need places %d units, not 30" % total)
+
+
+func _test_the_register_is_saved() -> void:
+	var state = _state()
+	var ns = state.player()
+	if not ns.unit_programmes.is_empty():
+		_fail("a new game starts with programmes: %s" % [ns.unit_programmes])
+	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FR1", 2)])
+	var back = ns.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
+	if back.unit_programmes.size() != 1 or Units.net_units(back, TYPE, "FR1") != 2:
+		_fail("the register did not survive a save: %s" % [back.unit_programmes])
+
+
+func _done(id: String, op: String, region: String, units: int) -> Dictionary:
+	return _row(id, op, UK.STATE_DONE, region, units)
+
+
+func _row(id: String, op: String, state: String, region: String, units: int) -> Dictionary:
+	return {"id": id, "type": TYPE, "op": op, "state": state, "rows": [{"region": region, "units": units}]}
+
+
+func _fail(message: String) -> void:
+	_failures.append(message)
+
+
+func _finish() -> void:
+	if _failures.is_empty():
+		print("test_units: all checks passed")
+		quit(0)
+	else:
+		for failure in _failures:
+			printerr("FAIL: %s" % failure)
+		quit(1)

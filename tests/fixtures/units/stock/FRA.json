@@ -1,0 +1,144 @@
+{
+  "_source": "test fixture",
+  "stock": [
+    {
+      "region": "FR1",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRB",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRC",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRD",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRE",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRF",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRG",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRH",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRI",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRJ",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRK",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    },
+    {
+      "region": "FRL",
+      "type": "fixture_school",
+      "units": 10,
+      "capacity": 10000
+    }
+  ],
+  "levels": [
+    {
+      "region": "FR1",
+      "figure": "pupils_per_teacher",
+      "level": 15.0
+    },
+    {
+      "region": "FRB",
+      "figure": "pupils_per_teacher",
+      "level": 20.0
+    },
+    {
+      "region": "FRC",
+      "figure": "pupils_per_teacher",
+      "level": 15.0
+    },
+    {
+      "region": "FRD",
+      "figure": "pupils_per_teacher",
+      "level": 20.0
+    },
+    {
+      "region": "FRE",
+      "figure": "pupils_per_teacher",
+      "level": 15.0
+    },
+    {
+      "region": "FRF",
+      "figure": "pupils_per_teacher",
+      "level": 20.0
+    },
+    {
+      "region": "FRG",
+      "figure": "pupils_per_teacher",
+      "level": 15.0
+    },
+    {
+      "region": "FRH",
+      "figure": "pupils_per_teacher",
+      "level": 20.0
+    },
+    {
+      "region": "FRI",
+      "figure": "pupils_per_teacher",
+      "level": 15.0
+    },
+    {
+      "region": "FRJ",
+      "figure": "pupils_per_teacher",
+      "level": 20.0
+    },
+    {
+      "region": "FRK",
+      "figure": "pupils_per_teacher",
+      "level": 15.0
+    },
+    {
+      "region": "FRL",
+      "figure": "pupils_per_teacher",
+      "level": 20.0
+    },
+    {
+      "region": "FRM",
+      "figure": "pupils_per_teacher",
+      "level": 20.0
+    }
+  ]
+}
