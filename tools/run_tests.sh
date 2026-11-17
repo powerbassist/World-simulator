@@ -44,7 +44,6 @@ tests=(
   tests/test_finance_autumn.gd
   tests/test_bill_queue.gd
   tests/test_goal_read.gd
-  tests/test_goal_table.gd
   tests/test_finance_read.gd
   tests/test_finance_rows.gd
   tests/test_investment_refusal.gd
@@ -204,7 +203,7 @@ tests=(
   tests/test_finance_editor.gd
   tests/test_finance_sheet.gd
   tests/test_finance_autumn_ui.gd
-  tests/test_goal_panel.gd
+  tests/test_law_gate.gd
   tests/test_sectors.gd
   tests/test_projects.gd
   tests/test_campaign.gd

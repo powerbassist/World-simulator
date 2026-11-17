@@ -16,6 +16,7 @@ extends RefCounted
 ## size's yes against the bill's own, since five strips will not fit the detail's column.
 
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
+const LawRow = preload("res://src/ui/law_row.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
@@ -25,8 +26,6 @@ const Num = preload("res://src/ui/num.gd")
 
 const CHIP_META := "grade"
 const STRIP_META := "grade_strip"
-## Where the forecast stands in a catalogue row (law_list.gd _row).
-const BAR_COLUMN := 3
 
 
 ## "400 lycees": the row's size at a grade, with no decimal when it has none.
@@ -44,13 +43,14 @@ static func read(ns, law, scale: float):
 ## A chip's press: the pick, the bill's bar in its row, the detail, the focus back on the chip.
 static func pick(list, law, step: float) -> void:
 	list.grades[String(law.id)] = step
-	var row: Node = list._rows.get_child(list._rows.get_child_count() - list._shown.size() + list._shown.find(law))
-	var bar: Control = row.get_child(BAR_COLUMN)
-	var redrawn: Control = list._forecast_bar(list._ns, list._party_list, law, list.BAR_WIDTH)
-	row.remove_child(bar)
-	bar.queue_free()
-	row.add_child(redrawn)
-	row.move_child(redrawn, BAR_COLUMN)
+	# The row is rebuilt whole at the grade (law_row.gd): its bar and its counts both move.
+	var at: int = list._rows.get_child_count() - list._shown.size() + list._shown.find(law)
+	var row: Node = list._rows.get_child(at)
+	var redrawn: Control = LawRow.build(list, list._ns, list._party_list, law, true, list.why(law))
+	list._rows.remove_child(row)
+	row.queue_free()
+	list._rows.add_child(redrawn)
+	list._rows.move_child(redrawn, at)
 	list.select(String(law.id))
 	for chip in list._detail.find_children("*", "Button", true, false):  # i18n: ok a class name
 		if chip.has_meta(CHIP_META) and is_equal_approx(float(chip.get_meta(CHIP_META)), step):

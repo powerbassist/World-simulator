@@ -154,11 +154,12 @@ func _paper():
 	return _panel()._paper
 
 
-## At rest (no bill, no queue) the paper is not on the page: no empty places, no prose.
+## At rest (no bill, no queue) the paper is on the page all the same (the Bills second pass,
+## G3-14): its places empty and its rule printed, so the rule is read before the first bill.
 func _check_the_paper_is_absent_at_rest() -> void:
 	_refresh()
-	if _paper().visible:
-		_fail("the order paper is shown with nothing in the slot and nothing queued")
+	if not _paper().visible:
+		_fail("the order paper is hidden with nothing in the slot and nothing queued")
 
 
 func _check_the_paper_reads_the_sim() -> void:
@@ -259,13 +260,13 @@ func _select(id: String) -> void:
 func _check_the_sheet_offers_queue_and_the_go_finds_it() -> void:
 	_select(_ids[3])
 	var propose: Button = _sheet_button("Propose")
-	if propose == null or not propose.disabled or not propose.tooltip_text.contains("before the Assembly"):
-		_fail("Propose is not down with the slot's reason while a bill is in the slot")
+	if propose != null and propose.visible:
+		_fail("the slot is held and a down Propose still stands beside the queue's one verb")
 	var queue: Button = _sheet_button("Queue")
 	if queue == null or queue.disabled:
 		_fail("a held slot with room: the sheet offers no enabled Queue")
 		return
-	if not queue.text.begins_with("Queue for "):
+	if not queue.text.begins_with("Propose for "):
 		_fail("Queue does not name the month: '%s'" % queue.text)
 	var go := ActsOn.find(_panel(), _ids[3])
 	if go == null:
@@ -275,7 +276,7 @@ func _check_the_sheet_offers_queue_and_the_go_finds_it() -> void:
 ## QA's M2 on #352: with the slot empty, the right click's Propose is a press that divides that law
 ## (run_proposal), not a request for the briefing popup -- and no test pressed it.
 func _check_the_plates_propose_divides() -> void:
-	var law_row: Button = _panel()._laws._rows.get_children()[0].get_child(0)
+	var law_row: Button = _panel()._laws._rows.get_children()[0].get_meta("pick")
 	var law_name := law_row.text
 	var proposed := []
 	var briefed := []
@@ -286,7 +287,7 @@ func _check_the_plates_propose_divides() -> void:
 	event.pressed = true
 	law_row.gui_input.emit(event)
 	var plate = _plate()
-	var press: Array = _plate_buttons(plate).filter(func(b): return b.text == "Propose") if plate != null else []
+	var press: Array = _plate_buttons(plate).filter(func(b): return b.text.begins_with("Propose for ")) if plate != null else []
 	if press.is_empty() or press[0].disabled:
 		_fail("with the slot empty the plate has no live Propose")
 		return
@@ -301,7 +302,7 @@ func _check_the_plates_propose_divides() -> void:
 
 
 func _check_the_right_click_is_the_same_table() -> void:
-	var row: Button = _panel()._laws._rows.get_children()[0].get_child(0)
+	var row: Button = _panel()._laws._rows.get_children()[0].get_meta("pick")
 	var event := InputEventMouseButton.new()
 	event.button_index = MOUSE_BUTTON_RIGHT
 	event.pressed = true
@@ -311,11 +312,10 @@ func _check_the_right_click_is_the_same_table() -> void:
 		_fail("a right click on a law's row opened no plate")
 		return
 	var texts: Array = _plate_buttons(plate).map(func(b): return b.text)
-	if not texts.has("Propose") or not texts.has("Open the sheet") or not texts.any(func(t): return String(t).begins_with("Queue for ") or String(t).begins_with("Take out")):
-		_fail("the plate offers %s; wanted Propose, a queue verb and Open the sheet" % [texts])
-	var propose: Button = _plate_buttons(plate).filter(func(b): return b.text == "Propose")[0]
-	if not propose.disabled or propose.tooltip_text == "":
-		_fail("with a bill in the slot the plate's Propose is not down with a reason")
+	# One verb (pass 2 T2): with a bill in the slot the queue's press is the proposal, alone.
+	var proposes: Array = texts.filter(func(t): return String(t).begins_with("Propose"))
+	if proposes.size() != 1 or not String(proposes[0]).begins_with("Propose for ") or not texts.has("Open the sheet"):
+		_fail("the plate offers %s; wanted one 'Propose for <month>' and Open the sheet" % [texts])
 	plate.hide()
 
 
@@ -335,7 +335,7 @@ func _check_a_full_queue_shows_queue_down_with_its_reason() -> void:
 	var queue: Button = _sheet_button("Queue")
 	if queue == null or not queue.disabled or queue.tooltip_text == "":
 		_fail("a full queue: Queue is not shown down with its reason")
-	elif queue.text.begins_with("Queue for "):
+	elif queue.text.begins_with("Propose for "):
 		_fail("a full queue names a month it has no place for: '%s'" % queue.text)
 
 

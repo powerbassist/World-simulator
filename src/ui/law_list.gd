@@ -1,29 +1,16 @@
 extends HBoxContainer
 
-## The Legislature's catalogue -- V5.2-0b, the author's call "Une ligne par loi +
-## détail" (docs/design/v5.2-legibility.md). Every proposable law is ONE row: its
-## name, a theme chip, a majority chip, the forecast as a small bar with the
-## majority marked, and two glyphs for what waits after the division (the second
-## chamber, the court), their sentences on hover. Selecting a row opens the detail
-## beside the list: the law's summary in full, never cut (the author's "Au clic,
-## jamais coupés"), the forecast and the after-the-division sentences spelled out,
-## and the verbs.
+## The Legislature's catalogue -- the Bills second pass, the author's pick "A : les rayons"
+## (gate 3: G3-1 messy, G3-2 not in categories). Three columns: the SHELVES down the left
+## (law_filters.gd: a search, one button per category with its count), the open shelf's laws as
+## rows (law_row.gd: name, verb, summary, the vote at a glance, and a shut law's reason), and the
+## selected law's sheet on the right (law_sheet.gd: the vote in full, what it does to each bloc,
+## one verb). Every law of a shelf stands on it, open or shut -- a law the Assembly cannot take now
+## says why on its row instead of vanishing (law_gate.gd), and another constitution's laws are not
+## this nation's book, so they are left out.
 ##
-## The page used to be 105 expanded blocks -- 3 850 words and 210 buttons, the
-## Senat and court sentence repeated on every row (1 219 words of it). The rows now
-## carry no sentence at all; the one selected law carries its whole text.
-##
-## V5.3-0 (b), spec 3.3: the row's words were still 600 of the tab's 1 045 -- a
-## theme word, "simple majority", "court stands", the chamber's name, repeated down
-## 105 rows. The theme is an icon now (its word on hover), the threshold shows only
-## when it is above half (as a figure), and the after-the-division cells show only
-## what stands in the way: a blank cell is a law nothing stops, so the exceptions
-## are what the eye finds going down a column. The words are named once, in the
-## header row.
-##
-## The panel (law_panel.gd) still owns every command and every helper the old row
-## used (`_forecast_text`, `_majority_phrase`, `_offer` and the verbs); this file
-## only lays the catalogue out.
+## The panel (law_panel.gd) still owns every command and every helper the rows read
+## (`forecast_counts`, `_majority_phrase`, `_offer` and the verbs); this file lays the catalogue out.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -32,6 +19,7 @@ const ChartStyle = preload("res://src/ui/chart_style.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Government = preload("res://src/sim/government.gd")
@@ -40,33 +28,26 @@ const ActsOn = preload("res://src/ui/acts_on.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
-const LawColumns = preload("res://src/ui/law_columns.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
+const LawGate = preload("res://src/sim/law_gate.gd")
 const BillActions = preload("res://src/ui/bill_actions.gd")
 const LawFilters = preload("res://src/ui/law_filters.gd")
 const BlocFilter = preload("res://src/ui/law_bloc_filter.gd")
-const GoalPanel = preload("res://src/ui/goal_panel.gd")
+const LawRow = preload("res://src/ui/law_row.gd")
 const LawSheet = preload("res://src/ui/law_sheet.gd")
 const LawSeatsTip = preload("res://src/ui/law_seats_tip.gd")
 
 ## The forecast's three columns: a for / against pair that reads as opposite, and
 ## a grey for the undecided between them (the dataviz method's diverging rule).
 const FORECAST_COLORS := [Color("#3987e5"), Color(0.557, 0.596, 0.624), Color("#d95926")]
-const BAR_WIDTH := 120.0
-## A law's name never squeezes below this (px at 100 %); past it the name clips
-## and its tooltip carries it whole.
-const NAME_WIDTH := 190.0
-## The row's fixed columns, px at text size 100 %: theme, threshold, the second
-## chamber's glyph, the court's.
-const COLUMNS := [28.0, 48.0, 72.0, 64.0]
 
 var _panel
 var _rows: VBoxContainer
-var _header: HBoxContainer
+var _head: Label
 var _detail: VBoxContainer
 var _selected := ""
-## The shelf and the search above the rows (law_filters.gd): built once, so the typed words stay.
+## The shelves and the search beside the rows (law_filters.gd): built once, so the typed words stay.
 var _filters: LawFilters
 ## V5.3-0 (2.4): the bloc whose liked laws the list shows, "" for every law. Set by
 ## the briefing's bloc Go and the Society panel's "what calms it" row; cleared by
@@ -75,6 +56,8 @@ var bloc_filter := ""
 ## The last fill's inputs, so a selection rebuilds the detail alone (QA on #96: a
 ## click that rebuilt all 105 rows and their forecasts cost ~100 ms).
 var _shown: Array = []
+## Law id -> the gate's flag for every shown law ("" open), read once per fill.
+var _why := {}
 var _ns
 var _party_list: Array = []
 ## The chip picked on each bill, by id: a display pick until Propose, kept through a refresh
@@ -90,36 +73,22 @@ var _game = null
 func _init(panel) -> void:
 	_panel = panel
 	name = "Laws"  # i18n: ok
-	add_theme_constant_override("separation", 20)
+	add_theme_constant_override("separation", 16)
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
-	# The header sits above the list's scroll, so it stays while the rows move and
-	# the rows container holds rows only.
-	var left := VBoxContainer.new()
-	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	left.size_flags_stretch_ratio = 0.6
-	add_child(left)
-	# The goals come first (goal_panel.gd): the balance, unemployment, a bloc, and what moves each.
-	left.add_child(GoalPanel.new(self))
 	_filters = LawFilters.new(_panel.mark_dirty)
-	left.add_child(_filters)
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 0)
-	left.add_child(head)
-	_header = HBoxContainer.new()
-	_header.add_theme_constant_override("separation", 10)
-	_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(_header)
-	var gutter := Control.new()
-	head.add_child(gutter)
-	_rows = _column(left, 1.0)
-	# The rows lose their scrollbar's width when it shows; the header, outside the
-	# scroll, reserves the same so its captions stay over their columns.
-	var bar := (_rows.get_parent() as ScrollContainer).get_v_scroll_bar()
-	bar.visibility_changed.connect(func() -> void:
-		gutter.custom_minimum_size.x = bar.get_combined_minimum_size().x if bar.visible else 0.0)
-	_rows.add_theme_constant_override("separation", 2)
-	_detail = _column(self, 0.4)
+	# A shelf pressed under a bloc's Go is the player choosing the shelf: the Go's filter ends.
+	_filters.shelf_pressed.connect(func() -> void: bloc_filter = "")
+	add_child(_filters)
+	var middle := VBoxContainer.new()
+	middle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	middle.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	add_child(middle)
+	_head = Label.new()
+	_head.theme_type_variation = UiTheme.MICRO
+	middle.add_child(_head)
+	_rows = _column(middle, 1.0)
+	_rows.add_theme_constant_override("separation", 10)
+	_detail = _column(self, 0.85)
 	_detail.add_theme_constant_override("separation", 8)
 
 
@@ -142,6 +111,11 @@ func selected_id() -> String:
 	return _selected
 
 
+## The gate's flag for a shown law, "" when the Assembly may take it now.
+func why(law) -> String:
+	return String(_why.get(String(law.id), ""))
+
+
 ## The grade this bill goes to the Assembly at: the player's pick, on a bill that may take one.
 ## 1 on the referendum route, whose settlement reads the row (LawMagnitude.may_grade).
 func grade(law, referendum := false) -> float:
@@ -150,16 +124,23 @@ func grade(law, referendum := false) -> float:
 
 
 ## Opens a law's detail. The selection survives the panel's refreshes; a law that
-## left the list hands the selection back to the first one.
+## left the list hands the selection back to the first open one.
 func select(law_id: String) -> void:
+	# A law on another shelf (a Go, the order paper, a test) opens its shelf first.
+	if not _shown.any(func(law) -> bool: return String(law.id) == law_id):
+		var law = _panel._find_law(law_id)
+		var shelf: String = LawFilters.shelf_of(law, _panel._loader) if law != null else ""
+		if shelf != "" and (shelf != _filters.category or _filters.query != ""):
+			_filters.open_shelf(shelf)
+			_selected = law_id
+			_panel._refresh()
+			return
 	_selected = law_id
-	# The filter's own row, when shown, sits above the law rows.
-	var first := _rows.get_child_count() - _shown.size()
-	for i in _shown.size():
-		if first >= 0 and first + i < _rows.get_child_count():
-			var pick: Button = _rows.get_child(first + i).get_child(0)
-			pick.flat = _shown[i].id != law_id
-			pick.set_pressed_no_signal(_shown[i].id == law_id)
+	for row in _rows.get_children():
+		if row.has_meta("pick"):
+			var pick: Button = row.get_meta("pick")
+			pick.flat = String(row.get_meta("law_id")) != law_id
+			pick.set_pressed_no_signal(String(row.get_meta("law_id")) == law_id)
 	for child in _detail.get_children():
 		_detail.remove_child(child)
 		child.queue_free()
@@ -176,6 +157,7 @@ func _notification(what: int) -> void:
 		bloc_filter = ""
 
 
+## `laws` is every law the nation's book holds, open or not: the gate sorts them here.
 func fill(ns, party_list: Array, laws: Array) -> void:
 	if not is_same(_game, _panel._state):
 		_game = _panel._state
@@ -185,30 +167,48 @@ func fill(ns, party_list: Array, laws: Array) -> void:
 		for child in box.get_children():
 			box.remove_child(child)
 			child.queue_free()
+	_why.clear()
+	var book: Array = []
+	for law in laws:
+		# Another constitution's laws are not this nation's book, whatever else shuts them.
+		if LawGate.constitution_allows(ns, law) and LawFilters.shelf_of(law, _panel._loader) != "":
+			_why[String(law.id)] = LawGate.shut(ns, law)
+			book.append(law)
 	if bloc_filter != "":
-		laws = liked_by(laws, bloc_filter)
+		book = liked_by(book, bloc_filter)
 		BlocFilter.row(self)
-	laws = _filters.apply(laws, _panel._loader)
-	_shown = laws
-	if laws.is_empty():
-		if _filters.is_active():
-			PanelKit.line(_rows, _filters.empty_text(), PanelKit.Tone.PLAIN)
-			return
-		if not ns.tabled_bill.is_empty():
-			PanelKit.line(_rows, tabled_text(ns), PanelKit.Tone.PLAIN)
-		PanelKit.line(_rows, tr("No law is currently proposable."), PanelKit.Tone.PLAIN)
-		return
+	# A bloc's Go reads every shelf: the laws it likes may stand on any of them.
+	book = _filters.apply(book, _panel._loader, bloc_filter != "")
+	_shown = book
 	_ns = ns
 	_party_list = party_list
-	LawColumns.header(_header, ns, COLUMNS, NAME_WIDTH, BAR_WIDTH)
-	var chosen = laws[0]
-	for law in laws:
-		if law.id == _selected:
+	_head.text = _head_text(book)
+	if book.is_empty():
+		# The sheet is empty too, so the bill that waits is said here.
+		if not ns.tabled_bill.is_empty():
+			PanelKit.line(_rows, tabled_text(ns), PanelKit.Tone.PLAIN)
+		PanelKit.line(_rows, _filters.empty_text(), PanelKit.Tone.PLAIN)
+		return
+	var chosen = null
+	for law in book:
+		if law.id == _selected or (chosen == null and why(law) == ""):
 			chosen = law
+	if chosen == null:
+		chosen = book[0]
 	_selected = chosen.id
-	for law in laws:
-		_rows.add_child(_row(ns, party_list, law, law == chosen))
+	for law in book:
+		_rows.add_child(LawRow.build(self, ns, party_list, law, law == chosen, why(law)))
 	_build_detail(ns, party_list, chosen)
+
+
+## "WORK · 13 LAWS · 3 SHUT": what the list holds, above it.
+func _head_text(book: Array) -> String:
+	var shut := book.filter(func(law) -> bool: return why(law) != "").size()
+	var place: String = Labels.law_category(_filters.category) if _filters.query == "" and bloc_filter == "" else Strings.t("Found")
+	var text := "%s · %s" % [place, Strings.tn("%d law", "%d laws", book.size()) % book.size()]
+	if shut > 0:
+		text += " · " + Strings.t("%d shut") % shut
+	return text
 
 
 ## The laws a bloc likes, the most liked first (law_bloc_filter.gd).
@@ -216,58 +216,16 @@ static func liked_by(laws: Array, bloc: String) -> Array:
 	return BlocFilter.liked_by(laws, bloc)
 
 
-func _row(ns, party_list: Array, law, selected: bool) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	var pick := Button.new()
-	pick.text = Strings.law_name(law)
-	pick.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	pick.flat = not selected
-	pick.toggle_mode = true
-	pick.button_pressed = selected
-	pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	pick.clip_text = true
-	pick.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	pick.custom_minimum_size.x = NAME_WIDTH * UiTheme.text_scale()
-	pick.pressed.connect(select.bind(String(law.id)))
-	pick.gui_input.connect(BillActions.row_input.bind(self, law))
-	row.add_child(pick)
-	pick.tooltip_text = pick.text
-	# Fixed widths, so every row's chips, bar and glyphs stand in the same columns
-	# whatever the law's name -- a list read down a column, not row by row.
-	row.add_child(LawColumns.theme_icon(String(law.theme), COLUMNS[0]))
-	var needs := _chip(LawColumns.threshold(majority_share(ns, law)), UiTheme.CAPTION, COLUMNS[1])
-	if needs.text != "":
-		needs.tooltip_text = _panel._majority_phrase(ns, law)
-		needs.mouse_filter = Control.MOUSE_FILTER_PASS
-	row.add_child(needs)
-	row.add_child(_forecast_bar(ns, party_list, law, BAR_WIDTH))
-	var slots := {"upper": _chip("", UiTheme.CAPTION, COLUMNS[2]), "court": _chip("", UiTheme.CAPTION, COLUMNS[3])}
-	for part in after_parts(ns, party_list, law, _panel.FORECAST_UNCERTAIN_BAND):
-		if bool(part.get("quiet", false)):
-			continue
-		var glyph: Label = slots[part["slot"]]
-		glyph.text = String(part["glyph"])
-		glyph.theme_type_variation = String(part["tone"])
-		glyph.tooltip_text = String(part["text"])
-		glyph.mouse_filter = Control.MOUSE_FILTER_PASS
-	row.add_child(slots["upper"])
-	row.add_child(slots["court"])
-	return row
-
-
-func _chip(text: String, tone := UiTheme.CAPTION, width := 0.0) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.theme_type_variation = tone
-	label.custom_minimum_size.x = width * UiTheme.text_scale()
-	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	return label
+## The forecast's counts at the grade the sheet picked: the bar and the row's words read this one.
+func counts_of(ns, party_list: Array, law) -> Dictionary:
+	return _panel.forecast_counts(ns, party_list, LawGrade.read(ns, law, grade(law)), _panel.forecast_band(ns, law.id))
 
 
 ## For, undecided and against as one bar, the law's majority marked across it.
-func _forecast_bar(ns, party_list: Array, law, width: float) -> Control:
-	var counts: Dictionary = _panel.forecast_counts(ns, party_list, LawGrade.read(ns, law, grade(law)), _panel.forecast_band(ns, law.id))
+## `counts`: the caller's counts_of(), when it holds them already.
+func _forecast_bar(ns, party_list: Array, law, width: float, counts := {}) -> Control:
+	if counts.is_empty():
+		counts = counts_of(ns, party_list, law)
 	var bar := ChartStack.new()
 	bar.setup([
 		{"label": tr("For"), "value": float(counts["yes"])},
@@ -335,7 +293,8 @@ func _verbs(ns, law) -> void:
 	var row := PanelKit.buttons(_detail)
 	var propose := Button.new()
 	propose.name = "Propose"  # i18n: ok a node name
-	propose.text = tr("Propose")
+	# The Bills second pass: the verb names the month the bill divides in (the slot's month).
+	propose.text = tr("Propose for %s") % DateText.month_long(int(_panel._state.month))
 	propose.pressed.connect(_panel.run_proposal.bind(law))
 	# V5.3-0 RF3: Propose acts on the law, and on the bloc the list is filtered for.
 	ActsOn.tag(propose, [law.id] + ([bloc_filter] if bloc_filter != "" else []))
@@ -365,6 +324,7 @@ func _verbs(ns, law) -> void:
 	# V5.2 b+ R2 and V5.3 screen 4: one bill before the Assembly at a time, and a queue of three
 	# behind it. The table (bill_verbs.gd) holds Propose and the referendum route down with its
 	# reason, and offers the queue; Article 49.3 answers only to its own cooldown (#173).
+	# A shut law (law_gate.gd) is a cell of that table too: every verb down with its reason.
 	BillActions.verbs(self, row, ns, law)
 
 

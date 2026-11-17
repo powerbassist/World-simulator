@@ -71,6 +71,7 @@ func _run() -> void:
 	_main._law_panel.setup(_main._state, loader)
 	_main._law_panel.mark_dirty()
 	_main._law_panel._process(0.0)
+	_main._law_panel._laws.select(String(law.id))  # its shelf (the Bills second pass)
 
 	var text_before := _collect_text(_main._law_panel)
 	if not text_before.contains(law.law_name):
@@ -162,6 +163,8 @@ func _check_rebellion_is_forecast_and_named(loader, ns) -> void:
 	_main._law_panel.setup(_main._state, loader)
 	_main._law_panel.mark_dirty()
 	_main._law_panel._process(0.0)
+	# The Bills second pass: the warning is on the law's sheet, so the law is opened.
+	_main._law_panel._laws.select(String(law.id))
 
 	var forecast := _collect_text(_main._law_panel)
 	if not forecast.contains("expected to break ranks"):

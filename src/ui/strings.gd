@@ -154,6 +154,12 @@ static func law_summary(law) -> String:
 	return row_summary("laws", law)
 
 
+## The one word the Bills row shows beside a law's name ("raises"), "" for a law that has none.
+static func law_verb(loader, law) -> String:
+	var english := String(loader.law_verb.get(String(law.id), ""))
+	return row("laws", String(law.id), "verb", english) if english != "" else ""
+
+
 ## "lycees": what a law's size counts (Law.magnitude).
 static func law_unit(law) -> String:
 	return row("laws", String(law.id), "unit", String(law.magnitude["unit"]))

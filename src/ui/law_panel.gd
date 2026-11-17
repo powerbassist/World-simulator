@@ -181,7 +181,7 @@ func _refresh() -> void:
 	var party_list: Array = _loader.parties.get(ns.id, [])
 	# V4.2. Authored laws plus the composed register -- the same concat the
 	# legality scan runs, so a draft the player finished is on this list.
-	_laws.fill(ns, party_list, Legislature.available(ns, _loader.laws + Statute.custom_laws(ns)))
+	_laws.fill(ns, party_list, _loader.laws + Statute.custom_laws(ns))
 
 
 func _build_result_summary(result: Dictionary) -> Control:
@@ -285,7 +285,7 @@ func _build_result_summary(result: Dictionary) -> Control:
 ## does the same lookup. See docs/amendment-model.md.
 func _majority_phrase(ns, law) -> String:
 	if not law.constitutional:
-		return tr("%s majority") % law.majority
+		return PanelKit.Labels.majority(String(law.majority))
 	match ns.amendment_rule:
 		"ordinary_law": return tr("ordinary majority")
 		"three_fifths": return tr("3/5 majority")
@@ -382,10 +382,6 @@ static func _line_at(support_now: float, band: float) -> String:
 	if support_now > band:
 		return "yes"
 	return "no" if support_now < -band else "abstain"
-
-
-func _forecast_text(ns, party_list: Array, law) -> String:
-	return forecast_text(ns, party_list, law, forecast_band(ns, law.id))
 
 
 ## The band THIS bill's forecast is blurred by: the ordinary uncertainty, or
