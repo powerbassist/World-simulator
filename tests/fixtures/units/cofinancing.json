@@ -1,0 +1,30 @@
+{
+  "_source": "test fixture",
+  "organisations": {
+    "eu": {
+      "rates": {
+        "less_developed": 0.8,
+        "transition": 0.6,
+        "transition_former_less_developed": 0.7,
+        "more_developed": 0.4,
+        "_note": "fixture label"
+      },
+      "warn_months": 12,
+      "periods": [
+        {
+          "id": "p1",
+          "first_year": 2020,
+          "last_year": 2026,
+          "pays_until_year": 2029,
+          "envelope_eur_bn": {
+            "FRA": 10.0,
+            "_note": "fixture label"
+          },
+          "_stand_in": "fixture label"
+        }
+      ],
+      "_warn_months_stand_in": "fixture label"
+    },
+    "_note": "fixture label"
+  }
+}
