@@ -354,7 +354,7 @@ func _check_the_strip_fits() -> void:
 		if n.length() > longest.length():
 			longest = n
 	var widest := {
-		"approval": "100% ▼", "deficit": "-10.50%", "gdp": "12345 Bn ▲",
+		"approval": "100% ▼", "deficit": "123.4 bn €", "gdp": "+12.3 %",
 		"unemployment": "12.34%", "inflation": "10.5%", "unrest": "100",
 		"assembly": "+123", "election": "60 mo", "programme": "100%",
 		"desk": "12 pending", "europe": "Treaty: 12m", "commodities": "%s 18%%" % longest,
