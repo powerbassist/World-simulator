@@ -83,6 +83,26 @@ func _check_each_rule_names_its_flag() -> void:
 	ns.held_bills[ordinary.id] = {"months": 3, "origin": "player"}
 	_expect(ns, ordinary, LawGate.HELD)
 	ns.held_bills.erase(ordinary.id)
+	# QA on #417: every flag reached on a staged state, so no branch of the gate can go unnoticed.
+	ordinary.repeals = "no_such_law_in_the_ledger"
+	_expect(ns, ordinary, LawGate.NOTHING_TO_REPEAL)
+	ordinary.repeals = ""
+	ns.referendum_pending = {"law_id": ordinary.id}
+	_expect(ns, ordinary, LawGate.REFERENDUM)
+	ns.referendum_pending = {}
+	ns.assembly_bills["staged"] = {"law_id": ordinary.id}
+	_expect(ns, ordinary, LawGate.ASSEMBLY)
+	ns.assembly_bills.erase("staged")
+	_expect(ns, ordinary, "")
+	var electoral = _first(func(law): return (law.effects.get("institutional", {}) as Dictionary).has("election_system") 		and LawGate.constitution_allows(ns, law) and not law.once)
+	if electoral == null:
+		_fail("premise: no electoral law this constitution allows")
+	else:
+		var inst: Dictionary = electoral.effects["institutional"]
+		ns.election_system = String(inst["election_system"])
+		if inst.has("election_threshold_pct"):
+			ns.election_threshold_pct = float(inst["election_threshold_pct"])
+		_expect(ns, electoral, LawGate.IN_FORCE)
 	var once = _first(func(law): return law.once)
 	if once == null:
 		_fail("premise: no once-only law")

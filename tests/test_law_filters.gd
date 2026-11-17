@@ -478,8 +478,10 @@ func _check_a_condition_is_named() -> void:
 		return
 	var said: String = preload("res://src/ui/law_shut.gd").text(_ns(), law, LawGate.CONDITIONS)
 	var want: String = preload("res://src/ui/num.gd").f(float(law.preconditions[0]["value"]), 1)
-	if not said.contains("unemployment") or not said.contains(want):
-		_fail("the condition's sentence does not name it: %s" % said)
+	# QA on #417: and where the figure stands NOW, the live one, not the wanted one again.
+	var now: String = preload("res://src/ui/num.gd").f(Legislature.read_field(_ns(), "unemployment_pct"), 1)
+	if not said.contains("unemployment") or not said.contains(want) or not said.contains("it is %s%%" % now) or want == now:
+		_fail("the condition's sentence does not name it and today's figure (%s): %s" % [now, said])
 
 
 ## pass 2 T4: the bloc chart reads the bill at the size picked, as the vote does.
