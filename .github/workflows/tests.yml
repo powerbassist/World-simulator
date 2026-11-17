@@ -221,6 +221,12 @@ jobs:
           n=$(python -c "import json; print(len(json.load(open('tools/ci_shards.json'))['shards']))")
           grep -q "shard: \[$(seq -s ', ' 1 "$n")\]" .github/workflows/tests.yml \
             || { echo "tools/ci_shards.json has $n shards; the suite matrix must list 1..$n"; exit 1; }
+      # LAST on purpose: a stale generated page must not hide the checks after it (a failed step
+      # skips the rest of the job). docs/ui-map.md is generated from src/ui/; never edited by hand.
+      - name: UI map is current
+        run: |
+          python tools/ui_map.py --selftest
+          python tools/ui_map.py --check
 
   # The one check to require on main: green only when every shard and the checks
   # are green (a skipped or cancelled shard is not a pass).
