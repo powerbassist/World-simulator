@@ -173,6 +173,11 @@ jobs:
           bash tools/check_names.sh
       - name: Vault links
         run: python tools/check_vault.py
+      # docs/ui-map.md is generated from src/ui/ (where each screen lives); never edited by hand.
+      - name: UI map is current
+        run: |
+          python tools/ui_map.py --selftest
+          python tools/ui_map.py --check
       # Versions and changelog (AGENTS.md): every changelog.d/ fragment parses, version.json
       # equals CHANGELOG.md's newest release, and the export's build-string rule holds.
       - name: Changelog and build version
