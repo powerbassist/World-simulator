@@ -1,0 +1,335 @@
+{
+ "_source": "Commission Implementing Decision (EU) 2021/1130 of 5 July 2021 (Official Journal L 244, 9.7.2021, p. 10, as published, no later amendment checked; read on EUR-Lex through the Publications Office, publications.europa.eu/resource/celex/32021D1130, 2026-11-17), Annexes I, II and III by NUTS 2021 level-2 region; the 70 % sub-category (transition regions that were less developed in 2014-2020) is Wielkopolskie PL41 and Dolnośląskie PL51, which Commission Implementing Decision 2014/99/EU (Official Journal L 50, 20.2.2014, p. 22; publications.europa.eu/resource/celex/32014D0099, Annex I) lists as less developed regions. Population weights: Eurostat demo_r_d2jan, 1 January 2021, both sexes, all ages, NUTS 2021 level 2 (ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_d2jan), read 2026-11-17.",
+ "_note": "A game region is one or more NUTS 2 regions; a region takes the category of the part holding most of its people, and `mixed` shows the split when the parts differ (Auvergne-Rhone-Alpes 17 % transition, Niedersachsen 22 %, Rheinland-Pfalz 13 %, Sachsen 74 % transition so the whole Land is transition). Britain has no entry: no British region is in the Union's cohesion framework since 2021.",
+ "regions": {
+  "FRA": {
+   "FR1": {
+    "category": "more_developed",
+    "nuts2": [
+     "FR10"
+    ]
+   },
+   "FRB": {
+    "category": "transition",
+    "nuts2": [
+     "FRB0"
+    ]
+   },
+   "FRC": {
+    "category": "transition",
+    "nuts2": [
+     "FRC1",
+     "FRC2"
+    ]
+   },
+   "FRD": {
+    "category": "transition",
+    "nuts2": [
+     "FRD1",
+     "FRD2"
+    ]
+   },
+   "FRE": {
+    "category": "transition",
+    "nuts2": [
+     "FRE1",
+     "FRE2"
+    ]
+   },
+   "FRF": {
+    "category": "transition",
+    "nuts2": [
+     "FRF1",
+     "FRF2",
+     "FRF3"
+    ]
+   },
+   "FRG": {
+    "category": "transition",
+    "nuts2": [
+     "FRG0"
+    ]
+   },
+   "FRH": {
+    "category": "transition",
+    "nuts2": [
+     "FRH0"
+    ]
+   },
+   "FRI": {
+    "category": "transition",
+    "nuts2": [
+     "FRI1",
+     "FRI2",
+     "FRI3"
+    ]
+   },
+   "FRJ": {
+    "category": "transition",
+    "nuts2": [
+     "FRJ1",
+     "FRJ2"
+    ]
+   },
+   "FRK": {
+    "category": "more_developed",
+    "nuts2": [
+     "FRK1",
+     "FRK2"
+    ],
+    "mixed": {
+     "more_developed": 0.831,
+     "transition": 0.169
+    }
+   },
+   "FRL": {
+    "category": "transition",
+    "nuts2": [
+     "FRL0"
+    ]
+   },
+   "FRM": {
+    "category": "transition",
+    "nuts2": [
+     "FRM0"
+    ]
+   }
+  },
+  "DEU": {
+   "DE1": {
+    "category": "more_developed",
+    "nuts2": [
+     "DE11",
+     "DE12",
+     "DE13",
+     "DE14"
+    ]
+   },
+   "DE2": {
+    "category": "more_developed",
+    "nuts2": [
+     "DE21",
+     "DE22",
+     "DE23",
+     "DE24",
+     "DE25",
+     "DE26",
+     "DE27"
+    ]
+   },
+   "DE3": {
+    "category": "more_developed",
+    "nuts2": [
+     "DE30"
+    ]
+   },
+   "DE4": {
+    "category": "transition",
+    "nuts2": [
+     "DE40"
+    ]
+   },
+   "DE5": {
+    "category": "more_developed",
+    "nuts2": [
+     "DE50"
+    ]
+   },
+   "DE6": {
+    "category": "more_developed",
+    "nuts2": [
+     "DE60"
+    ]
+   },
+   "DE7": {
+    "category": "more_developed",
+    "nuts2": [
+     "DE71",
+     "DE72",
+     "DE73"
+    ]
+   },
+   "DE8": {
+    "category": "transition",
+    "nuts2": [
+     "DE80"
+    ]
+   },
+   "DE9": {
+    "category": "more_developed",
+    "nuts2": [
+     "DE91",
+     "DE92",
+     "DE93",
+     "DE94"
+    ],
+    "mixed": {
+     "more_developed": 0.785,
+     "transition": 0.215
+    }
+   },
+   "DEA": {
+    "category": "more_developed",
+    "nuts2": [
+     "DEA1",
+     "DEA2",
+     "DEA3",
+     "DEA4",
+     "DEA5"
+    ]
+   },
+   "DEB": {
+    "category": "more_developed",
+    "nuts2": [
+     "DEB1",
+     "DEB2",
+     "DEB3"
+    ],
+    "mixed": {
+     "more_developed": 0.87,
+     "transition": 0.13
+    }
+   },
+   "DEC": {
+    "category": "more_developed",
+    "nuts2": [
+     "DEC0"
+    ]
+   },
+   "DED": {
+    "category": "transition",
+    "nuts2": [
+     "DED2",
+     "DED4",
+     "DED5"
+    ],
+    "mixed": {
+     "more_developed": 0.26,
+     "transition": 0.74
+    }
+   },
+   "DEE": {
+    "category": "transition",
+    "nuts2": [
+     "DEE0"
+    ]
+   },
+   "DEF": {
+    "category": "more_developed",
+    "nuts2": [
+     "DEF0"
+    ]
+   },
+   "DEG": {
+    "category": "transition",
+    "nuts2": [
+     "DEG0"
+    ]
+   }
+  },
+  "POL": {
+   "PL21": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL21"
+    ]
+   },
+   "PL22": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL22"
+    ]
+   },
+   "PL41": {
+    "category": "transition_former_less_developed",
+    "nuts2": [
+     "PL41"
+    ]
+   },
+   "PL42": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL42"
+    ]
+   },
+   "PL43": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL43"
+    ]
+   },
+   "PL51": {
+    "category": "transition_former_less_developed",
+    "nuts2": [
+     "PL51"
+    ]
+   },
+   "PL52": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL52"
+    ]
+   },
+   "PL61": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL61"
+    ]
+   },
+   "PL62": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL62"
+    ]
+   },
+   "PL63": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL63"
+    ]
+   },
+   "PL71": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL71"
+    ]
+   },
+   "PL72": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL72"
+    ]
+   },
+   "PL81": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL81"
+    ]
+   },
+   "PL82": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL82"
+    ]
+   },
+   "PL84": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL84"
+    ]
+   },
+   "PL91": {
+    "category": "more_developed",
+    "nuts2": [
+     "PL91"
+    ]
+   },
+   "PL92": {
+    "category": "less_developed",
+    "nuts2": [
+     "PL92"
+    ]
+   }
+  }
+ }
+}
