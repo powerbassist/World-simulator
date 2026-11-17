@@ -28,6 +28,7 @@ const Summit = preload("res://src/core/summit.gd")
 const PeopleLoader = preload("res://src/core/loaders/people_loader.gd")
 const CompaniesLoader = preload("res://src/core/loaders/companies_loader.gd")
 const DomainsLoader = preload("res://src/core/loaders/domains_loader.gd")
+const UnitsLoader = preload("res://src/core/loaders/units_loader.gd")
 const RegionsLoader = preload("res://src/core/loaders/regions_loader.gd")
 const OutletsLoader = preload("res://src/core/loaders/outlets_loader.gd")
 const VerbActionsLoader = preload("res://src/core/loaders/verb_actions_loader.gd")
@@ -296,12 +297,27 @@ var region_graph: Dictionary = {}
 ## (data/region-actions/fund.json; RegionsLoader.load_fund_rule; src/sim/region_funds.gd reads it).
 var region_fund_rule: Dictionary = {}
 
+## V5.3 c' (docs/design/v5.3-c-register.md section 2; UnitsLoader). The catalogue
+## (type id -> row), the start stock (NAT -> type -> region -> {units, capacity}), the
+## regional level (NAT -> type -> region -> level over the type's national figure), the Union's co-financing rule (org id -> {rates, warn_months, periods}) and
+## the five projects' `potential` rows, built from project_actions. All empty with no
+## data/units/ but the last.
+var unit_types: Dictionary = {}
+var unit_stock: Dictionary = {}
+var unit_levels: Dictionary = {}
+## NAT -> type -> the type's own national figure at the start (its stock file).
+var unit_national: Dictionary = {}
+var unit_cofinancing: Dictionary = {}
+var unit_potential: Array = []
+## UnitsLoader.warn_uncategorised()'s lines: content that loads but would read 0 %.
+var unit_warnings: Array[String] = []
+
 ## Feature id -> Vector2(lon, lat), Natural Earth's own hand-placed label anchor.
 ## Both files contribute; map_view.gd draws labels for the roster only.
 var label_points: Dictionary = {}
 
 
-func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world", voices_path := "res://data/voices/archetypes.json", domains_dir := "res://data/domains", industry_dir := "res://data/industry", region_fund_path := "res://data/region-actions/fund.json", taxes_dir := "res://data/taxes") -> void:
+func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/europe.geojson", parties_dir := "res://data/parties", laws_dir := "res://data/laws", political_systems_dir := "res://data/political-systems", scenarios_dir := "res://data/scenarios", diplomatic_actions_dir := "res://data/diplomatic-actions", world_path := "res://data/geo/world.geojson", bloc_proposals_dir := "res://data/bloc-proposals", people_dir := "res://data/people", companies_dir := "res://data/companies", company_actions_dir := "res://data/company-actions", outlets_dir := "res://data/outlets", investment_actions_dir := "res://data/investment-actions", project_actions_dir := "res://data/project-actions", campaign_actions_dir := "res://data/campaign-actions", pledges_dir := "res://data/pledges", events_dir := "res://data/events", regions_dir := "res://data/regions", regions_geo_path := "res://data/geo/regions.geojson", regions_graph_path := "res://data/geo/region_graph.json", summits_dir := "res://data/summits", energy_sources_path := "res://data/energy-sources.json", energy_actions_dir := "res://data/energy-actions", orgs_dir := "res://data/orgs", programme_dir := "res://data/programme", commodities_dir := "res://data/commodities", world_dir := "res://data/world", voices_path := "res://data/voices/archetypes.json", domains_dir := "res://data/domains", industry_dir := "res://data/industry", region_fund_path := "res://data/region-actions/fund.json", taxes_dir := "res://data/taxes", units_dir := "res://data/units") -> void:
 	nations.clear()
 	party_funding.clear()
 	parties.clear()
@@ -440,6 +456,8 @@ func load_all(nations_dir := "res://data/nations", geo_path := "res://data/geo/e
 	OutletsLoader.validate_outlets(self, outlets_dir)
 	RegionsLoader.validate_regions(self, regions_dir, regions_geo_path, regions_graph_path)
 	RegionsLoader.load_fund_rule(self, region_fund_path)
+	# After the regions, the domains, the orgs and the project actions it reads.
+	UnitsLoader.load_units(self, units_dir)
 	EnergyLoader.validate_energy_sources(self)
 	CommoditiesLoader.validate_commodities(self)
 

@@ -1,0 +1,36 @@
+{
+  "_source": "Catalogue row of the construction register (docs/design/v5.3-c-register.md): Britain's own school type, because no published table gives its teachers by upper years (see data/units/stock/GBR.json): the state-funded secondary school (ages 11 to 18, sixth form included), with its own figure secondary_pupils_per_teacher; only the nations whose stock file names this type are offered it. capacity, per nation, in the stock's own unit = the nation's mean enrolment per school in its stock: Britain 1 028 (4 299 417 pupils over 4 182 schools). STAND-IN numbers, none sourced: every figure marked below is the game's declared placeholder until the author's table of stand-ins (spec section 12). cost_eur_m: stand-in of 0.0575 M EUR per pupil, the same basis as the French and German school (the middle of a press-release anchor of 52 to 69 M EUR for a lycee of 900 to 1 200 places, not verified), applied to the 1 028-pupil unit (59.1 M EUR); a bounded search for the UK Department for Education's school delivery cost benchmarking found no per-pupil figure to read. running_eur_m: stand-in of 9 000 EUR per pupil a year (9.3 M EUR). staff: stand-in, one number for every nation (shown, moves nothing). build_months, overrun_odds, overrun_share, demolish_months, demolish_cost_share, band_units: the spec's stand-ins (sections 5, 7, 12). figure_elasticity: -1 (more places, fewer pupils per teacher). bloc_offset_per_pop_share: stand-in.",
+  "id": "secondary_school",
+  "name": "Secondary school",
+  "summary": "A state secondary school for pupils aged 11 to 18, sixth form included.",
+  "line": "education",
+  "sector": "schools",
+  "figure": {
+    "id": "secondary_pupils_per_teacher",
+    "unit": "pupils per teacher",
+    "better": "lower"
+  },
+  "payoff": "capacity",
+  "capacity": {
+    "GBR": 1028
+  },
+  "figure_elasticity": -1.0,
+  "cost_eur_m": {
+    "GBR": 59.1
+  },
+  "build_months": 30,
+  "running_eur_m": {
+    "GBR": 9.3
+  },
+  "staff": 90,
+  "overrun_odds": 0.15,
+  "overrun_share": 0.2,
+  "demolish_months": 12,
+  "demolish_cost_share": 0.1,
+  "cofinanced": false,
+  "band_units": 40,
+  "bloc_offset_per_pop_share": {
+    "students": 0.1,
+    "rural": 0.05
+  }
+}
