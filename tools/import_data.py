@@ -2584,16 +2584,39 @@ def natural_national_rate(nid):
     return round(sum(rates) / len(rates), 3)
 
 
+COHESION_CATEGORIES = ROOT / "tools" / "cohesion_categories.json"
+
+
 def load_cohesion_categories():
-    """{nation id: {region id: category}} from data/units/cohesion_categories.json, the
-    committed, sourced table of the Union's categories (V5.3 c'). A re-import writes the
-    field from it, so it is never hand-edited into data/regions/. A nation absent from the
-    table (Britain, the non-members) gets no field."""
-    path = ROOT / "data" / "units" / "cohesion_categories.json"
-    if not path.is_file():
-        return {}
-    table = json.loads(path.read_text(encoding="utf-8")).get("regions", {})
+    """{nation id: {region id: category}} from tools/cohesion_categories.json, the committed,
+    sourced table of the Union's categories (V5.3 c'). A re-import writes the field from it,
+    so it is never hand-edited into data/regions/. A nation absent from the table (Britain,
+    the non-members) gets no field; a nation in it must name every region it keeps."""
+    if not COHESION_CATEGORIES.is_file():
+        sys.exit("missing %s" % COHESION_CATEGORIES)
+    table = json.loads(COHESION_CATEGORIES.read_text(encoding="utf-8")).get("regions", {})
     return {nid: {rid: row["category"] for rid, row in rows.items()} for nid, rows in table.items()}
+
+
+COHESION_SOURCE = ("; cohesion_category from tools/cohesion_categories.json (Commission "
+                   "Implementing Decision (EU) 2021/1130, Annexes I to III, and 2014/99/EU for the "
+                   "70 % case; Eurostat demo_r_d2jan 2021 for the population weights of a region "
+                   "made of several NUTS 2 regions)")
+COHESION_NOTE = (" `cohesion_category` is the Union's category of the region for 2021-2027 "
+                 "(less_developed, transition, transition_former_less_developed or "
+                 "more_developed), the one of the part holding most of its people when the "
+                 "region is several NUTS 2 regions; it is read from the committed table, so a "
+                 "re-import reproduces it. It sets the co-financing rate (data/units/cofinancing.json).")
+
+
+def cohesion_field(cohesion, nid, code):
+    """{} for a nation outside the table; the region's category otherwise, and a kept region
+    with no row stops the import (a half-filled nation would pay 0 % silently)."""
+    if nid not in cohesion:
+        return {}
+    if code not in cohesion[nid]:
+        sys.exit("%s: kept region %s has no row in %s" % (nid, code, COHESION_CATEGORIES))
+    return {"cohesion_category": cohesion[nid][code]}
 
 
 def build_regions():
@@ -2690,7 +2713,7 @@ def build_regions():
                 "unemployment_rel": region_rel,
                 "sector_mix": region_mix,
                 "natural_change_pct": natural[nid]["rates"][code],
-                **({"cohesion_category": cohesion[nid][code]} if code in cohesion.get(nid, {}) else {}),
+                **cohesion_field(cohesion, nid, code),
                 "cities": cities,
             })
 
@@ -2760,6 +2783,9 @@ def build_regions():
                       "docs/natural-change-model.md."),
             "regions": regions,
         }
+        if nid in cohesion:
+            files[nid]["_source"] += COHESION_SOURCE
+            files[nid]["_note"] += COHESION_NOTE
     return files, index, counts
 
 

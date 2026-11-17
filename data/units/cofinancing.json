@@ -1,6 +1,6 @@
 {
   "_source": "Regulation (EU) 2021/1060 (Official Journal L 231, 30.6.2021): Article 112(3) for the rates, Article 63(2) for the last date expenditure counts (31 December 2029), Article 105 for the decommitment rule; Commission Implementing Decision (EU) 2021/1131 (Official Journal L 244, 9.7.2021, p. 21) for the ERDF allocations (Annex VI, current prices, EUR, total 2021-2027). Texts read on EUR-Lex through the Publications Office (publications.europa.eu/resource/celex/32021R1060 and 32021D1131) on 2026-11-17.",
-  "_note": "Figures are the Union's own, nothing here is derived. `envelope_eur_bn` is the nation's real ERDF allocation for 2021-2027 in current prices (Annex VI), the fund that pays buildings (Regulation (EU) 2021/1058 Article 3(1)(d)); the ESF+ (Annex VII, France 6.67, Germany 6.53, Poland 14.91 bn) pays people and the Cohesion Fund (Annex VIII, Poland 9.28 bn) pays transport and environment, so neither is counted. The game's declared share of it is the sim's constant, not data. Rates are the ceilings of Article 112(3): (a) 85 % less developed, (b) 70 % transition regions that were less developed in 2014-2020, (c) 60 % transition, (e) 40 % more developed; the 50 % case of (d) is not modelled (the Decision 2021/1130 does not list its regions). `pays_until_year` is the last year spending is eligible (Article 63(2)); a payment claim for commitments of 2021 to 2026 must reach the Commission by 31 December of the third year after the commitment (Article 105(1)). No period after 2027 is given: the 2028-2034 framework is not adopted. The `organisations` shape is the one Systems' loader reads.",
+  "_note": "Figures marked below are the Union's own; two are stand-ins. `envelope_eur_bn` is the nation's real ERDF allocation for 2021-2027 in current prices (Decision (EU) 2021/1131 Annex VI), the fund that pays buildings (Regulation (EU) 2021/1058 Article 3(1)(d)); the ESF+ (Annex VII: France 6.67, Germany 6.53, Poland 14.91 bn) pays people and the Cohesion Fund (Annex VIII, Poland 9.28 bn) pays transport and environment, so neither is counted. The game's declared share of it is the sim's constant, not data. FRANCE IS MAINLAND ONLY: the national ERDF total 9.0704 bn includes the outermost regions, none of which is a game region. The ERDF is not published by category, so France's figure is pro rata: 9.0704 bn x (Annex III transition 10.8182 + Annex IV more developed 2.2613) / (Annex II less developed 1.9819 + III + IV + Annex V outermost additional 0.6837) = 9.0704 x 13.0795 / 15.7451 = 7.5348 bn. Annex II is the four outermost less developed regions (Guadeloupe, Guyane, La Reunion, Mayotte); Martinique is a transition region inside Annex III and cannot be separated, so the mainland figure is overstated by Martinique's small share. Germany and Poland have no outermost region and keep Annex VI whole. Rates are the ceilings of Article 112(3): (a) 85 % less developed, (b) 70 % transition regions that were less developed in 2014-2020, (c) 60 % transition, (e) 40 % more developed; the 50 % case of (d) is not modelled (the Decision 2021/1130 does not list its regions). `pays_until_year` is the last year spending is eligible (Article 63(2)); a payment claim for commitments of 2021 to 2026 must reach the Commission by 31 December of the third year after the commitment (Article 105(1)). STAND-INS: the period 2028_2034 is copied from 2021_2027 (spec section 13) so the Union line does not vanish in 2030, its last payment year 2036 follows the same two-year lag; the 2028-2034 framework is not adopted. warn_months 12 is the game's own.",
   "organisations": {
     "eu": {
       "rates": {
@@ -16,13 +16,26 @@
           "last_year": 2027,
           "pays_until_year": 2029,
           "envelope_eur_bn": {
-            "FRA": 9.0704,
+            "FRA": 7.5348,
             "DEU": 10.9127,
             "POL": 47.4167
           }
+        },
+        {
+          "id": "2028_2034",
+          "first_year": 2028,
+          "last_year": 2034,
+          "pays_until_year": 2036,
+          "envelope_eur_bn": {
+            "FRA": 7.5348,
+            "DEU": 10.9127,
+            "POL": 47.4167
+          },
+          "_stand_in": "copied from 2021_2027; the 2028-2034 framework is not adopted, so no figure of it exists"
         }
       ],
-      "warn_months": 12
+      "warn_months": 12,
+      "_warn_months_stand_in": "12 is the game's own stand-in (spec s6), not a Union figure"
     }
   }
 }
