@@ -1,1 +1,0 @@
-None: reads for the coming Finances screen (a draft budget's vote before tabling, who a spending line is for, what one step of each tax yields, what the unset budget lines hold); nothing on screen uses them yet.
