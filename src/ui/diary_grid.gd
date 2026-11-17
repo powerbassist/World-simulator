@@ -302,9 +302,10 @@ func _offered(year: int, month: int) -> Dictionary:
 	for row in Audiences.pending(ns):
 		var rid := String(row["id"])
 		var past_this_page := false
-		for date in Audiences.offered_dates(_state, ns, rid):
+		var dates: Array = Audiences.offered_dates(_state, ns, rid)
+		for date in dates:
 			if int(date["year"]) == year and int(date["month"]) == month:
-				_add(out, int(date["day"]), {"id": rid, "person_id": String(row["person_id"]), "person": _loader.person_name(String(row["person_id"])), "date": date})
+				_add(out, int(date["day"]), {"id": rid, "person_id": String(row["person_id"]), "person": _loader.person_name(String(row["person_id"])), "date": date, "dates": dates})
 			elif int(date["year"]) * 12 + int(date["month"]) > year * 12 + month:
 				past_this_page = true
 		later += 1 if past_this_page else 0
@@ -350,7 +351,7 @@ func _render_list(entries: Array, offered: Array) -> void:
 		day_list.add_child(book)
 		# Gate 3 (G3-16): only the person's own days are bookable, and an empty diary read
 		# as broken without the reason beside the button.
-		PanelKit.plain_line(day_list, _offer_line(String(o["id"]), String(o["person"])), PanelKit.Tone.DIM)
+		PanelKit.plain_line(day_list, _offer_line(o["dates"], String(o["person"])), PanelKit.Tone.DIM)
 	for e in entries:
 		var row := HBoxContainer.new()
 		day_list.add_child(row)
@@ -372,9 +373,9 @@ func _render_list(entries: Array, offered: Array) -> void:
 			row.add_child(ActsOn.tag(call, [String(e["subject"])]))
 
 
-func _offer_line(request_id: String, person: String) -> String:
+func _offer_line(dates: Array, person: String) -> String:
 	var days := PackedStringArray()
-	for date in Audiences.offered_dates(_state, _state.player(), request_id):
+	for date in dates:
 		days.append(DateText.day_month(int(date["day"]), int(date["month"])))
 	return tr_n("%s can see you only on %d day: %s.", "%s can see you only on these %d days: %s.", days.size()) % [
 		person, days.size(), ", ".join(days)]

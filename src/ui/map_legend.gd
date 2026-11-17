@@ -41,7 +41,6 @@ const KEY_WIDTH := 2.0
 ## demand" -- does not resize the plate as the cursor crosses the map. A legend
 ## that changes width while being read is furniture moving under the player.
 const MIN_WIDTH := 196
-const TOGGLE_COLUMNS := 1
 
 var _buttons := {}          ## layer id -> Button
 var _stops: VBoxContainer
@@ -72,10 +71,8 @@ func _ready() -> void:
 	# switched the layer. Two columns still reached Portugal at text 130 %. Narrow, the
 	# plate stays on the Atlantic at every text size (tests/test_legend_clear.gd); its
 	# rows wrap rather than widen it.
-	var toggles := GridContainer.new()
-	toggles.columns = TOGGLE_COLUMNS
-	toggles.add_theme_constant_override("h_separation", 2)
-	toggles.add_theme_constant_override("v_separation", 2)
+	var toggles := VBoxContainer.new()
+	toggles.add_theme_constant_override("separation", 2)
 	column.add_child(toggles)
 
 	for id in MapLayers.ids():

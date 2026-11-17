@@ -68,7 +68,20 @@ func _process(_delta: float) -> bool:
 			UiTheme.rebuild(_main)
 		_main._map_view.set_layer(String(c[1]))
 		_main._hud.map_legend.show_layer(String(c[1]), _main._state, _main._map_view.viewer_id(), "France")
+		# The longest hover line this layer can print: the readout must not widen the plate.
+		_main._hud.map_legend.show_hover(_longest_readout(String(c[1])), _main._state, _main._map_view.viewer_id())
 	return false
+
+
+func _longest_readout(layer_id: String) -> String:
+	var best := ""
+	var best_len := -1
+	for id in _main._state.nations.keys():
+		var n := MapLayers.value_text(layer_id, _main._state, _main._map_view.viewer_id(), String(id)).length()
+		if n > best_len:
+			best_len = n
+			best = String(id)
+	return best
 
 
 func _check_clear(c: Array) -> void:
