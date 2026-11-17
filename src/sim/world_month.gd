@@ -97,6 +97,7 @@ const MeasurePolls = preload("res://src/sim/measure_polls.gd")
 const Exposure = preload("res://src/sim/exposure.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const Elections = preload("res://src/sim/elections.gd")
+const UnitBuild = preload("res://src/sim/unit_build.gd")
 const FrontPage = preload("res://src/sim/front_page.gd")
 
 ## The step names `on_step` receives, in run order. tests/test_world_month.gd
@@ -106,7 +107,7 @@ const STEPS: Array[String] = [
 	"Division", "Polls", "Addresses", "Access", "Energy", "Economy", "Commodities", "Budget", "Orgs", "Inflation",
 	"Media", "Programme", "Opinion", "History", "Calendar", "Discipline",
 	"Legislature", "Statute", "Dissolution", "Diplomacy", "Defence", "Processes",
-	"Companies", "Industry", "Closures", "Migration", "Investment", "Projects", "RegionFunds", "Sectors", "Campaign", "Pledges",
+	"Companies", "Industry", "Closures", "Migration", "Investment", "Projects", "Units", "RegionFunds", "Sectors", "Campaign", "Pledges",
 	"Demography", "Society", "Unrest", "Events", "Cabinet", "Characters",
 	"Audiences", "QuietEvent", "Elections",
 ]
@@ -395,6 +396,11 @@ static func _step(month: Month, step: String) -> Array:
 		# that finishes this month stops billing this month.
 		"Projects":
 			Projects.tick_month(state, loader)
+		# V5.3 c' (docs/design/v5.3-c-register.md): the unit programmes, a month on, and
+		# their two lines -- in Projects' slot for Projects' reason (bill -> deficit ->
+		# precondition), so a programme voted this month bills next month.
+		"Units":
+			UnitBuild.tick_month(state, loader)
 		# V5.3 a: the regional development funds, a month on, and their bill -- after
 		# Budget like Projects', so a fund opened this month bills next month (the
 		# deficit is a precondition field; the bill -> deficit -> precondition loop).

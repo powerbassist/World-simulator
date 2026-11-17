@@ -1574,6 +1574,16 @@ var region_closure_pts := {}
 ## (data/units/stock/) and is never saved; only what the player did is. absent_ok, no
 ## bump: no save before c' could hold a programme, so absent reads "none", the truth.
 var unit_programmes: Array[Dictionary] = []
+## The programmes' two lines, % of GDP a year, rewritten by UnitBuild.tick_month() every
+## month and read by Budget a month behind (project_bill_pct_gdp's case): the capital
+## paid while they build, and {sector: running cost} of the units standing (negative for
+## a closure of start stock), which Sectors.ratio() adds to the line's spending.
+## absent_ok: no save before c' holds a programme, so absent is 0 and {}, the truth.
+var unit_bill_pct_gdp: float = 0.0
+## The programmes opened so far, the source of each one's id (T9 on #413: unique for the
+## game). absent_ok: no save before c' opened one, so 0 is the truth.
+var unit_programme_seq: int = 0
+var unit_running_pct_gdp := {}
 ## The open funds' bill, % of GDP, rewritten by RegionFunds.tick_month() every month
 ## and read by Budget a month behind (project_bill_pct_gdp's case). absent_ok: the
 ## next tick rewrites it.
@@ -1773,6 +1783,14 @@ func debt_to_gdp_pct() -> float:
 	if gdp_eur_bn <= 0.0:
 		return 0.0
 	return debt_eur_bn / gdp_eur_bn * 100.0
+
+
+## The running costs of every line together, for the budget's sum: 0.0 with none.
+func unit_running_total_pct_gdp() -> float:
+	var total := 0.0
+	for line in unit_running_pct_gdp:
+		total += float(unit_running_pct_gdp[line])
+	return total
 
 
 func player_spending_pct_gdp() -> float:
