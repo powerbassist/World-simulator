@@ -30,7 +30,14 @@ var _find_law: Callable
 
 func _init() -> void:
 	add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
-	PanelKit.heading(self, tr("Order paper"))
+	# The Bills second pass (G3-14): the paper is always on screen, empty places included, so the
+	# rule is learnt before the first bill rather than after a refused press.
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 12)
+	add_child(head)
+	PanelKit.heading(head, tr("Order paper"))
+	# EXPAND: a wrapping line in a row with no width of its own breaks after every word.
+	PanelKit.line(head, tr("One law goes to the Assembly each month.")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_row = HBoxContainer.new()
 	_row.add_theme_constant_override("separation", 8)
 	add_child(_row)
@@ -47,10 +54,6 @@ func refresh(state, loader, find_law: Callable) -> void:
 		child.queue_free()
 	places.clear()
 	var ns = state.player()
-	# Nothing before the Assembly and nothing queued: the queue is only behind a held slot
-	# (#339), so four empty places would be a dead tile and prose on every visit. It shows the
-	# moment a bill is tabled or queued.
-	visible = not ns.tabled_bill.is_empty() or not ns.bill_queue.is_empty()
 	_place(-1, _tabled_title(state, ns), _date_text(_slot_date(state, ns)), _name_of(ns.tabled_bill), false)
 	for i in BillQueue.SIZE:
 		var entry: Dictionary = ns.bill_queue[i] if i < ns.bill_queue.size() else {}

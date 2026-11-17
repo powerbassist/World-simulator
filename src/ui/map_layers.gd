@@ -458,6 +458,16 @@ static func fills(layer_id: String, state, viewer_id: String, nation_ids: Array)
 	return out
 
 
+## The layers read as a PAIR with the viewer (a nation has no pair with itself, so the
+## viewer's own fill is NO_VALUE there). One list, so swatch(), value_text() and the
+## legend's "(you)" row cannot disagree.
+const PAIR_LAYERS := [RELATIONS, TRADE, COERCION]
+
+
+static func is_pair_layer(layer_id: String) -> bool:
+	return layer_id in PAIR_LAYERS
+
+
 ## The same colour at full opacity -- what a legend swatch and a test compare.
 ## Split from color_for() so a stop's swatch is provably the colour the map draws
 ## rather than a second table someone has to keep in step.
@@ -467,7 +477,7 @@ static func swatch(layer_id: String, state, viewer_id: String, nation_id: String
 	# NO_VALUE is the answer for the viewer's own nation on the PAIR layers only --
 	# a nation has no pair with itself. On the two commodity layers "you" is a real
 	# reading and falls through to the ramp.
-	if is_viewer(viewer_id, nation_id) and layer_id in [RELATIONS, TRADE, COERCION]:
+	if is_viewer(viewer_id, nation_id) and is_pair_layer(layer_id):
 		return NO_VALUE
 	var v := value(layer_id, state, viewer_id, nation_id)
 	if is_nan(v):
@@ -587,7 +597,7 @@ static func value(layer_id: String, state, viewer_id: String, nation_id: String)
 	# per-layer now. Production and import dependency are properties of a nation
 	# and not of a pair: "you" is a real reading on both, which is also why
 	# swatch() does not send them to NO_VALUE.
-	if is_viewer(viewer_id, nation_id) and layer_id in [RELATIONS, TRADE, COERCION]:
+	if is_viewer(viewer_id, nation_id) and is_pair_layer(layer_id):
 		return NAN
 	match layer_id:
 		RELATIONS:
@@ -645,7 +655,7 @@ static func _value_added(ns) -> float:
 ## the viewer alone and claiming DEU's side would need a second number this
 ## layer does not show.
 static func value_text(layer_id: String, state, viewer_id: String, nation_id: String) -> String:
-	if is_viewer(viewer_id, nation_id) and layer_id in [RELATIONS, TRADE, COERCION]:
+	if is_viewer(viewer_id, nation_id) and is_pair_layer(layer_id):
 		return Strings.t("%s — you") % nation_id
 	var v := value(layer_id, state, viewer_id, nation_id)
 	if is_nan(v):

@@ -916,7 +916,7 @@ func _wire_hud() -> void:
 	# about which layer is up.
 	_hud.map_legend.layer_selected.connect(func(id: String):
 		_map_view.set_layer(id)
-		_hud.map_legend.show_layer(_map_view.layer(), _state, _map_view.viewer_id())
+		_hud.map_legend.show_layer(_map_view.layer(), _state, _map_view.viewer_id(), _loader.nation_name(_map_view.viewer_id()))
 	)
 	_map_view.nation_hovered.connect(func(id: String):
 		_hud.map_legend.show_hover(id, _state, _map_view.viewer_id())

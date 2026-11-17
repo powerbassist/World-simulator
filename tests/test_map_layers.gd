@@ -371,6 +371,12 @@ func _check_legend_swatches_match_the_map() -> void:
 		if layer_id == MapLayers.TRADE:
 			stops = MapLayers.trade_stops(even)
 		var rects: Array = _all_color_rects(legend)
+		# G3-21: a pair layer ends with the viewer's own NO_VALUE row.
+		if MapLayers.is_pair_layer(layer_id):
+			if rects.is_empty() or not _close(rects[-1].color, MapLayers.NO_VALUE):
+				_fail("%s: the legend's last swatch is not the viewer's NO_VALUE row" % layer_id)
+			else:
+				rects = rects.slice(0, rects.size() - 1)
 		if rects.size() != stops.size():
 			_fail("%s: legend shows %d swatches for %d stops" % [
 				layer_id, rects.size(), stops.size()

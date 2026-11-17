@@ -295,7 +295,7 @@ func _check(c: Dictionary) -> void:
 		# once shifted select()'s rows by one).
 		var picked: String = laws._shown[-1].id
 		laws.select(picked)
-		var row: Button = laws._rows.get_child(laws._rows.get_child_count() - 1).get_child(0)
+		var row: Button = laws._rows.get_child(laws._rows.get_child_count() - 1).get_meta("pick")
 		if not row.button_pressed or laws.selected_id() != picked:
 			_fail("bloc: picking a law under the filter did not select it")
 		_main._windows.open("finances")
