@@ -361,18 +361,26 @@ func _check_the_window_forgets_after_six_months() -> void:
 		_fail("a register with nothing live left is not empty: %s" % [ns.measure_opinion])
 
 
-## G3-25 ("je peux spam adress the nation"): one address per bill per calendar month, on
-## the day path the game runs -- a Clock's day_advanced into DiaryDriver.resolve, main.gd's
-## wiring -- which marks yesterday's booked row and frees the diary's own rule. The month's
-## record is the register's, so the driver cannot clear it; the refusal names the date.
+## G3-25 ("je peux spam adress the nation"), the author's call on #419: ONE address to the
+## nation per calendar month, all bills together. On the path the game runs -- a Clock whose
+## day_advanced reaches DiaryDriver.resolve and whose month_elapsed runs the real month
+## (WorldMonth.tick_month), main.gd's wiring -- the driver marks yesterday's booked row the next
+## morning, which is what let an address through every day. The month's record is the
+## register's own, so neither the driver nor the month close of March clears it early.
 func _check_one_address_per_bill_a_month_on_the_day_path() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var law = _open_bill(state)
+	var other = null
+	for candidate in Legislature.available(ns, _loader.laws):
+		if not candidate.constitutional and candidate.id != law.id:
+			other = candidate
+			break
 	var clock := Clock.new()
 	clock.year = 2026
 	clock.month = 3
 	clock.day = 10
+	clock.month_elapsed.connect(func(_y: int, _m: int) -> void: WorldMonth.tick_month(state, _loader))
 	clock.day_advanced.connect(func(y: int, m: int, d: int) -> void:
 		state.year = y
 		state.month = m
@@ -383,11 +391,17 @@ func _check_one_address_per_bill_a_month_on_the_day_path() -> void:
 	var once: Dictionary = _shift_of(ns, law.id).duplicate()
 	for i in 3:
 		clock.advance_one_day()
-		var why := Address.refusal(state, law.id)
-		if why == "" or not why.contains("10/03/2026"):
-			_fail("day %d: the refusal is '%s', not one naming the 10/03/2026 address" % [state.day, why])
-		if bool(Address.give(state, _loader, law.id).get("ok", false)):
-			_fail("a second address on %d March went through" % state.day)
+		var rule: Dictionary = Address.month_rule(state)
+		if String(rule.get("kind", "")) != "month" or int(rule.get("day", 0)) != 10 or int(rule.get("month", 0)) != 3:
+			_fail("day %d: the month rule reads %s, not the address of 10 March" % [state.day, rule])
+		if Address.refusal(state, law.id) == "":
+			_fail("day %d: the bill is not refused" % state.day)
+		var again: Dictionary = Address.give(state, _loader, law.id)
+		if bool(again.get("ok", false)) or (again.get("month_rule", {}) as Dictionary).is_empty():
+			_fail("a second address on %d March: %s" % [state.day, again])
+		# The rule is the month's, not the bill's: another bill is refused too.
+		if other != null and bool(Address.give(state, _loader, other.id).get("ok", false)):
+			_fail("another bill was addressed on %d March" % state.day)
 	if _shift_of(ns, law.id) != once:
 		_fail("a refused address moved the bill's opinion")
 	while state.month == 3:

@@ -70,6 +70,7 @@ const Unrest = preload("res://src/sim/unrest.gd")
 const UK = preload("res://src/sim/unrest_constants.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Clock = preload("res://src/core/clock.gd")
+const Address = preload("res://src/sim/address.gd")
 
 const ROUNDTRIP_SLOT := "__test_save_load_roundtrip__"
 const SECOND_NATION_SLOT := "__test_save_load_roundtrip_deu__"
@@ -79,6 +80,7 @@ const DIPLOMACY_SLOT := "__test_save_load_roundtrip_diplomacy__"
 const NETWORK_SLOT := "__test_save_load_roundtrip_network__"
 const TRADE_SLOT := "__test_save_load_roundtrip_trade__"
 const COERCION_SLOT := "__test_save_load_roundtrip_coercion__"
+const ADDRESS_SLOT := "__test_save_load_roundtrip_address__"
 const BLOC_SLOT := "__test_save_load_roundtrip_bloc__"
 const ORG_FIGHT_SLOT := "__test_save_load_roundtrip_org_fight__"
 const BOGUS_SLOT := "__test_save_load_bogus_version__"
@@ -147,6 +149,7 @@ func _init() -> void:
 	_run_diplomacy_roundtrip(loader)
 	_run_trade_roundtrip(loader)
 	_run_coercion_roundtrip(loader)
+	_run_address_roundtrip(loader)
 	_run_bloc_roundtrip(loader)
 	_run_council_registers_roundtrip(loader)
 	_run_org_fight_roundtrip(loader)
@@ -542,6 +545,47 @@ func _run_trade_roundtrip(loader) -> void:
 ## one -- `agreements`' case exactly. `coercion_impulse_pct` reads as 0.0, which is
 ## right because nothing was in force. Contrast the two fields that DID earn 9->10
 ## above, both of which read as an actively wrong model.
+## G3-25 (#419): the month's address record is the register's own, so a reload mid-month keeps
+## the rule; and a save without the key (every save before the rule) reads as "no address yet
+## this month", the truth, so it is absent_ok and earns no bump.
+func _run_address_roundtrip(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	state.year = 2026
+	state.month = 3
+	state.day = 10
+	var law = null
+	for candidate in Legislature.available(state.player(), loader.laws):
+		if not candidate.constitutional:
+			law = candidate
+			break
+	if law == null or not bool(Address.give(state, loader, law.id).get("ok", false)):
+		_fail("no address to save")
+		return
+	state.day = 20
+	var clock := Clock.new()
+	clock.year = state.year
+	clock.month = state.month
+	clock.day = state.day
+	var save_error := SaveManager.save_game(state, clock, ADDRESS_SLOT)
+	clock.free()
+	if not save_error.is_empty():
+		_fail("save_game failed on a state with an address: %s" % save_error)
+		return
+	var loaded_result := SaveManager.load_game(ADDRESS_SLOT, loader)
+	if not loaded_result["ok"]:
+		_fail("load_game failed on a save with an address: %s" % loaded_result["error"])
+		return
+	var loaded = loaded_result["state"]
+	var rule: Dictionary = Address.month_rule(loaded)
+	if int(rule.get("day", 0)) != 10 or int(rule.get("month", 0)) != 3 or String(rule.get("law_id", "")) != String(law.id):
+		_fail("a mid-month reload lost the address record: %s" % [rule])
+	if Address.refusal(loaded, law.id) == "":
+		_fail("a mid-month reload let a second address through")
+	loaded.player().measure_opinion.erase(Address.LAST)
+	if not Address.month_rule(loaded).is_empty():
+		_fail("a register without the record still reads a month rule")
+
+
 func _run_coercion_roundtrip(loader) -> void:
 	# R10: the verb is refused between customs-union members (FRA and DEU share the
 	# EU), so the measure is imposed on a partner outside the union.
@@ -2384,7 +2428,7 @@ func _cleanup() -> void:
 	var dir := DirAccess.open(SaveManager.SAVE_DIR)
 	if dir == null:
 		return
-	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, NETWORK_SLOT, TRADE_SLOT, COERCION_SLOT, BLOC_SLOT, ORG_FIGHT_SLOT, COMMODITY_SLOT, BOGUS_SLOT]:
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, NETWORK_SLOT, TRADE_SLOT, COERCION_SLOT, ADDRESS_SLOT, BLOC_SLOT, ORG_FIGHT_SLOT, COMMODITY_SLOT, BOGUS_SLOT]:
 		for p in [SaveManager._path_for(slot), SaveManager._path_for(slot) + SaveManager.TEMP_SUFFIX]:
 			if FileAccess.file_exists(p):
 				dir.remove(p)
@@ -2393,7 +2437,7 @@ func _cleanup() -> void:
 	# and NETWORK were each missing from it and their slots outlived every run
 	# that wrote them (playtest B16a -- a test polluting the live slot list).
 	# Any new save_game call in this file must join both lists or this goes red.
-	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, NETWORK_SLOT, TRADE_SLOT, COERCION_SLOT, BLOC_SLOT, ORG_FIGHT_SLOT, COMMODITY_SLOT, BOGUS_SLOT]:
+	for slot in [ROUNDTRIP_SLOT, SECOND_NATION_SLOT, TRANSITION_SLOT, SCENARIO_SLOT, DIPLOMACY_SLOT, NETWORK_SLOT, TRADE_SLOT, COERCION_SLOT, ADDRESS_SLOT, BLOC_SLOT, ORG_FIGHT_SLOT, COMMODITY_SLOT, BOGUS_SLOT]:
 		if FileAccess.file_exists(SaveManager._path_for(slot)):
 			_fail("cleanup left '%s' behind in %s" % [slot, SaveManager.SAVE_DIR])
 

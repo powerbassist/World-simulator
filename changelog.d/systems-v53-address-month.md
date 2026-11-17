@@ -1,1 +1,1 @@
-Fixed: A bill can be addressed to the nation only once a month; the button says when it was last addressed.
+Fixed: The nation can be addressed once a month, whatever the bill; the address panel shows the date of the last one.
