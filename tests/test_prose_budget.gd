@@ -69,7 +69,7 @@ const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "regi
 	"overview": 170}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
-	"diplomacy": 22, "economy": 128, "energy": 118,
+	"diplomacy": 22, "economy": 130, "energy": 118,
 	"orgs": 610,
 	"majority": 97, "projects": 75, "society": 106,
 }
@@ -123,7 +123,10 @@ const TOTAL_PENDING := {
 ## The void pass, a stated rise of 12 (2794 -> 2806 before #401's merge, 2777 -> 2789 after; the parent accepted it at pass 2): the
 ## Decision tab after an answer lists what is still on the desk (its heading and the open files'
 ## titles, 9 at month 12) and the empty Agenda names its next step, "Plan the campaign" (3).
-const TOTAL_SUM_CEILING := 2789
+## Top bar A (#418 pass 2, T5: Economy prints the bar's own money figure and word, "12.9 bn €"
+## under "deficit, this month", where it printed "-5.30%" under "budget balance"): +2 on
+## Economy, stated: 2789 -> 2791.
+const TOTAL_SUM_CEILING := 2791
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

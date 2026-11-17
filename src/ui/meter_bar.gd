@@ -22,7 +22,6 @@ func setup(v: float, t: float, m: float) -> void:
 	top = maxf(t, 1e-9)
 	mark = m
 	custom_minimum_size = Vector2(SIZE.x * UiTheme.text_scale(), SIZE.y)
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	queue_redraw()
 
 

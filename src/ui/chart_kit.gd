@@ -37,10 +37,14 @@ static func line(parent: Control, title: String, series: Array, months: Array, o
 
 
 ## A sparkline: the trend beside a figure the caller already prints. `months`
-## feeds the hover only.
-static func spark(parent: Control, values: PackedFloat64Array, months: Array, unit := "") -> Control:
+## feeds the hover only. `opts` as line()'s: `zero` draws the zero line (a sign that
+## matters, the top bar's money), `min_span` the narrowest range.
+static func spark(parent: Control, values: PackedFloat64Array, months: Array, unit := "", opts := {}) -> Control:
 	var chart := ChartLine.new()
-	chart.setup([{"label": "", "values": values}], months, {"unit": unit, "spark": true})
+	var o := opts.duplicate()
+	o["unit"] = unit
+	o["spark"] = true
+	chart.setup([{"label": "", "values": values}], months, o)
 	parent.add_child(chart)
 	return chart
 

@@ -50,11 +50,11 @@ const StripSeries = preload("res://src/ui/strip_series.gd")
 ## value, U2's shape -- the author's call at that measurement.
 ## V5.3-0 4.5: the figures that flash in a status tone when they move, and
 ## whether rising is good news -- the same calls as Trends' worse_when_rising for
-## the four it watches. The rest of the strip moves without a verdict. "deficit"
-## is decided by the reading itself since gate 3 (its `rising_good`): the figure is the
-## SIZE of the deficit or of the surplus, so which way is good depends on which it is.
+## the four it watches. The rest of the strip moves without a verdict. The money is not
+## here since gate 3: its figure is the SIZE of the deficit or the surplus, so its flash
+## follows its signed balance (`signed`, top_bar.gd signed_tone()).
 const GOOD_WHEN_RISING := {
-	"approval": true, "deficit": true, "gdp": true, "unemployment": false,  # i18n: ok reading ids
+	"approval": true, "gdp": true, "unemployment": false,  # i18n: ok reading ids
 	"inflation": false, "unrest": false,  # i18n: ok reading ids
 }
 
@@ -77,10 +77,11 @@ const OFF_STRIP: Array[String] = ["approval", "election"]
 static func is_resting(r: Dictionary) -> bool:
 	return not bool(r["visible"]) or [Strings.t("— clear"), Strings.t("— covered"), NOTHING].has(String(r["text"]))
 
-## B10 (playtest 2026-09-16): "Budget balance", not "Deficit" -- the value is
-## signed, and "DEFICIT +10.50%" was a live contradiction on screen.
+## B10 (playtest 2026-09-16): "DEFICIT +10.50%" was a live contradiction on screen. Since
+## gate 3 the money's caption is its reading's own word (DEFICIT or SURPLUS, this month)
+## over an unsigned figure; this entry is only the caption before the first refresh.
 const CAPTIONS := {
-	"approval": "Approval", "deficit": "Budget balance", "gdp": "Growth, a year",  # i18n: msgid
+	"approval": "Approval", "deficit": "Deficit, this month", "gdp": "Growth, a year",  # i18n: msgid
 	"unemployment": "Unemployment", "inflation": "Inflation", "unrest": "Unrest",  # i18n: msgid
 	"assembly": "Majority", "election": "Next vote", "programme": "Programme",  # i18n: msgid
 	"desk": "Desk", "europe": "Europe", "commodities": "Supplies",  # i18n: msgid
@@ -189,24 +190,35 @@ static func _deficit(state, ns) -> Dictionary:
 	# in euros, named in words -- the sign moved from the figure into its caption.
 	var balance := StripSeries.balance_bn(ns.deficit_pct_gdp, ns.gdp_eur_bn)
 	var debt_change := Trends.delta(state, "debt_to_gdp_pct", WINDOW)
+	var share := Num.f(_snap(absf(ns.deficit_pct_gdp), 0.005), 2)
 	var lines: Array = [
-		_line(Strings.t("%s of GDP over a year.") % balance_share_text(ns)),
+		_line(Strings.t("A deficit of %s%% of GDP over a year.") % share if balance < 0.0
+			else Strings.t("A surplus of %s%% of GDP over a year.") % share),
 		_line(Strings.t("Debt %.0f Bn, %.0f%% of GDP, %s over %d months.") % [
 			ns.debt_eur_bn, ns.debt_to_gdp_pct(), Trends.change_text(debt_change), WINDOW,
 		], "debt"),
 	]
-	var r := _reading_lines(Strings.t("%s bn €") % Num.f(absf(balance), 1), lines)
+	var r := _reading_lines(Strings.t("%s bn €") % Num.f(_snap(absf(balance), 0.05), 1), lines)
 	r["caption"] = Strings.t("Deficit, this month") if balance < 0.0 else Strings.t("Surplus, this month")
-	# The figure is the size of the deficit or of the surplus: a bigger deficit is bad news.
-	r["rising_good"] = balance >= 0.0
+	# The flash and the curve follow the signed balance; the figure is its size.
+	r["signed"] = balance
 	return r
 
 
-## The balance as a signed share of GDP (surplus +), at two decimals: what the strip
-## printed before gate 3, and what Economy and the glossary's "deficit" term still show
-## (a share of GDP is their unit; the strip's is euros a month).
+## A figure that rounds to zero prints as zero, never "-0.0" (trends.gd change_text's rule).
+static func _snap(value: float, below: float) -> float:
+	return 0.0 if absf(value) < below else value
+
+
+## The balance as a signed share of GDP (surplus +): the glossary's "deficit" term, whose
+## unit is a share of GDP.
 static func balance_share_text(ns) -> String:
-	return "%s%%" % Num.fs(-ns.deficit_pct_gdp, 2)
+	return "%s%%" % Num.fs(_snap(-ns.deficit_pct_gdp, 0.005), 2)
+
+
+## Growth a year, two decimals, never "-0.00": the strip's tile and Economy's figure, one text.
+static func growth_text(ns) -> String:
+	return "%s%%" % Num.fs(_snap(ns.growth_annual_pct, 0.005), 2)
 
 
 ## Growth on the tile, the GDP level beside its change: the curve under it is growth's.
@@ -214,7 +226,7 @@ static func _gdp(state, ns) -> Dictionary:
 	var tip := Strings.t("GDP %.0f Bn; growth %s over %d months.") % [
 		ns.gdp_eur_bn, Trends.change_text(Trends.delta(state, "growth_annual_pct", WINDOW)), WINDOW,
 	]
-	var r := _reading("%s %%" % Num.fs(ns.growth_annual_pct, 1), tip)
+	var r := _reading(growth_text(ns), tip)
 	r["note"] = Strings.t("GDP %s bn") % Num.f(ns.gdp_eur_bn, 0)
 	return r
 

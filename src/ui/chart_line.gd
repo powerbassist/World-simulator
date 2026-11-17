@@ -141,6 +141,10 @@ func _draw() -> void:
 func _draw_spark() -> void:
 	var values: PackedFloat64Array = _series[0]["values"]
 	var pts := points(values, plot_rect(), _range)
+	var zy := zero_y() if _zero else -1.0
+	if zy >= 0.0:
+		var plot := plot_rect()
+		draw_line(Vector2(plot.position.x, zy), Vector2(plot.end.x, zy), UiTheme.EDGE, 1.0)
 	draw_polyline(pts, UiTheme.TEXT_DIM, 2.0, true)
 	draw_circle(pts[-1], DOT_R - 1.0, ChartStyle.SERIES[0])
 

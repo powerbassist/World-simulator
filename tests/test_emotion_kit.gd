@@ -159,11 +159,6 @@ func _check_figure_flash() -> void:
 	var cases := [
 		["approval up", "approval", "41%", "43%", UiTheme.GOOD],
 		["approval down", "approval", "43%", "41%", UiTheme.BAD],
-		# The strip's own text since gate 3: the month's money in euros, its sign in the
-		# caption, so the reading says which way is good (rising_good).
-		["deficit up", "deficit", "12.3 bn €", "13.1 bn €", UiTheme.BAD, false],
-		["deficit down", "deficit", "13.1 bn €", "12.3 bn €", UiTheme.GOOD, false],
-		["surplus up", "deficit", "1.2 bn €", "2.0 bn €", UiTheme.GOOD, true],
 		["a negative growth deeper", "gdp", "-0.4%", "-1.2%", UiTheme.BAD],
 		["unemployment down", "unemployment", "7.4%", "7.1%", UiTheme.GOOD],
 		["no move", "approval", "41%", "41%", Color(0, 0, 0, 0)],
@@ -171,9 +166,22 @@ func _check_figure_flash() -> void:
 		["a figure with no verdict", "assembly", "289", "301", Color(0, 0, 0, 0)],
 	]
 	for c in cases:
-		var got := TopBar.flash_tone(c[1], c[2], c[3], c[5] if c.size() > 5 else null)
+		var got := TopBar.flash_tone(c[1], c[2], c[3])
 		if got != c[4]:
 			_fail("%s flashes %s, expected %s" % [c[0], got, c[4]])
+	# The money since gate 3: its figure is a size, so it flashes by its signed balance (bn a
+	# month, surplus +), a deficit/surplus crossing included.
+	var money := [
+		["deficit grows", -12.3, -13.1, UiTheme.BAD],
+		["deficit shrinks", -13.1, -12.3, UiTheme.GOOD],
+		["into surplus", -0.4, 0.3, UiTheme.GOOD],
+		["into deficit", 0.3, -0.4, UiTheme.BAD],
+		["no move", -12.3, -12.3, Color(0, 0, 0, 0)],
+	]
+	for c in money:
+		var got := TopBar.signed_tone(c[1], c[2])
+		if got != c[3]:
+			_fail("the money %s flashes %s, expected %s" % [c[0], got, c[3]])
 
 
 func _fail(message: String) -> void:
