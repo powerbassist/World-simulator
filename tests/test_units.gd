@@ -18,6 +18,7 @@ const Units = preload("res://src/sim/units.gd")
 const UK = preload("res://src/sim/units_constants.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 const Region = preload("res://src/core/region.gd")
+const ProjectAction = preload("res://src/core/project_action.gd")
 const RK = preload("res://src/sim/region_constants.gd")
 
 const FIXTURE := "res://tests/fixtures/units"
@@ -44,6 +45,7 @@ func _init() -> void:
 		return
 	_test_the_fixture_loads()
 	_test_a_type_is_offered_only_where_a_stock_file_has_it()
+	_test_the_member_warning_reads_the_fixture()
 	_test_the_level_is_normalised_to_the_people()
 	_test_bad_rows_are_refused()
 	_test_cohesion_category_is_read_and_checked()
@@ -108,6 +110,13 @@ func _test_the_projects_are_potential_rows() -> void:
 		_fail("an unknown id reads a row")
 	if starts == 0 or potential != starts:
 		_fail("%d projects, %d potential rows" % [starts, potential])
+	var broken = ProjectAction.new()
+	broken.effects = {"project": {"op": "start", "project_id": "broken", "build_months": "soon"}}
+	var unpaid = ProjectAction.new()
+	unpaid.effects = {"project": {"op": "start", "project_id": "unpaid", "build_months": 24, "cost_pct_gdp": 0.1}}
+	var rows: Array = UnitsLoader.potential_rows([broken, unpaid] + Array(_loader.project_actions))
+	if rows.size() != starts:
+		_fail("a refused project action is read as a potential row: %d rows" % rows.size())
 
 
 func _test_the_fixture_loads() -> void:
@@ -116,19 +125,41 @@ func _test_the_fixture_loads() -> void:
 		_fail("the fixture type did not load: %s" % row)
 	if float(Units.start_capacity(_loader, "FRA", TYPE, "FR1")) != 10000.0:
 		_fail("FR1's start capacity reads %s, not the stock row's 10000" % Units.start_capacity(_loader, "FRA", TYPE, "FR1"))
-	# No data/regions file carries a category yet: every EU member warns once,
-	# a non-member never.
-	var warned := {}
-	for line in _loader.unit_warnings:
-		for nation_id in ["FRA", "DEU", "POL", "GBR"]:
-			if line.contains(" %s is a member" % nation_id):
-				warned[nation_id] = int(warned.get(nation_id, 0)) + 1
-	if int(warned.get("FRA", 0)) != 1 or int(warned.get("DEU", 0)) != 1 or warned.has("GBR"):
-		_fail("the uncategorised-member warnings are %s" % [warned])
 	var rule: Dictionary = _loader.unit_cofinancing.get("eu", {})
 	# The fixture carries `_` labels at every level (Content's stand-in notes): read past, kept out.
-	if float(rule.get("rates", {}).get("transition", 0.0)) != 0.6 or (rule.get("periods", []) as Array).size() != 1 			or (rule["rates"] as Dictionary).has("_note") or (rule["periods"][0]["envelope_eur_bn"] as Dictionary).has("_note"):
+	if float(rule.get("rates", {}).get("transition", 0.0)) != 0.6 or (rule.get("periods", []) as Array).size() != 1 \
+			or (rule["rates"] as Dictionary).has("_note") or (rule["periods"][0]["envelope_eur_bn"] as Dictionary).has("_note"):
 		_fail("the co-financing rule did not load: %s" % rule)
+
+
+## The member warning (the parent's ruling on #409; T1 and T6 on #410): one line for a
+## member nation WITH a stock file whose regions all lack a category, none once one
+## region has one, none for a member with no stock file. The categories are set here,
+## never read from data/regions, so the day the real ones land changes nothing.
+func _test_the_member_warning_reads_the_fixture() -> void:
+	var held := {}
+	for nation_id in ["FRA", "DEU"]:
+		for r in _loader.regions[nation_id]:
+			held[r] = r.cohesion_category
+			r.cohesion_category = ""
+	UnitsLoader.warn_uncategorised(_loader)
+	var lines: Array = _loader.unit_warnings.duplicate()
+	_loader.regions["FRA"][0].cohesion_category = "transition"
+	UnitsLoader.warn_uncategorised(_loader)
+	var after: Array = _loader.unit_warnings.duplicate()
+	for r in held:
+		r.cohesion_category = held[r]
+	var fra := 0
+	for line in lines:
+		if String(line).contains(" FRA is a member"):
+			fra += 1
+		if String(line).contains(" DEU is a member"):
+			_fail("a member with no stock file warns: %s" % line)
+	if fra != 1:
+		_fail("France warns %d times with no category, not once: %s" % [fra, lines])
+	for line in after:
+		if String(line).contains(" FRA is a member"):
+			_fail("France warns with one region categorised: %s" % line)
 
 
 func _test_a_type_is_offered_only_where_a_stock_file_has_it() -> void:
@@ -140,21 +171,48 @@ func _test_a_type_is_offered_only_where_a_stock_file_has_it() -> void:
 		_fail("a potential row is offered as a unit type")
 
 
-## Section 2: the loader stores each level relative to the nation's, so the
-## population-weighted mean is exactly 1 (the rule unemployment_rel follows).
+## Sections 2 and 3, one basis (T2 and T3 on #410): the level is the region's sourced
+## figure over the mean of the nation's regions weighted by their LIVE people x the
+## priority term, read now, so the people-weighted mean of what the screen shows is
+## exactly the nation's figure, with a priority set, after migration, with units built.
 func _test_the_level_is_normalised_to_the_people() -> void:
+	var state = _state()
+	var ns = state.player()
+	if absf(_people_mean(state, ns, "level") - 1.0) > 1e-12:
+		_fail("the population-weighted level is %.12f, not 1" % _people_mean(state, ns, "level"))
+	if Units.level(ns, _loader, TYPE, "FRB") <= Units.level(ns, _loader, TYPE, "FR1"):
+		_fail("FRB's 20 pupils should read above FR1's 15")
+	# Live shares: migration moves the people, the basis follows.
+	ns.region_pop_share["FR1"] = float(ns.region_pop_share["FR1"]) * 1.3
+	if absf(_people_mean(state, ns, "level") - 1.0) > 1e-12:
+		_fail("after a move of people the weighted level is %.12f, not 1" % _people_mean(state, ns, "level"))
+	# A priority on the sector, units built: the shown figure's people-weighted mean is
+	# the nation's figure.
+	Sectors.set_priority(state, ns, _loader, "education", "schools", "FRB")
+	ns.unit_programmes.assign([_done("p1", UK.OP_BUILD, "FR1", 2), _done("p2", UK.OP_BUILD, "FRC", 1)])
+	var nation := Sectors.quantity(ns, _loader, "education", "schools")
+	if absf(_people_mean(state, ns, "shown") - nation) > 1e-12 * nation:
+		_fail("with a priority and units the regions' mean is %.12f, not the nation's %.12f" % [_people_mean(state, ns, "shown"), nation])
+	# A nation the type is not offered to reads the nation's own figure.
+	var gbr = GameState.new_game(_loader, "GBR").player()
+	if Units.level(gbr, _loader, TYPE, "UKI") != 1.0:
+		_fail("a region with no level row reads %s, not 1" % Units.level(gbr, _loader, TYPE, "UKI"))
+
+
+func _people_mean(state, ns, what: String) -> float:
 	var weighted := 0.0
 	var people := 0.0
-	for r in _loader.regions["FRA"]:
-		weighted += r.share * Units.level(_loader, "FRA", "pupils_per_teacher", r.id)
-		people += r.share
-	if absf(weighted / people - 1.0) > 1e-9:
-		_fail("the population-weighted level is %.12f, not 1" % (weighted / people))
-	if Units.level(_loader, "FRA", "pupils_per_teacher", "FRB") <= Units.level(_loader, "FRA", "pupils_per_teacher", "FR1"):
-		_fail("FRB's 20 pupils should read above FR1's 15")
-	# A nation or figure with no level reads the nation's own figure.
-	if Units.level(_loader, "GBR", "pupils_per_teacher", "UKI") != 1.0:
-		_fail("a region with no level row reads %s, not 1" % Units.level(_loader, "GBR", "pupils_per_teacher", "UKI"))
+	for region in _named(state):
+		var p := float(ns.region_pop_share[region])
+		var v: float
+		if what == "level":
+			v = Units.level(ns, _loader, TYPE, region) * Sectors.regional_quantity(ns, _loader, "education", "schools", region) \
+				/ Sectors.quantity(ns, _loader, "education", "schools")
+		else:
+			v = Units.shown_figure(ns, _loader, TYPE, region)
+		weighted += p * v
+		people += p
+	return weighted / people
 
 
 func _test_bad_rows_are_refused() -> void:
@@ -163,7 +221,7 @@ func _test_bad_rows_are_refused() -> void:
 	if UnitsLoader.parse_type(_loader, good, TYPE + ".json", errors).is_empty() or not errors.is_empty():
 		_fail("the good fixture row is refused: %s" % [errors])
 	for case in [["capacity", 0], ["sector", "universities"], ["figure", "graduates_per_1000"],
-			["payoff", "network"], ["overrun_odds", 1.5], ["cost_eur_m", {"FRA": -1}], ["cost_eur_m", {"FRA": {"x": 1}}], ["cost_eur_m", {"FRA": 0}],
+			["payoff", "network"], ["overrun_odds", 1.5], ["figure_elasticity", 1.0], ["cost_eur_m", {"FRA": -1}], ["cost_eur_m", {"FRA": {"x": 1}}], ["cost_eur_m", {"FRA": 0}],
 			["build_months", 0], ["build_months", 12.5], ["id", "other_school"], ["cofinanced", "yes"], ["bloc_offset_per_pop_share", {"nobody": 1.0}]]:
 		var bad := good.duplicate(true)
 		bad[case[0]] = case[1]
@@ -193,6 +251,8 @@ func _test_bad_rows_are_refused() -> void:
 			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}],
 				"levels": full + [{"region": "FRB", "figure": "pupils_per_teacher", "level": 0.0}]},
 			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}],
+				"levels": full + [{"region": "FRB", "figure": "pupils_per_teacher", "level": 16.0}]},
+			{"stock": [{"region": "FR1", "type": TYPE, "units": 1, "capacity": 10}],
 				"levels": [{"region": "FR1", "figure": "pupils_per_teacher", "level": 15.0}]}]:
 		errors = []
 		UnitsLoader.parse_stock(_loader, "FRA", stock, types, "stock/FRA.json", errors)
@@ -205,7 +265,8 @@ func _test_bad_rows_are_refused() -> void:
 	if errors.is_empty():
 		_fail("a stocked type with no price for the nation is accepted")
 	var cof: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE.path_join("cofinancing.json")))
-	for case in [["warn_months", 0], ["periods", []], ["rates", {"rich": 0.5}], ["rates", {"transition": 1.5}]]:
+	for case in [["warn_months", 0], ["periods", []], ["rates", {"rich": 0.5}], ["rates", {"transition": 1.5}],
+			["rates", {"less_developed": 0.8, "transition": 0.6, "transition_former_less_developed": 0.7}]]:
 		var bad := cof.duplicate(true)
 		bad["organisations"]["eu"][case[0]] = case[1]
 		errors = []
@@ -244,7 +305,7 @@ func _test_nothing_built_reads_the_nation_times_the_level() -> void:
 	var ns = state.player()
 	for region in _named(state):
 		var want: float = Sectors.regional_quantity(ns, _loader, "education", "schools", region) \
-			* Units.level(_loader, "FRA", "pupils_per_teacher", region)
+			* Units.level(ns, _loader, TYPE, region)
 		if Units.netted_gain(ns, _loader, TYPE, region) != 0.0 or Units.shown_figure(ns, _loader, TYPE, region) != want:
 			_fail("%s shows %.6f with nothing built, not %.6f" % [region, Units.shown_figure(ns, _loader, TYPE, region), want])
 
@@ -327,6 +388,22 @@ func _test_fill_by_population() -> void:
 	# Two units: the largest remainders, FR1's and FRK's (the second most people).
 	if not Units.fill_by_population(ns, _loader, TYPE, -3).is_empty() or not Units.fill_by_need(ns, _loader, TYPE, 0).is_empty():
 		_fail("a fill of no units places some")
+	# Equal shares: ties go to file order (T12), the first region first.
+	var held: Dictionary = ns.region_pop_share.duplicate()
+	for region in ns.region_pop_share:
+		ns.region_pop_share[region] = 0.1
+	var tie: Array = Units.fill_by_population(ns, _loader, TYPE, 1)
+	if tie != [{"region": "FR1", "units": 1}]:
+		_fail("a tie does not go to the first region in file order: %s" % [tie])
+	# Shares summing to 0 (T13): all N placed, never short.
+	for region in ns.region_pop_share:
+		ns.region_pop_share[region] = 0.0
+	var none := 0
+	for row in Units.fill_by_population(ns, _loader, TYPE, 30):
+		none += int(row["units"])
+	if none != 30:
+		_fail("with no people counted, by population places %d units, not 30" % none)
+	ns.region_pop_share = held
 	var two: Array = Units.fill_by_population(ns, _loader, TYPE, 2)
 	if two != [{"region": "FR1", "units": 1}, {"region": "FRK", "units": 1}]:
 		_fail("by population places two units as %s, not one in FR1 and one in FRK" % [two])
@@ -361,6 +438,9 @@ func _test_fill_by_need_starts_with_the_worst() -> void:
 			_fail("by need fills a region with no stock")
 	if total != 30:
 		_fail("by need places %d units, not 30" % total)
+	# Each placed unit counts (T14): thirty units do not all land in one region.
+	if many.size() < 2:
+		_fail("by need puts all thirty units in one region: %s" % [many])
 
 
 ## A beds-per-1000 row is behind when it reads LOWER, and a built hospital raises it.
