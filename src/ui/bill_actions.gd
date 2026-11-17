@@ -36,6 +36,11 @@ static func verbs(list, row: Control, ns, law) -> void:
 	var queue: Dictionary = cells["queue"]
 	var out: Dictionary = cells["unqueue"]
 	if bool(queue["shown"]):
+		# The Bills second pass: one verb. While the slot is held, the queue's press IS the
+		# proposal ("Propose for March"), so the down Propose beside it would say it twice.
+		for verb in row.get_children():
+			if verb.name == "Propose":
+				verb.visible = false
 		var press := _press(String(queue["text"]), not bool(queue["enabled"]), String(queue["reason"]), law, QUEUE)
 		press.pressed.connect(func() -> void: add(list, law))
 		panel._offer(press)

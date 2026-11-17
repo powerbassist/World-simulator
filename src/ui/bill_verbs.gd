@@ -7,7 +7,7 @@ extends RefCounted
 ##   slot empty, law not queued   Propose                               (the queue is only behind a held slot)
 ##   slot empty, law queued       Propose down (queued); Take out of the queue
 ##   slot held by THIS law        Propose down; nothing else
-##   slot held by another bill    Propose down; Queue for <month>
+##   slot held by another bill    Propose down; Propose for <month> (the queue's press)
 ##   ... queue full               Queue shown but down, with its reason
 ##   law queued                   Propose down; Take out of the queue, naming its month
 ##
@@ -58,7 +58,7 @@ static func cells(state, loader, law_id: String, find_law := Callable()) -> Dict
 	if slot == "held":
 		var full: bool = ns.bill_queue.size() >= BillQueue.SIZE
 		out["queue"] = {"shown": true, "enabled": not full,
-			"text": Strings.t("The queue is full") if full else Strings.t("Queue for %s") % month_name(state, ns.bill_queue.size()),
+			"text": Strings.t("The queue is full") if full else Strings.t("Propose for %s") % month_name(state, ns.bill_queue.size()),
 			"reason": Strings.t("The queue holds three bills. Take one out first.") if full else ""}
 	return out
 

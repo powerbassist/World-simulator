@@ -16,6 +16,8 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const LawConditions = preload("res://src/sim/law_conditions.gd")
+## The proposable-law scan (available()): a leaf, so no cycle.
+const LawGate = preload("res://src/sim/law_gate.gd")
 const K = preload("res://src/sim/election_constants.gd")
 ## V4.2. The composed-law factory: the legality scan reads ns.custom_laws
 ## through Law.composed_register() because statute.gd preloads THIS file (the
@@ -164,7 +166,7 @@ static func _settle_referendum(state, ns, loader, verdict: Dictionary) -> void:
 	var law = Bills.by_id(loader, String(verdict.get("law_id", "")))
 	# The constitution can change while the country votes (V5.0d): a law it no
 	# longer allows lapses, the held-bill release's rule below.
-	if law == null or not _constitution_allows(ns, law):
+	if law == null or not LawGate.constitution_allows(ns, law):
 		return
 	if bool(verdict.get("passed", false)):
 		apply(state, ns, law, loader)
@@ -273,7 +275,7 @@ static func _tick_held_bills(state, ns, loader) -> void:
 		# amendment authored for the monarchy, released after the Republic Act,
 		# wrote a dissolution rule the republic's template refuses. It lapses:
 		# nothing applies, nothing is charged, the moot release's shape.
-		if not _constitution_allows(ns, law):
+		if not LawGate.constitution_allows(ns, law):
 			released["passed"] = false
 			released["lapsed"] = true
 			ns.last_law_result = released
@@ -421,90 +423,9 @@ static func resolve_upper(ns, party_list: Array, law) -> Dictionary:
 ## met, not already passed as a once-only law, not on cooldown, and -- for a
 ## constitutional amendment -- proposable under the nation's own system.
 static func available(ns, all_laws: Array) -> Array:
-	var out: Array = []
-	for law in all_laws:
-		if law.id == "":
-			continue
-		if law.once and ns.passed_law_ids.has(law.id):
-			continue
-		if ns.law_cooldown_months.has(law.id):
-			continue
-		# V4.2 ultra pass 2. A repeal whose target has no ledger entry is not
-		# proposable: repeal_target_legal() gates it at composition, so a target
-		# gone from the book means the repeal was ALREADY carried -- re-offering
-		# it would pass a carried no-op (quiet since the pass-4 finding made the
-		# empty-ledger subtraction a no-op, but a button that repeals nothing is
-		# still the half-removed act class). Kills both the after-cooldown no-op
-		# and the propose-path half of the two-repeals-of-one-target case -- the
-		# held window's half is the moot release's, in _tick_held_bills; the
-		# window self-heals the other way too, since a re-passed target re-opens
-		# its own repealer here.
-		if law.repeals != "" and not ns.law_ledger.has(law.repeals):
-			continue
-		if not _constitution_allows(ns, law):
-			continue
-		if _already_in_force(ns, law):
-			continue
-		# One referendum at a time, and while one is in flight nothing else may be
-		# put to the country. A second live question is not a bound that needed a
-		# constant -- it is what "the country votes on this" means.
-		if Referendum.is_pending(ns) and Referendum.pending_law_id(ns) == law.id:
-			continue
-		# V1.1e. A bill the second chamber is holding is IN FLIGHT and cannot be
-		# proposed again while it waits -- the same thing the line above says about a
-		# question already put to the country, and for the same reason: proposing it
-		# twice would let the player restart the clock they are waiting out.
-		if ns.held_bills.has(law.id):
-			continue
-		# V4.2 T6. A bill the assembly's own backbench has tabled is IN FLIGHT on
-		# exactly the held_bills grounds: the player proposing the same law inside
-		# the endorsement window would divide it twice and apply the effects twice,
-		# which is the double-application guard this scan exists to keep.
-		if _in_assembly_tray(ns, law.id):
-			continue
-		if _preconditions_met(ns, law):
-			out.append(law)
-	return out
-
-
-## Whether the assembly's own backbench has this law tabled -- available()'s
-## in-flight guard reads it and nothing else does.
-static func _in_assembly_tray(ns, law_id: String) -> bool:
-	for entry in ns.assembly_bills.values():
-		if String(entry.get("law_id", "")) == law_id:
-			return true
-	return false
-
-
-## The constitutional gate: a law authored for a template the nation is not under,
-## or a change of system its constitution forbids. available() runs it at proposal;
-## a held bill's release and a referendum's settle run it again (V5.0d), because the
-## system can change between the division and the day the law would take effect.
-static func _constitution_allows(ns, law) -> bool:
-	return (not law.constitutional or law.systems.has(ns.system_id)) and (not law.changes_system or ns.permits_system_change)
-
-
-## An electoral-reform Act that names the method the nation already uses changes
-## nothing, and a button that changes nothing is the bug V1.3e's screenshot pass
-## found on the diplomacy panel. Checked in code rather than by asking content to
-## remember it -- src/sim/campaign.gd's _op_legal() and src/sim/projects.gd's
-## available() give the argument -- and it is checked here rather than as a
-## precondition because PRECONDITION_FIELDS is numeric and an electoral system is a
-## string, which is a schema difference and not an oversight.
-static func _already_in_force(ns, law) -> bool:
-	var inst: Dictionary = law.effects.get("institutional", {})
-	if not inst.has("election_system"):
-		return false
-	if String(inst["election_system"]) != ns.election_system:
-		return false
-	# The method matches; the law is still live if it also moves the threshold.
-	if inst.has("election_threshold_pct"):
-		return is_equal_approx(float(inst["election_threshold_pct"]), ns.election_threshold_pct)
-	return true
-
-
-static func _preconditions_met(ns, law) -> bool:
-	return preconditions_met(ns, law.preconditions)
+	# The scan's rules live in law_gate.gd (the Bills second pass): the catalogue prints
+	# the flag a shut law carries, so the gate and this list are one function.
+	return all_laws.filter(func(law) -> bool: return law.id != "" and LawGate.shut(ns, law) == "")
 
 
 ## The precondition reader lives in law_conditions.gd since V5.0d (the size ratchet

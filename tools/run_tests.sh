@@ -204,7 +204,7 @@ tests=(
   tests/test_finance_editor.gd
   tests/test_finance_sheet.gd
   tests/test_finance_autumn_ui.gd
-  tests/test_goal_panel.gd
+  tests/test_law_gate.gd
   tests/test_sectors.gd
   tests/test_projects.gd
   tests/test_campaign.gd

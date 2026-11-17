@@ -181,7 +181,7 @@ func _refresh() -> void:
 	var party_list: Array = _loader.parties.get(ns.id, [])
 	# V4.2. Authored laws plus the composed register -- the same concat the
 	# legality scan runs, so a draft the player finished is on this list.
-	_laws.fill(ns, party_list, Legislature.available(ns, _loader.laws + Statute.custom_laws(ns)))
+	_laws.fill(ns, party_list, _loader.laws + Statute.custom_laws(ns))
 
 
 func _build_result_summary(result: Dictionary) -> Control:

@@ -41,11 +41,6 @@ static func register(main) -> void:
 	preload("res://src/ui/files_driver.gd").register(main)
 	# V5.3 screen 4: the Finances page (direction A), the first tab of its domain.
 	preload("res://src/ui/finances_driver.gd").register(main)
-	# V5.3 screen 4: a budget line or a tax rate row of the goal panel is set on the Books page, on its row.
-	main._law_panel.find_child("Goals", true, false).go_requested.connect(func(id: String, focus: String) -> void:
-		main._windows.open(id)
-		if focus != "":
-			main._windows.frame(id)._content.open_row(focus.get_slice(":", 0), focus.get_slice(":", 1)))
 	var lane := RequestLane.new()
 	lane.attach(main._hud.inbox)
 	var scene := AudienceScene.new()

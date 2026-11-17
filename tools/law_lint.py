@@ -67,6 +67,14 @@ CATEGORY_KEYS = ["taxes", "work", "welfare_health", "education_culture", "housin
                  "constitution", "elections", "media", "europe_migration"]
 CATEGORY_MIN = 4
 # The tax library's kinds (data/taxes/<id>.json, V5.3 e), then economy_constants'
+# law_verb.gd MAX: the Bills row's verb is one lowercase word
+VERB_MAX = 14
+
+
+def law_verb_ok(verb) -> bool:
+    return isinstance(verb, str) and 0 < len(verb) <= VERB_MAX and verb.isalpha() and verb == verb.lower()
+
+
 # SPENDING_KEYS / SECTOR_TREND
 TAX_KEYS = sorted(p.stem for p in (Path(__file__).resolve().parent.parent / "data" / "taxes").glob("*.json"))
 SPENDING_KEYS = ["health", "education", "defence", "pensions", "infrastructure"]
@@ -208,6 +216,10 @@ def check_schema(fname: str, law: dict, rep: Report, seen_ids: dict,
         rep.fail("%s: %s theme must be one of %s" % (where, lid, THEME_KEYS))
     if law.get("category") not in CATEGORY_KEYS:
         rep.fail("%s: %s category must be one of %s" % (where, lid, CATEGORY_KEYS))
+    # The Bills row's one word beside the name ("raises", "grants"): optional, and absent
+    # shows no word at all -- never one guessed from the summary (src/core/law_verb.gd).
+    if "verb" in law and not law_verb_ok(law["verb"]):
+        rep.fail("%s: %s verb must be one lowercase word, at most %d letters" % (where, lid, VERB_MAX))
 
     pos = law.get("position")
     if not isinstance(pos, dict) or "economic" not in pos or "social" not in pos:

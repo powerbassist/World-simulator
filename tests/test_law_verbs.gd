@@ -209,10 +209,15 @@ func _press(target: Control) -> void:
 func _row_bar(law) -> ChartStack:
 	var i: int = _list()._shown.find(law)
 	var row: Node = _list()._rows.get_child(_list()._rows.get_child_count() - _list()._shown.size() + i)
-	for child in row.get_children():
+	for child in row.find_children("*", "", true, false):
 		if child is ChartStack:
 			return child
 	return null
+
+
+## The sheet's vote line, as law_sheet.gd prints it from the counts.
+func _vote_line(counts: Dictionary) -> String:
+	return "%d for · %d undecided · %d against" % [counts["yes"], counts["undecided"], counts["no"]]
 
 
 func _check_a_row_with_no_size_shows_nothing() -> void:
@@ -240,7 +245,7 @@ func _check_the_reference_grade() -> void:
 		_fail("a bill not picked reads at 1")
 	# At its own size the page says what it always said: the row itself, read as the row.
 	var band: float = _main._law_panel.forecast_band(_ns(), _law.id)
-	if "Forecast: " + _main._law_panel.forecast_text(_ns(), _parties(), _law, band) not in _detail_text():
+	if _vote_line(_main._law_panel.forecast_counts(_ns(), _parties(), _law, band)) not in _detail_text():
 		_fail("at its own size the forecast is not the row's")
 	var strip := _strip_of(LawGrade.STRIP_META)
 	if String(strip.get("when", "x")) != "":
@@ -256,16 +261,15 @@ func _check_a_chip_rereads_the_bill() -> void:
 		_fail("the rebuild dropped the picked chip's focus")
 	var graded = LawMagnitude.scaled(_law, 10.0)
 	var band: float = _main._law_panel.forecast_band(_ns(), _law.id)
-	var text: String = _main._law_panel.forecast_text(_ns(), _parties(), graded, band)
-	if "Forecast: " + text not in _detail_text():
-		_fail("the detail's forecast is not the graded bill's: %s" % text)
 	var counts: Dictionary = _main._law_panel.forecast_counts(_ns(), _parties(), graded, band)
+	if _vote_line(counts) not in _detail_text():
+		_fail("the detail's forecast is not the graded bill's: %s" % _vote_line(counts))
 	var plain: Dictionary = _main._law_panel.forecast_counts(_ns(), _parties(), _law, band)
 	if int(counts["yes"]) == int(plain["yes"]) and int(counts["no"]) == int(plain["no"]):
 		_fail("premise: ten times this bill reads as its reference (%s)" % _law.id)
 	var bar := _row_bar(_law)
-	if bar == null or bar.get_index() != LawGrade.BAR_COLUMN:
-		_fail("the redrawn bar left its column")
+	if bar == null:
+		_fail("the redrawn row has no bar")
 	if bar == null or int(bar._parts[0]["value"]) != int(counts["yes"]):
 		_fail("the row's bar is not at the grade: %s against %d" % [bar._parts[0]["value"] if bar != null else "none", counts["yes"]])
 	var strip := _strip_of(LawGrade.STRIP_META)
@@ -342,7 +346,7 @@ func _check_the_sheet_reads_the_grade() -> void:
 		_fail("the sheet does not say the size")
 	var graded = LawMagnitude.scaled(_law, 10.0)
 	var band: float = _main._law_panel.forecast_band(_ns(), _law.id)
-	if _main._law_panel.forecast_text(_ns(), _parties(), graded, band) not in text:
+	if _vote_line(_main._law_panel.forecast_counts(_ns(), _parties(), graded, band)) not in text:
 		_fail("the sheet's forecast is not the graded bill's")
 
 

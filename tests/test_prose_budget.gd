@@ -123,7 +123,11 @@ const TOTAL_PENDING := {
 ## The void pass, a stated rise of 12 (2794 -> 2806 before #401's merge, 2777 -> 2789 after; the parent accepted it at pass 2): the
 ## Decision tab after an answer lists what is still on the desk (its heading and the open files'
 ## titles, 9 at month 12) and the empty Agenda names its next step, "Plan the campaign" (3).
-const TOTAL_SUM_CEILING := 2789
+## The Bills second pass (the author's pick "A : les rayons"), a stated rise 2789 -> 2958 (+169, all on the
+## Bills tab, 380 of its 450): every row of the open shelf carries the law's summary, the card's own ask
+## ("name + verb + summary"), and the shelves name their twelve categories with a count; the goal tiles
+## and "What moves it" left the tab.
+const TOTAL_SUM_CEILING := 2958
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
