@@ -1,0 +1,13 @@
+Statistisches Bundesamt (Destatis), Statistische Berichte
+
+The imprint of each Statistischer Bericht (read 2026-11-17 in the xlsx files of
+the reports 21111 "Allgemeinbildende Schulen", 21121 "Berufliche Schulen" and
+23111 "Grunddaten der Krankenhaeuser - Bundeslaender") states:
+
+    (c) Statistisches Bundesamt (Destatis), 2026
+    Vervielfaeltigung und Verbreitung, auch auszugsweise, mit Quellenangabe gestattet.
+
+That is: reproduction and distribution, also in part, are permitted with a
+credit to the source. The permission is for the published figures; the credit
+is in ATTRIBUTION.md. This file records the wording and is not a licence text
+issued by Destatis.

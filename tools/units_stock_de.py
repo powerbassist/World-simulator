@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
-"""Rebuild data/units/stock/DEU.json's `stock` and `levels` from the published sources.
+"""Rebuild data/units/stock/DEU.json's `stock` and `figures` from the published sources.
 
-Dev-only, not run by CI (network and openpyxl). The same shape and the same checks as
-tools/units_stock_fr.py; every number is a raw cell of a Destatis file.
+Dev-only, not run by CI (network and openpyxl). The same shape and checks as
+tools/units_stock_fr.py; every number is a raw cell of a published file.
 
   python tools/units_stock_de.py            # prints the table and the self-checks
   python tools/units_stock_de.py --check    # also fails if data/units/stock/DEU.json differs
+  python tools/units_stock_de.py --write    # rewrites its `stock` and `figures`, keeping `_source`
+
+Scope of upper secondary, the rule for every nation: FULL-TIME pupils, general and vocational, teachers in
+full-time equivalents, both from the SAME table family and school year. Part-time apprentices
+(Teilzeit-Berufsschulen) are out.
 
 Sources (read 2026-11-17), described in the file's `_source`:
-  schools, pupils, teachers   Destatis Statistischer Bericht 21111 and 21121, school year 2025/26 (xlsx, CSV sheets)
-  hospitals, beds, beds per 100 000, general hospitals
-                              Destatis Statistischer Bericht "Grunddaten der Krankenhaeuser - Bundeslaender" (2025),
-                              tables 23111-b02 and 23111-b14 (the beds per head use Destatis's own population)
-The report URLs carry a version number (v=3 here); a replaced report is a new read.
+  pupils and teachers   KMK, Dokumentation Nr. 248 (April 2026), tabellenteil Z, tables Z1.2 (pupils) and Z3.2
+                        (teachers, Vollzeitlehrkraefte-Einheiten), Laendervergleich 2024 = school year 2024/25
+  schools               Destatis Statistischer Bericht 21111 and 21121, school year 2024/25, tables 21111-01 and 21121-01
+  hospitals, beds       Destatis Statistischer Bericht "Grunddaten der Krankenhaeuser - Bundeslaender" (2025),
+                        tables 23111-b02 (beds per 100 000 with Destatis's own population) and 23111-b14
 """
 import gzip
 import io
@@ -23,19 +28,29 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "units" / "stock" / "DEU.json"
+KMK = "https://www.kmk.org/fileadmin/Dateien/pdf/Statistik/Dokumentationen/SKL_Teil_Z_Zusammenfassung_2024.xlsx"
 BASE = "https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bildung-Forschung-Kultur/Schulen/Publikationen/Downloads-Schulen/"
-GENERAL = BASE + "statistischer-bericht-allgemeinbildende-schulen-2110100267005.xlsx?__blob=publicationFile&v=3"
-VOCATIONAL = BASE + "statistischer-bericht-berufliche-schulen-2110200267005.xlsx?__blob=publicationFile&v=3"
+GENERAL = BASE + "statistischer-bericht-allgemeinbildende-schulen-2110100257005.xlsx?__blob=publicationFile&v=3"
+VOCATIONAL = BASE + "statistischer-bericht-berufliche-schulen-2110200257005.xlsx?__blob=publicationFile&v=2"
 HOSPITALS = ("https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Gesundheit/Krankenhauser/Publikationen/Downloads-Krankenhaeuser/"
              "statistischer-bericht-grunddaten-krankenhaeuser-bundeslaender-2120611257005.xlsx?__blob=publicationFile&v=4")
 LAND = {"Baden-Württemberg": "DE1", "Bayern": "DE2", "Berlin": "DE3", "Brandenburg": "DE4", "Bremen": "DE5",
         "Hamburg": "DE6", "Hessen": "DE7", "Mecklenburg-Vorpommern": "DE8", "Niedersachsen": "DE9",
         "Nordrhein-Westfalen": "DEA", "Rheinland-Pfalz": "DEB", "Saarland": "DEC", "Sachsen": "DED",
         "Sachsen-Anhalt": "DEE", "Schleswig-Holstein": "DEF", "Thüringen": "DEG"}
-# Upper secondary in every Land: the Gymnasium (its Sekundarbereich II pupils only) and these vocational types.
-VOC = ("Fachgymnasien", "Fachoberschulen", "Berufsoberschulen/Technische Oberschulen", "Teilzeit-Berufsschulen")
-KEYS = ("gym",) + VOC
-PUPIL = "Schüler/innen"
+# KMK's column codes, in the order of its tables (then D = Deutschland)
+KMK_COLUMNS = ["BW", "BY", "BE", "BB", "HB", "HH", "HE", "MV", "NI", "NW", "RP", "SL", "SN", "ST", "SH", "TH", "D"]
+GAME = dict(zip(KMK_COLUMNS, LAND.values()))
+# In scope: (block, row label). General Sekundarstufe II, and the full-time (Vollzeitform) vocational schools.
+IN_SCOPE = [("general", "Gymnasien*"), ("general", "Schularten mit drei Bildungsgängen"), ("general", "Freie Waldorfschulen"),
+            ("full", "Berufsfachschulen"), ("full", "Berufsober-/Technische Oberschulen"), ("full", "Fachgymnasien"),
+            ("full", "Fachoberschulen")]
+# Out of scope, listed with their size in `_source`.
+OUT_OF_SCOPE = [("general", "Abendgymnasien"), ("general", "Kollegs"), ("full", "Berufsvorbereitungsjahr"),
+                ("full", "Berufsgrundbildungsjahr"), ("full", "Berufsaufbauschulen"), ("full", "Fachschulen"),
+                ("full", "Fachakademien/Berufsakademien")]
+SCHOOL_TYPES_GENERAL = ("Gymnasien", "Schularten mit drei Bildungsgängen", "Freie Waldorfschulen")
+SCHOOL_TYPES_VOCATIONAL = ("Berufsfachschulen", "Berufsoberschulen/Technische Oberschulen", "Fachgymnasien", "Fachoberschulen")
 
 
 def get(url: str) -> bytes:
@@ -48,34 +63,50 @@ def sheet(book, name: str) -> list:
     return list(book[name].iter_rows(values_only=True))[1:]
 
 
-def schools() -> tuple:
+def kmk_table(book, name: str) -> dict:
+    """{(block, label): {kmk column code: value}} for the Sekundarstufe II rows of a KMK Laendervergleich sheet."""
+    out, block = {}, None
+    for row in book[name].iter_rows(values_only=True):
+        label = " ".join(str(next((c for c in row[1:5] if c), "")).split())
+        if label.startswith("Anmerkung"):
+            break
+        if label.startswith("Sekundarstufe II,"):
+            block = ("general" if "Allgemeinbildende" in label else "full" if "Vollzeitform" in label
+                     else "part" if "Teilzeitform" in label else "vocational")
+            out[(block, label)] = dict(zip(KMK_COLUMNS, row[5:22]))
+            continue
+        if label == "Sekundarstufe II":
+            block = None
+            continue
+        if block and label:
+            out[(block, label)] = dict(zip(KMK_COLUMNS, row[5:22]))
+    return out
+
+
+def schools() -> dict:
+    import openpyxl
+    book = openpyxl.load_workbook(io.BytesIO(get(KMK)), data_only=True)
+    pupils, teachers = kmk_table(book, "Z1.2"), kmk_table(book, "Z3.2")
+    for table in (pupils, teachers):
+        for key in IN_SCOPE + OUT_OF_SCOPE:
+            assert key in table, key
+            land = sum(table[key][c] for c in KMK_COLUMNS[:-1])
+            assert abs(land - table[key]["D"]) < 1.0, ("the 16 Laender differ from Deutschland", key, land, table[key]["D"])
+    return {"pupils": pupils, "teachers": teachers}
+
+
+def school_units() -> dict:
     import openpyxl
     general = openpyxl.load_workbook(io.BytesIO(get(GENERAL)), data_only=True, read_only=True)
     vocational = openpyxl.load_workbook(io.BytesIO(get(VOCATIONAL)), data_only=True, read_only=True)
-    units, pupils, taught, teachers = {}, {}, {}, {}
+    units = {}
     for r in sheet(general, "csv-21111-01"):
-        if r[4] == "Schulen" and r[5] == "Insgesamt" and r[6] == "Gymnasien":
-            units[(r[3], "gym")] = r[7]
-    for r in sheet(general, "csv-21111-03"):
-        if r[5] == "Gymnasien" and r[6] == "Insgesamt" and r[7] in ("Insgesamt", "Zusammen") and r[8] == PUPIL:
-            if r[4] == "Sekundarbereich II":
-                pupils[(r[3], "gym")] = r[9]
-            if r[4] == "Alle Bildungsbereiche":
-                taught[(r[3], "gym")] = r[9]
-    for r in sheet(general, "csv-21111-18"):
-        # Mecklenburg-Vorpommern files its Gymnasium teachers under 'Gymnasien (G8)'
-        if r[4] in ("Gymnasien", "Gymnasien (G8)") and r[5] == "Insgesamt" and r[6].startswith("Voll- und") and r[7] == "Insgesamt":
-            teachers[(r[3], "gym")] = r[8]
-    for r in sheet(vocational, "csv-21121-01"):
-        if r[4] == "Schulen" and r[5] == "Insgesamt" and r[6] in VOC:
+        if r[2] == "2024/25" and r[4] == "Schulen" and r[5] == "Insgesamt" and r[6] in SCHOOL_TYPES_GENERAL:
             units[(r[3], r[6])] = r[7]
-    for r in sheet(vocational, "csv-21121-02"):
-        if r[4] == "Insgesamt" and r[5] in VOC and r[6] == "Insgesamt" and r[7] in ("Insgesamt", "Zusammen") and r[8] == PUPIL:
-            pupils[(r[3], r[5])] = taught[(r[3], r[5])] = r[9]
-    for r in sheet(vocational, "csv-21121-11"):
-        if r[4] in VOC and r[5] == "Insgesamt" and r[6] == "Insgesamt" and r[7].startswith("Voll- und") and r[8] == "Insgesamt":
-            teachers[(r[3], r[4])] = r[9]
-    return units, pupils, taught, teachers
+    for r in sheet(vocational, "csv-21121-01"):
+        if r[2] == "2024/25" and r[4] == "Schulen" and r[5] == "Insgesamt" and r[6] in SCHOOL_TYPES_VOCATIONAL:
+            units[(r[3], r[6])] = r[7]
+    return units
 
 
 def hospitals() -> tuple:
@@ -97,39 +128,39 @@ def hospitals() -> tuple:
 
 
 def build() -> dict:
-    units, pupils, taught, teachers = schools()
+    kmk = schools()
+    pupils, teachers = kmk["pupils"], kmk["teachers"]
+    units = school_units()
     total, beds, per_100k, general_n, general_beds = hospitals()
     stock, ratios, bed_levels = [], [], []
-    tp = tt = 0
     for name, gid in LAND.items():
-        u = sum(units.get((name, k), 0) for k in KEYS)
-        cap = sum(pupils.get((name, k), 0) for k in KEYS)
-        paired = [k for k in KEYS if teachers.get((name, k))]  # a type without a teacher figure leaves the level only
-        p, t = sum(taught.get((name, k), 0) for k in paired), sum(teachers[(name, k)] for k in paired)
-        tp, tt = tp + p, tt + t
-        stock.append({"region": gid, "type": "upper_secondary_school", "units": u, "capacity": cap})
+        col = next(c for c, g in GAME.items() if g == gid)
+        cap = sum(pupils[k][col] for k in IN_SCOPE)
+        fte = sum(teachers[k][col] for k in IN_SCOPE)
+        n = sum(v for (land, _), v in units.items() if land == name)
+        stock.append({"region": gid, "type": "upper_secondary_school", "units": n, "capacity": int(cap)})
         stock.append({"region": gid, "type": "hospital", "units": total[name], "capacity": beds[name]})
-        ratios.append({"region": gid, "level": round(p / t, 2)})
+        ratios.append({"region": gid, "level": round(cap / fte, 2)})
         bed_levels.append({"region": gid, "level": round(per_100k[name] / 100, 2)})
     assert sum(r["units"] for r in stock if r["type"] == "hospital") == total["Deutschland"] == 1807, "hospitals"
     assert sum(r["capacity"] for r in stock if r["type"] == "hospital") == beds["Deutschland"] == 468803, "beds"
-    for k in KEYS:  # each school type's 16 Laender add up to the Deutschland row
-        for table in (units, pupils, teachers):
-            land = sum(v for (l, kk), v in table.items() if kk == k and l != "Deutschland")
-            nat = table.get(("Deutschland", k))
-            # the national Gymnasium teacher row is split in two labels, G8 and the rest
-            assert nat is None or nat == land or (k == "gym" and table is teachers), (k, nat, land)
+    nat_pupils = sum(pupils[k]["D"] for k in IN_SCOPE)
+    nat_fte = sum(teachers[k]["D"] for k in IN_SCOPE)
+    school_units_total = sum(r["units"] for r in stock if r["type"] == "upper_secondary_school")
+    school_pupils = sum(r["capacity"] for r in stock if r["type"] == "upper_secondary_school")
+    assert school_pupils == int(nat_pupils), (school_pupils, nat_pupils)
     figures = {
-        "upper_secondary_school": {"figure": "upper_secondary_pupils_per_teacher", "national": round(tp / tt, 2), "levels": ratios},
+        "upper_secondary_school": {"figure": "upper_secondary_pupils_per_teacher", "national": round(nat_pupils / nat_fte, 2), "levels": ratios},
         "hospital": {"figure": "hospital_beds_per_1000", "national": round(per_100k["Deutschland"] / 100, 2), "levels": bed_levels}}
-    capacity = {"upper_secondary_school": round(sum(r["capacity"] for r in stock if r["type"] == "upper_secondary_school")
-                                               / sum(r["units"] for r in stock if r["type"] == "upper_secondary_school")),
+    capacity = {"upper_secondary_school": round(school_pupils / school_units_total),
                 "hospital": round(general_beds["Deutschland"] / general_n["Deutschland"])}
-    print("catalogue capacity per new unit:", capacity, "(general hospitals", general_n["Deutschland"], "with",
-          general_beds["Deutschland"], "beds)")
-    print("schools", sum(r["units"] for r in stock if r["type"] == "upper_secondary_school"),
-          "pupils", sum(r["capacity"] for r in stock if r["type"] == "upper_secondary_school"),
-          "| hospitals 1807, beds 468803 (match Destatis's Deutschland row)")
+    print("catalogue capacity per new unit:", capacity)
+    print("schools", school_units_total, "full-time upper-secondary pupils", school_pupils, "teacher FTE", round(nat_fte, 1))
+    print("left out (national pupils / FTE):")
+    for key in OUT_OF_SCOPE:
+        print("  ", key[1], int(pupils[key]["D"]), round(teachers[key]["D"], 1))
+    part = next(v for k, v in pupils.items() if k[0] == "part" and k[1].endswith("Teilzeitform"))
+    print("   Teilzeitform (all part-time vocational):", int(part["D"]))
     return {"stock": stock, "figures": figures, "capacity": capacity}
 
 
