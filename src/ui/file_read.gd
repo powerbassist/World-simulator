@@ -29,6 +29,7 @@ const RequestLane = preload("res://src/ui/request_lane.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
 const EffectTags = preload("res://src/ui/effect_tags.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
+const Government = preload("res://src/sim/government.gd")
 
 
 ## The page's dictionary for `file` (an InboxFiles row), {} for a gone one.
@@ -51,6 +52,27 @@ static func describe(main, file: Dictionary) -> Dictionary:
 		choices.append(_choice(action, String(action["label"]), "", [], false))  # i18n: row-ok routed by the pusher
 	return {"id": id, "kind": "other", "micro": "", "title": String(file["title"]), "situation": String(file["body"]),  # i18n: row-ok routed by the pusher
 		"by_text": "", "by_month": -1, "who": {}, "choices": choices}
+
+
+## A desk entry with no inbox card (its popup kept quiet by the player's settings, or its card closed
+## with the X) as a page, {} when it has left the desk: the Folder is where it is answered (rework 2 S2).
+static func desk_entry(main, event_id: String) -> Dictionary:
+	var ev = Events.event_by_id(main._loader, event_id)
+	if ev == null:
+		return {}
+	var answers: Array = []
+	answers.resize(ev.choices.size())
+	answers.fill({})
+	return _event(main, "", event_id, {"actions": answers})
+
+
+## A desk entry's deadline for the Folder's list, short ("" once it has left the desk), without its page.
+static func desk_by_text(main, event_id: String) -> String:
+	var now := int(main._state.year) * 12 + int(main._state.month)
+	for entry in main._state.player().event_queue:
+		if String(entry.get("event_id", "")) == event_id:
+			return _by(now + int(entry.get("months_left", 0)) - 1, true)
+	return ""
 
 
 ## The file's name in the folder's list: a request is its person (the page says what they ask), anything
@@ -113,7 +135,35 @@ static func _event(main, id: String, event_id: String, file: Dictionary) -> Dict
 		choices.append(_choice(actions[i], Strings.choice_label(ev.id, choice), Strings.choice_short(ev.id, choice),
 			EffectTags.of(choice), bool(choice.get("is_default", false)), Strings.choice_summary(ev.id, choice)))
 	return {"id": id, "kind": "event", "micro": Strings.t("Decision"), "title": title, "situation": Strings.row_summary("events", ev),
-		"by_text": _by(last), "by_month": last, "who": who, "choices": choices}
+		"by_text": _by(last), "by_month": last, "who": who, "choices": choices, "subject": subject_of(main, ev)}
+
+
+## The person an event is about, resolved HERE and never in src/sim/ (U6b's rule: an event names an office,
+## the nation's own data names who holds it), as "name -- office", the office alone when nobody holds it.
+static func subject_of(main, ev) -> String:
+	if not ev.has_subject():
+		return ""
+	var ns = main._state.player()
+	var person_id := ""
+	var office := ""
+	match String(ev.subject_office):
+		"head_of_government":
+			person_id = String(ns.pm_person_id)
+			office = String(ns.head_of_government_title) if String(ns.head_of_government_title) != "" else Strings.t("Head of government")
+		"head_of_state":
+			person_id = String(ns.head_of_state_person_id)
+			office = String(ns.head_of_state_title) if String(ns.head_of_state_title) != "" else Strings.t("Head of state")
+		"largest_party_leader":
+			var party_list: Array = main._loader.parties.get(ns.id, [])
+			var largest := Government.largest_party_id(ns, party_list)
+			for party in party_list:
+				if party.id == largest:
+					# The override first: a fired challenge deposed the authored leader (people_panel.gd's read).
+					person_id = String(ns.party_leader_override.get(party.id, party.leader_person_id))
+					office = Strings.t("%s, leader") % party.party_name
+					break
+	var who: String = main._loader.person_name(person_id)
+	return office if who == "" else "%s — %s" % [who, office]
 
 
 static func _request(main, id: String, request_id: String, file: Dictionary) -> Dictionary:

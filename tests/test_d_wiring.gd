@@ -141,13 +141,13 @@ func _check_dispatches_speaker() -> void:
 	var queue: Array = ns.event_queue.duplicate(true)
 	ns.event_queue.clear()
 	ns.event_queue.append({"event_id": String(ev.id), "months_left": 3, "severity": 2, "speaker": String(person.id)})
+	# G2: the Folder's page for a desk entry with no card is file_view.gd's, with the speaker's face.
 	var panel = _main._events_panel
 	panel._refresh()
-	var face = panel.find_child("Speaker", true, false)
-	if face == null:
-		_failures.append("the Dispatches desk entry has no speaker's face")
-	elif not _texts(face).contains(String(person.person_name)):
-		_failures.append("the Dispatches face does not name the speaker: '%s'" % _texts(face))
+	panel.select("desk:" + String(ev.id))
+	var shown := _page_text(panel._page)
+	if not shown.contains(String(person.person_name)):
+		_failures.append("the Folder's page for a desk entry does not name its speaker: '%s'" % shown.left(200))
 	ns.event_queue.clear()
 	ns.event_queue.append_array(queue)
 	panel._refresh()
@@ -159,4 +159,15 @@ func _texts(node: Node) -> String:
 		out += node.text + "\n"
 	for child in node.get_children():
 		out += _texts(child)
+	return out
+
+
+func _page_text(node: Node) -> String:
+	var out := ""
+	for child in node.get_children():
+		if child is Label:
+			out += String(child.text) + "\n"
+		elif child is RichTextLabel:
+			out += String(child.get_parsed_text()) + "\n"
+		out += _page_text(child)
 	return out

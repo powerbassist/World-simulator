@@ -168,7 +168,6 @@ func _check_month_end_cards_it() -> void:
 	BriefingDriver.finish_month(_main, {})
 	if not _main._event_cards.values().has(String(ev.id)):
 		_fail("called: the month's end did not card the called event")
-	BriefingDriver.close(_main)
 
 
 ## An X on the called card is final: the next month's end does not put it up again.

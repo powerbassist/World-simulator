@@ -43,6 +43,9 @@ func _process(_delta: float) -> bool:
 		3:
 			_inbox = _main._hud.inbox
 			_inbox.clear()
+			# Rework 2 S2: the inbox shows its notes as one News line and the Folder reads them; the
+			# cards stay its store. Shown here so their grouping and fold are clicked as they stand.
+			_inbox._rows[Inbox.NOTES].show()
 			_check_grouping()
 			_long = _inbox.push("Dispatch", LONG)
 		4:

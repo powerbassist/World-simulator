@@ -53,7 +53,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step m-money
 ##       (the offer of money: m-money, m-left, m-taken; the affair: m-affair, m-no, m-yes, m-end)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --file event
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing crowded --folder-file event   (or: request)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing crowded --folder-file event   (or: request, decided, news)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --file request
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation DEU --book-visit
@@ -172,8 +172,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --termlimit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing calm
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark   (G1: the month end, the mark and his caption, no card)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing calm   (G2: the read is the Presidency page)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark   (G1: the month end, the mark and his caption)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark --briefing crowded --lang fr --text 130
 ##     (also tense: a request lapsing next month; crisis: an interrupt on the desk;
 ##     crowded: the interrupt and three requests lapsing, so the footer shows)
@@ -429,7 +429,8 @@ var _months := 0
 var _request := ""
 ## V5.3 screen 3: --file event | request opens the docked file page (--file request needs --request).
 var _file := ""
-## --folder-file event | request: the folder (--briefing crowded) on that file's page.
+## --folder-file event | request | decided | news: the Folder tab (--briefing crowded) on that file's page,
+## or on the first item of the decided or news group.
 var _folder_file := ""
 ## V5.2d, with --interrupt: the crisis's card carries its speaker (Speakers.resolve at
 ## delivery), so the frame shows the face, name and line under the title.
@@ -766,7 +767,7 @@ var _main
 ## The monthly briefing: the term's programme chosen first (its offer would hold a line
 ## of its own), then the situation's cause, then the month's end through its driver
 ## (G1: the mark and the caption), then -- unless --chief-mark -- the read the player
-## opens from the mark.
+## opens from the mark (G2: the Presidency page), or the Folder with --folder-file.
 func _stage_briefing() -> void:
 	var Driver = preload("res://src/ui/briefing_driver.gd")
 	var state = _main._state
@@ -797,9 +798,15 @@ func _stage_briefing() -> void:
 	if not _chief_mark:
 		Driver.read(_main)
 	if _folder_file != "":
-		var Folder := load("res://src/ui/folder_driver.gd")
-		var line := {"kind": "crisis", "subject": String(_main._loader.events[0].id)} if _folder_file == "event" 			else {"kind": "request", "subject": String(load("res://src/sim/audiences.gd").pending(ns)[0]["id"])}
-		Folder.go(_main, line)
+		var panel = _main._events_panel
+		match _folder_file:
+			"event", "request":
+				var line := {"kind": "crisis", "subject": String(_main._loader.events[0].id)} if _folder_file == "event" \
+					else {"kind": "request", "subject": String(load("res://src/sim/audiences.gd").pending(ns)[0]["id"])}
+				panel.show_file(Driver.file_of(_main, line))
+			_:
+				panel.show_group(_folder_file)
+		_main._windows.open("events")
 
 
 func _stage_the_outliner() -> void:
@@ -4087,7 +4094,7 @@ func _answer_a_crisis() -> void:
 	if ns.event_history.size() < 2:
 		printerr("--event-answered: the ledger holds %d rows, expected two" % ns.event_history.size())
 	if _main._events_panel != null:
-		_main._events_panel.scroll_to_bottom()
+		_main._events_panel.show_group(_main._events_panel.DECIDED)  # the record, not the question
 
 
 ## V2.6b1. A demonstration that has actually happened, on the map, in the place the

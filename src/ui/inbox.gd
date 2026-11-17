@@ -15,6 +15,11 @@ extends PanelContainer
 ## and keeps the newest NOTES_MAX, the oldest going first: news the player has
 ## not read is worth more than news that has sat there.
 ##
+## **Rework 2 S2: the notes are read in the Folder** (presidency-page-brief.md, "a note
+## still arrives; it stops being a card that asks nothing"). Their cards are kept here
+## as the store the Folder's news group reads (notes()), hidden; the lane shows one
+## line, "News: N", the notes landed since the player last read them, which opens them.
+##
 ## The lanes scroll inside the dock, so a column of tall rows can no longer run
 ## off the bottom of the screen (someday: "the overlay message column has no
 ## bound", V5.1-0c). Newest first in every lane.
@@ -25,7 +30,7 @@ extends PanelContainer
 ## goes in the title, so six identical leaks are one row. A new body is new news (a
 ## tally, a default, a second person's leak) and keeps its own row. And a note over
 ## FOLD_MIN characters shows the whole sentences that fit, the rest behind More,
-## which opens it in place -- a click on the card itself already goes to
+## which opens it in place -- a click on the card itself already went to
 ## Dispatches, and the body's TermText takes the hover for its glossary plates, so
 ## neither could be the bubble. A short note is never folded: a division or a
 ## tally is data, not prose; and a glossary mark is never folded away.
@@ -49,6 +54,8 @@ signal card_closed(id: String)
 signal card_action(id: String, index: int)
 ## V5.1-c3.2: the inbox came over an open tab (true) or went back (false).
 signal slid(shown: bool)
+## Rework 2 S2: the News line pressed -- main opens the Folder's news group.
+signal news_pressed
 
 ## The board's dock, beside the 1240 px workspace in the 1920 reference.
 const WIDTH := 440
@@ -74,6 +81,16 @@ var _slid := false
 ## V5.3-0 gate G9 ("no clear all button for notes"): beside the NOTES heading, shown
 ## while a note stands. Notes only -- a decision is never cleared in bulk.
 var _clear_notes: Button
+## Rework 2 S2: the News line, and the notes landed since the player last read them in the Folder.
+## Every landing counts, a note grouped with its twin and one past the cap too, so the line
+## moves the day a note lands (presidency-page-brief.md: "A note still signals its arrival").
+var _news: Button
+## Rework 2 S2, #403 pass 2 T7: the notes read in the Folder (id -> true); the line counts the plain notes there
+## that are not, so a note taken away, Clear all, or a twin landing again all move it.
+var _read := {}
+## #403 pass 2 T2: notes that carry a deadline or a route (the term's countdown, a takeover bid, a firm in
+## difficulty) stay cards here, above the News line's hidden store; only plain news folds into the line.
+var _kept: VBoxContainer
 
 
 ## Built in _init, not _ready: U5a's column worked before it was in a tree (the
@@ -116,6 +133,17 @@ func _init() -> void:
 		heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		head.add_child(heading)
 		if lane == NOTES:
+			# Rework 2 S2: the notes are read in the Folder's news group; here they are one line
+			# that says how many landed since the player last read them, and opens them.
+			heading.hide()
+			_news = Button.new()
+			_news.name = "NewsLine"  # i18n: ok a node name, found by tests
+			_news.theme_type_variation = UiTheme.SUBROW_BUTTON
+			_news.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			_news.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			_news.tooltip_text = tr("Read the news in the Folder.")
+			_news.pressed.connect(func() -> void: news_pressed.emit())
+			head.add_child(_news)
 			_clear_notes = PanelKit.sized(Button.new())
 			_clear_notes.name = "ClearNotes"  # i18n: ok a node name, found by tests
 			_clear_notes.text = tr("Clear all")
@@ -134,6 +162,13 @@ func _init() -> void:
 		rows.add_theme_constant_override("separation", 6)
 		lanes.add_child(rows)
 		_rows[lane] = rows
+	_rows[NOTES].hide()
+	_empty[NOTES].hide()
+	_kept = VBoxContainer.new()
+	_kept.add_theme_constant_override("separation", 6)
+	lanes.add_child(_kept)
+	lanes.move_child(_kept, _rows[NOTES].get_index())
+	_show_news()
 
 
 ## Returns the row's id, so the caller can dismiss it later without having
@@ -151,6 +186,7 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 		for other in _notes:
 			if _notes[other]["title"] == title and _notes[other]["body"] == body:
 				_group(other)
+				_landed()
 				return other
 
 	var card := PanelContainer.new()
@@ -238,6 +274,7 @@ func push(title: String, body: String, actions: Array = [], art: Texture2D = nul
 	_clear_notes.visible = _rows[NOTES].get_child_count() > 0
 	if _notes.has(id):
 		_show_note(id)
+		_landed()
 
 	if lane == NOTES:
 		var notes := rows.get_child_count()
@@ -290,7 +327,8 @@ func set_body(id: String, body: String) -> void:
 func _group(id: String) -> void:
 	var note: Dictionary = _notes[id]
 	note["count"] = int(note["count"]) + 1
-	_rows[NOTES].move_child(_cards[id], 0)
+	_read.erase(id)  # news again
+	_cards[id].get_parent().move_child(_cards[id], 0)
 	Motion.pulse(_cards[id])
 	_show_note(id)
 
@@ -357,10 +395,12 @@ func dismiss(id: String) -> void:
 	_lane_of.erase(id)
 	_asked.erase(id)
 	_notes.erase(id)
-	_rows[lane].remove_child(card)
+	_read.erase(id)
+	card.get_parent().remove_child(card)
 	card.queue_free()
-	_empty[lane].visible = _rows[lane].get_child_count() == 0
-	_clear_notes.visible = _rows[NOTES].get_child_count() > 0
+	_empty[lane].visible = lane != NOTES and _rows[lane].get_child_count() == 0
+	_clear_notes.visible = _rows[NOTES].get_child_count() + _kept.get_child_count() > 0
+	_show_news()
 	card_dismissed.emit(id)
 
 
@@ -370,7 +410,7 @@ func dismiss(id: String) -> void:
 func raise_card(id: String) -> void:
 	if not _cards.has(id):
 		return
-	_rows[_lane_of[id]].move_child(_cards[id], 0)
+	_cards[id].get_parent().move_child(_cards[id], 0)
 	Motion.pulse(_cards[id])
 
 
@@ -440,6 +480,58 @@ func lane_count(lane: String) -> int:
 func clear() -> void:
 	for id in _cards.keys():
 		dismiss(id)
+	news_seen()
+
+
+## The notes as the Folder lists them, newest first: {id, title, body, count}.
+func notes() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for card in _rows[NOTES].get_children():
+		var id := _id_of(card)
+		if _notes.has(id):
+			var tag: Label = card.get_child(0).get_node_or_null("ResultTone")
+			out.append({"id": id, "title": _notes[id]["title"], "body": _notes[id]["body"], "count": _notes[id]["count"],
+				"tag": tag.text if tag != null else "", "tag_variation": String(tag.theme_type_variation) if tag != null else ""})
+	return out
+
+
+## A note made a card that stays (it carries a deadline or a route); returns the id, so a pusher keeps it in one line.
+func keep_card(id: String) -> String:
+	if _notes.has(id) and _cards[id].get_parent() == _rows[NOTES]:
+		_rows[NOTES].remove_child(_cards[id])
+		_kept.add_child(_cards[id])
+		_kept.move_child(_cards[id], 0)
+		_show_news()
+	return id
+
+
+func news_count() -> int:
+	var n := 0
+	for card in _rows[NOTES].get_children():
+		if not _read.has(_id_of(card)):
+			n += 1
+	return n
+
+
+func news_line() -> Button:
+	return _news
+
+
+## The news read in the Folder: every plain note there is read.
+func news_seen() -> void:
+	for card in _rows[NOTES].get_children():
+		_read[_id_of(card)] = true
+	_show_news()
+
+
+func _landed() -> void:
+	_show_news()
+	if is_inside_tree():
+		Motion.pulse(_news)
+
+
+func _show_news() -> void:
+	_news.text = tr("News: %d") % news_count()
 
 
 ## Every note, each as the player's own X (card_closed, then dismissed).
@@ -448,6 +540,7 @@ func clear_notes() -> void:
 		if _lane_of[id] == NOTES:
 			card_closed.emit(id)
 			dismiss(id)
+	news_seen()
 
 
 func _id_of(card: Control) -> String:

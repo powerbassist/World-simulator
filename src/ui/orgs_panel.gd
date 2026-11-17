@@ -342,7 +342,7 @@ func _on_vote(org_id: String, choice: String) -> void:
 	var before := Trends.snapshot_now(_state)
 	if not Orgs.cast_vote(_state, org_id, choice):
 		# Same silent-failure class as _on_membership: a press the machine refused
-		# must not report a decision to Overview's RECENT DECISIONS.
+		# must not report a decision to the Presidency page's "What your decisions did".
 		_refusal_text = tr("Refused: that vote can no longer be cast.")
 		_dirty = true
 		return

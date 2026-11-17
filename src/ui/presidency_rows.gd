@@ -12,6 +12,8 @@ const Num = preload("res://src/ui/num.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const EffectsLedger = preload("res://src/ui/effects_ledger.gd")
+const ResultTone = preload("res://src/ui/result_tone.gd")
+const ChartKit = preload("res://src/ui/chart_kit.gd")
 const Government = preload("res://src/sim/government.gd")
 const Defence = preload("res://src/sim/defence.gd")
 const Society = preload("res://src/sim/society.gd")
@@ -22,6 +24,7 @@ const K = preload("res://src/sim/opinion_constants.gd")
 const SATISFACTION_BAND := 0.15
 ## Per past decision, the figures it names: its worst movers (the Overview's U4 number).
 const EFFECT_FIGURES_SHOWN := 2
+const SPARK_SIZE := Vector2(96, 24)
 
 
 ## Which start this game was begun under, after the nation's name; empty for the standard one.
@@ -114,6 +117,54 @@ static func effect_row(effect: Dictionary) -> Control:
 		figure.theme_type_variation = UiTheme.BAD_TEXT if float(m["severity"]) > 0.0 else UiTheme.GOOD_TEXT
 		row.add_child(figure)
 	return row
+
+
+## The lead's footer (the parent's rule on #217, carried from the retired plate): an item in its
+## last month the lead's lines crowded out is never unshown -- here, folded by kind, each group's
+## Go its first item's. `groups` [{text, index}]; `go` is called with the index.
+static func also_due(parent: Control, groups: Array, go: Callable) -> void:
+	if groups.is_empty():
+		return
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 8)
+	parent.add_child(flow)
+	var label := Label.new()
+	label.text = Strings.t("Also due this month:")
+	label.theme_type_variation = UiTheme.WARN_TEXT
+	flow.add_child(label)
+	for g in groups:
+		var button := PanelKit.sized(Button.new())
+		button.text = String(g["text"])
+		button.pressed.connect(go.bind(int(g["index"])))
+		flow.add_child(button)
+
+
+## What a choice did, booked by a register or else uncertain (briefing_effects.gd's honest
+## rule), as the retired plate drew it: the tone word, the line, the spark.
+static func choice_effect(effect: Dictionary) -> Control:
+	var box := HBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	var tag := Label.new()
+	tag.uppercase = true
+	tag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if bool(effect.get("uncertain", false)):
+		# Uncertain is never green or red (the author's "en gris", call 7).
+		tag.text = Strings.t("Uncertain")
+		tag.theme_type_variation = UiTheme.CAPTION
+	else:
+		ResultTone.apply(tag, String(effect.get("tone", "")))
+	box.add_child(tag)
+	var text := Label.new()
+	text.text = String(effect.get("text", ""))  # i18n: row-ok worded by briefing_effects.gd
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.tooltip_text = String(effect.get("tooltip", ""))  # i18n: row-ok worded by briefing_effects.gd
+	text.mouse_filter = Control.MOUSE_FILTER_PASS
+	box.add_child(text)
+	var spark: PackedFloat64Array = effect.get("spark", PackedFloat64Array())
+	if spark.size() >= 2:
+		ChartKit.spark(box, spark, []).custom_minimum_size = SPARK_SIZE
+	return box
 
 
 static func standing_word(ns) -> String:

@@ -544,7 +544,7 @@ func _ready() -> void:
 	# and the reason it is a window rather than a modal is in the panel's own header:
 	# a crisis the player can ignore and pay for is the whole of the deadline.
 	_events_panel = EventsPanel.new()
-	_windows.register("events", tr("Dispatches"), _events_panel, KEY_N, ICONS + "mail.svg")
+	_windows.register("events", tr("Folder"), _events_panel, KEY_N, ICONS + "mail.svg")
 	_events_panel.setup(_state, _loader)
 	_events_panel.set_messages(_messages)
 	_events_panel.acted.connect(func(before, label):
@@ -708,7 +708,7 @@ func _ready() -> void:
 	# Trends query the top bar and the Overview count by. It sits AFTER the load
 	# branch and inside the new-game case, so a loaded save never receives it.
 	if pending_load_slot.is_empty() and pending_save.is_empty():
-		_term_card_id = _hud.inbox.push(tr("Your term"), _term_card_body())
+		_term_card_id = _hud.inbox.keep_card(_hud.inbox.push(tr("Your term"), _term_card_body()))  # a countdown stays a card
 
 	# V4.1, after the opening card so the two land together: a new game IS an
 	# unchosen term start, so the clock sits still behind the programme choice
@@ -891,8 +891,9 @@ func _wire_hud() -> void:
 		_unseen_events.erase(event_id)
 		_hud.inbox.dismiss(id)
 		_resume_if_decision_settled()
-		# Nothing holds now: the tab is the player's again.
-		if not _decision_holds_clock(): _hud.inbox.slide_out()
+		# Nothing left to answer -- no decision card, no request (#403 T9: a programme card or an Open row asks
+		# nothing): the tab is the player's again. Requests never hold the clock, so "unless a decision holds" hid them.
+		if not _event_cards.keys().any(func(c): return _hud.inbox.lane_of(c) != "") and _hud.inbox.lane_count(_hud.inbox.REQUESTS) == 0: _hud.inbox.slide_out()
 		_update_top_bar()
 		_windows.mark_all_dirty()
 	)

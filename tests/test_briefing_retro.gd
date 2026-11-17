@@ -49,9 +49,9 @@ func _process(_delta: float) -> bool:
 			# The re-rank waits for the frame's end (one per frame, #393 pass 2 T1): each answer
 			# is checked the frame after.
 			_game()["lines"] = [STALE]
-			_main._events_panel.acted.emit({}, "an answer in Dispatches")
+			_main._events_panel.acted.emit({}, "an answer on the Folder")
 		3:
-			_check_reranked("an answer in the Dispatches window")
+			_check_reranked("an answer on the Folder tab")
 			_game()["lines"] = [STALE]
 			var lane = preload("res://src/ui/audience_driver.gd")._games[_main.get_instance_id()]["lane"]
 			lane.decline_requested.emit("__no_such_request__")
@@ -70,17 +70,13 @@ func _process(_delta: float) -> bool:
 			preload("res://src/ui/firm_commands.gd").invest(sector, list[list.size() - 1]["action"])
 		6:
 			_check_reranked("a programme put in the finance bill")
-			# Under an open read the re-rank waits (its Go buttons index the lines shown); the
-			# read's close runs it, or a file answered from the folder stays named on the mark.
+			# G2: the read is the Presidency page, and a command under it re-ranks at once.
 			BriefingDriver.read(_main)
 			_game()["lines"] = [STALE]
 			_main._windows.mark_all_dirty()
 		7:
-			if not (_game()["lines"] as Array).has(STALE):
-				_fail("premise: the re-rank ran under the open read")
-			BriefingDriver.close(_main)
+			_check_reranked("a command with the read open")
 		8:
-			_check_reranked("closing the read after a command under it")
 			var error := SaveManager.save_game(_main._state, _main._clock, SLOT)
 			if error != "":
 				_fail("could not save: %s" % error)

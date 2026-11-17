@@ -40,6 +40,7 @@ const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
+const MoodBadge = preload("res://src/ui/mood_badge.gd")
 
 ## What the country wants: the two issues the Overview kept.
 const TOP_ISSUE_COUNT := 2
@@ -53,6 +54,15 @@ var _state
 var _loader
 var _dirty := true
 var _read := {}
+## The Folder's "To answer" count, asked when the lead is drawn (files_driver.gd sets it): one count, whether
+## or not a month end has pushed a read yet (QA's TAKE 2 on #403, day 1).
+var files_count := Callable()
+## A re-rank queued for the frame's end (chief_mark_view.gd), run here first when a build comes before
+## it: a build on the old read drew the lead the command had just made stale, then built again once the
+## read landed (#401 pass 2, RECORD 11). Empty when none waits.
+var _read_now := Callable()
+## Builds since boot: a test counts them.
+var builds := 0
 
 var _title: Label
 var _lead_box: HBoxContainer
@@ -160,13 +170,22 @@ func mark_dirty() -> void:
 ## (chief_mark_view.gd). An empty read is a month not ranked yet.
 func set_read(read: Dictionary) -> void:
 	_read = read
+	_read_now = Callable()
 	_dirty = true
+
+
+## A command swept the panels and the read is re-ranked at the frame's end; `rank` runs it now.
+func await_read(rank: Callable) -> void:
+	_read_now = rank
 
 
 func _process(_delta: float) -> void:
 	if not _dirty or not is_visible_in_tree() or _state == null or _state.player() == null:
 		return
+	if _read_now.is_valid():
+		_read_now.call()  # lands through set_read, so the one build below draws the fresh lead
 	_dirty = false
+	builds += 1
 	_refresh()
 
 
@@ -186,6 +205,11 @@ func _refresh() -> void:
 func _fill_lead(ns) -> void:
 	_face.texture = _read.get("face")
 	_face.visible = _face.texture != null
+	# His mood, which the retired plate wore (V5.3-0's emotion kit); a read with none keeps no old one.
+	if not (_read.get("feel", {}) as Dictionary).is_empty():
+		MoodBadge.wear(_face, _read["feel"])
+	elif _face.has_node("MoodBadge"):
+		_face.get_node("MoodBadge").free()
 	_who.text = String(_read.get("who", ""))
 	_said.text = String(_read.get("said", ""))
 	_said.visible = not _said.text.is_empty()
@@ -198,7 +222,10 @@ func _fill_lead(ns) -> void:
 		PanelKit.line(_rows_box, tr("Nothing presses this month."))
 	for i in lines.size():
 		_lead_rows.append(_lead_row(lines[i], i))
-	_count_doors["files"].text = tr_n("%d file to answer", "%d files to answer", ns.event_queue.size()) % ns.event_queue.size()
+	PresidencyRows.also_due(_rows_box, _read.get("also", []), go_requested.emit)
+	# One count, the Folder's "To answer" (#403 pass 2 T11), pushed with the read.
+	var files: int = int(files_count.call()) if files_count.is_valid() else ns.event_queue.size()
+	_count_doors["files"].text = tr_n("%d file to answer", "%d files to answer", files) % files
 	var waiting := Audiences.waiting_count(ns)
 	_count_doors["requests"].text = tr_n("%d request waiting", "%d requests waiting", waiting) % waiting
 	_count_doors["requests"].disabled = waiting == 0  # no request: nothing to open
@@ -248,9 +275,8 @@ func _fill_term(ns) -> void:
 	var months: Array = []
 	for e in past:
 		months.append([int(e.get("year", 0)), int(e.get("month", 0))])
-	var head := _lane_row(null, "")
-	_set_plot(head, _lane(TermLane.Kind.HEAD, past.size(), ahead,
-		{"months": months, "today": [int(_state.year), int(_state.month)]}))
+	_lane_row(null, _lane(TermLane.Kind.HEAD, past.size(), ahead,
+		{"months": months, "today": [int(_state.year), int(_state.month)]}), "")
 	_fill_approval(past, ahead)
 	var lanes: Array = TermReads.goal_lanes(_state, _loader)
 	for lane in lanes:
@@ -258,9 +284,8 @@ func _fill_term(ns) -> void:
 	if lanes.is_empty():
 		var to_choose := not Programme.available(_state, ns, _loader).is_empty()
 		var gutter := _gutter(tr("Programme"), tr("To choose") if to_choose else tr("None this term"))
-		var row := _lane_row(gutter, "agenda" if to_choose else "")
-		_set_plot(row, _lane(TermLane.Kind.NOTE, past.size(), ahead, {"text":
-			tr("One goal, judged at the vote.") if to_choose else ""}))
+		_lane_row(gutter, _lane(TermLane.Kind.NOTE, past.size(), ahead, {"text":
+			tr("One goal, judged at the vote.") if to_choose else ""}), "agenda" if to_choose else "")
 	_fill_majority(ns)
 	_fill_state(ns)
 
@@ -279,8 +304,7 @@ func _fill_approval(past: Array, ahead: int) -> void:
 		PanelKit.plain_line(gutter, tr("%s in %d months") % [Trends.change_text(change), Trends.TREND_MONTHS], PanelKit.tone_for(change, false))
 	elif values.size() < 2:
 		PanelKit.plain_line(gutter, tr("Fills in as the months pass."))
-	_approval_lane = _lane_row(gutter, "society")
-	_set_plot(_approval_lane, _lane(TermLane.Kind.APPROVAL, past.size(), ahead, {"values": values}))
+	_approval_lane = _lane_row(gutter, _lane(TermLane.Kind.APPROVAL, past.size(), ahead, {"values": values}), "society")
 
 
 func _fill_goal(lane: Dictionary, past: int, ahead: int) -> void:
@@ -316,19 +340,17 @@ func _fill_goal(lane: Dictionary, past: int, ahead: int) -> void:
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar_row.add_child(bar)
 	_one_line(PanelKit.plain_line(bar_row, word, tone))
-	var row := _lane_row(gutter, String(lane["tab"]))
-	_set_plot(row, _lane(TermLane.Kind.GOAL, past, ahead, lane))
+	var row := _lane_row(gutter, _lane(TermLane.Kind.GOAL, past, ahead, lane), String(lane["tab"]))
 	_goal_doors.append(row.get_child(2))
 
 
 func _fill_majority(ns) -> void:
-	var row := _lane_row(_gutter(tr("Majority"), ""), "majority")
 	var line := VBoxContainer.new()
 	line.add_theme_constant_override("separation", 0)
 	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for part in PresidencyRows.majority(ns, _loader):
 		PanelKit.plain_line(line, String(part[0]), int(part[1]))
-	_set_plot(row, line)
+	var row := _lane_row(_gutter(tr("Majority"), ""), line, "majority")
 	_majority_door = row.get_child(2)
 
 
@@ -339,21 +361,11 @@ func _fill_state(ns) -> void:
 	for read in PresidencyRows.state_lines(_state, ns):
 		_door_row(lines, String(read[0]), int(read[1]), String(read[2]))
 	# Each line is its own door (defence and services open different tabs): no lane door.
-	var row := _lane_row(_gutter(tr("The state"), ""), "")
-	_set_plot(row, lines)
+	_lane_row(_gutter(tr("The state"), ""), lines, "")
 
 
-## The lane's plot in place of its placeholder. replace_by() does not free the node it
-## replaces (Node.replace_by, 4.7: "the replaced node is not automatically freed"), and the
-## page rebuilds every lane on each refresh.
-func _set_plot(row: HBoxContainer, plot: Control) -> void:
-	var placeholder := row.get_child(1)
-	placeholder.replace_by(plot)
-	placeholder.free()
-
-
-## A lane: [gutter | plot (a placeholder the caller replaces) | door]. `window` "" draws no door.
-func _lane_row(gutter: Control, window: String) -> HBoxContainer:
+## A lane: [gutter | plot | door]. `window` "" draws no door.
+func _lane_row(gutter: Control, plot: Control, window: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	_term_box.add_child(row)
@@ -361,9 +373,8 @@ func _lane_row(gutter: Control, window: String) -> HBoxContainer:
 	g.custom_minimum_size.x = GUTTER * UiTheme.text_scale()
 	g.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(g)
-	var placeholder := Control.new()
-	placeholder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(placeholder)
+	plot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(plot)
 	var door := PanelKit.sized(Button.new())
 	door.flat = true
 	door.text = "›"  # i18n: ok a glyph
@@ -455,8 +466,11 @@ func _door_row(parent: Control, text: String, tone: int, window: String) -> Butt
 
 func _fill_decided() -> void:
 	_clear(_decided_box)
+	# The month's booked effects first (the retired plate's "What your choices did"), then the ledger.
+	for effect in _read.get("effects", []):
+		_decided_box.add_child(PresidencyRows.choice_effect(effect))
 	var entries: Array = _state.recent_effects
-	if entries.is_empty():
+	if entries.is_empty() and (_read.get("effects", []) as Array).is_empty():
 		PanelKit.line(_decided_box, tr("Nothing committed yet this game."))
 	for i in mini(DECISIONS_SHOWN, entries.size()):
 		_decided_box.add_child(PresidencyRows.effect_row(entries[i]))
@@ -464,7 +478,9 @@ func _fill_decided() -> void:
 
 
 func _fold_text() -> String:
-	return ("▾ " if _decided_box.visible else "▸ ") + tr("What your decisions did (%d)") % (_state.recent_effects.size() if _state != null else 0)  # i18n: ok the fold's glyph
+	# What the fold holds, both lists (#403 pass 2 T8).
+	var held: int = (_read.get("effects", []) as Array).size() + (mini(DECISIONS_SHOWN, _state.recent_effects.size()) if _state != null else 0)
+	return ("▾ " if _decided_box.visible else "▸ ") + tr("What your decisions did (%d)") % held  # i18n: ok the fold's glyph
 
 
 ## A label on one line: in an HBox a wrapping label is given no width and stacks its words one
