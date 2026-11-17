@@ -43,7 +43,7 @@ var _selected := ""
 var _ns
 ## The selected entry's Choose (the page's fold answer).
 var _primary: Control = null
-## What the list was last filled from (the offer's ids, the text size, the language): an equal fill keeps the
+## What the list was last filled from (the offer's ids, the text size, the language, the term): an equal fill keeps the
 ## rows, so the Folder's rebuild on every day tick costs no list.
 var _filled := ""
 
@@ -100,7 +100,7 @@ static func _blocs_width() -> float:
 ## offered draws nothing.
 func fill(ns, offer: Array) -> void:
 	_ns = ns
-	var filled := "%s|%s|%s" % [",".join(offer.map(func(t): return String(t["id"]))), UiTheme.text_scale(), Strings.language()]
+	var filled := "%s|%s|%s|%d" % [",".join(offer.map(func(t): return String(t["id"]))), UiTheme.text_scale(), Strings.language(), int(ns.terms_served)]
 	if filled == _filled:
 		return
 	_filled = filled

@@ -402,7 +402,8 @@ func _build_page(ns) -> void:
 	elif _selected.begins_with("note:"):
 		_note_page(_selected.trim_prefix("note:"))
 	for button in _page.find_children("*", "Button", true, false):  # i18n: ok a class name
-		if not (button as Button).disabled:
+		# The hidden picker stays in the page: its rows are never another page's answer (pass 1).
+		if not (button as Button).disabled and not _picker.is_ancestor_of(button):
 			_primary = button
 			break
 

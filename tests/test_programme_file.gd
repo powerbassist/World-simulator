@@ -146,6 +146,18 @@ func _check_play_does_not_forfeit_the_offer(state, ns, loader) -> void:
 	_main._enforce_term_start_programme()
 	if not _main._clock.paused or not _main._paused_for_programme:
 		_fail("re-enforcing an unchosen term start did not restore the hold")
+	# Pass 1: the card closed with its X while the hold stands. The first Space still reaches the offer
+	# (its file put back), so the second can run -- the clock is never stuck behind a card gone.
+	ProgrammeFile.forget(_main)
+	_main._hud.inbox.dismiss(_card())
+	_main._toggle_pause_by_hand()
+	if not _main._clock.paused or not _main._windows.is_open("events") or _folder().selected() != "file:" + _card() or _card() == "":
+		_fail("with the programme card closed, Space did not open the offer on the Folder (page '%s')" % _folder().selected())
+	_main._windows.close("events")
+	_main._toggle_pause_by_hand()
+	if _main._clock.paused:
+		_fail("with the programme card closed, the second Space did not run the clock -- the hold is stuck")
+	_main._enforce_term_start_programme()
 
 
 func _open_file() -> void:
@@ -205,6 +217,9 @@ func _check_the_picker_survives_a_rebuild() -> void:
 		_folder().select("note:" + String(_main._hud.inbox.notes()[0]["id"]))
 		if picker.visible:
 			_fail("the picker stayed up on another page")
+		var action = _folder().primary_action()
+		if action != null and picker.is_ancestor_of(action):
+			_fail("on another page the Folder's primary action is a hidden programme row")
 	_open_file()
 	if picker.selected_id() != chosen:
 		_fail("coming back to the programme file lost the selection")

@@ -38,6 +38,11 @@ static func card_of(main) -> String:
 ## term's programme is a lane.
 static func open(main) -> void:
 	var card := card_of(main)
+	# The card closed with its X while the offer stands (pass 1): the hold is still up, so the file is put
+	# back (the enforcement is idempotent) rather than the press landing nowhere and the clock never running.
+	if card == "" and not Programme.available(main._state, main._state.player(), main._loader).is_empty():
+		main._enforce_term_start_programme()
+		card = card_of(main)
 	if card == "":
 		main._windows.open("overview")
 		return
@@ -78,7 +83,8 @@ static func build(main, page: Control, picker) -> void:
 static func booked(main, page: Control) -> void:
 	var live: Array = Programme.this_term(main._state.player())
 	if live.is_empty():
-		PanelKit.line(page, Strings.t("Answered."), PanelKit.Tone.DIM)
+		# The card left with nothing chosen (the clock ran past the term start): never dressed as an answer.
+		PanelKit.line(page, Strings.t("No programme was chosen this term."), PanelKit.Tone.DIM)
 		return
 	var ns = main._state.player()
 	var terms: Dictionary = Programme.terms_of(main._loader, String(live[-1]["entry_id"]))
