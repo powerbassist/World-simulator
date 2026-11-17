@@ -1,26 +1,28 @@
 {
   "_source": "Regulation (EU) 2021/1060 (Official Journal L 231, 30.6.2021): Article 112(3) for the rates, Article 63(2) for the last date expenditure counts (31 December 2029), Article 105 for the decommitment rule; Commission Implementing Decision (EU) 2021/1131 (Official Journal L 244, 9.7.2021, p. 21) for the ERDF allocations (Annex VI, current prices, EUR, total 2021-2027). Texts read on EUR-Lex through the Publications Office (publications.europa.eu/resource/celex/32021R1060 and 32021D1131) on 2026-11-17.",
-  "_note": "Figures are the Union's own, nothing here is derived. `envelope_eur_bn` is the nation's real ERDF allocation for 2021-2027 in current prices (Annex VI), the fund that pays buildings (Regulation (EU) 2021/1058 Article 3(1)(d)); the ESF+ (Annex VII, France 6.67, Germany 6.53, Poland 14.91 bn) pays people and the Cohesion Fund (Annex VIII, Poland 9.28 bn) pays transport and environment, so neither is counted. The game's declared share of it is the sim's constant, not data. Rates are the ceilings of Article 112(3): (a) 85 % less developed, (b) 70 % transition regions that were less developed in 2014-2020, (c) 60 % transition, (e) 40 % more developed; the 50 % case of (d) is not modelled (the Decision 2021/1130 does not list its regions). `pays_until_year` is the last year spending is eligible (Article 63(2)); a payment claim for commitments of 2021 to 2026 must reach the Commission by 31 December of the third year after the commitment (Article 105(1)). No period after 2027 is given: the 2028-2034 framework is not adopted.",
-  "eu": {
-    "rates": {
-      "less_developed": 0.85,
-      "transition_former_less_developed": 0.7,
-      "transition": 0.6,
-      "more_developed": 0.4
-    },
-    "periods": [
-      {
-        "id": "2021_2027",
-        "first_year": 2021,
-        "last_year": 2027,
-        "pays_until_year": 2029,
-        "envelope_eur_bn": {
-          "FRA": 9.0704,
-          "DEU": 10.9127,
-          "POL": 47.4167
+  "_note": "Figures are the Union's own, nothing here is derived. `envelope_eur_bn` is the nation's real ERDF allocation for 2021-2027 in current prices (Annex VI), the fund that pays buildings (Regulation (EU) 2021/1058 Article 3(1)(d)); the ESF+ (Annex VII, France 6.67, Germany 6.53, Poland 14.91 bn) pays people and the Cohesion Fund (Annex VIII, Poland 9.28 bn) pays transport and environment, so neither is counted. The game's declared share of it is the sim's constant, not data. Rates are the ceilings of Article 112(3): (a) 85 % less developed, (b) 70 % transition regions that were less developed in 2014-2020, (c) 60 % transition, (e) 40 % more developed; the 50 % case of (d) is not modelled (the Decision 2021/1130 does not list its regions). `pays_until_year` is the last year spending is eligible (Article 63(2)); a payment claim for commitments of 2021 to 2026 must reach the Commission by 31 December of the third year after the commitment (Article 105(1)). No period after 2027 is given: the 2028-2034 framework is not adopted. The `organisations` shape is the one Systems' loader reads.",
+  "organisations": {
+    "eu": {
+      "rates": {
+        "less_developed": 0.85,
+        "transition_former_less_developed": 0.7,
+        "transition": 0.6,
+        "more_developed": 0.4
+      },
+      "periods": [
+        {
+          "id": "2021_2027",
+          "first_year": 2021,
+          "last_year": 2027,
+          "pays_until_year": 2029,
+          "envelope_eur_bn": {
+            "FRA": 9.0704,
+            "DEU": 10.9127,
+            "POL": 47.4167
+          }
         }
-      }
-    ],
-    "warn_months": 12
+      ],
+      "warn_months": 12
+    }
   }
 }

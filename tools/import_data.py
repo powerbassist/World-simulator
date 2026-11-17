@@ -2584,8 +2584,21 @@ def natural_national_rate(nid):
     return round(sum(rates) / len(rates), 3)
 
 
+def load_cohesion_categories():
+    """{nation id: {region id: category}} from data/units/cohesion_categories.json, the
+    committed, sourced table of the Union's categories (V5.3 c'). A re-import writes the
+    field from it, so it is never hand-edited into data/regions/. A nation absent from the
+    table (Britain, the non-members) gets no field."""
+    path = ROOT / "data" / "units" / "cohesion_categories.json"
+    if not path.is_file():
+        return {}
+    table = json.loads(path.read_text(encoding="utf-8")).get("regions", {})
+    return {nid: {rid: row["category"] for rid, row in rows.items()} for nid, rows in table.items()}
+
+
 def build_regions():
     """{nation id: the file to write}, plus the index and the join's own counts."""
+    cohesion = load_cohesion_categories()
     populations = load_eurostat_region_population()
     nuts = load_gisco_nuts()
     inject_admin1(populations, nuts)
@@ -2677,6 +2690,7 @@ def build_regions():
                 "unemployment_rel": region_rel,
                 "sector_mix": region_mix,
                 "natural_change_pct": natural[nid]["rates"][code],
+                **({"cohesion_category": cohesion[nid][code]} if code in cohesion.get(nid, {}) else {}),
                 "cities": cities,
             })
 
