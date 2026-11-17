@@ -68,6 +68,8 @@ func _process(_delta: float) -> bool:
 	_check_the_inbox_stays_only_for_answers()
 	_check_the_programme_file_goes_to_the_agenda()
 	_check_the_subject_line()
+	_check_a_lapsed_request_says_so()
+	_check_one_count_on_day_one()
 	_start_the_lapse()
 	return false
 
@@ -576,6 +578,44 @@ func _check_the_subject_line() -> void:
 	var want: String = who if who != "" else String(ns.head_of_government_title)
 	if want == "" or not _texts(_panel()._page).contains(want):
 		_fail("the page of an event about the head of government does not name them ('%s')" % want)
+	_clear_desk()
+
+
+## QA's TAKE 1 on #403 (real-window play): a request left open on the Folder past its date lapses; its page
+## says so, never "Answered." -- the player gave none.
+func _check_a_lapsed_request_says_so() -> void:
+	_clear_desk()
+	var asked := _request()
+	var ns = _main._state.player()
+	_open_tab()
+	_panel().select("file:" + asked)
+	var row: Dictionary = ns.audience_requests[0]
+	row["deadline_month"] = int(_main._state.year) * 12 + int(_main._state.month) - 1  # overdue
+	preload("res://src/sim/audiences.gd").tick_month(_main._state, _main._loader, {})
+	AudienceDriver.refresh(_main)
+	_panel()._refresh()
+	var text := _texts(_panel()._page)
+	if _panel().selected() != "file:" + asked:
+		_fail("a lapsed request's page was swapped for another (selected '%s')" % _panel().selected())
+	if text.contains("Answered.") or not text.contains("lapsed"):
+		_fail("a lapsed request's page does not say it lapsed: '%s'" % text.left(120))
+	_clear_desk()
+
+
+## QA's TAKE 2 on #403 (T11): one count. On a new game's day 1 the page's files door counts the Folder's
+## "To answer" (the term's programme included), before any month end has pushed a read.
+func _check_one_count_on_day_one() -> void:
+	_clear_desk()
+	var page = _main._overview_panel
+	page.set_read({})  # nothing ranked yet: day 1
+	_main._hud.inbox.push("Choose the programme", "The term starts.", [], null, true)
+	_main._windows.open("overview")
+	page.mark_dirty()
+	page._process(0.0)
+	var want: int = _panel().answer_keys(_main).size()
+	if want == 0 or not String(page._count_doors["files"].text).begins_with(str(want)):
+		_fail("on day 1 the page's door reads '%s', the Folder lists %d to answer" % [page._count_doors["files"].text, want])
+	_main._windows.close_all()
 	_clear_desk()
 
 

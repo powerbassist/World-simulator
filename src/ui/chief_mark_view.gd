@@ -192,8 +192,7 @@ static func _push_read(main, lines: Array, who: String, face: Texture2D, chief) 
 	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said,
 		"feel": preload("res://src/ui/feelings.gd").of(main._state.player(), String(chief.id)) if chief != null else {},
 		"also": also_groups(main, lines.size(), game.get("also", [])),
-		"effects": _month_effects(main, game),
-		"to_answer": preload("res://src/ui/events_panel.gd").answer_keys(main).size()})
+		"effects": _month_effects(main, game)})
 
 
 ## The month's booked effects (the retired plate's "What your choices did"), worked out once a month: they

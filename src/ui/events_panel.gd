@@ -37,6 +37,8 @@ const MessageSettings = preload("res://src/ui/message_settings.gd")
 const FileRead = preload("res://src/ui/file_read.gd")
 const FileView = preload("res://src/ui/file_view.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
+const AudienceK = preload("res://src/sim/audience_constants.gd")
 
 const ANSWER := "answer"
 const DECIDED := "decided"
@@ -62,6 +64,9 @@ var _selected := ""
 var _shown_event := ""
 ## The shown file lapsed while open: its record says the clock answered it.
 var _lapsed := false
+## The request the shown file is, kept after it leaves: a request that lapsed while open says so, never
+## "Answered." (QA's TAKE 1 on #403).
+var _shown_request := ""
 ## A group asked for (the News line) before the list exists: its first item is chosen at the build.
 var _wanted_group := ""
 var _groups := {ANSWER: [], DECIDED: [], NEWS: []}
@@ -353,11 +358,19 @@ func _build_page(ns) -> void:
 	_primary = null
 	if not _selected.begins_with("file:") and not _selected.begins_with("desk:"):
 		_shown_event = ""
+		_shown_request = ""
 	if _selected.begins_with("file:"):
 		var id := _selected.trim_prefix("file:")
+		var live := not InboxFiles.of(_main._hud.inbox, id).is_empty()
 		if _main._event_cards.has(id):
 			_shown_event = String(_main._event_cards[id])
-		FileView.build(_page, FileRead.describe(_main, InboxFiles.of(_main._hud.inbox, id)), press)
+		if live:
+			_shown_request = String(preload("res://src/ui/audience_driver.gd").lane_of(_main)._request_of.get(id, ""))
+		var request := Audiences.request(ns, _shown_request) if _shown_request != "" and not live else {}
+		if String(request.get("status", "")) == AudienceK.STATUS_LAPSED:
+			PanelKit.line(_page, tr("It lapsed while it was open: the request went unanswered."))
+		else:
+			FileView.build(_page, FileRead.describe(_main, InboxFiles.of(_main._hud.inbox, id)), press)
 		# T10: the term's programme is a file with no answer of its own; until S3 its choice is on the Agenda.
 		if id == String(_main._programme_card_id) and not InboxFiles.of(_main._hud.inbox, id).is_empty():
 			var go := PanelKit.sized(Button.new())

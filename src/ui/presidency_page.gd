@@ -54,6 +54,9 @@ var _state
 var _loader
 var _dirty := true
 var _read := {}
+## The Folder's "To answer" count, asked when the lead is drawn (files_driver.gd sets it): one count, whether
+## or not a month end has pushed a read yet (QA's TAKE 2 on #403, day 1).
+var files_count := Callable()
 ## A re-rank queued for the frame's end (chief_mark_view.gd), run here first when a build comes before
 ## it: a build on the old read drew the lead the command had just made stale, then built again once the
 ## read landed (#401 pass 2, RECORD 11). Empty when none waits.
@@ -221,7 +224,7 @@ func _fill_lead(ns) -> void:
 		_lead_rows.append(_lead_row(lines[i], i))
 	PresidencyRows.also_due(_rows_box, _read.get("also", []), go_requested.emit)
 	# One count, the Folder's "To answer" (#403 pass 2 T11), pushed with the read.
-	var files := int(_read.get("to_answer", ns.event_queue.size()))
+	var files: int = int(files_count.call()) if files_count.is_valid() else ns.event_queue.size()
 	_count_doors["files"].text = tr_n("%d file to answer", "%d files to answer", files) % files
 	var waiting := Audiences.waiting_count(ns)
 	_count_doors["requests"].text = tr_n("%d request waiting", "%d requests waiting", waiting) % waiting

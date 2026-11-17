@@ -23,6 +23,7 @@ static func register(main) -> void:
 	view.attach(main)
 	_views[main.get_instance_id()] = view
 	main._events_panel.attach(main)
+	main._overview_panel.files_count = _files_count.bind(main)
 	main._hud.inbox.news_pressed.connect(func() -> void:
 		main._events_panel.show_group(main._events_panel.NEWS)
 		main._windows.open("events"))
@@ -40,6 +41,11 @@ static func activated(main, card_id: String) -> void:
 		main._windows.open(WINDOW)
 		return
 	main._windows.open("events")
+
+
+## The Folder's "To answer" count, for the Presidency page's door (a bound static: the page outlives no main).
+static func _files_count(main) -> int:
+	return main._events_panel.answer_keys(main).size()
 
 
 ## A desk file on the Folder (a priority's Go): the tab, on that file's page. The clock is left as it is.
