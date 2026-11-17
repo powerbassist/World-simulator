@@ -299,7 +299,7 @@
    "tests/test_natural_change.gd",
    "tests/test_nation_panel.gd",
    "tests/test_commodities_panel.gd",
-   "tests/test_agenda_panel.gd",
+   "tests/test_programme_file.gd",
    "tests/test_menu.gd",
    "tests/test_build_info.gd",
    "tests/test_boot_stages.gd",

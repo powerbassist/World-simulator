@@ -111,7 +111,7 @@ static func _agenda(ns, loader) -> Array:
 		var clock := StripReadings.programme_clock_text(terms, live)
 		if not clock.is_empty():
 			text += " · %s" % clock
-		rows.append(_row(text, PanelKit.Tone.PLAIN, "agenda"))
+		rows.append(_row(text, PanelKit.Tone.PLAIN, "overview"))  # its lane (the Agenda retired, S3)
 	return rows
 
 

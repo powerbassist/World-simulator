@@ -364,7 +364,7 @@ tests=(
   tests/test_commodities_panel.gd
   # V4.1: the agenda surface -- the term-start pause, the offer built from the
   # register, the choose command path, the derived progress bar, and the cards.
-  tests/test_agenda_panel.gd
+  tests/test_programme_file.gd
   # V2.3's pipeline: orphan art refused, the bytes-not-load() path held green
   # headless, the missing-portrait fallback, one committed icon per registered
   # window, and the card showing the player's leader's art.

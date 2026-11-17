@@ -400,6 +400,9 @@ func _check_notify_band() -> void:
 		return
 	var ns = _main._state.player()
 	_reset_desk()
+	# The term-start offer marks the Folder too (rework 2 S3): closed here, the band is about the crisis.
+	var chosen_was := int(ns.programme_chosen_term)
+	ns.programme_chosen_term = int(ns.terms_served)
 	Events.announce(ns, ev, _month_index(), Events.region_names(ns, _main._loader))
 	var state = _main._state
 	var loader = _main._loader
@@ -413,6 +416,7 @@ func _check_notify_band() -> void:
 	if not Pending.window_ids(state, loader, reg).has("events"):
 		_fail("notify OFF: a decision in its last month lit no mark")
 	_reset_desk()
+	ns.programme_chosen_term = chosen_was
 
 
 func _check_feed_band() -> void:

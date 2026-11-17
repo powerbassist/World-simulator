@@ -27,6 +27,7 @@ const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const ChiefMarkView = preload("res://src/ui/chief_mark_view.gd")
 const FilesDriver = preload("res://src/ui/files_driver.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
+const ProgrammeFile = preload("res://src/ui/programme_file.gd")
 
 ## The chief has three lines a situation (#226: 4 chiefs x 3 situations x 3).
 const CHIEF_VARIANTS := 3
@@ -41,7 +42,6 @@ static var _games := {}
 static func register(main) -> void:
 	_games[main.get_instance_id()] = {"lines": [], "memory": {}, "state_id": 0, "pending": {}, "said_in": "", "turns": {}}
 	# The two verbs block 0 added where a Go lands (2.4); the panels only ask.
-	main._agenda_panel.open_requested.connect(func(tab: String) -> void: main._windows.open(tab))
 	main._polling_panel.calm_requested.connect(func(tab: String, bloc: String) -> void: _open_laws_or(main, tab, bloc))
 	main._hud.inbox.card_action.connect(func(id: String, _i: int) -> void:  # V5.3 B7: a bill card's Go
 		if main._assembly_news.take_go(id): _open_laws_or(main, "legislature", ""))
@@ -263,6 +263,12 @@ static func go(main, index: int) -> void:
 			main._windows.open(tab)
 			main._hud.inbox.slide_in()
 			main._hud.inbox.raise_card(AudienceDriver.lane_of(main).card_of(subject))
+		"programme", "commitment" when tab == "events":
+			ProgrammeFile.open(main, String(target["acts_on"]))  # its file while the offer stands, else its lane
+		"programme" when tab == "overview":
+			# T4: the live entry's lane, scrolled to and focused -- the page alone would be a dead click.
+			main._windows.open(tab)
+			main._overview_panel.focus_goal(subject)
 		"bloc":
 			_open_laws_or(main, tab, subject)
 		"bill":
@@ -292,23 +298,26 @@ static func go(main, index: int) -> void:
 
 ## Where a line's Go lands: the tab, and the id an enabled control there is tagged
 ## with (acts_on.gd) -- the line's subject, except a commitment, whose verb is the
-## promised thing's own: a programme entry on the Agenda, an office on People's rows, a
+## promised thing's own: a programme entry on its file in the Folder, an office on People's rows, a
 ## figure on the Budget. A tabled bill is RF3's one named exception (the parent's
 ## call): it lands on the Legislature's tabled line, which has no verb until the
 ## Assembly divides.
 static func target_of(line: Dictionary) -> Dictionary:
 	var kind := String(line["kind"])
 	var subject := String(line["subject"])
+	# S3: the offer is the term's programme file on the Folder (its Choose acts on "offer"); a live entry's
+	# Go lands on its lane on the Presidency page (the GO table's tab).
+	if kind == "programme" and subject == "offer":
+		return {"tab": "events", "acts_on": subject}
 	if kind != "commitment":
 		return {"tab": String(line["go"]["tab"]), "acts_on": subject}
 	var object := subject.get_slice("|", 2)
-	# A minister's word (pre-gate RF3): the minister does the work, so the Agenda,
-	# Politics or the Budget hold no verb of the player's on it -- and the Agenda
-	# does not even show a programme entry the player does not hold. The Diary does.
+	# A minister's word (pre-gate RF3): the minister does the work, so the Folder,
+	# Politics or the Budget hold no verb of the player's on it. The Diary does.
 	if subject.get_slice("|", 0) == "delegated":
 		return {"tab": "calendar", "acts_on": subject}
 	if object.begins_with("programme:"):
-		return {"tab": "agenda", "acts_on": object.trim_prefix("programme:")}
+		return {"tab": "events", "acts_on": object.trim_prefix("programme:")}
 	if object.begins_with("office:"):
 		return {"tab": "people", "acts_on": "seats"}
 	if object.begins_with("meter:"):

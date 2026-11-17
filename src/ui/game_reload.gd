@@ -47,6 +47,7 @@ const MAIN_KEYED_STATICS := [
 	["audience_driver", "_games"], ["briefing_driver", "_games"], ["phone_driver", "_games"],
 	["poll_card", "_games"], ["files_driver", "_views"], ["council_cards", "_told"],
 	["proposal_note", "_tabled"], ["proposal_note", "_told"], ["region_arrival", "_told"],
+	["programme_file", "_seen"],
 ]
 
 
