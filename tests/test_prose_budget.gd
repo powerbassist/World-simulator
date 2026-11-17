@@ -69,7 +69,7 @@ const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "regi
 	"overview": 170}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
-	"diplomacy": 22, "economy": 128, "energy": 118,
+	"diplomacy": 22, "economy": 130, "energy": 118,
 	"orgs": 610,
 	"majority": 97, "projects": 75, "society": 106,
 }
@@ -130,7 +130,10 @@ const TOTAL_PENDING := {
 ## Its pass 2, a stated rise 2958 -> 2966 (T11, T15 of the parent's pass): a shut law's precondition names its
 ## figure and where it stands ("Needs unemployment at 9.0% or more; it is 7.7% now."), and a simple
 ## majority says its rule in words ("more for than against") instead of a seat count.
-const TOTAL_SUM_CEILING := 2966
+## Top bar A (#418 pass 2, T5: Economy prints the bar's own money figure and word, "12.9 bn €"
+## under "deficit, this month", where it printed "-5.30%" under "budget balance"): +2 on
+## Economy, stated: 2966 -> 2968.
+const TOTAL_SUM_CEILING := 2968
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

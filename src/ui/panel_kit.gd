@@ -39,6 +39,7 @@ const Num = preload("res://src/ui/num.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const TermText = preload("res://src/ui/term_text.gd")
+const MeterBar = preload("res://src/ui/meter_bar.gd")
 
 ## What a panel prints when it does not know. An em dash is not a small number:
 ## it says the figure is absent, where `0.00` says the figure is zero, and the
@@ -459,3 +460,14 @@ static func _variation(tone: Tone, fallback: String) -> String:
 			return UiTheme.CAPTION
 		_:
 			return fallback
+
+
+## V5.3 (gate 3, top bar A): `value` of `top` as a thin meter with a tick at `mark`, its
+## threshold (meter_bar.gd). The caller prints the figure and names the mark in words.
+static func meter(parent: Control, value: float, top: float, mark: float) -> Control:
+	var bar := MeterBar.new()
+	# Decoration by default; a host that hangs a tip on its figure makes it a hover target.
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(bar)
+	bar.setup(value, top, mark)
+	return bar

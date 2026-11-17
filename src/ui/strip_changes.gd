@@ -3,29 +3,54 @@ extends RefCounted
 ## The change beside a standing figure on the strip (V5.3, gate H6: a figure with no
 ## movement beside it says where it is and not where it is going): its own movement over
 ## Trends' window, signed, and whether that is good news. Only the figures history
-## carries (deficit, GDP's growth, unemployment); an empty dictionary is "no history
-## yet" or "no movement the player would notice". The tone is never alone: the glyph and
-## the number print too.
+## carries (the money, GDP's growth, unemployment); an empty dictionary is "no history
+## yet" or "no movement the player would notice". The tone is never alone: the glyph, the
+## number and, since gate 3 (G3-10, "i dont know if i got positive or negative flux"),
+## the word -- better or worse -- print too. The money moves as its signed balance:
+## ▲ is a smaller deficit or a bigger surplus, as its curve draws it.
 
 const Trends = preload("res://src/ui/trends.gd")
 const Num = preload("res://src/ui/num.gd")
+const Strings = preload("res://src/ui/strings.gd")
+const StripSeries = preload("res://src/ui/strip_series.gd")
 
 const WINDOW := Trends.TREND_MONTHS
 
+## Below this a move is not one the player would notice: points for a rate; for the money,
+## a share of a month's GDP, so the bar is the same for France and for Poland.
+const NOTICED_PT := 0.05
+const NOTICED_SHARE_OF_MONTH_GDP := 0.0002
+
 const CHANGES := {
-	"deficit": {"key": "deficit_pct_gdp", "sign": -1.0, "good_when_rising": true},  # i18n: ok reading ids
-	"gdp": {"key": "growth_annual_pct", "sign": 1.0, "good_when_rising": true},  # i18n: ok reading ids
-	"unemployment": {"key": "unemployment_pct", "sign": 1.0, "good_when_rising": false},  # i18n: ok reading ids
+	"deficit": {"key": "", "good_when_rising": true},  # i18n: ok reading ids -- the signed balance (StripSeries)
+	"gdp": {"key": "growth_annual_pct", "good_when_rising": true},  # i18n: ok reading ids
+	"unemployment": {"key": "unemployment_pct", "good_when_rising": false},  # i18n: ok reading ids
 }
 
-## {text: "▲ 0.19", good: true} or {} -- see CHANGES.
+## {text: "▼ 0.4 bn worse", good: false} or {} -- see CHANGES.
 static func change(id: String, state) -> Dictionary:
 	if not CHANGES.has(id):
 		return {}
 	var spec: Dictionary = CHANGES[id]
-	var moved: float = Trends.delta(state, String(spec["key"]), WINDOW) * float(spec["sign"])
-	if is_nan(moved) or absf(moved) < 0.05:
+	var money := id == "deficit"
+	var moved := _balance_moved(state) if money else Trends.delta(state, String(spec["key"]), WINDOW)
+	if is_nan(moved) or absf(moved) < (_noticed_bn(state) if money else NOTICED_PT):
 		return {}
-	return {"text": "%s %s" % ["▲" if moved > 0.0 else "▼", Num.f(absf(moved), 2)],  # i18n: ok glyph and figure
-		"good": (moved > 0.0) == bool(spec["good_when_rising"])}
+	var good: bool = (moved > 0.0) == bool(spec["good_when_rising"])
+	var amount := Strings.t("%s bn") % Num.f(absf(moved), 1) if money else Strings.t("%s pt") % Num.f(absf(moved), 2)
+	var figure := "%s %s" % ["▲" if moved > 0.0 else "▼", amount]  # i18n: ok a glyph and a figure
+	return {"text": Strings.t("%s better") % figure if good else Strings.t("%s worse") % figure, "good": good}
 
+
+## The month's balance now less WINDOW months ago, in bn: up is a smaller deficit.
+static func _balance_moved(state) -> float:
+	var now := Trends.entry_at(state, 0)
+	var then := Trends.entry_at(state, WINDOW)
+	if now.is_empty() or then.is_empty():
+		return NAN
+	return StripSeries.entry_balance(now) - StripSeries.entry_balance(then)
+
+
+static func _noticed_bn(state) -> float:
+	var now := Trends.entry_at(state, 0)
+	return NOTICED_SHARE_OF_MONTH_GDP * float(now.get("gdp_eur_bn", 0.0)) / 12.0

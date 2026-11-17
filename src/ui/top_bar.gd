@@ -6,6 +6,9 @@ const StripChanges = preload("res://src/ui/strip_changes.gd")
 const StripChildren = preload("res://src/ui/strip_children.gd")
 const TipPopup = preload("res://src/ui/tip_popup.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ChartKit = preload("res://src/ui/chart_kit.gd")
+const StripSeries = preload("res://src/ui/strip_series.gd")
 
 ## The thin strip along the top edge -- U2, rebuilt at U5a, made ONE THING at V4.8a,
 ## regrouped at V5.3 (the author picked bar C; gate H6, "info bar text not aligned,
@@ -28,10 +31,11 @@ const Motion = preload("res://src/ui/motion.gd")
 ## Reads state, never writes it. Save and the menu moved to the title bar
 ## (V5.1-c2.3), so the strip is the figures alone.
 
-## The strip's slot under the title bar: the BUREAU board's 58 px, which holds
-## the stacked figures up to the largest text size (they need 54 at 130 %,
-## V5.1-c2.4). The workspace starts below it.
-const BAR_HEIGHT := 58
+## The strip's slot under the title bar. 58 px held caption over value (54 at 130 %,
+## V5.1-c2.4); gate 3's tiles (the author's pick, top bar A) add a row under each value
+## -- its change in words, or its meter -- so the slot is the tiles' height at 130 %
+## (tests/test_top_bar_tiles.gd). The workspace starts below it.
+const BAR_HEIGHT := 84
 ## The programme caption's width: "PROGRAMME" itself, so the strip's measured
 ## width is the same with or without one running.
 const PROGRAMME_CAPTION_PX := 104
@@ -52,6 +56,21 @@ var _figure_captions := {}
 var _boxes := {}
 ## Reading id -> its change label (beside the value); empty for a figure with none.
 var _changes := {}
+## Reading id -> the slot its curve is drawn in, the curve as last drawn (null for none),
+## and the history it was drawn from ("<state id>:<months>"): redrawn when that changes.
+var _spark_slots := {}
+var _sparks := {}
+var _spark_keys := {}
+## Reading id -> its signed value at the last refresh, for a reading whose figure is a size
+## (the money): the flash follows the sign, not the shown text.
+var _signed := {}
+## The change row's height as last measured, and the text size it was measured at.
+var _row_h := 0.0
+var _row_h_scale := 0.0
+## Reading id -> the row under the value: its meter (built on first use) and its note.
+var _subs := {}
+var _meters := {}
+var _notes := {}
 ## Reading id -> its level-1 lines as last refreshed, alert line included.
 var _tips := {}
 var _popup
@@ -122,10 +141,10 @@ func _ready() -> void:
 	add_child(_popup)
 
 
-## Caption above, value and its change beside it below. U5a put them on one line to
-## get the strip to 40px; at V4.8a's thirteen readings one line needed 2219 px of a 1920
-## screen, so they stack again -- with a negative separation so the two lines sit inside
-## the dock's top.
+## A tile (gate 3, the author's pick "A : tuiles avec courbes"): the caption, then the value
+## with its 18-month curve beside it, then a row under them -- the change in words with its
+## glyph and tone, or the meter against its threshold, and a note (GDP's level, the mark in
+## words). The rows stack with a negative separation so the tile stays inside its slot.
 func _build_figure(key: String, title: String) -> Control:
 	var box := VBoxContainer.new()
 	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -138,23 +157,42 @@ func _build_figure(key: String, title: String) -> Control:
 	box.add_child(label)
 
 	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 7)
+	line.add_theme_constant_override("separation", 8)
 	box.add_child(line)
 	var value := Label.new()
 	value.theme_type_variation = UiTheme.FIGURE
 	_hoverable(value, key)
 	line.add_child(value)
+	var slot := HBoxContainer.new()
+	slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line.add_child(slot)
+
+	var sub := HBoxContainer.new()
+	sub.add_theme_constant_override("separation", 6)
+	box.add_child(sub)
+	# Every tile keeps this row, empty or not, so the tiles stand aligned and none jumps when
+	# a change appears (gate H6, #418 pass 2).
 	var change := Label.new()
-	change.theme_type_variation = UiTheme.CAPTION
-	change.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	change.size_flags_vertical = Control.SIZE_SHRINK_END
-	change.hide()
+	# A change line's own style even when empty: GOOD_TEXT and BAD_TEXT stand taller than a
+	# caption, and an empty row in CAPTION made those tiles 6 px shorter.
+	change.theme_type_variation = UiTheme.GOOD_TEXT
+	change.text = " "
 	_hoverable(change, key)
-	line.add_child(change)
+	sub.add_child(change)
+	var note := Label.new()
+	note.theme_type_variation = UiTheme.CAPTION
+	note.hide()
+	_hoverable(note, key)
+	sub.add_child(note)
+
 	_figure_values[key] = value
 	_figure_captions[key] = label
 	_boxes[key] = box
 	_changes[key] = change
+	_spark_slots[key] = slot
+	_subs[key] = sub
+	_notes[key] = note
 	# The programme's caption is its NAME (V4.1), which content writes and no width
 	# bounds -- clipped with an ellipsis, the full name in the tip, so one long
 	# programme cannot push the strip off the screen.
@@ -190,6 +228,16 @@ func _on_figure_exited(key: String) -> void:
 ## The figure's box (caption over value): what a reading's visibility shows and hides.
 func figure_box(id: String) -> Control:
 	return _boxes[id]
+
+
+## The figure's curve as last drawn, null for none (a test reads it).
+func spark_of(id: String) -> Control:
+	return _sparks.get(id, null)
+
+
+## The figure's meter, null for a figure with none (a test reads it).
+func meter_of(id: String):
+	return _meters.get(id, null)
 
 
 ## The plain text of a reading's tooltip, alert line included: the lines the
@@ -236,12 +284,19 @@ func refresh(state, _clock: Node, loader = null) -> void:
 			continue
 		# V4.9a. Rolls to the new value when only its numbers moved; a reading
 		# that changed shape snaps. Final the moment motion is off (headless).
-		Motion.roll_text(value, String(r["text"]), flash_tone(id, value.text, String(r["text"])))
+		var tone := flash_tone(id, value.text, String(r["text"]))
+		if r.has("signed"):
+			tone = signed_tone(float(_signed.get(id, r["signed"])), float(r["signed"]))
+			_signed[id] = float(r["signed"])
+		Motion.roll_text(value, String(r["text"]), tone)
 		if r.has("caption"):
 			caption.text = String(r["caption"]).to_upper()
 		var alert := String(r["alert_window"])
 		value.theme_type_variation = UiTheme.FIGURE if alert.is_empty() else UiTheme.FIGURE_ALERT
 		_show_change(id, state)
+		_hold_row(id)
+		_show_curve(id, state)
+		_show_meter(id, r)
 		var lines: Array = (r["lines"] as Array).duplicate()
 		if not alert.is_empty():
 			lines.append({"text": tr("Open %s.") % _window_hint(alert), "child_id": ""})
@@ -255,11 +310,76 @@ func refresh(state, _clock: Node, loader = null) -> void:
 func _show_change(id: String, state) -> void:
 	var label: Label = _changes[id]
 	var c := StripChanges.change(id, state)
-	label.visible = not c.is_empty()
 	if c.is_empty():
+		label.text = " "
+		label.theme_type_variation = UiTheme.GOOD_TEXT
 		return
 	label.text = String(c["text"])
 	label.theme_type_variation = UiTheme.GOOD_TEXT if bool(c["good"]) else UiTheme.BAD_TEXT
+
+
+## Every tile's change row stands at the height of a line carrying the ▲▼ glyphs, which come
+## from a taller fallback font: a row without them was 3 px shorter, and the tiles stood at
+## two heights (gate H6, #418 pass 2).
+func _hold_row(id: String) -> void:
+	if _row_h_scale != UiTheme.text_scale():
+		var probe := Label.new()
+		probe.theme_type_variation = UiTheme.GOOD_TEXT
+		probe.text = "▲▼ 0"  # i18n: ok a measuring probe, never shown
+		add_child(probe)
+		_row_h = probe.get_combined_minimum_size().y
+		probe.queue_free()
+		_row_h_scale = UiTheme.text_scale()
+	_subs[id].custom_minimum_size.y = _row_h
+
+
+## The 18-month curve beside a figure history carries (StripSeries), redrawn only when the
+## history it reads changed (a new month, another game); the money's is the signed balance
+## with its zero line. The curve is a hover target like the figure, so the tip stays.
+func _show_curve(id: String, state) -> void:
+	if not StripSeries.IDS.has(id):
+		return
+	var key := "%d:%d" % [state.get_instance_id(), state.history.size()]
+	if _spark_keys.get(id, "") == key:
+		return
+	_spark_keys[id] = key
+	var old: Control = _sparks.get(id, null)
+	if old != null:
+		old.get_parent().remove_child(old)
+		old.queue_free()
+	_sparks[id] = null
+	var values := StripSeries.values(id, state)
+	if values.size() < 2:
+		return
+	var spark := ChartKit.spark(_spark_slots[id], values, [], "", {"zero": id == "deficit"})
+	_hover_target(spark, id)
+	_sparks[id] = spark
+
+
+func _hover_target(node: Control, key: String) -> void:
+	node.mouse_filter = Control.MOUSE_FILTER_PASS
+	node.mouse_entered.connect(_on_figure_entered.bind(key, null))
+	node.mouse_exited.connect(_on_figure_exited.bind(key))
+
+
+## The meter against its threshold (unrest, the majority) and the note naming the mark.
+func _show_meter(id: String, r: Dictionary) -> void:
+	var note: Label = _notes[id]
+	note.text = String(r.get("note", ""))
+	note.visible = not note.text.is_empty()
+	if not r.has("meter"):
+		if _meters.has(id):
+			_meters[id].hide()
+		return
+	var m: Dictionary = r["meter"]
+	if not _meters.has(id):
+		_meters[id] = PanelKit.meter(_subs[id], float(m["value"]), float(m["top"]), float(m["mark"]))
+		_subs[id].move_child(_meters[id], 0)
+		_hover_target(_meters[id], id)
+		_meters[id].size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	else:
+		_meters[id].setup(float(m["value"]), float(m["top"]), float(m["mark"]))
+	_meters[id].show()
 
 
 ## V5.3-0 4.5: the tone a figure flashes when it moves from `before` to `after`:
@@ -271,6 +391,14 @@ static func flash_tone(id: String, before: String, after: String) -> Color:
 	if dir == 0 or not StripReadings.GOOD_WHEN_RISING.has(id):
 		return Color(0, 0, 0, 0)
 	return UiTheme.GOOD if (dir > 0) == bool(StripReadings.GOOD_WHEN_RISING[id]) else UiTheme.BAD
+
+
+## The money's flash (#418 pass 2): its signed balance moving up is good news, down bad,
+## across a deficit/surplus crossing too -- the shown figure is a size and cannot say.
+static func signed_tone(before: float, after: float) -> Color:
+	if is_equal_approx(before, after):
+		return Color(0, 0, 0, 0)
+	return UiTheme.GOOD if after > before else UiTheme.BAD
 
 
 ## The strip in its slot -- the screen right of the sidebar. The gaps between the

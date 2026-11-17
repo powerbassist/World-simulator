@@ -3,12 +3,14 @@ extends PanelContainer
 ## The chief's line as a caption under his mark -- G1, chief-briefing-brief.md 2: when
 ## he has something to say (the situation changed, or a line is new) the line drops
 ## under the mark for the length of it, over the running clock: no dim, no key, and
-## the mouse goes through it to whatever it covers (the right end of the figure strip
-## for a few seconds -- a figure there is still read on the map's own plates).
+## the mouse goes through it to whatever it covers (below the figure strip since #418:
+## the top of the map or the docked page, for a few seconds).
 ## voice.gd requires the line on screen while it is said; this is where it is. A line
 ## queued behind a messenger starts after this caption's timer: ChiefMarkView puts it back.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const TitleBar = preload("res://src/ui/title_bar.gd")
+const TopBar = preload("res://src/ui/top_bar.gd")
 
 ## Reading time when no clip says how long the line is (voices off, a language the
 ## clip was not voiced in): a speaking pace, held between a floor and a ceiling.
@@ -65,9 +67,12 @@ func _settle(anchor: Control) -> void:
 	_place(anchor)
 
 
+## Under the figure strip, not over it (#418 pass 2): the strip's tiles grew rightward with
+## top bar A, and a line dropped from the mark covered the unrest and majority tiles.
 func _place(anchor: Control) -> void:
 	var rect := anchor.get_global_rect()
-	global_position = Vector2(maxf(0.0, rect.end.x - size.x), rect.end.y + GAP_PX)
+	var top := maxf(rect.end.y, TitleBar.HEIGHT + TopBar.BAR_HEIGHT)
+	global_position = Vector2(maxf(0.0, rect.end.x - size.x), top + GAP_PX)
 
 
 func text() -> String:
