@@ -8,6 +8,13 @@ and level rows {region, figure, level}, every number a raw cell.
 
   python tools/units_stock_fr.py            # prints the table and the self-checks
   python tools/units_stock_fr.py --check    # also fails if data/units/stock/FRA.json differs
+  python tools/units_stock_fr.py --write    # rewrites its `stock` and `figures`, keeping `_source`
+
+The file's shape (Systems' loader): stock rows {region, type, units, capacity}, and per type
+`figures[type] = {figure, national, levels: [{region, level}]}`, the national value and the levels from
+ONE table and one scope. The catalogue's per-nation `capacity` is printed, not written here:
+a school = the mean enrolment per lycee; a hospital = the mean MCO beds (medicine, surgery, obstetrics, full
+hospitalisation) of the establishments with an authorised emergency department, DREES ARES 2021.
 
 Sources (read 2026-11-17), all in the file's `_source`:
   lycees      data.education.gouv.fr, fr-en-lycee_gt-effectifs-niveau-sexe-lv and
@@ -31,6 +38,8 @@ YEAR = "2024"
 PORTAL = "https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/"
 DREES = ("https://data.drees.solidarites-sante.gouv.fr/api/explore/v2.1/catalog/datasets/bases-ares/"
          "attachments/nombre_d_etablissements_de_sante_en_france_2013_2021_xlsx")
+DREES_URG = ("https://data.drees.solidarites-sante.gouv.fr/api/explore/v2.1/catalog/datasets/bases-ares/"
+             "attachments/nombre_d_etablissements_de_sante_en_france_2013_2021_xlsx")  # sheet NB_URG, same workbook as NB_ET
 # INSEE region code -> game region. The game's regions are the 2016 regions.
 REGION = {"11": "FR1", "24": "FRB", "27": "FRC", "28": "FRD", "32": "FRE", "44": "FRF", "52": "FRG",
           "53": "FRH", "75": "FRI", "76": "FRJ", "84": "FRK", "93": "FRL", "94": "FRM"}
@@ -40,6 +49,9 @@ NUTS = {"FR1": ["FR10"], "FRB": ["FRB0"], "FRC": ["FRC1", "FRC2"], "FRD": ["FRD1
         "FRI": ["FRI1", "FRI2", "FRI3"], "FRJ": ["FRJ1", "FRJ2"], "FRK": ["FRK1", "FRK2"], "FRL": ["FRL0"],
         "FRM": ["FRM0"]}
 OVERSEAS = ["FRY1", "FRY2", "FRY3", "FRY4", "FRY5"]
+FIGURES = {"upper_secondary_school": "upper_secondary_pupils_per_teacher", "hospital": "hospital_beds_per_1000"}
+MCO = ("https://data.drees.solidarites-sante.gouv.fr/api/explore/v2.1/catalog/datasets/bases-ares/"
+       "attachments/capacites_et_activite_en_mco_en_france_2013_2021_xlsx")
 
 
 def get(url: str) -> bytes:
@@ -59,6 +71,27 @@ def eurostat(code: str, **kw) -> dict:
     geo = d["dimension"]["geo"]["category"]["index"]
     # every other dimension is a single value here, so the position is the geo index
     return {g: d["value"][str(i)] for g, i in geo.items() if str(i) in d["value"]}
+
+
+def number(cell) -> int:
+    return int(str(cell).replace(" ", "").replace(" ", "").replace(" ", ""))
+
+
+def mco_means(count: dict) -> tuple:
+    """Mainland MCO beds in full hospitalisation (2021) and mainland establishments with an authorised
+    emergency department (2021), both DREES ARES, for the 13 regions."""
+    import openpyxl
+    import openpyxl.reader.excel as ex
+    ex.find_images = lambda a, p: ([], [])
+    beds = 0
+    for row in openpyxl.load_workbook(io.BytesIO(get(MCO)), data_only=True)["MCO_LIT"].iter_rows(values_only=True):
+        if row and isinstance(row[0], str) and row[0][:2] in REGION and row[0][2:5] == " - ":
+            beds += number([c for c in row if c is not None][-1])  # the last column is Total MCO 2021
+    emergency = 0
+    for row in openpyxl.load_workbook(io.BytesIO(get(DREES_URG)), data_only=True)["NB_URG"].iter_rows(values_only=True):
+        if row and isinstance(row[0], str) and row[0][:2] in REGION and row[0][2:5] == " - ":
+            emergency += number([c for c in row if c is not None][-1])  # 2021
+    return beds, emergency
 
 
 def build() -> dict:
@@ -101,38 +134,77 @@ def build() -> dict:
                 national = vals[-1]
     beds = eurostat("hlth_rs_bdsrg2", time="2021", unit="NR")
     pop = eurostat("demo_r_d2jan", time="2021", sex="T", age="TOTAL")
-    stock, levels = [], []
-    mainland_beds = 0
+    stock, levels = [], {"upper_secondary_school": [], "hospital": []}
+    mainland_beds = mainland_pop = 0
     for g in NUTS:
         b = int(sum(beds[n] for n in NUTS[g]))
         p = int(sum(pop[n] for n in NUTS[g]))
         mainland_beds += b
+        mainland_pop += p
         code = next(c for c, gg in REGION.items() if gg == g)
         s = school[g]
         stock.append({"region": g, "type": "upper_secondary_school", "units": s["units"], "capacity": s["capacity"]})
         stock.append({"region": g, "type": "hospital", "units": count[code], "capacity": b})
-        levels.append({"region": g, "figure": "pupils_per_teacher", "level": round(s["pupils_taught"] / s["fte"], 2)})
-        levels.append({"region": g, "figure": "beds_per_1000", "level": round(b / p * 1000, 2)})
+        levels["upper_secondary_school"].append({"region": g, "level": round(s["pupils_taught"] / s["fte"], 2)})
+        levels["hospital"].append({"region": g, "level": round(b / p * 1000, 2)})
     overseas_beds = sum(beds[x] for x in OVERSEAS)
     assert mainland_beds + overseas_beds == beds["FR"], "beds do not add up to Eurostat's national figure"
     overseas_est = sum(count[c] for c in ("01", "02", "03", "04", "06"))
     mainland_est = sum(count[c] for c in REGION)
     assert mainland_est + overseas_est == national, "establishments do not add up to DREES's France entiere"
+    taught = sum(a["pupils_taught"] for a in school.values())
+    fte = sum(a["fte"] for a in school.values())
+    mco_beds, emergency = mco_means(count)
+    figures = {
+        "upper_secondary_school": {"figure": FIGURES["upper_secondary_school"], "national": round(taught / fte, 2),
+                                   "levels": levels["upper_secondary_school"]},
+        "hospital": {"figure": FIGURES["hospital"], "national": round(mainland_beds / mainland_pop * 1000, 2),
+                     "levels": levels["hospital"]}}
+    capacity = {"upper_secondary_school": round(sum(a["capacity"] for a in school.values()) / sum(a["units"] for a in school.values())),
+                "hospital": round(mco_beds / emergency)}
+    print("catalogue capacity per new unit:", capacity, "(MCO beds", mco_beds, "over", emergency, "establishments with emergency)")
     print("teachers left out of the level:", sum(left_out.values()), dict(left_out))
     print("beds", mainland_beds, "+", overseas_beds, "= Eurostat", beds["FR"],
           "| establishments", mainland_est, "+", overseas_est, "= DREES", national)
-    return {"stock": stock, "levels": levels}
+    return {"stock": stock, "figures": figures, "capacity": capacity}
+
+
+def render(source: str, built: dict) -> str:
+    """The file's text: one row a line, the `_source` kept as it stands."""
+    rows = ",\n".join("    " + json.dumps(r, ensure_ascii=False) for r in built["stock"])
+    figures = []
+    for t, f in built["figures"].items():
+        levels = ",\n".join("      " + json.dumps(r) for r in f["levels"])
+        figures.append('    "%s": {"figure": "%s", "national": %s, "levels": [\n%s\n    ]}' % (t, f["figure"], f["national"], levels))
+    return ('{\n  "_source": ' + json.dumps(source, ensure_ascii=False) + ',\n  "stock": [\n' + rows
+            + '\n  ],\n  "figures": {\n' + ",\n".join(figures) + "\n  }\n}\n")
+
+
+def check_levels(figures: dict, nation: str = "FRA", tolerance: float = 0.03) -> None:
+    """The loader refuses a file whose levels, weighted by data/regions `share`, miss `national` by over 3 %."""
+    regions = json.loads((ROOT / "data" / "regions" / (nation + ".json")).read_text(encoding="utf8"))["regions"]
+    share = {r["id"]: r["share"] for r in regions}
+    for t, f in figures.items():
+        mean = sum(share[x["region"]] * x["level"] for x in f["levels"]) / sum(share[x["region"]] for x in f["levels"])
+        off = abs(mean / f["national"] - 1)
+        print("level check %s: weighted mean %.3f against national %s (%.1f %%)" % (t, mean, f["national"], off * 100))
+        assert off <= tolerance, t
 
 
 def main() -> int:
     built = build()
+    check_levels(built["figures"])
+    have = json.loads(OUT.read_text(encoding="utf8"))
+    if "--write" in sys.argv:
+        OUT.write_text(render(have["_source"], built), encoding="utf8", newline="\n")
+        return 0
     if "--check" in sys.argv:
-        have = json.loads(OUT.read_text(encoding="utf8"))
-        same = have["stock"] == built["stock"] and have["levels"] == built["levels"]
+        same = have["stock"] == built["stock"] and have.get("figures") == built["figures"]
         print("data/units/stock/FRA.json", "matches" if same else "DIFFERS from", "the sources as read now")
         return 0 if same else 1
-    for r in built["stock"] + built["levels"]:
+    for r in built["stock"]:
         print(r)
+    print(json.dumps(built["figures"], indent=1))
     return 0
 
 
