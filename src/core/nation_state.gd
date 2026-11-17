@@ -1568,6 +1568,12 @@ var region_funds: Array[Dictionary] = []
 ## src/sim/closure_region.gd, read and faded by src/sim/regions.gd. absent_ok, no bump:
 ## absent reads "no closure has landed", the truth for every older save.
 var region_closure_pts := {}
+## V5.3 c' (docs/design/v5.3-c-register.md sections 3 and 8): the player's unit
+## programmes, one row per programme built or closed -- {id, type, op, state, rows:
+## [{region, units}], ...}, written by src/sim/units.gd alone. The start stock is data
+## (data/units/stock/) and is never saved; only what the player did is. absent_ok, no
+## bump: no save before c' could hold a programme, so absent reads "none", the truth.
+var unit_programmes: Array[Dictionary] = []
 ## The open funds' bill, % of GDP, rewritten by RegionFunds.tick_month() every month
 ## and read by Budget a month behind (project_bill_pct_gdp's case). absent_ok: the
 ## next tick rewrites it.

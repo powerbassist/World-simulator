@@ -1,0 +1,40 @@
+{
+  "_source": "Catalogue row of the construction register (docs/design/v5.3-c-register.md). capacity, per nation, in the stock's own unit (beds) = the mean beds of the nation's general full-service hospitals, not of every establishment: Germany 290 = the 420 922 set-up beds of the 1 452 Allgemeine Krankenhaeuser (Destatis, Grunddaten der Krankenhaeuser - Bundeslaender, table 23111-b14, 2025). France 313 = 190 034 medicine, surgery and obstetrics beds in full hospitalisation of the 13 mainland regions (DREES, Base ARES, MCO_LIT, 2021) over the 607 establishments with an authorised emergency department (NB_URG, 2021), as the full-service proxy; closure rules read capacity, never unit counts (D3). STAND-IN numbers, none sourced: every figure marked below is the game's declared placeholder until the author's table of stand-ins (spec section 12). cost_eur_m: stand-in of 0.40 M EUR per bed (125.2 M EUR for the 313-bed unit), taken as about 3 300 EUR per square metre (the middle of the 2 800 to 3 900 EUR a square metre that the Baden-Wuerttemberg Rechnungshof compared for two children's clinics) times an assumed 120 square metres a bed; no per-bed audit figure was found in a bounded search. running_eur_m: stand-in of 0.26 M EUR per bed a year (81.4 M EUR for the unit). staff: stand-in of 3 jobs a bed (939). build_months, overrun_odds, overrun_share, demolish_months, demolish_cost_share, band_units: the spec's stand-ins (sections 5, 7, 12) with a longer build for a hospital. figure_elasticity: +1 by the spec (more beds, more beds per 1 000). bloc_offset_per_pop_share: stand-in. DEU: the same 0.40 M EUR per bed and 0.26 M EUR per bed a year as FRA applied to its 290-bed unit (116.0 and 75.4 M EUR); a bounded search found no German per-bed audit figure.",
+  "id": "hospital",
+  "name": "Hospital",
+  "summary": "A hospital with its beds, open all year round.",
+  "line": "health",
+  "sector": "hospitals",
+  "figure": {
+    "id": "hospital_beds_per_1000",
+    "unit": "beds per 1 000 inhabitants",
+    "better": "higher"
+  },
+  "payoff": "capacity",
+  "capacity": {
+    "FRA": 313,
+    "DEU": 290
+  },
+  "figure_elasticity": 1.0,
+  "cost_eur_m": {
+    "FRA": 125.2,
+    "DEU": 116.0
+  },
+  "build_months": 48,
+  "running_eur_m": {
+    "FRA": 81.4,
+    "DEU": 75.4
+  },
+  "staff": 939,
+  "overrun_odds": 0.3,
+  "overrun_share": 0.3,
+  "demolish_months": 18,
+  "demolish_cost_share": 0.15,
+  "cofinanced": true,
+  "band_units": 3,
+  "bloc_offset_per_pop_share": {
+    "pensioners": 0.1,
+    "rural": 0.08,
+    "urban": 0.03
+  }
+}
