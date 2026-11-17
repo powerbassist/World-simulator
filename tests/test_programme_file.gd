@@ -553,15 +553,15 @@ func _check_mid_term_says_when_the_next_programme_opens(state, ns, loader) -> vo
 	ns.months_in_term = 0
 
 
-## T14: a reload forgets the guard's memory of the old main (GameReload._forget_main).
+## T14: a reload forgets the guard's memory of the old main (GameReload.forget_main, MAIN_KEYED_STATICS).
 func _check_a_reload_forgets_the_guard() -> void:
 	ProgrammeFile.open(_main)
 	_folder()._refresh()
 	var id: int = _main.get_instance_id()
 	ProgrammeFile._seen[id] = 0
-	preload("res://src/ui/game_reload.gd")._forget_main(_main)
+	preload("res://src/ui/game_reload.gd").forget_main(_main)
 	if ProgrammeFile._seen.has(id):
-		_fail("GameReload._forget_main left the programme guard's memory of the old main")
+		_fail("GameReload.forget_main left the programme guard's memory of the old main")
 
 
 func _deadline_entry(state, ns, loader) -> Dictionary:
