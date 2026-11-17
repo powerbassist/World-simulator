@@ -32,11 +32,6 @@ const PROGRAMME_GROUP := {
 	"economy": "Economy", "institutions": "Institutions", "europe": "Europe",  # i18n: msgid
 	"society": "Society", "office": "Office",  # i18n: msgid
 }
-## A law's theme, lower case: the Legislature prints it in brackets after the name.
-const LAW_THEME := {
-	"business": "business", "institutional": "institutional", "labour": "labour",  # i18n: msgid
-	"social": "social", "tax": "tax",  # i18n: msgid
-}
 ## A law's shelf in the statute book (src/core/law_category.gd), the catalogue's grouping.
 const LAW_CATEGORY := {
 	"taxes": "Taxes", "work": "Work", "welfare_health": "Welfare and health",  # i18n: msgid
@@ -45,6 +40,11 @@ const LAW_CATEGORY := {
 	"farming": "Farming and the countryside", "justice_transparency": "Justice and transparency",  # i18n: msgid
 	"constitution": "Constitution and the state", "elections": "Elections", "media": "Media",  # i18n: msgid
 	"europe_migration": "Europe and migration",  # i18n: msgid
+	"drafts": "Your drafts",  # i18n: msgid -- the composed laws' shelf (law_filters.gd)
+}
+## A law's majority (law.gd's MAJORITY_KEYS), in words: the Bills sheet's threshold.
+const MAJORITY := {
+	"simple": "simple majority", "absolute": "absolute majority", "two_thirds": "two-thirds majority",  # i18n: msgid
 }
 const TAX := {
 	"income": "Income tax", "corporate": "Corporate tax", "vat": "VAT",  # i18n: msgid
@@ -94,9 +94,9 @@ static func tax(id: String) -> String:
 	return of(TAX, id)
 
 
-static func law_theme(id: String) -> String:
-	return of(LAW_THEME, id)
-
-
 static func law_category(id: String) -> String:
 	return of(LAW_CATEGORY, id)
+
+
+static func majority(id: String) -> String:
+	return of(MAJORITY, id)

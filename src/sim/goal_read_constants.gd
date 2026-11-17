@@ -7,6 +7,3 @@ extends RefCounted
 ## every kind); a step that would leave the kind's rate_range_pct (or take a line below
 ## nothing) is not offered.
 const SPENDING_STEP := 0.5
-
-## Tier 2's horizon: the two years the screen promises, the budget forecast's own span.
-const YEARS_MONTHS := 24

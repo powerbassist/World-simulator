@@ -17,6 +17,7 @@ const ChartBars = preload("res://src/ui/chart_bars.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
 const ChartHemicycle = preload("res://src/ui/chart_hemicycle.gd")
+const ChartDiverge = preload("res://src/ui/chart_diverge.gd")
 
 ## A line over time under a MICRO title. `series` is [{label, values}] with
 ## `values` a PackedFloat64Array aligned with `months` ([[year, month], ...]).
@@ -84,6 +85,33 @@ static func hemicycle(parent: Control, title: String, parts: Array, opts := {}) 
 	chart.setup(folded, opts)
 	box.add_child(chart)
 	_legend(box, folded, true, String(opts.get("unit", "")), int(opts.get("places", -1)), opts.get("colors", ChartStyle.SERIES))
+	return box
+
+
+## One signed bar per row around a zero line (chart_diverge.gd): `rows` are [{label, value,
+## text}], `text` the signed figure printed beside the bar, so the number is always read and
+## the colour only repeats it. Every row shares one span (the largest magnitude, or `opts.span`),
+## so the bars compare down the column. A row of zero keeps its place and prints its zero.
+static func diverging(parent: Control, title: String, rows: Array, opts := {}) -> VBoxContainer:
+	var box := _titled(parent, title)
+	var span := float(opts.get("span", 0.0))
+	for row in rows:
+		span = maxf(span, absf(float(row["value"])))
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 2)
+	for row in rows:
+		grid.add_child(_caption(String(row["label"])))  # i18n: row-ok chart data, the caller passes shown text
+		var bar := ChartDiverge.new()
+		bar.setup(float(row["value"]), span)
+		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		grid.add_child(bar)
+		var figure := _caption(String(row["text"]))  # i18n: row-ok chart data, the caller passes shown text
+		figure.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		figure.custom_minimum_size.x = 44.0 * UiTheme.text_scale()
+		grid.add_child(figure)
+	box.add_child(grid)
 	return box
 
 
