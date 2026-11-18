@@ -154,6 +154,13 @@ static func inflation_step(current: float, target: float) -> float:
 	)
 
 
+## The stock itself, for a display that records it (Budget.snapshot's history, the top bar's
+## curve). The only sanctioned read of the raw level outside this file: it is read-only and
+## deflates nothing (test_inflation's constant-price boundary).
+static func level_pct(ns) -> float:
+	return ns.inflation_pct
+
+
 ## The signed deviation of inflation from where this nation started, in points.
 ## Everything that prices inflation politically reads it through here, so the
 ## measured-against-its-own-start anchoring is not something a caller can bypass --
