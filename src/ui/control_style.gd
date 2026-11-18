@@ -4,8 +4,8 @@ extends RefCounted
 ## audit, sections 3 and 7; the parent's ruling for #420). Its own file beside
 ## option_check_style.gd so ui_theme.gd keeps one line per piece; the tokens are handed in,
 ## so this file preloads nothing back.
-##   Primary  the one action a screen exists for: the button's plate, outlined in the accent
-##            (identity, "you are here"), never a filled slab (the gate's oversized buttons);
+##   Primary  the one action a screen exists for: a lighter plate with a dim outline at rest,
+##            the accent only on hover, press and focus ("you are here"), never a filled slab;
 ##   Small    a verb at the caption size with a tight plate, beside a line it acts on;
 ##   Segment  one choice among a few, side by side; the picked one outlined in the accent;
 ##   Chip     a bordered caption-size plate, a glyph beside its words: Chip is neutral, the
@@ -18,7 +18,9 @@ extends RefCounted
 static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary, small_px: int) -> void:
 	var primary := String(names["primary"])
 	theme.set_type_variation(primary, "Button")  # i18n: ok
-	theme.set_stylebox("normal", primary, box.call(t["slate"], t["accent"]))
+	# At rest a lighter plate and a TEXT-dim outline, never the accent (the accent says "you are
+	# here": it shows on hover, press and focus).
+	theme.set_stylebox("normal", primary, box.call((t["slate"] as Color).lightened(0.06), t["dim"]))
 	theme.set_stylebox("hover", primary, box.call((t["slate"] as Color).lightened(0.10), t["accent"]))
 	theme.set_stylebox("pressed", primary, box.call((t["slate"] as Color).lightened(0.16), t["accent"]))
 	theme.set_stylebox("focus", primary, _ringed(box.call(Color(0, 0, 0, 0), t["accent"])))

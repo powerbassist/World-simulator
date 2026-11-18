@@ -25,7 +25,8 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
-const FinanceFoot = preload("res://src/ui/finance_foot.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const RegisterMoney = preload("res://src/ui/register_money.gd")
 const Units = preload("res://src/sim/units.gd")
@@ -37,6 +38,8 @@ const FinanceRows = preload("res://src/sim/finance_rows.gd")
 
 const SIDE_W := 380.0
 const COUNT_MAX := 200
+## Below the dock's height: the page's plate margins, so the sheet fills it without a scroll.
+const FILL_SLACK := 64.0
 
 var _state
 var _loader
@@ -49,9 +52,6 @@ var _count := 1
 var _placed := {}
 var _region := ""
 var _refusal := ""
-## The spin box the player was using: a change rebuilds the panel, and this puts the keyboard
-## back in the new one (region_panel.gd's _refocus).
-var _refocus := ""
 
 
 func _ready() -> void:
@@ -64,6 +64,8 @@ func _ready() -> void:
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body.add_theme_constant_override("separation", 10)
+	# The sheet fills the workspace: the money row sits at its foot, never with the map under it.
+	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_body)
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
@@ -90,21 +92,40 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
+## Whether the tab is offered to the nation played: a stock file names at least one type
+## (window_manager.gd asks; a rule over data, never a nation id).
+func is_offered() -> bool:
+	return _state != null and _state.player() != null and not _offered().is_empty()
+
+
 func _process(_delta: float) -> void:
-	if not _dirty or not is_visible_in_tree() or _state == null:
+	if not _dirty or not is_visible_in_tree() or _state == null or _state.player() == null:
+		return
+	# A hand in a spin box keeps it: the sheet is rebuilt when it leaves, never under it (the
+	# books' guard, finances_panel.gd). A press held down waits too: a box committing on the
+	# focus it lost to that press would otherwise free the button before the release.
+	var held: Control = get_viewport().gui_get_focus_owner()
+	if held != null and is_ancestor_of(held) and (held is LineEdit or held is SpinBox):
+		return
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		return
 	_dirty = false
 	_refresh()
 
 
-## The doors (a region's sheet, later a sector's tab or a warning): the sheet on that region,
-## by need filled for the current count.
+## The doors (a region's sheet, later a sector's tab or a warning): "Build here" puts the
+## count in THAT region, as a hand-set row; the lede and Who it moves follow it. A type that
+## has no stock there gives way to the first that has (a rule over data).
 func open_for(region_id: String) -> void:
-	if _type == "" or not _offered().has(_type):
+	var ns = _state.player()
+	if _type == "" or not _offered().has(_type) or Units.start_capacity(_loader, ns.id, _type, region_id) <= 0.0:
 		_type = _first_type()
-	# Spec row 0: the door brings the sheet with by need filled, whatever was edited before.
+		for type_id in _offered():
+			if Units.start_capacity(_loader, ns.id, type_id, region_id) > 0.0:
+				_type = type_id
+				break
 	_region = region_id
-	_fill(true)
+	_placed = {region_id: _count}
 	_dirty = true
 
 
@@ -167,6 +188,7 @@ func _refresh() -> void:
 		PanelKit.plain_line(_body, tr("This nation has no register of buildings yet."), PanelKit.Tone.PLAIN)
 		return
 	var ns = _state.player()
+	custom_minimum_size.y = get_viewport_rect().size.y - WindowManager.DOCK_TOP - WindowManager.DOCK_BOTTOM - FILL_SLACK
 	var row: Dictionary = Units.row(_loader, _type)
 	# Now, from one basis (preview with nothing placed is the shown figure, test_units pins it).
 	var now: Dictionary = Units.preview(ns, _loader, _type, {})
@@ -184,23 +206,11 @@ func _refresh() -> void:
 	_dots(middle, ns, shown, after, nation)
 	var quote := _quote(ns)
 	_composer(middle, ns, quote)
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_body.add_child(spacer)
 	_strip(ns, row, quote, shown, after)
 	_in_bill(ns)
-	if _refocus != "":
-		var spin := _find_meta(_body, _refocus)
-		if spin != null:
-			(spin as SpinBox).get_line_edit().grab_focus()
-		_refocus = ""
-
-
-func _find_meta(node: Node, key: String) -> Node:
-	if node.has_meta("focus_key") and String(node.get_meta("focus_key")) == key:
-		return node
-	for child in node.get_children():
-		var found := _find_meta(child, key)
-		if found != null:
-			return found
-	return null
 
 
 ## "Pays de la Loire: 4.82 hospital beds per 1 000 inhabitants; the nation 5.67." The type's
@@ -261,7 +271,7 @@ func _dots(parent: Control, ns, shown: Dictionary, after: Dictionary, nation: fl
 	# Worst first, by the figure's own direction: the regions the sheet exists for lead.
 	var lower_better := String((Units.row(_loader, _type).get("figure", {}) as Dictionary).get("better", "")) == "lower"
 	data.sort_custom(func(a, b): return float(a["before"]) > float(b["before"]) if lower_better else float(a["before"]) < float(b["before"]))
-	# The warning band joins when the sim names its threshold (Systems' slice C); until then none.
+	# The warning band joins when the sim names its threshold (UNIT_REGION_BAND, Systems' slice C).
 	var box := ChartKit.dots(col, tr("By region: now, and once built"), data, {"reference": nation})
 	var dots = box.get_meta("chart")
 	dots.set_meta("dots", true)
@@ -285,9 +295,7 @@ func _composer(parent: Control, ns, quote: Dictionary) -> void:
 	spin.max_value = COUNT_MAX
 	spin.value = _count
 	spin.set_meta("count", true)
-	spin.set_meta("focus_key", "count")
 	spin.value_changed.connect(func(v: float) -> void:
-		_refocus = "count"
 		_count = int(v)
 		_fill(true)
 		_dirty = true)
@@ -318,19 +326,19 @@ func _composer(parent: Control, ns, quote: Dictionary) -> void:
 		units.max_value = COUNT_MAX
 		units.value = int(_placed.get(id, 0))
 		units.set_meta("region_units", id)
-		units.set_meta("focus_key", "units:" + id)
 		units.value_changed.connect(func(v: float) -> void:
-			_refocus = "units:" + id
-			_placed[id] = int(v)
+			# The rows together never pass the count's own ceiling.
+			_placed[id] = mini(int(v), COUNT_MAX - (_sum() - int(_placed.get(id, 0))))
 			_count = maxi(1, _sum())
 			_dirty = true)
 		line.add_child(units)
 	# The concentration surcharge (section 4), said on the region it falls on, before the press.
 	var surcharge: Dictionary = quote.get("surcharge", {})
 	for id in surcharge:
-		if float(surcharge[id]) > 0.0:
+		# A warning only when it rounds to 1 % or more (the parent's ruling): the range carries the rest.
+		if roundi(100.0 * float(surcharge[id])) >= 1:
 			PanelKit.chip(col, tr("+%s %% on the price in %s: many units there within a year") % [
-				Num.f(100.0 * float(surcharge[id]), 1), _region_name(String(id))]).set_meta("surcharge", String(id))
+				Num.f(100.0 * float(surcharge[id]), 0), _region_name(String(id))]).set_meta("surcharge", String(id))
 	var bill := {FinanceRows.UNITS: [{"type": _type, "op": UK.OP_BUILD, "rows": rows()}]}
 	var why := _why_not(bill)
 	var press := PanelKit.sized(Button.new())
@@ -341,7 +349,13 @@ func _composer(parent: Control, ns, quote: Dictionary) -> void:
 	press.pressed.connect(func() -> void:
 		var answer: Dictionary = FinanceBill.table(_state, _loader, bill)
 		_refusal = "" if bool(answer.get("tabled", false)) else _reason(answer)
-		_dirty = true)
+		_dirty = true
+		# The bill moved: every panel reads it (firm_commands.invest's sweep).
+		var windows: Node = self
+		while windows != null and not windows.has_method("mark_all_dirty"):
+			windows = windows.get_parent()
+		if windows != null:
+			windows.mark_all_dirty())
 	PanelKit.buttons(col).add_child(press)
 	var said := why if why != "" else _refusal
 	var refusal := PanelKit.plain_line(col, said, PanelKit.Tone.PLAIN)
@@ -370,13 +384,11 @@ func _why_not(bill: Dictionary) -> String:
 	return "" if answer.is_empty() else _reason(answer)
 
 
+## The register's own reason when it gave one, else the bill's, said as every tabling says it.
 func _reason(answer: Dictionary) -> String:
 	if String(answer.get("reason", "")) != "":
 		return Strings.t(String(answer["reason"]))
-	for flag in answer:
-		if not ["tabled", "refused"].has(String(flag)):
-			return FinanceFoot.reason(String(flag))
-	return FinanceFoot.reason("")
+	return ProposalNote.body(answer, _loader.parties.get(_state.player().id, []))
 
 
 ## The sim's quote for the rows, {} while the rows cannot be tabled as a programme.
@@ -384,7 +396,11 @@ func _quote(ns) -> Dictionary:
 	var programme := {"type": _type, "op": UK.OP_BUILD, "rows": rows()}
 	if rows().is_empty() or UnitBuild.refusal(_state, ns, _loader, [programme]) != "":
 		return {}
-	return UnitPrice.quote(_state, ns, _loader, programme)
+	# The rows the bill already holds count toward concentration, as FinanceBill.drafted prices them.
+	# The same programme already held is this one, never an earlier order of it.
+	var earlier: Array = ((ns.tabled_bill.get("finance", {}) as Dictionary).get(FinanceRows.UNITS, []) as Array).filter(
+		func(kept): return not (String(kept.get("type", "")) == _type and kept.get("rows", []) == rows()))
+	return UnitPrice.quote(_state, ns, _loader, programme, earlier)
 
 
 ## The three-part strip: the money, who it moves, when and what can go wrong.
@@ -396,7 +412,9 @@ func _strip(ns, row: Dictionary, quote: Dictionary, shown: Dictionary, after: Di
 	var who := _column(strip, tr("Who it moves"))
 	var when := _column(strip, tr("When, and what can go wrong"))
 	if quote.is_empty():
-		PanelKit.plain_line(money, tr("Place at least one unit."), PanelKit.Tone.DIM)
+		var programme := {"type": _type, "op": UK.OP_BUILD, "rows": rows()}
+		var why := UnitBuild.refusal(_state, ns, _loader, [programme]) if not rows().is_empty() else ""
+		PanelKit.plain_line(money, Strings.t(why) if why != "" else tr("Place at least one unit."), PanelKit.Tone.DIM)
 		return
 	var lo := float(quote["lo_eur_m"]) / 1000.0
 	var hi := float(quote["hi_eur_m"]) / 1000.0
@@ -448,12 +466,14 @@ func _in_bill(ns) -> void:
 		return
 	PanelKit.heading(_body, tr("In the finance bill"))
 	var when := DateText.day_month(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))
+	var forced := bool(ns.tabled_bill.get("forced", false))
 	for p in held:
 		var n := 0
 		for r in p.get("rows", []):
 			n += int(r.get("units", 0))
 		var name := Strings.row_name("units", Units.row(_loader, String(p.get("type", ""))))
-		PanelKit.plain_line(_body, Strings.tn("%d unit of %s: it divides on %s.", "%d units of %s: it divides on %s.", n) % [n, name, when],
+		var text := Strings.tn("%d unit of %s: adopted without a vote on %s.", "%d units of %s: adopted without a vote on %s.", n) if forced else Strings.tn("%d unit of %s: it divides on %s.", "%d units of %s: it divides on %s.", n)
+		PanelKit.plain_line(_body, text % [n, name, when],
 			PanelKit.Tone.PLAIN).set_meta("in_bill", true)
 
 

@@ -131,7 +131,8 @@ func _draw() -> void:
 		draw_string(font, Vector2(name_x, text_y), String(r["label"]), HORIZONTAL_ALIGNMENT_LEFT, _lw() - name_x - PAD, fs, UiTheme.TEXT)  # i18n: row-ok chart data, the caller passes shown text
 		var b := _x(float(r["before"]))
 		var a := _x(float(r["after"]))
-		var value := Num.f(float(r["before"]), _places)
+		# The value printed is the value drawn: an untouched row's dot sits at its after.
+		var value := Num.f(float(r["after"]), _places)
 		if bool(r.get("moved", false)):
 			draw_line(Vector2(b, mid), Vector2(a, mid), accent, 2.0)
 			draw_arc(Vector2(b, mid), RING, 0.0, TAU, 20, UiTheme.TEXT_DIM, 2.0)

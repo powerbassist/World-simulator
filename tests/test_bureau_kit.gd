@@ -61,8 +61,8 @@ func _check_variations(theme: Theme) -> void:
 	if small.content_margin_left >= plain.content_margin_left:
 		_fail("Small is not tighter than a Button")
 	var primary: StyleBoxFlat = theme.get_stylebox("normal", UiTheme.PRIMARY)
-	if primary.border_width_left < 1 or primary.border_color == UiTheme.EDGE:
-		_fail("Primary carries no accent outline")
+	if primary.border_width_left < 1 or primary.border_color == UiTheme.EDGE or primary.border_color == UiTheme.accent():
+		_fail("Primary at rest has no outline of its own, or wears the accent (the accent is 'you are here')")
 
 
 func _check_chip() -> void:

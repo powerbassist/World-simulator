@@ -10,7 +10,7 @@ extends Control
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Num = preload("res://src/ui/num.gd")
 
-const BUILD := Color(0.290, 0.325, 0.353)  ## #4A535A: capital, a neutral the accent stands out from
+const BUILD := UiTheme.NEUTRAL_BAR  ## capital: the accent is the running cost
 const CASH_H := 72.0
 const YEARS_AFTER := 3
 

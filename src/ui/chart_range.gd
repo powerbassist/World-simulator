@@ -8,7 +8,7 @@ extends Control
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Num = preload("res://src/ui/num.gd")
 
-const BAR := Color(0.290, 0.325, 0.353)  ## #4A535A: a neutral the tick and the accent stand out from
+const BAR := UiTheme.NEUTRAL_BAR
 const BAR_H := 10.0
 const LABEL_W := 60.0
 

@@ -482,7 +482,9 @@ static func meter(parent: Control, value: float, top: float, mark: float) -> Con
 static func chip(parent: Control, text: String, variation := UiTheme.CHIP, glyph := "") -> PanelContainer:
 	var plate := PanelContainer.new()
 	plate.theme_type_variation = variation
-	plate.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	# The chip takes its column's width and its words wrap: at text 130 or in French a long chip
+	# folds onto a second line rather than running past the column.
+	plate.size_flags_horizontal = Control.SIZE_FILL
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	plate.add_child(row)
@@ -496,6 +498,8 @@ static func chip(parent: Control, text: String, variation := UiTheme.CHIP, glyph
 		row.add_child(picture)
 	var words := Label.new()
 	words.theme_type_variation = UiTheme.CHIP_TEXT
+	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.text = text
 	row.add_child(words)
 	parent.add_child(plate)

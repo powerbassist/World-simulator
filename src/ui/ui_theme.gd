@@ -57,6 +57,8 @@ const MAP_NEUTRAL := Color(0.827, 0.851, 0.878)  ## #D3D9E0
 ## What the accent is when there is no nation to take it from (the menu), and when
 ## no band of the flag passes accent_rule.gd's floors. A cool azure, deliberately
 ## not a flag colour of its own.
+## #4A535A: a neutral fill a chart's accent and ticks stand out from (ChartKit.range_bar, the bars a year).
+const NEUTRAL_BAR := Color(0.290, 0.325, 0.353)
 const ACCENT_FALLBACK := Color(0.361, 0.616, 0.922)  ## #5C9DEB
 
 ## Panels are graphite and nearly opaque: the map may show through a HUD plate

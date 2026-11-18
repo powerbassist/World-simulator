@@ -30,6 +30,8 @@ var _failures: Array[String] = []
 var _main
 var _panel
 var _frame := 0
+var _spin
+var _held_stock
 
 
 func _init() -> void:
@@ -61,35 +63,54 @@ func _process(_delta: float) -> bool:
 			if _with_meta("stock") == null:
 				_fail("the picked region's stock line is missing")
 		5:
-			_set_count(3)
-		7:
+			# A hand in the count box: the value moves, the sheet waits for the box to be left.
+			_spin = _with_meta("count")
+			_spin.get_line_edit().grab_focus()
+			_spin.value = 3
+		6:
+			if not is_instance_valid(_spin) or not _spin.is_inside_tree() or not _spin.get_line_edit().has_focus():
+				_fail("the sheet was rebuilt under the focused count box")
+			_spin.get_line_edit().release_focus()
+		8:
 			_check_count_refills(3)
 			# A law holds the slot: the press is refused before it, and says why.
 			_main._state.player().tabled_bill = {"law_id": String(_main._loader.laws[0].id), "referendum": false,
 				"vote_year": 2026, "vote_month": 1, "vote_day": 31}
 			_panel.mark_dirty()
-		9:
+		10:
 			_check_refused_before_the_press()
 			_main._state.player().tabled_bill = {}
 			_panel.mark_dirty()
-		11:
+		12:
 			_press(_with_meta("table"))
-		13:
-			_check_tabled()
 		14:
-			# The region sheet's door opens the register on that region.
+			_check_tabled()
+		15:
+			# The region sheet's door opens the register on that region, the count placed THERE
+			# (a region that is not the worst, so by need would put it elsewhere).
 			_main._windows.open("region")
 			var region_panel = _main._windows.content("region")
-			region_panel.open_region_at(_worst_region())
-		16:
+			region_panel.open_region_at(_other_region())
+		17:
 			_press(_with_meta("register_door"))
-		18:
-			_check_door_opened(_worst_region())
+		19:
+			_check_door_opened(_other_region())
+			# A nation with no stock file is not offered the tab (a rule over data).
+			var ns = _main._state.player()
+			_held_stock = _main._loader.unit_stock[ns.id]
+			_main._loader.unit_stock.erase(ns.id)
+			_main._windows.open("region")
+		20:
+			_main._windows.open("finances")
+		21:
+			if _main._windows.tab_ids().has("register"):
+				_fail("the register tab is offered to a nation with no stock file")
+			_main._loader.unit_stock[_main._state.player().id] = _held_stock
 			# A new type is a data edit: the fixture's catalogue replaces the shipped one.
 			UnitsLoader.load_units(_main._loader, FIXTURE)
 			_panel.setup(_main._state, _main._loader)
 			_main._windows.open("register")
-		20:
+		23:
 			_check_types_come_from_the_catalogue()
 			_finish()
 	return false
@@ -183,9 +204,6 @@ func _check_count_refills(n: int) -> void:
 		_fail("count %d placed %d units" % [n, total])
 	if _panel.rows() != Units.fill_by_need(_main._state.player(), _main._loader, _type(), n):
 		_fail("a new count did not refill by need")
-	var spin = _with_meta("count")
-	if spin == null or not spin.get_line_edit().has_focus():
-		_fail("the count box lost the keyboard when the panel rebuilt")
 
 
 func _check_refused_before_the_press() -> void:
@@ -214,11 +232,22 @@ func _worst_region() -> String:
 	return String(rows[0]["region"]) if not rows.is_empty() else ""
 
 
+func _other_region() -> String:
+	var ns = _main._state.player()
+	for region in _main._loader.regions.get(ns.id, []):
+		if String(region.id) != _worst_region() and Units.start_capacity(_main._loader, ns.id, _offered()[0], region.id) > 0.0:
+			return String(region.id)
+	return ""
+
+
 func _check_door_opened(region_id: String) -> void:
 	if not _main._windows.is_open("register"):
 		_fail("the door did not open the register")
 	if String(_panel.selected_region()) != region_id:
 		_fail("the register opened on %s, not %s" % [_panel.selected_region(), region_id])
+	var rows: Array = _panel.rows()
+	if rows.size() != 1 or String(rows[0]["region"]) != region_id:
+		_fail("Build here placed %s, not the count in %s" % [rows, region_id])
 
 
 func _press(button) -> void:
