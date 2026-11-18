@@ -310,7 +310,6 @@ func _check_the_chief_caption_sits_in_the_strip() -> void:
 ## Top bar A: a figure that has not moved says so ("= steady"), not nothing; no history yet says nothing.
 func _check_an_unmoved_figure_says_steady() -> void:
 	var state = _state()
-	var ns = state.player()
 	for i in StripSeries.MONTHS:
 		state.append_history(Budget.snapshot(state))
 	_bar.refresh(state, null, _loader)

@@ -19,6 +19,7 @@ const MIN_SECONDS := 4.0
 const MAX_SECONDS := 12.0
 const WIDTH_PX := 560
 const GAP_PX := 6
+const MIN_WIDTH_PX := 160
 
 ## Where the strip keeps room for the line (a global Rect2; top_bar.gd's caption_slot), or
 ## unset for a harness with no strip: then the line drops under the mark.
@@ -51,7 +52,7 @@ func say(line: String, anchor: Control, seconds := 0.0) -> void:
 	_line.text = line
 	var width := WIDTH_PX * UiTheme.text_scale()
 	if slot_of.is_valid():
-		width = clampf(Rect2(slot_of.call()).size.x - GAP_PX * 2.0, 0.0, width)
+		width = clampf(Rect2(slot_of.call()).size.x - GAP_PX * 2.0, MIN_WIDTH_PX * UiTheme.text_scale(), width)  # a floor: width 0 wraps per character
 	# An autowrapped Label measures its height at its CURRENT width: at 0 it wraps every
 	# character and the plate ran down the screen (the first windowed frame did). So the
 	# label gets its width before the plate is measured, and is measured again once laid out.
