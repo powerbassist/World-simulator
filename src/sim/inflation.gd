@@ -154,9 +154,9 @@ static func inflation_step(current: float, target: float) -> float:
 	)
 
 
-## The stock itself, for a display that records it (Budget.snapshot's history, the top bar's
-## curve). The only sanctioned read of the raw level outside this file: it is read-only and
-## deflates nothing (test_inflation's constant-price boundary).
+## The stock itself, for the history a display reads (the top bar's curve). Only
+## Budget.snapshot calls it -- test_inflation pins that -- and it deflates nothing: the
+## constant-price boundary stays.
 static func level_pct(ns) -> float:
 	return ns.inflation_pct
 

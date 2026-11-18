@@ -3,9 +3,9 @@ extends RefCounted
 ## The change beside a standing figure on the strip (V5.3, gate H6: a figure with no
 ## movement beside it says where it is and not where it is going): its own movement over
 ## Trends' window, signed, and whether that is good news. Only the figures history
-## carries (the money, GDP's growth, unemployment); an empty dictionary is "no history
-## yet" or "no movement the player would notice". The tone is never alone: the glyph, the
-## number and, since gate 3 (G3-10, "i dont know if i got positive or negative flux"),
+## carries (the money, GDP's growth, unemployment, inflation); an empty dictionary is "no
+## history yet", and a figure that has not moved by a noticed amount reads "= steady". The tone is never alone: the
+## glyph, the number and, since gate 3 (G3-10, "i dont know if i got positive or negative flux"),
 ## the word -- better or worse -- print too. The money moves as its signed balance:
 ## ▲ is a smaller deficit or a bigger surplus, as its curve draws it.
 

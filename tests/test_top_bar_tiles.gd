@@ -23,10 +23,18 @@ const StripChanges = preload("res://src/ui/strip_changes.gd")
 const ChiefCaption = preload("res://src/ui/chief_caption.gd")
 const TitleBar = preload("res://src/ui/title_bar.gd")
 
+const SHORT_LINE := "The situation is manageable, barely. It will need your signature."
+const LONG_LINE := "The situation is manageable, barely, and it will need your signature before the end of the month, or the assembly will take it out of your hands entirely."
+## [text scale, the remark]: the remark in the strip at both sizes, short and past two lines.
+const STAGES := [[1.0, SHORT_LINE], [1.3, SHORT_LINE], [1.3, LONG_LINE], [1.0, LONG_LINE]]
+
 var _failures: Array[String] = []
 var _loader
 var _bar
 var _frame := 0
+var _caption
+var _stage := 0
+var _wait := 0
 
 
 func _init() -> void:
@@ -43,6 +51,11 @@ func _init() -> void:
 
 func _process(_delta: float) -> bool:
 	_frame += 1
+	if _frame > 2:
+		return _caption_stages()
+	if _frame == 1:
+		_caption = ChiefCaption.new()  # docked once the bar has run its _ready, as the hud does
+		_bar.dock_caption(_caption)
 	if _frame < 2:
 		return false
 	_check_the_money_is_euros_a_month_in_words()
@@ -57,13 +70,10 @@ func _process(_delta: float) -> bool:
 	_check_the_money_threshold_scales()
 	_check_curve_and_meter_keep_the_tip()
 	_check_a_curve_is_rebuilt_only_on_change()
-	_check_the_chief_caption_clears_the_strip()
-	_check_the_chief_caption_sits_in_the_strip()
 	_check_an_unmoved_figure_says_steady()
 	_check_inflation_has_a_curve()
 	_check_tiles_are_divided_by_a_hairline()
-	_finish()
-	return true
+	return _caption_stages()
 
 
 func _state():
@@ -216,6 +226,11 @@ func _check_a_missing_field_is_skipped() -> void:
 		_fail("a month without the deficit is not left out of the money's curve")
 	if StripSeries.values("unemployment", state).size() != StripSeries.MONTHS - 1:
 		_fail("a month without unemployment is not left out of its curve")
+	# An older save's history has no inflation_pct at all: every month is skipped, no curve, no zero.
+	for entry in state.history:
+		(entry as Dictionary).erase("inflation_pct")
+	if StripSeries.values("inflation", state).size() != 0:
+		_fail("a history with no inflation_pct draws a curve instead of skipping every month")
 
 
 ## The money's "noticed" bar is a share of the nation's own month of GDP.
@@ -253,58 +268,6 @@ func _check_a_curve_is_rebuilt_only_on_change() -> void:
 	_bar.refresh(state, null, _loader)
 	if _bar.spark_of("gdp") == first:
 		_fail("a new month did not redraw the curve")
-
-
-## #418 pass 2 (the PR's own open point): the chief's line drops under the strip, not on it.
-func _check_the_chief_caption_clears_the_strip() -> void:
-	var mark := Control.new()
-	root.add_child(mark)
-	mark.position = Vector2(1500, 8)
-	mark.size = Vector2(300, 40)
-	var caption = ChiefCaption.new()
-	caption.theme = UiTheme.build()
-	root.add_child(caption)
-	caption.say("The situation is manageable, barely. It will need your signature.", mark, 5.0)
-	if caption.global_position.y < TitleBar.HEIGHT + TopBar.BAR_HEIGHT:
-		_fail("the chief's caption drops at y %.0f, over the strip (its foot is %d)" % [
-			caption.global_position.y, TitleBar.HEIGHT + TopBar.BAR_HEIGHT])
-	caption.queue_free()
-	mark.queue_free()
-
-
-## Top bar A: the chief's remark sits INSIDE the strip, right of the tiles and left of the chips,
-## and never over a tile, a chip or the inbox column under the strip -- at text 100 and 130 %.
-func _check_the_chief_caption_sits_in_the_strip() -> void:
-	var state = _with_history(_state(), 4.4, 5.3)
-	for scale in [1.0, 1.3]:
-		UiTheme.set_text_scale(scale)
-		_bar.theme = UiTheme.build()
-		_bar.refresh(state, null, _loader)
-		var mark := Control.new()
-		root.add_child(mark)
-		mark.position = Vector2(1500, 8)
-		mark.size = Vector2(300, 40)
-		var caption = ChiefCaption.new()
-		caption.theme = UiTheme.build()
-		caption.slot_of = Callable(_bar, "caption_slot")
-		root.add_child(caption)
-		caption.say("The situation is manageable, barely. It will need your signature.", mark, 5.0)
-		var rect := Rect2(caption.global_position, caption.size)
-		var bar_rect := Rect2(_bar.global_position, Vector2(_bar.size.x, TopBar.BAR_HEIGHT))
-		if not bar_rect.encloses(rect):
-			_fail("at text %d %% the chief's remark %s is not inside the strip %s: it covers what sits under it" % [roundi(scale * 100), rect, bar_rect])
-		var siblings: Array = []
-		for id in _bar._boxes.keys():
-			var box: Control = _bar._boxes[id]
-			if box.visible:
-				siblings.append(box)
-		for box in siblings:
-			if rect.intersects(box.get_global_rect()):
-				_fail("at text %d %% the chief's remark %s overlaps a tile or chip %s" % [roundi(scale * 100), rect, box.get_global_rect()])
-		caption.queue_free()
-		mark.queue_free()
-	UiTheme.set_text_scale(1.0)
-	_bar.theme = UiTheme.build()
 
 
 ## Top bar A: a figure that has not moved says so ("= steady"), not nothing; no history yet says nothing.
@@ -348,6 +311,48 @@ func _check_tiles_are_divided_by_a_hairline() -> void:
 			shown += 1
 	if _bar.divider_xs().size() != shown - 1:
 		_fail("%d tiles are shown and %d hairlines stand between them" % [shown, _bar.divider_xs().size()])
+
+
+## Top bar A, redone at #422 pass 2: the chief's remark is a child of the bar's own row, so it is
+## inside the strip and over no tile or chip a few frames after it is said (the deferred layout
+## is what the first version lost), at text 100 and 130, a long line included. One stage per
+## call, frames apart.
+func _caption_stages() -> bool:
+	if _stage >= STAGES.size():
+		if _bar._caption_width() != 0.0:
+			_fail("a silent chief still keeps %.0f px of the strip" % _bar._caption_width())
+		_finish()
+		return true
+	var stage: Array = STAGES[_stage]
+	if _wait == 0:
+		UiTheme.set_text_scale(float(stage[0]))
+		_bar.theme = UiTheme.build()
+		_bar.refresh(_with_history(_state(), 4.4, 5.3), null, _loader)
+		_caption.say(String(stage[1]), null, 60.0)
+	_wait += 1
+	if _wait < 4:
+		return false
+	var label := "text %d %%, %s remark" % [roundi(float(stage[0]) * 100), "long" if stage[1] == LONG_LINE else "short"]
+	var rect: Rect2 = _caption.get_global_rect()
+	var bar_rect := Rect2(_bar.global_position, Vector2(_bar.size.x, TopBar.BAR_HEIGHT))
+	if not _caption.visible:
+		_fail("%s: the remark is not shown" % label)
+	if not bar_rect.encloses(rect):
+		_fail("%s: the remark %s is not inside the strip %s: it covers what sits under it" % [label, rect, bar_rect])
+	if _bar.get_combined_minimum_size().y > TopBar.BAR_HEIGHT:
+		_fail("%s: the remark made the strip %.0f px tall, past its %d" % [label, _bar.get_combined_minimum_size().y, TopBar.BAR_HEIGHT])
+	for id in _bar._boxes.keys():
+		var box: Control = _bar._boxes[id]
+		if box.visible and rect.intersects(box.get_global_rect()):
+			_fail("%s: the remark %s overlaps a tile or chip %s" % [label, rect, box.get_global_rect()])
+	if stage[1] == LONG_LINE and _caption.tooltip_text != LONG_LINE:
+		_fail("%s: a line cut at two lines is not whole in the tooltip" % label)
+	_caption.clear()
+	_wait = 0
+	_stage += 1
+	UiTheme.set_text_scale(1.0)
+	_bar.theme = UiTheme.build()
+	return false
 
 
 func _fail(message: String) -> void:

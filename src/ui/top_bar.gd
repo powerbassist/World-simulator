@@ -48,10 +48,6 @@ const FIGURE_GAP_MIN := 6
 ## this strip's x), a gutter in.
 const LEFT_GUTTER := 16
 
-## The room the strip keeps free, right of the tiles, for the chief's remark (top bar A): the
-## tiles fold before this goes, so the remark never lands on a tile or under the strip.
-const CAPTION_MIN_PX := 240
-
 var _figure_values := {}
 ## Each figure's caption label, by the same key as _figure_values -- kept so the
 ## live tooltip goes on both hover targets, and the programme can name itself.
@@ -99,6 +95,10 @@ var _gap := FIGURE_GAP
 var _more: Label
 var _folded: Array = []
 
+## The stretching slot between the tiles and the chips, and the chief's remark docked in it.
+var _slot: HBoxContainer
+var _caption: Control
+
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(0, BAR_HEIGHT)
@@ -131,7 +131,13 @@ func _ready() -> void:
 	_figures.draw.connect(_draw_dividers)
 	_figures.sort_children.connect(_figures.queue_redraw)
 
-	row.add_child(_gutter(0, true))
+	# The stretching slot between the tiles and the chips. The chief's remark docks into it
+	# (dock_caption): a child of this row, so the row lays it out, and silent it takes no room.
+	_slot = HBoxContainer.new()
+	_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_slot.add_theme_constant_override("separation", 0)
+	row.add_child(_slot)
+	row.add_child(_gutter(FIGURE_GAP / 2))  # air between the remark and the chips
 	_chips = HBoxContainer.new()
 	_chips.add_theme_constant_override("separation", FIGURE_GAP)
 	row.add_child(_chips)
@@ -426,7 +432,7 @@ func refit() -> void:
 	_folded.clear()
 	_more.hide()
 	var available: float = get_viewport_rect().size.x - global_position.x - get_theme_stylebox("panel").get_minimum_size().x \
-		- LEFT_GUTTER * 2 - _chips_width() - CAPTION_MIN_PX * UiTheme.text_scale()
+		- LEFT_GUTTER * 2 - FIGURE_GAP / 2 - _chips_width() - _caption_width()
 	var shown: Array = []
 	for id in StripReadings.ON_STRIP:
 		if _boxes[id].visible:
@@ -471,14 +477,24 @@ func _draw_dividers() -> void:
 		_figures.draw_line(Vector2(x, 6.0), Vector2(x, _figures.size.y - 6.0), UiTheme.EDGE, 1.0)
 
 
-## The free band of the strip for the chief's remark (top bar A): right of the tiles, left
-## of the chips, the strip's own height. The tiles fold to keep CAPTION_MIN_PX of it.
-func caption_slot() -> Rect2:
-	# From the minimum widths, not the laid-out sizes: a line said in the frame a tile changed
-	# would read a layout one frame old and land on the tile.
-	var left := _figures.global_position.x + _figures.get_combined_minimum_size().x + FIGURE_GAP * 0.5
-	var right := global_position.x + size.x - get_theme_stylebox("panel").get_margin(SIDE_RIGHT) 		- LEFT_GUTTER - _chips_width() - FIGURE_GAP * 0.5
-	return Rect2(left, global_position.y, maxf(right - left, 0.0), BAR_HEIGHT)
+## Docks the chief's remark (chief_caption.gd) into the strip's own row, between the tiles and
+## the chips. Shown, it keeps its minimum width and the tiles fold to leave it; hidden, the
+## tiles have the room back, so the bar refits when it appears and when it goes.
+func dock_caption(caption: Control) -> void:
+	_caption = caption
+	var lead := _gutter(FIGURE_GAP / 2)  # air before the remark, only while it shows
+	lead.visible = caption.visible
+	_slot.add_child(lead)
+	_slot.add_child(caption)
+	caption.visibility_changed.connect(func() -> void: lead.visible = caption.visible)
+	caption.visibility_changed.connect(refit.call_deferred)
+
+
+## The room the shown remark keeps: its minimum width and the gap before it.
+func _caption_width() -> float:
+	if _caption == null or not _caption.visible:
+		return 0.0
+	return _caption.get_combined_minimum_size().x + FIGURE_GAP / 2
 
 
 ## The chips' own width (they never fold: each is something waiting), gaps and all.
