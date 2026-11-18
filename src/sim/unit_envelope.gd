@@ -68,7 +68,7 @@ static func envelope_eur_m(period: Dictionary, nation_id: String) -> float:
 
 ## What is left of the envelope of the period holding `year`, M EUR (0 for a
 ## non-member or a year with no period).
-static func left_eur_m(state, loader, ns, year: int) -> float:
+static func left_eur_m(loader, ns, year: int) -> float:
 	var org_id := org_of(loader, ns)
 	var period := period_of(loader, org_id, year)
 	if period.is_empty():
@@ -76,8 +76,9 @@ static func left_eur_m(state, loader, ns, year: int) -> float:
 	return maxf(0.0, envelope_eur_m(period, ns.id) - _held(ns, org_id, String(period["id"])))
 
 
-## At the vote, before `p` joins the register: its reservation, when it has a Union line.
-static func reserve(state, loader, ns, p: Dictionary) -> void:
+## At the vote, before `p` joins the register: its reservation, when it has a Union line
+## (none when nothing is left: a reservation of 0 is no Union money, and no line).
+static func reserve(loader, ns, p: Dictionary) -> void:
 	var t: Dictionary = loader.unit_types[String(p["type"])]
 	if String(p["op"]) != UK.OP_BUILD or not bool(t.get("cofinanced", false)):
 		return
@@ -85,9 +86,11 @@ static func reserve(state, loader, ns, p: Dictionary) -> void:
 	var period := period_of(loader, org_id, year_of(int(p["voted"])))
 	if period.is_empty() or year_of(int(p["voted"]) + int(p["build_months"])) > int(period["pays_until_year"]):
 		return
-	var want := _want(loader, org_id, ns, p, p["rows"])
+	var reserved := minf(_want(loader, org_id, ns, p, p["rows"]), left_eur_m(loader, ns, year_of(int(p["voted"]))))
+	if reserved <= 0.0:
+		return
 	p["union"] = {"org": org_id, "period": String(period["id"]), "pays_until": int(period["pays_until_year"]),
-		"reserved_eur_m": minf(want, left_eur_m(state, loader, ns, year_of(int(p["voted"])))), "paid_eur_m": 0.0, "months_left": 0}
+		"reserved_eur_m": reserved, "paid_eur_m": 0.0, "months_left": 0}
 
 
 ## What the Union would still hold for `p` built as `rows`, opening in month `opens`:

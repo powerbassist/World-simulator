@@ -18,6 +18,7 @@ const UK = preload("res://src/sim/units_constants.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const QuietMonth = preload("res://src/sim/quiet_month.gd")
+const Budget = preload("res://src/sim/budget.gd")
 
 const FIXTURE := "res://tests/fixtures/units"
 const TYPE := "fixture_school"
@@ -43,6 +44,7 @@ func _init() -> void:
 	_test_unanswered_is_pay_with_a_note()
 	_test_two_cards_a_year_a_third_waits()
 	_test_no_card_inside_the_window()
+	_test_the_forecast_is_blind_to_the_draw()
 	_finish()
 
 
@@ -362,6 +364,28 @@ func _test_no_card_inside_the_window() -> void:
 	_run_out(state, p)
 	if p.has("ask"):
 		_fail("a card was posted %d months before the opening" % UK.UNIT_OVERRUN_WINDOW_MONTHS)
+
+
+## Pass 1 on #421: the forecast's copy must not know whether the overrun fell before its
+## card lands (ProcessAsks.blind's reason, #280): a game whose draw fell projects the
+## bill of one whose draw did not, and the real register keeps its draw.
+func _test_the_forecast_is_blind_to_the_draw() -> void:
+	var v := _voted([{"region": "FRB", "units": 2}], true)
+	if v.is_empty():
+		return
+	var p: Dictionary = v["p"]
+	var drawn: Dictionary = p["overrun"].duplicate()
+	var months := int(p["overrun"]["month"]) - _now(v["state"]) + 4
+	var fell: Array = Budget.project(v["state"], {}, months, _loader)
+	p.erase("overrun")
+	var clean: Array = Budget.project(v["state"], {}, months, _loader)
+	p["overrun"] = drawn
+	if fell != clean:
+		_fail("the forecast shows the overrun before its card: %s vs %s" % [
+			fell.map(func(m) -> float: return float(m.get("deficit_pct_gdp", 0.0))), clean.map(func(m) -> float: return float(m.get("deficit_pct_gdp", 0.0)))])
+	Budget.project(v["state"], {}, months, _loader)
+	if p.get("overrun") != drawn:
+		_fail("forecasting erased the register's draw")
 
 
 ## Ticks a programme to its opening; the notes of the month it opened.

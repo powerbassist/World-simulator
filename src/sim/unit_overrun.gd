@@ -55,6 +55,9 @@ static func tick(state, ns, loader, now: int, notes: Array) -> void:
 		if not p.has("overrun") or p.has("ask") or String(p["state"]) != UK.STATE_BUILDING \
 				or int(p["months_left"]) <= UK.UNIT_OVERRUN_WINDOW_MONTHS or now < int(p["overrun"]["month"]):
 			continue
+		# shortcut: a card held for January by the cap is dropped if by then no more than the
+		# window is left to build (three short builds overrunning in one year); upgrade if
+		# tools/units_probe.gd (U6) measures it.
 		if _cards_in_year(ns, now) >= UK.UNIT_OVERRUN_CARDS_A_YEAR:
 			continue
 		var size := float(loader.unit_types[String(p["type"])]["overrun_share"]) * float(p["capital_month_eur_m"]) * int(p["months_left"])
@@ -66,6 +69,17 @@ static func tick(state, ns, loader, now: int, notes: Array) -> void:
 		p["ask"] = {"kind": "overrun", "posted": now, "due": now + UK.UNIT_OVERRUN_WINDOW_MONTHS,
 			"default": UK.OVERRUN_PAY, "eur_m": size, "answers": answers}
 		notes.append({"kind": "overrun_landed", "id": String(p["id"]), "eur_m": size})
+
+
+## The forecast's copy blind to the draw (pass 1 on #421, ProcessAsks.blind's reason):
+## Budget.project() runs the programmes on `sim`, and an overrun not yet posted would
+## land there, showing in the projected bill whether it fell. On the copy only, a draw
+## not yet on a card reads as none: the path of a programme that does not overrun.
+static func blind(sim) -> void:
+	for id in sim.nations:
+		for p in sim.nations[id].unit_programmes:
+			if p.has("overrun") and not p.has("ask"):
+				p.erase("overrun")
 
 
 ## The cards waiting for an answer, oldest first, as copies.

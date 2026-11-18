@@ -77,9 +77,9 @@ func _next(state) -> void:
 func _test_the_game_envelope() -> void:
 	var state = _state()
 	var ns = state.player()
-	if absf(UnitEnvelope.left_eur_m(state, _loader, ns, 2026) - _envelope()) > 1e-9:
-		_fail("the game's envelope is %.4f, not %.4f" % [UnitEnvelope.left_eur_m(state, _loader, ns, 2026), _envelope()])
-	if UnitEnvelope.left_eur_m(state, _loader, ns, 2031) != 0.0:
+	if absf(UnitEnvelope.left_eur_m(_loader, ns, 2026) - _envelope()) > 1e-9:
+		_fail("the game's envelope is %.4f, not %.4f" % [UnitEnvelope.left_eur_m(_loader, ns, 2026), _envelope()])
+	if UnitEnvelope.left_eur_m(_loader, ns, 2031) != 0.0:
 		_fail("a year with no period has an envelope")
 	# A later period is whole; one ended before the start is nothing.
 	var later := {"first_year": 2030, "last_year": 2036, "envelope_eur_bn": {"FRA": 7.0}}
@@ -99,7 +99,7 @@ func _test_the_vote_reserves_the_rate_of_each_category() -> void:
 		_fail("the vote reserved %.4f, not the categories' %.4f: %s" % [float(union.get("reserved_eur_m", 0.0)), want, union])
 	if String(union.get("period", "")) != "p1" or int(union.get("pays_until", 0)) != 2029:
 		_fail("the reservation names %s" % union)
-	if absf(UnitEnvelope.left_eur_m(state, _loader, state.player(), 2026) - (_envelope() - want)) > 1e-9:
+	if absf(UnitEnvelope.left_eur_m(_loader, state.player(), 2026) - (_envelope() - want)) > 1e-9:
 		_fail("what is left did not fall by the reservation")
 
 
@@ -112,7 +112,10 @@ func _test_the_reservation_is_capped_by_what_is_left() -> void:
 	var left := _envelope() - float(first["union"]["reserved_eur_m"])
 	if absf(float(second.get("union", {}).get("reserved_eur_m", 0.0)) - maxf(0.0, left)) > 1e-9:
 		_fail("the second reserved %.4f with %.4f left" % [float(second.get("union", {}).get("reserved_eur_m", 0.0)), left])
-	if UnitEnvelope.left_eur_m(state, _loader, state.player(), 2026) < -1e-9:
+	# Nothing left: no Union money, so no Union line (pass 1 on #421).
+	if left <= 0.0 and second.has("union"):
+		_fail("a programme reserving nothing carries a Union line: %s" % second["union"])
+	if UnitEnvelope.left_eur_m(_loader, state.player(), 2026) < -1e-9:
 		_fail("the envelope went below zero")
 
 

@@ -120,7 +120,7 @@ static func open(state, ns, loader, row: Dictionary) -> Dictionary:
 	# Section 5: the overrun is drawn here, once. Section 6: the Union's share reserved
 	# here, before the row joins the register (what is left does not count it yet).
 	UnitOverrun.draw(ns, p)
-	UnitEnvelope.reserve(state, loader, ns, p)
+	UnitEnvelope.reserve(loader, ns, p)
 	ns.unit_programmes.append(p)
 	return p
 
