@@ -83,7 +83,8 @@ def region_values(variable: int) -> dict:
         if cell.get("attrId") == 4:
             continue
         out[REGION[row["name"].removeprefix("REGION ")]] = float(cell["val"])
-    assert len(out) == 15, "15 regions with data expected"
+    missing = sorted(set(ORDER) - set(out))
+    assert missing == ["PL91", "PL92"], "BDL no longer flags exactly PL91 and PL92 as without data: %s" % missing
     return out
 
 
