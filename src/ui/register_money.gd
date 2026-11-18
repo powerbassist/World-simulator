@@ -40,15 +40,17 @@ func cash_of(start_month: int, build_months: int, estimate_bn: float, running_bn
 	_mode = "cash"
 	_legend = legend
 	_years = []
-	var first := start_month / 12
-	var open_at := start_month + build_months
+	# UnitPrice.now() is year x 12 + a 1-BASED month; the loop below counts 0-based months.
+	var s0 := start_month - 1
+	var first := s0 / 12
+	var open_at := s0 + build_months
 	var last := open_at / 12 + YEARS_AFTER
 	for year in range(first, last + 1):
 		var capital := 0.0
 		var running := 0.0
 		for m in 12:
 			var month := year * 12 + m
-			if month > start_month and month <= open_at:
+			if month > s0 and month <= open_at:
 				capital += estimate_bn / float(build_months)
 			elif month > open_at:
 				running += running_bn_year / 12.0

@@ -176,6 +176,9 @@ func _check_count_refills(n: int) -> void:
 		_fail("count %d placed %d units" % [n, total])
 	if _panel.rows() != Units.fill_by_need(_main._state.player(), _main._loader, _type(), n):
 		_fail("a new count did not refill by need")
+	var spin = _with_meta("count")
+	if spin == null or not spin.get_line_edit().has_focus():
+		_fail("the count box lost the keyboard when the panel rebuilt")
 
 
 func _check_refused_before_the_press() -> void:
@@ -194,6 +197,9 @@ func _check_tabled() -> void:
 		_fail("the press did not table the programme: %s" % [units])
 	if _with_meta("in_bill") == null:
 		_fail("the sheet does not say the programme is in the finance bill")
+	var press = _with_meta("table")
+	if press == null or not press.disabled:
+		_fail("the press stays live for a programme the bill already holds")
 
 
 func _worst_region() -> String:

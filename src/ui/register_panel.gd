@@ -49,6 +49,9 @@ var _count := 1
 var _placed := {}
 var _region := ""
 var _refusal := ""
+## The spin box the player was using: a change rebuilds the panel, and this puts the keyboard
+## back in the new one (region_panel.gd's _refocus).
+var _refocus := ""
 
 
 func _ready() -> void:
@@ -98,8 +101,10 @@ func _process(_delta: float) -> void:
 ## by need filled for the current count.
 func open_for(region_id: String) -> void:
 	if _type == "" or not _offered().has(_type):
-		_pick_type(_first_type())
+		_type = _first_type()
+	# Spec row 0: the door brings the sheet with by need filled, whatever was edited before.
 	_region = region_id
+	_fill(true)
 	_dirty = true
 
 
@@ -163,10 +168,12 @@ func _refresh() -> void:
 		return
 	var ns = _state.player()
 	var row: Dictionary = Units.row(_loader, _type)
+	# Now, from one basis (preview with nothing placed is the shown figure, test_units pins it).
+	var now: Dictionary = Units.preview(ns, _loader, _type, {})
 	var shown := {}
 	for region in _loader.regions.get(ns.id, []):
 		if Units.start_capacity(_loader, ns.id, _type, region.id) > 0.0:
-			shown[String(region.id)] = Units.shown_figure(ns, _loader, _type, region.id)
+			shown[String(region.id)] = float(now[String(region.id)])
 	var nation := Units.national_figure(ns, _loader, _type)
 	_lede(row, shown, nation)
 	_types()
@@ -179,6 +186,21 @@ func _refresh() -> void:
 	var quote := _quote(ns)
 	_strip(ns, row, quote, shown, after)
 	_in_bill(ns)
+	if _refocus != "":
+		var spin := _find_meta(_body, _refocus)
+		if spin != null:
+			(spin as SpinBox).get_line_edit().grab_focus()
+		_refocus = ""
+
+
+func _find_meta(node: Node, key: String) -> Node:
+	if node.has_meta("focus_key") and String(node.get_meta("focus_key")) == key:
+		return node
+	for child in node.get_children():
+		var found := _find_meta(child, key)
+		if found != null:
+			return found
+	return null
 
 
 ## "Pays de la Loire: 4.82 hospital beds per 1 000 inhabitants; the nation 5.67." The type's
@@ -200,7 +222,7 @@ func _lede(row: Dictionary, shown: Dictionary, nation: float) -> void:
 		var ns = _state.player()
 		var units := Units.start_units(_loader, ns.id, _type, _region)
 		var capacity := PanelKit.pop_text(Units.start_capacity(_loader, ns.id, _type, _region))
-		var stock := Strings.tn("Standing there now: %d establishment, a capacity of %s.", "Standing there now: %d establishments, a capacity of %s.", units) % [units, capacity] 			if units > 0 else tr("Standing there now: a capacity of %s; no count of establishments is published.") % capacity
+		var stock := Strings.tn("Standing there now: %d establishment, a capacity of %s.", "Standing there now: %d establishments, a capacity of %s.", units) % [units, capacity] if units > 0 else tr("Standing there now: a capacity of %s; no count of establishments is published.") % capacity
 		PanelKit.plain_line(_body, stock, PanelKit.Tone.DIM).set_meta("stock", true)
 
 
@@ -262,7 +284,9 @@ func _composer(parent: Control, ns) -> void:
 	spin.max_value = COUNT_MAX
 	spin.value = _count
 	spin.set_meta("count", true)
+	spin.set_meta("focus_key", "count")
 	spin.value_changed.connect(func(v: float) -> void:
+		_refocus = "count"
 		_count = int(v)
 		_fill(true)
 		_dirty = true)
@@ -292,7 +316,9 @@ func _composer(parent: Control, ns) -> void:
 		units.max_value = COUNT_MAX
 		units.value = int(_placed.get(id, 0))
 		units.set_meta("region_units", id)
+		units.set_meta("focus_key", "units:" + id)
 		units.value_changed.connect(func(v: float) -> void:
+			_refocus = "units:" + id
 			_placed[id] = int(v)
 			_count = maxi(1, _sum())
 			_dirty = true)
@@ -326,6 +352,11 @@ func _sum() -> int:
 func _why_not(bill: Dictionary) -> String:
 	if rows().is_empty():
 		return tr("Place at least one unit.")
+	# The same programme already in the bill: a second press would add nothing (FinanceRows.merge).
+	var held: Array = (_state.player().tabled_bill.get("finance", {}) as Dictionary).get(FinanceRows.UNITS, [])
+	for kept in held:
+		if String(kept.get("type", "")) == _type and String(kept.get("op", "")) == UK.OP_BUILD and kept.get("rows", []) == rows():
+			return tr("This programme is already in the finance bill.")
 	var answer: Dictionary = FinanceBill.refusal(_state, _loader, bill)
 	return "" if answer.is_empty() else _reason(answer)
 
@@ -418,6 +449,16 @@ func _in_bill(ns) -> void:
 		var name := Strings.row_name("units", Units.row(_loader, String(p.get("type", ""))))
 		PanelKit.plain_line(_body, Strings.tn("%d unit of %s: it divides on %s.", "%d units of %s: it divides on %s.", n) % [n, name, when],
 			PanelKit.Tone.PLAIN).set_meta("in_bill", true)
+
+
+## Whether any catalogue type the nation's stock offers stands in the region: the region
+## sheet's door is shown only where something can be built (no dead click).
+static func can_build_in(loader, nation_id: String, region_id: String) -> bool:
+	for row in Units.catalogue(loader):
+		var id := String(row["id"])
+		if String(row.get("payoff", "")) == UK.PAYOFF_CAPACITY and Units.offered(loader, nation_id, id) and Units.start_capacity(loader, nation_id, id, region_id) > 0.0:
+			return true
+	return false
 
 
 func _region_name(region_id: String) -> String:
