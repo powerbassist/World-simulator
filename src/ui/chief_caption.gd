@@ -20,6 +20,10 @@ const MAX_SECONDS := 12.0
 const WIDTH_PX := 560
 const GAP_PX := 6
 
+## Where the strip keeps room for the line (a global Rect2; top_bar.gd's caption_slot), or
+## unset for a harness with no strip: then the line drops under the mark.
+var slot_of := Callable()
+
 var _line: Label
 var _timer: Timer
 
@@ -46,6 +50,8 @@ func say(line: String, anchor: Control, seconds := 0.0) -> void:
 		return
 	_line.text = line
 	var width := WIDTH_PX * UiTheme.text_scale()
+	if slot_of.is_valid():
+		width = clampf(Rect2(slot_of.call()).size.x - GAP_PX * 2.0, 0.0, width)
 	# An autowrapped Label measures its height at its CURRENT width: at 0 it wraps every
 	# character and the plate ran down the screen (the first windowed frame did). So the
 	# label gets its width before the plate is measured, and is measured again once laid out.
@@ -70,9 +76,26 @@ func _settle(anchor: Control) -> void:
 ## Under the figure strip, not over it (#418 pass 2): the strip's tiles grew rightward with
 ## top bar A, and a line dropped from the mark covered the unrest and majority tiles.
 func _place(anchor: Control) -> void:
+	if slot_of.is_valid():
+		_place_in_strip(Rect2(slot_of.call()))
+		return
 	var rect := anchor.get_global_rect()
 	var top := maxf(rect.end.y, TitleBar.HEIGHT + TopBar.BAR_HEIGHT)
 	global_position = Vector2(maxf(0.0, rect.end.x - size.x), top + GAP_PX)
+
+
+## Inside the strip, right of the tiles (top bar A): the line is the strip's, so it is never
+## under it over the inbox column's header. A line too tall for the strip is cut at two
+## lines with an ellipsis rather than spill out of it.
+func _place_in_strip(slot: Rect2) -> void:
+	_line.max_lines_visible = -1
+	_line.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	reset_size()
+	if size.y > slot.size.y - GAP_PX * 2.0:
+		_line.max_lines_visible = 2
+		_line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		reset_size()
+	global_position = Vector2(slot.position.x + GAP_PX, slot.position.y + maxf((slot.size.y - size.y) / 2.0, 0.0))
 
 
 func text() -> String:

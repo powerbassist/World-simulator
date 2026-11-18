@@ -58,6 +58,10 @@ func _process(_delta: float) -> bool:
 	_check_curve_and_meter_keep_the_tip()
 	_check_a_curve_is_rebuilt_only_on_change()
 	_check_the_chief_caption_clears_the_strip()
+	_check_the_chief_caption_sits_in_the_strip()
+	_check_an_unmoved_figure_says_steady()
+	_check_inflation_has_a_curve()
+	_check_tiles_are_divided_by_a_hairline()
 	_finish()
 	return true
 
@@ -266,6 +270,85 @@ func _check_the_chief_caption_clears_the_strip() -> void:
 			caption.global_position.y, TitleBar.HEIGHT + TopBar.BAR_HEIGHT])
 	caption.queue_free()
 	mark.queue_free()
+
+
+## Top bar A: the chief's remark sits INSIDE the strip, right of the tiles and left of the chips,
+## and never over a tile, a chip or the inbox column under the strip -- at text 100 and 130 %.
+func _check_the_chief_caption_sits_in_the_strip() -> void:
+	var state = _with_history(_state(), 4.4, 5.3)
+	for scale in [1.0, 1.3]:
+		UiTheme.set_text_scale(scale)
+		_bar.theme = UiTheme.build()
+		_bar.refresh(state, null, _loader)
+		var mark := Control.new()
+		root.add_child(mark)
+		mark.position = Vector2(1500, 8)
+		mark.size = Vector2(300, 40)
+		var caption = ChiefCaption.new()
+		caption.theme = UiTheme.build()
+		caption.slot_of = Callable(_bar, "caption_slot")
+		root.add_child(caption)
+		caption.say("The situation is manageable, barely. It will need your signature.", mark, 5.0)
+		var rect := Rect2(caption.global_position, caption.size)
+		var bar_rect := Rect2(_bar.global_position, Vector2(_bar.size.x, TopBar.BAR_HEIGHT))
+		if not bar_rect.encloses(rect):
+			_fail("at text %d %% the chief's remark %s is not inside the strip %s: it covers what sits under it" % [roundi(scale * 100), rect, bar_rect])
+		var siblings: Array = []
+		for id in _bar._boxes.keys():
+			var box: Control = _bar._boxes[id]
+			if box.visible:
+				siblings.append(box)
+		for box in siblings:
+			if rect.intersects(box.get_global_rect()):
+				_fail("at text %d %% the chief's remark %s overlaps a tile or chip %s" % [roundi(scale * 100), rect, box.get_global_rect()])
+		caption.queue_free()
+		mark.queue_free()
+	UiTheme.set_text_scale(1.0)
+	_bar.theme = UiTheme.build()
+
+
+## Top bar A: a figure that has not moved says so ("= steady"), not nothing; no history yet says nothing.
+func _check_an_unmoved_figure_says_steady() -> void:
+	var state = _state()
+	var ns = state.player()
+	for i in StripSeries.MONTHS:
+		state.append_history(Budget.snapshot(state))
+	_bar.refresh(state, null, _loader)
+	for id in ["deficit", "gdp", "unemployment", "inflation"]:
+		var c := StripChanges.change(id, state)
+		if c.is_empty() or String(c["text"]) != tr("= steady"):
+			_fail("%s did not move and its change reads %s, not '= steady'" % [id, c])
+		var label: Label = _bar._changes[id]
+		if not label.visible or label.text != tr("= steady"):
+			_fail("%s: the tile's change row reads '%s', not '= steady'" % [id, label.text])
+	if not StripChanges.change("gdp", GameState.new_game(_loader, "FRA")).is_empty():
+		_fail("a game with no history says '= steady' instead of nothing")
+
+
+## Top bar A: inflation has its 18-month curve like the other three figures with history.
+func _check_inflation_has_a_curve() -> void:
+	var state = _state()
+	var ns = state.player()
+	for i in StripSeries.MONTHS:
+		ns.inflation_pct = 1.5 + 0.05 * i
+		state.append_history(Budget.snapshot(state))
+	if not StripSeries.IDS.has("inflation"):
+		_fail("inflation is not among the figures with a curve")
+	_bar.refresh(state, null, _loader)
+	var spark = _bar.spark_of("inflation")
+	if spark == null or not spark.visible:
+		_fail("inflation: 18 months of history and no curve")
+
+
+## Top bar A: a 1 px hairline stands between neighbouring tiles.
+func _check_tiles_are_divided_by_a_hairline() -> void:
+	_bar.refresh(_with_history(_state(), 4.4, 5.3), null, _loader)
+	var shown := 0
+	for child in _bar._figures.get_children():
+		if child.visible and child != _bar._more:
+			shown += 1
+	if _bar.divider_xs().size() != shown - 1:
+		_fail("%d tiles are shown and %d hairlines stand between them" % [shown, _bar.divider_xs().size()])
 
 
 func _fail(message: String) -> void:

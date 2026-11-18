@@ -25,17 +25,22 @@ const CHANGES := {
 	"deficit": {"key": "", "good_when_rising": true},  # i18n: ok reading ids -- the signed balance (StripSeries)
 	"gdp": {"key": "growth_annual_pct", "good_when_rising": true},  # i18n: ok reading ids
 	"unemployment": {"key": "unemployment_pct", "good_when_rising": false},  # i18n: ok reading ids
+	"inflation": {"key": "inflation_pct", "good_when_rising": false},  # i18n: ok reading ids
 }
 
-## {text: "▼ 0.4 bn worse", good: false} or {} -- see CHANGES.
+## {text: "▼ 0.4 bn worse", good: false} or {} -- see CHANGES. A figure with history that has not
+## moved by a noticed amount reads {text: "= steady", steady: true} (top bar A): an absent
+## change reads as a missing one, and the player cannot tell "flat" from "no data".
 static func change(id: String, state) -> Dictionary:
 	if not CHANGES.has(id):
 		return {}
 	var spec: Dictionary = CHANGES[id]
 	var money := id == "deficit"
 	var moved := _balance_moved(state) if money else Trends.delta(state, String(spec["key"]), WINDOW)
-	if is_nan(moved) or absf(moved) < (_noticed_bn(state) if money else NOTICED_PT):
+	if is_nan(moved):
 		return {}
+	if absf(moved) < (_noticed_bn(state) if money else NOTICED_PT):
+		return {"text": Strings.t("= steady"), "good": false, "steady": true}
 	var good: bool = (moved > 0.0) == bool(spec["good_when_rising"])
 	var amount := Strings.t("%s bn") % Num.f(absf(moved), 1) if money else Strings.t("%s pt") % Num.f(absf(moved), 2)
 	var figure := "%s %s" % ["▲" if moved > 0.0 else "▼", amount]  # i18n: ok a glyph and a figure

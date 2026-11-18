@@ -48,6 +48,10 @@ const FIGURE_GAP_MIN := 6
 ## this strip's x), a gutter in.
 const LEFT_GUTTER := 16
 
+## The room the strip keeps free, right of the tiles, for the chief's remark (top bar A): the
+## tiles fold before this goes, so the remark never lands on a tile or under the strip.
+const CAPTION_MIN_PX := 240
+
 var _figure_values := {}
 ## Each figure's caption label, by the same key as _figure_values -- kept so the
 ## live tooltip goes on both hover targets, and the programme can name itself.
@@ -124,6 +128,8 @@ func _ready() -> void:
 	_more.mouse_filter = Control.MOUSE_FILTER_PASS
 	_more.hide()
 	_figures.add_child(_more)
+	_figures.draw.connect(_draw_dividers)
+	_figures.sort_children.connect(_figures.queue_redraw)
 
 	row.add_child(_gutter(0, true))
 	_chips = HBoxContainer.new()
@@ -315,7 +321,10 @@ func _show_change(id: String, state) -> void:
 		label.theme_type_variation = UiTheme.GOOD_TEXT
 		return
 	label.text = String(c["text"])
-	label.theme_type_variation = UiTheme.GOOD_TEXT if bool(c["good"]) else UiTheme.BAD_TEXT
+	if c.has("steady"):
+		label.theme_type_variation = UiTheme.CAPTION  # no news either way: no status tone
+	else:
+		label.theme_type_variation = UiTheme.GOOD_TEXT if bool(c["good"]) else UiTheme.BAD_TEXT
 
 
 ## Every tile's change row stands at the height of a line carrying the ▲▼ glyphs, which come
@@ -417,7 +426,7 @@ func refit() -> void:
 	_folded.clear()
 	_more.hide()
 	var available: float = get_viewport_rect().size.x - global_position.x - get_theme_stylebox("panel").get_minimum_size().x \
-		- LEFT_GUTTER * 2 - _chips_width()
+		- LEFT_GUTTER * 2 - _chips_width() - CAPTION_MIN_PX * UiTheme.text_scale()
 	var shown: Array = []
 	for id in StripReadings.ON_STRIP:
 		if _boxes[id].visible:
@@ -440,6 +449,36 @@ func refit() -> void:
 	if gap != _gap:
 		_gap = gap
 		_figures.add_theme_constant_override("separation", gap)
+	_figures.queue_redraw()
+
+
+## The x (in `_figures`' own space) of the hairline between each pair of shown tiles, half a
+## gap after the left one's edge (top bar A: a 1 px line divides the tiles).
+func divider_xs() -> Array[float]:
+	var xs: Array[float] = []
+	var previous: Control = null
+	for child in _figures.get_children():
+		if not child.visible or child == _more:
+			continue
+		if previous != null:
+			xs.append((previous.position.x + previous.size.x + child.position.x) / 2.0)
+		previous = child
+	return xs
+
+
+func _draw_dividers() -> void:
+	for x in divider_xs():
+		_figures.draw_line(Vector2(x, 6.0), Vector2(x, _figures.size.y - 6.0), UiTheme.EDGE, 1.0)
+
+
+## The free band of the strip for the chief's remark (top bar A): right of the tiles, left
+## of the chips, the strip's own height. The tiles fold to keep CAPTION_MIN_PX of it.
+func caption_slot() -> Rect2:
+	# From the minimum widths, not the laid-out sizes: a line said in the frame a tile changed
+	# would read a layout one frame old and land on the tile.
+	var left := _figures.global_position.x + _figures.get_combined_minimum_size().x + FIGURE_GAP * 0.5
+	var right := global_position.x + size.x - get_theme_stylebox("panel").get_margin(SIDE_RIGHT) 		- LEFT_GUTTER - _chips_width() - FIGURE_GAP * 0.5
+	return Rect2(left, global_position.y, maxf(right - left, 0.0), BAR_HEIGHT)
 
 
 ## The chips' own width (they never fold: each is something waiting), gaps and all.

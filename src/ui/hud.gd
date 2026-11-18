@@ -129,6 +129,7 @@ func _ready() -> void:
 	# every container, so showing it moves nothing (it ignores the mouse).
 	chief_caption = ChiefCaption.new()
 	add_child(chief_caption)
+	chief_caption.slot_of = Callable(top_bar, "caption_slot")
 
 
 ## A loaded game's state, rebound to the furniture that keeps one: the ribbon's month,

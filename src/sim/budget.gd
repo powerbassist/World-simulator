@@ -749,6 +749,7 @@ static func snapshot(state) -> Dictionary:
 		"trend_annual_pct": ns.trend_annual_pct,
 		"growth_annual_pct": ns.growth_annual_pct,
 		"unemployment_pct": ns.unemployment_pct,
+		"inflation_pct": ns.inflation_pct,  # the top bar's inflation curve; an older save lacks it and the curve skips the month
 		"structural_unemployment_pct": ns.structural_unemployment_pct,
 		"population": ns.population,
 		"debt_eur_bn": ns.debt_eur_bn,
