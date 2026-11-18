@@ -52,7 +52,7 @@ static func refusal(state, ns, loader, rows: Array) -> String:
 		# A row equal to one already HELD never reaches here twice: FinanceRows.merge keeps it once.
 		var same := [String(row.get("type", "")), String(row.get("op", "")), row.get("rows", [])]
 		if seen.has(same):
-			return "One row per type and regions: put the units in one row."
+			return "Two identical rows in one bill: put the units in one row."
 		seen.append(same)
 		var type_id := String(row.get("type", ""))
 		if not loader.unit_types.has(type_id) or not Units.offered(loader, ns.id, type_id):
@@ -146,6 +146,7 @@ static func tick_month(state, loader) -> Array:
 			continue
 		var pay := float(p["capital_month_eur_m"])
 		p["paid_eur_m"] = float(p["paid_eur_m"]) + pay
+		p["paid_month"] = month
 		paid += pay
 		p["months_left"] = int(p["months_left"]) - 1
 		if int(p["months_left"]) <= 0:

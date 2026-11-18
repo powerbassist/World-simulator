@@ -16,6 +16,8 @@ const UnitsLoader = preload("res://src/core/loaders/units_loader.gd")
 const UnitBuild = preload("res://src/sim/unit_build.gd")
 const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
 const UnitOverrun = preload("res://src/sim/unit_overrun.gd")
+const UnitPrice = preload("res://src/sim/unit_price.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 const UK = preload("res://src/sim/units_constants.gd")
 const Budget = preload("res://src/sim/budget.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
@@ -46,6 +48,8 @@ func _init() -> void:
 	_test_an_opening_after_the_date_is_paid_nothing()
 	_test_the_warning_names_the_sum_about_to_lapse()
 	_test_the_receipt_survives_a_save()
+	_test_a_build_voted_late_keeps_its_share()
+	_test_leaving_the_union_ends_its_money()
 	_finish()
 
 
@@ -186,7 +190,7 @@ func _test_a_shrink_gives_back() -> void:
 	p["overrun"] = {"month": UnitBuild.now(state) + 1}
 	_next(state)
 	UnitBuild.tick_month(state, _loader)
-	var preview: Dictionary = UnitOverrun.answer_of(p, UK.OVERRUN_SHRINK)
+	var preview: Dictionary = UnitOverrun.answer_of(state, ns, _loader, p, UK.OVERRUN_SHRINK)
 	UnitOverrun.answer(state, ns, _loader, String(p["id"]), UK.OVERRUN_SHRINK)
 	var after := float(p["union"]["reserved_eur_m"])
 	if after >= before or absf(after - before * float(p["rows"][0]["units"]) / 3.0) > 1e-9:
@@ -221,28 +225,30 @@ func _test_an_opening_after_the_date_is_paid_nothing() -> void:
 	p["overrun"] = {"month": UnitBuild.now(state) + 1}
 	_next(state)
 	UnitBuild.tick_month(state, _loader)
-	if not bool(UnitOverrun.answer_of(p, UK.OVERRUN_DELAY).get("union_lost", false)):
-		_fail("the card's delay does not say the Union's share is lost: %s" % UnitOverrun.answer_of(p, UK.OVERRUN_DELAY))
-	if bool(UnitOverrun.answer_of(p, UK.OVERRUN_PAY).get("union_lost", true)):
+	if not bool(UnitOverrun.answer_of(state, ns, _loader, p, UK.OVERRUN_DELAY).get("union_lost", false)):
+		_fail("the card's delay does not say the Union's share is lost: %s" % UnitOverrun.answer_of(state, ns, _loader, p, UK.OVERRUN_DELAY))
+	if bool(UnitOverrun.answer_of(state, ns, _loader, p, UK.OVERRUN_PAY).get("union_lost", true)):
 		_fail("the card's pay says the Union's share is lost")
 
 
+## TAKE 5 on #421 (the parent's ruling): the warning comes warn_months before the end of
+## the period's LAST VOTE YEAR (the fixture's 2026: January 2026) and names what can still
+## be reserved then, with the reservations of builds that will open after the last
+## payment year; never money nobody can reserve.
 func _test_the_warning_names_the_sum_about_to_lapse() -> void:
 	var state = _state()
 	var ns = state.player()
 	var p := _open(state, SCHOOL, [{"region": "FRB", "units": 1}])
 	var left := _envelope() - float(p["union"]["reserved_eur_m"])
-	# Opening in May 2029, inside the date: its reservation is not about to lapse.
-	p["months_left"] = 6
-	state.year = 2028
+	state.year = 2025
 	state.month = 12
 	if not _warned(UnitBuild.tick_month(state, _loader)).is_empty():
 		_fail("the warning came before its month")
-	state.year = 2029
+	state.year = 2026
 	state.month = 1
 	var w := _warned(UnitBuild.tick_month(state, _loader))
-	if w.is_empty() or absf(float(w["eur_m"]) - left) > 1e-9 or int(w["year"]) != 2029:
-		_fail("the warning of January 2029 is %s, not %.4f by 2029" % [w, left])
+	if w.is_empty() or absf(float(w["eur_m"]) - left) > 1e-9 or int(w["year"]) != 2026:
+		_fail("the warning of January 2026 is %s, not %.4f to reserve by the end of 2026" % [w, left])
 	state.month = 2
 	if not _warned(UnitBuild.tick_month(state, _loader)).is_empty():
 		_fail("the warning came twice")
@@ -251,17 +257,22 @@ func _test_the_warning_names_the_sum_about_to_lapse() -> void:
 	ns = state.player()
 	p = _open(state, SCHOOL, [{"region": "FRB", "units": 1}])
 	left = _envelope() - float(p["union"]["reserved_eur_m"])
-	p["months_left"] = 40
-	state.year = 2029
-	state.month = 1
+	p["months_left"] = 60
 	w = _warned(UnitBuild.tick_month(state, _loader))
 	if w.is_empty() or absf(float(w["eur_m"]) - (left + float(p["union"]["reserved_eur_m"]))) > 1e-9:
 		_fail("the warning omits a reservation that will open too late: %s" % w)
+	# Money no build can still use is never named: paid until 2027, no fixture type
+	# voted in January 2026 opens by then.
+	var period: Dictionary = _loader.unit_cofinancing["eu"]["periods"][0]
+	period["pays_until_year"] = 2027
+	state = _state()
+	w = _warned(UnitBuild.tick_month(state, _loader))
+	period["pays_until_year"] = 2029
+	if not w.is_empty():
+		_fail("the warning names money nobody can reserve: %s" % w)
 	# A non-member is never warned.
 	state = _state()
 	state.player().orgs.erase("eu")
-	state.year = 2029
-	state.month = 1
 	if not _warned(UnitBuild.tick_month(state, _loader)).is_empty():
 		_fail("a non-member was warned")
 
@@ -273,10 +284,84 @@ func _test_the_receipt_survives_a_save() -> void:
 	var back = ns.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
 	if back.unit_receipt_pct_gdp != 0.0125:
 		_fail("the receipt came back as %s" % back.unit_receipt_pct_gdp)
+	# TAKE 8a on #421: the history entry names it (the register's tab reads it).
+	if float(Budget.snapshot(state).get("unit_receipt_pct_gdp", -1.0)) != 0.0125:
+		_fail("the snapshot does not name the receipt: %s" % Budget.snapshot(state).get("unit_receipt_pct_gdp"))
 	var d: Dictionary = ns.to_dict()
 	d.erase("unit_receipt_pct_gdp")
 	if ns.from_dict(d).unit_receipt_pct_gdp != 0.0:
 		_fail("an older save's receipt is not 0")
+
+
+## TAKE 1 on #421: the vote month pays (WorldMonth runs Division before Units), so a
+## school voted in July 2027 (30 months, real data) opens in December 2029, inside the
+## first period's last payment year, and keeps its Union share. Through the real month.
+func _test_a_build_voted_late_keeps_its_share() -> void:
+	var real = DataLoader.new()
+	real.load_all()
+	if not real.errors.is_empty():
+		_fail("the real data did not load: %s" % [real.errors])
+		return
+	var state = GameState.new_game(real, "FRA")
+	state.year = 2027
+	state.month = 7
+	var ns = state.player()
+	var row := {"type": "upper_secondary_school", "op": UK.OP_BUILD, "rows": [{"region": "FRB", "units": 2}]}
+	FinanceRows.apply(state, real, ns, FinanceBill.drafted(state, real, {FinanceRows.UNITS: [row]}))
+	var p: Dictionary = ns.unit_programmes[ns.unit_programmes.size() - 1]
+	var opens := UnitPrice.opens_at(p)
+	if opens != 2029 * 12 + 12 or not p.has("union"):
+		_fail("a school voted in July 2027 opens at %d and has the Union line %s" % [opens, p.get("union")])
+	WorldMonth.tick_month(state, real)
+	for i in 40:
+		if String(p["state"]) != UK.STATE_BUILDING:
+			break
+		_next(state)
+		WorldMonth.tick_month(state, real)
+	if int(p.get("opened", -1)) != opens:
+		_fail("it opened at %d, not the %d it was reserved on" % [int(p.get("opened", -1)), opens])
+	_next(state)
+	WorldMonth.tick_month(state, real)
+	if ns.unit_receipt_pct_gdp <= 0.0:
+		_fail("the Union paid nothing the month after a December 2029 opening")
+
+
+## TAKE 2 on #421: a nation that leaves the Union keeps no reservation and receives
+## nothing more, while building or while being paid.
+func _test_leaving_the_union_ends_its_money() -> void:
+	var state = _state()
+	var ns = state.player()
+	var p := _open(state, SCHOOL, [{"region": "FRB", "units": 2}])
+	p.erase("overrun")
+	ns.orgs.erase("eu")
+	_next(state)
+	UnitBuild.tick_month(state, _loader)
+	if float(p.get("union", {}).get("reserved_eur_m", 0.0)) != 0.0:
+		_fail("a nation that left still holds %s" % p["union"])
+	for i in 60:
+		_next(state)
+		UnitBuild.tick_month(state, _loader)
+		if ns.unit_receipt_pct_gdp != 0.0:
+			_fail("a nation that left before the opening was paid")
+			break
+	state = _state()
+	ns = state.player()
+	p = _open(state, SCHOOL, [{"region": "FRB", "units": 2}])
+	p.erase("overrun")
+	var paid_months := 0
+	for i in 60:
+		_next(state)
+		UnitBuild.tick_month(state, _loader)
+		if ns.unit_receipt_pct_gdp > 0.0:
+			paid_months += 1
+		if paid_months == 3:
+			break
+	var paid := float(p["union"]["paid_eur_m"])
+	ns.orgs.erase("eu")
+	_next(state)
+	UnitBuild.tick_month(state, _loader)
+	if ns.unit_receipt_pct_gdp != 0.0 or float(p["union"]["reserved_eur_m"]) != 0.0 or float(p["union"]["paid_eur_m"]) != paid:
+		_fail("a nation that left mid-payment still receives: %.6f, %s" % [ns.unit_receipt_pct_gdp, p["union"]])
 
 
 func _warned(notes: Array) -> Dictionary:

@@ -45,6 +45,8 @@ func _init() -> void:
 	_test_two_cards_a_year_a_third_waits()
 	_test_no_card_inside_the_window()
 	_test_the_forecast_is_blind_to_the_draw()
+	_test_the_card_shows_what_an_answer_does_now()
+	_test_a_whole_quotient_is_not_rounded_off()
 	_finish()
 
 
@@ -101,7 +103,7 @@ func _test_two_equal_rows_in_one_bill_are_refused() -> void:
 	var ns = state.player()
 	var row := _build([{"region": "FR1", "units": 2}])
 	var refused := FinanceBill.refusal(state, _loader, {FinanceRows.UNITS: [row, row.duplicate(true)]})
-	if not bool(refused.get("refused", false)) or String(refused.get("reason", "")) != "One row per type and regions: put the units in one row.":
+	if not bool(refused.get("refused", false)) or String(refused.get("reason", "")) != "Two identical rows in one bill: put the units in one row.":
 		_fail("two equal rows in one bill are not refused with the reason: %s" % refused)
 	FinanceBill.table(state, _loader, {FinanceRows.UNITS: [row, row.duplicate(true)]})
 	if not ns.tabled_bill.is_empty():
@@ -184,14 +186,14 @@ func _test_the_card_lands_in_its_month() -> void:
 		if absf(float(ask.get("eur_m", 0.0)) - size) > 1e-9:
 			_fail("the overrun is %.4f, not the share of the capital still to pay %.4f" % [float(ask.get("eur_m", 0.0)), size])
 		var ids: Array = []
-		for a in ask.get("answers", []):
+		for a in UnitOverrun.asks(state, ns, _loader)[0]["ask"]["answers"]:
 			ids.append(String(a["id"]))
 		if ids != [UK.OVERRUN_PAY, UK.OVERRUN_SHRINK, UK.OVERRUN_DELAY]:
 			_fail("the card offers %s" % [ids])
 		if not _has_note(notes, "overrun_landed", String(p["id"])):
 			_fail("the month's notes do not say the card landed: %s" % [notes])
-		if UnitOverrun.asks(ns).size() != 1:
-			_fail("the register lists %d asks" % UnitOverrun.asks(ns).size())
+		if UnitOverrun.asks(state, ns, _loader).size() != 1:
+			_fail("the register lists %d asks" % UnitOverrun.asks(state, ns, _loader).size())
 		# It is an arrival for the quiet-month call: the month is not empty.
 		ns.in_government = true
 		var with_it := QuietMonth.quiet(state, ns, _loader, _now(state))
@@ -225,7 +227,7 @@ func _test_pay_spreads_the_overrun_over_the_months_left() -> void:
 		_fail("pay billed %.4f a month for %d months, not %.4f for %d" % [float(p["capital_month_eur_m"]), int(p["months_left"]), rate + size / left, left])
 	if bool(UnitOverrun.answer(state, ns, _loader, String(p["id"]), UK.OVERRUN_PAY).get("ok", true)):
 		_fail("a card answered twice")
-	if UnitOverrun.asks(ns).size() != 0:
+	if UnitOverrun.asks(state, ns, _loader).size() != 0:
 		_fail("an answered card is still listed")
 	var opened := {}
 	for n in _run_out(state, p):
@@ -249,7 +251,7 @@ func _test_delay_keeps_the_rate_and_moves_the_opening() -> void:
 	var rate := float(p["capital_month_eur_m"])
 	var left := int(p["months_left"])
 	var contract := float(p["contract_eur_m"])
-	var preview: Dictionary = UnitOverrun.answer_of(p, UK.OVERRUN_DELAY)
+	var preview: Dictionary = UnitOverrun.answer_of(state, ns, _loader, p, UK.OVERRUN_DELAY)
 	UnitOverrun.answer(state, ns, _loader, String(p["id"]), UK.OVERRUN_DELAY)
 	var extra := int(ceilf(size / rate))
 	if int(p["months_left"]) != left + extra or float(p["capital_month_eur_m"]) > rate + 1e-12:
@@ -299,7 +301,7 @@ func _test_shrink_drops_units_until_the_first_budget_holds() -> void:
 	if one.is_empty():
 		return
 	_until_card(one["state"], one["p"])
-	if not UnitOverrun.answer_of(one["p"], UK.OVERRUN_SHRINK).is_empty():
+	if not UnitOverrun.answer_of(one["state"], one["ns"], _loader, one["p"], UK.OVERRUN_SHRINK).is_empty():
 		_fail("a one-unit programme offers to shrink")
 	if bool(UnitOverrun.answer(one["state"], one["ns"], _loader, String(one["p"]["id"]), UK.OVERRUN_SHRINK).get("ok", true)):
 		_fail("a one-unit programme shrank")
@@ -386,6 +388,56 @@ func _test_the_forecast_is_blind_to_the_draw() -> void:
 	Budget.project(v["state"], {}, months, _loader)
 	if p.get("overrun") != drawn:
 		_fail("forecasting erased the register's draw")
+
+
+## TAKE 4 on #421: a card left open into its hold month shows the answers as they would
+## land then (fewer months left), and the answer applied is the one shown.
+func _test_the_card_shows_what_an_answer_does_now() -> void:
+	var v := _voted([{"region": "FRB", "units": 2}], true)
+	if v.is_empty():
+		return
+	var state = v["state"]
+	var ns = v["ns"]
+	var p: Dictionary = v["p"]
+	_until_card(state, p)
+	_next(state)
+	UnitBuild.tick_month(state, _loader)
+	if p.has("answer"):
+		_fail("the card defaulted before its due month")
+		return
+	var size := float(p["ask"]["eur_m"])
+	var shown := UnitOverrun.answer_of(state, ns, _loader, p, UK.OVERRUN_PAY)
+	var want := float(p["capital_month_eur_m"]) + size / int(p["months_left"])
+	if absf(float(shown.get("capital_month_eur_m", 0.0)) - want) > 1e-12:
+		_fail("the hold month's card shows %.6f a month, an answer now pays %.6f" % [float(shown.get("capital_month_eur_m", 0.0)), want])
+	var listed: Dictionary = {}
+	for a in UnitOverrun.asks(state, ns, _loader)[0]["ask"]["answers"]:
+		if String(a["id"]) == UK.OVERRUN_PAY:
+			listed = a
+	if listed != shown:
+		_fail("asks() and answer_of() disagree: %s vs %s" % [listed, shown])
+	UnitOverrun.answer(state, ns, _loader, String(p["id"]), UK.OVERRUN_PAY)
+	if float(p["capital_month_eur_m"]) != float(shown["capital_month_eur_m"]) or int(p["months_left"]) != int(shown["months_left"]):
+		_fail("the answer applied is not the one shown: %s vs %s" % [p["capital_month_eur_m"], shown])
+
+
+## TAKE 3 on #421: a quotient that is whole in exact arithmetic but lands a hair off in
+## floats (100/30 a month, 5 months, a 0.2 overrun: 1.0000000000000002 months; 5 units
+## at 0.8: 3.9999999999999996) is not rounded a whole month or unit the wrong way.
+func _test_a_whole_quotient_is_not_rounded_off() -> void:
+	var state = _state()
+	var ns = state.player()
+	var rate := 100.0 / 30.0
+	var delay := {"type": TYPE, "op": UK.OP_BUILD, "rows": [{"region": "FRB", "units": 1}], "voted": _now(state),
+		"capital_month_eur_m": rate, "months_left": 5, "paid_eur_m": 0.0, "contract_eur_m": 100.0}
+	var d := UnitOverrun.outcome(state, ns, _loader, delay, UK.OVERRUN_DELAY, 0.2 * rate * 5)
+	if int(d["months_left"]) != 6:
+		_fail("a one-month overrun delays by %d months" % (int(d["months_left"]) - 5))
+	var shrink := {"type": TYPE, "op": UK.OP_BUILD, "rows": [{"region": "FRB", "units": 5}], "voted": _now(state),
+		"capital_month_eur_m": 243.6 / 30.0, "months_left": 30, "paid_eur_m": 0.0, "contract_eur_m": 243.6}
+	var s := UnitOverrun.outcome(state, ns, _loader, shrink, UK.OVERRUN_SHRINK, 243.6 * (1.0 / 0.8 - 1.0))
+	if int(s["units"]) != 4:
+		_fail("a shrink to four fifths of 5 units keeps %d" % int(s["units"]))
 
 
 ## Ticks a programme to its opening; the notes of the month it opened.

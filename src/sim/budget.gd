@@ -830,6 +830,7 @@ static func snapshot(state) -> Dictionary:
 		# running cost of their standing units, named parts of the spending.
 		"unit_bill_pct_gdp": ns.unit_bill_pct_gdp,
 		"unit_running_pct_gdp": ns.unit_running_total_pct_gdp(),
+		"unit_receipt_pct_gdp": ns.unit_receipt_pct_gdp,
 		# V5.3 a, on the snapshot for the same reason: the Budget table's fund row
 		# compares a projected month against the current one (Interface's ask).
 		"region_fund_bill_pct_gdp": ns.region_fund_bill_pct_gdp,

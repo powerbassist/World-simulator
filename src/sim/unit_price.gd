@@ -31,6 +31,14 @@ static func now(state) -> int:
 	return int(state.year) * 12 + int(state.month)
 
 
+## The month a building programme opens (TAKE 1 on #421): its last paid month plus the
+## months it has left. Before its first payment that is the vote month less one, because
+## the vote month pays (WorldMonth runs Division before Units). The one reading of the
+## date for the Union's line (reserve, after, warn) and the card's figures (outcome).
+static func opens_at(p: Dictionary) -> int:
+	return int(p.get("paid_month", int(p["voted"]) - 1)) + int(p["months_left"])
+
+
 ## The competence of the minister holding `line`, 0..1; 0 for a vacant seat.
 static func competence(state, ns, loader, line: String) -> float:
 	var holder := String(ns.cabinet.get(line, ""))

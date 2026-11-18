@@ -7,13 +7,15 @@ extends RefCounted
 ## middle third. A closure never overruns, a programme never has a second.
 ##
 ## THE CARD (tick()): posted in its month as p["ask"] = {kind, posted, due, default,
-## eur_m, answers}, the process asks' shape (process_asks.gd), sized as the type's
+## eur_m}, the process asks' dates (process_asks.gd), sized as the type's
 ## overrun_share of the capital still to pay. At most UNIT_OVERRUN_CARDS_A_YEAR cards in
 ## a calendar year; a further one waits for January. Posted only while more than its
 ## window of months is left to build, so every answer lands on a building programme.
 ## Unanswered at `due`, it is paid, and a note says why the bill rose.
 ##
-## THE ANSWERS (outcome(), the card's figures and the register's write alike):
+## THE ANSWERS (outcome(), the card's figures and the register's write alike, computed
+## when read, never stored: a card held into its last month shows what an answer does
+## then -- TAKE 4 on #421):
 ##   pay      the overrun spread over the months left: the bill rises;
 ##   shrink   each region's units cut in proportion, whole units, until the contract
 ##            and the overrun scaled to the units kept fit the contract; offered only
@@ -26,6 +28,9 @@ const UK = preload("res://src/sim/units_constants.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
 const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
+
+## How far off a whole number a float quotient may land and still be read as whole.
+const WHOLE := 1e-9
 
 const NOTHING_WAITING := "Nothing here is waiting for an answer."
 const NOT_AN_ANSWER := "That is not one of the answers."
@@ -61,13 +66,8 @@ static func tick(state, ns, loader, now: int, notes: Array) -> void:
 		if _cards_in_year(ns, now) >= UK.UNIT_OVERRUN_CARDS_A_YEAR:
 			continue
 		var size := float(loader.unit_types[String(p["type"])]["overrun_share"]) * float(p["capital_month_eur_m"]) * int(p["months_left"])
-		var answers: Array = []
-		for id in [UK.OVERRUN_PAY, UK.OVERRUN_SHRINK, UK.OVERRUN_DELAY]:
-			var o := outcome(state, ns, loader, p, id, size)
-			if not o.is_empty():
-				answers.append(o)
 		p["ask"] = {"kind": "overrun", "posted": now, "due": now + UK.UNIT_OVERRUN_WINDOW_MONTHS,
-			"default": UK.OVERRUN_PAY, "eur_m": size, "answers": answers}
+			"default": UK.OVERRUN_PAY, "eur_m": size}
 		notes.append({"kind": "overrun_landed", "id": String(p["id"]), "eur_m": size})
 
 
@@ -82,21 +82,29 @@ static func blind(sim) -> void:
 				p.erase("overrun")
 
 
-## The cards waiting for an answer, oldest first, as copies.
-static func asks(ns) -> Array:
+## The cards waiting for an answer, in the register's order, as copies whose ask carries
+## its `answers` as they would land now.
+static func asks(state, ns, loader) -> Array:
 	var out: Array = []
 	for p in ns.unit_programmes:
 		if p.has("ask") and not p.has("answer"):
-			out.append((p as Dictionary).duplicate(true))
+			var copy: Dictionary = (p as Dictionary).duplicate(true)
+			var answers: Array = []
+			for id in [UK.OVERRUN_PAY, UK.OVERRUN_SHRINK, UK.OVERRUN_DELAY]:
+				var a := answer_of(state, ns, loader, p, id)
+				if not a.is_empty():
+					answers.append(a)
+			copy["ask"]["answers"] = answers
+			out.append(copy)
 	return out
 
 
-## One answer of the card, by id ({} when it does not offer it).
-static func answer_of(p: Dictionary, answer_id: String) -> Dictionary:
-	for a in (p.get("ask", {}) as Dictionary).get("answers", []):
-		if String(a["id"]) == answer_id:
-			return a
-	return {}
+## One answer of the card as it would land now, by id ({} when the card is not waiting
+## or does not offer it).
+static func answer_of(state, ns, loader, p: Dictionary, answer_id: String) -> Dictionary:
+	if not p.has("ask") or p.has("answer") or String(p["state"]) != UK.STATE_BUILDING:
+		return {}
+	return outcome(state, ns, loader, p, answer_id, float(p["ask"]["eur_m"]))
 
 
 ## The player's answer (and the default's), applied at once: {ok} or {ok: false, reason}.
@@ -107,10 +115,10 @@ static func answer(state, ns, loader, programme_id: String, answer_id: String) -
 			p = row
 	if p.is_empty() or not p.has("ask") or p.has("answer") or String(p["state"]) != UK.STATE_BUILDING:
 		return {"ok": false, "reason": NOTHING_WAITING}
-	if answer_of(p, answer_id).is_empty():
+	var o := answer_of(state, ns, loader, p, answer_id)
+	if o.is_empty():
 		return {"ok": false, "reason": NOT_AN_ANSWER}
 	var size := float(p["ask"]["eur_m"])
-	var o := outcome(state, ns, loader, p, answer_id, size)
 	p["capital_month_eur_m"] = float(o["capital_month_eur_m"])
 	p["months_left"] = int(o["months_left"])
 	p["rows"] = o["rows"]
@@ -131,7 +139,8 @@ static func outcome(state, ns, loader, p: Dictionary, answer_id: String, size: f
 		UK.OVERRUN_PAY:
 			rate += size / left
 		UK.OVERRUN_DELAY:
-			var extra := int(ceilf(size / rate))
+			# A whole quotient a hair above in floats is whole (TAKE 3 on #421).
+			var extra := int(ceilf(size / rate - WHOLE))
 			rate = (rate * left + size) / float(left + extra)
 			left += extra
 		UK.OVERRUN_SHRINK:
@@ -140,7 +149,7 @@ static func outcome(state, ns, loader, p: Dictionary, answer_id: String, size: f
 			var voted := _units(rows)
 			var kept: Array = []
 			for r in rows:
-				var units := int(floorf(float(r["units"]) * keep))
+				var units := int(floorf(float(r["units"]) * keep + WHOLE))
 				if units > 0:
 					r["units"] = units
 					kept.append(r)
@@ -151,7 +160,7 @@ static func outcome(state, ns, loader, p: Dictionary, answer_id: String, size: f
 			rows = kept
 		_:
 			return {}
-	var opens := UnitPrice.now(state) + left
+	var opens := UnitPrice.opens_at(p) - int(p["months_left"]) + left
 	var union := UnitEnvelope.after(loader, ns, p, rows, opens)
 	return {"id": answer_id, "capital_month_eur_m": rate, "months_left": left, "opens": opens, "units": _units(rows),
 		"rows": rows, "union_eur_m": float(union["eur_m"]), "union_lost": bool(union["lost"])}
