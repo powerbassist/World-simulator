@@ -410,9 +410,14 @@ filename, and the convention was that a session updated BOTH with a `diff`
 gate before committing. The gate was quietly dropped: V2.8.1 stopped updating
 the copy and three session rows (V2.8.1/V2.9, V3.0, V3.1) drifted — the copy
 that drifts is the one that will be believed, exactly as this section used to
-warn. The file is deleted and every code comment, tool and model doc that
-cited it by name now cites `AGENTS.md`; the drift failure this paragraph once
-guarded against is impossible rather than merely remembered.
+warn. The file was deleted and every code comment, tool and model doc that
+cited it by name now cites `AGENTS.md`. Since 2026-11-18 a root `CLAUDE.md`
+exists again, but it is NOT a copy: its only content is the line `@AGENTS.md`
+(Claude Code's import syntax), so Claude Code and the Agent SDK, which read
+`CLAUDE.md` and not `AGENTS.md`, load these same rules. Never write anything
+else in `CLAUDE.md`; edit `AGENTS.md`. The drift failure this paragraph once
+guarded against stays impossible rather than merely remembered, because there
+is no second text to drift.
 
 **Review loops and delegated work** (lessons of V4.4's 23 passes, which never reached three clean ones):
 
