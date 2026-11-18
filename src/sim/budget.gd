@@ -187,6 +187,10 @@ static func recompute(state, ns) -> void:
 		# (Sectors.ratio() reads it there). A month behind, as every computed line is.
 		+ ns.unit_bill_pct_gdp
 		+ ns.unit_running_total_pct_gdp()
+		# V5.3 c' B2. The Union's receipt for a co-financed programme (unit_envelope.gd),
+		# netted here with the opposite sign rather than written into the transfer line,
+		# which Orgs rewrites every month. A month behind, as every computed line is.
+		- ns.unit_receipt_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 

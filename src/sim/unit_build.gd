@@ -23,6 +23,8 @@ extends RefCounted
 const UK = preload("res://src/sim/units_constants.gd")
 const Units = preload("res://src/sim/units.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
+const UnitOverrun = preload("res://src/sim/unit_overrun.gd")
+const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
@@ -43,7 +45,15 @@ static func refusal(state, ns, loader, rows: Array) -> String:
 	var regions := {}
 	for r in loader.regions.get(ns.id, []):
 		regions[r.id] = true
+	var seen: Array = []
 	for row in rows:
+		# Two equal rows in one text are refused, never collapsed (the parent's ruling on
+		# #413): the player meant one programme or two, and the sheet cannot tell which.
+		# A row equal to one already HELD never reaches here twice: FinanceRows.merge keeps it once.
+		var same := [String(row.get("type", "")), String(row.get("op", "")), row.get("rows", [])]
+		if seen.has(same):
+			return "One row per type and regions: put the units in one row."
+		seen.append(same)
 		var type_id := String(row.get("type", ""))
 		if not loader.unit_types.has(type_id) or not Units.offered(loader, ns.id, type_id):
 			return "This nation does not build that kind of unit."
@@ -105,17 +115,31 @@ static func open(state, ns, loader, row: Dictionary) -> Dictionary:
 		"rows": (row["rows"] as Array).duplicate(true), "voted": now(state), "months_left": months,
 		"build_months": months, "estimate_eur_m": float(q["estimate_eur_m"]), "lo_eur_m": float(q["lo_eur_m"]),
 		"hi_eur_m": float(q["hi_eur_m"]), "odds": float(q["odds"]), "contract_eur_m": contract,
-		"capital_month_eur_m": contract / months, "paid_eur_m": 0.0}
+		"capital_month_eur_m": contract / months, "paid_eur_m": 0.0,
+		"surcharge": (q.get("surcharge", {}) as Dictionary).duplicate()}
+	# Section 5: the overrun is drawn here, once. Section 6: the Union's share reserved
+	# here, before the row joins the register (what is left does not count it yet).
+	UnitOverrun.draw(ns, p)
+	UnitEnvelope.reserve(state, loader, ns, p)
 	ns.unit_programmes.append(p)
 	return p
 
 
 ## A month of every programme: each building one pays its month and counts down,
-## opening (DONE) when its months run out; then both lines are rewritten.
-static func tick_month(state, loader) -> void:
+## opening (DONE) when its months run out; then the overrun cards and the Union's
+## receipts and warning; then the lines are rewritten. Returns the month's notes
+## (WorldMonth's report key "units"), each {kind, id or org, ...}:
+##   opened             {id, type, realised_eur_m, estimate_eur_m}
+##   overrun_landed     {id, eur_m}   a card posted (UnitOverrun)
+##   overrun_defaulted  {id, eur_m}   an unanswered card paid at its date
+##   union_lapsed       {id, eur_m}   an opening after the period's last payment year
+##   lapse_warning      {org, period, eur_m, year}  warn_months before that year ends
+static func tick_month(state, loader) -> Array:
+	var notes: Array = []
 	var ns = state.player()
 	if ns == null:
-		return
+		return notes
+	var month := now(state)
 	var paid := 0.0
 	for p in ns.unit_programmes:
 		if String(p["state"]) != UK.STATE_BUILDING:
@@ -126,8 +150,15 @@ static func tick_month(state, loader) -> void:
 		p["months_left"] = int(p["months_left"]) - 1
 		if int(p["months_left"]) <= 0:
 			p["state"] = UK.STATE_DONE
-			p["opened"] = now(state)
+			p["opened"] = month
+			notes.append({"kind": "opened", "id": String(p["id"]), "type": String(p["type"]),
+				"realised_eur_m": float(p["paid_eur_m"]), "estimate_eur_m": float(p["estimate_eur_m"])})
+			UnitEnvelope.opening(loader, ns, p, month, notes)
+	UnitOverrun.tick(state, ns, loader, month, notes)
 	var gdp_m := float(ns.gdp_eur_bn) * 1000.0
+	var receipt := UnitEnvelope.receipts(ns, month)
+	ns.unit_receipt_pct_gdp = 100.0 * receipt * 12.0 / gdp_m if receipt != 0.0 and gdp_m > 0.0 else 0.0
+	UnitEnvelope.warn(loader, ns, month, notes)
 	var was: float = ns.unit_bill_pct_gdp + ns.unit_running_total_pct_gdp()
 	ns.unit_bill_pct_gdp = 100.0 * paid * 12.0 / gdp_m if paid != 0.0 and gdp_m > 0.0 else 0.0
 	var running := {}
@@ -155,6 +186,7 @@ static func tick_month(state, loader) -> void:
 	if change != 0.0:
 		ns.demand_impulse_pct = clampf(ns.demand_impulse_pct + change * C.MULT_SPENDING / C.impulse_level_factor(),
 			-C.IMPULSE_MAX_PCT, C.IMPULSE_MAX_PCT)
+	return notes
 
 
 static func _add(closing: Dictionary, p: Dictionary) -> void:
