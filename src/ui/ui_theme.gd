@@ -2,6 +2,7 @@ extends RefCounted
 
 const ScrollBars = preload("res://src/ui/scroll_bars.gd")
 const OptionCheckStyle = preload("res://src/ui/option_check_style.gd")
+const ControlStyle = preload("res://src/ui/control_style.gd")
 const AccentRule = preload("res://src/ui/accent_rule.gd")
 
 ## The game's one Theme -- U3, retuned at U5a. Before U3, three separate places
@@ -125,6 +126,14 @@ const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
 const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-row
 const REQUESTS_BUTTON := "RequestsButton" ## the title bar's "requests waiting" mark (V5.2 pre-gate)
 const CHIEF_MARK := "ChiefMark"           ## the chief's mark beside it (G1): a raised plate, no tone of its own
+## V5.3 c' (the bureau audit's items 1, 2, 5; control_style.gd says why each looks as it does).
+const PRIMARY := "Primary"                ## the one action a screen exists for  # i18n: ok
+const SMALL := "Small"                    ## a verb at the caption size  # i18n: ok
+const SEGMENT := "Segment"                ## one choice among a few, side by side  # i18n: ok
+const CHIP := "Chip"                      ## a bordered caption plate, neutral  # i18n: ok
+const CHIP_GOOD := "ChipGood"             ## a chip in the good-news tone
+const CHIP_WARN := "ChipWarn"             ## a chip in the attention tone
+const CHIP_BAD := "ChipBad"               ## a chip in the bad-news tone
 const OPTION_CHECK := "OptionCheck"       ## an option on a verb, not a verb (V5.2 close R4: the audience's Lie)
 
 ## The accent in force: the played nation's, set by apply() and read by everything
@@ -474,6 +483,10 @@ static func _buttons(theme: Theme) -> void:
 	# V5.2 close R4: an option ON a verb, not a verb (option_check_style.gd says why).
 	OptionCheckStyle.apply(theme, OPTION_CHECK, [_button_box(Color(0, 0, 0, 0)), _button_box(SLATE),
 		_button_box(Color(0, 0, 0, 0), _accent)], _px(SIZE_SMALL), TEXT_DIM, TEXT, WARN)
+	ControlStyle.apply(theme, {"primary": PRIMARY, "small": SMALL, "segment": SEGMENT, "chip": CHIP,
+		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD}, _button_box,
+		{"slate": SLATE, "hull": HULL, "edge": EDGE, "text": TEXT, "dim": TEXT_DIM, "good": GOOD, "warn": WARN,
+		"bad": BAD, "accent": _accent}, _px(SIZE_SMALL))
 
 
 ## Used for share-of-a-whole bars (Economy's sector split). The engine default

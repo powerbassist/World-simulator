@@ -1,43 +1,26 @@
 extends Control
 
-## The register sheet's two money charts (V5.3 c' slice 1), one Control in one of two modes:
-##   range  the price range as one grey bar, the estimate a tick on it, both ends and the
-##          estimate printed (section 4: the contract price is drawn inside it at the vote);
-##   cash   one bar a year from now, on one axis in bn: the capital while it builds (grey),
-##          the running cost once it opens (the accent: the player's own programme), the
-##          legend under it. The running cost never stops, so the years shown run past
-##          the opening on purpose.
+## The register sheet's money a year (V5.3 c' slice 1; the price range is ChartKit.range):
+## one bar a year from now, on one axis in bn: the capital while it builds (grey),
+## the running cost once it opens (the accent: the player's own programme), the
+## legend under it. The running cost never stops, so the years shown run past
+## the opening on purpose.
 ## The caller passes the sim's quote; the bars are its numbers spread over the calendar.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Num = preload("res://src/ui/num.gd")
 
 const BUILD := Color(0.290, 0.325, 0.353)  ## #4A535A: capital, a neutral the accent stands out from
-const BAR_H := 10.0
 const CASH_H := 72.0
 const YEARS_AFTER := 3
 
-var _mode := ""
-var _lo := 0.0
-var _mid := 0.0
-var _hi := 0.0
 ## cash: [[year, capital_bn, running_bn]], and the legend's two words.
 var _years: Array = []
 var _legend: Array = []
 
 
-func range_of(lo_bn: float, estimate_bn: float, hi_bn: float) -> void:
-	_mode = "range"
-	_lo = lo_bn
-	_mid = estimate_bn
-	_hi = hi_bn
-	custom_minimum_size = Vector2(240.0, BAR_H + _fs() * 1.6 + 6.0)
-	queue_redraw()
-
-
 ## `start_month` is months since year 0 (UnitPrice.now), the bill billed from the month after.
 func cash_of(start_month: int, build_months: int, estimate_bn: float, running_bn_year: float, legend: Array) -> void:
-	_mode = "cash"
 	_legend = legend
 	_years = []
 	# UnitPrice.now() is year x 12 + a 1-BASED month; the loop below counts 0-based months.
@@ -68,23 +51,7 @@ func _fs() -> int:
 
 
 func _draw() -> void:
-	if _mode == "range":
-		_draw_range()
-	elif _mode == "cash":
-		_draw_cash()
-
-
-func _draw_range() -> void:
-	var font := get_theme_default_font()
-	var fs := _fs()
-	var pad := (_hi - _lo) * 0.15 + 1e-6
-	var x := func(v: float) -> float: return (v - (_lo - pad)) / ((_hi + pad) - (_lo - pad)) * size.x
-	draw_rect(Rect2(x.call(_lo), 3.0, x.call(_hi) - x.call(_lo), BAR_H), BUILD)
-	draw_rect(Rect2(x.call(_mid) - 1.0, 0.0, 2.0, BAR_H + 6.0), UiTheme.TEXT)
-	var y := BAR_H + 6.0 + fs
-	draw_string(font, Vector2(x.call(_lo) - 30.0, y), Num.f(_lo, 2), HORIZONTAL_ALIGNMENT_CENTER, 60.0, fs, UiTheme.TEXT_DIM)
-	draw_string(font, Vector2(x.call(_mid) - 30.0, y), Num.f(_mid, 2), HORIZONTAL_ALIGNMENT_CENTER, 60.0, fs, UiTheme.TEXT)
-	draw_string(font, Vector2(x.call(_hi) - 30.0, y), Num.f(_hi, 2), HORIZONTAL_ALIGNMENT_CENTER, 60.0, fs, UiTheme.TEXT_DIM)
+	_draw_cash()
 
 
 func _draw_cash() -> void:
@@ -120,7 +87,7 @@ func _draw_cash() -> void:
 
 
 func _get_tooltip(at: Vector2) -> String:
-	if _mode != "cash" or _years.is_empty():
+	if _years.is_empty():
 		return ""
 	var i := clampi(int(at.x / (size.x / float(_years.size()))), 0, _years.size() - 1)
 	return "%d  %s + %s" % [int(_years[i][0]), Num.f(float(_years[i][1]), 2), Num.f(float(_years[i][2]), 2)]  # i18n: row-ok chart data

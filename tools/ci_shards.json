@@ -143,6 +143,7 @@
    "tests/test_feelings.gd",
    "tests/test_placement_points.gd",
    "tests/test_chart_kit.gd",
+   "tests/test_bureau_kit.gd",
    "tests/test_polls_closed.gd",
    "tests/test_state_visit.gd",
    "tests/test_regions.gd",

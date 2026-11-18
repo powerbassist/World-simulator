@@ -4,10 +4,10 @@ extends PanelContainer
 ## section 9, "One surface"; the author's pick, verbatim: "A pour commander + C en suivi").
 ## The player picks a unit type, how many and where, reads what it does before tabling, and
 ## puts it in the finance bill. In the order the decision is made:
-##   1. the type (one chip per catalogue type the nation's stock offers), how many, where
+##   1. the type (a segment per catalogue type the nation's stock offers), how many, where
 ##      (by need or by population fills the rows; each row is editable by hand);
 ##   2. every region on one axis of the type's own figure, now and once the units stand
-##      (register_dots.gd), a click picks a region and adds it to the rows;
+##      (ChartKit.dots, the shared dot plot), a click picks a region and adds it to the rows;
 ##   3. the strip: the money (the quote's range and a bar a year), who it moves (the picked
 ##      region before and after, what the others give back), when it opens and its odds;
 ##   4. the press, greyed with the bill's own reason before it is pressed (A5's grammar).
@@ -26,7 +26,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const FinanceFoot = preload("res://src/ui/finance_foot.gd")
-const RegisterDots = preload("res://src/ui/register_dots.gd")
+const ChartKit = preload("res://src/ui/chart_kit.gd")
 const RegisterMoney = preload("res://src/ui/register_money.gd")
 const Units = preload("res://src/sim/units.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
@@ -182,8 +182,8 @@ func _refresh() -> void:
 	_body.add_child(middle)
 	var after: Dictionary = Units.preview(ns, _loader, _type, _placed)
 	_dots(middle, ns, shown, after, nation)
-	_composer(middle, ns)
 	var quote := _quote(ns)
+	_composer(middle, ns, quote)
 	_strip(ns, row, quote, shown, after)
 	_in_bill(ns)
 	if _refocus != "":
@@ -233,43 +233,41 @@ func _figure_unit(row: Dictionary) -> String:
 func _types() -> void:
 	var flow := PanelKit.buttons(_body)
 	PanelKit.plain_line(flow, tr("Build"), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
+	# One choice among the catalogue's types (the shared segmented control): a new type in
+	# data/units/ is a new segment, nothing here names one.
+	var options: Array = []
 	for type_id in _offered():
-		var chip := PanelKit.sized(Button.new())
-		chip.toggle_mode = true
-		chip.button_pressed = type_id == _type
-		chip.text = Strings.row_name("units", Units.row(_loader, type_id))
-		chip.set_meta("type_chip", type_id)
-		chip.pressed.connect(func() -> void:
-			_pick_type(type_id)
-			_dirty = true)
-		flow.add_child(chip)
+		options.append({"id": type_id, "label": Strings.row_name("units", Units.row(_loader, type_id))})
+	var segments := PanelKit.segmented(flow, options, _type, func(id: String) -> void:
+		_pick_type(id)
+		_dirty = true)
+	for b in segments.get_children():
+		b.set_meta("type_chip", String(b.get_meta("segment")))
 
 
 func _dots(parent: Control, ns, shown: Dictionary, after: Dictionary, nation: float) -> void:
 	var col := VBoxContainer.new()
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(col)
-	PanelKit.heading(col, tr("By region: now, and once built"))
 	var data: Array = []
 	for region in _loader.regions.get(ns.id, []):
 		var id := String(region.id)
 		if shown.has(id):
-			data.append({"region": id, "name": String(region.region_name), "before": float(shown[id]),
-				"after": float(after.get(id, shown[id])), "placed": int(_placed.get(id, 0)), "selected": id == _region})
+			data.append({"id": id, "label": String(region.region_name), "before": float(shown[id]),
+				"after": float(after.get(id, shown[id])), "moved": int(_placed.get(id, 0)) > 0, "selected": id == _region})
 	# Worst first, by the figure's own direction: the regions the sheet exists for lead.
 	var lower_better := String((Units.row(_loader, _type).get("figure", {}) as Dictionary).get("better", "")) == "lower"
 	data.sort_custom(func(a, b): return float(a["before"]) > float(b["before"]) if lower_better else float(a["before"]) < float(b["before"]))
-	var dots = RegisterDots.new()
+	# The warning band joins when the sim names its threshold (Systems' slice C); until then none.
+	var box := ChartKit.dots(col, tr("By region: now, and once built"), data, {"reference": nation})
+	var dots = box.get_child(box.get_child_count() - 1)
 	dots.set_meta("dots", true)
-	dots.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_child(dots)
-	dots.setup(data, nation)
 	dots.picked.connect(func(id: String) -> void:
 		_region = id
 		_dirty = true)
 
 
-func _composer(parent: Control, ns) -> void:
+func _composer(parent: Control, ns, quote: Dictionary) -> void:
 	var col := VBoxContainer.new()
 	col.custom_minimum_size = Vector2(SIDE_W, 0)
 	col.add_theme_constant_override("separation", 6)
@@ -293,7 +291,8 @@ func _composer(parent: Control, ns) -> void:
 	count_row.add_child(spin)
 	var fills := PanelKit.buttons(col)
 	for pair in [[tr("By need"), true], [tr("By population"), false]]:
-		var b := PanelKit.sized(Button.new())
+		var b := Button.new()
+		b.theme_type_variation = UiTheme.SMALL
 		b.text = String(pair[0])
 		var need: bool = pair[1]
 		b.pressed.connect(func() -> void:
@@ -323,9 +322,16 @@ func _composer(parent: Control, ns) -> void:
 			_count = maxi(1, _sum())
 			_dirty = true)
 		line.add_child(units)
+	# The concentration surcharge (section 4), said on the region it falls on, before the press.
+	var surcharge: Dictionary = quote.get("surcharge", {})
+	for id in surcharge:
+		if float(surcharge[id]) > 0.0:
+			PanelKit.chip(col, tr("+%s %% on the price in %s: many units there within a year") % [
+				Num.f(100.0 * float(surcharge[id]), 1), _region_name(String(id))]).set_meta("surcharge", String(id))
 	var bill := {FinanceRows.UNITS: [{"type": _type, "op": UK.OP_BUILD, "rows": rows()}]}
 	var why := _why_not(bill)
 	var press := PanelKit.sized(Button.new())
+	press.theme_type_variation = UiTheme.PRIMARY
 	press.text = tr("Put it in the finance bill")
 	press.disabled = why != ""
 	press.set_meta("table", true)
@@ -396,10 +402,7 @@ func _strip(ns, row: Dictionary, quote: Dictionary, shown: Dictionary, after: Di
 	var line := PanelKit.plain_line(money, tr("%s to %s bn over %d months, then %s bn a year for good.") % [
 		Num.f(lo, 2), Num.f(hi, 2), months, Num.f(running, 2)], PanelKit.Tone.PLAIN)
 	line.set_meta("money", true)
-	var range_bar = RegisterMoney.new()
-	range_bar.set_meta("range", true)
-	money.add_child(range_bar)
-	range_bar.range_of(lo, float(quote["estimate_eur_m"]) / 1000.0, hi)
+	ChartKit.range(money, tr("Price range, bn"), lo, float(quote["estimate_eur_m"]) / 1000.0, hi).set_meta("range", true)
 	var cash = RegisterMoney.new()
 	cash.set_meta("cash", true)
 	money.add_child(cash)
@@ -408,8 +411,8 @@ func _strip(ns, row: Dictionary, quote: Dictionary, shown: Dictionary, after: Di
 	var open_at := UnitPrice.now(_state) + months
 	PanelKit.plain_line(when, tr("Opens about %s, %d months after the vote.") % [
 		DateText.month_year((open_at - 1) % 12 + 1, (open_at - 1) / 12), months], PanelKit.Tone.PLAIN)
-	var odds := PanelKit.plain_line(when, tr("Overrun: %s %% chance of one ask during the build.") % Num.f(100.0 * float(quote["odds"]), 0), PanelKit.Tone.PLAIN)
-	odds.theme_type_variation = UiTheme.WARN_TEXT
+	PanelKit.chip(when, tr("%s %% chance of one overrun ask during the build") % Num.f(100.0 * float(quote["odds"]), 0),
+		UiTheme.CHIP_WARN, "warning").set_meta("odds", true)
 
 
 func _column(parent: Control, heading: String) -> VBoxContainer:

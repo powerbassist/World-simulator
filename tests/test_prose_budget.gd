@@ -67,7 +67,7 @@ const PENDING := {}
 const PROGRAMME_FILE_TOTAL := 300
 const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
 	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135,
-	"overview": 170, "register": 116}
+	"overview": 170, "register": 119}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 130, "energy": 118,
@@ -135,9 +135,9 @@ const TOTAL_PENDING := {
 ## under "deficit, this month", where it printed "-5.30%" under "budget balance"): +2 on
 ## Economy, stated: 2966 -> 2968.
 ## The construction register (V5.3 c' slice 1, the author's "A pour commander"), a new Finances tab, a
-## stated rise 2968 -> 3084 (+116, all on the register: the type's lede and summary, the stock line, the
-## strip's money, who and when sentences, the chart axes' captions).
-const TOTAL_SUM_CEILING := 3084
+## stated rise 2968 -> 3087 (+119, all on the register: the type's lede and summary, the stock line, the
+## strip's money, who and when sentences, the charts' titles).
+const TOTAL_SUM_CEILING := 3087
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

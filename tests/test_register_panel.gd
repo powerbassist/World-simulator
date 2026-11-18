@@ -22,6 +22,7 @@ const UnitPrice = preload("res://src/sim/unit_price.gd")
 const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 const FIXTURE := "res://tests/fixtures/units"
 
@@ -51,6 +52,12 @@ func _process(_delta: float) -> bool:
 			_check_rows_are_filled_by_need()
 			_check_the_dots_are_the_sims()
 			_check_the_money_is_the_quote()
+			var odds = _with_meta("odds")
+			if odds == null or odds.theme_type_variation != UiTheme.CHIP_WARN:
+				_fail("the overrun odds are not a warning chip")
+			var press = _with_meta("table")
+			if press == null or press.theme_type_variation != UiTheme.PRIMARY:
+				_fail("the press is not the Primary button")
 			if _with_meta("stock") == null:
 				_fail("the picked region's stock line is missing")
 		5:
@@ -140,7 +147,7 @@ func _check_the_dots_are_the_sims() -> void:
 	if drawn.size() != holding:
 		_fail("the dot plot draws %d regions, %d hold the type" % [drawn.size(), holding])
 	for d in drawn:
-		var id := String(d["region"])
+		var id := String(d["id"])
 		if absf(float(d["before"]) - Units.shown_figure(ns, _main._loader, _type(), id)) > 1e-9 \
 				or absf(float(d["after"]) - float(after[id])) > 1e-9:
 			_fail("dot for %s is not the sim's before/after" % id)

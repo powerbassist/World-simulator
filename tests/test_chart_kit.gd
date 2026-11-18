@@ -18,6 +18,8 @@ const ChartLine = preload("res://src/ui/chart_line.gd")
 const ChartBars = preload("res://src/ui/chart_bars.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
 const ChartHemicycle = preload("res://src/ui/chart_hemicycle.gd")
+const ChartDots = preload("res://src/ui/chart_dots.gd")
+const ChartRange = preload("res://src/ui/chart_range.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
@@ -148,6 +150,9 @@ var _signed: VBoxContainer
 var _bars: VBoxContainer
 var _stack: VBoxContainer
 var _spark: Control
+var _dots: VBoxContainer
+var _range: VBoxContainer
+var _picked := ""
 
 
 func _build_charts() -> void:
@@ -161,6 +166,12 @@ func _build_charts() -> void:
 		[[2026, 1], [2026, 2]], {"zero": true})
 	_bars = ChartKit.bars(_box, "Bars", [{"label": "x", "value": 3.0}, {"label": "y", "value": 9.0}])
 	_spark = ChartKit.spark(_box, PackedFloat64Array([1.0, 3.0, 2.0]), months)
+	# V5.3 c' (the bureau audit's item 4): before and after per row, a reference line, a band.
+	_dots = ChartKit.dots(_box, "Dots", [
+		{"id": "a", "label": "A", "before": 4.8, "after": 5.1, "moved": true, "selected": true},
+		{"id": "b", "label": "B", "before": 6.6, "after": 6.6},
+		{"id": "c", "label": "C", "before": 5.0, "after": 4.98}], {"reference": 5.67, "band": Vector2(0.0, 5.2)})
+	_range = ChartKit.range(_box, "Range", 0.10, 0.13, 0.15)
 	_stack = ChartKit.stack(_box, "Stack", [{"label": "a", "value": 1.0}, {"label": "b", "value": 3.0}], {"marker": 0.5})
 
 
@@ -211,6 +222,34 @@ func _check_charts() -> void:
 		_fail("the hover over the second segment does not name it")
 	if _stack.get_node_or_null("Legend") == null:
 		_fail("a stack has no legend")
+	var dots := _chart(_dots, ChartDots)
+	if dots == null:
+		_fail("ChartKit.dots built no ChartDots")
+	else:
+		if dots.mark_x(0, "after") <= dots.mark_x(0, "before"):
+			_fail("a rising row's after mark is not right of its before")
+		var ref: float = dots.reference_x()
+		if ref <= dots.mark_x(0, "before") or ref >= dots.mark_x(1, "before"):
+			_fail("the reference line is not between the rows' values")
+		if not dots.in_band(0) or not dots.in_band(2) or dots.in_band(1):
+			_fail("the band does not mark exactly the rows inside it")
+		dots.picked.connect(func(id: String) -> void: _picked = id)
+		var click := InputEventMouseButton.new()
+		click.button_index = MOUSE_BUTTON_LEFT
+		click.pressed = true
+		click.position = Vector2(10.0, dots.row_height() * 1.5)
+		dots._gui_input(click)
+		if _picked != "b":
+			_fail("a click on the second row picked '%s'" % _picked)
+		if not String(dots._get_tooltip(Vector2(10.0, dots.row_height() * 0.5))).begins_with("A"):
+			_fail("the hover over the first row does not name it")
+	var rng := _chart(_range, ChartRange)
+	if rng == null:
+		_fail("ChartKit.range built no ChartRange")
+	else:
+		var bar: Rect2 = rng.bar_rect()
+		if rng.tick_x() <= bar.position.x or rng.tick_x() >= bar.end.x:
+			_fail("the estimate's tick is not inside the range bar")
 	if not _spark.has_line() or _spark.size.y > 40.0:
 		_fail("a sparkline drew no line or is %.0f px tall" % _spark.size.y)
 

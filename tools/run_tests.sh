@@ -310,6 +310,7 @@ tests=(
   tests/test_placement_points.gd
   tests/test_button_sizes.gd
   tests/test_chart_kit.gd
+  tests/test_bureau_kit.gd
   tests/test_chart_series.gd
   tests/test_panel_charts.gd
   tests/test_prose_budget.gd
