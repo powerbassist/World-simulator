@@ -427,6 +427,8 @@ static func signed_tone(before: float, after: float) -> Color:
 ## Measured off each figure's own minimum rather than the row's, because the
 ## row's cached minimum lags a visibility change by a frame.
 func refit() -> void:
+	if not is_inside_tree():
+		return  # a deferred refit from the remark can land after the bar left the tree
 	for id in _folded:
 		_boxes[id].show()
 	_folded.clear()
