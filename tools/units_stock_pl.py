@@ -104,6 +104,15 @@ def hospitals() -> dict:
     beds = eurostat("hlth_rs_bdsrg2", time=YEAR, unit="NR")
     pop = eurostat("demo_r_d2jan", time=YEAR, sex="T", age="TOTAL")
     assert abs(sum(beds[g] for g in ORDER) - beds["PL"]) < 1, "the 17 regions do not add up to Poland"
+    # Self-check against GUS's own beds: general hospitals are a part of all hospital beds, so Eurostat / BDL >= 1,
+    # and the excess is the non-general hospitals (psychiatric, rehabilitation, spa and long-term care). Zachodniopomorskie
+    # (3.18) and Kujawsko-pomorskie (2.20) lead because of their spa towns; Eurostat's PL42 is 19 789 in 2019, 19 827 in 2021,
+    # 20 139 in 2023 and 19 805 in 2024, so the cell is stable, not a code shift. A ratio outside [1, 3.5] stops the build.
+    for g in ORDER:
+        if g in general_beds:
+            ratio = beds[g] / general_beds[g]
+            print("  %s Eurostat %6d  GUS general %6d  ratio %.2f" % (g, beds[g], general_beds[g], ratio))
+            assert 1.0 <= ratio <= 3.5, "%s: Eurostat and GUS beds disagree (ratio %.2f)" % (g, ratio)
     stock = [{"region": g, "type": "hospital", "units": int(count.get(g, 0)), "capacity": int(beds[g])} for g in ORDER]
     levels = [{"region": g, "level": round(beds[g] / pop[g] * 1000, 2)} for g in ORDER]
     national = round(beds["PL"] / sum(pop[g] for g in ORDER) * 1000, 2)
