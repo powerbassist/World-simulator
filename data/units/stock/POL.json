@@ -1,0 +1,43 @@
+{
+  "_source": "Poland, the 17 game regions (the NUTS 2 regions, BDL level 3). Hospitals only in this file: the school type is not offered for Poland (see below). hospital: beds and the beds per 1 000 come from one table with one scope for all 17 regions: Eurostat hlth_rs_bdsrg2 (hospital beds, NUTS 2, unit NR, 2024; all hospital beds, psychiatric included) over Eurostat demo_r_d2jan (population on 1 January 2024); national = Poland's beds over the 17 regions' population (6.26); the levels weighted by the regions' share give it back within 0.1 % (the loader's tolerance is 3 %); the 17 regions add up to Eurostat's Poland total (229 406). units = general hospitals, GUS, Bank Danych Lokalnych (https://bdl.stat.gov.pl), subject P2452 General hospitals, variable 63127 (hospitals), level 3, 2024: 778 in all. BDL flags the two Mazowsze regions (PL91 Warszawski stoleczny and PL92 Mazowiecki regionalny) as having no data (attribute 4, value 0), so their units are 0 here: no count is published for them and none is estimated; GUS publishes Mazowieckie only as one voivodeship. The catalogue's hospital capacity (176 beds) is the mean size of a general hospital: GUS variable 63129 (beds in hospitals), 136 760 beds over those 778 hospitals in the 15 regions that publish them; it is smaller than the beds-per-unit of the stock because the stock's beds are Eurostat's, all hospital beds. Schools: Poland has no school type here. BDL gives pupils and school counts for the upper secondary schools (subject P3485, variables 455429 and 455431) only at commune (gmina) level, with adult and special schools in the total and no full-time split, and teachers in full-time equivalents only as 18 separate school-type variables (subjects P3235 and P3234) with no clear mapping of the basic vocational schools; that cannot meet the rule (full-time upper-secondary pupils over their teachers in full-time equivalents, one table) and nothing is estimated, so the type is not offered for Poland (spec section 2). Licences: GUS data under Creative Commons CC BY 4.0, Eurostat's re-use policy. Read 2026-11-18.",
+  "stock": [
+    {"region": "PL21", "type": "hospital", "units": 74, "capacity": 20488},
+    {"region": "PL22", "type": "hospital", "units": 143, "capacity": 25679},
+    {"region": "PL41", "type": "hospital", "units": 61, "capacity": 15310},
+    {"region": "PL42", "type": "hospital", "units": 43, "capacity": 19805},
+    {"region": "PL43", "type": "hospital", "units": 24, "capacity": 4604},
+    {"region": "PL51", "type": "hospital", "units": 75, "capacity": 20432},
+    {"region": "PL52", "type": "hospital", "units": 28, "capacity": 4728},
+    {"region": "PL61", "type": "hospital", "units": 43, "capacity": 18471},
+    {"region": "PL62", "type": "hospital", "units": 40, "capacity": 7540},
+    {"region": "PL63", "type": "hospital", "units": 38, "capacity": 10804},
+    {"region": "PL71", "type": "hospital", "units": 64, "capacity": 12777},
+    {"region": "PL72", "type": "hospital", "units": 25, "capacity": 9814},
+    {"region": "PL81", "type": "hospital", "units": 44, "capacity": 11964},
+    {"region": "PL82", "type": "hospital", "units": 39, "capacity": 13488},
+    {"region": "PL84", "type": "hospital", "units": 37, "capacity": 6765},
+    {"region": "PL91", "type": "hospital", "units": 0, "capacity": 17680},
+    {"region": "PL92", "type": "hospital", "units": 0, "capacity": 9057}
+  ],
+  "figures": {
+    "hospital": {"figure": "hospital_beds_per_1000", "national": 6.26, "levels": [
+      {"region": "PL21", "level": 6.17},
+      {"region": "PL22", "level": 6.09},
+      {"region": "PL41", "level": 4.45},
+      {"region": "PL42", "level": 12.54},
+      {"region": "PL43", "level": 4.86},
+      {"region": "PL51", "level": 7.28},
+      {"region": "PL52", "level": 5.31},
+      {"region": "PL61", "level": 9.56},
+      {"region": "PL62", "level": 5.82},
+      {"region": "PL63", "level": 4.7},
+      {"region": "PL71", "level": 5.49},
+      {"region": "PL72", "level": 8.74},
+      {"region": "PL81", "level": 6.18},
+      {"region": "PL82", "level": 6.9},
+      {"region": "PL84", "level": 6.27},
+      {"region": "PL91", "level": 5.39},
+      {"region": "PL92", "level": 4.12}
+    ]}
+  }
+}
