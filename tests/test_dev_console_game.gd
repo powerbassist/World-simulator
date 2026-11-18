@@ -232,7 +232,13 @@ func _check_save_load(console) -> void:
 	if not r.contains("saved"):
 		_fail("save: %s" % r)
 	console.run_command("set me.assembly_seats 22")
+	# A load rebuilds the game (game_reload.gd): the new main, with its own console, takes the
+	# old one's place in the tree.
+	var parent := _a.get_parent() as Node
+	var index: int = _a.get_index()
 	r = console.run_command("load %s" % SLOT)
+	_a = parent.get_child(index)
+	console = _console(_a)
 	if not r.contains("loaded") or _a._state.player().assembly_seats != 11:
 		_fail("load did not bring the saved game back: %s seats=%d" % [r, _a._state.player().assembly_seats])
 	if not console.run_command("load no_such_slot_here").contains("no save"):

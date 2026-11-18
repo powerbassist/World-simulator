@@ -314,11 +314,10 @@ func _check_manual_toggle_takes_the_clock() -> void:
 	# flag, the cluster's button is pressed and BOTH must drop; then both are
 	# re-armed and Space must drop both again -- so a door reverted to a bare
 	# toggle fails on its own line instead of hiding behind the other.
-	# V5.1-0c: with the offer unchosen the FIRST press opens the Agenda instead of
-	# running the clock (test_agenda_panel pins that); the Agenda being open, as it
-	# is for a player who has seen the offer, the press is the player declining.
-	_main._windows.open("agenda")
-	_main._agenda_panel._process(0.0)
+	# V5.1-0c: with the offer unchosen the FIRST press opens its file on the Folder instead
+	# of running the clock (test_programme_file pins that); the file shown, as it is for a
+	# player who has seen the offer, the press is the player declining.
+	preload("res://src/ui/programme_file.gd").open(_main)
 	_main._paused_for_programme = true
 	_main._hud.clock_cluster.pause_toggled.emit()
 	if clock.paused:
@@ -339,7 +338,7 @@ func _check_manual_toggle_takes_the_clock() -> void:
 		_fail("Space left the arrival flag up")
 	if _main._paused_for_programme:
 		_fail("Space left the programme hold up")
-	_main._windows.close("agenda")
+	_main._windows.close("events")
 	if not _main._unseen_events.has(String(ev.id)):
 		_fail("a manual toggle erased the unseen mark (the card is still unseen)")
 	_main._hud.inbox.dismiss(card_id)
@@ -367,11 +366,10 @@ func _check_manual_toggle_takes_the_clock() -> void:
 		var effects_before: int = _main._pending_effects.size()
 		var cards_before: Array = _main._hud.inbox._cards.keys()
 		_main._enforce_term_start_programme()  # the hold and card a real term start raises
-		_main._windows.open("agenda")  # V5.1-0c: a player who has seen the offer declining it
-		_main._agenda_panel._process(0.0)
+		preload("res://src/ui/programme_file.gd").open(_main)  # V5.1-0c: a player who has seen the offer declining it
 		_main._toggle_pause_by_hand()  # run
 		_main._toggle_pause_by_hand()  # pause
-		_main._windows.close("agenda")
+		_main._windows.close("events")
 		if not clock.paused:
 			_fail("the staging toggles left the clock running")
 		_main._on_programme_chosen(chosen_id)
@@ -1053,18 +1051,22 @@ func _restore_apply_effects_registers(ns, snap: Dictionary) -> void:
 
 ## B10 (playtest 2026-09-16): the figure was titled "DEFICIT" while its value was
 ## signed -- a surplus printed "+2.1%", a deficit "-10.5%", so "DEFICIT +10.50%"
-## sat on screen contradicting itself. The label is a balance now.
+## sat on screen contradicting itself. The label became a balance; since gate 3 (top bar
+## A) the caption is the word again, DEFICIT or SURPLUS this month, and the figure is
+## the month's euros with no sign: the title and the value can only agree.
 func _check_top_bar_budget_balance_label() -> void:
 	var top_bar = _main._top_bar
 	if top_bar == null:
 		_fail("B10: main.gd built no top bar")
 		return
-	var found := false
-	for node in _descendants(top_bar):
-		if node is Label and node.text == "BUDGET BALANCE":
-			found = true
-	if not found:
-		_fail("B10 REGRESSED: the top bar carries no BUDGET BALANCE label -- the deficit figure reverted to its self-contradicting title")
+	var ns = _main._state.player()
+	var want := "DEFICIT, THIS MONTH" if ns.deficit_pct_gdp > 0.0 else "SURPLUS, THIS MONTH"
+	var caption := String(top_bar._figure_captions["deficit"].text)
+	if caption != want:
+		_fail("B10 REGRESSED: the money's caption reads '%s' for a deficit of %.2f %% of GDP" % [caption, ns.deficit_pct_gdp])
+	var value := String(top_bar._figure_values["deficit"].text)
+	if value.begins_with("+") or value.begins_with("-") or value.begins_with("−"):
+		_fail("B10 REGRESSED: the money's figure carries a sign beside its word: '%s'" % value)
 
 
 ## Pass 19 minor: the empty-desk line printed "closed 0 months ago" in the month a
@@ -1076,6 +1078,9 @@ func _check_empty_desk_closed_copy() -> void:
 	var saved_quiet: Dictionary = ns.event_category_quiet.duplicate(true)
 	var quiet: int = EventsK.CATEGORY_QUIET_MONTHS
 	ns.event_queue.clear()
+	# The term-start offer is a Folder file of its own (rework 2 S3): an empty desk has it chosen.
+	var chosen_was := int(ns.programme_chosen_term)
+	ns.programme_chosen_term = int(ns.terms_served)
 	var expected := {
 		quiet: "The last matter closed this month.",
 		quiet - 1: "The last matter closed 1 month ago.",
@@ -1095,6 +1100,7 @@ func _check_empty_desk_closed_copy() -> void:
 			_fail("empty desk with %d quiet months left printed no caption" % remaining)
 	ns.event_queue = saved_queue
 	ns.event_category_quiet = saved_quiet
+	ns.programme_chosen_term = chosen_was
 	panel._refresh()
 
 

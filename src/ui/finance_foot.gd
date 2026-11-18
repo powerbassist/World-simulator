@@ -31,7 +31,6 @@ const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
-const GoalRows = preload("res://src/ui/goal_rows.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
@@ -135,7 +134,20 @@ static func reason(flag: String) -> String:
 		return Strings.t("Another bill holds this month's slot.")
 	if flag == "autumn":
 		return Strings.t("A tax is created or abolished only in the autumn month.")
-	return GoalRows.reason_text(flag)
+	# The refusal flags Legislature.refusal and FinanceBill.refusal hand back, in words (moved
+	# here from goal_rows.gd when the Bills second pass took the goal tiles off the tab).
+	match flag:
+		"finance_queued":
+			return Strings.t("A budget text is already queued.")
+		"referendum_in_flight":
+			return Strings.t("A referendum is in flight.")
+		"unavailable":
+			return Strings.t("Not open to propose now.")
+		"range":
+			return Strings.t("Outside the tax's range.")
+		"verb":
+			return Strings.t("A row of the bill is not legal now.")
+	return Strings.t("It cannot be tabled now.")
 
 
 ## The control the page exists to let the player press: the draft's verb, else the bill's sheet.

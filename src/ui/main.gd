@@ -10,6 +10,7 @@ const ICONS := "res://assets/icons/material/"
 const DataLoader = preload("res://src/core/data_loader.gd")
 const Nation = preload("res://src/core/nation.gd")
 const GameState = preload("res://src/core/game_state.gd")
+const GameReload = preload("res://src/ui/game_reload.gd")
 const ClockCluster = preload("res://src/ui/clock_cluster.gd")
 const Economy = preload("res://src/sim/economy.gd")
 const Energy = preload("res://src/sim/energy.gd")
@@ -37,7 +38,6 @@ const CalendarPanel = preload("res://src/ui/calendar_panel.gd")
 const DeskCards = preload("res://src/ui/desk_cards.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const PeoplePanel = preload("res://src/ui/people_panel.gd")
-const OutlinerPanel = preload("res://src/ui/outliner_panel.gd")
 const CompaniesPanel = preload("res://src/ui/companies_panel.gd")
 const ProjectsPanel = preload("res://src/ui/projects_panel.gd")
 const RegionsShell = preload("res://src/ui/regions_shell.gd")
@@ -45,7 +45,7 @@ const SectorsShell = preload("res://src/ui/sectors_shell.gd")
 const EnergyPanel = preload("res://src/ui/energy_panel.gd")
 const CampaignPanel = preload("res://src/ui/campaign_panel.gd")
 const CampaignChest = preload("res://src/ui/campaign_chest.gd")
-const AgendaPanel = preload("res://src/ui/agenda_panel.gd")
+const ProgrammeFile = preload("res://src/ui/programme_file.gd")
 const EventsPanel = preload("res://src/ui/events_panel.gd")
 const SummitPanel = preload("res://src/ui/summit_panel.gd")
 ## V4.2 T5. The bill briefing, over every bill the player can put to the Assembly.
@@ -71,7 +71,7 @@ const Domains = preload("res://src/ui/domains.gd")
 const MessageSettings = preload("res://src/ui/message_settings.gd")
 const Sound = preload("res://src/ui/sound.gd")
 const Music = preload("res://src/ui/music.gd")
-const OverviewPanel = preload("res://src/ui/overview_panel.gd")
+const PresidencyPage = preload("res://src/ui/presidency_page.gd")
 const EconomyPanel = preload("res://src/ui/economy_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Trends = preload("res://src/ui/trends.gd")
@@ -101,10 +101,10 @@ var pending_player_id := DEFAULT_PLAYER_NATION_ID
 ## load (tests, tools) gets and what every save written before V1.2e reads as.
 var pending_scenario_id := ""
 
-## Set by menu.gd before this scene enters the tree. Empty means a new game;
-## a slot name means load that save once the new game has been built and every
-## panel is wired, which is what _on_load_requested() below already expects.
-## A property rather than an autoload -- see menu.gd's note.
+## Set before this scene enters the tree (a test, a tool). Empty means a new game; a slot
+## name means boot from that save, read at the top of _ready() (game_reload.gd). The menu's
+## loading screen reads it itself and hands pending_save instead. A property rather than an
+## autoload -- see menu.gd's note.
 var pending_load_slot := ""
 
 ## V4.9a. Set by the loading screen (src/ui/boot_stages.gd), which built them
@@ -114,6 +114,9 @@ var pending_load_slot := ""
 ## reason in menu.gd.
 var pending_loader = null
 var pending_state = null
+## A load (game_reload.gd): {state, day, slot} from SaveManager.load_game(), handed to a main
+## built fresh for it. Empty for a new game.
+var pending_save := {}
 
 @onready var _clock: Node = $Clock
 
@@ -140,7 +143,7 @@ var _unseen_events := {}      # event id -> whether it holds the clock (below)
 ## Pending.window_ids runs on the per-day path, where a file read is not free.
 var _messages := {}
 ## V4.1. The term-start programme's card and its pause -- the arrival-pause
-## machinery pointed at the agenda. See _enforce_term_start_programme().
+## machinery pointed at the programme. See _enforce_term_start_programme().
 var _paused_for_programme := false
 var _programme_card_id := ""
 ## The opening "Your term" card. Its countdown ages with the clock, so the id
@@ -166,7 +169,6 @@ var _region_panel
 var _sector_panels := {}
 var _energy_panel
 var _campaign_panel
-var _agenda_panel
 var _events_panel
 var _summit_panel
 var _summit_before := {}
@@ -223,7 +225,16 @@ func _ready() -> void:
 		var pop_m := n.population / 1_000_000.0
 		print("%s %-15s pop %5.1fM   GDP EUR %5.0fbn   debt %5.1f%%" % [n.id, n.nation_name, pop_m, n.gdp_eur_bn, n.debt_to_gdp_pct])
 
-	_state = pending_state if pending_state != null else GameState.new_game(_loader, pending_player_id, pending_scenario_id)
+	GameReload.reset_statics()
+	# A boot asked to load (a test, a tool) reads the save first, as the loading screen does: no
+	# throwaway game. A save that does not read leaves the slot, and the load below says why.
+	if pending_save.is_empty() and not pending_load_slot.is_empty():
+		pending_save = GameReload.read(pending_load_slot, _loader)
+		if not pending_save.is_empty(): pending_load_slot = ""
+	if not pending_save.is_empty():
+		_state = pending_save["state"]
+	else:
+		_state = pending_state if pending_state != null else GameState.new_game(_loader, pending_player_id, pending_scenario_id)
 	if not _state.errors.is_empty():
 		for e in _state.errors:
 			push_error(e)
@@ -236,8 +247,11 @@ func _ready() -> void:
 	# month boundary freeze. See network.gd::warm(). Behind the loading screen
 	# (V4.9a) the table is already warm and this returns at once.
 	Net.warm(_state.region_graph)
-	_state.year = _clock.year
-	_state.month = _clock.month
+	if pending_save.is_empty():
+		_state.year = _clock.year
+		_state.month = _clock.month
+	else:
+		GameReload.set_clock(self)  # a loaded game sets the clock, not the other way round
 
 	# Three layers, back to front -- U5a's whole structural change. U2 made the
 	# map one tab among seven; here it is the background the game is played on,
@@ -259,13 +273,10 @@ func _ready() -> void:
 		_windows.open("projects")
 	)
 	# V2.2b, the register's own route. The cross names the city; the panel says
-	# everything else about it. show_city() BEFORE open(), _on_nation_clicked's
-	# order, so the content settles before the window sizes itself around it.
-	# Same "registered further down" note as above applies.
-	_map_view.city_clicked.connect(func(city_id: String):
-		_region_panel.show_city(city_id)
-		_windows.open("region")
-	)
+	# everything else about it. open_city() sets the city BEFORE it opens the tab,
+	# _on_nation_clicked's order, so the content settles before the window sizes
+	# itself around it. Same "registered further down" note as above applies.
+	_map_view.city_clicked.connect(func(city_id: String): _region_panel.open_city(city_id))
 
 	# V3.4. Above the map and below the windows: the flows are drawn ON the map,
 	# and a panel the player opened must still cover them. Its mouse filter is
@@ -300,18 +311,16 @@ func _ready() -> void:
 	# the tree, and a Control outside the tree has not run _ready(), so every
 	# label setup() writes to is still null -- AGENTS.md's gotcha, and the same
 	# order dashboard.gd's add_tab() enforced by doing both itself.
-	_overview_panel = OverviewPanel.new()
-	_windows.register("overview", tr("Overview"), _overview_panel, KEY_O, ICONS + "dashboard.svg")
+	# Rework 2: the Presidency page (the Overview and the Outliner as one), still "overview".
+	_overview_panel = PresidencyPage.new()
+	_windows.register("overview", tr("Overview"), _overview_panel, KEY_O, ICONS + "dashboard.svg", [KEY_Q])
 	_overview_panel.setup(_state, _loader)
+	_overview_panel.window_requested.connect(ProgrammeFile.open_window.bind(self))
+	_overview_panel.go_requested.connect(func(i: int): preload("res://src/ui/chief_mark_view.gd").page_go(self, i))
+	_overview_panel.requests_requested.connect(func(): AudienceDriver.open_oldest(self))
 
-	# V4.1. The government's programme: the one window where a programme is
-	# chosen and tracked (docs/programme-model.md §4). In the State cluster
-	# beside the Overview it frames -- the agenda is what the term is FOR,
-	# which is the sentence the Overview's other columns read against.
-	_agenda_panel = AgendaPanel.new()
-	_windows.register("agenda", tr("Agenda"), _agenda_panel, KEY_K, ICONS + "event.svg")
-	_agenda_panel.setup(_state, _loader)
-	_agenda_panel.programme_chosen.connect(_on_programme_chosen)
+	# V4.1's programme is chosen on the term's first file in the Folder since rework 2 S3 (programme_file.gd)
+	# and tracked as the Presidency page's lane: the Agenda tab retired, the Diary stays in its domain.
 
 	_economy_panel = EconomyPanel.new()
 	_windows.register("economy", tr("Economy"), _economy_panel, KEY_E, ICONS + "monitoring.svg")
@@ -437,14 +446,6 @@ func _ready() -> void:
 	_windows.register("people", tr("People"), _people_panel, KEY_R, ICONS + "person.svg")
 	_people_panel.setup(_state, _loader)
 
-	# V4.8b. What is pinned -- the agenda, firms in trouble, goods short, people
-	# who are against the term -- as one register-driven list. A window rather
-	# than a HUD plate (moving a plate moves the frames the 826 px band is
-	# measured against); a row opens the window that answers it.
-	var outliner_panel := OutlinerPanel.new()  # local: nothing else reads it
-	_windows.register("outliner", tr("Outliner"), outliner_panel, KEY_Q, ICONS + "checklist.svg")
-	outliner_panel.setup(_state, _loader)
-	outliner_panel.window_requested.connect(func(window_id: String): _windows.open(window_id))
 	_windows.register("glossary", tr("Glossary"), preload("res://src/ui/glossary_panel.gd").new(), KEY_NONE, ICONS + "menu_book.svg")  # V5.1-d3: reads Glossary alone, no setup
 
 	# V1.4a. In the Economy cluster rather than the World one: a firm is a domestic
@@ -536,7 +537,7 @@ func _ready() -> void:
 	# and the reason it is a window rather than a modal is in the panel's own header:
 	# a crisis the player can ignore and pay for is the whole of the deadline.
 	_events_panel = EventsPanel.new()
-	_windows.register("events", tr("Dispatches"), _events_panel, KEY_N, ICONS + "mail.svg")
+	_windows.register("events", tr("Folder"), _events_panel, KEY_N, ICONS + "mail.svg")
 	_events_panel.setup(_state, _loader)
 	_events_panel.set_messages(_messages)
 	_events_panel.acted.connect(func(before, label):
@@ -686,10 +687,11 @@ func _ready() -> void:
 	# the dev scripts out of a release entirely; install() gates the rest.
 	if ResourceLoader.exists(DEV_CONSOLE): load(DEV_CONSOLE).install(self)
 
-	# Loading reuses the whole existing load path rather than a separate
-	# start-from-save branch: a new game is built first, then replaced. That
-	# costs one throwaway GameState and buys one code path to keep correct.
-	if not pending_load_slot.is_empty():
+	# A main built from a save (game_reload.gd) establishes the loaded game; a boot whose save
+	# did not read keeps its slot, and the load path says why on the save screen.
+	if not pending_save.is_empty():
+		GameReload.after_load(self)
+	elif not pending_load_slot.is_empty():
 		_on_load_requested(pending_load_slot)
 
 	# The one sentence the playtest found missing: a new game opens on a running
@@ -698,8 +700,8 @@ func _ready() -> void:
 	# opening card carries it in the stack's own voice, counted by the same
 	# Trends query the top bar and the Overview count by. It sits AFTER the load
 	# branch and inside the new-game case, so a loaded save never receives it.
-	if pending_load_slot.is_empty():
-		_term_card_id = _hud.inbox.push(tr("Your term"), _term_card_body())
+	if pending_load_slot.is_empty() and pending_save.is_empty():
+		_term_card_id = _hud.inbox.keep_card(_hud.inbox.push(tr("Your term"), _term_card_body()))  # a countdown stays a card
 
 	# V4.1, after the opening card so the two land together: a new game IS an
 	# unchosen term start, so the clock sits still behind the programme choice
@@ -708,7 +710,7 @@ func _ready() -> void:
 	_enforce_term_start_programme()
 
 	# AFTER the enforcement, matching the load path's own order: the programme
-	# card names "agenda" in Pending.window_ids, and at boot the clock is paused
+	# card names the Folder in Pending.window_ids, and at boot the clock is paused
 	# with no month tick to refresh the strip later -- a bar built before the
 	# enforcement would leave the State-cluster mark dark on a decision the
 	# desk is actively holding open.
@@ -759,11 +761,9 @@ func _toggle_pause_by_hand() -> void:
 	# cluster's play, a speed (V5.1-d1a, G4) -- not only by the key.
 	if _stack != null and not _stack.accepts_hotkeys(): return
 	# V5.1-0c. The offer lives only until the clock first runs in a term, so the
-	# press that would forfeit it opens the Agenda instead -- once: when the Agenda
-	# has shown the offer, the next press is the player declining, and runs.
-	if _paused_for_programme and _clock.paused and not _agenda_panel.offer_seen(_state.player()):
-		_windows.open("agenda")
-		return
+	# press that would forfeit it opens its file on the Folder instead -- once: when
+	# the Folder has shown the offer, the next press is the player declining, and runs.
+	if _paused_for_programme and _clock.paused and ProgrammeFile.held_press(self): return
 	_clock.toggle_pause()
 	# V4.9c. By hand only: a pause the game takes (an arrival, the lapse guard)
 	# already carries its own sound, the event sting, and a hold that resumes
@@ -788,7 +788,7 @@ func _set_speed_by_hand(speed: int) -> void:
 ## V4.9c. The sound set's warm-up is a worker task, and a task the pool was
 ## given must be waited on before the scene that started it goes.
 func _exit_tree() -> void:
-	Sound.settle()
+	Sound.settle(); GameReload.forget_main(self)  # one line: main.gd is at its size baseline
 
 
 ## Every signal the furniture emits, connected in one place. hud.gd builds and
@@ -848,7 +848,7 @@ func _wire_hud() -> void:
 	# window where that choice is made instead -- the same rule, one card earlier.
 	_hud.inbox.card_activated.connect(func(id: String):
 		if not _programme_card_id.is_empty() and id == _programme_card_id:
-			_windows.open("agenda")
+			ProgrammeFile.open(self)
 			return
 		# V4.7b: an industry card routes to the window where its verbs live.
 		# (Focus-by-firm was deferred twice -- B2 to B3, and B3 shipped its
@@ -882,8 +882,9 @@ func _wire_hud() -> void:
 		_unseen_events.erase(event_id)
 		_hud.inbox.dismiss(id)
 		_resume_if_decision_settled()
-		# Nothing holds now: the tab is the player's again.
-		if not _decision_holds_clock(): _hud.inbox.slide_out()
+		# Nothing left to answer -- no decision card, no request (#403 T9: a programme card or an Open row asks
+		# nothing): the tab is the player's again. Requests never hold the clock, so "unless a decision holds" hid them.
+		if not _event_cards.keys().any(func(c): return _hud.inbox.lane_of(c) != "") and _hud.inbox.lane_count(_hud.inbox.REQUESTS) == 0: _hud.inbox.slide_out()
 		_update_top_bar()
 		_windows.mark_all_dirty()
 	)
@@ -915,7 +916,7 @@ func _wire_hud() -> void:
 	# about which layer is up.
 	_hud.map_legend.layer_selected.connect(func(id: String):
 		_map_view.set_layer(id)
-		_hud.map_legend.show_layer(_map_view.layer(), _state, _map_view.viewer_id())
+		_hud.map_legend.show_layer(_map_view.layer(), _state, _map_view.viewer_id(), _loader.nation_name(_map_view.viewer_id()))
 	)
 	_map_view.nation_hovered.connect(func(id: String):
 		_hud.map_legend.show_hover(id, _state, _map_view.viewer_id())
@@ -1381,8 +1382,8 @@ func _setup_news() -> void:
 func _on_day_advanced(year: int, month: int, day: int) -> void:
 	if _state != null:
 		# The mirror. game_state.gd does not serialise this; save_manager.gd
-		# carries clock.day at the payload's top level and _on_load_requested()
-		# re-mirrors it, so there is exactly one record of the date.
+		# carries clock.day at the payload's top level and a main built from a save
+		# re-mirrors it in _ready(), so there is exactly one record of the date.
 		_state.day = day
 		_resolve_appointments(year, month, day)
 		# V2.4a: the ribbon's today-mark and its past-dimming both move with the
@@ -1460,10 +1461,10 @@ func _on_save_requested(slot: String) -> void:
 	_save_load_panel.mark_dirty()
 
 
-## Loading replaces the live GameState wholesale, so every panel holding a
-## reference to the old one has to be pointed at the new one -- the same
-## setup() calls _ready() made the first time, not a special load path.
-func _on_load_requested(slot: String) -> void:
+## A load rebuilds the game (game_reload.gd): the save is read here, and only once it reads does
+## a new main take this one's place, so a failed load leaves the live game as it was. Returns the
+## main the game now runs in (this one when the load failed).
+func _on_load_requested(slot: String) -> Node:
 	var result := SaveManager.load_game(slot, _loader)
 	if not result["ok"]:
 		_save_load_panel.report(tr("Load failed: %s") % result["error"])
@@ -1473,124 +1474,8 @@ func _on_load_requested(slot: String) -> void:
 		# failed Continue starts a fresh France and says nothing at all.
 		_save_load_panel.show()
 		_clock.paused = true
-		return
-
-	_state = result["state"]
-	UiTheme.apply_for(self, _loader.nations[_state.player_nation_id])  # a loaded game may be another nation's
-	# The announce memories and live-card maps belong to the DISCARDED game:
-	# firm ids are content, so the same id failing in the loaded game would
-	# be card-silent behind this session's carried entries -- the pass-15
-	# fleet's reproduced find. The stack's ids are monotonic, so a card id never
-	# collides across the load; the cards themselves are cleared just below.
-	_industry_news.forget()
-	# The assembly's four beside them, the same rule: bill ids collide only
-	# within a run, so those two maps belong to the discarded game. The two
-	# month memories are NOT simply reset to -1 (the ultra pass-7 finding):
-	# the stamp exists so a quiet month cannot re-announce a division already
-	# on the register, and the load boundary must honour it, not reset it --
-	# the first month elapsed after a save+load otherwise re-announced the
-	# loaded division (or release) as news. Each slot takes the loaded stamp
-	# for ITS OWN shape of result and -1 otherwise: a stale memory inherited
-	# from the discarded game could swallow a real card whose stamp it
-	# happened to match.
-	_assembly_news.forget(_state.player().last_law_result)
-	# The V4.4 desk's three ride the same rule -- a stale unseen id would hold
-	# the clock past the load and a discarded game's decision card would route
-	# Events.answer against the loaded state (the decision pause beside the
-	# load's own pause below is the third).
-	# The discarded game's cards leave the STACK too, ALL of them: clearing only the
-	# map left decision cards' answer buttons on screen, looking live and doing
-	# nothing (card_action finds no event for the id and returns silently), and
-	# the plain ones -- "You hold Germany until FEB 2029" over a loaded France game
-	# (V5.1-a2) -- were never in any map to begin with.
-	_hud.inbox.clear()
-	_term_card_id = ""
-	_event_cards.clear()
-	_unseen_events.clear()
-	# The discarded game's programme card goes too: _enforce_term_start_programme()
-	# below returns early for a mid-term load, which would leave "choose one
-	# goal..." standing (and its id set) over a game with nothing to choose.
-	_drop_programme_card()
-	# A decision committed and not yet measured belongs to the DISCARDED game:
-	# left queued, the loaded game's next History step wrote it into its own
-	# recent_effects against the old game's baseline (the V5.0 fix-pass review).
-	_pending_effects.clear()
-	_clock.year = _state.year
-	_clock.month = _state.month
-	_clock.day = int(result["day"])
-	_clock.paused = true
-	# The discarded game's decision pause dies here, not just its clock: the
-	# loaded game's interrupt enforcement re-raises a pause if the save carries
-	# one, so the flag must not survive as a second holder of it. The programme
-	# pause dies with it: _enforce_term_start_programme() below re-raises it only
-	# if the loaded game is at a term start, and a stale true would otherwise
-	# block every later auto-resume (_resume_if_decision_settled reads it).
-	_paused_for_decision = false
-	_paused_for_programme = false
-
-	_map_view.setup(_loader, _state)
-	# A loaded game is a different _state, and an overlay left holding the
-	# throwaway one built at _ready() is the same five-panel drift the V2.8
-	# review found below -- setup(), not refresh(), because the reference itself
-	# is what has to be replaced.
-	_map_flows.setup(_map_view, _clock, _loader, _state)
-
-	# The bill briefing is not in the registry, so the setup() sweep below never
-	# reaches it -- open across a load it kept the discarded GameState, and its
-	# poll verb wrote the dead run's books (the V2.8 five-panel drift class).
-	_briefing.detach()
-
-	# EVERY REGISTERED PANEL, off the registry rather than a hand-written list.
-	# A panel stores `state` in its own setup(), so one omitted here keeps a
-	# reference to the throwaway game built at _ready() -- an object nothing ticks
-	# again. Until the V2.8 review this WAS a hand-written list, and it had drifted
-	# by five: city, energy, events, region and summit. The events panel is the one
-	# that made it more than a stale readout -- events_panel.gd calls
-	# Events.answer(_state, _loader, ev.id, ...), so answering a crisis after a
-	# load wrote the decision into the discarded state and the real event
-	# defaulted at its deadline. mark_all_dirty()'s own comment predicted exactly
-	# this, about
-	# exactly this kind of list, which is why the fix is the same one: derive it,
-	# so the omission is structurally impossible rather than remembered.
-	for panel in _windows.panels():
-		if panel.has_method("setup"):
-			panel.setup(_state, _loader)
-
-	# Not registered surfaces, so not reached by the loop above: the election
-	# screen is opened directly rather than through a window, and the ribbon and
-	# the portrait card are HUD furniture. Each stores `state` in its own setup()
-	# and so needs the same rebinding -- the portrait card's approval figure and
-	# the ribbon's month title were both frozen at the pre-load game's values.
-	_election_panel.setup(_state, _loader)
-	_hud.rebind(_state, _loader)
-	_hud.title_bar.set_nation(_loader.nations[_state.player_nation_id].nation_name)
-	_setup_news()
-	# The mirror is re-established here rather than waiting for the first day to
-	# elapse, because a loaded game opens PAUSED: without this the diary would
-	# refuse a booking for today as "that date has passed" until the player
-	# unpaused, which is a rule the player cannot see and did not break.
-	_state.day = _clock.day
-
-	_windows.mark_all_dirty()
-
-	# What the saved state can show, back in the inbox: the desk's rows and the
-	# latest consequence card (DeskCards.restore_after_load).
-	DeskCards.restore_after_load(self)
-	# V2.4b: the reload re-raise. An interrupt crisis pending in the save stops
-	# the clock again and is put back in front of the player -- a save made mid-
-	# crisis and reloaded is still mid-crisis, and the pause is the only thing
-	# that stops the clock from quietly resuming past a question the player never
-	# answered. (A save-scum dodge the other way -- reload to rethink -- still
-	# works; the re-raise kills the silent skip, not the rethink.)
-	_enforce_interrupt()
-	# V4.1. A save made at an unchosen term start is still one: the same
-	# reload-re-raise reasoning _enforce_interrupt() carries, one register over.
-	_enforce_term_start_programme()
-	_note_holds_for_pause_menu()
-
-	_save_load_panel.report(tr("Loaded '%s'.") % slot)
-	_save_load_panel.mark_dirty()
-	_update_top_bar()
+		return self
+	return GameReload.swap(self, result, slot)
 
 
 ## V2.4b, and the reversal of a V1.8 call for one flagged class. An event with
@@ -1646,7 +1531,7 @@ func _on_stack_top_changed(from: int, to: int) -> void:
 ## V4.1, the term-start enforcement -- the arrival-pause precedent pointed at
 ## the programme. At a term start with the choice still open, the clock does
 ## not run past it: the offer is surfaced as a CARD (the decision-card shape --
-## the Agenda window is the answer surface, and clicking the card opens it,
+## its file on the Folder is the answer surface, and clicking the card opens it,
 ## through the card_activated routing in _wire_hud()), the clock pauses, and
 ## the choice resumes through _on_programme_chosen().
 ##
@@ -1655,9 +1540,8 @@ func _on_stack_top_changed(from: int, to: int) -> void:
 ## on the desk both stay until it is answered -- but the clock waiting is what
 ## makes it a decision rather than a suggestion.
 ##
-## Three callers, one code path: _ready() (a new game IS a term start),
-## _on_load_requested() beside _enforce_interrupt() (a save made at an
-## unchosen term start re-raises it), and the end of _on_month_elapsed()
+## Two callers, one code path: _ready() (a new game IS a term start, and a main
+## built from a save made at an unchosen term start re-raises it), and the end of _on_month_elapsed()
 ## (a won election resets months_in_term; the month a new term begins is a
 ## term start again). Idempotent by construction: the previous card is
 ## dismissed before a fresh one is pushed, so repeated calls leave exactly
@@ -1724,7 +1608,7 @@ func _enforce_term_start_programme() -> void:
 	_drop_programme_card()
 	_programme_card_id = _hud.inbox.push(
 		tr("The term's programme"),
-		tr("The agenda holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise."),
+		tr("The Folder holds the offer. Choose one goal before the clock runs -- the register prices the delivery, not the promise."),
 		[], null,
 		# Protected: this plain card explains a live clock hold, and a few plain
 		# pushes at a term start would otherwise evict it as the oldest.

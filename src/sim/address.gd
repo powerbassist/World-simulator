@@ -6,9 +6,10 @@ extends RefCounted
 ## the forecast do).
 ##
 ## The register, ns.measure_opinion, one field: {"measures": {law id: {"months_left", "shifts":
-## {bloc: points away from neutral}}}, "given": [the month of each address in the window]}. The
-## key "polls" is MeasurePolls', a poll being the other thing a measure's opinion holds. {} on
-## every game that has done neither.
+## {bloc: points away from neutral}}}, "given": [the month of each address in the window],
+## "last_address": {year, month, day, law_id} for the month rule}. The key "polls" is
+## MeasurePolls', a poll being the other thing a measure's opinion holds. {} on every game that
+## has done neither.
 ##
 ## THE DIARY IS THE PRICE, AND IT HAS NO HALF-DAY. The spec says a half-day. The diary's unit is
 ## the day and its rule is one thing at a time, and half a day would need a second kind of day
@@ -24,6 +25,10 @@ const Legislature = preload("res://src/sim/legislature.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Media = preload("res://src/sim/media.gd")
 const Referendum = preload("res://src/sim/referendum.gd")
+
+## The register's key for the month's last address (month_rule), and the refusal it gives.
+const LAST := "last_address"
+const REFUSED_MONTH := "one address to the nation a month"
 
 
 ## The shift an address would bring, per bloc, after `repeats` addresses in the window: those
@@ -77,13 +82,18 @@ static func give(state, loader, law_id: String) -> Dictionary:
 	var law = Legislature.open_law(state, ns, loader, law_id)
 	if law == null:
 		return {"ok": false, "error": "no such bill is open"}
-	var booked: Dictionary = Calendar.book(state, _entry(state, law_id))
+	var rule := month_rule(state)
+	if not rule.is_empty():
+		return {"ok": false, "error": REFUSED_MONTH, "month_rule": rule}
+	var entry := _entry(state, law_id)
+	var booked: Dictionary = Calendar.book(state, entry)
 	if not bool(booked["ok"]):
 		return booked
 	var now: int = int(state.year) * 12 + int(state.month)
 	var worth_now := worth(ns, now)
 	var moved := shifts(ns, loader.outlets.get(ns.id, []), law, earlier(ns, now))
 	_write(ns, law_id, moved, now)
+	ns.measure_opinion[LAST] = {"year": int(state.year), "month": int(state.month), "day": int(entry["day"]), "law_id": law_id}
 	var price := {}
 	for bloc in moved:
 		if float(moved[bloc]) < 0.0:
@@ -93,10 +103,28 @@ static func give(state, loader, law_id: String) -> Dictionary:
 	return {"ok": true, "error": "", "shifts": moved, "worth": worth_now}
 
 
-## What the diary would say to an address today, "" when it would take it: read before the
-## press, so a panel never re-derives the rule it is greying a button for.
+## What stops an address today, "" when nothing does: read before the press, so a panel never
+## re-derives the rule it is greying a button for. The month rule comes first; a panel that
+## wants its date reads month_rule() (data, the UI words it).
 static func refusal(state, law_id: String) -> String:
+	if not month_rule(state).is_empty():
+		return REFUSED_MONTH
 	return Calendar.refusal_reason(state, _entry(state, law_id))
+
+
+## ONE ADDRESS TO THE NATION PER CALENDAR MONTH, all bills together (G3-25; the author's call
+## on #419: "Un par mois au total"). The record is the register's own (`last_address`), never
+## the diary's: the day's driver resolves yesterday's booked row the next morning, which is
+## what let an address through every day. {} when this month is free, else the last one,
+## {kind, year, month, day, law_id}.
+static func month_rule(state) -> Dictionary:
+	var ns = state.player()
+	var last: Dictionary = ns.measure_opinion.get(LAST, {}) if ns != null else {}
+	if last.is_empty() or int(last["year"]) != int(state.year) or int(last["month"]) != int(state.month):
+		return {}
+	var out := last.duplicate()
+	out["kind"] = "month"
+	return out
 
 
 ## Today's row. A stale day past the month's end reads as its last, as the diary's own check does.
@@ -155,6 +183,10 @@ static func tick_month(state) -> void:
 		ns.measure_opinion.erase("measures")
 	if given.is_empty():
 		ns.measure_opinion.erase("given")
+	# The month rule's record goes once its month is gone: it guards only its own month.
+	var last: Dictionary = ns.measure_opinion.get(LAST, {})
+	if not last.is_empty() and int(last["year"]) * 12 + int(last["month"]) < now:
+		ns.measure_opinion.erase(LAST)
 	for entry in state.appointments.duplicate():
 		if String(entry["kind"]) == CalendarK.KIND_ADDRESS and String(entry["status"]) == CalendarK.STATUS_BOOKED:
 			Calendar.resolve(state, Calendar.verb_key(entry), true)

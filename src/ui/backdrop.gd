@@ -26,7 +26,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## The two tokens: the dim is the theme's INK at 30 %, the blur 4 px (the lighter of the
 ## two strengths the author was shown). They live here and not in ui_theme.gd because
-## that file is at the size ratchet's 300-line ceiling and this is their one reader; a
+## that file is near the size ratchet's ceiling and this is their one reader; a
 ## panel never sets either.
 const BLUR_PX := 4.0
 const DIM := Color(UiTheme.INK.r, UiTheme.INK.g, UiTheme.INK.b, 0.30)

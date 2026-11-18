@@ -145,17 +145,22 @@ static func speak(parent: Node, path: String, delay_s := 0.0, card_id := "") -> 
 	var token := int(player.get_meta("token", 0)) + 1
 	player.set_meta("token", token)
 	player.set_meta("pending", true)
+	# A weak reference, not the player: a load frees it with its main before the delay is out, and
+	# a lambda that captured it is called on a freed object (#396 pass 2, T4).
+	var ref: WeakRef = weakref(player)
 	parent.get_tree().create_timer(delay_s).timeout.connect(func():
-		if is_instance_valid(player) and int(player.get_meta("token", 0)) == token:
-			player.set_meta("pending", false)
-			player.play())
+		var waiting := ref.get_ref() as AudioStreamPlayer
+		if waiting != null and int(waiting.get_meta("token", 0)) == token:
+			waiting.set_meta("pending", false)
+			waiting.play())
 
 
 ## Says `path` now if `parent`'s player is free, else after the lines already
 ## waiting there, in order: a line queued is never dropped (the parent's rules on
 ## #229), only cancelled -- by its card's hush, by a stop (a load), or, with a
 ## `gate`, when that control is no longer shown (a closed card says nothing later).
-static func speak_queued(parent: Node, path: String, card_id: String, gate: CanvasItem = null) -> void:
+## `on_start` runs when a queued line starts (the line's text back on screen, voice.gd's rule).
+static func speak_queued(parent: Node, path: String, card_id: String, gate: CanvasItem = null, on_start := Callable()) -> void:
 	if parent == null or not parent.is_inside_tree() or path == "":
 		return
 	var player := parent.get_node_or_null(NODE) as AudioStreamPlayer
@@ -166,6 +171,8 @@ static func speak_queued(parent: Node, path: String, card_id: String, gate: Canv
 	var entry := {"path": path, "card": card_id}
 	if gate != null:
 		entry["gate"] = gate  # read with is_instance_valid: a freed gate is a closed card
+	if on_start.is_valid():
+		entry["on_start"] = on_start
 	queue.append(entry)
 	player.set_meta(QUEUE, queue)
 	# A Timer the player owns, calling a bound static: when the player (or its
@@ -190,6 +197,8 @@ static func _next(parent: Node, player: AudioStreamPlayer, wait: Timer) -> void:
 		var entry: Dictionary = queue.pop_front()
 		if not entry.has("gate") or (is_instance_valid(entry["gate"])
 				and (entry["gate"] as CanvasItem).is_visible_in_tree()):
+			if entry.has("on_start"):
+				(entry["on_start"] as Callable).call()
 			speak(parent, String(entry["path"]), 0.0, String(entry["card"]))
 	if not queue.is_empty():
 		wait.start()

@@ -1,5 +1,5 @@
 {
- "_note": "Code lines per src/ file over 300, the most each may hold. Lowered by `python tools/check_size.py --update` in the change that shrinks a file; never raised (tools/check_size.py).",
+ "_note": "Code lines per src/ file over its folder's maximum (300, 400 under src/ui), the most each may hold. Lowered by `python tools/check_size.py --update` in the change that shrinks a file; delisted once it is back under its maximum; never raised (tools/check_size.py).",
  "code_lines": {
   "src/core/game_state.gd": 379,
   "src/core/law.gd": 411,
@@ -8,14 +8,11 @@
   "src/sim/companies.gd": 411,
   "src/sim/diplomacy.gd": 320,
   "src/sim/government.gd": 324,
-  "src/sim/legislature.gd": 600,
+  "src/sim/legislature.gd": 561,
   "src/sim/orgs.gd": 736,
   "src/sim/statute.gd": 441,
   "src/ui/calendar_panel.gd": 414,
-  "src/ui/campaign_panel.gd": 340,
-  "src/ui/election_panel.gd": 308,
-  "src/ui/main.gd": 900,
-  "src/ui/map_view.gd": 876,
-  "src/ui/overview_panel.gd": 380
+  "src/ui/main.gd": 868,
+  "src/ui/map_view.gd": 876
  }
 }

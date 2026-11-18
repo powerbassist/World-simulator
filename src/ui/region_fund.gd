@@ -13,8 +13,8 @@ extends RefCounted
 ## and prints RegionFunds.refusal()'s line under it, read before any press (A5's
 ## grammar, the Industry tab's).
 ##
-## The two sums live on the panel (`_fund_share`, `_fund_years`), so a rebuild keeps
-## them; a drag redraws only the strip, never the panel, so the slider keeps the mouse.
+## The two sums live on the panel's game state (region_state.gd), so a rebuild keeps them;
+## a drag redraws only the strip, never the panel, so the slider keeps the mouse.
 
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 ## V5.3 e (section 12): Go and Stop table rows of the finance bill, applied at the month's end.
@@ -91,9 +91,9 @@ static func _running(panel, box: Control, ns, row: Dictionary) -> void:
 	flow.add_child(stop)
 	# A refused Stop says why, as a refused Go does (QA's T2 on #345: a law in the slot
 	# made the press do nothing, silently).
-	var refusal := PanelKit.plain_line(box, String(panel._fund_refusal))
+	var refusal := PanelKit.plain_line(box, String(panel._game.fund_refusal))
 	refusal.set_meta("stop_refusal", true)
-	refusal.visible = String(panel._fund_refusal) != ""
+	refusal.visible = String(panel._game.fund_refusal) != ""
 	ResultTone.tint(refusal, ResultTone.BLOCKED)
 	stop.pressed.connect(func() -> void:
 		_pressed(panel, FinanceBill.table(panel._state, panel._loader, {"funds": {"stop": [String(row["id"])]}})))
@@ -122,17 +122,17 @@ static func _running(panel, box: Control, ns, row: Dictionary) -> void:
 static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
 	var lo_share := float(rule["share_pct"][0])
 	var lo_years := int(rule["years"][0])
-	if float(panel._fund_share) <= 0.0:
-		panel._fund_share = lo_share
-	if int(panel._fund_years) <= 0:
-		panel._fund_years = lo_years
+	if float(panel._game.fund_share) <= 0.0:
+		panel._game.fund_share = lo_share
+	if int(panel._game.fund_years) <= 0:
+		panel._game.fund_years = lo_years
 	# One sum a line, each value with its unit beside its own control (QA's TAKE 1 on
 	# #269: in one flow, "0.5" ran into the next caption and read "0.5 years"). The share
 	# says what it costs too, the sim's estimate at that level (#316's ask): a share of
 	# output is not a sum a player can weigh until it is money.
-	var share := _slider(PanelKit.buttons(box), lo_share, float(rule["share_pct"][1]), 0.5, float(panel._fund_share), "fund_share",
+	var share := _slider(PanelKit.buttons(box), lo_share, float(rule["share_pct"][1]), 0.5, float(panel._game.fund_share), "fund_share",
 		func(v: float) -> String: return _share_text(panel, ns, region, v))
-	var years := _slider(PanelKit.buttons(box), float(lo_years), float(rule["years"][1]), 1.0, float(panel._fund_years), "fund_years",
+	var years := _slider(PanelKit.buttons(box), float(lo_years), float(rule["years"][1]), 1.0, float(panel._game.fund_years), "fund_years",
 		func(v: float) -> String: return Strings.tn("%d year", "%d years", int(v)) % int(v))
 	var strip := EffectsStrip.new()
 	# The Industry strip's reading measure: the money beside its caption, not at the
@@ -152,33 +152,33 @@ static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
 	var redraw := func() -> void:
 		_price(panel, ns, region, strip, go, refusal)
 	share.value_changed.connect(func(v: float) -> void:
-		panel._fund_share = v
+		panel._game.fund_share = v
 		redraw.call())
 	years.value_changed.connect(func(v: float) -> void:
-		panel._fund_years = int(v)
+		panel._game.fund_years = int(v)
 		redraw.call())
 	go.pressed.connect(func() -> void:
 		_pressed(panel, FinanceBill.table(panel._state, panel._loader, {"funds": {"start": [
-			{"region_id": String(region.id), "share_pct": float(panel._fund_share), "years": int(panel._fund_years)}]}})))
+			{"region_id": String(region.id), "share_pct": float(panel._game.fund_share), "years": int(panel._game.fund_years)}]}})))
 	redraw.call()
 
 
 ## A Go or a Stop pressed: its refusal kept on the panel, so the line still says it after
 ## the rebuild the press asks for (a line set on the old controls was wiped by it).
 static func _pressed(panel, tabling: Dictionary) -> void:
-	panel._fund_refusal = "" if bool(tabling.get("tabled", false)) else ProposalNote.body(tabling)
+	panel._game.fund_refusal = "" if bool(tabling.get("tabled", false)) else ProposalNote.body(tabling)
 	panel.mark_dirty()
 
 
 ## The strip, the Go and the refusal line for the sums the controls hold now: the sim's
 ## reason the sums cannot open, else the last press's refusal.
 static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void:
-	var share := float(panel._fund_share)
-	var years := int(panel._fund_years)
+	var share := float(panel._game.fund_share)
+	var years := int(panel._game.fund_years)
 	var est: Dictionary = RegionFunds.estimate(panel._state, ns, panel._loader, String(region.id), share, years)
 	var ok := bool(est.get("ok", false))
 	go.disabled = not ok
-	refusal.text = String(panel._fund_refusal) if ok else Strings.t(String(est.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
+	refusal.text = String(panel._game.fund_refusal) if ok else Strings.t(String(est.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
 	refusal.visible = refusal.text != ""
 	strip.visible = ok
 	if not ok:
@@ -203,7 +203,7 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void
 ## (a cost beside its control; the strip below carries the Treasury's sign). A level
 ## the register refuses has no estimate, and reads the share alone.
 static func _share_text(panel, ns, region, share: float) -> String:
-	var est: Dictionary = RegionFunds.estimate(panel._state, ns, panel._loader, String(region.id), share, int(panel._fund_years))
+	var est: Dictionary = RegionFunds.estimate(panel._state, ns, panel._loader, String(region.id), share, int(panel._game.fund_years))
 	if not bool(est.get("ok", false)):
 		return Strings.t("%s %% of the region's output a year") % Num.f(share, 1)
 	return Strings.t("%s %% of the region's output: %s a year") % [Num.f(share, 1),

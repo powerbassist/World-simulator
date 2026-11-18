@@ -41,7 +41,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --poll-arrived --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --poll-address --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip approval:1
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --outliner --open outliner
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --outliner --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tip deficit:1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --settings
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --bid --open companies
@@ -53,7 +53,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience-step m-money
 ##       (the offer of money: m-money, m-left, m-taken; the affair: m-affair, m-no, m-yes, m-end)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --file event
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing crowded --folder-file event   (or: request)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing crowded --folder-file event   (or: request, decided, news)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --file request
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation DEU --book-visit
@@ -82,6 +82,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-arrival
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet change --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --text 130 --open region
@@ -112,7 +113,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --perf --frames 120
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --cards 6 --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mood 35
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --mid-term --open overview
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme-file offer   (or: booked)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 18 --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request   (add --broken-word: the askers hold evidence)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
@@ -140,8 +142,12 @@ extends SceneTree
 ##     (also promise, spent, closed, diary, save; and bargain, dates, gossip open a choice)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --term approval:lock:poll
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open agenda
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme prog_jobs_first --open agenda
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --agenda --open events
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme prog_jobs_first --open overview
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sector-refusal --open sector_industry
+##     (Industry runs a programme and the bigger one is picked: the refused verb says why)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --save-load
+##     (the Save/Load dialog over ten real saves)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defence --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --summit --open summit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --subsidy --open companies
@@ -171,8 +177,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --termlimit
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --defeated
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing calm
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark   (G1: the month end, the mark and his caption, no card)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing calm   (G2: the read is the Presidency page)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark   (G1: the month end, the mark and his caption)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark --briefing crowded --lang fr --text 130
 ##     (also tense: a request lapsing next month; crisis: an interrupt on the desk;
 ##     crowded: the interrupt and three requests lapsing, so the footer shows)
@@ -188,6 +194,7 @@ extends SceneTree
 
 const Relations = preload("res://src/core/relations.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const InterfaceSize = preload("res://src/ui/interface_size.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const OsCursor = preload("res://tools/os_cursor.gd")
@@ -270,7 +277,7 @@ var _hover_outline := ""
 var _tip := ""
 ## V4.8b. Stage one thing pinned in each outliner section (a running pinned
 ## programme entry, a failing major, a good short of demand, people with a
-## grudge), so --open outliner photographs the window with every section drawn.
+## grudge), so --open overview photographs the Presidency page's Open now with every section drawn.
 var _outliner := false
 
 ## V4.8c. The settings screen up over the game, so the MESSAGES grid (thirty-six
@@ -350,6 +357,9 @@ var _agenda := false
 ## --agenda alone ticks 48 months with nothing chosen, which photographs the
 ## empty state and none of the rows the block exists to fill.
 var _programme := ""
+## --sector-refusal: Industry runs its first programme and the bigger one is picked, so the
+## refused "Put it in the finance bill" shows the sim's reason (open with --open sector_industry).
+var _sector_refusal := false
 
 ## Which registered window to open before capturing, by the id main.gd registered
 ## it under. Generic rather than a flag per panel: --orgs exists because it has to
@@ -415,7 +425,7 @@ var _term := ""
 var _term_card := ""
 var _mood := -1.0
 ## --mid-term: seven months into the term with nothing chosen, the page a loaded
-## game shows (the Agenda's "when can I choose" line).
+## game shows (the Presidency page's programme lane, "None this term").
 var _mid_term := false
 ## V5.2-0a, --months N: N real months on the clock first, so the charts have a
 ## history to draw.
@@ -427,8 +437,12 @@ var _months := 0
 var _request := ""
 ## V5.3 screen 3: --file event | request opens the docked file page (--file request needs --request).
 var _file := ""
-## --folder-file event | request: the folder (--briefing crowded) on that file's page.
+## --folder-file event | request | decided | news: the Folder tab (--briefing crowded) on that file's page,
+## or on the first item of the decided or news group.
 var _folder_file := ""
+## Rework 2 S3: --programme-file offer | booked: the term's programme file on the Folder, its offer (the
+## term-start hold) or, Choose pressed on its first entry, what was booked.
+var _programme_file := ""
 ## V5.2d, with --interrupt: the crisis's card carries its speaker (Speakers.resolve at
 ## delivery), so the frame shows the face, name and line under the title.
 var _speaker := false
@@ -561,6 +575,11 @@ var _fund := false
 ## Screen 6 (the author's direction A): the worst region's sheet open beside the tinted map.
 ## --region-sheet [measure]: the measure the map's chips pick, "jobless" when none follows.
 var _region_sheet := ""
+## --region-about: the Regions tab with its About rows unfolded (#400 pass 2: the rows in the
+## narrowest host a row has).
+var _region_about := false
+## --save-load: the Save/Load dialog with ten real saved games, enough for its list's scroll bar.
+var _save_load := false
 ## Rework 1, --people-pick first | vacant | hover: the People roster with a line focused and
 ## its verbs under it -- the first line of "Needs you", or the health office left vacant;
 ## hover is the first line focused AND its person card up, as a pointer resting on it puts it.
@@ -580,8 +599,6 @@ var _law_verbs := ""
 var _queue := ""
 ## The catalogue's shelf and search (V5.3 screen 4): "shelf:words", either side may be empty.
 var _law_filter := ""
-## The Bills tab's goal panel with its list read through: --goals [deficit|unemployment|bloc].
-var _goals := ""
 ## The law sheet with its polls open ("Poll it" pressed on every law): --sheet-polls.
 var _sheet_polls := false
 ## A poll on a bill: "poll" (bought, out), "poll-arrived" or "poll-address".
@@ -657,7 +674,7 @@ var _consequence := false
 ## whole point. --region proves the Region panel builds and its five-column
 ## ledger fits. --city drives the map's own route end to end -- centred and
 ## zoomed past CITY_MIN_ZOOM on Paris, the cross hovered so the frame carries the
-## hover label, and the City panel opened through show_city() exactly as main.gd's
+## hover label, and the City panel opened through open_city() exactly as main.gd's
 ## click lambda does it.
 var _region := false
 var _city := false
@@ -759,7 +776,7 @@ var _main
 ## The monthly briefing: the term's programme chosen first (its offer would hold a line
 ## of its own), then the situation's cause, then the month's end through its driver
 ## (G1: the mark and the caption), then -- unless --chief-mark -- the read the player
-## opens from the mark.
+## opens from the mark (G2: the Presidency page), or the Folder with --folder-file.
 func _stage_briefing() -> void:
 	var Driver = preload("res://src/ui/briefing_driver.gd")
 	var state = _main._state
@@ -790,9 +807,15 @@ func _stage_briefing() -> void:
 	if not _chief_mark:
 		Driver.read(_main)
 	if _folder_file != "":
-		var Folder := load("res://src/ui/folder_driver.gd")
-		var line := {"kind": "crisis", "subject": String(_main._loader.events[0].id)} if _folder_file == "event" 			else {"kind": "request", "subject": String(load("res://src/sim/audiences.gd").pending(ns)[0]["id"])}
-		Folder.go(_main, line)
+		var panel = _main._events_panel
+		match _folder_file:
+			"event", "request":
+				var line := {"kind": "crisis", "subject": String(_main._loader.events[0].id)} if _folder_file == "event" \
+					else {"kind": "request", "subject": String(load("res://src/sim/audiences.gd").pending(ns)[0]["id"])}
+				panel.show_file(Driver.file_of(_main, line))
+			_:
+				panel.show_group(_folder_file)
+		_main._windows.open("events")
 
 
 func _stage_the_outliner() -> void:
@@ -964,6 +987,8 @@ func _init() -> void:
 			_council_frame = String(args[i]).trim_prefix("--council-")
 		elif args[i] == "--agenda":
 			_agenda = true
+		elif args[i] == "--sector-refusal":
+			_sector_refusal = true
 		elif args[i] == "--programme" and i + 1 < args.size():
 			_programme = args[i + 1]
 		elif args[i] == "--defence":
@@ -1115,6 +1140,10 @@ func _init() -> void:
 			_walked = true
 		elif args[i] == "--bill-refused":
 			_bill_refused = true
+		elif args[i] == "--save-load":
+			_save_load = true
+		elif args[i] == "--region-about":
+			_region_about = true
 		elif args[i] == "--region-sheet":
 			var next := String(args[i + 1]) if i + 1 < args.size() else ""
 			_region_sheet = next if not next.begins_with("--") and next != "" else "jobless"
@@ -1130,8 +1159,6 @@ func _init() -> void:
 			_b7 = String(args[i]).trim_prefix("--b7-")
 		elif args[i] in ["--grade", "--grade-tabled", "--address", "--address-again"]:
 			_law_verbs = String(args[i]).trim_prefix("--")
-		elif args[i] == "--goals" and i + 1 < args.size():
-			_goals = String(args[i + 1])
 		elif args[i] == "--sheet-polls":
 			_sheet_polls = true
 		elif args[i] == "--law-filter" and i + 1 < args.size():
@@ -1158,6 +1185,8 @@ func _init() -> void:
 			_request = args[i] if _request != "--audience" else _request
 		elif args[i] == "--folder-file" and i + 1 < args.size():
 			_folder_file = args[i + 1]
+		elif args[i] == "--programme-file" and i + 1 < args.size():
+			_programme_file = args[i + 1]
 		elif args[i] == "--file" and i + 1 < args.size():
 			_file = args[i + 1]
 		elif args[i] == "--audience-step" and i + 1 < args.size():
@@ -1206,6 +1235,9 @@ func _init() -> void:
 			_main.pending_player_id = _play
 	root.add_child(_main)
 	OsCursor.quiet_window()  # the menu's _ready applied the saved window mode just now
+	# The interface size, as the menu applies it at boot: main.tscn booted directly has no
+	# menu, and without this a 2560x1440 frame shows the 1080p canvas x1.33.
+	InterfaceSize.apply(root)
 
 
 ## V5.1-0b. The dev console's states, staged through its own run_command() the way
@@ -1298,7 +1330,13 @@ func _process(_delta: float) -> bool:
 		if _mid_term:
 			_main._state.player().months_in_term = 7
 			_main._enforce_term_start_programme()
-			_main._agenda_panel.mark_dirty()
+			_main._windows.mark_all_dirty()
+		if _programme_file != "":
+			preload("res://src/ui/programme_file.gd").open(_main)
+			if _programme_file == "booked":
+				_main._events_panel._refresh()
+				_main._events_panel.primary_action().pressed.emit()
+				_main._events_panel.mark_dirty()
 		if _mood >= 0.0:
 			_main._state.player().overall_approval_pct = _mood
 			_main._hud.portrait_card.refresh()
@@ -1354,7 +1392,8 @@ func _write_frame(path: String, note: String) -> bool:
 		quit(1)
 		return false
 	var suffix := " (%s)" % note if note != "" else ""
-	print("wrote %s (%dx%d)%s" % [ProjectSettings.globalize_path(path), image.get_width(), image.get_height(), suffix])
+	print("wrote %s (%dx%d, interface %s, canvas %s)%s" % [ProjectSettings.globalize_path(path), image.get_width(), image.get_height(),
+		root.content_scale_factor, root.get_visible_rect().size, suffix])
 	return true
 
 
@@ -1394,6 +1433,12 @@ func _apply_view() -> void:
 		_run_the_agenda()
 	if _programme != "":
 		_choose_a_programme()
+	if _sector_refusal:
+		var stops: Array = preload("res://src/ui/sector_programme.gd").stops(_main._loader, "industry")
+		_main._state.player().sector_investment["industry"] = {"intensity": float(stops[1]["intensity"]), "capital": 0.0}
+		var tab = _main._windows.content("sector_industry")
+		tab._prog_pick = stops.size() - 1
+		tab.mark_dirty()
 	if _defence:
 		_stand_up_an_alliance()
 	if _book:
@@ -1458,6 +1503,15 @@ func _apply_view() -> void:
 		_stage_a_fund()
 	if _region_sheet != "":
 		_stage_the_region_sheet()
+	if _save_load:
+		# Real saves (real date stamps), in the run's own user dir: "quicksave", a 64-letter name and eight more.
+		for slot in ["quicksave", "a".repeat(64)] + range(8).map(func(n: int) -> String: return "sauvegarde rapide du mandat %d" % n):
+			_main._on_save_requested(slot)
+		_main._save_load_panel.mark_dirty()
+		_main._save_load_panel.show()
+	if _region_about:
+		_main._windows.content("region")._about_open = true
+		_main._windows.content("region").mark_dirty()
 	if _region_arrival:
 		preload("res://src/ui/region_arrival.gd").check(_main)
 	if _b7 != "":
@@ -1472,8 +1526,6 @@ func _apply_view() -> void:
 		_stage_the_law_verbs()
 	if _queue != "":
 		_stage_the_queue()
-	if _goals != "":
-		_stage_the_goals()
 	if _sheet_polls:
 		for law in _main._loader.laws:
 			preload("res://src/ui/law_sheet.gd")._open[String(law.id)] = true
@@ -1614,7 +1666,8 @@ func _apply_view() -> void:
 		# trade frame this tool ever took photographed a ramp legend with no ramp
 		# rows in it, which is not the legend a player sees. Inherited from V1.3f.
 		_main._hud.map_legend.show_layer(
-			_main._map_view.layer(), _main._state, _main._map_view.viewer_id()
+			_main._map_view.layer(), _main._state, _main._map_view.viewer_id(),
+			_main._loader.nation_name(_main._map_view.viewer_id())
 		)
 	# EVERY setup flag above writes sim state behind panels that have already
 	# refreshed, and a panel refreshes once per dirty flag. Hiding a window frame
@@ -2364,8 +2417,8 @@ func _stage_the_region_sheet() -> void:
 	var regions: Array = _main._loader.regions.get(ns.id, [])
 	var access: Dictionary = Regions.accessibility_for(ns, regions, state.region_graph)
 	var panel = _main._windows.content("region")
-	panel._open_region = String(panel.worst_first(state, ns, regions, access)[0].id)
-	panel._measure = _region_sheet
+	panel._game.open_region = String(panel.worst_first(state, ns, regions, access)[0].id)
+	panel._game.measure = _region_sheet
 	panel.mark_dirty()
 
 
@@ -2382,7 +2435,7 @@ func _stage_a_fund() -> void:
 	for i in ([1, 2, 3] if _fund_cap else [1]):
 		funds.start(state, ns, loader, named[i].id, low, 2)
 	var panel = _main._windows.content("region")
-	panel._open_region = String(named[1 if _fund_running else 0].id)
+	panel._game.open_region = String(named[1 if _fund_running else 0].id)
 	panel.mark_dirty()
 
 
@@ -2426,7 +2479,7 @@ func _stage_the_queue() -> void:
 	preload("res://src/sim/legislature.gd").propose(state, _main._loader, first)
 	for i in (3 if _queue == "queue-full" else 2):
 		preload("res://src/sim/bill_queue.gd").add(state, {"law_id": ids[i + 1]})
-	panel._laws._selected = ids[4]
+	panel._laws.select(ids[4])
 	panel.mark_dirty()
 
 
@@ -2450,8 +2503,8 @@ func _stage_a_poll() -> void:
 		for row in polls.deliver_due(state, int(state.day)):
 			preload("res://src/ui/poll_card.gd").arrived(_main, row)
 	if _poll == "poll-address":
-		panel._laws._selected = String(law.id)
 		panel._laws.address_open = String(law.id)
+		panel._laws.select(String(law.id))
 		panel.mark_dirty()
 	else:
 		panel.brief_requested.emit(law)
@@ -3782,8 +3835,7 @@ func _point_at_the_capital() -> void:
 	view.zoom_by(2.0, view.size / 2.0)
 	view._hovered_city = "FR1_paris"
 	view.queue_redraw()
-	_main._region_panel.show_city("FR1_paris")
-	_main._windows.open("region")
+	_main._region_panel.open_city("FR1_paris")
 
 
 ## V1.7c. A referendum called and left in flight, so the law panel's pending block is
@@ -4064,7 +4116,7 @@ func _answer_a_crisis() -> void:
 	if ns.event_history.size() < 2:
 		printerr("--event-answered: the ledger holds %d rows, expected two" % ns.event_history.size())
 	if _main._events_panel != null:
-		_main._events_panel.scroll_to_bottom()
+		_main._events_panel.show_group(_main._events_panel.DECIDED)  # the record, not the question
 
 
 ## V2.6b1. A demonstration that has actually happened, on the map, in the place the
@@ -4249,20 +4301,3 @@ func _stage_b7() -> void:
 	_main._hud.inbox.slide_in()
 	print("--b7-%s: event %s, %d inbox cards" % [_b7, String(ev.id), _main._hud.inbox.card_count()])
 
-## --goals: the goal panel (V5.3 screen 4) read through in one go, which the game does a measure a frame,
-## and the named goal picked: "deficit", "unemployment" or "bloc" (the weakest bloc's tile).
-func _stage_the_goals() -> void:
-	_main._windows.open("legislature")
-	var goals = _main._law_panel.find_child("Goals", true, false)
-	var read = preload("res://src/sim/goal_read.gd").list_for(null, _main._state, _main._loader)
-	while not read.done():
-		preload("res://src/sim/goal_read.gd").step(read)
-	goals._read = read
-	goals._rebuild_tiles(_main._state, _main._loader)
-	if _goals == "bloc":
-		goals._pick_goal(String(goals._tiles.get_child(2).goal))
-	elif _goals != "deficit":
-		goals._pick_goal(_goals)
-	# Drawn here, not left to the panel's own frame: a capture takes its picture before one.
-	goals._redraw(_main._law_panel)
-	goals._stamp = goals._signature(_main._state)

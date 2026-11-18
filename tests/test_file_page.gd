@@ -27,6 +27,8 @@ const FileRead = preload("res://src/ui/file_read.gd")
 const FileView = preload("res://src/ui/file_view.gd")
 const FilesDriver = preload("res://src/ui/files_driver.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 var _failures: Array[String] = []
@@ -51,6 +53,36 @@ func _process(_delta: float) -> bool:
 	_check_a_gone_file()
 	_finish()
 	return true
+
+
+## Each button names its file as the folder's list does, and a press goes where the card's own click
+## goes (main.gd's card_activated route): the programme card to the Agenda, a file to this page.
+func _check_desk_buttons(view, listed: Array, open_files: Array) -> void:
+	var saw_request := false
+	var saw_programme := false
+	for i in open_files.size():
+		var file: Dictionary = open_files[i]
+		var button: Button = listed[i]
+		var want := FileRead.list_title(_main, file)
+		saw_request = saw_request or want != String(file["title"])
+		if button.text != want:
+			_fail("the desk lists '%s' as '%s', not '%s'" % [file["id"], button.text, want])
+		_main._windows.close_all()
+		button.pressed.emit()
+		if String(file["id"]) == String(_main._programme_card_id):
+			saw_programme = true
+			if not _main._windows.is_open("events") or _main._events_panel.selected() != preload("res://src/ui/programme_file.gd").KEY:
+				_fail("the programme card on the desk did not open its file on the Folder (open: %s)" % [_main._windows.open_ids()])
+		elif view.file_id() != String(file["id"]):
+			_fail("pressing a listed file opened '%s', not '%s'" % [view.file_id(), file["id"]])
+		view.show_file("card_gone")
+		view._rebuild()
+		listed = view.find_children("*", "Button", true, false).filter(
+				func(b) -> bool: return not (b as Node).is_queued_for_deletion())
+	if not saw_request:
+		_fail("premise: no request on the desk whose list title differs from its card's")
+	if not saw_programme:
+		_fail("premise: the term's programme card is not on the desk")
 
 
 func _check_every_effect_key_is_worded() -> void:
@@ -242,6 +274,14 @@ func _check_request_titles() -> void:
 
 
 func _check_a_gone_file() -> void:
+	# A request on the desk beside the term's programme card (#400 pass 2, T4 and T9): its button reads
+	# the person's name, as the folder's list does, and the programme card opens the Agenda.
+	var ns = _main._state.player()
+	for person in _main._loader.people.get(String(ns.id), []):
+		if not person.wants.is_empty() and String(person.id) != String(ns.head_of_state_person_id):
+			Audiences._arrive(ns, person, person.wants[0], int(_main._state.year) * 12 + int(_main._state.month), [])
+			break
+	AudienceDriver.refresh(_main)
 	var view = FilesDriver.view_of(_main)
 	_main._windows.open("file")
 	view._rebuild()
@@ -249,6 +289,27 @@ func _check_a_gone_file() -> void:
 	_texts(view, texts)
 	if not " ".join(texts).contains(Strings.t("Answered.")):
 		_fail("a file that is gone does not say so: %s" % [texts])
+	# The void pass (c), the author's pick "Encore sur ton bureau": after an answer the page lists
+	# what is still on the desk, one button per open file, and a press opens it here.
+	var open_files: Array = InboxFiles.list(_main._hud.inbox)
+	if open_files.is_empty():
+		_fail("premise: no open file on the desk to list")
+	elif not " ".join(texts).to_lower().contains(Strings.t("Still on your desk").to_lower()):
+		_fail("an answered page does not say what is still on the desk: %s" % [texts])
+	else:
+		var listed: Array = view.find_children("*", "Button", true, false).filter(
+				func(b) -> bool: return not (b as Node).is_queued_for_deletion())
+		if listed.size() != open_files.size():
+			_fail("an answered page lists %d files, the desk holds %d" % [listed.size(), open_files.size()])
+		else:
+			_check_desk_buttons(view, listed, open_files)
+	view.show_file("card_gone")
+	_main._hud.inbox.clear()
+	view._rebuild()
+	texts = PackedStringArray()
+	_texts(view, texts)
+	if not " ".join(texts).contains(Strings.t("Nothing else waits on your signature.")):
+		_fail("an answered page with an empty desk does not say so: %s" % [texts])
 	# A load rebinds every panel with setup(state, loader): the file the discarded game showed is gone with it
 	# (test_audience_load and eight more suites broke on a different signature, which this pins by name).
 	view.show_file("card_gone")
@@ -270,7 +331,7 @@ func _days(month: int, year: int) -> int:
 
 
 func _buttons(node: Node, out: Array[Button]) -> void:
-	if node is Button and (node as Button).get_parent() != null and not String((node as Button).text).is_empty() and (node as Button).focus_mode == Control.FOCUS_NONE \
+	if node is Button and (node as Button).get_parent() != null and not String((node as Button).text).is_empty() \
 			and (node as Button).custom_minimum_size.x == FileView.BUTTON_WIDTH:
 		out.append(node)
 	for child in node.get_children():

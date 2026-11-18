@@ -9,8 +9,6 @@ extends VBoxContainer
 ##
 ## What each kind draws, all from GameState.history (chart_series.gd) or the
 ## current state, never a series computed here:
-##   OVERVIEW  the term in four small multiples: approval (the polls), growth,
-##             deficit, unemployment;
 ##   ECONOMY   growth, unemployment and debt over the last ten years of history; then
 ##             revenue against spending over the term (V5.2 b+, moved from the Budget
 ##             tab with it at Finances slice 5);
@@ -30,7 +28,7 @@ const K = preload("res://src/sim/opinion_constants.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 
-enum { OVERVIEW, ECONOMY, SOCIETY, SEATS }
+enum { ECONOMY, SOCIETY, SEATS }
 
 ## Ten years: a decade of monthly history is as far back as a reader compares.
 const ECONOMY_MONTHS := 120
@@ -39,7 +37,7 @@ const ECONOMY_MONTHS := 120
 const POLL_SPAN := 20.0
 
 var _panel: Control
-var _kind := OVERVIEW
+var _kind := ECONOMY
 var _signature := ""
 
 
@@ -86,13 +84,6 @@ func _signature_of(state) -> String:
 
 func _build(state) -> void:
 	match _kind:
-		OVERVIEW:
-			var term := ChartSeries.term_window(state)
-			var grid := _grid(4)
-			_line(grid, Strings.t("Approval (polls)"), ChartSeries.polled(term, "overall_approval_pct", "overall"), term, {"unit": "%", "min_span": POLL_SPAN})
-			_line(grid, Strings.t("Growth"), ChartSeries.values(term, "growth_annual_pct"), term, {"unit": "%", "zero": true})
-			_line(grid, Strings.t("Deficit"), ChartSeries.values(term, "deficit_pct_gdp"), term, {"unit": Strings.t("% of GDP"), "zero": true})
-			_line(grid, Strings.t("Unemployment"), ChartSeries.values(term, "unemployment_pct"), term, {"unit": "%"})
 		ECONOMY:
 			var years := ChartSeries.last(state, ECONOMY_MONTHS)
 			var grid := _grid(3)

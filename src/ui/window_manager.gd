@@ -33,6 +33,8 @@ const Sound = preload("res://src/ui/sound.gd")
 
 signal opened(id: String)
 signal closed(id: String)
+## mark_all_dirty() ran: the state moved (every player command sweeps here; ChiefMarkView re-ranks on it).
+signal dirtied
 
 ## The board's geometry at the 1920x1080 reference: the dock starts at the
 ## sidebar's right edge and is 1240 wide, which leaves the 448px strip of map
@@ -44,6 +46,11 @@ const DOCK_WIDTH := 1240.0
 ## Screen 6, direction A: a tab whose place is the map docks narrow, so the nation stays on
 ## the map to its right (the Regions tab tints it). Every other tab takes DOCK_WIDTH.
 const DOCK_WIDTHS := {"region": 500.0}
+## The void pass (the author's call, 2026-11-16: "une largeur par domaine"): a domain whose widest
+## tab, in its fullest state, needs less than DOCK_WIDTH docks narrower, so the map shows beside it.
+## One width for every tab of a domain, so the header and "Back to the map" never move on a switch.
+## Read at 1.0 and 0.75 (#398) with French, the term-start offer, a nation's file and the Diary.
+const DOMAIN_WIDTHS := {"agenda": 800.0, "diplomacy": 760.0, "energy": 980.0}
 const DOCK_TOP := TitleBar.HEIGHT + TopBar.BAR_HEIGHT
 const DOCK_BOTTOM := Ribbon.STRIP_HEIGHT
 
@@ -57,6 +64,7 @@ const GROUP := "window_manager"
 
 var _pages := {}        # id -> TabPage
 var _keys := {}         # id -> keycode, KEY_NONE for a window with no shortcut
+var _also_keys := {}    # keycode -> id, a window's second key (register's `also`)
 var _icons := {}        # id -> Material Symbols path, "" for a window with no icon yet
 var _titles := {}       # id -> the title its tab shows
 
@@ -144,11 +152,16 @@ func _build_header() -> Control:
 ## domain row wears in the header. Both are here rather than in a table in
 ## main.gd, because a table in main.gd is what the keycode table WAS -- six of
 ## fourteen surfaces, the rest with no key at all.
-func register(id: String, title: String, content: Control, key: int = KEY_NONE, icon_path: String = "") -> void:
-	if key != KEY_NONE and id_for_key(key) != "":
-		push_error("window '%s' takes key %s, which '%s' already has" % [
-			id, OS.get_keycode_string(key), id_for_key(key),
-		])
+## `also` keys toggle the window too: a surface that took over a retired window keeps its key
+## (rework 2: the Presidency page answers O and the Outliner's Q).
+func register(id: String, title: String, content: Control, key: int = KEY_NONE, icon_path: String = "", also: Array = []) -> void:
+	for k in [key] + also:
+		if int(k) != KEY_NONE and id_for_key(int(k)) != "":
+			push_error("window '%s' takes key %s, which '%s' already has" % [
+				id, OS.get_keycode_string(int(k)), id_for_key(int(k)),
+			])
+		elif also.has(k):
+			_also_keys[int(k)] = id  # a held key stays its first window's
 	_keys[id] = key
 	_icons[id] = icon_path
 	_titles[id] = title
@@ -190,7 +203,7 @@ func open(id: String, quiet: bool = false) -> void:
 	var dock_was_up: bool = _dock.visible
 
 	_show_domain_of(id)
-	_dock.offset_right = DOCK_LEFT + float(DOCK_WIDTHS.get(id, DOCK_WIDTH))
+	_dock.offset_right = DOCK_LEFT + dock_width(id)
 	# Filling the body again, whatever band a probe imposed with fit_within().
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.show()
@@ -202,6 +215,7 @@ func open(id: String, quiet: bool = false) -> void:
 			_hide_page(other_id)
 	_mark_content_dirty(page)
 	_mark_tabs(id)
+	_fit_dock()  # sized on the frame it opens, not one frame later: no full-height flash
 
 	if not already_open:
 		# V4.9a. The dock rises when it comes up from the map; a tab switch is
@@ -250,6 +264,39 @@ func open_ids() -> Array:
 ## The panel registered as `id`, or null.
 func content(id: String) -> Control:
 	return _pages[id]._content if _pages.has(id) else null
+
+
+## The width the dock takes for a tab: its own (Regions), else its domain's, else DOCK_WIDTH. A
+## narrowed domain grows with a larger text, up to DOCK_WIDTH (at 130 % the Agenda's offer list cut
+## its right-hand column at 800 px), and never shrinks with a smaller one: its fixed parts do not.
+static func dock_width(id: String) -> float:
+	if DOCK_WIDTHS.has(id):
+		return float(DOCK_WIDTHS[id])
+	if not DOMAIN_WIDTHS.has(Domains.domain_of(id)):
+		return DOCK_WIDTH
+	return minf(DOCK_WIDTH, float(DOMAIN_WIDTHS[Domains.domain_of(id)]) * maxf(1.0, UiTheme.text_scale()))
+
+
+## The void pass (d), the author's call ("oui"): a page shorter than the dock is a plate as tall as
+## its content over the map, not a full-height page with a blank bottom. Re-read every frame the
+## dock is up, because a panel rebuilds on its own dirty flag and nothing signals its new height.
+## The width is re-read here too, so a text size changed with a narrowed tab open takes at once.
+func _process(_delta: float) -> void:
+	if _dock.visible:
+		_fit_dock()
+
+
+func _fit_dock() -> void:
+	var full: float = size.y - DOCK_TOP - DOCK_BOTTOM
+	var want := full
+	for id in _pages:
+		var page: TabPage = _pages[id]
+		if page.visible:
+			_dock.offset_right = DOCK_LEFT + dock_width(id)
+			var page_height: float = -1.0 if Domains.is_scene(id) else page.wanted_height()
+			if page_height >= 0.0:
+				want = minf(full, ceilf((_dock.get_child(0) as Control).get_combined_minimum_size().y + page_height))
+	_dock.offset_bottom = -DOCK_BOTTOM - maxf(0.0, full - want)
 
 
 ## The tab's page: its scroll, its content and its fold mark.
@@ -303,7 +350,7 @@ func id_for_key(key: int) -> String:
 	for id in _keys.keys():
 		if int(_keys[id]) == key:
 			return String(id)
-	return ""
+	return String(_also_keys.get(key, ""))
 
 
 ## The panels themselves, unwrapped from their pages.
@@ -324,6 +371,7 @@ func mark_all_dirty() -> void:
 	for panel in panels():
 		if panel.has_method("mark_dirty"):
 			panel.mark_dirty()
+	dirtied.emit()
 
 
 ## Back to the map. One close cue, and one step of history.

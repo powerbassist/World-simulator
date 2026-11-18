@@ -1,41 +1,33 @@
 extends RefCounted
 
 ## The monthly briefing's wiring -- V5.3-0, docs/design/v5.3-0-readability.md 2.2.
-## Static over main, as phone_driver.gd is: the card (chief_briefing.gd) to the
-## ranking (priorities.gd), the chief's mark and caption, and the Go table.
+## Static over main, as phone_driver.gd is: the month's ranking (priorities.gd), the chief's
+## mark and caption, and the Go table.
 ##
 ## **G1, the chief off the clock** (chief-briefing-brief.md; the author, 2026-11-15:
-## "Jamais"): a month end never opens the card and never pauses. month_end() ranks the
-## month, keeps it, puts the month's consequence cards and sector notes in the inbox,
-## names the first line on the mark in the title bar and, when he has something new,
-## drops his line under it as a caption. The Messages setting "only when new" went with
-## the hold. The card opens only when the player asks (the mark, read()): that read
-## holds the clock while it is up, outside the modal budget, until G2 retires it.
+## "Jamais"): a month end never pauses. month_end() ranks the month, keeps it, puts the
+## month's consequence cards and sector notes in the inbox, names the first line on the mark
+## in the title bar and, when he has something new, drops his line under it as a caption.
 ##
-## Under the invited read the old hold order stands: an interrupt or the term-start
-## offer still holding is named by the closing button ("Next: ..."), which opens it.
+## **G2, the plate retired** (rework 2 S2): his read is the Presidency page's lead, and the
+## mark opens that page (read()); a desk file is answered on the Folder tab (events_panel.gd),
+## the clock running. Nothing here stops the clock any more.
 
 const ResultTone = preload("res://src/ui/result_tone.gd")
-const ChiefBriefing = preload("res://src/ui/chief_briefing.gd")
-const ScreenStack = preload("res://src/ui/screen_stack.gd")
 const RegionArrival = preload("res://src/ui/region_arrival.gd")
 const FinanceSectors = preload("res://src/ui/finance_sectors.gd")
 const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const Music = preload("res://src/ui/music.gd")
 const Trends = preload("res://src/ui/trends.gd")
-const PriorityWords = preload("res://src/ui/priority_words.gd")
-const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
-const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
-const Events = preload("res://src/sim/events.gd")
-const Portrait = preload("res://src/ui/portrait.gd")
-const Feelings = preload("res://src/ui/feelings.gd")
 const Voices = preload("res://src/core/voices.gd")
 const Voice = preload("res://src/ui/voice.gd")
-const Staff = preload("res://src/sim/staff.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const ChiefMarkView = preload("res://src/ui/chief_mark_view.gd")
+const FilesDriver = preload("res://src/ui/files_driver.gd")
+const InboxFiles = preload("res://src/ui/inbox_files.gd")
+const ProgrammeFile = preload("res://src/ui/programme_file.gd")
 
 ## The chief has three lines a situation (#226: 4 chiefs x 3 situations x 3).
 const CHIEF_VARIANTS := 3
@@ -48,34 +40,15 @@ static var _games := {}
 
 
 static func register(main) -> void:
-	var card := ChiefBriefing.new()
-	main._stack.add(ScreenStack.SCENE, card, true, func() -> void: close(main))
-	card.hide()
-	var game := {"card": card, "lines": [], "memory": {}, "state_id": 0, "pending": {}, "was_running": false,
-		"said_in": "", "turns": {}}
-	_games[main.get_instance_id()] = game
-	card.go_pressed.connect(func(i: int) -> void: go(main, i))
-	card.closed.connect(func() -> void: close(main))
-	preload("res://src/ui/folder_driver.gd").attach(main, card)
+	_games[main.get_instance_id()] = {"lines": [], "memory": {}, "state_id": 0, "pending": {}, "said_in": "", "turns": {}}
 	# The two verbs block 0 added where a Go lands (2.4); the panels only ask.
-	main._agenda_panel.open_requested.connect(func(tab: String) -> void: main._windows.open(tab))
 	main._polling_panel.calm_requested.connect(func(tab: String, bloc: String) -> void: _open_laws_or(main, tab, bloc))
 	main._hud.inbox.card_action.connect(func(id: String, _i: int) -> void:  # V5.3 B7: a bill card's Go
 		if main._assembly_news.take_go(id): _open_laws_or(main, "legislature", ""))
-	# G1: the mark opens the read; an answered file ranks the month again, so the mark
-	# never names a file that is gone (the brief's "no stale line").
+	# G2: the mark opens the read, the Presidency page; an answered file ranks the month again,
+	# so the mark never names a file that is gone (the brief's "no stale line").
 	main._hud.title_bar.chief_pressed.connect(func() -> void: read(main))
-	main._hud.inbox.card_closed.connect(func(_id: String) -> void: ChiefMarkView.refresh(main, true))
-	main._hud.inbox.card_dismissed.connect(func(_id: String) -> void: ChiefMarkView.refresh(main, true))
-
-
-static func card_of(main) -> ChiefBriefing:
-	return _games.get(main.get_instance_id(), {}).get("card")
-
-
-static func showing(main) -> bool:
-	var card := card_of(main)
-	return card != null and card.visible
+	ChiefMarkView.follow(main)
 
 
 ## The Elections step's front page waits for what owns the screen after the count:
@@ -175,50 +148,9 @@ static func _rank_month(main, game: Dictionary, report: Dictionary) -> bool:
 		Music.follow(main, Priorities.situation(game["pending"]["lines"]), Trends.months_to_vote(state, state.player()),
 			state.get_instance_id())
 	game["report"] = report
+	game.erase("effects")  # the month's booked effects are read from this report (ChiefMarkView._month_effects)
 	return true
 
-
-## The event ids that hold the clock now: main's unseen arrivals and an interrupt.
-static func _held_events(main) -> Array:
-	var out: Array = []
-	for event_id in main._unseen_events:
-		if bool(main._unseen_events[event_id]):
-			out.append(String(event_id))
-	for entry in main._state.player().event_queue:
-		if bool(entry.get("interrupt", false)) and not out.has(String(entry.get("event_id", ""))):
-			out.append(String(entry.get("event_id", "")))
-	return out
-
-
-static func view(main, lines: Array, report: Dictionary, also: Array = []) -> Dictionary:
-	var state = main._state
-	var rows: Array = []
-	for l in lines:
-		rows.append({"icon": PriorityWords.icon_path(String(l["kind"])), "title": PriorityWords.title(l, state, main._loader),
-			"chip": PriorityWords.chip(l, state), "held": bool(l["held"]), "new": bool(l.get("fresh", false))})
-	var header := Strings.t("A quiet month") if Priorities.quiet(lines) \
-		else Strings.t("%s: your priorities") % DateText.month_year(int(state.month), int(state.year))
-	var chief = Staff.chief_of(main._loader, String(state.player().id))
-	var who := ""
-	var said := {"text": "", "clip": ""}
-	if chief != null:
-		who = Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id))
-		var situation := Priorities.situation(lines)
-		said = chief_said(main._loader, String(chief.id), situation, _turn(main, situation))
-	# The footer, folded by kind; each group's Go is its first item's (index past the
-	# three lines into lines + also).
-	var groups: Array = []
-	var by_kind := {}
-	for i in also.size():
-		var kind := String(also[i]["kind"])
-		if not by_kind.has(kind):
-			by_kind[kind] = {"items": [], "index": lines.size() + i}
-			groups.append(by_kind[kind])
-		by_kind[kind]["items"].append(also[i])
-	var footer: Array = groups.map(func(g): return {"text": PriorityWords.group(g["items"], state, main._loader), "index": g["index"]})
-	return {"header": header, "who": who, "also": footer, "line": said["text"], "clip": said["clip"], "face": Portrait.texture_for(String(chief.id)) if chief != null else null,
-		"feel": Feelings.of(state.player(), String(chief.id)) if chief != null else {},
-		"rows": rows, "effects": BriefingEffects.lines(state, main._loader, report), "close": _close_text(main)}
 
 
 ## How many cards this game has shown in `situation` (open() turns it): the line's
@@ -255,131 +187,88 @@ static func chief_line_ids() -> Array:
 
 ## The card's line said aloud once a card: `key` names the month (and the game), so
 ## a card opened again on the same month does not say it twice (the parent's TAKE 3).
-static func speak_once(main: Node, shown: Dictionary, card: CanvasItem, key: String) -> void:
+static func speak_once(main: Node, shown: Dictionary, card: CanvasItem, key: String, on_start := Callable()) -> void:
 	if String(card.get_meta(SPOKEN, "")) == key:
 		return
 	card.set_meta(SPOKEN, key)
-	speak(main, shown, card)
+	speak(main, shown, card, on_start)
 
 
 ## Under `main`, where the desk's arriving speakers talk too. A messenger's line
 ## under way, or waiting behind its sting, is never cut and never talked over: the
-## chief waits for it in Voice's queue and speaks when it ends, if `card` -- his
-## caption since G1 -- is still up. Nothing replays later (the parent's TAKE 1 on #229
-## -- an arrival month is a tense or crisis one, so dropping the line silenced the
-## chief exactly when it mattered).
-static func speak(main: Node, shown: Dictionary, card: CanvasItem) -> void:
-	Voice.speak_queued(main, String(shown.get("clip", "")), LINE_CARD, card)
+## chief waits for it in Voice's queue and speaks when it ends, if `card` -- his mark
+## since #393, which stays up for the month -- is still shown; `on_start` puts his caption
+## back as he starts. Nothing replays later (the parent's TAKE 1 on #229 -- an arrival
+## month is a tense or crisis one, so dropping the line silenced the chief when it mattered).
+static func speak(main: Node, shown: Dictionary, card: CanvasItem, on_start := Callable()) -> void:
+	Voice.speak_queued(main, String(shown.get("clip", "")), LINE_CARD, card, on_start)
 
 
-## "Continue", or "Next: ..." naming the surface that still holds the clock.
-static func _close_text(main) -> String:
-	var held := _holding_event(main)
-	if not held.is_empty():
-		var ev = Events.event_by_id(main._loader, held)
-		return Strings.t("Next: %s") % (Strings.row_name("events", ev) if ev != null else held)
-	if main._paused_for_programme:
-		return Strings.t("Next: the term's programme")
-	return Strings.t("Continue")
-
-
-static func _holding_event(main) -> String:
-	var ns = main._state.player()
-	if Events.interrupt_pending(ns):
-		var ev = Events.pending_event(ns, main._loader)
-		if ev != null:
-			return String(ev.id)
-	if main._decision_holds_clock():
-		var held := _held_events(main)
-		return held[0] if not held.is_empty() else ""
-	return ""
-
-
-## The read the player asked for (G1: the mark, until G2 makes it the Presidency page's
-## lead): the month ranked again from its own memory, then today's card, holding the
-## clock while it is up -- outside the modal budget, since the player opened it.
-## `rerank` false shows the lines as they stand (a test stages them).
+## The read the player asked for (the mark): the Presidency page, whose lead is this read (G2),
+## the month ranked again from its own memory first. Never a pause. `rerank` false shows the
+## lines as they stand (a test stages them).
 static func read(main, rerank := true) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
-	if game.is_empty() or game["card"].visible or main._state == null or main._state.player() == null:
+	if game.is_empty() or main._state == null or main._state.player() == null:
 		return
 	if rerank:
-		ChiefMarkView.rerank(main)
-	game["was_running"] = not main._clock.paused
-	main._clock.paused = true
-	game["card"].show_view(view(main, game["lines"], game.get("report", {}), game["also"]))
-	preload("res://src/ui/folder_driver.gd").refresh(main)
-	# A request the read names, on a line, in the footer or folded into a line's "+N
-	# more", has been SEEN under #207's rule (the parent's calls on QA's #218 finding and
-	# RECORD): its arrival's slowdown gives the player's speed back, unless they picked
-	# one since (_seen's own rule). Never opened, AudienceDriver's own rule stands.
+		ChiefMarkView.refresh(main, true)
+	# A request the read names, on a line, in the footer or folded into a line's "+N more", has
+	# been SEEN under #207's rule (the parent's calls on QA's #218 finding and RECORD): its
+	# arrival's slowdown gives the player's speed back, unless they picked one since (_seen's own
+	# rule). Never opened, AudienceDriver's own rule stands.
 	for entry in (game["lines"] as Array) + (game.get("also", []) as Array):
 		for named in [entry] + (entry.get("folded", []) as Array):
 			if String(named.get("kind", "")) == "request":
 				AudienceDriver._seen(main, String(named["subject"]))
-	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
+	main._windows.open("overview")
 
 
-static func close(main) -> void:
-	var game: Dictionary = _games.get(main.get_instance_id(), {})
-	if game.is_empty() or not game["card"].visible:
-		return
-	game["card"].hide()
-	game["card"].dismissed.emit()
-	var held := _holding_event(main)
-	if bool(game["was_running"]) and held.is_empty() and not main._paused_for_programme:
-		main._clock.paused = false
-	game["was_running"] = false
-	# The surface that still holds is the next thing on screen.
-	if not held.is_empty():
-		_raise_event(main, held)
-	elif main._paused_for_programme:
-		main._windows.open("agenda")
-	main._hud.clock_cluster.refresh(main._clock, preload("res://src/ui/hold_reason.gd").show(main))
-
-
-## After a load (QA's RECORD on #218, PhoneDriver.after_load's rule): the card, the mark
-## and the caption of the discarded game come down, and the clock it paused and the
-## lines it named belong to that game, so they go too (novelty starts over by
-## _rank_month's state_id). No `dismissed`: nothing of the discarded game waits on it.
+## After a load (QA's RECORD on #218, PhoneDriver.after_load's rule): the mark and the caption
+## of the discarded game come down, and the lines it named belong to that game, so they go too
+## (novelty starts over by _rank_month's state_id).
 static func after_load(main) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	if game.is_empty():
 		return
-	game["card"].hide()
 	Voice.hush(main, LINE_CARD)
-	game["was_running"] = false
 	game["lines"] = []
 	game["also"] = []
-	ChiefMarkView.clear(main)
+	ChiefMarkView.after_load(main, game)
 
 
-## Go: close by Continue's rule, then open the line's target (2.4's table).
+## Go: the line's target (2.4's table), the clock left as the player has it (G2). A line about a
+## desk file opens the Folder on it, where it is answered.
 static func go(main, index: int) -> void:
 	var game: Dictionary = _games.get(main.get_instance_id(), {})
 	var all: Array = (game.get("lines", []) as Array) + (game.get("also", []) as Array)
 	if game.is_empty() or index < 0 or index >= all.size():
 		return
 	var line: Dictionary = all[index]
-	if preload("res://src/ui/folder_driver.gd").go(main, line):
+	var file := file_of(main, line)
+	if file != "" and not InboxFiles.of(main._hud.inbox, file).is_empty():
+		FilesDriver.open_on_folder(main, file)
 		return
 	var target := target_of(line)
-	# Go keeps the clock paused (pre-gate B5: resumed at speed, a request booked for
-	# the next day opened its audience over the Go's target); the player resumes it
-	# with Space or the clock. Continue still gives the speed back (#207, #219).
-	game["was_running"] = false
-	close(main)
 	var tab := String(target["tab"])
 	var subject := String(line["subject"])
 	match String(line["kind"]):
 		"crisis", "decision":
-			_raise_event(main, subject)
+			# A desk entry with no card (its popup kept quiet, or its card closed): the Folder lists it too.
+			main._events_panel.select("desk:" + subject)
+			main._windows.open("events")
 		"request":
 			# The verbs are the request card's (Book a day / Delegate / Decline); the
 			# Diary beside it shows the days. Booking inside the grid is (b)'s (3.4).
 			main._windows.open(tab)
 			main._hud.inbox.slide_in()
 			main._hud.inbox.raise_card(AudienceDriver.lane_of(main).card_of(subject))
+		"programme", "commitment" when tab == "events":
+			ProgrammeFile.open(main, String(target["acts_on"]))  # its file while the offer stands, else its lane
+		"programme" when tab == "overview":
+			# T4: the live entry's lane, scrolled to and focused -- the page alone would be a dead click.
+			main._windows.open(tab)
+			main._overview_panel.focus_goal(subject)
 		"bloc":
 			_open_laws_or(main, tab, subject)
 		"bill":
@@ -409,23 +298,26 @@ static func go(main, index: int) -> void:
 
 ## Where a line's Go lands: the tab, and the id an enabled control there is tagged
 ## with (acts_on.gd) -- the line's subject, except a commitment, whose verb is the
-## promised thing's own: a programme entry on the Agenda, an office on People's rows, a
+## promised thing's own: a programme entry on its file in the Folder, an office on People's rows, a
 ## figure on the Budget. A tabled bill is RF3's one named exception (the parent's
 ## call): it lands on the Legislature's tabled line, which has no verb until the
 ## Assembly divides.
 static func target_of(line: Dictionary) -> Dictionary:
 	var kind := String(line["kind"])
 	var subject := String(line["subject"])
+	# S3: the offer is the term's programme file on the Folder (its Choose acts on "offer"); a live entry's
+	# Go lands on its lane on the Presidency page (the GO table's tab).
+	if kind == "programme" and subject == "offer":
+		return {"tab": "events", "acts_on": subject}
 	if kind != "commitment":
 		return {"tab": String(line["go"]["tab"]), "acts_on": subject}
 	var object := subject.get_slice("|", 2)
-	# A minister's word (pre-gate RF3): the minister does the work, so the Agenda,
-	# Politics or the Budget hold no verb of the player's on it -- and the Agenda
-	# does not even show a programme entry the player does not hold. The Diary does.
+	# A minister's word (pre-gate RF3): the minister does the work, so the Folder,
+	# Politics or the Budget hold no verb of the player's on it. The Diary does.
 	if subject.get_slice("|", 0) == "delegated":
 		return {"tab": "calendar", "acts_on": subject}
 	if object.begins_with("programme:"):
-		return {"tab": "agenda", "acts_on": object.trim_prefix("programme:")}
+		return {"tab": "events", "acts_on": object.trim_prefix("programme:")}
 	if object.begins_with("office:"):
 		return {"tab": "people", "acts_on": "seats"}
 	if object.begins_with("meter:"):
@@ -441,8 +333,13 @@ static func _open_laws_or(main, tab: String, bloc: String) -> void:
 	main._windows.open(tab)
 
 
-static func _raise_event(main, event_id: String) -> void:
-	main._hud.inbox.slide_in()
-	for card_id in main._event_cards:
-		if String(main._event_cards[card_id]) == event_id:
-			main._hud.inbox.raise_card(card_id)
+## The desk file a priority line is about (an inbox card id), or "" for a line that is not a file.
+static func file_of(main, line: Dictionary) -> String:
+	match String(line["kind"]):
+		"crisis", "decision":
+			for card_id in main._event_cards:
+				if String(main._event_cards[card_id]) == String(line["subject"]):
+					return String(card_id)
+		"request":
+			return AudienceDriver.lane_of(main).card_of(String(line["subject"]))
+	return ""

@@ -112,6 +112,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[nation-state-fields]] — the long argument and save verdict behind each society, demography, unrest, media and commodity field of NationState, moved out of `nation_state.gd` for the 2 000-line cap
 - [[finance-bill]] — the budget goes through a vote: pending budget and tax changes as one finance bill in the month's slot, read like a law and whipped like a confidence vote, 49.3 where the formation rule allows; the calls for the parent
 - [[v5.3-ab]] — V5.3 a + b, sectors and the decision grammar, from block 0's gate (2.5/5): the effects strip before every commit, industry verbs as processes with a cost and a time, regional verbs, the audience rethought (three options), opponents seeded wary by ideology, a density band of a meaningful decision a month; bands A1-A7, B1-B8. Built through #320, gated 2/5 on 2026-11-13; the screens it named are rebuilt since
+- [[v5.3-c-register]] — V5.3 c', the construction register and EU co-financing (proposed, not built): two unit types on sourced regional figures, the cost range and the one overrun ask, the Union's envelope that lapses, the row V5.4 needs, a sourcing plan and bands U1-U7
 - [[multinationals]] — multinationals and foreign ownership, V5.4 f, the author's four calls answered: one firm with plants in several nations (each plant projected into its host), a seven-step migration whose steps 1-4 keep the balance identical, with two re-baselines for the author, foreign control at the start sized to Eurostat's inward FATS, a foreign closure or an expropriation as a diplomatic act, outward bids and hosted jobs as diplomatic stake; bands M1-M11
 - [[v5.2-c6-party-campaigns]] — campaigns paid by the party: efforts priced per inhabitant, a public-funding income from two pots, running costs, the legal ceiling, the state line retired; bands in B9
 - [[v5.2-bplus-spec]] — gate b's follow-ups: votes made visible, relations as feelings, dismissing a minister, the Diary as an agenda grid, ownership only by law; with bands and a red-team
@@ -126,6 +127,7 @@ Design vault for a single-player geopolitics and nation-management game. You rul
 - [[vault]] — how this vault is set up: excluded folders, what each plugin is for, the templates
 - [[vault-dashboard]] — live views over the docs (Dataview) and the open author calls (Tasks)
 - [[architecture.excalidraw|architecture]] — the `data → sim → ui` rule as a drawing
+- [[ui-map]] — where each screen lives: domains, tabs, window ids, keys, panel files, the screen stack's surfaces; generated from `src/ui/` by `tools/ui_map.py`, never edited by hand
 - [[shell]] — the BUREAU shell as a canvas (map, workspace, HUD, screen stack) and the sidebar's domains and tabs, generated from `domains.gd`
 - [[2026-09-07-v3.3-roster-eu27]] — the one committed build plan (the others are gitignored scratch)
 

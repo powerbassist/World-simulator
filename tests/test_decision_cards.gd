@@ -242,7 +242,6 @@ func _check_month_end_checks() -> void:
 	BriefingDriver.finish_month(_main, {})
 	if _card_for("ratify|%s" % org.id) == "":
 		_fail("treaty: the month's end did not put up the card")
-	BriefingDriver.close(_main)
 
 
 ## The parent's ruling on RF6 (2026-11-10): every division the player swings is ONE card,

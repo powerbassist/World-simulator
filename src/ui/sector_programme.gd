@@ -8,15 +8,18 @@ extends RefCounted
 ##
 ## Every figure is the sim's: a stop's price a year is FinanceRows.cost_pct_gdp (the bill's
 ## own reader of a programme row), its blocs the action's offsets, its legality
-## Investment.available. The press tables the row through FirmCommands.invest.
+## Investment.refusal_reason then FinanceBill.refusal (the read that matches the press). The
+## press tables the row through FirmCommands.invest.
 
 const Investment = preload("res://src/sim/investment.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const ProposalNote = preload("res://src/ui/proposal_note.gd")
 
 
 ## The sector's stops in order: [{action, intensity}], the end action first (intensity 0).
@@ -84,7 +87,14 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	slider.custom_minimum_size.x = 200
 	slider.set_value_no_signal(pick)
 	slider.set_meta("programme", sector)
-	slider.value_changed.connect(func(v: float) -> void: _pick(panel, int(v)))
+	# The tab rebuilds on a pick, which freed the slider under a drag (the retro review's item 8): while it is held,
+	# the pick is kept and the rebuild waits for the release (Slider.drag_started comes before its value_changed).
+	slider.drag_started.connect(func() -> void: panel._dragging = true)
+	# A press that moved nothing picks nothing: the stop "as it stands" stays unpicked.
+	slider.drag_ended.connect(func(changed: bool) -> void:
+		panel._dragging = false
+		if changed:
+			_pick(panel, int(slider.value)))
 	row.add_child(slider)
 	var prices: Array = []
 	for i in list.size():
@@ -99,11 +109,28 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	box.set_meta("programme_box", sector)
 	# The typed price snaps to the nearest stop: the programmes are the data's, not a dial.
 	# An arrow's nudge (one step) moves to the next stop that way, or it would snap back.
-	box.value_changed.connect(func(v: float) -> void: _pick(panel, snap_stop(prices, pick, v, box.step)))
+	box.value_changed.connect(func(v: float) -> void:
+		panel._prog_focus = "box" if box.get_line_edit().has_focus() else ""
+		_pick(panel, snap_stop(prices, pick, v, box.step)))
 	row.add_child(box)
 	var action = list[pick]["action"]
-	var name := PanelKit.plain_line(row, Strings.row_name("investment-actions", action) if pick > 0 else Strings.t("No programme"), PanelKit.Tone.PLAIN)
+	var name := PanelKit.plain_line(row, _stop_name(list, pick), PanelKit.Tone.PLAIN)
 	name.autowrap_mode = TextServer.AUTOWRAP_OFF
+	name.set_meta("programme_name", sector)
+	# Under a mouse drag the rebuild waits for the release: the price and the name follow live.
+	# 4.7.2 emits value_changed on every left press, moved or not, and on a drag that comes
+	# back to its start: while held, the readouts follow and the pick waits for the release.
+	slider.value_changed.connect(func(v: float) -> void:
+		panel._prog_focus = "slider" if slider.has_focus() else ""
+		if panel._dragging:
+			box.set_value_no_signal(float(prices[int(v)]))
+			name.text = _stop_name(list, int(v))
+			return
+		_pick(panel, int(v)))
+	# A keyboard step or an arrow rebuilt the tab and freed the focused control: the new one takes it.
+	if panel._prog_focus != "":
+		(slider if panel._prog_focus == "slider" else box.get_line_edit()).call_deferred("grab_focus")
+		panel._prog_focus = ""
 	if queued >= 0:
 		PanelKit.plain_line(parent, Strings.t("In the finance bill: %s, voted at the month's end.") % Strings.row_name("investment-actions", list[queued]["action"]))
 	if pick == now or pick == queued:
@@ -116,11 +143,26 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	var go := PanelKit.sized(Button.new())
 	go.text = Strings.t("Put it in the finance bill")
 	go.set_meta("table_programme", String(action.id))
-	go.disabled = not Investment.available(state, ns, loader.investment_actions).has(action)
+	# The sim's own refusal (Investment.refusal_reason, #397) first, then the bill's (the press tables
+	# through FinanceBill.table, which also refuses a law in the slot, a queued finance bill, the
+	# autumn or a range): a verb that is open is one the press carries (#404 pass 2).
+	var refusal := Investment.refusal_reason(state, ns, loader, action)
+	var tabling: Dictionary = {} if refusal != "" else FinanceBill.refusal(state, loader, {FinanceRows.PROGRAMMES: {sector: String(action.id)}})
+	go.disabled = refusal != "" or bool(tabling.get("refused", false))
 	go.pressed.connect(func() -> void:
 		panel._prog_pick = -1
 		panel._on_invest(ns, action))
 	parent.add_child(go)
+	# A disabled verb says why (the retro review's item 9): the sim's reason in the tab's sentence (the
+	# firm verbs' "%s refused -- %s"), with the remedy while a programme runs; else the bill's own words.
+	if go.disabled:
+		var why := ProposalNote.body(tabling)
+		if refusal != "":
+			var named := Strings.row_name("investment-actions", action)
+			why = Strings.t("%s refused -- %s.") % [named, Strings.t(refusal)]  # i18n: row-ok the sim's reason, its English the msgid
+			if Investment.intensity_of(ns, sector) > 0.0:
+				why = Strings.t("%s refused -- %s: end it first, then table the new one.") % [named, Strings.t(refusal)]  # i18n: row-ok the sim's reason, its English the msgid
+		PanelKit.plain_line(parent, why, PanelKit.Tone.DIM).set_meta("programme_refusal", true)
 
 
 ## The stop a typed or nudged price picks: the next stop up or down for a nudge of one
@@ -140,6 +182,10 @@ static func nearest(prices: Array, v: float) -> int:
 	return best
 
 
+static func _stop_name(list: Array, i: int) -> String:
+	return Strings.row_name("investment-actions", list[i]["action"]) if i > 0 else Strings.t("No programme")
+
+
 static func _pick(panel, i: int) -> void:
 	panel._prog_pick = i
-	panel._dirty = true
+	panel._dirty = true  # held off by panel._dragging until the release

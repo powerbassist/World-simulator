@@ -52,7 +52,7 @@ signal go_pressed
 
 func _init() -> void:
 	add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
-	_money_row = PanelKit.row(self, tr("Balance this year"), "")
+	_money_row = PanelKit.row(self, tr("Balance this year"), "", PanelKit.Tone.PLAIN, 0.0)  # its cards are 300 px
 	_caption = _money_row.get_child(0)
 	money_label = _money_row.get_child(1)
 	_who = PanelKit.plain_line(self, "")

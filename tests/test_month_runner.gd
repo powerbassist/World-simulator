@@ -120,6 +120,42 @@ class Recorder extends Node:
 			presses += 1
 
 
+## #396 pass 2 (T3): a replayed click can load a game, and a load rebuilds the game -- the runner
+## leaves the tree with the main that owned it, mid-replay. What is left of the input was that
+## game's: the replay stops there, rather than calling push_input on no viewport.
+class Loader extends Node:
+	var runner: Node
+	var seen := 0
+	func _input(_event: InputEvent) -> void:
+		seen += 1
+		if runner.get_parent() != null:
+			runner.get_parent().remove_child(runner)
+
+
+func _check_a_replay_stops_when_the_runner_goes() -> void:
+	var host := Node.new()
+	root.add_child(host)
+	var runner = MonthRunner.new()
+	host.add_child(runner)
+	var loader := Loader.new()
+	loader.runner = runner
+	root.add_child(loader)
+	var events: Array[InputEvent] = []
+	for x in [10.0, 20.0, 30.0]:
+		# Motion, not keys: the two mains of this test hear the replay too, and a key is a hotkey.
+		var motion := InputEventMouseMotion.new()
+		motion.position = Vector2(x, 10.0)
+		events.append(motion)
+	runner._replay(events)
+	if loader.seen != 1:
+		_fail("a replay went on after the runner left the tree: %d events delivered, not 1" % loader.seen)
+	if runner.replaying:
+		_fail("a replay cut short left the runner marked replaying")
+	loader.free()  # now: queued, it would hear the next input and reach for the freed runner
+	runner.free()
+	host.queue_free()
+
+
 func _init() -> void:
 	_a = load("res://src/ui/main.tscn").instantiate()
 	root.add_child(_a)
@@ -134,6 +170,8 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 2:
 		return false  # let both scenes' _ready() run
+	if _frame == 2:
+		_check_a_replay_stops_when_the_runner_goes()
 	if _frame > MAX_FRAMES:
 		_fail("B's month was still closing after %d frames" % MAX_FRAMES)
 		return _finish()

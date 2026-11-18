@@ -37,12 +37,14 @@ func _initialize() -> void:
 	var state = _main._state
 	var ns = state.player()
 
-	# The term starts on day one: the agenda holds the programme's offer.
-	await _probe("programme", "agenda", loader.programme, "name")
+	# The term starts on day one: its programme file on the Folder holds the offer.
+	preload("res://src/ui/programme_file.gd").open(_main)
+	await _probe("programme", "events", loader.programme, "name")
 	await _probe("laws", "legislature", loader.laws, "name")
 	await _probe("laws", "legislature", loader.laws, "summary")
 	# An id the panel prints as a word goes through Labels and the UI table.
-	await _probe_label("legislature", "institutional")
+	# The Bills second pass: the shelves are the ids the tab prints as words (Labels.law_category).
+	await _probe_label("legislature", "Welfare and health")
 	await _probe("orgs", "orgs", loader.orgs, "name")
 	_adopt_a_rule(state, loader)
 	await _probe("bloc-proposals", "orgs", _proposals(loader), "name")
@@ -82,6 +84,10 @@ func _initialize() -> void:
 	# An event on the desk through the console's staging (the UI's own arrival path).
 	var ev = loader.events[0]
 	_console().run_command("event %s" % ev.id)
+	# The Folder kept the programme file the first probe opened: the player clicks the event's own file.
+	for card in _main._event_cards:
+		if String(_main._event_cards[card]) == String(ev.id):
+			_main._events_panel.show_file(String(card))
 	await _probe("events", "events", loader.events, "name")
 	await _probe("events", "events", loader.events, "choices")
 

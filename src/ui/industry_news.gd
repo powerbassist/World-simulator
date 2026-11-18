@@ -67,11 +67,12 @@ func announce() -> void:
 		var bid_firm := String(bid["company_id"])
 		if not _announced_bids.has(bid_firm):
 			_announced_bids[bid_firm] = true
-			var card_id: String = _stack.push(
+			# A bid lapses on a date: its card stays up, never folded into the News line (#403 pass 2 T2).
+			var card_id: String = _stack.keep_card(_stack.push(
 				tr("Foreign takeover bid"),
 				tr("%s has offered %s bn for %s. The offer lapses in %d months.") % [
 					_loader.nation_name(String(bid["bidder_nation"])), Num.f(float(bid["price_eur_bn"]), 1),
-					_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])])
+					_loader.firm_name(ns.id, bid_firm), int(bid["months_left"])]))
 			_bid_cards[bid_firm] = card_id
 			_industry_card_firms[card_id] = bid_firm
 	# The window counts down on EVERY live card, read from the register --
@@ -117,7 +118,7 @@ func announce() -> void:
 				_stack.set_body(String(_failure_cards[company_id]), failure_body)
 			continue
 		_announced_failures[company_id] = true
-		var card_id: String = _stack.push(tr("Firm in difficulty"), failure_body)
+		var card_id: String = _stack.keep_card(_stack.push(tr("Firm in difficulty"), failure_body))
 		_failure_cards[company_id] = card_id
 		_industry_card_firms[card_id] = company_id
 
@@ -125,12 +126,3 @@ func announce() -> void:
 ## A card this module pushed, by id: the route opens the Industry window for it.
 func has_card(card_id: String) -> bool:
 	return _industry_card_firms.has(card_id)
-
-
-## The discarded game's memories, at a load (main.gd's load path says why).
-func forget() -> void:
-	_announced_bids.clear()
-	_announced_failures.clear()
-	_bid_cards.clear()
-	_failure_cards.clear()
-	_industry_card_firms.clear()

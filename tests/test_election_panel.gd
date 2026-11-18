@@ -532,7 +532,7 @@ func _advance(clock: Node, months: int) -> void:
 				# An answerable pause with no verdict on screen -- the offer.
 				var offer: Array = Programme.available(_main._state, ns, _main._loader)
 				if not offer.is_empty():
-					_main._agenda_panel.programme_chosen.emit(String(offer[0]["id"]))
+					_main._on_programme_chosen(String(offer[0]["id"]))
 					continue
 				return
 

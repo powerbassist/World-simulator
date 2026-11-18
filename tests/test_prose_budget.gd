@@ -39,17 +39,16 @@ const DeskCards = preload("res://src/ui/desk_cards.gd")
 ## (EffectsLedger.drop_default_echo); the desk's "Decided for you" (26) is the rest.
 ## G2 moves the month's cards to the Presidency page's part 5.
 const INBOX_CEILING := 196
-## Spec 3.5: the monthly briefing card, in each situation tools/screenshot.gd stages.
-const BRIEFING_CEILING := 90
 
 ## The ceilings, sys 8+ words per tab (the note's "Budget sys 8+" column). Orgs is
 ## the note's 60 per organisation, for France's five.
 const BUDGET := {
-	"legislature": 80, "orgs": 300, "agenda": 40, "campaign": 40, "energy": 20,
+	"legislature": 80, "orgs": 300, "campaign": 40, "energy": 20,
 	"majority": 30, "region": 20, "projects": 20, "economy": 40,
-	"overview": 30, "diplomacy": 20, "society": 10,
+	# The Presidency page: 30 -> 36, a stated rise (rework 2 S1, the parent's ruling): the Overview's
+	# government reads kept whole (capability, the majority's line, the censure), three 8+ word sentences.
+	"overview": 36, "diplomacy": 20, "society": 10,
 	"events": 20, "people": 10, "companies": 10, "calendar": 10,
-	"outliner": 10,
 	"sector_agriculture": 10, "sector_industry": 10, "sector_services": 10,
 }
 ## The tabs 0b has not reached yet, held at what they measured before it started
@@ -61,12 +60,17 @@ const PENDING := {}
 ## grow while it waits -- each PR that rebuilds one deletes its line here.
 ## Re-measured once the months ran through main's month hook (Dispatches 14 -> 187,
 ## Campaign 223 -> 274, the outliner 2 -> 23): the same tabs, now in their played state.
-const TOTAL_BUDGET := {"agenda": 400, "people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
-	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135}
+## Rework 2 S3: the Agenda's 400 left with its tab. Its offer is the Folder's programme file now (the
+## picker's 28 names and one entry's text, measured 276): that page alone answers to PROGRAMME_FILE_TOTAL,
+## every other Folder page to the Folder's own 95 (#405 pass 2 T15).
+const PROGRAMME_FILE_TOTAL := 300
+const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
+	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135,
+	"overview": 170}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
-	"diplomacy": 22, "economy": 128, "energy": 118,
-	"orgs": 610, "outliner": 23, "overview": 127,
+	"diplomacy": 22, "economy": 130, "energy": 118,
+	"orgs": 610,
 	"majority": 97, "projects": 75, "society": 106,
 }
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
@@ -112,7 +116,24 @@ const TOTAL_PENDING := {
 ## Rework 1 (People + cabinet, direction A): People is one roster (122 at rest, from the
 ## old groups and cards) and Politics, retired, comes back as Parliament's Majority tab
 ## without the cabinet table (123 -> 97): 2848 -> 2794.
-const TOTAL_SUM_CEILING := 2794
+## Rework 2, slice 1: the Overview (127) and the Outliner (23) became one Presidency page, 130 at its
+## played state against a ceiling of 170 (the parent's, card G): 2794 -> 2770; then 2770 -> 2779, a stated rise
+## (the parent's ruling: every government read the Overview showed stays on the page, 139 of 170).
+## #401 pass 2 (section titles kept in Open now, the vote named, censure and 49.3 split): 2779 -> 2777.
+## The void pass, a stated rise of 12 (2794 -> 2806 before #401's merge, 2777 -> 2789 after; the parent accepted it at pass 2): the
+## Decision tab after an answer lists what is still on the desk (its heading and the open files'
+## titles, 9 at month 12) and the empty Agenda names its next step, "Plan the campaign" (3).
+## The Bills second pass (the author's pick "A : les rayons"), a stated rise 2789 -> 2958 (+169, all on the
+## Bills tab, 380 of its 450): every row of the open shelf carries the law's summary, the card's own ask
+## ("name + verb + summary"), and the shelves name their twelve categories with a count; the goal tiles
+## and "What moves it" left the tab.
+## Its pass 2, a stated rise 2958 -> 2966 (T11, T15 of the parent's pass): a shut law's precondition names its
+## figure and where it stands ("Needs unemployment at 9.0% or more; it is 7.7% now."), and a simple
+## majority says its rule in words ("more for than against") instead of a seat count.
+## Top bar A (#418 pass 2, T5: Economy prints the bar's own money figure and word, "12.9 bn €"
+## under "deficit, this month", where it printed "-5.30%" under "budget balance"): +2 on
+## Economy, stated: 2966 -> 2968.
+const TOTAL_SUM_CEILING := 2968
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
@@ -161,23 +182,18 @@ func _initialize() -> void:
 	# V5.3-0 (b), spec 3.5: the months run through the game's own month hook, not a
 	# bare tick_month, so the inbox, the Agenda and Dispatches stand in their played
 	# state (a bare tick left Dispatches at 14 words against 187 in play). The clock
-	# is not running, so the month runs whole, now (month_runner.gd). The monthly
-	# briefing opens as in play and is closed unread: a month it shows says the
-	# consequence card in its place (spec 3.3), so the inbox does not carry it.
+	# is not running, so the month runs whole, now (month_runner.gd). G2: the chief's
+	# plate is retired (his read is the Presidency page, whose ceilings are
+	# test_presidency_page.gd's), so nothing opens over the months.
 	for i in 12:
 		var next: int = main._state.year * 12 + main._state.month + 1
 		var year := floori((next - 1) / 12.0)
 		main._on_month_elapsed(year, next - year * 12)
 		await process_frame
-		if BriefingDriver.showing(main):
-			BriefingDriver.close(main)
-			await process_frame
 	_stage_desk(main)
 	windows.mark_all_dirty()
 	await _sweep(main, "month 12")
 	await _sweep_inbox(main)
-	for fixture in ["calm", "tense", "crisis"]:
-		await _sweep_briefing(main, fixture)
 	await _sweep_industry_card(main)
 	await _sweep_closure_card(main)
 	await _sweep_sector_tile(main)
@@ -254,6 +270,8 @@ func _sweep(main, stage: String) -> void:
 		_measured[id] = maxi(int(_measured.get(id, 0)), sys8)
 		_totals[id] = maxi(int(_totals.get(id, 0)), total)
 		var total_ceiling := int(TOTAL_PENDING.get(id, TOTAL_BUDGET.get(id, -1)))
+		if id == "events" and main._events_panel.selected() == preload("res://src/ui/programme_file.gd").KEY:
+			total_ceiling = PROGRAMME_FILE_TOTAL
 		if total_ceiling >= 0 and total > total_ceiling:
 			_fail("%s (%s): %d visible words, the ceiling is %d" % [id, stage, total, total_ceiling])
 		var ceiling := int(PENDING.get(id, BUDGET.get(id, -1)))
@@ -280,50 +298,6 @@ func _sweep_inbox(main) -> void:
 	if total > INBOX_CEILING:
 		_fail("inbox (month 12): %d visible words, the ceiling is %d" % [total, INBOX_CEILING])
 	inbox.slide_out()
-
-
-## Spec 3.5: the briefing card, staged as tools/screenshot.gd's --briefing does --
-## calm as the month left it, tense with a request waiting, crisis with an
-## interrupt on the desk -- each at or under BRIEFING_CEILING visible words.
-func _sweep_briefing(main, fixture: String) -> void:
-	var state = main._state
-	var ns = state.player()
-	var now := int(state.year) * 12 + int(state.month)
-	if fixture == "crisis":
-		var ev = main._loader.events[0]
-		var entry := {"event_id": String(ev.id), "event_name": ev.event_name, "months_left": 2,
-			"interrupt": true, "severity": 3, "category": ev.category}
-		ns.event_queue.append(entry)
-		preload("res://src/ui/desk_cards.gd").push(main, ev, entry)
-	if fixture == "tense":
-		for person in main._loader.people[String(ns.id)]:
-			if String(person.kind) == "politician" and String(person.id) != preload("res://src/sim/president.gd").leader_id(ns):
-				ns.audience_requests.append({"id": "%s|%d" % [person.id, now], "person_id": String(person.id),
-					"object": "programme:none", "stance": "sponsor", "arrived_month": now - 1, "deadline_month": now + 1,
-					"status": "pending", "date": {}, "resolved_month": -1})
-				break
-		preload("res://src/ui/audience_driver.gd").refresh(main)
-	BriefingDriver._games[main.get_instance_id()]["pending"] = {}
-	BriefingDriver.month_end(main, {})
-	BriefingDriver.read(main)  # G1: the card opens when the player asks
-	await process_frame
-	await process_frame
-	var card: Control = BriefingDriver.card_of(main)
-	if not card.visible:
-		_fail("briefing (%s): premise, the card did not open" % fixture)
-		return
-	var total := 0
-	for node in _visible_text_nodes(card):
-		var words := _words(_text_of(node))
-		total += words.size()
-		if _dump.has("briefing"):
-			print("dump briefing (%s) %3d %s: %s" % [fixture, words.size(), node.get_class(), _text_of(node).left(90).replace("
-", " / ")])
-	print("prose budget  briefing (%-6s)              all words %5d  ceiling %d" % [fixture, total, BRIEFING_CEILING])
-	if total > BRIEFING_CEILING:
-		_fail("briefing (%s): %d visible words, the ceiling is %d" % [fixture, total, BRIEFING_CEILING])
-	BriefingDriver.close(main)
-	await process_frame
 
 
 ## A6: the health line's tile on the Budget, opened with its verb and strip.

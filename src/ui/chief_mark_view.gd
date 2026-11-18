@@ -14,6 +14,9 @@ const Staff = preload("res://src/sim/staff.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const Priorities = preload("res://src/ui/priorities.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const BriefingEffects = preload("res://src/ui/briefing_effects.gd")
+## main's meta while a re-rank waits for the frame's end (follow()).
+const RERANK_QUEUED := "chief_rerank_queued"
 
 
 ## The mark from the month's first line; `rerank` ranks the month again first.
@@ -31,9 +34,10 @@ static func refresh(main, rerank := false) -> void:
 	var face: Texture2D = Portrait.texture_for(String(chief.id)) if chief != null else null
 	var who := Strings.t("%s, chief of staff") % main._loader.person_name(String(chief.id)) if chief != null else ""
 	# What a click does, said on the mark itself (the ux-copy pass: the face alone did not).
-	var tip := Strings.t("Click to open the month's briefing.")
+	var tip := Strings.t("Click to open the Presidency page.")
 	if who != "":
 		tip = "\n".join(PackedStringArray([who, tip]))
+	_push_read(main, lines, who, face, chief)
 	if lines.is_empty():
 		main._hud.title_bar.chief_mark.show_line(face, Strings.t("A quiet month"), "", false, tip)
 		return
@@ -61,7 +65,7 @@ static func rank(main, memory: Dictionary) -> Dictionary:
 	var state = main._state
 	var last: Array = memory.get("last", [])
 	var ranked := Priorities.rank(state, main._loader, {"memory": memory,
-		"held_events": BriefingDriver._held_events(main), "programme_held": main._paused_for_programme
+		"held_events": _held_events(main), "programme_held": main._paused_for_programme
 			or not preload("res://src/sim/programme.gd").available(state, state.player(), main._loader).is_empty()})
 	for l in ranked["lines"]:
 		l["fresh"] = not bool(l["standing"]) and not last.any(func(p): return p["kind"] == l["kind"] and p["subject"] == l["subject"])
@@ -69,9 +73,22 @@ static func rank(main, memory: Dictionary) -> Dictionary:
 	return ranked
 
 
+## The event ids that hold the clock now: main's unseen arrivals and an interrupt (the ranking's "held" lines).
+static func _held_events(main) -> Array:
+	var out: Array = []
+	for event_id in main._unseen_events:
+		if bool(main._unseen_events[event_id]):
+			out.append(String(event_id))
+	for entry in main._state.player().event_queue:
+		if bool(entry.get("interrupt", false)) and not out.has(String(entry.get("event_id", ""))):
+			out.append(String(entry.get("event_id", "")))
+	return out
+
+
 ## His line for the month's situation as the caption under the mark, said aloud once a
-## month (`key`), the voice gated on the caption: it waits behind a messenger only while
-## the caption is up.
+## month (`key`). The voice is gated on the mark, which stays up for the month: a line
+## queued behind a longer messenger's clip outlives the caption's reading timer, so the
+## caption comes back when the line starts (heard, so on screen: chief_caption.gd).
 static func speak(main, key: String) -> void:
 	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
 	var chief = Staff.chief_of(main._loader, String(main._state.player().id))
@@ -79,12 +96,129 @@ static func speak(main, key: String) -> void:
 		return
 	var situation := Priorities.situation(game["lines"])
 	var said := BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))
+	# The page's lead shows this line, and only this month's (#401 pass 2 T7): one speak rule.
+	game["spoken_line"] = String(said["text"])
+	game["spoken_key"] = key
+	refresh(main)
 	var caption = main._hud.chief_caption
 	caption.say(String(said["text"]), main._hud.title_bar.chief_mark)
+	# Gated on the mark, not the caption: the caption hides on its reading timer, and a line queued behind a longer
+	# messenger's clip was dropped with it (the retro review's item 13).
 	if caption.visible:
-		BriefingDriver.speak_once(main, said, caption, key)
+		BriefingDriver.speak_once(main, said, main._hud.title_bar.chief_mark, key, _say_again.bind(main, String(said["text"])))
+
+
+## The queued line starts: its caption back under the mark (a bound static, no lambda: the queue outlives frames).
+static func _say_again(main, text: String) -> void:
+	if is_instance_valid(main) and main.is_inside_tree():
+		main._hud.chief_caption.say(text, main._hud.title_bar.chief_mark)
+
+
+## What re-ranks the mark, or it names a file that is gone (the retro review's item 14, #393 pass 2 T1): every player
+## command -- a dispatch, an audience's Grant or End, a law tabled, the programme, the phone -- ends in the window
+## manager's one sweep (its `dirtied`), and an inbox card closed or dismissed changes what holds the clock without one.
+## Coalesced: a command that sweeps twice, or closes a card as it sweeps, ranks once, at the frame's end.
+static func follow(main) -> void:
+	main._windows.dirtied.connect(queue_rerank.bind(main))
+	main._hud.inbox.card_closed.connect(queue_rerank.bind(main).unbind(1))
+	main._hud.inbox.card_dismissed.connect(queue_rerank.bind(main).unbind(1))
+
+
+static func queue_rerank(main) -> void:
+	if main._overview_panel != null:
+		main._overview_panel.await_read(_rerank_queued.bind(main))
+	if not main.has_meta(RERANK_QUEUED):
+		main.set_meta(RERANK_QUEUED, true)
+		_rerank_queued.bind(main).call_deferred()
+
+
+## Once per queue: a re-rank already run for it (a caller that needs the read now runs it early) leaves
+## the deferred call nothing to do, or it would rank over what was set since.
+static func _rerank_queued(main) -> void:
+	if not is_instance_valid(main) or not main.has_meta(RERANK_QUEUED):
+		return
+	main.remove_meta(RERANK_QUEUED)
+	refresh(main, true)
+
+
+## A load: the ranking's memory and report go with the discarded game (left, the first card closed after the load
+## re-ranked from them and put that game's mark back up: the retro review's item 5). The loaded game is ranked now
+## from no memory, so its mark is up at once, not blank until its first month end (#393 pass 2, T2).
+static func after_load(main, game: Dictionary) -> void:
+	game.erase("report")
+	game.erase("effects")
+	game.erase("month_cards")  # held for the discarded game's month end (a load from the pause menu)
+	game["pending"] = {}
+	game["memory_before"] = {}
+	main._hud.chief_caption.clear()
+	refresh(main, true)
+	_restore_line(main, game)
+
+
+## After a load the page's lead carries his line for the loaded month's situation (#401 pass 2,
+## QA's lead 2): speak()'s line, worked out again the way speak() does it, with no voice and no
+## caption. Nothing is saved for it, so no save field: the same rule, recomputed.
+static func _restore_line(main, game: Dictionary) -> void:
+	var ns = main._state.player() if main._state != null else null
+	var chief = Staff.chief_of(main._loader, String(ns.id)) if ns != null else null
+	if chief == null or not bool(ns.in_government):
+		return
+	var situation := Priorities.situation(game.get("lines", []))
+	game["spoken_line"] = String(BriefingDriver.chief_said(main._loader, String(chief.id), situation, BriefingDriver._turn(main, situation))["text"])
+	game["spoken_key"] = month_key(main)
+	refresh(main)
+
+
+## The key a month's speech is stored under: the game and the month (month_end's speak key).
+static func month_key(main) -> String:
+	return "%d:%d" % [main._state.get_instance_id(), int(main._state.year) * 12 + int(main._state.month)]
 
 
 static func clear(main) -> void:
 	main._hud.title_bar.chief_mark.clear()
 	main._hud.chief_caption.clear()
+	if main._overview_panel != null:
+		main._overview_panel.set_read({})
+
+
+## The Presidency page's lead is this read (rework 2, "one ranking"): the same lines the mark
+## names, the chief's face and name, and the line he spoke at this month's end (speak()), none
+## in a month he kept silent: month_end's rule, never a second one.
+static func _push_read(main, lines: Array, who: String, face: Texture2D, chief) -> void:
+	if main._overview_panel == null:
+		return
+	var game: Dictionary = BriefingDriver._games.get(main.get_instance_id(), {})
+	var said := String(game.get("spoken_line", "")) if String(game.get("spoken_key", "")) == month_key(main) else ""
+	main._overview_panel.set_read({"lines": lines, "who": who, "face": face, "said": said,
+		"feel": preload("res://src/ui/feelings.gd").of(main._state.player(), String(chief.id)) if chief != null else {},
+		"also": also_groups(main, lines.size(), game.get("also", [])),
+		"effects": _month_effects(main, game)})
+
+
+## The month's booked effects (the retired plate's "What your choices did"), worked out once a month: they
+## change only at the month's end, and a read is pushed on every re-rank (pass 1 on #403).
+static func _month_effects(main, game: Dictionary) -> Array:
+	if String(game.get("effects_for", "")) != month_key(main) or not game.has("effects"):
+		game["effects"] = BriefingEffects.lines(main._state, main._loader, game.get("report", {}))
+		game["effects_for"] = month_key(main)
+	return game["effects"]
+
+
+## The footer's groups, folded by kind, each Go its first item's (an index past the lines into
+## lines + also, the Go table's own index): [{text, index}].
+static func also_groups(main, offset: int, also: Array) -> Array:
+	var groups: Array = []
+	var by_kind := {}
+	for i in also.size():
+		var kind := String(also[i]["kind"])
+		if not by_kind.has(kind):
+			by_kind[kind] = {"items": [], "index": offset + i}
+			groups.append(by_kind[kind])
+		by_kind[kind]["items"].append(also[i])
+	return groups.map(func(g): return {"text": PriorityWords.group(g["items"], main._state, main._loader), "index": g["index"]})
+
+
+## The page's Go on its lead row `index`: the briefing's own Go table (a desk file opens on the
+## Folder tab, G2).
+static func page_go(main, index: int) -> void:
+	BriefingDriver.go(main, index)

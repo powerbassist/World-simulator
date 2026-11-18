@@ -14,11 +14,13 @@ tests=(
   tests/test_finance_of_which.gd
   tests/test_industry_tab.gd
   tests/test_sectors_panel.gd
+  tests/test_sectors_retro.gd
   tests/test_firm_sheet.gd
   tests/test_industry_closure.gd
   tests/test_region_fund.gd
   tests/test_region_sheet.gd
   tests/test_region_map.gd
+  tests/test_region_load.gd
   tests/test_region_arrival.gd
   tests/test_called_event.gd
   tests/test_decision_cards.gd
@@ -42,9 +44,9 @@ tests=(
   tests/test_finance_autumn.gd
   tests/test_bill_queue.gd
   tests/test_goal_read.gd
-  tests/test_goal_table.gd
   tests/test_finance_read.gd
   tests/test_finance_rows.gd
+  tests/test_investment_refusal.gd
   tests/test_bill_verbs.gd
   tests/test_order_paper.gd
   tests/test_law_filters.gd
@@ -201,7 +203,7 @@ tests=(
   tests/test_finance_editor.gd
   tests/test_finance_sheet.gd
   tests/test_finance_autumn_ui.gd
-  tests/test_goal_panel.gd
+  tests/test_law_gate.gd
   tests/test_sectors.gd
   tests/test_projects.gd
   tests/test_campaign.gd
@@ -312,12 +314,12 @@ tests=(
   tests/test_prose_budget.gd
   tests/test_priorities.gd
   tests/test_briefing_hold.gd
+  tests/test_briefing_retro.gd
   tests/test_briefing_effects.gd
   tests/test_briefing_go.gd
   tests/test_briefing_clock.gd
   tests/test_law_list.gd
   tests/test_territory.gd
-  tests/test_dispatches_card.gd
   tests/test_clock_doors.gd
   tests/test_consequence_card.gd
   tests/test_dead_ends.gd
@@ -335,6 +337,8 @@ tests=(
   # has exactly one reader.
   tests/test_regions.gd
   tests/test_region_funds.gd
+  tests/test_units.gd
+  tests/test_unit_programmes.gd
   tests/test_screen_reads.gd
   # V2.7: the graph is content, the index is mean-one in output weights, and the
   # leaf takes Dictionaries and preloads nothing but its own constants.
@@ -361,7 +365,7 @@ tests=(
   tests/test_commodities_panel.gd
   # V4.1: the agenda surface -- the term-start pause, the offer built from the
   # register, the choose command path, the derived progress bar, and the cards.
-  tests/test_agenda_panel.gd
+  tests/test_programme_file.gd
   # V2.3's pipeline: orphan art refused, the bytes-not-load() path held green
   # headless, the missing-portrait fallback, one committed icon per registered
   # window, and the card showing the player's leader's art.
@@ -398,6 +402,8 @@ tests=(
   tests/test_voice_playback.gd
   tests/test_map_view.gd
   tests/test_map_layers.gd
+  tests/test_legend_clear.gd
+  tests/test_top_bar_tiles.gd
   tests/test_map_markers.gd
   tests/test_map_cities.gd
   tests/test_map_ground.gd
@@ -411,6 +417,7 @@ tests=(
   tests/test_shell_stack.gd
   tests/test_shell_fit.gd
   tests/test_workspace.gd
+  tests/test_dock_fit.gd
   tests/test_panel_kit.gd
   tests/test_hud.gd
   tests/test_ui_theme.gd
@@ -420,8 +427,9 @@ tests=(
   tests/test_ui_fit.gd
   tests/test_map_ownership.gd
   tests/test_load_hygiene.gd
+  tests/test_game_reload_records.gd
   tests/test_accent_rule.gd
-  tests/test_overview_panel.gd
+  tests/test_presidency_page.gd
   tests/test_save_load.gd
   # The test audit: a PLAYED game through the disk -- the reflective walk over
   # a state nobody hand-built, no NAN in the save, and twelve months after the
@@ -450,6 +458,7 @@ tests=(
   # V5.1b: the localisation plumbing -- tables, the switch, row keys, the lint, the fit sweep.
   tests/test_strings.gd
   tests/test_settings_language.gd
+  tests/test_interface_size.gd
   tests/test_i18n_lint.gd
   tests/test_i18n_fit.gd
   tests/test_date_text.gd

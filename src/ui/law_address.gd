@@ -21,6 +21,7 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 ## The blocs an address names before it counts the rest (the parent's ruling on #303: a speech
 ## moves every bloc, and six names was the longest line on the page).
@@ -50,6 +51,15 @@ static func build(list, box: Control, ns, law) -> void:
 		PanelKit.heading(box, Strings.t("Address to the nation"))
 		PanelKit.plain_line(box, Strings.t("On air today: %s.") % String(list.aired["seats"]), PanelKit.Tone.PLAIN)
 		_watch_the_day(list, box, state)
+		return
+	# One address a month (G3-25, the author's "Un par mois au total"): said as the month's
+	# rule with its date, and nothing else drawn -- a strip under a grey button would read as
+	# a price still to pay.
+	var rule := Address.month_rule(state)
+	if not rule.is_empty():
+		PanelKit.heading(box, Strings.t("Address to the nation"))
+		PanelKit.plain_line(box, Strings.t("You addressed the nation on %s. One address a month.")
+			% DateText.day_month_year(int(rule["day"]), int(rule["month"]), int(rule["year"])), PanelKit.Tone.PLAIN)
 		return
 	# Folded at rest, the Industry verbs' rule (spec 3.2): one strip, for the verb the player
 	# has opened. The tabled bill has a division coming, so it stands open with nothing to fold.

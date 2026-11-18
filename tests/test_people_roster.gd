@@ -543,8 +543,8 @@ func _check_politics_retired() -> void:
 		{"kind": "commitment", "subject": "promise|x|office:portfolio:health", "go": {"tab": ""}})
 	if String(office_go["tab"]) != "people" or String(office_go["acts_on"]) != "seats":
 		_fail("a word on an office lands on %s, not the office rows" % str(office_go))
-	if String(load("res://src/ui/agenda_panel.gd").GROUP_TAB.get("office", "")) != "majority":
-		_fail("the Agenda's office entries do not open the Majority tab")
+	if String(load("res://src/ui/term_reads.gd").GROUP_TAB.get("office", "")) != "majority":
+		_fail("the programme's office entries do not open the Majority tab")
 	# The strip's assembly figure, in trouble, opens the arithmetic: the Majority tab.
 	var ns = _main._state.player()
 	var was: bool = ns.is_minority

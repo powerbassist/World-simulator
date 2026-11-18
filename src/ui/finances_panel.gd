@@ -85,7 +85,7 @@ var _open_groups := {}
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(900, 520)
+	custom_minimum_size = Vector2(900, 0)  # the dock sets the height (tab_page.gd wanted_height)
 	var root := PanelKit.padded(self, 16, 12)
 	_lead = RichTextLabel.new()
 	_lead.bbcode_enabled = true

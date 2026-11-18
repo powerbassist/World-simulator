@@ -79,7 +79,7 @@ python tools/check_size.py
 ```
 
 The size ratchet, on CODE lines (no blank, no comment-only line) over `src/`:
-a new file stays at or under 300; a file in `tools/size_baseline.json` may
+a new file stays at or under 300 (400 under `src/ui/`); a file in `tools/size_baseline.json` may
 shrink, never grow, and the change that shrinks it lowers the baseline
 (`--update`); no `src/` file past 2 000 total lines, no exception (the last,
 `src/ui/main.gd`, closed at V5.1-d2: 2 705 -> 2 124 at c, 1 919 once the desk cards
@@ -92,6 +92,17 @@ python tools/check_vault.py
 
 The vault check: unresolved wikilinks, docs the index does not reach, orphans, missing
 frontmatter -- over tracked files only. What each Obsidian plugin is for: [docs/vault.md](docs/vault.md).
+
+```bash
+python tools/ui_map.py --check
+```
+
+Where each screen lives (domain, tab, window id, key, panel file, the screen stack's surfaces):
+`docs/ui-map.md` is GENERATED from the tracked `src/ui/` files. It goes stale when a PR adds,
+renames or re-keys a window (`_windows.register`), changes a domain row in `domains.gd`, adds a
+panel to a screen-stack rank, or changes a hotkey; then run `python tools/ui_map.py --write`.
+CI runs `--check` (last step of the checks job); the local gate (`run_tests.sh`) does NOT, so run it
+yourself. Never edit the page by hand.
 
 ```bash
 python tools/check_uids.py

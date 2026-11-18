@@ -6,19 +6,18 @@ extends SceneTree
 ## G1, the chief off the clock (chief-briefing-brief.md; the author: "Jamais"). The
 ## game's own clock, running at the player's speed in real frames, crosses month
 ## boundaries, and
-##   - a month end never pauses for the chief: the briefing's card stays down, the
-##     clock keeps running, the date moves on, and the clock line names no briefing;
+##   - a month end never pauses for the chief: the clock keeps running, the date moves
+##     on, and the clock line names no briefing;
 ##   - the month's ranking is still stored, and the chief's mark in the title bar
 ##     names its first line (title and deadline chip);
 ##   - when he speaks, his line is a caption under the mark (no dim, no key), and the
-##     voice he says it in is gated on the caption, not on the card;
-##   - a real click on the mark opens the read he was asked for: it holds the clock
-##     while it is open, the clock line says so, and a real click on Continue gives
-##     the speed back;
+##     voice he says it in is gated on his mark, not on the card (the caption hides on a timer);
+##   - G2: a real click on the mark opens the read he was asked for, the Presidency page,
+##     and the clock runs on at its speed (the plate that held it is retired);
 ##   - a request the read NAMES counts as seen when the read opens (#207's rule): its
-##     arrival slowed the clock from 3 to 1 by AudienceDriver's own rule, and the
-##     closed read leaves 3 -- on a line, in the footer, folded into another
-##     request's "+N more"; a speed the player picked after the arrival (2) is kept.
+##     arrival slowed the clock from 3 to 1 by AudienceDriver's own rule, and the read
+##     leaves 3 -- on a line, in the footer, folded into another request's "+N more";
+##     a speed the player picked after the arrival (2) is kept.
 
 const Click = preload("res://tests/click.gd")
 const BriefingDriver = preload("res://src/ui/briefing_driver.gd")
@@ -46,7 +45,6 @@ var _since := 0
 var _month := 0
 var _crossed := 0
 var _date := Vector3i()
-var _card
 var _case := 0
 
 
@@ -64,7 +62,7 @@ func _process(_delta: float) -> bool:
 		_start()
 		return false
 	if _since > TIMEOUT_FRAMES:
-		_fail("timed out in phase '%s' (date %s, paused %s, card %s)" % [_phase, _today(), _main._clock.paused, _card.visible])
+		_fail("timed out in phase '%s' (date %s, paused %s)" % [_phase, _today(), _main._clock.paused])
 		_finish()
 		return true
 	match _phase:
@@ -92,42 +90,17 @@ func _process(_delta: float) -> bool:
 		"read":
 			if _since < 2:
 				return false
-			if not _card.visible:
-				_fail("a click on the chief's mark did not open his read")
-			if not _main._clock.paused:
-				_fail("the read the player opened does not hold the clock")
-			# The speed Continue gives back: the clock's under the read (opening it counts
-			# a named request as seen, which may already have given an arrival's speed back).
-			_speed_before_read = _main._clock.speed
-			if HoldReason.show(_main) != tr("Paused: the monthly briefing."):
-				_fail("the clock line under the read: '%s'" % HoldReason.show(_main))
-			Click.half(_main.get_viewport(), _card._close, true)
-			_go("close_release")
-		"close_release":
-			Click.half(_main.get_viewport(), _card._close, false)
-			_go("closed")
-		"closed":
-			if _since < 2:
-				return false
-			if _card.visible:
-				_fail("Continue did not close the read")
+			if not _main._windows.is_open("overview"):
+				_fail("a click on the chief's mark did not open the Presidency page")
 			if _main._clock.paused:
-				_fail("Continue did not give the clock back")
-			if _main._clock.speed != _speed_before_read:
-				_fail("the clock resumed at %d, not the %d it had" % [_main._clock.speed, _speed_before_read])
+				_fail("the read the player opened paused the clock")
+			if HoldReason.show(_main) != "":
+				_fail("the clock line under the read: '%s'" % HoldReason.show(_main))
 			_seen_case()
-		"seen_press":
-			Click.half(_main.get_viewport(), _card._close, true)
-			_go("seen_release")
-		"seen_release":
-			Click.half(_main.get_viewport(), _card._close, false)
-			_go("seen_check")
 		"seen_check":
 			if _since < 2:
 				return false
 			var c: Array = SEEN_CASES[_case]
-			if _card.visible:
-				_fail("Continue did not close the read (case %s)" % str(c))
 			if _main._clock.speed != int(c[2]):
 				_fail("a request named on the read's %s, hand speed %d: the clock left at speed %d, not %d" % [
 					c[0], c[1], _main._clock.speed, c[2]])
@@ -139,13 +112,9 @@ func _process(_delta: float) -> bool:
 	return false
 
 
-var _speed_before_read := 0
 
-
-## What every month end must leave: no card, no pause, the ranking kept and named.
+## What every month end must leave: no pause, the ranking kept and named.
 func _check_month_end() -> void:
-	if _card.visible:
-		_fail("month %d: the briefing opened by itself" % _main._clock.month)
 	if _main._clock.paused and not _main._decision_holds_clock() and not _main._paused_for_programme:
 		_fail("month %d: the month end paused the clock for the chief" % _main._clock.month)
 	if HoldReason.show(_main) != "":
@@ -184,7 +153,6 @@ func _start() -> void:
 	var offer: Array = Programme.available(state, ns, _main._loader)
 	if not offer.is_empty():
 		_main._on_programme_chosen(String(offer[0]["id"]))
-	_card = BriefingDriver.card_of(_main)
 	_quiet_desk()
 	_main._windows.close_all()
 	_main._clock.set_speed(SPEED)
@@ -218,7 +186,7 @@ func _seen_case() -> void:
 	game["lines"] = [] if String(c[0]) == "footer" else [cand]
 	game["also"] = [cand] if String(c[0]) == "footer" else []
 	BriefingDriver.read(_main, false)  # the lines as staged, not ranked again
-	_go("seen_press")
+	_go("seen_check")
 
 
 func _quiet_desk() -> void:

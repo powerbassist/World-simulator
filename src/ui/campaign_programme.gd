@@ -24,7 +24,7 @@ static func build(body: Control, ns, loader) -> void:
 	var this_term: Array = Programme.this_term(ns)
 	if this_term.is_empty():
 		if Programme.is_term_start(ns):
-			PanelKit.line(body, Strings.t("No programme yet: see the Agenda (K)."), PanelKit.Tone.DIM)
+			PanelKit.line(body, Strings.t("No programme yet: choose it on its file in the Folder."), PanelKit.Tone.DIM)
 		else:
 			PanelKit.line(body, Strings.t("No programme was set this term."), PanelKit.Tone.DIM)
 		return
@@ -32,7 +32,7 @@ static func build(body: Control, ns, loader) -> void:
 		var terms: Dictionary = Programme.terms_of(loader, String(entry["entry_id"]))
 		if terms.is_empty():
 			# Content the loader no longer defines: the id stands in rather
-			# than a bar over nothing, agenda_panel.gd's rule.
+			# than a bar over nothing, the retired Agenda's rule.
 			PanelKit.line(body, Strings.t("%s -- the content behind it is gone; it concludes on the next tick.") % String(entry["entry_id"]), PanelKit.Tone.DIM)
 			continue
 		var name_text := Strings.row_name("programme", terms)
