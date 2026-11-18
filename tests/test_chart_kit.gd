@@ -171,7 +171,7 @@ func _build_charts() -> void:
 		{"id": "a", "label": "A", "before": 4.8, "after": 5.1, "moved": true, "selected": true},
 		{"id": "b", "label": "B", "before": 6.6, "after": 6.6},
 		{"id": "c", "label": "C", "before": 5.0, "after": 4.98}], {"reference": 5.67, "band": Vector2(0.0, 5.2)})
-	_range = ChartKit.range(_box, "Range", 0.10, 0.13, 0.15)
+	_range = ChartKit.range_bar(_box, "Range", 0.10, 0.13, 0.15)
 	_stack = ChartKit.stack(_box, "Stack", [{"label": "a", "value": 1.0}, {"label": "b", "value": 3.0}], {"marker": 0.5})
 
 
@@ -245,7 +245,7 @@ func _check_charts() -> void:
 			_fail("the hover over the first row does not name it")
 	var rng := _chart(_range, ChartRange)
 	if rng == null:
-		_fail("ChartKit.range built no ChartRange")
+		_fail("ChartKit.range_bar built no ChartRange")
 	else:
 		var bar: Rect2 = rng.bar_rect()
 		if rng.tick_x() <= bar.position.x or rng.tick_x() >= bar.end.x:

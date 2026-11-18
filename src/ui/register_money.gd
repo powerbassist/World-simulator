@@ -1,6 +1,6 @@
 extends Control
 
-## The register sheet's money a year (V5.3 c' slice 1; the price range is ChartKit.range):
+## The register sheet's money a year (V5.3 c' slice 1; the price range is ChartKit.range_bar):
 ## one bar a year from now, on one axis in bn: the capital while it builds (grey),
 ## the running cost once it opens (the accent: the player's own programme), the
 ## legend under it. The running cost never stops, so the years shown run past

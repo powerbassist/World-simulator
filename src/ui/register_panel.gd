@@ -239,6 +239,9 @@ func _types() -> void:
 	for type_id in _offered():
 		options.append({"id": type_id, "label": Strings.row_name("units", Units.row(_loader, type_id))})
 	var segments := PanelKit.segmented(flow, options, _type, func(id: String) -> void:
+		# A group still emits pressed on the picked segment: re-picking it must not wipe the rows.
+		if id == _type:
+			return
 		_pick_type(id)
 		_dirty = true)
 	for b in segments.get_children():
@@ -260,7 +263,7 @@ func _dots(parent: Control, ns, shown: Dictionary, after: Dictionary, nation: fl
 	data.sort_custom(func(a, b): return float(a["before"]) > float(b["before"]) if lower_better else float(a["before"]) < float(b["before"]))
 	# The warning band joins when the sim names its threshold (Systems' slice C); until then none.
 	var box := ChartKit.dots(col, tr("By region: now, and once built"), data, {"reference": nation})
-	var dots = box.get_child(box.get_child_count() - 1)
+	var dots = box.get_meta("chart")
 	dots.set_meta("dots", true)
 	dots.picked.connect(func(id: String) -> void:
 		_region = id
@@ -402,7 +405,7 @@ func _strip(ns, row: Dictionary, quote: Dictionary, shown: Dictionary, after: Di
 	var line := PanelKit.plain_line(money, tr("%s to %s bn over %d months, then %s bn a year for good.") % [
 		Num.f(lo, 2), Num.f(hi, 2), months, Num.f(running, 2)], PanelKit.Tone.PLAIN)
 	line.set_meta("money", true)
-	ChartKit.range(money, tr("Price range, bn"), lo, float(quote["estimate_eur_m"]) / 1000.0, hi).set_meta("range", true)
+	ChartKit.range_bar(money, tr("Price range, bn"), lo, float(quote["estimate_eur_m"]) / 1000.0, hi).set_meta("range", true)
 	var cash = RegisterMoney.new()
 	cash.set_meta("cash", true)
 	money.add_child(cash)

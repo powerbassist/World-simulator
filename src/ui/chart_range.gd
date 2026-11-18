@@ -1,6 +1,6 @@
 extends Control
 
-## A range with its estimate -- ChartKit.range (V5.3 c', the bureau audit's item 5): one
+## A range with its estimate -- ChartKit.range_bar (V5.3 c', the bureau audit's item 5): one
 ## neutral bar from the low end to the high end, the estimate a TEXT-tone tick across it,
 ## the three values printed under their marks. The register's price (section 4: the contract
 ## price is drawn inside the range at the vote) first; any figure known as a range later.

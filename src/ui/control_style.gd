@@ -22,7 +22,8 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	theme.set_stylebox("hover", primary, box.call((t["slate"] as Color).lightened(0.10), t["accent"]))
 	theme.set_stylebox("pressed", primary, box.call((t["slate"] as Color).lightened(0.16), t["accent"]))
 	theme.set_stylebox("focus", primary, _ringed(box.call(Color(0, 0, 0, 0), t["accent"])))
-	theme.set_stylebox("disabled", primary, box.call(t["hull"], t["edge"]))
+	# No border when disabled: the EDGE border is what reads "pressable" (ui_theme._buttons).
+	theme.set_stylebox("disabled", primary, box.call(t["hull"]))
 
 	var small := String(names["small"])
 	theme.set_type_variation(small, "Button")  # i18n: ok

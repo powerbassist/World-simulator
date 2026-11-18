@@ -495,8 +495,7 @@ static func chip(parent: Control, text: String, variation := UiTheme.CHIP, glyph
 		picture.custom_minimum_size = Vector2(px, px)
 		row.add_child(picture)
 	var words := Label.new()
-	words.theme_type_variation = UiTheme.FIGURE_LABEL
-	words.add_theme_color_override("font_color", UiTheme.TEXT)
+	words.theme_type_variation = UiTheme.CHIP_TEXT
 	words.text = text
 	row.add_child(words)
 	parent.add_child(plate)

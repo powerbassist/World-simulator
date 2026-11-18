@@ -134,6 +134,7 @@ const CHIP := "Chip"                      ## a bordered caption plate, neutral  
 const CHIP_GOOD := "ChipGood"             ## a chip in the good-news tone
 const CHIP_WARN := "ChipWarn"             ## a chip in the attention tone
 const CHIP_BAD := "ChipBad"               ## a chip in the bad-news tone
+const CHIP_TEXT := "ChipText"             ## a chip's words: caption size, the text tone
 const OPTION_CHECK := "OptionCheck"       ## an option on a verb, not a verb (V5.2 close R4: the audience's Lie)
 
 ## The accent in force: the played nation's, set by apply() and read by everything
@@ -344,7 +345,7 @@ static func _panels(theme: Theme) -> void:
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE]:
+	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE, CHIP_TEXT]:
 		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
@@ -385,6 +386,7 @@ static func _labels(theme: Theme) -> void:
 	_label(theme, WARN_TEXT, SIZE_SMALL, WARN)
 	_label(theme, BAD_SMALL, SIZE_SMALL, BAD)
 	_label(theme, GOOD_SMALL, SIZE_SMALL, GOOD)
+	_label(theme, CHIP_TEXT, SIZE_SMALL, TEXT)
 
 	# V5.3-0 R15 (the closing gate: "les unes ne sont pas assez graphiques"): a
 	# front page prints its paper's name in the black cut, tracked, and its
