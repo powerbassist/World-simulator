@@ -61,6 +61,14 @@ static func build(panel, box: Control, ns, region, regions: Array, access: Dicti
 		PanelKit.heading(box, Strings.t("Happening here"))
 		for text in happening:
 			PanelKit.plain_line(box, text, PanelKit.Tone.PLAIN)
+	# V5.3 c' slice 1: the register's door (section 9, row 0's "Build here").
+	if panel.open_register.is_valid():
+		var door := PanelKit.sized(Button.new())
+		door.text = Strings.t("Build here")
+		door.set_meta("register_door", true)
+		var id := String(region.id)
+		door.pressed.connect(func() -> void: panel.open_register.call(id))
+		PanelKit.buttons(box).add_child(door)
 	RegionFund.build(panel, box, ns, region, regions, access)
 
 

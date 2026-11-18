@@ -32,6 +32,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade --text 130 --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade-tabled --open legislature
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open register
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play GBR --open register
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --open register
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sheet-polls --open legislature   (the law sheet, polls open)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --law-filter taxes: --open legislature   (shelf:words)

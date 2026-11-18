@@ -28,7 +28,7 @@ const TABLE := [
 	{"id": "parliament", "title": "Parliament", "icon": "gavel.svg", "tabs": ["legislature", "majority"]},  # i18n: msgid title
 	{"id": "finances", "title": "Finances", "icon": "payments.svg", "tabs": ["finances", "projects"]},  # i18n: msgid title
 	{"id": "economy", "title": "Economy", "icon": "monitoring.svg", "tabs": ["economy"]},  # i18n: msgid title
-	{"id": "territory", "title": "Regions", "icon": "map.svg", "tabs": ["region"]},  # i18n: msgid title
+	{"id": "territory", "title": "Regions", "icon": "map.svg", "tabs": ["region", "register"]},  # i18n: msgid title
 	{"id": "energy", "title": "Energy", "icon": "bolt.svg", "tabs": ["energy"]},  # i18n: msgid title
 	# V5.3 screen 5: who makes the economy, sector by sector; the overview keeps the
 	# window id "companies" (screenshot.gd --open and the tests address it), and the

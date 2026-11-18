@@ -126,6 +126,20 @@ static func shown_figure(ns, loader, type_id: String, region_id: String) -> floa
 	return _shown(ns, loader, type_id, region_id, {})
 
 
+## The register sheet's "after" (section 9, row 1): every region's shown figure with
+## `placed` ({region: units}) counted as if built, from ONE basis, so the netting the
+## other regions give back is the rule's own. {} for an id that is not a capacity type.
+static func preview(ns, loader, type_id: String, placed: Dictionary) -> Dictionary:
+	var out := {}
+	if not loader.unit_types.has(type_id):
+		return out
+	var b := _basis(ns, loader, type_id, placed)
+	var n := national_figure(ns, loader, type_id)
+	for id in b["level"]:
+		out[id] = n * float(b["term"][id]) * float(b["level"][id]) * float(b["factor"][id]) / float(b["mean_factor"])
+	return out
+
+
 ## Section 3, "by population": N units split by region_pop_share over the regions
 ## that hold the type, largest remainder first (ties to the regions' file order).
 static func fill_by_population(ns, loader, type_id: String, n: int) -> Array:

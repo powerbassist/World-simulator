@@ -55,6 +55,7 @@ func _init() -> void:
 	_test_a_region_with_no_stock_gains_nothing()
 	_test_fill_by_population()
 	_test_fill_by_need_starts_with_the_worst()
+	_test_the_preview_reads_units_not_yet_built()
 	_test_a_higher_is_better_figure()
 	_test_the_register_is_saved()
 	_finish()
@@ -502,6 +503,26 @@ func _row(id: String, op: String, state: String, region: String, amount: int) ->
 	var r := {"region": region, "capacity": amount} if op == UK.OP_DEMOLISH else {"region": region, "units": amount}
 	return {"id": id, "type": TYPE, "op": op, "state": state, "rows": [r]}
 
+
+
+## The register sheet's before/after (V5.3 c' slice 1): preview() is the shown figure with
+## units placed but not built, from one basis, so the sheet's "after" is the very figure the
+## region shows once they stand, and with nothing placed it is the shown figure itself.
+func _test_the_preview_reads_units_not_yet_built() -> void:
+	var state = _state()
+	var ns = state.player()
+	var none: Dictionary = Units.preview(ns, _loader, TYPE, {})
+	var placed := {"FR1": 3}
+	var some: Dictionary = Units.preview(ns, _loader, TYPE, placed)
+	for region in _named(state):
+		if absf(float(none.get(region, -1.0)) - Units.shown_figure(ns, _loader, TYPE, region)) > 1e-9:
+			_fail("preview with nothing placed differs from the shown figure in %s" % region)
+		if absf(float(some.get(region, -1.0)) - Units._shown(ns, _loader, TYPE, region, placed)) > 1e-9:
+			_fail("preview with units placed differs from the basis in %s" % region)
+	if float(some["FR1"]) >= float(none["FR1"]):
+		_fail("three schools placed in FR1 did not lower its pupils per teacher: %s -> %s" % [none["FR1"], some["FR1"]])
+	if Units.preview(ns, _loader, "no_such_type", placed) != {}:
+		_fail("preview of an unknown type is not empty")
 
 func _fail(message: String) -> void:
 	_failures.append(message)

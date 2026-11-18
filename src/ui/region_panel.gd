@@ -56,6 +56,8 @@ var _refocus := ""
 var _overlay
 ## Re-binds the overlay to the nation a setup() brings (regions_shell.gd sets it).
 var rebind: Callable
+## Opens the construction register on a region (regions_shell.gd sets it).
+var open_register: Callable
 var _body: VBoxContainer
 var _back_button: Button
 var _close_button: Button

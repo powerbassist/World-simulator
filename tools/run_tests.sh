@@ -18,6 +18,7 @@ tests=(
   tests/test_firm_sheet.gd
   tests/test_industry_closure.gd
   tests/test_region_fund.gd
+  tests/test_register_panel.gd
   tests/test_region_sheet.gd
   tests/test_region_map.gd
   tests/test_region_load.gd

@@ -46,6 +46,7 @@ flowchart LR
   subgraph d_territory["Regions"]
     direction TB
     w_region["Regions<br/>region<br/>key T"]
+    w_register["Register<br/>register"]
   end
   subgraph d_energy["Energy"]
     direction TB
@@ -104,6 +105,7 @@ One row per `_windows.register()` call. *Opened by*: the sidebar (a domain's fir
 | Finances | Public Works | `projects` | W | `projects_panel.gd` | `main.gd` | tab strip; key W; door in main |
 | Economy | Economy | `economy` | E | `economy_panel.gd` | `main.gd` | sidebar; key E |
 | Regions | Regions | `region` | T | `regions_shell.gd` | `main.gd` | sidebar; key T; door in region_panel |
+| Regions | Register | `register` |  | `register_panel.gd` | `regions_shell.gd` | tab strip; door in regions_shell |
 | Energy | Energy | `energy` | F | `energy_panel.gd` | `main.gd` | sidebar; key F; door in main |
 | Sectors | Overview | `companies` | I | `companies_panel.gd` | `main.gd` | sidebar; key I; door in main, sectors_shell |
 | Sectors | Agriculture | `sector_agriculture` |  | `sectors_shell.gd` | `main.gd` | tab strip |
