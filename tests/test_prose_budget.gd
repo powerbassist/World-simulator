@@ -50,7 +50,7 @@ const BUDGET := {
 	"overview": 36, "diplomacy": 20, "society": 10,
 	"events": 20, "people": 10, "companies": 10, "calendar": 10,
 	"sector_agriculture": 10, "sector_industry": 10, "sector_services": 10,
-	"register": 53,
+	"register": 53, "programmes": 0,
 }
 ## The tabs 0b has not reached yet, held at what they measured before it started
 ## (dc515826 + #93) so they cannot grow while they wait; each PR that trims one
@@ -67,7 +67,7 @@ const PENDING := {}
 const PROGRAMME_FILE_TOTAL := 300
 const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
 	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135,
-	"overview": 170, "register": 119}
+	"overview": 170, "register": 137, "programmes": 15}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 130, "energy": 118,
@@ -137,10 +137,14 @@ const TOTAL_PENDING := {
 ## The construction register (V5.3 c' slice 1, the author's "A pour commander"), a new Finances tab, a
 ## stated rise 2968 -> 3087 (+119, all on the register: the type's lede and summary, the stock line, the
 ## strip's money, who and when sentences, the charts' titles).
-## The Sectors overview C (the author's "forme de l'economie"), a stated rise 3087 -> 3133 (+46, all on
+## Register slice 2 (the author's "A pour commander + C en suivi"), a stated rise 3087 -> 3157 after a
+## cut (the Union line, the warning card, the empty tab said in fewer words): +18 on the register (the
+## band's chip, the blocs a vote pleases, the Union line), the new Programmes tab's 15 (empty: its
+## lede, one line, the Union's envelope), and the region warnings' inbox cards at month 12.
+## The Sectors overview C (the author's "forme de l'economie"), a stated rise 3157 -> 3203 (+46, all on
 ## the overview): the lead naming the largest and the slowest sector, the two chart titles, a verdict
 ## chip per sector, and per card its two figure captions, "Biggest employers" and "Open <sector>".
-const TOTAL_SUM_CEILING := 3133
+const TOTAL_SUM_CEILING := 3203
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
