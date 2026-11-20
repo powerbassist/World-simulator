@@ -50,10 +50,7 @@ static func for_person(state, loader, row: Dictionary, see: Callable, call: Call
 
 ## The first offered day the Diary can take, or {}.
 static func first_free(state, request_id: String) -> Dictionary:
-	for date in Audiences.offered_dates(state, state.player(), request_id):
-		if bool(date.get("free", false)):
-			return date
-	return {}
+	return Audiences.first_free_day(state, state.player(), request_id)
 
 
 ## `verbs` is the panel's cabinet_verbs.gd: its reassign() and dismiss().

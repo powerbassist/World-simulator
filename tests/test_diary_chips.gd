@@ -68,16 +68,27 @@ func _process(_delta: float) -> bool:
 			_main._clock.advance_one_day()
 		32:
 			_check_unheld_turn_repicked()
-			# TAKE 1 and 2, in hand: the keyboard back on Book here, the day turns again.
-			var held := _book_here(_other)
-			if held != null:
-				held.grab_focus()
+			var grid = _main._calendar_panel._grid
+			# Pass 1 on the delta: the keyboard alone on Book here (where a Go leaves it) does not
+			# freeze the day's redraw -- the ring follows the day.
+			var kept := _book_here(_other)
+			if kept != null:
+				kept.grab_focus()
 			_main._clock.advance_one_day()
-			_main._calendar_panel._grid._process(0.0)
-			if held == null or not is_instance_valid(held) or not held.is_inside_tree():
-				_fail("the day's redraw freed the Book here the keyboard stands on")
-		34:
+			grid._process(0.0)
+			if int(grid._drawn_day) != int(_main._state.day):
+				_fail("the keyboard on Book here froze the day's redraw (drawn %d, today %d)" % [grid._drawn_day, _main._state.day])
+		33:
+			# TAKE 1 and 2, mid-click: Book here pressed (a frame after its rebuild, laid out),
+			# the day turns, then released.
 			_click_book(true)
+		35:
+			var grid = _main._calendar_panel._grid
+			var held := _book_here(_other)
+			_main._clock.advance_one_day()
+			grid._process(0.0)
+			if held == null or not is_instance_valid(held) or not held.is_inside_tree():
+				_fail("the day's redraw freed the Book here held down")
 		36:
 			_click_book(false)
 		38:

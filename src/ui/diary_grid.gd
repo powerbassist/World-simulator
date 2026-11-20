@@ -158,19 +158,19 @@ func _process(_delta: float) -> void:
 		_render()
 
 
-## A chip, or anything in the day list ("Book here"; #431 pass 2, TAKE 2), the pointer is on
-## or the keyboard stands on (a press takes the focus too): the daily redraw frees every
-## cell and row, which would drop the click, the focus and the hover. It waits, so today's
-## ring can lag until the control is let go; a booking still redraws, and a Book here pressed
-## on a day the clock has since turned books the first free one (audience_driver.gd).
+## A chip the pointer is on or the keyboard stands on, or anything in the day list ("Book
+## here"; #431 pass 2, TAKE 2) the pointer is on: the daily redraw frees every cell and row,
+## which would drop a click mid-press. It waits, so today's ring can lag until the pointer
+## leaves; a booking still redraws, and a Book here pressed on a day the clock has since turned
+## books the first free one (audience_driver.gd). The keyboard alone does not hold the day list:
+## after a Go it stands there for good, and diary_booking's _refocus puts it back after a redraw.
 func _in_hand() -> bool:
 	var viewport := get_viewport()
 	if viewport == null:
 		return false
-	for c in [viewport.gui_get_focus_owner(), viewport.gui_get_hovered_control()]:
-		if c is DiaryChip or (c != null and day_list != null and day_list.is_ancestor_of(c)):
-			return true
-	return false
+	var hovered := viewport.gui_get_hovered_control()
+	return viewport.gui_get_focus_owner() is DiaryChip or hovered is DiaryChip \
+			or (hovered != null and day_list != null and day_list.is_ancestor_of(hovered))
 
 
 func page() -> int:
