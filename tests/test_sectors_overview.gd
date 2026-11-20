@@ -57,20 +57,26 @@ func _process(_delta: float) -> bool:
 		8:
 			if not _main._windows.is_open("sector_services"):
 				_fail("a click on the Services dot did not open the Services tab")
+			_main._windows.open("companies")
+		10:
 			_route_to_a_firm()
-		11:
+		14:
 			_check_routed_firm_first()
 			# Pass 1: once the firm's question is answered, the route and its "waiting" heading go.
 			var ns = _main._state.player()
 			(ns.companies[_routed["id"]] as Dictionary).erase("closure")
 			_panel.mark_dirty()
-		13:
+		16:
 			if _node_with_meta("routed_heading", _routed["sector"]) != null:
 				_fail("routed: the 'waiting' heading stays after the firm's question is gone")
 			_press(_with_meta("open_tab", "sector_industry"))
-		15:
+		18:
 			if not _main._windows.is_open("sector_industry"):
 				_fail("Open Industry did not open the Industry tab")
+			_main._windows.open("companies")
+			_stage_a_quiet_extreme()
+		21:
+			_check_a_quiet_extreme()
 			_finish()
 	return false
 
@@ -194,6 +200,30 @@ func _check_quiet_world() -> void:
 		_fail("the lead names a slowest sector (%s) though a sector lags is %s" % [_panel._title.text, lags])
 
 
+## QA on #427 (T3, T4): every sector ahead of a nation trend set far below them, and one month of history.
+var _saved_trend := 0.0
+var _saved_history: Array = []
+
+
+func _stage_a_quiet_extreme() -> void:
+	var ns = _main._state.player()
+	_saved_trend = float(ns.trend_annual_pct)
+	_saved_history = _main._state.history.duplicate()
+	ns.trend_annual_pct = -20.0
+	_main._state.history = _saved_history.slice(0, 1)
+	_panel.mark_dirty()
+
+
+func _check_a_quiet_extreme() -> void:
+	if _panel._title.text.contains(Strings.t("Slowest against the economy: %s.").get_slice("%", 0)):
+		_fail("every sector is ahead and the lead still names a slowest: '%s'" % _panel._title.text)
+	for s in EK.SECTOR_TREND.keys():
+		if _node_with_meta("sector_curve", String(s)) != null:
+			_fail("%s card draws a curve band with %d month of history" % [s, _main._state.history.size()])
+	_main._state.player().trend_annual_pct = _saved_trend
+	_main._state.history = _saved_history
+
+
 ## A burden on Industry, a failed Services major, closures announced in two sectors.
 func _stage_a_busy_world() -> void:
 	var state = _main._state
@@ -241,6 +271,18 @@ func _check_busy_world() -> void:
 			_fail("share bar %s wears the accent: status is a fixed tone" % sectors[i])
 	if waiting < 2:
 		_fail("setup: %d sectors wait, expected 2" % waiting)
+	# QA T2: a lagging sector's chip carries the warning glyph, so its reading does not rest on colour.
+	for s in sectors:
+		var verdict := String(SectorRead.head(_main._state, _main._loader, ns, String(s))["verdict"])
+		var words := "%s: %s" % [Labels.sector(String(s)), SectorRead.verdict_words(verdict)]
+		var chip: Control = null
+		for label in _panel.find_children("*", "Label", true, false):
+			if (label as Label).text == words and (label as Control).is_visible_in_tree():
+				chip = label.get_parent()
+		if chip == null:
+			_fail("no chip '%s'" % words)
+		elif (chip.find_children("*", "TextureRect", false, false).size() > 0) != (verdict in ["behind", "slower"]):
+			_fail("chip '%s' glyph shown %s, the sector lags %s" % [words, not (verdict in ["behind", "slower"]), verdict in ["behind", "slower"]])
 	var dots = _node_with_meta("overview", "growth")
 	if dots != null:
 		for r in dots.data():
@@ -276,6 +318,12 @@ func _check_routed_firm_first() -> void:
 		_fail("routed: the firm's card (child %d) lands under the charts (child %d)" % [first_card, first_chart])
 	if _node_with_meta("routed_heading", _routed["sector"]) == null:
 		_fail("routed: no heading over the firm's card")
+	# QA T1: the routed card's line says the sector's trend, then the nation's (pass 2 lead 8).
+	var ns = _main._state.player()
+	var sector := String(_routed["sector"])
+	var trend_line := "trend %s %%/yr, nation %s" % [Num.fs(Economy.sector_trend_pct(_main._state, ns, sector), 1), Num.fs(float(ns.trend_annual_pct), 1)]
+	if not _text_under(_panel).contains(trend_line):
+		_fail("routed: the card does not read '%s'" % trend_line)
 	# A mouse route takes no keyboard focus (Space is the pause key): the page opens at the top, where the card sits.
 	var focus = _panel.get_viewport().gui_get_focus_owner()
 	if focus != null and _panel.is_ancestor_of(focus):
