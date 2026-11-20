@@ -1504,6 +1504,10 @@ var audience_requests: Array[Dictionary] = []
 ## absent_ok for the same reason: nobody has asked yet.
 var audience_asked_month := {}
 
+## person id -> the absolute month the president last summoned them (AudienceSummons' cap).
+## absent_ok: an older save summoned nobody, which is what absent reads.
+var audience_summoned_month := {}
+
 # --- Processes (V5.3 a) -------------------------------------------------------------
 ## The ownership and structure verbs in progress, and the ones that ended, one row
 ## each -- {id, action_id, company_id, status, stage, months_left, stage_months,

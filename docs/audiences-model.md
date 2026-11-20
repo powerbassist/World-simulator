@@ -550,5 +550,20 @@ A month in which nothing arrived for the player calls someone in (`docs/design/v
 
 A called request is a request like any other: it never holds the clock, and a lapse costs a decline.
 
+## 16. The summons (2026-11-20)
+
+The author's "Oui, petite carte à part" and "Toute personne du pays": the president may ask to
+see any person of his nation who has asked nothing (`Audiences.summon`, src/sim/audience_summons.gd).
+Not the president, not staff, not a foreign head, and not someone with an open request (he answers
+that one). Any free day from tomorrow to the diary's horizon; the refusal says why as data
+(`not_own`, `asked`, `summoned`, `too_far`, and the day's `taken` / `passed` / `no_day`).
+
+The meeting holds what a call holds: talk, no ask. Being received is the hold (+0.10 rapport,
+`KNOW_AUDIENCE` learned); every lever and deal verb answers "they asked nothing". It ends settled
+and unpriced; missed or cancelled, it closes `cancelled`, free. It takes no place in the lane and
+stamps no ask, so the person may still ask on their own. The cap: one summons a person in
+`SUMMON_COOLDOWN_MONTHS` (= `REQUEST_COOLDOWN_MONTHS`, 8), stamped in `audience_summoned_month`.
+`tools/audience_probe.gd -- --summons` (A6) reads what summoning everyone buys over a term.
+
 Related: [[people-model]] · [[calendar-model]] · [[v5.2-spec]] · [[bands-v5.2]] ·
 [[decision-surfaces]] · [[programme-model]] · [[summits-model]]

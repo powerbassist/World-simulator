@@ -94,6 +94,7 @@ tests=(
   tests/test_measure_polls.gd
   tests/test_start_regard.gd
   tests/test_audiences.gd
+  tests/test_audience_summons.gd
   tests/test_levers.gd
   tests/test_phone.gd
   tests/test_shadows.gd
