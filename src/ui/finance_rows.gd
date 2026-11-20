@@ -221,7 +221,8 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	# Who pays is the caption's text unless the row is at vote or created: the hover always says it, so a
 	# caption cut to an ellipsis can still be read.
-	caption.set_meta("who_pays", true)
+	if tag == who:
+		caption.set_meta("who_pays", true)
 	row.tooltip_text = Strings.t("Paid by: %s") % who
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
 	var rate := _cell(row, "", UiTheme.CAPTION, RATE_WIDTH)
