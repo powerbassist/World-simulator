@@ -54,3 +54,27 @@ const UNIT_PROGRAMMES_MAX_OPEN := 4
 const UNIT_ODDS_BASE := 1.5
 const UNIT_ODDS_MIN := 0.05
 const UNIT_ODDS_MAX := 0.60
+
+# --- The overrun's card (section 5) --------------------------------------------
+
+## The card's answers; the default is to pay.
+const OVERRUN_PAY := "pay"
+const OVERRUN_SHRINK := "shrink"
+const OVERRUN_DELAY := "delay"
+
+## The months the card waits for an answer before it defaults to pay (it holds the
+## clock only in the last of them). Stand-in.
+const UNIT_OVERRUN_WINDOW_MONTHS := 2
+
+## At most this many overrun cards land in one calendar year; a further one waits for
+## January (band U6). Stand-in.
+const UNIT_OVERRUN_CARDS_A_YEAR := 2
+
+# --- The Union's envelope (section 6) ------------------------------------------
+
+## The game's declared share of a nation's real allocation: social buildings are a
+## small part of what cohesion money pays for. Stand-in.
+const UNIT_ENVELOPE_GAME_SHARE := 0.1
+
+## The Union's share arrives over this many months after the opening.
+const UNIT_RECEIPT_MONTHS := 12

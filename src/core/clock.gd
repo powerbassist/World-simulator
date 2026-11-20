@@ -11,7 +11,11 @@ signal month_elapsed(year: int, month: int)
 const DAYS_IN_MONTH: Array[int] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 const SPEED_DAYS_PER_SECOND: Array[float] = [1.0, 3.0, 7.0]
 
-var year: int = 2026
+## The year a new game opens in: the clock's, and the register's "period under way at
+## the start" (src/sim/unit_envelope.gd), so the two never disagree.
+const START_YEAR := 2026
+
+var year: int = START_YEAR
 var month: int = 1
 var day: int = 1
 

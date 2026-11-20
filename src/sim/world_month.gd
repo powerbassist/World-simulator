@@ -33,6 +33,8 @@ extends RefCounted
 ##   exposures         Exposure.tick_month's exposures made (V5.2c)
 ##   election_results  Elections.tick_month's results (Array)
 ##   front_page        FrontPage.close's entry, {} when nothing earned one (V5.2d)
+##   units             UnitBuild.tick_month's notes: openings, overrun cards, the Union's
+##                     lapses and warning (V5.3 c' B2)
 ##
 ## The caller sets state.year and state.month first: the clock is the caller's,
 ## a harness counts its own months and the game takes them from Clock.
@@ -400,7 +402,7 @@ static func _step(month: Month, step: String) -> Array:
 		# their two lines -- in Projects' slot for Projects' reason (bill -> deficit ->
 		# precondition), so a programme voted this month bills next month.
 		"Units":
-			UnitBuild.tick_month(state, loader)
+			month.report["units"] = UnitBuild.tick_month(state, loader)
 		# V5.3 a: the regional development funds, a month on, and their bill -- after
 		# Budget like Projects', so a fund opened this month bills next month (the
 		# deficit is a precondition field; the bill -> deficit -> precondition loop).

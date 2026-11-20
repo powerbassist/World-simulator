@@ -24,6 +24,7 @@ const Industry = preload("res://src/sim/industry.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Projects = preload("res://src/sim/projects.gd")
 const UnitBuild = preload("res://src/sim/unit_build.gd")
+const UnitOverrun = preload("res://src/sim/unit_overrun.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 const Closures = preload("res://src/sim/closures.gd")
@@ -187,6 +188,10 @@ static func recompute(state, ns) -> void:
 		# (Sectors.ratio() reads it there). A month behind, as every computed line is.
 		+ ns.unit_bill_pct_gdp
 		+ ns.unit_running_total_pct_gdp()
+		# V5.3 c' B2. The Union's receipt for a co-financed programme (unit_envelope.gd),
+		# netted here with the opposite sign rather than written into the transfer line,
+		# which Orgs rewrites every month. A month behind, as every computed line is.
+		- ns.unit_receipt_pct_gdp
 	)
 	ns.deficit_pct_gdp = ns.total_spending_pct_gdp - ns.total_revenue_pct_gdp
 
@@ -503,13 +508,15 @@ static func projection_done(job: ProjectionJob) -> bool:
 
 
 ## A projection's copy: the pending committed on it, and blind to the other side's
-## answer to a counter (process_asks.gd). One function, because the forecast starts a
+## answer to a counter (process_asks.gd) and to an overrun drawn but not yet on its
+## card (unit_overrun.gd). One function, because the forecast starts a
 ## job from it too when a share move is drafted (budget_forecast.gd), and a second copy
 ## of these lines is how that road once saw the answer a month early (QA on #285).
 static func projection_copy(state, pending: Dictionary):
 	var sim = state.duplicate_state()
 	commit(sim, pending)
 	ProcessAsks.blind(sim)
+	UnitOverrun.blind(sim)
 	return sim
 
 
@@ -824,6 +831,7 @@ static func snapshot(state) -> Dictionary:
 		# running cost of their standing units, named parts of the spending.
 		"unit_bill_pct_gdp": ns.unit_bill_pct_gdp,
 		"unit_running_pct_gdp": ns.unit_running_total_pct_gdp(),
+		"unit_receipt_pct_gdp": ns.unit_receipt_pct_gdp,
 		# V5.3 a, on the snapshot for the same reason: the Budget table's fund row
 		# compares a projected month against the current one (Interface's ask).
 		"region_fund_bill_pct_gdp": ns.region_fund_bill_pct_gdp,
