@@ -37,7 +37,7 @@
   "demolish_months": 18,
   "demolish_cost_share": 0.15,
   "cofinanced": true,
-  "band_units": 3,
+  "band_units": 7,
   "bloc_offset_per_pop_share": {
     "pensioners": 0.1,
     "rural": 0.08,
