@@ -296,6 +296,7 @@ const FIELDS := [
 	["unit_programme_seq", SCALAR, VALUE, 0, true],  # V5.3 c': absent is none opened
 	["unit_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # V5.3 c': rewritten by the next tick
 	["unit_running_pct_gdp", DEEP, FLOAT_MAP, {}, true],  # V5.3 c': absent is no unit standing
+	["unit_receipt_pct_gdp", SCALAR, VALUE, 0.0, true],  # V5.3 c' B2: rewritten by the next tick
 	["region_history", NONE, COPIED, {}, true],  # V5.3 e PR B: absent is nothing sampled yet; not copied, a projection has no past
 	["region_fund_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # rewritten by the next tick
 	["rescue_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # V5.3 a: rewritten by the next tick

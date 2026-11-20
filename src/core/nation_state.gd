@@ -1584,6 +1584,10 @@ var unit_bill_pct_gdp: float = 0.0
 ## game). absent_ok: no save before c' opened one, so 0 is the truth.
 var unit_programme_seq: int = 0
 var unit_running_pct_gdp := {}
+## The Union's receipt for the programmes it co-finances (src/sim/unit_envelope.gd), % of
+## GDP a year, rewritten by UnitBuild.tick_month() and SUBTRACTED from the spending by
+## Budget a month behind. absent_ok: no save before B2 was owed one, so 0 is the truth.
+var unit_receipt_pct_gdp: float = 0.0
 ## The open funds' bill, % of GDP, rewritten by RegionFunds.tick_month() every month
 ## and read by Budget a month behind (project_bill_pct_gdp's case). absent_ok: the
 ## next tick rewrites it.

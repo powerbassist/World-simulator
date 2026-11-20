@@ -10,8 +10,8 @@ extends RefCounted
 ## A LEAF OVER STAMPS. Every read is a register another machine already writes, with
 ## the month it wrote it: a desk entry's `arrived` (Events), a request's
 ## `arrived_month` (Audiences), a closure's `announced` (Closures), a firm's
-## `bid_month` and `failed_month` (Companies), a process ask's `posted` (Processes), a
-## sector warning's `entered` (SectorWarnings) and a council division's opening with
+## `bid_month` and `failed_month` (Companies), a process ask's `posted` (Processes), an
+## overrun card's `posted` (UnitOverrun), a sector warning's `entered` (SectorWarnings) and a council division's opening with
 ## its `player_swings` (Orgs). It preloads constants and Events' draw leaf (whose own
 ## preloads are the cycle and constants) and no system: budget.gd preloads events.gd,
 ## so a system preloaded here could close a cycle back to its caller.
@@ -64,6 +64,10 @@ static func quiet(state, ns, loader, now: int) -> bool:
 	for row in ns.processes:
 		var ask: Dictionary = row.get("ask", {})
 		if int(ask.get("posted", -1)) == now and EventDraw.answers_differ(ns, ask.get("answers", [])):
+			return false
+	# An overrun card (unit_overrun.gd) is always a decision: its three answers are three prices.
+	for p in ns.unit_programmes:
+		if int((p.get("ask", {}) as Dictionary).get("posted", -1)) == now:
 			return false
 	for row in (ns.sector_drift.get("warnings", {}) as Dictionary).values():
 		if int(row.get("entered", -1)) == now:

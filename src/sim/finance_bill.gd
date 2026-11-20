@@ -144,6 +144,12 @@ static func refusal(state, loader, bill: Dictionary, force := false) -> Dictiona
 		# A units row says why (T10 on #413): the register's own reason, for the sheet.
 		if merged.has(FinanceRows.UNITS):
 			season["reason"] = UnitBuild.refusal(state, ns, loader, merged[FinanceRows.UNITS])
+	# The incoming text's own units rows (the parent's ruling on #413): merge() keeps a row
+	# once, so two equal rows in ONE bill are only seen here, before they collapse.
+	if season.is_empty() and bill.has(FinanceRows.UNITS):
+		var own := UnitBuild.refusal(state, ns, loader, bill[FinanceRows.UNITS])
+		if own != "":
+			season = {"tabled": false, "refused": true, "verb": true, "reason": own}
 	return season
 
 

@@ -43,8 +43,7 @@ static func merge(merged: Dictionary, bill: Dictionary) -> void:
 			bare.erase("quote")
 			var held := false
 			for kept in list:
-				if String(kept.get("type", "")) == String(bare.get("type", "")) and String(kept.get("op", "")) == String(bare.get("op", "")) \
-						and kept.get("rows", []) == bare.get("rows", []):
+				if same_units_row(kept, bare):
 					held = true
 			if not held:
 				list.append(bare)
@@ -64,6 +63,29 @@ static func merge(merged: Dictionary, bill: Dictionary) -> void:
 			if not list.is_empty():
 				funds[side] = list
 		merged[FUNDS] = funds
+
+
+## Whether two units rows are the same text: type, op, and each region's row in any order,
+## its numbers compared as numbers. A saved bill reads back through JSON with its ints
+## as floats, and in Godot 4.7.2 [3] == [3.0] is false, so a plain == would hold a
+## re-tabled row twice after a load. The one comparison of units rows (merge, and
+## UnitBuild.refusal's two identical rows in one bill).
+static func same_units_row(a: Dictionary, b: Dictionary) -> bool:
+	if String(a.get("type", "")) != String(b.get("type", "")) or String(a.get("op", "")) != String(b.get("op", "")):
+		return false
+	var ra: Array = a.get("rows", [])
+	var rb: Array = b.get("rows", [])
+	if ra.size() != rb.size():
+		return false
+	# By region, not by position: refusal() names a region once a row, so the order a
+	# screen lists them in is not part of the text.
+	var by_region := {}
+	for r in ra:
+		by_region[String(r.get("region", ""))] = [float(r.get("units", 0)), float(r.get("capacity", 0))]
+	for r in rb:
+		if by_region.get(String(r.get("region", ""))) != [float(r.get("units", 0)), float(r.get("capacity", 0))]:
+			return false
+	return true
 
 
 ## Whether any row is illegal on the live state now: true refuses the tabling (`verb`).
