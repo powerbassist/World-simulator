@@ -523,6 +523,8 @@ var _tax := false
 ## --books-draft: a draft on it; --books-tabled: a finance bill before the Assembly; --books-refused: another bill holds the slot.
 var _books_row := ""
 var _books_draft := false
+## --books-units: --books-draft plus a fuel duty (EUR/l) and the brackets: the tray's three unit kinds, five rows.
+var _books_units := false
 ## --books-sheet: the bill's sheet open over the Books page on the picture's draft (health +1.5, education -0.5, VAT +2).
 var _books_sheet := false
 var _books_move := false
@@ -1041,6 +1043,9 @@ func _init() -> void:
 			_books_move = true
 		elif args[i] == "--books-draft":
 			_books_draft = true
+		elif args[i] == "--books-units":
+			_books_draft = true
+			_books_units = true
 		elif args[i] == "--books-tabled":
 			_books_tabled = true
 		elif args[i] == "--books-refused":
@@ -2338,6 +2343,9 @@ func _stage_the_books() -> void:
 		page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
 		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
 		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
+	if _books_units:
+		page._draft.set_value("tax_rates_pct", "fuel_duty", float(ns.tax_rates_pct["fuel_duty"]) + 0.05)
+		page._draft.set_brackets(float(ns.tax_progressivity) + 0.1)
 	if _books_move:
 		# A share move drafted (Finances slice 5): the footer's "Apply the moves" (alone) or beside the rows of --books-draft.
 		page._draft.add_move("health", "hospitals", "prevention", 0.02)

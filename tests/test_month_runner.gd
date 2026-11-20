@@ -300,7 +300,7 @@ func _prepare_under_fire() -> void:
 
 
 func _aim_and_fire() -> bool:
-	var commit: Button = _b._windows.frame("finances")._content._foot.get_node("Table")
+	var commit: Button = _b._windows.frame("finances")._content._foot.find_child("Table", true, false)
 	var propose := _find_button(_b._briefing, "Propose the bill")
 	if propose == null:
 		_fail("premise: the briefing has no 'Propose the bill' button")

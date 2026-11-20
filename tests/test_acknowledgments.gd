@@ -75,14 +75,14 @@ func _check_withdraw_answers() -> void:
 	_main._windows.open("finances")
 	var page = _main._windows.frame("finances")._content
 	_redraw(page)
-	if page._foot.get_node("Withdraw").visible:
+	if page._foot.find_child("Withdraw", true, false).visible:
 		_fail("'Withdraw the bill' shows with no finance bill tabled")
 	FinanceBill.table(_main._state, _main._loader, {"tax_rates_pct": {"income": 5.0}})
 	_redraw(page)
-	if not page._foot.get_node("Withdraw").visible:
+	if not page._foot.find_child("Withdraw", true, false).visible:
 		_fail("'Withdraw the bill' is hidden while a finance bill is tabled")
 	var before_count: int = _main._hud.inbox.card_count()
-	page._foot.get_node("Withdraw").pressed.emit()
+	page._foot.find_child("Withdraw", true, false).pressed.emit()
 	if _main._hud.inbox.card_count() != before_count + 1 or not _stack_text().contains("FINANCE BILL WITHDRAWN"):
 		_fail("withdrawing the finance bill pushed no card saying so: '%s'" % _stack_text())
 	if not _main._state.player().tabled_bill.is_empty():
