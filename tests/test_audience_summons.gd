@@ -125,13 +125,17 @@ func _check_who_cannot_be_summoned() -> void:
 		_fail("premise: the asker could not ask: %s" % [asked])
 	elif String(Audiences.summon(state, ns, _loader, asker, day).get("code", "")) != K.SUMMON_ASKED:
 		_fail("a person with an open request was not refused as having asked")
-	# The cap: once per SUMMON_COOLDOWN_MONTHS, cancelled or not.
+	# The cap: once per SUMMON_COOLDOWN_MONTHS while the summons stands (a cancel gives it back,
+	# the parent's R-432-cancel ruling).
 	var pid := _own_quiet(state, [asker])
 	var first: Dictionary = Audiences.summon(state, ns, _loader, pid, day)
 	if not bool(first.get("ok", false)):
 		_fail("premise: the first summons was refused: %s" % [first])
 		return
-	Audiences.decline(state, ns, _loader, String(first["request"]["id"]))
+	for row in ns.audience_requests:  # a no-show, as tick_month closes one: the day back, the stamp kept
+		if String(row["id"]) == String(first["request"]["id"]):
+			Audiences._unbook(state, row)
+			Audiences._close(row, K.STATUS_CANCELLED, _now(state))
 	if String(Audiences.summon(state, ns, _loader, pid, _day(state, 22)).get("code", "")) != K.SUMMON_RECENT:
 		_fail("a second summons inside the cooldown was not refused as recent")
 	var recent: Dictionary = Audiences.summon_refusal(state, ns, _loader, pid)
@@ -139,7 +143,7 @@ func _check_who_cannot_be_summoned() -> void:
 		_fail("summon_refusal does not say the cooldown and the month it lifts: %s" % [recent])
 	ns.audience_summoned_month[pid] = _now(state) - K.SUMMON_COOLDOWN_MONTHS
 	if not Audiences.summon_refusal(state, ns, _loader, pid).is_empty():
-		_fail("the cooldown still holds %d months on" % K.SUMMON_COOLDOWN_MONTHS)
+		_fail("the cooldown still holds %d months on: %s" % [K.SUMMON_COOLDOWN_MONTHS, Audiences.summon_refusal(state, ns, _loader, pid)])
 	if K.SUMMON_COOLDOWN_MONTHS != K.REQUEST_COOLDOWN_MONTHS:
 		_fail("the summons' cooldown is not the months a person waits between two asks")
 
@@ -296,6 +300,9 @@ func _check_a_missed_summons_costs_nothing() -> void:
 				_fail("a missed summons was reported as a lapsed request")
 	if String(Audiences.request(ns, id)["status"]) != K.STATUS_CANCELLED:
 		_fail("a missed summons reads '%s', not cancelled" % Audiences.request(ns, id)["status"])
+	# R-432-cancel: a no-show keeps the stamp, the person's months still run.
+	if String(Audiences.summon_refusal(state, ns, _loader, pid).get("code", "")) != K.SUMMON_RECENT:
+		_fail("a missed summons gave back its stamp: %s" % [Audiences.summon_refusal(state, ns, _loader, pid)])
 	if [float(ns.person_grudges.get(pid, 0.0)), President.rapport(ns, pid)] != before:
 		_fail("a missed summons cost something: %s -> %s" % [before, [ns.person_grudges.get(pid, 0.0), President.rapport(ns, pid)]])
 
@@ -326,6 +333,10 @@ func _check_a_cancelled_summons_costs_nothing() -> void:
 			_fail("a cancelled summons kept its day")
 	if String(Audiences.request(ns, id)["status"]) != K.STATUS_CANCELLED:
 		_fail("a cancelled summons reads '%s'" % Audiences.request(ns, id)["status"])
+	# R-432-cancel: the player's cancel before the day gives back both stamps, the month's one
+	# summons and the person's months: the same person can be summoned again this month.
+	if not Audiences.summon_refusal(state, ns, _loader, pid).is_empty():
+		_fail("a cancelled summons kept its stamp: %s" % [Audiences.summon_refusal(state, ns, _loader, pid)])
 	# The phone and the roster have nothing to ask about either while a summons stands (next
 	# month: one summons a month). QA's lead 13: the summons must succeed for this to read.
 	_advance(state)

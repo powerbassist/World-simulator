@@ -12,8 +12,9 @@ extends RefCounted
 ## with no price -- it was the president's own appointment.
 ##
 ## THE CAP: one summons per person in SUMMON_COOLDOWN_MONTHS (the months a person waits between
-## two asks), stamped in ns.audience_summoned_month at the booking; a cancelled one keeps its
-## stamp, so a cancel and a re-book cannot farm the hold's rapport.
+## two asks), stamped in ns.audience_summoned_month at the booking. The player's cancel before the
+## day gives the stamp back (the parent's R-432-cancel ruling: no meeting was held, so no rapport to
+## farm); a no-show keeps it.
 
 const K = preload("res://src/sim/audience_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
