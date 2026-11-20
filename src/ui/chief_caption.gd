@@ -77,6 +77,12 @@ func _tip_if_cut() -> void:
 	tooltip_text = _line.text if _line.get_line_count() > MAX_LINES else ""
 
 
+## Read when the tooltip is asked for, not only when the label resizes: a text-size change can
+## re-wrap the line without moving the label's size, and the stored tooltip would go stale.
+func _get_tooltip(_at: Vector2) -> String:
+	return _line.text if _line.get_line_count() > MAX_LINES else ""
+
+
 ## A new theme -- the text size changed -- moves the minimum width with it.
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_THEME_CHANGED and _line != null:
