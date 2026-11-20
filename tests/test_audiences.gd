@@ -58,6 +58,7 @@ func _init() -> void:
 	_check_lapse_costs_what_a_decline_costs()
 	_check_delegation_costs_a_share()
 	_check_booking_takes_any_free_day()
+	_check_the_window_crosses_a_year_on_a_stale_day()
 	_check_an_unplaceable_request_still_offers_the_rest()
 	_check_a_booked_request_can_still_be_declined()
 	_check_a_decline_at_the_ceiling_still_costs()
@@ -449,6 +450,35 @@ func _check_booking_takes_any_free_day() -> void:
 		_fail("a booking left %d diary entries and status '%s'" % [entries, Audiences.request(ns, id)["status"]])
 	if bool(Audiences.book(state, ns, _loader, id, last).get("ok", true)):
 		_fail("a booked request was booked a second time")
+
+
+## GLM's gap pass (kept two of eight): a window across a year end, read on a stale day past the
+## month's end (Calendar's rule: it reads as the month's last day, so tomorrow is 1 January).
+func _check_the_window_crosses_a_year_on_a_stale_day() -> void:
+	var case = _game_with_request()
+	if case.is_empty():
+		return
+	var state = case["state"]
+	var ns = state.player()
+	var id := String(case["row"]["id"])
+	state.year = 2026
+	state.month = 12
+	state.day = 40
+	for row in ns.audience_requests:
+		if String(row["id"]) == id:
+			row["deadline_month"] = 2027 * 12 + 2
+	var dates: Array[Dictionary] = Audiences.offered_dates(state, ns, id)
+	if dates.size() != 31 + 28:
+		_fail("a window from a stale 31 December to February 2027 offered %d days, not 59" % dates.size())
+		return
+	if [int(dates[0]["year"]), int(dates[0]["month"]), int(dates[0]["day"])] != [2027, 1, 1] \
+			or [int(dates[58]["year"]), int(dates[58]["month"]), int(dates[58]["day"])] != [2027, 2, 28]:
+		_fail("the year-end window runs %s to %s, not 1 JAN to 28 FEB 2027" % [dates[0], dates[58]])
+	var r: Dictionary = Audiences.book(state, ns, _loader, id, {"year": 2026, "month": 12, "day": 31})
+	if bool(r.get("ok", true)) or String(r.get("reason", "")) != K.BOOK_PASSED:
+		_fail("31 December, today on a stale day, read %s, not passed" % [r])
+	if not bool(Audiences.book(state, ns, _loader, id, {"year": 2027, "month": 2, "day": 28}).get("ok", false)):
+		_fail("the last day of a window across the year end was refused")
 
 
 ## B2's 100 % row: every offered day taken, and the card still answers.
