@@ -57,17 +57,33 @@ func _process(_delta: float) -> bool:
 			_go()
 		28:
 			_check_focus()
-			# #431 pass 2 TAKE 1: the clock turns the picked day into today under the player's
-			# hand (the keyboard stands on Book here, so the grid's daily redraw waits).
+			# TAKE 1, nothing in hand: the focus and the pointer leave, the clock turns the
+			# picked day into today, and the redraw re-picks the first free day.
+			var focused := root.gui_get_focus_owner()
+			if focused != null:
+				focused.release_focus()
+			var away := InputEventMouseMotion.new()
+			away.position = Vector2(2, 2)
+			root.push_input(away)
 			_main._clock.advance_one_day()
-		30:
-			_click_book(true)
 		32:
-			_click_book(false)
+			_check_unheld_turn_repicked()
+			# TAKE 1 and 2, in hand: the keyboard back on Book here, the day turns again.
+			var held := _book_here(_other)
+			if held != null:
+				held.grab_focus()
+			_main._clock.advance_one_day()
+			_main._calendar_panel._grid._process(0.0)
+			if held == null or not is_instance_valid(held) or not held.is_inside_tree():
+				_fail("the day's redraw freed the Book here the keyboard stands on")
 		34:
+			_click_book(true)
+		36:
+			_click_book(false)
+		38:
 			_check_turned_day_booked()
 			_main._windows.close("calendar")
-		36:
+		40:
 			_check_closed()
 			_finish()
 			return true
@@ -263,6 +279,12 @@ func _check_turned_day_booked() -> void:
 	elif int(date.get("year", 0)) * 10000 + int(date.get("month", 0)) * 100 + int(date.get("day", 0)) \
 			<= int(_main._state.year) * 10000 + int(_main._state.month) * 100 + int(_main._state.day):
 		_fail("the turned day booked %s, today or before" % [date])
+
+
+func _check_unheld_turn_repicked() -> void:
+	var grid = _main._calendar_panel._grid
+	if grid._selected <= int(_main._state.day) or _book_here(_other) == null:
+		_fail("with nothing in hand, the turned day stayed picked (day %d, today %d) or lists no Book here" % [grid._selected, int(_main._state.day)])
 
 
 func _check_closed() -> void:

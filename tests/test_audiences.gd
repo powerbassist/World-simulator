@@ -423,6 +423,8 @@ func _check_booking_takes_any_free_day() -> void:
 	# TAKE 6: one end date -- the card's answer-by is the window's last month.
 	if Audiences.answer_by(case["row"]) != last_month:
 		_fail("answer-by reads %d, the window ends in %d" % [Audiences.answer_by(case["row"]), last_month])
+	if not bool(Audiences.answers(state, ns, _loader, id)["book"]["ok"]):
+		_fail("a request with free days reads Book closed: %s" % [Audiences.answers(state, ns, _loader, id)["book"]])
 	# TAKE 3: the first free day without walking the window.
 	var first_free: Dictionary = Audiences.first_free_day(state, ns, id)
 	for d in dates:
@@ -439,7 +441,8 @@ func _check_booking_takes_any_free_day() -> void:
 	var refused := func(date: Dictionary, reason: String, label: String) -> void:
 		var r: Dictionary = Audiences.book(state, ns, _loader, id, date)
 		# #431 pass 2 TAKE 8: the code under `code`, the words under `reason` (and `error`).
-		if bool(r.get("ok", true)) or String(r.get("code", "")) != reason or String(r.get("reason", "")) == "" or String(r.get("error", "")) == "":
+		if bool(r.get("ok", true)) or String(r.get("code", "")) != reason or String(r.get("reason", "")) != String(r.get("error", "")) \
+				or String(r.get("reason", "")) == reason or String(r.get("error", "")) == "":
 			_fail("booking %s (%s) read %s, not refused for '%s' with words" % [date, label, r, reason])
 	refused.call({"year": state.year, "month": state.month, "day": 10}, K.BOOK_PASSED, "today")
 	refused.call({"year": state.year, "month": state.month, "day": 3}, K.BOOK_PASSED, "a day gone")
