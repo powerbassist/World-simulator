@@ -17,15 +17,23 @@ const DateText = preload("res://src/ui/date_text.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const OrderSlot = preload("res://src/ui/order_slot.gd")
 const Strings = preload("res://src/ui/strings.gd")
-const VerbPlate = preload("res://src/ui/verb_plate.gd")
+const VerbBlock = preload("res://src/ui/verb_block.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 const TermText = preload("res://src/ui/term_text.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
+
+## The picked key of the finance bill, whose queue entry has no law id.
+const FINANCE := "finance"  # i18n: ok a key
 
 var places: Array = []
 var _row: HBoxContainer
 var _state
 var _loader
 var _find_law: Callable
+## The bill a right click picked (its law id, FINANCE for the finance bill), "" for none: its verbs dock under the
+## places and follow the bill, not its place (a close promotes the queue; a move reorders it).
+var _picked := ""
+var _verbs: VBoxContainer
 
 
 func _init() -> void:
@@ -41,11 +49,19 @@ func _init() -> void:
 	_row = HBoxContainer.new()
 	_row.add_theme_constant_override("separation", 8)
 	add_child(_row)
+	_verbs = VBoxContainer.new()
+	VerbBlock.tag(_verbs)
+	add_child(_verbs)
 
 
 ## `find_law` is the host's lookup of a law by id (a composed draft lives on the register, not
 ## the loader). Rebuilt from the state each time: the paper has no state of its own.
 func refresh(state, loader, find_law: Callable) -> void:
+	if state != _state:
+		_picked = ""  # another game (a load): its queue is not the one the bill was picked in
+	# The tab's refresh rebuilds the block; a verb the keyboard was on is lit again on the rebuilt one.
+	var focus: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	var relight := VerbBlock.key_of(focus) if focus is Button and _verbs.is_ancestor_of(focus) else ""
 	_state = state
 	_loader = loader
 	_find_law = find_law
@@ -60,6 +76,9 @@ func refresh(state, loader, find_law: Callable) -> void:
 		var held := not entry.is_empty()
 		_place(i, "%d · %s" % [i + 2, BillVerbs.month_name(state, i).to_upper()], _date_text(BillVerbs.division(state, i)),
 			_name_of(entry) if held else "", held)
+	_build_verbs(ns)
+	if relight != "":
+		VerbBlock.refocus(self, relight)
 
 
 func _place(i: int, title: String, date: String, name_text: String, handle: bool) -> void:
@@ -116,18 +135,84 @@ func _move(from: int, to: int) -> void:
 		changed.emit()
 
 
+## The picked bill's place in the queue, -1 when none is picked or it left the queue.
+func picked_index() -> int:
+	return _index_of(_picked)
+
+
+func _index_of(key: String) -> int:
+	if key == "" or _state == null:
+		return -1
+	var queue: Array = _state.player().bill_queue
+	for i in queue.size():
+		if _key_of(queue[i]) == key:
+			return i
+	return -1
+
+
+static func _key_of(entry: Dictionary) -> String:
+	var id := String(entry.get("law_id", ""))
+	return id if id != "" else FINANCE
+
+
+## A verb's press finds its bill's place at the press, never the place it was built at.
+func _move_by(key: String, step: int) -> void:
+	var i := _index_of(key)
+	if i >= 0:
+		_move(i, i + step)
+
+
+## The rework pass's C: a right click on a queued place picks it, docks its verbs under the four places and lights
+## them (no plate).
 func _menu(i: int) -> void:
-	var plate = VerbPlate.of(self)
-	if plate == null:
+	var queue: Array = _state.player().bill_queue
+	_picked = _key_of(queue[i]) if i >= 0 and i < queue.size() else ""
+	# A mouse gesture: a verb the keyboard was on is let go, not carried onto the new bill's block by the relight.
+	var focus: Control = get_viewport().gui_get_focus_owner()
+	if focus != null and _verbs.is_ancestor_of(focus):
+		focus.release_focus()
+	refresh(_state, _loader, _find_law)
+	VerbBlock.light(self)
+
+
+## The picked place's verbs, each down one with its reason in words under the row (never only a tooltip).
+func _build_verbs(ns) -> void:
+	for child in _verbs.get_children():
+		_verbs.remove_child(child)
+		child.queue_free()
+	var n: int = ns.bill_queue.size()
+	var i := _index_of(_picked)
+	if i < 0:
+		_picked = ""  # it left the queue (tabled by a close, or taken out)
+	_verbs.visible = i >= 0
+	if i < 0:
 		return
-	var n: int = _state.player().bill_queue.size()
-	plate.open(self, [
-		{"text": tr("Move earlier"), "enabled": i > 0, "reason": tr("It is already first in the queue."), "call": _move.bind(i, i - 1)},
-		{"text": tr("Move later"), "enabled": i < n - 1, "reason": tr("It is already last in the queue."), "call": _move.bind(i, i + 1)},
-		{"text": tr("Take out of the queue"), "enabled": true, "call": _take_out.bind(i)},
-	])
+	var key := _picked
+	var head := Label.new()
+	head.theme_type_variation = UiTheme.MICRO
+	head.text = tr("What you can do · %s") % _name_of(ns.bill_queue[i])
+	_verbs.add_child(head)
+	var row := PanelKit.buttons(_verbs)
+	var reasons := PackedStringArray()
+	for verb in [
+			[tr("Move earlier"), i > 0, tr("It is already first in the queue."), _move_by.bind(key, -1)],
+			[tr("Move later"), i < n - 1, tr("It is already last in the queue."), _move_by.bind(key, 1)],
+			[tr("Take out of the queue"), true, "", _take_out.bind(key)]]:
+		var press := PanelKit.sized(Button.new())
+		press.text = String(verb[0])
+		press.disabled = not bool(verb[1])
+		press.pressed.connect(verb[3])
+		row.add_child(press)
+		if press.disabled:
+			reasons.append(String(verb[2]))
+	if n == 1:
+		reasons = PackedStringArray([tr("It is the only bill in the queue.")])  # one reason, not "first ... last"
+	if not reasons.is_empty():
+		PanelKit.plain_line(_verbs, " ".join(reasons))
 
 
-func _take_out(i: int) -> void:
-	if BillQueue.remove(_state, i):
+func _take_out(key: String) -> void:
+	var i := _index_of(key)
+	if i >= 0 and BillQueue.remove(_state, i):
+		_picked = ""
 		changed.emit()

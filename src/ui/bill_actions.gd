@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## What a law's verbs do toward the slot and the queue -- V5.3 screen 4, PR 1. The sheet's verb row
-## (verbs) and the row's right click (menu) are two doors onto ONE table (bill_verbs.gd), so a
+## (verbs) and the row's right click, which lights that row, read ONE table (bill_verbs.gd), so a
 ## verb is down on both with the same reason, and neither offers a press the sim refuses.
 ## The commands are BillQueue's; the panel only redraws (mark_dirty).
 
@@ -9,9 +9,7 @@ const ActsOn = preload("res://src/ui/acts_on.gd")
 const BillQueue = preload("res://src/sim/bill_queue.gd")
 const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
-const Strings = preload("res://src/ui/strings.gd")
-const VerbPlate = preload("res://src/ui/verb_plate.gd")
-const DateText = preload("res://src/ui/date_text.gd")
+const VerbBlock = preload("res://src/ui/verb_block.gd")
 
 ## The sheet buttons' node names, which the tests and the briefing's Go find them by.
 const QUEUE := "Queue"  # i18n: ok a node name
@@ -79,28 +77,9 @@ static func take_out(list, law_id: String) -> void:
 	panel.mark_dirty()
 
 
-## A press on a law's row: the right button opens its verbs. (A signal's argument comes first,
-## the bound ones after.)
+## A press on a law's row: the right button selects it and lights its sheet's verbs (the rework pass's C;
+## the plate is gone). (A signal's argument comes first, the bound ones after.)
 static func row_input(event: InputEvent, list, law) -> void:
-	var press := event as InputEventMouseButton
-	if press != null and press.pressed and press.button_index == MOUSE_BUTTON_RIGHT:
-		menu(list, law)
-
-
-## The right click on a law's row: the same verbs, each a press (or down, with its reason).
-static func menu(list, law) -> void:
-	var panel = list._panel
-	var plate = VerbPlate.of(panel)
-	if plate == null:
-		return
-	var cells := BillVerbs.cells(panel._state, panel._loader, String(law.id), panel._find_law)
-	var queue: Dictionary = cells["queue"]
-	# One verb, as on the sheet: while the slot is held the queue's press is the proposal.
-	var items: Array = [] if bool(queue["shown"]) else [
-		{"text": Strings.t("Propose for %s") % DateText.month_long(int(panel._state.month)), "enabled": cells["propose"] == "", "reason": cells["propose"], "call": panel.run_proposal.bind(law)}]
-	if bool(queue["shown"]):
-		items.append({"text": queue["text"], "enabled": queue["enabled"], "reason": queue["reason"], "call": add.bind(list, law)})
-	if bool(cells["unqueue"]["shown"]):
-		items.append({"text": cells["unqueue"]["text"], "enabled": true, "call": take_out.bind(list, String(law.id))})
-	items.append({"text": Strings.t("Open the sheet"), "enabled": true, "call": list.select.bind(String(law.id))})
-	plate.open(panel, items)
+	if VerbBlock.is_right_press(event):
+		list.select(String(law.id))
+		VerbBlock.light(list._detail)

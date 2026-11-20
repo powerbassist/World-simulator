@@ -12,6 +12,7 @@ extends HBoxContainer
 ## The panel (law_panel.gd) still owns every command and every helper the rows read
 ## (`forecast_counts`, `_majority_phrase`, `_offer` and the verbs); this file lays the catalogue out.
 
+const VerbBlock = preload("res://src/ui/verb_block.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
@@ -291,6 +292,7 @@ func _build_detail(ns, party_list: Array, law) -> void:
 
 func _verbs(ns, law) -> void:
 	var row := PanelKit.buttons(_detail)
+	VerbBlock.tag(row)  # a right click on the law's row lights it
 	var propose := Button.new()
 	propose.name = "Propose"  # i18n: ok a node name
 	# The Bills second pass: the verb names the month the bill divides in (the slot's month).
