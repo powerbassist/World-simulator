@@ -234,6 +234,11 @@ func _check_the_plate_moves_and_takes_out() -> void:
 	_panel()._process(0.0)
 	if String(_ns().bill_queue[0]["law_id"]) != _ids[2]:
 		_fail("Move later did not swap the queue: %s" % [_ns().bill_queue])
+	var after = _main.get_viewport().gui_get_focus_owner()
+	if _block() == null or after == null or not _block().is_ancestor_of(after):
+		_fail("after Move later the tab's refresh left the docked verbs unlit (focus on %s)" % after)
+	if _paper()._picked != 1:
+		_fail("the docked verbs did not follow their bill to place %d (picked %d)" % [1, _paper()._picked])
 	_paper().places[1].menu_requested.emit(0)
 	_block_buttons()[2].pressed.emit()  # Take out of the queue
 	_panel()._process(0.0)

@@ -25,7 +25,7 @@ static func is_right_press(event: InputEvent) -> bool:
 ## its scroll's view once laid out. A block with every verb down still scrolls into view.
 static func light(root: Node) -> void:
 	for node in root.find_children("*", "", true, false):
-		if not node.has_meta(META) or not (node as Control).is_visible_in_tree():
+		if not node.has_meta(META) or not (node as Control).is_visible_in_tree() or _dying(node, root):
 			continue
 		var block := node as Control
 		for button in block.find_children("*", "Button", true, false):  # i18n: ok a class name
@@ -44,3 +44,13 @@ static func light(root: Node) -> void:
 static func _scroll_to(scroll: ScrollContainer, block: Control) -> void:
 	if is_instance_valid(scroll) and is_instance_valid(block) and scroll.is_ancestor_of(block):
 		scroll.ensure_control_visible(block)
+
+
+## Whether `node` or an ancestor up to `root` is queued for deletion: a panel that rebuilds with queue_free keeps the
+## old block in the tree until the frame ends, and lighting it would focus a verb about to be freed.
+static func _dying(node: Node, root: Node) -> bool:
+	while node != null and node != root:
+		if node.is_queued_for_deletion():
+			return true
+		node = node.get_parent()
+	return false

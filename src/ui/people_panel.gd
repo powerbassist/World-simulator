@@ -123,6 +123,7 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	_light = false  # a right click of the discarded game lights nothing in this one
 
 
 ## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).

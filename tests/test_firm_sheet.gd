@@ -235,11 +235,14 @@ func _check_menu() -> void:
 	_panel._refresh()
 	var block = null
 	for node in _panel._sheet.find_children("*", "", true, false):
-		if node.has_meta("verb_block"):
+		if node.has_meta("verb_block") and not node.is_queued_for_deletion() and not node.get_parent().is_queued_for_deletion():
 			block = node
 	if block == null:
 		_fail("the firm's sheet has no verb block")
 		return
+	var focus = _panel.get_viewport().gui_get_focus_owner()
+	if focus == null or not block.is_ancestor_of(focus):
+		_fail("the rebuilt sheet's verbs are not lit (focus on %s)" % focus)
 	var texts := []
 	for b in block.find_children("*", "Button", true, false):
 		texts.append((b as Button).text)
@@ -249,6 +252,15 @@ func _check_menu() -> void:
 		_fail("the sheet's verbs do not offer to call the chief: %s" % [texts])
 	if not joined.contains(_main.tr("Show on the map")):
 		_fail("the sheet's verbs do not offer the map: %s" % [texts])
+	var called := []
+	var mapped := []
+	_panel.call_requested.connect(func(pid: String) -> void: called.append(pid), CONNECT_ONE_SHOT)
+	_panel.map_requested.connect(func(at: Vector2) -> void: mapped.append(at), CONNECT_ONE_SHOT)
+	for b in block.find_children("*", "Button", true, false):
+		if (b as Button).text == _main.tr("Show on the map") or (b as Button).text.ends_with(_main._loader.person_name(String(_major.chief_id))):
+			(b as Button).pressed.emit()
+	if called != [String(_major.chief_id)] or mapped.size() != 1:
+		_fail("the sheet's Call and Map pressed: call %s, map %s" % [called, mapped])
 	# An arrow's nudge moves one stop; a typed price snaps to the nearest.
 	var prices := [0.0, 2.5, 4.6]
 	if SectorProgramme.snap_stop(prices, 1, 2.51, 0.01) != 2 or SectorProgramme.snap_stop(prices, 1, 2.49, 0.01) != 0:
