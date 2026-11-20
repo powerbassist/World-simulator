@@ -88,6 +88,11 @@ func _process(_delta: float) -> bool:
 			_call_then_load()
 		29:
 			_check_loaded()
+			# Cloud mutant M15 on #430: a load forgets a right click's pending light.
+			_main._people_panel._light = true
+			_main._people_panel.setup(_main._state, _main._loader)
+			if _main._people_panel._light:
+				_fail("a load kept the discarded game's light on People")
 			_finish()
 			return true
 	return false
@@ -252,13 +257,20 @@ func _people_row() -> Control:
 	return null
 
 
-## The right click's plate is up with the line's verbs: press its Call.
+## The rework pass's C: the right click picked the line and lit its verbs (the strip under it, no focus): press its Call.
 func _press_plate_call() -> void:
-	var plate = _main.find_child("VerbPlate", true, false)
-	if plate == null or not plate.visible:
-		_fail("a right click on a person in People did not open its verbs")
+	var people = _main._people_panel
+	var focus = _main.get_viewport().gui_get_focus_owner()
+	var strip = null
+	for node in people.find_children("*", "", true, false):
+		if node.has_meta("verb_block") and (node as Control).is_visible_in_tree():
+			strip = node
+	if strip == null:
+		_fail("a right click on a person in People did not light its verbs")
 		return
-	for button in plate.find_children("*", "Button", true, false):
+	if focus != null and people.is_ancestor_of(focus):
+		_fail("a right click on a person in People gave the keyboard to %s" % focus)
+	for button in strip.find_children("*", "Button", true, false):
 		if (button as Button).text.begins_with(Strings.t("Call: no day, worse odds").get_slice(":", 0)):
 			(button as Button).pressed.emit()
 			return

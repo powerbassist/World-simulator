@@ -62,11 +62,23 @@ func _process(_delta: float) -> bool:
 		12:
 			_check_tabled()
 			_check_typed_box_snaps()
-			_check_menu()
 		14:
+			_right_click_major()
+			# T6: a rebuild takes the old sheet out at once; left in the tree to the frame's end it doubled the
+			# content the deferred scroll measured, and the lit block landed off its place.
+			_panel._refresh()
+			for child in _panel._sheet.get_children() + _panel._body.get_children():
+				if child.is_queued_for_deletion():
+					_fail("a rebuild left the old %s in the sheet's tree" % child)
+					break
+		16:
+			_check_lit_block_on_screen()
+			_check_menu()
+			_check_a_load_forgets_the_light()
+		17:
 			# The scene goes a frame before the quit: its text shapes are freed, not leaked.
 			_main.queue_free()
-		16:
+		19:
 			_finish()
 			return true
 	return false
@@ -218,40 +230,83 @@ func _check_typed_box_snaps() -> void:
 	_fail("no typed box on the programme row")
 
 
-func _check_menu() -> void:
-	# A right click on a major's NAME opens the plate (QA's play of #381: only the face did).
-	var plate = preload("res://src/ui/verb_plate.gd").of(_panel)
-	plate.hide()
+## Pass 2 T6+9: a frame after a right click, the lit block is inside its scroll's view (the old sheet, freed late,
+## offset it).
+func _check_lit_block_on_screen() -> void:
+	var block: Control = null
+	for node in _panel._sheet.find_children("*", "", true, false):
+		if node.has_meta("verb_block") and (node as Control).is_visible_in_tree():
+			block = node
+	if block == null:
+		_fail("no lit block a frame after the right click")
+		return
+	var scroll: Control = _panel._sheet.get_parent().get_parent()
+	if not scroll.get_global_rect().grow(1.0).encloses(block.get_global_rect()):
+		_fail("the lit block %s is off its scroll's view %s" % [block.get_global_rect(), scroll.get_global_rect()])
+
+
+func _right_click_major() -> void:
+	(_panel._sheet.get_parent().get_parent() as ScrollContainer).scroll_vertical = 0
 	for button in _panel.find_children("*", "Button", true, false):
 		if String(button.get_meta("firm", "")) == String(_major.id):
 			var click := InputEventMouseButton.new()
 			click.button_index = MOUSE_BUTTON_RIGHT
 			click.pressed = true
 			button.gui_input.emit(click)
-	if plate == null or not plate.visible:
-		_fail("a right click on %s's name opens no plate" % _major.company_name)
-	elif plate != null:
-		plate.hide()
-	var ns = _main._state.player()
-	var items: Array = _panel.menu_items(_major)
+			return
+	_fail("no major's name to right-click")
+
+
+## Pass 2 T7: a load forgets a light the discarded game asked for.
+func _check_a_load_forgets_the_light() -> void:
+	_panel._light = true
+	_panel.setup(_main._state, _main._loader)
+	if _panel._light:
+		_fail("a load kept the discarded game's light")
+
+
+func _check_menu() -> void:
+	# The rework pass's C: a right click on a major's NAME selects it and lights the sheet's verbs.
+	_panel._firm_id = ""
+	for button in _panel.find_children("*", "Button", true, false):
+		if String(button.get_meta("firm", "")) == String(_major.id):
+			var click := InputEventMouseButton.new()
+			click.button_index = MOUSE_BUTTON_RIGHT
+			click.pressed = true
+			button.gui_input.emit(click)
+			break
+	if _panel._firm_id != String(_major.id):
+		_fail("a right click on %s's name did not select it (selected '%s')" % [_major.company_name, _panel._firm_id])
+	if not _panel._light:
+		_fail("a right click on %s does not ask to light the sheet's verbs" % _major.company_name)
+	_panel._refresh()
+	var block = null
+	for node in _panel._sheet.find_children("*", "", true, false):
+		if node.has_meta("verb_block") and not node.is_queued_for_deletion() and not node.get_parent().is_queued_for_deletion():
+			block = node
+	if block == null:
+		_fail("the firm's sheet has no verb block")
+		return
+	var focus = _panel.get_viewport().gui_get_focus_owner()
+	if focus != null and _panel.is_ancestor_of(focus):
+		_fail("a right click on a firm gave the keyboard to %s" % focus)
 	var texts := []
-	for item in items:
-		texts.append(String(item["text"]))
-	var joined := "\n".join(texts)
-	for action in Companies.available(_main._state, ns, _main._loader.company_actions, String(_major.id), _main._loader):
-		if not joined.contains(String(action.action_name)) and not joined.contains(_main.tr(String(action.action_name))):
-			_fail("the right click does not list %s" % action.id)
+	for b in block.find_children("*", "Button", true, false):
+		texts.append((b as Button).text)
+	var joined := " | ".join(texts)
 	if not joined.contains(_main._loader.person_name(String(_major.chief_id))):
-		_fail("the right click does not offer to call the chief")
+		_fail("the sheet's verbs do not offer to call the chief: %s" % [texts])
 	if not joined.contains(_main.tr("Show on the map")):
-		_fail("the right click does not offer the map")
-	# A verb's item selects the firm and focuses that verb on the sheet (GLM's gap 8).
-	for item in items:
-		if String(item["text"]).contains(String(_action("industrial_subsidy").action_name)):
-			_panel._firm_id = ""
-			item["call"].call()
-			if _panel._firm_id != String(_major.id) or _panel._focus_verb != "industrial_subsidy":
-				_fail("the menu's subsidy picked firm '%s', verb '%s'" % [_panel._firm_id, _panel._focus_verb])
+		_fail("the sheet's verbs do not offer the map: %s" % [texts])
+	var called := []
+	var mapped := []
+	_panel.call_requested.connect(func(pid: String) -> void: called.append(pid), CONNECT_ONE_SHOT)
+	_panel.map_requested.connect(func(at: Vector2) -> void: mapped.append(at), CONNECT_ONE_SHOT)
+	for b in block.find_children("*", "Button", true, false):
+		if (b as Button).text == _main.tr("Show on the map") or (b as Button).text.ends_with(_main._loader.person_name(String(_major.chief_id))):
+			(b as Button).pressed.emit()
+	if called != [String(_major.chief_id)] or mapped.size() != 1:
+		_fail("the sheet's Call and Map pressed: call %s, map %s" % [called, mapped])
 	# An arrow's nudge moves one stop; a typed price snaps to the nearest.
 	var prices := [0.0, 2.5, 4.6]
 	if SectorProgramme.snap_stop(prices, 1, 2.51, 0.01) != 2 or SectorProgramme.snap_stop(prices, 1, 2.49, 0.01) != 0:

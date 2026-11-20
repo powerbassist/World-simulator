@@ -36,7 +36,7 @@ const RosterLine = preload("res://src/ui/roster_line.gd")
 const RosterVerbs = preload("res://src/ui/roster_verbs.gd")
 const CabinetVerbs = preload("res://src/ui/cabinet_verbs.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
-const VerbPlate = preload("res://src/ui/verb_plate.gd")
+const VerbBlock = preload("res://src/ui/verb_block.gd")
 const CK = preload("res://src/sim/cabinet_constants.gd")
 
 const HEADS := ["Person", "Holds", "Feels", "Wants now", "You owe", "Known"]  # i18n: msgid
@@ -53,6 +53,8 @@ var _verbs := CabinetVerbs.new()
 var _chip := "needs"
 ## The focused line: ["person" | "office", id], or [] for none.
 var _picked: Array = []
+## A right click asked to light the picked line's verbs once the roster is rebuilt.
+var _light := false
 ## The focused line takes the keyboard back after the rebuild that freed it.
 var _refocus := false
 ## The briefing's person Go lands on that person's first verb.
@@ -121,6 +123,7 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	_light = false  # a right click of the discarded game lights nothing in this one
 
 
 ## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).
@@ -274,17 +277,21 @@ func _pick(kind: String, id: String) -> void:
 	_dirty = true
 
 
-## The right click's plate: the same items as the strip.
+## The right click (the rework pass's C, no plate): the line is picked and its strip of verbs lit after the rebuild.
 func _menu(kind: String, row: Dictionary) -> void:
-	var plate = VerbPlate.of(self)
-	if plate == null:
-		return
-	plate.open(self, _person_items(row) if kind == "person" else RosterVerbs.for_office(_state, _loader, row, _verbs))
+	_pick(kind, String(row["id"] if kind == "person" else row["portfolio"]))
+	_light = true
+	_dirty = true
 
 
 ## After a rebuild: a Go lands on the focused person's first live verb; a pick keeps the
 ## keyboard on its line.
 func _land() -> void:
+	if _light:
+		_light = false
+		_refocus = false
+		VerbBlock.light(_body)
+		return
 	if focused != "":
 		var seats := focused == "seats"
 		focused = ""
