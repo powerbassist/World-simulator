@@ -35,7 +35,7 @@ static func for_person(state, loader, row: Dictionary, see: Callable, call: Call
 	else:
 		var day := first_free(state, request)
 		if day.is_empty():
-			item["reason"] = Strings.t("None of the days they offer is free in your diary.")
+			item["reason"] = Strings.t("No day in your diary is free before their last day.")
 		else:
 			item["text"] = Strings.t("See them on %s") % DateText.day_month(int(day["day"]), int(day["month"]))
 			item["enabled"] = true

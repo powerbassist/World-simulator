@@ -57,8 +57,17 @@ func _process(_delta: float) -> bool:
 			_go()
 		28:
 			_check_focus()
-			_main._windows.close("calendar")
+			# #431 pass 2 TAKE 1: the clock turns the picked day into today under the player's
+			# hand (the keyboard stands on Book here, so the grid's daily redraw waits).
+			_main._clock.advance_one_day()
 		30:
+			_click_book(true)
+		32:
+			_click_book(false)
+		34:
+			_check_turned_day_booked()
+			_main._windows.close("calendar")
+		36:
 			_check_closed()
 			_finish()
 			return true
@@ -235,6 +244,25 @@ func _check_focus() -> void:
 	var shown: Vector2i = grid._shown()
 	if shown != Vector2i(int(first["year"]), int(first["month"])) or grid._selected != int(first["day"]):
 		_fail("Go did not turn the Diary to the first free day %s (shown %s, day %d)" % [first, shown, grid._selected])
+
+
+func _click_book(down: bool) -> void:
+	var book := _book_here(_other)
+	if book == null:
+		_fail("premise: Book here for the second request went with the day's turn")
+		return
+	Click.half(_main.get_viewport(), book, down)
+
+
+## A pick shown to the player still books after the day turns: the first free day, never "passed".
+func _check_turned_day_booked() -> void:
+	var row := Audiences.request(_main._state.player(), _other)
+	var date: Dictionary = row.get("date", {})
+	if String(row.get("status", "")) != "booked":
+		_fail("Book here pressed after the day turned did not book (%s)" % row.get("status", ""))
+	elif int(date.get("year", 0)) * 10000 + int(date.get("month", 0)) * 100 + int(date.get("day", 0)) \
+			<= int(_main._state.year) * 10000 + int(_main._state.month) * 100 + int(_main._state.day):
+		_fail("the turned day booked %s, today or before" % [date])
 
 
 func _check_closed() -> void:

@@ -6,8 +6,8 @@ extends SceneTree
 ## V5.2 pre-gate B (QA's TAKE 1 and the author's "Ralentir à l'arrivée",
 ## 2026-10-24), through the real game:
 ##   - a request card's "Answer by" names the LAST month an answer is taken: the
-##     sim lapses a pending request AS its deadline month begins
-##     (Audiences._overdue), so the card names the month before it;
+##     sim lapses a pending request as the month after its deadline begins
+##     (Audiences._overdue, #431's "Fin du mois limite"), so the card names the deadline month;
 ##   - a month that brings a request drops the clock to speed 1 -- not a stop (a
 ##     request never holds the clock) -- and a month that only lapses one does not;
 ##   - the "requests waiting" mark is a button: a real click (press and release
@@ -92,11 +92,11 @@ func _check_answer_by() -> void:
 		_fail("premise: the staged request is not in the register")
 		return
 	var deadline := int(raw["deadline_month"])
-	# The rule the card must agree with: still answerable in the month before the
-	# deadline, lapsed as the deadline month begins.
-	if Audiences._overdue(raw, deadline - 1) or not Audiences._overdue(raw, deadline):
-		_fail("premise: the sim no longer lapses a request as its deadline month begins")
-	var last := Words.when(deadline - 1)
+	# The rule the card must agree with (#431, "Fin du mois limite"): still answerable in the
+	# deadline month, lapsed as the month after begins.
+	if Audiences._overdue(raw, deadline) or not Audiences._overdue(raw, deadline + 1):
+		_fail("premise: the sim no longer lapses a request as the month after its deadline begins")
+	var last := Words.when(deadline)
 	var row := AudienceDriver.row_of(_main, Audiences.request(ns, _oldest))
 	if String(row["by"]) != last:
 		_fail("the card says 'Answer by %s'; the last month it is taken is %s" % [row["by"], last])

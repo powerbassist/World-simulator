@@ -8,9 +8,8 @@ extends SceneTree
 ## affair's and the lie's widgets left it with the author's C4: Argue, Pressure, the lie and
 ## the shadows' offer are the sim's, not this screen's):
 ##   - R3: the person's party, by name and in the hemicycle's colour slot, on the
-##     request card and the scene's header (the Diary's chip, which said it on its
-##     hover, left the grid with "N'importe quel jour libre", 2026-11-20; the faces
-##     return with the Diary's redraw) -- a party's
+##     request card, the Diary's day list beside its Book here (#431 pass 2 TAKE 7) and the
+##     scene's header -- a party's
 ##     LEADER included, whom the data names from the party, not the person;
 ##   - R5: the audience's end carries a STATUS-toned word that agrees with what
 ##     happened, never the colour alone -- a deal struck (the good tag driven) and a
@@ -50,6 +49,7 @@ func _process(_delta: float) -> bool:
 			if not _arrive():
 				return _end()
 			_check_card_party()
+			_check_booking_party()
 			_check_member_and_none()
 		5:
 			if not _reach_audience():
@@ -184,6 +184,12 @@ func _check_card_party() -> void:
 	var inbox = _main._hud.inbox
 	var card_id: String = AudienceDriver.lane_of(_main).card_of(_request)
 	_chip_matches(inbox._cards.get(card_id), "the request card")
+
+
+## #431 pass 2 TAKE 7: the party is back in the Diary's booking block, beside its Book here.
+func _check_booking_party() -> void:
+	AudienceDriver._open_booking(_main, _request)
+	_chip_matches(_main._calendar_panel._grid.day_list, "the Diary's day list")
 
 
 func _reach_audience() -> bool:

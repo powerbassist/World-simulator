@@ -5,8 +5,8 @@ extends SceneTree
 ##
 ## The horizon's read (src/ui/horizon_items.gd, V5.3 bar C): the DATED things the
 ## ribbon draws. What can fail silently is the arithmetic of "when": a request's last
-## answerable month is its deadline_month MINUS ONE (audience_driver and the diary say
-## so; the sim lapses it as the deadline month begins), a desk decision's is now +
+## answerable month is its deadline_month (Audiences.answer_by since #431, "Fin du mois
+## limite"; the sim lapses it as the month after begins), a desk decision's is now +
 ## months_left - 1 (Events counts months_left down at each month tick and lapses at 0),
 ## and a due outside the three-month window or already past is not drawn. An off-by-one
 ## here prints a lapse a month late, which no walk of the screen would notice.
@@ -54,8 +54,8 @@ func _check_requests(state, loader) -> void:
 	var now := _now(state)
 	_request(ns, "FRA_lachapelle", now + 2)
 	var dues: Array = Items.read(state, loader)["dues"]
-	if dues.size() != 1 or int(dues[0]["abs_month"]) != now + 1:
-		_fail("a request with deadline_month now+2 is last answerable in now+1 (the month BEFORE its deadline); read %s" % [dues])
+	if dues.size() != 1 or int(dues[0]["abs_month"]) != now + 2:
+		_fail("a request with deadline_month now+2 is last answerable in now+2 (its deadline month); read %s" % [dues])
 		return
 	if String(dues[0]["person_id"]) != "FRA_lachapelle" or String(dues[0]["who"]) != loader.person_name("FRA_lachapelle"):
 		_fail("a lone request's chip does not carry its person: %s" % [dues[0]])
@@ -70,8 +70,8 @@ func _check_requests(state, loader) -> void:
 		_fail("a group of two links one person's name: %s" % Items.due_text(dues[0]))
 	# Outside the window (three months: this, next, the one after) and already past: not drawn.
 	ns.audience_requests.clear()
-	_request(ns, "FRA_lachapelle", now + Items.MONTHS + 1)  # last answerable now+3: one past the window
-	_request(ns, "FRA_vasseur", now)  # last answerable now-1: past
+	_request(ns, "FRA_lachapelle", now + Items.MONTHS)  # last answerable now+3: one past the window
+	_request(ns, "FRA_vasseur", now - 1)  # last answerable now-1: past
 	_request(ns, "FRA_turcy", now + 2, AudienceK.STATUS_BOOKED)  # booked, not pending: nothing lapses
 	if not (Items.read(state, loader)["dues"] as Array).is_empty():
 		_fail("a due outside the window, a past one or a booked request was drawn: %s" % [Items.read(state, loader)["dues"]])

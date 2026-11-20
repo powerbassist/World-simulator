@@ -137,7 +137,9 @@ const TOTAL_PENDING := {
 ## The construction register (V5.3 c' slice 1, the author's "A pour commander"), a new Finances tab, a
 ## stated rise 2968 -> 3087 (+119, all on the register: the type's lede and summary, the stock line, the
 ## strip's money, who and when sentences, the charts' titles).
-const TOTAL_SUM_CEILING := 3087
+## #431 pass 2 (TAKE 7, R3 back): the asker's party beside each "Book here" in the Diary's day
+## list, as the grid's chips said it on their hover before they left: a stated rise 3087 -> 3097.
+const TOTAL_SUM_CEILING := 3097
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

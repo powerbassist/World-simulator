@@ -40,6 +40,7 @@ const President = preload("res://src/sim/president.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const DiaryChip = preload("res://src/ui/diary_chip.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
+const PartyChip = preload("res://src/ui/party_chip.gd")
 
 ## Monday first, as a European diary is ruled.
 const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msgid
@@ -153,16 +154,23 @@ func show_items(state, loader, items: Array) -> void:
 ## The clock runs with the Diary open, and the panel is redrawn on a month, never a
 ## day: today's ring and the offered days follow the day here (QA's TAKE 2 on #153).
 func _process(_delta: float) -> void:
-	if _state != null and _days != null and int(_state.day) != _drawn_day and is_visible_in_tree() and not _chip_in_hand():
+	if _state != null and _days != null and int(_state.day) != _drawn_day and is_visible_in_tree() and not _in_hand():
 		_render()
 
 
-## A chip the pointer is on or the keyboard stands on (a press takes the focus too): the
-## daily redraw frees every cell, which would drop the click, the focus and the hover.
-## It waits, so today's ring can lag until the chip is let go; a booking still redraws.
-func _chip_in_hand() -> bool:
+## A chip, or anything in the day list ("Book here"; #431 pass 2, TAKE 2), the pointer is on
+## or the keyboard stands on (a press takes the focus too): the daily redraw frees every
+## cell and row, which would drop the click, the focus and the hover. It waits, so today's
+## ring can lag until the control is let go; a booking still redraws, and a Book here pressed
+## on a day the clock has since turned books the first free one (audience_driver.gd).
+func _in_hand() -> bool:
 	var viewport := get_viewport()
-	return viewport != null and (viewport.gui_get_focus_owner() is DiaryChip or viewport.gui_get_hovered_control() is DiaryChip)
+	if viewport == null:
+		return false
+	for c in [viewport.gui_get_focus_owner(), viewport.gui_get_hovered_control()]:
+		if c is DiaryChip or (c != null and day_list != null and day_list.is_ancestor_of(c)):
+			return true
+	return false
 
 
 func page() -> int:
@@ -350,7 +358,14 @@ func _render_list(entries: Array, offered: Array) -> void:
 		var why := String(date.get("reason", ""))
 		book.tooltip_text = Strings.t(why) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
 		book.pressed.connect(func() -> void: booked.emit(String(o["id"]), date))
-		day_list.add_child(book)
+		# R3, back with #431 pass 2 TAKE 7: the asker's party beside the button, in words and its
+		# hemicycle slot, as the chip's hover said it before the chips left the grid.
+		var line := HBoxContainer.new()
+		day_list.add_child(line)
+		line.add_child(book)
+		var party := PartyChip.of(_loader, _state.player(), String(o["person_id"]))
+		if not party.is_empty():
+			line.add_child(PartyChip.make(party))
 		# Gate 3 (G3-16): only the person's own days are bookable, and an empty diary read
 		# as broken without the reason beside the button.
 		var offer := _offer_line(o["dates"], String(o["person"]))

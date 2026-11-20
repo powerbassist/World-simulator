@@ -449,7 +449,7 @@ func _check_a_called_lapse_costs_a_share() -> void:
 		ns.person_grudges[pid] = 0.0
 		ns.person_rapport[pid] = 0.0
 		var row := {"id": "%s|%d" % [pid, now - 3], "person_id": pid, "object": "x", "stance": "",
-			"arrived_month": now - 3, "deadline_month": now, "status": AudK.STATUS_PENDING, "date": {}, "resolved_month": -1}
+			"arrived_month": now - 3, "deadline_month": now - 1, "status": AudK.STATUS_PENDING, "date": {}, "resolved_month": -1}
 		if called:
 			row["called"] = true
 		ns.audience_requests.append(row)
@@ -483,7 +483,7 @@ func _check_a_called_accomplice_pays_the_whole_broken_word() -> void:
 	ns.person_rapport[pid] = 0.0
 	ns.exposure_evidence.append({"kind": "favour", "person_id": pid, "size": 1.0, "month": now - 4, "leader_id": President.leader_id(ns)})
 	var row := {"id": "%s|%d" % [pid, now - 3], "person_id": pid, "object": "x", "stance": "", "called": true,
-		"arrived_month": now - 3, "deadline_month": now, "status": AudK.STATUS_PENDING, "date": {}, "resolved_month": -1}
+		"arrived_month": now - 3, "deadline_month": now - 1, "status": AudK.STATUS_PENDING, "date": {}, "resolved_month": -1}
 	ns.audience_requests.append(row)
 	var told: Dictionary = Landings.lapse_price(ns, _loader, row)
 	_ok(bool(told.get("broken_word", false)), "lapse_price does not flag a called accomplice's broken word")
