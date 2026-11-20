@@ -26,7 +26,7 @@ const Delegation = preload("res://src/sim/delegation.gd")
 const FK = preload("res://src/sim/feeling_constants.gd")
 
 
-## The card's three answers. Booking needs a waiting request and an offered day
+## The card's three answers. Booking needs a waiting request and a day up to its last month
 ## the diary can place; delegation and decline are open on every open request,
 ## booked included -- the commands accept both, and a booked day is given back
 ## (B2's 100 %). Delegate also carries the cabinet's odds of keeping the word and
@@ -41,7 +41,7 @@ static func answers(state, ns, loader, row: Dictionary) -> Dictionary:
 	var delegate := open.merged(Delegation.odds(ns, loader, String(row["object"]), String(row.get("stance", ""))))
 	if String(row["status"]) == K.STATUS_BOOKED:
 		return {"book": {"ok": false, "reason": "already booked"}, "delegate": delegate, "decline": open}
-	var book := {"ok": false, "reason": "none of the days offered is free"}
+	var book := {"ok": false, "reason": "no free day before the last day they can see you"}
 	for date in Dates.offered(state, ns, row):
 		if bool(date["free"]):
 			book = {"ok": true, "reason": ""}

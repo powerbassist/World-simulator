@@ -21,7 +21,9 @@ extends SceneTree
 ##      delegated, its card checked for the other two answers. The month's diary
 ##      fires after the month's tick in day order; an audience held with no lever settles as
 ##      a refusal (the levers are V5.2b's second half).
-##      B2: 20-50 % of requests unplaceable; 12-30 audiences held in 60 months
+##      B2: 12-30 audiences held in 60 months (the 20-50 % unplaceable row retired with the
+##      two drawn days, the author's "N'importe quel jour libre" / "Fin du mois limite",
+##      2026-11-20; the share is still printed)
 ##      and >= 4 in months 1-20; 100 % of unplaceable requests offer delegate and
 ##      decline.
 ##   A4 PHONE FIRST (V5.2b b3; bands-v5.2.md B5's channel row as amended in #119):
@@ -627,7 +629,6 @@ func _bands(r: Dictionary) -> Dictionary:
 		"B1_at_least_8_in_m1_20": int(a1["arrivals_m1_20"]) >= 8,
 		"B1_at_least_12_people": int(a1["distinct_people"]) >= 12,
 		"B1_no_one_over_25pct": float(a1["top_person_share"]) <= 0.25,
-		"B2_unplaceable_20_50pct": float(a2["unplaceable_share"]) >= 0.20 and float(a2["unplaceable_share"]) <= 0.50,
 		"B2_held_12_30": int(a2["held"]) >= 12 and int(a2["held"]) <= 30,
 		"B2_held_4_by_m20": int(a2["held_m1_20"]) >= 4,
 		"B2_unplaceable_offer_100pct": int(a2["unplaceable"]) == 0 or float(a2["unplaceable_offered_share"]) == 1.0,

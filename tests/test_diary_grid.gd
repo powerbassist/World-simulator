@@ -113,8 +113,10 @@ func _stage() -> void:
 	if _request == "":
 		_fail("premise: no request could be staged")
 		return
+	# A day next month or later: tomorrow books too since "any free day" (2026-11-20), but the
+	# five days the check below runs would then reach the audience and open its scene.
 	for d in Audiences.offered_dates(state, ns, _request):
-		if bool(d["free"]):
+		if bool(d["free"]) and int(d["year"]) * 12 + int(d["month"]) > now:
 			_offered = d
 			break
 	if _offered.is_empty():

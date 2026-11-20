@@ -240,7 +240,9 @@ func _render() -> void:
 		cell.tooltip_text = "\n".join(texts)
 		cell.picked.connect(_pick)
 		_days.add_child(cell)
-		cell.show_chips(offered.get(d, []), _rows, booked)
+		# No chips (the parent's ruling, 2026-11-20): any free day to the deadline month books,
+		# so a chip per request on every day of the window was a wall of faces. The tint marks
+		# the window and the day list's Book here books; the faces return with the redraw.
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 
 
@@ -378,15 +380,10 @@ func _render_list(entries: Array, offered: Array) -> void:
 ## The days the person offers that the player can still take (a refused one says why on its
 ## own button), with the year when they straddle a year end; "" when none is left.
 func _offer_line(dates: Array, person: String) -> String:
-	var free: Array = dates.filter(func(d: Dictionary) -> bool: return bool(d.get("free", true)))
-	if free.is_empty():
+	# Any free day up to the deadline month's end books (the author's "N'importe quel jour
+	# libre" and "Fin du mois limite", 2026-11-20), so the line names the last one.
+	if dates.is_empty():
 		return ""
-	var years := {}
-	for date in free:
-		years[int(date["year"])] = true
-	var days := PackedStringArray()
-	for date in free:
-		days.append(DateText.day_month_year(int(date["day"]), int(date["month"]), int(date["year"])) if years.size() > 1
-			else DateText.day_month(int(date["day"]), int(date["month"])))
-	return tr_n("%s can see you only on %d day: %s.", "%s can see you only on these %d days: %s.", days.size()) % [
-		person, days.size(), ", ".join(days)]
+	var last: Dictionary = dates[dates.size() - 1]
+	return tr("%s can see you on any free day until %s.") % [person,
+		DateText.day_month_year(int(last["day"]), int(last["month"]), int(last["year"]))]

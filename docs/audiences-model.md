@@ -67,7 +67,7 @@ Characters (`WorldMonth`'s "Audiences" step):
    draw's and does not count.
 
 **The per-game seed (pre-gate B, CALL 2).** Every per-person draw -- the ask, the
-offered dates, the lever and phone rolls, the fog, the trait reveals -- is salted by
+lever and phone rolls, the fog, the trait reveals -- is salted by
 `NationState.draw_seed` through `Cycle.salted()`. Without one, every France game drew
 the same months, and QA's run met a silent year (one request in months 21-38). Seed 0
 is the unseeded draw (the probes, the tests, the balance table, and any save made
@@ -80,7 +80,7 @@ the same every game: recorded, not in this fix.
 
 | Answer | Costs | What it buys |
 |---|---|---|
-| **Book** | one of the `OFFERED_DATES` (2) days the person offers, inside the window, if the diary can place it ([[calendar-model]] §12: one thing at a time) | the audience: the scene (section 5), and, whatever is said, `KNOW_AUDIENCE` (0.05) times what is left to learn and, since b2.2, rapport `+RECEIVED_RAPPORT` (0.10, the mirror of a refusal to the face) |
+| **Book** | any day from tomorrow to the last day of the deadline month (a chief's: the answer-by month) the diary can place (the author's "N'importe quel jour libre" / "Fin du mois limite", 2026-11-20; a refusal names `taken`, `deadline` or `passed`) ([[calendar-model]] §12: one thing at a time) | the audience: the scene (section 5), and, whatever is said, `KNOW_AUDIENCE` (0.05) times what is left to learn and, since b2.2, rapport `+RECEIVED_RAPPORT` (0.10, the mirror of a refusal to the face) |
 | **Delegate** | `DELEGATE_GRUDGE_SHARE` (0.25) of a decline's grudge; a snub (`DELEGATE_SNUB_RAPPORT`) for a `vain` person or an office want | the request answered, most of the grudge avoided, no diary day, no knowledge -- and since b2.1 a minister's word that the want is served within `BOOKING_HORIZON_MONTHS` (12), judged at that date (section 7) |
 | **Decline** | `DECLINE_GRUDGE` (0.18, x the trait intake: loyal 0.5, principled 2) and `DECLINE_RAPPORT` (-0.1) | the days, and no commitment |
 | *(lapse)* | exactly a decline (the author's answer 3, 2026-10-21) | nothing |
@@ -112,8 +112,9 @@ are needed, measured:** with the fade and no refusal ceiling, test_balance still
 the clamp, because a refusal's monthly leak comes in bursts; with both, it passes.
 
 **Scarcity is occupancy, never a ceiling.** The diary refuses a day already
-taken (the U6a / V2.4a rule); the person offers two days; a request whose two days
-are both taken cannot be booked, and its card offers delegation and decline.
+taken (the U6a / V2.4a rule). Since 2026-11-20 any day from tomorrow to the deadline
+month's end books (the two drawn days are gone); a request with every one of those days
+taken cannot be booked, and its card offers delegation and decline.
 
 ## 4. The bands, measured (2026-10-24)
 

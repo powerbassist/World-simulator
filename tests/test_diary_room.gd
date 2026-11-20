@@ -21,6 +21,7 @@ extends SceneTree
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 ## Words given: past the twelve a long term piles up in QA's run (8 to 10 lines).
 const WORDS := 12
@@ -199,44 +200,40 @@ func _check(c: Dictionary) -> void:
 		_fail("%s: Book here sits in %d scroll(s), not the day list's and the page's" % [label, scrolls])
 
 
-## Gate 3 (G3-16): "je ne peux choisir la date, alors que mon agenda apparait vide". Only the
-## days the person offers are bookable, and the day list says so beside its Book here.
+## Gate 3 (G3-16): "je ne peux choisir la date, alors que mon agenda apparait vide". Since the
+## author's "N'importe quel jour libre" (2026-11-20) any free day to the answer-by month books, and
+## the day list says until when beside its Book here.
 func _check_why_these_days(panel, label: String) -> void:
 	var ns = _main._state.player()
 	var rid := String(_ids[0])
 	var who: String = _main._loader.person_name(String(Audiences.request(ns, rid)["person_id"]))
-	# Only the days still open to book are named (a refused one says why on its own button).
-	var n := 0
-	for date in Audiences.offered_dates(_main._state, ns, rid):
-		if bool(date.get("free", true)):
-			n += 1
-	var want := "%s can see you only on 1 day" % who if n == 1 else "%s can see you only on these %d days" % [who, n]
+	var dates: Array = Audiences.offered_dates(_main._state, ns, rid)
+	if dates.is_empty():
+		return
+	var last: Dictionary = dates[dates.size() - 1]
+	var want := "%s can see you on any free day until %s." % [who, DateText.day_month_year(int(last["day"]), int(last["month"]), int(last["year"]))]
 	var found := false
 	for node in panel._grid.day_list.find_children("*", "Label", true, false):
 		if String((node as Label).text).begins_with("%s can see you" % who):
-			found = String((node as Label).text).begins_with(want)
+			found = String((node as Label).text) == want
 			if not found:
 				_fail("%s: the day list says '%s', not '%s'" % [label, (node as Label).text, want])
 			break
-	if n > 0 and not found:
+	if not found:
 		_fail("%s: the day list does not say '%s'" % [label, want])
 
 
-## T4: a refused day is not named, a year end shows the years, one day reads in the singular.
+## The line names the window's last day with its year, and says nothing for no day.
 func _check_offer_line_forms() -> void:
 	var grid = _main._calendar_panel._grid
-	var crossing: String = grid._offer_line([
+	var line: String = grid._offer_line([
 		{"year": 2026, "month": 12, "day": 30, "free": true},
-		{"year": 2027, "month": 1, "day": 4, "free": true},
 		{"year": 2027, "month": 1, "day": 6, "free": false},
 	], "X")
-	if not crossing.begins_with("X can see you only on these 2 days") or not ("2026" in crossing and "2027" in crossing):
-		_fail("days across a year end read '%s'" % crossing)
-	var one: String = grid._offer_line([{"year": 2026, "month": 3, "day": 5, "free": true}], "X")
-	if not one.begins_with("X can see you only on 1 day:") or "2026" in one:
-		_fail("one day in the year reads '%s'" % one)
-	if grid._offer_line([{"year": 2026, "month": 3, "day": 5, "free": false}], "X") != "":
-		_fail("a request with no day left to book still names its days")
+	if line != "X can see you on any free day until %s." % DateText.day_month_year(6, 1, 2027):
+		_fail("the window's line reads '%s'" % line)
+	if grid._offer_line([], "X") != "":
+		_fail("a request with no day left names an end")
 
 
 func _finish() -> void:

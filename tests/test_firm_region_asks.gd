@@ -137,7 +137,8 @@ func _check_a_chief_is_offered_only_days_before_the_plant_lands() -> void:
 			_fail("a day offered after the plant lands: %s, due %d" % [d, due])
 
 
-## The days are drawn per request, so read over seeds: one seed may simply not pick that month.
+## Any free day to the deadline month books ("Fin du mois limite", 2026-11-20), so an ordinary
+## request reaches it on every seed; the seed loop is kept from when the days were drawn.
 func _check_only_a_chief_loses_the_deadline_month() -> void:
 	var state = _state()
 	var ns = state.player()

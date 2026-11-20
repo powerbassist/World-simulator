@@ -57,7 +57,7 @@ func _init() -> void:
 	_check_programme_choice_invites_its_people()
 	_check_lapse_costs_what_a_decline_costs()
 	_check_delegation_costs_a_share()
-	_check_booking_takes_an_offered_day()
+	_check_booking_takes_any_free_day()
 	_check_an_unplaceable_request_still_offers_the_rest()
 	_check_a_booked_request_can_still_be_declined()
 	_check_a_decline_at_the_ceiling_still_costs()
@@ -390,38 +390,56 @@ func _check_delegation_costs_a_share() -> void:
 		_fail("a delegated request does not read delegated")
 
 
-func _check_booking_takes_an_offered_day() -> void:
+## The author's call (2026-11-20, "N'importe quel jour libre"): a request can be booked on
+## any day from tomorrow to the last day of its deadline month ("Fin du mois limite");
+## nothing is drawn. A refusal names its reason as data: `taken` (the diary cannot place it),
+## `deadline` (after the deadline month), `passed` (today or earlier).
+func _check_booking_takes_any_free_day() -> void:
 	var case = _game_with_request()
 	if case.is_empty():
 		return
 	var state = case["state"]
 	var ns = state.player()
 	var id := String(case["row"]["id"])
+	state.day = 10
+	var last_month := int(case["row"]["deadline_month"])
+	var last_year := floori((last_month - 1) / 12.0)
+	var last := {"year": last_year, "month": last_month - last_year * 12}
+	last["day"] = Calendar.days_in_month(int(last["year"]), int(last["month"]))
 	var dates: Array[Dictionary] = Audiences.offered_dates(state, ns, id)
-	if dates.size() != K.OFFERED_DATES:
-		_fail("a request offered %d dates, not %d" % [dates.size(), K.OFFERED_DATES])
+	var want := 0
+	var m := _now(state)
+	while m <= last_month:
+		var y := floori((m - 1) / 12.0)
+		want += Calendar.days_in_month(y, m - y * 12)
+		m += 1
+	want -= 10  # today and the days before it
+	if dates.size() != want:
+		_fail("a request offered %d days, not every day from tomorrow to its deadline month's end (%d)" % [dates.size(), want])
 		return
-	var free := {}
-	for d in dates:
-		if bool(d["free"]):
-			free = d
-			break
-	if free.is_empty():
-		_fail("an empty diary could place none of %s" % [dates])
-		return
-	for day in range(28, 0, -1):
-		var offered := false
-		for d in dates:
-			if int(d["year"]) == int(free["year"]) and int(d["month"]) == int(free["month"]) and int(d["day"]) == day:
-				offered = true
-		if not offered:
-			var other := {"year": int(free["year"]), "month": int(free["month"]), "day": day}
-			if bool(Audiences.book(state, ns, _loader, id, other).get("ok", true)):
-				_fail("a booking on a day the person did not offer was accepted")
-			break
-	var result: Dictionary = Audiences.book(state, ns, _loader, id, free)
+	var first: Dictionary = dates[0]
+	if int(first["year"]) != int(state.year) or int(first["month"]) != int(state.month) or int(first["day"]) != 11:
+		_fail("the first day offered is %s, not tomorrow" % [first])
+	var end: Dictionary = dates[dates.size() - 1]
+	if int(end["year"]) != int(last["year"]) or int(end["month"]) != int(last["month"]) or int(end["day"]) != int(last["day"]):
+		_fail("the last day offered is %s, not the deadline month's last day %s" % [end, last])
+	var refused := func(date: Dictionary, reason: String, label: String) -> void:
+		var r: Dictionary = Audiences.book(state, ns, _loader, id, date)
+		if bool(r.get("ok", true)) or String(r.get("reason", "")) != reason or String(r.get("error", "")) == "":
+			_fail("booking %s (%s) read %s, not refused for '%s' with words" % [date, label, r, reason])
+	refused.call({"year": state.year, "month": state.month, "day": 10}, K.BOOK_PASSED, "today")
+	refused.call({"year": state.year, "month": state.month, "day": 3}, K.BOOK_PASSED, "a day gone")
+	var after := {"year": int(last["year"]), "month": int(last["month"]) % 12 + 1, "day": 1}
+	if int(last["month"]) == 12:
+		after["year"] = int(last["year"]) + 1
+	refused.call(after, K.BOOK_DEADLINE, "the day after the deadline month")
+	var taken := Calendar.make_entry(CalendarK.KIND_RESHUFFLE, int(state.year), int(state.month), 12, "", "", "", "p12", "")
+	Calendar.book(state, taken)
+	refused.call({"year": state.year, "month": state.month, "day": 12}, K.BOOK_TAKEN, "a day the diary holds")
+	# Any free day, not one drawn: the last day of the window books.
+	var result: Dictionary = Audiences.book(state, ns, _loader, id, last)
 	if not bool(result.get("ok", false)):
-		_fail("booking a free offered day was refused: %s" % [result])
+		_fail("booking the deadline month's last day was refused: %s" % [result])
 		return
 	var entries := 0
 	for e in state.appointments:
@@ -429,7 +447,7 @@ func _check_booking_takes_an_offered_day() -> void:
 			entries += 1
 	if entries != 1 or String(Audiences.request(ns, id)["status"]) != K.STATUS_BOOKED:
 		_fail("a booking left %d diary entries and status '%s'" % [entries, Audiences.request(ns, id)["status"]])
-	if bool(Audiences.book(state, ns, _loader, id, free).get("ok", true)):
+	if bool(Audiences.book(state, ns, _loader, id, last).get("ok", true)):
 		_fail("a booked request was booked a second time")
 
 
@@ -444,7 +462,7 @@ func _check_an_unplaceable_request_still_offers_the_rest() -> void:
 	for d in Audiences.offered_dates(state, ns, id):
 		# A reshuffle booked on the day takes it: one thing at a time.
 		var blocker := Calendar.make_entry(CalendarK.KIND_RESHUFFLE, int(d["year"]), int(d["month"]), int(d["day"]),
-			"", "", "", "p%d" % int(d["day"]), "")
+			"", "", "", "p%d_%d" % [int(d["month"]), int(d["day"])], "")
 		Calendar.book(state, blocker)
 	var answers: Dictionary = Audiences.answers(state, ns, _loader, id)
 	if bool(answers["book"]["ok"]) or String(answers["book"]["reason"]) == "":

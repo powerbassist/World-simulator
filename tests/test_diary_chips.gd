@@ -1,12 +1,14 @@
 extends SceneTree
 
-## V5.3 b, step 6 (docs/design/v5.3-ab.md section 5, "booking moves into the grid"): a waiting
-## request is a chip on each of its offered days, a click on a chip books THAT day, and the
-## request column beside the grid is gone.
-##   - each free offered day shows a chip with the asker's face and the last day to answer;
-##   - a real click on a chip books that very date, not the first offered;
-##   - a day the Diary refuses shows its chip disabled, with the sim's reason, and a click on
-##     it picks the day rather than dying (a dead click, V5.1's lesson);
+## V5.3 b, step 6 (docs/design/v5.3-ab.md section 5, "booking moves into the grid"), as the
+## parent ruled with "N'importe quel jour libre" (2026-11-20, option a): every day a request can
+## be booked on is tinted and wears NO chip (a chip on every day of the window was a wall of
+## faces); a click on the day lists its "Book here", which books THAT day. The faces return
+## with the Diary's redraw (the author's pick A, Interface's card).
+##   - a day of the window is tinted, with no chip on the grid;
+##   - a real click on the day's Book here books that very date, not the first offered;
+##   - DiaryDay's chip, set by hand: a refused day's is disabled with the sim's reason, and a
+##     click on it picks the day rather than dying (a dead click, V5.1's lesson);
 ##   - the inbox card's Go turns the Diary to the first free day and, frames later, past the
 ##     grid's rebuilds, the keyboard stands on that day's Book here;
 ##   - the Diary closed under a Go ends the booking, so the slowed clock is given back.
@@ -51,7 +53,6 @@ func _process(_delta: float) -> bool:
 			_click_refused(false)
 		16:
 			_check_refused_clicked()
-			_check_day_keeps_chip()
 		18:
 			_go()
 		28:
@@ -106,6 +107,10 @@ func _cell(day: int) -> Control:
 	return _main._calendar_panel._grid._days.get_node_or_null("Day_%d" % day) as Control
 
 
+func _book_here(id: String) -> Button:
+	return _main._calendar_panel._grid.day_list.find_child("BookHere_%s" % id, true, false) as Button
+
+
 func _chip(id: String, day: int) -> Button:
 	var cell := _cell(day)
 	return cell.find_child("Chip_%s" % id, true, false) as Button if cell != null else null
@@ -116,35 +121,15 @@ func _check_chips() -> void:
 		_fail("the request column beside the grid is still there")
 	if _request_id == "":
 		return
-	var chip := _chip(_request_id, int(_date["day"]))
-	if chip == null:
-		_fail("no chip on the offered day")
-		return
-	if not chip.is_visible_in_tree() or chip.disabled:
-		_fail("a free day's chip is hidden or disabled")
-	if chip.find_child("Face", true, false) == null:
-		_fail("the chip wears no face")
-	var by: Label = chip.find_child("By", true, false)
-	var row := Audiences.request(_main._state.player(), _request_id)
-	var last := preload("res://src/ui/lever_words.gd").when(int(row["deadline_month"]) - 1)
-	if by == null or not by.text.contains(last):
-		_fail("the chip's deadline reads '%s', not '%s'" % [by.text if by != null else "nothing", last])
-	var who: String = _main._loader.person_name(String(row["person_id"]))
-	if not chip.tooltip_text.contains(who):
-		_fail("the chip's hover does not name who asks: '%s'" % chip.tooltip_text)
-	var party: Dictionary = preload("res://src/ui/party_chip.gd").of(_main._loader, _main._state.player(), String(row["person_id"]))
-	if not party.is_empty() and not chip.tooltip_text.contains(String(party.get("name", "?"))):
-		_fail("the chip's hover does not name the party: '%s'" % chip.tooltip_text)
-	if chip.find_child("MoodBadge", true, false) == null:
-		_fail("the chip does not wear the asker's mood")
-	if chip.focus_mode != Control.FOCUS_ALL:
-		_fail("a keyboard cannot reach the chip")
-	var day: String = preload("res://src/ui/date_text.gd").day_month_year(int(_date["day"]), int(_date["month"]), int(_date["year"]))
-	if not chip.tooltip_text.contains(day):
-		_fail("the chip's hover does not give its day '%s': '%s'" % [day, chip.tooltip_text])
+	var cell := _cell(int(_date["day"]))
+	if cell == null or not bool(cell.tinted):
+		_fail("a day the request can be booked on is not tinted")
+	if _chip(_request_id, int(_date["day"])) != null:
+		_fail("a chip is back on the grid: every day of the window would wear one")
 	_check_the_later_count()
 	_check_go_takes_the_first_free_day()
 	_check_a_call_counts_from_the_request()
+	_main._calendar_panel._grid.pick(int(_date["year"]), int(_date["month"]), int(_date["day"]))
 
 
 ## The page-on button is the only sign left that a request has days further on.
@@ -191,11 +176,11 @@ func _check_a_call_counts_from_the_request() -> void:
 
 
 func _click(down: bool) -> void:
-	var chip := _chip(_request_id, int(_date["day"]))
-	if chip == null:
-		_fail("premise: the chip went before its click")
+	var book := _book_here(_request_id)
+	if book == null:
+		_fail("premise: the picked day lists no Book here before its click")
 		return
-	Click.half(_main.get_viewport(), chip, down)
+	Click.half(_main.get_viewport(), book, down)
 
 
 func _check_booked() -> void:
@@ -205,8 +190,6 @@ func _check_booked() -> void:
 		_fail("the click did not book the request (%s)" % row.get("status", ""))
 	elif int(booked.get("day", 0)) != int(_date["day"]) or int(booked.get("month", 0)) != int(_date["month"]):
 		_fail("the click booked %s, not its own day %s" % [booked, _date])
-	if _chip(_request_id, int(_date["day"])) != null:
-		_fail("a booked request keeps its chip")
 
 
 ## A refused day, set on a cell by hand: the chip shows, disabled, and passes the click on.
@@ -233,31 +216,6 @@ func _click_refused(down: bool) -> void:
 func _check_refused_clicked() -> void:
 	if _main._calendar_panel._grid._selected != 1:
 		_fail("a click on a refused chip did not pick its day (%d)" % _main._calendar_panel._grid._selected)
-
-
-## The daily redraw rebuilds the grid. On a chip in the player's hand it must wait, or a click
-## held across a new day books nothing and the keyboard is thrown off; let go, it runs.
-func _check_day_keeps_chip() -> void:
-	var grid = _main._calendar_panel._grid
-	var first: Dictionary = _free(_other)[0]
-	grid.show_month(int(first["year"]), int(first["month"]))
-	var chip := _chip(_other, int(first["day"]))
-	if chip == null:
-		_fail("premise: the second request has no chip on its first free day")
-		return
-	chip.grab_focus()
-	_main._state.day += 1
-	grid._process(0.0)
-	if not is_instance_valid(chip) or not chip.is_inside_tree():
-		_fail("a new day freed the chip the keyboard stands on")
-		_main._state.day -= 1
-		return
-	chip.release_focus()
-	grid._process(0.0)
-	if is_instance_valid(chip) and chip.is_inside_tree():
-		_fail("the day's redraw never ran once the chip was let go")
-	_main._state.day -= 1
-	grid._process(0.0)
 
 
 func _go() -> void:

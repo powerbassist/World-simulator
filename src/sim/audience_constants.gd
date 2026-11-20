@@ -58,10 +58,14 @@ const FIRST_REQUEST_BY_MONTH := 3
 const QUIET_ASKS_MAX := 9
 const QUIET_ASKS_MONTHS := 12
 
-## How many days a person offers inside the window. Scarcity is occupancy (the
-## diary's U6a / V2.4a rule), so an offered day the diary has taken is a day
-## lost; B2 wants 20-50 % of requests unplaceable for a player who books all.
-const OFFERED_DATES := 2
+## Why a booking was refused, as data the card can show (the author's calls of
+## 2026-11-20, "N'importe quel jour libre" and "Fin du mois limite": any day from tomorrow
+## to the last day of the deadline month books, audience_dates.gd; the two drawn days are
+## gone, and with them B2's 20-50 % unplaceable band). `taken`: the diary cannot place the
+## day (one thing at a time); `deadline`: after that last month; `passed`: today or a day gone.
+const BOOK_TAKEN := "taken"
+const BOOK_DEADLINE := "deadline"
+const BOOK_PASSED := "passed"
 
 ## The price of a refusal, on the registers people-model 14.1 names plus a's
 ## rapport. 0.18 is nine months of a standing want's denial pulse (0.02): a
@@ -175,5 +179,4 @@ const FIRM_PREFIX := "firm:"
 const OPEN := [STATUS_PENDING, STATUS_BOOKED]
 
 const SALT_REQUEST := "audience_request"
-const SALT_DATE := "audience_date"
 const SALT_DELEGATION := "delegation"
