@@ -377,12 +377,11 @@ func _render_list(entries: Array, offered: Array) -> void:
 			row.add_child(ActsOn.tag(call, [String(e["subject"])]))
 
 
-## The days the person offers that the player can still take (a refused one says why on its
-## own button), with the year when they straddle a year end; "" when none is left.
+## Until when the person can be seen: any free day up to the deadline month's end books (the
+## author's "N'importe quel jour libre" and "Fin du mois limite", 2026-11-20), so the line names
+## the window's last day; "" when no day of it is free (a refused one says why on its button).
 func _offer_line(dates: Array, person: String) -> String:
-	# Any free day up to the deadline month's end books (the author's "N'importe quel jour
-	# libre" and "Fin du mois limite", 2026-11-20), so the line names the last one.
-	if dates.is_empty():
+	if not dates.any(func(d: Dictionary) -> bool: return bool(d.get("free", true))):
 		return ""
 	var last: Dictionary = dates[dates.size() - 1]
 	return tr("%s can see you on any free day until %s.") % [person,

@@ -234,6 +234,8 @@ func _check_offer_line_forms() -> void:
 		_fail("the window's line reads '%s'" % line)
 	if grid._offer_line([], "X") != "":
 		_fail("a request with no day left names an end")
+	if grid._offer_line([{"year": 2026, "month": 3, "day": 5, "free": false}], "X") != "":
+		_fail("a request with every day taken still promises a free day")
 
 
 func _finish() -> void:

@@ -62,8 +62,10 @@ const QUIET_ASKS_MONTHS := 12
 ## 2026-11-20, "N'importe quel jour libre" and "Fin du mois limite": any day from tomorrow
 ## to the last day of the deadline month books, audience_dates.gd; the two drawn days are
 ## gone, and with them B2's 20-50 % unplaceable band). `taken`: the diary cannot place the
-## day (one thing at a time); `deadline`: after that last month; `passed`: today or a day gone.
+## day (one thing at a time); `deadline`: after that last month; `passed`: today or a day gone;
+## `no_day`: not a day of the calendar (31 February, day 0, month 13).
 const BOOK_TAKEN := "taken"
+const BOOK_NO_DAY := "no_day"
 const BOOK_DEADLINE := "deadline"
 const BOOK_PASSED := "passed"
 

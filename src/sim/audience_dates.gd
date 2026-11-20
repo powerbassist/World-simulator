@@ -45,10 +45,15 @@ static func offered(state, ns, row: Dictionary) -> Array[Dictionary]:
 ## reason one of K.BOOK_PASSED / BOOK_DEADLINE / BOOK_TAKEN, the error the words.
 static func refusal(state, row: Dictionary, date: Dictionary) -> Dictionary:
 	var today := _today(state)
-	var when := int(date.get("year", 0)) * 372 + int(date.get("month", 0)) * 31 + int(date.get("day", 0))
-	if when <= int(today["year"]) * 372 + int(today["month"]) * 31 + int(today["day"]):
+	var y := int(date.get("year", 0))
+	var m := int(date.get("month", 0))
+	var d := int(date.get("day", 0))
+	# Once only a drawn day could be booked; any day now, so an impossible one is refused here.
+	if m < 1 or m > 12 or d < 1 or d > Calendar.days_in_month(y, m):
+		return {"reason": K.BOOK_NO_DAY, "error": "not a day of the calendar"}
+	if Calendar.ordinal(y, m, d) <= Calendar.ordinal(int(today["year"]), int(today["month"]), int(today["day"])):
 		return {"reason": K.BOOK_PASSED, "error": "that day has passed"}
-	if int(date.get("year", 0)) * 12 + int(date.get("month", 0)) > last_month(row):
+	if y * 12 + m > last_month(row):
 		return {"reason": K.BOOK_DEADLINE, "error": "after the last day they can see you"}
 	var taken := Calendar.refusal_reason(state, entry(row, date))
 	return {} if taken.is_empty() else {"reason": K.BOOK_TAKEN, "error": taken}

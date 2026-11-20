@@ -477,6 +477,11 @@ func _check_the_window_crosses_a_year_on_a_stale_day() -> void:
 	var r: Dictionary = Audiences.book(state, ns, _loader, id, {"year": 2026, "month": 12, "day": 31})
 	if bool(r.get("ok", true)) or String(r.get("reason", "")) != K.BOOK_PASSED:
 		_fail("31 December, today on a stale day, read %s, not passed" % [r])
+	# Pass 1 on #431: only the drawn days' membership once kept an impossible date out.
+	for bad in [{"year": 2027, "month": 2, "day": 31}, {"year": 2027, "month": 1, "day": 0}, {"year": 2027, "month": 13, "day": 1}]:
+		r = Audiences.book(state, ns, _loader, id, bad)
+		if bool(r.get("ok", true)) or String(r.get("reason", "")) != K.BOOK_NO_DAY:
+			_fail("an impossible date %s read %s, not refused as no day" % [bad, r])
 	if not bool(Audiences.book(state, ns, _loader, id, {"year": 2027, "month": 2, "day": 28}).get("ok", false)):
 		_fail("the last day of a window across the year end was refused")
 
