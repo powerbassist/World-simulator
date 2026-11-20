@@ -34,8 +34,11 @@ static func band_range(band: Dictionary, shown: Dictionary) -> Vector2:
 static func band_chip(parent: Control, band: Dictionary) -> void:
 	if band.is_empty():
 		return
-	PanelKit.chip(parent, Strings.t("%s %% behind the nation or worse") % Num.f(100.0 * UK.UNIT_REGION_BAND, 0),
-		UiTheme.CHIP_WARN, "warning").set_meta("band_chip", true)
+	var chip := PanelKit.chip(parent, Strings.t("%s %% behind the nation or worse") % Num.f(100.0 * UK.UNIT_REGION_BAND, 0),
+		UiTheme.CHIP_WARN, "warning")
+	chip.set_meta("band_chip", true)
+	# Sized to its words, never the column's width.
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 
 
 ## Who the vote pleases and who it does not, by bloc (UnitBuild.blocs, the vote's own move):

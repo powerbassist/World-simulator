@@ -1,4 +1,4 @@
-extends Control
+extends PanelContainer
 
 ## The register's follow-up tab (V5.3 c' register slice 2, the author's pick "C en suivi";
 ## docs/design/v5.3-c-register.md sections 5 to 7): what the Register tab put in the finance
@@ -23,6 +23,10 @@ const UK = preload("res://src/sim/units_constants.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
 const UnitOverrun = preload("res://src/sim/unit_overrun.gd")
 const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
+const RegisterLanes = preload("res://src/ui/register_lanes.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
+## The register's own slack: the sheet fills the workspace, never with the map under it.
+const FILL_SLACK := 64.0
 
 var _state
 var _loader
@@ -33,15 +37,12 @@ var _close_button: Button
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(900, 0)
+	# No scroll of its own: the workspace's page scrolls (window_manager.frame()).
 	var root := PanelKit.padded(self, 16, 10)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body.add_theme_constant_override("separation", 12)
-	scroll.add_child(_body)
+	root.add_child(_body)
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
@@ -87,6 +88,7 @@ func _refresh() -> void:
 		_body.remove_child(child)
 		child.queue_free()
 	var ns = _state.player()
+	custom_minimum_size.y = get_viewport_rect().size.y - WindowManager.DOCK_TOP - WindowManager.DOCK_BOTTOM - FILL_SLACK
 	var building: Array = ns.unit_programmes.filter(func(p): return String(p.get("state", "")) == UK.STATE_BUILDING)
 	var asks: Array = UnitOverrun.asks(_state, ns, _loader)
 	var lede := Label.new()
@@ -101,13 +103,22 @@ func _refresh() -> void:
 		if not asks.is_empty():
 			lede.text += " " + tr_n("%d question waits for you.", "%d questions wait for you.", asks.size()) % asks.size()
 		PanelKit.plain_line(_body, tr("Every unit voted is built over its months, then open at a running cost for good."), PanelKit.Tone.DIM)
+	if not building.is_empty():
+		var list := PanelKit.section(_body, tr("Programmes"))
+		var lanes := RegisterLanes.new()
+		lanes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lanes.set_meta("lanes", true)
+		list.add_child(lanes)
+		var asked := {}
+		for copy in asks:
+			asked[String(copy["id"])] = true
+		lanes.setup(building.map(func(p): return {"label": _name(p), "start": int(p["voted"]), "opens": UnitPrice.opens_at(p),
+			"ask": asked.has(String(p["id"]))}), UnitPrice.now(_state))
+		for p in building:
+			_programme(list, p)
 	for copy in asks:
 		_overrun(copy)
 	_envelope(ns)
-	if not building.is_empty():
-		var list := PanelKit.section(_body, tr("Programmes"))
-		for p in building:
-			_programme(list, p)
 
 
 func _name(p: Dictionary) -> String:
@@ -128,7 +139,6 @@ func _programme(parent: Control, p: Dictionary) -> void:
 	PanelKit.plain_line(box, _name(p), PanelKit.Tone.PLAIN)
 	var total := int(p["build_months"])
 	var left := int(p["months_left"])
-	PanelKit.meter(box, float(total - left), float(maxi(total, 1)), float(total))  # the tick: the opening
 	var paid := float(p["paid_eur_m"]) / 1000.0
 	var to_pay := float(p["capital_month_eur_m"]) * left / 1000.0
 	var opens := UnitPrice.opens_at(p)
@@ -163,7 +173,7 @@ func _overrun(copy: Dictionary) -> void:
 	var ask: Dictionary = copy["ask"]
 	var card := PanelKit.section(_body, tr("Overrun ask: %s") % _name(copy))
 	card.set_meta("overrun_card", String(copy["id"]))
-	PanelKit.chip(card, tr("Answer by %s, or it is paid.") % _month(int(ask["due"])), UiTheme.CHIP_WARN, "warning")
+	PanelKit.chip(card, tr("Answer by %s, or it is paid.") % _month(int(ask["due"])), UiTheme.CHIP_WARN, "warning").size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	PanelKit.plain_line(card, tr("The builders need %s bn more to finish. One ask a programme: it will not come back.") % Num.f(float(ask["eur_m"]) / 1000.0, 2),
 		PanelKit.Tone.PLAIN)
 	var row := HBoxContainer.new()

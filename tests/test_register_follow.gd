@@ -247,6 +247,10 @@ func _check_follow_rows() -> void:
 		_fail("C shows %d programmes, the register holds %d" % [rows.size(), ns.unit_programmes.size()])
 		return
 	var p: Dictionary = ns.unit_programmes[0]
+	var lanes = _with_meta("lanes", _follow)
+	if lanes == null or lanes.data().size() != 1 or int(lanes.data()[0]["opens"]) != UnitPrice.opens_at(p) \
+			or int(lanes.data()[0]["start"]) != int(p["voted"]) or not bool(lanes.data()[0]["ask"]):
+		_fail("the lanes do not draw the register's months and ask: %s" % [null if lanes == null else lanes.data()])
 	var text := _text_under(rows[0])
 	if not text.contains(str(int(p["build_months"]))) and not text.contains(str(int(p["months_left"]))):
 		_fail("the programme row does not say its months: '%s'" % text)
