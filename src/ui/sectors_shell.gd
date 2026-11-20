@@ -50,8 +50,7 @@ static func refresh_marks(main) -> void:
 static func open_firm(sector: String, company_id: String, main) -> void:
 	main._companies_panel._open_sector = sector
 	main._companies_panel._open_firm = company_id
-	# Its verb takes the keyboard and the page opens at the top, where the card now sits.
-	main._companies_panel._refocus = ["company_id", company_id]
+	# The page opens at the top, where the card sits. No code focus: a mouse route must not hand Space to a verb.
 	main._companies_panel._scroll.scroll_vertical = 0
 	main._companies_panel.mark_dirty()
 	main._windows.open("companies")

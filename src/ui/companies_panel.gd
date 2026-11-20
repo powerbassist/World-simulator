@@ -53,6 +53,7 @@ const IndustryProgress = preload("res://src/ui/industry_progress.gd")
 const FirmCommands = preload("res://src/ui/firm_commands.gd")
 const SectorsOverview = preload("res://src/ui/sectors_overview.gd")
 const Labels = preload("res://src/ui/labels.gd")
+const SectorNeeds = preload("res://src/ui/sector_needs.gd")
 
 var _state
 var _loader
@@ -210,9 +211,11 @@ func _refresh() -> void:
 
 	if _last_refusal != "":
 		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
-	# A Needs you row's route (sectors_shell.open_firm) lands on its firm's verbs, first and named.
+	# A Needs you row's route (sectors_shell.open_firm) lands on its firm's verbs, first; named "waiting" only while
+	# a question of the sector's still stands.
 	if _open_sector != "":
-		PanelKit.heading(_body, tr("Waiting on you in %s") % Labels.sector(_open_sector)).set_meta("routed_heading", _open_sector)
+		if SectorNeeds.items(_state, _loader, ns).any(func(i) -> bool: return String(i["sector"]) == _open_sector):
+			PanelKit.heading(_body, tr("Waiting on you in %s") % Labels.sector(_open_sector)).set_meta("routed_heading", _open_sector)
 		IndustryCard.build(self, _body, ns, _open_sector)
 	# V5.3 a + b step 2 (spec 3.2): what is under way first, then what waits on the
 	# player, then the three sector cards, closed until opened; the public account

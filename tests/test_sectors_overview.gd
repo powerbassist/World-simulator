@@ -60,8 +60,15 @@ func _process(_delta: float) -> bool:
 			_route_to_a_firm()
 		11:
 			_check_routed_firm_first()
-			_press(_with_meta("open_tab", "sector_industry"))
+			# Pass 1: once the firm's question is answered, the route and its "waiting" heading go.
+			var ns = _main._state.player()
+			(ns.companies[_routed["id"]] as Dictionary).erase("closure")
+			_panel.mark_dirty()
 		13:
+			if _node_with_meta("routed_heading", _routed["sector"]) != null:
+				_fail("routed: the 'waiting' heading stays after the firm's question is gone")
+			_press(_with_meta("open_tab", "sector_industry"))
+		15:
 			if not _main._windows.is_open("sector_industry"):
 				_fail("Open Industry did not open the Industry tab")
 			_finish()
@@ -269,9 +276,12 @@ func _check_routed_firm_first() -> void:
 		_fail("routed: the firm's card (child %d) lands under the charts (child %d)" % [first_card, first_chart])
 	if _node_with_meta("routed_heading", _routed["sector"]) == null:
 		_fail("routed: no heading over the firm's card")
+	# A mouse route takes no keyboard focus (Space is the pause key): the page opens at the top, where the card sits.
 	var focus = _panel.get_viewport().gui_get_focus_owner()
-	if focus == null or not focus.has_meta("company_id") or String(focus.get_meta("company_id")) != _routed["id"]:
-		_fail("routed: the focus is not on the firm's verb (%s)" % focus)
+	if focus != null and _panel.is_ancestor_of(focus):
+		_fail("routed: a route gave code focus to %s" % focus)
+	if _panel._scroll.scroll_vertical != 0:
+		_fail("routed: the page is scrolled to %d, the card sits at the top" % _panel._scroll.scroll_vertical)
 
 
 func _node_with_meta(key: String, value: String):
