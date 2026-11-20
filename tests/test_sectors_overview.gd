@@ -19,11 +19,16 @@ const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const SectorRead = preload("res://src/ui/sector_read.gd")
+const Closures = preload("res://src/sim/closures.gd")
+const SectorsShell = preload("res://src/ui/sectors_shell.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 var _failures: Array[String] = []
 var _main
 var _panel
 var _frame := 0
+var _routed := {}
 
 
 func _init() -> void:
@@ -39,8 +44,24 @@ func _process(_delta: float) -> bool:
 			_main._windows.open("companies")
 		4:
 			_check_shape()
-			_press(_with_meta("open_tab", "sector_industry"))
+			_check_quiet_world()
+			_stage_a_busy_world()
 		6:
+			_check_busy_world()
+			# Pass 2 T7: a dot is a way in, as the card's Open is.
+			var dots = _node_with_meta("overview", "growth")
+			if dots == null:
+				_fail("no growth dot plot to click")
+			else:
+				dots.picked.emit("services")
+		8:
+			if not _main._windows.is_open("sector_services"):
+				_fail("a click on the Services dot did not open the Services tab")
+			_route_to_a_firm()
+		11:
+			_check_routed_firm_first()
+			_press(_with_meta("open_tab", "sector_industry"))
+		13:
 			if not _main._windows.is_open("sector_industry"):
 				_fail("Open Industry did not open the Industry tab")
 			_finish()
@@ -70,10 +91,10 @@ func _check_shape() -> void:
 	if not lead.text.contains(Labels.sector(lag)):
 		_fail("lead '%s' does not name the slowest sector %s" % [lead.text, Labels.sector(lag)])
 	var counts: Dictionary = SectorNeeds.counts(_main._state, _main._loader, ns)
-	var first_waiting := -1
+	var waiting_rows := []
 	for i in sectors.size():
-		if first_waiting < 0 and int(counts.get(SectorNeeds.tab_of(String(sectors[i])), 0)) > 0:
-			first_waiting = i
+		if int(counts.get(SectorNeeds.tab_of(String(sectors[i])), 0)) > 0:
+			waiting_rows.append(i)
 
 	# Share of output: one bar per sector, its value the sector's share in per cent.
 	var share = _node_with_meta("overview", "share")
@@ -88,8 +109,8 @@ func _check_shape() -> void:
 			if absf(float(rows[i]["value"]) - want) > 0.05:
 				_fail("share of %s drawn %.2f, sim %.2f" % [sectors[i], float(rows[i]["value"]), want])
 
-		if int(share._highlight) != first_waiting:
-			_fail("share chart lights row %d, the first waiting sector is %d" % [int(share._highlight), first_waiting])
+		if share._marked != waiting_rows:
+			_fail("share chart marks rows %s, the waiting sectors are %s" % [share._marked, waiting_rows])
 
 	# A verdict chip per sector, in the sim's words.
 	var text_all := _text_under(_panel)
@@ -146,6 +167,111 @@ func _check_shape() -> void:
 			_fail("%s card has no output curve" % s)
 	if not _visible_buttons_with_meta("company_id").is_empty():
 		_fail("a firm's Act is on the overview without a route to it")
+
+
+## Pass 2 on #427, the fresh game: the fold mark has its button, the trend is called a trend, and the lead names a
+## lagging sector only when one lags.
+func _check_quiet_world() -> void:
+	var primary = _panel.primary_action()
+	if primary == null or not primary.has_meta("open_tab"):
+		_fail("primary_action() finds no Open button: the fold mark never shows")
+	var text_all := _text_under(_panel)
+	if text_all.contains("Growth a year") or not text_all.contains("Trend a year"):
+		_fail("the dot plot is not titled 'Trend a year' as the sector tab is")
+	var ns = _main._state.player()
+	var lags := false
+	for s in EK.SECTOR_TREND.keys():
+		if SectorRead.head(_main._state, _main._loader, ns, String(s))["verdict"] in ["behind", "slower"]:
+			lags = true
+	if _panel._title.text.contains("Slowest") != lags:
+		_fail("the lead names a slowest sector (%s) though a sector lags is %s" % [_panel._title.text, lags])
+
+
+## A burden on Industry, a failed Services major, closures announced in two sectors.
+func _stage_a_busy_world() -> void:
+	var state = _main._state
+	var ns = state.player()
+	ns.regulation_burden["industry"] = 0.3
+	# Every Services firm fails: a sorted list would put one failed firm last, a whole failed sector shows it.
+	for company in Companies.firms_in_sector(_main._loader, ns.id, "services"):
+		if not ns.companies.has(company.id):
+			ns.companies[company.id] = {}
+		ns.companies[company.id]["failed"] = true
+	for sector in ["agriculture", "industry"]:
+		for company in Companies.majors_of(_main._loader, ns.id):
+			if String(company.sector) == sector and ns.companies.has(company.id):
+				Closures._announce(ns, company, ns.companies[company.id], 0.2, _main._loader.closure_rule, state.year * 12 + state.month)
+				break
+	_panel.mark_dirty()
+
+
+func _check_busy_world() -> void:
+	var ns = _main._state.player()
+	var sectors: Array = EK.SECTOR_TREND.keys()
+	var card = _node_with_meta("sector_card", "industry")
+	var burden := Strings.t("Regulated: %s") % Num.fs(0.3, 2)
+	if card == null or not _text_under(card).contains(burden):
+		_fail("the Industry card does not carry its burden '%s'" % burden)
+	var gone = _node_with_meta("employers", "services")
+	if gone != null and not gone._rows.is_empty():
+		_fail("failed firms are ranked among the biggest employers: %s" % [gone._rows])
+	var employers = _node_with_meta("employers", "industry")
+	if employers != null:
+		if not employers._rows.is_empty():
+			var v := float(employers._rows[0]["value"])
+			if employers.value_text(0) != CompanyVerb.thousands(v):
+				_fail("employer figure '%s', the jobs figure's format is '%s'" % [employers.value_text(0), CompanyVerb.thousands(v)])
+	var counts: Dictionary = SectorNeeds.counts(_main._state, _main._loader, ns)
+	var share = _node_with_meta("overview", "share")
+	var waiting := 0
+	for i in sectors.size():
+		var waits := int(counts.get(SectorNeeds.tab_of(String(sectors[i])), 0)) > 0
+		if waits:
+			waiting += 1
+		if share != null and waits != (share.bar_color(i) == UiTheme.WARN):
+			_fail("share bar %s drawn %s, waiting %s (a decision is the WARN tone, every waiting sector)" % [sectors[i], share.bar_color(i), waits])
+		if share != null and share.bar_color(i) == UiTheme.accent():
+			_fail("share bar %s wears the accent: status is a fixed tone" % sectors[i])
+	if waiting < 2:
+		_fail("setup: %d sectors wait, expected 2" % waiting)
+	var dots = _node_with_meta("overview", "growth")
+	if dots != null:
+		for r in dots.data():
+			if bool(r.get("selected", false)):
+				_fail("the dot plot marks %s in the accent as waiting" % r["id"])
+
+
+## Pass 2 T4: Needs you > Answer lands on the firm's card, first, under a heading, its verb focused.
+func _route_to_a_firm() -> void:
+	var ns = _main._state.player()
+	for company in Companies.majors_of(_main._loader, ns.id):
+		if String(company.sector) == "industry":
+			_routed = {"sector": "industry", "id": String(company.id)}
+			break
+	SectorsShell.open_firm(_routed["sector"], _routed["id"], _main)
+
+
+func _check_routed_firm_first() -> void:
+	var body: Control = _panel._body
+	var first_card := -1
+	var first_chart := -1
+	for i in body.get_child_count():
+		var child := body.get_child(i)
+		if child.is_queued_for_deletion():
+			continue
+		if first_chart < 0 and child.find_children("*", "ChartBars", true, false).size() + int(child is HBoxContainer and child.get_child_count() > 0 and child.get_child(0).find_children("*", "", true, false).any(func(n): return n.has_meta("overview"))) > 0:
+			first_chart = i
+		if first_card < 0 and not child.find_children("*", "Button", true, false).filter(func(b): return b.has_meta("company_id") and String(b.get_meta("company_id")) == _routed["id"]).is_empty():
+			first_card = i
+	if first_card < 0:
+		_fail("routed: the firm's card is not on the overview")
+	elif first_chart >= 0 and first_card > first_chart:
+		_fail("routed: the firm's card (child %d) lands under the charts (child %d)" % [first_card, first_chart])
+	if _node_with_meta("routed_heading", _routed["sector"]) == null:
+		_fail("routed: no heading over the firm's card")
+	var focus = _panel.get_viewport().gui_get_focus_owner()
+	if focus == null or not focus.has_meta("company_id") or String(focus.get_meta("company_id")) != _routed["id"]:
+		_fail("routed: the focus is not on the firm's verb (%s)" % focus)
 
 
 func _node_with_meta(key: String, value: String):

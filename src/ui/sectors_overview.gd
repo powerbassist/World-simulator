@@ -2,16 +2,16 @@ extends RefCounted
 
 ## The Sectors overview's shape -- the rework pass's C ("the economy's shape", the author's
 ## pick after the G3 line "sector overview is a joke"). One look says which sector carries
-## the economy and which lags: the share of output as bars, growth a year as a dot plot
+## the economy and which lags: the share of output as bars, the trend a year as a dot plot
 ## against the economy's own line, then one card per sector (output, share, jobs at named
 ## firms, an 18-month curve, the biggest employers, Open). The verbs live on each sector's
 ## tab; this file only reads.
 ##
 ## Every figure is a reader's: SectorRead.head (Economy.sector_trend_pct against the
 ## nation's trend), GameState.history's `sectors` for the curve, Companies.headcount for
-## the employers, SectorNeeds for the "decision" chip. The picture's own card outline in the
-## accent is not built: a plate never wears the accent (test_ui_theme); the waiting sector
-## is told by its chip and by its bar in the accent instead.
+## the employers, SectorNeeds for the "decision" chip. The picture drew the waiting sector in
+## the accent; a decision is a STATUS, so every waiting sector's bar is the WARN tone and its
+## card carries the chip (AGENTS.md: identity and status colour never mixed).
 
 const Companies = preload("res://src/sim/companies.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
@@ -34,8 +34,9 @@ const CURVE_HEIGHT := 32.0
 const EMPLOYERS := 4
 ## The chip glyph on a sector under the economy's pace and on a waiting card.
 const GLYPH := "warning"  # i18n: ok an icon file name
-## The lead: the largest sector by share, then the one furthest under the nation's trend.
+## The lead: the largest sector by share, then, when one lags, the one furthest under the nation's trend.
 const LEAD := "%s: %s %% of output. Slowest against the economy: %s."  # i18n: msgid
+const LEAD_ALONE := "%s: %s %% of output."  # i18n: msgid
 const VERDICT_CHIPS := {
 	"behind": UiTheme.CHIP_BAD, "slower": UiTheme.CHIP_WARN, "pace": UiTheme.CHIP_GOOD, "ahead": UiTheme.CHIP_GOOD,
 }
@@ -57,25 +58,27 @@ static func build(parent: Control, state, loader, ns, open_tab: Callable) -> Str
 	parent.add_child(charts)
 	var share_rows := []
 	var dot_rows := []
-	var highlight := -1
+	var marked := []
 	for i in sectors.size():
 		var s := String(sectors[i])
 		var share := 100.0 * float(heads[s]["output"]) / total if total > 0.0 else 0.0
 		share_rows.append({"label": Labels.sector(s), "value": share})
-		var waits := int(waiting.get(SectorNeeds.tab_of(s), 0)) > 0
-		if waits and highlight < 0:
-			highlight = i
+		if int(waiting.get(SectorNeeds.tab_of(s), 0)) > 0:
+			marked.append(i)
 		var trend := float(heads[s]["trend"])
-		dot_rows.append({"id": s, "label": Labels.sector(s), "before": trend, "after": trend, "moved": false, "selected": waits})
-	var share_box := ChartKit.bars(charts, Strings.t("Share of output"), share_rows, {"unit": " %", "highlight": highlight})
+		dot_rows.append({"id": s, "label": Labels.sector(s), "before": trend, "after": trend, "moved": false})
+	var share_box := ChartKit.bars(charts, Strings.t("Share of output"), share_rows, {"unit": " %", "marked": marked})
 	share_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	share_box.get_child(1).set_meta("overview", "share")
 	var growth := VBoxContainer.new()
 	growth.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	charts.add_child(growth)
-	var dots := ChartKit.dots(growth, Strings.t("Growth a year, against the economy (%s %%)") % Num.fs(float(ns.trend_annual_pct), 1),
+	var dots := ChartKit.dots(growth, Strings.t("Trend a year, against the economy (%s %%)") % Num.fs(float(ns.trend_annual_pct), 1),
 		dot_rows, {"reference": float(ns.trend_annual_pct), "places": 1})
-	(dots.get_meta("chart") as Control).set_meta("overview", "growth")
+	var dot_chart: Control = dots.get_meta("chart")
+	dot_chart.set_meta("overview", "growth")
+	# A dot is a way in, as the card's Open is (a click there did nothing).
+	dot_chart.picked.connect(func(id: String) -> void: open_tab.call(SectorNeeds.tab_of(id)))
 	var verdicts := HFlowContainer.new()
 	verdicts.add_theme_constant_override("h_separation", 8)
 	growth.add_child(verdicts)
@@ -125,6 +128,10 @@ static func _card(parent: Control, loader, ns, sector: String, head: Dictionary,
 	PanelKit.figure(figures, CompanyVerb.thousands(float(head["jobs"])), Strings.t("jobs at named firms"))
 	for figure in figures.get_children():  # the captions wrap at the card's width, not the figure's
 		(figure as Control).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# The sector's regulation burden: the public account's net rows name the sectors that carry one.
+	var burden: float = Companies.regulation_burden_of(ns, sector)
+	if burden != 0.0:
+		PanelKit.plain_line(box, (Strings.t("Regulated: %s") if burden > 0.0 else Strings.t("Deregulated: %s")) % Num.fs(burden, 2))
 	var values := PackedFloat64Array()
 	for e in history:
 		var outputs = e.get("sectors", null)
@@ -137,13 +144,14 @@ static func _card(parent: Control, loader, ns, sector: String, head: Dictionary,
 	# Under two months there is no line to draw: no band left empty (the figures above carry today).
 	curve.visible = values.size() >= 2
 
-	var firms: Array = Companies.firms_in_sector(loader, ns.id, sector)
+	# A failed firm employs nobody: it is not among the biggest employers.
+	var firms: Array = Companies.firms_in_sector(loader, ns.id, sector).filter(func(c) -> bool: return Companies.headcount(ns, c) > 0.0)
 	firms.sort_custom(func(a, b) -> bool: return Companies.headcount(ns, a) > Companies.headcount(ns, b))
 	var rows := []
 	for company in firms.slice(0, EMPLOYERS):
 		rows.append({"label": String(company.company_name), "value": Companies.headcount(ns, company)})  # i18n: row-ok a firm's proper name
 	if not rows.is_empty():
-		var employers := ChartKit.bars(box, Strings.t("Biggest employers"), rows)
+		var employers := ChartKit.bars(box, Strings.t("Biggest employers"), rows, {"figure": CompanyVerb.thousands})
 		employers.get_child(1).set_meta("employers", sector)
 
 	var open := PanelKit.sized(Button.new())
@@ -163,8 +171,11 @@ static func _lead(sectors: Array, heads: Dictionary, share_rows: Array) -> Strin
 		var gap := float(heads[sectors[i]]["trend"]) - float(heads[sectors[i]]["nation"])
 		if gap < float(heads[sectors[lag]]["trend"]) - float(heads[sectors[lag]]["nation"]):
 			lag = i
-	return Strings.t(LEAD) % [Labels.sector(String(sectors[top])), Num.f(float(share_rows[top]["value"]), 0),
-		Labels.sector(String(sectors[lag]))]
+	var largest := Labels.sector(String(sectors[top]))
+	var share := Num.f(float(share_rows[top]["value"]), 0)
+	if not String(heads[sectors[lag]]["verdict"]) in ["behind", "slower"]:
+		return Strings.t(LEAD_ALONE) % [largest, share]
+	return Strings.t(LEAD) % [largest, share, Labels.sector(String(sectors[lag]))]
 
 
 ## A chip's words on one line: in a flow, a chip's wrapping label measures zero wide and

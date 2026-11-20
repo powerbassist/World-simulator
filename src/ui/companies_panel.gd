@@ -52,6 +52,7 @@ const IndustryCard = preload("res://src/ui/industry_card.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
 const FirmCommands = preload("res://src/ui/firm_commands.gd")
 const SectorsOverview = preload("res://src/ui/sectors_overview.gd")
+const Labels = preload("res://src/ui/labels.gd")
 
 var _state
 var _loader
@@ -205,10 +206,14 @@ func _refresh() -> void:
 		# not read the firm register at all, so returning here would have hidden a
 		# working lever behind a missing content file.
 		PanelKit.heading(_body, tr("No register"))
-		PanelKit.line(_body, tr("No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply."))
+		PanelKit.line(_body, tr("No firms are named for this nation. Its sectors are modelled in aggregate."))
 
 	if _last_refusal != "":
 		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
+	# A Needs you row's route (sectors_shell.open_firm) lands on its firm's verbs, first and named.
+	if _open_sector != "":
+		PanelKit.heading(_body, tr("Waiting on you in %s") % Labels.sector(_open_sector)).set_meta("routed_heading", _open_sector)
+		IndustryCard.build(self, _body, ns, _open_sector)
 	# V5.3 a + b step 2 (spec 3.2): what is under way first, then what waits on the
 	# player, then the three sector cards, closed until opened; the public account
 	# last, folded.
@@ -216,9 +221,6 @@ func _refresh() -> void:
 	_build_autonomy_sections(ns)
 	# The rework pass's C: the economy's shape, the verbs one Open away on each sector's tab.
 	_title.text = SectorsOverview.build(_body, _state, _loader, ns, func(id: String) -> void: tab_requested.emit(id))
-	# A Needs you row's route (sectors_shell.open_firm) still lands on its firm's verbs here.
-	if _open_sector != "":
-		IndustryCard.build(self, _body, ns, _open_sector)
 	_build_ledger(ns)
 	_restore_focus()
 
@@ -300,7 +302,7 @@ func _firm_object(nation_id: String, company_id: String):
 ## The two deviation rows are NET, and deliberately not split into a subsidy half
 ## and a regulation half. Splitting them would mean recomputing each channel against
 ## a hypothetical register, which is a second model of the same quantity kept in
-## step by hand; the sector headings below carry the burden instead, so a player who
+## step by hand; the sector cards above carry the burden instead, so a player who
 ## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
 	var fold := PanelKit.sized(Button.new())
@@ -405,8 +407,8 @@ func _on_closure(closure_id: String, answer_id: String, what: String) -> void:
 func primary_action() -> Control:
 	if is_instance_valid(_primary):
 		return _primary
-	# V5.3 a + b step 2: with every card closed, the first card is the way in.
+	# The rework pass's C: the first sector card's Open is the way in.
 	for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
-		if button.has_meta("sector"):
+		if button.has_meta("open_tab"):
 			return button
 	return null
