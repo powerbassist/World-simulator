@@ -17,6 +17,8 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const SectorNeeds = preload("res://src/ui/sector_needs.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
+const SectorRead = preload("res://src/ui/sector_read.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -60,6 +62,19 @@ func _check_shape() -> void:
 	if not lead.text.contains(Labels.sector(top)):
 		_fail("lead '%s' does not name the largest sector %s" % [lead.text, Labels.sector(top)])
 
+	# ... and the one furthest under the nation's trend.
+	var lag := String(sectors[0])
+	for s in sectors:
+		if Economy.sector_trend_pct(_main._state, ns, String(s)) < Economy.sector_trend_pct(_main._state, ns, lag):
+			lag = String(s)
+	if not lead.text.contains(Labels.sector(lag)):
+		_fail("lead '%s' does not name the slowest sector %s" % [lead.text, Labels.sector(lag)])
+	var counts: Dictionary = SectorNeeds.counts(_main._state, _main._loader, ns)
+	var first_waiting := -1
+	for i in sectors.size():
+		if first_waiting < 0 and int(counts.get(SectorNeeds.tab_of(String(sectors[i])), 0)) > 0:
+			first_waiting = i
+
 	# Share of output: one bar per sector, its value the sector's share in per cent.
 	var share = _node_with_meta("overview", "share")
 	if share == null:
@@ -72,6 +87,16 @@ func _check_shape() -> void:
 			var want := 100.0 * float(ns.sector_output.get(sectors[i], 0.0)) / total
 			if absf(float(rows[i]["value"]) - want) > 0.05:
 				_fail("share of %s drawn %.2f, sim %.2f" % [sectors[i], float(rows[i]["value"]), want])
+
+		if int(share._highlight) != first_waiting:
+			_fail("share chart lights row %d, the first waiting sector is %d" % [int(share._highlight), first_waiting])
+
+	# A verdict chip per sector, in the sim's words.
+	var text_all := _text_under(_panel)
+	for s in sectors:
+		var words := SectorRead.verdict_words(SectorRead.verdict(Economy.sector_trend_pct(_main._state, ns, String(s)) - float(ns.trend_annual_pct)))
+		if not text_all.contains("%s: %s" % [Labels.sector(String(s)), words]):
+			_fail("no verdict chip '%s: %s'" % [Labels.sector(String(s)), words])
 
 	# Growth a year: a dot per sector at Economy.sector_trend_pct, the economy's line at the nation's trend.
 	var dots = _node_with_meta("overview", "growth")
@@ -87,7 +112,6 @@ func _check_shape() -> void:
 			_fail("the economy's line sits at %.3f, the nation's trend is %.3f" % [float(dots._reference), float(ns.trend_annual_pct)])
 
 	# Three cards: output, the biggest employer by headcount, one Open, and the decision chip iff something waits.
-	var counts: Dictionary = SectorNeeds.counts(_main._state, _main._loader, ns)
 	for s in sectors:
 		var card = _node_with_meta("sector_card", String(s))
 		if card == null:
@@ -97,14 +121,22 @@ func _check_shape() -> void:
 		var output := Num.f(float(ns.sector_output.get(s, 0.0)), 0)
 		if not text.contains(output):
 			_fail("%s card does not print its output %s bn: '%s'" % [s, output, text])
+		var jobs := 0.0
+		var firms: Array = Companies.firms_in_sector(_main._loader, ns.id, String(s))
+		for company in firms:
+			jobs += Companies.headcount(ns, company)
+		if not text.contains(CompanyVerb.thousands(jobs)):
+			_fail("%s card does not print its jobs %s: '%s'" % [s, CompanyVerb.thousands(jobs), text])
 		var biggest = null
-		for company in Companies.firms_in_sector(_main._loader, ns.id, String(s)):
+		for company in firms:
 			if biggest == null or Companies.headcount(ns, company) > Companies.headcount(ns, biggest):
 				biggest = company
 		var employers = _node_with_meta("employers", String(s))
 		if biggest != null and (employers == null or employers._rows.is_empty()
 				or String(employers._rows[0]["label"]) != String(biggest.company_name)):
 			_fail("%s card does not rank its biggest employer %s first" % [s, biggest.company_name])
+		if employers != null and employers._rows.size() != mini(firms.size(), 4):
+			_fail("%s card ranks %d employers, expected %d" % [s, employers._rows.size(), mini(firms.size(), 4)])
 		if _with_meta("open_tab", SectorNeeds.tab_of(String(s))) == null:
 			_fail("%s card has no Open button" % s)
 		var waiting := int(counts.get(SectorNeeds.tab_of(String(s)), 0)) > 0
