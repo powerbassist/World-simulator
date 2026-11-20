@@ -6,6 +6,7 @@ extends RefCounted
 ## request column once its cards went onto the grid (diary_chip.gd).
 
 const Grid = preload("res://src/ui/diary_grid.gd")
+const Audiences = preload("res://src/sim/audiences.gd")
 
 ## The request the keyboard was sent to book, "" for none. audience_driver clears it.
 var request := ""
@@ -42,6 +43,15 @@ func focus(request_id: String) -> void:
 func _refocus() -> void:
 	if request == "" or not _grid.is_visible_in_tree():
 		return
+	# #431 pass 2 TAKE 1: the daily redraw ran (nothing was in hand) and the picked day is now
+	# today or gone; the first free day takes the pick, its re-render brings us back here.
+	var st = _grid._state
+	if st != null and _grid._selected > 0 and _grid._shown() == Vector2i(int(st.year), int(st.month)) \
+			and _grid._selected <= int(st.day):
+		var first: Dictionary = Audiences.first_free_day(st, st.player(), request)
+		if not first.is_empty():
+			_grid.pick(int(first["year"]), int(first["month"]), int(first["day"]))
+			return
 	var viewport := _grid.get_viewport()
 	var owner: Control = viewport.gui_get_focus_owner() if viewport != null else null
 	if owner == null or owner.is_queued_for_deletion() or not owner.is_inside_tree():

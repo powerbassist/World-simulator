@@ -44,10 +44,8 @@ static func answers(state, ns, loader, row: Dictionary) -> Dictionary:
 	if String(row["status"]) == K.STATUS_BOOKED:
 		return {"book": {"ok": false, "reason": "already booked"}, "delegate": delegate, "decline": open}
 	var book := {"ok": false, "reason": "no free day before the last day they can see you"}
-	for date in Dates.offered(state, ns, row):
-		if bool(date["free"]):
-			book = {"ok": true, "reason": ""}
-			break
+	if not Dates.first_free(state, row).is_empty():
+		book = {"ok": true, "reason": ""}
 	return {"book": book, "delegate": delegate, "decline": open}
 
 

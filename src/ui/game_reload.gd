@@ -119,6 +119,8 @@ static func after_load(main) -> void:
 	main._assembly_news.forget(main._state.player().last_law_result)
 	# The desk's rows back in the inbox and the latest consequence card (C6).
 	preload("res://src/ui/desk_cards.gd").restore_after_load(main)
+	# The register's warnings and overrun asks still waiting (the inbox is not saved).
+	preload("res://src/ui/register_warning.gd").restore_after_load(main)
 	# The month's music from the loaded game's own situation, as its month ends would set it: the old
 	# main's Music node went with it, and nothing else plays a band before the first month end
 	# (#396 pass 2, T1).

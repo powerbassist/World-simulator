@@ -209,6 +209,7 @@ func _check_why_these_days(panel, label: String) -> void:
 	var who: String = _main._loader.person_name(String(Audiences.request(ns, rid)["person_id"]))
 	var dates: Array = Audiences.offered_dates(_main._state, ns, rid)
 	if dates.is_empty():
+		_fail("%s: the request has no day at all to read the line against" % label)  # QA's lead 14 on #431
 		return
 	var last: Dictionary = dates[dates.size() - 1]
 	var want := "%s can see you on any free day until %s." % [who, DateText.day_month_year(int(last["day"]), int(last["month"]), int(last["year"]))]

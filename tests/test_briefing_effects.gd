@@ -37,10 +37,6 @@ func _initialize() -> void:
 
 func _state():
 	var state = GameState.new_game(_loader, "FRA")
-	# A real date: an audience books any day from tomorrow, and month 0 has none (#431).
-	state.year = 2026
-	state.month = 1
-	state.day = 1
 	for i in 8:
 		state.history.append({"year": 2025, "month": 4 + i, "overall_approval_pct": 40.0 + i,
 			"unemployment_pct": 7.0, "deficit_pct_gdp": 4.0 + 0.1 * i, "growth_annual_pct": 1.0, "debt_to_gdp_pct": 110.0})

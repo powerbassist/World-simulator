@@ -63,12 +63,13 @@ static func close_overtaken(state, ns, now: int, loader = null, meters: Dictiona
 		row["resolved_month"] = now
 
 
-## The last month an answer is taken: overdue() below lapses a pending request AS its
-## deadline month begins, so the month before is the last one (QA's pre-gate B TAKE 1:
-## "Answer by AUG" lapsed on 1 AUG). Every surface that dates a request reads this one
-## rule (#388's TAKE 1: the People roster had re-derived it a month late).
+## The last month an answer is taken, and the last month a day can be booked in: one date
+## (#431 pass 2, TAKE 6; the author's "Fin du mois limite"): the deadline month, a chief's the
+## month before (audience_dates.gd last_month). overdue() lapses a pending request as the month
+## after it begins (QA's pre-gate B TAKE 1: "Answer by AUG" must not lapse on 1 AUG). Every
+## surface that dates a request reads this one rule (#388's TAKE 1).
 static func answer_by(row: Dictionary) -> int:
-	return int(row["deadline_month"]) - 1
+	return Dates.last_month(row)
 
 
 ## Pending past its window lapses; an audience booked or held in an earlier month and never
@@ -76,7 +77,7 @@ static func answer_by(row: Dictionary) -> int:
 static func overdue(row: Dictionary, now: int) -> bool:
 	match String(row.get("status", "")):
 		K.STATUS_PENDING:
-			return now >= int(row["deadline_month"])
+			return now > answer_by(row)
 		K.STATUS_BOOKED, K.STATUS_HELD:
 			var date: Dictionary = row.get("date", {})
 			return int(date.get("year", 0)) * 12 + int(date.get("month", 0)) < now

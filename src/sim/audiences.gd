@@ -112,6 +112,11 @@ static func offered_dates(state, ns, request_id: String) -> Array[Dictionary]:
 	return Dates.offered(state, ns, _row(ns, request_id))
 
 
+## The first day the request can be booked on, or {} (audience_dates.gd: stops at it).
+static func first_free_day(state, ns, request_id: String) -> Dictionary:
+	return Dates.first_free(state, _row(ns, request_id))
+
+
 ## The card's three answers (request_landings.gd, where the rule lives since V5.3 B7).
 static func answers(state, ns, loader, request_id: String) -> Dictionary:
 	return Landings.answers(state, ns, loader, _row(ns, request_id))
@@ -126,7 +131,7 @@ static func decline_price(ns, loader, request_id: String) -> Dictionary:
 # --- Commands -------------------------------------------------------------------------
 
 ## Book any day from tomorrow to the last day of the deadline month the diary can
-## place (audience_dates.gd; a chief's ends at the answer-by month). A refusal carries `reason` (K.BOOK_*) beside its words.
+## place (audience_dates.gd; a chief's ends a month earlier). A refusal carries `code` (K.BOOK_*) and `reason`, the words.
 static func book(state, ns, loader, request_id: String, date: Dictionary) -> Dictionary:
 	var row := _row(ns, request_id)
 	if row.is_empty() or String(row["status"]) != K.STATUS_PENDING:

@@ -16,6 +16,20 @@ const CalendarK = preload("res://src/sim/calendar_constants.gd")
 ## from the request's id are gone). Tomorrow, not today: a day booked today would fire at the
 ## next day's tick, after a month close that reads it as a no-show.
 static func offered(state, ns, row: Dictionary) -> Array[Dictionary]:
+	return _walk(state, row, false)
+
+
+## The first day of the window the diary can place, or {}: a card that needs one free day
+## stops there rather than reading the whole window (#431 pass 2, TAKE 3).
+static func first_free(state, row: Dictionary) -> Dictionary:
+	var found := _walk(state, row, true)
+	return {} if found.is_empty() else found[0]
+
+
+## The window's days in order, each with `free` and the words of why not (refusal(), the one
+## rule book() reads, so a day the list calls free is a day that books -- TAKE 4); with
+## `first_only`, just the first free one.
+static func _walk(state, row: Dictionary, first_only: bool) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if row.is_empty():
 		return out
@@ -33,16 +47,22 @@ static func offered(state, ns, row: Dictionary) -> Array[Dictionary]:
 				y += 1
 			continue
 		var date := {"year": y, "month": m, "day": d}
-		var reason := Calendar.refusal_reason(state, entry(row, date))
-		date["free"] = reason.is_empty()
-		date["reason"] = reason
+		var why := refusal(state, row, date)
+		date["free"] = why.is_empty()
+		date["reason"] = String(why.get("reason", ""))
+		if first_only and not bool(date["free"]):
+			d += 1
+			continue
 		out.append(date)
+		if first_only:
+			return out
 		d += 1
 	return out
 
 
-## Why `date` cannot be booked for `row`: {} when it can, else {reason, error} -- the
-## reason one of K.BOOK_PASSED / BOOK_DEADLINE / BOOK_TAKEN, the error the words.
+## Why `date` cannot be booked for `row`: {} when it can, else {code, reason, error} -- the
+## code one of K.BOOK_*, the reason and the error the words (TAKE 8: codes under `code`, words
+## under `reason`, as offered() and answers() carry them).
 static func refusal(state, row: Dictionary, date: Dictionary) -> Dictionary:
 	var today := _today(state)
 	var y := int(date.get("year", 0))
@@ -50,13 +70,13 @@ static func refusal(state, row: Dictionary, date: Dictionary) -> Dictionary:
 	var d := int(date.get("day", 0))
 	# Once only a drawn day could be booked; any day now, so an impossible one is refused here.
 	if m < 1 or m > 12 or d < 1 or d > Calendar.days_in_month(y, m):
-		return {"reason": K.BOOK_NO_DAY, "error": "not a day of the calendar"}
+		return _no(K.BOOK_NO_DAY, "not a day of the calendar")
 	if Calendar.ordinal(y, m, d) <= Calendar.ordinal(int(today["year"]), int(today["month"]), int(today["day"])):
-		return {"reason": K.BOOK_PASSED, "error": "that day has passed"}
+		return _no(K.BOOK_PASSED, "that day has passed")
 	if y * 12 + m > last_month(row):
-		return {"reason": K.BOOK_DEADLINE, "error": "after the last day they can see you"}
+		return _no(K.BOOK_DEADLINE, "after the last day they can see you")
 	var taken := Calendar.refusal_reason(state, entry(row, date))
-	return {} if taken.is_empty() else {"reason": K.BOOK_TAKEN, "error": taken}
+	return {} if taken.is_empty() else _no(K.BOOK_TAKEN, taken)
 
 
 ## The last month a day can be booked in (absolute): the deadline month ("Fin du mois limite").
@@ -71,6 +91,10 @@ static func last_month(row: Dictionary) -> int:
 static func entry(row: Dictionary, date: Dictionary) -> Dictionary:
 	return Calendar.make_entry(CalendarK.KIND_AUDIENCE, int(date["year"]), int(date["month"]), int(date["day"]),
 		String(row["id"]), String(row["person_id"]), "", "", "", String(row["person_id"]), 0)
+
+
+static func _no(code: String, words: String) -> Dictionary:
+	return {"code": code, "reason": words, "error": words}
 
 
 ## Calendar's today: a stale day past this month's end reads as its last day.

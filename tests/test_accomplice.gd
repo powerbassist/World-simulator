@@ -148,7 +148,7 @@ func _check_a_lapse_is_a_crossing() -> void:
 	_evidence(held, int(held["arrived"]) - 1)
 	var deadline := int(Audiences.request(plain["ns"], plain["id"]).get("deadline_month", 0))
 	for f in [plain, held]:
-		while _now(f["state"]) < deadline:
+		while _now(f["state"]) <= deadline:  # lapses as the month after its deadline begins (#431)
 			_advance(f["state"])
 		Audiences.tick_month(f["state"], _loader, METERS)
 	var a := President.rapport(plain["ns"], plain["pid"])
