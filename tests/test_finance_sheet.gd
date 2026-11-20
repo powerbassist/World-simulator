@@ -306,11 +306,11 @@ func _check_scope(want: Dictionary, price: FinancePrice, whole: Dictionary, extr
 	var pct := Num.f(deficit_after / gdp * 100.0, 2) + " %"
 	if not sheet.contains(pct):
 		_fail("the sheet's deficit in %% of GDP is not the whole bill's: wanted '%s'" % pct)
-	# One screen, one figure (the parent's ruling after #368): the Books deficit line and the ranges forecast are the
-	# same bill as the sheet's arrow, not the new rows alone.
-	var with_line: String = _panel._with.text
-	if not with_line.contains("deficit %s bn (%s" % [Num.f(deficit_after, 0), Num.f(deficit_after / gdp * 100.0, 2)]):
-		_fail("the Books deficit line is not the whole bill's (%s): %s" % [arrow, with_line])
+	# One screen, one figure (the parent's ruling after #368): the tray's deficit is the same bill as the sheet's arrow,
+	# not the new rows alone; the page's note no longer repeats it (#429 pass 2 T10: each number once).
+	var tray: String = _panel._foot._text.text
+	if not tray.contains("%s bn (%s" % [arrow, Num.f(deficit_after / gdp * 100.0, 2)]):
+		_fail("the tray's deficit is not the whole bill's (%s): %s" % [arrow, tray])
 	if var_to_str(_panel._forecast._want) != var_to_str(whole):
 		_fail("the ranges forecast is not fed the whole bill: %s" % var_to_str(_panel._forecast._want))
 	var foot: String = _panel._foot._text.text

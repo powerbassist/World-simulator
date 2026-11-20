@@ -5,6 +5,8 @@ extends Control
 ## a ring is the value before, a filled dot in the accent the value after, joined by a line,
 ## for a row that moves; a row that does not is a small dim dot. Optional:
 ##   reference  one vertical hairline (the nation's figure) with its value under the axis;
+##   label_w    the name column's width at text 100 (LABEL_W by default);
+##   value_w    the value column's width at text 100 (VALUE_W by default);
 ##   fixed      Vector2(lo, hi): the axis, whatever the values (the Finances tray's one 0-25 % scale);
 ##   band       Vector2(lo, hi) on the axis, shaded in the attention tone, and a warning
 ##              glyph (Material Symbols) on each row whose before lies inside it -- the tone
@@ -12,7 +14,8 @@ extends Control
 ## Values are printed at the row's end, so the chart never gates a number (the dataviz
 ## method's table view); a click on a row emits `picked(id)`.
 ##
-## Rows: [{id, label, before, after, moved, selected}] -- shown text and the caller's figures.
+## Rows: [{id, label, before, after, moved, selected, text}] -- shown text and the caller's figures; `text`, when given,
+## is printed in place of the row's figures (a unit the plot's decimals cannot say).
 
 signal picked(id: String)
 
@@ -32,6 +35,10 @@ var _reference := NAN
 var _band := Vector2(NAN, NAN)
 var _fixed := Vector2(NAN, NAN)
 var _places := 2
+## The value column's width at text 100 (opts.value_w): a row's own `text` with a unit needs more than a bare figure.
+var _value_w := VALUE_W
+## The name column's width at text 100 (opts.label_w).
+var _label_w := LABEL_W
 var _warning: Texture2D
 
 
@@ -41,6 +48,8 @@ func setup(rows: Array, opts := {}) -> void:
 	_band = opts.get("band", Vector2(NAN, NAN))
 	_fixed = opts.get("fixed", Vector2(NAN, NAN))
 	_places = int(opts.get("places", 2))
+	_value_w = float(opts.get("value_w", VALUE_W))
+	_label_w = float(opts.get("label_w", LABEL_W))
 	_warning = Icon.load_icon("res://assets/icons/material/warning.svg", UiTheme.WARN, _fs()) if not is_nan(_band.x) else null
 	custom_minimum_size = Vector2(0.0, row_height() * (rows.size() + 1))
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -76,11 +85,11 @@ func _fs() -> int:
 
 ## The name and value columns grow with the text size, or a long name is cut at 130 %.
 func _lw() -> float:
-	return LABEL_W * UiTheme.text_scale()
+	return _label_w * UiTheme.text_scale()
 
 
 func _vw() -> float:
-	return VALUE_W * UiTheme.text_scale()
+	return _value_w * UiTheme.text_scale()
 
 
 ## The axis: every value drawn and the reference, with a margin so no mark sits on an edge.
@@ -145,11 +154,13 @@ func _draw() -> void:
 			value = "%s → %s" % [Num.f(float(r["before"]), _places), Num.f(float(r["after"]), _places)]
 		else:
 			draw_circle(Vector2(a, mid), 3.5, UiTheme.TEXT_DIM)
+		value = String(r.get("text", value))  # i18n: row-ok the caller's shown figures (the Finances tray's units)
 		draw_string(font, Vector2(size.x - _vw(), text_y), value, HORIZONTAL_ALIGNMENT_RIGHT, _vw(), fs, UiTheme.TEXT)
 	var s := _span()
 	var ay := bottom + fs + 2.0
-	draw_string(font, Vector2(_x(s.x), ay), Num.f(s.x, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
-	draw_string(font, Vector2(_x(s.y) - 40.0, ay), Num.f(s.y, 1), HORIZONTAL_ALIGNMENT_RIGHT, 40.0, fs, UiTheme.TEXT_DIM)
+	# At the chart's own decimals: a duty in EUR/l read "0.7 ... 0.7" at one.
+	draw_string(font, Vector2(_x(s.x), ay), Num.f(s.x, _places), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
+	draw_string(font, Vector2(_x(s.y) - 60.0, ay), Num.f(s.y, _places), HORIZONTAL_ALIGNMENT_RIGHT, 60.0, fs, UiTheme.TEXT_DIM)
 	if not is_nan(_reference):
 		draw_string(font, Vector2(_x(_reference) - 60.0, ay), Num.f(_reference, _places), HORIZONTAL_ALIGNMENT_CENTER, 120.0, fs, UiTheme.TEXT)
 

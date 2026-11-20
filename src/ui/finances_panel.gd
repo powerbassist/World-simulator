@@ -241,8 +241,8 @@ func _paint(ns) -> void:
 		whole = _price.whole(_loader, _draft, String(FinanceRead.draft(_state, _loader, _draft.bill())["refusal"]) != "")
 	_forecast.want(FinanceMoves.wanted(whole["pending"] if drafted else _draft.pending(), _draft), drafted or _draft.has_moves())
 	var note := Strings.t("The autumn month is over: its creations and abolitions were taken out of the draft.") + " " if _autumn_dropped else ""
-	_with.text = note + (Strings.t("With your changes, the ranges above included: deficit %s bn (%s %% of GDP).") % [
-		Num.f(float(whole["deficit_after_bn"]), 0), Num.f(float(whole["deficit_after_pct"]), 2)] if drafted else "")
+	# The deficit with the draft is the tray's figure (pass 2 T10: each number once); the note says only what the ranges hold.
+	_with.text = note + (Strings.t("With your changes, the ranges above included.") if drafted else "")
 	for child in _ranges.get_children():
 		_ranges.remove_child(child)
 		child.queue_free()

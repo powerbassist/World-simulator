@@ -500,16 +500,20 @@ func _check_discard_drops_the_draft() -> void:
 		_fail("Discard left the draft or the footer up")
 
 
-## The price before he tables: the footer's second line is the very division FinanceRead.draft meets.
+## The price before he tables: the tray's bar is the very division FinanceRead.draft meets (its legend prints the seats;
+## the sentence no longer repeats them, #429 pass 2 T10).
 func _check_the_footer_says_the_forecast() -> void:
 	var ns = _state.player()
 	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
 	_panel._dirty = true
 	_panel._process(0.0)
 	var vote: Dictionary = preload("res://src/sim/finance_read.gd").draft(_state, _loader, _panel._draft.bill())["vote"]
-	var want := "%d for, %d against, %d undecided of %d" % [int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"]), int(vote["seats_total"])]
-	if not _panel._foot._text.text.contains(want):
-		_fail("the footer does not say '%s': '%s'" % [want, _panel._foot._text.text])
+	var legend := ""
+	for label in _panel._foot._vote_box.find_children("*", "Label", true, false):
+		legend += (label as Label).text + " "
+	for seats in [int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"])]:
+		if not legend.contains(str(seats)):
+			_fail("the tray's bar does not print %d seats: '%s'" % [seats, legend])
 	_panel._draft.revert()
 	_panel._dirty = true
 	_panel._process(0.0)

@@ -27,6 +27,7 @@ const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const ChartDots = preload("res://src/ui/chart_dots.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -37,6 +38,10 @@ const Num = preload("res://src/ui/num.gd")
 
 ## The dumbbells' one axis: every rate and line the draft moves sits between 0 and 25 (% or % of GDP).
 const SCALE := Vector2(0.0, 25.0)
+## The dumbbells' value column at text 100: "11.0 → 12.5 % of GDP" in full.
+const VALUE_W := 170.0
+## Its name column: the longest change name ("Income brackets", a tax's name) at text 100.
+const LABEL_W := 130.0
 
 var _text: Label
 var _table: Button
@@ -45,8 +50,15 @@ var _open: Button
 var _review: Button
 var _withdraw: Button
 var _changes: VBoxContainer
-var _chart: ChartDots
-var _marks: VBoxContainer
+## One chart per unit kind (pass 2 T3): the percentages share the 0-25 scale, any other unit gets its own axis.
+var _groups: VBoxContainer
+## The dumbbells' legend: shown with the dumbbells only (moves alone draw none).
+var _legend: Label
+## Each change's money a year, by "id|draft value|live value|day": a drag moves one row, so the others are priced once
+## per change of their own (pass 2 T2), not on every frame of the drag.
+var _gains := {}
+## The index of the change a remove mark took out, -1 for none: the focus goes to the mark now in its place.
+var _dropped_at := -1
 var _vote_box: VBoxContainer
 ## The drafted rows' ids the list was built for: a drag changes values, not rows, and repaints in place.
 var _built_ids := []
@@ -61,7 +73,7 @@ func _ready() -> void:
 
 	_changes = VBoxContainer.new()
 	_changes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_changes.size_flags_stretch_ratio = 1.3
+	_changes.size_flags_stretch_ratio = 1.6
 	row.add_child(_changes)
 	var head := HBoxContainer.new()
 	_changes.add_child(head)
@@ -69,19 +81,13 @@ func _ready() -> void:
 	title.theme_type_variation = UiTheme.MICRO
 	title.text = Strings.t("Your draft")
 	head.add_child(title)
-	var legend := PanelKit.plain_line(head, Strings.t("ring today, dot the draft, one scale 0 to 25; × takes a change out"))
+	_legend = PanelKit.plain_line(head, Strings.t("ring today, dot the draft; × takes a change out"))
+	var legend := _legend
 	legend.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_discard = _button(head, "Discard", Strings.t("Discard all"), discard_pressed)  # i18n: ok a node name
 	_discard.flat = true
-	var list := HBoxContainer.new()
-	_changes.add_child(list)
-	_chart = ChartDots.new()
-	_chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_chart.set_meta("tray", "changes")
-	list.add_child(_chart)
-	_marks = VBoxContainer.new()
-	_marks.add_theme_constant_override("separation", 0)
-	list.add_child(_marks)
+	_groups = VBoxContainer.new()
+	_changes.add_child(_groups)
 
 	var side := VBoxContainer.new()
 	side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -127,12 +133,14 @@ func refresh(state, loader, draft, price) -> void:
 	_review.visible = drafted
 	_open.visible = not drafted and tabled != null
 	_withdraw.visible = tabled != null
-	_changes.visible = drafted
+	_changes.visible = drafted or moves > 0  # Discard sits in its head: moves alone can be put away too
+	_groups.visible = drafted
+	_legend.visible = drafted
 	_vote_box.visible = false
 	if not visible:
 		return
 	if drafted:
-		_list(ns, draft, price)
+		_list(state, ns, draft, price)
 	var before_vote := ""
 	if tabled != null:
 		before_vote = Strings.t("A finance bill is before the Assembly: it divides on %s.") % DateText.day_month(
@@ -175,61 +183,145 @@ func refresh(state, loader, draft, price) -> void:
 	if refusal != "":
 		_text.text = text + "\n" + reason(refusal) + now_line
 		return
-	var vote: Dictionary = read["vote"]
-	_text.text = text + "\n" + Strings.t("Forecast now: %d for, %d against, %d undecided of %d.") % [
-		int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"]), int(vote["seats_total"])] + now_line
-	_vote(vote)
+	# The seats are the bar's (its legend prints each count): the sentence does not say them again (pass 2 T10).
+	_text.text = text + now_line
+	_vote(read["vote"])
 
 
-## The changes as dumbbells, each with its money a year and its remove mark, in the draft's own order.
-func _list(ns, draft, price) -> void:
+## The changes as dumbbells, one chart per unit kind in the draft's own order, each change with its own figures, its
+## money a year and its remove mark beside its row.
+func _list(state, ns, draft, price) -> void:
 	var rows: Array = draft.rows()
-	var dots := []
-	var ids := []
-	var top := 0.0
+	var kinds: Array = []
+	var by_kind := {}
 	for row in rows:
-		var id := FinanceRows.row_id(String(row["channel"]), String(row["key"]))
-		ids.append(id)
-		dots.append({"id": id, "label": FinanceRows.change_label(ns, row), "before": float(row["live"]),
-			"after": float(row["draft"]), "moved": true})
-		top = maxf(top, maxf(float(row["live"]), float(row["draft"])))
-	# One shared 0-25 scale while every change is a percentage; a change in other units (an excise's index) would
-	# pin to its edge there, so the axis then fits the values instead.
-	_chart.setup(dots, {"fixed": SCALE, "places": 1} if top <= SCALE.y else {"places": 1})
-	# The rows are rebuilt for another set of changes, or another text size (their height follows the chart's).
-	ids.append(_chart.row_height())
-	if ids != _built_ids:
-		_built_ids = ids
-		for child in _marks.get_children():
+		var kind := _kind(ns, row)
+		if not by_kind.has(kind):
+			kinds.append(kind)
+			by_kind[kind] = []
+		(by_kind[kind] as Array).append(row)
+	var ids := []
+	for row in rows:
+		ids.append(FinanceRows.row_id(String(row["channel"]), String(row["key"])))
+	var shape := [kinds, ids, UiTheme.text_scale()]
+	if shape != _built_ids:
+		_built_ids = shape
+		for child in _groups.get_children():
+			_groups.remove_child(child)
 			child.queue_free()
-		for i in rows.size():
-			_mark(String(rows[i]["channel"]), String(rows[i]["key"]), ids[i])
-	for i in rows.size():
-		var money: Label = _marks.get_child(_marks.get_child_count() - rows.size() + i).get_child(0)
-		var gain: float = price.row_balance_bn(rows[i])
-		money.text = EffectsStrip.money_text(gain)
-		money.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
+		for kind in kinds:
+			_group(by_kind[kind])
+	var day := "%d-%d-%d" % [int(state.year), int(state.month), int(state.day)]
+	for g in _groups.get_child_count():
+		var group: Array = by_kind[kinds[g]]
+		var chart: ChartDots = _groups.get_child(g).get_child(0)
+		var dots := []
+		var top := 0.0
+		for row in group:
+			dots.append({"id": FinanceRows.row_id(String(row["channel"]), String(row["key"])), "label": FinanceRows.change_label(ns, row),
+				"before": float(row["live"]), "after": float(row["draft"]), "moved": true, "text": FinanceRows.change_figures(ns, row)})
+			top = maxf(top, maxf(float(row["live"]), float(row["draft"])))
+		# The percentages share one 0-25 scale while they fit it; any other unit, or a value past it, fits its own axis.
+		# The figures carry their unit ("11.0 → 12.5 % of GDP"): a wider value column. A fitted axis of small values
+		# (a duty in EUR/l, the brackets) ticks at two decimals, or its two ends both read "0.7".
+		var opts := {"places": 1, "value_w": VALUE_W, "label_w": LABEL_W}
+		if kinds[g] == "pct" and top <= SCALE.y:
+			opts["fixed"] = SCALE
+		elif kinds[g] != "pct":
+			opts["places"] = 2
+		chart.setup(dots, opts)
+		var marks: VBoxContainer = chart.get_meta("marks")
+		for i in group.size():
+			var money: Label = marks.get_child(i).get_child(0)
+			var gain := _gain(price, group[i], day)
+			money.text = EffectsStrip.money_text(gain)
+			money.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
+	if _dropped_at >= 0:
+		var marks_now := []
+		for button in _groups.find_children("*", "BaseButton", true, false):  # i18n: ok a class name
+			if button.has_meta("drop") and not button.is_queued_for_deletion():
+				marks_now.append(button)
+		var next: Control = marks_now[mini(_dropped_at, marks_now.size() - 1)] if not marks_now.is_empty() else _table
+		_dropped_at = -1
+		next.grab_focus()
 
 
-func _mark(channel: String, key: String, id: String) -> void:
+## A change's unit kind: "pct" for a share of GDP or a rate in %, the brackets apart, else the tax's own unit.
+static func _kind(ns, row: Dictionary) -> String:
+	match String(row["channel"]):
+		FinanceDraft.SPENDING:
+			return "pct"
+		FinanceDraft.BRACKETS:
+			return "brackets"
+	var unit := String(ns.tax_library[String(row["key"])]["unit"])
+	return "pct" if unit == "%" else unit
+
+
+## One unit kind: its chart and, beside each row, the change's money and remove mark.
+func _group(rows: Array) -> void:
 	var line := HBoxContainer.new()
-	line.custom_minimum_size.y = _chart.row_height()
-	_marks.add_child(line)
+	_groups.add_child(line)
+	var chart := ChartDots.new()
+	chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chart.set_meta("tray", "changes")
+	line.add_child(chart)
+	var marks := VBoxContainer.new()
+	marks.add_theme_constant_override("separation", 0)
+	chart.set_meta("marks", marks)
+	line.add_child(marks)
+	for row in rows:
+		_mark(marks, chart, String(row["channel"]), String(row["key"]), FinanceRows.row_id(String(row["channel"]), String(row["key"])))
+
+
+func _gain(price, row: Dictionary, day: String) -> float:
+	var key := "%s|%s|%s|%s" % [FinanceRows.row_id(String(row["channel"]), String(row["key"])), row["draft"], row["live"], day]
+	if not _gains.has(key):
+		if _gains.size() > 64:
+			_gains.clear()  # a long drag leaves one stale key per step
+		_gains[key] = price.row_balance_bn(row)
+	return float(_gains[key])
+
+
+func _mark(marks: VBoxContainer, chart: ChartDots, channel: String, key: String, id: String) -> void:
+	var h := chart.row_height()
+	var line := HBoxContainer.new()
+	# Exactly a chart row's height, so the money and the mark sit beside their change (pass 2 T4): the children are
+	# shrunk into it, never the reverse.
+	line.custom_minimum_size.y = h
+	line.clip_contents = true
+	marks.add_child(line)
 	var money := Label.new()
 	money.name = "Money_" + id.replace(":", "_")  # i18n: ok a node name, found by tests
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	money.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	money.custom_minimum_size.x = 76.0 * UiTheme.text_scale()
-	money.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	money.size_flags_vertical = Control.SIZE_FILL
 	line.add_child(money)
-	var drop := Button.new()
-	drop.flat = true
-	drop.custom_minimum_size = Vector2(24.0, 24.0) * UiTheme.text_scale()  # a target, not a glyph's width
+	# A LinkButton: no stylebox padding, so it fits the row (a Button's own margins made the line 31 px for a 24 px row);
+	# its focus box still draws (Godot 4.7 LinkButton: theme style `focus`).
+	var drop := LinkButton.new()
+	drop.underline = LinkButton.UNDERLINE_MODE_NEVER
+	drop.focus_mode = Control.FOCUS_ALL  # reachable by the keyboard, and where the focus goes after a remove
 	drop.text = "×"  # i18n: ok a glyph, its tooltip says it
 	drop.tooltip_text = Strings.t("Take this change out of the draft")
+	drop.custom_minimum_size = Vector2(h, 0.0)  # a target as wide as the row is tall
+	drop.size_flags_vertical = Control.SIZE_FILL
 	drop.set_meta("drop", id)
-	drop.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	drop.pressed.connect(func() -> void: drop_pressed.emit(channel, key))
+	drop.pressed.connect(func() -> void:
+		_dropped_at = _index_of(id)
+		drop_pressed.emit(channel, key))
 	line.add_child(drop)
+
+
+## The place of change `id` among the remove marks on screen, in reading order.
+func _index_of(id: String) -> int:
+	var i := 0
+	for button in _groups.find_children("*", "BaseButton", true, false):  # i18n: ok a class name
+		if button.has_meta("drop"):
+			if String(button.get_meta("drop")) == id:
+				return i
+			i += 1
+	return -1
 
 
 ## How the Assembly would divide on the draft now, as the sheet draws it; redrawn only when the seats move.

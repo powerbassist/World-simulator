@@ -299,7 +299,7 @@ func _verbs(tabled: bool, refusal: String, forced: bool) -> void:
 	var row := PanelKit.buttons(_verb_box)
 	var table := PanelKit.sized(Button.new())
 	table.name = "SheetTable"  # i18n: ok a node name, found by tests
-	table.text = Strings.t("Table and force it") if forced else (Strings.t("Add to the bill") if tabled else Strings.t("Table the changes"))
+	table.text = Strings.t("Table and force it") if forced else (Strings.t("Add to the bill") if tabled else Strings.t("Table the bill"))
 	table.disabled = refusal != ""
 	table.pressed.connect(func() -> void: table_pressed.emit(forced))
 	row.add_child(table)
