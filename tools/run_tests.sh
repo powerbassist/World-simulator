@@ -18,6 +18,7 @@ tests=(
   tests/test_firm_sheet.gd
   tests/test_industry_closure.gd
   tests/test_region_fund.gd
+  tests/test_register_panel.gd
   tests/test_region_sheet.gd
   tests/test_region_map.gd
   tests/test_region_load.gd
@@ -309,6 +310,7 @@ tests=(
   tests/test_placement_points.gd
   tests/test_button_sizes.gd
   tests/test_chart_kit.gd
+  tests/test_bureau_kit.gd
   tests/test_chart_series.gd
   tests/test_panel_charts.gd
   tests/test_prose_budget.gd

@@ -38,6 +38,7 @@ func _init() -> void:
 		return
 	_test_the_shipped_tree_offers_nothing_until_content_lands()
 	_test_the_projects_are_potential_rows()
+	_test_fill_by_need_reads_one_basis_a_step()
 	UnitsLoader.load_units(_loader, FIXTURE)
 	if not _loader.errors.is_empty():
 		_failures.append("the fixture did not load cleanly: %s" % [_loader.errors])
@@ -55,6 +56,7 @@ func _init() -> void:
 	_test_a_region_with_no_stock_gains_nothing()
 	_test_fill_by_population()
 	_test_fill_by_need_starts_with_the_worst()
+	_test_the_preview_reads_units_not_yet_built()
 	_test_a_higher_is_better_figure()
 	_test_the_register_is_saved()
 	_finish()
@@ -461,6 +463,61 @@ func _test_fill_by_need_starts_with_the_worst() -> void:
 		_fail("by need puts all thirty units in one region: %s" % [many])
 
 
+
+## QA TAKE on #420: the register refills by need on every count change, and at 200 units
+## the fill froze the game 1-2 s, rebuilding the whole basis for every candidate region of
+## every step. Every candidate of one step reads the SAME placed units, so one basis a step
+## gives the same rows. Pinned on the shipped data, every type x nation x count, against the
+## per-candidate fill kept below; and the 200-unit fill timed against the parent's 50 ms
+## budget, asserted only past 5x that (no flaky bound), the reading printed.
+func _test_fill_by_need_reads_one_basis_a_step() -> void:
+	var swept := 0
+	for nation_id in _loader.unit_stock:
+		var ns = GameState.new_game(_loader, String(nation_id)).player()
+		for type_id in _loader.unit_types:
+			if not Units.offered(_loader, ns.id, String(type_id)) or String(_loader.unit_types[type_id].get("payoff", "")) != UK.PAYOFF_CAPACITY:
+				continue
+			for n in [1, 7, 40, 120]:
+				swept += 1
+				var rows: Array = Units.fill_by_need(ns, _loader, String(type_id), n)
+				var want := _fill_per_candidate(ns, String(type_id), n)
+				if rows != want:
+					_fail("by need %s %s x%d gives %s, the per-candidate fill %s" % [nation_id, type_id, n, rows, want])
+	if swept == 0:
+		_fail("the by-need sweep found no shipped type to fill")
+	var fra = GameState.new_game(_loader, "FRA").player()
+	var t0 := Time.get_ticks_usec()
+	Units.fill_by_need(fra, _loader, "hospital", 200)
+	var ms := float(Time.get_ticks_usec() - t0) / 1000.0
+	print("fill_by_need FRA hospital x200: %.1f ms (budget 50; %d sweeps identical)" % [ms, swept])
+	if ms > 250.0:
+		_fail("by need at 200 FRA hospitals took %.1f ms, past 5x the 50 ms budget" % ms)
+
+
+## The fill as it stood before the TAKE (82f97bfb), its basis kept here verbatim so a change
+## to units.gd's arithmetic cannot move the reference with it: one basis per candidate per step.
+func _fill_per_candidate(ns, type_id: String, n: int) -> Array:
+	var open: Array = []
+	for r in _loader.regions.get(ns.id, []):
+		if Units.start_capacity(_loader, ns.id, type_id, r.id) > 0.0:
+			open.append(String(r.id))
+	var behind := 1.0 if String(_loader.unit_types[type_id]["figure"]["better"]) == "lower" else -1.0
+	var placed := {}
+	for i in n:
+		var worst := ""
+		var top := -INF
+		for id in open:
+			var f := behind * _old_shown(ns, type_id, id, placed)
+			if f > top:
+				top = f
+				worst = id
+		placed[worst] = int(placed.get(worst, 0)) + 1
+	var out: Array = []
+	for id in open:
+		if int(placed.get(id, 0)) > 0:
+			out.append({"region": id, "units": int(placed[id])})
+	return out
+
 ## A beds-per-1000 row is behind when it reads LOWER, and a built hospital raises it.
 func _test_a_higher_is_better_figure() -> void:
 	var state = _state()
@@ -503,6 +560,26 @@ func _row(id: String, op: String, state: String, region: String, amount: int) ->
 	return {"id": id, "type": TYPE, "op": op, "state": state, "rows": [r]}
 
 
+
+## The register sheet's before/after (V5.3 c' slice 1): preview() is the shown figure with
+## units placed but not built, from one basis, so the sheet's "after" is the very figure the
+## region shows once they stand, and with nothing placed it is the shown figure itself.
+func _test_the_preview_reads_units_not_yet_built() -> void:
+	var state = _state()
+	var ns = state.player()
+	var none: Dictionary = Units.preview(ns, _loader, TYPE, {})
+	var placed := {"FR1": 3}
+	var some: Dictionary = Units.preview(ns, _loader, TYPE, placed)
+	for region in _named(state):
+		if absf(float(none.get(region, -1.0)) - Units.shown_figure(ns, _loader, TYPE, region)) > 1e-9:
+			_fail("preview with nothing placed differs from the shown figure in %s" % region)
+		if absf(float(some.get(region, -1.0)) - Units._shown(ns, _loader, TYPE, region, placed)) > 1e-9:
+			_fail("preview with units placed differs from the basis in %s" % region)
+	if float(some["FR1"]) >= float(none["FR1"]):
+		_fail("three schools placed in FR1 did not lower its pupils per teacher: %s -> %s" % [none["FR1"], some["FR1"]])
+	if Units.preview(ns, _loader, "no_such_type", placed) != {}:
+		_fail("preview of an unknown type is not empty")
+
 func _fail(message: String) -> void:
 	_failures.append(message)
 
@@ -515,3 +592,35 @@ func _finish() -> void:
 		for failure in _failures:
 			printerr("FAIL: %s" % failure)
 		quit(1)
+
+
+## units.gd's _basis and _shown as of 82f97bfb, copied, not called.
+func _old_shown(ns, type_id: String, region_id: String, placed: Dictionary) -> float:
+	var out := {"level": {}, "factor": {}, "term": {}, "mean_factor": 1.0}
+	var t: Dictionary = _loader.unit_types[type_id]
+	var rel: Dictionary = (_loader.unit_levels.get(ns.id, {}) as Dictionary).get(type_id, {})
+	var q := Sectors.quantity(ns, _loader, String(t["line"]), String(t["sector"]))
+	var people := 0.0
+	var tilted := 0.0
+	for r in _loader.regions.get(ns.id, []):
+		var p := float(ns.region_pop_share.get(r.id, 0.0))
+		var term := Sectors.regional_quantity(ns, _loader, String(t["line"]), String(t["sector"]), r.id) / q if q != 0.0 else 1.0
+		out["term"][r.id] = term
+		people += p
+		tilted += p * term * float(rel.get(r.id, 1.0))
+	var norm := tilted / people if people > 0.0 and tilted > 0.0 else 1.0
+	var weighted := 0.0
+	var weights := 0.0
+	for r in _loader.regions.get(ns.id, []):
+		var level := float(rel.get(r.id, 1.0)) / norm if not rel.is_empty() else 1.0
+		var f := Units._factor(ns, _loader, type_id, r.id, int(placed.get(r.id, 0)))
+		var w := float(ns.region_pop_share.get(r.id, 0.0)) * float(out["term"][r.id]) * level
+		out["level"][r.id] = level
+		out["factor"][r.id] = f
+		weighted += w * f
+		weights += w
+	if weights > 0.0 and weighted > 0.0:
+		out["mean_factor"] = weighted / weights
+	return Units.national_figure(ns, _loader, type_id) * float((out["term"] as Dictionary).get(region_id, 1.0)) \
+		* float((out["level"] as Dictionary).get(region_id, 1.0)) \
+		* float((out["factor"] as Dictionary).get(region_id, 1.0)) / float(out["mean_factor"])

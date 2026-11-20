@@ -13,6 +13,8 @@ extends RefCounted
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const ChartLine = preload("res://src/ui/chart_line.gd")
+const ChartDots = preload("res://src/ui/chart_dots.gd")
+const ChartRange = preload("res://src/ui/chart_range.gd")
 const ChartBars = preload("res://src/ui/chart_bars.gd")
 const ChartStack = preload("res://src/ui/chart_stack.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
@@ -112,6 +114,31 @@ static func diverging(parent: Control, title: String, rows: Array, opts := {}) -
 		figure.custom_minimum_size.x = 44.0 * UiTheme.text_scale()
 		grid.add_child(figure)
 	box.add_child(grid)
+	return box
+
+
+## V5.3 c' (the bureau audit's item 4): before and after per row on one axis (chart_dots.gd
+## says what each mark means). `rows` are [{id, label, before, after, moved, selected}];
+## `opts`: `reference` (a hairline), `band` (Vector2 lo, hi: the attention zone), `places`.
+## The chart is the box's meta "chart"; its `picked(id)` answers a click on a row.
+static func dots(parent: Control, title: String, rows: Array, opts := {}) -> VBoxContainer:
+	var box := _titled(parent, title)
+	var chart := ChartDots.new()
+	chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(chart)
+	chart.setup(rows, opts)
+	box.set_meta("chart", chart)
+	return box
+
+
+## V5.3 c' (the bureau audit's item 5): a range with its estimate's tick, the three printed.
+## Not `range`: that would shadow GDScript's global range() in this file.
+static func range_bar(parent: Control, title: String, lo: float, estimate: float, hi: float, opts := {}) -> VBoxContainer:
+	var box := _titled(parent, title)
+	var chart := ChartRange.new()
+	box.add_child(chart)
+	chart.setup(lo, estimate, hi, opts)
+	box.set_meta("chart", chart)
 	return box
 
 

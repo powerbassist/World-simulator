@@ -316,6 +316,11 @@ func panel_ids() -> Array:
 	return _pages.keys()
 
 
+func _offered(id: String) -> bool:
+	var panel := content(id)
+	return panel == null or not panel.has_method("is_offered") or bool(panel.is_offered())
+
+
 ## The open domain's tabs, in the table's order.
 func tab_ids() -> Array:
 	var out: Array = []
@@ -446,8 +451,12 @@ func _show_domain_of(id: String) -> void:
 		domain = id
 		tabs = [id]
 	else:
-		tabs = Domains.tabs(domain, _pages.keys())
-	if domain == _domain:
+		# A tab whose panel says it is not offered to the nation played is left out (a rule over
+		# its data: the register without a stock file); a panel that says nothing is always offered.
+		tabs = Domains.tabs(domain, _pages.keys()).filter(func(t): return _offered(String(t)))
+	# The same domain keeps its row only while the offered tabs are the same: what a panel
+	# offers can change without the domain ever changing.
+	if domain == _domain and tabs == tab_ids():
 		return
 	_domain = domain
 	_domain_label.text = heading

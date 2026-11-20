@@ -145,6 +145,7 @@
    "tests/test_feelings.gd",
    "tests/test_placement_points.gd",
    "tests/test_chart_kit.gd",
+   "tests/test_bureau_kit.gd",
    "tests/test_polls_closed.gd",
    "tests/test_state_visit.gd",
    "tests/test_regions.gd",
@@ -164,6 +165,7 @@
   [
    "tests/test_clock.gd",
    "tests/test_region_fund.gd",
+   "tests/test_register_panel.gd",
    "tests/test_polling_panel.gd",
    "tests/test_tick_levers.gd",
    "tests/test_diplomacy_parallel.gd",

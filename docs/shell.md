@@ -38,6 +38,7 @@ flowchart LR
   sb --> d_finances["Finances"]
   d_finances --> t_finances["finances"]
   d_finances --> t_projects["projects"]
+  d_finances --> t_register["register"]
   sb --> d_economy["Economy"]
   d_economy --> t_economy["economy"]
   sb --> d_territory["Regions"]

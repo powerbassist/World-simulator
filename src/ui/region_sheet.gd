@@ -19,6 +19,7 @@ const RegionRead = preload("res://src/sim/region_read.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const CK = preload("res://src/sim/character_act_constants.gd")
 const RegionFund = preload("res://src/ui/region_fund.gd")
+const RegisterPanel = preload("res://src/ui/register_panel.gd")
 const RegionVoice = preload("res://src/ui/region_voice.gd")
 const RegionTint = preload("res://src/ui/region_tint.gd")
 const WantTerms = preload("res://src/sim/want_terms.gd")
@@ -61,6 +62,14 @@ static func build(panel, box: Control, ns, region, regions: Array, access: Dicti
 		PanelKit.heading(box, Strings.t("Happening here"))
 		for text in happening:
 			PanelKit.plain_line(box, text, PanelKit.Tone.PLAIN)
+	# V5.3 c' slice 1: the register's door (section 9, row 0's "Build here").
+	if panel.open_register.is_valid() and RegisterPanel.can_build_in(panel._loader, ns.id, String(region.id)):
+		var door := PanelKit.sized(Button.new())
+		door.text = Strings.t("Build here")
+		door.set_meta("register_door", true)
+		var id := String(region.id)
+		door.pressed.connect(func() -> void: panel.open_register.call(id))
+		PanelKit.buttons(box).add_child(door)
 	RegionFund.build(panel, box, ns, region, regions, access)
 
 

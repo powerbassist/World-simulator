@@ -14,6 +14,9 @@ const MapRegions = preload("res://src/ui/map_regions.gd")
 const Region = preload("res://src/core/region.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
+## V5.3 c' slice 1: the construction register's order form, a tab beside Regions.
+const RegisterPanel = preload("res://src/ui/register_panel.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 
 static func panel(main) -> Control:
@@ -44,6 +47,14 @@ static func panel(main) -> Control:
 				return id
 		return ""
 	main._map_view.region_clicked.connect(tab.open_region)
+	# The register's tab, registered here because main.gd is at its size ratchet; a region's
+	# sheet opens it on that region (region_sheet.gd's Build here).
+	var register = RegisterPanel.new()
+	main._windows.register("register", Strings.t("Register"), register, KEY_NONE, "res://assets/icons/material/construction.svg")
+	register.setup(main._state, main._loader)
+	tab.open_register = func(region_id: String) -> void:
+		register.open_for(region_id)
+		main._windows.open("register")
 	return tab
 
 

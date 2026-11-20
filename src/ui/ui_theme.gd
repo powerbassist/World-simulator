@@ -2,6 +2,7 @@ extends RefCounted
 
 const ScrollBars = preload("res://src/ui/scroll_bars.gd")
 const OptionCheckStyle = preload("res://src/ui/option_check_style.gd")
+const ControlStyle = preload("res://src/ui/control_style.gd")
 const AccentRule = preload("res://src/ui/accent_rule.gd")
 
 ## The game's one Theme -- U3, retuned at U5a. Before U3, three separate places
@@ -56,6 +57,8 @@ const MAP_NEUTRAL := Color(0.827, 0.851, 0.878)  ## #D3D9E0
 ## What the accent is when there is no nation to take it from (the menu), and when
 ## no band of the flag passes accent_rule.gd's floors. A cool azure, deliberately
 ## not a flag colour of its own.
+## #4A535A: a neutral fill a chart's accent and ticks stand out from (ChartKit.range_bar, the bars a year).
+const NEUTRAL_BAR := Color(0.290, 0.325, 0.353)
 const ACCENT_FALLBACK := Color(0.361, 0.616, 0.922)  ## #5C9DEB
 
 ## Panels are graphite and nearly opaque: the map may show through a HUD plate
@@ -125,6 +128,15 @@ const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
 const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-row
 const REQUESTS_BUTTON := "RequestsButton" ## the title bar's "requests waiting" mark (V5.2 pre-gate)
 const CHIEF_MARK := "ChiefMark"           ## the chief's mark beside it (G1): a raised plate, no tone of its own
+## V5.3 c' (the bureau audit's items 1, 2, 5; control_style.gd says why each looks as it does).
+const PRIMARY := "Primary"                ## the one action a screen exists for  # i18n: ok
+const SMALL := "Small"                    ## a verb at the caption size  # i18n: ok
+const SEGMENT := "Segment"                ## one choice among a few, side by side  # i18n: ok
+const CHIP := "Chip"                      ## a bordered caption plate, neutral  # i18n: ok
+const CHIP_GOOD := "ChipGood"             ## a chip in the good-news tone
+const CHIP_WARN := "ChipWarn"             ## a chip in the attention tone
+const CHIP_BAD := "ChipBad"               ## a chip in the bad-news tone
+const CHIP_TEXT := "ChipText"             ## a chip's words: caption size, the text tone
 const OPTION_CHECK := "OptionCheck"       ## an option on a verb, not a verb (V5.2 close R4: the audience's Lie)
 
 ## The accent in force: the played nation's, set by apply() and read by everything
@@ -335,7 +347,7 @@ static func _panels(theme: Theme) -> void:
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE]:
+	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE, CHIP_TEXT]:
 		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
@@ -376,6 +388,7 @@ static func _labels(theme: Theme) -> void:
 	_label(theme, WARN_TEXT, SIZE_SMALL, WARN)
 	_label(theme, BAD_SMALL, SIZE_SMALL, BAD)
 	_label(theme, GOOD_SMALL, SIZE_SMALL, GOOD)
+	_label(theme, CHIP_TEXT, SIZE_SMALL, TEXT)
 
 	# V5.3-0 R15 (the closing gate: "les unes ne sont pas assez graphiques"): a
 	# front page prints its paper's name in the black cut, tracked, and its
@@ -474,6 +487,10 @@ static func _buttons(theme: Theme) -> void:
 	# V5.2 close R4: an option ON a verb, not a verb (option_check_style.gd says why).
 	OptionCheckStyle.apply(theme, OPTION_CHECK, [_button_box(Color(0, 0, 0, 0)), _button_box(SLATE),
 		_button_box(Color(0, 0, 0, 0), _accent)], _px(SIZE_SMALL), TEXT_DIM, TEXT, WARN)
+	ControlStyle.apply(theme, {"primary": PRIMARY, "small": SMALL, "segment": SEGMENT, "chip": CHIP,
+		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD}, _button_box,
+		{"slate": SLATE, "hull": HULL, "edge": EDGE, "text": TEXT, "dim": TEXT_DIM, "good": GOOD, "warn": WARN,
+		"bad": BAD, "accent": _accent}, _px(SIZE_SMALL))
 
 
 ## Used for share-of-a-whole bars (Economy's sector split). The engine default

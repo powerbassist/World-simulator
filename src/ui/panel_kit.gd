@@ -40,6 +40,7 @@ const Labels = preload("res://src/ui/labels.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const TermText = preload("res://src/ui/term_text.gd")
 const MeterBar = preload("res://src/ui/meter_bar.gd")
+const Icon = preload("res://src/ui/icon.gd")
 
 ## What a panel prints when it does not know. An em dash is not a small number:
 ## it says the figure is absent, where `0.00` says the figure is zero, and the
@@ -471,3 +472,57 @@ static func meter(parent: Control, value: float, top: float, mark: float) -> Con
 	parent.add_child(bar)
 	bar.setup(value, top, mark)
 	return bar
+
+
+## V5.3 c' (the bureau audit's item 1): a chip -- a bordered caption-size plate with a glyph
+## beside its words. `variation` is UiTheme.CHIP or a tone (CHIP_GOOD / CHIP_WARN / CHIP_BAD):
+## the tone is on the border and the glyph, the words stay in the text tone, so a state is
+## never told by colour alone. `glyph` names a Material Symbol under assets/icons/material/
+## ("" for none), read as SVG text (Icon.load_icon), never load()ed.
+static func chip(parent: Control, text: String, variation := UiTheme.CHIP, glyph := "") -> PanelContainer:
+	var plate := PanelContainer.new()
+	plate.theme_type_variation = variation
+	# The chip takes its column's width and its words wrap: at text 130 or in French a long chip
+	# folds onto a second line rather than running past the column.
+	plate.size_flags_horizontal = Control.SIZE_FILL
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	plate.add_child(row)
+	if glyph != "":
+		var tones := {UiTheme.CHIP_GOOD: UiTheme.GOOD, UiTheme.CHIP_WARN: UiTheme.WARN, UiTheme.CHIP_BAD: UiTheme.BAD}
+		var picture := TextureRect.new()
+		var px := roundi(UiTheme.SIZE_SMALL * UiTheme.text_scale())
+		picture.texture = Icon.load_icon("res://assets/icons/material/%s.svg" % glyph, tones.get(variation, UiTheme.TEXT_DIM), px)
+		picture.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		picture.custom_minimum_size = Vector2(px, px)
+		row.add_child(picture)
+	var words := Label.new()
+	words.theme_type_variation = UiTheme.CHIP_TEXT
+	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.text = text
+	row.add_child(words)
+	parent.add_child(plate)
+	return plate
+
+
+## V5.3 c' (the bureau audit's item 5): a segmented control -- one choice among a few, side by
+## side, grouped so one is down. `options` are [{id, label}] (labels already shown text);
+## `on_pick` is called with the picked id. The picked segment wears the accent outline.
+static func segmented(parent: Control, options: Array, selected: String, on_pick: Callable) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+	var group := ButtonGroup.new()
+	for o in options:
+		var b := Button.new()
+		b.theme_type_variation = UiTheme.SEGMENT
+		b.toggle_mode = true
+		b.button_group = group
+		b.text = String(o["label"])  # i18n: row-ok the caller passes shown text
+		b.button_pressed = String(o["id"]) == selected
+		b.set_meta("segment", String(o["id"]))
+		var id := String(o["id"])
+		b.pressed.connect(func() -> void: on_pick.call(id))
+		row.add_child(b)
+	parent.add_child(row)
+	return row

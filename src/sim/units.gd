@@ -126,6 +126,25 @@ static func shown_figure(ns, loader, type_id: String, region_id: String) -> floa
 	return _shown(ns, loader, type_id, region_id, {})
 
 
+## The register sheet's "after" (section 9, row 1): every region's shown figure with
+## `placed` ({region: units}) counted as if built, from ONE basis, so the netting the
+## other regions give back is the rule's own. {} for an id that is not a capacity type.
+static func preview(ns, loader, type_id: String, placed: Dictionary) -> Dictionary:
+	var out := {}
+	if not loader.unit_types.has(type_id):
+		return out
+	var b := _basis(ns, loader, type_id, placed)
+	var n := national_figure(ns, loader, type_id)
+	for id in b["level"]:
+		out[id] = _figure(n, b, id)
+	return out
+
+
+## A region's shown figure on a basis: the one formula preview and by need both read.
+static func _figure(national: float, b: Dictionary, id) -> float:
+	return national * float(b["term"][id]) * float(b["level"][id]) * float(b["factor"][id]) / float(b["mean_factor"])
+
+
 ## Section 3, "by population": N units split by region_pop_share over the regions
 ## that hold the type, largest remainder first (ties to the regions' file order).
 static func fill_by_population(ns, loader, type_id: String, n: int) -> Array:
@@ -159,11 +178,17 @@ static func fill_by_need(ns, loader, type_id: String, n: int) -> Array:
 		return []
 	var behind := 1.0 if String(loader.unit_types[type_id]["figure"]["better"]) == "lower" else -1.0
 	var placed := {}
+	# Every candidate of a step reads the same placed units: one set of factors a step over
+	# one base for the whole fill, not a whole basis a candidate (a 200-unit fill froze the
+	# register 1-2 s; QA TAKE on #420). The same arithmetic as preview(), in the same order.
+	var base := _base(ns, loader, type_id)
+	var national := national_figure(ns, loader, type_id)
 	for i in n:
 		var worst := ""
 		var top := -INF
+		var b := _with_factors(base, ns, loader, type_id, placed)
 		for id in open:
-			var f := behind * _shown(ns, loader, type_id, id, placed)
+			var f := behind * _figure(national, b, id)
 			if f > top:
 				top = f
 				worst = id
@@ -191,9 +216,14 @@ static func _factor(ns, loader, type_id: String, region_id: String, extra_units:
 ## at the floor too (the floor is in f, before the mean). `placed` counts units not yet
 ## built (the sheet's by-need fill).
 static func _basis(ns, loader, type_id: String, placed: Dictionary) -> Dictionary:
-	var out := {"level": {}, "factor": {}, "term": {}, "mean_factor": 1.0}
 	if not loader.unit_types.has(type_id):
-		return out
+		return {"level": {}, "factor": {}, "term": {}, "mean_factor": 1.0}
+	return _with_factors(_base(ns, loader, type_id), ns, loader, type_id, placed)
+
+
+## The basis's part that no placed unit moves: each region's term, level and weight w.
+static func _base(ns, loader, type_id: String) -> Dictionary:
+	var out := {"level": {}, "term": {}, "w": {}}
 	var t: Dictionary = loader.unit_types[type_id]
 	var rel: Dictionary = (loader.unit_levels.get(ns.id, {}) as Dictionary).get(type_id, {})
 	var q := Sectors.quantity(ns, loader, String(t["line"]), String(t["sector"]))
@@ -206,13 +236,21 @@ static func _basis(ns, loader, type_id: String, placed: Dictionary) -> Dictionar
 		people += p
 		tilted += p * term * float(rel.get(r.id, 1.0))
 	var norm := tilted / people if people > 0.0 and tilted > 0.0 else 1.0
+	for r in loader.regions.get(ns.id, []):
+		var level := float(rel.get(r.id, 1.0)) / norm if not rel.is_empty() else 1.0
+		out["level"][r.id] = level
+		out["w"][r.id] = float(ns.region_pop_share.get(r.id, 0.0)) * float(out["term"][r.id]) * level
+	return out
+
+
+## The base with each region's factor f for `placed`, and the weighted mean of f.
+static func _with_factors(base: Dictionary, ns, loader, type_id: String, placed: Dictionary) -> Dictionary:
+	var out := {"level": base["level"], "factor": {}, "term": base["term"], "mean_factor": 1.0}
 	var weighted := 0.0
 	var weights := 0.0
 	for r in loader.regions.get(ns.id, []):
-		var level := float(rel.get(r.id, 1.0)) / norm if not rel.is_empty() else 1.0
 		var f := _factor(ns, loader, type_id, r.id, int(placed.get(r.id, 0)))
-		var w := float(ns.region_pop_share.get(r.id, 0.0)) * float(out["term"][r.id]) * level
-		out["level"][r.id] = level
+		var w := float(base["w"][r.id])
 		out["factor"][r.id] = f
 		weighted += w * f
 		weights += w

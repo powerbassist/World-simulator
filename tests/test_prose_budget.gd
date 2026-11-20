@@ -50,6 +50,7 @@ const BUDGET := {
 	"overview": 36, "diplomacy": 20, "society": 10,
 	"events": 20, "people": 10, "companies": 10, "calendar": 10,
 	"sector_agriculture": 10, "sector_industry": 10, "sector_services": 10,
+	"register": 53,
 }
 ## The tabs 0b has not reached yet, held at what they measured before it started
 ## (dc515826 + #93) so they cannot grow while they wait; each PR that trims one
@@ -66,7 +67,7 @@ const PENDING := {}
 const PROGRAMME_FILE_TOTAL := 300
 const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
 	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135,
-	"overview": 170}
+	"overview": 170, "register": 119}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
 	"diplomacy": 22, "economy": 130, "energy": 118,
@@ -133,7 +134,10 @@ const TOTAL_PENDING := {
 ## Top bar A (#418 pass 2, T5: Economy prints the bar's own money figure and word, "12.9 bn €"
 ## under "deficit, this month", where it printed "-5.30%" under "budget balance"): +2 on
 ## Economy, stated: 2966 -> 2968.
-const TOTAL_SUM_CEILING := 2968
+## The construction register (V5.3 c' slice 1, the author's "A pour commander"), a new Finances tab, a
+## stated rise 2968 -> 3087 (+119, all on the register: the type's lede and summary, the stock line, the
+## strip's money, who and when sentences, the charts' titles).
+const TOTAL_SUM_CEILING := 3087
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
