@@ -48,6 +48,7 @@ func _process(_delta: float) -> bool:
 			_panel._on_structure_changed()
 		6:
 			_check_tray()
+			_check_drop_every_kind()
 			_press(_remove_mark("spending_pct_gdp:education"))
 		9:
 			var draft = _panel.shared_draft()
@@ -100,6 +101,35 @@ func _check_tray() -> void:
 			loud.append(b)
 	if loud.size() != 1 or (loud[0] as Button).text != Strings.t("Table the bill"):
 		_fail("the tray's loud buttons: %s" % [loud.map(func(b) -> String: return (b as Button).text)])
+
+
+## FinanceDraft.drop on each kind of change the tray can list: a birth, an abolition, the brackets.
+func _check_drop_every_kind() -> void:
+	var ns = _state.player()
+	var draft = FinanceDraft.new()
+	draft.setup(_state)
+	var in_force := String(ns.tax_rates_pct.keys()[0])
+	var outside := ""
+	for kind in ns.tax_library:
+		if not ns.tax_rates_pct.has(kind):
+			outside = String(kind)
+			break
+	draft.toggle_abolish(in_force)
+	draft.set_brackets(draft.live(FinanceDraft.BRACKETS, "") + 0.1)
+	if outside != "":
+		draft.set_create(outside, 1.0)
+	draft.drop(FinanceDraft.ABOLISH, in_force)
+	draft.drop(FinanceDraft.BRACKETS, "")
+	if outside != "":
+		draft.drop(FinanceDraft.TAX, outside)
+		if draft.is_created(outside):
+			_fail("a dropped birth is still a creation")
+	if not draft.is_empty():
+		_fail("dropping an abolition, the brackets and a birth left %d rows" % draft.count())
+	# The staged draft is all percentages: the dumbbells share the one 0-25 scale.
+	var chart = _changes_chart()
+	if chart != null and chart._fixed != Vector2(0.0, 25.0):
+		_fail("the tray's axis is %s, not the one 0-25 scale" % chart._fixed)
 
 
 func _changes_chart():

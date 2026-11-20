@@ -186,12 +186,18 @@ func _list(ns, draft, price) -> void:
 	var rows: Array = draft.rows()
 	var dots := []
 	var ids := []
+	var top := 0.0
 	for row in rows:
 		var id := FinanceRows.row_id(String(row["channel"]), String(row["key"]))
 		ids.append(id)
 		dots.append({"id": id, "label": FinanceRows.change_label(ns, row), "before": float(row["live"]),
 			"after": float(row["draft"]), "moved": true})
-	_chart.setup(dots, {"fixed": SCALE, "places": 1})
+		top = maxf(top, maxf(float(row["live"]), float(row["draft"])))
+	# One shared 0-25 scale while every change is a percentage; a change in other units (an excise's index) would
+	# pin to its edge there, so the axis then fits the values instead.
+	_chart.setup(dots, {"fixed": SCALE, "places": 1} if top <= SCALE.y else {"places": 1})
+	# The rows are rebuilt for another set of changes, or another text size (their height follows the chart's).
+	ids.append(_chart.row_height())
 	if ids != _built_ids:
 		_built_ids = ids
 		for child in _marks.get_children():
@@ -217,6 +223,7 @@ func _mark(channel: String, key: String, id: String) -> void:
 	line.add_child(money)
 	var drop := Button.new()
 	drop.flat = true
+	drop.custom_minimum_size = Vector2(24.0, 24.0) * UiTheme.text_scale()  # a target, not a glyph's width
 	drop.text = "×"  # i18n: ok a glyph, its tooltip says it
 	drop.tooltip_text = Strings.t("Take this change out of the draft")
 	drop.set_meta("drop", id)
