@@ -53,38 +53,76 @@ func _process(_delta: float) -> bool:
 				_fail("no window registered as 'register' and 'programmes' (%s, %s)" % [_register, _follow])
 				_finish()
 				return false
+			_main._windows.open("programmes")
+		4:
+			if not _text_under(_follow).contains(_follow.tr("No programme is building.")):
+				_fail("the empty Programmes tab does not say so: '%s'" % _text_under(_follow))
+			_check_envelope()
 			_warn()
-		3:
+		5:
 			_check_card_arrived()
 			_press(_go())
-		5:
+		7:
 			_check_opened_from_the_warning()
 			_check_band_marks()
 			_check_blocs_line()
 			_check_union_line()
+			_press(_with_meta("warning_build", _register))
+		9:
+			_check_built_from_the_warning()
+			# Leave it, on a sheet opened from the warning again with the bill empty.
+			_main._state.player().tabled_bill = {}
+			_register.open_from_warning(String(_note["type"]), String(_note["region"]), 1)
+		11:
 			_press(_with_meta("warning_leave", _register))
-		7:
+		13:
 			if _with_meta("warning_bar", _register) != null:
 				_fail("Leave it did not put the warning away")
 			# C: a programme under way, then its overrun card.
 			_open_programme()
 			_main._windows.open("programmes")
-		9:
+		15:
 			_check_follow_rows()
 			_check_overrun_card()
 			_press(_with_meta("overrun_pay", _follow))
-		11:
+		17:
 			var p: Dictionary = _main._state.player().unit_programmes[0]
 			if String(p.get("answer", "")) != UK.OVERRUN_PAY:
 				_fail("Pay did not answer the card: %s" % [p.get("answer", "")])
 			if _with_meta("overrun_card", _follow) != null:
 				_fail("the overrun card stays after its answer")
 			_check_no_union_line()
-		13:
+		19:
 			if _with_meta("union", _register) != null:
 				_fail("a nation in no organisation still shows a Union line")
 			_finish()
 	return false
+
+
+## Build here tables the warning's programme (the type's band_units in that region) and
+## puts the bar away.
+func _check_built_from_the_warning() -> void:
+	var held: Array = (_main._state.player().tabled_bill.get("finance", {}) as Dictionary).get("units", [])
+	var band_units := int(_main._loader.unit_types[String(_note["type"])]["band_units"])
+	if held.size() != 1 or String(held[0]["type"]) != String(_note["type"]) \
+			or held[0]["rows"] != [{"region": String(_note["region"]), "units": band_units}]:
+		_fail("Build here did not table %d units in %s: %s" % [band_units, _note["region"], held])
+	if _with_meta("warning_bar", _register) != null:
+		_fail("the warning bar stays after Build here")
+
+
+## The Union's envelope on C for a member, its figure the sim's.
+func _check_envelope() -> void:
+	var ns = _main._state.player()
+	var org := UnitEnvelope.org_of(_main._loader, ns)
+	var section = _with_meta("envelope", _follow)
+	if org == "":
+		if section != null:
+			_fail("an envelope for a nation in no organisation")
+		return
+	var left := UnitEnvelope.left_eur_m(_main._loader, ns, UnitEnvelope.year_of(UnitPrice.now(_main._state)))
+	if section == null or not _text_under(section).contains(Num.f(left / 1000.0, 2)):
+		_fail("the envelope does not say the %s bn left" % Num.f(left / 1000.0, 2))
 
 
 ## The month's own arrival: the sim's warning note, through the month's end.
@@ -193,6 +231,12 @@ func _open_programme() -> void:
 	# Its overrun card, posted now (UnitOverrun.tick's shape).
 	p["ask"] = {"kind": "overrun", "posted": UnitPrice.now(state), "due": UnitPrice.now(state) + UK.UNIT_OVERRUN_WINDOW_MONTHS,
 		"default": UK.OVERRUN_PAY, "eur_m": 0.1 * float(p["contract_eur_m"])}
+	# Its Union reservation (UnitEnvelope.reserve's shape), held whatever the start's envelope.
+	var org := UnitEnvelope.org_of(_main._loader, ns)
+	if org != "":
+		var period: Dictionary = UnitEnvelope.period_of(_main._loader, org, UnitEnvelope.year_of(UnitPrice.now(state)))
+		p["union"] = {"org": org, "period": String(period["id"]), "pays_until": int(period["pays_until_year"]) + 20,
+			"reserved_eur_m": 123.0, "paid_eur_m": 0.0, "months_left": 0}
 	_follow.mark_dirty()
 
 
@@ -208,6 +252,8 @@ func _check_follow_rows() -> void:
 		_fail("the programme row does not say its months: '%s'" % text)
 	if text.contains(".0 "):
 		_fail("a count printed as a float: '%s'" % text)
+	if p.has("union") and not text.contains(Num.f(float(p["union"]["reserved_eur_m"]) / 1000.0, 2)):
+		_fail("the programme row does not say the Union's reservation: '%s'" % text)
 
 
 func _check_overrun_card() -> void:

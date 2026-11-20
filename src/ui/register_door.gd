@@ -36,9 +36,8 @@ static func bar(panel, parent: Control, state, loader, warning: Dictionary) -> v
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	box.add_child(row)
-	_answer(row, Strings.t("Build here"), Strings.tn("%d unit: %s bn of debt net of the Union, then %s %% of GDP a year.",
-		"%d units: %s bn of debt net of the Union, then %s %% of GDP a year.", band_units) % [band_units,
-		Num.f(float(build["debt_eur_bn"]), 2), Num.f(running, 3)], "warning_build", func() -> void:
+	_answer(row, Strings.t("Build here"), Strings.tn("%d unit: %s bn of debt, then %s %% of GDP a year.", "%d units: %s bn of debt, then %s %% of GDP a year.", band_units) % [
+		band_units, Num.f(float(build["debt_eur_bn"]), 2), Num.f(running, 3)], "warning_build", func() -> void:
 			panel.place(region, band_units)
 			panel.clear_warning()
 			panel.table_programme())

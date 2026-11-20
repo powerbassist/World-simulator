@@ -74,12 +74,11 @@ static func union(parent: Control, state, ns, loader, programme: Dictionary, quo
 	var period := UnitEnvelope.period_of(loader, org, UnitEnvelope.year_of(now))
 	var text := ""
 	if reserved > 0.0:
-		text = Strings.t("The Union pays about %s bn of it, in the %d months after the opening.") % [
-			Num.f(reserved / 1000.0, 2), UK.UNIT_RECEIPT_MONTHS]
+		text = Strings.t("Union: about %s bn back after the opening.") % Num.f(reserved / 1000.0, 2)
 	elif period.is_empty():
-		text = Strings.t("No money from the Union: no envelope runs this year.")
+		text = Strings.t("No Union money this year.")
 	elif UnitEnvelope.year_of(UnitPrice.opens_at(draft)) > int(period["pays_until_year"]):
-		text = Strings.t("No money from the Union: it opens after %d, when this envelope stops paying.") % int(period["pays_until_year"])
+		text = Strings.t("No Union money: opens after %d.") % int(period["pays_until_year"])
 	else:
-		text = Strings.t("No money from the Union: nothing is left in its envelope.")
+		text = Strings.t("No Union money: its envelope is spent.")
 	PanelKit.plain_line(parent, text, PanelKit.Tone.DIM).set_meta("union", true)

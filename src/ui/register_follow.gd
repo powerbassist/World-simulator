@@ -95,7 +95,7 @@ func _refresh() -> void:
 	_body.add_child(lede)
 	if building.is_empty():
 		lede.text = tr("No programme is building.")
-		PanelKit.plain_line(_body, tr("The Register tab puts one in the finance bill; once voted, it is followed here."), PanelKit.Tone.DIM)
+		PanelKit.plain_line(_body, tr("Voted programmes show here."), PanelKit.Tone.DIM)
 	else:
 		lede.text = tr_n("%d programme building.", "%d programmes building.", building.size()) % building.size()
 		if not asks.is_empty():

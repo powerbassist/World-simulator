@@ -34,7 +34,7 @@ static func arrive(main, report: Dictionary) -> void:
 			inbox.card_action.connect(_on_open.bind(main))
 		var row: Dictionary = Units.row(main._loader, type_id)
 		var unit := Strings.row("units", type_id, "figure.unit", String((row.get("figure", {}) as Dictionary).get("unit", "")))
-		var body := Strings.t("%s: %s %s; the nation %s. Among the regions furthest behind: build here, or leave it.") % [
+		var body := Strings.t("%s: %s %s; the nation %s.") % [
 			_region_name(main, region), Num.f(float(note["figure"]), 2), unit, Num.f(float(note["national"]), 2)]
 		var card: String = inbox.push(Strings.row_name("units", row), body,
 			[{"label": Strings.t("Open"), "acts_on": SUBJECT + type_id + "|" + region}])
