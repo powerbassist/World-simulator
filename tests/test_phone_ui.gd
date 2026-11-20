@@ -88,6 +88,11 @@ func _process(_delta: float) -> bool:
 			_call_then_load()
 		29:
 			_check_loaded()
+			# Cloud mutant M15 on #430: a load forgets a right click's pending light.
+			_main._people_panel._light = true
+			_main._people_panel.setup(_main._state, _main._loader)
+			if _main._people_panel._light:
+				_fail("a load kept the discarded game's light on People")
 			_finish()
 			return true
 	return false

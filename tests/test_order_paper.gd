@@ -26,6 +26,8 @@ const ActsOn = preload("res://src/ui/acts_on.gd")
 const OrderSlot = preload("res://src/ui/order_slot.gd")
 const Click = preload("res://tests/click.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const VerbBlock = preload("res://src/ui/verb_block.gd")
+const GameState = preload("res://src/core/game_state.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -93,6 +95,15 @@ func _process(_delta: float) -> bool:
 			_key(KEY_SPACE)
 		26:
 			_check_the_keys_pressed_no_verb()
+			_check_a_stale_press_moves_the_picked_bill()
+			_check_the_place_bounds()
+			_check_a_load_drops_the_pick()
+			_stage_a_tall_scroll()
+		28:
+			VerbBlock.light(_tall)
+		31:
+			_check_the_tall_scroll()
+		33:
 			_finish()
 			return true
 	return false
@@ -371,6 +382,79 @@ func _check_a_lone_bill_says_why_once() -> void:
 	var text := _text_of(_block())
 	if text.contains(tr("It is already first in the queue.")) and text.contains(tr("It is already last in the queue.")):
 		_fail("a lone bill's reasons repeat: '%s'" % text)
+
+
+## QA T2 on #430: a verb built before the queue changed still moves ITS bill (a close or a take-out between the
+## build and the press).
+func _check_a_stale_press_moves_the_picked_bill() -> void:
+	_set_queue([_ids[1], _ids[2], _ids[3]])
+	_paper().places[2].menu_requested.emit(1)  # picks _ids[2]
+	var earlier: Button = _block_buttons()[0]
+	BillQueue.remove(_main._state, 0)  # no refresh: the block still stands as built
+	earlier.pressed.emit()  # the picked bill is first now: nothing to move
+	var order: Array = _ns().bill_queue.map(func(e): return String(e["law_id"]))
+	if order != [_ids[2], _ids[3]]:
+		_fail("a stale Move earlier moved another bill: %s, wanted %s" % [order, [_ids[2], _ids[3]]])
+	_refresh()
+
+
+## QA T5: Move earlier is live from the second place on, Move later is down at the last.
+func _check_the_place_bounds() -> void:
+	_set_queue([_ids[1], _ids[2], _ids[3]])
+	_paper().places[2].menu_requested.emit(1)
+	if (_block_buttons()[0] as Button).disabled:
+		_fail("Move earlier is down at the second place")
+	_paper().places[3].menu_requested.emit(2)
+	if not (_block_buttons()[1] as Button).disabled:
+		_fail("Move later is live at the last place")
+
+
+## QA T3: a load (another state) forgets the pick, even when the new game queues the same bill.
+func _check_a_load_drops_the_pick() -> void:
+	_set_queue([_ids[1], _ids[2]])
+	_paper().places[1].menu_requested.emit(0)
+	var other = GameState.new_game(_main._loader, "FRA")
+	other.year = _main._state.year  # main sets the clock's date on its own state; a bare one starts at month 0
+	other.month = _main._state.month
+	BillQueue.add(other, {"law_id": _ids[1]})
+	_paper().refresh(other, _main._loader, _panel()._find_law)
+	if _paper().picked_index() >= 0:
+		_fail("a load kept the discarded game's pick")
+	_paper().refresh(_main._state, _main._loader, _panel()._find_law)
+
+
+## QA T1 + T6: lighting scrolls the visible block into view, never a hidden one tagged before it.
+var _tall: VBoxContainer
+var _tall_scroll: ScrollContainer
+var _shown_block: Control
+
+
+func _stage_a_tall_scroll() -> void:
+	_tall_scroll = ScrollContainer.new()
+	_tall_scroll.size = Vector2(300, 200)
+	_tall_scroll.position = Vector2.ZERO
+	root.add_child(_tall_scroll)
+	_tall = VBoxContainer.new()
+	_tall_scroll.add_child(_tall)
+	var hidden := Control.new()
+	hidden.custom_minimum_size = Vector2(10, 40)
+	hidden.visible = false
+	VerbBlock.tag(hidden)
+	_tall.add_child(hidden)
+	var pad := Control.new()
+	pad.custom_minimum_size = Vector2(10, 1000)
+	_tall.add_child(pad)
+	_shown_block = Control.new()
+	_shown_block.custom_minimum_size = Vector2(10, 40)
+	VerbBlock.tag(_shown_block)
+	_tall.add_child(_shown_block)
+
+
+func _check_the_tall_scroll() -> void:
+	var view := _tall_scroll.get_global_rect().grow(1.0)
+	if not view.encloses(_shown_block.get_global_rect()):
+		_fail("lighting did not bring the visible block into view (scrolled %d)" % _tall_scroll.scroll_vertical)
+	_tall_scroll.queue_free()
 
 
 ## The paper's docked verb block, null while no place is picked.
