@@ -71,7 +71,7 @@ func _fs() -> int:
 	return roundi(UiTheme.SIZE_SMALL * UiTheme.text_scale())
 
 
-## The name and value columns grow with the text size, or a long name is cut at 130 %.
+## The name and value columns grow with the text size, or a long name is cut at the largest text size.
 func _lw() -> float:
 	return LABEL_W * UiTheme.text_scale()
 

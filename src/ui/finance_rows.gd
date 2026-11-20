@@ -34,7 +34,7 @@ const NAME_WIDTH := 215.0
 const SPENDING_NAME_WIDTH := 130.0
 const RATE_WIDTH := 100.0
 ## A spending line's figure ("from 11.0 to 12.5 %"): the name button takes the rest, never this. The unit is the
-## column's heading (% of GDP), so the figure stays short enough for the pane at 130 % text.
+## column's heading (% of GDP), so the figure stays short enough for the pane at the largest text size.
 const PCT_WIDTH := 124.0
 const FIGURE_WIDTH := 64.0
 const SWATCH := 10.0
@@ -121,7 +121,7 @@ static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
 		# What a briefing's Go on the deficit lands on (acts_on.gd): any line's slider acts on the balance.
 		ActsOn.tag(name, ["deficit", "balance"])
 		var pct := _cell(row, "", UiTheme.CAPTION, PCT_WIDTH)
-		# At 130 % the pane has no room for the figure beside the name: it is the row's hover (who-pays does the same).
+		# At the largest text size the pane has no room for the figure beside the name: it is the row's hover (who-pays does the same).
 		pct.visible = bool(ctx["wide"])
 		row.mouse_filter = Control.MOUSE_FILTER_PASS
 		pct.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -176,8 +176,8 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 		row.add_child(gap)
 	var label := _cell(row, name, UiTheme.HEADING, 0.0)
 	# A header's name is what the column is read by: it keeps its own width, and the note gives way (it fills what is
-	# left and is trimmed, or at 130 % is the row's hover), never "Other spend..." (QA's T1 on #366, once the scroll
-	# bar's gap took 8 px at 130 %).
+	# left and is trimmed, or at the largest text size is the row's hover), never "Other spend..." (QA's T1 on #366, once the scroll
+	# bar's gap took 8 px at the largest text size).
 	label.clip_text = false
 	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	if note != "" and UiTheme.text_scale() < 1.2:
@@ -208,7 +208,7 @@ static func _kind_row(ns, kind: Dictionary, wide: bool, ctx: Dictionary) -> Cont
 	var tax: Dictionary = ns.tax_library[String(kind["id"])]
 	var who := ", ".join((kind["who"] as Array).map(func(b) -> String: return Labels.bloc(String(b))))
 	# The name takes what it needs (a kind's name is the longest thing on the row); who pays fills the
-	# rest as a caption while there is room, and is the hover when there is not (130 %).
+	# rest as a caption while there is room, and is the hover when there is not (the largest text size).
 	var id := row_id(FinanceDraft.TAX, String(kind["id"]))
 	var name := _name_cell(row, Strings.row_name("taxes", tax), id, NAME_WIDTH, ctx)
 	name.tooltip_text = name.text
@@ -342,7 +342,7 @@ static func paint_rates(ctx: Dictionary) -> void:
 			label.text = Strings.t("from %s to %s %%") % [was, LedgerBox.text(target, places)]
 		else:
 			label.text = Strings.t("from %s to %s") % [was, LedgerBox.text(target, places) + unit]
-		# Written after the figure, never before: at 130 % the figure is the row's hover.
+		# Written after the figure, never before: at the largest text size the figure is the row's hover.
 		if not label.visible:
 			(label.get_parent() as Control).tooltip_text = label.text
 

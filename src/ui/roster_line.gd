@@ -18,7 +18,7 @@ const Feelings = preload("res://src/ui/feelings.gd")
 const FACE := Vector2(28, 38)
 ## The columns after the face, as shares of the line: person, holds, feels, wants, owe,
 ## known. Shares rather than pixels, so the heads and every line divide the same dock the
-## same way at any text size (the first frames clipped the page at 130 %); a long cell
+## same way at any text size (the first frames clipped the page at the largest text size); a long cell
 ## wraps inside its column, and a value sits under its head (V5.2 b+ R5).
 const COLS := [230, 170, 130, 300, 190, 80]
 

@@ -31,9 +31,9 @@ const StripSeries = preload("res://src/ui/strip_series.gd")
 ## Reads state, never writes it. Save and the menu moved to the title bar
 ## (V5.1-c2.3), so the strip is the figures alone.
 
-## The strip's slot under the title bar. 58 px held caption over value (54 at 130 %,
+## The strip's slot under the title bar. 58 px held caption over value (54 at the largest text size,
 ## V5.1-c2.4); gate 3's tiles (the author's pick, top bar A) add a row under each value
-## -- its change in words, or its meter -- so the slot is the tiles' height at 130 %
+## -- its change in words, or its meter -- so the slot is the tiles' height at the largest text size
 ## (tests/test_top_bar_tiles.gd). The workspace starts below it.
 const BAR_HEIGHT := 84
 ## The programme caption's width: "PROGRAMME" itself, so the strip's measured

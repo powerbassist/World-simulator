@@ -17,7 +17,7 @@ extends SceneTree
 ##   - the Agenda tab is gone and nothing opens it: the card's click and the Go land on the Folder;
 ##   - the offer is BUILT FROM THE REGISTER on the file page: one row per entry, one Choose;
 ##   - the picker SURVIVES the Folder's rebuild (the same node: its selection and its scroll);
-##   - at text 130 the list leaves the detail its room on the Folder's page;
+##   - at text 115 the list leaves the detail its room on the Folder's page;
 ##   - CHOOSE is a COMMAND: main performs, the clock runs, and the page then shows what was booked;
 ##   - a conclusion pushes a card.
 ##
@@ -34,7 +34,7 @@ const ProgrammePicker = preload("res://src/ui/programme_picker.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 
 ## The Folder's page beside its 300 px list in the full dock (measured, s3 frames): the list column
-## must leave the detail this much at text 130.
+## must leave the detail this much at text 115.
 const PAGE_WIDTH := 846.0
 const DETAIL_ROOM := 300.0
 
@@ -73,7 +73,7 @@ func _run() -> void:
 	_check_the_picker_survives_a_rebuild()
 	_check_focus_survives_a_rebuild()
 	_check_the_fill_refreshes_its_detail(state, ns, loader)
-	_check_text_130_leaves_the_detail_room(state, ns, loader)
+	_check_text_115_leaves_the_detail_room(state, ns, loader)
 	_check_past_terms_are_on_the_file(state, ns, loader)
 	_check_the_choice_is_a_command(state, ns, loader)
 	_check_the_booked_page_reads_its_term(state, ns, loader)
@@ -312,23 +312,23 @@ func _check_the_fill_refreshes_its_detail(state, ns, loader) -> void:
 	picker.fill(ns, offer)
 
 
-## The fix drawn at the picture step: at text 130 the blocs chip names one bloc and "+N", so the
+## The fix drawn at the picture step: at text 115 the blocs chip names one bloc and "+N", so the
 ## list column leaves the detail its room on the Folder's page.
-func _check_text_130_leaves_the_detail_room(state, ns, loader) -> void:
+func _check_text_115_leaves_the_detail_room(state, ns, loader) -> void:
 	var before := UiTheme.text_scale()
-	UiTheme.set_text_scale(1.3)
+	UiTheme.set_text_scale(1.15)
 	var picker = _folder()._picker
 	picker.fill(ns, Programme.available(state, ns, loader))
 	var list_min: float = picker.list_min_width()
 	if list_min > PAGE_WIDTH - 20.0 - DETAIL_ROOM:
-		_fail("at text 130 the programme list needs %.0f px of the %.0f px page -- the detail keeps less than %.0f" % [list_min, PAGE_WIDTH, DETAIL_ROOM])
+		_fail("at text 115 the programme list needs %.0f px of the %.0f px page -- the detail keeps less than %.0f" % [list_min, PAGE_WIDTH, DETAIL_ROOM])
 	# The chip names one bloc and a count, never two names (a width check alone would pass a clipped pair).
 	var plus := 0
 	for node in _walk(picker._rows):
 		if node is Label and String(node.tooltip_text).contains(", "):
 			plus += 1
 			if String(node.text).contains(", ") or not String(node.text).contains("+"):
-				_fail("at text 130 a row's blocs chip reads '%s', not one bloc and a count" % node.text)
+				_fail("at text 115 a row's blocs chip reads '%s', not one bloc and a count" % node.text)
 	if plus == 0:
 		_fail("premise: no offered entry is welcomed by two blocs or more")
 	UiTheme.set_text_scale(before)

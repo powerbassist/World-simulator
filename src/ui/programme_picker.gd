@@ -27,7 +27,7 @@ const Num = preload("res://src/ui/num.gd")
 const NAME_WIDTH := 200.0
 const COLUMNS := [64.0, 150.0]
 ## The blocs named on a row before "+N", and the chip's width for them. Past BLOCS_TEXT_CUT the chip
-## names one bloc: at text 130 two names need 195 px and the list would leave the detail under 300
+## names one bloc: at the largest text size two names need 195 px and the list would leave the detail under 300
 ## px of the Folder's 846 px page (the S3 picture step's arithmetic: 558 against 488 px).
 const BLOCS_NAMED := 2
 const BLOCS_TEXT_CUT := 1.15

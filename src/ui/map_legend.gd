@@ -68,7 +68,7 @@ func _ready() -> void:
 	# session's stated contract; tests/test_map_layers.gd asserts the count.
 	# One column, not one row (gate 3, G3-20): the six-wide row made a 614 px plate that
 	# sat over Spain and Portugal at the opening camera, so a click aimed at Iberia
-	# switched the layer. Two columns still reached Portugal at text 130 %. Narrow, the
+	# switched the layer. Two columns still reached Portugal at the largest text size. Narrow, the
 	# plate stays on the Atlantic at every text size (tests/test_legend_clear.gd); its
 	# rows wrap rather than widen it.
 	var toggles := VBoxContainer.new()

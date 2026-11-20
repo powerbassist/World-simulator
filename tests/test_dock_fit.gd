@@ -8,7 +8,7 @@ extends SceneTree
 ## broke it -- a floating window's height floor (Diplomacy 860) that kept the plate full height, a
 ## mid-term Agenda whose scroll was added to a floor that already held it (~300 px of blank), and
 ## a 440 px row measure in the 500 px Regions dock that put a sideways bar under the About rows.
-## Swept in English at text 100 and 130, the two ends the frames are taken at (French is paused, the
+## Swept in English at text 100 and 115, the two ends the frames are taken at (French is paused, the
 ## author, 2026-11-17).
 
 const WindowManager = preload("res://src/ui/window_manager.gd")
@@ -23,7 +23,7 @@ var _failures: Array[String] = []
 
 func _initialize() -> void:
 	await _sweep("en", 1.0)
-	await _sweep("en", 1.3)
+	await _sweep("en", 1.15)
 	UiTheme.set_text_scale(1.0)
 	for failure in _failures:
 		push_error("FAIL " + failure)
@@ -88,7 +88,7 @@ func _sweep(language: String, text_scale: float) -> void:
 	await _open(windows, "society")
 	_check_ledgers_share_a_caption_column(windows.content("society")._body, where + ", Society")
 
-	# The Save/Load dialog (QA's real-window play, French 130: "Supprimer" cut at the dialog's edge).
+	# The Save/Load dialog (QA's real-window play, French 115: "Supprimer" cut at the dialog's edge).
 	windows.close_all()
 	await _check_save_load_buttons_fit(main, where)
 

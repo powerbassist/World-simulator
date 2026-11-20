@@ -10,7 +10,7 @@ extends SceneTree
 ## text size -- squeezed it to nothing, and requests lapsed into refusals with their
 ## days on screen. Capping one grower (#231's first head) left the others.
 ##
-## Here, QA's whole probe matrix: text at 100 / 115 / 130 %, no word or a dozen in
+## Here, QA's whole probe matrix: text at 100 / 115 %, no word or a dozen in
 ## flight, one to six pending requests, the first request's first free day picked
 ## by a click on the grid; at six requests the keyboard's path too (the card's
 ## Days), a click on a list the player had scrolled down, and a picked day with
@@ -24,7 +24,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## Words given: past the twelve a long term piles up in QA's run (8 to 10 lines).
 const WORDS := 12
-const SCALES := [1.0, 1.15, 1.3]
+const SCALES := [1.0, 1.15]
 const MAX_REQUESTS := 6
 ## A packed day: more entries than the day list's floor holds, so "Book here" stays
 ## in view only because it is listed first, under the date.

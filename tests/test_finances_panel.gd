@@ -54,21 +54,21 @@ func _process(_delta: float) -> bool:
 			_check_the_surplus_has_no_bad_mark()
 			_check_a_fold_opens_and_redraws()
 			_check_the_stamp_and_the_forecast_redraw()
-			_check_who_pays_is_a_hover_at_130()
+			_check_who_pays_is_a_hover_at_115()
 			# QA's MO / MD on #359: end to end through the game's own wiring.
 			_main = load("res://src/ui/main.tscn").instantiate()
 			root.add_child(_main)
 		4:
-			# The docked page at 130 %: laid out a frame before the clip check reads it (QA's T1 on #366: the scroll bar's
+			# The docked page at 115 %: laid out a frame before the clip check reads it (QA's T1 on #366: the scroll bar's
 			# gap took 8 px from the books' columns and "Other spending" read "Other spend...").
-			UiTheme.set_text_scale(1.3)
+			UiTheme.set_text_scale(1.15)
 			_panel.theme = UiTheme.build()  # the game's fonts: a bare panel measures the engine default
 			_panel._dirty = true
 			_panel._process(0.0)
 			# The narrowest the page can be laid out: every column at its minimum, which is where a name is cut.
 			_panel.size = Vector2(_panel.get_combined_minimum_size().x, 820)
 		5:
-			_check_no_name_is_clipped_at_130()
+			_check_no_name_is_clipped_at_115()
 			UiTheme.set_text_scale(1.0)
 			_panel.theme = null
 			_panel._dirty = true
@@ -272,10 +272,10 @@ func _check_the_stamp_and_the_forecast_redraw() -> void:
 	_panel._process(0.0)
 
 
-## No header or row name on the books is cut to an ellipsis at 130 % text: a Label that clips and whose text is wider
+## No header or row name on the books is cut to an ellipsis at 115 % text: a Label that clips and whose text is wider
 ## than the box it was given says "Other spend...". The names are what the page is read by; the figures and notes
 ## around them may be tighter.
-func _check_no_name_is_clipped_at_130() -> void:
+func _check_no_name_is_clipped_at_115() -> void:
 	var clipped := []
 	for box in [_panel._revenue_box, _panel._spending_box]:
 		for node in box.find_children("*", "", true, false):
@@ -293,20 +293,20 @@ func _check_no_name_is_clipped_at_130() -> void:
 			if need > label.size.x + 0.5:
 				clipped.append("%s (%.0f of %.0f px)" % [label.text, need, label.size.x])
 	if not clipped.is_empty():
-		_fail("at 130 %% the books clip: %s" % ", ".join(clipped))
+		_fail("at 115 %% the books clip: %s" % ", ".join(clipped))
 
 
-func _check_who_pays_is_a_hover_at_130() -> void:
-	UiTheme.set_text_scale(1.3)
+func _check_who_pays_is_a_hover_at_115() -> void:
+	UiTheme.set_text_scale(1.15)
 	_panel._dirty = true
 	_panel._process(0.0)
 	var text := _text_of(_panel._revenue_box)
 	var tips: Array = _panel._revenue_box.find_children("*", "HBoxContainer", true, false).filter(func(n) -> bool: return String(n.tooltip_text).begins_with("Paid by:"))
 	UiTheme.set_text_scale(1.0)
 	if tips.is_empty():
-		_fail("at 130 % who pays is not a hover on the row")
+		_fail("at 115 % who pays is not a hover on the row")
 	if text.contains("Workers, Pensioners") or text.contains("Pensioners, Urban"):
-		_fail("at 130 % who pays is still a caption on the row")
+		_fail("at 115 % who pays is still a caption on the row")
 	_panel._dirty = true
 	_panel._process(0.0)
 

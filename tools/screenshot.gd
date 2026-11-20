@@ -17,7 +17,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --climate --open events
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --open budget
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --domain finances
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --domain finances
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --notes
@@ -30,11 +30,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --empty-chest --open campaign
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade --open legislature
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade --text 130 --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --grade-tabled --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open register
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play GBR --open register
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --open register
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --warned --open register   (opened from a region warning)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programmes --open programmes   (a programme building, its overrun card)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address --open legislature
@@ -66,23 +64,19 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --bill-refused --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books spending_pct_gdp:health --books-move   (a share move drafted; add --books-draft for rows beside it)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --slipping --open budget
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --sectors --slipping --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-back --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open sector_agriculture
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --open sector_industry
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open sector_services
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --closure --open sector_agriculture
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --closure --open sector_agriculture
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --text 130 --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-arrival
@@ -90,9 +84,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet change --open region
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --region-sheet --text 130 --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-cards
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-cards --text 130
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --b7-lapse
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --compose
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pmb
@@ -133,12 +125,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick hover --open people
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick hover --text 130 --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-pick vacant --open people
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --text 130 --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --lang fr --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open majority
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --open majority
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --person-card --rapport -0.1
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --dissolve-confirm
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --front-page   (or: --front-page one)
@@ -184,7 +173,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --blank diplomacy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --briefing calm   (G2: the read is the Presidency page)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark   (G1: the month end, the mark and his caption)
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark --briefing crowded --lang fr --text 130
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark --briefing crowded --lang fr
 ##     (also tense: a request lapsing next month; crisis: an interrupt on the desk;
 ##     crowded: the interrupt and three requests lapsing, so the footer shows)
 ##
@@ -472,7 +461,7 @@ var _domain := ""
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
 var _lang := ""  ## --lang CODE: the interface language of the staged game (default English)
-var _text := 100  ## --text PCT: the text size (V5.1-c2.4), 90 / 100 / 115 / 130
+var _text := 100  ## --text PCT: the text size (V5.1-c2.4), 90 / 100 / 115
 var _play := ""  ## --play ID: the played nation of the staged game (default France)
 var _defence := false
 
