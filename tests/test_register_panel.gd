@@ -33,6 +33,7 @@ var _frame := 0
 var _spin
 var _held_stock
 var _money_before := ""
+var _quote_before_press := {}
 
 
 func _init() -> void:
@@ -83,9 +84,13 @@ func _process(_delta: float) -> bool:
 			_main._state.player().tabled_bill = {}
 			_panel.mark_dirty()
 		12:
+			_quote_before_press = _panel._quote(_main._state.player())
 			_press(_with_meta("table"))
 		14:
 			_check_tabled()
+			# QA T-B (b): the programme just tabled is this one, never an earlier order of itself.
+			if _panel._quote(_main._state.player()) != _quote_before_press:
+				_fail("once tabled, the programme is priced against itself: %s was %s" % [_panel._quote(_main._state.player()), _quote_before_press])
 			# A save reads the bill back through JSON with its counts as floats (3 becomes 3.0):
 			# the loaded programme is still the one held, never a second order of it.
 			var ns = _main._state.player()
@@ -94,6 +99,7 @@ func _process(_delta: float) -> bool:
 			_panel.mark_dirty()
 		16:
 			_check_held_after_a_load()
+			_check_another_held_order_counts()
 		17:
 			# The region sheet's door opens the register on that region, the count placed THERE
 			# (a region that is not the worst, so by need would put it elsewhere).
@@ -259,6 +265,23 @@ func _check_held_after_a_load() -> void:
 	var line = _with_meta("in_bill")
 	if line == null or String(line.text).contains(".0 "):
 		_fail("the held count is printed as a float after a load")
+
+
+## QA T-B (a): a DIFFERENT held order of the same type in the same regions is an earlier
+## order, so the concentration surcharge rises with it.
+func _check_another_held_order_counts() -> void:
+	var ns = _main._state.player()
+	var finance: Dictionary = ns.tabled_bill["finance"]
+	var held: Array = finance[FinanceRows.UNITS]
+	var alone: Dictionary = _panel._quote(ns)
+	var more: Array = []
+	for r in _panel.rows():
+		more.append({"region": String(r["region"]), "units": int(r["units"]) + 5})
+	held.append({"type": _type(), "op": "build", "rows": more})
+	var with_other: Dictionary = _panel._quote(ns)
+	held.pop_back()
+	if alone.is_empty() or float(with_other.get("hi_eur_m", 0.0)) <= float(alone.get("hi_eur_m", 0.0)):
+		_fail("another held order in the same regions does not raise the price: %s then %s" % [alone, with_other])
 
 func _worst_region() -> String:
 	var rows: Array = Units.fill_by_need(_main._state.player(), _main._loader, _offered()[0], 1)
