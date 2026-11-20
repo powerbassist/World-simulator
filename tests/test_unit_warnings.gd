@@ -42,6 +42,7 @@ func _init() -> void:
 	_test_the_fourth_worst_waits()
 	_test_the_band_needs_the_gap()
 	_test_the_answers_are_the_registers_numbers()
+	_test_a_dull_warning_is_stamped_dull()
 	_test_warned_again_after_exactly_a_year()
 	_test_the_warning_ends_the_quiet_month()
 	_test_a_build_that_closes_the_gap_leaves_the_band()
@@ -262,6 +263,31 @@ func _test_the_warning_ends_the_quiet_month() -> void:
 	ns.unit_warned = {}
 	if not QuietMonth.quiet(state, ns, _loader, _now(state)):
 		_fail("the fixture month is not quiet without the warning: the test reads nothing")
+
+
+## A type so cheap that building its band moves no money past the bar and no bloc past an
+## arrow: its warning still arrives, stamped as no decision, and the month stays quiet.
+## The fixture's own costs are lowered for this test and put back.
+func _test_a_dull_warning_is_stamped_dull() -> void:
+	var saved: Dictionary = _loader.unit_types.duplicate(true)
+	for type_id in _loader.unit_types:
+		var t: Dictionary = _loader.unit_types[type_id]
+		t["cost_eur_m"]["FRA"] = 0.001
+		t["running_eur_m"]["FRA"] = 0.0
+		for bloc in t["bloc_offset_per_pop_share"]:
+			t["bloc_offset_per_pop_share"][bloc] = 0.0
+	var state = _state()
+	var ns = state.player()
+	ns.in_government = true
+	if _tick(state).is_empty():
+		_fail("no warning from the cheap types")
+	else:
+		var key: String = ns.unit_warned.keys()[0]
+		if bool(ns.unit_warned[key]["differs"]):
+			_fail("a warning whose build moves nothing is stamped as a decision")
+		if not QuietMonth.quiet(state, ns, _loader, _now(state)):
+			_fail("a warning that is no decision ends the quiet month")
+	_loader.unit_types = saved
 
 
 ## The build answer: the band's units there, the estimate as debt, the running cost a year
