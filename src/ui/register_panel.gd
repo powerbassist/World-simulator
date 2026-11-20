@@ -378,7 +378,7 @@ func _why_not(bill: Dictionary) -> String:
 	# The same programme already in the bill: a second press would add nothing (FinanceRows.merge).
 	var held: Array = (_state.player().tabled_bill.get("finance", {}) as Dictionary).get(FinanceRows.UNITS, [])
 	for kept in held:
-		if String(kept.get("type", "")) == _type and String(kept.get("op", "")) == UK.OP_BUILD and kept.get("rows", []) == rows():
+		if FinanceRows.same_units_row(kept, (bill[FinanceRows.UNITS] as Array)[0]):
 			return tr("This programme is already in the finance bill.")
 	var answer: Dictionary = FinanceBill.refusal(_state, _loader, bill)
 	return "" if answer.is_empty() else _reason(answer)
@@ -399,7 +399,7 @@ func _quote(ns) -> Dictionary:
 	# The rows the bill already holds count toward concentration, as FinanceBill.drafted prices them.
 	# The same programme already held is this one, never an earlier order of it.
 	var earlier: Array = ((ns.tabled_bill.get("finance", {}) as Dictionary).get(FinanceRows.UNITS, []) as Array).filter(
-		func(kept): return not (String(kept.get("type", "")) == _type and kept.get("rows", []) == rows()))
+		func(kept): return not FinanceRows.same_units_row(kept, programme))
 	return UnitPrice.quote(_state, ns, _loader, programme, earlier)
 
 

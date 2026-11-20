@@ -32,6 +32,7 @@ var _panel
 var _frame := 0
 var _spin
 var _held_stock
+var _money_before := ""
 
 
 func _init() -> void:
@@ -85,32 +86,48 @@ func _process(_delta: float) -> bool:
 			_press(_with_meta("table"))
 		14:
 			_check_tabled()
-		15:
+			# A save reads the bill back through JSON with its counts as floats (3 becomes 3.0):
+			# the loaded programme is still the one held, never a second order of it.
+			var ns = _main._state.player()
+			_money_before = String(_with_meta("money").text)
+			ns.tabled_bill = JSON.parse_string(JSON.stringify(ns.tabled_bill))
+			_panel.mark_dirty()
+		16:
+			_check_held_after_a_load()
+		17:
 			# The region sheet's door opens the register on that region, the count placed THERE
 			# (a region that is not the worst, so by need would put it elsewhere).
 			_main._windows.open("region")
 			var region_panel = _main._windows.content("region")
 			region_panel.open_region_at(_other_region())
-		17:
-			_press(_with_meta("register_door"))
 		19:
+			_press(_with_meta("register_door"))
+		21:
 			_check_door_opened(_other_region())
 			# A nation with no stock file is not offered the tab (a rule over data).
 			var ns = _main._state.player()
 			_held_stock = _main._loader.unit_stock[ns.id]
 			_main._loader.unit_stock.erase(ns.id)
-			_main._windows.open("region")
-		20:
+			# As a load does: the workspace closes, the next tab opened is in the SAME domain
+			# (the register's), so the tab row must be read again, not kept.
+			_main._windows.close_all()
+		22:
 			_main._windows.open("finances")
-		21:
+		23:
 			if _main._windows.tab_ids().has("register"):
 				_fail("the register tab is offered to a nation with no stock file")
 			_main._loader.unit_stock[_main._state.player().id] = _held_stock
+			_main._windows.close_all()
+		24:
+			_main._windows.open("finances")
+		25:
+			if not _main._windows.tab_ids().has("register"):
+				_fail("the register tab is missing once the stock file is back")
 			# A new type is a data edit: the fixture's catalogue replaces the shipped one.
 			UnitsLoader.load_units(_main._loader, FIXTURE)
 			_panel.setup(_main._state, _main._loader)
 			_main._windows.open("register")
-		23:
+		27:
 			_check_types_come_from_the_catalogue()
 			_finish()
 	return false
@@ -226,6 +243,21 @@ func _check_tabled() -> void:
 	if press == null or not press.disabled:
 		_fail("the press stays live for a programme the bill already holds")
 
+
+
+func _check_held_after_a_load() -> void:
+	var press = _with_meta("table")
+	if press == null or not press.disabled:
+		_fail("after a load the press is live again for the programme the bill holds")
+	var why = _with_meta("refusal")
+	if why == null or not String(why.text).contains(tr("This programme is already in the finance bill.")):
+		_fail("after a load the sheet does not say the programme is already held: '%s'" % ("" if why == null else why.text))
+	var money = _with_meta("money")
+	if money == null or String(money.text) != _money_before:
+		_fail("after a load the quote counts the held programme as an earlier order: '%s' was '%s'" % ["" if money == null else money.text, _money_before])
+	var line = _with_meta("in_bill")
+	if line == null or String(line.text).contains(".0 "):
+		_fail("the held count is printed as a float after a load")
 
 func _worst_region() -> String:
 	var rows: Array = Units.fill_by_need(_main._state.player(), _main._loader, _offered()[0], 1)
