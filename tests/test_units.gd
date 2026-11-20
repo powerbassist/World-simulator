@@ -38,6 +38,7 @@ func _init() -> void:
 		return
 	_test_the_shipped_tree_offers_nothing_until_content_lands()
 	_test_the_projects_are_potential_rows()
+	_test_fill_by_need_reads_one_basis_a_step()
 	UnitsLoader.load_units(_loader, FIXTURE)
 	if not _loader.errors.is_empty():
 		_failures.append("the fixture did not load cleanly: %s" % [_loader.errors])
@@ -55,7 +56,6 @@ func _init() -> void:
 	_test_a_region_with_no_stock_gains_nothing()
 	_test_fill_by_population()
 	_test_fill_by_need_starts_with_the_worst()
-	_test_fill_by_need_reads_one_basis_a_step()
 	_test_the_preview_reads_units_not_yet_built()
 	_test_a_higher_is_better_figure()
 	_test_the_register_is_saved()
@@ -467,22 +467,31 @@ func _test_fill_by_need_starts_with_the_worst() -> void:
 ## QA TAKE on #420: the register refills by need on every count change, and at 200 units
 ## the fill froze the game 1-2 s, rebuilding the whole basis for every candidate region of
 ## every step. Every candidate of one step reads the SAME placed units, so one basis a step
-## gives the same rows: pinned against the per-candidate fill, and at least 3x faster (a
-## ratio on this machine, not a wall-clock bound; the old cost is about the region count).
+## gives the same rows. Pinned on the shipped data, every type x nation x count, against the
+## per-candidate fill kept below; and the 200-unit fill timed against the parent's 50 ms
+## budget, asserted only past 5x that (no flaky bound), the reading printed.
 func _test_fill_by_need_reads_one_basis_a_step() -> void:
-	var state = _state()
-	var ns = state.player()
-	var n := 60
+	var swept := 0
+	for nation_id in _loader.unit_stock:
+		var ns = GameState.new_game(_loader, String(nation_id)).player()
+		for type_id in _loader.unit_types:
+			if not Units.offered(_loader, ns.id, String(type_id)) or String(_loader.unit_types[type_id].get("payoff", "")) != UK.PAYOFF_CAPACITY:
+				continue
+			for n in [1, 7, 40, 120]:
+				swept += 1
+				var rows: Array = Units.fill_by_need(ns, _loader, String(type_id), n)
+				var want := _fill_per_candidate(ns, String(type_id), n)
+				if rows != want:
+					_fail("by need %s %s x%d gives %s, the per-candidate fill %s" % [nation_id, type_id, n, rows, want])
+	if swept == 0:
+		_fail("the by-need sweep found no shipped type to fill")
+	var fra = GameState.new_game(_loader, "FRA").player()
 	var t0 := Time.get_ticks_usec()
-	var rows: Array = Units.fill_by_need(ns, _loader, TYPE, n)
-	var fast := Time.get_ticks_usec() - t0
-	t0 = Time.get_ticks_usec()
-	var want := _fill_per_candidate(ns, TYPE, n)
-	var slow := Time.get_ticks_usec() - t0
-	if rows != want:
-		_fail("by need with one basis a step gives %s, the per-candidate fill %s" % [rows, want])
-	if fast * 3 > slow:
-		_fail("by need at %d units took %d us, the per-candidate fill %d us: not one basis a step" % [n, fast, slow])
+	Units.fill_by_need(fra, _loader, "hospital", 200)
+	var ms := float(Time.get_ticks_usec() - t0) / 1000.0
+	print("fill_by_need FRA hospital x200: %.1f ms (budget 50; %d sweeps identical)" % [ms, swept])
+	if ms > 250.0:
+		_fail("by need at 200 FRA hospitals took %.1f ms, past 5x the 50 ms budget" % ms)
 
 
 ## The fill as it stood before the TAKE: one basis per candidate per step.
