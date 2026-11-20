@@ -37,8 +37,9 @@ signal closed
 ## law_panel.proposed emit, so a subsidy earns a U4 decision delta on the terms a
 ## law and a diplomatic action already do.
 signal acted(before, label)
+## A sector card's Open: the sector tab's window id (main opens it).
+signal tab_requested(window_id: String)
 
-const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Industry = preload("res://src/sim/industry.gd")
@@ -50,6 +51,7 @@ const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const IndustryCard = preload("res://src/ui/industry_card.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
 const FirmCommands = preload("res://src/ui/firm_commands.gd")
+const SectorsOverview = preload("res://src/ui/sectors_overview.gd")
 
 var _state
 var _loader
@@ -190,8 +192,6 @@ func _refresh() -> void:
 		return
 	_primary = null
 
-	_title.text = tr("Every sector")
-
 	for child in _body.get_children():
 		child.queue_free()
 
@@ -214,8 +214,11 @@ func _refresh() -> void:
 	# last, folded.
 	_progress = IndustryProgress.build(_body, _state, _loader, ns, _on_stop, _on_answer, _on_closure)
 	_build_autonomy_sections(ns)
-	for sector in EK.SECTOR_TREND.keys():
-		IndustryCard.build(self, _body, ns, String(sector))
+	# The rework pass's C: the economy's shape, the verbs one Open away on each sector's tab.
+	_title.text = SectorsOverview.build(_body, _state, _loader, ns, func(id: String) -> void: tab_requested.emit(id))
+	# A Needs you row's route (sectors_shell.open_firm) still lands on its firm's verbs here.
+	if _open_sector != "":
+		IndustryCard.build(self, _body, ns, _open_sector)
 	_build_ledger(ns)
 	_restore_focus()
 

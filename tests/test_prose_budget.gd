@@ -137,7 +137,10 @@ const TOTAL_PENDING := {
 ## The construction register (V5.3 c' slice 1, the author's "A pour commander"), a new Finances tab, a
 ## stated rise 2968 -> 3087 (+119, all on the register: the type's lede and summary, the stock line, the
 ## strip's money, who and when sentences, the charts' titles).
-const TOTAL_SUM_CEILING := 3087
+## The Sectors overview C (the author's "forme de l'economie"), a stated rise 3087 -> 3133 (+46, all on
+## the overview): the lead naming the largest and the slowest sector, the two chart titles, a verdict
+## chip per sector, and per card its two figure captions, "Biggest employers" and "Open <sector>".
+const TOTAL_SUM_CEILING := 3133
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

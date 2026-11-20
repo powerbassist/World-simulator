@@ -1,0 +1,1 @@
+Changed: The Sectors overview shows the shape of the economy: each sector's share of output, its growth against the economy, and a card per sector with its output, jobs, an 18-month curve, its biggest employers and a way into its tab.

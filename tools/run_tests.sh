@@ -13,6 +13,7 @@ tests=(
   tests/test_finance_sectors.gd
   tests/test_finance_of_which.gd
   tests/test_industry_tab.gd
+  tests/test_sectors_overview.gd
   tests/test_sectors_panel.gd
   tests/test_sectors_retro.gd
   tests/test_firm_sheet.gd

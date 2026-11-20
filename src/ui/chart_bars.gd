@@ -15,11 +15,15 @@ const ROUND := 4.0
 
 var _rows: Array = []
 var _unit := ""
+## opts.highlight: the one row drawn in the accent, the others in the neutral bar tone
+## (the Sectors overview's waiting sector); absent, every bar is the series hue.
+var _highlight := -2
 
 
 func setup(rows: Array, opts := {}) -> void:
 	_rows = rows
 	_unit = String(opts.get("unit", ""))
+	_highlight = int(opts.get("highlight", -2))
 	custom_minimum_size = Vector2(0.0, ROW * UiTheme.text_scale() * rows.size())
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	queue_redraw()
@@ -61,7 +65,7 @@ func _draw() -> void:
 		draw_string(font, Vector2(0.0, mid), String(_rows[i]["label"]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)  # i18n: row-ok chart data, the caller passes shown text
 		if r.size.x > 0.0:
 			var box := StyleBoxFlat.new()
-			box.bg_color = ChartStyle.SERIES[0]
+			box.bg_color = ChartStyle.SERIES[0] if _highlight == -2 else (UiTheme.accent() if i == _highlight else UiTheme.NEUTRAL_BAR)
 			box.corner_radius_top_right = int(ROUND)
 			box.corner_radius_bottom_right = int(ROUND)
 			draw_style_box(box, r)
