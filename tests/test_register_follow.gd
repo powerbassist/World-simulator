@@ -495,6 +495,11 @@ func _other_region() -> String:
 ## next month end.
 func _check_answered_ask_settles() -> void:
 	var p: Dictionary = _main._state.player().unit_programmes[0]
+	# The card must be there first, or the check below proves nothing (QA on 4183559b).
+	RegisterWarning.arrive(_main, {"units": [{"kind": "overrun_landed", "id": String(p["id"]), "eur_m": 1.0}]})
+	if _cards_on(RegisterWarning.OVERRUN + String(p["id"])).is_empty():
+		_fail("premise: no overrun card to settle")
+		return
 	p["answer"] = UK.OVERRUN_PAY
 	RegisterWarning.arrive(_main, {"units": []})
 	p.erase("answer")
