@@ -72,7 +72,7 @@ func _draw() -> void:
 		var r: Dictionary = _rows[i]
 		var top := rh * (i + 1)
 		var mid := top + rh * 0.5
-		draw_string(font, Vector2(0.0, mid + fs * 0.35), String(r["label"]), HORIZONTAL_ALIGNMENT_LEFT, LABEL_W - 8.0, fs, UiTheme.TEXT)
+		draw_string(font, Vector2(0.0, mid + fs * 0.35), String(r["label"]), HORIZONTAL_ALIGNMENT_LEFT, LABEL_W - 8.0, fs, UiTheme.TEXT)  # i18n: row-ok the caller translated it
 		var a := x_of(int(r["start"]))
 		var b := x_of(int(r["opens"]))
 		draw_rect(Rect2(a, mid - BAR_H * 0.5, maxf(b - a, 2.0), BAR_H), UiTheme.NEUTRAL_BAR)
@@ -91,4 +91,4 @@ func _draw() -> void:
 
 func _get_tooltip(at: Vector2) -> String:
 	var i := int(at.y / _row_h()) - 1
-	return String(_rows[i]["label"]) if i >= 0 and i < _rows.size() else ""
+	return String(_rows[i]["label"]) if i >= 0 and i < _rows.size() else ""  # i18n: row-ok the caller translated it

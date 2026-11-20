@@ -142,6 +142,14 @@ func _warn() -> void:
 
 
 func _check_card_arrived() -> void:
+	# Out of government the warning is not the player's: no second card.
+	var ns = _main._state.player()
+	var before: int = _main._hud.inbox.find_children("*", "Button", true, false).size()
+	ns.in_government = false
+	RegisterWarning.arrive(_main, {"units": [_note]})
+	ns.in_government = true
+	if _main._hud.inbox.find_children("*", "Button", true, false).size() != before:
+		_fail("a warning card arrived out of government")
 	if _go() == null:
 		_fail("the region warning reached no inbox card")
 		return

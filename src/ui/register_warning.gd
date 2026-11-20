@@ -22,6 +22,10 @@ const CARDS := "register_warning_cards"
 ## The month's end: one card a warning note in the month's report.
 static func arrive(main, report: Dictionary) -> void:
 	var inbox = main._hud.inbox
+	# Out of government the register's verbs are not the player's to take (RegionArrival's rule).
+	var ns = main._state.player()
+	if ns == null or not bool(ns.in_government):
+		return
 	for note in report.get("units", []):
 		if String(note.get("kind", "")) != UnitWarnings.KIND:
 			continue

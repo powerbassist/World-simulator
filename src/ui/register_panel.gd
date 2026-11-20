@@ -172,10 +172,14 @@ func rows() -> Array:
 
 
 func _offered() -> Array:
+	return offered_types(_loader, _state.player().id)
+
+
+## The catalogue's types the nation can build (the Programmes tab reads the same rule).
+static func offered_types(loader, nation_id: String) -> Array:
 	var out: Array = []
-	var ns = _state.player()
-	for row in Units.catalogue(_loader):
-		if String(row.get("payoff", "")) == UK.PAYOFF_CAPACITY and Units.offered(_loader, ns.id, String(row["id"])):
+	for row in Units.catalogue(loader):
+		if String(row.get("payoff", "")) == UK.PAYOFF_CAPACITY and Units.offered(loader, nation_id, String(row["id"])):
 			out.append(String(row["id"]))
 	return out
 
@@ -375,7 +379,7 @@ func _composer(parent: Control, ns, quote: Dictionary) -> void:
 	press.text = tr("Put it in the finance bill")
 	press.disabled = why != ""
 	press.set_meta("table", true)
-	press.pressed.connect(table_programme)
+	press.pressed.connect(func() -> void: table_programme())
 	PanelKit.buttons(col).add_child(press)
 	var said := why if why != "" else _refusal
 	var refusal := PanelKit.plain_line(col, said, PanelKit.Tone.PLAIN)
@@ -384,8 +388,8 @@ func _composer(parent: Control, ns, quote: Dictionary) -> void:
 	refusal.set_meta("refusal", true)
 
 
-## The press: the rows as a programme into the finance bill, or the refusal said.
-func table_programme() -> void:
+## The press: the rows as a programme into the finance bill, or the refusal said. True when tabled.
+func table_programme() -> bool:
 	var answer: Dictionary = FinanceBill.table(_state, _loader, {FinanceRows.UNITS: [{"type": _type, "op": UK.OP_BUILD, "rows": rows()}]})
 	_refusal = "" if bool(answer.get("tabled", false)) else _reason(answer)
 	_dirty = true
@@ -395,6 +399,7 @@ func table_programme() -> void:
 		windows = windows.get_parent()
 	if windows != null:
 		windows.mark_all_dirty()
+	return _refusal == ""
 
 
 func _sum() -> int:

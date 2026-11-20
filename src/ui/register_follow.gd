@@ -24,6 +24,7 @@ const UnitPrice = preload("res://src/sim/unit_price.gd")
 const UnitOverrun = preload("res://src/sim/unit_overrun.gd")
 const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
 const RegisterLanes = preload("res://src/ui/register_lanes.gd")
+const RegisterPanel = preload("res://src/ui/register_panel.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 ## The register's own slack: the sheet fills the workspace, never with the map under it.
 const FILL_SLACK := 64.0
@@ -66,12 +67,7 @@ func mark_dirty() -> void:
 ## Offered where the register is: a stock file names a type the nation can build (a rule
 ## over data, never a nation id).
 func is_offered() -> bool:
-	if _state == null or _state.player() == null:
-		return false
-	for row in Units.catalogue(_loader):
-		if String(row.get("payoff", "")) == UK.PAYOFF_CAPACITY and Units.offered(_loader, _state.player().id, String(row["id"])):
-			return true
-	return false
+	return _state != null and _state.player() != null and not RegisterPanel.offered_types(_loader, _state.player().id).is_empty()
 
 
 func _process(_delta: float) -> void:
