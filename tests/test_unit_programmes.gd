@@ -52,6 +52,7 @@ func _init() -> void:
 	_test_the_gap_pass_leads()
 	_test_pass2_takes()
 	_test_a_save_mid_build()
+	_test_the_vote_moves_the_blocs()
 	_finish()
 
 
@@ -453,6 +454,54 @@ func _test_a_save_mid_build() -> void:
 	UnitBuild.tick_month(state, _loader)
 	if back.unit_running_pct_gdp.is_empty():
 		_fail("the saved build's running cost did not start")
+
+
+## Slice C, the parent's ruling (call 2): at the vote each row moves the catalogue's blocs
+## by its offset x the region's share of the people x min(1, units / band_units), a build
+## up and a closure down (capacity closed over band_units x the unit's capacity), once,
+## through the game's one applier. UnitBuild.blocs() is the same figure for the screen.
+func _test_the_vote_moves_the_blocs() -> void:
+	var t: Dictionary = _loader.unit_types[TYPE]
+	var band := int(t["band_units"])
+	var offsets: Dictionary = t["bloc_offset_per_pop_share"]
+	var cases := [
+		["a band", [{"region": "FRB", "units": band}], 1.0, UK.OP_BUILD],
+		["half a band", [{"region": "FRB", "units": band / 2}], 0.5, UK.OP_BUILD],
+		["twice a band, capped", [{"region": "FRB", "units": band * 2}], 1.0, UK.OP_BUILD],
+		["a closure of a band's capacity", [{"region": "FRB",
+			"capacity": band * Units.unit_capacity(_loader, "FRA", TYPE)}], -1.0, UK.OP_DEMOLISH],
+	]
+	for c in cases:
+		var state = _state()
+		var ns = state.player()
+		var before: Dictionary = ns.bloc_offset.duplicate()
+		var share := float(ns.region_pop_share["FRB"])
+		var row := {"type": TYPE, "op": c[3], "rows": c[1]}
+		var shown := UnitBuild.blocs(ns, _loader, row)
+		FinanceRows.apply(state, _loader, ns, FinanceBill.drafted(state, _loader, {FinanceRows.UNITS: [row]}))
+		if ns.unit_programmes.size() != 1:
+			_fail("%s: the row did not open (%s)" % [c[0], UnitBuild.refusal(state, ns, _loader, [row])])
+			continue
+		for bloc in offsets:
+			var want := float(offsets[bloc]) * share * float(c[2])
+			var moved := float(ns.bloc_offset.get(bloc, 0.0)) - float(before.get(bloc, 0.0))
+			if absf(moved - want) > 1e-12:
+				_fail("%s: %s moved %.6f, not %.6f" % [c[0], bloc, moved, want])
+			if absf(float(shown.get(bloc, 0.0)) - want) > 1e-12:
+				_fail("%s: the screen's read of %s is %.6f, not %.6f" % [c[0], bloc, float(shown.get(bloc, 0.0)), want])
+		for bloc in ns.bloc_offset:
+			if not offsets.has(bloc) and float(ns.bloc_offset[bloc]) != float(before.get(bloc, 0.0)):
+				_fail("%s: %s moved, the catalogue names it not" % [c[0], bloc])
+	# Two rows add, each at its own region's share.
+	var state = _state()
+	var ns = state.player()
+	var before: Dictionary = ns.bloc_offset.duplicate()
+	FinanceRows.apply(state, _loader, ns, FinanceBill.drafted(state, _loader, {FinanceRows.UNITS: [_build(
+		[{"region": "FRB", "units": band}, {"region": "FRC", "units": band}])]}))
+	for bloc in offsets:
+		var want := float(offsets[bloc]) * (float(ns.region_pop_share["FRB"]) + float(ns.region_pop_share["FRC"]))
+		if absf(float(ns.bloc_offset.get(bloc, 0.0)) - float(before.get(bloc, 0.0)) - want) > 1e-12:
+			_fail("two rows: %s moved %.6f, not %.6f" % [bloc, float(ns.bloc_offset.get(bloc, 0.0)) - float(before.get(bloc, 0.0)), want])
 
 
 func _fail(message: String) -> void:

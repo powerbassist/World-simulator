@@ -140,6 +140,38 @@ static func preview(ns, loader, type_id: String, placed: Dictionary) -> Dictiona
 	return out
 
 
+## The regional warning's band (section 9, the parent's ruling on slice C): the nation's
+## UNIT_REGION_WORST regions furthest behind its figure for the type, each at least
+## UNIT_REGION_BAND behind, as {region: how far behind, a share of the nation's figure},
+## worst first, ties to the regions' file order. A rank, not one threshold: the real
+## spread differs too much by nation for one number to warn two to four regions in each.
+## Read live: a build that closes a gap takes its region out at once.
+static func band(ns, loader, type_id: String) -> Dictionary:
+	var out := {}
+	if not loader.unit_types.has(type_id):
+		return out
+	var national := national_figure(ns, loader, type_id)
+	if national == 0.0:
+		return out
+	var sign := 1.0 if String(loader.unit_types[type_id]["figure"]["better"]) == "lower" else -1.0
+	var shown := preview(ns, loader, type_id, {})
+	var behind: Array = []
+	var open := _buildable(ns, loader, type_id)
+	for i in open.size():
+		var gap := sign * (float(shown[open[i]]) / national - 1.0)
+		if gap >= UK.UNIT_REGION_BAND:
+			behind.append([gap, i, open[i]])
+	behind.sort_custom(func(a, b): return a[0] > b[0] or (a[0] == b[0] and a[1] < b[1]))
+	for row in behind.slice(0, UK.UNIT_REGION_WORST):
+		out[row[2]] = row[0]
+	return out
+
+
+## The one read the screen and the warning share.
+static func in_band(ns, loader, type_id: String, region_id: String) -> bool:
+	return band(ns, loader, type_id).has(region_id)
+
+
 ## A region's shown figure on a basis: the one formula preview and by need both read.
 static func _figure(national: float, b: Dictionary, id) -> float:
 	return national * float(b["term"][id]) * float(b["level"][id]) * float(b["factor"][id]) / float(b["mean_factor"])

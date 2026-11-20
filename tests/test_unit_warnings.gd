@@ -36,6 +36,10 @@ func _init() -> void:
 	_test_one_a_month_and_none_again_within_a_year()
 	_test_a_region_ahead_never_warns()
 	_test_nothing_in_band_nothing_arrives()
+	_test_the_band_is_the_worst_few()
+	_test_the_fourth_worst_waits()
+	_test_the_band_needs_the_gap()
+	_test_warned_again_after_exactly_a_year()
 	_test_the_warning_ends_the_quiet_month()
 	_test_a_build_that_closes_the_gap_leaves_the_band()
 	_test_the_stamps_survive_a_save()
@@ -103,7 +107,7 @@ func _test_the_worst_region_arrives_first() -> void:
 	if absf(float(w["figure"]) - Units.shown_figure(ns, _loader, type_id, String(w["region"]))) > 1e-9 \
 			or absf(float(w["national"]) - Units.national_figure(ns, _loader, type_id)) > 1e-9:
 		_fail("the warning's figures are not the screen's: %s" % [w])
-	if not UnitWarnings.in_band(ns, _loader, type_id, String(w["region"])):
+	if not Units.in_band(ns, _loader, type_id, String(w["region"])):
 		_fail("the warned region is not in the band")
 
 
@@ -152,6 +156,87 @@ func _test_nothing_in_band_nothing_arrives() -> void:
 		_fail("a month with no region in band brings %s" % [got])
 
 
+## The rank rule (the parent's ruling, call 1): a region is in band when it is among the
+## nation's UNIT_REGION_WORST worst for the type AND at least UNIT_REGION_BAND behind. The
+## fixture holds six or seven tied bad regions a type: ties go to the regions' file order.
+func _test_the_band_is_the_worst_few() -> void:
+	var state = _state()
+	var ns = state.player()
+	for type_id in _loader.unit_types:
+		var bad: Array = []
+		var inside: Array = []
+		for r in _loader.regions[ns.id]:
+			if _behind(ns, type_id, r.id) >= UK.UNIT_REGION_BAND:
+				bad.append(r.id)
+			if Units.in_band(ns, _loader, type_id, r.id):
+				inside.append(r.id)
+		if bad.size() <= UK.UNIT_REGION_WORST:
+			_fail("the fixture has %d regions behind for %s: the rank is not tested" % [bad.size(), type_id])
+		if inside != bad.slice(0, UK.UNIT_REGION_WORST):
+			_fail("%s in band: %s, not the first %d of %s" % [type_id, inside, UK.UNIT_REGION_WORST, bad])
+	if Units.in_band(ns, _loader, "no_such_type", "FR1"):
+		_fail("an unknown type is in band")
+
+
+## Built past the nation everywhere but one bad region: the band holds that one alone, not
+## the next-worst regions that stand ahead of the nation (the UNIT_REGION_BAND floor).
+func _test_the_band_needs_the_gap() -> void:
+	var state = _state()
+	var ns = state.player()
+	var type_id := "fixture_school"
+	var bad: Array = []
+	for r in _loader.regions[ns.id]:
+		if _behind(ns, type_id, r.id) >= UK.UNIT_REGION_BAND:
+			bad.append(r.id)
+	var rows: Array = []
+	for id in bad.slice(1):
+		rows.append({"region": id, "units": 3})
+	ns.unit_programmes.append({"id": "%s:1" % type_id, "type": type_id, "op": UK.OP_BUILD,
+		"state": UK.STATE_DONE, "rows": rows})
+	var band := Units.band(ns, _loader, type_id)
+	if band.keys() != [bad[0]]:
+		_fail("with one region left behind the band is %s, not [%s]" % [band, bad[0]])
+
+
+## The few in band warned this year, the month brings nothing, though a fourth region
+## stands as far behind: it is not among the worst few.
+func _test_the_fourth_worst_waits() -> void:
+	var state = _state()
+	var ns = state.player()
+	for type_id in _loader.unit_types:
+		for r in _loader.regions[ns.id]:
+			if Units.in_band(ns, _loader, type_id, r.id):
+				ns.unit_warned["%s|%s" % [type_id, r.id]] = _now(state)
+	var got := _tick(state)
+	if not got.is_empty():
+		_fail("a region outside the worst few is warned: %s" % [got])
+
+
+## Re-armed at exactly UNIT_WARN_REARM_MONTHS, not a month before.
+func _test_warned_again_after_exactly_a_year() -> void:
+	var state = _state()
+	var ns = state.player()
+	var first := _tick(state)
+	if first.is_empty():
+		_fail("no first warning")
+		return
+	var key := "%s|%s" % [first[0]["type"], first[0]["region"]]
+	var at := _now(state)
+	# Every other region in band was warned just now: only the first can come back.
+	for type_id in _loader.unit_types:
+		for r in _loader.regions[ns.id]:
+			var other := "%s|%s" % [type_id, r.id]
+			if other != key:
+				ns.unit_warned[other] = at + UK.UNIT_WARN_REARM_MONTHS
+	while _now(state) < at + UK.UNIT_WARN_REARM_MONTHS - 2:
+		_tick(state)
+	if not _tick(state).is_empty():
+		_fail("warned again %d months after" % (_now(state) - at))
+	var again := _tick(state)
+	if again.size() != 1 or "%s|%s" % [again[0]["type"], again[0]["region"]] != key:
+		_fail("not warned again at exactly %d months: %s" % [UK.UNIT_WARN_REARM_MONTHS, again])
+
+
 func _test_the_warning_ends_the_quiet_month() -> void:
 	var state = _state()
 	var ns = state.player()
@@ -182,7 +267,7 @@ func _test_a_build_that_closes_the_gap_leaves_the_band() -> void:
 		"state": UK.STATE_DONE, "rows": [{"region": region, "units": 3}]})
 	if _behind(ns, type_id, region) > 0.0:
 		_fail("the fixture build does not close the gap (%.4f)" % _behind(ns, type_id, region))
-	if UnitWarnings.in_band(ns, _loader, type_id, region):
+	if Units.in_band(ns, _loader, type_id, region):
 		_fail("a region built past the nation is still in the band")
 
 
