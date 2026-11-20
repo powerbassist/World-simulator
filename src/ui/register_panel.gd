@@ -130,6 +130,7 @@ func open_for(region_id: String) -> void:
 				break
 	_region = region_id
 	_placed = {region_id: _count}
+	_warning = {}  # a door that is not the warning's puts its bar away (pass 2 on #428)
 	_dirty = true
 
 
@@ -227,7 +228,7 @@ func _refresh() -> void:
 			shown[String(region.id)] = float(now[String(region.id)])
 	var nation := Units.national_figure(ns, _loader, _type)
 	_lede(row, shown, nation)
-	if String(_warning.get("type", "")) == _type:
+	if String(_warning.get("type", "")) == _type and String(_warning.get("region", "")) == _region:
 		RegisterDoor.bar(self, _body, _state, _loader, _warning)
 	_types()
 	var middle := HBoxContainer.new()

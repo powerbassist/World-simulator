@@ -55,7 +55,7 @@ static func panel(main) -> Control:
 	register.setup(main._state, main._loader)
 	# Its follow-up (the author's "C en suivi"): the programmes once voted, beside it.
 	var follow = RegisterFollow.new()
-	main._windows.register("programmes", Strings.t("Programmes"), follow, KEY_NONE, "res://assets/icons/material/construction.svg")
+	main._windows.register("programmes", Strings.t("Building"), follow, KEY_NONE, "res://assets/icons/material/construction.svg")
 	follow.setup(main._state, main._loader)
 	tab.open_register = func(region_id: String) -> void:
 		register.open_for(region_id)

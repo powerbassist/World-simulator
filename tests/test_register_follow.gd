@@ -53,6 +53,9 @@ func _process(_delta: float) -> bool:
 				_fail("no window registered as 'register' and 'programmes' (%s, %s)" % [_register, _follow])
 				_finish()
 				return false
+			# Pass 2 T10: the tab's name is not the finance bill's sector "programmes".
+			if _main._windows.title("programmes") != _follow.tr("Building"):
+				_fail("the follow-up tab is called '%s', not Building" % _main._windows.title("programmes"))
 			_main._windows.open("programmes")
 		4:
 			if not _text_under(_follow).contains(_follow.tr("No programme is building.")):
@@ -61,6 +64,8 @@ func _process(_delta: float) -> bool:
 			_warn()
 		5:
 			_check_card_arrived()
+			_check_one_card_a_subject()
+			_check_refused_open_keeps_the_card()
 			_press(_go())
 		7:
 			_check_opened_from_the_warning()
@@ -70,6 +75,7 @@ func _process(_delta: float) -> bool:
 			_press(_with_meta("warning_build", _register))
 		9:
 			_check_built_from_the_warning()
+			_check_restored_after_a_load()
 			# Leave it, on a sheet opened from the warning again with the bill empty.
 			_main._state.player().tabled_bill = {}
 			_register.open_from_warning(String(_note["type"]), String(_note["region"]), 1)
@@ -78,12 +84,18 @@ func _process(_delta: float) -> bool:
 		13:
 			if _with_meta("warning_bar", _register) != null:
 				_fail("Leave it did not put the warning away")
+			# Pass 2 T1: a door that is not the warning's puts the warning away.
+			_register.open_from_warning(String(_note["type"]), String(_note["region"]), 1)
+			_register.open_for(_other_region())
+			if not _register._warning.is_empty():
+				_fail("the warning survives a door to another region")
 			# C: a programme under way, then its overrun card.
 			_open_programme()
 			_main._windows.open("programmes")
 		15:
 			_check_follow_rows()
 			_check_overrun_card()
+			_check_overrun_arrivals()
 			_press(_with_meta("overrun_pay", _follow))
 		17:
 			var p: Dictionary = _main._state.player().unit_programmes[0]
@@ -91,8 +103,16 @@ func _process(_delta: float) -> bool:
 				_fail("Pay did not answer the card: %s" % [p.get("answer", "")])
 			if _with_meta("overrun_card", _follow) != null:
 				_fail("the overrun card stays after its answer")
-			_check_no_union_line()
+			# Pass 2 T6: a reservation gone (a Delay past its year, the Union left) says the share is lost.
+			if p.has("union"):
+				p["union"]["reserved_eur_m"] = 0.0
+			_follow.mark_dirty()
 		19:
+			var q: Dictionary = _main._state.player().unit_programmes[0]
+			if q.has("union") and (_with_meta("union_lost", _follow) == null or _text_under(_follow).contains(" 0.00 bn for it")):
+				_fail("a lost Union share still reads as held: '%s'" % _text_under(_follow))
+			_check_no_union_line()
+		21:
 			if _with_meta("union", _register) != null:
 				_fail("a nation in no organisation still shows a Union line")
 			_finish()
@@ -123,6 +143,10 @@ func _check_envelope() -> void:
 	var left := UnitEnvelope.left_eur_m(_main._loader, ns, UnitEnvelope.year_of(UnitPrice.now(_main._state)))
 	if section == null or not _text_under(section).contains(Num.f(left / 1000.0, 2)):
 		_fail("the envelope does not say the %s bn left" % Num.f(left / 1000.0, 2))
+		return
+	var period: Dictionary = UnitEnvelope.period_of(_main._loader, org, UnitEnvelope.year_of(UnitPrice.now(_main._state)))
+	if not _text_under(section).contains("until %d" % int(period["last_year"])):
+		_fail("the envelope does not name its last vote year %d: '%s'" % [int(period["last_year"]), _text_under(section)])
 
 
 ## The month's own arrival: the sim's warning note, through the month's end.
@@ -196,7 +220,7 @@ func _check_band_marks() -> void:
 	var chip = _with_meta("band_chip", _register)
 	if band.is_empty() != (chip == null):
 		_fail("the band chip is %s while the band holds %d regions" % ["shown" if chip != null else "missing", band.size()])
-	elif chip != null and not _text_under(chip).contains(Num.f(100.0 * UK.UNIT_REGION_BAND, 0)):
+	elif chip != null and not (_text_under(chip).contains(Num.f(100.0 * UK.UNIT_REGION_BAND, 0)) and _text_under(chip).contains(str(UK.UNIT_REGION_WORST))):
 		_fail("the band chip does not say the threshold: '%s'" % _text_under(chip))
 
 
@@ -239,6 +263,9 @@ func _open_programme() -> void:
 	# Its overrun card, posted now (UnitOverrun.tick's shape).
 	p["ask"] = {"kind": "overrun", "posted": UnitPrice.now(state), "due": UnitPrice.now(state) + UK.UNIT_OVERRUN_WINDOW_MONTHS,
 		"default": UK.OVERRUN_PAY, "eur_m": 0.1 * float(p["contract_eur_m"])}
+	# Pass 2 T2: five months built, then a Delay of fifteen (the total is no longer build_months).
+	p["paid_month"] = int(p["voted"]) + 4
+	p["months_left"] = int(p["build_months"]) + 15 - 5
 	# Its Union reservation (UnitEnvelope.reserve's shape), held whatever the start's envelope.
 	var org := UnitEnvelope.org_of(_main._loader, ns)
 	if org != "":
@@ -255,13 +282,14 @@ func _check_follow_rows() -> void:
 		_fail("C shows %d programmes, the register holds %d" % [rows.size(), ns.unit_programmes.size()])
 		return
 	var p: Dictionary = ns.unit_programmes[0]
+	var built_text := "5 of %d months built" % (5 + int(p["months_left"]))
+	if not _text_under(_follow).contains(built_text):
+		_fail("after a Delay the row does not say '%s': '%s'" % [built_text, _text_under(_follow)])
 	var lanes = _with_meta("lanes", _follow)
 	if lanes == null or lanes.data().size() != 1 or int(lanes.data()[0]["opens"]) != UnitPrice.opens_at(p) \
 			or int(lanes.data()[0]["start"]) != int(p["voted"]) or not bool(lanes.data()[0]["ask"]):
 		_fail("the lanes do not draw the register's months and ask: %s" % [null if lanes == null else lanes.data()])
 	var text := _text_under(rows[0])
-	if not text.contains(str(int(p["build_months"]))) and not text.contains(str(int(p["months_left"]))):
-		_fail("the programme row does not say its months: '%s'" % text)
 	if text.contains(".0 "):
 		_fail("a count printed as a float: '%s'" % text)
 	if p.has("union") and not text.contains(Num.f(float(p["union"]["reserved_eur_m"]) / 1000.0, 2)):
@@ -277,6 +305,12 @@ func _check_overrun_card() -> void:
 	for a in asks[0]["ask"]["answers"]:
 		if _with_meta("overrun_" + String(a["id"]), _follow) == null:
 			_fail("the card does not offer the sim's answer %s" % a["id"])
+		var squares = _with_meta("units_" + String(a["id"]), _follow)
+		if squares == null or squares.kept != int(a["units"]):
+			_fail("answer %s: the squares do not keep the sim's %d units" % [a["id"], int(a["units"])])
+	var bill = _with_meta("bill_if_paid", _follow)
+	if bill == null or bill.years().is_empty():
+		_fail("no year's bill under the overrun card")
 
 
 # --- helpers ---------------------------------------------------------------
@@ -363,3 +397,62 @@ func _finish() -> void:
 		for f in _failures:
 			push_error("FAIL " + f)
 		quit(1)
+
+
+## Pass 2 T11: a second arrival beside an unanswered card is dropped.
+func _check_one_card_a_subject() -> void:
+	RegisterWarning.arrive(_main, {"units": [_note]})
+	if _gos().size() != 1:
+		_fail("a second card beside the unanswered one: %d" % _gos().size())
+
+
+## Pass 2 T3: an Open that cannot show its tab (a scene holds the screen) keeps the card.
+func _check_refused_open_keeps_the_card() -> void:
+	var scene = _main._windows.frame("audience")
+	if scene == null:
+		_fail("premise: no audience scene to hold the screen")
+		return
+	scene.visible = true
+	_press(_go())
+	scene.visible = false
+	if _go() == null:
+		_fail("the card went with an Open the screen refused")
+
+
+## Pass 2 T4: the inbox is not saved; a warning still waiting comes back on a fresh main.
+func _check_restored_after_a_load() -> void:
+	RegisterWarning.restore_after_load(_main)
+	if _go() == null:
+		_fail("an unanswered warning did not come back after a load")
+
+
+## Pass 2 T5: an overrun ask is a card, its default and the Union's lapse are notes.
+func _check_overrun_arrivals() -> void:
+	var p: Dictionary = _main._state.player().unit_programmes[0]
+	RegisterWarning.arrive(_main, {"units": [{"kind": "overrun_landed", "id": String(p["id"]), "eur_m": 1.0},
+		{"kind": "overrun_defaulted", "id": String(p["id"]), "eur_m": 80.0},
+		{"kind": "lapse_warning", "eur_m": 120.0, "year": 2027}]})
+	var card := false
+	for b in _main._hud.inbox.find_children("*", "Button", true, false):
+		if ActsOn.acts_on(b, RegisterWarning.OVERRUN + String(p["id"])) and not _gone(b):
+			card = true
+	if not card:
+		_fail("an overrun ask reached no inbox card")
+	var text := _text_under(_main._hud.inbox)
+	if not text.contains(Num.f(0.08, 2)) or not text.contains(Num.f(0.12, 2)):
+		_fail("the default and the lapse are not noted: '%s'" % text.left(300))
+
+
+func _gos() -> Array:
+	var out: Array = []
+	for b in _main._hud.inbox.find_children("*", "Button", true, false):
+		if ActsOn.acts_on(b, RegisterWarning.SUBJECT + String(_note.get("type", "")) + "|" + String(_note.get("region", ""))) and not _gone(b):
+			out.append(b)
+	return out
+
+
+func _other_region() -> String:
+	for r in _main._loader.regions.get(_main._state.player().id, []):
+		if String(r.id) != String(_note["region"]) and Units.start_capacity(_main._loader, _main._state.player().id, String(_note["type"]), r.id) > 0.0:
+			return String(r.id)
+	return ""

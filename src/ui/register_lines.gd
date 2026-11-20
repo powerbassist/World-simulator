@@ -34,7 +34,8 @@ static func band_range(band: Dictionary, shown: Dictionary) -> Vector2:
 static func band_chip(parent: Control, band: Dictionary) -> void:
 	if band.is_empty():
 		return
-	var chip := PanelKit.chip(parent, Strings.t("%s %% behind the nation or worse") % Num.f(100.0 * UK.UNIT_REGION_BAND, 0),
+	# The rule as it is: a rank (the few furthest behind), each past a share of the nation's figure.
+	var chip := PanelKit.chip(parent, Strings.t("The %d furthest behind, each %s %% or more") % [UK.UNIT_REGION_WORST, Num.f(100.0 * UK.UNIT_REGION_BAND, 0)],
 		UiTheme.CHIP_WARN, "warning")
 	chip.set_meta("band_chip", true)
 
@@ -75,7 +76,7 @@ static func union(parent: Control, state, ns, loader, programme: Dictionary, quo
 	var period := UnitEnvelope.period_of(loader, org, UnitEnvelope.year_of(now))
 	var text := ""
 	if reserved > 0.0:
-		text = Strings.t("Union: about %s bn back after the opening.") % Num.f(reserved / 1000.0, 2)
+		text = Strings.t("Union: about %s bn back once open.") % Num.f(reserved / 1000.0, 2)
 	elif period.is_empty():
 		text = Strings.t("No Union money this year.")
 	elif UnitEnvelope.year_of(UnitPrice.opens_at(draft)) > int(period["pays_until_year"]):

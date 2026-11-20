@@ -25,6 +25,8 @@ const UnitOverrun = preload("res://src/sim/unit_overrun.gd")
 const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
 const RegisterLanes = preload("res://src/ui/register_lanes.gd")
 const RegisterPanel = preload("res://src/ui/register_panel.gd")
+const RegisterMoney = preload("res://src/ui/register_money.gd")
+const RegisterUnits = preload("res://src/ui/register_units.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 ## The register's own slack: the sheet fills the workspace, never with the map under it.
 const FILL_SLACK := 64.0
@@ -93,7 +95,6 @@ func _refresh() -> void:
 	_body.add_child(lede)
 	if building.is_empty():
 		lede.text = tr("No programme is building.")
-		PanelKit.plain_line(_body, tr("Voted programmes show here."), PanelKit.Tone.DIM)
 	else:
 		lede.text = tr_n("%d programme building.", "%d programmes building.", building.size()) % building.size()
 		if not asks.is_empty():
@@ -133,17 +134,24 @@ func _programme(parent: Control, p: Dictionary) -> void:
 	box.set_meta("programme", String(p["id"]))
 	parent.add_child(box)
 	PanelKit.plain_line(box, _name(p), PanelKit.Tone.PLAIN)
-	var total := int(p["build_months"])
+	# Months actually built (the vote month pays): a Delay adds months, so the total is these
+	# plus what is left, never the voted build_months.
 	var left := int(p["months_left"])
+	var built := maxi(0, int(p.get("paid_month", int(p["voted"]) - 1)) - int(p["voted"]) + 1)
+	var total := built + left
 	var paid := float(p["paid_eur_m"]) / 1000.0
 	var to_pay := float(p["capital_month_eur_m"]) * left / 1000.0
 	var opens := UnitPrice.opens_at(p)
 	PanelKit.plain_line(box, tr("%d of %d months built. Paid %s bn, %s bn to pay; opens %s.") % [
-		total - left, total, Num.f(paid, 2), Num.f(to_pay, 2), _month(opens)], PanelKit.Tone.DIM)
+		built, total, Num.f(paid, 2), Num.f(to_pay, 2), _month(opens)], PanelKit.Tone.DIM)
 	var union: Dictionary = p.get("union", {})
 	if not union.is_empty():
-		PanelKit.plain_line(box, tr("The Union holds %s bn for it, paid after the opening if it opens by %d.") % [
-			Num.f(float(union["reserved_eur_m"]) / 1000.0, 2), int(union["pays_until"])], PanelKit.Tone.DIM)
+		# Nothing held (a Delay past its year, the nation out of the Union): the share is lost.
+		if float(union["reserved_eur_m"]) <= 0.0 or UnitEnvelope.year_of(opens) > int(union["pays_until"]):
+			PanelKit.plain_line(box, tr("The Union's share for it is lost."), PanelKit.Tone.DIM).set_meta("union_lost", true)
+		else:
+			PanelKit.plain_line(box, tr("The Union holds %s bn for it, paid after the opening if it opens by %d.") % [
+				Num.f(float(union["reserved_eur_m"]) / 1000.0, 2), int(union["pays_until"])], PanelKit.Tone.DIM)
 
 
 ## The Union's envelope of the period under way: what is left of it, as a meter.
@@ -159,8 +167,9 @@ func _envelope(ns) -> void:
 	var left := UnitEnvelope.left_eur_m(_loader, ns, year)
 	var section := PanelKit.section(_body, tr("The Union's envelope, %d-%d") % [int(period["first_year"]), int(period["last_year"])])
 	section.set_meta("envelope", true)
-	PanelKit.plain_line(section, tr("%s bn left until %d, of %s.") % [Num.f(left / 1000.0, 2), int(period["pays_until_year"]),
-		Num.f(whole / 1000.0, 2)], PanelKit.Tone.PLAIN)
+	# Reserved only by a vote in the period's years: its last vote year, not the year it pays until.
+	PanelKit.plain_line(section, tr("%s of %s bn left; votes until %d.") % [Num.f(left / 1000.0, 2), Num.f(whole / 1000.0, 2),
+		int(period["last_year"])], PanelKit.Tone.PLAIN)
 	PanelKit.meter(section, left, maxf(whole, left), maxf(whole, left))
 
 
@@ -194,6 +203,40 @@ func _overrun(copy: Dictionary) -> void:
 				windows.mark_all_dirty())
 		PanelKit.buttons(col).add_child(button)
 		PanelKit.plain_line(col, _answer_says(copy, a), PanelKit.Tone.DIM)
+		# The units each answer keeps, as squares (a Shrink outlines the ones it cuts).
+		var squares := RegisterUnits.new()
+		squares.set_meta("units_" + answer_id, true)
+		col.add_child(squares)
+		squares.setup(int(a["units"]), _units(copy))
+	_bill_if_paid(card, copy)
+
+
+## Picture C's "the year's bill, if you pay": the capital left with the overrun paid over the
+## months left (its share on top in the attention tone), then the running cost once open.
+func _bill_if_paid(card: Control, copy: Dictionary) -> void:
+	var pay := {}
+	for a in copy["ask"].get("answers", []):
+		if String(a["id"]) == UK.OVERRUN_PAY:
+			pay = a
+	if pay.is_empty():
+		return
+	var left := int(pay["months_left"])
+	var capital := float(pay["capital_month_eur_m"]) * left
+	var q: Dictionary = UnitPrice.quote(_state, _state.player(), _loader, {"type": copy["type"], "op": copy["op"], "rows": copy["rows"]})
+	PanelKit.heading(card, tr("The year's bill, if you pay, bn"))
+	var bill = RegisterMoney.new()
+	bill.set_meta("bill_if_paid", true)
+	card.add_child(bill)
+	bill.cash_of(UnitPrice.now(_state), left, capital / 1000.0, float(q.get("running_eur_m_year", 0.0)) / 1000.0,
+		[tr("Building"), tr("Running cost"), tr("The overrun, paid")])
+	bill.mark_overrun(float(copy["ask"]["eur_m"]) / maxf(capital, 1e-9))
+
+
+func _units(p: Dictionary) -> int:
+	var n := 0
+	for r in p.get("rows", []):
+		n += int(r.get("units", 0))
+	return n
 
 
 func _answer_label(id: String) -> String:
