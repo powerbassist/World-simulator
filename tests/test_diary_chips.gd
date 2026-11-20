@@ -14,6 +14,8 @@ extends SceneTree
 ##   - the Diary closed under a Go ends the booking, so the slowed clock is given back.
 
 const Audiences = preload("res://src/sim/audiences.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
+const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Click = preload("res://tests/click.gd")
 
@@ -53,6 +55,7 @@ func _process(_delta: float) -> bool:
 			_click_refused(false)
 		16:
 			_check_refused_clicked()
+			_check_taken_not_rebooked()
 		18:
 			_go()
 		28:
@@ -252,6 +255,22 @@ func _click_refused(down: bool) -> void:
 func _check_refused_clicked() -> void:
 	if _main._calendar_panel._grid._selected != 1:
 		_fail("a click on a refused chip did not pick its day (%d)" % _main._calendar_panel._grid._selected)
+
+
+## QA's TAKE T1 on #431: only a day the clock turned is rebooked; a day the diary holds is
+## refused, and the request stays waiting.
+func _check_taken_not_rebooked() -> void:
+	var free := _free(_other)
+	if free.is_empty():
+		_fail("premise: the second request has no free day")
+		return
+	var day: Dictionary = free[0]
+	var blocker := Calendar.make_entry(CalendarK.KIND_RESHUFFLE, int(day["year"]), int(day["month"]), int(day["day"]), "", "", "", "qa_t1", "")
+	Calendar.book(_main._state, blocker)
+	_main._calendar_panel._grid.booked.emit(_other, day)
+	if String(Audiences.request(_main._state.player(), _other).get("status", "")) != "pending":
+		_fail("a Book here on a day the diary holds booked another day (%s)" % Audiences.request(_main._state.player(), _other).get("status", ""))
+	Calendar.cancel(_main._state, Calendar.verb_key(blocker))
 
 
 func _go() -> void:

@@ -97,8 +97,8 @@ static func _no(code: String, words: String) -> Dictionary:
 	return {"code": code, "reason": words, "error": words}
 
 
-## Calendar's today: a stale day past this month's end reads as its last day.
+## Today. A stale day past the month's end (31 in a 30-day month) needs no clamp here: the walk
+## turns it into the next month's 1st, and refusal() refuses that impossible date as no_day
+## before reading it (QA's T2 on #431: the clamp was an equivalent mutant).
 static func _today(state) -> Dictionary:
-	var y := int(state.year)
-	var m := int(state.month)
-	return {"year": y, "month": m, "day": mini(int(state.day), Calendar.days_in_month(y, m))}
+	return {"year": int(state.year), "month": int(state.month), "day": int(state.day)}

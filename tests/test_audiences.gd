@@ -59,6 +59,7 @@ func _init() -> void:
 	_check_delegation_costs_a_share()
 	_check_booking_takes_any_free_day()
 	_check_the_window_crosses_a_year_on_a_stale_day()
+	_check_a_stale_day_and_december()
 	_check_a_free_day_is_a_day_that_books()
 	_check_a_request_waits_through_its_deadline_month()
 	_check_an_unplaceable_request_still_offers_the_rest()
@@ -470,6 +471,29 @@ func _check_booking_takes_any_free_day() -> void:
 
 ## GLM's gap pass (kept two of eight): a window across a year end, read on a stale day past the
 ## month's end (Calendar's rule: it reads as the month's last day, so tomorrow is 1 January).
+## QA's TAKEs T2 and T3 on #431: a stale 31 in a 30-day month reads as its last day, and a
+## window that runs through December offers December's days.
+func _check_a_stale_day_and_december() -> void:
+	var case = _game_with_request()
+	if case.is_empty():
+		return
+	var state = case["state"]
+	var ns = state.player()
+	var id := String(case["row"]["id"])
+	for row in ns.audience_requests:
+		if String(row["id"]) == id:
+			row["deadline_month"] = 2027 * 12 + 1
+	state.year = 2026
+	state.month = 11
+	state.day = 31  # November has 30: read as the 30th, so tomorrow is 1 December
+	var dates: Array[Dictionary] = Audiences.offered_dates(state, ns, id)
+	if dates.is_empty() or [int(dates[0]["year"]), int(dates[0]["month"]), int(dates[0]["day"])] != [2026, 12, 1]:
+		_fail("a stale 31 November read the first day as %s, not 1 DEC 2026" % [dates.slice(0, 1)])
+	var december := dates.filter(func(d): return int(d["month"]) == 12).size()
+	if december != 31 or dates.size() != 31 + 31:
+		_fail("the window through December offered %d December days of %d in all, not 31 of 62" % [december, dates.size()])
+
+
 func _check_the_window_crosses_a_year_on_a_stale_day() -> void:
 	var case = _game_with_request()
 	if case.is_empty():
