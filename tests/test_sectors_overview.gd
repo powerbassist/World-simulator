@@ -110,7 +110,7 @@ func _check_shape() -> void:
 		var waiting := int(counts.get(SectorNeeds.tab_of(String(s)), 0)) > 0
 		if (_node_with_meta("decision_chip", String(s)) != null) != waiting:
 			_fail("%s card's decision chip shown=%s, waiting=%s" % [s, not waiting, waiting])
-		if _node_with_meta("sector_curve", String(s)) == null:
+		if _main._state.history.size() >= 2 and _node_with_meta("sector_curve", String(s)) == null:
 			_fail("%s card has no output curve" % s)
 	if not _visible_buttons_with_meta("company_id").is_empty():
 		_fail("a firm's Act is on the overview without a route to it")

@@ -35,7 +35,7 @@ const EMPLOYERS := 4
 ## The chip glyph on a sector under the economy's pace and on a waiting card.
 const GLYPH := "warning"  # i18n: ok an icon file name
 ## The lead: the largest sector by share, then the one furthest under the nation's trend.
-const LEAD := "%s make %s %% of output; %s grows slowest against the economy."  # i18n: msgid
+const LEAD := "%s: %s %% of output. Slowest against the economy: %s."  # i18n: msgid
 const VERDICT_CHIPS := {
 	"behind": UiTheme.CHIP_BAD, "slower": UiTheme.CHIP_WARN, "pace": UiTheme.CHIP_GOOD, "ahead": UiTheme.CHIP_GOOD,
 }
@@ -134,6 +134,8 @@ static func _card(parent: Control, loader, ns, sector: String, head: Dictionary,
 	var curve := ChartKit.spark(box, values, ChartSeries.months(history))
 	curve.custom_minimum_size.y = CURVE_HEIGHT * UiTheme.text_scale()
 	curve.set_meta("sector_curve", sector)
+	# Under two months there is no line to draw: no band left empty (the figures above carry today).
+	curve.visible = values.size() >= 2
 
 	var firms: Array = Companies.firms_in_sector(loader, ns.id, sector)
 	firms.sort_custom(func(a, b) -> bool: return Companies.headcount(ns, a) > Companies.headcount(ns, b))
@@ -168,5 +170,5 @@ static func _lead(sectors: Array, heads: Dictionary, share_rows: Array) -> Strin
 ## A chip's words on one line: in a flow, a chip's wrapping label measures zero wide and
 ## stood one letter per line on the first frame.
 static func _unwrapped(chip: Control) -> void:
-	for label in chip.find_children("*", "Label", true, false):
+	for label in chip.find_children("*", "Label", true, false):  # i18n: ok a class name
 		(label as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
