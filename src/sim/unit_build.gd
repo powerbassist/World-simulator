@@ -25,6 +25,8 @@ const Units = preload("res://src/sim/units.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
 const UnitOverrun = preload("res://src/sim/unit_overrun.gd")
 const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
+# finance_rows.gd preloads this file too; GDScript 4 resolves the pair (static calls only).
+const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const C = preload("res://src/sim/economy_constants.gd")
 
@@ -50,10 +52,10 @@ static func refusal(state, ns, loader, rows: Array) -> String:
 		# Two equal rows in one text are refused, never collapsed (the parent's ruling on
 		# #413): the player meant one programme or two, and the sheet cannot tell which.
 		# A row equal to one already HELD never reaches here twice: FinanceRows.merge keeps it once.
-		var same := [String(row.get("type", "")), String(row.get("op", "")), row.get("rows", [])]
-		if seen.has(same):
-			return "Two identical rows in one bill: put the units in one row."
-		seen.append(same)
+		for earlier in seen:
+			if FinanceRows.same_units_row(earlier, row):
+				return "Two identical rows in one bill: put the units in one row."
+		seen.append(row)
 		var type_id := String(row.get("type", ""))
 		if not loader.unit_types.has(type_id) or not Units.offered(loader, ns.id, type_id):
 			return "This nation does not build that kind of unit."

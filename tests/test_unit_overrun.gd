@@ -113,6 +113,20 @@ func _test_two_equal_rows_in_one_bill_are_refused() -> void:
 	var again := FinanceBill.table(state, _loader, {FinanceRows.UNITS: [row.duplicate(true)]})
 	if bool(again.get("refused", false)) or (ns.tabled_bill["finance"][FinanceRows.UNITS] as Array).size() != 1:
 		_fail("re-tabling a held row was refused or doubled: %s, %s" % [again, ns.tabled_bill["finance"][FinanceRows.UNITS]])
+	# A held row read back from a save (JSON turns 2 into 2.0) is still the same row: the
+	# same text re-tabled after a load is kept once (the #420 review's TAKE on #421).
+	var saved: Dictionary = JSON.parse_string(JSON.stringify({FinanceRows.UNITS: [row]}))
+	var merged := saved.duplicate(true)
+	FinanceRows.merge(merged, {FinanceRows.UNITS: [row.duplicate(true)]})
+	if (merged[FinanceRows.UNITS] as Array).size() != 1:
+		_fail("a row re-tabled after a save is held twice: %s" % [merged[FinanceRows.UNITS]])
+	if not FinanceRows.same_units_row(row, saved[FinanceRows.UNITS][0]) \
+			or FinanceRows.same_units_row(row, _build([{"region": "FR1", "units": 3}])):
+		_fail("same_units_row does not compare the rows by number")
+	# The same regions in another order are the same programme (a region is named once a row).
+	if not FinanceRows.same_units_row(_build([{"region": "FR1", "units": 2}, {"region": "FRB", "units": 1}]),
+			_build([{"region": "FRB", "units": 1.0}, {"region": "FR1", "units": 2}])):
+		_fail("the same rows in another order compare different")
 	# Same regions, other counts: two programmes, legal.
 	var other := FinanceBill.refusal(_state(), _loader, {FinanceRows.UNITS: [row, _build([{"region": "FR1", "units": 3}])]})
 	if not other.is_empty():
