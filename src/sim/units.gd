@@ -136,8 +136,13 @@ static func preview(ns, loader, type_id: String, placed: Dictionary) -> Dictiona
 	var b := _basis(ns, loader, type_id, placed)
 	var n := national_figure(ns, loader, type_id)
 	for id in b["level"]:
-		out[id] = n * float(b["term"][id]) * float(b["level"][id]) * float(b["factor"][id]) / float(b["mean_factor"])
+		out[id] = _figure(n, b, id)
 	return out
+
+
+## A region's shown figure on a basis: the one formula preview and by need both read.
+static func _figure(national: float, b: Dictionary, id) -> float:
+	return national * float(b["term"][id]) * float(b["level"][id]) * float(b["factor"][id]) / float(b["mean_factor"])
 
 
 ## Section 3, "by population": N units split by region_pop_share over the regions
@@ -183,7 +188,7 @@ static func fill_by_need(ns, loader, type_id: String, n: int) -> Array:
 		var top := -INF
 		var b := _with_factors(base, ns, loader, type_id, placed)
 		for id in open:
-			var f := behind * (national * float(b["term"][id]) * float(b["level"][id]) * float(b["factor"][id]) / float(b["mean_factor"]))
+			var f := behind * _figure(national, b, id)
 			if f > top:
 				top = f
 				worst = id

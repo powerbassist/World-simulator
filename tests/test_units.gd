@@ -494,7 +494,8 @@ func _test_fill_by_need_reads_one_basis_a_step() -> void:
 		_fail("by need at 200 FRA hospitals took %.1f ms, past 5x the 50 ms budget" % ms)
 
 
-## The fill as it stood before the TAKE: one basis per candidate per step.
+## The fill as it stood before the TAKE (82f97bfb), its basis kept here verbatim so a change
+## to units.gd's arithmetic cannot move the reference with it: one basis per candidate per step.
 func _fill_per_candidate(ns, type_id: String, n: int) -> Array:
 	var open: Array = []
 	for r in _loader.regions.get(ns.id, []):
@@ -506,7 +507,7 @@ func _fill_per_candidate(ns, type_id: String, n: int) -> Array:
 		var worst := ""
 		var top := -INF
 		for id in open:
-			var f := behind * Units._shown(ns, _loader, type_id, id, placed)
+			var f := behind * _old_shown(ns, type_id, id, placed)
 			if f > top:
 				top = f
 				worst = id
@@ -591,3 +592,35 @@ func _finish() -> void:
 		for failure in _failures:
 			printerr("FAIL: %s" % failure)
 		quit(1)
+
+
+## units.gd's _basis and _shown as of 82f97bfb, copied, not called.
+func _old_shown(ns, type_id: String, region_id: String, placed: Dictionary) -> float:
+	var out := {"level": {}, "factor": {}, "term": {}, "mean_factor": 1.0}
+	var t: Dictionary = _loader.unit_types[type_id]
+	var rel: Dictionary = (_loader.unit_levels.get(ns.id, {}) as Dictionary).get(type_id, {})
+	var q := Sectors.quantity(ns, _loader, String(t["line"]), String(t["sector"]))
+	var people := 0.0
+	var tilted := 0.0
+	for r in _loader.regions.get(ns.id, []):
+		var p := float(ns.region_pop_share.get(r.id, 0.0))
+		var term := Sectors.regional_quantity(ns, _loader, String(t["line"]), String(t["sector"]), r.id) / q if q != 0.0 else 1.0
+		out["term"][r.id] = term
+		people += p
+		tilted += p * term * float(rel.get(r.id, 1.0))
+	var norm := tilted / people if people > 0.0 and tilted > 0.0 else 1.0
+	var weighted := 0.0
+	var weights := 0.0
+	for r in _loader.regions.get(ns.id, []):
+		var level := float(rel.get(r.id, 1.0)) / norm if not rel.is_empty() else 1.0
+		var f := Units._factor(ns, _loader, type_id, r.id, int(placed.get(r.id, 0)))
+		var w := float(ns.region_pop_share.get(r.id, 0.0)) * float(out["term"][r.id]) * level
+		out["level"][r.id] = level
+		out["factor"][r.id] = f
+		weighted += w * f
+		weights += w
+	if weights > 0.0 and weighted > 0.0:
+		out["mean_factor"] = weighted / weights
+	return Units.national_figure(ns, _loader, type_id) * float((out["term"] as Dictionary).get(region_id, 1.0)) \
+		* float((out["level"] as Dictionary).get(region_id, 1.0)) \
+		* float((out["factor"] as Dictionary).get(region_id, 1.0)) / float(out["mean_factor"])
