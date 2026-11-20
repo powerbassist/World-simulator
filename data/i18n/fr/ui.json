@@ -203,7 +203,6 @@
   "No named employer is domiciled here.": "Aucun employeur nommé n'est domicilié ici.",
   "BODY · %d firms · %s jobs": "ORGANISME · %d entreprises · %s emplois",
   "No register": "Aucun registre",
-  "No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply.": "Aucune entreprise nommée pour cette nation. Ses secteurs sont modélisés en bloc ; les programmes d'investissement ci-dessous s'appliquent tout de même.",
   "Foreign takeover bid": "Offre de rachat étrangère",
   "Failing firms": "Entreprises en faillite",
   "%s -- rescue window: %d months left.": "%s — délai de sauvetage : %d mois restants.",
@@ -830,7 +829,6 @@
     "%d déplacements de part ont été appliqués malgré tout."
   ],
   "%s: the figures have slipped. See the Books.": "%s : les chiffres ont reculé. Consultez les Comptes.",
-  "Every sector": "Tous les secteurs",
   "Sectors": "Secteurs",
   "A foreign takeover bid waits on your answer": "Une offre publique d'achat étrangère attend votre réponse",
   "Failing: the rescue window is open": "En difficulté : la fenêtre de sauvetage est ouverte",
