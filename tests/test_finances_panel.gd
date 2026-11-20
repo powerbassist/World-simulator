@@ -16,6 +16,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceStacks = preload("res://src/ui/finance_stacks.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
@@ -50,6 +51,7 @@ func _process(_delta: float) -> bool:
 			_check_the_picture()
 			_check_the_rows()
 			_check_the_foot()
+			_check_the_kind_captions()
 			_check_the_colours_and_order()
 			_check_the_surplus_has_no_bad_mark()
 			_check_a_fold_opens_and_redraws()
@@ -325,3 +327,53 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL: %s" % f)
 	quit(1)
+
+
+## QA on #433: a kind row's caption is who pays, "At vote" while its rate is at the vote and
+## "Creation" while a new kind is drafted; the "Paid by" hover is on each of them.
+func _check_the_kind_captions() -> void:
+	var ns = _state.player()
+	var vat_id := FinanceRows.row_id(FinanceDraft.TAX, "vat")
+	_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+	_expect_caption(vat_id, tr("At vote"))
+	_state.player().tabled_bill = {}
+	# A kind not in force, drafted in the autumn (the month the nation's bill opens).
+	var held_month: int = _state.month
+	_state.month = int(_loader.nations[ns.id].finance_autumn_month)
+	var kind := ""
+	for group in _panel._book["groups"]:
+		if not (group["not_in_force"] as Array).is_empty():
+			kind = String(group["not_in_force"][0])
+			break
+	if kind == "":
+		_fail("premise: no kind is out of force to draft")
+	else:
+		_panel._draft.set_create(kind, 1.0)
+		_panel._stamp = ""
+		_panel._dirty = true
+		_panel._process(0.0)
+		_expect_caption(FinanceRows.row_id(FinanceDraft.TAX, kind), tr("Creation"))
+		_panel._draft.clear_create(kind)
+	_state.month = held_month
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+func _expect_caption(id: String, word: String) -> void:
+	var cells: Dictionary = _panel._ctx["cells"]
+	if not cells.has(id):
+		_fail("premise: no kind row for %s" % id)
+		return
+	var row: Control = (cells[id][0] as Control).get_parent()
+	if not String(row.tooltip_text).begins_with("Paid by:"):
+		_fail("%s: the row has no 'Paid by' hover: '%s'" % [id, row.tooltip_text])
+	var said := false
+	for node in row.get_children():
+		if node is Label and (node as Label).text == word:
+			said = true
+	if not said:
+		_fail("%s: the caption does not read '%s'" % [id, word])
