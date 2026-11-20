@@ -88,7 +88,7 @@ func _sweep(language: String, text_scale: float) -> void:
 	await _open(windows, "society")
 	_check_ledgers_share_a_caption_column(windows.content("society")._body, where + ", Society")
 
-	# The Save/Load dialog (QA's real-window play, French 115: "Supprimer" cut at the dialog's edge).
+	# The Save/Load dialog (QA's real-window play, French at the former 130 %: "Supprimer" cut at the dialog's edge).
 	windows.close_all()
 	await _check_save_load_buttons_fit(main, where)
 

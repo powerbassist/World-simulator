@@ -322,6 +322,24 @@ func _check_text_115_leaves_the_detail_room(state, ns, loader) -> void:
 	var list_min: float = picker.list_min_width()
 	if list_min > PAGE_WIDTH - 20.0 - DETAIL_ROOM:
 		_fail("at text 115 the programme list needs %.0f px of the %.0f px page -- the detail keeps less than %.0f" % [list_min, PAGE_WIDTH, DETAIL_ROOM])
+	# QA on #433: the two bloc names the chip now carries at 115 % are not cut to an ellipsis.
+	var cut := []
+	var measured := 0
+	for node in _walk(picker._rows):
+		if node is Label and node.is_visible_in_tree() and node.clip_text and node.text != "":
+			node.clip_text = false
+			node.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+			var need: float = node.get_minimum_size().x
+			node.clip_text = true
+			node.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+			if String(node.text).contains(","):
+				measured += 1
+			if need > node.size.x + 0.5 and String(node.text).contains(","):
+				cut.append("%s (%.0f of %.0f px)" % [node.text, need, node.size.x])
+	if measured == 0:
+		_fail("premise: no two-bloc chip was measured")
+	if not cut.is_empty():
+		_fail("at text 115 a bloc chip is cut: %s" % ", ".join(cut))
 	UiTheme.set_text_scale(before)
 	picker.fill(ns, Programme.available(state, ns, loader))
 

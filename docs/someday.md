@@ -638,7 +638,7 @@ QA's MCP pass on 89dddf4a, before the author's closing gate, scored A=0, B=3, C=
 ## Carried from V5.1-c (2026-10-22)
 
 - **`main.gd` keeps its total-lines exception** (2 124 lines, 1 090 code): the decision and programme holds and the desk cards (~130 lines) still live there; moving them out (a `clock_holds.gd`, the plan's) removes the `TOTAL_EXCEPTIONS` entry in `tools/check_size.py`. **Owner:** V5.1d.
-- **The panels' fit at text size 130 %** is unchecked: the chrome fits (`test_shell_fit`), the 22 panels were not swept. Text size also leaves the map labels and code-drawn sizes alone. **Owner:** V5.1d, which re-homes every window.
+- **The panels' fit at the largest text size (115 % since #433 removed the 130 %)** is unchecked: the chrome fits (`test_shell_fit`), the 22 panels were not swept. Text size also leaves the map labels and code-drawn sizes alone. **Owner:** V5.1d, which re-homes every window.
 - **The accent casing on the map ramps** (a ramp drawn in the player's accent): a G2 risk. **Owner:** V5.4.
 - **`src/sim/` and `src/core/` comments still name `src/ui/message_stack.gd` and its "six card slots"** (diplomacy, foreign_policy_constants, unrest, unrest_constants, nation_state); the inbox keeps every decision and 40 notes. Systems' files.
 - **Interface scale is gone**, replaced by Text size; a settings file's old `ui_scale_index` is ignored and the content scale reset to 1. Say so at the play gate.

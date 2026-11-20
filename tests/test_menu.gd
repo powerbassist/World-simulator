@@ -300,11 +300,6 @@ func _check_settings() -> void:
 	UiTheme.set_text_scale(1.0)
 
 
-## V3.6: the Sound row persists, and sound_enabled() reads the file rather than
-## the panel. OptionButton.select() emits nothing, so every mutation here calls
-## _save_and_apply() explicitly, like _check_settings() above. Rides this file's
-## own backup/restore discipline: the real settings.cfg goes back exactly as it
-## was found (or stays absent).
 ## The 130 % text size is gone (the author, 2026-11-20: "Retirer 130 % du jeu"): the largest
 ## size is 115 %, and a settings.cfg saved at the old fourth index reads as it, never past the
 ## list. In-memory configs: no file of the player's is read or written.
@@ -323,6 +318,11 @@ func _check_no_text_130() -> void:
 		_fail("a saved index past the end does not clamp to the largest size")
 
 
+## V3.6: the Sound row persists, and sound_enabled() reads the file rather than
+## the panel. OptionButton.select() emits nothing, so every mutation here calls
+## _save_and_apply() explicitly, like _check_settings() above. Rides this file's
+## own backup/restore discipline: the real settings.cfg goes back exactly as it
+## was found (or stays absent).
 func _check_sound_setting() -> void:
 	var panel = _menu._settings_panel
 	if panel == null:

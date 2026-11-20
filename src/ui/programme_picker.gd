@@ -26,12 +26,9 @@ const Num = preload("res://src/ui/num.gd")
 ## and its tooltip carries it whole. The chip columns: the clock, the blocs.
 const NAME_WIDTH := 200.0
 const COLUMNS := [64.0, 150.0]
-## The blocs named on a row before "+N", and the chip's width for them. Past BLOCS_TEXT_CUT the chip
-## names one bloc: at the largest text size two names need 195 px and the list would leave the detail under 300
-## px of the Folder's 846 px page (the S3 picture step's arithmetic: 558 against 488 px).
+## The blocs named on a row before "+N". (At the former 130 % the chip named one bloc, for the detail's room
+## on the Folder's page; that size is gone.)
 const BLOCS_NAMED := 2
-const BLOCS_TEXT_CUT := 1.15
-const BLOCS_ONE_WIDTH := 96.0
 ## The list's share of the picker: about 510 px of the Folder's page, the detail the rest.
 const LIST_RATIO := 0.62
 
@@ -84,15 +81,6 @@ func primary() -> Control:
 ## The list column's minimum width: what it takes of the page before the detail gets the rest.
 func list_min_width() -> float:
 	return _rows.get_combined_minimum_size().x
-
-
-## The blocs a row names at the current text size.
-static func _blocs_named() -> int:
-	return 1 if UiTheme.text_scale() > BLOCS_TEXT_CUT else BLOCS_NAMED
-
-
-static func _blocs_width() -> float:
-	return BLOCS_ONE_WIDTH if UiTheme.text_scale() > BLOCS_TEXT_CUT else float(COLUMNS[1])
 
 
 ## Sections per group, in the constants' own order, each by authored weight (the
@@ -179,7 +167,7 @@ func _row(terms: Dictionary) -> Control:
 	row.add_child(pick)
 	row.add_child(_chip(_clock_chip(terms), COLUMNS[0]))
 	var liked := liked_by(terms)
-	var chip := _chip(_blocs_chip(liked), _blocs_width())
+	var chip := _chip(_blocs_chip(liked), float(COLUMNS[1]))
 	chip.tooltip_text = ", ".join(liked.map(func(b): return Labels.bloc(String(b))))
 	chip.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.add_child(chip)
@@ -196,7 +184,7 @@ func _header() -> void:
 	spacer.custom_minimum_size.x = NAME_WIDTH * UiTheme.text_scale()
 	row.add_child(spacer)
 	row.add_child(_chip(tr("Deadline"), COLUMNS[0]))
-	row.add_child(_chip(tr("Welcomed by"), _blocs_width()))
+	row.add_child(_chip(tr("Welcomed by"), float(COLUMNS[1])))
 	_rows.add_child(row)
 
 
@@ -220,7 +208,7 @@ func _clock_chip(terms: Dictionary) -> String:
 func _blocs_chip(liked: Array) -> String:
 	if liked.is_empty():
 		return ""
-	var named := _blocs_named()
+	var named := BLOCS_NAMED
 	var names: Array = liked.slice(0, named).map(func(b): return Labels.bloc(String(b)))
 	if liked.size() > named:
 		return tr("%s +%d") % [", ".join(names), liked.size() - named]

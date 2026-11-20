@@ -380,11 +380,11 @@ func _check_the_shown_remark(label: String, stage: Array) -> void:
 		if box.visible and rect.intersects(box.get_global_rect()):
 			_fail("%s: the remark %s overlaps a tile or chip %s" % [label, rect, box.get_global_rect()])
 	# The tooltip is the whole line exactly when it is cut at two lines (chief_caption.gd). At the
-	# offered sizes the long line may fit; the stage past them (1.6) is where it is cut, so
-	# that stage must be, or the cut path is not exercised.
+	# offered sizes the long line fits at 100 %; from 115 % up it is cut, and those stages must be,
+	# or the cut path is not exercised.
 	var cut: bool = _caption._line.get_line_count() > ChiefCaption.MAX_LINES
 	if stage[1] == LONG_LINE:
-		if float(stage[0]) > 1.15 and not cut:
+		if float(stage[0]) >= 1.15 and not cut:
 			_fail("%s: premise: the long line is not cut at two lines, so the tooltip is not exercised" % label)
 		var tip: String = _caption._get_tooltip(Vector2.ZERO)
 		if tip != (LONG_LINE if cut else ""):

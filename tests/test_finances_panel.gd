@@ -283,9 +283,12 @@ func _check_no_name_is_clipped_at_115() -> void:
 			var label = node
 			if not label.is_visible_in_tree() or not label.clip_text or label.text == "":
 				continue
-			# A who-pays caption (a list of groups) is a note that may be tighter than the names; at
-			# 130 % it became the row's hover, which is gone with that size.
-			if label.text.contains(", "):
+			# A who-pays caption is a note that may be tighter than the names, and then it is the row's
+			# hover (picked by its role, never by what its text looks like).
+			if label.has_meta("who_pays"):
+				var row: Control = label.get_parent()
+				if not String(row.tooltip_text).begins_with("Paid by:"):
+					_fail("a who-pays caption on a row with no 'Paid by' hover: %s" % label.text)
 				continue
 			# The label's own measure of its text, as it would draw it (variation fonts and tracking included).
 			label.clip_text = false

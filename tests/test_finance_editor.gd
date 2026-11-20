@@ -581,7 +581,7 @@ func _check_a_text_size_change_rebuilds_the_page() -> void:
 		_fail("a text-size change did not rebuild the page at 115 %%: lead '%s'" % _panel._lead.text)
 	UiTheme.set_text_scale(1.0)
 	_panel._process(0.0)
-	if not _panel._ctx["wide"] or not String(_panel._lead.text).contains("font_size=%d" % UiTheme.SIZE_LEAD):
+	if not String(_panel._lead.text).contains("font_size=%d" % UiTheme.SIZE_LEAD):
 		_fail("back at 100 %% the page kept its 115 %% build: lead '%s'" % _panel._lead.text)
 
 
