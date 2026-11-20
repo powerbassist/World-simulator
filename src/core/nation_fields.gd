@@ -277,6 +277,7 @@ const FIELDS := [
 	["front_page_pending", DEEP, ROWS, [], true],  # V5.2d: absent is nothing waiting for the press
 	["audience_requests", DEEP, ROWS, [], true],  # V5.2b: absent is nobody has asked
 	["audience_asked_month", DEEP, INT_MAP, {}, true],  # V5.2b: absent is nobody has asked
+	["audience_summoned_month", DEEP, INT_MAP, {}, true],  # the summons: absent is nobody summoned
 	["phone_calls", DEEP, INT_MAP, {}, true],  # V5.2b b3: absent is nobody called
 	["draw_seed", SCALAR, VALUE, 0, true],  # pre-gate B: absent is the unseeded draw
 	["audience_lane_start", SCALAR, VALUE, -1, true],  # pre-gate B: absent stamps at the next tick

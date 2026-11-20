@@ -20,10 +20,22 @@ const WantTerms = preload("res://src/sim/want_terms.gd")
 static func open_count(ns, own: bool) -> int:
 	var n := 0
 	for row in ns.audience_requests:
+		# A summons is the president's, not an ask: no place in the lane (audience_summons.gd).
 		if K.OPEN.has(String(row.get("status", ""))) and not String(row.get("object", "")).begins_with(K.FIRM_PREFIX) \
+				and not K.is_summons(row) \
 				and String(row.get("person_id", "")).begins_with("%s_" % ns.id) == own:
 			n += 1
 	return n
+
+
+## The person's open request (pending or booked), the raw row, or {}: a summons is not one --
+## the one read the phone, the roster, the lane's asks and the summons' own refusal share
+## (#432 pass 2, TAKE 8).
+static func open_request(ns, person_id: String) -> Dictionary:
+	for row in ns.audience_requests:
+		if String(row.get("person_id", "")) == person_id and K.OPEN.has(String(row.get("status", ""))) and not K.is_summons(row):
+			return row
+	return {}
 
 
 ## Whether any of the played nation's own people has ever asked (a visiting head

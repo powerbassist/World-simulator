@@ -37,6 +37,12 @@ extends SceneTree
 ##      and serves nothing but what the packer happens to bring. No band: it reads what a deal
 ##      does across a term (the asks and offers it meets, words kept and broken, a brief stopped
 ##      by silence) so "green" is not the only evidence. Off by default, A1-A4's table stands.
+##   A6 (`-- --summons`, the summons, 2026-11-20) A1's idle term, and each month the president
+##      summons every person of the nation he may (Audiences.summon_refusal empty) on the
+##      month's first free day from the 2nd; each summons is held on its day and closed with
+##      nothing said. No band: it reads what the summons buys over a term against A1 -- the
+##      mean rapport and knowledge of the nation's people at the end, the summons held, the
+##      diary days they took -- for the author's table. Off by default, A1-A4's table stands.
 ##   A3 DECLINE EVERYTHING on arrival. B3's act row again, under explicit declines,
 ##      and the per-request price beside A1's lapse (tests/test_audiences.gd pins
 ##      the equality per request; this reports the means).
@@ -112,6 +118,7 @@ const President = preload("res://src/sim/president.gd")
 const Characters = preload("res://src/sim/characters.gd")
 const Phone = preload("res://src/sim/phone.gd")
 const Delegation = preload("res://src/sim/delegation.gd")
+const Staff = preload("res://src/sim/staff.gd")
 
 const PLAYER := "FRA"
 const MONTHS := 60
@@ -124,12 +131,15 @@ const B5_MIX := [0.165, 0.5, 0.835]
 var _loader
 ## A5's tally, filled by _fire_month when the regime is running.
 var _deal_tally := {}
+## --summons: _run() adds the term's "registers" (A6 against A1).
+var _registers_wanted := false
 
 
 func _init() -> void:
 	var json_path := ""
 	var b5 := false
 	var deal := false
+	var summons := false
 	var seeds: Array = []
 	for arg in OS.get_cmdline_user_args():
 		if String(arg).begins_with("--json="):
@@ -138,6 +148,8 @@ func _init() -> void:
 			b5 = true
 		elif String(arg) == "--deal":
 			deal = true
+		elif String(arg) == "--summons":
+			summons = true
 		elif String(arg).begins_with("--seeds="):
 			var span := String(arg).substr(8).split("-")
 			seeds = range(int(span[0]), int(span[span.size() - 1]) + 1)
@@ -163,6 +175,10 @@ func _init() -> void:
 		out["a5_deal"] = _run("A5")
 		out["a5_deal"]["tally"] = _deal_tally
 		_deal_tally = {}
+	if summons:
+		_registers_wanted = true
+		out["a6_summons"] = {"A1": _run("A1")["registers"], "A6": _run("A6")["registers"]}
+		_registers_wanted = false
 	if not seeds.is_empty():
 		out["b1_seeds"] = _b1_seeds(seeds)
 		for band in out["b1_seeds"]["bands"]:
@@ -197,6 +213,7 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 	var declines := 0
 	var peak := {}                # person_id -> highest grudge seen after a refusal
 	var visitors := {"arrivals": 0, "booked": 0, "unplaceable": 0, "held": 0}
+	var registers := {"summoned": 0, "held": 0, "people": {}}
 	for i in range(months):
 		var month := i + 1
 		state.year = 2026 + i / 12
@@ -205,6 +222,8 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 		var fire: Array = []
 		if regime == "A5":
 			_book_firms(state, ns)
+		if regime == "A6":
+			_summon_all(state, ns, registers)
 		if book_all:
 			fire = _pack(state)
 		if regime == "A4":
@@ -250,6 +269,8 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 		# does. The diary used to fire before the tick, which read the player's own
 		# visits as heads visiting France once visitors existed.
 		var report: Dictionary = WorldMonth.tick_month(state, _loader)
+		if regime == "A6":
+			_hold_summons(state, ns, registers)
 		if not _deal_tally.is_empty():
 			for key in ["kept", "broken", "void"]:
 				_deal_tally[key] += (report["commitments"][key] as Array).size()
@@ -321,6 +342,9 @@ func _run(regime: String, months := MONTHS, draw_seed := 0) -> Dictionary:
 		"refused_peak_grudges": _top(peak, per_person),
 	}
 	result["visitors"] = visitors
+	# Only under --summons (A6 against A1), so the default JSON stays byte-comparable.
+	if _registers_wanted:
+		result["registers"] = _registers(state, ns, registers)
 	if regime == "A4":
 		result["calls"] = calls
 		result["answered_by_phone"] = answered_by_phone
@@ -588,6 +612,53 @@ func _fire_month(state, fire: Array, held: Array, month: int, refused_at: Dictio
 		Calendar.resolve(state, Calendar.verb_key(e), true)
 
 
+## A6: every person the president may summon, on the month's first free day from the 2nd.
+func _summon_all(state, ns, registers: Dictionary) -> void:
+	for person in Staff.cast(_loader, PLAYER):
+		var pid := String(person.id)
+		if not Audiences.summon_refusal(state, ns, _loader, pid).is_empty():
+			continue
+		for d in range(2, Calendar.days_in_month(state.year, state.month) + 1):
+			var r: Dictionary = Audiences.summon(state, ns, _loader, pid, {"year": state.year, "month": state.month, "day": d})
+			if bool(r["ok"]):
+				registers["summoned"] += 1
+				registers["people"][pid] = true
+				break
+			if String(r["code"]) != AK.BOOK_TAKEN:
+				break
+
+
+## A6: this month's summons, held on their day and closed with nothing said (the hold alone).
+func _hold_summons(state, ns, registers: Dictionary) -> void:
+	var dim := Calendar.days_in_month(state.year, state.month)
+	for e in Calendar.due(state, state.year, state.month, dim):
+		if String(e["kind"]) != CalK.KIND_AUDIENCE:
+			continue
+		state.day = int(e.get("day", 1))
+		var session: Dictionary = Deal.open(state, ns, _loader, String(e["action_id"]))
+		if not session.is_empty():
+			Levers.close(state, ns, _loader, session)
+			registers["held"] += 1
+		Calendar.resolve(state, Calendar.verb_key(e), true)
+	state.day = 1
+
+
+## The nation's people at the term's end: mean rapport and knowledge, the summons counted.
+func _registers(state, ns, registers: Dictionary) -> Dictionary:
+	var rapport := 0.0
+	var knowledge := 0.0
+	var n := 0
+	for person in Staff.cast(_loader, PLAYER):
+		if String(person.id) == President.leader_id(ns):
+			continue
+		rapport += President.rapport(ns, String(person.id))
+		knowledge += President.knowledge(ns, String(person.id))
+		n += 1
+	return {"people": n, "mean_rapport": rapport / maxf(1.0, float(n)), "mean_knowledge": knowledge / maxf(1.0, float(n)),
+		"summoned": int(registers["summoned"]), "distinct_summoned": (registers["people"] as Dictionary).size(),
+		"held": int(registers["held"]), "diary_days": int(registers["summoned"])}
+
+
 ## A5's audience: held on its day, Granted if Grant is open, else refused.
 func _grant_audience(state, ns, id: String, e: Dictionary) -> void:
 	state.day = int(e.get("day", 1))
@@ -707,6 +778,9 @@ func _print(out: Dictionary) -> void:
 		print("   declared mix (information): %s" % [b5["mix_info"]["shares"]])
 	if out.has("a5_deal"):
 		print("A5 deal: %s | arrivals %d, booked %d, unplaceable %d" % [out["a5_deal"]["tally"], out["a5_deal"]["arrivals"], out["a5_deal"]["booked"], out["a5_deal"]["unplaceable"]])
+	if out.has("a6_summons"):
+		for regime in out["a6_summons"]:
+			print("%s summons: %s" % [regime, out["a6_summons"][regime]])
 	if out.has("b1_seeds"):
 		var b: Dictionary = out["b1_seeds"]
 		print("A1 over %d seeds: emptiest 12-month window >= 1 in %d, >= 2 in %d; B1 rows held %s" % [

@@ -177,6 +177,37 @@ const STATUS_OVERTAKEN := "overtaken"
 ## A chief's request names the firm: `firm:<company id>` (AudienceTriggers.chiefs).
 const FIRM_PREFIX := "firm:"
 
+## THE SUMMONS (the author's "Oui, petite carte à part" and "Toute personne du pays",
+## 2026-11-20; src/sim/audience_summons.gd): the president asks to see a person of his nation
+## who has asked nothing. Its row is a request whose object is SUMMON_OBJECT: no ask, so every
+## lever and deal verb says SUMMON_NO_ASK; missed or cancelled it closes CANCELLED, unpriced.
+## The cap is the months a person waits between two asks, so rapport cannot be farmed faster
+## than a person would ask; and, the author's "Une convocation par mois" (2026-11-20, on the A6
+## measure: 519 summons a term lifted the nation's mean regard -0.17 -> +0.62), at most
+## SUMMONS_PER_MONTH summons booked in a calendar month across everyone. Refusals as data, under
+## `code`: not_own, asked (answer the open request instead), booked (one already stands),
+## summoned (the person's cap; `lifts` names the month it lifts), month_used (the monthly cap),
+## no_free_day (nothing free to the horizon), too_far, and the day's BOOK_* codes.
+const SUMMON_OBJECT := "summons"
+const SUMMON_COOLDOWN_MONTHS := REQUEST_COOLDOWN_MONTHS
+const SUMMON_NOT_OWN := "not_own"
+const SUMMON_ASKED := "asked"
+const SUMMON_RECENT := "summoned"
+const SUMMON_BOOKED := "booked"
+const SUMMON_MONTH_USED := "month_used"
+const SUMMON_NO_FREE_DAY := "no_free_day"
+const SUMMONS_PER_MONTH := 1
+const SUMMON_TOO_FAR := "too_far"
+const SUMMON_NO_ASK := "nothing to ask about: they asked nothing"
+const STATUS_CANCELLED := "cancelled"
+const SUMMON_NO_DELEGATE := "you summoned them yourself"
+
+
+## Whether a request row (or a scene's session, which carries its object) is a summons: one
+## read for every door that must not treat it as an ask (#432 pass 2, TAKE 8/9).
+static func is_summons(row: Dictionary) -> bool:
+	return String(row.get("object", "")) == SUMMON_OBJECT
+
 ## The open statuses: a request in the lane or in the diary.
 const OPEN := [STATUS_PENDING, STATUS_BOOKED]
 
