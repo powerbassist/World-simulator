@@ -169,7 +169,7 @@ func _overrun(copy: Dictionary) -> void:
 	var ask: Dictionary = copy["ask"]
 	var card := PanelKit.section(_body, tr("Overrun ask: %s") % _name(copy))
 	card.set_meta("overrun_card", String(copy["id"]))
-	PanelKit.chip(card, tr("Answer by %s, or it is paid.") % _month(int(ask["due"])), UiTheme.CHIP_WARN, "warning").size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	PanelKit.chip(card, tr("Answer by %s, or it is paid.") % _month(int(ask["due"])), UiTheme.CHIP_WARN, "warning")
 	PanelKit.plain_line(card, tr("The builders need %s bn more to finish. One ask a programme: it will not come back.") % Num.f(float(ask["eur_m"]) / 1000.0, 2),
 		PanelKit.Tone.PLAIN)
 	var row := HBoxContainer.new()
