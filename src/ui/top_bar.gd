@@ -95,6 +95,13 @@ var _gap := FIGURE_GAP
 var _more: Label
 var _folded: Array = []
 
+## The stretching slot between the tiles and the chips, and the chief's remark docked in it.
+var _slot: HBoxContainer
+var _caption: Control
+## How many hairlines the last draw of the figure row drew (a test reads it: a headless run
+## has no pixels to look at).
+var _drawn_dividers := 0
+
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(0, BAR_HEIGHT)
@@ -124,8 +131,16 @@ func _ready() -> void:
 	_more.mouse_filter = Control.MOUSE_FILTER_PASS
 	_more.hide()
 	_figures.add_child(_more)
+	_figures.draw.connect(_draw_dividers)
+	_figures.sort_children.connect(_figures.queue_redraw)
 
-	row.add_child(_gutter(0, true))
+	# The stretching slot between the tiles and the chips. The chief's remark docks into it
+	# (dock_caption): a child of this row, so the row lays it out, and silent it takes no room.
+	_slot = HBoxContainer.new()
+	_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_slot.add_theme_constant_override("separation", 0)
+	row.add_child(_slot)
+	row.add_child(_gutter(FIGURE_GAP / 2))  # air between the remark and the chips
 	_chips = HBoxContainer.new()
 	_chips.add_theme_constant_override("separation", FIGURE_GAP)
 	row.add_child(_chips)
@@ -315,7 +330,10 @@ func _show_change(id: String, state) -> void:
 		label.theme_type_variation = UiTheme.GOOD_TEXT
 		return
 	label.text = String(c["text"])
-	label.theme_type_variation = UiTheme.GOOD_TEXT if bool(c["good"]) else UiTheme.BAD_TEXT
+	if c.has("steady"):
+		label.theme_type_variation = UiTheme.CAPTION  # no news either way: no status tone
+	else:
+		label.theme_type_variation = UiTheme.GOOD_TEXT if bool(c["good"]) else UiTheme.BAD_TEXT
 
 
 ## Every tile's change row stands at the height of a line carrying the ▲▼ glyphs, which come
@@ -412,12 +430,14 @@ static func signed_tone(before: float, after: float) -> Color:
 ## Measured off each figure's own minimum rather than the row's, because the
 ## row's cached minimum lags a visibility change by a frame.
 func refit() -> void:
+	if not is_inside_tree():
+		return  # a deferred refit from the remark can land after the bar left the tree
 	for id in _folded:
 		_boxes[id].show()
 	_folded.clear()
 	_more.hide()
 	var available: float = get_viewport_rect().size.x - global_position.x - get_theme_stylebox("panel").get_minimum_size().x \
-		- LEFT_GUTTER * 2 - _chips_width()
+		- LEFT_GUTTER * 2 - FIGURE_GAP / 2 - _chips_width() - _caption_width()
 	var shown: Array = []
 	for id in StripReadings.ON_STRIP:
 		if _boxes[id].visible:
@@ -440,6 +460,49 @@ func refit() -> void:
 	if gap != _gap:
 		_gap = gap
 		_figures.add_theme_constant_override("separation", gap)
+	_figures.queue_redraw()
+
+
+## The x (in `_figures`' own space) of the hairline between each pair of shown tiles, half a
+## gap after the left one's edge (top bar A: a 1 px line divides the tiles).
+func divider_xs() -> Array[float]:
+	var xs: Array[float] = []
+	var previous: Control = null
+	for child in _figures.get_children():
+		if not child.visible or child == _more:
+			continue
+		if previous != null:
+			xs.append((previous.position.x + previous.size.x + child.position.x) / 2.0)
+		previous = child
+	return xs
+
+
+func _draw_dividers() -> void:
+	_drawn_dividers = 0
+	for x in divider_xs():
+		_drawn_dividers += 1
+		_figures.draw_line(Vector2(x, 6.0), Vector2(x, _figures.size.y - 6.0), UiTheme.EDGE, 1.0)
+
+
+## Docks the chief's remark (chief_caption.gd) into the strip's own row, between the tiles and
+## the chips. Shown, it keeps its minimum width and the tiles fold to leave it; hidden, the
+## tiles have the room back, so the bar refits when it appears and when it goes.
+func dock_caption(caption: Control) -> void:
+	_caption = caption
+	var lead := _gutter(FIGURE_GAP / 2)  # air before the remark, only while it shows
+	_slot.add_child(lead)
+	_slot.add_child(caption)
+	# Read after add_child: the caption hides itself in its _ready, before the sync below exists.
+	lead.visible = caption.visible
+	caption.visibility_changed.connect(func() -> void: lead.visible = caption.visible)
+	caption.visibility_changed.connect(refit.call_deferred)
+
+
+## The room the shown remark keeps: its minimum width and the gap before it.
+func _caption_width() -> float:
+	if _caption == null or not _caption.visible:
+		return 0.0
+	return _caption.get_combined_minimum_size().x + FIGURE_GAP / 2
 
 
 ## The chips' own width (they never fold: each is something waiting), gaps and all.

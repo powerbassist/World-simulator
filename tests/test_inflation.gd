@@ -327,6 +327,27 @@ func _check_no_nominal_layer() -> void:
 				offenders.append("%s: %s" % [path, stripped])
 	if not offenders.is_empty():
 		_fail("the price level is read outside inflation.gd, which is what a nominal layer looks like: %s" % [offenders])
+	# The one sanctioned reader of the raw level, Inflation.level_pct, is called from the history
+	# snapshot alone: a second caller is a deflator with a different name.
+	var callers: Array[String] = []
+	for dir in ["res://src/sim", "res://src/ui", "res://src/core"]:
+		for path in _gd_under(dir):
+			if path == "res://src/sim/inflation.gd" or path == "res://src/sim/budget.gd":
+				continue
+			if FileAccess.get_file_as_string(path).contains("level_pct("):
+				callers.append(path)
+	if not callers.is_empty():
+		_fail("Inflation.level_pct is called outside Budget.snapshot: %s" % [callers])
+
+
+func _gd_under(dir: String) -> Array[String]:
+	var out: Array[String] = []
+	for f in DirAccess.get_files_at(dir):
+		if f.ends_with(".gd"):
+			out.append(dir + "/" + f)
+	for d in DirAccess.get_directories_at(dir):
+		out.append_array(_gd_under(dir + "/" + d))
+	return out
 
 
 ## Every harness that ticks a per-nation system must tick this one. V1.5d's bug, made
