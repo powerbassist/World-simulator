@@ -78,6 +78,16 @@ func _check_a_summons_books_a_day_and_is_no_ask() -> void:
 		_fail("a summons stamped the person as having asked")
 	if int(ns.audience_summoned_month.get(pid, -1)) != _now(state):
 		_fail("a summons did not stamp its month: %s" % [ns.audience_summoned_month])
+	# Pass 1 on #432: the briefing counts acted_month as a request answered; a summons answers none.
+	for raw in ns.audience_requests:
+		if String(raw["id"]) == String(row["id"]) and raw.has("acted_month"):
+			_fail("a summons carries acted_month, which the briefing counts as an answered request")
+	# The card's answers: no delegation, and a cancel priced at nothing.
+	var answers: Dictionary = Audiences.answers(state, ns, _loader, String(row["id"]))
+	if bool(answers["delegate"]["ok"]) or not bool(answers["decline"]["ok"]):
+		_fail("a summons' card reads %s: delegate open or cancel closed" % [answers])
+	if not Audiences.decline_price(ns, _loader, String(row["id"])).is_empty():
+		_fail("a summons' cancel is priced: %s" % [Audiences.decline_price(ns, _loader, String(row["id"]))])
 	# The person may still ask on their own.
 	var person = _loader.person_by_id[pid]
 	if person.wants.is_empty():

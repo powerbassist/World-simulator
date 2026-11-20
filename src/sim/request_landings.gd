@@ -38,6 +38,8 @@ static func answers(state, ns, loader, row: Dictionary) -> Dictionary:
 		var closed := {"ok": false, "reason": "this request is no longer waiting"}
 		return {"book": closed, "delegate": closed, "decline": closed}
 	var open := {"ok": true, "reason": ""}
+	if String(row["object"]) == K.SUMMON_OBJECT:  # the president's own summons: cancel, never hand over
+		return {"book": {"ok": false, "reason": "already booked"}, "delegate": {"ok": false, "reason": "you summoned them yourself"}, "decline": open}
 	var delegate := open.merged(Delegation.odds(ns, loader, String(row["object"]), String(row.get("stance", ""))))
 	if String(row["status"]) == K.STATUS_BOOKED:
 		return {"book": {"ok": false, "reason": "already booked"}, "delegate": delegate, "decline": open}
@@ -55,6 +57,8 @@ static func answers(state, ns, loader, row: Dictionary) -> Dictionary:
 ## room clamp is the two pulses exactly. `share` scales the decline's own part and
 ## never the broken word, as Audiences' lapse does: lapse_price below is the caller.
 static func decline_price(ns, loader, row: Dictionary, share := 1.0) -> Dictionary:
+	if String(row.get("object", "")) == K.SUMMON_OBJECT:  # cancelling one's own summons is free
+		return {}
 	var person = loader.person_by_id.get(String(row.get("person_id", "")))
 	var crossed: bool = person != null and President.holds_evidence(ns, String(person.id), int(row.get("arrived_month", 0)))
 	var pulse: float = K.DECLINE_GRUDGE * share + (LK.LIE_GRUDGE if crossed else 0.0)

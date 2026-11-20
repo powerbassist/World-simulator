@@ -36,7 +36,7 @@ static func refusal(state, ns, loader, person_id: String) -> Dictionary:
 		return {"reason": K.SUMMON_NOT_OWN, "error": "not someone of your nation you can summon"}
 	var at := int(ns.audience_summoned_month.get(person_id, -1))
 	if at >= 0 and _now(state) - at < K.SUMMON_COOLDOWN_MONTHS:
-		return {"reason": K.SUMMON_RECENT, "error": "you summoned them less than %d months ago" % K.SUMMON_COOLDOWN_MONTHS}
+		return {"reason": K.SUMMON_RECENT, "error": "you summoned them too recently"}
 	for row in ns.audience_requests:
 		if String(row.get("person_id", "")) == person_id and K.OPEN.has(String(row.get("status", ""))) and not is_summons(row):
 			return {"reason": K.SUMMON_ASKED, "error": "they have asked to see you: answer their request"}
@@ -75,7 +75,7 @@ static func summon(state, ns, loader, person_id: String, date: Dictionary) -> Di
 		return {"ok": false, "reason": K.BOOK_TAKEN, "error": String(booked.get("error", "")), "request": {}}
 	row["status"] = K.STATUS_BOOKED
 	row["date"] = day
-	row["acted_month"] = now
+	# No acted_month: the briefing counts that stamp as a request answered, and nobody asked.
 	ns.audience_requests.append(row)
 	ns.audience_summoned_month[person_id] = now
 	return {"ok": true, "error": "", "reason": "", "request": row.duplicate(true)}
