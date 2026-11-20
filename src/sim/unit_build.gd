@@ -25,6 +25,7 @@ const Units = preload("res://src/sim/units.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
 const UnitOverrun = preload("res://src/sim/unit_overrun.gd")
 const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
+const UnitWarnings = preload("res://src/sim/unit_warnings.gd")
 # finance_rows.gd preloads this file too; GDScript 4 resolves the pair (static calls only).
 const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
@@ -136,6 +137,7 @@ static func open(state, ns, loader, row: Dictionary) -> Dictionary:
 ##   overrun_defaulted  {id, eur_m}   an unanswered card paid at its date
 ##   union_lapsed       {id, eur_m}   an opening after the period's last payment year
 ##   lapse_warning      {org, period, eur_m, year}  warn_months before that year ends
+##   region_warning     {type, region, figure, national}  at most one a month (UnitWarnings)
 static func tick_month(state, loader) -> Array:
 	var notes: Array = []
 	var ns = state.player()
@@ -162,6 +164,7 @@ static func tick_month(state, loader) -> Array:
 	var receipt := UnitEnvelope.receipts(ns, month)
 	ns.unit_receipt_pct_gdp = 100.0 * receipt * 12.0 / gdp_m if receipt != 0.0 and gdp_m > 0.0 else 0.0
 	UnitEnvelope.warn(loader, ns, month, notes)
+	UnitWarnings.tick(ns, loader, month, notes)
 	var was: float = ns.unit_bill_pct_gdp + ns.unit_running_total_pct_gdp()
 	ns.unit_bill_pct_gdp = 100.0 * paid * 12.0 / gdp_m if paid != 0.0 and gdp_m > 0.0 else 0.0
 	var running := {}

@@ -78,3 +78,12 @@ const UNIT_ENVELOPE_GAME_SHARE := 0.1
 
 ## The Union's share arrives over this many months after the opening.
 const UNIT_RECEIPT_MONTHS := 12
+
+# --- The regional warning (section 9) ------------------------------------------
+
+## A region whose shown figure stands this share of the nation's figure behind it is in
+## the band. Stand-in, pending the author's table (tools/units_probe.gd).
+const UNIT_REGION_BAND := 0.08
+
+## A region warned for a type is not warned for it again within this many months.
+const UNIT_WARN_REARM_MONTHS := 12

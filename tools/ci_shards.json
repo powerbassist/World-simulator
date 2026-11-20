@@ -54,6 +54,7 @@
    "tests/test_unit_programmes.gd",
    "tests/test_unit_overrun.gd",
    "tests/test_unit_envelope.gd",
+   "tests/test_unit_warnings.gd",
    "tests/test_screen_reads.gd",
    "tests/test_siting.gd",
    "tests/test_energy.gd",
