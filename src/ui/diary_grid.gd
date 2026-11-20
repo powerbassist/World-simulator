@@ -40,6 +40,7 @@ const President = preload("res://src/sim/president.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const DiaryChip = preload("res://src/ui/diary_chip.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
+const PartyChip = preload("res://src/ui/party_chip.gd")
 
 ## Monday first, as a European diary is ruled.
 const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msgid
@@ -153,16 +154,23 @@ func show_items(state, loader, items: Array) -> void:
 ## The clock runs with the Diary open, and the panel is redrawn on a month, never a
 ## day: today's ring and the offered days follow the day here (QA's TAKE 2 on #153).
 func _process(_delta: float) -> void:
-	if _state != null and _days != null and int(_state.day) != _drawn_day and is_visible_in_tree() and not _chip_in_hand():
+	if _state != null and _days != null and int(_state.day) != _drawn_day and is_visible_in_tree() and not _in_hand():
 		_render()
 
 
-## A chip the pointer is on or the keyboard stands on (a press takes the focus too): the
-## daily redraw frees every cell, which would drop the click, the focus and the hover.
-## It waits, so today's ring can lag until the chip is let go; a booking still redraws.
-func _chip_in_hand() -> bool:
+## A chip the pointer is on or the keyboard stands on, or anything in the day list ("Book
+## here"; #431 pass 2, TAKE 2) the pointer is on: the daily redraw frees every cell and row,
+## which would drop a click mid-press. It waits, so today's ring can lag until the pointer
+## leaves; a booking still redraws, and a Book here pressed on a day the clock has since turned
+## books the first free one (audience_driver.gd). The keyboard alone does not hold the day list:
+## after a Go it stands there for good, and diary_booking's _refocus puts it back after a redraw.
+func _in_hand() -> bool:
 	var viewport := get_viewport()
-	return viewport != null and (viewport.gui_get_focus_owner() is DiaryChip or viewport.gui_get_hovered_control() is DiaryChip)
+	if viewport == null:
+		return false
+	var hovered := viewport.gui_get_hovered_control()
+	return viewport.gui_get_focus_owner() is DiaryChip or hovered is DiaryChip \
+			or (hovered != null and day_list != null and day_list.is_ancestor_of(hovered))
 
 
 func page() -> int:
@@ -240,7 +248,9 @@ func _render() -> void:
 		cell.tooltip_text = "\n".join(texts)
 		cell.picked.connect(_pick)
 		_days.add_child(cell)
-		cell.show_chips(offered.get(d, []), _rows, booked)
+		# No chips (the parent's ruling, 2026-11-20): any free day to the deadline month books,
+		# so a chip per request on every day of the window was a wall of faces. The tint marks
+		# the window and the day list's Book here books; the faces return with the redraw.
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 
 
@@ -348,7 +358,14 @@ func _render_list(entries: Array, offered: Array) -> void:
 		var why := String(date.get("reason", ""))
 		book.tooltip_text = Strings.t(why) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
 		book.pressed.connect(func() -> void: booked.emit(String(o["id"]), date))
-		day_list.add_child(book)
+		# R3, back with #431 pass 2 TAKE 7: the asker's party beside the button, in words and its
+		# hemicycle slot, as the chip's hover said it before the chips left the grid.
+		var line := HBoxContainer.new()
+		day_list.add_child(line)
+		line.add_child(book)
+		var party := PartyChip.of(_loader, _state.player(), String(o["person_id"]))
+		if not party.is_empty():
+			line.add_child(PartyChip.make(party))
 		# Gate 3 (G3-16): only the person's own days are bookable, and an empty diary read
 		# as broken without the reason beside the button.
 		var offer := _offer_line(o["dates"], String(o["person"]))
@@ -375,18 +392,12 @@ func _render_list(entries: Array, offered: Array) -> void:
 			row.add_child(ActsOn.tag(call, [String(e["subject"])]))
 
 
-## The days the person offers that the player can still take (a refused one says why on its
-## own button), with the year when they straddle a year end; "" when none is left.
+## Until when the person can be seen: any free day up to the deadline month's end books (the
+## author's "N'importe quel jour libre" and "Fin du mois limite", 2026-11-20), so the line names
+## the window's last day; "" when no day of it is free (a refused one says why on its button).
 func _offer_line(dates: Array, person: String) -> String:
-	var free: Array = dates.filter(func(d: Dictionary) -> bool: return bool(d.get("free", true)))
-	if free.is_empty():
+	if not dates.any(func(d: Dictionary) -> bool: return bool(d.get("free", true))):
 		return ""
-	var years := {}
-	for date in free:
-		years[int(date["year"])] = true
-	var days := PackedStringArray()
-	for date in free:
-		days.append(DateText.day_month_year(int(date["day"]), int(date["month"]), int(date["year"])) if years.size() > 1
-			else DateText.day_month(int(date["day"]), int(date["month"])))
-	return tr_n("%s can see you only on %d day: %s.", "%s can see you only on these %d days: %s.", days.size()) % [
-		person, days.size(), ", ".join(days)]
+	var last: Dictionary = dates[dates.size() - 1]
+	return tr("%s can see you on any free day until %s.") % [person,
+		DateText.day_month_year(int(last["day"]), int(last["month"]), int(last["year"]))]

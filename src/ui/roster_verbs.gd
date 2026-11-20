@@ -1,8 +1,8 @@
 extends RefCounted
 
-## The People roster's verbs -- rework 1. One table of items per row, read by both the
-## strip under the focused row and the right click's plate (verb_plate.gd), so the two
-## cannot offer different verbs. An item is {id, text, enabled, reason, call}: a verb the
+## The People roster's verbs -- rework 1. One table of items per row, read by the strip
+## under the focused row; a right click on a line picks it and lights that strip (the rework
+## pass's C retired the plate, verb_block.gd). An item is {id, text, enabled, reason, call}: a verb the
 ## sim would refuse stays on, greyed, with the sim's own reason (the brief: "no verb
 ## without its refusal reason before the press").
 ##
@@ -35,7 +35,7 @@ static func for_person(state, loader, row: Dictionary, see: Callable, call: Call
 	else:
 		var day := first_free(state, request)
 		if day.is_empty():
-			item["reason"] = Strings.t("None of the days they offer is free in your diary.")
+			item["reason"] = Strings.t("No day in your diary is free before their last day.")
 		else:
 			item["text"] = Strings.t("See them on %s") % DateText.day_month(int(day["day"]), int(day["month"]))
 			item["enabled"] = true
@@ -50,10 +50,7 @@ static func for_person(state, loader, row: Dictionary, see: Callable, call: Call
 
 ## The first offered day the Diary can take, or {}.
 static func first_free(state, request_id: String) -> Dictionary:
-	for date in Audiences.offered_dates(state, state.player(), request_id):
-		if bool(date.get("free", false)):
-			return date
-	return {}
+	return Audiences.first_free_day(state, state.player(), request_id)
 
 
 ## `verbs` is the panel's cabinet_verbs.gd: its reassign() and dismiss().
@@ -90,6 +87,7 @@ static func strip(parent: Control, items: Array, indent: float) -> Control:
 	var box := HBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	box.set_meta("strip", true)
+	box.set_meta("verb_block", true)  # VerbBlock.META: a right click on the line lights this strip
 	parent.add_child(box)
 	var pad := Control.new()
 	pad.custom_minimum_size.x = indent

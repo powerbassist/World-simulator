@@ -37,8 +37,9 @@ signal closed
 ## law_panel.proposed emit, so a subsidy earns a U4 decision delta on the terms a
 ## law and a diplomatic action already do.
 signal acted(before, label)
+## A sector card's Open: the sector tab's window id (main opens it).
+signal tab_requested(window_id: String)
 
-const EK = preload("res://src/sim/economy_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
 const Industry = preload("res://src/sim/industry.gd")
@@ -50,6 +51,9 @@ const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const IndustryCard = preload("res://src/ui/industry_card.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
 const FirmCommands = preload("res://src/ui/firm_commands.gd")
+const SectorsOverview = preload("res://src/ui/sectors_overview.gd")
+const Labels = preload("res://src/ui/labels.gd")
+const SectorNeeds = preload("res://src/ui/sector_needs.gd")
 
 var _state
 var _loader
@@ -190,8 +194,6 @@ func _refresh() -> void:
 		return
 	_primary = null
 
-	_title.text = tr("Every sector")
-
 	for child in _body.get_children():
 		child.queue_free()
 
@@ -205,17 +207,23 @@ func _refresh() -> void:
 		# not read the firm register at all, so returning here would have hidden a
 		# working lever behind a missing content file.
 		PanelKit.heading(_body, tr("No register"))
-		PanelKit.line(_body, tr("No firms are named for this nation. Its sectors are modelled in aggregate; the investment programmes below still apply."))
+		PanelKit.line(_body, tr("No firms are named for this nation. Its sectors are modelled in aggregate."))
 
 	if _last_refusal != "":
 		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
+	# A Needs you row's route (sectors_shell.open_firm) lands on its firm's verbs, first; named "waiting" only while
+	# a question of the sector's still stands.
+	if _open_sector != "":
+		if SectorNeeds.items(_state, _loader, ns).any(func(i) -> bool: return String(i["sector"]) == _open_sector):
+			PanelKit.heading(_body, tr("Waiting on you in %s") % Labels.sector(_open_sector)).set_meta("routed_heading", _open_sector)
+		IndustryCard.build(self, _body, ns, _open_sector)
 	# V5.3 a + b step 2 (spec 3.2): what is under way first, then what waits on the
 	# player, then the three sector cards, closed until opened; the public account
 	# last, folded.
 	_progress = IndustryProgress.build(_body, _state, _loader, ns, _on_stop, _on_answer, _on_closure)
 	_build_autonomy_sections(ns)
-	for sector in EK.SECTOR_TREND.keys():
-		IndustryCard.build(self, _body, ns, String(sector))
+	# The rework pass's C: the economy's shape, the verbs one Open away on each sector's tab.
+	_title.text = SectorsOverview.build(_body, _state, _loader, ns, func(id: String) -> void: tab_requested.emit(id))
 	_build_ledger(ns)
 	_restore_focus()
 
@@ -297,7 +305,7 @@ func _firm_object(nation_id: String, company_id: String):
 ## The two deviation rows are NET, and deliberately not split into a subsidy half
 ## and a regulation half. Splitting them would mean recomputing each channel against
 ## a hypothetical register, which is a second model of the same quantity kept in
-## step by hand; the sector headings below carry the burden instead, so a player who
+## step by hand; the sector cards above carry the burden instead, so a player who
 ## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
 	var fold := PanelKit.sized(Button.new())
@@ -402,8 +410,8 @@ func _on_closure(closure_id: String, answer_id: String, what: String) -> void:
 func primary_action() -> Control:
 	if is_instance_valid(_primary):
 		return _primary
-	# V5.3 a + b step 2: with every card closed, the first card is the way in.
+	# The rework pass's C: the first sector card's Open is the way in.
 	for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
-		if button.has_meta("sector"):
+		if button.has_meta("open_tab"):
 			return button
 	return null

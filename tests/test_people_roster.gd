@@ -237,7 +237,7 @@ func _check_order() -> void:
 		_fail("the roster does not lead with the person asking to see you: %s" % str(rows.slice(0, 2)))
 		return
 	# #388 TAKE 1: the roster dates the request as the inbox card does (Audiences.answer_by),
-	# never a month later (the deadline month itself, when the request has already lapsed).
+	# never a month later (the month after its deadline, when the request has already lapsed).
 	var card := AudienceDriver.row_of(_main, Audiences.request(_main._state.player(), _request))
 	if not String(rows[0]["wants"]).contains(String(card["by"])):
 		_fail("the roster's date is not the inbox card's '%s': '%s'" % [card["by"], rows[0]["wants"]])
@@ -273,7 +273,7 @@ func _check_order() -> void:
 
 
 func _lapse_text() -> String:
-	return preload("res://src/ui/lever_words.gd").when(_now() + 2)
+	return preload("res://src/ui/lever_words.gd").when(_now() + 3)  # deadline now+2 lapses at now+3 (#431)
 
 
 func _check_offices() -> void:

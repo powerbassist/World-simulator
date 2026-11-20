@@ -36,10 +36,7 @@ const FirmCommands = preload("res://src/ui/firm_commands.gd")
 const FirmSheet = preload("res://src/ui/firm_sheet.gd")
 const SectorProgramme = preload("res://src/ui/sector_programme.gd")
 const SectorGoodsView = preload("res://src/ui/sector_goods_view.gd")
-const IndustryVerbs = preload("res://src/ui/industry_verbs.gd")
-const VerbPlate = preload("res://src/ui/verb_plate.gd")
-const Strings = preload("res://src/ui/strings.gd")
-const Processes = preload("res://src/sim/processes.gd")
+const VerbBlock = preload("res://src/ui/verb_block.gd")
 
 ## The sheet's width in px: the picture's right column.
 const SHEET_WIDTH := 440
@@ -65,6 +62,8 @@ var _good_filter := ""
 var _sheet: VBoxContainer
 ## The firm on the sheet, "" for the default (the first waiting, else the first major).
 var _firm_id := ""
+## A right click asked to light the selected firm's verbs once the sheet is rebuilt.
+var _light := false
 ## firm_commands.gd's state: the focused verb, the card an irreversible verb asks on, the
 ## last refusal, the programme stop picked on the slider (-1: as it stands).
 var _focus_verb := ""
@@ -123,6 +122,7 @@ func setup(state, loader) -> void:
 	# card stays: it sits on the screen stack once and is re-armed by each ask (CompanyVerb.ask).
 	_good_filter = ""
 	_firm_id = ""
+	_light = false
 	_focus_verb = ""
 	_last_refusal = ""
 	_prog_pick = -1
@@ -155,7 +155,10 @@ func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
+	# Out of the tree at once: freed only at the frame's end, the old sheet doubled the content a lit block's scroll
+	# measured (pass 2 T6).
 	for child in _body.get_children() + _sheet.get_children():
+		child.get_parent().remove_child(child)
 		child.queue_free()
 	_head(ns)
 	_needs(ns)
@@ -164,6 +167,9 @@ func _refresh() -> void:
 	var company = _selected(ns)
 	if company != null:
 		FirmSheet.build(self, _sheet, ns, company)
+	if _light:
+		_light = false
+		VerbBlock.light(_sheet)
 
 
 func _head(ns) -> void:
@@ -308,38 +314,12 @@ func _select(company_id: String) -> void:
 	_dirty = true
 
 
-## The right click on a firm (H14): its verbs with their prices (a press selects the firm
-## and focuses the verb on the sheet), the call to its chief, the map.
+## The right click on a firm (the rework pass's C, no plate): the firm is selected and its sheet's verbs lit.
 func _right_click(event: InputEvent, company) -> void:
-	var press := event as InputEventMouseButton
-	if press == null or not press.pressed or press.button_index != MOUSE_BUTTON_RIGHT:
+	if not VerbBlock.is_right_press(event):
 		return
-	var plate = VerbPlate.of(self)
-	if plate != null:
-		plate.open(self, menu_items(company))
-
-
-func menu_items(company) -> Array:
-	var ns = _state.player()
-	var id := String(company.id)
-	var items: Array = []
-	for action in Companies.available(_state, ns, _loader.company_actions, id, _loader):
-		var est: Dictionary = Processes.estimate(_state, ns, _loader, action, id) if Processes.is_process(action) else {}
-		var money: Array = IndustryVerbs.money_line(_state, _loader, ns, company, action, est)
-		var why := CompanyVerb.refusal(_state, _loader, ns, company, action)
-		var verb := String(action.id)
-		items.append({"text": "%s · %s" % [Strings.row_name("company-actions", action), String(money[1])],
-			"enabled": why == "", "reason": Strings.t(why) if why != "" else "",  # i18n: row-ok the sim's reason, its English the msgid
-			"call": func() -> void:
-				_select(id)
-				_focus_verb = verb})
-	var chief: String = _loader.person_name(String(company.chief_id))
-	if chief != "":
-		items.append({"text": tr("Call %s") % chief, "enabled": true, "call": func() -> void: call_requested.emit(String(company.chief_id))})
-	var city = Region.find_city(_loader.regions.get(ns.id, []), Companies.live_city_of(ns, company))
-	if city != null:
-		items.append({"text": tr("Show on the map"), "enabled": true, "call": func() -> void: map_requested.emit(city.lonlat)})
-	return items
+	_select(String(company.id))
+	_light = true
 
 
 # The commands, shared with the overview (firm_commands.gd).

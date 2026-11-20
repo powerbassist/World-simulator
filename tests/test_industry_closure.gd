@@ -162,8 +162,8 @@ func _check_card() -> void:
 		_fail("card: the answers' row is not a flow (%s)" % parent)
 	if not Pending.window_ids(state, loader).has("companies"):
 		_fail("card: the Industry tab is not marked as waiting")
-	var head = _with_meta("sector", String(_major.sector))
-	if head == null or not _text_under(head.get_parent()).contains(_panel.tr("Decision due")):
+	# The overview's card carries the "N decision" chip since the rework pass's C.
+	if not _has_decision_chip(String(_major.sector)):
 		_fail("card: the %s card does not say a decision is due" % _major.sector)
 
 
@@ -344,8 +344,8 @@ func _check_re_ask() -> void:
 		_fail("re-ask: the chips are offered again")
 	if not Pending.window_ids(state, _main._loader).has("companies"):
 		_fail("re-ask: the Industry tab is not marked as waiting")
-	var head = _with_meta("sector", String(_third.sector))
-	if head == null or not _text_under(head.get_parent()).contains(_panel.tr("Decision due")):
+	# The overview's card carries the "N decision" chip since the rework pass's C.
+	if not _has_decision_chip(String(_third.sector)):
 		_fail("re-ask: the %s card does not say a decision is due" % _third.sector)
 	if not text.contains(String(_third.company_name)):
 		_fail("re-ask: the row does not name %s" % _third.company_name)
@@ -499,3 +499,10 @@ func _finish() -> void:
 		for f in _failures:
 			printerr(f)
 		quit(1)
+
+
+func _has_decision_chip(sector: String) -> bool:
+	for node in _panel.find_children("*", "", true, false):
+		if node.has_meta("decision_chip") and String(node.get_meta("decision_chip")) == sector and (node as Control).is_visible_in_tree():
+			return true
+	return false

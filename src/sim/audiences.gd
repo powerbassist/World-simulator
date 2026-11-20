@@ -102,10 +102,15 @@ static func request(ns, request_id: String) -> Dictionary:
 	return {} if row.is_empty() else _view(row)
 
 
-## The days the person offers, in date order, each with whether the diary can
-## place it (audience_dates.gd: the same days every time the card opens).
+## Every day the request can be booked on, in date order, each with whether the diary
+## can place it (audience_dates.gd: tomorrow to the deadline month's last day).
 static func offered_dates(state, ns, request_id: String) -> Array[Dictionary]:
 	return Dates.offered(state, ns, _row(ns, request_id))
+
+
+## The first day the request can be booked on, or {} (audience_dates.gd: stops at it).
+static func first_free_day(state, ns, request_id: String) -> Dictionary:
+	return Dates.first_free(state, _row(ns, request_id))
 
 
 ## The card's three answers (request_landings.gd, where the rule lives since V5.3 B7).
@@ -121,19 +126,15 @@ static func decline_price(ns, loader, request_id: String) -> Dictionary:
 
 # --- Commands -------------------------------------------------------------------------
 
-## Book one of the offered days. The diary refuses a day already taken (one
-## thing at a time), and that refusal is the scarcity.
+## Book any day from tomorrow to the last day of the deadline month the diary can
+## place (audience_dates.gd; a chief's ends a month earlier). A refusal carries `code` (K.BOOK_*) and `reason`, the words.
 static func book(state, ns, loader, request_id: String, date: Dictionary) -> Dictionary:
 	var row := _row(ns, request_id)
 	if row.is_empty() or String(row["status"]) != K.STATUS_PENDING:
 		return {"ok": false, "error": "this request is no longer waiting"}
-	var offered := false
-	for d in offered_dates(state, ns, request_id):
-		if int(d["year"]) == int(date.get("year", 0)) and int(d["month"]) == int(date.get("month", 0)) \
-				and int(d["day"]) == int(date.get("day", 0)):
-			offered = true
-	if not offered:
-		return {"ok": false, "error": "not a day the person offered"}
+	var refused := Dates.refusal(state, row, date)
+	if not refused.is_empty():
+		return refused.merged({"ok": false})
 	var day := {"year": int(date["year"]), "month": int(date["month"]), "day": int(date["day"])}
 	var result: Dictionary = Calendar.book(state, Dates.entry(row, day))
 	if bool(result.get("ok", false)):

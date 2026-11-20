@@ -2517,10 +2517,10 @@ func _stage_the_queue() -> void:
 	panel.mark_dirty()
 
 
-## "queue-menu": a few frames after the tab has refreshed, so the paper it opens from exists.
+## "queue-menu": a few frames after the tab has refreshed, so the paper it opens from exists: the right click
+## docks the place's verbs under the paper (the rework pass's C, no plate).
 func _open_the_queue_menu() -> void:
 	_main._law_panel._paper.places[1].menu_requested.emit(0)
-	preload("res://src/ui/verb_plate.gd").of(_main._law_panel).position = Vector2(560, 330)
 
 
 ## Bought today and out; or, with its day forced to today, printed and carded by the poll's

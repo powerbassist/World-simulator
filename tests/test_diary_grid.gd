@@ -113,8 +113,10 @@ func _stage() -> void:
 	if _request == "":
 		_fail("premise: no request could be staged")
 		return
+	# A day next month or later: tomorrow books too since "any free day" (2026-11-20), but the
+	# five days the check below runs would then reach the audience and open its scene.
 	for d in Audiences.offered_dates(state, ns, _request):
-		if bool(d["free"]):
+		if bool(d["free"]) and int(d["year"]) * 12 + int(d["month"]) > now:
 			_offered = d
 			break
 	if _offered.is_empty():
@@ -124,7 +126,7 @@ func _stage() -> void:
 ## Every dated thing in the horizon, with the day it lands on: the register and
 ## the fixed dates (Calendar.upcoming), each commitment on the first day of its
 ## month (judged as the month begins), each waiting request on the last day of
-## the month before its deadline (it lapses as the deadline month begins).
+## its answer-by month (Audiences.answer_by, the one rule: the deadline month since #431).
 func _check_marks() -> void:
 	var state = _main._state
 	var ns = state.player()
@@ -135,7 +137,7 @@ func _check_marks() -> void:
 		var m := int(row["due_month"])
 		_count(want, floori((m - 1) / 12.0), m - floori((m - 1) / 12.0) * 12, 1)
 	for row in Audiences.pending(ns):
-		var last := int(row["deadline_month"]) - 1
+		var last := Audiences.answer_by(row)
 		var y := floori((last - 1) / 12.0)
 		var mo := last - y * 12
 		_count(want, y, mo, Calendar.days_in_month(y, mo))

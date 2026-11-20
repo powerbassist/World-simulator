@@ -8,7 +8,8 @@ extends SceneTree
 ## affair's and the lie's widgets left it with the author's C4: Argue, Pressure, the lie and
 ## the shadows' offer are the sim's, not this screen's):
 ##   - R3: the person's party, by name and in the hemicycle's colour slot, on the
-##     request card, the Diary's booking block and the scene's header -- a party's
+##     request card, the Diary's day list beside its Book here (#431 pass 2 TAKE 7) and the
+##     scene's header -- a party's
 ##     LEADER included, whom the data names from the party, not the person;
 ##   - R5: the audience's end carries a STATUS-toned word that agrees with what
 ##     happened, never the colour alone -- a deal struck (the good tag driven) and a
@@ -185,17 +186,10 @@ func _check_card_party() -> void:
 	_chip_matches(inbox._cards.get(card_id), "the request card")
 
 
+## #431 pass 2 TAKE 7: the party is back in the Diary's booking block, beside its Book here.
 func _check_booking_party() -> void:
 	AudienceDriver._open_booking(_main, _request)
-	# The Diary's chip says the party on its hover, the column's card having gone.
-	var chip: Button = _main._calendar_panel._grid._days.find_child("Chip_%s" % _request, true, false)
-	var ns = _main._state.player()
-	var person := String(Audiences.request(ns, _request)["person_id"])
-	var party: Dictionary = preload("res://src/ui/party_chip.gd").of(_main._loader, ns, person)
-	if chip == null:
-		_fail("the Diary has no chip for the request")
-	elif not party.is_empty() and not chip.tooltip_text.contains(String(party["name"])):
-		_fail("the Diary's chip does not name the party: '%s'" % chip.tooltip_text)
+	_chip_matches(_main._calendar_panel._grid.day_list, "the Diary's day list")
 
 
 func _reach_audience() -> bool:
