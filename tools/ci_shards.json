@@ -167,6 +167,7 @@
    "tests/test_clock.gd",
    "tests/test_region_fund.gd",
    "tests/test_register_panel.gd",
+   "tests/test_register_follow.gd",
    "tests/test_polling_panel.gd",
    "tests/test_tick_levers.gd",
    "tests/test_diplomacy_parallel.gd",

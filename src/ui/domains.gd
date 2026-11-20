@@ -26,7 +26,7 @@ const TABLE := [
 	# majority's arithmetic and Dissolve live in Parliament's Majority tab.
 	{"id": "government", "title": "Government", "icon": "groups.svg", "tabs": ["people"]},  # i18n: msgid title
 	{"id": "parliament", "title": "Parliament", "icon": "gavel.svg", "tabs": ["legislature", "majority"]},  # i18n: msgid title
-	{"id": "finances", "title": "Finances", "icon": "payments.svg", "tabs": ["finances", "projects", "register"]},  # i18n: msgid title
+	{"id": "finances", "title": "Finances", "icon": "payments.svg", "tabs": ["finances", "projects", "register", "programmes"]},  # i18n: msgid title
 	{"id": "economy", "title": "Economy", "icon": "monitoring.svg", "tabs": ["economy"]},  # i18n: msgid title
 	{"id": "territory", "title": "Regions", "icon": "map.svg", "tabs": ["region"]},  # i18n: msgid title
 	{"id": "energy", "title": "Energy", "icon": "bolt.svg", "tabs": ["energy"]},  # i18n: msgid title
