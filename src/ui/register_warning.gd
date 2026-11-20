@@ -37,10 +37,11 @@ static func arrive(main, report: Dictionary) -> void:
 	if not _ours(main):
 		return
 	var ns = main._state.player()
+	_settle(main, ns)
 	for note in report.get("units", []):
 		match String(note.get("kind", "")):
 			UnitWarnings.KIND:
-				_warn(main, String(note["type"]), String(note["region"]), float(note["figure"]), float(note["national"]))
+				_warn(main, String(note["type"]), String(note["region"]), float(note["figure"]), float(note["national"]), int(main._state.month))
 			"overrun_landed":
 				_ask(main, String(note["id"]))
 			"overrun_defaulted":
@@ -65,11 +66,24 @@ static func restore_after_load(main) -> void:
 		var region := parts[1] if parts.size() > 1 else ""
 		if not main._loader.unit_types.has(type_id) or now - int(ns.unit_warned[key].get("month", 0)) >= UK.UNIT_WARN_REARM_MONTHS:
 			continue
-		if not Units.band(ns, main._loader, type_id).has(region) or _building(ns, type_id, region):
+		if not Units.band(ns, main._loader, type_id).has(region) or _building(ns, type_id, region) or _tabled(ns, type_id, region):
 			continue
-		_warn(main, type_id, region, Units.shown_figure(ns, main._loader, type_id, region), Units.national_figure(ns, main._loader, type_id))
+		var month := int(ns.unit_warned[key].get("month", now))
+		_warn(main, type_id, region, Units.shown_figure(ns, main._loader, type_id, region), Units.national_figure(ns, main._loader, type_id),
+			(month - 1) % 12 + 1)
 	for copy in UnitOverrun.asks(main._state, ns, main._loader):
 		_ask(main, String(copy["id"]))
+
+
+## An overrun card whose ask was answered on the Building tab goes (its Open would show nothing).
+static func _settle(main, ns) -> void:
+	var cards: Dictionary = main.get_meta(CARDS, {})
+	for card in cards.keys():
+		if String(cards[card]["kind"]) == "overrun":
+			var p := _programme(ns, String(cards[card]["id"]))
+			if p.is_empty() or p.has("answer"):
+				main._hud.inbox.dismiss(String(card))
+				cards.erase(card)
 
 
 static func _ours(main) -> bool:
@@ -78,14 +92,14 @@ static func _ours(main) -> bool:
 	return ns != null and bool(ns.in_government)
 
 
-static func _warn(main, type_id: String, region: String, figure: float, national: float) -> void:
+static func _warn(main, type_id: String, region: String, figure: float, national: float, month: int) -> void:
 	if not main._loader.unit_types.has(type_id):
 		return
 	var row: Dictionary = Units.row(main._loader, type_id)
 	var unit := Strings.row("units", type_id, "figure.unit", String((row.get("figure", {}) as Dictionary).get("unit", "")))
 	_push(main, SUBJECT + type_id + "|" + region, Strings.row_name("units", row), Strings.t("%s: %s %s; the nation %s.") % [
 		_region_name(main, region), Num.f(figure, 2), unit, Num.f(national, 2)],
-		{"kind": "warning", "type": type_id, "region": region, "month": int(main._state.month)})
+		{"kind": "warning", "type": type_id, "region": region, "month": month})
 
 
 static func _ask(main, programme_id: String) -> void:
@@ -145,6 +159,15 @@ static func _programme(ns, programme_id: String) -> Dictionary:
 static func _building(ns, type_id: String, region: String) -> bool:
 	for p in ns.unit_programmes:
 		if String(p.get("type", "")) == type_id and String(p.get("state", "")) == UK.STATE_BUILDING:
+			for r in p.get("rows", []):
+				if String(r.get("region", "")) == region:
+					return true
+	return false
+
+
+static func _tabled(ns, type_id: String, region: String) -> bool:
+	for p in (ns.tabled_bill.get("finance", {}) as Dictionary).get("units", []):
+		if String(p.get("type", "")) == type_id:
 			for r in p.get("rows", []):
 				if String(r.get("region", "")) == region:
 					return true

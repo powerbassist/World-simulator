@@ -34,6 +34,7 @@ var _failures: Array[String] = []
 var _main
 var _frame := 0
 var _note := {}
+var _note_month := 0  # the absolute month the warning was stamped
 var _register
 var _follow
 
@@ -75,12 +76,16 @@ func _process(_delta: float) -> bool:
 			_press(_with_meta("warning_build", _register))
 		9:
 			_check_built_from_the_warning()
-			_check_restored_after_a_load()
+			# Answered by tabling: a load does not raise it again.
+			RegisterWarning.restore_after_load(_main)
+			if _go() != null:
+				_fail("a warning already tabled came back after a load")
 			# Leave it, on a sheet opened from the warning again with the bill empty.
 			_main._state.player().tabled_bill = {}
 			_register.open_from_warning(String(_note["type"]), String(_note["region"]), 1)
 		11:
 			_press(_with_meta("warning_leave", _register))
+			_check_restored_after_a_load()
 		13:
 			if _with_meta("warning_bar", _register) != null:
 				_fail("Leave it did not put the warning away")
@@ -96,6 +101,7 @@ func _process(_delta: float) -> bool:
 			_check_follow_rows()
 			_check_overrun_card()
 			_check_overrun_arrivals()
+			_check_answered_ask_settles()
 			_press(_with_meta("overrun_pay", _follow))
 		17:
 			var p: Dictionary = _main._state.player().unit_programmes[0]
@@ -154,7 +160,8 @@ func _warn() -> void:
 	var state = _main._state
 	var ns = state.player()
 	var notes: Array = []
-	UnitWarnings.tick(state, ns, _main._loader, UnitPrice.now(state), notes)
+	_note_month = UnitPrice.now(state)
+	UnitWarnings.tick(state, ns, _main._loader, _note_month, notes)
 	for n in notes:
 		if String(n.get("kind", "")) == UnitWarnings.KIND:
 			_note = n
@@ -424,6 +431,12 @@ func _check_restored_after_a_load() -> void:
 	RegisterWarning.restore_after_load(_main)
 	if _go() == null:
 		_fail("an unanswered warning did not come back after a load")
+		return
+	# The month it came, not the load's.
+	var cards: Dictionary = _main.get_meta(RegisterWarning.CARDS)
+	for card in cards:
+		if String(cards[card]["subject"]).begins_with(RegisterWarning.SUBJECT) and int(cards[card]["month"]) != (int(_note_month) - 1) % 12 + 1:
+			_fail("a restored warning names month %d, not %d" % [int(cards[card]["month"]), (int(_note_month) - 1) % 12 + 1])
 
 
 ## Pass 2 T5: an overrun ask is a card, its default and the Union's lapse are notes.
@@ -456,3 +469,15 @@ func _other_region() -> String:
 		if String(r.id) != String(_note["region"]) and Units.start_capacity(_main._loader, _main._state.player().id, String(_note["type"]), r.id) > 0.0:
 			return String(r.id)
 	return ""
+
+
+## Pass 1 on the pass-2 delta: an ask answered on the Building tab takes its card with it at the
+## next month end.
+func _check_answered_ask_settles() -> void:
+	var p: Dictionary = _main._state.player().unit_programmes[0]
+	p["answer"] = UK.OVERRUN_PAY
+	RegisterWarning.arrive(_main, {"units": []})
+	p.erase("answer")
+	for b in _main._hud.inbox.find_children("*", "Button", true, false):
+		if ActsOn.acts_on(b, RegisterWarning.OVERRUN + String(p["id"])) and not _gone(b):
+			_fail("an answered ask's card stays in the inbox")
