@@ -16,6 +16,7 @@ const Migration = preload("res://src/sim/migration.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 ## V5.3 c' slice 1: the construction register's order form, a tab beside Regions.
 const RegisterPanel = preload("res://src/ui/register_panel.gd")
+const RegisterFollow = preload("res://src/ui/register_follow.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 
@@ -52,6 +53,10 @@ static func panel(main) -> Control:
 	var register = RegisterPanel.new()
 	main._windows.register("register", Strings.t("Register"), register, KEY_NONE, "res://assets/icons/material/construction.svg")
 	register.setup(main._state, main._loader)
+	# Its follow-up (the author's "C en suivi"): the programmes once voted, beside it.
+	var follow = RegisterFollow.new()
+	main._windows.register("programmes", Strings.t("Programmes"), follow, KEY_NONE, "res://assets/icons/material/construction.svg")
+	follow.setup(main._state, main._loader)
 	tab.open_register = func(region_id: String) -> void:
 		register.open_for(region_id)
 		main._windows.open("register")

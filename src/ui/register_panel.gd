@@ -29,6 +29,8 @@ const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const RegisterMoney = preload("res://src/ui/register_money.gd")
+const RegisterLines = preload("res://src/ui/register_lines.gd")
+const RegisterDoor = preload("res://src/ui/register_door.gd")
 const Units = preload("res://src/sim/units.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
 const UnitBuild = preload("res://src/sim/unit_build.gd")
@@ -52,6 +54,7 @@ var _count := 1
 var _placed := {}
 var _region := ""
 var _refusal := ""
+var _warning := {}  # {type, region, month}: the sheet was opened from a region warning
 
 
 func _ready() -> void:
@@ -81,6 +84,7 @@ func setup(state, loader) -> void:
 	_placed = {}
 	_region = ""
 	_refusal = ""
+	_warning = {}
 	_dirty = true
 
 
@@ -126,6 +130,27 @@ func open_for(region_id: String) -> void:
 				break
 	_region = region_id
 	_placed = {region_id: _count}
+	_dirty = true
+
+
+## The region warning's door (register_warning.gd): the type's band_units in that region,
+## and the warning's answers under the lede (register_door.gd).
+func open_from_warning(type_id: String, region_id: String, month: int) -> void:
+	_type = type_id
+	place(region_id, int(_loader.unit_types[type_id]["band_units"]))
+	_warning = {"type": type_id, "region": region_id, "month": month}
+
+
+## `units` in the region as a hand-set row, the count with it.
+func place(region_id: String, units: int) -> void:
+	_region = region_id
+	_count = units
+	_placed = {region_id: units}
+	_dirty = true
+
+
+func clear_warning() -> void:
+	_warning = {}
 	_dirty = true
 
 
@@ -198,6 +223,8 @@ func _refresh() -> void:
 			shown[String(region.id)] = float(now[String(region.id)])
 	var nation := Units.national_figure(ns, _loader, _type)
 	_lede(row, shown, nation)
+	if String(_warning.get("type", "")) == _type:
+		RegisterDoor.bar(self, _body, _state, _loader, _warning)
 	_types()
 	var middle := HBoxContainer.new()
 	middle.add_theme_constant_override("separation", 16)
@@ -271,8 +298,10 @@ func _dots(parent: Control, ns, shown: Dictionary, after: Dictionary, nation: fl
 	# Worst first, by the figure's own direction: the regions the sheet exists for lead.
 	var lower_better := String((Units.row(_loader, _type).get("figure", {}) as Dictionary).get("better", "")) == "lower"
 	data.sort_custom(func(a, b): return float(a["before"]) > float(b["before"]) if lower_better else float(a["before"]) < float(b["before"]))
-	# The warning band joins when the sim names its threshold (UNIT_REGION_BAND, Systems' slice C).
-	var box := ChartKit.dots(col, tr("By region: now, and once built"), data, {"reference": nation})
+	# The warning band, read once a redraw (a region's in_band rebuilds it each call).
+	var band: Dictionary = Units.band(ns, _loader, _type)
+	RegisterLines.band_chip(col, band)
+	var box := ChartKit.dots(col, tr("By region: now, and once built"), data, {"reference": nation, "band": RegisterLines.band_range(band, shown)})
 	var dots = box.get_meta("chart")
 	dots.set_meta("dots", true)
 	dots.picked.connect(func(id: String) -> void:
@@ -346,22 +375,26 @@ func _composer(parent: Control, ns, quote: Dictionary) -> void:
 	press.text = tr("Put it in the finance bill")
 	press.disabled = why != ""
 	press.set_meta("table", true)
-	press.pressed.connect(func() -> void:
-		var answer: Dictionary = FinanceBill.table(_state, _loader, bill)
-		_refusal = "" if bool(answer.get("tabled", false)) else _reason(answer)
-		_dirty = true
-		# The bill moved: every panel reads it (firm_commands.invest's sweep).
-		var windows: Node = self
-		while windows != null and not windows.has_method("mark_all_dirty"):
-			windows = windows.get_parent()
-		if windows != null:
-			windows.mark_all_dirty())
+	press.pressed.connect(table_programme)
 	PanelKit.buttons(col).add_child(press)
 	var said := why if why != "" else _refusal
 	var refusal := PanelKit.plain_line(col, said, PanelKit.Tone.PLAIN)
 	refusal.theme_type_variation = UiTheme.WARN_TEXT
 	refusal.visible = said != ""
 	refusal.set_meta("refusal", true)
+
+
+## The press: the rows as a programme into the finance bill, or the refusal said.
+func table_programme() -> void:
+	var answer: Dictionary = FinanceBill.table(_state, _loader, {FinanceRows.UNITS: [{"type": _type, "op": UK.OP_BUILD, "rows": rows()}]})
+	_refusal = "" if bool(answer.get("tabled", false)) else _reason(answer)
+	_dirty = true
+	# The bill moved: every panel reads it (firm_commands.invest's sweep).
+	var windows: Node = self
+	while windows != null and not windows.has_method("mark_all_dirty"):
+		windows = windows.get_parent()
+	if windows != null:
+		windows.mark_all_dirty()
 
 
 func _sum() -> int:
@@ -434,6 +467,7 @@ func _strip(ns, row: Dictionary, quote: Dictionary, shown: Dictionary, after: Di
 		DateText.month_year((open_at - 1) % 12 + 1, (open_at - 1) / 12), months], PanelKit.Tone.PLAIN)
 	PanelKit.chip(when, tr("%s %% chance of one overrun ask during the build") % Num.f(100.0 * float(quote["odds"]), 0),
 		UiTheme.CHIP_WARN, "warning").set_meta("odds", true)
+	RegisterLines.union(when, _state, ns, _loader, {"type": _type, "rows": rows()}, quote)
 
 
 func _column(parent: Control, heading: String) -> VBoxContainer:
@@ -457,6 +491,7 @@ func _who(col: VBoxContainer, row: Dictionary, shown: Dictionary, after: Diction
 		if int(_placed.get(id, 0)) <= 0:
 			back = maxf(back, absf(float(after[id]) - float(shown[id])))
 	PanelKit.plain_line(col, tr("The other regions give back up to %s: the nation's figure moves only with the money on its line.") % Num.f(back, 2), PanelKit.Tone.DIM)
+	RegisterLines.blocs(col, _state.player(), _loader, {"type": _type, "op": UK.OP_BUILD, "rows": rows()})
 
 
 ## The programmes the tabled finance bill already carries, with the day it divides.

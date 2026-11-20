@@ -39,6 +39,7 @@ flowchart LR
     w_finances["Books<br/>finances<br/>key B"]
     w_projects["Public Works<br/>projects<br/>key W"]
     w_register["Register<br/>register"]
+    w_programmes["Programmes<br/>programmes"]
   end
   subgraph d_economy["Economy"]
     direction TB
@@ -104,6 +105,7 @@ One row per `_windows.register()` call. *Opened by*: the sidebar (a domain's fir
 | Finances | Books | `finances` | B | `finances_panel.gd` | `finances_driver.gd` | sidebar; key B |
 | Finances | Public Works | `projects` | W | `projects_panel.gd` | `main.gd` | tab strip; key W; door in main |
 | Finances | Register | `register` |  | `register_panel.gd` | `regions_shell.gd` | tab strip; door in regions_shell |
+| Finances | Programmes | `programmes` |  | `register_follow.gd` | `regions_shell.gd` | tab strip |
 | Economy | Economy | `economy` | E | `economy_panel.gd` | `main.gd` | sidebar; key E |
 | Regions | Regions | `region` | T | `regions_shell.gd` | `main.gd` | sidebar; key T; door in region_panel |
 | Energy | Energy | `energy` | F | `energy_panel.gd` | `main.gd` | sidebar; key F; door in main |
