@@ -143,9 +143,12 @@ const TOTAL_PENDING := {
 ## cut (the Union line, the warning card, the empty tab said in fewer words): +18 on the register (the
 ## band's chip, the blocs a vote pleases, the Union line), the new Programmes tab's 15 (empty: its
 ## lede, one line, the Union's envelope), and the region warnings' inbox cards at month 12.
-## The right-click C, a stated rise 3157 -> 3178 (+21): the firm sheet's "Call <chief>" and "Show on the map" on the
+## The Sectors overview C (the author's "forme de l'economie"), a stated rise 3157 -> 3203 (+46, all on
+## the overview): the lead naming the largest and the slowest sector, the two chart titles, a verdict
+## chip per sector, and per card its two figure captions, "Biggest employers" and "Open <sector>".
+## The right-click C, a stated rise 3203 -> 3224 (+21): the firm sheet's "Call <chief>" and "Show on the map" on the
 ## three sector tabs, the verbs the retired plate carried.
-const TOTAL_SUM_CEILING := 3178
+const TOTAL_SUM_CEILING := 3224
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

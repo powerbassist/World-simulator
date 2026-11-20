@@ -13,6 +13,7 @@ tests=(
   tests/test_finance_sectors.gd
   tests/test_finance_of_which.gd
   tests/test_industry_tab.gd
+  tests/test_sectors_overview.gd
   tests/test_sectors_panel.gd
   tests/test_sectors_retro.gd
   tests/test_firm_sheet.gd
@@ -204,6 +205,7 @@ tests=(
   tests/test_finance_draft.gd
   tests/test_finance_editor.gd
   tests/test_finance_sheet.gd
+  tests/test_finance_tray.gd
   tests/test_finance_autumn_ui.gd
   tests/test_law_gate.gd
   tests/test_sectors.gd

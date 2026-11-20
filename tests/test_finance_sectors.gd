@@ -55,7 +55,7 @@ func _process(_delta: float) -> bool:
 			_check_drafted("hospitals", "prevention", 0.02)
 			_check_moves_alone_footer()
 			_check_forecast_carries(1, false)
-			_press(_panel._foot.get_node("Table"))
+			_press(_panel._foot.find_child("Table", true, false))
 		10:
 			_check_moved("hospitals", "prevention", 0.02)
 			if _panel._draft.has_moves():
@@ -69,7 +69,7 @@ func _process(_delta: float) -> bool:
 		14:
 			_press(_with_meta("move", "move"))
 		16:
-			_press(_panel._foot.get_node("Discard"))
+			_press(_panel._foot.find_child("Discard", true, false))
 		18:
 			_check_moved("hospitals", "prevention", 0.02)
 			if _panel._draft.has_moves():
@@ -218,7 +218,7 @@ func _check_refused() -> void:
 
 ## The footer with only a move drafted: the verb's word, and the sentence saying it applies now, with no vote.
 func _check_moves_alone_footer() -> void:
-	var table: Button = _panel._foot.get_node("Table")
+	var table: Button = _panel._foot.find_child("Table", true, false)
 	if not table.visible or table.text != Strings.t("Apply the moves"):
 		_fail("moves alone: the footer verb reads '%s' (visible %s), not 'Apply the moves'" % [table.text, table.visible])
 	var said: String = _panel._foot._text.text
@@ -226,14 +226,14 @@ func _check_moves_alone_footer() -> void:
 		_fail("moves alone: the footer does not say the move takes effect now (%s)" % said)
 	if not _panel._draft.is_empty() or _panel._draft.bill() != {}:
 		_fail("moves alone: the move leaked into the bill (%s)" % [_panel._draft.bill()])
-	if _panel._foot.get_node("Review").visible:
+	if _panel._foot.find_child("Review", true, false).visible:
 		_fail("moves alone: a bill to review is offered with no bill")
 
 
 ## Rows and a move: the bill's verb, and the extra line that says how many apply now and when the rest is voted.
 func _check_rows_and_moves_footer() -> void:
-	var table: Button = _panel._foot.get_node("Table")
-	if table.text != Strings.t("Table the changes"):
+	var table: Button = _panel._foot.find_child("Table", true, false)
+	if table.text != Strings.t("Table the bill"):
 		_fail("rows and a move: the footer verb reads '%s'" % table.text)
 	var said: String = _panel._foot._text.text
 	if not said.contains("share move applies now; the rest is voted on"):
@@ -269,7 +269,7 @@ func _check_a_refused_tabling_books_the_move() -> void:
 	_panel._paint_due = true  # the draft moved behind the page's back (no editor signal): ask for the paint
 	_panel._process(0.0)
 	var held: String = _panel._foot._text.text
-	if not (_panel._foot.get_node("Table") as Button).disabled or not held.contains("now; the rest is voted on"):
+	if not (_panel._foot.find_child("Table", true, false) as Button).disabled or not held.contains("now; the rest is voted on"):
 		_fail("a refusal with a move: the verb is live or the move's line is gone (%s)" % held)
 	_panel._on_table()
 	var after := Sectors.shares(ns, _main._loader, LINE)
@@ -310,8 +310,8 @@ func _check_a_tabled_bill_with_moves_only() -> void:
 	_panel._draft.add_move(LINE, "primary_care", "hospitals", 0.01)
 	_panel._process(0.0)
 	var said: String = _panel._foot._text.text
-	if (_panel._foot.get_node("Table") as Button).text != Strings.t("Apply the moves") or not said.contains("finance bill is before the Assembly".to_lower().left(0) + "A finance bill is before the Assembly"):
-		_fail("a bill at vote and a move: the footer reads '%s' / '%s'" % [(_panel._foot.get_node("Table") as Button).text, said])
+	if (_panel._foot.find_child("Table", true, false) as Button).text != Strings.t("Apply the moves") or not said.contains("finance bill is before the Assembly".to_lower().left(0) + "A finance bill is before the Assembly"):
+		_fail("a bill at vote and a move: the footer reads '%s' / '%s'" % [(_panel._foot.find_child("Table", true, false) as Button).text, said])
 	_panel._draft.revert()
 	ns.tabled_bill = {}
 
