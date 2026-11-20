@@ -121,6 +121,9 @@ func _ready() -> void:
 	_foot.withdraw_pressed.connect(_on_withdraw)
 	_foot.discard_pressed.connect(_on_discard)
 	_foot.review_pressed.connect(_open_sheet)
+	_foot.drop_pressed.connect(func(channel: String, key: String) -> void:
+		_draft.drop(channel, key)
+		_on_structure_changed())
 	# The bill's sheet lies over the page's right side (a PanelContainer stacks its children, and the sheet shrinks to the end).
 	_sheet = FinanceSheet.new()
 	add_child(_sheet)

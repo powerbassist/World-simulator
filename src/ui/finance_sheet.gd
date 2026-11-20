@@ -27,8 +27,6 @@ const FinanceFoot = preload("res://src/ui/finance_foot.gd")
 const Government = preload("res://src/sim/government.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
-const LedgerBox = preload("res://src/ui/ledger_box.gd")
-const TaxLibrary = preload("res://src/core/tax_library.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -209,38 +207,13 @@ func _row(list: Control, row: Dictionary) -> void:
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 10)
 	box.add_child(line)
-	var places := 1
-	var unit := Strings.t(" % of GDP")
-	var label := ""
-	# The autumn bill's two rows: a kind put in force (from nothing to its rate) and a kind abolished (its rate to nothing).
-	# Each is priced as a bill of its one row (FinanceBill.preview); neither names who is for and against.
+	# The autumn bill's two rows (a kind put in force, a kind abolished) name no one for and against.
 	var autumn_row: bool = channel == FinanceDraft.ABOLISH or bool(row.get("birth", false))
-	match channel:
-		FinanceDraft.SPENDING:
-			label = Labels.portfolio(key)
-		FinanceDraft.TAX, FinanceDraft.ABOLISH:
-			label = Strings.row_name("taxes", ns.tax_library[key])
-			places = TaxLibrary.step_decimals(ns, key)
-			unit = FinanceRows.unit_text(String(ns.tax_library[key]["unit"]))
-			if channel == FinanceDraft.ABOLISH:
-				label = Strings.t("Abolition of %s") % label
-			elif autumn_row:
-				label = Strings.t("Creation of %s") % label
-		_:
-			label = Strings.t("Income brackets")
-			places = 2
-			unit = ""
-	var name := PanelKit.plain_line(line, label, PanelKit.Tone.PLAIN)
+	var name := PanelKit.plain_line(line, FinanceRows.change_label(ns, row), PanelKit.Tone.PLAIN)
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# The figures are one line each: a wrapped "11 → 12 % of GDP" in a tight row is a column of single words.
-	PanelKit.plain_line(line, "%s → %s%s" % [LedgerBox.text(float(row["live"]), places), LedgerBox.text(float(row["draft"]), places), unit], PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
-	var gain: float
-	if channel == FinanceDraft.ABOLISH:
-		gain = _price.bill_balance_bn({FinanceBill.ABOLISH: [key]})
-	elif autumn_row:
-		gain = _price.bill_balance_bn({FinanceBill.CREATE: {key: row["draft"]}})
-	else:
-		gain = _price.balance_bn({channel: {key: row["draft"]}} if channel != FinanceDraft.BRACKETS else {channel: row["draft"]})
+	PanelKit.plain_line(line, FinanceRows.change_figures(ns, row), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
+	var gain: float = _price.row_balance_bn(row)
 	var effect := PanelKit.plain_line(line, EffectsStrip.money_text(gain), PanelKit.Tone.PLAIN)
 	effect.autowrap_mode = TextServer.AUTOWRAP_OFF
 	effect.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))

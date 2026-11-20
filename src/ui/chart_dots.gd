@@ -5,6 +5,7 @@ extends Control
 ## a ring is the value before, a filled dot in the accent the value after, joined by a line,
 ## for a row that moves; a row that does not is a small dim dot. Optional:
 ##   reference  one vertical hairline (the nation's figure) with its value under the axis;
+##   fixed      Vector2(lo, hi): the axis, whatever the values (the Finances tray's one 0-25 % scale);
 ##   band       Vector2(lo, hi) on the axis, shaded in the attention tone, and a warning
 ##              glyph (Material Symbols) on each row whose before lies inside it -- the tone
 ##              never alone.
@@ -29,6 +30,7 @@ const BAND_FILL := Color(0.890, 0.651, 0.227, 0.10)  ## UiTheme.WARN at 10 %: a 
 var _rows: Array = []
 var _reference := NAN
 var _band := Vector2(NAN, NAN)
+var _fixed := Vector2(NAN, NAN)
 var _places := 2
 var _warning: Texture2D
 
@@ -37,6 +39,7 @@ func setup(rows: Array, opts := {}) -> void:
 	_rows = rows
 	_reference = float(opts.get("reference", NAN))
 	_band = opts.get("band", Vector2(NAN, NAN))
+	_fixed = opts.get("fixed", Vector2(NAN, NAN))
 	_places = int(opts.get("places", 2))
 	_warning = Icon.load_icon("res://assets/icons/material/warning.svg", UiTheme.WARN, _fs()) if not is_nan(_band.x) else null
 	custom_minimum_size = Vector2(0.0, row_height() * (rows.size() + 1))
@@ -83,6 +86,8 @@ func _vw() -> float:
 ## The axis: every value drawn and the reference, with a margin so no mark sits on an edge.
 ## The band is clipped to it, never widens it.
 func _span() -> Vector2:
+	if not is_nan(_fixed.x):
+		return _fixed
 	var lo := INF
 	var hi := -INF
 	for r in _rows:

@@ -113,6 +113,20 @@ func whole(loader, draft, refused: bool) -> Dictionary:
 
 
 ## The state moved behind the page (a law, an event): both are due again.
+## The balance one drafted change books a year (finance_draft.gd's rows()), EUR bn, a gain positive: a kind abolished
+## or put in force is priced as a bill of its one row (FinanceBill.preview), any other as a pending of that row alone.
+func row_balance_bn(row: Dictionary) -> float:
+	var channel := String(row["channel"])
+	var key := String(row["key"])
+	if channel == "abolish":
+		return bill_balance_bn({FinanceBill.ABOLISH: [key]})
+	if bool(row.get("birth", false)):
+		return bill_balance_bn({FinanceBill.CREATE: {key: row["draft"]}})
+	if channel == "tax_progressivity":
+		return balance_bn({channel: row["draft"]})
+	return balance_bn({channel: {key: row["draft"]}})
+
+
 func reset() -> void:
 	_stamp = ""
 
