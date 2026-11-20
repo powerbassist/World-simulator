@@ -11,6 +11,7 @@ extends RefCounted
 ## (Companies.preview on a copy), the aid's words AidWords' (PR 3's reads). The 12-month
 ## change the picture staged is cut: the sim keeps no series per firm.
 
+const VerbBlock = preload("res://src/ui/verb_block.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Region = preload("res://src/core/region.gd")
@@ -62,7 +63,22 @@ static func build(panel, parent: Control, ns, company) -> void:
 			ClosureCard.build(file, state, loader, ns, row, panel._on_closure)
 
 	var verbs := PanelKit.section(parent, Strings.t("The State's verbs"))
+	VerbBlock.tag(verbs)  # a right click on the firm lights this block (the plate is gone)
 	IndustryVerbs.build(panel, verbs, ns, company)
 	var bills := PanelKit.buttons(verbs)
 	for bill in BillButton.ready_bills(state, ns, loader, String(company.id)):
 		bills.add_child(BillButton.make(loader, bill))
+	# What the right click's plate also offered: the call to the firm's chief and its place on the map.
+	var chief: String = loader.person_name(String(company.chief_id))
+	if chief != "":
+		_link(bills, Strings.t("Call %s") % chief, func() -> void: panel.call_requested.emit(String(company.chief_id)))
+	if city != null:
+		_link(bills, Strings.t("Show on the map"), func() -> void: panel.map_requested.emit(city.lonlat))
+
+
+static func _link(row: Control, text: String, call: Callable) -> void:
+	var press := PanelKit.sized(Button.new())
+	press.text = text
+	press.flat = true
+	press.pressed.connect(call)
+	row.add_child(press)

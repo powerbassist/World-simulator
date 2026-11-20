@@ -20,6 +20,8 @@ const Priorities = preload("res://src/ui/priorities.gd")
 const Rotation = preload("res://src/ui/priority_rotation.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const MusicBand = preload("res://src/ui/music_band.gd")
+const PriorityWords = preload("res://src/ui/priority_words.gd")
+const Strings = preload("res://src/ui/strings.gd")
 
 const PLAYABLE := ["DEU", "FRA", "GBR", "POL"]
 const MONTHS := 24
@@ -41,6 +43,7 @@ func _initialize() -> void:
 	_check_quiet_rotates()
 	_check_situation_and_band()
 	_check_unseen_kind_takes_line_three()
+	_check_finance_bill_named()
 	if _failures.is_empty():
 		print("test_priorities: all checks passed")
 	for f in _failures:
@@ -352,3 +355,12 @@ func _names(lines: Array) -> String:
 
 func _fail(message: String) -> void:
 	_failures.append(message)
+
+
+## The finance bill's vote line names the bill, never its register id (the rework pass's
+## frame today-books-tabled.png read "The vote on finance:24331").
+func _check_finance_bill_named() -> void:
+	var state = _new("FRA")
+	var title := PriorityWords.title({"kind": "bill", "subject": "finance:24331", "standing": false}, state, _loader)
+	if title.contains("finance:") or not title.contains(Strings.t("Finance bill")):
+		_fail("the finance bill's vote line reads '%s'" % title)

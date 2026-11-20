@@ -24,9 +24,10 @@ const Bills = preload("res://src/sim/bills.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const OrderSlot = preload("res://src/ui/order_slot.gd")
-const VerbPlate = preload("res://src/ui/verb_plate.gd")
 const Click = preload("res://tests/click.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const VerbBlock = preload("res://src/ui/verb_block.gd")
+const GameState = preload("res://src/core/game_state.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -88,9 +89,72 @@ func _process(_delta: float) -> bool:
 			_check_a_queued_law_shows_take_out()
 			_check_take_out_on_a_later_place()
 			_check_a_graded_law_queues_at_its_grade()
+			_right_click_with_the_slot_held()
+		24:
+			_key(KEY_ENTER)
+			_key(KEY_SPACE)
+		26:
+			_check_the_keys_pressed_no_verb()
+			_check_a_stale_press_moves_the_picked_bill()
+			_check_the_place_bounds()
+			_check_a_load_drops_the_pick()
+			_stage_a_tall_scroll()
+		28:
+			VerbBlock.light(_tall)
+		31:
+			_check_the_tall_scroll()
+		33:
 			_finish()
 			return true
 	return false
+
+
+## Pass 2 BLOCKERS 1+2 on #430: a right click lights a row's verbs and scrolls them in, it never focuses one --
+## with the slot held the first live verb is "Force (49.3)", so Enter adopted the law without a vote and Space
+## (ui_accept, also the pause key) pressed it.
+var _before_keys := {}
+
+
+func _right_click_with_the_slot_held() -> void:
+	_set_queue([])
+	var row: Button = null
+	for line in _panel()._laws._rows.get_children():
+		if String(line.get_meta("law_id", "")) == _ids[4]:
+			row = line.get_meta("pick")
+	if row == null:
+		_fail("no row for %s" % _ids[4])
+		return
+	_main._clock.paused = false
+	_before_keys = {"tabled": String(_ns().tabled_bill.get("law_id", "")), "queue": _ns().bill_queue.size(),
+		"proposed": [], "passed": _ns().passed_law_ids.duplicate()}
+	_panel().proposed.connect(func(_b, name_of, _r) -> void: _before_keys["proposed"].append(name_of))
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_RIGHT
+	event.pressed = true
+	row.gui_input.emit(event)
+	var focus = _main.get_viewport().gui_get_focus_owner()
+	if focus != null and _panel().is_ancestor_of(focus):
+		_fail("a right click gave the keyboard to '%s'" % (focus as Button).text if focus is Button else str(focus))
+
+
+func _key(keycode: Key) -> void:
+	for down in [true, false]:
+		var key := InputEventKey.new()
+		key.keycode = keycode
+		key.physical_keycode = keycode
+		key.pressed = down
+		root.push_input(key, true)
+
+
+func _check_the_keys_pressed_no_verb() -> void:
+	if not (_before_keys["proposed"] as Array).is_empty():
+		_fail("Enter or Space after a right click pressed a verb: %s" % [_before_keys["proposed"]])
+	if String(_ns().tabled_bill.get("law_id", "")) != String(_before_keys["tabled"]) or _ns().bill_queue.size() != int(_before_keys["queue"]):
+		_fail("Enter or Space after a right click changed the slot or the queue: %s / %s" % [_ns().tabled_bill, _ns().bill_queue])
+	if _ns().passed_law_ids != _before_keys["passed"]:
+		_fail("Enter or Space after a right click enacted a law")
+	if not _main._clock.paused:
+		_fail("Space after a right click did not pause the game")
 
 
 func _panel():
@@ -216,36 +280,202 @@ func _check_the_slot_takes_no_drop() -> void:
 		_fail("the month's slot takes a dropped bill (a bill reaches it by the close)")
 
 
+## The rework pass's C: no plate. A right click on a queued place docks its verbs under the four
+## places, a greyed one with its reason in words; it takes no focus (a mouse gesture).
 func _check_the_plate_moves_and_takes_out() -> void:
 	_set_queue([_ids[1], _ids[2]])
 	_paper().places[1].menu_requested.emit(0)
-	var plate = _plate()
-	if plate == null or not plate.visible:
-		_fail("a right click on a queued place opened no plate")
-		return
-	var items: Array = _plate_buttons(plate)
+	var items: Array = _block_buttons()
 	if items.size() != 3 or not (items[0] as Button).disabled or (items[1] as Button).disabled:
-		_fail("the plate for the first of two: %s (Move earlier should be down, Move later up)" % [items.map(func(b): return "%s/%s" % [b.text, b.disabled])])
+		_fail("the block for the first of two: %s (Move earlier should be down, Move later up)" % [items.map(func(b): return "%s/%s" % [b.text, b.disabled])])
 		return
+	if not _text_of(_block()).contains(tr("It is already first in the queue.")):
+		_fail("the greyed Move earlier does not say why in words: '%s'" % _text_of(_block()))
+	var held = _main.get_viewport().gui_get_focus_owner()
+	if held != null and _paper().is_ancestor_of(held):
+		_fail("the right click gave the keyboard to %s" % held)
+	# The keyboard path: on Move later, a press there rebuilds the block and hands the focus back to the same verb.
+	items[1].grab_focus()
+	if _main.find_child("VerbPlate", true, false) != null:
+		_fail("a plate still exists")
 	items[1].pressed.emit()
 	_panel()._process(0.0)
 	if String(_ns().bill_queue[0]["law_id"]) != _ids[2]:
 		_fail("Move later did not swap the queue: %s" % [_ns().bill_queue])
-	if plate.visible:
-		_fail("the plate stays open after a press")
+	var after = _main.get_viewport().gui_get_focus_owner()
+	if _block() == null or not (after is Button) or not _block().is_ancestor_of(after):
+		_fail("after Move later the tab's refresh let the keyboard out of the docked verbs (focus on %s)" % after)
+	if _paper().picked_index() != 1:
+		_fail("the docked verbs did not follow their bill to place %d (picked %d)" % [1, _paper().picked_index()])
+	_check_the_keyboard_stays_on_its_verb()
+	_check_a_drag_picks_nothing()
+	_check_the_pick_follows_its_bill_through_a_close()
+	_check_a_lone_bill_says_why_once()
+	_set_queue([_ids[2], _ids[1]])
 	_paper().places[1].menu_requested.emit(0)
-	_plate_buttons(_plate())[2].pressed.emit()  # Take out of the queue
+	_block_buttons()[2].pressed.emit()  # Take out of the queue
 	_panel()._process(0.0)
 	if _ns().bill_queue.size() != 1 or String(_ns().bill_queue[0]["law_id"]) != _ids[1]:
 		_fail("Take out did not remove the first place: %s" % [_ns().bill_queue])
 
 
-func _plate():
-	return VerbPlate.of(_panel())
+## Pass 2 T5: a refresh hands the keyboard back to the verb it was on, not to the block's first live one.
+func _check_the_keyboard_stays_on_its_verb() -> void:
+	_set_queue([_ids[1], _ids[2], _ids[3]])
+	_paper().places[1].menu_requested.emit(0)
+	var later: Button = _block_buttons()[1]
+	later.grab_focus()
+	later.pressed.emit()  # the bill moves to place 2 of 3: Move earlier and Move later both live
+	_panel()._process(0.0)
+	var after = _main.get_viewport().gui_get_focus_owner()
+	if not (after is Button) or (after as Button).text != later.text:
+		_fail("after Move later the keyboard landed on '%s', not Move later" % ((after as Button).text if after is Button else str(after)))
+	# Pass 1: with the keyboard on a docked verb, a right click on another bill hands it nothing.
+	_paper().places[3].menu_requested.emit(2)
+	var held = _main.get_viewport().gui_get_focus_owner()
+	if held != null and _paper().is_ancestor_of(held):
+		_fail("a right click after keyboard use gave the new bill's '%s' the keyboard" % ((held as Button).text if held is Button else str(held)))
 
 
-func _plate_buttons(plate: Node) -> Array:
-	return plate.find_children("*", "Button", true, false)
+## Pass 2 T3: a drag moves a bill, it does not open the verbs (a right click does).
+func _check_a_drag_picks_nothing() -> void:
+	_paper()._picked = ""
+	_set_queue([_ids[1], _ids[2]])
+	_paper().places[1].moved.emit(0, 1)
+	_panel()._process(0.0)
+	if _block() != null:
+		_fail("a drag opened the docked verbs without a right click")
+	# Mid-pick, a drag of another bill leaves the verbs on the picked one.
+	_paper().places[1].menu_requested.emit(0)  # picks the bill now first
+	var picked_name := _name_of(String(_ns().bill_queue[0]["law_id"]))
+	_paper().places[2].moved.emit(1, 0)
+	_panel()._process(0.0)
+	if not _text_of(_block()).contains(picked_name):
+		_fail("a drag of another bill switched the verbs off %s: '%s'" % [picked_name, _text_of(_block())])
+
+
+## Pass 2 T4: the pick is the bill, not its place. The month's close promotes the queue; Take out still takes out
+## the picked bill.
+func _check_the_pick_follows_its_bill_through_a_close() -> void:
+	_set_queue([_ids[1], _ids[2], _ids[3]])
+	_paper().places[2].menu_requested.emit(1)  # the second queued bill
+	_ns().bill_queue.pop_front()  # the close: the first queued bill went to the slot
+	_refresh()
+	var take_out: Button = null
+	for b in _block_buttons():
+		if (b as Button).text == tr("Take out of the queue"):
+			take_out = b
+	if take_out == null:
+		_fail("after the close the picked bill's verbs are gone")
+		return
+	take_out.pressed.emit()
+	_panel()._process(0.0)
+	var left: Array = _ns().bill_queue.map(func(e): return String(e["law_id"]))
+	if left != [_ids[3]]:
+		_fail("after the close Take out left %s, wanted only %s (the picked bill %s out)" % [left, _ids[3], _ids[2]])
+
+
+## Pass 2 T8: a bill alone in the queue has one reason, not "already first ... already last".
+func _check_a_lone_bill_says_why_once() -> void:
+	_set_queue([_ids[1]])
+	_paper().places[1].menu_requested.emit(0)
+	var text := _text_of(_block())
+	if text.contains(tr("It is already first in the queue.")) and text.contains(tr("It is already last in the queue.")):
+		_fail("a lone bill's reasons repeat: '%s'" % text)
+
+
+## QA T2 on #430: a verb built before the queue changed still moves ITS bill (a close or a take-out between the
+## build and the press).
+func _check_a_stale_press_moves_the_picked_bill() -> void:
+	_set_queue([_ids[1], _ids[2], _ids[3]])
+	_paper().places[2].menu_requested.emit(1)  # picks _ids[2]
+	var earlier: Button = _block_buttons()[0]
+	BillQueue.remove(_main._state, 0)  # no refresh: the block still stands as built
+	earlier.pressed.emit()  # the picked bill is first now: nothing to move
+	var order: Array = _ns().bill_queue.map(func(e): return String(e["law_id"]))
+	if order != [_ids[2], _ids[3]]:
+		_fail("a stale Move earlier moved another bill: %s, wanted %s" % [order, [_ids[2], _ids[3]]])
+	_refresh()
+
+
+## QA T5: Move earlier is live from the second place on, Move later is down at the last.
+func _check_the_place_bounds() -> void:
+	_set_queue([_ids[1], _ids[2], _ids[3]])
+	_paper().places[2].menu_requested.emit(1)
+	if (_block_buttons()[0] as Button).disabled:
+		_fail("Move earlier is down at the second place")
+	_paper().places[3].menu_requested.emit(2)
+	if not (_block_buttons()[1] as Button).disabled:
+		_fail("Move later is live at the last place")
+
+
+## QA T3: a load (another state) forgets the pick, even when the new game queues the same bill.
+func _check_a_load_drops_the_pick() -> void:
+	_set_queue([_ids[1], _ids[2]])
+	_paper().places[1].menu_requested.emit(0)
+	var other = GameState.new_game(_main._loader, "FRA")
+	other.year = _main._state.year  # main sets the clock's date on its own state; a bare one starts at month 0
+	other.month = _main._state.month
+	BillQueue.add(other, {"law_id": _ids[1]})
+	_paper().refresh(other, _main._loader, _panel()._find_law)
+	if _paper().picked_index() >= 0:
+		_fail("a load kept the discarded game's pick")
+	_paper().refresh(_main._state, _main._loader, _panel()._find_law)
+
+
+## QA T1 + T6: lighting scrolls the visible block into view, never a hidden one tagged before it.
+var _tall: VBoxContainer
+var _tall_scroll: ScrollContainer
+var _shown_block: Control
+
+
+func _stage_a_tall_scroll() -> void:
+	_tall_scroll = ScrollContainer.new()
+	_tall_scroll.size = Vector2(300, 200)
+	_tall_scroll.position = Vector2.ZERO
+	root.add_child(_tall_scroll)
+	_tall = VBoxContainer.new()
+	_tall_scroll.add_child(_tall)
+	var hidden := Control.new()
+	hidden.custom_minimum_size = Vector2(10, 40)
+	hidden.visible = false
+	VerbBlock.tag(hidden)
+	_tall.add_child(hidden)
+	var pad := Control.new()
+	pad.custom_minimum_size = Vector2(10, 1000)
+	_tall.add_child(pad)
+	_shown_block = Control.new()
+	_shown_block.custom_minimum_size = Vector2(10, 40)
+	VerbBlock.tag(_shown_block)
+	_tall.add_child(_shown_block)
+
+
+func _check_the_tall_scroll() -> void:
+	var view := _tall_scroll.get_global_rect().grow(1.0)
+	if not view.encloses(_shown_block.get_global_rect()):
+		_fail("lighting did not bring the visible block into view (scrolled %d)" % _tall_scroll.scroll_vertical)
+	_tall_scroll.queue_free()
+
+
+## The paper's docked verb block, null while no place is picked.
+func _block():
+	for node in _paper().find_children("*", "", true, false):
+		if node.has_meta("verb_block") and (node as Control).is_visible_in_tree():
+			return node
+	return null
+
+
+func _block_buttons() -> Array:
+	var block = _block()
+	return [] if block == null else block.find_children("*", "Button", true, false)
+
+
+func _text_of(node) -> String:
+	var out := ""
+	if node != null:
+		for label in node.find_children("*", "Label", true, false):
+			out += (label as Label).text + " "
+	return out
 
 
 ## The detail's button called `name` (a node name tests find them by).
@@ -286,38 +516,41 @@ func _check_the_plates_propose_divides() -> void:
 	event.button_index = MOUSE_BUTTON_RIGHT
 	event.pressed = true
 	law_row.gui_input.emit(event)
-	var plate = _plate()
-	var press: Array = _plate_buttons(plate).filter(func(b): return b.text.begins_with("Propose for ")) if plate != null else []
-	if press.is_empty() or press[0].disabled:
-		_fail("with the slot empty the plate has no live Propose")
+	# The rework pass's C: the right click lit the sheet's verbs; its Propose divides the row's law.
+	var press: Array = _panel()._laws._detail.find_children("Propose", "Button", true, false)
+	if press.is_empty() or press[0].disabled or not press[0].is_visible_in_tree():
+		_fail("with the slot empty the right click does not light a live Propose")
 		return
 	press[0].pressed.emit()
 	if proposed != [law_name]:
-		_fail("the plate's Propose divided %s, not the row's law '%s'" % [proposed, law_name])
+		_fail("the lit Propose divided %s, not the row's law '%s'" % [proposed, law_name])
 	if not briefed.is_empty():
-		_fail("the plate's Propose asked for the briefing popup")
+		_fail("the lit Propose asked for the briefing popup")
 	# The staging below starts from an empty slot.
 	_ns().tabled_bill = {}
 	_ns().last_law_result = {}
 
 
 func _check_the_right_click_is_the_same_table() -> void:
-	var row: Button = _panel()._laws._rows.get_children()[0].get_meta("pick")
+	_main.get_viewport().gui_release_focus()  # the keyboard steps above left a verb focused
+	var line: Node = _panel()._laws._rows.get_children()[0]
+	var row: Button = line.get_meta("pick")
 	var event := InputEventMouseButton.new()
 	event.button_index = MOUSE_BUTTON_RIGHT
 	event.pressed = true
 	row.gui_input.emit(event)
-	var plate = _plate()
-	if plate == null or not plate.visible:
-		_fail("a right click on a law's row opened no plate")
-		return
-	var texts: Array = _plate_buttons(plate).map(func(b): return b.text)
-	# One verb (pass 2 T2): with a bill in the slot the queue's press is the proposal, alone.
-	var proposes: Array = texts.filter(func(t): return String(t).begins_with("Propose"))
-	if proposes.size() != 1 or not String(proposes[0]).begins_with("Propose for ") or not texts.has("Open the sheet"):
-		_fail("the plate offers %s; wanted one 'Propose for <month>' and Open the sheet" % [texts])
-	plate.hide()
-
+	# The rework pass's C: the row is selected and its sheet's verb block lit (on screen, no focus).
+	if _panel()._laws.selected_id() != String(line.get_meta("law_id")):
+		_fail("a right click did not select the row's law (selected %s)" % _panel()._laws.selected_id())
+	var focus = _main.get_viewport().gui_get_focus_owner()
+	var block = null
+	for node in _panel()._laws._detail.find_children("*", "", true, false):
+		if node.has_meta("verb_block"):
+			block = node
+	if block == null or not (block as Control).is_visible_in_tree():
+		_fail("a right click on a law's row did not light the sheet's verbs")
+	if focus != null and _panel().is_ancestor_of(focus):
+		_fail("a right click on a law's row gave the keyboard to %s" % focus)
 
 func _check_a_real_press_queued_it() -> void:
 	var ids: Array = _ns().bill_queue.map(func(e): return String(e["law_id"]))
@@ -359,7 +592,7 @@ func _check_a_queued_law_shows_take_out() -> void:
 func _check_take_out_on_a_later_place() -> void:
 	_set_queue([_ids[1], _ids[2], _ids[3]])
 	_paper().places[2].menu_requested.emit(1)
-	_plate_buttons(_plate())[2].pressed.emit()  # Take out of the queue
+	_block_buttons()[2].pressed.emit()  # Take out of the queue
 	_panel()._process(0.0)
 	var order := []
 	for entry in _ns().bill_queue:

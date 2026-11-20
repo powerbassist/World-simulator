@@ -64,9 +64,11 @@ const PENDING := {}
 ## Rework 2 S3: the Agenda's 400 left with its tab. Its offer is the Folder's programme file now (the
 ## picker's 28 names and one entry's text, measured 276): that page alone answers to PROGRAMME_FILE_TOTAL,
 ## every other Folder page to the Folder's own 95 (#405 pass 2 T15).
+## The right-click C (the plate retired): a firm's sheet carries the plate's two other verbs, "Call <chief>" and
+## "Show on the map", a stated +7 on each sector tab (122 -> 129, 148 -> 155, 135 -> 142).
 const PROGRAMME_FILE_TOTAL := 300
 const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
-	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135,
+	"companies": 145, "sector_agriculture": 129, "sector_industry": 155, "sector_services": 142,
 	"overview": 170, "register": 137, "programmes": 15}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
@@ -141,9 +143,14 @@ const TOTAL_PENDING := {
 ## cut (the Union line, the warning card, the empty tab said in fewer words): +18 on the register (the
 ## band's chip, the blocs a vote pleases, the Union line), the new Programmes tab's 15 (empty: its
 ## lede, one line, the Union's envelope), and the region warnings' inbox cards at month 12.
+## The Sectors overview C (the author's "forme de l'economie"), a stated rise 3157 -> 3203 (+46, all on
+## the overview): the lead naming the largest and the slowest sector, the two chart titles, a verdict
+## chip per sector, and per card its two figure captions, "Biggest employers" and "Open <sector>".
+## The right-click C, a stated rise 3203 -> 3224 (+21): the firm sheet's "Call <chief>" and "Show on the map" on the
+## three sector tabs, the verbs the retired plate carried.
 ## #431 pass 2 (TAKE 7, R3 back): the asker's party beside each "Book here" in the Diary's day
-## list, as the grid's chips said it on their hover before they left: a stated rise 3157 -> 3167.
-const TOTAL_SUM_CEILING := 3167
+## list, as the grid's chips said it on their hover before they left: a stated rise 3224 -> 3234.
+const TOTAL_SUM_CEILING := 3234
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

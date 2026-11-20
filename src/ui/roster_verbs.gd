@@ -1,8 +1,8 @@
 extends RefCounted
 
-## The People roster's verbs -- rework 1. One table of items per row, read by both the
-## strip under the focused row and the right click's plate (verb_plate.gd), so the two
-## cannot offer different verbs. An item is {id, text, enabled, reason, call}: a verb the
+## The People roster's verbs -- rework 1. One table of items per row, read by the strip
+## under the focused row; a right click on a line picks it and lights that strip (the rework
+## pass's C retired the plate, verb_block.gd). An item is {id, text, enabled, reason, call}: a verb the
 ## sim would refuse stays on, greyed, with the sim's own reason (the brief: "no verb
 ## without its refusal reason before the press").
 ##
@@ -87,6 +87,7 @@ static func strip(parent: Control, items: Array, indent: float) -> Control:
 	var box := HBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	box.set_meta("strip", true)
+	box.set_meta("verb_block", true)  # VerbBlock.META: a right click on the line lights this strip
 	parent.add_child(box)
 	var pad := Control.new()
 	pad.custom_minimum_size.x = indent
