@@ -122,6 +122,7 @@ func setup(state, loader) -> void:
 	# card stays: it sits on the screen stack once and is re-armed by each ask (CompanyVerb.ask).
 	_good_filter = ""
 	_firm_id = ""
+	_light = false
 	_focus_verb = ""
 	_last_refusal = ""
 	_prog_pick = -1
@@ -154,7 +155,10 @@ func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
+	# Out of the tree at once: freed only at the frame's end, the old sheet doubled the content a lit block's scroll
+	# measured (pass 2 T6).
 	for child in _body.get_children() + _sheet.get_children():
+		child.get_parent().remove_child(child)
 		child.queue_free()
 	_head(ns)
 	_needs(ns)

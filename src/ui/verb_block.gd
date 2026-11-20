@@ -60,7 +60,7 @@ static func key_of(button: Button) -> String:
 
 static func _block(root: Node) -> Control:
 	for node in root.find_children("*", "", true, false):
-		if node.has_meta(META) and (node as Control).is_visible_in_tree() and not _dying(node, root):
+		if node.has_meta(META) and (node as Control).is_visible_in_tree():
 			return node as Control
 	return null
 
@@ -70,12 +70,3 @@ static func _scroll_to(scroll: ScrollContainer, block: Control) -> void:
 	if is_instance_valid(scroll) and is_instance_valid(block) and scroll.is_ancestor_of(block):
 		scroll.ensure_control_visible(block)
 
-
-## Whether `node` or an ancestor up to `root` is queued for deletion: a panel that rebuilds with queue_free keeps the
-## old block in the tree until the frame ends, and lighting it would focus a verb about to be freed.
-static func _dying(node: Node, root: Node) -> bool:
-	while node != null and node != root:
-		if node.is_queued_for_deletion():
-			return true
-		node = node.get_parent()
-	return false

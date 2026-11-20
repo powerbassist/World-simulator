@@ -62,11 +62,23 @@ func _process(_delta: float) -> bool:
 		12:
 			_check_tabled()
 			_check_typed_box_snaps()
-			_check_menu()
 		14:
+			_right_click_major()
+			# T6: a rebuild takes the old sheet out at once; left in the tree to the frame's end it doubled the
+			# content the deferred scroll measured, and the lit block landed off its place.
+			_panel._refresh()
+			for child in _panel._sheet.get_children() + _panel._body.get_children():
+				if child.is_queued_for_deletion():
+					_fail("a rebuild left the old %s in the sheet's tree" % child)
+					break
+		16:
+			_check_lit_block_on_screen()
+			_check_menu()
+			_check_a_load_forgets_the_light()
+		17:
 			# The scene goes a frame before the quit: its text shapes are freed, not leaked.
 			_main.queue_free()
-		16:
+		19:
 			_finish()
 			return true
 	return false
@@ -218,6 +230,41 @@ func _check_typed_box_snaps() -> void:
 	_fail("no typed box on the programme row")
 
 
+## Pass 2 T6+9: a frame after a right click, the lit block is inside its scroll's view (the old sheet, freed late,
+## offset it).
+func _check_lit_block_on_screen() -> void:
+	var block: Control = null
+	for node in _panel._sheet.find_children("*", "", true, false):
+		if node.has_meta("verb_block") and (node as Control).is_visible_in_tree():
+			block = node
+	if block == null:
+		_fail("no lit block a frame after the right click")
+		return
+	var scroll: Control = _panel._sheet.get_parent().get_parent()
+	if not scroll.get_global_rect().grow(1.0).encloses(block.get_global_rect()):
+		_fail("the lit block %s is off its scroll's view %s" % [block.get_global_rect(), scroll.get_global_rect()])
+
+
+func _right_click_major() -> void:
+	(_panel._sheet.get_parent().get_parent() as ScrollContainer).scroll_vertical = 0
+	for button in _panel.find_children("*", "Button", true, false):
+		if String(button.get_meta("firm", "")) == String(_major.id):
+			var click := InputEventMouseButton.new()
+			click.button_index = MOUSE_BUTTON_RIGHT
+			click.pressed = true
+			button.gui_input.emit(click)
+			return
+	_fail("no major's name to right-click")
+
+
+## Pass 2 T7: a load forgets a light the discarded game asked for.
+func _check_a_load_forgets_the_light() -> void:
+	_panel._light = true
+	_panel.setup(_main._state, _main._loader)
+	if _panel._light:
+		_fail("a load kept the discarded game's light")
+
+
 func _check_menu() -> void:
 	# The rework pass's C: a right click on a major's NAME selects it and lights the sheet's verbs.
 	_panel._firm_id = ""
@@ -246,8 +293,7 @@ func _check_menu() -> void:
 	var texts := []
 	for b in block.find_children("*", "Button", true, false):
 		texts.append((b as Button).text)
-	var joined := "
-".join(texts)
+	var joined := " | ".join(texts)
 	if not joined.contains(_main._loader.person_name(String(_major.chief_id))):
 		_fail("the sheet's verbs do not offer to call the chief: %s" % [texts])
 	if not joined.contains(_main.tr("Show on the map")):
