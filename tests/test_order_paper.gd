@@ -87,9 +87,63 @@ func _process(_delta: float) -> bool:
 			_check_a_queued_law_shows_take_out()
 			_check_take_out_on_a_later_place()
 			_check_a_graded_law_queues_at_its_grade()
+			_right_click_with_the_slot_held()
+		24:
+			_key(KEY_ENTER)
+			_key(KEY_SPACE)
+		26:
+			_check_the_keys_pressed_no_verb()
 			_finish()
 			return true
 	return false
+
+
+## Pass 2 BLOCKERS 1+2 on #430: a right click lights a row's verbs and scrolls them in, it never focuses one --
+## with the slot held the first live verb is "Force (49.3)", so Enter adopted the law without a vote and Space
+## (ui_accept, also the pause key) pressed it.
+var _before_keys := {}
+
+
+func _right_click_with_the_slot_held() -> void:
+	_set_queue([])
+	var row: Button = null
+	for line in _panel()._laws._rows.get_children():
+		if String(line.get_meta("law_id", "")) == _ids[4]:
+			row = line.get_meta("pick")
+	if row == null:
+		_fail("no row for %s" % _ids[4])
+		return
+	_main._clock.paused = false
+	_before_keys = {"tabled": String(_ns().tabled_bill.get("law_id", "")), "queue": _ns().bill_queue.size(),
+		"proposed": [], "passed": _ns().passed_law_ids.duplicate()}
+	_panel().proposed.connect(func(_b, name_of, _r) -> void: _before_keys["proposed"].append(name_of))
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_RIGHT
+	event.pressed = true
+	row.gui_input.emit(event)
+	var focus = _main.get_viewport().gui_get_focus_owner()
+	if focus != null and _panel().is_ancestor_of(focus):
+		_fail("a right click gave the keyboard to '%s'" % (focus as Button).text if focus is Button else str(focus))
+
+
+func _key(keycode: Key) -> void:
+	for down in [true, false]:
+		var key := InputEventKey.new()
+		key.keycode = keycode
+		key.physical_keycode = keycode
+		key.pressed = down
+		root.push_input(key, true)
+
+
+func _check_the_keys_pressed_no_verb() -> void:
+	if not (_before_keys["proposed"] as Array).is_empty():
+		_fail("Enter or Space after a right click pressed a verb: %s" % [_before_keys["proposed"]])
+	if String(_ns().tabled_bill.get("law_id", "")) != String(_before_keys["tabled"]) or _ns().bill_queue.size() != int(_before_keys["queue"]):
+		_fail("Enter or Space after a right click changed the slot or the queue: %s / %s" % [_ns().tabled_bill, _ns().bill_queue])
+	if _ns().passed_law_ids != _before_keys["passed"]:
+		_fail("Enter or Space after a right click enacted a law")
+	if not _main._clock.paused:
+		_fail("Space after a right click did not pause the game")
 
 
 func _panel():
@@ -216,7 +270,7 @@ func _check_the_slot_takes_no_drop() -> void:
 
 
 ## The rework pass's C: no plate. A right click on a queued place docks its verbs under the four
-## places, a greyed one with its reason in words, and the first live one takes the focus.
+## places, a greyed one with its reason in words; it takes no focus (a mouse gesture).
 func _check_the_plate_moves_and_takes_out() -> void:
 	_set_queue([_ids[1], _ids[2]])
 	_paper().places[1].menu_requested.emit(0)
@@ -226,8 +280,11 @@ func _check_the_plate_moves_and_takes_out() -> void:
 		return
 	if not _text_of(_block()).contains(tr("It is already first in the queue.")):
 		_fail("the greyed Move earlier does not say why in words: '%s'" % _text_of(_block()))
-	if _main.get_viewport().gui_get_focus_owner() != items[1]:
-		_fail("the right click did not light the block (focus on %s)" % _main.get_viewport().gui_get_focus_owner())
+	var held = _main.get_viewport().gui_get_focus_owner()
+	if held != null and _paper().is_ancestor_of(held):
+		_fail("the right click gave the keyboard to %s" % held)
+	# The keyboard path: on Move later, a press there rebuilds the block and hands the focus back to the same verb.
+	items[1].grab_focus()
 	if _main.find_child("VerbPlate", true, false) != null:
 		_fail("a plate still exists")
 	items[1].pressed.emit()
@@ -235,15 +292,30 @@ func _check_the_plate_moves_and_takes_out() -> void:
 	if String(_ns().bill_queue[0]["law_id"]) != _ids[2]:
 		_fail("Move later did not swap the queue: %s" % [_ns().bill_queue])
 	var after = _main.get_viewport().gui_get_focus_owner()
-	if _block() == null or after == null or not _block().is_ancestor_of(after):
-		_fail("after Move later the tab's refresh left the docked verbs unlit (focus on %s)" % after)
+	if _block() == null or not (after is Button) or not _block().is_ancestor_of(after):
+		_fail("after Move later the tab's refresh let the keyboard out of the docked verbs (focus on %s)" % after)
 	if _paper()._picked != 1:
 		_fail("the docked verbs did not follow their bill to place %d (picked %d)" % [1, _paper()._picked])
+	_check_the_keyboard_stays_on_its_verb()
+	_set_queue([_ids[2], _ids[1]])
 	_paper().places[1].menu_requested.emit(0)
 	_block_buttons()[2].pressed.emit()  # Take out of the queue
 	_panel()._process(0.0)
 	if _ns().bill_queue.size() != 1 or String(_ns().bill_queue[0]["law_id"]) != _ids[1]:
 		_fail("Take out did not remove the first place: %s" % [_ns().bill_queue])
+
+
+## Pass 2 T5: a refresh hands the keyboard back to the verb it was on, not to the block's first live one.
+func _check_the_keyboard_stays_on_its_verb() -> void:
+	_set_queue([_ids[1], _ids[2], _ids[3]])
+	_paper().places[1].menu_requested.emit(0)
+	var later: Button = _block_buttons()[1]
+	later.grab_focus()
+	later.pressed.emit()  # the bill moves to place 2 of 3: Move earlier and Move later both live
+	_panel()._process(0.0)
+	var after = _main.get_viewport().gui_get_focus_owner()
+	if not (after is Button) or (after as Button).text != later.text:
+		_fail("after Move later the keyboard landed on '%s', not Move later" % ((after as Button).text if after is Button else str(after)))
 
 
 ## The paper's docked verb block, null while no place is picked.
@@ -307,7 +379,7 @@ func _check_the_plates_propose_divides() -> void:
 	law_row.gui_input.emit(event)
 	# The rework pass's C: the right click lit the sheet's verbs; its Propose divides the row's law.
 	var press: Array = _panel()._laws._detail.find_children("Propose", "Button", true, false)
-	if press.is_empty() or press[0].disabled or _main.get_viewport().gui_get_focus_owner() != press[0]:
+	if press.is_empty() or press[0].disabled or not press[0].is_visible_in_tree():
 		_fail("with the slot empty the right click does not light a live Propose")
 		return
 	press[0].pressed.emit()
@@ -327,7 +399,7 @@ func _check_the_right_click_is_the_same_table() -> void:
 	event.button_index = MOUSE_BUTTON_RIGHT
 	event.pressed = true
 	row.gui_input.emit(event)
-	# The rework pass's C: the row is selected and its sheet's verb block lit (focus on its first live verb).
+	# The rework pass's C: the row is selected and its sheet's verb block lit (on screen, no focus).
 	if _panel()._laws.selected_id() != String(line.get_meta("law_id")):
 		_fail("a right click did not select the row's law (selected %s)" % _panel()._laws.selected_id())
 	var focus = _main.get_viewport().gui_get_focus_owner()
@@ -335,8 +407,10 @@ func _check_the_right_click_is_the_same_table() -> void:
 	for node in _panel()._laws._detail.find_children("*", "", true, false):
 		if node.has_meta("verb_block"):
 			block = node
-	if block == null or focus == null or not block.is_ancestor_of(focus):
-		_fail("a right click on a law's row did not light the sheet's verbs (focus on %s)" % focus)
+	if block == null or not (block as Control).is_visible_in_tree():
+		_fail("a right click on a law's row did not light the sheet's verbs")
+	if focus != null and _panel().is_ancestor_of(focus):
+		_fail("a right click on a law's row gave the keyboard to %s" % focus)
 
 func _check_a_real_press_queued_it() -> void:
 	var ids: Array = _ns().bill_queue.map(func(e): return String(e["law_id"]))

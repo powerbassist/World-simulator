@@ -252,7 +252,7 @@ func _people_row() -> Control:
 	return null
 
 
-## The rework pass's C: the right click picked the line and lit its verbs (the strip under it): press its Call.
+## The rework pass's C: the right click picked the line and lit its verbs (the strip under it, no focus): press its Call.
 func _press_plate_call() -> void:
 	var people = _main._people_panel
 	var focus = _main.get_viewport().gui_get_focus_owner()
@@ -260,9 +260,11 @@ func _press_plate_call() -> void:
 	for node in people.find_children("*", "", true, false):
 		if node.has_meta("verb_block") and (node as Control).is_visible_in_tree():
 			strip = node
-	if strip == null or focus == null or not strip.is_ancestor_of(focus):
-		_fail("a right click on a person in People did not light its verbs (focus on %s)" % focus)
+	if strip == null:
+		_fail("a right click on a person in People did not light its verbs")
 		return
+	if focus != null and people.is_ancestor_of(focus):
+		_fail("a right click on a person in People gave the keyboard to %s" % focus)
 	for button in strip.find_children("*", "Button", true, false):
 		if (button as Button).text.begins_with(Strings.t("Call: no day, worse odds").get_slice(":", 0)):
 			(button as Button).pressed.emit()

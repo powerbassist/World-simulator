@@ -241,8 +241,8 @@ func _check_menu() -> void:
 		_fail("the firm's sheet has no verb block")
 		return
 	var focus = _panel.get_viewport().gui_get_focus_owner()
-	if focus == null or not block.is_ancestor_of(focus):
-		_fail("the rebuilt sheet's verbs are not lit (focus on %s)" % focus)
+	if focus != null and _panel.is_ancestor_of(focus):
+		_fail("a right click on a firm gave the keyboard to %s" % focus)
 	var texts := []
 	for b in block.find_children("*", "Button", true, false):
 		texts.append((b as Button).text)

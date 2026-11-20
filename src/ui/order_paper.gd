@@ -57,7 +57,7 @@ func refresh(state, loader, find_law: Callable) -> void:
 		_picked = -1  # another game (a load): its queue is not the one the place was picked in
 	# The tab's refresh rebuilds the block; a verb the keyboard was on is lit again on the rebuilt one.
 	var focus: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
-	var relight: bool = focus != null and _verbs.is_ancestor_of(focus)
+	var relight := VerbBlock.key_of(focus) if focus is Button and _verbs.is_ancestor_of(focus) else ""
 	_state = state
 	_loader = loader
 	_find_law = find_law
@@ -73,8 +73,8 @@ func refresh(state, loader, find_law: Callable) -> void:
 		_place(i, "%d · %s" % [i + 2, BillVerbs.month_name(state, i).to_upper()], _date_text(BillVerbs.division(state, i)),
 			_name_of(entry) if held else "", held)
 	_build_verbs(ns)
-	if relight:
-		VerbBlock.light(self)
+	if relight != "":
+		VerbBlock.refocus(self, relight)
 
 
 func _place(i: int, title: String, date: String, name_text: String, handle: bool) -> void:
