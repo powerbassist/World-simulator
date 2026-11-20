@@ -23,6 +23,7 @@ const Closures = preload("res://src/sim/closures.gd")
 const SectorsShell = preload("res://src/ui/sectors_shell.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const ChartStyle = preload("res://src/ui/chart_style.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -229,6 +230,7 @@ func _stage_a_busy_world() -> void:
 	var state = _main._state
 	var ns = state.player()
 	ns.regulation_burden["industry"] = 0.3
+	ns.regulation_burden["agriculture"] = -0.2
 	# Every Services firm fails: a sorted list would put one failed firm last, a whole failed sector shows it.
 	for company in Companies.firms_in_sector(_main._loader, ns.id, "services"):
 		if not ns.companies.has(company.id):
@@ -249,11 +251,33 @@ func _check_busy_world() -> void:
 	var burden := Strings.t("Regulated: %s") % Num.fs(0.3, 2)
 	if card == null or not _text_under(card).contains(burden):
 		_fail("the Industry card does not carry its burden '%s'" % burden)
+	# QA T7: a deregulated sector says so.
+	var farm = _node_with_meta("sector_card", "agriculture")
+	var relief := Strings.t("Deregulated: %s") % Num.fs(-0.2, 2)
+	if farm == null or not _text_under(farm).contains(relief):
+		_fail("the Agriculture card does not carry its relief '%s'" % relief)
+	# QA T6: a sector with exactly one decision gets its chip.
+	var counts_now: Dictionary = SectorNeeds.counts(_main._state, _main._loader, ns)
+	for s in sectors:
+		var n := int(counts_now.get(SectorNeeds.tab_of(String(s)), 0))
+		if (_node_with_meta("decision_chip", String(s)) != null) != (n > 0):
+			_fail("%s: %d decision(s), chip shown %s" % [s, n, n == 0])
 	var gone = _node_with_meta("employers", "services")
 	if gone != null and not gone._rows.is_empty():
 		_fail("failed firms are ranked among the biggest employers: %s" % [gone._rows])
 	var employers = _node_with_meta("employers", "industry")
 	if employers != null:
+		# QA T8: with no rows marked, the bars keep the series hue.
+		if not employers._rows.is_empty() and employers.bar_color(0) != ChartStyle.SERIES[0]:
+			_fail("the employers' bars lost the series hue: %s" % employers.bar_color(0))
+		# QA T9: the value column is measured on the text drawn, so each figure ends inside the chart.
+		var font: Font = employers.get_theme_default_font()
+		var fs: int = employers._font_size()
+		var rects: Array = employers.bar_rects()
+		for i in employers._rows.size():
+			var end: float = rects[i].end.x + employers.PAD + font.get_string_size(employers.value_text(i), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+			if end > employers.size.x - employers.PAD + 0.5:
+				_fail("employer figure %d ends at %.1f, past the chart's right pad at %.1f" % [i, end, employers.size.x - employers.PAD])
 		if not employers._rows.is_empty():
 			var v := float(employers._rows[0]["value"])
 			if employers.value_text(0) != CompanyVerb.thousands(v):
