@@ -75,6 +75,8 @@ static func open(state, ns, loader, request_id: String) -> Dictionary:
 static func ask_of(state, ns, loader, row: Dictionary) -> Dictionary:
 	var now := _now(state)
 	var object := String(row.get("object", ""))
+	if object == AK.SUMMON_OBJECT:  # the president summoned them: no ask to grant or bargain over
+		return {"kind": K.ASK_WORD, "object": object, "why_not": AK.SUMMON_NO_ASK, "due_month": now, "smaller_due_month": now}
 	if object.begins_with(AK.FIRM_PREFIX):
 		return _firm_ask(state, ns, loader, object)
 	if object.begins_with("office:portfolio:"):

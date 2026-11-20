@@ -20,7 +20,9 @@ const WantTerms = preload("res://src/sim/want_terms.gd")
 static func open_count(ns, own: bool) -> int:
 	var n := 0
 	for row in ns.audience_requests:
+		# A summons is the president's, not an ask: no place in the lane (audience_summons.gd).
 		if K.OPEN.has(String(row.get("status", ""))) and not String(row.get("object", "")).begins_with(K.FIRM_PREFIX) \
+				and String(row.get("object", "")) != K.SUMMON_OBJECT \
 				and String(row.get("person_id", "")).begins_with("%s_" % ns.id) == own:
 			n += 1
 	return n
@@ -47,7 +49,7 @@ static func asked_ever(ns) -> bool:
 static func close_overtaken(state, ns, now: int, loader = null, meters: Dictionary = {}) -> void:
 	for row in ns.audience_requests:
 		var object := String(row.get("object", ""))
-		if not K.OPEN.has(String(row.get("status", ""))):
+		if not K.OPEN.has(String(row.get("status", ""))) or object == K.SUMMON_OBJECT:
 			continue
 		if object.begins_with(K.FIRM_PREFIX):
 			if not Closures.announced(ns, object.substr(K.FIRM_PREFIX.length())).is_empty():

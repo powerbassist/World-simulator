@@ -1,0 +1,1 @@
+Added: You can summon any person of your country who has not asked to see you, on a free day of your diary: being received raises their regard and teaches you a little about them, at most once every eight months each.

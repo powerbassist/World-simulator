@@ -177,6 +177,22 @@ const STATUS_OVERTAKEN := "overtaken"
 ## A chief's request names the firm: `firm:<company id>` (AudienceTriggers.chiefs).
 const FIRM_PREFIX := "firm:"
 
+## THE SUMMONS (the author's "Oui, petite carte à part" and "Toute personne du pays",
+## 2026-11-20; src/sim/audience_summons.gd): the president asks to see a person of his nation
+## who has asked nothing. Its row is a request whose object is SUMMON_OBJECT: no ask, so every
+## lever and deal verb says SUMMON_NO_ASK; missed or cancelled it closes CANCELLED, unpriced.
+## The cap is the months a person waits between two asks, so rapport cannot be farmed faster
+## than a person would ask. Refusals as data: not_own, asked (answer the open request instead),
+## summoned (the cap), too_far (past the diary's horizon), and the day's BOOK_* reasons.
+const SUMMON_OBJECT := "summons"
+const SUMMON_COOLDOWN_MONTHS := REQUEST_COOLDOWN_MONTHS
+const SUMMON_NOT_OWN := "not_own"
+const SUMMON_ASKED := "asked"
+const SUMMON_RECENT := "summoned"
+const SUMMON_TOO_FAR := "too_far"
+const SUMMON_NO_ASK := "nothing to ask about: they asked nothing"
+const STATUS_CANCELLED := "cancelled"
+
 ## The open statuses: a request in the lane or in the diary.
 const OPEN := [STATUS_PENDING, STATUS_BOOKED]
 

@@ -225,7 +225,7 @@ static func close(state, ns, loader, session: Dictionary) -> Dictionary:
 	if why != "":
 		return {"ok": false, "error": why, "outcome": "", "price": {}}
 	var won := String(session["won"])
-	var outcome := AK.STATUS_DECLINED
+	var outcome := AK.STATUS_SETTLED if String(session.get("object", "")) == AK.SUMMON_OBJECT else AK.STATUS_DECLINED
 	if session.has("outcome"):
 		outcome = String(session["outcome"])
 	elif won == "promise_date":
@@ -410,6 +410,8 @@ static func _why_not(ns, session: Dictionary) -> String:
 	var why := _attempt_reason(ns, session)
 	if why == "" and String(session.get("won", "")) != "":
 		why = "they have already agreed"
+	if why == "" and String(session.get("object", "")) == AK.SUMMON_OBJECT:
+		why = AK.SUMMON_NO_ASK  # a summons is talk only (audience_summons.gd)
 	return why
 
 

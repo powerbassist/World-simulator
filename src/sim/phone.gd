@@ -129,7 +129,8 @@ static func _line_reason(state, ns, loader, person_id: String) -> String:
 ## The person's open request (pending or booked), as Audiences reads it, or {}.
 static func _open_request(ns, person_id: String) -> Dictionary:
 	for row in ns.audience_requests:
-		if String(row.get("person_id", "")) == person_id and AK.OPEN.has(String(row.get("status", ""))):
+		if String(row.get("person_id", "")) == person_id and AK.OPEN.has(String(row.get("status", ""))) \
+				and String(row.get("object", "")) != AK.SUMMON_OBJECT:
 			return Audiences.request(ns, String(row["id"]))
 	return {}
 
