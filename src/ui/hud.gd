@@ -125,10 +125,9 @@ func _ready() -> void:
 	right.add_child(ribbon)
 	ribbon.add_clock(clock_cluster)
 
-	# G1: the chief's caption, laid over everything under the title bar and outside
-	# every container, so showing it moves nothing (it ignores the mouse).
+	# G1: the chief's caption, docked in the top bar's own row (top bar A): the bar lays it out.
 	chief_caption = ChiefCaption.new()
-	add_child(chief_caption)
+	top_bar.dock_caption(chief_caption)
 
 
 ## A loaded game's state, rebound to the furniture that keeps one: the ribbon's month,

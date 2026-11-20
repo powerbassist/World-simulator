@@ -13,10 +13,10 @@ extends RefCounted
 const MONTHS := 18
 
 ## The figures with a curve, in the strip's order.
-const IDS: Array[String] = ["deficit", "gdp", "unemployment"]
+const IDS: Array[String] = ["deficit", "gdp", "unemployment", "inflation"]
 
 ## The history field each curve reads (the money reads two, below).
-const KEYS := {"gdp": "growth_annual_pct", "unemployment": "unemployment_pct"}
+const KEYS := {"gdp": "growth_annual_pct", "unemployment": "unemployment_pct", "inflation": "inflation_pct"}
 
 
 ## The month's balance in bn of euros, surplus positive: the deficit's share of GDP
