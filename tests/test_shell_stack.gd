@@ -76,7 +76,7 @@ func _process(_delta: float) -> bool:
 ## A click leaves no focus on the button it pressed; a button the KEYBOARD reached
 ## keeps it (Tab, the arrow keys), because that is how the keyboard path works.
 func _commit_button() -> Button:
-	return _main._windows.frame("finances")._content._foot.get_node("Table")
+	return _main._windows.frame("finances")._content._foot.find_child("Table", true, false)
 
 
 func _click_commit() -> void:

@@ -206,7 +206,7 @@ func _check_a_drag_repaints_in_place() -> void:
 	var cell: Label = _panel._ctx["cells"][id][0]
 	if not cell.text.contains(" to "):
 		_fail("the row's figure does not show the move: '%s'" % cell.text)
-	if not _panel._foot.visible or not _panel._foot.get_node("Table").visible:
+	if not _panel._foot.visible or not _panel._foot.find_child("Table", true, false).visible:
 		_fail("a drafted row did not bring up the footer's one button")
 	if not _panel._foot._text.text.contains("1 change"):
 		_fail("the footer does not count the row: '%s'" % _panel._foot._text.text)
@@ -278,7 +278,7 @@ func _check_a_refusal_disables_the_button_and_says_why() -> void:
 	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
 	_panel._dirty = true
 	_panel._process(0.0)
-	var table: Button = _panel._foot.get_node("Table")
+	var table: Button = _panel._foot.find_child("Table", true, false)
 	if not table.disabled:
 		_fail("the button is live while another bill holds the slot")
 	if not _panel._foot._text.text.contains("Another bill holds"):
@@ -297,7 +297,7 @@ func _check_table_locks_the_rows_and_withdraw_frees_them() -> void:
 	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
 	_panel._dirty = true
 	_panel._process(0.0)
-	var table: Button = _panel._foot.get_node("Table")
+	var table: Button = _panel._foot.find_child("Table", true, false)
 	if table.disabled:
 		_fail("the button is dead with a legal draft")
 	table.pressed.emit()
@@ -315,9 +315,9 @@ func _check_table_locks_the_rows_and_withdraw_frees_them() -> void:
 		_fail("a row at vote still opens an editor")
 	if not (_panel._ctx["cells"][id][0] as Label).text.contains(" to "):
 		_fail("a row at vote does not show where it is going")
-	if not _panel._foot.get_node("OpenBill").visible or not _panel._foot.get_node("Withdraw").visible:
+	if not _panel._foot.find_child("OpenBill", true, false).visible or not _panel._foot.find_child("Withdraw", true, false).visible:
 		_fail("the footer does not offer the bill's sheet and its withdrawal")
-	_panel._foot.get_node("Withdraw").pressed.emit()
+	_panel._foot.find_child("Withdraw", true, false).pressed.emit()
 	if not ns.tabled_bill.is_empty():
 		_fail("Withdraw did not take the bill back")
 	_panel._process(0.0)
@@ -367,15 +367,15 @@ func _check_an_amendment_adds_to_the_tabled_bill() -> void:
 	_panel._draft.set_value(FinanceDraft.TAX, "income", float(ns.tax_rates_pct["income"]) + 1.0)
 	_panel._dirty = true
 	_panel._process(0.0)
-	if _panel._foot.get_node("Table").text != Strings.t("Add to the bill"):
-		_fail("the button does not say it adds to the bill: '%s'" % _panel._foot.get_node("Table").text)
-	_panel._foot.get_node("Table").pressed.emit()
+	if _panel._foot.find_child("Table", true, false).text != Strings.t("Add to the bill"):
+		_fail("the button does not say it adds to the bill: '%s'" % _panel._foot.find_child("Table", true, false).text)
+	_panel._foot.find_child("Table", true, false).pressed.emit()
 	var rows: Dictionary = ns.tabled_bill.get("finance", {}).get("tax_rates_pct", {})
 	if not rows.has("vat") or not rows.has("income"):
 		_fail("the amendment is not in the bill: %s" % [ns.tabled_bill])
 	if not _panel._draft.is_empty():
 		_fail("the draft stands after an amendment")
-	_panel._foot.get_node("Withdraw").pressed.emit()
+	_panel._foot.find_child("Withdraw", true, false).pressed.emit()
 	_panel._process(0.0)
 
 
@@ -491,7 +491,7 @@ func _check_discard_drops_the_draft() -> void:
 	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(_state.player().tax_rates_pct["vat"]) + 2.0)
 	_panel._dirty = true
 	_panel._process(0.0)
-	var discard: Button = _panel._foot.get_node("Discard")
+	var discard: Button = _panel._foot.find_child("Discard", true, false)
 	if not discard.visible:
 		_fail("a draft has no way to be dropped")
 	discard.pressed.emit()
@@ -500,16 +500,20 @@ func _check_discard_drops_the_draft() -> void:
 		_fail("Discard left the draft or the footer up")
 
 
-## The price before he tables: the footer's second line is the very division FinanceRead.draft meets.
+## The price before he tables: the tray's bar is the very division FinanceRead.draft meets (its legend prints the seats;
+## the sentence no longer repeats them, #429 pass 2 T10).
 func _check_the_footer_says_the_forecast() -> void:
 	var ns = _state.player()
 	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
 	_panel._dirty = true
 	_panel._process(0.0)
 	var vote: Dictionary = preload("res://src/sim/finance_read.gd").draft(_state, _loader, _panel._draft.bill())["vote"]
-	var want := "%d for, %d against, %d undecided of %d" % [int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"]), int(vote["seats_total"])]
-	if not _panel._foot._text.text.contains(want):
-		_fail("the footer does not say '%s': '%s'" % [want, _panel._foot._text.text])
+	var legend := ""
+	for label in _panel._foot._vote_box.find_children("*", "Label", true, false):
+		legend += (label as Label).text + " "
+	for seats in [int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"])]:
+		if not legend.contains(str(seats)):
+			_fail("the tray's bar does not print %d seats: '%s'" % [seats, legend])
 	_panel._draft.revert()
 	_panel._dirty = true
 	_panel._process(0.0)
@@ -603,15 +607,15 @@ func _check_withdraw_keeps_the_draft() -> void:
 	_panel._draft.set_value(FinanceDraft.TAX, "income", float(ns.tax_rates_pct["income"]) + 1.0)
 	_panel._dirty = true
 	_panel._process(0.0)
-	if not _panel._foot.get_node("Withdraw").visible or not _panel._foot.get_node("Table").visible:
+	if not _panel._foot.find_child("Withdraw", true, false).visible or not _panel._foot.find_child("Table", true, false).visible:
 		_fail("with a draft and a bill at vote the footer must offer both Withdraw and the draft's verb")
-	_panel._foot.get_node("Withdraw").pressed.emit()
+	_panel._foot.find_child("Withdraw", true, false).pressed.emit()
 	if not ns.tabled_bill.is_empty():
 		_fail("Withdraw did not take the bill back with a draft standing")
 	if _panel._draft.count() != 1:
 		_fail("withdrawing the bill dropped the draft: %d rows" % _panel._draft.count())
 	_panel._process(0.0)
-	if not _panel._foot.get_node("Table").visible or _panel._foot.get_node("Withdraw").visible:
+	if not _panel._foot.find_child("Table", true, false).visible or _panel._foot.find_child("Withdraw", true, false).visible:
 		_fail("after the withdrawal the footer should offer the draft's verb alone")
 	_panel._draft.revert()
 	_panel._dirty = true

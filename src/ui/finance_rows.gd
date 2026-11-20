@@ -353,3 +353,33 @@ static func _other_revenue_tip(ctx: Dictionary) -> String:
 	var parts: Array = ctx["parts"]["revenue"]
 	return Strings.t("%s bn of it is revenue no rate here sets (social contributions, local taxes), and %s bn is what laws in force add. Tariffs and dividends are listed under it when there are any; the rest is not split.") % [
 		Num.f(float(parts[0]["bn"]), 0), Num.f(float(parts[1]["bn"]), 1)]
+
+
+## A drafted change's name (finance_draft.gd's rows()): a line, a tax, a kind put in force or abolished, the brackets.
+## The bill's sheet and the Books page's tray both say it.
+static func change_label(ns, row: Dictionary) -> String:
+	var key := String(row["key"])
+	match String(row["channel"]):
+		FinanceDraft.SPENDING:
+			return Labels.portfolio(key)
+		FinanceDraft.TAX:
+			var tax := Strings.row_name("taxes", ns.tax_library[key])
+			return Strings.t("Creation of %s") % tax if bool(row.get("birth", false)) else tax
+		FinanceDraft.ABOLISH:
+			return Strings.t("Abolition of %s") % Strings.row_name("taxes", ns.tax_library[key])
+	return Strings.t("Income brackets")
+
+
+## "11 → 12.5 % of GDP": the change's value today and in the draft, in its row's own unit and decimals.
+static func change_figures(ns, row: Dictionary) -> String:
+	var key := String(row["key"])
+	var places := 1
+	var unit := Strings.t(" % of GDP")
+	match String(row["channel"]):
+		FinanceDraft.TAX, FinanceDraft.ABOLISH:
+			places = TaxLibrary.step_decimals(ns, key)
+			unit = unit_text(String(ns.tax_library[key]["unit"]))
+		FinanceDraft.BRACKETS:
+			places = 2
+			unit = ""
+	return "%s → %s%s" % [LedgerBox.text(float(row["live"]), places), LedgerBox.text(float(row["draft"]), places), unit]

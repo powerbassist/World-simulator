@@ -465,8 +465,8 @@ func _ready() -> void:
 	# earns a U4 decision delta on exactly the same terms.
 	_companies_panel.acted.connect(func(before, label):
 		_queue_effect(label, before)
-		_update_top_bar()
-	)
+		_update_top_bar())
+	_companies_panel.tab_requested.connect(_windows.open)
 
 	# V1.6f. In the Economy cluster beside Industry, and its OWN window rather than
 	# more rows on that one: a project is a dated national commitment and that panel

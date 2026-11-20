@@ -85,6 +85,19 @@ func in_force(kind: String) -> bool:
 	return _state.player().tax_rates_pct.has(kind)
 
 
+## One change taken out of the draft (the tray's remove mark): the row reads the register again.
+func drop(channel: String, key: String) -> void:
+	match channel:
+		BRACKETS:
+			_brackets = null
+		ABOLISH:
+			_abolished.erase(key)
+		_:
+			(_edited[channel] as Dictionary).erase(key)
+			if channel == TAX:
+				_created.erase(key)
+
+
 ## The player's input on one row. `channel` is SPENDING or TAX; the brackets have their own call.
 func set_value(channel: String, key: String, value: float) -> void:
 	(_edited[channel] as Dictionary)[key] = value
