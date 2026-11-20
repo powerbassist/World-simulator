@@ -137,6 +137,7 @@ func refresh(state, loader, draft, price) -> void:
 	_legend.visible = drafted
 	_vote_box.visible = false
 	if not visible:
+		_dropped_at = -1  # the tray went with the last change: a stale index would pull the next draft's focus onto an x
 		return
 	if drafted:
 		_list(state, ns, draft, price)

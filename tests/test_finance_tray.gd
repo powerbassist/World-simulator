@@ -25,6 +25,7 @@ var _loader
 var _state
 var _panel
 var _frame := 0
+var _outside: Button
 
 
 func _init() -> void:
@@ -75,6 +76,27 @@ func _process(_delta: float) -> bool:
 		11:
 			if not _panel.shared_draft().is_clean() or _panel._foot.visible:
 				_fail("Discard all left a draft or a visible tray")
+			# QA on #429: the last change removed by its x hides the tray; a remove index left standing pulled the
+			# focus onto the next draft's x, wherever it was, so a keyboard player's next Space removed it again.
+			var draft = _panel.shared_draft()
+			draft.set_value(FinanceDraft.SPENDING, "health", draft.live(FinanceDraft.SPENDING, "health") + 1.5)
+			_panel._on_structure_changed()
+		13:
+			_press(_remove_mark("spending_pct_gdp:health"))
+		15:
+			if _panel._foot.visible:
+				_fail("removing the last change left the tray visible")
+			_outside = Button.new()
+			_outside.focus_mode = Control.FOCUS_ALL
+			root.add_child(_outside)
+			_outside.grab_focus()
+			var draft = _panel.shared_draft()
+			draft.set_value(FinanceDraft.TAX, "vat", draft.live(FinanceDraft.TAX, "vat") + 1.0)
+			_panel._on_structure_changed()
+		17:
+			var focus = _panel.get_viewport().gui_get_focus_owner()
+			if focus != _outside:
+				_fail("a fresh draft after the last remove took the focus to %s" % (focus.name if focus != null else "nothing"))
 			_finish()
 	return false
 
