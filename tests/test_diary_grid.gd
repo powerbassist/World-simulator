@@ -7,8 +7,9 @@ extends SceneTree
 ##   - every register entry and fixed date within the horizon has a mark on its
 ##     day (100 %), and so do a commitment's due date and a waiting request's last
 ##     day to answer;
-##   - a day a waiting request offers is tinted, and its day list books it ("Book
-##     here", a real press and release frames apart);
+##   - the request's See them (the month page, picture A) arms it: every free day of its
+##     window is tinted and a click on one books that day (a real press and release
+##     frames apart, a pixel of jitter between);
 ##   - today is marked; paging stops at both ends of the horizon.
 
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -36,6 +37,7 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		3:
 			_stage()
+			preload("res://src/ui/audience_driver.gd").refresh(_main)
 			_main._windows.open("calendar")
 		6:
 			_grid = _main._calendar_panel.find_child("DiaryGrid", true, false)
@@ -49,15 +51,21 @@ func _process(_delta: float) -> bool:
 			_check_month_turn()
 			_check_travel_days()
 			_grid.show_month(int(_offered["year"]), int(_offered["month"]))
+			if _cell(int(_offered["day"])) != null and bool(_cell(int(_offered["day"])).tinted):
+				_fail("a day is tinted with no request armed")
+			var see := _main._calendar_panel.find_child("See_%s" % _request, true, false) as Button
+			if see == null:
+				_fail("the request has no See them on the month page")
+				_finish()
+				return true
+			see.pressed.emit()
+			_grid.show_month(int(_offered["year"]), int(_offered["month"]))
 		8:
 			var cell := _cell(int(_offered["day"]))
 			if cell == null or not bool(cell.tinted):
-				_fail("the day a waiting request offers is not tinted")
+				_fail("a free day of the armed request's window is not tinted")
 				_finish()
 				return true
-			# The chips (step 6) book on their own click: this is a click on the day itself.
-			for child in cell.get_children():
-				child.visible = false
 			_target = cell
 			_press(true)
 		9:
@@ -67,23 +75,18 @@ func _process(_delta: float) -> bool:
 		11:
 			_press(false)
 		14:
-			_target = _grid.day_list.find_child("BookHere*", true, false) as Control
-			if _target == null or not _target.is_visible_in_tree():
-				_fail("the offered day's list has no Book here")
-				_finish()
-				return true
-			_press(true)
-		17:
-			_press(false)
-		20:
 			var row := Audiences.request(_main._state.player(), _request)
 			if String(row.get("status", "")) != AK.STATUS_BOOKED:
-				_fail("Book here did not book the audience: %s" % String(row.get("status", "")))
+				_fail("the click on a free day did not book the audience: %s" % String(row.get("status", "")))
+			elif int(row["date"]["day"]) != int(_offered["day"]) or int(row["date"]["month"]) != int(_offered["month"]):
+				_fail("the click booked %s, not the day clicked %s" % [row["date"], _offered])
+			if not _grid.armed.is_empty():
+				_fail("the grid stayed armed after the booking")
 			# QA's TAKE 2 on #153: days pass with the Diary open; today's ring follows.
 			_grid.show_month(int(_main._state.year), int(_main._state.month))
 			for i in 5:
 				_main._clock.advance_one_day()
-		22:
+		16:
 			var today := _cell(int(_main._state.day))
 			if today == null or not bool(today.today):
 				_fail("five days on with the Diary open, today's ring is not on day %d" % int(_main._state.day))

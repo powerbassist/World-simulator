@@ -123,6 +123,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 18 --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request   (add --broken-word: the askers hold evidence)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --summon --open calendar   (the month page: a summons booked, the cap spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step counter
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step countered
@@ -440,6 +441,9 @@ var _months := 0
 ## first one's offered days; --audience books its first free day and reaches it, so
 ## the scene is up.
 var _request := ""
+## The month page: --summon (with --request) books a summons of the first person who can be
+## summoned, on their first free day, so the column lists it and the cap is spent.
+var _summon := false
 ## V5.3 screen 3: --file event | request opens the docked file page (--file request needs --request).
 var _file := ""
 ## --folder-file event | request | decided | news: the Folder tab (--briefing crowded) on that file's page,
@@ -1221,6 +1225,8 @@ func _init() -> void:
 			_speaker = true
 		elif args[i] == "--broken-word":
 			_broken_word = true
+		elif args[i] == "--summon":
+			_summon = true
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
 		elif args[i] == "--folder-file" and i + 1 < args.size():
@@ -2760,6 +2766,16 @@ func _stage_requests() -> void:
 			if _broken_word:
 				ns.exposure_evidence.append({"kind": "favour", "person_id": String(person.id), "size": 1.0,
 					"month": now - 1, "leader_id": String(ns.head_of_state_person_id if ns.has_executive else ns.pm_person_id)})
+	if _summon:
+		for person in people:
+			var pid := String(person.id)
+			if not Audiences.summon_refusal(_main._state, ns, _main._loader, pid).is_empty():
+				continue
+			for d in Audiences.summon_days(_main._state, pid):
+				if bool(d["free"]):
+					Audiences.summon(_main._state, ns, _main._loader, pid, d)
+					break
+			break
 	Driver.refresh(_main)
 	var first: Dictionary = Audiences.pending(ns)[0] if not Audiences.pending(ns).is_empty() else {}
 	if first.is_empty() or _request == "--request":

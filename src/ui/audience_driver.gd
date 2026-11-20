@@ -29,6 +29,7 @@ const President = preload("res://src/sim/president.gd")
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
+const MonthPage = preload("res://src/ui/diary_month_page.gd")
 
 const WINDOW := "audience"
 
@@ -70,6 +71,8 @@ static func register(main) -> void:
 		_answer(main, id, result)
 		_seen(main, id)
 	main._calendar_panel._grid.booked.connect(book)
+	MonthPage.wire(main, game, func(id: String) -> void: _open_booking(main, id),
+		func(id: String, result: Dictionary) -> void: _answer(main, id, result), func() -> void: refresh(main))
 	# Rework 1: the People roster's See books the same way, on the request's first free day.
 	main._people_panel.see_requested.connect(book)
 	main._people_panel.reassigned.connect(func(before: Dictionary, title: String) -> void: main._queue_effect(title, before))
@@ -145,7 +148,7 @@ static func refresh(main) -> void:
 	if not live.has(String(game["booking_for"])):
 		game["booking_for"] = ""
 	game["lane"].show_requests(rows)
-	main._calendar_panel._grid.set_requests(rows)
+	MonthPage.show(main, rows)
 	main._calendar_panel.booking.request = String(game["booking_for"])
 	main._hud.title_bar.set_requests(Audiences.waiting_count(ns))
 	game["promises"].show_rows(given_lines(main), judged_rows(main))
@@ -376,6 +379,8 @@ static func _open_booking(main, request_id: String) -> void:
 		return
 	_games[main.get_instance_id()]["booking_for"] = request_id
 	main._windows.open("calendar")
+	main._calendar_panel._grid.arm({"id": request_id, "person_id": String(request["person_id"]),
+		"person": main._loader.person_name(String(request["person_id"])), "summons": false})
 	main._calendar_panel.booking.show_days(Audiences.offered_dates(main._state, ns, request_id), main._state, main._loader)
 	refresh(main)
 	main._calendar_panel.booking.focus(request_id)

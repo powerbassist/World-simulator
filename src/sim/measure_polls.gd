@@ -83,7 +83,7 @@ static func commission(state, loader, key: String, tier: String) -> Dictionary:
 	if polls.has(tier) and now < _open_after(polls[tier]):
 		return _refused("That poll was commissioned already: the figures it bought are fixed.")
 	var cost := float(K.TIERS[tier]["cost_eur_bn"])
-	var today := mini(int(state.day), Calendar.days_in_month(int(state.year), int(state.month)))
+	var today := Calendar.today(state)
 	var row := {
 		"month": now,
 		"cost": cost,

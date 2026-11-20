@@ -12,26 +12,21 @@ extends Control
 ## square, a commitment falling due a diamond and a request's last day to answer
 ## a triangle, both in the attention tone (something waits on the player).
 ##
-## V5.3 b, step 6: a day a waiting request offers carries its chip (diary_chip.gd), a
-## real control beside the date, and a row with two asks grows to hold both.
+## The month page (picture A): a free day of the armed person's window is tinted, and the
+## grid books it on the click (diary_grid.gd _on_day).
 
 signal picked(day: int)
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
-const DiaryChip = preload("res://src/ui/diary_chip.gd")
 
 const SIZE := Vector2(58, 46)
 const MARK := 3.5
-## px at text size 100 %: the date's column, left of the chips.
-const CHIP_LEFT := 26.0
-const CHIP_GAP := 2.0
 
 var day := 0
 var today := false
-var tinted := false  # a waiting request offers this day
+var tinted := false  # a free day of the armed person's window: a click books it
 var selected := false
 var marks: Array[String] = []  # "booking" / "away" / "fixed" / "due" / "deadline", one per entry
-var _chips: VBoxContainer
 var _down := false  # a press began on this cell: only its own release picks it
 
 
@@ -61,35 +56,6 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 
-## This day's chips, one per offering request: `offers` the grid's {id, person, date},
-## `rows` request id -> its row, `booked` the grid's signal a chip's click goes out on.
-## After add_child(): a chip's anchors read the cell it sits in.
-func show_chips(offers: Array, rows: Dictionary, booked: Signal) -> void:
-	if _chips != null:
-		remove_child(_chips)
-		_chips.queue_free()
-		_chips = null
-	if offers.is_empty():
-		return
-	var s := UiTheme.text_scale()
-	_chips = VBoxContainer.new()
-	_chips.mouse_filter = Control.MOUSE_FILTER_PASS
-	_chips.add_theme_constant_override("separation", int(CHIP_GAP * s))
-	add_child(_chips)
-	_chips.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_chips.offset_left = CHIP_LEFT * s
-	_chips.offset_top = 3.0
-	_chips.offset_right = -3.0
-	for o in offers:
-		var chip := DiaryChip.new()
-		_chips.add_child(chip)
-		chip.fill(o, rows.get(String(o["id"]), {}))
-		var id := String(o["id"])
-		var date: Dictionary = o["date"]
-		chip.pressed.connect(func() -> void: booked.emit(id, date))
-	custom_minimum_size.y = maxf(SIZE.y, 6.0 + offers.size() * (DiaryChip.HEIGHT + CHIP_GAP)) * s
-
-
 func _draw() -> void:
 	var r := Rect2(Vector2.ZERO, size).grow(-1.0)
 	var accent := UiTheme.accent()
@@ -106,8 +72,7 @@ func _draw() -> void:
 	for kind in marks:
 		_mark(kind, Vector2(x, y), accent)
 		x += MARK * 3.0
-		# A second chip reaches the marks' row, right of the date.
-		if x > (CHIP_LEFT * UiTheme.text_scale() if _chips != null and _chips.get_child_count() > 1 else size.x - 6.0):
+		if x > size.x - 6.0:
 			break
 
 

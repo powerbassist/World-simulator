@@ -5,10 +5,11 @@ extends VBoxContainer
 ## booking horizon (BOOKING_HORIZON_MONTHS), today ringed in the accent. Every
 ## day carries a mark per entry (diary_day.gd): the register's bookings and the
 ## fixed dates the panel hands in, a commitment falling due and a waiting
-## request's last day to answer, read here. A day a waiting request offers is
-## tinted and carries the asker's chip (diary_chip.gd), whose click books that day;
-## a click on the day itself lists its entries -- with "Book here" where a request
-## offered it, the keyboard's and the inbox's path.
+## request's last day to answer, read here. The month page (picture A, the author's pick):
+## a person is ARMED -- a request's See them or Go, a summons' See them (diary_people.gd)
+## -- and every free day of their window is tinted; a click on one books it, the mouse's
+## and the keyboard's path alike. Any other click lists the day's entries, and a day of the
+## window the diary cannot take says why there.
 ##
 ## The day list is `day_list`, which the panel places inside its scroll: a list
 ## that changes height must not move the booking form under it (the form's own
@@ -19,6 +20,10 @@ extends VBoxContainer
 ## audience wiring calls Audiences.book), a cancel as `cancel_requested`.
 
 signal booked(request_id: String, date: Dictionary)
+## A summons' day picked: the president asks to see `person_id` (Audiences.summon).
+signal summoned(person_id: String, date: Dictionary)
+## The armed person changed, or none is: the column's See them reads it.
+signal armed_changed
 signal cancel_requested(key: String)
 ## A commitment's "Call": the Diary's verb on a word falling due (pre-gate RF3).
 signal call_requested(person_id: String)
@@ -38,9 +43,7 @@ const K = preload("res://src/sim/calendar_constants.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const President = preload("res://src/sim/president.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
-const DiaryChip = preload("res://src/ui/diary_chip.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
-const PartyChip = preload("res://src/ui/party_chip.gd")
 
 ## Monday first, as a European diary is ruled.
 const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msgid
@@ -69,10 +72,15 @@ var _drawn_day := 0  # the state's day at the last render: a new day redraws (to
 ## Go opens the Diary and picks the due day in one frame): applied by show_items.
 var _wanted := Vector3i.ZERO
 var _title: Label
+## The armed person's window in words, over the month (armed_line()); hidden when none is.
+var _armed_label: Label
 var _days: GridContainer
 var _later: Button
-## request id -> audience_driver's row: the chips' words (set_requests).
-var _rows := {}
+## The person a click on a free day books: {id (the request's, "" for a summons), person_id,
+## person (the shown name), summons}; {} for none. arm() sets it; a booking clears it.
+var armed := {}
+## The armed person's window, read once a render: the days and why one is refused.
+var _armed_dates: Array = []
 
 
 func _init() -> void:
@@ -83,6 +91,11 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	_armed_label = Label.new()
+	_armed_label.name = "ArmedLine"  # i18n: ok a node name, found by tests
+	_armed_label.theme_type_variation = UiTheme.WARN_TEXT
+	_armed_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	add_child(_armed_label)
 	var head := HBoxContainer.new()
 	add_child(head)
 	var back := PanelKit.sized(Button.new())
@@ -129,12 +142,10 @@ func list_scroll() -> ScrollContainer:
 	return _list_scroll
 
 
-## The waiting requests, in audience_driver's words, read once a refresh: the chips'
-## face, deadline and hover, never read on the daily redraw.
-func set_requests(rows: Array) -> void:
-	_rows = {}
-	for row in rows:
-		_rows[String(row["id"])] = row
+## Arm a person: their window is tinted and a click on a free day books it. {} disarms.
+func arm(target: Dictionary) -> void:
+	armed = target
+	armed_changed.emit()
 	_render()
 
 
@@ -158,18 +169,18 @@ func _process(_delta: float) -> void:
 		_render()
 
 
-## A chip the pointer is on or the keyboard stands on, or anything in the day list ("Book
-## here"; #431 pass 2, TAKE 2) the pointer is on: the daily redraw frees every cell and row,
-## which would drop a click mid-press. It waits, so today's ring can lag until the pointer
-## leaves; a booking still redraws, and a Book here pressed on a day the clock has since turned
-## books the first free one (audience_driver.gd). The keyboard alone does not hold the day list:
-## after a Go it stands there for good, and diary_booking's _refocus puts it back after a redraw.
+## A day the pointer is on while a person is armed, or anything in the day list the pointer
+## is on (#431 pass 2, TAKE 2): the daily redraw frees every cell and row, which would drop a
+## click mid-press. It waits, so today's ring can lag until the pointer leaves; a booking still
+## redraws, and a day pressed as the clock turns it into today books the first free one
+## (audience_driver.gd). The keyboard alone holds nothing: after a Go it stands on a day for
+## good, and diary_booking's _refocus puts it back after a redraw.
 func _in_hand() -> bool:
 	var viewport := get_viewport()
 	if viewport == null:
 		return false
 	var hovered := viewport.gui_get_hovered_control()
-	return viewport.gui_get_focus_owner() is DiaryChip or hovered is DiaryChip \
+	return (hovered is DiaryDay and not armed.is_empty()) \
 			or (hovered != null and day_list != null and day_list.is_ancestor_of(hovered))
 
 
@@ -235,23 +246,47 @@ func _render() -> void:
 		cell.day = d
 		cell.today = is_now and d == int(_state.day)
 		cell.selected = d == _selected
-		cell.tinted = offered.has(d)
+		# Only a day that books takes the tint: a taken day of the window read as free (#431 R10).
+		cell.tinted = offered.has(d) and bool((offered[d][0]["date"] as Dictionary).get("free", false))
 		var texts := PackedStringArray()
 		for e in entries.get(d, []):
 			cell.marks.append(String(e["mark"]))
 			texts.append(String(e["text"]))
 		for o in offered.get(d, []):
-			# A refused offered day says why on its hover, as its Book here does.
+			# A refused day of the window says why on its hover, as the day list does.
 			var why := String((o["date"] as Dictionary).get("reason", ""))
 			if why != "":
-				texts.append("%s: %s" % [String(o["person"]), Strings.t(why)])  # i18n: row-ok the sim's reason, its English the msgid
+				texts.append("%s: %s" % [String(armed["person"]), Strings.t(why)])  # i18n: row-ok the sim's reason, its English the msgid
 		cell.tooltip_text = "\n".join(texts)
-		cell.picked.connect(_pick)
+		cell.picked.connect(_on_day)
 		_days.add_child(cell)
-		# No chips (the parent's ruling, 2026-11-20): any free day to the deadline month books,
-		# so a chip per request on every day of the window was a wall of faces. The tint marks
-		# the window and the day list's Book here books; the faces return with the redraw.
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
+	_armed_label.text = armed_line()
+	_armed_label.visible = _armed_label.text != ""
+
+
+## A click on a day: a free day of the armed person's window books; any other is picked.
+func _on_day(d: int) -> void:
+	var date := _armed_on(d)
+	if not bool(date.get("free", false)):
+		_pick(d)
+		return
+	var target := armed
+	armed = {}
+	armed_changed.emit()
+	if bool(target.get("summons", false)):
+		summoned.emit(String(target["person_id"]), date)
+	else:
+		booked.emit(String(target["id"]), date)
+
+
+## Day `d` of the shown month in the armed person's window, {} when it is not in it.
+func _armed_on(d: int) -> Dictionary:
+	var ym := _shown()
+	for date in _armed_dates:
+		if int(date["year"]) == ym.x and int(date["month"]) == ym.y and int(date["day"]) == d:
+			return date
+	return {}
 
 
 func _pick(d: int) -> void:
@@ -304,21 +339,31 @@ func _entries(year: int, month: int) -> Dictionary:
 	return out
 
 
-## Day -> [{request id, person, date}] a waiting request offers in the shown month.
+## Day -> [{date}] the armed person can be seen on in the shown month, each with `free` and
+## the sim's words for a refused one. The window is re-read every render: a day the clock
+## turned or a booking took drops out on its own.
 func _offered(year: int, month: int) -> Dictionary:
 	var out := {}
 	var ns = _state.player()
+	_armed_dates = []
+	if bool(armed.get("summons", false)):
+		_armed_dates = Audiences.summon_days(_state, String(armed["person_id"]))
+	elif not armed.is_empty():
+		if String(Audiences.request(ns, String(armed["id"])).get("status", "")) != "pending":
+			# Answered elsewhere, lapsed or booked: nothing is left to book.
+			armed = {}
+			armed_changed.emit.call_deferred()
+		else:
+			_armed_dates = Audiences.offered_dates(_state, ns, String(armed["id"]))
+	for date in _armed_dates:
+		if int(date["year"]) == year and int(date["month"]) == month:
+			_add(out, int(date["day"]), {"date": date})
 	var later := 0
 	for row in Audiences.pending(ns):
-		var rid := String(row["id"])
-		var past_this_page := false
-		var dates: Array = Audiences.offered_dates(_state, ns, rid)
-		for date in dates:
-			if int(date["year"]) == year and int(date["month"]) == month:
-				_add(out, int(date["day"]), {"id": rid, "person_id": String(row["person_id"]), "person": _loader.person_name(String(row["person_id"])), "date": date, "dates": dates})
-			elif int(date["year"]) * 12 + int(date["month"]) > year * 12 + month:
-				past_this_page = true
-		later += 1 if past_this_page else 0
+		for date in Audiences.offered_dates(_state, ns, String(row["id"])):
+			if int(date["year"]) * 12 + int(date["month"]) > year * 12 + month:
+				later += 1
+				break
 	_later.text = "> %d" % later if later > 0 else ">"  # i18n: ok a glyph and a count
 	# No column lists the requests any more: the button says some have days further on.
 	_later.tooltip_text = tr_n("Next month: %d request offers a later day", "Next month: %d requests offer later days", later) % later if later > 0 else tr("Next month")
@@ -345,32 +390,11 @@ func _render_list(entries: Array, offered: Array) -> void:
 	PanelKit.heading(day_list, DateText.day_month_year(_selected, ym.y, ym.x))
 	if entries.is_empty() and offered.is_empty():
 		PanelKit.line(day_list, tr("Nothing on this day."))
-	# The verbs first, under the date: a busy day's entries would push them below
-	# the floor's fold, where a click on the grid does not follow them.
+	# A day of the armed person's window the diary cannot take: why, under the date.
 	for o in offered:
-		var date: Dictionary = o["date"]
-		var book := PanelKit.sized(Button.new())
-		# One per offering request: two requests can offer the same day, and a
-		# second "BookHere" would be renamed "@Button@N" and lost to find_child.
-		book.name = "BookHere_%s" % String(o["id"])  # i18n: ok a node name, found by tests
-		book.text = tr("Book here: %s") % String(o["person"])
-		book.disabled = not bool(date.get("free", true))
-		var why := String(date.get("reason", ""))
-		book.tooltip_text = Strings.t(why) if why != "" else ""  # i18n: row-ok the sim's reason, its English the msgid
-		book.pressed.connect(func() -> void: booked.emit(String(o["id"]), date))
-		# R3, back with #431 pass 2 TAKE 7: the asker's party beside the button, in words and its
-		# hemicycle slot, as the chip's hover said it before the chips left the grid.
-		var line := HBoxContainer.new()
-		day_list.add_child(line)
-		line.add_child(book)
-		var party := PartyChip.of(_loader, _state.player(), String(o["person_id"]))
-		if not party.is_empty():
-			line.add_child(PartyChip.make(party))
-		# Gate 3 (G3-16): only the person's own days are bookable, and an empty diary read
-		# as broken without the reason beside the button.
-		var offer := _offer_line(o["dates"], String(o["person"]))
-		if offer != "":
-			PanelKit.plain_line(day_list, offer, PanelKit.Tone.DIM)
+		var why := String((o["date"] as Dictionary).get("reason", ""))
+		if why != "":
+			PanelKit.plain_line(day_list, "%s: %s" % [String(armed["person"]), Strings.t(why)], PanelKit.Tone.DIM)  # i18n: row-ok the sim's reason, its English the msgid
 	for e in entries:
 		var row := HBoxContainer.new()
 		day_list.add_child(row)
@@ -392,12 +416,11 @@ func _render_list(entries: Array, offered: Array) -> void:
 			row.add_child(ActsOn.tag(call, [String(e["subject"])]))
 
 
-## Until when the person can be seen: any free day up to the deadline month's end books (the
-## author's "N'importe quel jour libre" and "Fin du mois limite", 2026-11-20), so the line names
-## the window's last day; "" when no day of it is free (a refused one says why on its button).
-func _offer_line(dates: Array, person: String) -> String:
-	if not dates.any(func(d: Dictionary) -> bool: return bool(d.get("free", true))):
+## The armed person's window in words, for the line over the grid: "" when nobody is armed or
+## no day of it is free (a refused day says why on its own hover).
+func armed_line() -> String:
+	if armed.is_empty() or not _armed_dates.any(func(d: Dictionary) -> bool: return bool(d.get("free", false))):
 		return ""
-	var last: Dictionary = dates[dates.size() - 1]
-	return tr("%s can see you on any free day until %s.") % [person,
+	var last: Dictionary = _armed_dates[_armed_dates.size() - 1]
+	return tr("Click a free day to see %s: any free day until %s.") % [String(armed["person"]),
 		DateText.day_month_year(int(last["day"]), int(last["month"]), int(last["year"]))]

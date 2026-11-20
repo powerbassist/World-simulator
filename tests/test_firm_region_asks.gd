@@ -152,11 +152,11 @@ func _check_only_a_chief_loses_the_deadline_month() -> void:
 		_fail("no ordinary request to read: %s" % [asked])
 		return
 	var deadline := int(asked["request"]["deadline_month"])
+	# Any free day to the deadline month's end (#431): the window draws nothing, so one read
+	# answers it (#431 R12: it looped 199 seeds).
 	var reached := false
-	for s in range(1, 200):
-		ns.draw_seed = s
-		for d in Audiences.offered_dates(state, ns, String(asked["request"]["id"])):
-			reached = reached or int(d["year"]) * 12 + int(d["month"]) == deadline
+	for d in Audiences.offered_dates(state, ns, String(asked["request"]["id"])):
+		reached = reached or int(d["year"]) * 12 + int(d["month"]) == deadline
 	if not reached:
 		_fail("an ordinary request is never offered a day in its deadline month")
 

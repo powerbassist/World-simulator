@@ -38,6 +38,8 @@ const DateText = preload("res://src/ui/date_text.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
 const DiaryBooking = preload("res://src/ui/diary_booking.gd")
 const DiaryGrid = preload("res://src/ui/diary_grid.gd")
+const DiaryPeople = preload("res://src/ui/diary_people.gd")
+const DiaryLabels = preload("res://src/ui/diary_labels.gd")
 
 signal closed
 
@@ -49,30 +51,12 @@ signal diary_changed
 ## V5.3 b, step 6: a request's Go: its day picked, the keyboard on it.
 var booking := DiaryBooking.new()
 var _grid := DiaryGrid.new()
+## The month page's people column (picture A): audience_driver.gd feeds and wires it.
+var people := DiaryPeople.new()
 
-## What each fixed-date kind is called on screen. Presentation, so it lives here
-## rather than in calendar_constants.gd — src/sim/ names the kind, the panel says
-## it in English.
-const FIXED_LABEL := {
-	K.FIXED_ELECTION: "Legislative election",  # i18n: msgid
-	K.FIXED_EP_ELECTION: "European election",  # i18n: msgid
-	K.FIXED_EXECUTIVE: "Presidential election",  # i18n: msgid
-	K.FIXED_HEAD_OF_STATE: "Head of state's term ends",  # i18n: msgid
-	K.FIXED_COUNCIL_PROPOSAL: "Council proposes",  # i18n: msgid
-	K.FIXED_COUNCIL_VOTE: "Council votes",  # i18n: msgid
-	K.FIXED_COUNCIL_RATIFICATION: "Ratification deadline",  # i18n: msgid
-	K.FIXED_DISSOLUTION: "Dissolution available again",  # i18n: msgid
-	K.FIXED_COOLDOWN: "Available again",  # i18n: msgid
-	K.FIXED_PROJECT: "Opens",  # i18n: msgid
-	K.FIXED_REFERENDUM: "Referendum",  # i18n: msgid
-	K.FIXED_EVENT: "Deadline",  # i18n: msgid -- one word on the Diary (RF6)
-}
-
-const KIND_LABEL := {
-	K.KIND_DIPLOMATIC: "Diplomatic act",  # i18n: msgid
-	K.KIND_LAW: "Propose a law",  # i18n: msgid
-	K.KIND_RESHUFFLE: "Reshuffle a portfolio",  # i18n: msgid
-}
+## What each fixed-date kind and each bookable kind is called on screen (diary_labels.gd).
+const FIXED_LABEL = DiaryLabels.FIXED_LABEL
+const KIND_LABEL = DiaryLabels.KIND_LABEL
 
 var _state
 var _loader
@@ -101,8 +85,16 @@ func _ready() -> void:
 	# (tab_page.gd wanted_height), and the page scrolls past that with its fold mark.
 	custom_minimum_size = Vector2(520, 0)
 
-	var root := PanelKit.padded(self, 16, 10)
-
+	var page := HBoxContainer.new()
+	page.add_theme_constant_override("separation", 16)
+	PanelKit.padded(self, 16, 10).add_child(page)
+	# The month page (picture A): the grid and everything under it on the left, the people who
+	# want to see the president, and his own reach, on the right.
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 10)
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	page.add_child(root)
+	page.add_child(people)
 
 	# Outside the scroll, and that is the point. A new game's next twelve months
 	# are empty -- the nearest dated event is sixteen months out -- so the one

@@ -1,9 +1,8 @@
 extends RefCounted
 
 ## A request's Go from the inbox -- V5.3 b, step 6: the grid turns to the first day it offers
-## that the Diary can take (else its first) and picks it, so the day list carries "Book here",
-## and the keyboard stands on that button through the grid's rebuilds. What is left of the
-## request column once its cards went onto the grid (diary_chip.gd).
+## that the Diary can take (else its first) and picks it, and the keyboard stands on that day
+## through the grid's rebuilds; Enter there books it, as a click does (the month page).
 
 const Grid = preload("res://src/ui/diary_grid.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
@@ -58,8 +57,10 @@ func _refocus() -> void:
 		_focus_on(request)
 
 
+## The picked day of the armed request's window takes the keyboard, where Enter books it.
 func _focus_on(request_id: String) -> void:
-	for b in _grid.day_list.find_children("BookHere_%s" % request_id, "Button", true, false):  # i18n: ok a node name and a class, found by tests
-		if not (b as Button).disabled and not b.is_queued_for_deletion():
-			(b as Button).grab_focus()
-			return
+	if String(_grid.armed.get("id", "")) != request_id or _grid._selected == 0:
+		return
+	var cell := _grid._days.get_node_or_null("Day_%d" % _grid._selected) as Control
+	if cell != null and not cell.is_queued_for_deletion():
+		cell.grab_focus()

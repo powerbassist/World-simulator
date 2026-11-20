@@ -17,6 +17,11 @@ extends SceneTree
 ## two entries, then five, listed beside its "Book here". Each time "Book here"
 ## lies inside EVERY scroll it sits in -- the day list's and the docked page's --
 ## so it is on screen, not merely inside a scroll that is not.
+##
+## The month page (picture A, Interface's card): the booking moved onto the grid -- the
+## request is armed (the card's See them, or the inbox's Go) and a click on a free day books
+## it. The same matrix now holds the armed request's first free DAY and its See them on
+## screen inside every scroll they sit in, and the line over the grid saying until when.
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
@@ -97,13 +102,22 @@ func _next() -> void:
 	_main._windows.open("calendar")
 	# The opened panel's own redraw, now rather than next frame: it would hand the
 	# grid its items again over the busy day's.
-	_main._calendar_panel._process(0.0)
 	var free := _free_days(String(_ids[0]))
+	_main._calendar_panel._grid.arm({})
 	match String(c["path"]):
 		"days":
-			# The card's Days: the grid turns to the first free day and the keyboard
-			# lands on its Book here.
+			# The inbox card's Go: the request armed, the grid on its first free day.
 			AudienceDriver.lane_of(_main).book_requested.emit(String(_ids[0]))
+		_:
+			var see := _main._calendar_panel.find_child("See_%s" % String(_ids[0]), true, false) as Button
+			if see == null:
+				_fail("premise: the request's card has no See them")
+			else:
+				see.pressed.emit()
+	_main._calendar_panel._process(0.0)
+	match String(c["path"]):
+		"days":
+			pass
 		"busy":
 			# The day's own entries listed beside its Book here.
 			var date: Dictionary = free[0]
@@ -175,34 +189,38 @@ func _check(c: Dictionary) -> void:
 	if Audiences.pending(_main._state.player()).size() != int(c["n"]):
 		_fail("premise: %s: %d requests are not waiting" % [label, int(c["n"])])
 		return
-	var book := panel.find_child("BookHere_%s" % String(_ids[0]), true, false) as Control
-	if book == null or not book.is_visible_in_tree():
-		_fail("%s: the picked day shows no Book here" % label)
+	if String(panel._grid.armed.get("id", "")) != String(_ids[0]):
+		_fail("%s: the request is not armed (%s)" % [label, panel._grid.armed])
 		return
-	# The heading, the Book here and the entries.
-	if String(c["path"]) == "busy" and panel._grid.day_list.get_child_count() < 2 + int(c["entries"]):
-		_fail("premise: %s: the picked day does not list its entries beside Book here" % label)
+	var first: Dictionary = _free_days(String(_ids[0]))[0]
+	var day := panel._grid._days.get_node_or_null("Day_%d" % int(first["day"])) as Control
+	if day == null or not bool(day.tinted):
+		_fail("%s: the first free day is not on the grid, tinted" % label)
+		return
+	# The heading and the entries.
+	if String(c["path"]) == "busy" and panel._grid.day_list.get_child_count() < 1 + int(c["entries"]):
+		_fail("premise: %s: the picked day does not list its entries" % label)
 		return
 	_check_why_these_days(panel, label)
 	_checked += 1
-	var at := book.get_global_rect()
-	var scrolls := 0
-	var node: Node = book.get_parent()
-	while node != null:
-		if node is ScrollContainer:
-			scrolls += 1
-			var view := (node as ScrollContainer).get_global_rect()
-			if view.size.y < at.size.y or not view.encloses(at):
-				_fail("%s: Book here (%s) lies outside the view of %s (%s)" % [label, at, node.name, view])
-				return
-		node = node.get_parent()
-	if scrolls < 2:
-		_fail("%s: Book here sits in %d scroll(s), not the day list's and the page's" % [label, scrolls])
+	for target in [day, panel.find_child("See_%s" % String(_ids[0]), true, false) as Control]:
+		if target == null or not target.is_visible_in_tree():
+			_fail("%s: %s is not on screen" % [label, target.name if target != null else "See them"])
+			return
+		var at: Rect2 = target.get_global_rect()
+		var node: Node = target.get_parent()
+		while node != null:
+			if node is ScrollContainer:
+				var view := (node as ScrollContainer).get_global_rect()
+				if view.size.y < at.size.y or not view.encloses(at):
+					_fail("%s: %s (%s) lies outside the view of %s (%s)" % [label, target.name, at, node.name, view])
+					return
+			node = node.get_parent()
 
 
 ## Gate 3 (G3-16): "je ne peux choisir la date, alors que mon agenda apparait vide". Since the
 ## author's "N'importe quel jour libre" (2026-11-20) any free day to the answer-by month books, and
-## the day list says until when beside its Book here.
+## the line over the grid says until when.
 func _check_why_these_days(panel, label: String) -> void:
 	var ns = _main._state.player()
 	var rid := String(_ids[0])
@@ -212,31 +230,29 @@ func _check_why_these_days(panel, label: String) -> void:
 		_fail("%s: the request has no day at all to read the line against" % label)  # QA's lead 14 on #431
 		return
 	var last: Dictionary = dates[dates.size() - 1]
-	var want := "%s can see you on any free day until %s." % [who, DateText.day_month_year(int(last["day"]), int(last["month"]), int(last["year"]))]
-	var found := false
-	for node in panel._grid.day_list.find_children("*", "Label", true, false):
-		if String((node as Label).text).begins_with("%s can see you" % who):
-			found = String((node as Label).text) == want
-			if not found:
-				_fail("%s: the day list says '%s', not '%s'" % [label, (node as Label).text, want])
-			break
-	if not found:
-		_fail("%s: the day list does not say '%s'" % [label, want])
+	var want := "Click a free day to see %s: any free day until %s." % [who, DateText.day_month_year(int(last["day"]), int(last["month"]), int(last["year"]))]
+	var line := panel.find_child("ArmedLine", true, false) as Label
+	if line == null or not line.is_visible_in_tree() or line.text != want:
+		_fail("%s: the line over the grid says '%s', not '%s'" % [label, line.text if line != null else "nothing", want])
 
 
 ## The line names the window's last day with its year, and says nothing for no day.
 func _check_offer_line_forms() -> void:
 	var grid = _main._calendar_panel._grid
-	var line: String = grid._offer_line([
-		{"year": 2026, "month": 12, "day": 30, "free": true},
-		{"year": 2027, "month": 1, "day": 6, "free": false},
-	], "X")
-	if line != "X can see you on any free day until %s." % DateText.day_month_year(6, 1, 2027):
-		_fail("the window's line reads '%s'" % line)
-	if grid._offer_line([], "X") != "":
+	var kept: Dictionary = grid.armed
+	var dates: Array = grid._armed_dates
+	grid.armed = {"id": "x", "person": "X"}
+	grid._armed_dates = [{"year": 2026, "month": 12, "day": 30, "free": true}, {"year": 2027, "month": 1, "day": 6, "free": false}]
+	if grid.armed_line() != "Click a free day to see X: any free day until %s." % DateText.day_month_year(6, 1, 2027):
+		_fail("the window's line reads '%s'" % grid.armed_line())
+	grid._armed_dates = []
+	if grid.armed_line() != "":
 		_fail("a request with no day left names an end")
-	if grid._offer_line([{"year": 2026, "month": 3, "day": 5, "free": false}], "X") != "":
+	grid._armed_dates = [{"year": 2026, "month": 3, "day": 5, "free": false}]
+	if grid.armed_line() != "":
 		_fail("a request with every day taken still promises a free day")
+	grid.armed = kept
+	grid._armed_dates = dates
 
 
 func _finish() -> void:
