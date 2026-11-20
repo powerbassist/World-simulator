@@ -82,8 +82,7 @@ func _ready() -> void:
 	title.text = Strings.t("Your draft")
 	head.add_child(title)
 	_legend = PanelKit.plain_line(head, Strings.t("ring today, dot the draft; × takes a change out"))
-	var legend := _legend
-	legend.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_legend.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_discard = _button(head, "Discard", Strings.t("Discard all"), discard_pressed)  # i18n: ok a node name
 	_discard.flat = true
 	_groups = VBoxContainer.new()
@@ -141,6 +140,11 @@ func refresh(state, loader, draft, price) -> void:
 		return
 	if drafted:
 		_list(state, ns, draft, price)
+	elif _dropped_at >= 0:
+		# The last change went: no mark to land on. Discard while moves remain, else the focus is let go with the tray.
+		_dropped_at = -1
+		if _discard.is_visible_in_tree():
+			_discard.grab_focus()
 	var before_vote := ""
 	if tabled != null:
 		before_vote = Strings.t("A finance bill is before the Assembly: it divides on %s.") % DateText.day_month(
@@ -211,7 +215,8 @@ func _list(state, ns, draft, price) -> void:
 			child.queue_free()
 		for kind in kinds:
 			_group(by_kind[kind])
-	var day := "%d-%d-%d" % [int(state.year), int(state.month), int(state.day)]
+	# The books today, as the price reads them (re-read after a tabling or a law): a row's money is kept while they hold.
+	var day := "%d-%d-%d|%s" % [int(state.year), int(state.month), int(state.day), str(price.now().get("deficit_pct_gdp", 0.0))]
 	for g in _groups.get_child_count():
 		var group: Array = by_kind[kinds[g]]
 		var chart: ChartDots = _groups.get_child(g).get_child(0)
