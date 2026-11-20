@@ -176,8 +176,11 @@ static func fill_by_need(ns, loader, type_id: String, n: int) -> Array:
 	for i in n:
 		var worst := ""
 		var top := -INF
+		# Every candidate of a step reads the same placed units: one basis a step, not one a
+		# candidate (a 200-unit fill froze the register 1-2 s; QA TAKE on #420).
+		var shown := preview(ns, loader, type_id, placed)
 		for id in open:
-			var f := behind * _shown(ns, loader, type_id, id, placed)
+			var f := behind * float(shown[id])
 			if f > top:
 				top = f
 				worst = id

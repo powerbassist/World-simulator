@@ -55,6 +55,7 @@ func _init() -> void:
 	_test_a_region_with_no_stock_gains_nothing()
 	_test_fill_by_population()
 	_test_fill_by_need_starts_with_the_worst()
+	_test_fill_by_need_reads_one_basis_a_step()
 	_test_the_preview_reads_units_not_yet_built()
 	_test_a_higher_is_better_figure()
 	_test_the_register_is_saved()
@@ -461,6 +462,51 @@ func _test_fill_by_need_starts_with_the_worst() -> void:
 	if many.size() < 2:
 		_fail("by need puts all thirty units in one region: %s" % [many])
 
+
+
+## QA TAKE on #420: the register refills by need on every count change, and at 200 units
+## the fill froze the game 1-2 s, rebuilding the whole basis for every candidate region of
+## every step. Every candidate of one step reads the SAME placed units, so one basis a step
+## gives the same rows: pinned against the per-candidate fill, and at least 3x faster (a
+## ratio on this machine, not a wall-clock bound; the old cost is about the region count).
+func _test_fill_by_need_reads_one_basis_a_step() -> void:
+	var state = _state()
+	var ns = state.player()
+	var n := 60
+	var t0 := Time.get_ticks_usec()
+	var rows: Array = Units.fill_by_need(ns, _loader, TYPE, n)
+	var fast := Time.get_ticks_usec() - t0
+	t0 = Time.get_ticks_usec()
+	var want := _fill_per_candidate(ns, TYPE, n)
+	var slow := Time.get_ticks_usec() - t0
+	if rows != want:
+		_fail("by need with one basis a step gives %s, the per-candidate fill %s" % [rows, want])
+	if fast * 3 > slow:
+		_fail("by need at %d units took %d us, the per-candidate fill %d us: not one basis a step" % [n, fast, slow])
+
+
+## The fill as it stood before the TAKE: one basis per candidate per step.
+func _fill_per_candidate(ns, type_id: String, n: int) -> Array:
+	var open: Array = []
+	for r in _loader.regions.get(ns.id, []):
+		if Units.start_capacity(_loader, ns.id, type_id, r.id) > 0.0:
+			open.append(String(r.id))
+	var behind := 1.0 if String(_loader.unit_types[type_id]["figure"]["better"]) == "lower" else -1.0
+	var placed := {}
+	for i in n:
+		var worst := ""
+		var top := -INF
+		for id in open:
+			var f := behind * Units._shown(ns, _loader, type_id, id, placed)
+			if f > top:
+				top = f
+				worst = id
+		placed[worst] = int(placed.get(worst, 0)) + 1
+	var out: Array = []
+	for id in open:
+		if int(placed.get(id, 0)) > 0:
+			out.append({"region": id, "units": int(placed[id])})
+	return out
 
 ## A beds-per-1000 row is behind when it reads LOWER, and a built hospital raises it.
 func _test_a_higher_is_better_figure() -> void:
