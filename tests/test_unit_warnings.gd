@@ -44,6 +44,7 @@ func _init() -> void:
 	_test_the_answers_are_the_registers_numbers()
 	_test_a_dull_warning_is_stamped_dull()
 	_test_a_build_under_way_is_not_warned_again()
+	_test_a_closure_under_way_is_not_warned_either()
 	_test_warned_again_after_exactly_a_year()
 	_test_the_warning_ends_the_quiet_month()
 	_test_a_build_that_closes_the_gap_leaves_the_band()
@@ -326,22 +327,67 @@ func _test_a_dull_warning_is_stamped_dull() -> void:
 ## The build answer: the band's units there, the estimate as debt, the running cost a year
 ## on the line, the vote's blocs; leaving it is nothing. A build big enough on money decides.
 func _test_the_answers_are_the_registers_numbers() -> void:
+	# Pass 2 on #425 (TAKEs 6 and 7): the build is what the player would pay -- the quote's
+	# capital net of the Union's share a real vote would reserve, the quote's running cost
+	# keyed to the type's SECTOR as a standing unit's is -- and its blocs are the vote's.
+	# The school (36 months) opens inside the fixture's period, so the Union pays a share.
+	for type_id in ["fixture_school", "fixture_hospital"]:
+		var state = _state()
+		var ns = state.player()
+		var t: Dictionary = _loader.unit_types[type_id]
+		var a := UnitWarnings.answers(state, ns, _loader, type_id, "FRB")
+		var row := {"type": type_id, "op": UK.OP_BUILD, "rows": [{"region": "FRB", "units": int(t["band_units"])}]}
+		if a.size() != 2 or not (a[0] as Dictionary).is_empty():
+			_fail("the answers are not leave, build: %s" % [a])
+			continue
+		var q := UnitPrice.quote(state, ns, _loader, row)
+		# The vote's own reservation, on a copy of the game that votes the row.
+		var voted = _state()
+		var p := UnitBuild.open(voted, voted.player(), _loader, row)
+		var union := float(p.get("union", {}).get("reserved_eur_m", 0.0))
+		if type_id == "fixture_school" and union <= 0.0:
+			_fail("the fixture school gets no Union share: the test reads nothing")
+		var want := (float(q["estimate_eur_m"]) - union) / 1000.0
+		if absf(float(a[1]["debt_eur_bn"]) - want) > 1e-12:
+			_fail("%s: the build's debt %.6f is not the estimate net of the Union's %.6f" % [type_id, float(a[1]["debt_eur_bn"]), want])
+		var running := 100.0 * float(q["running_eur_m_year"]) / (float(ns.gdp_eur_bn) * 1000.0)
+		var spent: Dictionary = a[1]["spending_pct_gdp"]
+		if spent.keys() != [String(t["sector"])] or absf(float(spent[String(t["sector"])]) - running) > 1e-12:
+			_fail("%s: the running cost is not the quote's on the type's sector: %s" % [type_id, a[1]["spending_pct_gdp"]])
+		if a[1]["bloc_offset"] != UnitBuild.blocs(ns, _loader, row):
+			_fail("%s: the build's blocs are not the vote's: %s" % [type_id, a[1]])
+		if not ns.unit_programmes.is_empty():
+			_fail("%s: reading the answers opened a programme" % type_id)
+
+
+## Pass 2 on #425 (TAKE 9): a region where a CLOSURE of the type is under way is not told
+## to build there either.
+func _test_a_closure_under_way_is_not_warned_either() -> void:
 	var state = _state()
 	var ns = state.player()
-	var type_id := "fixture_hospital"
-	var t: Dictionary = _loader.unit_types[type_id]
-	var a := UnitWarnings.answers(state, ns, _loader, type_id, "FR1")
-	var row := {"type": type_id, "op": UK.OP_BUILD, "rows": [{"region": "FR1", "units": int(t["band_units"])}]}
-	if a.size() != 2 or not (a[0] as Dictionary).is_empty():
-		_fail("the answers are not leave, build: %s" % [a])
+	var first := _tick(state)
+	if first.is_empty():
+		_fail("no warning to close against")
 		return
-	if absf(float(a[1]["debt_eur_bn"]) - float(UnitPrice.quote(state, ns, _loader, row)["estimate_eur_m"]) / 1000.0) > 1e-12:
-		_fail("the build's debt is not the quote's estimate: %s" % [a[1]])
-	var running := 100.0 * float(t["band_units"]) * float(t["running_eur_m"]["FRA"]) / (float(ns.gdp_eur_bn) * 1000.0)
-	if absf(float(a[1]["spending_pct_gdp"][String(t["line"])]) - running) > 1e-12:
-		_fail("the build's running cost is not the band's units' on the line: %s" % [a[1]])
-	if a[1]["bloc_offset"] != UnitBuild.blocs(ns, _loader, row):
-		_fail("the build's blocs are not the vote's: %s" % [a[1]])
+	var type_id := String(first[0]["type"])
+	var region := String(first[0]["region"])
+	var p := UnitBuild.open(state, ns, _loader, {"type": type_id, "op": UK.OP_DEMOLISH,
+		"rows": [{"region": region, "capacity": Units.unit_capacity(_loader, "FRA", type_id)}]})
+	# Eligible again at once (a stamp a year old), every other pair just warned.
+	for t in _loader.unit_types:
+		for r in _loader.regions[ns.id]:
+			ns.unit_warned["%s|%s" % [t, r.id]] = {"month": _now(state), "differs": true}
+	ns.unit_warned["%s|%s" % [type_id, region]] = {"month": _now(state) - UK.UNIT_WARN_REARM_MONTHS, "differs": true}
+	for i in 3:
+		for w in _tick(state):
+			if String(w["type"]) == type_id and String(w["region"]) == region:
+				_fail("%s told to build while a closure is under way there" % region)
+	if String(p["state"]) != UK.STATE_BUILDING:
+		_fail("the closure ended inside the test's window: it reads nothing")
+	ns.unit_programmes.clear()
+	var back := _tick(state)
+	if back.size() != 1 or String(back[0]["region"]) != region:
+		_fail("without the closure the region does not come back: %s" % [back])
 
 
 func _test_a_build_that_closes_the_gap_leaves_the_band() -> void:

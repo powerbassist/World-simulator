@@ -99,11 +99,12 @@ extends SceneTree
 ##              answers = each answer's debt booked once and bloc offsets (V5.3 a);
 ##   unit       a regional warning of the construction register (src/sim/unit_warnings.gd,
 ##              the month it is stamped; V5.3 c' slice C): UnitWarnings.answers, leave
-##              it or build the type's band_units in that region -- the estimate as debt
-##              booked once, the units' running cost as money a year, the vote's bloc
-##              moves (UnitBuild.blocs). The priority answer is not on
-##              the strip (a free move, as a sector warning's share move). The overrun
-##              card is not counted: no regime here builds;
+##              it or build the type's band_units in that region -- the estimate net
+##              of the Union's share as debt booked once, the units' running cost on
+##              the type's sector as money a year (EventDraw.money_bn, the stamp's own
+##              read), the vote's bloc moves (UnitBuild.blocs). The priority answer is
+##              not on the strip (a free move, as a sector warning's share move). The
+##              overrun card is not counted: no regime here builds;
 ##   programme  the term-start offer (Programme.available non-empty after a month
 ##              without it; the new game's own offer, open before the first tick,
 ##              in the first month's row); answers = none, and each entry's
@@ -158,6 +159,7 @@ const Closures = preload("res://src/sim/closures.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
 const UnitWarnings = preload("res://src/sim/unit_warnings.gd")
+const EventDraw = preload("res://src/sim/event_draw.gd")
 const DomainsK = preload("res://src/sim/domains_constants.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
@@ -1017,7 +1019,10 @@ func _unit_candidates(state, ns, now: int, out: Array) -> void:
 		var parts := String(key).split("|")
 		var strips: Array = []
 		for effects in UnitWarnings.answers(state, ns, _loader, parts[0], parts[1]):
-			var strip := _effects_strip(state, effects)
+			# The running cost is keyed to the type's sector, not a budget line, so it is read as
+			# the warning's own stamp reads it (EventDraw.money_bn), never booked on a copy.
+			var strip := _effects_strip(state, {"bloc_offset": effects.get("bloc_offset", {})})
+			strip["money_bn"] = EventDraw.money_bn(ns, effects)
 			strip["debt_bn"] = float(effects.get("debt_eur_bn", 0.0))
 			strips.append(strip)
 		out.append({"source": "unit", "subject": "unit|%s" % String(key), "state": "",

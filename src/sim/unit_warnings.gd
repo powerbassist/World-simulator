@@ -12,9 +12,9 @@ extends RefCounted
 ##                                         "region_warning", type, region, figure, national}.
 ##                                         UnitBuild.tick_month calls it;
 ##   answers(state, ns, loader, type, r)   its answers as effects: leave it ({}), or build
-##                                         the type's band_units there (the estimate as
-##                                         debt once, the running cost on the line a year,
-##                                         the vote's bloc moves).
+##                                         the type's band_units there (the estimate net of
+##                                         the Union's share as debt once, the running cost
+##                                         on the type's sector a year, the vote's blocs).
 ##
 ## A WARNING MOVES NO NUMBER. It is a stamp and a note: QuietMonth reads the stamp, the
 ## screen reads the note. Its answers are the register's own verbs, which the player
@@ -29,6 +29,7 @@ extends RefCounted
 const UK = preload("res://src/sim/units_constants.gd")
 const Units = preload("res://src/sim/units.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
+const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
 const EventDraw = preload("res://src/sim/event_draw.gd")
 # unit_build.gd calls tick(); static calls only, as finance_rows' pair with it.
 const UnitBuild = preload("res://src/sim/unit_build.gd")
@@ -49,7 +50,7 @@ static func tick(state, ns, loader, now: int, notes: Array) -> void:
 			var key := "%s|%s" % [type_id, region]
 			if ns.unit_warned.has(key) and now - int(ns.unit_warned[key].get("month", -UK.UNIT_WARN_REARM_MONTHS)) < UK.UNIT_WARN_REARM_MONTHS:
 				continue
-			# Its answer is under way (pass 1 on #425): no "build here" until the build opens.
+			# Its answer is under way (passes 1 and 2 on #425): nothing until the programme ends.
 			if building.has(region):
 				continue
 			# Strictly worse wins: ties go to the first type, then the band's own order.
@@ -65,23 +66,31 @@ static func tick(state, ns, loader, now: int, notes: Array) -> void:
 		"figure": Units.shown_figure(ns, loader, best_type, best_region), "national": Units.national_figure(ns, loader, best_type)})
 
 
-## The regions where a build of the type is under way: {region: true}.
+## The regions where a programme of the type is under way, a build or a closure (pass 2 on
+## #425: no "build here" while the player is closing there either): {region: true}.
 static func _building(ns, type_id: String) -> Dictionary:
 	var out := {}
 	for p in ns.unit_programmes:
-		if String(p.get("type", "")) == type_id and String(p.get("op", "")) == UK.OP_BUILD \
-				and String(p.get("state", "")) == UK.STATE_BUILDING:
+		if String(p.get("type", "")) == type_id and String(p.get("state", "")) == UK.STATE_BUILDING:
 			for r in p.get("rows", []):
 				out[String(r.get("region", ""))] = true
 	return out
 
 
+## Pass 2 on #425: what the player would pay, from the vote's own reads -- the quote's
+## capital net of the Union's share UnitEnvelope.reserve() would hold for it (run on the
+## draft programme only, never the register), and the quote's running cost keyed to the
+## type's sector, as a standing unit's is (UnitBuild.tick_month).
 static func answers(state, ns, loader, type_id: String, region_id: String) -> Array:
 	var t: Dictionary = loader.unit_types[type_id]
-	var n := int(t["band_units"])
-	var row := {"type": type_id, "op": UK.OP_BUILD, "rows": [{"region": region_id, "units": n}]}
+	var row := {"type": type_id, "op": UK.OP_BUILD, "rows": [{"region": region_id, "units": int(t["band_units"])}]}
+	var q := UnitPrice.quote(state, ns, loader, row)
+	var draft := {"type": type_id, "op": UK.OP_BUILD, "rows": row["rows"], "voted": UnitPrice.now(state),
+		"months_left": int(q["build_months"]), "surcharge": q["surcharge"]}
+	UnitEnvelope.reserve(loader, ns, draft)
+	var union := float(draft.get("union", {}).get("reserved_eur_m", 0.0))
 	var gdp_m := float(ns.gdp_eur_bn) * 1000.0
-	var running := 100.0 * float(n) * float((t["running_eur_m"] as Dictionary).get(ns.id, 0.0)) / gdp_m if gdp_m > 0.0 else 0.0
+	var running := 100.0 * float(q["running_eur_m_year"]) / gdp_m if gdp_m > 0.0 else 0.0
 	return [{}, {"bloc_offset": UnitBuild.blocs(ns, loader, row),
-		"debt_eur_bn": float(UnitPrice.quote(state, ns, loader, row)["estimate_eur_m"]) / 1000.0,
-		"spending_pct_gdp": {String(t["line"]): running}}]
+		"debt_eur_bn": (float(q["estimate_eur_m"]) - union) / 1000.0,
+		"spending_pct_gdp": {String(t["sector"]): running}}]
