@@ -78,3 +78,16 @@ const UNIT_ENVELOPE_GAME_SHARE := 0.1
 
 ## The Union's share arrives over this many months after the opening.
 const UNIT_RECEIPT_MONTHS := 12
+
+# --- The regional warning (section 9) ------------------------------------------
+
+## A region is in the band when it is among the nation's UNIT_REGION_WORST furthest
+## behind for the type AND its shown figure stands at least UNIT_REGION_BAND of the
+## nation's figure behind it (the parent's ruling on slice C: a rank, since no one band
+## warned two to four regions in every nation; measured by tools/units_probe.gd). Stand-ins,
+## pending the author's table.
+const UNIT_REGION_WORST := 3
+const UNIT_REGION_BAND := 0.04
+
+## A region warned for a type is not warned for it again within this many months.
+const UNIT_WARN_REARM_MONTHS := 12

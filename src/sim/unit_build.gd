@@ -25,6 +25,9 @@ const Units = preload("res://src/sim/units.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
 const UnitOverrun = preload("res://src/sim/unit_overrun.gd")
 const UnitEnvelope = preload("res://src/sim/unit_envelope.gd")
+const UnitWarnings = preload("res://src/sim/unit_warnings.gd")
+# legislature.gd reaches this file through budget.gd; static calls only, as finance_rows' pair.
+const Legislature = preload("res://src/sim/legislature.gd")
 # finance_rows.gd preloads this file too; GDScript 4 resolves the pair (static calls only).
 const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
@@ -124,7 +127,36 @@ static func open(state, ns, loader, row: Dictionary) -> Dictionary:
 	UnitOverrun.draw(ns, p)
 	UnitEnvelope.reserve(loader, ns, p)
 	ns.unit_programmes.append(p)
+	# The blocs the vote moves, once, through the game's one applier (the parent's ruling).
+	var moves := blocs(ns, loader, row)
+	if not moves.is_empty():
+		Legislature.apply_effects(state, ns, {"bloc_offset": moves}, loader)
 	return p
+
+
+## What a row moves on the blocs when it is voted, {bloc: points}: each region row the
+## type's bloc_offset_per_pop_share x the region's share of the people x min(1, units /
+## band_units), up for a build and down for a closure (the capacity closed over band_units
+## x the unit's capacity). Capped at a band's size a region, so a nation built at band size
+## by population moves a bloc by the catalogue's figure itself, about one project's
+## announcement, and no programme runs past it. The register's blocs line reads the same.
+static func blocs(ns, loader, row: Dictionary) -> Dictionary:
+	var out := {}
+	var type_id := String(row.get("type", ""))
+	if not loader.unit_types.has(type_id):
+		return out
+	var t: Dictionary = loader.unit_types[type_id]
+	var band := float(t["band_units"])
+	var closing := String(row.get("op", "")) == UK.OP_DEMOLISH
+	for r in row.get("rows", []):
+		var size := float(r.get("units", 0))
+		if closing:
+			size = float(r.get("capacity", 0.0)) / maxf(Units.unit_capacity(loader, ns.id, type_id), 1e-9)
+		var sign := -1.0 if closing else 1.0
+		var scale := sign * minf(1.0, size / band) * float(ns.region_pop_share.get(String(r.get("region", "")), 0.0))
+		for bloc in t["bloc_offset_per_pop_share"]:
+			out[bloc] = float(out.get(bloc, 0.0)) + float(t["bloc_offset_per_pop_share"][bloc]) * scale
+	return out
 
 
 ## A month of every programme: each building one pays its month and counts down,
@@ -136,6 +168,7 @@ static func open(state, ns, loader, row: Dictionary) -> Dictionary:
 ##   overrun_defaulted  {id, eur_m}   an unanswered card paid at its date
 ##   union_lapsed       {id, eur_m}   an opening after the period's last payment year
 ##   lapse_warning      {org, period, eur_m, year}  warn_months before that year ends
+##   region_warning     {type, region, figure, national}  at most one a month (UnitWarnings)
 static func tick_month(state, loader) -> Array:
 	var notes: Array = []
 	var ns = state.player()
@@ -162,6 +195,7 @@ static func tick_month(state, loader) -> Array:
 	var receipt := UnitEnvelope.receipts(ns, month)
 	ns.unit_receipt_pct_gdp = 100.0 * receipt * 12.0 / gdp_m if receipt != 0.0 and gdp_m > 0.0 else 0.0
 	UnitEnvelope.warn(loader, ns, month, notes)
+	UnitWarnings.tick(state, ns, loader, month, notes)
 	var was: float = ns.unit_bill_pct_gdp + ns.unit_running_total_pct_gdp()
 	ns.unit_bill_pct_gdp = 100.0 * paid * 12.0 / gdp_m if paid != 0.0 and gdp_m > 0.0 else 0.0
 	var running := {}

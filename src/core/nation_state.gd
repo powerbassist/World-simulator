@@ -1588,6 +1588,11 @@ var unit_running_pct_gdp := {}
 ## GDP a year, rewritten by UnitBuild.tick_month() and SUBTRACTED from the spending by
 ## Budget a month behind. absent_ok: no save before B2 was owed one, so 0 is the truth.
 var unit_receipt_pct_gdp: float = 0.0
+## The regional warnings (src/sim/unit_warnings.gd): "<type>|<region>" -> {month it was last
+## warned, differs: whether its answers are a decision}, which the twelve-month rule and
+## QuietMonth read. absent_ok: no save before
+## slice C held a warning, so {} is the truth (the next month warns as a new game would).
+var unit_warned := {}
 ## The open funds' bill, % of GDP, rewritten by RegionFunds.tick_month() every month
 ## and read by Budget a month behind (project_bill_pct_gdp's case). absent_ok: the
 ## next tick rewrites it.
