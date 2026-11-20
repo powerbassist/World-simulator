@@ -69,9 +69,9 @@ static func quiet(state, ns, loader, now: int) -> bool:
 	for p in ns.unit_programmes:
 		if int((p.get("ask", {}) as Dictionary).get("posted", -1)) == now:
 			return false
-	# A regional warning (unit_warnings.gd) offers three verbs: build, priority, leave.
-	for month in ns.unit_warned.values():
-		if int(month) == now:
+	# A regional warning (unit_warnings.gd), when its build is a decision on the strip's bars.
+	for row in ns.unit_warned.values():
+		if int(row.get("month", -1)) == now and bool(row.get("differs", true)):
 			return false
 	for row in (ns.sector_drift.get("warnings", {}) as Dictionary).values():
 		if int(row.get("entered", -1)) == now:

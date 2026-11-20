@@ -97,6 +97,13 @@ extends SceneTree
 ##              kept under a ceiling, else close; a counter is never its pick);
 ##   process    a process's ask (src/sim/process_asks.gd), the month it is posted;
 ##              answers = each answer's debt booked once and bloc offsets (V5.3 a);
+##   unit       a regional warning of the construction register (src/sim/unit_warnings.gd,
+##              the month it is stamped; V5.3 c' slice C): UnitWarnings.answers, leave
+##              it or build the type's band_units in that region -- the estimate as debt
+##              booked once, the units' running cost as money a year, the vote's bloc
+##              moves (UnitBuild.blocs). The priority answer is not on
+##              the strip (a free move, as a sector warning's share move). The overrun
+##              card is not counted: no regime here builds;
 ##   programme  the term-start offer (Programme.available non-empty after a month
 ##              without it; the new game's own offer, open before the first tick,
 ##              in the first month's row); answers = none, and each entry's
@@ -150,6 +157,7 @@ const Industry = preload("res://src/sim/industry.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 const SectorWarnings = preload("res://src/sim/sector_warnings.gd")
+const UnitWarnings = preload("res://src/sim/unit_warnings.gd")
 const DomainsK = preload("res://src/sim/domains_constants.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Companies = preload("res://src/sim/companies.gd")
@@ -796,6 +804,7 @@ func _density_run(nation_id: String, months: int, regime: String) -> Dictionary:
 		_firm_candidates(state, ns, now, candidates)
 		_closure_candidates(state, ns, now, candidates)
 		_sector_candidates(state, ns, now, candidates)
+		_unit_candidates(state, ns, now, candidates)
 		_process_candidates(state, ns, now, candidates)
 		_council_candidates(state, ns, now, candidates)
 		_bill_candidates(state, ns, candidates)
@@ -998,6 +1007,21 @@ func _sector_candidates(state, ns, now: int, out: Array) -> void:
 		out.append({"source": "sector", "subject": "sector|%s" % String(row["id"]), "state": "",
 			"domain": line, "due": "arrival",
 			"answers": [{}, _effects_strip(state, SectorWarnings.raise_effects(ns, _loader, line, String(row["id"])))]})
+
+
+## A regional warning, the month it is stamped: leave it, or build the band's units there.
+func _unit_candidates(state, ns, now: int, out: Array) -> void:
+	for key in ns.unit_warned:
+		if int(ns.unit_warned[key].get("month", -1)) != now:
+			continue
+		var parts := String(key).split("|")
+		var strips: Array = []
+		for effects in UnitWarnings.answers(state, ns, _loader, parts[0], parts[1]):
+			var strip := _effects_strip(state, effects)
+			strip["debt_bn"] = float(effects.get("debt_eur_bn", 0.0))
+			strips.append(strip)
+		out.append({"source": "unit", "subject": "unit|%s" % String(key), "state": "",
+			"domain": String(_loader.unit_types[parts[0]]["line"]), "due": "arrival", "answers": strips})
 
 
 ## Doing nothing, then every verb Companies.available offers on the firm whose op

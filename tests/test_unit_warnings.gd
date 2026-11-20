@@ -16,6 +16,8 @@ const UnitBuild = preload("res://src/sim/unit_build.gd")
 const UnitWarnings = preload("res://src/sim/unit_warnings.gd")
 const UK = preload("res://src/sim/units_constants.gd")
 const QuietMonth = preload("res://src/sim/quiet_month.gd")
+const EventDraw = preload("res://src/sim/event_draw.gd")
+const UnitPrice = preload("res://src/sim/unit_price.gd")
 
 const FIXTURE := "res://tests/fixtures/units"
 const KIND := "region_warning"
@@ -39,6 +41,7 @@ func _init() -> void:
 	_test_the_band_is_the_worst_few()
 	_test_the_fourth_worst_waits()
 	_test_the_band_needs_the_gap()
+	_test_the_answers_are_the_registers_numbers()
 	_test_warned_again_after_exactly_a_year()
 	_test_the_warning_ends_the_quiet_month()
 	_test_a_build_that_closes_the_gap_leaves_the_band()
@@ -147,7 +150,7 @@ func _test_nothing_in_band_nothing_arrives() -> void:
 	for type_id in _loader.unit_types:
 		for r in _loader.regions[ns.id]:
 			if _behind(ns, type_id, r.id) > 0.0:
-				ns.unit_warned["%s|%s" % [type_id, r.id]] = _now(state)
+				ns.unit_warned["%s|%s" % [type_id, r.id]] = {"month": _now(state), "differs": true}
 				stamped += 1
 	if stamped == 0:
 		_fail("the fixture has no region behind the nation")
@@ -206,7 +209,7 @@ func _test_the_fourth_worst_waits() -> void:
 	for type_id in _loader.unit_types:
 		for r in _loader.regions[ns.id]:
 			if Units.in_band(ns, _loader, type_id, r.id):
-				ns.unit_warned["%s|%s" % [type_id, r.id]] = _now(state)
+				ns.unit_warned["%s|%s" % [type_id, r.id]] = {"month": _now(state), "differs": true}
 	var got := _tick(state)
 	if not got.is_empty():
 		_fail("a region outside the worst few is warned: %s" % [got])
@@ -227,7 +230,7 @@ func _test_warned_again_after_exactly_a_year() -> void:
 		for r in _loader.regions[ns.id]:
 			var other := "%s|%s" % [type_id, r.id]
 			if other != key:
-				ns.unit_warned[other] = at + UK.UNIT_WARN_REARM_MONTHS
+				ns.unit_warned[other] = {"month": at + UK.UNIT_WARN_REARM_MONTHS, "differs": true}
 	while _now(state) < at + UK.UNIT_WARN_REARM_MONTHS - 2:
 		_tick(state)
 	if not _tick(state).is_empty():
@@ -244,13 +247,42 @@ func _test_the_warning_ends_the_quiet_month() -> void:
 	if _tick(state).is_empty():
 		_fail("no warning to test the quiet month with")
 		return
-	var stamps: Dictionary = ns.unit_warned.duplicate()
+	var key: String = ns.unit_warned.keys()[0]
+	var parts := key.split("|")
+	# The stamp is QuietMonth's filter over the warning's own answers, as for any arrival.
+	var decides := EventDraw.answers_differ(ns, UnitWarnings.answers(state, ns, _loader, parts[0], parts[1]))
+	if bool(ns.unit_warned[key]["differs"]) != decides:
+		_fail("the stamp says differs %s, its answers say %s" % [ns.unit_warned[key]["differs"], decides])
+	ns.unit_warned[key]["differs"] = true
 	if QuietMonth.quiet(state, ns, _loader, _now(state)):
-		_fail("a regional warning leaves the month quiet")
+		_fail("a regional warning that is a decision leaves the month quiet")
+	ns.unit_warned[key]["differs"] = false
+	if not QuietMonth.quiet(state, ns, _loader, _now(state)):
+		_fail("a regional warning that is no decision ends the quiet month")
 	ns.unit_warned = {}
 	if not QuietMonth.quiet(state, ns, _loader, _now(state)):
 		_fail("the fixture month is not quiet without the warning: the test reads nothing")
-	ns.unit_warned = stamps
+
+
+## The build answer: the band's units there, the estimate as debt, the running cost a year
+## on the line, the vote's blocs; leaving it is nothing. A build big enough on money decides.
+func _test_the_answers_are_the_registers_numbers() -> void:
+	var state = _state()
+	var ns = state.player()
+	var type_id := "fixture_hospital"
+	var t: Dictionary = _loader.unit_types[type_id]
+	var a := UnitWarnings.answers(state, ns, _loader, type_id, "FR1")
+	var row := {"type": type_id, "op": UK.OP_BUILD, "rows": [{"region": "FR1", "units": int(t["band_units"])}]}
+	if a.size() != 2 or not (a[0] as Dictionary).is_empty():
+		_fail("the answers are not leave, build: %s" % [a])
+		return
+	if absf(float(a[1]["debt_eur_bn"]) - float(UnitPrice.quote(state, ns, _loader, row)["estimate_eur_m"]) / 1000.0) > 1e-12:
+		_fail("the build's debt is not the quote's estimate: %s" % [a[1]])
+	var running := 100.0 * float(t["band_units"]) * float(t["running_eur_m"]["FRA"]) / (float(ns.gdp_eur_bn) * 1000.0)
+	if absf(float(a[1]["spending_pct_gdp"][String(t["line"])]) - running) > 1e-12:
+		_fail("the build's running cost is not the band's units' on the line: %s" % [a[1]])
+	if a[1]["bloc_offset"] != UnitBuild.blocs(ns, _loader, row):
+		_fail("the build's blocs are not the vote's: %s" % [a[1]])
 
 
 func _test_a_build_that_closes_the_gap_leaves_the_band() -> void:
@@ -279,8 +311,12 @@ func _test_the_stamps_survive_a_save() -> void:
 		_fail("no stamp to save")
 		return
 	var back = ns.from_dict(JSON.parse_string(JSON.stringify(ns.to_dict())))
-	if back.unit_warned != ns.unit_warned:
-		_fail("the stamps do not survive a save: %s vs %s" % [back.unit_warned, ns.unit_warned])
+	for key in ns.unit_warned:
+		var was: Dictionary = ns.unit_warned[key]
+		var now: Dictionary = back.unit_warned.get(key, {})
+		# A JSON round trip reads numbers back as floats: compared as the readers read them.
+		if int(now.get("month", -1)) != int(was["month"]) or bool(now.get("differs", not was["differs"])) != bool(was["differs"]):
+			_fail("the stamp %s does not survive a save: %s vs %s" % [key, now, was])
 	var d: Dictionary = ns.to_dict()
 	d.erase("unit_warned")
 	if not ns.from_dict(d).unit_warned.is_empty():

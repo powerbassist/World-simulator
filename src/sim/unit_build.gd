@@ -195,7 +195,7 @@ static func tick_month(state, loader) -> Array:
 	var receipt := UnitEnvelope.receipts(ns, month)
 	ns.unit_receipt_pct_gdp = 100.0 * receipt * 12.0 / gdp_m if receipt != 0.0 and gdp_m > 0.0 else 0.0
 	UnitEnvelope.warn(loader, ns, month, notes)
-	UnitWarnings.tick(ns, loader, month, notes)
+	UnitWarnings.tick(state, ns, loader, month, notes)
 	var was: float = ns.unit_bill_pct_gdp + ns.unit_running_total_pct_gdp()
 	ns.unit_bill_pct_gdp = 100.0 * paid * 12.0 / gdp_m if paid != 0.0 and gdp_m > 0.0 else 0.0
 	var running := {}
