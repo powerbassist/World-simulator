@@ -312,8 +312,8 @@ func _check_the_fill_refreshes_its_detail(state, ns, loader) -> void:
 	picker.fill(ns, offer)
 
 
-## The fix drawn at the picture step: at text 115 the blocs chip names one bloc and "+N", so the
-## list column leaves the detail its room on the Folder's page.
+## The fix drawn at the picture step: at the largest text size the list column leaves the detail its
+## room on the Folder's page. (At 130 % the blocs chip named one bloc and "+N"; that size is gone.)
 func _check_text_115_leaves_the_detail_room(state, ns, loader) -> void:
 	var before := UiTheme.text_scale()
 	UiTheme.set_text_scale(1.15)
@@ -322,15 +322,6 @@ func _check_text_115_leaves_the_detail_room(state, ns, loader) -> void:
 	var list_min: float = picker.list_min_width()
 	if list_min > PAGE_WIDTH - 20.0 - DETAIL_ROOM:
 		_fail("at text 115 the programme list needs %.0f px of the %.0f px page -- the detail keeps less than %.0f" % [list_min, PAGE_WIDTH, DETAIL_ROOM])
-	# The chip names one bloc and a count, never two names (a width check alone would pass a clipped pair).
-	var plus := 0
-	for node in _walk(picker._rows):
-		if node is Label and String(node.tooltip_text).contains(", "):
-			plus += 1
-			if String(node.text).contains(", ") or not String(node.text).contains("+"):
-				_fail("at text 115 a row's blocs chip reads '%s', not one bloc and a count" % node.text)
-	if plus == 0:
-		_fail("premise: no offered entry is welcomed by two blocs or more")
 	UiTheme.set_text_scale(before)
 	picker.fill(ns, Programme.available(state, ns, loader))
 

@@ -389,7 +389,7 @@ func _check_the_shown_remark(label: String, stage: Array) -> void:
 		var tip: String = _caption._get_tooltip(Vector2.ZERO)
 		if tip != (LONG_LINE if cut else ""):
 			_fail("%s: the tooltip is '%s' for a line %s" % [label, tip, "cut at two lines" if cut else "shown whole"])
-	if stage[1] == SHORT_LINE and float(stage[0]) == 1.0 and not _caption.tooltip_text.is_empty():
+	if stage[1] == SHORT_LINE and float(stage[0]) == 1.0 and not _caption._get_tooltip(Vector2.ZERO).is_empty():
 		_fail("%s: a line shown whole repeats itself as a tooltip" % label)
 	var slot: float = 1920.0 - 232.0 - TopBar.LEFT_GUTTER * 2 - TopBar.FIGURE_GAP / 2 - _bar.get_theme_stylebox("panel").get_minimum_size().x
 	var used: float = _bar._figures.get_combined_minimum_size().x + _bar._caption_width() + _bar._chips_width()

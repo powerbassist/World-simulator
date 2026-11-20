@@ -34,7 +34,6 @@ func _ready() -> void:
 	_line.max_lines_visible = MAX_LINES
 	_line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_line.resized.connect(_tip_if_cut)
 	add_child(_line)
 	_timer = Timer.new()
 	_timer.one_shot = true
@@ -51,7 +50,6 @@ func say(line: String, _anchor: Control = null, seconds := 0.0) -> void:
 		hide()
 		return
 	_line.text = line
-	_tip_if_cut()
 	show()
 	_timer.start(seconds if seconds > 0.0 else reading_seconds(line))
 
@@ -72,13 +70,8 @@ func clear() -> void:
 
 
 ## The whole line as a tooltip only when the two lines cut it: a line shown whole would
-## repeat itself. Measured again whenever the label is laid out at a new width.
-func _tip_if_cut() -> void:
-	tooltip_text = _line.text if _line.get_line_count() > MAX_LINES else ""
-
-
-## Read when the tooltip is asked for, not only when the label resizes: a text-size change can
-## re-wrap the line without moving the label's size, and the stored tooltip would go stale.
+## repeat itself. Read when the tooltip is asked for, not stored: a text-size change can
+## re-wrap the line without moving the label's size, and a stored tooltip would go stale.
 func _get_tooltip(_at: Vector2) -> String:
 	return _line.text if _line.get_line_count() > MAX_LINES else ""
 
