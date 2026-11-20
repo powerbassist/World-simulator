@@ -194,7 +194,8 @@ func _run_a_month() -> void:
 		var id := String(person.id)
 		if person.wants.is_empty() or id == String(ns.head_of_state_person_id) or ns.audience_asked_month.has(id):
 			continue
-		Audiences._arrive(ns, person, person.wants[0], next - Audiences.K.REQUEST_WINDOW_MONTHS, [])
+		# Lapses as the month after its deadline begins (#431): arrived WINDOW + 1 months before next.
+		Audiences._arrive(ns, person, person.wants[0], next - Audiences.K.REQUEST_WINDOW_MONTHS - 1, [])
 		_lapsing = String(ns.audience_requests[-1]["id"])
 		break
 	AudienceDriver.refresh(_main)

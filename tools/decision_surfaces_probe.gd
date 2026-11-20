@@ -935,12 +935,12 @@ func _request_candidates(state, ns, report: Dictionary, now: int, out: Array) ->
 	var arrived := {}
 	for r in (report.get("audience_requests", {}) as Dictionary).get("arrived", []):
 		arrived[String(r["id"])] = true
-	# A pending request lapses in the tick of its deadline month (Audiences._overdue:
-	# now >= deadline_month), so its last month at a boundary is the one before.
+	# A pending request's last month is Audiences.answer_by (the deadline month since #431);
+	# it lapses as the month after begins.
 	for r in Audiences.pending(ns):
 		var request_id := String(r["id"])
 		var is_new := arrived.has(request_id)
-		if not is_new and int(r["deadline_month"]) - 1 != now:
+		if not is_new and Audiences.answer_by(r) != now:
 			continue
 		out.append({"source": "request", "subject": "request|%s" % String(r["person_id"]),
 			"state": "%s|%s" % [String(r["object"]), String(r["stance"])], "domain": "audience",

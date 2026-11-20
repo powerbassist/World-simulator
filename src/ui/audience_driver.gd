@@ -14,6 +14,7 @@ const PollCard = preload("res://src/ui/poll_card.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const RequestLandings = preload("res://src/sim/request_landings.gd")
+const AudienceK = preload("res://src/sim/audience_constants.gd")
 const CalendarK = preload("res://src/sim/calendar_constants.gd")
 const RequestLane = preload("res://src/ui/request_lane.gd")
 const AudienceScene = preload("res://src/ui/audience_scene.gd")
@@ -59,6 +60,12 @@ static func register(main) -> void:
 	lane.decline_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))
 	var book := func(id: String, date: Dictionary) -> void:
 		var result := Audiences.book(main._state, main._state.player(), main._loader, id, date)
+		# #431 pass 2 TAKE 1: the clock turned the picked day into today under the player's hand;
+		# the pick was the first free day, so the first free day now is what they chose.
+		if String(result.get("code", "")) == AudienceK.BOOK_PASSED:
+			var first := Audiences.first_free_day(main._state, main._state.player(), id)
+			if not first.is_empty():
+				result = Audiences.book(main._state, main._state.player(), main._loader, id, first)
 		game["booking_for"] = ""
 		_answer(main, id, result)
 		_seen(main, id)

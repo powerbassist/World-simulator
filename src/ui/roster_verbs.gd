@@ -35,7 +35,7 @@ static func for_person(state, loader, row: Dictionary, see: Callable, call: Call
 	else:
 		var day := first_free(state, request)
 		if day.is_empty():
-			item["reason"] = Strings.t("None of the days they offer is free in your diary.")
+			item["reason"] = Strings.t("No day in your diary is free before their last day.")
 		else:
 			item["text"] = Strings.t("See them on %s") % DateText.day_month(int(day["day"]), int(day["month"]))
 			item["enabled"] = true
@@ -50,10 +50,7 @@ static func for_person(state, loader, row: Dictionary, see: Callable, call: Call
 
 ## The first offered day the Diary can take, or {}.
 static func first_free(state, request_id: String) -> Dictionary:
-	for date in Audiences.offered_dates(state, state.player(), request_id):
-		if bool(date.get("free", false)):
-			return date
-	return {}
+	return Audiences.first_free_day(state, state.player(), request_id)
 
 
 ## `verbs` is the panel's cabinet_verbs.gd: its reassign() and dismiss().

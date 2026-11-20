@@ -1608,7 +1608,7 @@ var rescue_bill_pct_gdp: float = 0.0
 var phone_calls := {}
 
 ## Pre-gate B, CALL 2. The seed of this nation's people's draws -- the request
-## hazard, the offered dates, the lever and phone rolls, the fog, the trait
+## hazard, the lever and phone rolls, the fog, the trait
 ## reveals, each salted through Cycle.salted(). Without one, every France game drew
 ## the same months, and QA's run met a silent year (1 request in months 21-38). Set
 ## on the played nation by President.seed_draws(), which the UI calls once at a new

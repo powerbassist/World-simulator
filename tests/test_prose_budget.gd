@@ -148,7 +148,9 @@ const TOTAL_PENDING := {
 ## chip per sector, and per card its two figure captions, "Biggest employers" and "Open <sector>".
 ## The right-click C, a stated rise 3203 -> 3224 (+21): the firm sheet's "Call <chief>" and "Show on the map" on the
 ## three sector tabs, the verbs the retired plate carried.
-const TOTAL_SUM_CEILING := 3224
+## #431 pass 2 (TAKE 7, R3 back): the asker's party beside each "Book here" in the Diary's day
+## list, as the grid's chips said it on their hover before they left: a stated rise 3224 -> 3234.
+const TOTAL_SUM_CEILING := 3234
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
