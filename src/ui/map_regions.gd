@@ -151,7 +151,7 @@ func label_font() -> Font:
 
 ## Each labelled region's chip on screen now: centred on the region's label point, else the
 ## first of STEPS (in half chips) that covers none of its cities and no chip
-## already placed (at a 130 % text size, neighbours' chips overlapped) AND keeps its centre
+## already placed (at the former 130 % text size, neighbours' chips overlapped) AND keeps its centre
 ## inside the region's own rings -- a chip stepped into a neighbour reads as the neighbour's
 ## figure (QA's T2 on #384). If no step fits, the centred chip stays: over a city is wrong but
 ## unambiguous, in the wrong region is not.

@@ -16,6 +16,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceStacks = preload("res://src/ui/finance_stacks.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
@@ -50,25 +51,25 @@ func _process(_delta: float) -> bool:
 			_check_the_picture()
 			_check_the_rows()
 			_check_the_foot()
+			_check_the_kind_captions()
 			_check_the_colours_and_order()
 			_check_the_surplus_has_no_bad_mark()
 			_check_a_fold_opens_and_redraws()
 			_check_the_stamp_and_the_forecast_redraw()
-			_check_who_pays_is_a_hover_at_130()
 			# QA's MO / MD on #359: end to end through the game's own wiring.
 			_main = load("res://src/ui/main.tscn").instantiate()
 			root.add_child(_main)
 		4:
-			# The docked page at 130 %: laid out a frame before the clip check reads it (QA's T1 on #366: the scroll bar's
+			# The docked page at 115 %: laid out a frame before the clip check reads it (QA's T1 on #366: the scroll bar's
 			# gap took 8 px from the books' columns and "Other spending" read "Other spend...").
-			UiTheme.set_text_scale(1.3)
+			UiTheme.set_text_scale(1.15)
 			_panel.theme = UiTheme.build()  # the game's fonts: a bare panel measures the engine default
 			_panel._dirty = true
 			_panel._process(0.0)
 			# The narrowest the page can be laid out: every column at its minimum, which is where a name is cut.
 			_panel.size = Vector2(_panel.get_combined_minimum_size().x, 820)
 		5:
-			_check_no_name_is_clipped_at_130()
+			_check_no_name_is_clipped_at_115()
 			UiTheme.set_text_scale(1.0)
 			_panel.theme = null
 			_panel._dirty = true
@@ -272,10 +273,10 @@ func _check_the_stamp_and_the_forecast_redraw() -> void:
 	_panel._process(0.0)
 
 
-## No header or row name on the books is cut to an ellipsis at 130 % text: a Label that clips and whose text is wider
+## No header or row name on the books is cut to an ellipsis at 115 % text: a Label that clips and whose text is wider
 ## than the box it was given says "Other spend...". The names are what the page is read by; the figures and notes
 ## around them may be tighter.
-func _check_no_name_is_clipped_at_130() -> void:
+func _check_no_name_is_clipped_at_115() -> void:
 	var clipped := []
 	for box in [_panel._revenue_box, _panel._spending_box]:
 		for node in box.find_children("*", "", true, false):
@@ -283,6 +284,13 @@ func _check_no_name_is_clipped_at_130() -> void:
 				continue
 			var label = node
 			if not label.is_visible_in_tree() or not label.clip_text or label.text == "":
+				continue
+			# A who-pays caption is a note that may be tighter than the names, and then it is the row's
+			# hover (picked by its role, never by what its text looks like).
+			if label.has_meta("who_pays"):
+				var row: Control = label.get_parent()
+				if not String(row.tooltip_text).begins_with("Paid by:"):
+					_fail("a who-pays caption on a row with no 'Paid by' hover: %s" % label.text)
 				continue
 			# The label's own measure of its text, as it would draw it (variation fonts and tracking included).
 			label.clip_text = false
@@ -293,22 +301,7 @@ func _check_no_name_is_clipped_at_130() -> void:
 			if need > label.size.x + 0.5:
 				clipped.append("%s (%.0f of %.0f px)" % [label.text, need, label.size.x])
 	if not clipped.is_empty():
-		_fail("at 130 %% the books clip: %s" % ", ".join(clipped))
-
-
-func _check_who_pays_is_a_hover_at_130() -> void:
-	UiTheme.set_text_scale(1.3)
-	_panel._dirty = true
-	_panel._process(0.0)
-	var text := _text_of(_panel._revenue_box)
-	var tips: Array = _panel._revenue_box.find_children("*", "HBoxContainer", true, false).filter(func(n) -> bool: return String(n.tooltip_text).begins_with("Paid by:"))
-	UiTheme.set_text_scale(1.0)
-	if tips.is_empty():
-		_fail("at 130 % who pays is not a hover on the row")
-	if text.contains("Workers, Pensioners") or text.contains("Pensioners, Urban"):
-		_fail("at 130 % who pays is still a caption on the row")
-	_panel._dirty = true
-	_panel._process(0.0)
+		_fail("at 115 %% the books clip: %s" % ", ".join(clipped))
 
 
 func _press_open_the_bill_through_main() -> void:
@@ -334,3 +327,53 @@ func _finish() -> void:
 	for f in _failures:
 		printerr("FAIL: %s" % f)
 	quit(1)
+
+
+## QA on #433: a kind row's caption is who pays, "At vote" while its rate is at the vote and
+## "Creation" while a new kind is drafted; the "Paid by" hover is on each of them.
+func _check_the_kind_captions() -> void:
+	var ns = _state.player()
+	var vat_id := FinanceRows.row_id(FinanceDraft.TAX, "vat")
+	_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+	_expect_caption(vat_id, tr("At vote"))
+	_state.player().tabled_bill = {}
+	# A kind not in force, drafted in the autumn (the month the nation's bill opens).
+	var held_month: int = _state.month
+	_state.month = int(_loader.nations[ns.id].finance_autumn_month)
+	var kind := ""
+	for group in _panel._book["groups"]:
+		if not (group["not_in_force"] as Array).is_empty():
+			kind = String(group["not_in_force"][0])
+			break
+	if kind == "":
+		_fail("premise: no kind is out of force to draft")
+	else:
+		_panel._draft.set_create(kind, 1.0)
+		_panel._stamp = ""
+		_panel._dirty = true
+		_panel._process(0.0)
+		_expect_caption(FinanceRows.row_id(FinanceDraft.TAX, kind), tr("Creation"))
+		_panel._draft.clear_create(kind)
+	_state.month = held_month
+	_panel._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+func _expect_caption(id: String, word: String) -> void:
+	var cells: Dictionary = _panel._ctx["cells"]
+	if not cells.has(id):
+		_fail("premise: no kind row for %s" % id)
+		return
+	var row: Control = (cells[id][0] as Control).get_parent()
+	if not String(row.tooltip_text).begins_with("Paid by:"):
+		_fail("%s: the row has no 'Paid by' hover: '%s'" % [id, row.tooltip_text])
+	var said := false
+	for node in row.get_children():
+		if node is Label and (node as Label).text == word:
+			said = true
+	if not said:
+		_fail("%s: the caption does not read '%s'" % [id, word])

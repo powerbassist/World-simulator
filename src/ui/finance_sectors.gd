@@ -208,7 +208,7 @@ func _verb(dns, sectors: Array, why_of: Dictionary) -> void:
 		aim_pick(_draft, dns, _loader, _line, sectors, why_of, String(why_of.keys()[0]))
 	if float(pick.get("amount", 0.0)) <= 0.0:
 		pick["amount"] = STEP
-	# A flow, so the three pickers and the slider wrap under each other where the column is narrow (130 % text).
+	# A flow, so the three pickers and the slider wrap under each other where the column is narrow (the former 130 % text size).
 	var picks := HFlowContainer.new()
 	add_child(picks)
 	PanelKit.plain_line(picks, Strings.t("Move"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF

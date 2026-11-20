@@ -28,7 +28,7 @@ const Items = preload("res://src/ui/horizon_items.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 
 ## The plate's height (the workspace's dock reads it): one lane of chips, the line, the day
-## numbers. 88 holds the largest text size (130 %) without the plate growing past the dock.
+## numbers. 88 held the former 130 % without the plate growing past the dock.
 const STRIP_HEIGHT := 88
 ## The months' shares of the line: this month by days, then two compressed.
 const SHARES: Array[float] = [0.5, 0.25, 0.25]

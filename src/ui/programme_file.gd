@@ -4,7 +4,7 @@ extends RefCounted
 ## Diary stays alone in its domain): the offer is the term-start file in "To answer", its page a
 ## lead (file_view.gd) over the programme picker (programme_picker.gd). The parent's pick at the
 ## picture step was B, a picker body, over A, a card per entry: 28 whole summaries put the page at
-## 3.5 screens at 1.0 and 5.4 at text 130, and lost the five groups.
+## 3.5 screens at 1.0 and 5.4 at the former 130 % text size, and lost the five groups.
 ##
 ## THE FILE FOLLOWS THE OFFER, NOT THE CARD (#405 pass 2, T2): it is listed under KEY while
 ## Programme.available() holds anything, whatever became of the inbox card -- closed with its X,

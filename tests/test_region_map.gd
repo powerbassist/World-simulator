@@ -116,7 +116,7 @@ func _check_open() -> void:
 		_fail("the map figures are not drawn in the bold figure face")
 	_check_budget()
 	# The chips at the default text size and at the larger ones, where they crowd.
-	for scale in [1.0, 1.3, 1.6]:
+	for scale in [1.0, 1.15, 1.6]:
 		UiTheme.set_text_scale(scale)
 		_check_chips(scale)
 	UiTheme.set_text_scale(1.0)

@@ -48,7 +48,7 @@ const WEEKDAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # i18n: msg
 ## and one entry row. The list's scroll is the Diary's only flexible region, and
 ## everything else grows: a card a pending request beside the grid, "Your word"
 ## under it, the text size. Without a floor they squeezed it to nothing and "Book
-## here" fell out of view (#231's QA round: 4 requests at 100 %, any at 130 %); with
+## here" fell out of view (#231's QA round: 4 requests at 100 %, any at the former 130 %); with
 ## one, the Diary grows past the dock instead and its page scrolls as one.
 const LIST_ROOM_PX := 96.0
 

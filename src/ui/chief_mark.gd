@@ -8,7 +8,7 @@ extends Button
 ##
 ## A Button holding its own row: the children ignore the mouse, so the whole plate is
 ## the one target, and its width follows the row (a long title is cut, the tooltip
-## carries it whole: a request's name and "+2 more" ran past 600 px in French at 130 %).
+## carries it whole: a request's name and "+2 more" ran past 600 px in French at the former 130 %).
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Grade = preload("res://src/ui/grade.gd")

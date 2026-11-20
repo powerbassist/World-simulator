@@ -60,11 +60,14 @@ const DEFAULT_FULLSCREEN := true
 
 ## V5.1-c2.4. The text size: the type scale alone, so the shell keeps its slots
 ## at the 1920 reference. It REPLACED the interface scale (content_scale_factor
-## 85-130 %; the parent's call, 2026-10-22): at 130 % that shrank the reference
-## to 1477 px and the docked workspace left 5 px of map. An old `ui_scale_index`
+## 85-130 %; the parent's call, 2026-10-22): at the largest of those that shrank the
+## reference to 1477 px and the docked workspace left 5 px of map. An old `ui_scale_index`
 ## in settings.cfg is ignored. "More map" came back below 100 % as the interface size
 ## (interface_size.gd), which grows the canvas instead of shrinking it.
-const TEXT_SCALES: Array[float] = [0.9, 1.0, 1.15, 1.3]
+## 130 % left the list on the author's word (2026-11-20, "Retirer 130 % du jeu"): the
+## largest size is 115 %, and a settings.cfg saved at the old fourth index clamps to it
+## (_text_index).
+const TEXT_SCALES: Array[float] = [0.9, 1.0, 1.15]
 const DEFAULT_TEXT_INDEX := 1
 
 ## Sound on a first launch. Audible rather than muted by default: a sting that

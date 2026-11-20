@@ -187,15 +187,14 @@ func _process(_delta: float) -> void:
 
 func _refresh(ns) -> void:
 	_lead.text = _sentence()
-	var wide := UiTheme.text_scale() < 1.2
 	for box in [_revenue_box, _spending_box]:
 		for child in box.get_children():
 			box.remove_child(child)
 			child.queue_free()
 	_editor = null
-	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": FinanceAutumn.tabled_rows(ns), "cells": {}, "editor": _make_editor, "wide": wide,
+	_ctx = {"draft": _draft, "open": _open_id, "on_open": _on_open, "tabled": FinanceAutumn.tabled_rows(ns), "cells": {}, "editor": _make_editor,
 		"parts": FinanceRead.other_parts(ns), "autumn": FinanceBill.autumn_open(_state, _loader), "on_create": _on_create, "slipping": FinanceSectors.slipping(ns, _loader), "open_groups": _open_groups, "toggle": _toggle_group}
-	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, wide, _ctx)
+	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, _ctx)
 	FinanceRows.spending(_spending_box, _book, _ctx)
 	_stacks.setup(_revenue_parts(), _spending_parts(), float(_book["deficit_bn"]))
 	_paint(ns)

@@ -62,20 +62,20 @@ func _check_type_steps() -> void:
 ## theme sets, at once -- and nothing else: a plate's margins are layout, and a
 ## larger text must not quietly re-lay the shell.
 func _check_text_scale() -> void:
-	UiTheme.set_text_scale(1.3)
+	UiTheme.set_text_scale(1.15)
 	var big: Theme = UiTheme.build()
 	UiTheme.set_text_scale(1.0)
 	var base: Theme = UiTheme.build()
-	if big.default_font_size != roundi(base.default_font_size * 1.3):
-		_fail("at 130 %% the body is %d px, not %d" % [big.default_font_size, roundi(base.default_font_size * 1.3)])
+	if big.default_font_size != roundi(base.default_font_size * 1.15):
+		_fail("at 115 %% the body is %d px, not %d" % [big.default_font_size, roundi(base.default_font_size * 1.15)])
 	for type in [UiTheme.MICRO, UiTheme.HEADING, UiTheme.FIGURE, UiTheme.HERO, UiTheme.CAPTION, UiTheme.LEAD]:
-		var want := roundi(base.get_font_size("font_size", type) * 1.3)
+		var want := roundi(base.get_font_size("font_size", type) * 1.15)
 		if big.get_font_size("font_size", type) != want:
-			_fail("at 130 %% '%s' is %d px, not %d" % [type, big.get_font_size("font_size", type), want])
+			_fail("at 115 %% '%s' is %d px, not %d" % [type, big.get_font_size("font_size", type), want])
 	var plate_big: StyleBox = big.get_stylebox("panel", UiTheme.PLATE)
 	var plate_base: StyleBox = base.get_stylebox("panel", UiTheme.PLATE)
 	if plate_big.get_minimum_size() != plate_base.get_minimum_size():
-		_fail("the text size moved a plate's margins: %s at 130 %%, %s at 100 %%" % [plate_big.get_minimum_size(), plate_base.get_minimum_size()])
+		_fail("the text size moved a plate's margins: %s at 115 %%, %s at 100 %%" % [plate_big.get_minimum_size(), plate_base.get_minimum_size()])
 
 
 func _check_theme_contents() -> void:
