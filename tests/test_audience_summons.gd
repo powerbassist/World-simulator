@@ -160,6 +160,17 @@ func _check_one_a_month_and_one_standing() -> void:
 		_fail("summon() let a second summons through in one month")
 	if K.SUMMONS_PER_MONTH != 1:
 		_fail("the monthly cap is not the author's one")
+	# QA's T1/T2 on #432: the month is the booking's, not the meeting's -- a summons booked for a
+	# day next month still uses this month, and a day beyond this month books at all.
+	var fresh = _game()
+	var fns = fresh.player()
+	var c := _own_quiet(fresh)
+	var d := _own_quiet(fresh, [c])
+	var nxt := {"year": int(fresh.year) + (1 if int(fresh.month) == 12 else 0), "month": int(fresh.month) % 12 + 1, "day": 5}
+	if not bool(Audiences.summon(fresh, fns, _loader, c, nxt).get("ok", false)):
+		_fail("a summons for a day next month was refused")
+	elif String(Audiences.summon_refusal(fresh, fns, _loader, d).get("code", "")) != K.SUMMON_MONTH_USED:
+		_fail("a summons booked for next month left this month's one unused")
 	# Nine months on, a's cap has lifted but a's summons -- booked far ahead -- still stands.
 	for row in ns.audience_requests:
 		if String(row["person_id"]) == a:
@@ -247,7 +258,8 @@ func _check_the_meeting_is_talk_and_unpriced() -> void:
 	if String(Audiences.request(copy3.player(), id)["status"]) != K.STATUS_SETTLED or float(copy3.player().person_grudges.get(pid, 0.0)) > g3:
 		_fail("a held summons never closed read '%s' at the month's end" % Audiences.request(copy3.player(), id)["status"])
 	# TAKE 4 and 5: no refusal risk, no offer, and nothing to answer or agree.
-	if not Deal.refusal_risk(state, ns, _loader, session).is_empty() or not (Deal.answers(state, ns, _loader, session)["offer"] as Dictionary).is_empty():
+	if not Deal.refusal_risk(state, ns, _loader, session).is_empty() or not Deal.silence_worth(state, ns, _loader, session).is_empty() \
+			or not (Deal.answers(state, ns, _loader, session)["offer"] as Dictionary).is_empty():
 		_fail("a summons scene projects a refusal risk or an offer")
 	if bool(Audiences.agree(ns, id, K.STATUS_PROMISED)) or bool(Audiences.answer(state, ns, id, K.STATUS_PROMISED).get("ok", true)):
 		_fail("a summons took an agreement or an answer")
@@ -263,6 +275,9 @@ func _check_the_meeting_is_talk_and_unpriced() -> void:
 		_fail("a closed summons reads '%s'" % Audiences.request(ns, id)["status"])
 
 
+## QA's T3 on #432: AudienceLane.close_overtaken never closes a summons -- it reads a booked row
+## only once overdue, and then only to ask whether the person's want is served, which no want
+## named "summons" ever is; so no skip is needed there and none is kept.
 func _check_a_missed_summons_costs_nothing() -> void:
 	var state = _game()
 	var ns = state.player()

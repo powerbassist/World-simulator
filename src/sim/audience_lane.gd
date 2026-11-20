@@ -59,7 +59,7 @@ static func asked_ever(ns) -> bool:
 static func close_overtaken(state, ns, now: int, loader = null, meters: Dictionary = {}) -> void:
 	for row in ns.audience_requests:
 		var object := String(row.get("object", ""))
-		if not K.OPEN.has(String(row.get("status", ""))) or K.is_summons(row):
+		if not K.OPEN.has(String(row.get("status", ""))):
 			continue
 		if object.begins_with(K.FIRM_PREFIX):
 			if not Closures.announced(ns, object.substr(K.FIRM_PREFIX.length())).is_empty():
