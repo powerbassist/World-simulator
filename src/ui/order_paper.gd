@@ -22,6 +22,9 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const TermText = preload("res://src/ui/term_text.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 
+## The picked key of the finance bill, whose queue entry has no law id.
+const FINANCE := "finance"  # i18n: ok a key
+
 var places: Array = []
 var _row: HBoxContainer
 var _state
@@ -30,7 +33,6 @@ var _find_law: Callable
 ## The bill a right click picked (its law id, FINANCE for the finance bill), "" for none: its verbs dock under the
 ## places and follow the bill, not its place (a close promotes the queue; a move reorders it).
 var _picked := ""
-const FINANCE := "finance"  # i18n: ok a key
 var _verbs: VBoxContainer
 
 
@@ -165,6 +167,10 @@ func _move_by(key: String, step: int) -> void:
 func _menu(i: int) -> void:
 	var queue: Array = _state.player().bill_queue
 	_picked = _key_of(queue[i]) if i >= 0 and i < queue.size() else ""
+	# A mouse gesture: a verb the keyboard was on is let go, not carried onto the new bill's block by the relight.
+	var focus: Control = get_viewport().gui_get_focus_owner()
+	if focus != null and _verbs.is_ancestor_of(focus):
+		focus.release_focus()
 	refresh(_state, _loader, _find_law)
 	VerbBlock.light(self)
 

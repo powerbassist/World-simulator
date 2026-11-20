@@ -319,6 +319,11 @@ func _check_the_keyboard_stays_on_its_verb() -> void:
 	var after = _main.get_viewport().gui_get_focus_owner()
 	if not (after is Button) or (after as Button).text != later.text:
 		_fail("after Move later the keyboard landed on '%s', not Move later" % ((after as Button).text if after is Button else str(after)))
+	# Pass 1: with the keyboard on a docked verb, a right click on another bill hands it nothing.
+	_paper().places[3].menu_requested.emit(2)
+	var held = _main.get_viewport().gui_get_focus_owner()
+	if held != null and _paper().is_ancestor_of(held):
+		_fail("a right click after keyboard use gave the new bill's '%s' the keyboard" % ((held as Button).text if held is Button else str(held)))
 
 
 ## Pass 2 T3: a drag moves a bill, it does not open the verbs (a right click does).
