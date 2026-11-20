@@ -171,4 +171,4 @@ The window hotkeys are in the table above.
 
 ### Right-click
 
-Files that handle `MOUSE_BUTTON_RIGHT`: `country_box.gd`, `election_panel.gd`, `order_slot.gd`, `roster_line.gd`.
+Files that handle `MOUSE_BUTTON_RIGHT`: `country_box.gd`, `election_panel.gd`, `order_slot.gd`, `roster_line.gd`, `verb_block.gd`.
