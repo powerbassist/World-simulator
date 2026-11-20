@@ -43,12 +43,14 @@ static func tick(state, ns, loader, now: int, notes: Array) -> void:
 	var types: Array = loader.unit_types.keys()
 	types.sort()
 	for type_id in types:
-		if not Units.offered(loader, ns.id, type_id):
-			continue
 		var band := Units.band(ns, loader, type_id)
+		var building := _building(ns, type_id)
 		for region in band:
 			var key := "%s|%s" % [type_id, region]
 			if ns.unit_warned.has(key) and now - int(ns.unit_warned[key].get("month", -UK.UNIT_WARN_REARM_MONTHS)) < UK.UNIT_WARN_REARM_MONTHS:
+				continue
+			# Its answer is under way (pass 1 on #425): no "build here" until the build opens.
+			if building.has(region):
 				continue
 			# Strictly worse wins: ties go to the first type, then the band's own order.
 			if float(band[region]) > worst:
@@ -61,6 +63,17 @@ static func tick(state, ns, loader, now: int, notes: Array) -> void:
 		"differs": EventDraw.answers_differ(ns, answers(state, ns, loader, best_type, best_region))}
 	notes.append({"kind": KIND, "type": best_type, "region": best_region,
 		"figure": Units.shown_figure(ns, loader, best_type, best_region), "national": Units.national_figure(ns, loader, best_type)})
+
+
+## The regions where a build of the type is under way: {region: true}.
+static func _building(ns, type_id: String) -> Dictionary:
+	var out := {}
+	for p in ns.unit_programmes:
+		if String(p.get("type", "")) == type_id and String(p.get("op", "")) == UK.OP_BUILD \
+				and String(p.get("state", "")) == UK.STATE_BUILDING:
+			for r in p.get("rows", []):
+				out[String(r.get("region", ""))] = true
+	return out
 
 
 static func answers(state, ns, loader, type_id: String, region_id: String) -> Array:

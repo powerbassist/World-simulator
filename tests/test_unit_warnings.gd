@@ -43,6 +43,7 @@ func _init() -> void:
 	_test_the_band_needs_the_gap()
 	_test_the_answers_are_the_registers_numbers()
 	_test_a_dull_warning_is_stamped_dull()
+	_test_a_build_under_way_is_not_warned_again()
 	_test_warned_again_after_exactly_a_year()
 	_test_the_warning_ends_the_quiet_month()
 	_test_a_build_that_closes_the_gap_leaves_the_band()
@@ -263,6 +264,38 @@ func _test_the_warning_ends_the_quiet_month() -> void:
 	ns.unit_warned = {}
 	if not QuietMonth.quiet(state, ns, _loader, _now(state)):
 		_fail("the fixture month is not quiet without the warning: the test reads nothing")
+
+
+## Pass 1 on #425: a region where a build of the type is already under way has had its
+## answer; it is not told to build there again until the build opens.
+func _test_a_build_under_way_is_not_warned_again() -> void:
+	var state = _state()
+	var ns = state.player()
+	var first := _tick(state)
+	if first.is_empty():
+		_fail("no warning to build against")
+		return
+	var type_id := String(first[0]["type"])
+	var region := String(first[0]["region"])
+	# A real programme, opened as the vote opens it (36 to 60 months: building all the while).
+	var p := UnitBuild.open(state, ns, _loader, {"type": type_id, "op": UK.OP_BUILD, "rows": [{"region": region, "units": 1}]})
+	# Every other pair warned just now: only the region being built could come back.
+	for t in _loader.unit_types:
+		for r in _loader.regions[ns.id]:
+			var key := "%s|%s" % [t, r.id]
+			if key != "%s|%s" % [type_id, region]:
+				ns.unit_warned[key] = {"month": _now(state) + UK.UNIT_WARN_REARM_MONTHS, "differs": true}
+	for i in UK.UNIT_WARN_REARM_MONTHS + 2:
+		for w in _tick(state):
+			if String(w["type"]) == type_id and String(w["region"]) == region:
+				_fail("%s warned again while a build is under way there" % region)
+	if String(p["state"]) != UK.STATE_BUILDING:
+		_fail("the programme opened inside the test's window: it reads nothing")
+	# Control: with the programme gone, the region comes back at once (it is still in band).
+	ns.unit_programmes.clear()
+	var back := _tick(state)
+	if back.size() != 1 or String(back[0]["region"]) != region:
+		_fail("without the build the region does not come back: %s" % [back])
 
 
 ## A type so cheap that building its band moves no money past the bar and no bloc past an
