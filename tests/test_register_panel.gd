@@ -108,8 +108,9 @@ func _process(_delta: float) -> bool:
 			var ns = _main._state.player()
 			_held_stock = _main._loader.unit_stock[ns.id]
 			_main._loader.unit_stock.erase(ns.id)
-			# As a load does: the workspace closes, the next tab opened is in the SAME domain
-			# (the register's), so the tab row must be read again, not kept.
+			# What a panel offers changes while the domain stays: the workspace closes and the next
+			# tab opened is in the SAME domain (the register's), so the row is read again, not kept.
+			# A load swaps in a fresh main today (GameReload.swap); this pins the row for any other path.
 			_main._windows.close_all()
 		22:
 			_main._windows.open("finances")

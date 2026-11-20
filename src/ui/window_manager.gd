@@ -454,8 +454,8 @@ func _show_domain_of(id: String) -> void:
 		# A tab whose panel says it is not offered to the nation played is left out (a rule over
 		# its data: the register without a stock file); a panel that says nothing is always offered.
 		tabs = Domains.tabs(domain, _pages.keys()).filter(func(t): return _offered(String(t)))
-	# The same domain keeps its row only while the offered tabs are the same: a load can
-	# change what a panel offers without the domain ever changing.
+	# The same domain keeps its row only while the offered tabs are the same: what a panel
+	# offers can change without the domain ever changing.
 	if domain == _domain and tabs == tab_ids():
 		return
 	_domain = domain
