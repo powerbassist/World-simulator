@@ -35,6 +35,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open register
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play GBR --open register
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --text 130 --open register
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --warned --open register   (opened from a region warning)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programmes --open programmes   (a programme building, its overrun card)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sheet-polls --open legislature   (the law sheet, polls open)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --law-filter taxes: --open legislature   (shelf:words)
@@ -666,6 +668,10 @@ var _downgrade := false
 var _redistribute := false
 var _invest := false
 var _build := false
+## Register slice 2: the register opened from the start's region warning (its card's Open), and
+## a programme of that warning voted with its overrun card posted (the Programmes tab).
+var _warned := false
+var _programmes := false
 ## V5.1-d1a (G6): the energy tab's first order armed, through the panel's own signal.
 var _arm_energy := false
 ## V5.1-d1b (G10): a quiet event answered through the Events window, then its month
@@ -780,6 +786,28 @@ var _main
 ## of its own), then the situation's cause, then the month's end through its driver
 ## (G1: the mark and the caption), then -- unless --chief-mark -- the read the player
 ## opens from the mark (G2: the Presidency page), or the Folder with --folder-file.
+## The start's region warning through the month's end (the inbox card), then its Open; with
+## --programmes, that warning's programme voted with its overrun card posted.
+func _stage_the_warning() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var notes: Array = []
+	preload("res://src/sim/unit_warnings.gd").tick(state, ns, _main._loader, int(state.year) * 12 + int(state.month), notes)
+	if notes.is_empty():
+		return
+	preload("res://src/ui/briefing_driver.gd").month_end(_main, {"units": notes})
+	var note: Dictionary = notes[-1]
+	_main._windows.content("register").open_from_warning(String(note["type"]), String(note["region"]), int(state.month))
+	if not _programmes:
+		return
+	var UK = preload("res://src/sim/units_constants.gd")
+	var row := {"type": String(note["type"]), "op": UK.OP_BUILD, "rows": [{"region": String(note["region"]), "units": 4}]}
+	var p: Dictionary = preload("res://src/sim/unit_build.gd").open(state, ns, _main._loader, row)
+	var now := int(state.year) * 12 + int(state.month)
+	p["ask"] = {"kind": "overrun", "posted": now, "due": now + UK.UNIT_OVERRUN_WINDOW_MONTHS, "default": UK.OVERRUN_PAY,
+		"eur_m": float(_main._loader.unit_types[String(note["type"])]["overrun_share"]) * float(p["capital_month_eur_m"]) * int(p["months_left"])}
+
+
 func _stage_briefing() -> void:
 	var Driver = preload("res://src/ui/briefing_driver.gd")
 	var state = _main._state
@@ -1052,6 +1080,10 @@ func _init() -> void:
 			_invest = true
 		elif args[i] == "--build":
 			_build = true
+		elif args[i] == "--warned":
+			_warned = true
+		elif args[i] == "--programmes":
+			_programmes = true
 		elif args[i] == "--arm-energy":
 			_arm_energy = true
 		elif args[i] == "--consequence":
@@ -1560,6 +1592,8 @@ func _apply_view() -> void:
 		_back_the_biggest_sector()
 	if _build:
 		_break_ground()
+	if _warned or _programmes:
+		_stage_the_warning()
 	if _region:
 		_open_the_partition()
 	if _election:

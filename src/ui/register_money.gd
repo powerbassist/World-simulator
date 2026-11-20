@@ -17,6 +17,14 @@ const YEARS_AFTER := 3
 ## cash: [[year, capital_bn, running_bn]], and the legend's two words.
 var _years: Array = []
 var _legend: Array = []
+## The share of each building bar that is an overrun (the Building tab's "if you pay"), drawn on
+## top in the attention tone with a third legend entry; 0 on the order form.
+var _overrun := 0.0
+
+
+func mark_overrun(share: float) -> void:
+	_overrun = clampf(share, 0.0, 1.0)
+	queue_redraw()
 
 
 ## `start_month` is months since year 0 (UnitPrice.now), the bill billed from the month after.
@@ -75,13 +83,16 @@ func _draw_cash() -> void:
 		if hr > 0.0:
 			draw_rect(Rect2(x0, CASH_H - hr, w, hr), accent)
 		if hc > 0.0:
-			draw_rect(Rect2(x0, CASH_H - hr - hc - (2.0 if hr > 0.0 else 0.0), w, hc), BUILD)
+			var base := CASH_H - hr - (2.0 if hr > 0.0 else 0.0)
+			draw_rect(Rect2(x0, base - hc, w, hc), BUILD)
+			if _overrun > 0.0:
+				draw_rect(Rect2(x0, base - hc, w, hc * _overrun), UiTheme.WARN)
 		# Two digits of the year: the bars are narrow, the century never changes here.
 		draw_string(font, Vector2(x0, CASH_H + fs + 2.0), "%02d" % (int(_years[i][0]) % 100), HORIZONTAL_ALIGNMENT_CENTER, w, fs, UiTheme.TEXT_DIM)
 	var ly := CASH_H + fs * 2.6 + 2.0
 	var lx := 0.0
 	for k in _legend.size():
-		draw_rect(Rect2(lx, ly - fs * 0.75, 10.0, 10.0), BUILD if k == 0 else accent)
+		draw_rect(Rect2(lx, ly - fs * 0.75, 10.0, 10.0), BUILD if k == 0 else (accent if k == 1 else UiTheme.WARN))
 		draw_string(font, Vector2(lx + 15.0, ly), String(_legend[k]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)  # i18n: row-ok the caller passes shown text
 		lx += 15.0 + font.get_string_size(String(_legend[k]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 16.0  # i18n: row-ok the caller passes shown text
 
