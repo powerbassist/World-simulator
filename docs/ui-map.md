@@ -164,7 +164,6 @@ The window hotkeys are in the table above.
 | S | `main.gd` |
 | ESCAPE | `country_box.gd` |
 | ESCAPE | `glossary_tip.gd` |
-| ESCAPE | `verb_plate.gd` |
 | F1 | `glossary_tip.gd` |
 | F11 | `window_mode.gd` |
 | F12 | `dev_console.gd` |
@@ -172,4 +171,4 @@ The window hotkeys are in the table above.
 
 ### Right-click
 
-Files that handle `MOUSE_BUTTON_RIGHT`: `bill_actions.gd`, `country_box.gd`, `election_panel.gd`, `order_slot.gd`, `roster_line.gd`, `sector_panel.gd`.
+Files that handle `MOUSE_BUTTON_RIGHT`: `country_box.gd`, `election_panel.gd`, `order_slot.gd`, `roster_line.gd`.

@@ -64,9 +64,11 @@ const PENDING := {}
 ## Rework 2 S3: the Agenda's 400 left with its tab. Its offer is the Folder's programme file now (the
 ## picker's 28 names and one entry's text, measured 276): that page alone answers to PROGRAMME_FILE_TOTAL,
 ## every other Folder page to the Folder's own 95 (#405 pass 2 T15).
+## The right-click C (the plate retired): a firm's sheet carries the plate's two other verbs, "Call <chief>" and
+## "Show on the map", a stated +7 on each sector tab (122 -> 129, 148 -> 155, 135 -> 142).
 const PROGRAMME_FILE_TOTAL := 300
 const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
-	"companies": 145, "sector_agriculture": 122, "sector_industry": 148, "sector_services": 135,
+	"companies": 145, "sector_agriculture": 129, "sector_industry": 155, "sector_services": 142,
 	"overview": 170, "register": 119}
 const TOTAL_PENDING := {
 	"calendar": 34, "campaign": 140,
@@ -137,7 +139,9 @@ const TOTAL_PENDING := {
 ## The construction register (V5.3 c' slice 1, the author's "A pour commander"), a new Finances tab, a
 ## stated rise 2968 -> 3087 (+119, all on the register: the type's lede and summary, the stock line, the
 ## strip's money, who and when sentences, the charts' titles).
-const TOTAL_SUM_CEILING := 3087
+## The right-click C, a stated rise 3087 -> 3108 (+21): the firm sheet's "Call <chief>" and "Show on the map" on the
+## three sector tabs, the verbs the retired plate carried.
+const TOTAL_SUM_CEILING := 3108
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

@@ -1,0 +1,1 @@
+Changed: A right click no longer opens a small menu: it selects the row and highlights its verbs where they already live (a bill's sheet, a firm's sheet, the person's line), and the order paper shows a queued bill's moves under its four places, with the reason when one is not possible.

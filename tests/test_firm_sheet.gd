@@ -219,39 +219,36 @@ func _check_typed_box_snaps() -> void:
 
 
 func _check_menu() -> void:
-	# A right click on a major's NAME opens the plate (QA's play of #381: only the face did).
-	var plate = preload("res://src/ui/verb_plate.gd").of(_panel)
-	plate.hide()
+	# The rework pass's C: a right click on a major's NAME selects it and lights the sheet's verbs.
+	_panel._firm_id = ""
 	for button in _panel.find_children("*", "Button", true, false):
 		if String(button.get_meta("firm", "")) == String(_major.id):
 			var click := InputEventMouseButton.new()
 			click.button_index = MOUSE_BUTTON_RIGHT
 			click.pressed = true
 			button.gui_input.emit(click)
-	if plate == null or not plate.visible:
-		_fail("a right click on %s's name opens no plate" % _major.company_name)
-	elif plate != null:
-		plate.hide()
-	var ns = _main._state.player()
-	var items: Array = _panel.menu_items(_major)
+			break
+	if _panel._firm_id != String(_major.id):
+		_fail("a right click on %s's name did not select it (selected '%s')" % [_major.company_name, _panel._firm_id])
+	if not _panel._light:
+		_fail("a right click on %s does not ask to light the sheet's verbs" % _major.company_name)
+	_panel._refresh()
+	var block = null
+	for node in _panel._sheet.find_children("*", "", true, false):
+		if node.has_meta("verb_block"):
+			block = node
+	if block == null:
+		_fail("the firm's sheet has no verb block")
+		return
 	var texts := []
-	for item in items:
-		texts.append(String(item["text"]))
-	var joined := "\n".join(texts)
-	for action in Companies.available(_main._state, ns, _main._loader.company_actions, String(_major.id), _main._loader):
-		if not joined.contains(String(action.action_name)) and not joined.contains(_main.tr(String(action.action_name))):
-			_fail("the right click does not list %s" % action.id)
+	for b in block.find_children("*", "Button", true, false):
+		texts.append((b as Button).text)
+	var joined := "
+".join(texts)
 	if not joined.contains(_main._loader.person_name(String(_major.chief_id))):
-		_fail("the right click does not offer to call the chief")
+		_fail("the sheet's verbs do not offer to call the chief: %s" % [texts])
 	if not joined.contains(_main.tr("Show on the map")):
-		_fail("the right click does not offer the map")
-	# A verb's item selects the firm and focuses that verb on the sheet (GLM's gap 8).
-	for item in items:
-		if String(item["text"]).contains(String(_action("industrial_subsidy").action_name)):
-			_panel._firm_id = ""
-			item["call"].call()
-			if _panel._firm_id != String(_major.id) or _panel._focus_verb != "industrial_subsidy":
-				_fail("the menu's subsidy picked firm '%s', verb '%s'" % [_panel._firm_id, _panel._focus_verb])
+		_fail("the sheet's verbs do not offer the map: %s" % [texts])
 	# An arrow's nudge moves one stop; a typed price snaps to the nearest.
 	var prices := [0.0, 2.5, 4.6]
 	if SectorProgramme.snap_stop(prices, 1, 2.51, 0.01) != 2 or SectorProgramme.snap_stop(prices, 1, 2.49, 0.01) != 0:

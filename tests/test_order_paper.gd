@@ -24,7 +24,6 @@ const Bills = preload("res://src/sim/bills.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const OrderSlot = preload("res://src/ui/order_slot.gd")
-const VerbPlate = preload("res://src/ui/verb_plate.gd")
 const Click = preload("res://tests/click.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
@@ -216,36 +215,51 @@ func _check_the_slot_takes_no_drop() -> void:
 		_fail("the month's slot takes a dropped bill (a bill reaches it by the close)")
 
 
+## The rework pass's C: no plate. A right click on a queued place docks its verbs under the four
+## places, a greyed one with its reason in words, and the first live one takes the focus.
 func _check_the_plate_moves_and_takes_out() -> void:
 	_set_queue([_ids[1], _ids[2]])
 	_paper().places[1].menu_requested.emit(0)
-	var plate = _plate()
-	if plate == null or not plate.visible:
-		_fail("a right click on a queued place opened no plate")
-		return
-	var items: Array = _plate_buttons(plate)
+	var items: Array = _block_buttons()
 	if items.size() != 3 or not (items[0] as Button).disabled or (items[1] as Button).disabled:
-		_fail("the plate for the first of two: %s (Move earlier should be down, Move later up)" % [items.map(func(b): return "%s/%s" % [b.text, b.disabled])])
+		_fail("the block for the first of two: %s (Move earlier should be down, Move later up)" % [items.map(func(b): return "%s/%s" % [b.text, b.disabled])])
 		return
+	if not _text_of(_block()).contains(tr("It is already first in the queue.")):
+		_fail("the greyed Move earlier does not say why in words: '%s'" % _text_of(_block()))
+	if _main.get_viewport().gui_get_focus_owner() != items[1]:
+		_fail("the right click did not light the block (focus on %s)" % _main.get_viewport().gui_get_focus_owner())
+	if _main.find_child("VerbPlate", true, false) != null:
+		_fail("a plate still exists")
 	items[1].pressed.emit()
 	_panel()._process(0.0)
 	if String(_ns().bill_queue[0]["law_id"]) != _ids[2]:
 		_fail("Move later did not swap the queue: %s" % [_ns().bill_queue])
-	if plate.visible:
-		_fail("the plate stays open after a press")
 	_paper().places[1].menu_requested.emit(0)
-	_plate_buttons(_plate())[2].pressed.emit()  # Take out of the queue
+	_block_buttons()[2].pressed.emit()  # Take out of the queue
 	_panel()._process(0.0)
 	if _ns().bill_queue.size() != 1 or String(_ns().bill_queue[0]["law_id"]) != _ids[1]:
 		_fail("Take out did not remove the first place: %s" % [_ns().bill_queue])
 
 
-func _plate():
-	return VerbPlate.of(_panel())
+## The paper's docked verb block, null while no place is picked.
+func _block():
+	for node in _paper().find_children("*", "", true, false):
+		if node.has_meta("verb_block") and (node as Control).is_visible_in_tree():
+			return node
+	return null
 
 
-func _plate_buttons(plate: Node) -> Array:
-	return plate.find_children("*", "Button", true, false)
+func _block_buttons() -> Array:
+	var block = _block()
+	return [] if block == null else block.find_children("*", "Button", true, false)
+
+
+func _text_of(node) -> String:
+	var out := ""
+	if node != null:
+		for label in node.find_children("*", "Label", true, false):
+			out += (label as Label).text + " "
+	return out
 
 
 ## The detail's button called `name` (a node name tests find them by).
@@ -286,38 +300,38 @@ func _check_the_plates_propose_divides() -> void:
 	event.button_index = MOUSE_BUTTON_RIGHT
 	event.pressed = true
 	law_row.gui_input.emit(event)
-	var plate = _plate()
-	var press: Array = _plate_buttons(plate).filter(func(b): return b.text.begins_with("Propose for ")) if plate != null else []
-	if press.is_empty() or press[0].disabled:
-		_fail("with the slot empty the plate has no live Propose")
+	# The rework pass's C: the right click lit the sheet's verbs; its Propose divides the row's law.
+	var press: Array = _panel()._laws._detail.find_children("Propose", "Button", true, false)
+	if press.is_empty() or press[0].disabled or _main.get_viewport().gui_get_focus_owner() != press[0]:
+		_fail("with the slot empty the right click does not light a live Propose")
 		return
 	press[0].pressed.emit()
 	if proposed != [law_name]:
-		_fail("the plate's Propose divided %s, not the row's law '%s'" % [proposed, law_name])
+		_fail("the lit Propose divided %s, not the row's law '%s'" % [proposed, law_name])
 	if not briefed.is_empty():
-		_fail("the plate's Propose asked for the briefing popup")
+		_fail("the lit Propose asked for the briefing popup")
 	# The staging below starts from an empty slot.
 	_ns().tabled_bill = {}
 	_ns().last_law_result = {}
 
 
 func _check_the_right_click_is_the_same_table() -> void:
-	var row: Button = _panel()._laws._rows.get_children()[0].get_meta("pick")
+	var line: Node = _panel()._laws._rows.get_children()[0]
+	var row: Button = line.get_meta("pick")
 	var event := InputEventMouseButton.new()
 	event.button_index = MOUSE_BUTTON_RIGHT
 	event.pressed = true
 	row.gui_input.emit(event)
-	var plate = _plate()
-	if plate == null or not plate.visible:
-		_fail("a right click on a law's row opened no plate")
-		return
-	var texts: Array = _plate_buttons(plate).map(func(b): return b.text)
-	# One verb (pass 2 T2): with a bill in the slot the queue's press is the proposal, alone.
-	var proposes: Array = texts.filter(func(t): return String(t).begins_with("Propose"))
-	if proposes.size() != 1 or not String(proposes[0]).begins_with("Propose for ") or not texts.has("Open the sheet"):
-		_fail("the plate offers %s; wanted one 'Propose for <month>' and Open the sheet" % [texts])
-	plate.hide()
-
+	# The rework pass's C: the row is selected and its sheet's verb block lit (focus on its first live verb).
+	if _panel()._laws.selected_id() != String(line.get_meta("law_id")):
+		_fail("a right click did not select the row's law (selected %s)" % _panel()._laws.selected_id())
+	var focus = _main.get_viewport().gui_get_focus_owner()
+	var block = null
+	for node in _panel()._laws._detail.find_children("*", "", true, false):
+		if node.has_meta("verb_block"):
+			block = node
+	if block == null or focus == null or not block.is_ancestor_of(focus):
+		_fail("a right click on a law's row did not light the sheet's verbs (focus on %s)" % focus)
 
 func _check_a_real_press_queued_it() -> void:
 	var ids: Array = _ns().bill_queue.map(func(e): return String(e["law_id"]))
@@ -359,7 +373,7 @@ func _check_a_queued_law_shows_take_out() -> void:
 func _check_take_out_on_a_later_place() -> void:
 	_set_queue([_ids[1], _ids[2], _ids[3]])
 	_paper().places[2].menu_requested.emit(1)
-	_plate_buttons(_plate())[2].pressed.emit()  # Take out of the queue
+	_block_buttons()[2].pressed.emit()  # Take out of the queue
 	_panel()._process(0.0)
 	var order := []
 	for entry in _ns().bill_queue:
