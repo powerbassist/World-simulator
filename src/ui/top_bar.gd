@@ -485,9 +485,10 @@ func _draw_dividers() -> void:
 func dock_caption(caption: Control) -> void:
 	_caption = caption
 	var lead := _gutter(FIGURE_GAP / 2)  # air before the remark, only while it shows
-	lead.visible = caption.visible
 	_slot.add_child(lead)
 	_slot.add_child(caption)
+	# Read after add_child: the caption hides itself in its _ready, before the sync below exists.
+	lead.visible = caption.visible
 	caption.visibility_changed.connect(func() -> void: lead.visible = caption.visible)
 	caption.visibility_changed.connect(refit.call_deferred)
 

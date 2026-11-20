@@ -58,6 +58,9 @@ func _process(_delta: float) -> bool:
 		_bar.dock_caption(_caption)
 	if _frame < 2:
 		return false
+	# Before the chief has said anything: the docked remark asks for no room at all.
+	if _bar._slot.get_combined_minimum_size().x != 0.0:
+		_fail("before any remark the slot asks for %.0f px (the gap before the remark shows)" % _bar._slot.get_combined_minimum_size().x)
 	_check_the_money_is_euros_a_month_in_words()
 	_check_no_history_draws_no_curve()
 	_check_the_curves_and_the_changes()
@@ -321,6 +324,8 @@ func _caption_stages() -> bool:
 	if _stage >= STAGES.size():
 		if _bar._caption_width() != 0.0:
 			_fail("a silent chief still keeps %.0f px of the strip" % _bar._caption_width())
+		if _bar._slot.get_combined_minimum_size().x != 0.0:
+			_fail("a silent chief's slot still asks for %.0f px (the gap before the remark stayed)" % _bar._slot.get_combined_minimum_size().x)
 		_finish()
 		return true
 	var stage: Array = STAGES[_stage]
@@ -347,6 +352,8 @@ func _caption_stages() -> bool:
 			_fail("%s: the remark %s overlaps a tile or chip %s" % [label, rect, box.get_global_rect()])
 	if stage[1] == LONG_LINE and _caption.tooltip_text != LONG_LINE:
 		_fail("%s: a line cut at two lines is not whole in the tooltip" % label)
+	if stage[1] == SHORT_LINE and float(stage[0]) == 1.0 and not _caption.tooltip_text.is_empty():
+		_fail("%s: a line shown whole repeats itself as a tooltip" % label)
 	_caption.clear()
 	_wait = 0
 	_stage += 1

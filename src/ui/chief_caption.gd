@@ -34,6 +34,7 @@ func _ready() -> void:
 	_line.max_lines_visible = MAX_LINES
 	_line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_line.resized.connect(_tip_if_cut)
 	add_child(_line)
 	_timer = Timer.new()
 	_timer.one_shot = true
@@ -50,7 +51,7 @@ func say(line: String, _anchor: Control = null, seconds := 0.0) -> void:
 		hide()
 		return
 	_line.text = line
-	tooltip_text = line
+	_tip_if_cut()
 	show()
 	_timer.start(seconds if seconds > 0.0 else reading_seconds(line))
 
@@ -68,6 +69,12 @@ func text() -> String:
 func clear() -> void:
 	_timer.stop()
 	hide()
+
+
+## The whole line as a tooltip only when the two lines cut it: a line shown whole would
+## repeat itself. Measured again whenever the label is laid out at a new width.
+func _tip_if_cut() -> void:
+	tooltip_text = _line.text if _line.get_line_count() > MAX_LINES else ""
 
 
 ## A new theme -- the text size changed -- moves the minimum width with it.
