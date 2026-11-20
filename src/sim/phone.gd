@@ -27,6 +27,7 @@ const LeverOdds = preload("res://src/sim/lever_odds.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
+const Lane = preload("res://src/sim/audience_lane.gd")
 const President = preload("res://src/sim/president.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 
@@ -128,11 +129,8 @@ static func _line_reason(state, ns, loader, person_id: String) -> String:
 
 ## The person's open request (pending or booked), as Audiences reads it, or {}.
 static func _open_request(ns, person_id: String) -> Dictionary:
-	for row in ns.audience_requests:
-		if String(row.get("person_id", "")) == person_id and AK.OPEN.has(String(row.get("status", ""))) \
-				and String(row.get("object", "")) != AK.SUMMON_OBJECT:
-			return Audiences.request(ns, String(row["id"]))
-	return {}
+	var row := Lane.open_request(ns, person_id)
+	return {} if row.is_empty() else Audiences.request(ns, String(row["id"]))
 
 
 static func _now(state) -> int:

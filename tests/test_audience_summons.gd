@@ -47,6 +47,7 @@ func _init() -> void:
 	_check_a_summons_books_a_day_and_is_no_ask()
 	_check_who_cannot_be_summoned()
 	_check_the_days_reasons()
+	_check_one_a_month_and_one_standing()
 	_check_the_meeting_is_talk_and_unpriced()
 	_check_a_missed_summons_costs_nothing()
 	_check_a_cancelled_summons_costs_nothing()
@@ -112,9 +113,9 @@ func _check_who_cannot_be_summoned() -> void:
 			_fail("premise: no %s to read" % c[2])
 			continue
 		var r: Dictionary = Audiences.summon(state, ns, _loader, String(c[0]), day)
-		if bool(r.get("ok", true)) or String(r.get("reason", "")) != String(c[1]) or String(r.get("error", "")) == "":
+		if bool(r.get("ok", true)) or String(r.get("code", "")) != String(c[1]) or String(r.get("error", "")) == "":
 			_fail("summoning %s read %s, not refused '%s' with words" % [c[2], r, c[1]])
-		if String(Audiences.summon_refusal(state, ns, _loader, String(c[0])).get("reason", "")) != String(c[1]):
+		if String(Audiences.summon_refusal(state, ns, _loader, String(c[0])).get("code", "")) != String(c[1]):
 			_fail("summon_refusal for %s does not say '%s'" % [c[2], c[1]])
 	# An open request: answer that one instead.
 	var asker := _own_quiet(state)
@@ -122,7 +123,7 @@ func _check_who_cannot_be_summoned() -> void:
 	var asked: Dictionary = Audiences.invite(state, ns, _loader, asker, String(person.wants[0]["object"]), String(person.wants[0]["stance"]))
 	if not bool(asked.get("ok", false)):
 		_fail("premise: the asker could not ask: %s" % [asked])
-	elif String(Audiences.summon(state, ns, _loader, asker, day).get("reason", "")) != K.SUMMON_ASKED:
+	elif String(Audiences.summon(state, ns, _loader, asker, day).get("code", "")) != K.SUMMON_ASKED:
 		_fail("a person with an open request was not refused as having asked")
 	# The cap: once per SUMMON_COOLDOWN_MONTHS, cancelled or not.
 	var pid := _own_quiet(state, [asker])
@@ -131,15 +132,54 @@ func _check_who_cannot_be_summoned() -> void:
 		_fail("premise: the first summons was refused: %s" % [first])
 		return
 	Audiences.decline(state, ns, _loader, String(first["request"]["id"]))
-	if String(Audiences.summon(state, ns, _loader, pid, _day(state, 22)).get("reason", "")) != K.SUMMON_RECENT:
+	if String(Audiences.summon(state, ns, _loader, pid, _day(state, 22)).get("code", "")) != K.SUMMON_RECENT:
 		_fail("a second summons inside the cooldown was not refused as recent")
-	if String(Audiences.summon_refusal(state, ns, _loader, pid).get("reason", "")) != K.SUMMON_RECENT:
-		_fail("summon_refusal does not say the cooldown")
+	var recent: Dictionary = Audiences.summon_refusal(state, ns, _loader, pid)
+	if String(recent.get("code", "")) != K.SUMMON_RECENT or int(recent.get("lifts", -1)) != _now(state) + K.SUMMON_COOLDOWN_MONTHS:
+		_fail("summon_refusal does not say the cooldown and the month it lifts: %s" % [recent])
 	ns.audience_summoned_month[pid] = _now(state) - K.SUMMON_COOLDOWN_MONTHS
 	if not Audiences.summon_refusal(state, ns, _loader, pid).is_empty():
 		_fail("the cooldown still holds %d months on" % K.SUMMON_COOLDOWN_MONTHS)
 	if K.SUMMON_COOLDOWN_MONTHS != K.REQUEST_COOLDOWN_MONTHS:
 		_fail("the summons' cooldown is not the months a person waits between two asks")
+
+
+## The author's "Une convocation par mois" and pass 2's TAKE 2: one summons a calendar month across
+## everyone, one standing summons a person; the days a summons can take; none when the diary is full.
+func _check_one_a_month_and_one_standing() -> void:
+	var state = _game()
+	var ns = state.player()
+	var a := _own_quiet(state)
+	var b := _own_quiet(state, [a])
+	if not bool(Audiences.summon(state, ns, _loader, a, _day(state, 20)).get("ok", false)):
+		_fail("premise: the month's first summons was refused")
+		return
+	if String(Audiences.summon_refusal(state, ns, _loader, b).get("code", "")) != K.SUMMON_MONTH_USED:
+		_fail("a second summons in one month read %s, not month_used" % [Audiences.summon_refusal(state, ns, _loader, b)])
+	if String(Audiences.summon(state, ns, _loader, b, _day(state, 22)).get("code", "")) != K.SUMMON_MONTH_USED:
+		_fail("summon() let a second summons through in one month")
+	if K.SUMMONS_PER_MONTH != 1:
+		_fail("the monthly cap is not the author's one")
+	# Nine months on, a's cap has lifted but a's summons -- booked far ahead -- still stands.
+	for row in ns.audience_requests:
+		if String(row["person_id"]) == a:
+			row["date"] = {"year": int(state.year) + 1, "month": int(state.month), "day": 20}
+	for m in range(K.SUMMON_COOLDOWN_MONTHS + 1):
+		_advance(state)
+	state.day = 10
+	if String(Audiences.summon_refusal(state, ns, _loader, a).get("code", "")) != K.SUMMON_BOOKED:
+		_fail("a person with a summons still standing read %s, not booked" % [Audiences.summon_refusal(state, ns, _loader, a)])
+	if not Audiences.summon_refusal(state, ns, _loader, b).is_empty():
+		_fail("a new month's first summons is refused: %s" % [Audiences.summon_refusal(state, ns, _loader, b)])
+	# TAKE 3: the days, tomorrow to the diary's horizon; and none free when the diary is full.
+	var days: Array[Dictionary] = Audiences.summon_days(state, b)
+	if days.is_empty() or int(days[0]["day"]) != 11 or int(days[0]["month"]) != int(state.month):
+		_fail("a summons' days do not start tomorrow: %s" % [days.slice(0, 1)])
+	while state.appointments.size() < CalendarK.MAX_APPOINTMENTS:
+		var n: int = state.appointments.size()
+		state.appointments.append(Calendar.make_entry(CalendarK.KIND_RESHUFFLE, int(state.year) + 2, 1 + n % 12, 1 + n % 28, "", "", "", "full%d" % n, ""))
+	if String(Audiences.summon_refusal(state, ns, _loader, b).get("code", "")) != K.SUMMON_NO_FREE_DAY:
+		_fail("a full diary read %s, not no_free_day" % [Audiences.summon_refusal(state, ns, _loader, b)])
 
 
 func _check_the_days_reasons() -> void:
@@ -152,7 +192,7 @@ func _check_the_days_reasons() -> void:
 	for c in [[_day(state, 10), K.BOOK_PASSED, "today"], [_day(state, 25), K.BOOK_TAKEN, "a taken day"],
 			[{"year": int(state.year), "month": 2, "day": 30}, K.BOOK_NO_DAY, "30 February"], [far, K.SUMMON_TOO_FAR, "two years on"]]:
 		var r: Dictionary = Audiences.summon(state, ns, _loader, pid, c[0])
-		if bool(r.get("ok", true)) or String(r.get("reason", "")) != String(c[1]):
+		if bool(r.get("ok", true)) or String(r.get("code", "")) != String(c[1]):
 			_fail("summoning on %s (%s) read %s, not '%s'" % [c[0], c[2], r, c[1]])
 	if ns.audience_summoned_month.has(pid):
 		_fail("a refused summons stamped the cooldown")
@@ -206,6 +246,11 @@ func _check_the_meeting_is_talk_and_unpriced() -> void:
 	Audiences.tick_month(copy3, _loader, METERS)
 	if String(Audiences.request(copy3.player(), id)["status"]) != K.STATUS_SETTLED or float(copy3.player().person_grudges.get(pid, 0.0)) > g3:
 		_fail("a held summons never closed read '%s' at the month's end" % Audiences.request(copy3.player(), id)["status"])
+	# TAKE 4 and 5: no refusal risk, no offer, and nothing to answer or agree.
+	if not Deal.refusal_risk(state, ns, _loader, session).is_empty() or not (Deal.answers(state, ns, _loader, session)["offer"] as Dictionary).is_empty():
+		_fail("a summons scene projects a refusal risk or an offer")
+	if bool(Audiences.agree(ns, id, K.STATUS_PROMISED)) or bool(Audiences.answer(state, ns, id, K.STATUS_PROMISED).get("ok", true)):
+		_fail("a summons took an agreement or an answer")
 	var talked: Dictionary = Levers.talk(state, ns, _loader, session, "family")
 	if not bool(talked.get("ok", false)):
 		_fail("a topic could not be talked in a summons: %s" % [talked])
@@ -250,8 +295,12 @@ func _check_a_cancelled_summons_costs_nothing() -> void:
 		return
 	var id := String(r["request"]["id"])
 	var before := [float(ns.person_grudges.get(pid, 0.0)), President.rapport(ns, pid)]
-	if bool(Audiences.delegate(state, ns, _loader, id).get("ok", true)):
-		_fail("a summons was delegated")
+	# TAKE 5: a booked summons takes no phone answer (a settle with no ask, a promise with no word).
+	if bool(Audiences.answer(state, ns, id, K.STATUS_PROMISED).get("ok", true)) or String(Audiences.request(ns, id)["status"]) != K.STATUS_BOOKED:
+		_fail("a booked summons was answered as a request")
+	var deleg: Dictionary = Audiences.delegate(state, ns, _loader, id)
+	if bool(deleg.get("ok", true)) or String(deleg.get("error", "")) != K.SUMMON_NO_DELEGATE:
+		_fail("a summons was delegated, or refused with another message: %s" % [deleg])
 	var c: Dictionary = Audiences.decline(state, ns, _loader, id)
 	if not bool(c.get("ok", false)) or not (c.get("price", {}) as Dictionary).is_empty():
 		_fail("cancelling a summons read %s, not free" % [c])
@@ -262,11 +311,16 @@ func _check_a_cancelled_summons_costs_nothing() -> void:
 			_fail("a cancelled summons kept its day")
 	if String(Audiences.request(ns, id)["status"]) != K.STATUS_CANCELLED:
 		_fail("a cancelled summons reads '%s'" % Audiences.request(ns, id)["status"])
-	# The phone has nothing to ask about either while a summons stands.
+	# The phone and the roster have nothing to ask about either while a summons stands (next
+	# month: one summons a month). QA's lead 13: the summons must succeed for this to read.
+	_advance(state)
+	state.day = 10
 	var again := _own_quiet(state, [pid])
 	var s: Dictionary = Audiences.summon(state, ns, _loader, again, _day(state, 21))
-	if bool(s.get("ok", false)) and String(Phone.options(state, ns, _loader, again)["request_id"]) != "":
-		_fail("the phone reads a summons as the person's request")
+	if not bool(s.get("ok", false)):
+		_fail("premise: the second summons was refused: %s" % [s])
+	elif String(Phone.options(state, ns, _loader, again)["request_id"]) != "" or not AudienceLane.open_request(ns, again).is_empty():
+		_fail("the phone or the lane's open request reads a summons as the person's request")
 
 
 func _check_the_stamp_survives_a_save() -> void:

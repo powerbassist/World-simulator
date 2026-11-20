@@ -624,7 +624,7 @@ func _summon_all(state, ns, registers: Dictionary) -> void:
 				registers["summoned"] += 1
 				registers["people"][pid] = true
 				break
-			if String(r["reason"]) != AK.BOOK_TAKEN:
+			if String(r["code"]) != AK.BOOK_TAKEN:
 				break
 
 

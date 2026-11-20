@@ -66,7 +66,7 @@ static func tick_month(state, loader, meters: Dictionary) -> Dictionary:
 			_close(row, agreed, now)
 			continue
 		_unbook(state, row)
-		if Summons.is_summons(row):  # missed, or held and never closed: the president's own, unpriced
+		if K.is_summons(row):  # missed, or held and never closed: the president's own, unpriced
 			_close(row, K.STATUS_SETTLED if String(row["status"]) == K.STATUS_HELD else K.STATUS_CANCELLED, now)
 			continue
 		# A called request costs a share of a decline (CALLED_LAPSE_SHARE's reason).
@@ -154,8 +154,8 @@ static func book(state, ns, loader, request_id: String, date: Dictionary) -> Dic
 
 static func delegate(state, ns, loader, request_id: String) -> Dictionary:
 	var row := _row(ns, request_id)
-	if row.is_empty() or not K.OPEN.has(String(row["status"])) or Summons.is_summons(row):
-		return {"ok": false, "error": "this request is no longer waiting"}
+	if row.is_empty() or not K.OPEN.has(String(row["status"])) or K.is_summons(row):
+		return {"ok": false, "error": K.SUMMON_NO_DELEGATE if K.is_summons(row) else "this request is no longer waiting"}
 	_unbook(state, row)
 	var snub := Delegation.snub(loader.person_by_id.get(String(row["person_id"])), String(row["object"]))
 	var price := _price(state, ns, loader, row, K.DELEGATE_GRUDGE_SHARE, snub)
@@ -177,7 +177,7 @@ static func decline(state, ns, loader, request_id: String) -> Dictionary:
 	if row.is_empty() or not K.OPEN.has(String(row["status"])):
 		return {"ok": false, "error": "this request is no longer waiting"}
 	_unbook(state, row)
-	if Summons.is_summons(row):  # cancelling one's own summons: free, the day back
+	if K.is_summons(row):  # cancelling one's own summons: free, the day back
 		_close(row, K.STATUS_CANCELLED, _now(state))
 		return {"ok": true, "error": "", "price": {}}
 	var price := _price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT, true)
@@ -205,7 +205,7 @@ static func hold(state, ns, loader, request_id: String) -> Dictionary:
 ## closed ends as that agreement, not as a no-show.
 static func agree(ns, request_id: String, outcome: String) -> bool:
 	var row := _row(ns, request_id)
-	if row.is_empty() or String(row["status"]) != K.STATUS_HELD or not [K.STATUS_SETTLED, K.STATUS_PROMISED].has(outcome):
+	if row.is_empty() or String(row["status"]) != K.STATUS_HELD or not [K.STATUS_SETTLED, K.STATUS_PROMISED].has(outcome) or K.is_summons(row):
 		return false
 	row["agreed"] = outcome
 	return true
@@ -238,12 +238,16 @@ static func summon_refusal(state, ns, loader, person_id: String) -> Dictionary:
 	return Summons.refusal(state, ns, loader, person_id)
 
 
+static func summon_days(state, person_id: String) -> Array[Dictionary]:
+	return Summons.days(state, person_id)
+
+
 ## b3: a request answered by phone (Phone.dial) -- a lever that worked on a call
 ## settles it, a promise as promised, with no price and nothing learned (a call is
 ## not a hold); a booked day is given back.
 static func answer(state, ns, request_id: String, outcome: String) -> Dictionary:
 	var row := _row(ns, request_id)
-	if row.is_empty() or not K.OPEN.has(String(row["status"])):
+	if row.is_empty() or not K.OPEN.has(String(row["status"])) or K.is_summons(row):  # a summons has nothing to answer
 		return {"ok": false, "error": "this request is no longer waiting"}
 	if not [K.STATUS_SETTLED, K.STATUS_PROMISED].has(outcome):
 		return {"ok": false, "error": "not an outcome"}
@@ -260,7 +264,7 @@ static func settle(state, ns, loader, request_id: String, outcome: String) -> Di
 	if not [K.STATUS_SETTLED, K.STATUS_PROMISED, K.STATUS_DECLINED].has(outcome):
 		return {"ok": false, "error": "not an outcome"}
 	var price := {}
-	if Summons.is_summons(row):  # no ask to refuse: a summons ends settled, unpriced
+	if K.is_summons(row):  # no ask to refuse: a summons ends settled, unpriced
 		outcome = K.STATUS_SETTLED
 	elif outcome == K.STATUS_DECLINED:
 		price = _price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT, true)
@@ -371,10 +375,7 @@ static func _may_ask(ns, person, leader: String, now: int) -> bool:
 	if ns.audience_asked_month.has(person.id) \
 			and now - int(ns.audience_asked_month[person.id]) < K.REQUEST_COOLDOWN_MONTHS:
 		return false
-	for row in ns.audience_requests:
-		if String(row.get("person_id", "")) == person.id and K.OPEN.has(String(row.get("status", ""))) and not Summons.is_summons(row):
-			return false
-	return true
+	return Lane.open_request(ns, String(person.id)).is_empty()
 
 
 ## The first want the government does not serve and could (Characters.servable():

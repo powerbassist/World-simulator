@@ -34,6 +34,7 @@ const PresidentK = preload("res://src/sim/president_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
 const Staff = preload("res://src/sim/staff.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
+const AudienceLane = preload("res://src/sim/audience_lane.gd")
 
 ## The chips, in reading order: id, label. "needs" is the default view.
 const CHIPS := [
@@ -233,10 +234,9 @@ static func _party_of(loader, ns, party_id: String):
 
 ## The person's open request (pending or booked), Audiences' own view, or {}.
 static func _open_request(ns, pid: String) -> Dictionary:
-	for row in ns.audience_requests:
-		if String(row.get("person_id", "")) == pid and AK.OPEN.has(String(row.get("status", ""))):
-			return Audiences.request(ns, String(row["id"]))
-	return {}
+	# A summons is not a request (#432 pass 2, TAKE 1): the lane's one read leaves it out.
+	var row := AudienceLane.open_request(ns, pid)
+	return {} if row.is_empty() else Audiences.request(ns, String(row["id"]))
 
 
 ## The first want the world is not giving them, the machine's own read

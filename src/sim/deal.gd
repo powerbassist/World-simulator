@@ -75,7 +75,7 @@ static func open(state, ns, loader, request_id: String) -> Dictionary:
 static func ask_of(state, ns, loader, row: Dictionary) -> Dictionary:
 	var now := _now(state)
 	var object := String(row.get("object", ""))
-	if object == AK.SUMMON_OBJECT:  # the president summoned them: no ask to grant or bargain over
+	if AK.is_summons(row):  # the president summoned them: no ask to grant or bargain over
 		return {"kind": K.ASK_WORD, "object": object, "why_not": AK.SUMMON_NO_ASK, "due_month": now, "smaller_due_month": now}
 	if object.begins_with(AK.FIRM_PREFIX):
 		return _firm_ask(state, ns, loader, object)
@@ -118,13 +118,13 @@ static func offer_of(state, ns, loader, person_id: String) -> Dictionary:
 ## (src/sim/refusal_risk.gd says what that projection can and cannot see). Copies the world:
 ## read it on a redraw, not every frame.
 static func refusal_risk(state, _ns, loader, session: Dictionary) -> Dictionary:
-	return RefusalRisk.of_refusal(state, loader, String(session.get("request_id", "")))
+	return {} if AK.is_summons(session) else RefusalRisk.of_refusal(state, loader, String(session.get("request_id", "")))  # no ask, no risk
 
 
 ## What their silence is worth, from Grant's side: the same figures with no refusal, the
 ## briefs a word of silence spares over its term.
 static func silence_worth(state, _ns, loader, session: Dictionary) -> Dictionary:
-	return RefusalRisk.of_silence(state, loader, String(session.get("request_id", "")))
+	return {} if AK.is_summons(session) else RefusalRisk.of_silence(state, loader, String(session.get("request_id", "")))
 
 
 ## The people in the matter (mockup C's "Ask her about"): at most five person ids, ordered,
@@ -158,7 +158,7 @@ static func answers(state, ns, loader, session: Dictionary) -> Dictionary:
 	return {
 		"ask": session.get("ask", {}),
 		# Once struck, the offer it took: the card reads the deal, not what would be on offer now.
-		"offer": session.get("struck", offer_of(state, ns, loader, String(session.get("person_id", "")))),
+		"offer": {} if AK.is_summons(session) else session.get("struck", offer_of(state, ns, loader, String(session.get("person_id", "")))),
 		"money": {} if String(session.get("won", "")) != "" else _money(state, ns, loader, session),
 		"grant": grant_card,
 		"bargain": {"due_month": int(session.get("ask", {}).get("smaller_due_month", 0)), "approaches": approaches},
