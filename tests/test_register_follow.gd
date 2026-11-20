@@ -100,6 +100,7 @@ func _process(_delta: float) -> bool:
 		15:
 			_check_follow_rows()
 			_check_overrun_card()
+			_check_restore_negatives()
 			_check_overrun_arrivals()
 			_check_answered_ask_settles()
 			_press(_with_meta("overrun_pay", _follow))
@@ -175,11 +176,12 @@ func _warn() -> void:
 func _check_card_arrived() -> void:
 	# Out of government the warning is not the player's: no second card.
 	var ns = _main._state.player()
-	var before: int = _main._hud.inbox.find_children("*", "Button", true, false).size()
+	var away := _note.duplicate()
+	away["region"] = _other_region()
 	ns.in_government = false
-	RegisterWarning.arrive(_main, {"units": [_note]})
+	RegisterWarning.arrive(_main, {"units": [away]})
 	ns.in_government = true
-	if _main._hud.inbox.find_children("*", "Button", true, false).size() != before:
+	if not _cards_on(RegisterWarning.SUBJECT + String(away["type"]) + "|" + String(away["region"])).is_empty():
 		_fail("a warning card arrived out of government")
 	if _go() == null:
 		_fail("the region warning reached no inbox card")
@@ -269,7 +271,7 @@ func _open_programme() -> void:
 	var p: Dictionary = UnitBuild.open(state, ns, _main._loader, row)
 	# Its overrun card, posted now (UnitOverrun.tick's shape).
 	p["ask"] = {"kind": "overrun", "posted": UnitPrice.now(state), "due": UnitPrice.now(state) + UK.UNIT_OVERRUN_WINDOW_MONTHS,
-		"default": UK.OVERRUN_PAY, "eur_m": 0.1 * float(p["contract_eur_m"])}
+		"default": UK.OVERRUN_PAY, "eur_m": 0.5 * float(p["contract_eur_m"])}  # a Delay that crosses a year
 	# Pass 2 T2: five months built, then a Delay of fifteen (the total is no longer build_months).
 	p["paid_month"] = int(p["voted"]) + 4
 	p["months_left"] = int(p["build_months"]) + 15 - 5
@@ -277,7 +279,8 @@ func _open_programme() -> void:
 	var org := UnitEnvelope.org_of(_main._loader, ns)
 	if org != "":
 		var period: Dictionary = UnitEnvelope.period_of(_main._loader, org, UnitEnvelope.year_of(UnitPrice.now(state)))
-		p["union"] = {"org": org, "period": String(period["id"]), "pays_until": int(period["pays_until_year"]) + 20,
+		# Paid only if it opens by the year it opens now: a Delay pushes it past (QA T5).
+		p["union"] = {"org": org, "period": String(period["id"]), "pays_until": UnitEnvelope.year_of(UnitPrice.opens_at(p)),
 			"reserved_eur_m": 123.0, "paid_eur_m": 0.0, "months_left": 0}
 	_follow.mark_dirty()
 
@@ -315,6 +318,10 @@ func _check_overrun_card() -> void:
 		var squares = _with_meta("units_" + String(a["id"]), _follow)
 		if squares == null or squares.kept != int(a["units"]):
 			_fail("answer %s: the squares do not keep the sim's %d units" % [a["id"], int(a["units"])])
+	var delay_col = _with_meta("units_" + UK.OVERRUN_DELAY, _follow)
+	if _main._state.player().unit_programmes[0].has("union") and (delay_col == null
+			or not _text_under(delay_col.get_parent()).contains(_follow.tr("The Union's share is lost."))):
+		_fail("a Delay past the Union's year does not say its share is lost")
 	var bill = _with_meta("bill_if_paid", _follow)
 	if bill == null or bill.years().is_empty():
 		_fail("no year's bill under the overrun card")
@@ -411,6 +418,14 @@ func _check_one_card_a_subject() -> void:
 	RegisterWarning.arrive(_main, {"units": [_note]})
 	if _gos().size() != 1:
 		_fail("a second card beside the unanswered one: %d" % _gos().size())
+	# QA T3: closed with its X, the subject is free again for the next arrival.
+	var cards: Dictionary = _main.get_meta(RegisterWarning.CARDS)
+	for card in cards.keys():
+		if String(cards[card]["subject"]).begins_with(RegisterWarning.SUBJECT):
+			_main._hud.inbox.dismiss(String(card))
+	RegisterWarning.arrive(_main, {"units": [_note]})
+	if _gos().size() != 1:
+		_fail("after its card was closed the warning's next arrival shows %d cards" % _gos().size())
 
 
 ## Pass 2 T3: an Open that cannot show its tab (a scene holds the screen) keeps the card.
@@ -451,6 +466,11 @@ func _check_overrun_arrivals() -> void:
 			card = true
 	if not card:
 		_fail("an overrun ask reached no inbox card")
+	else:
+		var opens: Array = _cards_on(RegisterWarning.OVERRUN + String(p["id"]))
+		_press(opens[0])
+		if not _main._windows.is_open("programmes"):
+			_fail("an overrun card's Open did not show the Building tab")
 	var text := _text_under(_main._hud.inbox)
 	if not text.contains(Num.f(0.08, 2)) or not text.contains(Num.f(0.12, 2)):
 		_fail("the default and the lapse are not noted: '%s'" % text.left(300))
@@ -481,3 +501,42 @@ func _check_answered_ask_settles() -> void:
 	for b in _main._hud.inbox.find_children("*", "Button", true, false):
 		if ActsOn.acts_on(b, RegisterWarning.OVERRUN + String(p["id"])) and not _gone(b):
 			_fail("an answered ask's card stays in the inbox")
+
+
+
+## QA T1, T2 on #428: a load raises no warning whose region left the band, builds there, or
+## was warned past the rearm months; it does raise an overrun ask still waiting.
+func _check_restore_negatives() -> void:
+	var ns = _main._state.player()
+	var type_id := String(_note["type"])
+	var band: Dictionary = Units.band(ns, _main._loader, type_id)
+	var cards: Dictionary = _main.get_meta(RegisterWarning.CARDS, {})
+	for card in cards.keys():
+		_main._hud.inbox.dismiss(String(card))
+	var out_of_band := ""
+	for r in _main._loader.regions.get(ns.id, []):
+		if not band.has(String(r.id)) and Units.start_capacity(_main._loader, ns.id, type_id, r.id) > 0.0:
+			out_of_band = String(r.id)
+	var old := ""
+	for id in band:
+		if String(id) != String(_note["region"]):
+			old = String(id)
+	var now := UnitPrice.now(_main._state)
+	ns.unit_warned[type_id + "|" + out_of_band] = {"month": now, "differs": true}
+	if old != "":
+		ns.unit_warned[type_id + "|" + old] = {"month": now - UK.UNIT_WARN_REARM_MONTHS, "differs": true}
+	RegisterWarning.restore_after_load(_main)
+	for region in [String(_note["region"]), out_of_band, old]:
+		if region != "" and not _cards_on(RegisterWarning.SUBJECT + type_id + "|" + region).is_empty():
+			_fail("a load raised the warning on %s (building, out of the band or past the rearm)" % region)
+	var p: Dictionary = ns.unit_programmes[0]
+	if _cards_on(RegisterWarning.OVERRUN + String(p["id"])).is_empty():
+		_fail("a load did not raise the overrun ask still waiting")
+
+
+func _cards_on(subject: String) -> Array:
+	var out: Array = []
+	for b in _main._hud.inbox.find_children("*", "Button", true, false):
+		if ActsOn.acts_on(b, subject) and not _gone(b):
+			out.append(b)
+	return out
