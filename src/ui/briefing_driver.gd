@@ -85,6 +85,7 @@ static func month_end(main, report: Dictionary) -> void:
 	game.erase("month_cards")
 	if ns != null:
 		RegionArrival.check(main)
+		preload("res://src/ui/register_warning.gd").arrive(main, report)  # the register's warning, the slice-2 gate
 		preload("res://src/ui/desk_cards.gd").card_called(main)  # B7: the quiet-month call comes after the Events hook
 		preload("res://src/ui/council_cards.gd").check(main)  # B7: a treaty at home, a division the player swings
 	# The month's consequence cards and its crossings go to the inbox every month: no card
