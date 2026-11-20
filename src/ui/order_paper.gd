@@ -27,8 +27,10 @@ var _row: HBoxContainer
 var _state
 var _loader
 var _find_law: Callable
-## The queued place a right click picked (its queue index), -1 for none: its verbs dock under the places.
-var _picked := -1
+## The bill a right click picked (its law id, FINANCE for the finance bill), "" for none: its verbs dock under the
+## places and follow the bill, not its place (a close promotes the queue; a move reorders it).
+var _picked := ""
+const FINANCE := "finance"  # i18n: ok a key
 var _verbs: VBoxContainer
 
 
@@ -54,7 +56,7 @@ func _init() -> void:
 ## the loader). Rebuilt from the state each time: the paper has no state of its own.
 func refresh(state, loader, find_law: Callable) -> void:
 	if state != _state:
-		_picked = -1  # another game (a load): its queue is not the one the place was picked in
+		_picked = ""  # another game (a load): its queue is not the one the bill was picked in
 	# The tab's refresh rebuilds the block; a verb the keyboard was on is lit again on the rebuilt one.
 	var focus: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
 	var relight := VerbBlock.key_of(focus) if focus is Button and _verbs.is_ancestor_of(focus) else ""
@@ -128,14 +130,41 @@ func _tip_of(i: int) -> String:
 
 func _move(from: int, to: int) -> void:
 	if BillQueue.move(_state, from, to):
-		_picked = to  # the block follows its bill
 		changed.emit()
+
+
+## The picked bill's place in the queue, -1 when none is picked or it left the queue.
+func picked_index() -> int:
+	return _index_of(_picked)
+
+
+func _index_of(key: String) -> int:
+	if key == "" or _state == null:
+		return -1
+	var queue: Array = _state.player().bill_queue
+	for i in queue.size():
+		if _key_of(queue[i]) == key:
+			return i
+	return -1
+
+
+static func _key_of(entry: Dictionary) -> String:
+	var id := String(entry.get("law_id", ""))
+	return id if id != "" else FINANCE
+
+
+## A verb's press finds its bill's place at the press, never the place it was built at.
+func _move_by(key: String, step: int) -> void:
+	var i := _index_of(key)
+	if i >= 0:
+		_move(i, i + step)
 
 
 ## The rework pass's C: a right click on a queued place picks it, docks its verbs under the four places and lights
 ## them (no plate).
 func _menu(i: int) -> void:
-	_picked = i
+	var queue: Array = _state.player().bill_queue
+	_picked = _key_of(queue[i]) if i >= 0 and i < queue.size() else ""
 	refresh(_state, _loader, _find_law)
 	VerbBlock.light(self)
 
@@ -146,12 +175,13 @@ func _build_verbs(ns) -> void:
 		_verbs.remove_child(child)
 		child.queue_free()
 	var n: int = ns.bill_queue.size()
-	if _picked >= n:
-		_picked = -1
-	_verbs.visible = _picked >= 0
-	if _picked < 0:
+	var i := _index_of(_picked)
+	if i < 0:
+		_picked = ""  # it left the queue (tabled by a close, or taken out)
+	_verbs.visible = i >= 0
+	if i < 0:
 		return
-	var i := _picked
+	var key := _picked
 	var head := Label.new()
 	head.theme_type_variation = UiTheme.MICRO
 	head.text = tr("What you can do · %s") % _name_of(ns.bill_queue[i])
@@ -159,9 +189,9 @@ func _build_verbs(ns) -> void:
 	var row := PanelKit.buttons(_verbs)
 	var reasons := PackedStringArray()
 	for verb in [
-			[tr("Move earlier"), i > 0, tr("It is already first in the queue."), _move.bind(i, i - 1)],
-			[tr("Move later"), i < n - 1, tr("It is already last in the queue."), _move.bind(i, i + 1)],
-			[tr("Take out of the queue"), true, "", _take_out.bind(i)]]:
+			[tr("Move earlier"), i > 0, tr("It is already first in the queue."), _move_by.bind(key, -1)],
+			[tr("Move later"), i < n - 1, tr("It is already last in the queue."), _move_by.bind(key, 1)],
+			[tr("Take out of the queue"), true, "", _take_out.bind(key)]]:
 		var press := PanelKit.sized(Button.new())
 		press.text = String(verb[0])
 		press.disabled = not bool(verb[1])
@@ -169,11 +199,14 @@ func _build_verbs(ns) -> void:
 		row.add_child(press)
 		if press.disabled:
 			reasons.append(String(verb[2]))
+	if n == 1:
+		reasons = PackedStringArray([tr("It is the only bill in the queue.")])  # one reason, not "first ... last"
 	if not reasons.is_empty():
 		PanelKit.plain_line(_verbs, " ".join(reasons))
 
 
-func _take_out(i: int) -> void:
-	if BillQueue.remove(_state, i):
-		_picked = -1
+func _take_out(key: String) -> void:
+	var i := _index_of(key)
+	if i >= 0 and BillQueue.remove(_state, i):
+		_picked = ""
 		changed.emit()

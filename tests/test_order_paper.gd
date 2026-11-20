@@ -294,9 +294,12 @@ func _check_the_plate_moves_and_takes_out() -> void:
 	var after = _main.get_viewport().gui_get_focus_owner()
 	if _block() == null or not (after is Button) or not _block().is_ancestor_of(after):
 		_fail("after Move later the tab's refresh let the keyboard out of the docked verbs (focus on %s)" % after)
-	if _paper()._picked != 1:
-		_fail("the docked verbs did not follow their bill to place %d (picked %d)" % [1, _paper()._picked])
+	if _paper().picked_index() != 1:
+		_fail("the docked verbs did not follow their bill to place %d (picked %d)" % [1, _paper().picked_index()])
 	_check_the_keyboard_stays_on_its_verb()
+	_check_a_drag_picks_nothing()
+	_check_the_pick_follows_its_bill_through_a_close()
+	_check_a_lone_bill_says_why_once()
 	_set_queue([_ids[2], _ids[1]])
 	_paper().places[1].menu_requested.emit(0)
 	_block_buttons()[2].pressed.emit()  # Take out of the queue
@@ -316,6 +319,53 @@ func _check_the_keyboard_stays_on_its_verb() -> void:
 	var after = _main.get_viewport().gui_get_focus_owner()
 	if not (after is Button) or (after as Button).text != later.text:
 		_fail("after Move later the keyboard landed on '%s', not Move later" % ((after as Button).text if after is Button else str(after)))
+
+
+## Pass 2 T3: a drag moves a bill, it does not open the verbs (a right click does).
+func _check_a_drag_picks_nothing() -> void:
+	_paper()._picked = ""
+	_set_queue([_ids[1], _ids[2]])
+	_paper().places[1].moved.emit(0, 1)
+	_panel()._process(0.0)
+	if _block() != null:
+		_fail("a drag opened the docked verbs without a right click")
+	# Mid-pick, a drag of another bill leaves the verbs on the picked one.
+	_paper().places[1].menu_requested.emit(0)  # picks the bill now first
+	var picked_name := _name_of(String(_ns().bill_queue[0]["law_id"]))
+	_paper().places[2].moved.emit(1, 0)
+	_panel()._process(0.0)
+	if not _text_of(_block()).contains(picked_name):
+		_fail("a drag of another bill switched the verbs off %s: '%s'" % [picked_name, _text_of(_block())])
+
+
+## Pass 2 T4: the pick is the bill, not its place. The month's close promotes the queue; Take out still takes out
+## the picked bill.
+func _check_the_pick_follows_its_bill_through_a_close() -> void:
+	_set_queue([_ids[1], _ids[2], _ids[3]])
+	_paper().places[2].menu_requested.emit(1)  # the second queued bill
+	_ns().bill_queue.pop_front()  # the close: the first queued bill went to the slot
+	_refresh()
+	var take_out: Button = null
+	for b in _block_buttons():
+		if (b as Button).text == tr("Take out of the queue"):
+			take_out = b
+	if take_out == null:
+		_fail("after the close the picked bill's verbs are gone")
+		return
+	take_out.pressed.emit()
+	_panel()._process(0.0)
+	var left: Array = _ns().bill_queue.map(func(e): return String(e["law_id"]))
+	if left != [_ids[3]]:
+		_fail("after the close Take out left %s, wanted only %s (the picked bill %s out)" % [left, _ids[3], _ids[2]])
+
+
+## Pass 2 T8: a bill alone in the queue has one reason, not "already first ... already last".
+func _check_a_lone_bill_says_why_once() -> void:
+	_set_queue([_ids[1]])
+	_paper().places[1].menu_requested.emit(0)
+	var text := _text_of(_block())
+	if text.contains(tr("It is already first in the queue.")) and text.contains(tr("It is already last in the queue.")):
+		_fail("a lone bill's reasons repeat: '%s'" % text)
 
 
 ## The paper's docked verb block, null while no place is picked.
@@ -393,6 +443,7 @@ func _check_the_plates_propose_divides() -> void:
 
 
 func _check_the_right_click_is_the_same_table() -> void:
+	_main.get_viewport().gui_release_focus()  # the keyboard steps above left a verb focused
 	var line: Node = _panel()._laws._rows.get_children()[0]
 	var row: Button = line.get_meta("pick")
 	var event := InputEventMouseButton.new()
