@@ -14,6 +14,7 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const SectorWarningView = preload("res://src/ui/sector_warning_view.gd")
 const Closures = preload("res://src/sim/closures.gd")
+const Bills = preload("res://src/sim/bills.gd")
 
 ## The Material Symbols icon per kind (assets/icons/material/).
 const ICON := {"crisis": "event", "decision": "mail", "plant": "factory", "election": "campaign", "bill": "gavel",
@@ -122,9 +123,10 @@ static func _event(loader, event_id: String) -> String:
 
 
 static func _law(ns, loader, law_id: String) -> String:
-	for law in loader.laws:
-		if String(law.id) == law_id:
-			return Strings.law_name(law)
+	# Bills.by_id names an authored law and a finance bill alike (finance:<month> has no row in loader.laws).
+	var law = Bills.by_id(loader, law_id)
+	if law != null:
+		return Strings.law_name(law)
 	# A draft of the assembly's own: its name is in the draft.
 	var draft: Dictionary = ns.draft_bills.get(law_id, {})
 	return String(draft.get("name", law_id))  # i18n: row-ok a draft's generated name

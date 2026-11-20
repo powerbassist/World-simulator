@@ -10,6 +10,7 @@ const Budget = preload("res://src/sim/budget.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const SimRows = preload("res://src/sim/finance_rows.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 
 ## How many pendings are kept: a drag moves one row a frame, and the row's own and the whole draft's differ
 ## only when two rows are moved. The sheet prices each changed row alone and then the whole bill on every rebuild, so
@@ -113,6 +114,20 @@ func whole(loader, draft, refused: bool) -> Dictionary:
 
 
 ## The state moved behind the page (a law, an event): both are due again.
+## The balance one drafted change books a year (finance_draft.gd's rows()), EUR bn, a gain positive: a kind abolished
+## or put in force is priced as a bill of its one row (FinanceBill.preview), any other as a pending of that row alone.
+func row_balance_bn(row: Dictionary) -> float:
+	var channel := String(row["channel"])
+	var key := String(row["key"])
+	if channel == FinanceDraft.ABOLISH:
+		return bill_balance_bn({FinanceBill.ABOLISH: [key]})
+	if bool(row.get("birth", false)):
+		return bill_balance_bn({FinanceBill.CREATE: {key: row["draft"]}})
+	if channel == FinanceDraft.BRACKETS:
+		return balance_bn({channel: row["draft"]})
+	return balance_bn({channel: {key: row["draft"]}})
+
+
 func reset() -> void:
 	_stamp = ""
 
