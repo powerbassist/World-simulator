@@ -98,6 +98,9 @@ var _folded: Array = []
 ## The stretching slot between the tiles and the chips, and the chief's remark docked in it.
 var _slot: HBoxContainer
 var _caption: Control
+## How many hairlines the last draw of the figure row drew (a test reads it: a headless run
+## has no pixels to look at).
+var _drawn_dividers := 0
 
 
 func _ready() -> void:
@@ -475,7 +478,9 @@ func divider_xs() -> Array[float]:
 
 
 func _draw_dividers() -> void:
+	_drawn_dividers = 0
 	for x in divider_xs():
+		_drawn_dividers += 1
 		_figures.draw_line(Vector2(x, 6.0), Vector2(x, _figures.size.y - 6.0), UiTheme.EDGE, 1.0)
 
 

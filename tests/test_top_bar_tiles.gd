@@ -26,7 +26,8 @@ const TitleBar = preload("res://src/ui/title_bar.gd")
 const SHORT_LINE := "The situation is manageable, barely. It will need your signature."
 const LONG_LINE := "The situation is manageable, barely, and it will need your signature before the end of the month, or the assembly will take it out of your hands entirely."
 ## [text scale, the remark]: the remark in the strip at both sizes, short and past two lines.
-const STAGES := [[1.0, SHORT_LINE], [1.3, SHORT_LINE], [1.3, LONG_LINE], [1.0, LONG_LINE]]
+## The last stage is past the text sizes the menu offers, so the remark has to fold a tile there.
+const STAGES := [[1.0, SHORT_LINE], [1.3, SHORT_LINE], [1.3, LONG_LINE], [1.0, LONG_LINE], [1.6, LONG_LINE]]
 
 var _failures: Array[String] = []
 var _loader
@@ -35,6 +36,9 @@ var _frame := 0
 var _caption
 var _stage := 0
 var _wait := 0
+var _folds_shown := 0
+var _guard_bar
+var _guard_step := 0
 
 
 func _init() -> void:
@@ -322,6 +326,10 @@ func _check_tiles_are_divided_by_a_hairline() -> void:
 ## call, frames apart.
 func _caption_stages() -> bool:
 	if _stage >= STAGES.size():
+		if _guard_step < 3:
+			_guard_step += 1
+			_stage_guard()
+			return false
 		if _bar._caption_width() != 0.0:
 			_fail("a silent chief still keeps %.0f px of the strip" % _bar._caption_width())
 		if _bar._slot.get_combined_minimum_size().x != 0.0:
@@ -335,16 +343,37 @@ func _caption_stages() -> bool:
 		_bar.refresh(_with_history(_state(), 4.4, 5.3), null, _loader)
 		_caption.say(String(stage[1]), null, 60.0)
 	_wait += 1
-	if _wait < 4:
-		return false
 	var label := "text %d %%, %s remark" % [roundi(float(stage[0]) * 100), "long" if stage[1] == LONG_LINE else "short"]
+	if _wait == 4:
+		_check_the_shown_remark(label, stage)
+		_folds_shown = _bar.folded_ids().size()
+		_caption.clear()
+	if _wait < 8:
+		return false
+	# Silent again for a few frames: the tiles the remark folded are back.
+	if float(stage[0]) > 1.3:
+		if _folds_shown == 0:
+			_fail("%s: premise: the remark folded no tile, so its room is not measured" % label)
+		elif _bar.folded_ids().size() >= _folds_shown:
+			_fail("%s: %d tiles folded with the remark, %d once it went: the tiles did not get the room back" % [label, _folds_shown, _bar.folded_ids().size()])
+	_wait = 0
+	_stage += 1
+	UiTheme.set_text_scale(1.0)
+	_bar.theme = UiTheme.build()
+	return false
+
+
+## The remark a few frames after it is said: inside the strip, over no tile or chip, the strip
+## no taller, the tiles folded to leave it room, the hairlines drawn, the tooltip only when cut.
+func _check_the_shown_remark(label: String, stage: Array) -> void:
 	var rect: Rect2 = _caption.get_global_rect()
 	var bar_rect := Rect2(_bar.global_position, Vector2(_bar.size.x, TopBar.BAR_HEIGHT))
 	if not _caption.visible:
 		_fail("%s: the remark is not shown" % label)
-	if not bar_rect.encloses(rect):
+	# Past the offered text sizes the strip's height is not promised; that stage measures the fold only.
+	if float(stage[0]) <= 1.3 and not bar_rect.encloses(rect):
 		_fail("%s: the remark %s is not inside the strip %s: it covers what sits under it" % [label, rect, bar_rect])
-	if _bar.get_combined_minimum_size().y > TopBar.BAR_HEIGHT:
+	if float(stage[0]) <= 1.3 and _bar.get_combined_minimum_size().y > TopBar.BAR_HEIGHT:
 		_fail("%s: the remark made the strip %.0f px tall, past its %d" % [label, _bar.get_combined_minimum_size().y, TopBar.BAR_HEIGHT])
 	for id in _bar._boxes.keys():
 		var box: Control = _bar._boxes[id]
@@ -354,12 +383,28 @@ func _caption_stages() -> bool:
 		_fail("%s: a line cut at two lines is not whole in the tooltip" % label)
 	if stage[1] == SHORT_LINE and float(stage[0]) == 1.0 and not _caption.tooltip_text.is_empty():
 		_fail("%s: a line shown whole repeats itself as a tooltip" % label)
-	_caption.clear()
-	_wait = 0
-	_stage += 1
-	UiTheme.set_text_scale(1.0)
-	_bar.theme = UiTheme.build()
-	return false
+	var slot: float = 1920.0 - 232.0 - TopBar.LEFT_GUTTER * 2 - TopBar.FIGURE_GAP / 2 - _bar.get_theme_stylebox("panel").get_minimum_size().x
+	var used: float = _bar._figures.get_combined_minimum_size().x + _bar._caption_width() + _bar._chips_width()
+	if used > slot + 0.5:
+		_fail("%s: tiles, remark and chips need %.0f px of a %.0f px strip: the tiles did not fold for the remark" % [label, used, slot])
+	if _bar._drawn_dividers == 0 or _bar._drawn_dividers != _bar.divider_xs().size():
+		_fail("%s: %d hairlines drawn for %d gaps between tiles" % [label, _bar._drawn_dividers, _bar.divider_xs().size()])
+
+## A remark shown on a bar that then leaves the tree (a load, back to the menu): the deferred
+## refit lands outside the tree and must do nothing, not print an error the runner fails on.
+func _stage_guard() -> void:
+	match _guard_step:
+		1:
+			_guard_bar = load("res://src/ui/top_bar.gd").new()
+			_guard_bar.theme = UiTheme.build()
+			root.add_child(_guard_bar)
+		2:
+			var caption = ChiefCaption.new()
+			_guard_bar.dock_caption(caption)
+			caption.say(SHORT_LINE, null, 60.0)
+			root.remove_child(_guard_bar)  # the deferred refit runs after this, out of the tree
+		3:
+			_guard_bar.free()
 
 
 func _fail(message: String) -> void:
