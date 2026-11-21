@@ -87,7 +87,8 @@ static func show(main, rows: Array) -> void:
 		var end := _unix(by_y, by - by_y * 12, Calendar.days_in_month(by_y, by - by_y * 12))
 		var came := int(request["arrived_month"])
 		var start := _unix(floori((came - 1) / 12.0), came - floori((came - 1) / 12.0) * 12, 1)
-		row["left"] = maxi(0, (end - today) / 86400)
+		# The last day still counts: "1 day" on it, never "0 days" (pass 2 TAKE 11).
+		row["left"] = maxi(1, (end - today) / 86400 + 1)
 		row["frac"] = clampf(float(end - today) / maxf(1.0, float(end - start)), 0.0, 1.0)
 	var reach: Array = []
 	for person in loader.people.get(String(ns.id), []):

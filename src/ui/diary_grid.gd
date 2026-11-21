@@ -300,10 +300,12 @@ func _bands(trips: Array, entries: Dictionary, first: int) -> Dictionary:
 			d += 1
 			continue
 		var start := d
+		var key := String(trips[d - 1]["key"])
 		var label := tr("Travel")
 		# Only a journey day, or a meeting with a journey beside it: an appointment the day after a
 		# trip ends is not part of its band (pass 1 on #434).
-		while d <= trips.size() and _on_trip(trips, d):
+		# One trip's days only: a second trip out the day after the first ends is its own band.
+		while d <= trips.size() and _on_trip(trips, d) and String(trips[d - 1]["key"]) == key:
 			if bool(trips[d - 1]["meeting"]):
 				for e in entries.get(d, []):
 					if String(e["mark"]) == "booking":
@@ -337,7 +339,8 @@ func _render_furniture(ym: Vector2i) -> void:
 		if String(e["mark"]) == "booking" and at > today and (soonest.is_empty() or at < int(soonest["at"])):
 			soonest = e.merged({"at": at})
 	_next[0].text = DateText.day_month(int(soonest["day"]), int(soonest["month"])) if not soonest.is_empty() else PanelKit.MISSING
-	_next[1].text = String(soonest.get("text", tr("next")))  # i18n: row-ok the grid's words
+	# The short words, as a cell's: the full line in a caption that does not wrap widened the grid.
+	_next[1].text = String(soonest.get("short", soonest.get("text", tr("next"))))  # i18n: row-ok the grid's words
 	var due := -1
 	for row in Audiences.pending(ns):
 		due = Audiences.answer_by(row) if due < 0 else mini(due, Audiences.answer_by(row))

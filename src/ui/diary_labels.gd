@@ -34,7 +34,7 @@ static func short(row: Dictionary, loader) -> String:
 		return name.get_slice(" ", name.get_slice_count(" ") - 1)
 	if kind == K.KIND_DIPLOMATIC:
 		var id := String(row.get("target_id", ""))
-		return String(loader.nations[id].nation_name) if loader.nations.has(id) else id
+		return loader.nation_name(id)
 	return Strings.t(String(BOOKING_SHORT.get(kind, kind)))
 
 ## What each fixed-date kind is called on screen. Presentation, so it lives here

@@ -218,7 +218,7 @@ func _token(row: Dictionary) -> void:
 	b.toggle_mode = true
 	b.button_pressed = String(row["id"]) == _open
 	b.custom_minimum_size = TOKEN * s
-	b.tooltip_text = tr("%s: %d days left to answer") % [String(row["person"]), int(row.get("left", 0))]
+	b.tooltip_text = tr_n("%s: %d day left to answer", "%s: %d days left to answer", int(row.get("left", 0))) % [String(row["person"]), int(row.get("left", 0))]
 	_tokens.add_child(b)
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -223,6 +223,30 @@ func _check_travel_days() -> void:
 	if _cell(17) != null and bool(_cell(17).band):
 		_fail("the appointment the day after the trip joined its band")
 	state.appointments.erase(after)
+	# Pass 2 TAKE 10: a second trip back to back (out on day 17, the day after the first ends) is
+	# its own band, its own host named -- not one band under the last host's name.
+	var next_visit := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), 19, "state_visit", "ITA", "", "", "", "", 2)
+	state.appointments.append(next_visit)
+	_main._calendar_panel._refresh()
+	_grid.show_month(int(at["year"]), int(at["month"]))
+	if _cell(12) == null or String(_cell(12).band_label) != host:
+		_fail("back to back, the first trip's band reads '%s', not '%s'" % [_cell(12).band_label if _cell(12) != null else "", host])
+	var second := String(_main._loader.nations["ITA"].nation_name)
+	if _cell(17) == null or String(_cell(17).band_label) != second:
+		_fail("back to back, the second trip's first day reads '%s', not '%s'" % [_cell(17).band_label if _cell(17) != null else "", second])
+	# Pass 2 TAKE 9: the "next" counter's caption is the entry's short words, as a cell's are --
+	# the full line in a label that does not wrap widened the grid.
+	var today := int(state.year) * 10000 + int(state.month) * 100 + int(state.day)
+	var soonest := {}
+	for e in _grid._items:
+		var when := int(e["year"]) * 10000 + int(e["month"]) * 100 + int(e["day"])
+		if String(e["mark"]) == "booking" and when > today and (soonest.is_empty() or when < int(soonest["at"])):
+			soonest = e.merged({"at": when})
+	if soonest.is_empty() or not soonest.has("short"):
+		_fail("premise: no booking ahead with short words")
+	elif String(_grid._next[1].text) != String(soonest["short"]):
+		_fail("the next counter's caption reads '%s', not the entry's short '%s'" % [_grid._next[1].text, soonest["short"]])
+	state.appointments.erase(next_visit)
 	state.appointments.erase(visit)
 	_main._calendar_panel._refresh()
 
