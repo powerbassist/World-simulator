@@ -429,6 +429,7 @@ tests=(
   tests/test_shell_fit.gd
   tests/test_workspace.gd
   tests/test_dock_fit.gd
+  tests/test_layout_walker.gd
   tests/test_panel_kit.gd
   tests/test_hud.gd
   tests/test_ui_theme.gd
