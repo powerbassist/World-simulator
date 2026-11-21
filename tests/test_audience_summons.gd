@@ -51,6 +51,7 @@ func _init() -> void:
 	_check_the_meeting_is_talk_and_unpriced()
 	_check_a_missed_summons_costs_nothing()
 	_check_a_cancelled_summons_costs_nothing()
+	_check_a_resummons_after_a_cancel_is_its_own_row()
 	_check_the_stamp_survives_a_save()
 	_finish()
 
@@ -347,6 +348,36 @@ func _check_a_cancelled_summons_costs_nothing() -> void:
 		_fail("premise: the second summons was refused: %s" % [s])
 	elif String(Phone.options(state, ns, _loader, again)["request_id"]) != "" or not AudienceLane.open_request(ns, again).is_empty():
 		_fail("the phone or the lane's open request reads a summons as the person's request")
+
+
+func _check_a_resummons_after_a_cancel_is_its_own_row() -> void:
+	# Pass 2 TAKE 1: a summons cancelled then made again the same month, the same day even,
+	# is a new row -- one id for both found the cancelled row, so the second never opened.
+	var state = _game()
+	var ns = state.player()
+	var pid := _own_quiet(state)
+	var first: Dictionary = Audiences.summon(state, ns, _loader, pid, _day(state, 20))
+	if not bool(first.get("ok", false)):
+		_fail("premise: the summons was refused: %s" % [first])
+		return
+	var old_id := String(first["request"]["id"])
+	Audiences.decline(state, ns, _loader, old_id)
+	var again: Dictionary = Audiences.summon(state, ns, _loader, pid, _day(state, 20))
+	if not bool(again.get("ok", false)):
+		_fail("a summons cancelled could not be made again: %s" % [again])
+		return
+	var id := String(again["request"]["id"])
+	if id == old_id:
+		_fail("a summons made again after a cancel kept the cancelled one's id '%s'" % id)
+	if String(Audiences.request(ns, id)["status"]) != K.STATUS_BOOKED:
+		_fail("the summons made again reads '%s', not booked" % Audiences.request(ns, id)["status"])
+	if not bool(Audiences.decline(state, ns, _loader, id).get("ok", false)) or String(Audiences.request(ns, id)["status"]) != K.STATUS_CANCELLED:
+		_fail("the summons made again could not be cancelled")
+	var third: Dictionary = Audiences.summon(state, ns, _loader, pid, _day(state, 22))
+	var third_id := String((third.get("request", {}) as Dictionary).get("id", ""))
+	state.day = 22
+	if Deal.open(state, ns, _loader, third_id).is_empty():
+		_fail("a third summons the same month opened no meeting")
 
 
 func _check_the_stamp_survives_a_save() -> void:
