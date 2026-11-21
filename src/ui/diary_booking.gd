@@ -42,11 +42,14 @@ func focus(request_id: String, by_keys := true) -> void:
 
 
 ## The picked day takes the keyboard (a summons' See them from the keys: it has no request id).
-func focus_day() -> void:
+## `settle`: only on arrival (a Go) -- the daily refocus must not jump the page back to its top
+## each in-game day (pass 2 TAKE 7).
+func focus_day(settle := true) -> void:
 	var cell := _grid._days.get_node_or_null("Day_%d" % _grid._selected) as Control
 	if _grid._selected > 0 and cell != null and not cell.is_queued_for_deletion():
 		cell.grab_focus()
-		_settle(cell)
+		if settle:
+			_settle(cell)
 
 
 ## A rebuild freed the focused control: the pending booking takes it again. Focus the player
@@ -66,14 +69,14 @@ func _refocus() -> void:
 	var viewport := _grid.get_viewport()
 	var owner: Control = viewport.gui_get_focus_owner() if viewport != null else null
 	if owner == null or owner.is_queued_for_deletion() or not owner.is_inside_tree():
-		_focus_on(request)
+		_focus_on(request, false)
 
 
 ## The picked day of the armed request's window takes the keyboard, where Enter books it.
-func _focus_on(request_id: String) -> void:
+func _focus_on(request_id: String, settle := true) -> void:
 	if not keys or String(_grid.armed.get("id", "")) != request_id:
 		return
-	focus_day()
+	focus_day(settle)
 
 
 ## The page's scroll followed the focus while the month page was still laying out (the

@@ -47,6 +47,11 @@ func _process(_delta: float) -> bool:
 			_check_summons()
 			_check_refused_summons()
 			_check_armed_summons_lets_go()
+			_go_for_settle()
+		8:
+			_scroll_then_refocus()
+		11:
+			_check_refocus_keeps_scroll()
 			_finish()
 			return true
 	return false
@@ -327,6 +332,56 @@ func _check_armed_summons_lets_go() -> void:
 	AudienceDriver.after_load(_main)
 	if not grid.armed.is_empty():
 		_fail("a summons armed stayed armed across a load")
+
+
+## Pass 2 TAKE 7: a Go settles the page once (scroll from the top to the day); the daily
+## refocus while armed must not, or the page jumps back to the top each in-game day.
+var _scroll: ScrollContainer
+var _scrolled := -1
+
+
+func _go_for_settle() -> void:
+	_stage()
+	AudienceDriver.refresh(_main)
+	# A page longer than the view, as with a long day list or a full column: it really scrolls.
+	var tall := Control.new()
+	tall.custom_minimum_size.y = 2000
+	_main._calendar_panel._grid.get_parent().add_child(tall)
+	AudienceDriver.lane_of(_main).book_requested.emit(_request)
+
+
+func _scroll_then_refocus() -> void:
+	var node: Node = _main._calendar_panel._grid.get_parent()
+	while node != null and not (node is ScrollContainer):
+		node = node.get_parent()
+	_scroll = node as ScrollContainer
+	if _scroll == null:
+		_fail("premise: the Diary's page is in no scroll")
+		return
+	# Down, the picked day still whole in view: nothing the keyboard needs is off screen.
+	var grid = _main._calendar_panel._grid
+	var day := grid._days.get_node_or_null("Day_%d" % grid._selected) as Control
+	if day == null:
+		_fail("premise: no picked day")
+		return
+	var top := day.get_global_rect().position.y - _scroll.get_global_rect().position.y + _scroll.scroll_vertical
+	_scroll.scroll_vertical = int(top / 3.0)
+	_scrolled = _scroll.scroll_vertical
+	if _scrolled <= 0:
+		_fail("premise: the Diary's page does not scroll (%d)" % _scrolled)
+		return
+	# The daily redraw freed the focused day: the refocus puts the keyboard back on it.
+	_main.get_viewport().gui_release_focus()
+	_main._calendar_panel.booking._refocus()
+
+
+func _check_refocus_keeps_scroll() -> void:
+	if _scroll == null or _scrolled <= 0:
+		return
+	if not (_main.get_viewport().gui_get_focus_owner() is DiaryDay):
+		_fail("premise: the refocus put the keyboard on no day")
+	if _scroll.scroll_vertical != _scrolled:
+		_fail("the daily refocus moved the page from %d to %d" % [_scrolled, _scroll.scroll_vertical])
 
 
 func _finish() -> void:
