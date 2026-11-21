@@ -1,7 +1,7 @@
 {
   "hits": [
     "calendar | text 115, interface 100 | vbar | fills",
-    "finances | text 115, interface 100 | hbar | 1/23/0",
-    "finances | text 115, interface 75 | hbar | 1/23/0"
+    "finances | text 115, interface 100 | hbar | sideways bar",
+    "finances | text 115, interface 75 | hbar | sideways bar"
   ]
 }

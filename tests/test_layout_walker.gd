@@ -18,7 +18,7 @@ extends SceneTree
 ##   clip   a Label or Button cut by clip_text with no ellipsis and no wrap: the text is wider
 ##          than the control and nothing says so;
 ##   class  a PanelKit.buttons() row or a same_class() group whose buttons differ in class or,
-##          where no caller set a floor, in size -- the group's promise (panel_kit.gd _classed()).
+##          in drawn size -- the group's promise (panel_kit.gd _share_class(), same_class()).
 
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const InterfaceSize = preload("res://src/ui/interface_size.gd")
@@ -69,6 +69,7 @@ func _sweep(text_scale: float) -> void:
 			windows.open(String(id), true)
 			await _frames(4)
 			if not windows.is_open(String(id)):
+				print("layout_walker: %s did not open (%s)" % [id, where])
 				continue
 			_opened += 1
 			_check(windows, String(id), where)
@@ -88,7 +89,8 @@ func _check(windows, id: String, where: String) -> void:
 	for node in dock.find_children("*", "ScrollContainer", true, false):
 		var scroll := node as ScrollContainer
 		if scroll.is_visible_in_tree() and scroll.get_h_scroll_bar().visible:
-			_hit(id, where, "hbar", _path(dock, scroll), "content %.0f px in %.0f" % [
+			# Keyed by the window alone: a child-index path would move with any row added above it.
+			_hit(id, where, "hbar", "sideways bar", "at %s, content %.0f px in %.0f" % [_path(dock, scroll),
 				scroll.get_child(0).get_combined_minimum_size().x if scroll.get_child_count() > 0 else 0.0, scroll.size.x])
 	var scroll: ScrollContainer = page._scroll
 	if scroll.get_v_scroll_bar().visible:
@@ -133,7 +135,7 @@ func _check_clip(control: Control, dock: Control, id: String, where: String) -> 
 		_hit(id, where, "clip", "%s '%s'" % [control.get_class(), text.left(32)], "needs %.0f px, has %.0f" % [need, control.size.x])
 
 
-## A group's promise: one class for all, and one size where no caller set a floor (OWN_MIN_META).
+## A group's promise: one class for all, and one drawn size (a kit button's own floor included).
 func _check_groups(dock: Control, id: String, where: String) -> void:
 	var groups := {}
 	for node in dock.find_children("*", "Button", true, false):
@@ -162,12 +164,14 @@ func _check_groups(dock: Control, id: String, where: String) -> void:
 		if classes.size() > 1:
 			_hit(id, where, "class", labels, "%d classes in one group" % classes.size())
 			continue
+		# Every member, a kit button's own floor included: PanelKit.button() keeps the class it was
+		# built with as a floor (OWN_MIN_META), so a verb built L in a group that resolves to M draws
+		# wider than its siblings -- the uneven row the play found.
 		for axis in [0, 1]:
 			var sizes: Array = []
 			for b in members:
-				if ((b as Button).get_meta(PanelKit.OWN_MIN_META, Vector2.ZERO) as Vector2)[axis] == 0.0:
-					sizes.append(roundf((b as Button).size[axis]))
-			if sizes.size() > 1 and sizes.max() - sizes.min() > 0.5:
+				sizes.append(roundf((b as Button).size[axis]))
+			if sizes.max() - sizes.min() > 0.5:
 				_hit(id, where, "class", labels, "%s %s px" % ["widths" if axis == 0 else "heights", sizes])
 
 
