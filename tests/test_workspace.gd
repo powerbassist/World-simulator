@@ -355,9 +355,9 @@ func _check_dock_width_follows_the_domain() -> void:
 		if not is_equal_approx(width, float(want[id])) or not is_equal_approx(width, WindowManager.dock_width(id)):
 			_fail("the %s tab docks %.0f wide, not %.0f" % [id, width, float(want[id])])
 	# A narrowed domain grows with the text size, never past DOCK_WIDTH.
-	UiTheme.set_text_scale(1.3)
-	if not is_equal_approx(WindowManager.dock_width("diplomacy"), 988.0) or not is_equal_approx(WindowManager.dock_width("finances"), WindowManager.DOCK_WIDTH):
-		_fail("at text 130 Diplomacy docks %.0f and Finances %.0f, not 988 and 1240" % [WindowManager.dock_width("diplomacy"), WindowManager.dock_width("finances")])
+	UiTheme.set_text_scale(1.15)
+	if not is_equal_approx(WindowManager.dock_width("diplomacy"), 874.0) or not is_equal_approx(WindowManager.dock_width("finances"), WindowManager.DOCK_WIDTH):
+		_fail("at text 115 Diplomacy docks %.0f and Finances %.0f, not 874 and 1240" % [WindowManager.dock_width("diplomacy"), WindowManager.dock_width("finances")])
 	# #400 pass 2 T6: a smaller text never narrows it -- the dock's fixed parts (tabs, padding, the
 	# offer's columns) do not shrink with the text.
 	UiTheme.set_text_scale(0.9)

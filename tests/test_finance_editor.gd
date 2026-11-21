@@ -77,7 +77,7 @@ func _process(_delta: float) -> bool:
 			_check_leaving_an_untouched_off_grid_row_drafts_nothing()
 			_check_a_sweep_waits_for_the_hand()
 			_check_the_unset_lines_say_what_they_hold()
-			_check_the_hover_follows_the_figure_at_130()
+			_check_a_text_size_change_rebuilds_the_page()
 			_check_withdraw_keeps_the_draft()
 			_check_a_go_opens_the_folded_row()
 			_panel._open_id = ""
@@ -569,35 +569,20 @@ func _check_the_unset_lines_say_what_they_hold() -> void:
 		_fail("the two unset lines do not both say what is not split: %s" % [tips])
 
 
-## At 130 % a spending line's figure is the row's hover (QA's T1 on #363): it reads what the figure reads, after
-## every change, never the paint before.
-func _check_the_hover_follows_the_figure_at_130() -> void:
+## A text-size change in Settings rebuilds the page by itself (QA's B2 on #363), and back at 100 % it
+## goes back to its build. (The 130 % layout, where a spending figure became the row's hover, left
+## with that size.)
+func _check_a_text_size_change_rebuilds_the_page() -> void:
 	var UiTheme = preload("res://src/ui/ui_theme.gd")
-	var ns = _state.player()
-	UiTheme.set_text_scale(1.3)
-	# No manual dirty mark: a text-size change in Settings rebuilds the page by itself (QA's B2).
+	UiTheme.set_text_scale(1.15)
+	# No manual dirty mark.
 	_panel._process(0.0)
-	if _panel._ctx["wide"] or not String(_panel._lead.text).contains("font_size=%d" % int(round(UiTheme.SIZE_LEAD * 1.3))):
-		_fail("a text-size change did not rebuild the page at 130 %%: wide %s, lead '%s'" % [_panel._ctx["wide"], _panel._lead.text])
-	var id := FinanceRows.row_id(FinanceDraft.SPENDING, "health")
-	var cell: Label = _panel._ctx["cells"][id][0]
-	var row: Control = cell.get_parent()
-	if cell.visible:
-		_fail("premise: the spending figure is shown beside the name at 130 %")
-	if row.tooltip_text != cell.text:
-		_fail("after the build the hover reads '%s', the figure '%s'" % [row.tooltip_text, cell.text])
-	_panel._draft.set_value(FinanceDraft.SPENDING, "health", float(ns.spending_pct_gdp["health"]) + 1.0)
-	_panel._paint(ns)
-	if not cell.text.begins_with("from") or row.tooltip_text != cell.text:
-		_fail("after a move the hover reads '%s', the figure '%s'" % [row.tooltip_text, cell.text])
-	_panel._draft.revert()
-	_panel._paint(ns)
-	if row.tooltip_text != cell.text:
-		_fail("after Discard the hover reads '%s', the figure '%s'" % [row.tooltip_text, cell.text])
+	if not String(_panel._lead.text).contains("font_size=%d" % int(round(UiTheme.SIZE_LEAD * 1.15))):
+		_fail("a text-size change did not rebuild the page at 115 %%: lead '%s'" % _panel._lead.text)
 	UiTheme.set_text_scale(1.0)
 	_panel._process(0.0)
-	if not _panel._ctx["wide"] or not String(_panel._lead.text).contains("font_size=%d" % UiTheme.SIZE_LEAD):
-		_fail("back at 100 %% the page kept its 130 %% build: lead '%s'" % _panel._lead.text)
+	if not String(_panel._lead.text).contains("font_size=%d" % UiTheme.SIZE_LEAD):
+		_fail("back at 100 %% the page kept its 115 %% build: lead '%s'" % _panel._lead.text)
 
 
 ## C3 on #363: Withdraw is there whenever a bill is at vote, and withdrawing keeps what the player is drafting.

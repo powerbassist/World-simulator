@@ -27,7 +27,7 @@ const SHORT_LINE := "The situation is manageable, barely. It will need your sign
 const LONG_LINE := "The situation is manageable, barely, and it will need your signature before the end of the month, or the assembly will take it out of your hands entirely."
 ## [text scale, the remark]: the remark in the strip at both sizes, short and past two lines.
 ## The last stage is past the text sizes the menu offers, so the remark has to fold a tile there.
-const STAGES := [[1.0, SHORT_LINE], [1.3, SHORT_LINE], [1.3, LONG_LINE], [1.0, LONG_LINE], [1.6, LONG_LINE]]
+const STAGES := [[1.0, SHORT_LINE], [1.15, SHORT_LINE], [1.15, LONG_LINE], [1.0, LONG_LINE], [1.6, LONG_LINE]]
 
 var _failures: Array[String] = []
 var _loader
@@ -172,7 +172,7 @@ func _check_the_meters() -> void:
 ## The tiles stand in the strip's slot at the largest text size too.
 func _check_the_tiles_fit_their_slot() -> void:
 	var state = _with_history(_state(), 4.4, 5.3)
-	for scale in [1.0, 1.3]:
+	for scale in [1.0, 1.15]:
 		UiTheme.set_text_scale(scale)
 		_bar.theme = UiTheme.build()
 		_bar.refresh(state, null, _loader)
@@ -212,7 +212,7 @@ func _check_the_tiles_align() -> void:
 ## The refreshed strip itself (curves, words, notes, meters) fits beside the chips.
 func _check_the_real_strip_fits() -> void:
 	var state = _with_history(_state(), 4.4, 5.3)
-	for scale in [1.0, 1.3]:
+	for scale in [1.0, 1.15]:
 		UiTheme.set_text_scale(scale)
 		_bar.theme = UiTheme.build()
 		_bar.refresh(state, null, _loader)
@@ -322,7 +322,7 @@ func _check_tiles_are_divided_by_a_hairline() -> void:
 
 ## Top bar A, redone at #422 pass 2: the chief's remark is a child of the bar's own row, so it is
 ## inside the strip and over no tile or chip a few frames after it is said (the deferred layout
-## is what the first version lost), at text 100 and 130, a long line included. One stage per
+## is what the first version lost), at text 100 and 115, a long line included. One stage per
 ## call, frames apart.
 func _caption_stages() -> bool:
 	if _stage >= STAGES.size():
@@ -351,7 +351,7 @@ func _caption_stages() -> bool:
 	if _wait < 8:
 		return false
 	# Silent again for a few frames: the tiles the remark folded are back.
-	if float(stage[0]) > 1.3:
+	if float(stage[0]) > 1.15:
 		if _folds_shown == 0:
 			_fail("%s: premise: the remark folded no tile, so its room is not measured" % label)
 		elif _bar.folded_ids().size() >= _folds_shown:
@@ -371,17 +371,25 @@ func _check_the_shown_remark(label: String, stage: Array) -> void:
 	if not _caption.visible:
 		_fail("%s: the remark is not shown" % label)
 	# Past the offered text sizes the strip's height is not promised; that stage measures the fold only.
-	if float(stage[0]) <= 1.3 and not bar_rect.encloses(rect):
+	if float(stage[0]) <= 1.15 and not bar_rect.encloses(rect):
 		_fail("%s: the remark %s is not inside the strip %s: it covers what sits under it" % [label, rect, bar_rect])
-	if float(stage[0]) <= 1.3 and _bar.get_combined_minimum_size().y > TopBar.BAR_HEIGHT:
+	if float(stage[0]) <= 1.15 and _bar.get_combined_minimum_size().y > TopBar.BAR_HEIGHT:
 		_fail("%s: the remark made the strip %.0f px tall, past its %d" % [label, _bar.get_combined_minimum_size().y, TopBar.BAR_HEIGHT])
 	for id in _bar._boxes.keys():
 		var box: Control = _bar._boxes[id]
 		if box.visible and rect.intersects(box.get_global_rect()):
 			_fail("%s: the remark %s overlaps a tile or chip %s" % [label, rect, box.get_global_rect()])
-	if stage[1] == LONG_LINE and _caption.tooltip_text != LONG_LINE:
-		_fail("%s: a line cut at two lines is not whole in the tooltip" % label)
-	if stage[1] == SHORT_LINE and float(stage[0]) == 1.0 and not _caption.tooltip_text.is_empty():
+	# The tooltip is the whole line exactly when it is cut at two lines (chief_caption.gd). At the
+	# offered sizes the long line fits at 100 %; from 115 % up it is cut, and those stages must be,
+	# or the cut path is not exercised.
+	var cut: bool = _caption._line.get_line_count() > ChiefCaption.MAX_LINES
+	if stage[1] == LONG_LINE:
+		if float(stage[0]) >= 1.15 and not cut:
+			_fail("%s: premise: the long line is not cut at two lines, so the tooltip is not exercised" % label)
+		var tip: String = _caption._get_tooltip(Vector2.ZERO)
+		if tip != (LONG_LINE if cut else ""):
+			_fail("%s: the tooltip is '%s' for a line %s" % [label, tip, "cut at two lines" if cut else "shown whole"])
+	if stage[1] == SHORT_LINE and float(stage[0]) == 1.0 and not _caption._get_tooltip(Vector2.ZERO).is_empty():
 		_fail("%s: a line shown whole repeats itself as a tooltip" % label)
 	var slot: float = 1920.0 - 232.0 - TopBar.LEFT_GUTTER * 2 - TopBar.FIGURE_GAP / 2 - _bar.get_theme_stylebox("panel").get_minimum_size().x
 	var used: float = _bar._figures.get_combined_minimum_size().x + _bar._caption_width() + _bar._chips_width()

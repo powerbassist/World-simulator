@@ -67,6 +67,7 @@ func _process(_delta: float) -> bool:
 			_check_structure()
 			_check_settings()
 			_check_sound_setting()
+			_check_no_text_130()
 			_check_plate()
 			_check_scenario_select()
 			_write_save()
@@ -260,7 +261,7 @@ func _check_settings() -> void:
 
 	# V5.1-c2.4: the text size replaced the interface scale, which left the
 	# window's content scale at 1.
-	const TEXT_INDEX := 3
+	const TEXT_INDEX := 2
 	const RESOLUTION_INDEX := 2
 	panel._fullscreen_button.select(0)
 	panel._resolution_button.select(RESOLUTION_INDEX)
@@ -297,6 +298,24 @@ func _check_settings() -> void:
 		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 		root.content_scale_factor = 1.0
 	UiTheme.set_text_scale(1.0)
+
+
+## The 130 % text size is gone (the author, 2026-11-20: "Retirer 130 % du jeu"): the largest
+## size is 115 %, and a settings.cfg saved at the old fourth index reads as it, never past the
+## list. In-memory configs: no file of the player's is read or written.
+func _check_no_text_130() -> void:
+	for scale in SettingsPanel.TEXT_SCALES:
+		if scale > 1.15:
+			_fail("a text size above 115 %% is offered (%s)" % scale)
+	var old := ConfigFile.new()
+	old.set_value("display", "text_scale_index", 3)
+	var scale: float = SettingsPanel.TEXT_SCALES[SettingsPanel._text_index(old)]
+	if not is_equal_approx(scale, 1.15):
+		_fail("a saved 130 %% reads as %s, not 115 %%" % scale)
+	var wild := ConfigFile.new()
+	wild.set_value("display", "text_scale_index", 99)
+	if not is_equal_approx(SettingsPanel.TEXT_SCALES[SettingsPanel._text_index(wild)], 1.15):
+		_fail("a saved index past the end does not clamp to the largest size")
 
 
 ## V3.6: the Sound row persists, and sound_enabled() reads the file rather than

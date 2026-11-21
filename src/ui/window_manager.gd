@@ -269,7 +269,7 @@ func content(id: String) -> Control:
 
 
 ## The width the dock takes for a tab: its own (Regions), else its domain's, else DOCK_WIDTH. A
-## narrowed domain grows with a larger text, up to DOCK_WIDTH (at 130 % the Agenda's offer list cut
+## narrowed domain grows with a larger text, up to DOCK_WIDTH (at the former 130 % the Agenda's offer list cut
 ## its right-hand column at 800 px), and never shrinks with a smaller one: its fixed parts do not.
 static func dock_width(id: String) -> float:
 	if DOCK_WIDTHS.has(id):
