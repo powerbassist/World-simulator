@@ -25,6 +25,7 @@ extends Control
 
 const TabPage = preload("res://src/ui/tab_page.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const Inbox = preload("res://src/ui/inbox.gd")
 const TopBar = preload("res://src/ui/top_bar.gd")
 const Sidebar = preload("res://src/ui/sidebar.gd")
 const Ribbon = preload("res://src/ui/ribbon.gd")
@@ -42,8 +43,9 @@ signal dirtied
 ## G3 S1's geometry: the workspace starts GAP_PANE right of the sidebar's pane and GAP_PANE under
 ## the top strip's, ends GAP_PANE above the time bar's, and reaches GAP_PANE short of the
 ## screen's right edge -- always full (decision 9: a screen with little content uses fewer, wider
-## sheets, and the map shows in the gaps). The inbox slides over it from the right. Every edge
-## is read from the pane it meets, so the chrome and the workspace cannot drift apart.
+## sheets, and the map shows in the gaps). The inbox sits beside it at the right: while it shows,
+## the workspace ends GAP_PANE short of it (_place_dock). Every edge is read from the pane it
+## meets, so the chrome and the workspace cannot drift apart.
 const GAP := UiTheme.GAP_PANE
 const DOCK_LEFT := GAP + Sidebar.WIDTH + GAP
 const DOCK_TOP := GAP + TopBar.BAR_HEIGHT + GAP
@@ -134,6 +136,7 @@ func _build_header() -> Control:
 	_tab_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_tab_slot)
 	_tab_row = HBoxContainer.new()  # replaced by the segmented row on the first domain
+	_tab_slot.add_child(_tab_row)   # in the slot, so the first rebuild frees it
 
 	_crumb_slot = HBoxContainer.new()
 	_crumb_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -286,12 +289,14 @@ func content(id: String) -> Control:
 	return _pages[id]._content if _pages.has(id) else null
 
 
-## The width the dock takes for a tab on a screen `view_w` wide: its own (Regions), else the full
-## band, GAP_PANE short of the right edge (decision 9; the per-domain widths went at G3 S1).
+## The width the dock takes for a tab on a screen `view_w` wide: its own (Regions), else the band
+## beside the inbox -- the narrowest a full tab gets, since the inbox shows by default when a tab
+## opens from the map (the fit tests judge a window against this; full is wider). The per-domain
+## widths went at G3 S1 (decision 9).
 static func dock_width(id: String, view_w := 1920.0) -> float:
 	if DOCK_WIDTHS.has(id):
 		return float(DOCK_WIDTHS[id])
-	return view_w - GAP - DOCK_LEFT
+	return view_w - GAP - DOCK_LEFT - Inbox.WIDTH - GAP
 
 
 ## The dock's right edge: anchored to the screen's, GAP_PANE in, or a narrow tab's own width. While

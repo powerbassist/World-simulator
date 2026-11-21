@@ -356,6 +356,9 @@ func _check_dock_width_follows_the_domain() -> void:
 				_fail("at text %d %% the %s tab docks %.0f wide to %.0f, not the full %.0f to %.0f" % [
 					roundi(scale * 100), id, rect.size.x, rect.end.x, full, BOUNDS.x - UiTheme.GAP_PANE])
 	UiTheme.set_text_scale(1.0)
+	# The fit tests' band is the width BESIDE the inbox, the narrowest a full tab gets (#439 pass 1).
+	if not is_equal_approx(WindowManager.dock_width("finances"), full - WindowManager.Inbox.WIDTH - UiTheme.GAP_PANE):
+		_fail("dock_width() gives %.0f, not the band beside the inbox" % WindowManager.dock_width("finances"))
 	UiTheme.set_text_scale(1.0)
 	_manager.close_all()
 
