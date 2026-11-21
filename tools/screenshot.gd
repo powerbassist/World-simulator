@@ -67,6 +67,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --bill-refused --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books spending_pct_gdp:health --books-move   (a share move drafted; add --books-draft for rows beside it)

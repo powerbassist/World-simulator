@@ -85,7 +85,8 @@ static func build(panel, parent: Control, ns, company) -> void:
 static func _link(row: Control, text: String, call: Callable) -> void:
 	var press := PanelKit.sized(Button.new())
 	press.text = text
-	press.flat = true
+	# A ghost, not bold text (Design's T9 on #441): a click has two looks, a button or a ghost.
+	press.theme_type_variation = UiTheme.GHOST
 	press.pressed.connect(call)
 	row.add_child(press)
 
