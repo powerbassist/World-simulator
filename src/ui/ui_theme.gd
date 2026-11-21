@@ -167,6 +167,9 @@ const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
 const TOP_BAR_PANEL := "TopBarPanel"      ## the thin strip flush to the top edge
 const PLATE := "Plate"                    ## a SHEET (G3): opaque, borderless, one job  # i18n: ok
 const PANE := "Pane"                      ## a glass pane of the chrome (PanelKit.pane)  # i18n: ok
+## S0 only: the glass where the chrome still stands, docked flush to a screen edge -- square,
+## no shadow, so no corner shows raw map and no shadow falls on the workspace. S1 floats it.
+const PANE_DOCKED := "PaneDocked"
 const TILE_PANEL := "TilePanel"           ## a tile inside a sheet
 const POPOVER_PANEL := "PopoverPanel"     ## a tooltip or a menu: opaque, never blurred
 const GHOST := "Ghost"                    ## a quiet link-like action: no fill until hovered  # i18n: ok
@@ -185,6 +188,7 @@ const CHIP_GOOD := "ChipGood"             ## a chip in the good-news tone
 const CHIP_WARN := "ChipWarn"             ## a chip in the attention tone
 const CHIP_BAD := "ChipBad"               ## a chip in the bad-news tone
 const CHIP_TEXT := "ChipText"             ## a chip's words: caption size, the text tone
+const COUNT_PILL := "CountPill"           ## a count that waits on you: TEXT on an amber pill (G3)
 const OPTION_CHECK := "OptionCheck"       ## an option on a verb, not a verb (V5.2 close R4: the audience's Lie)
 
 ## The accent in force: the played nation's, set by apply() and read by everything
@@ -403,6 +407,12 @@ static func _panels(theme: Theme) -> void:
 	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
 		pane.set_content_margin(side, 10)
 	_variation(theme, PANE, pane)
+	var docked := _flat(pane.bg_color, 0)
+	docked.set_border_width_all(1)
+	docked.border_color = PANE_RIM
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		docked.set_content_margin(side, 10)
+	_variation(theme, PANE_DOCKED, docked)
 
 	# The top strip is the same glass, but still flush against the window edge until S1
 	# floats it: square corners, the rim only underneath (an edge drawn against the
@@ -490,6 +500,14 @@ static func _labels(theme: Theme) -> void:
 	_label(theme, BAD_SMALL, SIZE_SMALL, BAD)
 	_label(theme, GOOD_SMALL, SIZE_SMALL, GOOD)
 	_label(theme, CHIP_TEXT, SIZE_SMALL, TEXT)
+	# G3: a count waiting on the player (the sidebar's) is an amber PILL, its figure in the
+	# text tone -- a status tone is never the colour of text on a control.
+	theme.set_type_variation(COUNT_PILL, "Label")  # i18n: ok
+	_label(theme, COUNT_PILL, SIZE_SMALL, TEXT, _face(WEIGHT_BOLD))
+	var pill := _flat(WARN_GROUND, 99)
+	for side in [SIDE_LEFT, SIDE_RIGHT]:
+		pill.set_content_margin(side, 6)
+	theme.set_stylebox("normal", COUNT_PILL, pill)
 
 	# V5.3-0 R15 (the closing gate: "les unes ne sont pas assez graphiques"): a
 	# front page prints its paper's name in the black cut, tracked, and its
@@ -531,12 +549,18 @@ static func _buttons(theme: Theme) -> void:
 	for type in ["Button", "OptionButton"]:
 		theme.set_stylebox("normal", type, _button_box(CONTROL))
 		theme.set_stylebox("hover", type, _button_box(CONTROL_HOVER))
-		theme.set_stylebox("pressed", type, _button_box(CONTROL_PRESSED))
-		theme.set_stylebox("hover_pressed", type, _button_box(CONTROL_HOVER))
+		# "pressed" is also a toggle that is ON -- a picked chip, the clock's running speed,
+		# the map layer shown: G3 marks it picked with the accent FILL, and keeps it under
+		# the pointer (pass 2: an ON toggle lost its mark on hover, and a picked chip was
+		# CONTROL_PRESSED, 1.14:1 from an unpicked one -- invisible).
+		theme.set_stylebox("pressed", type, _button_box(accent_fill()))
+		theme.set_stylebox("hover_pressed", type, _button_box(accent_fill().darkened(0.06)))
 		theme.set_stylebox("focus", type, _ring())
 		theme.set_stylebox("disabled", type, _button_box(Color(0, 0, 0, 0), LINE_STRONG))
-		for state in ["font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
+		for state in ["font_hover_color", "font_focus_color"]:
 			theme.set_color(state, type, TEXT)
+		for state in ["font_pressed_color", "font_hover_pressed_color"]:
+			theme.set_color(state, type, on_accent_fill())
 		theme.set_color("font_disabled_color", type, TEXT_OFF)
 		if label != null:
 			theme.set_font("font", type, label)
@@ -547,23 +571,26 @@ static func _buttons(theme: Theme) -> void:
 	theme.set_stylebox("normal", CLUSTER_BUTTON, _cluster_box(Color(0, 0, 0, 0)))
 	theme.set_stylebox("hover", CLUSTER_BUTTON, _cluster_box(CONTROL))
 	theme.set_stylebox("pressed", CLUSTER_BUTTON, _cluster_box(CONTROL, _accent))
+	theme.set_stylebox("hover_pressed", CLUSTER_BUTTON, _cluster_box(CONTROL_HOVER, _accent))
 	theme.set_stylebox("focus", CLUSTER_BUTTON, _ring())
 	theme.set_color("font_color", CLUSTER_BUTTON, TEXT_DIM_CHROME)
-	for state in ["font_hover_color", "font_pressed_color", "font_focus_color"]:
+	for state in ["font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
 		theme.set_color(state, CLUSTER_BUTTON, TEXT)
 
 	theme.set_type_variation(SUBROW_BUTTON, "Button")  # i18n: ok
 	theme.set_stylebox("normal", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0)))
 	theme.set_stylebox("hover", SUBROW_BUTTON, _button_box(CONTROL))
 	theme.set_stylebox("pressed", SUBROW_BUTTON, _button_box(CONTROL, _accent))
+	theme.set_stylebox("hover_pressed", SUBROW_BUTTON, _button_box(CONTROL_HOVER, _accent))
 	theme.set_stylebox("focus", SUBROW_BUTTON, _ring())
 	theme.set_color("font_color", SUBROW_BUTTON, TEXT_DIM)
 	theme.set_color("font_hover_color", SUBROW_BUTTON, TEXT)
 	theme.set_color("font_pressed_color", SUBROW_BUTTON, TEXT)
-	# A refused answer on a card (a spent call, a Book with every day taken): no fill and
-	# the text off, so it is not told from a live one by the hover alone (QA's pre-gate B
-	# RECORD 8).
-	theme.set_stylebox("disabled", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0)))
+	theme.set_color("font_hover_pressed_color", SUBROW_BUTTON, TEXT)
+	# A refused answer on a card (a spent call, a Book with every day taken): the outline of
+	# every disabled control and the text off, so it is not told from a live one by the hover
+	# alone (QA's pre-gate B RECORD 8; pass 2: TEXT_OFF alone was 1.55:1 from TEXT_DIM).
+	theme.set_stylebox("disabled", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0), LINE_STRONG))
 	theme.set_color("font_disabled_color", SUBROW_BUTTON, TEXT_OFF)
 
 	# The requests mark: something waits on the player, the one place WARN outlines a

@@ -36,9 +36,13 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	var small := String(names["small"])
 	theme.set_type_variation(small, "Button")  # i18n: ok
 	var states := {"normal": [t["control"], Color(0, 0, 0, 0)], "hover": [t["hover"], Color(0, 0, 0, 0)],
-		"pressed": [t["pressed"], Color(0, 0, 0, 0)], "disabled": [Color(0, 0, 0, 0), t["line"]]}
+		"pressed": [fill, Color(0, 0, 0, 0)], "hover_pressed": [fill.darkened(0.06), Color(0, 0, 0, 0)],
+		"disabled": [Color(0, 0, 0, 0), t["line"]]}
 	for state in states:
 		theme.set_stylebox(state, small, _tight(box.call(states[state][0], states[state][1])))
+	# Picked (a toggle that is on), as for a Button: the fill, its own label.
+	for state in ["font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, small, t["on_fill"])
 	theme.set_stylebox("focus", small, t["ring"])
 	theme.set_font_size("font_size", small, small_px)
 
@@ -48,7 +52,7 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	theme.set_stylebox("hover", ghost, box.call(t["control"]))
 	theme.set_stylebox("pressed", ghost, box.call(t["pressed"]))
 	theme.set_stylebox("focus", ghost, t["ring"])
-	theme.set_stylebox("disabled", ghost, box.call(Color(0, 0, 0, 0)))
+	theme.set_stylebox("disabled", ghost, box.call(Color(0, 0, 0, 0), t["line"]))  # inert: the outline, as every disabled control
 	theme.set_color("font_color", ghost, t["dim"])
 	if medium != null:
 		theme.set_font("font", ghost, medium)

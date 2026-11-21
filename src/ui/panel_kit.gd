@@ -231,6 +231,7 @@ static func button(text: String, size := Size.M, height := BTN_H) -> Button:
 	var b := Button.new()
 	b.text = text  # i18n: row-ok the caller passes shown text
 	_classed(b, size, height)
+	b.set_meta(OWN_MIN_META, b.custom_minimum_size)  # its own class holds inside a group too
 	return sized(b)
 
 
@@ -269,9 +270,14 @@ static func _share_class(flow: Container) -> void:
 
 
 ## A worded verb in the plain, primary or ghost look. An icon button keeps BTN_W_ICON's square,
-## and a sub-row, cluster or segment is a list entry, not a verb: a class would re-lay them.
+## a sub-row, cluster or segment is a list entry and a toggle is a chip, not a verb: a class
+## would re-lay them.
 static func _is_verb(node: Node) -> bool:
-	return node is Button and (node as Button).text != "" and String((node as Button).theme_type_variation) in ["", UiTheme.PRIMARY, UiTheme.GHOST]
+	if not node is Button:
+		return false
+	var b := node as Button
+	# A toggle is a chip, which keeps its label's width (spec decision 6); a flat button is a link.
+	return b.text != "" and not b.toggle_mode and not b.flat and String(b.theme_type_variation) in ["", UiTheme.PRIMARY, UiTheme.GHOST]
 
 
 ## G3: a SHEET -- one job, opaque, its heading in tracked capitals. Returns the body, as

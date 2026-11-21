@@ -353,14 +353,17 @@ the language shown, and every class times the text size. `tests/test_panel_kit.g
 fails a group whose buttons do not share a class.
 
 **G3 replaced BUREAU's look (the author's pick, 2026-11-21, "Sheets on glass").**
-The map fills the screen. The chrome is three floating glass panes (the sidebar, the
-top strip, the time bar): a dark tint over the blurred map (`src/ui/frost.gd`, under
-`PanelKit.pane()`), a 1px light rim, `R_PANE` corners; the "Glass" setting turns the
-blur off and the panes `PANE_SOLID`. The workspace's content sits on solid **sheets**
+Its target: the map fills the screen and the chrome is three floating glass panes (the
+sidebar, the top strip, the time bar): a dark tint over the blurred map (`src/ui/frost.gd`,
+under `PanelKit.pane()`), a 1px light rim, `R_PANE` corners; the "Glass" setting turns the
+blur off and the panes `PANE_SOLID`. At S0 the chrome is glass where it already stands:
+the title bar, figure strip, sidebar and day ribbon are docked, square panes
+(`TOP_BAR_PANEL`, `PANE_DOCKED`) until S1 floats them into three. The workspace's content sits on solid **sheets**
 (`UiTheme.PLATE`, `PanelKit.sheet()`), one job per sheet, `GAP_PANE` apart, with no
 border and a soft shadow; tooltips and menus are opaque popovers that never blur.
-Things are separated by space and by a change of surface; the only line left is the
-divider between a table's rows. Text never sits on glass over the map without the
+Things are separated by space and by a change of surface; the only line G3 keeps is the
+divider between a table's rows (screens that draw their own lines keep BUREAU's `EDGE`
+until their slice). Text never sits on glass over the map without the
 pane's tint, and never on a sheet that is not opaque. `test_ui_theme.gd` fails a
 sheet that is translucent or bordered, a pane that drops its rim, and a pane that
 still reads the screen with Glass off. The BUREAU hairline on four sides is gone; do

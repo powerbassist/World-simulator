@@ -26,8 +26,10 @@ static func apply(theme: Theme, variation: String, boxes: Array, font_px: int, d
 	theme.set_color("font_color", variation, dim)
 	theme.set_color("font_hover_color", variation, text)
 	theme.set_color("font_focus_color", variation, dim)
-	theme.set_color("font_pressed_color", variation, warn)
-	theme.set_color("font_hover_pressed_color", variation, warn)
+	# The words stay the text tone when checked (G3: a status tone is never text on a
+	# control); the checked box beside them carries the amber.
+	theme.set_color("font_pressed_color", variation, text)
+	theme.set_color("font_hover_pressed_color", variation, text)
 	theme.set_color("font_disabled_color", variation, Color(dim, 0.45))
 	var px := font_px - 2
 	theme.set_icon("unchecked", variation, _box(px, dim, false))

@@ -135,6 +135,7 @@ func _check_theme_contents() -> void:
 			_fail("the disabled %s keeps a fill, so it reads live" % type)
 
 	_check_grammar(theme)
+	_check_states_distinct(theme)
 	_check_pressed_text_contrast(theme)
 	_check_fonts(theme)
 
@@ -217,6 +218,39 @@ func _check_grammar(theme: Theme) -> void:
 		_fail("apply(root, accent) did not carry the accent into the theme")
 	UiTheme.apply(host)
 	host.free()
+
+
+## #436 pass 2 -- both failed silently at S0's first cut: an ON toggle (a picked chip, the
+## open domain, the clock's speed) must read apart from OFF, at rest AND under the pointer;
+## and a disabled control apart from a live one. "Apart" is a border the other lacks or in
+## another colour, or grounds 1.3:1 apart once laid on the sheet. Mutation: Button's pressed
+## back at CONTROL_PRESSED (1.14:1), or hover_pressed equal to hover, fails here.
+func _check_states_distinct(theme: Theme) -> void:
+	for type in ["Button", UiTheme.SUBROW_BUTTON, UiTheme.CLUSTER_BUTTON, UiTheme.SMALL]:
+		for pair in [["normal", "pressed"], ["hover", "hover_pressed"]]:
+			if not _distinct(_state_box(theme, pair[0], type), _state_box(theme, pair[1], type)):
+				_fail("%s: '%s' and '%s' look the same, so a toggle's on/off is invisible" % [type, pair[0], pair[1]])
+	for type in ["Button", "OptionButton", UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.GHOST]:
+		if not _distinct(_state_box(theme, "normal", type), _state_box(theme, "disabled", type)):
+			_fail("%s: disabled looks like normal, so a refused action reads live" % type)
+
+
+func _state_box(theme: Theme, state: String, type: String) -> StyleBoxFlat:
+	var owner := type if theme.has_stylebox(state, type) else String(theme.get_type_variation_base(type))
+	return theme.get_stylebox(state, owner) as StyleBoxFlat
+
+
+func _distinct(a: StyleBoxFlat, b: StyleBoxFlat) -> bool:
+	if a == null or b == null:
+		return a != b
+	for side in ["left", "top", "right", "bottom"]:
+		var wa: int = a.get("border_width_" + side)
+		var wb: int = b.get("border_width_" + side)
+		if (wa > 0) != (wb > 0) or (wa > 0 and a.border_color != b.border_color):
+			return true
+	var ga := UiTheme.SHEET.lerp(Color(a.bg_color, 1.0), a.bg_color.a)
+	var gb := UiTheme.SHEET.lerp(Color(b.bg_color, 1.0), b.bg_color.a)
+	return AccentRule.contrast(ga, gb) >= 1.3
 
 
 ## G3 (Glass off): every pane is PANE_SOLID and nothing reads the screen -- the frost under
