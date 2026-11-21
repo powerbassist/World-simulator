@@ -18,6 +18,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --domain finances
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open society
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open diplomacy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --notes
@@ -114,6 +116,15 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programme-file offer   (or: booked)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 18 --open overview
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request   (add --broken-word: the askers hold evidence)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --broken-word
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --interrupt --speaker --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-tabled
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-refused
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-units
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn --books-sheet
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-about --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step counter
