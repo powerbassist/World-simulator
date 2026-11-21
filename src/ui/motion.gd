@@ -74,6 +74,11 @@ const LAYER_S := 0.3
 ## Germany's sixteen, after which the beats shorten instead.
 const DECLARE_S := 0.28
 const NIGHT_MAX_S := 4.5
+## G3 S2, the Diary's booking: a bookable place grows into its appointment (MORPH_S, a
+## TRANS_BACK overshoot), and the accent leaves the fresh appointment over DRAIN_S -- the two
+## beats a player must see (the gate's G8: under about 0.2 s went unseen).
+const MORPH_S := 0.28
+const DRAIN_S := 0.6
 
 const _META := &"motion_tween"
 ## The text a running roll_text() is heading for (its flash included).

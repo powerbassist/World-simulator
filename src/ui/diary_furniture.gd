@@ -40,7 +40,7 @@ static func open_form(panel: Control, windows) -> void:
 static func counter(parent: Control, node_name: String) -> Array:
 	var plate := PanelContainer.new()
 	plate.name = node_name
-	plate.theme_type_variation = UiTheme.PLATE
+	plate.theme_type_variation = UiTheme.TILE_PANEL  # G3: a figure tile inside the sheet
 	parent.add_child(plate)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 0)
@@ -114,9 +114,13 @@ class Swatch extends Control:
 	func _draw() -> void:
 		var r := Rect2(Vector2.ONE, size - Vector2.ONE * 2.0)
 		if kind == "tint":
-			draw_rect(r, UiTheme.HULL)
-			draw_rect(r, Color(UiTheme.accent(), 0.22))
-			draw_rect(r, UiTheme.EDGE, false, 1.0)
+			# A bookable place, as the cell draws it: a dashed outline in the accent (G3 S2).
+			var tone := UiTheme.accent()
+			for side in [[r.position, Vector2(r.end.x, r.position.y)], [Vector2(r.end.x, r.position.y), r.end],
+					[r.end, Vector2(r.position.x, r.end.y)], [Vector2(r.position.x, r.end.y), r.position]]:
+				draw_dashed_line(side[0], side[1], tone, 1.5, 3.0)
 			return
-		# The trip's band, as the cell draws it.
-		draw_rect(Rect2(r.position + Vector2(0, r.size.y / 4.0), Vector2(r.size.x, r.size.y / 2.0)), Color(UiTheme.accent(), 0.30))
+		# The trip's capsule and its rail, as the cell draws them.
+		var mid := r.position.y + r.size.y / 2.0
+		draw_rect(Rect2(r.position.x, mid - r.size.y / 3.0, r.size.x, r.size.y * 2.0 / 3.0), UiTheme.BAND)
+		draw_line(Vector2(r.position.x + 2.0, mid), Vector2(r.end.x - 2.0, mid), UiTheme.BAND_RAIL, 2.0)
