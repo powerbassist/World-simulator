@@ -326,9 +326,13 @@ func _check_glass_off() -> void:
 ## hovered control): every live state of a button holds AA with its label, and the screen's
 ## one action, filled with the accent, holds it with its own label.
 func _check_pressed_text_contrast(theme: Theme) -> void:
-	var states := {"normal": "font_color", "hover": "font_hover_color", "pressed": "font_pressed_color"}
+	# hover_pressed too (#439 pass 2 T2): a toggle that is ON under the pointer -- the armed "See
+	# them", a Primary toggle -- took its base Button's graphite when its variation had none.
+	var states := {"normal": "font_color", "hover": "font_hover_color", "pressed": "font_pressed_color", "hover_pressed": "font_hover_pressed_color"}
 	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.SEGMENT, UiTheme.GHOST, UiTheme.PICKED, UiTheme.SIDEBAR_ROW]:
 		for state in states:
+			if state == "hover_pressed" and type == UiTheme.GHOST:
+				continue  # a ghost is never a toggle
 			var box := theme.get_stylebox(state, type) as StyleBoxFlat
 			if box == null:
 				_fail("%s has no %s stylebox" % [type, state])

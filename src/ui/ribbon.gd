@@ -38,6 +38,10 @@ const CHIP_GAP := 6.0
 ## The room kept between the month's name, today's mark and a day number.
 const TITLE_GAP := 4.0
 const CLOCK_WIDTH := 480
+## The cells' top from the plate's: the y's above are measured from it. PANE_PAD is the PANE's own
+## top and bottom margin (ui_theme.gd).
+const INSET := 10
+const PANE_PAD := 3
 const BLOCK_HEIGHT := 6.0
 const ICON_PX := 14
 
@@ -59,9 +63,15 @@ func _ready() -> void:
 	PanelKit.pane(self)  # G3 S1: the time bar, a floating glass pane
 	custom_minimum_size = Vector2(0, STRIP_HEIGHT)
 
+	# The lane and the line are drawn at fixed y's from the cells' top, laid out for 10 px of
+	# margin: the PANE gives 3, so the strip adds the rest (#439 pass 2 T3: the line ran 7 high).
+	var air := MarginContainer.new()
+	air.add_theme_constant_override("margin_top", INSET - PANE_PAD)
+	air.add_theme_constant_override("margin_bottom", INSET - PANE_PAD)
+	add_child(air)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
-	add_child(row)
+	air.add_child(row)
 
 	_clock_slot = HBoxContainer.new()
 	_clock_slot.custom_minimum_size = Vector2(CLOCK_WIDTH, 0)

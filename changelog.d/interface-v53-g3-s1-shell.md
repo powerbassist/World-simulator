@@ -5,3 +5,6 @@ Changed: The open domain in the sidebar is marked with a bar in your nation's co
 Changed: Panels sit on dark sheets with a faint edge and a small shadow; the inbox is a little narrower.
 Changed: The date in the time bar reads in full, like "Thu 1 January 2026", and the next vote as a month and year.
 Fixed: Clicking a button no longer flashes it in your nation's colour; only a chosen option and the running clock speed stay filled.
+Fixed: The construction register and its building list fill the screen without a scroll bar.
+Fixed: An open fold or a picked firm stays readable under a yellow national colour.
+Fixed: The time bar's timeline sits level again, and the clock no longer pushes it sideways while the clock is held.

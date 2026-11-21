@@ -28,9 +28,12 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	# never falls (a dark label on a yellow fill starts near 10:1 and keeps AA).
 	theme.set_stylebox("hover", primary, _glow(box.call(fill.darkened(0.06))))
 	theme.set_stylebox("pressed", primary, _glow(box.call(fill.darkened(0.12))))
+	# Held ON under the pointer (the armed "See them" is a Primary toggle): the fill still, never
+	# the base Button's graphite (#439 pass 2 T2).
+	theme.set_stylebox("hover_pressed", primary, _glow(box.call(fill.darkened(0.12))))
 	theme.set_stylebox("focus", primary, t["ring"])
 	theme.set_stylebox("disabled", primary, box.call(Color(0, 0, 0, 0), t["line"]))
-	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
 		theme.set_color(state, primary, t["on_fill"])
 
 	var small := String(names["small"])

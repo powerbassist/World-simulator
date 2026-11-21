@@ -57,12 +57,43 @@ func _process(_delta: float) -> bool:
 func _later_frames() -> bool:
 	if _frame < 5:
 		return false  # a layout pass or two for the cards to take their height
-	_check_cards_do_not_push_the_ui_down()
-	# V5.1-c2.2: the floating windows' "clear of the column" and "a grown window
-	# stays on screen" checks went with the windows. A docked page is the dock's
-	# size whatever its content, and the dock's place is tests/test_workspace.gd's.
+	if _frame == 5:
+		_check_cards_do_not_push_the_ui_down()
+		# V5.1-c2.2: the floating windows' "clear of the column" and "a grown window
+		# stays on screen" checks went with the windows. A docked page is the dock's
+		# size whatever its content, and the dock's place is tests/test_workspace.gd's.
+		_main._windows.open("calendar")
+		return false
+	if _frame < 8:
+		return false
+	_check_own_sheets_on_the_header_grid()
 	_finish()
 	return false
+
+
+## Design's gate T1 on #439: a panel that brings its own sheets sets them on the header sheet's
+## grid -- its first sheet a gap under the header, its outer edges on the header's -- with no
+## margin left over from the page sheet that went away.
+func _check_own_sheets_on_the_header_grid() -> void:
+	var header: Rect2 = (_main._windows.dock().get_child(0) as Control).get_global_rect()
+	var sheets: Array = _main._windows.content("calendar").find_children("*", "PanelContainer", true, false).filter(
+		func(n): return n.theme_type_variation == UiTheme.PLATE and n.is_visible_in_tree())
+	if sheets.is_empty():
+		_fail("premise: the Diary shows no sheet")
+		return
+	var left := INF
+	var right := -INF
+	var top := INF
+	for sheet in sheets:
+		var r: Rect2 = sheet.get_global_rect()
+		left = minf(left, r.position.x)
+		right = maxf(right, r.end.x)
+		top = minf(top, r.position.y)
+	var gap := float(UiTheme.GAP_PANE)
+	if absf(left - header.position.x) > 0.5 or absf(right - header.end.x) > 0.5:
+		_fail("the Diary's sheets run %.0f to %.0f, off the header sheet's %.0f to %.0f" % [left, right, header.position.x, header.end.x])
+	if absf(top - (header.end.y + gap)) > 0.5:
+		_fail("the Diary's first sheet starts %.0f px under the header, not a gap (%.0f)" % [top - header.end.y, gap])
 
 
 ## The four cluster icons are read straight off disk and rasterised, bypassing
@@ -648,6 +679,15 @@ func _check_three_floating_panes() -> void:
 		_fail("the Finances page is not one sheet")
 	if not _main._windows.frame("calendar").own_sheets() or _main._windows.frame("calendar").theme_type_variation != UiTheme.BARE:
 		_fail("the Diary's page draws a sheet behind its own sheets")
+	# A scene's header has no tabs, so no segmented ground either (#439 pass 2 T5: an empty 6x6
+	# tile square beside the title).
+	_main._windows._show_domain_of("audience")
+	for node in _main._windows._tab_slot.find_children("*", "PanelContainer", true, false):
+		if not node.is_queued_for_deletion():
+			_fail("a scene's header draws a tab ground with no tab on it")
+	_main._windows._show_domain_of("finances")
+	if _main._windows.tab_buttons().is_empty():
+		_fail("premise: Finances has no tabs in its header")
 	# While the inbox shows over a tab, the workspace ends a gap short of it: nothing under it.
 	if hud.inbox.visible:
 		_main._windows.open("finances")

@@ -88,7 +88,9 @@ func _ready() -> void:
 
 	var page := HBoxContainer.new()
 	page.add_theme_constant_override("separation", 16)
-	PanelKit.padded(self, 16, 10).add_child(page)
+	# No margin round the sheets: they sit on the header sheet's grid, its edges and a gap under
+	# it (Design's gate T1 on #439; the page sheet that the margin belonged to is gone).
+	add_child(page)
 	# The month page (picture A): the grid and everything under it on the left, the people who
 	# want to see the president, and his own reach, on the right.
 	var root := PanelKit.sheet(page)  # G3 S2: the month is one sheet

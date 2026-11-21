@@ -15,6 +15,7 @@ extends SceneTree
 ## A button may be this much wider than its label before it reads as a slab:
 ## the theme's padding and a little air, not a layout.
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const AccentRule = preload("res://src/ui/accent_rule.gd")
 
 const SLACK := 160.0
 
@@ -36,6 +37,9 @@ func _process(_delta: float) -> bool:
 		return false
 	if _ids.is_empty():
 		_ids = _main._windows.panel_ids()
+		# Germany's accent, a yellow whose fill takes a DARK label (#439 pass 2 T6): a flat toggle
+		# that took PICKED's label had that dark label on the dark sheet, with no fill under it.
+		UiTheme.apply_for(_main, _main._loader.nations["DEU"])
 	if _at > 0 and _at <= _ids.size():
 		_scan(_main._windows, String(_ids[_at - 1]))
 	if _at < _ids.size():
@@ -56,6 +60,13 @@ func _scan(node: Node, where: String) -> void:
 		# toggle left on the plain or small button would lose its mark (PanelKit.toggle()).
 		if button.toggle_mode and not button.flat and String(button.theme_type_variation) in ["", "Button", UiTheme.SMALL]:
 			_fail("%s: the toggle '%s' wears '%s', not PICKED: ON reads as OFF" % [where, button.text, button.theme_type_variation])
+		# A flat toggle draws no fill, so ON its label sits on the sheet: it must read there. (A row
+		# that drops flat when picked -- a law, a shelf -- is never flat while ON.)
+		if button.toggle_mode and button.flat and button.button_pressed:
+			for state in ["font_pressed_color", "font_hover_pressed_color"]:
+				var ratio := AccentRule.contrast(button.get_theme_color(state), UiTheme.SHEET)
+				if ratio < AccentRule.MIN_CONTRAST:
+					_fail("%s: the flat toggle '%s' ON reads %.2f:1 on the sheet (%s)" % [where, button.text, ratio, state])
 		var parent := button.get_parent()
 		if not (parent is BoxContainer and (parent as BoxContainer).vertical):
 			continue

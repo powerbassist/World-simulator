@@ -347,6 +347,24 @@ func _fit_dock() -> void:
 	_dock.offset_bottom = -DOCK_BOTTOM - maxf(0.0, full - want)
 
 
+## The height a page's content has without scrolling once the page fills the dock: the band less
+## the header sheet as drawn, the gap under it and the page sheet's own margins. A panel whose sheet
+## is the workspace (the register) takes it as its floor (#439 pass 2 T1: a floor of the screen less
+## a fixed 64 was sized for BUREAU's 39 px header, and the taller header sheet made it scroll).
+func page_room(id: String) -> float:
+	var page: TabPage = _pages.get(id, null)
+	var plate := page.get_theme_stylebox("panel") if page != null else null
+	var header := (_dock.get_child(0) as Control).get_combined_minimum_size().y
+	return size.y - DOCK_TOP - DOCK_BOTTOM - header - GAP - (plate.get_minimum_size().y if plate != null else 0.0)
+
+
+## Sets `panel`'s height floor to its page's room (page_room), from wherever the panel sits.
+static func fill_page(panel: Control, id: String) -> void:
+	var manager = panel.get_tree().get_first_node_in_group(GROUP) if panel.is_inside_tree() else null
+	if manager != null:
+		panel.custom_minimum_size.y = manager.page_room(id)
+
+
 ## The tab's page: its scroll, its content and its fold mark.
 func frame(id: String):
 	return _pages.get(id, null)
@@ -517,6 +535,11 @@ func _show_domain_of(id: String) -> void:
 	var options: Array = []
 	for tab in tabs:
 		options.append({"id": String(tab), "label": title(tab)})
+	if options.is_empty():
+		# A scene has no tabs: no segmented ground either, or an empty tile square sits by the title.
+		_tab_row = HBoxContainer.new()
+		_tab_slot.add_child(_tab_row)
+		return
 	_tab_row = PanelKit.segmented(_tab_slot, options, "", func(tab: String) -> void: open(tab))
 	for button in _tab_row.get_children():
 		button.focus_mode = Control.FOCUS_NONE  # chrome: Space is the pause key

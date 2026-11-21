@@ -23,8 +23,6 @@ signal speed_selected(speed: int)
 const MONTH_NAMES := DateText.SHORT
 
 const ICON_PX := 20
-## The hold line's room: it ellipsises past it and the tooltip carries the whole sentence.
-const REASON_WIDTH := 290
 ## Own-drawn glyphs (assets/icons/ui), one file per speed so the speed reads as a
 ## pip count without a number: Material has no three-step play.
 const GLYPHS := {
@@ -65,6 +63,10 @@ func _ready() -> void:
 	var text := VBoxContainer.new()
 	text.add_theme_constant_override("separation", -2)
 	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# The column takes the slot's width left of the speeds, and the hold line ellipsises inside it:
+	# a fixed floor under the date widened the horizon's clock slot whenever the clock held
+	# (#439 pass 2 T4: 182 + 16 + 290 = 488 of 480).
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(text)
 	_date_label = Label.new()
 	_date_label.theme_type_variation = UiTheme.FIGURE
@@ -73,7 +75,7 @@ func _ready() -> void:
 	_reason = Label.new()
 	_reason.theme_type_variation = UiTheme.WARN_TEXT
 	_reason.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_reason.custom_minimum_size.x = REASON_WIDTH
+	_reason.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_reason.mouse_filter = Control.MOUSE_FILTER_PASS
 	_reason.hide()
 	text.add_child(_reason)

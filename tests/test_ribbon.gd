@@ -29,6 +29,9 @@ extends SceneTree
 
 const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const Ribbon = preload("res://src/ui/ribbon.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -45,9 +48,40 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false  # let the scene's _ready() run
 
-	_run()
-	_finish()
+	if _frame == 2:
+		_run()
+		# #439 pass 2 T4: the clock's slot holds the widest date at the largest text size with a
+		# hold reason under it, so the horizon never shifts on a long month.
+		UiTheme.set_text_scale(1.15)
+		UiTheme.rebuild(_main)
+		var clock = _main._hud.clock_cluster
+		clock._date_label.text = DateText.weekday_long(14, 9, 2026)
+		clock._reason.text = "The month is closing, and every hold says why"  # i18n: ok test fixture
+		clock._reason.show()
+	elif _frame == 5:
+		_check_the_pane_seats_its_lane()
+		_check_the_clock_fits_its_slot()
+		UiTheme.set_text_scale(1.0)
+		_finish()
 	return false
+
+
+## T3: the horizon draws at fixed y's from its cells' top, laid out for the docked pane's 10 px
+## margin; the floating PANE has 3, so the strip adds the rest itself or the line runs 7 px high.
+func _check_the_pane_seats_its_lane() -> void:
+	var ribbon = _main._hud.ribbon
+	var inset: float = ribbon._cells.global_position.y - ribbon.global_position.y
+	if not is_equal_approx(inset, 10.0):
+		_fail("the horizon's cells start %.0f px into the time bar, not 10: LINE_Y no longer sits on the line" % inset)
+
+
+func _check_the_clock_fits_its_slot() -> void:
+	var clock = _main._hud.clock_cluster
+	var slot: Control = clock.get_parent()
+	if slot.size.x > Ribbon.CLOCK_WIDTH + 0.5:
+		_fail("'%s' at text 115 with a hold reason widens the clock's slot to %.0f (of %d): the horizon shifts" % [clock._date_label.text, slot.size.x, Ribbon.CLOCK_WIDTH])
+	if clock._date_label.get_combined_minimum_size().x > clock._date_label.size.x + 0.5:
+		_fail("the date '%s' is cut in its slot at text 115" % clock._date_label.text)
 
 
 func _run() -> void:

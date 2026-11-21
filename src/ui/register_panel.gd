@@ -40,8 +40,6 @@ const FinanceRows = preload("res://src/sim/finance_rows.gd")
 
 const SIDE_W := 380.0
 const COUNT_MAX := 200
-## Below the dock's height: the page's plate margins, so the sheet fills it without a scroll.
-const FILL_SLACK := 64.0
 
 var _state
 var _loader
@@ -218,7 +216,7 @@ func _refresh() -> void:
 		PanelKit.plain_line(_body, tr("This nation has no register of buildings yet."), PanelKit.Tone.PLAIN)
 		return
 	var ns = _state.player()
-	custom_minimum_size.y = get_viewport_rect().size.y - WindowManager.DOCK_TOP - WindowManager.DOCK_BOTTOM - FILL_SLACK
+	WindowManager.fill_page(self, "register")  # the sheet fills the workspace, never scrolls for it
 	var row: Dictionary = Units.row(_loader, _type)
 	# Now, from one basis (preview with nothing placed is the shown figure, test_units pins it).
 	var now: Dictionary = Units.preview(ns, _loader, _type, {})
