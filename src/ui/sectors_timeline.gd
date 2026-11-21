@@ -93,7 +93,7 @@ static func rows(state, loader, ns) -> Array:
 		_add(out, sector_of, cid, {"key": "failing|%s" % cid, "kind": "failing",
 			"title": Strings.t("%s: rescue window") % loader.firm_name(ns.id, cid), "sub": Strings.t("a failing major"),
 			"ends": maxi(int(failure["months_left"]), 1), "due": maxi(int(failure["months_left"]), 1), "style": TimelineBar.DUE,
-			"waits": true, "bad": Strings.t("unanswered, it fails"), "source": failure})
+			"waits": true, "bad": Strings.t("unanswered, it goes under"), "source": failure})
 	var bid: Dictionary = Industry.pending_bid(state, ns, loader)
 	if not bid.is_empty():
 		var cid := String(bid["company_id"])

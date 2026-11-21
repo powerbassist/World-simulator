@@ -15,6 +15,7 @@ const Companies = preload("res://src/sim/companies.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const ProcessAsks = preload("res://src/sim/process_asks.gd")
 const Closures = preload("res://src/sim/closures.gd")
+const SectorsShell = preload("res://src/ui/sectors_shell.gd")
 const SectorsTimeline = preload("res://src/ui/sectors_timeline.gd")
 const SectorProgramme = preload("res://src/ui/sector_programme.gd")
 const TimelineBar = preload("res://src/ui/timeline_bar.gd")
@@ -28,6 +29,7 @@ const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _panel
+var _kept = null
 var _frame := 0
 var _stake := ""
 var _closing := ""
@@ -63,6 +65,29 @@ func _process(_delta: float) -> bool:
 			if String(row.get("answer", "")) != "accept":
 				_fail("Accept pressed in the side sheet did not reach the sim: %s" % row.get("answer", "none"))
 			_check_choose_order()
+			# A route with a stale view of what waits (the overview unseen for months): the
+			# route still wins (pass 1 on the pass-2 delta).
+			_panel._waits_seen = {}
+			_panel._seen_once = true
+			# The failing firm sorts after the closure, so a stale set would hand the sheet to the closure.
+			SectorsShell.open_firm(_sector_of(_failing), _failing, _main)
+		14:
+			if _node_with_meta("decision", "failing|%s" % _failing) == null:
+				_fail("a route to %s's rescue window opened another row" % _failing)
+			# A new day moves today's line on the bars drawn; it does not rebuild the page.
+			var on_sheet: Array = _panel._side.find_children("*", "Button", true, false)
+			_kept = on_sheet[0] if not on_sheet.is_empty() else null
+			_main._state.day += 1
+		16:
+			if _kept == null or not is_instance_valid(_kept) or not _kept.is_inside_tree():
+				_fail("a new day rebuilt the page (the answer the player was on is gone)")
+			var moved := false
+			for bar in _panel._body.find_children("*", "Control", true, false):
+				if bar is TimelineBar and not bar._swatch and bar.today > 0.0:
+					moved = true
+			if not moved:
+				_fail("a new day did not move today's line")
+			_main._state.day -= 1
 			_finish()
 	return false
 
@@ -265,6 +290,13 @@ func _check_choose_order() -> void:
 	_panel._rows = keep[4]
 	_panel._waits_seen = keep[5]
 	_panel._seen_once = keep[6]
+
+
+func _sector_of(company_id: String) -> String:
+	for c in Companies.majors_of(_main._loader, _main._state.player().id):
+		if String(c.id) == company_id:
+			return String(c.sector)
+	return ""
 
 
 func _process_id() -> String:

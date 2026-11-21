@@ -55,6 +55,8 @@ const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const IndustryCard = preload("res://src/ui/industry_card.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
+const TimelineBar = preload("res://src/ui/timeline_bar.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 const SectorsTimeline = preload("res://src/ui/sectors_timeline.gd")
 const SectorsDecision = preload("res://src/ui/sectors_decision.gd")
 const FirmCommands = preload("res://src/ui/firm_commands.gd")
@@ -118,8 +120,10 @@ var _held_firm := ""
 ## over the player's older pick (pass 2 on #441, the ask T11). Empty until the first build.
 var _waits_seen := {}
 var _seen_once := false
-## The rows of the last build (a pick's firm) and the day it drew (today's line moves daily).
+## The rows of the last build (a pick's firm), and the month and day it drew: a new day moves
+## today's line on the bars it drew, a new month rebuilds.
 var _rows: Array = []
+var _built_month := -1
 var _built_day := -1
 ## The doors strip and the side column (read by the tests).
 var _doors: Control
@@ -219,13 +223,25 @@ func hide_close_button() -> void:
 
 
 func _process(_delta: float) -> void:
-	# Today's line on the timeline is a day's position: a new day redraws it.
-	if _state != null and int(_state.day) != _built_day:
+	if _state != null and int(_state.year) * 12 + int(_state.month) != _built_month:
 		_dirty = true
+	elif _state != null and int(_state.day) != _built_day and not _dirty:
+		_move_today()
 	if not _dirty or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
 	_refresh()
+
+
+## Today's line moves a day on the bars already drawn: a rebuild each day would drop the
+## keyboard focus and a click in flight (pass 1 on the pass-2 delta).
+func _move_today() -> void:
+	_built_day = int(_state.day)
+	var today := (float(_state.day) - 1.0) / float(DateText.days_in(int(_state.month), int(_state.year)))
+	for bar in _body.find_children("*", "Control", true, false):
+		if bar is TimelineBar:
+			bar.today = today
+			bar.queue_redraw()
 
 
 func mark_dirty() -> void:
@@ -260,6 +276,7 @@ func _refresh() -> void:
 		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
 	var rows := SectorsTimeline.rows(_state, _loader, ns)
 	_rows = rows
+	_built_month = int(_state.year) * 12 + int(_state.month)
 	_built_day = int(_state.day)
 	# The side column follows the text size, as the rest of the page does.
 	_side.custom_minimum_size.x = roundf(SectorsDecision.WIDTH * UiTheme.text_scale())

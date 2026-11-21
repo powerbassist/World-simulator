@@ -55,6 +55,13 @@ static func open_firm(sector: String, company_id: String, main) -> void:
 	# answering firm X's Needs you row opened firm Y's decision).
 	var rows: Array = SectorsTimeline.rows(main._state, main._loader, main._state.player())
 	main._companies_panel._rows = rows
+	# The route is the pick: what waits now is seen, so a stale set cannot take it over.
+	var seen := {}
+	for r in rows:
+		if bool(r["waits"]):
+			seen[String(r["key"])] = true
+	main._companies_panel._waits_seen = seen
+	main._companies_panel._seen_once = true
 	var mine := rows.filter(func(r) -> bool: return String(r["company_id"]) == company_id)
 	mine.sort_custom(func(a, b) -> bool: return bool(a["waits"]) and not bool(b["waits"]))
 	main._companies_panel.set_pick(String(mine[0]["key"]) if not mine.is_empty() else "")
