@@ -54,6 +54,7 @@ func _process(_delta: float) -> bool:
 		_check_no_hand_written_panel_list()
 		_check_the_dirty_sweep_is_derived()
 		_build_kit_samples()
+		_build_button_group()
 		_fit_every_window_to_the_band()
 		return false
 
@@ -64,6 +65,7 @@ func _process(_delta: float) -> bool:
 		return false
 
 	_check_the_kit_uses_variations_and_not_overrides()
+	_check_button_classes()
 	_check_a_ledger_is_one_measurement()
 	_check_rows_keep_a_readable_measure()
 	_check_the_fold_is_visible_to_this_harness()
@@ -72,6 +74,75 @@ func _process(_delta: float) -> bool:
 	_report_the_fold_contract()
 	_finish()
 	return false
+
+
+# -- G3's button classes ---------------------------------------------------------
+
+var _group: HFlowContainer
+
+
+func _build_button_group() -> void:
+	_group = PanelKit.buttons(_host)
+	for text in ["Go", "Order an inquiry into the regional prefect"]:
+		var b := Button.new()
+		b.text = text  # i18n: ok a test label
+		_group.add_child(b)
+	# Not verbs of the group: a list entry, and a verb whose caller asked for a taller button.
+	var entry := Button.new()
+	entry.text = "Health"  # i18n: ok a test label
+	entry.theme_type_variation = UiTheme.SUBROW_BUTTON
+	_group.add_child(entry)
+	var chip := Button.new()
+	chip.text = "On"  # i18n: ok a test label
+	chip.toggle_mode = true
+	_group.add_child(chip)
+	_group.add_child(PanelKit.button("Sign the decree", PanelKit.Size.L, PanelKit.BTN_H_MAIN))
+	var tall := Button.new()
+	tall.text = "Sign"  # i18n: ok a test label
+	tall.custom_minimum_size = Vector2(0, 60)
+	_group.add_child(tall)
+
+
+## A button is one of four widths, never its label's (g3-spec.md section 1): a lone button
+## takes its class at BTN_H; a group shares the class its LONGEST label needs, so the short
+## verb is as wide as the long one; and the class follows the text size. Mutation: a group
+## that sizes each button to its own label fails the shared width; a class that ignores the
+## text scale fails the 115 % width.
+func _check_button_classes() -> void:
+	var lone := PanelKit.button("Go", PanelKit.Size.S)
+	if lone.custom_minimum_size != Vector2(PanelKit.BTN_W[PanelKit.Size.S], PanelKit.BTN_H):
+		_fail("a lone S button is %s, not its class %s" % [lone.custom_minimum_size, Vector2(PanelKit.BTN_W[PanelKit.Size.S], PanelKit.BTN_H)])
+	lone.free()
+
+	var short := _group.get_child(0) as Button
+	var long := _group.get_child(1) as Button
+	if short.custom_minimum_size.x != long.custom_minimum_size.x or short.get_meta(PanelKit.CLASS_META, -1) != long.get_meta(PanelKit.CLASS_META, -2):
+		_fail("a group's buttons do not share a class: %.0f and %.0f px" % [short.size.x, long.size.x])
+	if long.get_meta(PanelKit.CLASS_META, -1) == PanelKit.Size.S:
+		_fail("the group took the class of its SHORTEST label")
+	# Review pass 1: the group classes worded verbs only, and over a caller's own size.
+	if (_group.get_child(2) as Button).custom_minimum_size != Vector2.ZERO:
+		_fail("the group re-sized a sub-row entry, which is a list item and not a verb")
+	if (_group.get_child(3) as Button).custom_minimum_size != Vector2.ZERO:
+		_fail("the group gave a toggle chip a width class; a chip keeps its label's width")
+	var own := _group.get_child(4) as Button
+	if own.custom_minimum_size.x < PanelKit.BTN_W[PanelKit.Size.L] or own.custom_minimum_size.y != PanelKit.BTN_H_MAIN:
+		_fail("a PanelKit.button lost its own class (L, BTN_H_MAIN) inside a group: %s" % own.custom_minimum_size)
+	if (_group.get_child(5) as Button).custom_minimum_size.y != 60.0:
+		_fail("the group wiped a height the caller set")
+	if not PanelKit.BTN_W.values().has(int(short.custom_minimum_size.x)):
+		_fail("a group button's width %.0f is not one of the four classes" % short.custom_minimum_size.x)
+
+	# The boundaries: a label exactly a class's width stays in it; one pixel past L is XL.
+	if PanelKit.class_for(PanelKit.BTN_W[PanelKit.Size.M]) != PanelKit.Size.M or PanelKit.class_for(PanelKit.BTN_W[PanelKit.Size.L] + 1) != PanelKit.Size.XL:
+		_fail("class_for misplaces a label at a class's edge")
+
+	UiTheme.set_text_scale(1.15)
+	var big := PanelKit.button("Go", PanelKit.Size.M)
+	UiTheme.set_text_scale(1.0)
+	if big.custom_minimum_size.x != roundf(PanelKit.BTN_W[PanelKit.Size.M] * 1.15):
+		_fail("at 115 %% an M button is %.0f px, not its class times the text size" % big.custom_minimum_size.x)
+	big.free()
 
 
 # -- The three bugs -------------------------------------------------------------

@@ -301,7 +301,7 @@ func _open(id: String, anchor: Rect2, level: int, held: float) -> void:
 	_truncate(level)
 	GlossaryHint.term_read = true
 	var panel := PanelContainer.new()
-	panel.theme_type_variation = UiTheme.PLATE
+	panel.theme_type_variation = UiTheme.POPOVER_PANEL
 	panel.custom_minimum_size = Vector2(WIDTH, 0)
 	panel.modulate.a = 0.0
 	var box := VBoxContainer.new()
@@ -387,7 +387,10 @@ func _set_mouse(p: Dictionary) -> void:
 
 func _show_fill(p: Dictionary) -> void:
 	var share := clampf((float(p["hold"]) - OPEN_DELAY_S) / (LOCK_HOLD_S - OPEN_DELAY_S), 0.0, 1.0)
-	(p["fill"] as Control).custom_minimum_size.x = share * (WIDTH - 2.0 * EDGE)
+	# The bar spans the plate's content, read off its stylebox: a fixed margin here overran it
+	# when the popover's padding changed (G3 pass 2: 344 px in a 334 px column).
+	var pad := (p["panel"] as Control).get_theme_stylebox("panel").get_minimum_size().x
+	(p["fill"] as Control).custom_minimum_size.x = share * (WIDTH - pad)
 
 
 func _on_a_locked_plate(point: Vector2) -> bool:

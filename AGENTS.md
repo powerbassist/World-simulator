@@ -347,22 +347,44 @@ it. Separation and margin constants stay at their call sites; they are layout �
 V2.1a, because they are that grammar's layout rather than any one panel's. Since
 V2.1a a panel builds its rows out of `PanelKit` rather than its own helpers, and
 `tests/test_panel_kit.gd` fails if a migrated panel keeps a private copy.
+A button's width is one of four classes (`PanelKit.button`, and `PanelKit.buttons`
+for a group), never its label's: a group takes the class its longest label needs in
+the language shown, and every class times the text size. `tests/test_panel_kit.gd`
+fails a group whose buttons do not share a class.
 
-**V5.1a replaced U5a's look with BUREAU (the author's pick, 2026-10-21).** The
-palette is graphite with **one accent that is the played nation's own flag
-colour**, and the visual grammar is: every panel is near-opaque graphite with a
-1px `EDGE` hairline on **all four sides** and no accent of its own. The accent is
-reserved for what says "you are here" — the open cluster's bar, a focus ring, a
-fill, the folded plate's outline. `test_ui_theme.gd` fails a plate that wears the
-accent or drops an edge. The U5a brass hairline is gone; do not bring it back as
-a "signature".
+**G3 replaced BUREAU's look (the author's pick, 2026-11-21, "Sheets on glass").**
+Its target: the map fills the screen and the chrome is three floating glass panes (the
+sidebar, the top strip, the time bar): a dark tint over the blurred map (`src/ui/frost.gd`,
+under `PanelKit.pane()`), a 1px light rim, `R_PANE` corners; the "Glass" setting turns the
+blur off and the panes `PANE_SOLID`. At S0 the chrome is glass where it already stands:
+the title bar, figure strip, sidebar and day ribbon are docked, square panes
+(`TOP_BAR_PANEL`, `PANE_DOCKED`) until S1 floats them into three. The workspace's content sits on solid **sheets**
+(`UiTheme.PLATE`, `PanelKit.sheet()`), one job per sheet, `GAP_PANE` apart, with no
+border and a soft shadow; tooltips and menus are opaque popovers that never blur.
+Things are separated by space and by a change of surface; the only line G3 keeps is the
+divider between a table's rows (screens that draw their own lines keep BUREAU's `EDGE`
+until their slice). Text never sits on glass over the map without the
+pane's tint, and never on a sheet that is not opaque. `test_ui_theme.gd` fails a
+sheet that is translucent or bordered, a pane that drops its rim, and a pane that
+still reads the screen with Glass off. The BUREAU hairline on four sides is gone; do
+not bring it back. G3 lands in slices (Design's `g3-spec.md`): S0 is the theme, so
+every screen took the colours, corners and button states at once; S1 floats the
+shell; S2 to S8 re-lay the screens one by one. Until a screen's slice, it may still
+draw with BUREAU's names (`HULL`, `SLATE`, `EDGE`), now aliases of the G3 surface
+each became.
 
 The accent is chosen by a **rule over the flag's bands** (`src/ui/accent_rule.gd`,
 `data/nations/*.json`), never by nation id: of the bands with enough chroma, the one
 that needs the **smallest** hue shift (ties to file order), its hue **shifted** if it falls within 24° of a state tone (alert red,
 good-news green, attention amber) to the nearest clear edge of that zone, and
 lifted in HSL lightness to WCAG AA (4.5:1) on the lightest graphite surface
-(SLATE, where the accent is read as text), still qualifies. Polish crimson
+(`TILE_HOVER`, where the accent is read as text), still qualifies. The rule gives two
+results: the accent as text and outline (`UiTheme.accent()`), and the accent as a
+fill (`UiTheme.accent_fill()`), darkened until white text on it holds 4.5:1, or left
+as it is under a dark label when its hue cannot. The fill is for today's date, the
+armed verb, a picked chip, a bookable day under the pointer and a screen's one main
+action (`UiTheme.PRIMARY`); no other button is filled. A status tone or the accent
+is never the colour of text on a control. Polish crimson
 becomes raspberry, German gold a bright yellow; the flag's colour family survives and is never mistaken for a
 state. `UiTheme.ACCENT_FALLBACK` is for a flag with no chroma at all, and for the
 menu. **Two kinds of colour, never mixed:** IDENTITY follows the nation
@@ -376,7 +398,8 @@ rule over all 41 flags.
 
 Type is **Archivo** (variable, SIL OFL) cut by weight and width axes — keyed by
 OpenType *tag*, an int, since a string key is accepted and does nothing — with
-`tnum` on figures. Icons are filled **Material Symbols Rounded** SVGs under
+`tnum` on figures. The scale has one size for a title, `SIZE_TITLE` (the `Title`
+variation). Icons are filled **Material Symbols Rounded** SVGs under
 `assets/icons/material/` (Apache-2.0). Photographs (portraits, scene backdrops,
 event-art plates) go through one runtime material, `src/ui/grade.gd`, applied
 with `Grade.apply(rect)`; `test_grade.gd` fails a surface that forgot. Fonts and
@@ -386,12 +409,13 @@ headless from a fresh clone — never `load()` an icon path.
 
 **Text a player reads goes through `tr("English")`** (V5.1b, [docs/localisation.md](docs/localisation.md)): the English is the msgid, French is `data/i18n/fr/ui.json`, a row of `data/` is shown through a `Strings` row accessor (`row_name`, `row_summary`, `choice_label`, `record_event_name`, `noun`, ... over `Strings.row(kind, id, field, english)`; `tests/test_i18n_rows_lint.gd` fails a raw read of a row's English) and an id made into a word through `Labels` (never `id.capitalize()`). The caller wraps, helpers never translate, a `static func` uses `Strings.t()`, and never use a `tr()` result as a key or compare shown text to an English literal. `tests/test_i18n_lint.gd` fails a bare literal at a text sink or anywhere it reads as prose (a const table of prose carries `# i18n: msgid`) and a ternary of short fragments inside a format argument -- a sentence is whole, a count picks its form with `tr_n` / `Strings.tn`; a figure with decimals goes through `Num.f` / `Num.fs` (the language's decimal separator, never a raw `%.2f`) and a date through `DateText`; `tests/test_i18n_fit.gd` opens every window under +35% pseudolocalization. Map place names are the one exception to the body width: `UiTheme.map_face()` at `UiTheme.SIZE_MAP`, the narrow end of Archivo's width axis, because the label packer drops a name that does not fit.
 
-The shell is (V5.1-c, the BUREAU board): `map_view` full-rect at the back;
+The shell is (V5.1-c's layout, until G3's S1 floats it): `map_view` full-rect at the back;
 `window_manager` over it, a workspace docked left that shows one tab at a time
 under its domain (`src/ui/domains.gd` is the table of domains and their tabs;
 back and forward walk the player's path); `hud` on top -- the title bar, the
 sidebar, the figure strip (it folds its lowest-priority figures into "+N" when
-its slot is short), the legend, the message column and the day ribbon; and
+its slot is short), the legend, the message column and the day ribbon (the title
+bar, sidebar, strip and ribbon dressed as glass panes); and
 `screen_stack` above them, which ranks what owns the screen (workspace, inbox,
 placement, scene, system) for the keys, Escape and the game's own arrivals. A
 panel is registered with `_windows.register(id, title, panel)` **before** its

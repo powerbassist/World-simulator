@@ -116,6 +116,29 @@ static func lift(c: Color, surface: Color) -> Color:
 	return Color.WHITE
 
 
+## G3: the accent as a fill under a white label. HSL lightness lowered, hue and saturation
+## kept, until white clears MIN_CONTRAST on it. A hue that needs more than MAX_FILL_DARKEN
+## to get there (a yellow turns olive) is no longer its family: it comes back untouched
+## and label_on() gives it a dark label instead. Judged by measured contrast, never by nation.
+const MAX_FILL_DARKEN := 0.2
+
+
+static func fill(c: Color) -> Color:
+	var hsl := _to_hsl(c)
+	var l: float = hsl.z
+	while l > hsl.z - MAX_FILL_DARKEN:
+		var dark := _from_hsl(hsl.x, hsl.y, l)
+		if contrast(Color.WHITE, dark) >= MIN_CONTRAST:
+			return dark
+		l -= 0.01
+	return c
+
+
+## White on `fill` when it holds AA, else `dark`.
+static func label_on(fill_colour: Color, dark: Color) -> Color:
+	return Color.WHITE if contrast(Color.WHITE, fill_colour) >= MIN_CONTRAST else dark
+
+
 static func chroma(c: Color) -> float:
 	return maxf(c.r, maxf(c.g, c.b)) - minf(c.r, minf(c.g, c.b))
 

@@ -80,7 +80,7 @@ func _ready() -> void:
 
 func _make_panel(width: float, level: int) -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.theme_type_variation = UiTheme.PLATE
+	panel.theme_type_variation = UiTheme.POPOVER_PANEL
 	panel.custom_minimum_size = Vector2(width, 0)
 	panel.visible = false
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP

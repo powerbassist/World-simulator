@@ -18,6 +18,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --nation LUX
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --domain finances
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --domain finances --hover-domain
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open society
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open diplomacy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
@@ -471,6 +472,8 @@ var _phone := ""
 ## V5.1-c2.3: open a domain through its sidebar entry (its first tab), so a frame
 ## shows the entry marked and the tab open -- V2.1c's --cluster, for the sidebar.
 var _domain := ""
+## G3 #436 pass 2: the open domain's sidebar entry under the pointer (an ON toggle hovered).
+var _hover_domain := false
 
 ## V1.3e, and --orgs's argument a third time. The nation panel's refusal line only
 ## renders for a partner who actually refuses, and which partners refuse is the
@@ -1258,6 +1261,8 @@ func _init() -> void:
 			_perf_overlay = true
 		elif args[i] == "--domain" and i + 1 < args.size():
 			_domain = args[i + 1]
+		elif args[i] == "--hover-domain":
+			_hover_domain = true
 		elif args[i] == "--defeated":
 			_defeated = true
 		elif args[i] == "--termlimit":
@@ -1678,6 +1683,14 @@ func _apply_view() -> void:
 	# After --open: the domain's first tab replaces whatever --open opened.
 	if _domain != "":
 		_main._hud.sidebar.navigate.emit(_domain)
+		if _hover_domain:
+			# A pushed motion over the entry once it is laid out -- never a warp of the real cursor.
+			_main.get_tree().create_timer(0.3).timeout.connect(func() -> void:
+				var entry: Control = _main._hud.sidebar._entries[_domain]
+				var motion := InputEventMouseMotion.new()
+				motion.position = entry.get_global_rect().get_center()
+				motion.global_position = motion.position
+				entry.get_viewport().push_input(motion))
 	# After the domain: a decision arrives over a tab already open, as in play --
 	# staged before it, the tab's opening put the slid inbox away again.
 	if _interrupt:

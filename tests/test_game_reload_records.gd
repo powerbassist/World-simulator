@@ -26,6 +26,7 @@ const SLOT := "__test_game_reload_records__"
 const NOT_PER_GAME := {
 	"audience_talk_view.gd:_faces": "portrait face crops, a cache of assets",
 	"backdrop.gd:_material": "the shared blur material",
+	"frost.gd:_material": "the shared glass-pane blur material",
 	"event_art.gd:_cache": "decoded art plates, a cache",
 	"glossary.gd:_rows": "the glossary table, read once from data/",
 	"glossary.gd:_by_id": "the glossary index over those rows",
@@ -72,6 +73,7 @@ const NOT_PER_GAME := {
 	"term_text.gd:_marked_ids": "a compiled regex",
 	"ui_theme.gd:_accent": "the played nation's accent, re-applied by main on every boot (UiTheme.apply_for)",
 	"ui_theme.gd:_text_scale": "the text size setting (settings, not a game's)",
+	"ui_theme.gd:_glass": "the Glass setting (settings, not a game's)",
 	"ui_theme.gd:_archivo": "the loaded font, a cache",
 	"ui_theme.gd:_map_face": "the loaded map font, a cache",
 	"ui_theme.gd:_map_figure_face": "the loaded map figure font, a cache",

@@ -13,6 +13,7 @@ extends PanelContainer
 ## what opens -- refused under a scene, as the keys are.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const Domains = preload("res://src/ui/domains.gd")
 
@@ -33,7 +34,7 @@ var _pending: Array = []
 
 
 func _ready() -> void:
-	theme_type_variation = UiTheme.PLATE
+	PanelKit.pane(self, UiTheme.PANE_DOCKED)  # G3: glass, docked until S1 floats it
 	custom_minimum_size = Vector2(WIDTH, 0)
 
 	_list = VBoxContainer.new()
@@ -138,9 +139,11 @@ func _add_link(id: String, title: String, icon_path: String) -> void:
 	_entries[id] = button
 
 	# The count is a STATUS tone -- something waits on you, the attention colour --
-	# never the played nation's accent, which marks only "you are here".
+	# never the played nation's accent, which marks only "you are here". G3: the tone is
+	# the pill's ground, the figure stays the text tone (no status text on a control).
 	var pill := Label.new()
-	pill.add_theme_color_override("font_color", UiTheme.WARN)
+	pill.theme_type_variation = UiTheme.COUNT_PILL
+	pill.grow_horizontal = Control.GROW_DIRECTION_BEGIN  # a wider pill grows inward
 	pill.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT)
 	pill.offset_left = -28.0
 	pill.offset_right = -8.0

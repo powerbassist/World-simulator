@@ -103,11 +103,19 @@ func _check_icons_load() -> void:
 	UiTheme.apply(host, Color("#2596FF"))
 	var sidebar = _main._hud.sidebar
 	sidebar.show_pending(["finances"])
+	# G3 S0: the sidebar and the day ribbon are glass, docked until S1 floats them (#436 pass 2).
+	for chrome in [sidebar, _main._hud.ribbon]:
+		if (chrome as Control).theme_type_variation != UiTheme.PANE_DOCKED:
+			_fail("%s is not the docked glass pane" % (chrome as Node).name)
 	var pill: Label = sidebar._pills["finances"]
 	if not pill.visible:
 		_fail("a pending budget did not show a count on Finances")
-	if pill.get_theme_color("font_color") != UiTheme.WARN:
-		_fail("the pending count is %s, not the attention tone" % pill.get_theme_color("font_color").to_html(false))
+	# G3: the attention tone is the pill's ground; the figure on it is the text tone.
+	var ground := pill.get_theme_stylebox("normal") as StyleBoxFlat
+	if ground == null or ground.bg_color != UiTheme.WARN_GROUND:
+		_fail("the pending count does not sit on the attention tone's pill")
+	if pill.get_theme_color("font_color") != UiTheme.TEXT:
+		_fail("the pending count's figure is %s, not the text tone" % pill.get_theme_color("font_color").to_html(false))
 	sidebar.show_pending([])
 
 	# The mood icon's WORRIED band sits between GOOD and BAD: a status tone, not the

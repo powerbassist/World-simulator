@@ -12,6 +12,7 @@ extends PanelContainer
 ## bar does not know what a scene is.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Domains = preload("res://src/ui/domains.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const ChiefMark = preload("res://src/ui/chief_mark.gd")
@@ -39,7 +40,7 @@ var _where := ""
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(0, HEIGHT)
-	theme_type_variation = UiTheme.TOP_BAR_PANEL
+	PanelKit.pane(self, UiTheme.TOP_BAR_PANEL)  # G3: glass, flush to the top until S1 floats it
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)

@@ -78,6 +78,9 @@ const DEFAULT_SOUND := true
 ## tween in src/ui/motion.gd lands on its final value at once, so nothing a
 ## player reads depends on watching an animation finish.
 const DEFAULT_MOTION := true
+## G3: the chrome's panes blur the map. Off is the solid pane, and the switch for a machine
+## whose renderer cannot blur or whose frame cannot afford it (ui_theme.gd, frost.gd).
+const DEFAULT_GLASS := true
 
 ## Ambience on a first launch (V4.9c, author's call): the beds are the one sound
 ## a player most wants off while keeping the cues, so they get their own row --
@@ -112,6 +115,7 @@ var _sound_button: OptionButton
 var _voice_button: OptionButton
 var _music_button: OptionButton
 var _motion_button: OptionButton
+var _glass_button: OptionButton
 var _message_buttons := {}  # category -> {switch: OptionButton}
 
 ## Narrow enough that a category label and four band pickers fit the panel's
@@ -141,6 +145,7 @@ static func apply_saved(window: Window) -> void:
 		Strings.set_language(Strings.DEFAULT)
 	# Before the first theme is built, for the language's reason.
 	UiTheme.set_text_scale(TEXT_SCALES[_text_index(cfg)])
+	UiTheme.set_glass(bool(cfg.get_value("display", "glass", DEFAULT_GLASS)))
 	_apply(
 		window,
 		bool(cfg.get_value("display", "fullscreen", DEFAULT_FULLSCREEN)),
@@ -265,6 +270,7 @@ func _save_and_apply() -> void:
 	cfg.set_value("audio", "voice", _voice_button.selected)
 	cfg.set_value("audio", "music", _music_button.selected)
 	cfg.set_value("display", "motion", motion_on)
+	cfg.set_value("display", "glass", _glass_button.selected == 1)
 	cfg.set_value(MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, _foreign_news_button.selected == 1)
 	cfg.save(CONFIG_PATH)
 	revision += 1
@@ -278,8 +284,10 @@ func _save_and_apply() -> void:
 		_rebuild()
 	# Applied at once, on whichever scene is up -- the menu or the game.
 	var text_scale: float = TEXT_SCALES[_text_button.selected]
-	if not is_equal_approx(text_scale, UiTheme.text_scale()):
+	var glass := _glass_button.selected == 1
+	if not is_equal_approx(text_scale, UiTheme.text_scale()) or glass != UiTheme.glass():
 		UiTheme.set_text_scale(text_scale)
+		UiTheme.set_glass(glass)
 		if get_tree().current_scene is Control:
 			UiTheme.rebuild(get_tree().current_scene)
 
@@ -348,6 +356,7 @@ func _build() -> void:
 	_voice_button = _add_row(grid, tr("Voices"), [tr("Off"), tr("Quiet"), tr("Normal"), tr("Loud")])
 	_music_button = _add_row(grid, tr("Music"), [tr("Off"), tr("Quiet"), tr("Normal"), tr("Loud")])
 	_motion_button = _add_row(grid, tr("Motion"), [tr("Off"), tr("On")])
+	_glass_button = _add_row(grid, tr("Glass"), [tr("Off"), tr("On")])
 	_foreign_news_button = _add_row(grid, tr("News of other countries"), [tr("Off"), tr("On")])
 
 	PanelKit.line(root, tr("The language applies in full to windows opened after the change; load a game again to apply it to every window."))
@@ -488,6 +497,7 @@ func _load_into_controls() -> void:
 	_voice_button.select(voice_level())
 	_music_button.select(music_level())
 	_motion_button.select(1 if bool(cfg.get_value("display", "motion", DEFAULT_MOTION)) else 0)
+	_glass_button.select(1 if bool(cfg.get_value("display", "glass", DEFAULT_GLASS)) else 0)
 	_foreign_news_button.select(1 if bool(cfg.get_value(
 		MessageSettings.SECTION, MessageSettings.FOREIGN_NEWS_KEY, MessageSettings.DEFAULT_FOREIGN_NEWS)) else 0)
 	_resolution_button.disabled = fullscreen

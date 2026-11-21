@@ -35,6 +35,7 @@ extends SceneTree
 
 const MainScene := "res://src/ui/main.tscn"
 const Backdrop = preload("res://src/ui/backdrop.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## Paris. Every zoom is framed on the same land-heavy point, so the deep-zoom
 ## samples rasterise polygons rather than open sea -- the player case the gate
@@ -97,6 +98,11 @@ var _pan_stuck := 0
 
 
 func _initialize() -> void:
+	# G3 S0: `-- --glass-off` measures the chrome's panes solid, the same frame without the
+	# blur's screen read, so the PR can give the blur's cost as on minus off.
+	if OS.get_cmdline_user_args().has("--glass-off"):
+		UiTheme.set_glass(false)
+	print("glass=%s" % UiTheme.glass())
 	_main = load(MainScene).instantiate()
 	root.add_child(_main)
 	print("screen=%dx%d" % [
