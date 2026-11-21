@@ -84,11 +84,15 @@ func _check_own_sheets_on_the_header_grid() -> void:
 	var left := INF
 	var right := -INF
 	var top := INF
+	var bottom := -INF
 	for sheet in sheets:
 		var r: Rect2 = sheet.get_global_rect()
 		left = minf(left, r.position.x)
 		right = maxf(right, r.end.x)
 		top = minf(top, r.position.y)
+		bottom = maxf(bottom, r.end.y)
+	if bottom > _main._windows.dock().get_global_rect().end.y + 0.5:
+		_fail("the Diary's sheets end at %.0f, past the workspace's foot" % bottom)
 	var gap := float(UiTheme.GAP_PANE)
 	if absf(left - header.position.x) > 0.5 or absf(right - header.end.x) > 0.5:
 		_fail("the Diary's sheets run %.0f to %.0f, off the header sheet's %.0f to %.0f" % [left, right, header.position.x, header.end.x])

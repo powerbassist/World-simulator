@@ -32,16 +32,13 @@ const StripReadings = preload("res://src/ui/strip_readings.gd")
 const STRIP_HEIGHT := 88
 ## The months' shares of the line: this month by days, then two compressed.
 const SHARES: Array[float] = [0.5, 0.25, 0.25]
-const LINE_Y := 40.0
-const LANE_Y := 0.0
+## Below the chips' lane, the room the bookings' blocks and the deadline ticks stand in above the
+## line; under it, the labels' drop. The lane and the line themselves are measured (_place_lane).
+const LANE_GAP := 6.0
+const LABEL_DROP := 9.0
 const CHIP_GAP := 6.0
 ## The room kept between the month's name, today's mark and a day number.
 const TITLE_GAP := 4.0
-const CLOCK_WIDTH := 480
-## The cells' top from the plate's: the y's above are measured from it. PANE_PAD is the PANE's own
-## top and bottom margin (ui_theme.gd).
-const INSET := 10
-const PANE_PAD := 3
 const BLOCK_HEIGHT := 6.0
 const ICON_PX := 14
 
@@ -57,24 +54,22 @@ var _dirty := true
 var _signature_seen: Array = []
 var _items := {}
 var _chips: Array[Control] = []
+## The chips' lane top and the line's y in `_cells`, measured each refresh (_place_lane).
+var _lane_y := 0.0
+var _line_y := 40.0
 
 
 func _ready() -> void:
 	PanelKit.pane(self)  # G3 S1: the time bar, a floating glass pane
 	custom_minimum_size = Vector2(0, STRIP_HEIGHT)
 
-	# The lane and the line are drawn at fixed y's from the cells' top, laid out for 10 px of
-	# margin: the PANE gives 3, so the strip adds the rest (#439 pass 2 T3: the line ran 7 high).
-	var air := MarginContainer.new()
-	air.add_theme_constant_override("margin_top", INSET - PANE_PAD)
-	air.add_theme_constant_override("margin_bottom", INSET - PANE_PAD)
-	add_child(air)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
-	air.add_child(row)
+	add_child(row)
 
+	# As wide as the clock asks: its widest date, measured (clock_cluster.gd), so a long month
+	# never shifts the horizon.
 	_clock_slot = HBoxContainer.new()
-	_clock_slot.custom_minimum_size = Vector2(CLOCK_WIDTH, 0)
 	_clock_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_clock_slot)
 	row.add_child(_rule())
@@ -88,7 +83,7 @@ func _ready() -> void:
 	row.add_child(_cells)
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.MICRO_CHROME
-	_title.position = Vector2(30, LINE_Y + 3)
+	_title.position = Vector2(30, _line_y + 3)
 	_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cells.add_child(_title)
 
@@ -146,6 +141,11 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_THEME_CHANGED:
+		_dirty = true  # a text size moves the lane and the line (_place_lane)
+
+
 func _process(_delta: float) -> void:
 	if _state == null or not visible or _cells.size.x < 10.0:
 		return
@@ -159,12 +159,27 @@ func _process(_delta: float) -> void:
 	if not _dirty:
 		return
 	_dirty = false
+	_place_lane()
 	_title.text = DateText.month_long(_state.month).to_upper()
 	_items = Items.read(_state, _loader)
 	_rebuild_chips()
 	_refresh_vote()
 	_cells.queue_redraw()
-	_title.position.x = float(_labels()["title"].position.x)
+	_title.position = (_labels()["title"] as Rect2).position
+
+
+## The lane of chips, the line under it and the labels under that, measured at the theme's text
+## size and centred in the cells, so neither the pane's margin nor a text size can push the line
+## through the chips or the labels off the plate (#439 pass 2 T3: fixed y's laid out for the docked
+## pane's 10 px margin ran 7 px high in the floating pane's 3).
+func _place_lane() -> void:
+	var font := _cells.get_theme_default_font()
+	var full := _cells.get_theme_default_font_size()
+	var chip := _cells.get_theme_stylebox("panel", UiTheme.PLATE)
+	var lane := (chip.get_minimum_size().y if chip != null else 0.0) + font.get_height(full)
+	var block := lane + LANE_GAP + LABEL_DROP + full
+	_lane_y = floorf(maxf(0.0, (_cells.size.y - block) / 2.0))
+	_line_y = _lane_y + lane + LANE_GAP
 
 
 ## What the horizon reads, in a handful of integers: the day, the diary's size, the
@@ -257,14 +272,14 @@ func _rebuild_chips() -> void:
 			folded.append(String(want["tip"]))
 			chip.queue_free()
 			continue
-		chip.position = Vector2(left, LANE_Y)
+		chip.position = Vector2(left, _lane_y)
 		chip.size = Vector2(width, chip.get_combined_minimum_size().y)
 		edge = left + width
 		_chips.append(chip)
 	if not folded.is_empty():
 		var more := _chip({"text": "+%d" % folded.size(), "icon": "", "warn": false, "tip": "\n".join(folded)})
 		_cells.add_child(more)
-		more.position = Vector2(minf(edge + CHIP_GAP, _cells.size.x - 32.0), LANE_Y)
+		more.position = Vector2(minf(edge + CHIP_GAP, _cells.size.x - 32.0), _lane_y)
 		more.size = more.get_combined_minimum_size()
 		_chips.append(more)
 
@@ -329,9 +344,9 @@ func _labels() -> Dictionary:
 	var today := int(_state.day)
 	var today_x := _day_x(int(_state.year), int(_state.month), today)
 	var mark_w := font.get_string_size(str(today), HORIZONTAL_ALIGNMENT_LEFT, -1, small).x + 10.0
-	var mark := Rect2(clampf(today_x - mark_w / 2.0, 0.0, maxf(_cells.size.x - mark_w, 0.0)), LINE_Y + 5.0, mark_w, full + 4.0)
+	var mark := Rect2(clampf(today_x - mark_w / 2.0, 0.0, maxf(_cells.size.x - mark_w, 0.0)), _line_y + 5.0, mark_w, full + 4.0)
 	var title_size := _title.get_minimum_size()
-	var title := Rect2(30.0, LINE_Y + 3.0, title_size.x, title_size.y)
+	var title := Rect2(30.0, _line_y + 3.0, title_size.x, title_size.y)
 	if title.intersects(mark.grow(TITLE_GAP)):
 		title.position.x = mark.end.x + TITLE_GAP
 	var numbers: Array[Dictionary] = []
@@ -341,7 +356,7 @@ func _labels() -> Dictionary:
 			continue
 		var x := _day_x(int(_state.year), int(_state.month), d)
 		var w := font.get_string_size(str(d), HORIZONTAL_ALIGNMENT_LEFT, -1, small).x
-		var box := Rect2(x - w / 2.0 - 3.0, LINE_Y + 5.0, w + 6.0, full + 4.0)
+		var box := Rect2(x - w / 2.0 - 3.0, _line_y + 5.0, w + 6.0, full + 4.0)
 		if box.intersects(mark.grow(TITLE_GAP)) or box.intersects(title.grow(TITLE_GAP)):
 			continue
 		numbers.append({"rect": box, "text": str(d), "x": x, "width": w})
@@ -358,23 +373,23 @@ func _draw_cells() -> void:
 	var width := _cells.size.x
 	var today_x := _day_x(int(_state.year), int(_state.month), int(_state.day))
 	# The line, dim behind today (what has gone), edge-coloured ahead.
-	_cells.draw_rect(Rect2(0, LINE_Y, width, 2), UiTheme.EDGE)
-	_cells.draw_rect(Rect2(0, LINE_Y, today_x, 2), UiTheme.TEXT_DIM)
+	_cells.draw_rect(Rect2(0, _line_y, width, 2), UiTheme.EDGE)
+	_cells.draw_rect(Rect2(0, _line_y, today_x, 2), UiTheme.TEXT_DIM)
 	for i in SHARES.size():
 		var span := _segment(i)
 		if i > 0:
-			_cells.draw_rect(Rect2(span.x, 0, 1, LINE_Y + font_size + 8), UiTheme.EDGE)
+			_cells.draw_rect(Rect2(span.x, _lane_y, 1, _line_y - _lane_y + font_size + 8), UiTheme.EDGE)
 			var at := _month_at(i)
-			_cells.draw_string(font, Vector2(span.x + 14, LINE_Y + 3 + font_size), DateText.month_long(int(at["month"])).to_upper(),
+			_cells.draw_string(font, Vector2(span.x + 14, _line_y + 3 + font_size), DateText.month_long(int(at["month"])).to_upper(),
 				HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 2, UiTheme.TEXT_DIM)
 	# Day numbers: the first of every week of this month, and today, a filled mark.
 	var layout := _labels()
 	for n in (layout["numbers"] as Array):
-		_cells.draw_string(font, Vector2(float(n["x"]) - float(n["width"]) / 2.0, LINE_Y + 3 + font_size), String(n["text"]),
+		_cells.draw_string(font, Vector2(float(n["x"]) - float(n["width"]) / 2.0, _line_y + 3 + font_size), String(n["text"]),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size - 2, UiTheme.TEXT_DIM)
-	_cells.draw_rect(Rect2(today_x - 1.0, 0, 2, LINE_Y), UiTheme.accent())
+	_cells.draw_rect(Rect2(today_x - 1.0, _lane_y, 2, _line_y - _lane_y), UiTheme.accent())
 	_cells.draw_rect(layout["mark"], UiTheme.accent())
-	_cells.draw_string(font, Vector2((layout["mark"] as Rect2).position.x + 5.0, LINE_Y + 3 + font_size), str(int(_state.day)), HORIZONTAL_ALIGNMENT_LEFT, -1,
+	_cells.draw_string(font, Vector2((layout["mark"] as Rect2).position.x + 5.0, _line_y + 3 + font_size), str(int(_state.day)), HORIZONTAL_ALIGNMENT_LEFT, -1,
 		font_size - 2, UiTheme.INK)
 	# Bookings on the line: the meeting solid, its travel days hatched, as the diary draws them.
 	for b in (_items.get("bookings", []) as Array):
@@ -383,7 +398,7 @@ func _draw_cells() -> void:
 			continue
 		var cell := _cell_width(int(b["year"]), int(b["month"]))
 		for leg in range(-int(b["travel_days"]), int(b["travel_days"]) + 1):
-			var rect := Rect2(meet + leg * cell - cell / 2.0 + 2.0, LINE_Y - 2.0 - BLOCK_HEIGHT, maxf(cell - 4.0, 2.0), BLOCK_HEIGHT)
+			var rect := Rect2(meet + leg * cell - cell / 2.0 + 2.0, _line_y - 2.0 - BLOCK_HEIGHT, maxf(cell - 4.0, 2.0), BLOCK_HEIGHT)
 			if leg == 0:
 				_cells.draw_rect(rect, UiTheme.TEXT)
 			else:
@@ -392,7 +407,7 @@ func _draw_cells() -> void:
 	for due in (_items.get("dues", []) as Array):
 		var index := _index_of(int(due["abs_month"]))
 		if index >= 0:
-			_cells.draw_rect(Rect2(_segment(index).y - 4.0, LINE_Y - 9, 2, 20), UiTheme.WARN)
+			_cells.draw_rect(Rect2(_segment(index).y - 4.0, _line_y - 9, 2, 20), UiTheme.WARN)
 
 
 ## One day's width in its month's segment.
