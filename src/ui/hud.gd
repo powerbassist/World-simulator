@@ -4,8 +4,8 @@ extends Control
 ## sidebar down the left, ONE top strip (the figures with the title bar's tools docked in its
 ## row) and the time bar along the bottom, each GAP_PANE from the screen's edges and from each
 ## other; over the map area the legend, the inbox (a column of sheets at the right, beside the
-## workspace, which ends a gap short of it) and the front pages. The workspace (window_manager.gd) fills the band
-## between the panes; this file only arranges the chrome.
+## workspace, which ends a gap short of it) and the front pages. The workspace
+## (window_manager.gd) fills the band between the panes; this file only arranges the chrome.
 ##
 ## It owns no game state and no behaviour: every signal these pieces emit is
 ## connected by main.gd, which is the node holding the Clock and the GameState.

@@ -23,8 +23,9 @@ signal speed_selected(speed: int)
 const MONTH_NAMES := DateText.SHORT
 
 const ICON_PX := 20
-## The years whose dates _fit_width measures: enough for every weekday to meet every day number.
-const DATE_YEARS := Vector2i(2026, 2034)
+## The year whose dates _fit_width measures: every month meets every weekday in a year, and the
+## figures are tabular, so a day's or a year's digits never change the width.
+const DATE_YEAR := 2026
 ## Own-drawn glyphs (assets/icons/ui), one file per speed so the speed reads as a
 ## pip count without a number: Material has no three-step play.
 const GLYPHS := {
@@ -92,17 +93,16 @@ func _notification(what: int) -> void:
 
 ## As wide as the speeds and the widest date this clock can print, measured in the face and size
 ## shown, so the horizon beside it never moves with the month (#439 pass 2 T4: a typed 480 slot
-## widened on a long month at text 115). Every weekday meets every day number within a few years.
+## widened on a long month at text 115).
 func _fit_width() -> void:
 	var font := _date_label.get_theme_font("font")
 	var px := _date_label.get_theme_font_size("font_size")
 	if font == null:
 		return
 	var widest := 0.0
-	for year in range(DATE_YEARS.x, DATE_YEARS.y):
-		for month in range(1, 13):
-			for day in range(1, DateText.days_in(month, year) + 1):
-				widest = maxf(widest, font.get_string_size(DateText.weekday_long(day, month, year), HORIZONTAL_ALIGNMENT_LEFT, -1, px).x)
+	for month in range(1, 13):
+		for day in range(1, DateText.days_in(month, DATE_YEAR) + 1):
+			widest = maxf(widest, font.get_string_size(DateText.weekday_long(day, month, DATE_YEAR), HORIZONTAL_ALIGNMENT_LEFT, -1, px).x)
 	var speeds := (get_child(0) as Control).get_combined_minimum_size().x
 	custom_minimum_size.x = ceilf(speeds + get_theme_constant("separation") + widest)
 

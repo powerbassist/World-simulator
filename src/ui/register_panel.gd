@@ -94,6 +94,11 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
+## A text size moves the header sheet, so the floor (page_room) is read again.
+func _notification(what: int) -> void:
+	_dirty = _dirty or what == NOTIFICATION_THEME_CHANGED
+
+
 ## Whether the tab is offered to the nation played: a stock file names at least one type
 ## (window_manager.gd asks; a rule over data, never a nation id).
 func is_offered() -> bool:

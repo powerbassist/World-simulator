@@ -64,6 +64,12 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
+## A text size moves the header sheet, so the floor (page_room) is read again.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_THEME_CHANGED:
+		_dirty = true
+
+
 ## Offered where the register is: a stock file names a type the nation can build (a rule
 ## over data, never a nation id).
 func is_offered() -> bool:

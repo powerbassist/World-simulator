@@ -173,10 +173,12 @@ func _process(_delta: float) -> void:
 ## through the chips or the labels off the plate (#439 pass 2 T3: fixed y's laid out for the docked
 ## pane's 10 px margin ran 7 px high in the floating pane's 3).
 func _place_lane() -> void:
-	var font := _cells.get_theme_default_font()
 	var full := _cells.get_theme_default_font_size()
-	var chip := _cells.get_theme_stylebox("panel", UiTheme.PLATE)
-	var lane := (chip.get_minimum_size().y if chip != null else 0.0) + font.get_height(full)
+	# A chip as built (its plate, its glyph, its line) is the lane's height, read off one.
+	var probe := _chip({"text": "0", "icon": "", "warn": false, "tip": ""})
+	_cells.add_child(probe)
+	var lane := probe.get_combined_minimum_size().y
+	probe.free()
 	var block := lane + LANE_GAP + LABEL_DROP + full
 	_lane_y = floorf(maxf(0.0, (_cells.size.y - block) / 2.0))
 	_line_y = _lane_y + lane + LANE_GAP
