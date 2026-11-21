@@ -128,4 +128,6 @@ static func _answers(panel, body: Control, state, loader, ns, row: Dictionary, c
 				if action != null and offered.has(action) and company != null:
 					flow.add_child(panel._action_button(ns, company, action))
 		"programme":
+			# What the programme does, in its data's words; its stop is changed in the finance bill.
+			PanelKit.plain_line(body, Strings.row_summary("investment-actions", source["action"]))
 			PanelKit.plain_line(body, Strings.t("It runs until you change it in the finance bill, on the sector's tab."))

@@ -401,16 +401,15 @@ func _sweep_warned_tile(main) -> void:
 	main._windows.close_all()
 
 
-## A6: the opened card, as a player leaves it mid-decision.
+## A6: a firm's verbs, as a player leaves them mid-decision -- since G3 S3 on its sector
+## tab's firm sheet (the overview's firm card is gone).
 func _sweep_industry_card(main) -> void:
 	var state = main._state
 	var ns = state.player()
 	var major = preload("res://src/sim/companies.gd").majors_of(main._loader, ns.id)[0]
-	var panel = main._companies_panel
-	panel._open_sector = String(major.sector)
-	panel._open_firm = String(major.id)
-	main._windows.open("companies", true)
-	panel.mark_dirty()
+	var panel = main._sector_panels[String(major.sector)]
+	main._windows.open("sector_%s" % String(major.sector), true)
+	panel._select(String(major.id))
 	await process_frame
 	await process_frame
 	for button in panel.find_children("*", "Button", true, false):  # i18n: ok a class name
@@ -418,13 +417,7 @@ func _sweep_industry_card(main) -> void:
 			button.grab_focus()
 			break
 	await process_frame
-	var card: Node = null
-	for button in panel.find_children("*", "Button", true, false):  # i18n: ok a class name
-		if String(button.get_meta("sector", "")) == String(major.sector):
-			card = button.get_parent().get_parent()
-	if card == null:
-		_fail("industry card: the opened card is not on the tab")
-		return
+	var card: Node = panel._sheet
 	var total := 0
 	for node in _visible_text_nodes(card):
 		var words := _words(_text_of(node))

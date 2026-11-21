@@ -46,11 +46,8 @@ static func refresh_marks(main) -> void:
 	main._windows.set_tab_counts(SectorNeeds.counts(main._state, main._loader, ns))
 
 
-## A Needs you row's Go: the overview, the firm's row picked in the side sheet and its
-## card opened under it.
+## A Needs you row's Go: the overview, the firm's row picked in the side sheet.
 static func open_firm(sector: String, company_id: String, main) -> void:
-	main._companies_panel._open_sector = sector
-	main._companies_panel._open_firm = company_id
 	# G3 S3: the side sheet shows the routed firm's row -- its waiting one first (pass 2 on #441:
 	# answering firm X's Needs you row opened firm Y's decision).
 	var rows: Array = SectorsTimeline.rows(main._state, main._loader, main._state.player())

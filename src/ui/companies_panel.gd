@@ -31,8 +31,9 @@ extends PanelContainer
 ## G3 S3 (the author's "C La frise") RE-LAID THE PAGE: a strip of three sector doors on top,
 ## then what runs and when it lands as dated rows on one time scale (sectors_timeline.gd), the
 ## picked row's sheet beside the list where its decision is answered (sectors_decision.gd), and
-## the economy's shape under the timeline. The cards' three levels of indent are gone from the
-## page; a Needs you route still opens the firm's card in the side column.
+## the economy's shape under the timeline. The cards are gone from the page (industry_card.gd
+## with them): a Needs you route picks its firm's row, and a firm's verbs are its sector tab's
+## (Design's T4 on #441).
 ##
 ## It also stops returning early on an empty firm register. A nation with no
 ## data/companies/<ID>.json still has three sectors and can still invest in them --
@@ -53,7 +54,6 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
-const IndustryCard = preload("res://src/ui/industry_card.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
 const TimelineBar = preload("res://src/ui/timeline_bar.gd")
 const DateText = preload("res://src/ui/date_text.gd")
@@ -61,8 +61,6 @@ const SectorsTimeline = preload("res://src/ui/sectors_timeline.gd")
 const SectorsDecision = preload("res://src/ui/sectors_decision.gd")
 const FirmCommands = preload("res://src/ui/firm_commands.gd")
 const SectorsOverview = preload("res://src/ui/sectors_overview.gd")
-const Labels = preload("res://src/ui/labels.gd")
-const SectorNeeds = preload("res://src/ui/sector_needs.gd")
 
 var _state
 var _loader
@@ -95,16 +93,10 @@ var _primary: Control = null
 var _last_refusal := ""
 ## The card an irreversible verb asks on (CompanyVerb.ask), made at the first ask.
 var _confirm
-## V5.3 a + b step 2: what the player has opened -- a sector card, a firm's verbs,
-## a body list, the public account -- and the verb that has focus. Held here, not
-## in the rebuilt rows, so the month's sweep redraws the tab as the player left it.
-## "" is closed. `_refocus` is the control a toggle came from, focused again after
+## What the player has opened -- the public account. Held here, not in the rebuilt rows,
+## so the month's sweep redraws the tab as the player left it. "" is closed. `_refocus` is the control a toggle came from, focused again after
 ## the rebuild so the keyboard path does not fall back to the top.
-var _open_sector := ""
-var _open_firm := ""
-var _open_body := ""
 var _open_ledger := ""
-var _focus_verb := ""
 var _refocus := []
 ## The timeline row the side sheet shows, by its key ("" lets _choose pick), and its firm: a
 ## row that changes kind (a closure rescued becomes rescue|firm) is found again by the firm.
@@ -184,11 +176,7 @@ func setup(state, loader) -> void:
 	_dirty = true
 	# A setup() after the first is a load: the discarded game's open rows and refusal go with it, as sector_panel's do.
 	_last_refusal = ""
-	_open_sector = ""
-	_open_firm = ""
-	_open_body = ""
 	_open_ledger = ""
-	_focus_verb = ""
 	_refocus = []
 	_pick = ""
 	_pick_firm = ""
@@ -238,7 +226,7 @@ func _process(_delta: float) -> void:
 func _move_today() -> void:
 	_built_day = int(_state.day)
 	var today := (float(_state.day) - 1.0) / float(DateText.days_in(int(_state.month), int(_state.year)))
-	for bar in _body.find_children("*", "Control", true, false):
+	for bar in _body.find_children("*", "Control", true, false):  # i18n: ok a class name
 		if bar is TimelineBar:
 			bar.today = today
 			bar.queue_redraw()
@@ -289,12 +277,6 @@ func _refresh() -> void:
 	_title = SectorsOverview.charts(_body, _state, _loader, ns, tab)
 	_build_ledger(ns)
 	SectorsDecision.build(self, _side, picked)
-	# A Needs you row's route (sectors_shell.open_firm) also opens its firm's card, under the
-	# sheet; named "waiting" only while a question of the sector's still stands.
-	if _open_sector != "":
-		if SectorNeeds.items(_state, _loader, ns).any(func(i) -> bool: return String(i["sector"]) == _open_sector):
-			PanelKit.heading(_side, tr("Waiting on you in %s") % Labels.sector(_open_sector)).set_meta("routed_heading", _open_sector)
-		IndustryCard.build(self, _side, ns, _open_sector)
 	_restore_focus()
 
 	if _pin_bottom:
@@ -426,13 +408,10 @@ func _act(ns, company, action) -> void:
 	FirmCommands.run(self, ns, company, action)
 
 
-## Opens `key` in the slot named `field` (a card, a firm, a body list, the ledger),
-## or closes it when it is already open; a firm opened or closed drops the focus.
+## Opens `key` in the slot named `field` (the ledger), or closes it when it is already open.
 func _toggle(field: String, key: String, meta := "") -> void:
 	set(field, "" if String(get(field)) == key else key)
-	if field == "_open_firm":
-		_focus_verb = ""
-	_refocus = [meta if meta != "" else {"_open_sector": "sector", "_open_firm": "company_id"}.get(field, ""), key]
+	_refocus = [meta, key]
 	_dirty = true
 
 

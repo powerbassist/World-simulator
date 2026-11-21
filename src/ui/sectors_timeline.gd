@@ -113,7 +113,7 @@ static func rows(state, loader, ns) -> Array:
 			"title": Strings.row_name("investment-actions", stops[at]["action"]), "sub": Strings.t("the sector's programme"),
 			"ends": -1, "due": -1, "style": TimelineBar.RUNNING, "waits": false, "then": "", "bad": "",
 			"money": Strings.t("%s a year, running") % EffectsStrip.sum_text(-SectorProgramme.price(state, loader, ns, stops, String(sector), at)),
-			"source": {}})
+			"source": {"action": stops[at]["action"]}})
 	out.sort_custom(_sooner)
 	return out
 
