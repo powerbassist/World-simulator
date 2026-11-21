@@ -339,6 +339,20 @@ static func same_width(buttons: Array) -> void:
 		(b as Control).custom_minimum_size.x = widest
 
 
+## G3 S2: buttons that answer one question but sit in different rows (the Diary's matrix: See
+## them, Call, Delegate, Decline) take ONE class, the one their longest label needs -- a group
+## without a flow. Re-read on every call from each button's own minimum, so a redraw with other
+## labels steps the class up or down (RECORD H10 on same_width: no stale width survives).
+static func same_class(buttons: Array) -> void:
+	var widest := 0.0
+	for b in buttons:
+		(b as Button).custom_minimum_size = (b as Button).get_meta(OWN_MIN_META, Vector2.ZERO)
+		widest = maxf(widest, (b as Button).get_combined_minimum_size().x)
+	var size := class_for(widest)
+	for b in buttons:
+		_classed(b, size, BTN_H)
+
+
 ## Caption left, value right, the value carrying the tone. The single commonest
 ## shape in this interface: eleven panels build it, and until now each built it
 ## itself.

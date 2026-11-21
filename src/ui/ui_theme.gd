@@ -75,6 +75,10 @@ const PANE_TINT := Color(0.051, 0.067, 0.082, 0.64)  ## #0D1115 at 64 %
 const PANE_BACKDROP_GAIN := 0.6
 const PANE_RIM := Color(1, 1, 1, 0.13)
 const PANE_SOLID := Color(0.051, 0.067, 0.082, 0.92) ## a pane with Glass off
+## G3 S2: a multi-day event in the Diary (a visit's trip), drawn by diary_band.gd.
+const BAND := Color("#1E252B")          ## the capsule
+const BAND_RAIL := Color("#77818A")     ## its travel line
+const BAND_MEETING := Color("#3B444C")  ## its meeting-day pill
 ## BUREAU's names, as the G3 surface each became (see the header).
 const HULL := SHEET
 const SLATE := CONTROL

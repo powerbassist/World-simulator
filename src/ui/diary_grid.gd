@@ -36,6 +36,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const DiaryDay = preload("res://src/ui/diary_day.gd")
+const Band = preload("res://src/ui/diary_band.gd")
 const Furniture = preload("res://src/ui/diary_furniture.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
@@ -88,6 +89,9 @@ var _later: Button
 var armed := {}
 ## The armed person's window, read once a render: the days and why one is refused.
 var _armed_dates: Array = []
+## G3 S2: the day just booked, {abs month, day, person id}, whose appointment drains from the
+## accent once (`played`) and keeps its check until the next booking.
+var _fresh := {}
 
 
 func _init() -> void:
@@ -111,7 +115,7 @@ func _ready() -> void:
 	back.pressed.connect(page_by.bind(-1))
 	head.add_child(back)
 	_title = Label.new()
-	_title.theme_type_variation = UiTheme.LEAD
+	_title.theme_type_variation = UiTheme.FIGURE  # G3: the month's name at the figure size
 	_title.custom_minimum_size.x = 150.0 * UiTheme.text_scale()
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	head.add_child(_title)
@@ -130,6 +134,7 @@ func _ready() -> void:
 	Furniture.legend(self)
 	var names := GridContainer.new()
 	names.columns = 7
+	names.add_theme_constant_override("h_separation", int(DiaryDay.GAP * UiTheme.text_scale()))
 	add_child(names)
 	for wd in WEEKDAYS:
 		var label := Label.new()
@@ -137,10 +142,11 @@ func _ready() -> void:
 		label.theme_type_variation = UiTheme.CAPTION
 		label.custom_minimum_size.x = DiaryDay.SIZE.x * UiTheme.text_scale()
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		names.add_child(label)
 	_days = GridContainer.new()
 	_days.columns = 7
+	for sep in ["h_separation", "v_separation"]:
+		_days.add_theme_constant_override(sep, int(DiaryDay.GAP * UiTheme.text_scale()))
 	add_child(_days)
 	_next_strip = HFlowContainer.new()
 	_next_strip.name = "NextMonth"  # i18n: ok a node name, found by tests
@@ -243,7 +249,7 @@ func _render() -> void:
 		return
 	_drawn_day = int(_state.day)
 	var ym := _shown()
-	_title.text = DateText.month_year(ym.y, ym.x)
+	_title.text = DateText.month_long_year(ym.y, ym.x)
 	for child in _days.get_children():
 		_days.remove_child(child)
 		child.queue_free()
@@ -252,24 +258,41 @@ func _render() -> void:
 	# Monday-first: the engine's weekday is 0 for Sunday.
 	var first: int = (int(Time.get_datetime_dict_from_unix_time(int(Time.get_unix_time_from_datetime_dict(
 		{"year": ym.x, "month": ym.y, "day": 1, "hour": 0, "minute": 0, "second": 0})))["weekday"]) + 6) % 7
+	# G3 S2: whole weeks -- the days before the 1st and after the last, out of the month.
+	var before := Vector2i(ym.x - (1 if ym.y == 1 else 0), 12 if ym.y == 1 else ym.y - 1)
+	var before_len := Calendar.days_in_month(before.x, before.y)
 	for i in first:
-		var gap := Control.new()
-		gap.custom_minimum_size = DiaryDay.SIZE * UiTheme.text_scale()
-		gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		_days.add_child(gap)
+		_outside(before_len - first + 1 + i, before.y, i == 0)
 	var is_now := _month_abs == _now()
 	var trips: Array = Calendar.day_cells(_state, ym.x, ym.y)
-	var bands := _bands(trips, entries, first)
+	var bands := Band.bands(trips, entries, first)
+	var who := String(armed.get("person", ""))
+	var place := tr("See %s") % who.get_slice(" ", who.get_slice_count(" ") - 1)
 	for d in range(1, Calendar.days_in_month(ym.x, ym.y) + 1):
 		var cell := DiaryDay.new()
 		cell.name = "Day_%d" % d
 		cell.day = d
+		cell.caption = DateText.day_mon(1, ym.y) if d == 1 else ""
 		cell.today = is_now and d == int(_state.day)
 		cell.selected = d == _selected
 		cell.band = bands.has(d)
-		cell.band_label = String(bands.get(d, ""))
+		if cell.band:
+			var b: Dictionary = bands[d]
+			cell.band_label = String(b["label"])  # i18n: row-ok the band's words, worded in diary_band.gd
+			cell.band_key = String(b["key"])
+			cell.band_left = String(b["left"])
+			cell.band_right = String(b["right"])
+			cell.band_leg = String(b["leg"])
+			cell.band_meeting = bool(b["meeting"])
+			cell.band_name = _band_name(bands, d)
+			cell.band_picked = cell.band_meeting and d == _selected
+			cell.band_hover.connect(_light_trip)
 		# Only a day that books takes the tint: a taken day of the window read as free (#431 R10).
 		cell.tinted = offered.has(d) and bool((offered[d][0]["date"] as Dictionary).get("free", false))
+		cell.offer = place if cell.tinted else ""
+		cell.taken = Strings.t(String((offered[d][0]["date"] as Dictionary).get("reason", ""))) if offered.has(d) and not cell.tinted else ""  # i18n: row-ok the sim's reason, its English the msgid
+		cell.fresh = not _fresh.is_empty() and int(_fresh["at"]) == _month_abs and int(_fresh["day"]) == d
+		cell.fresh_person = String(_fresh.get("person", ""))
 		var texts := PackedStringArray()
 		cell.entries = entries.get(d, [])
 		for e in cell.entries:
@@ -283,48 +306,43 @@ func _render() -> void:
 		cell.picked.connect(_on_day)
 		_days.add_child(cell)
 		cell.fill()
+		if cell.fresh and not bool(_fresh.get("played", false)):
+			_fresh["played"] = true
+			cell.play_fresh()
+	var after := 1
+	while _days.get_child_count() % 7 != 0:
+		_outside(after, 1 if ym.y == 12 else ym.y + 1, after == 1)
+		after += 1
 	_render_furniture(ym)
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 	_armed_label.text = armed_line()
 	_armed_label.visible = _armed_label.text != ""
 
 
-## Day -> the band's label, for every day a visit's trip covers (its journey and its meeting):
-## one plain band per trip, its label (the host's name, or "Travel" when the meeting is in
-## another month) on the run's first day and again on a Monday, where the band starts a row.
-func _bands(trips: Array, entries: Dictionary, first: int) -> Dictionary:
-	var out := {}
-	var d := 1
-	while d <= trips.size():
-		if not _on_trip(trips, d):
-			d += 1
-			continue
-		var start := d
-		var key := String(trips[d - 1]["key"])
-		var label := tr("Travel")
-		# Only a journey day, or a meeting with a journey beside it: an appointment the day after a
-		# trip ends is not part of its band (pass 1 on #434).
-		# One trip's days only: a second trip out the day after the first ends is its own band.
-		while d <= trips.size() and _on_trip(trips, d) and String(trips[d - 1]["key"]) == key:
-			if bool(trips[d - 1]["meeting"]):
-				for e in entries.get(d, []):
-					if String(e["mark"]) == "booking":
-						label = String(e.get("short", e["text"]))
-			d += 1
-		for day in range(start, d):
-			out[day] = label if day == start or (first + day - 1) % 7 == 0 else ""
-	return out
+## A day out of the shown month: dated ("23 Feb" on the grid's first tile and a month's 1st), inert.
+func _outside(d: int, month: int, named: bool) -> void:
+	var cell := DiaryDay.new()
+	cell.name = "Out_%d_%d" % [month, d]  # i18n: ok a node name
+	cell.outside = true
+	cell.day = d
+	cell.caption = DateText.day_mon(d, month) if named else ""
+	_days.add_child(cell)
+	cell.fill()
 
 
-func _on_trip(trips: Array, d: int) -> bool:
-	# A journey day, or a meeting whose journey (the same act's key) lies beside it.
-	var c: Dictionary = trips[d - 1]
-	if bool(c["travel"]):
-		return true
-	for n in [d - 2, d]:
-		if bool(c["meeting"]) and n >= 0 and n < trips.size() and bool(trips[n]["travel"]) and String(trips[n]["key"]) == String(c["key"]):
-			return true
-	return false
+## The trip's name on its meeting pill: the run's label, read back from its first day.
+func _band_name(bands: Dictionary, d: int) -> String:
+	while d > 1 and bands.has(d - 1) and String(bands[d - 1]["key"]) == String(bands[d]["key"]) and String(bands[d]["label"]) == "":  # i18n: row-ok the band's words, worded in diary_band.gd
+		d -= 1
+	return String(bands[d]["label"])  # i18n: row-ok the band's words, worded in diary_band.gd
+
+
+## The pointer on one day of a trip lights every day of it, every row; leaving it, none.
+func _light_trip(key: String, on: bool) -> void:
+	for cell in _days.get_children():
+		if cell is DiaryDay and cell.band and cell.band_key == key and cell.band_hot != on:
+			cell.band_hot = on
+			cell.queue_redraw()
 
 
 ## The counters and next month's strip, off the same reads as the cells.
@@ -338,14 +356,14 @@ func _render_furniture(ym: Vector2i) -> void:
 		var at := int(e["year"]) * 10000 + int(e["month"]) * 100 + int(e["day"])
 		if String(e["mark"]) == "booking" and at > today and (soonest.is_empty() or at < int(soonest["at"])):
 			soonest = e.merged({"at": at})
-	_next[0].text = DateText.day_month(int(soonest["day"]), int(soonest["month"])) if not soonest.is_empty() else PanelKit.MISSING
+	_next[0].text = DateText.day_mon(int(soonest["day"]), int(soonest["month"])) if not soonest.is_empty() else PanelKit.MISSING
 	# The short words, as a cell's: the full line in a caption that does not wrap widened the grid.
 	_next[1].text = String(soonest.get("short", soonest.get("text", tr("next"))))  # i18n: row-ok the grid's words
 	var due := -1
 	for row in Audiences.pending(ns):
 		due = Audiences.answer_by(row) if due < 0 else mini(due, Audiences.answer_by(row))
 	var y := floori((due - 1) / 12.0)
-	_due[0].text = DateText.day_month(Calendar.days_in_month(y, due - y * 12), due - y * 12) if due > 0 else PanelKit.MISSING
+	_due[0].text = DateText.day_mon(Calendar.days_in_month(y, due - y * 12), due - y * 12) if due > 0 else PanelKit.MISSING
 	_due[1].text = tr("first answer-by")
 	_due[1].theme_type_variation = UiTheme.WARN_TEXT if due > 0 else UiTheme.CAPTION
 	var next := Vector2i(ym.x + (1 if ym.y == 12 else 0), 1 if ym.y == 12 else ym.y + 1)
@@ -368,6 +386,7 @@ func _on_day(d: int) -> void:
 		_pick(d)
 		return
 	var target := armed
+	_fresh = {"at": _month_abs, "day": d, "person": String(target.get("person_id", ""))}
 	# arm() redraws: a refused summons leaves no stale tint, so no second click books on an
 	# empty target (pass 2 TAKE 4).
 	arm({})

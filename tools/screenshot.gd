@@ -127,6 +127,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn --books-sheet
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-about --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diary-booked   (G3 S2: the first request booked by a click on a free day, its appointment fresh)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --summon --open calendar   (the month page: a summons booked, the cap spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --request --open calendar --diary-page 2   (the month page two months on: a visit's travel)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
@@ -448,6 +449,8 @@ var _request := ""
 var _summon := false
 ## --diary-page N: the Diary's grid paged N months on after it opens.
 var _diary_page := 0
+## G3 S2, --diary-booked: --request-book, then a click on a free day a few days on books it (fresh).
+var _diary_booked := false
 ## V5.3 screen 3: --file event | request opens the docked file page (--file request needs --request).
 var _file := ""
 ## --folder-file event | request | decided | news: the Folder tab (--briefing crowded) on that file's page,
@@ -1235,6 +1238,9 @@ func _init() -> void:
 			_summon = true
 		elif args[i] == "--diary-page" and i + 1 < args.size():
 			_diary_page = int(args[i + 1])
+		elif args[i] == "--diary-booked":
+			_diary_booked = true
+			_request = "--request-book"
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
 		elif args[i] == "--folder-file" and i + 1 < args.size():
@@ -2809,6 +2815,13 @@ func _stage_requests() -> void:
 			if String(row.get("id", "")) == String(first["id"]):
 				row["offer"] = {"currency": String(currencies[0]), "amount_eur_m": 1.0}
 	Driver._open_booking(_main, String(first["id"]))
+	if _diary_booked:
+		var grid = _main._calendar_panel._grid
+		for date in Audiences.offered_dates(_main._state, ns, String(first["id"])):
+			if bool(date["free"]) and int(date["day"]) >= int(_main._state.day) + 4:
+				grid.show_month(int(date["year"]), int(date["month"]))
+				grid._on_day(int(date["day"]))
+				break
 	if _request != "--audience":
 		return
 	for date in Audiences.offered_dates(_main._state, ns, String(first["id"])):

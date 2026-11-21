@@ -21,6 +21,23 @@ const LONG: Array[String] = [
 ]
 
 
+## G3's short form (g3-spec.md decision 4: "3 Mar", no capitals, no slashes).
+const SHORT_CASED: Array[String] = [
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun",  # i18n: msgid
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",  # i18n: msgid
+]
+
+
+## "3 Mar": G3's short date (the Diary's first; the rest of the screens move slice by slice).
+static func day_mon(day: int, month_number: int) -> String:
+	return "%d %s" % [day, Strings.t(SHORT_CASED[clampi(month_number, 1, 12) - 1])]
+
+
+## "March 2026": G3's month title.
+static func month_long_year(month_number: int, year: int) -> String:
+	return "%s %d" % [month_long(month_number), year]
+
+
 ## The three-letter name of month 1-12 in the current language ("JAN", "JANV").
 static func month(month_number: int) -> String:
 	return Strings.t(SHORT[clampi(month_number, 1, 12) - 1])

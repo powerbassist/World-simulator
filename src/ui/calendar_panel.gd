@@ -91,10 +91,8 @@ func _ready() -> void:
 	PanelKit.padded(self, 16, 10).add_child(page)
 	# The month page (picture A): the grid and everything under it on the left, the people who
 	# want to see the president, and his own reach, on the right.
-	var root := VBoxContainer.new()
+	var root := PanelKit.sheet(page)  # G3 S2: the month is one sheet
 	root.add_theme_constant_override("separation", 10)
-	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	page.add_child(root)
 	page.add_child(people)
 
 	# Outside the scroll, and that is the point. A new game's next twelve months

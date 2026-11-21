@@ -35,9 +35,10 @@ const WIDTH := 410.0
 const TOKEN := Vector2(76, 82)
 const FACE := Vector2(44, 58)
 ## px at text size 100 %: the matrix's columns -- the verb, then a day, rapport, odds, learn.
-const COLUMNS := [86.0, 44.0, 132.0, 58.0, 44.0]
+const COLUMNS := [128.0, 44.0, 126.0, 58.0, 44.0]  # the verb's column holds class M (G3 S2)
 
 var _tokens: HFlowContainer
+var _head: Label
 var _file: VBoxContainer
 var _file_plate: PanelContainer
 ## show_rows()'s last arguments: a token's click redraws the file from them.
@@ -73,15 +74,18 @@ func _input(event: InputEvent) -> void:
 
 func _ready() -> void:
 	custom_minimum_size.x = WIDTH * UiTheme.text_scale()
+	# G3 S2: one job per sheet -- who wants to see you, the open file, your own reach.
+	var who := PanelKit.sheet(self)
 	var head := Label.new()
+	_head = head
 	head.name = "Waiting"  # i18n: ok a node name, found by tests
 	head.theme_type_variation = UiTheme.MICRO
-	add_child(head)
+	who.add_child(head)
 	# A flow: six waiting people wrap to a second row rather than widen the column past the dock.
 	_tokens = HFlowContainer.new()
 	_tokens.add_theme_constant_override("h_separation", 4)
 	_tokens.add_theme_constant_override("v_separation", 4)
-	add_child(_tokens)
+	who.add_child(_tokens)
 	_file_plate = PanelContainer.new()
 	_file_plate.theme_type_variation = UiTheme.PLATE
 	add_child(_file_plate)
@@ -134,7 +138,7 @@ func show_rows(rows: Array, people: Array, summoned: Array, free: bool, armed: D
 	if _tokens == null:
 		return
 	_last = [rows, people, summoned, free, armed]
-	(get_node("Waiting") as Label).text = tr_n("%d wants to see you", "%d want to see you", rows.size()) % rows.size() \
+	_head.text = tr_n("%d wants to see you", "%d want to see you", rows.size()) % rows.size() \
 		if not rows.is_empty() else tr("Nobody is waiting to see you")
 	var armed_id := "" if bool(armed.get("summons", false)) else String(armed.get("id", ""))
 	if armed_id != "" and armed_id != _armed_was:
@@ -228,6 +232,8 @@ func _token(row: Dictionary) -> void:
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var ring := Ring.new()
 	ring.frac = float(row.get("frac", 1.0))
+	var last := int(row.get("left", 0)) <= 1
+	ring.last = last
 	ring.custom_minimum_size = Vector2(44, 44) * s
 	ring.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -237,9 +243,9 @@ func _token(row: Dictionary) -> void:
 	ring.add_child(face)
 	face.position = (Vector2(44, 44) - Vector2(26, 34)) * s / 2.0
 	for text in [String(row["person"]).get_slice(" ", String(row["person"]).get_slice_count(" ") - 1),
-			tr_n("%d day", "%d days", int(row.get("left", 0))) % int(row.get("left", 0))]:
+			tr("today") if last else tr_n("%d day", "%d days", int(row.get("left", 0))) % int(row.get("left", 0))]:
 		var label := Label.new()
-		label.theme_type_variation = UiTheme.CAPTION if box.get_child_count() == 1 else UiTheme.WARN_TEXT
+		label.theme_type_variation = UiTheme.CAPTION if box.get_child_count() == 1 else (UiTheme.BAD_TEXT if last else UiTheme.WARN_TEXT)
 		label.text = text  # i18n: row-ok a name, or a count already worded
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.clip_text = true
@@ -285,6 +291,9 @@ func _show_file(row: Dictionary, armed: bool) -> void:
 		["●", tr("▲ up"), tr("full"), "●"], tr("Now click a free day on the calendar.") if armed else String(row.get("until", "")))
 	see.toggle_mode = true
 	see.button_pressed = armed
+	# Armed, it is the screen's one main action: the accent fill (g3-spec.md, the button states).
+	if armed:
+		see.theme_type_variation = UiTheme.PRIMARY
 	see.pressed.connect(func() -> void: see_requested.emit(id))
 	var call := _verb(id, "Call", tr("Call"), row.get("call", {}),  # i18n: ok a node-name key
 		["○", tr("▲ if it lands"), "−%d" % roundi(LeverK.CALL_ODDS_PENALTY * 100.0), "○"], tr("no day used; one call a month"))
@@ -303,7 +312,7 @@ func _show_file(row: Dictionary, armed: bool) -> void:
 	var decline := _verb(id, "Decline", tr("Decline"), row.get("decline", {}),  # i18n: ok a node-name key
 		["○", tr("▼ a grudge"), PanelKit.MISSING, "○"], price)
 	decline.pressed.connect(func() -> void: decline_requested.emit(id))
-	PanelKit.same_width([see, call, delegate, decline])
+	PanelKit.same_class([see, call, delegate, decline])
 
 
 ## One verb's row of the matrix and its note under it; a refused verb stays, disabled, its
@@ -350,12 +359,16 @@ func _cells(parent: Control, lead: Button, texts: Array, tone: PanelKit.Tone) ->
 
 
 ## The ring of a token: the share of the window left, in the attention tone, on an EDGE track.
+## G3 S2: the track LINE_STRONG; on the last day the arc is BAD and never shorter than a sliver,
+## so the ring does not read empty beside "today" (RECORD from #434's pass 1).
 class Ring extends Control:
 	var frac := 1.0
+	var last := false
 
 	func _draw() -> void:
 		var c := size / 2.0
 		var r := minf(size.x, size.y) / 2.0 - 2.0
-		draw_arc(c, r, 0.0, TAU, 48, UiTheme.EDGE, 3.0, true)
-		if frac > 0.0:
-			draw_arc(c, r, -PI / 2.0, -PI / 2.0 + TAU * clampf(frac, 0.0, 1.0), 48, UiTheme.WARN, 3.0, true)
+		draw_arc(c, r, 0.0, TAU, 48, UiTheme.LINE_STRONG, 3.0, true)
+		var share := maxf(frac, 0.08) if last else frac
+		if share > 0.0:
+			draw_arc(c, r, -PI / 2.0, -PI / 2.0 + TAU * clampf(share, 0.0, 1.0), 48, UiTheme.BAD if last else UiTheme.WARN, 3.0, true)
