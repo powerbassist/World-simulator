@@ -51,7 +51,11 @@ static func wire(main, game: Dictionary, open_booking: Callable, answer: Callabl
 				if bool(d["free"]):
 					result = Audiences.summon(main._state, ns, main._loader, pid, d)
 					break
-		answer.call(String((result.get("request", {}) as Dictionary).get("id", "")), result))
+		if bool(result.get("ok", false)):
+			answer.call(String((result["request"] as Dictionary).get("id", "")), result)
+		else:
+			main._hud.inbox.push(Strings.t("The summons"), Strings.t(String(result.get("error", ""))))  # i18n: row-ok the sim's refusal
+			refresh.call())
 	grid.armed_changed.connect(func() -> void: refresh.call())
 
 
@@ -99,7 +103,7 @@ static func show(main, rows: Array) -> void:
 			summoned.append({"id": String(row["id"]), "person": loader.person_name(String(row["person_id"])),
 				"when": DateText.day_month_year(int(d["day"]), int(d["month"]), int(d["year"]))})
 	var now := int(state.year) * 12 + int(state.month)
-	var free: bool = not ns.audience_summoned_month.values().any(func(m) -> bool: return int(m) == now)
+	var free: bool = ns.audience_summoned_month.values().filter(func(m) -> bool: return int(m) == now).size() < AudienceK.SUMMONS_PER_MONTH
 	main._calendar_panel.people.show_rows(rows, reach, summoned, free, main._calendar_panel._grid.armed)
 
 

@@ -92,7 +92,7 @@ func _line(e: Dictionary) -> void:
 		lead = Mark.new()
 		(lead as Mark).kind = String(e["mark"])
 	lead.custom_minimum_size = Vector2(LEAD * s, FACE.y * s)
-	lead.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ignore_mouse(lead)
 	row.add_child(lead)
 	var label := Label.new()
 	label.theme_type_variation = UiTheme.CAPTION if String(e["mark"]) == "" else UiTheme.CHIP_TEXT
@@ -102,6 +102,15 @@ func _line(e: Dictionary) -> void:
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(label)
+
+
+## A face's inner control stops the mouse by default: a press on it would never reach the cell
+## (a dead click) and would not count as the day in hand (pass 1 on #434).
+static func ignore_mouse(node: Node) -> void:
+	if node is Control:
+		(node as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		ignore_mouse(child)
 
 
 func _notification(what: int) -> void:

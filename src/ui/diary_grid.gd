@@ -296,14 +296,14 @@ func _bands(trips: Array, entries: Dictionary, first: int) -> Dictionary:
 	var out := {}
 	var d := 1
 	while d <= trips.size():
-		var c: Dictionary = trips[d - 1]
-		var on_trip: bool = bool(c["travel"]) or (bool(c["meeting"]) and ((d > 1 and bool(trips[d - 2]["travel"])) or (d < trips.size() and bool(trips[d]["travel"]))))
-		if not on_trip:
+		if not _on_trip(trips, d):
 			d += 1
 			continue
 		var start := d
 		var label := tr("Travel")
-		while d <= trips.size() and (bool(trips[d - 1]["travel"]) or bool(trips[d - 1]["meeting"])):
+		# Only a journey day, or a meeting with a journey beside it: an appointment the day after a
+		# trip ends is not part of its band (pass 1 on #434).
+		while d <= trips.size() and _on_trip(trips, d):
 			if bool(trips[d - 1]["meeting"]):
 				for e in entries.get(d, []):
 					if String(e["mark"]) == "booking":
@@ -312,6 +312,17 @@ func _bands(trips: Array, entries: Dictionary, first: int) -> Dictionary:
 		for day in range(start, d):
 			out[day] = label if day == start or (first + day - 1) % 7 == 0 else ""
 	return out
+
+
+func _on_trip(trips: Array, d: int) -> bool:
+	# A journey day, or a meeting whose journey (the same act's key) lies beside it.
+	var c: Dictionary = trips[d - 1]
+	if bool(c["travel"]):
+		return true
+	for n in [d - 2, d]:
+		if bool(c["meeting"]) and n >= 0 and n < trips.size() and bool(trips[n]["travel"]) and String(trips[n]["key"]) == String(c["key"]):
+			return true
+	return false
 
 
 ## The counters and next month's strip, off the same reads as the cells.

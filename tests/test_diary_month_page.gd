@@ -113,6 +113,14 @@ func _check_cards() -> void:
 		# The matrix row: four cells beside the verb (a day, rapport, odds, learn).
 		if b.get_parent().get_parent().get_child_count() != 5:
 			_fail("%s's matrix row has %d cells, not 5" % [verb, b.get_parent().get_parent().get_child_count()])
+	# Pass 1 on #434: nothing inside a token stops the mouse, so a press on the face presses it.
+	var token := people.find_child("Token_%s" % _request, true, false) as Control
+	if token == null:
+		_fail("the waiting request has no token")
+	for node in (token.find_children("*", "Control", true, false) if token != null else []):
+		if (node as Control).mouse_filter != Control.MOUSE_FILTER_IGNORE:
+			_fail("%s inside the token stops the mouse: a press on it is a dead click" % node.name)
+			break
 	# One width for the four answers (the author, 2026-11-21: buttons sized by their text "incongru").
 	var widths := {}
 	for verb in ["See", "Call", "Delegate", "Decline"]:

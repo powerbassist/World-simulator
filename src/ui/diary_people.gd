@@ -28,6 +28,7 @@ const MoodBadge = preload("res://src/ui/mood_badge.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const AudienceK = preload("res://src/sim/audience_constants.gd")
 const LeverK = preload("res://src/sim/lever_constants.gd")
+const DiaryDay = preload("res://src/ui/diary_day.gd")
 
 ## px at text size 100 %: the column beside the grid, a token, the file's face.
 const WIDTH := 410.0
@@ -220,7 +221,7 @@ func _token(row: Dictionary) -> void:
 	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(ring)
 	var face: Control = Portrait.framed_for(String(row["person_id"]), Vector2(26, 34) * s)
-	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	DiaryDay.ignore_mouse(face)
 	ring.add_child(face)
 	face.position = (Vector2(44, 44) - Vector2(26, 34)) * s / 2.0
 	for text in [String(row["person"]).get_slice(" ", String(row["person"]).get_slice_count(" ") - 1),

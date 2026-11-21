@@ -203,6 +203,9 @@ func _check_travel_days() -> void:
 	var at := _month(4)
 	var visit := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), 14, "state_visit", "DEU", "", "", "", "", 2)
 	state.appointments.append(visit)
+	# Pass 1 on #434: an appointment the day after the trip ends is not on its band.
+	var after := Calendar.make_entry(K.KIND_RESHUFFLE, int(at["year"]), int(at["month"]), 17, "", "", "", "interior", "")
+	state.appointments.append(after)
 	_main._calendar_panel._refresh()
 	_grid.show_month(int(at["year"]), int(at["month"]))
 	# One band across the trip (the parent, 2026-11-21): the journey's days and the meeting, the
@@ -217,6 +220,9 @@ func _check_travel_days() -> void:
 	for d in [13, 14, 15, 16]:
 		if _cell(d) != null and String(_cell(d).band_label) != "" and _grid._days.get_children().find(_cell(d)) % 7 != 0:
 			_fail("the band repeats its label on day %d, mid-row" % d)
+	if _cell(17) != null and bool(_cell(17).band):
+		_fail("the appointment the day after the trip joined its band")
+	state.appointments.erase(after)
 	state.appointments.erase(visit)
 	_main._calendar_panel._refresh()
 
