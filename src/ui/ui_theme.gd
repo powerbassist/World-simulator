@@ -94,8 +94,12 @@ const R_POPOVER := 14
 const GAP_PANE := 12   ## between panes, between sheets, from the screen's edge
 const PAD_PANE := 12   ## inside a pane, left and right
 ## Shadows: the pictures' CSS blur radii, retuned in a real window (StyleBoxFlat falls off sooner).
-const ELEV_SHEET := [Color(0, 0, 0, 0.40), Vector2(0, 6), 14]   # colour, offset, size
-const ELEV_PANE := [Color(0, 0, 0, 0.40), Vector2(0, 10), 24]
+## Elevation C, "Contact" (the author's pick, 2026-11-21, elevation/notes.md): a 3 px shadow just
+## under a sheet and a faint rim all round. The soft 14 px halo was wider than the 12 px gap it sat
+## in and dimmed the map G3 shows between sheets; the rim holds a sheet's edge over open sea.
+const ELEV_SHEET := [Color(0, 0, 0, 0.30), Vector2(0, 2), 3]   # colour, offset, size
+const SHEET_RIM := Color(1, 1, 1, 0.08)
+const ELEV_PANE := [Color(0, 0, 0, 0.35), Vector2(0, 2), 4]
 const ELEV_POPOVER := [Color(0, 0, 0, 0.45), Vector2(0, 8), 18]
 
 ## The map's own mark for what is NOT the player's: another nation's city, project
@@ -155,6 +159,10 @@ const HEADLINE := "Headline"  ## a front page's headline at display size (R15)  
 const HERO := "Hero"                 ## the portrait card's approval, and only it  # i18n: ok
 const FIGURE_LABEL := "FigureLabel"  ## the caption above a large number
 const CAPTION := "Caption"           ## dim secondary text  # i18n: ok
+## G3 S1: the same two on a glass pane, in TEXT_DIM_CHROME (the tint under them is darker than a
+## sheet, so the dim of a sheet would read too faint on it).
+const MICRO_CHROME := "MicroChrome"
+const CAPTION_CHROME := "CaptionChrome"
 const GOOD_TEXT := "GoodText"        ## a delta that is good news
 const BAD_TEXT := "BadText"          ## a delta that is bad news
 const WARN_TEXT := "WarnText"        ## something waits on the player (V5.1-d1b3: why the clock holds)
@@ -172,6 +180,9 @@ const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
 const PLATE := "Plate"                    ## a SHEET (G3): opaque, borderless, one job  # i18n: ok
 const PANE := "Pane"                      ## a glass pane of the chrome (PanelKit.pane)  # i18n: ok
 const TILE_PANEL := "TilePanel"           ## a tile inside a sheet
+## G3 S1: a container that draws nothing -- a panel's root on its tab's sheet, and the page of a
+## panel that lays out its own sheets on the map (window_manager.gd OWN_SHEETS).
+const BARE := "Bare"                      # i18n: ok
 const POPOVER_PANEL := "PopoverPanel"     ## a tooltip or a menu: opaque, never blurred
 const GHOST := "Ghost"                    ## a quiet link-like action: no fill until hovered  # i18n: ok
 const PLATE_FOLDED := "PlateFolded"       ## a plate whose primary action is below the fold
@@ -372,6 +383,8 @@ static func _panels(theme: Theme) -> void:
 	# the accent never, because it is reserved for what marks where you are. The margins
 	# stay BUREAU's in S0 -- PAD_SHEET comes with S1's widths, so no screen re-lays here.
 	var sheet := _flat(SHEET, R_SHEET, ELEV_SHEET)
+	sheet.set_border_width_all(1)
+	sheet.border_color = SHEET_RIM
 	sheet.content_margin_left = 10
 	sheet.content_margin_right = 10
 	sheet.content_margin_top = 8
@@ -385,11 +398,14 @@ static func _panels(theme: Theme) -> void:
 	# "No state programme" over a live bill at V1.6e). The accent keeps one meaning under
 	# this: it marks what you are being sent to.
 	var folded := sheet.duplicate()
+	# One border colour per StyleBoxFlat: the fold's accent edge replaces the rim, not adds to it.
+	folded.set_border_width_all(0)
 	folded.border_width_bottom = 2
 	folded.border_color = _accent
 	_variation(theme, PLATE_FOLDED, folded)
 
 	_variation(theme, TILE_PANEL, _flat(TILE, R_TILE))
+	_variation(theme, BARE, StyleBoxEmpty.new())
 
 	# A tooltip or a menu: opaque, so it never reads the screen and never needs a second
 	# copy of it; the pane's rim so it lifts off a sheet. The engine's own tooltips too.
@@ -440,7 +456,7 @@ static func _flat(bg: Color, radius: int, elev := []) -> StyleBoxFlat:
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, TITLE, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE, CHIP_TEXT]:
+	for variation in [LEAD, TITLE, HEADING, MICRO, MICRO_CHROME, CAPTION_CHROME, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE, CHIP_TEXT]:
 		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
@@ -460,6 +476,7 @@ static func _labels(theme: Theme) -> void:
 		theme.set_font("font", HEADING, tracked)
 
 	_label(theme, MICRO, SIZE_MICRO, TEXT_DIM, tracked)
+	_label(theme, MICRO_CHROME, SIZE_MICRO, TEXT_DIM_CHROME, tracked)
 
 	# Figures carry the tabular-figures feature so a ticking number stops
 	# shifting its own column every month -- unemployment going 7.33 -> 7.4 used
@@ -476,6 +493,7 @@ static func _labels(theme: Theme) -> void:
 	_label(theme, FIGURE_LABEL, SIZE_SMALL, TEXT_DIM)
 
 	_label(theme, CAPTION, SIZE_SMALL, TEXT_DIM)
+	_label(theme, CAPTION_CHROME, SIZE_SMALL, TEXT_DIM_CHROME)
 
 	theme.set_color("font_color", GOOD_TEXT, GOOD)
 	theme.set_color("font_color", BAD_TEXT, BAD)

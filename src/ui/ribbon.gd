@@ -77,7 +77,7 @@ func _ready() -> void:
 	_cells.resized.connect(func(): _dirty = true)
 	row.add_child(_cells)
 	_title = Label.new()
-	_title.theme_type_variation = UiTheme.MICRO
+	_title.theme_type_variation = UiTheme.MICRO_CHROME
 	_title.position = Vector2(30, LINE_Y + 3)
 	_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cells.add_child(_title)
@@ -90,7 +90,7 @@ func _ready() -> void:
 	row.add_child(_vote_box)
 	var caption := Label.new()
 	caption.text = tr("NEXT VOTE")
-	caption.theme_type_variation = UiTheme.MICRO
+	caption.theme_type_variation = UiTheme.MICRO_CHROME
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_vote_box.add_child(caption)
 	var value_row := HBoxContainer.new()
@@ -102,7 +102,7 @@ func _ready() -> void:
 	_vote_value.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	value_row.add_child(_vote_value)
 	_vote_months = Label.new()
-	_vote_months.theme_type_variation = UiTheme.CAPTION
+	_vote_months.theme_type_variation = UiTheme.CAPTION_CHROME
 	_vote_months.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	value_row.add_child(_vote_months)
 

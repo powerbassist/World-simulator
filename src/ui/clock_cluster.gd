@@ -12,6 +12,7 @@ extends HBoxContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Icon = preload("res://src/ui/icon.gd")
 
 signal pause_toggled
@@ -82,10 +83,9 @@ func _ready() -> void:
 ## would take Space, the pause key, for itself (V5.1-0c's forfeited Agenda).
 func _button(parent: Control, tip: String, glyph) -> Button:
 	var button := Button.new()
-	button.theme_type_variation = UiTheme.SUBROW_BUTTON
 	button.tooltip_text = tip
 	button.focus_mode = Control.FOCUS_NONE
-	button.toggle_mode = true
+	PanelKit.toggle(button)  # G3 S1: the running control is the accent fill (spec section 1)
 	button.custom_minimum_size = Vector2(38, 32)
 	_textures[glyph] = {"dim": Icon.load_icon(GLYPHS[glyph], UiTheme.TEXT_DIM, ICON_PX),
 		"lit": Icon.load_icon(GLYPHS[glyph], UiTheme.TEXT, ICON_PX)}
@@ -129,7 +129,7 @@ func refresh(clock: Node, reason = null) -> void:
 		_pause_button.button_pressed = true
 		_pause_button.icon = _textures["busy"]["lit"]
 		return
-	var date := DateText.weekday_full(clock.day, clock.month, clock.year)
+	var date := DateText.weekday_long(clock.day, clock.month, clock.year)
 	# V4.9a. The clock shows its speed rather than stating it: one beat per
 	# day, so the beats' own rhythm is the speed, and a paused date is dimmed --
 	# still the date, visibly not moving. The dim is state, not motion, so it

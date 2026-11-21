@@ -75,7 +75,7 @@ func build(registered: Array) -> void:
 		_add_link("agenda", tr(Domains.title("agenda")), Domains.icon_path("agenda"))
 	var heading := Label.new()
 	heading.text = tr("DOMAINS")
-	heading.theme_type_variation = UiTheme.MICRO
+	heading.theme_type_variation = UiTheme.MICRO_CHROME
 	_list.add_child(heading)
 	for id in shown:
 		if id != "agenda":

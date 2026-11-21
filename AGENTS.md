@@ -359,13 +359,15 @@ tint over the blurred map (`src/ui/frost.gd`, under `PanelKit.pane()`), a 1px li
 `R_PANE` corners and no shadow (a stylebox's shadow darkens the blur under its own body);
 the "Glass" setting turns the blur off and the panes `PANE_SOLID`, which keep `ELEV_PANE`.
 Nothing else is a pane. The workspace has no pane: its content sits on solid **sheets**
-(`UiTheme.PLATE`, `PanelKit.sheet()`), one job per sheet, `GAP_PANE` apart, with no
-border and a soft shadow; tooltips and menus are opaque popovers that never blur.
-Things are separated by space and by a change of surface; the only line G3 keeps is the
-divider between a table's rows (screens that draw their own lines keep BUREAU's `EDGE`
+(`UiTheme.PLATE`, `PanelKit.sheet()`), one job per sheet, `GAP_PANE` apart, with a
+contact shadow of a few px and a faint `SHEET_RIM` on all four sides (elevation C, the
+author's pick, 2026-11-21: the soft halo was wider than the gap it sat in); tooltips and
+menus are opaque popovers that never blur.
+Things are separated by space and by a change of surface; the only lines G3 keeps are a
+sheet's faint rim and the divider between a table's rows (screens that draw their own lines keep BUREAU's `EDGE`
 until their slice). Text never sits on glass over the map without the
 pane's tint, and never on a sheet that is not opaque. `test_ui_theme.gd` fails a
-sheet that is translucent or bordered, a pane that drops its rim, and a pane that
+sheet that is translucent, without its rim or with a wide shadow, a pane that drops its rim, and a pane that
 still reads the screen with Glass off. The BUREAU hairline on four sides is gone; do
 not bring it back. A toggle that is ON wears the accent fill through its own variation,
 `UiTheme.PICKED` (`PanelKit.toggle()`), because "pressed" is also a plain button held

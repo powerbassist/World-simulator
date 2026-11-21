@@ -196,10 +196,11 @@ func _check_the_bar_after_the_rebuild() -> void:
 	# A clear desk takes no slot (gate H6): stated outright, not through the code's own predicate.
 	if _main._state.player().event_queue.is_empty() and bar.figure_box("desk").visible:
 		_fail("an empty desk still shows its '— clear' chip on the strip")
-	# The date carries its weekday (DateText.weekday_full), the hold line is the cluster's own.
+	# The date carries its weekday, in G3's full form (decision 4: "Tue 3 March 2026", no
+	# capitals, no slashes); the hold line is the cluster's own.
 	var date: String = hud.clock_cluster._date_label.text
-	if not RegEx.create_from_string("^[A-Za-z]{3} \\d{2}/\\d{2}/\\d{4}$").search(date):
-		_fail("the clock's date '%s' is not 'Wed 12/08/2026'" % date)
+	if not RegEx.create_from_string("^[A-Z][a-z]{2} \\d{1,2} [A-Z][a-z]+ \\d{4}$").search(date):
+		_fail("the clock's date '%s' is not 'Tue 3 March 2026'" % date)
 	# Approval's reason went with it: the portrait card's number answers a hover.
 	var label: Label = hud.portrait_card._approval_label
 	label.mouse_entered.emit()
@@ -639,6 +640,14 @@ func _check_three_floating_panes() -> void:
 	hud.sidebar.select("")
 	if hud.sidebar.open_bar() != null:
 		_fail("the accent bar stayed with nothing open")
+	# Design's gate E1 on #439: one sheet per page, no tile-coloured slab inside it; the Diary,
+	# which lays out its own sheets, has no page sheet behind them.
+	if _main._windows.content("finances").theme_type_variation != UiTheme.BARE:
+		_fail("the Finances panel's root draws its own ground on its page: '%s'" % _main._windows.content("finances").theme_type_variation)
+	if _main._windows.frame("finances").theme_type_variation != UiTheme.PLATE:
+		_fail("the Finances page is not one sheet")
+	if not _main._windows.frame("calendar").own_sheets() or _main._windows.frame("calendar").theme_type_variation != UiTheme.BARE:
+		_fail("the Diary's page draws a sheet behind its own sheets")
 	# While the inbox shows over a tab, the workspace ends a gap short of it: nothing under it.
 	if hud.inbox.visible:
 		_main._windows.open("finances")

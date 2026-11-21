@@ -125,6 +125,6 @@ static func booking_name(entry: Dictionary, loader) -> String:
 	return String(entry.get("kind", ""))
 
 
-## The vote's figure: "05/2027", and its count of months.
+## The vote's figure: "May 2027" (G3 decision 4: no slashes), and its count of months.
 static func vote_text(vote: Dictionary) -> String:
-	return "%02d/%d" % [int(vote["month"]), int(vote["year"])]
+	return DateText.month_long_year(int(vote["month"]), int(vote["year"]))

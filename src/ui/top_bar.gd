@@ -169,7 +169,7 @@ func _build_figure(key: String, title: String) -> Control:
 
 	var label := Label.new()
 	label.text = title.to_upper()
-	label.theme_type_variation = UiTheme.MICRO
+	label.theme_type_variation = UiTheme.MICRO_CHROME
 	_hoverable(label, key)
 	box.add_child(label)
 
@@ -198,7 +198,7 @@ func _build_figure(key: String, title: String) -> Control:
 	_hoverable(change, key)
 	sub.add_child(change)
 	var note := Label.new()
-	note.theme_type_variation = UiTheme.CAPTION
+	note.theme_type_variation = UiTheme.CAPTION_CHROME
 	note.hide()
 	_hoverable(note, key)
 	sub.add_child(note)
@@ -333,7 +333,7 @@ func _show_change(id: String, state) -> void:
 		return
 	label.text = String(c["text"])
 	if c.has("steady"):
-		label.theme_type_variation = UiTheme.CAPTION  # no news either way: no status tone
+		label.theme_type_variation = UiTheme.CAPTION_CHROME  # no news either way: no status tone
 	else:
 		label.theme_type_variation = UiTheme.GOOD_TEXT if bool(c["good"]) else UiTheme.BAD_TEXT
 

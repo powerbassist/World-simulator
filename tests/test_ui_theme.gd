@@ -162,24 +162,26 @@ func _check_player_accent_wired() -> void:
 
 
 ## G3's grammar, replacing BUREAU's hairline on four sides (the author picked "Sheets on
-## glass", 2026-11-21). A SHEET is opaque, borderless and R_SHEET, and never wears the
-## accent; a PANE of the chrome is the tint with a light rim and R_PANE; with Glass off the
-## pane is PANE_SOLID. The test is the mirror of BUREAU's: where that one failed a plate
-## missing an edge, this fails a sheet that draws one.
+## glass", 2026-11-21). A SHEET is opaque, R_SHEET, with elevation C (the author's pick,
+## 2026-11-21): a contact shadow of a few px and a faint SHEET_RIM on all four sides -- never
+## BUREAU's EDGE hairline, never the accent; a PANE of the chrome is the tint with a light rim
+## and R_PANE; with Glass off the pane is PANE_SOLID.
 func _check_grammar(theme: Theme) -> void:
 	var plate := theme.get_stylebox("panel", UiTheme.PLATE) as StyleBoxFlat
 	if plate == null:
 		_fail("the sheet style is not a StyleBoxFlat")
 		return
 	for side in ["top", "bottom", "left", "right"]:
-		if plate.get("border_width_" + side) > 0:
-			_fail("the sheet draws a border on its %s edge; G3 separates by surface, not by line" % side)
+		if plate.get("border_width_" + side) != 1:
+			_fail("the sheet's %s edge is %d px, not elevation C's 1 px rim" % [side, plate.get("border_width_" + side)])
+	if plate.border_color != UiTheme.SHEET_RIM:
+		_fail("the sheet's edge is %s, not the faint SHEET_RIM" % plate.border_color)
 	if plate.bg_color.a < 1.0:
 		_fail("the sheet is translucent (alpha %.2f): text on a sheet must not depend on the map" % plate.bg_color.a)
 	if plate.bg_color != UiTheme.SHEET or plate.corner_radius_top_left != UiTheme.R_SHEET:
 		_fail("the sheet is not SHEET at R_SHEET")
-	if plate.shadow_size <= 0:
-		_fail("the sheet has no shadow to lift it off the map")
+	if plate.shadow_size <= 0 or plate.shadow_size > UiTheme.GAP_PANE / 2:
+		_fail("the sheet's shadow is %d px: a contact shadow, not none and not wider than half the gap" % plate.shadow_size)
 
 	var pane := theme.get_stylebox("panel", UiTheme.PANE) as StyleBoxFlat
 	if pane == null or pane.border_color != UiTheme.PANE_RIM or pane.border_width_left < 1 or pane.corner_radius_top_left != UiTheme.R_PANE:

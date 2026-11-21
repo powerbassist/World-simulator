@@ -56,6 +56,9 @@ const DOCK_BOTTOM := GAP + Ribbon.STRIP_HEIGHT + GAP
 ## frame beside it keeps its left edge (regions_shell.gd; the chips crowd at 160 % without it).
 const DOCK_WIDTHS := {"region": 476.0}
 const INBOX_GROUP := "inbox"  # inbox.gd's GROUP: the column the workspace makes room for
+## G3 S1: the tabs whose panel lays out its own sheets, so their page draws none (tab_page.gd). A
+## screen joins this table in the slice that re-lays it on sheets (S2: the Diary).
+const OWN_SHEETS := ["calendar"]
 
 ## How many destinations back and forward remember -- a session's worth of
 ## wandering, not its whole history.
@@ -203,6 +206,8 @@ func register(id: String, title: String, content: Control, key: int = KEY_NONE, 
 	if content.has_method("hide_close_button"):
 		content.hide_close_button()
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if OWN_SHEETS.has(id):
+		page.set_own_sheets()
 	page.hide()
 	_pages[id] = page
 

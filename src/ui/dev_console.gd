@@ -106,7 +106,7 @@ func _build() -> void:
 	_counter.tooltip_text = "Errors and warnings logged this run -- click to read them (F12 opens the console)"
 	_counter.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	_counter.offset_left = -170.0
-	_counter.offset_top = 44.0
+	_counter.offset_top = 104.0  # under the top strip's pane (G3 S1), not over its Menu
 	_counter.offset_right = -10.0
 	_counter.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_counter.gui_input.connect(func(event: InputEvent):
