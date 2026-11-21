@@ -97,7 +97,7 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--only", default="")
     ap.add_argument("--repo", default=str(Path(__file__).resolve().parent.parent))
-    ap.add_argument("--interface-size", type=int, default=None, help="interface_size_index to write into each temp user dir")
+    ap.add_argument("--interface-size", type=int, choices=range(5), default=None, help="interface_size_index to write into each temp user dir")
     opts = ap.parse_args()
     repo = Path(opts.repo)
     script = repo / "tools" / "screenshot.gd"
