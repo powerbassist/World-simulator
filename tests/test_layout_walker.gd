@@ -35,6 +35,7 @@ var _hits := {}  # key -> detail
 var _opened := 0
 var _clip_checked := 0  # premise counters: a check that never ran passes silently
 var _groups_checked := 0
+var _premise: Array[String] = []  # a wrong canvas: never a hit, so a rewrite cannot baseline it
 
 
 func _initialize() -> void:
@@ -63,7 +64,7 @@ func _sweep(text_scale: float) -> void:
 		print("layout_walker: %s, canvas %.0fx%.0f" % [where, view.x, view.y])
 		var want: Vector2 = Vector2(1920.0, 1080.0) / InterfaceSize.SIZES[row]
 		if not view.is_equal_approx(want):
-			_hit("(premise)", where, "canvas", "%.0fx%.0f" % [view.x, view.y], "wanted %.0fx%.0f" % [want.x, want.y])
+			_premise.append("%s: canvas %.0fx%.0f, wanted %.0fx%.0f" % [where, view.x, view.y, want.x, want.y])
 		for id in windows.panel_ids():
 			windows.close_all()
 			windows.open(String(id), true)
@@ -86,12 +87,16 @@ func _frames(count: int) -> void:
 func _check(windows, id: String, where: String) -> void:
 	var page = windows.frame(id)
 	var dock: Control = windows.dock()
+	# Keyed by the window and a count: a child-index path would move with any row added above it,
+	# and the count keeps a second bar in a baselined window from passing under the first.
+	var bars: Array[String] = []
 	for node in dock.find_children("*", "ScrollContainer", true, false):
 		var scroll := node as ScrollContainer
 		if scroll.is_visible_in_tree() and scroll.get_h_scroll_bar().visible:
-			# Keyed by the window alone: a child-index path would move with any row added above it.
-			_hit(id, where, "hbar", "sideways bar", "at %s, content %.0f px in %.0f" % [_path(dock, scroll),
+			bars.append("at %s, content %.0f px in %.0f" % [_path(dock, scroll),
 				scroll.get_child(0).get_combined_minimum_size().x if scroll.get_child_count() > 0 else 0.0, scroll.size.x])
+	if not bars.is_empty():
+		_hit(id, where, "hbar", "%d sideways bar%s" % [bars.size(), "" if bars.size() == 1 else "s"], "; ".join(bars))
 	var scroll: ScrollContainer = page._scroll
 	if scroll.get_v_scroll_bar().visible:
 		var band: float = dock.get_parent_area_size().y - windows.DOCK_TOP - windows.DOCK_BOTTOM
@@ -102,13 +107,13 @@ func _check(windows, id: String, where: String) -> void:
 				page._content.get_combined_minimum_size().y, scroll.size.y])
 	for node in dock.find_children("*", "", true, false):
 		if node is Label or node is Button:
-			_check_clip(node as Control, dock, id, where)
+			_check_clip(node as Control, id, where)
 	_check_groups(dock, id, where)
 
 
 ## clip_text with no trimming and no wrap: the only way a Label or Button is drawn narrower than its
 ## text (a Control is otherwise never smaller than its minimum, which holds the whole text).
-func _check_clip(control: Control, dock: Control, id: String, where: String) -> void:
+func _check_clip(control: Control, id: String, where: String) -> void:
 	if not control.is_visible_in_tree() or not control.get("clip_text"):
 		return
 	if int(control.get("text_overrun_behavior")) != TextServer.OVERRUN_NO_TRIMMING:
@@ -162,7 +167,7 @@ func _check_groups(dock: Control, id: String, where: String) -> void:
 		for b in members:
 			classes[(b as Button).get_meta(PanelKit.CLASS_META)] = true
 		if classes.size() > 1:
-			_hit(id, where, "class", labels, "%d classes in one group" % classes.size())
+			_hit(id, where, "class", "a group of %d" % members.size(), "%s: %d classes in one group" % [labels, classes.size()])
 			continue
 		# Every member, a kit button's own floor included: PanelKit.button() keeps the class it was
 		# built with as a floor (OWN_MIN_META), so a verb built L in a group that resolves to M draws
@@ -172,7 +177,9 @@ func _check_groups(dock: Control, id: String, where: String) -> void:
 			for b in members:
 				sizes.append(roundf((b as Button).size[axis]))
 			if sizes.max() - sizes.min() > 0.5:
-				_hit(id, where, "class", labels, "%s %s px" % ["widths" if axis == 0 else "heights", sizes])
+				# The labels go in the detail, not the key: a label carrying live data would churn it.
+				_hit(id, where, "class", "a group of %d, %s" % [members.size(), "widths" if axis == 0 else "heights"],
+					"%s: %s px" % [labels, sizes])
 
 
 ## A node's place as child indices from the dock: stable between runs, where a built node's name
@@ -195,6 +202,10 @@ func _finish() -> void:
 	var keys: Array = _hits.keys()
 	keys.sort()
 	if OS.get_cmdline_user_args().has("--write-baseline"):
+		if not _premise.is_empty():
+			push_error("FAIL premise, nothing written: " + "; ".join(_premise))
+			quit(1)
+			return
 		var file := FileAccess.open(BASELINE, FileAccess.WRITE)
 		file.store_string(JSON.stringify({"hits": keys}, "  ") + "\n")
 		file.close()
@@ -206,6 +217,9 @@ func _finish() -> void:
 	if parsed is Dictionary:
 		known = parsed.get("hits", [])
 	var failures := 0
+	for line in _premise:
+		failures += 1
+		push_error("FAIL premise: " + line)
 	if _opened == 0 or _clip_checked == 0 or _groups_checked == 0:
 		failures += 1
 		push_error("FAIL premise: %d windows opened, %d clipped labels measured, %d button groups compared" % [
