@@ -90,7 +90,6 @@ func _run() -> void:
 	_check_the_pause_menu_still_opens_and_closes()
 	_check_map_is_the_background()
 	_check_hud_lets_the_map_through()
-	_check_the_map_is_reachable_beside_a_domain()
 	_check_breadcrumb_follows_the_tab()
 	_check_title_bar_walks_the_history()
 	_check_chrome_is_inert_under_a_scene()
@@ -189,30 +188,6 @@ func _check_map_is_the_background() -> void:
 	# must not cover the clock or the portrait.
 	if _main._windows.get_index() > _main._hud.get_index():
 		_fail("floating windows draw over the HUD furniture")
-
-
-## V5.1-c2.2. The workspace docks left and leaves the map uncovered to its right
-## -- the strip the inbox slides over. Asked as the player asks it: point there
-## with a domain open and see what the pointer reaches. A dock that grew across
-## the screen, or a holder behind it that eats clicks, fails silently.
-func _check_the_map_is_reachable_beside_a_domain() -> void:
-	_main._windows.open("finances")
-	# The inbox that rode over the tab (V5.1-d1a, G1) is put away: the claim is
-	# that the dock and its holder leave the strip to the map.
-	_main._hud.inbox.slide_out()
-	var viewport: Viewport = _main.get_viewport()
-	var size: Vector2 = viewport.get_visible_rect().size
-	var point := Vector2(size.x * 0.9, size.y * 0.5)
-	var motion := InputEventMouseMotion.new()
-	motion.position = point
-	motion.global_position = point
-	viewport.push_input(motion, true)
-	var hit: Control = viewport.gui_get_hovered_control()
-	if hit != null and hit != _main._map_view and not _main._map_view.is_ancestor_of(hit):
-		_fail("with a domain open, a click at %s lands on %s (%s), not the map" % [str(point), hit.name, hit.get_class()])
-	if _main._windows.dock().get_global_rect().has_point(point):
-		_fail("the dock covers %s, the map's strip beside it" % str(point))
-	_main._windows.close_all()
 
 
 ## V5.1-c2.3. Where the player is, said in the title bar: the nation, the domain

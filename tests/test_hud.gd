@@ -62,13 +62,41 @@ func _later_frames() -> bool:
 		# V5.1-c2.2: the floating windows' "clear of the column" and "a grown window
 		# stays on screen" checks went with the windows. A docked page is the dock's
 		# size whatever its content, and the dock's place is tests/test_workspace.gd's.
+		# #439 QA T1: at the reference size, the inbox put away gives the workspace back.
+		root.size = Vector2i(1920, 1080)
+		_main._windows.open("finances")
+		_main._hud.inbox.slide_out()
+		return false
+	if _frame == 7:
+		_check_the_workspace_is_full_with_the_inbox_away()
 		_main._windows.open("calendar")
 		return false
-	if _frame < 8:
+	if _frame < 10:
 		return false
 	_check_own_sheets_on_the_header_grid()
 	_finish()
 	return false
+
+
+## The workspace is always full (G3 decision 9): with the inbox put away it reaches GAP_PANE short of
+## the screen's right edge, and the gap beside it is the map's -- a pointer there reaches the map,
+## not a holder behind the workspace (the old test_shell strip claim, re-aimed at the gap).
+func _check_the_workspace_is_full_with_the_inbox_away() -> void:
+	var gap := float(UiTheme.GAP_PANE)
+	if _main._hud.inbox.visible:
+		_fail("premise: the inbox did not slide away")
+	var dock: Rect2 = _main._windows.dock().get_global_rect()
+	if not is_equal_approx(dock.end.x, 1920.0 - gap):
+		_fail("with the inbox away the workspace ends at %.0f, not a gap short of 1920 (%.0f)" % [dock.end.x, 1920.0 - gap])
+	var viewport: Viewport = _main.get_viewport()
+	var point := Vector2(1920.0 - gap / 2.0, 540.0)
+	var motion := InputEventMouseMotion.new()
+	motion.position = point
+	motion.global_position = point
+	viewport.push_input(motion, true)
+	var hit: Control = viewport.gui_get_hovered_control()
+	if hit != null and hit != _main._map_view and not _main._map_view.is_ancestor_of(hit):
+		_fail("the gap right of the workspace lands on %s (%s), not the map" % [hit.name, hit.get_class()])
 
 
 ## Design's gate T1 on #439: a panel that brings its own sheets sets them on the header sheet's

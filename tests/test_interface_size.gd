@@ -118,8 +118,9 @@ func _check_old_config() -> void:
 ## canvas instead of stopping at 1080.
 func _check_regions_frame() -> void:
 	var w = WindowManager
-	var left: float = w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"])
-	var old := Rect2(left, w.DOCK_TOP, 1920.0 - (w.GAP + RegionsShell.INBOX_WIDTH) - left, 1080.0 - w.DOCK_TOP - w.DOCK_BOTTOM)
+	# Literals, not the formula under test (#439 QA T3): the sidebar's pane and its gaps (256), the
+	# narrow dock (476), the inbox's column off the right edge (412), the panes above and below.
+	var old := Rect2(732, 108, 776, 860)
 	var at_1080: Rect2 = RegionsShell.fit_rect_for(Vector2(1920, 1080))
 	if not at_1080.is_equal_approx(old):
 		_fail("the Regions frame moved at 1920x1080: %s, was %s" % [at_1080, old])
