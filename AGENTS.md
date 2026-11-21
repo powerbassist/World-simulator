@@ -353,12 +353,12 @@ the language shown, and every class times the text size. `tests/test_panel_kit.g
 fails a group whose buttons do not share a class.
 
 **G3 replaced BUREAU's look (the author's pick, 2026-11-21, "Sheets on glass").**
-Its target: the map fills the screen and the chrome is three floating glass panes (the
-sidebar, the top strip, the time bar): a dark tint over the blurred map (`src/ui/frost.gd`,
-under `PanelKit.pane()`), a 1px light rim, `R_PANE` corners; the "Glass" setting turns the
-blur off and the panes `PANE_SOLID`. At S0 the chrome is glass where it already stands:
-the title bar, figure strip, sidebar and day ribbon are docked, square panes
-(`TOP_BAR_PANEL`, `PANE_DOCKED`) until S1 floats them into three. The workspace's content sits on solid **sheets**
+The map fills the screen and the chrome is three floating glass panes (the sidebar, the
+top strip, the time bar), `GAP_PANE` from the screen's edges and from each other: a dark
+tint over the blurred map (`src/ui/frost.gd`, under `PanelKit.pane()`), a 1px light rim,
+`R_PANE` corners and no shadow (a stylebox's shadow darkens the blur under its own body);
+the "Glass" setting turns the blur off and the panes `PANE_SOLID`, which keep `ELEV_PANE`.
+Nothing else is a pane. The workspace has no pane: its content sits on solid **sheets**
 (`UiTheme.PLATE`, `PanelKit.sheet()`), one job per sheet, `GAP_PANE` apart, with no
 border and a soft shadow; tooltips and menus are opaque popovers that never blur.
 Things are separated by space and by a change of surface; the only line G3 keeps is the
@@ -367,9 +367,12 @@ until their slice). Text never sits on glass over the map without the
 pane's tint, and never on a sheet that is not opaque. `test_ui_theme.gd` fails a
 sheet that is translucent or bordered, a pane that drops its rim, and a pane that
 still reads the screen with Glass off. The BUREAU hairline on four sides is gone; do
-not bring it back. G3 lands in slices (Design's `g3-spec.md`): S0 is the theme, so
-every screen took the colours, corners and button states at once; S1 floats the
-shell; S2 to S8 re-lay the screens one by one. Until a screen's slice, it may still
+not bring it back. A toggle that is ON wears the accent fill through its own variation,
+`UiTheme.PICKED` (`PanelKit.toggle()`), because "pressed" is also a plain button held
+down, which takes `CONTROL_PRESSED`; `test_button_sizes.gd` fails a toggle left on the
+plain look. G3 lands in slices (Design's `g3-spec.md`): S0 is the theme, so every screen
+took the colours, corners and button states at once; S1 floated the shell; S2 to S8
+re-lay the screens one by one. Until a screen's slice, it may still
 draw with BUREAU's names (`HULL`, `SLATE`, `EDGE`), now aliases of the G3 surface
 each became.
 
@@ -409,13 +412,17 @@ headless from a fresh clone — never `load()` an icon path.
 
 **Text a player reads goes through `tr("English")`** (V5.1b, [docs/localisation.md](docs/localisation.md)): the English is the msgid, French is `data/i18n/fr/ui.json`, a row of `data/` is shown through a `Strings` row accessor (`row_name`, `row_summary`, `choice_label`, `record_event_name`, `noun`, ... over `Strings.row(kind, id, field, english)`; `tests/test_i18n_rows_lint.gd` fails a raw read of a row's English) and an id made into a word through `Labels` (never `id.capitalize()`). The caller wraps, helpers never translate, a `static func` uses `Strings.t()`, and never use a `tr()` result as a key or compare shown text to an English literal. `tests/test_i18n_lint.gd` fails a bare literal at a text sink or anywhere it reads as prose (a const table of prose carries `# i18n: msgid`) and a ternary of short fragments inside a format argument -- a sentence is whole, a count picks its form with `tr_n` / `Strings.tn`; a figure with decimals goes through `Num.f` / `Num.fs` (the language's decimal separator, never a raw `%.2f`) and a date through `DateText`; `tests/test_i18n_fit.gd` opens every window under +35% pseudolocalization. Map place names are the one exception to the body width: `UiTheme.map_face()` at `UiTheme.SIZE_MAP`, the narrow end of Archivo's width axis, because the label packer drops a name that does not fit.
 
-The shell is (V5.1-c's layout, until G3's S1 floats it): `map_view` full-rect at the back;
-`window_manager` over it, a workspace docked left that shows one tab at a time
-under its domain (`src/ui/domains.gd` is the table of domains and their tabs;
-back and forward walk the player's path); `hud` on top -- the title bar, the
-sidebar, the figure strip (it folds its lowest-priority figures into "+N" when
-its slot is short), the legend, the message column and the day ribbon (the title
-bar, sidebar, strip and ribbon dressed as glass panes); and
+The shell is (G3 S1): `map_view` full-rect at the back; `window_manager` over it, a
+workspace of sheets beside the sidebar, `GAP_PANE` from every pane, that shows one tab at
+a time under its domain and fills the band between the panes (the author's decision 9;
+Regions alone docks narrow, its place being the map it tints; while the inbox shows, the
+workspace ends `GAP_PANE` short of it, so nothing sits under it); the tabs are
+a segmented control in the workspace's first sheet, beside the breadcrumb
+(`src/ui/domains.gd` is the table of domains and their tabs; back and forward walk the
+player's path); `hud` on top -- the three glass panes: the sidebar, the top strip with
+the figures (it folds its lowest-priority figures into "+N" when its slot is short) and
+the title bar's tools in one row, the time bar -- then the legend, the inbox (a column
+of sheets at the right, beside the workspace, never over it) and the front pages; and
 `screen_stack` above them, which ranks what owns the screen (workspace, inbox,
 placement, scene, system) for the keys, Escape and the game's own arrivals. A
 panel is registered with `_windows.register(id, title, panel)` **before** its

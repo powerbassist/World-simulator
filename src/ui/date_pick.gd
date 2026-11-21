@@ -13,6 +13,7 @@ signal picked(date: Dictionary)
 signal opened
 signal closed
 
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -124,7 +125,7 @@ func _show(absolute: int) -> void:
 		cell.name = "Day%d" % day  # i18n: ok a node name, found by tests
 		cell.pressed.connect(choose.bind(day, _shown))
 		if int(date["year"]) == year and int(date["month"]) == month and int(date["day"]) == day:
-			cell.toggle_mode = true
+			PanelKit.toggle(cell)
 			cell.button_pressed = true
 		_grid.add_child(cell)
 

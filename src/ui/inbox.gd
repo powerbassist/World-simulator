@@ -59,6 +59,9 @@ signal news_pressed
 
 ## The board's dock, beside the 1240 px workspace in the 1920 reference.
 const WIDTH := 440
+## The window manager finds the inbox here to make room beside it (G3 S1): the two are siblings
+## under main, and neither holds the other.
+const GROUP := "inbox"
 const DECISIONS := "decisions"
 const REQUESTS := "requests"
 const NOTES := "notes"
@@ -97,6 +100,7 @@ var _kept: VBoxContainer
 ## grade test pushes into one that never enters it), and the lanes are plain
 ## structure that needs no theme to exist.
 func _init() -> void:
+	add_to_group(GROUP)
 	theme_type_variation = UiTheme.PLATE
 	custom_minimum_size = Vector2(WIDTH, 0)
 

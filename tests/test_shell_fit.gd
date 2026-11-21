@@ -21,7 +21,6 @@ extends SceneTree
 
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Sidebar = preload("res://src/ui/sidebar.gd")
-const TitleBar = preload("res://src/ui/title_bar.gd")
 const TopBar = preload("res://src/ui/top_bar.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
@@ -80,6 +79,26 @@ func _process(_delta: float) -> bool:
 			if _wait > 0:
 				return false
 			_check_chrome_at_115()
+			# G3 S1: the title bar's tools share the strip's pane. A requests mark and a held
+			# line appearing widen them, and the figures must refold around them. Each reading
+			# at its widest ONCE (the doubled staging above is the figures' own worst case: its
+			# chips, which never fold, take 1 083 px of the row by themselves).
+			for id in StripReadings.ORDER:
+				var value: Label = _main._top_bar._figure_values[id]
+				value.text = value.text.substr(0, (value.text.length() + 1) / 2).strip_edges()
+			_main._top_bar.refit()
+			_main._hud.title_bar.set_requests(12)
+			_main._hud.title_bar.set_held(tr("A decision is waiting"))
+			_phase = "tools"
+			_wait = 4
+		"tools":
+			_wait -= 1
+			if _wait > 0:
+				return false
+			var strip: float = _main._hud.top_bar.get_combined_minimum_size().x
+			var slot: float = _main.get_viewport().get_visible_rect().size.x - Sidebar.WIDTH - 3 * UiTheme.GAP_PANE
+			if strip > slot + 0.5:
+				_fail("with the requests and the held line up the strip needs %.0f px of %.0f: it did not refold" % [strip, slot])
 			UiTheme.set_text_scale(1.0)
 			_finish()
 	return false
@@ -105,7 +124,8 @@ func _stage_every_reading_at_its_widest() -> void:
 ## and what it hides must be the tail of the priority order, behind a "+N".
 func _check_strip_folds_by_priority() -> void:
 	var bar = _main._top_bar
-	var slot: float = _main.get_viewport().get_visible_rect().size.x - Sidebar.WIDTH
+	# G3 S1: the strip is a pane GAP_PANE right of the sidebar's and GAP_PANE short of the edge.
+	var slot: float = _main.get_viewport().get_visible_rect().size.x - Sidebar.WIDTH - 3 * UiTheme.GAP_PANE
 	var need: float = bar.get_combined_minimum_size().x
 	if need > slot + 0.5:
 		_fail("the strip asks for %.0f px of a %.0f px slot -- it did not fold" % [need, slot])
@@ -138,21 +158,18 @@ func _check_refit_on_resize() -> void:
 func _check_chrome_at_115() -> void:
 	var hud = _main._hud
 	var view: Vector2 = _main.get_viewport().get_visible_rect().size
-	var title: Vector2 = hud.title_bar.get_combined_minimum_size()
-	if title.y > TitleBar.HEIGHT + 0.5:
-		_fail("at 115 %% the title bar is %.0f px tall; its slot is %d" % [title.y, TitleBar.HEIGHT])
-	if title.x > view.x + 0.5:
-		_fail("at 115 %% the title bar needs %.0f px of a %.0f px screen" % [title.x, view.x])
+	var gap := float(UiTheme.GAP_PANE)
 	var strip: Vector2 = hud.top_bar.get_combined_minimum_size()
 	if strip.y > TopBar.BAR_HEIGHT + 0.5:
 		_fail("at 115 %% the strip is %.0f px tall; its slot is %d" % [strip.y, TopBar.BAR_HEIGHT])
-	if strip.x > view.x - Sidebar.WIDTH + 0.5:
-		_fail("at 115 %% the strip needs %.0f px of its %.0f px slot -- it did not fold" % [strip.x, view.x - Sidebar.WIDTH])
+	if strip.x > view.x - Sidebar.WIDTH - 3 * gap + 0.5:
+		_fail("at 115 %% the strip needs %.0f px of its %.0f px slot -- it did not fold" % [strip.x, view.x - Sidebar.WIDTH - 3 * gap])
 	var side: Vector2 = hud.sidebar.get_combined_minimum_size()
 	if side.x > Sidebar.WIDTH + 0.5:
 		_fail("at 115 %% the sidebar needs %.0f px; it is %d wide" % [side.x, Sidebar.WIDTH])
-	if side.y > view.y - TitleBar.HEIGHT + 0.5:
-		_fail("at 115 %% the sidebar needs %.0f px of %.0f under the title bar" % [side.y, view.y - TitleBar.HEIGHT])
+	var room: float = view.y - 3 * gap - hud.ribbon.size.y
+	if side.y > room + 0.5:
+		_fail("at 115 %% the sidebar needs %.0f px of the %.0f above the time bar" % [side.y, room])
 
 
 func _fail(message: String) -> void:

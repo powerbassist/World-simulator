@@ -28,10 +28,11 @@ const StripSeries = preload("res://src/ui/strip_series.gd")
 ## second tooltip beside ours); tip_of(id) is the plain text a test or a reader
 ## can still get.
 ##
-## Reads state, never writes it. Save and the menu moved to the title bar
-## (V5.1-c2.3), so the strip is the figures alone.
+## Reads state, never writes it. G3 S1 made it ONE floating glass pane with the title bar's
+## tools (history, the chief's mark, the requests, save, the menu) docked at its right end
+## (dock_tools): the strip is the top pane of three.
 
-## The strip's slot under the title bar. 58 px held caption over value (54 at the former 130 %,
+## The top pane's height (G3 S1: the title bar's tools sit in its row). 58 px held caption over value (54 at the former 130 %,
 ## V5.1-c2.4); gate 3's tiles (the author's pick, top bar A) add a row under each value
 ## -- its change in words, or its meter -- so the slot is the tiles' height at the former 130 %
 ## (tests/test_top_bar_tiles.gd). The workspace starts below it.
@@ -44,9 +45,8 @@ const PROGRAMME_CAPTION_PX := 104
 const FIGURE_LINE_GAP := -4
 const FIGURE_GAP := 26
 const FIGURE_GAP_MIN := 6
-## The left edge of the first figure: the workspace's own edge (sidebar's width 232 is
-## this strip's x), a gutter in.
-const LEFT_GUTTER := 16
+## The left edge of the first figure: the pane's own padding plus this gutter.
+const LEFT_GUTTER := 4
 
 var _figure_values := {}
 ## Each figure's caption label, by the same key as _figure_values -- kept so the
@@ -98,6 +98,9 @@ var _folded: Array = []
 ## The stretching slot between the tiles and the chips, and the chief's remark docked in it.
 var _slot: HBoxContainer
 var _caption: Control
+## The title bar's tools, docked at the row's right end (dock_tools), and the row itself.
+var _tools: Control
+var _row: HBoxContainer
 ## How many hairlines the last draw of the figure row drew (a test reads it: a headless run
 ## has no pixels to look at).
 var _drawn_dividers := 0
@@ -105,13 +108,12 @@ var _drawn_dividers := 0
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(0, BAR_HEIGHT)
-	# Square corners and its own padding, because this one sits flush against
-	# the window edge; G3's glass behind it (S1 floats it as a pane).
-	PanelKit.pane(self, UiTheme.TOP_BAR_PANEL)
+	PanelKit.pane(self)  # G3 S1: the top of the three floating glass panes
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 0)
 	add_child(row)
+	_row = row
 
 	row.add_child(_gutter(LEFT_GUTTER))
 	_figures = HBoxContainer.new()
@@ -436,8 +438,10 @@ func refit() -> void:
 		_boxes[id].show()
 	_folded.clear()
 	_more.hide()
-	var available: float = get_viewport_rect().size.x - global_position.x - get_theme_stylebox("panel").get_minimum_size().x \
-		- LEFT_GUTTER * 2 - FIGURE_GAP / 2 - _chips_width() - _caption_width()
+	# The pane ends GAP_PANE short of the window's edge (G3 S1), and the title bar's tools share it.
+	var available: float = get_viewport_rect().size.x - UiTheme.GAP_PANE - global_position.x \
+		- get_theme_stylebox("panel").get_minimum_size().x \
+		- LEFT_GUTTER * 2 - FIGURE_GAP / 2 - _chips_width() - _caption_width() - _tools_width()
 	var shown: Array = []
 	for id in StripReadings.ON_STRIP:
 		if _boxes[id].visible:
@@ -482,6 +486,21 @@ func _draw_dividers() -> void:
 	for x in divider_xs():
 		_drawn_dividers += 1
 		_figures.draw_line(Vector2(x, 6.0), Vector2(x, _figures.size.y - 6.0), UiTheme.EDGE, 1.0)
+
+
+## Docks the title bar's tools (title_bar.gd) at the row's right end, after the chips: one pane,
+## one row (G3 S1). Their width comes off the figures' room, so the tiles fold to leave it.
+func dock_tools(tools: Control) -> void:
+	_tools = tools
+	_row.add_child(_gutter(FIGURE_GAP / 2))
+	_row.add_child(tools)
+	tools.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# The requests mark and the held line come and go: the figures refit around them.
+	tools.minimum_size_changed.connect(refit.call_deferred)
+
+
+func _tools_width() -> float:
+	return 0.0 if _tools == null else _tools.get_combined_minimum_size().x + FIGURE_GAP / 2.0
 
 
 ## Docks the chief's remark (chief_caption.gd) into the strip's own row, between the tiles and

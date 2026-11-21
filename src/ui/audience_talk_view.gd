@@ -12,6 +12,7 @@ extends VBoxContainer
 
 signal asked(line_id: String, topic: String, args: Dictionary)
 
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
@@ -110,7 +111,7 @@ func _chip(person: Dictionary, live: bool, picked: bool) -> Button:
 	chip.text = String(person["name"])  # i18n: row-ok a person's shown name, from the loader
 	chip.tooltip_text = String(person["tip"])  # i18n: row-ok the tie, worded by the view's builder
 	chip.disabled = not live
-	chip.toggle_mode = true
+	PanelKit.toggle(chip)
 	chip.button_pressed = picked
 	var face := _face(String(person["id"]))
 	if face != null:

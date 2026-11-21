@@ -155,7 +155,7 @@ static func _polls(list, box: Control, sections, law_id: String) -> void:
 	var toggle := PanelKit.sized(Button.new())
 	toggle.name = "PollIt"  # i18n: ok a node name, found by tests
 	toggle.text = Strings.t("Poll it")
-	toggle.toggle_mode = true
+	PanelKit.toggle(toggle)
 	toggle.button_pressed = open
 	# Deferred: the toggle redraws the sheet, and a button may not free itself in its own press.
 	toggle.pressed.connect(_flip.bind(list, law_id), CONNECT_DEFERRED)

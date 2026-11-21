@@ -14,6 +14,8 @@ extends SceneTree
 
 ## A button may be this much wider than its label before it reads as a slab:
 ## the theme's padding and a little air, not a layout.
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+
 const SLACK := 160.0
 
 var _failures: Array[String] = []
@@ -50,6 +52,10 @@ func _scan(node: Node, where: String) -> void:
 		if child.get_class() != "Button" or not (child as Control).is_visible_in_tree():
 			continue
 		var button := child as Button
+		# G3 S1 (#436 RECORD, the press flash): only PICKED wears the accent fill when ON, so a
+		# toggle left on the plain or small button would lose its mark (PanelKit.toggle()).
+		if button.toggle_mode and not button.flat and String(button.theme_type_variation) in ["", "Button", UiTheme.SMALL]:
+			_fail("%s: the toggle '%s' wears '%s', not PICKED: ON reads as OFF" % [where, button.text, button.theme_type_variation])
 		var parent := button.get_parent()
 		if not (parent is BoxContainer and (parent as BoxContainer).vertical):
 			continue

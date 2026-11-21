@@ -36,13 +36,14 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	var small := String(names["small"])
 	theme.set_type_variation(small, "Button")  # i18n: ok
 	var states := {"normal": [t["control"], Color(0, 0, 0, 0)], "hover": [t["hover"], Color(0, 0, 0, 0)],
-		"pressed": [fill, Color(0, 0, 0, 0)], "hover_pressed": [fill.darkened(0.06), Color(0, 0, 0, 0)],
+		"pressed": [t["pressed"], Color(0, 0, 0, 0)], "hover_pressed": [t["pressed"], Color(0, 0, 0, 0)],
 		"disabled": [Color(0, 0, 0, 0), t["line"]]}
 	for state in states:
 		theme.set_stylebox(state, small, _tight(box.call(states[state][0], states[state][1])))
-	# Picked (a toggle that is on), as for a Button: the fill, its own label.
+	# Held down, as a Button: CONTROL_PRESSED, never the fill (#436 RECORD, the press flash). No
+	# small verb is a toggle; one that becomes one takes PICKED.
 	for state in ["font_pressed_color", "font_hover_pressed_color"]:
-		theme.set_color(state, small, t["on_fill"])
+		theme.set_color(state, small, t["text"])
 	theme.set_stylebox("focus", small, t["ring"])
 	theme.set_font_size("font_size", small, small_px)
 

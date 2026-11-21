@@ -56,7 +56,7 @@ var _chips: Array[Control] = []
 
 
 func _ready() -> void:
-	PanelKit.pane(self, UiTheme.PANE_DOCKED)  # G3: the time bar, glass, docked until S1 floats it
+	PanelKit.pane(self)  # G3 S1: the time bar, a floating glass pane
 	custom_minimum_size = Vector2(0, STRIP_HEIGHT)
 
 	var row := HBoxContainer.new()

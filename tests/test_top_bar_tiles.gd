@@ -21,7 +21,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Num = preload("res://src/ui/num.gd")
 const StripChanges = preload("res://src/ui/strip_changes.gd")
 const ChiefCaption = preload("res://src/ui/chief_caption.gd")
-const TitleBar = preload("res://src/ui/title_bar.gd")
+const SLOT_LEFT := 12.0 + 232.0 + 12.0  # GAP_PANE, the sidebar, GAP_PANE
 
 const SHORT_LINE := "The situation is manageable, barely. It will need your signature."
 const LONG_LINE := "The situation is manageable, barely, and it will need your signature before the end of the month, or the assembly will take it out of your hands entirely."
@@ -48,9 +48,10 @@ func _init() -> void:
 	_bar = load("res://src/ui/top_bar.gd").new()
 	_bar.theme = UiTheme.build()
 	root.add_child(_bar)
-	# Where the shell puts it: right of the 232 px sidebar, the screen's width.
-	_bar.position = Vector2(232, TitleBar.HEIGHT)
-	_bar.size = Vector2(1920 - 232, TopBar.BAR_HEIGHT)
+	# Where the shell puts it (G3 S1): a gap right of the 232 px sidebar's pane, a gap under the
+	# top edge, a gap short of the screen's right edge.
+	_bar.position = Vector2(SLOT_LEFT, UiTheme.GAP_PANE)
+	_bar.size = Vector2(1920 - UiTheme.GAP_PANE - SLOT_LEFT, TopBar.BAR_HEIGHT)
 
 
 func _process(_delta: float) -> bool:
@@ -216,7 +217,7 @@ func _check_the_real_strip_fits() -> void:
 		UiTheme.set_text_scale(scale)
 		_bar.theme = UiTheme.build()
 		_bar.refresh(state, null, _loader)
-		var slot: float = 1920.0 - 232.0 - TopBar.LEFT_GUTTER * 2 - _bar.get_theme_stylebox("panel").get_minimum_size().x
+		var slot: float = 1920.0 - UiTheme.GAP_PANE - SLOT_LEFT - TopBar.LEFT_GUTTER * 2 - _bar.get_theme_stylebox("panel").get_minimum_size().x
 		var used: float = _bar._figures.get_combined_minimum_size().x + _bar._chips_width()
 		if used > slot + 0.5:
 			_fail("at text %d %% the refreshed strip needs %.0f px of a %.0f px slot" % [roundi(scale * 100), used, slot])
@@ -391,7 +392,7 @@ func _check_the_shown_remark(label: String, stage: Array) -> void:
 			_fail("%s: the tooltip is '%s' for a line %s" % [label, tip, "cut at two lines" if cut else "shown whole"])
 	if stage[1] == SHORT_LINE and float(stage[0]) == 1.0 and not _caption._get_tooltip(Vector2.ZERO).is_empty():
 		_fail("%s: a line shown whole repeats itself as a tooltip" % label)
-	var slot: float = 1920.0 - 232.0 - TopBar.LEFT_GUTTER * 2 - TopBar.FIGURE_GAP / 2 - _bar.get_theme_stylebox("panel").get_minimum_size().x
+	var slot: float = 1920.0 - UiTheme.GAP_PANE - SLOT_LEFT - TopBar.LEFT_GUTTER * 2 - TopBar.FIGURE_GAP / 2 - _bar.get_theme_stylebox("panel").get_minimum_size().x
 	var used: float = _bar._figures.get_combined_minimum_size().x + _bar._caption_width() + _bar._chips_width()
 	if used > slot + 0.5:
 		_fail("%s: tiles, remark and chips need %.0f px of a %.0f px strip: the tiles did not fold for the remark" % [label, used, slot])

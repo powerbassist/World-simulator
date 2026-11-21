@@ -311,7 +311,7 @@ func _build_ledger(ns) -> void:
 	var fold := PanelKit.sized(Button.new())
 	fold.flat = true
 	fold.text = tr("The public account")
-	fold.toggle_mode = true
+	PanelKit.toggle(fold)
 	fold.button_pressed = _open_ledger != ""
 	fold.set_meta("ledger", "ledger")
 	fold.pressed.connect(func() -> void: _toggle("_open_ledger", "ledger", "ledger"))

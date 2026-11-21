@@ -87,7 +87,8 @@ const R_SHEET := 16
 const R_TILE := 12
 const R_SMALL := 10
 const R_POPOVER := 14
-const GAP_PANE := 12   ## between panes, between sheets, from the screen's edge (S1 lays it out)
+const GAP_PANE := 12   ## between panes, between sheets, from the screen's edge
+const PAD_PANE := 12   ## inside a pane, left and right
 ## Shadows: the pictures' CSS blur radii, retuned in a real window (StyleBoxFlat falls off sooner).
 const ELEV_SHEET := [Color(0, 0, 0, 0.40), Vector2(0, 6), 14]   # colour, offset, size
 const ELEV_PANE := [Color(0, 0, 0, 0.40), Vector2(0, 10), 24]
@@ -164,19 +165,18 @@ const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
 
 # -- Container and button variations -------------------------------------------
 
-const TOP_BAR_PANEL := "TopBarPanel"      ## the thin strip flush to the top edge
 const PLATE := "Plate"                    ## a SHEET (G3): opaque, borderless, one job  # i18n: ok
 const PANE := "Pane"                      ## a glass pane of the chrome (PanelKit.pane)  # i18n: ok
-## S0 only: the glass where the chrome still stands, docked flush to a screen edge -- square,
-## no shadow, so no corner shows raw map and no shadow falls on the workspace. S1 floats it.
-const PANE_DOCKED := "PaneDocked"
 const TILE_PANEL := "TilePanel"           ## a tile inside a sheet
 const POPOVER_PANEL := "PopoverPanel"     ## a tooltip or a menu: opaque, never blurred
 const GHOST := "Ghost"                    ## a quiet link-like action: no fill until hovered  # i18n: ok
 const PLATE_FOLDED := "PlateFolded"       ## a plate whose primary action is below the fold
-const TITLE_BAR := "TitleBar"             ## a floating window's grab handle
 const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
 const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-row
+## G3 S1: a toggle that is ON wears the accent fill. Its own variation (PanelKit.toggle), because
+## "pressed" is also a plain button held down, which must not flash the fill (#436 RECORD).
+const PICKED := "Picked"                  # i18n: ok
+const SIDEBAR_ROW := "SidebarRow"         ## a domain's row in the sidebar pane (G3 spec section 2)
 const REQUESTS_BUTTON := "RequestsButton" ## the title bar's "requests waiting" mark (V5.2 pre-gate)
 const CHIEF_MARK := "ChiefMark"           ## the chief's mark beside it (G1): a raised plate, no tone of its own
 ## V5.3 c' (the bureau audit's items 1, 2, 5; control_style.gd says why each looks as it does).
@@ -188,7 +188,7 @@ const CHIP_GOOD := "ChipGood"             ## a chip in the good-news tone
 const CHIP_WARN := "ChipWarn"             ## a chip in the attention tone
 const CHIP_BAD := "ChipBad"               ## a chip in the bad-news tone
 const CHIP_TEXT := "ChipText"             ## a chip's words: caption size, the text tone
-const COUNT_PILL := "CountPill"           ## a count that waits on you: TEXT on an amber pill (G3)
+const COUNT_PILL := "CountPill"           ## a count that waits on you: a solid amber pill, a dark figure
 const OPTION_CHECK := "OptionCheck"       ## an option on a verb, not a verb (V5.2 close R4: the audience's Lie)
 
 ## The accent in force: the played nation's, set by apply() and read by everything
@@ -230,8 +230,10 @@ static func on_accent_fill() -> Color:
 
 
 ## G3's "Glass" setting (settings_panel.gd): on, the chrome's panes blur the map
-## (frost.gd); off, or on a renderer that cannot, they are PANE_SOLID and nothing reads
-## the screen. Set before the first theme is built, like the text size.
+## (frost.gd); off, they are PANE_SOLID and nothing reads the screen. Set before the first
+## theme is built, like the text size. There is no renderer check: the one renderer the game
+## ships on, gl_compatibility, gives the blur's screen mipmaps (measured at S0, frost.gd), and
+## a player whose machine draws it badly turns the setting off (#436 RECORD 10).
 static var _glass := true
 
 
@@ -400,43 +402,20 @@ static func _panels(theme: Theme) -> void:
 
 	# A glass PANE of the chrome: the tint over the blurred map (frost.gd draws the blur
 	# under it), a 1px light rim, R_PANE. With Glass off the tint is PANE_SOLID and the
-	# frost is not drawn, so nothing reads the screen.
-	var pane := _flat(PANE_TINT if _glass else PANE_SOLID, R_PANE, ELEV_PANE)
+	# frost is not drawn, so nothing reads the screen. The shadow is the SOLID pane's only:
+	# a StyleBoxFlat draws its shadow under its whole body, so under glass it darkened the
+	# blur inside the pane to about 0.36 instead of the 0.6 gain (#436 RECORD 4); the rim
+	# and the blur lift a glass pane off the map without one.
+	var pane := _flat(PANE_TINT if _glass else PANE_SOLID, R_PANE, [] if _glass else ELEV_PANE)
 	pane.set_border_width_all(1)
 	pane.border_color = PANE_RIM
-	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
-		pane.set_content_margin(side, 10)
+	for side in [SIDE_LEFT, SIDE_RIGHT]:
+		pane.set_content_margin(side, PAD_PANE)
+	# 3 above and below, as the flush strip had: the top strip's tiles fill its 84 px slot at
+	# text 115 (test_top_bar_tiles); a pane whose content wants air adds its own margin inside.
+	for side in [SIDE_TOP, SIDE_BOTTOM]:
+		pane.set_content_margin(side, 3)
 	_variation(theme, PANE, pane)
-	var docked := _flat(pane.bg_color, 0)
-	docked.set_border_width_all(1)
-	docked.border_color = PANE_RIM
-	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
-		docked.set_content_margin(side, 10)
-	_variation(theme, PANE_DOCKED, docked)
-
-	# The top strip is the same glass, but still flush against the window edge until S1
-	# floats it: square corners, the rim only underneath (an edge drawn against the
-	# screen edge is a seam), and no shadow up into the window's edge.
-	var bar := _flat(PANE_TINT if _glass else PANE_SOLID, 0)
-	bar.border_width_bottom = 1
-	bar.border_color = PANE_RIM
-	bar.content_margin_left = 16
-	bar.content_margin_right = 16
-	# 3, down from 6 at V4.8a: the figures stack caption over value now, and the
-	# strip must stay above the dock's 44px DOCK_TOP (it drew 50 at 6).
-	bar.content_margin_top = 3
-	bar.content_margin_bottom = 3
-	_variation(theme, TOP_BAR_PANEL, bar)
-
-	# A window's grab handle: a control's surface, lighter than the sheet under it.
-	var title := _flat(CONTROL, 0)
-	title.corner_radius_top_left = R_SHEET
-	title.corner_radius_top_right = R_SHEET
-	title.content_margin_left = 12
-	title.content_margin_right = 6
-	title.content_margin_top = 5
-	title.content_margin_bottom = 5
-	_variation(theme, TITLE_BAR, title)
 
 
 static func _variation(theme: Theme, name: String, box: StyleBox) -> void:
@@ -500,11 +479,13 @@ static func _labels(theme: Theme) -> void:
 	_label(theme, BAD_SMALL, SIZE_SMALL, BAD)
 	_label(theme, GOOD_SMALL, SIZE_SMALL, GOOD)
 	_label(theme, CHIP_TEXT, SIZE_SMALL, TEXT)
-	# G3: a count waiting on the player (the sidebar's) is an amber PILL, its figure in the
-	# text tone -- a status tone is never the colour of text on a control.
+	# G3 S1: a count waiting on the player (the sidebar's) is a SOLID amber pill, its figure bold
+	# in the sheet's colour, 8.5:1 (the author's pick, "Ambre pleine", 2026-11-21: on amber at
+	# 17 % the white figure left no amber in the pill at all, QA's RECORD on #436). The pill is
+	# not a control, so the figure's colour is its own.
 	theme.set_type_variation(COUNT_PILL, "Label")  # i18n: ok
-	_label(theme, COUNT_PILL, SIZE_SMALL, TEXT, _face(WEIGHT_BOLD))
-	var pill := _flat(WARN_GROUND, 99)
+	_label(theme, COUNT_PILL, SIZE_SMALL, SHEET, _face(WEIGHT_BOLD))
+	var pill := _flat(WARN, 99)
 	for side in [SIDE_LEFT, SIDE_RIGHT]:
 		pill.set_content_margin(side, 6)
 	theme.set_stylebox("normal", COUNT_PILL, pill)
@@ -549,21 +530,30 @@ static func _buttons(theme: Theme) -> void:
 	for type in ["Button", "OptionButton"]:
 		theme.set_stylebox("normal", type, _button_box(CONTROL))
 		theme.set_stylebox("hover", type, _button_box(CONTROL_HOVER))
-		# "pressed" is also a toggle that is ON -- a picked chip, the clock's running speed,
-		# the map layer shown: G3 marks it picked with the accent FILL, and keeps it under
-		# the pointer (pass 2: an ON toggle lost its mark on hover, and a picked chip was
-		# CONTROL_PRESSED, 1.14:1 from an unpicked one -- invisible).
-		theme.set_stylebox("pressed", type, _button_box(accent_fill()))
-		theme.set_stylebox("hover_pressed", type, _button_box(accent_fill().darkened(0.06)))
+		# "pressed" is a button held down here: CONTROL_PRESSED, with the scale (Motion). A
+		# toggle that is ON wears PICKED below (#436 RECORD: the fill flashed under every click).
+		theme.set_stylebox("pressed", type, _button_box(CONTROL_PRESSED))
+		theme.set_stylebox("hover_pressed", type, _button_box(CONTROL_PRESSED))
 		theme.set_stylebox("focus", type, _ring())
 		theme.set_stylebox("disabled", type, _button_box(Color(0, 0, 0, 0), LINE_STRONG))
 		for state in ["font_hover_color", "font_focus_color"]:
 			theme.set_color(state, type, TEXT)
 		for state in ["font_pressed_color", "font_hover_pressed_color"]:
-			theme.set_color(state, type, on_accent_fill())
+			theme.set_color(state, type, TEXT)
 		theme.set_color("font_disabled_color", type, TEXT_OFF)
 		if label != null:
 			theme.set_font("font", type, label)
+
+	# PICKED, a toggle that is ON -- a picked chip, the clock's running speed, the map layer
+	# shown: the accent FILL, kept under the pointer (#436 pass 2: an ON toggle lost its mark on
+	# hover, and a picked chip at CONTROL_PRESSED was 1.14:1 from an unpicked one -- invisible).
+	theme.set_type_variation(PICKED, "Button")  # i18n: ok
+	theme.set_stylebox("normal", PICKED, _button_box(CONTROL))
+	theme.set_stylebox("hover", PICKED, _button_box(CONTROL_HOVER))
+	theme.set_stylebox("pressed", PICKED, _button_box(accent_fill()))
+	theme.set_stylebox("hover_pressed", PICKED, _button_box(accent_fill().darkened(0.06)))
+	for state in ["font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, PICKED, on_accent_fill())
 
 	# A cluster is an icon with a name under it, not a slab. Flat until it is the open
 	# one, where the accent fills the bar under it -- "one accent says where you are".
@@ -592,6 +582,19 @@ static func _buttons(theme: Theme) -> void:
 	# alone (QA's pre-gate B RECORD 8; pass 2: TEXT_OFF alone was 1.55:1 from TEXT_DIM).
 	theme.set_stylebox("disabled", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0), LINE_STRONG))
 	theme.set_color("font_disabled_color", SUBROW_BUTTON, TEXT_OFF)
+
+	# A domain's row in the sidebar pane (G3 S1): no ground at rest, its name TEXT_DIM_CHROME on
+	# the glass; the name brightens under the pointer; the open one sits on CONTROL with the
+	# accent bar beside it (sidebar.gd draws the bar, outside the row, on the pane's padding).
+	theme.set_type_variation(SIDEBAR_ROW, "Button")  # i18n: ok
+	theme.set_stylebox("normal", SIDEBAR_ROW, _button_box(Color(0, 0, 0, 0)))
+	theme.set_stylebox("hover", SIDEBAR_ROW, _button_box(Color(0, 0, 0, 0)))
+	theme.set_stylebox("pressed", SIDEBAR_ROW, _button_box(CONTROL))
+	theme.set_stylebox("hover_pressed", SIDEBAR_ROW, _button_box(CONTROL_HOVER))
+	theme.set_stylebox("focus", SIDEBAR_ROW, _ring())
+	theme.set_color("font_color", SIDEBAR_ROW, TEXT_DIM_CHROME)
+	for state in ["font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, SIDEBAR_ROW, TEXT)
 
 	# The requests mark: something waits on the player, the one place WARN outlines a
 	# control (the author: "clearly visible"). The words stay TEXT; the outline is the tone.

@@ -283,7 +283,7 @@ func _show_file(row: Dictionary, armed: bool) -> void:
 	var grudge := roundi(AudienceK.DELEGATE_GRUDGE_SHARE * 100.0)
 	var see := _verb(id, "See", tr("See them"), row.get("book", {}),
 		["●", tr("▲ up"), tr("full"), "●"], tr("Now click a free day on the calendar.") if armed else String(row.get("until", "")))
-	see.toggle_mode = true
+	PanelKit.toggle(see)
 	see.button_pressed = armed
 	see.pressed.connect(func() -> void: see_requested.emit(id))
 	var call := _verb(id, "Call", tr("Call"), row.get("call", {}),  # i18n: ok a node-name key

@@ -59,7 +59,7 @@ static func build(box: Control, state, loader, key: String, commission: Callable
 	for tier in K.TIERS:
 		var chip := PanelKit.sized(Button.new())
 		chip.text = Strings.t(String(TIER_NAME[tier]))  # i18n: row-ok a tier id, its name the msgid
-		chip.toggle_mode = true
+		PanelKit.toggle(chip)
 		chip.button_group = group
 		chip.button_pressed = tier == shown
 		chip.set_meta(CHIP_META, String(tier))

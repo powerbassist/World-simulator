@@ -11,6 +11,7 @@ extends SceneTree
 ## silently needs a test is the whole reason this file exists.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const AccentRule = preload("res://src/ui/accent_rule.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const MoodIcon = preload("res://src/ui/mood_icon.gd")
@@ -103,19 +104,19 @@ func _check_icons_load() -> void:
 	UiTheme.apply(host, Color("#2596FF"))
 	var sidebar = _main._hud.sidebar
 	sidebar.show_pending(["finances"])
-	# G3 S0: the sidebar and the day ribbon are glass, docked until S1 floats them (#436 pass 2).
-	for chrome in [sidebar, _main._hud.ribbon]:
-		if (chrome as Control).theme_type_variation != UiTheme.PANE_DOCKED:
-			_fail("%s is not the docked glass pane" % (chrome as Node).name)
+	_check_three_floating_panes()
 	var pill: Label = sidebar._pills["finances"]
 	if not pill.visible:
 		_fail("a pending budget did not show a count on Finances")
-	# G3: the attention tone is the pill's ground; the figure on it is the text tone.
+	# G3 S1 (the author's "Ambre pleine"): a solid amber pill, the figure in the sheet's dark,
+	# at AA on it.
 	var ground := pill.get_theme_stylebox("normal") as StyleBoxFlat
-	if ground == null or ground.bg_color != UiTheme.WARN_GROUND:
-		_fail("the pending count does not sit on the attention tone's pill")
-	if pill.get_theme_color("font_color") != UiTheme.TEXT:
-		_fail("the pending count's figure is %s, not the text tone" % pill.get_theme_color("font_color").to_html(false))
+	if ground == null or ground.bg_color != UiTheme.WARN:
+		_fail("the pending count does not sit on a solid amber pill")
+	elif AccentRule.contrast(pill.get_theme_color("font_color"), ground.bg_color) < AccentRule.MIN_CONTRAST:
+		_fail("the pending count's figure %s does not hold AA on the amber" % pill.get_theme_color("font_color").to_html(false))
+	elif pill.get_theme_color("font_color") != UiTheme.SHEET:
+		_fail("the pending count's figure is %s, not the sheet's dark" % pill.get_theme_color("font_color").to_html(false))
 	sidebar.show_pending([])
 
 	# The mood icon's WORRIED band sits between GOOD and BAD: a status tone, not the
@@ -590,6 +591,66 @@ func _collect_text(node) -> String:
 	for child in node.get_children():
 		out += _collect_text(child)
 	return out
+
+
+## G3 S1: the chrome is THREE floating glass panes -- the sidebar, ONE top strip (the figures and the
+## title bar's tools in one row) and the time bar -- each GAP_PANE from the screen's edges and from each
+## other. A pane that went back to flush, or a fourth pane, is the BUREAU board again.
+func _check_three_floating_panes() -> void:
+	var hud = _main._hud
+	var view: Vector2 = _main.get_viewport().get_visible_rect().size
+	var gap := float(UiTheme.GAP_PANE)
+	for chrome in [hud.sidebar, hud.top_bar, hud.ribbon]:
+		if (chrome as Control).theme_type_variation != UiTheme.PANE:
+			_fail("%s wears '%s', not the floating glass pane" % [(chrome as Node).name, (chrome as Control).theme_type_variation])
+	if not hud.top_bar.is_ancestor_of(hud.title_bar):
+		_fail("the title bar's tools are not in the top strip's pane")
+	if hud.title_bar is PanelContainer:
+		_fail("the title bar is still a pane of its own")
+	var side: Rect2 = hud.sidebar.get_global_rect()
+	var strip: Rect2 = hud.top_bar.get_global_rect()
+	var bar: Rect2 = hud.ribbon.get_global_rect()
+	if not side.position.is_equal_approx(Vector2(gap, gap)):
+		_fail("the sidebar's pane is at %s, not a gap from the corner" % str(side.position))
+	if not is_equal_approx(strip.position.x, side.end.x + gap) or not is_equal_approx(strip.position.y, gap):
+		_fail("the top strip is at %s, not a gap right of the sidebar and under the top edge" % str(strip.position))
+	if not is_equal_approx(strip.end.x, view.x - gap):
+		_fail("the top strip ends at %.0f, not a gap short of %.0f" % [strip.end.x, view.x])
+	if not is_equal_approx(bar.position.x, gap) or not is_equal_approx(bar.end.x, view.x - gap) or not is_equal_approx(bar.end.y, view.y - gap):
+		_fail("the time bar is %s, not the screen's width less two gaps, a gap off the bottom" % str(bar))
+	if not is_equal_approx(bar.position.y, side.end.y + gap):
+		_fail("the sidebar ends at %.0f and the time bar starts at %.0f: not a gap apart" % [side.end.y, bar.position.y])
+	# The open domain's row: a control's ground and the accent bar left of it, in the pane's
+	# padding -- the accent's one mark in the sidebar (G3 spec section 2).
+	hud.sidebar.select("finances")
+	var accent_bar: ColorRect = hud.sidebar.open_bar()
+	if accent_bar == null or accent_bar.get_parent() != hud.sidebar._entries["finances"] or accent_bar.color != UiTheme.accent():
+		_fail("the open Finances row carries no accent bar")
+	elif accent_bar.offset_right > 0.0 or accent_bar.offset_right - accent_bar.offset_left < 4.0:
+		_fail("the open row's accent bar is not a 4 px bar left of the row")
+	if hud.sidebar._entries["finances"].theme_type_variation != UiTheme.SIDEBAR_ROW:
+		_fail("a sidebar entry is not a SIDEBAR_ROW")
+	# The bar moves with the open domain: one bar, on the new row, none left on the old one.
+	hud.sidebar.select("economy")
+	for id in ["finances", "economy"]:
+		var bars: int = (hud.sidebar._entries[id] as Node).get_children().filter(func(c): return c is ColorRect and not c.is_queued_for_deletion()).size()
+		if bars != (1 if id == "economy" else 0):
+			_fail("after opening Economy the %s row carries %d accent bars" % [id, bars])
+	hud.sidebar.select("")
+	if hud.sidebar.open_bar() != null:
+		_fail("the accent bar stayed with nothing open")
+	# While the inbox shows over a tab, the workspace ends a gap short of it: nothing under it.
+	if hud.inbox.visible:
+		_main._windows.open("finances")
+		var dock: Rect2 = _main._windows.dock().get_global_rect()
+		if dock.end.x > hud.inbox.get_global_rect().position.x - gap + 0.5:
+			_fail("with the inbox up the workspace ends at %.0f, under the inbox at %.0f" % [dock.end.x, hud.inbox.get_global_rect().position.x])
+		_main._windows.close_all()
+	else:
+		_fail("premise: the inbox is not shown on the map")
+	var inbox: Rect2 = hud.inbox.get_global_rect()
+	if hud.inbox.visible and not is_equal_approx(inbox.end.x, view.x - gap):
+		_fail("the inbox ends at %.0f, not a gap short of the screen's edge" % inbox.end.x)
 
 
 func _fail(message: String) -> void:

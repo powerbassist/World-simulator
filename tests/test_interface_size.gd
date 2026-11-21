@@ -113,13 +113,13 @@ func _check_old_config() -> void:
 	DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 
 
-## The Regions tab frames the nation between its narrow dock and the inbox strip.
-## At the 1920x1080 canvas the rect is the one it always was; on a bigger canvas it
-## follows the canvas instead of stopping at 1080.
+## The Regions tab frames the nation between its narrow dock and the inbox's column (G3 S1: the
+## inbox's width and the gap off the right edge). On a bigger canvas it follows the
+## canvas instead of stopping at 1080.
 func _check_regions_frame() -> void:
 	var w = WindowManager
-	var old := Rect2(w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"]), w.DOCK_TOP,
-		w.DOCK_WIDTH - float(w.DOCK_WIDTHS["region"]), 1080.0 - w.DOCK_TOP - w.DOCK_BOTTOM)
+	var left: float = w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"])
+	var old := Rect2(left, w.DOCK_TOP, 1920.0 - (w.GAP + RegionsShell.INBOX_WIDTH) - left, 1080.0 - w.DOCK_TOP - w.DOCK_BOTTOM)
 	var at_1080: Rect2 = RegionsShell.fit_rect_for(Vector2(1920, 1080))
 	if not at_1080.is_equal_approx(old):
 		_fail("the Regions frame moved at 1920x1080: %s, was %s" % [at_1080, old])

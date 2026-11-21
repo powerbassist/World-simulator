@@ -23,7 +23,10 @@ const WIDTH := 232
 ## The Inbox's id in `navigate`, beside the domain ids. Until V5.1-c3 builds
 ## the inbox, it opens Dispatches.
 const INBOX := "inbox"
-const ENTRY_HEIGHT := 36
+## G3 S1's sidebar row: 38 high at R_TILE (g3-spec.md section 2).
+const ENTRY_HEIGHT := 38
+## The open row's accent bar: 4 px wide, in the pane's padding just left of the row.
+const BAR_WIDTH := 4.0
 
 var portrait_card: Control
 var _list: VBoxContainer
@@ -31,15 +34,21 @@ var _entries := {}      # domain id -> its Button
 var _pills := {}        # domain id -> its count Label
 var _selected := ""
 var _pending: Array = []
+var _bar: ColorRect
 
 
 func _ready() -> void:
-	PanelKit.pane(self, UiTheme.PANE_DOCKED)  # G3: glass, docked until S1 floats it
+	PanelKit.pane(self)  # G3 S1: a floating glass pane
 	custom_minimum_size = Vector2(WIDTH, 0)
 
+	# Air under the rim, which the pane's own 3 px (the top strip's) does not give a list.
+	var air := MarginContainer.new()
+	air.add_theme_constant_override("margin_top", 10)
+	air.add_theme_constant_override("margin_bottom", 10)
+	add_child(air)
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 2)
-	add_child(_list)
+	air.add_child(_list)
 
 
 ## The portrait card goes on top; hud.gd builds it so main.gd keeps reaching it
@@ -80,11 +89,33 @@ func entry_ids() -> Array:
 	return _entries.keys()
 
 
-## The open domain wears the pressed state -- the accent, "you are here".
+## The open domain wears the pressed state -- a control's ground -- and the accent bar beside it,
+## "you are here" (G3: the bar is the accent's mark, the row's ground is not).
 func select(domain_id: String) -> void:
 	_selected = domain_id
 	for id in _entries.keys():
 		_entries[id].set_pressed_no_signal(id == domain_id)
+	if is_instance_valid(_bar) and _bar.get_parent() != null:
+		_bar.get_parent().remove_child(_bar)
+		_bar.queue_free()
+		_bar = null
+	if _entries.has(domain_id):
+		# A child of the row, left of it in the pane's padding: it moves with the row and goes
+		# with it on a rebuild. Read the accent here, after main.gd applied the nation's.
+		_bar = ColorRect.new()
+		_bar.color = UiTheme.accent()
+		_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_bar.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+		_bar.offset_left = -BAR_WIDTH - 4.0
+		_bar.offset_right = -4.0
+		_bar.offset_top = -10.0
+		_bar.offset_bottom = 10.0
+		_entries[domain_id].add_child(_bar)
+
+
+## The accent bar beside the open row, or null with nothing open (a test reads it).
+func open_bar() -> ColorRect:
+	return _bar
 
 
 func selected() -> String:
@@ -124,7 +155,7 @@ func _add_link(id: String, title: String, icon_path: String) -> void:
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.custom_minimum_size = Vector2(0, ENTRY_HEIGHT)
-	button.theme_type_variation = UiTheme.SUBROW_BUTTON
+	button.theme_type_variation = UiTheme.SIDEBAR_ROW
 	# No focus, as on every piece of chrome: a clicked entry that kept the focus
 	# would take Space, the pause key, for itself (V5.1-0c's forfeited Agenda).
 	button.focus_mode = Control.FOCUS_NONE

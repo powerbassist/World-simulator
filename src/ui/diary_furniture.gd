@@ -20,7 +20,7 @@ static func folded(parent: Control, label: String) -> VBoxContainer:
 	var open := PanelKit.sized(Button.new())
 	open.name = "BookAnAct"  # i18n: ok a node name, found by tests
 	open.text = label
-	open.toggle_mode = true
+	PanelKit.toggle(open)
 	parent.add_child(open)
 	var box := VBoxContainer.new()
 	box.visible = false

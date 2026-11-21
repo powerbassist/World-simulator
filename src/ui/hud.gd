@@ -1,10 +1,11 @@
 extends Control
 
-## The chrome around the map -- V5.1-c2.3's BUREAU shell: the title bar across
-## the top, the sidebar down the left, the figure strip under the title bar, and
-## over the map area the legend and the message column, with the day ribbon at
-## the bottom. The workspace (window_manager.gd) docks beside the sidebar,
-## under the strip and above the ribbon; this file only arranges the chrome.
+## The chrome around the map -- G3 S1, "Sheets on glass": THREE floating glass panes, the
+## sidebar down the left, ONE top strip (the figures with the title bar's tools docked in its
+## row) and the time bar along the bottom, each GAP_PANE from the screen's edges and from each
+## other; over the map area the legend, the inbox (a column of sheets at the right that slides
+## over the workspace) and the front pages. The workspace (window_manager.gd) fills the band
+## between the panes; this file only arranges the chrome.
 ##
 ## It owns no game state and no behaviour: every signal these pieces emit is
 ## connected by main.gd, which is the node holding the Clock and the GameState.
@@ -29,6 +30,7 @@ const FrontPage = preload("res://src/ui/front_page.gd")
 const ChiefCaption = preload("res://src/ui/chief_caption.gd")
 
 const EDGE_MARGIN := 14
+const GAP := UiTheme.GAP_PANE
 
 var title_bar
 var top_bar
@@ -46,20 +48,20 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	# The screen less GAP_PANE on every side, the panes GAP_PANE apart: the map shows in the gaps.
+	var frame := _ignore(MarginContainer.new())
+	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	for side in ["left", "right", "top", "bottom"]:
+		frame.add_theme_constant_override("margin_%s" % side, GAP)
+	add_child(frame)
 	var column := _ignore(VBoxContainer.new())
-	column.add_theme_constant_override("separation", 0)
-	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(column)
+	column.add_theme_constant_override("separation", GAP)
+	frame.add_child(column)
 
-	# The title bar across the top: history, where you are, save and the menu. The
-	# clock is not here since the V5.3 bar rebuild: it sits at the left end of the
-	# horizon, beside the days it counts.
-	title_bar = TitleBar.new()
-	column.add_child(title_bar)
 	clock_cluster = ClockCluster.new()
 
 	var row := _ignore(HBoxContainer.new())
-	row.add_theme_constant_override("separation", 0)
+	row.add_theme_constant_override("separation", GAP)
 	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(row)
 
@@ -70,13 +72,17 @@ func _ready() -> void:
 	sidebar.add_portrait(portrait_card)
 
 	var right := _ignore(VBoxContainer.new())
-	right.add_theme_constant_override("separation", 0)
+	right.add_theme_constant_override("separation", GAP)
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(right)
 
-	# The figure strip, under the title bar and beside the sidebar.
+	# The top strip beside the sidebar: the figures, and the title bar's tools (history, the
+	# chief's mark, the requests, save, the menu) in the same pane's row. The clock is not here
+	# since the V5.3 bar rebuild: it sits at the left end of the horizon, beside its days.
 	top_bar = TopBar.new()
 	right.add_child(top_bar)
+	title_bar = TitleBar.new()
+	top_bar.dock_tools(title_bar)
 
 	# The map area: a plain Control, so nothing drawn over it -- the legend, a
 	# column of tall cards -- can change its size and push the ribbon off the
@@ -97,8 +103,9 @@ func _ready() -> void:
 	map_legend.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	legend_column.add_child(map_legend)
 
-	# V5.1-c3.1. The inbox, docked at the map area's right edge: the strip of map
-	# beside the workspace, which is where the board puts it. Its own height is
+	# V5.1-c3.1. The inbox, at the map area's right edge -- GAP_PANE short of the screen's,
+	# as the workspace -- the fourth column at the right (G3 decision 8a); over a tab the
+	# workspace ends a gap short of it (window_manager.gd _place_dock). Its own height is
 	# the map area's, and its lanes scroll inside it.
 	inbox = Inbox.new()
 	map_area.add_child(inbox)
@@ -116,13 +123,14 @@ func _ready() -> void:
 	front_page.anchor_right = 0.5
 	front_page.offset_left = -FrontPage.WIDTH / 2.0
 	front_page.offset_right = FrontPage.WIDTH / 2.0
-	front_page.offset_top = EDGE_MARGIN
+	front_page.offset_top = GAP
 	front_page.grow_horizontal = Control.GROW_DIRECTION_BOTH
 
-	# V2.4a: the day ribbon, the bottom-most plate, the line the month sits on.
+	# V2.4a: the day ribbon, the time bar -- the bottom pane, the screen's whole width under the
+	# sidebar and the workspace, the line the month sits on.
 	ribbon = Ribbon.new()
 	ribbon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right.add_child(ribbon)
+	column.add_child(ribbon)
 	ribbon.add_clock(clock_cluster)
 
 	# G1: the chief's caption, docked in the top bar's own row (top bar A): the bar lays it out.
