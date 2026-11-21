@@ -33,6 +33,8 @@ var _frame := 0
 var _grid
 var _request := ""
 var _offered := {}
+var _edge_offset := 0
+var _second = null
 
 
 func _init() -> void:
@@ -66,6 +68,13 @@ func _process(_delta: float) -> bool:
 			var cell = _cell(int(_offered["day"]))
 			if cell == null or not is_equal_approx(float(cell.drain), 1.0):
 				_fail("the fresh appointment never finished draining: %.2f" % (float(cell.drain) if cell != null else -1.0))
+			# Pass 1: "just booked" -- the check goes once the day turns.
+			_main._clock.advance_one_day()
+		15:
+			_grid.show_month(int(_offered["year"]), int(_offered["month"]))
+			var cell = _cell(int(_offered["day"]))
+			if cell != null and bool(cell.fresh):
+				_fail("a day on, the appointment still wears the just-booked check")
 			_finish()
 			return true
 	return false
@@ -150,6 +159,28 @@ func _check_trip() -> void:
 	if bool(_cell(14).band_hot):
 		_fail("the trip stayed lit after the pointer left")
 	state.appointments.erase(visit)
+	# Pass 1: a trip across the month's edge keeps a chevron there, not a round end. A month whose
+	# last day is not a Sunday and whose next starts on no Monday: a row break would chevron anyway.
+	for offset in range(4, 16):
+		var m := _month(offset)
+		var end_wd := (int(Time.get_datetime_dict_from_unix_time(int(Time.get_unix_time_from_datetime_dict({"year": int(m["year"]),
+			"month": int(m["month"]), "day": Calendar.days_in_month(int(m["year"]), int(m["month"])), "hour": 0, "minute": 0, "second": 0})))["weekday"]) + 6) % 7
+		if end_wd != 6:
+			at = m
+			_edge_offset = offset
+			break
+	var last := Calendar.days_in_month(int(at["year"]), int(at["month"]))
+	var edge := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), last, "state_visit", "DEU", "", "", "", "", 2)
+	state.appointments.append(edge)
+	_main._calendar_panel._refresh()
+	_grid.show_month(int(at["year"]), int(at["month"]))
+	if _cell(last) == null or String(_cell(last).band_right) != "chevron":
+		_fail("a trip going on into next month ends round on the month's last day")
+	var nxt := _month(_edge_offset + 1)
+	_grid.show_month(int(nxt["year"]), int(nxt["month"]))
+	if _cell(1) == null or String(_cell(1).band_left) != "chevron":
+		_fail("a trip begun last month starts round on the 1st")
+	state.appointments.erase(edge)
 	_main._calendar_panel._refresh()
 
 
@@ -166,6 +197,9 @@ func _check_places() -> void:
 	if not held.is_empty():
 		blocker = Calendar.make_entry(K.KIND_RESHUFFLE, int(held["year"]), int(held["month"]), int(held["day"]), "", "", "", "interior", "")
 		state.appointments.append(blocker)
+		# A second entry on the day: two lines above the place.
+		_second = Calendar.make_entry(K.KIND_RESHUFFLE, int(held["year"]), int(held["month"]), int(held["day"]), "", "", "", "finance", "")
+		state.appointments.append(_second)
 		_main._calendar_panel._refresh()
 	var see := _main._calendar_panel.find_child("See_%s" % _request, true, false) as Button
 	if see == null:
@@ -180,6 +214,14 @@ func _check_places() -> void:
 	var cell = _cell(int(_offered["day"]))
 	if cell == null or String(cell.offer) != tr("See %s") % surname:
 		_fail("the free day's bookable place reads '%s', not 'See %s'" % [cell.offer if cell != null else "", surname])
+	var s := UiTheme.text_scale()
+	for c in _grid._days.get_children():
+		if (String(c.get("offer")) != "" or String(c.get("taken")) != "") and c._lines != null:
+			# The place is drawn PLACE_H + 5 up from the tile's foot.
+			var need: float = c._lines.offset_top + c._lines.get_combined_minimum_size().y + (preload("res://src/ui/diary_day.gd").PLACE_H + 5.0) * s
+			if (c as Control).custom_minimum_size.y < need:
+				_fail("day %d's place would sit on its lines: floor %.0f < %.0f" % [int(c.day), c.custom_minimum_size.y, need])
+				break
 	if blocker != null:
 		var taken = _cell(int(held["day"]))
 		if taken == null or String(taken.taken) == "":
@@ -187,6 +229,7 @@ func _check_places() -> void:
 		elif String(taken.offer) != "":
 			_fail("a taken day still offers a place")
 		state.appointments.erase(blocker)
+		state.appointments.erase(_second)
 	var armed := _main._calendar_panel.find_child("See_%s" % _request, true, false) as Button
 	if armed == null or String(armed.theme_type_variation) != UiTheme.PRIMARY:
 		_fail("the armed See them is not the screen's main action")

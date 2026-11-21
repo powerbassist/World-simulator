@@ -285,7 +285,7 @@ func _show_file(row: Dictionary, armed: bool) -> void:
 	PanelKit.chip(_file, tr("Answer by %s") % String(row.get("by", "")), UiTheme.CHIP_WARN)
 	if bool(row.get("broken_word", false)):
 		PanelKit.plain_line(_file, tr("They hold something on you. Refusing them breaks your word."), PanelKit.Tone.BAD)
-	_cells(_file, null, ["", tr("a day"), tr("rapport"), tr("odds"), tr("learn")], PanelKit.Tone.DIM)
+	var header := _cells(_file, null, ["", tr("a day"), tr("rapport"), tr("odds"), tr("learn")], PanelKit.Tone.DIM)
 	var grudge := roundi(AudienceK.DELEGATE_GRUDGE_SHARE * 100.0)
 	var see := _verb(id, "See", tr("See them"), row.get("book", {}),
 		["●", tr("▲ up"), tr("full"), "●"], tr("Now click a free day on the calendar.") if armed else String(row.get("until", "")))
@@ -313,6 +313,8 @@ func _show_file(row: Dictionary, armed: bool) -> void:
 		["○", tr("▼ a grudge"), PanelKit.MISSING, "○"], price)
 	decline.pressed.connect(func() -> void: decline_requested.emit(id))
 	PanelKit.same_class([see, call, delegate, decline])
+	# A class past the column's (French, 115 %) widens the verbs' column: the header follows it.
+	(header.get_child(0) as Control).custom_minimum_size.x = maxf(float(COLUMNS[0]) * s, see.custom_minimum_size.x)
 
 
 ## One verb's row of the matrix and its note under it; a refused verb stays, disabled, its
@@ -334,7 +336,7 @@ func _verb(id: String, key: String, label: String, answer: Dictionary, marks: Ar
 
 ## A matrix row at COLUMNS' widths: `lead` (a verb's button, or nothing for the header), then
 ## the texts; a ▲ is good news and a ▼ bad, said by the glyph as well as the tone.
-func _cells(parent: Control, lead: Button, texts: Array, tone: PanelKit.Tone) -> void:
+func _cells(parent: Control, lead: Button, texts: Array, tone: PanelKit.Tone) -> HBoxContainer:
 	var s := UiTheme.text_scale()
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 0)
@@ -356,6 +358,7 @@ func _cells(parent: Control, lead: Button, texts: Array, tone: PanelKit.Tone) ->
 			cell.theme_type_variation = UiTheme.GOOD_TEXT
 		elif t.begins_with("▼"):
 			cell.theme_type_variation = UiTheme.BAD_TEXT
+	return row
 
 
 ## The ring of a token: the share of the window left, in the attention tone, on an EDGE track.

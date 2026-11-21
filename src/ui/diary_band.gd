@@ -28,7 +28,9 @@ const JOIN := "join"
 ## Day -> {label, left, right, leg, meeting, key} for every day a visit's trip covers (its
 ## journey and its meeting). `label` is the host on the run's first day and again on a Monday
 ## (where the band starts a row), "" elsewhere; `first` the month's first weekday, Monday 0.
-static func bands(trips: Array, entries: Dictionary, first: int) -> Dictionary:
+## `on_before` / `on_after`: the trip on the 1st (the last day) goes on into the month before
+## (after), so that end is a chevron, not a cap -- the shape follows the trip, not the page.
+static func bands(trips: Array, entries: Dictionary, first: int, on_before := false, on_after := false) -> Dictionary:
 	var out := {}
 	var d := 1
 	while d <= trips.size():
@@ -60,8 +62,9 @@ static func bands(trips: Array, entries: Dictionary, first: int) -> Dictionary:
 			elif day == meeting + 1:
 				leg = Strings.t("back")
 			out[day] = {"label": label if day == start or col == 0 else "", "key": key, "leg": leg,
-				"meeting": day == meeting, "left": CAP if day == start else (CHEVRON_END if col == 0 else JOIN),
-				"right": CAP if day == end else (CHEVRON_END if col == 6 else JOIN)}
+				"meeting": day == meeting,
+				"left": CHEVRON_END if col == 0 or (day == 1 and on_before) else (CAP if day == start else JOIN),
+				"right": CHEVRON_END if col == 6 or (day == trips.size() and on_after) else (CAP if day == end else JOIN)}
 	return out
 
 
@@ -74,6 +77,29 @@ static func on_trip(trips: Array, d: int) -> bool:
 		if bool(c["meeting"]) and n >= 0 and n < trips.size() and bool(trips[n]["travel"]) and String(trips[n]["key"]) == String(c["key"]):
 			return true
 	return false
+
+
+## Whether this month's day `at` and the neighbour month's day `there` belong to one trip.
+static func goes_on(trips: Array, other: Array, at: int, there: int) -> bool:
+	if trips.is_empty() or other.is_empty():
+		return false
+	var key := String(trips[at]["key"])
+	return key != "" and String(other[there]["key"]) == key
+
+
+## The trip's name on its meeting pill: the run's label, read back from its first day.
+static func name_of(bands: Dictionary, d: int) -> String:
+	while d > 1 and bands.has(d - 1) and String(bands[d - 1]["key"]) == String(bands[d]["key"]) and String(bands[d]["label"]) == "":  # i18n: row-ok the band's words, worded above
+		d -= 1
+	return String(bands[d]["label"])  # i18n: row-ok the band's words, worded above
+
+
+## The pointer on one day of a trip lights every day of it, every row; leaving it, none.
+static func light(key: String, on: bool, days: Control) -> void:
+	for cell in days.get_children():
+		if cell.get("band") and String(cell.band_key) == key and cell.band_hot != on:
+			cell.band_hot = on
+			cell.queue_redraw()
 
 
 ## The cell's piece of the capsule. `gap` the grid's separation, half of which each joined end

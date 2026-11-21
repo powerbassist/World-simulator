@@ -205,7 +205,7 @@ func _in_hand() -> bool:
 	if viewport == null:
 		return false
 	var hovered := viewport.gui_get_hovered_control()
-	return (hovered is DiaryDay and not armed.is_empty()) \
+	return (hovered is DiaryDay and not hovered.outside and not armed.is_empty()) \
 			or (hovered != null and day_list != null and day_list.is_ancestor_of(hovered))
 
 
@@ -249,6 +249,9 @@ func _render() -> void:
 	if _state == null or _days == null or _state.player() == null:
 		return
 	_drawn_day = int(_state.day)
+	# The check is "just booked": it goes once the day turns, its drain long played.
+	if not _fresh.is_empty() and float(_fresh.get("drain", 0.0)) >= 1.0 and int(_fresh["on"]) != _drawn_day:
+		_fresh = {}
 	var ym := _shown()
 	_title.text = DateText.month_long_year(ym.y, ym.x)
 	for child in _days.get_children():
@@ -266,7 +269,9 @@ func _render() -> void:
 		_outside(before_len - first + 1 + i, before.y, i == 0)
 	var is_now := _month_abs == _now()
 	var trips: Array = Calendar.day_cells(_state, ym.x, ym.y)
-	var bands := Band.bands(trips, entries, first)
+	var after_ym := Vector2i(ym.x + (1 if ym.y == 12 else 0), 1 if ym.y == 12 else ym.y + 1)
+	var bands := Band.bands(trips, entries, first, Band.goes_on(trips, Calendar.day_cells(_state, before.x, before.y), 0, -1),
+		Band.goes_on(trips, Calendar.day_cells(_state, after_ym.x, after_ym.y), trips.size() - 1, 0))
 	var who := String(armed.get("person", ""))
 	var place := tr("See %s") % who.get_slice(" ", who.get_slice_count(" ") - 1)
 	for d in range(1, Calendar.days_in_month(ym.x, ym.y) + 1):
@@ -278,16 +283,8 @@ func _render() -> void:
 		cell.selected = d == _selected
 		cell.band = bands.has(d)
 		if cell.band:
-			var b: Dictionary = bands[d]
-			cell.band_label = String(b["label"])  # i18n: row-ok the band's words, worded in diary_band.gd
-			cell.band_key = String(b["key"])
-			cell.band_left = String(b["left"])
-			cell.band_right = String(b["right"])
-			cell.band_leg = String(b["leg"])
-			cell.band_meeting = bool(b["meeting"])
-			cell.band_name = _band_name(bands, d)
-			cell.band_picked = cell.band_meeting and d == _selected
-			cell.band_hover.connect(_light_trip)
+			cell.wear_band(bands[d], Band.name_of(bands, d), d == _selected)
+			cell.band_hover.connect(Band.light.bind(_days))
 		# Only a day that books takes the tint: a taken day of the window read as free (#431 R10).
 		cell.tinted = offered.has(d) and bool((offered[d][0]["date"] as Dictionary).get("free", false))
 		cell.offer = place if cell.tinted else ""
@@ -312,12 +309,27 @@ func _render() -> void:
 			_play_fresh()
 	var after := 1
 	while _days.get_child_count() % 7 != 0:
-		_outside(after, 1 if ym.y == 12 else ym.y + 1, after == 1)
+		_outside(after, after_ym.y, after == 1)
 		after += 1
 	_render_furniture(ym)
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 	_armed_label.text = armed_line()
 	_armed_label.visible = _armed_label.text != ""
+
+
+## The appointment just booked, read back after the booking: the day the request LANDED on (the
+## driver books the first free day when the clock took the one picked), nothing when it was
+## refused; a summons keeps the day picked. Stamped with today, so the check goes once the day
+## turns. The panel's items catch up on its own refresh: the drain starts when the card exists.
+func _mark_fresh(target: Dictionary, picked: Dictionary) -> void:
+	var at := picked
+	if not bool(target.get("summons", false)):
+		var row := Audiences.request(_state.player(), String(target["id"]))
+		at = row.get("date", {}) if String(row.get("status", "")) == "booked" else {}
+	if at.is_empty():
+		return
+	_fresh = {"at": int(at["year"]) * 12 + int(at["month"]), "day": int(at["day"]), "person": String(target["person_id"]), "on": int(_state.day)}
+	_render()
 
 
 ## The fresh appointment's drain, on the grid's clock: a redraw mid-drain (the booking's own
@@ -340,21 +352,6 @@ func _outside(d: int, month: int, named: bool) -> void:
 	cell.caption = DateText.day_mon(d, month) if named else ""
 	_days.add_child(cell)
 	cell.fill()
-
-
-## The trip's name on its meeting pill: the run's label, read back from its first day.
-func _band_name(bands: Dictionary, d: int) -> String:
-	while d > 1 and bands.has(d - 1) and String(bands[d - 1]["key"]) == String(bands[d]["key"]) and String(bands[d]["label"]) == "":  # i18n: row-ok the band's words, worded in diary_band.gd
-		d -= 1
-	return String(bands[d]["label"])  # i18n: row-ok the band's words, worded in diary_band.gd
-
-
-## The pointer on one day of a trip lights every day of it, every row; leaving it, none.
-func _light_trip(key: String, on: bool) -> void:
-	for cell in _days.get_children():
-		if cell is DiaryDay and cell.band and cell.band_key == key and cell.band_hot != on:
-			cell.band_hot = on
-			cell.queue_redraw()
 
 
 ## The counters and next month's strip, off the same reads as the cells.
@@ -398,7 +395,7 @@ func _on_day(d: int) -> void:
 		_pick(d)
 		return
 	var target := armed
-	_fresh = {"at": _month_abs, "day": d, "person": String(target.get("person_id", ""))}
+	_fresh = {}
 	# arm() redraws: a refused summons leaves no stale tint, so no second click books on an
 	# empty target (pass 2 TAKE 4).
 	arm({})
@@ -406,6 +403,7 @@ func _on_day(d: int) -> void:
 		summoned.emit(String(target["person_id"]), date)
 	else:
 		booked.emit(String(target["id"]), date)
+	_mark_fresh(target, date)
 
 
 ## Day `d` of the shown month in the armed person's window, {} when it is not in it.

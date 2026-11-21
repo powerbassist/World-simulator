@@ -119,6 +119,9 @@ func fill() -> void:
 			_appointment(shown[i])
 		else:
 			_line(shown[i])
+	# The place is drawn at the tile's foot: the tile grows so it never sits on a card or a line.
+	if offer != "" or taken != "":
+		custom_minimum_size.y = maxf(SIZE.y * s, _lines.offset_top + _lines.get_combined_minimum_size().y + (PLACE_H + 8.0) * s)
 
 
 func _line(e: Dictionary) -> void:
@@ -174,6 +177,19 @@ func _label(text: String, variation: String) -> Label:
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return label
+
+
+## The trip's piece on this day, from diary_band.gd's bands(): `name` the trip's (for the
+## meeting pill), `picked` whether the day is the one picked.
+func wear_band(b: Dictionary, name: String, picked: bool) -> void:
+	band_label = String(b["label"])  # i18n: row-ok the band's words, worded in diary_band.gd
+	band_key = String(b["key"])
+	band_left = String(b["left"])
+	band_right = String(b["right"])
+	band_leg = String(b["leg"])
+	band_meeting = bool(b["meeting"])
+	band_name = name
+	band_picked = band_meeting and picked
 
 
 ## The day holds the appointment just booked (the grid starts its drain only then: the redraw
