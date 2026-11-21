@@ -364,8 +364,9 @@ func _on_day(d: int) -> void:
 		_pick(d)
 		return
 	var target := armed
-	armed = {}
-	armed_changed.emit()
+	# arm() redraws: a refused summons leaves no stale tint, so no second click books on an
+	# empty target (pass 2 TAKE 4).
+	arm({})
 	if bool(target.get("summons", false)):
 		summoned.emit(String(target["person_id"]), date)
 	else:

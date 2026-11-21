@@ -45,6 +45,7 @@ func _process(_delta: float) -> bool:
 			_check_toggle_and_elsewhere()
 			_check_cards()
 			_check_summons()
+			_check_refused_summons()
 			_finish()
 			return true
 	return false
@@ -256,6 +257,51 @@ func _check_summons() -> void:
 	people.pick_person(String(can[1]["person_id"]))
 	if see.disabled:
 		_fail("after Cancel, the month's summons is still spent: %s" % people._why.text)
+
+
+## Pass 2 TAKE 4: a summons refused at the click (here the person's months stamped between the
+## See them and the click) leaves no day tinted, and a second click books nothing -- it once
+## sent the grid's emptied target on as a booking.
+func _check_refused_summons() -> void:
+	var state = _main._state
+	var ns = state.player()
+	var people = _people()
+	var grid = _main._calendar_panel._grid
+	var can: Array = people._people.filter(func(p: Dictionary) -> bool: return String(p["why"]) == "")
+	if can.is_empty():
+		_fail("premise: nobody left to summon")
+		return
+	var pid := String(can[0]["person_id"])
+	people.pick_person(pid)
+	(people.find_child("SummonSee", true, false) as Button).pressed.emit()
+	var first: Dictionary = {}
+	for d in Audiences.summon_days(state, pid):
+		if bool(d["free"]):
+			first = d
+			break
+	if first.is_empty() or not bool(grid.armed.get("summons", false)):
+		_fail("premise: the summons is not armed on a free day")
+		return
+	grid.show_month(int(first["year"]), int(first["month"]))
+	ns.audience_summoned_month[pid] = int(state.year) * 12 + int(state.month)
+	var before: int = ns.audience_requests.size()
+	var enter := InputEventAction.new()
+	enter.action = "ui_accept"
+	enter.pressed = true
+	grid._days.get_node("Day_%d" % int(first["day"]))._gui_input(enter)
+	var cell = grid._days.get_node_or_null("Day_%d" % int(first["day"]))
+	if cell == null or cell.is_queued_for_deletion() or bool(cell.tinted):
+		cell = null
+		for c in grid._days.get_children():
+			if not c.is_queued_for_deletion() and c.name == "Day_%d" % int(first["day"]):
+				cell = c
+	if cell == null or bool(cell.tinted):
+		_fail("a summons refused at the click left its day tinted")
+		return
+	cell._gui_input(enter)
+	if ns.audience_requests.size() != before or not grid.armed.is_empty():
+		_fail("a second click after a refused summons booked or armed something")
+	ns.audience_summoned_month.erase(pid)
 
 
 func _finish() -> void:
