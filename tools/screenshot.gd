@@ -2609,11 +2609,13 @@ func _stage_the_industry_tab() -> void:
 			for row in ns.processes:
 				row["months_left"] = 1
 				preload("res://src/sim/process_asks.gd").post(ns, row, action, state.year * 12 + state.month, majors[1])
-	panel._open_sector = String(majors[0].sector)
-	panel._open_firm = String(majors[0].id)
+	# G3 S3: a firm's verbs are its sector tab's firm sheet (the overview's card is gone): the
+	# first major picked there, a live verb focused, for a frame of that tab.
+	var tab = _main._sector_panels[String(majors[0].sector)]
+	tab._select(String(majors[0].id))
 	for action in Companies.available(state, ns, loader.company_actions, String(majors[0].id), loader):
 		if preload("res://src/ui/company_verb.gd").refusal(state, loader, ns, majors[0], action) == "":
-			panel._focus_verb = String(action.id)
+			tab._focus_verb = String(action.id)
 			break
 	panel.mark_dirty()
 

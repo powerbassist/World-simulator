@@ -76,6 +76,9 @@ static func build(panel, parent: Control, row: Dictionary) -> VBoxContainer:
 		var due := PanelKit.chip(top, Strings.t("answer by %s") % SectorsTimeline.answer_by(state, int(row["due"])), UiTheme.CHIP_WARN, "event")  # i18n: ok an icon file name
 		due.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		due.set_meta("answer_by", String(row["key"]))
+		# A chip wraps at its column's width; at the head's right it would wrap letter by letter.
+		for label in due.find_children("*", "Label", true, false):  # i18n: ok a class name
+			(label as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
 	_tiles(body, state, ns, row, company)
 	_answers(panel, body, state, loader, ns, row, company)
 	# A ghost, not bold text: a click has two looks, a button or a ghost (Design's T9).
