@@ -67,6 +67,7 @@ func _run() -> void:
 	_check_a_refusal_is_printed(panel, state)
 	_check_the_form_offers_what_can_be_booked(panel)
 	_check_away_line_months(panel, state)
+	_check_a_visit_verb_opens_the_fold(panel)
 
 
 ## The two lines main.gd's own comment predicted three sessions ago. Checked
@@ -255,6 +256,20 @@ func _check_away_line_months(panel, state) -> void:
 		_fail("a month-crossing trip lost one of its months: '%s'" % two)
 	if not two.contains("–"):
 		_fail("the two-month away form lost its month span dash: '%s'" % two)
+
+
+## Pass 2 TAKE 2 (#434): a nation's visit verb fills the booking form (main.gd's
+## book_requested); the form lives in the "Book an act" fold, so the fold must open with it,
+## or the player lands on a page with nothing filled in sight.
+func _check_a_visit_verb_opens_the_fold(panel) -> void:
+	var fold := panel.find_child("BookAnAct", true, false) as Button
+	if fold == null or fold.button_pressed:
+		_fail("premise: no closed Book an act fold")
+		return
+	var action = _main._loader.diplomatic_actions[0]
+	panel.fill_booking(String(action.id), "DEU", _main._windows)
+	if not fold.button_pressed or not panel._kind_pick.is_visible_in_tree():
+		_fail("a visit verb filled a booking form left hidden in the closed fold")
 
 
 func _refresh(panel) -> void:
