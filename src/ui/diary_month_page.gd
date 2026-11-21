@@ -12,6 +12,7 @@ const AudienceTalks = preload("res://src/ui/audience_talks.gd")
 const PhoneDriver = preload("res://src/ui/phone_driver.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Calendar = preload("res://src/sim/calendar.gd")
 
 
 ## `open_booking(id)` arms a request and turns the grid to its first free day, `answer(id,
@@ -60,12 +61,23 @@ static func show(main, rows: Array) -> void:
 	var state = main._state
 	var ns = state.player()
 	var loader = main._loader
+	# Calendar.today: the month turns before the day at the close, and a stale 31 is no date.
+	var today := _unix(int(state.year), int(state.month), Calendar.today(state))
 	for row in rows:
 		var dates: Array = Audiences.offered_dates(state, ns, String(row["id"]))
 		row["until"] = ""
 		if not dates.is_empty():
 			var last: Dictionary = dates[dates.size() - 1]
 			row["until"] = Strings.t("any free day until %s") % DateText.day_month_year(int(last["day"]), int(last["month"]), int(last["year"]))
+		# The token's ring: the share of the window left, from the month it came to the last day.
+		var request := Audiences.request(ns, String(row["id"]))
+		var by := Audiences.answer_by(request)
+		var by_y := floori((by - 1) / 12.0)
+		var end := _unix(by_y, by - by_y * 12, Calendar.days_in_month(by_y, by - by_y * 12))
+		var came := int(request["arrived_month"])
+		var start := _unix(floori((came - 1) / 12.0), came - floori((came - 1) / 12.0) * 12, 1)
+		row["left"] = maxi(0, (end - today) / 86400)
+		row["frac"] = clampf(float(end - today) / maxf(1.0, float(end - start)), 0.0, 1.0)
 	var reach: Array = []
 	for person in loader.people.get(String(ns.id), []):
 		var pid := String(person.id)
@@ -73,7 +85,12 @@ static func show(main, rows: Array) -> void:
 		# Not his to summon, or someone already waiting on an answer (the card above answers).
 		if [AudienceK.SUMMON_NOT_OWN, AudienceK.SUMMON_ASKED].has(String(why.get("code", ""))):
 			continue
-		reach.append({"person_id": pid, "person": loader.person_name(pid), "why": String(why.get("reason", ""))})
+		var words := Strings.t(String(why.get("reason", ""))) if not why.is_empty() else ""  # i18n: row-ok the sim's refusal, its English the msgid
+		if why.has("lifts"):
+			var lifts := int(why["lifts"])
+			var ly := floori((lifts - 1) / 12.0)
+			words = Strings.t("%s: again from %s") % [words, DateText.month_year(lifts - ly * 12, ly)]
+		reach.append({"person_id": pid, "person": loader.person_name(pid), "why": words})
 	reach.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return String(a["person"]) < String(b["person"]))
 	var summoned: Array = []
 	for row in ns.audience_requests:
@@ -81,4 +98,10 @@ static func show(main, rows: Array) -> void:
 			var d: Dictionary = row["date"]
 			summoned.append({"id": String(row["id"]), "person": loader.person_name(String(row["person_id"])),
 				"when": DateText.day_month_year(int(d["day"]), int(d["month"]), int(d["year"]))})
-	main._calendar_panel.people.show_rows(rows, reach, summoned, main._calendar_panel._grid.armed)
+	var now := int(state.year) * 12 + int(state.month)
+	var free: bool = not ns.audience_summoned_month.values().any(func(m) -> bool: return int(m) == now)
+	main._calendar_panel.people.show_rows(rows, reach, summoned, free, main._calendar_panel._grid.armed)
+
+
+static func _unix(y: int, m: int, d: int) -> int:
+	return int(Time.get_unix_time_from_datetime_dict({"year": y, "month": m, "day": d, "hour": 0, "minute": 0, "second": 0}))

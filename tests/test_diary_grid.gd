@@ -154,7 +154,7 @@ func _check_marks() -> void:
 			continue
 		_grid.show_month(y, mo)
 		var cell := _cell(int(parts[2]))
-		var marks: int = cell.marks.size() if cell != null else 0
+		var marks: int = cell.entries.size() if cell != null else 0
 		if marks < int(want[key]):
 			_fail("%s carries %d marks, %d entries fall on it" % [key, marks, want[key]])
 		seen += 1
@@ -205,10 +205,18 @@ func _check_travel_days() -> void:
 	state.appointments.append(visit)
 	_main._calendar_panel._refresh()
 	_grid.show_month(int(at["year"]), int(at["month"]))
-	for d in [12, 13, 15, 16]:
+	# One band across the trip (the parent, 2026-11-21): the journey's days and the meeting, the
+	# host named once on the run's first day (and again where a Monday starts a new row).
+	for d in [12, 13, 14, 15, 16]:
 		var cell := _cell(d)
-		if cell == null or cell.marks.is_empty():
-			_fail("the visit's travel day %d carries no mark" % d)
+		if cell == null or not bool(cell.band):
+			_fail("the visit's day %d is not on its band" % d)
+	var host := String(_main._loader.nations["DEU"].nation_name)
+	if _cell(12) == null or String(_cell(12).band_label) != host:
+		_fail("the band's first day reads '%s', not the host '%s'" % [_cell(12).band_label if _cell(12) != null else "", host])
+	for d in [13, 14, 15, 16]:
+		if _cell(d) != null and String(_cell(d).band_label) != "" and _grid._days.get_children().find(_cell(d)) % 7 != 0:
+			_fail("the band repeats its label on day %d, mid-row" % d)
 	state.appointments.erase(visit)
 	_main._calendar_panel._refresh()
 

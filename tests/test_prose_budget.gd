@@ -69,9 +69,9 @@ const PENDING := {}
 const PROGRAMME_FILE_TOTAL := 300
 const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
 	"companies": 145, "sector_agriculture": 129, "sector_industry": 155, "sector_services": 142,
-	"overview": 170, "register": 137, "programmes": 15}
+	"overview": 170, "register": 137, "programmes": 15, "calendar": 128}
 const TOTAL_PENDING := {
-	"calendar": 34, "campaign": 140,
+	"campaign": 140,
 	"diplomacy": 22, "economy": 130, "energy": 118,
 	"orgs": 610,
 	"majority": 97, "projects": 75, "society": 106,
@@ -150,7 +150,11 @@ const TOTAL_PENDING := {
 ## three sector tabs, the verbs the retired plate carried.
 ## #431 pass 2 (TAKE 7, R3 back): the asker's party beside each "Book here" in the Diary's day
 ## list, as the grid's chips said it on their hover before they left: a stated rise 3224 -> 3234.
-const TOTAL_SUM_CEILING := 3234
+## The month page (the author's picks A + C, 2026-11-21): the Diary is a rebuilt tab and leaves
+## PENDING (34) for TOTAL_BUDGET at what it measured (128): the counters, the legend, the cells'
+## own lines, next month's strip and the people column's matrix; a stated rise 3234 -> 3323,
+## to the parent.
+const TOTAL_SUM_CEILING := 3323
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

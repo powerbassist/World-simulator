@@ -124,6 +124,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request   (add --broken-word: the askers hold evidence)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --summon --open calendar   (the month page: a summons booked, the cap spent)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --request --open calendar --diary-page 2   (the month page two months on: a visit's travel)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step counter
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step countered
@@ -444,6 +445,8 @@ var _request := ""
 ## The month page: --summon (with --request) books a summons of the first person who can be
 ## summoned, on their first free day, so the column lists it and the cap is spent.
 var _summon := false
+## --diary-page N: the Diary's grid paged N months on after it opens.
+var _diary_page := 0
 ## V5.3 screen 3: --file event | request opens the docked file page (--file request needs --request).
 var _file := ""
 ## --folder-file event | request | decided | news: the Folder tab (--briefing crowded) on that file's page,
@@ -1227,6 +1230,8 @@ func _init() -> void:
 			_broken_word = true
 		elif args[i] == "--summon":
 			_summon = true
+		elif args[i] == "--diary-page" and i + 1 < args.size():
+			_diary_page = int(args[i + 1])
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
 		elif args[i] == "--folder-file" and i + 1 < args.size():
@@ -1657,6 +1662,9 @@ func _apply_view() -> void:
 		_main._on_nation_clicked(_nation)
 	if _open != "":
 		_main._windows.open(_open)
+		if _diary_page > 0:
+			_main._calendar_panel._process(0.0)
+			_main._calendar_panel._grid.page_by(_diary_page)
 		# B14: open() silently no-ops on an id that was never registered, so a
 		# stale help-text id photographed the plain map while the operator
 		# believed they had captured a surface. The frame is still written --

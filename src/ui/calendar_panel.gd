@@ -40,6 +40,7 @@ const DiaryBooking = preload("res://src/ui/diary_booking.gd")
 const DiaryGrid = preload("res://src/ui/diary_grid.gd")
 const DiaryPeople = preload("res://src/ui/diary_people.gd")
 const DiaryLabels = preload("res://src/ui/diary_labels.gd")
+const Furniture = preload("res://src/ui/diary_furniture.gd")
 
 signal closed
 
@@ -123,9 +124,10 @@ func _ready() -> void:
 	scroll.add_child(_body)
 	_body.add_child(_grid.day_list)
 
-	root.add_child(HSeparator.new())
 	root.add_child(_grid.promise_slot)
-	_build_form(root)
+	# The month page has no form under its grid (picture A; the parent's ruling, 2026-11-21): a
+	# visit, a law or a reshuffle is booked behind one button that opens the same form.
+	_build_form(Furniture.folded(root, tr("Book an act")))
 
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
@@ -265,7 +267,7 @@ func _refresh_strip() -> void:
 		var live: bool = booking and Calendar.can_cancel(row)
 		items.append({"year": int(row["year"]), "month": int(row["month"]), "day": int(row.get("day", 1)),
 			"text": _booking_text(row) if booking else _fixed_text(row), "mark": "booking" if booking else "fixed",
-			"cancel": Calendar.verb_key(row) if live else ""})
+			"cancel": Calendar.verb_key(row) if live else "", "person": String(row.get("target_id", "")) if String(row.get("kind", "")) == K.KIND_AUDIENCE else "", "short": DiaryLabels.short(row, _loader)})
 	_grid.show_items(_state, _loader, items)
 
 	_refresh_later()

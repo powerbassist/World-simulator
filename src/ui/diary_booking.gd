@@ -64,3 +64,19 @@ func _focus_on(request_id: String) -> void:
 	var cell := _grid._days.get_node_or_null("Day_%d" % _grid._selected) as Control
 	if cell != null and not cell.is_queued_for_deletion():
 		cell.grab_focus()
+		_settle(cell)
+
+
+## The page's scroll followed the focus while the month page was still laying out (the
+## counters, the armed line), and kept an offset that hid the page's top. A frame later, from
+## the top, it scrolls only as far as the day needs.
+func _settle(cell: Control) -> void:
+	await _grid.get_tree().process_frame
+	if not is_instance_valid(cell) or not cell.is_inside_tree():
+		return
+	var node := cell.get_parent()
+	while node != null and not (node is ScrollContainer and node != _grid._list_scroll):
+		node = node.get_parent()
+	if node != null:
+		(node as ScrollContainer).scroll_vertical = 0
+		(node as ScrollContainer).ensure_control_visible(cell)

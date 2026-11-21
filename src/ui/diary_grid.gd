@@ -36,6 +36,7 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const DiaryDay = preload("res://src/ui/diary_day.gd")
+const Furniture = preload("res://src/ui/diary_furniture.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -72,6 +73,12 @@ var _drawn_day := 0  # the state's day at the last render: a new day redraws (to
 ## Go opens the Diary and picks the due day in one frame): applied by show_items.
 var _wanted := Vector3i.ZERO
 var _title: Label
+## The three counters over the month, each [figure, caption] (diary_furniture.gd).
+var _waiting: Array
+var _next: Array
+var _due: Array
+## Next month's strip under the grid.
+var _next_strip: HFlowContainer
 ## The armed person's window in words, over the month (armed_line()); hidden when none is.
 var _armed_label: Label
 var _days: GridContainer
@@ -104,8 +111,8 @@ func _ready() -> void:
 	back.pressed.connect(page_by.bind(-1))
 	head.add_child(back)
 	_title = Label.new()
-	_title.theme_type_variation = UiTheme.HEADING
-	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.theme_type_variation = UiTheme.LEAD
+	_title.custom_minimum_size.x = 150.0 * UiTheme.text_scale()
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	head.add_child(_title)
 	_later = PanelKit.sized(Button.new())
@@ -114,6 +121,13 @@ func _ready() -> void:
 	_later.tooltip_text = tr("Next month")
 	_later.pressed.connect(page_by.bind(1))
 	head.add_child(_later)
+	var spring := Control.new()
+	spring.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(spring)
+	_waiting = Furniture.counter(head, "Waiting")  # i18n: ok a node name, found by tests
+	_next = Furniture.counter(head, "NextUp")
+	_due = Furniture.counter(head, "FirstDue")
+	Furniture.legend(self)
 	var names := GridContainer.new()
 	names.columns = 7
 	add_child(names)
@@ -128,6 +142,10 @@ func _ready() -> void:
 	_days = GridContainer.new()
 	_days.columns = 7
 	add_child(_days)
+	_next_strip = HFlowContainer.new()
+	_next_strip.name = "NextMonth"  # i18n: ok a node name, found by tests
+	_next_strip.add_theme_constant_override("h_separation", 12)
+	add_child(_next_strip)
 
 
 ## The scroll the panel puts the day list in: it takes the panel's slack (EXPAND,
@@ -240,17 +258,21 @@ func _render() -> void:
 		gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_days.add_child(gap)
 	var is_now := _month_abs == _now()
+	var trips: Array = Calendar.day_cells(_state, ym.x, ym.y)
+	var bands := _bands(trips, entries, first)
 	for d in range(1, Calendar.days_in_month(ym.x, ym.y) + 1):
 		var cell := DiaryDay.new()
 		cell.name = "Day_%d" % d
 		cell.day = d
 		cell.today = is_now and d == int(_state.day)
 		cell.selected = d == _selected
+		cell.band = bands.has(d)
+		cell.band_label = String(bands.get(d, ""))
 		# Only a day that books takes the tint: a taken day of the window read as free (#431 R10).
 		cell.tinted = offered.has(d) and bool((offered[d][0]["date"] as Dictionary).get("free", false))
 		var texts := PackedStringArray()
-		for e in entries.get(d, []):
-			cell.marks.append(String(e["mark"]))
+		cell.entries = entries.get(d, [])
+		for e in cell.entries:
 			texts.append(String(e["text"]))
 		for o in offered.get(d, []):
 			# A refused day of the window says why on its hover, as the day list does.
@@ -260,9 +282,68 @@ func _render() -> void:
 		cell.tooltip_text = "\n".join(texts)
 		cell.picked.connect(_on_day)
 		_days.add_child(cell)
+		cell.fill()
+	_render_furniture(ym)
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 	_armed_label.text = armed_line()
 	_armed_label.visible = _armed_label.text != ""
+
+
+## Day -> the band's label, for every day a visit's trip covers (its journey and its meeting):
+## one plain band per trip, its label (the host's name, or "Travel" when the meeting is in
+## another month) on the run's first day and again on a Monday, where the band starts a row.
+func _bands(trips: Array, entries: Dictionary, first: int) -> Dictionary:
+	var out := {}
+	var d := 1
+	while d <= trips.size():
+		var c: Dictionary = trips[d - 1]
+		var on_trip: bool = bool(c["travel"]) or (bool(c["meeting"]) and ((d > 1 and bool(trips[d - 2]["travel"])) or (d < trips.size() and bool(trips[d]["travel"]))))
+		if not on_trip:
+			d += 1
+			continue
+		var start := d
+		var label := tr("Travel")
+		while d <= trips.size() and (bool(trips[d - 1]["travel"]) or bool(trips[d - 1]["meeting"])):
+			if bool(trips[d - 1]["meeting"]):
+				for e in entries.get(d, []):
+					if String(e["mark"]) == "booking":
+						label = String(e.get("short", e["text"]))
+			d += 1
+		for day in range(start, d):
+			out[day] = label if day == start or (first + day - 1) % 7 == 0 else ""
+	return out
+
+
+## The counters and next month's strip, off the same reads as the cells.
+func _render_furniture(ym: Vector2i) -> void:
+	var ns = _state.player()
+	_waiting[0].text = str(Audiences.waiting_count(ns))
+	_waiting[1].text = tr("waiting")
+	var today := int(_state.year) * 10000 + int(_state.month) * 100 + int(_state.day)
+	var soonest := {}
+	for e in _items:
+		var at := int(e["year"]) * 10000 + int(e["month"]) * 100 + int(e["day"])
+		if String(e["mark"]) == "booking" and at > today and (soonest.is_empty() or at < int(soonest["at"])):
+			soonest = e.merged({"at": at})
+	_next[0].text = DateText.day_month(int(soonest["day"]), int(soonest["month"])) if not soonest.is_empty() else PanelKit.MISSING
+	_next[1].text = String(soonest.get("text", tr("next")))  # i18n: row-ok the grid's words
+	var due := -1
+	for row in Audiences.pending(ns):
+		due = Audiences.answer_by(row) if due < 0 else mini(due, Audiences.answer_by(row))
+	var y := floori((due - 1) / 12.0)
+	_due[0].text = DateText.day_month(Calendar.days_in_month(y, due - y * 12), due - y * 12) if due > 0 else PanelKit.MISSING
+	_due[1].text = tr("first answer-by")
+	_due[1].theme_type_variation = UiTheme.WARN_TEXT if due > 0 else UiTheme.CAPTION
+	var next := Vector2i(ym.x + (1 if ym.y == 12 else 0), 1 if ym.y == 12 else ym.y + 1)
+	var rows: Array = []
+	var later := _entries(next.x, next.y)
+	var days := later.keys()
+	days.sort()
+	for d in days:
+		for e in later[d]:
+			if String(e["mark"]) != "away":
+				rows.append({"day": d, "text": String(e["text"])})
+	Furniture.next_month(_next_strip, DateText.month_year(next.y, next.x), rows)
 
 
 ## A click on a day: a free day of the armed person's window books; any other is picked.
@@ -313,7 +394,7 @@ func _entries(year: int, month: int) -> Dictionary:
 	# too (Calendar.day_cells, the ribbon's own read).
 	for cell in Calendar.day_cells(_state, year, month):
 		if bool(cell["travel"]):
-			_add(out, int(cell["day"]), {"text": Strings.t("Away: travelling to or from a visit"), "mark": "away", "cancel": ""})
+			_add(out, int(cell["day"]), {"text": Strings.t("Away: travelling to or from a visit"), "mark": "away", "cancel": "", "short": Strings.t("Travel")})
 	var ns = _state.player()
 	var abs_month := year * 12 + month
 	# A commitment is judged as its month begins (Levers.tick_month), so its mark
@@ -324,18 +405,18 @@ func _entries(year: int, month: int) -> Dictionary:
 			var want := PersonCard.object_text(_loader, ns, String(row["object"]), {})
 			# The briefing's subject for this word (priorities.gd _commitments), so a
 			# commitment's Go lands on its Call here.
-			_add(out, 1, {"text": Words.commitment_text(String(row["kind"]), who, want, int(row["due_month"])), "mark": "due", "cancel": "",
+			_add(out, 1, {"text": Words.commitment_text(String(row["kind"]), who, want, int(row["due_month"])), "mark": "due", "cancel": "", "short": Strings.t("Word due"),
 				"call": String(row["person_id"]), "subject": "%s|%s|%s" % [row["kind"], row["person_id"], row["object"]]})
 	# What people owe the president under a deal, as its month begins too.
 	for row in President.owed(ns):
 		if int(row["due_month"]) == abs_month:
-			_add(out, 1, {"text": DealWords.owed_text(_loader, ns, row), "mark": "due", "cancel": ""})
+			_add(out, 1, {"text": DealWords.owed_text(_loader, ns, row), "mark": "due", "cancel": "", "short": Strings.t("Owed you")})
 	# A request lapses as its deadline month begins (Audiences._overdue), so the
 	# last day to answer is the end of the month before -- the card's "Answer by".
 	for row in Audiences.pending(ns):
 		if Audiences.answer_by(row) == abs_month:
 			_add(out, Calendar.days_in_month(year, month), {"text": Strings.t("Last day to answer %s") % _loader.person_name(String(row["person_id"])),
-				"mark": "deadline", "cancel": ""})
+				"mark": "deadline", "cancel": "", "short": Strings.t("Answer by")})
 	return out
 
 

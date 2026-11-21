@@ -106,12 +106,24 @@ func _check_cards() -> void:
 		if b == null:
 			_fail("the card has no %s" % verb)
 			continue
-		# The price on the verb's own line (Design's read: "the prices are not beside the verbs").
-		var words := ""
-		for label in b.get_parent().find_children("*", "Label", true, false):
-			words += String((label as Label).text)
-		if words.strip_edges() == "":
-			_fail("%s carries no words beside it" % verb)
+		# The price under the verb's own row (Design's read: "the prices are not beside the verbs").
+		var note := card.find_child("Note_%s_%s" % [verb, _request], true, false) as Label
+		if note == null or note.text.strip_edges() == "":
+			_fail("%s carries no words under it" % verb)
+		# The matrix row: four cells beside the verb (a day, rapport, odds, learn).
+		if b.get_parent().get_parent().get_child_count() != 5:
+			_fail("%s's matrix row has %d cells, not 5" % [verb, b.get_parent().get_parent().get_child_count()])
+	# One width for the four answers (the author, 2026-11-21: buttons sized by their text "incongru").
+	var widths := {}
+	for verb in ["See", "Call", "Delegate", "Decline"]:
+		var b := card.find_child("%s_%s" % [verb, _request], true, false) as Button
+		if b != null:
+			widths[roundi(b.get_combined_minimum_size().x)] = true
+	if widths.size() != 1:
+		_fail("the file's four answers are not one width: %s" % [widths.keys()])
+	var pair := [people.find_child("SummonSee", true, false) as Button, people.find_child("SummonCall", true, false) as Button]
+	if roundi(pair[0].get_combined_minimum_size().x) != roundi(pair[1].get_combined_minimum_size().x):
+		_fail("the summons' See them and Call are not one width")
 	(card.find_child("Decline_%s" % _request, true, false) as Button).pressed.emit()
 	if String(Audiences.request(_main._state.player(), _request).get("status", "")) != AK.STATUS_DECLINED:
 		_fail("Decline on the card did not decline (%s)" % Audiences.request(_main._state.player(), _request).get("status", ""))
