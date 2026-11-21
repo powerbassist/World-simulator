@@ -203,6 +203,21 @@ func _check(c: Dictionary) -> void:
 		return
 	_check_why_these_days(panel, label)
 	_checked += 1
+	# Pass 2 TAKE 6: at 115 % the page grew wider than the dock -- a sideways scroll, the
+	# column's right edge past the dock. Every scroll over the column must hold its width.
+	var col := panel.people as Control
+	var up: Node = col.get_parent()
+	while up != null:
+		if up is ScrollContainer:
+			var sc := up as ScrollContainer
+			var inner := sc.get_child(0) as Control
+			if inner != null and inner.get_combined_minimum_size().x > sc.size.x + 0.5:
+				_fail("%s: the page needs %.0f px across, its view %s has %.0f: a sideways scroll" % [label, inner.get_combined_minimum_size().x, sc.name, sc.size.x])
+				return
+			if col.get_global_rect().end.x > sc.get_global_rect().end.x + 0.5:
+				_fail("%s: the people column ends at x %.0f, past its view's %.0f" % [label, col.get_global_rect().end.x, sc.get_global_rect().end.x])
+				return
+		up = up.get_parent()
 	for target in [day, panel.find_child("See_%s" % String(_ids[0]), true, false) as Control]:
 		if target == null or not target.is_visible_in_tree():
 			_fail("%s: %s is not on screen" % [label, target.name if target != null else "See them"])

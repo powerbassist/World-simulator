@@ -37,7 +37,7 @@ const FACE := Vector2(44, 58)
 ## px at text size 100 %: the matrix's columns -- the verb, then a day, rapport, odds, learn.
 const COLUMNS := [86.0, 44.0, 132.0, 58.0, 44.0]
 
-var _tokens: HBoxContainer
+var _tokens: HFlowContainer
 var _file: VBoxContainer
 var _file_plate: PanelContainer
 ## show_rows()'s last arguments: a token's click redraws the file from them.
@@ -77,8 +77,10 @@ func _ready() -> void:
 	head.name = "Waiting"  # i18n: ok a node name, found by tests
 	head.theme_type_variation = UiTheme.MICRO
 	add_child(head)
-	_tokens = HBoxContainer.new()
-	_tokens.add_theme_constant_override("separation", 4)
+	# A flow: six waiting people wrap to a second row rather than widen the column past the dock.
+	_tokens = HFlowContainer.new()
+	_tokens.add_theme_constant_override("h_separation", 4)
+	_tokens.add_theme_constant_override("v_separation", 4)
 	add_child(_tokens)
 	_file_plate = PanelContainer.new()
 	_file_plate.theme_type_variation = UiTheme.PLATE

@@ -22,8 +22,10 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 
-## px at text size 100 %: a day wide enough for a short name, tall enough for three lines.
-const SIZE := Vector2(100, 74)
+## px at text size 100 %: a day's floor, wide enough for a short name, tall enough for three
+## lines. The cells EXPAND to fill the page; at 115 % a 100 px floor beside the people column
+## outgrew the dock (pass 2 TAKE 6: a sideways scroll).
+const SIZE := Vector2(84, 74)
 const MARK := 3.5
 const MAX_LINES := 3
 ## px at text size 100 %: a line's lead (its mark or the face) and the face itself.
