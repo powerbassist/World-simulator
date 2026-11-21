@@ -180,8 +180,8 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 static func _process_strip(strip, option: Dictionary) -> void:
 	strip.show_lines(Strings.t("Treasury"), EffectsStrip.cost_text(-float(option["debt_eur_bn"])), -float(option["debt_eur_bn"]),
 		EffectsStrip.who_text(option["bloc_offset"]),
-		Strings.t("A %d to %d %% chance they accept. Refused, the old price stands, or they walk away: %d %% of refusals.") % [
-			roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"])), roundi(100.0 * float(option["walk"]))])
+		# Its chance of acceptance is the track under the strip (CounterChips, Design's T8 on #441).
+		Strings.t("Refused, the old price stands, or they walk away: %d %% of refusals.") % roundi(100.0 * float(option["walk"])))
 
 
 ## A process the month end just closed, for that one month (the parent's ruling on

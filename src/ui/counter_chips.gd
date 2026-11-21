@@ -66,6 +66,12 @@ static func build(box: Control, key: String, counters: Array, fill: Callable, ma
 	box.move_child(chance, -1)
 	box.add_child(go)
 	go.pressed.connect(func() -> void: make.call(String(_picked[key])))
+	# Inside an answer list (AnswerRow), the counter's button is one of the answers: one class.
+	if box.has_meta("answer_list"):
+		var answers: Array = box.get_meta("buttons", [])
+		answers.append(go)
+		box.set_meta("buttons", answers)
+		PanelKit.same_class(answers)
 	show.call(shown)
 
 

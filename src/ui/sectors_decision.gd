@@ -97,7 +97,10 @@ static func _tiles(body: Control, state, ns, row: Dictionary, company) -> void:
 	body.add_child(tiles)
 	var kind := String(row["kind"])
 	var source: Dictionary = row["source"]
-	if kind == "ask" and not (source.get("ask", {}).get("answers", []) as Array).is_empty():
+	# A price ask (a stake, a nationalisation, a sale): its first answer books the price. A
+	# contested ruling's first answer is pressing on, which is not a price: no tile.
+	var priced: bool = String(source.get("ask", {}).get("kind", "")) != "contest" and not (source.get("ask", {}).get("answers", []) as Array).is_empty()
+	if kind == "ask" and priced:
 		var first: Dictionary = source["ask"]["answers"][0]
 		PanelKit.figure_tile(tiles, EffectsStrip.cost_text(-float(first["debt_eur_bn"])), Strings.t("Price"))
 	elif kind == "bid":
@@ -153,5 +156,7 @@ static func _answers(panel, body: Control, state, loader, ns, row: Dictionary, c
 ## own gated button, its price as the verbs print it, the blocs it moves.
 static func _verb_row(panel, list: VBoxContainer, state, loader, ns, company, action) -> void:
 	var money: Array = IndustryVerbs.money_line(state, loader, ns, company, action, {})
+	# A refused verb says why beside it, never only greyed (band A5).
+	var why := CompanyVerb.refusal(state, loader, ns, company, action)
 	AnswerRow.add(list, panel._action_button(ns, company, action), String(money[1]),
-		AidWords.offsets(state, loader, ns, company, action))
+		AidWords.offsets(state, loader, ns, company, action), Strings.t(why) if why != "" else "")  # i18n: row-ok the sim's reason, its English the msgid

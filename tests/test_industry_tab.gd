@@ -319,9 +319,16 @@ func _read_counter_strip(option: Dictionary) -> void:
 		_fail("counter: no strip under the chips")
 		return
 	var text := _text_under(strip)
-	var range_text := "%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))]
+	# The odds are the chance track's (Design's T8 on #441), not the strip's words.
+	var chart = null
+	for node in _panel.find_children("*", "", true, false):
+		if node.has_meta("counter_chance") and (node as Control).is_visible_in_tree():
+			chart = node.get_meta("chart")
+	if chart == null or roundi(chart._lo) != roundi(100.0 * float(option["odds_lo"])) or roundi(chart._hi) != roundi(100.0 * float(option["odds_hi"])):
+		_fail("counter %d %%: the chance track does not show its odds range" % counter)
+	var range_text := ""
 	var walk := "%d %% of refusals" % roundi(100.0 * float(option["walk"]))
-	if strip.money_label.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])) or not text.contains(range_text) or not text.contains(walk):
+	if strip.money_label.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])) or not text.contains(walk):
 		_fail("counter %d %%: the strip reads '%s', expected its price, %s and %s" % [counter, text, range_text, walk])
 
 
