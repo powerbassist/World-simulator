@@ -80,12 +80,25 @@ static func warp(viewport: Viewport, at: Vector2) -> bool:
 static func quiet_window() -> bool:
 	if enabled() or DisplayServer.get_name() == "headless":
 		return false
-	var plan := quiet_plan(DisplayServer.window_get_mode(), DisplayServer.window_get_position())
+	var target := quiet_target()
+	var plan := quiet_plan(DisplayServer.window_get_mode(), DisplayServer.window_get_position(), target)
 	if plan[0]:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	if plan[1]:
-		DisplayServer.window_set_position(OFF_SCREEN)
-	return DisplayServer.window_get_position() == OFF_SCREEN
+		DisplayServer.window_set_position(target)
+	return DisplayServer.window_get_position() == target
+
+
+## Where the quiet window goes. NATION_SHOT_SCREEN=N (tools/screenshot_all.py sets it, the
+## author's call of 2026-11-21: a capture lands on his SECONDARY screen, not under his hands)
+## puts it at that screen's top-left; absent, not a number, or not an existing screen it is
+## OFF_SCREEN as before (one-screen machines, Linux CI). The screen's own position is read, so
+## a secondary screen above or left of the primary (negative coordinates) works.
+static func quiet_target() -> Vector2i:
+	var raw := OS.get_environment("NATION_SHOT_SCREEN")
+	if raw.is_valid_int() and int(raw) >= 0 and int(raw) < DisplayServer.get_screen_count():
+		return DisplayServer.screen_get_position(int(raw))
+	return OFF_SCREEN
 
 
 ## Pure, so a headless test can pin it: [set windowed first, set the position], from the
@@ -93,6 +106,6 @@ static func quiet_window() -> bool:
 ## SettingsPanel.apply_saved() puts the window fullscreen on the nearest monitor after a
 ## capture tool's _init (an isolated APPDATA has no settings.cfg, so the default, fullscreen,
 ## applies), and a plan that remembered "already moved" would leave it there.
-static func quiet_plan(mode: int, position: Vector2i) -> Array:
+static func quiet_plan(mode: int, position: Vector2i, target: Vector2i = OFF_SCREEN) -> Array:
 	var not_windowed := mode != DisplayServer.WINDOW_MODE_WINDOWED
-	return [not_windowed, not_windowed or position != OFF_SCREEN]
+	return [not_windowed, not_windowed or position != target]
