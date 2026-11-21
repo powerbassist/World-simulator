@@ -383,6 +383,11 @@ func _armed_on(d: int) -> Dictionary:
 
 func _pick(d: int) -> void:
 	_selected = d
+	# Only a keyboard already on a day keeps one: a pick from a click elsewhere (See them) must
+	# not hand Space to a day (pass 2 TAKE 8, the #427 ruling); diary_booking focuses a Go's day.
+	var viewport := get_viewport()
+	var owner: Control = viewport.gui_get_focus_owner() if viewport != null else null
+	var keep := owner is DiaryDay and _days != null and _days.is_ancestor_of(owner)
 	# A new day reads from its date: an offset left from scrolling the last one (or
 	# LATER) would hide the "Book here" listed first. Not on the daily redraw.
 	if _list_scroll != null:
@@ -391,7 +396,7 @@ func _pick(d: int) -> void:
 	# The re-render freed the picked cell: its successor takes the focus, so a
 	# keyboard player keeps their place (QA's RECORD on #153).
 	var cell := _days.get_node_or_null("Day_%d" % d) as Control
-	if cell != null:
+	if cell != null and keep:
 		cell.grab_focus()
 
 

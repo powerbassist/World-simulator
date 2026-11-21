@@ -54,11 +54,21 @@ var _people: Array = []
 var _open := ""
 ## The armed request last seen: a new one opens its file, and a token's click is not undone.
 var _armed_was := ""
+## The route of the last press: a key (true) or the mouse. See them hands the keyboard a day
+## only from the keys -- a mouse route must not leave Space booking it (the #427 ruling).
+var by_keys := false
 
 
 func _init() -> void:
 	name = "DiaryPeople"  # i18n: ok a node name, found by tests
 	add_theme_constant_override("separation", PanelKit.SECTION_SEPARATION)
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		by_keys = false
+	elif (event is InputEventKey or event is InputEventJoypadButton) and event.pressed:
+		by_keys = true
 
 
 func _ready() -> void:

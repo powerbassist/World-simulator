@@ -15,7 +15,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
 
 
-## `open_booking(id)` arms a request and turns the grid to its first free day, `answer(id,
+## `open_booking(id, keys)` arms a request and turns the grid to its first free day, `answer(id,
 ## result)` lands a command's result, `refresh()` redraws everything off the registers.
 static func wire(main, game: Dictionary, open_booking: Callable, answer: Callable, refresh: Callable) -> void:
 	var panel = main._calendar_panel
@@ -27,7 +27,7 @@ static func wire(main, game: Dictionary, open_booking: Callable, answer: Callabl
 			game["booking_for"] = ""
 			grid.arm({})
 		else:
-			open_booking.call(id))
+			open_booking.call(id, people.by_keys))
 	people.delegate_requested.connect(func(id: String) -> void:
 		answer.call(id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
 	people.decline_requested.connect(func(id: String) -> void:
@@ -40,7 +40,9 @@ static func wire(main, game: Dictionary, open_booking: Callable, answer: Callabl
 		game["booking_for"] = ""
 		grid.arm({"id": "", "person_id": pid, "person": main._loader.person_name(pid), "summons": true})
 		panel.booking.show_days(Audiences.summon_days(main._state, pid), main._state, main._loader)
-		refresh.call())
+		refresh.call()
+		if people.by_keys:
+			panel.booking.focus_day())
 	grid.summoned.connect(func(pid: String, date: Dictionary) -> void:
 		var ns = main._state.player()
 		var result := Audiences.summon(main._state, ns, main._loader, pid, date)

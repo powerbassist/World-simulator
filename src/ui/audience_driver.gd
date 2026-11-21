@@ -71,7 +71,7 @@ static func register(main) -> void:
 		_answer(main, id, result)
 		_seen(main, id)
 	main._calendar_panel._grid.booked.connect(book)
-	MonthPage.wire(main, game, func(id: String) -> void: _open_booking(main, id),
+	MonthPage.wire(main, game, func(id: String, keys: bool) -> void: _open_booking(main, id, keys),
 		func(id: String, result: Dictionary) -> void: _answer(main, id, result), func() -> void: refresh(main))
 	# Rework 1: the People roster's See books the same way, on the request's first free day.
 	main._people_panel.see_requested.connect(book)
@@ -372,7 +372,7 @@ static func _leave(main, game: Dictionary) -> void:
 		refresh(main)
 
 
-static func _open_booking(main, request_id: String) -> void:
+static func _open_booking(main, request_id: String, keys := true) -> void:
 	var ns = main._state.player()
 	var request := Audiences.request(ns, request_id)
 	if request.is_empty():
@@ -383,7 +383,7 @@ static func _open_booking(main, request_id: String) -> void:
 		"person": main._loader.person_name(String(request["person_id"])), "summons": false})
 	main._calendar_panel.booking.show_days(Audiences.offered_dates(main._state, ns, request_id), main._state, main._loader)
 	refresh(main)
-	main._calendar_panel.booking.focus(request_id)
+	main._calendar_panel.booking.focus(request_id, keys)
 
 
 static func _answer(main, request_id: String, result: Dictionary) -> void:

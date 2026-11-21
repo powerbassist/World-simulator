@@ -9,6 +9,9 @@ const Audiences = preload("res://src/sim/audiences.gd")
 
 ## The request the keyboard was sent to book, "" for none. audience_driver clears it.
 var request := ""
+## The request came by the keys (a Go, a keyboard See them): only then does a day take the
+## focus, where Space books it -- never after a mouse route (pass 2 TAKE 8).
+var keys := true
 var _grid: Grid
 
 
@@ -32,15 +35,24 @@ func show_days(dates: Array, state, loader) -> void:
 	_grid.pick(int(first["year"]), int(first["month"]), int(first["day"]))
 
 
-func focus(request_id: String) -> void:
+func focus(request_id: String, by_keys := true) -> void:
 	request = request_id
+	keys = by_keys
 	_focus_on(request_id)
+
+
+## The picked day takes the keyboard (a summons' See them from the keys: it has no request id).
+func focus_day() -> void:
+	var cell := _grid._days.get_node_or_null("Day_%d" % _grid._selected) as Control
+	if _grid._selected > 0 and cell != null and not cell.is_queued_for_deletion():
+		cell.grab_focus()
+		_settle(cell)
 
 
 ## A rebuild freed the focused control: the pending booking takes it again. Focus the player
 ## moved elsewhere stays.
 func _refocus() -> void:
-	if request == "" or not _grid.is_visible_in_tree():
+	if request == "" or not keys or not _grid.is_visible_in_tree():
 		return
 	# #431 pass 2 TAKE 1: the daily redraw ran (nothing was in hand) and the picked day is now
 	# today or gone; the first free day takes the pick, its re-render brings us back here.
@@ -59,12 +71,9 @@ func _refocus() -> void:
 
 ## The picked day of the armed request's window takes the keyboard, where Enter books it.
 func _focus_on(request_id: String) -> void:
-	if String(_grid.armed.get("id", "")) != request_id or _grid._selected == 0:
+	if not keys or String(_grid.armed.get("id", "")) != request_id:
 		return
-	var cell := _grid._days.get_node_or_null("Day_%d" % _grid._selected) as Control
-	if cell != null and not cell.is_queued_for_deletion():
-		cell.grab_focus()
-		_settle(cell)
+	focus_day()
 
 
 ## The page's scroll followed the focus while the month page was still laying out (the

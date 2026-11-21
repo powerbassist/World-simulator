@@ -19,6 +19,7 @@ extends SceneTree
 const Audiences = preload("res://src/sim/audiences.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const DiaryDay = preload("res://src/ui/diary_day.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -40,6 +41,7 @@ func _process(_delta: float) -> bool:
 			AudienceDriver.refresh(_main)
 			_main._windows.open("calendar")
 		5:
+			_check_see_route()
 			_check_toggle_and_elsewhere()
 			_check_cards()
 			_check_summons()
@@ -57,6 +59,44 @@ func _stage() -> void:
 			_request = String(r["request"]["id"])
 			return
 	_fail("premise: no request could be staged")
+
+
+## Pass 2 TAKE 8 (the #427 ruling): a MOUSE click on See them must not hand Space to a day --
+## no day takes the focus; from the keyboard, the picked day does, where Enter books it.
+func _check_see_route() -> void:
+	var people = _people()
+	var see := people.find_child("See_%s" % _request, true, false) as Button
+	if see == null:
+		_fail("premise: the card has no See them")
+		return
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	people._input(click)
+	see.pressed.emit()
+	if _main.get_viewport().gui_get_focus_owner() is DiaryDay:
+		_fail("a mouse click on See them left a day focused: Space would book it")
+	(_people().find_child("See_%s" % _request, true, false) as Button).pressed.emit()
+	var key := InputEventKey.new()
+	key.keycode = KEY_ENTER
+	key.pressed = true
+	people._input(key)
+	(_people().find_child("See_%s" % _request, true, false) as Button).pressed.emit()
+	if not (_main.get_viewport().gui_get_focus_owner() is DiaryDay):
+		_fail("See them from the keyboard left no day focused")
+	(_people().find_child("See_%s" % _request, true, false) as Button).pressed.emit()
+	var summons := people.find_child("SummonSee", true, false) as Button
+	var can: Array = people._people.filter(func(p: Dictionary) -> bool: return String(p["why"]) == "")
+	if summons == null or can.is_empty():
+		_fail("premise: no summons See them")
+		return
+	people.pick_person(String(can[0]["person_id"]))
+	people._input(click)
+	summons.pressed.emit()
+	if _main.get_viewport().gui_get_focus_owner() is DiaryDay:
+		_fail("a mouse click on a summons' See them left a day focused")
+	_main._calendar_panel._grid.arm({})
+	_main.get_viewport().gui_release_focus()
 
 
 ## See them toggles; a request answered off the page disarms the grid at its next render.
