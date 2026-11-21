@@ -4,6 +4,7 @@ extends RefCounted
 ## its answers side by side and the buyer's counters; searching, its months left; a buyer
 ## that came back (OFFERED), one month's re-ask at the old sweetener.
 
+const AnswerRow = preload("res://src/ui/answer_row.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Closures = preload("res://src/sim/closures.gd")
@@ -15,10 +16,7 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Num = preload("res://src/ui/num.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
-const UiTheme = preload("res://src/ui/ui_theme.gd")
 
-## One answer's column on a closure card, in px: three fit a docked window.
-const ANSWER_WIDTH := 300
 ## The economy's clause in the card's reason: under this gap the figure prints as 0.0.
 const GAP_SAID_PCT := 0.05
 ## A countered closure's result, the month it lands (the parent's ruling on #287,
@@ -100,7 +98,8 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 		# Drawn in its due month, before the tick lands it (a load, a redraw).
 		closing = Strings.t("%s closes its %s plant this month: %s jobs.") % [firm, place, jobs]
 	if not titled:
-		PanelKit.plain_line(box, closing, PanelKit.Tone.PLAIN).theme_type_variation = UiTheme.WARN_TEXT
+		# Plain: amber is for what waits with its date (G3 decision 2, Design's T5).
+		PanelKit.plain_line(box, closing, PanelKit.Tone.PLAIN)
 	if offered and row.has("answer"):
 		PanelKit.plain_line(box, Strings.t("Answered: %s.") % Strings.t(SELL_OLD))
 		return
@@ -111,43 +110,30 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 	var region := region_line(state, loader, ns, row)
 	if region != "":
 		PanelKit.plain_line(box, region, PanelKit.Tone.PLAIN).set_meta("closure_region", String(row["id"]))
-	var flow := PanelKit.buttons(box)
 	var what := "%s, %s" % [firm, place]
 	var answers := Closures.answers(state, ns, loader, String(row["id"]))
 	var make := func(id: String) -> void: closure.call(String(row["id"]), id, what)
-	var buttons: Array = []
+	var counters := answers.filter(func(o: Dictionary) -> bool: return String(o["kind"]) == "negotiate")
+	# One row per answer (AnswerRow, Design's T1 on #441), the counter after the buyer it bargains with.
+	var list := AnswerRow.list(box)
 	for option in answers:
 		var id := String(option["id"])
 		if String(option["kind"]) == "negotiate":
 			continue
-		var column := VBoxContainer.new()
-		column.custom_minimum_size.x = ANSWER_WIDTH
-		flow.add_child(column)
-		var strip := EffectsStrip.new()
-		strip.price_neutral = true
-		column.add_child(strip)
 		var button := PanelKit.sized(Button.new())
+		button.set_meta("closure_answer", id)
+		button.pressed.connect(make.bind(id))
 		if offered and String(option["kind"]) == "buyer":
-			var sale := -float(option["sweetener_eur_bn"])
-			strip.show_lines("", Strings.t("%s at the sale") % EffectsStrip.sum_text(sale), sale, "",
-				Strings.t("The buyer keeps the %s jobs next month.") % jobs)
 			button.text = Strings.t(SELL_OLD)
 			ActsOn.tag(button, [String(row["id"])])
+			AnswerRow.add(list, button, Strings.t("%s at the sale") % EffectsStrip.sum_text(-float(option["sweetener_eur_bn"])), {},
+				Strings.t("The buyer keeps the %s jobs next month.") % jobs)
 		else:
-			var sums: Array = money(option)
-			strip.show_lines("", String(sums[0]), float(sums[1]),
-				EffectsStrip.who_text(option["bloc_offset"]), jobs_text(option))
 			button.text = label(option)
-		button.set_meta("closure_answer", id)
-		button.set_meta("money_label", strip.money_label)
-		button.pressed.connect(make.bind(id))
-		column.add_child(button)
-		buttons.append(button)
-	# Each answer stands in its own column, not the flow: one class group across them (G3 S3 pass 2).
-	PanelKit.same_class(buttons)
-	var counters := answers.filter(func(o: Dictionary) -> bool: return String(o["kind"]) == "negotiate")
-	if not counters.is_empty():
-		CounterChips.build(box, String(row["id"]), counters, _strip, make, "closure_answer")
+			AnswerRow.add(list, button, String(money(option)[0]), option["bloc_offset"], jobs_text(option))
+		if String(option["kind"]) == "buyer" and not counters.is_empty():
+			AnswerRow.rule(list)
+			CounterChips.build(list, String(row["id"]), counters, _strip, make, "closure_answer")
 	PanelKit.plain_line(box, Strings.t("Unanswered, the plant is sold at the old price.") if offered else Strings.t("Unanswered, the plant closes."))
 
 
@@ -229,7 +215,7 @@ static func _strip(strip, option: Dictionary) -> void:
 	# The chance of a buyer is the column beside it; the prose budget (at most 100 words
 	# on the announced card, the parent's ruling) keeps this to what a counter adds.
 	strip.show_lines("", String(sums[0]), float(sums[1]), "",
-		Strings.t("In %d to %d months. It accepts at %d to %d %%; refused, it returns at %s, or walks (%d %% of refusals). No deal, the jobs are lost.") % [
+		# Its chance of acceptance is the track under the strip (CounterChips, Design's T8).
+		Strings.t("In %d to %d months. Refused, it returns at %s, or walks (%d %% of refusals). No deal, the jobs are lost.") % [
 			int(option["months"]), int(option["months_hi"]),
-			roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"])),
 			EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"])), roundi(100.0 * float(option["walk"]))])

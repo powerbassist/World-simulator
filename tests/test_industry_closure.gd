@@ -157,14 +157,17 @@ func _check_card() -> void:
 		var want := _money_of(answer)
 		if money == null or money.text != want:
 			_fail("card: '%s' reads '%s', its figures print '%s'" % [id, money.text if money != null else "<none>", want])
-		# Side by side: every answer's column shares one flow.
-		var column: Node = button.get_parent()
+		# One list, one row each (AnswerRow, Design's T1 on #441): the button's cell in its row.
+		var answer_row: Node = button.get_parent().get_parent()
+		if not answer_row.has_meta("answer_row"):
+			_fail("card: '%s' is not an answer row" % id)
+			continue
 		if parent == null:
-			parent = column.get_parent()
-		elif column.get_parent() != parent:
-			_fail("card: the answers are not side by side ('%s' in another row)" % id)
-	if not (parent is HFlowContainer):
-		_fail("card: the answers' row is not a flow (%s)" % parent)
+			parent = answer_row.get_parent()
+		elif answer_row.get_parent() != parent:
+			_fail("card: the answers are not one list ('%s' in another)" % id)
+	if parent == null or not parent.has_meta("answer_list"):
+		_fail("card: the answers are not in an answer list (%s)" % parent)
 	if not Pending.window_ids(state, loader).has("companies"):
 		_fail("card: the Industry tab is not marked as waiting")
 	# The overview's card carries the "N decision" chip since the rework pass's C.
@@ -300,8 +303,12 @@ func _make_the_counter() -> void:
 	var text := _text_under(strip)
 	if strip.money_label.text != _money_of(option):
 		_fail("counter: the strip's money reads '%s', its figures print '%s'" % [strip.money_label.text, _money_of(option)])
-	for want in ["%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))],
-			"(%d %% of refusals)" % roundi(100.0 * float(option["walk"])), EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"]))]:
+	# The chance they accept is the track's (Design's T8), not the strip's words.
+	var track = _with_meta("counter_chance", "true")
+	var chart = track.get_meta("chart") if track != null else null
+	if chart == null or roundi(chart._lo) != roundi(100.0 * float(option["odds_lo"])) or roundi(chart._hi) != roundi(100.0 * float(option["odds_hi"])):
+		_fail("counter: the chance track does not show %d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))])
+	for want in ["(%d %% of refusals)" % roundi(100.0 * float(option["walk"])), EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"]))]:
 		if not text.contains(want):
 			_fail("counter: the strip '%s' does not carry %s" % [text, want])
 	_counter_id = String(option["id"])

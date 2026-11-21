@@ -168,8 +168,9 @@ const SECTOR_TILE_CEILING := 90
 ## parent's ruling on #287): a decision this size must read at a glance. G3 S3 moved it to
 ## the Sectors side sheet, whose head (sector and kind, the title, the jobs and Answer-by
 ## tiles) is picture C's; the card's own warned sentence that said the same was cut, and
-## the 6 words left over are stated here: 100 -> 106.
-const CLOSURE_CARD_CEILING := 106
+## the 6 words left over are stated here: 100 -> 106. Design's T1/T8 on #441 add one: the
+## answers' rows and the chance track's title, with the counter's odds clause cut: 106 -> 107.
+const CLOSURE_CARD_CEILING := 107
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit", "audience"]

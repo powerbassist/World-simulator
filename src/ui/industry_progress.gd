@@ -26,6 +26,7 @@ const Region = preload("res://src/core/region.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
 const ProcessAsks = preload("res://src/sim/process_asks.gd")
+const AnswerRow = preload("res://src/ui/answer_row.gd")
 const CounterChips = preload("res://src/ui/counter_chips.gd")
 const ClosureCard = preload("res://src/ui/closure_card.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
@@ -153,35 +154,25 @@ static func process_row(box: Control, state, loader, ns, row: Dictionary, stop: 
 ## The question, each answer a row (its button, the money it books, the blocs it
 ## moves), and what happens if the player says nothing.
 static func _ask(box: Control, process_id: String, ask: Dictionary, what: String, answer: Callable) -> void:
-	var question := PanelKit.plain_line(box, Strings.t(String(QUESTION.get(String(ask["kind"]), ""))), PanelKit.Tone.PLAIN)
-	question.theme_type_variation = UiTheme.WARN_TEXT
-	var counters: Array = []
-	var buttons: Array = []
-	for option in ask["answers"]:
+	# A question is said plainly: amber is for what waits with its date (G3 decision 2, Design's T5).
+	PanelKit.plain_line(box, Strings.t(String(QUESTION.get(String(ask["kind"]), ""))), PanelKit.Tone.PLAIN)
+	var counters: Array = ask["answers"].filter(func(o: Dictionary) -> bool: return o.has("counter"))
+	var plain: Array = ask["answers"].filter(func(o: Dictionary) -> bool: return not o.has("counter"))
+	# One row per answer (AnswerRow, Design's T1): the first, then the counter, then the rest --
+	# Accept, Make the counter, Walk away.
+	var list := AnswerRow.list(box)
+	for i in plain.size():
+		var option: Dictionary = plain[i]
 		var id := String(option["id"])
-		if option.has("counter"):
-			counters.append(option)
-			continue
-		var flow := PanelKit.buttons(box)
 		var button := PanelKit.sized(Button.new())
 		button.text = _label(id)
 		button.set_meta("answer_id", id)
 		button.set_meta("process_id", process_id)
 		button.pressed.connect(func() -> void: answer.call(process_id, id, what))
-		flow.add_child(button)
-		buttons.append(button)
-		var gain := -float(option["debt_eur_bn"])
-		var money := PanelKit.plain_line(flow, EffectsStrip.cost_text(gain), PanelKit.Tone.PLAIN)
-		money.autowrap_mode = TextServer.AUTOWRAP_OFF
-		money.theme_type_variation = ""  # G3 decision 1: a price is neutral, its minus sign says the cost
-		button.set_meta("money_label", money)
-		var who := EffectsStrip.who_text(option["bloc_offset"])
-		if who != "":
-			PanelKit.plain_line(flow, who).autowrap_mode = TextServer.AUTOWRAP_OFF
-	# One question's answers are one class group across their rows (G3 S3 pass 2).
-	PanelKit.same_class(buttons)
-	if not counters.is_empty():
-		CounterChips.build(box, process_id, counters, _process_strip, func(id: String) -> void: answer.call(process_id, id, what), "answer_id")
+		AnswerRow.add(list, button, EffectsStrip.cost_text(-float(option["debt_eur_bn"])), option["bloc_offset"])
+		if i == 0 and not counters.is_empty():
+			AnswerRow.rule(list)
+			CounterChips.build(list, process_id, counters, _process_strip, func(cid: String) -> void: answer.call(process_id, cid, what), "answer_id")
 	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % _label(String(ask["default"])))
 
 
