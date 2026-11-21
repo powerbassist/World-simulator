@@ -92,8 +92,9 @@ const BTN_H_MAIN := 44
 ## The class a button was given; a group's buttons all carry the same one.
 const CLASS_META := &"button_class"
 const OWN_MIN_META := &"button_own_min"
-## Set by same_class(): the button belongs to a group wider than its flow (_share_class skips it).
-const GROUP_META := &"button_class_group"
+## same_class()'s group, so a layout test can find buttons that share a class without a flow;
+## a flow's own re-sort (_share_class) leaves them to that group's class (G3 S3).
+const CLASS_GROUP_META := &"button_class_group"
 
 
 # -- Structure ----------------------------------------------------------------
@@ -261,7 +262,7 @@ static func _share_class(flow: Container) -> void:
 	var group: Array[Button] = []
 	for child in flow.get_children():
 		# A verb same_class() put in a wider group keeps that group's class (G3 S3 pass 2).
-		if _is_verb(child) and not (child as Button).has_meta(GROUP_META):
+		if _is_verb(child) and not (child as Button).has_meta(CLASS_GROUP_META):
 			group.append(child as Button)
 	var widest := 0.0
 	for b in group:
@@ -351,7 +352,6 @@ static func same_width(buttons: Array) -> void:
 static func same_class(buttons: Array, height := BTN_H) -> void:
 	var widest := 0.0
 	for b in buttons:
-		(b as Button).set_meta(GROUP_META, true)
 		if not (b as Button).has_meta(OWN_MIN_META):
 			(b as Button).set_meta(OWN_MIN_META, (b as Button).custom_minimum_size)
 		(b as Button).custom_minimum_size = (b as Button).get_meta(OWN_MIN_META)
@@ -359,6 +359,7 @@ static func same_class(buttons: Array, height := BTN_H) -> void:
 	var size := class_for(widest)
 	for b in buttons:
 		_classed(b, size, height)
+		(b as Button).set_meta(CLASS_GROUP_META, (buttons[0] as Object).get_instance_id())
 
 
 ## Caption left, value right, the value carrying the tone. The single commonest

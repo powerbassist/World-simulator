@@ -194,6 +194,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --chief-mark --briefing crowded --lang fr
 ##     (also tense: a request lapsing next month; crisis: an interrupt on the desk;
 ##     crowded: the interrupt and three requests lapsing, so the footer shows)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --diary-booked
 ##
 ## Exists because --headless draws nothing and the whole test suite is headless.
 ## Two U5a bugs -- the map's opening zoom and a window's maximum height -- were
