@@ -109,6 +109,10 @@ func _check_button_classes() -> void:
 	if not PanelKit.BTN_W.values().has(int(short.custom_minimum_size.x)):
 		_fail("a group button's width %.0f is not one of the four classes" % short.custom_minimum_size.x)
 
+	# The boundaries: a label exactly a class's width stays in it; one pixel past L is XL.
+	if PanelKit.class_for(PanelKit.BTN_W[PanelKit.Size.M]) != PanelKit.Size.M or PanelKit.class_for(PanelKit.BTN_W[PanelKit.Size.L] + 1) != PanelKit.Size.XL:
+		_fail("class_for misplaces a label at a class's edge")
+
 	UiTheme.set_text_scale(1.15)
 	var big := PanelKit.button("Go", PanelKit.Size.M)
 	UiTheme.set_text_scale(1.0)

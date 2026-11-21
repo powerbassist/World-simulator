@@ -12,6 +12,7 @@ extends SceneTree
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const AccentRule = preload("res://src/ui/accent_rule.gd")
 
 var _failures: Array[String] = []
 var _frame := 0
@@ -60,9 +61,13 @@ func _check_variations(theme: Theme) -> void:
 	var plain: StyleBoxFlat = theme.get_stylebox("normal", "Button")
 	if small.content_margin_left >= plain.content_margin_left:
 		_fail("Small is not tighter than a Button")
+	# G3: the screen's one action is the one filled button -- the accent FILL, its label at AA.
 	var primary: StyleBoxFlat = theme.get_stylebox("normal", UiTheme.PRIMARY)
-	if primary.border_width_left < 1 or primary.border_color == UiTheme.EDGE or primary.border_color == UiTheme.accent():
-		_fail("Primary at rest has no outline of its own, or wears the accent (the accent is 'you are here')")
+	if primary.bg_color != UiTheme.accent_fill():
+		_fail("Primary at rest is not the accent fill")
+	var label := theme.get_color("font_color", UiTheme.PRIMARY)
+	if AccentRule.contrast(label, primary.bg_color) < AccentRule.MIN_CONTRAST:
+		_fail("Primary's label is %.2f:1 on its fill, under AA" % AccentRule.contrast(label, primary.bg_color))
 
 
 func _check_chip() -> void:

@@ -118,6 +118,15 @@ func _check_theme_contents() -> void:
 	if theme.get_color("font_color", UiTheme.GOOD_TEXT) == theme.get_color("font_color", UiTheme.BAD_TEXT):
 		_fail("the good and bad text colours are identical")
 
+	# A ghost is a quiet action: no fill until the pointer is on it (else it is a button).
+	if (theme.get_stylebox("normal", UiTheme.GHOST) as StyleBoxFlat).bg_color.a > 0.0 or (theme.get_stylebox("hover", UiTheme.GHOST) as StyleBoxFlat).bg_color.a <= 0.0:
+		_fail("the ghost is filled at rest or empty on hover")
+
+	# The status tones are read as text on a tile (a delta, a date): G3 lifted BAD for it.
+	for tone in [UiTheme.GOOD, UiTheme.BAD, UiTheme.WARN]:
+		if AccentRule.contrast(tone, UiTheme.TILE) < AccentRule.MIN_CONTRAST:
+			_fail("the tone %s is %.2f:1 on a tile, under AA" % [tone.to_html(false), AccentRule.contrast(tone, UiTheme.TILE)])
+
 	# A disabled button must not look live (the menu's Continue read enabled with no
 	# saves, playtest 2026-09-05). G3's live look is the fill, so disabled has none.
 	for type in ["Button", "OptionButton", UiTheme.PRIMARY]:
