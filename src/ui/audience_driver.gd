@@ -122,6 +122,28 @@ static func register(main) -> void:
 	main._calendar_panel._grid.call_requested.connect(func(pid: String) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
 	main._hud.title_bar.requests_pressed.connect(func() -> void: open_oldest(main))
+	# The month page counts the days left: it follows the day, and opens current. DEFERRED: main
+	# mirrors the clock's day into the state on the same signal, connected after this one; at a
+	# month's close the state still holds the old month's last day until the 1st arrives (QA play).
+	main._clock.day_advanced.connect(func(_y: int, _m: int, _d: int) -> void: _month_page(main), CONNECT_DEFERRED)
+	main._windows.opened.connect(func(id: String) -> void:
+		if id == "calendar":
+			_month_page(main))
+	# A new game's Diary has its people and its cap before the first month closes (QA play).
+	refresh(main)
+
+
+## The month page alone, redrawn off the register (the lane's inbox cards keep their place). Not
+## while the pointer is on the column: a redraw would drop a click mid-press.
+static func _month_page(main) -> void:
+	var people: Control = main._calendar_panel.people
+	var hovered: Control = people.get_viewport().gui_get_hovered_control() if people.get_viewport() != null else null
+	if main._state == null or not people.is_visible_in_tree() or (hovered != null and people.is_ancestor_of(hovered)):
+		return
+	var rows: Array = []
+	for request in Audiences.pending(main._state.player()):
+		rows.append(row_of(main, request))
+	MonthPage.show(main, rows)
 
 
 static func lane_of(main) -> RequestLane:

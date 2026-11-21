@@ -38,6 +38,7 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		3:
 			_main._clock.paused = true
+			_check_a_new_game_has_its_reach()
 			_stage()
 			AudienceDriver.refresh(_main)
 			_main._windows.open("calendar")
@@ -60,6 +61,9 @@ func _process(_delta: float) -> bool:
 			_scroll_then_refocus()
 		11:
 			_check_refocus_keeps_scroll()
+			_turn_the_month()
+		14:
+			_check_tokens_count_from_the_first()
 			_finish()
 			return true
 	return false
@@ -562,6 +566,63 @@ func _check_summons_day_passed_under_hand() -> void:
 	state.month = kept[1]
 	state.day = kept[2]
 	AudienceDriver.refresh(_main)
+
+
+## QA play on #434: a new game's Diary has its "Someone else" before any month closes -- the
+## picker filled, the cap's caption set (no refresh had run before the first month's end).
+func _check_a_new_game_has_its_reach() -> void:
+	var people = _people()
+	if people._people.is_empty() or people._pick.item_count == 0 or people._cap.text == "":
+		_fail("a new game's Diary has no one to summon and no cap caption before the first month ends")
+
+
+## QA play on #434: at a month's close the clock's day is still the old month's last; the
+## tokens must count from the 1st once it arrives, and count down day by day after.
+var _turn_request := ""
+
+
+func _turn_the_month() -> void:
+	var state = _main._state
+	_turn_request = _request
+	state.day = 31
+	state.month += 1
+	AudienceDriver.after_month(_main, {})
+	_main._clock.day_advanced.emit(int(state.year), int(state.month), 1)
+
+
+func _check_tokens_count_from_the_first() -> void:
+	var state = _main._state
+	if int(state.day) != 1:
+		_fail("premise: the clock's 1st did not land (day %d)" % int(state.day))
+		return
+	var request := Audiences.request(state.player(), _turn_request)
+	if String(request.get("status", "")) != AK.STATUS_PENDING:
+		_fail("premise: the request is no longer waiting (%s)" % request.get("status", ""))
+		return
+	var person := String(_main._loader.person_name(String(request["person_id"])))
+	var token := _people().find_child("Token_%s" % _turn_request, true, false) as Button
+	var want := "%s: %d days left to answer" % [person, _left(request)]
+	if token == null or token.tooltip_text != want:
+		_fail("after a month's close the token reads '%s', not '%s'" % [token.tooltip_text if token != null else "no token", want])
+	# Days passed with the Diary shut: it opens counting from today.
+	_main._windows.close("calendar")
+	state.day = 9
+	_main._windows.open("calendar")
+	token = _people().find_child("Token_%s" % _turn_request, true, false) as Button
+	want = "%s: %d days left to answer" % [person, _left(request)]
+	if token == null or token.tooltip_text != want:
+		_fail("the Diary opened days later reads '%s', not '%s'" % [token.tooltip_text if token != null else "no token", want])
+
+
+## Days from today to the answer-by month's last day, both counted.
+func _left(request: Dictionary) -> int:
+	var state = _main._state
+	var by := Audiences.answer_by(request)
+	var by_y := floori((by - 1) / 12.0)
+	var by_m := by - by_y * 12
+	var end := Time.get_unix_time_from_datetime_dict({"year": by_y, "month": by_m, "day": Calendar.days_in_month(by_y, by_m)})
+	var now := Time.get_unix_time_from_datetime_dict({"year": int(state.year), "month": int(state.month), "day": int(state.day)})
+	return int((end - now) / 86400) + 1
 
 
 func _finish() -> void:
