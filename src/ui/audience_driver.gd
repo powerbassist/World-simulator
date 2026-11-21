@@ -84,7 +84,12 @@ static func register(main) -> void:
 	# A Go left without a day -- the Diary closed under it -- ends the player's action
 	# as surely as a booking does.
 	main._windows.closed.connect(func(id: String) -> void:
-		if id == "calendar" and String(game["booking_for"]) != "":
+		if id != "calendar":
+			return
+		# A summons armed has no booking_for: it lets go with the Diary too (pass 2 TAKE 5).
+		if not main._calendar_panel._grid.armed.is_empty():
+			main._calendar_panel._grid.arm({})
+		if String(game["booking_for"]) != "":
 			var was := String(game["booking_for"])
 			game["booking_for"] = ""
 			_seen(main, was)
@@ -364,6 +369,9 @@ static func after_load(main) -> void:
 		game["slowed_for"] = {}
 		game["resume_speed"] = 0
 		game["booking_for"] = ""
+		# Armed in the game left behind, a summons would book in the loaded one (pass 2 TAKE 5).
+		# No arm(): its redraw would read the old game; the load's own redraw follows.
+		main._calendar_panel._grid.armed = {}
 	PhoneDriver.after_load(main)
 	refresh(main)
 

@@ -46,6 +46,7 @@ func _process(_delta: float) -> bool:
 			_check_cards()
 			_check_summons()
 			_check_refused_summons()
+			_check_armed_summons_lets_go()
 			_finish()
 			return true
 	return false
@@ -302,6 +303,30 @@ func _check_refused_summons() -> void:
 	if ns.audience_requests.size() != before or not grid.armed.is_empty():
 		_fail("a second click after a refused summons booked or armed something")
 	ns.audience_summoned_month.erase(pid)
+
+
+## Pass 2 TAKE 5: a summons armed and not clicked lets go when the Diary closes and on a load --
+## it once summoned the person in the loaded game at the next click.
+func _check_armed_summons_lets_go() -> void:
+	AudienceDriver.refresh(_main)
+	var people = _people()
+	var grid = _main._calendar_panel._grid
+	var can: Array = people._people.filter(func(p: Dictionary) -> bool: return String(p["why"]) == "")
+	if can.is_empty():
+		_fail("premise: nobody left to summon")
+		return
+	people.pick_person(String(can[0]["person_id"]))
+	var see := people.find_child("SummonSee", true, false) as Button
+	see.pressed.emit()
+	_main._windows.close("calendar")
+	if not grid.armed.is_empty():
+		_fail("a summons armed stayed armed with the Diary closed")
+	_main._windows.open("calendar")
+	people.pick_person(String(can[0]["person_id"]))
+	see.pressed.emit()
+	AudienceDriver.after_load(_main)
+	if not grid.armed.is_empty():
+		_fail("a summons armed stayed armed across a load")
 
 
 func _finish() -> void:
