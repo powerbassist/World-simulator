@@ -250,7 +250,7 @@ func _render() -> void:
 		return
 	_drawn_day = int(_state.day)
 	# The check is "just booked": it goes once the day turns, its drain long played.
-	if not _fresh.is_empty() and float(_fresh.get("drain", 0.0)) >= 1.0 and int(_fresh["on"]) != _drawn_day:
+	if not _fresh.is_empty() and int(_fresh["on"]) != _stamp():
 		_fresh = {}
 	var ym := _shown()
 	_title.text = DateText.month_long_year(ym.y, ym.x)
@@ -317,19 +317,26 @@ func _render() -> void:
 	_armed_label.visible = _armed_label.text != ""
 
 
-## The appointment just booked, read back after the booking: the day the request LANDED on (the
-## driver books the first free day when the clock took the one picked), nothing when it was
-## refused; a summons keeps the day picked. Stamped with today, so the check goes once the day
-## turns. The panel's items catch up on its own refresh: the drain starts when the card exists.
-func _mark_fresh(target: Dictionary, picked: Dictionary) -> void:
-	var at := picked
-	if not bool(target.get("summons", false)):
-		var row := Audiences.request(_state.player(), String(target["id"]))
-		at = row.get("date", {}) if String(row.get("status", "")) == "booked" else {}
-	if at.is_empty():
-		return
-	_fresh = {"at": int(at["year"]) * 12 + int(at["month"]), "day": int(at["day"]), "person": String(target["person_id"]), "on": int(_state.day)}
-	_render()
+## The appointment just booked: the audience with this person the register did not hold before
+## the click -- the day it LANDED on (the driver books the first free day when the clock took the
+## one picked), for a request and a summons alike; none when it was refused. Stamped with the
+## full date: the check goes when the day turns, its drain played or not (pass 2 TAKEs 5, 6).
+func _mark_fresh(target: Dictionary, had: Array) -> void:
+	for e in _state.appointments:
+		var key := _audience_key(e, String(target.get("person_id", "")))
+		if key != "" and not had.has(key):
+			_fresh = {"at": int(e["year"]) * 12 + int(e["month"]), "day": int(e["day"]), "person": String(target["person_id"]), "on": _stamp()}
+			_render()
+			return
+
+
+func _audience_key(e: Dictionary, person_id: String) -> String:
+	var hers := String(e.get("kind", "")) == K.KIND_AUDIENCE and String(e.get("target_id", "")) == person_id
+	return "%d-%d-%d" % [int(e["year"]), int(e["month"]), int(e["day"])] if hers else ""
+
+
+func _stamp() -> int:
+	return (int(_state.year) * 12 + int(_state.month)) * 32 + int(_state.day)
 
 
 ## The fresh appointment's drain, on the grid's clock: a redraw mid-drain (the booking's own
@@ -399,11 +406,12 @@ func _on_day(d: int) -> void:
 	# arm() redraws: a refused summons leaves no stale tint, so no second click books on an
 	# empty target (pass 2 TAKE 4).
 	arm({})
+	var had: Array = _state.appointments.map(func(e) -> String: return _audience_key(e, String(target.get("person_id", ""))))
 	if bool(target.get("summons", false)):
 		summoned.emit(String(target["person_id"]), date)
 	else:
 		booked.emit(String(target["id"]), date)
-	_mark_fresh(target, date)
+	_mark_fresh(target, had)
 
 
 ## Day `d` of the shown month in the armed person's window, {} when it is not in it.

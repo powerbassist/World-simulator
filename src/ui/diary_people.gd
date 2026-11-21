@@ -35,7 +35,9 @@ const WIDTH := 410.0
 const TOKEN := Vector2(76, 82)
 const FACE := Vector2(44, 58)
 ## px at text size 100 %: the matrix's columns -- the verb, then a day, rapport, odds, learn.
-const COLUMNS := [128.0, 44.0, 126.0, 58.0, 44.0]  # the verb's column holds class M (G3 S2)
+## G3 S2: the verb's column holds class M; the sum (370) plus the file's and the sheet's padding
+## (36) stays inside WIDTH, or the page widens (pass 2 TAKE 4).
+const COLUMNS := [120.0, 44.0, 110.0, 52.0, 44.0]
 
 var _tokens: HFlowContainer
 var _head: Label
@@ -222,7 +224,8 @@ func _token(row: Dictionary) -> void:
 	b.toggle_mode = true
 	b.button_pressed = String(row["id"]) == _open
 	b.custom_minimum_size = TOKEN * s
-	b.tooltip_text = tr_n("%s: %d day left to answer", "%s: %d days left to answer", int(row.get("left", 0))) % [String(row["person"]), int(row.get("left", 0))]
+	b.tooltip_text = tr("%s: today is the last day to answer") % String(row["person"]) if int(row.get("left", 0)) <= 1 \
+		else tr_n("%s: %d day left to answer", "%s: %d days left to answer", int(row.get("left", 0))) % [String(row["person"]), int(row.get("left", 0))]
 	_tokens.add_child(b)
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -312,7 +315,7 @@ func _show_file(row: Dictionary, armed: bool) -> void:
 	var decline := _verb(id, "Decline", tr("Decline"), row.get("decline", {}),  # i18n: ok a node-name key
 		["○", tr("▼ a grudge"), PanelKit.MISSING, "○"], price)
 	decline.pressed.connect(func() -> void: decline_requested.emit(id))
-	PanelKit.same_class([see, call, delegate, decline])
+	PanelKit.same_class([see, call, delegate, decline], PanelKit.BTN_H_ROW)  # buttons in a table's rows
 	# A class past the column's (French, 115 %) widens the verbs' column: the header follows it.
 	(header.get_child(0) as Control).custom_minimum_size.x = maxf(float(COLUMNS[0]) * s, see.custom_minimum_size.x)
 

@@ -119,9 +119,10 @@ func fill() -> void:
 			_appointment(shown[i])
 		else:
 			_line(shown[i])
-	# The place is drawn at the tile's foot: the tile grows so it never sits on a card or a line.
-	if offer != "" or taken != "":
-		custom_minimum_size.y = maxf(SIZE.y * s, _lines.offset_top + _lines.get_combined_minimum_size().y + (PLACE_H + 8.0) * s)
+	# The tile grows to hold its lines (a card and two lines outgrow the floor, pass 2 TAKE 3), and
+	# the place drawn at its foot, which must never sit on a card or a line.
+	var place := (PLACE_H + 8.0) * s if offer != "" or taken != "" else 3.0 * s
+	custom_minimum_size.y = maxf(SIZE.y * s, _lines.offset_top + _lines.get_combined_minimum_size().y + place)
 
 
 func _line(e: Dictionary) -> void:
@@ -165,6 +166,7 @@ func _appointment(e: Dictionary) -> void:
 	row.add_child(words)
 	words.add_child(_label(Strings.t("Audience"), UiTheme.CHIP_TEXT))
 	words.add_child(_label(String(e.get("short", e["text"])), UiTheme.CHIP_TEXT))  # i18n: row-ok the grid's words
+	card.ink(drain)
 	card.custom_minimum_size.y = 28.0 * s
 
 
@@ -205,6 +207,7 @@ func set_drain(t: float) -> void:
 	for card in (_lines.get_children() if _lines != null else []):
 		if card is Appointment:
 			card.drain = t
+			card.ink(t)
 			var grow := minf(t * Motion.DRAIN_S / Motion.MORPH_S, 1.0)
 			card.scale = Vector2.ONE * (0.9 + 0.1 * Tween.interpolate_value(0.0, 1.0, grow, 1.0, Tween.TRANS_BACK, Tween.EASE_OUT))
 			card.pivot_offset = card.size / 2.0
@@ -266,7 +269,8 @@ func _draw() -> void:
 		_box.border_color = accent
 	draw_style_box(_box, r)
 	if band:
-		Band.draw(self, _box, GAP * s)
+		# The grid's own gap, read live: its separation and this reach agree after a text-size change.
+		Band.draw(self, _box, float(get_parent().get_theme_constant("h_separation")) if get_parent() is GridContainer else GAP * s)
 	_draw_date(s, accent)
 	if offer != "" or taken != "":
 		_draw_place(s, accent)
@@ -284,7 +288,7 @@ func _draw_date(s: float, accent: Color) -> void:
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		var d := maxf(w + 8.0 * s, 18.0 * s)
 		draw_circle(Vector2(x + d / 2.0 - 3.0 * s, base - font.get_ascent(fs) / 2.0 + 1.0), d / 2.0, UiTheme.accent_fill())
-		draw_string(font, Vector2(x + (d - w) / 2.0 - 3.0 * s, base), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color.WHITE)
+		draw_string(font, Vector2(x + (d - w) / 2.0 - 3.0 * s, base), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.on_accent_fill())
 		draw_string(font, Vector2(x + d + 2.0 * s, base), Strings.t("Today"), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, accent)
 		return
 	draw_string(font, Vector2(x, base), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_OFF if outside else UiTheme.TEXT_DIM)
@@ -313,7 +317,7 @@ func _draw_place(s: float, accent: Color) -> void:
 	else:
 		_dashed(place, accent, 1.5)
 	draw_string(font, Vector2(place.position.x + 8.0 * s, mid), offer, HORIZONTAL_ALIGNMENT_LEFT, place.size.x - 12.0 * s, fs,
-		Color.WHITE if _hover else accent)
+		UiTheme.on_accent_fill() if _hover else accent)
 
 
 ## A dashed rounded outline: dashes along the straight runs, arcs at the corners.
@@ -336,6 +340,15 @@ class Appointment extends Control:
 	var fresh := false
 	var drain := 1.0
 	var _box := StyleBoxFlat.new()
+
+	## The words' ink follows the fill: the fill's own (dark on a light accent such as Germany's
+	## yellow) while fresh, back to the theme's as the accent drains (pass 2 TAKE 2). A modulate,
+	## not a colour override: the theme's text tone times this.
+	func ink(t: float) -> void:
+		var plain := Color(1, 1, 1)  # the identity modulate: the theme's own tone
+		var tone := UiTheme.on_accent_fill().lerp(plain, t) if fresh else plain
+		for label in find_children("*", "Label", true, false):  # i18n: ok a class name
+			(label as Label).self_modulate = tone
 
 	func _draw() -> void:
 		_box.set_corner_radius_all(UiTheme.R_SMALL)

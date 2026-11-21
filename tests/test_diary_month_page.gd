@@ -435,7 +435,8 @@ func _check_days_left() -> void:
 	state.year = by_y
 	state.month = by_m
 	state.day = last
-	_tooltip_reads("%s: 1 day left to answer" % person, "on the last day")
+	# G3 S2 pass 2 TAKE 11: the last day says so, as the token's caption does ("today").
+	_tooltip_reads("%s: today is the last day to answer" % person, "on the last day")
 	state.year = kept[0]
 	state.month = kept[1]
 	state.day = kept[2]

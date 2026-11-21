@@ -26,6 +26,8 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Motion = preload("res://src/ui/motion.gd")
+const DiaryDay = preload("res://src/ui/diary_day.gd")
+const DiaryPeople = preload("res://src/ui/diary_people.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -75,6 +77,7 @@ func _process(_delta: float) -> bool:
 			var cell = _cell(int(_offered["day"]))
 			if cell != null and bool(cell.fresh):
 				_fail("a day on, the appointment still wears the just-booked check")
+			_check_summons_fresh()
 			_finish()
 			return true
 	return false
@@ -159,6 +162,23 @@ func _check_trip() -> void:
 	if bool(_cell(14).band_hot):
 		_fail("the trip stayed lit after the pointer left")
 	state.appointments.erase(visit)
+	# Pass 2 TAKE 1: a trip that starts on a Monday starts round, one that ends on a Sunday ends round.
+	var mon := _day_at_col(0, 1, last_day(at) - 4)
+	var mv := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), mon + 2, "state_visit", "DEU", "", "", "", "", 2)
+	state.appointments.append(mv)
+	_main._calendar_panel._refresh()
+	_grid.show_month(int(at["year"]), int(at["month"]))
+	if String(_cell(mon).band_left) != "cap":
+		_fail("a trip starting on Monday %d starts with '%s', not a round end" % [mon, _cell(mon).band_left])
+	state.appointments.erase(mv)
+	var sun := _day_at_col(6, 5, last_day(at))
+	var sv := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), sun - 2, "state_visit", "DEU", "", "", "", "", 2)
+	state.appointments.append(sv)
+	_main._calendar_panel._refresh()
+	_grid.show_month(int(at["year"]), int(at["month"]))
+	if String(_cell(sun).band_right) != "cap":
+		_fail("a trip ending on Sunday %d ends with '%s', not a round end" % [sun, _cell(sun).band_right])
+	state.appointments.erase(sv)
 	# Pass 1: a trip across the month's edge keeps a chevron there, not a round end. A month whose
 	# last day is not a Sunday and whose next starts on no Monday: a row break would chevron anyway.
 	for offset in range(4, 16):
@@ -214,6 +234,7 @@ func _check_places() -> void:
 	var cell = _cell(int(_offered["day"]))
 	if cell == null or String(cell.offer) != tr("See %s") % surname:
 		_fail("the free day's bookable place reads '%s', not 'See %s'" % [cell.offer if cell != null else "", surname])
+	_check_floors("the armed page")
 	var s := UiTheme.text_scale()
 	for c in _grid._days.get_children():
 		if (String(c.get("offer")) != "" or String(c.get("taken")) != "") and c._lines != null:
@@ -248,6 +269,12 @@ func _check_verb_class() -> void:
 			_fail("the file has no %s verb" % key)
 			return
 		verbs.append(b)
+	var s := UiTheme.text_scale()
+	if not is_equal_approx((verbs[0] as Button).custom_minimum_size.y, roundf(PanelKit.BTN_H_ROW * s)):
+		_fail("the matrix's verbs are %.0f px high, not a table row's button" % (verbs[0] as Button).custom_minimum_size.y)
+	var column: Control = _main._calendar_panel.people
+	if column.get_combined_minimum_size().x > DiaryPeople.WIDTH * s + 0.5:
+		_fail("the people column needs %.0f px, past its %.0f: the page widens" % [column.get_combined_minimum_size().x, DiaryPeople.WIDTH * s])
 	var w: float = (verbs[0] as Button).custom_minimum_size.x
 	for b in verbs:
 		if not is_equal_approx((b as Button).custom_minimum_size.x, w):
@@ -271,6 +298,43 @@ func _check_fresh() -> void:
 		_fail("two frames after the booking the accent has already gone: the drain played before the appointment existed")
 	if cell != null and String(cell.offer) != "":
 		_fail("the booked day still offers a place")
+	var state = _main._state
+	var extra: Array = []
+	for portfolio in ["interior", "finance"]:
+		extra.append(Calendar.make_entry(K.KIND_RESHUFFLE, int(_offered["year"]), int(_offered["month"]), int(_offered["day"]), "", "", "", portfolio, ""))
+		state.appointments.append(extra[-1])
+	_main._calendar_panel._refresh()
+	_grid.show_month(int(_offered["year"]), int(_offered["month"]))
+	_check_floors("a busy day")
+	for e in extra:
+		state.appointments.erase(e)
+	_main._calendar_panel._refresh()
+	# Pass 2 TAKE 2: no white on the accent fill (Germany's yellow fails it); the fill's own ink.
+	for path in ["res://src/ui/diary_day.gd", "res://src/ui/diary_band.gd"]:
+		if FileAccess.get_file_as_string(path).contains("Color.WHITE"):
+			_fail("%s writes Color.WHITE: on a light accent fill it fails 4.5:1 -- use UiTheme.on_accent_fill()" % path)
+
+
+## Pass 2 TAKE 5: a summons is fresh on the day it LANDED, read from the register.
+func _check_summons_fresh() -> void:
+	var state = _main._state
+	var ns = state.player()
+	for person in _main._loader.people[String(ns.id)]:
+		var pid := String(person.id)
+		if not Audiences.summon_refusal(state, ns, _main._loader, pid).is_empty():
+			continue
+		for d in Audiences.summon_days(state, pid):
+			if bool(d["free"]):
+				_grid.arm({"id": "", "person_id": pid, "person": _main._loader.person_name(pid), "summons": true})
+				_grid.show_month(int(d["year"]), int(d["month"]))
+				_grid._on_day(int(d["day"]))
+				_main._calendar_panel._refresh()
+				_grid.show_month(int(d["year"]), int(d["month"]))
+				var cell = _cell(int(d["day"]))
+				if cell == null or not bool(cell.fresh):
+					_fail("the summons just booked is not fresh on its day")
+				return
+	_fail("premise: nobody could be summoned")
 
 
 ## An out-of-month tile takes no click (the keyboard is checked above).
@@ -304,7 +368,10 @@ func _check_class_relabel() -> void:
 		b.text = t
 		box.add_child(b)
 		buttons.append(b)
+	(buttons[1] as Button).custom_minimum_size.y = 50.0
 	PanelKit.same_class(buttons)
+	if (buttons[1] as Button).custom_minimum_size.y < 50.0:
+		_fail("same_class wiped a height the caller set")
 	var before: float = (buttons[0] as Button).custom_minimum_size.x
 	(buttons[2] as Button).text = "A much longer answer than any class S holds"
 	PanelKit.same_class(buttons)
@@ -317,6 +384,32 @@ func _check_class_relabel() -> void:
 	if not is_equal_approx((buttons[0] as Button).custom_minimum_size.x, before):
 		_fail("the group did not step back down when the long label went")
 	box.queue_free()
+
+
+## The first day of the shown month at weekday column `col` (Monday 0) within [lo, hi].
+func _day_at_col(col: int, lo: int, hi: int) -> int:
+	for d in range(lo, hi + 1):
+		if _grid._days.get_children().find(_cell(d)) % 7 == col:
+			return d
+	return lo
+
+
+func last_day(m: Dictionary) -> int:
+	return Calendar.days_in_month(int(m["year"]), int(m["month"]))
+
+
+## Pass 2 TAKE 3: every tile's floor holds its lines (and its place): nothing is cut under the
+## next row.
+func _check_floors(where: String) -> void:
+	var s := UiTheme.text_scale()
+	for c in _grid._days.get_children():
+		if bool(c.get("outside")) or c._lines == null:
+			continue
+		var place: float = (DiaryDay.PLACE_H + 5.0) * s if String(c.offer) != "" or String(c.taken) != "" else 0.0
+		var need: float = c._lines.offset_top + c._lines.get_combined_minimum_size().y + place
+		if (c as Control).custom_minimum_size.y < need:
+			_fail("%s: day %d's floor %.0f cuts its lines (needs %.0f)" % [where, int(c.day), c.custom_minimum_size.y, need])
+			return
 
 
 func _cell(day: int):

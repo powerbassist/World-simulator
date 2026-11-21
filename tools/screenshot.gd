@@ -128,6 +128,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-about --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diary-booked   (G3 S2: the first request booked by a click on a free day, its appointment fresh)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diary-busy   (--diary-booked, and two reshuffles on the same day: a busy tile)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --summon --open calendar   (the month page: a summons booked, the cap spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --request --open calendar --diary-page 2   (the month page two months on: a visit's travel)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience
@@ -451,6 +452,8 @@ var _summon := false
 var _diary_page := 0
 ## G3 S2, --diary-booked: --request-book, then a click on a free day a few days on books it (fresh).
 var _diary_booked := false
+## --diary-busy: --diary-booked, and two more acts on the booked day.
+var _diary_busy := false
 ## V5.3 screen 3: --file event | request opens the docked file page (--file request needs --request).
 var _file := ""
 ## --folder-file event | request | decided | news: the Folder tab (--briefing crowded) on that file's page,
@@ -1238,8 +1241,9 @@ func _init() -> void:
 			_summon = true
 		elif args[i] == "--diary-page" and i + 1 < args.size():
 			_diary_page = int(args[i + 1])
-		elif args[i] == "--diary-booked":
+		elif args[i] == "--diary-booked" or args[i] == "--diary-busy":
 			_diary_booked = true
+			_diary_busy = args[i] == "--diary-busy"
 			_request = "--request-book"
 		elif args[i] == "--request" or args[i] == "--request-book" or args[i] == "--audience":
 			_request = args[i] if _request != "--audience" else _request
@@ -2817,11 +2821,22 @@ func _stage_requests() -> void:
 	Driver._open_booking(_main, String(first["id"]))
 	if _diary_booked:
 		var grid = _main._calendar_panel._grid
+		var booked := false
+		var this_month := int(_main._state.year) * 12 + int(_main._state.month)
 		for date in Audiences.offered_dates(_main._state, ns, String(first["id"])):
-			if bool(date["free"]) and int(date["day"]) >= int(_main._state.day) + 4:
+			# A later month counts whatever its day: a day number alone booked nothing from the 27th.
+			if bool(date["free"]) and (int(date["year"]) * 12 + int(date["month"]) > this_month or int(date["day"]) >= int(_main._state.day) + 4):
 				grid.show_month(int(date["year"]), int(date["month"]))
 				grid._on_day(int(date["day"]))
+				booked = true
+				if _diary_busy:
+					for portfolio in ["interior", "finance"]:
+						_main._state.appointments.append(Calendar.make_entry(CalendarK.KIND_RESHUFFLE, int(date["year"]), int(date["month"]), int(date["day"]), "", "", "", portfolio, ""))
+					_main._calendar_panel._refresh()
+					grid.show_month(int(date["year"]), int(date["month"]))
 				break
+		if not booked:
+			push_error("screenshot: --diary-booked found no free day to book; the frame shows no fresh booking")
 	if _request != "--audience":
 		return
 	for date in Audiences.offered_dates(_main._state, ns, String(first["id"])):

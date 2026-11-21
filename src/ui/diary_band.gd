@@ -63,8 +63,10 @@ static func bands(trips: Array, entries: Dictionary, first: int, on_before := fa
 				leg = Strings.t("back")
 			out[day] = {"label": label if day == start or col == 0 else "", "key": key, "leg": leg,
 				"meeting": day == meeting,
-				"left": CHEVRON_END if col == 0 or (day == 1 and on_before) else (CAP if day == start else JOIN),
-				"right": CHEVRON_END if col == 6 or (day == trips.size() and on_after) else (CAP if day == end else JOIN)}
+				# The trip's own start and end come first: a Monday start is round, not a row break's
+				# chevron (pass 2 TAKE 1); only the month's edge, where the trip goes on, beats them.
+				"left": CHEVRON_END if day == 1 and on_before else (CAP if day == start else (CHEVRON_END if col == 0 else JOIN)),
+				"right": CHEVRON_END if day == trips.size() and on_after else (CAP if day == end else (CHEVRON_END if col == 6 else JOIN))}
 	return out
 
 
