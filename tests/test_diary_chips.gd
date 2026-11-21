@@ -287,6 +287,11 @@ func _go() -> void:
 	var answers: Array = lane._answers_of.get(_other, [])
 	if answers.is_empty() or String(answers[0]["label"]) != tr("Go"):
 		_fail("the inbox card's first answer is not Go: %s" % [answers])
+	# The Go from the keys: only that route hands the keyboard a day (the #427 ruling).
+	var enter := InputEventKey.new()
+	enter.keycode = KEY_ENTER
+	enter.pressed = true
+	_main._calendar_panel.people._input(enter)
 	lane.book_requested.emit(_other)
 
 
