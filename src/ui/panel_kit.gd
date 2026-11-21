@@ -92,6 +92,8 @@ const BTN_H_MAIN := 44
 ## The class a button was given; a group's buttons all carry the same one.
 const CLASS_META := &"button_class"
 const OWN_MIN_META := &"button_own_min"
+## same_class()'s group, so a layout test can find buttons that share a class without a flow.
+const CLASS_GROUP_META := &"button_class_group"
 
 
 # -- Structure ----------------------------------------------------------------
@@ -368,6 +370,7 @@ static func same_class(buttons: Array, height := BTN_H) -> void:
 	var size := class_for(widest)
 	for b in buttons:
 		_classed(b, size, height)
+		(b as Button).set_meta(CLASS_GROUP_META, (buttons[0] as Object).get_instance_id())
 
 
 ## Caption left, value right, the value carrying the tone. The single commonest
