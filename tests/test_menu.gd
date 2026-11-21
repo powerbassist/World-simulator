@@ -266,7 +266,10 @@ func _check_settings() -> void:
 	panel._fullscreen_button.select(0)
 	panel._resolution_button.select(RESOLUTION_INDEX)
 	panel._text_button.select(TEXT_INDEX)
+	panel._glass_button.select(0)  # G3: Glass off, which must reach the theme and the file
 	panel._save_and_apply()
+	if UiTheme.glass():
+		_fail("Glass saved off but the theme still blurs")
 
 	var expected: float = SettingsPanel.TEXT_SCALES[TEXT_INDEX]
 	if not is_equal_approx(UiTheme.text_scale(), expected):
@@ -287,7 +290,14 @@ func _check_settings() -> void:
 		_fail("settings did not survive a reload: text size %d, resolution %d" % [
 			reloaded._text_button.selected, reloaded._resolution_button.selected
 		])
+	if reloaded._glass_button.selected != 0:
+		_fail("Glass off did not survive a reload")
 	reloaded.queue_free()
+	# The next launch reads it before the first theme (apply_saved), as the text size.
+	UiTheme.set_glass(true)
+	SettingsPanel.apply_saved(root)
+	if UiTheme.glass():
+		_fail("apply_saved did not read Glass off from the file")
 
 	if had_config:
 		var restore := FileAccess.open(SettingsPanel.CONFIG_PATH, FileAccess.WRITE)
@@ -298,6 +308,7 @@ func _check_settings() -> void:
 		DirAccess.remove_absolute(SettingsPanel.CONFIG_PATH)
 		root.content_scale_factor = 1.0
 	UiTheme.set_text_scale(1.0)
+	UiTheme.set_glass(true)
 
 
 ## The 130 % text size is gone (the author, 2026-11-20: "Retirer 130 % du jeu"): the largest

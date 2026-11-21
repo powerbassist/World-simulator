@@ -91,6 +91,7 @@ const BTN_H := 36
 const BTN_H_MAIN := 44
 ## The class a button was given; a group's buttons all carry the same one.
 const CLASS_META := &"button_class"
+const OWN_MIN_META := &"button_own_min"
 
 
 # -- Structure ----------------------------------------------------------------
@@ -242,22 +243,35 @@ static func class_for(width_px: float) -> Size:
 	return Size.XL
 
 
+## The class is a floor over what the caller asked for (OWN_MIN_META, read the first time):
+## a group re-classes on every sort, and must not wipe a width or height a caller set.
 static func _classed(b: Button, size: Size, height: int) -> void:
+	if not b.has_meta(OWN_MIN_META):
+		b.set_meta(OWN_MIN_META, b.custom_minimum_size)
 	b.set_meta(CLASS_META, size)
-	var want := Vector2(roundf(BTN_W[size] * UiTheme.text_scale()), roundf(height * UiTheme.text_scale()))
+	var want := Vector2(roundf(BTN_W[size] * UiTheme.text_scale()), roundf(height * UiTheme.text_scale())).max(b.get_meta(OWN_MIN_META))
 	if b.custom_minimum_size != want:
 		b.custom_minimum_size = want
 
 
 static func _share_class(flow: Container) -> void:
+	var group: Array[Button] = []
+	for child in flow.get_children():
+		if _is_verb(child):
+			group.append(child as Button)
 	var widest := 0.0
-	for child in flow.get_children():
-		if child is Button and (child as Button).visible:
-			widest = maxf(widest, (child as Button).get_minimum_size().x)  # the label's own, not the class
+	for b in group:
+		if b.visible:
+			widest = maxf(widest, b.get_minimum_size().x)  # the label's own, not the class
 	var size := class_for(widest)
-	for child in flow.get_children():
-		if child is Button:
-			_classed(child as Button, size, BTN_H)
+	for b in group:
+		_classed(b, size, BTN_H)
+
+
+## A worded verb in the plain, primary or ghost look. An icon button keeps BTN_W_ICON's square,
+## and a sub-row, cluster or segment is a list entry, not a verb: a class would re-lay them.
+static func _is_verb(node: Node) -> bool:
+	return node is Button and (node as Button).text != "" and String((node as Button).theme_type_variation) in ["", UiTheme.PRIMARY, UiTheme.GHOST]
 
 
 ## G3: a SHEET -- one job, opaque, its heading in tracked capitals. Returns the body, as

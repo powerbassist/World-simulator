@@ -87,6 +87,15 @@ func _build_button_group() -> void:
 		var b := Button.new()
 		b.text = text  # i18n: ok a test label
 		_group.add_child(b)
+	# Not verbs of the group: a list entry, and a verb whose caller asked for a taller button.
+	var entry := Button.new()
+	entry.text = "Health"  # i18n: ok a test label
+	entry.theme_type_variation = UiTheme.SUBROW_BUTTON
+	_group.add_child(entry)
+	var tall := Button.new()
+	tall.text = "Sign"  # i18n: ok a test label
+	tall.custom_minimum_size = Vector2(0, 60)
+	_group.add_child(tall)
 
 
 ## A button is one of four widths, never its label's (g3-spec.md section 1): a lone button
@@ -106,6 +115,11 @@ func _check_button_classes() -> void:
 		_fail("a group's buttons do not share a class: %.0f and %.0f px" % [short.size.x, long.size.x])
 	if long.get_meta(PanelKit.CLASS_META, -1) == PanelKit.Size.S:
 		_fail("the group took the class of its SHORTEST label")
+	# Review pass 1: the group classes worded verbs only, and over a caller's own size.
+	if (_group.get_child(2) as Button).custom_minimum_size != Vector2.ZERO:
+		_fail("the group re-sized a sub-row entry, which is a list item and not a verb")
+	if (_group.get_child(3) as Button).custom_minimum_size.y != 60.0:
+		_fail("the group wiped a height the caller set")
 	if not PanelKit.BTN_W.values().has(int(short.custom_minimum_size.x)):
 		_fail("a group button's width %.0f is not one of the four classes" % short.custom_minimum_size.x)
 

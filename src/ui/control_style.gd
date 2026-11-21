@@ -24,8 +24,9 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	var primary := String(names["primary"])
 	theme.set_type_variation(primary, "Button")  # i18n: ok
 	theme.set_stylebox("normal", primary, _glow(box.call(fill)))
-	theme.set_stylebox("hover", primary, _glow(box.call(fill)))
-	# Darker when held: it keeps a white label's contrast rising, never falling.
+	# Darker under the pointer and darker again when held: a white label's contrast rises,
+	# never falls (a dark label on a yellow fill starts near 10:1 and keeps AA).
+	theme.set_stylebox("hover", primary, _glow(box.call(fill.darkened(0.06))))
 	theme.set_stylebox("pressed", primary, _glow(box.call(fill.darkened(0.12))))
 	theme.set_stylebox("focus", primary, t["ring"])
 	theme.set_stylebox("disabled", primary, box.call(Color(0, 0, 0, 0), t["line"]))

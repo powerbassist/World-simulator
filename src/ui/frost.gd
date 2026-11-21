@@ -11,10 +11,10 @@ extends Control
 ## node draws only a mask the pane's own shape (its stylebox's corners, filled white) and
 ## the shader keeps the mask's alpha, so the antialiased corners survive.
 ##
-## How it blurs is backdrop.gd's method, measured on the Compatibility renderer the game
-## runs: `hint_screen_texture` with `filter_linear_mipmap` gives the screen at lower
-## resolutions for free, the mip near log2(radius) is a box blur of that radius, and nine
-## taps spread over it hide the mip's blocks. The three panes never overlap and popovers
+## How it blurs is backdrop.gd's shader itself, one kernel for the modal and the panes
+## (measured on the Compatibility renderer the game runs): `hint_screen_texture` with
+## `filter_linear_mipmap`, the mip near log2(radius), nine taps over it; its tint, black at
+## 1 - PANE_BACKDROP_GAIN, is the pane's darkening, and it keeps the mask's alpha. The three panes never overlap and popovers
 ## are opaque, so the frame's one screen copy serves all three (no BackBufferCopy).
 ##
 ## Glass off (UiTheme.glass(), the "Glass" setting): hidden, so nothing reads the screen and
@@ -22,33 +22,12 @@ extends Control
 ## settings change triggers (UiTheme.rebuild).
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const Backdrop = preload("res://src/ui/backdrop.gd")
 
 ## The blur radius in DESIGN pixels: about 30 at 1080p, which scales to 40 at 1440p (the
 ## spec's two numbers) because the shader converts it to the window's physical pixels.
 const BLUR_PX := 30.0
 
-const CODE := """shader_type canvas_item;
-render_mode unshaded;
-
-uniform sampler2D screen_tex : hint_screen_texture, repeat_disable, filter_linear_mipmap;
-uniform float blur_px;
-uniform float gain;
-uniform float design_h;
-
-void fragment() {
-	float radius = blur_px * (1.0 / SCREEN_PIXEL_SIZE.y) / design_h;
-	float lod = max(log2(radius) - 0.5, 0.0);
-	vec2 px = SCREEN_PIXEL_SIZE * radius * 0.5;
-	vec3 sum = vec3(0.0);
-	for (int y = -1; y <= 1; y++) {
-		for (int x = -1; x <= 1; x++) {
-			sum += textureLod(screen_tex, SCREEN_UV + vec2(float(x), float(y)) * px, lod).rgb;
-		}
-	}
-	// The mask's alpha is the pane's shape, corners antialiased.
-	COLOR = vec4(sum / 9.0 * gain, COLOR.a);
-}
-"""
 
 static var _material: ShaderMaterial
 
@@ -59,18 +38,17 @@ var _mask: StyleBoxFlat
 
 static func material_for_panes() -> ShaderMaterial:
 	if _material == null:
-		var shader := Shader.new()
-		shader.code = CODE
 		_material = ShaderMaterial.new()
-		_material.shader = shader
+		_material.shader = Backdrop.material().shader  # the one blur kernel, its own uniforms here
 		_material.set_shader_parameter("blur_px", BLUR_PX)
-		_material.set_shader_parameter("gain", UiTheme.PANE_BACKDROP_GAIN)
+		# The backdrop's tint mixed toward black is a gain: 1 - alpha of the blurred map is kept.
+		_material.set_shader_parameter("tint", Color(0, 0, 0, 1.0 - UiTheme.PANE_BACKDROP_GAIN))
 		_material.set_shader_parameter("design_h", float(ProjectSettings.get_setting("display/window/size/viewport_height", 1080)))
 	return _material
 
 
 func _init() -> void:
-	name = "Frost"
+	name = "Frost"  # i18n: ok a node name
 	show_behind_parent = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	material = material_for_panes()
