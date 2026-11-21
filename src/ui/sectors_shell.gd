@@ -45,11 +45,13 @@ static func refresh_marks(main) -> void:
 	main._windows.set_tab_counts(SectorNeeds.counts(main._state, main._loader, ns))
 
 
-## A Needs you row's Go: the overview, with the firm's sector and its verbs opened (the
-## answers live there until screen 5's slice 2).
+## A Needs you row's Go: the overview, the firm's row picked in the side sheet and its
+## card opened under it.
 static func open_firm(sector: String, company_id: String, main) -> void:
 	main._companies_panel._open_sector = sector
 	main._companies_panel._open_firm = company_id
+	# G3 S3: the side sheet shows the firm's timeline row, if it has one (companies_panel._choose).
+	main._companies_panel._pick = ""
 	# The page opens at the top, where the card sits. No code focus: a mouse route must not hand Space to a verb.
 	main._companies_panel._scroll.scroll_vertical = 0
 	main._companies_panel.mark_dirty()

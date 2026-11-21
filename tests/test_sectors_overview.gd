@@ -3,13 +3,14 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_sectors_overview.gd
 ## Non-zero exit on any failure.
 ##
-## V5.3 rework pass, Sectors overview C ("the economy's shape", the author's pick): the
-## overview opens on one lead sentence, the share of output as bars, growth a year as a
-## dot plot against the economy's own line, and three sector cards (output, share, jobs
-## at named firms, an 18-month curve, the biggest employers, one "Open <sector>"). Every
-## figure is checked against the sim's own reader, so a card that drew a stale or a
-## swapped number fails here. The per-sector firm cards stay off the overview unless a
-## Needs you row routed the player to a firm (sectors_shell.open_firm).
+## G3 S3, the Sectors overview "C La frise" (the author's pick): three sector doors on top
+## (output, the trend a year against the nation's, an 18-month curve, the verdict, what
+## waits, one Open), then the timeline (test_sectors_timeline.gd), and under it the
+## economy's shape: one lead sentence, the share of output as bars, growth a year as a
+## dot plot against the economy's own line. Every figure is checked against the sim's own
+## reader, so a door that drew a stale or a swapped number fails here. A firm's card stays
+## off the page unless a Needs you row routed the player to it (sectors_shell.open_firm):
+## then it opens in the side column.
 
 const Companies = preload("res://src/sim/companies.gd")
 const Economy = preload("res://src/sim/economy.gd")
@@ -126,13 +127,12 @@ func _check_shape() -> void:
 		if share._marked != waiting_rows:
 			_fail("share chart marks rows %s, the waiting sectors are %s" % [share._marked, waiting_rows])
 
-	# A verdict chip per sector, in the sim's words.
-	var text_all := _text_under(_panel)
+	# A verdict chip per sector, in the sim's words, on its door.
 	for s in sectors:
 		var words := SectorRead.verdict_words(SectorRead.verdict(Economy.sector_trend_pct(_main._state, ns, String(s)) - float(ns.trend_annual_pct)))
-		if not text_all.contains("%s: %s" % [Labels.sector(String(s)), words]):
-			_fail("no verdict chip '%s: %s'" % [Labels.sector(String(s)), words])
-
+		var chip = _node_with_meta("verdict_chip", String(s))
+		if chip == null or not _text_under(chip).contains(words):
+			_fail("no verdict chip '%s' on the %s door" % [words, s])
 	# Growth a year: a dot per sector at Economy.sector_trend_pct, the economy's line at the nation's trend.
 	var dots = _node_with_meta("overview", "growth")
 	if dots == null:
@@ -146,39 +146,29 @@ func _check_shape() -> void:
 		if absf(float(dots._reference) - float(ns.trend_annual_pct)) > 1e-6:
 			_fail("the economy's line sits at %.3f, the nation's trend is %.3f" % [float(dots._reference), float(ns.trend_annual_pct)])
 
-	# Three cards: output, the biggest employer by headcount, one Open, and the decision chip iff something waits.
+	# Three doors: output, the trend against the nation's, one Open, and the waiting chip iff something waits.
 	for s in sectors:
 		var card = _node_with_meta("sector_card", String(s))
 		if card == null:
-			_fail("no card for %s" % s)
+			_fail("no door for %s" % s)
 			continue
 		var text := _text_under(card)
 		var output := Num.f(float(ns.sector_output.get(s, 0.0)), 0)
 		if not text.contains(output):
-			_fail("%s card does not print its output %s bn: '%s'" % [s, output, text])
-		var jobs := 0.0
-		var firms: Array = Companies.firms_in_sector(_main._loader, ns.id, String(s))
-		for company in firms:
-			jobs += Companies.headcount(ns, company)
-		if not text.contains(CompanyVerb.thousands(jobs)):
-			_fail("%s card does not print its jobs %s: '%s'" % [s, CompanyVerb.thousands(jobs), text])
-		var biggest = null
-		for company in firms:
-			if biggest == null or Companies.headcount(ns, company) > Companies.headcount(ns, biggest):
-				biggest = company
-		var employers = _node_with_meta("employers", String(s))
-		if biggest != null and (employers == null or employers._rows.is_empty()
-				or String(employers._rows[0]["label"]) != String(biggest.company_name)):
-			_fail("%s card does not rank its biggest employer %s first" % [s, biggest.company_name])
-		if employers != null and employers._rows.size() != mini(firms.size(), 4):
-			_fail("%s card ranks %d employers, expected %d" % [s, employers._rows.size(), mini(firms.size(), 4)])
+			_fail("%s door does not print its output %s bn: '%s'" % [s, output, text])
+		var trend := "%s %% a year, nation %s" % [Num.fs(Economy.sector_trend_pct(_main._state, ns, String(s)), 1), Num.fs(float(ns.trend_annual_pct), 1)]
+		if not text.contains(trend):
+			_fail("%s door does not read '%s': '%s'" % [s, trend, text])
 		if _with_meta("open_tab", SectorNeeds.tab_of(String(s))) == null:
-			_fail("%s card has no Open button" % s)
+			_fail("%s door has no Open button" % s)
 		var waiting := int(counts.get(SectorNeeds.tab_of(String(s)), 0)) > 0
 		if (_node_with_meta("decision_chip", String(s)) != null) != waiting:
-			_fail("%s card's decision chip shown=%s, waiting=%s" % [s, not waiting, waiting])
+			_fail("%s door's waiting chip shown=%s, waiting=%s" % [s, not waiting, waiting])
 		if _main._state.history.size() >= 2 and _node_with_meta("sector_curve", String(s)) == null:
-			_fail("%s card has no output curve" % s)
+			_fail("%s door has no output curve" % s)
+		# The doors sit above the timeline and the charts (the page's first child).
+		if card.get_parent() != _panel._doors or _panel._page.get_child(0) != _panel._doors:
+			_fail("%s door is not in the strip on top of the page" % s)
 	if not _visible_buttons_with_meta("company_id").is_empty():
 		_fail("a firm's Act is on the overview without a route to it")
 
@@ -220,7 +210,7 @@ func _check_a_quiet_extreme() -> void:
 		_fail("every sector is ahead and the lead still names a slowest: '%s'" % _panel._title.text)
 	for s in EK.SECTOR_TREND.keys():
 		if _node_with_meta("sector_curve", String(s)) != null:
-			_fail("%s card draws a curve band with %d month of history" % [s, _main._state.history.size()])
+			_fail("%s door draws a curve band with %d month of history" % [s, _main._state.history.size()])
 	_main._state.player().trend_annual_pct = _saved_trend
 	_main._state.history = _saved_history
 
@@ -262,26 +252,6 @@ func _check_busy_world() -> void:
 		var n := int(counts_now.get(SectorNeeds.tab_of(String(s)), 0))
 		if (_node_with_meta("decision_chip", String(s)) != null) != (n > 0):
 			_fail("%s: %d decision(s), chip shown %s" % [s, n, n == 0])
-	var gone = _node_with_meta("employers", "services")
-	if gone != null and not gone._rows.is_empty():
-		_fail("failed firms are ranked among the biggest employers: %s" % [gone._rows])
-	var employers = _node_with_meta("employers", "industry")
-	if employers != null:
-		# QA T8: with no rows marked, the bars keep the series hue.
-		if not employers._rows.is_empty() and employers.bar_color(0) != ChartStyle.SERIES[0]:
-			_fail("the employers' bars lost the series hue: %s" % employers.bar_color(0))
-		# QA T9: the value column is measured on the text drawn, so each figure ends inside the chart.
-		var font: Font = employers.get_theme_default_font()
-		var fs: int = employers._font_size()
-		var rects: Array = employers.bar_rects()
-		for i in employers._rows.size():
-			var end: float = rects[i].end.x + employers.PAD + font.get_string_size(employers.value_text(i), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-			if end > employers.size.x - employers.PAD + 0.5:
-				_fail("employer figure %d ends at %.1f, past the chart's right pad at %.1f" % [i, end, employers.size.x - employers.PAD])
-		if not employers._rows.is_empty():
-			var v := float(employers._rows[0]["value"])
-			if employers.value_text(0) != CompanyVerb.thousands(v):
-				_fail("employer figure '%s', the jobs figure's format is '%s'" % [employers.value_text(0), CompanyVerb.thousands(v)])
 	var counts: Dictionary = SectorNeeds.counts(_main._state, _main._loader, ns)
 	var share = _node_with_meta("overview", "share")
 	var waiting := 0
@@ -298,15 +268,11 @@ func _check_busy_world() -> void:
 	# QA T2: a lagging sector's chip carries the warning glyph, so its reading does not rest on colour.
 	for s in sectors:
 		var verdict := String(SectorRead.head(_main._state, _main._loader, ns, String(s))["verdict"])
-		var words := "%s: %s" % [Labels.sector(String(s)), SectorRead.verdict_words(verdict)]
-		var chip: Control = null
-		for label in _panel.find_children("*", "Label", true, false):
-			if (label as Label).text == words and (label as Control).is_visible_in_tree():
-				chip = label.get_parent()
+		var chip = _node_with_meta("verdict_chip", String(s))
 		if chip == null:
-			_fail("no chip '%s'" % words)
-		elif (chip.find_children("*", "TextureRect", false, false).size() > 0) != (verdict in ["behind", "slower"]):
-			_fail("chip '%s' glyph shown %s, the sector lags %s" % [words, not (verdict in ["behind", "slower"]), verdict in ["behind", "slower"]])
+			_fail("no verdict chip on %s" % s)
+		elif (chip.find_children("*", "TextureRect", true, false).size() > 0) != (verdict in ["behind", "slower"]):
+			_fail("%s's verdict chip glyph shown %s, the sector lags %s" % [s, not (verdict in ["behind", "slower"]), verdict in ["behind", "slower"]])
 	var dots = _node_with_meta("overview", "growth")
 	if dots != null:
 		for r in dots.data():
@@ -325,21 +291,11 @@ func _route_to_a_firm() -> void:
 
 
 func _check_routed_firm_first() -> void:
-	var body: Control = _panel._body
-	var first_card := -1
-	var first_chart := -1
-	for i in body.get_child_count():
-		var child := body.get_child(i)
-		if child.is_queued_for_deletion():
-			continue
-		if first_chart < 0 and child.find_children("*", "ChartBars", true, false).size() + int(child is HBoxContainer and child.get_child_count() > 0 and child.get_child(0).find_children("*", "", true, false).any(func(n): return n.has_meta("overview"))) > 0:
-			first_chart = i
-		if first_card < 0 and not child.find_children("*", "Button", true, false).filter(func(b): return b.has_meta("company_id") and String(b.get_meta("company_id")) == _routed["id"]).is_empty():
-			first_card = i
-	if first_card < 0:
-		_fail("routed: the firm's card is not on the overview")
-	elif first_chart >= 0 and first_card > first_chart:
-		_fail("routed: the firm's card (child %d) lands under the charts (child %d)" % [first_card, first_chart])
+	# The routed firm's card opens in the side column, with the sheet for its row.
+	var side: Control = _panel._side
+	var found := side.find_children("*", "Button", true, false).filter(func(b): return b.has_meta("company_id") and String(b.get_meta("company_id")) == _routed["id"])
+	if found.is_empty():
+		_fail("routed: the firm's card is not in the side column")
 	if _node_with_meta("routed_heading", _routed["sector"]) == null:
 		_fail("routed: no heading over the firm's card")
 	# QA T1: the routed card's line says the sector's trend, then the nation's (pass 2 lead 8).

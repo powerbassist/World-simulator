@@ -82,74 +82,76 @@ const ANSWER := {
 }
 
 
-## The strip under `parent`, or null while nothing runs. `stop` is called with the
-## process id and the row's words when its Stop is pressed; `answer` with the
-## process id, the answer's id and the row's words when an ask is answered;
-## `closure` with the closure id, the answer's id and the card's words.
-static func build(parent: Control, state, loader, ns, stop: Callable, answer: Callable, closure: Callable) -> Control:
+## G3 S3: the strip is gone from the overview -- each running thing is a row of the
+## timeline (sectors_timeline.gd) and its decision is built by the side sheet
+## (sectors_decision.gd) through process_row(), ClosureCard.build() and rescue(). What
+## stays here as a list is last month's endings, under the timeline (endings()).
+
+## Last month's endings under `parent`, or null when none: a process closed (its outcome)
+## and a closure the player countered (ClosureCard.result).
+static func endings(parent: Control, state, loader, ns) -> Control:
 	var rows := Processes.rows(ns)
-	var closures := Closures.open(ns)
-	var rescues := Closures.rescues(ns)
 	# An open row says its own counter's outcome (_outcome): the closed lines are the rest.
 	var ended: Array = ProcessAsks.closed_last_month(state, ns).filter(func(line: Dictionary) -> bool:
 		return not rows.any(func(r: Dictionary) -> bool: return String(r["id"]) == String(line["id"])))
 	# A counter that came back is the re-ask's own row (ClosureCard.build): not a result.
 	var results: Array = Closures.closed_last_month(state, ns).filter(func(line: Dictionary) -> bool:
 		return String(line["outcome"]) != "back")
-	if rows.is_empty() and closures.is_empty() and rescues.is_empty() and ended.is_empty() and results.is_empty():
+	if ended.is_empty() and results.is_empty():
 		return null
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	parent.add_child(box)
-	PanelKit.heading(box, Strings.t("In progress"))
+	PanelKit.heading(box, Strings.t("Ended last month"))
 	for line in ended:
 		_ended(box, loader, ns, line)
 	for line in results:
 		ClosureCard.result(box, loader, ns, line)
-	for row in closures:
-		ClosureCard.build(box, state, loader, ns, row, closure)
-	for row in rescues:
-		_rescue(box, loader, ns, row)
-	for row in rows:
-		var verb := Strings.row_name("company-actions", _action(loader, String(row["action_id"])))
-		var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
-		var stage := String(row["stage"])
-		var months := int(row["months_left"])
-		PanelKit.plain_line(box, Strings.tn("%s, %s: %s, %d month left, then %s.", "%s, %s: %s, %d months left, then %s.", months) % [
-			verb, firm, Strings.t(String(STAGE.get(stage, stage))), months, Strings.t(String(NEXT.get(stage, "")))],  # i18n: row-ok stage words from the table above
-			PanelKit.Tone.PLAIN)
-		var what := "%s, %s" % [verb, firm]
-		var ask: Dictionary = row.get("ask", {})
-		_outcome(box, row)
-		if row.has("answer"):
-			PanelKit.plain_line(box, Strings.t("Answered: %s.") % _label(String(row["answer"])))
-		elif not ask.is_empty():
-			_ask(box, String(row["id"]), ask, what, answer)
-			continue
-		var price: Dictionary = Processes.stop_price(state, ns, loader, String(row["id"]))
-		if not bool(price.get("ok", false)):
-			# No Stop, and the row says why: a drawn ruling (the stage's last month, a
-			# referral the authority clears asks nothing) or a stage past stopping.
-			PanelKit.plain_line(box, Strings.t("The authority has reached its finding.") if stage == "investigation"
-				else Strings.t(String(price.get("reason", ""))))  # i18n: row-ok the sim's reason, its English the msgid
-			continue
-		var flow := PanelKit.buttons(box)
-		var button := PanelKit.sized(Button.new())
-		button.text = Strings.t("Stop")
-		button.set_meta("process_id", String(row["id"]))
-		var gain := -float(price["debt_eur_bn"])
-		var money := PanelKit.plain_line(flow, EffectsStrip.cost_text(gain), PanelKit.Tone.PLAIN)
-		money.autowrap_mode = TextServer.AUTOWRAP_OFF
-		money.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
-		button.set_meta("money_label", money)
-		var who := EffectsStrip.who_text(price.get("bloc_offset", {}))
-		if who != "":
-			var angers := PanelKit.plain_line(flow, who)
-			angers.autowrap_mode = TextServer.AUTOWRAP_OFF
-		button.pressed.connect(func() -> void: stop.call(String(row["id"]), what))
-		flow.add_child(button)
-		flow.move_child(button, 0)
 	return box
+
+
+## One running process under `box`: its line, its counter's outcome, then its ask's answers,
+## or its Stop with what stopping costs, or why it cannot be stopped. `stop` is called with the
+## process id and the row's words; `answer` with the process id, the answer's id and the words.
+static func process_row(box: Control, state, loader, ns, row: Dictionary, stop: Callable, answer: Callable) -> void:
+	var verb := Strings.row_name("company-actions", _action(loader, String(row["action_id"])))
+	var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
+	var stage := String(row["stage"])
+	var months := int(row["months_left"])
+	PanelKit.plain_line(box, Strings.tn("%s, %s: %s, %d month left, then %s.", "%s, %s: %s, %d months left, then %s.", months) % [
+		verb, firm, Strings.t(String(STAGE.get(stage, stage))), months, Strings.t(String(NEXT.get(stage, "")))],  # i18n: row-ok stage words from the table above
+		PanelKit.Tone.PLAIN)
+	var what := "%s, %s" % [verb, firm]
+	var ask: Dictionary = row.get("ask", {})
+	_outcome(box, row)
+	if row.has("answer"):
+		PanelKit.plain_line(box, Strings.t("Answered: %s.") % _label(String(row["answer"])))
+	elif not ask.is_empty():
+		_ask(box, String(row["id"]), ask, what, answer)
+		return
+	var price: Dictionary = Processes.stop_price(state, ns, loader, String(row["id"]))
+	if not bool(price.get("ok", false)):
+		# No Stop, and the row says why: a drawn ruling (the stage's last month, a
+		# referral the authority clears asks nothing) or a stage past stopping.
+		PanelKit.plain_line(box, Strings.t("The authority has reached its finding.") if stage == "investigation"
+			else Strings.t(String(price.get("reason", ""))))  # i18n: row-ok the sim's reason, its English the msgid
+		return
+	var flow := PanelKit.buttons(box)
+	var button := PanelKit.sized(Button.new())
+	button.text = Strings.t("Stop")
+	button.set_meta("process_id", String(row["id"]))
+	var gain := -float(price["debt_eur_bn"])
+	var money := PanelKit.plain_line(flow, EffectsStrip.cost_text(gain), PanelKit.Tone.PLAIN)
+	money.autowrap_mode = TextServer.AUTOWRAP_OFF
+	money.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
+	button.set_meta("money_label", money)
+	var who := EffectsStrip.who_text(price.get("bloc_offset", {}))
+	if who != "":
+		var angers := PanelKit.plain_line(flow, who)
+		angers.autowrap_mode = TextServer.AUTOWRAP_OFF
+	button.pressed.connect(func() -> void: stop.call(String(row["id"]), what))
+	flow.add_child(button)
+	flow.move_child(button, 0)
 
 
 ## The question, each answer a row (its button, the money it books, the blocs it
@@ -229,7 +231,7 @@ static func _outcome(box: Control, row: Dictionary) -> void:
 
 ## A plant rescue running (#277, the parent's call: a running rescue must be seen):
 ## the plant, the jobs it keeps, what it costs a year and the months left.
-static func _rescue(box: Control, loader, ns, row: Dictionary) -> void:
+static func rescue(box: Control, loader, ns, row: Dictionary) -> void:
 	var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
 	var city = Region.find_city(loader.regions.get(ns.id, []), String(row["city_id"]))
 	var place: String = String(city.city_name) if city != null else firm

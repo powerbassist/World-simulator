@@ -28,6 +28,12 @@ extends PanelContainer
 ## keeps what the player has opened, the commands, and the rows that are not a
 ## sector's: the bid, the failing firms, the public account.
 ##
+## G3 S3 (the author's "C La frise") RE-LAID THE PAGE: a strip of three sector doors on top,
+## then what runs and when it lands as dated rows on one time scale (sectors_timeline.gd), the
+## picked row's sheet beside the list where its decision is answered (sectors_decision.gd), and
+## the economy's shape under the timeline. The cards' three levels of indent are gone from the
+## page; a Needs you route still opens the firm's card in the side column.
+##
 ## It also stops returning early on an empty firm register. A nation with no
 ## data/companies/<ID>.json still has three sectors and can still invest in them --
 ## the register is what may be absent, not the economy.
@@ -42,7 +48,6 @@ signal tab_requested(window_id: String)
 
 const Companies = preload("res://src/sim/companies.gd")
 const Investment = preload("res://src/sim/investment.gd")
-const Industry = preload("res://src/sim/industry.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
@@ -50,6 +55,8 @@ const Num = preload("res://src/ui/num.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const IndustryCard = preload("res://src/ui/industry_card.gd")
 const IndustryProgress = preload("res://src/ui/industry_progress.gd")
+const SectorsTimeline = preload("res://src/ui/sectors_timeline.gd")
+const SectorsDecision = preload("res://src/ui/sectors_decision.gd")
 const FirmCommands = preload("res://src/ui/firm_commands.gd")
 const SectorsOverview = preload("res://src/ui/sectors_overview.gd")
 const Labels = preload("res://src/ui/labels.gd")
@@ -59,7 +66,11 @@ var _state
 var _loader
 var _dirty := true
 
+## The economy's lead sentence, over the share bars (SectorsOverview.charts).
 var _title: Label
+## The page under the scroll: the doors, then the two columns.
+var _page: VBoxContainer
+## The left column: the timeline, the economy's shape, the public account.
 var _body: VBoxContainer
 ## Kept rather than left local, and the reason is the screenshot pass. This panel's
 ## content is guaranteed to overflow -- three sectors, their programmes and up to six
@@ -93,8 +104,11 @@ var _open_body := ""
 var _open_ledger := ""
 var _focus_verb := ""
 var _refocus := []
-## The In progress strip, or null while nothing runs (read by the tests).
-var _progress: Control
+## The timeline row the side sheet shows, by its key ("" lets _choose pick).
+var _pick := ""
+## The doors strip and the side column (read by the tests).
+var _doors: Control
+var _side: VBoxContainer
 
 
 func _ready() -> void:
@@ -109,29 +123,35 @@ func _ready() -> void:
 	root.add_theme_constant_override("separation", 10)
 	margin.add_child(root)
 
-	_title = Label.new()
-	_title.theme_type_variation = UiTheme.LEAD
-	root.add_child(_title)
-
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(_scroll)
 
-	# The body sits inside a right margin rather than flush to the scroll, because a
+	# The page sits inside a right margin rather than flush to the scroll, because a
 	# ScrollContainer draws its bar OVER the content: without this the right-aligned
-	# figures in PanelKit.row() run underneath it, which is what the first captured frame
-	# showed for all three ledger values. A vertical bar is ~10px, and this panel is
-	# the one surface in the game whose content is guaranteed to overflow.
+	# figures run underneath it. A vertical bar is ~10px.
 	var gutter := MarginContainer.new()
 	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gutter.add_theme_constant_override("margin_right", 14)
 	_scroll.add_child(gutter)
 
+	_page = VBoxContainer.new()
+	_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_page.add_theme_constant_override("separation", 12)
+	gutter.add_child(_page)
+
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 12)
+	_page.add_child(columns)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_theme_constant_override("separation", 6)
-	gutter.add_child(_body)
+	_body.add_theme_constant_override("separation", 12)
+	columns.add_child(_body)
+	_side = VBoxContainer.new()
+	_side.custom_minimum_size.x = roundf(SectorsDecision.WIDTH * UiTheme.text_scale())
+	_side.add_theme_constant_override("separation", 12)
+	columns.add_child(_side)
 
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
@@ -151,6 +171,7 @@ func setup(state, loader) -> void:
 	_open_ledger = ""
 	_focus_verb = ""
 	_refocus = []
+	_pick = ""
 
 
 ## Pins the scroll to the bottom, for tools/screenshot.gd. A panel whose body always
@@ -194,92 +215,61 @@ func _refresh() -> void:
 		return
 	_primary = null
 
-	for child in _body.get_children():
+	for child in _body.get_children() + _side.get_children():
+		child.get_parent().remove_child(child)
 		child.queue_free()
+	if _doors != null:
+		_doors.get_parent().remove_child(_doors)
+		_doors.queue_free()
+	var tab := func(id: String) -> void: tab_requested.emit(id)
+	_doors = SectorsOverview.doors(_page, _state, _loader, ns, tab)
+	_page.move_child(_doors, 0)
 
 	if ns.companies.is_empty():
 		# Reachable: a nation with no data/companies/<ID>.json has unpartitioned
 		# sectors, which is a supported state rather than a hole. Said plainly, so
 		# the player of a nation whose register has not been authored yet sees a
-		# reason rather than an empty window.
-		#
-		# V1.6e turned this from a RETURN into a note. The sector programmes below do
-		# not read the firm register at all, so returning here would have hidden a
-		# working lever behind a missing content file.
+		# reason rather than an empty window. The programmes do not read the register.
 		PanelKit.heading(_body, tr("No register"))
 		PanelKit.line(_body, tr("No firms are named for this nation. Its sectors are modelled in aggregate."))
 
 	if _last_refusal != "":
 		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
-	# A Needs you row's route (sectors_shell.open_firm) lands on its firm's verbs, first; named "waiting" only while
-	# a question of the sector's still stands.
+	var rows := SectorsTimeline.rows(_state, _loader, ns)
+	var picked := _choose(rows)
+	SectorsTimeline.build(_body, _state, rows, String(picked.get("key", "")), _on_pick)
+	IndustryProgress.endings(_body, _state, _loader, ns)
+	_title = SectorsOverview.charts(_body, _state, _loader, ns, tab)
+	_build_ledger(ns)
+	SectorsDecision.build(self, _side, picked)
+	# A Needs you row's route (sectors_shell.open_firm) also opens its firm's card, under the
+	# sheet; named "waiting" only while a question of the sector's still stands.
 	if _open_sector != "":
 		if SectorNeeds.items(_state, _loader, ns).any(func(i) -> bool: return String(i["sector"]) == _open_sector):
-			PanelKit.heading(_body, tr("Waiting on you in %s") % Labels.sector(_open_sector)).set_meta("routed_heading", _open_sector)
-		IndustryCard.build(self, _body, ns, _open_sector)
-	# V5.3 a + b step 2 (spec 3.2): what is under way first, then what waits on the
-	# player, then the three sector cards, closed until opened; the public account
-	# last, folded.
-	_progress = IndustryProgress.build(_body, _state, _loader, ns, _on_stop, _on_answer, _on_closure)
-	_build_autonomy_sections(ns)
-	# The rework pass's C: the economy's shape, the verbs one Open away on each sector's tab.
-	_title.text = SectorsOverview.build(_body, _state, _loader, ns, func(id: String) -> void: tab_requested.emit(id))
-	_build_ledger(ns)
+			PanelKit.heading(_side, tr("Waiting on you in %s") % Labels.sector(_open_sector)).set_meta("routed_heading", _open_sector)
+		IndustryCard.build(self, _side, ns, _open_sector)
 	_restore_focus()
 
 	if _pin_bottom:
 		_apply_bottom()
 
 
-## V4.7b: the autonomy machine's two answerable states, each with the verb
-## row on it. A pending bid offers block/allow; a failing major offers the
-## rescue (its restore arm answers the window). Both vanish when answered or
-## lapsed -- the sections are the state's own material, not a feed.
-func _build_autonomy_sections(ns) -> void:
-	var bid: Dictionary = Industry.pending_bid(_state, ns, _loader)
-	if not bid.is_empty():
-		PanelKit.heading(_body, tr("Foreign takeover bid"))
-		var firm_name: String = _loader.firm_name(ns.id, String(bid["company_id"]))
-		# EUR bn, its own format -- pop_text is the POPULATION formatter and
-		# rendered a 50 bn offer as "0 k" (the B3 review's Important). The
-		# bidder resolves through the loader like every other surface -- the
-		# raw three-letter id read as a country's name on the shipped frame
-		# (the pass-4 fleet's find).
-		PanelKit.line(_body, tr("%s offers %s bn for %s -- %d months left.") % [
-			_loader.nation_name(String(bid["bidder_nation"])), Num.f(float(bid["price_eur_bn"]), 1),
-			firm_name, int(bid["months_left"])])
-		var row := PanelKit.buttons(_body)
-		# The same gate the failing row answers to: available() is the door
-		# execute() refuses through. A bid standing on a FAILED firm once
-		# rendered dead Block/Allow buttons beside the rescue row (the
-		# pass-4 fleet's merged find); the machine now clears a bid at the
-		# failure commit, and this gate is the defence in depth -- if a bid
-		# and a failure ever coexist again, the buttons go with the door.
-		var bid_actions: Array = Companies.available(_state, ns, _loader.company_actions, String(bid["company_id"]), _loader)
-		for action_id in ["block_takeover", "allow_takeover"]:
-			var action = _action_by_id(action_id)
-			if action != null and bid_actions.has(action):
-				row.add_child(_action_button(ns, _firm_object(ns.id, String(bid["company_id"])), action))
-	var failing: Array = Industry.failing(_state, ns, _loader)
-	if not failing.is_empty():
-		PanelKit.heading(_body, tr("Failing firms"))
-		for failure in failing:
-			var company_id := String(failure["company_id"])
-			PanelKit.line(_body, tr("%s -- rescue window: %d months left.") % [
-				_loader.firm_name(ns.id, company_id), int(failure["months_left"])])
-			var action = _action_by_id("strategic_rescue")
-			if action == null:
-				continue
-			# NO availability gate here, deliberately, and this is not the
-			# oversight it looks like beside the bid row above: available()'s
-			# failed gate offers strategic_rescue UNCONDITIONALLY on a firm
-			# inside its window (the pass-2 zombie fix), so every firm this
-			# loop lists has the verb -- an earlier draft gated and noted a
-			# subsidised-firm refusal that the same fix made unreachable
-			# (the failure commit clears the subsidy; the pass-4 fleet found
-			# the note dead). If a future gate ever refuses here again, gate
-			# AND note come back together.
-			PanelKit.buttons(_body).add_child(_action_button(ns, _firm_object(ns.id, company_id), action))
+## The row the side sheet shows: the player's pick while it still runs, else the routed
+## firm's row, else the first that waits, else the first; {} when nothing runs.
+func _choose(rows: Array) -> Dictionary:
+	for want in [func(r) -> bool: return String(r["key"]) == _pick,
+			func(r) -> bool: return _open_firm != "" and String(r["company_id"]) == _open_firm,
+			func(r) -> bool: return bool(r["waits"]), func(_r) -> bool: return true]:
+		for r in rows:
+			if want.call(r):
+				return r
+	return {}
+
+
+func _on_pick(key: String) -> void:
+	_pick = key
+	_refocus = ["timeline_pick", key]
+	_dirty = true
 
 
 func _action_by_id(id: String):
@@ -410,8 +400,8 @@ func _on_closure(closure_id: String, answer_id: String, what: String) -> void:
 func primary_action() -> Control:
 	if is_instance_valid(_primary):
 		return _primary
-	# The rework pass's C: the first sector card's Open is the way in.
-	for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
+	# G3 S3: a door's Open is the way in.
+	for button in _page.find_children("*", "Button", true, false):  # i18n: ok a class name
 		if button.has_meta("open_tab"):
 			return button
 	return null

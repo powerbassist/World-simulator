@@ -25,6 +25,7 @@ const ClosureCard = preload("res://src/ui/closure_card.gd")
 const IndustryVerbs = preload("res://src/ui/industry_verbs.gd")
 const BillButton = preload("res://src/ui/bill_button.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
+const SectorsDecision = preload("res://src/ui/sectors_decision.gd")
 
 const FACE := Vector2(56, 72)
 
@@ -48,12 +49,13 @@ static func build(panel, parent: Control, ns, company) -> void:
 	var name := PanelKit.plain_line(words, company.company_name, PanelKit.Tone.PLAIN)
 	name.theme_type_variation = UiTheme.LEAD
 
+	# G3 S3: the figures on tiles (the kit's firm sheet).
 	var figures := HBoxContainer.new()
-	figures.add_theme_constant_override("separation", 28)
+	figures.add_theme_constant_override("separation", 8)
 	parent.add_child(figures)
-	PanelKit.figure(figures, CompanyVerb.thousands(Companies.headcount(ns, company)), Strings.t("Jobs"))
-	PanelKit.figure(figures, Strings.t("%s bn") % Num.f(Companies.value_eur_bn(ns, company), 1), Strings.t("Worth"))
-	PanelKit.figure(figures, Strings.t("%s %%") % Num.f(100.0 * Companies.state_share_of(ns, company.id), 0), Strings.t("State"))
+	SectorsDecision.tile(figures, CompanyVerb.thousands(Companies.headcount(ns, company)), Strings.t("Jobs"))
+	SectorsDecision.tile(figures, Strings.t("%s bn") % Num.f(Companies.value_eur_bn(ns, company), 1), Strings.t("Worth"))
+	SectorsDecision.tile(figures, Strings.t("%s %%") % Num.f(100.0 * Companies.state_share_of(ns, company.id), 0), Strings.t("State"))
 
 	if String(panel._last_refusal) != "":
 		ResultTone.tint(PanelKit.line(parent, panel._last_refusal), ResultTone.BLOCKED)
