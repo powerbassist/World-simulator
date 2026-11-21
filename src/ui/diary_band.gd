@@ -111,8 +111,9 @@ static func draw(cell: Control, box: StyleBoxFlat, gap: float) -> void:
 	var y := TOP * s
 	var h := HEIGHT * s
 	var r := h / 2.0
-	var x0: float = 4.0 if cell.band_left == CAP else (-gap / 2.0 if cell.band_left == JOIN else 0.0)
-	var x1: float = cell.size.x - (4.0 if cell.band_right == CAP else (-gap / 2.0 if cell.band_right == JOIN else 0.0))
+	var ends := _ends(cell, gap)
+	var x0 := ends.x
+	var x1 := ends.y
 	box.bg_color = UiTheme.CONTROL_HOVER if cell.band_hot else UiTheme.BAND
 	box.border_width_left = 0
 	box.border_width_right = 0
@@ -142,18 +143,40 @@ static func draw(cell: Control, box: StyleBoxFlat, gap: float) -> void:
 		cell.draw_string(bold if bold != null else font, Vector2(pill.position.x + 8.0 * s, mid + font.get_ascent(fs) / 2.0 - 1.0),
 			cell.band_name, HORIZONTAL_ALIGNMENT_LEFT, pill.size.x - 12.0 * s, fs, UiTheme.TEXT)
 		return
-	# A travel day: the rail, after the leg's plane and name where a leg begins.
-	# A joined end runs the rail to the capsule's edge, so the rail is one line across the gap.
-	var rail_from := x0 + (0.0 if cell.band_left == JOIN else (14.0 if cell.band_left == CHEVRON_END else 6.0) * s)
+	# A travel day: the leg's plane and name where a leg begins, then the rail.
 	if cell.band_leg != "":
-		_plane(cell, Vector2(rail_from + 5.0 * s, mid), s)
-		var at := rail_from + 14.0 * s
-		cell.draw_string(font, Vector2(at, mid + font.get_ascent(fs) / 2.0 - 1.0), cell.band_leg,
-			HORIZONTAL_ALIGNMENT_LEFT, maxf(x1 - at - 4.0, 1.0), fs, UiTheme.TEXT)
-		rail_from = at + font.get_string_size(cell.band_leg, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 6.0 * s
-	var rail_to := x1 - (0.0 if cell.band_right == JOIN else (14.0 if cell.band_right == CHEVRON_END else 6.0) * s)
-	if rail_to > rail_from:
-		cell.draw_line(Vector2(rail_from, mid), Vector2(rail_to, mid), UiTheme.BAND_RAIL, 2.0)
+		var lead := x0 + _inset(cell.band_left, s)
+		_plane(cell, Vector2(lead + 5.0 * s, mid), s)
+		cell.draw_string(font, Vector2(lead + 14.0 * s, mid + font.get_ascent(fs) / 2.0 - 1.0), cell.band_leg,
+			HORIZONTAL_ALIGNMENT_LEFT, maxf(x1 - lead - 18.0 * s, 1.0), fs, UiTheme.TEXT)
+	var span := rail(cell, gap)
+	if span != Vector2.ZERO:
+		cell.draw_line(Vector2(span.x, mid), Vector2(span.y, mid), UiTheme.BAND_RAIL, 2.0)
+
+
+## The rail's run across a travel day, Vector2(from, to) in the cell's x, after the leg's plane and
+## name; ZERO where nothing is left to draw (a leg's name filling the day). A joined end runs it to
+## the capsule's edge, so the rail is one line across the grid's gap.
+static func rail(cell: Control, gap: float) -> Vector2:
+	var s := UiTheme.text_scale()
+	var ends := _ends(cell, gap)
+	var rail_from: float = ends.x + _inset(cell.band_left, s)
+	if cell.band_leg != "":
+		var fs := roundi(UiTheme.SIZE_SMALL * s)
+		rail_from += 14.0 * s + cell.get_theme_default_font().get_string_size(cell.band_leg, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 6.0 * s
+	var rail_to: float = ends.y - _inset(cell.band_right, s)
+	return Vector2(rail_from, rail_to) if rail_to > rail_from else Vector2.ZERO
+
+
+## The capsule's x span in the cell: in from a round end, out by half the gap at a joined one.
+static func _ends(cell: Control, gap: float) -> Vector2:
+	var x0: float = 4.0 if cell.band_left == CAP else (-gap / 2.0 if cell.band_left == JOIN else 0.0)
+	var x1: float = cell.size.x - (4.0 if cell.band_right == CAP else (-gap / 2.0 if cell.band_right == JOIN else 0.0))
+	return Vector2(x0, x1)
+
+
+static func _inset(end: String, s: float) -> float:
+	return 0.0 if end == JOIN else (14.0 if end == CHEVRON_END else 6.0) * s
 
 
 static func _chevron(cell: Control, at: Vector2, s: float) -> void:

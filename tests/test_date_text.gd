@@ -18,6 +18,11 @@ func _init() -> void:
 	Strings.set_language("en")
 	if DateText.day_month_year(1, 1, 2026) != "01 JAN 2026":
 		_fail("an English date should read 01 JAN 2026, got %s" % DateText.day_month_year(1, 1, 2026))
+	# G3's forms (g3-spec.md decision 4): "3 Mar" short, "March 2026" for a month's title.
+	if DateText.day_mon(3, 3) != "3 Mar" or DateText.day_mon(1, 1) != "1 Jan" or DateText.day_mon(31, 12) != "31 Dec":
+		_fail("day_mon: %s, %s, %s" % [DateText.day_mon(3, 3), DateText.day_mon(1, 1), DateText.day_mon(31, 12)])
+	if DateText.month_long_year(3, 2026) != "March 2026":
+		_fail("month_long_year: %s" % DateText.month_long_year(3, 2026))
 	if DateText.month_year(5, 2027) != "MAY 2027" or DateText.day_month(3, 12) != "03 DEC":
 		_fail("month_year / day_month in English: %s, %s" % [DateText.month_year(5, 2027), DateText.day_month(3, 12)])
 	if DateText.month_long(1) != "January" or DateText.month_long(12) != "December":

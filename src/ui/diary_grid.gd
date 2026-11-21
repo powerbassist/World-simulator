@@ -331,8 +331,7 @@ func _mark_fresh(target: Dictionary, had: Array) -> void:
 
 
 func _audience_key(e: Dictionary, person_id: String) -> String:
-	var hers := String(e.get("kind", "")) == K.KIND_AUDIENCE and String(e.get("target_id", "")) == person_id
-	return "%d-%d-%d" % [int(e["year"]), int(e["month"]), int(e["day"])] if hers else ""
+	return "%d-%d-%d" % [int(e["year"]), int(e["month"]), int(e["day"])] if String(e.get("kind", "")) == K.KIND_AUDIENCE and String(e.get("target_id", "")) == person_id else ""
 
 
 func _stamp() -> int:
@@ -343,11 +342,14 @@ func _stamp() -> int:
 ## refresh, a day turning) builds a new cell, which picks the drain up where it stands.
 func _play_fresh() -> void:
 	_fresh["drain"] = 0.0
+	var mark := _fresh
 	Motion.run(self, Motion.DRAIN_S, func(t: float) -> void:
+		# The day turned or another booking came mid-drain: this mark is gone (QA's mutant run).
+		if not is_same(mark, _fresh):
+			return
 		_fresh["drain"] = t
 		var cell := _days.get_node_or_null("Day_%d" % int(_fresh["day"])) if int(_fresh["at"]) == _month_abs else null
-		if cell != null:
-			cell.set_drain(t))
+		if cell != null: cell.set_drain(t))
 
 
 ## A day out of the shown month: dated ("23 Feb" on the grid's first tile and a month's 1st), inert.

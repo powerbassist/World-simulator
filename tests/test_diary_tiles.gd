@@ -28,6 +28,7 @@ const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const DiaryDay = preload("res://src/ui/diary_day.gd")
 const DiaryPeople = preload("res://src/ui/diary_people.gd")
+const Band = preload("res://src/ui/diary_band.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -58,6 +59,8 @@ func _process(_delta: float) -> bool:
 				_finish()
 				return true
 			_check_whole_weeks()
+			_check_november()
+			_check_tile_rules()
 			_check_trip()
 			_check_places()
 		8:
@@ -97,6 +100,59 @@ func _stage() -> void:
 		if bool(d["free"]) and int(d["year"]) * 12 + int(d["month"]) > now:
 			_offered = d
 			break
+
+
+## QA on #437: November's trailing days are December's, not January's.
+func _check_november() -> void:
+	var y := int(_main._state.year)
+	_grid.show_month(y, 11)
+	if _grid.page() < 0 or _grid._shown() != Vector2i(y, 11):
+		return  # out of the horizon from this start: nothing to read
+	var outs: Array = _grid._days.get_children().filter(func(c) -> bool: return bool(c.get("outside")) and int(c.day) < 15)
+	if not outs.is_empty() and not String(outs[0].name).begins_with("Out_12_"):
+		_fail("November's trailing day is '%s', not December's" % outs[0].name)
+
+
+## QA on #437: a pointer on an out-of-month tile lights nothing; a place costs a line above it.
+func _check_tile_rules() -> void:
+	for c in _grid._days.get_children():
+		if bool(c.get("outside")):
+			c.mouse_entered.emit()
+			if bool(c._hover):
+				_fail("an out-of-month tile lights under the pointer")
+			c.mouse_exited.emit()
+			break
+	var cell := DiaryDay.new()
+	cell.day = 9
+	cell.offer = "See Somebody"
+	cell.entries = [{"text": "a", "mark": "fixed"}, {"text": "b", "mark": "fixed"}, {"text": "c", "mark": "fixed"}]
+	root.add_child(cell)
+	cell.fill()
+	if cell._lines.get_child_count() > DiaryDay.MAX_LINES - 1:
+		_fail("a tile with a place shows %d lines above it, past %d" % [cell._lines.get_child_count(), DiaryDay.MAX_LINES - 1])
+	# QA's visual TAKE: a place's words that outgrow it are cut with an ellipsis, never mid-letter.
+	var font := cell.get_theme_default_font()
+	var fitted := DiaryDay.fit("See Vasseur-Montgolfier", font, 13, 60.0)
+	if not fitted.ends_with("…") or font.get_string_size(fitted, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x > 60.0:
+		_fail("a long place reads '%s': not cut to its width with an ellipsis" % fitted)
+	if DiaryDay.fit("See Roy", font, 13, 200.0) != "See Roy":
+		_fail("a place that fits was cut")
+	cell.queue_free()
+	# Pass 2 TAKE 2: a fresh card's words take the fill's ink -- dark on a light accent.
+	var kept := UiTheme._accent
+	UiTheme._accent = Color("#E8D000")
+	var card := DiaryDay.Appointment.new()
+	card.fresh = true
+	var words := Label.new()
+	card.add_child(words)
+	root.add_child(card)
+	card.ink(0.0)
+	if UiTheme.on_accent_fill().is_equal_approx(Color.WHITE):
+		_fail("premise: a yellow accent's fill takes white ink")
+	elif not words.self_modulate.is_equal_approx(UiTheme.on_accent_fill()):
+		_fail("a fresh card on a yellow fill writes %s, not the fill's ink %s" % [words.self_modulate, UiTheme.on_accent_fill()])
+	UiTheme._accent = kept
+	card.queue_free()
 
 
 func _check_whole_weeks() -> void:
@@ -151,6 +207,24 @@ func _check_trip() -> void:
 			_fail("day %d names a leg: '%s'" % [d, _cell(d).band_leg])
 	if not bool(_cell(14).band_meeting) or bool(_cell(13).band_meeting):
 		_fail("the meeting pill is not on the meeting day alone")
+	# QA on #437 (Hugo's mutants): the pill names the trip mid-row; only the meeting day takes the
+	# pick's outline; a travel day mid-trip draws its rail; the capsule reaches the grid's own gap.
+	if String(_cell(14).band_name) != host:
+		_fail("the meeting pill reads '%s', not the host '%s'" % [_cell(14).band_name, host])
+	var span: Vector2 = Band.rail(_cell(13), float(_cell(13).band_gap()))
+	if span.y <= span.x:
+		_fail("a travel day mid-trip draws no rail: %s" % span)
+	_grid._days.add_theme_constant_override("h_separation", 20)
+	if not is_equal_approx(float(_cell(13).band_gap()), 20.0):
+		_fail("the capsule's reach does not follow the grid's gap: %.1f" % float(_cell(13).band_gap()))
+	_grid._days.add_theme_constant_override("h_separation", int(DiaryDay.GAP * UiTheme.text_scale()))
+	_grid._pick(13)
+	if bool(_cell(13).band_picked):
+		_fail("a travel day picked took the meeting's outline")
+	_grid._pick(14)
+	if not bool(_cell(14).band_picked):
+		_fail("the meeting day picked has no outline")
+	_grid._selected = 0
 	# The pointer on one day of the trip lights the whole trip, and nothing else.
 	_cell(13).mouse_entered.emit()
 	for d in range(12, 17):
@@ -162,6 +236,24 @@ func _check_trip() -> void:
 	if bool(_cell(14).band_hot):
 		_fail("the trip stayed lit after the pointer left")
 	state.appointments.erase(visit)
+	# QA on #437: a run that opens on its meeting (the way out last month) names no way out there.
+	var first_meet := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), 1, "state_visit", "DEU", "", "", "", "", 2)
+	state.appointments.append(first_meet)
+	_main._calendar_panel._refresh()
+	_grid.show_month(int(at["year"]), int(at["month"]))
+	if bool(_cell(1).band) and (String(_cell(1).band_leg) != "" or String(_cell(2).band_leg) != tr("back")):
+		_fail("a run opening on its meeting reads '%s' / '%s', not '' / 'back'" % [_cell(1).band_leg, _cell(2).band_leg])
+	state.appointments.erase(first_meet)
+	# A Saturday inside a trip joins Sunday: no chevron before the week ends.
+	var sat := _day_at_col(5, 3, last_day(at) - 2)
+	var satv := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), sat, "state_visit", "DEU", "", "", "", "", 2)
+	state.appointments.append(satv)
+	_main._calendar_panel._refresh()
+	_grid.show_month(int(at["year"]), int(at["month"]))
+	if String(_cell(sat).band_right) != "join":
+		_fail("Saturday %d inside a trip ends '%s', not joined to Sunday" % [sat, _cell(sat).band_right])
+	state.appointments.erase(satv)
+	_main._calendar_panel._refresh()
 	# Pass 2 TAKE 1: a trip that starts on a Monday starts round, one that ends on a Sunday ends round.
 	var mon := _day_at_col(0, 1, last_day(at) - 4)
 	var mv := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), mon + 2, "state_visit", "DEU", "", "", "", "", 2)
@@ -309,6 +401,15 @@ func _check_fresh() -> void:
 	for e in extra:
 		state.appointments.erase(e)
 	_main._calendar_panel._refresh()
+	# QA on #437 (T6): the fresh mark is stamped with the whole date: the same day number a month
+	# on is not "the same day".
+	var stamp_kept := int(state.month)
+	state.month = stamp_kept % 12 + 1
+	_grid._render()
+	if not _grid._fresh.is_empty():
+		_fail("a month on, on the same day number, the booking is still fresh")
+	state.month = stamp_kept
+	_grid._render()
 	# Pass 2 TAKE 2: no white on the accent fill (Germany's yellow fails it); the fill's own ink.
 	for path in ["res://src/ui/diary_day.gd", "res://src/ui/diary_band.gd"]:
 		if FileAccess.get_file_as_string(path).contains("Color.WHITE"):
@@ -325,6 +426,9 @@ func _check_summons_fresh() -> void:
 			continue
 		for d in Audiences.summon_days(state, pid):
 			if bool(d["free"]):
+				# QA on #437 (T5): an older audience with the same person is not the one just booked.
+				var older := Calendar.make_entry(K.KIND_AUDIENCE, int(d["year"]), int(d["month"]), 1 if int(d["day"]) != 1 else 2, "", pid)
+				state.appointments.push_front(older)
 				_grid.arm({"id": "", "person_id": pid, "person": _main._loader.person_name(pid), "summons": true})
 				_grid.show_month(int(d["year"]), int(d["month"]))
 				_grid._on_day(int(d["day"]))
@@ -333,6 +437,9 @@ func _check_summons_fresh() -> void:
 				var cell = _cell(int(d["day"]))
 				if cell == null or not bool(cell.fresh):
 					_fail("the summons just booked is not fresh on its day")
+				if int(_grid._fresh.get("day", -1)) != int(d["day"]):
+					_fail("the fresh mark sits on day %d, an older audience, not the one booked (%d)" % [int(_grid._fresh.get("day", -1)), int(d["day"])])
+				state.appointments.erase(older)
 				return
 	_fail("premise: nobody could be summoned")
 

@@ -269,11 +269,16 @@ func _draw() -> void:
 		_box.border_color = accent
 	draw_style_box(_box, r)
 	if band:
-		# The grid's own gap, read live: its separation and this reach agree after a text-size change.
-		Band.draw(self, _box, float(get_parent().get_theme_constant("h_separation")) if get_parent() is GridContainer else GAP * s)
+		Band.draw(self, _box, band_gap())
 	_draw_date(s, accent)
 	if offer != "" or taken != "":
 		_draw_place(s, accent)
+
+
+## The grid's own gap, read live: its separation and the capsule's reach agree after a
+## text-size change (pass 2 TAKE 9).
+func band_gap() -> float:
+	return float(get_parent().get_theme_constant("h_separation")) if get_parent() is GridContainer else GAP * UiTheme.text_scale()
 
 
 func _draw_date(s: float, accent: Color) -> void:
@@ -307,7 +312,7 @@ func _draw_place(s: float, accent: Color) -> void:
 		_box.set_border_width_all(1)
 		_box.border_color = UiTheme.LINE_STRONG
 		draw_style_box(_box, place)
-		draw_string(font, Vector2(place.position.x + 6.0 * s, mid), taken, HORIZONTAL_ALIGNMENT_LEFT, place.size.x - 10.0 * s, roundi(UiTheme.SIZE_MICRO * s), UiTheme.WARN)
+		draw_string(font, Vector2(place.position.x + 6.0 * s, mid), fit(taken, font, roundi(UiTheme.SIZE_MICRO * s), place.size.x - 10.0 * s), HORIZONTAL_ALIGNMENT_LEFT, -1, roundi(UiTheme.SIZE_MICRO * s), UiTheme.WARN)
 		return
 	if _hover:
 		_box.set_corner_radius_all(UiTheme.R_SMALL)
@@ -316,8 +321,19 @@ func _draw_place(s: float, accent: Color) -> void:
 		draw_style_box(_box, place)
 	else:
 		_dashed(place, accent, 1.5)
-	draw_string(font, Vector2(place.position.x + 8.0 * s, mid), offer, HORIZONTAL_ALIGNMENT_LEFT, place.size.x - 12.0 * s, fs,
+	draw_string(font, Vector2(place.position.x + 8.0 * s, mid), fit(offer, font, fs, place.size.x - 12.0 * s), HORIZONTAL_ALIGNMENT_LEFT, -1, fs,
 		UiTheme.on_accent_fill() if _hover else accent)
+
+
+## `text` as it fits `width`: whole, or cut with an ellipsis -- draw_string's own width clips
+## mid-letter ("See Vasse" at 115 %, QA's TAKE on #437), which reads as a different name.
+static func fit(text: String, font: Font, fs: int, width: float) -> String:
+	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x <= width:
+		return text
+	var cut := text
+	while cut.length() > 1 and font.get_string_size(cut + "…", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > width:  # i18n: ok a glyph
+		cut = cut.left(-1)
+	return cut.strip_edges() + "…"  # i18n: ok a glyph
 
 
 ## A dashed rounded outline: dashes along the straight runs, arcs at the corners.
