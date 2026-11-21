@@ -124,8 +124,9 @@ func _check_shape() -> void:
 			if absf(float(rows[i]["value"]) - want) > 0.05:
 				_fail("share of %s drawn %.2f, sim %.2f" % [sectors[i], float(rows[i]["value"]), want])
 
-		if share._marked != waiting_rows:
-			_fail("share chart marks rows %s, the waiting sectors are %s" % [share._marked, waiting_rows])
+		# Design's T5 on #441: the bars stay neutral; the door's "N wait" says what waits.
+		if not share._marked.is_empty():
+			_fail("share chart marks rows %s: a waiting sector's bar is neutral now" % [share._marked])
 
 	# A verdict chip per sector, in the sim's words, on its door.
 	for s in sectors:
@@ -180,7 +181,7 @@ func _check_quiet_world() -> void:
 	if primary == null or not primary.has_meta("open_tab"):
 		_fail("primary_action() finds no Open button: the fold mark never shows")
 	var text_all := _text_under(_panel)
-	if text_all.contains("Growth a year") or not text_all.contains("Trend a year"):
+	if text_all.to_lower().contains("growth a year") or not text_all.to_lower().contains("trend a year"):
 		_fail("the dot plot is not titled 'Trend a year' as the sector tab is")
 	var ns = _main._state.player()
 	var lags := false
@@ -259,8 +260,8 @@ func _check_busy_world() -> void:
 		var waits := int(counts.get(SectorNeeds.tab_of(String(sectors[i])), 0)) > 0
 		if waits:
 			waiting += 1
-		if share != null and waits != (share.bar_color(i) == UiTheme.WARN):
-			_fail("share bar %s drawn %s, waiting %s (a decision is the WARN tone, every waiting sector)" % [sectors[i], share.bar_color(i), waits])
+		if share != null and share.bar_color(i) == UiTheme.WARN:
+			_fail("share bar %s is amber: the door's count says what waits (Design's T5)" % sectors[i])
 		if share != null and share.bar_color(i) == UiTheme.accent():
 			_fail("share bar %s wears the accent: status is a fixed tone" % sectors[i])
 	if waiting < 2:
@@ -291,19 +292,10 @@ func _route_to_a_firm() -> void:
 
 
 func _check_routed_firm_first() -> void:
-	# The routed firm's card opens in the side column, with the sheet for its row.
-	var side: Control = _panel._side
-	var found := side.find_children("*", "Button", true, false).filter(func(b): return b.has_meta("company_id") and String(b.get_meta("company_id")) == _routed["id"])
-	if found.is_empty():
-		_fail("routed: the firm's card is not in the side column")
-	if _node_with_meta("routed_heading", _routed["sector"]) == null:
-		_fail("routed: no heading over the firm's card")
-	# QA T1: the routed card's line says the sector's trend, then the nation's (pass 2 lead 8).
-	var ns = _main._state.player()
-	var sector := String(_routed["sector"])
-	var trend_line := "trend %s %%/yr, nation %s" % [Num.fs(Economy.sector_trend_pct(_main._state, ns, sector), 1), Num.fs(float(ns.trend_annual_pct), 1)]
-	if not _text_under(_panel).contains(trend_line):
-		_fail("routed: the card does not read '%s'" % trend_line)
+	# G3 S3 (Design's T4 on #441): the route picks the firm's row in the side sheet; the
+	# overview has no firm card any more.
+	if _panel._shown_firm != String(_routed["id"]):
+		_fail("routed: the side sheet shows firm '%s', not %s" % [_panel._shown_firm, _routed["id"]])
 	# A mouse route takes no keyboard focus (Space is the pause key): the page opens at the top, where the card sits.
 	var focus = _panel.get_viewport().gui_get_focus_owner()
 	if focus != null and _panel.is_ancestor_of(focus):

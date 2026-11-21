@@ -9,8 +9,9 @@ extends RefCounted
 ##
 ## Every figure is a reader's: SectorRead.head (Economy.sector_trend_pct against the
 ## nation's trend), GameState.history's `sectors` for the curve, SectorNeeds for what waits.
-## A decision is a STATUS: every waiting sector's bar is the WARN tone and its door carries
-## the amber count (AGENTS.md: identity and status colour never mixed). No chart wears the
+## A decision is a STATUS with a date: the door carries the amber count; the share bars stay
+## neutral and a comparison ("slower than the nation") is a neutral chip (G3 decision 2,
+## Design's T5 on #441). No chart wears the
 ## accent for a quantity (G3 decision 5).
 
 const Companies = preload("res://src/sim/companies.gd")
@@ -36,7 +37,7 @@ const GLYPH := "warning"  # i18n: ok an icon file name
 const LEAD := "%s: %s %% of output. Slowest against the economy: %s."  # i18n: msgid
 const LEAD_ALONE := "%s: %s %% of output."  # i18n: msgid
 const VERDICT_CHIPS := {
-	"behind": UiTheme.CHIP_BAD, "slower": UiTheme.CHIP_WARN, "pace": UiTheme.CHIP_GOOD, "ahead": UiTheme.CHIP_GOOD,
+	"behind": UiTheme.CHIP_BAD, "slower": UiTheme.CHIP, "pace": UiTheme.CHIP_GOOD, "ahead": UiTheme.CHIP_GOOD,
 }
 
 
@@ -63,12 +64,13 @@ static func charts(parent: Control, state, loader, ns, open_tab: Callable) -> La
 	for s in sectors:
 		heads[s] = SectorRead.head(state, loader, ns, String(s))
 		total += float(heads[s]["output"])
-	var waiting: Dictionary = SectorNeeds.counts(state, loader, ns)
 	var body := PanelKit.sheet(parent)
 	var lead := PanelKit.plain_line(body, "", PanelKit.Tone.PLAIN)
 	lead.theme_type_variation = UiTheme.LEAD
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 32)
+	# Stacked, each on the column's whole width: side by side the dot plot had no width for its
+	# scale and its dots fell on one line (Design's T2 on #441).
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
 	body.add_child(row)
 	var share_rows := []
 	var dot_rows := []
@@ -77,14 +79,16 @@ static func charts(parent: Control, state, loader, ns, open_tab: Callable) -> La
 		var s := String(sectors[i])
 		var share := 100.0 * float(heads[s]["output"]) / total if total > 0.0 else 0.0
 		share_rows.append({"label": Labels.sector(s), "value": share})
-		if int(waiting.get(SectorNeeds.tab_of(s), 0)) > 0:
-			marked.append(i)
 		var trend := float(heads[s]["trend"])
 		dot_rows.append({"id": s, "label": Labels.sector(s), "before": trend, "after": trend, "moved": false})
-	var share_box := ChartKit.bars(row, Strings.t("Share of output"), share_rows, {"unit": " %", "marked": marked})
+	# Neutral bars: the door's amber "N wait" says what waits (Design's T5 on #441); the titles
+	# are headings as everywhere on the page (T10).
+	PanelKit.heading(row, Strings.t("Share of output"))
+	var share_box := ChartKit.bars(row, "", share_rows, {"unit": " %", "marked": marked})
 	share_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	share_box.get_child(1).set_meta("overview", "share")
-	var dots := ChartKit.dots(row, Strings.t("Trend a year, against the economy (%s %%)") % Num.fs(float(ns.trend_annual_pct), 1),
+	PanelKit.heading(row, Strings.t("Trend a year, against the economy (%s %%)") % Num.fs(float(ns.trend_annual_pct), 1))
+	var dots := ChartKit.dots(row, "",
 		dot_rows, {"reference": float(ns.trend_annual_pct), "places": 1})
 	dots.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var dot_chart: Control = dots.get_meta("chart")

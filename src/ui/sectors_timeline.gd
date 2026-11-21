@@ -221,7 +221,11 @@ static func _row(body: Control, state, r: Dictionary, span: int, today: float, w
 	words.custom_minimum_size.x = width
 	words.add_theme_constant_override("separation", 0)
 	line.add_child(words)
-	var sector := PanelKit.plain_line(words, Labels.sector(String(r["sector"])).to_upper(), PanelKit.Tone.PLAIN)
+	# One left edge for kicker, title and sub (Design's T11): the kicker and the sub sit in by the
+	# title button's own content margin, read from its stylebox rather than typed.
+	var edge := MarginContainer.new()
+	words.add_child(edge)
+	var sector := PanelKit.plain_line(edge, Labels.sector(String(r["sector"])).to_upper(), PanelKit.Tone.PLAIN)
 	sector.theme_type_variation = UiTheme.HEADING
 	var title := Button.new()
 	title.flat = true
@@ -235,7 +239,12 @@ static func _row(body: Control, state, r: Dictionary, span: int, today: float, w
 	title.set_meta("timeline_pick", String(r["key"]))
 	title.pressed.connect(func() -> void: pick.call(String(r["key"])))
 	words.add_child(title)
-	PanelKit.plain_line(words, String(r["sub"]))
+	var inset := roundi(title.get_theme_stylebox("normal").content_margin_left)
+	edge.add_theme_constant_override("margin_left", inset)
+	var below := MarginContainer.new()
+	below.add_theme_constant_override("margin_left", inset)
+	words.add_child(below)
+	PanelKit.plain_line(below, String(r["sub"]))
 	var bar: Control = TimelineBar.new()
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# A click on the lane is a click on its row: the plate below picks it.
