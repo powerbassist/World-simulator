@@ -96,7 +96,11 @@ static func quiet_window() -> bool:
 ## a secondary screen above or left of the primary (negative coordinates) works.
 static func quiet_target() -> Vector2i:
 	var raw := OS.get_environment("NATION_SHOT_SCREEN")
-	if raw.is_valid_int() and int(raw) >= 0 and int(raw) < DisplayServer.get_screen_count():
+	# Never the primary screen, whatever index it has: the whole point is that a capture does not
+	# appear where the author plays (Godot's indices follow the OS enumeration, so index 1 is not
+	# always the secondary).
+	if raw.is_valid_int() and int(raw) >= 0 and int(raw) < DisplayServer.get_screen_count() \
+			and int(raw) != DisplayServer.get_primary_screen():
 		return DisplayServer.screen_get_position(int(raw))
 	return OFF_SCREEN
 
