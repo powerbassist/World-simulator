@@ -96,7 +96,7 @@ One row per `_windows.register()` call. *Opened by*: the sidebar (a domain's fir
 
 | domain | tab | window id | key | panel file | registered in | opened by |
 |---|---|---|---|---|---|---|
-| Agenda | Diary | `calendar` | C | `calendar_panel.gd` | `main.gd` | sidebar; key C; door in audience_driver, calendar_panel |
+| Agenda | Diary | `calendar` | C | `calendar_panel.gd` | `main.gd` | sidebar; key C; door in audience_driver, diary_furniture |
 | Presidency | Overview | `overview` | O / Q | `presidency_page.gd` | `main.gd` | sidebar; key O / Q; door in briefing_driver, country_box, programme_file |
 | Presidency | Folder | `events` | N | `events_panel.gd` | `main.gd` | tab strip; key N; door in briefing_driver, files_driver, programme_file |
 | Government | People | `people` | R | `people_panel.gd` | `main.gd` | sidebar; key R; door in audience_driver |
