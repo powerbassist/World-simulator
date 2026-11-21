@@ -50,7 +50,9 @@ const DOCK_WIDTHS := {"region": 500.0}
 ## tab, in its fullest state, needs less than DOCK_WIDTH docks narrower, so the map shows beside it.
 ## One width for every tab of a domain, so the header and "Back to the map" never move on a switch.
 ## Read at 1.0 and 0.75 (#398) with French, the term-start offer, a nation's file and the Diary.
-const DOMAIN_WIDTHS := {"agenda": 800.0, "diplomacy": 760.0, "energy": 980.0}
+## The Agenda left the table with the month page (picture A): the grid and the people column
+## beside it take the full dock.
+const DOMAIN_WIDTHS := {"diplomacy": 760.0, "energy": 980.0}
 const DOCK_TOP := TitleBar.HEIGHT + TopBar.BAR_HEIGHT
 const DOCK_BOTTOM := Ribbon.STRIP_HEIGHT
 

@@ -12,8 +12,9 @@ extends RefCounted
 ## with no price -- it was the president's own appointment.
 ##
 ## THE CAP: one summons per person in SUMMON_COOLDOWN_MONTHS (the months a person waits between
-## two asks), stamped in ns.audience_summoned_month at the booking; a cancelled one keeps its
-## stamp, so a cancel and a re-book cannot farm the hold's rapport.
+## two asks), stamped in ns.audience_summoned_month at the booking. The player's cancel before the
+## day gives the stamp back (the parent's R-432-cancel ruling: no meeting was held, so no rapport to
+## farm); a no-show keeps it.
 
 const K = preload("res://src/sim/audience_constants.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -65,6 +66,7 @@ static func summon(state, ns, loader, person_id: String, date: Dictionary) -> Di
 		return refused.merged({"ok": false, "request": {}})
 	var now := _now(state)
 	var row := _window(person_id, now)
+	row["id"] = _unique_id(ns, String(row["id"]))  # before the book: the day keys on it
 	var bad := Dates.refusal(state, row, date)
 	if String(bad.get("code", "")) == K.BOOK_DEADLINE:
 		bad = _no(K.SUMMON_TOO_FAR, "further ahead than the diary reaches")
@@ -98,6 +100,20 @@ static func _window(person_id: String, now: int) -> Dictionary:
 		# Not an arrival: it ends no quiet month and the quiet call's stamp reads it as plain.
 		"differs": false,
 	}
+
+
+## A summons cancelled and made again the same month must not share the cancelled row's id:
+## every lookup by id would find the cancelled one first (pass 2 TAKE 1).
+static func _unique_id(ns, base: String) -> String:
+	var taken := {}
+	for row in ns.audience_requests:
+		taken[String(row.get("id", ""))] = true
+	var id := base
+	var n := 1
+	while taken.has(id):
+		n += 1
+		id = "%s#%d" % [base, n]
+	return id
 
 
 static func _no(code: String, words: String) -> Dictionary:

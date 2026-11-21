@@ -188,8 +188,9 @@ func _check_card_party() -> void:
 
 ## #431 pass 2 TAKE 7: the party is back in the Diary's booking block, beside its Book here.
 func _check_booking_party() -> void:
+	# The month page: the asker's party sits on their file beside the grid (the column, option C).
 	AudienceDriver._open_booking(_main, _request)
-	_chip_matches(_main._calendar_panel._grid.day_list, "the Diary's day list")
+	_chip_matches(_main._calendar_panel.people, "the Diary's people column")
 
 
 func _reach_audience() -> bool:

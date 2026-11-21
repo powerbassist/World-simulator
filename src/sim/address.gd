@@ -129,8 +129,7 @@ static func month_rule(state) -> Dictionary:
 
 ## Today's row. A stale day past the month's end reads as its last, as the diary's own check does.
 static func _entry(state, law_id: String) -> Dictionary:
-	var today := mini(int(state.day), Calendar.days_in_month(int(state.year), int(state.month)))
-	return Calendar.make_entry(CalendarK.KIND_ADDRESS, int(state.year), int(state.month), today, "", "", law_id)
+	return Calendar.make_entry(CalendarK.KIND_ADDRESS, int(state.year), int(state.month), Calendar.today(state), "", "", law_id)
 
 
 static func _write(ns, law_id: String, moved: Dictionary, now: int) -> void:

@@ -327,6 +327,18 @@ static func sized(button: Button) -> Button:
 	return button
 
 
+## Buttons that answer one question share one width, the widest one's (the author, 2026-11-21:
+## "les boutons qui change de taille selon la taille du texte me parait incongru"). After the
+## buttons are in the tree with their text, so the theme's font measures them.
+static func same_width(buttons: Array) -> void:
+	var widest := 0.0
+	for b in buttons:
+		(b as Control).custom_minimum_size.x = 0.0
+		widest = maxf(widest, (b as Control).get_combined_minimum_size().x)
+	for b in buttons:
+		(b as Control).custom_minimum_size.x = widest
+
+
 ## Caption left, value right, the value carrying the tone. The single commonest
 ## shape in this interface: eleven panels build it, and until now each built it
 ## itself.

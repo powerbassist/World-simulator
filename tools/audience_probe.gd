@@ -656,7 +656,7 @@ func _registers(state, ns, registers: Dictionary) -> Dictionary:
 		n += 1
 	return {"people": n, "mean_rapport": rapport / maxf(1.0, float(n)), "mean_knowledge": knowledge / maxf(1.0, float(n)),
 		"summoned": int(registers["summoned"]), "distinct_summoned": (registers["people"] as Dictionary).size(),
-		"held": int(registers["held"]), "diary_days": int(registers["summoned"])}
+		"held": int(registers["held"])}
 
 
 ## A5's audience: held on its day, Granted if Grant is open, else refused.

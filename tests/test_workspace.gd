@@ -346,7 +346,8 @@ func _check_the_fold_mark_clears() -> void:
 ## the header and "Back to the map" never move between sibling tabs; a short domain leaves the map
 ## beside it.
 func _check_dock_width_follows_the_domain() -> void:
-	var want := {"calendar": 800.0, "diplomacy": 760.0, "orgs": 760.0, "energy": 980.0,
+	# The Diary takes the full dock since the month page (its grid and people column side by side).
+	var want := {"calendar": WindowManager.DOCK_WIDTH, "diplomacy": 760.0, "orgs": 760.0, "energy": 980.0,
 		"finances": WindowManager.DOCK_WIDTH, "projects": WindowManager.DOCK_WIDTH, "economy": WindowManager.DOCK_WIDTH}
 	for id in want:
 		_manager.open(id)
@@ -355,13 +356,13 @@ func _check_dock_width_follows_the_domain() -> void:
 			_fail("the %s tab docks %.0f wide, not %.0f" % [id, width, float(want[id])])
 	# A narrowed domain grows with the text size, never past DOCK_WIDTH.
 	UiTheme.set_text_scale(1.15)
-	if not is_equal_approx(WindowManager.dock_width("calendar"), 920.0) or not is_equal_approx(WindowManager.dock_width("finances"), WindowManager.DOCK_WIDTH):
-		_fail("at text 115 the Diary docks %.0f and Finances %.0f, not 920 and 1240" % [WindowManager.dock_width("calendar"), WindowManager.dock_width("finances")])
+	if not is_equal_approx(WindowManager.dock_width("diplomacy"), 874.0) or not is_equal_approx(WindowManager.dock_width("finances"), WindowManager.DOCK_WIDTH):
+		_fail("at text 115 Diplomacy docks %.0f and Finances %.0f, not 874 and 1240" % [WindowManager.dock_width("diplomacy"), WindowManager.dock_width("finances")])
 	# #400 pass 2 T6: a smaller text never narrows it -- the dock's fixed parts (tabs, padding, the
 	# offer's columns) do not shrink with the text.
 	UiTheme.set_text_scale(0.9)
-	if not is_equal_approx(WindowManager.dock_width("calendar"), 800.0):
-		_fail("at text 90 the Diary docks %.0f, narrower than its 800" % WindowManager.dock_width("calendar"))
+	if not is_equal_approx(WindowManager.dock_width("diplomacy"), 760.0):
+		_fail("at text 90 Diplomacy docks %.0f, narrower than its 760" % WindowManager.dock_width("diplomacy"))
 	UiTheme.set_text_scale(1.0)
 	_manager.close_all()
 
