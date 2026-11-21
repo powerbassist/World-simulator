@@ -14,6 +14,7 @@ extends SceneTree
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const AccentRule = preload("res://src/ui/accent_rule.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -37,6 +38,7 @@ func _process(_delta: float) -> bool:
 	_check_theme_contents()
 	_check_scenes_carry_it()
 	_check_no_panel_overrides()
+	_check_glass_off()
 	_check_text_scale()
 	_check_type_steps()
 	_finish()
@@ -90,7 +92,7 @@ func _check_theme_contents() -> void:
 		if box is StyleBoxFlat and box.bg_color.a < 1.0:
 			_fail("the PanelContainer style is translucent (alpha %.2f)" % box.bg_color.a)
 
-	for variation in [UiTheme.TOP_BAR_PANEL, UiTheme.PLATE, UiTheme.TITLE_BAR]:
+	for variation in [UiTheme.TOP_BAR_PANEL, UiTheme.PLATE, UiTheme.TITLE_BAR, UiTheme.PANE, UiTheme.TILE_PANEL, UiTheme.POPOVER_PANEL]:
 		if not theme.has_stylebox("panel", variation):
 			_fail("theme has no %s variation stylebox" % variation)
 		if theme.get_type_variation_base(variation) != &"PanelContainer":
@@ -116,73 +118,16 @@ func _check_theme_contents() -> void:
 	if theme.get_color("font_color", UiTheme.GOOD_TEXT) == theme.get_color("font_color", UiTheme.BAD_TEXT):
 		_fail("the good and bad text colours are identical")
 
-	# A disabled button must not wear the same border as a live one -- the menu's
-	# Continue read enabled with no saves (playtest 2026-09-05). The border is
-	# what reads "pressable"; HULL fill and font_disabled_color are the inert look.
-	for type in ["Button", "OptionButton"]:
+	# A disabled button must not look live (the menu's Continue read enabled with no
+	# saves, playtest 2026-09-05). G3's live look is the fill, so disabled has none.
+	for type in ["Button", "OptionButton", UiTheme.PRIMARY]:
 		var disabled_box := theme.get_stylebox("disabled", type) as StyleBoxFlat
-		var normal_box := theme.get_stylebox("normal", type) as StyleBoxFlat
-		if disabled_box != null and normal_box != null:
-			if disabled_box.border_width_left > 0 and disabled_box.border_color == normal_box.border_color:
-				_fail("the disabled %s keeps the live border" % type)
+		if disabled_box != null and disabled_box.bg_color.a > 0.0:
+			_fail("the disabled %s keeps a fill, so it reads live" % type)
 
 	_check_grammar(theme)
 	_check_pressed_text_contrast(theme)
 	_check_fonts(theme)
-
-
-## V5.1a's grammar, replacing U5a's one brass hairline (the author picked BUREAU,
-## 2026-10-21). A plate is a graphite panel with a hairline on EVERY side and no
-## accent of its own; the accent is reserved for what says "you are here". The
-## test is the mirror of the one it replaces: where U5a failed a plate that drew a
-## second edge, this fails one that does not, and fails any plate wearing the accent.
-func _check_grammar(theme: Theme) -> void:
-	var plate := theme.get_stylebox("panel", UiTheme.PLATE)
-	if not plate is StyleBoxFlat:
-		_fail("the plate style is not a StyleBoxFlat")
-		return
-
-	for side in ["top", "bottom", "left", "right"]:
-		if plate.get("border_width_" + side) < 1:
-			_fail("the plate has no hairline on its %s edge" % side)
-	if plate.border_color != UiTheme.EDGE:
-		_fail("the plate's hairline is not the edge colour")
-	if plate.border_color == UiTheme.accent():
-		_fail("the plate wears the accent, which is reserved for where-you-are marks")
-
-	# Graphite and near-opaque: the map may show through a HUD plate only faintly.
-	if plate.bg_color.a >= 1.0 or plate.bg_color.a < 0.9:
-		_fail("the plate's alpha is %.2f, outside [0.9, 1.0)" % plate.bg_color.a)
-
-	# Headings (every section label, window title and card title) are neutral: the
-	# board's Bureau mockups set them in text colour, with the accent reserved for the
-	# active tab, the icon and the marker -- "you are here", not "this is a heading".
-	if theme.get_color("font_color", UiTheme.HEADING) == UiTheme.accent():
-		_fail("headings wear the accent, which is reserved for where-you-are marks")
-
-	# The folded plate and a cluster's open marker are the accent's two jobs in
-	# the chrome. An accent that is not the one in force means a nation's colour
-	# never reached the theme.
-	var folded := theme.get_stylebox("panel", UiTheme.PLATE_FOLDED) as StyleBoxFlat
-	if folded == null or folded.border_width_bottom < 2 or folded.border_color != UiTheme.accent():
-		_fail("the folded plate is not outlined in the accent with a 2px bottom edge")
-	var open := theme.get_stylebox("pressed", UiTheme.CLUSTER_BUTTON) as StyleBoxFlat
-	if open == null or open.border_width_bottom < 2 or open.border_color != UiTheme.accent():
-		_fail("the open cluster does not carry the accent bar")
-
-	# Without a nation (the menu), the accent is the named fallback, not a flag.
-	var host := Control.new()
-	UiTheme.apply(host)
-	if UiTheme.accent() != UiTheme.ACCENT_FALLBACK:
-		_fail("the accent in force with no nation chosen is not the fallback")
-
-	# A given accent reaches a freshly built theme: set one, rebuild, read.
-	UiTheme.apply(host, Color("#E3A63A"))
-	var tinted := host.theme.get_stylebox("panel", UiTheme.PLATE_FOLDED) as StyleBoxFlat
-	if tinted.border_color != Color("#E3A63A"):
-		_fail("apply(root, accent) did not carry the accent into the theme")
-	UiTheme.apply(host)
-	host.free()
 
 
 ## main.gd re-applies the theme once the played nation is known (and again on a
@@ -206,21 +151,107 @@ func _check_player_accent_wired() -> void:
 		_fail("the menu's own theme does not carry the fallback accent")
 
 
-## The accent is read as TEXT where a button is pressed, so its contrast has to be
-## measured on the surface that button actually draws: a plain Button's pressed
-## fill is SLATE lightened, lighter than the SLATE the accent rule judges on (QA
-## measured 2.76:1 for France's blue there). Every pressed state's text must clear
-## AA on its own fill.
+## G3's grammar, replacing BUREAU's hairline on four sides (the author picked "Sheets on
+## glass", 2026-11-21). A SHEET is opaque, borderless and R_SHEET, and never wears the
+## accent; a PANE of the chrome is the tint with a light rim and R_PANE; with Glass off the
+## pane is PANE_SOLID. The test is the mirror of BUREAU's: where that one failed a plate
+## missing an edge, this fails a sheet that draws one.
+func _check_grammar(theme: Theme) -> void:
+	var plate := theme.get_stylebox("panel", UiTheme.PLATE) as StyleBoxFlat
+	if plate == null:
+		_fail("the sheet style is not a StyleBoxFlat")
+		return
+	for side in ["top", "bottom", "left", "right"]:
+		if plate.get("border_width_" + side) > 0:
+			_fail("the sheet draws a border on its %s edge; G3 separates by surface, not by line" % side)
+	if plate.bg_color.a < 1.0:
+		_fail("the sheet is translucent (alpha %.2f): text on a sheet must not depend on the map" % plate.bg_color.a)
+	if plate.bg_color != UiTheme.SHEET or plate.corner_radius_top_left != UiTheme.R_SHEET:
+		_fail("the sheet is not SHEET at R_SHEET")
+	if plate.shadow_size <= 0:
+		_fail("the sheet has no shadow to lift it off the map")
+
+	var pane := theme.get_stylebox("panel", UiTheme.PANE) as StyleBoxFlat
+	if pane == null or pane.border_color != UiTheme.PANE_RIM or pane.border_width_left < 1 or pane.corner_radius_top_left != UiTheme.R_PANE:
+		_fail("the pane lost its rim or its R_PANE corners")
+	elif pane.bg_color != (UiTheme.PANE_TINT if UiTheme.glass() else UiTheme.PANE_SOLID):
+		_fail("the pane's ground is %s, not the tint Glass asks for" % pane.bg_color)
+	var popover := theme.get_stylebox("panel", UiTheme.POPOVER_PANEL) as StyleBoxFlat
+	if popover == null or popover.bg_color.a < 1.0:
+		_fail("a popover is not opaque: it would need a second copy of the screen")
+
+	# Headings (every section label, window title and card title) are neutral: the
+	# accent is reserved for "you are here", not "this is a heading".
+	if theme.get_color("font_color", UiTheme.HEADING) == UiTheme.accent():
+		_fail("headings wear the accent, which is reserved for where-you-are marks")
+
+	# The folded sheet and a cluster's open marker are the accent's two jobs in the
+	# chrome. An accent that is not the one in force means a nation's colour never
+	# reached the theme.
+	var folded := theme.get_stylebox("panel", UiTheme.PLATE_FOLDED) as StyleBoxFlat
+	if folded == null or folded.border_width_bottom < 2 or folded.border_color != UiTheme.accent():
+		_fail("the folded plate is not outlined in the accent with a 2px bottom edge")
+	var open := theme.get_stylebox("pressed", UiTheme.CLUSTER_BUTTON) as StyleBoxFlat
+	if open == null or open.border_width_bottom < 2 or open.border_color != UiTheme.accent():
+		_fail("the open cluster does not carry the accent bar")
+
+	# Without a nation (the menu), the accent is the named fallback, not a flag.
+	var host := Control.new()
+	UiTheme.apply(host)
+	if UiTheme.accent() != UiTheme.ACCENT_FALLBACK:
+		_fail("the accent in force with no nation chosen is not the fallback")
+
+	# A given accent reaches a freshly built theme: set one, rebuild, read.
+	UiTheme.apply(host, Color("#E3A63A"))
+	var tinted := host.theme.get_stylebox("panel", UiTheme.PLATE_FOLDED) as StyleBoxFlat
+	if tinted.border_color != Color("#E3A63A"):
+		_fail("apply(root, accent) did not carry the accent into the theme")
+	UiTheme.apply(host)
+	host.free()
+
+
+## G3 (Glass off): every pane is PANE_SOLID and nothing reads the screen -- the frost under
+## a pane hides, which is the only node that samples it. Mutation: a frost that ignores
+## glass() stays visible and fails here; a pane built from the tint fails the colour.
+func _check_glass_off() -> void:
+	var holder := Control.new()
+	root.add_child(holder)
+	UiTheme.apply(holder)
+	var pane := PanelKit.pane(PanelContainer.new())
+	holder.add_child(pane)
+	var frost := pane.get_child(0) as CanvasItem
+	if frost == null or not frost.visible:
+		_fail("with Glass on, a pane has no visible frost under it")
+	UiTheme.set_glass(false)
+	UiTheme.rebuild(holder)
+	var solid := pane.get_theme_stylebox("panel") as StyleBoxFlat
+	if solid.bg_color != UiTheme.PANE_SOLID:
+		_fail("with Glass off the pane is %s, not PANE_SOLID" % solid.bg_color)
+	if frost != null and frost.visible:
+		_fail("with Glass off the frost still draws, so the screen is still read")
+	UiTheme.set_glass(true)
+	UiTheme.apply(holder)
+	holder.queue_free()
+
+
+## No text on a control is a status tone or the accent (the accent drops to 3.8:1 on a
+## hovered control): every live state of a button holds AA with its label, and the screen's
+## one action, filled with the accent, holds it with its own label.
 func _check_pressed_text_contrast(theme: Theme) -> void:
-	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON]:
-		var box := theme.get_stylebox("pressed", type) as StyleBoxFlat
-		if box == null:
-			_fail("%s has no pressed stylebox" % type)
-			continue
-		var text := theme.get_color("font_pressed_color", type)
-		var ratio := AccentRule.contrast(text, box.bg_color)
-		if ratio < AccentRule.MIN_CONTRAST:
-			_fail("%s pressed text %s on %s is %.2f:1, under AA" % [type, text.to_html(false), box.bg_color.to_html(false), ratio])
+	var states := {"normal": "font_color", "hover": "font_hover_color", "pressed": "font_pressed_color"}
+	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.SEGMENT, UiTheme.GHOST]:
+		for state in states:
+			var box := theme.get_stylebox(state, type) as StyleBoxFlat
+			if box == null:
+				_fail("%s has no %s stylebox" % [type, state])
+				continue
+			# A transparent state sits on the sheet: judge it there.
+			var ground := box.bg_color if box.bg_color.a > 0.0 else UiTheme.SHEET
+			# A variation that does not set a colour takes its base type's, as a control does.
+			var text := theme.get_color(states[state], type if theme.has_color(states[state], type) else theme.get_type_variation_base(type))
+			var ratio := AccentRule.contrast(text, ground)
+			if ratio < AccentRule.MIN_CONTRAST:
+				_fail("%s %s text %s on %s is %.2f:1, under AA" % [type, state, text.to_html(false), ground.to_html(false), ratio])
 
 
 ## The fonts are the one part of the theme that fails *silently*: a missing

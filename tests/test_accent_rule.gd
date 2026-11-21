@@ -82,6 +82,14 @@ func _check_helpers() -> void:
 	var greys := [Color.WHITE, Color.BLACK, Color("#808080")]
 	if AccentRule.pick(greys, UiTheme.SLATE, [UiTheme.BAD], UiTheme.ACCENT_FALLBACK) != UiTheme.ACCENT_FALLBACK:
 		_fail("a flag of greys should take the fallback")
+	# G3: France's text accent #2596FF fills at about #1A73DB, white on it 4.5:1 or more; a
+	# yellow cannot darken that far in its family and keeps a dark label instead.
+	var fr_fill := AccentRule.fill(Color("#2596FF"))
+	if AccentRule.contrast(Color.WHITE, fr_fill) < AccentRule.MIN_CONTRAST or AccentRule.contrast(Color.WHITE, fr_fill) > 5.2:
+		_fail("France's fill %s is not just dark enough for white (%.2f:1)" % [fr_fill.to_html(false), AccentRule.contrast(Color.WHITE, fr_fill)])
+	var pale := Color("#FFE14D")
+	if AccentRule.fill(pale) != pale or AccentRule.label_on(pale, Color.BLACK) != Color.BLACK:
+		_fail("a yellow should keep its colour and take the dark label")
 
 
 ## Real flags, by what the rule must say about each: the colour FAMILY of the first
@@ -120,7 +128,7 @@ func _check_roster_invariants() -> void:
 		if accent == UiTheme.ACCENT_FALLBACK:
 			fallbacks += 1
 			continue
-		if AccentRule.contrast(accent, UiTheme.SLATE) < AccentRule.MIN_CONTRAST - 0.01:
+		if AccentRule.contrast(accent, UiTheme.TILE_HOVER) < AccentRule.MIN_CONTRAST - 0.01:
 			_fail("%s accent %s is under the contrast floor" % [id, accent.to_html(false)])
 		if AccentRule.chroma(accent) < AccentRule.MIN_CHROMA:
 			_fail("%s accent %s has gone grey after the lift" % [id, accent.to_html(false)])
@@ -135,9 +143,24 @@ func _check_roster_invariants() -> void:
 				near = true
 		if not near:
 			_fail("%s accent %s is in no band's colour family" % [id, accent.to_html(false)])
+		_check_fill(id, accent)
 	# The fallback is for a flag with no chroma at all, and every roster flag has some.
 	if fallbacks > 0:
 		_fail("%d of %d nations fell back" % [fallbacks, ids.size()])
+
+
+## G3: the accent as a fill. Its label holds AA on it, white or the dark branch; it stays as
+## clear of the state tones as the accent; and it is the accent's own family, only darker.
+func _check_fill(id: String, accent: Color) -> void:
+	var fill := AccentRule.fill(accent)
+	var label := AccentRule.label_on(fill, Color(UiTheme.PANE_SOLID, 1.0))
+	if AccentRule.contrast(label, fill) < AccentRule.MIN_CONTRAST:
+		_fail("%s fill %s under its label %s is %.2f:1, under AA" % [id, fill.to_html(false), label.to_html(false), AccentRule.contrast(label, fill)])
+	for tone in [UiTheme.BAD, UiTheme.GOOD, UiTheme.WARN]:
+		if AccentRule.hue_distance(fill.h * 360.0, tone.h * 360.0) < AccentRule.MIN_HUE_DISTANCE - 0.5:
+			_fail("%s fill %s is too near the state tone %s" % [id, fill.to_html(false), tone.to_html(false)])
+	if fill.get_luminance() > accent.get_luminance() + 0.001 or AccentRule.hue_distance(fill.h * 360.0, accent.h * 360.0) > 1.0:
+		_fail("%s fill %s is not the accent %s darkened" % [id, fill.to_html(false), accent.to_html(false)])
 
 
 func _accent_of(id: String) -> Color:

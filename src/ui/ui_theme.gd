@@ -34,20 +34,64 @@ const AccentRule = preload("res://src/ui/accent_rule.gd")
 ## The brass top-edge hairline of U5a is gone, and so is the rule against drawing
 ## a plate's other three edges: those edges are the grammar now.
 ##
-## Colour names are kept from U5a (fifty callers) and mean what they say here:
-## INK the ground, HULL a panel, SLATE a raised row or hover, EDGE the hairline.
+## ---
+##
+## G3, "Sheets on glass" (the author's pick, 2026-11-21, after "je veux un design
+## moderne"; the spec is Design's g3-spec.md, AGENTS.md "UI conventions" carries its
+## rules). The map fills the screen; the chrome is three floating glass PANES (a dark
+## tint over the blurred map, a light rim); the workspace's content sits on opaque
+## SHEETS, one job each, separated by space and a change of surface rather than by
+## lines. Slice S0 is this file and PanelKit: every screen takes the colours, corners
+## and button states at once; the shell's layout is S1's.
+##
+## The BUREAU names (INK, HULL, SLATE, EDGE) stay as aliases of the G3 surface they
+## became, because fifty callers draw with them; a slice that re-lays a screen moves
+## it to the G3 name.
 
 # -- Palette ------------------------------------------------------------------
 
-const INK := Color(0.059, 0.071, 0.078)        ## #0F1214 behind everything
-const HULL := Color(0.090, 0.106, 0.118)       ## #171B1E panel body
-const SLATE := Color(0.153, 0.176, 0.196)      ## #272D32 raised row, hover
-const EDGE := Color(0.196, 0.224, 0.251)       ## #323940 hairline
-const TEXT := Color(0.929, 0.941, 0.949)       ## #EDF0F2 body text
-const TEXT_DIM := Color(0.557, 0.596, 0.624)   ## #8E989F captions
+const INK := Color(0.059, 0.071, 0.078)        ## #0F1214 the deepest ground: a well, a track
+const SHEET := Color("#11151A")                ## the body of a sheet
+const TILE := Color("#1A2026")                 ## a day, a figure tile, a quiet group in a sheet
+const TILE_HOVER := Color("#262D34")           ## a tile under the pointer; the accent's judging surface
+const CONTROL := Color("#252C33")              ## a button, a chip, an appointment
+const CONTROL_HOVER := Color("#323A42")        ## a control under the pointer; the open tab
+const CONTROL_PRESSED := Color("#1C2228")      ## a control held down
+const LINE := Color("#242B31")                 ## the divider between table rows, and nothing else
+const LINE_STRONG := Color("#343C44")          ## an empty track, a disabled outline
+const POPOVER := Color("#1C2228")              ## a tooltip, a menu
+const TEXT := Color("#F3F5F7")                 ## body text
+const TEXT_DIM := Color("#A3ACB3")             ## captions on a sheet
+const TEXT_DIM_CHROME := Color("#B6BEC5")      ## captions on a glass pane
+## A disabled label, an out-of-month date: large or secondary text only (4.6:1 on a tile).
+const TEXT_OFF := Color("#7F8890")
 const GOOD := Color(0.247, 0.702, 0.498)       ## #3FB37F
-const BAD := Color(0.898, 0.325, 0.294)        ## #E5534B
-const WARN := Color(0.890, 0.651, 0.227)       ## #E3A63A attention, not failure
+## G3: lifted from #E5534B, which was 4.4:1 on a tile; this is 5.5.
+const BAD := Color("#F26A62")
+const WARN := Color(0.890, 0.651, 0.227)       ## #E3A63A something waits on you, with a date
+const WARN_GROUND := Color(WARN, 0.17)         ## the ground of a deadline tag
+## A glass pane: this tint over the blurred map, which is first darkened by the gain.
+const PANE_TINT := Color(0.051, 0.067, 0.082, 0.64)  ## #0D1115 at 64 %
+const PANE_BACKDROP_GAIN := 0.6
+const PANE_RIM := Color(1, 1, 1, 0.13)
+const PANE_SOLID := Color(0.051, 0.067, 0.082, 0.92) ## a pane with Glass off
+## BUREAU's names, as the G3 surface each became (see the header).
+const HULL := SHEET
+const SLATE := CONTROL
+const EDGE := LINE_STRONG
+
+# -- Shape and depth (G3). Radii and shadows are the look; spacing stays layout. --
+
+const R_PANE := 22
+const R_SHEET := 16
+const R_TILE := 12
+const R_SMALL := 10
+const R_POPOVER := 14
+const GAP_PANE := 12   ## between panes, between sheets, from the screen's edge (S1 lays it out)
+## Shadows: the pictures' CSS blur radii, retuned in a real window (StyleBoxFlat falls off sooner).
+const ELEV_SHEET := [Color(0, 0, 0, 0.40), Vector2(0, 6), 14]   # colour, offset, size
+const ELEV_PANE := [Color(0, 0, 0, 0.40), Vector2(0, 10), 24]
+const ELEV_POPOVER := [Color(0, 0, 0, 0.45), Vector2(0, 8), 18]
 
 ## The map's own mark for what is NOT the player's: another nation's city, project
 ## or plant. The accent is the played nation's identity, so it goes on that nation's
@@ -61,10 +105,6 @@ const MAP_NEUTRAL := Color(0.827, 0.851, 0.878)  ## #D3D9E0
 const NEUTRAL_BAR := Color(0.290, 0.325, 0.353)
 const ACCENT_FALLBACK := Color(0.361, 0.616, 0.922)  ## #5C9DEB
 
-## Panels are graphite and nearly opaque: the map may show through a HUD plate
-## only faintly. A panel of figures you can see a coastline through is unreadable
-## (U3's lesson), which is why a window body stays fully opaque.
-const PLATE_ALPHA := 0.97
 
 # -- Type scale ---------------------------------------------------------------
 
@@ -79,6 +119,9 @@ const SIZE_SMALL := 13
 const SIZE_BASE := 15
 const SIZE_LEAD := 18
 const SIZE_FIGURE := 22
+## G3: a screen's title and a person's name on their sheet. Off the step ladder the
+## test holds (18 -> 20 is a tenth): it is a title cut, not a reading size.
+const SIZE_TITLE := 20
 const SIZE_MAP := 10     ## the map's place names, drawn in map_face() -- see WIDTH_MAP
 const SIZE_HERO := 27    ## the portrait card's approval figure, and only that
 
@@ -101,6 +144,7 @@ const LEAD := "Lead"                 ## the one sentence a screen is about  # i1
 const HEADING := "Heading"           ## small dim section label above a group  # i18n: ok
 const MICRO := "Micro"               ## tracked uppercase, smaller than Heading  # i18n: ok
 const FIGURE := "Figure"             ## a large number  # i18n: ok
+const TITLE := "Title"               ## a screen's title, a person's name on their sheet (G3)  # i18n: ok
 const MASTHEAD := "Masthead"  ## a paper's name on a front page (V5.3-0 R15)  # i18n: ok
 const HEADLINE := "Headline"  ## a front page's headline at display size (R15)  # i18n: ok
 const HERO := "Hero"                 ## the portrait card's approval, and only it  # i18n: ok
@@ -121,7 +165,11 @@ const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
 # -- Container and button variations -------------------------------------------
 
 const TOP_BAR_PANEL := "TopBarPanel"      ## the thin strip flush to the top edge
-const PLATE := "Plate"                    ## HUD furniture over the map  # i18n: ok
+const PLATE := "Plate"                    ## a SHEET (G3): opaque, borderless, one job  # i18n: ok
+const PANE := "Pane"                      ## a glass pane of the chrome (PanelKit.pane)  # i18n: ok
+const TILE_PANEL := "TilePanel"           ## a tile inside a sheet
+const POPOVER_PANEL := "PopoverPanel"     ## a tooltip or a menu: opaque, never blurred
+const GHOST := "Ghost"                    ## a quiet link-like action: no fill until hovered  # i18n: ok
 const PLATE_FOLDED := "PlateFolded"       ## a plate whose primary action is below the fold
 const TITLE_BAR := "TitleBar"             ## a floating window's grab handle
 const CLUSTER_BUTTON := "ClusterButton"   ## the four bottom-bar clusters
@@ -154,15 +202,41 @@ static var _map_figure_face: Font
 
 ## The accent a flag resolves to -- accent_rule.gd's floors over the flag's bands,
 ## judged against the three state tones (alert, good, attention) and the LIGHTEST
-## graphite surface, SLATE: the accent is read as text
-## on a hovered row, the open cluster and a pressed button, not only on a panel, so
-## the panel (HULL) would pass colours that fail where they are actually used.
+## surface it is read on as text, TILE_HOVER (a hovered tile); judged on the sheet
+## (HULL) it would pass colours that fail where they are actually used.
 static func accent_for(bands: Array) -> Color:
-	return AccentRule.pick(bands, SLATE, [BAD, GOOD, WARN], ACCENT_FALLBACK)
+	return AccentRule.pick(bands, TILE_HOVER, [BAD, GOOD, WARN], ACCENT_FALLBACK)
 
 
 static func accent() -> Color:
 	return _accent
+
+
+## G3: the accent as a FILL -- the same rule's second result (accent_rule.fill): darkened
+## until white holds AA on it, or left as it is when its hue cannot (a yellow), in which
+## case its label is dark. For today's date, the armed verb, a picked chip, a screen's one
+## main action; no other button is filled.
+static func accent_fill() -> Color:
+	return AccentRule.fill(_accent)
+
+
+## The label colour on accent_fill(): white, or the solid pane's dark when white fails.
+static func on_accent_fill() -> Color:
+	return AccentRule.label_on(accent_fill(), Color(PANE_SOLID, 1.0))
+
+
+## G3's "Glass" setting (settings_panel.gd): on, the chrome's panes blur the map
+## (frost.gd); off, or on a renderer that cannot, they are PANE_SOLID and nothing reads
+## the screen. Set before the first theme is built, like the text size.
+static var _glass := true
+
+
+static func set_glass(on: bool) -> void:
+	_glass = on
+
+
+static func glass() -> bool:
+	return _glass
 
 
 ## The face the map draws place names in -- see WIDTH_MAP. One cached object: the
@@ -278,76 +352,102 @@ static func _face(weight: int, spacing := 0, tabular := false, width := WIDTH_CO
 
 
 static func _panels(theme: Theme) -> void:
-	# The default every PanelContainer gets, including the ones nested inside a
-	# panel's own layout. Opaque, one hairline: the grammar of the whole screen.
-	var panel := StyleBoxFlat.new()
-	panel.bg_color = HULL
-	panel.set_corner_radius_all(4)
-	panel.set_border_width_all(1)
-	panel.border_color = EDGE
-	theme.set_stylebox("panel", "PanelContainer", panel)
+	# The default every PanelContainer gets, including the ones nested inside a panel's
+	# own layout: a TILE, opaque and borderless -- a quiet group set off from the sheet
+	# it sits on by its surface, not by a line (G3).
+	theme.set_stylebox("panel", "PanelContainer", _flat(TILE, R_TILE))
 
-	# HUD furniture over the map and every workspace tab's plate -- see
-	# hud.gd and the workspace. The same panel, a touch translucent and with
-	# room inside; it carries no accent, because the accent is reserved for what
-	# marks where you are.
-	var plate := StyleBoxFlat.new()
-	plate.bg_color = Color(HULL.r, HULL.g, HULL.b, PLATE_ALPHA)
-	plate.set_corner_radius_all(4)
-	plate.set_border_width_all(1)
-	plate.border_color = EDGE
-	plate.content_margin_left = 10
-	plate.content_margin_right = 10
-	plate.content_margin_top = 8
-	plate.content_margin_bottom = 8
-	theme.set_type_variation(PLATE, "PanelContainer")
-	theme.set_stylebox("panel", PLATE, plate)
+	# A SHEET: what every workspace plate and HUD card is. Opaque (a panel of figures you
+	# can see a coastline through is unreadable, U3's lesson), no border, a soft shadow;
+	# the accent never, because it is reserved for what marks where you are. The margins
+	# stay BUREAU's in S0 -- PAD_SHEET comes with S1's widths, so no screen re-lays here.
+	var sheet := _flat(SHEET, R_SHEET, ELEV_SHEET)
+	sheet.content_margin_left = 10
+	sheet.content_margin_right = 10
+	sheet.content_margin_top = 8
+	sheet.content_margin_bottom = 8
+	_variation(theme, PLATE, sheet)
 
-	# The plate outlined in the accent, 2px along its bottom -- V2.1a's one added mark.
-	# It says "the thing you came to this panel to press is below the fold", a
-	# claim a scrollbar structurally cannot make (that failure cost five
-	# screenshot passes: all eight diplomatic verbs lost at V1.3e and again at
-	# V1.3g, three sector rows reading "No state programme" over a live bill at
-	# V1.6e -- the player could always scroll, and had no reason to think there
-	# was anything to scroll to). The accent keeps one meaning under this: it
-	# marks what you are being sent to.
-	var folded := plate.duplicate()
+	# The sheet with a 2px accent bottom edge -- V2.1a's one added mark, kept by G3. It
+	# says "the thing you came to this panel to press is below the fold", a claim a
+	# scrollbar structurally cannot make (that failure cost five screenshot passes: all
+	# eight diplomatic verbs lost at V1.3e and again at V1.3g, three sector rows reading
+	# "No state programme" over a live bill at V1.6e). The accent keeps one meaning under
+	# this: it marks what you are being sent to.
+	var folded := sheet.duplicate()
 	folded.border_width_bottom = 2
 	folded.border_color = _accent
-	theme.set_type_variation(PLATE_FOLDED, "PanelContainer")
-	theme.set_stylebox("panel", PLATE_FOLDED, folded)
+	_variation(theme, PLATE_FOLDED, folded)
 
-	# A window's grab handle. Lighter than the body it sits on.
-	var title := StyleBoxFlat.new()
-	title.bg_color = SLATE
-	title.corner_radius_top_left = 4
-	title.corner_radius_top_right = 4
-	title.content_margin_left = 12
-	title.content_margin_right = 6
-	title.content_margin_top = 5
-	title.content_margin_bottom = 5
-	theme.set_type_variation(TITLE_BAR, "PanelContainer")
-	theme.set_stylebox("panel", TITLE_BAR, title)
+	_variation(theme, TILE_PANEL, _flat(TILE, R_TILE))
 
-	# The top strip is flush against the window edge: square corners, and only a
-	# hairline underneath -- an edge drawn against the screen edge is a seam.
-	var bar := StyleBoxFlat.new()
-	bar.bg_color = Color(INK.r, INK.g, INK.b, PLATE_ALPHA)
-	bar.set_corner_radius_all(0)
+	# A tooltip or a menu: opaque, so it never reads the screen and never needs a second
+	# copy of it; the pane's rim so it lifts off a sheet. The engine's own tooltips too.
+	var popover := _flat(POPOVER, R_POPOVER, ELEV_POPOVER)
+	popover.set_border_width_all(1)
+	popover.border_color = PANE_RIM
+	for side in [SIDE_LEFT, SIDE_RIGHT]:
+		popover.set_content_margin(side, 13)
+	for side in [SIDE_TOP, SIDE_BOTTOM]:
+		popover.set_content_margin(side, 10)
+	_variation(theme, POPOVER_PANEL, popover)
+	theme.set_stylebox("panel", "TooltipPanel", popover)  # i18n: ok
+	theme.set_color("font_color", "TooltipLabel", TEXT)  # i18n: ok
+
+	# A glass PANE of the chrome: the tint over the blurred map (frost.gd draws the blur
+	# under it), a 1px light rim, R_PANE. With Glass off the tint is PANE_SOLID and the
+	# frost is not drawn, so nothing reads the screen.
+	var pane := _flat(PANE_TINT if _glass else PANE_SOLID, R_PANE, ELEV_PANE)
+	pane.set_border_width_all(1)
+	pane.border_color = PANE_RIM
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		pane.set_content_margin(side, 10)
+	_variation(theme, PANE, pane)
+
+	# The top strip is the same glass, but still flush against the window edge until S1
+	# floats it: square corners, the rim only underneath (an edge drawn against the
+	# screen edge is a seam), and no shadow up into the window's edge.
+	var bar := _flat(PANE_TINT if _glass else PANE_SOLID, 0)
 	bar.border_width_bottom = 1
-	bar.border_color = EDGE
+	bar.border_color = PANE_RIM
 	bar.content_margin_left = 16
 	bar.content_margin_right = 16
 	# 3, down from 6 at V4.8a: the figures stack caption over value now, and the
 	# strip must stay above the dock's 44px DOCK_TOP (it drew 50 at 6).
 	bar.content_margin_top = 3
 	bar.content_margin_bottom = 3
-	theme.set_type_variation(TOP_BAR_PANEL, "PanelContainer")
-	theme.set_stylebox("panel", TOP_BAR_PANEL, bar)
+	_variation(theme, TOP_BAR_PANEL, bar)
+
+	# A window's grab handle: a control's surface, lighter than the sheet under it.
+	var title := _flat(CONTROL, 0)
+	title.corner_radius_top_left = R_SHEET
+	title.corner_radius_top_right = R_SHEET
+	title.content_margin_left = 12
+	title.content_margin_right = 6
+	title.content_margin_top = 5
+	title.content_margin_bottom = 5
+	_variation(theme, TITLE_BAR, title)
+
+
+static func _variation(theme: Theme, name: String, box: StyleBox) -> void:
+	theme.set_type_variation(name, "PanelContainer")
+	theme.set_stylebox("panel", name, box)
+
+
+## A borderless rounded surface, with a shadow when `elev` ([colour, offset, size]) is given.
+static func _flat(bg: Color, radius: int, elev := []) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = bg
+	box.set_corner_radius_all(radius)
+	if not elev.is_empty():
+		box.shadow_color = elev[0]
+		box.shadow_offset = elev[1]
+		box.shadow_size = elev[2]
+	return box
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE, CHIP_TEXT]:
+	for variation in [LEAD, TITLE, HEADING, MICRO, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE, CHIP_TEXT]:
 		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
@@ -355,6 +455,7 @@ static func _labels(theme: Theme) -> void:
 	var tracked := _face(WEIGHT_MEDIUM, 1)
 
 	_label(theme, LEAD, SIZE_LEAD, TEXT, bold)
+	_label(theme, TITLE, SIZE_TITLE, TEXT, bold)
 
 	# Heading and Micro are the same idea at two weights of emphasis: a tracked
 	# uppercase label naming a group. Micro is for chrome the player reads once
@@ -421,76 +522,75 @@ static func _rich(theme: Theme) -> void:
 
 
 static func _buttons(theme: Theme) -> void:
+	# G3's button: a CONTROL surface, R_TILE, no border; the label TEXT at the bold cut on
+	# every live state, because a status tone or the accent is never text on a control
+	# (the accent as text drops to 3.8:1 on a hovered control). Disabled has no fill and
+	# a LINE_STRONG outline: the fill is what reads "pressable" now, so an outline with
+	# nothing in it is the inert look (the menu's disabled Continue, playtest 2026-09-05).
+	var label := _face(WEIGHT_BOLD)
 	for type in ["Button", "OptionButton"]:
-		theme.set_stylebox("normal", type, _button_box(SLATE, EDGE))
-		theme.set_stylebox("hover", type, _button_box(SLATE.lightened(0.10), _accent))
-		theme.set_stylebox("pressed", type, _button_box(SLATE.lightened(0.16), _accent))
-		theme.set_stylebox("focus", type, _button_box(Color(0, 0, 0, 0), _accent))
-		# No border on disabled: live buttons carry EDGE, so the border is what
-		# reads "pressable" at a glance; HULL fill alone is the inert look
-		# (font_disabled_color already dims the text). The menu's disabled
-		# Continue read enabled until clicked (playtest 2026-09-05).
-		theme.set_stylebox("disabled", type, _button_box(HULL))
-		theme.set_color("font_hover_color", type, TEXT)
-		# Neutral text on the pressed fill (the accent shows on its border): the fill
-		# is SLATE lightened, lighter than the surface the accent rule judges on, and
-		# the accent's text measured 2.76:1 there.
-		theme.set_color("font_pressed_color", type, TEXT)
-		theme.set_color("font_disabled_color", type, TEXT_DIM)
+		theme.set_stylebox("normal", type, _button_box(CONTROL))
+		theme.set_stylebox("hover", type, _button_box(CONTROL_HOVER))
+		theme.set_stylebox("pressed", type, _button_box(CONTROL_PRESSED))
+		theme.set_stylebox("hover_pressed", type, _button_box(CONTROL_HOVER))
+		theme.set_stylebox("focus", type, _ring())
+		theme.set_stylebox("disabled", type, _button_box(Color(0, 0, 0, 0), LINE_STRONG))
+		for state in ["font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
+			theme.set_color(state, type, TEXT)
+		theme.set_color("font_disabled_color", type, TEXT_OFF)
+		if label != null:
+			theme.set_font("font", type, label)
 
-	# A cluster is an icon with a name under it, not a slab. Flat until it is the
-	# open one, where the accent fills the bar under it -- "one accent says where
-	# you are", the rule the rail button used, at the bottom of the screen.
+	# A cluster is an icon with a name under it, not a slab. Flat until it is the open
+	# one, where the accent fills the bar under it -- "one accent says where you are".
 	theme.set_type_variation(CLUSTER_BUTTON, "Button")  # i18n: ok
 	theme.set_stylebox("normal", CLUSTER_BUTTON, _cluster_box(Color(0, 0, 0, 0)))
-	theme.set_stylebox("hover", CLUSTER_BUTTON, _cluster_box(SLATE))
-	theme.set_stylebox("pressed", CLUSTER_BUTTON, _cluster_box(SLATE, _accent))
-	theme.set_stylebox("focus", CLUSTER_BUTTON, _cluster_box(Color(0, 0, 0, 0), _accent))
-	theme.set_color("font_color", CLUSTER_BUTTON, TEXT_DIM)
-	theme.set_color("font_hover_color", CLUSTER_BUTTON, TEXT)
-	theme.set_color("font_pressed_color", CLUSTER_BUTTON, _accent)
-	theme.set_color("font_focus_color", CLUSTER_BUTTON, TEXT)
+	theme.set_stylebox("hover", CLUSTER_BUTTON, _cluster_box(CONTROL))
+	theme.set_stylebox("pressed", CLUSTER_BUTTON, _cluster_box(CONTROL, _accent))
+	theme.set_stylebox("focus", CLUSTER_BUTTON, _ring())
+	theme.set_color("font_color", CLUSTER_BUTTON, TEXT_DIM_CHROME)
+	for state in ["font_hover_color", "font_pressed_color", "font_focus_color"]:
+		theme.set_color(state, CLUSTER_BUTTON, TEXT)
 
 	theme.set_type_variation(SUBROW_BUTTON, "Button")  # i18n: ok
 	theme.set_stylebox("normal", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0)))
-	theme.set_stylebox("hover", SUBROW_BUTTON, _button_box(SLATE))
-	theme.set_stylebox("pressed", SUBROW_BUTTON, _button_box(SLATE, _accent))
-	theme.set_stylebox("focus", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0), _accent))
+	theme.set_stylebox("hover", SUBROW_BUTTON, _button_box(CONTROL))
+	theme.set_stylebox("pressed", SUBROW_BUTTON, _button_box(CONTROL, _accent))
+	theme.set_stylebox("focus", SUBROW_BUTTON, _ring())
 	theme.set_color("font_color", SUBROW_BUTTON, TEXT_DIM)
 	theme.set_color("font_hover_color", SUBROW_BUTTON, TEXT)
-	theme.set_color("font_pressed_color", SUBROW_BUTTON, _accent)
-	# A refused answer on a card (a spent call, a Book with every day taken): it
-	# fell back to Button's HULL fill, invisible on a plate, and TEXT_DIM, this
-	# variation's own live colour -- so only the hover told it from a live one
-	# (QA's pre-gate B RECORD 8). No fill, and the text half gone.
+	theme.set_color("font_pressed_color", SUBROW_BUTTON, TEXT)
+	# A refused answer on a card (a spent call, a Book with every day taken): no fill and
+	# the text off, so it is not told from a live one by the hover alone (QA's pre-gate B
+	# RECORD 8).
 	theme.set_stylebox("disabled", SUBROW_BUTTON, _button_box(Color(0, 0, 0, 0)))
-	theme.set_color("font_disabled_color", SUBROW_BUTTON, Color(TEXT_DIM, 0.45))
+	theme.set_color("font_disabled_color", SUBROW_BUTTON, TEXT_OFF)
 
-	# The requests mark is a STATUS tone, not identity: something waits on the
-	# player, the one place WARN outlines a control (the author: "clearly visible").
+	# The requests mark: something waits on the player, the one place WARN outlines a
+	# control (the author: "clearly visible"). The words stay TEXT; the outline is the tone.
 	theme.set_type_variation(REQUESTS_BUTTON, "Button")  # i18n: ok
-	theme.set_stylebox("normal", REQUESTS_BUTTON, _button_box(SLATE, WARN))
-	theme.set_stylebox("hover", REQUESTS_BUTTON, _button_box(SLATE.lightened(0.10), WARN))
-	theme.set_stylebox("pressed", REQUESTS_BUTTON, _button_box(SLATE.lightened(0.16), WARN))
-	theme.set_stylebox("focus", REQUESTS_BUTTON, _button_box(Color(0, 0, 0, 0), WARN))
-	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
-		theme.set_color(state, REQUESTS_BUTTON, WARN)
+	theme.set_stylebox("normal", REQUESTS_BUTTON, _button_box(CONTROL, WARN))
+	theme.set_stylebox("hover", REQUESTS_BUTTON, _button_box(CONTROL_HOVER, WARN))
+	theme.set_stylebox("pressed", REQUESTS_BUTTON, _button_box(CONTROL_PRESSED, WARN))
+	theme.set_stylebox("focus", REQUESTS_BUTTON, _ring())
 
-	# G1: the chief's mark is neither identity nor status -- a raised SLATE plate on its
-	# EDGE hairline; its chip carries the tone when a line is due now.
+	# G1: the chief's mark is neither identity nor status -- a control's surface; its chip
+	# carries the tone when a line is due now.
 	theme.set_type_variation(CHIEF_MARK, "Button")  # i18n: ok
-	theme.set_stylebox("normal", CHIEF_MARK, _button_box(SLATE, EDGE))
-	theme.set_stylebox("hover", CHIEF_MARK, _button_box(SLATE.lightened(0.10), EDGE))
-	theme.set_stylebox("pressed", CHIEF_MARK, _button_box(SLATE.lightened(0.16), EDGE))
-	theme.set_stylebox("focus", CHIEF_MARK, _button_box(Color(0, 0, 0, 0), EDGE))
+	theme.set_stylebox("normal", CHIEF_MARK, _button_box(CONTROL))
+	theme.set_stylebox("hover", CHIEF_MARK, _button_box(CONTROL_HOVER))
+	theme.set_stylebox("pressed", CHIEF_MARK, _button_box(CONTROL_PRESSED))
+	theme.set_stylebox("focus", CHIEF_MARK, _ring())
 
 	# V5.2 close R4: an option ON a verb, not a verb (option_check_style.gd says why).
-	OptionCheckStyle.apply(theme, OPTION_CHECK, [_button_box(Color(0, 0, 0, 0)), _button_box(SLATE),
-		_button_box(Color(0, 0, 0, 0), _accent)], _px(SIZE_SMALL), TEXT_DIM, TEXT, WARN)
+	OptionCheckStyle.apply(theme, OPTION_CHECK, [_button_box(Color(0, 0, 0, 0)), _button_box(CONTROL),
+		_ring()], _px(SIZE_SMALL), TEXT_DIM, TEXT, WARN)
 	ControlStyle.apply(theme, {"primary": PRIMARY, "small": SMALL, "segment": SEGMENT, "chip": CHIP,
-		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD}, _button_box,
-		{"slate": SLATE, "hull": HULL, "edge": EDGE, "text": TEXT, "dim": TEXT_DIM, "good": GOOD, "warn": WARN,
-		"bad": BAD, "accent": _accent}, _px(SIZE_SMALL))
+		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD, "ghost": GHOST}, _button_box,
+		{"control": CONTROL, "hover": CONTROL_HOVER, "pressed": CONTROL_PRESSED, "line": LINE_STRONG,
+		"text": TEXT, "dim": TEXT_DIM, "off": TEXT_OFF, "good": GOOD, "warn": WARN, "bad": BAD,
+		"fill": accent_fill(), "on_fill": on_accent_fill(), "ring": _ring()},
+		_px(SIZE_SMALL), _face(WEIGHT_MEDIUM))
 
 
 ## Used for share-of-a-whole bars (Economy's sector split). The engine default
@@ -508,12 +608,11 @@ static func _progress(theme: Theme) -> void:
 	theme.set_stylebox("fill", "ProgressBar", fill)
 
 
-## Every slider (the budget's, the tax's, a fund's): the engine default draws no track
-## on graphite, so a slider read as a lone dot beside its value (the fund's frame,
-## #316). The track is EDGE, the hairline; the part behind the grabber is the accent,
-## a fill. The content margins are the bar's thickness, as for the scrollbars.
+## Every slider (the budget's, the tax's, a fund's): G3's track is 4px of LINE_STRONG,
+## round, and the part behind the grabber the accent FILL. The content margins are the
+## bar's thickness, as for the scrollbars.
 static func _sliders(theme: Theme) -> void:
-	for part in [["slider", EDGE], ["grabber_area", _accent], ["grabber_area_highlight", _accent]]:
+	for part in [["slider", LINE_STRONG], ["grabber_area", accent_fill()], ["grabber_area_highlight", accent_fill()]]:
 		var bar := StyleBoxFlat.new()
 		bar.bg_color = part[1]
 		bar.set_corner_radius_all(2)
@@ -525,7 +624,7 @@ static func _sliders(theme: Theme) -> void:
 static func _button_box(bg: Color, border := Color(0, 0, 0, 0)) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = bg
-	box.set_corner_radius_all(4)
+	box.set_corner_radius_all(R_TILE)
 	box.content_margin_left = 12
 	box.content_margin_right = 12
 	box.content_margin_top = 5
@@ -536,13 +635,25 @@ static func _button_box(bg: Color, border := Color(0, 0, 0, 0)) -> StyleBoxFlat:
 	return box
 
 
+## G3's one focus ring, everywhere: 2px of the accent, 2px outside the control, its
+## radius plus 2. The only place the accent is an outline.
+static func _ring() -> StyleBoxFlat:
+	var ring := StyleBoxFlat.new()
+	ring.draw_center = false
+	ring.set_border_width_all(2)
+	ring.border_color = _accent
+	ring.set_corner_radius_all(R_TILE + 2)
+	ring.set_expand_margin_all(2)
+	return ring
+
+
 ## A cluster's selected state is a bar of the accent along the *bottom*, on the
 ## screen edge the control is anchored to (U2's rail button put its bar on the left
 ## for the same reason).
 static func _cluster_box(bg: Color, marker := Color(0, 0, 0, 0)) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = bg
-	box.set_corner_radius_all(4)
+	box.set_corner_radius_all(R_TILE)
 	box.content_margin_left = 14
 	box.content_margin_right = 14
 	box.content_margin_top = 6

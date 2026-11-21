@@ -16,7 +16,7 @@ const Strings = preload("res://src/ui/strings.gd")
 ## figures the bar shows on its segments.
 static func build(panel, counts := {}) -> Control:
 	var plate := PanelContainer.new()
-	plate.theme_type_variation = UiTheme.PLATE
+	plate.theme_type_variation = UiTheme.POPOVER_PANEL
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_%s" % side, 12)

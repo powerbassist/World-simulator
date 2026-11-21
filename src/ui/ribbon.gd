@@ -56,7 +56,7 @@ var _chips: Array[Control] = []
 
 
 func _ready() -> void:
-	theme_type_variation = UiTheme.PLATE
+	PanelKit.pane(self)  # G3: the time bar, a glass pane of the chrome
 	custom_minimum_size = Vector2(0, STRIP_HEIGHT)
 
 	var row := HBoxContainer.new()

@@ -301,7 +301,7 @@ func _open(id: String, anchor: Rect2, level: int, held: float) -> void:
 	_truncate(level)
 	GlossaryHint.term_read = true
 	var panel := PanelContainer.new()
-	panel.theme_type_variation = UiTheme.PLATE
+	panel.theme_type_variation = UiTheme.POPOVER_PANEL
 	panel.custom_minimum_size = Vector2(WIDTH, 0)
 	panel.modulate.a = 0.0
 	var box := VBoxContainer.new()

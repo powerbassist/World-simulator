@@ -13,6 +13,7 @@ extends PanelContainer
 ## what opens -- refused under a scene, as the keys are.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const Domains = preload("res://src/ui/domains.gd")
 
@@ -33,7 +34,7 @@ var _pending: Array = []
 
 
 func _ready() -> void:
-	theme_type_variation = UiTheme.PLATE
+	PanelKit.pane(self)  # G3: a glass pane of the chrome
 	custom_minimum_size = Vector2(WIDTH, 0)
 
 	_list = VBoxContainer.new()

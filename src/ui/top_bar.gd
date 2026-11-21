@@ -106,8 +106,8 @@ var _drawn_dividers := 0
 func _ready() -> void:
 	custom_minimum_size = Vector2(0, BAR_HEIGHT)
 	# Square corners and its own padding, because this one sits flush against
-	# the window edge; every other panel takes the theme's default.
-	theme_type_variation = UiTheme.TOP_BAR_PANEL
+	# the window edge; G3's glass behind it (S1 floats it as a pane).
+	PanelKit.pane(self, UiTheme.TOP_BAR_PANEL)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 0)

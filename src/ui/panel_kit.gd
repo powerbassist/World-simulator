@@ -41,6 +41,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const TermText = preload("res://src/ui/term_text.gd")
 const MeterBar = preload("res://src/ui/meter_bar.gd")
 const Icon = preload("res://src/ui/icon.gd")
+const Frost = preload("res://src/ui/frost.gd")
 
 ## What a panel prints when it does not know. An em dash is not a small number:
 ## it says the figure is absent, where `0.00` says the figure is zero, and the
@@ -78,6 +79,18 @@ const ALIGNED_META := &"ledgers_aligned"
 ## this game -- a percentage point, a share of GDP, a poll point -- and stops
 ## the search being unbounded on a figure that really is zero.
 const DELTA_MAX_PLACES := 4
+
+## G3's button classes (g3-spec.md section 1), at text size 100 and times the text size: a
+## button is one of four widths and one of three heights, never its label's width. Layout,
+## so they live here beside sized() and _share_measure(), not in the theme.
+enum Size { S, M, L, XL }
+const BTN_W := {Size.S: 80, Size.M: 120, Size.L: 168, Size.XL: 232}
+const BTN_W_ICON := 36
+const BTN_H_ROW := 28
+const BTN_H := 36
+const BTN_H_MAIN := 44
+## The class a button was given; a group's buttons all carry the same one.
+const CLASS_META := &"button_class"
 
 
 # -- Structure ----------------------------------------------------------------
@@ -198,12 +211,77 @@ static func padded(owner: Control, margin_px: int, separation: int) -> VBoxConta
 ## A flow container's minimum width is its widest button, not the sum of them: a
 ## firm's seven actions in French were one 1302 px row, and the Companies window
 ## grew past the screen's edge to hold it (QA on #49).
+##
+## G3: the row is also a GROUP (the spec's button_group): its buttons share the class the
+## longest label needs in the language shown, re-read before every sort, so a label that
+## grows in French or at 115 % steps the whole group up a class together.
 static func buttons(parent: Control) -> HFlowContainer:
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override("h_separation", BUTTON_SEPARATION)
 	flow.add_theme_constant_override("v_separation", BUTTON_SEPARATION)
+	flow.pre_sort_children.connect(_share_class.bind(flow))
 	parent.add_child(flow)
 	return flow
+
+
+## One button of a class: its width the class's, its height BTN_H (BTN_H_MAIN for a screen's
+## one action, BTN_H_ROW inside a table row), both times the text size.
+static func button(text: String, size := Size.M, height := BTN_H) -> Button:
+	var b := Button.new()
+	b.text = text  # i18n: row-ok the caller passes shown text
+	_classed(b, size, height)
+	return sized(b)
+
+
+## The narrowest class that holds `width_px` at the text size in force; XL past it (a label
+## too long for XL is a copy problem, not a fifth class).
+static func class_for(width_px: float) -> Size:
+	for size in [Size.S, Size.M, Size.L]:
+		if width_px <= BTN_W[size] * UiTheme.text_scale():
+			return size
+	return Size.XL
+
+
+static func _classed(b: Button, size: Size, height: int) -> void:
+	b.set_meta(CLASS_META, size)
+	var want := Vector2(roundf(BTN_W[size] * UiTheme.text_scale()), roundf(height * UiTheme.text_scale()))
+	if b.custom_minimum_size != want:
+		b.custom_minimum_size = want
+
+
+static func _share_class(flow: Container) -> void:
+	var widest := 0.0
+	for child in flow.get_children():
+		if child is Button and (child as Button).visible:
+			widest = maxf(widest, (child as Button).get_minimum_size().x)  # the label's own, not the class
+	var size := class_for(widest)
+	for child in flow.get_children():
+		if child is Button:
+			_classed(child as Button, size, BTN_H)
+
+
+## G3: a SHEET -- one job, opaque, its heading in tracked capitals. Returns the body, as
+## section() does.
+static func sheet(parent: Control, title := "") -> VBoxContainer:
+	var plate := PanelContainer.new()
+	plate.theme_type_variation = UiTheme.PLATE
+	plate.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(plate)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", SECTION_SEPARATION)
+	plate.add_child(body)
+	if title != "":
+		heading(body, title)
+	return body
+
+
+## G3: dresses a chrome container as a glass pane -- the variation (UiTheme.PANE, or the
+## flush TOP_BAR_PANEL until S1 floats the strip) and the blur behind it (frost.gd). Call it
+## first in the pane's _ready(), before its content.
+static func pane(panel: PanelContainer, variation := UiTheme.PANE) -> PanelContainer:
+	panel.theme_type_variation = variation
+	panel.add_child(Frost.new())
+	return panel
 
 
 ## T5 (#400 pass 2): the rows of one stack take one width, the widest row's or the measure, so their
@@ -508,10 +586,19 @@ static func chip(parent: Control, text: String, variation := UiTheme.CHIP, glyph
 
 ## V5.3 c' (the bureau audit's item 5): a segmented control -- one choice among a few, side by
 ## side, grouped so one is down. `options` are [{id, label}] (labels already shown text);
-## `on_pick` is called with the picked id. The picked segment wears the accent outline.
+## `on_pick` is called with the picked id. The picked segment is a raised control on the ground.
 static func segmented(parent: Control, options: Array, selected: String, on_pick: Callable) -> HBoxContainer:
+	# G3: the segments sit on a tile ground, 3px inside it.
+	var ground := PanelContainer.new()
+	ground.theme_type_variation = UiTheme.TILE_PANEL
+	ground.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var inset := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		inset.add_theme_constant_override(side, 3)
+	ground.add_child(inset)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 2)
+	inset.add_child(row)
 	var group := ButtonGroup.new()
 	for o in options:
 		var b := Button.new()
@@ -524,5 +611,5 @@ static func segmented(parent: Control, options: Array, selected: String, on_pick
 		var id := String(o["id"])
 		b.pressed.connect(func() -> void: on_pick.call(id))
 		row.add_child(b)
-	parent.add_child(row)
+	parent.add_child(ground)
 	return row
