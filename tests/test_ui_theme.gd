@@ -275,11 +275,8 @@ func _check_states_distinct(theme: Theme) -> void:
 	for base in ["Button", "CheckBox"]:  # an option on a verb is a CheckBox variation
 		buttons.append_array(Array(theme.get_type_variation_list(base)))
 	for type in buttons:
-		# PICKED_FLAT draws no control under its words: a flat toggle ON is text on the sheet, where
-		# the accent as text holds AA (the parent's ruling, #439 T7) -- its ON states only.
-		var on_the_sheet: Array = ["font_pressed_color", "font_hover_pressed_color"] if type == UiTheme.PICKED_FLAT else []
 		for item in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
-			if not item in on_the_sheet and theme.has_color(item, type) and theme.get_color(item, type) in forbidden:
+			if theme.has_color(item, type) and theme.get_color(item, type) in forbidden:
 				_fail("%s: '%s' is a status tone or the accent, text on a control" % [type, item])
 
 
@@ -332,7 +329,7 @@ func _check_pressed_text_contrast(theme: Theme) -> void:
 	# hover_pressed too (#439 pass 2 T2): a toggle that is ON under the pointer -- the armed "See
 	# them", a Primary toggle -- took its base Button's graphite when its variation had none.
 	var states := {"normal": "font_color", "hover": "font_hover_color", "pressed": "font_pressed_color", "hover_pressed": "font_hover_pressed_color"}
-	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.SEGMENT, UiTheme.GHOST, UiTheme.PICKED, UiTheme.SIDEBAR_ROW]:
+	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.SEGMENT, UiTheme.GHOST, UiTheme.PICKED, UiTheme.PICKED_ROW, UiTheme.SIDEBAR_ROW]:
 		for state in states:
 			if state == "hover_pressed" and type == UiTheme.GHOST:
 				continue  # a ghost is never a toggle

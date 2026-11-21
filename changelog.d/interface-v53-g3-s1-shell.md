@@ -8,4 +8,4 @@ Fixed: Clicking a button no longer flashes it in your nation's colour; only a ch
 Fixed: The construction register and its building list fill the screen without a scroll bar.
 Fixed: An open fold or a picked firm stays readable under a yellow national colour.
 Fixed: The time bar's timeline sits level again, and the clock no longer pushes it sideways while the clock is held.
-Fixed: A picked firm's name now shows in your nation's colour.
+Fixed: A picked firm's name, and an open fold, now sit on a raised ground.

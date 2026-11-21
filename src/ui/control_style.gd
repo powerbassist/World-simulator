@@ -17,7 +17,7 @@ extends RefCounted
 
 
 ## `box` is ui_theme's _button_box (bg, border) -> StyleBoxFlat; `t` the tokens
-## {control, hover, pressed, line, text, dim, off, good, warn, bad, fill, on_fill, accent, ring};
+## {control, hover, pressed, line, text, dim, off, good, warn, bad, fill, on_fill, ring};
 ## `small_px` the caption size scaled; `medium` the 500 cut (null when the font did not load).
 static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary, small_px: int, medium: Font) -> void:
 	var fill := t["fill"] as Color
@@ -45,13 +45,18 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	theme.set_stylebox("hover", picked, box.call(t["hover"]))
 	theme.set_stylebox("pressed", picked, box.call(fill))
 	theme.set_stylebox("hover_pressed", picked, box.call(fill.darkened(0.06)))
-	# PICKED_FLAT, a flat toggle ON (a picked firm's name): no fill under it, so the accent as its
-	# text, which accent_rule holds at AA on the lightest graphite (#439 T7).
-	var flat := String(names["picked_flat"])
-	theme.set_type_variation(flat, "Button")  # i18n: ok
 	for state in ["font_pressed_color", "font_hover_pressed_color"]:
 		theme.set_color(state, picked, t["on_fill"])
-		theme.set_color(state, flat, t["accent"])
+	# PICKED_ROW, a borderless toggle (a picked name, a fold; g3-spec section 2): no ground at rest,
+	# a control's under the pointer and while ON -- "picked in a list" is a ground, never a hue
+	# (Design's ruling on #439 T7). A flat Button draws no box at all, so toggle() unflattens it.
+	var row := String(names["picked_row"])
+	theme.set_type_variation(row, "Button")  # i18n: ok
+	var row_states := {"normal": Color(0, 0, 0, 0), "hover": t["control"], "pressed": t["control"], "hover_pressed": t["hover"]}
+	for state in row_states:
+		theme.set_stylebox(state, row, box.call(row_states[state]))
+	for state in ["font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, row, t["text"])
 
 	var small := String(names["small"])
 	theme.set_type_variation(small, "Button")  # i18n: ok

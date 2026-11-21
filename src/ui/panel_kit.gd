@@ -307,12 +307,13 @@ static func pane(panel: PanelContainer) -> PanelContainer:
 ## G3 S1: a toggle -- a chip, a fold, a picked row -- wears the accent fill while ON (PICKED). A
 ## plain button held down does not (#436 RECORD, the press flash), so a toggle opts in here;
 ## test_button_sizes fails a toggle left on the plain look.
-## A FLAT toggle (a fold, a picked name) draws no fill, so ON it takes the accent as its text
-## (PICKED_FLAT): PICKED's label is the fill's own, dark under a yellow accent, and on the bare sheet
-## it vanished (#439 pass 2 T6, T7).
+## A FLAT toggle (a fold, a picked name) becomes a borderless one, PICKED_ROW: a flat Button draws
+## no box, so ON read as OFF, and PICKED's label -- the fill's own, dark under a yellow accent --
+## vanished on the bare sheet (#439 pass 2 T6, T7: Design's ruling, a ground and never a hue).
 static func toggle(button: Button) -> Button:
 	button.toggle_mode = true
-	button.theme_type_variation = UiTheme.PICKED_FLAT if button.flat else UiTheme.PICKED
+	button.theme_type_variation = UiTheme.PICKED_ROW if button.flat else UiTheme.PICKED
+	button.flat = false
 	return button
 
 

@@ -60,16 +60,22 @@ func _scan(node: Node, where: String) -> void:
 		# toggle left on the plain or small button would lose its mark (PanelKit.toggle()).
 		if button.toggle_mode and not button.flat and String(button.theme_type_variation) in ["", "Button", UiTheme.SMALL]:
 			_fail("%s: the toggle '%s' wears '%s', not PICKED: ON reads as OFF" % [where, button.text, button.theme_type_variation])
-		# A flat toggle draws no fill, so ON its label sits on the sheet: it must read there. (A row
-		# that drops flat when picked -- a law, a shelf -- is never flat while ON.)
-		if button.toggle_mode and button.flat and button.button_pressed:
-			for state in ["font_pressed_color", "font_hover_pressed_color"]:
-				var ratio := AccentRule.contrast(button.get_theme_color(state), UiTheme.SHEET)
-				if ratio < AccentRule.MIN_CONTRAST:
-					_fail("%s: the flat toggle '%s' ON reads %.2f:1 on the sheet (%s)" % [where, button.text, ratio, state])
-				# #439 T7: and ON must not read as OFF -- a picked firm's name is the only mark it has.
-				if button.get_theme_color(state).is_equal_approx(button.get_theme_color("font_color")):
-					_fail("%s: the flat toggle '%s' ON wears its OFF colour (%s)" % [where, button.text, state])
+		# #439 T6/T7 (Design's ruling): a toggle that is ON is never flat -- a flat Button draws no
+		# box, so ON read as OFF -- and a borderless one (PICKED_ROW) shows ON as a ground, with a
+		# label that reads on it under Germany's yellow accent.
+		if button.toggle_mode and button.button_pressed and button.flat:
+			_fail("%s: the toggle '%s' is ON and flat: nothing marks it" % [where, button.text])
+		if button.toggle_mode and button.button_pressed and String(button.theme_type_variation) == UiTheme.PICKED_ROW:
+			var on := button.get_theme_stylebox("pressed") as StyleBoxFlat
+			var off := button.get_theme_stylebox("normal") as StyleBoxFlat
+			if on == null or off == null or on.bg_color.is_equal_approx(off.bg_color) or on.bg_color.a < 0.5:
+				_fail("%s: the picked row '%s' has no ground of its own when ON" % [where, button.text])
+			else:
+				for state in ["font_pressed_color", "font_hover_pressed_color"]:
+					var ground: Color = on.bg_color if state == "font_pressed_color" else (button.get_theme_stylebox("hover_pressed") as StyleBoxFlat).bg_color
+					var ratio := AccentRule.contrast(button.get_theme_color(state), ground)
+					if ratio < AccentRule.MIN_CONTRAST:
+						_fail("%s: the picked row '%s' ON reads %.2f:1 on its ground (%s)" % [where, button.text, ratio, state])
 		var parent := button.get_parent()
 		if not (parent is BoxContainer and (parent as BoxContainer).vertical):
 			continue
