@@ -79,6 +79,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open sector_agriculture
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --open sector_industry
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open sector_services
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open sector_industry   (a yellow accent: the picked firm, a flat toggle)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --closure --open sector_agriculture
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
