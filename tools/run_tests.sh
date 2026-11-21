@@ -306,6 +306,7 @@ tests=(
   tests/test_bill_card.gd
   tests/test_dismiss_ui.gd
   tests/test_diary_grid.gd
+  tests/test_diary_tiles.gd
   tests/test_diary_chips.gd
   tests/test_diary_month_page.gd
   tests/test_deal_scene.gd
