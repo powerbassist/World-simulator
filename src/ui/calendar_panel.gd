@@ -492,9 +492,7 @@ func _refresh_travel_note() -> void:
 ## partner, act and travel filled in, the earliest open day offered -- and the
 ## player picks the day and books it here. Nothing is booked until they do.
 func fill_booking(action_id: String, target_id: String, windows) -> void:
-	windows.open("calendar")
-	# The form sits in the "Book an act" fold: filled out of sight, it is no landing (#434 pass 2).
-	(find_child("BookAnAct", true, false) as Button).button_pressed = true
+	Furniture.open_form(self, windows)
 	# Built now, not on the next frame's refresh: the month is picked below.
 	_refresh_months()
 	_kind_pick.selected = K.KINDS.find(K.KIND_DIPLOMATIC)

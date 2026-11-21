@@ -29,6 +29,13 @@ static func folded(parent: Control, label: String) -> VBoxContainer:
 	return box
 
 
+## The Diary open on its booking form: the form sits in the "Book an act" fold, and filled out of
+## sight it is no landing (#434 pass 2 TAKE 2).
+static func open_form(panel: Control, windows) -> void:
+	windows.open("calendar")
+	(panel.find_child("BookAnAct", true, false) as Button).button_pressed = true
+
+
 ## A counter: a figure over its caption, on a plate. Returns [figure, caption] to fill later.
 static func counter(parent: Control, node_name: String) -> Array:
 	var plate := PanelContainer.new()
