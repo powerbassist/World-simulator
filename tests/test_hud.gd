@@ -334,7 +334,7 @@ func _check_decisions_are_never_evicted() -> void:
 	stack.clear()
 
 
-## QA #45's fit take: a long answer wraps inside the 440 px dock instead of
+## QA #45's fit take: a long answer wraps inside the inbox's width instead of
 ## widening it (U5a's unwrapped row reached ~705 px in English, ~1075 in French).
 func _check_choice_row_wraps() -> void:
 	var stack = _main._hud.inbox

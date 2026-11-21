@@ -57,8 +57,10 @@ signal slid(shown: bool)
 ## Rework 2 S2: the News line pressed -- main opens the Folder's news group.
 signal news_pressed
 
-## The board's dock, beside the 1240 px workspace in the 1920 reference.
-const WIDTH := 440
+## G3 S1: 400, down from the board's 440, so the workspace beside it keeps 1 228 px at the 1920
+## reference after the panes' gaps (the Diary's month needs 1 200 at text 115; the parent's
+## call A, 2026-11-21).
+const WIDTH := 400
 ## The window manager finds the inbox here to make room beside it (G3 S1): the two are siblings
 ## under main, and neither holds the other.
 const GROUP := "inbox"
