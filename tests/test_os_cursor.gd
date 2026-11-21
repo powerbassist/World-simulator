@@ -79,6 +79,18 @@ func _check_plan() -> void:
 		_fail("a fullscreen window was not put windowed and off screen")
 	if OsCursor.quiet_plan(maxed, off) != [true, true]:
 		_fail("a maximized window was not put windowed and off screen (it ignores the position)")
+	# A capture on a secondary screen (NATION_SHOT_SCREEN): the target is that screen's corner,
+	# negative coordinates included (a monitor above the primary), and "there" needs no work.
+	var second := Vector2i(339, -1080)
+	if OsCursor.quiet_plan(win, second, second) != [false, false]:
+		_fail("a window already on the target screen needed work")
+	if OsCursor.quiet_plan(win, off, second) != [false, true]:
+		_fail("a window left off screen was not moved onto the target screen")
+	if OsCursor.quiet_plan(full, second, second) != [true, true]:
+		_fail("a fullscreen window on the target screen was not put windowed")
+	# No env (this suite): the target is off screen, so nothing changes for every other caller.
+	if OsCursor.quiet_target() != off:
+		_fail("quiet_target() moved off its default with NATION_SHOT_SCREEN unset")
 	# The QA sequence: off screen, then the menu applies the saved settings -> fullscreen.
 	var states := [[win, off], [full, Vector2i(0, 0)], [win, off]]
 	var plans: Array = []
