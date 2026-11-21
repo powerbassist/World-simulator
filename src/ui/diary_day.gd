@@ -176,19 +176,23 @@ func _label(text: String, variation: String) -> Label:
 	return label
 
 
-## The booking's beats: the appointment's accent drains to grey (Motion off: at once). The grid
-## calls it on the day it just booked, once.
-func play_fresh() -> void:
-	Motion.run(self, Motion.DRAIN_S, func(t: float) -> void:
-		drain = t
-		for card in (_lines.get_children() if _lines != null else []):
-			if card is Appointment:
-				card.drain = t
-				# The place grows into its appointment over MORPH_S, overshooting a little.
-				var grow := minf(t * Motion.DRAIN_S / Motion.MORPH_S, 1.0)
-				card.scale = Vector2.ONE * (0.9 + 0.1 * Tween.interpolate_value(0.0, 1.0, grow, 1.0, Tween.TRANS_BACK, Tween.EASE_OUT))
-				card.pivot_offset = card.size / 2.0
-				card.queue_redraw())
+## The day holds the appointment just booked (the grid starts its drain only then: the redraw
+## that disarms the grid comes before the booking lands).
+func has_fresh_card() -> bool:
+	return _lines != null and _lines.get_children().any(func(c: Node) -> bool: return c is Appointment and c.fresh)
+
+
+## The booking's beats at `t` (0 to 1, the grid's clock, which outlives a redraw of this cell):
+## the accent drains to grey, and the card grows into place over the first MORPH_S, overshooting.
+func set_drain(t: float) -> void:
+	drain = t
+	for card in (_lines.get_children() if _lines != null else []):
+		if card is Appointment:
+			card.drain = t
+			var grow := minf(t * Motion.DRAIN_S / Motion.MORPH_S, 1.0)
+			card.scale = Vector2.ONE * (0.9 + 0.1 * Tween.interpolate_value(0.0, 1.0, grow, 1.0, Tween.TRANS_BACK, Tween.EASE_OUT))
+			card.pivot_offset = card.size / 2.0
+			card.queue_redraw()
 
 
 ## A face's inner control stops the mouse by default: a press on it would never reach the cell

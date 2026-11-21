@@ -38,6 +38,7 @@ const DateText = preload("res://src/ui/date_text.gd")
 const DiaryDay = preload("res://src/ui/diary_day.gd")
 const Band = preload("res://src/ui/diary_band.gd")
 const Furniture = preload("res://src/ui/diary_furniture.gd")
+const Motion = preload("res://src/ui/motion.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const PersonCard = preload("res://src/ui/person_card.gd")
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -90,7 +91,7 @@ var armed := {}
 ## The armed person's window, read once a render: the days and why one is refused.
 var _armed_dates: Array = []
 ## G3 S2: the day just booked, {abs month, day, person id}, whose appointment drains from the
-## accent once (`played`) and keeps its check until the next booking.
+## accent once (`drain`, 0 to 1, on the grid's clock) and keeps its check until the next booking.
 var _fresh := {}
 
 
@@ -293,6 +294,7 @@ func _render() -> void:
 		cell.taken = Strings.t(String((offered[d][0]["date"] as Dictionary).get("reason", ""))) if offered.has(d) and not cell.tinted else ""  # i18n: row-ok the sim's reason, its English the msgid
 		cell.fresh = not _fresh.is_empty() and int(_fresh["at"]) == _month_abs and int(_fresh["day"]) == d
 		cell.fresh_person = String(_fresh.get("person", ""))
+		cell.drain = float(_fresh.get("drain", 0.0)) if cell.fresh else 1.0  # no grey frame before the drain
 		var texts := PackedStringArray()
 		cell.entries = entries.get(d, [])
 		for e in cell.entries:
@@ -306,9 +308,8 @@ func _render() -> void:
 		cell.picked.connect(_on_day)
 		_days.add_child(cell)
 		cell.fill()
-		if cell.fresh and not bool(_fresh.get("played", false)):
-			_fresh["played"] = true
-			cell.play_fresh()
+		if cell.fresh and not _fresh.has("drain") and cell.has_fresh_card():
+			_play_fresh()
 	var after := 1
 	while _days.get_child_count() % 7 != 0:
 		_outside(after, 1 if ym.y == 12 else ym.y + 1, after == 1)
@@ -317,6 +318,17 @@ func _render() -> void:
 	_render_list(entries.get(_selected, []), offered.get(_selected, []))
 	_armed_label.text = armed_line()
 	_armed_label.visible = _armed_label.text != ""
+
+
+## The fresh appointment's drain, on the grid's clock: a redraw mid-drain (the booking's own
+## refresh, a day turning) builds a new cell, which picks the drain up where it stands.
+func _play_fresh() -> void:
+	_fresh["drain"] = 0.0
+	Motion.run(self, Motion.DRAIN_S, func(t: float) -> void:
+		_fresh["drain"] = t
+		var cell := _days.get_node_or_null("Day_%d" % int(_fresh["day"])) if int(_fresh["at"]) == _month_abs else null
+		if cell != null:
+			cell.set_drain(t))
 
 
 ## A day out of the shown month: dated ("23 Feb" on the grid's first tile and a month's 1st), inert.

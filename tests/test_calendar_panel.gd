@@ -139,9 +139,8 @@ func _check_strip_spans_the_horizon(panel, state) -> void:
 	var months_shown := 0
 	for offset in range(K.BOOKING_HORIZON_MONTHS + 1):
 		var total: int = state.year * 12 + (state.month - 1) + offset
-		var heading := "%s %d" % [
-			panel.ClockCluster.MONTH_NAMES[total % 12], total / 12,
-		]
+		# G3 S2: the month's title is written in full ("March 2026", g3-spec.md decision 4).
+		var heading: String = preload("res://src/ui/date_text.gd").month_long_year(total % 12 + 1, total / 12)
 		panel._grid.show_month(total / 12, total % 12 + 1)
 		if panel._grid._title.text == heading:
 			months_shown += 1

@@ -14,6 +14,8 @@ extends SceneTree
 ##     a day of their window the diary holds says it is taken, with the reason;
 ##   - a booking just made is fresh: its appointment wears the check, and the accent has
 ##     drained (motion off headless: the final state at once);
+##   - with motion on, the fresh appointment's accent drains over DRAIN_S after the booking
+##     lands -- not on the redraw that disarms the grid before it (pass 1's own find);
 ##   - the people column's armed verb is the screen's main action (the accent fill), and
 ##     the file's four verbs share one button class, re-read on every redraw (RECORD H10).
 
@@ -23,6 +25,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
+const Motion = preload("res://src/ui/motion.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -55,6 +58,14 @@ func _process(_delta: float) -> bool:
 			_check_places()
 		8:
 			_check_fresh()
+			_check_outside_click()
+			_check_class_relabel()
+		12:
+			# Settled through Motion.finish (the documented read of an end state), not wall time.
+			Motion.finish(_grid)
+			var cell = _cell(int(_offered["day"]))
+			if cell == null or not is_equal_approx(float(cell.drain), 1.0):
+				_fail("the fresh appointment never finished draining: %.2f" % (float(cell.drain) if cell != null else -1.0))
 			_finish()
 			return true
 	return false
@@ -180,7 +191,8 @@ func _check_places() -> void:
 	if armed == null or String(armed.theme_type_variation) != UiTheme.PRIMARY:
 		_fail("the armed See them is not the screen's main action")
 	_check_verb_class()
-	# Book it as the click does.
+	# Book it as the click does, motion on: the drain is a beat the player must see.
+	Motion.override = 1
 	_grid._on_day(int(_offered["day"]))
 
 
@@ -212,10 +224,56 @@ func _check_fresh() -> void:
 	var cell = _cell(int(_offered["day"]))
 	if cell == null or not bool(cell.fresh):
 		_fail("the appointment just booked is not fresh")
-	elif not is_equal_approx(float(cell.drain), 1.0):
-		_fail("motion off, the fresh appointment has not drained: %.2f" % float(cell.drain))
+	elif float(cell.drain) >= 1.0:
+		_fail("two frames after the booking the accent has already gone: the drain played before the appointment existed")
 	if cell != null and String(cell.offer) != "":
 		_fail("the booked day still offers a place")
+
+
+## An out-of-month tile takes no click (the keyboard is checked above).
+func _check_outside_click() -> void:
+	var out: Control = null
+	for c in _grid._days.get_children():
+		if bool(c.get("outside")):
+			out = c
+			break
+	if out == null:
+		_fail("premise: no out-of-month tile on the shown page")
+		return
+	var hits := [0]
+	out.picked.connect(func(_d: int) -> void: hits[0] += 1)
+	for down in [true, false]:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.pressed = down
+		out._gui_input(e)
+	if hits[0] != 0:
+		_fail("a click on an out-of-month tile picked it")
+
+
+## RECORD H10: same_class re-reads the labels -- a longer one steps every button up together.
+func _check_class_relabel() -> void:
+	var box := HBoxContainer.new()
+	root.add_child(box)
+	var buttons: Array = []
+	for t in ["Go", "Call", "Ask", "No"]:
+		var b := Button.new()
+		b.text = t
+		box.add_child(b)
+		buttons.append(b)
+	PanelKit.same_class(buttons)
+	var before: float = (buttons[0] as Button).custom_minimum_size.x
+	(buttons[2] as Button).text = "A much longer answer than any class S holds"
+	PanelKit.same_class(buttons)
+	for b in buttons:
+		if (b as Button).custom_minimum_size.x <= before:
+			_fail("a longer label did not step the whole group up a class")
+			break
+	(buttons[2] as Button).text = "Ask"
+	PanelKit.same_class(buttons)
+	if not is_equal_approx((buttons[0] as Button).custom_minimum_size.x, before):
+		_fail("the group did not step back down when the long label went")
+	box.queue_free()
 
 
 func _cell(day: int):
@@ -232,6 +290,7 @@ func _fail(message: String) -> void:
 
 
 func _finish() -> void:
+	Motion.override = -1
 	if _failures.is_empty():
 		print("test_diary_tiles: all checks passed")
 		quit(0)
