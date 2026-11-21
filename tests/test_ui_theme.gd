@@ -269,6 +269,12 @@ func _check_states_distinct(theme: Theme) -> void:
 		var on_hover := _state_box(theme, "hover_pressed", type)
 		if not theme.has_stylebox("hover_pressed", type) or on_hover.bg_color == UiTheme.accent_fill() or on_hover.border_color != UiTheme.accent():
 			_fail("%s: an ON entry under the pointer does not keep its own accent edge" % type)
+	# A borderless toggle's four grounds are four steps (#439 T3b): a hovered row never looks picked.
+	var grounds: Array = []
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
+		grounds.append((theme.get_stylebox(state, UiTheme.PICKED_ROW) as StyleBoxFlat).bg_color)
+	if grounds[0].a > 0.0 or grounds[1] != UiTheme.TILE or grounds[2] != UiTheme.CONTROL or grounds[3] != UiTheme.CONTROL_HOVER:
+		_fail("PickedRow's grounds are %s, not none / TILE / CONTROL / CONTROL_HOVER" % str(grounds))
 	# A status tone or the accent is never the colour of text on a control (G3), in any state.
 	var forbidden := [UiTheme.GOOD, UiTheme.BAD, UiTheme.WARN, UiTheme.accent()]
 	var buttons: Array = ["Button", "OptionButton", "CheckBox"]
