@@ -171,7 +171,15 @@ func _check_hold_locks() -> void:
 		_fail("an unlocked plate does not pass the mouse through")
 	if _tip.plate_text(1).contains(Glossary.body("approval").left(30)):
 		_fail("an unlocked plate shows the body")
-	_tip.tick(GlossaryTip.LOCK_HOLD_S - GlossaryTip.OPEN_DELAY_S)
+	# Just before the lock the hold bar is near full: it must fit the plate's content, not
+	# the plate plus a fixed margin (#436 pass 2: 344 px in a 334 px column widened the tip).
+	_tip.tick(GlossaryTip.LOCK_HOLD_S - GlossaryTip.OPEN_DELAY_S - 0.02)
+	var plate: Control = _tip.plate(1)
+	var bar: Control = _tip._plates[0]["fill"]
+	var content := plate.size.x - plate.get_theme_stylebox("panel").get_minimum_size().x
+	if bar != null and bar.custom_minimum_size.x > content + 0.5:
+		_fail("the hold bar is %.0f px in a %.0f px plate content" % [bar.custom_minimum_size.x, content])
+	_tip.tick(0.02)
 	if not _tip.is_locked(1):
 		_fail("holding still %.1f s on a term did not lock its plate" % GlossaryTip.LOCK_HOLD_S)
 

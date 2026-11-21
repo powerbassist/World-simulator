@@ -186,6 +186,11 @@ func _check_grammar(theme: Theme) -> void:
 		_fail("the pane lost its rim or its R_PANE corners")
 	elif pane.bg_color != (UiTheme.PANE_TINT if UiTheme.glass() else UiTheme.PANE_SOLID):
 		_fail("the pane's ground is %s, not the tint Glass asks for" % pane.bg_color)
+	# S0's docked chrome: square and shadowless, so no corner shows raw map and no shadow
+	# falls on the workspace (#436 pass 2).
+	var docked := theme.get_stylebox("panel", UiTheme.PANE_DOCKED) as StyleBoxFlat
+	if docked == null or docked.corner_radius_top_left != 0 or docked.shadow_size != 0 or docked.border_color != UiTheme.PANE_RIM:
+		_fail("the docked pane is not square, shadowless and rimmed")
 	var popover := theme.get_stylebox("panel", UiTheme.POPOVER_PANEL) as StyleBoxFlat
 	if popover == null or popover.bg_color.a < 1.0:
 		_fail("a popover is not opaque: it would need a second copy of the screen")
@@ -233,6 +238,21 @@ func _check_states_distinct(theme: Theme) -> void:
 	for type in ["Button", "OptionButton", UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.GHOST]:
 		if not _distinct(_state_box(theme, "normal", type), _state_box(theme, "disabled", type)):
 			_fail("%s: disabled looks like normal, so a refused action reads live" % type)
+	# QA on #436: a list entry that is ON keeps ITS mark under the pointer -- the accent edge
+	# on its own control -- rather than falling back to a plain Button's filled pick.
+	for type in [UiTheme.SUBROW_BUTTON, UiTheme.CLUSTER_BUTTON]:
+		var on_hover := _state_box(theme, "hover_pressed", type)
+		if not theme.has_stylebox("hover_pressed", type) or on_hover.bg_color == UiTheme.accent_fill() or on_hover.border_color != UiTheme.accent():
+			_fail("%s: an ON entry under the pointer does not keep its own accent edge" % type)
+	# A status tone or the accent is never the colour of text on a control (G3), in any state.
+	var forbidden := [UiTheme.GOOD, UiTheme.BAD, UiTheme.WARN, UiTheme.accent()]
+	var buttons: Array = ["Button", "OptionButton", "CheckBox"]
+	for base in ["Button", "CheckBox"]:  # an option on a verb is a CheckBox variation
+		buttons.append_array(Array(theme.get_type_variation_list(base)))
+	for type in buttons:
+		for item in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
+			if theme.has_color(item, type) and theme.get_color(item, type) in forbidden:
+				_fail("%s: '%s' is a status tone or the accent, text on a control" % [type, item])
 
 
 func _state_box(theme: Theme, state: String, type: String) -> StyleBoxFlat:

@@ -92,6 +92,11 @@ func _build_button_group() -> void:
 	entry.text = "Health"  # i18n: ok a test label
 	entry.theme_type_variation = UiTheme.SUBROW_BUTTON
 	_group.add_child(entry)
+	var chip := Button.new()
+	chip.text = "On"  # i18n: ok a test label
+	chip.toggle_mode = true
+	_group.add_child(chip)
+	_group.add_child(PanelKit.button("Sign the decree", PanelKit.Size.L, PanelKit.BTN_H_MAIN))
 	var tall := Button.new()
 	tall.text = "Sign"  # i18n: ok a test label
 	tall.custom_minimum_size = Vector2(0, 60)
@@ -118,7 +123,12 @@ func _check_button_classes() -> void:
 	# Review pass 1: the group classes worded verbs only, and over a caller's own size.
 	if (_group.get_child(2) as Button).custom_minimum_size != Vector2.ZERO:
 		_fail("the group re-sized a sub-row entry, which is a list item and not a verb")
-	if (_group.get_child(3) as Button).custom_minimum_size.y != 60.0:
+	if (_group.get_child(3) as Button).custom_minimum_size != Vector2.ZERO:
+		_fail("the group gave a toggle chip a width class; a chip keeps its label's width")
+	var own := _group.get_child(4) as Button
+	if own.custom_minimum_size.x < PanelKit.BTN_W[PanelKit.Size.L] or own.custom_minimum_size.y != PanelKit.BTN_H_MAIN:
+		_fail("a PanelKit.button lost its own class (L, BTN_H_MAIN) inside a group: %s" % own.custom_minimum_size)
+	if (_group.get_child(5) as Button).custom_minimum_size.y != 60.0:
 		_fail("the group wiped a height the caller set")
 	if not PanelKit.BTN_W.values().has(int(short.custom_minimum_size.x)):
 		_fail("a group button's width %.0f is not one of the four classes" % short.custom_minimum_size.x)

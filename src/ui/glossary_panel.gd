@@ -1,6 +1,7 @@
 extends PanelContainer
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 const TermText = preload("res://src/ui/term_text.gd")
 const Glossary = preload("res://src/ui/glossary.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -139,6 +140,9 @@ func _refresh() -> void:
 			current = letter
 			_headings[letter] = PanelKit.heading(_body, letter)
 			var jump := Button.new()
+			# A jump key is navigation, not a verb: the tight caption look at its letter's
+			# width, outside the group's width classes (G3 QA on #436: 80 px boxes on two rows).
+			jump.theme_type_variation = UiTheme.SMALL
 			jump.text = letter
 			jump.pressed.connect(_jump.bind(letter))
 			_bar.add_child(jump)

@@ -293,6 +293,19 @@ func _check_settings() -> void:
 	if reloaded._glass_button.selected != 0:
 		_fail("Glass off did not survive a reload")
 	reloaded.queue_free()
+	# Glass alone changed, the text size as it is: it still reaches the theme, and the picker
+	# shows On when the file says on (Hugo's mutants on #436).
+	panel._glass_button.select(1)
+	panel._save_and_apply()
+	if not UiTheme.glass():
+		_fail("turning Glass back on alone did not reach the theme")
+	var again = SettingsPanel.new()
+	root.add_child(again)
+	if again._glass_button.selected != 1:
+		_fail("the Glass picker shows Off when the file says on")
+	again.queue_free()
+	panel._glass_button.select(0)
+	panel._save_and_apply()
 	# The next launch reads it before the first theme (apply_saved), as the text size.
 	UiTheme.set_glass(true)
 	SettingsPanel.apply_saved(root)
