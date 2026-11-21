@@ -7,8 +7,9 @@ extends SceneTree
 ##   - every register entry and fixed date within the horizon has a mark on its
 ##     day (100 %), and so do a commitment's due date and a waiting request's last
 ##     day to answer;
-##   - a day a waiting request offers is tinted, and its day list books it ("Book
-##     here", a real press and release frames apart);
+##   - the request's See them (the month page, picture A) arms it: every free day of its
+##     window is tinted and a click on one books that day (a real press and release
+##     frames apart, a pixel of jitter between);
 ##   - today is marked; paging stops at both ends of the horizon.
 
 const Calendar = preload("res://src/sim/calendar.gd")
@@ -36,6 +37,7 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		3:
 			_stage()
+			preload("res://src/ui/audience_driver.gd").refresh(_main)
 			_main._windows.open("calendar")
 		6:
 			_grid = _main._calendar_panel.find_child("DiaryGrid", true, false)
@@ -49,15 +51,21 @@ func _process(_delta: float) -> bool:
 			_check_month_turn()
 			_check_travel_days()
 			_grid.show_month(int(_offered["year"]), int(_offered["month"]))
+			if _cell(int(_offered["day"])) != null and bool(_cell(int(_offered["day"])).tinted):
+				_fail("a day is tinted with no request armed")
+			var see := _main._calendar_panel.find_child("See_%s" % _request, true, false) as Button
+			if see == null:
+				_fail("the request has no See them on the month page")
+				_finish()
+				return true
+			see.pressed.emit()
+			_grid.show_month(int(_offered["year"]), int(_offered["month"]))
 		8:
 			var cell := _cell(int(_offered["day"]))
 			if cell == null or not bool(cell.tinted):
-				_fail("the day a waiting request offers is not tinted")
+				_fail("a free day of the armed request's window is not tinted")
 				_finish()
 				return true
-			# The chips (step 6) book on their own click: this is a click on the day itself.
-			for child in cell.get_children():
-				child.visible = false
 			_target = cell
 			_press(true)
 		9:
@@ -67,23 +75,18 @@ func _process(_delta: float) -> bool:
 		11:
 			_press(false)
 		14:
-			_target = _grid.day_list.find_child("BookHere*", true, false) as Control
-			if _target == null or not _target.is_visible_in_tree():
-				_fail("the offered day's list has no Book here")
-				_finish()
-				return true
-			_press(true)
-		17:
-			_press(false)
-		20:
 			var row := Audiences.request(_main._state.player(), _request)
 			if String(row.get("status", "")) != AK.STATUS_BOOKED:
-				_fail("Book here did not book the audience: %s" % String(row.get("status", "")))
+				_fail("the click on a free day did not book the audience: %s" % String(row.get("status", "")))
+			elif int(row["date"]["day"]) != int(_offered["day"]) or int(row["date"]["month"]) != int(_offered["month"]):
+				_fail("the click booked %s, not the day clicked %s" % [row["date"], _offered])
+			if not _grid.armed.is_empty():
+				_fail("the grid stayed armed after the booking")
 			# QA's TAKE 2 on #153: days pass with the Diary open; today's ring follows.
 			_grid.show_month(int(_main._state.year), int(_main._state.month))
 			for i in 5:
 				_main._clock.advance_one_day()
-		22:
+		16:
 			var today := _cell(int(_main._state.day))
 			if today == null or not bool(today.today):
 				_fail("five days on with the Diary open, today's ring is not on day %d" % int(_main._state.day))
@@ -151,7 +154,7 @@ func _check_marks() -> void:
 			continue
 		_grid.show_month(y, mo)
 		var cell := _cell(int(parts[2]))
-		var marks: int = cell.marks.size() if cell != null else 0
+		var marks: int = cell.entries.size() if cell != null else 0
 		if marks < int(want[key]):
 			_fail("%s carries %d marks, %d entries fall on it" % [key, marks, want[key]])
 		seen += 1
@@ -200,12 +203,50 @@ func _check_travel_days() -> void:
 	var at := _month(4)
 	var visit := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), 14, "state_visit", "DEU", "", "", "", "", 2)
 	state.appointments.append(visit)
+	# Pass 1 on #434: an appointment the day after the trip ends is not on its band.
+	var after := Calendar.make_entry(K.KIND_RESHUFFLE, int(at["year"]), int(at["month"]), 17, "", "", "", "interior", "")
+	state.appointments.append(after)
 	_main._calendar_panel._refresh()
 	_grid.show_month(int(at["year"]), int(at["month"]))
-	for d in [12, 13, 15, 16]:
+	# One band across the trip (the parent, 2026-11-21): the journey's days and the meeting, the
+	# host named once on the run's first day (and again where a Monday starts a new row).
+	for d in [12, 13, 14, 15, 16]:
 		var cell := _cell(d)
-		if cell == null or cell.marks.is_empty():
-			_fail("the visit's travel day %d carries no mark" % d)
+		if cell == null or not bool(cell.band):
+			_fail("the visit's day %d is not on its band" % d)
+	var host := String(_main._loader.nations["DEU"].nation_name)
+	if _cell(12) == null or String(_cell(12).band_label) != host:
+		_fail("the band's first day reads '%s', not the host '%s'" % [_cell(12).band_label if _cell(12) != null else "", host])
+	for d in [13, 14, 15, 16]:
+		if _cell(d) != null and String(_cell(d).band_label) != "" and _grid._days.get_children().find(_cell(d)) % 7 != 0:
+			_fail("the band repeats its label on day %d, mid-row" % d)
+	if _cell(17) != null and bool(_cell(17).band):
+		_fail("the appointment the day after the trip joined its band")
+	state.appointments.erase(after)
+	# Pass 2 TAKE 10: a second trip back to back (out on day 17, the day after the first ends) is
+	# its own band, its own host named -- not one band under the last host's name.
+	var next_visit := Calendar.make_entry(K.KIND_DIPLOMATIC, int(at["year"]), int(at["month"]), 19, "state_visit", "ITA", "", "", "", "", 2)
+	state.appointments.append(next_visit)
+	_main._calendar_panel._refresh()
+	_grid.show_month(int(at["year"]), int(at["month"]))
+	if _cell(12) == null or String(_cell(12).band_label) != host:
+		_fail("back to back, the first trip's band reads '%s', not '%s'" % [_cell(12).band_label if _cell(12) != null else "", host])
+	var second := String(_main._loader.nations["ITA"].nation_name)
+	if _cell(17) == null or String(_cell(17).band_label) != second:
+		_fail("back to back, the second trip's first day reads '%s', not '%s'" % [_cell(17).band_label if _cell(17) != null else "", second])
+	# Pass 2 TAKE 9: the "next" counter's caption is the entry's short words, as a cell's are --
+	# the full line in a label that does not wrap widened the grid.
+	var today := int(state.year) * 10000 + int(state.month) * 100 + int(state.day)
+	var soonest := {}
+	for e in _grid._items:
+		var when := int(e["year"]) * 10000 + int(e["month"]) * 100 + int(e["day"])
+		if String(e["mark"]) == "booking" and when > today and (soonest.is_empty() or when < int(soonest["at"])):
+			soonest = e.merged({"at": when})
+	if soonest.is_empty() or not soonest.has("short"):
+		_fail("premise: no booking ahead with short words")
+	elif String(_grid._next[1].text) != String(soonest["short"]):
+		_fail("the next counter's caption reads '%s', not the entry's short '%s'" % [_grid._next[1].text, soonest["short"]])
+	state.appointments.erase(next_visit)
 	state.appointments.erase(visit)
 	_main._calendar_panel._refresh()
 

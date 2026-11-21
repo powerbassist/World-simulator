@@ -163,7 +163,7 @@ func _arrive(i: int) -> Control:
 	return card.find_children("*", "Label", true, false)[0]
 
 
-## With the Diary on the request's days: the picked day's "Book here" for it, its
+## With the Diary on the request's days: the picked free day of its window, its
 ## card's Days pressed again, or the workspace's "Back to the map", which closes the
 ## Diary under it.
 func _picker_button(how: String) -> Control:
@@ -176,11 +176,12 @@ func _picker_button(how: String) -> Control:
 				return b
 		_fail("the workspace has no Back to the map")
 		return null
-	var who: String = _main._loader.person_name(String(Audiences.request(_main._state.player(), _request_id)["person_id"]))
-	for b in _main._calendar_panel._grid.day_list.find_children("BookHere*", "Button", true, false):
-		if (b as Button).text.contains(who) and not (b as Button).disabled and not b.is_queued_for_deletion():
-			return b
-	_fail("premise: the picked day offers no free Book here for %s" % who)
+	# The month page: the picked day is the request's first free one, and its click books it.
+	var grid = _main._calendar_panel._grid
+	var day := grid._days.get_node_or_null("Day_%d" % int(grid._selected)) as Control
+	if day != null and bool(day.tinted) and not day.is_queued_for_deletion():
+		return day
+	_fail("premise: the picked day is not a free day of the request's window")
 	return null
 
 

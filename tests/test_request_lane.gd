@@ -32,7 +32,6 @@ var _lane: RequestLane
 var _asked := []
 var _booked := []
 var _target: Button
-signal booked_probe(id: String, date: Dictionary)
 
 
 func _init() -> void:
@@ -144,26 +143,9 @@ func _check_lapse_price_is_the_sims() -> void:
 	ns.audience_requests.erase(request)
 
 
-## The chips the grid puts on an offered day (the column's cards went there, step 6).
+## B6: a call since the request came is said on its card; none says nothing (the grid's chips
+## left with the month page: diary_people.gd's cards, tests/test_diary_month_page.gd).
 func _check_booking() -> void:
-	var free := {"year": 2026, "month": 2, "day": 10, "free": true, "reason": ""}
-	var taken := {"year": 2026, "month": 2, "day": 10, "free": false, "reason": "This day is taken."}
-	var cell = preload("res://src/ui/diary_day.gd").new()
-	_main.add_child(cell)
-	var rows := {"req_1": _rows(true)[0], "req_2": _rows(true)[1]}
-	var heard := []
-	booked_probe.connect(func(id: String, date: Dictionary) -> void: heard.append([id, date]))
-	cell.show_chips([{"id": "req_2", "person_id": "", "person": "B", "date": free}, {"id": "req_1", "person_id": "", "person": "A", "date": taken}], rows, booked_probe)
-	var open: Button = cell.find_child("Chip_req_2", true, false)
-	var refused: Button = cell.find_child("Chip_req_1", true, false)
-	if open == null or refused == null:
-		_fail("a day does not carry one chip per offering request")
-		return
-	if open.disabled or not refused.disabled or not refused.tooltip_text.contains("taken"):
-		_fail("a chip's state does not follow its day: free %s, refused %s '%s'" % [not open.disabled, refused.disabled, refused.tooltip_text])
-	open.pressed.emit()
-	if heard != [["req_2", free]]:
-		_fail("the chip booked %s" % [heard])
 	# B6: a call since the request came is said on its card; none says nothing.
 	var called: Dictionary = _rows(true)[0].duplicate()
 	called["called"] = 24316

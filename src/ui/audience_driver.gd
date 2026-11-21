@@ -29,6 +29,7 @@ const President = preload("res://src/sim/president.gd")
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
 const PartyChip = preload("res://src/ui/party_chip.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
+const MonthPage = preload("res://src/ui/diary_month_page.gd")
 
 const WINDOW := "audience"
 
@@ -54,7 +55,8 @@ static func register(main) -> void:
 	var game := {"lane": lane, "scene": scene, "session": {}, "answered": {}, "promises": promises,
 		"slowed_for": {}, "resume_speed": 0, "booking_for": ""}
 	_games[main.get_instance_id()] = game
-	lane.book_requested.connect(func(id: String) -> void: _open_booking(main, id))
+	# The Go hands the keyboard a day only from the keys, as the column's See them (the #427 ruling).
+	lane.book_requested.connect(func(id: String) -> void: _open_booking(main, id, main._calendar_panel.people.by_keys))
 	lane.seen.connect(func(id: String) -> void: _seen(main, id))
 	lane.delegate_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
 	lane.decline_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))
@@ -70,6 +72,9 @@ static func register(main) -> void:
 		_answer(main, id, result)
 		_seen(main, id)
 	main._calendar_panel._grid.booked.connect(book)
+	MonthPage.wire(main, game, func(id: String, keys: bool) -> void: _open_booking(main, id, keys),
+		func(id: String, result: Dictionary) -> void: _answer(main, id, result), func() -> void: refresh(main),
+		func(id: String) -> void: _seen(main, id))
 	# Rework 1: the People roster's See books the same way, on the request's first free day.
 	main._people_panel.see_requested.connect(book)
 	main._people_panel.reassigned.connect(func(before: Dictionary, title: String) -> void: main._queue_effect(title, before))
@@ -80,7 +85,12 @@ static func register(main) -> void:
 	# A Go left without a day -- the Diary closed under it -- ends the player's action
 	# as surely as a booking does.
 	main._windows.closed.connect(func(id: String) -> void:
-		if id == "calendar" and String(game["booking_for"]) != "":
+		if id != "calendar":
+			return
+		# A summons armed has no booking_for: it lets go with the Diary too (pass 2 TAKE 5).
+		if not main._calendar_panel._grid.armed.is_empty():
+			main._calendar_panel._grid.arm({})
+		if String(game["booking_for"]) != "":
 			var was := String(game["booking_for"])
 			game["booking_for"] = ""
 			_seen(main, was)
@@ -112,6 +122,28 @@ static func register(main) -> void:
 	main._calendar_panel._grid.call_requested.connect(func(pid: String) -> void:
 		PhoneDriver.open_call(main, pid, AudienceTalks.gossip_people(main, pid)))
 	main._hud.title_bar.requests_pressed.connect(func() -> void: open_oldest(main))
+	# The month page counts the days left: it follows the day, and opens current. DEFERRED: main
+	# mirrors the clock's day into the state on the same signal, connected after this one; at a
+	# month's close the state still holds the old month's last day until the 1st arrives (QA play).
+	main._clock.day_advanced.connect(func(_y: int, _m: int, _d: int) -> void: _month_page(main), CONNECT_DEFERRED)
+	main._windows.opened.connect(func(id: String) -> void:
+		if id == "calendar":
+			_month_page(main))
+	# A new game's Diary has its people and its cap before the first month closes (QA play).
+	refresh(main)
+
+
+## The month page alone, redrawn off the register (the lane's inbox cards keep their place). Not
+## while the pointer is on the column: a redraw would drop a click mid-press.
+static func _month_page(main) -> void:
+	var people: Control = main._calendar_panel.people
+	var hovered: Control = people.get_viewport().gui_get_hovered_control() if people.get_viewport() != null else null
+	if main._state == null or not people.is_visible_in_tree() or (hovered != null and people.is_ancestor_of(hovered)):
+		return
+	var rows: Array = []
+	for request in Audiences.pending(main._state.player()):
+		rows.append(row_of(main, request))
+	MonthPage.show(main, rows)
 
 
 static func lane_of(main) -> RequestLane:
@@ -145,7 +177,7 @@ static func refresh(main) -> void:
 	if not live.has(String(game["booking_for"])):
 		game["booking_for"] = ""
 	game["lane"].show_requests(rows)
-	main._calendar_panel._grid.set_requests(rows)
+	MonthPage.show(main, rows)
 	main._calendar_panel.booking.request = String(game["booking_for"])
 	main._hud.title_bar.set_requests(Audiences.waiting_count(ns))
 	game["promises"].show_rows(given_lines(main), judged_rows(main))
@@ -360,6 +392,9 @@ static func after_load(main) -> void:
 		game["slowed_for"] = {}
 		game["resume_speed"] = 0
 		game["booking_for"] = ""
+		# Armed in the game left behind, a summons would book in the loaded one (pass 2 TAKE 5).
+		# No arm(): its redraw would read the old game; the load's own redraw follows.
+		main._calendar_panel._grid.armed = {}
 	PhoneDriver.after_load(main)
 	refresh(main)
 
@@ -369,16 +404,18 @@ static func _leave(main, game: Dictionary) -> void:
 		refresh(main)
 
 
-static func _open_booking(main, request_id: String) -> void:
+static func _open_booking(main, request_id: String, keys := true) -> void:
 	var ns = main._state.player()
 	var request := Audiences.request(ns, request_id)
 	if request.is_empty():
 		return
 	_games[main.get_instance_id()]["booking_for"] = request_id
 	main._windows.open("calendar")
+	main._calendar_panel._grid.arm({"id": request_id, "person_id": String(request["person_id"]),
+		"person": main._loader.person_name(String(request["person_id"])), "summons": false})
 	main._calendar_panel.booking.show_days(Audiences.offered_dates(main._state, ns, request_id), main._state, main._loader)
 	refresh(main)
-	main._calendar_panel.booking.focus(request_id)
+	main._calendar_panel.booking.focus(request_id, keys)
 
 
 static func _answer(main, request_id: String, result: Dictionary) -> void:

@@ -178,6 +178,9 @@ static func decline(state, ns, loader, request_id: String) -> Dictionary:
 		return {"ok": false, "error": "this request is no longer waiting"}
 	_unbook(state, row)
 	if K.is_summons(row):  # cancelling one's own summons: free, the day back
+		# The parent's R-432-cancel ruling: called off before it is held, it gives back both stamps
+		# (the month's one summons and the person's months) -- one key holds both. A no-show keeps them.
+		ns.audience_summoned_month.erase(String(row["person_id"]))
 		_close(row, K.STATUS_CANCELLED, _now(state))
 		return {"ok": true, "error": "", "price": {}}
 	var price := _price(state, ns, loader, row, 1.0, K.DECLINE_RAPPORT, true)

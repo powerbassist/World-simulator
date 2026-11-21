@@ -38,6 +38,9 @@ const DateText = preload("res://src/ui/date_text.gd")
 const VisitBooking = preload("res://src/ui/visit_booking.gd")
 const DiaryBooking = preload("res://src/ui/diary_booking.gd")
 const DiaryGrid = preload("res://src/ui/diary_grid.gd")
+const DiaryPeople = preload("res://src/ui/diary_people.gd")
+const DiaryLabels = preload("res://src/ui/diary_labels.gd")
+const Furniture = preload("res://src/ui/diary_furniture.gd")
 
 signal closed
 
@@ -49,30 +52,12 @@ signal diary_changed
 ## V5.3 b, step 6: a request's Go: its day picked, the keyboard on it.
 var booking := DiaryBooking.new()
 var _grid := DiaryGrid.new()
+## The month page's people column (picture A): audience_driver.gd feeds and wires it.
+var people := DiaryPeople.new()
 
-## What each fixed-date kind is called on screen. Presentation, so it lives here
-## rather than in calendar_constants.gd — src/sim/ names the kind, the panel says
-## it in English.
-const FIXED_LABEL := {
-	K.FIXED_ELECTION: "Legislative election",  # i18n: msgid
-	K.FIXED_EP_ELECTION: "European election",  # i18n: msgid
-	K.FIXED_EXECUTIVE: "Presidential election",  # i18n: msgid
-	K.FIXED_HEAD_OF_STATE: "Head of state's term ends",  # i18n: msgid
-	K.FIXED_COUNCIL_PROPOSAL: "Council proposes",  # i18n: msgid
-	K.FIXED_COUNCIL_VOTE: "Council votes",  # i18n: msgid
-	K.FIXED_COUNCIL_RATIFICATION: "Ratification deadline",  # i18n: msgid
-	K.FIXED_DISSOLUTION: "Dissolution available again",  # i18n: msgid
-	K.FIXED_COOLDOWN: "Available again",  # i18n: msgid
-	K.FIXED_PROJECT: "Opens",  # i18n: msgid
-	K.FIXED_REFERENDUM: "Referendum",  # i18n: msgid
-	K.FIXED_EVENT: "Deadline",  # i18n: msgid -- one word on the Diary (RF6)
-}
-
-const KIND_LABEL := {
-	K.KIND_DIPLOMATIC: "Diplomatic act",  # i18n: msgid
-	K.KIND_LAW: "Propose a law",  # i18n: msgid
-	K.KIND_RESHUFFLE: "Reshuffle a portfolio",  # i18n: msgid
-}
+## What each fixed-date kind and each bookable kind is called on screen (diary_labels.gd).
+const FIXED_LABEL = DiaryLabels.FIXED_LABEL
+const KIND_LABEL = DiaryLabels.KIND_LABEL
 
 var _state
 var _loader
@@ -101,8 +86,16 @@ func _ready() -> void:
 	# (tab_page.gd wanted_height), and the page scrolls past that with its fold mark.
 	custom_minimum_size = Vector2(520, 0)
 
-	var root := PanelKit.padded(self, 16, 10)
-
+	var page := HBoxContainer.new()
+	page.add_theme_constant_override("separation", 16)
+	PanelKit.padded(self, 16, 10).add_child(page)
+	# The month page (picture A): the grid and everything under it on the left, the people who
+	# want to see the president, and his own reach, on the right.
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 10)
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	page.add_child(root)
+	page.add_child(people)
 
 	# Outside the scroll, and that is the point. A new game's next twelve months
 	# are empty -- the nearest dated event is sixteen months out -- so the one
@@ -131,9 +124,10 @@ func _ready() -> void:
 	scroll.add_child(_body)
 	_body.add_child(_grid.day_list)
 
-	root.add_child(HSeparator.new())
 	root.add_child(_grid.promise_slot)
-	_build_form(root)
+	# The month page has no form under its grid (picture A; the parent's ruling, 2026-11-21): a
+	# visit, a law or a reshuffle is booked behind one button that opens the same form.
+	_build_form(Furniture.folded(root, tr("Book an act")))
 
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
@@ -273,7 +267,7 @@ func _refresh_strip() -> void:
 		var live: bool = booking and Calendar.can_cancel(row)
 		items.append({"year": int(row["year"]), "month": int(row["month"]), "day": int(row.get("day", 1)),
 			"text": _booking_text(row) if booking else _fixed_text(row), "mark": "booking" if booking else "fixed",
-			"cancel": Calendar.verb_key(row) if live else ""})
+			"cancel": Calendar.verb_key(row) if live else "", "person": String(row.get("target_id", "")) if String(row.get("kind", "")) == K.KIND_AUDIENCE else "", "short": DiaryLabels.short(row, _loader)})
 	_grid.show_items(_state, _loader, items)
 
 	_refresh_later()
@@ -498,7 +492,7 @@ func _refresh_travel_note() -> void:
 ## partner, act and travel filled in, the earliest open day offered -- and the
 ## player picks the day and books it here. Nothing is booked until they do.
 func fill_booking(action_id: String, target_id: String, windows) -> void:
-	windows.open("calendar")
+	Furniture.open_form(self, windows)
 	# Built now, not on the next frame's refresh: the month is picked below.
 	_refresh_months()
 	_kind_pick.selected = K.KINDS.find(K.KIND_DIPLOMATIC)
