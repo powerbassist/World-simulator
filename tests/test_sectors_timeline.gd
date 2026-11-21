@@ -58,6 +58,7 @@ func _process(_delta: float) -> bool:
 			var row := Processes.live(_main._state.player(), _stake)
 			if String(row.get("answer", "")) != "accept":
 				_fail("Accept pressed in the side sheet did not reach the sim: %s" % row.get("answer", "none"))
+			_check_choose_order()
 			_finish()
 	return false
 
@@ -178,6 +179,28 @@ func _check_picked_closure() -> void:
 	var plate = _node_with_meta("timeline_row", "closure|%s" % _closing_id())
 	if plate == null or not plate is PanelContainer:
 		_fail("the picked row does not sit on a tile")
+
+
+## The side sheet's row: the player's pick, then a waiting row, then the row last answered
+## (it stays once it stops waiting), then the first.
+func _check_choose_order() -> void:
+	var held: Array = [_panel._pick, _panel._held, _panel._open_firm]
+	_panel._pick = ""
+	_panel._open_firm = ""
+	_panel._held = "c"
+	var rows := [{"key": "a", "company_id": "", "waits": false}, {"key": "b", "company_id": "", "waits": true},
+		{"key": "c", "company_id": "", "waits": false}]
+	if String(_panel._choose(rows)["key"]) != "b":
+		_fail("choose: a waiting row did not come before the one answered")
+	rows[1]["waits"] = false
+	if String(_panel._choose(rows)["key"]) != "c":
+		_fail("choose: the row answered did not stay on the sheet once it stopped waiting")
+	_panel._pick = "a"
+	if String(_panel._choose(rows)["key"]) != "a":
+		_fail("choose: the player's pick did not come first")
+	_panel._pick = held[0]
+	_panel._held = held[1]
+	_panel._open_firm = held[2]
 
 
 func _process_id() -> String:

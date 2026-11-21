@@ -147,7 +147,10 @@ static func _door(parent: Control, ns, sector: String, head: Dictionary, waiting
 	open.tooltip_text = Strings.t("Open %s") % Labels.sector(sector)
 	open.set_meta("open_tab", SectorNeeds.tab_of(sector))
 	open.pressed.connect(func() -> void: open_tab.call(SectorNeeds.tab_of(sector)))
-	line.add_child(open)
+	# In a flow, not the door's own row: a verb's box wraps (test_i18n_fit).
+	var verbs := PanelKit.buttons(line)
+	verbs.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	verbs.add_child(open)
 
 
 static func _lead(sectors: Array, heads: Dictionary, share_rows: Array) -> String:

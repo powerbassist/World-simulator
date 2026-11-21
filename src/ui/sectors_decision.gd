@@ -15,6 +15,7 @@ const IndustryProgress = preload("res://src/ui/industry_progress.gd")
 const ClosureCard = preload("res://src/ui/closure_card.gd")
 const SectorNeeds = preload("res://src/ui/sector_needs.gd")
 const SectorsTimeline = preload("res://src/ui/sectors_timeline.gd")
+const Closures = preload("res://src/sim/closures.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const Portrait = preload("res://src/ui/portrait.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -47,7 +48,7 @@ static func build(panel, parent: Control, row: Dictionary) -> VBoxContainer:
 	var body := PanelKit.sheet(parent)
 	body.set_meta("decision", String(row.get("key", "")))
 	if row.is_empty():
-		PanelKit.plain_line(body, Strings.t("Nothing is under way. A decision the economy puts to you lands on the timeline, with its date."))
+		PanelKit.plain_line(body, Strings.t("No decision waits."))
 		return body
 	var company = panel._firm_object(ns.id, String(row["company_id"])) if String(row["company_id"]) != "" else null
 	var top := HBoxContainer.new()
@@ -63,7 +64,9 @@ static func build(panel, parent: Control, row: Dictionary) -> VBoxContainer:
 		Strings.t(String(KIND_WORDS.get(String(row["kind"]), "")))]).to_upper(), PanelKit.Tone.PLAIN).theme_type_variation = UiTheme.HEADING  # i18n: row-ok the table's msgids
 	var title := PanelKit.plain_line(words, String(row["title"]), PanelKit.Tone.PLAIN)
 	title.theme_type_variation = UiTheme.LEAD
-	PanelKit.plain_line(words, String(row["sub"]))
+	# A closure's sub is its plant's jobs, which its Jobs tile reads.
+	if String(row["kind"]) != "closure":
+		PanelKit.plain_line(words, String(row["sub"]))
 	_tiles(body, state, ns, row, company)
 	_answers(panel, body, state, loader, ns, row, company)
 	var open := PanelKit.button(Strings.t("Open %s") % Labels.sector(String(row["sector"])), PanelKit.Size.L)
@@ -74,12 +77,15 @@ static func build(panel, parent: Control, row: Dictionary) -> VBoxContainer:
 	return body
 
 
-## The figure tiles: the firm's jobs, then the date the row settles (its answer, or its end).
+## The figure tiles: the firm's jobs (a closure's: its plant's), then the date the row settles
+## (its answer, or its end).
 static func _tiles(body: Control, state, ns, row: Dictionary, company) -> void:
 	var tiles := HBoxContainer.new()
 	tiles.add_theme_constant_override("separation", 8)
 	body.add_child(tiles)
-	if company != null:
+	if String(row["kind"]) == "closure":
+		tile(tiles, CompanyVerb.thousands(float(row["source"].get("jobs", 0.0))), Strings.t("Jobs"))
+	elif company != null:
 		tile(tiles, CompanyVerb.thousands(Companies.headcount(ns, company)), Strings.t("Jobs"))
 	if int(row["due"]) >= 0:
 		tile(tiles, SectorsTimeline.date_in(state, int(row["due"])), Strings.t("Answer by"))
@@ -106,7 +112,8 @@ static func _answers(panel, body: Control, state, loader, ns, row: Dictionary, c
 			PanelKit.heading(body, Strings.t("Your answer") if String(row["kind"]) == "ask" else Strings.t("Under way"))
 			IndustryProgress.process_row(body, state, loader, ns, source, panel._on_stop, panel._on_answer)
 		"closure", "search":
-			ClosureCard.build(body, state, loader, ns, source, panel._on_closure)
+			ClosureCard.build(body, state, loader, ns, source, panel._on_closure,
+				String(source.get("status", "")) == Closures.ANNOUNCED)
 		"rescue":
 			IndustryProgress.rescue(body, loader, ns, source)
 		"failing":

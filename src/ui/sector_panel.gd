@@ -195,8 +195,11 @@ func _head(ns) -> void:
 	tag.autowrap_mode = TextServer.AUTOWRAP_OFF
 	var lead := PanelKit.plain_line(said, SectorRead.lead(reading, func(v: float) -> String: return Num.fs(v, 1)), PanelKit.Tone.PLAIN)
 	lead.theme_type_variation = UiTheme.LEAD
-	var figures := HBoxContainer.new()
-	figures.add_theme_constant_override("separation", 8)
+	# Two by two: four tiles in one row left the tab past its dock under +35 % (test_i18n_fit).
+	var figures := GridContainer.new()
+	figures.columns = 2
+	figures.add_theme_constant_override("h_separation", 8)
+	figures.add_theme_constant_override("v_separation", 8)
 	figures.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	split.add_child(figures)
 	SectorsDecision.tile(figures, tr("%s bn") % Num.f(float(reading["output"]), 0), tr("Output"))

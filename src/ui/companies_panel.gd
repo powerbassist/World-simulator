@@ -106,6 +106,10 @@ var _focus_verb := ""
 var _refocus := []
 ## The timeline row the side sheet shows, by its key ("" lets _choose pick).
 var _pick := ""
+## The row the side sheet showed at the last build, and the one an answer was given on: it
+## stays on the sheet once it stops waiting, unless another row waits (_choose).
+var _shown := ""
+var _held := ""
 ## The doors strip and the side column (read by the tests).
 var _doors: Control
 var _side: VBoxContainer
@@ -172,6 +176,7 @@ func setup(state, loader) -> void:
 	_focus_verb = ""
 	_refocus = []
 	_pick = ""
+	_held = ""
 
 
 ## Pins the scroll to the bottom, for tools/screenshot.gd. A panel whose body always
@@ -237,6 +242,7 @@ func _refresh() -> void:
 		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
 	var rows := SectorsTimeline.rows(_state, _loader, ns)
 	var picked := _choose(rows)
+	_shown = String(picked.get("key", ""))
 	SectorsTimeline.build(_body, _state, rows, String(picked.get("key", "")), _on_pick)
 	IndustryProgress.endings(_body, _state, _loader, ns)
 	_title = SectorsOverview.charts(_body, _state, _loader, ns, tab)
@@ -255,11 +261,13 @@ func _refresh() -> void:
 
 
 ## The row the side sheet shows: the player's pick while it still runs, else the routed
-## firm's row, else the first that waits, else the first; {} when nothing runs.
+## firm's row, else the first that waits, else the row last answered, else the first; {}
+## when nothing runs.
 func _choose(rows: Array) -> Dictionary:
 	for want in [func(r) -> bool: return String(r["key"]) == _pick,
 			func(r) -> bool: return _open_firm != "" and String(r["company_id"]) == _open_firm,
-			func(r) -> bool: return bool(r["waits"]), func(_r) -> bool: return true]:
+			func(r) -> bool: return bool(r["waits"]), func(r) -> bool: return String(r["key"]) == _held,
+			func(_r) -> bool: return true]:
 		for r in rows:
 			if want.call(r):
 				return r
@@ -368,21 +376,24 @@ func _restore_focus() -> void:
 		return
 	var want: Array = _refocus
 	_refocus = []
-	for button in _body.find_children("*", "Button", true, false):  # i18n: ok a class name
+	for button in _page.find_children("*", "Button", true, false):  # i18n: ok a class name
 		if button.has_meta(want[0]) and str(button.get_meta(want[0])) == str(want[1]):
 			button.call_deferred("grab_focus")
 			return
 
 
 func _on_stop(process_id: String, what: String) -> void:
+	_held = _shown
 	FirmCommands.stop(self, process_id, what)
 
 
 func _on_answer(process_id: String, answer_id: String, what: String) -> void:
+	_held = _shown
 	FirmCommands.answer(self, process_id, answer_id, what)
 
 
 func _on_closure(closure_id: String, answer_id: String, what: String) -> void:
+	_held = _shown
 	FirmCommands.closure(self, closure_id, answer_id, what)
 
 

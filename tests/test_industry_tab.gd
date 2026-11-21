@@ -111,8 +111,8 @@ func _check_closed() -> void:
 		_fail("closed: an Act button is on screen before any card was opened")
 	if not _visible_with_meta("action_id").is_empty():
 		_fail("closed: a verb is on screen before any firm was opened")
-	if _panel._progress != null and _panel._progress.is_visible_in_tree():
-		_fail("closed: the In progress strip shows with nothing running")
+	if not _visible_with_meta("timeline_pick").is_empty():
+		_fail("closed: the timeline draws a row with nothing running")
 
 
 ## An opened card: one Act per major of its sector, and no verb yet.
@@ -138,7 +138,7 @@ func _check_folds() -> void:
 		if not Companies.is_major(company) and (largest == null
 				or Companies.headcount(ns, company) > Companies.headcount(ns, largest)):
 			largest = company
-	var text := _text_under(_panel._body)
+	var text := _text_under(_panel)
 	if largest != null and not text.contains(String(largest.company_name)):
 		_fail("body fold pressed: its largest firm %s is not listed" % largest.company_name)
 	if not text.contains(_panel.tr("Subsidy bill")):
@@ -151,6 +151,10 @@ func _check_verbs() -> void:
 	var ns = _main._state.player()
 	var offered: Array = Companies.available(_main._state, ns, _main._loader.company_actions, String(_major.id), _main._loader)
 	var selectors := _visible_with_meta("action_id")
+	# G3 S3: the firm card sits in the side column; the rebuild keeps focus on its Act.
+	var owner: Control = _panel.get_viewport().gui_get_focus_owner()
+	if owner == null or str(owner.get_meta("company_id", "")) != String(_major.id):
+		_fail("firm open: focus did not come back to %s's Act after the rebuild (%s)" % [_major.company_name, owner])
 	if selectors.size() != offered.size():
 		_fail("firm open: %d verbs on screen, %d on offer" % [selectors.size(), offered.size()])
 	for button in selectors:
@@ -224,10 +228,10 @@ func _check_in_progress() -> void:
 	if rows.size() != 1:
 		_fail("in progress: %d rows in the register, expected 1" % rows.size())
 		return
-	if _panel._progress == null or not _panel._progress.is_visible_in_tree():
-		_fail("in progress: the strip is not on screen with a process running")
+	if _visible_with_meta("timeline_pick").size() != 1:
+		_fail("in progress: the timeline does not draw the one running process")
 		return
-	if not _text_under(_panel._progress).contains(String(_major.company_name)):
+	if not _text_under(_panel._side).contains(String(_major.company_name)):
 		_fail("in progress: no row names %s" % _major.company_name)
 	var stop = _button_with_meta("process_id", String(rows[0]["id"]))
 	if stop == null:
@@ -322,7 +326,7 @@ func _check_counter(option: Dictionary) -> void:
 func _read_counter_strip(option: Dictionary) -> void:
 	var counter := roundi(100.0 * float(option["counter"]))
 	var strip = null
-	for node in _panel._progress.find_children("*", "", true, false):
+	for node in _panel._side.find_children("*", "", true, false):
 		if node.has_meta("counter_strip"):
 			strip = node
 	if strip == null:
@@ -351,7 +355,7 @@ func _check_answered() -> void:
 	var ns = _main._state.player()
 	if not Processes.asks(ns).is_empty():
 		_fail("answered: the ask still waits")
-	if not _text_under(_panel._progress).contains(_panel.tr("Answered: %s.") % _panel.tr("Accept")):
+	if not _text_under(_panel._side).contains(_panel.tr("Answered: %s.") % _panel.tr("Accept")):
 		_fail("answered: the row does not say what was answered")
 	if _acted < 1:
 		_fail("answered: the panel emitted no acted")
@@ -371,7 +375,7 @@ func _check_countered() -> void:
 	if booked != _counter_made:
 		_fail("counter: '%s' was picked and made, the row booked '%s'" % [_counter_made, booked])
 	var said: String = _panel.tr("Answered: %s.") % (_panel.tr("Counter %d %%") % int(_counter_made.trim_prefix("negotiate_")))
-	if not _text_under(_panel._progress).contains(said):
+	if not _text_under(_panel._side).contains(said):
 		_fail("counter: the row does not say '%s'" % said)
 	var lines := {"back": _panel.tr("Your counter was refused: the old price is asked again."),
 		"accepted": _panel.tr("Your counter was accepted.")}
@@ -381,7 +385,7 @@ func _check_countered() -> void:
 				row["negotiation"] = {"answer": _counter_made, "outcome": outcome, "month": 0}
 		_panel._refresh()
 		var found := false
-		for node in _panel._progress.find_children("*", "Label", true, false):
+		for node in _panel._side.find_children("*", "Label", true, false):
 			if String(node.get_meta("negotiation", "")) == outcome and node.text == lines[outcome]:
 				found = true
 		if not found:

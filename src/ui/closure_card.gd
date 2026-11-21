@@ -75,8 +75,10 @@ static func reason(row: Dictionary) -> String:
 	return fell + " " + Strings.t("The economy was %s %% below its potential.") % Num.f(-gap, 1)
 
 
-## A closure: announced, its card and answers; searching, its months left.
-static func build(box: Control, state, loader, ns, row: Dictionary, closure: Callable) -> void:
+## A closure: announced, its card and answers; searching, its months left. `titled`: the
+## host already titles the closure (the Sectors side sheet's head and Answer-by tile), so
+## the warned sentence that says it again is left out.
+static func build(box: Control, state, loader, ns, row: Dictionary, closure: Callable, titled := false) -> void:
 	var firm: String = loader.firm_name(ns.id, String(row["company_id"]))
 	var city = Region.find_city(loader.regions.get(ns.id, []), String(row["city_id"]))
 	var place: String = String(city.city_name) if city != null else firm
@@ -97,8 +99,8 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 	elif due == 0:
 		# Drawn in its due month, before the tick lands it (a load, a redraw).
 		closing = Strings.t("%s closes its %s plant this month: %s jobs.") % [firm, place, jobs]
-	var head := PanelKit.plain_line(box, closing, PanelKit.Tone.PLAIN)
-	head.theme_type_variation = UiTheme.WARN_TEXT
+	if not titled:
+		PanelKit.plain_line(box, closing, PanelKit.Tone.PLAIN).theme_type_variation = UiTheme.WARN_TEXT
 	if offered and row.has("answer"):
 		PanelKit.plain_line(box, Strings.t("Answered: %s.") % Strings.t(SELL_OLD))
 		return

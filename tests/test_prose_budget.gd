@@ -165,8 +165,11 @@ const INDUSTRY_CARD_CEILING := 90
 ## its share move and strip.
 const SECTOR_TILE_CEILING := 90
 ## An announced closure's row on In progress, its answers and its counters (the
-## parent's ruling on #287): a decision this size must read at a glance.
-const CLOSURE_CARD_CEILING := 100
+## parent's ruling on #287): a decision this size must read at a glance. G3 S3 moved it to
+## the Sectors side sheet, whose head (sector and kind, the title, the jobs and Answer-by
+## tiles) is picture C's; the card's own warned sentence that said the same was cut, and
+## the 6 words left over are stated here: 100 -> 106.
+const CLOSURE_CARD_CEILING := 106
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit", "audience"]
@@ -354,7 +357,9 @@ func _sweep_closure_card(main) -> void:
 	await process_frame
 	await process_frame
 	var total := 0
-	for node in _visible_text_nodes(panel._progress):
+	# The decision sheet alone: a firm card routed under it (_open_sector) is not the closure's.
+	var sheet: Control = panel._side.find_children("*", "", true, false).filter(func(n) -> bool: return n.has_meta("decision"))[0]
+	for node in _visible_text_nodes(sheet):
 		var words := _words(_text_of(node))
 		total += words.size()
 		if _dump.has("closure_card"):

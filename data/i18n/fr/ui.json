@@ -205,8 +205,6 @@
   "BODY · %d firms · %s jobs": "ORGANISME · %d entreprises · %s emplois",
   "No register": "Aucun registre",
   "Foreign takeover bid": "Offre de rachat étrangère",
-  "Failing firms": "Entreprises en faillite",
-  "%s -- rescue window: %d months left.": "%s — délai de sauvetage : %d mois restants.",
   "The public account": "Les comptes publics",
   "Subsidy bill": "Coût des subventions",
   "Dividend income": "Dividendes perçus",
@@ -1003,7 +1001,6 @@
   "Press on": "Poursuivre",
   "Settle": "Régler",
   "Hold for a new bid": "Attendre une nouvelle offre",
-  "In progress": "En cours",
   "%s, %s: %s, %d month left, then %s.": [
     "%s, %s : %s, %d mois restant, puis %s.",
     "%s, %s : %s, %d mois restants, puis %s."

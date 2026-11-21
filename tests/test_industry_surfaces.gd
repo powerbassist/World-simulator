@@ -77,7 +77,7 @@ func _run() -> void:
 		_fail("no companies pending mark with a bid standing")
 	panel._dirty = true
 	panel._refresh()
-	if _count_live_buttons(panel._body, ["Block the Takeover", "Allow the Takeover"]) < 2:
+	if _count_live_buttons(panel, ["Block the Takeover", "Allow the Takeover"]) < 2:
 		_fail("the bid built no live takeover buttons (the bid row, or the firm row co-offering it)")
 
 	# --- The answered bid: memory clears, the card is TAKEN AWAY, and the
@@ -108,7 +108,7 @@ func _run() -> void:
 		_fail("no companies pending mark with failures standing")
 	panel._dirty = true
 	panel._refresh()
-	if _count_live_buttons(panel._body, ["Strategic Rescue Package"]) < 1:
+	if _count_live_buttons(panel, ["Strategic Rescue Package"]) < 1:
 		_fail("the failing-firms rows built no live rescue button")
 
 	# --- The per-firm memory: a rescued firm RE-failing re-announces ---------
@@ -152,7 +152,7 @@ func _run() -> void:
 		panel._dirty = true
 		panel._refresh()
 		var chair_name: String = loader.person_name(chair_id)
-		if not _live_text_has(panel._body, "Chair: %s" % chair_name):
+		if not _live_text_has(panel, "Chair: %s" % chair_name):
 			_fail("the SOE chair line did not draw the resolved name")
 		ns.companies[major.id].erase("board_chair")
 

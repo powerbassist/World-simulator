@@ -61,9 +61,16 @@ func _process(_delta: float) -> bool:
 		8:
 			_press(_with_meta("closure_answer", "rescue"))
 		10:
+			# The rescued plant is a new row (rescue|firm): the player picks it on the timeline.
+			var rescues := Closures.rescues(_main._state.player())
+			_press(_with_meta("timeline_pick", "rescue|%s" % String(rescues[0]["company_id"])) if rescues.size() == 1 else null)
+		11:
 			_check_rescue()
 			_announce_third()
 		12:
+			# The player's pick (the rescue) holds while it runs: the new closure is picked too.
+			_press(_with_meta("timeline_pick", "closure|%s" % String(_row_of_third().get("id", ""))))
+		13:
 			_pick_the_last_chip()
 		14:
 			_make_the_counter()
@@ -97,11 +104,11 @@ func _check_card() -> void:
 	var state = _main._state
 	var ns = state.player()
 	var loader = _main._loader
-	if _panel._progress == null or not _panel._progress.is_visible_in_tree():
-		_fail("card: the In progress strip is not on screen with a closure announced")
+	if not _panel._side.is_visible_in_tree() or _panel._side.get_child_count() == 0:
+		_fail("card: the side sheet is not on screen with a closure announced")
 		return
 	var row: Dictionary = Closures.open(ns)[0]
-	var text := _text_under(_panel._progress)
+	var text := _text_under(_panel._side)
 	var city = Region.find_city(loader.regions.get(ns.id, []), String(row["city_id"]))
 	if not text.contains(String(_major.company_name)) or (city != null and not text.contains(String(city.city_name))):
 		_fail("card: '%s' names neither %s nor its city" % [text, _major.company_name])
@@ -228,12 +235,9 @@ func _check_rescue() -> void:
 	Closures.tick_month(state, _main._loader)
 	var row: Dictionary = Closures.rescues(ns)[0]
 	_panel._refresh()
-	if _panel._progress == null:
-		_fail("rescue alone: the In progress strip is not drawn")
-		return
-	# Read in the new strip: the old rows are queued for freeing, still in the tree.
+	# Read in the new side sheet: the old rows are queued for freeing, still in the tree.
 	var later = null
-	for node in _panel._progress.find_children("*", "Label", true, false):
+	for node in _panel._side.find_children("*", "Label", true, false):
 		if node.has_meta("rescue") and String(node.get_meta("rescue")) == String(row["company_id"]):
 			later = node
 	var months := int(row["months_left"])
@@ -254,7 +258,7 @@ func _check_searching() -> void:
 	if _with_meta("closure_answer", "buyer") != null:
 		_fail("buyer pressed: the answers still stand")
 	var months := int(open[0]["months_left"])
-	if not _text_under(_panel._progress).contains(Strings.tn("%d month left", "%d months left", months) % months):
+	if not _text_under(_panel._side).contains(Strings.tn("%d month left", "%d months left", months) % months):
 		_fail("searching: the row does not say the search's months left (%d)" % months)
 
 
@@ -311,7 +315,7 @@ func _check_countered() -> void:
 	if String(row.get("answer", "")) != _counter_id or String(row.get("status", "")) != Closures.SEARCHING:
 		_fail("counter made: the row is %s / '%s', expected searching on '%s'" % [row.get("status", ""), row.get("answer", ""), _counter_id])
 	var said := Strings.t("Answered: %s.") % (Strings.t("Counter %d %%") % int(_counter_id.trim_prefix("negotiate_")))
-	if not _text_under(_panel._progress).contains(said):
+	if not _text_under(_panel._side).contains(said):
 		_fail("counter made: the searching row does not say '%s'" % said)
 
 
@@ -331,8 +335,11 @@ func _stage_the_buyer_back() -> void:
 func _check_re_ask() -> void:
 	var state = _main._state
 	var row := _row_of_third()
-	var text := _text_under(_panel._progress)
+	var text := _text_under(_panel._side)
 	var old: String = EffectsStrip.sum_text(-float(row["back_sweetener_eur_bn"]))
+	# G3 S3: the side sheet titles a closure, but a buyer back is said by the card itself.
+	if not text.contains(Strings.t("The buyer came back for %s's plant in %s: %s jobs, at the old price.").get_slice("%", 0)):
+		_fail("re-ask: the sheet does not say the buyer came back ('%s')" % text)
 	if not text.contains(Strings.t("Unanswered, the plant is sold at the old price.")) or text.contains(Strings.t("Unanswered, the plant closes.")):
 		_fail("re-ask: the default line is not the sale ('%s')" % text)
 	var sell = _with_meta("closure_answer", "buyer")
@@ -355,7 +362,7 @@ func _check_re_ask() -> void:
 ## Answered once: the row says so, and nothing waits any more.
 func _check_re_ask_answered() -> void:
 	var ns = _main._state.player()
-	var text := _text_under(_panel._progress)
+	var text := _text_under(_panel._side)
 	if not text.contains(Strings.t("Answered: %s.") % Strings.t("Sell at the old price")):
 		_fail("re-ask answered: the row does not say so ('%s')" % text)
 	if text.contains(Strings.t("Unanswered, the plant is sold at the old price.")):
