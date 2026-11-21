@@ -72,7 +72,8 @@ static func register(main) -> void:
 		_seen(main, id)
 	main._calendar_panel._grid.booked.connect(book)
 	MonthPage.wire(main, game, func(id: String, keys: bool) -> void: _open_booking(main, id, keys),
-		func(id: String, result: Dictionary) -> void: _answer(main, id, result), func() -> void: refresh(main))
+		func(id: String, result: Dictionary) -> void: _answer(main, id, result), func() -> void: refresh(main),
+		func(id: String) -> void: _seen(main, id))
 	# Rework 1: the People roster's See books the same way, on the request's first free day.
 	main._people_panel.see_requested.connect(book)
 	main._people_panel.reassigned.connect(func(before: Dictionary, title: String) -> void: main._queue_effect(title, before))

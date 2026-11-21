@@ -172,9 +172,28 @@ func _check_cards() -> void:
 	var pair := [people.find_child("SummonSee", true, false) as Button, people.find_child("SummonCall", true, false) as Button]
 	if roundi(pair[0].get_combined_minimum_size().x) != roundi(pair[1].get_combined_minimum_size().x):
 		_fail("the summons' See them and Call are not one width")
+	# Pass 2 TAKE 3: the column's verbs are a request seen, as the inbox card's are -- the speed
+	# the request's arrival took comes back. See them pressed twice (armed, let go), then Decline.
+	_slowed()
+	(card.find_child("See_%s" % _request, true, false) as Button).pressed.emit()
+	(_people().find_child("See_%s" % _request, true, false) as Button).pressed.emit()
+	if _main._clock.speed != 3:
+		_fail("See them let go on the column left the clock slowed (speed %d)" % _main._clock.speed)
+	_slowed()
+	card = people.find_child("Card_%s" % _request, true, false) as Control
 	(card.find_child("Decline_%s" % _request, true, false) as Button).pressed.emit()
 	if String(Audiences.request(_main._state.player(), _request).get("status", "")) != AK.STATUS_DECLINED:
 		_fail("Decline on the card did not decline (%s)" % Audiences.request(_main._state.player(), _request).get("status", ""))
+	if _main._clock.speed != 3:
+		_fail("Decline on the column left the clock slowed (speed %d)" % _main._clock.speed)
+
+
+## The request's arrival slowed the clock from 3 (audience_driver._slow_for).
+func _slowed() -> void:
+	var game: Dictionary = AudienceDriver._games[_main.get_instance_id()]
+	game["slowed_for"] = {_request: true}
+	game["resume_speed"] = 3
+	_main._clock.set_speed(1)
 
 
 func _check_summons() -> void:
