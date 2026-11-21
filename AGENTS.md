@@ -389,7 +389,8 @@ fill (`UiTheme.accent_fill()`), darkened until white text on it holds 4.5:1, or 
 as it is under a dark label when its hue cannot. The fill is for today's date, the
 armed verb, a picked chip, a bookable day under the pointer and a screen's one main
 action (`UiTheme.PRIMARY`); no other button is filled. A status tone or the accent
-is never the colour of text on a control. Polish crimson
+is never the colour of text on a control; a FLAT toggle that is ON draws no control, so its
+label takes the accent as text (`UiTheme.PICKED_FLAT`, a picked firm's name). Polish crimson
 becomes raspberry, German gold a bright yellow; the flag's colour family survives and is never mistaken for a
 state. `UiTheme.ACCENT_FALLBACK` is for a flag with no chroma at all, and for the
 menu. **Two kinds of colour, never mixed:** IDENTITY follows the nation

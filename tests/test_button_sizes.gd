@@ -67,6 +67,9 @@ func _scan(node: Node, where: String) -> void:
 				var ratio := AccentRule.contrast(button.get_theme_color(state), UiTheme.SHEET)
 				if ratio < AccentRule.MIN_CONTRAST:
 					_fail("%s: the flat toggle '%s' ON reads %.2f:1 on the sheet (%s)" % [where, button.text, ratio, state])
+				# #439 T7: and ON must not read as OFF -- a picked firm's name is the only mark it has.
+				if button.get_theme_color(state).is_equal_approx(button.get_theme_color("font_color")):
+					_fail("%s: the flat toggle '%s' ON wears its OFF colour (%s)" % [where, button.text, state])
 		var parent := button.get_parent()
 		if not (parent is BoxContainer and (parent as BoxContainer).vertical):
 			continue

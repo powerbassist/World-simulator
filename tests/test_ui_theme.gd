@@ -275,8 +275,11 @@ func _check_states_distinct(theme: Theme) -> void:
 	for base in ["Button", "CheckBox"]:  # an option on a verb is a CheckBox variation
 		buttons.append_array(Array(theme.get_type_variation_list(base)))
 	for type in buttons:
+		# PICKED_FLAT draws no control under its words: a flat toggle ON is text on the sheet, where
+		# the accent as text holds AA (the parent's ruling, #439 T7) -- its ON states only.
+		var on_the_sheet: Array = ["font_pressed_color", "font_hover_pressed_color"] if type == UiTheme.PICKED_FLAT else []
 		for item in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
-			if theme.has_color(item, type) and theme.get_color(item, type) in forbidden:
+			if not item in on_the_sheet and theme.has_color(item, type) and theme.get_color(item, type) in forbidden:
 				_fail("%s: '%s' is a status tone or the accent, text on a control" % [type, item])
 
 

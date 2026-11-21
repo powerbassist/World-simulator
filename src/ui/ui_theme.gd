@@ -191,6 +191,9 @@ const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-r
 ## G3 S1: a toggle that is ON wears the accent fill. Its own variation (PanelKit.toggle), because
 ## "pressed" is also a plain button held down, which must not flash the fill (#436 RECORD).
 const PICKED := "Picked"                  # i18n: ok
+## A FLAT toggle ON (a picked firm's name): no fill to sit on, so its label takes the accent as text,
+## which accent_rule holds at AA on the lightest graphite (#439 T7).
+const PICKED_FLAT := "PickedFlat"         # i18n: ok
 const SIDEBAR_ROW := "SidebarRow"         ## a domain's row in the sidebar pane (G3 spec section 2)
 const REQUESTS_BUTTON := "RequestsButton" ## the title bar's "requests waiting" mark (V5.2 pre-gate)
 const CHIEF_MARK := "ChiefMark"           ## the chief's mark beside it (G1): a raised plate, no tone of its own
@@ -566,16 +569,7 @@ static func _buttons(theme: Theme) -> void:
 		if label != null:
 			theme.set_font("font", type, label)
 
-	# PICKED, a toggle that is ON -- a picked chip, the clock's running speed, the map layer
-	# shown: the accent FILL, kept under the pointer (#436 pass 2: an ON toggle lost its mark on
-	# hover, and a picked chip at CONTROL_PRESSED was 1.14:1 from an unpicked one -- invisible).
-	theme.set_type_variation(PICKED, "Button")  # i18n: ok
-	theme.set_stylebox("normal", PICKED, _button_box(CONTROL))
-	theme.set_stylebox("hover", PICKED, _button_box(CONTROL_HOVER))
-	theme.set_stylebox("pressed", PICKED, _button_box(accent_fill()))
-	theme.set_stylebox("hover_pressed", PICKED, _button_box(accent_fill().darkened(0.06)))
-	for state in ["font_pressed_color", "font_hover_pressed_color"]:
-		theme.set_color(state, PICKED, on_accent_fill())
+	# PICKED and PICKED_FLAT, the toggles that are ON: control_style.gd.
 
 	# A cluster is an icon with a name under it, not a slab. Flat until it is the open
 	# one, where the accent fills the bar under it -- "one accent says where you are".
@@ -638,10 +632,10 @@ static func _buttons(theme: Theme) -> void:
 	OptionCheckStyle.apply(theme, OPTION_CHECK, [_button_box(Color(0, 0, 0, 0)), _button_box(CONTROL),
 		_ring()], _px(SIZE_SMALL), TEXT_DIM, TEXT, WARN)
 	ControlStyle.apply(theme, {"primary": PRIMARY, "small": SMALL, "segment": SEGMENT, "chip": CHIP,
-		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD, "ghost": GHOST}, _button_box,
+		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD, "ghost": GHOST, "picked": PICKED, "picked_flat": PICKED_FLAT}, _button_box,
 		{"control": CONTROL, "hover": CONTROL_HOVER, "pressed": CONTROL_PRESSED, "line": LINE_STRONG,
 		"text": TEXT, "dim": TEXT_DIM, "off": TEXT_OFF, "good": GOOD, "warn": WARN, "bad": BAD,
-		"fill": accent_fill(), "on_fill": on_accent_fill(), "ring": _ring()},
+		"fill": accent_fill(), "on_fill": on_accent_fill(), "accent": _accent, "ring": _ring()},
 		_px(SIZE_SMALL), _face(WEIGHT_MEDIUM))
 
 

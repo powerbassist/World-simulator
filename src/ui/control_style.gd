@@ -17,7 +17,7 @@ extends RefCounted
 
 
 ## `box` is ui_theme's _button_box (bg, border) -> StyleBoxFlat; `t` the tokens
-## {control, hover, pressed, line, text, dim, off, good, warn, bad, fill, on_fill, ring};
+## {control, hover, pressed, line, text, dim, off, good, warn, bad, fill, on_fill, accent, ring};
 ## `small_px` the caption size scaled; `medium` the 500 cut (null when the font did not load).
 static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary, small_px: int, medium: Font) -> void:
 	var fill := t["fill"] as Color
@@ -35,6 +35,23 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	theme.set_stylebox("disabled", primary, box.call(Color(0, 0, 0, 0), t["line"]))
 	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
 		theme.set_color(state, primary, t["on_fill"])
+
+	# PICKED, a toggle that is ON -- a picked chip, the clock's running speed, the map layer
+	# shown: the accent FILL, kept under the pointer (#436 pass 2: an ON toggle lost its mark on
+	# hover, and a picked chip at CONTROL_PRESSED was 1.14:1 from an unpicked one -- invisible).
+	var picked := String(names["picked"])
+	theme.set_type_variation(picked, "Button")  # i18n: ok
+	theme.set_stylebox("normal", picked, box.call(t["control"]))
+	theme.set_stylebox("hover", picked, box.call(t["hover"]))
+	theme.set_stylebox("pressed", picked, box.call(fill))
+	theme.set_stylebox("hover_pressed", picked, box.call(fill.darkened(0.06)))
+	# PICKED_FLAT, a flat toggle ON (a picked firm's name): no fill under it, so the accent as its
+	# text, which accent_rule holds at AA on the lightest graphite (#439 T7).
+	var flat := String(names["picked_flat"])
+	theme.set_type_variation(flat, "Button")  # i18n: ok
+	for state in ["font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, picked, t["on_fill"])
+		theme.set_color(state, flat, t["accent"])
 
 	var small := String(names["small"])
 	theme.set_type_variation(small, "Button")  # i18n: ok
