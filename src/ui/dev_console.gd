@@ -260,6 +260,8 @@ func _update_counter() -> void:
 	_shown_counts = Vector2i(_log.errors, _log.warnings)
 	_counter.text = "ERR %d  WARN %d" % [_log.errors, _log.warnings]
 	_counter.theme_type_variation = UiTheme.BAD_TEXT if _log.errors > 0 else UiTheme.CAPTION
+	# Only when there is something to read: at zero it sat over the chrome's panes for nothing (G3 S1).
+	_counter.visible = _log.errors + _log.warnings > 0
 
 
 func _fill_errors() -> void:

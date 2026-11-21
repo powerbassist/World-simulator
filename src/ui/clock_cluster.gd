@@ -127,7 +127,7 @@ func refresh(clock: Node, reason = null) -> void:
 	if _shown_held:
 		_date_label.modulate.a = Motion.PAUSED_ALPHA
 		_pause_button.button_pressed = true
-		_pause_button.icon = _textures["busy"]["lit"]
+		_pause_button.icon = _lit("busy")
 		return
 	var date := DateText.weekday_long(clock.day, clock.month, clock.year)
 	# V4.9a. The clock shows its speed rather than stating it: one beat per
@@ -152,4 +152,15 @@ func refresh(clock: Node, reason = null) -> void:
 
 ## The dim glyph at rest, the lit one while the button is the clock's state.
 func _set_glyph(button: Button, glyph, lit: bool) -> void:
-	button.icon = _textures[glyph]["lit" if lit else "dim"]
+	button.icon = _lit(glyph) if lit else _textures[glyph]["dim"]
+
+
+## G3 S1: the lit glyph sits on the accent fill (PICKED), so it takes the fill's own label colour --
+## white, or the dark one where white fails (German yellow) -- read when drawn, after the nation's
+## accent is applied, and kept per colour.
+func _lit(glyph) -> ImageTexture:
+	var tone := UiTheme.on_accent_fill()
+	var key := "lit_" + tone.to_html()
+	if not _textures[glyph].has(key):
+		_textures[glyph][key] = Icon.load_icon(GLYPHS[glyph], tone, ICON_PX)
+	return _textures[glyph][key]
