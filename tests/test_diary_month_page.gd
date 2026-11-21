@@ -102,6 +102,10 @@ func _check_see_route() -> void:
 	summons.pressed.emit()
 	if _main.get_viewport().gui_get_focus_owner() is DiaryDay:
 		_fail("a mouse click on a summons' See them left a day focused")
+	people._input(key)
+	(people.find_child("SummonSee", true, false) as Button).pressed.emit()
+	if not (_main.get_viewport().gui_get_focus_owner() is DiaryDay):
+		_fail("a summons' See them from the keyboard left no day focused")
 	_main._calendar_panel._grid.arm({})
 	_main.get_viewport().gui_release_focus()
 	# The inbox card's Go by the mouse: the same rule (pass 1 on the pass-2 delta).
