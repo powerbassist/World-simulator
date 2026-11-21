@@ -363,7 +363,8 @@ func _render_furniture(ym: Vector2i) -> void:
 ## A click on a day: a free day of the armed person's window books; any other is picked.
 func _on_day(d: int) -> void:
 	var date := _armed_on(d)
-	if not bool(date.get("free", false)):
+	# Nobody armed (a load cleared it before the redraw): a stale tint books nothing.
+	if armed.is_empty() or not bool(date.get("free", false)):
 		_pick(d)
 		return
 	var target := armed

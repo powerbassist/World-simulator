@@ -55,7 +55,8 @@ static func register(main) -> void:
 	var game := {"lane": lane, "scene": scene, "session": {}, "answered": {}, "promises": promises,
 		"slowed_for": {}, "resume_speed": 0, "booking_for": ""}
 	_games[main.get_instance_id()] = game
-	lane.book_requested.connect(func(id: String) -> void: _open_booking(main, id))
+	# The Go hands the keyboard a day only from the keys, as the column's See them (the #427 ruling).
+	lane.book_requested.connect(func(id: String) -> void: _open_booking(main, id, main._calendar_panel.people.by_keys))
 	lane.seen.connect(func(id: String) -> void: _seen(main, id))
 	lane.delegate_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.delegate(main._state, main._state.player(), main._loader, id)))
 	lane.decline_requested.connect(func(id: String) -> void: _answer(main, id, Audiences.decline(main._state, main._state.player(), main._loader, id)))

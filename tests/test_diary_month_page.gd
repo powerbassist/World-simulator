@@ -104,6 +104,13 @@ func _check_see_route() -> void:
 		_fail("a mouse click on a summons' See them left a day focused")
 	_main._calendar_panel._grid.arm({})
 	_main.get_viewport().gui_release_focus()
+	# The inbox card's Go by the mouse: the same rule (pass 1 on the pass-2 delta).
+	people._input(click)
+	AudienceDriver.lane_of(_main).book_requested.emit(_request)
+	if _main.get_viewport().gui_get_focus_owner() is DiaryDay:
+		_fail("a mouse click on the inbox's Go left a day focused")
+	_main._calendar_panel._grid.arm({})
+	_main.get_viewport().gui_release_focus()
 
 
 ## See them toggles; a request answered off the page disarms the grid at its next render.
@@ -347,6 +354,10 @@ func _go_for_settle() -> void:
 	var tall := Control.new()
 	tall.custom_minimum_size.y = 2000
 	_main._calendar_panel._grid.get_parent().add_child(tall)
+	var key := InputEventKey.new()
+	key.keycode = KEY_ENTER
+	key.pressed = true
+	_people()._input(key)
 	AudienceDriver.lane_of(_main).book_requested.emit(_request)
 
 
