@@ -179,6 +179,11 @@ func _check_picked_closure() -> void:
 	var plate = _node_with_meta("timeline_row", "closure|%s" % _closing_id())
 	if plate == null or not plate is PanelContainer:
 		_fail("the picked row does not sit on a tile")
+	# A click on the bar is a click on the row (pass 1 on #441: the bar ate it).
+	for row in _panel.find_children("*", "", true, false).filter(func(n): return n.has_meta("timeline_row")):
+		for bar in row.find_children("*", "Control", true, false).filter(func(n): return n is TimelineBar):
+			if (bar as Control).mouse_filter == Control.MOUSE_FILTER_STOP:
+				_fail("a lane's bar stops the click its row picks on (%s)" % row.get_meta("timeline_row"))
 
 
 ## The side sheet's row: the player's pick, then a waiting row, then the row last answered
@@ -195,6 +200,15 @@ func _check_choose_order() -> void:
 	rows[1]["waits"] = false
 	if String(_panel._choose(rows)["key"]) != "c":
 		_fail("choose: the row answered did not stay on the sheet once it stopped waiting")
+	# A routed firm comes after a waiting row (pass 1 on #441: a route outranked new decisions).
+	rows[0]["company_id"] = "routed"
+	rows[1]["waits"] = true
+	_panel._open_firm = "routed"
+	if String(_panel._choose(rows)["key"]) != "b":
+		_fail("choose: a routed firm's row came before a row that waits")
+	rows[1]["waits"] = false
+	if String(_panel._choose(rows)["key"]) != "a":
+		_fail("choose: the routed firm's row did not come before the row answered")
 	_panel._pick = "a"
 	if String(_panel._choose(rows)["key"]) != "a":
 		_fail("choose: the player's pick did not come first")

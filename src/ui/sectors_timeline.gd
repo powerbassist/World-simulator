@@ -68,8 +68,10 @@ static func rows(state, loader, ns) -> Array:
 		var place := _place(loader, ns, row)
 		var jobs := Strings.t("%s jobs") % CompanyVerb.thousands(float(row.get("jobs", 0.0)))
 		if waits:
+			# A buyer back defaults to the sale (ClosureCard.build): its title says so.
+			var title := Strings.t("%s: the buyer is back for its %s plant") if String(row["status"]) == Closures.OFFERED 				else Strings.t("%s closes its %s plant")
 			_add(out, sector_of, cid, {"key": "closure|%s" % String(row["id"]), "kind": "closure",
-				"title": Strings.t("%s closes its %s plant") % [loader.firm_name(ns.id, cid), place], "sub": jobs,
+				"title": title % [loader.firm_name(ns.id, cid), place], "sub": jobs,
 				"ends": maxi(int(row.get("due", now)) - now, 1), "due": maxi(int(row.get("due", now)) - now, 1), "style": TimelineBar.DUE,
 				"waits": true, "bad": Strings.t("unanswered, it shuts") if String(row["status"]) == Closures.ANNOUNCED else "", "source": row})
 		else:
@@ -181,7 +183,11 @@ static func lead_text(state, rows: Array) -> String:
 	for r in due:
 		last = maxi(last, maxi(int(r["due"]), int(r["ends"])))
 	var t: int = state.year * 12 + state.month + last
-	return Strings.tn("%d answer is due by %s.", "%d answers are due by %s.", due.size()) % [due.size(), DateText.month_long((t - 1) % 12 + 1)]
+	var month := (t - 1) % 12 + 1
+	var year := floori((t - 1) / 12.0)
+	# The year only when it is not this one ("due by February" in November reads as last February).
+	var when := DateText.month_long(month) if year == int(state.year) else DateText.month_long_year(month, year)
+	return Strings.tn("%d answer is due by %s.", "%d answers are due by %s.", due.size()) % [due.size(), when]
 
 
 static func _row(body: Control, state, r: Dictionary, span: int, today: float, width: float, picked: bool, pick: Callable) -> void:
@@ -215,6 +221,8 @@ static func _row(body: Control, state, r: Dictionary, span: int, today: float, w
 	PanelKit.plain_line(words, String(r["sub"]))
 	var bar: Control = TimelineBar.new()
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# A click on the lane is a click on its row: the plate below picks it.
+	bar.mouse_filter = Control.MOUSE_FILTER_PASS
 	line.add_child(bar)
 	var chips := []
 	if int(r["due"]) >= 0:

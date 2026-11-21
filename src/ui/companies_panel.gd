@@ -260,13 +260,14 @@ func _refresh() -> void:
 		_apply_bottom()
 
 
-## The row the side sheet shows: the player's pick while it still runs, else the routed
-## firm's row, else the first that waits, else the row last answered, else the first; {}
-## when nothing runs.
+## The row the side sheet shows: the player's pick while it still runs, else the first that
+## waits, else the routed firm's row, else the row last answered, else the first; {} when
+## nothing runs. A route sits under a waiting row: _open_firm outlives the decision it
+## routed to, and must not hide the next one.
 func _choose(rows: Array) -> Dictionary:
-	for want in [func(r) -> bool: return String(r["key"]) == _pick,
+	for want in [func(r) -> bool: return String(r["key"]) == _pick, func(r) -> bool: return bool(r["waits"]),
 			func(r) -> bool: return _open_firm != "" and String(r["company_id"]) == _open_firm,
-			func(r) -> bool: return bool(r["waits"]), func(r) -> bool: return String(r["key"]) == _held,
+			func(r) -> bool: return String(r["key"]) == _held,
 			func(_r) -> bool: return true]:
 		for r in rows:
 			if want.call(r):

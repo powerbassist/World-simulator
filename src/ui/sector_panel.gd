@@ -283,7 +283,7 @@ func _majors(ns) -> void:
 		var face := Portrait.control_for(String(company.chief_id), MAJOR_FACE)
 		face.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		words.add_child(face)
-		var pick := Button.new()
+		var pick := PanelKit.sized(Button.new())
 		pick.flat = true
 		pick.toggle_mode = true
 		pick.text = company.company_name

@@ -337,6 +337,10 @@ func _check_re_ask() -> void:
 	var row := _row_of_third()
 	var text := _text_under(_panel._side)
 	var old: String = EffectsStrip.sum_text(-float(row["back_sweetener_eur_bn"]))
+	# Its timeline row says the buyer is back, not that the plant closes (pass 1 on #441).
+	var lane = _with_meta("timeline_pick", "closure|%s" % String(row["id"]))
+	if lane == null or (lane as Button).text.contains(Strings.t("closes")) or not (lane as Button).text.contains(String(_third.company_name)):
+		_fail("re-ask: the timeline row reads '%s'" % ((lane as Button).text if lane != null else "<none>"))
 	# G3 S3: the side sheet titles a closure, but a buyer back is said by the card itself.
 	if not text.contains(Strings.t("The buyer came back for %s's plant in %s: %s jobs, at the old price.").get_slice("%", 0)):
 		_fail("re-ask: the sheet does not say the buyer came back ('%s')" % text)
