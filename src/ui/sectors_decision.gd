@@ -64,8 +64,8 @@ static func build(panel, parent: Control, row: Dictionary) -> VBoxContainer:
 		Strings.t(String(KIND_WORDS.get(String(row["kind"]), "")))]).to_upper(), PanelKit.Tone.PLAIN).theme_type_variation = UiTheme.HEADING  # i18n: row-ok the table's msgids
 	var title := PanelKit.plain_line(words, String(row["title"]), PanelKit.Tone.PLAIN)
 	title.theme_type_variation = UiTheme.LEAD
-	# A closure's sub is its plant's jobs, which its Jobs tile reads.
-	if String(row["kind"]) != "closure":
+	# A plant's sub is its jobs, which its Jobs tile reads.
+	if not String(row["kind"]) in ["closure", "search", "rescue"]:
 		PanelKit.plain_line(words, String(row["sub"]))
 	_tiles(body, state, ns, row, company)
 	_answers(panel, body, state, loader, ns, row, company)
@@ -77,31 +77,25 @@ static func build(panel, parent: Control, row: Dictionary) -> VBoxContainer:
 	return body
 
 
-## The figure tiles: the firm's jobs (a closure's: its plant's), then the date the row settles
-## (its answer, or its end).
+## The figure tiles: the row's own jobs, then the date the row settles (its last day to
+## answer, or its end), then its price. A plant's row (a closure, a buyer search, a rescue)
+## counts the plant's jobs; a failing major none (a failed firm employs nobody); the rest
+## the firm's.
 static func _tiles(body: Control, state, ns, row: Dictionary, company) -> void:
 	var tiles := HBoxContainer.new()
 	tiles.add_theme_constant_override("separation", 8)
 	body.add_child(tiles)
-	if String(row["kind"]) == "closure":
-		tile(tiles, CompanyVerb.thousands(float(row["source"].get("jobs", 0.0))), Strings.t("Jobs"))
-	elif company != null:
-		tile(tiles, CompanyVerb.thousands(Companies.headcount(ns, company)), Strings.t("Jobs"))
+	var kind := String(row["kind"])
+	if kind in ["closure", "search", "rescue"]:
+		PanelKit.figure_tile(tiles, CompanyVerb.thousands(float(row["source"].get("jobs", 0.0))), Strings.t("Jobs"))
+	elif company != null and kind != "failing":
+		PanelKit.figure_tile(tiles, CompanyVerb.thousands(Companies.headcount(ns, company)), Strings.t("Jobs"))
 	if int(row["due"]) >= 0:
-		tile(tiles, SectorsTimeline.date_in(state, int(row["due"])), Strings.t("Answer by"))
+		PanelKit.figure_tile(tiles, SectorsTimeline.answer_by(state, int(row["due"])), Strings.t("Answer by"))
 	elif int(row["ends"]) >= 0:
-		tile(tiles, SectorsTimeline.date_in(state, int(row["ends"])), Strings.t("Ends"))
+		PanelKit.figure_tile(tiles, SectorsTimeline.date_in(state, int(row["ends"])), Strings.t("Ends"))
 	if String(row.get("money", "")) != "":
-		tile(tiles, String(row["money"]), Strings.t("Cost"))
-
-
-## A figure on a tile (G3's figure tile): the side sheet's, the sector tab's head and firm sheet.
-static func tile(parent: Control, value: String, caption: String) -> PanelContainer:
-	var plate := PanelContainer.new()
-	plate.theme_type_variation = UiTheme.TILE_PANEL
-	parent.add_child(plate)
-	PanelKit.figure(plate, value, caption)
-	return plate
+		PanelKit.figure_tile(tiles, String(row["money"]), Strings.t("Cost"))
 
 
 ## What the row asks, built by the reader that knows its kind.

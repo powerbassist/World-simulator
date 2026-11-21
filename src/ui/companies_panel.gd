@@ -104,12 +104,23 @@ var _open_body := ""
 var _open_ledger := ""
 var _focus_verb := ""
 var _refocus := []
-## The timeline row the side sheet shows, by its key ("" lets _choose pick).
+## The timeline row the side sheet shows, by its key ("" lets _choose pick), and its firm: a
+## row that changes kind (a closure rescued becomes rescue|firm) is found again by the firm.
 var _pick := ""
+var _pick_firm := ""
 ## The row the side sheet showed at the last build, and the one an answer was given on: it
 ## stays on the sheet once it stops waiting, unless another row waits (_choose).
 var _shown := ""
+var _shown_firm := ""
 var _held := ""
+var _held_firm := ""
+## The waiting rows' keys at the last build: a row that starts to wait is picked on its own,
+## over the player's older pick (pass 2 on #441, the ask T11). Empty until the first build.
+var _waits_seen := {}
+var _seen_once := false
+## The rows of the last build (a pick's firm) and the day it drew (today's line moves daily).
+var _rows: Array = []
+var _built_day := -1
 ## The doors strip and the side column (read by the tests).
 var _doors: Control
 var _side: VBoxContainer
@@ -176,7 +187,11 @@ func setup(state, loader) -> void:
 	_focus_verb = ""
 	_refocus = []
 	_pick = ""
+	_pick_firm = ""
 	_held = ""
+	_held_firm = ""
+	_waits_seen = {}
+	_seen_once = false
 
 
 ## Pins the scroll to the bottom, for tools/screenshot.gd. A panel whose body always
@@ -204,6 +219,9 @@ func hide_close_button() -> void:
 
 
 func _process(_delta: float) -> void:
+	# Today's line on the timeline is a day's position: a new day redraws it.
+	if _state != null and int(_state.day) != _built_day:
+		_dirty = true
 	if not _dirty or not is_visible_in_tree() or _state == null:
 		return
 	_dirty = false
@@ -241,8 +259,14 @@ func _refresh() -> void:
 	if _last_refusal != "":
 		ResultTone.tint(PanelKit.line(_body, _last_refusal), ResultTone.BLOCKED)
 	var rows := SectorsTimeline.rows(_state, _loader, ns)
+	_rows = rows
+	_built_day = int(_state.day)
+	# The side column follows the text size, as the rest of the page does.
+	_side.custom_minimum_size.x = roundf(SectorsDecision.WIDTH * UiTheme.text_scale())
+	_pick_new_waits(rows)
 	var picked := _choose(rows)
 	_shown = String(picked.get("key", ""))
+	_shown_firm = String(picked.get("company_id", ""))
 	SectorsTimeline.build(_body, _state, rows, String(picked.get("key", "")), _on_pick)
 	IndustryProgress.endings(_body, _state, _loader, ns)
 	_title = SectorsOverview.charts(_body, _state, _loader, ns, tab)
@@ -260,23 +284,46 @@ func _refresh() -> void:
 		_apply_bottom()
 
 
-## The row the side sheet shows: the player's pick while it still runs, else the first that
-## waits, else the routed firm's row, else the row last answered, else the first; {} when
-## nothing runs. A route sits under a waiting row: _open_firm outlives the decision it
-## routed to, and must not hide the next one.
+## The row the side sheet shows: the player's pick (a Needs you route sets it, open_firm), or
+## its firm's row once the pick changed kind; else the first that waits; else the row last
+## answered, or its firm's; else the first; {} when nothing runs.
 func _choose(rows: Array) -> Dictionary:
-	for want in [func(r) -> bool: return String(r["key"]) == _pick, func(r) -> bool: return bool(r["waits"]),
-			func(r) -> bool: return _open_firm != "" and String(r["company_id"]) == _open_firm,
-			func(r) -> bool: return String(r["key"]) == _held,
-			func(_r) -> bool: return true]:
+	var firm := func(r, want: String) -> bool: return want != "" and String(r["company_id"]) == want
+	for want in [func(r) -> bool: return String(r["key"]) == _pick, func(r) -> bool: return firm.call(r, _pick_firm),
+			func(r) -> bool: return bool(r["waits"]), func(r) -> bool: return String(r["key"]) == _held,
+			func(r) -> bool: return firm.call(r, _held_firm), func(_r) -> bool: return true]:
 		for r in rows:
 			if want.call(r):
 				return r
 	return {}
 
 
-func _on_pick(key: String) -> void:
+## A row that starts to wait opens in the sheet on its own: the player's older pick gives way.
+func _pick_new_waits(rows: Array) -> void:
+	var now := {}
+	var fresh := ""
+	for r in rows:
+		if bool(r["waits"]):
+			now[String(r["key"])] = true
+			if fresh == "" and _seen_once and not _waits_seen.has(String(r["key"])):
+				fresh = String(r["key"])
+	if fresh != "":
+		set_pick(fresh)
+	_waits_seen = now
+	_seen_once = true
+
+
+## Picks the row `key` (a click, a route, a new decision); its firm is kept for a kind change.
+func set_pick(key: String) -> void:
 	_pick = key
+	_pick_firm = ""
+	for r in _rows:
+		if String(r["key"]) == key:
+			_pick_firm = String(r["company_id"])
+
+
+func _on_pick(key: String) -> void:
+	set_pick(key)
 	_refocus = ["timeline_pick", key]
 	_dirty = true
 
@@ -385,16 +432,19 @@ func _restore_focus() -> void:
 
 func _on_stop(process_id: String, what: String) -> void:
 	_held = _shown
+	_held_firm = _shown_firm
 	FirmCommands.stop(self, process_id, what)
 
 
 func _on_answer(process_id: String, answer_id: String, what: String) -> void:
 	_held = _shown
+	_held_firm = _shown_firm
 	FirmCommands.answer(self, process_id, answer_id, what)
 
 
 func _on_closure(closure_id: String, answer_id: String, what: String) -> void:
 	_held = _shown
+	_held_firm = _shown_firm
 	FirmCommands.closure(self, closure_id, answer_id, what)
 
 

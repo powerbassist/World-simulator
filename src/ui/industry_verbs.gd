@@ -52,7 +52,7 @@ static func build(panel, parent: Control, ns, company) -> void:
 		var money: Array = money_line(state, loader, ns, company, action, est)
 		var money_label := PanelKit.plain_line(cost, String(money[1]), PanelKit.Tone.PLAIN)
 		money_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-		money_label.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(float(money[2])))
+		money_label.theme_type_variation = ""  # G3 decision 1: a price is neutral, its minus sign says the cost
 		selector.set_meta("money_label", money_label)
 		# Aid, said as the player weighs it (screen 5 slice 2): a job's price, a tax point's share.
 		if AidWords.is_aid(action):
@@ -72,6 +72,7 @@ static func build(panel, parent: Control, ns, company) -> void:
 		detail.custom_minimum_size.x = STRIP_WIDTH
 		parent.add_child(detail)
 		var strip := EffectsStrip.new()
+		strip.price_neutral = true
 		detail.add_child(strip)
 		strip.show_lines(String(money[0]), String(money[1]), float(money[2]),
 			EffectsStrip.who_text(AidWords.offsets(state, loader, ns, company, action)),

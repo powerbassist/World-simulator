@@ -37,7 +37,6 @@ const FirmSheet = preload("res://src/ui/firm_sheet.gd")
 const SectorProgramme = preload("res://src/ui/sector_programme.gd")
 const SectorGoodsView = preload("res://src/ui/sector_goods_view.gd")
 const VerbBlock = preload("res://src/ui/verb_block.gd")
-const SectorsDecision = preload("res://src/ui/sectors_decision.gd")
 
 ## The sheet's width in px: the picture's right column.
 const SHEET_WIDTH := 440
@@ -202,10 +201,10 @@ func _head(ns) -> void:
 	figures.add_theme_constant_override("v_separation", 8)
 	figures.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	split.add_child(figures)
-	SectorsDecision.tile(figures, tr("%s bn") % Num.f(float(reading["output"]), 0), tr("Output"))
-	SectorsDecision.tile(figures, CompanyVerb.thousands(float(reading["jobs"])), tr("Jobs"))
-	SectorsDecision.tile(figures, tr("%s %%") % Num.fs(float(reading["trend"]), 1), tr("Trend a year"))
-	SectorsDecision.tile(figures, tr("%s %%") % Num.f(float(reading["of_gdp"]), 1), tr("Of GDP"))
+	PanelKit.figure_tile(figures, tr("%s bn") % Num.f(float(reading["output"]), 0), tr("Output"))
+	PanelKit.figure_tile(figures, CompanyVerb.thousands(float(reading["jobs"])), tr("Jobs"))
+	PanelKit.figure_tile(figures, tr("%s %%") % Num.fs(float(reading["trend"]), 1), tr("Trend a year"))
+	PanelKit.figure_tile(figures, tr("%s %%") % Num.f(float(reading["of_gdp"]), 1), tr("Of GDP"))
 	SectorProgramme.build(self, box, ns, sector)
 
 

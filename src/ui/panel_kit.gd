@@ -92,6 +92,8 @@ const BTN_H_MAIN := 44
 ## The class a button was given; a group's buttons all carry the same one.
 const CLASS_META := &"button_class"
 const OWN_MIN_META := &"button_own_min"
+## Set by same_class(): the button belongs to a group wider than its flow (_share_class skips it).
+const GROUP_META := &"button_class_group"
 
 
 # -- Structure ----------------------------------------------------------------
@@ -258,7 +260,8 @@ static func _classed(b: Button, size: Size, height: int) -> void:
 static func _share_class(flow: Container) -> void:
 	var group: Array[Button] = []
 	for child in flow.get_children():
-		if _is_verb(child):
+		# A verb same_class() put in a wider group keeps that group's class (G3 S3 pass 2).
+		if _is_verb(child) and not (child as Button).has_meta(GROUP_META):
 			group.append(child as Button)
 	var widest := 0.0
 	for b in group:
@@ -348,6 +351,7 @@ static func same_width(buttons: Array) -> void:
 static func same_class(buttons: Array, height := BTN_H) -> void:
 	var widest := 0.0
 	for b in buttons:
+		(b as Button).set_meta(GROUP_META, true)
 		if not (b as Button).has_meta(OWN_MIN_META):
 			(b as Button).set_meta(OWN_MIN_META, (b as Button).custom_minimum_size)
 		(b as Button).custom_minimum_size = (b as Button).get_meta(OWN_MIN_META)
@@ -389,6 +393,16 @@ static func row(parent: Control, left: String, right: String, tone := Tone.PLAIN
 
 	parent.add_child(line_box)
 	return line_box
+
+
+## G3: a figure on a tile (the side sheet's, a sector tab's head, the firm sheet). The caption
+## does not wrap: a tile is at least its caption's width, so it never runs under the next.
+static func figure_tile(parent: Control, value: String, caption: String) -> PanelContainer:
+	var plate := PanelContainer.new()
+	plate.theme_type_variation = UiTheme.TILE_PANEL
+	parent.add_child(plate)
+	(figure(plate, value, caption).get_child(1) as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
+	return plate
 
 
 ## A large number with its caption underneath. The caption goes below rather

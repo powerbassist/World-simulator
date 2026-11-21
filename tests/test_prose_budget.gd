@@ -358,8 +358,12 @@ func _sweep_closure_card(main) -> void:
 	await process_frame
 	var total := 0
 	# The decision sheet alone: a firm card routed under it (_open_sector) is not the closure's.
-	var sheet: Control = panel._side.find_children("*", "", true, false).filter(func(n) -> bool: return n.has_meta("decision"))[0]
-	for node in _visible_text_nodes(sheet):
+	var sheets: Array = panel._side.find_children("*", "", true, false).filter(func(n) -> bool:
+		return String(n.get_meta("decision", "")).begins_with("closure|"))
+	if sheets.is_empty():
+		_fail("closure card: the side sheet does not show the closure")
+		return
+	for node in _visible_text_nodes(sheets[0]):
 		var words := _words(_text_of(node))
 		total += words.size()
 		if _dump.has("closure_card"):

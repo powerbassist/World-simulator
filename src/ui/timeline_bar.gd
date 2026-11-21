@@ -150,6 +150,13 @@ func _draw_mark(r: Rect2) -> void:
 	_fill.bg_color = UiTheme.NEUTRAL_BAR
 	_fill.set_corner_radius_all(int(radius))
 	draw_style_box(_fill, r)
+	# A bar that ends wears a cap at its end; a programme's runs off the scale with an arrow, so a
+	# 36-month rescue does not read as open-ended (pass 2 on #441).
+	if style == BAR:
+		draw_line(Vector2(r.end.x - 1.0, r.position.y - 2.0), Vector2(r.end.x - 1.0, r.end.y + 2.0), UiTheme.TEXT, 2.0)
+	elif style == RUNNING:
+		var tip := Vector2(r.end.x, r.position.y + radius)
+		draw_colored_polygon(PackedVector2Array([tip, tip + Vector2(-radius, -radius - 2.0), tip + Vector2(-radius, radius + 2.0)]), UiTheme.TEXT_DIM)
 	if style == DUE:
 		var c := Vector2(r.end.x, r.position.y + radius)
 		var d := DIAMOND * UiTheme.text_scale()

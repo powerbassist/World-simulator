@@ -1,9 +1,11 @@
 extends RefCounted
 
-## The Industry tab's In progress strip -- V5.3 a + b step 2, docs/design/v5.3-ab.md
-## 2.3: a decision that takes time is shown at the top of the tab it belongs to,
-## each row with its stage, the months left and what comes next, and a Stop that
-## says what stopping costs before it is pressed (Processes.stop_price(), the sim's
+## A running process's words and answers, and last month's endings. Born as the Industry
+## tab's In progress strip (V5.3 a + b step 2, docs/design/v5.3-ab.md 2.3); since G3 S3 each
+## row is a line of the Sectors timeline and this builds what the side sheet shows for it
+## (process_row, rescue) and the endings under the timeline. A row carries its stage, the
+## months left and what comes next, and a Stop that says what stopping costs before it is
+## pressed (Processes.stop_price(), the sim's
 ## figure: the break fee or the legal fees spent, and the U-turn's blocs).
 ##
 ## A STAGE THAT ASKS (#248, process_asks.gd: "each stage asks you something") puts
@@ -11,14 +13,8 @@ extends RefCounted
 ## blocs it moves, and the answer taken if the player says nothing. Its Stop gives
 ## way while the question stands: walking away and stopping are among the answers.
 ##
-## A PLANT CLOSURE ANNOUNCED (#251, closures.gd) is a decision card here too: the
-## firm, its city, the jobs and the month it lands, then its answers SIDE BY SIDE --
-## each its own strip (what it books, the jobs it keeps or loses, the blocs it moves)
-## and its button -- and the answer taken if the player says nothing. A buyer search
-## shows its months left.
-##
-## Hidden while nothing runs, which is every game until a process starts: a strip
-## that said "nothing in progress" would be words for nothing (the prose budget).
+## A plant closure's card is closure_card.gd's. The endings are hidden when nothing ended:
+## a line saying "nothing ended" would be words for nothing (the prose budget).
 
 const Processes = preload("res://src/sim/processes.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
@@ -143,7 +139,7 @@ static func process_row(box: Control, state, loader, ns, row: Dictionary, stop: 
 	var gain := -float(price["debt_eur_bn"])
 	var money := PanelKit.plain_line(flow, EffectsStrip.cost_text(gain), PanelKit.Tone.PLAIN)
 	money.autowrap_mode = TextServer.AUTOWRAP_OFF
-	money.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
+	money.theme_type_variation = ""  # G3 decision 1: a price is neutral, its minus sign says the cost
 	button.set_meta("money_label", money)
 	var who := EffectsStrip.who_text(price.get("bloc_offset", {}))
 	if who != "":
@@ -160,6 +156,7 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 	var question := PanelKit.plain_line(box, Strings.t(String(QUESTION.get(String(ask["kind"]), ""))), PanelKit.Tone.PLAIN)
 	question.theme_type_variation = UiTheme.WARN_TEXT
 	var counters: Array = []
+	var buttons: Array = []
 	for option in ask["answers"]:
 		var id := String(option["id"])
 		if option.has("counter"):
@@ -172,14 +169,17 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 		button.set_meta("process_id", process_id)
 		button.pressed.connect(func() -> void: answer.call(process_id, id, what))
 		flow.add_child(button)
+		buttons.append(button)
 		var gain := -float(option["debt_eur_bn"])
 		var money := PanelKit.plain_line(flow, EffectsStrip.cost_text(gain), PanelKit.Tone.PLAIN)
 		money.autowrap_mode = TextServer.AUTOWRAP_OFF
-		money.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
+		money.theme_type_variation = ""  # G3 decision 1: a price is neutral, its minus sign says the cost
 		button.set_meta("money_label", money)
 		var who := EffectsStrip.who_text(option["bloc_offset"])
 		if who != "":
 			PanelKit.plain_line(flow, who).autowrap_mode = TextServer.AUTOWRAP_OFF
+	# One question's answers are one class group across their rows (G3 S3 pass 2).
+	PanelKit.same_class(buttons)
 	if not counters.is_empty():
 		CounterChips.build(box, process_id, counters, _process_strip, func(id: String) -> void: answer.call(process_id, id, what), "answer_id")
 	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % _label(String(ask["default"])))

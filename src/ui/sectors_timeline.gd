@@ -34,8 +34,8 @@ const DateText = preload("res://src/ui/date_text.gd")
 ## The scale's months: never under SPAN_MIN (a near row still has room), never past SPAN_MAX.
 const SPAN_MIN := 6
 const SPAN_MAX := 12
-## The left column's width, in px at text size 100 (the picture's 360).
-const TEXT_WIDTH := 260.0
+## The left column's width, in px at text size 100: the picture's 360 (260 cut titles at 1.0).
+const TEXT_WIDTH := 360.0
 ## Waiting rows first, the soonest answer first; then the rest by their end, the open-ended last.
 const KIND_ORDER := ["ask", "closure", "failing", "bid", "process", "search", "rescue", "programme"]
 
@@ -65,23 +65,26 @@ static func rows(state, loader, ns) -> Array:
 	for row in Closures.open(ns):
 		var cid := String(row["company_id"])
 		var waits := _closure_waits(row)
-		var place := _place(loader, ns, row)
+		var firm: String = loader.firm_name(ns.id, cid)
+		var city := _city(loader, ns, row)
 		var jobs := Strings.t("%s jobs") % CompanyVerb.thousands(float(row.get("jobs", 0.0)))
 		if waits:
 			# A buyer back defaults to the sale (ClosureCard.build): its title says so.
-			var title := Strings.t("%s: the buyer is back for its %s plant") if String(row["status"]) == Closures.OFFERED 				else Strings.t("%s closes its %s plant")
+			var title := _plant(firm, city, Strings.t("%s closes its %s plant"), Strings.t("%s closes a plant"))
+			if String(row["status"]) == Closures.OFFERED:
+				title = _plant(firm, city, Strings.t("%s: the buyer is back for its %s plant"), Strings.t("%s: the buyer is back for its plant"))
 			_add(out, sector_of, cid, {"key": "closure|%s" % String(row["id"]), "kind": "closure",
-				"title": title % [loader.firm_name(ns.id, cid), place], "sub": jobs,
+				"title": title, "sub": jobs,
 				"ends": maxi(int(row.get("due", now)) - now, 1), "due": maxi(int(row.get("due", now)) - now, 1), "style": TimelineBar.DUE,
 				"waits": true, "bad": Strings.t("unanswered, it shuts") if String(row["status"]) == Closures.ANNOUNCED else "", "source": row})
 		else:
 			_add(out, sector_of, cid, {"key": "closure|%s" % String(row["id"]), "kind": "search",
-				"title": Strings.t("%s: a buyer for its %s plant") % [loader.firm_name(ns.id, cid), place], "sub": jobs,
+				"title": _plant(firm, city, Strings.t("%s: a buyer for its %s plant"), Strings.t("%s: a buyer for its plant")), "sub": jobs,
 				"ends": maxi(int(row.get("months_left", 1)), 1), "style": TimelineBar.WINDOW, "source": row})
 	for row in Closures.rescues(ns):
 		var cid := String(row["company_id"])
 		_add(out, sector_of, cid, {"key": "rescue|%s" % cid, "kind": "rescue",
-			"title": Strings.t("%s: its %s plant rescued") % [loader.firm_name(ns.id, cid), _place(loader, ns, row)],
+			"title": _plant(loader.firm_name(ns.id, cid), _city(loader, ns, row), Strings.t("%s: its %s plant rescued"), Strings.t("%s: its plant rescued")),
 			"sub": Strings.t("%s jobs kept") % CompanyVerb.thousands(float(row.get("jobs", 0.0))),
 			"ends": maxi(int(row["months_left"]), 1), "style": TimelineBar.BAR,
 			"money": Strings.t("%s a year") % EffectsStrip.sum_text(-float(row["rescue_eur_bn_per_year"])), "source": row})
@@ -89,14 +92,16 @@ static func rows(state, loader, ns) -> Array:
 		var cid := String(failure["company_id"])
 		_add(out, sector_of, cid, {"key": "failing|%s" % cid, "kind": "failing",
 			"title": Strings.t("%s: rescue window") % loader.firm_name(ns.id, cid), "sub": Strings.t("a failing major"),
-			"ends": maxi(int(failure["months_left"]), 1), "style": TimelineBar.WINDOW, "waits": true, "source": failure})
+			"ends": maxi(int(failure["months_left"]), 1), "due": maxi(int(failure["months_left"]), 1), "style": TimelineBar.DUE,
+			"waits": true, "bad": Strings.t("unanswered, it fails"), "source": failure})
 	var bid: Dictionary = Industry.pending_bid(state, ns, loader)
 	if not bid.is_empty():
 		var cid := String(bid["company_id"])
 		_add(out, sector_of, cid, {"key": "bid|%s" % cid, "kind": "bid",
 			"title": Strings.t("%s: a foreign takeover bid") % loader.firm_name(ns.id, cid),
 			"sub": Strings.t("from %s") % loader.nation_name(String(bid["bidder_nation"])),
-			"ends": maxi(int(bid["months_left"]), 1), "style": TimelineBar.WINDOW, "waits": true, "source": bid})
+			"ends": maxi(int(bid["months_left"]), 1), "due": maxi(int(bid["months_left"]), 1), "style": TimelineBar.DUE,
+			"waits": true, "source": bid})
 	for sector in EK.SECTOR_TREND.keys():
 		if Investment.intensity_of(ns, String(sector)) <= 0.0:
 			continue
@@ -119,6 +124,17 @@ static func span_of(rows: Array) -> int:
 	for r in rows:
 		far = maxi(far, maxi(int(r["ends"]), int(r["due"])))
 	return clampi(far + 1, SPAN_MIN, SPAN_MAX)
+
+
+## The last day to answer a row due `months` from now: the month end crossed into month now
+## + `months` lands the default, so it is the last day of the month before (the Diary's
+## "Answer by", diary_grid.gd).
+static func answer_by(state, months: int) -> String:
+	var t: int = state.year * 12 + state.month + maxi(months, 1) - 1
+	var month := (t - 1) % 12 + 1
+	var year := floori((t - 1) / 12.0)
+	var day := DateText.days_in(month, year)
+	return "%s %s" % [DateText.weekday(day, month, year), DateText.day_mon(day, month)]
 
 
 ## "Sun 1 Aug": the first day of month now + `months`, the day the month's end settles it.
@@ -163,7 +179,8 @@ static func build(parent: Control, state, rows: Array, picked: String, pick: Cal
 	legend.add_theme_constant_override("h_separation", 16)
 	legend.set_meta("timeline", "legend")
 	body.add_child(legend)
-	for key in [[TimelineBar.DUE, Strings.t("your answer is due")], [TimelineBar.RUNNING, Strings.t("runs until you stop it")],
+	for key in [[TimelineBar.DUE, Strings.t("your answer is due")], [TimelineBar.BAR, Strings.t("ends on its date")],
+			[TimelineBar.RUNNING, Strings.t("runs until you stop it")],
 			[TimelineBar.WINDOW, Strings.t("a window that closes")]]:
 		var item := HBoxContainer.new()
 		legend.add_child(item)
@@ -182,7 +199,7 @@ static func lead_text(state, rows: Array) -> String:
 	var last := 0
 	for r in due:
 		last = maxi(last, maxi(int(r["due"]), int(r["ends"])))
-	var t: int = state.year * 12 + state.month + last
+	var t: int = state.year * 12 + state.month + maxi(last, 1) - 1
 	var month := (t - 1) % 12 + 1
 	var year := floori((t - 1) / 12.0)
 	# The year only when it is not this one ("due by February" in November reads as last February).
@@ -226,7 +243,7 @@ static func _row(body: Control, state, r: Dictionary, span: int, today: float, w
 	line.add_child(bar)
 	var chips := []
 	if int(r["due"]) >= 0:
-		chips.append([Strings.t("answer by %s") % date_in(state, int(r["due"])), UiTheme.CHIP_WARN, "event"])
+		chips.append([Strings.t("answer by %s") % answer_by(state, int(r["due"])), UiTheme.CHIP_WARN, "event"])
 	if String(r.get("bad", "")) != "":
 		chips.append([String(r["bad"]), UiTheme.CHIP_BAD, ""])
 	elif String(r.get("then", "")) != "" and int(r["due"]) >= 0:
@@ -234,6 +251,9 @@ static func _row(body: Control, state, r: Dictionary, span: int, today: float, w
 	var inside := String(r.get("money", ""))
 	if String(r["style"]) == TimelineBar.WINDOW:
 		inside = Strings.t("window closes %s") % date_in(state, int(r["ends"]))
+	elif String(r["kind"]) == "process":
+		# A process's bar runs to its stage's end, not the process's (the sim keeps no more).
+		inside = Strings.t("this stage ends %s") % date_in(state, int(r["ends"]))
 	elif String(r["style"]) == TimelineBar.BAR and inside == "":
 		inside = Strings.t("ends %s") % date_in(state, int(r["ends"]))
 	bar.setup(String(r["style"]), span, today, int(r["ends"]), int(r["due"]), inside, chips)
@@ -271,9 +291,16 @@ static func _closure_waits(row: Dictionary) -> bool:
 	return String(row["status"]) == Closures.ANNOUNCED or (String(row["status"]) == Closures.OFFERED and not row.has("answer"))
 
 
-static func _place(loader, ns, row: Dictionary) -> String:
+## The plant's city, or "" when the row names none.
+static func _city(loader, ns, row: Dictionary) -> String:
 	var city = Region.find_city(loader.regions.get(ns.id, []), String(row.get("city_id", "")))
-	return String(city.city_name) if city != null else Strings.t("one")
+	return String(city.city_name) if city != null else ""
+
+
+## A plant's title as one whole sentence: with its city, or the sentence that names none
+## (AGENTS.md: a sentence is whole, never a fragment spliced in); the callers translate both.
+static func _plant(firm: String, city: String, with_city: String, without: String) -> String:
+	return with_city % [firm, city] if city != "" else without % firm
 
 
 static func _action(loader, id: String):

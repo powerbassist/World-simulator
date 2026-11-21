@@ -23,6 +23,10 @@ const Strings = preload("res://src/ui/strings.gd")
 
 var _failures: Array[String] = []
 var _main
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
+
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+
 var _panel
 var _frame := 0
 var _stake := ""
@@ -72,6 +76,11 @@ func _check_dates() -> void:
 	var want := "%s %s" % [DateText.weekday(1, 1, 2028), DateText.day_mon(1, 1)]
 	if SectorsTimeline.date_in(state, 1) != want:
 		_fail("date_in(Dec 2027, 1) is '%s', want '%s'" % [SectorsTimeline.date_in(state, 1), want])
+	# Answer by: the last day before the default lands, as the Diary says it (pass 2 on #441).
+	for case in [[1, 31, 12, 2027], [2, 31, 1, 2028]]:
+		var last := "%s %s" % [DateText.weekday(case[1], case[2], case[3]), DateText.day_mon(case[1], case[2])]
+		if SectorsTimeline.answer_by(state, case[0]) != last:
+			_fail("answer_by(Dec 2027, %d) is '%s', want '%s'" % [case[0], SectorsTimeline.answer_by(state, case[0]), last])
 	state.year = keep[0]
 	state.month = keep[1]
 
@@ -134,8 +143,9 @@ func _check_rows() -> void:
 	if closure.is_empty() or int(closure["due"]) != due or String(closure["bad"]) == "":
 		_fail("the closure row: %s (want due %d and its 'unanswered, it shuts')" % [closure, due])
 	var failing: Dictionary = by_kind.get("failing", {})
-	if failing.is_empty() or int(failing["ends"]) != 5 or String(failing["style"]) != TimelineBar.WINDOW or int(failing["due"]) != -1:
-		_fail("the rescue window: %s (want ends 5, a window, no answer date)" % [failing])
+	# G3 decision 2: it waits on the player, so amber with its date (pass 2 on #441).
+	if failing.is_empty() or int(failing["ends"]) != 5 or String(failing["style"]) != TimelineBar.DUE or int(failing["due"]) != 5:
+		_fail("the rescue window: %s (want ends 5, due 5, amber)" % [failing])
 	var programme: Dictionary = by_kind.get("programme", {})
 	if programme.is_empty() or int(programme["ends"]) != -1 or String(programme["style"]) != TimelineBar.RUNNING:
 		_fail("the Industry programme: %s (want an open-ended running bar)" % [programme])
@@ -164,7 +174,20 @@ func _check_page() -> void:
 		_fail("the side sheet did not open on the stake's ask")
 	if _with_meta("answer_id", "accept") == null:
 		_fail("the stake's Accept is not in the side sheet")
-	var chip := Strings.t("answer by %s") % SectorsTimeline.date_in(_main._state, 1)
+	var chip := Strings.t("answer by %s") % SectorsTimeline.answer_by(_main._state, 1)
+	# A tile is at least its caption's width (pass 2 on #441: "JobEnds").
+	for plate in _panel._side.find_children("*", "PanelContainer", true, false):
+		if plate.theme_type_variation == UiTheme.TILE_PANEL:
+			for label in plate.find_children("*", "Label", true, false):
+				if (label as Label).autowrap_mode != TextServer.AUTOWRAP_OFF:
+					_fail("a tile's '%s' wraps under the next tile" % (label as Label).text)
+	# One question's answers are one class: Accept as wide as Walk away.
+	var widths := {}
+	for b in _panel._side.find_children("*", "Button", true, false):
+		if b.has_meta("answer_id") and not b.has_meta("counter_id") and String(b.get_meta("answer_id")) != "counter":
+			widths[String(b.get_meta("answer_id"))] = (b as Button).get_combined_minimum_size().x
+	if widths.size() < 2 or widths.values().min() != widths.values().max():
+		_fail("the ask's answers are not one width: %s" % [widths])
 	var lane = _node_with_meta("timeline_row", "process|%s" % _process_id())
 	if lane == null or not _text_under(lane).contains(chip):
 		_fail("the stake's lane does not carry '%s'" % chip)
@@ -176,6 +199,14 @@ func _check_picked_closure() -> void:
 	var answers: Array = _panel._side.find_children("*", "Button", true, false).filter(func(b): return b.has_meta("closure_answer"))
 	if answers.is_empty():
 		_fail("the closure's sheet has no answers")
+	# The Jobs tile counts the plant's jobs, not the firm's (pass 2 on #441).
+	var jobs := CompanyVerb.thousands(float(Closures.announced(_main._state.player(), _closing).get("jobs", 0.0)))
+	var tile_text := ""
+	for plate in _node_with_meta("decision", "closure|%s" % _closing_id()).find_children("*", "PanelContainer", true, false):
+		if plate.theme_type_variation == UiTheme.TILE_PANEL and _text_under(plate).contains(Strings.t("Jobs")):
+			tile_text = _text_under(plate)
+	if not tile_text.begins_with(jobs):
+		_fail("the closure's Jobs tile reads '%s', the plant's jobs are %s" % [tile_text, jobs])
 	var plate = _node_with_meta("timeline_row", "closure|%s" % _closing_id())
 	if plate == null or not plate is PanelContainer:
 		_fail("the picked row does not sit on a tile")
@@ -186,35 +217,54 @@ func _check_picked_closure() -> void:
 				_fail("a lane's bar stops the click its row picks on (%s)" % row.get_meta("timeline_row"))
 
 
-## The side sheet's row: the player's pick, then a waiting row, then the row last answered
-## (it stays once it stops waiting), then the first.
+## The side sheet's row: the player's pick, else its firm's row once the pick changed kind,
+## else a waiting row, else the row last answered (or its firm's), else the first. A row that
+## starts to wait is picked on its own (the ask T11 on #441).
 func _check_choose_order() -> void:
-	var held: Array = [_panel._pick, _panel._held, _panel._open_firm]
+	var keep: Array = [_panel._pick, _panel._pick_firm, _panel._held, _panel._held_firm, _panel._rows, _panel._waits_seen, _panel._seen_once]
+	var rows := [{"key": "a", "company_id": "fa", "waits": false}, {"key": "b", "company_id": "fb", "waits": true},
+		{"key": "c", "company_id": "fc", "waits": false}]
+	_panel._rows = rows
 	_panel._pick = ""
-	_panel._open_firm = ""
+	_panel._pick_firm = ""
 	_panel._held = "c"
-	var rows := [{"key": "a", "company_id": "", "waits": false}, {"key": "b", "company_id": "", "waits": true},
-		{"key": "c", "company_id": "", "waits": false}]
+	_panel._held_firm = "fc"
 	if String(_panel._choose(rows)["key"]) != "b":
 		_fail("choose: a waiting row did not come before the one answered")
 	rows[1]["waits"] = false
 	if String(_panel._choose(rows)["key"]) != "c":
 		_fail("choose: the row answered did not stay on the sheet once it stopped waiting")
-	# A routed firm comes after a waiting row (pass 1 on #441: a route outranked new decisions).
-	rows[0]["company_id"] = "routed"
+	_panel._held = "closure|gone"
+	if String(_panel._choose(rows)["key"]) != "c":
+		_fail("choose: the row answered was lost when it changed kind (its firm's row)")
 	rows[1]["waits"] = true
-	_panel._open_firm = "routed"
-	if String(_panel._choose(rows)["key"]) != "b":
-		_fail("choose: a routed firm's row came before a row that waits")
-	rows[1]["waits"] = false
-	if String(_panel._choose(rows)["key"]) != "a":
-		_fail("choose: the routed firm's row did not come before the row answered")
-	_panel._pick = "a"
+	_panel.set_pick("a")
 	if String(_panel._choose(rows)["key"]) != "a":
 		_fail("choose: the player's pick did not come first")
-	_panel._pick = held[0]
-	_panel._held = held[1]
-	_panel._open_firm = held[2]
+	_panel._pick = "closure|gone"
+	if String(_panel._choose(rows)["key"]) != "a":
+		_fail("choose: the pick was lost when its row changed kind (its firm's row)")
+	# A row that starts to wait takes the sheet; one that already waited does not.
+	_panel._waits_seen = {"b": true}
+	_panel._seen_once = true
+	_panel.set_pick("a")
+	var fresh := rows + [{"key": "d", "company_id": "fd", "waits": true}]
+	_panel._rows = fresh
+	_panel._pick_new_waits(fresh)
+	if _panel._pick != "d":
+		_fail("choose: a row that started to wait did not open on its own (pick %s)" % _panel._pick)
+	_panel._pick_new_waits(fresh)
+	_panel.set_pick("a")
+	_panel._pick_new_waits(fresh)
+	if _panel._pick != "a":
+		_fail("choose: a row that already waited took the player's pick back")
+	_panel._pick = keep[0]
+	_panel._pick_firm = keep[1]
+	_panel._held = keep[2]
+	_panel._held_firm = keep[3]
+	_panel._rows = keep[4]
+	_panel._waits_seen = keep[5]
+	_panel._seen_once = keep[6]
 
 
 func _process_id() -> String:

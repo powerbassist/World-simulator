@@ -5,6 +5,7 @@ extends RefCounted
 ## literal register() per sector tab (the strip's and the outliner's tests read the
 ## registered window ids off those calls); this file makes the tabs and keeps their marks.
 
+const SectorsTimeline = preload("res://src/ui/sectors_timeline.gd")
 const SectorPanel = preload("res://src/ui/sector_panel.gd")
 const SectorNeeds = preload("res://src/ui/sector_needs.gd")
 const Pending = preload("res://src/ui/pending.gd")
@@ -50,8 +51,13 @@ static func refresh_marks(main) -> void:
 static func open_firm(sector: String, company_id: String, main) -> void:
 	main._companies_panel._open_sector = sector
 	main._companies_panel._open_firm = company_id
-	# G3 S3: the side sheet shows the firm's timeline row, if it has one (companies_panel._choose).
-	main._companies_panel._pick = ""
+	# G3 S3: the side sheet shows the routed firm's row -- its waiting one first (pass 2 on #441:
+	# answering firm X's Needs you row opened firm Y's decision).
+	var rows: Array = SectorsTimeline.rows(main._state, main._loader, main._state.player())
+	main._companies_panel._rows = rows
+	var mine := rows.filter(func(r) -> bool: return String(r["company_id"]) == company_id)
+	mine.sort_custom(func(a, b) -> bool: return bool(a["waits"]) and not bool(b["waits"]))
+	main._companies_panel.set_pick(String(mine[0]["key"]) if not mine.is_empty() else "")
 	# The page opens at the top, where the card sits. No code focus: a mouse route must not hand Space to a verb.
 	main._companies_panel._scroll.scroll_vertical = 0
 	main._companies_panel.mark_dirty()

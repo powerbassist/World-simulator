@@ -61,16 +61,14 @@ func _process(_delta: float) -> bool:
 		8:
 			_press(_with_meta("closure_answer", "rescue"))
 		10:
-			# The rescued plant is a new row (rescue|firm): the player picks it on the timeline.
-			var rescues := Closures.rescues(_main._state.player())
-			_press(_with_meta("timeline_pick", "rescue|%s" % String(rescues[0]["company_id"])) if rescues.size() == 1 else null)
-		11:
+			# Nobody picks a row by hand: the answered closure comes back as rescue|firm and the
+			# sheet keeps it by its firm (pass 2 on #441).
+			_check_sheet("rescue|%s" % String(_second_id()))
 			_check_rescue()
 			_announce_third()
 		12:
-			# The player's pick (the rescue) holds while it runs: the new closure is picked too.
-			_press(_with_meta("timeline_pick", "closure|%s" % String(_row_of_third().get("id", ""))))
-		13:
+			# The third closure starts to wait: it opens in the sheet on its own (the ask T11).
+			_check_sheet("closure|%s" % String(_row_of_third().get("id", "")))
 			_pick_the_last_chip()
 		14:
 			_make_the_counter()
@@ -468,6 +466,20 @@ func _check_unknown_kind() -> void:
 	var odd := {"id": "odd_answer", "kind": "odd", "jobs_lost": 1.0, "months": 1}
 	if ClosureCard.label(odd) != "odd_answer" or ClosureCard.jobs_text(odd) != "" or String(ClosureCard.money(odd)[0]) != "":
 		_fail("unknown kind: the card reads '%s' / '%s' / %s" % [ClosureCard.label(odd), ClosureCard.jobs_text(odd), ClosureCard.money(odd)])
+
+
+## The side sheet shows the row `key` (its decision meta), with no row pressed by hand.
+func _check_sheet(key: String) -> void:
+	var sheet = _with_meta("decision", key)
+	if sheet == null:
+		var shown: Array = _panel._side.find_children("*", "", true, false).filter(func(n): return n.has_meta("decision"))
+		_fail("frame %d: the sheet shows %s, not %s" % [_frame, shown.map(func(n): return n.get_meta("decision")), key])
+
+
+## The second major's id, the one whose plant was rescued.
+func _second_id() -> String:
+	var rescues := Closures.rescues(_main._state.player())
+	return String(rescues[0]["company_id"]) if rescues.size() == 1 else ""
 
 
 func _row_of_third() -> Dictionary:

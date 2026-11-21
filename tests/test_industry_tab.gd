@@ -231,8 +231,13 @@ func _check_in_progress() -> void:
 	if _visible_with_meta("timeline_pick").size() != 1:
 		_fail("in progress: the timeline does not draw the one running process")
 		return
-	if not _text_under(_panel._side).contains(String(_major.company_name)):
-		_fail("in progress: no row names %s" % _major.company_name)
+	# The decision sheet itself names the firm, not the routed card beside it.
+	var sheet = null
+	for node in _panel._side.find_children("*", "", true, false):
+		if node.has_meta("decision") and String(node.get_meta("decision")) == "process|%s" % String(rows[0]["id"]):
+			sheet = node
+	if sheet == null or not _text_under(sheet).contains(String(_major.company_name)):
+		_fail("in progress: the side sheet does not show the stake on %s" % _major.company_name)
 	var stop = _button_with_meta("process_id", String(rows[0]["id"]))
 	if stop == null:
 		_fail("in progress: no Stop on the running stake")

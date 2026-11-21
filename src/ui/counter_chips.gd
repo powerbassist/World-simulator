@@ -26,6 +26,7 @@ static func build(box: Control, key: String, counters: Array, fill: Callable, ma
 	# spacer the other half, so it shrinks with a narrow workspace and wraps at a larger
 	# text size, while its money stays near its caption rather than at the far edge.
 	var strip := EffectsStrip.new()
+	strip.price_neutral = true
 	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	strip.set_meta("counter_strip", true)
 	var half := HBoxContainer.new()

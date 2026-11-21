@@ -1,6 +1,6 @@
 extends RefCounted
 
-## A plant closure's row on the Industry tab's In progress strip (#251, #285): announced,
+## A plant closure's card (#251, #285), on the Sectors side sheet and a firm's sheet: announced,
 ## its answers side by side and the buyer's counters; searching, its months left; a buyer
 ## that came back (OFFERED), one month's re-ask at the old sweetener.
 
@@ -115,6 +115,7 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 	var what := "%s, %s" % [firm, place]
 	var answers := Closures.answers(state, ns, loader, String(row["id"]))
 	var make := func(id: String) -> void: closure.call(String(row["id"]), id, what)
+	var buttons: Array = []
 	for option in answers:
 		var id := String(option["id"])
 		if String(option["kind"]) == "negotiate":
@@ -123,6 +124,7 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 		column.custom_minimum_size.x = ANSWER_WIDTH
 		flow.add_child(column)
 		var strip := EffectsStrip.new()
+		strip.price_neutral = true
 		column.add_child(strip)
 		var button := PanelKit.sized(Button.new())
 		if offered and String(option["kind"]) == "buyer":
@@ -140,6 +142,9 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 		button.set_meta("money_label", strip.money_label)
 		button.pressed.connect(make.bind(id))
 		column.add_child(button)
+		buttons.append(button)
+	# Each answer stands in its own column, not the flow: one class group across them (G3 S3 pass 2).
+	PanelKit.same_class(buttons)
 	var counters := answers.filter(func(o: Dictionary) -> bool: return String(o["kind"]) == "negotiate")
 	if not counters.is_empty():
 		CounterChips.build(box, String(row["id"]), counters, _strip, make, "closure_answer")
