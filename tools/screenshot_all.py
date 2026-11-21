@@ -10,7 +10,9 @@ writes `<out>/<NN>_<slug>.png` plus contact sheets of four frames
 It also prints any flag screenshot.gd parses that no header line stages: a state
 the header does not list is a state nobody photographs.
 
-Usage: python tools/screenshot_all.py --out DIR [--only SUBSTR] [--repo PATH]
+Usage: python tools/screenshot_all.py --out DIR [--only SUBSTR] [--repo PATH] [--interface-size N]
+--interface-size N writes settings.cfg [display] interface_size_index=N into each run's temp user
+dir (src/ui/interface_size.gd: 1 = 1.0, 2 = 0.9, 3 = 0.8, 4 = 0.75); without it the game's default (Auto).
 Run it alone: it opens one Godot window after another (AGENTS.md, one Godot at a
 time in a checkout). Needs Pillow for the sheets; without it the frames still land.
 """
@@ -29,7 +31,7 @@ from pathlib import Path
 HEADER = re.compile(r'^##\s+godot --path "<repo>" --script res://tools/screenshot\.gd(?: -- (?P<args>.*))?$')
 PARSED = re.compile(r'args\[i\] == "(--[a-z0-9-]+)"')
 # Flags that steer a staging rather than stage one, so a header line need not carry them.
-MODIFIERS = {"--out", "--frames"}
+MODIFIERS = {"--out", "--frames", "--text"}
 TIMEOUT_S = 240
 
 
@@ -95,6 +97,7 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--only", default="")
     ap.add_argument("--repo", default=str(Path(__file__).resolve().parent.parent))
+    ap.add_argument("--interface-size", type=int, choices=range(5), default=None, help="interface_size_index to write into each temp user dir")
     opts = ap.parse_args()
     repo = Path(opts.repo)
     script = repo / "tools" / "screenshot.gd"
@@ -115,6 +118,15 @@ def main() -> int:
     return 1 if failed else 0
 
 
+def write_interface_size(user_dir: str, index: int) -> None:
+    """user:// is APPDATA/Godot/app_userdata/<project> on Windows and XDG_DATA_HOME/godot/... on
+    Linux; both point at the same temp dir here, so write the file where either build reads it."""
+    for sub in ("Godot", "godot"):
+        d = Path(user_dir) / sub / "app_userdata" / "Nation Simulator"
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "settings.cfg").write_text(f"[display]\n\ninterface_size_index={index}\n", encoding="utf-8")
+
+
 def _run_all(lines, opts, repo, out, frames, failed) -> None:
     for i, args in enumerate(lines):
         if opts.only and opts.only not in args:
@@ -124,6 +136,8 @@ def _run_all(lines, opts, repo, out, frames, failed) -> None:
         user_dir = tempfile.mkdtemp(prefix="nsim_shot_")
         env["APPDATA"] = user_dir
         env["XDG_DATA_HOME"] = user_dir
+        if opts.interface_size is not None:
+            write_interface_size(user_dir, opts.interface_size)
         cmd = ["godot", "--path", str(repo), "--script", "res://tools/screenshot.gd", "--"]
         cmd += args.split() + ["--out", str(target)]
         try:
