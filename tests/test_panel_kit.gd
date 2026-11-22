@@ -52,6 +52,7 @@ func _process(_delta: float) -> bool:
 		_check_tone_reads_the_convention_and_not_the_sign()
 		_check_no_panel_builds_its_own_row_any_more()
 		_check_g3_shapes_have_one_home()
+		_check_no_private_inset_on_a_tile()
 		_check_no_hand_written_panel_list()
 		_check_the_dirty_sweep_is_derived()
 		_build_kit_samples()
@@ -66,6 +67,7 @@ func _process(_delta: float) -> bool:
 		return false
 
 	_check_the_kit_uses_variations_and_not_overrides()
+	_check_tiles_pad_themselves()
 	_check_button_classes()
 	_check_a_ledger_is_one_measurement()
 	_check_rows_keep_a_readable_measure()
@@ -80,6 +82,8 @@ func _process(_delta: float) -> bool:
 # -- G3's button classes ---------------------------------------------------------
 
 var _group: HFlowContainer
+var _tile: PanelContainer
+var _plain_tile: PanelContainer
 
 
 func _build_button_group() -> void:
@@ -275,6 +279,46 @@ func _check_g3_shapes_have_one_home() -> void:
 				_fail("%s carries its own `%s`: the shape lives in PanelKit / AnswerRow" % [path, name])
 
 
+## G3 kit card (R1): a tile pads itself, in the kit, 12 px on the four sides -- not in the theme's
+## TilePanel box (slim tiles and row grounds share that box) and not in a panel's own inset.
+func _check_tiles_pad_themselves() -> void:
+	# The spec's 12 (gate-450 item 1), written here and not read off the constant it guards: a TILE_PAD
+	# set to 0 must fail (QA on #451).
+	const SPEC_PAD := 12
+	if PanelKit.TILE_PAD != SPEC_PAD:
+		_fail("PanelKit.TILE_PAD is %d, the spec's tile padding is %d" % [PanelKit.TILE_PAD, SPEC_PAD])
+	for tile in [_tile, _plain_tile]:
+		var inset := PanelKit.tile_body(tile)
+		for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+			if inset.get_theme_constant(side) != SPEC_PAD:
+				_fail("a kit tile's %s is %d, not %d" % [side, inset.get_theme_constant(side), SPEC_PAD])
+		if String(tile.theme_type_variation) != UiTheme.TILE_PANEL:
+			_fail("a kit tile wears %s, not TilePanel" % tile.theme_type_variation)
+	# Measured, not read off a constant: the figure's text starts 12 px inside the plate.
+	var value := _tile.find_children("*", "Label", true, false)[0] as Label
+	if value.global_position.x - _tile.global_position.x < SPEC_PAD - 0.5:
+		_fail("the tile's figure sits %.1f px from its edge" % (value.global_position.x - _tile.global_position.x))
+	if value.global_position.y - _tile.global_position.y < SPEC_PAD - 0.5:
+		_fail("the tile's figure sits %.1f px under its top" % (value.global_position.y - _tile.global_position.y))
+
+
+## A TilePanel in a panel file takes the kit's padding (PanelKit.padded_tile / figure_tile); a
+## private MarginContainer right after one is the third copy of the same inset (#449 had two).
+## The grounds that are not tiles say so with `# not a tile:` on that line.
+func _check_no_private_inset_on_a_tile() -> void:
+	for path in _gd_files("res://src/ui"):
+		if path.ends_with("/panel_kit.gd"):
+			continue
+		var lines := _read(path).split("
+")
+		for i in lines.size():
+			if not (lines[i].contains("theme_type_variation") and (lines[i].contains("TILE_PANEL") or lines[i].contains("TILE_FAILS"))):
+				continue
+			for j in range(i, mini(i + 7, lines.size())):
+				if lines[j].contains("MarginContainer.new()") and not lines[j].contains("# not a tile:") and not lines[i].contains("# not a tile:"):
+					_fail("%s:%d insets its own tile: PanelKit.padded_tile() pads it (or mark the ground `# not a tile:`)" % [path, j + 1])
+
+
 # -- The registry ----------------------------------------------------------------
 
 ## The most repeated bug on this project's record, made impossible rather than
@@ -376,6 +420,10 @@ func _build_kit_samples() -> void:
 	PanelKit.row(body, "Debt", "125.2% of GDP")
 	PanelKit.row(body, "Deficit", "-2.86%", PanelKit.Tone.BAD)
 	PanelKit.figure(body, "7.67%", "unemployment")
+	_tile = PanelKit.figure_tile(body, "7.67%", "unemployment")
+	_plain_tile = PanelKit.padded_tile()
+	body.add_child(_plain_tile)
+	PanelKit.plain_line(PanelKit.tile_body(_plain_tile), "Who it moves")
 	PanelKit.line(body, "A long enough sentence that it has to wrap somewhere inside the six hundred pixels this sample column has been given, which is the only way to find out whether it wraps at all.")
 	PanelKit.heading(_sample_root, "available")
 

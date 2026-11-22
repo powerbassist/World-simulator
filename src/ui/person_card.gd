@@ -90,7 +90,7 @@ static func dated_lines(loader, ns, pid: String) -> PackedStringArray:
 	for row in President.commitments_with(ns, pid):
 		if String(row["kind"]) == "delegated":
 			dated.append([int(row["made_month"]), Strings.t("%s: your minister promised them %s by %s.") % [Words.when(int(row["made_month"])),
-				object_text(loader, ns, String(row["object"]), {}), Words.when(int(row["due_month"]))]])
+				object_text(loader, ns, String(row["object"]), {}), Words.when_long(int(row["due_month"]))]])
 	for row in President.judged_commitments(ns):
 		if String(row["person_id"]) != pid or String(row["kind"]) != "delegated" or String(row["verdict"]) == "void":
 			continue

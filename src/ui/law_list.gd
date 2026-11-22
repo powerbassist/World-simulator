@@ -91,26 +91,48 @@ func _init(panel) -> void:
 	_head.theme_type_variation = UiTheme.MICRO
 	middle.add_child(_head)
 	_rows = _column(middle, 1.0)
-	_rows.add_theme_constant_override("separation", 10)
+	_rows.add_theme_constant_override("separation", 0)  # the rows' own padding is the gap (LawRow.GROUND_PAD_V)
 	var right: VBoxContainer = PanelKit.sheet(self)
 	right.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail = _column(right, 1.0)
 	_detail.add_theme_constant_override("separation", 8)
 
 
+## The clip opens GLOW_ROOM past the content on each side (T14): a filled press on the sheet's edge
+## keeps its glow and its focus ring, and the content keeps its x. The sheet's own padding (10) holds
+## the scroll bar.
+const GLOW_ROOM := 6
+
+
 func _column(parent: Control, ratio: float) -> VBoxContainer:
+	var out := MarginContainer.new()
+	out.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	out.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	out.size_flags_stretch_ratio = ratio
+	out.add_theme_constant_override("margin_left", -GLOW_ROOM)
+	out.add_theme_constant_override("margin_right", -GLOW_ROOM)
+	parent.add_child(out)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# EXPAND, so the tab page lets the panel fill the dock (tab_page.gd's
 	# _scrolls_inside, QA #54's list that stopped two thirds down).
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_stretch_ratio = ratio
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	parent.add_child(scroll)
+	out.add_child(scroll)
+	var room := MarginContainer.new()
+	room.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	room.add_theme_constant_override("margin_left", GLOW_ROOM)
+	room.add_theme_constant_override("margin_right", GLOW_ROOM)
+	scroll.add_child(room)
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(box)
+	room.add_child(box)
 	return box
+
+
+## The scroll a column's box sits in (its box, the room margin, the scroll: see `_column`).
+func scroll_of(box: Control) -> ScrollContainer:
+	return box.get_parent().get_parent() as ScrollContainer
 
 
 func selected_id() -> String:
@@ -144,8 +166,7 @@ func select(law_id: String) -> void:
 	_selected = law_id
 	for row in _rows.get_children():
 		if row.has_meta("pick"):
-			var pick: Button = row.get_meta("pick")
-			pick.set_pressed_no_signal(String(row.get_meta("law_id")) == law_id)
+			LawRow.mark(row, String(row.get_meta("law_id")) == law_id)
 	for child in _detail.get_children():
 		_detail.remove_child(child)
 		child.queue_free()

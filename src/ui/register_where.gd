@@ -101,11 +101,10 @@ static func build(panel, parent: Control, ns, row: Dictionary, shown: Dictionary
 	_legend(body, band)
 	if panel.rows().is_empty():
 		return  # nothing placed: the programme sheet and the greyed press say so once
-	var who := PanelContainer.new()
-	who.theme_type_variation = UiTheme.TILE_PANEL
+	var who := PanelKit.padded_tile()
 	body.add_child(who)
 	var col := VBoxContainer.new()
-	who.add_child(col)
+	PanelKit.tile_body(who).add_child(col)
 	PanelKit.heading(col, Strings.t("Who it moves"))
 	_who(panel, col, row, shown, after)
 

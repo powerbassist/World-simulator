@@ -53,7 +53,7 @@ static func _reveal_book(panel: Control) -> void:
 static func counter(parent: Control, node_name: String) -> Array:
 	var plate := PanelContainer.new()
 	plate.name = node_name
-	plate.theme_type_variation = UiTheme.TILE_PANEL  # G3: a figure tile inside the sheet
+	plate.theme_type_variation = UiTheme.TILE_PANEL  # not a tile: a slim counter, 6 px in (the kit card left it)
 	parent.add_child(plate)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 0)

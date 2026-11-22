@@ -224,7 +224,7 @@ func _check_a_bought_tier_opens_again() -> void:
 	if not _go().disabled:
 		_fail("a tier bought this month can be bought again")
 	var open_on: int = MeasurePolls.next_open_month(_ns(), String(_law.id), "quick")
-	if Words.when(open_on) not in _strip()._when.text:
+	if Words.when_long(open_on) not in _strip()._when.text:
 		_fail("the strip does not say when the tier opens: %s" % _strip()._when.text)
 	row["month"] = int(row["month"]) - K.REPOLL_MONTHS
 	_chip("quick").pressed.emit()

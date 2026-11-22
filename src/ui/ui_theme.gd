@@ -194,6 +194,9 @@ const SUBROW_BUTTON := "SubrowButton"     ## an entry in an open cluster's sub-r
 const PICKED := "Picked"                  # i18n: ok
 ## A borderless toggle (a picked firm's name, a fold): no ground at rest, CONTROL when ON (#439 T7).
 const PICKED_ROW := "PickedRow"           # i18n: ok
+## A picked name on a ground of its own (a picked Bills row): no ground of its own while ON, so the
+## row's ground is the one; hover and focus stay (Design's T1 on #451).
+const PICKED_NAME := "PickedName"         # i18n: ok
 const SIDEBAR_ROW := "SidebarRow"         ## a domain's row in the sidebar pane (G3 spec section 2)
 const REQUESTS_BUTTON := "RequestsButton" ## the title bar's "requests waiting" mark (V5.2 pre-gate)
 const CHIEF_MARK := "ChiefMark"           ## the chief's mark beside it (G1): a raised plate, no tone of its own
@@ -635,7 +638,7 @@ static func _buttons(theme: Theme) -> void:
 	OptionCheckStyle.apply(theme, OPTION_CHECK, [_button_box(Color(0, 0, 0, 0)), _button_box(CONTROL),
 		_ring()], _px(SIZE_SMALL), TEXT_DIM, TEXT, WARN)
 	ControlStyle.apply(theme, {"primary": PRIMARY, "small": SMALL, "segment": SEGMENT, "chip": CHIP,
-		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD, "ghost": GHOST, "picked": PICKED, "picked_row": PICKED_ROW, "lever": LEVER}, _button_box,
+		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD, "ghost": GHOST, "picked": PICKED, "picked_row": PICKED_ROW, "picked_name": PICKED_NAME, "lever": LEVER}, _button_box,
 		{"control": CONTROL, "hover": CONTROL_HOVER, "pressed": CONTROL_PRESSED, "line": LINE_STRONG,
 		"text": TEXT, "dim": TEXT_DIM, "off": TEXT_OFF, "good": GOOD, "warn": WARN, "bad": BAD,
 		"fill": accent_fill(), "on_fill": on_accent_fill(), "tile": TILE, "ring": _ring(), "bold": _face(WEIGHT_BOLD), "base_px": _px(SIZE_BASE)},

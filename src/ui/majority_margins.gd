@@ -86,14 +86,7 @@ static func build(parent: Control, ns, party_list: Array, parts: Array, breakabl
 ## A margin: PanelKit's figure tile, its figure in the tone, the strip and sentences under it.
 static func _margin(parent: Control, figure: String, caption: String, tone := PanelKit.Tone.PLAIN) -> VBoxContainer:
 	var plate := PanelKit.figure_tile(parent, figure, caption)
-	var body := plate.get_child(0) as VBoxContainer
-	# 12 px inside the tile, as the path's (Design's T1/T6 on #449): the text no longer sits on its edge.
-	plate.remove_child(body)
-	var inset := MarginContainer.new()
-	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		inset.add_theme_constant_override(side, 12)
-	plate.add_child(inset)
-	inset.add_child(body)
+	var body := PanelKit.tile_body(plate).get_child(0) as VBoxContainer
 	body.add_theme_constant_override("separation", 6)
 	if tone != PanelKit.Tone.PLAIN:
 		(body.get_child(0) as Label).theme_type_variation = UiTheme.FIGURE_GOOD if tone == PanelKit.Tone.GOOD else UiTheme.FIGURE_ALERT

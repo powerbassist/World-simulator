@@ -75,6 +75,8 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	theme.set_stylebox("hover_pressed", picked, box.call(fill.darkened(0.06)))
 	for state in ["font_pressed_color", "font_hover_pressed_color"]:
 		theme.set_color(state, picked, t["on_fill"])
+	if medium != null:
+		theme.set_font("font", picked, medium)  # the spec's chip: a label at 500, not a verb's bold (T9)
 	# PICKED_ROW, a borderless toggle (a picked name, a fold; g3-spec section 2 "Borderless
 	# toggle"): four grounds a step apart -- none at rest, TILE under the pointer, CONTROL while ON,
 	# CONTROL_HOVER ON under it -- so a hovered row never looks picked; "picked in a list" is a
@@ -87,6 +89,16 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 		theme.set_stylebox(state, row, box.call(row_states[state]))
 	for state in ["font_pressed_color", "font_hover_pressed_color"]:
 		theme.set_color(state, row, t["text"])
+
+	# PICKED_NAME: a picked row's name, on the row's own ground: the ON state draws nothing (the
+	# ground is the mark), the pointer still lifts it to CONTROL_HOVER, the base focus ring stays.
+	var picked_name := String(names["picked_name"])
+	theme.set_type_variation(picked_name, "Button")  # i18n: ok
+	var name_states := {"normal": Color(0, 0, 0, 0), "hover": t["tile"], "pressed": Color(0, 0, 0, 0), "hover_pressed": t["hover"]}
+	for state in name_states:
+		theme.set_stylebox(state, picked_name, box.call(name_states[state]))
+	for state in ["font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, picked_name, t["text"])
 
 	var small := String(names["small"])
 	theme.set_type_variation(small, "Button")  # i18n: ok
@@ -155,8 +167,8 @@ static func _segment(b: StyleBoxFlat) -> StyleBoxFlat:
 ## ACCENT_GLOW: the fill at 35 % under the armed button, and under nothing else.
 static func _glow(b: StyleBoxFlat) -> StyleBoxFlat:
 	b.shadow_color = Color(b.bg_color, 0.35)
-	b.shadow_size = 8
-	b.shadow_offset = Vector2(0, 3)
+	b.shadow_size = 6  # a halo, centred: 6 is the gap between two buttons of a row, so a neighbour never cuts it
+	b.shadow_offset = Vector2.ZERO
 	return b
 
 

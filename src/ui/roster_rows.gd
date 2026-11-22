@@ -150,7 +150,7 @@ static func _row(state, loader, ns, pid: String) -> Dictionary:
 	owed.sort_custom(func(a, b): return int(a["due_month"]) < int(b["due_month"]))
 	if not owed.is_empty():
 		var first: Dictionary = owed[0]
-		row["owe"] = Strings.t("%s, due %s") % [PersonCard.object_text(loader, ns, String(first["object"]), {}), Words.when(int(first["due_month"]))]
+		row["owe"] = Strings.t("%s, due %s") % [PersonCard.object_text(loader, ns, String(first["object"]), {}), Words.when_long(int(first["due_month"]))]
 		if int(first["due_month"]) - now <= DUE_MONTHS:
 			row["rank"] = mini(int(row["rank"]), Need.DUE)
 	var request := _open_request(ns, pid)
@@ -166,7 +166,7 @@ static func _row(state, loader, ns, pid: String) -> Dictionary:
 			# The inbox card's own date (Audiences.answer_by), never a second reading of it.
 			# Short: the row sits under "Needs you" in the waiting tone, so the ask goes unsaid
 			# (the prose budget's long-sentence ceiling, 10 words on the tab).
-			row["wants"] = Strings.t("Answer by %s: %s") % [Words.when(Audiences.answer_by(request)), about]
+			row["wants"] = Strings.t("Answer by %s: %s") % [Words.when_long(Audiences.answer_by(request)), about]
 			row["wants_tone"] = UiTheme.WARN_TEXT
 	else:
 		var want := _first_unserved(state, loader, ns, person)
@@ -288,7 +288,7 @@ static func offices(state, loader) -> Array:
 			"seats": "—"}
 		if party == null:
 			var since := _vacated(ns, f)
-			row["party"] = Strings.t("Vacant since %s") % Words.when(since) if since >= 0 else ""
+			row["party"] = Strings.t("Vacant since %s") % Words.when_long(since) if since >= 0 else ""
 			row["delivers"] = Strings.t("Counts half until you fill it")
 			row["delivers_tone"] = UiTheme.BAD_TEXT
 			out.append(row)

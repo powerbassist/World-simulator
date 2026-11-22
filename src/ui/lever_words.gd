@@ -86,6 +86,13 @@ static func when(absolute: int) -> String:
 	return DateText.month_year(absolute - year * 12, year)
 
 
+## The same month inside a sentence: "January 2027", no capitals (decision 4; `when` is the slot's and
+## the tag's short form).
+static func when_long(absolute: int) -> String:
+	var year := floori((absolute - 1) / 12.0)
+	return DateText.month_long_year(absolute - year * 12, year)
+
+
 ## What a lever will cost, BEFORE the click: Levers' `spends` row (register ->
 ## amount; a commitment and a bond step are counts), a register's in the word it
 ## lands in (R11) from `feel`, Feelings.of() the person. `due` names the promise's

@@ -113,7 +113,7 @@ static func _watch_the_day(list, box: Control, state) -> void:
 static func _fold(list, law) -> void:
 	list.address_open = "" if list.address_open == String(law.id) else String(law.id)
 	list.select(String(law.id))
-	var scroll: ScrollContainer = list._detail.get_parent()
+	var scroll: ScrollContainer = list.scroll_of(list._detail)
 	for button in list._detail.find_children("*", "Button", true, false):  # i18n: ok a class name
 		if button.has_meta(FOLD_META):
 			button.grab_focus()

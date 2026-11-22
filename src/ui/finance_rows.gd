@@ -264,9 +264,8 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 
 ## The open row's editor on a tile under its row (gate T3 on #443), the table's left edge kept.
 static func _on_ground(editor: Control) -> Control:
-	var tile := PanelContainer.new()
-	tile.theme_type_variation = UiTheme.TILE_PANEL
-	tile.add_child(editor)
+	var tile := PanelKit.padded_tile()
+	PanelKit.tile_body(tile).add_child(editor)
 	return tile
 
 
