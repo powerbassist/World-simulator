@@ -12,6 +12,8 @@ static func register(main) -> void:
 	var panel := FinancesPanel.new()
 	main._windows.register("finances", Strings.t("Books"), panel, KEY_B, main.ICONS + "payments.svg")
 	panel.setup(main._state, main._loader)
+	# G3 S4: the bill's rail stays beside every Finances tab (Books, Public works, Register, Building).
+	main._windows.set_aside("finances", panel.rail())
 	panel.go_requested.connect(main._windows.open)
 	# The one fiscal command the page sends (a bill tabled, added to or withdrawn): the shell's card and effect baseline.
 	panel.committed.connect(func(before: Dictionary, tabling: Dictionary) -> void:

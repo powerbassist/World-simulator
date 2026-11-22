@@ -67,6 +67,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --tax --moved
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --inbox-away --open budget   (G3 S4: the bill's rail open, the inbox put away)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
@@ -124,6 +125,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --broken-word
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --interrupt --speaker --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-tabled
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-tabled --books-draft --inbox-away   (an amendment: the tabled bill is the waterfall's first step)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-refused
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-units
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet
@@ -572,6 +574,8 @@ var _books_refused := false
 ## nothing moved shows none of them. The Tax Code's draft rides the Budget's
 ## columns too, and the Budget's strip says only what its own Commit books.
 var _moved := false
+## G3 S4: the inbox put away before the capture, so a domain's aside (the bill's rail) shows open, not folded.
+var _inbox_away := false
 
 ## V5.3 a + b step 2: the Industry tab mid-decision -- a minority stake running on
 ## the second major, its final price asked (#248: the In progress row's question
@@ -1183,6 +1187,8 @@ func _init() -> void:
 		elif args[i] == "--open" and i + 1 < args.size():
 			# The Budget tab retired into the Books page (Finances slice 5): its old flag opens the page that holds its rows.
 			_open = "finances" if args[i + 1] == "budget" else args[i + 1]
+		elif args[i] == "--inbox-away":
+			_inbox_away = true
 		elif args[i] == "--moved":
 			_moved = true
 		elif args[i] == "--industry":
@@ -1777,6 +1783,9 @@ func _apply_view() -> void:
 		_main._map_view.queue_redraw()
 	if _hover_outline != "":
 		_stage_outline_hover()
+	if _inbox_away:
+		_main._hud.inbox.slide_out()
+		_main._hud.inbox.hide()
 	if _notes:
 		var inbox = _main._hud.inbox
 		for n in 6:
@@ -2396,7 +2405,9 @@ func _stage_the_books() -> void:
 		page.open_row(_books_row.get_slice(":", 0), _books_row.get_slice(":", 1))
 	if _books_draft or _books_refused:
 		page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
-		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
+		# A row at vote is locked in play: an amendment never drafts it again.
+		if not _books_tabled:
+			page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
 		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
 	if _books_units:
 		page._draft.set_value("tax_rates_pct", "fuel_duty", float(ns.tax_rates_pct["fuel_duty"]) + 0.05)

@@ -16,6 +16,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
+const FinanceLever = preload("res://src/ui/finance_lever.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -113,10 +114,32 @@ func _process(_delta: float) -> bool:
 				_fail("the rows moved %s px when the draft was dropped" % (_revenue_row_y() - _rows_y))
 			_panel.open_row(FinanceDraft.TAX, "vat")
 			_panel._process(0.0)
-		10:
-			# The Go puts the cursor on that row's own slider (a frame after the build).
+		12:
+			# The Go puts the cursor on that row's own lever, once the editor is laid out (two frames after the build: G3 S4).
 			if _panel._editor == null or root.gui_get_focus_owner() != _panel._editor._slider:
 				_fail("a Go did not put the cursor on the row's slider")
+			# QA's TAKE on #443 (pass 2 T1's sibling): a tax in force at 0 % (the wealth tax) has no bar to drag, so its open
+			# row keeps the editor's own slider; the wheel over it scrolls the books, never the rate.
+			_panel._draft.revert()
+			root.gui_release_focus()  # the Go's focus on VAT's lever holds the rebuild off
+			_panel.open_row(FinanceDraft.TAX, "wealth")
+			_panel._process(0.0)
+		15:
+			var slider: HSlider = _panel._editor._slider if _panel._editor != null else null
+			if slider == null or slider is FinanceLever or not slider.is_visible_in_tree():
+				_fail("premise: the wealth tax's open row shows no slider of its own")
+			else:
+				for down in [true, false]:
+					var wheel := InputEventMouseButton.new()
+					wheel.button_index = MOUSE_BUTTON_WHEEL_UP
+					wheel.pressed = down
+					wheel.factor = 1.0
+					wheel.position = slider.get_global_rect().get_center()
+					wheel.global_position = wheel.position
+					root.push_input(wheel, true)
+				_panel._process(0.0)
+				if not _panel._draft.is_empty():
+					_fail("the wheel over the wealth tax's slider drafted %d change(s)" % _panel._draft.count())
 			_finish()
 	return false
 
@@ -208,8 +231,8 @@ func _check_a_drag_repaints_in_place() -> void:
 		_fail("the row's figure does not show the move: '%s'" % cell.text)
 	if not _panel._foot.visible or not _panel._foot.find_child("Table", true, false).visible:
 		_fail("a drafted row did not bring up the footer's one button")
-	if not _panel._foot._text.text.contains("1 change"):
-		_fail("the footer does not count the row: '%s'" % _panel._foot._text.text)
+	if not _panel._foot._count.text.to_lower().contains("1 change"):
+		_fail("the rail does not count the row: '%s'" % _panel._foot._count.text)
 	_panel._draft.revert()
 	_panel._paint(_state.player())
 
@@ -321,8 +344,8 @@ func _check_table_locks_the_rows_and_withdraw_frees_them() -> void:
 	if not ns.tabled_bill.is_empty():
 		_fail("Withdraw did not take the bill back")
 	_panel._process(0.0)
-	if _panel._foot.visible:
-		_fail("the footer stays up with nothing drafted and nothing tabled")
+	if _panel._foot._changes.visible or _panel._foot._withdraw.visible:
+		_fail("the rail lists changes or a bill with nothing drafted and nothing tabled")
 
 
 ## Opening another row rebuilds the page: the draft rides it, and a reopened row shows the draft against today.
@@ -401,8 +424,8 @@ func _check_the_brackets_are_priced_end_to_end() -> void:
 	_panel._process(0.0)
 	if _panel._draft.count() != 1 or _editor().get_node("Effect").text == "":
 		_fail("a brackets-only draft has no effect line: %d rows '%s'" % [_panel._draft.count(), _editor().get_node("Effect").text])
-	if not _panel._foot._text.text.contains("1 change"):
-		_fail("the footer does not count the brackets: '%s'" % _panel._foot._text.text)
+	if not _panel._foot._count.text.to_lower().contains("1 change"):
+		_fail("the rail does not count the brackets: '%s'" % _panel._foot._count.text)
 	_panel._draft.revert()
 
 
@@ -496,8 +519,8 @@ func _check_discard_drops_the_draft() -> void:
 		_fail("a draft has no way to be dropped")
 	discard.pressed.emit()
 	_panel._process(0.0)
-	if not _panel._draft.is_empty() or _panel._foot.visible:
-		_fail("Discard left the draft or the footer up")
+	if not _panel._draft.is_empty() or _panel._foot._changes.visible:
+		_fail("Discard left the draft or the rail's changes up")
 
 
 ## The price before he tables: the tray's bar is the very division FinanceRead.draft meets (its legend prints the seats;
