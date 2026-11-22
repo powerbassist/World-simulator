@@ -27,6 +27,8 @@ var _main
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const IndustryK = preload("res://src/sim/industry_constants.gd")
+const SectorsDecision = preload("res://src/ui/sectors_decision.gd")
 
 var _panel
 var _kept = null
@@ -34,6 +36,7 @@ var _frame := 0
 var _stake := ""
 var _closing := ""
 var _failing := ""
+var _bid := ""
 
 
 func _init() -> void:
@@ -54,6 +57,7 @@ func _process(_delta: float) -> bool:
 		6:
 			_check_rows()
 			_check_page()
+			_check_bid_chip()
 			_press(_with_meta("timeline_pick", "closure|%s" % _closing_id()))
 		8:
 			_check_picked_closure()
@@ -74,6 +78,7 @@ func _process(_delta: float) -> bool:
 		14:
 			if _node_with_meta("decision", "failing|%s" % _failing) == null:
 				_fail("a route to %s's rescue window opened another row" % _failing)
+			_check_failing_tiles()
 			# A new day moves today's line on the bars drawn; it does not rebuild the page.
 			var on_sheet: Array = _panel._side.find_children("*", "Button", true, false)
 			_kept = on_sheet[0] if not on_sheet.is_empty() else null
@@ -88,6 +93,14 @@ func _process(_delta: float) -> bool:
 			if not moved:
 				_fail("a new day did not move today's line")
 			_main._state.day -= 1
+			# The side column follows the text size (pass 2 on #441, QA's mutant d).
+			UiTheme.set_text_scale(1.15)
+			_panel.mark_dirty()
+		18:
+			var want := roundf(SectorsDecision.WIDTH * 1.15)
+			if _panel._side.custom_minimum_size.x != want:
+				_fail("at text 115 the side column is %.0f wide, want %.0f" % [_panel._side.custom_minimum_size.x, want])
+			UiTheme.set_text_scale(1.0)
 			_finish()
 	return false
 
@@ -144,6 +157,12 @@ func _stage() -> void:
 			ns.companies[company.id]["failed"] = true
 			ns.companies[company.id]["rescue_months_left"] = 5
 			_failing = String(company.id)
+		elif String(company.id) not in [_stake, _closing, _failing] and _bid == "" and ns.companies.has(company.id):
+			var entry: Dictionary = ns.companies[company.id]
+			entry["bid_bidder"] = "DEU|foreign_rival"
+			entry["bid_price_eur_bn"] = 12.0
+			entry["bid_months_left"] = IndustryK.BID_WINDOW_MONTHS
+			_bid = String(company.id)
 	var stops: Array = SectorProgramme.stops(_main._loader, "industry")
 	ns.sector_investment["industry"] = {"intensity": float(stops[1]["intensity"]), "capital": 0.0}
 	_panel.mark_dirty()
@@ -171,6 +190,10 @@ func _check_rows() -> void:
 	# G3 decision 2: it waits on the player, so amber with its date (pass 2 on #441).
 	if failing.is_empty() or int(failing["ends"]) != 5 or String(failing["style"]) != TimelineBar.DUE or int(failing["due"]) != 5:
 		_fail("the rescue window: %s (want ends 5, due 5, amber)" % [failing])
+	# The bid waits on the player like the rest: amber, with its answer-by date (T9, QA's mutants b, c).
+	var bid: Dictionary = by_kind.get("bid", {})
+	if bid.is_empty() or String(bid["style"]) != TimelineBar.DUE or int(bid["due"]) != IndustryK.BID_WINDOW_MONTHS:
+		_fail("the takeover bid: %s (want due %d, amber)" % [bid, IndustryK.BID_WINDOW_MONTHS])
 	var programme: Dictionary = by_kind.get("programme", {})
 	if programme.is_empty() or int(programme["ends"]) != -1 or String(programme["style"]) != TimelineBar.RUNNING:
 		_fail("the Industry programme: %s (want an open-ended running bar)" % [programme])
@@ -183,6 +206,24 @@ func _check_rows() -> void:
 			_fail("a waiting row (%s) sits under a row that waits for nothing" % r["key"])
 	if String(rows[0]["key"]) != String(ask["key"]):
 		_fail("the first row is %s, the soonest answer is the stake's %s" % [rows[0]["key"], ask["key"]])
+
+
+## A failing major's sheet shows no Jobs tile: the firm is going under (T5, QA's mutant a).
+func _check_failing_tiles() -> void:
+	var sheet = _node_with_meta("decision", "failing|%s" % _failing)
+	if sheet == null:
+		return
+	for plate in sheet.find_children("*", "PanelContainer", true, false):
+		if plate.theme_type_variation == UiTheme.TILE_PANEL and _text_under(plate).contains(Strings.t("Jobs")):
+			_fail("the failing major's sheet shows a Jobs tile: '%s'" % _text_under(plate))
+
+
+## The bid's row on the page carries its answer-by chip (QA's mutant c).
+func _check_bid_chip() -> void:
+	var row = _node_with_meta("timeline_row", "bid|%s" % _bid)
+	var chip := Strings.t("answer by %s") % SectorsTimeline.answer_by(_main._state, IndustryK.BID_WINDOW_MONTHS)
+	if row == null or not _text_under(row).contains(chip):
+		_fail("the bid's row has no '%s' chip" % chip)
 
 
 func _check_page() -> void:
