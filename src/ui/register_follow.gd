@@ -115,7 +115,8 @@ func _refresh() -> void:
 		PanelKit.plain_line(words, tr("Every unit voted is built over its months, then open at a running cost for good."), PanelKit.Tone.DIM)
 	if not asks.is_empty():
 		# The one date on the page: amber is for a date to answer by (Building in C).
-		var due := PanelKit.chip(head, tr("Answer by %s") % _month(int(asks[0]["ask"]["due"])), UiTheme.CHIP_WARN, "warning")
+		var first_due: int = asks.map(func(c): return int(c["ask"]["due"])).min()  # the earliest: the one that lapses first
+		var due := PanelKit.chip(head, tr("Answer by %s") % _month(first_due), UiTheme.CHIP_WARN, "warning")  # i18n: ok an icon name
 		due.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		due.set_meta("due", true)
 		for label in due.find_children("*", "Label", true, false):  # i18n: ok a class name
@@ -137,8 +138,8 @@ func _refresh() -> void:
 	var foot := HBoxContainer.new()
 	foot.add_theme_constant_override("separation", UiTheme.GAP_PANE)
 	_body.add_child(foot)
-	if not asks.is_empty():
-		_bill_if_paid(foot, asks[0])
+	for copy in asks:
+		_bill_if_paid(foot, copy)  # one bill a question, as each card carried its own before
 	_envelope(ns, foot)
 
 

@@ -103,7 +103,8 @@ func _draw() -> void:
 		var a := x_of(int(r["start"]))
 		var b := x_of(int(r["opens"]))
 		draw_rect(Rect2(a, mid - bar_h * 0.5, maxf(b - a, 2.0), bar_h), UiTheme.NEUTRAL_BAR)
-		if String(r.get("bar_text", "")) != "":
+		# Said only when it fits the bar: a short build would cut it mid-word (the line under the lanes says it too).
+		if String(r.get("bar_text", "")) != "" and font.get_string_size(String(r["bar_text"]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x <= b - a - 12.0:
 			draw_string(font, Vector2(a + 8.0, mid + fs * 0.35), String(r["bar_text"]), HORIZONTAL_ALIGNMENT_LEFT, maxf(b - a - 12.0, 0.0), fs, UiTheme.TEXT)  # i18n: row-ok the caller translated it
 		# The open stretch: dashed, to the axis's end -- it stands for good.
 		var end := x_of((_last_year + 1) * 12 + 1)

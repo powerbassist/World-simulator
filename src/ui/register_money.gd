@@ -88,7 +88,7 @@ func _draw_cash() -> void:
 		if hc > 0.0:
 			var base := CASH_H - hr - (2.0 if hr > 0.0 else 0.0)
 			draw_rect(Rect2(x0, base - hc, w, hc), BUILD)
-			if _overrun > 0.0:
+			if _overrun > 0.0 and hc * _overrun >= 2.0:  # under 2 px an outline has no inside
 				# An outlined piece, not amber: amber is only the date the ask is answered by (Building in C).
 				draw_rect(Rect2(x0 + 0.5, base - hc + 0.5, w - 1.0, hc * _overrun - 1.0), UiTheme.TEXT, false, 1.5)
 		# Two digits of the year: the bars are narrow, the century never changes here.
