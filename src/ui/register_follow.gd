@@ -27,6 +27,7 @@ const RegisterLanes = preload("res://src/ui/register_lanes.gd")
 const RegisterPanel = preload("res://src/ui/register_panel.gd")
 const RegisterMoney = preload("res://src/ui/register_money.gd")
 const RegisterUnits = preload("res://src/ui/register_units.gd")
+const FinanceRowsUi = preload("res://src/ui/finance_rows.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 
 var _state
@@ -38,11 +39,13 @@ var _close_button: Button
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(900, 0)
+	theme_type_variation = UiTheme.BARE  # the page lays out its own sheets (window_manager OWN_SHEETS)
 	# No scroll of its own: the workspace's page scrolls (window_manager.frame()).
-	var root := PanelKit.padded(self, 16, 10)
+	var root := VBoxContainer.new()
+	add_child(root)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_theme_constant_override("separation", 12)
+	_body.add_theme_constant_override("separation", UiTheme.GAP_PANE)
 	root.add_child(_body)
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
@@ -93,19 +96,32 @@ func _refresh() -> void:
 	WindowManager.fill_page(self, "programmes")  # the sheet fills the workspace, never scrolls for it
 	var building: Array = ns.unit_programmes.filter(func(p): return String(p.get("state", "")) == UK.STATE_BUILDING)
 	var asks: Array = UnitOverrun.asks(_state, ns, _loader)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 16)
+	PanelKit.sheet(_body).add_child(head)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(words)
 	var lede := Label.new()
 	lede.theme_type_variation = UiTheme.LEAD
 	lede.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_body.add_child(lede)
+	words.add_child(lede)
 	if building.is_empty():
 		lede.text = tr("No programme is building.")
 	else:
 		lede.text = tr_n("%d programme building.", "%d programmes building.", building.size()) % building.size()
 		if not asks.is_empty():
 			lede.text += " " + tr_n("%d question waits for you.", "%d questions wait for you.", asks.size()) % asks.size()
-		PanelKit.plain_line(_body, tr("Every unit voted is built over its months, then open at a running cost for good."), PanelKit.Tone.DIM)
+		PanelKit.plain_line(words, tr("Every unit voted is built over its months, then open at a running cost for good."), PanelKit.Tone.DIM)
+	if not asks.is_empty():
+		# The one date on the page: amber is for a date to answer by (Building in C).
+		var due := PanelKit.chip(head, tr("Answer by %s") % _month(int(asks[0]["ask"]["due"])), UiTheme.CHIP_WARN, "warning")
+		due.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		due.set_meta("due", true)
+		for label in due.find_children("*", "Label", true, false):  # i18n: ok a class name
+			(label as Label).autowrap_mode = TextServer.AUTOWRAP_OFF  # the date on one line, beside the lede
 	if not building.is_empty():
-		var list := PanelKit.section(_body, tr("Programmes"))
+		var list := PanelKit.sheet(_body, tr("Programmes"))
 		var lanes := RegisterLanes.new()
 		lanes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lanes.set_meta("lanes", true)
@@ -113,13 +129,27 @@ func _refresh() -> void:
 		var asked := {}
 		for copy in asks:
 			asked[String(copy["id"])] = true
-		lanes.setup(building.map(func(p): return {"label": _name(p), "start": int(p["voted"]), "opens": UnitPrice.opens_at(p),
-			"ask": asked.has(String(p["id"]))}), UnitPrice.now(_state))
+		lanes.setup(building.map(func(p): return _lane(p, asked.has(String(p["id"])))), UnitPrice.now(_state), {"row": 44})
 		for p in building:
 			_programme(list, p)
 	for copy in asks:
 		_overrun(copy)
-	_envelope(ns)
+	var foot := HBoxContainer.new()
+	foot.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	_body.add_child(foot)
+	if not asks.is_empty():
+		_bill_if_paid(foot, asks[0])
+	_envelope(ns, foot)
+
+
+## A programme's lane: its name, what is paid of its build, its months in the bar.
+func _lane(p: Dictionary, ask: bool) -> Dictionary:
+	var left := int(p["months_left"])
+	var built := maxi(0, int(p.get("paid_month", int(p["voted"]) - 1)) - int(p["voted"]) + 1)
+	var paid := float(p["paid_eur_m"]) / 1000.0
+	return {"label": _name(p), "start": int(p["voted"]), "opens": UnitPrice.opens_at(p), "ask": ask,
+		"sub": tr("paid %s of %s bn") % [Num.f(paid, 2), Num.f(paid + float(p["capital_month_eur_m"]) * left / 1000.0, 2)],
+		"bar_text": tr("building · %d of %d months") % [built, built + left]}
 
 
 func _name(p: Dictionary) -> String:
@@ -131,23 +161,19 @@ func _name(p: Dictionary) -> String:
 	return tr("%s · %s · %d") % [Strings.row_name("units", Units.row(_loader, String(p["type"]))), ", ".join(names), units]
 
 
-## One programme: its name, its months as a meter, the money and the opening.
+## One programme under the lanes: its months built and its opening in words (the lane draws them), then the Union's
+## line.
 func _programme(parent: Control, p: Dictionary) -> void:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
+	box.add_theme_constant_override("separation", 2)
 	box.set_meta("programme", String(p["id"]))
 	parent.add_child(box)
-	PanelKit.plain_line(box, _name(p), PanelKit.Tone.PLAIN)
 	# Months actually built (the vote month pays): a Delay adds months, so the total is these
 	# plus what is left, never the voted build_months.
 	var left := int(p["months_left"])
 	var built := maxi(0, int(p.get("paid_month", int(p["voted"]) - 1)) - int(p["voted"]) + 1)
-	var total := built + left
-	var paid := float(p["paid_eur_m"]) / 1000.0
-	var to_pay := float(p["capital_month_eur_m"]) * left / 1000.0
 	var opens := UnitPrice.opens_at(p)
-	PanelKit.plain_line(box, tr("%d of %d months built. Paid %s bn, %s bn to pay; opens %s.") % [
-		built, total, Num.f(paid, 2), Num.f(to_pay, 2), _month(opens)], PanelKit.Tone.DIM)
+	PanelKit.plain_line(box, tr("%s: %d of %d months built; opens %s.") % [_name(p), built, built + left, _month(opens)], PanelKit.Tone.DIM)
 	var union: Dictionary = p.get("union", {})
 	if not union.is_empty():
 		# Nothing held (a Delay past its year, the nation out of the Union): the share is lost.
@@ -159,7 +185,7 @@ func _programme(parent: Control, p: Dictionary) -> void:
 
 
 ## The Union's envelope of the period under way: what is left of it, as a meter.
-func _envelope(ns) -> void:
+func _envelope(ns, parent: Control) -> void:
 	var org := UnitEnvelope.org_of(_loader, ns)
 	if org == "":
 		return
@@ -169,7 +195,7 @@ func _envelope(ns) -> void:
 		return
 	var whole := UnitEnvelope.envelope_eur_m(period, ns.id)
 	var left := UnitEnvelope.left_eur_m(_loader, ns, year)
-	var section := PanelKit.section(_body, tr("The Union's envelope, %d-%d") % [int(period["first_year"]), int(period["last_year"])])
+	var section := PanelKit.sheet(parent, tr("The Union's envelope, %d-%d") % [int(period["first_year"]), int(period["last_year"])])
 	section.set_meta("envelope", true)
 	# Reserved only by a vote in the period's years: its last vote year, not the year it pays until.
 	PanelKit.plain_line(section, tr("%s of %s bn left; votes until %d.") % [Num.f(left / 1000.0, 2), Num.f(whole / 1000.0, 2),
@@ -177,47 +203,96 @@ func _envelope(ns) -> void:
 	PanelKit.meter(section, left, maxf(whole, left), maxf(whole, left))
 
 
-## The overrun card: what the builders ask, by when, and the answers as they would land now.
+## The overrun ask on its own sheet (Building in C): what the builders ask, then its three answers side by side, each
+## with its figure, the units it keeps, the same small chart on one axis (from the vote to the opening it gives) and
+## what it makes of the programme, and the date it is answered by, or paid.
 func _overrun(copy: Dictionary) -> void:
 	var ask: Dictionary = copy["ask"]
-	var card := PanelKit.section(_body, tr("Overrun ask: %s") % _name(copy))
+	var card := PanelKit.sheet(_body, tr("Overrun ask · %s") % _name(copy))
 	card.set_meta("overrun_card", String(copy["id"]))
-	PanelKit.chip(card, tr("Answer by %s, or it is paid.") % _month(int(ask["due"])), UiTheme.CHIP_WARN, "warning")
-	PanelKit.plain_line(card, tr("The builders need %s bn more to finish. One ask a programme: it will not come back.") % Num.f(float(ask["eur_m"]) / 1000.0, 2),
-		PanelKit.Tone.PLAIN)
+	var line := HBoxContainer.new()
+	card.add_child(line)
+	var need := Label.new()
+	need.theme_type_variation = UiTheme.LEAD
+	need.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	need.text = tr("The builders need %s bn more to finish.") % Num.f(float(ask["eur_m"]) / 1000.0, 2)
+	line.add_child(need)
+	PanelKit.plain_line(line, tr("One ask a programme: it will not come back."), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", 12)
 	card.add_child(row)
+	var until := 0
 	for a in ask.get("answers", []):
-		var col := VBoxContainer.new()
-		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(col)
-		var button := PanelKit.sized(Button.new())
-		button.text = _answer_label(String(a["id"]))
-		button.set_meta("overrun_" + String(a["id"]), true)
-		var programme := String(copy["id"])
-		var answer_id := String(a["id"])
-		button.pressed.connect(func() -> void:
-			UnitOverrun.answer(_state, _state.player(), _loader, programme, answer_id)
-			_dirty = true
-			var windows: Node = self
-			while windows != null and not windows.has_method("mark_all_dirty"):
-				windows = windows.get_parent()
-			if windows != null:
-				windows.mark_all_dirty())
-		PanelKit.buttons(col).add_child(button)
-		PanelKit.plain_line(col, _answer_says(copy, a), PanelKit.Tone.DIM)
-		# The units each answer keeps, as squares (a Shrink outlines the ones it cuts).
-		var squares := RegisterUnits.new()
-		squares.set_meta("units_" + answer_id, true)
-		col.add_child(squares)
-		squares.setup(int(a["units"]), _units(copy))
-	_bill_if_paid(card, copy)
+		until = maxi(until, int(a["opens"]))
+	for a in ask.get("answers", []):
+		_answer(row, copy, a, until)
+	PanelKit.plain_line(card, tr("Unanswered by %s: it is paid.") % _month(int(ask["due"])), PanelKit.Tone.DIM)
+
+
+## One answer as a tile: its name, its figure, the units it keeps, its small chart, what it makes, its button.
+func _answer(row: Control, copy: Dictionary, a: Dictionary, until: int) -> void:
+	var tile := PanelContainer.new()
+	tile.theme_type_variation = UiTheme.TILE_PANEL
+	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(tile)
+	var col := VBoxContainer.new()
+	tile.add_child(col)
+	var answer_id := String(a["id"])
+	PanelKit.heading(col, _answer_label(answer_id))
+	PanelKit.figure(col, _answer_figure(copy, a), _answer_caption(copy, a))
+	# The units each answer keeps, as squares (a Shrink outlines the ones it cuts).
+	var squares := RegisterUnits.new()
+	squares.set_meta("units_" + answer_id, true)
+	col.add_child(squares)
+	squares.setup(int(a["units"]), _units(copy))
+	var chart := RegisterLanes.new()
+	chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chart.set_meta("answer_chart_" + answer_id, true)
+	col.add_child(chart)
+	chart.setup([{"label": "", "start": int(copy["voted"]), "opens": int(a["opens"])}], UnitPrice.now(_state),
+		{"label_w": 0.0, "axis": false, "until": until, "row": 18})
+	var says := PanelKit.plain_line(col, _answer_says(copy, a), PanelKit.Tone.DIM)
+	says.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var button := PanelKit.sized(Button.new())
+	button.text = _answer_label(answer_id)
+	button.set_meta("overrun_" + answer_id, true)
+	var programme := String(copy["id"])
+	button.pressed.connect(func() -> void:
+		UnitOverrun.answer(_state, _state.player(), _loader, programme, answer_id)
+		_dirty = true
+		var windows: Node = self
+		while windows != null and not windows.has_method("mark_all_dirty"):
+			windows = windows.get_parent()
+		if windows != null:
+			windows.mark_all_dirty())
+	PanelKit.buttons(col).add_child(button)
+
+
+func _answer_figure(copy: Dictionary, a: Dictionary) -> String:
+	var more := int(a["months_left"]) - int(copy["months_left"])
+	match String(a["id"]):
+		UK.OVERRUN_PAY:
+			return tr("+%s bn") % Num.f(float(copy["ask"]["eur_m"]) / 1000.0, 2)
+		UK.OVERRUN_SHRINK:
+			return tr("%d of %d units") % [int(a["units"]), _units(copy)]
+		_:
+			return tr_n("+%d month", "+%d months", more) % more
+
+
+func _answer_caption(copy: Dictionary, a: Dictionary) -> String:
+	var left := int(copy["months_left"])
+	match String(a["id"]):
+		UK.OVERRUN_PAY:
+			return tr_n("over the %d month left", "over the %d months left", left) % left
+		UK.OVERRUN_SHRINK:
+			return tr("the bill holds")
+		_:
+			return tr("the same monthly bill")
 
 
 ## Picture C's "the year's bill, if you pay": the capital left with the overrun paid over the
 ## months left (its share on top in the attention tone), then the running cost once open.
-func _bill_if_paid(card: Control, copy: Dictionary) -> void:
+func _bill_if_paid(parent: Control, copy: Dictionary) -> void:
 	var pay := {}
 	for a in copy["ask"].get("answers", []):
 		if String(a["id"]) == UK.OVERRUN_PAY:
@@ -227,9 +302,11 @@ func _bill_if_paid(card: Control, copy: Dictionary) -> void:
 	var left := int(pay["months_left"])
 	var capital := float(pay["capital_month_eur_m"]) * left
 	var q: Dictionary = UnitPrice.quote(_state, _state.player(), _loader, {"type": copy["type"], "op": copy["op"], "rows": copy["rows"]})
-	PanelKit.heading(card, tr("The year's bill, if you pay, bn"))
+	var card := PanelKit.sheet(parent, tr("The year's bill, if you pay, bn"))
 	var bill = RegisterMoney.new()
 	bill.set_meta("bill_if_paid", true)
+	# Its running cost lands on a spending line: that line's hue, never the accent (Diane's R4 on #443).
+	bill.running_color = FinanceRowsUi.line_color(String(Units.row(_loader, String(copy["type"])).get("line", "")))
 	card.add_child(bill)
 	bill.cash_of(UnitPrice.now(_state), left, capital / 1000.0, float(q.get("running_eur_m_year", 0.0)) / 1000.0,
 		[tr("Building"), tr("Running cost"), tr("The overrun, paid")])
@@ -253,18 +330,10 @@ func _answer_label(id: String) -> String:
 			return tr("Delay")
 
 
-## What an answer makes of the programme, from its outcome (UnitOverrun.outcome's fields).
-func _answer_says(copy: Dictionary, a: Dictionary) -> String:
-	var opens := _month(int(a["opens"]))
-	var left := int(copy["months_left"])
-	var says := ""
-	match String(a["id"]):
-		UK.OVERRUN_PAY:
-			says = tr("+%s bn over the %d months left; opens %s.") % [Num.f(float(copy["ask"]["eur_m"]) / 1000.0, 2), left, opens]
-		UK.OVERRUN_SHRINK:
-			says = tr_n("%d unit kept, the bill holds; opens %s.", "%d units kept, the bill holds; opens %s.", int(a["units"])) % [int(a["units"]), opens]
-		_:
-			says = tr_n("The same monthly bill, %d more month; opens %s.", "The same monthly bill, %d more months; opens %s.", int(a["months_left"]) - left) % [int(a["months_left"]) - left, opens]
+## What an answer makes of the programme, from its outcome (UnitOverrun.outcome's fields): the units it keeps and
+## when it opens (the figure over it says the money or the months), and the Union's share when it is lost.
+func _answer_says(_copy: Dictionary, a: Dictionary) -> String:
+	var says := tr_n("%d unit, opens %s.", "%d units, opens %s.", int(a["units"])) % [int(a["units"]), _month(int(a["opens"]))]
 	if bool(a.get("union_lost", false)):
 		says += " " + tr("The Union's share is lost.")
 	return says

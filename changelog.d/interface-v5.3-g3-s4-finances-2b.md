@@ -1,0 +1,3 @@
+Changed: The Building screen lays programmes on a year timeline, with what is paid and the months built on each.
+Changed: An overrun ask shows its three answers side by side, each with its figure, the units it keeps and the same small timeline.
+Changed: The overrun's share of the year's bill is outlined rather than coloured, and the running cost wears its spending line's colour.

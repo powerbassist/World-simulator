@@ -29,6 +29,9 @@ const RegisterWarning = preload("res://src/ui/register_warning.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
+const FinanceRowsUi = preload("res://src/ui/finance_rows.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -325,6 +328,34 @@ func _check_overrun_card() -> void:
 	var bill = _with_meta("bill_if_paid", _follow)
 	if bill == null or bill.years().is_empty():
 		_fail("no year's bill under the overrun card")
+	_check_building_in_c(asks[0])
+
+
+## Building in C (building-in-c.png): the page lays out its own sheets; the ask's three answers each carry the same
+## small chart on ONE axis (a Delay's later opening is read against the Pay's); the date the ask must be answered by
+## is said on the page's head; the year's bill wears the running cost in its line's hue (Diane's R4), never the accent.
+func _check_building_in_c(copy: Dictionary) -> void:
+	if not WindowManager.OWN_SHEETS.has("programmes"):
+		_fail("Building is not a page of its own sheets")
+	var charts := []
+	for a in copy["ask"]["answers"]:
+		var chart = _with_meta("answer_chart_" + String(a["id"]), _follow)
+		if chart == null:
+			_fail("answer %s has no small chart" % a["id"])
+			continue
+		charts.append(chart)
+		if int(chart.data()[0]["opens"]) != int(a["opens"]):
+			_fail("answer %s's chart opens at %d, the sim's %d" % [a["id"], int(chart.data()[0]["opens"]), int(a["opens"])])
+	for c in charts:
+		if c.axis_end() != charts[0].axis_end():
+			_fail("the answers' charts are not on one axis: %s against %s" % [c.axis_end(), charts[0].axis_end()])
+	var due = _with_meta("due", _follow)
+	if due == null or not _text_under(due).contains(DateText.month_year((int(copy["ask"]["due"]) - 1) % 12 + 1, (int(copy["ask"]["due"]) - 1) / 12)):
+		_fail("the page's head does not say the date the ask is answered by")
+	var bill = _with_meta("bill_if_paid", _follow)
+	var line := String(Units.row(_main._loader, String(copy["type"]))["line"])
+	if bill != null and not bill.running_color.is_equal_approx(FinanceRowsUi.line_color(line)):
+		_fail("the year's bill wears %s for the running cost, not its line's hue" % bill.running_color)
 
 
 # --- helpers ---------------------------------------------------------------
