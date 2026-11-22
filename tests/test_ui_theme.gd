@@ -284,6 +284,11 @@ func _check_states_distinct(theme: Theme) -> void:
 		grounds.append((theme.get_stylebox(state, UiTheme.PICKED_ROW) as StyleBoxFlat).bg_color)
 	if grounds[0].a > 0.0 or grounds[1] != UiTheme.TILE or grounds[2] != UiTheme.CONTROL or grounds[3] != UiTheme.CONTROL_HOVER:
 		_fail("PickedRow's grounds are %s, not none / TILE / CONTROL / CONTROL_HOVER" % str(grounds))
+	# A picked name on a row's own ground draws nothing while ON, and keeps its hover (#451 T1).
+	var name_on := theme.get_stylebox("pressed", UiTheme.PICKED_NAME) as StyleBoxFlat
+	var name_hover := theme.get_stylebox("hover", UiTheme.PICKED_NAME) as StyleBoxFlat
+	if name_on.bg_color.a > 0.0 or name_hover.bg_color.a <= 0.0:
+		_fail("PickedName: ON must draw no ground and hover must keep one")
 	# A status tone or the accent is never the colour of text on a control (G3), in any state.
 	var forbidden := [UiTheme.GOOD, UiTheme.BAD, UiTheme.WARN, UiTheme.accent()]
 	var buttons: Array = ["Button", "OptionButton", "CheckBox"]
@@ -344,7 +349,7 @@ func _check_pressed_text_contrast(theme: Theme) -> void:
 	# hover_pressed too (#439 pass 2 T2): a toggle that is ON under the pointer -- the armed "See
 	# them", a Primary toggle -- took its base Button's graphite when its variation had none.
 	var states := {"normal": "font_color", "hover": "font_hover_color", "pressed": "font_pressed_color", "hover_pressed": "font_hover_pressed_color"}
-	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.SEGMENT, UiTheme.GHOST, UiTheme.PICKED, UiTheme.PICKED_ROW, UiTheme.SIDEBAR_ROW]:
+	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.SEGMENT, UiTheme.GHOST, UiTheme.PICKED, UiTheme.PICKED_ROW, UiTheme.PICKED_NAME, UiTheme.SIDEBAR_ROW]:
 		for state in states:
 			if state == "hover_pressed" and type == UiTheme.GHOST:
 				continue  # a ghost is never a toggle

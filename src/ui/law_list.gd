@@ -91,7 +91,7 @@ func _init(panel) -> void:
 	_head.theme_type_variation = UiTheme.MICRO
 	middle.add_child(_head)
 	_rows = _column(middle, 1.0)
-	_rows.add_theme_constant_override("separation", 10)
+	_rows.add_theme_constant_override("separation", 0)  # the rows' own padding is the gap (LawRow.GROUND_PAD_V)
 	var right: VBoxContainer = PanelKit.sheet(self)
 	right.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail = _column(right, 1.0)
@@ -166,8 +166,7 @@ func select(law_id: String) -> void:
 	_selected = law_id
 	for row in _rows.get_children():
 		if row.has_meta("pick"):
-			var pick: Button = row.get_meta("pick")
-			pick.set_pressed_no_signal(String(row.get_meta("law_id")) == law_id)
+			LawRow.mark(row, String(row.get_meta("law_id")) == law_id)
 	for child in _detail.get_children():
 		_detail.remove_child(child)
 		child.queue_free()

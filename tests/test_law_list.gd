@@ -21,6 +21,7 @@ const WindowManager = preload("res://src/ui/window_manager.gd")
 const LawPath = preload("res://src/ui/law_path.gd")
 const ChartDiverge = preload("res://src/ui/chart_diverge.gd")
 const ControlStyle = preload("res://src/ui/control_style.gd")
+const LawRow = preload("res://src/ui/law_row.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
@@ -231,6 +232,31 @@ func _check_picked_row_ground() -> void:
 			_fail("the picked row's name starts at %.1f and its summary at %.1f" % [name_x, summary_x])
 	if grounds != 1:
 		_fail("%d rows carry the picked ground, not one" % grounds)
+	# T1 (#451): the name wears no ground of its own while the row's ground is there; T2: the rows'
+	# padding and the list's gap come to main's 10 px between rows; the ground follows a pick.
+	for row in _rows():
+		var picked_row: bool = (row.get_meta("pick") as Button).button_pressed
+		var name_button: Button = row.get_meta("pick")
+		var on := name_button.get_theme_stylebox("pressed") as StyleBoxFlat
+		if picked_row and (String(name_button.theme_type_variation) != UiTheme.PICKED_NAME or on.bg_color.a > 0.0):
+			_fail("the picked row's name still draws a ground of its own")
+		if not picked_row and String(name_button.theme_type_variation) != UiTheme.PICKED_ROW:
+			_fail("a row that is not picked wears '%s', not PICKED_ROW" % name_button.theme_type_variation)
+	if _laws()._rows.get_theme_constant("separation") + 2 * LawRow.GROUND_PAD_V > 10:
+		_fail("the rows' gap and padding come to more than main's 10 px between rows")
+	var other := ""
+	for row in _rows():
+		if not (row.get_meta("pick") as Button).button_pressed:
+			other = String(row.get_meta("law_id"))
+			break
+	if other != "":
+		var before := _laws().selected_id()
+		_laws().select(other)
+		for row in _rows():
+			var is_it := String(row.get_meta("law_id")) == other
+			if (String((row as Control).theme_type_variation) == UiTheme.TILE_PANEL) != is_it:
+				_fail("after a pick the ground did not follow it to %s" % other)
+		_laws().select(before)
 
 
 ## T14 (the author: "the blur around the blue button is cropped"): a filled press on the sheet's

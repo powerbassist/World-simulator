@@ -90,6 +90,16 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	for state in ["font_pressed_color", "font_hover_pressed_color"]:
 		theme.set_color(state, row, t["text"])
 
+	# PICKED_NAME: a picked row's name, on the row's own ground: the ON state draws nothing (the
+	# ground is the mark), the pointer still lifts it to CONTROL_HOVER, the base focus ring stays.
+	var picked_name := String(names["picked_name"])
+	theme.set_type_variation(picked_name, "Button")  # i18n: ok
+	var name_states := {"normal": Color(0, 0, 0, 0), "hover": t["tile"], "pressed": Color(0, 0, 0, 0), "hover_pressed": t["hover"]}
+	for state in name_states:
+		theme.set_stylebox(state, picked_name, box.call(name_states[state]))
+	for state in ["font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, picked_name, t["text"])
+
 	var small := String(names["small"])
 	theme.set_type_variation(small, "Button")  # i18n: ok
 	var states := {"normal": [t["control"], Color(0, 0, 0, 0)], "hover": [t["hover"], Color(0, 0, 0, 0)],

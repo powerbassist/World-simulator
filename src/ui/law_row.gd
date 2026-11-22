@@ -17,16 +17,17 @@ const BillActions = preload("res://src/ui/bill_actions.gd")
 
 ## The vote bar's width on a row, px (the picked picture at 1248, G3 S5).
 const BAR_WIDTH := 92.0
-## The picked row's ground reaches this far past the vote bar (and half of it above and below).
+## The picked row's ground reaches this far past the vote bar, and GROUND_PAD_V above and below the
+## row. The list's own gap is zero: the two together are main's 10 px between rows, so a pick and the
+## ground move nothing (Design's T2 on #451).
 const GROUND_PAD := 12
+const GROUND_PAD_V := 5
 
 
 static func build(list, ns, party_list: Array, law, selected: bool, flag: String) -> Control:
 	# The picked row is a ground under the whole row -- name, summary, vote (T10); the others take
 	# the same padding bare, so a pick moves nothing. The holder is what the list sees and hears.
-	var holder: Container = PanelContainer.new() if selected else MarginContainer.new()
-	if selected:
-		holder.theme_type_variation = UiTheme.TILE_PANEL  # not a tile: a picked row's ground, no kit padding
+	var holder := PanelContainer.new()
 	holder.set_meta("law_id", String(law.id))
 	# PASS, not STOP: the row hears its click and the list's scroll still hears the wheel.
 	holder.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -38,8 +39,8 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 	var pad := MarginContainer.new()
 	pad.mouse_filter = Control.MOUSE_FILTER_PASS
 	pad.add_theme_constant_override("margin_right", GROUND_PAD)
-	pad.add_theme_constant_override("margin_top", GROUND_PAD / 2)
-	pad.add_theme_constant_override("margin_bottom", GROUND_PAD / 2)
+	pad.add_theme_constant_override("margin_top", GROUND_PAD_V)
+	pad.add_theme_constant_override("margin_bottom", GROUND_PAD_V)
 	holder.add_child(pad)
 	var row := VBoxContainer.new()
 	row.add_theme_constant_override("separation", 2)
@@ -74,6 +75,7 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 	words.add_child(name_line)
 	name_line.add_child(pick)
 	holder.set_meta("pick", pick)
+	mark(holder, selected)
 	# The summary and a shut law's reason start where the name does: under the name button's own
 	# content margin, read from its box once it is in the tree.
 	var under := MarginContainer.new()
@@ -103,6 +105,16 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 			line.autowrap_mode = TextServer.AUTOWRAP_WORD
 			under_box.add_child(line)
 	return holder
+
+
+## One ground while the row is picked, none otherwise, and the name wears none of its own while
+## the row's ground is there (T1). The list calls it when the pick moves, so no row is rebuilt.
+static func mark(holder: Control, on: bool) -> void:
+	# not a tile: a picked row's ground, no kit padding
+	holder.theme_type_variation = UiTheme.TILE_PANEL if on else UiTheme.BARE
+	var pick: Button = holder.get_meta("pick")
+	pick.theme_type_variation = UiTheme.PICKED_NAME if on else UiTheme.PICKED_ROW
+	pick.set_pressed_no_signal(on)
 
 
 ## The vote at a glance: the forecast bar, and the counts under it.
