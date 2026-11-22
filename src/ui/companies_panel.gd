@@ -344,6 +344,8 @@ func _firm_object(nation_id: String, company_id: String):
 ## step by hand; the sector cards above carry the burden instead, so a player who
 ## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
+	# On its own sheet: with no page sheet (T14) a bare fold would sit on the map.
+	var box := PanelKit.sheet(_body)
 	var fold := PanelKit.sized(Button.new())
 	# A fold, not bold text (Design's T9 on #441): flat, so toggle() gives it the fold look, PICKED_ROW.
 	fold.flat = true
@@ -352,29 +354,29 @@ func _build_ledger(ns) -> void:
 	fold.button_pressed = _open_ledger != ""
 	fold.set_meta("ledger", "ledger")
 	fold.pressed.connect(func() -> void: _toggle("_open_ledger", "ledger", "ledger"))
-	_body.add_child(fold)
+	box.add_child(fold)
 	if _open_ledger == "":
 		return
-	PanelKit.row(_body, tr("Subsidy bill"), tr("%s %% of GDP") % Num.f(ns.subsidy_bill_pct_gdp, 3))
+	PanelKit.row(box, tr("Subsidy bill"), tr("%s %% of GDP") % Num.f(ns.subsidy_bill_pct_gdp, 3))
 	# V1.4c. On the same ledger and not on a second one, because it is the same
 	# register read from the other side of the budget -- and it lags a month, like the
 	# bill above it, so a firm nationalised this month shows 0.000 until the next tick.
-	PanelKit.row(_body, tr("Dividend income"), tr("%s %% of GDP") % Num.f(ns.dividend_revenue_pct_gdp, 3))
-	PanelKit.row(_body, tr("Growth effect"), tr("%s %%/yr") % Num.fs(ns.firm_impulse_pct, 3))
+	PanelKit.row(box, tr("Dividend income"), tr("%s %% of GDP") % Num.f(ns.dividend_revenue_pct_gdp, 3))
+	PanelKit.row(box, tr("Growth effect"), tr("%s %%/yr") % Num.fs(ns.firm_impulse_pct, 3))
 	# Signed the way the player reads it -- jobs, not unemployment points -- because
 	# the stored figure is an offset ADDED to structural unemployment and a positive
 	# number there is bad news. Flipping it here rather than storing it flipped keeps
 	# economy.gd's sum readable.
-	PanelKit.row(_body, tr("Jobs effect"), tr("%s pts unemployment") % Num.fs(ns.firm_jobs_offset_pct, 3))
+	PanelKit.row(box, tr("Jobs effect"), tr("%s pts unemployment") % Num.fs(ns.firm_jobs_offset_pct, 3))
 	# V1.6e, on the same ledger as the subsidy bill because it is the other half of
 	# one question -- what the state is spending on the productive economy -- and it
 	# lags a month for the same reason.
-	PanelKit.row(_body, tr("Investment bill"), tr("%s %% of GDP") % Num.f(ns.investment_bill_pct_gdp, 3))
+	PanelKit.row(box, tr("Investment bill"), tr("%s %% of GDP") % Num.f(ns.investment_bill_pct_gdp, 3))
 	# The trend the capital has BOUGHT, not the growth it is producing this month.
 	# Those are different quantities and the difference is the whole lever: the bill
 	# lands immediately and this number takes years to arrive, which is why both are
 	# printed rather than one summary of them.
-	PanelKit.row(_body, tr("Trend bought"), tr("%s %%/yr") % Num.fs(Investment.national_trend_shift_pct(ns), 3))
+	PanelKit.row(box, tr("Trend bought"), tr("%s %%/yr") % Num.fs(Investment.national_trend_shift_pct(ns), 3))
 
 
 ## A programme is a finance-bill row (firm_commands.gd, shared with the sector tabs).
