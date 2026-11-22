@@ -125,6 +125,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --broken-word
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --interrupt --speaker --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-tabled
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-tabled --books-draft --inbox-away   (an amendment: the tabled bill is the waterfall's first step)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-refused
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-units
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet

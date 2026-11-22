@@ -34,6 +34,12 @@ const GROUP_NAME := {
 	"wealth_property": "Wealth and property", "energy_environment": "Energy and environment",  # i18n: msgid
 }
 const NAME_WIDTH := 215.0
+## A tax row's indent under its group (its gap is the swatch's and this): a line's name and a bar header's take it too, so
+## the cells left of every bar add up the same and the bars share one x and one length (pass 2 T5 on #443).
+const INDENT := 8.0
+## The caption between a row's name and its figure: the same floor on every row with a bar, or the bars part on a narrow
+## page (pass 1 on the #443 fix round).
+const CAPTION_MIN := 120.0
 ## A spending line's figure ("from 11.0 to 12.5 %"): the name button takes the rest, never this. The unit is the
 ## column's heading (% of GDP), so the figure stays short enough for the pane at the former 130 % text size.
 const PCT_WIDTH := 124.0
@@ -125,17 +131,17 @@ static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
 		var id := row_id(FinanceDraft.SPENDING, String(line["key"]))
 		# A line with a sector slipping says so while closed: a warning on a closed row is unseen (the Budget's mark).
 		var shown := Labels.portfolio(String(line["key"]))
-		var name := _name_cell(row, Strings.t("%s (!)") % shown if (ctx.get("slipping", []) as Array).has(String(line["key"])) else shown, id, NAME_WIDTH, ctx)
+		var name := _name_cell(row, Strings.t("%s (!)") % shown if (ctx.get("slipping", []) as Array).has(String(line["key"])) else shown, id, NAME_WIDTH + INDENT / UiTheme.text_scale(), ctx)
 		# What a briefing's Go on the deficit lands on (acts_on.gd): any line's slider acts on the balance.
 		ActsOn.tag(name, ["deficit", "balance"])
-		_cell(row, "", UiTheme.CAPTION, 0.0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_cell(row, "", UiTheme.CAPTION, CAPTION_MIN).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var pct := _cell(row, "", UiTheme.CAPTION, PCT_WIDTH)
 		row.mouse_filter = Control.MOUSE_FILTER_PASS
 		(ctx["cells"] as Dictionary)[id] = [pct, FinanceDraft.SPENDING, String(line["key"]), float(line["pct"])]
 		_money_cells(row, id, FinanceDraft.SPENDING, String(line["key"]), float(line["bn"]), float(line["pct"]), line_color(String(line["key"])), ctx)
 		box.add_child(row)
 		if String(ctx["open"]) == id and not (ctx["tabled"] as Dictionary).has(id):
-			box.add_child(_tile((ctx["editor"] as Callable).call(FinanceDraft.SPENDING, String(line["key"]))))
+			box.add_child(_on_ground((ctx["editor"] as Callable).call(FinanceDraft.SPENDING, String(line["key"]))))
 	_header(box, SERVICE, Strings.t("Debt service"), bn_text(float(book["service_bn"])), Strings.t("not set here"),
 		Strings.t("Interest on the debt: it follows the debt and the rates the markets ask."), float(book["service_bn"]), ctx)
 	_header(box, MUTED, Strings.t("Other spending"), bn_text(float(book["other_spending_bn"])), Strings.t("not set here"),
@@ -182,14 +188,14 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 		row.add_child(gap)
 	# A header with a bar lays its cells out as a line's (swatch, name, note, figure column, bar): the bars share one x and
 	# one length, so the same billions draw the same pixels (pass 2 T5 on #443).
-	var label := _cell(row, name, UiTheme.HEADING, NAME_WIDTH if bar_bn >= 0.0 else 0.0)
+	var label := _cell(row, name, UiTheme.HEADING, NAME_WIDTH + INDENT / UiTheme.text_scale() if bar_bn >= 0.0 else 0.0)
 	# A header's name is what the column is read by: it keeps its own width, and the note gives way (it fills what is
 	# left and is trimmed), never "Other spend..." (QA's T1 on #366, once the scroll bar's gap took 8 px at the
 	# former 130 % text size).
 	label.clip_text = false
 	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	if note != "":
-		var caption := _cell(row, note, UiTheme.CAPTION, 0.0)
+		var caption := _cell(row, note, UiTheme.CAPTION, CAPTION_MIN if bar_bn >= 0.0 else 0.0)
 		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	else:
@@ -224,15 +230,14 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 	var row := _row()
 	var gap := Control.new()
-	gap.custom_minimum_size.x = SWATCH + 8.0
+	gap.custom_minimum_size.x = SWATCH + INDENT
 	row.add_child(gap)
 	var tax: Dictionary = ns.tax_library[String(kind["id"])]
 	var who := ", ".join((kind["who"] as Array).map(func(b) -> String: return Labels.bloc(String(b))))
 	# The name takes what it needs (a kind's name is the longest thing on the row); who pays fills the
 	# rest as a caption while there is room, and is always the row's hover too: at the largest size the caption is cut.
 	var id := row_id(FinanceDraft.TAX, String(kind["id"]))
-	# The indent is taken from the name cell, so the cells to the bar's left add up as a line's (pass 2 T5 on #443).
-	var name := _name_cell(row, Strings.row_name("taxes", tax), id, NAME_WIDTH - 8.0 / UiTheme.text_scale(), ctx)
+	var name := _name_cell(row, Strings.row_name("taxes", tax), id, NAME_WIDTH, ctx)
 	name.tooltip_text = name.text
 	var at_vote: bool = (ctx["tabled"] as Dictionary).has(id)
 	var tag := who
@@ -240,7 +245,7 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 		tag = Strings.t("At vote")
 	elif (ctx["draft"] as FinanceDraft).is_created(String(kind["id"])):
 		tag = Strings.t("Creation")
-	var caption := _cell(row, tag, UiTheme.CAPTION, 120.0)
+	var caption := _cell(row, tag, UiTheme.CAPTION, CAPTION_MIN)
 	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# Who pays is the caption's text unless the row is at vote or created: the hover always says it, so a
 	# caption cut to an ellipsis can still be read.
@@ -255,7 +260,7 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 
 
 ## The open row's editor on a tile under its row (gate T3 on #443), the table's left edge kept.
-static func _tile(editor: Control) -> Control:
+static func _on_ground(editor: Control) -> Control:
 	var tile := PanelContainer.new()
 	tile.theme_type_variation = UiTheme.TILE_PANEL
 	tile.add_child(editor)
@@ -268,8 +273,8 @@ static func columns(box: Control, title: String, who: String, named: bool) -> vo
 	var gap := Control.new()
 	gap.custom_minimum_size.x = SWATCH
 	row.add_child(gap)
-	_cell(row, title.to_upper(), UiTheme.MICRO, NAME_WIDTH).clip_text = false
-	_cell(row, who.to_upper(), UiTheme.MICRO, 0.0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cell(row, title.to_upper(), UiTheme.MICRO, NAME_WIDTH + INDENT / UiTheme.text_scale()).clip_text = false
+	_cell(row, who.to_upper(), UiTheme.MICRO, CAPTION_MIN).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cell(row, "", UiTheme.MICRO, PCT_WIDTH)
 	var bar := _cell(row, Strings.t("Drag").to_upper() if named else "", UiTheme.MICRO, BAR_MIN)
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -349,7 +354,7 @@ static func _birth_row(box: Control, ns, kind: String, ctx: Dictionary) -> void:
 		return
 	var row := _row()
 	var gap := Control.new()
-	gap.custom_minimum_size.x = SWATCH + 8.0
+	gap.custom_minimum_size.x = SWATCH + INDENT
 	row.add_child(gap)
 	var name := _cell(row, Strings.row_name("taxes", tax), UiTheme.CAPTION, NAME_WIDTH)
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -368,7 +373,7 @@ static func _kind_with_editor(box: Control, ns, kind: Dictionary, ctx: Dictionar
 	box.add_child(_kind_row(ns, kind, ctx))
 	var id := row_id(FinanceDraft.TAX, String(kind["id"]))
 	if String(ctx["open"]) == id and not (ctx["tabled"] as Dictionary).has(id):
-		box.add_child(_tile((ctx["editor"] as Callable).call(FinanceDraft.TAX, String(kind["id"]))))
+		box.add_child(_on_ground((ctx["editor"] as Callable).call(FinanceDraft.TAX, String(kind["id"]))))
 
 
 ## A row's name: the button that opens its editor, or a plain name while the row is at vote (a tabled

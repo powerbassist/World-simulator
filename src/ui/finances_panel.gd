@@ -340,6 +340,8 @@ func _open_sheet() -> void:
 	# #443); on Books it costs no history step.
 	if not is_visible_in_tree():
 		go_requested.emit("finances")
+		if not is_visible_in_tree():
+			return  # Books could not open (a scene owns the screen): no sheet on a hidden page
 	_sheet.show()
 	_sheet.refresh()
 	_sheet.focus_primary()

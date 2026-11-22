@@ -542,6 +542,11 @@ func _check_header_bars_on_the_row_scale() -> void:
 	var a := row_bar.get_global_rect()
 	# A tax's row is indented under its group, its bar is not: the one scale holds across the two sections too.
 	headers.append(_panel._ctx["levers"]["tax_rates_pct:vat"][0])
+	# The column head over the bars ("DRAG") stands where they start.
+	for label in _panel._spending_box.find_children("*", "Label", true, false):  # i18n: ok a class name
+		if (label as Label).text == Strings.t("Drag").to_upper():
+			if absf((label as Control).global_position.x - row_bar.global_position.x) > 0.5:
+				_fail("the bars' column head starts at %s, the bars at %s" % [(label as Control).global_position.x, row_bar.global_position.x])
 	for bar in headers:
 		var b := (bar as Control).get_global_rect()
 		if absf(b.position.x - a.position.x) > 0.5 or absf(b.size.x - a.size.x) > 0.5:
