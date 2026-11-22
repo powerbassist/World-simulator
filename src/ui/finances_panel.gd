@@ -197,6 +197,8 @@ func _process(_delta: float) -> void:
 	var held: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
 	# A row's bar (finance_lever.gd) is a lever under the hand too, open row or not.
 	var holding: bool = held != null and ((is_instance_valid(_editor) and _editor.is_ancestor_of(held)) or (held is HSlider and _scroll.is_ancestor_of(held)))
+	for cell in (_ctx.get("levers", {}) as Dictionary).values():
+		holding = holding or (is_instance_valid(cell[0]) and cell[0].is_dragging())
 	if not _dirty or (holding and not _rebuild_now):
 		_paint(ns)
 		return
@@ -233,9 +235,11 @@ func _refresh(ns) -> void:
 ## The Go's landing, a frame after the build: the editor may have been rebuilt or closed since (a stale one is skipped).
 func _focus_editor(editor: FinanceEditor) -> void:
 	# The editor is laid out two frames after the build (#439's lesson): a scroll read before that lands on a stale place.
-	await get_tree().process_frame
-	await get_tree().process_frame
-	if is_instance_valid(editor) and editor.is_inside_tree() and _scroll.is_ancestor_of(editor):
+	for _i in 2:
+		if not is_inside_tree():
+			return
+		await get_tree().process_frame
+	if is_inside_tree() and is_instance_valid(editor) and editor.is_inside_tree() and _scroll.is_ancestor_of(editor):
 		_scroll.ensure_control_visible(editor)
 		editor.focus_lever()
 

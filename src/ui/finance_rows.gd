@@ -83,7 +83,7 @@ static func bn_text(value: float) -> String:
 ## The revenue column: every group (largest first) with its kinds, then what no row sets.
 static func revenue(box: Control, book: Dictionary, state, loader, open_groups: Dictionary, toggle: Callable, ctx: Dictionary) -> void:
 	var ns = state.player()
-	columns(box, Strings.t("Revenue · %s") % bn_text(float(book["revenue_bn"])), Strings.t("Who pays"))
+	columns(box, Strings.t("Revenue"), Strings.t("Who pays"), false)
 	for group in book["groups"]:
 		var gid := String(group["id"])
 		_header(box, group_color(gid), group_name(gid), bn_text(float(group["total"])), "")
@@ -113,7 +113,8 @@ static func revenue(box: Control, book: Dictionary, state, loader, open_groups: 
 
 ## The spending column: the five lines, then the debt service and what no line sets.
 static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
-	columns(box, Strings.t("Spending · %s") % bn_text(float(book["spending_bn"])), Strings.t("Who it is for"))
+	# The totals are the sentence's (each number once); the column names are said once, over spending.
+	columns(box, Strings.t("Spending"), Strings.t("For"), true)
 	for line in book["lines"]:
 		var row := _row()
 		row.add_child(_swatch(line_color(String(line["key"]))))
@@ -244,18 +245,18 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 
 
 ## A section's head: its title and total, then the table's column names over the cells they name.
-static func columns(box: Control, title: String, who: String) -> void:
+static func columns(box: Control, title: String, who: String, named: bool) -> void:
 	var row := _row()
 	var gap := Control.new()
 	gap.custom_minimum_size.x = SWATCH
 	row.add_child(gap)
 	_cell(row, title, UiTheme.MICRO, NAME_WIDTH).clip_text = false
 	_cell(row, who, UiTheme.MICRO, 0.0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cell(row, Strings.t("Lever"), UiTheme.MICRO, PCT_WIDTH)
-	var bar := _cell(row, Strings.t("A year, bn · drag the end"), UiTheme.MICRO, BAR_MIN)
+	_cell(row, Strings.t("Lever") if named else "", UiTheme.MICRO, PCT_WIDTH)
+	var bar := _cell(row, Strings.t("Drag to set") if named else "", UiTheme.MICRO, BAR_MIN)
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cell(row, Strings.t("A year"), UiTheme.MICRO, FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_cell(row, Strings.t("Balance"), UiTheme.MICRO, BALANCE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_cell(row, Strings.t("A year") if named else "", UiTheme.MICRO, FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_cell(row, Strings.t("Balance") if named else "", UiTheme.MICRO, BALANCE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var spaced := MarginContainer.new()
 	spaced.add_theme_constant_override("margin_top", 10)
 	spaced.add_child(row)

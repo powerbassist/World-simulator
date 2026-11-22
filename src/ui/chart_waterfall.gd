@@ -33,12 +33,12 @@ func setup(start: Dictionary, steps: Array, end: Dictionary, opts := {}) -> void
 	_worse_up = bool(opts.get("worse_up", true))
 	_total_places = int(opts.get("total_places", 0))
 	_step_places = int(opts.get("step_places", 1))
-	_rows = [{"label": String(start["label"]), "from": 0.0, "to": float(start["value"]), "kind": "total"}]
+	_rows = [{"label": String(start["label"]), "from": 0.0, "to": float(start["value"]), "kind": "total"}]  # i18n: row-ok chart data, the caller's shown text
 	var at := float(start["value"])
 	for step in steps:
-		_rows.append({"label": String(step["label"]), "from": at, "to": at + float(step["value"]), "kind": "step", "delta": float(step["value"])})
+		_rows.append({"label": String(step["label"]), "from": at, "to": at + float(step["value"]), "kind": "step", "delta": float(step["value"])})  # i18n: row-ok chart data, the caller's shown text
 		at += float(step["value"])
-	_rows.append({"label": String(end["label"]), "from": 0.0, "to": float(end["value"]), "kind": "total"})
+	_rows.append({"label": String(end["label"]), "from": 0.0, "to": float(end["value"]), "kind": "total"})  # i18n: row-ok chart data, the caller's shown text
 	_lo = 0.0
 	_hi = 0.0
 	for row in _rows:
@@ -90,7 +90,7 @@ func row_count() -> int:
 
 
 func label(i: int) -> String:
-	return String(_rows[i]["label"])
+	return String(_rows[i]["label"])  # i18n: row-ok chart data, the caller's shown text
 
 
 func figure(i: int) -> String:
@@ -111,7 +111,7 @@ func _draw() -> void:
 		var bar := bar_rect(i)
 		var base := i * h + (h + fs * 0.7) * 0.5
 		var total := String(row["kind"]) == "total"
-		draw_string(font, Vector2(0.0, base), String(row["label"]), HORIZONTAL_ALIGNMENT_LEFT, label_w, fs,
+		draw_string(font, Vector2(0.0, base), fit(font, String(row["label"]), label_w, fs), HORIZONTAL_ALIGNMENT_LEFT, label_w, fs,  # i18n: row-ok chart data, the caller's shown text
 			UiTheme.TEXT if total else UiTheme.TEXT_DIM, TextServer.JUSTIFICATION_NONE)
 		draw_rect(bar, bar_color(i))
 		draw_string(font, Vector2(bar.end.x + 6.0, base), figure(i), HORIZONTAL_ALIGNMENT_LEFT, FIGURE_W * UiTheme.text_scale(), fs, UiTheme.TEXT)
@@ -119,6 +119,16 @@ func _draw() -> void:
 			# The connector: from where this bar leaves the running total to the next bar's row.
 			var x := x_of(float(row["to"]))
 			draw_dashed_line(Vector2(x, bar.end.y), Vector2(x, (i + 1) * h + (h - BAR_H) * 0.5), UiTheme.LINE_STRONG, 1.0, 3.0)
+
+
+## `text` cut to `width` with an ellipsis: draw_string neither clips nor trims, so a long change ran over its bar.
+static func fit(font: Font, text: String, width: float, fs: int) -> String:
+	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x <= width:
+		return text
+	var cut := text
+	while cut.length() > 1 and font.get_string_size(cut + "…", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > width:
+		cut = cut.left(cut.length() - 1)
+	return cut.strip_edges() + "…"
 
 
 func _get_tooltip(at: Vector2) -> String:

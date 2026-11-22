@@ -290,6 +290,13 @@ func _check_waterfall() -> void:
 		_fail("the bill's bar is not 0 to 158.1: %s" % total)
 	if chart.bar_color(1) != UiTheme.BAD or chart.bar_color(2) != UiTheme.GOOD or chart.bar_color(0) != UiTheme.NEUTRAL_BAR:
 		_fail("the waterfall's tones are wrong: %s %s %s" % [chart.bar_color(0), chart.bar_color(1), chart.bar_color(2)])
+	# Pass 1 on #443: a long step name is cut to its column with an ellipsis, never drawn over its bar.
+	var font := chart.get_theme_default_font()
+	var cut: String = ChartWaterfall.fit(font, "Creation of Retail turnover tax, 0.0 → 2.0 %", 80.0, 13)
+	if not cut.ends_with("…") or font.get_string_size(cut, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x > 80.0:
+		_fail("a long waterfall label is not cut to its column: '%s'" % cut)
+	if ChartWaterfall.fit(font, "Today", 80.0, 13) != "Today":
+		_fail("a short waterfall label was cut")
 	if chart.figure(1) != "+43.6" or chart.figure(2) != "-14.6" or chart.figure(0) != "147":
 		_fail("the waterfall's figures are %s, %s, %s" % [chart.figure(0), chart.figure(1), chart.figure(2)])
 

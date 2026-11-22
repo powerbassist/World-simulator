@@ -86,6 +86,9 @@ func _check_press_maps_money() -> void:
 		_fail("a press at 260 bn's x set %s, not 26" % _lever.value)
 	if _changes != 1:
 		_fail("one press emitted %d value_changed" % _changes)
+	# Pass 1 on #443: a mouse hand lets go with the button; a focus kept held the Books page's rebuild off.
+	if _lever.has_focus() or _lever.is_dragging():
+		_fail("a released press left the lever focused or dragging")
 	_click(_lever, _lever.x_of(24.2))
 	if not is_equal_approx(_lever.value, 24.0):
 		_fail("a press at 24.2's x did not snap to the 0.5 step: %s" % _lever.value)

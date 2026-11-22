@@ -68,6 +68,11 @@ func can_drag() -> bool:
 	return editable and _per_unit > 0.0
 
 
+## A press is being dragged (the page does not rebuild under it).
+func is_dragging() -> bool:
+	return _dragging
+
+
 func ring_x() -> float:
 	return x_of(_live)
 
@@ -88,9 +93,10 @@ func _gui_input(event: InputEvent) -> void:
 	if button != null and button.button_index == MOUSE_BUTTON_LEFT:
 		_dragging = button.pressed
 		if button.pressed:
-			if focus_mode != Control.FOCUS_NONE:
-				grab_focus()
 			value = _rate_at(button.position.x)
+		elif has_focus():
+			# A mouse hand lets go with the button: a focus kept would hold the page's rebuild off until a click elsewhere.
+			release_focus()
 		accept_event()
 		return
 	var motion := event as InputEventMouseMotion

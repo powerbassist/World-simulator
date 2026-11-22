@@ -231,12 +231,13 @@ func _check_a_bar_is_a_lever() -> void:
 		_fail("a moved row shows no balance")
 	if not _panel._foot._count.text.contains("1 change"):
 		_fail("the rail does not count the bar's move: '%s'" % _panel._foot._count.text)
-	# Past the row's reach: clamped as the box clamps.
-	vat.value = vat.max_value
-	var hi: float = float(FinanceEditor.span(_state.player(), draft, FinanceDraft.TAX, "vat")["hi"])
-	if draft.value(FinanceDraft.TAX, "vat") > hi + 1e-6:
-		_fail("a bar dragged to its end wrote %s past the reach %s" % [draft.value(FinanceDraft.TAX, "vat"), hi])
+	# Past the row's reach: clamped as the box clamps. A spending line's track runs 0 to 30 % of GDP, its reach 5 points
+	# either side of today, so a bar dragged to its end must stop at the reach.
 	var health = levers["spending_pct_gdp:health"][0]
+	health.value = health.max_value
+	var hi: float = float(FinanceEditor.span(_state.player(), draft, FinanceDraft.SPENDING, "health")["hi"])
+	if draft.value(FinanceDraft.SPENDING, "health") > hi + 1e-6 or hi >= health.max_value:
+		_fail("a bar dragged to its end wrote %s past the reach %s" % [draft.value(FinanceDraft.SPENDING, "health"), hi])
 	draft.set_value(FinanceDraft.SPENDING, "health", draft.live(FinanceDraft.SPENDING, "health") + 1.0)
 	_panel._on_moved()
 	_panel._process(0.0)

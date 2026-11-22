@@ -41,6 +41,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
+const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
 
 ## The rail's width at text 100: the waterfall's name column (a change and its figures, "Health, 11.0 → 12.5"), a bar
 ## that still reads at its shortest step, and its figure; with the sheet's margins.
@@ -82,6 +83,9 @@ var _draft
 var _price
 var _stamp := ""
 var _folded := false
+## Frames until the next look at whether the page beside the rail shows its own filled button.
+var _lead_wait := 0
+var _open_seen: Array = []
 ## The parts a folded rail hides, and the summary it shows instead.
 var _full: Array[Control] = []
 var _summary: Label
@@ -199,9 +203,20 @@ func _process(_delta: float) -> void:
 		return
 	var ns = _state.player()
 	var stamp := "%d|%d|%d|%s|%d|%d" % [_state.year, _state.month, _state.day, str(ns.tabled_bill), _draft.count(), _draft.moves().size()]
+	if not is_equal_approx(custom_minimum_size.x, (FOLDED_WIDTH if _folded else WIDTH) * UiTheme.text_scale()):
+		stamp = ""
 	if stamp != _stamp:
 		refresh(_state, _loader, _draft, _price)
-	_quiet_if_the_page_leads()
+	# A tab switched beside the rail is looked at at once.
+	var manager = get_tree().get_first_node_in_group("window_manager")
+	var shown: Array = manager.open_ids() if manager != null else []
+	if shown != _open_seen:
+		_open_seen = shown
+		_lead_wait = 0
+	_lead_wait -= 1
+	if _lead_wait <= 0:
+		_lead_wait = 15  # a quarter of a second: a placed unit lights Register's button, nothing faster needs it
+		_quiet_if_the_page_leads()
 
 
 ## Written from the draft and the books; called on every draft move and every redraw, so it reads only.
@@ -211,6 +226,8 @@ func refresh(state, loader, draft, price) -> void:
 	var drafted: bool = not draft.is_empty()
 	var moves: int = draft.moves().size()
 	_stamp = "%d|%d|%d|%s|%d|%d" % [state.year, state.month, state.day, str(ns.tabled_bill), draft.count(), moves]
+	custom_minimum_size.x = (FOLDED_WIDTH if _folded else WIDTH) * UiTheme.text_scale()  # the text size may have moved
+	_lead_wait = 0
 	var vote_on := DateText.day_mon(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
 	_title.text = Strings.t("Finance bill · %s") % DateText.month_long(int(state.month))
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD if _folded else TextServer.AUTOWRAP_OFF
@@ -230,7 +247,7 @@ func refresh(state, loader, draft, price) -> void:
 	if tabled != null:
 		vote_on = DateText.day_mon(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))
 	_date_words().text = Strings.t("divides %s") % vote_on
-	_empty.text = Strings.t("No change yet. Move a line's bar on Books, or put a programme in from Register: the deficit and the vote show here.")
+	_empty.text = Strings.t("No change yet.")
 	if not drafted:
 		_dropped_at = -1  # the changes went with the last one: a stale index would pull the next draft's focus onto an x
 	var before_vote := ""
@@ -461,26 +478,9 @@ func page_leads() -> bool:
 	return false
 
 
-## The refusal in words, for a page with no queue verb: another bill in the slot is said as it is.
+## The refusal in words (finance_refusal.gd, the table the sheet and the rail both say).
 static func reason(flag: String) -> String:
-	if flag == "already_tabled":
-		return Strings.t("Another bill holds this month's slot.")
-	if flag == "autumn":
-		return Strings.t("A tax is created or abolished only in the autumn month.")
-	# The refusal flags Legislature.refusal and FinanceBill.refusal hand back, in words (moved
-	# here from goal_rows.gd when the Bills second pass took the goal tiles off the tab).
-	match flag:
-		"finance_queued":
-			return Strings.t("A budget text is already queued.")
-		"referendum_in_flight":
-			return Strings.t("A referendum is in flight.")
-		"unavailable":
-			return Strings.t("Not open to propose now.")
-		"range":
-			return Strings.t("Outside the tax's range.")
-		"verb":
-			return Strings.t("A row of the bill is not legal now.")
-	return Strings.t("It cannot be tabled now.")
+	return FinanceRefusal.reason(flag)
 
 
 ## The control the page exists to let the player press: the draft's verb, else the bill's sheet.
