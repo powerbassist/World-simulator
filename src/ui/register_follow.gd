@@ -29,6 +29,11 @@ const RegisterMoney = preload("res://src/ui/register_money.gd")
 const RegisterUnits = preload("res://src/ui/register_units.gd")
 const FinanceRowsUi = preload("res://src/ui/finance_rows.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
+const AnswerRow = preload("res://src/ui/answer_row.gd")
+const HOURGLASS := "res://assets/icons/ui/hourglass.svg"
+
+## The empty page's next step (Design T5 on #448): regions_shell opens Register on it.
+signal register_requested
 
 var _state
 var _loader
@@ -108,6 +113,14 @@ func _refresh() -> void:
 	words.add_child(lede)
 	if building.is_empty():
 		lede.text = tr("No programme is building.")
+		# The next step as a ghost button at the sheet's end: a label, not one more sentence (Design T5 on #448).
+		var door := PanelKit.sized(Button.new())
+		door.text = tr("Open Register")
+		door.theme_type_variation = UiTheme.GHOST
+		door.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		door.set_meta("open_register", true)
+		door.pressed.connect(func() -> void: register_requested.emit())
+		head.add_child(door)
 	else:
 		lede.text = tr_n("%d programme building.", "%d programmes building.", building.size()) % building.size()
 		if not asks.is_empty():
@@ -116,7 +129,8 @@ func _refresh() -> void:
 	if not asks.is_empty():
 		# The one date on the page: amber is for a date to answer by (Building in C).
 		var first_due: int = asks.map(func(c): return int(c["ask"]["due"])).min()  # the earliest: the one that lapses first
-		var due := PanelKit.chip(head, tr("Answer by %s") % _month(first_due), UiTheme.CHIP_WARN, "warning")  # i18n: ok an icon name
+		# A deadline tag wears the hourglass (gate T8 on #443); the triangle is the alert glyph.
+		var due := PanelKit.chip(head, tr("Answer by %s") % _month(first_due), UiTheme.CHIP_WARN, HOURGLASS)
 		due.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		due.set_meta("due", true)
 		for label in due.find_children("*", "Label", true, false):  # i18n: ok a class name
@@ -127,10 +141,10 @@ func _refresh() -> void:
 		lanes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lanes.set_meta("lanes", true)
 		list.add_child(lanes)
-		var asked := {}
+		var due := {}  # a programme's ask: the month it is answered by
 		for copy in asks:
-			asked[String(copy["id"])] = true
-		lanes.setup(building.map(func(p): return _lane(p, asked.has(String(p["id"])))), UnitPrice.now(_state), {"row": 44})
+			due[String(copy["id"])] = int(copy["ask"]["due"])
+		lanes.setup(building.map(func(p): return _lane(p, int(due.get(String(p["id"]), 0)))), UnitPrice.now(_state), {"row": 44})
 		for p in building:
 			_programme(list, p)
 	for copy in asks:
@@ -143,12 +157,14 @@ func _refresh() -> void:
 	_envelope(ns, foot)
 
 
-## A programme's lane: its name, what is paid of its build, its months in the bar.
-func _lane(p: Dictionary, ask: bool) -> Dictionary:
+## A programme's lane: its name, what is paid of its build, its months in the bar, and its ask's answer-by month
+## (0: none) with its tag.
+func _lane(p: Dictionary, due: int) -> Dictionary:
 	var left := int(p["months_left"])
 	var built := maxi(0, int(p.get("paid_month", int(p["voted"]) - 1)) - int(p["voted"]) + 1)
 	var paid := float(p["paid_eur_m"]) / 1000.0
-	return {"label": _name(p), "start": int(p["voted"]), "opens": UnitPrice.opens_at(p), "ask": ask,
+	return {"label": _name(p), "start": int(p["voted"]), "opens": UnitPrice.opens_at(p), "due": due,
+		"tag": tr("answer by %s") % _month(due) if due > 0 else "",
 		"sub": tr("paid %s of %s bn") % [Num.f(paid, 2), Num.f(paid + float(p["capital_month_eur_m"]) * left / 1000.0, 2)],
 		"bar_text": tr("building · %d of %d months") % [built, built + left]}
 
@@ -248,9 +264,19 @@ func _answer(row: Control, copy: Dictionary, a: Dictionary, until: int) -> void:
 	chart.set_meta("answer_chart_" + answer_id, true)
 	col.add_child(chart)
 	chart.setup([{"label": "", "start": int(copy["voted"]), "opens": int(a["opens"])}], UnitPrice.now(_state),
-		{"label_w": 0.0, "axis": false, "until": until, "row": 18})
+		{"label_w": 0.0, "axis": false, "until": until, "row": 18, "ends": true})
 	var says := PanelKit.plain_line(col, _answer_says(copy, a), PanelKit.Tone.DIM)
 	says.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if bool(a.get("union_lost", false)):
+		# Bad news on its own line, its red down-glyph and the amount it loses (Design T4 on #448).
+		var lost := HBoxContainer.new()
+		lost.add_theme_constant_override("separation", 6)
+		lost.set_meta("union_lost_answer", true)
+		col.add_child(lost)
+		lost.add_child(AnswerRow.Glyph.new(false))
+		var held := float(copy.get("union", {}).get("reserved_eur_m", 0.0)) / 1000.0
+		var words := PanelKit.plain_line(lost, tr("The Union's share is lost: %s bn.") % Num.f(held, 2), PanelKit.Tone.PLAIN)
+		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var button := PanelKit.sized(Button.new())
 	button.text = _answer_label(answer_id)
 	button.set_meta("overrun_" + answer_id, true)
@@ -329,12 +355,9 @@ func _answer_label(id: String) -> String:
 
 
 ## What an answer makes of the programme, from its outcome (UnitOverrun.outcome's fields): the units it keeps and
-## when it opens (the figure over it says the money or the months), and the Union's share when it is lost.
+## when it opens (the figure over it says the money or the months); a lost Union share has its own line.
 func _answer_says(_copy: Dictionary, a: Dictionary) -> String:
-	var says := tr_n("%d unit, opens %s.", "%d units, opens %s.", int(a["units"])) % [int(a["units"]), _month(int(a["opens"]))]
-	if bool(a.get("union_lost", false)):
-		says += " " + tr("The Union's share is lost.")
-	return says
+	return tr_n("%d unit, opens %s.", "%d units, opens %s.", int(a["units"])) % [int(a["units"]), _month(int(a["opens"]))]
 
 
 func _month(absolute: int) -> String:

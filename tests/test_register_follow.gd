@@ -32,6 +32,8 @@ const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const FinanceRowsUi = preload("res://src/ui/finance_rows.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+const AnswerRow = preload("res://src/ui/answer_row.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -65,8 +67,17 @@ func _process(_delta: float) -> bool:
 			if not _text_under(_follow).contains(_follow.tr("No programme is building.")):
 				_fail("the empty Programmes tab does not say so: '%s'" % _text_under(_follow))
 			_check_envelope()
+			# Design T5 on #448: the empty page says its next step, a ghost button to Register.
+			var door = _with_meta("open_register", _follow)
+			if door == null or door.theme_type_variation != UiTheme.GHOST:
+				_fail("the empty Building page has no ghost button to Register")
+			else:
+				_press(door)
 			_warn()
 		5:
+			if not _main._windows.is_open("register"):
+				_fail("the empty page's Open Register did not open Register")
+			_main._windows.open("programmes")  # back where the warning's checks start
 			_check_card_arrived()
 			_check_one_card_a_subject()
 			_check_refused_open_keeps_the_card()
@@ -300,8 +311,13 @@ func _check_follow_rows() -> void:
 		_fail("after a Delay the row does not say '%s': '%s'" % [built_text, _text_under(_follow)])
 	var lanes = _with_meta("lanes", _follow)
 	if lanes == null or lanes.data().size() != 1 or int(lanes.data()[0]["opens"]) != UnitPrice.opens_at(p) \
-			or int(lanes.data()[0]["start"]) != int(p["voted"]) or not bool(lanes.data()[0]["ask"]):
+			or int(lanes.data()[0]["start"]) != int(p["voted"]) or int(lanes.data()[0].get("due", 0)) != int(p["ask"]["due"]):
 		_fail("the lanes do not draw the register's months and ask: %s" % [null if lanes == null else lanes.data()])
+	# Design T1 on #448: the ask's mark sits on the date it is answered by, its tag saying that date; a timeline says when.
+	elif absf(lanes.ask_x(0) - lanes.x_of(int(p["ask"]["due"]))) > 0.5 \
+			or not String(lanes.data()[0].get("tag", "")).contains(_month(int(p["ask"]["due"]))):
+		_fail("the lane's ask mark is not on its answer-by date: x %s, the date's %s, tag '%s'" % [lanes.ask_x(0),
+			lanes.x_of(int(p["ask"]["due"])), lanes.data()[0].get("tag", "")])
 	var text := _text_under(rows[0])
 	if text.contains(".0 "):
 		_fail("a count printed as a float: '%s'" % text)
@@ -322,9 +338,14 @@ func _check_overrun_card() -> void:
 		if squares == null or squares.kept != int(a["units"]):
 			_fail("answer %s: the squares do not keep the sim's %d units" % [a["id"], int(a["units"])])
 	var delay_col = _with_meta("units_" + UK.OVERRUN_DELAY, _follow)
-	if _main._state.player().unit_programmes[0].has("union") and (delay_col == null
-			or not _text_under(delay_col.get_parent()).contains(_follow.tr("The Union's share is lost."))):
-		_fail("a Delay past the Union's year does not say its share is lost")
+	var p0: Dictionary = _main._state.player().unit_programmes[0]
+	if p0.has("union"):
+		# Design T4 on #448: the bad news on its own line, its red down-glyph and its amount.
+		var lost = null if delay_col == null else _with_meta("union_lost_answer", delay_col.get_parent())
+		var amount := Num.f(float(p0["union"]["reserved_eur_m"]) / 1000.0, 2)
+		if lost == null or not _text_under(lost).contains(amount) \
+				or lost.find_children("*", "", false, false).filter(func(n): return n is AnswerRow.Glyph and not n.up).is_empty():
+			_fail("a Delay past the Union's year does not say its share is lost on a line of its own, glyph and %s bn" % amount)
 	var bill = _with_meta("bill_if_paid", _follow)
 	if bill == null or bill.years().is_empty():
 		_fail("no year's bill under the overrun card")
@@ -346,12 +367,20 @@ func _check_building_in_c(copy: Dictionary) -> void:
 		charts.append(chart)
 		if int(chart.data()[0]["opens"]) != int(a["opens"]):
 			_fail("answer %s's chart opens at %d, the sim's %d" % [a["id"], int(chart.data()[0]["opens"]), int(a["opens"])])
+		# Design T3 on #448: each small chart says its ends, the start year and the opening (short), so one axis reads.
+		var opens := int(a["opens"])
+		var want := [str((int(copy["voted"]) - 1) / 12), DateText.mon_year((opens - 1) % 12 + 1, (opens - 1) / 12)]
+		if chart.ends() != want:
+			_fail("answer %s's chart says %s under it, not %s" % [a["id"], chart.ends(), want])
 	for c in charts:
 		if c.axis_end() != charts[0].axis_end():
 			_fail("the answers' charts are not on one axis: %s against %s" % [c.axis_end(), charts[0].axis_end()])
 	var due = _with_meta("due", _follow)
 	if due == null or not _text_under(due).contains(DateText.month_long_year((int(copy["ask"]["due"]) - 1) % 12 + 1, (int(copy["ask"]["due"]) - 1) / 12)):
 		_fail("the page's head does not say the date the ask is answered by")
+	# Design T2 on #448: a deadline tag wears the hourglass; the triangle is the alert glyph.
+	elif due.find_children("*", "TextureRect", true, false).filter(func(t): return String(t.get_meta("glyph", "")).ends_with("hourglass.svg")).is_empty():
+		_fail("the head's answer-by chip does not wear the hourglass")
 	var bill = _with_meta("bill_if_paid", _follow)
 	var line := String(Units.row(_main._loader, String(copy["type"]))["line"])
 	if bill != null and not bill.running_color.is_equal_approx(FinanceRowsUi.line_color(line)):
@@ -372,6 +401,10 @@ func _card(node):
 	while up != null and not (up is PanelContainer):
 		up = up.get_parent()
 	return up
+
+
+func _month(absolute: int) -> String:
+	return DateText.month_long_year((absolute - 1) % 12 + 1, (absolute - 1) / 12)
 
 
 func _region_name(id: String) -> String:

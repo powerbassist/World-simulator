@@ -53,6 +53,11 @@ static func day_month_year(day: int, month_number: int, year: int) -> String:
 	return "%02d %s %d" % [day, month(month_number), year]
 
 
+## "Dec 2029": a short date under a small chart (G3's cased short month).
+static func mon_year(month_number: int, year: int) -> String:
+	return "%s %d" % [Strings.t(SHORT_CASED[clampi(month_number, 1, 12) - 1]), year]
+
+
 ## "JAN 2026".
 static func month_year(month_number: int, year: int) -> String:
 	return "%s %d" % [month(month_number), year]
