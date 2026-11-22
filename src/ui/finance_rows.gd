@@ -180,7 +180,9 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 		var gap := Control.new()
 		gap.custom_minimum_size.x = SWATCH
 		row.add_child(gap)
-	var label := _cell(row, name, UiTheme.HEADING, 0.0)
+	# A header with a bar lays its cells out as a line's (swatch, name, note, figure column, bar): the bars share one x and
+	# one length, so the same billions draw the same pixels (pass 2 T5 on #443).
+	var label := _cell(row, name, UiTheme.HEADING, NAME_WIDTH if bar_bn >= 0.0 else 0.0)
 	# A header's name is what the column is read by: it keeps its own width, and the note gives way (it fills what is
 	# left and is trimmed), never "Other spend..." (QA's T1 on #366, once the scroll bar's gap took 8 px at the
 	# former 130 % text size).
@@ -196,8 +198,10 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 			tip = note if tip == "" else note + ". " + tip
 	if bar_bn >= 0.0:
 		# A part no rate here sets is drawn on the table's money scale too, a bar with no handle.
+		_cell(row, "", "", PCT_WIDTH)
 		var bar := FinanceLever.new()
 		bar.custom_minimum_size.x = BAR_MIN * UiTheme.text_scale()
+		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(bar)
 		bar.setup(1.0, float(ctx.get("scale_bn", bar_bn)), bar_bn, color)
 		bar.step = 0.0
@@ -227,7 +231,8 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 	# The name takes what it needs (a kind's name is the longest thing on the row); who pays fills the
 	# rest as a caption while there is room, and is always the row's hover too: at the largest size the caption is cut.
 	var id := row_id(FinanceDraft.TAX, String(kind["id"]))
-	var name := _name_cell(row, Strings.row_name("taxes", tax), id, NAME_WIDTH, ctx)
+	# The indent is taken from the name cell, so the cells to the bar's left add up as a line's (pass 2 T5 on #443).
+	var name := _name_cell(row, Strings.row_name("taxes", tax), id, NAME_WIDTH - 8.0 / UiTheme.text_scale(), ctx)
 	name.tooltip_text = name.text
 	var at_vote: bool = (ctx["tabled"] as Dictionary).has(id)
 	var tag := who
@@ -298,6 +303,10 @@ static func _money_cells(row: Control, id: String, channel: String, key: String,
 		lever.lock()
 	elif ctx.has("on_lever"):
 		lever.value_changed.connect(func(value: float) -> void: (ctx["on_lever"] as Callable).call(channel, key, value))
+		# Let go on the grid point nearest today: no change, though today sits off the grid (pass 2 T9 on #443).
+		lever.released.connect(func() -> void:
+			if lever.at_today():
+				(ctx["on_lever"] as Callable).call(channel, key, draft.live(channel, key)))
 	lever.tooltip_text = Strings.t("Drag the end of the bar to set it; the box under the open row takes the exact figure.")
 	_cell(row, bn_text(today_bn), "", FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var balance := _cell(row, "", "", BALANCE_WIDTH)

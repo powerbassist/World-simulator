@@ -68,9 +68,6 @@ var _groups: VBoxContainer
 var _fall: VBoxContainer
 var _chart: ChartWaterfall
 var _pct: Label
-## Each change's money a year, by "id|draft value|live value|day": a drag moves one row, so the others are priced once
-## per change of their own (pass 2 T2 on #429), not on every frame of the drag.
-var _gains := {}
 ## Who each change is for or who pays it (finance_who.gd keeps a line's blocs for the day).
 var _who := FinanceWho.new()
 ## The index of the change a remove mark took out, -1 for none: the focus goes to the mark now in its place.
@@ -130,15 +127,26 @@ func _ready() -> void:
 	_stays.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_empty = PanelKit.plain_line(col, "", PanelKit.Tone.PLAIN)
 	_empty.autowrap_mode = TextServer.AUTOWRAP_WORD
+	# The waterfall and the changes scroll between the bill's head and its verdict and verbs: a long draft keeps "Table the
+	# bill" on screen (pass 2 T3 on #443). It takes the room the spacer took, so the verbs stay at the rail's foot.
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true  # the focus after a remove lands on an x in it
+	col.add_child(scroll)
+	var listed := VBoxContainer.new()
+	listed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	listed.add_theme_constant_override("separation", 10)
+	scroll.add_child(listed)
 	_fall = VBoxContainer.new()
-	col.add_child(_fall)
+	listed.add_child(_fall)
 	var box := ChartKit.waterfall(_fall, Strings.t("The deficit, a year, bn").to_upper(), {"label": "", "value": 0.0}, [], {"label": "", "value": 0.0})
 	_chart = box.get_meta("chart")
 	_chart.set_meta("rail", "waterfall")
 	_pct = PanelKit.plain_line(_fall, "", PanelKit.Tone.DIM)
 
 	_changes = VBoxContainer.new()
-	col.add_child(_changes)
+	listed.add_child(_changes)
 	var changes_head := HBoxContainer.new()
 	changes_head.add_theme_constant_override("separation", 8)
 	_changes.add_child(changes_head)
@@ -159,9 +167,6 @@ func _ready() -> void:
 	_verdict = Label.new()
 	_verdict.autowrap_mode = TextServer.AUTOWRAP_WORD
 	col.add_child(_verdict)
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	col.add_child(spacer)
 	var verbs := PanelKit.buttons(col)
 	_verbs = verbs
 	_table = _button(verbs, "Table", Strings.t("Table the bill"), table_pressed)  # i18n: ok a node name
@@ -276,8 +281,13 @@ func refresh(state, loader, draft, price) -> void:
 		vote_on = DateText.day_mon(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))
 	_date_words().text = Strings.t("divides %s") % vote_on
 	_empty.text = Strings.t("No change yet.")
-	if not drafted:
-		_dropped_at = -1  # the changes went with the last one: a stale index would pull the next draft's focus onto an x
+	if not drafted and _dropped_at >= 0:
+		# The changes went with the last one: the focus goes to a verb still here (Discard all while share moves remain,
+		# pass 2 T8 on #443), never nowhere; a stale index would pull the next draft's focus onto an x.
+		_dropped_at = -1
+		var next: Control = _discard if _discard.visible else (_open if _open.visible else null)
+		if next != null:
+			next.grab_focus()
 	var before_vote := ""
 	if tabled != null:
 		before_vote = Strings.t("A finance bill is before the Assembly: it divides on %s.") % vote_on
@@ -297,7 +307,12 @@ func refresh(state, loader, draft, price) -> void:
 	# The same pricing as the sheet (FinancePrice.whole): the bill the vote decides. On an amendment the money is the
 	# whole bill's, and the sentence says so.
 	var whole: Dictionary = price.whole(loader, draft, refusal != "")
-	_list(state, ns, draft, price, whole)
+	# An amendment's money is the whole bill's: the bill already tabled is its own first step (pass 2 T6 on #443).
+	var first := {}
+	if tabled != null and refusal == "":
+		var alone: Dictionary = price.tabled(loader)
+		first = {"label": Strings.t("The bill before the Assembly"), "value": float(alone["deficit_after_bn"]) - float(alone["deficit_now_bn"])}
+	_list(ns, draft, price, whole, first)
 	var text := ""
 	if tabled != null:
 		text = Strings.t("An amendment to the bill before the Assembly: the figures are the whole bill's.")
@@ -342,7 +357,7 @@ func _width() -> float:
 
 
 ## The waterfall and the change list: the list is rebuilt when the rows change, the figures every refresh.
-func _list(state, ns, draft, price, whole: Dictionary) -> void:
+func _list(ns, draft, price, whole: Dictionary, first: Dictionary) -> void:
 	var rows: Array = draft.rows()
 	var ids := []
 	for row in rows:
@@ -356,12 +371,11 @@ func _list(state, ns, draft, price, whole: Dictionary) -> void:
 		for row in rows:
 			_change(ns, row)
 	_count.text = (Strings.tn("%d change", "%d changes", rows.size()) % rows.size()).to_upper()
-	# The books today, as the price reads them (re-read after a tabling or a law): a row's money is kept while they hold.
-	var day := "%d-%d-%d|%s" % [int(state.year), int(state.month), int(state.day), str(price.now().get("deficit_pct_gdp", 0.0))]
-	var steps := []
-	var walked := 0.0
+	# A row's money is kept by the price while the books hold (FinancePrice.row_balance_bn).
+	var steps := [] if first.is_empty() else [first]
+	var walked := 0.0 if first.is_empty() else float(first["value"])
 	for i in rows.size():
-		var gain := _gain(price, rows[i], day)
+		var gain: float = price.row_balance_bn(rows[i])
 		var money: Label = _groups.get_child(i).find_child("Money_*", true, false)
 		money.text = EffectsStrip.money_text(gain)
 		money.theme_type_variation = ControlStyle.STRONG  # a price is neutral with its sign (gate T4 on #443)
@@ -424,15 +438,6 @@ func _change(ns, row: Dictionary) -> void:
 	line.add_child(drop)
 
 
-func _gain(price, row: Dictionary, day: String) -> float:
-	var key := "%s|%s|%s|%s" % [FinanceRows.row_id(String(row["channel"]), String(row["key"])), row["draft"], row["live"], day]
-	if not _gains.has(key):
-		if _gains.size() > 64:
-			_gains.clear()  # a long drag leaves one stale key per step
-		_gains[key] = price.row_balance_bn(row)
-	return float(_gains[key])
-
-
 ## The place of change `id` among the remove marks on screen, in reading order.
 func _index_of(id: String) -> int:
 	var i := 0
@@ -480,7 +485,8 @@ func page_leads() -> bool:
 		if page == null or page.is_ancestor_of(self):
 			continue
 		for button in page.find_children("*", "Button", true, false):  # i18n: ok a class name
-			if (button as Button).theme_type_variation == UiTheme.PRIMARY and (button as Button).is_visible_in_tree():
+			# A disabled one is not the next step (pass 2 T11 on #443: Register's, with nothing placed).
+			if (button as Button).theme_type_variation == UiTheme.PRIMARY and (button as Button).is_visible_in_tree() and not (button as Button).disabled:
 				return true
 	return false
 

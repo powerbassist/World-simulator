@@ -17,6 +17,11 @@ var _frame := 0
 var _lever: FinanceLever
 var _locked: FinanceLever
 var _changes := 0
+## Pass 2 on #443: a scrolled list with a live bar and a dead one (no money per point) in it.
+var _scroll: ScrollContainer
+var _in_scroll: FinanceLever
+var _dead: FinanceLever
+var _released := 0
 
 
 func _init() -> void:
@@ -45,6 +50,32 @@ func _init() -> void:
 	_locked.max_value = 30.0
 	_locked.value = 20.0
 	_locked.lock()
+	_scroll = ScrollContainer.new()
+	_scroll.position = Vector2(0, 220)
+	_scroll.size = Vector2(500, 120)
+	root.add_child(_scroll)
+	UiTheme.apply(_scroll)
+	var tall := VBoxContainer.new()
+	tall.custom_minimum_size = Vector2(480, 900)
+	_scroll.add_child(tall)
+	_in_scroll = FinanceLever.new()
+	_in_scroll.custom_minimum_size = Vector2(412, 20)
+	_in_scroll.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	tall.add_child(_in_scroll)
+	_in_scroll.setup(10.0, 400.0, 20.0, Color.WHITE)
+	_in_scroll.max_value = 30.0
+	_in_scroll.step = 0.5
+	_in_scroll.value = 20.0
+	# A tax in force at 0 % (France's wealth tax) has no money per point: its bar draws nothing.
+	_dead = FinanceLever.new()
+	_dead.custom_minimum_size = Vector2(412, 20)
+	_dead.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	tall.add_child(_dead)
+	_dead.setup(0.0, 400.0, 0.0, Color.WHITE)
+	_dead.max_value = 30.0
+	_dead.step = 0.5
+	_dead.value = 0.0
+	_lever.released.connect(func() -> void: _released += 1)
 
 
 func _process(_delta: float) -> bool:
@@ -55,6 +86,9 @@ func _process(_delta: float) -> bool:
 		_check_locked()
 		_check_keys()
 		_check_off_grid()
+		_check_wheel()
+		_check_dead()
+		_check_home()
 		_finish()
 		return true
 	return false
@@ -83,7 +117,11 @@ func _check_geometry() -> void:
 ## A press at the x of 300 bn sets 30 % (300 bn / 10 bn a point); a press between steps snaps.
 func _check_press_maps_money() -> void:
 	_changes = 0
+	_released = 0
 	_click(_lever, _lever.x_of(26.0))
+	# Pass 2 T9: the page reads at_today() when the hand lets go.
+	if _released != 1:
+		_fail("a press let go emitted %d released" % _released)
 	if not is_equal_approx(_lever.value, 26.0):
 		_fail("a press at 260 bn's x set %s, not 26" % _lever.value)
 	if _changes != 1:
@@ -142,6 +180,66 @@ func _check_off_grid() -> void:
 	if odd.is_moved():
 		_fail("a rate today off the step grid reads as moved (the snapped %s against %s)" % [odd.value, 20.83])
 	odd.queue_free()
+
+
+## Pass 2 T1 on #443: the wheel over a bar scrolls the list, never the rate (a draft changed unseen).
+func _check_wheel() -> void:
+	_scroll.scroll_vertical = 0
+	_wheel(_in_scroll)
+	if not is_equal_approx(_in_scroll.value, 20.0):
+		_fail("the wheel over a bar moved its rate to %s" % _in_scroll.value)
+	if _scroll.scroll_vertical <= 0:
+		_fail("the wheel over a bar did not scroll the list under it")
+
+
+## Pass 2 T2 on #443: a bar that draws nothing takes no press, and the wheel over it still scrolls the list.
+func _check_dead() -> void:
+	_click(_dead, _dead.x_of(0.0) + 200.0)
+	if not is_equal_approx(_dead.value, 0.0):
+		_fail("a bar that draws nothing set a rate on a click: %s" % _dead.value)
+	_scroll.scroll_vertical = 0
+	_wheel(_dead)
+	if _scroll.scroll_vertical <= 0:
+		_fail("the wheel over a dead bar did not scroll the list")
+
+
+## Pass 2 T9 on #443: a rate today off the grid (Germany's 20.83 % on a 0.5 step) or past the track's end: a release
+## on the grid point nearest today reads as today, so the row can be put back to "no change" by hand.
+func _check_home() -> void:
+	var odd := FinanceLever.new()
+	odd.custom_minimum_size = Vector2(412, 20)
+	_lever.get_parent().add_child(odd)
+	odd.setup(10.0, 400.0, 20.83, Color.WHITE)
+	odd.max_value = 30.0
+	odd.step = 0.1
+	odd.value = 20.8
+	if not odd.at_today():
+		_fail("20.8 on a 0.1 grid is not read as today's 20.83")
+	odd.value = 20.9
+	if odd.at_today():
+		_fail("20.9 is read as today's 20.83")
+	# Half a step exactly (20.85 against 20.8 on the grid), float error included.
+	odd.setup(10.0, 400.0, 20.85, Color.WHITE)
+	odd.value = 20.8
+	if not odd.at_today():
+		_fail("a grid point half a step from today is not read as today")
+	# Today past the track's end: the end on today's side is today.
+	odd.setup(10.0, 400.0, 34.0, Color.WHITE)
+	odd.value = 30.0
+	if not odd.at_today():
+		_fail("the track's end on today's side is not read as today (34 past a 30 end)")
+	odd.queue_free()
+
+
+func _wheel(control: Control) -> void:
+	for down in [true, false]:
+		var event := InputEventMouseButton.new()
+		event.button_index = MOUSE_BUTTON_WHEEL_DOWN
+		event.pressed = down
+		event.factor = 1.0
+		event.position = control.get_global_rect().position + Vector2(100.0, 10.0)
+		event.global_position = event.position
+		root.push_input(event, true)
 
 
 func _click(control: Control, x: float) -> void:

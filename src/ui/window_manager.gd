@@ -304,6 +304,10 @@ func _place_aside(id: String) -> Vector2:
 
 func _fit_page(page: Control, id: String) -> void:
 	var room := _place_aside(id)
+	# Only a page that fills the body: one a probe placed with fit_within() (top-left anchors) keeps the size it was given
+	# (pass 2 T12 on #443: offsets written on it every frame shrank it to its minimum).
+	if page.anchor_right < 1.0 or page.anchor_bottom < 1.0:
+		return
 	page.offset_right = -room.x
 	page.offset_top = room.y
 

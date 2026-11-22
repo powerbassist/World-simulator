@@ -101,6 +101,21 @@ func _process(_delta: float) -> bool:
 			var focus = _panel.get_viewport().gui_get_focus_owner()
 			if focus != _outside:
 				_fail("a fresh draft after the last remove took the focus to %s" % (focus.name if focus != null else "nothing"))
+			# Pass 2 T8 on #443: the last change removed while a share move stays: the focus goes to Discard all, never nowhere.
+			var draft = _panel.shared_draft()
+			draft.revert()
+			draft.add_move("health", "hospitals", "primary_care", 0.01)
+			draft.set_value(FinanceDraft.SPENDING, "health", draft.live(FinanceDraft.SPENDING, "health") + 1.5)
+			_panel._on_structure_changed()
+		19:
+			_press(_remove_mark("spending_pct_gdp:health"))
+		21:
+			var focus = _panel.get_viewport().gui_get_focus_owner()
+			var discard := _panel._foot.find_child("Discard", true, false) as Button
+			if not _panel.shared_draft().has_moves() or not discard.is_visible_in_tree():
+				_fail("premise: the share move or Discard all went with the last change")
+			elif focus != discard:
+				_fail("the last change removed with a share move left the focus on %s, not Discard all" % (focus.name if focus != null else "nothing"))
 			_finish()
 	return false
 
@@ -238,12 +253,16 @@ func _check_drop_every_kind() -> void:
 		_fail("dropping an abolition, the brackets and a birth left %d rows" % draft.count())
 
 
+## Counts the previews a price runs (a miss of its kept answers): the rows are priced once, whichever surface asks
+## (pass 2 T7 on #443 moved the rows' cache into the price).
 class CountingPrice extends "res://src/ui/finance_price.gd":
 	var rows := 0
 
-	func row_balance_bn(row: Dictionary) -> float:
-		rows += 1
-		return super.row_balance_bn(row)
+	func after(pending: Dictionary) -> Dictionary:
+		_check()
+		if not _kept.has(var_to_str(pending)):
+			rows += 1
+		return super.after(pending)
 
 
 ## {row id: its line} over the rail's listed changes on screen.

@@ -21,6 +21,12 @@ var _state
 var _stamp := ""
 var _now := {}
 var _kept := {}
+## Each drafted change's money a year, by the row itself (its value, today's, its birth flag): a drag moves one row, so
+## the others are priced once and not again on every step, whichever surface asks (the rows' balances, the rail). The
+## FIFO above evicted them on the drag's own entries (pass 2 T7 on #443, as #429 pass 2 T2).
+var _rows := {}
+## The bill before the Assembly alone, priced as whole() prices it (tabled()), kept for the day and the bill.
+var _tabled := {}
 
 
 func setup(state) -> void:
@@ -91,7 +97,19 @@ func bill_balance_bn(bill: Dictionary) -> float:
 ## and the Budget-shaped pending the ranges forecast is fed (the same bill, less the births, which that forecast cannot
 ## take).
 func whole(loader, draft, refused: bool) -> Dictionary:
-	var bill: Dictionary = draft.bill()
+	return _whole(loader, draft.bill(), refused)
+
+
+## The bill before the Assembly with nothing added: an amendment's first step on the rail's waterfall, so the residual
+## step holds only what the rows miss together (pass 2 T6 on #443). Kept apart from the FIFO a drag fills.
+func tabled(loader) -> Dictionary:
+	_check()
+	if _tabled.is_empty():
+		_tabled = _whole(loader, {}, false)
+	return _tabled
+
+
+func _whole(loader, bill: Dictionary, refused: bool) -> Dictionary:
 	var cost_pct := 0.0
 	if not refused:
 		bill = FinanceBill.drafted(_state, loader, bill)
@@ -117,6 +135,16 @@ func whole(loader, draft, refused: bool) -> Dictionary:
 ## The balance one drafted change books a year (finance_draft.gd's rows()), EUR bn, a gain positive: a kind abolished
 ## or put in force is priced as a bill of its one row (FinanceBill.preview), any other as a pending of that row alone.
 func row_balance_bn(row: Dictionary) -> float:
+	_check()
+	var key := var_to_str(row)
+	if not _rows.has(key):
+		if _rows.size() > 64:
+			_rows.clear()  # a long drag leaves one stale key a step
+		_rows[key] = _row_balance_bn(row)
+	return float(_rows[key])
+
+
+func _row_balance_bn(row: Dictionary) -> float:
 	var channel := String(row["channel"])
 	var key := String(row["key"])
 	if channel == FinanceDraft.ABOLISH:
@@ -138,3 +166,5 @@ func _check() -> void:
 		_stamp = stamp
 		_now = {}
 		_kept = {}
+		_rows = {}
+		_tabled = {}

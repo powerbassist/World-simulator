@@ -173,6 +173,8 @@ func setup(state, loader) -> void:
 
 func mark_dirty() -> void:
 	_price.reset()
+	# The rail repaints itself on the other Finances tabs from its own stamp (pass 2 T10 on #443).
+	_foot.mark_dirty()
 	_forecast.state_changed()
 	# A law, an event or a summit moved the register: the books are read again, not kept for the day.
 	_stamp = ""
@@ -309,7 +311,9 @@ func _money_scale() -> float:
 ## repaint in place and the rail follows.
 func _on_lever(channel: String, key: String, value: float) -> void:
 	var reach := FinanceEditor.span(_state.player(), _draft, channel, key)
-	_draft.set_value(channel, key, clampf(value, float(reach["lo"]), float(reach["hi"])))
+	# Today is "no change" even past the reach (a rate the register holds outside it): never clamped into a move.
+	var live := _draft.live(channel, key)
+	_draft.set_value(channel, key, live if is_equal_approx(value, live) else clampf(value, float(reach["lo"]), float(reach["hi"])))
 	_on_moved()
 
 
@@ -332,6 +336,10 @@ func shared_draft() -> FinanceDraft:
 
 
 func _open_sheet() -> void:
+	# The sheet lies over Books: pressed beside another Finances tab, the rail's Review opens Books first (pass 2 T4 on
+	# #443); on Books it costs no history step.
+	if not is_visible_in_tree():
+		go_requested.emit("finances")
 	_sheet.show()
 	_sheet.refresh()
 	_sheet.focus_primary()

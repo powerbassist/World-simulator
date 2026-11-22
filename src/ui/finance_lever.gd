@@ -12,6 +12,9 @@ extends HSlider
 ## engine calls before the slider's own (Control::_call_gui_input), and accepted there. Its look is the
 ## LEVER variation (ui_theme.gd), whose track and grabber draw nothing, so _draw is the only picture.
 
+## A press let go (a click or the end of a drag): the page reads at_today() then (pass 2 T9 on #443).
+signal released
+
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## Room at each end of the bar for the dot's radius, so a dot at 0 or at the scale's end is not cut.
@@ -37,6 +40,8 @@ var shown := NAN
 
 func _init() -> void:
 	theme_type_variation = UiTheme.LEVER
+	# The wheel scrolls the table under the bars; on a bar it changed the draft unseen (pass 2 T1 on #443).
+	scrollable = false
 	size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	custom_minimum_size = Vector2(120.0, 20.0)
 
@@ -50,6 +55,9 @@ func setup(per_unit: float, scale_bn: float, live: float, color: Color) -> void:
 	_color = color
 	focus_mode = Control.FOCUS_ALL if editable and per_unit > 0.0 else Control.FOCUS_NONE
 	mouse_default_cursor_shape = Control.CURSOR_HSIZE if focus_mode == Control.FOCUS_ALL else Control.CURSOR_ARROW
+	# No money per point, no mapping from x: the engine's own press would set a rate on a bar that draws nothing (T2).
+	if per_unit <= 0.0:
+		editable = false
 	queue_redraw()
 
 
@@ -85,6 +93,12 @@ func is_moved() -> bool:
 	return not is_equal_approx(_at(), _live)
 
 
+## Whether the slider sits on the grid point nearest today (today off the grid, or past the track's end on its side):
+## a release there is "no change", since the snapped value can never equal an off-grid rate (pass 2 T9 on #443).
+func at_today() -> bool:
+	return absf(value - clampf(_live, min_value, max_value)) <= step * 0.5 + 1e-6
+
+
 func _at() -> float:
 	return value if is_nan(shown) else shown
 
@@ -99,6 +113,7 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	var button := event as InputEventMouseButton
 	if button != null and button.button_index == MOUSE_BUTTON_LEFT:
+		var was := _dragging
 		_dragging = button.pressed
 		if button.pressed:
 			value = _rate_at(button.position.x)
@@ -106,6 +121,8 @@ func _gui_input(event: InputEvent) -> void:
 			# A mouse hand lets go with the button: a focus kept would hold the page's rebuild off until a click elsewhere.
 			release_focus()
 		accept_event()
+		if was and not button.pressed:
+			released.emit()
 		return
 	var motion := event as InputEventMouseMotion
 	if motion != null and _dragging:
