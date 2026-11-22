@@ -240,8 +240,9 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 	# rest as a caption while there is room, and is always the row's hover too: at the largest size the caption is cut.
 	var id := row_id(FinanceDraft.TAX, String(kind["id"]))
 	var name := _name_cell(row, Strings.row_name("taxes", tax), id, NAME_WIDTH, ctx)
-	name.tooltip_text = name.text
 	var at_vote: bool = (ctx["tabled"] as Dictionary).has(id)
+	if not at_vote:
+		name.tooltip_text = name.text  # at vote the hover says why the row does not open (pass 2 T3 on #447)
 	var tag := who
 	if at_vote:
 		tag = Strings.t("At vote")

@@ -160,6 +160,7 @@ func _process(_delta: float) -> bool:
 			_panel.mark_dirty()
 		35:
 			_check_fills_without_scrolling("register", "text 1.15")
+			_check_the_press_follows_its_sheet()
 			_main._windows.open("programmes")
 			_main._windows.content("programmes").mark_dirty()
 		38:
@@ -179,6 +180,17 @@ func _check_fills_without_scrolling(id: String, where: String) -> void:
 	var dock: Rect2 = _main._windows.dock().get_global_rect()
 	if page.get_global_rect().end.y < dock.end.y - 1.0 or dock.end.y < 1080.0 - WindowManager.DOCK_BOTTOM - 1.0:
 		_fail("%s at 1080, %s: the page ends at %.0f, short of the dock's foot %.0f" % [id, where, page.get_global_rect().end.y, 1080.0 - WindowManager.DOCK_BOTTOM])
+
+
+## Pass 2 T6 on #447: the programme's sheet is as tall as its own content, so its press never follows a long regions'
+## table under the fold (Poland's 17 regions at 115 %).
+func _check_the_press_follows_its_sheet() -> void:
+	var press = _with_meta("table")
+	var sheet: Control = press.get_parent()
+	while sheet != null and not (sheet is PanelContainer):
+		sheet = sheet.get_parent()
+	if sheet == null or absf(sheet.size.y - sheet.get_combined_minimum_size().y) > 1.0:
+		_fail("the programme's sheet is %.0f px tall for %.0f of content: its press rides the table's height" % [sheet.size.y if sheet else -1.0, sheet.get_combined_minimum_size().y if sheet else -1.0])
 
 
 func _offered() -> Array:
@@ -253,6 +265,37 @@ func _check_the_money_is_the_quote() -> void:
 		_fail("the money has no range bar or no bars a year")
 
 
+## Pass 2 T1 on #447: the programme never passes COUNT_MAX units, by "+" or by a stepper, and no region goes below 0.
+func _check_the_ceiling() -> void:
+	var regions: Array = []
+	for region in _main._loader.regions.get(_main._state.player().id, []):
+		if Units.start_capacity(_main._loader, _main._state.player().id, _type(), region.id) > 0.0:
+			regions.append(String(region.id))
+	var a := String(regions[0])
+	var b := String(regions[1])
+	_panel._placed = {a: _panel.COUNT_MAX - 1, b: 1}
+	_panel._count = _panel.COUNT_MAX
+	_panel._refresh()
+	for add in _all_with_meta("region_add"):
+		if not add.disabled:
+			_fail("at the ceiling a '+' still adds a unit (%s)" % add.get_meta("region_add"))
+			add.pressed.emit()
+			break
+	for st in _all_with_meta("region_units"):
+		if String(st.get_meta("region_units")) == b:
+			st.value = 2
+	if _panel._sum() > _panel.COUNT_MAX or int(_panel._placed.get(b, 0)) < 0:
+		_fail("past the ceiling: %d units, %s in %s" % [_panel._sum(), _panel._placed.get(b, 0), b])
+	# An old save past the ceiling (the pre-#447 "+" could make one): a stepper edit never sends a region below 0.
+	_panel._placed = {a: _panel.COUNT_MAX + 1, b: 1}
+	_panel._refresh()
+	for st in _all_with_meta("region_units"):
+		if String(st.get_meta("region_units")) == b:
+			st.value = 2
+	if int(_panel._placed.get(b, 0)) < 0:
+		_fail("a stepper edit past the ceiling put %d units in %s" % [_panel._placed.get(b, 0), b])
+
+
 func _fill_button(mode: String) -> Button:
 	for b in _all_with_meta("fill"):
 		if String(b.get_meta("fill")) == mode:
@@ -277,6 +320,14 @@ func _check_by_population_and_back() -> void:
 	_panel._refresh()
 	if not _panel.landing().is_empty():
 		_fail("with nothing placed the page still offers a landing: %s" % [_panel.landing()])
+	# Pass 2 T2 on #447: the reason the press is greyed is said once.
+	var said := 0
+	for label in _panel.find_children("*", "Label", true, false):
+		if (label as Label).is_visible_in_tree() and (label as Label).text == _panel.tr("Place at least one unit."):
+			said += 1
+	if said != 1:
+		_fail("with nothing placed 'Place at least one unit.' is said %d times" % said)
+	_check_the_ceiling()
 	_panel._placed = held
 	_panel.mark_dirty()
 

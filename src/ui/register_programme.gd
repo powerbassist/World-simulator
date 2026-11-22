@@ -29,6 +29,9 @@ static func build(panel, parent: Control, ns, row: Dictionary, quote: Dictionary
 	var body := PanelKit.sheet(parent, Strings.t("The programme"))
 	body.get_parent().size_flags_horizontal = Control.SIZE_FILL
 	body.get_parent().custom_minimum_size.x = WIDTH * UiTheme.text_scale()
+	# As tall as its own content, never the regions' table: a long table (Poland's 17 regions at 115 %) would carry the
+	# press under the fold (pass 2 T6 on #447).
+	body.get_parent().size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var rows: Array = panel.rows()
 	var tiles := HBoxContainer.new()
 	tiles.add_theme_constant_override("separation", 8)
@@ -36,17 +39,11 @@ static func build(panel, parent: Control, ns, row: Dictionary, quote: Dictionary
 	PanelKit.figure_tile(tiles, str(panel._sum()), Strings.row_name("units", row))
 	var where: String = panel._region_name(String(rows[0]["region"])) if rows.size() == 1 else Strings.tn("%d region", "%d regions", rows.size()) % rows.size()
 	PanelKit.figure_tile(tiles, where, Strings.t("Where")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if quote.is_empty():
-		var programme := {"type": panel._type, "op": UK.OP_BUILD, "rows": rows}
-		var why := UnitBuild.refusal(panel._state, ns, panel._loader, [programme]) if not rows.is_empty() else ""
-		PanelKit.plain_line(body, Strings.t(why) if why != "" else Strings.t("Place at least one unit."), PanelKit.Tone.DIM)
-	else:
+	# No quote: nothing to price; why is said once, under the greyed press (pass 2 T2 on #447).
+	if not quote.is_empty():
 		_money(panel, body, row, quote)
 		_when(panel, body, ns, quote)
 	_in_bill(panel, body, ns)
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_child(spacer)
 	_press(panel, body)
 
 
@@ -76,7 +73,7 @@ static func _when(panel, body: Control, ns, quote: Dictionary) -> void:
 	var months := int(quote["build_months"])
 	var open_at := UnitPrice.now(panel._state) + months
 	PanelKit.plain_line(body, Strings.t("Opens about %s, %d months after the vote.") % [
-		DateText.month_year((open_at - 1) % 12 + 1, (open_at - 1) / 12), months], PanelKit.Tone.PLAIN)
+		DateText.month_long_year((open_at - 1) % 12 + 1, (open_at - 1) / 12), months], PanelKit.Tone.PLAIN)
 	# A risk without a date is plain text with its glyph (Design, Register in C): amber is for a date to answer by.
 	var risk := HBoxContainer.new()
 	risk.add_theme_constant_override("separation", 6)

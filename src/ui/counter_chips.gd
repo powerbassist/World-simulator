@@ -4,6 +4,7 @@ extends RefCounted
 ## closure's buyer, so the player learns one shape. The caller fills the strip and makes
 ## the counter; the picks are read, then answered.
 
+const AnswerRow = preload("res://src/ui/answer_row.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
@@ -15,41 +16,39 @@ const Strings = preload("res://src/ui/strings.gd")
 static var _picked := {}
 
 
-## #280's counters as ONE row (the parent's design): a chip per counter (5, 10, 15 %),
-## the picked chip's strip under the row -- the countered price, the blocs, its chances
-## as the sim shows them (the range, NEVER the drawn odds) and the walk-away risk --
-## and one button that makes the picked counter. The picks are read, then answered.
-static func build(box: Control, key: String, counters: Array, fill: Callable, make: Callable, go_key: String) -> void:
-	var row := PanelKit.buttons(box)
+## #280's counters as ONE answer row (Design's T13 on #441): the button that makes the picked
+## counter in the row's first cell, like every answer; in its slots a chip per counter (5, 10,
+## 15 %), the picked chip's cost in the costs' column, who it pleases and angers (the glyph
+## lines), what follows, and its chance as the sim shows it (the range, NEVER the drawn odds).
+## `fill(strip, option)` prices the strip and returns what follows. The picks are read, then answered.
+static func build(box: VBoxContainer, key: String, counters: Array, fill: Callable, make: Callable, go_key: String) -> void:
+	var go := PanelKit.sized(Button.new())
+	# Labelled BEFORE the shell: same_class measures each button's text when the row is added.
+	go.text = Strings.t("Make the counter")
+	go.set_meta(go_key, "counter")
+	var slots := AnswerRow.shell(box, go)
+	var row := PanelKit.buttons(slots)
 	PanelKit.plain_line(row, Strings.t("Counter"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var group := ButtonGroup.new()
-	# No fixed width (the parent's ruling on #281): the strip takes half the row, a
-	# spacer the other half, so it shrinks with a narrow workspace and wraps at a larger
-	# text size, while its money stays near its caption rather than at the far edge.
 	var strip := EffectsStrip.new()
 	strip.price_neutral = true
 	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	strip.set_meta("counter_strip", true)
-	var half := HBoxContainer.new()
-	half.add_child(strip)
-	var rest := Control.new()
-	rest.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rest.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	half.add_child(rest)
-	var go := PanelKit.sized(Button.new())
-	go.text = Strings.t("Make the counter")
-	go.set_meta(go_key, "counter")
+	var who := AnswerRow.who_box(slots)
+	var follows := PanelKit.plain_line(slots, "")
+	follows.set_meta("counter_follows", true)
 	var shown: Dictionary = counters[0]
 	for option in counters:
 		if String(option["id"]) == String(_picked.get(key, "")):
 			shown = option
 	# The chance they accept as a range on a 0 to 100 track (Design's T8 on #441), the sim's
 	# shown range, never the drawn odds; its middle is the range's.
-	var chance := ChartKit.range_bar(box, Strings.t("Chance they accept, %"), 0.0, 0.0, 0.0)
+	var chance := ChartKit.range_bar(slots, Strings.t("Chance they accept, %"), 0.0, 0.0, 0.0)
 	chance.set_meta("counter_chance", true)
 	var show := func(option: Dictionary) -> void:
 		_picked[key] = String(option["id"])
-		fill.call(strip, option)
+		follows.text = String(fill.call(strip, option))
+		AnswerRow.fill_who(who, option.get("bloc_offset", {}))
 		var lo := 100.0 * float(option["odds_lo"])
 		var hi := 100.0 * float(option["odds_hi"])
 		chance.get_meta("chart").setup(lo, (lo + hi) / 2.0, hi, {"track": [0.0, 100.0], "places": 0})
@@ -62,16 +61,10 @@ static func build(box: Control, key: String, counters: Array, fill: Callable, ma
 		chip.set_meta("counter_id", String(option["id"]))
 		chip.pressed.connect(func() -> void: show.call(option))
 		row.add_child(chip)
-	box.add_child(half)
-	box.move_child(chance, -1)
-	box.add_child(go)
+	slots.add_child(strip)
+	slots.move_child(strip, 1)
+	slots.move_child(chance, -1)
 	go.pressed.connect(func() -> void: make.call(String(_picked[key])))
-	# Inside an answer list (AnswerRow), the counter's button is one of the answers: one class.
-	if box.has_meta("answer_list"):
-		var answers: Array = box.get_meta("buttons", [])
-		answers.append(go)
-		box.set_meta("buttons", answers)
-		PanelKit.same_class(answers)
 	show.call(shown)
 
 

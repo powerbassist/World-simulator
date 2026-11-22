@@ -257,6 +257,17 @@ func _check_charts() -> void:
 		dots._gui_input(click)
 		if _picked != "b":
 			_fail("under a head row, a click on the second row picked '%s'" % _picked)
+		# Pass 2 T5 on #447: the reference's sentence on the head row never covers an axis-end figure.
+		var rows: Array = [{"id": "a", "label": "A", "before": 4.0, "after": 4.0}, {"id": "b", "label": "B", "before": 6.0, "after": 6.0}]
+		dots.setup(rows, {"head": {"label": "Region", "value": "Now", "reference": "the nation %s"}, "reference": 5.95})
+		dots.size = Vector2(dots._lw() + dots._vw() + 300.0, dots.size.y)
+		var ends: Array = dots.head_ends_shown()
+		if not ends[0] or ends[1]:
+			_fail("a reference by the axis's end: the end figures shown %s, wanted [true, false]" % [ends])
+		dots.setup(rows, {"head": {"label": "Region", "value": "Now", "reference": "the nation %s"}, "reference": 5.0})
+		if dots.head_ends_shown() != [true, true]:
+			_fail("a reference mid-axis hides an end figure: %s" % [dots.head_ends_shown()])
+		dots.setup(dots.data(), {"head": {"label": "Region", "value": "Now"}})
 		_picked = ""
 		click.position = Vector2(10.0, dots.row_height() * 0.5)
 		dots._gui_input(click)

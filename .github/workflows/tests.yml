@@ -187,6 +187,8 @@ jobs:
         run: |
           python tools/check_uids.py --selftest
           python tools/check_uids.py
+      - name: Screenshot driver selftest (a size folder must match its interface size)
+        run: python tools/screenshot_all.py --selftest
       - name: Voice pipeline selftest (no network)
         run: python tools/voice_pipeline.py --selftest
       - name: Size ratchet (code lines; tools/size_baseline.json)

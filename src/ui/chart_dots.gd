@@ -181,15 +181,42 @@ func _draw() -> void:
 		draw_string(font, Vector2(_x(_reference) - 60.0, ay), Num.f(_reference, _places), HORIZONTAL_ALIGNMENT_CENTER, 120.0, fs, UiTheme.TEXT)
 
 
+func _said() -> String:
+	return String(_head.get("reference", "%s")) % Num.f(_reference, _places)  # i18n: row-ok the caller passes shown text
+
+
+## Where the reference's sentence sits on the head row, a little air either side.
+func _said_span(font: Font, fs: int) -> Vector2:
+	var half := font.get_string_size(_said(), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x * 0.5 + 6.0
+	return Vector2(_x(_reference) - half, _x(_reference) + half)
+
+
+## Which axis-end figures the head row draws, [lo, hi]: one the reference's sentence would cover is left out, the
+## sentence being the one that says what the line is (pass 2 T5 on #447).
+func head_ends_shown() -> Array:
+	if _head.is_empty() or is_nan(_reference):
+		return [true, true]
+	var font := get_theme_default_font()
+	var fs := _fs()
+	var s := _span()
+	var taken := _said_span(font, fs)
+	var lo_end := _x(s.x) + font.get_string_size(Num.f(s.x, _places), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var hi_start := _x(s.y) - font.get_string_size(Num.f(s.y, _places), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	return [lo_end < taken.x or _x(s.x) > taken.y, _x(s.y) < taken.x or hi_start > taken.y]
+
+
 ## The head row: the name column's title, the axis's ends and the reference said, the value column's title.
 func _draw_head(font: Font, fs: int, s: Vector2) -> void:
 	var y := row_height() * 0.5 + fs * 0.35
 	draw_string(font, Vector2(PAD, y), String(_head.get("label", "")).to_upper(), HORIZONTAL_ALIGNMENT_LEFT, _lw() - PAD * 2.0, fs, UiTheme.TEXT_DIM)  # i18n: row-ok the caller passes shown text
-	draw_string(font, Vector2(_x(s.x), y), Num.f(s.x, _places), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
-	draw_string(font, Vector2(_x(s.y) - 60.0, y), Num.f(s.y, _places), HORIZONTAL_ALIGNMENT_RIGHT, 60.0, fs, UiTheme.TEXT_DIM)
 	if not is_nan(_reference):
-		var said := String(_head.get("reference", "%s")) % Num.f(_reference, _places)  # i18n: row-ok the caller passes shown text
-		draw_string(font, Vector2(_x(_reference) - 80.0, y), said, HORIZONTAL_ALIGNMENT_CENTER, 160.0, fs, UiTheme.TEXT)
+		draw_string(font, Vector2(_said_span(font, fs).x + 6.0, y), _said(), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)
+	var shown := head_ends_shown()
+	var hi := Num.f(s.y, _places)
+	if shown[0]:
+		draw_string(font, Vector2(_x(s.x), y), Num.f(s.x, _places), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
+	if shown[1]:
+		draw_string(font, Vector2(_x(s.y) - font.get_string_size(hi, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x, y), hi, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
 	draw_string(font, Vector2(size.x - _vw(), y), String(_head.get("value", "")).to_upper(), HORIZONTAL_ALIGNMENT_RIGHT, _vw(), fs, UiTheme.TEXT_DIM)  # i18n: row-ok the caller passes shown text
 
 
