@@ -68,13 +68,13 @@ const PENDING := {}
 ## "Show on the map", a stated +7 on each sector tab (122 -> 129, 148 -> 155, 135 -> 142).
 const PROGRAMME_FILE_TOTAL := 300
 const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
-	"companies": 145, "sector_agriculture": 129, "sector_industry": 155, "sector_services": 142,
+	"companies": 145, "sector_agriculture": 129, "sector_industry": 155, "sector_services": 142, "projects": 199,
 	"overview": 170, "register": 137, "programmes": 15, "calendar": 128}
 const TOTAL_PENDING := {
 	"campaign": 140,
 	"diplomacy": 22, "economy": 130, "energy": 118,
 	"orgs": 610,
-	"majority": 97, "projects": 75, "society": 106,
+	"majority": 97, "society": 106,
 }
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
@@ -154,7 +154,12 @@ const TOTAL_PENDING := {
 ## PENDING (34) for TOTAL_BUDGET at what it measured (128): the counters, the legend, the cells'
 ## own lines, next month's strip and the people column's matrix; a stated rise 3234 -> 3323,
 ## to the parent.
-const TOTAL_SUM_CEILING := 3323
+## Public works "A calendrier" (G3 S4 PR 2c, the author's pick): the tab leaves TOTAL_PENDING (75) for
+## TOTAL_BUDGET at what it measured (199) after a cut (the sheet's bill, growth and "at once" lines, the
+## bill chart's caption): a lane a work with its name, its line and its verb, the picked work's sheet (its
+## kicker, the authored summary, four figures, who it pleases and angers, its Start), the head's three
+## figures; a stated rise 3323 -> 3431, to the parent.
+const TOTAL_SUM_CEILING := 3431
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
