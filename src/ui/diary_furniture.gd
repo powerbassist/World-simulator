@@ -20,7 +20,7 @@ static func folded(parent: Control, label: String) -> VBoxContainer:
 	var open := PanelKit.sized(Button.new())
 	open.name = "BookAnAct"  # i18n: ok a node name, found by tests
 	open.text = label
-	open.toggle_mode = true
+	PanelKit.toggle(open)
 	parent.add_child(open)
 	var box := VBoxContainer.new()
 	box.visible = false
@@ -34,6 +34,19 @@ static func folded(parent: Control, label: String) -> VBoxContainer:
 static func open_form(panel: Control, windows) -> void:
 	windows.open("calendar")
 	(panel.find_child("BookAnAct", true, false) as Button).button_pressed = true
+	_reveal_book(panel)
+
+
+## The page draws no fold mark (its own sheets, OWN_SHEETS), so the form a verb filled brings its
+## Book into the page's sight (#439 QA T2). Two frames on: ScrollContainer.ensure_control_visible
+## does nothing on a node laid out in the same frame (the 4.7 class page), and the dock refits the
+## page the frame after the form opens.
+static func _reveal_book(panel: Control) -> void:
+	await panel.get_tree().process_frame
+	await panel.get_tree().process_frame
+	var scroll := panel.get_parent() as ScrollContainer
+	if scroll != null and panel.primary_action() != null:
+		scroll.ensure_control_visible(panel.primary_action())
 
 
 ## A counter: a figure over its caption, on a plate. Returns [figure, caption] to fill later.

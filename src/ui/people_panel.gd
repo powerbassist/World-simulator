@@ -79,7 +79,7 @@ func _ready() -> void:
 	for chip in RosterRows.CHIPS:
 		var button := PanelKit.sized(Button.new())
 		button.text = tr(String(chip[1]))
-		button.toggle_mode = true
+		PanelKit.toggle(button)
 		button.set_meta("chip", String(chip[0]))
 		button.pressed.connect(_pick_chip.bind(String(chip[0])))
 		_chips.add_child(button)

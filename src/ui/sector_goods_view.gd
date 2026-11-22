@@ -51,7 +51,7 @@ static func build(panel, parent: Control, ns) -> void:
 static func _chip(panel, parent: Control, good_id: String, text: String) -> void:
 	var chip := PanelKit.sized(Button.new())
 	chip.text = text
-	chip.toggle_mode = true
+	PanelKit.toggle(chip)
 	chip.button_pressed = panel._good_filter == good_id
 	chip.set_meta("good", good_id)
 	chip.pressed.connect(func() -> void:

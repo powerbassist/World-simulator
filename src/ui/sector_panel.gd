@@ -284,7 +284,7 @@ func _majors(ns) -> void:
 		words.add_child(face)
 		var pick := PanelKit.sized(Button.new())
 		pick.flat = true
-		pick.toggle_mode = true
+		PanelKit.toggle(pick)
 		pick.text = company.company_name
 		pick.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		pick.button_pressed = picked == company

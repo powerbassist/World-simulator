@@ -442,7 +442,7 @@ func _build_promises(ns) -> void:
 	# they are looked up once a run-up, the efforts above are read every month.
 	var toggle := PanelKit.sized(Button.new())
 	toggle.text = tr("Make a promise")
-	toggle.toggle_mode = true
+	PanelKit.toggle(toggle)
 	toggle.button_pressed = promises_open
 	toggle.pressed.connect(func() -> void: promises_open = not promises_open; _refocus = true; _dirty = true)
 	# RF3: it opens the promises, which act on the coming vote (the election Go).

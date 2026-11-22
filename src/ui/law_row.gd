@@ -37,7 +37,7 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 	pick.text = Strings.law_name(law)
 	pick.tooltip_text = pick.text
 	pick.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	pick.toggle_mode = true
+	PanelKit.toggle(pick)
 	pick.flat = not selected
 	pick.button_pressed = selected
 	pick.clip_text = true

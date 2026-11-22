@@ -69,7 +69,7 @@ static func build(list, box: Control, ns, law) -> void:
 		var open: bool = list.address_open == String(law.id)
 		var fold := PanelKit.sized(Button.new())
 		fold.text = Strings.t("Address the nation")
-		fold.toggle_mode = true
+		PanelKit.toggle(fold)
 		fold.button_pressed = open
 		fold.set_meta(FOLD_META, true)
 		fold.pressed.connect(_fold.bind(list, law), CONNECT_DEFERRED)

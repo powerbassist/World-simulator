@@ -23,6 +23,7 @@ const FinanceRows = preload("res://src/sim/finance_rows.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
 
 const FIXTURE := "res://tests/fixtures/units"
 
@@ -136,8 +137,40 @@ func _process(_delta: float) -> bool:
 			_main._windows.open("register")
 		27:
 			_check_types_come_from_the_catalogue()
+			# #439 pass 2 T1: the sheet fills the page to the dock's foot and no further -- the floor
+			# read from the header sheet as drawn, not a slack sized for BUREAU's 39 px header.
+			root.size = Vector2i(1920, 1080)
+			_main._windows.open("register")
+		30:
+			_check_fills_without_scrolling("register", "text 1.0")
+			_main._windows.open("programmes")
+		32:
+			_check_fills_without_scrolling("programmes", "text 1.0")
+			UiTheme.set_text_scale(1.15)
+			UiTheme.rebuild(_main)
+			_main._windows.open("register")
+			_panel.mark_dirty()
+		35:
+			_check_fills_without_scrolling("register", "text 1.15")
+			_main._windows.open("programmes")
+			_main._windows.content("programmes").mark_dirty()
+		38:
+			_check_fills_without_scrolling("programmes", "text 1.15")
+			UiTheme.set_text_scale(1.0)
 			_finish()
 	return false
+
+
+## Full to the foot of the dock (the sheet is the workspace), and no scroll bar for its own floor.
+func _check_fills_without_scrolling(id: String, where: String) -> void:
+	var page = _main._windows.frame(id)
+	var scroll: ScrollContainer = page._scroll
+	var content: Control = _main._windows.content(id)
+	if scroll.get_v_scroll_bar().visible:
+		_fail("%s at 1080, %s: the page scrolls (content %.0f in a %.0f px scroll)" % [id, where, content.get_combined_minimum_size().y, scroll.size.y])
+	var dock: Rect2 = _main._windows.dock().get_global_rect()
+	if page.get_global_rect().end.y < dock.end.y - 1.0 or dock.end.y < 1080.0 - WindowManager.DOCK_BOTTOM - 1.0:
+		_fail("%s at 1080, %s: the page ends at %.0f, short of the dock's foot %.0f" % [id, where, page.get_global_rect().end.y, 1080.0 - WindowManager.DOCK_BOTTOM])
 
 
 func _offered() -> Array:

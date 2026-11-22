@@ -153,7 +153,7 @@ func _row(terms: Dictionary) -> Control:
 	pick.text = Strings.row_name("programme", terms)
 	pick.tooltip_text = pick.text
 	pick.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	pick.toggle_mode = true
+	PanelKit.toggle(pick)
 	pick.flat = true
 	pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pick.clip_text = true

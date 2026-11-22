@@ -22,6 +22,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open society
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open diplomacy
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --glass-off --open budget   (G3: the panes solid, the Glass setting off)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --hover-outline RUS
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --notes
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --plant --zoom 5 --center 2.5 44.5
@@ -80,6 +81,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open sector_agriculture
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --open sector_industry
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open sector_services
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open sector_industry   (a yellow accent: the picked firm, a flat toggle)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --lang fr --closure --open sector_agriculture
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-cap --open region
@@ -1290,6 +1292,8 @@ func _init() -> void:
 			_text = int(args[i + 1])
 		elif args[i] == "--play" and i + 1 < args.size():
 			_play = args[i + 1].to_upper()
+		elif args[i] == "--glass-off":
+			UiTheme.set_glass(false)  # before the first theme is built, as the setting does at boot
 
 	# Before anything is built: tr() text is the language it was built in.
 	if _lang != "" and not Strings.set_language(_lang):

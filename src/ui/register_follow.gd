@@ -28,8 +28,6 @@ const RegisterPanel = preload("res://src/ui/register_panel.gd")
 const RegisterMoney = preload("res://src/ui/register_money.gd")
 const RegisterUnits = preload("res://src/ui/register_units.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
-## The register's own slack: the sheet fills the workspace, never with the map under it.
-const FILL_SLACK := 64.0
 
 var _state
 var _loader
@@ -66,6 +64,12 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
+## A text size moves the header sheet, so the floor (page_room) is read again.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_THEME_CHANGED:
+		_dirty = true
+
+
 ## Offered where the register is: a stock file names a type the nation can build (a rule
 ## over data, never a nation id).
 func is_offered() -> bool:
@@ -86,7 +90,7 @@ func _refresh() -> void:
 		_body.remove_child(child)
 		child.queue_free()
 	var ns = _state.player()
-	custom_minimum_size.y = get_viewport_rect().size.y - WindowManager.DOCK_TOP - WindowManager.DOCK_BOTTOM - FILL_SLACK
+	WindowManager.fill_page(self, "programmes")  # the sheet fills the workspace, never scrolls for it
 	var building: Array = ns.unit_programmes.filter(func(p): return String(p.get("state", "")) == UK.STATE_BUILDING)
 	var asks: Array = UnitOverrun.asks(_state, ns, _loader)
 	var lede := Label.new()

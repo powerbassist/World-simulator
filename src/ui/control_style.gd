@@ -17,7 +17,7 @@ extends RefCounted
 
 
 ## `box` is ui_theme's _button_box (bg, border) -> StyleBoxFlat; `t` the tokens
-## {control, hover, pressed, line, text, dim, off, good, warn, bad, fill, on_fill, ring};
+## {control, hover, pressed, line, text, dim, off, good, warn, bad, fill, on_fill, tile, ring};
 ## `small_px` the caption size scaled; `medium` the 500 cut (null when the font did not load).
 static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary, small_px: int, medium: Font) -> void:
 	var fill := t["fill"] as Color
@@ -28,21 +28,49 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	# never falls (a dark label on a yellow fill starts near 10:1 and keeps AA).
 	theme.set_stylebox("hover", primary, _glow(box.call(fill.darkened(0.06))))
 	theme.set_stylebox("pressed", primary, _glow(box.call(fill.darkened(0.12))))
+	# Held ON under the pointer (the armed "See them" is a Primary toggle): the fill still, never
+	# the base Button's graphite (#439 pass 2 T2).
+	theme.set_stylebox("hover_pressed", primary, _glow(box.call(fill.darkened(0.12))))
 	theme.set_stylebox("focus", primary, t["ring"])
 	theme.set_stylebox("disabled", primary, box.call(Color(0, 0, 0, 0), t["line"]))
-	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
 		theme.set_color(state, primary, t["on_fill"])
+
+	# PICKED, a toggle that is ON -- a picked chip, the clock's running speed, the map layer
+	# shown: the accent FILL, kept under the pointer (#436 pass 2: an ON toggle lost its mark on
+	# hover, and a picked chip at CONTROL_PRESSED was 1.14:1 from an unpicked one -- invisible).
+	var picked := String(names["picked"])
+	theme.set_type_variation(picked, "Button")  # i18n: ok
+	theme.set_stylebox("normal", picked, box.call(t["control"]))
+	theme.set_stylebox("hover", picked, box.call(t["hover"]))
+	theme.set_stylebox("pressed", picked, box.call(fill))
+	theme.set_stylebox("hover_pressed", picked, box.call(fill.darkened(0.06)))
+	for state in ["font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, picked, t["on_fill"])
+	# PICKED_ROW, a borderless toggle (a picked name, a fold; g3-spec section 2 "Borderless
+	# toggle"): four grounds a step apart -- none at rest, TILE under the pointer, CONTROL while ON,
+	# CONTROL_HOVER ON under it -- so a hovered row never looks picked; "picked in a list" is a
+	# ground, never a hue (Design's rulings on #439 T7, T3b). A flat Button draws no box at all, so
+	# toggle() unflattens it.
+	var row := String(names["picked_row"])
+	theme.set_type_variation(row, "Button")  # i18n: ok
+	var row_states := {"normal": Color(0, 0, 0, 0), "hover": t["tile"], "pressed": t["control"], "hover_pressed": t["hover"]}
+	for state in row_states:
+		theme.set_stylebox(state, row, box.call(row_states[state]))
+	for state in ["font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, row, t["text"])
 
 	var small := String(names["small"])
 	theme.set_type_variation(small, "Button")  # i18n: ok
 	var states := {"normal": [t["control"], Color(0, 0, 0, 0)], "hover": [t["hover"], Color(0, 0, 0, 0)],
-		"pressed": [fill, Color(0, 0, 0, 0)], "hover_pressed": [fill.darkened(0.06), Color(0, 0, 0, 0)],
+		"pressed": [t["pressed"], Color(0, 0, 0, 0)], "hover_pressed": [t["pressed"], Color(0, 0, 0, 0)],
 		"disabled": [Color(0, 0, 0, 0), t["line"]]}
 	for state in states:
 		theme.set_stylebox(state, small, _tight(box.call(states[state][0], states[state][1])))
-	# Picked (a toggle that is on), as for a Button: the fill, its own label.
+	# Held down, as a Button: CONTROL_PRESSED, never the fill (#436 RECORD, the press flash). No
+	# small verb is a toggle; one that becomes one takes PICKED.
 	for state in ["font_pressed_color", "font_hover_pressed_color"]:
-		theme.set_color(state, small, t["on_fill"])
+		theme.set_color(state, small, t["text"])
 	theme.set_stylebox("focus", small, t["ring"])
 	theme.set_font_size("font_size", small, small_px)
 

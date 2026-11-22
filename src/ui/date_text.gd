@@ -81,6 +81,11 @@ static func weekday_full(day: int, month_number: int, year: int) -> String:
 	return "%s %02d/%02d/%d" % [weekday(day, month_number, year), day, month_number, year]
 
 
+## "Tue 3 March 2026": G3's full date (decision 4: no capitals, no slashes), the time bar's.
+static func weekday_long(day: int, month_number: int, year: int) -> String:
+	return "%s %d %s %d" % [weekday(day, month_number, year), day, month_long(month_number), year]
+
+
 ## The three-letter weekday name of a date, in the current language.
 static func weekday(day: int, month_number: int, year: int) -> String:
 	return Strings.t(WEEKDAYS[weekday_index(day, month_number, year)])

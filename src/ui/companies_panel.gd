@@ -357,7 +357,7 @@ func _build_ledger(ns) -> void:
 	# A ghost toggle, not bold text (Design's T9 on #441).
 	fold.theme_type_variation = UiTheme.GHOST
 	fold.text = tr("The public account")
-	fold.toggle_mode = true
+	PanelKit.toggle(fold)
 	fold.button_pressed = _open_ledger != ""
 	fold.set_meta("ledger", "ledger")
 	fold.pressed.connect(func() -> void: _toggle("_open_ledger", "ledger", "ledger"))

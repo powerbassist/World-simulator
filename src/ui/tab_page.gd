@@ -20,6 +20,8 @@ var _scroll: ScrollContainer
 var _content: Control
 var _folded := false
 var _fill_decided := false
+## The page draws no sheet: its panel lays out its own (set_own_sheets).
+var _bare := false
 
 
 func setup(content: Control) -> void:
@@ -43,6 +45,12 @@ func setup(content: Control) -> void:
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.size_flags_vertical = Control.SIZE_FILL
 	_scroll.add_child(content)
+	# G3 S1 (Design's gate E1 on #439): this page is the panel's one sheet, so a panel root that
+	# is a plain PanelContainer must not draw its own ground on it -- the engine's default is now
+	# a TILE, which made a tile-coloured slab inside the sheet (a frame in a frame, and text on
+	# the wrong ground). A root that names its own variation keeps it.
+	if content is PanelContainer and String(content.theme_type_variation).is_empty():
+		content.theme_type_variation = UiTheme.BARE
 
 	# The fold mark is re-decided every frame the page is visible rather than on a
 	# signal. Three separate things move it -- the dock sizing the page, the
@@ -57,10 +65,22 @@ func _process(_delta: float) -> void:
 		return
 	_decide_fill()
 	var now := primary_action_below_fold()
-	if now == _folded:
+	if now == _folded or _bare:
 		return
 	_folded = now
 	theme_type_variation = UiTheme.PLATE_FOLDED if now else UiTheme.PLATE
+
+
+## G3 S1: a panel that builds its own sheets (the Diary since S2) sits on the map, its sheets 12
+## apart, with no page sheet behind them: a sheet on a sheet is the frame in a frame Design's gate
+## refused. Its fold mark goes with the sheet; its own sheets say what is below.
+func set_own_sheets() -> void:
+	_bare = true
+	theme_type_variation = UiTheme.BARE
+
+
+func own_sheets() -> bool:
+	return _bare
 
 
 func _decide_fill() -> void:

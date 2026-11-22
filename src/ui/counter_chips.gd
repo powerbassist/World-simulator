@@ -56,7 +56,7 @@ static func build(box: Control, key: String, counters: Array, fill: Callable, ma
 	for option in counters:
 		var chip := PanelKit.sized(Button.new())
 		chip.text = Strings.t("%d %%") % roundi(100.0 * float(option["counter"]))
-		chip.toggle_mode = true
+		PanelKit.toggle(chip)
 		chip.button_group = group
 		chip.button_pressed = String(option["id"]) == String(shown["id"])
 		chip.set_meta("counter_id", String(option["id"]))

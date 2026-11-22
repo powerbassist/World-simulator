@@ -1,18 +1,18 @@
-extends PanelContainer
+extends HBoxContainer
 
-## The bar across the top of the screen -- V5.1-c2.3, the BUREAU board's: back
-## and forward over the player's own path, where they are, the requests waiting,
-## save and the menu. The date and the speeds left it for the horizon (V5.3).
+## The title bar's tools -- V5.1-c2.3, the BUREAU board's: back and forward over the
+## player's own path, the chief's mark, the requests waiting, save and the menu. The date
+## and the speeds left it for the horizon (V5.3).
 ##
-## The figures are not here. They are the strip under it (top_bar.gd, which
-## keeps its name and its readings), so this bar never has to fold.
+## G3 S1: no pane of its own. The top strip (top_bar.gd) is ONE glass pane with the figures,
+## and this row docks at its right end (TopBar.dock_tools); where the player is -- the
+## breadcrumb -- moved into the workspace's header sheet (follow()), the line it names.
 ##
 ## Proposes, never commands: every button goes back to main.gd as a signal, and
 ## main.gd decides -- back under a scene is refused there, not here, because this
 ## bar does not know what a scene is.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
-const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Domains = preload("res://src/ui/domains.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const ChiefMark = preload("res://src/ui/chief_mark.gd")
@@ -24,8 +24,6 @@ signal settings_requested
 signal requests_pressed
 ## G1: the chief's mark clicked -- main's briefing driver opens his read.
 signal chief_pressed
-
-const HEIGHT := 58
 
 var _back: Button
 var _forward: Button
@@ -39,12 +37,8 @@ var _where := ""
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(0, HEIGHT)
-	PanelKit.pane(self, UiTheme.TOP_BAR_PANEL)  # G3: glass, flush to the top until S1 floats it
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	add_child(row)
+	add_theme_constant_override("separation", 10)
+	var row := self
 
 	var history := HBoxContainer.new()
 	history.add_theme_constant_override("separation", 4)
@@ -55,12 +49,13 @@ func _ready() -> void:
 	_forward.pressed.connect(func(): forward_requested.emit())
 	set_history(false, false)
 
+	# Built here, placed by follow() in the workspace's header (G3 S1): kept by this bar, which
+	# owns the words, so a reader still asks the title bar for crumb().
 	_crumb = Label.new()
 	_crumb.theme_type_variation = UiTheme.CAPTION
 	_crumb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_crumb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_crumb.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	row.add_child(_crumb)
 
 	# G1: the chief's mark, left of the requests: the month's first priority, read
 	# while the clock runs (he no longer stops it to say so).
@@ -86,10 +81,18 @@ func _ready() -> void:
 	var tools := HBoxContainer.new()
 	tools.add_theme_constant_override("separation", 4)
 	row.add_child(tools)
-	var save := _button(tools, tr("SAVE"), tr("Save and load (S)"))
+	# Ghosts (G3 spec section 2: "Save", "Menu" are quiet links), in sentence case.
+	var save := _button(tools, tr("Save"), tr("Save and load (S)"))
+	save.theme_type_variation = UiTheme.GHOST
 	save.pressed.connect(func(): save_load_requested.emit())
-	var menu := _button(tools, tr("MENU"), tr("Pause menu (Esc)"))
+	var menu := _button(tools, tr("Menu"), tr("Pause menu (Esc)"))
+	menu.theme_type_variation = UiTheme.GHOST
 	menu.pressed.connect(func(): settings_requested.emit())
+
+
+## The breadcrumb's label, for the window manager's header (follow() places it there).
+func crumb_label() -> Label:
+	return _crumb
 
 
 ## The bar follows the window manager itself: every open and every close moves
@@ -97,6 +100,7 @@ func _ready() -> void:
 func follow(windows, nation_name: String) -> void:
 	_windows = windows
 	_nation = nation_name
+	windows.dock_crumb(_crumb)
 	windows.opened.connect(show_where)
 	windows.closed.connect(func(_id: String):
 		if windows.open_ids().is_empty():

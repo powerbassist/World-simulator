@@ -14,6 +14,8 @@ const MapRegions = preload("res://src/ui/map_regions.gd")
 const Region = preload("res://src/core/region.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
+const Inbox = preload("res://src/ui/inbox.gd")
+const INBOX_WIDTH := Inbox.WIDTH
 ## V5.3 c' slice 1: the construction register's order form, a tab beside Regions.
 const RegisterPanel = preload("res://src/ui/register_panel.gd")
 const RegisterFollow = preload("res://src/ui/register_follow.gd")
@@ -86,13 +88,12 @@ static func bind(main, overlay) -> void:
 
 
 ## The map the Regions tab frames the nation in, on a canvas of `view` logical px: right
-## of the narrow dock, left of the inbox's strip, between the strip of figures and the
-## day ribbon. At 1920x1080 it is the rect it always was (the strip right of the
-## 1240 dock); a bigger canvas (settings_panel.gd's interface size) widens and
-## heightens it with the map rather than stopping at 1080.
+## of the narrow dock, left of the inbox's sheets, between the top strip's pane and the time
+## bar's. A bigger canvas (settings_panel.gd's interface size) widens and heightens it with
+## the map rather than stopping at 1080.
 static func fit_rect_for(view: Vector2) -> Rect2:
 	var w = WindowManager
 	var left: float = w.DOCK_LEFT + float(w.DOCK_WIDTHS["region"])
-	# The inbox's strip, measured at the reference: what the 1240 dock leaves of 1920.
-	var strip: float = 1920.0 - (w.DOCK_LEFT + w.DOCK_WIDTH)
+	# The inbox's column and the gap that keeps it off the edge (G3 S1).
+	var strip: float = w.GAP + INBOX_WIDTH
 	return Rect2(left, w.DOCK_TOP, view.x - strip - left, view.y - w.DOCK_TOP - w.DOCK_BOTTOM)

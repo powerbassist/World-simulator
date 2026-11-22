@@ -630,7 +630,8 @@ func _report_the_fold_contract() -> void:
 		])
 
 		frame._process(0.0)
-		var expected: String = UiTheme.PLATE_FOLDED if below else UiTheme.PLATE
+		# G3 S1: a page whose panel lays out its own sheets draws none, fold mark included.
+		var expected: String = UiTheme.BARE if frame.own_sheets() else (UiTheme.PLATE_FOLDED if below else UiTheme.PLATE)
 		if frame.theme_type_variation != expected:
 			_fail("%s reports below_fold=%s and wears '%s'" % [id, below, frame.theme_type_variation])
 

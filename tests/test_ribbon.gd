@@ -29,6 +29,9 @@ extends SceneTree
 
 const Calendar = preload("res://src/sim/calendar.gd")
 const K = preload("res://src/sim/calendar_constants.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const Ribbon = preload("res://src/ui/ribbon.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -45,9 +48,62 @@ func _process(_delta: float) -> bool:
 	if _frame < 2:
 		return false  # let the scene's _ready() run
 
-	_run()
-	_finish()
+	if _frame == 2:
+		_run()
+		_check_the_lane_sits_on_the_plate("text 100")
+		_check_the_clock_never_widens("text 100")
+		# #439 pass 2 T3/T4 at the largest text size, with a hold reason under the date.
+		UiTheme.set_text_scale(1.15)
+		UiTheme.rebuild(_main)
+		var clock = _main._hud.clock_cluster
+		clock._reason.text = "The month is closing, and every hold says why"  # i18n: ok test fixture
+		clock._reason.show()
+		_main._hud.ribbon.mark_dirty()
+	elif _frame == 5:
+		_check_the_lane_sits_on_the_plate("text 115")
+		_check_the_clock_never_widens("text 115")
+		UiTheme.set_text_scale(1.0)
+		_finish()
 	return false
+
+
+## T3: the chips' lane, the line and the labels under it are measured and sit inside the cells,
+## centred, with no chip reaching the line: a margin or a text size cannot push one through another
+## (fixed y's laid out for the docked pane's 10 px ran 7 px high in the floating pane).
+func _check_the_lane_sits_on_the_plate(where: String) -> void:
+	var ribbon = _main._hud.ribbon
+	var cells: Control = ribbon._cells
+	var full: int = cells.get_theme_default_font_size()
+	var top: float = ribbon._lane_y
+	var bottom: float = ribbon._line_y + Ribbon.LABEL_DROP + full
+	if top < 0.0 or bottom > cells.size.y + 0.5:
+		_fail("%s: the horizon runs %.0f to %.0f in cells %.0f tall" % [where, top, bottom, cells.size.y])
+	if absf(top - (cells.size.y - bottom)) > 1.5:
+		_fail("%s: the horizon is not centred in its cells (%.0f above, %.0f below)" % [where, top, cells.size.y - bottom])
+	var title: Rect2 = Rect2(ribbon._title.position, ribbon._title.size)
+	if title.position.y < ribbon._line_y:
+		_fail("%s: the month's name sits above the line" % where)
+	for chip in ribbon._chips:
+		if is_instance_valid(chip) and chip.position.y + chip.size.y > ribbon._line_y - Ribbon.LANE_GAP + 0.5:
+			_fail("%s: a chip reaches into the line's room (bottom %.0f, line %.0f)" % [where, chip.position.y + chip.size.y, ribbon._line_y])
+
+
+## T4: the clock's width is its widest date's, whatever date it shows: no month moves the horizon.
+func _check_the_clock_never_widens(where: String) -> void:
+	var clock = _main._hud.clock_cluster
+	var label: Label = clock._date_label
+	var shown := label.text
+	var floor_x: float = clock.custom_minimum_size.x
+	var widest := ""
+	for year in [2026, 2027, 2028]:
+		for month in range(1, 13):
+			for day in range(1, DateText.days_in(month, year) + 1):
+				label.text = DateText.weekday_long(day, month, year)
+				if clock.get_combined_minimum_size().x > floor_x + 0.5:
+					widest = label.text
+	label.text = shown
+	if not widest.is_empty():
+		_fail("%s: '%s' widens the clock past its measured %.0f px: the horizon shifts" % [where, widest, floor_x])
 
 
 func _run() -> void:

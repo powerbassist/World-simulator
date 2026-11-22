@@ -28,6 +28,8 @@ const K = preload("res://src/sim/calendar_constants.gd")
 ## checked headlessly is that the panel does not open past it.
 const USABLE_BAND_PX := 886.0
 
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+
 var _failures: Array[String] = []
 var _main
 var _frame := 0
@@ -42,10 +44,39 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame < 2:
 		return false  # let the scene's _ready() run
-
-	_run()
-	_finish()
+	if _frame == 2:
+		_run()
+		# #439 QA T2: a visit verb fills the form at 1920x1080 and the page shows its Book.
+		root.size = Vector2i(1920, 1080)
+		_fill_a_visit()
+	elif _frame == 6:
+		_check_book_in_sight("text 100")
+		UiTheme.set_text_scale(1.15)
+		UiTheme.rebuild(_main)
+		_main._windows.close_all()
+	elif _frame == 8:
+		_fill_a_visit()
+	elif _frame == 12:
+		_check_book_in_sight("text 115")
+		UiTheme.set_text_scale(1.0)
+		_finish()
 	return false
+
+
+func _fill_a_visit() -> void:
+	var action = _main._loader.diplomatic_actions[0]
+	_main._calendar_panel.fill_booking(String(action.id), "DEU", _main._windows)
+
+
+## The Diary lays out its own sheets, so its page draws no fold mark: the form a verb filled has
+## to bring its Book into the page's sight itself.
+func _check_book_in_sight(where: String) -> void:
+	var book: Control = _main._calendar_panel.primary_action()
+	var scroll: ScrollContainer = _main._windows.frame("calendar")._scroll
+	if book == null:
+		_fail("%s: premise: the filled form has no Book to press" % where)
+	elif book.get_global_rect().end.y > scroll.get_global_rect().end.y + 0.5:
+		_fail("%s: a visit verb filled the form and its Book sits below the page (%.0f, the page ends %.0f)" % [where, book.get_global_rect().end.y, scroll.get_global_rect().end.y])
 
 
 func _run() -> void:
