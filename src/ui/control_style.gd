@@ -28,6 +28,14 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	# never falls (a dark label on a yellow fill starts near 10:1 and keeps AA).
 	theme.set_stylebox("hover", primary, _glow(box.call(fill.darkened(0.06))))
 	theme.set_stylebox("pressed", primary, _glow(box.call(fill.darkened(0.12))))
+	# The Books lever (finance_lever.gd) draws its bar, ring and dot itself: the slider's own track and grabber draw nothing.
+	var lever := String(names["lever"])
+	theme.set_type_variation(lever, "HSlider")  # i18n: ok
+	for part in ["slider", "grabber_area", "grabber_area_highlight"]:
+		theme.set_stylebox(part, lever, StyleBoxEmpty.new())
+	var none := ImageTexture.create_from_image(Image.create(1, 1, false, Image.FORMAT_RGBA8))
+	for icon in ["grabber", "grabber_highlight", "grabber_disabled", "tick"]:
+		theme.set_icon(icon, lever, none)
 	# Held ON under the pointer (the armed "See them" is a Primary toggle): the fill still, never
 	# the base Button's graphite (#439 pass 2 T2).
 	theme.set_stylebox("hover_pressed", primary, _glow(box.call(fill.darkened(0.12))))

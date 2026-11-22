@@ -205,6 +205,7 @@ tests=(
   tests/test_ledger_box.gd
   tests/test_finance_draft.gd
   tests/test_finance_editor.gd
+  tests/test_finance_lever.gd
   tests/test_finance_sheet.gd
   tests/test_finance_tray.gd
   tests/test_finance_autumn_ui.gd
