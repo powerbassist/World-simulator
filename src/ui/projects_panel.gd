@@ -135,7 +135,7 @@ func _refresh() -> void:
 		if String(r["id"]) == _picked:
 			var free := WorksRows.slots(_loader) - Projects.building_count(ns)
 			var sheet := WorksSheet.build(main, r, rows, now, free, func(action) -> void: _on_act(ns, action))
-			for b in sheet.find_children("*", "Button", true, false):
+			for b in sheet.find_children("*", "Button", true, false):  # i18n: ok a class name
 				if (b as Button).theme_type_variation == UiTheme.PRIMARY:
 					_primary = b
 
@@ -164,8 +164,8 @@ func _lead(rows: Array, term: int) -> String:
 		if String(r["id"]) == _picked and String(r["state"]) == WorksRows.OFFER:
 			var opens := int(r["opens"])
 			if term > 0 and opens > term:
-				return tr_n("%s would open %d month after your term ends.", "%s would open %d months after your term ends.", opens - term) % [r["name"], opens - term]
-			return tr("%s would open in %s, before your term ends.") % [r["name"], DateText.month_long_year((opens - 1) % 12 + 1, (opens - 1) / 12)]
+				return tr_n("%s would open %d month after your term ends.", "%s would open %d months after your term ends.", opens - term) % [r["name"], opens - term]  # i18n: row-ok the reader's name, through Strings.noun
+			return tr("%s would open in %s, before your term ends.") % [r["name"], DateText.month_long_year((opens - 1) % 12 + 1, (opens - 1) / 12)]  # i18n: row-ok the reader's name, through Strings.noun
 	if not rows.filter(func(r): return String(r["state"]) == WorksRows.BUILDING).is_empty():
 		return tr("Every slot is taken: nothing can start until a work opens.")
 	return tr("Every work has been built.") if not rows.is_empty() else tr("Nothing is on offer.")
@@ -187,7 +187,7 @@ func _works(main: Control, rows: Array, now: int, term: int) -> void:
 	axis.axis(first, last, now, term)
 	var buttons: Array = []
 	for r in rows:
-		_row(sheet, r, first, last, now, term, width, verbs, buttons)
+		_lane_row(sheet, r, first, last, now, term, width, verbs, buttons)
 	if not buttons.is_empty():
 		PanelKit.same_class(buttons, PanelKit.BTN_H_ROW)
 	PanelKit.heading(sheet, tr("The works' bill, % of GDP a year"))
@@ -197,7 +197,7 @@ func _works(main: Control, rows: Array, now: int, term: int) -> void:
 	var name := ""
 	for r in rows:
 		if String(r["id"]) == _picked and String(r["state"]) == WorksRows.OFFER:
-			name = String(r["name"])
+			name = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
 	bill.setup(rows, first, last, _picked if name != "" else "", name)
 	var caption := PanelKit.plain_line(words.get_child(0), tr("Paid from the month a work starts until the month it opens."))
 	caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -221,7 +221,7 @@ func _columns(parent: Control, width: float, verbs: float, middle: Control):
 	return line if middle is WorksBill else middle
 
 
-func _row(sheet: Control, r: Dictionary, first: int, last: int, now: int, term: int, width: float, verbs: float, buttons: Array) -> void:
+func _lane_row(sheet: Control, r: Dictionary, first: int, last: int, now: int, term: int, width: float, verbs: float, buttons: Array) -> void:
 	var id := String(r["id"])
 	var picked := id == _picked
 	# The picked row sits on a tile (sectors_timeline's grammar); the others on the sheet itself.
@@ -238,10 +238,10 @@ func _row(sheet: Control, r: Dictionary, first: int, last: int, now: int, term: 
 	var title := Button.new()
 	title.flat = true
 	title.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	title.text = String(r["name"])
+	title.text = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
 	title.clip_text = true
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	title.tooltip_text = String(r["name"])
+	title.tooltip_text = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
 	title.pressed.connect(func() -> void:
 		_picked = id
 		_dirty = true)
@@ -291,7 +291,7 @@ func _ask_cancel(ns, r: Dictionary) -> void:
 			return
 		_confirm.confirmed.connect(func() -> void: _on_act(_state.player(), _confirm.get_meta(&"action")))
 	_confirm.set_meta(&"action", r["cancel"])
-	_confirm.ask(tr("%s: cancel it?\nWhat it has cost is lost, and nothing is built.") % String(r["name"]),
+	_confirm.ask(tr("%s: cancel it?\nWhat it has cost is lost, and nothing is built.") % String(r["name"]),  # i18n: row-ok the reader's name, through Strings.noun
 		Strings.row_name("project-actions", r["cancel"]))
 
 

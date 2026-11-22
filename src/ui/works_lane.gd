@@ -101,14 +101,16 @@ func _draw() -> void:
 		draw_line(Vector2(x, fs * 1.4 if _row.is_empty() else 0.0), Vector2(x, size.y), UiTheme.EDGE, 1.0)
 		if _row.is_empty():
 			draw_string(font, Vector2(x - fs, fs), str(year), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)  # i18n: row-ok chart data
+	var xn := x_of(_now)
+	var today_end := xn + 2.0 + font.get_string_size(tr("today"), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 8.0
 	if _term > 0:
 		var xt := x_of(_term)
 		draw_dashed_line(Vector2(xt, fs * 1.4 if _row.is_empty() else 0.0), Vector2(xt, size.y), UiTheme.TEXT_DIM, 1.0, DASH)
 		if _row.is_empty():
 			var words := tr("your term ends · %s") % DateText.month_long_year((_term - 1) % 12 + 1, (_term - 1) / 12)
 			var w := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-			draw_string(font, Vector2(clampf(xt - w * 0.5, 0.0, size.x - w), fs * 2.4), words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)
-	var xn := x_of(_now)
+			# Past "today" when the vote is near: two labels never overprint.
+			draw_string(font, Vector2(clampf(maxf(xt - w * 0.5, today_end), 0.0, size.x - w), fs * 2.4), words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)
 	if _row.is_empty():
 		draw_string(font, Vector2(xn + 2.0, fs * 2.4), tr("today"), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.accent())
 	else:

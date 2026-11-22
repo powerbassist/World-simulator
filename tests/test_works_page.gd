@@ -91,7 +91,7 @@ func _check_offers() -> void:
 		var bn := float(terms["cost_pct_gdp"]) / 100.0 * float(ns.gdp_eur_bn)
 		if absf(float(r["cost_bn"]) - bn) > 1e-6 or absf(float(r["all_bn"]) - bn * int(terms["build_months"]) / 12.0) > 1e-6:
 			_fail("%s costs %s a year, %s in all; the terms say %s a year" % [r["id"], r["cost_bn"], r["all_bn"], bn])
-		if String(r["region"]) != Projects.site_region(_main._loader, String(ns.id), String(r["id"])):
+		if String(r["region"]) != _region_name(Projects.site_region(_main._loader, String(ns.id), String(r["id"]))):
 			_fail("%s lands in '%s', the sim's '%s'" % [r["id"], r["region"], Projects.site_region(_main._loader, String(ns.id), String(r["id"]))])
 
 
@@ -162,6 +162,14 @@ func _check_building() -> void:
 
 
 # --- helpers ---------------------------------------------------------------
+
+## A region's shown name, read off the loader the way the regions screen does; "" for none.
+func _region_name(id: String) -> String:
+	for region in _main._loader.regions.get(_state().player().id, []):
+		if String(region.id) == id:
+			return String(region.region_name)
+	return ""
+
 
 func _press(button) -> void:
 	if button == null:

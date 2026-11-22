@@ -8,11 +8,12 @@ extends RefCounted
 ## Calendar.fixed_dates turns into the diary's date (and the same arithmetic: months added to
 ## an absolute month, year x 12 + month); an offer opens its build from today "if started
 ## now". A cost a year in bn is the authored share of GDP times today's GDP; the region is
-## Projects.site_region's (empty: the page says none). Offers are what Projects.available
+## Projects.site_region's, by its name (empty: the page says none). Offers are what Projects.available
 ## returns, as the tab always listed them: a work locked behind a full register is not drawn.
 
 const Projects = preload("res://src/sim/projects.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Events = preload("res://src/sim/events.gd")
 
 const BUILDING := "building"
 const OFFER := "offer"
@@ -60,7 +61,7 @@ static func _row(loader, ns, pid: String, kind: String, verbs: Dictionary) -> Di
 	return {"id": pid, "state": kind, "months": months, "left": months, "opens": -1,
 		"name": Strings.noun("project-actions", loader.project_actions, "project", "project_id", pid, "project_name", Projects.name_of(loader, pid)),
 		"cost_pct": float(terms.get("cost_pct_gdp", 0.0)), "cost_bn": bn, "all_bn": bn * months / 12.0,
-		"growth_pct": float(terms.get("potential_growth_pct", 0.0)), "region": Projects.site_region(loader, String(ns.id), pid),
+		"growth_pct": float(terms.get("potential_growth_pct", 0.0)), "region": String(Events.region_names(ns, loader).get(Projects.site_region(loader, String(ns.id), pid), "")),
 		"blocs": {}, "summary": "", "start": verbs.get(pid + "|start"), "cancel": verbs.get(pid + "|abandon")}
 
 
