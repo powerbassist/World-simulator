@@ -27,6 +27,8 @@ var _targets: Array = []
 var _index := 0
 var _kept_floor := 0.0
 var _checked := 0
+## Pages checked while they did not scroll (QA's TAKE on #445: a calm page shows no gap bar).
+var _calm := 0
 
 
 func _init() -> void:
@@ -51,6 +53,7 @@ func _process(_delta: float) -> bool:
 	if _index > 0:
 		_check_target(_targets[_index - 1])
 	if _index < _targets.size():
+		_check_calm(_targets[_index])
 		_overflow(_targets[_index])
 		_index += 1
 		return false
@@ -117,6 +120,17 @@ func _sheet_scrolls(page: Control) -> Array:
 	return out
 
 
+## QA's TAKE on #445: before the floor makes it overflow, a scroll that does not scroll shows no
+## gap bar -- else every page that fits would carry a full-length bar in its gap.
+func _check_calm(scroll: ScrollContainer) -> void:
+	if GapBars.scrolls(scroll):
+		return
+	_calm += 1
+	var bar := GapBars.bar_for(_main._windows, scroll)
+	if bar != null and bar.is_visible_in_tree():
+		_fail("%s, %s: the page does not scroll and its gap bar shows" % [_id, scroll.name])
+
+
 func _overflow(scroll: ScrollContainer) -> void:
 	var content := scroll.get_child(0) as Control
 	_kept_floor = content.custom_minimum_size.y
@@ -154,6 +168,8 @@ func _check_target(scroll: ScrollContainer) -> void:
 
 ## Back to the map: no bar is left standing in the empty gap.
 func _check_none_left_on_the_map() -> void:
+	if _calm == 0:
+		_fail("premise: no own-sheets page was checked before it overflowed")
 	if _checked == 0:
 		_fail("premise: no scroll was checked")
 	for node in _main._windows.find_children("*", "VScrollBar", true, false):
