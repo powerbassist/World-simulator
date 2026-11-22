@@ -31,6 +31,7 @@ const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 var _failures: Array[String] = []
 var _main
 var _frame := 0
+var _tall: Control
 var _target: Button
 var _target_id := ""
 var _briefed := []
@@ -60,12 +61,55 @@ func _process(_delta: float) -> bool:
 				_fail("a refresh dropped the selection (%s, wanted %s)" % [_laws().selected_id(), _target_id])
 			_check_picked_row_ground()
 			_check_polls_closed()
+			_check_detail_hugs()
+			# A bill longer than the band: the sheet stops at the band and its column scrolls.
+			_tall = Control.new()
+			_tall.custom_minimum_size.y = 3000.0
+			_laws()._detail.add_child(_tall)
+		18:
+			_check_detail_capped()
+			_tall.queue_free()
 			_laws()._detail.find_child("PollIt", true, false).pressed.emit()
-		20:
+		22:
 			_check_propose()
 			_finish()
 			return true
 	return false
+
+
+## The 2K card's A (the author, 2026-11-22): the bill's sheet is as tall as its content, under the list's
+## full band, and leaves the filled press its glow at the foot; a bill longer than the band stops at it.
+func _check_detail_hugs() -> void:
+	var detail := _sheet_of(_laws()._detail)
+	var list := _sheet_of(_laws()._rows)
+	var scroll := _laws().scroll_of(_laws()._detail)
+	if detail == null or list == null:
+		_fail("a Bills column has no sheet")
+		return
+	if absf(detail.size.y - detail.get_combined_minimum_size().y) > 1.0 or detail.get_global_rect().end.y > list.get_global_rect().end.y - 40.0:
+		_fail("the bill's sheet is %.0f px tall for %.0f of content, its foot at %.0f under the list's %.0f: it does not hug" % [
+			detail.size.y, detail.get_combined_minimum_size().y, detail.get_global_rect().end.y, list.get_global_rect().end.y])
+	if scroll.get_v_scroll_bar().visible:
+		_fail("the bill's sheet scrolls a bill shorter than the band")
+	var glow_px := int((UiTheme.build().get_stylebox("hover", UiTheme.PRIMARY) as StyleBoxFlat).shadow_size)
+	if scroll.get_global_rect().end.y - _laws()._detail.get_global_rect().end.y < glow_px - 0.5:
+		_fail("the bill's last row sits on its clip's foot: a filled press there loses its glow")
+
+
+func _check_detail_capped() -> void:
+	var detail := _sheet_of(_laws()._detail)
+	var list := _sheet_of(_laws()._rows)
+	if detail.get_global_rect().end.y > list.get_global_rect().end.y + 1.0:
+		_fail("a bill longer than the band runs its sheet to %.0f, past the band's foot %.0f" % [detail.get_global_rect().end.y, list.get_global_rect().end.y])
+	if not _laws().scroll_of(_laws()._detail).get_v_scroll_bar().visible:
+		_fail("a bill longer than the band does not scroll")
+
+
+func _sheet_of(box: Control) -> Control:
+	var sheet: Control = box
+	while sheet != null and String(sheet.theme_type_variation) != UiTheme.PLATE:
+		sheet = sheet.get_parent() as Control
+	return sheet
 
 
 func _laws() -> LawList:

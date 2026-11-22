@@ -69,6 +69,7 @@ var aired := {}
 ## The bill whose address is unfolded, "" for none: only one strip stands at a time.
 var address_open := ""
 var _game = null
+var _detail_sheet: Control
 
 
 func _init(panel) -> void:
@@ -96,6 +97,22 @@ func _init(panel) -> void:
 	right.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail = _column(right, 1.0)
 	_detail.add_theme_constant_override("separation", 8)
+	# The 2K card's A (the author, 2026-11-22): the bill's sheet is as tall as its content, capped at
+	# the band, and the map shows under it; the list keeps the whole band, because it scrolls. Its
+	# column's scroll is held at that height (_fit_detail), so the sheet has a height of its own.
+	_detail_sheet = right.get_parent()
+	_detail_sheet.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	var room: Control = _detail.get_parent()
+	room.add_theme_constant_override("margin_bottom", GLOW_ROOM)  # the last press keeps its glow at the foot
+	room.minimum_size_changed.connect(_fit_detail, CONNECT_DEFERRED)
+	resized.connect(_fit_detail, CONNECT_DEFERRED)
+
+
+## The bill's column as tall as the bill, up to the band less the sheet's own padding: past it, it scrolls.
+func _fit_detail() -> void:
+	var edges: float = _detail_sheet.get_theme_stylebox("panel").get_minimum_size().y
+	var want: float = (_detail.get_parent() as Control).get_combined_minimum_size().y
+	scroll_of(_detail).custom_minimum_size.y = minf(want, maxf(0.0, size.y - edges))
 
 
 ## The clip opens GLOW_ROOM past the content on each side (T14): a filled press on the sheet's edge
