@@ -16,6 +16,7 @@ extends PanelContainer
 ## random number. src/sim/ never learns a forecast exists.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const DivisionTerms = preload("res://src/sim/division_terms.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
@@ -65,6 +66,8 @@ var _list: VBoxContainer
 var _laws: LawList
 var _paper := OrderPaper.new()
 var _result_box: VBoxContainer
+## The in-flight sheet's body: its plate is shown only while it holds something.
+var _flight: VBoxContainer
 var _dirty := true
 var _close_button: Button
 
@@ -83,23 +86,29 @@ var _endorse_refusal := ""
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(760, 0)  # the dock sets the height (tab_page.gd wanted_height)
+	theme_type_variation = UiTheme.BARE  # the page lays out its own sheets (window_manager OWN_SHEETS)
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	add_child(root)
 
-	var root := PanelKit.padded(self, 16, 12)
-
+	# G3 S5 (Bills = C): the order paper is one slim sheet across the top; the tab's title already
+	# says Bills, so the page does not say it again (_title stays for the panel's tests and hosts).
+	var paper_sheet := PanelKit.sheet(root)
 	_title = Label.new()
-	root.add_child(_title)
+	_title.visible = false
+	paper_sheet.add_child(_title)
 	_paper.changed.connect(mark_dirty)
-	root.add_child(_paper)
+	paper_sheet.add_child(_paper)
 
+	# V5.2-0b: what is in flight (a referendum, a held bill, the assembly's own bills, the last
+	# verdict) on a sheet of its own that stands only while something is in flight; then the
+	# catalogue -- the list and the open law's sheet (law_list.gd), each scrolling on its own.
+	_flight = PanelKit.sheet(root)
 	_result_box = VBoxContainer.new()
-	root.add_child(_result_box)
-
-	# V5.2-0b: what is in flight (a referendum, a held bill, the assembly's own
-	# bills) above, then the catalogue -- one row per law, the selected one's
-	# detail beside it (law_list.gd), each half scrolling on its own.
+	_flight.add_child(_result_box)
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 14)
-	root.add_child(_list)
+	_flight.add_child(_list)
 	_laws = LawList.new(self)
 	root.add_child(_laws)
 
@@ -119,8 +128,9 @@ func _build_footer() -> Control:
 
 
 ## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).
+## Its row goes too: on a page of its own sheets an empty row would still take a gap.
 func hide_close_button() -> void:
-	_close_button.hide()
+	_close_button.get_parent().hide()
 
 
 func setup(state, loader) -> void:
@@ -149,6 +159,7 @@ func _refresh() -> void:
 	_paper.refresh(_state, _loader, _find_law)
 
 	for child in _result_box.get_children():
+		_result_box.remove_child(child)
 		child.queue_free()
 	# V5.2 b+ R2: while a bill is before the Assembly the last verdict is history,
 	# and the page opens on the bill that waits (law_list.gd's tabled line).
@@ -156,6 +167,7 @@ func _refresh() -> void:
 		_result_box.add_child(_build_result_summary(ns.last_law_result))
 
 	for child in _list.get_children():
+		_list.remove_child(child)
 		child.queue_free()
 
 	# A referendum in flight is the first thing on this page, because while one is
@@ -177,6 +189,7 @@ func _refresh() -> void:
 	# The refusal is NOT cleared here: refresh displays it, the handler owns
 	# its lifetime (see _endorse_refusal).
 	_build_assembly_section(ns)
+	_flight.get_parent().visible = _result_box.get_child_count() + _list.get_child_count() > 0
 
 	var party_list: Array = _loader.parties.get(ns.id, [])
 	# V4.2. Authored laws plus the composed register -- the same concat the

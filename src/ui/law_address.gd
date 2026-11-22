@@ -43,7 +43,8 @@ class NextDay extends Node:
 			list.select(list.selected_id())
 
 
-static func build(list, box: Control, ns, law) -> void:
+## `row` takes the fold's button (the sheet's verb row, G3 S5); what it unfolds goes into `box`.
+static func build(list, box: Control, ns, law, row: Control = null) -> void:
 	var state = list._panel._state
 	# The press's answer takes the verb's place: the day is gone, and a strip under a grey
 	# button would read as what just happened.
@@ -73,7 +74,7 @@ static func build(list, box: Control, ns, law) -> void:
 		fold.button_pressed = open
 		fold.set_meta(FOLD_META, true)
 		fold.pressed.connect(_fold.bind(list, law), CONNECT_DEFERRED)
-		box.add_child(fold)
+		(row if row != null else box).add_child(fold)
 		if not open:
 			return
 	var est := _estimate(list, ns, law)

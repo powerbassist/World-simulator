@@ -19,15 +19,10 @@ const ChartStack = preload("res://src/ui/chart_stack.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
-const Num = preload("res://src/ui/num.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
-const LK = preload("res://src/sim/legislature_constants.gd")
 const Government = preload("res://src/sim/government.gd")
-const Chambers = preload("res://src/sim/chambers.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
-const ChambersK = preload("res://src/sim/chambers_constants.gd")
-const Judiciary = preload("res://src/sim/judiciary.gd")
 const ReferendumK = preload("res://src/sim/referendum_constants.gd")
 const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const LawGrade = preload("res://src/ui/law_grade.gd")
@@ -38,10 +33,15 @@ const BlocFilter = preload("res://src/ui/law_bloc_filter.gd")
 const LawRow = preload("res://src/ui/law_row.gd")
 const LawSheet = preload("res://src/ui/law_sheet.gd")
 const LawSeatsTip = preload("res://src/ui/law_seats_tip.gd")
+const LawPath = preload("res://src/ui/law_path.gd")
 
-## The forecast's three columns: a for / against pair that reads as opposite, and
-## a grey for the undecided between them (the dataviz method's diverging rule).
-const FORECAST_COLORS := [Color("#3987e5"), Color(0.557, 0.596, 0.624), Color("#d95926")]
+## The forecast's three columns in a vote's tones (G3 decision 3, the author: green, red, grey
+## everywhere): for and against read as opposite, the undecided grey between them.
+const UNDECIDED := Color(0.557, 0.596, 0.624)
+const FORECAST_COLORS := [UiTheme.GOOD, UNDECIDED, UiTheme.BAD]
+
+## The list's sheet at text size 100 % (the picked picture at 1248: summaries on three lines).
+const LIST_WIDTH := 372.0
 
 var _panel
 var _rows: VBoxContainer
@@ -74,22 +74,27 @@ var _game = null
 func _init(panel) -> void:
 	_panel = panel
 	name = "Laws"  # i18n: ok
-	add_theme_constant_override("separation", 16)
+	add_theme_constant_override("separation", UiTheme.GAP_PANE)
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# G3 S5 (Bills = C): two sheets -- the shelves and the open shelf's laws on the left, at the
+	# picture's width, and the open law's sheet taking the rest.
+	var middle: VBoxContainer = PanelKit.sheet(self)
+	var left: Control = middle.get_parent()
+	left.size_flags_horizontal = Control.SIZE_FILL
+	left.custom_minimum_size.x = LIST_WIDTH * UiTheme.text_scale()
+	middle.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_filters = LawFilters.new(_panel.mark_dirty)
 	# A shelf pressed under a bloc's Go is the player choosing the shelf: the Go's filter ends.
 	_filters.shelf_pressed.connect(func() -> void: bloc_filter = "")
-	add_child(_filters)
-	var middle := VBoxContainer.new()
-	middle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	middle.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(middle)
+	middle.add_child(_filters)
 	_head = Label.new()
 	_head.theme_type_variation = UiTheme.MICRO
 	middle.add_child(_head)
 	_rows = _column(middle, 1.0)
 	_rows.add_theme_constant_override("separation", 10)
-	_detail = _column(self, 0.85)
+	var right: VBoxContainer = PanelKit.sheet(self)
+	right.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_detail = _column(right, 1.0)
 	_detail.add_theme_constant_override("separation", 8)
 
 
@@ -239,50 +244,9 @@ func _forecast_bar(ns, party_list: Array, law, width: float, counts := {}) -> Co
 	return bar
 
 
-## The share of the seats the line marks, read the way legislature.gd's division
-## reads law.majority (QA on #96: a two-thirds ordinary law drew its line at half).
-## A simple majority needs more yes than no; half the seats is where that is sure.
+## The share of the seats the line marks (law_path.gd reads law.majority as the division does).
 static func majority_share(ns, law) -> float:
-	match String(law.majority):
-		"two_thirds":
-			return LK.TWO_THIRDS_MAJORITY_FRACTION
-		"amendment":
-			return float(LK.AMENDMENT_RULE_FRACTIONS.get(String(ns.amendment_rule), LK.ABSOLUTE_MAJORITY_FRACTION))
-	return LK.ABSOLUTE_MAJORITY_FRACTION
-
-
-## What waits after the Assembly: a glyph for the row and the sentence for the
-## hover and the detail. The second chamber's is a FORECAST blurred like the
-## Assembly's, because a chamber is people; the court's is not blurred, because a
-## court is a RULE (docs/judiciary-model.md). Empty when nobody can stop the bill.
-static func after_parts(ns, party_list: Array, law, band: float) -> Array:
-	var parts: Array = []
-	var chamber := String(ns.upper_chamber_name)
-	var power: String = Chambers.power_over(ns, law)
-	if power != ChambersK.VERDICT_NONE:
-		var upper := Legislature.resolve_upper(ns, party_list, law)
-		var margin: int = int(upper["yes_seats"]) - int(upper["no_seats"])
-		if absi(margin) <= int(float(upper["seats_total"]) * band):
-			parts.append({"slot": "upper", "glyph": "?", "tone": UiTheme.WARN_TEXT,
-				"text": Strings.t("%s: too close to call.") % chamber})
-		elif bool(upper["passed"]):
-			parts.append({"slot": "upper", "glyph": "", "quiet": true, "tone": UiTheme.CAPTION,
-				"text": Strings.t("%s: expected to agree.") % chamber})
-		elif power == ChambersK.VERDICT_ABSOLUTE:
-			parts.append({"slot": "upper", "glyph": Strings.t("blocks"), "tone": UiTheme.BAD_SMALL,
-				"text": Strings.t("%s: expected to refuse, and it cannot be overridden.") % chamber})
-		else:
-			parts.append({"slot": "upper", "glyph": Strings.t("holds"), "tone": UiTheme.WARN_TEXT,
-				"text": Strings.t("%s: expected to refuse, holding it %d months.") % [chamber, ChambersK.UPPER_HOLD_MONTHS]})
-	if Judiciary.reviews(ns, law):
-		var tolerance: float = Judiciary.tolerance(ns)
-		if Judiciary.strikes_down(ns, law):
-			parts.append({"slot": "court", "glyph": Strings.t("strikes"), "tone": UiTheme.BAD_SMALL,
-				"text": Strings.t("The court would strike it down: it reaches %s against %s.") % [Num.f(law.reach, 2), Num.f(tolerance, 2)]})
-		elif law.reach > 0.0:
-			parts.append({"slot": "court", "glyph": "", "quiet": true, "tone": UiTheme.CAPTION,
-				"text": Strings.t("The court would let it stand: it reaches %s against %s.") % [Num.f(law.reach, 2), Num.f(tolerance, 2)]})
-	return parts
+	return LawPath.majority_share(ns, law)
 
 
 ## The selected law in full (law_sheet.gd lays it out).
@@ -290,7 +254,8 @@ func _build_detail(ns, party_list: Array, law) -> void:
 	LawSheet.build(self, _detail, ns, party_list, law)
 
 
-func _verbs(ns, law) -> void:
+## The sheet's verb row, returned so the address and the polls put their folds in it (G3 S5).
+func _verbs(ns, law) -> Control:
 	var row := PanelKit.buttons(_detail)
 	VerbBlock.tag(row)  # a right click on the law's row lights it
 	var propose := Button.new()
@@ -328,6 +293,13 @@ func _verbs(ns, law) -> void:
 	# reason, and offers the queue; Article 49.3 answers only to its own cooldown (#173).
 	# A shut law (law_gate.gd) is a cell of that table too: every verb down with its reason.
 	BillActions.verbs(self, row, ns, law)
+	# G3 S5: one filled verb, the one that puts this law on the order paper (Propose, or the queue's
+	# press while the slot is held); the others stay plain.
+	for verb in row.get_children():
+		if verb.visible and (verb.name == "Propose" or verb.name == BillActions.QUEUE):
+			verb.theme_type_variation = UiTheme.PRIMARY
+			break
+	return row
 
 
 ## Which bill is before the Assembly and the day it divides (ns.tabled_bill; its

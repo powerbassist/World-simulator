@@ -15,8 +15,8 @@ const LawShut = preload("res://src/ui/law_shut.gd")
 const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const BillActions = preload("res://src/ui/bill_actions.gd")
 
-## The vote bar's width on a row, px.
-const BAR_WIDTH := 150.0
+## The vote bar's width on a row, px (the picked picture at 1248, G3 S5).
+const BAR_WIDTH := 92.0
 
 
 static func build(list, ns, party_list: Array, law, selected: bool, flag: String) -> Control:
@@ -30,9 +30,16 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 		if press != null and press.pressed and press.button_index == MOUSE_BUTTON_LEFT:
 			list.select(String(law.id)))
 	row.gui_input.connect(BillActions.row_input.bind(list, law))
+	# G3 S5 (Bills = C): the words on the left (name, summary, a shut law's reason), the vote at
+	# a glance on the right.
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
 	row.add_child(top)
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", 2)
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.mouse_filter = Control.MOUSE_FILTER_PASS
+	top.add_child(words)
 	var pick := Button.new()
 	pick.text = Strings.law_name(law)
 	pick.tooltip_text = pick.text
@@ -45,7 +52,11 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 	pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pick.pressed.connect(list.select.bind(String(law.id)))
 	pick.gui_input.connect(BillActions.row_input.bind(list, law))
-	top.add_child(pick)
+	# The name and its verb ("raises", from the data) on one line, the summary under them.
+	var name_line := HBoxContainer.new()
+	name_line.add_theme_constant_override("separation", 8)
+	words.add_child(name_line)
+	name_line.add_child(pick)
 	row.set_meta("pick", pick)
 	var verb := Strings.law_verb(list._panel._loader, law)
 	if verb != "":
@@ -53,10 +64,10 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 		word.text = verb.to_upper()
 		word.theme_type_variation = UiTheme.MICRO
 		word.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		top.add_child(word)
+		name_line.add_child(word)
 	if flag == "":
 		top.add_child(_vote(list, ns, party_list, law))
-	PanelKit.line(row, Strings.law_summary(law))
+	PanelKit.line(words, Strings.law_summary(law))
 	# A queued law that has since shut keeps both: why it is shut, and that it is still queued.
 	for why in [LawShut.text(ns, law, flag) if flag != "" else "", _paper_text(list, law)]:
 		if why != "":
@@ -64,7 +75,7 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 			line.text = why
 			line.theme_type_variation = UiTheme.WARN_TEXT
 			line.autowrap_mode = TextServer.AUTOWRAP_WORD
-			row.add_child(line)
+			words.add_child(line)
 	return row
 
 

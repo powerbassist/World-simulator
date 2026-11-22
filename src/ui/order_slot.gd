@@ -9,7 +9,6 @@ extends PanelContainer
 signal moved(from: int, to: int)
 signal menu_requested(index: int)
 
-const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Icon = preload("res://src/ui/icon.gd")
 
@@ -34,26 +33,24 @@ func _init() -> void:
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 10)
 	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_top", 6)
-	margin.add_theme_constant_override("margin_bottom", 6)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
 	add_child(margin)
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
-	margin.add_child(column)
+	# G3 S5 (Bills = C): one line -- "2 · FEBRUARY", the bill's name, the day it divides.
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 8)
-	column.add_child(head)
+	margin.add_child(head)
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.MICRO
-	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
-	_date = Label.new()
-	_date.theme_type_variation = UiTheme.CAPTION
-	head.add_child(_date)
 	_name = Label.new()
 	_name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_name.clip_text = true
-	column.add_child(_name)
+	_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(_name)
+	_date = Label.new()
+	_date.theme_type_variation = UiTheme.CAPTION
+	head.add_child(_date)
 
 
 ## `title` and `date` are the caption line, `name` the bill ("" for a free place), `tip` its

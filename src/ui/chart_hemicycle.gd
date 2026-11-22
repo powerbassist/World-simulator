@@ -24,6 +24,9 @@ var _places := -1
 var _colors: Array = ChartStyle.SERIES
 var _seats := PackedVector2Array()
 var _owners: Array[int] = []
+## A tooltip drawn by the caller (a Control it builds on hover), shown over the wedge's words: the
+## law's chamber on Bills hangs the Assembly's seats by party here (G3 S5), as its bar did.
+var hover: Callable = Callable()
 
 
 func setup(parts: Array, opts := {}) -> void:
@@ -122,6 +125,10 @@ func _draw() -> void:
 		var at := clampi(int(ceil(float(share) * _seats.size())) - 1, 0, _seats.size() - 1)
 		var dir := _seats[at].normalized()
 		draw_line(center + dir * radius * (INNER - 0.08), center + dir * radius, UiTheme.TEXT, 1.0)
+
+
+func _make_custom_tooltip(_for_text: String) -> Object:
+	return hover.call() if hover.is_valid() else null
 
 
 func _get_tooltip(at: Vector2) -> String:

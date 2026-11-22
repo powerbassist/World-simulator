@@ -21,6 +21,11 @@ const LawFilters = preload("res://src/ui/law_filters.gd")
 const LawShut = preload("res://src/ui/law_shut.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
+const LawPath = preload("res://src/ui/law_path.gd")
+const LawSeatsTip = preload("res://src/ui/law_seats_tip.gd")
+
+## The Assembly's chamber on the law's sheet, px at text size 100 % (the picked picture's, about 220).
+const CHAMBER_HEIGHT := 220.0
 
 ## The laws whose polls are open on the sheet.
 static var _open := {}
@@ -28,9 +33,6 @@ static var _open := {}
 
 static func build(list, box: VBoxContainer, ns, party_list: Array, law) -> void:
 	var panel = list._panel
-	# V5.2 b+ R2: a bill before the Assembly is the page's first fact while it waits.
-	if not ns.tabled_bill.is_empty():
-		PanelKit.line(box, list.tabled_text(ns), PanelKit.Tone.PLAIN)
 	# The Bills second pass: the shelf and the verb over the name, as the row has them.
 	var kicker := Label.new()
 	var verb := Strings.law_verb(panel._loader, law)
@@ -58,79 +60,63 @@ static func build(list, box: VBoxContainer, ns, party_list: Array, law) -> void:
 		why.autowrap_mode = TextServer.AUTOWRAP_WORD
 		box.add_child(why)
 	LawGrade.build(list, box, ns, law)
-	_vote(list, box, ns, party_list, law)
+	var c: Dictionary = list.counts_of(ns, party_list, law)
+	# G3 S5 (Bills = C): the hurdles in a row, then the Assembly's vote beside what it does to
+	# the blocs. A shut law has no division coming, so it gets no path and no verdict.
+	if flag == "":
+		LawPath.build(box, ns, party_list, law, c)
+	var middle := HBoxContainer.new()
+	middle.add_theme_constant_override("separation", 24)
+	box.add_child(middle)
+	var left := VBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	middle.add_child(left)
+	_assembly(list, left, ns, law, c)
+	var right := VBoxContainer.new()
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	middle.add_child(right)
 	# The price at the size picked: the passage applies the scaled bill, as the vote reads it.
-	_blocs(box, LawGrade.read(ns, law, list.grade(law)))
-	list._verbs(ns, law)
+	_blocs(right, LawGrade.read(ns, law, list.grade(law)))
 	# The poll buttons redraw the whole panel: a purchase narrows the forecast on every row too.
 	var sections := Sections.new(panel._state, panel._loader, law, list.grade(law), {}, String(law.id), panel.mark_dirty, panel.polled.emit)
 	# A Callable does not keep a RefCounted alive: the sheet holds the builder its buttons call.
 	box.set_meta("sections", sections)
-	sections.channels(box)
+	sections.channels(right)
+	# V5.2 b+ R2: a bill before the Assembly says why nothing else can be put now, above the verbs.
+	if not ns.tabled_bill.is_empty():
+		PanelKit.line(box, list.tabled_text(ns), PanelKit.Tone.PLAIN)
+	var row: Control = list._verbs(ns, law)
 	# A shut law has no division to address the country about or to poll: neither is offered.
 	if flag == "":
-		LawAddress.build(list, box, ns, law)
-		_polls(list, box, sections, String(law.id))
+		LawAddress.build(list, box, ns, law, row)
+		_polls(list, box, row, sections, String(law.id))
 
 
-## The vote in full: the stacked bar by seats with the line to pass marked, the counts named under
-## it, the forecast's verdict, and what waits after the Assembly (the second chamber, the court).
-static func _vote(list, box: VBoxContainer, ns, party_list: Array, law) -> void:
-	var panel = list._panel
-	var head := HBoxContainer.new()
-	box.add_child(head)
-	var title := Label.new()
-	title.text = Strings.t("The vote")
-	title.theme_type_variation = UiTheme.MICRO
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(title)
-	var c: Dictionary = list.counts_of(ns, party_list, law)
+## The Assembly on this law: a chamber of three parts (for, undecided, against) in the vote's
+## tones with the law's own line across it, never a per-party seat guess; the rule in words under it.
+static func _assembly(list, box: VBoxContainer, ns, law, c: Dictionary) -> void:
+	var parts := [
+		{"label": Strings.t("For"), "value": float(c["yes"])},
+		{"label": Strings.t("Undecided"), "value": float(c["undecided"])},
+		{"label": Strings.t("Against"), "value": float(c["no"])},
+	]
+	var chart: Control = ChartKit.hemicycle(box, Strings.t("The Assembly on this law"), parts,
+		{"marker": list.majority_share(ns, law), "colors": list.FORECAST_COLORS, "places": 0, "height": CHAMBER_HEIGHT})
+	# The seats by party are one hover away, as they were on the bar (law_seats_tip.gd).
+	for drawn in chart.find_children("*", "Control", true, false):
+		if drawn.has_method("seat_count"):
+			drawn.hover = LawSeatsTip.build.bind(list._panel, c)
 	var seats := int(c["yes"]) + int(c["no"]) + int(c["undecided"])
-	var needed := seats_to_pass(list.majority_share(ns, law), seats)
-	var simple := String(law.majority) == "simple"
-	# A shut law has no division coming, so it gets no verdict on one.
-	if list.why(law) == "":
-		var verdict := verdict_of(c, needed, simple)
-		var word := Label.new()
-		word.text = verdict[0]
-		word.theme_type_variation = verdict[1]
-		head.add_child(word)
-	box.add_child(list._forecast_bar(ns, party_list, law, 0.0, c))
 	# The rule as the division applies it: more for than against, or a number of seats.
-	if simple:
-		PanelKit.line(box, Strings.t("%d for · %d undecided · %d against · more for than against") % [c["yes"], c["undecided"], c["no"]])
+	if String(law.majority) == "simple":
+		PanelKit.line(box, Strings.t("It carries with more for than against: the line is half the votes cast."))
 	else:
-		PanelKit.line(box, Strings.t("%d for · %d undecided · %d against · %d to pass") % [c["yes"], c["undecided"], c["no"], needed])
+		PanelKit.line(box, Strings.t("The line: %d seats to pass.") % LawPath.seats_to_pass(list.majority_share(ns, law), seats))
 	# A threshold other than more yes than no is said in words (a 3/5, a referendum after).
 	if String(law.majority) != "simple" or law.constitutional:
-		PanelKit.line(box, panel._majority_phrase(ns, law))
+		PanelKit.line(box, list._panel._majority_phrase(ns, law))
 	if int(c["rebels"]) > 0:
 		PanelKit.line(box, Strings.t("%d expected to break ranks.") % c["rebels"])
-	for part in list.after_parts(ns, party_list, law, panel.FORECAST_UNCERTAIN_BAND):
-		PanelKit.line(box, String(part["text"]), PanelKit.Tone.PLAIN)
-
-
-## The yes seats a division needs, read as division_terms.gd reads the bar: more than half is
-## strictly above it, a larger share (two thirds, three fifths) is at or above it.
-static func seats_to_pass(share: float, seats: int) -> int:
-	var bar := share * float(seats)
-	if share <= 0.5:
-		return floori(bar) + 1
-	return ceili(bar - 1e-6)
-
-
-## The forecast's word and its tone, read off the counts the bar draws: carried only when the
-## undecided cannot turn it, lost only when they cannot save it. A simple majority is more yes
-## than no; any other is `needed` yes seats.
-static func verdict_of(c: Dictionary, needed: int, simple: bool) -> Array:
-	var yes := int(c["yes"])
-	var no := int(c["no"])
-	var open := int(c["undecided"])
-	if (simple and yes > no + open) or (not simple and yes >= needed):
-		return [Strings.t("passes"), UiTheme.GOOD_SMALL]
-	if (simple and no >= yes + open) or (not simple and yes + open < needed):
-		return [Strings.t("fails"), UiTheme.BAD_SMALL]
-	return [Strings.t("too close to call"), UiTheme.WARN_TEXT]
 
 
 ## What the law does to each bloc: its authored price as it lands (clamped as the passage clamps
@@ -149,9 +135,8 @@ static func _blocs(box: VBoxContainer, law) -> void:
 ## The polls are a page of their own words (the country's read, the tiers, the whip count), so
 ## they open on "Poll it" and stay open while the player moves between laws: a display pick, as
 ## PollStrip's tier is. Closed, the sheet stays inside the Bills tab's word ceiling.
-static func _polls(list, box: Control, sections, law_id: String) -> void:
+static func _polls(list, box: Control, row: Control, sections, law_id: String) -> void:
 	var open: bool = _open.has(law_id)
-	var row := PanelKit.buttons(box)
 	var toggle := PanelKit.sized(Button.new())
 	toggle.name = "PollIt"  # i18n: ok a node name, found by tests
 	toggle.text = Strings.t("Poll it")

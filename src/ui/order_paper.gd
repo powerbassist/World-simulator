@@ -40,15 +40,15 @@ func _init() -> void:
 	add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	# The Bills second pass (G3-14): the paper is always on screen, empty places included, so the
 	# rule is learnt before the first bill rather than after a refused press.
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 12)
-	add_child(head)
-	PanelKit.heading(head, tr("Order paper"))
-	# EXPAND: a wrapping line in a row with no width of its own breaks after every word.
-	PanelKit.line(head, tr("One law goes to the Assembly each month.")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# G3 S5 (Bills = C): one slim line, the heading and the four places side by side; the rule
+	# is the heading's hover, and each place's own.
 	_row = HBoxContainer.new()
 	_row.add_theme_constant_override("separation", 8)
 	add_child(_row)
+	var head: Control = PanelKit.heading(_row, tr("Order paper"))
+	head.tooltip_text = tr("One law goes to the Assembly each month.")
+	head.mouse_filter = Control.MOUSE_FILTER_STOP
+	head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_verbs = VBoxContainer.new()
 	VerbBlock.tag(_verbs)
 	add_child(_verbs)
@@ -66,8 +66,9 @@ func refresh(state, loader, find_law: Callable) -> void:
 	_loader = loader
 	_find_law = find_law
 	for child in _row.get_children():
-		_row.remove_child(child)
-		child.queue_free()
+		if child is PanelContainer:  # the places; the heading stays
+			_row.remove_child(child)
+			child.queue_free()
 	places.clear()
 	var ns = state.player()
 	_place(-1, _tabled_title(state, ns), _date_text(_slot_date(state, ns)), _name_of(ns.tabled_bill), false)
