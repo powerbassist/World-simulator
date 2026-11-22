@@ -486,6 +486,7 @@ tests=(
   # Dev health: every tools/*.gd compiles -- no test loads them, so a moved sim
   # signature broke the probes and the screenshot driver silently (QA, #256 vs #257).
   tests/test_tools_parse.gd
+  tests/test_screenshot_guards.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is
@@ -541,6 +542,7 @@ fi
 
 # Step 0: the gate tests its own tooling before it gates anything else.
 "$py" tools/suite_runner.py --selftest || exit 1
+"$py" tools/screenshot_all.py --selftest || exit 1
 
 # A FRESH CLONE HAS NO .godot/, AND WITHOUT ONE THERE IS NO
 # global_script_class_cache.cfg -- so every `class_name` in a committed addon is
