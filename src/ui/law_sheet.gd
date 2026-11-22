@@ -1,11 +1,12 @@
 extends RefCounted
 
 ## The selected law's sheet -- the detail beside the catalogue (law_list.gd lays the list out and
-## owns the verbs). The Bills second pass (the author's "A : les rayons"): the shelf and the verb,
-## the name, the summary whole, a shut law's reason; the size; THE VOTE as the stacked bar by seats
-## with the line to pass, its counts and the forecast's verdict; WHAT IT DOES TO THE BLOCS as one
-## diverging bar per bloc (chart_kit.gd's diverging()), the signed price printed; then the one
-## verb, the channels, the address and -- last -- the polls it can commission. Propose here
+## owns the verbs). G3 S5, the author's pick "C : le chemin de la loi": the shelf and the verb, the
+## name, the summary whole, a shut law's reason; the size; ITS PATH, one step per hurdle
+## (law_path.gd); THE ASSEMBLY ON THIS LAW as a chamber of for / undecided / against with the line
+## to pass, beside WHAT IT DOES TO THE BLOCS (one diverging bar per bloc, the signed price
+## printed) and the channels; then why nothing else can be put now, and one row of verbs: Propose
+## filled, Force, the address and the polls, whose strips unfold under the row. Propose here
 ## divides (law_panel.run_proposal).
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")

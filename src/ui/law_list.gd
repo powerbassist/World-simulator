@@ -145,7 +145,6 @@ func select(law_id: String) -> void:
 	for row in _rows.get_children():
 		if row.has_meta("pick"):
 			var pick: Button = row.get_meta("pick")
-			pick.flat = String(row.get_meta("law_id")) != law_id
 			pick.set_pressed_no_signal(String(row.get_meta("law_id")) == law_id)
 	for child in _detail.get_children():
 		_detail.remove_child(child)
@@ -298,6 +297,7 @@ func _verbs(ns, law) -> Control:
 	for verb in row.get_children():
 		if verb.visible and (verb.name == "Propose" or verb.name == BillActions.QUEUE):
 			verb.theme_type_variation = UiTheme.PRIMARY
+			row.move_child(verb, 0)  # the picture's order: the filled verb first
 			break
 	return row
 

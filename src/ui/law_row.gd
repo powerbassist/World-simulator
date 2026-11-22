@@ -44,8 +44,9 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 	pick.text = Strings.law_name(law)
 	pick.tooltip_text = pick.text
 	pick.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	# Flat, so the picked law is a ground (PICKED_ROW), not the accent's fill (g3-spec 2).
+	pick.flat = true
 	PanelKit.toggle(pick)
-	pick.flat = not selected
 	pick.button_pressed = selected
 	pick.clip_text = true
 	pick.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
