@@ -648,7 +648,10 @@ static func chip(parent: Control, text: String, variation := UiTheme.CHIP, glyph
 		var tones := {UiTheme.CHIP_GOOD: UiTheme.GOOD, UiTheme.CHIP_WARN: UiTheme.WARN, UiTheme.CHIP_BAD: UiTheme.BAD}
 		var picture := TextureRect.new()
 		var px := roundi(UiTheme.SIZE_SMALL * UiTheme.text_scale())
-		picture.texture = Icon.load_icon("res://assets/icons/material/%s.svg" % glyph, tones.get(variation, UiTheme.TEXT_DIM), px)
+		# A Material Symbols name, or a whole path for a glyph of our own (the hourglass of a deadline).
+		var path := glyph if glyph.begins_with("res://") else "res://assets/icons/material/%s.svg" % glyph
+		picture.texture = Icon.load_icon(path, tones.get(variation, UiTheme.TEXT_DIM), px)
+		picture.set_meta("glyph", path)
 		picture.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 		picture.custom_minimum_size = Vector2(px, px)
 		row.add_child(picture)

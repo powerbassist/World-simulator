@@ -2,7 +2,7 @@ extends Control
 
 ## The register sheet's money a year (V5.3 c' slice 1; the price range is ChartKit.range_bar):
 ## one bar a year from now, on one axis in bn: the capital while it builds (grey),
-## the running cost once it opens (the accent: the player's own programme), the
+## the running cost once it opens (in the hue of the spending line it lands on), the
 ## legend under it. The running cost never stops, so the years shown run past
 ## the opening on purpose.
 ## The caller passes the sim's quote; the bars are its numbers spread over the calendar.
@@ -10,7 +10,7 @@ extends Control
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Num = preload("res://src/ui/num.gd")
 
-const BUILD := UiTheme.NEUTRAL_BAR  ## capital: the accent is the running cost
+const BUILD := UiTheme.NEUTRAL_BAR  ## capital, neutral; the running cost wears its spending line's hue
 const CASH_H := 72.0
 const YEARS_AFTER := 3
 
@@ -18,9 +18,10 @@ const YEARS_AFTER := 3
 var _years: Array = []
 var _legend: Array = []
 ## The share of each building bar that is an overrun (the Building tab's "if you pay"), drawn on
-## top in the attention tone with a third legend entry; 0 on the order form.
+## top as an outline with a third legend entry; 0 on the order form.
 var _overrun := 0.0
-## The running cost's hue: the spending line it lands on (the caller sets it, Diane's R4 on #443); the accent until then.
+## The running cost's hue: the spending line it lands on (both callers set it, Diane's R4 on #443); the accent only
+## for a caller that sets none.
 var running_color := Color(0, 0, 0, 0)
 
 
@@ -88,13 +89,20 @@ func _draw_cash() -> void:
 			var base := CASH_H - hr - (2.0 if hr > 0.0 else 0.0)
 			draw_rect(Rect2(x0, base - hc, w, hc), BUILD)
 			if _overrun > 0.0:
-				draw_rect(Rect2(x0, base - hc, w, hc * _overrun), UiTheme.WARN)
+				# An outlined piece, not amber: amber is only the date the ask is answered by (Building in C).
+				if hc * _overrun >= 2.0:
+					draw_rect(Rect2(x0 + 0.5, base - hc + 0.5, w - 1.0, hc * _overrun - 1.0), UiTheme.TEXT, false, 1.5)
+				else:  # too thin for an outline: a 1 px line, so the legend's "The overrun, paid" still has a mark
+					draw_rect(Rect2(x0, base - hc, w, 1.0), UiTheme.TEXT)
 		# Two digits of the year: the bars are narrow, the century never changes here.
 		draw_string(font, Vector2(x0, CASH_H + fs + 2.0), "%02d" % (int(_years[i][0]) % 100), HORIZONTAL_ALIGNMENT_CENTER, w, fs, UiTheme.TEXT_DIM)
 	var ly := CASH_H + fs * 2.6 + 2.0
 	var lx := 0.0
 	for k in _legend.size():
-		draw_rect(Rect2(lx, ly - fs * 0.75, 10.0, 10.0), BUILD if k == 0 else (accent if k == 1 else UiTheme.WARN))
+		if k == 2:
+			draw_rect(Rect2(lx + 0.5, ly - fs * 0.75 + 0.5, 9.0, 9.0), UiTheme.TEXT, false, 1.5)  # the overrun: outlined
+		else:
+			draw_rect(Rect2(lx, ly - fs * 0.75, 10.0, 10.0), BUILD if k == 0 else accent)
 		draw_string(font, Vector2(lx + 15.0, ly), String(_legend[k]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)  # i18n: row-ok the caller passes shown text
 		lx += 15.0 + font.get_string_size(String(_legend[k]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 16.0  # i18n: row-ok the caller passes shown text
 
