@@ -467,7 +467,7 @@ func _check_another_bill_reads_the_month_rule() -> void:
 	if _strip_node(LawAddress.STRIP_META) != null:
 		_fail("another bill, the same month, draws the address's strip")
 	var rule: Dictionary = Address.month_rule(_main._state)
-	var date := DateText.day_month_year(int(rule.get("day", 0)), int(rule.get("month", 0)), int(rule.get("year", 0)))
+	var date := DateText.date_long(int(rule.get("day", 0)), int(rule.get("month", 0)), int(rule.get("year", 0)))
 	if rule.is_empty() or "One address a month" not in _detail_text() or date not in _detail_text():
 		_fail("the month's rule and its date are not on the page: %s" % _detail_text())
 

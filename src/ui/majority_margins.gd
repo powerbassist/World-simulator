@@ -32,7 +32,10 @@ static func build(parent: Control, ns, party_list: Array, parts: Array, breakabl
 		lit_government.append({"value": part["value"], "color": part["color"], "lit": part["gov"]})
 	_strip(tile, lit_government, seats, need, held - breakable, held)
 	if breakable > 0:
-		PanelKit.line(tile, Strings.t("Up to %d may break ranks, leaving %d") % [breakable, held - breakable], PanelKit.Tone.PLAIN)
+		# The margin that is left, not the seats to subtract from (Design's T6 on #449).
+		var left := held - breakable - need
+		PanelKit.line(tile, (Strings.t("Up to %d may break ranks; still %d above the line") % [breakable, left]) if left >= 0
+			else (Strings.t("Up to %d may break ranks; that would leave it %d short of the line") % [breakable, -left]), PanelKit.Tone.PLAIN)
 
 	if ns.censure_rule == "none":
 		return
@@ -82,7 +85,15 @@ static func build(parent: Control, ns, party_list: Array, parts: Array, breakabl
 
 ## A margin: PanelKit's figure tile, its figure in the tone, the strip and sentences under it.
 static func _margin(parent: Control, figure: String, caption: String, tone := PanelKit.Tone.PLAIN) -> VBoxContainer:
-	var body := PanelKit.figure_tile(parent, figure, caption).get_child(0) as VBoxContainer
+	var plate := PanelKit.figure_tile(parent, figure, caption)
+	var body := plate.get_child(0) as VBoxContainer
+	# 12 px inside the tile, as the path's (Design's T1/T6 on #449): the text no longer sits on its edge.
+	plate.remove_child(body)
+	var inset := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		inset.add_theme_constant_override(side, 12)
+	plate.add_child(inset)
+	inset.add_child(body)
 	body.add_theme_constant_override("separation", 6)
 	if tone != PanelKit.Tone.PLAIN:
 		(body.get_child(0) as Label).theme_type_variation = UiTheme.FIGURE_GOOD if tone == PanelKit.Tone.GOOD else UiTheme.FIGURE_ALERT
@@ -95,3 +106,4 @@ static func _strip(parent: Control, parts: Array, total: int, line_at: int, box_
 	var strip := SeatStrip.new()
 	parent.add_child(strip)
 	strip.setup(parts, total, line_at, box_from, box_to)
+	strip.line_label = str(line_at)  # the number over the tick: the player reads it, never subtracts to it

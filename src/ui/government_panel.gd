@@ -313,7 +313,8 @@ func _seat_chart(ns, parts: Array) -> void:
 	if ns.censure_rule != "none" and Government.censure_seats(ns) != Government.majority_seats(ns) + 1:
 		marks.append(float(Government.censure_seats(ns)) / maxf(float(ns.assembly_seats), 1.0))
 	ChartKit.hemicycle(_chamber, tr("Government, then opposition"), parts,
-		{"markers": marks, "colors": colors, "places": 0, "unit": tr(" seats"), "height": CHAMBER_HEIGHT})
+		{"markers": marks, "colors": colors, "places": 0, "unit": tr(" seats"), "height": CHAMBER_HEIGHT,
+		"marker_labels": [tr("a majority, %d") % (Government.majority_seats(ns) + 1)]})
 
 
 func _swatch(color: Color) -> ColorRect:
@@ -390,6 +391,7 @@ func _build_partner_table(ns) -> Control:
 		name_label.theme_type_variation = UiTheme.SUBROW_BUTTON
 		name_label.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		name_label.text = party.party_name  # i18n: row-ok a party's shown name
+		name_label.add_theme_color_override("font_color", UiTheme.TEXT)  # a name in a table is TEXT (Design's T11 on #449)
 		if pid == ns.pm_party_id:
 			name_label.text += "  (%s)" % ns.head_of_government_title
 		name_label.tooltip_text = tr("Its offices, in People: reshuffle there.")

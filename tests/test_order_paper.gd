@@ -231,14 +231,26 @@ func _check_the_paper_reads_the_sim() -> void:
 	if places.size() != 4:
 		_fail("the paper has %d places, not the slot and the queue's three" % places.size())
 		return
-	var want := [_name_of(_ids[0]), _name_of(_ids[1]), _name_of(_ids[2]), "—"]
+	var want := [_name_of(_ids[0]), _name_of(_ids[1]), _name_of(_ids[2]), ""]
 	for i in 4:
 		if (places[i] as OrderSlot).place_name() != want[i]:
 			_fail("place %d reads '%s', not '%s'" % [i + 1, places[i].place_name(), want[i]])
-	var date: String = (places[1]._date as Label).text
-	var due: Dictionary = BillVerbs.division(_main._state, 0)
-	if not date.contains(DateText.day_month(int(due["day"]), int(due["month"]))):
-		_fail("the first queued place says '%s', not the day it divides (%s)" % [date, due])
+	# G3 S5 (Design's T3 on #449): only the bill before the Assembly carries its day, as the deadline tag.
+	var tabled: Dictionary = _ns().tabled_bill
+	var slot_date: String = (places[0]._date as Label).text
+	if not tabled.is_empty() and (not places[0]._tag.visible or slot_date != DateText.day_mon(int(tabled["vote_day"]), int(tabled["vote_month"]))):
+		_fail("the slot's deadline tag says '%s', not the day the tabled bill divides (%s)" % [slot_date, tabled])
+	if places[1]._tag.visible:
+		_fail("a queued place carries a date: '%s'" % places[1]._date.text)
+	# The dashed place is the first free one and no other.
+	var free: Array = places.filter(func(p): return p.is_first_free())
+	var first_empty := -1
+	for i in places.size():
+		if places[i].place_name() == "":
+			first_empty = i
+			break
+	if free.size() != (0 if first_empty < 0 else 1) or (first_empty >= 0 and not places[first_empty].is_first_free()):
+		_fail("the dashed place is not the first free one (empty at %d, %d dashed)" % [first_empty, free.size()])
 	if (places[1]._title as Label).text.find("2 ·") != 0:
 		_fail("the first queued place is not numbered 2: '%s'" % places[1]._title.text)
 	if places[3].tooltip_text == "":
@@ -583,7 +595,7 @@ func _check_a_queued_law_shows_take_out() -> void:
 	if BillVerbs.queued_at(_ns(), _ids[1]) >= 0:
 		_fail("Take out left the law in the queue")
 	var places: Array = _paper().places
-	if (places[3] as OrderSlot).place_name() != "—" and _ns().bill_queue.size() < BillQueue.SIZE:
+	if (places[3] as OrderSlot).place_name() != "" and _ns().bill_queue.size() < BillQueue.SIZE:
 		_fail("the paper still shows a bill in the free place after a take out")
 
 

@@ -71,24 +71,27 @@ func refresh(state, loader, find_law: Callable) -> void:
 			child.queue_free()
 	places.clear()
 	var ns = state.player()
-	_place(-1, _tabled_title(state, ns), _date_text(_slot_date(state, ns)), _name_of(ns.tabled_bill), false)
+	# G3 S5 (Design's T3): only the bill before the Assembly carries its day, as the deadline tag; the
+	# first free place, the one a Propose books, is the dashed one.
+	var slot_held: bool = not ns.tabled_bill.is_empty()
+	_place(-1, _tabled_title(state, ns), _date_text(_slot_date(state, ns)) if slot_held else "", _name_of(ns.tabled_bill), false, not slot_held)
 	for i in BillQueue.SIZE:
 		var entry: Dictionary = ns.bill_queue[i] if i < ns.bill_queue.size() else {}
 		var held := not entry.is_empty()
-		# G3 S5: one slim line, so the month is short ("2 · FEB") and the day bare ("28 Feb").
-		_place(i, "%d · %s" % [i + 2, DateText.month(int(BillVerbs.division(state, i)["month"])).to_upper()], _date_text(BillVerbs.division(state, i)),
-			_name_of(entry) if held else "", held)
+		# One slim line, so the month is short ("2 · FEB").
+		_place(i, "%d · %s" % [i + 2, DateText.month(int(BillVerbs.division(state, i)["month"])).to_upper()], "",
+			_name_of(entry) if held else "", held, slot_held and not held and i == ns.bill_queue.size())
 	_build_verbs(ns)
 	if relight != "":
 		VerbBlock.refocus(self, relight)
 
 
-func _place(i: int, title: String, date: String, name_text: String, handle: bool) -> void:
+func _place(i: int, title: String, date: String, name_text: String, handle: bool, first_free := false) -> void:
 	var place := OrderSlot.new()
 	place.index = i if handle else -1
 	place.drop_to = mini(i, _state.player().bill_queue.size() - 1) if i >= 0 else -1
 	_row.add_child(place)
-	place.show_place(title, date, name_text, _tip_of(i), handle)
+	place.show_place(title, date, name_text, _tip_of(i), handle, first_free)
 	place.moved.connect(_move)
 	place.menu_requested.connect(_menu)
 	places.append(place)
@@ -107,7 +110,7 @@ func _slot_date(state, ns) -> Dictionary:
 
 
 static func _date_text(d: Dictionary) -> String:
-	return DateText.day_month(int(d["day"]), int(d["month"]))
+	return DateText.day_mon(int(d["day"]), int(d["month"]))
 
 
 ## A bill's name, "" for an empty entry: a law's, or the finance bill's.

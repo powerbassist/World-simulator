@@ -23,6 +23,7 @@ const LawShut = preload("res://src/ui/law_shut.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const LawPath = preload("res://src/ui/law_path.gd")
+const ControlStyle = preload("res://src/ui/control_style.gd")
 const LawSeatsTip = preload("res://src/ui/law_seats_tip.gd")
 
 ## The Assembly's chamber on the law's sheet, px at text size 100 % (the picked picture's, about 220).
@@ -141,7 +142,9 @@ static func _polls(list, box: Control, row: Control, sections, law_id: String) -
 	var toggle := PanelKit.sized(Button.new())
 	toggle.name = "PollIt"  # i18n: ok a node name, found by tests
 	toggle.text = Strings.t("Poll it")
-	PanelKit.toggle(toggle)
+	# A verb that opens a section is not armed: open is the CONTROL_HOVER ground, the fill stays on Propose.
+	toggle.toggle_mode = true
+	toggle.theme_type_variation = ControlStyle.OPENER
 	toggle.button_pressed = open
 	# Deferred: the toggle redraws the sheet, and a button may not free itself in its own press.
 	toggle.pressed.connect(_flip.bind(list, law_id), CONNECT_DEFERRED)

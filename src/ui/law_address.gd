@@ -19,6 +19,7 @@ const PollStrip = preload("res://src/ui/poll_strip.gd")
 const AddressK = preload("res://src/sim/address_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ControlStyle = preload("res://src/ui/control_style.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
@@ -60,7 +61,7 @@ static func build(list, box: Control, ns, law, row: Control = null) -> void:
 	if not rule.is_empty():
 		PanelKit.heading(box, Strings.t("Address to the nation"))
 		PanelKit.plain_line(box, Strings.t("You addressed the nation on %s. One address a month.")
-			% DateText.day_month_year(int(rule["day"]), int(rule["month"]), int(rule["year"])), PanelKit.Tone.PLAIN)
+			% DateText.date_long(int(rule["day"]), int(rule["month"]), int(rule["year"])), PanelKit.Tone.PLAIN)
 		return
 	# Folded at rest, the Industry verbs' rule (spec 3.2): one strip, for the verb the player
 	# has opened. The tabled bill has a division coming, so it stands open with nothing to fold.
@@ -70,7 +71,8 @@ static func build(list, box: Control, ns, law, row: Control = null) -> void:
 		var open: bool = list.address_open == String(law.id)
 		var fold := PanelKit.sized(Button.new())
 		fold.text = Strings.t("Address the nation")
-		PanelKit.toggle(fold)
+		fold.toggle_mode = true
+		fold.theme_type_variation = ControlStyle.OPENER  # opens its own section: not armed (Design's T4 on #449)
 		fold.button_pressed = open
 		fold.set_meta(FOLD_META, true)
 		fold.pressed.connect(_fold.bind(list, law), CONNECT_DEFERRED)

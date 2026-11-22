@@ -236,7 +236,7 @@ func _forecast_bar(ns, party_list: Array, law, width: float, counts := {}) -> Co
 		{"label": tr("For"), "value": float(counts["yes"])},
 		{"label": tr("Undecided"), "value": float(counts["undecided"])},
 		{"label": tr("Against"), "value": float(counts["no"])},
-	], {"marker": majority_share(ns, law), "colors": FORECAST_COLORS, "places": 0, "unit": tr(" seats")})
+	], {"marker": majority_share(ns, law), "colors": FORECAST_COLORS, "places": 0, "unit": tr(" seats"), "bar": 8.0})
 	bar.hover = LawSeatsTip.build.bind(_panel, counts)
 	bar.custom_minimum_size.x = width
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -308,4 +308,4 @@ func tabled_text(ns) -> String:
 	var id := String(ns.tabled_bill.get("law_id", ""))
 	return tr("%s is before the Assembly: it divides on %s, and no other bill can be put before then.") % [
 		Strings.law_name(_panel._find_law(id), id),
-		DateText.day_month(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))]
+		DateText.day_long(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))]

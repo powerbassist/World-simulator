@@ -409,6 +409,7 @@ static func _panels(theme: Theme) -> void:
 	_variation(theme, PLATE_FOLDED, folded)
 
 	_variation(theme, TILE_PANEL, _flat(TILE, R_TILE))
+	ControlStyle.fails_tile(theme, _flat(TILE, R_TILE), BAD)  # a tile whose step kills the law (G3 S5)
 	_variation(theme, BARE, StyleBoxEmpty.new())
 
 	# A tooltip or a menu: opaque, so it never reads the screen and never needs a second

@@ -19,6 +19,8 @@ const Click = preload("res://tests/click.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const LawPath = preload("res://src/ui/law_path.gd")
+const ChartDiverge = preload("res://src/ui/chart_diverge.gd")
+const ControlStyle = preload("res://src/ui/control_style.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
@@ -163,6 +165,7 @@ func _check_bills_page() -> void:
 	var steps: Array = LawPath.steps(ns, _laws()._party_list, law, _laws().counts_of(ns, _laws()._party_list, law))
 	if path == null or steps.map(func(s): return s["slot"]) != want or path.get_child_count() != want.size() * 2 - 1:
 		_fail("the law's path is not its hurdles by rule: %s, want %s" % [steps.map(func(s): return s["slot"]), want])
+	_check_path_tiles(steps)
 	# A nation with fewer hurdles: no second chamber's say and no review, the Assembly alone.
 	var saved := [ns.upper_ordinary, ns.upper_amendment, ns.judicial_review]
 	ns.upper_ordinary = ChambersK.VERDICT_NONE
@@ -195,6 +198,36 @@ func _check_bills_page() -> void:
 				if _laws()._detail.find_child(node_name, true, false) != null:
 					_fail("%s is shut and its sheet still draws %s" % [shut.id, node_name])
 			break
+
+
+## Design's T1, T2 on #449: a hurdle's verdict is the lead size in its tone with a glyph, a plain word is never amber,
+## the kill takes a BAD outline, the court carries its meter, and every tile holds its words 12 px inside.
+func _check_path_tiles(steps: Array) -> void:
+	for step in steps:
+		var tone := Color(step["tone"])
+		if tone == UiTheme.WARN:
+			_fail("the %s step's word '%s' is amber: amber is what waits on the player, with a date" % [step["slot"], step["word"]])
+		var glyph := "check" if tone == UiTheme.GOOD else ("warning" if tone == UiTheme.BAD else "")
+		if String(step["glyph"]) != glyph or bool(step["fails"]) != (tone == UiTheme.BAD):
+			_fail("the %s step has glyph '%s' and fails=%s for tone %s" % [step["slot"], step["glyph"], step["fails"], tone])
+		var tile: Node = _laws()._detail.find_child("Step_%s" % step["slot"], true, false)
+		if tile == null:
+			_fail("no tile for the %s step" % step["slot"])
+			continue
+		if String(tile.theme_type_variation) != (ControlStyle.TILE_FAILS if bool(step["fails"]) else UiTheme.TILE_PANEL):
+			_fail("the %s tile wears %s: only a kill takes the outline" % [step["slot"], tile.theme_type_variation])
+		if (tile.get_child(0) as MarginContainer).get_theme_constant("margin_left") != LawPath.TILE_INSET:
+			_fail("the %s tile's words sit on its edge, not %d px inside" % [step["slot"], LawPath.TILE_INSET])
+		if (tile.find_child("Glyph", true, false) != null) != (glyph != ""):
+			_fail("the %s tile's glyph does not follow its verdict" % step["slot"])
+		if (tile.find_child("CourtMeter", true, false) != null) != (step["slot"] == "court"):
+			_fail("the %s tile and the court's meter: only the court shows what the law reaches against what it allows" % step["slot"])
+	if ChartDiverge.colour_of(0.2) != UiTheme.GOOD or ChartDiverge.colour_of(-0.2) != UiTheme.BAD:
+		_fail("a bloc's gain is not the vote's green and its loss the vote's red")
+	for toggle_name in ["PollIt"]:
+		var toggle: Button = _laws()._detail.find_child(toggle_name, true, false)
+		if toggle != null and String(toggle.theme_type_variation) != ControlStyle.OPENER:
+			_fail("%s, a verb that opens its own section, is armed (%s), not an opener" % [toggle_name, toggle.theme_type_variation])
 
 
 ## V5.3 screen 4 PR 2b: the sheet carries the briefing's price and polls inline, a poll bought there

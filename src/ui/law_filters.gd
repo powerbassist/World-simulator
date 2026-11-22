@@ -81,14 +81,11 @@ func apply(laws: Array, loader, every_shelf := false) -> Array:
 		var b: Button = _buttons[key]
 		b.text = "%s · %d" % [Labels.law_category(key), int(counts.get(key, 0))]
 		b.set_pressed_no_signal(key == category and query == "" and not every_shelf)
-		# A flat button draws no pressed state: the open shelf stands raised, the others flat.
-		b.flat = not b.button_pressed
 	_buttons[DRAFTS].visible = counts.has(DRAFTS)
 	# The last draft gone (proposed, carried): its shelf goes with it, back to the first.
 	if category == DRAFTS and not counts.has(DRAFTS):
 		category = SHELVES[0]
 		_buttons[category].set_pressed_no_signal(query == "" and not every_shelf)
-		_buttons[category].flat = not _buttons[category].button_pressed
 	var needle := query.strip_edges().to_lower()
 	return laws.filter(func(law) -> bool:
 		if needle != "":
