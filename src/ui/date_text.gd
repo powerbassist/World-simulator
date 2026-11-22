@@ -53,6 +53,16 @@ static func day_month_year(day: int, month_number: int, year: int) -> String:
 	return "%02d %s %d" % [day, month(month_number), year]
 
 
+## "31 January": a day in a sentence ("it divides on 31 January"), no capitals, no zero (G3 S5, Design's T8).
+static func day_long(day: int, month_number: int) -> String:
+	return "%d %s" % [day, month_long(month_number)]
+
+
+## "1 January 2026": a full date in a sentence.
+static func date_long(day: int, month_number: int, year: int) -> String:
+	return "%d %s %d" % [day, month_long(month_number), year]
+
+
 ## "Dec 2029": a short date under a small chart (G3's cased short month).
 static func mon_year(month_number: int, year: int) -> String:
 	return "%s %d" % [Strings.t(SHORT_CASED[clampi(month_number, 1, 12) - 1]), year]

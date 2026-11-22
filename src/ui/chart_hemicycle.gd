@@ -16,25 +16,35 @@ const HEIGHT := 170.0
 ## The floor in the middle, as a share of the outer radius: the rows start here.
 const INNER := 0.38
 const PAD := 6.0
+## Room over the ring for a marker's words, px at text 100 %.
+const LABEL_ROOM := 16.0
 
 var _parts: Array = []
 var _unit := ""
 var _markers: Array = []
+## Words over a marker, parallel to `_markers` ("a majority, 289"); the chart leaves room over the ring for them.
+var _marker_labels: Array = []
+var _top := 0.0
 var _places := -1
 var _colors: Array = ChartStyle.SERIES
 var _seats := PackedVector2Array()
 var _owners: Array[int] = []
+## A tooltip drawn by the caller (a Control it builds on hover), shown over the wedge's words: the
+## law's chamber on Bills hangs the Assembly's seats by party here (G3 S5), as its bar did.
+var hover: Callable = Callable()
 
 
 func setup(parts: Array, opts := {}) -> void:
 	_parts = parts
 	_unit = String(opts.get("unit", ""))
 	_markers = opts.get("markers", [opts["marker"]] if opts.has("marker") else [])
+	_marker_labels = opts.get("marker_labels", [])
+	_top = LABEL_ROOM * UiTheme.text_scale() if not _marker_labels.is_empty() else 0.0
 	_places = int(opts.get("places", -1))
 	_colors = opts.get("colors", ChartStyle.SERIES)
 	_owners = owners(parts)
 	_seats = seats(_owners.size())
-	custom_minimum_size = Vector2(0.0, HEIGHT * UiTheme.text_scale())
+	custom_minimum_size = Vector2(0.0, float(opts.get("height", HEIGHT)) * UiTheme.text_scale())  # a page's own chamber is larger (S5)
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	queue_redraw()
 
@@ -101,11 +111,11 @@ func seat_count() -> int:
 
 
 func _radius() -> float:
-	return maxf(minf(size.x / 2.0, size.y - PAD) - PAD, 1.0)
+	return maxf(minf(size.x / 2.0, size.y - PAD - _top) - PAD, 1.0)
 
 
 func _center() -> Vector2:
-	return Vector2(size.x / 2.0, PAD + _radius())
+	return Vector2(size.x / 2.0, PAD + _top + _radius())
 
 
 func _draw() -> void:
@@ -118,10 +128,25 @@ func _draw() -> void:
 	var dot := clampf(ring * 0.42, 1.2, 6.0)
 	for i in _seats.size():
 		draw_circle(center + _seats[i] * radius, dot, _colors[mini(_owners[i], _colors.size() - 1)])
-	for share in _markers:
-		var at := clampi(int(ceil(float(share) * _seats.size())) - 1, 0, _seats.size() - 1)
+	for i in _markers.size():
+		var at := clampi(int(ceil(float(_markers[i]) * _seats.size())) - 1, 0, _seats.size() - 1)
 		var dir := _seats[at].normalized()
 		draw_line(center + dir * radius * (INNER - 0.08), center + dir * radius, UiTheme.TEXT, 1.0)
+		if i < _marker_labels.size():
+			_label(center + dir * radius, String(_marker_labels[i]))
+
+
+## Words over the end of a marker, centred on it and kept inside the chart.
+func _label(at: Vector2, words: String) -> void:
+	var font := get_theme_font("font", "Label")  # i18n: ok a theme type
+	var px := roundi(UiTheme.SIZE_SMALL * UiTheme.text_scale())
+	var width := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
+	draw_string(font, Vector2(clampf(at.x - width / 2.0, 0.0, maxf(size.x - width, 0.0)), maxf(at.y - 5.0, float(px))), words,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, px, UiTheme.TEXT_DIM)
+
+
+func _make_custom_tooltip(_for_text: String) -> Object:
+	return hover.call() if hover.is_valid() else null
 
 
 func _get_tooltip(at: Vector2) -> String:

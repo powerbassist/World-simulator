@@ -14,9 +14,20 @@ const Strings = preload("res://src/ui/strings.gd")
 const Characters = preload("res://src/sim/characters.gd")
 
 
-## The colour of the `index`-th party in its nation's data order.
+## The colour of the `index`-th party in its nation's data order, for every surface that shows a party (Design,
+## g3-spec 7, 2026-11-22): the first five take the categorical hues less the accent's (no party wears "you are
+## here"), the 6th a neutral grey, the 7th and beyond a darker one. No seventh hue: none passes the validator beside
+## the six. Six parties cannot be told apart by colour alone, so a party's swatch always sits beside its name.
+## shortcut: an 8th party and beyond share the 7th's grey without an "Others" entry (every nation has 4 to 6 today);
+## fold them into one legend entry when a nation carries 8.
 static func colour_at(index: int) -> Color:
-	return ChartStyle.SERIES[mini(index, ChartStyle.SERIES.size() - 1)]
+	var hues: Array[Color] = ChartStyle.series_for(UiTheme.accent())
+	if index < hues.size():
+		return hues[index]
+	return PARTY_SIXTH if index == hues.size() else PARTY_REST
+
+const PARTY_SIXTH := Color("#8a96a1")
+const PARTY_REST := Color("#56616a")
 
 
 ## {name, colour} of `person_id`'s party in `ns`, or {} for a person with no party

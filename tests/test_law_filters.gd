@@ -299,8 +299,11 @@ func _check_the_verb_and_the_paper() -> void:
 	var paper = _main._law_panel._paper
 	if not paper.is_visible_in_tree():
 		_fail("the order paper is hidden with nothing tabled")
-	if not _texts(paper).contains("One law goes to the Assembly each month."):
-		_fail("the order paper does not print its rule")
+	# G3 S5: one slim line, so the rule is the heading's hover, not a sentence.
+	var ruled: Array = paper.find_children("*", "Label", true, false).filter(
+		func(l): return l.tooltip_text == "One law goes to the Assembly each month.")
+	if ruled.is_empty():
+		_fail("the order paper does not carry its rule")
 
 
 func _check_the_goal_tiles_are_gone() -> void:
@@ -381,7 +384,7 @@ func _check_a_law_elsewhere_opens_its_shelf() -> void:
 ## The sheet's verdict word reads the counts at their edges: carried only when the undecided cannot
 ## turn it, lost only when they cannot save it.
 func _check_the_verdict_word() -> void:
-	var LawSheet = preload("res://src/ui/law_sheet.gd")
+	var LawSheet = preload("res://src/ui/law_path.gd")  # the vote's rules live with the path since G3 S5
 	for case in [
 		[{"yes": 300, "no": 200, "undecided": 77}, 289, true, "passes"],
 		[{"yes": 250, "no": 200, "undecided": 127}, 289, true, "too close to call"],

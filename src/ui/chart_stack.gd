@@ -10,6 +10,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
 
 const BAR := 18.0
+
 const GAP := 2.0
 ## Seven parts and an "Others": the categorical palette's eight slots, never a
 ## generated ninth hue.
@@ -19,6 +20,7 @@ var _parts: Array = []
 var _unit := ""
 var _markers: Array = []
 var _places := -1
+var _bar := BAR
 var _colors: Array = ChartStyle.SERIES
 ## A tooltip drawn by the caller (a Control it builds on hover), shown over the segment text: the
 ## Bills tab hangs the Assembly's seats here, since the bar is where a vote is read (V5.3 screen 4).
@@ -31,7 +33,8 @@ func setup(parts: Array, opts := {}) -> void:
 	_markers = opts.get("markers", [opts["marker"]] if opts.has("marker") else [])
 	_places = int(opts.get("places", -1))
 	_colors = opts.get("colors", ChartStyle.SERIES)
-	custom_minimum_size = Vector2(0.0, BAR + 8.0)
+	_bar = float(opts.get("bar", BAR))  # a list row asks for a thin bar (G3 S5)
+	custom_minimum_size = Vector2(0.0, _bar + 8.0)
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	queue_redraw()
 
@@ -75,10 +78,10 @@ func _draw() -> void:
 	for i in _parts.size():
 		var r: Rect2 = rects[i]
 		if r.size.x > 0.0:
-			draw_rect(Rect2(r.position + Vector2(0.0, 4.0), r.size), _colors[mini(i, _colors.size() - 1)])
+			draw_rect(Rect2(r.position + Vector2(0.0, 4.0), Vector2(r.size.x, _bar)), _colors[mini(i, _colors.size() - 1)])
 	for share in _markers:
 		var x := size.x * float(share)
-		draw_line(Vector2(x, 0.0), Vector2(x, BAR + 8.0), UiTheme.TEXT, 1.0)
+		draw_line(Vector2(x, 0.0), Vector2(x, _bar + 8.0), UiTheme.TEXT, 1.0)
 
 
 func has_marker() -> bool:

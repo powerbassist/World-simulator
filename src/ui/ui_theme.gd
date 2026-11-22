@@ -174,6 +174,7 @@ const RICH_CAPTION := "RichCaption"
 const RICH_GOOD := "RichGood"
 const RICH_BAD := "RichBad"
 const FIGURE_ALERT := "FigureAlert"  ## a strip figure in a bad state (V4.8a)
+const FIGURE_GOOD := "FigureGood"    ## a figure that is good news (S5: a forced bill survives)
 
 # -- Container and button variations -------------------------------------------
 
@@ -408,6 +409,7 @@ static func _panels(theme: Theme) -> void:
 	_variation(theme, PLATE_FOLDED, folded)
 
 	_variation(theme, TILE_PANEL, _flat(TILE, R_TILE))
+	ControlStyle.fails_tile(theme, _flat(TILE, R_TILE), BAD)  # a tile whose step kills the law (G3 S5)
 	_variation(theme, BARE, StyleBoxEmpty.new())
 
 	# A tooltip or a menu: opaque, so it never reads the screen and never needs a second
@@ -459,7 +461,7 @@ static func _flat(bg: Color, radius: int, elev := []) -> StyleBoxFlat:
 
 
 static func _labels(theme: Theme) -> void:
-	for variation in [LEAD, TITLE, HEADING, MICRO, MICRO_CHROME, CAPTION_CHROME, FIGURE, FIGURE_ALERT, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE, CHIP_TEXT]:
+	for variation in [LEAD, TITLE, HEADING, MICRO, MICRO_CHROME, CAPTION_CHROME, FIGURE, FIGURE_ALERT, FIGURE_GOOD, HERO, FIGURE_LABEL, CAPTION, GOOD_TEXT, BAD_TEXT, WARN_TEXT, BAD_SMALL, GOOD_SMALL, MASTHEAD, HEADLINE, CHIP_TEXT]:
 		theme.set_type_variation(variation, "Label")  # i18n: ok
 
 	var bold := _face(WEIGHT_BOLD)
@@ -490,6 +492,7 @@ static func _labels(theme: Theme) -> void:
 	# so a reading in trouble changes colour and nothing else -- a figure that
 	# changed size when it went bad would shove its neighbours along the strip.
 	_label(theme, FIGURE_ALERT, SIZE_FIGURE, BAD, figures)
+	_label(theme, FIGURE_GOOD, SIZE_FIGURE, GOOD, figures)
 
 	_label(theme, HERO, SIZE_HERO, TEXT, figures)
 

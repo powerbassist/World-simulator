@@ -74,7 +74,7 @@ const TOTAL_PENDING := {
 	"campaign": 140,
 	"diplomacy": 22, "economy": 130, "energy": 118,
 	"orgs": 610,
-	"majority": 97, "society": 106,
+	"majority": 99, "society": 106,
 }
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
@@ -136,6 +136,8 @@ const TOTAL_PENDING := {
 ## Top bar A (#418 pass 2, T5: Economy prints the bar's own money figure and word, "12.9 bn €"
 ## under "deficit, this month", where it printed "-5.30%" under "budget balance"): +2 on
 ## Economy, stated: 2966 -> 2968.
+## G3 S5 round 2 (Design's T6 on #449): the margin tile's break-ranks line reads "Up to 14 may break ranks; still 15 above the
+## line" for "...; leaving 304", +2 on the Majority page, stated: its ceiling 97 -> 99.
 ## The construction register (V5.3 c' slice 1, the author's "A pour commander"), a new Finances tab, a
 ## stated rise 2968 -> 3087 (+119, all on the register: the type's lede and summary, the stock line, the
 ## strip's money, who and when sentences, the charts' titles).
@@ -159,7 +161,10 @@ const TOTAL_PENDING := {
 ## bill chart's caption): a lane a work with its name, its line and its verb, the picked work's sheet (its
 ## kicker, the authored summary, four figures, who it pleases and angers, its Start), the head's three
 ## figures; a stated rise 3323 -> 3431, to the parent.
-const TOTAL_SUM_CEILING := 3431
+## Parliament (G3 S5, #449 round 2): the Bills and Majority pages' own words, a stated rise 3431 -> 3438 (+7): the
+## break-ranks line (+2, Majority 97 -> 99) and the rest on the Bills page (+5, not itemised: "Free" on the order paper
+## and the path's reworded steps are the new prose there).
+const TOTAL_SUM_CEILING := 3438
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

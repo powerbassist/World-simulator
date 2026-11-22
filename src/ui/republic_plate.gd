@@ -13,6 +13,7 @@ extends VBoxContainer
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Num = preload("res://src/ui/num.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 var _toggle: Button
@@ -25,7 +26,7 @@ func _init() -> void:
 	add_theme_constant_override("separation", 4)
 	_toggle = Button.new()
 	_toggle.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_toggle.flat = true
+	_toggle.theme_type_variation = UiTheme.GHOST  # a fold is a ghost, TEXT_DIM at 500, with its chevron (Design's T13 on #449)
 	_toggle.pressed.connect(func() -> void: set_open(not _open))
 	add_child(_toggle)
 	_body = VBoxContainer.new()
@@ -46,6 +47,11 @@ func is_open() -> bool:
 
 func body() -> VBoxContainer:
 	return _body
+
+
+## Its fold button, which a page may seat in its own head row (Majority, G3 S5); the body stays here.
+func toggle() -> Button:
+	return _toggle
 
 
 ## Rebuilt with the panel. `upper` and `court` are the panel's own phrases.

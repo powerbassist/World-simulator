@@ -5,13 +5,12 @@ extends Control
 ## share of the chart's span. The Bills sheet draws what a law does to each bloc with it; the
 ## same piece is meant for Diplomacy's relations and a sector's moves.
 ##
-## The two directions take the vote bar's own pair -- SERIES slot 1 (blue) for above zero, slot 2
-## (orange) for below -- validated on HULL by the dataviz validator (CVD dE 26.8, normal-vision
-## dE 31.8, both >= 3:1). Colour is never the only signal: the caller prints the signed value
-## beside every bar, and a zero draws no bar at all, only the line.
+## The two directions take the vote's own tones, GOOD above zero and BAD below (G3 S5, Design's
+## T5: a chart never wears the accent's hue, and the blue it had was the hue France skips, beside
+## the filled press). Colour is never the only signal: the caller prints the signed value beside
+## every bar, and a zero draws no bar at all, only the line.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
-const ChartStyle = preload("res://src/ui/chart_style.gd")
 
 const BAR := 10.0
 
@@ -35,8 +34,13 @@ static func bar_rect(v: float, chart_span: float, width: float) -> Rect2:
 	return Rect2(mid if v >= 0.0 else mid - length, 3.0, length, BAR)
 
 
+## The bar's colour: the vote's own tones (a test reads it).
+static func colour_of(v: float) -> Color:
+	return UiTheme.GOOD if v > 0.0 else UiTheme.BAD
+
+
 func _draw() -> void:
 	var r := bar_rect(value, span, size.x)
 	if r.size.x > 0.0:
-		draw_rect(r, ChartStyle.SERIES[0] if value > 0.0 else ChartStyle.SERIES[1])
+		draw_rect(r, colour_of(value))
 	draw_line(Vector2(size.x * 0.5, 0.0), Vector2(size.x * 0.5, size.y), UiTheme.EDGE, 1.0)

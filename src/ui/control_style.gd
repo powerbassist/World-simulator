@@ -22,6 +22,10 @@ extends RefCounted
 ## A figure that is a price: the text colour at the bold cut (decision 1). Its name lives here, beside the style it
 ## names, because ui_theme.gd sits at the size ratchet's ceiling.
 const STRONG := "Strong"  # i18n: ok a variation name
+## A verb that opens its own section (Poll it, Address the nation): a button at rest, and while its section is
+## open the CONTROL_HOVER ground with the text label -- never the accent fill, which stays on the armed verb
+## (G3 S5, Design's T4 on #449).
+const OPENER := "Opener"  # i18n: ok a variation name
 
 
 static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary, small_px: int, medium: Font) -> void:
@@ -30,6 +34,12 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	theme.set_font("font", STRONG, t["bold"])
 	theme.set_font_size("font_size", STRONG, int(t["base_px"]))
 	theme.set_color("font_color", STRONG, t["text"])
+	theme.set_type_variation(OPENER, "Button")  # i18n: ok
+	for state in {"normal": t["control"], "hover": t["hover"], "pressed": t["hover"], "hover_pressed": t["hover"]}:
+		theme.set_stylebox(state, OPENER, box.call({"normal": t["control"], "hover": t["hover"], "pressed": t["hover"], "hover_pressed": t["hover"]}[state]))
+	theme.set_stylebox("focus", OPENER, t["ring"])
+	theme.set_color("font_pressed_color", OPENER, t["text"])
+	theme.set_color("font_hover_pressed_color", OPENER, t["text"])
 	var fill := t["fill"] as Color
 	var primary := String(names["primary"])
 	theme.set_type_variation(primary, "Button")  # i18n: ok
@@ -148,3 +158,13 @@ static func _glow(b: StyleBoxFlat) -> StyleBoxFlat:
 	b.shadow_size = 8
 	b.shadow_offset = Vector2(0, 3)
 	return b
+
+
+## TILE_PANEL with a 1px outline in `edge`: the tile whose step kills the law wears BAD, so the red hurdle is
+## the loudest thing on the sheet (G3 S5, Design's T1). Lives here, not in ui_theme.gd, which is at the size ratchet.
+const TILE_FAILS := "TileFails"  # i18n: ok a variation name
+static func fails_tile(theme: Theme, tile: StyleBoxFlat, edge: Color) -> void:
+	tile.set_border_width_all(1)
+	tile.border_color = edge
+	theme.set_type_variation(TILE_FAILS, "PanelContainer")  # i18n: ok
+	theme.set_stylebox("panel", TILE_FAILS, tile)

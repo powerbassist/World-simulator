@@ -40,15 +40,15 @@ func _init() -> void:
 	add_theme_constant_override("separation", PanelKit.ROW_SEPARATION)
 	# The Bills second pass (G3-14): the paper is always on screen, empty places included, so the
 	# rule is learnt before the first bill rather than after a refused press.
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 12)
-	add_child(head)
-	PanelKit.heading(head, tr("Order paper"))
-	# EXPAND: a wrapping line in a row with no width of its own breaks after every word.
-	PanelKit.line(head, tr("One law goes to the Assembly each month.")).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# G3 S5 (Bills = C): one slim line, the heading and the four places side by side; the rule
+	# is the heading's hover, and each place's own.
 	_row = HBoxContainer.new()
 	_row.add_theme_constant_override("separation", 8)
 	add_child(_row)
+	var head: Control = PanelKit.heading(_row, tr("Order paper"))
+	head.tooltip_text = tr("One law goes to the Assembly each month.")
+	head.mouse_filter = Control.MOUSE_FILTER_STOP
+	head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_verbs = VBoxContainer.new()
 	VerbBlock.tag(_verbs)
 	add_child(_verbs)
@@ -66,34 +66,39 @@ func refresh(state, loader, find_law: Callable) -> void:
 	_loader = loader
 	_find_law = find_law
 	for child in _row.get_children():
-		_row.remove_child(child)
-		child.queue_free()
+		if child is PanelContainer:  # the places; the heading stays
+			_row.remove_child(child)
+			child.queue_free()
 	places.clear()
 	var ns = state.player()
-	_place(-1, _tabled_title(state, ns), _date_text(_slot_date(state, ns)), _name_of(ns.tabled_bill), false)
+	# G3 S5 (Design's T3): only the bill before the Assembly carries its day, as the deadline tag; the
+	# first free place, the one a Propose books, is the dashed one.
+	var slot_held: bool = not ns.tabled_bill.is_empty()
+	_place(-1, _tabled_title(state, ns), _date_text(_slot_date(state, ns)) if slot_held else "", _name_of(ns.tabled_bill), false, not slot_held)
 	for i in BillQueue.SIZE:
 		var entry: Dictionary = ns.bill_queue[i] if i < ns.bill_queue.size() else {}
 		var held := not entry.is_empty()
-		_place(i, "%d · %s" % [i + 2, BillVerbs.month_name(state, i).to_upper()], _date_text(BillVerbs.division(state, i)),
-			_name_of(entry) if held else "", held)
+		# One slim line, so the month is short ("2 · FEB").
+		_place(i, "%d · %s" % [i + 2, DateText.month(int(BillVerbs.division(state, i)["month"])).to_upper()], "",
+			_name_of(entry) if held else "", held, slot_held and not held and i == ns.bill_queue.size())
 	_build_verbs(ns)
 	if relight != "":
 		VerbBlock.refocus(self, relight)
 
 
-func _place(i: int, title: String, date: String, name_text: String, handle: bool) -> void:
+func _place(i: int, title: String, date: String, name_text: String, handle: bool, first_free := false) -> void:
 	var place := OrderSlot.new()
 	place.index = i if handle else -1
 	place.drop_to = mini(i, _state.player().bill_queue.size() - 1) if i >= 0 else -1
 	_row.add_child(place)
-	place.show_place(title, date, name_text, _tip_of(i), handle)
+	place.show_place(title, date, name_text, _tip_of(i), handle, first_free)
 	place.moved.connect(_move)
 	place.menu_requested.connect(_menu)
 	places.append(place)
 
 
 func _tabled_title(state, ns) -> String:
-	return "1 · %s" % DateText.month_long(int(ns.tabled_bill.get("vote_month", state.month))).to_upper()
+	return "1 · %s" % DateText.month(int(ns.tabled_bill.get("vote_month", state.month))).to_upper()
 
 
 ## The day this month's slot divides: the tabled bill's own, or the month's last day.
@@ -105,7 +110,7 @@ func _slot_date(state, ns) -> Dictionary:
 
 
 static func _date_text(d: Dictionary) -> String:
-	return "%s %s" % [DateText.weekday(int(d["day"]), int(d["month"]), int(d["year"])), DateText.day_month(int(d["day"]), int(d["month"]))]
+	return DateText.day_mon(int(d["day"]), int(d["month"]))
 
 
 ## A bill's name, "" for an empty entry: a law's, or the finance bill's.

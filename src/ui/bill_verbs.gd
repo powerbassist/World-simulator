@@ -87,4 +87,4 @@ static func tabled_reason(ns, loader, find_law := Callable()) -> String:
 	var law = find_law.call(id) if find_law.is_valid() else Bills.by_id(loader, id)
 	return Strings.t("%s is before the Assembly: it divides on %s, and no other bill can be put before then.") % [
 		Strings.law_name(law, id),
-		DateText.day_month(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))]
+		DateText.day_long(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))]

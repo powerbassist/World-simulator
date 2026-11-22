@@ -16,6 +16,15 @@ const ChartStack = preload("res://src/ui/chart_stack.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Click = preload("res://tests/click.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
+const LawPath = preload("res://src/ui/law_path.gd")
+const ChartDiverge = preload("res://src/ui/chart_diverge.gd")
+const ControlStyle = preload("res://src/ui/control_style.gd")
+const Chambers = preload("res://src/sim/chambers.gd")
+const ChambersK = preload("res://src/sim/chambers_constants.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
+const JudiciaryK = preload("res://src/sim/judiciary_constants.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -36,6 +45,7 @@ func _process(_delta: float) -> bool:
 		3:
 			_main._windows.open("legislature")
 		6:
+			_check_bills_page()
 			_check_rows()
 			_press(true)
 		10:
@@ -96,16 +106,14 @@ func _check_rows() -> void:
 			_target_id = String(law.id)
 	if _target_id == "":
 		_fail("the third row's button does not name a law: %s" % _target.text)
-	# What waits after the Assembly reads on the sheet, not as a column: some law of the
-	# shelf carries a second-chamber or court sentence, and its sheet prints it.
-	var said := false
+	# What waits after the Assembly reads on the sheet's path: some law of the shelf meets a
+	# second chamber or the court, and its sheet prints that step's word.
 	for law in shown:
-		var parts := LawList.after_parts(ns, _laws()._party_list, law, _main._law_panel.FORECAST_UNCERTAIN_BAND)
-		if not parts.is_empty():
+		var steps: Array = LawPath.steps(ns, _laws()._party_list, law, _laws().counts_of(ns, _laws()._party_list, law))
+		if steps.size() > 1 and _laws().why(law) == "":
 			_laws().select(String(law.id))
-			said = _text(_laws()._detail).contains(String(parts[0]["text"]))
-			if not said:
-				_fail("%s: the sheet does not print '%s'" % [law.id, parts[0]["text"]])
+			if not _text(_laws()._detail).contains(String(steps[1]["word"])):
+				_fail("%s: the sheet does not print '%s'" % [law.id, steps[1]["word"]])
 			break
 	_laws().select(String(shown[0].id))
 
@@ -127,8 +135,99 @@ func _check_selected() -> void:
 	var summary: String = Strings.law_summary(law)
 	if summary.length() > 20 and not text.contains(summary.left(20)):
 		_fail("the detail does not carry the law's summary: %s" % summary.left(40))
-	if not text.contains(" undecided · "):
+	if not text.contains(tr("Undecided")) or not text.contains(tr("Against")):
 		_fail("the detail does not spell the vote out")
+
+
+## G3 S5, Bills = C (the law's path): the page lays out its own sheets; the order paper is one slim
+## line; the open law's path has a step per hurdle BY RULE (the Assembly always, the second chamber
+## when it has a say on this law, the court when it reviews it); the Assembly's vote is a chamber of
+## three parts in the vote's tones; Propose is the one filled verb.
+func _check_bills_page() -> void:
+	var panel = _main._law_panel
+	var ns = _main._state.player()
+	if panel.theme_type_variation != UiTheme.BARE or not WindowManager.OWN_SHEETS.has("legislature"):
+		_fail("Bills does not lay out its own sheets (BARE + OWN_SHEETS)")
+	var paper: Control = panel._paper
+	var tall := 0.0
+	for place in paper.places:
+		tall = maxf(tall, (place as Control).size.y)
+	if paper.places.is_empty() or tall > 44.0 * UiTheme.text_scale():
+		_fail("the order paper is not one slim line: its places stand %.0f px tall" % tall)
+	var law = _laws()._shown[0]
+	_laws().select(String(law.id))
+	var path: Node = _laws()._detail.find_child("Path", true, false)
+	var want: Array = ["assembly"]
+	if Chambers.power_over(ns, law) != ChambersK.VERDICT_NONE:
+		want.append("upper")
+	if Judiciary.reviews(ns, law):
+		want.append("court")
+	var steps: Array = LawPath.steps(ns, _laws()._party_list, law, _laws().counts_of(ns, _laws()._party_list, law))
+	if path == null or steps.map(func(s): return s["slot"]) != want or path.get_child_count() != want.size() * 2 - 1:
+		_fail("the law's path is not its hurdles by rule: %s, want %s" % [steps.map(func(s): return s["slot"]), want])
+	_check_path_tiles(steps)
+	# A nation with fewer hurdles: no second chamber's say and no review, the Assembly alone.
+	var saved := [ns.upper_ordinary, ns.upper_amendment, ns.judicial_review]
+	ns.upper_ordinary = ChambersK.VERDICT_NONE
+	ns.upper_amendment = ChambersK.VERDICT_NONE
+	ns.judicial_review = JudiciaryK.REVIEW_NONE
+	var alone: Array = LawPath.steps(ns, _laws()._party_list, law, _laws().counts_of(ns, _laws()._party_list, law))
+	if alone.map(func(s): return s["slot"]) != ["assembly"]:
+		_fail("with no second chamber and no review the path still reads %s" % [alone.map(func(s): return s["slot"])])
+	ns.upper_ordinary = saved[0]
+	ns.upper_amendment = saved[1]
+	ns.judicial_review = saved[2]
+	var chamber: Array = _laws()._detail.find_children("*", "Control", true, false).filter(func(c): return c.has_method("seat_count"))
+	if chamber.size() != 1 or chamber[0]._colors.slice(0, 3) != [UiTheme.GOOD, LawList.UNDECIDED, UiTheme.BAD] 			or chamber[0]._parts.size() != 3 or not chamber[0].has_marker():
+		_fail("the Assembly's vote is not one chamber of for / undecided / against with its line")
+	var filled: Array = _laws()._detail.find_children("*", "Button", true, false).filter(
+		func(b): return b.visible and b.theme_type_variation == UiTheme.PRIMARY)
+	if filled.size() != 1 or not (filled[0].text.begins_with(tr("Propose").left(7)) or filled[0].name == "Queue"):
+		_fail("the law's sheet has %d filled verbs, not one Propose: %s" % [filled.size(), filled.map(func(b): return b.text)])
+	elif filled[0].get_index() != 0:
+		_fail("the filled verb is not first in its row")
+	# The in-flight sheet stands only while something is in flight (an empty sheet would float).
+	var flight: Control = panel._flight.get_parent()
+	if flight.visible != (panel._result_box.get_child_count() + panel._list.get_child_count() > 0):
+		_fail("the in-flight sheet shows %s with %d things in flight" % [flight.visible, panel._result_box.get_child_count() + panel._list.get_child_count()])
+	# A shut law has no division coming: no path, no address, no polls.
+	for shut in _laws()._shown:
+		if _laws().why(shut) != "":
+			_laws().select(String(shut.id))
+			for node_name in ["Path", "PollIt"]:
+				if _laws()._detail.find_child(node_name, true, false) != null:
+					_fail("%s is shut and its sheet still draws %s" % [shut.id, node_name])
+			break
+
+
+## Design's T1, T2 on #449: a hurdle's verdict is the lead size in its tone with a glyph, a plain word is never amber,
+## the kill takes a BAD outline, the court carries its meter, and every tile holds its words 12 px inside.
+func _check_path_tiles(steps: Array) -> void:
+	for step in steps:
+		var tone := Color(step["tone"])
+		if tone == UiTheme.WARN:
+			_fail("the %s step's word '%s' is amber: amber is what waits on the player, with a date" % [step["slot"], step["word"]])
+		var glyph := "check" if tone == UiTheme.GOOD else ("warning" if tone == UiTheme.BAD else "")
+		if String(step["glyph"]) != glyph or bool(step["fails"]) != (tone == UiTheme.BAD):
+			_fail("the %s step has glyph '%s' and fails=%s for tone %s" % [step["slot"], step["glyph"], step["fails"], tone])
+		var tile: Node = _laws()._detail.find_child("Step_%s" % step["slot"], true, false)
+		if tile == null:
+			_fail("no tile for the %s step" % step["slot"])
+			continue
+		if String(tile.theme_type_variation) != (ControlStyle.TILE_FAILS if bool(step["fails"]) else UiTheme.TILE_PANEL):
+			_fail("the %s tile wears %s: only a kill takes the outline" % [step["slot"], tile.theme_type_variation])
+		if (tile.get_child(0) as MarginContainer).get_theme_constant("margin_left") != LawPath.TILE_INSET:
+			_fail("the %s tile's words sit on its edge, not %d px inside" % [step["slot"], LawPath.TILE_INSET])
+		if (tile.find_child("Glyph", true, false) != null) != (glyph != ""):
+			_fail("the %s tile's glyph does not follow its verdict" % step["slot"])
+		if (tile.find_child("CourtMeter", true, false) != null) != (step["slot"] == "court"):
+			_fail("the %s tile and the court's meter: only the court shows what the law reaches against what it allows" % step["slot"])
+	if ChartDiverge.colour_of(0.2) != UiTheme.GOOD or ChartDiverge.colour_of(-0.2) != UiTheme.BAD:
+		_fail("a bloc's gain is not the vote's green and its loss the vote's red")
+	for toggle_name in ["PollIt"]:
+		var toggle: Button = _laws()._detail.find_child(toggle_name, true, false)
+		if toggle != null and String(toggle.theme_type_variation) != ControlStyle.OPENER:
+			_fail("%s, a verb that opens its own section, is armed (%s), not an opener" % [toggle_name, toggle.theme_type_variation])
 
 
 ## V5.3 screen 4 PR 2b: the sheet carries the briefing's price and polls inline, a poll bought there

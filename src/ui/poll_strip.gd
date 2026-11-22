@@ -13,6 +13,7 @@ const MeasurePolls = preload("res://src/sim/measure_polls.gd")
 const K = preload("res://src/sim/poll_constants.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -46,6 +47,17 @@ static func build(box: Control, state, loader, key: String, commission: Callable
 	if MeasurePolls.position_of(ns, loader, key).is_empty():
 		return
 	var row := PanelKit.buttons(box)
+	# The tiers are one choice among a few: a segmented control, the open one CONTROL_HOVER (Design's T4 on #449).
+	var ground := PanelContainer.new()
+	ground.theme_type_variation = UiTheme.TILE_PANEL
+	var inset := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		inset.add_theme_constant_override(side, 3)
+	ground.add_child(inset)
+	var segments := HBoxContainer.new()
+	segments.add_theme_constant_override("separation", 2)
+	inset.add_child(segments)
+	row.add_child(ground)
 	var strip := EffectsStrip.new()
 	strip.set_meta(STRIP_META, true)
 	var go := PanelKit.sized(Button.new())
@@ -59,12 +71,13 @@ static func build(box: Control, state, loader, key: String, commission: Callable
 	for tier in K.TIERS:
 		var chip := PanelKit.sized(Button.new())
 		chip.text = Strings.t(String(TIER_NAME[tier]))  # i18n: row-ok a tier id, its name the msgid
-		PanelKit.toggle(chip)
+		chip.toggle_mode = true
+		chip.theme_type_variation = UiTheme.SEGMENT
 		chip.button_group = group
 		chip.button_pressed = tier == shown
 		chip.set_meta(CHIP_META, String(tier))
 		chip.pressed.connect(show.bind(String(tier)))
-		row.add_child(chip)
+		segments.add_child(chip)
 	box.add_child(strip)
 	box.add_child(go)
 	go.pressed.connect(func() -> void: commission.call(String(_picked[key])))
@@ -152,7 +165,7 @@ static func range_text(printed: Array) -> String:
 static func arrived_text(row: Dictionary) -> String:
 	var on := MeasurePolls.arrives_on(row)
 	# With its year: a read is fixed for good, and can be years old.
-	return DateText.day_month_year(int(on["day"]), int(on["month"]), int(on["year"]))
+	return DateText.date_long(int(on["day"]), int(on["month"]), int(on["year"]))
 
 
 ## "Workers 41.2-47.4, Urban 38.0-44.0, ...": a poll's blocs on one line, for a card or a strip.

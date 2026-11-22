@@ -19,6 +19,7 @@ const SERIES: Array[Color] = [
 	Color("#d55181"), Color("#008300"), Color("#9085e9"), Color("#e66767"),
 ]
 
+
 ## Decision 5 (G3, Design's gate T2 on #443): a categorical palette that skips the one hue nearest the played nation's
 ## accent, so no part reads as "you are here". Six hues; the order once one is skipped is fixed per skipped hue, each
 ## row validated on the sheet (#11151A, dark): dropping green or amber from the plain order puts orange beside amber or

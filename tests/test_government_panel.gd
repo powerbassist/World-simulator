@@ -52,8 +52,10 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		1:
 			_check_majority()
+			_check_the_picked_page()
 		2:
 			_check_minority()
+			_check_the_49_3_tile()
 		3:
 			_check_cohabitation()
 		4:
@@ -84,6 +86,60 @@ func _check_the_republic_plate() -> void:
 	plate.set_open(false)
 	if _panel._dissolve_button.visible and not _panel._dissolve_button.disabled 			and not _panel._dissolve_button.tooltip_text.contains("locks out"):
 		_fail("the dissolution's price is not on the Dissolve button: %s" % _panel._dissolve_button.tooltip_text)
+
+
+## G3 S5 (the author's pick, Majority A with B's two margins): the page lays out its own sheets
+## (head with Dissolve, the chamber, what the numbers allow, the parties); the chamber wears
+## the parties' hues, never the accent's blue; each margin is a seat strip with its line and
+## its dashed box, the figures the live arithmetic.
+func _check_the_picked_page() -> void:
+	var ns = _state.player()
+	_refresh_text()
+	var UiTheme = load("res://src/ui/ui_theme.gd")
+	var ChartStyle = load("res://src/ui/chart_style.gd")
+	var PartyChip = load("res://src/ui/party_chip.gd")
+	if _panel.theme_type_variation != UiTheme.BARE or not load("res://src/ui/window_manager.gd").OWN_SHEETS.has("majority"):
+		_fail("Majority does not lay out its own sheets (BARE + OWN_SHEETS)")
+	var plates: Array = _panel.find_children("*", "PanelContainer", true, false).filter(
+		func(p): return p.theme_type_variation == UiTheme.PLATE)
+	if plates.size() < 4:
+		_fail("Majority has %d sheets, the picture four" % plates.size())
+	var head = plates.filter(func(p): return p.is_ancestor_of(_panel._title))
+	if head.is_empty() or not head[0].is_ancestor_of(_panel._dissolve_button):
+		_fail("Dissolve is not on the head sheet beside the lead")
+	var chart = _panel.find_children("*", "Control", true, false).filter(func(c): return c.has_method("seat_count"))
+	if chart.is_empty() or chart[0].custom_minimum_size.y < 240.0:
+		_fail("the chamber is not the page's large chart")
+	elif chart[0]._colors.has(UiTheme.accent()) or not chart[0]._colors.has(PartyChip.colour_at(0)):
+		_fail("the chamber does not wear the parties' hues: %s" % [chart[0]._colors])
+	# Design's party rule (g3-spec 7, 2026-11-22): parties 1-5 take the categorical hues less the accent's, the 6th
+	# #8A96A1, the 7th and beyond #56616A; one function for every surface.
+	var hues: Array[Color] = ChartStyle.series_for(UiTheme.accent())
+	if PartyChip.colour_at(0) != hues[0] or PartyChip.colour_at(4) != hues[4] 			or PartyChip.colour_at(5) != Color("#8a96a1") or PartyChip.colour_at(6) != Color("#56616a") 			or PartyChip.colour_at(9) != Color("#56616a"):
+		_fail("a party's colour is not Design's rule: %s" % [[PartyChip.colour_at(0), PartyChip.colour_at(5), PartyChip.colour_at(6)]])
+	var margins = _panel.find_child("Margins", true, false)
+	var strips: Array = [] if margins == null else margins.find_children("*", "Control", true, false).filter(func(c): return c.has_method("box"))
+	if strips.size() != 2:
+		_fail("what the numbers allow carries %d seat strips, not 2" % strips.size())
+		return
+	var need: int = Government.majority_seats(ns) + 1
+	var breakable := 0
+	for party in _loader.parties.get(ns.id, []):
+		if ns.coalition_party_ids.has(party.id):
+			breakable += load("res://src/sim/discipline.gd").rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0)
+	if strips[0].line_at() != need or strips[0].box() != Vector2i(ns.coalition_seats - breakable, ns.coalition_seats):
+		_fail("the majority strip: line %d box %s, wanted %d and %s" % [strips[0].line_at(), strips[0].box(), need, Vector2i(ns.coalition_seats - breakable, ns.coalition_seats)])
+	var against: int = ns.assembly_seats - ns.coalition_seats
+	var censure: int = Government.censure_seats(ns)
+	if strips[1].line_at() != censure or strips[1].box() != Vector2i(against, censure):
+		_fail("the censure strip: line %d box %s, wanted %d and %s" % [strips[1].line_at(), strips[1].box(), censure, Vector2i(against, censure)])
+	var text: String = _collect_text(margins)
+	if not text.contains("+%d" % (ns.coalition_seats - need)) or not text.contains("%d short" % (censure - against)):
+		_fail("the margins' figures are not the arithmetic: %s" % text)
+	# Design's T6: the sentence under the margin is what is LEFT above the line, not the seats to subtract from.
+	var left: int = ns.coalition_seats - breakable - need
+	if breakable > 0 and not text.contains("Up to %d may break ranks; still %d above the line" % [breakable, left]):
+		_fail("the break-ranks line is not breakable %d and %d left above the line: %s" % [breakable, left, text])
 
 
 func _refresh_text() -> String:
@@ -137,6 +193,38 @@ func _check_minority() -> void:
 	# say a united opposition could remove this government.
 	if not text.contains("bring this government down on its own"):
 		_fail("a minority facing 415 opposition seats is not warned about censure: %s" % text)
+
+
+## The 49.3 tile's word: a forced bill that would carry a censure Falls (BAD), one the cooldown bars is
+## Unavailable, otherwise it Survives. Staged by moving the agreed position far from every party: nobody is
+## cohesive with it, so every line is "for" and the motion carries.
+func _check_the_49_3_tile() -> void:
+	var ns = _state.player()
+	var position: Dictionary = ns.coalition_position
+	ns.coalition_position = {"economic": 50.0, "social": 50.0}
+	var forced: Dictionary = Government.resolve_censure(ns, _loader.parties[ns.id], true)
+	if not bool(forced["carried"]):
+		_fail("the staging does not carry a forced censure, so the Falls check below tests nothing")
+	ns.force_cooldown_months = 0
+	var tile := _tile_word(_refresh_text())
+	if tile != "Falls":
+		_fail("a forced bill that carries the censure reads '%s', not Falls" % tile)
+	ns.force_cooldown_months = 3
+	tile = _tile_word(_refresh_text())
+	if tile != "Unavailable":
+		_fail("Article 49.3 on cooldown reads '%s', not Unavailable" % tile)
+	ns.force_cooldown_months = 0
+	ns.coalition_position = position
+
+
+## The 49.3 tile's figure ("Survives", "Falls" or "Unavailable"): the LAST of them in the text, as _breakable_seats does.
+func _tile_word(text: String) -> String:
+	var found := ""
+	for line in text.split("
+"):
+		if line in ["Survives", "Falls", "Unavailable"]:
+			found = line
+	return found
 
 
 ## Cohabitation is the one outcome that is neither a win nor a loss, so the panel

@@ -15,6 +15,8 @@ const TRACK := 4.0
 var value := 0.0
 var top := 1.0
 var mark := 0.0
+## The court's meter: a fill past the tick is bad news, so the fill takes BAD there (law_path.gd).
+var bad_past_mark := false
 
 
 func setup(v: float, t: float, m: float) -> void:
@@ -30,6 +32,6 @@ func _draw() -> void:
 	draw_rect(Rect2(0.0, y, size.x, TRACK), UiTheme.SLATE)
 	var fill := clampf(value / top, 0.0, 1.0) * size.x
 	if fill > 0.0:
-		draw_rect(Rect2(0.0, y, maxf(fill, 2.0), TRACK), UiTheme.TEXT)
+		draw_rect(Rect2(0.0, y, maxf(fill, 2.0), TRACK), UiTheme.BAD if bad_past_mark and value > mark else UiTheme.TEXT)
 	var x := clampf(mark / top, 0.0, 1.0) * size.x
 	draw_line(Vector2(x, 0.0), Vector2(x, size.y), UiTheme.TEXT, 1.5)

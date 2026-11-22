@@ -43,6 +43,8 @@ const RepublicPlate = preload("res://src/ui/republic_plate.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
 const Num = preload("res://src/ui/num.gd")
+const MajorityMargins = preload("res://src/ui/majority_margins.gd")
+const PartyChip = preload("res://src/ui/party_chip.gd")
 
 ## Longest human label for each formation method. The panel names the rule the
 ## player is actually governing under rather than the enum, so a Frenchman is
@@ -119,9 +121,16 @@ const ELECTION_SYSTEM_LABEL := {
 const PLATE_LABELS := {"censure": CENSURE_LABEL, "dissolution": DISSOLUTION_LABEL, "method": METHOD_LABEL,
 	"amendment": AMENDMENT_LABEL, "referendum": REFERENDUM_LABEL, "election": ELECTION_SYSTEM_LABEL}
 
+## The chamber's height on its own sheet (the picked picture's half circle, about 280 at 1.0).
+const CHAMBER_HEIGHT := 280.0
+
 var _state
 var _loader
+var _status: Label
 var _title: RichTextLabel
+## G3 S5: the page's own sheets -- the chamber, what the numbers allow, the parties.
+var _chamber: VBoxContainer
+var _margins: VBoxContainer
 var _body: VBoxContainer
 var _dirty := true
 var _close_button: Button
@@ -132,29 +141,48 @@ var _plate := RepublicPlate.new()
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(560, 0)  # the dock sets the height (tab_page.gd wanted_height)
+	theme_type_variation = UiTheme.BARE  # the page lays out its own sheets (window_manager OWN_SHEETS)
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	add_child(root)
 
-	var root := PanelKit.padded(self, 16, 10)
-
+	# G3 S5 (the author's pick, Majority A with B's two margins): the head sheet carries the
+	# state of the government, the one sentence the page is about, the folded constitution and
+	# Dissolve -- the verb first, as V2.1b set it, so it never falls under the fold.
+	var head_sheet := PanelKit.sheet(root)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 16)
+	head_sheet.add_child(head)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(words)
+	_status = Label.new()
+	_status.theme_type_variation = UiTheme.MICRO
+	words.add_child(_status)
 	# A rich line since V5.1-d1b2 (G9): the head of government's name opens their card.
 	_title = PanelKit.TermText.new()
-	root.add_child(_title)
-
-	# THE VERBS COME BEFORE THE READOUT -- V2.1b, and it is the fold contract's own
-	# remedy rather than a preference. This panel's body runs to about 945px of
-	# assembly arithmetic against a usable band of 826, so with the buttons under it
-	# Dissolve sat 39px below the fold and no height could lift it: the band is the
-	# ceiling and the content is taller than the band, which is V1.3g's finding
-	# exactly. Ordering can, and it fixes it structurally -- the verb stays reachable
-	# whatever the body grows to, where 39px of headroom would have been one added
-	# row from failing again.
+	words.add_child(_title)
+	# The constitution's fold sits in the head row; its sentences unfold under the head.
+	var fold := _plate.toggle()
+	_plate.remove_child(fold)
+	fold.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(fold)
+	head_sheet.add_child(_plate)
 	# V5.2 b+ (R3): the one Dissolve button (dissolve_button.gd); its one home since rework 1.
 	_dissolve_button = DissolveButton.new()
+	_dissolve_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_dissolve_button.dissolved.connect(_on_dissolved)
-	root.add_child(_dissolve_button)
+	head.add_child(_dissolve_button)
 
-	_body = VBoxContainer.new()
+	var middle := HBoxContainer.new()
+	middle.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	root.add_child(middle)
+	_chamber = PanelKit.sheet(middle)
+	_chamber.get_parent().size_flags_stretch_ratio = 1.3
+	_margins = PanelKit.sheet(middle)
+
+	_body = PanelKit.sheet(root)
 	_body.add_theme_constant_override("separation", 4)
-	root.add_child(_body)
 
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
@@ -195,57 +223,29 @@ func _refresh() -> void:
 	if n == null:
 		return
 
-	_title.set_marked("%s %s — %s" % [ns.head_of_government_title, PanelKit.person(ns.pm_person_id, _loader.person_name(ns.pm_person_id)), n.chamber_name])
+	var standing: String = tr("COHABITATION — the assembly majority is against you") if ns.is_cohabitation 		else (tr("MINORITY GOVERNMENT") if ns.is_minority else tr("Majority government"))
+	_status.text = "%s · %s" % [n.chamber_name, standing]
+	_title.set_marked(tr("%s %s holds %d of %d seats; a majority needs %d.") % [ns.head_of_government_title,
+		PanelKit.person(ns.pm_person_id, _loader.person_name(ns.pm_person_id)), ns.coalition_seats, ns.assembly_seats,
+		Government.majority_seats(ns) + 1])
 
 	# The partner lines are rebuilt below: the keyboard on one goes back to it (#389 pass 2).
 	var focus = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
 	var had_party: String = String(focus.get_meta("party")) if focus != null and is_ancestor_of(focus) and focus.has_meta("party") else ""
-	for child in _body.get_children():
-		if child == _plate:
-			_body.remove_child(_plate)
-		else:
+	for box in [_chamber, _margins, _body]:
+		for child in box.get_children():
 			child.queue_free()
 
-	# V5.2-0b (docs/design/v5.2-legibility.md): the live arithmetic, short, under
-	# the seat bar it reads; the constitution folds into its plate (the author's
-	# "Une plaque repliée"); the tables get real headings.
-	_seat_bar(ns)
-	PanelKit.line(_body, tr("COHABITATION — the assembly majority is against you") if ns.is_cohabitation 		else (tr("MINORITY GOVERNMENT") if ns.is_minority else tr("Majority government")), PanelKit.Tone.PLAIN)
-	PanelKit.line(_body, tr("%d of %d seats · a majority needs %d") % [ns.coalition_seats, ns.assembly_seats, Government.majority_seats(ns) + 1], PanelKit.Tone.PLAIN)
-	# Seats a party holds are not seats it necessarily delivers (V1.1b).
-	var breakable := _worst_case_rebels(ns)
-	if breakable > 0:
-		PanelKit.line(_body, tr("Up to %d may break ranks, leaving %d") % [breakable, ns.coalition_seats - breakable], PanelKit.Tone.PLAIN)
-	if ns.censure_rule != "none":
-		var needed := Government.censure_seats(ns)
-		var against: int = int(ns.assembly_seats) - int(ns.coalition_seats)
-		PanelKit.line(_body, tr("Censure needs %d · the opposition holds %d") % [needed, against], PanelKit.Tone.PLAIN)
-		if against >= needed:
-			PanelKit.line(_body, tr("The opposition could bring this government down on its own."), PanelKit.Tone.PLAIN)
-		# Only a constitution with Article 49.3 has this tally: the same gate as
-		# Government.can_force. Resolved through the real resolver (V1.1b: a motion
-		# collects seats from parties whose line is against it).
-		if ns.formation_method == "presidential_appointment":
-			var forced := Government.resolve_censure(ns, _loader.parties.get(ns.id, []), true)
-			var rebels := 0
-			for pid in forced["party_rebels"]:
-				rebels += int(forced["party_rebels"][pid])
-			PanelKit.rich(_body, tr("Under [g=article_49_3]Article 49.3[/g] today: %d seats would move to censure%s.") % [
-				forced["for_seats"],
-				tr(", %d of them against their own party's line") % rebels if rebels > 0 else "",
-			], PanelKit.Tone.PLAIN)
-			if ns.force_cooldown_months > 0:
-				PanelKit.line(_body, tr("Article 49.3 unavailable for %d months.") % ns.force_cooldown_months, PanelKit.Tone.PLAIN)
-			elif forced["carried"]:
-				PanelKit.line(_body, tr("Forcing a bill now would bring the government down."), PanelKit.Tone.PLAIN)
-			else:
-				PanelKit.line(_body, tr("A forced bill would survive censure."), PanelKit.Tone.PLAIN)
+	# G3 S5: the chamber large on its own sheet; the margins beside it, each a figure with its strip
+	# (majority_margins.gd: the live arithmetic V5.2-0b set, in the same sentences); the constitution
+	# folds into its plate (the author's "Une plaque repliée"); the parties' table under them.
+	var parts := _parts(ns)
+	_seat_chart(ns, parts)
+	MajorityMargins.build(_margins, ns, _loader.parties.get(ns.id, []), parts, _worst_case_rebels(ns))
 	if ns.governments_fallen > 0:
-		PanelKit.line(_body, tr("Governments censured out of office this run: %d.") % ns.governments_fallen, PanelKit.Tone.PLAIN)
+		PanelKit.line(_margins, tr("Governments censured out of office this run: %d.") % ns.governments_fallen, PanelKit.Tone.PLAIN)
 
 	_dissolve_button.sync(_state, ns)
-
-	_body.add_child(_plate)
 	_plate.fill(ns, _loader, PLATE_LABELS, _upper_phrase(ns), _court_phrase(ns))
 
 	PanelKit.heading(_body, tr("In government"))
@@ -266,32 +266,64 @@ func _refresh() -> void:
 			ns.resignations_count, last_party, Labels.portfolio(String(last.get("portfolio", "")))
 		], PanelKit.Tone.PLAIN)
 
-	var outside: Array[String] = []
+	var outside := HFlowContainer.new()
+	outside.add_theme_constant_override("h_separation", 18)
 	for party in _loader.parties.get(ns.id, []):
 		if not ns.coalition_party_ids.has(party.id) and int(ns.seats_by_party.get(party.id, 0)) > 0:
-			outside.append("%s (%d)" % [party.party_name, int(ns.seats_by_party.get(party.id, 0))])
-	if not outside.is_empty():
+			var item := HBoxContainer.new()
+			item.add_child(_swatch(_party_color(ns, party.id)))
+			PanelKit.plain_line(item, "%s  %d" % [party.party_name, int(ns.seats_by_party.get(party.id, 0))], PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
+			outside.add_child(item)
+	if outside.get_child_count() > 0:
 		PanelKit.heading(_body, tr("In opposition"))
-		PanelKit.line(_body, ", ".join(outside), PanelKit.Tone.PLAIN)
+		_body.add_child(outside)
+	else:
+		outside.free()
 
 
-## The assembly as a hemicycle (V5.2 b+ R6; a bar since V5.2-0b): the government's parties, then the
-## opposition's, each in the slot the Legislature's bar gives it (the colour follows
-## the party, never its side), the majority and the censure threshold marked.
-func _seat_bar(ns) -> void:
+## The chamber's parts in its order -- the government's parties, then the opposition's -- each in
+## its party's hue (PartyChip.colour_at, by its place in the nation's list: the colour follows the
+## party, never its side). `gov` tells the margins' strips which side to light.
+func _parts(ns) -> Array:
 	var parties: Array = _loader.parties.get(ns.id, [])
 	var parts: Array = []
-	var colors: Array = []
 	for in_government in [true, false]:
-		for i in parties.size():
-			if ns.coalition_party_ids.has(parties[i].id) == in_government:
-				parts.append({"label": String(parties[i].party_name), "value": float(ns.seats_by_party.get(parties[i].id, 0))})
-				colors.append(ChartStyle.SERIES[mini(i, ChartStyle.SERIES.size() - 1)])
+		for party in parties:
+			if ns.coalition_party_ids.has(party.id) == in_government:
+				parts.append({"label": String(party.party_name), "value": int(ns.seats_by_party.get(party.id, 0)),
+					"color": _party_color(ns, party.id), "gov": in_government})
+	return parts
+
+
+func _party_color(ns, party_id: String) -> Color:
+	var parties: Array = _loader.parties.get(ns.id, [])
+	for i in parties.size():
+		if parties[i].id == party_id:
+			return PartyChip.colour_at(i)
+	return PartyChip.colour_at(parties.size())
+
+
+## The assembly as a hemicycle (V5.2 b+ R6), the page's large chart since S5: the majority's line
+## and, where censure takes another count, the censure line.
+func _seat_chart(ns, parts: Array) -> void:
+	var colors: Array = []
+	for part in parts:
+		colors.append(part["color"])
 	var marks := [float(Government.majority_seats(ns) + 1) / maxf(float(ns.assembly_seats), 1.0)]
-	if ns.censure_rule != "none":
+	if ns.censure_rule != "none" and Government.censure_seats(ns) != Government.majority_seats(ns) + 1:
 		marks.append(float(Government.censure_seats(ns)) / maxf(float(ns.assembly_seats), 1.0))
-	ChartKit.hemicycle(_body, tr("Government, then opposition — the lines mark a majority and censure"), parts,
-		{"markers": marks, "colors": colors, "places": 0, "unit": tr(" seats")})
+	ChartKit.hemicycle(_chamber, tr("Government, then opposition"), parts,
+		{"markers": marks, "colors": colors, "places": 0, "unit": tr(" seats"), "height": CHAMBER_HEIGHT,
+		"marker_labels": [tr("a majority, %d") % (Government.majority_seats(ns) + 1)]})
+
+
+func _swatch(color: Color) -> ColorRect:
+	var swatch := ColorRect.new()
+	swatch.color = color
+	swatch.custom_minimum_size = Vector2(ChartStyle.SWATCH, ChartStyle.SWATCH)
+	swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	swatch.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	return swatch
 
 
 ## One row per coalition partner: seats, distance from the agreed position, the
@@ -329,14 +361,14 @@ func _court_phrase(ns) -> String:
 
 func _build_partner_table(ns) -> Control:
 	var grid := GridContainer.new()
-	grid.columns = 6
+	grid.columns = 7
 	grid.add_theme_constant_override("h_separation", 16)
 
-	for header in ["party", "seats", "distance", "reliability", "discipline", "rebels"]:
+	for header in ["", "party", "seats", "distance", "reliability", "discipline", "rebels"]:
 		var label := Label.new()
 		label.text = header
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if header == "party" else HORIZONTAL_ALIGNMENT_RIGHT
-		label.custom_minimum_size.x = 200 if header == "party" else 84
+		label.custom_minimum_size.x = 200 if header == "party" else (0 if header == "" else 84)
 		label.theme_type_variation = UiTheme.CAPTION
 		grid.add_child(label)
 
@@ -354,10 +386,12 @@ func _build_partner_table(ns) -> Control:
 			continue
 		var party = by_id[pid]
 
+		grid.add_child(_swatch(_party_color(ns, pid)))
 		var name_label := Button.new()
 		name_label.theme_type_variation = UiTheme.SUBROW_BUTTON
 		name_label.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		name_label.text = party.party_name  # i18n: row-ok a party's shown name
+		name_label.add_theme_color_override("font_color", UiTheme.TEXT)  # a name in a table is TEXT (Design's T11 on #449)
 		if pid == ns.pm_party_id:
 			name_label.text += "  (%s)" % ns.head_of_government_title
 		name_label.tooltip_text = tr("Its offices, in People: reshuffle there.")
@@ -379,7 +413,14 @@ func _build_partner_table(ns) -> Control:
 		grid.add_child(_right(Num.f(sqrt(d_econ * d_econ + d_social * d_social), 2)))
 
 		var bonus := Government.coalition_bonus(ns, party)
-		grid.add_child(_right("%.0f%%" % (bonus / GK.COALITION_BONUS_MAX * 100.0)))
+		# The share as a bar beside its figure (S5): partners compare down the column.
+		var reliability := HBoxContainer.new()
+		reliability.add_theme_constant_override("separation", 8)
+		var meter := PanelKit.meter(reliability, bonus, GK.COALITION_BONUS_MAX, -1.0)
+		meter.custom_minimum_size.x = 120.0 * UiTheme.text_scale()
+		meter.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		reliability.add_child(_right("%.0f%%" % (bonus / GK.COALITION_BONUS_MAX * 100.0)))
+		grid.add_child(reliability)
 
 		# Live against authored, because the drift is the story. A party sitting
 		# at its own ceiling prints one number; one that has slipped prints both.
@@ -394,7 +435,11 @@ func _build_partner_table(ns) -> Control:
 		# The worst a bill can cost this party: the whip's full pull IS the
 		# coalition bonus, so that bonus is the strain, measured against members
 		# who would otherwise vote the other way.
-		grid.add_child(_right(str(Discipline.rebel_seats(ns, party, bonus, 0.0))))
+		# The members who may break ranks, counted and drawn one dot each (B's dashed box, seat by seat).
+		var rebels := Discipline.rebel_seats(ns, party, bonus, 0.0)
+		var dots := _right(("%d  " % rebels) + "• ".repeat(mini(rebels, 20)).strip_edges() if rebels > 0 else "0")
+		dots.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		grid.add_child(dots)
 
 	return grid
 
