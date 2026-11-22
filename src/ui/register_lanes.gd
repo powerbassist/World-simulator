@@ -158,7 +158,7 @@ func _draw() -> void:
 	var said := ends()
 	if not said.is_empty():
 		var y := head + _lane_h() * _rows.size() + fs * 1.1
-		var a0 := x_of(int(_rows[0]["start"]))
+		var a0 := x_of(int(_rows[0]["start"])) + 4.0  # clear of today's hairline, which sits on the start
 		draw_string(font, Vector2(a0, y), said[0], HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)  # i18n: row-ok chart data
 		var w1 := font.get_string_size(said[1], HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		var x1 := clampf(x_of(int(_rows[0]["opens"])) - w1 * 0.5, a0 + font.get_string_size(said[0], HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 8.0,
