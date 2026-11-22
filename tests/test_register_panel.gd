@@ -265,8 +265,19 @@ func _check_by_population_and_back() -> void:
 	_press(_fill_button("population"))
 	if _panel.rows() != Units.fill_by_population(_main._state.player(), _main._loader, _type(), 3):
 		_fail("By population did not fill the count by population: %s" % [_panel.rows()])
+	# The picked fill shows itself (the page rebuilt at once here, as its next frame would).
+	_panel._refresh()
+	if not _fill_button("population").button_pressed or _fill_button("need").button_pressed:
+		_fail("By population filled the rows but the toggles do not show it")
 	_panel._fill(true)
 	_panel._fill_mode = "need"
+	# Nothing placed: no place for the programme in the bill's rail.
+	var held: Dictionary = _panel._placed.duplicate()
+	_panel._placed = {}
+	_panel._refresh()
+	if not _panel.landing().is_empty():
+		_fail("with nothing placed the page still offers a landing: %s" % [_panel.landing()])
+	_panel._placed = held
 	_panel.mark_dirty()
 
 

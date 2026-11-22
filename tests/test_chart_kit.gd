@@ -250,6 +250,20 @@ func _check_charts() -> void:
 			_fail("a click on the second row picked '%s'" % _picked)
 		if not String(dots._get_tooltip(Vector2(10.0, dots.row_height() * 0.5))).begins_with("A"):
 			_fail("the hover over the first row does not name it")
+		# Register in C: with a head row the rows start one row down; a click and a hover find the row under them.
+		dots.setup(dots.data(), {"head": {"label": "Region", "value": "Now"}})
+		_picked = ""
+		click.position = Vector2(10.0, dots.row_height() * 2.5)
+		dots._gui_input(click)
+		if _picked != "b":
+			_fail("under a head row, a click on the second row picked '%s'" % _picked)
+		_picked = ""
+		click.position = Vector2(10.0, dots.row_height() * 0.5)
+		dots._gui_input(click)
+		if _picked != "":
+			_fail("a click on the head row picked '%s'" % _picked)
+		if not String(dots._get_tooltip(Vector2(10.0, dots.row_height() * 1.5))).begins_with("A"):
+			_fail("under a head row, the hover over the first row does not name it")
 	var rng := _chart(_range, ChartRange)
 	if rng == null:
 		_fail("ChartKit.range_bar built no ChartRange")

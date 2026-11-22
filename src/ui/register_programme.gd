@@ -61,7 +61,7 @@ static func _money(panel, body: Control, row: Dictionary, quote: Dictionary) -> 
 	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	line.set_meta("money", true)
 	ChartKit.range_bar(body, Strings.t("Price range, bn"), lo, float(quote["estimate_eur_m"]) / 1000.0, hi).set_meta("range", true)
-	PanelKit.plain_line(body, Strings.t("The bill by year, bn"), PanelKit.Tone.DIM).theme_type_variation = UiTheme.CAPTION
+	PanelKit.plain_line(body, Strings.t("By year, bn"), PanelKit.Tone.DIM).theme_type_variation = UiTheme.CAPTION
 	var cash = RegisterMoney.new()
 	cash.set_meta("cash", true)
 	# Its running cost lands on a spending line: that line's hue, never the accent (Diane's R4 on #443).

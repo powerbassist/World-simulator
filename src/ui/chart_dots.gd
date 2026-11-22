@@ -195,14 +195,14 @@ func _draw_head(font: Font, fs: int, s: Vector2) -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var i := int((event.position.y - _top()) / row_height())
+		var i := int(floorf((event.position.y - _top()) / row_height()))
 		if i >= 0 and i < _rows.size():
 			picked.emit(String(_rows[i]["id"]))
 			accept_event()
 
 
 func _get_tooltip(at: Vector2) -> String:
-	var i := int(at.y / row_height())
+	var i := int(floorf((at.y - _top()) / row_height()))
 	if i < 0 or i >= _rows.size():
 		return ""
 	var r: Dictionary = _rows[i]

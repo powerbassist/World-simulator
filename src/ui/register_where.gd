@@ -11,7 +11,6 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
-const ChartDots = preload("res://src/ui/chart_dots.gd")
 const RegisterLines = preload("res://src/ui/register_lines.gd")
 const Units = preload("res://src/sim/units.gd")
 const UK = preload("res://src/sim/units_constants.gd")
@@ -76,7 +75,7 @@ static func build(panel, parent: Control, ns, row: Dictionary, shown: Dictionary
 	var body := PanelKit.sheet(parent)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var band: Dictionary = Units.band(ns, panel._loader, panel._type)
-	_fills(panel, body, band)
+	_fills(panel, body)
 	var data: Array = []
 	for region in panel._loader.regions.get(ns.id, []):
 		var id := String(region.id)
@@ -109,8 +108,8 @@ static func build(panel, parent: Control, ns, row: Dictionary, shown: Dictionary
 	_who(panel, col, row, shown, after)
 
 
-## By need, by population (each refills the programme's count), or by hand on the rows; the band's rule at the right.
-static func _fills(panel, body: Control, band: Dictionary) -> void:
+## By need or by population (each refills the programme's count); by hand, a row's own stepper or "+".
+static func _fills(panel, body: Control) -> void:
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 10)
 	body.add_child(line)
@@ -129,16 +128,6 @@ static func _fills(panel, body: Control, band: Dictionary) -> void:
 			panel._fill(mode == "need")
 			panel._dirty = true)
 		line.add_child(b)
-	var hand := PanelKit.plain_line(line, Strings.t("or add units region by region"), PanelKit.Tone.DIM)
-	hand.theme_type_variation = UiTheme.CAPTION
-	hand.autowrap_mode = TextServer.AUTOWRAP_OFF
-	hand.clip_text = true
-	hand.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	hand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hand.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	RegisterLines.band_chip(line, band)
-	for label in line.get_child(line.get_child_count() - 1).find_children("*", "Label", true, false):  # i18n: ok a class name
-		(label as Label).autowrap_mode = TextServer.AUTOWRAP_OFF  # the rule on one line, beside the fills
 
 
 ## The units column beside the table, one control a row in the table's order: a stepper where the programme places
@@ -185,22 +174,12 @@ static func _units(panel, table: Control, data: Array, h: float) -> void:
 			cell.add_child(add)
 
 
-## What the band's shade and the plot's two marks say, under the table: the tone never alone.
+## The band's shade said under the table, as its rule with its glyph (the tone never alone). The plot's two marks
+## need no key: the head names the column "Now -> built" and each row prints both figures.
 static func _legend(body: Control, band: Dictionary) -> void:
 	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 8)
 	body.add_child(line)
-	if not band.is_empty():
-		var swatch := ColorRect.new()
-		swatch.color = ChartDots.BAND_FILL * Color(1, 1, 1, 3.0)
-		swatch.custom_minimum_size = Vector2(12, 12)
-		swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		line.add_child(swatch)
-		PanelKit.plain_line(line, Strings.t("%s %% behind the nation, or more") % Num.f(100.0 * UK.UNIT_REGION_BAND, 0), PanelKit.Tone.DIM)
-	PanelKit.plain_line(line, Strings.t("○ now, ● once built"), PanelKit.Tone.DIM)
-	for label in line.find_children("*", "Label", false, false):  # i18n: ok a class name
-		(label as Label).theme_type_variation = UiTheme.CAPTION
-		(label as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
+	RegisterLines.band_chip(line, band)
 
 
 ## The picked region before and after, and the most any other region gives back.
