@@ -130,6 +130,7 @@ func _build_footer() -> Control:
 ## Docked-tab mode: the docking frame's X is the real close (window_manager.gd's register()).
 ## Its row goes too: on a page of its own sheets an empty row would still take a gap.
 func hide_close_button() -> void:
+	_close_button.hide()
 	_close_button.get_parent().hide()
 
 
