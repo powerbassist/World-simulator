@@ -16,6 +16,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
+const FinanceLever = preload("res://src/ui/finance_lever.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const Budget = preload("res://src/sim/budget.gd")
@@ -117,6 +118,28 @@ func _process(_delta: float) -> bool:
 			# The Go puts the cursor on that row's own lever, once the editor is laid out (two frames after the build: G3 S4).
 			if _panel._editor == null or root.gui_get_focus_owner() != _panel._editor._slider:
 				_fail("a Go did not put the cursor on the row's slider")
+			# QA's TAKE on #443 (pass 2 T1's sibling): a tax in force at 0 % (the wealth tax) has no bar to drag, so its open
+			# row keeps the editor's own slider; the wheel over it scrolls the books, never the rate.
+			_panel._draft.revert()
+			root.gui_release_focus()  # the Go's focus on VAT's lever holds the rebuild off
+			_panel.open_row(FinanceDraft.TAX, "wealth")
+			_panel._process(0.0)
+		15:
+			var slider: HSlider = _panel._editor._slider if _panel._editor != null else null
+			if slider == null or slider is FinanceLever or not slider.is_visible_in_tree():
+				_fail("premise: the wealth tax's open row shows no slider of its own")
+			else:
+				for down in [true, false]:
+					var wheel := InputEventMouseButton.new()
+					wheel.button_index = MOUSE_BUTTON_WHEEL_UP
+					wheel.pressed = down
+					wheel.factor = 1.0
+					wheel.position = slider.get_global_rect().get_center()
+					wheel.global_position = wheel.position
+					root.push_input(wheel, true)
+				_panel._process(0.0)
+				if not _panel._draft.is_empty():
+					_fail("the wheel over the wealth tax's slider drafted %d change(s)" % _panel._draft.count())
 			_finish()
 	return false
 

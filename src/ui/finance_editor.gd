@@ -169,6 +169,7 @@ func _lever(parent: Control, step: float, lo: float, hi: float, decimals: int, b
 		parent.add_child(line)
 		return [row_lever, held]
 	var slider := HSlider.new()
+	slider.scrollable = false  # the wheel scrolls the books, never the rate (QA's TAKE on #443, as the row's bar)
 	slider.min_value = lo
 	slider.max_value = hi if hi > lo else lo + step
 	slider.step = step
