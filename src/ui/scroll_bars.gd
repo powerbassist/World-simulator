@@ -11,6 +11,10 @@ const BAR_WIDTH_PX := 10.0
 ## the horizontal bar's. One theme constant, so every one of the ScrollContainers gets it and the bar's own boxes
 ## (and so its input area) stay as they were.
 const SCROLL_GAP_PX := 8.0
+## Design's T16 on #441: the bar of a page that lays out its own sheets stands in the 12 px gap at its
+## scroll's right (gap_bars.gd), so it is thinner than the theme's 10 to sit inside it with room.
+const GAP_BAR := "GapScrollBar"  # i18n: ok a theme variation
+const GAP_BAR_WIDTH_PX := 8.0
 
 
 ## Every floating panel sits inside a ScrollContainer, so nothing is unreachable --
@@ -37,12 +41,22 @@ static func apply(theme: Theme, ink: Color, edge: Color, dim: Color) -> void:
 		theme.set_stylebox("grabber", type, _grabber_box(edge))
 		theme.set_stylebox("grabber_highlight", type, _grabber_box(edge.lightened(0.25)))
 		theme.set_stylebox("grabber_pressed", type, _grabber_box(dim))
+	theme.set_type_variation(GAP_BAR, "VScrollBar")
+	var slim := StyleBoxFlat.new()
+	slim.bg_color = Color(ink.r, ink.g, ink.b, 0.6)
+	slim.set_corner_radius_all(2)
+	slim.content_margin_left = GAP_BAR_WIDTH_PX / 2.0
+	slim.content_margin_right = GAP_BAR_WIDTH_PX / 2.0
+	theme.set_stylebox("scroll", GAP_BAR, slim)
+	theme.set_stylebox("grabber", GAP_BAR, _grabber_box(edge, GAP_BAR_WIDTH_PX))
+	theme.set_stylebox("grabber_highlight", GAP_BAR, _grabber_box(edge.lightened(0.25), GAP_BAR_WIDTH_PX))
+	theme.set_stylebox("grabber_pressed", GAP_BAR, _grabber_box(dim, GAP_BAR_WIDTH_PX))
 
 
-static func _grabber_box(bg: Color) -> StyleBoxFlat:
+static func _grabber_box(bg: Color, width := BAR_WIDTH_PX) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = bg
 	box.set_corner_radius_all(2)
-	box.content_margin_left = BAR_WIDTH_PX / 2.0
-	box.content_margin_right = BAR_WIDTH_PX / 2.0
+	box.content_margin_left = width / 2.0
+	box.content_margin_right = width / 2.0
 	return box
