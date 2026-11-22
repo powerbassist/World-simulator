@@ -19,6 +19,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const WorksRows = preload("res://src/ui/works_rows.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
+const Num = preload("res://src/ui/num.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -47,6 +48,7 @@ func _process(_delta: float) -> bool:
 			_check_page()
 			_check_axes()
 			_check_marks()
+			_check_figures()
 			_started = String(_page.picked())
 			_press(_with_meta("works_go", _page))
 		6:
@@ -66,6 +68,16 @@ func _process(_delta: float) -> bool:
 			_page.mark_dirty()
 		12:
 			_check_refusal()
+			_press(_with_meta("works_start_" + _offer_ids()[0], _page))
+		14:
+			# One work building: pick another offer, whose sheet says it takes the last slot.
+			_page._picked = _offer_ids()[0]
+			_page.mark_dirty()
+		16:
+			_check_one_free()
+			_press(_with_meta("works_go", _page))
+		18:
+			_check_full()
 			_finish()
 	return false
 
@@ -181,6 +193,74 @@ func _check_marks() -> void:
 		var inset: float = (title as Button).get_theme_stylebox("normal").get_margin(SIDE_LEFT)
 		if absf(title.global_position.x + inset - sub.global_position.x) > 1.0:
 			_fail("a lane's name sits at %s, its sub-line at %s" % [title.global_position.x + inset, sub.global_position.x])
+
+
+## QA's TAKE on #450: the figures and sentences a player reads, each against its own source.
+func _check_figures() -> void:
+	var ns = _state().player()
+	var rows: Array = WorksRows.rows(_state(), _main._loader, ns)
+	var term := _term()
+	if _lead_text() != _page._lead(rows, term):
+		_fail("the page's lead '%s' is not the lead for its state" % _lead_text())
+	var picked: Dictionary = rows.filter(func(r): return String(r["id"]) == String(_page.picked()))[0]
+	var opens := int(picked["opens"])
+	# A term ending five months before the opening: the lead counts them.
+	var said: String = _page._lead(rows, opens - 5)
+	if said != _page.tr_n("%s would open %d month after your term ends.", "%s would open %d months after your term ends.", 5) % [picked["name"], 5]:
+		_fail("an offer opening five months after the term reads '%s'" % said)
+	var with := Num.f(WorksRows.bill_at(rows, _now(), String(picked["id"])), 2)
+	if not _text_under(_with_meta("works_sheet", _page)).contains(_page.tr("Works' bill: %s %% of GDP. No vote.") % with):
+		_fail("the sheet's works' bill is not %s with the picked offer" % with)
+	if not _text_under(_with_meta("works_sheet", _page)).contains(_page.tr("It takes a free slot.")):
+		_fail("with every slot free the sheet does not say it takes a free slot")
+	var most := -1
+	for action in JSON.parse_string(FileAccess.get_file_as_string("res://data/project-actions/projects.json"))["actions"]:
+		for cond in action["preconditions"]:
+			if String(cond["field"]) == "project_count" and String(cond["op"]) == "<=":
+				most = maxi(most, int(cond["value"]))
+	if WorksRows.slots(_main._loader) != most + 1:
+		_fail("%d slots; the data's project_count <= %d allows %d" % [WorksRows.slots(_main._loader), most, most + 1])
+
+
+## One work building, an offer picked: the head's bill is the register's, the sheet takes the last slot.
+func _check_one_free() -> void:
+	var ns = _state().player()
+	var bill: String = _page.tr("%s %%") % Num.f(Projects.bill_pct_gdp(ns, _main._loader), 3)
+	if Projects.bill_pct_gdp(ns, _main._loader) <= 0.0 or not _text_under(_page).contains(bill + " "):
+		_fail("the head's bill tile does not read %s" % bill)
+	var sheet = _with_meta("works_sheet", _page)
+	if sheet == null or not _text_under(sheet).contains(_page.tr("It takes the last free slot.")):
+		_fail("one slot free and the picked offer's sheet does not say it takes the last one")
+
+
+## Both slots taken: the lead says nothing can start, the tile counts them.
+func _check_full() -> void:
+	var ns = _state().player()
+	var slots := WorksRows.slots(_main._loader)
+	if Projects.building_count(ns) != slots:
+		_fail("%d works building, not the %d slots" % [Projects.building_count(ns), slots])
+		return
+	if _lead_text() != _page.tr("Every slot is taken: nothing can start until a work opens."):
+		_fail("every slot taken and the lead reads '%s'" % _lead_text())
+	if not _text_under(_page).contains(_page.tr("%d of %d") % [slots, slots] + " "):
+		_fail("the head's tile does not read %d of %d" % [slots, slots])
+
+
+func _term() -> int:
+	var when := Trends.vote_date(_state().player())
+	return when.x * 12 + when.y if Trends.months_until(_state(), when.x, when.y) >= 0 else -1
+
+
+func _lead_text() -> String:
+	for l in _page.find_children("*", "Label", true, false):  # i18n: ok a class name
+		if (l as Label).theme_type_variation == UiTheme.LEAD and l.is_visible_in_tree():
+			return (l as Label).text
+	return ""
+
+
+func _offer_ids() -> Array:
+	return WorksRows.rows(_state(), _main._loader, _state().player()).filter(
+		func(r): return String(r["state"]) == WorksRows.OFFER and r["start"] != null).map(func(r): return String(r["id"]))
 
 
 ## A refused verb is said inside the head sheet, never on the map between the sheets.
