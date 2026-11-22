@@ -47,7 +47,7 @@ static func rows(state, loader, ns) -> Array:
 			var r := _row(loader, ns, pid, OFFER, verbs)
 			r["opens"] = today + int(r["months"])
 			r["blocs"] = action.effects.get("bloc_offset", {})
-			r["summary"] = Strings.row_summary("project-actions", action)
+			r["summary"] = Strings.row_summary("project-actions", action)  # i18n: row-ok through Strings.row_summary
 			out.append(r)
 	for pid in Projects.completed(ns):
 		out.append(_row(loader, ns, String(pid), DONE, verbs))

@@ -154,7 +154,7 @@ func _head(ns, rows: Array, term: int) -> void:
 	line.add_child(lead)
 	var bill := Projects.bill_pct_gdp(ns, _loader)
 	PanelKit.figure_tile(line, tr("%s %%") % Num.f(bill, 3), tr("of GDP a year · %s bn") % Num.f(bill / 100.0 * float(ns.gdp_eur_bn), 1))
-	PanelKit.figure_tile(line, tr("+%s %%") % Num.f(ns.project_potential_target_pct, 3), tr("growth a year bought so far"))
+	PanelKit.figure_tile(line, tr("+%s %%") % Num.f(ns.project_potential_target_pct, 3), tr("growth a year bought"))
 	PanelKit.figure_tile(line, tr("%d of %d") % [Projects.building_count(ns), WorksRows.slots(_loader)], tr("works being built"))
 
 
@@ -199,7 +199,7 @@ func _works(main: Control, rows: Array, now: int, term: int) -> void:
 		if String(r["id"]) == _picked and String(r["state"]) == WorksRows.OFFER:
 			name = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
 	bill.setup(rows, first, last, _picked if name != "" else "", name)
-	var caption := PanelKit.plain_line(words.get_child(0), tr("Paid from the month a work starts until the month it opens."))
+	var caption := PanelKit.plain_line(words.get_child(0), tr("Paid until the work opens."))
 	caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if name != "":
 		PanelKit.plain_line(words.get_child(0), tr("Dashed: with the picked work."), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

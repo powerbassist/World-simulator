@@ -29,6 +29,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open projects   (G3 S4 Public works "A calendrier": nothing building, every work on offer)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --works-full --open projects   (G3 S4 Public works: both slots taken, today, nothing can start)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign
@@ -701,6 +702,7 @@ var _downgrade := false
 var _redistribute := false
 var _invest := false
 var _build := false
+var _works_full := false
 ## Register slice 2: the register opened from the start's region warning (its card's Open), and
 ## a programme of that warning voted with its overrun card posted (the Programmes tab).
 var _warned := false
@@ -1127,6 +1129,8 @@ func _init() -> void:
 			_invest = true
 		elif args[i] == "--build":
 			_build = true
+		elif args[i] == "--works-full":
+			_works_full = true
 		elif args[i] == "--warned":
 			_warned = true
 		elif args[i] == "--programmes":
@@ -1656,8 +1660,8 @@ func _apply_view() -> void:
 		_soak_the_rich()
 	if _invest:
 		_back_the_biggest_sector()
-	if _build:
-		_break_ground()
+	if _build or _works_full:
+		_break_ground(_build)
 	if _warned or _programmes:
 		_stage_the_warning()
 	if _region:
@@ -3787,7 +3791,8 @@ func _commit_delta(spending: Dictionary, taxes: Dictionary) -> void:
 	Budget.commit(state, pending)
 
 
-func _break_ground() -> void:
+## `tick` false (--works-full): the works are started today and nothing runs, so every slot is taken.
+func _break_ground(tick := true) -> void:
 	var state = _main._state
 	if state == null:
 		return
@@ -3815,7 +3820,10 @@ func _break_ground() -> void:
 		printerr("--build: no project could be started")
 		return
 
-	_tick_months(shortest + 12)
+	if tick:
+		_tick_months(shortest + 12)
+	# The ticked months raise the front pages over the map and the page; a frame of the works wants the page.
+	_main._hud.front_page.dismiss()
 
 	# Scrolled for --invest's reason, and it applies harder here: Public Works lists
 	# what is building, what is finished and what is left, so the finished section --
