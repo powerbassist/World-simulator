@@ -34,6 +34,9 @@ const ELSEWHERE := "@elsewhere"
 
 ## What Commit will move the balance by, in EUR bn a year; read by the tests
 ## beside the text the line prints.
+## G3 decision 1 (red is bad news only): a strip pricing a verb on a G3 screen prints the
+## price in the body ink with its minus sign; the old screens keep their tones.
+var price_neutral := false
 var money_bn := 0.0
 var money_label: Label
 var _caption: Label
@@ -78,7 +81,7 @@ func show_effects(gain_bn: float, who := "", when := "", has_money := true,
 	_caption.text = tr("Balance this year")
 	_caption.visible = true
 	money_label.text = money_text(gain_bn)
-	money_label.theme_type_variation = cell_variation(money_tone(gain_bn))
+	money_label.theme_type_variation = "" if price_neutral else cell_variation(money_tone(gain_bn))
 	_money_row.visible = has_money
 	_who.text = who
 	_who.visible = who != "" and has_money
@@ -101,7 +104,7 @@ func show_lines(caption: String, money: String, gain_bn: float, who := "", when 
 	# No caption: the money stands at the line's start (a closure's narrow columns).
 	_caption.visible = caption != ""
 	money_label.text = money
-	money_label.theme_type_variation = cell_variation(money_tone(gain_bn))
+	money_label.theme_type_variation = "" if price_neutral else cell_variation(money_tone(gain_bn))
 	_money_row.visible = true
 	_who.text = who
 	_who.visible = who != ""

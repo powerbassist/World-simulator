@@ -51,6 +51,7 @@ func _process(_delta: float) -> bool:
 		_check_delta_never_prints_a_false_zero()
 		_check_tone_reads_the_convention_and_not_the_sign()
 		_check_no_panel_builds_its_own_row_any_more()
+		_check_g3_shapes_have_one_home()
 		_check_no_hand_written_panel_list()
 		_check_the_dirty_sweep_is_derived()
 		_build_kit_samples()
@@ -257,6 +258,21 @@ func _check_no_panel_builds_its_own_row_any_more() -> void:
 			_fail("%s builds its rows without the kit" % path)
 	if checked < 19:
 		_fail("only %d panel files were scanned, and there are nineteen" % checked)
+
+
+## G3 S3 (#441): the figure tile is PanelKit.figure_tile and an answer's row is
+## AnswerRow.add (answer_row.gd). A UI file that rebuilds either -- a tile plate holding a
+## PanelKit.figure, an "answer_row" of its own -- is where the next panel copies the wrong one.
+func _check_g3_shapes_have_one_home() -> void:
+	for path in _gd_files("res://src/ui"):
+		var source := _read(path)
+		if path.ends_with("/panel_kit.gd") or path.ends_with("/answer_row.gd"):
+			continue
+		if source.contains("TILE_PANEL") and source.contains("PanelKit.figure("):
+			_fail("%s builds its own figure tile: PanelKit.figure_tile() is the one" % path)
+		for name in ["func tile(", "func _tile(", "func figure_tile(", "func answer_row(", "func _answer_row(", "set_meta(\"answer_row\""]:
+			if source.contains(name):
+				_fail("%s carries its own `%s`: the shape lives in PanelKit / AnswerRow" % [path, name])
 
 
 # -- The registry ----------------------------------------------------------------

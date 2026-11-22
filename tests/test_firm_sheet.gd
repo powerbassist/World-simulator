@@ -240,13 +240,13 @@ func _check_lit_block_on_screen() -> void:
 	if block == null:
 		_fail("no lit block a frame after the right click")
 		return
-	var scroll: Control = _panel._sheet.get_parent().get_parent()
+	var scroll: Control = _panel._sheet.get_parent()  # the scroll itself since T14
 	if not scroll.get_global_rect().grow(1.0).encloses(block.get_global_rect()):
 		_fail("the lit block %s is off its scroll's view %s" % [block.get_global_rect(), scroll.get_global_rect()])
 
 
 func _right_click_major() -> void:
-	(_panel._sheet.get_parent().get_parent() as ScrollContainer).scroll_vertical = 0
+	(_panel._sheet.get_parent() as ScrollContainer).scroll_vertical = 0  # the column is the scroll's own child since T14 (no gutter)
 	for button in _panel.find_children("*", "Button", true, false):
 		if String(button.get_meta("firm", "")) == String(_major.id):
 			var click := InputEventMouseButton.new()

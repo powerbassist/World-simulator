@@ -242,8 +242,9 @@ func _check_go_landed() -> void:
 		_fail("a closure's Answer selected '%s' on the sheet, not %s" % [_panel._firm_id, _major.id])
 	preload("res://src/ui/sectors_shell.gd").open_firm("industry", String(_major.id), _main)
 	var companies = _main._companies_panel
-	if not _main._windows.is_open("companies") or companies._open_sector != "industry" or companies._open_firm != String(_major.id):
-		_fail("go_firm opened sector '%s', firm '%s'" % [companies._open_sector, companies._open_firm])
+	# G3 S3: the route picks the firm's timeline row, if it has one; the overview has no firm card.
+	if not _main._windows.is_open("companies") or not companies._pick_firm in ["", String(_major.id)]:
+		_fail("go_firm opened the overview on firm '%s', not %s" % [companies._pick_firm, _major.id])
 
 
 ## A good covered under the line says so on its sector's row, and the strip's Go aims

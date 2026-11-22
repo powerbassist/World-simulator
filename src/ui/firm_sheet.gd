@@ -12,6 +12,7 @@ extends RefCounted
 ## change the picture staged is cut: the sim keeps no series per firm.
 
 const VerbBlock = preload("res://src/ui/verb_block.gd")
+const CompaniesK = preload("res://src/sim/companies_constants.gd")
 const Companies = preload("res://src/sim/companies.gd")
 const Closures = preload("res://src/sim/closures.gd")
 const Region = preload("res://src/core/region.gd")
@@ -48,13 +49,18 @@ static func build(panel, parent: Control, ns, company) -> void:
 	var name := PanelKit.plain_line(words, company.company_name, PanelKit.Tone.PLAIN)
 	name.theme_type_variation = UiTheme.LEAD
 
+	# G3 S3: the figures on tiles (the kit's firm sheet).
 	var figures := HBoxContainer.new()
-	figures.add_theme_constant_override("separation", 28)
+	figures.add_theme_constant_override("separation", 8)
 	parent.add_child(figures)
-	PanelKit.figure(figures, CompanyVerb.thousands(Companies.headcount(ns, company)), Strings.t("Jobs"))
-	PanelKit.figure(figures, Strings.t("%s bn") % Num.f(Companies.value_eur_bn(ns, company), 1), Strings.t("Worth"))
-	PanelKit.figure(figures, Strings.t("%s %%") % Num.f(100.0 * Companies.state_share_of(ns, company.id), 0), Strings.t("State"))
+	PanelKit.figure_tile(figures, CompanyVerb.thousands(Companies.headcount(ns, company)), Strings.t("Jobs"))
+	PanelKit.figure_tile(figures, Strings.t("%s bn") % Num.f(Companies.value_eur_bn(ns, company), 1), Strings.t("Worth"))
+	PanelKit.figure_tile(figures, Strings.t("%s %%") % Num.f(100.0 * Companies.state_share_of(ns, company.id), 0), Strings.t("State"))
 
+	# What the state holds and pays, and its chair (moved here with the overview's firm card, G3 S3).
+	var held := standing(loader, ns, company)
+	if held != "":
+		PanelKit.plain_line(parent, held).set_meta("standing", String(company.id))
 	if String(panel._last_refusal) != "":
 		ResultTone.tint(PanelKit.line(parent, panel._last_refusal), ResultTone.BLOCKED)
 	for row in Closures.open(ns):
@@ -79,6 +85,24 @@ static func build(panel, parent: Control, ns, company) -> void:
 static func _link(row: Control, text: String, call: Callable) -> void:
 	var press := PanelKit.sized(Button.new())
 	press.text = text
-	press.flat = true
+	# A ghost, not bold text (Design's T9 on #441): a click has two looks, a button or a ghost.
+	press.theme_type_variation = UiTheme.GHOST
 	press.pressed.connect(call)
 	row.add_child(press)
+
+
+## The firm's standing in one line: what the state holds and pays, and its chair.
+static func standing(loader, ns, company) -> String:
+	var parts := PackedStringArray()
+	var held := Companies.state_share_of(ns, company.id)
+	if held > 0.0:
+		parts.append(Strings.t("Public %.0f %%, %s bn a year to the treasury") % [
+			100.0 * held, Num.f(held * Companies.output_eur_bn(ns, company) * CompaniesK.DIVIDEND_YIELD, 2)])
+	var intensity := Companies.subsidy_of(ns, company.id)
+	if intensity > 0.0:
+		parts.append(Strings.t("Subsidised %.0f %%") % (100.0 * intensity))
+	var chair := String(ns.companies.get(company.id, {}).get("board_chair", ""))
+	if chair != "":
+		var chair_name: String = loader.person_name(chair)
+		parts.append(Strings.t("Chair: %s") % (chair_name if chair_name != "" else chair))
+	return ". ".join(parts)

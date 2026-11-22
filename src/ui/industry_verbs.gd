@@ -36,21 +36,27 @@ static func build(panel, parent: Control, ns, company) -> void:
 	var state = panel._state
 	var loader = panel._loader
 	var details := {}
+	var selectors: Array = []
 	for action in Companies.available(state, ns, loader.company_actions, String(company.id), loader):
 		var id := String(action.id)
 		var row := PanelKit.buttons(parent)
 		var selector := CompanyVerb.button(state, loader, ns, company, action)
 		selector.set_meta("action_id", id)
 		row.add_child(selector)
+		selectors.append(selector)
+		# G3 S3: the cost and its caption stacked beside the verb, so a caption never wraps under it.
+		var cost := VBoxContainer.new()
+		cost.add_theme_constant_override("separation", 0)
+		row.add_child(cost)
 		var est: Dictionary = Processes.estimate(state, ns, loader, action, String(company.id)) if Processes.is_process(action) else {}
 		var money: Array = money_line(state, loader, ns, company, action, est)
-		var money_label := PanelKit.plain_line(row, String(money[1]), PanelKit.Tone.PLAIN)
+		var money_label := PanelKit.plain_line(cost, String(money[1]), PanelKit.Tone.PLAIN)
 		money_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-		money_label.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(float(money[2])))
+		money_label.theme_type_variation = ""  # G3 decision 1: a price is neutral, its minus sign says the cost
 		selector.set_meta("money_label", money_label)
 		# Aid, said as the player weighs it (screen 5 slice 2): a job's price, a tax point's share.
 		if AidWords.is_aid(action):
-			var aid := PanelKit.plain_line(row, AidWords.caption(state, loader, ns, company, action))
+			var aid := PanelKit.plain_line(cost, AidWords.caption(state, loader, ns, company, action))
 			aid.autowrap_mode = TextServer.AUTOWRAP_OFF
 		var why := CompanyVerb.refusal(state, loader, ns, company, action)
 		if why != "":
@@ -66,6 +72,7 @@ static func build(panel, parent: Control, ns, company) -> void:
 		detail.custom_minimum_size.x = STRIP_WIDTH
 		parent.add_child(detail)
 		var strip := EffectsStrip.new()
+		strip.price_neutral = true
 		detail.add_child(strip)
 		strip.show_lines(String(money[0]), String(money[1]), float(money[2]),
 			EffectsStrip.who_text(AidWords.offsets(state, loader, ns, company, action)),
@@ -83,6 +90,8 @@ static func build(panel, parent: Control, ns, company) -> void:
 		details[id] = detail
 		selector.focus_entered.connect(func() -> void: _show(panel, details, id))
 		selector.pressed.connect(func() -> void: _show(panel, details, id))
+	# G3 S3: the State's verbs are one class group: one width across their rows, the longest label's.
+	PanelKit.same_class(selectors)
 	_show(panel, details, String(panel._focus_verb))
 
 

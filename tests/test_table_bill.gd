@@ -16,6 +16,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 const Click = preload("res://tests/click.gd")
 
+var _tab
 var _failures: Array[String] = []
 var _main
 var _frame := 0
@@ -37,17 +38,17 @@ func _process(_delta: float) -> bool:
 			if _bill == null:
 				return _end()
 			_check_names()
-			# V5.3 a + b step 2: a firm's bills sit with its verbs, under its Act.
-			var panel = _main._companies_panel
-			panel._open_sector = String(_bill_firm.sector)
-			panel._open_firm = String(_bill_firm.id)
-			_main._windows.open("companies")
+			# A firm's bills sit with its verbs, on its sector tab's firm sheet (G3 S3: the
+			# overview no longer carries a firm card).
+			_tab = _main._sector_panels[String(_bill_firm.sector)]
+			_main._windows.open("sector_%s" % String(_bill_firm.sector))
+			_tab._select(String(_bill_firm.id))
 		6:
-			for b in _main._companies_panel.find_children("TableBill", "Button", true, false):
+			for b in _tab.find_children("TableBill", "Button", true, false):
 				if String(b.get_meta("law_id", "")) == String(_bill.id):
 					_target = b
 			if _target == null or not _target.is_visible_in_tree():
-				_fail("the companies panel offers no 'Table a bill' for %s" % _bill.id)
+				_fail("the firm sheet offers no 'Table a bill' for %s" % _bill.id)
 				return _end()
 			_press(true)
 		9:
@@ -60,9 +61,9 @@ func _process(_delta: float) -> bool:
 			# A lost vote's cooldown: the bill is not proposable, so it is not offered
 			# (the Legislature's own list reads Legislature.available the same way).
 			_main._state.player().law_cooldown_months[String(_bill.id)] = 6
-			_main._companies_panel.mark_dirty()
+			_tab.mark_dirty()
 		15:
-			for b in _main._companies_panel.find_children("TableBill", "Button", true, false):
+			for b in _tab.find_children("TableBill", "Button", true, false):
 				if String(b.get_meta("law_id", "")) == String(_bill.id):
 					_fail("a bill under its cooldown is still offered as 'Table a bill'")
 			return _end()

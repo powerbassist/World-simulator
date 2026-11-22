@@ -4,6 +4,7 @@ extends RefCounted
 ## closure's buyer, so the player learns one shape. The caller fills the strip and makes
 ## the counter; the picks are read, then answered.
 
+const ChartKit = preload("res://src/ui/chart_kit.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -26,6 +27,7 @@ static func build(box: Control, key: String, counters: Array, fill: Callable, ma
 	# spacer the other half, so it shrinks with a narrow workspace and wraps at a larger
 	# text size, while its money stays near its caption rather than at the far edge.
 	var strip := EffectsStrip.new()
+	strip.price_neutral = true
 	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	strip.set_meta("counter_strip", true)
 	var half := HBoxContainer.new()
@@ -41,9 +43,16 @@ static func build(box: Control, key: String, counters: Array, fill: Callable, ma
 	for option in counters:
 		if String(option["id"]) == String(_picked.get(key, "")):
 			shown = option
+	# The chance they accept as a range on a 0 to 100 track (Design's T8 on #441), the sim's
+	# shown range, never the drawn odds; its middle is the range's.
+	var chance := ChartKit.range_bar(box, Strings.t("Chance they accept, %"), 0.0, 0.0, 0.0)
+	chance.set_meta("counter_chance", true)
 	var show := func(option: Dictionary) -> void:
 		_picked[key] = String(option["id"])
 		fill.call(strip, option)
+		var lo := 100.0 * float(option["odds_lo"])
+		var hi := 100.0 * float(option["odds_hi"])
+		chance.get_meta("chart").setup(lo, (lo + hi) / 2.0, hi, {"track": [0.0, 100.0], "places": 0})
 	for option in counters:
 		var chip := PanelKit.sized(Button.new())
 		chip.text = Strings.t("%d %%") % roundi(100.0 * float(option["counter"]))
@@ -54,8 +63,15 @@ static func build(box: Control, key: String, counters: Array, fill: Callable, ma
 		chip.pressed.connect(func() -> void: show.call(option))
 		row.add_child(chip)
 	box.add_child(half)
+	box.move_child(chance, -1)
 	box.add_child(go)
 	go.pressed.connect(func() -> void: make.call(String(_picked[key])))
+	# Inside an answer list (AnswerRow), the counter's button is one of the answers: one class.
+	if box.has_meta("answer_list"):
+		var answers: Array = box.get_meta("buttons", [])
+		answers.append(go)
+		box.set_meta("buttons", answers)
+		PanelKit.same_class(answers)
 	show.call(shown)
 
 

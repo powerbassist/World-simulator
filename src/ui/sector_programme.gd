@@ -136,6 +136,7 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	if pick == now or pick == queued:
 		return
 	var strip := EffectsStrip.new()
+	strip.price_neutral = true
 	parent.add_child(strip)
 	var change := -(float(prices[pick]) - float(prices[now]))
 	strip.show_lines(Strings.t("Treasury"), Strings.t("%s a year") % EffectsStrip.money_text(change), change,

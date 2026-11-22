@@ -61,9 +61,14 @@ func _process(_delta: float) -> bool:
 		8:
 			_press(_with_meta("closure_answer", "rescue"))
 		10:
+			# Nobody picks a row by hand: the answered closure comes back as rescue|firm and the
+			# sheet keeps it by its firm (pass 2 on #441).
+			_check_sheet("rescue|%s" % String(_second_id()))
 			_check_rescue()
 			_announce_third()
 		12:
+			# The third closure starts to wait: it opens in the sheet on its own (the ask T11).
+			_check_sheet("closure|%s" % String(_row_of_third().get("id", "")))
 			_pick_the_last_chip()
 		14:
 			_make_the_counter()
@@ -97,11 +102,11 @@ func _check_card() -> void:
 	var state = _main._state
 	var ns = state.player()
 	var loader = _main._loader
-	if _panel._progress == null or not _panel._progress.is_visible_in_tree():
-		_fail("card: the In progress strip is not on screen with a closure announced")
+	if not _panel._side.is_visible_in_tree() or _panel._side.get_child_count() == 0:
+		_fail("card: the side sheet is not on screen with a closure announced")
 		return
 	var row: Dictionary = Closures.open(ns)[0]
-	var text := _text_under(_panel._progress)
+	var text := _text_under(_panel._side)
 	var city = Region.find_city(loader.regions.get(ns.id, []), String(row["city_id"]))
 	if not text.contains(String(_major.company_name)) or (city != null and not text.contains(String(city.city_name))):
 		_fail("card: '%s' names neither %s nor its city" % [text, _major.company_name])
@@ -152,14 +157,17 @@ func _check_card() -> void:
 		var want := _money_of(answer)
 		if money == null or money.text != want:
 			_fail("card: '%s' reads '%s', its figures print '%s'" % [id, money.text if money != null else "<none>", want])
-		# Side by side: every answer's column shares one flow.
-		var column: Node = button.get_parent()
+		# One list, one row each (AnswerRow, Design's T1 on #441): the button's cell in its row.
+		var answer_row: Node = button.get_parent().get_parent()
+		if not answer_row.has_meta("answer_row"):
+			_fail("card: '%s' is not an answer row" % id)
+			continue
 		if parent == null:
-			parent = column.get_parent()
-		elif column.get_parent() != parent:
-			_fail("card: the answers are not side by side ('%s' in another row)" % id)
-	if not (parent is HFlowContainer):
-		_fail("card: the answers' row is not a flow (%s)" % parent)
+			parent = answer_row.get_parent()
+		elif answer_row.get_parent() != parent:
+			_fail("card: the answers are not one list ('%s' in another)" % id)
+	if parent == null or not parent.has_meta("answer_list"):
+		_fail("card: the answers are not in an answer list (%s)" % parent)
 	if not Pending.window_ids(state, loader).has("companies"):
 		_fail("card: the Industry tab is not marked as waiting")
 	# The overview's card carries the "N decision" chip since the rework pass's C.
@@ -228,12 +236,9 @@ func _check_rescue() -> void:
 	Closures.tick_month(state, _main._loader)
 	var row: Dictionary = Closures.rescues(ns)[0]
 	_panel._refresh()
-	if _panel._progress == null:
-		_fail("rescue alone: the In progress strip is not drawn")
-		return
-	# Read in the new strip: the old rows are queued for freeing, still in the tree.
+	# Read in the new side sheet: the old rows are queued for freeing, still in the tree.
 	var later = null
-	for node in _panel._progress.find_children("*", "Label", true, false):
+	for node in _panel._side.find_children("*", "Label", true, false):
 		if node.has_meta("rescue") and String(node.get_meta("rescue")) == String(row["company_id"]):
 			later = node
 	var months := int(row["months_left"])
@@ -254,7 +259,7 @@ func _check_searching() -> void:
 	if _with_meta("closure_answer", "buyer") != null:
 		_fail("buyer pressed: the answers still stand")
 	var months := int(open[0]["months_left"])
-	if not _text_under(_panel._progress).contains(Strings.tn("%d month left", "%d months left", months) % months):
+	if not _text_under(_panel._side).contains(Strings.tn("%d month left", "%d months left", months) % months):
 		_fail("searching: the row does not say the search's months left (%d)" % months)
 
 
@@ -298,8 +303,12 @@ func _make_the_counter() -> void:
 	var text := _text_under(strip)
 	if strip.money_label.text != _money_of(option):
 		_fail("counter: the strip's money reads '%s', its figures print '%s'" % [strip.money_label.text, _money_of(option)])
-	for want in ["%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))],
-			"(%d %% of refusals)" % roundi(100.0 * float(option["walk"])), EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"]))]:
+	# The chance they accept is the track's (Design's T8), not the strip's words.
+	var track = _with_meta("counter_chance", "true")
+	var chart = track.get_meta("chart") if track != null else null
+	if chart == null or roundi(chart._lo) != roundi(100.0 * float(option["odds_lo"])) or roundi(chart._hi) != roundi(100.0 * float(option["odds_hi"])):
+		_fail("counter: the chance track does not show %d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))])
+	for want in ["(%d %% of refusals)" % roundi(100.0 * float(option["walk"])), EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"]))]:
 		if not text.contains(want):
 			_fail("counter: the strip '%s' does not carry %s" % [text, want])
 	_counter_id = String(option["id"])
@@ -311,7 +320,7 @@ func _check_countered() -> void:
 	if String(row.get("answer", "")) != _counter_id or String(row.get("status", "")) != Closures.SEARCHING:
 		_fail("counter made: the row is %s / '%s', expected searching on '%s'" % [row.get("status", ""), row.get("answer", ""), _counter_id])
 	var said := Strings.t("Answered: %s.") % (Strings.t("Counter %d %%") % int(_counter_id.trim_prefix("negotiate_")))
-	if not _text_under(_panel._progress).contains(said):
+	if not _text_under(_panel._side).contains(said):
 		_fail("counter made: the searching row does not say '%s'" % said)
 
 
@@ -331,8 +340,15 @@ func _stage_the_buyer_back() -> void:
 func _check_re_ask() -> void:
 	var state = _main._state
 	var row := _row_of_third()
-	var text := _text_under(_panel._progress)
+	var text := _text_under(_panel._side)
 	var old: String = EffectsStrip.sum_text(-float(row["back_sweetener_eur_bn"]))
+	# Its timeline row says the buyer is back, not that the plant closes (pass 1 on #441).
+	var lane = _with_meta("timeline_pick", "closure|%s" % String(row["id"]))
+	if lane == null or (lane as Button).text.contains(Strings.t("closes")) or not (lane as Button).text.contains(String(_third.company_name)):
+		_fail("re-ask: the timeline row reads '%s'" % ((lane as Button).text if lane != null else "<none>"))
+	# G3 S3: the side sheet titles a closure, but a buyer back is said by the card itself.
+	if not text.contains(Strings.t("The buyer came back for %s's plant in %s: %s jobs, at the old price.").get_slice("%", 0)):
+		_fail("re-ask: the sheet does not say the buyer came back ('%s')" % text)
 	if not text.contains(Strings.t("Unanswered, the plant is sold at the old price.")) or text.contains(Strings.t("Unanswered, the plant closes.")):
 		_fail("re-ask: the default line is not the sale ('%s')" % text)
 	var sell = _with_meta("closure_answer", "buyer")
@@ -355,7 +371,7 @@ func _check_re_ask() -> void:
 ## Answered once: the row says so, and nothing waits any more.
 func _check_re_ask_answered() -> void:
 	var ns = _main._state.player()
-	var text := _text_under(_panel._progress)
+	var text := _text_under(_panel._side)
 	if not text.contains(Strings.t("Answered: %s.") % Strings.t("Sell at the old price")):
 		_fail("re-ask answered: the row does not say so ('%s')" % text)
 	if text.contains(Strings.t("Unanswered, the plant is sold at the old price.")):
@@ -457,6 +473,20 @@ func _check_unknown_kind() -> void:
 	var odd := {"id": "odd_answer", "kind": "odd", "jobs_lost": 1.0, "months": 1}
 	if ClosureCard.label(odd) != "odd_answer" or ClosureCard.jobs_text(odd) != "" or String(ClosureCard.money(odd)[0]) != "":
 		_fail("unknown kind: the card reads '%s' / '%s' / %s" % [ClosureCard.label(odd), ClosureCard.jobs_text(odd), ClosureCard.money(odd)])
+
+
+## The side sheet shows the row `key` (its decision meta), with no row pressed by hand.
+func _check_sheet(key: String) -> void:
+	var sheet = _with_meta("decision", key)
+	if sheet == null:
+		var shown: Array = _panel._side.find_children("*", "", true, false).filter(func(n): return n.has_meta("decision"))
+		_fail("frame %d: the sheet shows %s, not %s" % [_frame, shown.map(func(n): return n.get_meta("decision")), key])
+
+
+## The second major's id, the one whose plant was rescued.
+func _second_id() -> String:
+	var rescues := Closures.rescues(_main._state.player())
+	return String(rescues[0]["company_id"]) if rescues.size() == 1 else ""
 
 
 func _row_of_third() -> Dictionary:
