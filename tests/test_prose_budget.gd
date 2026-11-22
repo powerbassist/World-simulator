@@ -74,7 +74,7 @@ const TOTAL_PENDING := {
 	"campaign": 140,
 	"diplomacy": 22, "economy": 130, "energy": 118,
 	"orgs": 610,
-	"majority": 97, "projects": 75, "society": 106,
+	"majority": 99, "projects": 75, "society": 106,
 }
 ## The sum of every tab's total and the inbox's, a ratchet: each rebuilding PR
 ## lowers it to what it measured. RF6's target is 3 600, reached at V5.3-0 (b)
@@ -136,6 +136,8 @@ const TOTAL_PENDING := {
 ## Top bar A (#418 pass 2, T5: Economy prints the bar's own money figure and word, "12.9 bn €"
 ## under "deficit, this month", where it printed "-5.30%" under "budget balance"): +2 on
 ## Economy, stated: 2966 -> 2968.
+## G3 S5 round 2 (Design's T6 on #449): the margin tile's break-ranks line reads "Up to 14 may break ranks; still 15 above the
+## line" for "...; leaving 304", +2 on the Majority page, stated: its ceiling 97 -> 99.
 ## The construction register (V5.3 c' slice 1, the author's "A pour commander"), a new Finances tab, a
 ## stated rise 2968 -> 3087 (+119, all on the register: the type's lede and summary, the stock line, the
 ## strip's money, who and when sentences, the charts' titles).
