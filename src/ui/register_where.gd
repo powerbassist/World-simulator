@@ -156,7 +156,7 @@ static func _units(panel, table: Control, data: Array, h: float) -> void:
 			units.set_meta("region_units", id)
 			units.value_changed.connect(func(v: float) -> void:
 				# The rows together never pass the count's own ceiling.
-				panel._placed[id] = mini(int(v), panel.COUNT_MAX - (panel._sum() - int(panel._placed.get(id, 0))))
+				panel._placed[id] = maxi(0, mini(int(v), panel.COUNT_MAX - (panel._sum() - int(panel._placed.get(id, 0)))))
 				panel._count = maxi(1, panel._sum())
 				panel._fill_mode = ""
 				panel._dirty = true)
@@ -167,6 +167,7 @@ static func _units(panel, table: Control, data: Array, h: float) -> void:
 			add.text = "+"  # i18n: ok a glyph
 			add.tooltip_text = Strings.t("Add a unit in %s") % String(d["label"])  # i18n: row-ok the region's shown name, built above
 			add.set_meta("region_add", id)
+			add.disabled = panel._sum() >= panel.COUNT_MAX  # the programme's ceiling: "+" never passes it
 			add.pressed.connect(func() -> void:
 				panel._placed[id] = 1
 				panel._region = id

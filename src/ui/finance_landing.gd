@@ -30,13 +30,19 @@ func title() -> String:
 
 func _draw() -> void:
 	var accent := UiTheme.accent()
-	var r := Rect2(Vector2(1, 1), size - Vector2(2, 2))
+	# Inside the rail's padding on the right as on the left (Diane's T3 on #447): the scroll's column runs to the rim.
+	var r := Rect2(Vector2(1, 1), size - Vector2(2.0 + UiTheme.PAD_PANE, 2.0))
 	var c := float(UiTheme.R_SMALL)
 	for run in [[r.position + Vector2(c, 0), Vector2(r.end.x - c, r.position.y)], [Vector2(r.position.x + c, r.end.y), r.end - Vector2(c, 0)],
 			[r.position + Vector2(0, c), Vector2(r.position.x, r.end.y - c)], [Vector2(r.end.x, r.position.y + c), r.end - Vector2(0, c)]]:
 		draw_dashed_line(run[0], run[1], accent, 1.5, 4.0)
+	# The corners, rounded as the Diary's bookable place's (diary_day.gd _dashed; pass 2 T4 on #447).
+	draw_arc(r.position + Vector2(c, c), c, PI, PI * 1.5, 6, accent, 1.5)
+	draw_arc(Vector2(r.end.x - c, r.position.y + c), c, PI * 1.5, TAU, 6, accent, 1.5)
+	draw_arc(r.end - Vector2(c, c), c, 0.0, PI * 0.5, 6, accent, 1.5)
+	draw_arc(Vector2(r.position.x + c, r.end.y - c), c, PI * 0.5, PI, 6, accent, 1.5)
 	var font := get_theme_default_font()
 	var fs := roundi(UiTheme.SIZE_SMALL * UiTheme.text_scale())
-	var w := size.x - PAD * 2.0
+	var w := size.x - PAD * 2.0 - UiTheme.PAD_PANE
 	draw_string(font, Vector2(PAD, PAD + fs), DiaryDay.fit(_title, font, fs, w), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, accent)  # i18n: row-ok the page's shown text
 	draw_string(font, Vector2(PAD, PAD + fs * 2.2), DiaryDay.fit(_line, font, fs, w), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, accent)  # i18n: row-ok the page's shown text

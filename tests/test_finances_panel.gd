@@ -455,6 +455,10 @@ func _check_names_at_one_x() -> void:
 			_fail("'%s' starts its text at x %.1f, '%s' at %.1f: not one edge" % [name.text, text_x, first.text, first_x])
 		if not name.get_theme_color("font_color").is_equal_approx(UiTheme.TEXT):
 			_fail("'%s' is drawn in %s, not TEXT" % [name.text, name.get_theme_color("font_color").to_html(false)])
+	# Pass 2 T3 on #447: a tax at vote says why it does not open when hovered, never just its own name.
+	for node in locked:
+		if (node as Control).tooltip_text != Strings.t("At vote: withdraw the bill to change it.") or (node as Control).mouse_filter == Control.MOUSE_FILTER_IGNORE:
+			_fail("the locked '%s' hovers '%s'" % [node.text, (node as Control).tooltip_text])
 
 
 ## Gate-443 T12: "Withdraw the bill" is a ghost like its neighbours, never bare bold text.
