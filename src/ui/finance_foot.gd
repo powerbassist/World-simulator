@@ -45,6 +45,8 @@ const Num = preload("res://src/ui/num.gd")
 ## The rail's width at text 100: the waterfall's name column (a change and its figures, "Health, 11.0 → 12.5"), a bar
 ## that still reads at its shortest step, and its figure; with the sheet's margins.
 const WIDTH := 470.0
+## Folded (the inbox shows beside it, so the table keeps its width): the bill in a few lines and its one verb.
+const FOLDED_WIDTH := 230.0
 ## A residual under this (bn a year) is rounding, not a step.
 const RESIDUAL_BN := 0.05
 
@@ -79,6 +81,10 @@ var _loader
 var _draft
 var _price
 var _stamp := ""
+var _folded := false
+## The parts a folded rail hides, and the summary it shows instead.
+var _full: Array[Control] = []
+var _summary: Label
 
 
 func _ready() -> void:
@@ -96,7 +102,12 @@ func _ready() -> void:
 	_date = PanelKit.chip(head, "", UiTheme.CHIP_WARN)
 	_date.size_flags_horizontal = Control.SIZE_SHRINK_END
 	_date.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	PanelKit.plain_line(col, Strings.t("It stays on every Finances tab: Register and Building add to it."), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_WORD
+	_date_words().autowrap_mode = TextServer.AUTOWRAP_OFF  # a date is one line; a wrapping chip squeezed it to a letter a line
+	var stays := PanelKit.plain_line(col, Strings.t("It stays on every Finances tab: Register and Building add to it."), PanelKit.Tone.DIM)
+	stays.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_summary = PanelKit.plain_line(col, "", PanelKit.Tone.PLAIN)
+	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_summary.hide()
 	_empty = PanelKit.plain_line(col, "", PanelKit.Tone.PLAIN)
 	_empty.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_fall = VBoxContainer.new()
@@ -127,6 +138,7 @@ func _ready() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(spacer)
+	_full = [stays, _changes, _vote_box, _text]
 	var verbs := PanelKit.buttons(col)
 	_table = _button(verbs, "Table", Strings.t("Table the bill"), table_pressed)  # i18n: ok a node name
 	_table.theme_type_variation = UiTheme.PRIMARY
@@ -147,6 +159,26 @@ func _button(parent: Control, node_name: String, label: String, signal_out: Sign
 	button.pressed.connect(signal_out.emit)
 	parent.add_child(button)
 	return button
+
+
+func _date_words() -> Label:
+	return _date.get_child(0).get_child(-1) as Label
+
+
+## Folds the rail to a few lines (window_manager, while the inbox shows) or opens it again. True when it changed.
+func set_folded(folded: bool) -> bool:
+	if folded == _folded:
+		return false
+	_folded = folded
+	custom_minimum_size.x = (FOLDED_WIDTH if folded else WIDTH) * UiTheme.text_scale()
+	_stamp = ""
+	if _state != null and _state.player() != null:
+		refresh(_state, _loader, _draft, _price)
+	return true
+
+
+func is_folded() -> bool:
+	return _folded
 
 
 ## What the rail repaints itself from on a tab that is not Books (where the page repaints it on every move).
@@ -181,6 +213,10 @@ func refresh(state, loader, draft, price) -> void:
 	_stamp = "%d|%d|%d|%s|%d|%d" % [state.year, state.month, state.day, str(ns.tabled_bill), draft.count(), moves]
 	var vote_on := DateText.day_mon(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
 	_title.text = Strings.t("Finance bill · %s") % DateText.month_long(int(state.month))
+	_title.autowrap_mode = TextServer.AUTOWRAP_WORD if _folded else TextServer.AUTOWRAP_OFF
+	_full[0].visible = not _folded  # "it stays on every tab": said by the open rail only
+	_text.visible = true
+	_summary.visible = false
 	_table.visible = drafted or moves > 0
 	_discard.visible = drafted or moves > 0
 	_review.visible = drafted
@@ -193,7 +229,7 @@ func refresh(state, loader, draft, price) -> void:
 	_date.visible = drafted or tabled != null
 	if tabled != null:
 		vote_on = DateText.day_mon(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))
-	(_date.get_child(0).get_child(-1) as Label).text = Strings.t("divides %s") % vote_on
+	_date_words().text = Strings.t("divides %s") % vote_on
 	_empty.text = Strings.t("No change yet. Move a line's bar on Books, or put a programme in from Register: the deficit and the vote show here.")
 	if not drafted:
 		_dropped_at = -1  # the changes went with the last one: a stale index would pull the next draft's focus onto an x
@@ -208,6 +244,8 @@ func refresh(state, loader, draft, price) -> void:
 		return
 	if not drafted:
 		_text.text = before_vote
+		_summary.visible = false
+		_fall.visible = false
 		return
 	var read: Dictionary = FinanceRead.draft(state, loader, draft.bill())
 	var refusal := String(read["refusal"])
@@ -237,6 +275,21 @@ func refresh(state, loader, draft, price) -> void:
 	if refusal == "":
 		# The seats are the bar's (its legend prints each count): the sentence does not say them again.
 		_vote(read["vote"])
+	_fold(read, whole, refusal)
+
+
+## Folded, the bill is a few lines: the deficit today and with it, and how the Assembly would divide now.
+func _fold(read: Dictionary, whole: Dictionary, refusal: String) -> void:
+	_summary.visible = _folded
+	_fall.visible = not _folded
+	for part in _full:
+		part.visible = part.visible and not _folded
+	if not _folded:
+		return
+	var vote: Dictionary = read["vote"]
+	_summary.text = Strings.tn("%d change.", "%d changes.", _draft.count()) % _draft.count() + " " + \
+		Strings.t("Deficit %s → %s bn.") % [Num.f(float(whole["deficit_now_bn"]), 0), Num.f(float(whole["deficit_after_bn"]), 0)] + "\n" + \
+		(reason(refusal) if refusal != "" else Strings.t("For %d, against %d, undecided %d.") % [int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"])])
 
 
 ## The waterfall and the change list: the list is rebuilt when the rows change, the figures every refresh.

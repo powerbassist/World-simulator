@@ -277,6 +277,9 @@ func _place_aside(id: String) -> float:
 		var aside: Control = _asides[domain]
 		aside.visible = domain == Domains.domain_of(id)
 		if aside.visible:
+			# While the inbox shows beside the workspace, an aside that can fold does, so the page keeps its width.
+			if aside.has_method("set_folded"):
+				aside.set_folded(_inbox_room() > 0.0)
 			var width := aside.get_combined_minimum_size().x
 			aside.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
 			aside.offset_left = -width
@@ -378,6 +381,7 @@ func _fit_dock() -> void:
 		var page: TabPage = _pages[id]
 		if page.visible:
 			_place_dock(id)
+			page.offset_right = -_place_aside(id)
 			var page_height: float = -1.0 if Domains.is_scene(id) else page.wanted_height()
 			# A domain with an aside fills the band: the rail is as tall as the workspace, whatever the page.
 			if page_height >= 0.0 and aside() == null:

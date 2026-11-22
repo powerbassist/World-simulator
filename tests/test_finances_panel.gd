@@ -74,13 +74,30 @@ func _process(_delta: float) -> bool:
 			_panel._process(0.0)
 		6:
 			_main._windows.open("finances")
-		9:
+		8:
+			_check_the_rail_is_the_domains_aside()
+			# A draft on Books and a programme placed on Register: two next steps, one filled button a screen.
+			var page = _main._windows.content("finances")
+			var draft = page.shared_draft()
+			draft.set_value(FinanceDraft.SPENDING, "health", draft.live(FinanceDraft.SPENDING, "health") + 1.0)
+			page._on_structure_changed()
+			_main._windows.content("register")._fill(true)
+			_main._windows.open("register")
+		11:
+			_check_one_filled_button("register", false)
+			_main._windows.open("programmes")
+		13:
+			_check_one_filled_button("programmes", true)
+			_main._windows.open("finances")
+		15:
+			_check_one_filled_button("finances", true)
+			_main._windows.content("finances").shared_draft().revert()
 			_main._state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
 			_main._windows.frame("finances")._content.mark_dirty()
 			_main._windows.frame("finances")._content._stamp = ""
-		12:
+		18:
 			_press_open_the_bill_through_main()
-		14:
+		20:
 			if not _main._windows.is_open("legislature"):
 				_fail("Open the bill, pressed on the Finances tab, did not open the Bills tab")
 			_finish()
@@ -296,6 +313,44 @@ func _check_no_name_is_clipped_at_115() -> void:
 				clipped.append("%s (%.0f of %.0f px)" % [label.text, need, label.size.x])
 	if not clipped.is_empty():
 		_fail("at 115 %% the books clip: %s" % ", ".join(clipped))
+
+
+## G3 S4: the bill's rail is the Finances domain's aside, shown beside the page and folded while the inbox shows
+## (the table keeps its width), on every Finances tab.
+func _check_the_rail_is_the_domains_aside() -> void:
+	var page = _main._windows.content("finances")
+	var rail: Control = page.rail()
+	if _main._windows.aside() != rail or not rail.is_visible_in_tree():
+		_fail("the bill's rail is not the aside shown beside Books")
+		return
+	var inbox: Control = _main.get_tree().get_first_node_in_group("inbox") as Control
+	var inbox_shows: bool = inbox != null and inbox.is_visible_in_tree()
+	if rail.is_folded() != inbox_shows:
+		_fail("the rail is folded %s with the inbox showing %s" % [rail.is_folded(), inbox_shows])
+	var page_frame: Control = _main._windows.frame("finances")
+	if page_frame.get_global_rect().end.x > rail.get_global_rect().position.x - UiTheme.GAP_PANE + 0.5:
+		_fail("the page runs under the rail: page ends %s, rail starts %s" % [page_frame.get_global_rect().end.x, rail.get_global_rect().position.x])
+
+
+## The parent's ruling (2026-11-22): one filled button a screen, the screen's next step. Register's own PRIMARY leads
+## and the rail's verb is plain; on Building and Books the rail's verb is the filled one.
+func _check_one_filled_button(tab: String, rail_leads: bool) -> void:
+	var rail: Control = _main._windows.content("finances").rail()
+	if _main._windows.aside() != rail or not rail.is_visible_in_tree():
+		_fail("the rail is not beside the %s tab" % tab)
+		return
+	var filled := []
+	for root_node in [_main._windows.content(tab), rail]:
+		for b in (root_node as Node).find_children("*", "Button", true, false):
+			if (b as Button).is_visible_in_tree() and not (b as Button).disabled and (b as Button).theme_type_variation == UiTheme.PRIMARY:
+				filled.append((b as Button).text)
+	if filled.size() != 1:
+		_fail("the %s tab shows %d filled buttons: %s" % [tab, filled.size(), filled])
+	var table := rail.find_child("Table", true, false) as Button
+	if table == null or not table.is_visible_in_tree():
+		_fail("premise: the rail's Table is not up on %s" % tab)
+	elif (table.theme_type_variation == UiTheme.PRIMARY) != rail_leads:
+		_fail("on %s the rail's Table is %s, wanted it filled %s" % [tab, table.theme_type_variation, rail_leads])
 
 
 func _press_open_the_bill_through_main() -> void:

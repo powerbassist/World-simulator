@@ -200,8 +200,7 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 		bar.lock()
 	var figure := _cell(row, total, "", FIGURE_WIDTH)
 	figure.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	if bar_bn >= 0.0:
-		_cell(row, "", "", BALANCE_WIDTH)
+	_cell(row, "", "", BALANCE_WIDTH)  # every total under "A year", the balance column kept clear
 	if tip != "":
 		row.tooltip_text = tip
 		row.mouse_filter = Control.MOUSE_FILTER_PASS
