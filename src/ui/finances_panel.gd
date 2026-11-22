@@ -232,6 +232,9 @@ func _refresh(ns) -> void:
 
 ## The Go's landing, a frame after the build: the editor may have been rebuilt or closed since (a stale one is skipped).
 func _focus_editor(editor: FinanceEditor) -> void:
+	# The editor is laid out two frames after the build (#439's lesson): a scroll read before that lands on a stale place.
+	await get_tree().process_frame
+	await get_tree().process_frame
 	if is_instance_valid(editor) and editor.is_inside_tree() and _scroll.is_ancestor_of(editor):
 		_scroll.ensure_control_visible(editor)
 		editor.focus_lever()

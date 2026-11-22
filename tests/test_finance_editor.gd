@@ -113,8 +113,8 @@ func _process(_delta: float) -> bool:
 				_fail("the rows moved %s px when the draft was dropped" % (_revenue_row_y() - _rows_y))
 			_panel.open_row(FinanceDraft.TAX, "vat")
 			_panel._process(0.0)
-		10:
-			# The Go puts the cursor on that row's own slider (a frame after the build).
+		12:
+			# The Go puts the cursor on that row's own lever, once the editor is laid out (two frames after the build: G3 S4).
 			if _panel._editor == null or root.gui_get_focus_owner() != _panel._editor._slider:
 				_fail("a Go did not put the cursor on the row's slider")
 			_finish()

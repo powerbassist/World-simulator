@@ -16,6 +16,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
+const FinanceEditor = preload("res://src/ui/finance_editor.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
@@ -52,6 +53,7 @@ func _process(_delta: float) -> bool:
 			_check_the_foot()
 			_check_the_kind_captions()
 			_check_the_colours_and_order()
+			_check_a_bar_is_a_lever()
 			_check_a_fold_opens_and_redraws()
 			_check_the_stamp_and_the_forecast_redraw()
 			# QA's MO / MD on #359: end to end through the game's own wiring.
@@ -210,6 +212,43 @@ func _check_the_foot() -> void:
 
 ## GLM's test-gap list (reviewed against the tree), carried to the table: a bar's colour follows its line or its
 ## group, never its rank, and two groups never share one.
+## G3 S4: a closed row's bar is its lever. Moving it writes the draft (clamped to the row's reach), the row's balance
+## and the rail follow, and nothing is rebuilt under the hand (the same lever after the repaint: QA's B1 on #363); a
+## draft moved from elsewhere (the editor's box, a Go) moves the bar's dot.
+func _check_a_bar_is_a_lever() -> void:
+	var draft = _panel.shared_draft()
+	var levers: Dictionary = _panel._ctx["levers"]
+	var vat = levers["tax_rates_pct:vat"][0]
+	var live: float = draft.live(FinanceDraft.TAX, "vat")
+	vat.value = live + vat.step * 2.0
+	_panel._process(0.0)
+	if not draft.is_moved(FinanceDraft.TAX, "vat") or not is_equal_approx(draft.value(FinanceDraft.TAX, "vat"), live + vat.step * 2.0):
+		_fail("moving VAT's bar did not reach the draft: %s" % draft.value(FinanceDraft.TAX, "vat"))
+	if _panel._ctx["levers"]["tax_rates_pct:vat"][0] != vat:
+		_fail("a bar's move rebuilt the rows under the hand")
+	var balance: Label = _panel._ctx["balances"]["tax_rates_pct:vat"][0]
+	if balance.text == "":
+		_fail("a moved row shows no balance")
+	if not _panel._foot._count.text.contains("1 change"):
+		_fail("the rail does not count the bar's move: '%s'" % _panel._foot._count.text)
+	# Past the row's reach: clamped as the box clamps.
+	vat.value = vat.max_value
+	var hi: float = float(FinanceEditor.span(_state.player(), draft, FinanceDraft.TAX, "vat")["hi"])
+	if draft.value(FinanceDraft.TAX, "vat") > hi + 1e-6:
+		_fail("a bar dragged to its end wrote %s past the reach %s" % [draft.value(FinanceDraft.TAX, "vat"), hi])
+	var health = levers["spending_pct_gdp:health"][0]
+	draft.set_value(FinanceDraft.SPENDING, "health", draft.live(FinanceDraft.SPENDING, "health") + 1.0)
+	_panel._on_moved()
+	_panel._process(0.0)
+	if not is_equal_approx(health.value, draft.value(FinanceDraft.SPENDING, "health")) or not health.is_moved():
+		_fail("a draft moved from elsewhere left health's dot at %s" % health.value)
+	draft.revert()
+	_panel._on_structure_changed()
+	_panel._process(0.0)
+	if _panel._ctx["balances"]["tax_rates_pct:vat"][0].text != "":
+		_fail("a reverted row keeps its balance")
+
+
 func _check_the_colours_and_order() -> void:
 	var book := FinanceBooks.read(_state)
 	var levers: Dictionary = _panel._ctx["levers"]
