@@ -38,16 +38,18 @@ const ChartWaterfall = preload("res://src/ui/chart_waterfall.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
-const Labels = preload("res://src/ui/labels.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
 const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
+const FinanceStrip = preload("res://src/ui/finance_strip.gd")
+const FinanceWho = preload("res://src/ui/finance_who.gd")
+const ControlStyle = preload("res://src/ui/control_style.gd")
+const Icon = preload("res://src/ui/icon.gd")
+const HOURGLASS := "res://assets/icons/ui/hourglass.svg"
 
 ## The rail's width at text 100: the waterfall's name column (a change and its figures, "Health, 11.0 → 12.5"), a bar
 ## that still reads at its shortest step, and its figure; with the sheet's margins.
 const WIDTH := 470.0
-## Folded (the inbox shows beside it, so the table keeps its width): the bill in a few lines and its one verb.
-const FOLDED_WIDTH := 230.0
 ## A residual under this (bn a year) is rounding, not a step.
 const RESIDUAL_BN := 0.05
 
@@ -69,9 +71,8 @@ var _pct: Label
 ## Each change's money a year, by "id|draft value|live value|day": a drag moves one row, so the others are priced once
 ## per change of their own (pass 2 T2 on #429), not on every frame of the drag.
 var _gains := {}
-## The blocs that weigh a spending line, by key, for the day they were read (one FinanceRead.line_blocs a line a day).
-var _blocs := {}
-var _blocs_day := ""
+## Who each change is for or who pays it (finance_who.gd keeps a line's blocs for the day).
+var _who := FinanceWho.new()
 ## The index of the change a remove mark took out, -1 for none: the focus goes to the mark now in its place.
 var _dropped_at := -1
 var _vote_box: VBoxContainer
@@ -86,9 +87,14 @@ var _folded := false
 ## Frames until the next look at whether the page beside the rail shows its own filled button.
 var _lead_wait := 0
 var _open_seen: Array = []
-## The parts a folded rail hides, and the summary it shows instead.
-var _full: Array[Control] = []
-var _summary: Label
+## Open: the column. Folded (the inbox shows): one line under the header (finance_strip.gd), the date tag and the verbs
+## docked into it.
+var _col: VBoxContainer
+var _head: HBoxContainer
+var _verbs: Container
+var _strip: FinanceStrip
+var _verdict: Label
+var _stays: Label
 
 
 func _ready() -> void:
@@ -97,7 +103,12 @@ func _ready() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
 	add_child(col)
+	_col = col
+	_strip = FinanceStrip.new()
+	add_child(_strip)
+	_strip.hide()
 	var head := HBoxContainer.new()
+	_head = head
 	col.add_child(head)
 	_title = Label.new()
 	_title.theme_type_variation = UiTheme.LEAD
@@ -107,16 +118,21 @@ func _ready() -> void:
 	_date.size_flags_horizontal = Control.SIZE_SHRINK_END
 	_date.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_date_words().autowrap_mode = TextServer.AUTOWRAP_OFF  # a date is one line; a wrapping chip squeezed it to a letter a line
-	var stays := PanelKit.plain_line(col, Strings.t("It stays on every Finances tab: Register and Building add to it."), PanelKit.Tone.DIM)
-	stays.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_summary = PanelKit.plain_line(col, "", PanelKit.Tone.PLAIN)
-	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_summary.hide()
+	# A deadline tag wears the hourglass (gate T8 on #443), as the time bar's do.
+	var glass := TextureRect.new()
+	var px := roundi(UiTheme.SIZE_SMALL * UiTheme.text_scale())
+	glass.texture = Icon.load_icon(HOURGLASS, UiTheme.WARN, px)
+	glass.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	glass.custom_minimum_size = Vector2(px, px)
+	_date.get_child(0).add_child(glass)
+	_date.get_child(0).move_child(glass, 0)
+	_stays = PanelKit.plain_line(col, Strings.t("It stays on every Finances tab: Register and Building add to it."), PanelKit.Tone.DIM)
+	_stays.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_empty = PanelKit.plain_line(col, "", PanelKit.Tone.PLAIN)
 	_empty.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_fall = VBoxContainer.new()
 	col.add_child(_fall)
-	var box := ChartKit.waterfall(_fall, Strings.t("The deficit, a year, bn"), {"label": "", "value": 0.0}, [], {"label": "", "value": 0.0})
+	var box := ChartKit.waterfall(_fall, Strings.t("The deficit, a year, bn").to_upper(), {"label": "", "value": 0.0}, [], {"label": "", "value": 0.0})
 	_chart = box.get_meta("chart")
 	_chart.set_meta("rail", "waterfall")
 	_pct = PanelKit.plain_line(_fall, "", PanelKit.Tone.DIM)
@@ -139,18 +155,23 @@ func _ready() -> void:
 	col.add_child(_text)
 	_vote_box = VBoxContainer.new()
 	col.add_child(_vote_box)
+	# The Assembly's result in words under its bar, with its check or its cross (gate T9 on #443).
+	_verdict = Label.new()
+	_verdict.autowrap_mode = TextServer.AUTOWRAP_WORD
+	col.add_child(_verdict)
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(spacer)
-	_full = [stays, _changes, _vote_box, _text]
 	var verbs := PanelKit.buttons(col)
+	_verbs = verbs
 	_table = _button(verbs, "Table", Strings.t("Table the bill"), table_pressed)  # i18n: ok a node name
 	_table.theme_type_variation = UiTheme.PRIMARY
 	_open = _button(verbs, "OpenBill", Strings.t("Open the bill"), open_pressed)
+	# Two looks for a click: a button or a ghost (gate T7 on #443). The links are ghosts; the rail's verb stays the loud one.
 	_discard = _button(verbs, "Discard", Strings.t("Discard all"), discard_pressed)  # i18n: ok a node name
-	_discard.flat = true
+	_discard.theme_type_variation = UiTheme.GHOST
 	_review = _button(verbs, "Review", Strings.t("Review the bill"), review_pressed)  # i18n: ok a node name
-	_review.flat = true  # the sheet is the act's detail; the rail's own verb stays the loud one
+	_review.theme_type_variation = UiTheme.GHOST
 	_withdraw = _button(verbs, "Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed)  # i18n: ok a node name
 	_withdraw.flat = true
 
@@ -169,12 +190,20 @@ func _date_words() -> Label:
 	return _date.get_child(0).get_child(-1) as Label
 
 
-## Folds the rail to a few lines (window_manager, while the inbox shows) or opens it again. True when it changed.
+## Folds the rail to one line under the header (window_manager, while the inbox shows) or opens it again: the date tag
+## and the verbs move with it, so each stays one control. True when it changed.
 func set_folded(folded: bool) -> bool:
 	if folded == _folded:
 		return false
 	_folded = folded
-	custom_minimum_size.x = (FOLDED_WIDTH if folded else WIDTH) * UiTheme.text_scale()
+	_col.visible = not folded
+	_strip.visible = folded
+	if folded:
+		_strip.dock([_date, _verbs])
+	else:
+		_date.reparent(_head, false)
+		_verbs.reparent(_col, false)
+	custom_minimum_size.x = _width()
 	_stamp = ""
 	if _state != null and _state.player() != null:
 		refresh(_state, _loader, _draft, _price)
@@ -203,7 +232,7 @@ func _process(_delta: float) -> void:
 		return
 	var ns = _state.player()
 	var stamp := "%d|%d|%d|%s|%d|%d" % [_state.year, _state.month, _state.day, str(ns.tabled_bill), _draft.count(), _draft.moves().size()]
-	if not is_equal_approx(custom_minimum_size.x, (FOLDED_WIDTH if _folded else WIDTH) * UiTheme.text_scale()):
+	if not is_equal_approx(custom_minimum_size.x, _width()):
 		stamp = ""
 	if stamp != _stamp:
 		refresh(_state, _loader, _draft, _price)
@@ -226,14 +255,12 @@ func refresh(state, loader, draft, price) -> void:
 	var drafted: bool = not draft.is_empty()
 	var moves: int = draft.moves().size()
 	_stamp = "%d|%d|%d|%s|%d|%d" % [state.year, state.month, state.day, str(ns.tabled_bill), draft.count(), moves]
-	custom_minimum_size.x = (FOLDED_WIDTH if _folded else WIDTH) * UiTheme.text_scale()  # the text size may have moved
+	custom_minimum_size.x = _width()  # the text size may have moved
 	_lead_wait = 0
 	var vote_on := DateText.day_mon(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
 	_title.text = Strings.t("Finance bill · %s") % DateText.month_long(int(state.month))
-	_title.autowrap_mode = TextServer.AUTOWRAP_WORD if _folded else TextServer.AUTOWRAP_OFF
-	_full[0].visible = not _folded  # "it stays on every tab": said by the open rail only
 	_text.visible = true
-	_summary.visible = false
+	_verdict.visible = false
 	_table.visible = drafted or moves > 0
 	_discard.visible = drafted or moves > 0
 	_review.visible = drafted
@@ -258,11 +285,11 @@ func refresh(state, loader, draft, price) -> void:
 		_table.disabled = false
 		_text.text = Strings.tn("%d share move takes effect now, with no vote.", "%d share moves take effect now, with no vote.", moves) % moves + \
 			("\n" + before_vote if tabled != null else "")
+		_strip.say(_title.text, _text.text.replace("\n", " "), "", false, false)
 		return
 	if not drafted:
 		_text.text = before_vote
-		_summary.visible = false
-		_fall.visible = false
+		_strip.say(_title.text, before_vote if tabled != null else _empty.text, "", false, false)
 		return
 	var read: Dictionary = FinanceRead.draft(state, loader, draft.bill())
 	var refusal := String(read["refusal"])
@@ -289,24 +316,28 @@ func refresh(state, loader, draft, price) -> void:
 		text = reason(refusal) + ("\n" + text if text != "" else "")
 	_text.text = text
 	_text.visible = text != ""
-	if refusal == "":
-		# The seats are the bar's (its legend prints each count): the sentence does not say them again.
-		_vote(read["vote"])
-	_fold(read, whole, refusal)
-
-
-## Folded, the bill is a few lines: the deficit today and with it, and how the Assembly would divide now.
-func _fold(read: Dictionary, whole: Dictionary, refusal: String) -> void:
-	_summary.visible = _folded
-	_fall.visible = not _folded
-	for part in _full:
-		part.visible = part.visible and not _folded
-	if not _folded:
-		return
 	var vote: Dictionary = read["vote"]
-	_summary.text = Strings.tn("%d change.", "%d changes.", _draft.count()) % _draft.count() + " " + \
-		Strings.t("Deficit %s → %s bn.") % [Num.f(float(whole["deficit_now_bn"]), 0), Num.f(float(whole["deficit_after_bn"]), 0)] + "\n" + \
-		(reason(refusal) if refusal != "" else Strings.t("For %d, against %d, undecided %d.") % [int(vote["yes_seats"]), int(vote["no_seats"]), int(vote["abstain_seats"])])
+	var verdict := reason(refusal) if refusal != "" else carries_text(vote)
+	if refusal == "":
+		# The seats are the bar's (its legend prints each count); the verdict says the result in words.
+		_vote(vote)
+		_verdict.text = verdict
+		_verdict.theme_type_variation = UiTheme.GOOD_SMALL if bool(vote.get("passed", false)) else UiTheme.BAD_SMALL
+		_verdict.visible = true
+	_strip.say(_title.text, Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
+		Strings.t("deficit %s → %s bn a year") % [Num.f(float(whole["deficit_now_bn"]), 0), Num.f(float(whole["deficit_after_bn"]), 0)],
+		verdict, refusal == "" and bool(vote.get("passed", false)), refusal != "" or not bool(vote.get("passed", false)))
+
+
+## "✓ It carries: 348 for, 229 against." -- the Assembly's result as the sim's own division rule reads it now.
+static func carries_text(vote: Dictionary) -> String:
+	var counts := [int(vote["yes_seats"]), int(vote["no_seats"])]
+	return ("✓ " + Strings.t("It carries: %d for, %d against.") % counts) if bool(vote.get("passed", false)) \
+		else ("✗ " + Strings.t("It falls: %d for, %d against.") % counts)
+
+
+func _width() -> float:
+	return 0.0 if _folded else WIDTH * UiTheme.text_scale()
 
 
 ## The waterfall and the change list: the list is rebuilt when the rows change, the figures every refresh.
@@ -323,7 +354,7 @@ func _list(state, ns, draft, price, whole: Dictionary) -> void:
 			child.queue_free()
 		for row in rows:
 			_change(ns, row)
-	_count.text = Strings.tn("%d change", "%d changes", rows.size()) % rows.size()
+	_count.text = (Strings.tn("%d change", "%d changes", rows.size()) % rows.size()).to_upper()
 	# The books today, as the price reads them (re-read after a tabling or a law): a row's money is kept while they hold.
 	var day := "%d-%d-%d|%s" % [int(state.year), int(state.month), int(state.day), str(price.now().get("deficit_pct_gdp", 0.0))]
 	var steps := []
@@ -332,7 +363,7 @@ func _list(state, ns, draft, price, whole: Dictionary) -> void:
 		var gain := _gain(price, rows[i], day)
 		var money: Label = _groups.get_child(i).find_child("Money_*", true, false)
 		money.text = EffectsStrip.money_text(gain)
-		money.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain))
+		money.theme_type_variation = ControlStyle.STRONG  # a price is neutral with its sign (gate T4 on #443)
 		# A gain to the treasury narrows the deficit: the step is its opposite.
 		steps.append({"label": "%s, %s" % [FinanceRows.change_label(ns, rows[i]), FinanceRows.change_figures(ns, rows[i])], "value": -gain})
 		walked -= gain
@@ -366,7 +397,7 @@ func _change(ns, row: Dictionary) -> void:
 	var name := PanelKit.plain_line(line, FinanceRows.change_label(ns, row), PanelKit.Tone.PLAIN)
 	name.autowrap_mode = TextServer.AUTOWRAP_OFF
 	name.custom_minimum_size.x = 110.0 * UiTheme.text_scale()
-	var who := PanelKit.plain_line(line, _who(ns, row), PanelKit.Tone.DIM)
+	var who := PanelKit.plain_line(line, _who.say(_state, _loader, row), PanelKit.Tone.DIM)
 	who.autowrap_mode = TextServer.AUTOWRAP_OFF
 	who.clip_text = true
 	who.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -390,31 +421,6 @@ func _change(ns, row: Dictionary) -> void:
 		_dropped_at = _index_of(id)
 		drop_pressed.emit(channel, key))
 	line.add_child(drop)
-
-
-## Who a change is for (a line's blocs, most first) or who pays it (a tax's payers); the autumn's two rows name no one.
-func _who(ns, row: Dictionary) -> String:
-	var key := String(row["key"])
-	match String(row["channel"]):
-		FinanceDraft.SPENDING:
-			var blocs := _line_blocs(key)
-			return Strings.t("for %s") % ", ".join(blocs.map(func(b) -> String: return Labels.bloc(String(b)))) if not blocs.is_empty() else ""
-		FinanceDraft.TAX:
-			if bool(row.get("birth", false)):
-				return ""
-			var payers: Array = ns.tax_library[key].get("who_pays", [])
-			return Strings.t("%s pay") % ", ".join(payers.map(func(b) -> String: return Labels.bloc(String(b)))) if not payers.is_empty() else ""
-	return ""
-
-
-func _line_blocs(key: String) -> Array:
-	var day := "%d|%d|%d" % [_state.year, _state.month, _state.day] if _state != null else ""
-	if day != _blocs_day:
-		_blocs_day = day
-		_blocs = {}
-	if not _blocs.has(key):
-		_blocs[key] = [] if _state == null else (FinanceRead.line_blocs(_state, _loader, key)["weights"] as Array).map(func(pair: Array) -> String: return String(pair[0]))
-	return _blocs[key]
 
 
 func _gain(price, row: Dictionary, day: String) -> float:
@@ -446,7 +452,7 @@ func _vote(vote: Dictionary) -> void:
 	_vote_key = key
 	for child in _vote_box.get_children():
 		child.queue_free()
-	ChartKit.stack(_vote_box, Strings.t("Assembly, if it divided now"), [
+	ChartKit.stack(_vote_box, Strings.t("Assembly, if it divided now").to_upper(), [
 		{"label": Strings.t("For"), "value": float(vote["yes_seats"])},
 		{"label": Strings.t("Against"), "value": float(vote["no_seats"])},
 		{"label": Strings.t("Undecided"), "value": float(vote["abstain_seats"])},

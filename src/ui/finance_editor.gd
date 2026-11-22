@@ -33,7 +33,6 @@ const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
-const GK = preload("res://src/sim/goal_read_constants.gd")
 
 ## A spending line's step, ceiling and reach either side of its value today, in points of GDP.
 const LINE_STEP := 0.1
@@ -84,6 +83,7 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 		return
 	var now := PanelKit.plain_line(self, Strings.t("Now %s") % (LedgerBox.text(_draft.live(channel, key), decimals) + unit) if in_force else Strings.t("Not in force yet"), PanelKit.Tone.DIM)
 	now.name = "Now"  # i18n: ok a node name, found by tests
+	now.visible = channel == FinanceDraft.TAX and not in_force  # the row's lever text says "now" (G3 S4 gate T3)
 	if channel == FinanceDraft.TAX:
 		# What the rate is a rate OF (the data's own words): the hover on the figure, not a sentence on the page.
 		now.tooltip_text = Strings.row("taxes", key, "rate_meaning", String(ns.tax_library[key].get("rate_meaning", "")))
@@ -98,8 +98,14 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 		_brackets_box = brackets[1]
 	_effect = PanelKit.plain_line(self, "", PanelKit.Tone.PLAIN)
 	_effect.name = "Effect"  # i18n: ok a node name, found by tests
+	# The balance is the row's Balance cell and the rail's (gate T3 on #443: each number once). Kept, unshown, for the
+	# brackets, which have no row of their own: the rail's change carries their money.
+	_effect.visible = false
 	for line in _who_lines(state, loader):
-		PanelKit.plain_line(self, line, PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_WORD
+		var said := PanelKit.plain_line(self, String(line[0]), PanelKit.Tone.DIM)
+		said.autowrap_mode = TextServer.AUTOWRAP_WORD
+		if String(line[1]) != "":
+			said.theme_type_variation = String(line[1])
 	if channel == FinanceDraft.TAX and not in_force and _draft.is_created(key):
 		_verb(Strings.t("Take it back"), "TakeBack", func() -> void: _draft.clear_create(key))  # i18n: ok a node name
 	elif channel == FinanceDraft.TAX and autumn and in_force and ns.tax_library[key].has("rate_range_pct"):
@@ -254,17 +260,21 @@ func _income_key(ns) -> String:
 func _who_lines(state, loader) -> Array:
 	if channel == FinanceDraft.TAX:
 		var paid: Array = state.player().tax_library[key].get("who_pays", [])
-		return [Strings.t("Paid by: %s") % ", ".join(paid.map(func(b) -> String: return Labels.bloc(String(b))))]
+		return [[Strings.t("Paid by: %s") % ", ".join(paid.map(func(b) -> String: return Labels.bloc(String(b)))), ""]]
+	# A step up of the line, bloc by bloc (gate T3 on #443): two glyph lines, the tone never alone.
 	var read: Dictionary = FinanceRead.line_blocs(state, loader, key)
-	var out := []
-	var weights: Array = read["weights"]
-	if not weights.is_empty():
-		out.append(Strings.t("For: %s") % ", ".join(weights.map(func(pair: Array) -> String: return Labels.bloc(String(pair[0])))))
-	var offsets := {}
+	var up := []
+	var down := []
 	for pair in read["gains"] + read["loses"]:
-		offsets[pair[0]] = pair[1]
-	var cost: float = GK.SPENDING_STEP * float(state.player().gdp_eur_bn) / 100.0
-	out.append(Strings.t("One step (%s pt of GDP): %s a year. %s") % [Num.f(GK.SPENDING_STEP, 1), EffectsStrip.money_text(-cost), EffectsStrip.who_text(offsets)])
+		if float(pair[1]) > 0.0:
+			up.append(Labels.bloc(String(pair[0])))
+		elif float(pair[1]) < 0.0:
+			down.append(Labels.bloc(String(pair[0])))
+	var out := []
+	if not up.is_empty():
+		out.append(["▲ " + Strings.t("A step up pleases %s") % ", ".join(up), UiTheme.GOOD_SMALL])
+	if not down.is_empty():
+		out.append(["▼ " + Strings.t("A step up angers %s") % ", ".join(down), UiTheme.BAD_SMALL])
 	return out
 
 

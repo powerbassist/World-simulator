@@ -22,6 +22,7 @@ const EK = preload("res://src/sim/economy_constants.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceLever = preload("res://src/ui/finance_lever.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
+const ControlStyle = preload("res://src/ui/control_style.gd")
 
 ## A part nobody sets here: the muted neutral of the page's two stacks, and a darker one for the
 ## debt service so that the two are told apart by more than their place.
@@ -44,12 +45,15 @@ const SWATCH := 10.0
 
 
 ## The colour of a group follows the group (its slot in the loader's closed list), never its rank.
+## (G3 S4, gate T2 on #443: the palette skips the hue nearest the played nation's accent, ChartStyle.series_for.)
 static func group_color(group_id: String) -> Color:
-	return ChartStyle.SERIES[maxi(TaxesLoader.GROUPS.find(group_id), 0) % ChartStyle.SERIES.size()]
+	var series := ChartStyle.series_for(UiTheme.accent())
+	return series[maxi(TaxesLoader.GROUPS.find(group_id), 0) % series.size()]
 
 
 static func line_color(key: String) -> Color:
-	return ChartStyle.SERIES[maxi(EK.SPENDING_KEYS.find(key), 0) % ChartStyle.SERIES.size()]
+	var series := ChartStyle.series_for(UiTheme.accent())
+	return series[maxi(EK.SPENDING_KEYS.find(key), 0) % series.size()]
 
 
 static func group_name(group_id: String) -> String:
@@ -83,7 +87,7 @@ static func bn_text(value: float) -> String:
 ## The revenue column: every group (largest first) with its kinds, then what no row sets.
 static func revenue(box: Control, book: Dictionary, state, loader, open_groups: Dictionary, toggle: Callable, ctx: Dictionary) -> void:
 	var ns = state.player()
-	columns(box, Strings.t("Revenue"), Strings.t("Who pays"), false)
+	columns(box, Strings.t("Revenue · %s") % bn_text(float(book["revenue_bn"])), Strings.t("Who pays"), false)
 	for group in book["groups"]:
 		var gid := String(group["id"])
 		_header(box, group_color(gid), group_name(gid), bn_text(float(group["total"])), "")
@@ -113,8 +117,8 @@ static func revenue(box: Control, book: Dictionary, state, loader, open_groups: 
 
 ## The spending column: the five lines, then the debt service and what no line sets.
 static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
-	# The totals are the sentence's (each number once); the column names are said once, over spending.
-	columns(box, Strings.t("Spending"), Strings.t("For"), true)
+	# The column names are said once, over spending; a spending row's "for" is the open row's (its blocs cost a read).
+	columns(box, Strings.t("Spending · %s") % bn_text(float(book["spending_bn"])), "", true)
 	for line in book["lines"]:
 		var row := _row()
 		row.add_child(_swatch(line_color(String(line["key"]))))
@@ -131,7 +135,7 @@ static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
 		_money_cells(row, id, FinanceDraft.SPENDING, String(line["key"]), float(line["bn"]), float(line["pct"]), line_color(String(line["key"])), ctx)
 		box.add_child(row)
 		if String(ctx["open"]) == id and not (ctx["tabled"] as Dictionary).has(id):
-			box.add_child((ctx["editor"] as Callable).call(FinanceDraft.SPENDING, String(line["key"])))
+			box.add_child(_tile((ctx["editor"] as Callable).call(FinanceDraft.SPENDING, String(line["key"]))))
 	_header(box, SERVICE, Strings.t("Debt service"), bn_text(float(book["service_bn"])), Strings.t("not set here"),
 		Strings.t("Interest on the debt: it follows the debt and the rates the markets ask."), float(book["service_bn"]), ctx)
 	_header(box, MUTED, Strings.t("Other spending"), bn_text(float(book["other_spending_bn"])), Strings.t("not set here"),
@@ -196,6 +200,7 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 		bar.custom_minimum_size.x = BAR_MIN * UiTheme.text_scale()
 		row.add_child(bar)
 		bar.setup(1.0, float(ctx.get("scale_bn", bar_bn)), bar_bn, color)
+		bar.step = 0.0
 		bar.max_value = maxf(bar_bn, 1.0)
 		bar.value = bar_bn
 		bar.lock()
@@ -244,19 +249,27 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 	return row
 
 
+## The open row's editor on a tile under its row (gate T3 on #443), the table's left edge kept.
+static func _tile(editor: Control) -> Control:
+	var tile := PanelContainer.new()
+	tile.theme_type_variation = UiTheme.TILE_PANEL
+	tile.add_child(editor)
+	return tile
+
+
 ## A section's head: its title and total, then the table's column names over the cells they name.
 static func columns(box: Control, title: String, who: String, named: bool) -> void:
 	var row := _row()
 	var gap := Control.new()
 	gap.custom_minimum_size.x = SWATCH
 	row.add_child(gap)
-	_cell(row, title, UiTheme.MICRO, NAME_WIDTH).clip_text = false
-	_cell(row, who, UiTheme.MICRO, 0.0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cell(row, Strings.t("Lever") if named else "", UiTheme.MICRO, PCT_WIDTH)
-	var bar := _cell(row, Strings.t("Drag to set") if named else "", UiTheme.MICRO, BAR_MIN)
+	_cell(row, title.to_upper(), UiTheme.MICRO, NAME_WIDTH).clip_text = false
+	_cell(row, who.to_upper(), UiTheme.MICRO, 0.0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cell(row, "", UiTheme.MICRO, PCT_WIDTH)
+	var bar := _cell(row, Strings.t("Drag").to_upper() if named else "", UiTheme.MICRO, BAR_MIN)
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cell(row, Strings.t("A year") if named else "", UiTheme.MICRO, FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_cell(row, Strings.t("Balance") if named else "", UiTheme.MICRO, BALANCE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_cell(row, Strings.t("A year").to_upper() if named else "", UiTheme.MICRO, FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_cell(row, Strings.t("Balance").to_upper() if named else "", UiTheme.MICRO, BALANCE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var spaced := MarginContainer.new()
 	spaced.add_theme_constant_override("margin_top", 10)
 	spaced.add_child(row)
@@ -295,12 +308,13 @@ static func _money_cells(row: Control, id: String, channel: String, key: String,
 
 static func _fold_button(folded: Array, on_press: Callable) -> Control:
 	var button := Button.new()
-	button.flat = true
+	button.theme_type_variation = UiTheme.GHOST
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var sum := 0.0
 	for kind in folded:
 		sum += float(kind["yield_bn"])
-	button.text = Strings.tn("%d other kind, %s bn", "%d other kinds, %s bn", folded.size()) % [folded.size(), Num.f(sum, 0 if sum >= 10.0 else 1)]
+	button.text = Strings.tn("%d other kind, %s bn", "%d other kinds, %s bn", folded.size()) % [folded.size(), Num.f(sum, 0 if sum >= 10.0 else 1)] + "  ▸"  # i18n: ok a glyph
 	button.pressed.connect(on_press)
 	var gap := MarginContainer.new()
 	gap.add_theme_constant_override("margin_left", int(SWATCH + 8.0))
@@ -344,7 +358,7 @@ static func _kind_with_editor(box: Control, ns, kind: Dictionary, ctx: Dictionar
 	box.add_child(_kind_row(ns, kind, ctx))
 	var id := row_id(FinanceDraft.TAX, String(kind["id"]))
 	if String(ctx["open"]) == id and not (ctx["tabled"] as Dictionary).has(id):
-		box.add_child((ctx["editor"] as Callable).call(FinanceDraft.TAX, String(kind["id"])))
+		box.add_child(_tile((ctx["editor"] as Callable).call(FinanceDraft.TAX, String(kind["id"]))))
 
 
 ## A row's name: the button that opens its editor, or a plain name while the row is at vote (a tabled
@@ -431,7 +445,7 @@ static func _paint_levers(ctx: Dictionary) -> void:
 		var moved: bool = drafted.has(id) and price != null
 		var gain: float = price.row_balance_bn(drafted[id]) if moved else 0.0
 		label.text = EffectsStrip.money_text(gain) if moved else ""
-		label.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain)) if moved else ""
+		label.theme_type_variation = ControlStyle.STRONG if moved else ""
 
 
 ## What the unset revenue holds, as the model keeps it (FinanceRead.other_parts): the part set when the game

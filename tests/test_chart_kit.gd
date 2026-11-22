@@ -297,6 +297,15 @@ func _check_waterfall() -> void:
 		_fail("a long waterfall label is not cut to its column: '%s'" % cut)
 	if ChartWaterfall.fit(font, "Today", 80.0, 13) != "Today":
 		_fail("a short waterfall label was cut")
+	# Decision 5 (gate T2 on #443): the palette skips the hue nearest the accent, in that hue's validated order.
+	var france: Array = ChartStyle.series_for(Color("#2496ff"))
+	if france.has(ChartStyle.CATEGORICAL[0]) or france.size() != 5:
+		_fail("France's blue accent keeps the blue part: %s" % [france])
+	var germany: Array = ChartStyle.series_for(Color("#ffd400"))
+	if germany.has(ChartStyle.CATEGORICAL[3]) or germany[3] != ChartStyle.CATEGORICAL[5]:
+		_fail("Germany's yellow keeps amber, or violet does not take its place: %s" % [germany])
+	if ChartStyle.series_for(Color("#20b070"))[2] != ChartStyle.CATEGORICAL[5]:
+		_fail("a green accent's order does not put violet third")
 	if chart.figure(1) != "+43.6" or chart.figure(2) != "-14.6" or chart.figure(0) != "147":
 		_fail("the waterfall's figures are %s, %s, %s" % [chart.figure(0), chart.figure(1), chart.figure(2)])
 

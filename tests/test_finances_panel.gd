@@ -19,6 +19,7 @@ const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceEditor = preload("res://src/ui/finance_editor.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const ChartStyle = preload("res://src/ui/chart_style.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -229,7 +230,7 @@ func _check_a_bar_is_a_lever() -> void:
 	var balance: Label = _panel._ctx["balances"]["tax_rates_pct:vat"][0]
 	if balance.text == "":
 		_fail("a moved row shows no balance")
-	if not _panel._foot._count.text.contains("1 change"):
+	if not _panel._foot._count.text.to_lower().contains("1 change"):
 		_fail("the rail does not count the bar's move: '%s'" % _panel._foot._count.text)
 	# Past the row's reach: clamped as the box clamps. A spending line's track runs 0 to 30 % of GDP, its reach 5 points
 	# either side of today, so a bar dragged to its end must stop at the reach.
@@ -264,6 +265,14 @@ func _check_the_colours_and_order() -> void:
 				_fail("kind %s is not drawn in its group's colour" % kind["id"])
 	if FinanceRows.group_color(TaxesLoader.GROUPS[0]) == FinanceRows.group_color(TaxesLoader.GROUPS[1]):
 		_fail("two groups share a colour")
+	# Decision 5 (gate T2 on #443): no bar wears the hue nearest the accent -- France's blue is skipped.
+	var skipped: Color = ChartStyle.CATEGORICAL[0]
+	for cell in levers.values():
+		if cell[0]._color == skipped:
+			_fail("a bar wears the accent's own hue under France")
+			break
+	if _panel._ctx["balances"].is_empty():
+		_fail("premise: no balance cells")
 
 
 ## A press on a group's fold line shows its folded kinds at once (no wait for the day to turn).
@@ -367,9 +376,20 @@ func _check_the_rail_is_the_domains_aside() -> void:
 	var inbox_shows: bool = inbox != null and inbox.is_visible_in_tree()
 	if rail.is_folded() != inbox_shows:
 		_fail("the rail is folded %s with the inbox showing %s" % [rail.is_folded(), inbox_shows])
+	# Folded (gate T1 on #443) the rail is one line across the top, the page under it at the full width; open, it stands at
+	# the right and the page ends short of it.
 	var page_frame: Control = _main._windows.frame("finances")
-	if page_frame.get_global_rect().end.x > rail.get_global_rect().position.x - UiTheme.GAP_PANE + 0.5:
-		_fail("the page runs under the rail: page ends %s, rail starts %s" % [page_frame.get_global_rect().end.x, rail.get_global_rect().position.x])
+	var page_box := page_frame.get_global_rect()
+	var rail_box := rail.get_global_rect()
+	if rail.is_folded():
+		if page_box.position.y < rail_box.end.y + UiTheme.GAP_PANE - 0.5 or absf(rail_box.size.x - page_box.size.x) > 0.5:
+			_fail("the folded rail is not one line over the page: rail %s, page %s" % [rail_box, page_box])
+		if rail_box.size.y > 80.0 * UiTheme.text_scale():
+			_fail("the folded rail is %s px tall, not one line" % rail_box.size.y)
+		if not rail._strip.is_ancestor_of(rail.find_child("Table", true, false)):
+			_fail("the folded rail's verbs are not on its line")
+	elif page_box.end.x > rail_box.position.x - UiTheme.GAP_PANE + 0.5:
+		_fail("the page runs under the rail: page ends %s, rail starts %s" % [page_box.end.x, rail_box.position.x])
 
 
 ## The parent's ruling (2026-11-22): one filled button a screen, the screen's next step. Register's own PRIMARY leads

@@ -237,7 +237,7 @@ func open(id: String, quiet: bool = false) -> void:
 	_place_dock(id)
 	# Filling the body again, whatever band a probe imposed with fit_within().
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	page.offset_right = -_place_aside(id)
+	_fit_page(page, id)
 	page.show()
 	_dock.show()
 	for other_id in _pages.keys():
@@ -270,24 +270,42 @@ func set_aside(domain: String, aside: Control) -> void:
 	_body.add_child(aside)
 
 
-## Shows the aside of `id`'s domain at the body's right, hides the others; the width the page gives up for it (0 for none).
-func _place_aside(id: String) -> float:
-	var room := 0.0
+## Shows the aside of `id`'s domain, hides the others, and returns the room the page gives up for it: (right, top). Open,
+## it stands at the body's right; folded (an aside that can fold does while the inbox shows), it is one line across the
+## top, so the page keeps its width (Design's gate T1 on #443).
+func _place_aside(id: String) -> Vector2:
+	var room := Vector2.ZERO
 	for domain in _asides:
 		var aside: Control = _asides[domain]
 		aside.visible = domain == Domains.domain_of(id)
-		if aside.visible:
-			# While the inbox shows beside the workspace, an aside that can fold does, so the page keeps its width.
-			if aside.has_method("set_folded"):
-				aside.set_folded(_inbox_room() > 0.0)
-			var width := aside.get_combined_minimum_size().x
+		if not aside.visible:
+			continue
+		var folded := false
+		if aside.has_method("set_folded"):
+			aside.set_folded(_inbox_room() > 0.0)
+			folded = aside.is_folded()
+		var want := aside.get_combined_minimum_size()
+		if folded:
+			aside.set_anchors_preset(Control.PRESET_TOP_WIDE)
+			aside.offset_left = 0.0
+			aside.offset_right = 0.0
+			aside.offset_top = 0.0
+			aside.offset_bottom = want.y
+			room = Vector2(0.0, want.y + GAP)
+		else:
 			aside.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-			aside.offset_left = -width
+			aside.offset_left = -want.x
 			aside.offset_right = 0.0
 			aside.offset_top = 0.0
 			aside.offset_bottom = 0.0
-			room = width + GAP
+			room = Vector2(want.x + GAP, 0.0)
 	return room
+
+
+func _fit_page(page: Control, id: String) -> void:
+	var room := _place_aside(id)
+	page.offset_right = -room.x
+	page.offset_top = room.y
 
 
 ## The aside shown beside the open tab, or null.
@@ -381,7 +399,7 @@ func _fit_dock() -> void:
 		var page: TabPage = _pages[id]
 		if page.visible:
 			_place_dock(id)
-			page.offset_right = -_place_aside(id)
+			_fit_page(page, id)
 			var page_height: float = -1.0 if Domains.is_scene(id) else page.wanted_height()
 			# A domain with an aside fills the band: the rail is as tall as the workspace, whatever the page.
 			if page_height >= 0.0 and aside() == null:
@@ -398,7 +416,10 @@ func page_room(id: String) -> float:
 	var page: TabPage = _pages.get(id, null)
 	var plate := page.get_theme_stylebox("panel") if page != null else null
 	var header := (_dock.get_child(0) as Control).get_combined_minimum_size().y
-	return size.y - DOCK_TOP - DOCK_BOTTOM - header - GAP - (plate.get_minimum_size().y if plate != null else 0.0)
+	# A domain's aside folded to one line over the page (the bill's rail while the inbox shows) takes its height too.
+	var over := aside()
+	var strip: float = over.get_combined_minimum_size().y + GAP if over != null and over.has_method("is_folded") and over.is_folded() else 0.0
+	return size.y - DOCK_TOP - DOCK_BOTTOM - header - GAP - strip - (plate.get_minimum_size().y if plate != null else 0.0)
 
 
 ## Sets `panel`'s height floor to its page's room (page_room), from wherever the panel sits.

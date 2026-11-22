@@ -635,7 +635,7 @@ static func _buttons(theme: Theme) -> void:
 		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD, "ghost": GHOST, "picked": PICKED, "picked_row": PICKED_ROW, "lever": LEVER}, _button_box,
 		{"control": CONTROL, "hover": CONTROL_HOVER, "pressed": CONTROL_PRESSED, "line": LINE_STRONG,
 		"text": TEXT, "dim": TEXT_DIM, "off": TEXT_OFF, "good": GOOD, "warn": WARN, "bad": BAD,
-		"fill": accent_fill(), "on_fill": on_accent_fill(), "tile": TILE, "ring": _ring()},
+		"fill": accent_fill(), "on_fill": on_accent_fill(), "tile": TILE, "ring": _ring(), "bold": _face(WEIGHT_BOLD), "base_px": _px(SIZE_BASE)},
 		_px(SIZE_SMALL), _face(WEIGHT_MEDIUM))
 
 

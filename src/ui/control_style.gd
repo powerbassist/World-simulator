@@ -19,7 +19,17 @@ extends RefCounted
 ## `box` is ui_theme's _button_box (bg, border) -> StyleBoxFlat; `t` the tokens
 ## {control, hover, pressed, line, text, dim, off, good, warn, bad, fill, on_fill, tile, ring};
 ## `small_px` the caption size scaled; `medium` the 500 cut (null when the font did not load).
+## A figure that is a price: the text colour at the bold cut (decision 1). Its name lives here, beside the style it
+## names, because ui_theme.gd sits at the size ratchet's ceiling.
+const STRONG := "Strong"  # i18n: ok a variation name
+
+
 static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary, small_px: int, medium: Font) -> void:
+	# G3 S4 (gate T4 on #443): a price -- a row's balance, a change's money -- is the text colour at the bold cut.
+	theme.set_type_variation(STRONG, "Label")  # i18n: ok
+	theme.set_font("font", STRONG, t["bold"])
+	theme.set_font_size("font_size", STRONG, int(t["base_px"]))
+	theme.set_color("font_color", STRONG, t["text"])
 	var fill := t["fill"] as Color
 	var primary := String(names["primary"])
 	theme.set_type_variation(primary, "Button")  # i18n: ok

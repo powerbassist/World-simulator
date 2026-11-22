@@ -19,6 +19,8 @@ const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+const ControlStyle = preload("res://src/ui/control_style.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -139,8 +141,16 @@ func _check_tray() -> void:
 	# ONE button: Table the bill. Everything else in the tray is a link (flat).
 	var loud := []
 	for b in foot.find_children("*", "Button", true, false):
-		if (b as Button).is_visible_in_tree() and not (b as Button).flat:
+		if (b as Button).is_visible_in_tree() and not (b as Button).flat and (b as Button).theme_type_variation != UiTheme.GHOST:
 			loud.append(b)
+	# Gate T4 on #443: a change's money is a price, the text colour at the bold cut, never a tone.
+	for id in drawn:
+		var money: Label = foot.find_child("Money_" + String(id).replace(":", "_"), true, false)
+		if money != null and money.theme_type_variation != ControlStyle.STRONG:
+			_fail("change %s's money wears '%s', not the price's bold" % [id, money.theme_type_variation])
+	# Gate T9: the Assembly's result in words under its bar, with its glyph.
+	if not foot._verdict.visible or not (foot._verdict.text.begins_with("✓") or foot._verdict.text.begins_with("✗")):
+		_fail("the rail does not say the Assembly's result in words: '%s'" % foot._verdict.text)
 	if loud.size() != 1 or (loud[0] as Button).text != Strings.t("Table the bill"):
 		_fail("the tray's loud buttons: %s" % [loud.map(func(b) -> String: return (b as Button).text)])
 

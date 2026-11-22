@@ -208,7 +208,7 @@ func _check_a_drag_repaints_in_place() -> void:
 		_fail("the row's figure does not show the move: '%s'" % cell.text)
 	if not _panel._foot.visible or not _panel._foot.find_child("Table", true, false).visible:
 		_fail("a drafted row did not bring up the footer's one button")
-	if not _panel._foot._count.text.contains("1 change"):
+	if not _panel._foot._count.text.to_lower().contains("1 change"):
 		_fail("the rail does not count the row: '%s'" % _panel._foot._count.text)
 	_panel._draft.revert()
 	_panel._paint(_state.player())
@@ -401,7 +401,7 @@ func _check_the_brackets_are_priced_end_to_end() -> void:
 	_panel._process(0.0)
 	if _panel._draft.count() != 1 or _editor().get_node("Effect").text == "":
 		_fail("a brackets-only draft has no effect line: %d rows '%s'" % [_panel._draft.count(), _editor().get_node("Effect").text])
-	if not _panel._foot._count.text.contains("1 change"):
+	if not _panel._foot._count.text.to_lower().contains("1 change"):
 		_fail("the rail does not count the brackets: '%s'" % _panel._foot._count.text)
 	_panel._draft.revert()
 

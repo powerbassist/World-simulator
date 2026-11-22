@@ -13,6 +13,7 @@ extends RefCounted
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 ## [snapshot key, name] per side, in the order the Budget printed them.
 const SPENDING := [
@@ -64,11 +65,12 @@ static func build(box: Control, parts: Array, id: String, ctx: Dictionary) -> vo
 		gap.add_child(lines)
 	else:
 		var button := Button.new()
-		button.flat = true
+		button.theme_type_variation = UiTheme.GHOST  # a fold: a ghost with its chevron (g3-spec "Borderless toggle")
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		button.name = "OfWhich"  # i18n: ok a node name, found by tests
 		# Two words and a count, not the names: the page's prose is held at its ceiling, and the names are the hover.
-		button.text = Strings.tn("%d part", "%d parts", parts.size()) % parts.size()
+		button.text = Strings.tn("%d part", "%d parts", parts.size()) % parts.size() + "  ▸"  # i18n: ok a glyph
 		button.tooltip_text = Strings.t("of which: %s") % ", ".join(parts.map(func(p: Dictionary) -> String: return Strings.t(String(p["part"]))))
 		button.pressed.connect((ctx["toggle"] as Callable).bind(id))
 		gap.add_child(button)
