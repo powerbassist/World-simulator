@@ -10,6 +10,7 @@ extends SceneTree
 
 const DateText = preload("res://src/ui/date_text.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const LeverWords = preload("res://src/ui/lever_words.gd")
 
 var _failures: Array[String] = []
 
@@ -40,6 +41,12 @@ func _init() -> void:
 	# Out-of-range months clamp rather than index past the table.
 	if DateText.month(0) != "JAN" or DateText.month(13) != "DEC":
 		_fail("a month outside 1-12 should clamp")
+	# A month index is 1-based and its year turns after December (QA on #451): December must stay December.
+	for year in [2026, 2027]:
+		if LeverWords.when_long(year * 12 + 12) != "December %d" % year or LeverWords.when_long(year * 12 + 1) != "January %d" % year:
+			_fail("when_long: %s / %s around the turn of %d" % [LeverWords.when_long(year * 12 + 12), LeverWords.when_long(year * 12 + 1), year])
+		if LeverWords.when(year * 12 + 12) != "DEC %d" % year or LeverWords.when(year * 12 + 1) != "JAN %d" % year:
+			_fail("when: %s / %s around the turn of %d" % [LeverWords.when(year * 12 + 12), LeverWords.when(year * 12 + 1), year])
 	_check_no_private_month_tables()
 	_check_local_stamp()
 	_finish()

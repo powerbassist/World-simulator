@@ -282,18 +282,23 @@ func _check_g3_shapes_have_one_home() -> void:
 ## G3 kit card (R1): a tile pads itself, in the kit, 12 px on the four sides -- not in the theme's
 ## TilePanel box (slim tiles and row grounds share that box) and not in a panel's own inset.
 func _check_tiles_pad_themselves() -> void:
+	# The spec's 12 (gate-450 item 1), written here and not read off the constant it guards: a TILE_PAD
+	# set to 0 must fail (QA on #451).
+	const SPEC_PAD := 12
+	if PanelKit.TILE_PAD != SPEC_PAD:
+		_fail("PanelKit.TILE_PAD is %d, the spec's tile padding is %d" % [PanelKit.TILE_PAD, SPEC_PAD])
 	for tile in [_tile, _plain_tile]:
 		var inset := PanelKit.tile_body(tile)
 		for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-			if inset.get_theme_constant(side) != PanelKit.TILE_PAD:
-				_fail("a kit tile's %s is %d, not %d" % [side, inset.get_theme_constant(side), PanelKit.TILE_PAD])
+			if inset.get_theme_constant(side) != SPEC_PAD:
+				_fail("a kit tile's %s is %d, not %d" % [side, inset.get_theme_constant(side), SPEC_PAD])
 		if String(tile.theme_type_variation) != UiTheme.TILE_PANEL:
 			_fail("a kit tile wears %s, not TilePanel" % tile.theme_type_variation)
 	# Measured, not read off a constant: the figure's text starts 12 px inside the plate.
 	var value := _tile.find_children("*", "Label", true, false)[0] as Label
-	if value.global_position.x - _tile.global_position.x < PanelKit.TILE_PAD - 0.5:
+	if value.global_position.x - _tile.global_position.x < SPEC_PAD - 0.5:
 		_fail("the tile's figure sits %.1f px from its edge" % (value.global_position.x - _tile.global_position.x))
-	if value.global_position.y - _tile.global_position.y < PanelKit.TILE_PAD - 0.5:
+	if value.global_position.y - _tile.global_position.y < SPEC_PAD - 0.5:
 		_fail("the tile's figure sits %.1f px under its top" % (value.global_position.y - _tile.global_position.y))
 
 

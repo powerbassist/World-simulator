@@ -242,8 +242,8 @@ func _check_picked_row_ground() -> void:
 			_fail("the picked row's name still draws a ground of its own")
 		if not picked_row and String(name_button.theme_type_variation) != UiTheme.PICKED_ROW:
 			_fail("a row that is not picked wears '%s', not PICKED_ROW" % name_button.theme_type_variation)
-	if _laws()._rows.get_theme_constant("separation") + 2 * LawRow.GROUND_PAD_V > 10:
-		_fail("the rows' gap and padding come to more than main's 10 px between rows")
+	if _laws()._rows.get_theme_constant("separation") + 2 * LawRow.GROUND_PAD_V != 10:
+		_fail("the rows' gap and padding come to %d px, not main's 10 between rows" % (_laws()._rows.get_theme_constant("separation") + 2 * LawRow.GROUND_PAD_V))
 	var other := ""
 	for row in _rows():
 		if not (row.get_meta("pick") as Button).button_pressed:
@@ -263,6 +263,10 @@ func _check_picked_row_ground() -> void:
 ## edge has its glow and its focus ring inside the scroll's clip. The content keeps its x; the clip
 ## opens GLOW_ROOM px past it on each side, still inside the sheet.
 func _check_scroll_clip_leaves_room() -> void:
+	# The room the glow needs is the theme's own, not LawList.GLOW_ROOM: GLOW_ROOM set to 0 must fail (QA on #451).
+	var glow_px := int((UiTheme.build().get_stylebox("hover", UiTheme.PRIMARY) as StyleBoxFlat).shadow_size)
+	if glow_px < 1:
+		_fail("the filled button has no glow to leave room for")
 	for box in [_laws()._rows, _laws()._detail]:
 		var scroll := _laws().scroll_of(box)
 		if scroll == null:
@@ -273,7 +277,7 @@ func _check_scroll_clip_leaves_room() -> void:
 			sheet = sheet.get_parent() as Control
 		var room_left: float = (box as Control).global_position.x - scroll.global_position.x
 		var room_right: float = scroll.get_global_rect().end.x - (box as Control).get_global_rect().end.x
-		if room_left < LawList.GLOW_ROOM - 0.5:
+		if room_left < glow_px - 0.5:
 			_fail("a column's content starts %.1f px inside its clip: a filled press there loses its glow" % room_left)
 		if sheet != null and scroll.get_global_rect().end.x > sheet.get_global_rect().end.x + 0.5:
 			_fail("a column's scroll bar leaves its sheet (%.1f px)" % (scroll.get_global_rect().end.x - sheet.get_global_rect().end.x))
@@ -295,8 +299,8 @@ func _check_path_tiles(steps: Array) -> void:
 			continue
 		if String(tile.theme_type_variation) != (ControlStyle.TILE_FAILS if bool(step["fails"]) else UiTheme.TILE_PANEL):
 			_fail("the %s tile wears %s: only a kill takes the outline" % [step["slot"], tile.theme_type_variation])
-		if PanelKit.tile_body(tile).get_theme_constant("margin_left") != PanelKit.TILE_PAD:
-			_fail("the %s tile's words sit on its edge, not %d px inside" % [step["slot"], PanelKit.TILE_PAD])
+		if PanelKit.tile_body(tile).get_theme_constant("margin_left") != 12:
+			_fail("the %s tile's words sit on its edge, not %d px inside" % [step["slot"], 12])
 		if (tile.find_child("Glyph", true, false) != null) != (glyph != ""):
 			_fail("the %s tile's glyph does not follow its verdict" % step["slot"])
 		if (tile.find_child("CourtMeter", true, false) != null) != (step["slot"] == "court"):
