@@ -344,12 +344,9 @@
   "Next %s election: %s": "Prochaine élection (%s) : %s",
   "Approval by bloc": "Popularité par bloc",
   "What the country is thinking about": "Ce qui préoccupe le pays",
-  "Construction bill": "Coût des chantiers",
   "Under construction": "En construction",
-  "Nothing is being built.": "Aucun chantier en cours.",
   "Finished": "Terminés",
   "Available": "Disponibles",
-  "Every project has been built.": "Tous les projets ont été réalisés.",
   "Named share of the population": "Part nommée de la population",
   "Unnamed — extra-regio and overseas": "Non nommé — hors région et outre-mer",
   "Named share of output": "Part nommée de la production",
@@ -394,7 +391,6 @@
   "Military capability %s — a deployment costs %s%% of GDP.": "Capacité militaire %s — un déploiement coûte %s %% du PIB.",
   "Press under state oversight (%s).": "Presse sous tutelle de l'État (%s).",
   "Press independence guaranteed (%s).": "Indépendance de la presse garantie (%s).",
-  "%d of %d months remaining · %s %% of GDP a year · will buy %s %%/yr": "%d mois restants sur %d · %s %% du PIB par an · rapportera %s %%/an",
   "%d month on the clock": [
     "%d mois au compteur",
     "%d mois au compteur"

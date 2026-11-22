@@ -28,6 +28,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --plant --zoom 5 --center 2.5 44.5
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --book --open calendar
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open projects
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open projects   (G3 S4 Public works "A calendrier": nothing building, every work on offer)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --build --hover-project high_speed_rail
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --campaign --open campaign

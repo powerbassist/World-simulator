@@ -22,6 +22,7 @@ tests=(
   tests/test_region_fund.gd
   tests/test_register_panel.gd
   tests/test_register_follow.gd
+  tests/test_works_page.gd
   tests/test_region_sheet.gd
   tests/test_region_map.gd
   tests/test_region_load.gd
