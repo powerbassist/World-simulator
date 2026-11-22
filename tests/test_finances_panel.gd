@@ -29,6 +29,7 @@ var _state
 var _panel
 var _frame := 0
 var _main
+var _window_was := Vector2i.ZERO
 
 
 func _init() -> void:
@@ -469,6 +470,9 @@ func _register_primary() -> Button:
 
 ## Pass 2 T3 on #443: twelve changes at text 115, the rail open (the inbox put away): its verbs stay on screen.
 func _start_a_long_bill() -> void:
+	# The author's screen, not the headless default (taller: twelve changes fitted with room to spare).
+	_window_was = root.size
+	root.size = Vector2i(1920, 1080)
 	var inbox = _main._hud.inbox
 	inbox.slide_out()
 	inbox.hide()
@@ -499,8 +503,16 @@ func _check_a_long_bill_keeps_its_verbs() -> void:
 	elif table.get_global_rect().end.y > body.end.y + 0.5 or rail.get_global_rect().end.y > body.end.y + 0.5:
 		_fail("a twelve-change bill at 115 %% puts its verbs at %s, past the workspace's foot %s (rail %s)" % [
 			table.get_global_rect(), body.end.y, rail.get_global_rect()])
+	# The waterfall and the changes scroll in what is left, never squeezed to nothing.
+	var scroll := rail._fall.get_parent().get_parent() as ScrollContainer
+	if scroll == null or not scroll.is_ancestor_of(rail._changes):
+		_fail("the waterfall and the changes are not in one scroll")
+	elif scroll.size.y < 160.0 or scroll.get_v_scroll_bar().max_value <= scroll.size.y:
+		_fail("a twelve-change bill's scroll is %s px tall over %s of content: nothing to scroll or no room" % [
+			scroll.size.y, scroll.get_v_scroll_bar().max_value])
 	UiTheme.set_text_scale(1.0)
 	UiTheme.rebuild(_main)
+	root.size = _window_was
 	page.shared_draft().revert()
 	page._on_structure_changed()
 
