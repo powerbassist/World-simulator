@@ -96,7 +96,7 @@ func _check_answer_by() -> void:
 	# deadline month, lapsed as the month after begins.
 	if Audiences._overdue(raw, deadline) or not Audiences._overdue(raw, deadline + 1):
 		_fail("premise: the sim no longer lapses a request as the month after its deadline begins")
-	var last := Words.when(deadline)
+	var last := Words.when_long(deadline)
 	var row := AudienceDriver.row_of(_main, Audiences.request(ns, _oldest))
 	if String(row["by"]) != last:
 		_fail("the card says 'Answer by %s'; the last month it is taken is %s" % [row["by"], last])

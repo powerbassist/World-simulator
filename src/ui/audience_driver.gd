@@ -199,7 +199,7 @@ static func row_of(main, request: Dictionary) -> Dictionary:
 		"ask": PersonCard.object_text(loader, ns, String(request["object"]), request),
 		"wants": "%s %s" % [Strings.t(PersonCard.stance_label(String(request["stance"]))),
 			PersonCard.object_text(loader, ns, String(request["object"]), request)],
-		"by": Words.when(last), "called": _called(main, request), "party": PartyChip.of(loader, ns, String(request["person_id"])),
+		"by": Words.when_long(last), "called": _called(main, request), "party": PartyChip.of(loader, ns, String(request["person_id"])),
 		"price": Words.price_text(price, Feelings.of(ns, String(request["person_id"]))), "broken_word": price.has("broken_word"), "feel": Feelings.of(ns, String(request["person_id"])),
 		"book": answers["book"], "delegate": answers["delegate"], "decline": answers["decline"],
 		"delegate_hint": Words.delegate_hint(answers["delegate"])}.merged(_call_answer(main, String(request["person_id"]))).merged(_lapse(main, request))

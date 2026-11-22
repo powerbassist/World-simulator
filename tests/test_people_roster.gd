@@ -206,7 +206,7 @@ func _check_vacant_since() -> void:
 		ns.portfolio_removed_month.erase(f)
 	else:
 		ns.portfolio_removed_month[f] = stamp
-	var want := Strings.t("Vacant since %s") % preload("res://src/ui/lever_words.gd").when(_now())
+	var want := Strings.t("Vacant since %s") % preload("res://src/ui/lever_words.gd").when_long(_now())
 	if said != want:
 		_fail("a vacancy left by a resignation reads '%s', not '%s'" % [said, want])
 
