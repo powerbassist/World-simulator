@@ -49,7 +49,7 @@ static func build(box: Control, state, loader, key: String, commission: Callable
 	var row := PanelKit.buttons(box)
 	# The tiers are one choice among a few: a segmented control, the open one CONTROL_HOVER (Design's T4 on #449).
 	var ground := PanelContainer.new()
-	ground.theme_type_variation = UiTheme.TILE_PANEL
+	ground.theme_type_variation = UiTheme.TILE_PANEL  # not a tile: the segmented ground, 3 px in
 	var inset := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		inset.add_theme_constant_override(side, 3)
@@ -93,7 +93,7 @@ static func _fill(strip: EffectsStrip, go: Button, ns, key: String, tier: String
 	var closed := open_on > now
 	strip.show_lines(Strings.t("Treasury"), EffectsStrip.sum_text(cost), cost,
 		Strings.t("Support per bloc, within %s points.") % Num.f(float(terms["margin"]), 1),
-		Strings.t("Can be polled again from %s.") % Words.when(open_on) if closed else Strings.t("Arrives in %d weeks.") % int(terms["weeks"]))
+		Strings.t("Can be polled again from %s.") % Words.when_long(open_on) if closed else Strings.t("Arrives in %d weeks.") % int(terms["weeks"]))
 	go.disabled = closed
 
 

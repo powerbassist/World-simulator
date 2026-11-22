@@ -34,7 +34,7 @@ var _first_free := false
 
 
 func _init() -> void:
-	theme_type_variation = UiTheme.TILE_PANEL
+	theme_type_variation = UiTheme.TILE_PANEL  # not a tile: a slot, 10 by 4 (the order paper)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var margin := MarginContainer.new()

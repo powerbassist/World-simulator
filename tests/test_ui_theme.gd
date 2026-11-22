@@ -134,6 +134,15 @@ func _check_theme_contents() -> void:
 		if disabled_box != null and disabled_box.bg_color.a > 0.0:
 			_fail("the disabled %s keeps a fill, so it reads live" % type)
 
+	# The filled button's glow is a halo (Design's T14): 6 px all round, no drop, so a neighbour 6 px
+	# away never cuts it and a press on a clip edge shows it equal on the four sides.
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
+		var glow := theme.get_stylebox(state, UiTheme.PRIMARY) as StyleBoxFlat
+		if glow.shadow_size != 6 or glow.shadow_offset != Vector2.ZERO:
+			_fail("the filled button's %s glow is size %d offset %s, not a centred halo of 6" % [state, glow.shadow_size, glow.shadow_offset])
+	# A chip's label is the 500 cut, as a ghost's (T9): a toggle chip left at the button's bold read as a verb.
+	if theme.get_font("font", UiTheme.PICKED) != theme.get_font("font", UiTheme.GHOST) or theme.get_font("font", UiTheme.PICKED) == theme.get_font("font", "Button"):
+		_fail("a chip (PICKED) is not at the 500 cut")
 	_check_grammar(theme)
 	_check_states_distinct(theme)
 	_check_pressed_text_contrast(theme)

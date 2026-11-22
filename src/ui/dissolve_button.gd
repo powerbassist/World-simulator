@@ -64,7 +64,7 @@ func _on_pressed() -> void:
 			return
 		_confirm.confirmed.connect(_on_confirmed)
 	_asked_due = _due(ns)
-	_confirm.ask(tr("Dissolve the Assembly? An election follows on %s.") % Words.when(_asked_due), tr("Dissolve"))
+	_confirm.ask(tr("Dissolve the Assembly? An election follows on %s.") % Words.when_long(_asked_due), tr("Dissolve"))
 
 
 func _due(ns) -> int:

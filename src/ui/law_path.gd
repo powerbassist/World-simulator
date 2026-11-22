@@ -27,7 +27,6 @@ const LK = preload("res://src/sim/legislature_constants.gd")
 const BAND := 0.15
 
 ## What a step's tile holds its words in, px (Design's T1/T6: the head no longer sits on the tile's edge).
-const TILE_INSET := 12
 
 
 ## [{slot, title, word, tone, glyph, note, fails, meter?}] in the order the law meets them. `counts`
@@ -99,17 +98,12 @@ static func build(box: VBoxContainer, ns, party_list: Array, law, counts: Dictio
 ## glyph), the court's meter when it has one, the reason under it. A tile whose step kills the law
 ## wears a 1 px BAD outline, so the red hurdle is the loudest thing on the sheet.
 static func _step(n: int, step: Dictionary) -> Control:
-	var tile := PanelContainer.new()
-	tile.theme_type_variation = ControlStyle.TILE_FAILS if bool(step["fails"]) else UiTheme.TILE_PANEL
+	var tile := PanelKit.padded_tile(ControlStyle.TILE_FAILS if bool(step["fails"]) else UiTheme.TILE_PANEL)
 	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tile.name = "Step_%s" % step["slot"]  # i18n: ok a node name, found by tests
-	var inset := MarginContainer.new()
-	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		inset.add_theme_constant_override(side, TILE_INSET)
-	tile.add_child(inset)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 4)
-	inset.add_child(col)
+	PanelKit.tile_body(tile).add_child(col)
 	var head := Label.new()
 	head.text = "%d · %s" % [n, String(step["title"]).to_upper()]
 	head.theme_type_variation = UiTheme.MICRO

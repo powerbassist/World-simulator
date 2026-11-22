@@ -409,13 +409,37 @@ static func row(parent: Control, left: String, right: String, tone := Tone.PLAIN
 	return line_box
 
 
+## G3 kit card (R1): what a tile keeps between its edge and its content, on the four sides. It lives
+## here and not in the theme's TilePanel box, because slim tiles and row grounds share that box (a
+## picked row padded 12 px would shift against its neighbours).
+const TILE_PAD := 12
+
+
+## A tile that pads itself: a TilePanel (or `variation`) holding a MarginContainer of TILE_PAD. Put its
+## content in `tile_body(tile)`; the caller adds the tile where it goes. A tile for content that is
+## more than a figure; a figure alone is `figure_tile`.
+static func padded_tile(variation: String = UiTheme.TILE_PANEL) -> PanelContainer:
+	var tile := PanelContainer.new()
+	tile.theme_type_variation = variation
+	var inset := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		inset.add_theme_constant_override(side, TILE_PAD)
+	tile.add_child(inset)
+	return tile
+
+
+## Where a padded tile's content goes.
+static func tile_body(tile: PanelContainer) -> MarginContainer:
+	return tile.get_child(0) as MarginContainer
+
+
 ## G3: a figure on a tile (the side sheet's, a sector tab's head, the firm sheet). The caption
-## does not wrap: a tile is at least its caption's width, so it never runs under the next.
+## does not wrap: a tile is at least its caption's width, so it never runs under the next. Its box is
+## `tile_body(tile).get_child(0)`.
 static func figure_tile(parent: Control, value: String, caption: String) -> PanelContainer:
-	var plate := PanelContainer.new()
-	plate.theme_type_variation = UiTheme.TILE_PANEL
+	var plate := padded_tile()
 	parent.add_child(plate)
-	(figure(plate, value, caption).get_child(1) as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
+	(figure(tile_body(plate), value, caption).get_child(1) as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
 	return plate
 
 

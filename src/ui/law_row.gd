@@ -17,19 +17,34 @@ const BillActions = preload("res://src/ui/bill_actions.gd")
 
 ## The vote bar's width on a row, px (the picked picture at 1248, G3 S5).
 const BAR_WIDTH := 92.0
+## The picked row's ground reaches this far past the vote bar (and half of it above and below).
+const GROUND_PAD := 12
 
 
 static func build(list, ns, party_list: Array, law, selected: bool, flag: String) -> Control:
-	var row := VBoxContainer.new()
-	row.add_theme_constant_override("separation", 2)
-	row.set_meta("law_id", String(law.id))
+	# The picked row is a ground under the whole row -- name, summary, vote (T10); the others take
+	# the same padding bare, so a pick moves nothing. The holder is what the list sees and hears.
+	var holder: Container = PanelContainer.new() if selected else MarginContainer.new()
+	if selected:
+		holder.theme_type_variation = UiTheme.TILE_PANEL  # not a tile: a picked row's ground, no kit padding
+	holder.set_meta("law_id", String(law.id))
 	# PASS, not STOP: the row hears its click and the list's scroll still hears the wheel.
-	row.mouse_filter = Control.MOUSE_FILTER_PASS
-	row.gui_input.connect(func(event: InputEvent) -> void:
+	holder.mouse_filter = Control.MOUSE_FILTER_PASS
+	holder.gui_input.connect(func(event: InputEvent) -> void:
 		var press := event as InputEventMouseButton
 		if press != null and press.pressed and press.button_index == MOUSE_BUTTON_LEFT:
 			list.select(String(law.id)))
-	row.gui_input.connect(BillActions.row_input.bind(list, law))
+	holder.gui_input.connect(BillActions.row_input.bind(list, law))
+	var pad := MarginContainer.new()
+	pad.mouse_filter = Control.MOUSE_FILTER_PASS
+	pad.add_theme_constant_override("margin_right", GROUND_PAD)
+	pad.add_theme_constant_override("margin_top", GROUND_PAD / 2)
+	pad.add_theme_constant_override("margin_bottom", GROUND_PAD / 2)
+	holder.add_child(pad)
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+	row.mouse_filter = Control.MOUSE_FILTER_PASS
+	pad.add_child(row)
 	# G3 S5 (Bills = C): the words on the left (name, summary, a shut law's reason), the vote at
 	# a glance on the right.
 	var top := HBoxContainer.new()
@@ -58,7 +73,14 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 	name_line.add_theme_constant_override("separation", 8)
 	words.add_child(name_line)
 	name_line.add_child(pick)
-	row.set_meta("pick", pick)
+	holder.set_meta("pick", pick)
+	# The summary and a shut law's reason start where the name does: under the name button's own
+	# content margin, read from its box once it is in the tree.
+	var under := MarginContainer.new()
+	under.name = "Under"  # i18n: ok a node name, found by tests
+	words.add_child(under)
+	pick.tree_entered.connect(func() -> void:
+		under.add_theme_constant_override("margin_left", roundi(pick.get_theme_stylebox("normal").content_margin_left)))
 	var verb := Strings.law_verb(list._panel._loader, law)
 	if verb != "":
 		var word := Label.new()
@@ -68,7 +90,10 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 		name_line.add_child(word)
 	if flag == "":
 		top.add_child(_vote(list, ns, party_list, law))
-	PanelKit.line(words, Strings.law_summary(law))
+	var under_box := VBoxContainer.new()
+	under_box.add_theme_constant_override("separation", 2)
+	under.add_child(under_box)
+	PanelKit.line(under_box, Strings.law_summary(law))
 	# A queued law that has since shut keeps both: why it is shut, and that it is still queued.
 	for why in [LawShut.text(ns, law, flag) if flag != "" else "", _paper_text(list, law)]:
 		if why != "":
@@ -76,8 +101,8 @@ static func build(list, ns, party_list: Array, law, selected: bool, flag: String
 			line.text = why
 			line.theme_type_variation = UiTheme.WARN_TEXT
 			line.autowrap_mode = TextServer.AUTOWRAP_WORD
-			words.add_child(line)
-	return row
+			under_box.add_child(line)
+	return holder
 
 
 ## The vote at a glance: the forecast bar, and the counts under it.

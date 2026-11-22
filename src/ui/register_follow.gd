@@ -259,7 +259,7 @@ func _answer(row: Control, copy: Dictionary, a: Dictionary, until: int) -> Butto
 	# The kit's figure tile (test_panel_kit: one home), its box carrying the rest of the answer.
 	var tile := PanelKit.figure_tile(row, _answer_figure(copy, a), _answer_caption(copy, a))
 	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var col := tile.get_child(0) as VBoxContainer
+	var col := PanelKit.tile_body(tile).get_child(0) as VBoxContainer
 	var answer_id := String(a["id"])
 	col.move_child(PanelKit.heading(col, _answer_label(answer_id)), 0)
 	# The units each answer keeps, as squares (a Shrink outlines the ones it cuts).

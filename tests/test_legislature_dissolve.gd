@@ -57,7 +57,7 @@ func _process(_delta: float) -> bool:
 				_finish()
 				return true
 			var due: int = int(_main._state.year) * 12 + int(_main._state.month) + int(ns.dissolution_notice_months)
-			var question := "Dissolve the Assembly? An election follows on %s." % Words.when(due)
+			var question := "Dissolve the Assembly? An election follows on %s." % Words.when_long(due)
 			if not _text(card).contains(question):
 				_fail("the card does not ask '%s': %s" % [question, _text(card)])
 			if ns.dissolution_pending:
@@ -85,8 +85,8 @@ func _process(_delta: float) -> bool:
 		30:
 			var ns = _main._state.player()
 			var due: int = int(_main._state.year) * 12 + int(_main._state.month) + int(ns.dissolution_notice_months)
-			if ns.dissolution_pending or not _card().is_visible_in_tree() or not _text(_card()).contains(Words.when(due)):
-				_fail("a confirm after the month turned did not ask again with %s: pending %s, '%s'" % [Words.when(due), ns.dissolution_pending, _text(_card())])
+			if ns.dissolution_pending or not _card().is_visible_in_tree() or not _text(_card()).contains(Words.when_long(due)):
+				_fail("a confirm after the month turned did not ask again with %s: pending %s, '%s'" % [Words.when_long(due), ns.dissolution_pending, _text(_card())])
 			_press(true)
 		33:
 			_press(false)

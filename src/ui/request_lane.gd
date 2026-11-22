@@ -122,7 +122,7 @@ static func _body(row: Dictionary) -> String:
 		body += " " + Strings.t("They hold something on you. Refusing them breaks your word.")
 	# B6: a call does not answer them, and the card used to say nothing about it.
 	if int(row.get("called", 0)) > 0:
-		body += " " + Strings.t("You called in %s; they still want to see you.") % Words.when(int(row["called"]))
+		body += " " + Strings.t("You called in %s; they still want to see you.") % Words.when_long(int(row["called"]))
 	return body
 
 

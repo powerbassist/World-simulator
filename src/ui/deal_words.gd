@@ -55,8 +55,8 @@ static func act_risk(row: Dictionary) -> String:
 static func owed_text(loader, ns, row: Dictionary) -> String:
 	var who: String = loader.person_name(String(row["person_id"]))
 	if String(row["kind"]) == "pledge":
-		return Strings.t("%s has pledged a vote on %s, until %s.") % [who, PersonCard.object_text(loader, ns, String(row["object"]), {}), Words.when(int(row["due_month"]))]
-	return Strings.t("%s keeps silent until %s.") % [who, Words.when(int(row["due_month"]))]
+		return Strings.t("%s has pledged a vote on %s, until %s.") % [who, PersonCard.object_text(loader, ns, String(row["object"]), {}), Words.when_long(int(row["due_month"]))]
+	return Strings.t("%s keeps silent until %s.") % [who, Words.when_long(int(row["due_month"]))]
 
 
 ## What a person owed, judged, for the Diary's record beside the president's own words.
@@ -70,7 +70,7 @@ static func _bargain(ask: Dictionary, answers: Dictionary) -> String:
 	if String(ask.get("kind", "")) == K.ASK_FIRM:
 		var buyer: Dictionary = ask.get("buyer", {})
 		return "" if buyer.is_empty() else Strings.t("Or bargain for less: find a buyer. %s. %s") % [ClosureCard.money(buyer)[0], ClosureCard.jobs_text(buyer)]
-	return Strings.t("Or bargain for less: your word by %s, or the date you promise, for the same offer.") % Words.when(int(answers.get("bargain", {}).get("due_month", 0)))
+	return Strings.t("Or bargain for less: your word by %s, or the date you promise, for the same offer.") % Words.when_long(int(answers.get("bargain", {}).get("due_month", 0)))
 
 
 static func _ask(loader, ns, ask: Dictionary, grant: Dictionary, wants: String) -> Dictionary:
@@ -85,7 +85,7 @@ static func _ask(loader, ns, ask: Dictionary, grant: Dictionary, wants: String) 
 		var rescue: Dictionary = ask.get("rescue", {})
 		return {"want": "%s%s." % [thing.left(1).to_upper(), thing.substr(1)], "want_stake": wants,
 			"grant_cost": "" if rescue.is_empty() else Strings.t("The rescue: %s. %s") % [ClosureCard.money(rescue)[0], ClosureCard.jobs_text(rescue)]}
-	var by := Words.when(int(ask.get("due_month", 0)))
+	var by := Words.when_long(int(ask.get("due_month", 0)))
 	if kind == K.ASK_LAW:
 		return {"want": Strings.t("Bring %s before the chamber.") % thing, "want_stake": wants,
 			"grant_cost": Strings.t("Your word to bring it by %s. Not brought, it is a lie.") % by}

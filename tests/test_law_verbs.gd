@@ -204,7 +204,7 @@ func _detail_text() -> String:
 
 
 func _press(target: Control) -> void:
-	(_list()._detail.get_parent() as ScrollContainer).ensure_control_visible(target)
+	_list().scroll_of(_list()._detail).ensure_control_visible(target)
 	_click = target
 	_click_at = _frame + 4
 
@@ -481,7 +481,7 @@ func _check_the_month_turning_lifts_the_rule() -> void:
 		_fail("the next month, the address is still refused: %s" % _detail_text())
 	if "One address a month" in _detail_text():
 		_fail("the next month, the page still says one address a month")
-	var scroll: ScrollContainer = _list()._detail.get_parent()
+	var scroll: ScrollContainer = _list().scroll_of(_list()._detail)
 	if scroll.scroll_vertical <= 0:
 		_fail("premise: the column had room, so nothing here tests the scroll")
 	if not scroll.get_global_rect().encloses(_air().get_global_rect()):

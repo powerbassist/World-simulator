@@ -21,6 +21,7 @@ const WindowManager = preload("res://src/ui/window_manager.gd")
 const LawPath = preload("res://src/ui/law_path.gd")
 const ChartDiverge = preload("res://src/ui/chart_diverge.gd")
 const ControlStyle = preload("res://src/ui/control_style.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Chambers = preload("res://src/sim/chambers.gd")
 const ChambersK = preload("res://src/sim/chambers_constants.gd")
 const Judiciary = preload("res://src/sim/judiciary.gd")
@@ -56,6 +57,7 @@ func _process(_delta: float) -> bool:
 		16:
 			if _laws().selected_id() != _target_id:
 				_fail("a refresh dropped the selection (%s, wanted %s)" % [_laws().selected_id(), _target_id])
+			_check_picked_row_ground()
 			_check_polls_closed()
 			_laws()._detail.find_child("PollIt", true, false).pressed.emit()
 		20:
@@ -166,6 +168,7 @@ func _check_bills_page() -> void:
 	if path == null or steps.map(func(s): return s["slot"]) != want or path.get_child_count() != want.size() * 2 - 1:
 		_fail("the law's path is not its hurdles by rule: %s, want %s" % [steps.map(func(s): return s["slot"]), want])
 	_check_path_tiles(steps)
+	_check_scroll_clip_leaves_room()
 	# A nation with fewer hurdles: no second chamber's say and no review, the Assembly alone.
 	var saved := [ns.upper_ordinary, ns.upper_amendment, ns.judicial_review]
 	ns.upper_ordinary = ChambersK.VERDICT_NONE
@@ -202,6 +205,56 @@ func _check_bills_page() -> void:
 
 ## Design's T1, T2 on #449: a hurdle's verdict is the lead size in its tone with a glyph, a plain word is never amber,
 ## the kill takes a BAD outline, the court carries its meter, and every tile holds its words 12 px inside.
+## T10: the picked row's ground runs under the whole row -- name, summary and vote bar -- and the
+## name and the summary start at one x. The rows that are not picked wear no ground.
+func _check_picked_row_ground() -> void:
+	var grounds := 0
+	for row in _rows():
+		var picked: bool = (row.get_meta("pick") as Button).button_pressed
+		var has_ground: bool = row is PanelContainer and String((row as Control).theme_type_variation) == UiTheme.TILE_PANEL
+		if has_ground != picked:
+			_fail("a row is %s and %s a ground" % ["picked" if picked else "not picked", "has" if has_ground else "has not"])
+		if not picked:
+			continue
+		grounds += 1
+		var rect := (row as Control).get_global_rect()
+		var name_button: Button = row.get_meta("pick")
+		var under := row.find_child("Under", true, false) as Control
+		if not rect.encloses(name_button.get_global_rect()) or not rect.encloses(under.get_global_rect()):
+			_fail("the picked row's ground does not reach its name and its summary")
+		for bar in row.find_children("*", "", true, false).filter(func(c): return c is ChartStack):
+			if not rect.encloses((bar as Control).get_global_rect()):
+				_fail("the picked row's ground stops short of its vote bar")
+		var name_x := name_button.get_global_position().x + name_button.get_theme_stylebox("normal").content_margin_left
+		var summary_x: float = (under.get_child(0) as Control).get_global_position().x
+		if absf(name_x - summary_x) > 0.5:
+			_fail("the picked row's name starts at %.1f and its summary at %.1f" % [name_x, summary_x])
+	if grounds != 1:
+		_fail("%d rows carry the picked ground, not one" % grounds)
+
+
+## T14 (the author: "the blur around the blue button is cropped"): a filled press on the sheet's
+## edge has its glow and its focus ring inside the scroll's clip. The content keeps its x; the clip
+## opens GLOW_ROOM px past it on each side, still inside the sheet.
+func _check_scroll_clip_leaves_room() -> void:
+	for box in [_laws()._rows, _laws()._detail]:
+		var scroll := _laws().scroll_of(box)
+		if scroll == null:
+			_fail("a Bills column is not a scroll over its box")
+			continue
+		var sheet: Control = scroll
+		while sheet != null and String(sheet.theme_type_variation) != UiTheme.PLATE:
+			sheet = sheet.get_parent() as Control
+		var room_left: float = (box as Control).global_position.x - scroll.global_position.x
+		var room_right: float = scroll.get_global_rect().end.x - (box as Control).get_global_rect().end.x
+		if room_left < LawList.GLOW_ROOM - 0.5:
+			_fail("a column's content starts %.1f px inside its clip: a filled press there loses its glow" % room_left)
+		if sheet != null and scroll.get_global_rect().end.x > sheet.get_global_rect().end.x + 0.5:
+			_fail("a column's scroll bar leaves its sheet (%.1f px)" % (scroll.get_global_rect().end.x - sheet.get_global_rect().end.x))
+		if room_right < 0.0:
+			_fail("a column's content runs past its clip")
+
+
 func _check_path_tiles(steps: Array) -> void:
 	for step in steps:
 		var tone := Color(step["tone"])
@@ -216,8 +269,8 @@ func _check_path_tiles(steps: Array) -> void:
 			continue
 		if String(tile.theme_type_variation) != (ControlStyle.TILE_FAILS if bool(step["fails"]) else UiTheme.TILE_PANEL):
 			_fail("the %s tile wears %s: only a kill takes the outline" % [step["slot"], tile.theme_type_variation])
-		if (tile.get_child(0) as MarginContainer).get_theme_constant("margin_left") != LawPath.TILE_INSET:
-			_fail("the %s tile's words sit on its edge, not %d px inside" % [step["slot"], LawPath.TILE_INSET])
+		if PanelKit.tile_body(tile).get_theme_constant("margin_left") != PanelKit.TILE_PAD:
+			_fail("the %s tile's words sit on its edge, not %d px inside" % [step["slot"], PanelKit.TILE_PAD])
 		if (tile.find_child("Glyph", true, false) != null) != (glyph != ""):
 			_fail("the %s tile's glyph does not follow its verdict" % step["slot"])
 		if (tile.find_child("CourtMeter", true, false) != null) != (step["slot"] == "court"):
