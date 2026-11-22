@@ -77,12 +77,22 @@ func _process(_delta: float) -> bool:
 			# gap took 8 px from the books' columns and "Other spending" read "Other spend...").
 			UiTheme.set_text_scale(1.15)
 			_panel.theme = UiTheme.build()  # the game's fonts: a bare panel measures the engine default
+			# VAT at vote: its row is locked while Income tax beside it opens (gate-443 T11).
+			_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
+			_panel._stamp = ""
 			_panel._dirty = true
 			_panel._process(0.0)
 			# The narrowest the page can be laid out: every column at its minimum, which is where a name is cut.
 			_panel.size = Vector2(_panel.get_combined_minimum_size().x, 820)
 		5:
 			_check_no_name_is_clipped_at_115()
+			_check_names_at_one_x()
+			_check_the_withdraw_is_a_ghost()
+			# QA's RECORD on #443: the caption floor keeps the bars on one scale on the narrowest page, rail open.
+			_check_header_bars_on_the_row_scale()
+			_check_no_sheet_on_a_hidden_page()
+			_state.player().tabled_bill = {}
+			_panel._stamp = ""
 			UiTheme.set_text_scale(1.0)
 			_panel.theme = null
 			_panel._dirty = true
@@ -410,6 +420,46 @@ func _check_no_name_is_clipped_at_115() -> void:
 				clipped.append("%s (%.0f of %.0f px)" % [label.text, need, label.size.x])
 	if not clipped.is_empty():
 		_fail("at 115 %% the books clip: %s" % ", ".join(clipped))
+
+
+## Gate-443 T11: a name in a list keeps TEXT, at one left edge. A row at vote (locked) and a row that opens read
+## alike; the caption ("At vote") and the locked bar carry the state. Taxes: the rows share their indent.
+func _check_names_at_one_x() -> void:
+	var names: Array = _panel._revenue_box.find_children("RowName", "", true, false)
+	var locked: Array = names.filter(func(n) -> bool: return n is Label)
+	var open: Array = names.filter(func(n) -> bool: return n is Button)
+	if locked.is_empty() or open.is_empty():
+		_fail("premise: %d locked and %d openable tax names with VAT at vote" % [locked.size(), open.size()])
+		return
+	var first: Control = open[0]
+	for node in names:
+		var name: Control = node
+		var text_x := name.global_position.x + name.get_theme_stylebox("normal").get_margin(SIDE_LEFT)
+		var first_x := first.global_position.x + first.get_theme_stylebox("normal").get_margin(SIDE_LEFT)
+		if absf(text_x - first_x) > 0.5:
+			_fail("'%s' starts its text at x %.1f, '%s' at %.1f: not one edge" % [name.text, text_x, first.text, first_x])
+		if not name.get_theme_color("font_color").is_equal_approx(UiTheme.TEXT):
+			_fail("'%s' is drawn in %s, not TEXT" % [name.text, name.get_theme_color("font_color").to_html(false)])
+
+
+## Gate-443 T12: "Withdraw the bill" is a ghost like its neighbours, never bare bold text.
+func _check_the_withdraw_is_a_ghost() -> void:
+	var withdraw: Button = _panel._foot._withdraw
+	if not withdraw.visible:
+		_fail("premise: no Withdraw with a bill at vote")
+	if withdraw.flat or withdraw.theme_type_variation != UiTheme.GHOST:
+		_fail("Withdraw the bill is %s (flat %s), not a ghost" % [withdraw.theme_type_variation, withdraw.flat])
+
+
+## QA's RECORD on #443: Review cannot put the bill's sheet on a page that stays hidden (a scene owns the screen and
+## Books could not open): no sheet.
+func _check_no_sheet_on_a_hidden_page() -> void:
+	_panel.hide()
+	_panel._open_sheet()
+	if _panel._sheet.visible:
+		_fail("the bill's sheet opened on a hidden page")
+		_panel._sheet.hide()
+	_panel.show()
 
 
 ## G3 S4: the bill's rail is the Finances domain's aside, shown beside the page and folded while the inbox shows

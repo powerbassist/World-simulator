@@ -40,6 +40,8 @@ const INDENT := 8.0
 ## The caption between a row's name and its figure: the same floor on every row with a bar, or the bars part on a narrow
 ## page (pass 1 on the #443 fix round).
 const CAPTION_MIN := 120.0
+## The borderless toggle's own left padding (UiTheme._button_box): a locked name starts its text where an open one does.
+const NAME_INSET := 12
 ## A spending line's figure ("from 11.0 to 12.5 %"): the name button takes the rest, never this. The unit is the
 ## column's heading (% of GDP), so the figure stays short enough for the pane at the former 130 % text size.
 const PCT_WIDTH := 124.0
@@ -379,13 +381,20 @@ static func _kind_with_editor(box: Control, ns, kind: Dictionary, ctx: Dictionar
 ## A row's name: the button that opens its editor, or a plain name while the row is at vote (a tabled
 ## row is locked until the bill is withdrawn, as in the picture).
 static func _name_cell(row: Control, text: String, id: String, width: float, ctx: Dictionary) -> Control:
+	# A name in a list keeps TEXT at one edge, open or at vote (gate-443 T11): the caption and the locked bar say the state.
 	if (ctx["tabled"] as Dictionary).has(id):
-		var locked := _cell(row, text, "", width)
+		var inset := MarginContainer.new()
+		inset.add_theme_constant_override("margin_left", NAME_INSET)
+		inset.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(inset)
+		var locked := _cell(inset, text, "", width - NAME_INSET / UiTheme.text_scale())
+		locked.name = "RowName"  # i18n: ok a node name, found by tests
 		locked.tooltip_text = Strings.t("At vote: withdraw the bill to change it.")
 		return locked
 	var button := Button.new()
+	button.name = "RowName"  # i18n: ok a node name, found by tests
 	button.text = text
-	button.theme_type_variation = UiTheme.SUBROW_BUTTON
+	button.theme_type_variation = UiTheme.PICKED_ROW
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.toggle_mode = true
 	button.button_pressed = String(ctx["open"]) == id

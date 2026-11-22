@@ -178,7 +178,7 @@ func _ready() -> void:
 	_review = _button(verbs, "Review", Strings.t("Review the bill"), review_pressed)  # i18n: ok a node name
 	_review.theme_type_variation = UiTheme.GHOST
 	_withdraw = _button(verbs, "Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed)  # i18n: ok a node name
-	_withdraw.flat = true
+	_withdraw.theme_type_variation = UiTheme.GHOST
 
 
 func _button(parent: Control, node_name: String, label: String, signal_out: Signal) -> Button:
