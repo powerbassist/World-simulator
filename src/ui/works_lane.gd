@@ -6,7 +6,9 @@ extends Control
 ## started now" (the accent when it is the picked one, as a bookable place on the Diary); a dot
 ## marks the opening, then a wedge says its growth arrives over about five years -- a sign, not
 ## the trend's curve (the sim adds the payoff to a target the economy converges on). Today is
-## the accent's hairline; the end of the term a dashed line across every lane.
+## the accent's hairline; the end of the term a dashed line across every lane. A mark line never
+## strikes text (Design's T1 and T2 on #450): the term's label sits beside its line, and in a
+## lane the lines start under the lane's words.
 ##
 ## Rows are works_rows.gd's. Months are absolute (year x 12 + month).
 
@@ -24,12 +26,20 @@ var _last := 1
 var _now := 0
 var _term := -1
 var _picked := false
+var _legend := false
 
 
 ## The head row: the years, today and the term's end under them.
 func axis(first: int, last: int, now: int, term: int) -> void:
 	_place(first, last, now, term)
 	custom_minimum_size.y = _fs() * 3.0
+
+
+## The legend under the lanes: what a solid bar, a dashed bar and a wedge mean.
+func legend() -> void:
+	_legend = true
+	custom_minimum_size.y = _fs() * 1.6
+	queue_redraw()
 
 
 ## One work's lane.
@@ -51,6 +61,40 @@ func _place(first: int, last: int, now: int, term: int) -> void:
 
 func term_month() -> int:
 	return _term
+
+
+func _term_words() -> String:
+	return tr("your term ends · %s") % DateText.month_long_year((_term - 1) % 12 + 1, (_term - 1) / 12)
+
+
+## The axis row's "your term ends" label: ending 6 px left of its line when there is room after
+## "today", else starting 6 px right of it. Empty off the axis row or with no term ahead.
+func term_label_rect() -> Rect2:
+	if _term <= 0 or not _row.is_empty() or _legend:
+		return Rect2()
+	var font := get_theme_default_font()
+	var fs := _fs()
+	var w := font.get_string_size(_term_words(), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var xt := x_of(_term)
+	var x := xt - 6.0 - w
+	if x < _today_end(font, fs):
+		x = xt + 6.0 if xt + 6.0 + w <= size.x else x
+	return Rect2(x, fs * 2.4 - font.get_ascent(fs), w, font.get_height(fs))
+
+
+## Where the term's and the years' lines start: under the term's label on the axis row, under
+## the lane's words in a lane.
+func line_top() -> float:
+	var font := get_theme_default_font()
+	var fs := _fs()
+	if _row.is_empty():
+		var label := term_label_rect()
+		return label.end.y if label.size.x > 0.0 else fs * 1.4
+	return fs * 1.1 + font.get_descent(fs) + 2.0
+
+
+func _today_end(font: Font, fs: int) -> float:
+	return x_of(_now) + 2.0 + font.get_string_size(tr("today"), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 8.0
 
 
 ## The x of an absolute month on an axis `width` wide that runs from `first` to `last`.
@@ -78,7 +122,9 @@ func _said() -> String:
 		WorksRows.BUILDING:
 			return tr("opens %s · then about five years to arrive") % _mon(opens)
 		WorksRows.OFFER:
-			if _term > 0 and opens > _term:
+			# Only the picked lane says it: the lead says it for that work, and five lanes saying
+			# it was the page's longest repeat (Design's T2 on #450).
+			if _picked and _term > 0 and opens > _term:
 				return tr_n("if started now: opens %s · %d month after your term ends", "if started now: opens %s · %d months after your term ends",
 					opens - _term) % [_mon(opens), opens - _term]
 			return tr("if started now: opens %s") % _mon(opens)
@@ -93,24 +139,24 @@ func _mon(month: int) -> String:
 func _draw() -> void:
 	var font := get_theme_default_font()
 	var fs := _fs()
+	if _legend:
+		_draw_legend(font, fs)
+		return
+	var top := line_top()
 	# The years: a hairline at each January (and its number on the head row).
 	for year in range((_first - 1) / 12, (_last - 1) / 12 + 1):
 		var x := x_of(year * 12 + 1)
 		if x <= 0.0 and year * 12 + 1 < _first:
 			continue
-		draw_line(Vector2(x, fs * 1.4 if _row.is_empty() else 0.0), Vector2(x, size.y), UiTheme.EDGE, 1.0)
+		draw_line(Vector2(x, fs * 1.4 if _row.is_empty() else top), Vector2(x, size.y), UiTheme.EDGE, 1.0)
 		if _row.is_empty():
 			draw_string(font, Vector2(x - fs, fs), str(year), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)  # i18n: row-ok chart data
 	var xn := x_of(_now)
-	var today_end := xn + 2.0 + font.get_string_size(tr("today"), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 8.0
 	if _term > 0:
 		var xt := x_of(_term)
-		draw_dashed_line(Vector2(xt, fs * 1.4 if _row.is_empty() else 0.0), Vector2(xt, size.y), UiTheme.TEXT_DIM, 1.0, DASH)
+		draw_dashed_line(Vector2(xt, top), Vector2(xt, size.y), UiTheme.TEXT_DIM, 1.0, DASH)
 		if _row.is_empty():
-			var words := tr("your term ends · %s") % DateText.month_long_year((_term - 1) % 12 + 1, (_term - 1) / 12)
-			var w := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-			# Past "today" when the vote is near: two labels never overprint.
-			draw_string(font, Vector2(clampf(maxf(xt - w * 0.5, today_end), 0.0, size.x - w), fs * 2.4), words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)
+			draw_string(font, Vector2(term_label_rect().position.x, fs * 2.4), _term_words(), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT)
 	if _row.is_empty():
 		draw_string(font, Vector2(xn + 2.0, fs * 2.4), tr("today"), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.accent())
 	else:
@@ -123,7 +169,7 @@ func _lane(font: Font, fs: int, xn: float) -> void:
 	var mid := fs * 2.4
 	var h := fs * 0.6
 	if kind == WorksRows.DONE:
-		draw_string(font, Vector2(xn + 8.0, mid + fs * 0.35), _said(), HORIZONTAL_ALIGNMENT_LEFT, size.x - xn - 8.0, fs, UiTheme.TEXT_DIM)
+		draw_string(font, Vector2(xn + 8.0, fs * 1.1), _said(), HORIZONTAL_ALIGNMENT_LEFT, size.x - xn - 8.0, fs, UiTheme.TEXT_DIM)
 		return
 	var xo := x_of(int(_row["opens"]))
 	draw_string(font, Vector2(xn + 8.0, fs * 1.1), _said(), HORIZONTAL_ALIGNMENT_LEFT, size.x - xn - 8.0, fs, UiTheme.TEXT)
@@ -139,3 +185,24 @@ func _lane(font: Font, fs: int, xn: float) -> void:
 		for edge in [[bar.position, Vector2(bar.end.x, bar.position.y)], [Vector2(bar.position.x, bar.end.y), bar.end]]:
 			draw_dashed_line(edge[0], edge[1], tone, 1.5, DASH)
 	draw_circle(Vector2(xo, mid), fs * 0.3, UiTheme.TEXT)
+
+
+## Three keys in a row, each a mark as the lanes draw it, then its words.
+func _draw_legend(font: Font, fs: int) -> void:
+	var x := 0.0
+	var mid := fs * 0.8
+	var h := fs * 0.6
+	for key in [[WorksRows.BUILDING, tr("being built")], [WorksRows.OFFER, tr("on offer, if started now")], ["", tr("its growth arriving")]]:
+		var mark := Rect2(x, mid - h * 0.5, fs * 1.6, h)
+		match String(key[0]):
+			WorksRows.BUILDING:
+				draw_rect(mark, UiTheme.NEUTRAL_BAR)
+			WorksRows.OFFER:
+				for edge in [[mark.position, Vector2(mark.end.x, mark.position.y)], [Vector2(mark.position.x, mark.end.y), mark.end]]:
+					draw_dashed_line(edge[0], edge[1], UiTheme.TEXT_DIM, 1.5, DASH)
+			_:
+				draw_colored_polygon(PackedVector2Array([Vector2(mark.position.x, mark.end.y), Vector2(mark.end.x, mark.position.y), mark.end]),
+					Color(UiTheme.NEUTRAL_BAR, 0.6))
+		x = mark.end.x + 6.0
+		draw_string(font, Vector2(x, mid + fs * 0.35), String(key[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
+		x += font.get_string_size(String(key[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 16.0

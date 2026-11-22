@@ -124,8 +124,7 @@ func _refresh() -> void:
 	var now := WorksRows.now(_state)
 	var when := Trends.vote_date(ns)
 	var term := when.x * 12 + when.y if Trends.months_until(_state, when.x, when.y) >= 0 else -1
-	_head(ns, rows, term)
-	_build_refusal(ns)
+	_build_refusal(ns, _head(ns, rows, term))
 	var main := HBoxContainer.new()
 	main.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main.add_theme_constant_override("separation", UiTheme.GAP_PANE)
@@ -141,21 +140,25 @@ func _refresh() -> void:
 
 
 ## The page's head: the sentence that says what to decide, then the bill, the growth bought
-## and the slots taken.
-func _head(ns, rows: Array, term: int) -> void:
+## and the slots taken. Returns the lead's column, where a refusal is said (Design's T4 on #450:
+## a page of its own sheets has no text on the map).
+func _head(ns, rows: Array, term: int) -> VBoxContainer:
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 8)
 	PanelKit.sheet(_body).add_child(line)
 	var lead := Label.new()
 	lead.theme_type_variation = UiTheme.LEAD
 	lead.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lead.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lead.text = _lead(rows, term)
-	line.add_child(lead)
+	var lede := VBoxContainer.new()
+	lede.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_child(lede)
+	lede.add_child(lead)
 	var bill := Projects.bill_pct_gdp(ns, _loader)
 	PanelKit.figure_tile(line, tr("%s %%") % Num.f(bill, 3), tr("of GDP a year · %s bn") % Num.f(bill / 100.0 * float(ns.gdp_eur_bn), 1))
 	PanelKit.figure_tile(line, tr("+%s %%") % Num.f(ns.project_potential_target_pct, 3), tr("growth a year bought"))
 	PanelKit.figure_tile(line, tr("%d of %d") % [Projects.building_count(ns), WorksRows.slots(_loader)], tr("works being built"))
+	return lede
 
 
 ## One whole sentence a case: the picked offer against the term's end, or why nothing can start.
@@ -203,6 +206,13 @@ func _works(main: Control, rows: Array, now: int, term: int) -> void:
 		_lane_row(sheet, r, first, last, now, term, width, verbs, buttons)
 	if not buttons.is_empty():
 		PanelKit.same_class(buttons, PanelKit.BTN_H_ROW)
+	var legend: Control = _columns(sheet, width, verbs, WorksLane.new())
+	legend.set_meta("works_legend", true)
+	legend.legend()
+	# 16 px between the legend and the bill's heading (Design's T5): the sheet's own gap and the rest.
+	var gap := Control.new()
+	gap.custom_minimum_size.y = maxf(16.0 - sheet.get_theme_constant("separation"), 0.0)
+	sheet.add_child(gap)
 	PanelKit.heading(sheet, tr("The works' bill, % of GDP a year"))
 	var bill: Control = WorksBill.new()
 	var words: Control = _columns(sheet, width, verbs, bill)
@@ -212,10 +222,15 @@ func _works(main: Control, rows: Array, now: int, term: int) -> void:
 		if String(r["id"]) == _picked and String(r["state"]) == WorksRows.OFFER:
 			name = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
 	bill.setup(rows, first, last, now, _picked if name != "" else "", name)
-	var caption := PanelKit.plain_line(words.get_child(0), tr("Paid until the work opens."))
-	caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# The bill's y ticks are drawn left of its plot, in this column's right end (Design's T3).
+	var captions := MarginContainer.new()
+	captions.add_theme_constant_override("margin_right", roundi(WorksBill.TICKS_EM * UiTheme.SIZE_SMALL * UiTheme.text_scale()))
+	words.get_child(0).add_child(captions)
+	var column := VBoxContainer.new()
+	captions.add_child(column)
+	PanelKit.plain_line(column, tr("Paid until the work opens.")).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if name != "":
-		PanelKit.plain_line(words.get_child(0), tr("Dashed: with the picked work."), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		PanelKit.plain_line(column, tr("Dashed: with the picked work.")).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 
 ## A row of the three columns (words, the axis's control, the verbs); returns the middle control,
@@ -255,11 +270,18 @@ func _lane_row(sheet: Control, r: Dictionary, first: int, last: int, now: int, t
 	title.clip_text = true
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title.tooltip_text = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
+	title.set_meta("works_title", id)
 	title.pressed.connect(func() -> void:
 		_picked = id
 		_dirty = true)
 	words.add_child(title)
-	PanelKit.plain_line(words, _sub(r)).autowrap_mode = TextServer.AUTOWRAP_OFF
+	# The sub-line starts where the name's text does, inside the button's own margin (Design's T6).
+	var inset := MarginContainer.new()
+	inset.add_theme_constant_override("margin_left", roundi(title.get_theme_stylebox("normal").get_margin(SIDE_LEFT)))
+	words.add_child(inset)
+	var sub := PanelKit.plain_line(inset, _sub(r))
+	sub.autowrap_mode = TextServer.AUTOWRAP_OFF
+	sub.set_meta("works_sub", id)
 	var lane: Control = WorksLane.new()
 	lane.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lane.set_meta("works_lane", id)
@@ -321,14 +343,14 @@ func _on_act(ns, action) -> void:
 
 
 ## The last verb the sim refused -- its display record, ns.last_project_result -- as a
-## BLOCKED line at the top, so a stale button pressed is never a silent click
+## BLOCKED line under the lead, so a stale button pressed is never a silent click
 ## (V5.3-0 RF7, the parent's call on #222: energy, project and investment results).
 ## The sim gives no reason beyond "not available", so the line says that.
-func _build_refusal(ns) -> void:
+func _build_refusal(ns, lede: Control) -> void:
 	var last: Dictionary = ns.last_project_result
 	for action in (_loader.project_actions if bool(last.get("refused", false)) else []):
 		if String(action.id) == String(last.get("action_id", "")):
-			ResultTone.tint(PanelKit.line(_body, tr("%s refused -- it is no longer on offer.") % Strings.row_name("project-actions", action)), ResultTone.BLOCKED)
+			ResultTone.tint(PanelKit.line(lede, tr("%s refused -- it is no longer on offer.") % Strings.row_name("project-actions", action)), ResultTone.BLOCKED)
 
 
 ## The control this panel exists to let the player press -- V2.1a's fold contract: the

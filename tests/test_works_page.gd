@@ -46,6 +46,7 @@ func _process(_delta: float) -> bool:
 			_check_offers()
 			_check_page()
 			_check_axes()
+			_check_marks()
 			_started = String(_page.picked())
 			_press(_with_meta("works_go", _page))
 		6:
@@ -61,6 +62,10 @@ func _process(_delta: float) -> bool:
 		10:
 			if Projects.is_building(_state().player(), _started):
 				_fail("the confirm's yes did not cancel the work")
+			_state().player().last_project_result = {"refused": true, "action_id": String(_main._loader.project_actions[0].id)}
+			_page.mark_dirty()
+		12:
+			_check_refusal()
 			_finish()
 	return false
 
@@ -140,6 +145,52 @@ func _check_axes() -> void:
 	var picked: Dictionary = rows.filter(func(r): return String(r["id"]) == String(_page.picked()))[0]
 	if absf(WorksRows.bill_at(rows, _now(), String(_page.picked())) - WorksRows.bill_at(rows, _now()) - float(picked["cost_pct"])) > 1e-9:
 		_fail("the bill with the picked work does not add its cost")
+
+
+## Design's round on #450 (gate-450.md): a mark line never strikes text, only the picked lane says
+## how long after the term it opens, a legend under the lanes, one x for a lane's name and its
+## sub-line, one style for the bill's two captions.
+func _check_marks() -> void:
+	var axis = _with_meta("works_axis", _page)
+	var label: Rect2 = axis.term_label_rect() if axis.has_method("term_label_rect") else Rect2()
+	if axis.term_month() > 0:
+		var xt: float = axis.x_of(axis.term_month())
+		if label.size.x <= 0.0:
+			_fail("the term's end has no label beside its line")
+		elif label.position.x < xt and label.end.x > xt:
+			_fail("the term's line runs through its own label")
+		elif axis.line_top() < label.end.y:
+			_fail("in the axis row the term's line starts above its label's foot")
+	for lane in _all_with_meta("works_lane", _page):
+		var says := String(lane.tooltip_text).contains("after your term ends")
+		if says and String(lane.get_meta("works_lane")) != String(_page.picked()):
+			_fail("the lane %s, not picked, says how long after the term it opens" % lane.get_meta("works_lane"))
+	if _with_meta("works_legend", _page) == null:
+		_fail("no legend under the lanes")
+	var captions: Array = []
+	for l in _page.find_children("*", "Label", true, false):  # i18n: ok a class name
+		if (l as Label).text in [_page.tr("Paid until the work opens."), _page.tr("Dashed: with the picked work.")]:
+			captions.append(l)
+	if captions.size() != 2 or captions[0].theme_type_variation != captions[1].theme_type_variation:
+		_fail("the bill's two captions do not wear one style")
+	var sub = _with_meta("works_sub", _page)
+	var title = _with_meta("works_title", _page)
+	if sub == null or title == null:
+		_fail("no lane name (%s) or sub-line (%s)" % [title, sub])
+	else:
+		var inset: float = (title as Button).get_theme_stylebox("normal").get_margin(SIDE_LEFT)
+		if absf(title.global_position.x + inset - sub.global_position.x) > 1.0:
+			_fail("a lane's name sits at %s, its sub-line at %s" % [title.global_position.x + inset, sub.global_position.x])
+
+
+## A refused verb is said inside the head sheet, never on the map between the sheets.
+func _check_refusal() -> void:
+	for l in _page.find_children("*", "Label", true, false):  # i18n: ok a class name
+		if (l as Label).text.ends_with(_page.tr("refused -- it is no longer on offer.").trim_prefix("%s ")):
+			if l.get_parent() == _page._body:
+				_fail("the refused line sits on the map, a child of the bare body")
+			return
+	_fail("no refused line drawn")
 
 
 ## A started work: its lane opens on the diary's date, and Cancel... is a ghost that asks.
