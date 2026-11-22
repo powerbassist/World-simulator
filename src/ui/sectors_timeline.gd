@@ -229,7 +229,7 @@ static func _row(body: Control, state, r: Dictionary, span: int, today: float, w
 	sector.theme_type_variation = UiTheme.HEADING
 	var title := Button.new()
 	title.flat = true
-	title.toggle_mode = true
+	PanelKit.toggle(title)  # a flat toggle wears PICKED_ROW, one look per kind (#439)
 	title.button_pressed = picked
 	title.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	title.text = String(r["title"])  # i18n: row-ok built from msgids above

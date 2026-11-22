@@ -354,8 +354,8 @@ func _firm_object(nation_id: String, company_id: String):
 ## wants the attribution reads which sectors are marked.
 func _build_ledger(ns) -> void:
 	var fold := PanelKit.sized(Button.new())
-	# A ghost toggle, not bold text (Design's T9 on #441).
-	fold.theme_type_variation = UiTheme.GHOST
+	# A fold, not bold text (Design's T9 on #441): flat, so toggle() gives it the fold look, PICKED_ROW.
+	fold.flat = true
 	fold.text = tr("The public account")
 	PanelKit.toggle(fold)
 	fold.button_pressed = _open_ledger != ""
