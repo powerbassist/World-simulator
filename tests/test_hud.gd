@@ -11,6 +11,7 @@ extends SceneTree
 ## silently needs a test is the whole reason this file exists.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const AccentRule = preload("res://src/ui/accent_rule.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const MoodIcon = preload("res://src/ui/mood_icon.gd")
@@ -56,12 +57,75 @@ func _process(_delta: float) -> bool:
 func _later_frames() -> bool:
 	if _frame < 5:
 		return false  # a layout pass or two for the cards to take their height
-	_check_cards_do_not_push_the_ui_down()
-	# V5.1-c2.2: the floating windows' "clear of the column" and "a grown window
-	# stays on screen" checks went with the windows. A docked page is the dock's
-	# size whatever its content, and the dock's place is tests/test_workspace.gd's.
+	if _frame == 5:
+		_check_cards_do_not_push_the_ui_down()
+		# V5.1-c2.2: the floating windows' "clear of the column" and "a grown window
+		# stays on screen" checks went with the windows. A docked page is the dock's
+		# size whatever its content, and the dock's place is tests/test_workspace.gd's.
+		# #439 QA T1: at the reference size, the inbox put away gives the workspace back.
+		root.size = Vector2i(1920, 1080)
+		_main._windows.open("finances")
+		_main._hud.inbox.slide_out()
+		return false
+	if _frame == 7:
+		_check_the_workspace_is_full_with_the_inbox_away()
+		_main._windows.open("calendar")
+		return false
+	if _frame < 10:
+		return false
+	_check_own_sheets_on_the_header_grid()
 	_finish()
 	return false
+
+
+## The workspace is always full (G3 decision 9): with the inbox put away it reaches GAP_PANE short of
+## the screen's right edge, and the gap beside it is the map's -- a pointer there reaches the map,
+## not a holder behind the workspace (the old test_shell strip claim, re-aimed at the gap).
+func _check_the_workspace_is_full_with_the_inbox_away() -> void:
+	var gap := float(UiTheme.GAP_PANE)
+	if _main._hud.inbox.visible:
+		_fail("premise: the inbox did not slide away")
+	var dock: Rect2 = _main._windows.dock().get_global_rect()
+	if not is_equal_approx(dock.end.x, 1920.0 - gap):
+		_fail("with the inbox away the workspace ends at %.0f, not a gap short of 1920 (%.0f)" % [dock.end.x, 1920.0 - gap])
+	var viewport: Viewport = _main.get_viewport()
+	var point := Vector2(1920.0 - gap / 2.0, 540.0)
+	var motion := InputEventMouseMotion.new()
+	motion.position = point
+	motion.global_position = point
+	viewport.push_input(motion, true)
+	var hit: Control = viewport.gui_get_hovered_control()
+	if hit != null and hit != _main._map_view and not _main._map_view.is_ancestor_of(hit):
+		_fail("the gap right of the workspace lands on %s (%s), not the map" % [hit.name, hit.get_class()])
+
+
+## Design's gate T1 on #439: a panel that brings its own sheets sets them on the header sheet's
+## grid -- its first sheet a gap under the header, its outer edges on the header's -- with no
+## margin left over from the page sheet that went away.
+func _check_own_sheets_on_the_header_grid() -> void:
+	var header: Rect2 = (_main._windows.dock().get_child(0) as Control).get_global_rect()
+	var sheets: Array = _main._windows.content("calendar").find_children("*", "PanelContainer", true, false).filter(
+		func(n): return n.theme_type_variation == UiTheme.PLATE and n.is_visible_in_tree())
+	if sheets.is_empty():
+		_fail("premise: the Diary shows no sheet")
+		return
+	var left := INF
+	var right := -INF
+	var top := INF
+	var bottom := -INF
+	for sheet in sheets:
+		var r: Rect2 = sheet.get_global_rect()
+		left = minf(left, r.position.x)
+		right = maxf(right, r.end.x)
+		top = minf(top, r.position.y)
+		bottom = maxf(bottom, r.end.y)
+	if bottom > _main._windows.dock().get_global_rect().end.y + 0.5:
+		_fail("the Diary's sheets end at %.0f, past the workspace's foot" % bottom)
+	var gap := float(UiTheme.GAP_PANE)
+	if absf(left - header.position.x) > 0.5 or absf(right - header.end.x) > 0.5:
+		_fail("the Diary's sheets run %.0f to %.0f, off the header sheet's %.0f to %.0f" % [left, right, header.position.x, header.end.x])
+	if absf(top - (header.end.y + gap)) > 0.5:
+		_fail("the Diary's first sheet starts %.0f px under the header, not a gap (%.0f)" % [top - header.end.y, gap])
 
 
 ## The four cluster icons are read straight off disk and rasterised, bypassing
@@ -103,19 +167,19 @@ func _check_icons_load() -> void:
 	UiTheme.apply(host, Color("#2596FF"))
 	var sidebar = _main._hud.sidebar
 	sidebar.show_pending(["finances"])
-	# G3 S0: the sidebar and the day ribbon are glass, docked until S1 floats them (#436 pass 2).
-	for chrome in [sidebar, _main._hud.ribbon]:
-		if (chrome as Control).theme_type_variation != UiTheme.PANE_DOCKED:
-			_fail("%s is not the docked glass pane" % (chrome as Node).name)
+	_check_three_floating_panes()
 	var pill: Label = sidebar._pills["finances"]
 	if not pill.visible:
 		_fail("a pending budget did not show a count on Finances")
-	# G3: the attention tone is the pill's ground; the figure on it is the text tone.
+	# G3 S1 (the author's "Ambre pleine"): a solid amber pill, the figure in the sheet's dark,
+	# at AA on it.
 	var ground := pill.get_theme_stylebox("normal") as StyleBoxFlat
-	if ground == null or ground.bg_color != UiTheme.WARN_GROUND:
-		_fail("the pending count does not sit on the attention tone's pill")
-	if pill.get_theme_color("font_color") != UiTheme.TEXT:
-		_fail("the pending count's figure is %s, not the text tone" % pill.get_theme_color("font_color").to_html(false))
+	if ground == null or ground.bg_color != UiTheme.WARN:
+		_fail("the pending count does not sit on a solid amber pill")
+	elif AccentRule.contrast(pill.get_theme_color("font_color"), ground.bg_color) < AccentRule.MIN_CONTRAST:
+		_fail("the pending count's figure %s does not hold AA on the amber" % pill.get_theme_color("font_color").to_html(false))
+	elif pill.get_theme_color("font_color") != UiTheme.SHEET:
+		_fail("the pending count's figure is %s, not the sheet's dark" % pill.get_theme_color("font_color").to_html(false))
 	sidebar.show_pending([])
 
 	# The mood icon's WORRIED band sits between GOOD and BAD: a status tone, not the
@@ -195,10 +259,11 @@ func _check_the_bar_after_the_rebuild() -> void:
 	# A clear desk takes no slot (gate H6): stated outright, not through the code's own predicate.
 	if _main._state.player().event_queue.is_empty() and bar.figure_box("desk").visible:
 		_fail("an empty desk still shows its '— clear' chip on the strip")
-	# The date carries its weekday (DateText.weekday_full), the hold line is the cluster's own.
+	# The date carries its weekday, in G3's full form (decision 4: "Tue 3 March 2026", no
+	# capitals, no slashes); the hold line is the cluster's own.
 	var date: String = hud.clock_cluster._date_label.text
-	if not RegEx.create_from_string("^[A-Za-z]{3} \\d{2}/\\d{2}/\\d{4}$").search(date):
-		_fail("the clock's date '%s' is not 'Wed 12/08/2026'" % date)
+	if not RegEx.create_from_string("^[A-Z][a-z]{2} \\d{1,2} [A-Z][a-z]+ \\d{4}$").search(date):
+		_fail("the clock's date '%s' is not 'Tue 3 March 2026'" % date)
 	# Approval's reason went with it: the portrait card's number answers a hover.
 	var label: Label = hud.portrait_card._approval_label
 	label.mouse_entered.emit()
@@ -333,7 +398,7 @@ func _check_decisions_are_never_evicted() -> void:
 	stack.clear()
 
 
-## QA #45's fit take: a long answer wraps inside the 440 px dock instead of
+## QA #45's fit take: a long answer wraps inside the inbox's width instead of
 ## widening it (U5a's unwrapped row reached ~705 px in English, ~1075 in French).
 func _check_choice_row_wraps() -> void:
 	var stack = _main._hud.inbox
@@ -590,6 +655,83 @@ func _collect_text(node) -> String:
 	for child in node.get_children():
 		out += _collect_text(child)
 	return out
+
+
+## G3 S1: the chrome is THREE floating glass panes -- the sidebar, ONE top strip (the figures and the
+## title bar's tools in one row) and the time bar -- each GAP_PANE from the screen's edges and from each
+## other. A pane that went back to flush, or a fourth pane, is the BUREAU board again.
+func _check_three_floating_panes() -> void:
+	var hud = _main._hud
+	var view: Vector2 = _main.get_viewport().get_visible_rect().size
+	var gap := float(UiTheme.GAP_PANE)
+	for chrome in [hud.sidebar, hud.top_bar, hud.ribbon]:
+		if (chrome as Control).theme_type_variation != UiTheme.PANE:
+			_fail("%s wears '%s', not the floating glass pane" % [(chrome as Node).name, (chrome as Control).theme_type_variation])
+	if not hud.top_bar.is_ancestor_of(hud.title_bar):
+		_fail("the title bar's tools are not in the top strip's pane")
+	if hud.title_bar is PanelContainer:
+		_fail("the title bar is still a pane of its own")
+	var side: Rect2 = hud.sidebar.get_global_rect()
+	var strip: Rect2 = hud.top_bar.get_global_rect()
+	var bar: Rect2 = hud.ribbon.get_global_rect()
+	if not side.position.is_equal_approx(Vector2(gap, gap)):
+		_fail("the sidebar's pane is at %s, not a gap from the corner" % str(side.position))
+	if not is_equal_approx(strip.position.x, side.end.x + gap) or not is_equal_approx(strip.position.y, gap):
+		_fail("the top strip is at %s, not a gap right of the sidebar and under the top edge" % str(strip.position))
+	if not is_equal_approx(strip.end.x, view.x - gap):
+		_fail("the top strip ends at %.0f, not a gap short of %.0f" % [strip.end.x, view.x])
+	if not is_equal_approx(bar.position.x, gap) or not is_equal_approx(bar.end.x, view.x - gap) or not is_equal_approx(bar.end.y, view.y - gap):
+		_fail("the time bar is %s, not the screen's width less two gaps, a gap off the bottom" % str(bar))
+	if not is_equal_approx(bar.position.y, side.end.y + gap):
+		_fail("the sidebar ends at %.0f and the time bar starts at %.0f: not a gap apart" % [side.end.y, bar.position.y])
+	# The open domain's row: a control's ground and the accent bar left of it, in the pane's
+	# padding -- the accent's one mark in the sidebar (G3 spec section 2).
+	hud.sidebar.select("finances")
+	var accent_bar: ColorRect = hud.sidebar.open_bar()
+	if accent_bar == null or accent_bar.get_parent() != hud.sidebar._entries["finances"] or accent_bar.color != UiTheme.accent():
+		_fail("the open Finances row carries no accent bar")
+	elif accent_bar.offset_right > 0.0 or accent_bar.offset_right - accent_bar.offset_left < 4.0:
+		_fail("the open row's accent bar is not a 4 px bar left of the row")
+	if hud.sidebar._entries["finances"].theme_type_variation != UiTheme.SIDEBAR_ROW:
+		_fail("a sidebar entry is not a SIDEBAR_ROW")
+	# The bar moves with the open domain: one bar, on the new row, none left on the old one.
+	hud.sidebar.select("economy")
+	for id in ["finances", "economy"]:
+		var bars: int = (hud.sidebar._entries[id] as Node).get_children().filter(func(c): return c is ColorRect and not c.is_queued_for_deletion()).size()
+		if bars != (1 if id == "economy" else 0):
+			_fail("after opening Economy the %s row carries %d accent bars" % [id, bars])
+	hud.sidebar.select("")
+	if hud.sidebar.open_bar() != null:
+		_fail("the accent bar stayed with nothing open")
+	# Design's gate E1 on #439: one sheet per page, no tile-coloured slab inside it; the Diary,
+	# which lays out its own sheets, has no page sheet behind them.
+	if _main._windows.content("finances").theme_type_variation != UiTheme.BARE:
+		_fail("the Finances panel's root draws its own ground on its page: '%s'" % _main._windows.content("finances").theme_type_variation)
+	if _main._windows.frame("finances").theme_type_variation != UiTheme.PLATE:
+		_fail("the Finances page is not one sheet")
+	if not _main._windows.frame("calendar").own_sheets() or _main._windows.frame("calendar").theme_type_variation != UiTheme.BARE:
+		_fail("the Diary's page draws a sheet behind its own sheets")
+	# A scene's header has no tabs, so no segmented ground either (#439 pass 2 T5: an empty 6x6
+	# tile square beside the title).
+	_main._windows._show_domain_of("audience")
+	for node in _main._windows._tab_slot.find_children("*", "PanelContainer", true, false):
+		if not node.is_queued_for_deletion():
+			_fail("a scene's header draws a tab ground with no tab on it")
+	_main._windows._show_domain_of("finances")
+	if _main._windows.tab_buttons().is_empty():
+		_fail("premise: Finances has no tabs in its header")
+	# While the inbox shows over a tab, the workspace ends a gap short of it: nothing under it.
+	if hud.inbox.visible:
+		_main._windows.open("finances")
+		var dock: Rect2 = _main._windows.dock().get_global_rect()
+		if dock.end.x > hud.inbox.get_global_rect().position.x - gap + 0.5:
+			_fail("with the inbox up the workspace ends at %.0f, under the inbox at %.0f" % [dock.end.x, hud.inbox.get_global_rect().position.x])
+		_main._windows.close_all()
+	else:
+		_fail("premise: the inbox is not shown on the map")
+	var inbox: Rect2 = hud.inbox.get_global_rect()
+	if hud.inbox.visible and not is_equal_approx(inbox.end.x, view.x - gap):
+		_fail("the inbox ends at %.0f, not a gap short of the screen's edge" % inbox.end.x)
 
 
 func _fail(message: String) -> void:

@@ -267,7 +267,7 @@ func _majors(ns) -> void:
 		cell.add_child(words)
 		var pick := PanelKit.sized(Button.new())
 		pick.flat = true
-		pick.toggle_mode = true
+		PanelKit.toggle(pick)
 		pick.text = company.company_name
 		pick.button_pressed = _selected(ns) == company
 		pick.set_meta("firm", String(company.id))

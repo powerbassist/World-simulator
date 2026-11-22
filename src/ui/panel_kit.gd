@@ -297,13 +297,26 @@ static func sheet(parent: Control, title := "") -> VBoxContainer:
 	return body
 
 
-## G3: dresses a chrome container as a glass pane -- the variation (UiTheme.PANE, or the
-## flush TOP_BAR_PANEL until S1 floats the strip) and the blur behind it (frost.gd). Call it
-## first in the pane's _ready(), before its content.
-static func pane(panel: PanelContainer, variation := UiTheme.PANE) -> PanelContainer:
-	panel.theme_type_variation = variation
+## G3: dresses a chrome container as a glass pane -- UiTheme.PANE and the blur behind it
+## (frost.gd). Call it first in the pane's _ready(), before its content. Three panes only: the
+## sidebar, the top strip and the time bar (G3 S1); the inbox and the workspace are sheets.
+static func pane(panel: PanelContainer) -> PanelContainer:
+	panel.theme_type_variation = UiTheme.PANE
 	panel.add_child(Frost.new())
 	return panel
+
+
+## G3 S1: a toggle -- a chip, a fold, a picked row -- wears the accent fill while ON (PICKED). A
+## plain button held down does not (#436 RECORD, the press flash), so a toggle opts in here;
+## test_button_sizes fails a toggle left on the plain look.
+## A FLAT toggle (a fold, a picked name) becomes a borderless one, PICKED_ROW: a flat Button draws
+## no box, so ON read as OFF, and PICKED's label -- the fill's own, dark under a yellow accent --
+## vanished on the bare sheet (#439 pass 2 T6, T7: Design's ruling, a ground and never a hue).
+static func toggle(button: Button) -> Button:
+	button.toggle_mode = true
+	button.theme_type_variation = UiTheme.PICKED_ROW if button.flat else UiTheme.PICKED
+	button.flat = false
+	return button
 
 
 ## T5 (#400 pass 2): the rows of one stack take one width, the widest row's or the measure, so their

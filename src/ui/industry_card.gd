@@ -49,7 +49,7 @@ static func build(panel, parent: Control, ns, sector: String) -> void:
 	var head := PanelKit.buttons(card)
 	var toggle := PanelKit.sized(Button.new())
 	toggle.text = Labels.sector(sector)
-	toggle.toggle_mode = true
+	PanelKit.toggle(toggle)
 	toggle.button_pressed = open
 	toggle.set_meta("sector", sector)
 	toggle.pressed.connect(func() -> void: panel._toggle("_open_sector", sector))
@@ -127,7 +127,7 @@ static func _firm_row(panel, card: Control, ns, company) -> void:
 	figures.autowrap_mode = TextServer.AUTOWRAP_OFF
 	var act := PanelKit.sized(Button.new())
 	act.text = Strings.t("Act")
-	act.toggle_mode = true
+	PanelKit.toggle(act)
 	var id := String(company.id)
 	act.button_pressed = panel._open_firm == id
 	act.set_meta("company_id", id)
@@ -185,7 +185,7 @@ static func _body(panel, card: Control, ns, sector: String, body: Array) -> void
 	var fold := PanelKit.sized(Button.new())
 	fold.flat = true
 	fold.text = Strings.tn("%d smaller firm · %s jobs", "%d smaller firms · %s jobs", body.size()) % [body.size(), CompanyVerb.thousands(jobs)]
-	fold.toggle_mode = true
+	PanelKit.toggle(fold)
 	fold.set_meta("fold", key)
 	fold.button_pressed = panel._open_body == key
 	fold.pressed.connect(func() -> void: panel._toggle("_open_body", key))

@@ -12,6 +12,7 @@ extends HBoxContainer
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Icon = preload("res://src/ui/icon.gd")
 
 signal pause_toggled
@@ -22,8 +23,9 @@ signal speed_selected(speed: int)
 const MONTH_NAMES := DateText.SHORT
 
 const ICON_PX := 20
-## The hold line's room: it ellipsises past it and the tooltip carries the whole sentence.
-const REASON_WIDTH := 290
+## The year whose dates _fit_width measures: every month meets every weekday in a year, and the
+## figures are tabular, so a day's or a year's digits never change the width.
+const DATE_YEAR := 2026
 ## Own-drawn glyphs (assets/icons/ui), one file per speed so the speed reads as a
 ## pip count without a number: Material has no three-step play.
 const GLYPHS := {
@@ -64,6 +66,10 @@ func _ready() -> void:
 	var text := VBoxContainer.new()
 	text.add_theme_constant_override("separation", -2)
 	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# The column takes the slot's width left of the speeds, and the hold line ellipsises inside it:
+	# a fixed floor under the date widened the horizon's clock slot whenever the clock held
+	# (#439 pass 2 T4: 182 + 16 + 290 = 488 of 480).
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(text)
 	_date_label = Label.new()
 	_date_label.theme_type_variation = UiTheme.FIGURE
@@ -72,20 +78,42 @@ func _ready() -> void:
 	_reason = Label.new()
 	_reason.theme_type_variation = UiTheme.WARN_TEXT
 	_reason.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_reason.custom_minimum_size.x = REASON_WIDTH
+	_reason.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_reason.mouse_filter = Control.MOUSE_FILTER_PASS
 	_reason.hide()
 	text.add_child(_reason)
+	_fit_width()
+
+
+func _notification(what: int) -> void:
+	# Deferred: the cluster hears of a new theme before its date label's cache has the new size.
+	if what == NOTIFICATION_THEME_CHANGED and _date_label != null:
+		_fit_width.call_deferred()
+
+
+## As wide as the speeds and the widest date this clock can print, measured in the face and size
+## shown, so the horizon beside it never moves with the month (#439 pass 2 T4: a typed 480 slot
+## widened on a long month at text 115).
+func _fit_width() -> void:
+	var font := _date_label.get_theme_font("font")
+	var px := _date_label.get_theme_font_size("font_size")
+	if font == null:
+		return
+	var widest := 0.0
+	for month in range(1, 13):
+		for day in range(1, DateText.days_in(month, DATE_YEAR) + 1):
+			widest = maxf(widest, font.get_string_size(DateText.weekday_long(day, month, DATE_YEAR), HORIZONTAL_ALIGNMENT_LEFT, -1, px).x)
+	var speeds := (get_child(0) as Control).get_combined_minimum_size().x
+	custom_minimum_size.x = ceilf(speeds + get_theme_constant("separation") + widest)
 
 
 ## No focus, as on every piece of chrome: a clicked button that kept the focus
 ## would take Space, the pause key, for itself (V5.1-0c's forfeited Agenda).
 func _button(parent: Control, tip: String, glyph) -> Button:
 	var button := Button.new()
-	button.theme_type_variation = UiTheme.SUBROW_BUTTON
 	button.tooltip_text = tip
 	button.focus_mode = Control.FOCUS_NONE
-	button.toggle_mode = true
+	PanelKit.toggle(button)  # G3 S1: the running control is the accent fill (spec section 1)
 	button.custom_minimum_size = Vector2(38, 32)
 	_textures[glyph] = {"dim": Icon.load_icon(GLYPHS[glyph], UiTheme.TEXT_DIM, ICON_PX),
 		"lit": Icon.load_icon(GLYPHS[glyph], UiTheme.TEXT, ICON_PX)}
@@ -127,9 +155,9 @@ func refresh(clock: Node, reason = null) -> void:
 	if _shown_held:
 		_date_label.modulate.a = Motion.PAUSED_ALPHA
 		_pause_button.button_pressed = true
-		_pause_button.icon = _textures["busy"]["lit"]
+		_pause_button.icon = _lit("busy")
 		return
-	var date := DateText.weekday_full(clock.day, clock.month, clock.year)
+	var date := DateText.weekday_long(clock.day, clock.month, clock.year)
 	# V4.9a. The clock shows its speed rather than stating it: one beat per
 	# day, so the beats' own rhythm is the speed, and a paused date is dimmed --
 	# still the date, visibly not moving. The dim is state, not motion, so it
@@ -152,4 +180,15 @@ func refresh(clock: Node, reason = null) -> void:
 
 ## The dim glyph at rest, the lit one while the button is the clock's state.
 func _set_glyph(button: Button, glyph, lit: bool) -> void:
-	button.icon = _textures[glyph]["lit" if lit else "dim"]
+	button.icon = _lit(glyph) if lit else _textures[glyph]["dim"]
+
+
+## G3 S1: the lit glyph sits on the accent fill (PICKED), so it takes the fill's own label colour --
+## white, or the dark one where white fails (German yellow) -- read when drawn, after the nation's
+## accent is applied, and kept per colour.
+func _lit(glyph) -> ImageTexture:
+	var tone := UiTheme.on_accent_fill()
+	var key := "lit_" + tone.to_html()
+	if not _textures[glyph].has(key):
+		_textures[glyph][key] = Icon.load_icon(GLYPHS[glyph], tone, ICON_PX)
+	return _textures[glyph][key]

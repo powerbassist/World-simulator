@@ -11,6 +11,7 @@ extends SceneTree
 ## and a due outside the three-month window or already past is not drawn. An off-by-one
 ## here prints a lapse a month late, which no walk of the screen would notice.
 
+const DateText = preload("res://src/ui/date_text.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Items = preload("res://src/ui/horizon_items.gd")
@@ -130,8 +131,8 @@ func _check_the_vote(state, loader) -> void:
 	if int(vote["months"]) != Trends.months_to_vote(state, state.player()):
 		_fail("the horizon's vote count (%d) and the strip's (%d) differ -- two clocks for one vote" % [
 			int(vote["months"]), Trends.months_to_vote(state, state.player())])
-	if Items.vote_text(vote) != "%02d/%d" % [int(vote["month"]), int(vote["year"])]:
-		_fail("the vote's date is not MM/YYYY: %s" % Items.vote_text(vote))
+	if Items.vote_text(vote) != DateText.month_long_year(int(vote["month"]), int(vote["year"])) or Items.vote_text(vote).contains("/"):
+		_fail("the vote's date is not 'May 2027' (decision 4): %s" % Items.vote_text(vote))
 
 
 func _fail(message: String) -> void:

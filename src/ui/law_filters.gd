@@ -57,7 +57,7 @@ func _init(on_change: Callable) -> void:
 	for key in SHELVES + [DRAFTS]:
 		var b := Button.new()
 		b.name = "Shelf_%s" % key  # i18n: ok a node name, found by tests
-		b.toggle_mode = true
+		PanelKit.toggle(b)
 		b.button_group = group
 		b.flat = true
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT

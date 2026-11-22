@@ -92,7 +92,7 @@ func _check_theme_contents() -> void:
 		if box is StyleBoxFlat and box.bg_color.a < 1.0:
 			_fail("the PanelContainer style is translucent (alpha %.2f)" % box.bg_color.a)
 
-	for variation in [UiTheme.TOP_BAR_PANEL, UiTheme.PLATE, UiTheme.TITLE_BAR, UiTheme.PANE, UiTheme.TILE_PANEL, UiTheme.POPOVER_PANEL]:
+	for variation in [UiTheme.PLATE, UiTheme.PANE, UiTheme.TILE_PANEL, UiTheme.POPOVER_PANEL]:
 		if not theme.has_stylebox("panel", variation):
 			_fail("theme has no %s variation stylebox" % variation)
 		if theme.get_type_variation_base(variation) != &"PanelContainer":
@@ -162,35 +162,49 @@ func _check_player_accent_wired() -> void:
 
 
 ## G3's grammar, replacing BUREAU's hairline on four sides (the author picked "Sheets on
-## glass", 2026-11-21). A SHEET is opaque, borderless and R_SHEET, and never wears the
-## accent; a PANE of the chrome is the tint with a light rim and R_PANE; with Glass off the
-## pane is PANE_SOLID. The test is the mirror of BUREAU's: where that one failed a plate
-## missing an edge, this fails a sheet that draws one.
+## glass", 2026-11-21). A SHEET is opaque, R_SHEET, with elevation C (the author's pick,
+## 2026-11-21): a contact shadow of a few px and a faint SHEET_RIM on all four sides -- never
+## BUREAU's EDGE hairline, never the accent; a PANE of the chrome is the tint with a light rim
+## and R_PANE; with Glass off the pane is PANE_SOLID.
 func _check_grammar(theme: Theme) -> void:
 	var plate := theme.get_stylebox("panel", UiTheme.PLATE) as StyleBoxFlat
 	if plate == null:
 		_fail("the sheet style is not a StyleBoxFlat")
 		return
 	for side in ["top", "bottom", "left", "right"]:
-		if plate.get("border_width_" + side) > 0:
-			_fail("the sheet draws a border on its %s edge; G3 separates by surface, not by line" % side)
+		if plate.get("border_width_" + side) != 1:
+			_fail("the sheet's %s edge is %d px, not elevation C's 1 px rim" % [side, plate.get("border_width_" + side)])
+	if plate.border_color != UiTheme.SHEET_RIM:
+		_fail("the sheet's edge is %s, not the faint SHEET_RIM" % plate.border_color)
 	if plate.bg_color.a < 1.0:
 		_fail("the sheet is translucent (alpha %.2f): text on a sheet must not depend on the map" % plate.bg_color.a)
 	if plate.bg_color != UiTheme.SHEET or plate.corner_radius_top_left != UiTheme.R_SHEET:
 		_fail("the sheet is not SHEET at R_SHEET")
-	if plate.shadow_size <= 0:
-		_fail("the sheet has no shadow to lift it off the map")
+	if plate.shadow_size <= 0 or plate.shadow_size > UiTheme.GAP_PANE / 2:
+		_fail("the sheet's shadow is %d px: a contact shadow, not none and not wider than half the gap" % plate.shadow_size)
 
 	var pane := theme.get_stylebox("panel", UiTheme.PANE) as StyleBoxFlat
 	if pane == null or pane.border_color != UiTheme.PANE_RIM or pane.border_width_left < 1 or pane.corner_radius_top_left != UiTheme.R_PANE:
 		_fail("the pane lost its rim or its R_PANE corners")
 	elif pane.bg_color != (UiTheme.PANE_TINT if UiTheme.glass() else UiTheme.PANE_SOLID):
 		_fail("the pane's ground is %s, not the tint Glass asks for" % pane.bg_color)
-	# S0's docked chrome: square and shadowless, so no corner shows raw map and no shadow
-	# falls on the workspace (#436 pass 2).
-	var docked := theme.get_stylebox("panel", UiTheme.PANE_DOCKED) as StyleBoxFlat
-	if docked == null or docked.corner_radius_top_left != 0 or docked.shadow_size != 0 or docked.border_color != UiTheme.PANE_RIM:
-		_fail("the docked pane is not square, shadowless and rimmed")
+	# #436 pass 2 RECORD 4: a stylebox's shadow is drawn under its whole body, so under glass it
+	# darkened the blur inside the pane to about 0.36 instead of the 0.6 gain. Glass on, the pane
+	# has no shadow (the rim and the blur lift it); Glass off, PANE_SOLID keeps ELEV_PANE.
+	for glass in [true, false]:
+		UiTheme.set_glass(glass)
+		var host := Control.new()
+		UiTheme.apply(host)
+		var box := host.theme.get_stylebox("panel", UiTheme.PANE) as StyleBoxFlat
+		if glass and box.shadow_size != 0:
+			_fail("a glass pane draws a shadow under its own tint (size %d)" % box.shadow_size)
+		if not glass and (box.shadow_size <= 0 or box.bg_color != UiTheme.PANE_SOLID):
+			_fail("a solid pane lost its shadow or its PANE_SOLID ground")
+		host.free()
+	UiTheme.set_glass(true)
+	for retired in ["PaneDocked", "TopBarPanel", "TitleBar"]:  # i18n: ok S0's interim names
+		if theme.has_stylebox("panel", retired):
+			_fail("S0's interim variation '%s' outlived S1's floating shell" % retired)
 	var popover := theme.get_stylebox("panel", UiTheme.POPOVER_PANEL) as StyleBoxFlat
 	if popover == null or popover.bg_color.a < 1.0:
 		_fail("a popover is not opaque: it would need a second copy of the screen")
@@ -231,7 +245,18 @@ func _check_grammar(theme: Theme) -> void:
 ## another colour, or grounds 1.3:1 apart once laid on the sheet. Mutation: Button's pressed
 ## back at CONTROL_PRESSED (1.14:1), or hover_pressed equal to hover, fails here.
 func _check_states_distinct(theme: Theme) -> void:
-	for type in ["Button", UiTheme.SUBROW_BUTTON, UiTheme.CLUSTER_BUTTON, UiTheme.SMALL]:
+	# #436 RECORD (press flash): "pressed" is both a toggle that is ON and a button held down, so
+	# a plain button flashed the accent fill under every click (AGENTS.md: "no other button is
+	# filled"). The fill is PICKED's alone, a variation a toggle opts into (PanelKit.toggle); a
+	# plain or small button held down is CONTROL_PRESSED.
+	for type in ["Button", "OptionButton", UiTheme.SMALL]:
+		var held := _state_box(theme, "pressed", type)
+		if held.bg_color == UiTheme.accent_fill():
+			_fail("%s held down flashes the accent fill" % type)
+	if _state_box(theme, "pressed", UiTheme.PICKED).bg_color != UiTheme.accent_fill():
+		_fail("a picked toggle is not the accent fill")
+	# (The sidebar's open row is told apart by its accent bar, which test_hud checks.)
+	for type in [UiTheme.PICKED, UiTheme.SUBROW_BUTTON, UiTheme.CLUSTER_BUTTON]:
 		for pair in [["normal", "pressed"], ["hover", "hover_pressed"]]:
 			if not _distinct(_state_box(theme, pair[0], type), _state_box(theme, pair[1], type)):
 				_fail("%s: '%s' and '%s' look the same, so a toggle's on/off is invisible" % [type, pair[0], pair[1]])
@@ -244,6 +269,12 @@ func _check_states_distinct(theme: Theme) -> void:
 		var on_hover := _state_box(theme, "hover_pressed", type)
 		if not theme.has_stylebox("hover_pressed", type) or on_hover.bg_color == UiTheme.accent_fill() or on_hover.border_color != UiTheme.accent():
 			_fail("%s: an ON entry under the pointer does not keep its own accent edge" % type)
+	# A borderless toggle's four grounds are four steps (#439 T3b): a hovered row never looks picked.
+	var grounds: Array = []
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
+		grounds.append((theme.get_stylebox(state, UiTheme.PICKED_ROW) as StyleBoxFlat).bg_color)
+	if grounds[0].a > 0.0 or grounds[1] != UiTheme.TILE or grounds[2] != UiTheme.CONTROL or grounds[3] != UiTheme.CONTROL_HOVER:
+		_fail("PickedRow's grounds are %s, not none / TILE / CONTROL / CONTROL_HOVER" % str(grounds))
 	# A status tone or the accent is never the colour of text on a control (G3), in any state.
 	var forbidden := [UiTheme.GOOD, UiTheme.BAD, UiTheme.WARN, UiTheme.accent()]
 	var buttons: Array = ["Button", "OptionButton", "CheckBox"]
@@ -301,9 +332,13 @@ func _check_glass_off() -> void:
 ## hovered control): every live state of a button holds AA with its label, and the screen's
 ## one action, filled with the accent, holds it with its own label.
 func _check_pressed_text_contrast(theme: Theme) -> void:
-	var states := {"normal": "font_color", "hover": "font_hover_color", "pressed": "font_pressed_color"}
-	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.SEGMENT, UiTheme.GHOST]:
+	# hover_pressed too (#439 pass 2 T2): a toggle that is ON under the pointer -- the armed "See
+	# them", a Primary toggle -- took its base Button's graphite when its variation had none.
+	var states := {"normal": "font_color", "hover": "font_hover_color", "pressed": "font_pressed_color", "hover_pressed": "font_hover_pressed_color"}
+	for type in ["Button", "OptionButton", UiTheme.CLUSTER_BUTTON, UiTheme.SUBROW_BUTTON, UiTheme.PRIMARY, UiTheme.SMALL, UiTheme.SEGMENT, UiTheme.GHOST, UiTheme.PICKED, UiTheme.PICKED_ROW, UiTheme.SIDEBAR_ROW]:
 		for state in states:
+			if state == "hover_pressed" and type == UiTheme.GHOST:
+				continue  # a ghost is never a toggle
 			var box := theme.get_stylebox(state, type) as StyleBoxFlat
 			if box == null:
 				_fail("%s has no %s stylebox" % [type, state])

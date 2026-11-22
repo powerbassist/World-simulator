@@ -128,7 +128,7 @@ func _register() -> void:
 			page.add_child(scroll)
 			scroll.add_child(content)
 		_contents[id] = content
-		_manager.register(id, id.to_upper(), page)
+		_manager.register(id, id.capitalize(), page)
 
 
 ## Nothing is open and the dock is down: a dock left visible with no tab in it
@@ -190,7 +190,7 @@ func _check_a_window_in_no_row_is_its_own_domain() -> void:
 	_manager.open("alpha")
 	if _manager.open_ids() != ["alpha"]:
 		_fail("a window in no row did not open: %s" % str(_manager.open_ids()))
-	if _manager.domain_title() != "ALPHA" or _manager.tab_ids() != ["alpha"]:
+	if _manager.domain_title() != "Alpha" or _manager.tab_ids() != ["alpha"]:
 		_fail("a window in no row opened under '%s' with tabs %s" % [_manager.domain_title(), str(_manager.tab_ids())])
 	_manager.close_all()
 
@@ -342,27 +342,23 @@ func _check_the_fold_mark_clears() -> void:
 	_manager.close_all()
 
 
-## The void pass (b), the author's call: ONE width per domain, from its widest tab's full state, so
-## the header and "Back to the map" never move between sibling tabs; a short domain leaves the map
-## beside it.
+## G3 S1, decision 9 (the author, 2026-11-21: "Toujours plein"): the workspace's sheets always fill
+## it, from the sidebar's pane to GAP_PANE short of the screen's right edge, at every text size. The one
+## narrow tab is Regions, whose place is the map it tints (window_manager.gd DOCK_WIDTHS).
 func _check_dock_width_follows_the_domain() -> void:
-	# The Diary takes the full dock since the month page (its grid and people column side by side).
-	var want := {"calendar": WindowManager.DOCK_WIDTH, "diplomacy": 760.0, "orgs": 760.0, "energy": 980.0,
-		"finances": WindowManager.DOCK_WIDTH, "projects": WindowManager.DOCK_WIDTH, "economy": WindowManager.DOCK_WIDTH}
-	for id in want:
-		_manager.open(id)
-		var width: float = _manager.dock().get_global_rect().size.x
-		if not is_equal_approx(width, float(want[id])) or not is_equal_approx(width, WindowManager.dock_width(id)):
-			_fail("the %s tab docks %.0f wide, not %.0f" % [id, width, float(want[id])])
-	# A narrowed domain grows with the text size, never past DOCK_WIDTH.
-	UiTheme.set_text_scale(1.15)
-	if not is_equal_approx(WindowManager.dock_width("diplomacy"), 874.0) or not is_equal_approx(WindowManager.dock_width("finances"), WindowManager.DOCK_WIDTH):
-		_fail("at text 115 Diplomacy docks %.0f and Finances %.0f, not 874 and 1240" % [WindowManager.dock_width("diplomacy"), WindowManager.dock_width("finances")])
-	# #400 pass 2 T6: a smaller text never narrows it -- the dock's fixed parts (tabs, padding, the
-	# offer's columns) do not shrink with the text.
-	UiTheme.set_text_scale(0.9)
-	if not is_equal_approx(WindowManager.dock_width("diplomacy"), 760.0):
-		_fail("at text 90 Diplomacy docks %.0f, narrower than its 760" % WindowManager.dock_width("diplomacy"))
+	var full: float = BOUNDS.x - UiTheme.GAP_PANE - WindowManager.DOCK_LEFT
+	for scale in [1.0, 1.15, 0.9]:
+		UiTheme.set_text_scale(scale)
+		for id in ["calendar", "diplomacy", "orgs", "energy", "finances", "projects", "economy"]:
+			_manager.open(id)
+			var rect: Rect2 = _manager.dock().get_global_rect()
+			if not is_equal_approx(rect.size.x, full) or not is_equal_approx(rect.end.x, BOUNDS.x - UiTheme.GAP_PANE):
+				_fail("at text %d %% the %s tab docks %.0f wide to %.0f, not the full %.0f to %.0f" % [
+					roundi(scale * 100), id, rect.size.x, rect.end.x, full, BOUNDS.x - UiTheme.GAP_PANE])
+	UiTheme.set_text_scale(1.0)
+	# The fit tests' band is the width BESIDE the inbox, the narrowest a full tab gets (#439 pass 1).
+	if not is_equal_approx(WindowManager.dock_width("finances"), full - WindowManager.Inbox.WIDTH - UiTheme.GAP_PANE):
+		_fail("dock_width() gives %.0f, not the band beside the inbox" % WindowManager.dock_width("finances"))
 	UiTheme.set_text_scale(1.0)
 	_manager.close_all()
 
@@ -469,23 +465,48 @@ func _check_a_tall_page_takes_the_whole_dock() -> void:
 	_manager.close_all()
 
 
-## The board's geometry at the 1920x1080 reference: the dock's left edge at the
-## sidebar's right edge, 1240 wide, under the strip, and the map uncovered to its
-## right (test_shell.gd hit-tests that half in the real scene).
+## G3 S1's geometry at the 1920x1080 reference: the workspace starts GAP_PANE right of the sidebar's
+## pane and GAP_PANE under the top strip's, ends GAP_PANE short of the screen's edge, and has no pane of
+## its own: its header is the first sheet, the page a second one, GAP_PANE apart. The tabs are a
+## segmented control in the header, in sentence case.
 func _check_workspace_docks_left() -> void:
 	_manager.open("finances")
 	var rect: Rect2 = _manager.dock().get_global_rect()
+	var gap := float(UiTheme.GAP_PANE)
+	if not is_equal_approx(WindowManager.DOCK_LEFT, gap + WindowManager.Sidebar.WIDTH + gap):
+		_fail("DOCK_LEFT is %.0f, not a gap either side of the %d px sidebar" % [WindowManager.DOCK_LEFT, WindowManager.Sidebar.WIDTH])
 	if not is_equal_approx(rect.position.x, WindowManager.DOCK_LEFT):
 		_fail("the dock's left edge is at %.0f, not the sidebar's %.0f" % [rect.position.x, WindowManager.DOCK_LEFT])
-	if not is_equal_approx(rect.size.x, WindowManager.DOCK_WIDTH):
-		_fail("the dock is %.0f wide, not %.0f" % [rect.size.x, WindowManager.DOCK_WIDTH])
-	if rect.end.x >= BOUNDS.x - 100.0:
-		_fail("the dock ends at %.0f and leaves no map to its right" % rect.end.x)
+	if not is_equal_approx(rect.end.x, BOUNDS.x - gap):
+		_fail("the dock ends at %.0f, not a gap short of the screen's %.0f" % [rect.end.x, BOUNDS.x])
+	if not is_equal_approx(WindowManager.DOCK_TOP, gap + WindowManager.TopBar.BAR_HEIGHT + gap):
+		_fail("DOCK_TOP is %.0f, not a gap either side of the %d px strip" % [WindowManager.DOCK_TOP, WindowManager.TopBar.BAR_HEIGHT])
 	if not is_equal_approx(rect.position.y, WindowManager.DOCK_TOP):
 		_fail("the dock's top is at %.0f, not under the strip at %.0f" % [rect.position.y, WindowManager.DOCK_TOP])
+	var header: Control = _manager.dock().get_child(0)
+	if header.theme_type_variation != UiTheme.PLATE:
+		_fail("the workspace's header wears '%s', not a sheet" % header.theme_type_variation)
 	var page: Control = _manager.frame("finances")
 	if page.get_global_rect().end.x > rect.end.x + 0.5 or page.size.x < rect.size.x - 40.0:
 		_fail("the open page (%s) does not fill the dock (%s)" % [str(page.get_global_rect()), str(rect)])
+	if not is_equal_approx(page.get_global_rect().position.y - header.get_global_rect().end.y, gap):
+		_fail("the header and the page are %.0f px apart, not GAP_PANE" % (page.get_global_rect().position.y - header.get_global_rect().end.y))
+	var tabs: Array = _manager.tab_buttons()
+	if tabs.is_empty():
+		_fail("the Finances header shows no tabs")
+	# A tab with something waiting wears the count and the hourglass, and loses both when it clears.
+	_manager.set_tab_counts({"finances": 2})
+	var counted: Button = tabs.filter(func(b): return String(b.get_meta("tab")) == "finances")[0]
+	if not counted.text.ends_with("  2") or counted.icon == null:
+		_fail("a tab with two waiting reads '%s' (icon %s)" % [counted.text, counted.icon])
+	_manager.set_tab_counts({})
+	if counted.text != _manager.title("finances") or counted.icon != null:
+		_fail("a cleared tab still reads '%s'" % counted.text)
+	for button in tabs:
+		if (button as Button).theme_type_variation != UiTheme.SEGMENT:
+			_fail("the tab '%s' is not a segment" % (button as Button).text)
+		if (button as Button).text == (button as Button).text.to_upper() and (button as Button).text != (button as Button).text.to_lower():
+			_fail("the tab '%s' is in capitals, not sentence case" % (button as Button).text)
 	_manager.close_all()
 
 

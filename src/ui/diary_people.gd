@@ -292,7 +292,7 @@ func _show_file(row: Dictionary, armed: bool) -> void:
 	var grudge := roundi(AudienceK.DELEGATE_GRUDGE_SHARE * 100.0)
 	var see := _verb(id, "See", tr("See them"), row.get("book", {}),
 		["●", tr("▲ up"), tr("full"), "●"], tr("Now click a free day on the calendar.") if armed else String(row.get("until", "")))
-	see.toggle_mode = true
+	PanelKit.toggle(see)
 	see.button_pressed = armed
 	# Armed, it is the screen's one main action: the accent fill (g3-spec.md, the button states).
 	if armed:

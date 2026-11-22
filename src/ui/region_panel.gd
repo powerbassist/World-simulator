@@ -243,7 +243,7 @@ func _chips() -> void:
 	for measure in RegionTint.MEASURES:
 		var chip := PanelKit.sized(Button.new())
 		chip.text = RegionTint.label(measure)
-		chip.toggle_mode = true
+		PanelKit.toggle(chip)
 		chip.button_pressed = measure == _game.measure
 		chip.set_meta("measure", measure)
 		chip.disabled = measure == "change" and not held
@@ -377,7 +377,7 @@ func _opened(ns, regions: Array, region, access: Dictionary, sites: Array) -> Co
 func _about(ns, regions: Array) -> void:
 	var toggle := PanelKit.sized(Button.new())
 	toggle.text = tr("About these figures")
-	toggle.toggle_mode = true
+	PanelKit.toggle(toggle)
 	toggle.button_pressed = _about_open
 	toggle.pressed.connect(func() -> void: _about_open = not _about_open; _refocus = "about"; _dirty = true)
 	PanelKit.buttons(_body).add_child(toggle)

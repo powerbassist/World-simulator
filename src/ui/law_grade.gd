@@ -71,7 +71,7 @@ static func build(list, box: Control, ns, law) -> void:
 	for step in LawMagnitude.offered(law):
 		var chip := PanelKit.sized(Button.new())
 		chip.text = size_text(law, float(step))
-		chip.toggle_mode = true
+		PanelKit.toggle(chip)
 		chip.button_group = group
 		chip.button_pressed = is_equal_approx(float(step), picked)
 		chip.set_meta(CHIP_META, float(step))
