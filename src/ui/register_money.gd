@@ -10,7 +10,7 @@ extends Control
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Num = preload("res://src/ui/num.gd")
 
-const BUILD := UiTheme.NEUTRAL_BAR  ## capital: the accent is the running cost
+const BUILD := UiTheme.NEUTRAL_BAR  ## capital, neutral; the running cost wears its spending line's hue
 const CASH_H := 72.0
 const YEARS_AFTER := 3
 
@@ -88,9 +88,12 @@ func _draw_cash() -> void:
 		if hc > 0.0:
 			var base := CASH_H - hr - (2.0 if hr > 0.0 else 0.0)
 			draw_rect(Rect2(x0, base - hc, w, hc), BUILD)
-			if _overrun > 0.0 and hc * _overrun >= 2.0:  # under 2 px an outline has no inside
+			if _overrun > 0.0:
 				# An outlined piece, not amber: amber is only the date the ask is answered by (Building in C).
-				draw_rect(Rect2(x0 + 0.5, base - hc + 0.5, w - 1.0, hc * _overrun - 1.0), UiTheme.TEXT, false, 1.5)
+				if hc * _overrun >= 2.0:
+					draw_rect(Rect2(x0 + 0.5, base - hc + 0.5, w - 1.0, hc * _overrun - 1.0), UiTheme.TEXT, false, 1.5)
+				else:  # too thin for an outline: a 1 px line, so the legend's "The overrun, paid" still has a mark
+					draw_rect(Rect2(x0, base - hc, w, 1.0), UiTheme.TEXT)
 		# Two digits of the year: the bars are narrow, the century never changes here.
 		draw_string(font, Vector2(x0, CASH_H + fs + 2.0), "%02d" % (int(_years[i][0]) % 100), HORIZONTAL_ALIGNMENT_CENTER, w, fs, UiTheme.TEXT_DIM)
 	var ly := CASH_H + fs * 2.6 + 2.0

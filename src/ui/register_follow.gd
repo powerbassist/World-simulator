@@ -128,7 +128,7 @@ func _refresh() -> void:
 		PanelKit.plain_line(words, tr("Every unit voted is built over its months, then open at a running cost for good."), PanelKit.Tone.DIM)
 	if not asks.is_empty():
 		# The one date on the page: amber is for a date to answer by (Building in C).
-		var first_due: int = asks.map(func(c): return int(c["ask"]["due"])).min()  # the earliest: the one that lapses first
+		var first_due: int = asks.map(func(c): return _last_month(c)).min()  # the earliest: the one that lapses first
 		# A deadline tag wears the hourglass (gate T8 on #443); the triangle is the alert glyph.
 		var due := PanelKit.chip(head, tr("Answer by %s") % _month(first_due), UiTheme.CHIP_WARN, HOURGLASS)
 		due.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
@@ -143,18 +143,24 @@ func _refresh() -> void:
 		list.add_child(lanes)
 		var due := {}  # a programme's ask: the month it is answered by
 		for copy in asks:
-			due[String(copy["id"])] = int(copy["ask"]["due"])
+			due[String(copy["id"])] = _last_month(copy)
 		lanes.setup(building.map(func(p): return _lane(p, int(due.get(String(p["id"]), 0)))), UnitPrice.now(_state), {"row": 44})
 		for p in building:
 			_programme(list, p)
 	for copy in asks:
 		_overrun(copy)
-	var foot := HBoxContainer.new()
-	foot.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	# A flow: three asks' bills and the envelope wrap onto a second line rather than squeeze (pass 2 T2 on #448).
+	var foot := HFlowContainer.new()
+	foot.add_theme_constant_override("h_separation", UiTheme.GAP_PANE)
+	foot.add_theme_constant_override("v_separation", UiTheme.GAP_PANE)
+	foot.set_meta("follow_foot", true)
 	_body.add_child(foot)
 	for copy in asks:
 		_bill_if_paid(foot, copy)  # one bill a question, as each card carried its own before
 	_envelope(ns, foot)
+	if foot.get_child_count() == 0:
+		_body.remove_child(foot)  # no empty row: it would add a gap under the page
+		foot.queue_free()
 
 
 ## A programme's lane: its name, what is paid of its build, its months in the bar, and its ask's answer-by month
@@ -241,13 +247,15 @@ func _overrun(copy: Dictionary) -> void:
 	var until := 0
 	for a in ask.get("answers", []):
 		until = maxi(until, int(a["opens"]))
+	var verbs: Array = []
 	for a in ask.get("answers", []):
-		_answer(row, copy, a, until)
-	PanelKit.plain_line(card, tr("Unanswered by %s: it is paid.") % _month(int(ask["due"])), PanelKit.Tone.DIM)
+		verbs.append(_answer(row, copy, a, until))
+	PanelKit.same_class(verbs)  # one question, one class (AnswerRow's rule)
+	PanelKit.plain_line(card, tr("Unanswered by %s: it is paid.") % _month(_last_month(copy)), PanelKit.Tone.DIM)
 
 
 ## One answer as a tile: its name, its figure, the units it keeps, its small chart, what it makes, its button.
-func _answer(row: Control, copy: Dictionary, a: Dictionary, until: int) -> void:
+func _answer(row: Control, copy: Dictionary, a: Dictionary, until: int) -> Button:
 	# The kit's figure tile (test_panel_kit: one home), its box carrying the rest of the answer.
 	var tile := PanelKit.figure_tile(row, _answer_figure(copy, a), _answer_caption(copy, a))
 	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -266,7 +274,6 @@ func _answer(row: Control, copy: Dictionary, a: Dictionary, until: int) -> void:
 	chart.setup([{"label": "", "start": int(copy["voted"]), "opens": int(a["opens"])}], UnitPrice.now(_state),
 		{"label_w": 0.0, "axis": false, "until": until, "row": 18, "ends": true})
 	var says := PanelKit.plain_line(col, _answer_says(copy, a), PanelKit.Tone.DIM)
-	says.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if bool(a.get("union_lost", false)):
 		# Bad news on its own line, its red down-glyph and the amount it loses (Design T4 on #448).
 		var lost := HBoxContainer.new()
@@ -290,6 +297,7 @@ func _answer(row: Control, copy: Dictionary, a: Dictionary, until: int) -> void:
 		if windows != null:
 			windows.mark_all_dirty())
 	PanelKit.buttons(col).add_child(button)
+	return button
 
 
 func _answer_figure(copy: Dictionary, a: Dictionary) -> String:
@@ -315,7 +323,7 @@ func _answer_caption(copy: Dictionary, a: Dictionary) -> String:
 
 
 ## Picture C's "the year's bill, if you pay": the capital left with the overrun paid over the
-## months left (its share on top in the attention tone), then the running cost once open.
+## months left (its share on top, outlined), then the running cost once open.
 func _bill_if_paid(parent: Control, copy: Dictionary) -> void:
 	var pay := {}
 	for a in copy["ask"].get("answers", []):
@@ -326,7 +334,8 @@ func _bill_if_paid(parent: Control, copy: Dictionary) -> void:
 	var left := int(pay["months_left"])
 	var capital := float(pay["capital_month_eur_m"]) * left
 	var q: Dictionary = UnitPrice.quote(_state, _state.player(), _loader, {"type": copy["type"], "op": copy["op"], "rows": copy["rows"]})
-	var card := PanelKit.sheet(parent, tr("The year's bill, if you pay, bn"))
+	# Its programme in the title: two asks' bills are told apart (pass 2 T2 on #448).
+	var card := PanelKit.sheet(parent, tr("The year's bill if you pay · %s, bn") % _name(copy))
 	var bill = RegisterMoney.new()
 	bill.set_meta("bill_if_paid", true)
 	# Its running cost lands on a spending line: that line's hue, never the accent (Diane's R4 on #443).
@@ -335,6 +344,12 @@ func _bill_if_paid(parent: Control, copy: Dictionary) -> void:
 	bill.cash_of(UnitPrice.now(_state), left, capital / 1000.0, float(q.get("running_eur_m_year", 0.0)) / 1000.0,
 		[tr("Building"), tr("Running cost"), tr("The overrun, paid")])
 	bill.mark_overrun(float(copy["ask"]["eur_m"]) / maxf(capital, 1e-9))
+
+
+## The last month an ask can be answered in: UnitOverrun.tick pays it once now reaches its due
+## month, so the due month itself is already too late (pass 2 T1 on #448).
+static func _last_month(copy: Dictionary) -> int:
+	return int(copy["ask"]["due"]) - 1
 
 
 func _units(p: Dictionary) -> int:

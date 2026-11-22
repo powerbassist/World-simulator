@@ -250,6 +250,7 @@
    "tests/test_map_labels.gd",
    "tests/test_map_plants.gd",
    "tests/test_hud.gd",
+   "tests/test_gap_bars.gd",
    "tests/test_presidency_page.gd",
    "tests/test_dev_console_game.gd",
    "tests/test_orgs_panel.gd",

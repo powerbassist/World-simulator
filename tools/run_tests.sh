@@ -435,6 +435,7 @@ tests=(
   tests/test_layout_walker.gd
   tests/test_panel_kit.gd
   tests/test_hud.gd
+  tests/test_gap_bars.gd
   tests/test_ui_theme.gd
   tests/test_scroll_gap.gd
   tests/test_grade.gd

@@ -122,7 +122,7 @@ func _draw() -> void:
 	var fs := _fs()
 	var rh := _row_h()
 	var head := _head()
-	# The years along the top, one tick each (or under the lane, for a small chart with no head).
+	# The years: a tick each, their numbers along the top only on a chart with a head.
 	for year in range(_first_year, _last_year + 1):
 		var x := x_of(year * 12 + 1)
 		if _axis:
