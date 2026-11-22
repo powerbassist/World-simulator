@@ -1,28 +1,20 @@
 extends PanelContainer
 
-## Public works -- V1.6f's one new surface.
+## Public works -- V1.6f's surface, laid out again at G3 S4 PR 2c as the author's "A calendrier"
+## (works-a-calendar.png; g3-slices/s4-finances/notes.md "Public works"): every work is a lane
+## on one axis of years with today and the end of the term on it, the works' bill by year under
+## the same axis, and the picked work's sheet beside them. The player decides WHEN: what opens
+## before the term ends, and what the bill is in each year until then.
 ##
-## Reads simulation state and content, and writes neither: the verb goes back as an
-## explicit command through `acted`, which is the shape Budget.commit() set and
-## companies_panel.gd follows.
+## Reads simulation state and content, and writes neither: a verb goes back as an explicit
+## command through `acted`, the shape Budget.commit() set. A start applies at once and never
+## feeds the finance bill (a project's bill is its own spending line), so the page has no lever
+## rows; its one filled button is the picked work's Start, and the finance bill's fold is plain
+## here (FinancePages.leads reads that).
 ##
-## IT IS ITS OWN WINDOW, WHERE V1.6e HUNG ITS WHOLE SURFACE ON companies_panel.gd's
-## EXISTING SECTOR HEADINGS. That worked because a sector programme is pointed at
-## exactly the heading that panel was already printing. A project is pointed at
-## nothing on it: it is a dated national commitment, not a sectoral one, and the
-## Industry panel is already 434 lines whose body is guaranteed to overflow --
-## V1.6e's own screenshot pass paid for that fold. Registering a window is one
-## `_windows.register()` call plus a row in domains.gd.
-##
-## THE WHOLE BODY SCROLLS FROM THE FIRST LINE, companies_panel.gd's answer to the
-## fold nation_panel.gd has paid for three times. Ten actions and up to five live
-## projects is more than a fixed column can hold, and both lists grow.
-##
-## THREE SECTIONS AND NOT ONE, because a project is in one of three states and each
-## is a different question. What is being BUILT is what the treasury is paying for
-## now; what is FINISHED is what the country has permanently bought; and what is
-## AVAILABLE is what is left. Collapsing them into one list would hide the only thing
-## a player has to plan around -- that the payoff arrives years after the bill.
+## A project is in one of three states and each is a different question -- what is BUILT is
+## what the treasury pays for now, what is FINISHED is what the country has bought, what is
+## ON OFFER is what is left -- so the lanes keep them apart, building first.
 
 signal closed
 ## (before_snapshot, label) -- the same pair companies_panel.acted, nation_panel.acted
@@ -31,69 +23,48 @@ signal closed
 signal acted(before, label)
 
 const Projects = preload("res://src/sim/projects.gd")
-const ProjectsK = preload("res://src/sim/projects_constants.gd")
-const EconomyK = preload("res://src/sim/economy_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Num = preload("res://src/ui/num.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const ConfirmCard = preload("res://src/ui/confirm_card.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
+const WorksRows = preload("res://src/ui/works_rows.gd")
+const WorksLane = preload("res://src/ui/works_lane.gd")
+const WorksBill = preload("res://src/ui/works_bill.gd")
+const WorksSheet = preload("res://src/ui/works_sheet.gd")
+
+## The words column of the lanes and the bill, at text size 100 (the picture's 250).
+const TEXT_WIDTH := 250.0
+## The axis runs at least this far past the last opening, so every wedge shows.
+const AXIS_PAST := 30
 
 var _state
 var _loader
 var _dirty := true
-
-var _title: Label
 var _body: VBoxContainer
-## Kept rather than left local, for companies_panel.gd's reason: this panel's content
-## overflows once anything is under way, so the row a screenshot flag has just acted
-## on is usually below the fold, and a frame that cannot show it proves nothing about
-## the row it exists to check. tools/screenshot.gd drives this; nothing in the game
-## does.
-var _scroll: ScrollContainer
-var _pin_bottom := false
 var _close_button: Button
+var _picked := ""
+## The yes-or-no a Cancel… asks on; made on the screen stack at the first ask.
+var _confirm = null
 
-## The first enabled verb this panel built on its last refresh. See primary_action().
+## The control this panel exists to let the player press. See primary_action().
 var _primary: Control = null
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(520, 0)  # the dock sets the height (tab_page.gd wanted_height)
-
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
-
+	custom_minimum_size = Vector2(900, 0)
+	theme_type_variation = UiTheme.BARE  # the page lays out its own sheets (window_manager OWN_SHEETS)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
-	margin.add_child(root)
-
-	_title = Label.new()
-	_title.theme_type_variation = UiTheme.LEAD
-	root.add_child(_title)
-
-	_scroll = ScrollContainer.new()
-	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(_scroll)
-
-	# The body sits inside a right margin rather than flush to the scroll, because a
-	# ScrollContainer draws its bar OVER the content and the right-aligned figures in
-	# _row() would run underneath it. companies_panel.gd's first captured frame is
-	# what found that; inherited rather than rediscovered.
-	var gutter := MarginContainer.new()
-	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	gutter.add_theme_constant_override("margin_right", 14)
-	_scroll.add_child(gutter)
-
+	add_child(root)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_theme_constant_override("separation", 6)
-	gutter.add_child(_body)
-
+	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_body.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	root.add_child(_body)
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
 	_close_button.pressed.connect(func(): closed.emit())
@@ -106,23 +77,29 @@ func setup(state, loader) -> void:
 	_dirty = true
 
 
-## Pins the scroll to the bottom, for tools/screenshot.gd. A STANDING FLAG rather
-## than a one-shot call, because _refresh() rebuilds every child and a scroll set
-## before the next rebuild is undone by it. companies_panel.gd's own correction.
+## tools/screenshot.gd's --build calls it. The page no longer scrolls on its own (the
+## workspace's page does), so there is nothing to pin: kept so the flag still runs.
 func scroll_to_bottom() -> void:
-	_pin_bottom = true
 	_dirty = true
-
-
-func _apply_bottom() -> void:
-	if _scroll == null:
-		return
-	await get_tree().process_frame
-	_scroll.scroll_vertical = int(_scroll.get_v_scroll_bar().max_value)
 
 
 func hide_close_button() -> void:
 	_close_button.hide()
+
+
+func mark_dirty() -> void:
+	_dirty = true
+
+
+## The work the sheet shows.
+func picked() -> String:
+	return _picked
+
+
+## A text size moves the sheets, so the floor (page_room) is read again.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_THEME_CHANGED:
+		_dirty = true
 
 
 func _process(_delta: float) -> void:
@@ -132,150 +109,226 @@ func _process(_delta: float) -> void:
 	_refresh()
 
 
-func mark_dirty() -> void:
-	_dirty = true
-
-
 func _refresh() -> void:
 	var ns = _state.player()
 	if ns == null:
 		return
 	_primary = null
-
-	_title.text = tr("Public Works")
-
 	for child in _body.get_children():
+		_body.remove_child(child)
 		child.queue_free()
-
-	_build_refusal(ns)
-	_build_ledger(ns)
-	_build_building(ns)
-	_build_completed(ns)
-	_build_available(ns)
-
-	if _pin_bottom:
-		_apply_bottom()
-
-
-## The two figures the register produces, and they are the two ENDS of this lever
-## rather than a summary of it. The bill is what the treasury pays this month for
-## work in progress; the trend is what finished work has permanently bought. Both
-## read exactly 0.0 for a player who has begun nothing, which is the honest readout
-## and not a bug.
-##
-## THE SECOND ROW IS THE TARGET AND NOT WHAT HAS ARRIVED, and the caption says so.
-## economy_constants.SHIFT_ADJUST is a five-year lag, so a project that completed
-## last month has bought its full addend and delivered almost none of it -- printing
-## the delivered figure alone would tell a player their motorway did nothing.
-func _build_ledger(ns) -> void:
-	PanelKit.heading(_body, tr("The public account"))
-	PanelKit.row(_body, tr("Construction bill"), tr("%s %% of GDP") % Num.f(ns.project_bill_pct_gdp, 3))
-	PanelKit.row(_body, tr("Trend bought"), tr("%s %%/yr") % Num.fs(ns.project_potential_target_pct, 3))
-	if ns.project_potential_target_pct > 0.0:
-		PanelKit.line(_body, tr("Bought, not yet delivered: completed works raise the trend the economy is heading for, and it takes about five years to arrive."))
+	WindowManager.fill_page(self, "projects")
+	var rows := WorksRows.rows(_state, _loader, ns)
+	if rows.filter(func(r): return String(r["id"]) == _picked).is_empty():
+		_picked = WorksRows.first_pick(rows)
+	var now := WorksRows.now(_state)
+	var when := Trends.vote_date(ns)
+	var term := when.x * 12 + when.y if Trends.months_until(_state, when.x, when.y) >= 0 else -1
+	_build_refusal(ns, _head(ns, rows, term))
+	var main := HBoxContainer.new()
+	main.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	_body.add_child(main)
+	_works(main, rows, now, term)
+	for r in rows:
+		if String(r["id"]) == _picked:
+			var free := WorksRows.slots(_loader) - Projects.building_count(ns)
+			var sheet := WorksSheet.build(main, r, rows, now, free, func(action) -> void: _on_act(ns, action))
+			for b in sheet.find_children("*", "Button", true, false):  # i18n: ok a class name
+				if (b as Button).theme_type_variation == UiTheme.PRIMARY:
+					_primary = b
 
 
-func _build_building(ns) -> void:
-	var live := Projects.building(ns)
-	PanelKit.heading(_body, tr("Under construction"))
-	if live.is_empty():
-		PanelKit.line(_body, tr("Nothing is being built."))
-		return
-	for pid in live:
-		_build_live(ns, String(pid))
+## The page's head: the sentence that says what to decide, then the bill, the growth bought
+## and the slots taken. Returns the lead's column, where a refusal is said (Design's T4 on #450:
+## a page of its own sheets has no text on the map).
+func _head(ns, rows: Array, term: int) -> VBoxContainer:
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+	PanelKit.sheet(_body).add_child(line)
+	var lead := Label.new()
+	lead.theme_type_variation = UiTheme.LEAD
+	lead.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lead.text = _lead(rows, term)
+	var lede := VBoxContainer.new()
+	lede.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_child(lede)
+	lede.add_child(lead)
+	var bill := Projects.bill_pct_gdp(ns, _loader)
+	PanelKit.figure_tile(line, tr("%s %%") % Num.f(bill, 3), tr("of GDP a year · %s bn") % Num.f(bill / 100.0 * float(ns.gdp_eur_bn), 1))
+	PanelKit.figure_tile(line, tr("+%s %%") % Num.f(ns.project_potential_target_pct, 3), tr("growth a year bought"))
+	PanelKit.figure_tile(line, tr("%d of %d") % [Projects.building_count(ns), WorksRows.slots(_loader)], tr("works being built"))
+	return lede
 
 
-## One project in flight, with the two things a player needs and nothing else: how
-## far through it is, and what it will be worth. The progress is shown as months
-## REMAINING rather than as a percentage, because months remaining is what the
-## register actually holds and what the diary prints -- two surfaces reporting one
-## fact in two units is how they come to disagree.
-func _build_live(ns, project_id: String) -> void:
-	var terms := Projects.terms_of(_loader, project_id)
-	var block := VBoxContainer.new()
-	block.add_theme_constant_override("separation", 2)
-
-	PanelKit.line(block, Strings.noun("project-actions", _loader.project_actions, "project", "project_id", project_id, "project_name", Projects.name_of(_loader, project_id)), PanelKit.Tone.PLAIN)
-
-	var left := Projects.months_left(ns, project_id)
-	var total := int(terms.get("build_months", 0))
-	PanelKit.line(block, tr("%d of %d months remaining · %s %% of GDP a year · will buy %s %%/yr") % [
-		left, total, Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3),
-		Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
-	], PanelKit.Tone.GOOD)
-
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 6)
-	for action in Projects.available(_state, ns, _loader.project_actions):
-		if String(action.effects.get("project", {}).get("project_id", "")) != project_id:
-			continue
-		buttons.add_child(_button(ns, action))
-	block.add_child(buttons)
-
-	_body.add_child(block)
+## One whole sentence a case: the picked offer against the term's end, or why nothing can start.
+func _lead(rows: Array, term: int) -> String:
+	var picked: Dictionary = {}
+	for r in rows:
+		if String(r["id"]) == _picked:
+			picked = r
+	var opens := int(picked.get("opens", -1))
+	var when := DateText.month_long_year((opens - 1) % 12 + 1, (opens - 1) / 12) if opens > 0 else ""
+	if String(picked.get("state", "")) == WorksRows.OFFER:
+		if term > 0 and opens > term:
+			return tr_n("%s would open %d month after your term ends.", "%s would open %d months after your term ends.", opens - term) % [picked["name"], opens - term]  # i18n: row-ok the reader's name, through Strings.noun
+		if term > 0:
+			return tr("%s would open in %s, before your term ends.") % [picked["name"], when]  # i18n: row-ok the reader's name, through Strings.noun
+		return tr("%s would open in %s.") % [picked["name"], when]  # i18n: row-ok the reader's name, through Strings.noun
+	var building := rows.filter(func(r): return String(r["state"]) == WorksRows.BUILDING).size()
+	var slots := WorksRows.slots(_loader)
+	if building > 0 and building >= slots:
+		return tr("Every slot is taken: nothing can start until a work opens.")
+	match String(picked.get("state", "")):
+		WorksRows.BUILDING:
+			return tr("%s opens in %s.") % [picked["name"], when]  # i18n: row-ok the reader's name, through Strings.noun
+		WorksRows.DONE:
+			return tr("%s is open.") % picked["name"]  # i18n: row-ok the reader's name, through Strings.noun
+	return tr("Every work has been built.") if not rows.is_empty() else tr("Nothing is on offer.")
 
 
-## What the country has permanently bought. Listed rather than summed into the
-## ledger's one figure, because a president who inherits a finished rail spine
-## should be able to see whose it was -- and because the accumulator alone cannot
-## say what is in it.
-func _build_completed(ns) -> void:
-	var done := Projects.completed(ns)
-	if done.is_empty():
-		return
-	PanelKit.heading(_body, tr("Finished"))
-	for pid in done:
-		var terms := Projects.terms_of(_loader, String(pid))
-		PanelKit.row(_body,
-			Strings.noun("project-actions", _loader.project_actions, "project", "project_id", String(pid), "project_name", Projects.name_of(_loader, String(pid))),
-			tr("%s %%/yr") % Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
-		)
+## The works' sheet: the axis, a lane a work, the legend, then the bill on the same axis.
+func _works(main: Control, rows: Array, now: int, term: int) -> void:
+	var sheet := PanelKit.sheet(main, tr("Works · %d") % rows.size())
+	sheet.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var first := (now - 1) / 12 * 12 + 1
+	var last := maxi(now, term) + 12
+	for r in rows:
+		last = maxi(last, int(r["opens"]) + AXIS_PAST)
+	last = (last - 1) / 12 * 12 + 13  # to the next January
+	var width := roundf(TEXT_WIDTH * UiTheme.text_scale())
+	var verbs := roundf(PanelKit.BTN_W[PanelKit.Size.M] * UiTheme.text_scale())
+	var axis: Control = _columns(sheet, width, verbs, WorksLane.new())
+	axis.set_meta("works_axis", true)
+	axis.axis(first, last, now, term)
+	var buttons: Array = []
+	for r in rows:
+		_lane_row(sheet, r, first, last, now, term, width, verbs, buttons)
+	if not buttons.is_empty():
+		PanelKit.same_class(buttons, PanelKit.BTN_H_ROW)
+	var legend: Control = _columns(sheet, width, verbs, WorksLane.new())
+	legend.set_meta("works_legend", true)
+	legend.legend()
+	# 16 px between the legend and the bill's heading (Design's T5): the sheet's own gap and the rest.
+	var gap := Control.new()
+	gap.custom_minimum_size.y = maxf(16.0 - sheet.get_theme_constant("separation"), 0.0)
+	sheet.add_child(gap)
+	PanelKit.heading(sheet, tr("The works' bill, % of GDP a year"))
+	var bill: Control = WorksBill.new()
+	var words: Control = _columns(sheet, width, verbs, bill)
+	bill.set_meta("works_bill", true)
+	var name := ""
+	for r in rows:
+		if String(r["id"]) == _picked and String(r["state"]) == WorksRows.OFFER:
+			name = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
+	bill.setup(rows, first, last, now, _picked if name != "" else "", name)
+	# The bill's y ticks are drawn left of its plot, in this column's right end (Design's T3).
+	var captions := MarginContainer.new()
+	captions.add_theme_constant_override("margin_right", roundi(WorksBill.TICKS_EM * UiTheme.SIZE_SMALL * UiTheme.text_scale()))
+	words.get_child(0).add_child(captions)
+	var column := VBoxContainer.new()
+	captions.add_child(column)
+	PanelKit.plain_line(column, tr("Paid until the work opens.")).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if name != "":
+		PanelKit.plain_line(column, tr("Dashed: with the picked work.")).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 
-## Everything the player could begin now. A project already begun or already built
-## is not here, because Projects.available() refuses it structurally -- so this list
-## shrinks over a game and never offers the same motorway twice.
-func _build_available(ns) -> void:
-	PanelKit.heading(_body, tr("Available"))
-	var offered := 0
-	for action in Projects.available(_state, ns, _loader.project_actions):
-		var terms: Dictionary = action.effects.get("project", {})
-		if String(terms.get("op", "")) != "start":
-			continue
-		offered += 1
-		_build_offer(ns, action, terms)
-	if offered == 0:
-		# Reachable two ways and they are different states, so the caption names both:
-		# every project begun, or the `project_count` gate closed by what is already
-		# under way. A player who cannot tell which will think the lever is broken.
-		if Projects.building_count(ns) > 0:
-			PanelKit.line(_body, tr_n("Nothing can begin while %d is under construction. Finish or abandon it.", "Nothing can begin while %d are under construction. Finish or abandon one.", Projects.building_count(ns))
-				% Projects.building_count(ns))
-		else:
-			PanelKit.line(_body, tr("Every project has been built."))
+## A row of the three columns (words, the axis's control, the verbs); returns the middle control,
+## or for the bill the row itself (its words column holds the caption).
+func _columns(parent: Control, width: float, verbs: float, middle: Control):
+	var line := HBoxContainer.new()
+	parent.add_child(line)
+	var words := VBoxContainer.new()
+	words.custom_minimum_size.x = width
+	line.add_child(words)
+	middle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_child(middle)
+	var pad := Control.new()
+	pad.custom_minimum_size.x = verbs
+	line.add_child(pad)
+	return line if middle is WorksBill else middle
 
 
-func _build_offer(ns, action, terms: Dictionary) -> void:
-	var block := VBoxContainer.new()
-	block.add_theme_constant_override("separation", 2)
+func _lane_row(sheet: Control, r: Dictionary, first: int, last: int, now: int, term: int, width: float, verbs: float, buttons: Array) -> void:
+	var id := String(r["id"])
+	var picked := id == _picked
+	# The picked row sits on a tile (sectors_timeline's grammar); the others on the sheet itself.
+	var plate: Container = PanelContainer.new() if picked else MarginContainer.new()
+	if picked:
+		plate.theme_type_variation = UiTheme.TILE_PANEL
+	sheet.add_child(plate)
+	var line := HBoxContainer.new()
+	plate.add_child(line)
+	var words := VBoxContainer.new()
+	words.custom_minimum_size.x = width
+	words.add_theme_constant_override("separation", 0)
+	line.add_child(words)
+	var title := Button.new()
+	title.flat = true
+	title.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.text = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
+	title.clip_text = true
+	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title.tooltip_text = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
+	title.set_meta("works_title", id)
+	title.pressed.connect(func() -> void:
+		_picked = id
+		_dirty = true)
+	words.add_child(title)
+	# The sub-line starts where the name's text does, inside the button's own margin (Design's T6).
+	var inset := MarginContainer.new()
+	inset.add_theme_constant_override("margin_left", roundi(title.get_theme_stylebox("normal").get_margin(SIDE_LEFT)))
+	words.add_child(inset)
+	var sub := PanelKit.plain_line(inset, _sub(r))
+	sub.autowrap_mode = TextServer.AUTOWRAP_OFF
+	sub.set_meta("works_sub", id)
+	var lane: Control = WorksLane.new()
+	lane.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lane.set_meta("works_lane", id)
+	line.add_child(lane)
+	lane.lane(r, first, last, now, term, picked)
+	var verb := CenterContainer.new()
+	verb.custom_minimum_size.x = verbs
+	line.add_child(verb)
+	var ns = _state.player()
+	if String(r["state"]) == WorksRows.OFFER and r["start"] != null:
+		var start := PanelKit.button(tr("Start"), PanelKit.Size.S, PanelKit.BTN_H_ROW)
+		start.set_meta("works_start_" + id, true)
+		start.pressed.connect(func() -> void: _on_act(ns, r["start"]))
+		verb.add_child(start)
+		buttons.append(start)
+	elif String(r["state"]) == WorksRows.BUILDING and r["cancel"] != null:
+		var cancel := PanelKit.button(tr("Cancel…"), PanelKit.Size.S, PanelKit.BTN_H_ROW)
+		cancel.theme_type_variation = UiTheme.GHOST
+		cancel.set_meta("works_cancel_" + id, true)
+		cancel.pressed.connect(func() -> void: _ask_cancel(ns, r))
+		verb.add_child(cancel)
+		buttons.append(cancel)
 
-	PanelKit.line(block, tr("%d mo · %s %% GDP/yr · growth %s %%/yr once open") % [
-		int(terms.get("build_months", 0)), Num.f(float(terms.get("cost_pct_gdp", 0.0)), 3),
-		Num.fs(float(terms.get("potential_growth_pct", 0.0)), 3),
-	])
-	block.add_child(_button(ns, action))
 
-	_body.add_child(block)
+func _sub(r: Dictionary) -> String:
+	var growth := Num.f(float(r["growth_pct"]), 3)
+	match String(r["state"]):
+		WorksRows.BUILDING:
+			return tr("%d of %d months built · +%s %%/yr") % [int(r["months"]) - int(r["left"]), int(r["months"]), growth]
+		WorksRows.OFFER:
+			return tr("on offer · %s %% of GDP · +%s %%/yr") % [Num.f(float(r["cost_pct"]), 2), growth]
+		_:
+			return tr("finished · +%s %%/yr") % growth
 
 
-func _button(ns, action) -> Button:
-	var button := PanelKit.sized(Button.new())
-	button.text = Strings.row_name("project-actions", action)
-	button.tooltip_text = Strings.row_summary("project-actions", action)
-	button.pressed.connect(func(): _on_act(ns, action))
-	if _primary == null and not button.disabled:
-		_primary = button
-	return button
+## Cancelling recovers nothing (Projects: no partial motorway), so it asks first.
+func _ask_cancel(_ns, r: Dictionary) -> void:
+	if _confirm == null:
+		_confirm = ConfirmCard.on_stack(self)
+		if _confirm == null:
+			# Never an irreversible cancel without its question: a host with no screen stack offers none.
+			push_error("projects_panel: no screen stack to ask the cancel on; nothing cancelled")
+			return
+		_confirm.confirmed.connect(func() -> void: _on_act(_state.player(), _confirm.get_meta(&"action")))
+	_confirm.set_meta(&"action", r["cancel"])
+	_confirm.ask(tr("%s: cancel it?\nWhat it has cost is lost, and nothing is built.") % String(r["name"]),  # i18n: row-ok the reader's name, through Strings.noun
+		Strings.row_name("project-actions", r["cancel"]))
 
 
 ## U4's contract, companies_panel._on_invest()'s shape exactly: the baseline is
@@ -290,21 +343,17 @@ func _on_act(ns, action) -> void:
 
 
 ## The last verb the sim refused -- its display record, ns.last_project_result -- as a
-## BLOCKED line at the top, so a stale button pressed is never a silent click
+## BLOCKED line under the lead, so a stale button pressed is never a silent click
 ## (V5.3-0 RF7, the parent's call on #222: energy, project and investment results).
 ## The sim gives no reason beyond "not available", so the line says that.
-func _build_refusal(ns) -> void:
+func _build_refusal(ns, lede: Control) -> void:
 	var last: Dictionary = ns.last_project_result
 	for action in (_loader.project_actions if bool(last.get("refused", false)) else []):
 		if String(action.id) == String(last.get("action_id", "")):
-			ResultTone.tint(PanelKit.line(_body, tr("%s refused -- it is no longer on offer.") % Strings.row_name("project-actions", action)), ResultTone.BLOCKED)
+			ResultTone.tint(PanelKit.line(lede, tr("%s refused -- it is no longer on offer.") % Strings.row_name("project-actions", action)), ResultTone.BLOCKED)
 
 
-## The control this panel exists to let the player press -- V2.1a's fold contract.
-##
-## Duck-typed: tab_page.gd asks through has_method(), so a panel with nothing
-## to press simply does not implement this and never draws the fold mark. The
-## FIRST enabled action is the answer rather than the last, because a panel whose
-## first verb has scrolled off is already a panel whose verbs are hidden.
+## The control this panel exists to let the player press -- V2.1a's fold contract: the
+## picked work's Start, or nothing (a page with no offer has no main verb).
 func primary_action() -> Control:
 	return _primary if is_instance_valid(_primary) else null
