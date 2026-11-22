@@ -138,7 +138,8 @@ func _check_folds() -> void:
 		var open_icon: Texture2D = fold.icon
 		fold.button_pressed = false
 		fold.toggled.emit(false)
-		if fold.icon == open_icon:
+		# A new texture every time: compare the pixels, or a fold that never turns still passes.
+		if fold.icon.get_image().get_data() == open_icon.get_image().get_data():
 			_fail("the fold's chevron did not turn when it closed")
 		fold.button_pressed = true
 		fold.toggled.emit(true)

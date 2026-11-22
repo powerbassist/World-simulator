@@ -23,6 +23,9 @@ static var _picked := {}
 ## `fill(strip, option)` prices the strip and returns what follows. The picks are read, then answered.
 static func build(box: VBoxContainer, key: String, counters: Array, fill: Callable, make: Callable, go_key: String) -> void:
 	var go := PanelKit.sized(Button.new())
+	# Labelled BEFORE the shell: same_class measures each button's text when the row is added.
+	go.text = Strings.t("Make the counter")
+	go.set_meta(go_key, "counter")
 	var slots := AnswerRow.shell(box, go)
 	var row := PanelKit.buttons(slots)
 	PanelKit.plain_line(row, Strings.t("Counter"), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -34,8 +37,6 @@ static func build(box: VBoxContainer, key: String, counters: Array, fill: Callab
 	var who := AnswerRow.who_box(slots)
 	var follows := PanelKit.plain_line(slots, "")
 	follows.set_meta("counter_follows", true)
-	go.text = Strings.t("Make the counter")
-	go.set_meta(go_key, "counter")
 	var shown: Dictionary = counters[0]
 	for option in counters:
 		if String(option["id"]) == String(_picked.get(key, "")):
