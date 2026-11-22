@@ -2,7 +2,7 @@ extends Control
 
 ## The register sheet's money a year (V5.3 c' slice 1; the price range is ChartKit.range_bar):
 ## one bar a year from now, on one axis in bn: the capital while it builds (grey),
-## the running cost once it opens (the accent: the player's own programme), the
+## the running cost once it opens (in the hue of the spending line it lands on), the
 ## legend under it. The running cost never stops, so the years shown run past
 ## the opening on purpose.
 ## The caller passes the sim's quote; the bars are its numbers spread over the calendar.
@@ -20,7 +20,8 @@ var _legend: Array = []
 ## The share of each building bar that is an overrun (the Building tab's "if you pay"), drawn on
 ## top as an outline with a third legend entry; 0 on the order form.
 var _overrun := 0.0
-## The running cost's hue: the spending line it lands on (the caller sets it, Diane's R4 on #443); the accent until then.
+## The running cost's hue: the spending line it lands on (both callers set it, Diane's R4 on #443); the accent only
+## for a caller that sets none.
 var running_color := Color(0, 0, 0, 0)
 
 

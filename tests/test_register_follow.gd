@@ -350,7 +350,7 @@ func _check_building_in_c(copy: Dictionary) -> void:
 		if c.axis_end() != charts[0].axis_end():
 			_fail("the answers' charts are not on one axis: %s against %s" % [c.axis_end(), charts[0].axis_end()])
 	var due = _with_meta("due", _follow)
-	if due == null or not _text_under(due).contains(DateText.month_year((int(copy["ask"]["due"]) - 1) % 12 + 1, (int(copy["ask"]["due"]) - 1) / 12)):
+	if due == null or not _text_under(due).contains(DateText.month_long_year((int(copy["ask"]["due"]) - 1) % 12 + 1, (int(copy["ask"]["due"]) - 1) / 12)):
 		_fail("the page's head does not say the date the ask is answered by")
 	var bill = _with_meta("bill_if_paid", _follow)
 	var line := String(Units.row(_main._loader, String(copy["type"]))["line"])

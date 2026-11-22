@@ -8,9 +8,9 @@ extends Control
 ##   label_w    the name column's width at text 100 (LABEL_W by default);
 ##   value_w    the value column's width at text 100 (VALUE_W by default);
 ##   fixed      Vector2(lo, hi): the axis, whatever the values (the Finances tray's one 0-25 % scale);
-##   band       Vector2(lo, hi) on the axis, shaded in the attention tone, and a warning
-##              glyph (Material Symbols) on each row whose before lies inside it -- the tone
-##              never alone (the bad-news tone: a region this far behind is bad news);
+##   band       Vector2(lo, hi) on the axis, shaded in the bad-news tone (a region this far behind
+##              is bad news), and a warning glyph (Material Symbols) on each row whose before lies
+##              inside it -- the tone never alone;
 ##   row        a row's height at text 100 (ROW by default; the register's rows hold a stepper);
 ##   head       {label, value, reference}: a head row over the plot, the columns' names and the axis there instead
 ##              of under the rows (reference is a "%s" sentence for the reference's value).

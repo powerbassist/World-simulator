@@ -340,7 +340,7 @@ func _answer_says(_copy: Dictionary, a: Dictionary) -> String:
 
 
 func _month(absolute: int) -> String:
-	return DateText.month_year((absolute - 1) % 12 + 1, (absolute - 1) / 12)
+	return DateText.month_long_year((absolute - 1) % 12 + 1, (absolute - 1) / 12)  # the month in full (decision 4)
 
 
 func _region_name(region_id: String) -> String:
