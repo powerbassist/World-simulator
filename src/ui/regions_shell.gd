@@ -59,6 +59,7 @@ static func panel(main) -> Control:
 	var follow = RegisterFollow.new()
 	main._windows.register("programmes", Strings.t("Building"), follow, KEY_NONE, "res://assets/icons/material/construction.svg")
 	follow.setup(main._state, main._loader)
+	follow.register_requested.connect(func() -> void: main._windows.open("register"))
 	tab.open_register = func(region_id: String) -> void:
 		register.open_for(region_id)
 		main._windows.open("register")

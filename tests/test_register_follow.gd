@@ -29,6 +29,11 @@ const RegisterWarning = preload("res://src/ui/register_warning.gd")
 const ActsOn = preload("res://src/ui/acts_on.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
+const FinanceRowsUi = preload("res://src/ui/finance_rows.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+const AnswerRow = preload("res://src/ui/answer_row.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -62,8 +67,17 @@ func _process(_delta: float) -> bool:
 			if not _text_under(_follow).contains(_follow.tr("No programme is building.")):
 				_fail("the empty Programmes tab does not say so: '%s'" % _text_under(_follow))
 			_check_envelope()
+			# Design T5 on #448: the empty page says its next step, a ghost button to Register.
+			var door = _with_meta("open_register", _follow)
+			if door == null or door.theme_type_variation != UiTheme.GHOST:
+				_fail("the empty Building page has no ghost button to Register")
+			else:
+				_press(door)
 			_warn()
 		5:
+			if not _main._windows.is_open("register"):
+				_fail("the empty page's Open Register did not open Register")
+			_main._windows.open("programmes")  # back where the warning's checks start
 			_check_card_arrived()
 			_check_one_card_a_subject()
 			_check_refused_open_keeps_the_card()
@@ -122,6 +136,9 @@ func _process(_delta: float) -> bool:
 		21:
 			if _with_meta("union", _register) != null:
 				_fail("a nation in no organisation still shows a Union line")
+			_stage_two_asks()
+		23:
+			_check_two_asks()
 			_finish()
 	return false
 
@@ -297,8 +314,13 @@ func _check_follow_rows() -> void:
 		_fail("after a Delay the row does not say '%s': '%s'" % [built_text, _text_under(_follow)])
 	var lanes = _with_meta("lanes", _follow)
 	if lanes == null or lanes.data().size() != 1 or int(lanes.data()[0]["opens"]) != UnitPrice.opens_at(p) \
-			or int(lanes.data()[0]["start"]) != int(p["voted"]) or not bool(lanes.data()[0]["ask"]):
+			or int(lanes.data()[0]["start"]) != int(p["voted"]) or int(lanes.data()[0].get("due", 0)) != _last(p):
 		_fail("the lanes do not draw the register's months and ask: %s" % [null if lanes == null else lanes.data()])
+	# Design T1 on #448: the ask's mark sits on the date it is answered by, its tag saying that date; a timeline says when.
+	elif absf(lanes.ask_x(0) - lanes.x_of(_last(p))) > 0.5 \
+			or not String(lanes.data()[0].get("tag", "")).contains(_month(_last(p))):
+		_fail("the lane's ask mark is not on its answer-by date: x %s, the date's %s, tag '%s'" % [lanes.ask_x(0),
+			lanes.x_of(_last(p)), lanes.data()[0].get("tag", "")])
 	var text := _text_under(rows[0])
 	if text.contains(".0 "):
 		_fail("a count printed as a float: '%s'" % text)
@@ -319,12 +341,56 @@ func _check_overrun_card() -> void:
 		if squares == null or squares.kept != int(a["units"]):
 			_fail("answer %s: the squares do not keep the sim's %d units" % [a["id"], int(a["units"])])
 	var delay_col = _with_meta("units_" + UK.OVERRUN_DELAY, _follow)
-	if _main._state.player().unit_programmes[0].has("union") and (delay_col == null
-			or not _text_under(delay_col.get_parent()).contains(_follow.tr("The Union's share is lost."))):
-		_fail("a Delay past the Union's year does not say its share is lost")
+	var p0: Dictionary = _main._state.player().unit_programmes[0]
+	if p0.has("union"):
+		# Design T4 on #448: the bad news on its own line, its red down-glyph and its amount.
+		var lost = null if delay_col == null else _with_meta("union_lost_answer", delay_col.get_parent())
+		var amount := Num.f(float(p0["union"]["reserved_eur_m"]) / 1000.0, 2)
+		if lost == null or not _text_under(lost).contains(amount) \
+				or lost.find_children("*", "", false, false).filter(func(n): return n is AnswerRow.Glyph and not n.up).is_empty():
+			_fail("a Delay past the Union's year does not say its share is lost on a line of its own, glyph and %s bn" % amount)
 	var bill = _with_meta("bill_if_paid", _follow)
 	if bill == null or bill.years().is_empty():
 		_fail("no year's bill under the overrun card")
+	_check_building_in_c(asks[0])
+
+
+## Building in C (building-in-c.png): the page lays out its own sheets; the ask's three answers each carry the same
+## small chart on ONE axis (a Delay's later opening is read against the Pay's); the date the ask must be answered by
+## is said on the page's head; the year's bill wears the running cost in its line's hue (Diane's R4), never the accent.
+func _check_building_in_c(copy: Dictionary) -> void:
+	if not WindowManager.OWN_SHEETS.has("programmes"):
+		_fail("Building is not a page of its own sheets")
+	var charts := []
+	for a in copy["ask"]["answers"]:
+		var chart = _with_meta("answer_chart_" + String(a["id"]), _follow)
+		if chart == null:
+			_fail("answer %s has no small chart" % a["id"])
+			continue
+		charts.append(chart)
+		if int(chart.data()[0]["opens"]) != int(a["opens"]):
+			_fail("answer %s's chart opens at %d, the sim's %d" % [a["id"], int(chart.data()[0]["opens"]), int(a["opens"])])
+		# Design T3 on #448: each small chart says its ends, the start year and the opening (short), so one axis reads.
+		var opens := int(a["opens"])
+		var want := [str((int(copy["voted"]) - 1) / 12), DateText.mon_year((opens - 1) % 12 + 1, (opens - 1) / 12)]
+		if chart.ends() != want:
+			_fail("answer %s's chart says %s under it, not %s" % [a["id"], chart.ends(), want])
+	for c in charts:
+		if c.axis_end() != charts[0].axis_end():
+			_fail("the answers' charts are not on one axis: %s against %s" % [c.axis_end(), charts[0].axis_end()])
+	var due = _with_meta("due", _follow)
+	# Pass 2 T1 on #448: UnitOverrun.tick pays once now >= due, so the last month to answer is due - 1.
+	if due == null or not _text_under(due).contains(_month(_last(copy))):
+		_fail("the page's head does not say the last month to answer (%s)" % _month(_last(copy)))
+	elif not _text_under(_with_meta("overrun_card", _follow)).contains(_follow.tr("Unanswered by %s: it is paid.") % _month(_last(copy))):
+		_fail("the ask's foot does not say the last month to answer")
+	# Design T2 on #448: a deadline tag wears the hourglass; the triangle is the alert glyph.
+	elif due.find_children("*", "TextureRect", true, false).filter(func(t): return String(t.get_meta("glyph", "")).ends_with("hourglass.svg")).is_empty():
+		_fail("the head's answer-by chip does not wear the hourglass")
+	var bill = _with_meta("bill_if_paid", _follow)
+	var line := String(Units.row(_main._loader, String(copy["type"]))["line"])
+	if bill != null and not bill.running_color.is_equal_approx(FinanceRowsUi.line_color(line)):
+		_fail("the year's bill wears %s for the running cost, not its line's hue" % bill.running_color)
 
 
 # --- helpers ---------------------------------------------------------------
@@ -341,6 +407,65 @@ func _card(node):
 	while up != null and not (up is PanelContainer):
 		up = up.get_parent()
 	return up
+
+
+## The last month an ask can be answered in: UnitOverrun.tick pays it on its due month.
+func _last(p: Dictionary) -> int:
+	return int(p["ask"]["due"]) - 1
+
+
+## Pass 2 T2 + T3 on #448: two asks at once, one of them a 40-unit programme.
+func _stage_two_asks() -> void:
+	var state = _main._state
+	var ns = state.player()
+	ns.unit_programmes.clear()
+	for units in [3, 40]:
+		var row := {"type": String(_note["type"]), "op": UK.OP_BUILD, "rows": [{"region": String(_note["region"]), "units": units}]}
+		var p: Dictionary = UnitBuild.open(state, ns, _main._loader, row)
+		p["ask"] = {"kind": "overrun", "posted": UnitPrice.now(state), "due": UnitPrice.now(state) + UK.UNIT_OVERRUN_WINDOW_MONTHS,
+			"default": UK.OVERRUN_PAY, "eur_m": 0.2 * float(p["contract_eur_m"])}
+	_main._windows.open("programmes")
+	_follow.mark_dirty()
+
+
+func _check_two_asks() -> void:
+	var bills := _all_with_meta("bill_if_paid", _follow)
+	if bills.size() != 2:
+		_fail("%d bills for two asks" % bills.size())
+	var titles := {}
+	for b in bills:
+		titles[_text_under(b.get_parent())] = true
+	if titles.size() != bills.size():
+		_fail("two asks' bills cannot be told apart: %s" % titles.keys())
+	if _with_meta("follow_foot", _follow) == null or not (_with_meta("follow_foot", _follow) is HFlowContainer):
+		_fail("the foot of the page does not flow")
+	# The workspace's edge, not the page's: a page grows to its content, the workspace does not.
+	var page_end: float = _main._windows.dock().get_global_rect().end.x
+	for card in _all_with_meta("overrun_card", _follow):
+		var buttons: Array = []
+		for id in [UK.OVERRUN_PAY, UK.OVERRUN_SHRINK, UK.OVERRUN_DELAY]:
+			var squares = _with_meta("units_" + id, card.get_parent())
+			if squares != null and squares.get_global_rect().end.x > page_end + 0.5:
+				_fail("answer %s's squares run past the page (%s > %s)" % [id, squares.get_global_rect().end.x, page_end])
+			# Where the squares are DRAWN, not the control's rect (QA's TAKE on #448: per_line() = voted kept the rect and drew 40 in a row).
+			if squares != null and squares.voted >= 40:
+				var drawn: float = squares.per_line() * (squares.SIDE + squares.GAP) - squares.GAP
+				if squares.lines() < 2 or drawn > squares.size.x + 0.5:
+					_fail("answer %s's %d squares draw %d a line on %d lines, %s px in %s" % [id, squares.voted, squares.per_line(),
+						squares.lines(), drawn, squares.size.x])
+			var b = _with_meta("overrun_" + id, card.get_parent())
+			if b != null:
+				buttons.append(b)
+		# AnswerRow's one-class rule: the three answers are one group (PanelKit.same_class).
+		var groups := {}
+		for b in buttons:
+			groups[b.get_meta(&"button_class_group", -1)] = true
+		if buttons.size() != 3 or groups.size() != 1 or groups.has(-1):
+			_fail("the three answers' buttons are not one class group: %s" % groups.keys())
+
+
+func _month(absolute: int) -> String:
+	return DateText.month_long_year((absolute - 1) % 12 + 1, (absolute - 1) / 12)
 
 
 func _region_name(id: String) -> String:
@@ -460,6 +585,12 @@ func _check_overrun_arrivals() -> void:
 	RegisterWarning.arrive(_main, {"units": [{"kind": "overrun_landed", "id": String(p["id"]), "eur_m": 1.0},
 		{"kind": "overrun_defaulted", "id": String(p["id"]), "eur_m": 80.0},
 		{"kind": "lapse_warning", "eur_m": 120.0, "year": 2027}]})
+	# Pass 2 T1 on #448: the card names the last month to answer, the month before the ask is paid
+	# (read before its Open, which takes the card away).
+	var last := _last(p)
+	var asked := _text_under(_main._hud.inbox)
+	if not asked.contains(DateText.month_year((last - 1) % 12 + 1, (last - 1) / 12)):
+		_fail("the overrun card does not say the last month to answer: '%s'" % asked.left(400))
 	var card := false
 	for b in _main._hud.inbox.find_children("*", "Button", true, false):
 		if ActsOn.acts_on(b, RegisterWarning.OVERRUN + String(p["id"])) and not _gone(b):
@@ -474,6 +605,7 @@ func _check_overrun_arrivals() -> void:
 	var text := _text_under(_main._hud.inbox)
 	if not text.contains(Num.f(0.08, 2)) or not text.contains(Num.f(0.12, 2)):
 		_fail("the default and the lapse are not noted: '%s'" % text.left(300))
+
 
 
 func _gos() -> Array:
