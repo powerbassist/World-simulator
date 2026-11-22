@@ -34,6 +34,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Icon = preload("res://src/ui/icon.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const Sound = preload("res://src/ui/sound.gd")
+const GapBars = preload("res://src/ui/gap_bars.gd")
 
 signal opened(id: String)
 signal closed(id: String)
@@ -58,7 +59,7 @@ const DOCK_WIDTHS := {"region": 476.0}
 const INBOX_GROUP := "inbox"  # inbox.gd's GROUP: the column the workspace makes room for
 ## G3 S1: the tabs whose panel lays out its own sheets, so their page draws none (tab_page.gd). A
 ## screen joins this table in the slice that re-lays it on sheets (S2: the Diary).
-const OWN_SHEETS := ["calendar", "finances", "companies", "sector_agriculture", "sector_industry", "sector_services", "majority", "legislature"]  # S3: Sectors (#441 T14); S4: Finances; S5: Parliament
+const OWN_SHEETS := ["calendar", "finances", "companies", "sector_agriculture", "sector_industry", "sector_services", "register", "majority", "legislature"]  # S3: Sectors (#441 T14); S4: Finances, Register; S5: Parliament
 
 ## How many destinations back and forward remember -- a session's worth of
 ## wandering, not its whole history.
@@ -86,6 +87,8 @@ var _tab_counts := {}   # tab id -> items waiting on the player (V5.3 screen 5)
 ## G3 S4: a domain's ASIDE -- one sheet at the workspace's right that stays beside every tab of that domain (the
 ## finance bill's rail on Finances), GAP_PANE from the page. Domain id -> Control; the page ends short of it.
 var _asides := {}
+## Design's T16 on #441: the bars of the OWN_SHEETS pages, in the gap at their scroll's right (gap_bars.gd).
+var _gap_bars: GapBars
 
 ## Destinations, "" for the map. The cursor is the one on screen.
 var _history: Array[String] = []
@@ -116,6 +119,9 @@ func _ready() -> void:
 	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_dock.add_child(_body)
+
+	_gap_bars = GapBars.new()
+	add_child(_gap_bars)
 
 
 func _build_header() -> Control:
@@ -211,6 +217,7 @@ func register(id: String, title: String, content: Control, key: int = KEY_NONE, 
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if OWN_SHEETS.has(id):
 		page.set_own_sheets()
+		_gap_bars.adopt(page)
 	page.hide()
 	_pages[id] = page
 
@@ -239,6 +246,8 @@ func open(id: String, quiet: bool = false) -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_fit_page(page, id)
 	page.show()
+	if page.own_sheets():
+		_gap_bars.adopt(page)  # a scroll the panel built after it registered
 	_dock.show()
 	for other_id in _pages.keys():
 		if other_id != id and _pages[other_id].visible:

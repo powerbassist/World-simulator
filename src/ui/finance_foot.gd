@@ -24,6 +24,8 @@ signal discard_pressed
 signal open_pressed
 signal review_pressed
 signal withdraw_pressed
+## The folded line's chevron: the shell puts the inbox away (finances_driver.gd), and the rail opens.
+signal unfold_pressed
 ## A change's remove mark: (channel, key) as FinanceDraft.drop takes them.
 signal drop_pressed(channel: String, key: String)
 
@@ -42,6 +44,8 @@ const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
 const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
 const FinanceStrip = preload("res://src/ui/finance_strip.gd")
+const FinancePages = preload("res://src/ui/finance_pages.gd")
+const FinanceLanding = preload("res://src/ui/finance_landing.gd")
 const FinanceWho = preload("res://src/ui/finance_who.gd")
 const ControlStyle = preload("res://src/ui/control_style.gd")
 const Icon = preload("res://src/ui/icon.gd")
@@ -91,7 +95,11 @@ var _head: HBoxContainer
 var _verbs: Container
 var _strip: FinanceStrip
 var _verdict: Label
+var _landing: FinanceLanding  # where the page's programme would land (Register): a dashed place
 var _stays: Label
+## The frame the chevron was pressed: an unfold that follows within a few frames is the chevron's, and the keyboard
+## follows it; a later one (the inbox closed some other way) leaves the focus where it is (pass 1 on #447).
+var _unfold_frame := -100
 
 
 func _ready() -> void:
@@ -103,6 +111,7 @@ func _ready() -> void:
 	_col = col
 	_strip = FinanceStrip.new()
 	add_child(_strip)
+	_strip.unfold_pressed.connect(func() -> void: _unfold_frame = Engine.get_process_frames(); unfold_pressed.emit())
 	_strip.hide()
 	var head := HBoxContainer.new()
 	_head = head
@@ -157,6 +166,8 @@ func _ready() -> void:
 	_groups = VBoxContainer.new()
 	_groups.add_theme_constant_override("separation", 2)
 	_changes.add_child(_groups)
+	_landing = FinanceLanding.new()
+	listed.add_child(_landing)
 
 	_text = Label.new()
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -169,20 +180,17 @@ func _ready() -> void:
 	col.add_child(_verdict)
 	var verbs := PanelKit.buttons(col)
 	_verbs = verbs
-	_table = _button(verbs, "Table", Strings.t("Table the bill"), table_pressed)  # i18n: ok a node name
-	_table.theme_type_variation = UiTheme.PRIMARY
+	_table = _button(verbs, "Table", Strings.t("Table the bill"), table_pressed, UiTheme.PRIMARY)  # i18n: ok a node name
 	_open = _button(verbs, "OpenBill", Strings.t("Open the bill"), open_pressed)
 	# Two looks for a click: a button or a ghost (gate T7 on #443). The links are ghosts; the rail's verb stays the loud one.
-	_discard = _button(verbs, "Discard", Strings.t("Discard all"), discard_pressed)  # i18n: ok a node name
-	_discard.theme_type_variation = UiTheme.GHOST
-	_review = _button(verbs, "Review", Strings.t("Review the bill"), review_pressed)  # i18n: ok a node name
-	_review.theme_type_variation = UiTheme.GHOST
-	_withdraw = _button(verbs, "Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed)  # i18n: ok a node name
-	_withdraw.flat = true
+	_discard = _button(verbs, "Discard", Strings.t("Discard all"), discard_pressed, UiTheme.GHOST)  # i18n: ok a node name
+	_review = _button(verbs, "Review", Strings.t("Review the bill"), review_pressed, UiTheme.GHOST)  # i18n: ok a node name
+	_withdraw = _button(verbs, "Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed, UiTheme.GHOST)  # i18n: ok a node name
 
 
-func _button(parent: Control, node_name: String, label: String, signal_out: Signal) -> Button:
+func _button(parent: Control, node_name: String, label: String, signal_out: Signal, variation := "") -> Button:
 	var button := PanelKit.sized(Button.new())
+	button.theme_type_variation = variation
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.name = node_name  # i18n: ok a node name, found by tests
 	button.text = label
@@ -209,6 +217,9 @@ func set_folded(folded: bool) -> bool:
 		_date.reparent(_head, false)
 		for verb in [_table, _open, _discard, _review, _withdraw]:
 			verb.reparent(_verbs, false)
+		var first := _verbs.get_children().filter(func(v) -> bool: return v.visible and not v.disabled)
+		if Engine.get_process_frames() - _unfold_frame <= 3 and not first.is_empty():
+			(first[0] as Control).call_deferred("grab_focus")
 	custom_minimum_size.x = _width()
 	_stamp = ""
 	if _state != null and _state.player() != null:
@@ -333,7 +344,7 @@ func refresh(state, loader, draft, price) -> void:
 	_text.text = text
 	_text.visible = text != ""
 	var vote: Dictionary = read["vote"]
-	var verdict := reason(refusal) if refusal != "" else carries_text(vote)
+	var verdict := reason(refusal) if refusal != "" else FinanceRefusal.carries_text(vote)
 	if refusal == "":
 		# The seats are the bar's (its legend prints each count); the verdict says the result in words.
 		_vote(vote)
@@ -343,13 +354,6 @@ func refresh(state, loader, draft, price) -> void:
 	_strip.say(_title.text, Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
 		Strings.t("deficit %s → %s bn a year") % [Num.f(float(whole["deficit_now_bn"]), 0), Num.f(float(whole["deficit_after_bn"]), 0)],
 		verdict, refusal == "" and bool(vote.get("passed", false)), refusal != "" or not bool(vote.get("passed", false)))
-
-
-## "✓ It carries: 348 for, 229 against." -- the Assembly's result as the sim's own division rule reads it now.
-static func carries_text(vote: Dictionary) -> String:
-	var counts := [int(vote["yes_seats"]), int(vote["no_seats"])]
-	return ("✓ " + Strings.t("It carries: %d for, %d against.") % counts) if bool(vote.get("passed", false)) \
-		else ("✗ " + Strings.t("It falls: %d for, %d against.") % counts)
 
 
 func _width() -> float:
@@ -469,26 +473,11 @@ func _vote(vote: Dictionary) -> void:
 ## of its own (Register's "Put it in the finance bill") leads; the rail's verb is then plain, and filled again on a tab
 ## that feeds the bill nothing (Building) or on Books, whose next step is the rail's.
 func _quiet_if_the_page_leads() -> void:
-	var leads := page_leads()
+	_landing.show_for(FinancePages.landing(self))
+	var leads := FinancePages.leads(self)
 	var want := "" if leads else UiTheme.PRIMARY
 	if _table.theme_type_variation != want:
 		_table.theme_type_variation = want
-
-
-## Whether the workspace page shown beside the rail shows a PRIMARY button of its own.
-func page_leads() -> bool:
-	var manager = get_tree().get_first_node_in_group("window_manager") if is_inside_tree() else null
-	if manager == null:
-		return false
-	for id in manager.open_ids():
-		var page: Control = manager.content(id)
-		if page == null or page.is_ancestor_of(self):
-			continue
-		for button in page.find_children("*", "Button", true, false):  # i18n: ok a class name
-			# A disabled one is not the next step (pass 2 T11 on #443: Register's, with nothing placed).
-			if (button as Button).theme_type_variation == UiTheme.PRIMARY and (button as Button).is_visible_in_tree() and not (button as Button).disabled:
-				return true
-	return false
 
 
 ## The refusal in words (finance_refusal.gd, the table the sheet and the rail both say).

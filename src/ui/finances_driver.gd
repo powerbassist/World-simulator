@@ -14,6 +14,8 @@ static func register(main) -> void:
 	panel.setup(main._state, main._loader)
 	# G3 S4: the bill's rail stays beside every Finances tab (Books, Public works, Register, Building).
 	main._windows.set_aside("finances", panel.rail())
+	# R1: the folded line's chevron puts the inbox away; the window manager then opens the rail beside the page.
+	panel.rail().unfold_pressed.connect(main._hud.inbox.slide_out)
 	panel.go_requested.connect(main._windows.open)
 	# The one fiscal command the page sends (a bill tabled, added to or withdrawn): the shell's card and effect baseline.
 	panel.committed.connect(func(before: Dictionary, tabling: Dictionary) -> void:

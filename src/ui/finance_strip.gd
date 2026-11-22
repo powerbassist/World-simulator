@@ -4,7 +4,8 @@ extends HBoxContainer
 ## beside the workspace, the bill's rail (finance_foot.gd) becomes a slim sheet under the header, the workspace's width:
 ## the bill's name, what it holds, the deficit before and after, the Assembly's verdict in words, then the rail's own
 ## date tag and verbs, docked here so there is one of each (a second "Table the bill" would be two buttons for one act).
-## The table under it keeps the page's full width.
+## The table under it keeps the page's full width. Its chevron puts the inbox away, which shows the whole rail (R1, the
+## parent's ruling on #443: one surface owns the screen, no rail over the page).
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const ControlStyle = preload("res://src/ui/control_style.gd")
@@ -14,6 +15,8 @@ var _line: Label
 var _verdict: Label
 ## Where the rail's date tag and verbs sit while folded.
 var _slot: HBoxContainer
+
+signal unfold_pressed
 
 
 func _ready() -> void:
@@ -35,6 +38,14 @@ func _ready() -> void:
 	_slot.add_theme_constant_override("separation", 10)
 	_slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	add_child(_slot)
+	var unfold := Button.new()
+	unfold.name = "Unfold"  # i18n: ok a node name, found by tests
+	unfold.text = "›"  # i18n: ok a glyph
+	unfold.theme_type_variation = UiTheme.GHOST
+	unfold.tooltip_text = tr("The whole bill: puts the inbox away")
+	unfold.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	unfold.pressed.connect(unfold_pressed.emit)
+	add_child(unfold)
 
 
 ## The line: the bill's name, what it holds (`line`), and the verdict in its tone (`good` the good-news tone, `bad` the

@@ -36,7 +36,7 @@ static func band_chip(parent: Control, band: Dictionary) -> void:
 		return
 	# The rule as it is: a rank (the few furthest behind), each past a share of the nation's figure.
 	var chip := PanelKit.chip(parent, Strings.t("The %d furthest behind, each %s %% or more") % [UK.UNIT_REGION_WORST, Num.f(100.0 * UK.UNIT_REGION_BAND, 0)],
-		UiTheme.CHIP_WARN, "warning")
+		UiTheme.CHIP_BAD, "warning")  # bad news, with its glyph (Register in C)
 	chip.set_meta("band_chip", true)
 
 
