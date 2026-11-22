@@ -130,6 +130,20 @@ func _check_folds() -> void:
 	var text := _text_under(_panel)
 	if not text.contains(_panel.tr("Subsidy bill")):
 		_fail("public account pressed: its rows are not on screen")
+	# A fold wears a chevron that turns (the #441 RECORD; g3-spec "Borderless toggle"): open is not closed.
+	var fold = _button_with_meta("ledger", "ledger")
+	if fold == null or fold.icon == null:
+		_fail("the public account fold has no chevron")
+	else:
+		var open_icon: Texture2D = fold.icon
+		fold.button_pressed = false
+		fold.toggled.emit(false)
+		if fold.icon == open_icon:
+			_fail("the fold's chevron did not turn when it closed")
+		fold.button_pressed = true
+		fold.toggled.emit(true)
+		if fold.icon.get_image().get_data() != open_icon.get_image().get_data():
+			_fail("the fold's open chevron is not the one it showed open")
 
 
 ## Act opened: one selector per verb on offer, each with its money line; no strip
@@ -305,8 +319,47 @@ func _check_counter(option: Dictionary) -> void:
 		return
 	(chip as Button).pressed.emit()
 	_read_counter_strip(option)
+	_check_counter_row(option)
 	if _button_with_meta("answer_id", "counter") == null:
 		_fail("counter: no button makes the picked counter")
+
+
+## T13 on #441: the counter is an answer like the others. Its button is the first cell of an answer
+## row, its figures the row's slots (the chips, the cost in the costs' column, the glyph lines, the
+## chance track), and its cost sits under the other answers' costs.
+func _check_counter_row(option: Dictionary) -> void:
+	var counter := roundi(100.0 * float(option["counter"]))
+	var go = _button_with_meta("answer_id", "counter")
+	if go == null:
+		return
+	var row: Node = go.get_parent().get_parent()
+	if not row.has_meta("answer_row") or row.get_child(0) != go.get_parent():
+		_fail("counter %d %%: its button is not the first cell of an answer row" % counter)
+		return
+	for need in ["counter_id", "counter_strip", "counter_chance"]:
+		if not row.find_children("*", "", true, false).any(func(n): return n.has_meta(need)):
+			_fail("counter %d %%: its row has no %s" % [counter, need])
+	var bloc: Dictionary = option["bloc_offset"]
+	var ups := bloc.values().any(func(v): return float(v) > 0.0)
+	var downs := bloc.values().any(func(v): return float(v) < 0.0)
+	var who := row.find_children("*", "", true, false).filter(func(n): return n.has_meta("who") and (n as Control).is_visible_in_tree())
+	if who.size() != int(ups) + int(downs):
+		_fail("counter %d %%: %d who lines in its row, wanted %d (glyph and word each)" % [counter, who.size(), int(ups) + int(downs)])
+	var strip: Control = row.find_children("*", "", true, false).filter(func(n): return n.has_meta("counter_strip"))[0]
+	if _text_under(strip).contains(_panel.tr("Pleases")):
+		_fail("counter %d %%: the strip still prints pleases and angers as one plain line" % counter)
+	var plain = _button_with_meta("answer_id", String(_first_plain_id()))
+	if plain != null:
+		var cost: Label = plain.get_meta("money_label")
+		if absf(strip.money_label.get_global_rect().position.x - cost.get_global_rect().position.x) > 0.5:
+			_fail("counter %d %%: its cost is at x %.0f, the answers' costs at %.0f" % [counter, strip.money_label.get_global_rect().position.x, cost.get_global_rect().position.x])
+
+
+func _first_plain_id() -> String:
+	for option in Processes.asks(_main._state.player())[0]["ask"]["answers"]:
+		if not option.has("counter"):
+			return String(option["id"])
+	return ""
 
 
 func _read_counter_strip(option: Dictionary) -> void:
@@ -318,7 +371,7 @@ func _read_counter_strip(option: Dictionary) -> void:
 	if strip == null:
 		_fail("counter: no strip under the chips")
 		return
-	var text := _text_under(strip)
+	var text := _text_under(strip.get_parent())  # what follows is its own line in the row's slots (T13)
 	# The odds are the chance track's (Design's T8 on #441), not the strip's words.
 	var chart = null
 	for node in _panel.find_children("*", "", true, false):
