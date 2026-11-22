@@ -18,7 +18,7 @@ and as NATION_SHOT_SCREEN, which tools/os_cursor.gd's quiet_window() reads each 
 The interface size is always written: --interface-size N, else index 1 (1.0), because Auto would follow
 the other screen's resolution and change every frame.
 --interface-size N writes settings.cfg [display] interface_size_index=N into each run's temp user
-dir (src/ui/interface_size.gd: 1 = 1.0, 2 = 0.9, 3 = 0.8, 4 = 0.75); without it the game's default (Auto).
+dir (src/ui/interface_size.gd: 1 = 1.0, 2 = 0.9, 3 = 0.8, 4 = 0.75); 0 is Auto; without the flag, index 1.
 A folder named for a size (t100, t075) must hold that size's frames: --out t075 with --interface-size 0 (Auto) or
 1 is refused, because Auto follows the screen and index 4 is 0.75, so the name would lie (Igor, 2026-11-22).
 Run it alone: it opens one Godot window after another (AGENTS.md, one Godot at a
@@ -65,7 +65,7 @@ def slug(args: str) -> str:
 
 # interface_size_index -> the size it means (src/ui/interface_size.gd SIZES; 0 is Auto, no fixed size).
 INTERFACE_SIZES = {1: 1.0, 2: 0.9, 3: 0.8, 4: 0.75}
-SIZE_DIR = re.compile(r"^t(\d{3})$")
+SIZE_DIR = re.compile(r"^t(\d{2,3})$", re.IGNORECASE)  # t100, t075, t75
 
 
 def out_name_mismatch(out: Path, index: int | None) -> str:
@@ -122,11 +122,11 @@ def no_focus_override(repo: Path):
 def selftest() -> int:
     ok = [
         (Path("x/t100"), None), (Path("x/t100"), 1), (Path("x/t075"), 4), (Path("x/t090"), 2), (Path("x/t080"), 3),
-        (Path("x/frames"), 0), (Path("x/frames"), 4), (Path("t100x"), 0),
+        (Path("x/frames"), 0), (Path("x/frames"), 4), (Path("t100x"), 0), (Path("x/t75"), 4), (Path("x/T075"), 4),
     ]
     bad = [
         (Path("x/t075"), 0), (Path("x/t075"), 1), (Path("x/t075"), None), (Path("x/t100"), 4), (Path("x/t100"), 0),
-        (Path("x/t090"), 4),
+        (Path("x/t090"), 4), (Path("x/t75"), 0), (Path("x/T075"), 1),
     ]
     failures = [f"{o} idx {i}: refused ({out_name_mismatch(o, i)})" for o, i in ok if out_name_mismatch(o, i)]
     failures += [f"{o} idx {i}: accepted, a mismatch" for o, i in bad if not out_name_mismatch(o, i)]
