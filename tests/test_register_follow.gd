@@ -447,6 +447,12 @@ func _check_two_asks() -> void:
 			var squares = _with_meta("units_" + id, card.get_parent())
 			if squares != null and squares.get_global_rect().end.x > page_end + 0.5:
 				_fail("answer %s's squares run past the page (%s > %s)" % [id, squares.get_global_rect().end.x, page_end])
+			# Where the squares are DRAWN, not the control's rect (QA's TAKE on #448: per_line() = voted kept the rect and drew 40 in a row).
+			if squares != null and squares.voted >= 40:
+				var drawn: float = squares.per_line() * (squares.SIDE + squares.GAP) - squares.GAP
+				if squares.lines() < 2 or drawn > squares.size.x + 0.5:
+					_fail("answer %s's %d squares draw %d a line on %d lines, %s px in %s" % [id, squares.voted, squares.per_line(),
+						squares.lines(), drawn, squares.size.x])
 			var b = _with_meta("overrun_" + id, card.get_parent())
 			if b != null:
 				buttons.append(b)
