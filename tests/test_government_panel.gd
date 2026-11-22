@@ -55,6 +55,7 @@ func _process(_delta: float) -> bool:
 			_check_the_picked_page()
 		2:
 			_check_minority()
+			_check_the_49_3_tile()
 		3:
 			_check_cohabitation()
 		4:
@@ -135,6 +136,10 @@ func _check_the_picked_page() -> void:
 	var text: String = _collect_text(margins)
 	if not text.contains("+%d" % (ns.coalition_seats - need)) or not text.contains("%d short" % (censure - against)):
 		_fail("the margins' figures are not the arithmetic: %s" % text)
+	# Design's T6: the sentence under the margin is what is LEFT above the line, not the seats to subtract from.
+	var left: int = ns.coalition_seats - breakable - need
+	if breakable > 0 and not text.contains("Up to %d may break ranks; still %d above the line" % [breakable, left]):
+		_fail("the break-ranks line is not breakable %d and %d left above the line: %s" % [breakable, left, text])
 
 
 func _refresh_text() -> String:
@@ -188,6 +193,38 @@ func _check_minority() -> void:
 	# say a united opposition could remove this government.
 	if not text.contains("bring this government down on its own"):
 		_fail("a minority facing 415 opposition seats is not warned about censure: %s" % text)
+
+
+## The 49.3 tile's word: a forced bill that would carry a censure Falls (BAD), one the cooldown bars is
+## Unavailable, otherwise it Survives. Staged by moving the agreed position far from every party: nobody is
+## cohesive with it, so every line is "for" and the motion carries.
+func _check_the_49_3_tile() -> void:
+	var ns = _state.player()
+	var position: Dictionary = ns.coalition_position
+	ns.coalition_position = {"economic": 50.0, "social": 50.0}
+	var forced: Dictionary = Government.resolve_censure(ns, _loader.parties[ns.id], true)
+	if not bool(forced["carried"]):
+		_fail("the staging does not carry a forced censure, so the Falls check below tests nothing")
+	ns.force_cooldown_months = 0
+	var tile := _tile_word(_refresh_text())
+	if tile != "Falls":
+		_fail("a forced bill that carries the censure reads '%s', not Falls" % tile)
+	ns.force_cooldown_months = 3
+	tile = _tile_word(_refresh_text())
+	if tile != "Unavailable":
+		_fail("Article 49.3 on cooldown reads '%s', not Unavailable" % tile)
+	ns.force_cooldown_months = 0
+	ns.coalition_position = position
+
+
+## The 49.3 tile's figure ("Survives", "Falls" or "Unavailable"): the LAST of them in the text, as _breakable_seats does.
+func _tile_word(text: String) -> String:
+	var found := ""
+	for line in text.split("
+"):
+		if line in ["Survives", "Falls", "Unavailable"]:
+			found = line
+	return found
 
 
 ## Cohabitation is the one outcome that is neither a win nor a loss, so the panel
