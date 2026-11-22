@@ -85,13 +85,11 @@ func _init(sector_id := "") -> void:
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(560, 0)  # the dock sets the height (tab_page.gd wanted_height)
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
+	# No margin round the sheets: they sit on the header sheet's grid, 12 apart (window_manager
+	# OWN_SHEETS; Design's T14 on #441, the Diary's rule).
 	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 16)
-	margin.add_child(columns)
+	columns.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	add_child(columns)
 	_body = _column(columns, Control.SIZE_EXPAND_FILL)
 	_sheet = _column(columns, Control.SIZE_FILL)
 	_sheet.custom_minimum_size.x = SHEET_WIDTH
@@ -105,15 +103,12 @@ func _column(parent: Control, horizontal: int) -> VBoxContainer:
 	scroll.size_flags_horizontal = horizontal
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	parent.add_child(scroll)
-	# The bar draws over the content: the right-aligned figures keep clear of it.
-	var gutter := MarginContainer.new()
-	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	gutter.add_theme_constant_override("margin_right", 14)
-	scroll.add_child(gutter)
+	# No gutter for the bar: the sheets' edges meet the header's (T14); a sheet's own padding keeps
+	# its right-aligned figures clear of a bar drawn over it.
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_theme_constant_override("separation", 14)
-	gutter.add_child(box)
+	box.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	scroll.add_child(box)
 	return box
 
 
@@ -283,11 +278,10 @@ func _majors(ns) -> void:
 		face.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		words.add_child(face)
 		var pick := PanelKit.sized(Button.new())
+		# Not a toggle: the picked tile carries the ground, the name inside stays bare (Design's T15).
 		pick.flat = true
-		PanelKit.toggle(pick)
 		pick.text = company.company_name
 		pick.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		pick.button_pressed = picked == company
 		pick.set_meta("firm", String(company.id))
 		pick.pressed.connect(_select.bind(String(company.id)))
 		pick.gui_input.connect(_right_click.bind(company))

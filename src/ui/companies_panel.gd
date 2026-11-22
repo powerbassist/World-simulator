@@ -125,35 +125,26 @@ var _side: VBoxContainer
 func _ready() -> void:
 	custom_minimum_size = Vector2(520, 0)  # the dock sets the height (tab_page.gd wanted_height)
 
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
-
+	# No margin round the sheets: they sit on the header sheet's grid, its edges and a gap under it
+	# (window_manager OWN_SHEETS; Design's T14 on #441, the Diary's rule).
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 10)
-	margin.add_child(root)
+	add_child(root)
 
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(_scroll)
 
-	# The page sits inside a right margin rather than flush to the scroll, because a
-	# ScrollContainer draws its bar OVER the content: without this the right-aligned
-	# figures run underneath it. A vertical bar is ~10px.
-	var gutter := MarginContainer.new()
-	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	gutter.add_theme_constant_override("margin_right", 14)
-	_scroll.add_child(gutter)
-
+	# No gutter for the bar: the outer sheet's edge must meet the header's (T14), and a sheet's own
+	# padding keeps its right-aligned figures clear of a bar drawn over it.
 	_page = VBoxContainer.new()
 	_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_page.add_theme_constant_override("separation", 12)
-	gutter.add_child(_page)
+	_page.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	_scroll.add_child(_page)
 
 	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 12)
+	columns.add_theme_constant_override("separation", UiTheme.GAP_PANE)
 	_page.add_child(columns)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL

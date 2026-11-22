@@ -228,9 +228,8 @@ static func _row(body: Control, state, r: Dictionary, span: int, today: float, w
 	var sector := PanelKit.plain_line(edge, Labels.sector(String(r["sector"])).to_upper(), PanelKit.Tone.PLAIN)
 	sector.theme_type_variation = UiTheme.HEADING
 	var title := Button.new()
+	# Not a toggle: the picked row's plate carries the ground, the name inside stays bare (Design's T15).
 	title.flat = true
-	PanelKit.toggle(title)  # a flat toggle wears PICKED_ROW, one look per kind (#439)
-	title.button_pressed = picked
 	title.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	title.text = String(r["title"])  # i18n: row-ok built from msgids above
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
