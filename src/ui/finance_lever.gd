@@ -63,6 +63,11 @@ func x_of(rate: float) -> float:
 	return PAD + frac * maxf(size.x - 2.0 * PAD, 1.0)
 
 
+## Whether a press or a key can move it: an editable lever with money per point (a kind not in force has none).
+func can_drag() -> bool:
+	return editable and _per_unit > 0.0
+
+
 func ring_x() -> float:
 	return x_of(_live)
 

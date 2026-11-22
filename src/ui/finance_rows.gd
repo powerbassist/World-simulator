@@ -20,6 +20,8 @@ const TaxLibrary = preload("res://src/core/tax_library.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
+const FinanceLever = preload("res://src/ui/finance_lever.gd")
+const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 
 ## A part nobody sets here: the muted neutral of the page's two stacks, and a darker one for the
 ## debt service so that the two are told apart by more than their place.
@@ -31,12 +33,13 @@ const GROUP_NAME := {
 	"wealth_property": "Wealth and property", "energy_environment": "Energy and environment",  # i18n: msgid
 }
 const NAME_WIDTH := 215.0
-const SPENDING_NAME_WIDTH := 130.0
-const RATE_WIDTH := 100.0
 ## A spending line's figure ("from 11.0 to 12.5 %"): the name button takes the rest, never this. The unit is the
 ## column's heading (% of GDP), so the figure stays short enough for the pane at the former 130 % text size.
 const PCT_WIDTH := 124.0
 const FIGURE_WIDTH := 64.0
+## G3 S4 (Books in C): the row's balance a year while the draft moves it, and the bar's least width.
+const BALANCE_WIDTH := 76.0
+const BAR_MIN := 140.0
 const SWATCH := 10.0
 
 
@@ -80,6 +83,7 @@ static func bn_text(value: float) -> String:
 ## The revenue column: every group (largest first) with its kinds, then what no row sets.
 static func revenue(box: Control, book: Dictionary, state, loader, open_groups: Dictionary, toggle: Callable, ctx: Dictionary) -> void:
 	var ns = state.player()
+	columns(box, Strings.t("Revenue · %s") % bn_text(float(book["revenue_bn"])), Strings.t("Who pays"))
 	for group in book["groups"]:
 		var gid := String(group["id"])
 		_header(box, group_color(gid), group_name(gid), bn_text(float(group["total"])), "")
@@ -103,35 +107,34 @@ static func revenue(box: Control, book: Dictionary, state, loader, open_groups: 
 			var month := int(loader.nations[ns.id].finance_autumn_month)
 			var line := PanelKit.plain_line(box, Strings.t("Not in force, creatable in %s: %s") % [DateText.month_long(month), names], PanelKit.Tone.DIM)
 			line.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_header(box, MUTED, Strings.t("Other revenue"), bn_text(float(book["other_revenue_bn"])), Strings.t("not set here"), _other_revenue_tip(ctx))
+	_header(box, MUTED, Strings.t("Other revenue"), bn_text(float(book["other_revenue_bn"])), Strings.t("not set here"), _other_revenue_tip(ctx), float(book["other_revenue_bn"]), ctx)
 	FinanceOfWhich.build(box, book["of_which"]["revenue"], "other_revenue", ctx)
 
 
 ## The spending column: the five lines, then the debt service and what no line sets.
 static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
-	_header(box, Color.TRANSPARENT, Strings.t("Spending"), bn_text(float(book["spending_bn"])), Strings.t("lines in % of GDP"))
+	columns(box, Strings.t("Spending · %s") % bn_text(float(book["spending_bn"])), Strings.t("Who it is for"))
 	for line in book["lines"]:
 		var row := _row()
 		row.add_child(_swatch(line_color(String(line["key"]))))
 		var id := row_id(FinanceDraft.SPENDING, String(line["key"]))
 		# A line with a sector slipping says so while closed: a warning on a closed row is unseen (the Budget's mark).
 		var shown := Labels.portfolio(String(line["key"]))
-		var name := _name_cell(row, Strings.t("%s (!)") % shown if (ctx.get("slipping", []) as Array).has(String(line["key"])) else shown, id, SPENDING_NAME_WIDTH, ctx)
-		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var name := _name_cell(row, Strings.t("%s (!)") % shown if (ctx.get("slipping", []) as Array).has(String(line["key"])) else shown, id, NAME_WIDTH, ctx)
 		# What a briefing's Go on the deficit lands on (acts_on.gd): any line's slider acts on the balance.
 		ActsOn.tag(name, ["deficit", "balance"])
+		_cell(row, "", UiTheme.CAPTION, 0.0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var pct := _cell(row, "", UiTheme.CAPTION, PCT_WIDTH)
 		row.mouse_filter = Control.MOUSE_FILTER_PASS
-		pct.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		(ctx["cells"] as Dictionary)[id] = [pct, FinanceDraft.SPENDING, String(line["key"]), float(line["pct"])]
-		_cell(row, bn_text(float(line["bn"])), "", FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_money_cells(row, id, FinanceDraft.SPENDING, String(line["key"]), float(line["bn"]), float(line["pct"]), line_color(String(line["key"])), ctx)
 		box.add_child(row)
 		if String(ctx["open"]) == id and not (ctx["tabled"] as Dictionary).has(id):
 			box.add_child((ctx["editor"] as Callable).call(FinanceDraft.SPENDING, String(line["key"])))
 	_header(box, SERVICE, Strings.t("Debt service"), bn_text(float(book["service_bn"])), Strings.t("not set here"),
-		Strings.t("Interest on the debt: it follows the debt and the rates the markets ask."))
+		Strings.t("Interest on the debt: it follows the debt and the rates the markets ask."), float(book["service_bn"]), ctx)
 	_header(box, MUTED, Strings.t("Other spending"), bn_text(float(book["other_spending_bn"])), Strings.t("not set here"),
-		Strings.t("Everything the state spends that none of the five lines sets. The parts that are not zero are listed under it (the Union, deployments, subsidies and the like); the rest of the authored figure is not split."))
+		Strings.t("Everything the state spends that none of the five lines sets. The parts that are not zero are listed under it (the Union, deployments, subsidies and the like); the rest of the authored figure is not split."), float(book["other_spending_bn"]), ctx)
 	FinanceOfWhich.build(box, book["of_which"]["spending"], "other_spending", ctx)
 
 
@@ -163,7 +166,7 @@ static func _cell(parent: Control, text: String, variation: String, width: float
 
 
 ## A group's header (or a part's): swatch, name, a note ("not set here"), the total.
-static func _header(box: Control, color: Color, name: String, total: String, note: String, tip := "") -> void:
+static func _header(box: Control, color: Color, name: String, total: String, note: String, tip := "", bar_bn := -1.0, ctx := {}) -> void:
 	var row := _row()
 	row.add_theme_constant_override("separation", 8)
 	if color.a > 0.0:
@@ -186,8 +189,19 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		if note != "":
 			tip = note if tip == "" else note + ". " + tip
+	if bar_bn >= 0.0:
+		# A part no rate here sets is drawn on the table's money scale too, a bar with no handle.
+		var bar := FinanceLever.new()
+		bar.custom_minimum_size.x = BAR_MIN * UiTheme.text_scale()
+		row.add_child(bar)
+		bar.setup(1.0, float(ctx.get("scale_bn", bar_bn)), bar_bn, color)
+		bar.max_value = maxf(bar_bn, 1.0)
+		bar.value = bar_bn
+		bar.lock()
 	var figure := _cell(row, total, "", FIGURE_WIDTH)
 	figure.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	if bar_bn >= 0.0:
+		_cell(row, "", "", BALANCE_WIDTH)
 	if tip != "":
 		row.tooltip_text = tip
 		row.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -218,18 +232,65 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 		tag = Strings.t("Creation")
 	var caption := _cell(row, tag, UiTheme.CAPTION, 120.0)
 	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	# Who pays is the caption's text unless the row is at vote or created: the hover always says it, so a
 	# caption cut to an ellipsis can still be read.
 	if tag == who:
 		caption.set_meta("who_pays", true)
 	row.tooltip_text = Strings.t("Paid by: %s") % who
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
-	var rate := _cell(row, "", UiTheme.CAPTION, RATE_WIDTH)
-	rate.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var rate := _cell(row, "", UiTheme.CAPTION, PCT_WIDTH)
 	(ctx["cells"] as Dictionary)[id] = [rate, FinanceDraft.TAX, String(kind["id"]), float(kind["rate"]), int(kind["decimals"]), String(kind["unit"])]
-	_cell(row, bn_text(float(kind["yield_bn"])), "", FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_money_cells(row, id, FinanceDraft.TAX, String(kind["id"]), float(kind["yield_bn"]), float(kind["rate"]), group_color(String(tax.get("group", ""))), ctx)
 	return row
+
+
+## A section's head: its title and total, then the table's column names over the cells they name.
+static func columns(box: Control, title: String, who: String) -> void:
+	var row := _row()
+	var gap := Control.new()
+	gap.custom_minimum_size.x = SWATCH
+	row.add_child(gap)
+	_cell(row, title, UiTheme.MICRO, NAME_WIDTH).clip_text = false
+	_cell(row, who, UiTheme.MICRO, 0.0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cell(row, Strings.t("Lever"), UiTheme.MICRO, PCT_WIDTH)
+	var bar := _cell(row, Strings.t("A year, bn · drag the end"), UiTheme.MICRO, BAR_MIN)
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cell(row, Strings.t("A year"), UiTheme.MICRO, FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_cell(row, Strings.t("Balance"), UiTheme.MICRO, BALANCE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var spaced := MarginContainer.new()
+	spaced.add_theme_constant_override("margin_top", 10)
+	spaced.add_child(row)
+	box.add_child(spaced)
+
+
+## A row's lever (its bar on the table's money scale), its money a year today and its balance while the draft moves it.
+## `today_bn` is the row's money a year at `rate` today, which gives the bar its money per point.
+static func _money_cells(row: Control, id: String, channel: String, key: String, today_bn: float, rate: float, color: Color, ctx: Dictionary) -> void:
+	var lever := FinanceLever.new()
+	lever.name = "Lever_" + id.replace(":", "_")  # i18n: ok a node name, found by tests
+	lever.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lever.custom_minimum_size.x = BAR_MIN * UiTheme.text_scale()
+	row.add_child(lever)
+	var draft: FinanceDraft = ctx["draft"]
+	var reach: Dictionary = (ctx["span"] as Callable).call(channel, key) if ctx.has("span") else {"track_lo": 0.0, "track_hi": maxf(rate * 2.0, 1.0), "step": 0.1}
+	lever.min_value = float(reach["track_lo"])
+	lever.max_value = maxf(float(reach["track_hi"]), float(reach["track_lo"]) + float(reach["step"]))
+	lever.step = float(reach["step"])
+	lever.setup(today_bn / rate if rate > 0.0 else 0.0, float(ctx.get("scale_bn", maxf(today_bn, 1.0))), draft.live(channel, key), color)
+	lever.set_block_signals(true)
+	lever.value = draft.value(channel, key)
+	lever.set_block_signals(false)
+	if (ctx["tabled"] as Dictionary).has(id) or (channel == FinanceDraft.TAX and draft.is_abolished(key)):
+		lever.lock()
+	elif ctx.has("on_lever"):
+		lever.value_changed.connect(func(value: float) -> void: (ctx["on_lever"] as Callable).call(channel, key, value))
+	lever.tooltip_text = Strings.t("Drag the end of the bar to set it; the box under the open row takes the exact figure.")
+	_cell(row, bn_text(today_bn), "", FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var balance := _cell(row, "", "", BALANCE_WIDTH)
+	balance.name = "Balance_" + id.replace(":", "_")  # i18n: ok a node name, found by tests
+	balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	ctx.get_or_add("levers", {})[id] = [lever, channel, key]
+	ctx.get_or_add("balances", {})[id] = [balance, channel, key]
 
 
 static func _fold_button(folded: Array, on_press: Callable) -> Control:
@@ -341,6 +402,36 @@ static func paint_rates(ctx: Dictionary) -> void:
 			label.text = Strings.t("from %s to %s %%") % [was, LedgerBox.text(target, places)]
 		else:
 			label.text = Strings.t("from %s to %s") % [was, LedgerBox.text(target, places) + unit]
+	_paint_levers(ctx)
+
+
+## The bars' dots and the balances, in place: a drag repaints, never rebuilds (QA's B1 on #363).
+static func _paint_levers(ctx: Dictionary) -> void:
+	var draft = ctx["draft"]
+	var tabled: Dictionary = ctx["tabled"]
+	for id in ctx.get("levers", {}):
+		var cell: Array = ctx["levers"][id]
+		var lever: FinanceLever = cell[0]
+		if not is_instance_valid(lever):
+			continue
+		lever.set_block_signals(true)
+		lever.value = draft.live(cell[1], cell[2]) + float(tabled[id]) if tabled.has(id) else draft.value(cell[1], cell[2])
+		lever.set_block_signals(false)
+		lever.queue_redraw()
+	var price = ctx.get("price", null)
+	# The draft's own rows (a kind put in force carries its birth flag, priced as a bill of its one row).
+	var drafted := {}
+	for row in draft.rows():
+		drafted[row_id(String(row["channel"]), String(row["key"]))] = row
+	for id in ctx.get("balances", {}):
+		var cell: Array = ctx["balances"][id]
+		var label: Label = cell[0]
+		if not is_instance_valid(label):
+			continue
+		var moved: bool = drafted.has(id) and price != null
+		var gain: float = price.row_balance_bn(drafted[id]) if moved else 0.0
+		label.text = EffectsStrip.money_text(gain) if moved else ""
+		label.theme_type_variation = EffectsStrip.cell_variation(EffectsStrip.money_tone(gain)) if moved else ""
 
 
 ## What the unset revenue holds, as the model keeps it (FinanceRead.other_parts): the part set when the game

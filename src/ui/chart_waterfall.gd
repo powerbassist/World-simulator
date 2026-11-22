@@ -36,7 +36,7 @@ func setup(start: Dictionary, steps: Array, end: Dictionary, opts := {}) -> void
 	_rows = [{"label": String(start["label"]), "from": 0.0, "to": float(start["value"]), "kind": "total"}]
 	var at := float(start["value"])
 	for step in steps:
-		_rows.append({"label": String(step["label"]), "from": at, "to": at + float(step["value"]), "kind": "step"})
+		_rows.append({"label": String(step["label"]), "from": at, "to": at + float(step["value"]), "kind": "step", "delta": float(step["value"])})
 		at += float(step["value"])
 	_rows.append({"label": String(end["label"]), "from": 0.0, "to": float(end["value"]), "kind": "total"})
 	_lo = 0.0
@@ -85,11 +85,20 @@ func bar_color(i: int) -> Color:
 	return UiTheme.BAD if up == _worse_up else UiTheme.GOOD
 
 
+func row_count() -> int:
+	return _rows.size()
+
+
+func label(i: int) -> String:
+	return String(_rows[i]["label"])
+
+
 func figure(i: int) -> String:
 	var row: Dictionary = _rows[i]
 	if String(row["kind"]) == "total":
 		return Num.f(float(row["to"]), _total_places)
-	return Num.fs(float(row["to"]) - float(row["from"]), _step_places)
+	# The step's own value, not to - from: a running sum's float error must not flip the last digit.
+	return Num.fs(float(row["delta"]), _step_places)
 
 
 func _draw() -> void:

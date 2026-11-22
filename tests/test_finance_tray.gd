@@ -3,13 +3,13 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_finance_tray.gd
 ## Non-zero exit on any failure.
 ##
-## The rework pass's Finances C ("tiroir des changements", the author's pick): the Books page's footer became a
-## docked tray. With rows drafted it lists each change as a dumbbell (ring today, dot the draft): the percentages
-## on one 0-25 scale, any other unit on its own axis, each in its own unit and decimals; the change's money a year
-## and a remove mark, on its row; says the deficit before and after and how the Assembly would divide (each number
-## once); and carries ONE button, "Table the bill" (the sheet's act has the same name; Review and Discard all are
-## links). A remove takes one change out and hands the focus back; Discard all empties the draft, moves alone too.
-## A drag prices only the row it moves.
+## G3 S4, Finances in C: the tray became the bill's RAIL beside the page. With rows drafted it walks the deficit as a
+## waterfall (today, each change a signed step, the bill: the whole bill's figure at the end, a residual the rows
+## miss as its own step), lists each change with who it is for or who pays, its money a year and a remove mark, says
+## how the Assembly would divide (each number once); and carries ONE loud button, "Table the bill" (the sheet's act
+## has the same name; Review and Discard all are links). A remove takes one change out and hands the focus back;
+## Discard all empties the draft, moves alone too. A drag prices only the row it moves. With nothing drafted the
+## rail stays, says so, and offers no verb.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
@@ -56,7 +56,6 @@ func _process(_delta: float) -> bool:
 		6:
 			_check_tray()
 			_check_units()
-			_check_alignment()
 			_check_each_number_once()
 			_check_one_name()
 			_check_drop_every_kind()
@@ -74,8 +73,11 @@ func _process(_delta: float) -> bool:
 				_fail("removing a change left the focus nowhere (%s)" % focus)
 			_press(_panel._foot.find_child("Discard", true, false))
 		11:
-			if not _panel.shared_draft().is_clean() or _panel._foot.visible:
-				_fail("Discard all left a draft or a visible tray")
+			if not _panel.shared_draft().is_clean() or _panel._foot._changes.visible or not _panel._foot._empty.visible:
+				_fail("Discard all left a draft, the changes shown or no empty note")
+			for b in _panel._foot.find_children("*", "Button", true, false):
+				if (b as Button).is_visible_in_tree():
+					_fail("the empty rail offers '%s'" % (b as Button).text)
 			# QA on #429: the last change removed by its x hides the tray; a remove index left standing pulled the
 			# focus onto the next draft's x, wherever it was, so a keyboard player's next Space removed it again.
 			var draft = _panel.shared_draft()
@@ -84,8 +86,8 @@ func _process(_delta: float) -> bool:
 		13:
 			_press(_remove_mark("spending_pct_gdp:health"))
 		15:
-			if _panel._foot.visible:
-				_fail("removing the last change left the tray visible")
+			if _panel._foot._changes.visible:
+				_fail("removing the last change left the changes shown")
 			_outside = Button.new()
 			_outside.focus_mode = Control.FOCUS_ALL
 			root.add_child(_outside)
@@ -109,26 +111,31 @@ func _check_tray() -> void:
 		return
 	var drawn := _drawn()
 	if drawn.size() != draft.count():
-		_fail("the tray draws %d changes, the draft holds %d" % [drawn.size(), draft.count()])
+		_fail("the rail lists %d changes, the draft holds %d" % [drawn.size(), draft.count()])
+	var chart = foot._chart
+	var steps := 0
 	for want in draft.rows():
 		var id := "%s:%s" % [want["channel"], want["key"]]
 		if not drawn.has(id):
-			_fail("change %s is not drawn" % id)
+			_fail("change %s is not listed" % id)
 			continue
-		var row: Dictionary = drawn[id]
-		if absf(float(row["before"]) - float(want["live"])) > 1e-6 or absf(float(row["after"]) - float(want["draft"])) > 1e-6:
-			_fail("change %s drawn %s -> %s, the draft says %s -> %s" % [id, row["before"], row["after"], want["live"], want["draft"]])
 		var money: Label = foot.find_child("Money_" + id.replace(":", "_"), true, false)
 		var gain: float = _panel._price.row_balance_bn(want)
 		if money == null or money.text != EffectsStrip.money_text(gain):
 			_fail("change %s's money reads '%s', priced %s" % [id, money.text if money != null else "<none>", EffectsStrip.money_text(gain)])
 		if _remove_mark(id) == null:
 			_fail("change %s has no remove mark" % id)
-	# The deficit before and after, the whole bill's (FinancePrice.whole), in the sentence.
+		# Its step in the waterfall: the opposite of its gain (a gain narrows the deficit), signed.
+		steps += 1
+		if chart.figure(steps) != Num.fs(-gain, 1):
+			_fail("change %s's step reads %s, its gain %s" % [id, chart.figure(steps), gain])
+	# Today and the bill, the whole bill's (FinancePrice.whole), at the waterfall's two ends; a residual is one more step.
 	var whole: Dictionary = _panel._price.whole(_loader, draft, false)
-	var deficit := "%s → %s" % [Num.f(float(whole["deficit_now_bn"]), 0), Num.f(float(whole["deficit_after_bn"]), 0)]
-	if not foot._text.text.contains(deficit):
-		_fail("the tray does not run the deficit from now to after: '%s'" % foot._text.text)
+	var last: int = chart.row_count() - 1
+	if chart.figure(0) != Num.f(float(whole["deficit_now_bn"]), 0) or chart.figure(last) != Num.f(float(whole["deficit_after_bn"]), 0):
+		_fail("the waterfall runs %s to %s, the whole bill %s to %s" % [chart.figure(0), chart.figure(last), whole["deficit_now_bn"], whole["deficit_after_bn"]])
+	if last - 1 != steps and last - 2 != steps:
+		_fail("the waterfall has %d steps for %d changes" % [last - 1, steps])
 	# ONE button: Table the bill. Everything else in the tray is a link (flat).
 	var loud := []
 	for b in foot.find_children("*", "Button", true, false):
@@ -138,35 +145,13 @@ func _check_tray() -> void:
 		_fail("the tray's loud buttons: %s" % [loud.map(func(b) -> String: return (b as Button).text)])
 
 
-## Pass 2 T3: a change says its value in its own unit and decimals, and a unit that is not a percentage gets its own
-## axis; the legend claims no range.
+## Pass 2 T3 on #429, kept: a change says its value in its own unit and decimals -- the waterfall's step names it so.
 func _check_units() -> void:
 	var ns = _state.player()
-	var drawn := _drawn()
-	for want in _panel.shared_draft().rows():
-		var id := "%s:%s" % [want["channel"], want["key"]]
-		if drawn.has(id) and String(drawn[id].get("text", "")) != FinanceRows.change_figures(ns, want):
-			_fail("change %s reads '%s', not '%s'" % [id, drawn[id].get("text", ""), FinanceRows.change_figures(ns, want)])
-	var fixed := 0
-	for chart in _charts():
-		if chart._fixed == Vector2(0.0, 25.0):
-			fixed += 1
-			for r in chart.data():
-				if String(r["id"]).begins_with(FinanceDraft.BRACKETS) or String(r["id"]).ends_with("fuel_duty"):
-					_fail("%s is drawn on the 0-25 %% scale" % r["id"])
-	if fixed != 1 or _charts().size() != 3:
-		_fail("%d charts (%d on the 0-25 scale) for three unit kinds" % [_charts().size(), fixed])
-
-
-## Pass 2 T4: every money and remove line is exactly as tall as its chart row, so each sits beside its change.
-func _check_alignment() -> void:
-	for chart in _charts():
-		var marks: Control = chart.get_meta("marks")
-		var h: float = chart.row_height()
-		for line in marks.get_children():
-			if absf((line as Control).size.y - h) > 0.5:
-				_fail("a mark line is %.1f px tall, its chart row %.1f" % [(line as Control).size.y, h])
-				return
+	var rows: Array = _panel.shared_draft().rows()
+	for i in rows.size():
+		if not _panel._foot._chart.label(i + 1).contains(FinanceRows.change_figures(ns, rows[i])):
+			_fail("step %d reads '%s', not its figures '%s'" % [i + 1, _panel._foot._chart.label(i + 1), FinanceRows.change_figures(ns, rows[i])])
 
 
 ## Pass 2 T10: each number once -- the seats in the bar only, the deficit in the tray only.
@@ -251,21 +236,13 @@ class CountingPrice extends "res://src/ui/finance_price.gd":
 		return super.row_balance_bn(row)
 
 
-func _charts() -> Array:
-	var out := []
-	for node in _panel._foot.find_children("*", "", true, false):
-		if node.has_meta("tray") and String(node.get_meta("tray")) == "changes" and (node as Control).is_visible_in_tree() \
-				and not node.is_queued_for_deletion() and not node.get_parent().is_queued_for_deletion():
-			out.append(node)
-	return out
-
-
-## {row id: drawn row} over every change chart.
+## {row id: its line} over the rail's listed changes on screen.
 func _drawn() -> Dictionary:
 	var out := {}
-	for chart in _charts():
-		for r in chart.data():
-			out[String(r["id"])] = r
+	for node in _panel._foot.find_children("*", "HBoxContainer", true, false):
+		if node.has_meta("rail") and String(node.get_meta("rail")) == "change" and (node as Control).is_visible_in_tree() \
+				and not node.is_queued_for_deletion():
+			out[String(node.get_meta("id"))] = node
 	return out
 
 

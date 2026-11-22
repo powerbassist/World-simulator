@@ -58,7 +58,7 @@ const DOCK_WIDTHS := {"region": 476.0}
 const INBOX_GROUP := "inbox"  # inbox.gd's GROUP: the column the workspace makes room for
 ## G3 S1: the tabs whose panel lays out its own sheets, so their page draws none (tab_page.gd). A
 ## screen joins this table in the slice that re-lays it on sheets (S2: the Diary).
-const OWN_SHEETS := ["calendar"]
+const OWN_SHEETS := ["calendar", "finances"]
 
 ## How many destinations back and forward remember -- a session's worth of
 ## wandering, not its whole history.
@@ -83,6 +83,9 @@ var _tab_slot: HBoxContainer   # holds the segmented control, rebuilt per domain
 var _crumb_slot: HBoxContainer # the title bar's breadcrumb, docked here (dock_crumb)
 var _domain := ""       # the open domain's id (a window in no row is its own)
 var _tab_counts := {}   # tab id -> items waiting on the player (V5.3 screen 5)
+## G3 S4: a domain's ASIDE -- one sheet at the workspace's right that stays beside every tab of that domain (the
+## finance bill's rail on Finances), GAP_PANE from the page. Domain id -> Control; the page ends short of it.
+var _asides := {}
 
 ## Destinations, "" for the map. The cursor is the one on screen.
 var _history: Array[String] = []
@@ -234,6 +237,7 @@ func open(id: String, quiet: bool = false) -> void:
 	_place_dock(id)
 	# Filling the body again, whatever band a probe imposed with fit_within().
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.offset_right = -_place_aside(id)
 	page.show()
 	_dock.show()
 	for other_id in _pages.keys():
@@ -255,6 +259,40 @@ func open(id: String, quiet: bool = false) -> void:
 	if not Domains.is_scene(id):
 		_record(id)
 	opened.emit(id)
+
+
+## A domain's aside: kept in the body, shown beside each of the domain's tabs (open), hidden elsewhere.
+func set_aside(domain: String, aside: Control) -> void:
+	_asides[domain] = aside
+	aside.hide()
+	if aside.get_parent() != null:
+		aside.get_parent().remove_child(aside)  # built inside its page, so a page with no manager still has it
+	_body.add_child(aside)
+
+
+## Shows the aside of `id`'s domain at the body's right, hides the others; the width the page gives up for it (0 for none).
+func _place_aside(id: String) -> float:
+	var room := 0.0
+	for domain in _asides:
+		var aside: Control = _asides[domain]
+		aside.visible = domain == Domains.domain_of(id)
+		if aside.visible:
+			var width := aside.get_combined_minimum_size().x
+			aside.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
+			aside.offset_left = -width
+			aside.offset_right = 0.0
+			aside.offset_top = 0.0
+			aside.offset_bottom = 0.0
+			room = width + GAP
+	return room
+
+
+## The aside shown beside the open tab, or null.
+func aside() -> Control:
+	for domain in _asides:
+		if (_asides[domain] as Control).visible:
+			return _asides[domain]
+	return null
 
 
 func close(id: String, quiet: bool = false) -> void:
@@ -341,7 +379,8 @@ func _fit_dock() -> void:
 		if page.visible:
 			_place_dock(id)
 			var page_height: float = -1.0 if Domains.is_scene(id) else page.wanted_height()
-			if page_height >= 0.0:
+			# A domain with an aside fills the band: the rail is as tall as the workspace, whatever the page.
+			if page_height >= 0.0 and aside() == null:
 				# The header sheet, the gap between the sheets, the page.
 				want = minf(full, ceilf((_dock.get_child(0) as Control).get_combined_minimum_size().y + GAP + page_height))
 	_dock.offset_bottom = -DOCK_BOTTOM - maxf(0.0, full - want)

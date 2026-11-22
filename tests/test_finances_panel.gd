@@ -14,7 +14,6 @@ extends SceneTree
 const FinanceBooks = preload("res://src/ui/finance_books.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
-const FinanceStacks = preload("res://src/ui/finance_stacks.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const TaxesLoader = preload("res://src/core/loaders/taxes_loader.gd")
@@ -53,7 +52,6 @@ func _process(_delta: float) -> bool:
 			_check_the_foot()
 			_check_the_kind_captions()
 			_check_the_colours_and_order()
-			_check_the_surplus_has_no_bad_mark()
 			_check_a_fold_opens_and_redraws()
 			_check_the_stamp_and_the_forecast_redraw()
 			# QA's MO / MD on #359: end to end through the game's own wiring.
@@ -140,29 +138,35 @@ func _text_of(node: Node) -> String:
 	return out
 
 
+## G3 S4, Books in C: one table, spending first, and every row's bar on ONE money scale -- two rows' bars stand in the
+## ratio of their money a year (the stacks' "one scale" rule, carried to the rows); the sentence still says the books.
 func _check_the_picture() -> void:
 	var book := FinanceBooks.read(_state)
-	var heights: Dictionary = _panel._stacks.heights()
-	var want_ratio := float(book["revenue_bn"]) / float(book["spending_bn"])
-	var ratio := float(heights["revenue"]) / float(heights["spending"])
-	if absf(ratio - want_ratio) > 0.002:
-		_fail("the stacks stand in the ratio %.4f, the books say %.4f" % [ratio, want_ratio])
-	if not (float(heights["spending"]) > float(heights["revenue"])) and float(book["deficit_bn"]) > 0.0:
-		_fail("a deficit does not show as the spending stack standing taller")
+	if _panel._spending_box.get_index() > _panel._revenue_box.get_index() or _panel._spending_box.get_parent() != _panel._revenue_box.get_parent():
+		_fail("the table is not one column with spending first")
+	var levers: Dictionary = _panel._ctx["levers"]
+	var health: Array = levers.get("spending_pct_gdp:health", [])
+	var vat: Array = levers.get("tax_rates_pct:vat", [])
+	if health.is_empty() or vat.is_empty():
+		_fail("health or VAT has no lever")
+		return
+	var health_bn := 0.0
+	for line in book["lines"]:
+		if String(line["key"]) == "health":
+			health_bn = float(line["bn"])
+	var vat_bn := 0.0
+	for group in book["groups"]:
+		for kind in group["kinds"]:
+			if String(kind["id"]) == "vat":
+				vat_bn = float(kind["yield_bn"])
+	var h: float = health[0].ring_x() - health[0].PAD
+	var v: float = vat[0].ring_x() - vat[0].PAD
+	if absf(h / v - health_bn / vat_bn) > 0.01:
+		_fail("health's bar and VAT's stand %.3f to 1, their money %.3f to 1" % [h / v, health_bn / vat_bn])
 	var text := _text_of(_panel._lead)
 	for figure in [str(int(round(float(book["revenue_bn"])))), str(int(round(float(book["spending_bn"])))), str(int(round(float(book["deficit_bn"]))))]:
 		if not text.contains(figure):
 			_fail("the sentence does not say %s: '%s'" % [figure, text])
-	# One scale for both, whichever stands taller: a surplus has revenue on top.
-	var surplus := FinanceStacks.new()
-	root.add_child(surplus)
-	surplus.setup([{"label": "in", "value": 100.0, "color": Color.WHITE}], [{"label": "out", "value": 80.0, "color": Color.WHITE}], -20.0)
-	var sh: Dictionary = surplus.heights()
-	if absf(float(sh["spending"]) / float(sh["revenue"]) - 0.8) > 1e-6:
-		_fail("a surplus draws its stacks on two scales: %s" % [sh])
-	surplus.queue_free()
-	if not _text_of(_panel._stacks).contains("Deficit"):
-		_fail("the deficit's mark has no word beside it")
 
 
 func _check_the_rows() -> void:
@@ -176,8 +180,8 @@ func _check_the_rows() -> void:
 
 
 func _check_the_foot() -> void:
-	if _panel._foot.visible:
-		_fail("the foot offers a bill with none before the Assembly")
+	if _panel._foot._withdraw.visible or _panel._foot._open.visible:
+		_fail("the rail offers a bill with none before the Assembly")
 	_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
 	_panel._stamp = ""
 	_panel._dirty = true
@@ -187,32 +191,22 @@ func _check_the_foot() -> void:
 	_state.player().tabled_bill = {}
 
 
-## GLM's test-gap list (reviewed against the tree): a part's colour follows the part, not its rank, and
-## the spending stack lists its lines largest first.
+## GLM's test-gap list (reviewed against the tree), carried to the table: a bar's colour follows its line or its
+## group, never its rank, and two groups never share one.
 func _check_the_colours_and_order() -> void:
 	var book := FinanceBooks.read(_state)
-	var parts: Array = _panel._revenue_parts()
+	var levers: Dictionary = _panel._ctx["levers"]
+	for line in book["lines"]:
+		var lever: Array = levers.get("spending_pct_gdp:" + String(line["key"]), [])
+		if lever.is_empty() or lever[0]._color != FinanceRows.line_color(String(line["key"])):
+			_fail("line %s is not drawn in its own colour" % line["key"])
 	for group in book["groups"]:
-		var found := parts.filter(func(p) -> bool: return String(p["label"]) == FinanceRows.group_name(String(group["id"])))
-		if found.is_empty() or found[0]["color"] != FinanceRows.group_color(String(group["id"])):
-			_fail("group %s is not drawn in its own colour" % group["id"])
+		for kind in group["kinds"]:
+			var lever: Array = levers.get("tax_rates_pct:" + String(kind["id"]), [])
+			if lever.is_empty() or lever[0]._color != FinanceRows.group_color(String(group["id"])):
+				_fail("kind %s is not drawn in its group's colour" % kind["id"])
 	if FinanceRows.group_color(TaxesLoader.GROUPS[0]) == FinanceRows.group_color(TaxesLoader.GROUPS[1]):
 		_fail("two groups share a colour")
-	var spend: Array = _panel._spending_parts()
-	var lines := spend.slice(0, 5)
-	for i in range(1, lines.size()):
-		if float(lines[i]["value"]) > float(lines[i - 1]["value"]):
-			_fail("the spending stack's lines are not largest first")
-
-
-## A surplus has no deficit mark: the word is hidden, the figure stays.
-func _check_the_surplus_has_no_bad_mark() -> void:
-	var surplus := FinanceStacks.new()
-	root.add_child(surplus)
-	surplus.setup([{"label": "in", "value": 100.0, "color": Color.WHITE}], [{"label": "out", "value": 80.0, "color": Color.WHITE}], -20.0)
-	if surplus._word.visible or not surplus._figure.visible or surplus._word.text != "Surplus":
-		_fail("a surplus draws the deficit's word or loses its figure")
-	surplus.queue_free()
 
 
 ## A press on a group's fold line shows its folded kinds at once (no wait for the day to turn).
@@ -250,8 +244,8 @@ func _check_a_fold_opens_and_redraws() -> void:
 ## `settled` repaints its figures in place (never a rebuild).
 func _check_the_stamp_and_the_forecast_redraw() -> void:
 	_panel._process(0.0)
-	if _panel._foot.visible:
-		_fail("premise: the foot is up with no bill")
+	if _panel._foot._withdraw.visible:
+		_fail("premise: the rail holds a bill with none tabled")
 	_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
 	_panel._dirty = true
 	_panel._process(0.0)

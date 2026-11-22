@@ -44,6 +44,8 @@ var channel := ""
 var key := ""
 ## The autumn bill is open (FinanceBill.autumn_open, read by the page): an in-force kind may be abolished.
 var autumn := false
+## The row's own bar (finance_lever.gd), handed in by the page before setup(): the editor's lever when it can be dragged.
+var row_lever: HSlider = null
 var _state
 var _draft
 var _price
@@ -68,18 +70,11 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	key = row_key
 	var ns = state.player()
 	add_theme_constant_override("separation", 6)
-	var step := LINE_STEP
-	var decimals := 1
-	if channel == FinanceDraft.TAX:
-		var span: Array = ns.tax_library[key]["rate_range_pct"]
-		_lo = float(span[0])
-		_hi = float(span[1])
-		step = TaxLibrary.step_pct(ns, key)
-		decimals = TaxLibrary.step_decimals(ns, key)
-	else:
-		var at: float = _draft.live(channel, key)
-		_lo = maxf(0.0, at - LINE_SPAN)
-		_hi = minf(LINE_MAX, at + LINE_SPAN)
+	var reach := span(ns, _draft, channel, key)
+	var step := float(reach["step"])
+	var decimals := int(reach["decimals"])
+	_lo = float(reach["lo"])
+	_hi = float(reach["hi"])
 	var unit := FinanceRows.unit_text(String(ns.tax_library[key]["unit"])) if channel == FinanceDraft.TAX else Strings.t(" % of GDP")
 	var in_force: bool = channel != FinanceDraft.TAX or ns.tax_rates_pct.has(key)
 	if channel == FinanceDraft.TAX and in_force and autumn and _draft.is_abolished(key):
@@ -93,9 +88,7 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 		# What the rate is a rate OF (the data's own words): the hover on the figure, not a sentence on the page.
 		now.tooltip_text = Strings.row("taxes", key, "rate_meaning", String(ns.tax_library[key].get("rate_meaning", "")))
 		now.mouse_filter = Control.MOUSE_FILTER_PASS
-	var track_lo := _lo if channel == FinanceDraft.TAX else 0.0
-	var track_hi := _hi if channel == FinanceDraft.TAX else LINE_MAX
-	var made := _lever(self, step, track_lo, track_hi, decimals, "Box", _lo, _hi)  # i18n: ok a node name, found by tests
+	var made := _lever(self, step, float(reach["track_lo"]), float(reach["track_hi"]), decimals, "Box", _lo, _hi)  # i18n: ok a node name, found by tests
 	_slider = made[0]
 	_box = made[1]
 	if channel == FinanceDraft.TAX and key == _income_key(ns):
@@ -148,6 +141,18 @@ func _lever(parent: Control, step: float, lo: float, hi: float, decimals: int, b
 		lever_key = key
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 8)
+	# G3 S4: the row's own bar is the lever (finance_lever.gd); the editor keeps the exact box. The row writes the draft
+	# on a drag, so here the bar only brings the box and the effect line along.
+	if lever_channel == channel and lever_key == key and row_lever != null and row_lever.can_drag():
+		row_lever.value_changed.connect(func(_value: float) -> void:
+			_sync()
+			if _tile != null:
+				_tile.refresh())
+		var held := LedgerBox.attach(line, reach_lo, reach_hi, func(value: float) -> void: _write(lever_channel, lever_key, value))
+		held.name = box_name
+		_caption(line, reach_lo, reach_hi, decimals)
+		parent.add_child(line)
+		return [row_lever, held]
 	var slider := HSlider.new()
 	slider.min_value = lo
 	slider.max_value = hi if hi > lo else lo + step
@@ -162,12 +167,28 @@ func _lever(parent: Control, step: float, lo: float, hi: float, decimals: int, b
 	line.add_child(slider)
 	var box := LedgerBox.attach(line, reach_lo, reach_hi, func(value: float) -> void: _write(lever_channel, lever_key, value))
 	box.name = box_name
+	_caption(line, reach_lo, reach_hi, decimals)
+	parent.add_child(line)
+	return [slider, box]
+
+
+func _caption(line: Control, reach_lo: float, reach_hi: float, decimals: int) -> void:
 	var caption := Label.new()
 	caption.text = Strings.t("%s to %s") % [Num.f(reach_lo, decimals), Num.f(reach_hi, decimals)]
 	caption.theme_type_variation = UiTheme.CAPTION
 	line.add_child(caption)
-	parent.add_child(line)
-	return [slider, box]
+
+
+## A row's reach: where a write is clamped (lo, hi), the track a lever spans (track_lo, track_hi), its step and decimals.
+## A tax moves inside its range; a spending line LINE_SPAN either side of today, on a 0 to LINE_MAX track. The row's
+## bar (finance_rows.gd) and this editor read the same reach.
+static func span(ns, draft, row_channel: String, row_key: String) -> Dictionary:
+	if row_channel == FinanceDraft.TAX:
+		var range_pct: Array = ns.tax_library[row_key].get("rate_range_pct", [0.0, 0.0])
+		return {"lo": float(range_pct[0]), "hi": float(range_pct[1]), "track_lo": float(range_pct[0]), "track_hi": float(range_pct[1]),
+			"step": TaxLibrary.step_pct(ns, row_key), "decimals": TaxLibrary.step_decimals(ns, row_key)}
+	var at: float = draft.live(row_channel, row_key)
+	return {"lo": maxf(0.0, at - LINE_SPAN), "hi": minf(LINE_MAX, at + LINE_SPAN), "track_lo": 0.0, "track_hi": LINE_MAX, "step": LINE_STEP, "decimals": 1}
 
 
 ## The player's input: into the draft, never from a refresh.
