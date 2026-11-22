@@ -486,6 +486,7 @@ tests=(
   # Dev health: every tools/*.gd compiles -- no test loads them, so a moved sim
   # signature broke the probes and the screenshot driver silently (QA, #256 vs #257).
   tests/test_tools_parse.gd
+  tests/test_screenshot_guards.gd
 )
 
 # THE RUNNER IS THE WHOLE GATE -- CI runs this same script -- so a test file on disk that is
