@@ -231,15 +231,12 @@ func _overrun(copy: Dictionary) -> void:
 
 ## One answer as a tile: its name, its figure, the units it keeps, its small chart, what it makes, its button.
 func _answer(row: Control, copy: Dictionary, a: Dictionary, until: int) -> void:
-	var tile := PanelContainer.new()
-	tile.theme_type_variation = UiTheme.TILE_PANEL
+	# The kit's figure tile (test_panel_kit: one home), its box carrying the rest of the answer.
+	var tile := PanelKit.figure_tile(row, _answer_figure(copy, a), _answer_caption(copy, a))
 	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(tile)
-	var col := VBoxContainer.new()
-	tile.add_child(col)
+	var col := tile.get_child(0) as VBoxContainer
 	var answer_id := String(a["id"])
-	PanelKit.heading(col, _answer_label(answer_id))
-	PanelKit.figure(col, _answer_figure(copy, a), _answer_caption(copy, a))
+	col.move_child(PanelKit.heading(col, _answer_label(answer_id)), 0)
 	# The units each answer keeps, as squares (a Shrink outlines the ones it cuts).
 	var squares := RegisterUnits.new()
 	squares.set_meta("units_" + answer_id, true)
