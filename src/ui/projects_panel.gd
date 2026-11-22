@@ -160,14 +160,27 @@ func _head(ns, rows: Array, term: int) -> void:
 
 ## One whole sentence a case: the picked offer against the term's end, or why nothing can start.
 func _lead(rows: Array, term: int) -> String:
+	var picked: Dictionary = {}
 	for r in rows:
-		if String(r["id"]) == _picked and String(r["state"]) == WorksRows.OFFER:
-			var opens := int(r["opens"])
-			if term > 0 and opens > term:
-				return tr_n("%s would open %d month after your term ends.", "%s would open %d months after your term ends.", opens - term) % [r["name"], opens - term]  # i18n: row-ok the reader's name, through Strings.noun
-			return tr("%s would open in %s, before your term ends.") % [r["name"], DateText.month_long_year((opens - 1) % 12 + 1, (opens - 1) / 12)]  # i18n: row-ok the reader's name, through Strings.noun
-	if not rows.filter(func(r): return String(r["state"]) == WorksRows.BUILDING).is_empty():
+		if String(r["id"]) == _picked:
+			picked = r
+	var opens := int(picked.get("opens", -1))
+	var when := DateText.month_long_year((opens - 1) % 12 + 1, (opens - 1) / 12) if opens > 0 else ""
+	if String(picked.get("state", "")) == WorksRows.OFFER:
+		if term > 0 and opens > term:
+			return tr_n("%s would open %d month after your term ends.", "%s would open %d months after your term ends.", opens - term) % [picked["name"], opens - term]  # i18n: row-ok the reader's name, through Strings.noun
+		if term > 0:
+			return tr("%s would open in %s, before your term ends.") % [picked["name"], when]  # i18n: row-ok the reader's name, through Strings.noun
+		return tr("%s would open in %s.") % [picked["name"], when]  # i18n: row-ok the reader's name, through Strings.noun
+	var building := rows.filter(func(r): return String(r["state"]) == WorksRows.BUILDING).size()
+	var slots := WorksRows.slots(_loader)
+	if building > 0 and building >= slots:
 		return tr("Every slot is taken: nothing can start until a work opens.")
+	match String(picked.get("state", "")):
+		WorksRows.BUILDING:
+			return tr("%s opens in %s.") % [picked["name"], when]  # i18n: row-ok the reader's name, through Strings.noun
+		WorksRows.DONE:
+			return tr("%s is open.") % picked["name"]  # i18n: row-ok the reader's name, through Strings.noun
 	return tr("Every work has been built.") if not rows.is_empty() else tr("Nothing is on offer.")
 
 
@@ -198,7 +211,7 @@ func _works(main: Control, rows: Array, now: int, term: int) -> void:
 	for r in rows:
 		if String(r["id"]) == _picked and String(r["state"]) == WorksRows.OFFER:
 			name = String(r["name"])  # i18n: row-ok the reader's name, through Strings.noun
-	bill.setup(rows, first, last, _picked if name != "" else "", name)
+	bill.setup(rows, first, last, now, _picked if name != "" else "", name)
 	var caption := PanelKit.plain_line(words.get_child(0), tr("Paid until the work opens."))
 	caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if name != "":
@@ -283,11 +296,12 @@ func _sub(r: Dictionary) -> String:
 
 
 ## Cancelling recovers nothing (Projects: no partial motorway), so it asks first.
-func _ask_cancel(ns, r: Dictionary) -> void:
+func _ask_cancel(_ns, r: Dictionary) -> void:
 	if _confirm == null:
 		_confirm = ConfirmCard.on_stack(self)
 		if _confirm == null:
-			_on_act(ns, r["cancel"])
+			# Never an irreversible cancel without its question: a host with no screen stack offers none.
+			push_error("projects_panel: no screen stack to ask the cancel on; nothing cancelled")
 			return
 		_confirm.confirmed.connect(func() -> void: _on_act(_state.player(), _confirm.get_meta(&"action")))
 	_confirm.set_meta(&"action", r["cancel"])

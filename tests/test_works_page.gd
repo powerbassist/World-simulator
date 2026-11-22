@@ -159,6 +159,14 @@ func _check_building() -> void:
 	var cancel = _with_meta("works_cancel_" + _started, _page)
 	if cancel == null or cancel.theme_type_variation != UiTheme.GHOST or not String(cancel.text).ends_with("…"):
 		_fail("the building work has no ghost Cancel…")
+	# Pass 1 on #450: one work building leaves a slot free; with the building work picked, the lead
+	# must not say every slot is taken.
+	var was: String = _page._picked
+	_page._picked = _started
+	var said: String = _page._lead(rows, -1)
+	_page._picked = was
+	if Projects.building_count(ns) < WorksRows.slots(_main._loader) and said == _page.tr("Every slot is taken: nothing can start until a work opens."):
+		_fail("one slot is free and the lead says every slot is taken")
 
 
 # --- helpers ---------------------------------------------------------------

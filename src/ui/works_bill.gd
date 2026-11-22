@@ -16,20 +16,23 @@ const DASH := 4.0
 var _rows: Array = []
 var _first := 0
 var _last := 1
+## Today: the picked offer would be paid from now, never over the months already past.
+var _now := 0
 var _with := ""
 var _with_name := ""
 var _top := 0.1
 
 
-func setup(rows: Array, first: int, last: int, with_id: String, with_name: String) -> void:
+func setup(rows: Array, first: int, last: int, now: int, with_id: String, with_name: String) -> void:
 	_rows = rows
+	_now = now
 	_first = first
 	_last = maxi(last, first + 12)
 	_with = with_id
 	_with_name = with_name
 	_top = 0.1
 	for m in range(_first, _last + 1):
-		_top = maxf(_top, WorksRows.bill_at(_rows, m, _with))
+		_top = maxf(_top, _at(m, _with))
 	_top = ceilf(_top * 10.0) / 10.0  # a round top: 0.4 for 0.33
 	custom_minimum_size.y = _fs() * 9.0
 	queue_redraw()
@@ -73,11 +76,11 @@ func _draw() -> void:
 		var with := _steps(_with)
 		for i in with.size() - 1:
 			draw_dashed_line(with[i], with[i + 1], UiTheme.TEXT, 1.5, DASH)
-	var now0 := WorksRows.bill_at(_rows, _first)
-	draw_string(font, Vector2(x_of(_first) + 40.0, _y(now0) - 4.0), tr("%s signed") % Num.f(now0, 2), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
+	var now0 := WorksRows.bill_at(_rows, _now)
+	draw_string(font, Vector2(x_of(_now) + 40.0, _y(now0) - 4.0), tr("%s signed") % Num.f(now0, 2), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)
 	if _with != "":
-		var with0 := WorksRows.bill_at(_rows, _first, _with)
-		draw_string(font, Vector2(x_of(_first) + 40.0, _y(with0) - 4.0), tr("%s with %s") % [Num.f(with0, 2), _with_name], HORIZONTAL_ALIGNMENT_LEFT,
+		var with0 := _at(_now, _with)
+		draw_string(font, Vector2(x_of(_now) + 40.0, _y(with0) - 4.0), tr("%s with %s") % [Num.f(with0, 2), _with_name], HORIZONTAL_ALIGNMENT_LEFT,
 			size.x - 48.0, fs, UiTheme.TEXT)
 
 
@@ -86,7 +89,7 @@ func _steps(with_id: String) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	var was := -1.0
 	for m in range(_first, _last + 1):
-		var v := WorksRows.bill_at(_rows, m, with_id)
+		var v := _at(m, with_id)
 		if v != was:
 			if was >= 0.0:
 				out.append(Vector2(x_of(m), _y(was)))
@@ -96,9 +99,14 @@ func _steps(with_id: String) -> PackedVector2Array:
 	return out
 
 
+## The bill in `month`, the offer `with_id` added only from today on.
+func _at(month: int, with_id: String) -> float:
+	return WorksRows.bill_at(_rows, month, with_id if month >= _now else "")
+
+
 func _get_tooltip(at: Vector2) -> String:
 	var m := _first + roundi(at.x / maxf(size.x, 1.0) * float(_last - _first))
 	var when := DateText.mon_year((m - 1) % 12 + 1, (m - 1) / 12)
 	if _with == "":
 		return tr("%s: %s %% of GDP a year") % [when, Num.f(WorksRows.bill_at(_rows, m), 2)]
-	return tr("%s: %s %% of GDP a year; %s with %s") % [when, Num.f(WorksRows.bill_at(_rows, m), 2), Num.f(WorksRows.bill_at(_rows, m, _with), 2), _with_name]
+	return tr("%s: %s %% of GDP a year; %s with %s") % [when, Num.f(WorksRows.bill_at(_rows, m), 2), Num.f(_at(m, _with), 2), _with_name]
