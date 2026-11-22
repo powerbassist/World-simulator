@@ -20,6 +20,7 @@ const Units = preload("res://src/sim/units.gd")
 const UnitsLoader = preload("res://src/core/loaders/units_loader.gd")
 const UnitPrice = preload("res://src/sim/unit_price.gd")
 const FinanceRows = preload("res://src/sim/finance_rows.gd")
+const FinanceRowsUi = preload("res://src/ui/finance_rows.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
@@ -57,25 +58,32 @@ func _process(_delta: float) -> bool:
 			_check_rows_are_filled_by_need()
 			_check_the_dots_are_the_sims()
 			_check_the_money_is_the_quote()
+			# A risk without a date is plain text with its glyph (Register in C): never the amber chip, which is a date's.
 			var odds = _with_meta("odds")
-			if odds == null or odds.theme_type_variation != UiTheme.CHIP_WARN:
-				_fail("the overrun odds are not a warning chip")
+			if odds == null or odds.get_parent().get_child(0) is not TextureRect or String(odds.theme_type_variation).begins_with("Chip"):
+				_fail("the overrun odds are not a line with its warning glyph")
+			_check_running_cost_wears_its_line()
+			_check_the_table_rows_hold_their_units()
 			var press = _with_meta("table")
 			if press == null or press.theme_type_variation != UiTheme.PRIMARY:
 				_fail("the press is not the Primary button")
 			if _with_meta("stock") == null:
 				_fail("the picked region's stock line is missing")
 		5:
-			# A hand in the count box: the value moves, the sheet waits for the box to be left.
-			_spin = _with_meta("count")
+			# A hand in a row's stepper: the value moves, the sheet waits for the box to be left.
+			_spin = _with_meta("region_units")
 			_spin.get_line_edit().grab_focus()
 			_spin.value = 3
 		6:
 			if not is_instance_valid(_spin) or not _spin.is_inside_tree() or not _spin.get_line_edit().has_focus():
-				_fail("the sheet was rebuilt under the focused count box")
+				_fail("the sheet was rebuilt under the focused stepper")
 			_spin.get_line_edit().release_focus()
+		7:
+			# By need refills the programme's count (the rows' sum) over the regions most behind.
+			_press(_fill_button("need"))
 		8:
 			_check_count_refills(3)
+			_check_by_population_and_back()
 			# A law holds the slot: the press is refused before it, and says why.
 			_main._state.player().tabled_bill = {"law_id": String(_main._loader.laws[0].id), "referendum": false,
 				"vote_year": 2026, "vote_month": 1, "vote_day": 31}
@@ -245,12 +253,65 @@ func _check_the_money_is_the_quote() -> void:
 		_fail("the money has no range bar or no bars a year")
 
 
-func _set_count(n: int) -> void:
-	var spin = _with_meta("count")
-	if spin == null:
-		_fail("no count control")
+func _fill_button(mode: String) -> Button:
+	for b in _all_with_meta("fill"):
+		if String(b.get_meta("fill")) == mode:
+			return b
+	return null
+
+
+## By population fills the same count by population and shows itself picked; By need takes it back.
+func _check_by_population_and_back() -> void:
+	_press(_fill_button("population"))
+	if _panel.rows() != Units.fill_by_population(_main._state.player(), _main._loader, _type(), 3):
+		_fail("By population did not fill the count by population: %s" % [_panel.rows()])
+	_panel._fill(true)
+	_panel._fill_mode = "need"
+	_panel.mark_dirty()
+
+
+## Diane's R4 on #443: the running cost lands on a spending line and wears that line's hue, never the accent.
+func _check_running_cost_wears_its_line() -> void:
+	var cash = _with_meta("cash")
+	var want: Color = FinanceRowsUi.line_color(String(Units.row(_main._loader, _type())["line"]))
+	if cash == null or not cash.running_color.is_equal_approx(want):
+		_fail("the running cost is %s, not its line's %s" % [cash.running_color if cash != null else null, want])
+	if cash != null and cash.running_color.is_equal_approx(UiTheme.accent()):
+		_fail("the running cost wears the accent")
+
+
+## Register in C: each region of the table holds its units on its row, in the plot's order: a stepper where the
+## programme places units, a "+" where it places none; a "+" adds one unit there, by hand.
+func _check_the_table_rows_hold_their_units() -> void:
+	var dots = _with_meta("dots")
+	var steppers := _all_with_meta("region_units")
+	var adds := _all_with_meta("region_add")
+	if dots == null or steppers.size() + adds.size() != dots.data().size():
+		_fail("the table has %d unit controls for %d regions" % [steppers.size() + adds.size(), dots.data().size() if dots != null else -1])
 		return
-	spin.value = n
+	var placed := {}
+	for r in _panel.rows():
+		placed[String(r["region"])] = true
+	for st in steppers:
+		if not placed.has(String(st.get_meta("region_units"))):
+			_fail("a stepper on %s, where the programme places nothing" % st.get_meta("region_units"))
+	# Row by row: each control's centre sits on its region's row of the plot.
+	var h: float = dots.row_height()
+	for i in dots.data().size():
+		var id := String(dots.data()[i]["id"])
+		for c in steppers + adds:
+			if String(c.get_meta("region_units", c.get_meta("region_add", ""))) == id:
+				var mid: float = dots.global_position.y + h * (i + 1.5)
+				if absf(c.get_global_rect().get_center().y - mid) > h * 0.5:
+					_fail("%s's unit control is not on its row (%.0f, row at %.0f)" % [id, c.get_global_rect().get_center().y, mid])
+	var add = adds[0]
+	var id := String(add.get_meta("region_add"))
+	add.pressed.emit()
+	if int(_panel._placed.get(id, 0)) != 1 or _panel._fill_mode != "":
+		_fail("'+' on %s did not place one unit by hand (%s, %s)" % [id, _panel._placed, _panel._fill_mode])
+	_panel._placed.erase(id)
+	_panel._fill_mode = "need"
+	_panel.mark_dirty()
 
 
 func _check_count_refills(n: int) -> void:

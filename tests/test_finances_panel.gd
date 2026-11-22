@@ -136,9 +136,11 @@ func _process(_delta: float) -> bool:
 		45:
 			# The rail looks at the page a quarter of a second at a time: the placed unit lit Register's button.
 			_check_one_filled_button("register", false)
+			_check_the_landing(true)
 			_main._windows.open("programmes")
 		47:
 			_check_one_filled_button("programmes", true)
+			_check_the_landing(false)
 			_main._windows.open("finances")
 		49:
 			_check_one_filled_button("finances", true)
@@ -512,6 +514,17 @@ func _check_the_chevron_put_the_inbox_away() -> void:
 	var held: Control = _main.get_viewport().gui_get_focus_owner()
 	if held == null or not rail.is_ancestor_of(held) or not held.is_visible_in_tree():
 		_fail("after the chevron the keyboard is on %s, not on the open rail" % [held])
+
+
+## Register in C: the rail shows where Register's programme would land, a dashed place under the changes, while the
+## programme can be tabled; on a tab that places nothing (Building) there is none.
+func _check_the_landing(on_register: bool) -> void:
+	var landing: Control = _main._windows.content("finances").rail()._landing
+	var register = _main._windows.content("register")
+	if on_register and (not landing.visible or landing.title() == "" or not landing.title().contains(Strings.row_name("units", register._loader.unit_types[register.selected_type()]))):
+		_fail("beside Register the rail shows no landing for the placed programme ('%s')" % landing.title())
+	if not on_register and landing.visible:
+		_fail("beside %s the rail still shows a landing ('%s')" % ["Building", landing.title()])
 
 
 ## The parent's ruling (2026-11-22): one filled button a screen, the screen's next step. Register's own PRIMARY leads

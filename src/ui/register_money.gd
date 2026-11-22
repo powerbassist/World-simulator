@@ -20,6 +20,8 @@ var _legend: Array = []
 ## The share of each building bar that is an overrun (the Building tab's "if you pay"), drawn on
 ## top in the attention tone with a third legend entry; 0 on the order form.
 var _overrun := 0.0
+## The running cost's hue: the spending line it lands on (the caller sets it, Diane's R4 on #443); the accent until then.
+var running_color := Color(0, 0, 0, 0)
 
 
 func mark_overrun(share: float) -> void:
@@ -73,7 +75,7 @@ func _draw_cash() -> void:
 	var n := _years.size()
 	var slot := size.x / float(n)
 	var w := slot - 3.0
-	var accent := UiTheme.accent()
+	var accent := running_color if running_color.a > 0.0 else UiTheme.accent()
 	for i in n:
 		var capital := float(_years[i][1])
 		var running := float(_years[i][2])

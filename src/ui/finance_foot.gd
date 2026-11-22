@@ -44,6 +44,8 @@ const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
 const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
 const FinanceStrip = preload("res://src/ui/finance_strip.gd")
+const FinancePages = preload("res://src/ui/finance_pages.gd")
+const FinanceLanding = preload("res://src/ui/finance_landing.gd")
 const FinanceWho = preload("res://src/ui/finance_who.gd")
 const ControlStyle = preload("res://src/ui/control_style.gd")
 const Icon = preload("res://src/ui/icon.gd")
@@ -93,6 +95,7 @@ var _head: HBoxContainer
 var _verbs: Container
 var _strip: FinanceStrip
 var _verdict: Label
+var _landing: FinanceLanding  # where the page's programme would land (Register): a dashed place
 var _stays: Label
 var _unfolding := false  # the chevron opened the rail: the keyboard follows it
 
@@ -161,6 +164,8 @@ func _ready() -> void:
 	_groups = VBoxContainer.new()
 	_groups.add_theme_constant_override("separation", 2)
 	_changes.add_child(_groups)
+	_landing = FinanceLanding.new()
+	listed.add_child(_landing)
 
 	_text = Label.new()
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -467,26 +472,11 @@ func _vote(vote: Dictionary) -> void:
 ## of its own (Register's "Put it in the finance bill") leads; the rail's verb is then plain, and filled again on a tab
 ## that feeds the bill nothing (Building) or on Books, whose next step is the rail's.
 func _quiet_if_the_page_leads() -> void:
-	var leads := page_leads()
+	_landing.show_for(FinancePages.landing(self))
+	var leads := FinancePages.leads(self)
 	var want := "" if leads else UiTheme.PRIMARY
 	if _table.theme_type_variation != want:
 		_table.theme_type_variation = want
-
-
-## Whether the workspace page shown beside the rail shows a PRIMARY button of its own.
-func page_leads() -> bool:
-	var manager = get_tree().get_first_node_in_group("window_manager") if is_inside_tree() else null
-	if manager == null:
-		return false
-	for id in manager.open_ids():
-		var page: Control = manager.content(id)
-		if page == null or page.is_ancestor_of(self):
-			continue
-		for button in page.find_children("*", "Button", true, false):  # i18n: ok a class name
-			# A disabled one is not the next step (pass 2 T11 on #443: Register's, with nothing placed).
-			if (button as Button).theme_type_variation == UiTheme.PRIMARY and (button as Button).is_visible_in_tree() and not (button as Button).disabled:
-				return true
-	return false
 
 
 ## The refusal in words (finance_refusal.gd, the table the sheet and the rail both say).
