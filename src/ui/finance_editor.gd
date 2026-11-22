@@ -101,11 +101,19 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	# The balance is the row's Balance cell and the rail's (gate T3 on #443: each number once). Kept, unshown, for the
 	# brackets, which have no row of their own: the rail's change carries their money.
 	_effect.visible = false
+	# [glyph, its tone, the words, the names]: the glyph carries the tone, the words are dim and the names plain (gate T10
+	# on #443, as Sectors' answer rows), so a whole sentence is never red.
 	for line in _who_lines(state, loader):
-		var said := PanelKit.plain_line(self, String(line[0]), PanelKit.Tone.DIM)
-		said.autowrap_mode = TextServer.AUTOWRAP_WORD
-		if String(line[1]) != "":
-			said.theme_type_variation = String(line[1])
+		var said := HBoxContainer.new()
+		said.add_theme_constant_override("separation", 4)
+		add_child(said)
+		if String(line[0]) != "":
+			var glyph := PanelKit.plain_line(said, String(line[0]), PanelKit.Tone.PLAIN)
+			glyph.theme_type_variation = String(line[1])
+		PanelKit.plain_line(said, String(line[2]), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
+		var names := PanelKit.plain_line(said, String(line[3]), PanelKit.Tone.PLAIN)
+		names.autowrap_mode = TextServer.AUTOWRAP_WORD
+		names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if channel == FinanceDraft.TAX and not in_force and _draft.is_created(key):
 		_verb(Strings.t("Take it back"), "TakeBack", func() -> void: _draft.clear_create(key))  # i18n: ok a node name
 	elif channel == FinanceDraft.TAX and autumn and in_force and ns.tax_library[key].has("rate_range_pct"):
@@ -260,7 +268,7 @@ func _income_key(ns) -> String:
 func _who_lines(state, loader) -> Array:
 	if channel == FinanceDraft.TAX:
 		var paid: Array = state.player().tax_library[key].get("who_pays", [])
-		return [[Strings.t("Paid by: %s") % ", ".join(paid.map(func(b) -> String: return Labels.bloc(String(b)))), ""]]
+		return [["", "", Strings.t("Paid by:"), ", ".join(paid.map(func(b) -> String: return Labels.bloc(String(b))))]]
 	# A step up of the line, bloc by bloc (gate T3 on #443): two glyph lines, the tone never alone.
 	var read: Dictionary = FinanceRead.line_blocs(state, loader, key)
 	var up := []
@@ -272,9 +280,9 @@ func _who_lines(state, loader) -> Array:
 			down.append(Labels.bloc(String(pair[0])))
 	var out := []
 	if not up.is_empty():
-		out.append(["▲ " + Strings.t("A step up pleases %s") % ", ".join(up), UiTheme.GOOD_SMALL])
+		out.append(["▲", UiTheme.GOOD_SMALL, Strings.t("A step up pleases"), ", ".join(up)])
 	if not down.is_empty():
-		out.append(["▼ " + Strings.t("A step up angers %s") % ", ".join(down), UiTheme.BAD_SMALL])
+		out.append(["▼", UiTheme.BAD_SMALL, Strings.t("A step up angers"), ", ".join(down)])
 	return out
 
 

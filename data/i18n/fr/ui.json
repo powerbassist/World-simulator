@@ -711,7 +711,6 @@
   "Balance: %s a year.": "Solde : %s par an.",
   "Paid by: %s": "Payé par : %s",
   "For: %s": "Pour : %s",
-  "One step (%s pt of GDP): %s a year. %s": "Un cran (%s pt de PIB) : %s par an. %s",
   "Withdraw the bill": "Retirer le texte",
   "Open the bill": "Ouvrir le texte",
   "A finance bill is before the Assembly: it divides on %s.": "Un projet de loi de finances est devant l'Assemblée : elle vote le %s.",
