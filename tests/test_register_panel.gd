@@ -160,6 +160,7 @@ func _process(_delta: float) -> bool:
 			_panel.mark_dirty()
 		35:
 			_check_fills_without_scrolling("register", "text 1.15")
+			_check_the_press_follows_its_sheet()
 			_main._windows.open("programmes")
 			_main._windows.content("programmes").mark_dirty()
 		38:
@@ -179,6 +180,17 @@ func _check_fills_without_scrolling(id: String, where: String) -> void:
 	var dock: Rect2 = _main._windows.dock().get_global_rect()
 	if page.get_global_rect().end.y < dock.end.y - 1.0 or dock.end.y < 1080.0 - WindowManager.DOCK_BOTTOM - 1.0:
 		_fail("%s at 1080, %s: the page ends at %.0f, short of the dock's foot %.0f" % [id, where, page.get_global_rect().end.y, 1080.0 - WindowManager.DOCK_BOTTOM])
+
+
+## Pass 2 T6 on #447: the programme's sheet is as tall as its own content, so its press never follows a long regions'
+## table under the fold (Poland's 17 regions at 115 %).
+func _check_the_press_follows_its_sheet() -> void:
+	var press = _with_meta("table")
+	var sheet: Control = press.get_parent()
+	while sheet != null and not (sheet is PanelContainer):
+		sheet = sheet.get_parent()
+	if sheet == null or absf(sheet.size.y - sheet.get_combined_minimum_size().y) > 1.0:
+		_fail("the programme's sheet is %.0f px tall for %.0f of content: its press rides the table's height" % [sheet.size.y if sheet else -1.0, sheet.get_combined_minimum_size().y if sheet else -1.0])
 
 
 func _offered() -> Array:

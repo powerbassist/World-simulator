@@ -29,6 +29,9 @@ static func build(panel, parent: Control, ns, row: Dictionary, quote: Dictionary
 	var body := PanelKit.sheet(parent, Strings.t("The programme"))
 	body.get_parent().size_flags_horizontal = Control.SIZE_FILL
 	body.get_parent().custom_minimum_size.x = WIDTH * UiTheme.text_scale()
+	# As tall as its own content, never the regions' table: a long table (Poland's 17 regions at 115 %) would carry the
+	# press under the fold (pass 2 T6 on #447).
+	body.get_parent().size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var rows: Array = panel.rows()
 	var tiles := HBoxContainer.new()
 	tiles.add_theme_constant_override("separation", 8)
@@ -41,9 +44,6 @@ static func build(panel, parent: Control, ns, row: Dictionary, quote: Dictionary
 		_money(panel, body, row, quote)
 		_when(panel, body, ns, quote)
 	_in_bill(panel, body, ns)
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_child(spacer)
 	_press(panel, body)
 
 

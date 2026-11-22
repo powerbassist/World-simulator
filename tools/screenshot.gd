@@ -40,6 +40,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --warned --open register   (opened from a region warning)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --programmes --open programmes   (a programme building, its overrun card)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --inbox-away --open register   (G3 S4 Register in C: the bill's rail open beside it, the programme's dashed place)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open register   (pass 2 T6 on #447: the press in view with the inbox, a second register)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play POL --open register --text 115   (pass 2 T6 on #447: the press in view at 115 %)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sheet-polls --open legislature   (the law sheet, polls open)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --law-filter taxes: --open legislature   (shelf:words)
