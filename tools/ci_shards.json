@@ -336,6 +336,7 @@
    "tests/test_strings.gd",
    "tests/test_num.gd",
    "tests/test_staff_kind.gd",
+   "tests/test_screenshot_guards.gd",
    "tests/test_tools_parse.gd"
   ]
  ]

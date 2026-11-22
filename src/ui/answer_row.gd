@@ -29,7 +29,7 @@ static func list(parent: Control) -> VBoxContainer:
 	return box
 
 
-## A LINE under the last row of `list`, before a block that is not a row (a counter's chips).
+## A LINE under the last row of `list`.
 static func rule(list: VBoxContainer) -> void:
 	var line := ColorRect.new()
 	line.color = UiTheme.LINE
@@ -38,10 +38,10 @@ static func rule(list: VBoxContainer) -> void:
 	list.add_child(line)
 
 
-## One answer under `list`: `button` at the left, then its slots. `offsets` is bloc -> move
-## (a positive move pleases); `follows` may be "". Returns the cost's Label, which is also the
-## button's money_label (the tests' and the panels' contract).
-static func add(list: VBoxContainer, button: Button, cost: String, offsets: Dictionary, follows := "") -> Label:
+## The frame of one answer under `list` -- a LINE after the one above, `button` in the first
+## cell, an empty column of slots -- for an answer that fills its own slots (a counter's chips,
+## its cost, its chance). One class with the list's other buttons.
+static func shell(list: VBoxContainer, button: Button) -> VBoxContainer:
 	if list.get_child_count() > 0:
 		rule(list)
 	var row := HBoxContainer.new()
@@ -55,17 +55,42 @@ static func add(list: VBoxContainer, button: Button, cost: String, offsets: Dict
 	slots.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slots.add_theme_constant_override("separation", 2)
 	row.add_child(slots)
+	var buttons: Array = list.get_meta("buttons", [])
+	buttons.append(button)
+	list.set_meta("buttons", buttons)
+	PanelKit.same_class(buttons)
+	return slots
+
+
+## One answer under `list`: `button` at the left, then its slots. `offsets` is bloc -> move
+## (a positive move pleases); `follows` may be "". Returns the cost's Label, which is also the
+## button's money_label (the tests' and the panels' contract).
+static func add(list: VBoxContainer, button: Button, cost: String, offsets: Dictionary, follows := "") -> Label:
+	var slots := shell(list, button)
 	var money := PanelKit.plain_line(slots, cost, PanelKit.Tone.PLAIN)
 	button.set_meta("money_label", money)
 	_who(slots, offsets, true)
 	_who(slots, offsets, false)
 	if follows != "":
 		PanelKit.plain_line(slots, follows)
-	var buttons: Array = list.get_meta("buttons", [])
-	buttons.append(button)
-	list.set_meta("buttons", buttons)
-	PanelKit.same_class(buttons)
 	return money
+
+
+## The two who lines in their own box, for an answer whose figures change under it (a counter's
+## pick): empty it and fill it again with `fill_who`.
+static func who_box(slots: Control) -> VBoxContainer:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	slots.add_child(box)
+	return box
+
+
+static func fill_who(box: Control, offsets: Dictionary) -> void:
+	for child in box.get_children():
+		box.remove_child(child)
+		child.queue_free()
+	_who(box, offsets, true)
+	_who(box, offsets, false)
 
 
 ## "Pleases Workers, Students." or "Angers Business.", behind its glyph; nothing when no bloc moves that way.

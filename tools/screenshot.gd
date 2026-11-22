@@ -213,6 +213,7 @@ extends SceneTree
 const Relations = preload("res://src/core/relations.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const InterfaceSize = preload("res://src/ui/interface_size.gd")
+const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const OsCursor = preload("res://tools/os_cursor.gd")
@@ -496,7 +497,7 @@ var _hover_domain := false
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
 var _lang := ""  ## --lang CODE: the interface language of the staged game (default English)
-var _text := 100  ## --text PCT: the text size (V5.1-c2.4), 90 / 100 / 115
+var _text := 100  ## --text PCT: the text size (V5.1-c2.4), 90 / 100 / 115; anything else is refused
 var _play := ""  ## --play ID: the played nation of the staged game (default France)
 var _defence := false
 
@@ -984,6 +985,17 @@ func _stage_outline_hover() -> void:
 	printerr("--hover-outline: %s is not under any visible point" % _hover_outline)
 
 
+## --text takes only the sizes the Settings row offers (SettingsPanel.TEXT_SCALES, as percents): a frame at 130 shows a size no
+## player can pick, so it is refused rather than shot. "" when fine, else the message. Static so a test can call it.
+static func text_pct_refusal(raw: String) -> String:
+	var allowed: Array[int] = []
+	for scale in SettingsPanel.TEXT_SCALES:
+		allowed.append(roundi(scale * 100.0))
+	if raw.is_valid_int() and allowed.has(raw.to_int()):
+		return ""
+	return "--text %s is not a text size the game offers (allowed: %s)" % [raw, ", ".join(allowed.map(func(a: int) -> String: return str(a)))]
+
+
 func _init() -> void:
 	# Nothing here needs the real pointer (tools/os_cursor.gd), so the window goes
 	# off screen: a capture must not sit on the author's desk or catch their mouse.
@@ -1296,6 +1308,11 @@ func _init() -> void:
 		elif args[i] == "--lang" and i + 1 < args.size():
 			_lang = args[i + 1]
 		elif args[i] == "--text" and i + 1 < args.size():
+			var refusal := text_pct_refusal(args[i + 1])
+			if refusal != "":
+				push_error("screenshot: " + refusal)
+				quit(2)
+				return
 			_text = int(args[i + 1])
 		elif args[i] == "--play" and i + 1 < args.size():
 			_play = args[i + 1].to_upper()
