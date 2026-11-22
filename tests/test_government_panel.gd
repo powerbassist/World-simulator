@@ -52,6 +52,7 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		1:
 			_check_majority()
+			_check_the_picked_page()
 		2:
 			_check_minority()
 		3:
@@ -84,6 +85,50 @@ func _check_the_republic_plate() -> void:
 	plate.set_open(false)
 	if _panel._dissolve_button.visible and not _panel._dissolve_button.disabled 			and not _panel._dissolve_button.tooltip_text.contains("locks out"):
 		_fail("the dissolution's price is not on the Dissolve button: %s" % _panel._dissolve_button.tooltip_text)
+
+
+## G3 S5 (the author's pick, Majority A with B's two margins): the page lays out its own sheets
+## (head with Dissolve, the chamber, what the numbers allow, the parties); the chamber wears
+## the parties' hues, never the accent's blue; each margin is a seat strip with its line and
+## its dashed box, the figures the live arithmetic.
+func _check_the_picked_page() -> void:
+	var ns = _state.player()
+	_refresh_text()
+	var UiTheme = load("res://src/ui/ui_theme.gd")
+	var ChartStyle = load("res://src/ui/chart_style.gd")
+	if _panel.theme_type_variation != UiTheme.BARE or not load("res://src/ui/window_manager.gd").OWN_SHEETS.has("majority"):
+		_fail("Majority does not lay out its own sheets (BARE + OWN_SHEETS)")
+	var plates: Array = _panel.find_children("*", "PanelContainer", true, false).filter(
+		func(p): return p.theme_type_variation == UiTheme.PLATE)
+	if plates.size() < 4:
+		_fail("Majority has %d sheets, the picture four" % plates.size())
+	var head = plates.filter(func(p): return p.is_ancestor_of(_panel._title))
+	if head.is_empty() or not head[0].is_ancestor_of(_panel._dissolve_button):
+		_fail("Dissolve is not on the head sheet beside the lead")
+	var chart = _panel.find_children("*", "Control", true, false).filter(func(c): return c.has_method("seat_count"))
+	if chart.is_empty() or chart[0].custom_minimum_size.y < 240.0:
+		_fail("the chamber is not the page's large chart")
+	elif chart[0]._colors.has(ChartStyle.SERIES[0]) or chart[0]._colors[0] != ChartStyle.PARTY[0]:
+		_fail("the chamber does not wear the parties' hues: %s" % [chart[0]._colors])
+	var margins = _panel.find_child("Margins", true, false)
+	var strips: Array = [] if margins == null else margins.find_children("*", "Control", true, false).filter(func(c): return c.has_method("box"))
+	if strips.size() != 2:
+		_fail("what the numbers allow carries %d seat strips, not 2" % strips.size())
+		return
+	var need: int = Government.majority_seats(ns) + 1
+	var breakable := 0
+	for party in _loader.parties.get(ns.id, []):
+		if ns.coalition_party_ids.has(party.id):
+			breakable += load("res://src/sim/discipline.gd").rebel_seats(ns, party, Government.coalition_bonus(ns, party), 0.0)
+	if strips[0].line_at() != need or strips[0].box() != Vector2i(ns.coalition_seats - breakable, ns.coalition_seats):
+		_fail("the majority strip: line %d box %s, wanted %d and %s" % [strips[0].line_at(), strips[0].box(), need, Vector2i(ns.coalition_seats - breakable, ns.coalition_seats)])
+	var against: int = ns.assembly_seats - ns.coalition_seats
+	var censure: int = Government.censure_seats(ns)
+	if strips[1].line_at() != censure or strips[1].box() != Vector2i(against, censure):
+		_fail("the censure strip: line %d box %s, wanted %d and %s" % [strips[1].line_at(), strips[1].box(), censure, Vector2i(against, censure)])
+	var text: String = _collect_text(margins)
+	if not text.contains("+%d" % (ns.coalition_seats - need)) or not text.contains("%d short" % (censure - against)):
+		_fail("the margins' figures are not the arithmetic: %s" % text)
 
 
 func _refresh_text() -> String:

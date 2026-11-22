@@ -34,7 +34,7 @@ func setup(parts: Array, opts := {}) -> void:
 	_colors = opts.get("colors", ChartStyle.SERIES)
 	_owners = owners(parts)
 	_seats = seats(_owners.size())
-	custom_minimum_size = Vector2(0.0, HEIGHT * UiTheme.text_scale())
+	custom_minimum_size = Vector2(0.0, float(opts.get("height", HEIGHT)) * UiTheme.text_scale())  # a page's own chamber is larger (S5)
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	queue_redraw()
 

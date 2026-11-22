@@ -48,6 +48,11 @@ func body() -> VBoxContainer:
 	return _body
 
 
+## Its fold button, which a page may seat in its own head row (Majority, G3 S5); the body stays here.
+func toggle() -> Button:
+	return _toggle
+
+
 ## Rebuilt with the panel. `upper` and `court` are the panel's own phrases.
 func fill(ns, loader, labels: Dictionary, upper: String, court: String) -> void:
 	for child in _body.get_children():
