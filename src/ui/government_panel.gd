@@ -44,6 +44,7 @@ const ChartKit = preload("res://src/ui/chart_kit.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
 const Num = preload("res://src/ui/num.gd")
 const MajorityMargins = preload("res://src/ui/majority_margins.gd")
+const PartyChip = preload("res://src/ui/party_chip.gd")
 
 ## Longest human label for each formation method. The panel names the rule the
 ## player is actually governing under rather than the enum, so a Frenchman is
@@ -281,7 +282,7 @@ func _refresh() -> void:
 
 
 ## The chamber's parts in its order -- the government's parties, then the opposition's -- each in
-## its party's hue (ChartStyle.PARTY, by its place in the nation's list: the colour follows the
+## its party's hue (PartyChip.colour_at, by its place in the nation's list: the colour follows the
 ## party, never its side). `gov` tells the margins' strips which side to light.
 func _parts(ns) -> Array:
 	var parties: Array = _loader.parties.get(ns.id, [])
@@ -298,8 +299,8 @@ func _party_color(ns, party_id: String) -> Color:
 	var parties: Array = _loader.parties.get(ns.id, [])
 	for i in parties.size():
 		if parties[i].id == party_id:
-			return ChartStyle.PARTY[i % ChartStyle.PARTY.size()]
-	return ChartStyle.PARTY[0]
+			return PartyChip.colour_at(i)
+	return PartyChip.colour_at(parties.size())
 
 
 ## The assembly as a hemicycle (V5.2 b+ R6), the page's large chart since S5: the majority's line

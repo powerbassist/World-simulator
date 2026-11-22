@@ -96,6 +96,7 @@ func _check_the_picked_page() -> void:
 	_refresh_text()
 	var UiTheme = load("res://src/ui/ui_theme.gd")
 	var ChartStyle = load("res://src/ui/chart_style.gd")
+	var PartyChip = load("res://src/ui/party_chip.gd")
 	if _panel.theme_type_variation != UiTheme.BARE or not load("res://src/ui/window_manager.gd").OWN_SHEETS.has("majority"):
 		_fail("Majority does not lay out its own sheets (BARE + OWN_SHEETS)")
 	var plates: Array = _panel.find_children("*", "PanelContainer", true, false).filter(
@@ -108,8 +109,13 @@ func _check_the_picked_page() -> void:
 	var chart = _panel.find_children("*", "Control", true, false).filter(func(c): return c.has_method("seat_count"))
 	if chart.is_empty() or chart[0].custom_minimum_size.y < 240.0:
 		_fail("the chamber is not the page's large chart")
-	elif chart[0]._colors.has(ChartStyle.SERIES[0]) or chart[0]._colors[0] != ChartStyle.PARTY[0]:
+	elif chart[0]._colors.has(UiTheme.accent()) or not chart[0]._colors.has(PartyChip.colour_at(0)):
 		_fail("the chamber does not wear the parties' hues: %s" % [chart[0]._colors])
+	# Design's party rule (g3-spec 7, 2026-11-22): parties 1-5 take the categorical hues less the accent's, the 6th
+	# #8A96A1, the 7th and beyond #56616A; one function for every surface.
+	var hues: Array[Color] = ChartStyle.series_for(UiTheme.accent())
+	if PartyChip.colour_at(0) != hues[0] or PartyChip.colour_at(4) != hues[4] 			or PartyChip.colour_at(5) != Color("#8a96a1") or PartyChip.colour_at(6) != Color("#56616a") 			or PartyChip.colour_at(9) != Color("#56616a"):
+		_fail("a party's colour is not Design's rule: %s" % [[PartyChip.colour_at(0), PartyChip.colour_at(5), PartyChip.colour_at(6)]])
 	var margins = _panel.find_child("Margins", true, false)
 	var strips: Array = [] if margins == null else margins.find_children("*", "Control", true, false).filter(func(c): return c.has_method("box"))
 	if strips.size() != 2:

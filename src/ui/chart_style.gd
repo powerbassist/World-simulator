@@ -19,14 +19,6 @@ const SERIES: Array[Color] = [
 	Color("#d55181"), Color("#008300"), Color("#9085e9"), Color("#e66767"),
 ]
 
-## G3 S5 (Design's Parliament notes, 2026-11-21): the parties' hues, by the party's place in the nation's
-## list (the colour follows the party, never its side or rank). Six, none blue: the accent's hue is
-## "you are here", and today's first party wore it. Validated in this order, dark, on #11151A.
-## shortcut: one palette for every nation, no colour of a party's own in data; a party field replaces it.
-const PARTY: Array[Color] = [
-	Color("#9085e9"), Color("#d95926"), Color("#199e70"), Color("#c98500"), Color("#d55181"), Color("#008300"),
-]
-
 
 ## Decision 5 (G3, Design's gate T2 on #443): a categorical palette that skips the one hue nearest the played nation's
 ## accent, so no part reads as "you are here". Six hues; the order once one is skipped is fixed per skipped hue, each
