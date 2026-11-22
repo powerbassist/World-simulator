@@ -390,6 +390,7 @@ static func _name_cell(row: Control, text: String, id: String, width: float, ctx
 		var locked := _cell(inset, text, "", width - NAME_INSET / UiTheme.text_scale())
 		locked.name = "RowName"  # i18n: ok a node name, found by tests
 		locked.tooltip_text = Strings.t("At vote: withdraw the bill to change it.")
+		locked.mouse_filter = Control.MOUSE_FILTER_PASS  # a Label ignores the pointer: its hover would never show
 		return locked
 	var button := Button.new()
 	button.name = "RowName"  # i18n: ok a node name, found by tests

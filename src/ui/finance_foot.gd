@@ -97,7 +97,9 @@ var _strip: FinanceStrip
 var _verdict: Label
 var _landing: FinanceLanding  # where the page's programme would land (Register): a dashed place
 var _stays: Label
-var _unfolding := false  # the chevron opened the rail: the keyboard follows it
+## The frame the chevron was pressed: an unfold that follows within a few frames is the chevron's, and the keyboard
+## follows it; a later one (the inbox closed some other way) leaves the focus where it is (pass 1 on #447).
+var _unfold_frame := -100
 
 
 func _ready() -> void:
@@ -109,7 +111,7 @@ func _ready() -> void:
 	_col = col
 	_strip = FinanceStrip.new()
 	add_child(_strip)
-	_strip.unfold_pressed.connect(func() -> void: _unfolding = true; unfold_pressed.emit())
+	_strip.unfold_pressed.connect(func() -> void: _unfold_frame = Engine.get_process_frames(); unfold_pressed.emit())
 	_strip.hide()
 	var head := HBoxContainer.new()
 	_head = head
@@ -216,9 +218,8 @@ func set_folded(folded: bool) -> bool:
 		for verb in [_table, _open, _discard, _review, _withdraw]:
 			verb.reparent(_verbs, false)
 		var first := _verbs.get_children().filter(func(v) -> bool: return v.visible and not v.disabled)
-		if _unfolding and not first.is_empty():
+		if Engine.get_process_frames() - _unfold_frame <= 3 and not first.is_empty():
 			(first[0] as Control).call_deferred("grab_focus")
-		_unfolding = false
 	custom_minimum_size.x = _width()
 	_stamp = ""
 	if _state != null and _state.player() != null:

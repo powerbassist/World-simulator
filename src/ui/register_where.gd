@@ -99,6 +99,8 @@ static func build(panel, parent: Control, ns, row: Dictionary, shown: Dictionary
 		panel._dirty = true)
 	_units(panel, table, data, dots.row_height())
 	_legend(body, band)
+	if panel.rows().is_empty():
+		return  # nothing placed: the programme sheet and the greyed press say so once
 	var who := PanelContainer.new()
 	who.theme_type_variation = UiTheme.TILE_PANEL
 	body.add_child(who)

@@ -16,11 +16,11 @@ var _line := ""
 ## {title, line} from the page (register_programme.gd landing()); {} hides the place.
 func show_for(place: Dictionary) -> void:
 	visible = not place.is_empty()
+	custom_minimum_size.y = (UiTheme.SIZE_SMALL * 2.0 + 18.0) * UiTheme.text_scale()  # a text size moves it, the same words or not
 	if String(place.get("title", "")) == _title and String(place.get("line", "")) == _line:
 		return
 	_title = String(place.get("title", ""))
 	_line = String(place.get("line", ""))
-	custom_minimum_size.y = (UiTheme.SIZE_SMALL * 2.0 + 18.0) * UiTheme.text_scale()
 	queue_redraw()
 
 
