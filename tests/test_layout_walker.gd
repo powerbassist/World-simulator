@@ -99,7 +99,7 @@ func _check(windows, id: String, where: String) -> void:
 	if not bars.is_empty():
 		_hit(id, where, "hbar", "%d sideways bar%s" % [bars.size(), "" if bars.size() == 1 else "s"], "; ".join(bars))
 	var scroll: ScrollContainer = page._scroll
-	if GapBars.scrolls(scroll):  # an OWN_SHEETS page's bar stands in the gap, its own hidden (T16)
+	if scroll.get_v_scroll_bar().visible or GapBars.scrolls(scroll):  # an OWN_SHEETS page's bar stands in the gap, its own hidden (T16)
 		var band: float = dock.get_parent_area_size().y - windows.DOCK_TOP - windows.DOCK_BOTTOM
 		var hugs: bool = dock.size.y < band - 0.5
 		var fills: bool = bool(page._content.size_flags_vertical & Control.SIZE_EXPAND)

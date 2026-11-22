@@ -38,6 +38,7 @@ func _process(_delta: float) -> bool:
 	_frame += 1
 	if _frame == 2:
 		root.size = Vector2i(1920, 1080)
+		_check_any_panel_is_a_sheet()
 		_ids = WindowManager.OWN_SHEETS.duplicate()
 		_next_page()
 		return false
@@ -55,6 +56,31 @@ func _process(_delta: float) -> bool:
 		return false
 	_next_page()
 	return false
+
+
+## #445 pass 2 T1: a sheet is any panel that draws (the bill sheet, finance_sheet.gd, is a default
+## PanelContainer, not a PLATE), so a scroll inside one keeps its own bar; only a BARE panel is no sheet.
+func _check_any_panel_is_a_sheet() -> void:
+	var page := Control.new()
+	root.add_child(page)
+	var drawn := PanelContainer.new()
+	page.add_child(drawn)
+	var inside := ScrollContainer.new()
+	drawn.add_child(inside)
+	var bare := PanelContainer.new()
+	bare.theme_type_variation = UiTheme.BARE
+	page.add_child(bare)
+	var through := ScrollContainer.new()
+	bare.add_child(through)
+	var bars = GapBars.new()
+	root.add_child(bars)
+	bars.adopt(page)
+	if inside.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER or GapBars.bar_for(bars, inside) != null:
+		_fail("a scroll inside a default-styled panel (the bill sheet) lost its own bar to a gap bar")
+	if GapBars.bar_for(bars, through) == null:
+		_fail("a scroll under a BARE panel was not given its gap bar")
+	page.queue_free()
+	bars.queue_free()
 
 
 func _next_page() -> void:
@@ -83,7 +109,7 @@ func _sheet_scrolls(page: Control) -> Array:
 		var in_sheet := false
 		var up: Node = scroll.get_parent()
 		while up != null and up != page:
-			if up is Control and (up as Control).theme_type_variation == UiTheme.PLATE:
+			if up is PanelContainer and (up as Control).theme_type_variation != UiTheme.BARE:
 				in_sheet = true
 			up = up.get_parent()
 		if not in_sheet:

@@ -37,8 +37,8 @@ func adopt(page: Control) -> void:
 		bar.hide()
 		add_child(bar)
 		var inner := scroll.get_v_scroll_bar()
-		# share() links later changes, not the values already set: a scroll adopted after its last
-		# layout would leave this bar at the Range defaults (0 to 100, page 0) until the next one.
+		# bar.share(inner) makes the scroll's own bar take THIS bar's values, so the bar is given the
+		# scroll's values first: without these four lines the page jumps to the Range defaults (0 to 100, page 0).
 		bar.min_value = inner.min_value
 		bar.max_value = inner.max_value
 		bar.page = inner.page
@@ -65,7 +65,8 @@ static func scrolls(scroll: ScrollContainer) -> bool:
 static func _in_sheet(scroll: Node, page: Node) -> bool:
 	var up := scroll.get_parent()
 	while up != null and up != page:
-		if up is Control and (up as Control).theme_type_variation == UiTheme.PLATE:
+		# Any panel that draws is a sheet (#445 pass 2 T1: the bill sheet is a default-styled panel, not a PLATE).
+		if up is PanelContainer and (up as Control).theme_type_variation != UiTheme.BARE:
 			return true
 		up = up.get_parent()
 	return false

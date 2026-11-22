@@ -118,7 +118,7 @@ func _check_hugs(windows, id: String, where: String, short: bool) -> void:
 	var full: float = 1080.0 - WindowManager.DOCK_TOP - WindowManager.DOCK_BOTTOM
 	if short and dock.size.y > full - 100.0:
 		_fail("%s (%s): the dock is %.0f px of %.0f, the plate did not hug its content" % [id, where, dock.size.y, full])
-	if dock.size.y < full - 0.5 and GapBars.scrolls(scroll):  # the bar may stand in the gap (T16)
+	if dock.size.y < full - 0.5 and (scroll.get_v_scroll_bar().visible or GapBars.scrolls(scroll)):  # the bar may stand in the gap (T16)
 		_fail("%s (%s): a hugging plate (%.0f px) scrolls its own content" % [id, where, dock.size.y])
 	var bottom := scroll.get_global_rect().position.y
 	for node in page._content.find_children("*", "Control", true, false):
