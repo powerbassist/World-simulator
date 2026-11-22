@@ -132,7 +132,6 @@ static func build(box: Control, state, loader, ns, row: Dictionary, closure: Cal
 			button.text = label(option)
 			AnswerRow.add(list, button, String(money(option)[0]), option["bloc_offset"], jobs_text(option))
 		if String(option["kind"]) == "buyer" and not counters.is_empty():
-			AnswerRow.rule(list)
 			CounterChips.build(list, String(row["id"]), counters, _strip, make, "closure_answer")
 	PanelKit.plain_line(box, Strings.t("Unanswered, the plant is sold at the old price.") if offered else Strings.t("Unanswered, the plant closes."))
 
@@ -210,12 +209,11 @@ static func _unknown(option: Dictionary) -> void:
 
 ## A closure's counter on the strip (#285): the search and the cut sweetener, then what
 ## a buyer that was found may answer: yes, back at the old sweetener, or gone.
-static func _strip(strip, option: Dictionary) -> void:
+static func _strip(strip, option: Dictionary) -> String:
 	var sums: Array = money(option)
-	# The chance of a buyer is the column beside it; the prose budget (at most 100 words
-	# on the announced card, the parent's ruling) keeps this to what a counter adds.
-	strip.show_lines("", String(sums[0]), float(sums[1]), "",
-		# Its chance of acceptance is the track under the strip (CounterChips, Design's T8).
-		Strings.t("In %d to %d months. Refused, it returns at %s, or walks (%d %% of refusals). No deal, the jobs are lost.") % [
-			int(option["months"]), int(option["months_hi"]),
-			EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"])), roundi(100.0 * float(option["walk"]))])
+	strip.show_lines("", String(sums[0]), float(sums[1]))
+	# The chance of a buyer is the track under it (CounterChips, Design's T8); the prose budget (at
+	# most 100 words on the announced card, the parent's ruling) keeps this to what a counter adds.
+	return Strings.t("In %d to %d months. Refused, it returns at %s, or walks (%d %% of refusals). No deal, the jobs are lost.") % [
+		int(option["months"]), int(option["months_hi"]),
+		EffectsStrip.sum_text(-float(option["back_sweetener_eur_bn"])), roundi(100.0 * float(option["walk"]))]

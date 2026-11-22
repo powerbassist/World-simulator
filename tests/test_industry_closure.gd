@@ -300,7 +300,7 @@ func _make_the_counter() -> void:
 	if strip == null:
 		_fail("counter: no strip under the chips")
 		return
-	var text := _text_under(strip)
+	var text := _text_under(strip.get_parent())  # what follows is its own line in the row's slots (T13)
 	if strip.money_label.text != _money_of(option):
 		_fail("counter: the strip's money reads '%s', its figures print '%s'" % [strip.money_label.text, _money_of(option)])
 	# The chance they accept is the track's (Design's T8), not the strip's words.

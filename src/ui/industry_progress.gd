@@ -171,17 +171,16 @@ static func _ask(box: Control, process_id: String, ask: Dictionary, what: String
 		button.pressed.connect(func() -> void: answer.call(process_id, id, what))
 		AnswerRow.add(list, button, EffectsStrip.cost_text(-float(option["debt_eur_bn"])), option["bloc_offset"])
 		if i == 0 and not counters.is_empty():
-			AnswerRow.rule(list)
 			CounterChips.build(list, process_id, counters, _process_strip, func(cid: String) -> void: answer.call(process_id, cid, what), "answer_id")
 	PanelKit.plain_line(box, Strings.t("Unanswered by next month: %s.") % _label(String(ask["default"])))
 
 
 ## A process's counter on the strip: the countered price, the range, the walk-away risk.
-static func _process_strip(strip, option: Dictionary) -> void:
-	strip.show_lines(Strings.t("Treasury"), EffectsStrip.cost_text(-float(option["debt_eur_bn"])), -float(option["debt_eur_bn"]),
-		EffectsStrip.who_text(option["bloc_offset"]),
-		# Its chance of acceptance is the track under the strip (CounterChips, Design's T8 on #441).
-		Strings.t("Refused, the old price stands, or they walk away: %d %% of refusals.") % roundi(100.0 * float(option["walk"])))
+static func _process_strip(strip, option: Dictionary) -> String:
+	# The cost stands in the costs' column and who it pleases is the glyph lines (CounterChips, T13);
+	# its chance of acceptance is the track under them (T8 on #441).
+	strip.show_lines("", EffectsStrip.cost_text(-float(option["debt_eur_bn"])), -float(option["debt_eur_bn"]))
+	return Strings.t("Refused, the old price stands, or they walk away: %d %% of refusals.") % roundi(100.0 * float(option["walk"]))
 
 
 ## A process the month end just closed, for that one month (the parent's ruling on
