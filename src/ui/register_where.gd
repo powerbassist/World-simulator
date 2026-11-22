@@ -180,6 +180,8 @@ static func _legend(body: Control, band: Dictionary) -> void:
 	var line := HBoxContainer.new()
 	body.add_child(line)
 	RegisterLines.band_chip(line, band)
+	for label in line.find_children("*", "Label", true, false):  # i18n: ok a class name
+		(label as Label).autowrap_mode = TextServer.AUTOWRAP_OFF  # the rule on one line
 
 
 ## The picked region before and after, and the most any other region gives back.

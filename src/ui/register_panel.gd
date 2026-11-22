@@ -235,7 +235,7 @@ func _refresh() -> void:
 	var nation := Units.national_figure(ns, _loader, _type)
 	RegisterWhere.lede(self, PanelKit.sheet(_body), row, shown, nation)
 	if String(_warning.get("type", "")) == _type and String(_warning.get("region", "")) == _region:
-		RegisterDoor.bar(self, _body, _state, _loader, _warning)
+		RegisterDoor.bar(self, PanelKit.sheet(_body), _state, _loader, _warning)  # on its own sheet: no text bare on the map
 	var middle := HBoxContainer.new()
 	middle.add_theme_constant_override("separation", UiTheme.GAP_PANE)
 	middle.size_flags_vertical = Control.SIZE_EXPAND_FILL
