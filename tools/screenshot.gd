@@ -2405,7 +2405,9 @@ func _stage_the_books() -> void:
 		page.open_row(_books_row.get_slice(":", 0), _books_row.get_slice(":", 1))
 	if _books_draft or _books_refused:
 		page._draft.set_value("tax_rates_pct", "income", float(ns.tax_rates_pct["income"]) + 2.0)
-		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
+		# A row at vote is locked in play: an amendment never drafts it again.
+		if not _books_tabled:
+			page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
 		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
 	if _books_units:
 		page._draft.set_value("tax_rates_pct", "fuel_duty", float(ns.tax_rates_pct["fuel_duty"]) + 0.05)
