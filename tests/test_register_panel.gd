@@ -67,8 +67,10 @@ func _process(_delta: float) -> bool:
 			var press = _with_meta("table")
 			if press == null or press.theme_type_variation != UiTheme.PRIMARY:
 				_fail("the press is not the Primary button")
-			if _with_meta("stock") == null:
-				_fail("the picked region's stock line is missing")
+			# QA's TAKE on #447: the summary line carries the stock sentence, not only its meta.
+			var stock = _with_meta("stock")
+			if stock == null or not String(stock.text).contains("Standing there now"):
+				_fail("the picked region's stock line is missing: '%s'" % (stock.text if stock != null else ""))
 		5:
 			# A hand in a row's stepper: the value moves, the sheet waits for the box to be left.
 			_spin = _with_meta("region_units")
