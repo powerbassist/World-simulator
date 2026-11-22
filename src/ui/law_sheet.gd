@@ -103,7 +103,7 @@ static func _assembly(list, box: VBoxContainer, ns, law, c: Dictionary) -> void:
 	var chart: Control = ChartKit.hemicycle(box, Strings.t("The Assembly on this law"), parts,
 		{"marker": list.majority_share(ns, law), "colors": list.FORECAST_COLORS, "places": 0, "height": CHAMBER_HEIGHT})
 	# The seats by party are one hover away, as they were on the bar (law_seats_tip.gd).
-	for drawn in chart.find_children("*", "Control", true, false):
+	for drawn in chart.find_children("*", "Control", true, false):  # i18n: ok a class name
 		if drawn.has_method("seat_count"):
 			drawn.hover = LawSeatsTip.build.bind(list._panel, c)
 	var seats := int(c["yes"]) + int(c["no"]) + int(c["undecided"])

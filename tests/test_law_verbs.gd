@@ -223,6 +223,15 @@ func _vote_line(counts: Dictionary) -> String:
 	return "%d for · %d undecided · %d against" % [counts["yes"], counts["undecided"], counts["no"]]
 
 
+## The sheet's vote as its chamber draws it (G3 S5: the Assembly on this law, for / undecided / against).
+func _chamber_line() -> String:
+	for c in _list()._detail.find_children("*", "Control", true, false):
+		if c.has_method("seat_count"):
+			var v: Array = c._parts.map(func(p): return int(p["value"]))
+			return "%d for · %d undecided · %d against" % [v[0], v[1], v[2]]
+	return ""
+
+
 func _check_a_row_with_no_size_shows_nothing() -> void:
 	if not _chips().is_empty():
 		_fail("a row with no size offers %d chips" % _chips().size())
@@ -248,7 +257,7 @@ func _check_the_reference_grade() -> void:
 		_fail("a bill not picked reads at 1")
 	# At its own size the page says what it always said: the row itself, read as the row.
 	var band: float = _main._law_panel.forecast_band(_ns(), _law.id)
-	if _vote_line(_main._law_panel.forecast_counts(_ns(), _parties(), _law, band)) not in _detail_text():
+	if _vote_line(_main._law_panel.forecast_counts(_ns(), _parties(), _law, band)) != _chamber_line():
 		_fail("at its own size the forecast is not the row's")
 	var strip := _strip_of(LawGrade.STRIP_META)
 	if String(strip.get("when", "x")) != "":
@@ -265,7 +274,7 @@ func _check_a_chip_rereads_the_bill() -> void:
 	var graded = LawMagnitude.scaled(_law, 10.0)
 	var band: float = _main._law_panel.forecast_band(_ns(), _law.id)
 	var counts: Dictionary = _main._law_panel.forecast_counts(_ns(), _parties(), graded, band)
-	if _vote_line(counts) not in _detail_text():
+	if _vote_line(counts) != _chamber_line():
 		_fail("the detail's forecast is not the graded bill's: %s" % _vote_line(counts))
 	var plain: Dictionary = _main._law_panel.forecast_counts(_ns(), _parties(), _law, band)
 	if int(counts["yes"]) == int(plain["yes"]) and int(counts["no"]) == int(plain["no"]):
@@ -349,7 +358,7 @@ func _check_the_sheet_reads_the_grade() -> void:
 		_fail("the sheet does not say the size")
 	var graded = LawMagnitude.scaled(_law, 10.0)
 	var band: float = _main._law_panel.forecast_band(_ns(), _law.id)
-	if _vote_line(_main._law_panel.forecast_counts(_ns(), _parties(), graded, band)) not in text:
+	if _vote_line(_main._law_panel.forecast_counts(_ns(), _parties(), graded, band)) != _chamber_line():
 		_fail("the sheet's forecast is not the graded bill's")
 
 

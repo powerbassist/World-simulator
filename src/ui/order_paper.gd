@@ -75,7 +75,8 @@ func refresh(state, loader, find_law: Callable) -> void:
 	for i in BillQueue.SIZE:
 		var entry: Dictionary = ns.bill_queue[i] if i < ns.bill_queue.size() else {}
 		var held := not entry.is_empty()
-		_place(i, "%d · %s" % [i + 2, BillVerbs.month_name(state, i).to_upper()], _date_text(BillVerbs.division(state, i)),
+		# G3 S5: one slim line, so the month is short ("2 · FEB") and the day bare ("28 Feb").
+		_place(i, "%d · %s" % [i + 2, DateText.month(int(BillVerbs.division(state, i)["month"])).to_upper()], _date_text(BillVerbs.division(state, i)),
 			_name_of(entry) if held else "", held)
 	_build_verbs(ns)
 	if relight != "":
@@ -94,7 +95,7 @@ func _place(i: int, title: String, date: String, name_text: String, handle: bool
 
 
 func _tabled_title(state, ns) -> String:
-	return "1 · %s" % DateText.month_long(int(ns.tabled_bill.get("vote_month", state.month))).to_upper()
+	return "1 · %s" % DateText.month(int(ns.tabled_bill.get("vote_month", state.month))).to_upper()
 
 
 ## The day this month's slot divides: the tabled bill's own, or the month's last day.
@@ -106,7 +107,7 @@ func _slot_date(state, ns) -> Dictionary:
 
 
 static func _date_text(d: Dictionary) -> String:
-	return "%s %s" % [DateText.weekday(int(d["day"]), int(d["month"]), int(d["year"])), DateText.day_month(int(d["day"]), int(d["month"]))]
+	return DateText.day_month(int(d["day"]), int(d["month"]))
 
 
 ## A bill's name, "" for an empty entry: a law's, or the finance bill's.
