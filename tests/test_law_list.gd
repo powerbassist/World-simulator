@@ -181,6 +181,20 @@ func _check_bills_page() -> void:
 		func(b): return b.visible and b.theme_type_variation == UiTheme.PRIMARY)
 	if filled.size() != 1 or not (filled[0].text.begins_with(tr("Propose").left(7)) or filled[0].name == "Queue"):
 		_fail("the law's sheet has %d filled verbs, not one Propose: %s" % [filled.size(), filled.map(func(b): return b.text)])
+	elif filled[0].get_index() != 0:
+		_fail("the filled verb is not first in its row")
+	# The in-flight sheet stands only while something is in flight (an empty sheet would float).
+	var flight: Control = panel._flight.get_parent()
+	if flight.visible != (panel._result_box.get_child_count() + panel._list.get_child_count() > 0):
+		_fail("the in-flight sheet shows %s with %d things in flight" % [flight.visible, panel._result_box.get_child_count() + panel._list.get_child_count()])
+	# A shut law has no division coming: no path, no address, no polls.
+	for shut in _laws()._shown:
+		if _laws().why(shut) != "":
+			_laws().select(String(shut.id))
+			for node_name in ["Path", "PollIt"]:
+				if _laws()._detail.find_child(node_name, true, false) != null:
+					_fail("%s is shut and its sheet still draws %s" % [shut.id, node_name])
+			break
 
 
 ## V5.3 screen 4 PR 2b: the sheet carries the briefing's price and polls inline, a poll bought there
