@@ -161,7 +161,10 @@ const TOTAL_PENDING := {
 ## bill chart's caption): a lane a work with its name, its line and its verb, the picked work's sheet (its
 ## kicker, the authored summary, four figures, who it pleases and angers, its Start), the head's three
 ## figures; a stated rise 3323 -> 3431, to the parent.
-const TOTAL_SUM_CEILING := 3431
+## Parliament (G3 S5, #449 round 2): the Bills and Majority pages' own words, a stated rise 3431 -> 3438 (+7): the
+## break-ranks line (+2, Majority 97 -> 99) and the rest on the Bills page (+5, not itemised: "Free" on the order paper
+## and the path's reworded steps are the new prose there).
+const TOTAL_SUM_CEILING := 3438
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
