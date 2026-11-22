@@ -110,6 +110,7 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 		if String(line[0]) != "":
 			var glyph := PanelKit.plain_line(said, String(line[0]), PanelKit.Tone.PLAIN)
 			glyph.theme_type_variation = String(line[1])
+			glyph.autowrap_mode = TextServer.AUTOWRAP_OFF  # a wrapping glyph has no width and sat on its words
 		PanelKit.plain_line(said, String(line[2]), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
 		var names := PanelKit.plain_line(said, String(line[3]), PanelKit.Tone.PLAIN)
 		names.autowrap_mode = TextServer.AUTOWRAP_WORD
