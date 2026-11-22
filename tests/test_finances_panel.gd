@@ -77,12 +77,22 @@ func _process(_delta: float) -> bool:
 			# gap took 8 px from the books' columns and "Other spending" read "Other spend...").
 			UiTheme.set_text_scale(1.15)
 			_panel.theme = UiTheme.build()  # the game's fonts: a bare panel measures the engine default
+			# VAT at vote: its row is locked while Income tax beside it opens (gate-443 T11).
+			_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
+			_panel._stamp = ""
 			_panel._dirty = true
 			_panel._process(0.0)
 			# The narrowest the page can be laid out: every column at its minimum, which is where a name is cut.
 			_panel.size = Vector2(_panel.get_combined_minimum_size().x, 820)
 		5:
 			_check_no_name_is_clipped_at_115()
+			_check_names_at_one_x()
+			_check_the_withdraw_is_a_ghost()
+			# QA's RECORD on #443: the caption floor keeps the bars on one scale on the narrowest page, rail open.
+			_check_header_bars_on_the_row_scale()
+			_check_no_sheet_on_a_hidden_page()
+			_state.player().tabled_bill = {}
+			_panel._stamp = ""
 			UiTheme.set_text_scale(1.0)
 			_panel.theme = null
 			_panel._dirty = true
@@ -126,9 +136,11 @@ func _process(_delta: float) -> bool:
 		45:
 			# The rail looks at the page a quarter of a second at a time: the placed unit lit Register's button.
 			_check_one_filled_button("register", false)
+			_check_the_landing(true)
 			_main._windows.open("programmes")
 		47:
 			_check_one_filled_button("programmes", true)
+			_check_the_landing(false)
 			_main._windows.open("finances")
 		49:
 			_check_one_filled_button("finances", true)
@@ -151,6 +163,19 @@ func _process(_delta: float) -> bool:
 		64:
 			if not _main._windows.is_open("legislature"):
 				_fail("Open the bill, pressed on the Finances tab, did not open the Bills tab")
+			# R1, the parent's ruling on #443: the folded line's chevron puts the inbox away, which shows the whole rail.
+			_main._windows.open("finances")
+			_main._hud.inbox.slide_in()
+		67:
+			var rail: Control = _main._windows.content("finances").rail()
+			var unfold := rail.find_child("Unfold", true, false) as Button
+			if not rail.is_folded() or unfold == null or not unfold.is_visible_in_tree():
+				_fail("premise: with the inbox in, no folded rail with its chevron (folded %s)" % rail.is_folded())
+			else:
+				unfold.grab_focus()
+				unfold.pressed.emit()
+		70:
+			_check_the_chevron_put_the_inbox_away()
 			_finish()
 	return false
 
@@ -412,6 +437,50 @@ func _check_no_name_is_clipped_at_115() -> void:
 		_fail("at 115 %% the books clip: %s" % ", ".join(clipped))
 
 
+## Gate-443 T11: a name in a list keeps TEXT, at one left edge. A row at vote (locked) and a row that opens read
+## alike; the caption ("At vote") and the locked bar carry the state. Taxes: the rows share their indent.
+func _check_names_at_one_x() -> void:
+	var names: Array = _panel._revenue_box.find_children("RowName", "", true, false)
+	var locked: Array = names.filter(func(n) -> bool: return n is Label)
+	var open: Array = names.filter(func(n) -> bool: return n is Button)
+	if locked.is_empty() or open.is_empty():
+		_fail("premise: %d locked and %d openable tax names with VAT at vote" % [locked.size(), open.size()])
+		return
+	var first: Control = open[0]
+	for node in names:
+		var name: Control = node
+		var text_x := name.global_position.x + name.get_theme_stylebox("normal").get_margin(SIDE_LEFT)
+		var first_x := first.global_position.x + first.get_theme_stylebox("normal").get_margin(SIDE_LEFT)
+		if absf(text_x - first_x) > 0.5:
+			_fail("'%s' starts its text at x %.1f, '%s' at %.1f: not one edge" % [name.text, text_x, first.text, first_x])
+		if not name.get_theme_color("font_color").is_equal_approx(UiTheme.TEXT):
+			_fail("'%s' is drawn in %s, not TEXT" % [name.text, name.get_theme_color("font_color").to_html(false)])
+	# Pass 2 T3 on #447: a tax at vote says why it does not open when hovered, never just its own name.
+	for node in locked:
+		if (node as Control).tooltip_text != Strings.t("At vote: withdraw the bill to change it.") or (node as Control).mouse_filter == Control.MOUSE_FILTER_IGNORE:
+			_fail("the locked '%s' hovers '%s'" % [node.text, (node as Control).tooltip_text])
+
+
+## Gate-443 T12: "Withdraw the bill" is a ghost like its neighbours, never bare bold text.
+func _check_the_withdraw_is_a_ghost() -> void:
+	var withdraw: Button = _panel._foot._withdraw
+	if not withdraw.visible:
+		_fail("premise: no Withdraw with a bill at vote")
+	if withdraw.flat or withdraw.theme_type_variation != UiTheme.GHOST:
+		_fail("Withdraw the bill is %s (flat %s), not a ghost" % [withdraw.theme_type_variation, withdraw.flat])
+
+
+## QA's RECORD on #443: Review cannot put the bill's sheet on a page that stays hidden (a scene owns the screen and
+## Books could not open): no sheet.
+func _check_no_sheet_on_a_hidden_page() -> void:
+	_panel.hide()
+	_panel._open_sheet()
+	if _panel._sheet.visible:
+		_fail("the bill's sheet opened on a hidden page")
+		_panel._sheet.hide()
+	_panel.show()
+
+
 ## G3 S4: the bill's rail is the Finances domain's aside, shown beside the page and folded while the inbox shows
 ## (the table keeps its width), on every Finances tab.
 func _check_the_rail_is_the_domains_aside() -> void:
@@ -438,6 +507,28 @@ func _check_the_rail_is_the_domains_aside() -> void:
 			_fail("the folded rail's verbs are not on its line")
 	elif page_box.end.x > rail_box.position.x - UiTheme.GAP_PANE + 0.5:
 		_fail("the page runs under the rail: page ends %s, rail starts %s" % [page_box.end.x, rail_box.position.x])
+
+
+## R1: pressed, the chevron slides the inbox away, the rail opens beside the page, and the keyboard lands on the rail's
+## first verb (the chevron went with the line it was on).
+func _check_the_chevron_put_the_inbox_away() -> void:
+	var rail: Control = _main._windows.content("finances").rail()
+	if _main._hud.inbox.is_visible_in_tree() or rail.is_folded():
+		_fail("the chevron left the inbox showing %s, the rail folded %s" % [_main._hud.inbox.is_visible_in_tree(), rail.is_folded()])
+	var held: Control = _main.get_viewport().gui_get_focus_owner()
+	if held == null or not rail.is_ancestor_of(held) or not held.is_visible_in_tree():
+		_fail("after the chevron the keyboard is on %s, not on the open rail" % [held])
+
+
+## Register in C: the rail shows where Register's programme would land, a dashed place under the changes, while the
+## programme can be tabled; on a tab that places nothing (Building) there is none.
+func _check_the_landing(on_register: bool) -> void:
+	var landing: Control = _main._windows.content("finances").rail()._landing
+	var register = _main._windows.content("register")
+	if on_register and (not landing.visible or landing.title() == "" or not landing.title().contains(Strings.row_name("units", register._loader.unit_types[register.selected_type()]))):
+		_fail("beside Register the rail shows no landing for the placed programme ('%s')" % landing.title())
+	if not on_register and landing.visible:
+		_fail("beside %s the rail still shows a landing ('%s')" % ["Building", landing.title()])
 
 
 ## The parent's ruling (2026-11-22): one filled button a screen, the screen's next step. Register's own PRIMARY leads
