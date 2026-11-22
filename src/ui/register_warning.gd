@@ -106,9 +106,9 @@ static func _ask(main, programme_id: String) -> void:
 	var p := _programme(main._state.player(), programme_id)
 	if p.is_empty() or not p.has("ask"):
 		return
-	var due := int(p["ask"]["due"])
+	var last := int(p["ask"]["due"]) - 1  # the last month to answer: UnitOverrun.tick pays on the due month
 	_push(main, OVERRUN + programme_id, Strings.t("Overrun ask"), Strings.t("%s: the builders need %s bn more. Answer by %s, or it is paid.") % [
-		_programme_name(main, p), Num.f(float(p["ask"]["eur_m"]) / 1000.0, 2), DateText.month_year((due - 1) % 12 + 1, (due - 1) / 12)],
+		_programme_name(main, p), Num.f(float(p["ask"]["eur_m"]) / 1000.0, 2), DateText.month_year((last - 1) % 12 + 1, (last - 1) / 12)],
 		{"kind": "overrun", "id": programme_id})
 
 
