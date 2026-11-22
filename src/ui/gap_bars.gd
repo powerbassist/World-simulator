@@ -36,7 +36,14 @@ func adopt(page: Control) -> void:
 		bar.set_meta(META, scroll)
 		bar.hide()
 		add_child(bar)
-		bar.share(scroll.get_v_scroll_bar())
+		var inner := scroll.get_v_scroll_bar()
+		# share() links later changes, not the values already set: a scroll adopted after its last
+		# layout would leave this bar at the Range defaults (0 to 100, page 0) until the next one.
+		bar.min_value = inner.min_value
+		bar.max_value = inner.max_value
+		bar.page = inner.page
+		bar.value = inner.value
+		bar.share(inner)
 		_bars[scroll] = bar
 
 
@@ -73,7 +80,7 @@ func _process(_delta: float) -> void:
 			bar.queue_free()
 			_bars.erase(scroll)
 			continue
-		bar.visible = scroll.is_visible_in_tree() and bar.max_value - bar.page > 0.5
+		bar.visible = scroll.is_visible_in_tree() and scrolls(scroll)  # the scroll's own range, the truth
 		if bar.visible:
 			var rect: Rect2 = scroll.get_global_rect()
 			bar.position = Vector2(rect.end.x + (UiTheme.GAP_PANE - ScrollBars.GAP_BAR_WIDTH_PX) / 2.0, rect.position.y) - global_position
