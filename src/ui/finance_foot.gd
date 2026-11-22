@@ -199,10 +199,11 @@ func set_folded(folded: bool) -> bool:
 	_col.visible = not folded
 	_strip.visible = folded
 	if folded:
-		_strip.dock([_date, _verbs])
+		_strip.dock([_date] + _verbs.get_children())
 	else:
 		_date.reparent(_head, false)
-		_verbs.reparent(_col, false)
+		for verb in [_table, _open, _discard, _review, _withdraw]:
+			verb.reparent(_verbs, false)
 	custom_minimum_size.x = _width()
 	_stamp = ""
 	if _state != null and _state.player() != null:

@@ -29,6 +29,10 @@ var _scale_bn := 1.0
 var _live := 0.0
 var _color := Color.WHITE
 var _dragging := false
+## The draft's own value, as the page paints it (NAN: the slider's value). The slider snaps its value to the step from
+## its floor, so a rate today off that grid (Germany's 20.83 % income tax) drew its dot a step away from its ring, a
+## move nobody made; the dot reads the draft instead.
+var shown := NAN
 
 
 func _init() -> void:
@@ -78,7 +82,11 @@ func ring_x() -> float:
 
 
 func is_moved() -> bool:
-	return not is_equal_approx(value, _live)
+	return not is_equal_approx(_at(), _live)
+
+
+func _at() -> float:
+	return value if is_nan(shown) else shown
 
 
 func _rate_at(x: float) -> float:
@@ -109,7 +117,7 @@ func _draw() -> void:
 	if _per_unit <= 0.0:
 		return
 	var mid := size.y * 0.5
-	var at := x_of(value)
+	var at := x_of(_at())
 	var live := ring_x()
 	var near := minf(at, live)
 	draw_rect(Rect2(PAD - 1.0, mid - BAR_H * 0.5, maxf(near - PAD + 1.0, 0.0), BAR_H), _color)

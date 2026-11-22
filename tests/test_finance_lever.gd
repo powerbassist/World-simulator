@@ -54,6 +54,7 @@ func _process(_delta: float) -> bool:
 		_check_press_maps_money()
 		_check_locked()
 		_check_keys()
+		_check_off_grid()
 		_finish()
 		return true
 	return false
@@ -76,6 +77,7 @@ func _check_geometry() -> void:
 		_lever.value = 20.0
 	if _lever.is_moved():
 		_fail("the draft at today's value reads as moved")
+
 
 
 ## A press at the x of 300 bn sets 30 % (300 bn / 10 bn a point); a press between steps snaps.
@@ -124,6 +126,22 @@ func _check_keys() -> void:
 	root.push_input(key, true)
 	if not is_equal_approx(_lever.value, 20.5):
 		_fail("the right arrow did not step the lever by 0.5: %s" % _lever.value)
+
+
+func _check_off_grid() -> void:
+	# Gate round on #443: a rate today off the step grid (Germany's 20.83 %) is not a move -- the slider snaps its value,
+	# the dot draws the draft's.
+	var odd := FinanceLever.new()
+	odd.custom_minimum_size = Vector2(412, 20)
+	_lever.get_parent().add_child(odd)
+	odd.setup(10.0, 400.0, 20.83, Color.WHITE)
+	odd.max_value = 30.0
+	odd.step = 0.5
+	odd.value = 20.83
+	odd.shown = 20.83
+	if odd.is_moved():
+		_fail("a rate today off the step grid reads as moved (the snapped %s against %s)" % [odd.value, 20.83])
+	odd.queue_free()
 
 
 func _click(control: Control, x: float) -> void:

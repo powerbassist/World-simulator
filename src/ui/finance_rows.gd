@@ -293,6 +293,7 @@ static func _money_cells(row: Control, id: String, channel: String, key: String,
 	lever.set_block_signals(true)
 	lever.value = draft.value(channel, key)
 	lever.set_block_signals(false)
+	lever.shown = draft.value(channel, key)
 	if (ctx["tabled"] as Dictionary).has(id) or (channel == FinanceDraft.TAX and draft.is_abolished(key)):
 		lever.lock()
 	elif ctx.has("on_lever"):
@@ -431,6 +432,7 @@ static func _paint_levers(ctx: Dictionary) -> void:
 		lever.set_block_signals(true)
 		lever.value = draft.live(cell[1], cell[2]) + float(tabled[id]) if tabled.has(id) else draft.value(cell[1], cell[2])
 		lever.set_block_signals(false)
+		lever.shown = draft.live(cell[1], cell[2]) + float(tabled[id]) if tabled.has(id) else draft.value(cell[1], cell[2])
 		lever.queue_redraw()
 	var price = ctx.get("price", null)
 	# The draft's own rows (a kind put in force carries its birth flag, priced as a bill of its one row).

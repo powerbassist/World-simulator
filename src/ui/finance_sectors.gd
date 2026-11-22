@@ -140,6 +140,7 @@ func _sector_row(dns, sector: Dictionary, share: float, warned: bool) -> void:
 	name.set_meta("sector", id)
 	var figure := PanelKit.plain_line(row, Strings.t("%s %s") % [quantity_text(Sectors.quantity(dns, _loader, _line, id)), unit_text(sector)], PanelKit.Tone.DIM)
 	figure.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	figure.autowrap_mode = TextServer.AUTOWRAP_OFF  # a wrapping label in a clipped cell drew nothing
 	figure.clip_text = true
 	figure.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	figure.tooltip_text = figure.text
@@ -236,14 +237,15 @@ func _verb(dns, sectors: Array, why_of: Dictionary) -> void:
 	picks.add_child(amount)
 	var shown := PanelKit.plain_line(picks, "", PanelKit.Tone.PLAIN)
 	shown.autowrap_mode = TextServer.AUTOWRAP_OFF
+	# One Move line (gate T3 on #443): the pickers, the amount and the verb together; what it does under it.
+	var move := PanelKit.sized(Button.new())
+	move.text = Strings.t("Draft the move")
+	move.set_meta("move", "move")
+	picks.add_child(move)
 	var strip := EffectsStrip.new()
 	strip.set_meta("sectors", true)
 	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(strip)
-	var move := PanelKit.sized(Button.new())
-	move.text = Strings.t("Draft the move")
-	move.set_meta("move", "move")
-	add_child(move)
 	var refusal := PanelKit.plain_line(self, "")
 	refusal.set_meta("refusal", "refusal")
 	ResultTone.tint(refusal, ResultTone.BLOCKED)

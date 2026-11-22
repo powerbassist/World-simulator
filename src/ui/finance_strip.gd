@@ -24,8 +24,6 @@ func _ready() -> void:
 	add_child(_title)
 	_line = Label.new()
 	_line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_line.clip_text = true
-	_line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	add_child(_line)
 	_verdict = Label.new()
 	_verdict.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -49,7 +47,8 @@ func say(title: String, line: String, verdict: String, good: bool, bad: bool) ->
 	_verdict.theme_type_variation = UiTheme.GOOD_SMALL if good else (UiTheme.BAD_SMALL if bad else UiTheme.CAPTION)
 
 
-## Moves `nodes` (the rail's date tag, its verbs) into the line, in order.
+## Moves `nodes` (the rail's date tag, its verbs one by one) into the line, in order: a flow container in a row wraps
+## its buttons into a column, so the buttons come without it.
 func dock(nodes: Array) -> void:
 	for node in nodes:
 		(node as Node).reparent(_slot, false)
