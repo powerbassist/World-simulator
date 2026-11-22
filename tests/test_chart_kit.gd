@@ -20,6 +20,7 @@ const ChartStack = preload("res://src/ui/chart_stack.gd")
 const ChartHemicycle = preload("res://src/ui/chart_hemicycle.gd")
 const ChartDots = preload("res://src/ui/chart_dots.gd")
 const ChartRange = preload("res://src/ui/chart_range.gd")
+const ChartWaterfall = preload("res://src/ui/chart_waterfall.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
@@ -152,10 +153,15 @@ var _stack: VBoxContainer
 var _spark: Control
 var _dots: VBoxContainer
 var _range: VBoxContainer
+var _fall: VBoxContainer
 var _picked := ""
 
 
 func _build_charts() -> void:
+	# G3 S4: the bill's deficit as a waterfall, today to the bill, each change a step from the running total.
+	_fall = ChartKit.waterfall(_box, "Deficit", {"label": "Today", "value": 147.0}, [
+		{"label": "Health", "value": 43.6}, {"label": "Education", "value": -14.6}, {"label": "Income tax", "value": -17.9}],
+		{"label": "With the bill", "value": 158.1})
 	var months := [[2026, 1], [2026, 2], [2026, 3]]
 	_empty = ChartKit.line(_box, "Empty", [{"label": "a", "values": PackedFloat64Array([5.0])}], [[2026, 1]])
 	_one = ChartKit.line(_box, "One", [{"label": "a", "values": PackedFloat64Array([1.0, 2.0, 3.5])}], months, {"unit": "%"})
@@ -191,6 +197,7 @@ func _text(box: Node) -> String:
 
 
 func _check_charts() -> void:
+	_check_waterfall()
 	var empty := _chart(_empty, ChartLine)
 	if empty == null or empty.has_line():
 		_fail("one month drew a line")
@@ -256,6 +263,51 @@ func _check_charts() -> void:
 
 func _fail(message: String) -> void:
 	_failures.append(message)
+
+
+## Each step starts where the running total stood and ends where the change takes it; a change that widens the
+## deficit is the bad tone, one that narrows it the good; the two totals are neutral and start at zero; every bar
+## prints its signed figure (a waterfall without its numbers makes the reader add in the head).
+func _check_waterfall() -> void:
+	var chart: ChartWaterfall = _fall.get_meta("chart") if _fall != null and _fall.has_meta("chart") else null
+	if chart == null:
+		_fail("ChartKit.waterfall built no ChartWaterfall")
+		return
+	var today := chart.bar_rect(0)
+	var health := chart.bar_rect(1)
+	var education := chart.bar_rect(2)
+	var tax := chart.bar_rect(3)
+	var total := chart.bar_rect(4)
+	if absf(today.position.x - chart.x_of(0.0)) > 0.5 or absf(today.end.x - chart.x_of(147.0)) > 0.5:
+		_fail("today's bar is not 0 to 147: %s" % today)
+	if absf(health.position.x - chart.x_of(147.0)) > 0.5 or absf(health.end.x - chart.x_of(190.6)) > 0.5:
+		_fail("a rise of 43.6 does not run 147 to 190.6: %s" % health)
+	if absf(education.end.x - chart.x_of(190.6)) > 0.5 or absf(education.position.x - chart.x_of(176.0)) > 0.5:
+		_fail("a cut of 14.6 does not run back from 190.6 to 176: %s" % education)
+	if absf(tax.position.x - chart.x_of(158.1)) > 0.5:
+		_fail("the last step does not end at 158.1: %s" % tax)
+	if absf(total.end.x - chart.x_of(158.1)) > 0.5 or absf(total.position.x - chart.x_of(0.0)) > 0.5:
+		_fail("the bill's bar is not 0 to 158.1: %s" % total)
+	if chart.bar_color(1) != UiTheme.BAD or chart.bar_color(2) != UiTheme.GOOD or chart.bar_color(0) != UiTheme.NEUTRAL_BAR:
+		_fail("the waterfall's tones are wrong: %s %s %s" % [chart.bar_color(0), chart.bar_color(1), chart.bar_color(2)])
+	# Pass 1 on #443: a long step name is cut to its column with an ellipsis, never drawn over its bar.
+	var font := chart.get_theme_default_font()
+	var cut: String = ChartWaterfall.fit(font, "Creation of Retail turnover tax, 0.0 → 2.0 %", 80.0, 13)
+	if not cut.ends_with("…") or font.get_string_size(cut, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x > 80.0:
+		_fail("a long waterfall label is not cut to its column: '%s'" % cut)
+	if ChartWaterfall.fit(font, "Today", 80.0, 13) != "Today":
+		_fail("a short waterfall label was cut")
+	# Decision 5 (gate T2 on #443): the palette skips the hue nearest the accent, in that hue's validated order.
+	var france: Array = ChartStyle.series_for(Color("#2496ff"))
+	if france.has(ChartStyle.CATEGORICAL[0]) or france.size() != 5:
+		_fail("France's blue accent keeps the blue part: %s" % [france])
+	var germany: Array = ChartStyle.series_for(Color("#ffd400"))
+	if germany.has(ChartStyle.CATEGORICAL[3]) or germany[3] != ChartStyle.CATEGORICAL[5]:
+		_fail("Germany's yellow keeps amber, or violet does not take its place: %s" % [germany])
+	if ChartStyle.series_for(Color("#20b070"))[2] != ChartStyle.CATEGORICAL[5]:
+		_fail("a green accent's order does not put violet third")
+	if chart.figure(1) != "+43.6" or chart.figure(2) != "-14.6" or chart.figure(0) != "147":
+		_fail("the waterfall's figures are %s, %s, %s" % [chart.figure(0), chart.figure(1), chart.figure(2)])
 
 
 func _finish() -> void:

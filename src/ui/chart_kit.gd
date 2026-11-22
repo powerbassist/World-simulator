@@ -20,6 +20,7 @@ const ChartStack = preload("res://src/ui/chart_stack.gd")
 const ChartStyle = preload("res://src/ui/chart_style.gd")
 const ChartHemicycle = preload("res://src/ui/chart_hemicycle.gd")
 const ChartDiverge = preload("res://src/ui/chart_diverge.gd")
+const ChartWaterfall = preload("res://src/ui/chart_waterfall.gd")
 
 ## A line over time under a MICRO title. `series` is [{label, values}] with
 ## `values` a PackedFloat64Array aligned with `months` ([[year, month], ...]).
@@ -138,6 +139,16 @@ static func range_bar(parent: Control, title: String, lo: float, estimate: float
 	var chart := ChartRange.new()
 	box.add_child(chart)
 	chart.setup(lo, estimate, hi, opts)
+	box.set_meta("chart", chart)
+	return box
+
+
+## A total walked change by change (chart_waterfall.gd): today, each signed step from the running total, the total after.
+static func waterfall(parent: Control, title: String, start: Dictionary, steps: Array, end: Dictionary, opts := {}) -> VBoxContainer:
+	var box := _titled(parent, title)
+	var chart := ChartWaterfall.new()
+	box.add_child(chart)
+	chart.setup(start, steps, end, opts)
 	box.set_meta("chart", chart)
 	return box
 

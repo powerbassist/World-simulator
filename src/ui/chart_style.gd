@@ -6,6 +6,7 @@ extends RefCounted
 ## copy without preloading each other.
 
 const Num = preload("res://src/ui/num.gd")
+const AccentRule = preload("res://src/ui/accent_rule.gd")
 
 ## The categorical slots, in a FIXED order that is never cycled: the dataviz
 ## default's dark steps. Validated against HULL (#171B1E), the surface every chart
@@ -17,6 +18,26 @@ const SERIES: Array[Color] = [
 	Color("#3987e5"), Color("#d95926"), Color("#199e70"), Color("#c98500"),
 	Color("#d55181"), Color("#008300"), Color("#9085e9"), Color("#e66767"),
 ]
+
+## Decision 5 (G3, Design's gate T2 on #443): a categorical palette that skips the one hue nearest the played nation's
+## accent, so no part reads as "you are here". Six hues; the order once one is skipped is fixed per skipped hue, each
+## row validated on the sheet (#11151A, dark): dropping green or amber from the plain order puts orange beside amber or
+## pink beside green, below the colour-blind floor, so those two rows are reordered.
+const CATEGORICAL: Array[Color] = [Color("#3987e5"), Color("#d95926"), Color("#199e70"), Color("#c98500"), Color("#d55181"), Color("#9085e9")]
+const SKIPPING := [[1, 2, 3, 4, 5], [0, 2, 3, 4, 5], [0, 1, 5, 3, 4], [0, 1, 2, 5, 4], [0, 1, 2, 3, 5], [0, 1, 2, 3, 4]]
+
+
+## The five hues for a chart's parts under `accent`: CATEGORICAL less the hue nearest it, in that hue's order.
+static func series_for(accent: Color) -> Array[Color]:
+	var skip := 0
+	for i in CATEGORICAL.size():
+		if AccentRule.hue_distance(CATEGORICAL[i].h * 360.0, accent.h * 360.0) < AccentRule.hue_distance(CATEGORICAL[skip].h * 360.0, accent.h * 360.0):
+			skip = i
+	var out: Array[Color] = []
+	for i in SKIPPING[skip]:
+		out.append(CATEGORICAL[i])
+	return out
+
 
 ## A line chart's height in px at text size 100 %, the axis band included (the
 ## method's anti-pattern: a container whose height leaves the axis labels out).

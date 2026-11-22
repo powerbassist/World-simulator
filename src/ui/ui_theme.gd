@@ -199,6 +199,7 @@ const CHIEF_MARK := "ChiefMark"           ## the chief's mark beside it (G1): a 
 ## V5.3 c' (the bureau audit's items 1, 2, 5; control_style.gd says why each looks as it does).
 const PRIMARY := "Primary"                ## the one action a screen exists for  # i18n: ok
 const SMALL := "Small"                    ## a verb at the caption size  # i18n: ok
+const LEVER := "Lever"                    ## a Books line's bar that is its own lever: draws itself (finance_lever.gd)  # i18n: ok
 const SEGMENT := "Segment"                ## one choice among a few, side by side  # i18n: ok
 const CHIP := "Chip"                      ## a bordered caption plate, neutral  # i18n: ok
 const CHIP_GOOD := "ChipGood"             ## a chip in the good-news tone
@@ -631,10 +632,10 @@ static func _buttons(theme: Theme) -> void:
 	OptionCheckStyle.apply(theme, OPTION_CHECK, [_button_box(Color(0, 0, 0, 0)), _button_box(CONTROL),
 		_ring()], _px(SIZE_SMALL), TEXT_DIM, TEXT, WARN)
 	ControlStyle.apply(theme, {"primary": PRIMARY, "small": SMALL, "segment": SEGMENT, "chip": CHIP,
-		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD, "ghost": GHOST, "picked": PICKED, "picked_row": PICKED_ROW}, _button_box,
+		"chip_good": CHIP_GOOD, "chip_warn": CHIP_WARN, "chip_bad": CHIP_BAD, "ghost": GHOST, "picked": PICKED, "picked_row": PICKED_ROW, "lever": LEVER}, _button_box,
 		{"control": CONTROL, "hover": CONTROL_HOVER, "pressed": CONTROL_PRESSED, "line": LINE_STRONG,
 		"text": TEXT, "dim": TEXT_DIM, "off": TEXT_OFF, "good": GOOD, "warn": WARN, "bad": BAD,
-		"fill": accent_fill(), "on_fill": on_accent_fill(), "tile": TILE, "ring": _ring()},
+		"fill": accent_fill(), "on_fill": on_accent_fill(), "tile": TILE, "ring": _ring(), "bold": _face(WEIGHT_BOLD), "base_px": _px(SIZE_BASE)},
 		_px(SIZE_SMALL), _face(WEIGHT_MEDIUM))
 
 

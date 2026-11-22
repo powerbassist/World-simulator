@@ -19,7 +19,17 @@ extends RefCounted
 ## `box` is ui_theme's _button_box (bg, border) -> StyleBoxFlat; `t` the tokens
 ## {control, hover, pressed, line, text, dim, off, good, warn, bad, fill, on_fill, tile, ring};
 ## `small_px` the caption size scaled; `medium` the 500 cut (null when the font did not load).
+## A figure that is a price: the text colour at the bold cut (decision 1). Its name lives here, beside the style it
+## names, because ui_theme.gd sits at the size ratchet's ceiling.
+const STRONG := "Strong"  # i18n: ok a variation name
+
+
 static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary, small_px: int, medium: Font) -> void:
+	# G3 S4 (gate T4 on #443): a price -- a row's balance, a change's money -- is the text colour at the bold cut.
+	theme.set_type_variation(STRONG, "Label")  # i18n: ok
+	theme.set_font("font", STRONG, t["bold"])
+	theme.set_font_size("font_size", STRONG, int(t["base_px"]))
+	theme.set_color("font_color", STRONG, t["text"])
 	var fill := t["fill"] as Color
 	var primary := String(names["primary"])
 	theme.set_type_variation(primary, "Button")  # i18n: ok
@@ -28,6 +38,14 @@ static func apply(theme: Theme, names: Dictionary, box: Callable, t: Dictionary,
 	# never falls (a dark label on a yellow fill starts near 10:1 and keeps AA).
 	theme.set_stylebox("hover", primary, _glow(box.call(fill.darkened(0.06))))
 	theme.set_stylebox("pressed", primary, _glow(box.call(fill.darkened(0.12))))
+	# The Books lever (finance_lever.gd) draws its bar, ring and dot itself: the slider's own track and grabber draw nothing.
+	var lever := String(names["lever"])
+	theme.set_type_variation(lever, "HSlider")  # i18n: ok
+	for part in ["slider", "grabber_area", "grabber_area_highlight"]:
+		theme.set_stylebox(part, lever, StyleBoxEmpty.new())
+	var none := ImageTexture.create_from_image(Image.create(1, 1, false, Image.FORMAT_RGBA8))
+	for icon in ["grabber", "grabber_highlight", "grabber_disabled", "tick"]:
+		theme.set_icon(icon, lever, none)
 	# Held ON under the pointer (the armed "See them" is a Primary toggle): the fill still, never
 	# the base Button's graphite (#439 pass 2 T2).
 	theme.set_stylebox("hover_pressed", primary, _glow(box.call(fill.darkened(0.12))))

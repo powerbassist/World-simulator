@@ -33,7 +33,6 @@ const Labels = preload("res://src/ui/labels.gd")
 const Num = preload("res://src/ui/num.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
-const GK = preload("res://src/sim/goal_read_constants.gd")
 
 ## A spending line's step, ceiling and reach either side of its value today, in points of GDP.
 const LINE_STEP := 0.1
@@ -44,6 +43,8 @@ var channel := ""
 var key := ""
 ## The autumn bill is open (FinanceBill.autumn_open, read by the page): an in-force kind may be abolished.
 var autumn := false
+## The row's own bar (finance_lever.gd), handed in by the page before setup(): the editor's lever when it can be dragged.
+var row_lever: HSlider = null
 var _state
 var _draft
 var _price
@@ -68,18 +69,11 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	key = row_key
 	var ns = state.player()
 	add_theme_constant_override("separation", 6)
-	var step := LINE_STEP
-	var decimals := 1
-	if channel == FinanceDraft.TAX:
-		var span: Array = ns.tax_library[key]["rate_range_pct"]
-		_lo = float(span[0])
-		_hi = float(span[1])
-		step = TaxLibrary.step_pct(ns, key)
-		decimals = TaxLibrary.step_decimals(ns, key)
-	else:
-		var at: float = _draft.live(channel, key)
-		_lo = maxf(0.0, at - LINE_SPAN)
-		_hi = minf(LINE_MAX, at + LINE_SPAN)
+	var reach := span(ns, _draft, channel, key)
+	var step := float(reach["step"])
+	var decimals := int(reach["decimals"])
+	_lo = float(reach["lo"])
+	_hi = float(reach["hi"])
 	var unit := FinanceRows.unit_text(String(ns.tax_library[key]["unit"])) if channel == FinanceDraft.TAX else Strings.t(" % of GDP")
 	var in_force: bool = channel != FinanceDraft.TAX or ns.tax_rates_pct.has(key)
 	if channel == FinanceDraft.TAX and in_force and autumn and _draft.is_abolished(key):
@@ -89,13 +83,12 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 		return
 	var now := PanelKit.plain_line(self, Strings.t("Now %s") % (LedgerBox.text(_draft.live(channel, key), decimals) + unit) if in_force else Strings.t("Not in force yet"), PanelKit.Tone.DIM)
 	now.name = "Now"  # i18n: ok a node name, found by tests
+	now.visible = channel == FinanceDraft.TAX and not in_force  # the row's lever text says "now" (G3 S4 gate T3)
 	if channel == FinanceDraft.TAX:
 		# What the rate is a rate OF (the data's own words): the hover on the figure, not a sentence on the page.
 		now.tooltip_text = Strings.row("taxes", key, "rate_meaning", String(ns.tax_library[key].get("rate_meaning", "")))
 		now.mouse_filter = Control.MOUSE_FILTER_PASS
-	var track_lo := _lo if channel == FinanceDraft.TAX else 0.0
-	var track_hi := _hi if channel == FinanceDraft.TAX else LINE_MAX
-	var made := _lever(self, step, track_lo, track_hi, decimals, "Box", _lo, _hi)  # i18n: ok a node name, found by tests
+	var made := _lever(self, step, float(reach["track_lo"]), float(reach["track_hi"]), decimals, "Box", _lo, _hi)  # i18n: ok a node name, found by tests
 	_slider = made[0]
 	_box = made[1]
 	if channel == FinanceDraft.TAX and key == _income_key(ns):
@@ -105,8 +98,23 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 		_brackets_box = brackets[1]
 	_effect = PanelKit.plain_line(self, "", PanelKit.Tone.PLAIN)
 	_effect.name = "Effect"  # i18n: ok a node name, found by tests
+	# The balance is the row's Balance cell and the rail's (gate T3 on #443: each number once). Kept, unshown, for the
+	# brackets, which have no row of their own: the rail's change carries their money.
+	_effect.visible = false
+	# [glyph, its tone, the words, the names]: the glyph carries the tone, the words are dim and the names plain (gate T10
+	# on #443, as Sectors' answer rows), so a whole sentence is never red.
 	for line in _who_lines(state, loader):
-		PanelKit.plain_line(self, line, PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_WORD
+		var said := HBoxContainer.new()
+		said.add_theme_constant_override("separation", 4)
+		add_child(said)
+		if String(line[0]) != "":
+			var glyph := PanelKit.plain_line(said, String(line[0]), PanelKit.Tone.PLAIN)
+			glyph.theme_type_variation = String(line[1])
+			glyph.autowrap_mode = TextServer.AUTOWRAP_OFF  # a wrapping glyph has no width and sat on its words
+		PanelKit.plain_line(said, String(line[2]), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
+		var names := PanelKit.plain_line(said, String(line[3]), PanelKit.Tone.PLAIN)
+		names.autowrap_mode = TextServer.AUTOWRAP_WORD
+		names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if channel == FinanceDraft.TAX and not in_force and _draft.is_created(key):
 		_verb(Strings.t("Take it back"), "TakeBack", func() -> void: _draft.clear_create(key))  # i18n: ok a node name
 	elif channel == FinanceDraft.TAX and autumn and in_force and ns.tax_library[key].has("rate_range_pct"):
@@ -148,7 +156,20 @@ func _lever(parent: Control, step: float, lo: float, hi: float, decimals: int, b
 		lever_key = key
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 8)
+	# G3 S4: the row's own bar is the lever (finance_lever.gd); the editor keeps the exact box. The row writes the draft
+	# on a drag, so here the bar only brings the box and the effect line along.
+	if lever_channel == channel and lever_key == key and row_lever != null and row_lever.can_drag():
+		row_lever.value_changed.connect(func(_value: float) -> void:
+			_sync()
+			if _tile != null:
+				_tile.refresh())
+		var held := LedgerBox.attach(line, reach_lo, reach_hi, func(value: float) -> void: _write(lever_channel, lever_key, value))
+		held.name = box_name
+		_caption(line, reach_lo, reach_hi, decimals)
+		parent.add_child(line)
+		return [row_lever, held]
 	var slider := HSlider.new()
+	slider.scrollable = false  # the wheel scrolls the books, never the rate (QA's TAKE on #443, as the row's bar)
 	slider.min_value = lo
 	slider.max_value = hi if hi > lo else lo + step
 	slider.step = step
@@ -162,12 +183,28 @@ func _lever(parent: Control, step: float, lo: float, hi: float, decimals: int, b
 	line.add_child(slider)
 	var box := LedgerBox.attach(line, reach_lo, reach_hi, func(value: float) -> void: _write(lever_channel, lever_key, value))
 	box.name = box_name
+	_caption(line, reach_lo, reach_hi, decimals)
+	parent.add_child(line)
+	return [slider, box]
+
+
+func _caption(line: Control, reach_lo: float, reach_hi: float, decimals: int) -> void:
 	var caption := Label.new()
 	caption.text = Strings.t("%s to %s") % [Num.f(reach_lo, decimals), Num.f(reach_hi, decimals)]
 	caption.theme_type_variation = UiTheme.CAPTION
 	line.add_child(caption)
-	parent.add_child(line)
-	return [slider, box]
+
+
+## A row's reach: where a write is clamped (lo, hi), the track a lever spans (track_lo, track_hi), its step and decimals.
+## A tax moves inside its range; a spending line LINE_SPAN either side of today, on a 0 to LINE_MAX track. The row's
+## bar (finance_rows.gd) and this editor read the same reach.
+static func span(ns, draft, row_channel: String, row_key: String) -> Dictionary:
+	if row_channel == FinanceDraft.TAX:
+		var range_pct: Array = ns.tax_library[row_key].get("rate_range_pct", [0.0, 0.0])
+		return {"lo": float(range_pct[0]), "hi": float(range_pct[1]), "track_lo": float(range_pct[0]), "track_hi": float(range_pct[1]),
+			"step": TaxLibrary.step_pct(ns, row_key), "decimals": TaxLibrary.step_decimals(ns, row_key)}
+	var at: float = draft.live(row_channel, row_key)
+	return {"lo": maxf(0.0, at - LINE_SPAN), "hi": minf(LINE_MAX, at + LINE_SPAN), "track_lo": 0.0, "track_hi": LINE_MAX, "step": LINE_STEP, "decimals": 1}
 
 
 ## The player's input: into the draft, never from a refresh.
@@ -233,17 +270,21 @@ func _income_key(ns) -> String:
 func _who_lines(state, loader) -> Array:
 	if channel == FinanceDraft.TAX:
 		var paid: Array = state.player().tax_library[key].get("who_pays", [])
-		return [Strings.t("Paid by: %s") % ", ".join(paid.map(func(b) -> String: return Labels.bloc(String(b))))]
+		return [["", "", Strings.t("Paid by:"), ", ".join(paid.map(func(b) -> String: return Labels.bloc(String(b))))]]
+	# A step up of the line, bloc by bloc (gate T3 on #443): two glyph lines, the tone never alone.
 	var read: Dictionary = FinanceRead.line_blocs(state, loader, key)
-	var out := []
-	var weights: Array = read["weights"]
-	if not weights.is_empty():
-		out.append(Strings.t("For: %s") % ", ".join(weights.map(func(pair: Array) -> String: return Labels.bloc(String(pair[0])))))
-	var offsets := {}
+	var up := []
+	var down := []
 	for pair in read["gains"] + read["loses"]:
-		offsets[pair[0]] = pair[1]
-	var cost: float = GK.SPENDING_STEP * float(state.player().gdp_eur_bn) / 100.0
-	out.append(Strings.t("One step (%s pt of GDP): %s a year. %s") % [Num.f(GK.SPENDING_STEP, 1), EffectsStrip.money_text(-cost), EffectsStrip.who_text(offsets)])
+		if float(pair[1]) > 0.0:
+			up.append(Labels.bloc(String(pair[0])))
+		elif float(pair[1]) < 0.0:
+			down.append(Labels.bloc(String(pair[0])))
+	var out := []
+	if not up.is_empty():
+		out.append(["▲", UiTheme.GOOD_SMALL, Strings.t("A step up pleases"), ", ".join(up)])
+	if not down.is_empty():
+		out.append(["▼", UiTheme.BAD_SMALL, Strings.t("A step up angers"), ", ".join(down)])
 	return out
 
 

@@ -718,8 +718,12 @@ func _check_three_floating_panes() -> void:
 	# which lays out its own sheets, has no page sheet behind them.
 	if _main._windows.content("finances").theme_type_variation != UiTheme.BARE:
 		_fail("the Finances panel's root draws its own ground on its page: '%s'" % _main._windows.content("finances").theme_type_variation)
-	if _main._windows.frame("finances").theme_type_variation != UiTheme.PLATE:
-		_fail("the Finances page is not one sheet")
+	# G3 S4: Books lays out its own two sheets (the sentence, the table), so its page draws none; Public works,
+	# not re-laid yet, is still one sheet.
+	if not _main._windows.frame("finances").own_sheets() or _main._windows.frame("finances").theme_type_variation != UiTheme.BARE:
+		_fail("the Books page draws a sheet behind its own sheets")
+	if _main._windows.frame("projects").theme_type_variation != UiTheme.PLATE:
+		_fail("the Public works page is not one sheet")
 	if not _main._windows.frame("calendar").own_sheets() or _main._windows.frame("calendar").theme_type_variation != UiTheme.BARE:
 		_fail("the Diary's page draws a sheet behind its own sheets")
 	# A scene's header has no tabs, so no segmented ground either (#439 pass 2 T5: an empty 6x6

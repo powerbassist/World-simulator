@@ -34,9 +34,10 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const FinanceLever = preload("res://src/ui/finance_lever.gd")
 
-## A sector's bar, in px: the tile's widest share reads at a glance beside it.
-const BAR_WIDTH := 100
 ## The share a move takes, in points of the line: one to ten.
 const STEP := SectorWarningView.STEP
 ## A sector's trend beside its figure, in px.
@@ -128,29 +129,39 @@ func _sector_row(dns, sector: Dictionary, share: float, warned: bool) -> void:
 	var id := String(sector["id"])
 	# Two lines, not one: the column the row sits in is narrow, and "5.34 per 1 000 inhabitants, need-adjusted" is the long
 	# part, so it wraps under the mark, the bar and the share instead of running out of the page.
-	var cell := VBoxContainer.new()
-	add_child(cell)
-	var row := PanelKit.buttons(cell)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	add_child(row)
 	var name := PanelKit.plain_line(row, Strings.t("%s (!)") % SectorWarningView.sector_name(sector) if warned else SectorWarningView.sector_name(sector), PanelKit.Tone.PLAIN)
 	if warned:
 		ResultTone.tint(name, ResultTone.RISKY)
-	name.custom_minimum_size.x = 130
+	name.custom_minimum_size.x = FinanceRows.NAME_WIDTH * UiTheme.text_scale()
 	name.autowrap_mode = TextServer.AUTOWRAP_OFF
 	name.set_meta("sector", id)
-	var bar := ProgressBar.new()
-	bar.custom_minimum_size = Vector2(BAR_WIDTH, 12)
+	var figure := PanelKit.plain_line(row, Strings.t("%s %s") % [quantity_text(Sectors.quantity(dns, _loader, _line, id)), unit_text(sector)], PanelKit.Tone.DIM)
+	figure.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	figure.autowrap_mode = TextServer.AUTOWRAP_OFF  # a wrapping label in a clipped cell drew nothing
+	figure.clip_text = true
+	figure.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	figure.tooltip_text = figure.text
+	figure.mouse_filter = Control.MOUSE_FILTER_PASS
+	var pct := PanelKit.plain_line(row, Strings.t("%s %% of the line") % Num.f(100.0 * share, 0), PanelKit.Tone.PLAIN)
+	pct.autowrap_mode = TextServer.AUTOWRAP_OFF
+	pct.custom_minimum_size.x = FinanceRows.PCT_WIDTH * UiTheme.text_scale()
+	# The share as a bar in the line's own colour (decision 5: never the accent), on a 0-100 % scale: a locked lever.
+	var bar := FinanceLever.new()
+	bar.custom_minimum_size.x = FinanceRows.BAR_MIN * UiTheme.text_scale()
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(bar)
+	bar.setup(1.0, 100.0, 100.0 * share, FinanceRows.line_color(_line))
+	bar.step = 0.0  # the share as it is: a slider's step of 1 would round it
 	bar.max_value = 100.0
 	bar.value = 100.0 * share
-	bar.show_percentage = false
-	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(bar)
+	bar.lock()
 	name.set_meta("bar", bar)
-	PanelKit.plain_line(row, Strings.t("%s %%") % Num.f(100.0 * share, 0), PanelKit.Tone.PLAIN).autowrap_mode = TextServer.AUTOWRAP_OFF
 	var trend := SectorWarnings.trend(dns, id)
 	if trend.size() >= 2:
 		ChartKit.spark(row, PackedFloat64Array(trend), []).custom_minimum_size = SPARK_SIZE
-	var figure := PanelKit.plain_line(cell, Strings.t("%s %s") % [quantity_text(Sectors.quantity(dns, _loader, _line, id)), unit_text(sector)], PanelKit.Tone.DIM)
-	figure.autowrap_mode = TextServer.AUTOWRAP_WORD
 
 
 ## Each slipping sector's reason once with the sectors it names, then the raise as one chip.
@@ -226,14 +237,15 @@ func _verb(dns, sectors: Array, why_of: Dictionary) -> void:
 	picks.add_child(amount)
 	var shown := PanelKit.plain_line(picks, "", PanelKit.Tone.PLAIN)
 	shown.autowrap_mode = TextServer.AUTOWRAP_OFF
+	# One Move line (gate T3 on #443): the pickers, the amount and the verb together; what it does under it.
+	var move := PanelKit.sized(Button.new())
+	move.text = Strings.t("Draft the move")
+	move.set_meta("move", "move")
+	picks.add_child(move)
 	var strip := EffectsStrip.new()
 	strip.set_meta("sectors", true)
 	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(strip)
-	var move := PanelKit.sized(Button.new())
-	move.text = Strings.t("Draft the move")
-	move.set_meta("move", "move")
-	add_child(move)
 	var refusal := PanelKit.plain_line(self, "")
 	refusal.set_meta("refusal", "refusal")
 	ResultTone.tint(refusal, ResultTone.BLOCKED)
