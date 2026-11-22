@@ -161,6 +161,19 @@ func _process(_delta: float) -> bool:
 		64:
 			if not _main._windows.is_open("legislature"):
 				_fail("Open the bill, pressed on the Finances tab, did not open the Bills tab")
+			# R1, the parent's ruling on #443: the folded line's chevron puts the inbox away, which shows the whole rail.
+			_main._windows.open("finances")
+			_main._hud.inbox.slide_in()
+		67:
+			var rail: Control = _main._windows.content("finances").rail()
+			var unfold := rail.find_child("Unfold", true, false) as Button
+			if not rail.is_folded() or unfold == null or not unfold.is_visible_in_tree():
+				_fail("premise: with the inbox in, no folded rail with its chevron (folded %s)" % rail.is_folded())
+			else:
+				unfold.grab_focus()
+				unfold.pressed.emit()
+		70:
+			_check_the_chevron_put_the_inbox_away()
 			_finish()
 	return false
 
@@ -488,6 +501,17 @@ func _check_the_rail_is_the_domains_aside() -> void:
 			_fail("the folded rail's verbs are not on its line")
 	elif page_box.end.x > rail_box.position.x - UiTheme.GAP_PANE + 0.5:
 		_fail("the page runs under the rail: page ends %s, rail starts %s" % [page_box.end.x, rail_box.position.x])
+
+
+## R1: pressed, the chevron slides the inbox away, the rail opens beside the page, and the keyboard lands on the rail's
+## first verb (the chevron went with the line it was on).
+func _check_the_chevron_put_the_inbox_away() -> void:
+	var rail: Control = _main._windows.content("finances").rail()
+	if _main._hud.inbox.is_visible_in_tree() or rail.is_folded():
+		_fail("the chevron left the inbox showing %s, the rail folded %s" % [_main._hud.inbox.is_visible_in_tree(), rail.is_folded()])
+	var held: Control = _main.get_viewport().gui_get_focus_owner()
+	if held == null or not rail.is_ancestor_of(held) or not held.is_visible_in_tree():
+		_fail("after the chevron the keyboard is on %s, not on the open rail" % [held])
 
 
 ## The parent's ruling (2026-11-22): one filled button a screen, the screen's next step. Register's own PRIMARY leads

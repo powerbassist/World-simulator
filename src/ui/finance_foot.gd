@@ -24,6 +24,8 @@ signal discard_pressed
 signal open_pressed
 signal review_pressed
 signal withdraw_pressed
+## The folded line's chevron: the shell puts the inbox away (finances_driver.gd), and the rail opens.
+signal unfold_pressed
 ## A change's remove mark: (channel, key) as FinanceDraft.drop takes them.
 signal drop_pressed(channel: String, key: String)
 
@@ -92,6 +94,7 @@ var _verbs: Container
 var _strip: FinanceStrip
 var _verdict: Label
 var _stays: Label
+var _unfolding := false  # the chevron opened the rail: the keyboard follows it
 
 
 func _ready() -> void:
@@ -103,6 +106,7 @@ func _ready() -> void:
 	_col = col
 	_strip = FinanceStrip.new()
 	add_child(_strip)
+	_strip.unfold_pressed.connect(func() -> void: _unfolding = true; unfold_pressed.emit())
 	_strip.hide()
 	var head := HBoxContainer.new()
 	_head = head
@@ -169,20 +173,17 @@ func _ready() -> void:
 	col.add_child(_verdict)
 	var verbs := PanelKit.buttons(col)
 	_verbs = verbs
-	_table = _button(verbs, "Table", Strings.t("Table the bill"), table_pressed)  # i18n: ok a node name
-	_table.theme_type_variation = UiTheme.PRIMARY
+	_table = _button(verbs, "Table", Strings.t("Table the bill"), table_pressed, UiTheme.PRIMARY)  # i18n: ok a node name
 	_open = _button(verbs, "OpenBill", Strings.t("Open the bill"), open_pressed)
 	# Two looks for a click: a button or a ghost (gate T7 on #443). The links are ghosts; the rail's verb stays the loud one.
-	_discard = _button(verbs, "Discard", Strings.t("Discard all"), discard_pressed)  # i18n: ok a node name
-	_discard.theme_type_variation = UiTheme.GHOST
-	_review = _button(verbs, "Review", Strings.t("Review the bill"), review_pressed)  # i18n: ok a node name
-	_review.theme_type_variation = UiTheme.GHOST
-	_withdraw = _button(verbs, "Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed)  # i18n: ok a node name
-	_withdraw.theme_type_variation = UiTheme.GHOST
+	_discard = _button(verbs, "Discard", Strings.t("Discard all"), discard_pressed, UiTheme.GHOST)  # i18n: ok a node name
+	_review = _button(verbs, "Review", Strings.t("Review the bill"), review_pressed, UiTheme.GHOST)  # i18n: ok a node name
+	_withdraw = _button(verbs, "Withdraw", Strings.t("Withdraw the bill"), withdraw_pressed, UiTheme.GHOST)  # i18n: ok a node name
 
 
-func _button(parent: Control, node_name: String, label: String, signal_out: Signal) -> Button:
+func _button(parent: Control, node_name: String, label: String, signal_out: Signal, variation := "") -> Button:
 	var button := PanelKit.sized(Button.new())
+	button.theme_type_variation = variation
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.name = node_name  # i18n: ok a node name, found by tests
 	button.text = label
@@ -209,6 +210,10 @@ func set_folded(folded: bool) -> bool:
 		_date.reparent(_head, false)
 		for verb in [_table, _open, _discard, _review, _withdraw]:
 			verb.reparent(_verbs, false)
+		var first := _verbs.get_children().filter(func(v) -> bool: return v.visible and not v.disabled)
+		if _unfolding and not first.is_empty():
+			(first[0] as Control).call_deferred("grab_focus")
+		_unfolding = false
 	custom_minimum_size.x = _width()
 	_stamp = ""
 	if _state != null and _state.player() != null:
@@ -333,7 +338,7 @@ func refresh(state, loader, draft, price) -> void:
 	_text.text = text
 	_text.visible = text != ""
 	var vote: Dictionary = read["vote"]
-	var verdict := reason(refusal) if refusal != "" else carries_text(vote)
+	var verdict := reason(refusal) if refusal != "" else FinanceRefusal.carries_text(vote)
 	if refusal == "":
 		# The seats are the bar's (its legend prints each count); the verdict says the result in words.
 		_vote(vote)
@@ -343,13 +348,6 @@ func refresh(state, loader, draft, price) -> void:
 	_strip.say(_title.text, Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
 		Strings.t("deficit %s → %s bn a year") % [Num.f(float(whole["deficit_now_bn"]), 0), Num.f(float(whole["deficit_after_bn"]), 0)],
 		verdict, refusal == "" and bool(vote.get("passed", false)), refusal != "" or not bool(vote.get("passed", false)))
-
-
-## "✓ It carries: 348 for, 229 against." -- the Assembly's result as the sim's own division rule reads it now.
-static func carries_text(vote: Dictionary) -> String:
-	var counts := [int(vote["yes_seats"]), int(vote["no_seats"])]
-	return ("✓ " + Strings.t("It carries: %d for, %d against.") % counts) if bool(vote.get("passed", false)) \
-		else ("✗ " + Strings.t("It falls: %d for, %d against.") % counts)
 
 
 func _width() -> float:
