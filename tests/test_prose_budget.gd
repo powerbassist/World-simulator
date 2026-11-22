@@ -165,8 +165,12 @@ const INDUSTRY_CARD_CEILING := 90
 ## its share move and strip.
 const SECTOR_TILE_CEILING := 90
 ## An announced closure's row on In progress, its answers and its counters (the
-## parent's ruling on #287): a decision this size must read at a glance.
-const CLOSURE_CARD_CEILING := 100
+## parent's ruling on #287): a decision this size must read at a glance. G3 S3 moved it to
+## the Sectors side sheet, whose head (sector and kind, the title, the jobs and Answer-by
+## tiles) is picture C's; the card's own warned sentence that said the same was cut, and
+## the 6 words left over are stated here: 100 -> 106. Design's T1/T8 on #441 add one: the
+## answers' rows and the chance track's title, with the counter's odds clause cut: 106 -> 107.
+const CLOSURE_CARD_CEILING := 107
 
 ## Exempt: the glossary is where explanation lives; the summit is a scene.
 const EXEMPT := ["glossary", "summit", "audience"]
@@ -354,7 +358,13 @@ func _sweep_closure_card(main) -> void:
 	await process_frame
 	await process_frame
 	var total := 0
-	for node in _visible_text_nodes(panel._progress):
+	# The decision sheet alone: a firm card routed under it (_open_sector) is not the closure's.
+	var sheets: Array = panel._side.find_children("*", "", true, false).filter(func(n) -> bool:
+		return String(n.get_meta("decision", "")).begins_with("closure|"))
+	if sheets.is_empty():
+		_fail("closure card: the side sheet does not show the closure")
+		return
+	for node in _visible_text_nodes(sheets[0]):
 		var words := _words(_text_of(node))
 		total += words.size()
 		if _dump.has("closure_card"):
@@ -392,16 +402,15 @@ func _sweep_warned_tile(main) -> void:
 	main._windows.close_all()
 
 
-## A6: the opened card, as a player leaves it mid-decision.
+## A6: a firm's verbs, as a player leaves them mid-decision -- since G3 S3 on its sector
+## tab's firm sheet (the overview's firm card is gone).
 func _sweep_industry_card(main) -> void:
 	var state = main._state
 	var ns = state.player()
 	var major = preload("res://src/sim/companies.gd").majors_of(main._loader, ns.id)[0]
-	var panel = main._companies_panel
-	panel._open_sector = String(major.sector)
-	panel._open_firm = String(major.id)
-	main._windows.open("companies", true)
-	panel.mark_dirty()
+	var panel = main._sector_panels[String(major.sector)]
+	main._windows.open("sector_%s" % String(major.sector), true)
+	panel._select(String(major.id))
 	await process_frame
 	await process_frame
 	for button in panel.find_children("*", "Button", true, false):  # i18n: ok a class name
@@ -409,13 +418,7 @@ func _sweep_industry_card(main) -> void:
 			button.grab_focus()
 			break
 	await process_frame
-	var card: Node = null
-	for button in panel.find_children("*", "Button", true, false):  # i18n: ok a class name
-		if String(button.get_meta("sector", "")) == String(major.sector):
-			card = button.get_parent().get_parent()
-	if card == null:
-		_fail("industry card: the opened card is not on the tab")
-		return
+	var card: Node = panel._sheet
 	var total := 0
 	for node in _visible_text_nodes(card):
 		var words := _words(_text_of(node))

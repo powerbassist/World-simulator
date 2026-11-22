@@ -3,11 +3,10 @@ extends SceneTree
 ## Headless test: godot --headless --script res://tests/test_industry_tab.gd
 ## Non-zero exit on any failure.
 ##
-## V5.3 a + b step 2, docs/design/v5.3-ab.md 3.2 "The tab, rebuilt": the In progress
-## strip first, then three sector cards, closed until opened; an opened card lists
-## its majors as rows with ONE Act button each; Act opens the firm's verbs, each its
-## name and its money line, and the full three-line strip only for the verb that
-## has focus (a click or the keyboard, never hover).
+## V5.3 a + b step 2, docs/design/v5.3-ab.md 3.2, as G3 S3 left it: a firm's verbs, on its
+## sector tab's firm sheet, each its name and its money line, and the full three-line strip
+## only for the verb that has focus (a click or the keyboard, never hover); a running
+## process on the overview's timeline and side sheet, its ask, counter, Stop and endings.
 ##
 ## Band A5 (spec section 9): a verb whose condition fails is greyed AND its failing
 ## line is on screen beside it -- never only in a tooltip, never first after a
@@ -38,6 +37,9 @@ var _major
 var _sector := ""
 ## The counter picked and made at frame 16 (a #280 answer id, negotiate_N).
 var _counter_made := ""
+## The sector tab, and where the meta helpers look (the overview, or the tab for its verbs).
+var _tab
+var _root
 
 
 func _init() -> void:
@@ -50,6 +52,7 @@ func _process(_delta: float) -> bool:
 	match _frame:
 		2:
 			_panel = _main._companies_panel
+			_root = _panel
 			_panel.acted.connect(func(_b, _l): _acted += 1)
 			var ns = _main._state.player()
 			_major = Companies.majors_of(_main._loader, ns.id)[0]
@@ -57,29 +60,35 @@ func _process(_delta: float) -> bool:
 			_main._windows.open("companies")
 		4:
 			_check_closed()
-			# The overview draws no firm card of its own since the rework pass's C; a Needs
-			# you route opens one (sectors_shell.open_firm), staged here without the firm.
-			_panel._open_sector = _sector
-			_panel.mark_dirty()
+			# G3 S3: a firm's verbs are its sector tab's firm sheet (the overview's card is gone).
+			_tab = _main._sector_panels[_sector]
+			_main._windows.open("sector_%s" % _sector)
+			_tab._select(String(_major.id))
 		6:
-			_check_sector_open()
-			_press(_button_with_meta("fold", "body:" + _sector))
-			_press(_button_with_meta("ledger", "ledger"))
-		7:
-			_check_folds()
-			_press(_button_with_meta("company_id", String(_major.id)))
-		8:
+			_root = _tab
 			_check_verbs()
 			_focus_first_live_verb()
-		10:
+		8:
 			_check_focused()
-			_panel.mark_dirty()
-		12:
+			_tab.mark_dirty()
+		10:
 			_check_open_state_survives()
+			_root = _panel
+			_main._windows.open("companies")
+		11:
+			_press(_button_with_meta("ledger", "ledger"))
+		12:
+			_check_folds()
 			_start_process()
 		14:
 			_check_in_progress()
+			_main._windows.open("sector_%s" % _sector)
+			_tab.mark_dirty()
+		15:
+			_root = _tab
 			_check_a5()
+			_root = _panel
+			_main._windows.open("companies")
 			_post_ask()
 		16:
 			_check_ask()
@@ -111,36 +120,14 @@ func _check_closed() -> void:
 		_fail("closed: an Act button is on screen before any card was opened")
 	if not _visible_with_meta("action_id").is_empty():
 		_fail("closed: a verb is on screen before any firm was opened")
-	if _panel._progress != null and _panel._progress.is_visible_in_tree():
-		_fail("closed: the In progress strip shows with nothing running")
+	if not _visible_with_meta("timeline_pick").is_empty():
+		_fail("closed: the timeline draws a row with nothing running")
 
 
 ## An opened card: one Act per major of its sector, and no verb yet.
-func _check_sector_open() -> void:
-	var ns = _main._state.player()
-	var want := 0
-	for company in Companies.majors_of(_main._loader, ns.id):
-		if String(company.sector) == _sector:
-			want += 1
-	var acts := _visible_with_meta("company_id")
-	if acts.size() != want:
-		_fail("%s open: %d Act buttons, expected one per major (%d)" % [_sector, acts.size(), want])
-	if not _visible_with_meta("action_id").is_empty():
-		_fail("%s open: a verb is on screen before Act was pressed" % _sector)
-
-
-## The two folds open on a press: the body list names its largest firm, the public
-## account its first row.
+## The public account opens on a press: its first row.
 func _check_folds() -> void:
-	var ns = _main._state.player()
-	var largest = null
-	for company in Companies.firms_in_sector(_main._loader, ns.id, _sector):
-		if not Companies.is_major(company) and (largest == null
-				or Companies.headcount(ns, company) > Companies.headcount(ns, largest)):
-			largest = company
-	var text := _text_under(_panel._body)
-	if largest != null and not text.contains(String(largest.company_name)):
-		_fail("body fold pressed: its largest firm %s is not listed" % largest.company_name)
+	var text := _text_under(_panel)
 	if not text.contains(_panel.tr("Subsidy bill")):
 		_fail("public account pressed: its rows are not on screen")
 
@@ -183,7 +170,7 @@ func _check_focused() -> void:
 			lines += 1
 	if lines > 3:
 		_fail("focused: the strip shows %d lines, the most is 3" % lines)
-	var action_id := String(_panel._focus_verb)
+	var action_id := String(_tab._focus_verb)
 	var action = _action(action_id)
 	var ns = _main._state.player()
 	if Processes.is_process(action):
@@ -199,8 +186,6 @@ func _check_focused() -> void:
 
 ## A month's sweep rebuilds the body; the card, the firm and the focus stay.
 func _check_open_state_survives() -> void:
-	if _visible_with_meta("company_id").is_empty():
-		_fail("after a refresh the opened card closed")
 	if _visible_with_meta("action_id").is_empty():
 		_fail("after a refresh the opened firm closed")
 	if _visible_strips().size() != 1:
@@ -224,11 +209,16 @@ func _check_in_progress() -> void:
 	if rows.size() != 1:
 		_fail("in progress: %d rows in the register, expected 1" % rows.size())
 		return
-	if _panel._progress == null or not _panel._progress.is_visible_in_tree():
-		_fail("in progress: the strip is not on screen with a process running")
+	if _visible_with_meta("timeline_pick").size() != 1:
+		_fail("in progress: the timeline does not draw the one running process")
 		return
-	if not _text_under(_panel._progress).contains(String(_major.company_name)):
-		_fail("in progress: no row names %s" % _major.company_name)
+	# The decision sheet itself names the firm, not the routed card beside it.
+	var sheet = null
+	for node in _panel._side.find_children("*", "", true, false):
+		if node.has_meta("decision") and String(node.get_meta("decision")) == "process|%s" % String(rows[0]["id"]):
+			sheet = node
+	if sheet == null or not _text_under(sheet).contains(String(_major.company_name)):
+		_fail("in progress: the side sheet does not show the stake on %s" % _major.company_name)
 	var stop = _button_with_meta("process_id", String(rows[0]["id"]))
 	if stop == null:
 		_fail("in progress: no Stop on the running stake")
@@ -300,9 +290,9 @@ func _check_ask() -> void:
 			_fail("ask: a Stop stands beside the question (walking away is an answer)")
 	if not Pending.window_ids(_main._state, _main._loader).has("companies"):
 		_fail("ask: the Industry tab is not marked as waiting")
-	var head = _button_with_meta("sector", _sector)
-	if head == null or not _text_under(head.get_parent()).contains(_panel.tr("Decision due")):
-		_fail("ask: the %s card does not say a decision is due" % _sector)
+	# G3 S3: the sector's door carries the amber "N wait" chip.
+	if not _panel.find_children("*", "", true, false).any(func(n): return String(n.get_meta("decision_chip", "")) == _sector and (n as Control).is_visible_in_tree()):
+		_fail("ask: the %s door does not say a decision waits" % _sector)
 
 
 ## A counter's chip, pressed: the strip under the row reads its price, its shown
@@ -322,16 +312,23 @@ func _check_counter(option: Dictionary) -> void:
 func _read_counter_strip(option: Dictionary) -> void:
 	var counter := roundi(100.0 * float(option["counter"]))
 	var strip = null
-	for node in _panel._progress.find_children("*", "", true, false):
+	for node in _panel._side.find_children("*", "", true, false):
 		if node.has_meta("counter_strip"):
 			strip = node
 	if strip == null:
 		_fail("counter: no strip under the chips")
 		return
 	var text := _text_under(strip)
-	var range_text := "%d to %d %%" % [roundi(100.0 * float(option["odds_lo"])), roundi(100.0 * float(option["odds_hi"]))]
+	# The odds are the chance track's (Design's T8 on #441), not the strip's words.
+	var chart = null
+	for node in _panel.find_children("*", "", true, false):
+		if node.has_meta("counter_chance") and (node as Control).is_visible_in_tree():
+			chart = node.get_meta("chart")
+	if chart == null or roundi(chart._lo) != roundi(100.0 * float(option["odds_lo"])) or roundi(chart._hi) != roundi(100.0 * float(option["odds_hi"])):
+		_fail("counter %d %%: the chance track does not show its odds range" % counter)
+	var range_text := ""
 	var walk := "%d %% of refusals" % roundi(100.0 * float(option["walk"]))
-	if strip.money_label.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])) or not text.contains(range_text) or not text.contains(walk):
+	if strip.money_label.text != EffectsStrip.cost_text(-float(option["debt_eur_bn"])) or not text.contains(walk):
 		_fail("counter %d %%: the strip reads '%s', expected its price, %s and %s" % [counter, text, range_text, walk])
 
 
@@ -351,7 +348,7 @@ func _check_answered() -> void:
 	var ns = _main._state.player()
 	if not Processes.asks(ns).is_empty():
 		_fail("answered: the ask still waits")
-	if not _text_under(_panel._progress).contains(_panel.tr("Answered: %s.") % _panel.tr("Accept")):
+	if not _text_under(_panel._side).contains(_panel.tr("Answered: %s.") % _panel.tr("Accept")):
 		_fail("answered: the row does not say what was answered")
 	if _acted < 1:
 		_fail("answered: the panel emitted no acted")
@@ -371,7 +368,7 @@ func _check_countered() -> void:
 	if booked != _counter_made:
 		_fail("counter: '%s' was picked and made, the row booked '%s'" % [_counter_made, booked])
 	var said: String = _panel.tr("Answered: %s.") % (_panel.tr("Counter %d %%") % int(_counter_made.trim_prefix("negotiate_")))
-	if not _text_under(_panel._progress).contains(said):
+	if not _text_under(_panel._side).contains(said):
 		_fail("counter: the row does not say '%s'" % said)
 	var lines := {"back": _panel.tr("Your counter was refused: the old price is asked again."),
 		"accepted": _panel.tr("Your counter was accepted.")}
@@ -381,7 +378,7 @@ func _check_countered() -> void:
 				row["negotiation"] = {"answer": _counter_made, "outcome": outcome, "month": 0}
 		_panel._refresh()
 		var found := false
-		for node in _panel._progress.find_children("*", "Label", true, false):
+		for node in _panel._side.find_children("*", "Label", true, false):
 			if String(node.get_meta("negotiation", "")) == outcome and node.text == lines[outcome]:
 				found = true
 		if not found:
@@ -509,7 +506,7 @@ func _button_with_meta(key: String, value: String):
 
 func _visible_with_meta(key: String) -> Array:
 	var out := []
-	for b in _panel.find_children("*", "Button", true, false):
+	for b in _root.find_children("*", "Button", true, false):
 		if b.has_meta(key) and (b as Control).is_visible_in_tree():
 			out.append(b)
 	return out
@@ -517,14 +514,14 @@ func _visible_with_meta(key: String) -> Array:
 
 func _visible_strips() -> Array:
 	var out := []
-	for node in _panel.find_children("*", "", true, false):
+	for node in _root.find_children("*", "", true, false):
 		if node.get_script() == EffectsStrip and (node as Control).is_visible_in_tree():
 			out.append(node)
 	return out
 
 
 func _go_button():
-	for b in _panel.find_children("*", "Button", true, false):
+	for b in _root.find_children("*", "Button", true, false):
 		if b.has_meta("go") and (b as Control).is_visible_in_tree():
 			return b
 	return null

@@ -71,9 +71,18 @@ func _later_frames() -> bool:
 		_check_the_workspace_is_full_with_the_inbox_away()
 		_main._windows.open("calendar")
 		return false
-	if _frame < 10:
+	if _frame == 10:
+		_check_own_sheets_on_the_header_grid("calendar")
+		# Design's T14 on #441: the Sectors pages bring their own sheets too.
+		_main._windows.open("companies")
 		return false
-	_check_own_sheets_on_the_header_grid()
+	if _frame == 13:
+		_check_own_sheets_on_the_header_grid("companies")
+		_main._windows.open("sector_industry")
+		return false
+	if _frame < 16:
+		return false
+	_check_own_sheets_on_the_header_grid("sector_industry")
 	_finish()
 	return false
 
@@ -102,12 +111,14 @@ func _check_the_workspace_is_full_with_the_inbox_away() -> void:
 ## Design's gate T1 on #439: a panel that brings its own sheets sets them on the header sheet's
 ## grid -- its first sheet a gap under the header, its outer edges on the header's -- with no
 ## margin left over from the page sheet that went away.
-func _check_own_sheets_on_the_header_grid() -> void:
+func _check_own_sheets_on_the_header_grid(id: String) -> void:
 	var header: Rect2 = (_main._windows.dock().get_child(0) as Control).get_global_rect()
-	var sheets: Array = _main._windows.content("calendar").find_children("*", "PanelContainer", true, false).filter(
+	if not _main._windows._pages[id].own_sheets():
+		_fail("%s's page draws a sheet behind its own (window_manager OWN_SHEETS)" % id)
+	var sheets: Array = _main._windows.content(id).find_children("*", "PanelContainer", true, false).filter(
 		func(n): return n.theme_type_variation == UiTheme.PLATE and n.is_visible_in_tree())
 	if sheets.is_empty():
-		_fail("premise: the Diary shows no sheet")
+		_fail("premise: %s shows no sheet" % id)
 		return
 	var left := INF
 	var right := -INF
@@ -120,12 +131,12 @@ func _check_own_sheets_on_the_header_grid() -> void:
 		top = minf(top, r.position.y)
 		bottom = maxf(bottom, r.end.y)
 	if bottom > _main._windows.dock().get_global_rect().end.y + 0.5:
-		_fail("the Diary's sheets end at %.0f, past the workspace's foot" % bottom)
+		_fail("%s's sheets end at %.0f, past the workspace's foot" % [id, bottom])
 	var gap := float(UiTheme.GAP_PANE)
 	if absf(left - header.position.x) > 0.5 or absf(right - header.end.x) > 0.5:
-		_fail("the Diary's sheets run %.0f to %.0f, off the header sheet's %.0f to %.0f" % [left, right, header.position.x, header.end.x])
+		_fail("%s's sheets run %.0f to %.0f, off the header sheet's %.0f to %.0f" % [id, left, right, header.position.x, header.end.x])
 	if absf(top - (header.end.y + gap)) > 0.5:
-		_fail("the Diary's first sheet starts %.0f px under the header, not a gap (%.0f)" % [top - header.end.y, gap])
+		_fail("%s's first sheet starts %.0f px under the header, not a gap (%.0f)" % [id, top - header.end.y, gap])
 
 
 ## The four cluster icons are read straight off disk and rasterised, bypassing

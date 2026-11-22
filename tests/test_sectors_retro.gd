@@ -76,11 +76,8 @@ func _process(_delta: float) -> bool:
 		16:
 			var companies = _main._windows.content("companies")
 			companies._last_refusal = "refused in the old game"
-			companies._open_sector = "x"
-			companies._open_firm = "x"
-			companies._open_body = "x"
+			companies._pick = "x"
 			companies._open_ledger = "x"
-			companies._focus_verb = "x"
 			_panel._good_filter = "x"
 			_panel._firm_id = "x"
 			_panel._prog_pick = 1
@@ -93,7 +90,7 @@ func _process(_delta: float) -> bool:
 			_panel = _main._windows.content(TAB)
 			companies = _main._windows.content("companies")
 			_check_load_forgets()
-			if companies._last_refusal != "" or companies._open_sector != "" or companies._open_firm != "" 					or companies._open_body != "" or companies._open_ledger != "" or companies._focus_verb != "":
+			if companies._last_refusal != "" or companies._pick != "" or companies._open_ledger != "":
 				_fail("a load keeps the discarded game's Companies picks or refusal")
 			_cleanup()
 			_main.queue_free()

@@ -69,11 +69,13 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --moved --inbox-away --open budget   (G3 S4: the bill's rail open, the inbox put away)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --open companies
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --months 12 --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --walked --bill-refused --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books spending_pct_gdp:health --books-move   (a share move drafted; add --books-draft for rows beside it)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --open budget
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sectors --slipping --open budget
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --industry --closure --failing --sector-refusal --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-back --open companies
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --closure --buyer-walked --open companies
@@ -2619,11 +2621,13 @@ func _stage_the_industry_tab() -> void:
 			for row in ns.processes:
 				row["months_left"] = 1
 				preload("res://src/sim/process_asks.gd").post(ns, row, action, state.year * 12 + state.month, majors[1])
-	panel._open_sector = String(majors[0].sector)
-	panel._open_firm = String(majors[0].id)
+	# G3 S3: a firm's verbs are its sector tab's firm sheet (the overview's card is gone): the
+	# first major picked there, a live verb focused, for a frame of that tab.
+	var tab = _main._sector_panels[String(majors[0].sector)]
+	tab._select(String(majors[0].id))
 	for action in Companies.available(state, ns, loader.company_actions, String(majors[0].id), loader):
 		if preload("res://src/ui/company_verb.gd").refusal(state, loader, ns, majors[0], action) == "":
-			panel._focus_verb = String(action.id)
+			tab._focus_verb = String(action.id)
 			break
 	panel.mark_dirty()
 

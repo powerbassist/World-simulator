@@ -48,13 +48,20 @@ func _initialize() -> void:
 	await _probe("orgs", "orgs", loader.orgs, "name")
 	_adopt_a_rule(state, loader)
 	await _probe("bloc-proposals", "orgs", _proposals(loader), "name")
-	# V5.3 a + b step 2: the verbs and the sector programmes sit in an opened card,
-	# a firm's verbs under its Act -- opened as a player would before reading them.
+	# A firm's verbs and its sector's programme are its sector tab's (G3 S3: the overview
+	# no longer carries a firm card) -- the firm picked as a player would before reading them.
 	var major = preload("res://src/sim/companies.gd").majors_of(loader, ns.id)[0]
-	_main._companies_panel._open_sector = String(major.sector)
-	_main._companies_panel._open_firm = String(major.id)
-	await _probe("companies:company-actions", "companies", loader.company_actions, "name")
+	_main._sector_panels[String(major.sector)]._select(String(major.id))
+	await _probe("companies:company-actions", "sector_%s" % String(major.sector), loader.company_actions, "name")
+	# A programme's name is its timeline row's title on the overview, once it runs.
+	var stops: Array = preload("res://src/ui/sector_programme.gd").stops(loader, "industry")
+	var had = ns.sector_investment.get("industry", null)
+	ns.sector_investment["industry"] = {"intensity": float(stops[1]["intensity"]), "capital": 0.0}
 	await _probe("companies:investment-actions", "companies", loader.investment_actions, "name")
+	if had == null:
+		ns.sector_investment.erase("industry")
+	else:
+		ns.sector_investment["industry"] = had
 	await _probe("energy-actions", "energy", loader.energy_actions, "name")
 	await _probe("project-actions", "projects", loader.project_actions, "name")
 	_main._on_nation_clicked("DEU")

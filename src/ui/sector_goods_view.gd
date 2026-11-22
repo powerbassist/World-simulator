@@ -18,7 +18,7 @@ static func build(panel, parent: Control, ns) -> void:
 	var loader = panel._loader
 	var sector: String = panel.sector
 	var all: Array = SectorGoods.rows_all(state, loader, ns, sector)
-	var section := PanelKit.section(parent, Strings.t("What it makes"))
+	var section := PanelKit.sheet(parent, Strings.t("What it makes"))
 	if all.is_empty():
 		PanelKit.plain_line(section, Strings.t("Nothing in the goods register is made here yet."))
 		return

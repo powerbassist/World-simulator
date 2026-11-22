@@ -42,6 +42,9 @@ const VerbBlock = preload("res://src/ui/verb_block.gd")
 const SHEET_WIDTH := 440
 
 const FACE := Vector2(28, 38)
+## A major's tile (G3 S3): its width and its face, in px at text size 100.
+const MAJOR_W := 150.0
+const MAJOR_FACE := Vector2(44, 58)
 ## The verdict's tag tone: a status, so a fixed tone and its words, never the accent.
 const VERDICT_TONE := {"behind": UiTheme.BAD_TEXT, "slower": UiTheme.WARN_TEXT, "pace": UiTheme.CAPTION, "ahead": UiTheme.GOOD_TEXT}
 ## The line a Needs you row says under the firm's name, by kind.
@@ -82,13 +85,11 @@ func _init(sector_id := "") -> void:
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(560, 0)  # the dock sets the height (tab_page.gd wanted_height)
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_%s" % side, 16)
-	add_child(margin)
+	# No margin round the sheets: they sit on the header sheet's grid, 12 apart (window_manager
+	# OWN_SHEETS; Design's T14 on #441, the Diary's rule).
 	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 16)
-	margin.add_child(columns)
+	columns.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	add_child(columns)
 	_body = _column(columns, Control.SIZE_EXPAND_FILL)
 	_sheet = _column(columns, Control.SIZE_FILL)
 	_sheet.custom_minimum_size.x = SHEET_WIDTH
@@ -102,15 +103,12 @@ func _column(parent: Control, horizontal: int) -> VBoxContainer:
 	scroll.size_flags_horizontal = horizontal
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	parent.add_child(scroll)
-	# The bar draws over the content: the right-aligned figures keep clear of it.
-	var gutter := MarginContainer.new()
-	gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	gutter.add_theme_constant_override("margin_right", 14)
-	scroll.add_child(gutter)
+	# No gutter for the bar: the sheets' edges meet the header's (T14); a sheet's own padding keeps
+	# its right-aligned figures clear of a bar drawn over it.
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_theme_constant_override("separation", 14)
-	gutter.add_child(box)
+	box.add_theme_constant_override("separation", UiTheme.GAP_PANE)
+	scroll.add_child(box)
 	return box
 
 
@@ -166,7 +164,7 @@ func _refresh() -> void:
 	_majors(ns)
 	var company = _selected(ns)
 	if company != null:
-		FirmSheet.build(self, _sheet, ns, company)
+		FirmSheet.build(self, PanelKit.sheet(_sheet), ns, company)
 	if _light:
 		_light = false
 		VerbBlock.light(_sheet)
@@ -174,25 +172,34 @@ func _refresh() -> void:
 
 func _head(ns) -> void:
 	var reading := SectorRead.head(_state, _loader, ns, sector)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", PanelKit.SECTION_SEPARATION)
-	_body.add_child(box)
-	var top := PanelKit.buttons(box)
+	# G3 S3: the head is a sheet -- the verdict over the lead on the left, the figures on tiles at its right.
+	var box := PanelKit.sheet(_body)
+	var split := HBoxContainer.new()
+	split.add_theme_constant_override("separation", 16)
+	box.add_child(split)
+	var said := VBoxContainer.new()
+	said.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	split.add_child(said)
+	var top := PanelKit.buttons(said)
 	var name_label := PanelKit.plain_line(top, Labels.sector(sector), PanelKit.Tone.PLAIN)
 	name_label.theme_type_variation = UiTheme.HEADING
 	name_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	var tag := PanelKit.plain_line(top, SectorRead.verdict_words(String(reading["verdict"])), PanelKit.Tone.PLAIN)
 	tag.theme_type_variation = String(VERDICT_TONE[reading["verdict"]])
 	tag.autowrap_mode = TextServer.AUTOWRAP_OFF
-	var lead := PanelKit.plain_line(box, SectorRead.lead(reading, func(v: float) -> String: return Num.fs(v, 1)), PanelKit.Tone.PLAIN)
+	var lead := PanelKit.plain_line(said, SectorRead.lead(reading, func(v: float) -> String: return Num.fs(v, 1)), PanelKit.Tone.PLAIN)
 	lead.theme_type_variation = UiTheme.LEAD
-	var figures := HBoxContainer.new()
-	figures.add_theme_constant_override("separation", 28)
-	box.add_child(figures)
-	PanelKit.figure(figures, tr("%s bn") % Num.f(float(reading["output"]), 0), tr("Output"))
-	PanelKit.figure(figures, CompanyVerb.thousands(float(reading["jobs"])), tr("Jobs"))
-	PanelKit.figure(figures, tr("%s %%") % Num.fs(float(reading["trend"]), 1), tr("Trend a year"))
-	PanelKit.figure(figures, tr("%s %%") % Num.f(float(reading["of_gdp"]), 1), tr("Of GDP"))
+	# Two by two: four tiles in one row left the tab past its dock under +35 % (test_i18n_fit).
+	var figures := GridContainer.new()
+	figures.columns = 2
+	figures.add_theme_constant_override("h_separation", 8)
+	figures.add_theme_constant_override("v_separation", 8)
+	figures.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	split.add_child(figures)
+	PanelKit.figure_tile(figures, tr("%s bn") % Num.f(float(reading["output"]), 0), tr("Output"))
+	PanelKit.figure_tile(figures, CompanyVerb.thousands(float(reading["jobs"])), tr("Jobs"))
+	PanelKit.figure_tile(figures, tr("%s %%") % Num.fs(float(reading["trend"]), 1), tr("Trend a year"))
+	PanelKit.figure_tile(figures, tr("%s %%") % Num.f(float(reading["of_gdp"]), 1), tr("Of GDP"))
 	SectorProgramme.build(self, box, ns, sector)
 
 
@@ -204,7 +211,7 @@ func _needs(ns) -> void:
 	# Nothing waiting, no section: the tab's hourglass already says so (the text diet).
 	if mine.is_empty():
 		return
-	var section := PanelKit.section(_body, tr("Needs you · %d") % mine.size())
+	var section := PanelKit.sheet(_body, tr("Needs you · %d") % mine.size())
 	for item in mine:
 		var company = _firm(String(item["company_id"]))
 		var row := HBoxContainer.new()
@@ -250,39 +257,44 @@ func _majors(ns) -> void:
 	for company in Companies.firms_in_sector(_loader, ns.id, sector):
 		if Companies.is_major(company):
 			majors.append(company)
-	var section := PanelKit.section(_body, tr("The majors · %d") % majors.size())
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 24)
-	grid.add_theme_constant_override("v_separation", PanelKit.SECTION_SEPARATION)
+	# G3 S3: a sheet of firm tiles (the kit's majors): the face above the name, the picked one on a tile.
+	var section := PanelKit.sheet(_body, tr("The majors · %d") % majors.size())
+	var grid := HFlowContainer.new()
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
 	section.add_child(grid)
+	var picked = _selected(ns)
 	for company in majors:
-		var cell := HBoxContainer.new()
-		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cell.add_theme_constant_override("separation", PanelKit.COLUMN_SEPARATION)
+		var cell: Container = PanelContainer.new() if picked == company else MarginContainer.new()
+		if picked == company:
+			cell.theme_type_variation = UiTheme.TILE_PANEL
+		cell.custom_minimum_size.x = roundf(MAJOR_W * UiTheme.text_scale())
 		grid.add_child(cell)
-		cell.add_child(Portrait.control_for(String(company.chief_id), FACE))
 		var words := VBoxContainer.new()
-		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		words.alignment = BoxContainer.ALIGNMENT_CENTER
+		words.add_theme_constant_override("separation", 2)
 		cell.add_child(words)
+		var face := Portrait.control_for(String(company.chief_id), MAJOR_FACE)
+		face.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		words.add_child(face)
 		var pick := PanelKit.sized(Button.new())
+		# Not a toggle: the picked tile carries the ground, the name inside stays bare (Design's T15).
 		pick.flat = true
-		PanelKit.toggle(pick)
 		pick.text = company.company_name
-		pick.button_pressed = _selected(ns) == company
+		pick.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		pick.set_meta("firm", String(company.id))
 		pick.pressed.connect(_select.bind(String(company.id)))
-		# The name is the largest target and stops the event before the cell: it answers
-		# the right click itself (QA's play of #381).
 		pick.gui_input.connect(_right_click.bind(company))
 		words.add_child(pick)
 		cell.gui_input.connect(_right_click.bind(company))
 		var city = Region.find_city(_loader.regions.get(ns.id, []), Companies.live_city_of(ns, company))
 		var jobs := tr("%s jobs") % CompanyVerb.thousands(Companies.headcount(ns, company))
-		PanelKit.plain_line(words, jobs if city == null else "%s · %s" % [String(city.city_name), jobs])
+		var where := PanelKit.plain_line(words, jobs if city == null else "%s · %s" % [String(city.city_name), jobs])
+		where.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		if not Closures.announced(ns, String(company.id)).is_empty():
 			var tag := PanelKit.plain_line(words, tr("closing a plant"), PanelKit.Tone.PLAIN)
 			tag.theme_type_variation = UiTheme.BAD_TEXT
+			tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
 func _firm(company_id: String):
