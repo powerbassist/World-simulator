@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Run from the repo root, one gate at a time, and report each as PASS or FAIL with
 the one decisive line. Do not fix a failing gate silently: name it, then ask.
-Every gate below is already named in AGENTS.md; this skill only fixes their order.
+The gates come from AGENTS.md and CI's workflow; this skill fixes their order.
 
 **One Godot at a time.** Gate 3 starts Godot. If the editor, the MCP bridge or
 another run holds this checkout, stop and say so instead of running it.
@@ -19,12 +19,14 @@ another run holds this checkout, stop and say so instead of running it.
 git status --short
 ```
 
-- `M project.godot` must be present and must stay **unstaged**. It is the editor's,
-  never yours (AGENTS.md "Gotchas").
-- **A clean `git status` is itself the alarm.** The per-machine lines have been
-  committed into HEAD before. Check the committed file directly, whatever the
-  status says: `git show HEAD:project.godot | grep -n MCPRuntimeServer` must print
-  nothing (the committed `[autoload]` names only DialogueManager).
+- `project.godot` stays **unstaged**: its local changes are the editor's, never
+  yours (AGENTS.md "Gotchas"). The main checkout normally shows `M project.godot`;
+  a fresh worktree is clean until an editor opens it.
+- **In the main checkout a clean `git status` on it is the alarm.** The per-machine
+  lines have been committed into HEAD before. In any checkout, check the committed
+  file directly, whatever the status says:
+  `git show HEAD:project.godot | grep -n MCPRuntimeServer` must print nothing (the
+  committed `[autoload]` names only DialogueManager).
 - Stage by explicit path only. Never `git add -A`, `.`, `-u` or `commit -a`.
 
 ## 2. Every new script has its `.uid`
@@ -61,21 +63,34 @@ row in `tools/run_tests.sh`'s `tests=()`.
 
 ## 4. The cheap gates
 
-Run all of these; report each separately. They are the Python gates CI's "checks" job
-runs, plus `law_lint` (which `tests.yml` does not run).
+Run all of these; report each separately. They are the gates CI's checks job runs
+(`.github/workflows/tests.yml`), plus `law_lint`, which it does not run. When this
+list and the workflow differ, the workflow wins.
 
 ```bash
 bash tools/check_names.sh
-python tools/check_size.py
 python tools/check_vault.py
+python tools/changelog.py --selftest
+python tools/export_windows.py --selftest
+python tools/changelog.py --check
+python tools/changelog.py --check-pr "$(git merge-base origin/main HEAD)"
 python tools/check_uids.py
-reuse lint
+python tools/screenshot_all.py --selftest
+python tools/voice_pipeline.py --selftest
+python tools/check_size.py
 python tools/event_lint.py --check
 python tools/law_lint.py --check
+python tools/check_skills.py
 python tools/i18n_extract.py --check
-python tools/voice_pipeline.py --selftest
+python tools/translate_api.py --selftest
+reuse lint
 bash tools/run_tests.sh --print-tests | python tools/ci_shards.py --check
+python tools/ui_map.py --check
 ```
+
+CI also runs the `--selftest` of `check_names.sh`, `check_uids.py`, `check_size.py`,
+`check_skills.py`, `i18n_extract.py` and `ui_map.py`: run it when the block touched
+that tool.
 
 `bash tools/check_mcp.sh` is AGENTS.md's sixth. It needs the editor and the
 per-machine bridge, so CI never runs it: run it when the block touched the MCP
@@ -92,7 +107,14 @@ setup or `.mcp.json`, and otherwise list it under "not run".
   and `data/laws/` (schema plus the book's spread bands). CI runs the first; the second
   is not in `tests.yml`, so this is its only gate outside the suite.
 - `i18n_extract.py --check`: a stale key, an empty value or a placeholder mismatch in
-  `data/i18n/`. CI also runs its `--selftest` first.
+  `data/i18n/`.
+- `changelog.py --check-pr`: reads commits only (a diff from the base to HEAD), so run
+  it once the block is committed; the merge base keeps changes that landed on main
+  out of it.
+- `check_skills.py`: lints the regard offsets shipped on person rows, not the files
+  under `.claude/skills/`.
+- `ui_map.py --check`: `docs/ui-map.md` is generated from `src/ui/`; when stale, run
+  `python tools/ui_map.py --write`.
 - `voice_pipeline.py --selftest`: no network, no credits spent.
 - `ci_shards.py --check`: every registered test is in exactly one shard of
   `tools/ci_shards.json`. The local suite does not check this; a new test needs its
