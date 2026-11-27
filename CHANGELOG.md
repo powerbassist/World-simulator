@@ -14,6 +14,136 @@ with its measurements, is docs/history.md.
 The lines waiting for the next cut are the files in changelog.d/ (AGENTS.md, "Versions and
 changelog"). `python tools/changelog.py notes` prints them as the cut will.
 
+## [0.5.3-gate.4] - 2026-11-28 (V5.3 G3: sheets on glass)
+
+### Added
+
+- A law's sheet shows the vote in full with the seats needed to pass, and what the law does to each bloc as a chart.
+- You can ask to see someone of your nation yourself: pick them in the Diary, click a free day, and they come. One a month, and the same person not again for eight months; cancelling before the day gives the chance back.
+- A Glass setting turns the frosted blur off for solid panels.
+- A booking you just made flashes in your colour and keeps a check mark.
+- "The public account" fold on the Sectors overview shows a chevron that turns when it opens.
+- A thin line now divides the top bar's figures.
+- A top bar figure that has not moved says "= steady" instead of showing nothing.
+- Inflation in the top bar now has its own 18-month curve.
+- Beside the Register, the finance bill shows a dashed place where the programme would land.
+- A chevron at the end of the folded finance bill puts the inbox away and shows the whole bill.
+- With no programme building, the Building screen offers a button to the Register.
+- On the relations, trade and coercion layers the legend explains the dark fill on your own country.
+- When you book an audience, the diary says which days the person can see you.
+- A Programmes tab under Finances follows each building programme: its months, the money paid and still to pay, its opening date, the Union's envelope, and an overrun question with its answers.
+- A region far behind the nation on schools or hospitals now arrives as an inbox card; its Open shows the Register on that region with the answers: build here, or leave it.
+- The Register marks the regions in the warning band, names the blocs a programme pleases, and says what the Union would pay.
+- A Register tab under Finances, beside Public Works: pick a kind of public building, how many and where, see each region now and once built, the price range, the bill a year and the opening date, then put it in the finance bill.
+- A region's sheet has a Build here button that opens the Register on that region.
+- Each figure on the top bar says whether it got better or worse over six months, and carries a small curve of its last eighteen months.
+
+### Changed
+
+- The Bills tab sorts the laws onto shelves by subject, each with its count, and a search finds a law on any shelf.
+- Each law's row shows its summary and the vote at a glance, with the seats for and against.
+- A law the Assembly cannot take now stays on its shelf and says why on its row.
+- The order paper is always on the Bills tab, with the rule that one law goes to the Assembly each month.
+- The law's main button names the month it would be voted in.
+- The Diary is a month page: each day shows what it holds, a trip's travel days form one band, three counters sit over the month, and next month's dates are named under it.
+- The people who want to see you sit beside the calendar, each ringed by the time left to answer; their file sets the four answers side by side with what each costs.
+- To book an audience, press See them on the person's file (or Go in the inbox), then click any free day on the calendar.
+- Only the days you can actually book are tinted; a taken day says why when you click it.
+- Visits, laws and reshuffles are booked behind one "Book an act" button in the Diary.
+- The Books page's draft now sits in a tray: each change on one scale from today to the draft, with its money and a way to take it out, the deficit before and after, how the Assembly would vote, and one button to table the bill.
+- Figure tiles and the cards that hold more than a figure keep their text a little way in from the edge.
+- The glow around the main button is an even halo on every side, and it is no longer cut where a button sits on the edge of the Bills lists.
+- The subject chips on Bills use a lighter label.
+- On Bills, the picked law's highlight runs under its whole row, and its name and summary line up.
+- A new look: panels are solid dark sheets with rounded corners and a soft shadow, with no outlines.
+- The sidebar, the top strips and the day ribbon are frosted glass over the blurred map.
+- Buttons are filled surfaces in a few fixed widths, so a row of buttons lines up; the main action of a screen is filled with your nation's colour.
+- Tooltips are rounded popovers, and the red for bad news is a little brighter so it reads better.
+- The Diary's month is drawn as tiles: whole weeks with the neighbouring months' days, today's date in a filled disc, appointments as small cards with the person's face.
+- A state visit's trip reads as one capsule per week, its legs named ("to ...", "back") and the meeting day as a pill; pointing at any day of it lights the whole trip.
+- While you pick a day for someone, each free day carries a "See ..." place to click, and a day the diary cannot give says why.
+- In the people column, the armed "See them" is the screen's main button, the four answers share one button size, and on a request's last day its ring turns red and says "today".
+- A counter-offer on a price ask or a plant closure is now an answer like the others: its button stands at the left, and its shares, cost, who it pleases and angers, and its chance sit at the right in the same places as the other answers.
+- The Sectors overview opens on a timeline of everything under way in the economy (negotiations, plant closures, rescues, failing firms, takeover bids, sector programmes), each on a bar to its end, the ones waiting on you first with the last day to answer.
+- Picking a row on the Sectors timeline opens it in a side sheet beside the list, with the firm's face, its figures and the answers it asks; a decision that arrives opens there on its own, and a row you answered stays until another decision waits.
+- Each answer on the side sheet is one row: its button, its price, who it pleases and who it angers, and what follows; the chance a counter is accepted is drawn as a range from 0 to 100.
+- Each sector is a door at the top of the overview: its verdict, how many decisions wait, its output and trend, a small curve, and a way into its tab.
+- Prices on the Sectors screens read in plain ink with their minus sign; amber is kept for what waits on you, with its date.
+- A firm's verbs, its bills and its standing (state share, subsidy, chair) are on its sector tab's firm sheet; the head figures sit on tiles and every firm verb is one size with its cost under it.
+- Parliament's Majority page lays out the chamber large, with the seats you can lose and the seats a censure lacks drawn as two bars beside it, and the parties each in their own colour.
+- Parliament's Bills page shows each law's path through the Assembly, the upper house and the court as steps, the Assembly's vote as a chamber in green and red, and the order paper on one slim line.
+- A party wears the same colour everywhere, and never the colour of your own nation.
+- On the Bills page each step of a law's path states its verdict with a tick or a warning triangle, the step that would kill the law is outlined in red, and the court's step shows what the law reaches against what the court allows.
+- The order paper marks only the bill before the Assembly with its date, and the next free place is a dashed place saying "Free".
+- Dates in sentences read as "on 31 January", and on slim lines as "31 Jan".
+- On the Diary, Finances and Sectors pages, the scroll bar now stands in the thin gap beside the page instead of narrowing it, so the page keeps its edges when it scrolls.
+- A right click selects its row and brings that row's verbs into view where they already live: a bill's sheet, a firm's sheet, a person's line. The keyboard stays where it was, so Space still pauses.
+- A right click on a queued bill shows its moves under the order paper's four places, with the reason when a move is not possible; they stay with that bill when the queue moves on.
+- Calling a firm's chief and showing the firm on the map are now on the firm's sheet.
+- The Sectors overview shows the shape of the economy: each sector's share of output, its growth against the economy, and a card per sector with its output, jobs, an 18-month curve, its biggest employers and a way into its tab; a click on a sector's dot opens its tab too.
+- On a wide screen the Books page puts Spending beside Revenue, so the whole budget is in view.
+- Public works, the region register and the bill sheet in Parliament end under their content, so the map shows below them on large screens instead of empty panels.
+- The Register screen reads as one table: each region sits on the chart's axis with its figure, and its units are set on its own row.
+- The programme's facts (what, where, the money, when it opens, what can go wrong) sit on their own sheet beside the regions.
+- A programme's running cost wears the colour of the spending line it lands on.
+- In the budget table every row name reads the same, open or at vote, and "Withdraw the bill" is a quiet button like its neighbours.
+- The Building screen lays programmes on a year timeline, with what is paid and the months built on each.
+- An overrun ask shows its three answers side by side, each with its figure, the units it keeps and the same small timeline.
+- The overrun's share of the year's bill is outlined rather than coloured, and the running cost wears its spending line's colour.
+- On the Building timeline, an overrun ask is marked on the date it must be answered by, and each answer's small timeline names its start and its opening.
+- Public works is a calendar: every work is a bar on a timeline of years with today and the end of your term on it, the works' bill by year under it, and the picked work's figures, who it pleases and angers, and its Start beside it.
+- Cancelling a public work asks for a confirmation first.
+- The Books page is one table, spending then revenue: every line and tax has its own bar on one money scale, and dragging the end of the bar sets it; the open line still takes an exact figure.
+- The finance bill is a column at the right that stays on every Finances tab, with the deficit walked change by change from today to the bill, who each change is for or who pays it, and how the Assembly would divide.
+- While the inbox is open, the finance bill's column folds to a few lines so the table keeps its width.
+- Only the screen's next step is a filled button: on Register it is "Put it in the finance bill", and the bill's own button is plain there.
+- On an amendment, the deficit walk shows the bill already before the Assembly as its own first step, and the bill's column scrolls its changes so its buttons stay on screen.
+- On a wide screen, a sector's page lays three columns: its figures and majors, what it makes, and the selected firm.
+- The top bar shows this month's deficit or surplus in euros, named in words, instead of a signed share of GDP.
+- The top bar shows growth with the economy's size beside it, and unrest and your majority as gauges against the line that matters (strikes, a majority).
+- The sidebar, the figures along the top and the time bar float as three frosted glass panes over the map, with the map showing in the gaps between them.
+- An open screen fills the space between the panes, and makes room beside the inbox rather than hiding under it; its tabs sit in a rounded switch at the top of the screen, next to where you are.
+- Save, Menu, Back and Forward sit in the top pane beside the figures.
+- The open domain in the sidebar is marked with a bar in your nation's colour, and a count waiting there is a solid amber pill.
+- Panels sit on dark sheets with a faint edge and a small shadow; the inbox is a little narrower.
+- The date in the time bar reads in full, like "Thu 1 January 2026", and the next vote as a month and year.
+- A person who asks to see you can be received on any free day of your diary from tomorrow until the end of the month they need an answer by, not only on two days they picked.
+- The diary no longer puts a face on each day a person can be seen: the days are tinted, and a click on one lists who you can receive, with their party.
+- Voting a programme of new schools or hospitals now wins some favour with the groups who care about them, and voting to close them costs it.
+- A month in which a region is flagged as far behind the nation on schools or hospitals no longer counts as a quiet month, so the game does not add an event of its own.
+
+### Removed
+
+- The goal tiles and their "What moves it" list are gone from the Bills tab.
+- The Sectors overview no longer has its own "In progress" and "Failing firms" lists, nor a firm card under the side sheet; both lists are rows on the timeline.
+- The small menu a right click opened is gone.
+- The Sectors overview no longer lists every firm under each sector, nor the sector programme rows; a firm's verbs are on its sector's tab, and a sector's regulation now reads on its card.
+- The 130 % text size.
+- The two stacked bars of revenue and spending on the Books page; the bars on each row replace them.
+- The 115 % text size; a saved 115 % reads as 100 %.
+
+### Fixed
+
+- The finance bill's vote showed a code instead of its name in the title bar.
+- A poll's next date reads "January 2027", and so do the dates inside the deal and request sentences.
+- On Bills, the picked law is one highlight with no second box round its name, the highlight follows a new pick, and the list keeps its old spacing.
+- The roster's due, answer-by and vacant-since dates read "January 2027".
+- Opening a firm or a fold in the Sectors side column keeps the keyboard focus on what you pressed.
+- Opening "Poll it" or "Address the nation" no longer paints the button like the main action.
+- The chief's remark now sits inside the top bar instead of covering the inbox column's header.
+- Public works: the years under the timelines no longer run into each other, "today" stays clear of the end of your term, and a work's opening date is no longer cut off at larger text sizes.
+- Parliament: no more blank band under the Assembly's seats at larger text sizes.
+- An overrun ask now gives the last month you can answer it in, not the month it is paid.
+- With several overrun asks, each year's bill names its programme, and a programme of many units no longer pushes its answers off the screen.
+- The map layer buttons no longer sit over Spain and Portugal, so a click on those countries opens them instead of changing the map's colours.
+- Clicking a button no longer flashes it in your nation's colour; only a chosen option and the running clock speed stay filled.
+- The construction register and its building list fill the screen without a scroll bar.
+- An open fold or a picked firm stays readable under a yellow national colour.
+- The time bar's timeline sits level again, and the clock no longer pushes it sideways while the clock is held.
+- A picked firm's name, and an open fold, now sit on a raised ground.
+- Booking a visit from a nation scrolls the diary down to its Book button.
+- The nation can be addressed once a month, whatever the bill; the address panel shows the date of the last one.
+
 ## [0.5.3-gate.3] - 2026-11-17 (V5.3 rework 2 and the void pass)
 
 ### Added
