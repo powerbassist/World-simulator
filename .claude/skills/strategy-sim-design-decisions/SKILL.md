@@ -145,9 +145,10 @@ Write, in this order:
 8. **Broader direction**: the version a later block would build, in three lines.
 9. **Not verified**: what was inferred, what the code was not read for.
 
-Two to five findings. A long bag of weak observations is a fail of this step. A full
-audit runs 500 to 700 words per surface. When the brief sets a cap below that, items 1,
-2, 3, 6 and 7 keep their tables and items 4, 5 and 8 become one line each.
+Report the findings that change what the player does; a long bag of weak observations is a
+fail of this step. Keep the audit short enough to read in one sitting. When the brief asks for
+a short one, items 1, 2, 3, 6 and 7 keep their tables and items 4, 5 and 8 become one line
+each.
 
 ## Guards - fail loudly
 
