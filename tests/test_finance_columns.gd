@@ -82,8 +82,9 @@ func _check_scale(scale: float) -> void:
 	_check_one_table("at %.0f, text %d" % [PAGE_1080, roundi(scale * 100)])
 	if scale == 1.0 and not (need > 1652.0 and need <= PAGE_2K):
 		_fail("at text 100 the switch is %.0f: not between the 1080 page and the 2K one" % need)
-	if scale < 1.0 and not (need > PAGE_1080 and need <= PAGE_2K):
-		_fail("at text 90 the switch is %.0f: not between the 1080 page and the 2K one" % need)
+	# Under the 100 bound's floor, so a switch that stopped following the text size fails here.
+	if scale < 1.0 and not (need > PAGE_1080 and need <= 1652.0):
+		_fail("at text 90 the switch is %.0f: not between the 1080 page and the text-100 floor" % need)
 	# One px under, one table; at it and over, two sheets; back under, one table again.
 	await _at(need - 2.0)
 	_check_one_table("2 px under the switch")
