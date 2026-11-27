@@ -96,6 +96,11 @@ func _process(_delta: float) -> bool:
 		return false
 	if _stage == 8:
 		_check_the_capped_page(INF)
+		_fold_the_capped_rail()
+		_stage = 9
+		return false
+	if _stage == 9:
+		_check_the_capped_strip()
 		_finish()
 		return false
 
@@ -396,6 +401,42 @@ func _check_the_capped_page(cap: float) -> void:
 		_fail("capped at %s the page is %s and its rail %s, wanted a %.0f page with the rail a gap past it" % [cap, held, beside, wanted])
 	if not is_equal_approx(_manager.dock().size.x, full):
 		_fail("a capped page narrowed the header band to %.0f" % _manager.dock().size.x)
+
+
+## The same page with the inbox showing: a rail that folds lies over the page as a strip, and ends where the page does.
+func _fold_the_capped_rail() -> void:
+	_manager.close_all()
+	var inbox := Control.new()
+	inbox.add_to_group(WindowManager.INBOX_GROUP)
+	inbox.size = Vector2(300, 500)
+	root.add_child(inbox)
+	_rail = FoldingRail.new()
+	_rail.custom_minimum_size = Vector2(200, 60)
+	_manager.set_aside(WindowManager.Domains.domain_of("capped"), _rail)
+	_capped.cap = 900.0
+	_manager.open("capped")
+
+
+func _check_the_capped_strip() -> void:
+	var held: Rect2 = _manager.frame("capped").get_global_rect()
+	var strip: Rect2 = _rail.get_global_rect()
+	var full: float = BOUNDS.x - UiTheme.GAP_PANE - WindowManager.DOCK_LEFT - 300.0 - UiTheme.GAP_PANE
+	if not _rail.folded or not is_equal_approx(held.size.x, 900.0) or not is_equal_approx(strip.end.x, held.end.x) 			or not is_equal_approx(strip.position.x, held.position.x) or not is_equal_approx(held.position.y, strip.end.y + UiTheme.GAP_PANE):
+		_fail("capped with the inbox showing: the page is %s and the strip %s, wanted 900 wide each, the strip over the page" % [held, strip])
+	if not is_equal_approx(_manager.dock().size.x, full):
+		_fail("a capped page under a folded strip narrowed the header band to %.0f of %.0f" % [_manager.dock().size.x, full])
+
+
+class FoldingRail extends Control:
+	var folded := false
+
+	func set_folded(now: bool) -> bool:
+		var changed := folded != now
+		folded = now
+		return changed
+
+	func is_folded() -> bool:
+		return folded
 
 
 class Capped extends Control:

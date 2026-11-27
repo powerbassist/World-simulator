@@ -13,6 +13,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceColumns = preload("res://src/ui/finance_columns.gd")
+const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
@@ -169,12 +170,8 @@ func _check_the_open_editor() -> void:
 	if not _panel._table.columns():
 		_fail("premise: no columns at %.0f" % PAGE_2K)
 		return
-	for row in [[FinanceDraft.SPENDING, "health"], [FinanceDraft.TAX, "income_tax"]]:
-		_panel.open_row(row[0], row[1])
-		for _i in 6:
-			await process_frame
-		if _panel._editor == null:
-			_fail("premise: no editor on %s" % row[1])
+	for row in [[FinanceDraft.SPENDING, "health"], [FinanceDraft.TAX, "income"]]:
+		await _open(row[0], row[1])
 		_check_columns("%s open" % row[1])
 		# Nothing the editor says is cut in the narrower sheet (a sector's figure was, in the first frames).
 		for node in _panel._editor.find_children("*", "Label", true, false) if _panel._editor != null else []:  # i18n: ok a class name
@@ -182,9 +179,56 @@ func _check_the_open_editor() -> void:
 			if label.is_visible_in_tree() and label.clip_text and label.text != "" \
 					and label.get_theme_font("font").get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, label.get_theme_font_size("font_size")).x > label.size.x + 0.5:
 				_fail("%s open: '%s' is cut at %.0f px" % [row[1], label.text, label.size.x])
-	_panel.open_row(FinanceDraft.TAX, "income_tax")
+		if row[0] == FinanceDraft.SPENDING:
+			await _check_every_line_figures(2)
+	_panel.open_row(FinanceDraft.TAX, "income")
 	for _i in 4:
 		await process_frame
+
+
+## A sector's figure wraps beside its name, so it needs a width of its own: starved, it stacks a word a line.
+## Read in both arrangements at both text sizes, the spending row's editor left open.
+func _check_sector_figures(most := 2) -> void:
+	for scale in [1.0, 1.15]:
+		UiTheme.set_text_scale(scale)
+		_panel.theme = UiTheme.build()
+		for width in [PAGE_1080, 2292.0]:
+			await _at(width)
+			var names: Array = _panel._editor.find_children("*", "Label", true, false).filter(func(l) -> bool: return l.has_meta("sector"))  # i18n: ok a class name
+			if names.is_empty():
+				_fail("premise: no sector rows at %.0f, text %d" % [width, roundi(scale * 100)])
+			for name in names:
+				var figure := name.get_parent().get_child(1) as Label
+				if figure.size.x < FinanceRows.CAPTION_MIN * scale - 0.5 or figure.get_line_count() > most:
+					_fail("%s at %.0f, text %d: '%s' is %.0f wide on %d lines" % [_panel._open_id, width, roundi(scale * 100), figure.text, figure.size.x, figure.get_line_count()])
+			_check_fits("sector rows at %.0f, text %d" % [width, roundi(scale * 100)])
+	UiTheme.set_text_scale(1.0)
+	_panel.theme = UiTheme.build()
+	await _at(PAGE_2K)
+
+
+## Every line's sectors, not health's alone: the longest names are elsewhere, and a longer language lengthens them.
+func _check_every_line_figures(most: int) -> void:
+	var lines := 0
+	for key in _state.player().spending_pct_gdp:
+		await _open(FinanceDraft.SPENDING, String(key))
+		if _panel._editor == null or _panel._editor.find_children("*", "Label", true, false).filter(func(l) -> bool: return l.has_meta("sector")).is_empty():  # i18n: ok a class name
+			continue
+		lines += 1
+		await _check_sector_figures(most)
+	if lines < 2:
+		_fail("premise: %d lines with sectors" % lines)
+
+
+## Open a row with the keyboard let go first: an editor holding it keeps its row (the page never rebuilds under a hand),
+## and the row asked for would not be the one measured.
+func _open(channel: String, key: String) -> void:
+	root.gui_release_focus()
+	_panel.open_row(channel, key)
+	for _i in 6:
+		await process_frame
+	if _panel._editor == null or _panel._editor.channel != channel or _panel._editor.key != key:
+		_fail("premise: no editor on %s (%s)" % [key, "none" if _panel._editor == null else _panel._editor.key])
 
 
 func _check_pseudo() -> void:
@@ -192,17 +236,21 @@ func _check_pseudo() -> void:
 	ProjectSettings.set_setting("internationalization/pseudolocalization/expansion_ratio", 0.35)
 	TranslationServer.pseudolocalization_enabled = true
 	TranslationServer.reload_pseudolocalization()
+	root.gui_release_focus()  # an editor holding the keyboard would keep the English rows up
 	_panel._open_id = ""
 	_panel.mark_dirty()
 	await _at(PAGE_1080)
 	var need: float = _panel._table.need()
 	print("test_finance_columns: pseudo, the switch at %.0f px" % need)
+	if _head_text(_panel._spending_box, "who") == "WHO PAYS" or not _slot(_panel._revenue_box, "who").any(func(c) -> bool: return c.text.begins_with("[")):
+		_fail("premise: the rows are still English under the pseudo-locale")
 	_check_fits("pseudo, one table")
 	await _at(need + 40.0)
 	if not _panel._table.columns():
 		_fail("pseudo: no columns 40 px over its own switch")
 	_check_fits("pseudo, columns")
 	_check_one_bar("pseudo, columns")
+	await _check_every_line_figures(99)  # the pseudo unit runs to five lines: wrapped, never starved of width
 	TranslationServer.pseudolocalization_enabled = false
 
 
