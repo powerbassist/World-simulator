@@ -47,8 +47,8 @@ is: the game writes the French date and the decimal comma itself.
 ## Typography
 
 Use **U+00A0 (non-breaking space)** everywhere French typography wants a space the line
-must not break on. This is the existing French table's convention (219 such spaces in `ui.json`): the
-narrow U+202F is not used anywhere, so do not introduce it.
+must not break on. This is the existing French table's convention: the narrow U+202F is not
+used anywhere, so do not introduce it.
 
 | Where | Write |
 |---|---|
@@ -68,7 +68,7 @@ narrow U+202F is not used anywhere, so do not introduce it.
 includes the chief of staff, ministers, party leaders, union secretaries, firm chiefs,
 foreign leaders and journalists. It is how the Élysée and every ministry actually speak,
 even between colleagues of thirty years, and the game's existing French already uses *vous*
-(29 rows, and no *tu*). The only exceptions are the President's spouse and a lover in a
+(and no *tu*). The only exceptions are the President's spouse and a lover in a
 private scene (the affair lines): they say *tu*, which is exactly what makes those lines
 private.
 
@@ -226,9 +226,10 @@ as a subtitle while the English recording plays (the author's call). Translate t
 do not shorten it to match the audio, and do not change its meaning to match the recording's
 intonation.
 
-**Not yet: summit responses.** The player's choice lines in `data/summits/*.dialogue` stay in
-English until `summit_panel.gd` stops reading a choice's effects by its English text. The
-extractor keeps them out of the `ui` source. Summit spoken lines and titles may be translated.
+**Not yet: summit responses.** The player's choice lines in `data/summits/*.dialogue` are not
+translated yet, and the extractor keeps them out of the `ui` source. Their effects are keyed by
+the response's stable id, so translating them is safe once the French pass reaches them. Summit
+spoken lines and titles may be translated.
 
 ## Before you return a row
 
@@ -254,7 +255,7 @@ and lists any termbase additions it proposes.
 
 ## Sources
 
-- The game's own French table (`data/i18n/fr/ui.json`): its 677 shipped rows set the termbase's
+- The game's own French table (`data/i18n/fr/ui.json`): its shipped rows set the termbase's
   existing words, the U+00A0 convention and the *vous* register.
 - `localize-fr` from i18n-agent/i18nstack (MIT), read as data: its typography table, its rule of
   infinitive buttons and *Aucun* empty states, and its list of calques were the starting

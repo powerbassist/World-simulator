@@ -20,7 +20,7 @@ makes true, plus what its slots carry.** Everything below follows from that.
 
 | Input | Where | What it gives you |
 |---|---|---|
-| The line type and its condition | Gameplay's menu (`.superpowers/sdd/audience-talk-menu.md` in the Gameplay worktree), later `data/audiences/talk_lines.json` | what is guaranteed true when the line shows: the only facts you may state |
+| The line type and its condition | Gameplay's menu `data/audiences/talk_lines.json` (design notes: `.superpowers/sdd/audience-talk-menu.md` in the Gameplay worktree) | what is guaranteed true when the line shows: the only facts you may state |
 | The two answers the menu names | the same row's "She answers" column | what each answer must tell the player |
 | Who can say it | the file: `default.dialogue` is spoken by every kind; a stance file by that stance; a trait override by that trait | how much voice the line may carry |
 | The person's data | `data/people/<NATION>.json`: `kind` (politician, executive, press_owner, judge, activist, regional_figure, union_leader), `traits`, `wants`, `spouse_id`; feelings bands in `src/ui/feelings.gd` (rapport cold to close, loyalty disloyal to devoted, grudge annoyed or resentful) | what may differ between speakers |
@@ -31,20 +31,23 @@ invents facts the scene will contradict.
 
 ## The slots, and what each one is
 
-The wiring (`src/ui/audience_talks.gd`, `audience_scene.gd`) passes one dictionary per line.
-Write against what it carries, not what the mockup shows.
+The wiring (`src/ui/audience_lines.gd`, `audience_view.gd`, `audience_scene.gd`,
+`audience_talks.gd`) passes one dictionary per line. Write against what it carries, not what
+the mockup shows. `name`, `president`, `ask`, `first`, `lever` and `topic` are always
+present (the last two start empty); the others exist only when the line's facts carry them.
 
 | Slot | Carries | Write it as |
 |---|---|---|
 | `{{name}}` | the person's full shown name ("Hélène Vasseur") | the speaker prefix of her lines; never inside a sentence |
-| `{{president}}` | the player's full name ("Daniel Moucron") | rarely. "Not this week, Daniel Moucron" is what ships, and nobody addresses a president that way. At most once per title, never in the player's line |
+| `{{first}}` | the person's first name | the player addressing her by name |
+| `{{president}}` | the player's full name ("Daniel Moucron") | the speaker prefix of the player's line. Nobody addresses a president by full name, so as a vocative rarely: at most once per title, never inside the player's words |
 | `{{ask}}` | the request's object, as a noun phrase | "the matter of {{ask}}" works; "your {{ask}}" may not |
-| `{{bill}}` `{{plant}}` `{{region}}` `{{third}}` | proposed by Gameplay (the talk menu), not wired yet | a name used as a noun: "the {{bill}}", "the plant at {{plant}}" only once Interface says it carries a town |
-| `{{date}}` | proposed, format not fixed | write sentences that survive both "May" and "15 May 2026": "on {{date}}" breaks the first, "in {{date}}" the second. Prefer a sentence that does not need the preposition, or ask Interface for the format first |
-
-The mockup's "How is your family, Hélène?" uses a first name the slots do not carry. A
-`{{first}}` slot, or a title slot ("Madame la ministre"), is Interface's to add; until then do
-not address the person by name in the player's line.
+| `{{bill}}` | the law in question | a name used as a noun |
+| `{{plant}}` | "<firm>'s plant at <town>", a whole noun phrase | use it as it is; do not add "the plant at" |
+| `{{date}}` | the closure's due date, set with `{{plant}}` | prefer a sentence that survives any date format |
+| `{{sector}}` | the sector's label | a name used as a noun |
+| `{{third}}` | another person's name; in the player's line the panel puts the face picker there | a name; say nothing about their character |
+| `{{lever}}` `{{topic}}` | the word for the lever or topic, on result titles | a name used as a noun |
 
 ## The player's line
 
@@ -59,7 +62,7 @@ About 70 characters in English. French runs 20 to 35 % longer, and the menu row 
 ## Her answers
 
 Each answer title holds **two or three `%` variants**, so the same person seen twice does not
-repeat herself (the repo's `default.dialogue` carries two to six per title). Each variant:
+repeat herself. Each variant:
 
 1. **One or two sentences, about 160 characters at most.** CK3's writers found a character
    event holds "about three paragraphs of copy and 3-4 options" before it looks wrong
@@ -158,12 +161,12 @@ These are the shapes the author has called ridiculous. Check each draft against 
    condition, a slot, or the person's own stance. Anything else goes.
 6. **The yes and no test.** Read the two answer titles side by side and write, in one line
    each, what the player learns from each. If the two lines are the same, rewrite the no.
-7. **French later.** The i18n lints (`tests/test_i18n_lint.gd`, `tools/i18n_extract.py`) do not
-   read `.dialogue` files. Dialogue Manager has its own translation path:
-   `locale/translations_pot_files` in `project.godot` lists the summit files only today.
-   Registering the audience files is a committed `project.godot` change, which is the parent's
-   call. Until then, write English that a translator can carry: no puns, no idioms that only
-   work in English, one sentence per thought.
+7. **French.** `tools/i18n_extract.py` reads every spoken line and response of
+   `data/audiences/*.dialogue` as a `ui` msgid, with the French in `data/i18n/fr/ui.json`
+   (`french-localization`). A changed English line leaves its old French key stale, which
+   `--check` fails on; a new line only shows in the coverage counts. Write English that a
+   translator can carry: no puns, no idioms that only work in English, one sentence per
+   thought.
 
 ## Common mistakes
 
