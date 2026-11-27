@@ -7,7 +7,8 @@ extends SceneTree
 ## read whole, on the page's OWN width. Pinned here, at text 90 and 100: one table below the switch and two sheets
 ## from it; the switch falls where Design computed it (between the 1080 page and the 2K one); nothing in either
 ## arrangement is wider than its sheet or cut, an open row's editor included; the two sheets' bars share one length
-## (the money scale, T5 on #443); the page goes back to one table; the page's cap; the long pseudo-locale fits.
+## (the money scale, T5 on #443); in columns each sheet hugs its rows and the width left over stays empty at the right;
+## the page goes back to one table; the page's cap; the long pseudo-locale fits.
 
 const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
@@ -61,9 +62,10 @@ func _run() -> void:
 
 
 ## The books laid out `width` wide (a page with no window manager keeps the bill's rail in its frame, so the panel
-## is that much wider). Containers sort and the table re-lays itself over a few frames.
+## is that much wider). Containers sort and the table re-lays itself over a few frames. Sized again each pass, as the
+## dock sizes its page every frame: sheets measured at another text size hold it for one pass, one table the next.
 func _at(width: float) -> void:
-	for _pass in 2:
+	for _pass in 3:
 		var rail: float = _panel.size.x - _panel._table.size.x if _panel._table.size.x > 0.0 else 0.0
 		_panel.size = Vector2(width + rail, 1100)
 		for _i in 4:
@@ -98,9 +100,11 @@ func _check_scale(scale: float) -> void:
 	await _at(need)
 	_check_columns("at the switch, text %d" % roundi(scale * 100))
 	_check_need("at the switch, text %d" % roundi(scale * 100))
-	await _at(need + 175.0 * scale)
-	_check_columns("175 px over, text %d" % roundi(scale * 100))
-	_check_split(175.0 * scale, scale, "175 px over, text %d" % roundi(scale * 100))
+	for width in [need + 175.0 * scale, 2292.0]:
+		await _at(width)
+		var at := "at %.0f, text %d" % [width, roundi(scale * 100)]
+		_check_columns(at)
+		_check_hug(scale, at)
 	if not is_equal_approx(table.cap(), maxf(1880.0 * scale, need + 1.0)):
 		_fail("the cap is %.0f, wanted %.0f" % [table.cap(), maxf(1880.0 * scale, need + 1.0)])
 	await _at(PAGE_1080)
@@ -184,17 +188,18 @@ func _check_need(state: String) -> void:
 		_fail("%s: the switch is %.1f for sheets, gap and bar room of %.1f (laid gap %.1f)" % [state, table.need(), sum, gap])
 
 
-## Of the room over the switch a fifth goes to spending (Design's 736 of 1880), and every bar grows by that much.
-## The 0.2 is written here: read from the code, any other split would pass.
-func _check_split(over: float, scale: float, state: String) -> void:
+## Each sheet is as wide as its rows ask, the bars at their least, whatever the page gives: the leftover stands at the
+## right of Revenue, never inside a sheet (the author on 2K).
+func _check_hug(scale: float, state: String) -> void:
 	var table: FinanceColumns = _panel._table
-	var share := floorf(over * 0.2)
 	var bar: float = (table._row_bars(_panel._revenue_box)[0] as Control).size.x
-	var sheet: float = (table._wraps[0] as Control).size.x
-	var wanted_bar := FinanceRows.BAR_MIN * scale + share
-	var wanted_sheet: float = table._spend + share + table._margins()
-	if absf(bar - wanted_bar) > 0.5 or absf(sheet - wanted_sheet) > 0.5:
-		_fail("%s: bars %.1f (wanted %.1f), spending's sheet %.1f (wanted %.1f)" % [state, bar, wanted_bar, sheet, wanted_sheet])
+	var spending: float = (table._wraps[0] as Control).size.x
+	var revenue: Control = table._wraps[1]
+	var wanted := [FinanceRows.BAR_MIN * scale, table._spend + table._margins(), table._rev + table._margins()]
+	if absf(bar - wanted[0]) > 0.5 or absf(spending - wanted[1]) > 0.5 or absf(revenue.size.x - wanted[2]) > 0.5:
+		_fail("%s: bars %.1f, sheets %.1f and %.1f, wanted %s" % [state, bar, spending, revenue.size.x, wanted])
+	if absf(table.scroll.get_global_rect().end.x - revenue.get_global_rect().end.x) > 0.5:
+		_fail("%s: the scroll ends at %.0f, revenue at %.0f: its bar would stand away from the sheets" % [state, table.scroll.get_global_rect().end.x, revenue.get_global_rect().end.x])
 
 
 ## Every bar, in both sheets, one length: the same billions draw the same pixels.
@@ -242,7 +247,7 @@ func _check_sector_figures(most := 2) -> void:
 			var names: Array = _panel._editor.find_children("*", "Label", true, false).filter(func(l) -> bool: return l.has_meta("sector"))  # i18n: ok a class name
 			if names.is_empty():
 				_fail("premise: no sector rows at %.0f, text %d" % [width, roundi(scale * 100)])
-			var lines: int = most if width == PAGE_1080 or width == 2292.0 else most + 1  # the narrower sheet: one more
+			var lines: int = most if width == PAGE_1080 else most + 1  # a hugging sheet in columns: one more
 			for name in names:
 				var figure := name.get_parent().get_child(1) as Label
 				if figure.size.x < FinanceRows.CAPTION_MIN * scale - 0.5 or figure.get_line_count() > lines:
@@ -379,8 +384,8 @@ func _check_who_folded() -> void:
 	await _at(PAGE_2K)
 
 
-## In the dock, a window too short for the books: in columns the bar stands in the gap, so Revenue keeps the page's
-## right edge (T16 on #441); as one table the scroll is inside a sheet again and keeps its own.
+## In the dock, a window too short for the books: in columns the bar stands in the gap at Revenue's right (T16 on #441);
+## as one table the scroll is inside a sheet again and keeps its own.
 func _check_the_scroll_bar() -> void:
 	_panel.hide()
 	var host := Control.new()
@@ -405,8 +410,8 @@ func _check_the_scroll_bar() -> void:
 			_fail("premise: at %d, columns %s, scrolls %s" % [width, table.columns(), GapBars.scrolls(table.scroll)])
 		elif table.columns():
 			var end: float = (panel._revenue_box.get_parent() as Control).get_global_rect().end.x
-			if own.visible or gap == null or not gap.visible or absf(end - table.get_global_rect().end.x) > 0.5:
-				_fail("columns at %d: own bar %s, gap bar %s, revenue ends at %.0f of %.0f" % [width, own.visible, gap != null and gap.visible, end, table.get_global_rect().end.x])
+			if own.visible or gap == null or not gap.visible or gap.global_position.x < end - 0.5 or gap.get_global_rect().end.x > end + UiTheme.GAP_PANE + 0.5:
+				_fail("columns at %d: own bar %s, gap bar at %s, revenue ends at %.0f" % [width, own.visible, "none" if gap == null else str(gap.get_global_rect()), end])
 		elif not own.visible or (gap != null and gap.visible):
 			_fail("one table at %d: own bar %s, gap bar %s" % [width, own.visible, gap != null and gap.visible])
 	host.queue_free()

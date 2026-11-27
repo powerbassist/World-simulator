@@ -15,9 +15,6 @@ const Labels = preload("res://src/ui/labels.gd")
 
 ## The width the columned page stops at, times the text size (the parent's ruling, gate-2k.md note 3).
 const CEILING := 1880.0
-## Of the room over what both columns need, spending's share: Design's 736 of 1880 (about 701 needed, 175 over).
-## Under a half, so revenue always has room for bars as long as spending's (one money scale, T5 on #443).
-const SPENDING_SHARE := 0.2
 const HEADS := {"drag": "Drag", "year": "A year", "balance": "Balance"}  # i18n: msgid
 
 var scroll := ScrollContainer.new()
@@ -51,9 +48,7 @@ func _init() -> void:
 		wrap.add_child(box)
 		_books.add_child(wrap)
 		_wraps.append(wrap)
-	_wraps[1].size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	resized.connect(func() -> void: _stale = true)
-	scroll.resized.connect(func() -> void: _stale = true)
 
 
 func columns() -> bool:
@@ -175,13 +170,16 @@ func _lay() -> void:
 	for wrap in _wraps:
 		wrap.theme_type_variation = UiTheme.PLATE if _columns else UiTheme.BARE
 		wrap.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if _columns else Control.SIZE_FILL  # the sheets hug
-	# From the scroll's width, never from the rows': their own widths would hold a narrowed page open.
-	var over := maxf(0.0, scroll.size.x - _bar_room() - _spend - _rev - 2.0 * _margins() - UiTheme.GAP_PANE) if _columns else 0.0
-	var spend_wide := _spend + floorf(over * SPENDING_SHARE)
-	_wraps[0].custom_minimum_size.x = spend_wide + _margins() if _columns else 0.0
-	# One length for every bar of both sheets, one money scale: the least a bar is plus spending's share. Never what
-	# is left beside one row: a header's longer name would lengthen revenue's bars past the page (pass 2 T1).
-	var bar_wide := FinanceRows.BAR_MIN * scale + floorf(over * SPENDING_SHARE)
+	# In columns every sheet hugs its rows and the scroll hugs the sheets, so its bar stands beside Revenue: the page's
+	# leftover stays empty at the right (the author on 2K). SHOW_NEVER passes no minimum up, so each says its own; their
+	# sum is under the switch by the bar's room, so a page they hold wide still goes back to one table.
+	var sheets := [_spend + _margins(), _rev + _margins()]
+	for i in 2:
+		_wraps[i].custom_minimum_size.x = sheets[i] if _columns else 0.0
+	scroll.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN if _columns else Control.SIZE_FILL
+	scroll.custom_minimum_size.x = sheets[0] + sheets[1] + UiTheme.GAP_PANE if _columns else 0.0
+	# One length for every bar of both sheets, one money scale (T5 on #443): the least a bar is.
+	var bar_wide := FinanceRows.BAR_MIN * scale
 	for cell in _slot(spending, "who"):
 		cell.visible = not _columns
 	for cell in _slot(spending, "pct"):  # "not set here" moves into the blank figure cell
