@@ -138,7 +138,7 @@ func _width_of(row: Control, who: float) -> float:
 	var total := 0.0
 	var count := 0
 	for cell in row.get_children():
-		var wide: float = (cell as Control).get_combined_minimum_size().x
+		var wide := ceilf((cell as Control).get_combined_minimum_size().x)  # a box rounds each cell's minimum up
 		if cell.get_meta("slot", "") == "who":
 			if who <= 0.0:
 				continue

@@ -14,6 +14,7 @@ const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceColumns = preload("res://src/ui/finance_columns.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const FinanceLever = preload("res://src/ui/finance_lever.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const GapBars = preload("res://src/ui/gap_bars.gd")
@@ -49,6 +50,7 @@ func _run() -> void:
 	_panel.theme = UiTheme.build()
 	await _check_the_open_editor()
 	await _check_the_held_slider()
+	await _check_the_dragged_bar()
 	await _check_who_folded()
 	await _check_pseudo()
 	await _check_the_scroll_bar()
@@ -87,10 +89,17 @@ func _check_scale(scale: float) -> void:
 	_check_one_table("2 px under the switch")
 	if table.cap() != INF:
 		_fail("one table with a cap of %.0f" % table.cap())
-	await _at(need + 1.0)
+	# Exactly need(), set by hand: _at() allows half a px, which is the whole of this case.
+	table.size.x = need
+	table._process(0.0)
+	if table.size.x != need or not table.columns():
+		_fail("text %d: %.2f wide against a switch of %.0f, columns %s" % [roundi(scale * 100), table.size.x, need, table.columns()])
+	await _at(need)
 	_check_columns("at the switch, text %d" % roundi(scale * 100))
+	_check_need("at the switch, text %d" % roundi(scale * 100))
 	await _at(need + 175.0 * scale)
 	_check_columns("175 px over, text %d" % roundi(scale * 100))
+	_check_split(175.0 * scale, scale, "175 px over, text %d" % roundi(scale * 100))
 	if not is_equal_approx(table.cap(), maxf(1880.0 * scale, need + 1.0)):
 		_fail("the cap is %.0f, wanted %.0f" % [table.cap(), maxf(1880.0 * scale, need + 1.0)])
 	await _at(PAGE_1080)
@@ -160,6 +169,31 @@ func _check_fits(state: String) -> void:
 		_fail("%s: revenue ends at %.0f, past the page's %.0f" % [state, sheet_end, _panel._table.get_global_rect().end.x])
 	if _panel.size.x > 0.0 and _panel._table.get_global_rect().end.x > _panel.get_global_rect().end.x + 0.5:
 		_fail("%s: the books end past the page" % state)
+
+
+## need() is the two sheets as they stand there, the gap between them and the scroll bar's room: nothing short,
+## nothing spare.
+func _check_need(state: String) -> void:
+	var table: FinanceColumns = _panel._table
+	var spending: Control = table._wraps[0]
+	var revenue: Control = table._wraps[1]
+	var gap := revenue.global_position.x - spending.get_global_rect().end.x
+	var sum: float = spending.size.x + UiTheme.GAP_PANE + revenue.get_combined_minimum_size().x + table._bar_room()
+	if absf(gap - UiTheme.GAP_PANE) > 0.5 or absf(table.need() - sum) > 1.0:
+		_fail("%s: the switch is %.1f for sheets, gap and bar room of %.1f (laid gap %.1f)" % [state, table.need(), sum, gap])
+
+
+## Of the room over the switch a fifth goes to spending (Design's 736 of 1880), and every bar grows by that much.
+## The 0.2 is written here: read from the code, any other split would pass.
+func _check_split(over: float, scale: float, state: String) -> void:
+	var table: FinanceColumns = _panel._table
+	var share := floorf(over * 0.2)
+	var bar: float = (table._row_bars(_panel._revenue_box)[0] as Control).size.x
+	var sheet: float = (table._wraps[0] as Control).size.x
+	var wanted_bar := FinanceRows.BAR_MIN * scale + share
+	var wanted_sheet: float = table._spend + share + table._margins()
+	if absf(bar - wanted_bar) > 0.5 or absf(sheet - wanted_sheet) > 0.5:
+		_fail("%s: bars %.1f (wanted %.1f), spending's sheet %.1f (wanted %.1f)" % [state, bar, wanted_bar, sheet, wanted_sheet])
 
 
 ## Every bar, in both sheets, one length: the same billions draw the same pixels.
@@ -285,6 +319,39 @@ func _check_the_held_slider() -> void:
 	if _panel._table.columns():
 		_fail("a slider only focused holds the arrangement")
 	root.gui_release_focus()
+
+
+## A row's bar mid-drag holds the arrangement too. Pushed to the viewport, not through Input: the table's other
+## hold (a focused slider with the button down) reads Input, so only the drag can hold it here.
+func _check_the_dragged_bar() -> void:
+	await _at(PAGE_2K)
+	var bars: Array = _panel._table._row_bars(_panel._spending_box).filter(func(b) -> bool: return b.can_drag())
+	if bars.is_empty():
+		_fail("premise: no spending bar to drag")
+		return
+	var bar: FinanceLever = bars[0]
+	_drag(bar, true)
+	if not bar.is_dragging():
+		_fail("premise: the press did not start a drag")
+	_panel._table.size.x = PAGE_1080
+	_panel._table._process(0.0)
+	if not _panel._table.columns():
+		_fail("the table re-laid itself under a dragged bar")
+	_drag(bar, false)
+	_panel._table._process(0.0)
+	if _panel._table.columns():
+		_fail("a bar let go still holds the arrangement")
+	root.gui_release_focus()
+
+
+## On the handle where it stands, so the draft does not move.
+func _drag(bar: FinanceLever, down: bool) -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = down
+	event.position = bar.get_global_rect().position + Vector2(bar.x_of(bar.value), bar.size.y * 0.5)
+	event.global_position = event.position
+	root.push_input(event, true)
 
 
 func _press(down: bool) -> void:
