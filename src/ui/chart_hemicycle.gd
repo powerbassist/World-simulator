@@ -25,6 +25,8 @@ var _markers: Array = []
 ## Words over a marker, parallel to `_markers` ("a majority, 289"); the chart leaves room over the ring for them.
 var _marker_labels: Array = []
 var _top := 0.0
+## The height asked for, text size in; a narrow column takes less (_notification).
+var _full := 0.0
 var _places := -1
 var _colors: Array = ChartStyle.SERIES
 var _seats := PackedVector2Array()
@@ -44,9 +46,17 @@ func setup(parts: Array, opts := {}) -> void:
 	_colors = opts.get("colors", ChartStyle.SERIES)
 	_owners = owners(parts)
 	_seats = seats(_owners.size())
-	custom_minimum_size = Vector2(0.0, float(opts.get("height", HEIGHT)) * UiTheme.text_scale())  # a page's own chamber is larger (S5)
+	_full = float(opts.get("height", HEIGHT)) * UiTheme.text_scale()  # a page's own chamber is larger (S5)
+	custom_minimum_size = Vector2(0.0, _full)
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	queue_redraw()
+
+
+## The box hugs the ring: in a column too narrow for the height asked for, the width sets the
+## radius, and the rest would be blank over the legend (R4 on #452, 67 px at text 115).
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and _full > 0.0 and size.x > 0.0:
+		custom_minimum_size.y = minf(_full, size.x / 2.0 + PAD + _top)
 
 
 ## `n` seats in the upper half of the unit disc (y up is negative, as on screen),

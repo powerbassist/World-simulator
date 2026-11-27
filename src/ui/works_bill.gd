@@ -50,6 +50,11 @@ func global_x(month: int) -> float:
 	return global_position.x + x_of(month)
 
 
+## The foot's years, thinned as the lanes' head row is (WorksLane.years_across).
+func year_labels() -> Array:
+	return WorksLane.years_across(_first, _last, size.x, get_theme_default_font(), _fs())
+
+
 func _fs() -> int:
 	return roundi(UiTheme.SIZE_SMALL * UiTheme.text_scale())
 
@@ -70,10 +75,8 @@ func _draw() -> void:
 		var tick := Num.f(value, 2)
 		var w := font.get_string_size(tick, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		draw_string(font, Vector2(-6.0 - w, _y(value) + fs * 0.35), tick, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)  # i18n: row-ok a figure
-	for year in range((_first - 1) / 12, (_last - 1) / 12 + 1):
-		var x := x_of(year * 12 + 1)
-		if year * 12 + 1 >= _first:
-			draw_string(font, Vector2(x - fs, size.y - 2.0), str(year), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)  # i18n: row-ok chart data
+	for label in year_labels():
+		draw_string(font, Vector2(label[1].position.x, size.y - 2.0), str(label[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)  # i18n: row-ok chart data
 	if signed.size() > 1:
 		var area := PackedVector2Array(signed)
 		area.append(Vector2(signed[signed.size() - 1].x, _y(0.0)))

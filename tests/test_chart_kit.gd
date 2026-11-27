@@ -51,6 +51,7 @@ func _process(_delta: float) -> bool:
 		return false
 	if _frame == 4:
 		_check_charts()
+		_check_hemicycle_hugs()
 		_finish()
 		return true
 	return false
@@ -112,6 +113,27 @@ func _check_hemicycle_hover() -> void:
 	if wrong > 0:
 		_fail("the hemicycle's hover names the wrong party on %d seats" % wrong)
 	chart.free()
+
+
+## R4 on #452 (gate-452.md): in a column too narrow for the ring's height the box hugs the seats
+## (a larger text size grew the box and not the ring, 67 px blank over the legend); a wide column
+## keeps the height asked for.
+func _check_hemicycle_hugs() -> void:
+	var was := UiTheme.text_scale()
+	UiTheme.set_text_scale(1.15)
+	for width in [300.0, 900.0]:
+		var chart := ChartHemicycle.new()
+		root.add_child(chart)
+		chart.setup([{"label": "a", "value": 289.0}, {"label": "b", "value": 288.0}], {"height": 210.0})
+		chart.size = Vector2(width, chart.custom_minimum_size.y)
+		chart.size = Vector2(width, chart.custom_minimum_size.y)  # as the container sorts it again
+		var blank: float = chart.size.y - chart._center().y
+		if width < 400.0 and (blank > ChartHemicycle.PAD + 0.5 or chart.custom_minimum_size.y >= 210.0 * 1.15):
+			_fail("a %d px hemicycle leaves %.0f px under its seats in a %.0f px box" % [width, blank, chart.size.y])
+		if width > 400.0 and not is_equal_approx(chart.custom_minimum_size.y, 210.0 * 1.15):
+			_fail("a wide hemicycle is %.1f px tall, not the %.1f asked for" % [chart.custom_minimum_size.y, 210.0 * 1.15])
+		chart.free()
+	UiTheme.set_text_scale(was)
 
 
 ## A seat's angle from the left end of the floor: pi on the left, 0 on the right.

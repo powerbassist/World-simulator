@@ -68,7 +68,8 @@ func _term_words() -> String:
 
 
 ## The axis row's "your term ends" label: ending 6 px left of its line when there is room after
-## "today", else starting 6 px right of it. Empty off the axis row or with no term ahead.
+## "today", else starting 6 px right of it and past "today" when the term is that close (R2 on
+## #452). Empty off the axis row or with no term ahead.
 func term_label_rect() -> Rect2:
 	if _term <= 0 or not _row.is_empty() or _legend:
 		return Rect2()
@@ -77,9 +78,37 @@ func term_label_rect() -> Rect2:
 	var w := font.get_string_size(_term_words(), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	var xt := x_of(_term)
 	var x := xt - 6.0 - w
-	if x < _today_end(font, fs):
-		x = xt + 6.0 if xt + 6.0 + w <= size.x else x
+	var after := today_rect().end.x + 8.0
+	if x < after:
+		x = maxf(minf(xt + 6.0, size.x - w), after)
 	return Rect2(x, fs * 2.4 - font.get_ascent(fs), w, font.get_height(fs))
+
+
+## "today"'s box on the axis row, from its line.
+func today_rect() -> Rect2:
+	var font := get_theme_default_font()
+	var fs := _fs()
+	var w := font.get_string_size(tr("today"), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	return Rect2(x_of(_now) + 2.0, fs * 2.4 - font.get_ascent(fs), w, font.get_height(fs))
+
+
+## The axis row's years, as [year, Rect2] (years_across).
+func year_labels() -> Array:
+	return years_across(_first, _last, size.x, get_theme_default_font(), _fs())
+
+
+## The years an axis `width` wide has room to say, each centred about its January: every year, or
+## every second, third... so that no two touch (R2 on #452). The bill's foot uses the same.
+static func years_across(first: int, last: int, width: float, font: Font, fs: int) -> Array:
+	var w := font.get_string_size("0000", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var a_year := width * 12.0 / float(maxi(last - first, 1))
+	var step := maxi(ceili((w + fs * 0.5) / maxf(a_year, 1.0)), 1)
+	var out := []
+	var year := (first + 10) / 12  # the first January on the axis
+	while year * 12 + 1 <= last:
+		out.append([year, Rect2(x_at(year * 12 + 1, first, last, width) - fs, 0.0, w, font.get_height(fs))])
+		year += step
+	return out
 
 
 ## Where the term's and the years' lines start: under the term's label on the axis row, under
@@ -91,10 +120,6 @@ func line_top() -> float:
 		var label := term_label_rect()
 		return label.end.y if label.size.x > 0.0 else fs * 1.4
 	return fs * 1.1 + font.get_descent(fs) + 2.0
-
-
-func _today_end(font: Font, fs: int) -> float:
-	return x_of(_now) + 2.0 + font.get_string_size(tr("today"), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 8.0
 
 
 ## The x of an absolute month on an axis `width` wide that runs from `first` to `last`.
@@ -132,6 +157,22 @@ func _said() -> String:
 			return tr("open · its growth is still arriving")
 
 
+## What the lane draws over its bar: the whole sentence where it fits, else its start. The cut
+## part stays in the tooltip, and for the picked offer in the page's lead (R2 on #452).
+func caption() -> String:
+	var said := _said()
+	var fs := _fs()
+	if get_theme_default_font().get_string_size(said, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x <= size.x - x_of(_now) - 8.0:
+		return said
+	var opens := _mon(int(_row.get("opens", -1)))
+	match String(_row.get("state", "")):
+		WorksRows.BUILDING:
+			return tr("opens %s") % opens
+		WorksRows.OFFER:
+			return tr("if started now: opens %s") % opens
+	return said
+
+
 func _mon(month: int) -> String:
 	return DateText.mon_year((month - 1) % 12 + 1, (month - 1) / 12)
 
@@ -143,14 +184,15 @@ func _draw() -> void:
 		_draw_legend(font, fs)
 		return
 	var top := line_top()
-	# The years: a hairline at each January (and its number on the head row).
+	# The years: a hairline at each January, and on the head row the numbers there is room for.
 	for year in range((_first - 1) / 12, (_last - 1) / 12 + 1):
 		var x := x_of(year * 12 + 1)
 		if x <= 0.0 and year * 12 + 1 < _first:
 			continue
 		draw_line(Vector2(x, fs * 1.4 if _row.is_empty() else top), Vector2(x, size.y), UiTheme.EDGE, 1.0)
-		if _row.is_empty():
-			draw_string(font, Vector2(x - fs, fs), str(year), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)  # i18n: row-ok chart data
+	if _row.is_empty():
+		for label in year_labels():
+			draw_string(font, Vector2(label[1].position.x, fs), str(label[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.TEXT_DIM)  # i18n: row-ok chart data
 	var xn := x_of(_now)
 	if _term > 0:
 		var xt := x_of(_term)
@@ -169,10 +211,10 @@ func _lane(font: Font, fs: int, xn: float) -> void:
 	var mid := fs * 2.4
 	var h := fs * 0.6
 	if kind == WorksRows.DONE:
-		draw_string(font, Vector2(xn + 8.0, fs * 1.1), _said(), HORIZONTAL_ALIGNMENT_LEFT, size.x - xn - 8.0, fs, UiTheme.TEXT_DIM)
+		draw_string(font, Vector2(xn + 8.0, fs * 1.1), caption(), HORIZONTAL_ALIGNMENT_LEFT, size.x - xn - 8.0, fs, UiTheme.TEXT_DIM)
 		return
 	var xo := x_of(int(_row["opens"]))
-	draw_string(font, Vector2(xn + 8.0, fs * 1.1), _said(), HORIZONTAL_ALIGNMENT_LEFT, size.x - xn - 8.0, fs, UiTheme.TEXT)
+	draw_string(font, Vector2(xn + 8.0, fs * 1.1), caption(), HORIZONTAL_ALIGNMENT_LEFT, size.x - xn - 8.0, fs, UiTheme.TEXT)
 	# Its growth arriving after the opening: a wedge from nothing to the bar's height.
 	var xe := x_of(int(_row["opens"]) + ARRIVES_MONTHS)
 	draw_colored_polygon(PackedVector2Array([Vector2(xo, mid + h * 0.5), Vector2(xe, mid - h * 0.5), Vector2(xe, mid + h * 0.5)]),

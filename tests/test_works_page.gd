@@ -20,6 +20,8 @@ const WorksRows = preload("res://src/ui/works_rows.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const Num = preload("res://src/ui/num.gd")
+const WorksLane = preload("res://src/ui/works_lane.gd")
+const WorksBill = preload("res://src/ui/works_bill.gd")
 
 var _failures: Array[String] = []
 var _main
@@ -50,6 +52,7 @@ func _process(_delta: float) -> bool:
 			_check_marks()
 			_check_figures()
 			_check_row_hugs("offers on the table")
+			_check_narrow_axes()
 			_started = String(_page.picked())
 			_press(_with_meta("works_go", _page))
 		6:
@@ -243,6 +246,63 @@ func _check_figures() -> void:
 				most = maxi(most, int(cond["value"]))
 	if WorksRows.slots(_main._loader) != most + 1:
 		_fail("%d slots; the data's project_count <= %d allows %d" % [WorksRows.slots(_main._loader), most, most + 1])
+
+
+## R2 on #452 (gate-452.md): at any text size and lane width no two year labels touch, "today"
+## stands clear of "your term ends" however close the term is, and a lane's caption is never cut.
+func _check_narrow_axes() -> void:
+	var was := UiTheme.text_scale()
+	var first := 2027 * 12 + 1
+	var last := first + 12 * 12
+	for scale in [0.9, 1.0, 1.15]:
+		UiTheme.set_text_scale(scale)
+		for width in [260.0, 330.0, 480.0, 900.0]:
+			for now in [first, first + 11]:
+				for ahead in [1, 4, 5, 16, 60]:
+					var at := "text %s, %d px, today +%d, term +%d" % [scale, width, now - first, ahead]
+					var axis: Control = WorksLane.new()
+					root.add_child(axis)
+					UiTheme.apply(axis)
+					axis.axis(first, last, now, now + ahead)
+					axis.size = Vector2(width, 60.0)
+					_check_apart(axis.year_labels(), "lanes' years at " + at)
+					var term: Rect2 = axis.term_label_rect()
+					if term.intersects(axis.today_rect()):
+						_fail("'today' %s sits on the term's label %s at %s" % [axis.today_rect(), term, at])
+					if axis.line_top() < term.end.y:
+						_fail("the term's line starts above its label's foot at " + at)
+					axis.free()
+				var bill: Control = WorksBill.new()
+				root.add_child(bill)
+				UiTheme.apply(bill)
+				bill.setup([], first, last, now, "", "")
+				bill.size = Vector2(width, 140.0)
+				_check_apart(bill.year_labels(), "the bill's years at text %s, %d px" % [scale, width])
+				bill.free()
+				var lane: Control = WorksLane.new()
+				root.add_child(lane)
+				UiTheme.apply(lane)
+				lane.lane({"state": WorksRows.OFFER, "opens": now + 96}, first, last, now, now + 4, true)
+				lane.size = Vector2(width, 50.0)
+				var drawn: String = lane.caption()
+				var room: float = width - lane.x_of(now) - 8.0
+				var wide: float = lane.get_theme_default_font().get_string_size(drawn, HORIZONTAL_ALIGNMENT_LEFT, -1, roundi(UiTheme.SIZE_SMALL * scale)).x
+				if wide > room:
+					_fail("the lane's caption '%s' is %.0f px in %.0f at text %s" % [drawn, wide, room, scale])
+				if width >= 900.0 and not drawn.contains("after your term ends"):
+					_fail("a wide lane's caption dropped how long after the term it opens: '%s'" % drawn)
+				lane.free()
+	UiTheme.set_text_scale(was)
+
+
+func _check_apart(labels: Array, where: String) -> void:
+	if labels.size() < 2:
+		_fail("%s: %d year labels" % [where, labels.size()])
+	for i in range(1, labels.size()):
+		var gap: float = labels[i][1].position.x - labels[i - 1][1].end.x
+		if gap < 2.0:
+			_fail("%s: %s and %s are %.0f px apart" % [where, labels[i - 1][0], labels[i][0], gap])
+			return
 
 
 ## One work building, an offer picked: the head's bill is the register's, the sheet takes the last slot.
