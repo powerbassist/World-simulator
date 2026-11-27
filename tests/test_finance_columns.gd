@@ -48,6 +48,8 @@ func _run() -> void:
 	UiTheme.set_text_scale(1.0)
 	_panel.theme = UiTheme.build()
 	await _check_the_open_editor()
+	await _check_the_held_slider()
+	await _check_who_folded()
 	await _check_pseudo()
 	await _check_the_scroll_bar()
 	for line in _failures:
@@ -89,8 +91,8 @@ func _check_scale(scale: float) -> void:
 	_check_columns("at the switch, text %d" % roundi(scale * 100))
 	await _at(need + 175.0 * scale)
 	_check_columns("175 px over, text %d" % roundi(scale * 100))
-	if not is_equal_approx(table.cap(), maxf(1880.0 * scale, need)):
-		_fail("the cap is %.0f, wanted %.0f" % [table.cap(), maxf(1880.0 * scale, need)])
+	if not is_equal_approx(table.cap(), maxf(1880.0 * scale, need + 1.0)):
+		_fail("the cap is %.0f, wanted %.0f" % [table.cap(), maxf(1880.0 * scale, need + 1.0)])
 	await _at(PAGE_1080)
 	_check_one_table("back under the switch")
 
@@ -153,6 +155,9 @@ func _check_fits(state: String) -> void:
 			if row.is_visible_in_tree() and row.get_global_rect().end.x > sheet.end.x + 0.5:
 				_fail("%s: a row ends at %.0f, its sheet at %.0f" % [state, row.get_global_rect().end.x, sheet.end.x])
 				return
+	var sheet_end: float = (_panel._revenue_box.get_parent() as Control).get_global_rect().end.x
+	if _panel._table.columns() and sheet_end > _panel._table.get_global_rect().end.x + 0.5:
+		_fail("%s: revenue ends at %.0f, past the page's %.0f" % [state, sheet_end, _panel._table.get_global_rect().end.x])
 	if _panel.size.x > 0.0 and _panel._table.get_global_rect().end.x > _panel.get_global_rect().end.x + 0.5:
 		_fail("%s: the books end past the page" % state)
 
@@ -195,14 +200,17 @@ func _check_sector_figures(most := 2) -> void:
 	for scale in [1.0, 1.15]:
 		UiTheme.set_text_scale(scale)
 		_panel.theme = UiTheme.build()
-		for width in [PAGE_1080, 2292.0]:
+		root.gui_release_focus()  # held by the editor, the rows would stay at the old size and so would the switch
+		await _at(PAGE_1080)
+		for width in [PAGE_1080, _panel._table.need() + 1.0, PAGE_2K, 2292.0]:
 			await _at(width)
 			var names: Array = _panel._editor.find_children("*", "Label", true, false).filter(func(l) -> bool: return l.has_meta("sector"))  # i18n: ok a class name
 			if names.is_empty():
 				_fail("premise: no sector rows at %.0f, text %d" % [width, roundi(scale * 100)])
+			var lines: int = most if width == PAGE_1080 or width == 2292.0 else most + 1  # the narrower sheet: one more
 			for name in names:
 				var figure := name.get_parent().get_child(1) as Label
-				if figure.size.x < FinanceRows.CAPTION_MIN * scale - 0.5 or figure.get_line_count() > most:
+				if figure.size.x < FinanceRows.CAPTION_MIN * scale - 0.5 or figure.get_line_count() > lines:
 					_fail("%s at %.0f, text %d: '%s' is %.0f wide on %d lines" % [_panel._open_id, width, roundi(scale * 100), figure.text, figure.size.x, figure.get_line_count()])
 			_check_fits("sector rows at %.0f, text %d" % [width, roundi(scale * 100)])
 	UiTheme.set_text_scale(1.0)
@@ -236,25 +244,71 @@ func _open(channel: String, key: String) -> void:
 
 func _check_pseudo() -> void:
 	Strings.set_language("en")
-	ProjectSettings.set_setting("internationalization/pseudolocalization/expansion_ratio", 0.35)
-	TranslationServer.pseudolocalization_enabled = true
-	TranslationServer.reload_pseudolocalization()
-	root.gui_release_focus()  # an editor holding the keyboard would keep the English rows up
-	_panel._open_id = ""
-	_panel.mark_dirty()
-	await _at(PAGE_1080)
-	var need: float = _panel._table.need()
-	print("test_finance_columns: pseudo, the switch at %.0f px" % need)
-	if _head_text(_panel._spending_box, "who") == "WHO PAYS" or not _slot(_panel._revenue_box, "who").any(func(c) -> bool: return c.text.begins_with("[")):
-		_fail("premise: the rows are still English under the pseudo-locale")
-	_check_fits("pseudo, one table")
-	await _at(need + 40.0)
-	if not _panel._table.columns():
-		_fail("pseudo: no columns 40 px over its own switch")
-	_check_fits("pseudo, columns")
-	_check_one_bar("pseudo, columns")
+	# 0.5 first: past the shipped 0.35 a header's name outgrows the line rows, which no bar may follow (pass 2 T1).
+	for ratio in [0.5, 0.35]:
+		ProjectSettings.set_setting("internationalization/pseudolocalization/expansion_ratio", ratio)
+		TranslationServer.pseudolocalization_enabled = true
+		TranslationServer.reload_pseudolocalization()
+		root.gui_release_focus()  # an editor holding the keyboard would keep the old rows up
+		_panel._open_id = ""
+		_panel.mark_dirty()
+		await _at(1300.0)
+		var need: float = _panel._table.need()
+		print("test_finance_columns: pseudo %s, the switch at %.0f px" % [ratio, need])
+		if _head_text(_panel._spending_box, "who") == "WHO PAYS" or not _slot(_panel._revenue_box, "who").any(func(c) -> bool: return c.text.begins_with("[")):
+			_fail("premise: the rows are still English under the pseudo-locale")
+		_check_fits("pseudo %s, one table" % ratio)
+		await _at(need + 1.0)
+		if not _panel._table.columns():
+			_fail("pseudo %s: no columns at its own switch" % ratio)
+		_check_fits("pseudo %s, columns" % ratio)
+		_check_one_bar("pseudo %s, columns" % ratio)
 	await _check_every_line_figures(99)  # the pseudo unit runs to five lines: wrapped, never starved of width
 	TranslationServer.pseudolocalization_enabled = false
+
+
+## A slider under the pointer keeps its arrangement, the editor's as a row's bar: a track that changed length
+## mid-drag would jump the rate (pass 2 T4). The keyboard alone holds nothing.
+func _check_the_held_slider() -> void:
+	await _at(PAGE_2K)
+	await _open(FinanceDraft.TAX, "income")
+	var sliders: Array = _panel._editor.find_children("*", "HSlider", true, false)  # i18n: ok a class name
+	var held: Control = sliders[0] if not sliders.is_empty() else _panel._table._row_bars(_panel._revenue_box).filter(func(b) -> bool: return b.focus_mode != Control.FOCUS_NONE)[0]
+	held.grab_focus()
+	_press(true)
+	_panel._table.size.x = PAGE_1080
+	_panel._table._process(0.0)
+	if not _panel._table.columns():
+		_fail("the table re-laid itself under a held slider")
+	_press(false)
+	_panel._table._process(0.0)
+	if _panel._table.columns():
+		_fail("a slider only focused holds the arrangement")
+	root.gui_release_focus()
+
+
+func _press(down: bool) -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = down
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+
+
+## Who pays counts the folded kinds even when every visible row says "At vote" (pass 2 T3).
+func _check_who_folded() -> void:
+	await _at(PAGE_2K)
+	var table: FinanceColumns = _panel._table
+	var groups := [{"kinds": [], "folded": [{"who": ["workers", "retirees", "business", "farmers", "students", "workers", "retirees", "business"]}]}]
+	for cell in _slot(_panel._revenue_box, "who"):
+		cell.remove_meta("who_pays")
+	var before: float = table._who
+	table.measure(groups)
+	if table._who <= before + 100.0:
+		_fail("a folded kind's who-pays is not measured: %.0f, was %.0f" % [table._who, before])
+	_panel._open_id = ""
+	_panel.mark_dirty()
+	await _at(PAGE_2K)
 
 
 ## In the dock, a window too short for the books: in columns the bar stands in the gap, so Revenue keeps the page's

@@ -27,11 +27,10 @@ var _books := BoxContainer.new()
 var _wraps: Array[PanelContainer] = []
 var _columns := false
 var _stale := false
-## Measured on the rows just built: the switch, each sheet's width, a spending bar row less its bar, who-pays whole.
+## Measured on the rows just built: the switch, each sheet's width, who-pays whole.
 var _need := INF
 var _spend := 0.0
 var _rev := 0.0
-var _beside_bar := 0.0
 var _who := 0.0
 
 
@@ -73,9 +72,17 @@ func cap() -> float:
 
 
 func _process(_delta: float) -> void:
-	# Never under a hand: a bar that moved or changed length mid-drag would jump its value.
-	if _stale and not find_children("*", "HSlider", true, false).any(func(bar) -> bool: return bar is FinanceLever and bar.is_dragging()):  # i18n: ok a class name
+	# Never under a hand: a track that moved or changed length mid-drag would jump its value.
+	if _stale and not _held():
 		_lay()
+
+
+## A row's bar dragged, or the pointer down on the editor's slider (which cannot say it is dragged).
+func _held() -> bool:
+	var focus := get_viewport().gui_get_focus_owner()
+	if focus is HSlider and is_ancestor_of(focus) and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		return true
+	return find_children("*", "HSlider", true, false).any(func(bar) -> bool: return bar is FinanceLever and bar.is_dragging())  # i18n: ok a class name
 
 
 ## Read the rows just built (call it after every rebuild, before anything dresses them) and lay them out.
@@ -83,18 +90,16 @@ func _process(_delta: float) -> void:
 ## never moves the switch.
 func measure(groups: Array) -> void:
 	_who = 0.0
-	for cell in _slot(revenue, "who"):  # the head and the notes are in that column too
+	var cells := _slot(revenue, "who")  # the head and the notes are in that column too
+	for cell in cells:
 		_who = maxf(_who, _text_width(cell, cell.text))
-		if cell.has_meta("who_pays"):
-			for group in groups:
-				for kind in (group["kinds"] as Array) + (group["folded"] as Array):
-					_who = maxf(_who, _text_width(cell, ", ".join((kind["who"] as Array).map(func(b) -> String: return Labels.bloc(String(b))))))
-			groups = []  # every kind's, once: they share the caption's font
+	var captions := cells.filter(func(c) -> bool: return c.theme_type_variation == UiTheme.CAPTION)
+	for group in groups if not captions.is_empty() else []:  # every kind's, shown or folded: the caption's font
+		for kind in (group["kinds"] as Array) + (group["folded"] as Array):
+			_who = maxf(_who, _text_width(captions[0], ", ".join((kind["who"] as Array).map(func(b) -> String: return Labels.bloc(String(b))))))
 	_who = ceilf(_who) + 1.0
 	# Whole pixels: a sheet a fraction wide would draw its bars a pixel longer than the other's.
 	_spend = ceilf(_widest(spending, 0.0))
-	for bar in _row_bars(spending).slice(0, 1):
-		_beside_bar = ceilf(_width_of(bar.get_parent(), 0.0) - bar.custom_minimum_size.x)
 	_rev = _widest(revenue, _who)
 	_need = ceilf(_spend + _rev + 2.0 * _margins() + UiTheme.GAP_PANE + _bar_room())
 	_lay()
@@ -174,8 +179,9 @@ func _lay() -> void:
 	var over := maxf(0.0, scroll.size.x - _bar_room() - _spend - _rev - 2.0 * _margins() - UiTheme.GAP_PANE) if _columns else 0.0
 	var spend_wide := _spend + floorf(over * SPENDING_SHARE)
 	_wraps[0].custom_minimum_size.x = spend_wide + _margins() if _columns else 0.0
-	# In columns every bar of both sheets is this long, not what its own sheet has left: one money scale.
-	var bar_wide := floorf(spend_wide - _beside_bar) if _columns else FinanceRows.BAR_MIN * scale
+	# One length for every bar of both sheets, one money scale: the least a bar is plus spending's share. Never what
+	# is left beside one row: a header's longer name would lengthen revenue's bars past the page (pass 2 T1).
+	var bar_wide := FinanceRows.BAR_MIN * scale + floorf(over * SPENDING_SHARE)
 	for cell in _slot(spending, "who"):
 		cell.visible = not _columns
 	for cell in _slot(spending, "pct"):  # "not set here" moves into the blank figure cell
