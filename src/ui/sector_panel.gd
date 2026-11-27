@@ -6,6 +6,11 @@ extends PanelContainer
 ## the sector makes good by good (sector_goods_view.gd), its majors. Right: the selected
 ## firm's sheet (firm_sheet.gd) with its file and the State's verbs (slice 2).
 ##
+## A page wide enough lays three columns (W2, the author's pick, 2026-11-27): the lead,
+## what waits and the majors | what it makes | the firm. The switch is the page's OWN
+## width against its blocks' minimums, read each frame, so it follows the text size, the
+## language and the month's figures.
+##
 ## A major or a closure's Answer selects its firm on the sheet; a right click on a firm
 ## opens its verbs with their prices, the call to its chief and the map. A bid, a failing
 ## major or a process's ask is still answered on the overview (the window "companies"):
@@ -37,13 +42,19 @@ const FirmSheet = preload("res://src/ui/firm_sheet.gd")
 const SectorProgramme = preload("res://src/ui/sector_programme.gd")
 const SectorGoodsView = preload("res://src/ui/sector_goods_view.gd")
 const VerbBlock = preload("res://src/ui/verb_block.gd")
+const FinanceColumns = preload("res://src/ui/finance_columns.gd")
 
 ## The sheet's width in px: the picture's right column.
 const SHEET_WIDTH := 440
+## Both times the text size: the widest the lead stands in three (the picture's, which the switch also counts, so the
+## 1080 page keeps two columns at text 100), and the narrowest: four major tiles in a row.
+const LEFT_WIDTH := 788.0
+const LEFT_FLOOR := 648.0
 
 const FACE := Vector2(28, 38)
 ## A major's tile (G3 S3): its width and its face, in px at text size 100.
 const MAJOR_W := 150.0
+const MAJOR_GAP := 8
 const MAJOR_FACE := Vector2(44, 58)
 ## The verdict's tag tone: a status, so a fixed tone and its words, never the accent.
 const VERDICT_TONE := {"behind": UiTheme.BAD_TEXT, "slower": UiTheme.WARN_TEXT, "pace": UiTheme.CAPTION, "ahead": UiTheme.GOOD_TEXT}
@@ -60,6 +71,15 @@ var _state
 var _loader
 var _dirty := true
 var _body: VBoxContainer
+## The middle column, hidden while there are two; what the sector makes moves between it and _body.
+var _middle: VBoxContainer
+var _goods: VBoxContainer
+## The majors' tiles: in three the lead is as wide as they ask in one row.
+var _majors_row: HFlowContainer
+## The widest the unfiltered goods table asked: a chip narrows the table and must not move the switch.
+var _goods_wide := 0.0
+## The page's width from which three columns read whole.
+var _need := INF
 ## The good the chips filter the table to, "" for all of them.
 var _good_filter := ""
 var _sheet: VBoxContainer
@@ -91,6 +111,8 @@ func _ready() -> void:
 	columns.add_theme_constant_override("separation", UiTheme.GAP_PANE)
 	add_child(columns)
 	_body = _column(columns, Control.SIZE_EXPAND_FILL)
+	_middle = _column(columns, Control.SIZE_FILL)
+	(_middle.get_parent() as Control).hide()
 	_sheet = _column(columns, Control.SIZE_FILL)
 	_sheet.custom_minimum_size.x = SHEET_WIDTH
 
@@ -143,10 +165,70 @@ func hide_close_button() -> void:
 
 
 func _process(_delta: float) -> void:
-	if not _dirty or _dragging or not is_visible_in_tree() or _state == null:
+	# A held slider holds the arrangement too: a track that changed length under it would jump its value.
+	if _dragging or not is_visible_in_tree() or _state == null:
 		return
-	_dirty = false
-	_refresh()
+	if _dirty:
+		_dirty = false
+		_refresh()
+	_arrange()
+
+
+## The width the page stops at in columns (window_manager.gd reads it); INF as two.
+func page_cap() -> float:
+	# A px over the switch, as Books' (finance_columns.gd cap()).
+	return maxf(FinanceColumns.CEILING * UiTheme.text_scale(), _need + 1.0) if (_middle.get_parent() as Control).visible else INF
+
+
+## Two columns or three, by the page's width against what the blocks ask now.
+func _arrange() -> void:
+	if _goods == null:
+		return
+	var text := UiTheme.text_scale()
+	var asked := _goods.get_combined_minimum_size().x
+	_goods_wide = asked if _good_filter == "" else maxf(_goods_wide, asked)
+	var goods := ceilf(maxf(_goods_wide, SHEET_WIDTH * text))
+	var left := LEFT_FLOOR * text
+	for child in _body.get_children():
+		if child != _goods:
+			left = maxf(left, (child as Control).get_combined_minimum_size().x)
+	left = ceilf(left)
+	var firm := ceilf(maxf(SHEET_WIDTH, _sheet.get_combined_minimum_size().x))
+	var gaps := 2.0 * UiTheme.GAP_PANE
+	# A px over the narrowest three: the columns' minimums stay under the switch, so a page they hold wide falls to two.
+	_need = maxf(ceilf((LEFT_WIDTH + SHEET_WIDTH) * text) + firm, left + goods + firm + 1.0) + gaps
+	var three := size.x >= _need
+	var home := _middle if three else _body
+	if _goods.get_parent() != home:
+		# Leaving the tree drops the focus: a chip that held it takes it back, its ring shown or hidden as it was.
+		var held := get_viewport().gui_get_focus_owner()
+		if held != null and not _goods.is_ancestor_of(held):
+			held = null
+		var ring := held != null and held.has_focus(true)
+		_goods.get_parent().remove_child(_goods)
+		home.add_child(_goods)
+		if not three:
+			_body.move_child(_goods, _body.get_child_count() - 2)  # above the majors
+		if held != null:
+			held.grab_focus(not ring)
+	# In three every column hugs its content; the page's leftover stays empty at its right (the author on 2K).
+	var lead := _body.get_parent() as ScrollContainer
+	lead.size_flags_horizontal = Control.SIZE_FILL if three else Control.SIZE_EXPAND_FILL
+	var row := (_majors_row.get_parent().get_parent() as Control).get_theme_stylebox("panel").get_minimum_size().x - MAJOR_GAP
+	for cell in _majors_row.get_children():
+		row += ceilf((cell as Control).get_combined_minimum_size().x) + MAJOR_GAP
+	var hug := maxf(left, floorf(minf(row, LEFT_WIDTH * text)))
+	# The majors wrap where the page has no room for their one row, with the same px to spare as the switch.
+	if hug + goods + firm + gaps + 1.0 > size.x:
+		hug = left
+	# Widths on the scrolls: SHOW_NEVER passes no minimum up.
+	lead.custom_minimum_size.x = hug if three else 0.0
+	(_middle.get_parent() as Control).custom_minimum_size.x = goods
+	(_middle.get_parent() as Control).visible = three
+	(_sheet.get_parent() as Control).custom_minimum_size.x = firm if three else 0.0
+	# Never DISABLED in three: the columns' minimums would hold the page wide, and it could not come back.
+	for box in [_body, _middle, _sheet]:
+		(box.get_parent() as ScrollContainer).horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER if three else ScrollContainer.SCROLL_MODE_DISABLED
 
 
 func _refresh() -> void:
@@ -155,12 +237,14 @@ func _refresh() -> void:
 		return
 	# Out of the tree at once: freed only at the frame's end, the old sheet doubled the content a lit block's scroll
 	# measured (pass 2 T6).
-	for child in _body.get_children() + _sheet.get_children():
+	for child in _body.get_children() + _middle.get_children() + _sheet.get_children():
 		child.get_parent().remove_child(child)
 		child.queue_free()
 	_head(ns)
 	_needs(ns)
-	SectorGoodsView.build(self, _body, ns)
+	_goods = VBoxContainer.new()
+	_body.add_child(_goods)  # _arrange() moves it to the middle column the same frame
+	SectorGoodsView.build(self, _goods, ns)
 	_majors(ns)
 	var company = _selected(ns)
 	if company != null:
@@ -260,9 +344,10 @@ func _majors(ns) -> void:
 	# G3 S3: a sheet of firm tiles (the kit's majors): the face above the name, the picked one on a tile.
 	var section := PanelKit.sheet(_body, tr("The majors · %d") % majors.size())
 	var grid := HFlowContainer.new()
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
+	grid.add_theme_constant_override("h_separation", MAJOR_GAP)
+	grid.add_theme_constant_override("v_separation", MAJOR_GAP)
 	section.add_child(grid)
+	_majors_row = grid
 	var picked = _selected(ns)
 	for company in majors:
 		var cell: Container = PanelContainer.new() if picked == company else MarginContainer.new()
