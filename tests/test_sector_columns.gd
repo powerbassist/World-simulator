@@ -48,6 +48,7 @@ func _run() -> void:
 	await _scale_to(1.0)
 	await _check_the_long_table()
 	await _check_the_chip()
+	await _check_the_focus()
 	await _check_the_held_slider()
 	await _check_pseudo()
 	await _check_needs_you()
@@ -197,6 +198,19 @@ func _check_the_chip() -> void:
 	await _frames()
 	if _panel._need >= need:
 		_fail("a load keeps the last game's goods width: %.0f" % _panel._need)
+
+
+## The goods block changes parent at a switch; the keyboard stays on the chip it held.
+func _check_the_focus() -> void:
+	await _at(PAGE_2K)
+	var chip := _panel._goods.find_children("*", "Button", true, false).filter(func(b) -> bool: return b.has_meta("good"))[0] as Button  # i18n: ok a class name
+	chip.grab_focus()
+	for width in [PAGE_1080, PAGE_2K]:
+		await _at(width)
+		var owner := root.gui_get_focus_owner()
+		if owner != chip:
+			_fail("the focus left the chip at the switch to %.0f: it is on %s" % [width, owner])
+	chip.release_focus()
 
 
 func _check_the_held_slider() -> void:

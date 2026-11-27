@@ -196,10 +196,17 @@ func _arrange() -> void:
 	var three := size.x >= _need
 	var home := _middle if three else _body
 	if _goods.get_parent() != home:
+		# Leaving the tree drops the focus: a chip that held it takes it back, its ring shown or hidden as it was.
+		var held := get_viewport().gui_get_focus_owner()
+		if held != null and not _goods.is_ancestor_of(held):
+			held = null
+		var ring := held != null and held.has_focus(true)
 		_goods.get_parent().remove_child(_goods)
 		home.add_child(_goods)
 		if not three:
 			_body.move_child(_goods, _body.get_child_count() - 2)  # above the majors
+		if held != null:
+			held.grab_focus(not ring)
 	var lead := _body.get_parent() as ScrollContainer
 	lead.size_flags_horizontal = Control.SIZE_FILL if three else Control.SIZE_EXPAND_FILL
 	lead.custom_minimum_size.x = maxf(left, floorf(minf(LEFT_WIDTH * text, size.x - goods - firm - gaps))) if three else 0.0
