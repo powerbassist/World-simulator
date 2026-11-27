@@ -147,12 +147,13 @@ func _process(_delta: float) -> bool:
 			_main._windows.open("register")
 		27:
 			_check_types_come_from_the_catalogue()
-			# #439 pass 2 T1: the sheet fills the page to the dock's foot and no further -- the floor
-			# read from the header sheet as drawn, not a slack sized for BUREAU's 39 px header.
+			# The 2K card's A (the author, 2026-11-22) reverses #439 pass 2 T1: the table's sheet hugs its
+			# rows and the map shows under it; the page itself still fills the band beside the bill's rail.
 			root.size = Vector2i(1920, 1080)
 			_main._windows.open("register")
 		30:
 			_check_fills_without_scrolling("register", "text 1.0")
+			_check_table_hugs("text 1.0")
 			_main._windows.open("programmes")
 		32:
 			_check_fills_without_scrolling("programmes", "text 1.0")
@@ -162,6 +163,7 @@ func _process(_delta: float) -> bool:
 			_panel.mark_dirty()
 		35:
 			_check_fills_without_scrolling("register", "text 1.15")
+			_check_table_hugs("text 1.15")
 			_check_the_press_follows_its_sheet()
 			_main._windows.open("programmes")
 			_main._windows.content("programmes").mark_dirty()
@@ -182,6 +184,17 @@ func _check_fills_without_scrolling(id: String, where: String) -> void:
 	var dock: Rect2 = _main._windows.dock().get_global_rect()
 	if page.get_global_rect().end.y < dock.end.y - 1.0 or dock.end.y < 1080.0 - WindowManager.DOCK_BOTTOM - 1.0:
 		_fail("%s at 1080, %s: the page ends at %.0f, short of the dock's foot %.0f" % [id, where, page.get_global_rect().end.y, 1080.0 - WindowManager.DOCK_BOTTOM])
+
+
+## The table's row (the regions' sheet and the programme's) is as tall as its content, not the band.
+func _check_table_hugs(where: String) -> void:
+	var rows: Array = _panel._body.get_children().filter(func(c): return c is HBoxContainer)
+	if rows.size() != 1:
+		_fail("register, %s: %d rows of sheets, not one" % [where, rows.size()])
+		return
+	var row: Control = rows[0]
+	if row.size.y > row.get_combined_minimum_size().y + 1.0:
+		_fail("register, %s: the table's row is %.0f px tall for %.0f of content: it stretches to the band" % [where, row.size.y, row.get_combined_minimum_size().y])
 
 
 ## Pass 2 T6 on #447: the programme's sheet is as tall as its own content, so its press never follows a long regions'

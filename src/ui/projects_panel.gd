@@ -31,7 +31,6 @@ const ResultTone = preload("res://src/ui/result_tone.gd")
 const Num = preload("res://src/ui/num.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const ConfirmCard = preload("res://src/ui/confirm_card.gd")
-const WindowManager = preload("res://src/ui/window_manager.gd")
 const WorksRows = preload("res://src/ui/works_rows.gd")
 const WorksLane = preload("res://src/ui/works_lane.gd")
 const WorksBill = preload("res://src/ui/works_bill.gd")
@@ -62,7 +61,6 @@ func _ready() -> void:
 	add_child(root)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_body.add_theme_constant_override("separation", UiTheme.GAP_PANE)
 	root.add_child(_body)
 	_close_button = Button.new()
@@ -96,7 +94,7 @@ func picked() -> String:
 	return _picked
 
 
-## A text size moves the sheets, so the floor (page_room) is read again.
+## A text size moves the sheets: they are built again.
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_THEME_CHANGED:
 		_dirty = true
@@ -117,7 +115,6 @@ func _refresh() -> void:
 	for child in _body.get_children():
 		_body.remove_child(child)
 		child.queue_free()
-	WindowManager.fill_page(self, "projects")
 	var rows := WorksRows.rows(_state, _loader, ns)
 	if rows.filter(func(r): return String(r["id"]) == _picked).is_empty():
 		_picked = WorksRows.first_pick(rows)
@@ -125,8 +122,9 @@ func _refresh() -> void:
 	var when := Trends.vote_date(ns)
 	var term := when.x * 12 + when.y if Trends.months_until(_state, when.x, when.y) >= 0 else -1
 	_build_refusal(ns, _head(ns, rows, term))
+	# The 2K card's A (the author, 2026-11-22): the row hugs its content, its two sheets ending
+	# together at the taller one's foot, and the map shows under it -- not a slab to the band's foot.
 	var main := HBoxContainer.new()
-	main.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main.add_theme_constant_override("separation", UiTheme.GAP_PANE)
 	_body.add_child(main)
 	_works(main, rows, now, term)

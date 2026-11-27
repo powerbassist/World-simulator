@@ -49,6 +49,7 @@ func _process(_delta: float) -> bool:
 			_check_axes()
 			_check_marks()
 			_check_figures()
+			_check_row_hugs("offers on the table")
 			_started = String(_page.picked())
 			_press(_with_meta("works_go", _page))
 		6:
@@ -78,8 +79,30 @@ func _process(_delta: float) -> bool:
 			_press(_with_meta("works_go", _page))
 		18:
 			_check_full()
+			_check_row_hugs("both slots taken")
 			_finish()
 	return false
+
+
+## The 2K card's A (the author, 2026-11-22): the row of the lanes and the picked work's sheet hugs its
+## content, both sheets ending together at the taller one's foot, and the map shows under it.
+func _check_row_hugs(where: String) -> void:
+	var sheet: Control = _with_meta("works_sheet", _page)
+	while sheet != null and String(sheet.theme_type_variation) != UiTheme.PLATE:
+		sheet = sheet.get_parent() as Control
+	if sheet == null or not (sheet.get_parent() is HBoxContainer):
+		_fail("%s: the picked work's sheet is not in the row" % where)
+		return
+	var row: Control = sheet.get_parent()
+	var feet: Array = row.get_children().filter(func(c): return c is Control and c.visible).map(
+		func(c): return roundf((c as Control).get_global_rect().end.y))
+	if feet.max() - feet.min() > 1.0:
+		_fail("%s: the row's sheets end at %s, not together" % [where, feet])
+	if row.size.y > row.get_combined_minimum_size().y + 1.0:
+		_fail("%s: the row is %.0f px tall for %.0f of content: its sheets stretch to the band" % [where, row.size.y, row.get_combined_minimum_size().y])
+	var dock: Rect2 = _main._windows.dock().get_global_rect()
+	if row.get_global_rect().end.y > dock.end.y - 40.0:
+		_fail("%s: the row ends at %.0f, at the dock's foot %.0f: no map under it" % [where, row.get_global_rect().end.y, dock.end.y])
 
 
 func _state():
