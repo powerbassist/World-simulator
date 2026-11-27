@@ -38,6 +38,7 @@ const Trends = preload("res://src/ui/trends.gd")
 const FinanceAutumn = preload("res://src/ui/finance_autumn.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const FinanceColumns = preload("res://src/ui/finance_columns.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
@@ -61,6 +62,7 @@ var _spending_box: VBoxContainer
 var _foot: FinanceFoot
 var _sheet: FinanceSheet
 var _scroll: ScrollContainer
+var _table: FinanceColumns
 var _with: Label
 var _draft := FinanceDraft.new()
 var _price := FinancePrice.new()
@@ -118,22 +120,12 @@ func _ready() -> void:
 	_ranges = HBoxContainer.new()
 	_ranges.add_theme_constant_override("separation", 24)
 	head.add_child(_ranges)
-	var table := PanelKit.sheet(root)
-	(table.get_parent() as Control).size_flags_vertical = Control.SIZE_EXPAND_FILL
-	table.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_scroll = ScrollContainer.new()
-	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	table.add_child(_scroll)
-	var books := VBoxContainer.new()
-	books.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	books.add_theme_constant_override("separation", 0)
-	_scroll.add_child(books)
-	# One table, spending first: the lines are what a budget sets; revenue under them.
-	_spending_box = VBoxContainer.new()
-	books.add_child(_spending_box)
-	_revenue_box = VBoxContainer.new()
-	books.add_child(_revenue_box)
+	_table = FinanceColumns.new()
+	_table.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(_table)
+	_scroll = _table.scroll
+	_spending_box = _table.spending
+	_revenue_box = _table.revenue
 	# The rail is built here, so a page with no window manager (a test) still has its verbs; the driver hands it to
 	# the manager as the Finances domain's aside (rail()).
 	_foot = FinanceFoot.new()
@@ -226,6 +218,7 @@ func _refresh(ns) -> void:
 		"price": _price, "scale_bn": _money_scale(), "on_lever": _on_lever, "span": func(channel: String, key: String) -> Dictionary: return FinanceEditor.span(ns, _draft, channel, key)}
 	FinanceRows.spending(_spending_box, _book, _ctx)
 	FinanceRows.revenue(_revenue_box, _book, _state, _loader, _open_groups, _toggle_group, _ctx)
+	_table.measure(_book["groups"])
 	_paint(ns)
 	# The request is the rebuild's: with no editor to land on (a birth taken back) it dies here, or the next row opened
 	# by the mouse would take the keyboard unasked.
@@ -284,6 +277,11 @@ func _paint(ns) -> void:
 	for entry in [["proj_growth", Strings.t("Growth, 2 years")], ["proj_unemployment", Strings.t("Unemployment, 2 years")], ["proj_debt", Strings.t("Debt, 2 years")]]:
 		var pair: Array = rows.get(entry[0], ["…", "…"])
 		PanelKit.figure(_ranges, String(pair[1] if drafted or _draft.has_moves() else pair[0]), entry[1])
+
+
+## The width the page stops at in columns (window_manager.gd reads it); INF as one table.
+func page_cap() -> float:
+	return _table.cap()
 
 
 ## The sentence the page is for. Its figures are FIGURE-sized, the rest LEAD, as the brief asks.

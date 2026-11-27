@@ -140,9 +140,8 @@ func _sector_row(dns, sector: Dictionary, share: float, warned: bool) -> void:
 	name.set_meta("sector", id)
 	var figure := PanelKit.plain_line(row, Strings.t("%s %s") % [quantity_text(Sectors.quantity(dns, _loader, _line, id)), unit_text(sector)], PanelKit.Tone.DIM)
 	figure.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	figure.autowrap_mode = TextServer.AUTOWRAP_OFF  # a wrapping label in a clipped cell drew nothing
-	figure.clip_text = true
-	figure.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	figure.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART  # a second line where the sheet is a column, never cut
+	figure.custom_minimum_size.x = FinanceRows.CAPTION_MIN * UiTheme.text_scale()  # wrapped, never a word a line
 	figure.tooltip_text = figure.text
 	figure.mouse_filter = Control.MOUSE_FILTER_PASS
 	var pct := PanelKit.plain_line(row, Strings.t("%s %% of the line") % Num.f(100.0 * share, 0), PanelKit.Tone.PLAIN)
@@ -150,7 +149,8 @@ func _sector_row(dns, sector: Dictionary, share: float, warned: bool) -> void:
 	pct.custom_minimum_size.x = FinanceRows.PCT_WIDTH * UiTheme.text_scale()
 	# The share as a bar in the line's own colour (decision 5: never the accent), on a 0-100 % scale: a locked lever.
 	var bar := FinanceLever.new()
-	bar.custom_minimum_size.x = FinanceRows.BAR_MIN * UiTheme.text_scale()
+	# Half a row's least: in a column the figure's floor and a full bar's together would widen the sheet past the page.
+	bar.custom_minimum_size.x = FinanceRows.BAR_MIN * 0.5 * UiTheme.text_scale()
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(bar)
 	bar.setup(1.0, 100.0, 100.0 * share, FinanceRows.line_color(_line))

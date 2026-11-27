@@ -15,6 +15,9 @@ const ScrollBars = preload("res://src/ui/scroll_bars.gd")
 
 ## On a gap bar: the scroll it moves.
 const META := "gap_bar_for"
+## On a scroll whose sheet comes and goes (Books in columns, finance_columns.gd): its own scroll mode says where its
+## bar stands, in the gap (SHOW_NEVER) or beside its content (AUTO).
+const FOLLOWS := "gap_bar_follows"
 
 var _bars := {}  # ScrollContainer -> VScrollBar
 
@@ -28,9 +31,11 @@ func _ready() -> void:
 func adopt(page: Control) -> void:
 	for node in page.find_children("*", "ScrollContainer", true, false):
 		var scroll := node as ScrollContainer
-		if _bars.has(scroll) or scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED or _in_sheet(scroll, page):
+		var follows := scroll.has_meta(FOLLOWS)
+		if _bars.has(scroll) or scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED or (not follows and _in_sheet(scroll, page)):
 			continue
-		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+		if not follows:
+			scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 		var bar := VScrollBar.new()
 		bar.theme_type_variation = ScrollBars.GAP_BAR
 		bar.set_meta(META, scroll)
@@ -81,7 +86,8 @@ func _process(_delta: float) -> void:
 			bar.queue_free()
 			_bars.erase(scroll)
 			continue
-		bar.visible = scroll.is_visible_in_tree() and scrolls(scroll)  # the scroll's own range, the truth
+		# The scroll's own range, the truth; a following scroll that shows its own bar has none here.
+		bar.visible = scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_SHOW_NEVER and scroll.is_visible_in_tree() and scrolls(scroll)
 		if bar.visible:
 			var rect: Rect2 = scroll.get_global_rect()
 			bar.position = Vector2(rect.end.x + (UiTheme.GAP_PANE - ScrollBars.GAP_BAR_WIDTH_PX) / 2.0, rect.position.y) - global_position
