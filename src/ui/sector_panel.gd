@@ -195,7 +195,8 @@ func _arrange() -> void:
 	left = ceilf(left)
 	var firm := ceilf(maxf(SHEET_WIDTH, _sheet.get_combined_minimum_size().x))
 	var gaps := 2.0 * UiTheme.GAP_PANE
-	_need = maxf(ceilf((LEFT_WIDTH + SHEET_WIDTH) * text) + firm, left + goods + firm) + gaps
+	# A px over the narrowest three: the columns' minimums stay under the switch, so a page they hold wide falls to two.
+	_need = maxf(ceilf((LEFT_WIDTH + SHEET_WIDTH) * text) + firm, left + goods + firm + 1.0) + gaps
 	var three := size.x >= _need
 	var home := _middle if three else _body
 	if _goods.get_parent() != home:
@@ -216,9 +217,12 @@ func _arrange() -> void:
 	var row := (_majors_row.get_parent().get_parent() as Control).get_theme_stylebox("panel").get_minimum_size().x - MAJOR_GAP
 	for cell in _majors_row.get_children():
 		row += ceilf((cell as Control).get_combined_minimum_size().x) + MAJOR_GAP
-	var hug := maxf(left, minf(row, LEFT_WIDTH * text))
+	var hug := maxf(left, floorf(minf(row, LEFT_WIDTH * text)))
+	# The majors wrap where the page has no room for their one row, with the same px to spare as the switch.
+	if hug + goods + firm + gaps + 1.0 > size.x:
+		hug = left
 	# Widths on the scrolls: SHOW_NEVER passes no minimum up.
-	lead.custom_minimum_size.x = maxf(left, floorf(minf(hug, size.x - goods - firm - gaps))) if three else 0.0
+	lead.custom_minimum_size.x = hug if three else 0.0
 	(_middle.get_parent() as Control).custom_minimum_size.x = goods
 	(_middle.get_parent() as Control).visible = three
 	(_sheet.get_parent() as Control).custom_minimum_size.x = firm if three else 0.0

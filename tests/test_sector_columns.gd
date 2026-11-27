@@ -195,13 +195,18 @@ func _check_the_long_table() -> void:
 	var tile := cell.custom_minimum_size.x
 	cell.custom_minimum_size.x = 400.0
 	await _frames()
-	if not _near(_widths(), [PAGE_2K - 700.0 - 440.0 - 2.0 * UiTheme.GAP_PANE, 700.0, 440.0]):
-		_fail("wide majors beside a 700 px table: the columns are %s" % [_widths()])
-	_panel._goods.custom_minimum_size.x = 0.0
-	await _frames()
-	if not _near(_widths(), [788.0, 440.0, 440.0]):
-		_fail("wide majors: the columns are %s, the lead stops at 788" % [_widths()])
+	if not _near(_widths(), [648.0, 700.0, 440.0]):
+		_fail("wide majors beside a 700 px table: the columns are %s, they wrap in 648" % [_widths()])
+	await _at(PAGE_2K_AWAY)
+	if not _near(_widths(), [788.0, 700.0, 440.0]):
+		_fail("wide majors and a 700 px table on the wider page: the columns are %s, the lead stops at 788" % [_widths()])
+	# The room shrinks under columns that fill it past the switch: the page follows, its own minimums never hold it.
+	await _at(PAGE_2K)
+	_check_three("back from the wider page")
+	await _at(PAGE_1080)
+	_check_two("from three columns with a 700 px table")
 	cell.custom_minimum_size.x = tile
+	await _at(PAGE_2K)
 	_panel._goods.custom_minimum_size.x = 800.0
 	await _frames()
 	_check_two("an 800 px goods table at 2K")
