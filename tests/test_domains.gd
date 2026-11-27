@@ -24,6 +24,7 @@ func _init() -> void:
 		_failures.append("data did not load cleanly: %s" % [_loader.errors])
 		_finish()
 		return
+	_test_a_thousand_in_a_unit_never_breaks()  # first: the later tests swap the loaded lines
 	_test_a_good_line_parses_and_renormalises()
 	_test_every_refusal()
 	_test_a_need_drift_is_optional()
@@ -142,6 +143,21 @@ func _test_every_sector_id_has_a_moving_elasticity() -> void:
 		for id in DK.SECTOR_IDS[line]:
 			if float(DK.ELASTICITY.get(id, 0.0)) <= 0.0:
 				_fail("sector %s has no elasticity: it would move nothing" % id)
+
+
+## A unit that names a thousand ("per 1 000 inhabitants") holds the figure together: the column it
+## sits in is narrow enough to wrap, and a break inside "1 000" reads as two numbers.
+func _test_a_thousand_in_a_unit_never_breaks() -> void:
+	var breakable := RegEx.create_from_string("[0-9] [0-9]{3}")
+	var seen := 0
+	for line in _loader.domains.keys():
+		for sector in Sectors.sectors_of(_loader, line):
+			var unit := String(sector["quantity"]["unit"])
+			seen += int("000" in unit)
+			if breakable.search(unit) != null:
+				_fail("%s/%s: the unit \"%s\" can break inside its figure" % [line, sector["id"], unit])
+	if seen == 0:
+		_fail("premise: no loaded unit names a thousand")
 
 
 func _state_with_health():
