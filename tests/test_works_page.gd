@@ -262,10 +262,10 @@ func _check_narrow_axes() -> void:
 					var at := "text %s, %d px, today +%d, term +%d" % [scale, width, now - first, ahead]
 					var axis: Control = WorksLane.new()
 					root.add_child(axis)
-					UiTheme.apply(axis)
+					UiTheme.rebuild(axis)
 					axis.axis(first, last, now, now + ahead)
 					axis.size = Vector2(width, 60.0)
-					_check_apart(axis.year_labels(), "lanes' years at " + at)
+					_check_apart(axis.year_labels(), width, "lanes' years at " + at)
 					var term: Rect2 = axis.term_label_rect()
 					if term.intersects(axis.today_rect()):
 						_fail("'today' %s sits on the term's label %s at %s" % [axis.today_rect(), term, at])
@@ -274,14 +274,14 @@ func _check_narrow_axes() -> void:
 					axis.free()
 				var bill: Control = WorksBill.new()
 				root.add_child(bill)
-				UiTheme.apply(bill)
+				UiTheme.rebuild(bill)
 				bill.setup([], first, last, now, "", "")
 				bill.size = Vector2(width, 140.0)
-				_check_apart(bill.year_labels(), "the bill's years at text %s, %d px" % [scale, width])
+				_check_apart(bill.year_labels(), width, "the bill's years at text %s, %d px" % [scale, width])
 				bill.free()
 				var lane: Control = WorksLane.new()
 				root.add_child(lane)
-				UiTheme.apply(lane)
+				UiTheme.rebuild(lane)
 				lane.lane({"state": WorksRows.OFFER, "opens": now + 96}, first, last, now, now + 4, true)
 				lane.size = Vector2(width, 50.0)
 				var drawn: String = lane.caption()
@@ -289,15 +289,25 @@ func _check_narrow_axes() -> void:
 				var wide: float = lane.get_theme_default_font().get_string_size(drawn, HORIZONTAL_ALIGNMENT_LEFT, -1, roundi(UiTheme.SIZE_SMALL * scale)).x
 				if wide > room:
 					_fail("the lane's caption '%s' is %.0f px in %.0f at text %s" % [drawn, wide, room, scale])
-				if width >= 900.0 and not drawn.contains("after your term ends"):
+				if width >= 900.0 and drawn != lane._said():
 					_fail("a wide lane's caption dropped how long after the term it opens: '%s'" % drawn)
 				lane.free()
 	UiTheme.set_text_scale(was)
 
 
-func _check_apart(labels: Array, where: String) -> void:
+## Every label inside the row, the axis's first year (it starts on a January, as the page's does)
+## still said, no two closer than 2 px.
+func _check_apart(labels: Array, width: float, where: String) -> void:
 	if labels.size() < 2:
 		_fail("%s: %d year labels" % [where, labels.size()])
+		return
+	if labels[0][0] != 2027:
+		_fail("%s: the axis's first year is not said, it starts at %s" % [where, labels[0][0]])
+	for label in labels:
+		var box: Rect2 = label[1]
+		if box.position.x < -0.01 or box.end.x > width + 0.01:
+			_fail("%s: %s runs from %.0f to %.0f, outside the row's 0 to %.0f" % [where, label[0], box.position.x, box.end.x, width])
+			break
 	for i in range(1, labels.size()):
 		var gap: float = labels[i][1].position.x - labels[i - 1][1].end.x
 		if gap < 2.0:

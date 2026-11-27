@@ -97,17 +97,16 @@ func year_labels() -> Array:
 	return years_across(_first, _last, size.x, get_theme_default_font(), _fs())
 
 
-## The years an axis `width` wide has room to say, each centred about its January: every year, or
-## every second, third... so that no two touch (R2 on #452). The bill's foot uses the same.
+## The years an axis `width` wide has room to say, each centred about its January but kept inside
+## the row: a year that would crowd the one before it is left out, so no two touch (R2 on #452).
+## The bill's foot uses the same.
 static func years_across(first: int, last: int, width: float, font: Font, fs: int) -> Array:
 	var w := font.get_string_size("0000", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-	var a_year := width * 12.0 / float(maxi(last - first, 1))
-	var step := maxi(ceili((w + fs * 0.5) / maxf(a_year, 1.0)), 1)
 	var out := []
-	var year := (first + 10) / 12  # the first January on the axis
-	while year * 12 + 1 <= last:
-		out.append([year, Rect2(x_at(year * 12 + 1, first, last, width) - fs, 0.0, w, font.get_height(fs))])
-		year += step
+	for year in range((first + 10) / 12, (last - 1) / 12 + 1):  # the Januaries on the axis
+		var x := clampf(x_at(year * 12 + 1, first, last, width) - fs, 0.0, maxf(width - w, 0.0))
+		if out.is_empty() or x >= out[-1][1].end.x + fs * 0.4:
+			out.append([year, Rect2(x, 0.0, w, font.get_height(fs))])
 	return out
 
 
