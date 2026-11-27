@@ -50,6 +50,8 @@ const FIGURE_WIDTH := 64.0
 ## G3 S4 (Books in C): the row's balance a year while the draft moves it, and the bar's least width.
 const BALANCE_WIDTH := 76.0
 const BAR_MIN := 140.0
+## The DRAG head's second line, left blank under its name for the money scale's figures.
+const SCALE_LINE := "\n "
 const SWATCH := 10.0
 
 
@@ -76,7 +78,7 @@ static func bn_text(value: float) -> String:
 ## The revenue column: every group (largest first) with its kinds, then what no row sets.
 static func revenue(box: Control, book: Dictionary, state, loader, open_groups: Dictionary, toggle: Callable, ctx: Dictionary) -> void:
 	var ns = state.player()
-	columns(box, Strings.t("Revenue · %s") % bn_text(float(book["revenue_bn"])), Strings.t("Who pays"), false)
+	columns(box, Strings.t("Revenue · %s") % bn_text(float(book["revenue_bn"])), Strings.t("Who pays"), false, ctx)
 	for group in book["groups"]:
 		var gid := String(group["id"])
 		_header(box, group_color(gid), group_name(gid), bn_text(float(group["total"])), "")
@@ -107,7 +109,7 @@ static func revenue(box: Control, book: Dictionary, state, loader, open_groups: 
 ## The spending column: the five lines, then the debt service and what no line sets.
 static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
 	# The column names are said once, over spending; a spending row's "for" is the open row's (its blocs cost a read).
-	columns(box, Strings.t("Spending · %s") % bn_text(float(book["spending_bn"])), "", true)
+	columns(box, Strings.t("Spending · %s") % bn_text(float(book["spending_bn"])), "", true, ctx)
 	for line in book["lines"]:
 		var row := _row()
 		row.add_child(_swatch(line_color(String(line["key"]))))
@@ -252,7 +254,7 @@ static func _on_ground(editor: Control) -> Control:
 
 
 ## A section's head: its title and total, then the table's column names over the cells they name.
-static func columns(box: Control, title: String, who: String, named: bool) -> void:
+static func columns(box: Control, title: String, who: String, named: bool, ctx: Dictionary) -> void:
 	var row := _row()
 	var gap := Control.new()
 	gap.custom_minimum_size.x = SWATCH
@@ -260,10 +262,16 @@ static func columns(box: Control, title: String, who: String, named: bool) -> vo
 	_cell(row, title.to_upper(), UiTheme.MICRO, NAME_WIDTH + INDENT / UiTheme.text_scale()).clip_text = false
 	_cell(row, who.to_upper(), UiTheme.MICRO, CAPTION_MIN, "who").size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cell(row, Strings.t("Rate").to_upper() if named else "", UiTheme.MICRO, PCT_WIDTH, "rate")
-	var bar := _cell(row, Strings.t("Drag").to_upper() if named else "", UiTheme.MICRO, BAR_MIN, "drag")
+	# Two lines: the column's name, and under it the money scale every bar of the table is drawn to.
+	var head := Strings.t("Drag").to_upper() + SCALE_LINE if named else ""
+	var bar := _cell(row, head, UiTheme.MICRO, BAR_MIN, "drag")
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var scale := float(ctx.get("scale_bn", 1.0))
+	FinanceLever.axis(bar, ["0", Num.f(scale * 0.5, 0), bn_text(scale)])
 	_cell(row, Strings.t("A year").to_upper() if named else "", UiTheme.MICRO, FIGURE_WIDTH, "year").horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_cell(row, Strings.t("Balance").to_upper() if named else "", UiTheme.MICRO, BALANCE_WIDTH, "balance").horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	for cell in row.get_children():
+		cell.size_flags_vertical = Control.SIZE_SHRINK_BEGIN  # level with the first line of the DRAG head
 	var spaced := MarginContainer.new()
 	spaced.add_theme_constant_override("margin_top", 10)
 	spaced.add_child(row)

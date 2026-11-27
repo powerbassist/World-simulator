@@ -190,7 +190,10 @@ func _lay() -> void:
 		cell.custom_minimum_size.x = _who if _columns else FinanceRows.CAPTION_MIN * scale
 	for slot in HEADS:
 		for cell in _slot(revenue, slot):  # spending names the columns for both only while it stands over revenue
-			cell.text = Strings.t(HEADS[slot]).to_upper() if _columns else ""
+			var second := FinanceRows.SCALE_LINE if slot == "drag" else ""
+			cell.text = Strings.t(HEADS[slot]).to_upper() + second if _columns else ""
+			for mark in cell.get_children():
+				mark.visible = _columns
 	for bar in _row_bars(spending) + _slot(spending, "drag") + _row_bars(revenue) + _slot(revenue, "drag"):
 		bar.custom_minimum_size.x = bar_wide
 		bar.size_flags_horizontal = Control.SIZE_FILL if _columns else Control.SIZE_EXPAND_FILL

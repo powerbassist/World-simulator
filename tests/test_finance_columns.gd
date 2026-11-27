@@ -20,6 +20,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const GapBars = preload("res://src/ui/gap_bars.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## The books' width as the game gives it: the 1080 page with the inbox showing (the bill's rail folded over it), and
 ## the 2K page with the inbox showing.
@@ -128,6 +129,10 @@ func _check_one_table(state: String) -> void:
 		_fail("%s: the rate column is headed '%s'" % [state, _head_text(spending, "rate")])
 	_check_fits(state)
 	_check_one_bar(state)
+	_check_axis(spending, state)
+	for head in _slot(revenue, "drag"):
+		if head.get_children().any(func(mark) -> bool: return mark.visible):
+			_fail("%s: revenue repeats the money scale under spending's" % state)
 
 
 func _check_columns(state: String) -> void:
@@ -156,6 +161,8 @@ func _check_columns(state: String) -> void:
 			_fail("%s: revenue's head reads '%s' for %s" % [state, _head_text(revenue, pair[0]), pair[1]])
 	_check_fits(state)
 	_check_one_bar(state)
+	_check_axis(spending, state)
+	_check_axis(revenue, state)
 	# Read whole: not one who-pays caption cut, the longest included.
 	for cell in _slot(revenue, "who"):
 		var wants: float = cell.get_theme_font("font").get_string_size(cell.text, HORIZONTAL_ALIGNMENT_LEFT, -1, cell.get_theme_font_size("font_size")).x
@@ -213,6 +220,36 @@ func _check_one_bar(state: String) -> void:
 			widths[roundi((bar as Control).size.x)] = true
 	if widths.size() != 1:
 		_fail("%s: the bars are %s px long" % [state, widths.keys()])
+
+
+## The DRAG head carries the table's one money scale: 0, half and the whole of it, each where every bar under it draws
+## that sum, under the word and not on one another.
+func _check_axis(box: Control, state: String) -> void:
+	var scale: float = _panel._money_scale()
+	var head: Label = _slot(box, "drag")[0]
+	var marks: Array = head.get_children().filter(func(mark) -> bool: return mark.visible)
+	var want := ["0", Num.f(scale * 0.5, 0), FinanceRows.bn_text(scale)]
+	var said := marks.map(func(mark) -> String: return mark.text)
+	if said != want:
+		_fail("%s: the scale reads %s, wanted %s" % [state, said, want])
+		return
+	var inks := marks.map(func(m) -> float: return m.get_theme_font("font").get_string_size(m.text, HORIZONTAL_ALIGNMENT_LEFT, -1, m.get_theme_font_size("font_size")).x)
+	var from: float = marks[0].global_position.x
+	var middle: float = marks[1].get_global_rect().get_center().x
+	var to: float = marks[2].get_global_rect().end.x
+	var bars: Array = _panel._table._row_bars(box).filter(func(bar) -> bool: return bar._per_unit > 0.0)
+	if bars.is_empty():
+		_fail("premise: %s: no bar with money to read the scale against" % state)
+	for bar in bars:
+		var drawn := [0.0, 0.5, 1.0].map(func(part) -> float: return bar.global_position.x + bar.x_of(scale * part / bar._per_unit))
+		if absf(from - drawn[0]) > 1.0 or absf(middle - drawn[1]) > 1.0 or absf(to - drawn[2]) > 1.0:
+			_fail("%s: the scale stands at %.1f %.1f %.1f, a bar draws it at %s" % [state, from, middle, to, drawn])
+			break
+	if from + inks[0] + 4.0 > middle - inks[1] * 0.5 or middle + inks[1] * 0.5 + 4.0 > to - inks[2]:
+		_fail("%s: the scale's figures meet (%s px wide on %.0f)" % [state, inks, to - from])
+	for mark in marks:
+		if mark.global_position.y < head.global_position.y + head.get_line_height(0) - 0.5 or mark.get_global_rect().end.y > head.get_global_rect().end.y + 0.5:
+			_fail("%s: '%s' is on the column's name or out of its head: %s in %s" % [state, mark.text, mark.get_global_rect(), head.get_global_rect()])
 
 
 ## An open row's editor lives in its sheet: it must not widen the column it opens in.
@@ -306,6 +343,8 @@ func _check_pseudo() -> void:
 			_fail("pseudo %s: no columns at its own switch" % ratio)
 		_check_fits("pseudo %s, columns" % ratio)
 		_check_one_bar("pseudo %s, columns" % ratio)
+		if ratio == 0.35:  # the shipped ratio: past it "[558 bn]" is wider than half a bar
+			_check_axis(_panel._revenue_box, "pseudo %s, columns" % ratio)
 	await _check_every_line_figures(99)  # the pseudo unit runs to five lines: wrapped, never starved of width
 	TranslationServer.pseudolocalization_enabled = false
 
@@ -454,7 +493,7 @@ func _slot(box: Node, slot: String) -> Array:
 ## The text of a sheet's head cell (the first row of the sheet).
 func _head_text(box: Node, slot: String) -> String:
 	var cells := _slot(box, slot)
-	return "?" if cells.is_empty() else String(cells[0].text)
+	return "?" if cells.is_empty() else String(cells[0].text).strip_edges()
 
 
 func _fail(message: String) -> void:
