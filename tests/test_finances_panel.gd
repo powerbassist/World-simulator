@@ -235,7 +235,10 @@ func _text_of(node: Node) -> String:
 ## ratio of their money a year (the stacks' "one scale" rule, carried to the rows); the sentence still says the books.
 func _check_the_picture() -> void:
 	var book := FinanceBooks.read(_state)
-	if _panel._spending_box.get_index() > _panel._revenue_box.get_index() or _panel._spending_box.get_parent() != _panel._revenue_box.get_parent():
+	# Each box on its own wrapper (W2): one parent over both, spending's first.
+	var spending: Node = _panel._spending_box.get_parent()
+	var revenue: Node = _panel._revenue_box.get_parent()
+	if spending.get_index() > revenue.get_index() or spending.get_parent() != revenue.get_parent():
 		_fail("the table is not one column with spending first")
 	var levers: Dictionary = _panel._ctx["levers"]
 	var health: Array = levers.get("spending_pct_gdp:health", [])

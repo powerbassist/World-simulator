@@ -140,9 +140,7 @@ func _sector_row(dns, sector: Dictionary, share: float, warned: bool) -> void:
 	name.set_meta("sector", id)
 	var figure := PanelKit.plain_line(row, Strings.t("%s %s") % [quantity_text(Sectors.quantity(dns, _loader, _line, id)), unit_text(sector)], PanelKit.Tone.DIM)
 	figure.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	figure.autowrap_mode = TextServer.AUTOWRAP_OFF  # a wrapping label in a clipped cell drew nothing
-	figure.clip_text = true
-	figure.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	figure.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART  # a second line where the sheet is a column, never cut
 	figure.tooltip_text = figure.text
 	figure.mouse_filter = Control.MOUSE_FILTER_PASS
 	var pct := PanelKit.plain_line(row, Strings.t("%s %% of the line") % Num.f(100.0 * share, 0), PanelKit.Tone.PLAIN)

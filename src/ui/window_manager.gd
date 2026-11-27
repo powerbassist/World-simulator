@@ -297,14 +297,14 @@ func _place_aside(id: String) -> Vector2:
 		if folded:
 			aside.set_anchors_preset(Control.PRESET_TOP_WIDE)
 			aside.offset_left = 0.0
-			aside.offset_right = 0.0
+			aside.offset_right = -_past_cap(id, 0.0)
 			aside.offset_top = 0.0
 			aside.offset_bottom = want.y
 			room = Vector2(0.0, want.y + GAP)
 		else:
 			aside.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-			aside.offset_left = -want.x
-			aside.offset_right = 0.0
+			aside.offset_right = -_past_cap(id, want.x + GAP)
+			aside.offset_left = aside.offset_right - want.x
 			aside.offset_top = 0.0
 			aside.offset_bottom = 0.0
 			room = Vector2(want.x + GAP, 0.0)
@@ -317,8 +317,15 @@ func _fit_page(page: Control, id: String) -> void:
 	# (pass 2 T12 on #443: offsets written on it every frame shrank it to its minimum).
 	if page.anchor_right < 1.0 or page.anchor_bottom < 1.0:
 		return
-	page.offset_right = -room.x
+	page.offset_right = -room.x - _past_cap(id, room.x)
 	page.offset_top = room.y
+
+
+## W2: what a page in columns leaves at the band's right, beside `taken` (the map shows there); its strip or rail ends
+## with it. The header keeps the band: the tabs do not move from page to page.
+func _past_cap(id: String, taken: float) -> float:
+	var content: Control = _pages[id]._content
+	return maxf(0.0, _body.size.x - taken - content.page_cap()) if content.has_method("page_cap") else 0.0
 
 
 ## The aside shown beside the open tab, or null.

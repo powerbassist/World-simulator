@@ -136,7 +136,7 @@ static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
 		var name := _name_cell(row, Strings.t("%s (!)") % shown if (ctx.get("slipping", []) as Array).has(String(line["key"])) else shown, id, NAME_WIDTH + INDENT / UiTheme.text_scale(), ctx)
 		# What a briefing's Go on the deficit lands on (acts_on.gd): any line's slider acts on the balance.
 		ActsOn.tag(name, ["deficit", "balance"])
-		_cell(row, "", UiTheme.CAPTION, CAPTION_MIN).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_cell(row, "", UiTheme.CAPTION, CAPTION_MIN, "who").size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var pct := _cell(row, "", UiTheme.CAPTION, PCT_WIDTH)
 		row.mouse_filter = Control.MOUSE_FILTER_PASS
 		(ctx["cells"] as Dictionary)[id] = [pct, FinanceDraft.SPENDING, String(line["key"]), float(line["pct"])]
@@ -166,8 +166,9 @@ static func _swatch(color: Color) -> Control:
 	return swatch
 
 
-static func _cell(parent: Control, text: String, variation: String, width: float) -> Label:
+static func _cell(parent: Control, text: String, variation: String, width: float, slot := "") -> Label:
 	var label := Label.new()
+	label.set_meta("slot", slot)  # what finance_columns.gd dresses by arrangement
 	label.text = text
 	label.theme_type_variation = variation
 	label.custom_minimum_size.x = width * UiTheme.text_scale()
@@ -197,7 +198,7 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 	label.clip_text = false
 	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	if note != "":
-		var caption := _cell(row, note, UiTheme.CAPTION, CAPTION_MIN if bar_bn >= 0.0 else 0.0)
+		var caption := _cell(row, note, UiTheme.CAPTION, CAPTION_MIN if bar_bn >= 0.0 else 0.0, "who")
 		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	else:
@@ -206,7 +207,7 @@ static func _header(box: Control, color: Color, name: String, total: String, not
 			tip = note if tip == "" else note + ". " + tip
 	if bar_bn >= 0.0:
 		# A part no rate here sets is drawn on the table's money scale too, a bar with no handle.
-		_cell(row, "", "", PCT_WIDTH)
+		_cell(row, "", "", PCT_WIDTH, "pct")
 		var bar := FinanceLever.new()
 		bar.custom_minimum_size.x = BAR_MIN * UiTheme.text_scale()
 		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -248,7 +249,7 @@ static func _kind_row(ns, kind: Dictionary, ctx: Dictionary) -> Control:
 		tag = Strings.t("At vote")
 	elif (ctx["draft"] as FinanceDraft).is_created(String(kind["id"])):
 		tag = Strings.t("Creation")
-	var caption := _cell(row, tag, UiTheme.CAPTION, CAPTION_MIN)
+	var caption := _cell(row, tag, UiTheme.CAPTION, CAPTION_MIN, "who")
 	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# Who pays is the caption's text unless the row is at vote or created: the hover always says it, so a
 	# caption cut to an ellipsis can still be read.
@@ -276,12 +277,12 @@ static func columns(box: Control, title: String, who: String, named: bool) -> vo
 	gap.custom_minimum_size.x = SWATCH
 	row.add_child(gap)
 	_cell(row, title.to_upper(), UiTheme.MICRO, NAME_WIDTH + INDENT / UiTheme.text_scale()).clip_text = false
-	_cell(row, who.to_upper(), UiTheme.MICRO, CAPTION_MIN).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cell(row, who.to_upper(), UiTheme.MICRO, CAPTION_MIN, "who").size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cell(row, "", UiTheme.MICRO, PCT_WIDTH)
-	var bar := _cell(row, Strings.t("Drag").to_upper() if named else "", UiTheme.MICRO, BAR_MIN)
+	var bar := _cell(row, Strings.t("Drag").to_upper() if named else "", UiTheme.MICRO, BAR_MIN, "drag")
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cell(row, Strings.t("A year").to_upper() if named else "", UiTheme.MICRO, FIGURE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_cell(row, Strings.t("Balance").to_upper() if named else "", UiTheme.MICRO, BALANCE_WIDTH).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_cell(row, Strings.t("A year").to_upper() if named else "", UiTheme.MICRO, FIGURE_WIDTH, "year").horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_cell(row, Strings.t("Balance").to_upper() if named else "", UiTheme.MICRO, BALANCE_WIDTH, "balance").horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var spaced := MarginContainer.new()
 	spaced.add_theme_constant_override("margin_top", 10)
 	spaced.add_child(row)
