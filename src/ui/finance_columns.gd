@@ -8,6 +8,7 @@ extends PanelContainer
 
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceLever = preload("res://src/ui/finance_lever.gd")
+const GapBars = preload("res://src/ui/gap_bars.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
@@ -38,6 +39,7 @@ func _init() -> void:
 	theme_type_variation = UiTheme.PLATE
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.set_meta(GapBars.FOLLOWS, true)
 	add_child(scroll)
 	_books.vertical = true
 	_books.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -66,7 +68,8 @@ func need() -> float:
 
 ## The width the page stops at: none as one table (it fills the workspace, decision 9).
 func cap() -> float:
-	return maxf(CEILING * UiTheme.text_scale(), _need) if _columns else INF
+	# A px over the switch: a cap equal to it, subtracted back from the band, could land a fraction under.
+	return maxf(CEILING * UiTheme.text_scale(), _need + 1.0) if _columns else INF
 
 
 func _process(_delta: float) -> void:
@@ -162,6 +165,8 @@ func _lay() -> void:
 	theme_type_variation = UiTheme.BARE if _columns else UiTheme.PLATE
 	# Never DISABLED in columns: the content's minimum would hold the page wide, and it could not come back.
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER if _columns else ScrollContainer.SCROLL_MODE_DISABLED
+	# In columns the scroll holds sheets: its bar stands in the gap, or Revenue would end short of the header's edge.
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER if _columns else ScrollContainer.SCROLL_MODE_AUTO
 	for wrap in _wraps:
 		wrap.theme_type_variation = UiTheme.PLATE if _columns else UiTheme.BARE
 		wrap.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if _columns else Control.SIZE_FILL  # the sheets hug

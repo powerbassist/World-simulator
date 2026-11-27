@@ -15,6 +15,8 @@ const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceColumns = preload("res://src/ui/finance_columns.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const WindowManager = preload("res://src/ui/window_manager.gd")
+const GapBars = preload("res://src/ui/gap_bars.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 ## The books' width as the game gives it: the 1080 page with the inbox showing (the bill's rail folded over it), and
@@ -47,6 +49,7 @@ func _run() -> void:
 	_panel.theme = UiTheme.build()
 	await _check_the_open_editor()
 	await _check_pseudo()
+	await _check_the_scroll_bar()
 	for line in _failures:
 		printerr("FAIL: " + line)
 	print("test_finance_columns: %s" % ("OK" if _failures.is_empty() else "%d failures" % _failures.size()))
@@ -252,6 +255,40 @@ func _check_pseudo() -> void:
 	_check_one_bar("pseudo, columns")
 	await _check_every_line_figures(99)  # the pseudo unit runs to five lines: wrapped, never starved of width
 	TranslationServer.pseudolocalization_enabled = false
+
+
+## In the dock, a window too short for the books: in columns the bar stands in the gap, so Revenue keeps the page's
+## right edge (T16 on #441); as one table the scroll is inside a sheet again and keeps its own.
+func _check_the_scroll_bar() -> void:
+	_panel.hide()
+	var host := Control.new()
+	host.theme = UiTheme.build()
+	root.add_child(host)
+	var manager := WindowManager.new()
+	host.add_child(manager)
+	var panel := FinancesPanel.new()
+	manager.register("finances", "Finances", panel)
+	panel.setup(_state, _loader)
+	manager.set_aside("finances", panel.rail())
+	for width in [2560, 1920, 2560]:
+		root.size = Vector2i(width, 900)
+		host.size = Vector2(width, 900)
+		manager.open("finances")
+		for _i in 12:
+			await process_frame
+		var table: FinanceColumns = panel._table
+		var own: VScrollBar = table.scroll.get_v_scroll_bar()
+		var gap: VScrollBar = GapBars.bar_for(manager, table.scroll)
+		if table.columns() != (width == 2560) or not GapBars.scrolls(table.scroll):
+			_fail("premise: at %d, columns %s, scrolls %s" % [width, table.columns(), GapBars.scrolls(table.scroll)])
+		elif table.columns():
+			var end: float = (panel._revenue_box.get_parent() as Control).get_global_rect().end.x
+			if own.visible or gap == null or not gap.visible or absf(end - table.get_global_rect().end.x) > 0.5:
+				_fail("columns at %d: own bar %s, gap bar %s, revenue ends at %.0f of %.0f" % [width, own.visible, gap != null and gap.visible, end, table.get_global_rect().end.x])
+		elif not own.visible or (gap != null and gap.visible):
+			_fail("one table at %d: own bar %s, gap bar %s" % [width, own.visible, gap != null and gap.visible])
+	host.queue_free()
+	_panel.show()
 
 
 func _slot(box: Node, slot: String) -> Array:
