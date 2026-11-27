@@ -205,6 +205,7 @@ tests=(
   tests/test_tax.gd
   tests/test_finances_panel.gd
   tests/test_finance_columns.gd
+  tests/test_sector_columns.gd
   tests/test_ledger_box.gd
   tests/test_finance_draft.gd
   tests/test_finance_editor.gd
