@@ -6,7 +6,7 @@ extends SceneTree
 ## `-- --write-baseline` rewrites the file from this run.
 ##
 ## The generic half of the fit tests: every window main.gd registers (window_manager panel_ids()),
-## opened in its default state, at every text size the Settings row offers (0.9 / 1.0 / 1.15) and
+## opened in its default state, at every text size the Settings row offers (0.9 / 1.0) and
 ## at interface size 1.0 and 0.75 (the 2560x1440 canvas), on a 1920x1080 root set by hand. The
 ## hand-staged states (a note on the Folder, the programme file, a city card, Save/Load full of
 ## saves) stay in test_dock_fit.gd, test_i18n_fit.gd and the others: this one finds the window

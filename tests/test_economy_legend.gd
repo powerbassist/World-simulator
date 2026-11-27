@@ -46,17 +46,16 @@ func _process(_delta: float) -> bool:
 	if _frame == 2:
 		_panel._refresh()
 		_run()
-		# The headline's captions in French, at the largest text size: laid out
+		# The headline's captions in French, at the largest text size (100 %): laid out
 		# a frame later, each must still read on one line (an autowrapping
 		# caption in an unsized row can wrap word by word).
 		Strings.set_language("fr")
-		UiTheme.set_text_scale(1.15)
 		_panel._refresh()
 	elif _frame == 4:
 		for box in _panel._headline.get_children():
 			for child in box.get_children():
 				if child is Label and child.theme_type_variation == UiTheme.FIGURE_LABEL and child.get_line_count() > 1:
-					_fail("the headline caption '%s' wraps to %d lines in French at 115 %%" % [child.text, child.get_line_count()])
+					_fail("the headline caption '%s' wraps to %d lines in French" % [child.text, child.get_line_count()])
 		Strings.set_language("en")
 		_finish()
 	return false

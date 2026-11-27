@@ -73,9 +73,8 @@ func _process(_delta: float) -> bool:
 			_main = load("res://src/ui/main.tscn").instantiate()
 			root.add_child(_main)
 		4:
-			# The docked page at 115 %: laid out a frame before the clip check reads it (QA's T1 on #366: the scroll bar's
+			# The docked page: laid out a frame before the clip check reads it (QA's T1 on #366: the scroll bar's
 			# gap took 8 px from the books' columns and "Other spending" read "Other spend...").
-			UiTheme.set_text_scale(1.15)
 			_panel.theme = UiTheme.build()  # the game's fonts: a bare panel measures the engine default
 			# VAT at vote: its row is locked while Income tax beside it opens (gate-443 T11).
 			_state.player().tabled_bill = {"law_id": "finance:2026", "vote_year": 2026, "vote_month": 1, "vote_day": 31, "finance": {"tax_rates_pct": {"vat": 1.0}}}
@@ -85,7 +84,7 @@ func _process(_delta: float) -> bool:
 			# The narrowest the page can be laid out: every column at its minimum, which is where a name is cut.
 			_panel.size = Vector2(_panel.get_combined_minimum_size().x, 820)
 		5:
-			_check_no_name_is_clipped_at_115()
+			_check_no_name_is_clipped()
 			_check_names_at_one_x()
 			_check_the_withdraw_is_a_ghost()
 			# QA's RECORD on #443: the caption floor keeps the bars on one scale on the narrowest page, rail open.
@@ -93,7 +92,6 @@ func _process(_delta: float) -> bool:
 			_check_no_sheet_on_a_hidden_page()
 			_state.player().tabled_bill = {}
 			_panel._stamp = ""
-			UiTheme.set_text_scale(1.0)
 			_panel.theme = null
 			_panel._dirty = true
 			_panel._process(0.0)
@@ -409,10 +407,10 @@ func _check_the_stamp_and_the_forecast_redraw() -> void:
 	_panel._process(0.0)
 
 
-## No header or row name on the books is cut to an ellipsis at 115 % text: a Label that clips and whose text is wider
+## No header or row name on the books is cut to an ellipsis: a Label that clips and whose text is wider
 ## than the box it was given says "Other spend...". The names are what the page is read by; the figures and notes
 ## around them may be tighter.
-func _check_no_name_is_clipped_at_115() -> void:
+func _check_no_name_is_clipped() -> void:
 	var clipped := []
 	for box in [_panel._revenue_box, _panel._spending_box]:
 		for node in box.find_children("*", "", true, false):
@@ -437,7 +435,7 @@ func _check_no_name_is_clipped_at_115() -> void:
 			if need > label.size.x + 0.5:
 				clipped.append("%s (%.0f of %.0f px)" % [label.text, need, label.size.x])
 	if not clipped.is_empty():
-		_fail("at 115 %% the books clip: %s" % ", ".join(clipped))
+		_fail("the books clip: %s" % ", ".join(clipped))
 
 
 ## Gate-443 T11: a name in a list keeps TEXT, at one left edge. A row at vote (locked) and a row that opens read
@@ -562,7 +560,7 @@ func _register_primary() -> Button:
 	return null
 
 
-## Pass 2 T3 on #443: twelve changes at text 115, the rail open (the inbox put away): its verbs stay on screen.
+## Pass 2 T3 on #443: twelve changes, the rail open (the inbox put away): its verbs stay on screen.
 func _start_a_long_bill() -> void:
 	# The author's screen, not the headless default (taller: twelve changes fitted with room to spare).
 	_window_was = root.size
@@ -570,8 +568,6 @@ func _start_a_long_bill() -> void:
 	var inbox = _main._hud.inbox
 	inbox.slide_out()
 	inbox.hide()
-	UiTheme.set_text_scale(1.15)
-	UiTheme.rebuild(_main)
 	var page = _main._windows.content("finances")
 	var draft = page.shared_draft()
 	var ns = _main._state.player()
@@ -595,7 +591,7 @@ func _check_a_long_bill_keeps_its_verbs() -> void:
 	elif table == null or not table.is_visible_in_tree():
 		_fail("a twelve-change bill shows no Table the bill")
 	elif table.get_global_rect().end.y > body.end.y + 0.5 or rail.get_global_rect().end.y > body.end.y + 0.5:
-		_fail("a twelve-change bill at 115 %% puts its verbs at %s, past the workspace's foot %s (rail %s)" % [
+		_fail("a twelve-change bill puts its verbs at %s, past the workspace's foot %s (rail %s)" % [
 			table.get_global_rect(), body.end.y, rail.get_global_rect()])
 	# The waterfall and the changes scroll in what is left, never squeezed to nothing.
 	var scroll := rail._fall.get_parent().get_parent() as ScrollContainer
@@ -604,8 +600,6 @@ func _check_a_long_bill_keeps_its_verbs() -> void:
 	elif scroll.size.y < 160.0 or scroll.get_v_scroll_bar().max_value <= scroll.size.y:
 		_fail("a twelve-change bill's scroll is %s px tall over %s of content: nothing to scroll or no room" % [
 			scroll.size.y, scroll.get_v_scroll_bar().max_value])
-	UiTheme.set_text_scale(1.0)
-	UiTheme.rebuild(_main)
 	root.size = _window_was
 	page.shared_draft().revert()
 	page._on_structure_changed()

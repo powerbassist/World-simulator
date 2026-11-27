@@ -19,7 +19,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const WorldMonth = preload("res://src/sim/world_month.gd")
 
 ## The text sizes the settings offer at their ends: the plate grows with its text.
-const SCALES := [1.0, 1.15]
+const SCALES := [0.9, 1.0]
 ## The author's screen, then the two common laptop screens.
 const SCREENS := [Vector2i(1920, 1080), Vector2i(1366, 768), Vector2i(1280, 720)]
 ## A game this far on: trade shares, measures and relations have moved off their seeds.

@@ -218,7 +218,7 @@ static func padded(owner: Control, margin_px: int, separation: int) -> VBoxConta
 ##
 ## G3: the row is also a GROUP (the spec's button_group): its buttons share the class the
 ## longest label needs in the language shown, re-read before every sort, so a label that
-## grows in French or at 115 % steps the whole group up a class together.
+## grows in French steps the whole group up a class together.
 static func buttons(parent: Control) -> HFlowContainer:
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override("h_separation", BUTTON_SEPARATION)

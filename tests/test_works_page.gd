@@ -254,7 +254,7 @@ func _check_narrow_axes() -> void:
 	var was := UiTheme.text_scale()
 	var first := 2027 * 12 + 1
 	var last := first + 12 * 12
-	for scale in [0.9, 1.0, 1.15]:
+	for scale in [0.9, 1.0]:
 		UiTheme.set_text_scale(scale)
 		for width in [260.0, 330.0, 480.0, 900.0]:
 			for now in [first, first + 11]:

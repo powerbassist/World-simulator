@@ -154,22 +154,10 @@ func _process(_delta: float) -> bool:
 		30:
 			_check_fills_without_scrolling("register", "text 1.0")
 			_check_table_hugs("text 1.0")
+			_check_the_press_follows_its_sheet()
 			_main._windows.open("programmes")
 		32:
 			_check_fills_without_scrolling("programmes", "text 1.0")
-			UiTheme.set_text_scale(1.15)
-			UiTheme.rebuild(_main)
-			_main._windows.open("register")
-			_panel.mark_dirty()
-		35:
-			_check_fills_without_scrolling("register", "text 1.15")
-			_check_table_hugs("text 1.15")
-			_check_the_press_follows_its_sheet()
-			_main._windows.open("programmes")
-			_main._windows.content("programmes").mark_dirty()
-		38:
-			_check_fills_without_scrolling("programmes", "text 1.15")
-			UiTheme.set_text_scale(1.0)
 			_finish()
 	return false
 
@@ -198,7 +186,7 @@ func _check_table_hugs(where: String) -> void:
 
 
 ## Pass 2 T6 on #447: the programme's sheet is as tall as its own content, so its press never follows a long regions'
-## table under the fold (Poland's 17 regions at 115 %).
+## table under the fold (Poland's 17 regions).
 func _check_the_press_follows_its_sheet() -> void:
 	var press = _with_meta("table")
 	var sheet: Control = press.get_parent()
