@@ -356,6 +356,16 @@ A windowed Godot run reads the OS cursor: `Viewport.get_mouse_position()` and ev
 - **When the proof IS the pointer** (an RTL meta hover, a tooltip's popup `Window`): run with `NATION_OS_CURSOR=1` on the command line and say so in the report, while the author is away. The flag is never set by a script, a hook or CI.
 - **Measure it, do not assume it**: `tools/screenshot.gd`'s two former warps are measured with a busy-polled cursor watcher (a "teleport" is two samples 400 px apart; a hand cannot do that); the old code produced one per run and the new produces none.
 
+## Frame dumps and the panel-critique page
+
+Every frame `tools/screenshot.gd` saves, `tools/screenshot_all.py` runs included, has `<frame>.json` beside it (`tools/panel_dump.gd`): the visible Control tree, one node per line, with class, node path, owning script, rect and clip in window pixels, theme variation, text, colours, font and box. To find what draws something on a frame, grep its dump for the text and read `script` and `path`. Measured over seven states at 2560x1440 (2026-11-27): 2 to 47 ms and 8 to 320 KB per frame, against 13 to 40 s for the whole run, so there is no off switch. A frame copied or renamed takes its `.json` with it.
+
+For comments on a picture of a panel that lead back to the code, capture with `--bare` (adds `<frame>_bare.png`, the frame without what the page redraws: about 0.75 s and 2.7 MB more per frame), then build the page and publish `index.html` with the two PNGs as a private artifact:
+
+`python tools/panel_page.py DIR/books.json --out PAGE_DIR --state "Books, France, 1 January 2026" --commit <sha>`
+
+Every node is an element whose opening tag carries `data-script` and `data-node`, and a comment on the published page quotes that tag. Without a bare frame the page is the game frame with the same elements over it; with one, text and flat boxes are redrawn from the theme values. Limits: the rebuild was proved on the Books screen only; rich text, icons, sliders and custom drawing are shown as game pixels; a SubViewport is not walked.
+
 ## Deliberately not installed
 
 Ten-plus other Godot MCP servers exist. Two are installed, and they were chosen to **not** overlap: one drives the editor, one serves docs.

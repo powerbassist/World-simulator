@@ -4,7 +4,7 @@
 tools/screenshot.gd takes one flag per staged state and lists each staging in its
 header, one `godot ... -- <args>` line apiece. This runs every one of those lines,
 windowed (a headless Godot draws nothing), each in its own temporary user dir, and
-writes `<out>/<NN>_<slug>.png` plus contact sheets of four frames
+writes `<out>/<NN>_<slug>.png` (and its `.json` tree dump) plus contact sheets of four frames
 (`<out>/sheet_NN.png`) so a session can look at all of them in a few reads.
 
 It also prints any flag screenshot.gd parses that no header line stages: a state
@@ -41,7 +41,7 @@ from pathlib import Path
 HEADER = re.compile(r'^##\s+godot --path "<repo>" --script res://tools/screenshot\.gd(?: -- (?P<args>.*))?$')
 PARSED = re.compile(r'args\[i\] == "(--[a-z0-9-]+)"')
 # Flags that steer a staging rather than stage one, so a header line need not carry them.
-MODIFIERS = {"--out", "--frames", "--text"}
+MODIFIERS = {"--out", "--frames", "--text", "--bare"}
 TIMEOUT_S = 240
 
 
@@ -243,7 +243,7 @@ def _run_all(lines, opts, repo, out, frames, failed) -> None:
         cmd += args.split() + ["--out", str(target)]
         try:
             done = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=TIMEOUT_S)
-            ok = done.returncode == 0 and target.exists()
+            ok = done.returncode == 0 and target.exists() and target.with_suffix(".json").exists()
         except subprocess.TimeoutExpired:
             ok = False
         print(f"[{i:02d}] {'ok  ' if ok else 'FAIL'} {args or '(default)'}", flush=True)
