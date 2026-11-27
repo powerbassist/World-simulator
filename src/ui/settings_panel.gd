@@ -64,10 +64,10 @@ const DEFAULT_FULLSCREEN := true
 ## reference to 1477 px and the docked workspace left 5 px of map. An old `ui_scale_index`
 ## in settings.cfg is ignored. "More map" came back below 100 % as the interface size
 ## (interface_size.gd), which grows the canvas instead of shrinking it.
-## 130 % left the list on the author's word (2026-11-20, "Retirer 130 % du jeu"): the
-## largest size is 115 %, and a settings.cfg saved at the old fourth index clamps to it
-## (_text_index).
-const TEXT_SCALES: Array[float] = [0.9, 1.0, 1.15]
+## 130 % (2026-11-20, "Retirer 130 % du jeu") and 115 % (2026-11-27, "abandonnons le texte a
+## 115%") left the list on the author's word: the largest size is 100 %, the last entry, so a
+## settings.cfg saved at a removed index (2 or 3) clamps to it (_text_index).
+const TEXT_SCALES: Array[float] = [0.9, 1.0]
 const DEFAULT_TEXT_INDEX := 1
 
 ## Sound on a first launch. Audible rather than muted by default: a sting that

@@ -51,14 +51,6 @@ func _process(_delta: float) -> bool:
 		_fill_a_visit()
 	elif _frame == 6:
 		_check_book_in_sight("text 100")
-		UiTheme.set_text_scale(1.15)
-		UiTheme.rebuild(_main)
-		_main._windows.close_all()
-	elif _frame == 8:
-		_fill_a_visit()
-	elif _frame == 12:
-		_check_book_in_sight("text 115")
-		UiTheme.set_text_scale(1.0)
 		_finish()
 	return false
 

@@ -120,7 +120,7 @@ func _check_hemicycle_hover() -> void:
 ## keeps the height asked for.
 func _check_hemicycle_hugs() -> void:
 	var was := UiTheme.text_scale()
-	UiTheme.set_text_scale(1.15)
+	UiTheme.set_text_scale(0.9)
 	for width in [300.0, 900.0]:
 		var chart := ChartHemicycle.new()
 		root.add_child(chart)
@@ -128,10 +128,10 @@ func _check_hemicycle_hugs() -> void:
 		chart.size = Vector2(width, chart.custom_minimum_size.y)
 		chart.size = Vector2(width, chart.custom_minimum_size.y)  # as the container sorts it again
 		var blank: float = chart.size.y - chart._center().y
-		if width < 400.0 and (blank > ChartHemicycle.PAD + 0.5 or chart.custom_minimum_size.y >= 210.0 * 1.15):
+		if width < 400.0 and (blank > ChartHemicycle.PAD + 0.5 or chart.custom_minimum_size.y >= 210.0 * 0.9):
 			_fail("a %d px hemicycle leaves %.0f px under its seats in a %.0f px box" % [width, blank, chart.size.y])
-		if width > 400.0 and not is_equal_approx(chart.custom_minimum_size.y, 210.0 * 1.15):
-			_fail("a wide hemicycle is %.1f px tall, not the %.1f asked for" % [chart.custom_minimum_size.y, 210.0 * 1.15])
+		if width > 400.0 and not is_equal_approx(chart.custom_minimum_size.y, 210.0 * 0.9):
+			_fail("a wide hemicycle is %.1f px tall, not the %.1f asked for" % [chart.custom_minimum_size.y, 210.0 * 0.9])
 		chart.free()
 	UiTheme.set_text_scale(was)
 

@@ -67,7 +67,7 @@ func _process(_delta: float) -> bool:
 			_check_structure()
 			_check_settings()
 			_check_sound_setting()
-			_check_no_text_130()
+			_check_removed_text_sizes()
 			_check_plate()
 			_check_scenario_select()
 			_write_save()
@@ -261,7 +261,7 @@ func _check_settings() -> void:
 
 	# V5.1-c2.4: the text size replaced the interface scale, which left the
 	# window's content scale at 1.
-	const TEXT_INDEX := 2
+	const TEXT_INDEX := 0  # not the default, so the round trip proves it was saved
 	const RESOLUTION_INDEX := 2
 	panel._fullscreen_button.select(0)
 	panel._resolution_button.select(RESOLUTION_INDEX)
@@ -324,22 +324,19 @@ func _check_settings() -> void:
 	UiTheme.set_glass(true)
 
 
-## The 130 % text size is gone (the author, 2026-11-20: "Retirer 130 % du jeu"): the largest
-## size is 115 %, and a settings.cfg saved at the old fourth index reads as it, never past the
-## list. In-memory configs: no file of the player's is read or written.
-func _check_no_text_130() -> void:
+## 115 % and 130 % are gone (the author, 2026-11-27: "abandonnons le texte a 115%"; 130 % on
+## 2026-11-20): the largest size is 100 %, and a settings.cfg saved at a removed index reads as it,
+## never past the list and never 90 %. In-memory configs: no file of the player's is read or written.
+func _check_removed_text_sizes() -> void:
 	for scale in SettingsPanel.TEXT_SCALES:
-		if scale > 1.15:
-			_fail("a text size above 115 %% is offered (%s)" % scale)
-	var old := ConfigFile.new()
-	old.set_value("display", "text_scale_index", 3)
-	var scale: float = SettingsPanel.TEXT_SCALES[SettingsPanel._text_index(old)]
-	if not is_equal_approx(scale, 1.15):
-		_fail("a saved 130 %% reads as %s, not 115 %%" % scale)
-	var wild := ConfigFile.new()
-	wild.set_value("display", "text_scale_index", 99)
-	if not is_equal_approx(SettingsPanel.TEXT_SCALES[SettingsPanel._text_index(wild)], 1.15):
-		_fail("a saved index past the end does not clamp to the largest size")
+		if scale > 1.0:
+			_fail("a text size above 100 %% is offered (%s)" % scale)
+	for saved in [2, 3, 99]:
+		var old := ConfigFile.new()
+		old.set_value("display", "text_scale_index", saved)
+		var scale: float = SettingsPanel.TEXT_SCALES[SettingsPanel._text_index(old)]
+		if not is_equal_approx(scale, 1.0):
+			_fail("a saved text size index %d reads as %s, not 100 %%" % [saved, scale])
 
 
 ## V3.6: the Sound row persists, and sound_enabled() reads the file rather than

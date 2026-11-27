@@ -52,17 +52,14 @@ func _process(_delta: float) -> bool:
 		_run()
 		_check_the_lane_sits_on_the_plate("text 100")
 		_check_the_clock_never_widens("text 100")
-		# #439 pass 2 T3/T4 at the largest text size, with a hold reason under the date.
-		UiTheme.set_text_scale(1.15)
-		UiTheme.rebuild(_main)
+		# #439 pass 2 T3/T4 with a hold reason under the date.
 		var clock = _main._hud.clock_cluster
 		clock._reason.text = "The month is closing, and every hold says why"  # i18n: ok test fixture
 		clock._reason.show()
 		_main._hud.ribbon.mark_dirty()
 	elif _frame == 5:
-		_check_the_lane_sits_on_the_plate("text 115")
-		_check_the_clock_never_widens("text 115")
-		UiTheme.set_text_scale(1.0)
+		_check_the_lane_sits_on_the_plate("a hold reason shown")
+		_check_the_clock_never_widens("a hold reason shown")
 		_finish()
 	return false
 

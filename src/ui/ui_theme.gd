@@ -439,8 +439,8 @@ static func _panels(theme: Theme) -> void:
 	pane.border_color = PANE_RIM
 	for side in [SIDE_LEFT, SIDE_RIGHT]:
 		pane.set_content_margin(side, PAD_PANE)
-	# 3 above and below, as the flush strip had: the top strip's tiles fill its 84 px slot at
-	# text 115 (test_top_bar_tiles); a pane whose content wants air adds its own margin inside.
+	# 3 above and below, as the flush strip had: the top strip's tiles fill its 84 px slot
+	# (test_top_bar_tiles); a pane whose content wants air adds its own margin inside.
 	for side in [SIDE_TOP, SIDE_BOTTOM]:
 		pane.set_content_margin(side, 3)
 	_variation(theme, PANE, pane)

@@ -597,15 +597,15 @@ func _check_the_unset_lines_say_what_they_hold() -> void:
 ## with that size.)
 func _check_a_text_size_change_rebuilds_the_page() -> void:
 	var UiTheme = preload("res://src/ui/ui_theme.gd")
-	UiTheme.set_text_scale(1.15)
+	UiTheme.set_text_scale(0.9)
 	# No manual dirty mark.
 	_panel._process(0.0)
-	if not String(_panel._lead.text).contains("font_size=%d" % int(round(UiTheme.SIZE_LEAD * 1.15))):
-		_fail("a text-size change did not rebuild the page at 115 %%: lead '%s'" % _panel._lead.text)
+	if not String(_panel._lead.text).contains("font_size=%d" % int(round(UiTheme.SIZE_LEAD * 0.9))):
+		_fail("a text-size change did not rebuild the page at 90 %%: lead '%s'" % _panel._lead.text)
 	UiTheme.set_text_scale(1.0)
 	_panel._process(0.0)
 	if not String(_panel._lead.text).contains("font_size=%d" % UiTheme.SIZE_LEAD):
-		_fail("back at 100 %% the page kept its 115 %% build: lead '%s'" % _panel._lead.text)
+		_fail("back at 100 %% the page kept its 90 %% build: lead '%s'" % _panel._lead.text)
 
 
 ## C3 on #363: Withdraw is there whenever a bill is at vote, and withdrawing keeps what the player is drafting.

@@ -44,7 +44,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --open programmes   (G3 S4 Building in C: no programme building yet)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --inbox-away --open register   (G3 S4 Register in C: the bill's rail open beside it, the programme's dashed place)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play DEU --open register   (pass 2 T6 on #447: the press in view with the inbox, a second register)
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play POL --open register --text 115   (pass 2 T6 on #447: the press in view at 115 %)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --play POL --open register --text 90   (pass 2 T6 on #447: the press in view)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --address --open legislature
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --sheet-polls --open legislature   (the law sheet, polls open)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --law-filter taxes: --open legislature   (shelf:words)
@@ -502,7 +502,7 @@ var _hover_domain := false
 ## line. Takes the id so the frame can be aimed at a refuser.
 var _nation := ""
 var _lang := ""  ## --lang CODE: the interface language of the staged game (default English)
-var _text := 100  ## --text PCT: the text size (V5.1-c2.4), 90 / 100 / 115; anything else is refused
+var _text := 100  ## --text PCT: the text size (V5.1-c2.4), 90 / 100; anything else is refused
 var _play := ""  ## --play ID: the played nation of the staged game (default France)
 var _defence := false
 
