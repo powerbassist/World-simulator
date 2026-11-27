@@ -46,14 +46,15 @@ const FinanceColumns = preload("res://src/ui/finance_columns.gd")
 
 ## The sheet's width in px: the picture's right column.
 const SHEET_WIDTH := 440
-## The lead's column in three (the picture's), and what it gives up to a long goods table: four major tiles in a
-## row. Both times the text size.
+## Both times the text size: the widest the lead stands in three (the picture's, which the switch also counts, so the
+## 1080 page keeps two columns at text 100), and the narrowest: four major tiles in a row.
 const LEFT_WIDTH := 788.0
 const LEFT_FLOOR := 648.0
 
 const FACE := Vector2(28, 38)
 ## A major's tile (G3 S3): its width and its face, in px at text size 100.
 const MAJOR_W := 150.0
+const MAJOR_GAP := 8
 const MAJOR_FACE := Vector2(44, 58)
 ## The verdict's tag tone: a status, so a fixed tone and its words, never the accent.
 const VERDICT_TONE := {"behind": UiTheme.BAD_TEXT, "slower": UiTheme.WARN_TEXT, "pace": UiTheme.CAPTION, "ahead": UiTheme.GOOD_TEXT}
@@ -73,6 +74,8 @@ var _body: VBoxContainer
 ## The middle column, hidden while there are two; what the sector makes moves between it and _body.
 var _middle: VBoxContainer
 var _goods: VBoxContainer
+## The majors' tiles: in three the lead is as wide as they ask in one row.
+var _majors_row: HFlowContainer
 ## The widest the unfiltered goods table asked: a chip narrows the table and must not move the switch.
 var _goods_wide := 0.0
 ## The page's width from which three columns read whole.
@@ -108,7 +111,7 @@ func _ready() -> void:
 	columns.add_theme_constant_override("separation", UiTheme.GAP_PANE)
 	add_child(columns)
 	_body = _column(columns, Control.SIZE_EXPAND_FILL)
-	_middle = _column(columns, Control.SIZE_EXPAND_FILL)
+	_middle = _column(columns, Control.SIZE_FILL)
 	(_middle.get_parent() as Control).hide()
 	_sheet = _column(columns, Control.SIZE_FILL)
 	_sheet.custom_minimum_size.x = SHEET_WIDTH
@@ -207,11 +210,18 @@ func _arrange() -> void:
 			_body.move_child(_goods, _body.get_child_count() - 2)  # above the majors
 		if held != null:
 			held.grab_focus(not ring)
+	# In three every column hugs its content; the page's leftover stays empty at its right (the author on 2K).
 	var lead := _body.get_parent() as ScrollContainer
 	lead.size_flags_horizontal = Control.SIZE_FILL if three else Control.SIZE_EXPAND_FILL
-	lead.custom_minimum_size.x = maxf(left, floorf(minf(LEFT_WIDTH * text, size.x - goods - firm - gaps))) if three else 0.0
+	var row := (_majors_row.get_parent().get_parent() as Control).get_theme_stylebox("panel").get_minimum_size().x - MAJOR_GAP
+	for cell in _majors_row.get_children():
+		row += ceilf((cell as Control).get_combined_minimum_size().x) + MAJOR_GAP
+	var hug := maxf(left, minf(row, LEFT_WIDTH * text))
+	# Widths on the scrolls: SHOW_NEVER passes no minimum up.
+	lead.custom_minimum_size.x = maxf(left, floorf(minf(hug, size.x - goods - firm - gaps))) if three else 0.0
+	(_middle.get_parent() as Control).custom_minimum_size.x = goods
 	(_middle.get_parent() as Control).visible = three
-	(_sheet.get_parent() as Control).custom_minimum_size.x = firm if three else 0.0  # on the scroll: SHOW_NEVER passes no minimum up
+	(_sheet.get_parent() as Control).custom_minimum_size.x = firm if three else 0.0
 	# Never DISABLED in three: the columns' minimums would hold the page wide, and it could not come back.
 	for box in [_body, _middle, _sheet]:
 		(box.get_parent() as ScrollContainer).horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER if three else ScrollContainer.SCROLL_MODE_DISABLED
@@ -330,9 +340,10 @@ func _majors(ns) -> void:
 	# G3 S3: a sheet of firm tiles (the kit's majors): the face above the name, the picked one on a tile.
 	var section := PanelKit.sheet(_body, tr("The majors · %d") % majors.size())
 	var grid := HFlowContainer.new()
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
+	grid.add_theme_constant_override("h_separation", MAJOR_GAP)
+	grid.add_theme_constant_override("v_separation", MAJOR_GAP)
 	section.add_child(grid)
+	_majors_row = grid
 	var picked = _selected(ns)
 	for company in majors:
 		var cell: Container = PanelContainer.new() if picked == company else MarginContainer.new()

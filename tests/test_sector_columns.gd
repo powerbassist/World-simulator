@@ -5,9 +5,10 @@ extends SceneTree
 ##
 ## W2, the page in columns (Design's pick, the author's, gate-2k.md note 5): a sector's tab lays three columns -- the
 ## lead over the majors, what it makes, the firm's sheet -- from the page's OWN width, and keeps its two under it.
-## Pinned here: the switch at text 100 and 90; the picture's widths at the 2K page; a long goods table taking width from
-## the lead's column down to four majors in a row, and past that two columns; nothing wider than its column in either
-## arrangement; a chip and a held programme slider moving nothing; the page's cap, in the dock too; the pseudo-locale.
+## Every column hugs its content: the leftover width stays empty at the right of the page, never inside a column.
+## Pinned here: the switch at text 100 and 90; the same column widths on every wide page; a long goods table widening
+## its own column only, and past the page two columns; nothing wider than its column in either arrangement; a chip and
+## a held programme slider moving nothing; the page's cap, in the dock too; the pseudo-locale.
 
 const GameState = preload("res://src/core/game_state.gd")
 const SectorPanel = preload("res://src/ui/sector_panel.gd")
@@ -103,11 +104,17 @@ func _check_scale(scale: float) -> void:
 	_check_three("at the switch, " + at)
 	await _at(PAGE_2K)
 	_check_three("2K, " + at)
-	if scale == 1.0:
-		# The picture: 788 | 628 | 440.
-		var widths := [_scroll(_panel._body).size.x, _scroll(_panel._middle).size.x, _scroll(_panel._sheet).size.x]
-		if absf(widths[0] - 788.0) > 0.5 or absf(widths[1] - 628.0) > 0.5 or absf(widths[2] - 440.0) > 0.5:
-			_fail("at 2K the columns are %s, the picture's are 788, 628 and 440" % [widths])
+	var widths := _widths()
+	# France's industry in January: four majors a little over 648 in a row, a short goods table, the firm's sheet at its
+	# two-column width.
+	if scale == 1.0 and not (widths[0] >= 647.5 and widths[0] < 700.0 and _near(widths.slice(1), [440.0, 440.0])):
+		_fail("at 2K the columns are %s, wanted about 650, then 440 and 440" % [widths])
+	_check_one_row("2K, " + at)
+	await _at(PAGE_2K_AWAY)
+	_check_three("the wider 2K page, " + at)
+	if not _near(_widths(), widths):
+		_fail("%s: the columns follow the page's width: %s at 1880, %s at 2292" % [at, widths, _widths()])
+	await _at(PAGE_2K)
 	var cap := maxf(1880.0 * scale, need + 1.0)
 	if not is_equal_approx(_panel.page_cap(), cap):
 		_fail("%s: the cap is %.0f, wanted %.0f" % [at, _panel.page_cap(), cap])
@@ -140,10 +147,29 @@ func _check_three(state: String) -> void:
 	var a := _scroll(_panel._body).get_global_rect()
 	var b := _scroll(_panel._middle).get_global_rect()
 	var c := _scroll(_panel._sheet).get_global_rect()
-	if absf(b.position.x - a.end.x - UiTheme.GAP_PANE) > 0.5 or absf(c.position.x - b.end.x - UiTheme.GAP_PANE) > 0.5 \
-			or absf(a.position.y - b.position.y) > 0.5 or absf(c.end.x - _panel.get_global_rect().end.x) > 0.5:
-		_fail("%s: the columns stand %s %s %s in %s" % [state, a, b, c, _panel.get_global_rect()])
+	var page: Rect2 = _panel.get_global_rect()
+	if absf(a.position.x - page.position.x) > 0.5 or absf(b.position.x - a.end.x - UiTheme.GAP_PANE) > 0.5 \
+			or absf(c.position.x - b.end.x - UiTheme.GAP_PANE) > 0.5 or absf(a.position.y - b.position.y) > 0.5 or c.end.x > page.end.x + 0.5:
+		_fail("%s: the columns stand %s %s %s in %s" % [state, a, b, c, page])
 	_check_fits(state)
+
+
+func _check_one_row(state: String) -> void:
+	var majors := _major_cells()
+	if majors.size() < 4 or absf(majors[0].global_position.y - majors[3].global_position.y) > 0.5:
+		_fail("%s: premise or defect: the four majors do not stand in one row at %.0f" % [state, _widths()[0]])
+
+
+## The three columns' widths, left to right.
+func _widths() -> Array:
+	return [_scroll(_panel._body).size.x, _scroll(_panel._middle).size.x, _scroll(_panel._sheet).size.x]
+
+
+func _near(a: Array, b: Array) -> bool:
+	for i in a.size():
+		if absf(a[i] - b[i]) > 0.5:
+			return false
+	return true
 
 
 ## Nothing is wider than the column it stands in.
@@ -154,19 +180,28 @@ func _check_fits(state: String) -> void:
 			_fail("%s: a column holds %.0f of content in %.0f" % [state, box.get_combined_minimum_size().x, scroll.size.x])
 
 
-## A goods table longer than the sheet takes width from the lead's column, down to four majors in a row; past that
-## the 2K page keeps two columns and a wider one takes three.
+## A goods table longer than the sheet widens its own column and no other; one too long for the 2K page keeps two
+## columns there, and a wider page takes three.
 func _check_the_long_table() -> void:
 	await _at(PAGE_2K)
+	var hug: float = _widths()[0]
 	_panel._goods.custom_minimum_size.x = 700.0
 	await _frames()
 	_check_three("a 700 px goods table at 2K")
-	var left: float = _scroll(_panel._body).size.x
-	if absf(left - (PAGE_2K - 700.0 - 440.0 - 2.0 * UiTheme.GAP_PANE)) > 0.5 or _scroll(_panel._middle).size.x < 699.5:
-		_fail("a 700 px goods table leaves the lead %.0f and the goods %.0f" % [left, _scroll(_panel._middle).size.x])
-	var majors := _major_cells()
-	if majors.size() < 4 or absf(majors[0].global_position.y - majors[3].global_position.y) > 0.5:
-		_fail("premise or defect: the four majors do not stand in one row at %.0f" % left)
+	if not _near(_widths(), [hug, 700.0, 440.0]):
+		_fail("a 700 px goods table leaves the columns %s, wanted %.0f, 700 and 440" % [_widths(), hug])
+	# Majors too wide for one row: the lead stops at the picture's 788, and under it where the page has less to give.
+	var cell: Control = _major_cells()[0]
+	var tile := cell.custom_minimum_size.x
+	cell.custom_minimum_size.x = 400.0
+	await _frames()
+	if not _near(_widths(), [PAGE_2K - 700.0 - 440.0 - 2.0 * UiTheme.GAP_PANE, 700.0, 440.0]):
+		_fail("wide majors beside a 700 px table: the columns are %s" % [_widths()])
+	_panel._goods.custom_minimum_size.x = 0.0
+	await _frames()
+	if not _near(_widths(), [788.0, 440.0, 440.0]):
+		_fail("wide majors: the columns are %s, the lead stops at 788" % [_widths()])
+	cell.custom_minimum_size.x = tile
 	_panel._goods.custom_minimum_size.x = 800.0
 	await _frames()
 	_check_two("an 800 px goods table at 2K")
