@@ -212,6 +212,9 @@ extends SceneTree
 ## obvious in one frame. A UI session that never looks at a frame is a UI session
 ## that ships whatever the layout engine happened to do.
 ##
+## Every frame gets <frame>.json beside it, the visible Control tree with each node's script and
+## rect (tools/panel_dump.gd); --bare adds <frame>_bare.png, which only panel_page.py needs.
+##
 ## Runs windowed, not headless, on purpose: root.get_texture() is the window's own
 ## framebuffer, and with no rendering device there is nothing in it.
 
@@ -222,6 +225,7 @@ const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Motion = preload("res://src/ui/motion.gd")
 const OsCursor = preload("res://tools/os_cursor.gd")
+const PanelDump = preload("res://tools/panel_dump.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const BlocK = preload("res://src/sim/bloc_constants.gd")
 const Council = preload("res://src/sim/council.gd")
@@ -275,6 +279,8 @@ const APPLY_LEAD_FRAMES := 4
 
 var _frames_wanted := FRAMES_DEFAULT
 var _out_path := OUT_DEFAULT
+## --bare: also save each frame without what tools/panel_page.py redraws.
+var _bare := false
 var _frame := 0
 
 ## U5c. Which map layer to capture, and which nation to hold the cursor over.
@@ -1016,6 +1022,8 @@ func _init() -> void:
 			_frames_wanted = int(args[i + 1])
 		elif args[i] == "--out" and i + 1 < args.size():
 			_out_path = args[i + 1]
+		elif args[i] == "--bare":
+			_bare = true
 		elif args[i] == "--layer" and i + 1 < args.size():
 			_layer = args[i + 1]
 		elif args[i] == "--notes":
@@ -1483,8 +1491,8 @@ func _process(_delta: float) -> bool:
 	return true
 
 
-## Grabs the framebuffer and saves it. Returns false (having quit) when the
-## grab failed -- run windowed, not --headless.
+## Grabs the framebuffer and saves it, the tree dump beside it. Returns false (having quit) when the
+## grab or the dump failed -- run windowed, not --headless.
 func _write_frame(path: String, note: String) -> bool:
 	var image := root.get_texture().get_image()
 	if image == null:
@@ -1499,6 +1507,9 @@ func _write_frame(path: String, note: String) -> bool:
 	var suffix := " (%s)" % note if note != "" else ""
 	print("wrote %s (%dx%d, interface %s, canvas %s)%s" % [ProjectSettings.globalize_path(path), image.get_width(), image.get_height(),
 		root.content_scale_factor, root.get_visible_rect().size, suffix])
+	if not PanelDump.new().write(root, path, _bare):
+		quit(1)
+		return false
 	return true
 
 

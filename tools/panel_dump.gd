@@ -1,13 +1,11 @@
-## A screenshot.gd frame plus the visible Control tree behind it, as JSON. Dev-only, never shipped.
+## The visible Control tree behind a screenshot.gd frame, as JSON beside the PNG. Dev-only, never shipped.
 ##
-## Takes every flag screenshot.gd takes (it is that script with one more step at capture time)
-## and writes `<out>.json` beside `<out>.png`, for the panel-critique page: each node's path,
-## owning script and rect in WINDOW pixels, so a comment on the page leads to the code.
-## It also writes `<out>_bare.png`: the same frame minus exactly what panel_page.py redraws
-## (the text and flat boxes of REBUILT nodes), so the page's rebuild sits on nothing it draws.
-##
-##   godot --path "<repo>" --resolution 2560x1440 --script res://tools/panel_dump.gd -- --open budget --out DIR/books.png
-extends "res://tools/screenshot.gd"
+## screenshot.gd calls write() after it saves each frame: `<frame>.json` holds each node's path,
+## owning script, rect in WINDOW pixels and resolved theme values, one node per line, so a grep
+## for a script or a text returns the whole node. With --bare it also saves `<frame>_bare.png`:
+## the same frame minus exactly what panel_page.py redraws (the text and flat boxes of REBUILT
+## nodes), so the page's rebuild sits on nothing it draws.
+extends RefCounted
 
 ## The stylebox a class draws behind itself. A Button's follows its draw mode instead.
 const BOXES := {"Panel": "panel", "PanelContainer": "panel", "ScrollContainer": "panel", "LineEdit": "normal",
@@ -18,31 +16,51 @@ const REBUILT := ["Label", "Button", "ColorRect", "Panel", "PanelContainer", "Sc
 const BUTTON_STATES := {BaseButton.DRAW_NORMAL: "normal", BaseButton.DRAW_PRESSED: "pressed",
 	BaseButton.DRAW_HOVER: "hover", BaseButton.DRAW_DISABLED: "disabled", BaseButton.DRAW_HOVER_PRESSED: "hover_pressed"}
 
+var _root: Window
+var _rebuilt: Array[Control] = []
 
-var _hidden: Array[Control] = []
 
-
-func _write_frame(path: String, note: String) -> bool:
-	if not super(path, note):
-		return false
-	var nodes: Array = []
-	_hidden.clear()
-	_walk(root, root.get_final_transform(), Rect2(Vector2.ZERO, Vector2(root.size)), 1.0, 0, 0, "", nodes)
-	var file := FileAccess.open(path.get_basename() + ".json", FileAccess.WRITE)
+## True only on the last line: a script error part-way returns the default, false.
+func write(root: Window, png_path: String, bare: bool) -> bool:
+	var started := Time.get_ticks_usec()
+	var nodes := walk(root)
+	var lines := PackedStringArray()
+	for node in nodes:
+		lines.append(JSON.stringify(node))
+	var path := png_path.get_basename() + ".json"
+	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
-		printerr("could not write the dump beside %s: %d" % [path, FileAccess.get_open_error()])
-		quit(1)
+		printerr("could not write %s: %d" % [path, FileAccess.get_open_error()])
 		return false
-	# The walk is done, so hiding cannot change what it read. self_modulate spares the children.
-	for control in _hidden:
+	file.store_string('{"width": %d, "height": %d, "nodes": [\n%s\n]}\n' % [root.size.x, root.size.y, ",\n".join(lines)])
+	print("dumped %d nodes in %.0f ms (%d bytes)" % [nodes.size(), (Time.get_ticks_usec() - started) / 1000.0, file.get_length()])
+	return not bare or _write_bare(png_path.get_basename() + "_bare.png")
+
+
+## Every visible Control under `root`, in tree order.
+func walk(root: Window) -> Array:
+	_root = root
+	_rebuilt.clear()
+	var out: Array = []
+	_walk(root, root.get_final_transform(), Rect2(Vector2.ZERO, Vector2(root.size)), 1.0, 0, 0, "", out)
+	return out
+
+
+## Alpha is put back: --tally takes a second frame from the same run.
+## self_modulate spares the children.
+func _write_bare(path: String) -> bool:
+	var started := Time.get_ticks_usec()
+	var alphas: Array = _rebuilt.map(func(c: Control) -> float: return c.self_modulate.a)
+	for control in _rebuilt:
 		control.self_modulate.a = 0.0
 	RenderingServer.force_draw()
-	var bare := path.get_basename() + "_bare.png"
-	if not super(bare, "bare"):
+	var error := _root.get_texture().get_image().save_png(path)
+	for i in _rebuilt.size():
+		_rebuilt[i].self_modulate.a = alphas[i]
+	if error != OK:
+		printerr("could not write %s: %d" % [path, error])
 		return false
-	file.store_string(JSON.stringify({"width": root.size.x, "height": root.size.y, "frame": path.get_file(),
-		"bare": bare.get_file(), "nodes": nodes}, " "))
-	print("dumped %d nodes" % nodes.size())
+	print("bare frame in %.0f ms" % ((Time.get_ticks_usec() - started) / 1000.0))
 	return true
 
 
@@ -52,7 +70,7 @@ func _walk(node: Node, base: Transform2D, clip: Rect2, alpha: float, layer: int,
 	var own := node.get_script() as Script
 	if own != null:
 		script = own.resource_path
-	if node != root:
+	if node != _root:
 		if node is Window:
 			var window := node as Window
 			if not window.visible:
@@ -82,7 +100,7 @@ func _walk(node: Node, base: Transform2D, clip: Rect2, alpha: float, layer: int,
 				"rect": _list(rect), "clip": _list(shown), "alpha": alpha * control.self_modulate.a, "layer": layer, "z": z})
 			out.append(entry)
 			if entry.rebuilt:
-				_hidden.append(control)
+				_rebuilt.append(control)
 		if control.clip_contents:
 			if not shown.has_area():
 				return
@@ -171,7 +189,7 @@ func _describe(control: Control, scale: float) -> Dictionary:
 ## auto-generated name (@Label@123) may differ.
 func _index_path(node: Node) -> Array:
 	var out: Array = []
-	while node != root:
+	while node != _root:
 		out.push_front(node.get_index(true))
 		node = node.get_parent()
 	return out

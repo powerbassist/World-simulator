@@ -8,8 +8,11 @@ extends SceneTree
 ## so a size the game adds is accepted without touching the tool. The other half of the same fix,
 ## screenshot_all.py refusing a size folder that lies about --interface-size, is `python
 ## tools/screenshot_all.py --selftest` (the gate and CI run it).
+##
+## Also the tree walk behind each frame's .json (tools/panel_dump.gd), whose drift would be silent.
 
 const Shot = preload("res://tools/screenshot.gd")
+const PanelDump = preload("res://tools/panel_dump.gd")
 const SettingsPanel = preload("res://src/ui/settings_panel.gd")
 
 var _failures: Array[String] = []
@@ -26,7 +29,33 @@ func _initialize() -> void:
 			_failures.append("--text '%s' is not a size the game offers but was accepted" % raw)
 		elif not message.contains("90, 100)"):
 			_failures.append("--text '%s': the refusal does not list the allowed sizes: %s" % [raw, message])
+
+## A frame in: a Control outside the tree has no rect.
+func _process(_delta: float) -> bool:
+	_check_the_dump()
 	for failure in _failures:
 		push_error("FAIL " + failure)
 	print("test_screenshot_guards: %d failures" % _failures.size())
 	quit(1 if not _failures.is_empty() else 0)
+	return true
+
+
+func _check_the_dump() -> void:
+	var box := Control.new()
+	var shown := Label.new()
+	shown.text = "seen"
+	shown.position = Vector2(10, 20)
+	shown.size = Vector2(60, 24)
+	var hidden := Label.new()
+	hidden.visible = false
+	box.size = Vector2(200, 100)
+	box.add_child(hidden)
+	box.add_child(shown)
+	root.add_child(box)
+	var nodes := PanelDump.new().walk(root)
+	if nodes.size() != 2:
+		_failures.append("the dump holds %d nodes for a box with one visible label, not 2" % nodes.size())
+		return
+	var label: Dictionary = nodes[1]
+	if label.text != "seen" or not label.rebuilt or label.index_path != [box.get_index(), 1]:
+		_failures.append("the label's dump entry is wrong: %s" % label)

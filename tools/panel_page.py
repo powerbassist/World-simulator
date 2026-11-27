@@ -1,4 +1,4 @@
-"""A panel_dump.gd capture as a static HTML page where a comment leads to the code.
+"""A screenshot.gd frame and its tree dump as a static HTML page where a comment leads to the code.
 
     python tools/panel_page.py DIR/books.json --out PAGE_DIR --state "Books, France, January" --commit <sha>
     python tools/panel_page.py --selftest
@@ -11,10 +11,14 @@ Text and flat boxes are redrawn from the dump's theme values over the bare frame
 without them). What Godot draws itself (custom draw, shader, image, slider, rich text) is game
 pixels: a window cut out of the full frame where nothing redrawn lies on top of it, and the
 bare frame underneath otherwise. The "Game frame" box swaps the rebuild for the real capture.
+Without a `_bare.png` (a capture taken without --bare) nothing is redrawn: the page is the game
+frame with the same commentable elements over it.
 
-Dev-only, never shipped. Publish PAGE_DIR/index.html with the other files of PAGE_DIR.
+Dev-only, never shipped. Publish PAGE_DIR/index.html as a private artifact, the PNGs beside it
+as its files. It has no doctype: the artifact host wraps a page in its own.
 """
 import argparse
+import base64
 import html
 import json
 import shutil
@@ -28,9 +32,9 @@ VALIGN = ["flex-start", "center", "flex-end", "flex-start"]
 # a sidebar row's badge is 8 %, the top strip's figures about 30 %.
 COVER_LIMIT = 0.1
 
-CSS = """@font-face{font-family:Archivo;src:url(Archivo-Variable.ttf);font-weight:100 900;font-stretch:62%% 125%%}
-body{margin:0;background:#111;color:#ddd;font:14px Archivo,sans-serif}
-header,table{margin:8px}label{margin-right:12px}.scroll{overflow-x:auto}
+CSS = """@font-face{font-family:Archivo;src:url(data:font/ttf;base64,%(font)s);font-weight:100 900;font-stretch:62%% 125%%}
+:root{color-scheme:dark}body{margin:0;background:#111;color:#ddd;font:14px Archivo,sans-serif}
+header,table{margin:8px 16px}#game{margin-left:16px}label{margin-right:12px}.scroll{overflow-x:auto}
 #stage{position:relative;overflow:hidden;width:%(w)dpx;height:%(h)dpx;background:url(%(bare)s) no-repeat;text-align:left}
 .n{position:absolute;box-sizing:border-box;margin:0;border:0 solid transparent;font-kerning:normal}
 .n:hover{outline:2px solid #f0f;outline-offset:-1px}.pass{pointer-events:none}
@@ -139,14 +143,15 @@ def text_span(node, pad, widths):
         ";".join(outer), html.escape(";".join(style)), html.escape(node["text"]))
 
 
-def page(dump, prefix, state, commit):
-    numbered = [("%s%d" % (prefix, i + 1), node) for i, node in enumerate(dump["nodes"])]
+def page(dump, prefix, state, commit, frame, bare=None, font=""):
+    nodes = dump["nodes"] if bare else [dict(node, rebuilt=False) for node in dump["nodes"]]
+    numbered = [("%s%d" % (prefix, i + 1), node) for i, node in enumerate(nodes)]
     # Godot draws by canvas layer, then z, then tree order; sorted() keeps the tree order.
     numbered = sorted(numbered, key=lambda pair: (pair[1]["layer"], pair[1]["z"]))
     cut = crops([node for _, node in numbered])
-    frame, bare = html.escape(dump["frame"]), html.escape(dump["bare"])
-    out = ['<!doctype html><meta charset="utf-8"><title>Panel critique: %s</title>' % html.escape(state),
-           "<style>%s</style>" % (CSS % {"w": dump["width"], "h": dump["height"], "frame": frame, "bare": bare}),
+    frame, bare = html.escape(frame), html.escape(bare or frame)
+    out = ['<meta charset="utf-8"><title>%s critique</title>' % html.escape(state.split(",")[0]),
+           "<style>%s</style>" % (CSS % {"w": dump["width"], "h": dump["height"], "frame": frame, "bare": bare, "font": font}),
            '<input type="checkbox" id="game"><label for="game">Game frame</label>',
            "".join('<input type="radio" name="zoom" id="z%s"%s><label for="z%s">%s%%</label>'
                    % (z, " checked" if z == 75 else "", z, z) for z in (50, 75, 100)),
@@ -177,7 +182,8 @@ def selftest():
         node("/root/Box", "HBoxContainer", [0, 0, 100, 100], rebuilt=False),
         node("/root/Badge", "Label", [10, 50, 5, 4], text="1", **label),
     ]
-    out = page({"width": 100, "height": 100, "frame": "f.png", "bare": "b.png", "nodes": nodes}, "B", "s", "c")
+    dump = {"width": 100, "height": 100, "nodes": nodes}
+    out = page(dump, "B", "s", "c", "f.png", "b.png")
     tags = {line.split('"')[1]: line for line in out.splitlines() if line.startswith("<div id=")}
     assert list(tags) == ["B1", "B2", "B3", "B4", "B5", "B6"]
     assert tags["B2"].startswith('<div id="B2" data-comment-target data-script="res://a.gd" data-node="/root/Say &quot;x&quot;"')
@@ -185,16 +191,19 @@ def selftest():
     assert "url(f.png) -10px -50px" in tags["B4"], "a barely covered slider is cut from the frame"
     assert "url(f.png)" not in tags["B1"] and 'class="n"' in tags["B1"], "a covered map stays in the base, clickable"
     assert 'class="n pass"' in tags["B5"], "a container that draws nothing lets the click through"
+    only = page(dump, "B", "s", "c", "f.png")
+    assert "b.png" not in only and "&lt;</span>" not in only, "without a bare frame nothing is redrawn"
+    assert 'id="B2" data-comment-target' in only and "url(f.png) -10px -10px" in only
     print("panel_page selftest ok")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("dump", nargs="?", type=Path, help="the .json panel_dump.gd wrote")
+    parser.add_argument("dump", nargs="?", type=Path, help="the .json beside a screenshot.gd frame")
     parser.add_argument("--out", type=Path, help="page folder, created")
     parser.add_argument("--state", default="", help="what is on screen, shown in the header")
     parser.add_argument("--commit", default="unknown", help="the commit the capture was taken from")
-    parser.add_argument("--prefix", help="id prefix, default the dump name's first letter")
+    parser.add_argument("--prefix", help="id prefix, default the dump name's first letter (frame sets start with digits)")
     parser.add_argument("--selftest", action="store_true")
     args = parser.parse_args()
     if args.selftest:
@@ -203,13 +212,17 @@ def main():
     if not args.dump or not args.out:
         parser.error("a dump and --out are needed")
     dump = json.loads(args.dump.read_text(encoding="utf-8"))
-    if "bare" not in dump:
-        sys.exit("%s has no bare frame: capture it again with this checkout's panel_dump.gd" % args.dump)
+    # Found by name, not read from the dump: a frame set renames its files.
+    frame, bare = (args.dump.with_name(args.dump.stem + end) for end in (".png", "_bare.png"))
+    if not frame.exists():
+        sys.exit("no frame beside the dump: %s" % frame)
     args.out.mkdir(parents=True, exist_ok=True)
-    for name in (dump["frame"], dump["bare"]):
-        shutil.copyfile(args.dump.parent / name, args.out / name)
-    shutil.copyfile(FONT, args.out / FONT.name)
-    text = page(dump, args.prefix or args.dump.stem[0].upper(), args.state or args.dump.stem, args.commit)
+    bare = bare if bare.exists() else None
+    for source in filter(None, (frame, bare)):
+        shutil.copyfile(source, args.out / source.name)
+    letter = next((c for c in args.dump.stem if c.isalpha()), "n").upper()
+    text = page(dump, args.prefix or letter, args.state or args.dump.stem, args.commit,
+                frame.name, bare and bare.name, base64.b64encode(FONT.read_bytes()).decode("ascii"))
     (args.out / "index.html").write_text(text, encoding="utf-8", newline="\n")
     print("wrote %s: %d nodes" % (args.out / "index.html", len(dump["nodes"])))
 
