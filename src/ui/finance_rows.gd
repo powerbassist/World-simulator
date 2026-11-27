@@ -23,6 +23,7 @@ const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceLever = preload("res://src/ui/finance_lever.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const ControlStyle = preload("res://src/ui/control_style.gd")
+const FinanceUnits = preload("res://src/ui/finance_units.gd")
 
 ## A part nobody sets here: the muted neutral of the page's two stacks, and a darker one for the
 ## debt service so that the two are told apart by more than their place.
@@ -66,26 +67,6 @@ static func line_color(key: String) -> Color:
 
 static func group_name(group_id: String) -> String:
 	return Strings.t(String(GROUP_NAME.get(group_id, group_id)))
-
-
-## A tax's unit as it is printed after the rate: a symbol is not translated, a word is.
-static func unit_text(code: String) -> String:
-	match code:
-		"%":
-			return " %"
-		"pt":
-			return Strings.t(" pt")
-		"index":
-			return Strings.t(" (index)")
-		"EUR/l":
-			return " €/l"
-		"EUR/kg":
-			return " €/kg"
-		"EUR/t":
-			return " €/t"
-		"EUR/passenger":
-			return Strings.t(" € a passenger")
-	return " " + code
 
 
 static func bn_text(value: float) -> String:
@@ -278,7 +259,7 @@ static func columns(box: Control, title: String, who: String, named: bool) -> vo
 	row.add_child(gap)
 	_cell(row, title.to_upper(), UiTheme.MICRO, NAME_WIDTH + INDENT / UiTheme.text_scale()).clip_text = false
 	_cell(row, who.to_upper(), UiTheme.MICRO, CAPTION_MIN, "who").size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cell(row, "", UiTheme.MICRO, PCT_WIDTH)
+	_cell(row, Strings.t("Rate").to_upper() if named else "", UiTheme.MICRO, PCT_WIDTH, "rate")
 	var bar := _cell(row, Strings.t("Drag").to_upper() if named else "", UiTheme.MICRO, BAR_MIN, "drag")
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cell(row, Strings.t("A year").to_upper() if named else "", UiTheme.MICRO, FIGURE_WIDTH, "year").horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -430,18 +411,18 @@ static func paint_rates(ctx: Dictionary) -> void:
 		var spending := channel == FinanceDraft.SPENDING
 		var places := 1 if spending else int(cell[4])
 		var was := LedgerBox.text(live, places)
-		var unit := "" if spending else unit_text(String(cell[5]))
+		var code := "" if spending else String(cell[5])
 		if channel == FinanceDraft.TAX and draft.is_abolished(key):
 			label.text = Strings.t("abolish")
 		# A birth at vote is a kind not in force; one in force at 0 % (the wealth tax) raised is a rate row (retro item 11).
 		elif channel == FinanceDraft.TAX and (draft.is_created(key) or (tabled.has(id) and not draft.in_force(key))):
-			label.text = Strings.t("new, at %s") % (LedgerBox.text(target, places) + unit)
+			label.text = Strings.t("new, at %s") % FinanceUnits.rate(LedgerBox.text(target, places), code)
 		elif target == live:
-			label.text = Strings.t("%s %%") % Num.f(live, 1) if spending else was + unit
+			label.text = Strings.t("%s %%") % Num.f(live, 1) if spending else FinanceUnits.rate(was, code)
 		elif spending:
 			label.text = Strings.t("from %s to %s %%") % [was, LedgerBox.text(target, places)]
 		else:
-			label.text = Strings.t("from %s to %s") % [was, LedgerBox.text(target, places) + unit]
+			label.text = FinanceUnits.moving(was, LedgerBox.text(target, places), code)
 	_paint_levers(ctx)
 
 
@@ -502,12 +483,15 @@ static func change_label(ns, row: Dictionary) -> String:
 static func change_figures(ns, row: Dictionary) -> String:
 	var key := String(row["key"])
 	var places := 1
-	var unit := Strings.t(" % of GDP")
+	var code := ""
 	match String(row["channel"]):
 		FinanceDraft.TAX, FinanceDraft.ABOLISH:
 			places = TaxLibrary.step_decimals(ns, key)
-			unit = unit_text(String(ns.tax_library[key]["unit"]))
+			code = String(ns.tax_library[key]["unit"])
 		FinanceDraft.BRACKETS:
 			places = 2
-			unit = ""
-	return "%s → %s%s" % [LedgerBox.text(float(row["live"]), places), LedgerBox.text(float(row["draft"]), places), unit]
+	var was := LedgerBox.text(float(row["live"]), places)
+	var to := LedgerBox.text(float(row["draft"]), places)
+	if String(row["channel"]) == FinanceDraft.SPENDING:
+		return "%s → %s%s" % [was, to, Strings.t(" % of GDP")]
+	return FinanceUnits.arrow(was, to, code)

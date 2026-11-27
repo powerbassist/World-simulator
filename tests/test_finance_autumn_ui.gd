@@ -18,6 +18,7 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Num = preload("res://src/ui/num.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const FinanceUnits = preload("res://src/ui/finance_units.gd")
 const FinanceFoot = preload("res://src/ui/finance_foot.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
@@ -475,7 +476,7 @@ func _check_a_bill_at_vote_locks_its_births() -> void:
 	_panel._paint(ns)
 	var rate_now := float(ns.tax_rates_pct["tobacco_duty"])
 	var places := TaxLibrary.step_decimals(ns, "tobacco_duty")
-	var want_cell: String = Strings.t("from %s to %s") % [LedgerBox.text(rate_now, places), LedgerBox.text(0.0, places) + FinanceRows.unit_text(String(ns.tax_library["tobacco_duty"]["unit"]))]
+	var want_cell: String = FinanceUnits.moving(LedgerBox.text(rate_now, places), LedgerBox.text(0.0, places), String(ns.tax_library["tobacco_duty"]["unit"]))
 	if abolish_cell.text != want_cell:
 		_fail("an abolition at vote reads '%s', wanted '%s'" % [abolish_cell.text, want_cell])
 	_panel._on_withdraw()

@@ -55,6 +55,7 @@ func _run() -> void:
 	await _check_who_folded()
 	await _check_pseudo()
 	await _check_the_scroll_bar()
+	await _check_rate_words()
 	for line in _failures:
 		printerr("FAIL: " + line)
 	print("test_finance_columns: %s" % ("OK" if _failures.is_empty() else "%d failures" % _failures.size()))
@@ -121,8 +122,10 @@ func _check_one_table(state: String) -> void:
 	for cell in _slot(spending, "who"):
 		if not cell.visible:
 			_fail("%s: a spending caption is hidden in one table" % state)
-	if _head_text(revenue, "year") != "":
+	if _head_text(revenue, "year") != "" or _head_text(revenue, "rate") != "":
 		_fail("%s: revenue repeats the column names under spending's" % state)
+	if _head_text(spending, "rate") != Strings.t("Rate").to_upper():
+		_fail("%s: the rate column is headed '%s'" % [state, _head_text(spending, "rate")])
 	_check_fits(state)
 	_check_one_bar(state)
 
@@ -148,7 +151,7 @@ func _check_columns(state: String) -> void:
 	var noted := _slot(spending, "pct").filter(func(c) -> bool: return c.text == Strings.t("not set here"))
 	if noted.size() != 2:
 		_fail("%s: 'not set here' said on %d of spending's two unset rows" % [state, noted.size()])
-	for pair in [["drag", "Drag"], ["year", "A year"], ["balance", "Balance"]]:
+	for pair in [["rate", "Rate"], ["drag", "Drag"], ["year", "A year"], ["balance", "Balance"]]:
 		if _head_text(revenue, pair[0]) != Strings.t(pair[1]).to_upper():
 			_fail("%s: revenue's head reads '%s' for %s" % [state, _head_text(revenue, pair[0]), pair[1]])
 	_check_fits(state)
@@ -416,6 +419,32 @@ func _check_the_scroll_bar() -> void:
 			_fail("one table at %d: own bar %s, gap bar %s" % [width, own.visible, gap != null and gap.visible])
 	host.queue_free()
 	_panel.show()
+
+
+## An index reads before its number, in the row, in its change and in the change's figures, and fits the column.
+func _check_rate_words() -> void:
+	var ns = _state.player()
+	_panel._open_id = ""
+	_panel._open_groups["consumption"] = true
+	_panel.mark_dirty()
+	for width in [PAGE_1080, PAGE_2K]:
+		await _at(width)
+		for pair in [[100.0, "index\u00a0100"], [105.0, "from index\u00a0100 to 105"]]:
+			_panel._draft.set_value(FinanceDraft.TAX, "alcohol_duty", pair[0])
+			_panel.mark_dirty()
+			for _i in 6:
+				await process_frame
+			var cell: Label = _panel._ctx["cells"][FinanceRows.row_id(FinanceDraft.TAX, "alcohol_duty")][0]
+			var wants: float = cell.get_theme_font("font").get_string_size(cell.text, HORIZONTAL_ALIGNMENT_LEFT, -1, cell.get_theme_font_size("font_size")).x
+			if cell.text != pair[1] or wants > cell.size.x + 0.5:
+				_fail("at %.0f the index reads '%s' (%.0f of %.0f px), wanted '%s'" % [width, cell.text, wants, cell.size.x, pair[1]])
+	var row := {"channel": FinanceDraft.TAX, "key": "alcohol_duty", "live": 100.0, "draft": 105.0}
+	if FinanceRows.change_figures(ns, row) != "index\u00a0100 → 105":
+		_fail("the change reads '%s'" % FinanceRows.change_figures(ns, row))
+	row = {"channel": FinanceDraft.TAX, "key": "vat", "live": 20.0, "draft": 21.0}
+	if not FinanceRows.change_figures(ns, row).ends_with(" %") or FinanceRows.change_figures(ns, row).count("%") != 1:
+		_fail("a percentage's change reads '%s'" % FinanceRows.change_figures(ns, row))
+	_panel._draft.drop(FinanceDraft.TAX, "alcohol_duty")
 
 
 func _slot(box: Node, slot: String) -> Array:

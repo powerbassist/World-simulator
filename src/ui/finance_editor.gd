@@ -23,6 +23,7 @@ const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
+const FinanceUnits = preload("res://src/ui/finance_units.gd")
 const FinanceSectors = preload("res://src/ui/finance_sectors.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
@@ -74,14 +75,15 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	var decimals := int(reach["decimals"])
 	_lo = float(reach["lo"])
 	_hi = float(reach["hi"])
-	var unit := FinanceRows.unit_text(String(ns.tax_library[key]["unit"])) if channel == FinanceDraft.TAX else Strings.t(" % of GDP")
+	var code := String(ns.tax_library[key]["unit"]) if channel == FinanceDraft.TAX else ""
+	var unit := FinanceUnits.suffix(code) if channel == FinanceDraft.TAX else Strings.t(" % of GDP")
 	var in_force: bool = channel != FinanceDraft.TAX or ns.tax_rates_pct.has(key)
 	if channel == FinanceDraft.TAX and in_force and autumn and _draft.is_abolished(key):
 		# An abolished kind has no rate to set: the editor says so and offers the way back.
 		PanelKit.plain_line(self, Strings.t("Abolished in the bill: it leaves the books."), PanelKit.Tone.BAD)
 		_verb(Strings.t("Keep it"), "KeepTax", func() -> void: _draft.toggle_abolish(key))  # i18n: ok a node name
 		return
-	var now := PanelKit.plain_line(self, Strings.t("Now %s") % (LedgerBox.text(_draft.live(channel, key), decimals) + unit) if in_force else Strings.t("Not in force yet"), PanelKit.Tone.DIM)
+	var now := PanelKit.plain_line(self, Strings.t("Now %s") % (FinanceUnits.rate(LedgerBox.text(_draft.live(channel, key), decimals), code) if code == "index" else LedgerBox.text(_draft.live(channel, key), decimals) + unit) if in_force else Strings.t("Not in force yet"), PanelKit.Tone.DIM)
 	now.name = "Now"  # i18n: ok a node name, found by tests
 	now.visible = channel == FinanceDraft.TAX and not in_force  # the row's lever text says "now" (G3 S4 gate T3)
 	if channel == FinanceDraft.TAX:

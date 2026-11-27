@@ -15,7 +15,7 @@ const Labels = preload("res://src/ui/labels.gd")
 
 ## The width the columned page stops at, times the text size (the parent's ruling, gate-2k.md note 3).
 const CEILING := 1880.0
-const HEADS := {"drag": "Drag", "year": "A year", "balance": "Balance"}  # i18n: msgid
+const HEADS := {"rate": "Rate", "drag": "Drag", "year": "A year", "balance": "Balance"}  # i18n: msgid
 
 var scroll := ScrollContainer.new()
 var spending := VBoxContainer.new()
