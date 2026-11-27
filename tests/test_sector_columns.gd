@@ -18,6 +18,8 @@ const Closures = preload("res://src/sim/closures.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const GapBars = preload("res://src/ui/gap_bars.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
 
 ## The page as the game gives it: 1080 with the inbox showing and away, 2K showing and away.
 const PAGE_1080 := 1240.0
@@ -56,6 +58,7 @@ func _run() -> void:
 	await _check_pseudo()
 	await _check_needs_you()
 	await _check_the_dock()
+	await _check_the_job_figure()
 	for line in _failures:
 		printerr("FAIL: " + line)
 	print("test_sector_columns: %s" % ("OK" if _failures.is_empty() else "%d failures" % _failures.size()))
@@ -359,6 +362,34 @@ func _check_the_dock() -> void:
 				_fail("the middle column scrolls %s, its gap bar %s" % [GapBars.scrolls(scroll), gap != null and gap.visible])
 	host.queue_free()
 	_panel.show()
+
+
+## A job figure is one figure: a major's line ("Ostrow Wielkopolski . 55 856 jobs") may break anywhere but inside it,
+## at any width (gate on Sectors: Siec Wielkopolska read "55" over "856").
+func _check_the_job_figure() -> void:
+	var figure := CompanyVerb.thousands(1055856.0)
+	var host := Control.new()
+	host.theme = UiTheme.build()
+	root.add_child(host)
+	var line := PanelKit.plain_line(host, "Ostrow Wielkopolski - %s jobs" % figure)
+	var first := line.text.find(figure)
+	var broke := 0
+	var most := 0
+	for width in range(30, 300, 3):
+		line.size = Vector2(width, 200)
+		await process_frame
+		var a := line.get_character_bounds(first)
+		var b := line.get_character_bounds(first + figure.length() - 1)
+		most = maxi(most, line.get_line_count())
+		if absf(a.position.y - b.position.y) > 0.5:
+			broke = width
+	if most < 3 or first < 0:
+		_fail("premise: the line never wrapped (%d lines at most, figure at %d)" % [most, first])
+	if broke > 0:
+		_fail("at %d px the figure '%s' breaks across two lines" % [broke, figure])
+	if not line.get_theme_font("font").has_char(figure.unicode_at(1)):
+		_fail("the font has no glyph for the figure's separator %d" % figure.unicode_at(1))
+	host.queue_free()
 
 
 func _major_cells() -> Array:

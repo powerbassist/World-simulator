@@ -481,7 +481,7 @@ func _check_rate_words() -> void:
 	if FinanceRows.change_figures(ns, row) != "index\u00a0100 → 105":
 		_fail("the change reads '%s'" % FinanceRows.change_figures(ns, row))
 	row = {"channel": FinanceDraft.TAX, "key": "vat", "live": 20.0, "draft": 21.0}
-	if not FinanceRows.change_figures(ns, row).ends_with(" %") or FinanceRows.change_figures(ns, row).count("%") != 1:
+	if not FinanceRows.change_figures(ns, row).ends_with("\u00a0%") or FinanceRows.change_figures(ns, row).count("%") != 1:
 		_fail("a percentage's change reads '%s'" % FinanceRows.change_figures(ns, row))
 	_panel._draft.drop(FinanceDraft.TAX, "alcohol_duty")
 

@@ -2,3 +2,4 @@ Changed: On wide screens the Books' two columns are only as wide as their lines,
 Changed: The Books head their rate column "Rate", and an index reads "index 100" instead of "100 (index)".
 Added: The Books show a money scale over their bars: zero, half and a full bar, in billions.
 Fixed: The sidebar's count now sits in the middle of its circle.
+Fixed: A job figure such as "55 856" no longer breaks across two lines.
