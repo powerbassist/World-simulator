@@ -97,15 +97,16 @@ func year_labels() -> Array:
 	return years_across(_first, _last, size.x, get_theme_default_font(), _fs())
 
 
-## The years an axis `width` wide has room to say, each centred about its January but kept inside
-## the row: a year that would crowd the one before it is left out, so no two touch (R2 on #452).
-## The bill's foot uses the same.
+## The years an axis `width` wide has room to say, each over its January, sliding from flush left
+## at the axis's start to flush right at its end so all stay inside the row at one spacing: a year
+## that would crowd the one before it is left out, so no two touch (R2 on #452). The bill's foot
+## uses the same.
 static func years_across(first: int, last: int, width: float, font: Font, fs: int) -> Array:
 	var w := font.get_string_size("0000", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	var out := []
 	for year in range((first + 10) / 12, (last - 1) / 12 + 1):  # the Januaries on the axis
-		var x := clampf(x_at(year * 12 + 1, first, last, width) - fs, 0.0, maxf(width - w, 0.0))
-		if out.is_empty() or x >= out[-1][1].end.x + fs * 0.4:
+		var x := x_at(year * 12 + 1, first, last, maxf(width - w, 0.0))
+		if out.is_empty() or x >= out[-1][1].end.x + fs * 0.5:
 			out.append([year, Rect2(x, 0.0, w, font.get_height(fs))])
 	return out
 

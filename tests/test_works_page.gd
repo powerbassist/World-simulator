@@ -295,8 +295,8 @@ func _check_narrow_axes() -> void:
 	UiTheme.set_text_scale(was)
 
 
-## Every label inside the row, the axis's first year (it starts on a January, as the page's does)
-## still said, no two closer than 2 px.
+## Every label inside the row and over its January, the axis's first year (it starts on a January,
+## as the page's does) still said, no two closer than 2 px, and the years thinned evenly.
 func _check_apart(labels: Array, width: float, where: String) -> void:
 	if labels.size() < 2:
 		_fail("%s: %d year labels" % [where, labels.size()])
@@ -307,6 +307,15 @@ func _check_apart(labels: Array, width: float, where: String) -> void:
 		var box: Rect2 = label[1]
 		if box.position.x < -0.01 or box.end.x > width + 0.01:
 			_fail("%s: %s runs from %.0f to %.0f, outside the row's 0 to %.0f" % [where, label[0], box.position.x, box.end.x, width])
+			break
+		# 12 years on the axis, from January 2027.
+		var tick: float = width * (label[0] - 2027) / 12.0
+		if tick < box.position.x - 0.01 or tick > box.end.x + 0.01:
+			_fail("%s: %s runs from %.0f to %.0f, off its January at %.0f" % [where, label[0], box.position.x, box.end.x, tick])
+			break
+	for i in range(2, labels.size()):
+		if labels[i][0] - labels[i - 1][0] != labels[1][0] - labels[0][0]:
+			_fail("%s: the years skip unevenly, %s" % [where, labels.map(func(l): return l[0])])
 			break
 	for i in range(1, labels.size()):
 		var gap: float = labels[i][1].position.x - labels[i - 1][1].end.x
