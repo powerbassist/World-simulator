@@ -22,7 +22,6 @@ const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
-const WindowManager = preload("res://src/ui/window_manager.gd")
 const RegisterWhere = preload("res://src/ui/register_where.gd")
 const RegisterProgramme = preload("res://src/ui/register_programme.gd")
 const RegisterDoor = preload("res://src/ui/register_door.gd")
@@ -63,8 +62,8 @@ func _ready() -> void:
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body.add_theme_constant_override("separation", UiTheme.GAP_PANE)
-	# The sheet fills the workspace: the money row sits at its foot, never with the map under it.
-	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# The 2K card's A (the author, 2026-11-22, reversing #439 pass 2 T1): the sheets hug their rows and
+	# the map shows under them; the page still fills the band beside the bill's rail.
 	scroll.add_child(_body)
 	_close_button = Button.new()
 	_close_button.text = tr("Close")
@@ -94,7 +93,7 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
-## A text size moves the header sheet, so the floor (page_room) is read again.
+## A text size moves the sheets: they are built again.
 func _notification(what: int) -> void:
 	_dirty = _dirty or what == NOTIFICATION_THEME_CHANGED
 
@@ -224,7 +223,6 @@ func _refresh() -> void:
 		PanelKit.plain_line(_body, tr("This nation has no register of buildings yet."), PanelKit.Tone.PLAIN)
 		return
 	var ns = _state.player()
-	WindowManager.fill_page(self, "register")  # the sheet fills the workspace, never scrolls for it
 	var row: Dictionary = Units.row(_loader, _type)
 	# Now, from one basis (preview with nothing placed is the shown figure, test_units pins it).
 	var now: Dictionary = Units.preview(ns, _loader, _type, {})
@@ -238,7 +236,6 @@ func _refresh() -> void:
 		RegisterDoor.bar(self, PanelKit.sheet(_body), _state, _loader, _warning)  # on its own sheet: no text bare on the map
 	var middle := HBoxContainer.new()
 	middle.add_theme_constant_override("separation", UiTheme.GAP_PANE)
-	middle.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_body.add_child(middle)
 	var quote := _quote(ns)
 	RegisterWhere.build(self, middle, ns, row, shown, Units.preview(ns, _loader, _type, _placed), nation)
