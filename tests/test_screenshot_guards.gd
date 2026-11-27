@@ -44,17 +44,25 @@ func _check_the_dump() -> void:
 	var box := Control.new()
 	var shown := Label.new()
 	shown.text = "seen"
-	shown.position = Vector2(10, 20)
+	shown.position = Vector2(10, 2)
 	shown.size = Vector2(60, 24)
 	var hidden := Label.new()
 	hidden.visible = false
-	box.size = Vector2(200, 100)
+	box.size = Vector2(200, 30)
+	# top_level, as the tip popup is: outside its clipping parent and still drawn.
+	var loose := Label.new()
+	loose.text = "loose"
+	loose.top_level = true
+	loose.position = Vector2(0, 40)
+	loose.size = Vector2(40, 20)
+	box.clip_contents = true
 	box.add_child(hidden)
 	box.add_child(shown)
+	box.add_child(loose)
 	root.add_child(box)
 	var nodes := PanelDump.new().walk(root)
-	if nodes.size() != 2:
-		_failures.append("the dump holds %d nodes for a box with one visible label, not 2" % nodes.size())
+	if nodes.size() != 3 or nodes[2].clip != nodes[2].rect:
+		_failures.append("the dump should hold the box, its visible label and the unclipped top_level one: %s" % [nodes])
 		return
 	var label: Dictionary = nodes[1]
 	if label.text != "seen" or not label.rebuilt or label.index_path != [box.get_index(), 1]:

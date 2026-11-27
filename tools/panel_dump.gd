@@ -20,7 +20,8 @@ var _root: Window
 var _rebuilt: Array[Control] = []
 
 
-## True only on the last line: a script error part-way returns the default, false.
+## False when a file could not be written. A script error inside the walk drops that subtree and
+## shows only in stderr.
 func write(root: Window, png_path: String, bare: bool) -> bool:
 	var started := Time.get_ticks_usec()
 	var nodes := walk(root)
@@ -86,6 +87,10 @@ func _walk(node: Node, base: Transform2D, clip: Rect2, alpha: float, layer: int,
 		var item := node as CanvasItem
 		if not item.visible:
 			return
+		if item.top_level:  # drawn as if it had no parent: no inherited clip, alpha or z
+			clip = Rect2(Vector2.ZERO, Vector2(_root.size))
+			alpha = 1.0
+			z = 0
 		alpha *= item.modulate.a
 		if alpha < 0.01:
 			return
