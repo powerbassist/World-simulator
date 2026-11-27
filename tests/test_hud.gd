@@ -86,7 +86,9 @@ func _later_frames() -> bool:
 		return false
 	if _frame < 16:
 		return false
-	_check_own_sheets_on_the_header_grid("sector_industry")
+	var sectors = _main._windows.content("sector_industry")
+	# At 1920 with the inbox away the tab lays three columns, each as wide as its content.
+	_check_own_sheets_on_the_header_grid("sector_industry", sectors._goods.get_parent() == sectors._middle)
 	_finish()
 	return false
 
@@ -114,8 +116,10 @@ func _check_the_workspace_is_full_with_the_inbox_away() -> void:
 
 ## Design's gate T1 on #439: a panel that brings its own sheets sets them on the header sheet's
 ## grid -- its first sheet a gap under the header, its outer edges on the header's -- with no
-## margin left over from the page sheet that went away.
-func _check_own_sheets_on_the_header_grid(id: String) -> void:
+## margin left over from the page sheet that went away. `hugs`: a page whose columns are as wide as
+## their content keeps the left edge and may stop short of the right one, the leftover left empty
+## there (the author's rule for a wide page).
+func _check_own_sheets_on_the_header_grid(id: String, hugs := false) -> void:
 	var header: Rect2 = (_main._windows.dock().get_child(0) as Control).get_global_rect()
 	if not _main._windows._pages[id].own_sheets():
 		_fail("%s's page draws a sheet behind its own (window_manager OWN_SHEETS)" % id)
@@ -137,7 +141,8 @@ func _check_own_sheets_on_the_header_grid(id: String) -> void:
 	if bottom > _main._windows.dock().get_global_rect().end.y + 0.5:
 		_fail("%s's sheets end at %.0f, past the workspace's foot" % [id, bottom])
 	var gap := float(UiTheme.GAP_PANE)
-	if absf(left - header.position.x) > 0.5 or absf(right - header.end.x) > 0.5:
+	var short: bool = hugs and right < header.end.x
+	if absf(left - header.position.x) > 0.5 or (absf(right - header.end.x) > 0.5 and not short):
 		_fail("%s's sheets run %.0f to %.0f, off the header sheet's %.0f to %.0f" % [id, left, right, header.position.x, header.end.x])
 	if absf(top - (header.end.y + gap)) > 0.5:
 		_fail("%s's first sheet starts %.0f px under the header, not a gap (%.0f)" % [id, top - header.end.y, gap])

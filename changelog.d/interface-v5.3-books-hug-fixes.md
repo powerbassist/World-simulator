@@ -3,3 +3,4 @@ Changed: The Books head their rate column "Rate", and an index reads "index 100"
 Added: The Books show a money scale over their bars: zero, half and a full bar, in billions.
 Fixed: The sidebar's count now sits in the middle of its circle.
 Fixed: A job figure such as "55 856", or the "1 000" in a sector's measure, no longer breaks across two lines.
+Changed: On a 1080p screen with the inbox put away, a sector's tab now shows three columns where all three fit.

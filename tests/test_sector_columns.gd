@@ -70,9 +70,10 @@ func _frames() -> void:
 		await process_frame
 
 
-## The page laid out `width` wide.
+## The page laid out `width` wide. Sized again each pass, as the dock sizes its page every frame: three columns held
+## wide let go of the majors' row first, then of their third column, then of the width.
 func _at(width: float, height := 1100.0) -> void:
-	for _pass in 2:
+	for _pass in 3:
 		_panel.size = Vector2(width, height)
 		await _frames()
 	if absf(_panel.size.x - width) > 0.5:
@@ -92,21 +93,22 @@ func _check_scale(scale: float) -> void:
 	await _at(PAGE_1080)
 	var need: float = _panel._need
 	print("test_sector_columns: %s, the switch at %.0f px" % [at, need])
-	# The picture's three columns, in px at text 100: 788, a goods column no narrower than the firm's sheet, the sheet.
-	var picture := ceilf((788.0 + 440.0) * scale + 440.0 + 2.0 * UiTheme.GAP_PANE)
-	if absf(need - picture) > 0.5:
-		_fail("%s: the switch is %.0f, wanted %.0f" % [at, need, picture])
-	if scale == 1.0:
-		if not (need > PAGE_1080_AWAY and need <= PAGE_2K):
-			_fail("%s: the switch is %.0f: not between the 1080 page and the 2K one" % [at, need])
-		await _at(PAGE_1080_AWAY)
-		_check_two("1080, the inbox away, " + at)
-		await _at(PAGE_1080)
+	# The switch is what the three ask hugged, no written width: under the 1080 page with the inbox away, over it
+	# with the inbox showing.
+	if not (need > PAGE_1080 and need <= PAGE_1080_AWAY):
+		_fail("%s: the switch is %.0f: not between the 1080 page with the inbox and without" % [at, need])
+	await _at(PAGE_1080_AWAY)
+	_check_three("1080, the inbox away, " + at)
+	_check_one_row("1080, the inbox away, " + at)
+	await _at(PAGE_1080)
 	_check_two("1080, " + at)
 	await _at(need - 1.0)
 	_check_two("1 px under the switch, " + at)
 	await _at(need)
 	_check_three("at the switch, " + at)
+	var asked: float = _widths()[0] + _widths()[1] + _widths()[2] + 2.0 * UiTheme.GAP_PANE
+	if need - asked < -0.5 or need - asked > 1.5:
+		_fail("%s: the switch is %.0f for columns of %s: %.0f with their gaps" % [at, need, _widths(), asked])
 	await _at(PAGE_2K)
 	_check_three("2K, " + at)
 	var widths := _widths()
@@ -331,7 +333,7 @@ func _check_pseudo() -> void:
 	TranslationServer.pseudolocalization_enabled = false
 
 
-## In the dock: the 2K page stops at its cap and the 1080 one keeps two columns.
+## In the dock: the 2K page stops at its cap and one too narrow for three keeps two columns.
 func _check_the_dock() -> void:
 	_panel.hide()
 	var host := Control.new()
@@ -342,7 +344,7 @@ func _check_the_dock() -> void:
 	var panel := SectorPanel.new("industry")
 	manager.register("sector_industry", "Industry", panel)
 	panel.setup(_state, _loader)
-	for width in [2560, 1920, 2560]:
+	for width in [2560, 1440, 2560]:
 		root.size = Vector2i(width, 500)
 		host.size = Vector2(width, 500)
 		manager.open("sector_industry")

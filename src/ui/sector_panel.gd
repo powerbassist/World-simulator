@@ -46,8 +46,8 @@ const FinanceColumns = preload("res://src/ui/finance_columns.gd")
 
 ## The sheet's width in px: the picture's right column.
 const SHEET_WIDTH := 440
-## Both times the text size: the widest the lead stands in three (the picture's, which the switch also counts, so the
-## 1080 page keeps two columns at text 100), and the narrowest: four major tiles in a row.
+## Both times the text size: the widest the lead stands in three (the picture's), and the narrowest, four major tiles
+## in a row, which the switch counts.
 const LEFT_WIDTH := 788.0
 const LEFT_FLOOR := 648.0
 
@@ -196,7 +196,7 @@ func _arrange() -> void:
 	var firm := ceilf(maxf(SHEET_WIDTH, _sheet.get_combined_minimum_size().x))
 	var gaps := 2.0 * UiTheme.GAP_PANE
 	# A px over the narrowest three: the columns' minimums stay under the switch, so a page they hold wide falls to two.
-	_need = maxf(ceilf((LEFT_WIDTH + SHEET_WIDTH) * text) + firm, left + goods + firm + 1.0) + gaps
+	_need = left + goods + firm + 1.0 + gaps
 	var three := size.x >= _need
 	var home := _middle if three else _body
 	if _goods.get_parent() != home:
