@@ -11,7 +11,7 @@ extends SceneTree
 ## re-folds when the window changes shape, not only on the next day's refresh
 ## (Review focus 5: a window gone 21:9 mid-game).
 ##
-## And at the largest text size (V5.1-c2.4, Review focus 4): at 115 % on the 1920
+## And at the largest text size (V5.1-c2.4, Review focus 4): at 100 % on the 1920
 ## reference the title bar, the strip and the sidebar keep their slots -- the
 ## strip folds rather than grows, nothing pushes the workspace's top down.
 ##
@@ -70,7 +70,7 @@ func _process(_delta: float) -> bool:
 			# Back to the reference, at the largest text size, through the same
 			# path the settings row takes.
 			root.size = Vector2i(1920, 1080)
-			UiTheme.set_text_scale(1.15)
+			UiTheme.set_text_scale(1.0)
 			UiTheme.rebuild(_main)
 			_phase = "text"
 			_wait = 4
@@ -78,7 +78,7 @@ func _process(_delta: float) -> bool:
 			_wait -= 1
 			if _wait > 0:
 				return false
-			_check_chrome_at_115()
+			_check_the_chrome()
 			# G3 S1: the title bar's tools share the strip's pane. A requests mark and a held
 			# line appearing widen them, and the figures must refold around them. Each reading
 			# at its widest ONCE (the doubled staging above is the figures' own worst case: its
@@ -155,21 +155,21 @@ func _check_refit_on_resize() -> void:
 			% [folded.size(), _folded_at_narrow.size()])
 
 
-func _check_chrome_at_115() -> void:
+func _check_the_chrome() -> void:
 	var hud = _main._hud
 	var view: Vector2 = _main.get_viewport().get_visible_rect().size
 	var gap := float(UiTheme.GAP_PANE)
 	var strip: Vector2 = hud.top_bar.get_combined_minimum_size()
 	if strip.y > TopBar.BAR_HEIGHT + 0.5:
-		_fail("at 115 %% the strip is %.0f px tall; its slot is %d" % [strip.y, TopBar.BAR_HEIGHT])
+		_fail("the strip is %.0f px tall; its slot is %d" % [strip.y, TopBar.BAR_HEIGHT])
 	if strip.x > view.x - Sidebar.WIDTH - 3 * gap + 0.5:
-		_fail("at 115 %% the strip needs %.0f px of its %.0f px slot -- it did not fold" % [strip.x, view.x - Sidebar.WIDTH - 3 * gap])
+		_fail("the strip needs %.0f px of its %.0f px slot -- it did not fold" % [strip.x, view.x - Sidebar.WIDTH - 3 * gap])
 	var side: Vector2 = hud.sidebar.get_combined_minimum_size()
 	if side.x > Sidebar.WIDTH + 0.5:
-		_fail("at 115 %% the sidebar needs %.0f px; it is %d wide" % [side.x, Sidebar.WIDTH])
+		_fail("the sidebar needs %.0f px; it is %d wide" % [side.x, Sidebar.WIDTH])
 	var room: float = view.y - 3 * gap - hud.ribbon.size.y
 	if side.y > room + 0.5:
-		_fail("at 115 %% the sidebar needs %.0f px of the %.0f above the time bar" % [side.y, room])
+		_fail("the sidebar needs %.0f px of the %.0f above the time bar" % [side.y, room])
 
 
 func _fail(message: String) -> void:

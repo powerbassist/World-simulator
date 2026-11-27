@@ -4,7 +4,7 @@ extends SceneTree
 ## Non-zero exit on any failure.
 ##
 ## W2, the page in columns (Design's pick, the author's, gate-2k.md): Books lays Spending beside Revenue once both
-## read whole, on the page's OWN width. Pinned here, at text 100 and 115: one table below the switch and two sheets
+## read whole, on the page's OWN width. Pinned here, at text 90 and 100: one table below the switch and two sheets
 ## from it; the switch falls where Design computed it (between the 1080 page and the 2K one); nothing in either
 ## arrangement is wider than its sheet or cut, an open row's editor included; the two sheets' bars share one length
 ## (the money scale, T5 on #443); the page goes back to one table; the page's cap; the long pseudo-locale fits.
@@ -45,7 +45,7 @@ func _run() -> void:
 	_panel.setup(_state, _loader)
 	await _at(PAGE_1080)
 	await _check_scale(1.0)
-	await _check_scale(1.15)
+	await _check_scale(0.9)
 	UiTheme.set_text_scale(1.0)
 	_panel.theme = UiTheme.build()
 	await _check_the_open_editor()
@@ -82,8 +82,8 @@ func _check_scale(scale: float) -> void:
 	_check_one_table("at %.0f, text %d" % [PAGE_1080, roundi(scale * 100)])
 	if scale == 1.0 and not (need > 1652.0 and need <= PAGE_2K):
 		_fail("at text 100 the switch is %.0f: not between the 1080 page and the 2K one" % need)
-	if scale > 1.0 and not (need > PAGE_2K and need <= 2292.0):
-		_fail("at text 115 the switch is %.0f: Design has it between 1880 and 2292" % need)
+	if scale < 1.0 and not (need > PAGE_1080 and need <= PAGE_2K):
+		_fail("at text 90 the switch is %.0f: not between the 1080 page and the 2K one" % need)
 	# One px under, one table; at it and over, two sheets; back under, one table again.
 	await _at(need - 2.0)
 	_check_one_table("2 px under the switch")
@@ -231,7 +231,7 @@ func _check_the_open_editor() -> void:
 ## A sector's figure wraps beside its name, so it needs a width of its own: starved, it stacks a word a line.
 ## Read in both arrangements at both text sizes, the spending row's editor left open.
 func _check_sector_figures(most := 2) -> void:
-	for scale in [1.0, 1.15]:
+	for scale in [0.9, 1.0]:
 		UiTheme.set_text_scale(scale)
 		_panel.theme = UiTheme.build()
 		root.gui_release_focus()  # held by the editor, the rows would stay at the old size and so would the switch

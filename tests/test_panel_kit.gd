@@ -112,7 +112,7 @@ func _build_button_group() -> void:
 ## takes its class at BTN_H; a group shares the class its LONGEST label needs, so the short
 ## verb is as wide as the long one; and the class follows the text size. Mutation: a group
 ## that sizes each button to its own label fails the shared width; a class that ignores the
-## text scale fails the 115 % width.
+## text scale fails the 90 % width.
 func _check_button_classes() -> void:
 	var lone := PanelKit.button("Go", PanelKit.Size.S)
 	if lone.custom_minimum_size != Vector2(PanelKit.BTN_W[PanelKit.Size.S], PanelKit.BTN_H):
@@ -142,12 +142,12 @@ func _check_button_classes() -> void:
 	if PanelKit.class_for(PanelKit.BTN_W[PanelKit.Size.M]) != PanelKit.Size.M or PanelKit.class_for(PanelKit.BTN_W[PanelKit.Size.L] + 1) != PanelKit.Size.XL:
 		_fail("class_for misplaces a label at a class's edge")
 
-	UiTheme.set_text_scale(1.15)
-	var big := PanelKit.button("Go", PanelKit.Size.M)
+	UiTheme.set_text_scale(0.9)
+	var small := PanelKit.button("Go", PanelKit.Size.M)
 	UiTheme.set_text_scale(1.0)
-	if big.custom_minimum_size.x != roundf(PanelKit.BTN_W[PanelKit.Size.M] * 1.15):
-		_fail("at 115 %% an M button is %.0f px, not its class times the text size" % big.custom_minimum_size.x)
-	big.free()
+	if small.custom_minimum_size.x != roundf(PanelKit.BTN_W[PanelKit.Size.M] * 0.9):
+		_fail("at 90 %% an M button is %.0f px, not its class times the text size" % small.custom_minimum_size.x)
+	small.free()
 
 
 # -- The three bugs -------------------------------------------------------------

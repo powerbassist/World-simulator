@@ -94,12 +94,12 @@ func _process(_delta: float) -> bool:
 				_fail("a new day did not move today's line")
 			_main._state.day -= 1
 			# The side column follows the text size (pass 2 on #441, QA's mutant d).
-			UiTheme.set_text_scale(1.15)
+			UiTheme.set_text_scale(0.9)
 			_panel.mark_dirty()
 		18:
-			var want := roundf(SectorsDecision.WIDTH * 1.15)
+			var want := roundf(SectorsDecision.WIDTH * 0.9)
 			if _panel._side.custom_minimum_size.x != want:
-				_fail("at text 115 the side column is %.0f wide, want %.0f" % [_panel._side.custom_minimum_size.x, want])
+				_fail("at text 90 the side column is %.0f wide, want %.0f" % [_panel._side.custom_minimum_size.x, want])
 			UiTheme.set_text_scale(1.0)
 			_finish()
 	return false

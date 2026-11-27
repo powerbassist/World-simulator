@@ -364,7 +364,7 @@ func _check_the_fold_mark_clears() -> void:
 ## narrow tab is Regions, whose place is the map it tints (window_manager.gd DOCK_WIDTHS).
 func _check_dock_width_follows_the_domain() -> void:
 	var full: float = BOUNDS.x - UiTheme.GAP_PANE - WindowManager.DOCK_LEFT
-	for scale in [1.0, 1.15, 0.9]:
+	for scale in [1.0, 0.9]:
 		UiTheme.set_text_scale(scale)
 		for id in ["calendar", "diplomacy", "orgs", "energy", "finances", "projects", "economy"]:
 			_manager.open(id)

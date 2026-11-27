@@ -316,7 +316,7 @@ func _show_file(row: Dictionary, armed: bool) -> void:
 		["○", tr("▼ a grudge"), PanelKit.MISSING, "○"], price)
 	decline.pressed.connect(func() -> void: decline_requested.emit(id))
 	PanelKit.same_class([see, call, delegate, decline], PanelKit.BTN_H_ROW)  # buttons in a table's rows
-	# A class past the column's (French, 115 %) widens the verbs' column: the header follows it.
+	# A class past the column's (French) widens the verbs' column: the header follows it.
 	(header.get_child(0) as Control).custom_minimum_size.x = maxf(float(COLUMNS[0]) * s, see.custom_minimum_size.x)
 
 
