@@ -164,7 +164,9 @@ const TOTAL_PENDING := {
 ## Parliament (G3 S5, #449 round 2): the Bills and Majority pages' own words, a stated rise 3431 -> 3438 (+7): the
 ## break-ranks line (+2, Majority 97 -> 99) and the rest on the Bills page (+5, not itemised: "Free" on the order paper
 ## and the path's reworded steps are the new prose there).
-const TOTAL_SUM_CEILING := 3438
+## The Books' small fixes (the author's critique of the page): the rate column's head "Rate" and the "bn" of the money
+## scale on the DRAG head, both asked for: a stated rise 3438 -> 3440 (+2), to the parent.
+const TOTAL_SUM_CEILING := 3440
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector
