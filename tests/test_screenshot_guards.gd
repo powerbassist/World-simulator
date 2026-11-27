@@ -59,11 +59,36 @@ func _check_the_dump() -> void:
 	box.add_child(hidden)
 	box.add_child(shown)
 	box.add_child(loose)
+	# Sticks out of the box on the right, and so does its child, under a parent that does not clip.
+	var partly := Control.new()
+	partly.position = Vector2(180, 5)
+	partly.size = Vector2(60, 20)
+	var deep := Control.new()
+	deep.position = Vector2(10, 0)
+	deep.size = Vector2(40, 10)
+	partly.add_child(deep)
+	box.add_child(partly)
+	var faded := Control.new()
+	faded.modulate.a = 0.0
+	faded.size = Vector2(10, 10)
+	box.add_child(faded)
+	var half := Control.new()
+	half.modulate.a = 0.5
+	half.size = Vector2(10, 10)
+	box.add_child(half)
 	root.add_child(box)
 	var nodes := PanelDump.new().walk(root)
-	if nodes.size() != 3 or nodes[2].clip != nodes[2].rect:
-		_failures.append("the dump should hold the box, its visible label and the unclipped top_level one: %s" % [nodes])
+	if nodes.size() != 6 or nodes[2].clip != nodes[2].rect:
+		_failures.append("the dump should hold the box, its label, the unclipped top_level one, the two cut ones and the half faded one: %s" % [nodes])
 		return
 	var label: Dictionary = nodes[1]
 	if label.text != "seen" or not label.rebuilt or label.index_path != [box.get_index(), 1]:
 		_failures.append("the label's dump entry is wrong: %s" % label)
+	var edge: float = nodes[0].rect[0] + nodes[0].rect[2]
+	for cut: Dictionary in [nodes[3], nodes[4]]:
+		var rect: Array = cut.rect
+		var clip: Array = cut.clip
+		if rect[0] + rect[2] <= edge or clip[0] != rect[0] or absf(clip[0] + clip[2] - edge) > 0.05:
+			_failures.append("a control sticking out of a clipping box should be cut at its edge %s: %s" % [edge, cut])
+	if not is_equal_approx(nodes[5].alpha, 0.5):
+		_failures.append("a half faded control should read alpha 0.5: %s" % nodes[5])
