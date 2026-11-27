@@ -71,7 +71,7 @@ static func warp(viewport: Viewport, at: Vector2) -> bool:
 ## holds the focus sends the author's keystrokes to a game they cannot see. What did stop
 ## it, in 6 of 6 launches, is the project setting display/window/size/no_focus=true,
 ## which only takes effect at window creation: an override.cfg beside project.godot
-## (tools/screenshot_all.py writes one for its runs). NO_FOCUS / MOUSE_PASSTHROUGH set late
+## (tools/screenshot_all.py writes one for its runs, which also mutes them). NO_FOCUS / MOUSE_PASSTHROUGH set late
 ## through window_set_flag changed no Win32 style bit, so they are not used here.
 ## Not applied with the flag on (that run wants the real cursor, on screen), headless (no
 ## window), nor to timing probes, whose numbers a moved window could change.
