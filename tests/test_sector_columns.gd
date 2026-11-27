@@ -8,7 +8,8 @@ extends SceneTree
 ## Every column hugs its content: the leftover width stays empty at the right of the page, never inside a column.
 ## Pinned here: the switch at text 100 and 90; the same column widths on every wide page; a long goods table widening
 ## its own column only, and past the page two columns; nothing wider than its column in either arrangement; a chip and
-## a held programme slider moving nothing; the page's cap, in the dock too; the pseudo-locale.
+## a held programme slider moving nothing; the focused chip and its ring across a switch; a short page shrinking back;
+## the page's cap, in the dock too; the pseudo-locale.
 
 const GameState = preload("res://src/core/game_state.gd")
 const SectorPanel = preload("res://src/ui/sector_panel.gd")
@@ -48,6 +49,7 @@ func _run() -> void:
 	await _check_scale(0.9)
 	await _scale_to(1.0)
 	await _check_the_long_table()
+	await _check_the_short_page()
 	await _check_the_chip()
 	await _check_the_focus()
 	await _check_the_held_slider()
@@ -66,9 +68,9 @@ func _frames() -> void:
 
 
 ## The page laid out `width` wide.
-func _at(width: float) -> void:
+func _at(width: float, height := 1100.0) -> void:
 	for _pass in 2:
-		_panel.size = Vector2(width, 1100)
+		_panel.size = Vector2(width, height)
 		await _frames()
 	if absf(_panel.size.x - width) > 0.5:
 		_fail("premise: the page is %.0f wide, wanted %.0f" % [_panel.size.x, width])
@@ -240,17 +242,45 @@ func _check_the_chip() -> void:
 		_fail("a load keeps the last game's goods width: %.0f" % _panel._need)
 
 
-## The goods block changes parent at a switch; the keyboard stays on the chip it held.
+## The goods block changes parent at a switch; the keyboard stays on the chip it held, its ring shown or hidden as it
+## was (a mouse press hides it).
 func _check_the_focus() -> void:
 	await _at(PAGE_2K)
 	var chip := _panel._goods.find_children("*", "Button", true, false).filter(func(b) -> bool: return b.has_meta("good"))[0] as Button  # i18n: ok a class name
-	chip.grab_focus()
-	for width in [PAGE_1080, PAGE_2K]:
-		await _at(width)
-		var owner := root.gui_get_focus_owner()
-		if owner != chip:
-			_fail("the focus left the chip at the switch to %.0f: it is on %s" % [width, owner])
-	chip.release_focus()
+	for hidden in [false, true]:
+		chip.grab_focus(hidden)
+		if chip.has_focus(true) == hidden:
+			_fail("premise: a chip grabbed with its ring %s does not say so" % ("hidden" if hidden else "shown"))
+		for width in [PAGE_1080, PAGE_2K]:
+			await _at(width)
+			var owner := root.gui_get_focus_owner()
+			if owner != chip:
+				_fail("the focus left the chip at the switch to %.0f: it is on %s" % [width, owner])
+			elif chip.has_focus(true) == hidden:
+				_fail("the switch to %.0f turned the chip's ring %s" % [width, "on" if hidden else "off"])
+		chip.release_focus()
+
+
+## A page too short for its columns, each with its own bar (no window manager to move it to the gap): the bars never
+## hold the page wide when its room shrinks.
+func _check_the_short_page() -> void:
+	_panel._goods.custom_minimum_size.x = 700.0
+	var cell: Control = _major_cells()[0]
+	var tile := cell.custom_minimum_size.x
+	cell.custom_minimum_size.x = 400.0
+	await _at(PAGE_2K, 150.0)
+	_check_three("a short 2K page")
+	for box in [_panel._body, _panel._middle, _panel._sheet]:
+		if not GapBars.scrolls(_scroll(box) as ScrollContainer):
+			_fail("premise: a column does not scroll in a 150 px page: %s" % _scroll(box).size)
+	await _at(PAGE_1080, 150.0)  # _at fails a page held wider than asked
+	# Not _check_two: here the sheet is its 440 plus its own bar.
+	if _panel._goods.get_parent() != _panel._body or _scroll(_panel._middle).visible:
+		_fail("a short page shrunk from three columns keeps three")
+	cell.custom_minimum_size.x = tile
+	_panel._goods.custom_minimum_size.x = 0.0
+	_panel.mark_dirty()
+	await _frames()
 
 
 func _check_the_held_slider() -> void:
