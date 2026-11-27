@@ -27,7 +27,9 @@ time in a checkout). Needs Pillow for the sheets; without it the frames still la
 from __future__ import annotations
 
 import argparse
+import configparser
 import contextlib
+import io
 import os
 import re
 import shutil
@@ -105,18 +107,41 @@ def no_focus_override(repo: Path):
     setting display/window/size/no_focus=true creates the window without activation (0 of
     6 launches), but only at creation, so it has to be in place before the run starts:
     an override.cfg beside project.godot, written for these runs and removed after.
-    A stale one would leave the game without keyboard focus, hence the finally and the
-    .gitignore line; an existing override.cfg is the author's and is never touched."""
+    The same file picks the Dummy audio driver (audio/driver/driver), so a run makes no
+    sound (the author, 2026-11-27). A stale one would leave the game mute and without
+    keyboard focus, hence the finally and the .gitignore line; an existing override.cfg
+    is the author's and is never touched."""
     cfg = repo / "override.cfg"
     if cfg.exists():
-        print("override.cfg already exists; leaving it (windows may take focus)")
+        print("override.cfg already exists; leaving it (windows may take focus and play sound)")
         yield
         return
-    cfg.write_text("[display]\n\nwindow/size/no_focus=true\n", encoding="utf-8")
+    cfg.write_text('[display]\n\nwindow/size/no_focus=true\n\n[audio]\n\ndriver/driver="Dummy"\n', encoding="utf-8")
     try:
         yield
     finally:
         cfg.unlink(missing_ok=True)
+
+
+def override_failures() -> list[str]:
+    """The real writer, on a temp folder: both settings while it runs, nothing after, an own file kept."""
+    failures = []
+    with tempfile.TemporaryDirectory() as d:
+        cfg = Path(d) / "override.cfg"
+        got = configparser.ConfigParser()
+        with no_focus_override(Path(d)):
+            got.read(cfg, encoding="utf-8")
+        for section, key, want in (("display", "window/size/no_focus", "true"), ("audio", "driver/driver", '"Dummy"')):
+            if got.get(section, key, fallback=None) != want:
+                failures.append(f"override.cfg: [{section}] {key} is not {want}")
+        if cfg.exists():
+            failures.append("override.cfg: left behind after the run")
+        cfg.write_bytes(b"own\n")
+        with contextlib.redirect_stdout(io.StringIO()), no_focus_override(Path(d)):
+            pass
+        if not cfg.exists() or cfg.read_bytes() != b"own\n":
+            failures.append("override.cfg: an existing file was touched")
+    return failures
 
 
 def selftest() -> int:
@@ -130,6 +155,7 @@ def selftest() -> int:
     ]
     failures = [f"{o} idx {i}: refused ({out_name_mismatch(o, i)})" for o, i in ok if out_name_mismatch(o, i)]
     failures += [f"{o} idx {i}: accepted, a mismatch" for o, i in bad if not out_name_mismatch(o, i)]
+    failures += override_failures()
     for f in failures:
         print("FAIL " + f)
     print("screenshot_all selftest: " + ("all checks passed" if not failures else f"{len(failures)} failures"))
