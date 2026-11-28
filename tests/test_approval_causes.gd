@@ -20,6 +20,7 @@ const K = preload("res://src/sim/opinion_constants.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 
 const MONTHS := 14
+const BLOC_MONTHS := 30
 const EPS := 1e-9
 ## The austerity budget of tools/balance_probe.gd: it moves jobs, growth, the deficit,
 ## three taxes and five spending lines, and the unrest it raises.
@@ -40,6 +41,7 @@ func _init() -> void:
 		_finish()
 		return
 	_test_the_rows_sum_to_the_target_every_month()
+	_test_each_bloc_sums_to_its_own_target_every_month()
 	_test_the_clamp_row_carries_what_the_clamp_cut()
 	_test_a_target_past_the_band_is_cut_to_it()
 	_test_history_carries_the_split()
@@ -91,6 +93,66 @@ func _test_the_rows_sum_to_the_target_every_month() -> void:
 		_fail("premise: the austerity run moved only %d issue rows (time in office moved: %s)" % [int(seen["issues_moved"]), seen["time_moved"]])
 
 
+## Every month of a 30-month run in the game's order: each bloc's rows sum to its own
+## target, that target is the tick's (target_of cut to the band), the lag is the bloc's
+## approval minus it, and every national row, the target and the lag are the size-weighted
+## sum of the blocs'.
+func _test_each_bloc_sums_to_its_own_target_every_month() -> void:
+	var run := _austerity_run()
+	var state = run["state"]
+	var ns = state.player()
+	var seen := {"months": 0, "differ": false, "direct": false}
+	for i in range(BLOC_MONTHS):
+		_next_month(state)
+		WorldMonth.tick_month(state, _loader, func(step: String, after: bool, _report: Dictionary) -> void:
+			if not (after and step == "Opinion"):
+				return
+			var blocs: Dictionary = Opinion.bloc_causes(ns)
+			var national: Dictionary = Opinion.causes(ns)
+			var sat := Opinion.issue_satisfaction(ns)
+			var weighted := {}
+			var w_target := 0.0
+			var w_lag := 0.0
+			for bloc in K.BLOC_KEYS:
+				if not blocs.has(bloc):
+					_fail("month %d: no split for bloc '%s': %s" % [i + 1, bloc, blocs.keys()])
+					continue
+				var b: Dictionary = blocs[bloc]
+				var rows: Dictionary = b["rows"]
+				var total := 0.0
+				for key in rows:
+					total += float(rows[key])
+				var tick := clampf(Opinion.target_of(ns, bloc, sat, Opinion.bloc_weights(ns, bloc, sat)), K.APPROVAL_MIN, K.APPROVAL_MAX)
+				if absf(total - float(b["target"])) > EPS:
+					_fail("month %d, %s: the rows sum to %.12f, its target is %.12f" % [i + 1, bloc, total, float(b["target"])])
+				if absf(float(b["target"]) - tick) > EPS:
+					_fail("month %d, %s: the split's target %.12f is not the tick's %.12f" % [i + 1, bloc, float(b["target"]), tick])
+				if absf(float(b["lag"]) - (float(ns.bloc_approval[bloc]) - tick)) > EPS:
+					_fail("month %d, %s: the lag %.6f is not its approval minus its target" % [i + 1, bloc, float(b["lag"])])
+				var size := float(K.BLOC_SIZE[bloc])
+				for key in rows:
+					weighted[key] = float(weighted.get(key, 0.0)) + size * float(rows[key])
+					if key.begins_with("direct:") and key != "direct:earlier" and absf(float(rows[key])) > 0.01:
+						seen["direct"] = true
+					if key.begins_with("issue:") and absf(float(rows[key]) - float((blocs[K.BLOC_KEYS[0]]["rows"] as Dictionary).get(key, 0.0))) > 0.01:
+						seen["differ"] = true
+				w_target += size * float(b["target"])
+				w_lag += size * float(b["lag"])
+			if weighted.size() != (national["rows"] as Dictionary).size():
+				_fail("month %d: the blocs' rows are %s, the national %s" % [i + 1, weighted.keys(), (national["rows"] as Dictionary).keys()])
+			for key in national["rows"]:
+				if absf(float(national["rows"][key]) - float(weighted.get(key, NAN))) > EPS:
+					_fail("month %d: national '%s' is %.12f, the blocs' weighted sum %.12f" % [i + 1, key, float(national["rows"][key]), float(weighted.get(key, NAN))])
+			if absf(float(national["target"]) - w_target) > EPS or absf(float(national["lag"]) - w_lag) > EPS:
+				_fail("month %d: national target/lag %.9f/%.9f, the blocs' weighted %.9f/%.9f" % [i + 1, float(national["target"]), float(national["lag"]), w_target, w_lag])
+			seen["months"] = int(seen["months"]) + 1)
+	# Premise: six different splits with a booked direct row, not six copies of zeros.
+	if int(seen["months"]) != BLOC_MONTHS:
+		_fail("premise: the Opinion step ran %d of %d months" % [int(seen["months"]), BLOC_MONTHS])
+	if not bool(seen["differ"]) or not bool(seen["direct"]):
+		_fail("premise: the run's blocs differ on an issue: %s; a sourced direct row moved: %s" % [seen["differ"], seen["direct"]])
+
+
 ## A target pushed past the clamp: the clamp row is what it cut (negative here), the rows
 ## still sum to the target, and a target inside the clamp has a clamp row of zero.
 func _test_the_clamp_row_carries_what_the_clamp_cut() -> void:
@@ -111,6 +173,7 @@ func _test_the_clamp_row_carries_what_the_clamp_cut() -> void:
 		_fail("a target past the clamp shows a clamp row of %s" % [rows.get("clamp", NAN)])
 	if absf(total - _independent_target(ns)) > EPS:
 		_fail("past the clamp the rows sum to %.9f, the target is %.9f" % [total, _independent_target(ns)])
+	_check_each_bloc(ns, "past the clamp", func(rows: Dictionary) -> bool: return float(rows["clamp"]) < -1.0)
 
 
 ## A target below the approval band (full fatigue, a failed programme, every offset and
@@ -139,6 +202,7 @@ func _test_a_target_past_the_band_is_cut_to_it() -> void:
 		_fail("a target past the band: the split's target %.6f, its rows sum %.6f" % [float(c["target"]), total])
 	if absf(float(c["lag"]) - (float(ns.overall_approval_pct) - float(c["target"]))) > EPS:
 		_fail("past the band the lag %.6f is not measured to the reachable target" % float(c["lag"]))
+	_check_each_bloc(ns, "past the band", func(rows: Dictionary) -> bool: return float(rows["clamp"]) > 0.0)
 
 
 ## The History step carries the split: the month's entry holds causes(ns) as it stood
@@ -182,6 +246,23 @@ func _test_an_entry_from_before_reads_as_no_split() -> void:
 	var old := {"overall_approval_pct": 48.0, "bloc_approval": {}, "issue_salience": {}}
 	if not Opinion.causes_of(old).is_empty():
 		_fail("an entry without the split reads as %s, not {}" % [Opinion.causes_of(old)])
+
+
+## A staged state, bloc by bloc: the rows sum to the bloc's own reachable target and its
+## clamp row passes `clamp_ok` (it carried the cut in that bloc too).
+func _check_each_bloc(ns, label: String, clamp_ok: Callable) -> void:
+	var sat := Opinion.issue_satisfaction(ns)
+	var blocs: Dictionary = Opinion.bloc_causes(ns)
+	for bloc in K.BLOC_KEYS:
+		var rows: Dictionary = blocs[bloc]["rows"]
+		var total := 0.0
+		for key in rows:
+			total += float(rows[key])
+		var tick := clampf(Opinion.target_of(ns, bloc, sat, Opinion.bloc_weights(ns, bloc, sat)), K.APPROVAL_MIN, K.APPROVAL_MAX)
+		if absf(total - tick) > EPS or absf(float(blocs[bloc]["target"]) - tick) > EPS:
+			_fail("%s, %s: the rows sum %.9f, the split's target %.9f, the tick's %.9f" % [label, bloc, total, float(blocs[bloc]["target"]), tick])
+		if not clamp_ok.call(rows):
+			_fail("%s, %s: the clamp row is %s" % [label, bloc, rows.get("clamp", NAN)])
 
 
 func _austerity_run() -> Dictionary:
