@@ -81,7 +81,7 @@ func _stage_two_requests() -> void:
 	for person in _main._loader.people.get(String(ns.id), []):
 		if person.wants.is_empty() or asked >= 2 or String(person.id) == String(ns.head_of_state_person_id):
 			continue
-		Audiences._arrive(ns, person, person.wants[0], now, [])
+		Audiences._arrive(ns, person, {"object": "region:FRE", "stance": "want"}, now, [])  # an act: a word to give (call 2 B)
 		asked += 1
 	var pending := Audiences.pending(ns)
 	if pending.size() < 2:

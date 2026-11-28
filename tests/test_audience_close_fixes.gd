@@ -88,10 +88,6 @@ func _scene():
 func _arrive() -> bool:
 	var state = _main._state
 	var ns = state.player()
-	var want := {}
-	for person in _main._loader.people.get(String(ns.id), []):
-		if want.is_empty() and not person.wants.is_empty():
-			want = person.wants[0]
 	# A leader with the spark first (the sim's seeded draw), so the begun-then-ended
 	# path runs through the wiring; any covered leader otherwise.
 	for need_spark in [true, false]:
@@ -108,7 +104,7 @@ func _arrive() -> bool:
 		_fail("premise: no covered party leader to see")
 		return false
 	var now: int = int(state.year) * 12 + int(state.month)
-	Audiences._arrive(ns, _person, _person.wants[0] if not _person.wants.is_empty() else want, now, [])
+	Audiences._arrive(ns, _person, {"object": "region:FRE", "stance": "want"}, now, [])  # an act: a word to give (call 2 B)
 	_request = String(ns.audience_requests[-1]["id"])
 	AudienceDriver.refresh(_main)
 	return true
@@ -247,7 +243,7 @@ func _arrive_other() -> bool:
 		_fail("premise: no second person to see")
 		return false
 	var now: int = int(state.year) * 12 + int(state.month)
-	Audiences._arrive(ns, _person, _person.wants[0], now, [])
+	Audiences._arrive(ns, _person, {"object": "region:FRE", "stance": "want"}, now, [])  # an act: a word to give (call 2 B)
 	_request = String(ns.audience_requests[-1]["id"])
 	AudienceDriver.refresh(_main)
 	return true
