@@ -24,6 +24,7 @@ func _init() -> void:
 		_failures.append("data did not load cleanly: %s" % [_loader.errors])
 		_finish()
 		return
+	_test_a_thousand_in_a_unit_never_breaks()  # first: the later tests swap the loaded lines
 	_test_a_good_line_parses_and_renormalises()
 	_test_every_refusal()
 	_test_a_need_drift_is_optional()
@@ -142,6 +143,28 @@ func _test_every_sector_id_has_a_moving_elasticity() -> void:
 		for id in DK.SECTOR_IDS[line]:
 			if float(DK.ELASTICITY.get(id, 0.0)) <= 0.0:
 				_fail("sector %s has no elasticity: it would move nothing" % id)
+
+
+## A text that names a thousand ("per 1 000 inhabitants": a unit, a summary) holds the figure together:
+## a column narrow enough to wrap would break inside "1 000", which reads as two numbers.
+func _test_a_thousand_in_a_unit_never_breaks() -> void:
+	var breakable := RegEx.create_from_string("[0-9] [0-9]{3}")
+	var texts := {}
+	for line in _loader.domains.keys():
+		for sector in Sectors.sectors_of(_loader, line):
+			texts["%s/%s unit" % [line, sector["id"]]] = String(sector["quantity"]["unit"])
+			texts["%s/%s summary" % [line, sector["id"]]] = String(sector["summary"])
+	var french: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/i18n/fr/domains.json"))
+	for key in french:
+		texts["fr " + String(key)] = String(french[key])
+	var seen := {false: 0, true: 0}  # by French
+	for where in texts:
+		var text: String = texts[where]
+		seen[String(where).begins_with("fr ")] += int("000" in text)
+		if breakable.search(text) != null:
+			_fail("%s: \"%s\" can break inside its figure" % [where, text])
+	if seen[false] == 0 or seen[true] == 0:
+		_fail("premise: no loaded text names a thousand in one language: %s" % [seen])
 
 
 func _state_with_health():

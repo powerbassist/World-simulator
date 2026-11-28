@@ -10,7 +10,7 @@
       ],
       "quantity": {
         "id": "beds_per_1000",
-        "unit": "per 1 000 inhabitants",
+        "unit": "per 1\u00a0000 inhabitants",
         "better": "higher"
       },
       "start": {

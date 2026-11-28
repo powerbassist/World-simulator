@@ -38,6 +38,22 @@ var _dragging := false
 var shown := NAN
 
 
+## The table's one money scale on the DRAG head: `figures` (0, half, the whole) where x_of draws those sums on any
+## bar under the head, which is as wide and as far left as the bars. On the head's second line.
+static func axis(head: Label, figures: Array) -> void:
+	var sides := [HORIZONTAL_ALIGNMENT_LEFT, HORIZONTAL_ALIGNMENT_CENTER, HORIZONTAL_ALIGNMENT_RIGHT]
+	for i in 3:
+		var mark := Label.new()
+		mark.text = figures[i]
+		mark.theme_type_variation = UiTheme.MICRO
+		mark.horizontal_alignment = sides[i]
+		mark.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+		mark.grow_vertical = Control.GROW_DIRECTION_BEGIN
+		mark.offset_left = PAD
+		mark.offset_right = -PAD
+		head.add_child(mark)
+
+
 func _init() -> void:
 	theme_type_variation = UiTheme.LEVER
 	# The wheel scrolls the table under the bars; on a bar it changed the draft unseen (pass 2 T1 on #443).

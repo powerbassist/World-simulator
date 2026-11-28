@@ -65,13 +65,13 @@
     {
       "id": "universities",
       "name": "Universities",
-      "summary": "Tertiary education. More spending raises the number of graduates a year for every 1 000 inhabitants.",
+      "summary": "Tertiary education. More spending raises the number of graduates a year for every 1 000 inhabitants.",
       "codes": [
         "GF0904"
       ],
       "quantity": {
         "id": "graduates_per_1000",
-        "unit": "graduates a year per 1 000 inhabitants",
+        "unit": "graduates a year per 1\u00a0000 inhabitants",
         "better": "higher"
       },
       "start": {

@@ -7,7 +7,8 @@ extends SceneTree
 ## read whole, on the page's OWN width. Pinned here, at text 90 and 100: one table below the switch and two sheets
 ## from it; the switch falls where Design computed it (between the 1080 page and the 2K one); nothing in either
 ## arrangement is wider than its sheet or cut, an open row's editor included; the two sheets' bars share one length
-## (the money scale, T5 on #443); the page goes back to one table; the page's cap; the long pseudo-locale fits.
+## (the money scale, T5 on #443); in columns each sheet hugs its rows and the width left over stays empty at the right;
+## the page goes back to one table; the page's cap; the long pseudo-locale fits.
 
 const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
@@ -19,6 +20,7 @@ const UiTheme = preload("res://src/ui/ui_theme.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const GapBars = preload("res://src/ui/gap_bars.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const Num = preload("res://src/ui/num.gd")
 
 ## The books' width as the game gives it: the 1080 page with the inbox showing (the bill's rail folded over it), and
 ## the 2K page with the inbox showing.
@@ -54,6 +56,8 @@ func _run() -> void:
 	await _check_who_folded()
 	await _check_pseudo()
 	await _check_the_scroll_bar()
+	await _check_rate_words()
+	_check_small_scale()
 	for line in _failures:
 		printerr("FAIL: " + line)
 	print("test_finance_columns: %s" % ("OK" if _failures.is_empty() else "%d failures" % _failures.size()))
@@ -61,9 +65,10 @@ func _run() -> void:
 
 
 ## The books laid out `width` wide (a page with no window manager keeps the bill's rail in its frame, so the panel
-## is that much wider). Containers sort and the table re-lays itself over a few frames.
+## is that much wider). Containers sort and the table re-lays itself over a few frames. Sized again each pass, as the
+## dock sizes its page every frame: sheets measured at another text size hold it for one pass, one table the next.
 func _at(width: float) -> void:
-	for _pass in 2:
+	for _pass in 3:
 		var rail: float = _panel.size.x - _panel._table.size.x if _panel._table.size.x > 0.0 else 0.0
 		_panel.size = Vector2(width + rail, 1100)
 		for _i in 4:
@@ -98,9 +103,11 @@ func _check_scale(scale: float) -> void:
 	await _at(need)
 	_check_columns("at the switch, text %d" % roundi(scale * 100))
 	_check_need("at the switch, text %d" % roundi(scale * 100))
-	await _at(need + 175.0 * scale)
-	_check_columns("175 px over, text %d" % roundi(scale * 100))
-	_check_split(175.0 * scale, scale, "175 px over, text %d" % roundi(scale * 100))
+	for width in [need + 175.0 * scale, 2292.0]:
+		await _at(width)
+		var at := "at %.0f, text %d" % [width, roundi(scale * 100)]
+		_check_columns(at)
+		_check_hug(scale, at)
 	if not is_equal_approx(table.cap(), maxf(1880.0 * scale, need + 1.0)):
 		_fail("the cap is %.0f, wanted %.0f" % [table.cap(), maxf(1880.0 * scale, need + 1.0)])
 	await _at(PAGE_1080)
@@ -117,10 +124,14 @@ func _check_one_table(state: String) -> void:
 	for cell in _slot(spending, "who"):
 		if not cell.visible:
 			_fail("%s: a spending caption is hidden in one table" % state)
-	if _head_text(revenue, "year") != "":
-		_fail("%s: revenue repeats the column names under spending's" % state)
+	if _head_text(revenue, "year") != "" or _head_text(revenue, "balance") != "":
+		_fail("%s: revenue repeats the money columns' names under spending's" % state)
+	_check_rate_heads(state)
 	_check_fits(state)
 	_check_one_bar(state)
+	_check_axis(spending, state)
+	# Spending's head scrolls off over the taxes: the Revenue sub-head says the rate and the scale again (P2).
+	_check_axis(revenue, state)
 
 
 func _check_columns(state: String) -> void:
@@ -144,16 +155,29 @@ func _check_columns(state: String) -> void:
 	var noted := _slot(spending, "pct").filter(func(c) -> bool: return c.text == Strings.t("not set here"))
 	if noted.size() != 2:
 		_fail("%s: 'not set here' said on %d of spending's two unset rows" % [state, noted.size()])
-	for pair in [["drag", "Drag"], ["year", "A year"], ["balance", "Balance"]]:
+	for pair in [["rate", "Rate"], ["drag", "Drag"], ["year", "A year"], ["balance", "Balance"]]:
 		if _head_text(revenue, pair[0]) != Strings.t(pair[1]).to_upper():
 			_fail("%s: revenue's head reads '%s' for %s" % [state, _head_text(revenue, pair[0]), pair[1]])
+	_check_rate_heads(state)
 	_check_fits(state)
 	_check_one_bar(state)
+	_check_axis(spending, state)
+	_check_axis(revenue, state)
 	# Read whole: not one who-pays caption cut, the longest included.
 	for cell in _slot(revenue, "who"):
 		var wants: float = cell.get_theme_font("font").get_string_size(cell.text, HORIZONTAL_ALIGNMENT_LEFT, -1, cell.get_theme_font_size("font_size")).x
 		if wants > cell.size.x + 0.5:
 			_fail("%s: '%s' is cut (%.0f of %.0f px)" % [state, cell.text, wants, cell.size.x])
+
+
+## Spending's figures are shares, not rates (P1): its head says so, Revenue's says "Rate", in both arrangements.
+func _check_rate_heads(state: String) -> void:
+	for pair in [[_panel._spending_box, "% of GDP"], [_panel._revenue_box, "Rate"]]:
+		var said := _head_text(pair[0], "rate")
+		var cell: Label = _slot(pair[0], "rate")[0]
+		var wants: float = cell.get_theme_font("font").get_string_size(cell.text, HORIZONTAL_ALIGNMENT_LEFT, -1, cell.get_theme_font_size("font_size")).x
+		if said != Strings.t(pair[1]).to_upper() or wants > cell.size.x + 0.5:
+			_fail("%s: the figures' column is headed '%s' (%.0f of %.0f px), wanted '%s'" % [state, said, wants, cell.size.x, pair[1]])
 
 
 ## Nothing is wider than the sheet it sits on.
@@ -184,17 +208,18 @@ func _check_need(state: String) -> void:
 		_fail("%s: the switch is %.1f for sheets, gap and bar room of %.1f (laid gap %.1f)" % [state, table.need(), sum, gap])
 
 
-## Of the room over the switch a fifth goes to spending (Design's 736 of 1880), and every bar grows by that much.
-## The 0.2 is written here: read from the code, any other split would pass.
-func _check_split(over: float, scale: float, state: String) -> void:
+## Each sheet is as wide as its rows ask, the bars at their least, whatever the page gives: the leftover stands at the
+## right of Revenue, never inside a sheet (the author on 2K).
+func _check_hug(scale: float, state: String) -> void:
 	var table: FinanceColumns = _panel._table
-	var share := floorf(over * 0.2)
 	var bar: float = (table._row_bars(_panel._revenue_box)[0] as Control).size.x
-	var sheet: float = (table._wraps[0] as Control).size.x
-	var wanted_bar := FinanceRows.BAR_MIN * scale + share
-	var wanted_sheet: float = table._spend + share + table._margins()
-	if absf(bar - wanted_bar) > 0.5 or absf(sheet - wanted_sheet) > 0.5:
-		_fail("%s: bars %.1f (wanted %.1f), spending's sheet %.1f (wanted %.1f)" % [state, bar, wanted_bar, sheet, wanted_sheet])
+	var spending: float = (table._wraps[0] as Control).size.x
+	var revenue: Control = table._wraps[1]
+	var wanted := [FinanceRows.BAR_MIN * scale, table._spend + table._margins(), table._rev + table._margins()]
+	if absf(bar - wanted[0]) > 0.5 or absf(spending - wanted[1]) > 0.5 or absf(revenue.size.x - wanted[2]) > 0.5:
+		_fail("%s: bars %.1f, sheets %.1f and %.1f, wanted %s" % [state, bar, spending, revenue.size.x, wanted])
+	if absf(table.scroll.get_global_rect().end.x - revenue.get_global_rect().end.x) > 0.5:
+		_fail("%s: the scroll ends at %.0f, revenue at %.0f: its bar would stand away from the sheets" % [state, table.scroll.get_global_rect().end.x, revenue.get_global_rect().end.x])
 
 
 ## Every bar, in both sheets, one length: the same billions draw the same pixels.
@@ -205,6 +230,40 @@ func _check_one_bar(state: String) -> void:
 			widths[roundi((bar as Control).size.x)] = true
 	if widths.size() != 1:
 		_fail("%s: the bars are %s px long" % [state, widths.keys()])
+
+
+## The DRAG head carries the table's one money scale: 0, half and the whole of it, each where every bar under it draws
+## that sum, under the word (level with "Rate" where the head carries no word) and not on one another.
+func _check_axis(box: Control, state: String) -> void:
+	var scale: float = _panel._money_scale()
+	var head: Label = _slot(box, "drag")[0]
+	var marks: Array = head.get_children().filter(func(mark) -> bool: return mark.visible)
+	var want := ["0", Num.f(scale * 0.5, 0), FinanceRows.bn_text(scale)]
+	var said := marks.map(func(mark) -> String: return mark.text)
+	if said != want:
+		_fail("%s: the scale reads %s, wanted %s" % [state, said, want])
+		return
+	var inks := marks.map(func(m) -> float: return m.get_theme_font("font").get_string_size(m.text, HORIZONTAL_ALIGNMENT_LEFT, -1, m.get_theme_font_size("font_size")).x)
+	var from: float = marks[0].global_position.x
+	var middle: float = marks[1].get_global_rect().get_center().x
+	var to: float = marks[2].get_global_rect().end.x
+	var bars: Array = _panel._table._row_bars(box).filter(func(bar) -> bool: return bar._per_unit > 0.0)
+	if bars.is_empty():
+		_fail("premise: %s: no bar with money to read the scale against" % state)
+	for bar in bars:
+		var drawn := [0.0, 0.5, 1.0].map(func(part) -> float: return bar.global_position.x + bar.x_of(scale * part / bar._per_unit))
+		if absf(from - drawn[0]) > 1.0 or absf(middle - drawn[1]) > 1.0 or absf(to - drawn[2]) > 1.0:
+			_fail("%s: the scale stands at %.1f %.1f %.1f, a bar draws it at %s" % [state, from, middle, to, drawn])
+			break
+	if from + inks[0] + 4.0 > middle - inks[1] * 0.5 or middle + inks[1] * 0.5 + 4.0 > to - inks[2]:
+		_fail("%s: the scale's figures meet (%s px wide on %.0f)" % [state, inks, to - from])
+	var top: float = head.global_position.y + head.get_line_height(0)
+	if head.text == "":
+		top = (_slot(box, "rate")[0] as Control).global_position.y
+	for mark in marks:
+		var off: bool = absf(mark.global_position.y - top) > 1.0 if head.text == "" else mark.global_position.y < top - 0.5
+		if off or mark.get_global_rect().end.y > head.get_global_rect().end.y + (1.0 if head.text == "" else 0.5):
+			_fail("%s: '%s' is on the column's name or out of its head: %s in %s" % [state, mark.text, mark.get_global_rect(), head.get_global_rect()])
 
 
 ## An open row's editor lives in its sheet: it must not widen the column it opens in.
@@ -242,7 +301,7 @@ func _check_sector_figures(most := 2) -> void:
 			var names: Array = _panel._editor.find_children("*", "Label", true, false).filter(func(l) -> bool: return l.has_meta("sector"))  # i18n: ok a class name
 			if names.is_empty():
 				_fail("premise: no sector rows at %.0f, text %d" % [width, roundi(scale * 100)])
-			var lines: int = most if width == PAGE_1080 or width == 2292.0 else most + 1  # the narrower sheet: one more
+			var lines: int = most if width == PAGE_1080 else most + 1  # a hugging sheet in columns: one more
 			for name in names:
 				var figure := name.get_parent().get_child(1) as Label
 				if figure.size.x < FinanceRows.CAPTION_MIN * scale - 0.5 or figure.get_line_count() > lines:
@@ -298,6 +357,8 @@ func _check_pseudo() -> void:
 			_fail("pseudo %s: no columns at its own switch" % ratio)
 		_check_fits("pseudo %s, columns" % ratio)
 		_check_one_bar("pseudo %s, columns" % ratio)
+		if ratio == 0.35:  # the shipped ratio: past it "[558 bn]" is wider than half a bar
+			_check_axis(_panel._revenue_box, "pseudo %s, columns" % ratio)
 	await _check_every_line_figures(99)  # the pseudo unit runs to five lines: wrapped, never starved of width
 	TranslationServer.pseudolocalization_enabled = false
 
@@ -379,8 +440,8 @@ func _check_who_folded() -> void:
 	await _at(PAGE_2K)
 
 
-## In the dock, a window too short for the books: in columns the bar stands in the gap, so Revenue keeps the page's
-## right edge (T16 on #441); as one table the scroll is inside a sheet again and keeps its own.
+## In the dock, a window too short for the books: in columns the bar stands in the gap at Revenue's right (T16 on #441);
+## as one table the scroll is inside a sheet again and keeps its own.
 func _check_the_scroll_bar() -> void:
 	_panel.hide()
 	var host := Control.new()
@@ -405,12 +466,55 @@ func _check_the_scroll_bar() -> void:
 			_fail("premise: at %d, columns %s, scrolls %s" % [width, table.columns(), GapBars.scrolls(table.scroll)])
 		elif table.columns():
 			var end: float = (panel._revenue_box.get_parent() as Control).get_global_rect().end.x
-			if own.visible or gap == null or not gap.visible or absf(end - table.get_global_rect().end.x) > 0.5:
-				_fail("columns at %d: own bar %s, gap bar %s, revenue ends at %.0f of %.0f" % [width, own.visible, gap != null and gap.visible, end, table.get_global_rect().end.x])
+			if own.visible or gap == null or not gap.visible or gap.global_position.x < end - 0.5 or gap.get_global_rect().end.x > end + UiTheme.GAP_PANE + 0.5:
+				_fail("columns at %d: own bar %s, gap bar at %s, revenue ends at %.0f" % [width, own.visible, "none" if gap == null else str(gap.get_global_rect()), end])
 		elif not own.visible or (gap != null and gap.visible):
 			_fail("one table at %d: own bar %s, gap bar %s" % [width, own.visible, gap != null and gap.visible])
 	host.queue_free()
 	_panel.show()
+
+
+## An index reads before its number, in the row, in its change and in the change's figures, and fits the column.
+func _check_rate_words() -> void:
+	var ns = _state.player()
+	_panel._open_id = ""
+	_panel._open_groups["consumption"] = true
+	_panel.mark_dirty()
+	for width in [PAGE_1080, PAGE_2K]:
+		await _at(width)
+		for pair in [[100.0, "index\u00a0100"], [105.0, "from index\u00a0100 to 105"]]:
+			_panel._draft.set_value(FinanceDraft.TAX, "alcohol_duty", pair[0])
+			_panel.mark_dirty()
+			for _i in 6:
+				await process_frame
+			var cell: Label = _panel._ctx["cells"][FinanceRows.row_id(FinanceDraft.TAX, "alcohol_duty")][0]
+			var wants: float = cell.get_theme_font("font").get_string_size(cell.text, HORIZONTAL_ALIGNMENT_LEFT, -1, cell.get_theme_font_size("font_size")).x
+			if cell.text != pair[1] or wants > cell.size.x + 0.5:
+				_fail("at %.0f the index reads '%s' (%.0f of %.0f px), wanted '%s'" % [width, cell.text, wants, cell.size.x, pair[1]])
+	var row := {"channel": FinanceDraft.TAX, "key": "alcohol_duty", "live": 100.0, "draft": 105.0}
+	if FinanceRows.change_figures(ns, row) != "index\u00a0100 → 105":
+		_fail("the change reads '%s'" % FinanceRows.change_figures(ns, row))
+	row = {"channel": FinanceDraft.TAX, "key": "vat", "live": 20.0, "draft": 21.0}
+	if not FinanceRows.change_figures(ns, row).ends_with("\u00a0%") or FinanceRows.change_figures(ns, row).count("%") != 1:
+		_fail("a percentage's change reads '%s'" % FinanceRows.change_figures(ns, row))
+	_panel._draft.drop(FinanceDraft.TAX, "alcohol_duty")
+	# The editor's step line names an index step the same way: "index 10", never a bare 10.
+	await _open(FinanceDraft.TAX, "alcohol_duty")
+	var steps: Array = _panel._editor.find_children("*", "Label", true, false).filter(func(l) -> bool: return l.text.begins_with("One step"))  # i18n: ok a class name
+	if steps.size() != 1 or not (steps[0] as Label).text.begins_with("One step (index 10):"):
+		_fail("the index step reads %s" % [steps.map(func(l) -> String: return l.text)])
+
+
+## A scale under 20 bn keeps a decimal on its half mark, or it names a sum the bar does not draw there (a small
+## nation's books: 3.3 bn read 0, 2, 3.3).
+func _check_small_scale() -> void:
+	var box := VBoxContainer.new()
+	FinanceRows.columns(box, "", "", true, {"scale_bn": 3.3})
+	var said: Array = _slot(box, "drag")[0].get_children().map(func(mark) -> String: return mark.text)
+	var want := ["0", Num.f(3.3 * 0.5, 1), FinanceRows.bn_text(3.3)]
+	if said != want:
+		_fail("a 3.3 bn scale reads %s, wanted %s" % [said, want])
+	box.free()
 
 
 func _slot(box: Node, slot: String) -> Array:
@@ -420,7 +524,7 @@ func _slot(box: Node, slot: String) -> Array:
 ## The text of a sheet's head cell (the first row of the sheet).
 func _head_text(box: Node, slot: String) -> String:
 	var cells := _slot(box, slot)
-	return "?" if cells.is_empty() else String(cells[0].text)
+	return "?" if cells.is_empty() else String(cells[0].text).strip_edges()
 
 
 func _fail(message: String) -> void:

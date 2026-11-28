@@ -156,13 +156,14 @@ static func process_question(state, loader, ns, company, action) -> String:
 	return " ".join(lines)
 
 
-## A headcount with its thousands apart ("41 200"): the panel's own format.
+## A headcount with its thousands apart ("41 200"): the panel's own format. Apart by a no-break space, so a figure
+## never wraps in two.
 static func thousands(value: float) -> String:
 	var whole := int(round(value))
 	var text := str(absi(whole))
 	var out := ""
 	while text.length() > 3:
-		out = " " + text.substr(text.length() - 3) + out
+		out = "\u00a0" + text.substr(text.length() - 3) + out
 		text = text.substr(0, text.length() - 3)
 	return ("-" if whole < 0 else "") + text + out
 
