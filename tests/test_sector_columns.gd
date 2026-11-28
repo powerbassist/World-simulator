@@ -9,7 +9,8 @@ extends SceneTree
 ## Pinned here: the switch at text 100 and 90; the same column widths on every wide page; a long goods table widening
 ## its own column only, and past the page two columns; nothing wider than its column in either arrangement; a chip and
 ## a held programme slider moving nothing; the focused chip and its ring across a switch; a short page shrinking back;
-## the page's cap, in the dock too; the pseudo-locale.
+## the page's cap, in the dock too; the pseudo-locale; and in the shell, a tab press that never changes the column
+## count.
 
 const GameState = preload("res://src/core/game_state.gd")
 const SectorPanel = preload("res://src/ui/sector_panel.gd")
@@ -18,6 +19,9 @@ const Closures = preload("res://src/sim/closures.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const WindowManager = preload("res://src/ui/window_manager.gd")
 const GapBars = preload("res://src/ui/gap_bars.gd")
+const CompanyVerb = preload("res://src/ui/company_verb.gd")
+const PanelKit = preload("res://src/ui/panel_kit.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 
 ## The page as the game gives it: 1080 with the inbox showing and away, 2K showing and away.
 const PAGE_1080 := 1240.0
@@ -56,6 +60,10 @@ func _run() -> void:
 	await _check_pseudo()
 	await _check_needs_you()
 	await _check_the_dock()
+	await _check_the_job_figure()
+	_panel.hide()
+	for nation in ["POL", "GBR"]:
+		await _check_a_tab_press(nation)
 	for line in _failures:
 		printerr("FAIL: " + line)
 	print("test_sector_columns: %s" % ("OK" if _failures.is_empty() else "%d failures" % _failures.size()))
@@ -67,9 +75,10 @@ func _frames() -> void:
 		await process_frame
 
 
-## The page laid out `width` wide.
+## The page laid out `width` wide. Sized again each pass, as the dock sizes its page every frame: three columns held
+## wide let go of the majors' row first, then of their third column, then of the width.
 func _at(width: float, height := 1100.0) -> void:
-	for _pass in 2:
+	for _pass in 3:
 		_panel.size = Vector2(width, height)
 		await _frames()
 	if absf(_panel.size.x - width) > 0.5:
@@ -89,21 +98,22 @@ func _check_scale(scale: float) -> void:
 	await _at(PAGE_1080)
 	var need: float = _panel._need
 	print("test_sector_columns: %s, the switch at %.0f px" % [at, need])
-	# The picture's three columns, in px at text 100: 788, a goods column no narrower than the firm's sheet, the sheet.
-	var picture := ceilf((788.0 + 440.0) * scale + 440.0 + 2.0 * UiTheme.GAP_PANE)
-	if absf(need - picture) > 0.5:
-		_fail("%s: the switch is %.0f, wanted %.0f" % [at, need, picture])
-	if scale == 1.0:
-		if not (need > PAGE_1080_AWAY and need <= PAGE_2K):
-			_fail("%s: the switch is %.0f: not between the 1080 page and the 2K one" % [at, need])
-		await _at(PAGE_1080_AWAY)
-		_check_two("1080, the inbox away, " + at)
-		await _at(PAGE_1080)
+	# The switch is what the three ask hugged, no written width: under the 1080 page with the inbox away, over it
+	# with the inbox showing.
+	if not (need > PAGE_1080 and need <= PAGE_1080_AWAY):
+		_fail("%s: the switch is %.0f: not between the 1080 page with the inbox and without" % [at, need])
+	await _at(PAGE_1080_AWAY)
+	_check_three("1080, the inbox away, " + at)
+	_check_one_row("1080, the inbox away, " + at)
+	await _at(PAGE_1080)
 	_check_two("1080, " + at)
 	await _at(need - 1.0)
 	_check_two("1 px under the switch, " + at)
 	await _at(need)
 	_check_three("at the switch, " + at)
+	var asked: float = _widths()[0] + _widths()[1] + _widths()[2] + 2.0 * UiTheme.GAP_PANE
+	if need - asked < -0.5 or need - asked > 1.5:
+		_fail("%s: the switch is %.0f for columns of %s: %.0f with their gaps" % [at, need, _widths(), asked])
 	await _at(PAGE_2K)
 	_check_three("2K, " + at)
 	var widths := _widths()
@@ -328,7 +338,7 @@ func _check_pseudo() -> void:
 	TranslationServer.pseudolocalization_enabled = false
 
 
-## In the dock: the 2K page stops at its cap and the 1080 one keeps two columns.
+## In the dock: the 2K page stops at its cap and one too narrow for three keeps two columns.
 func _check_the_dock() -> void:
 	_panel.hide()
 	var host := Control.new()
@@ -339,7 +349,7 @@ func _check_the_dock() -> void:
 	var panel := SectorPanel.new("industry")
 	manager.register("sector_industry", "Industry", panel)
 	panel.setup(_state, _loader)
-	for width in [2560, 1920, 2560]:
+	for width in [2560, 1440, 2560]:
 		root.size = Vector2i(width, 500)
 		host.size = Vector2(width, 500)
 		manager.open("sector_industry")
@@ -359,6 +369,136 @@ func _check_the_dock() -> void:
 				_fail("the middle column scrolls %s, its gap bar %s" % [GapBars.scrolls(scroll), gap != null and gap.visible])
 	host.queue_free()
 	_panel.show()
+
+
+## A job figure is one figure: a major's line ("Ostrow Wielkopolski . 55 856 jobs") may break anywhere but inside it,
+## at any width (gate on Sectors: Siec Wielkopolska read "55" over "856").
+func _check_the_job_figure() -> void:
+	var figure := CompanyVerb.thousands(1055856.0)
+	var host := Control.new()
+	host.theme = UiTheme.build()
+	root.add_child(host)
+	var line := PanelKit.plain_line(host, "Ostrow Wielkopolski - %s jobs" % figure)
+	var first := line.text.find(figure)
+	var broke := 0
+	var most := 0
+	for width in range(30, 300, 3):
+		line.size = Vector2(width, 200)
+		await process_frame
+		var a := line.get_character_bounds(first)
+		var b := line.get_character_bounds(first + figure.length() - 1)
+		most = maxi(most, line.get_line_count())
+		if absf(a.position.y - b.position.y) > 0.5:
+			broke = width
+	if most < 3 or first < 0:
+		_fail("premise: the line never wrapped (%d lines at most, figure at %d)" % [most, first])
+	if broke > 0:
+		_fail("at %d px the figure '%s' breaks across two lines" % [broke, figure])
+	if not line.get_theme_font("font").has_char(figure.unicode_at(1)):
+		_fail("the font has no glyph for the figure's separator %d" % figure.unicode_at(1))
+	host.queue_free()
+
+
+## A tab press never changes the column count: the switch is the widest sector tab's need, read before that tab was
+## ever shown (measured on #461: from July, Poland's and Britain's Services stood in two columns while their other
+## tabs stood in three).
+func _check_a_tab_press(nation: String) -> void:
+	root.size = Vector2i(1920, 1080)
+	root.content_scale_factor = 1.0
+	var main = load("res://src/ui/main.tscn").instantiate()
+	main.pending_player_id = nation
+	root.add_child(main)
+	for _i in 10:
+		await process_frame
+	root.content_scale_factor = 1.0
+	for _month in 6:
+		WorldMonth.tick_month(main._state, main._loader)
+	main._windows.mark_all_dirty()
+	var at := "%s, month 6, 1080 with the inbox away" % nation
+	var columns := []
+	var needs := []
+	for sector in ["agriculture", "industry", "services", "agriculture"]:
+		main._windows.open("sector_" + sector)
+		main._hud.inbox.slide_out()
+		for _i in 12:
+			await process_frame
+		var panel = main._sector_panels[sector]
+		if absf(panel.size.x - PAGE_1080_AWAY) > 0.5:
+			_fail("premise, %s: the %s page is %.0f wide, wanted %.0f" % [at, sector, panel.size.x, PAGE_1080_AWAY])
+		columns.append(3 if _scroll(panel._middle).visible else 2)
+		needs.append(panel._need)
+	print("test_sector_columns: %s, columns %s, switches %s" % [at, columns, needs])
+	if columns.count(columns[0]) != columns.size():
+		_fail("%s: a tab press changes the column count: agriculture, industry, services, agriculture read %s" % [at, columns])
+	if not _near(needs, [needs[2], needs[2], needs[2], needs[2]]):
+		_fail("%s: the tabs switch at different widths: %s" % [at, needs])
+	# A new text size reaches the tabs that are not showing: the switch read on Agriculture is the one Services shows.
+	UiTheme.set_text_scale(0.9)
+	UiTheme.rebuild(main)
+	var small := []
+	for sector in ["agriculture", "services"]:
+		main._windows.open("sector_" + sector)
+		main._hud.inbox.slide_out()
+		for _i in 12:
+			await process_frame
+		small.append(main._sector_panels[sector]._need)
+	if absf(small[0] - small[1]) > 0.5 or not small[1] < needs[2] - 0.5:
+		_fail("%s, then text 90: the switch is %.0f on Agriculture and %.0f on Services (%.0f at text 100)" % [at, small[0], small[1], needs[2]])
+	UiTheme.set_text_scale(1.0)
+	UiTheme.rebuild(main)
+	# Premise: Agriculture alone would stand in three here, so the equal counts above are not the data's doing.
+	var alone := SectorPanel.new("agriculture")
+	alone.theme = main._sector_panels["agriculture"].theme
+	var host := Control.new()
+	host.theme = UiTheme.build()
+	root.add_child(host)
+	host.add_child(alone)
+	alone.theme_type_variation = UiTheme.BARE
+	alone.setup(main._state, main._loader)
+	for _pass in 3:
+		alone.size = Vector2(PAGE_1080_AWAY, 1000)
+		await _frames()
+	if not _scroll(alone._middle).visible:
+		_fail("premise, %s: Agriculture on its own does not stand in three (%.0f)" % [at, alone._need])
+	host.queue_free()
+	await _check_builds_a_frame(main, at)
+	main.queue_free()
+	for _i in 3:
+		await process_frame
+
+
+## A month turn under a sector tab builds one tab a frame: all three in one frame tripled the month's stall (QA on
+## #461). A tab just shown builds every stale one in its first frame, so its column count cannot change after the press.
+func _check_builds_a_frame(main, at: String) -> void:
+	var tabs: Array = main._sector_panels.values()
+	var stale := func() -> int: return tabs.filter(func(t) -> bool: return t._dirty).size()
+	main._windows.open("sector_services")
+	await _frames()
+	WorldMonth.tick_month(main._state, main._loader)
+	main._windows.mark_all_dirty()
+	var left: int = stale.call()
+	if left != 3:
+		_fail("premise, %s: a month turn leaves %d sector tabs stale, wanted 3" % [at, left])
+	var built := []
+	for _i in 6:
+		await process_frame
+		built.append(left - int(stale.call()))
+		left = stale.call()
+	if built.max() > 1 or left != 0:
+		_fail("%s: after a month turn the frames build %s sector tabs, %d left stale: wanted one a frame, none left" % [at, built, left])
+	main._windows.close_all()
+	await _frames()
+	WorldMonth.tick_month(main._state, main._loader)
+	main._windows.mark_all_dirty()
+	main._windows.open("sector_agriculture")
+	var first := 0
+	for _i in 6:
+		await process_frame
+		first = 3 - int(stale.call())
+		if first > 0:
+			break
+	if first != 3:
+		_fail("%s: a tab just shown built %d of 3 stale sector tabs in its first frame" % [at, first])
 
 
 func _major_cells() -> Array:

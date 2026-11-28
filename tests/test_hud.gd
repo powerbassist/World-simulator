@@ -59,6 +59,7 @@ func _later_frames() -> bool:
 		return false  # a layout pass or two for the cards to take their height
 	if _frame == 5:
 		_check_cards_do_not_push_the_ui_down()
+		_count_on_finances("2")
 		# V5.1-c2.2: the floating windows' "clear of the column" and "a grown window
 		# stays on screen" checks went with the windows. A docked page is the dock's
 		# size whatever its content, and the dock's place is tests/test_workspace.gd's.
@@ -68,10 +69,13 @@ func _later_frames() -> bool:
 		_main._hud.inbox.slide_out()
 		return false
 	if _frame == 7:
+		_check_the_count_is_centred("2")
+		_count_on_finances("12")
 		_check_the_workspace_is_full_with_the_inbox_away()
 		_main._windows.open("calendar")
 		return false
 	if _frame == 10:
+		_check_the_count_is_centred("12")
 		_check_own_sheets_on_the_header_grid("calendar")
 		# Design's T14 on #441: the Sectors pages bring their own sheets too.
 		_main._windows.open("companies")
@@ -82,7 +86,9 @@ func _later_frames() -> bool:
 		return false
 	if _frame < 16:
 		return false
-	_check_own_sheets_on_the_header_grid("sector_industry")
+	var sectors = _main._windows.content("sector_industry")
+	# At 1920 with the inbox away the tab lays three columns, each as wide as its content.
+	_check_own_sheets_on_the_header_grid("sector_industry", sectors._goods.get_parent() == sectors._middle)
 	_finish()
 	return false
 
@@ -110,8 +116,10 @@ func _check_the_workspace_is_full_with_the_inbox_away() -> void:
 
 ## Design's gate T1 on #439: a panel that brings its own sheets sets them on the header sheet's
 ## grid -- its first sheet a gap under the header, its outer edges on the header's -- with no
-## margin left over from the page sheet that went away.
-func _check_own_sheets_on_the_header_grid(id: String) -> void:
+## margin left over from the page sheet that went away. `hugs`: a page whose columns are as wide as
+## their content keeps the left edge and may stop short of the right one, the leftover left empty
+## there (the author's rule for a wide page).
+func _check_own_sheets_on_the_header_grid(id: String, hugs := false) -> void:
 	var header: Rect2 = (_main._windows.dock().get_child(0) as Control).get_global_rect()
 	if not _main._windows._pages[id].own_sheets():
 		_fail("%s's page draws a sheet behind its own (window_manager OWN_SHEETS)" % id)
@@ -133,10 +141,42 @@ func _check_own_sheets_on_the_header_grid(id: String) -> void:
 	if bottom > _main._windows.dock().get_global_rect().end.y + 0.5:
 		_fail("%s's sheets end at %.0f, past the workspace's foot" % [id, bottom])
 	var gap := float(UiTheme.GAP_PANE)
-	if absf(left - header.position.x) > 0.5 or absf(right - header.end.x) > 0.5:
+	var short: bool = hugs and right < header.end.x
+	if absf(left - header.position.x) > 0.5 or (absf(right - header.end.x) > 0.5 and not short):
 		_fail("%s's sheets run %.0f to %.0f, off the header sheet's %.0f to %.0f" % [id, left, right, header.position.x, header.end.x])
 	if absf(top - (header.end.y + gap)) > 0.5:
 		_fail("%s's first sheet starts %.0f px under the header, not a gap (%.0f)" % [id, top - header.end.y, gap])
+
+
+func _count_on_finances(text: String) -> void:
+	var pill: Label = _main._hud.sidebar._pills["finances"]
+	pill.text = text
+	pill.show()
+
+
+## The sidebar's count stands in the middle of its pill by its figures' own ink, not by the line box, which keeps
+## room under the baseline that a figure never uses (the author: "the number is not centered inside the circle").
+func _check_the_count_is_centred(text: String) -> void:
+	var pill: Label = _main._hud.sidebar._pills["finances"]
+	if pill.text != text or not pill.is_visible_in_tree():
+		_fail("premise: the count reads '%s' (shown %s), wanted '%s'" % [pill.text, pill.is_visible_in_tree(), text])
+		return
+	var line := TextLine.new()
+	line.add_string(text, pill.get_theme_font("font"), pill.get_theme_font_size("font_size"))
+	var server := TextServerManager.get_primary_interface()
+	var ink := Rect2()
+	var pen := 0.0
+	for glyph in server.shaped_text_get_glyphs(line.get_rid()):
+		var px := Vector2i(int(glyph["font_size"]), 0)
+		var box := Rect2(Vector2(pen, 0.0) + server.font_get_glyph_offset(glyph["font_rid"], px, glyph["index"]),
+			server.font_get_glyph_size(glyph["font_rid"], px, glyph["index"]))
+		ink = box if pen == 0.0 else ink.merge(box)
+		pen += float(glyph["advance"])
+	# The first character's box is the line's own place in the pill; its baseline is an ascent under the top.
+	var middle := pill.get_character_bounds(0).position + Vector2(ink.get_center().x, line.get_line_ascent() + ink.get_center().y)
+	var off := middle - pill.size * 0.5
+	if ink.size.y < 5.0 or absf(off.x) > 0.75 or absf(off.y) > 0.75:
+		_fail("the count '%s' stands %s off the middle of its %s pill (ink %s)" % [text, off, pill.size, ink.size])
 
 
 ## The four cluster icons are read straight off disk and rasterised, bypassing

@@ -9,7 +9,7 @@ extends PanelContainer
 ## A page wide enough lays three columns (W2, the author's pick, 2026-11-27): the lead,
 ## what waits and the majors | what it makes | the firm. The switch is the page's OWN
 ## width against its blocks' minimums, read each frame, so it follows the text size, the
-## language and the month's figures.
+## language and the month's figures; the widest of the sector tabs' sets it for all.
 ##
 ## A major or a closure's Answer selects its firm on the sheet; a right click on a firm
 ## opens its verbs with their prices, the call to its chief and the map. A bid, a failing
@@ -46,8 +46,8 @@ const FinanceColumns = preload("res://src/ui/finance_columns.gd")
 
 ## The sheet's width in px: the picture's right column.
 const SHEET_WIDTH := 440
-## Both times the text size: the widest the lead stands in three (the picture's, which the switch also counts, so the
-## 1080 page keeps two columns at text 100), and the narrowest: four major tiles in a row.
+## Both times the text size: the widest the lead stands in three (the picture's), and the narrowest, four major tiles
+## in a row, which the switch counts.
 const LEFT_WIDTH := 788.0
 const LEFT_FLOOR := 648.0
 
@@ -78,8 +78,17 @@ var _goods: VBoxContainer
 var _majors_row: HFlowContainer
 ## The widest the unfiltered goods table asked: a chip narrows the table and must not move the switch.
 var _goods_wide := 0.0
-## The page's width from which three columns read whole.
+## The page's width from which three columns read whole, on this tab and on the others.
 var _need := INF
+## The sector tabs, this one among them (sectors_shell.gd hands main's table): none for a panel on its own.
+var tabs := {}
+## The size caches may be stale for a measure taken hidden: set at a rebuild or a new theme (the text size), spent
+## by the next measure.
+var _stale := false
+## What this tab asked last, answered again while a stale tab waits its turn to be built.
+var _asked := {}
+## On screen since the last frame, false once hidden or loaded anew.
+var _settled := false
 ## The good the chips filter the table to, "" for all of them.
 var _good_filter := ""
 var _sheet: VBoxContainer
@@ -138,6 +147,7 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	_settled = false
 	# A setup() after the first is a load: the discarded game's picks go with it (the retro review's item 7). The confirm
 	# card stays: it sits on the screen stack once and is re-armed by each ask (CompanyVerb.ask).
 	_good_filter = ""
@@ -158,6 +168,9 @@ func mark_dirty() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree():
 		_dragging = false
+		_settled = false
+	if what == NOTIFICATION_THEME_CHANGED:
+		_stale = true
 
 
 func hide_close_button() -> void:
@@ -168,10 +181,14 @@ func _process(_delta: float) -> void:
 	# A held slider holds the arrangement too: a track that changed length under it would jump its value.
 	if _dragging or not is_visible_in_tree() or _state == null:
 		return
+	# One sector tab is built a frame under a tab on screen, its own first (QA on #461: all three in a month turn's
+	# frame tripled the stall). A tab just shown builds every stale one: its column count holds from the press.
+	var spare := (0 if _dirty else 1) if _settled else tabs.size()
+	_settled = true
 	if _dirty:
 		_dirty = false
 		_refresh()
-	_arrange()
+	_arrange(spare)
 
 
 ## The width the page stops at in columns (window_manager.gd reads it); INF as two.
@@ -180,10 +197,22 @@ func page_cap() -> float:
 	return maxf(FinanceColumns.CEILING * UiTheme.text_scale(), _need + 1.0) if (_middle.get_parent() as Control).visible else INF
 
 
-## Two columns or three, by the page's width against what the blocks ask now.
-func _arrange() -> void:
+## What three columns ask of this tab. A stale tab is built first, hidden, to say it; one that may not build yet answers
+## what it asked last.
+func _asks(build := true) -> Dictionary:
+	if _dirty and not build:
+		return _asked
+	if _dirty and _state != null:
+		_dirty = false
+		_refresh()
+		_stale = true
 	if _goods == null:
-		return
+		return {}
+	# Measured: a tab built hidden read its goods names as 1 px (the switch 127 px short), and a new text size left its
+	# goods table at the old width.
+	if _stale and not is_visible_in_tree():
+		_drop_sizes(self)
+	_stale = false
 	var text := UiTheme.text_scale()
 	var asked := _goods.get_combined_minimum_size().x
 	_goods_wide = asked if _good_filter == "" else maxf(_goods_wide, asked)
@@ -194,9 +223,36 @@ func _arrange() -> void:
 			left = maxf(left, (child as Control).get_combined_minimum_size().x)
 	left = ceilf(left)
 	var firm := ceilf(maxf(SHEET_WIDTH, _sheet.get_combined_minimum_size().x))
-	var gaps := 2.0 * UiTheme.GAP_PANE
 	# A px over the narrowest three: the columns' minimums stay under the switch, so a page they hold wide falls to two.
-	_need = maxf(ceilf((LEFT_WIDTH + SHEET_WIDTH) * text) + firm, left + goods + firm + 1.0) + gaps
+	_asked = {"left": left, "goods": goods, "firm": firm, "need": left + goods + firm + 1.0 + 2.0 * UiTheme.GAP_PANE}
+	return _asked
+
+
+static func _drop_sizes(node: Node) -> void:
+	for child in node.get_children():
+		_drop_sizes(child)
+	if node is Control:
+		(node as Control).update_minimum_size()
+
+
+## Two columns or three, by the page's width against what the widest sector tab asks: a tab press never changes it.
+## `spare` is how many stale tabs not showing may be built now.
+func _arrange(spare: int) -> void:
+	var mine := _asks()
+	if mine.is_empty():
+		return
+	_need = mine["need"]
+	for tab in tabs.values():
+		if tab == self:
+			continue
+		var turn: bool = tab._dirty and spare > 0
+		spare -= int(turn)
+		_need = maxf(_need, tab._asks(turn).get("need", 0.0))
+	var text := UiTheme.text_scale()
+	var left: float = mine["left"]
+	var goods: float = mine["goods"]
+	var firm: float = mine["firm"]
+	var gaps := 2.0 * UiTheme.GAP_PANE
 	var three := size.x >= _need
 	var home := _middle if three else _body
 	if _goods.get_parent() != home:

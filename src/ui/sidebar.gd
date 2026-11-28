@@ -180,7 +180,9 @@ func _add_link(id: String, title: String, icon_path: String) -> void:
 	pill.offset_right = -8.0
 	pill.offset_top = -10.0
 	pill.offset_bottom = 10.0
-	pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	# Centred both ways: a figure has no descender, so the middle of its line is the middle of its ink.
+	pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pill.hide()
 	button.add_child(pill)

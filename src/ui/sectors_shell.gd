@@ -31,6 +31,7 @@ static func tab(main, sector: String) -> Control:
 		main._windows.close_all()
 		main._map_view.center_on_lonlat(lonlat.x, lonlat.y))
 	main._sector_panels[sector] = panel
+	panel.tabs = main._sector_panels  # the one table, filled as the tabs are made
 	return panel
 
 

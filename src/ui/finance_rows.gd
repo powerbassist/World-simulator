@@ -23,6 +23,7 @@ const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const FinanceLever = preload("res://src/ui/finance_lever.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const ControlStyle = preload("res://src/ui/control_style.gd")
+const FinanceUnits = preload("res://src/ui/finance_units.gd")
 
 ## A part nobody sets here: the muted neutral of the page's two stacks, and a darker one for the
 ## debt service so that the two are told apart by more than their place.
@@ -49,6 +50,8 @@ const FIGURE_WIDTH := 64.0
 ## G3 S4 (Books in C): the row's balance a year while the draft moves it, and the bar's least width.
 const BALANCE_WIDTH := 76.0
 const BAR_MIN := 140.0
+## The DRAG head's second line, left blank under its name for the money scale's figures.
+const SCALE_LINE := "\n "
 const SWATCH := 10.0
 
 
@@ -68,26 +71,6 @@ static func group_name(group_id: String) -> String:
 	return Strings.t(String(GROUP_NAME.get(group_id, group_id)))
 
 
-## A tax's unit as it is printed after the rate: a symbol is not translated, a word is.
-static func unit_text(code: String) -> String:
-	match code:
-		"%":
-			return " %"
-		"pt":
-			return Strings.t(" pt")
-		"index":
-			return Strings.t(" (index)")
-		"EUR/l":
-			return " €/l"
-		"EUR/kg":
-			return " €/kg"
-		"EUR/t":
-			return " €/t"
-		"EUR/passenger":
-			return Strings.t(" € a passenger")
-	return " " + code
-
-
 static func bn_text(value: float) -> String:
 	return Strings.t("%s bn") % Num.f(value, 0 if absf(value) >= 10.0 else 1)
 
@@ -95,7 +78,7 @@ static func bn_text(value: float) -> String:
 ## The revenue column: every group (largest first) with its kinds, then what no row sets.
 static func revenue(box: Control, book: Dictionary, state, loader, open_groups: Dictionary, toggle: Callable, ctx: Dictionary) -> void:
 	var ns = state.player()
-	columns(box, Strings.t("Revenue · %s") % bn_text(float(book["revenue_bn"])), Strings.t("Who pays"), false)
+	columns(box, Strings.t("Revenue · %s") % bn_text(float(book["revenue_bn"])), Strings.t("Who pays"), false, ctx)
 	for group in book["groups"]:
 		var gid := String(group["id"])
 		_header(box, group_color(gid), group_name(gid), bn_text(float(group["total"])), "")
@@ -126,7 +109,7 @@ static func revenue(box: Control, book: Dictionary, state, loader, open_groups: 
 ## The spending column: the five lines, then the debt service and what no line sets.
 static func spending(box: Control, book: Dictionary, ctx: Dictionary) -> void:
 	# The column names are said once, over spending; a spending row's "for" is the open row's (its blocs cost a read).
-	columns(box, Strings.t("Spending · %s") % bn_text(float(book["spending_bn"])), "", true)
+	columns(box, Strings.t("Spending · %s") % bn_text(float(book["spending_bn"])), "", true, ctx)
 	for line in book["lines"]:
 		var row := _row()
 		row.add_child(_swatch(line_color(String(line["key"]))))
@@ -271,18 +254,25 @@ static func _on_ground(editor: Control) -> Control:
 
 
 ## A section's head: its title and total, then the table's column names over the cells they name.
-static func columns(box: Control, title: String, who: String, named: bool) -> void:
+static func columns(box: Control, title: String, who: String, named: bool, ctx: Dictionary) -> void:
 	var row := _row()
 	var gap := Control.new()
 	gap.custom_minimum_size.x = SWATCH
 	row.add_child(gap)
 	_cell(row, title.to_upper(), UiTheme.MICRO, NAME_WIDTH + INDENT / UiTheme.text_scale()).clip_text = false
 	_cell(row, who.to_upper(), UiTheme.MICRO, CAPTION_MIN, "who").size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cell(row, "", UiTheme.MICRO, PCT_WIDTH)
-	var bar := _cell(row, Strings.t("Drag").to_upper() if named else "", UiTheme.MICRO, BAR_MIN, "drag")
+	# Spending's figures are shares, so its head says of what; Revenue's "Rate" is finance_columns.gd's.
+	_cell(row, Strings.t("% of GDP").to_upper() if named else "", UiTheme.MICRO, PCT_WIDTH, "rate")
+	# Two lines: the column's name, and under it the money scale every bar of the table is drawn to.
+	var head := Strings.t("Drag").to_upper() + SCALE_LINE if named else ""
+	var bar := _cell(row, head, UiTheme.MICRO, BAR_MIN, "drag")
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var scale := float(ctx.get("scale_bn", 1.0))
+	FinanceLever.axis(bar, ["0", Num.f(scale * 0.5, 0 if scale >= 20.0 else 1), bn_text(scale)])
 	_cell(row, Strings.t("A year").to_upper() if named else "", UiTheme.MICRO, FIGURE_WIDTH, "year").horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_cell(row, Strings.t("Balance").to_upper() if named else "", UiTheme.MICRO, BALANCE_WIDTH, "balance").horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	for cell in row.get_children():
+		cell.size_flags_vertical = Control.SIZE_SHRINK_BEGIN  # level with the first line of the DRAG head
 	var spaced := MarginContainer.new()
 	spaced.add_theme_constant_override("margin_top", 10)
 	spaced.add_child(row)
@@ -430,18 +420,18 @@ static func paint_rates(ctx: Dictionary) -> void:
 		var spending := channel == FinanceDraft.SPENDING
 		var places := 1 if spending else int(cell[4])
 		var was := LedgerBox.text(live, places)
-		var unit := "" if spending else unit_text(String(cell[5]))
+		var code := "" if spending else String(cell[5])
 		if channel == FinanceDraft.TAX and draft.is_abolished(key):
 			label.text = Strings.t("abolish")
 		# A birth at vote is a kind not in force; one in force at 0 % (the wealth tax) raised is a rate row (retro item 11).
 		elif channel == FinanceDraft.TAX and (draft.is_created(key) or (tabled.has(id) and not draft.in_force(key))):
-			label.text = Strings.t("new, at %s") % (LedgerBox.text(target, places) + unit)
+			label.text = Strings.t("new, at %s") % FinanceUnits.rate(LedgerBox.text(target, places), code)
 		elif target == live:
-			label.text = Strings.t("%s %%") % Num.f(live, 1) if spending else was + unit
+			label.text = Strings.t("%s %%") % Num.f(live, 1) if spending else FinanceUnits.rate(was, code)
 		elif spending:
 			label.text = Strings.t("from %s to %s %%") % [was, LedgerBox.text(target, places)]
 		else:
-			label.text = Strings.t("from %s to %s") % [was, LedgerBox.text(target, places) + unit]
+			label.text = FinanceUnits.moving(was, LedgerBox.text(target, places), code)
 	_paint_levers(ctx)
 
 
@@ -502,12 +492,15 @@ static func change_label(ns, row: Dictionary) -> String:
 static func change_figures(ns, row: Dictionary) -> String:
 	var key := String(row["key"])
 	var places := 1
-	var unit := Strings.t(" % of GDP")
+	var code := ""
 	match String(row["channel"]):
 		FinanceDraft.TAX, FinanceDraft.ABOLISH:
 			places = TaxLibrary.step_decimals(ns, key)
-			unit = unit_text(String(ns.tax_library[key]["unit"]))
+			code = String(ns.tax_library[key]["unit"])
 		FinanceDraft.BRACKETS:
 			places = 2
-			unit = ""
-	return "%s → %s%s" % [LedgerBox.text(float(row["live"]), places), LedgerBox.text(float(row["draft"]), places), unit]
+	var was := LedgerBox.text(float(row["live"]), places)
+	var to := LedgerBox.text(float(row["draft"]), places)
+	if String(row["channel"]) == FinanceDraft.SPENDING:
+		return "%s → %s%s" % [was, to, Strings.t(" % of GDP")]
+	return FinanceUnits.arrow(was, to, code)
