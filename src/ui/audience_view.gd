@@ -107,7 +107,7 @@ static func _talk(state, ns, loader, session: Dictionary) -> Array:
 	for line in TalkMenu.lines(state, ns, loader, session):
 		var people: Array = []
 		for p in line["people"]:
-			people.append({"id": String(p["id"]), "name": loader.person_name(String(p["id"])), "tip": _tie_words(loader, ns, p["tie"])})
+			people.append({"id": String(p["id"]), "name": loader.person_name(String(p["id"])), "tip": _tie_words(loader, ns, p["tie"], String(p["id"]))})
 		out.append({"id": line["id"], "topic": line["topic"], "tag": line["tag"], "args": line["args"], "people": people,
 			"vars": _vars(loader, ns, line["facts"]), "plain": Words.topic(String(line["topic"]))})
 	return out
@@ -127,8 +127,9 @@ static func _vars(loader, ns, facts: Dictionary) -> Dictionary:
 	return out
 
 
-## How a face in a gossip is tied, for its tooltip: the sim's links, in words.
-static func _tie_words(loader, ns, tie: Dictionary) -> String:
+## How a face in a gossip is tied, for its tooltip: the sim's links, in words. A want's level
+## is that face's own.
+static func _tie_words(loader, ns, tie: Dictionary, person_id: String) -> String:
 	if String(tie["kind"]) == "office":
 		return Strings.t("Wants the leadership of the party: their post.")
 	if String(tie["kind"]) == "party":
@@ -136,5 +137,5 @@ static func _tie_words(loader, ns, tie: Dictionary) -> String:
 			if String(party.id) == String(tie["party_id"]):
 				return Strings.t("Of the same party: %s.") % String(party.party_name)
 		return Strings.t("Of the same party.")
-	var thing := PersonCard.object_text(loader, ns, String(tie["object"]), {})
+	var thing := PersonCard.object_text(loader, ns, String(tie["object"]), {"person_id": person_id})
 	return Strings.t("Wants the same: %s.") % thing if bool(tie["same_side"]) else Strings.t("Takes the other side on %s.") % thing

@@ -14,6 +14,7 @@ extends SceneTree
 ##     when it turns, and asked as a dated word.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
+const AudienceView = preload("res://src/ui/audience_view.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Person = preload("res://src/core/person.gd")
 const PeopleLoader = preload("res://src/core/loaders/people_loader.gd")
@@ -602,7 +603,8 @@ func _check_the_card_names_both_objects() -> void:
 ## A meter want in words, at the person's own threshold: a row that carries only their id
 ## reads the same, and a row with neither never prints a figure it does not have.
 func _check_a_meter_want_reads_in_words() -> void:
-	var ns = _state().player()
+	var state = _state()
+	var ns = state.player()
 	var seen := 0
 	for pid in _loader.person_by_id:
 		for want in _loader.person_by_id[pid].wants:
@@ -621,6 +623,27 @@ func _check_a_meter_want_reads_in_words() -> void:
 				_fail("%s with no threshold prints a figure: '%s'" % [object, bare])
 	if seen == 0:
 		_fail("no meter want in the data: the check read nothing")
+	# A distance that prints as 0.0 is the starting level, from either side.
+	var level: String = PersonCard.object_text(_loader, ns, "meter:press_freedom", {"above": 0.0})
+	for near in [0.04, -0.04]:
+		var read: String = PersonCard.object_text(_loader, ns, "meter:press_freedom", {"above": near})
+		if read != level:
+			_fail("a distance of %s reads '%s', not '%s'" % [near, read, level])
+	# The gossip tooltip says the tied face's own level.
+	var tips := 0
+	for pid in _loader.person_by_id:
+		if tips >= 3:
+			break
+		for line in AudienceView._talk(state, ns, _loader, {"person_id": pid}):
+			for face in line["people"]:
+				for want in _loader.person_by_id[face["id"]].wants:
+					var object := String(want["object"])
+					if object.begins_with("meter:") and String(face["tip"]).contains(PersonCard.object_text(_loader, ns, object, {})):
+						tips += 1
+						if not String(face["tip"]).contains(PersonCard.object_text(_loader, ns, object, want)):
+							_fail("%s's tie tooltip names no level: '%s'" % [face["id"], face["tip"]])
+	if tips == 0:
+		_fail("no gossip tie on a meter: the tooltip check read nothing")
 
 
 # --- Fixtures ----------------------------------------------------------------------------

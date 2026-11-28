@@ -90,7 +90,8 @@ static func _meter_text(loader, object: String, want: Dictionary) -> String:
 	if words.size() == 1 or not held.has("above"):
 		return Strings.t(String(words[0]))
 	var above := float(held["above"])
-	if is_zero_approx(above):
+	# Tested as printed, to one decimal: 0.04 would otherwise read "more than 0.0 above".
+	if absf(above) < 0.05:
 		return Strings.t(String(words[1]))
 	return Strings.t(String(words[2] if above > 0.0 else words[3])) % Num.f(absf(above), 1)
 
