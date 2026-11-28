@@ -149,15 +149,22 @@ func _test_every_sector_id_has_a_moving_elasticity() -> void:
 ## sits in is narrow enough to wrap, and a break inside "1 000" reads as two numbers.
 func _test_a_thousand_in_a_unit_never_breaks() -> void:
 	var breakable := RegEx.create_from_string("[0-9] [0-9]{3}")
-	var seen := 0
+	var units := {}
 	for line in _loader.domains.keys():
 		for sector in Sectors.sectors_of(_loader, line):
-			var unit := String(sector["quantity"]["unit"])
-			seen += int("000" in unit)
-			if breakable.search(unit) != null:
-				_fail("%s/%s: the unit \"%s\" can break inside its figure" % [line, sector["id"], unit])
-	if seen == 0:
-		_fail("premise: no loaded unit names a thousand")
+			units["%s/%s" % [line, sector["id"]]] = String(sector["quantity"]["unit"])
+	var french: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/i18n/fr/domains.json"))
+	for key in french:
+		if String(key).ends_with(".quantity.unit"):
+			units["fr " + String(key)] = String(french[key])
+	var seen := {false: 0, true: 0}  # by French
+	for where in units:
+		var unit: String = units[where]
+		seen[String(where).begins_with("fr ")] += int("000" in unit)
+		if breakable.search(unit) != null:
+			_fail("%s: the unit \"%s\" can break inside its figure" % [where, unit])
+	if seen[false] == 0 or seen[true] == 0:
+		_fail("premise: no loaded unit names a thousand in one language: %s" % [seen])
 
 
 func _state_with_health():

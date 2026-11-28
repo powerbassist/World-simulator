@@ -57,6 +57,7 @@ func _run() -> void:
 	await _check_pseudo()
 	await _check_the_scroll_bar()
 	await _check_rate_words()
+	_check_small_scale()
 	for line in _failures:
 		printerr("FAIL: " + line)
 	print("test_finance_columns: %s" % ("OK" if _failures.is_empty() else "%d failures" % _failures.size()))
@@ -484,6 +485,18 @@ func _check_rate_words() -> void:
 	if not FinanceRows.change_figures(ns, row).ends_with("\u00a0%") or FinanceRows.change_figures(ns, row).count("%") != 1:
 		_fail("a percentage's change reads '%s'" % FinanceRows.change_figures(ns, row))
 	_panel._draft.drop(FinanceDraft.TAX, "alcohol_duty")
+
+
+## A scale under 20 bn keeps a decimal on its half mark, or it names a sum the bar does not draw there (a small
+## nation's books: 3.3 bn read 0, 2, 3.3).
+func _check_small_scale() -> void:
+	var box := VBoxContainer.new()
+	FinanceRows.columns(box, "", "", true, {"scale_bn": 3.3})
+	var said: Array = _slot(box, "drag")[0].get_children().map(func(mark) -> String: return mark.text)
+	var want := ["0", Num.f(3.3 * 0.5, 1), FinanceRows.bn_text(3.3)]
+	if said != want:
+		_fail("a 3.3 bn scale reads %s, wanted %s" % [said, want])
+	box.free()
 
 
 func _slot(box: Node, slot: String) -> Array:

@@ -267,7 +267,7 @@ static func columns(box: Control, title: String, who: String, named: bool, ctx: 
 	var bar := _cell(row, head, UiTheme.MICRO, BAR_MIN, "drag")
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var scale := float(ctx.get("scale_bn", 1.0))
-	FinanceLever.axis(bar, ["0", Num.f(scale * 0.5, 0), bn_text(scale)])
+	FinanceLever.axis(bar, ["0", Num.f(scale * 0.5, 0 if scale >= 20.0 else 1), bn_text(scale)])
 	_cell(row, Strings.t("A year").to_upper() if named else "", UiTheme.MICRO, FIGURE_WIDTH, "year").horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_cell(row, Strings.t("Balance").to_upper() if named else "", UiTheme.MICRO, BALANCE_WIDTH, "balance").horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	for cell in row.get_children():
