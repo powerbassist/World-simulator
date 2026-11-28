@@ -81,9 +81,15 @@ func _check_the_phone_trades_no_vote_on_talk() -> void:
 	var f := _requested("meter:press_freedom")
 	if f.is_empty():
 		return
+	var bargain := _lever_row(Phone.options(f["state"], f["ns"], _loader, f["pid"]), "bargain")
+	for currency in bargain.get("currencies", []):
+		if String(currency["currency"]) == LK.CURRENCY_VOTE_TRADE and (bool(currency["offered"]) or String(currency["why_not"]) != AK.TALK_ONLY):
+			_fail("the phone card offers a vote trade on talk: %s" % [currency])
 	var r: Dictionary = Phone.dial(f["state"], f["ns"], _loader, f["pid"], "bargain", {"currency": LK.CURRENCY_VOTE_TRADE})
 	if not f["ns"].commitments.is_empty():
 		_fail("a vote trade by phone wrote an IOU on talk: %s (%s)" % [f["ns"].commitments, r])
+	if bool(r.get("ok", true)) or String(r.get("error", "")) != AK.TALK_ONLY:
+		_fail("a vote trade by phone on talk is refused with the talk reason: %s" % [r])
 
 
 func _check_the_levers_spend_no_word_on_talk() -> void:
@@ -125,7 +131,7 @@ func _check_a_promise_on_talk_spends_no_attempt() -> void:
 		_fail("premise: the audience did not open")
 		return
 	var r: Dictionary = Levers.attempt(f["state"], f["ns"], _loader, session, "promise_date", {"due_month": _now(f["state"]) + LK.PROMISE_MIN_MONTHS})
-	if bool(r.get("ok", true)) or int(session["attempts_left"]) != LK.ATTEMPTS or not f["ns"].commitments.is_empty():
+	if bool(r.get("ok", true)) or String(r.get("error", "")) != AK.TALK_ONLY or int(session["attempts_left"]) != LK.ATTEMPTS or not f["ns"].commitments.is_empty():
 		_fail("a promise on talk took a roll or wrote a word: %s %s" % [r, session])
 
 

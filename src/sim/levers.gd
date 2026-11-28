@@ -169,7 +169,7 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	# on a yes. A promise the president could not make is still refused before any roll.
 	var promise := lever == "promise_date"
 	if promise and not (President.covers(state, ns, loader, String(person.id)) and WantTerms.is_act(_asked(session))):
-		refused["error"] = "the promise could not be made"
+		refused["error"] = "the promise could not be made" if WantTerms.is_act(_asked(session)) else AK.TALK_ONLY
 		return refused
 	var spent := {} if promise else pay(state, ns, loader, person, _asked(session), lever, args, now)
 	if spent.has("refused"):

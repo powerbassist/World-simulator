@@ -65,7 +65,13 @@ static func options(state, ns, loader, person_id: String) -> Dictionary:
 			why_not = "you are not friends" if LeverOdds.odds(person, lever, c) < 0.0 else "too long a shot for a call"
 		elif why_not == "":
 			why_not = Levers.word_given(ns, person_id, lever, String(request["object"]))
-		(out["levers"] as Array).append(Levers.lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state)))
+		var row := Levers.lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state))
+		if lever == "bargain" and not request.is_empty() and not WantTerms.is_act(String(request["object"])):
+			for currency in row["currencies"]:  # call 2 B: a vote trade is an IOU, a word, so none on talk
+				if String(currency["currency"]) == K.CURRENCY_VOTE_TRADE:
+					currency["offered"] = false
+					currency["why_not"] = AK.TALK_ONLY
+		(out["levers"] as Array).append(row)
 	for topic in K.TOPICS:
 		var why_not := why
 		if why_not == "" and topic == "dinner":
@@ -108,7 +114,7 @@ static func dial(state, ns, loader, person_id: String, lever_or_topic: String, a
 	var p := odds(person, lever_or_topic, Levers.cell(state, ns, loader, {"person_id": person_id, "object": object}))
 	var spent := Levers.pay(state, ns, loader, person, object, lever_or_topic, args, now)
 	if spent.has("refused"):
-		refused["error"] = "the promise could not be made"
+		refused["error"] = AK.TALK_ONLY if not WantTerms.is_act(object) else "the promise could not be made"
 		return refused
 	ns.phone_calls[person_id] = now
 	var success := Cycle.unit_pair(person_id, Cycle.salted("%s:%s" % [K.SALT_PHONE, lever_or_topic], ns.draw_seed), now) < p
