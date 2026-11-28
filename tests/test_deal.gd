@@ -689,7 +689,7 @@ func _check_the_struck_band_dates_the_counter() -> void:
 	if not bool(Deal.bargain(f["state"], f["ns"], _loader, f["session"], "promise_date", {"due_month": due}).get("success", false)):
 		_fail("premise: the seeded counter did not win")
 		return
-	var view := AudienceView.view_of({"_state": f["state"], "_loader": _loader}, {"session": f["session"], "scene": {"flow": {"ranked": true}}})
+	var view := AudienceView.view_of({"_state": f["state"], "_loader": _loader}, {"session": f["session"], "scene": {"flow": {"ranked": true}, "visiting": f["person_id"]}})
 	var texts: Array = (view["struck_lines"] as Array).map(func(l: Dictionary) -> String: return String(l["text"]))
 	var year := floori((due - 1) / 12.0)
 	var day: String = preload("res://src/ui/date_text.gd").day_month_year(1, due - year * 12, year)
