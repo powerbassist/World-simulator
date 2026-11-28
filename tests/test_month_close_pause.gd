@@ -15,21 +15,28 @@ extends SceneTree
 ## pause -- the clock is paused after the month, and the decision's hold (the
 ## flag the next press reads) is still up.
 ##
-## A second month, closed on the window's close button (QA's Q1 on #464): a close
+## Two more, closed on the window's close button (QA's Q1 on #464): a close
 ## is a notification, which the runner's deferral never saw, so the pause menu
 ## opened on half a month and remembered a running clock -- Resume then ran it over
 ## the hold the month's end had raised.
+##
+## One of them runs first, with no event and a meeting booked on the 1st (QA's
+## T1): its summit takes the clock only once the month releases it, so the close
+## must be answered after that, not merely after the month's steps.
 
 const Events = preload("res://src/sim/events.gd")
+const Diplomacy = preload("res://src/sim/diplomacy.gd")
 
 const MAX_FRAMES := 600
+## One month closed per case, in this order: the meeting needs the new game, where its host is still free.
+enum { CLOSE_ON_MEETING, SPACE, CLOSE_ON_EVENT }
 
 var _failures: Array[String] = []
 var _main
 var _frame := 0
 var _event_id := ""
 var _closing := false
-var _by_close_button := false
+var _case := CLOSE_ON_MEETING
 var _day_closed_on := 0
 
 
@@ -50,9 +57,10 @@ func _process(_delta: float) -> bool:
 	if _main._month_runner.running():
 		return false
 	_check_after_the_month()
-	if _by_close_button or not _failures.is_empty():
+	if _case == CLOSE_ON_EVENT or not _failures.is_empty():
 		return _finish()
-	_by_close_button = true
+	_main._windows.close("summit")
+	_case += 1
 	_closing = false
 	return false
 
@@ -90,13 +98,18 @@ func _stage_and_close() -> bool:
 	clock.set_speed(3)
 	while clock.day < clock._days_in_month(clock.month, clock.year):
 		clock.advance_one_day()
+	if _case == CLOSE_ON_MEETING:
+		ns.event_queue.clear()
+		_main._unseen_events.clear()
+		if not _book_a_meeting_on_the_first():
+			return _finish()
 	clock.paused = false
 	clock._process(1.0 / clock.SPEED_DAYS_PER_SECOND[2])
 	if not _main._month_runner.running():
 		_fail("premise: the 1st did not start a month across frames")
 		return _finish()
 	_day_closed_on = clock.day
-	if _by_close_button:
+	if _case != SPACE:
 		root.propagate_notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
 		_closing = true
 		return false
@@ -111,15 +124,36 @@ func _stage_and_close() -> bool:
 	return false
 
 
+func _book_a_meeting_on_the_first() -> bool:
+	var clock = _main._clock
+	var state = _main._state
+	# A host with a summit to show that can still receive one: a nation visited lately by anyone refuses on the day.
+	for target in _main._loader.summits:
+		for action in Diplomacy.available(state, _main._loader.diplomatic_actions, state.player_nation_id, target):
+			if not action.opens_meeting:
+				continue
+			var december: bool = clock.month == 12
+			state.appointments.append({"kind": "diplomatic", "action_id": String(action.id), "target_id": target,
+				"law_id": "", "portfolio": "", "party_id": "", "year": clock.year + (1 if december else 0),
+				"month": 1 if december else clock.month + 1, "day": 1, "travel_days": 0, "status": "booked"})
+			return true
+	_fail("premise: no nation can be visited, so no meeting can be booked")
+	return false
+
+
 func _check_after_the_month() -> void:
-	var left := -1
-	for entry in _main._state.player().event_queue:
-		if String(entry.get("event_id", "")) == _event_id:
-			left = int(entry.get("months_left", -1))
-	if left != 1:
-		_fail("premise: the staged event has %d months left after the month, not 1" % left)
+	if _case == CLOSE_ON_MEETING:
+		if not _main._windows.is_open("summit"):
+			_fail("premise: the meeting booked on the 1st did not open its summit")
+	else:
+		var left := -1
+		for entry in _main._state.player().event_queue:
+			if String(entry.get("event_id", "")) == _event_id:
+				left = int(entry.get("months_left", -1))
+		if left != 1:
+			_fail("premise: the staged event has %d months left after the month, not 1" % left)
 	var press := "Space pressed"
-	if _by_close_button:
+	if _case != SPACE:
 		press = "Resume after a window close sent"
 		if not _main._pause_menu.visible or not _main._pause_menu.warns():
 			_fail("a window close sent while the month closed did not put the pause menu's question")
@@ -132,7 +166,7 @@ func _check_after_the_month() -> void:
 			_fail("%s while the month closed ran the clock from day %d to %d" % [press, _day_closed_on, _main._clock.day])
 	if not _main._clock.paused:
 		_fail("%s while the month closed left the clock RUNNING after it" % press)
-	if not _main._paused_for_decision:
+	if _case != CLOSE_ON_MEETING and not _main._paused_for_decision:
 		_fail("%s while the month closed released the decision's hold" % press)
 
 
