@@ -6,7 +6,7 @@
       "id": "prog_the_hospital_year",
       "laws": ["health_service_reform", "social_care_cap_act", "homelessness_duty_act"],
       "name": "The Hospital Year",
-      "summary": "0.8% of GDP a year more on health from the day the programme is chosen, and the term's verdict taken from the only [g=poll]poll[/g] that prices it. A hospital service is judged in confidence and in waiting lists; the register keeps the confidence.",
+      "summary": "0.8% of GDP more a year on health from the day the programme is chosen, and the term's verdict taken from the only [g=poll]poll[/g] that prices it. A hospital service is judged in confidence and in waiting lists; the register keeps the confidence.",
       "group": "society",
       "activation": "player",
       "immediate": {
@@ -42,7 +42,7 @@
       "id": "prog_the_classroom_ledger",
       "laws": ["universal_school_meals", "student_grants_act", "tuition_fees_abolition_act"],
       "name": "The Classroom Ledger",
-      "summary": "0.8% of GDP a year more on education at choice, the judgement due within the year -- education is the [g=spending]spending[/g] the country audits fastest. Miss the clock and the students' bloc keeps the score.",
+      "summary": "0.8% of GDP more a year on education at choice, the judgement due within the year -- education is the [g=spending]spending[/g] the country audits fastest. Miss the clock and the students' bloc keeps the score.",
       "group": "society",
       "activation": "player",
       "immediate": {
@@ -249,7 +249,7 @@
       "id": "prog_the_growing_towns",
       "laws": ["planning_liberalisation_act", "grid_modernisation_act"],
       "name": "The Growing Towns",
-      "summary": "0.5% of GDP a year more into the towns' roads and rails at choice, and a year's growth at one point eight as the proof the money went somewhere. A recession is the world overtaking the programme, not the programme failing.",
+      "summary": "0.5% of GDP more a year into the towns' roads and rails at choice, and a year's growth at one point eight as the proof the money went somewhere. A recession is the world overtaking the programme, not the programme failing.",
       "group": "society",
       "activation": "player",
       "immediate": {

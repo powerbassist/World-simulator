@@ -635,6 +635,12 @@ func _check_a_meter_want_reads_in_words() -> void:
 		var floor_words := "a floor 0.1 under the starting level of %s" % meter.replace("_", " ")
 		if under != floor_words:
 			_fail("a distance under the start reads '%s', not '%s'" % [under, floor_words])
+	# Over the start is a rise to win: "more than 0.2 above" read as if it were there already.
+	for meter in ["press_freedom", "judicial_independence"]:
+		var over: String = PersonCard.object_text(_loader, ns, "meter:%s" % meter, {"above": 0.2})
+		var rise := "a rise of more than 0.2 in %s" % meter.replace("_", " ")
+		if over != rise:
+			_fail("a distance over the start reads '%s', not '%s'" % [over, rise])
 	# The gossip tooltip says the tied face's own level.
 	var tips := 0
 	for pid in _loader.person_by_id:

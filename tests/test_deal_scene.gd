@@ -271,7 +271,7 @@ func _check_a_meter_word_card() -> void:
 	var card := DealWords.card(_main._loader, _ns(), {"ask": {"kind": "word", "object": object, "due_month": 24313},
 		"offer": {"kind": "silence", "months": 12}, "grant": {"ok": true, "why_not": ""}, "refuse": {}}, {}, "wants it",
 		"judge", "FRA_lariviere")
-	if not String(card["want"]).contains("more than 0.1 above its starting level"):
+	if not String(card["want"]).contains("a rise of more than 0.1 in press freedom"):
 		_fail("a meter word does not say the person's level: '%s'" % card["want"])
 
 
@@ -283,7 +283,7 @@ func _check_a_dated_meter_word() -> void:
 	if not President.commit(_main._state, _ns(), _main._loader, "delegated", pid, object, due):
 		_fail("premise: no minister's word staged on a meter")
 		return
-	var level := "more than 0.1 above its starting level"
+	var level := "a rise of more than 0.1 in press freedom"
 	_main._calendar_panel._grid.show_items(_main._state, _main._loader, [])
 	var marks: Array = _main._calendar_panel._grid._entries((due - 1) / 12, (due - 1) % 12 + 1).get(1, [])
 	if not marks.any(func(e): return String(e["text"]).contains(level)):

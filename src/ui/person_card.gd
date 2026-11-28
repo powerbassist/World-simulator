@@ -64,10 +64,10 @@ const PORTFOLIO_LABEL := Labels.PORTFOLIO
 const METER_WORDS := {
 	"grievance": ["unrest"],  # i18n: msgid
 	"press_freedom": ["press freedom", "press freedom above its starting level",  # i18n: msgid
-		"press freedom more than %s above its starting level",  # i18n: msgid
+		"a rise of more than %s in press freedom",  # i18n: msgid
 		"a floor %s under the starting level of press freedom"],  # i18n: msgid
 	"judicial_independence": ["judicial independence", "judicial independence above its starting level",  # i18n: msgid
-		"judicial independence more than %s above its starting level",  # i18n: msgid
+		"a rise of more than %s in judicial independence",  # i18n: msgid
 		"a floor %s under the starting level of judicial independence"],  # i18n: msgid
 }
 
