@@ -19,7 +19,7 @@ const PRESS_OWNER := "press_owner"
 
 
 ## The card the scene shows. `wants` the request in the lane's words, `kind` the person's.
-static func card(loader, ns, answers: Dictionary, feel: Dictionary, wants: String, kind: String) -> Dictionary:
+static func card(loader, ns, answers: Dictionary, feel: Dictionary, wants: String, kind: String, person_id := "") -> Dictionary:
 	var ask: Dictionary = answers.get("ask", {})
 	var offer: Dictionary = answers.get("offer", {})
 	var grant: Dictionary = answers.get("grant", {})
@@ -32,7 +32,7 @@ static func card(loader, ns, answers: Dictionary, feel: Dictionary, wants: Strin
 		"bargain": _bargain(ask, answers),
 		"refuse": refuse_text, "struck": String(grant.get("why_not", "")) == "they have already agreed",  # i18n: ok the sim's reason, compared
 	}
-	out.merge(_ask(loader, ns, ask, grant, wants))
+	out.merge(_ask(loader, ns, ask, grant, wants, person_id))
 	out.merge(_offer(loader, ns, offer, kind))
 	return out
 
@@ -73,10 +73,10 @@ static func _bargain(ask: Dictionary, answers: Dictionary) -> String:
 	return Strings.t("Or bargain for less: your word by %s, or the date you promise, for the same offer.") % Words.when_long(int(answers.get("bargain", {}).get("due_month", 0)))
 
 
-static func _ask(loader, ns, ask: Dictionary, grant: Dictionary, wants: String) -> Dictionary:
+static func _ask(loader, ns, ask: Dictionary, grant: Dictionary, wants: String, person_id: String) -> Dictionary:
 	var kind := String(ask.get("kind", ""))
 	var object := String(ask.get("object", ""))
-	var thing := PersonCard.object_text(loader, ns, object, {})
+	var thing := PersonCard.object_text(loader, ns, object, {"person_id": person_id})
 	if kind == K.ASK_POST:
 		return {"want": Strings.t("The %s, for their party.") % thing, "want_stake": wants,
 			"grant_cost": _post_cost(loader, ns, grant.get("removal", {}))}

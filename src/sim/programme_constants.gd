@@ -85,6 +85,11 @@ const LegislatureK = preload("res://src/sim/legislature_constants.gd")
 const TRIGGER_FIELDS := LegislatureK.PRECONDITION_FIELDS
 const TRIGGER_OPS := LegislatureK.PRECONDITION_OPS
 
+## What `current_value` and `goal_value` count, as codes the offer page words:
+## "%" a rate, "pct_gdp" a share of GDP, "t_co2e" tonnes a person, "terms" mandates.
+const UNITS := ["%", "pct_gdp", "t_co2e", "terms"]
+
+
 ## Every key an authored entry may carry. The loader refuses an entry that carries
 ## a key not on this list beside the ones it needs -- the summits' sidecar
 ## contract's loud refusal: a typo'd field must be a load error, never an inert
@@ -92,7 +97,7 @@ const TRIGGER_OPS := LegislatureK.PRECONDITION_OPS
 const ENTRY_FIELDS := [
 	"id", "name", "summary", "group", "activation", "possible",
 	"immediate", "complete", "fail", "invalid", "timeout_months",
-	"current_value", "goal_value", "progressbar",
+	"current_value", "unit", "goal_value", "progressbar",
 	"on_complete", "on_fail", "on_invalid", "on_timeout",
 	"weight", "pinned", "laws",
 ]
@@ -108,5 +113,5 @@ const ENTRY_FIELDS := [
 ## whitelist here.
 const REQUIRED_FIELDS := [
 	"id", "name", "summary", "group", "activation", "timeout_months",
-	"current_value", "goal_value", "progressbar",
+	"current_value", "unit", "goal_value", "progressbar",
 ]

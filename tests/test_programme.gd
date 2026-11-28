@@ -46,6 +46,14 @@ var _failures: Array[String] = []
 var _loader
 
 
+## The unit each readable figure is counted in (programme_constants.UNITS).
+const FIGURE_UNITS := {
+	"unemployment_pct": "%", "growth_annual_pct": "%", "overall_approval_pct": "%", "unrest_pct": "%",
+	"deficit_pct_gdp": "pct_gdp", "debt_to_gdp_pct": "pct_gdp",
+	"co2e_per_capita_t": "t_co2e", "terms_served": "terms",
+}
+
+
 func _init() -> void:
 	_loader = DataLoader.new()
 	_loader.load_all()
@@ -152,6 +160,9 @@ func _test_the_register_sweep() -> void:
 		# Ordering is authored, not defaulted: the panel sorts by this.
 		if not entry.has("weight") or not (typeof(entry["weight"]) == TYPE_FLOAT or typeof(entry["weight"]) == TYPE_INT):
 			_fail("%s carries no numeric weight" % id)
+		# The unit names the figure: a wrong one would print a share of GDP as tonnes.
+		if String(entry.get("unit", "")) != String(FIGURE_UNITS.get(String(entry["current_value"]), "")):
+			_fail("%s: unit '%s' does not count %s" % [id, entry.get("unit", ""), entry["current_value"]])
 		# Every effect slot re-validates through the same extraction the loader ran.
 		for key in ["immediate", "on_complete", "on_fail", "on_invalid", "on_timeout"]:
 			if not entry.has(key):
@@ -239,7 +250,7 @@ func _test_the_loader_refuses_malformed_entries() -> void:
 	var base := {
 		"id": "prog_fixture", "name": "The Fixture", "summary": "s",
 		"group": "economy", "activation": "player", "timeout_months": 0,
-		"current_value": "growth_annual_pct", "goal_value": 2.0, "progressbar": "up",
+		"current_value": "growth_annual_pct", "unit": "%", "goal_value": 2.0, "progressbar": "up",
 	}
 	_refused(base, "could never conclude", "an entry with no trigger and no deadline")
 	_refused(_with(base, "possibles", []), "not a recognised field", "a typo'd field name")
@@ -254,6 +265,7 @@ func _test_the_loader_refuses_malformed_entries() -> void:
 	no_summary.erase("summary")
 	_refused(no_summary, "missing required field 'summary'", "an entry without a summary")
 	_refused(_with(base, "summary", "   "), "non-empty string", "an entry with a blank summary")
+	_refused(_with(base, "unit", "eur"), "is not one of", "a unit outside the closed list")
 
 
 func _with(d: Dictionary, key: String, value) -> Dictionary:

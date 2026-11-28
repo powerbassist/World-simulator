@@ -32,7 +32,7 @@ static func line(glyph: String, tone: String, text: String) -> Dictionary:
 ## the counter's {earliest, latest} months and its one row. `counter` is {} for an ask that has
 ## no date to move (a post, a plant): two cards, the same rule.
 static func question(loader, ns, session: Dictionary, answers: Dictionary, feel: Dictionary, wants: String, kind: String, reads: Dictionary) -> Dictionary:
-	var card := DealWords.card(loader, ns, answers, feel, wants, kind)
+	var card := DealWords.card(loader, ns, answers, feel, wants, kind, String(session.get("person_id", "")))
 	var ask: Dictionary = answers.get("ask", {})
 	var grant_lines: Array = [line(DOWN, BAD, String(card["grant_cost"]))] if String(card["grant_cost"]) != "" else []
 	grant_lines.append(line(UP, GOOD, String(card["give_stake"])))

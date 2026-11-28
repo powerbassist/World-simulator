@@ -35,7 +35,7 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	var answers := Deal.answers(state, ns, loader, session)
 	var struck := session.has("struck") or String(session.get("won", "")) != ""
 	var wants := _want_words(loader, ns, person, String(session["object"]))
-	var card := DealWords.card(loader, ns, answers, feel, wants, kind)
+	var card := DealWords.card(loader, ns, answers, feel, wants, kind, pid)
 	# "money" is ALWAYS in the view: the scene merges a result's view over its own, and a key left
 	# out would keep the offer on screen after it was answered.
 	var view := {"voice": AudienceVoice.lines(loader, pid), "choices": {"feel": feel}, "struck": struck, "money": {}, "notice_lines": game.get("notice", []),
@@ -96,7 +96,7 @@ static func _want_words(loader, ns, person, object: String) -> String:
 		for w in person.wants:
 			if String(w["object"]) == object:
 				stance = String(w["stance"])
-	var thing := PersonCard.object_text(loader, ns, object, {"object": object})
+	var thing := PersonCard.object_text(loader, ns, object, {"person_id": person.id if person != null else ""})
 	return "%s %s" % [Strings.t(PersonCard.stance_label(stance)), thing] if stance != "" else thing
 
 
@@ -107,7 +107,7 @@ static func _talk(state, ns, loader, session: Dictionary) -> Array:
 	for line in TalkMenu.lines(state, ns, loader, session):
 		var people: Array = []
 		for p in line["people"]:
-			people.append({"id": String(p["id"]), "name": loader.person_name(String(p["id"])), "tip": _tie_words(loader, ns, p["tie"])})
+			people.append({"id": String(p["id"]), "name": loader.person_name(String(p["id"])), "tip": _tie_words(loader, ns, p["tie"], String(p["id"]))})
 		out.append({"id": line["id"], "topic": line["topic"], "tag": line["tag"], "args": line["args"], "people": people,
 			"vars": _vars(loader, ns, line["facts"]), "plain": Words.topic(String(line["topic"]))})
 	return out
@@ -127,8 +127,9 @@ static func _vars(loader, ns, facts: Dictionary) -> Dictionary:
 	return out
 
 
-## How a face in a gossip is tied, for its tooltip: the sim's links, in words.
-static func _tie_words(loader, ns, tie: Dictionary) -> String:
+## How a face in a gossip is tied, for its tooltip: the sim's links, in words. A want's level
+## is that face's own.
+static func _tie_words(loader, ns, tie: Dictionary, person_id: String) -> String:
 	if String(tie["kind"]) == "office":
 		return Strings.t("Wants the leadership of the party: their post.")
 	if String(tie["kind"]) == "party":
@@ -136,5 +137,5 @@ static func _tie_words(loader, ns, tie: Dictionary) -> String:
 			if String(party.id) == String(tie["party_id"]):
 				return Strings.t("Of the same party: %s.") % String(party.party_name)
 		return Strings.t("Of the same party.")
-	var thing := PersonCard.object_text(loader, ns, String(tie["object"]), {})
+	var thing := PersonCard.object_text(loader, ns, String(tie["object"]), {"person_id": person_id})
 	return Strings.t("Wants the same: %s.") % thing if bool(tie["same_side"]) else Strings.t("Takes the other side on %s.") % thing

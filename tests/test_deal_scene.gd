@@ -13,6 +13,7 @@ const Audiences = preload("res://src/sim/audiences.gd")
 const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const Bills = preload("res://src/sim/bills.gd")
 const Deal = preload("res://src/sim/deal.gd")
+const PersonCard = preload("res://src/ui/person_card.gd")
 const DealWords = preload("res://src/ui/deal_words.gd")
 const ClosureCard = preload("res://src/ui/closure_card.gd")
 const SC = preload("res://src/sim/shadow_constants.gd")
@@ -157,6 +158,8 @@ func _check_words() -> void:
 		_fail("the money's two chances are the wrong way round: '%s'" % risk)
 	_check_a_firm_card()
 	_check_a_dated_vote()
+	_check_a_meter_word_card()
+	_check_a_dated_meter_word()
 	_check_a_post_cost()
 	var row := {"person_id": _voter, "verdict": "kept"}
 	var kept := DealWords.owed_verdict(_main._loader, row)
@@ -260,6 +263,35 @@ func _check_a_dated_vote() -> void:
 	var day: String = preload("res://src/ui/date_text.gd").day_month_year(3, 12, 2026)
 	if not stake.contains(day) or not stake.contains("16"):
 		_fail("a dated vote does not say its seats and day '%s': '%s'" % [day, stake])
+
+
+## The card of a word on a meter says the person's own level, never "above 0.0".
+func _check_a_meter_word_card() -> void:
+	var object := "meter:press_freedom"
+	var card := DealWords.card(_main._loader, _ns(), {"ask": {"kind": "word", "object": object, "due_month": 24313},
+		"offer": {"kind": "silence", "months": 12}, "grant": {"ok": true, "why_not": ""}, "refuse": {}}, {}, "wants it",
+		"judge", "FRA_lariviere")
+	if not String(card["want"]).contains("a rise of more than 0.1 in press freedom"):
+		_fail("a meter word does not say the person's level: '%s'" % card["want"])
+
+
+## A word due on a meter keeps the person's level in the Diary and on their dated lines.
+func _check_a_dated_meter_word() -> void:
+	var pid := "FRA_lariviere"
+	var object := "meter:press_freedom"
+	var due := int(_main._state.year) * 12 + int(_main._state.month) + 3
+	if not President.commit(_main._state, _ns(), _main._loader, "delegated", pid, object, due):
+		_fail("premise: no minister's word staged on a meter")
+		return
+	var level := "a rise of more than 0.1 in press freedom"
+	_main._calendar_panel._grid.show_items(_main._state, _main._loader, [])
+	var marks: Array = _main._calendar_panel._grid._entries((due - 1) / 12, (due - 1) % 12 + 1).get(1, [])
+	if not marks.any(func(e): return String(e["text"]).contains(level)):
+		_fail("the Diary's word due names no level: %s" % [marks])
+	var lines := PersonCard.dated_lines(_main._loader, _ns(), pid)
+	if not "\n".join(lines).contains(level):
+		_fail("the person's dated lines name no level: %s" % [lines])
+	President.withdraw_commitment(_ns(), "delegated", pid, object)
 
 
 func _check_a_post_cost() -> void:

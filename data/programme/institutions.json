@@ -21,6 +21,7 @@
       },
       "timeout_months": 0,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 55.0,
       "progressbar": "up",
       "on_complete": {
@@ -61,6 +62,7 @@
       },
       "timeout_months": 0,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 53.0,
       "progressbar": "up",
       "on_complete": {
@@ -101,6 +103,7 @@
       },
       "timeout_months": 0,
       "current_value": "unrest_pct",
+      "unit": "%",
       "goal_value": 4.0,
       "progressbar": "down",
       "on_complete": {
@@ -135,6 +138,7 @@
       },
       "timeout_months": 0,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 54.0,
       "progressbar": "up",
       "on_complete": {
@@ -177,6 +181,7 @@
       },
       "timeout_months": 0,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 53.0,
       "progressbar": "up",
       "weight": 5,
@@ -208,6 +213,7 @@
       },
       "timeout_months": 0,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 58.0,
       "progressbar": "up",
       "on_complete": {
@@ -243,6 +249,7 @@
       },
       "timeout_months": 10,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 53.0,
       "progressbar": "up",
       "on_complete": {
