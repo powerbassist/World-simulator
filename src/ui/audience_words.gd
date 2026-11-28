@@ -148,7 +148,7 @@ static func struck_lines(answers: Dictionary, card: Dictionary) -> Array:
 static func talk_lines(name: String, wants: String, summons: bool) -> Array:
 	if summons:
 		return [line(NEUTRAL, DIM, Strings.t("You asked to see them: there is nothing to settle, only talk."))]
-	return [line(NEUTRAL, DIM, Strings.t("%s %s: not yours to do, so there is no word to give, only talk.") % [name, wants])]
+	return [line(NEUTRAL, DIM, Strings.t("%s %s: no act of yours answers that, so there is no word to give, only talk.") % [name, wants])]
 
 
 ## The money on the table: where it lands (the band's head) and its two lines, the risk and what

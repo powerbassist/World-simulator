@@ -62,6 +62,8 @@ var _band: PanelContainer
 var _tone: Label
 var _result: Label
 var _band_lines: VBoxContainer
+## The band's head (the tone tag and the result): hidden while it has nothing to say.
+var _band_head: HBoxContainer
 var _end: Button
 var _pending := ""
 ## The talk's rows being built: a newer build discards an older one still awaiting its lines.
@@ -113,19 +115,19 @@ func _ready() -> void:
 	_band.theme_type_variation = UiTheme.PLATE
 	words.add_child(_band)
 	var band_box := PanelKit.padded(_band, 12, 6)
-	var band_head := HBoxContainer.new()
-	band_head.add_theme_constant_override("separation", 12)
-	band_box.add_child(band_head)
+	_band_head = HBoxContainer.new()
+	_band_head.add_theme_constant_override("separation", 12)
+	band_box.add_child(_band_head)
 	_tone = Label.new()
 	_tone.name = "ResultTone"  # i18n: ok a node name, found by tests
 	_tone.uppercase = true
 	_tone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	band_head.add_child(_tone)
+	_band_head.add_child(_tone)
 	_result = Label.new()
 	_result.theme_type_variation = UiTheme.LEAD
 	_result.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	band_head.add_child(_result)
+	_band_head.add_child(_result)
 	_band_lines = VBoxContainer.new()
 	_band_lines.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_band_lines.add_theme_constant_override("separation", 3)
@@ -182,7 +184,11 @@ func open(view: Dictionary) -> void:
 		child.queue_free()
 	if view.has("party"):
 		_party.add_child(PartyChip.make(view["party"]))
+	# A new audience opens with no result: the last one's goodbye is not this one's head (#463 Design T1).
+	_result.text = ""
+	ResultTone.apply(_tone, "")
 	_render(_view)
+	_head()
 	say(String(view.get("opening_title", "opening")), {})
 
 
@@ -206,6 +212,7 @@ func show_result(text: String, view: Dictionary, title: String, extra := {}, ton
 		_result.text = text
 		ResultTone.apply(_tone, tone)
 	_badge(_view)
+	_head()
 	if title != "":
 		say(title, extra)
 
@@ -215,6 +222,7 @@ func show_result(text: String, view: Dictionary, title: String, extra := {}, ton
 func show_close(outcome: String, text: String, tone := "") -> void:
 	_result.text = text
 	ResultTone.apply(_tone, tone)
+	_head()
 	AudienceVoice.say(self, _spoken, _voice, "farewell")
 	say(DialogueLines.close_title(_view, outcome), {})
 	if flow.fire("refuse"):
@@ -255,6 +263,7 @@ func _render(view: Dictionary) -> void:
 		_lead.text = String(money.get("lead", ""))
 		_result.text = String(money.get("terms", ""))
 		ResultTone.apply(_tone, ResultTone.TABLE)
+		_head()
 		_lines(money.get("lines", []))
 		_build += 1
 		var mine := _build
@@ -276,6 +285,11 @@ func _render(view: Dictionary) -> void:
 			flow.lines = view["talk"]
 			flow.ranked = true
 		_fill_talk(view)
+
+
+## A band is a head and lines; with no result there is no head row, so a talk band is its one line.
+func _head() -> void:
+	_band_head.visible = _result.text != "" or _tone.visible
 
 
 func _lines(rows: Array) -> void:

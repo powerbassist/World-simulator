@@ -213,7 +213,7 @@ static func is_summons(row: Dictionary) -> bool:
 ## given only on something the player does (WantTerms.is_act). A want on a programme or a meter is
 ## talk: Deal.ask_of marks its ask `talk` with this reason, every lever and the grant say it, and
 ## closing the audience is unpriced, as a summons.
-const TALK_ONLY := "nothing you can promise: what they want is not yours to do"
+const TALK_ONLY := "nothing you can promise: no act of yours answers what they want"
 
 
 ## Whether a scene's session is talk only: a summons, or an ask with no act behind it.

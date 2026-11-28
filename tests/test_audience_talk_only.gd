@@ -85,6 +85,10 @@ func _check_it_opens_on_the_topics(which: String, band: String) -> void:
 	if not (scene._view.get("money", {}) as Dictionary).is_empty() or not Shadows.offer(_main._state.player(), session).is_empty() \
 			or not (Deal.answers(_main._state, _main._state.player(), _main._loader, session)["money"] as Dictionary).is_empty():
 		_fail("%s talk audience still offers the request's money" % which)
+	# Design T1: open() clears the band's head, so a talk audience never opens under the last
+	# visitor's goodbye ("They leave satisfied ..."), and an empty head takes no row.
+	if scene._result.text != "" or scene._band_head.visible:
+		_fail("%s talk audience opens under a head: '%s', row shown %s" % [which, scene._result.text, scene._band_head.visible])
 	var said := ""
 	for label in scene._band_lines.find_children("*", "Label", true, false):
 		said += (label as Label).text + " "
