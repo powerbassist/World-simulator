@@ -35,7 +35,7 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	var answers := Deal.answers(state, ns, loader, session)
 	var struck := session.has("struck") or String(session.get("won", "")) != ""
 	var wants := _want_words(loader, ns, person, String(session["object"]))
-	var card := DealWords.card(loader, ns, answers, feel, wants, kind)
+	var card := DealWords.card(loader, ns, answers, feel, wants, kind, pid)
 	# "money" is ALWAYS in the view: the scene merges a result's view over its own, and a key left
 	# out would keep the offer on screen after it was answered.
 	var view := {"voice": AudienceVoice.lines(loader, pid), "choices": {"feel": feel}, "struck": struck, "money": {}, "notice_lines": game.get("notice", []),
@@ -96,7 +96,7 @@ static func _want_words(loader, ns, person, object: String) -> String:
 		for w in person.wants:
 			if String(w["object"]) == object:
 				stance = String(w["stance"])
-	var thing := PersonCard.object_text(loader, ns, object, {"object": object})
+	var thing := PersonCard.object_text(loader, ns, object, {"person_id": person.id if person != null else ""})
 	return "%s %s" % [Strings.t(PersonCard.stance_label(stance)), thing] if stance != "" else thing
 
 

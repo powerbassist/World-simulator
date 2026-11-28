@@ -150,14 +150,14 @@ static func _row(state, loader, ns, pid: String) -> Dictionary:
 	owed.sort_custom(func(a, b): return int(a["due_month"]) < int(b["due_month"]))
 	if not owed.is_empty():
 		var first: Dictionary = owed[0]
-		row["owe"] = Strings.t("%s, due %s") % [PersonCard.object_text(loader, ns, String(first["object"]), {}), Words.when_long(int(first["due_month"]))]
+		row["owe"] = Strings.t("%s, due %s") % [PersonCard.object_text(loader, ns, String(first["object"]), first), Words.when_long(int(first["due_month"]))]
 		if int(first["due_month"]) - now <= DUE_MONTHS:
 			row["rank"] = mini(int(row["rank"]), Need.DUE)
 	var request := _open_request(ns, pid)
 	if not request.is_empty():
 		row["rank"] = Need.REQUEST
 		row["request_id"] = String(request["id"])
-		var about := PersonCard.object_text(loader, ns, String(request["object"]), {})
+		var about := PersonCard.object_text(loader, ns, String(request["object"]), request)
 		if String(request["status"]) == AK.STATUS_BOOKED and not (request["date"] as Dictionary).is_empty():
 			var d: Dictionary = request["date"]
 			row["booked"] = true

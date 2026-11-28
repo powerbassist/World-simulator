@@ -21,6 +21,7 @@
       },
       "timeout_months": 6,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 53.0,
       "progressbar": "up",
       "on_complete": {
@@ -50,6 +51,7 @@
       },
       "timeout_months": 12,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 58.0,
       "progressbar": "up",
       "on_complete": {
@@ -67,7 +69,7 @@
       "id": "prog_the_orderly_house",
       "laws": ["retirement_age_reform", "vat_consolidation", "tobacco_alcohol_duty"],
       "name": "The Orderly House",
-      "summary": "The deficit held under two and a half for as long as the register is open -- discipline as the term's character rather than its clock. The anti-avoidance yield lands on the day of the choice; the drift, not the president, writes the fail line. Offered between the lines, where discipline is still a choice.",
+      "summary": "The deficit held under two and a half for as long as the register is open -- discipline as the term's character rather than its clock. The anti-avoidance yield, 0.3% of GDP a year, lands on the day of the choice; the drift, not the president, writes the fail line. Offered between the lines, where discipline is still a choice.",
       "group": "office",
       "activation": "player",
       "possible": [
@@ -102,6 +104,7 @@
       },
       "timeout_months": 0,
       "current_value": "deficit_pct_gdp",
+      "unit": "pct_gdp",
       "goal_value": 2.5,
       "progressbar": "down",
       "on_complete": {
@@ -143,6 +146,7 @@
       },
       "timeout_months": 0,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 60.0,
       "progressbar": "up",
       "weight": 5,
@@ -174,6 +178,7 @@
       },
       "timeout_months": 0,
       "current_value": "debt_to_gdp_pct",
+      "unit": "pct_gdp",
       "goal_value": 114.0,
       "progressbar": "down",
       "on_complete": {
@@ -209,6 +214,7 @@
       },
       "timeout_months": 0,
       "current_value": "terms_served",
+      "unit": "terms",
       "goal_value": 1.0,
       "progressbar": "up",
       "weight": 2,

@@ -27,6 +27,7 @@
       },
       "timeout_months": 0,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 54.0,
       "progressbar": "up",
       "weight": 10,
@@ -51,6 +52,7 @@
       },
       "timeout_months": 12,
       "current_value": "growth_annual_pct",
+      "unit": "%",
       "goal_value": 2.0,
       "progressbar": "up",
       "on_fail": {
@@ -91,6 +93,7 @@
       },
       "timeout_months": 0,
       "current_value": "co2e_per_capita_t",
+      "unit": "t_co2e",
       "goal_value": 3.7,
       "progressbar": "down",
       "on_complete": {
@@ -106,7 +109,7 @@
       "id": "prog_the_tariff_line",
       "laws": ["carbon_border_adjustment", "fuel_duty_uplift"],
       "name": "The Tariff Line",
-      "summary": "Credibility for the trade fight, priced on the ledger: the deficit under four and a half inside eight months, with a corporate levy raised the day the programme opens. The markets read budgets before they read communiques. Offered where the four and a half is still ahead and the seven has not already arrived.",
+      "summary": "Credibility for the trade fight, priced on the ledger: the deficit under four and a half inside eight months, with corporate tax up 0.75 points the day the programme opens. The markets read budgets before they read communiques. Offered where the four and a half is still ahead and the seven has not already arrived.",
       "group": "europe",
       "activation": "player",
       "possible": [
@@ -138,6 +141,7 @@
       },
       "timeout_months": 8,
       "current_value": "deficit_pct_gdp",
+      "unit": "pct_gdp",
       "goal_value": 4.5,
       "progressbar": "down",
       "on_complete": {
@@ -184,6 +188,7 @@
       },
       "timeout_months": 10,
       "current_value": "unemployment_pct",
+      "unit": "%",
       "goal_value": 7.2,
       "progressbar": "down",
       "on_complete": {
@@ -198,7 +203,7 @@
       "id": "prog_the_border_fund",
       "laws": ["immigration_tightening", "seasonal_worker_programme"],
       "name": "The Border Fund",
-      "summary": "Cross-border infrastructure, paid for at choice and judged like every other programme -- on whether the country ends the term more persuaded than it began. The fund is the act; the confidence is the verdict.",
+      "summary": "0.3% of GDP a year more on cross-border infrastructure at choice, judged like every other programme -- on whether the country ends the term more persuaded than it began. The fund is the act; the confidence is the verdict.",
       "group": "europe",
       "activation": "player",
       "immediate": {
@@ -218,6 +223,7 @@
       },
       "timeout_months": 0,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 53.0,
       "progressbar": "up",
       "on_complete": {
@@ -260,6 +266,7 @@
       },
       "timeout_months": 0,
       "current_value": "overall_approval_pct",
+      "unit": "%",
       "goal_value": 57.0,
       "progressbar": "up",
       "weight": 3,

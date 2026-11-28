@@ -157,6 +157,7 @@ func _check_words() -> void:
 		_fail("the money's two chances are the wrong way round: '%s'" % risk)
 	_check_a_firm_card()
 	_check_a_dated_vote()
+	_check_a_meter_word_card()
 	_check_a_post_cost()
 	var row := {"person_id": _voter, "verdict": "kept"}
 	var kept := DealWords.owed_verdict(_main._loader, row)
@@ -260,6 +261,16 @@ func _check_a_dated_vote() -> void:
 	var day: String = preload("res://src/ui/date_text.gd").day_month_year(3, 12, 2026)
 	if not stake.contains(day) or not stake.contains("16"):
 		_fail("a dated vote does not say its seats and day '%s': '%s'" % [day, stake])
+
+
+## The card of a word on a meter says the person's own level, never "above 0.0".
+func _check_a_meter_word_card() -> void:
+	var object := "meter:press_freedom"
+	var card := DealWords.card(_main._loader, _ns(), {"ask": {"kind": "word", "object": object, "due_month": 24313},
+		"offer": {"kind": "silence", "months": 12}, "grant": {"ok": true, "why_not": ""}, "refuse": {}}, {}, "wants it",
+		"judge", "FRA_lariviere")
+	if not String(card["want"]).contains("more than 0.1 above its starting level"):
+		_fail("a meter word does not say the person's level: '%s'" % card["want"])
 
 
 func _check_a_post_cost() -> void:

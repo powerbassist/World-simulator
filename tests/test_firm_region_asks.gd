@@ -68,6 +68,7 @@ func _init() -> void:
 	_check_a_ministers_word_on_a_plant_is_judged_on_the_plant()
 	_check_a_chief_brings_no_money_even_when_the_draw_would()
 	_check_no_minister_can_answer_for_a_firm_or_a_region()
+	_check_a_meter_want_reads_in_words()
 	_check_grant_is_the_rescue_and_writes_no_word()
 	_check_a_bargain_won_is_the_buyer_and_writes_no_word()
 	_check_a_promise_is_not_an_approach_on_a_firm()
@@ -596,6 +597,29 @@ func _check_the_card_names_both_objects() -> void:
 		# Read in the person's own voice too ("I want ..."), so never "their".
 		if text == "" or text.contains(":") or text.contains(REGION) or text.contains(company_id) or text.begins_with("their"):
 			_fail("the card shows a raw object for %s: '%s'" % [object, text])
+
+
+## A meter want in words, at the person's own threshold: a row that carries only their id
+## reads the same, and a row with neither never prints a figure it does not have.
+func _check_a_meter_want_reads_in_words() -> void:
+	var ns = _state().player()
+	var seen := 0
+	for pid in _loader.person_by_id:
+		for want in _loader.person_by_id[pid].wants:
+			var object := String(want["object"])
+			if not object.begins_with("meter:"):
+				continue
+			seen += 1
+			var own: String = PersonCard.object_text(_loader, ns, object, want)
+			var by_id: String = PersonCard.object_text(_loader, ns, object, {"person_id": pid})
+			var bare: String = PersonCard.object_text(_loader, ns, object, {})
+			var figure := "%.1f" % absf(float(want.get("below", want.get("above", 0.0))))
+			if own != by_id or own.contains("_") or own.contains("grievance") or (figure != "0.0" and not own.contains(figure)) 					or (figure == "0.0" and own.contains("0.0")):
+				_fail("%s: %s reads '%s', by id '%s'" % [pid, object, own, by_id])
+			if bare.contains("_") or bare.contains("0"):
+				_fail("%s with no threshold prints a figure: '%s'" % [object, bare])
+	if seen == 0:
+		_fail("no meter want in the data: the check read nothing")
 
 
 # --- Fixtures ----------------------------------------------------------------------------

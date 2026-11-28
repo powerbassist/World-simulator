@@ -58,6 +58,43 @@ const STANCE_LABEL := {
 const PORTFOLIO_LABEL := Labels.PORTFOLIO
 
 
+## Each meter a want can name, in words: [the meter, at, above, below]. Press freedom and the
+## courts are a distance from where the game began (a signed stance, a deviation) and are
+## wanted ABOVE the threshold; grievance is the unrest figure, wanted below it.
+const METER_WORDS := {
+	"grievance": ["unrest"],  # i18n: msgid
+	"press_freedom": ["press freedom", "press freedom above its starting level",  # i18n: msgid
+		"press freedom more than %s above its starting level",  # i18n: msgid
+		"press freedom less than %s below its starting level"],  # i18n: msgid
+	"judicial_independence": ["judicial independence", "judicial independence above its starting level",  # i18n: msgid
+		"judicial independence more than %s above its starting level",  # i18n: msgid
+		"judicial independence less than %s below its starting level"],  # i18n: msgid
+}
+
+
+## `want` is the want itself, or any row carrying `person_id` (a request, a commitment): the
+## threshold is then that person's own. With neither, the meter is named and no figure is made up.
+static func _meter_text(loader, object: String, want: Dictionary) -> String:
+	var meter := object.substr("meter:".length())
+	var held := want
+	var person = loader.person_by_id.get(String(want.get("person_id", "")))
+	if not (held.has("above") or held.has("below")) and person != null:
+		for w in person.wants:
+			if String(w["object"]) == object:
+				held = w
+	if not METER_WORDS.has(meter):
+		return meter.replace("_", " ")
+	var words: Array = METER_WORDS[meter]
+	if meter == "grievance" and held.has("below"):
+		return Strings.t("unrest below %s%%") % Num.f(float(held["below"]), 1)
+	if words.size() == 1 or not held.has("above"):
+		return Strings.t(String(words[0]))
+	var above := float(held["above"])
+	if is_zero_approx(above):
+		return Strings.t(String(words[1]))
+	return Strings.t(String(words[2] if above > 0.0 else words[3])) % Num.f(absf(above), 1)
+
+
 static func stance_label(stance: String) -> String:
 	return String(STANCE_LABEL.get(stance, stance))
 
@@ -90,7 +127,7 @@ static func dated_lines(loader, ns, pid: String) -> PackedStringArray:
 	for row in President.commitments_with(ns, pid):
 		if String(row["kind"]) == "delegated":
 			dated.append([int(row["made_month"]), Strings.t("%s: your minister promised them %s by %s.") % [Words.when(int(row["made_month"])),
-				object_text(loader, ns, String(row["object"]), {}), Words.when_long(int(row["due_month"]))]])
+				object_text(loader, ns, String(row["object"]), row), Words.when_long(int(row["due_month"]))]])
 	for row in President.judged_commitments(ns):
 		if String(row["person_id"]) != pid or String(row["kind"]) != "delegated" or String(row["verdict"]) == "void":
 			continue
@@ -150,9 +187,7 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 		var law_id := object.substr("law:".length())
 		return Strings.law_name(Bills.by_id(loader, law_id), law_id)
 	if object.begins_with("meter:"):
-		var meter := object.substr("meter:".length())
-		var threshold := float(want.get("below", want.get("above", 0.0)))
-		return (Strings.t("%s below %s") if want.has("below") else Strings.t("%s above %s")) % [meter.replace("_", " "), Num.f(threshold, 1)]
+		return _meter_text(loader, object, want)
 	return object
 
 var _body: VBoxContainer
