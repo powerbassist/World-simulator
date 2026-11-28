@@ -22,6 +22,7 @@ const ChartDots = preload("res://src/ui/chart_dots.gd")
 const ChartRange = preload("res://src/ui/chart_range.gd")
 const ChartWaterfall = preload("res://src/ui/chart_waterfall.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
+const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 
 var _failures: Array[String] = []
 var _frame := 0
@@ -363,6 +364,19 @@ func _check_waterfall() -> void:
 	if fall.zero_rect().size != Vector2(1.0, fall.row_height() * 3):
 		_fail("the zero line is %s" % fall.zero_rect())
 	fall.free()
+	# The author's rule (2026-11-28): given the caller's step_text, a step reads with its own unit, and the longest
+	# figure the books can make fits the column beside the bar.
+	var units := ChartWaterfall.new()
+	units.setup({"label": "a", "value": -147.0}, [{"label": "b", "value": -143.6}, {"label": "c", "value": 0.023}],
+		{"label": "d", "value": -290.6}, {"step_text": EffectsStrip.sum_text})
+	if units.figure(1) != "-143.6 bn" or units.figure(2) != "+23 m":
+		_fail("the waterfall's steps read %s and %s, want their units" % [units.figure(1), units.figure(2)])
+	units.free()
+	var size := roundi(UiTheme.SIZE_SMALL * UiTheme.text_scale())
+	for longest in ["-888.8 bn", "+888 m", "+888 k"]:
+		var wide := 6.0 + font.get_string_size(longest, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		if wide > ChartWaterfall.FIGURE_W * UiTheme.text_scale():
+			_fail("'%s' needs %s px, the figure column is %s" % [longest, wide, ChartWaterfall.FIGURE_W * UiTheme.text_scale()])
 
 
 func _finish() -> void:

@@ -392,7 +392,7 @@ func _list(ns, draft, price, whole: Dictionary) -> void:
 	for i in rows.size():
 		var gain: float = price.row_balance_bn(rows[i])
 		var money: Label = _groups.get_child(i).find_child("Money_*", true, false)
-		money.text = EffectsStrip.money_text(gain)
+		money.text = EffectsStrip.sum_text(gain)
 		money.theme_type_variation = ControlStyle.STRONG  # a price is neutral with its sign (gate T4 on #443)
 	_pct.text = Strings.t("%s bn is %s %% of GDP; today %s %%.") % [Num.f(float(whole["deficit_after_bn"]), 0), Num.f(float(whole["deficit_after_pct"]), 2),
 		Num.f(float(price.now().get("deficit_pct_gdp", 0.0)), 2)]

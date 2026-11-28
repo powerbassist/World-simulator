@@ -4,11 +4,12 @@ extends RefCounted
 ## the same chart on both, so the two can never disagree. Today, the bill already before the Assembly (an
 ## amendment's first step), each drafted change a signed step, what the rows alone do not explain, the bill. It
 ## plots the BALANCE (the author, 2026-11-28): a deficit reaches left of zero, a change that widens it steps left,
-## and a step is signed as the list signs it. The two totals print their size.
+## and a step reads as the list reads it: signed, in the unit its size calls for. The two totals print their size.
 
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
 const ChartWaterfall = preload("res://src/ui/chart_waterfall.gd")
+const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Num = preload("res://src/ui/num.gd")
 
@@ -37,7 +38,8 @@ static func setup(chart: ChartWaterfall, state, loader, draft, price, whole: Dic
 	var after := -float(whole["deficit_after_bn"])
 	if absf(after - now - walked) >= RESIDUAL_BN:
 		steps.append({"label": Strings.t("Together, and what the rows alone miss"), "value": after - now - walked})
-	chart.setup(_total(Strings.t("Today"), now), steps, _total(Strings.t("With the bill"), after), {"label_w": LABEL_W, "worse_up": false})
+	chart.setup(_total(Strings.t("Today"), now), steps, _total(Strings.t("With the bill"), after),
+		{"label_w": LABEL_W, "worse_up": false, "step_text": EffectsStrip.sum_text})
 
 
 ## A total's row: where the balance stands, printed as its size (its side of the zero line says which it is).

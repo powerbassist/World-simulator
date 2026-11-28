@@ -26,16 +26,19 @@ var _label_w := LABEL_W
 var _worse_up := true
 var _total_places := 0
 var _step_places := 1
+var _step_text := Callable()
 
 
 ## `start` and `end` {label, value, figure?} (`figure` is the total's shown text, its value otherwise);
 ## `steps` [{label, value}] each a signed change. opts: label_w (at text 100),
-## worse_up (true when a rise is bad news, the default; false for a balance), total_places, step_places.
+## worse_up (true when a rise is bad news, the default; false for a balance), total_places, step_places, and
+## step_text (a signed change as the caller words it, unit included; step_places otherwise).
 func setup(start: Dictionary, steps: Array, end: Dictionary, opts := {}) -> void:
 	_label_w = float(opts.get("label_w", LABEL_W))
 	_worse_up = bool(opts.get("worse_up", true))
 	_total_places = int(opts.get("total_places", 0))
 	_step_places = int(opts.get("step_places", 1))
+	_step_text = opts.get("step_text", Callable())
 	_rows = [{"label": String(start["label"]), "from": 0.0, "to": float(start["value"]), "kind": "total", "figure": String(start.get("figure", ""))}]  # i18n: row-ok chart data, the caller's shown text
 	var at := float(start["value"])
 	for step in steps:
@@ -107,6 +110,8 @@ func figure(i: int) -> String:
 		return String(row["figure"]) if String(row["figure"]) != "" else Num.f(float(row["to"]), _total_places)  # i18n: row-ok chart data
 	# The step's own value, not to - from: a running sum's float error must not flip the last digit.
 	var delta := float(row["delta"])
+	if _step_text.is_valid():
+		return String(_step_text.call(delta))
 	if absf(delta) < 0.5 * pow(10.0, -_step_places):
 		return Num.f(0.0, _step_places)  # never "-0.0"
 	return Num.fs(delta, _step_places)

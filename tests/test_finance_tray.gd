@@ -138,13 +138,13 @@ func _check_tray() -> void:
 			continue
 		var money: Label = foot.find_child("Money_" + id.replace(":", "_"), true, false)
 		var gain: float = _panel._price.row_balance_bn(want)
-		if money == null or money.text != EffectsStrip.money_text(gain):
-			_fail("change %s's money reads '%s', priced %s" % [id, money.text if money != null else "<none>", EffectsStrip.money_text(gain)])
+		if money == null or money.text != EffectsStrip.sum_text(gain):
+			_fail("change %s's money reads '%s', priced %s" % [id, money.text if money != null else "<none>", EffectsStrip.sum_text(gain)])
 		if _remove_mark(id) == null:
 			_fail("change %s has no remove mark" % id)
 		# Its step in the waterfall: its effect on the balance, signed as the list signs it.
 		steps += 1
-		if chart.figure(steps) != Num.fs(gain, 1):
+		if chart.figure(steps) != EffectsStrip.sum_text(gain):
 			_fail("change %s's step reads %s, its gain %s" % [id, chart.figure(steps), gain])
 	# Today and the bill, the whole bill's (FinancePrice.whole), at the waterfall's two ends; a residual is one more step.
 	var whole: Dictionary = _panel._price.whole(_loader, draft, false)

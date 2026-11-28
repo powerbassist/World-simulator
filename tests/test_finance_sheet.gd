@@ -80,6 +80,7 @@ func _process(_delta: float) -> bool:
 			_check_a_tabled_programme_is_priced_in_the_whole_bill()
 			_check_the_waterfall_is_mirrored()
 			_check_a_surplus_says_surplus()
+			_check_a_small_change_reads_in_millions()
 			_check_britain_has_no_forcing()
 		5:
 			return _finish()
@@ -162,7 +163,7 @@ func _check_the_totals_are_the_footers() -> void:
 	for entry in [["health", FinanceDraft.SPENDING], ["vat", FinanceDraft.TAX]]:
 		var own := {entry[1]: {entry[0]: draft.value(entry[1], entry[0])}}
 		var row := _sheet().find_child("SheetRow_%s_%s" % [entry[1], entry[0]], true, false)
-		if row == null or not _text_of(row).contains(EffectsStrip.money_text(price.balance_bn(own))):
+		if row == null or not _text_of(row).contains(EffectsStrip.sum_text(price.balance_bn(own))):
 			_fail("the %s row does not show its own balance" % entry[0])
 
 
@@ -689,6 +690,33 @@ func _check_a_surplus_says_surplus() -> void:
 		if chart.figure(last) != size_said or (will < 0.0) != (end.position.x >= chart.zero_rect().position.x - 1.0):
 			_fail("%s: the chart ends '%s' at %s (zero %s), want %s" % [words, chart.figure(last), end, chart.zero_rect().position.x, size_said])
 		_panel.close_sheet()
+
+
+## The author's rule (2026-11-28): a change under a tenth of a billion reads in millions, never "0.0 bn": in both
+## lists of changes and on both charts.
+func _check_a_small_change_reads_in_millions() -> void:
+	_state = GameState.new_game(_loader, "FRA")
+	_panel.setup(_state, _loader)
+	_panel._dirty = true
+	_panel._process(0.0)
+	var draft = _panel.shared_draft()
+	draft.revert()
+	draft.set_value(FinanceDraft.TAX, "capital_gains", draft.live(FinanceDraft.TAX, "capital_gains") + 0.1)
+	_panel._on_moved()
+	_panel._process(0.0)
+	_open_sheet()
+	_settle()
+	var price := FinancePrice.new()
+	price.setup(_state)
+	var said := EffectsStrip.sum_text(price.row_balance_bn(draft.rows()[0]))
+	if not said.ends_with(" m"):
+		_fail("premise: a 0.1 point of capital gains moves %s, not millions" % said)
+	var rail := _panel._foot.find_child("Money_tax_rates_pct_capital_gains", true, false) as Label
+	var listed := _sheet().find_child("SheetRow_tax_rates_pct_capital_gains", true, false).find_child("Money", true, false) as Label
+	var got := [rail.text, listed.text, _panel._foot._chart.figure(1), _document_chart().figure(1)]
+	if got != [said, said, said, said]:
+		_fail("a small change reads %s on the rail's list, the document's list and the two charts, want %s" % [got, said])
+	_panel.close_sheet()
 
 
 func _check_britain_has_no_forcing() -> void:

@@ -336,7 +336,7 @@ func _change(ns, row: Dictionary, at: int) -> void:
 		(tag.get_child(0).get_child(-1) as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
 	_word(words, FinanceRows.change_figures(ns, row), UiTheme.CAPTION).size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var gain: float = _price.row_balance_bn(row)
-	var money := _word(line, EffectsStrip.money_text(gain), EffectsStrip.cell_variation(EffectsStrip.money_tone(gain)))
+	var money := _word(line, EffectsStrip.sum_text(gain), EffectsStrip.cell_variation(EffectsStrip.money_tone(gain)))
 	money.name = "Money"  # i18n: ok a node name, found by tests
 	money.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	# A LinkButton as the rail's: no stylebox padding, so it fits the row; its focus box still draws.
