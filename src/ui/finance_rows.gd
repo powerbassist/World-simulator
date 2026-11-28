@@ -261,7 +261,8 @@ static func columns(box: Control, title: String, who: String, named: bool, ctx: 
 	row.add_child(gap)
 	_cell(row, title.to_upper(), UiTheme.MICRO, NAME_WIDTH + INDENT / UiTheme.text_scale()).clip_text = false
 	_cell(row, who.to_upper(), UiTheme.MICRO, CAPTION_MIN, "who").size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cell(row, Strings.t("Rate").to_upper() if named else "", UiTheme.MICRO, PCT_WIDTH, "rate")
+	# Spending's figures are shares, so its head says of what; Revenue's "Rate" is finance_columns.gd's.
+	_cell(row, Strings.t("% of GDP").to_upper() if named else "", UiTheme.MICRO, PCT_WIDTH, "rate")
 	# Two lines: the column's name, and under it the money scale every bar of the table is drawn to.
 	var head := Strings.t("Drag").to_upper() + SCALE_LINE if named else ""
 	var bar := _cell(row, head, UiTheme.MICRO, BAR_MIN, "drag")

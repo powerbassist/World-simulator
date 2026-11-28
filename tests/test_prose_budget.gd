@@ -67,7 +67,7 @@ const PENDING := {}
 ## The right-click C (the plate retired): a firm's sheet carries the plate's two other verbs, "Call <chief>" and
 ## "Show on the map", a stated +7 on each sector tab (122 -> 129, 148 -> 155, 135 -> 142).
 const PROGRAMME_FILE_TOTAL := 300
-const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 181, "region": 250, "events": 95,
+const TOTAL_BUDGET := {"people": 250, "legislature": 450, "finances": 184, "region": 250, "events": 95,
 	"companies": 145, "sector_agriculture": 129, "sector_industry": 155, "sector_services": 142, "projects": 199,
 	"overview": 170, "register": 137, "programmes": 15, "calendar": 128}
 const TOTAL_PENDING := {
@@ -166,7 +166,9 @@ const TOTAL_PENDING := {
 ## and the path's reworded steps are the new prose there).
 ## The Books' small fixes (the author's critique of the page): the rate column's head "Rate" and the "bn" of the money
 ## scale on the DRAG head, both asked for: a stated rise 3438 -> 3440 (+2), to the parent.
-const TOTAL_SUM_CEILING := 3440
+## The parent's ruling on Design's gate of the same fixes (P1, P2): spending's head says "% of GDP" for "Rate" (+1), and
+## the one-table Revenue sub-head repeats "Rate" and the money scale (+2): a stated rise 3440 -> 3443, to the parent.
+const TOTAL_SUM_CEILING := 3443
 const TOTAL_SUM_TARGET := 3600
 
 ## V5.3 a + b step 2, band A6 (docs/design/v5.3-ab.md section 9): an opened sector

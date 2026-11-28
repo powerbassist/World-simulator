@@ -124,16 +124,14 @@ func _check_one_table(state: String) -> void:
 	for cell in _slot(spending, "who"):
 		if not cell.visible:
 			_fail("%s: a spending caption is hidden in one table" % state)
-	if _head_text(revenue, "year") != "" or _head_text(revenue, "rate") != "":
-		_fail("%s: revenue repeats the column names under spending's" % state)
-	if _head_text(spending, "rate") != Strings.t("Rate").to_upper():
-		_fail("%s: the rate column is headed '%s'" % [state, _head_text(spending, "rate")])
+	if _head_text(revenue, "year") != "" or _head_text(revenue, "balance") != "":
+		_fail("%s: revenue repeats the money columns' names under spending's" % state)
+	_check_rate_heads(state)
 	_check_fits(state)
 	_check_one_bar(state)
 	_check_axis(spending, state)
-	for head in _slot(revenue, "drag"):
-		if head.get_children().any(func(mark) -> bool: return mark.visible):
-			_fail("%s: revenue repeats the money scale under spending's" % state)
+	# Spending's head scrolls off over the taxes: the Revenue sub-head says the rate and the scale again (P2).
+	_check_axis(revenue, state)
 
 
 func _check_columns(state: String) -> void:
@@ -160,6 +158,7 @@ func _check_columns(state: String) -> void:
 	for pair in [["rate", "Rate"], ["drag", "Drag"], ["year", "A year"], ["balance", "Balance"]]:
 		if _head_text(revenue, pair[0]) != Strings.t(pair[1]).to_upper():
 			_fail("%s: revenue's head reads '%s' for %s" % [state, _head_text(revenue, pair[0]), pair[1]])
+	_check_rate_heads(state)
 	_check_fits(state)
 	_check_one_bar(state)
 	_check_axis(spending, state)
@@ -169,6 +168,16 @@ func _check_columns(state: String) -> void:
 		var wants: float = cell.get_theme_font("font").get_string_size(cell.text, HORIZONTAL_ALIGNMENT_LEFT, -1, cell.get_theme_font_size("font_size")).x
 		if wants > cell.size.x + 0.5:
 			_fail("%s: '%s' is cut (%.0f of %.0f px)" % [state, cell.text, wants, cell.size.x])
+
+
+## Spending's figures are shares, not rates (P1): its head says so, Revenue's says "Rate", in both arrangements.
+func _check_rate_heads(state: String) -> void:
+	for pair in [[_panel._spending_box, "% of GDP"], [_panel._revenue_box, "Rate"]]:
+		var said := _head_text(pair[0], "rate")
+		var cell: Label = _slot(pair[0], "rate")[0]
+		var wants: float = cell.get_theme_font("font").get_string_size(cell.text, HORIZONTAL_ALIGNMENT_LEFT, -1, cell.get_theme_font_size("font_size")).x
+		if said != Strings.t(pair[1]).to_upper() or wants > cell.size.x + 0.5:
+			_fail("%s: the figures' column is headed '%s' (%.0f of %.0f px), wanted '%s'" % [state, said, wants, cell.size.x, pair[1]])
 
 
 ## Nothing is wider than the sheet it sits on.
@@ -224,7 +233,7 @@ func _check_one_bar(state: String) -> void:
 
 
 ## The DRAG head carries the table's one money scale: 0, half and the whole of it, each where every bar under it draws
-## that sum, under the word and not on one another.
+## that sum, under the word (level with "Rate" where the head carries no word) and not on one another.
 func _check_axis(box: Control, state: String) -> void:
 	var scale: float = _panel._money_scale()
 	var head: Label = _slot(box, "drag")[0]
@@ -248,8 +257,12 @@ func _check_axis(box: Control, state: String) -> void:
 			break
 	if from + inks[0] + 4.0 > middle - inks[1] * 0.5 or middle + inks[1] * 0.5 + 4.0 > to - inks[2]:
 		_fail("%s: the scale's figures meet (%s px wide on %.0f)" % [state, inks, to - from])
+	var top: float = head.global_position.y + head.get_line_height(0)
+	if head.text == "":
+		top = (_slot(box, "rate")[0] as Control).global_position.y
 	for mark in marks:
-		if mark.global_position.y < head.global_position.y + head.get_line_height(0) - 0.5 or mark.get_global_rect().end.y > head.get_global_rect().end.y + 0.5:
+		var off: bool = absf(mark.global_position.y - top) > 1.0 if head.text == "" else mark.global_position.y < top - 0.5
+		if off or mark.get_global_rect().end.y > head.get_global_rect().end.y + 1.0:
 			_fail("%s: '%s' is on the column's name or out of its head: %s in %s" % [state, mark.text, mark.get_global_rect(), head.get_global_rect()])
 
 
