@@ -363,11 +363,26 @@ func _check_each_lever_pays_its_spend() -> void:
 			_fail("a promise due at month %d (now %d) was accepted" % [bad, now])
 	if _snapshot(ns, pid) != before:
 		_fail("refused promises wrote the registers")
-	# A promise refused binds nothing (#323): one row on a yes, none on a no.
-	var won := bool(Levers.attempt(state, ns, _loader, c["session"], "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS}).get("success", false))
-	var rows: Array[Dictionary] = President.commitments_with(ns, pid)
-	if rows.size() != (1 if won else 0) or (won and (rows[0]["kind"] != "promise" or int(rows[0]["due_month"]) != now + LK.PROMISE_MIN_MONTHS)):
-		_fail("a promise (won %s) left %s" % [won, rows])
+	# A promise refused binds nothing (#323): one row on a yes, none on a no. The roll is seeded, so
+	# fresh fixtures under other draw seeds walk both branches, and the test fails if one is never met.
+	var seen := {}
+	for s in range(8):
+		if seen.size() == 2:
+			break
+		if s > 0:
+			c = _booked()
+			state = c["state"]
+			ns = c["ns"]
+			pid = String(c["session"]["person_id"])
+			now = int(state.year) * 12 + int(state.month)
+		ns.draw_seed = s
+		var won := bool(Levers.attempt(state, ns, _loader, c["session"], "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS}).get("success", false))
+		seen[won] = true
+		var rows: Array[Dictionary] = President.commitments_with(ns, pid)
+		if rows.size() != (1 if won else 0) or (won and (rows[0]["kind"] != "promise" or int(rows[0]["due_month"]) != now + LK.PROMISE_MIN_MONTHS)):
+			_fail("a promise (won %s) left %s" % [won, rows])
+	if seen.size() != 2:
+		_fail("eight draw seeds never met both a yes and a no on the promise: %s" % [seen])
 	c = _booked()
 	state = c["state"]
 	ns = c["ns"]

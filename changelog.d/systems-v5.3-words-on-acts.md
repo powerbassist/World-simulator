@@ -1,2 +1,3 @@
-Changed: You give your word in an audience only on something you can do yourself: a bill, a post, a regional fund, a measure or a plant. Someone who wants a programme dropped or a figure moved can still be talked round, but there is no promise to make and no price for sending them away.
+Changed: You give your word in an audience only on something you can do yourself: a bill, a post, a regional fund, a measure or a plant. Someone who wants a programme dropped or a figure moved can still be talked round, but there is no promise to make, and ending the audience with them costs nothing; refusing to receive them, or letting the request lapse, still does.
+Changed: Such an audience, and one you summoned yourself, opens straight on the conversation topics: no deal to strike, and no money is offered.
 Changed: A promise already given in a saved game on a programme or a figure is still judged as it was given.

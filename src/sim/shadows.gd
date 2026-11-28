@@ -36,9 +36,11 @@ const President = preload("res://src/sim/president.gd")
 
 
 ## The scene's open offer: the request's, until the president answers it. {} for
-## none -- a request from before V5.2c carries no offer key and reads as none.
+## none -- a request from before V5.2c carries no offer key and reads as none. A talk audience
+## (AK.is_talk) has none either: the money buys the word, and there is no word to give (#463 T2).
+## Read here, not at the draw: a programme's want becomes a bill's ask only once its law is open.
 static func offer(ns, session: Dictionary) -> Dictionary:
-	if session.is_empty() or bool(session.get("offer_answered", false)):
+	if session.is_empty() or bool(session.get("offer_answered", false)) or AK.is_talk(session):
 		return {}
 	return Audiences.request(ns, String(session.get("request_id", ""))).get("offer", {})
 

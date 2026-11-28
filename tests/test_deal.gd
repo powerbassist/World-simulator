@@ -158,7 +158,8 @@ func _check_an_entry_with_no_law_is_talk() -> void:
 	var ask: Dictionary = Deal.ask_of(f["state"], ns, _loader, Audiences.request(ns, f["id"]))
 	# Call 2 B (the author, 2026-11-28): a programme's place on the register is not the
 	# president's to do, so there is no word to give on it.
-	if String(ask.get("kind", "")) != "word" or String(ask.get("object", "")) != String(f["object"]) 			or not bool(ask.get("talk", false)) or String(ask.get("why_not", "")) != AK.TALK_ONLY:
+	if String(ask.get("kind", "")) != "word" or String(ask.get("object", "")) != String(f["object"]) \
+			or not bool(ask.get("talk", false)) or String(ask.get("why_not", "")) != AK.TALK_ONLY:
 		_fail("an entry with no law is talk, its ask closed with the reason, got %s" % [ask])
 	var answers: Dictionary = Deal.answers(f["state"], ns, _loader, f["session"])
 	if bool(answers["grant"]["ok"]) or not (answers["offer"] as Dictionary).is_empty() or not (answers["refuse"] as Dictionary).is_empty():
@@ -167,7 +168,9 @@ func _check_an_entry_with_no_law_is_talk() -> void:
 		if bool(row["offered"]) or String(row["why_not"]) != AK.TALK_ONLY:
 			_fail("talk offers no approach, got %s" % [row])
 	var before: int = ns.commitments.size()
-	if bool(Deal.grant(f["state"], ns, _loader, f["session"]).get("ok", true)) 			or bool(Deal.bargain(f["state"], ns, _loader, f["session"], "argue").get("ok", true)) 			or bool(Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", {"due_month": _now(f) + 6}).get("ok", true)):
+	if bool(Deal.grant(f["state"], ns, _loader, f["session"]).get("ok", true)) \
+			or bool(Deal.bargain(f["state"], ns, _loader, f["session"], "argue").get("ok", true)) \
+			or bool(Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", {"due_month": _now(f) + 6}).get("ok", true)):
 		_fail("a talk audience took a Grant or an approach")
 	if ns.commitments.size() != before:
 		_fail("a talk audience wrote a word: %s" % [ns.commitments])

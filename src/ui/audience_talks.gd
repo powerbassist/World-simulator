@@ -24,6 +24,7 @@ const HoldReason = preload("res://src/ui/hold_reason.gd")
 const Capital = preload("res://src/core/capital.gd")
 const DialogueLines = preload("res://src/ui/dialogue_lines.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
+const AK = preload("res://src/sim/audience_constants.gd")
 const AudienceView = preload("res://src/ui/audience_view.gd")
 const AudienceWords = preload("res://src/ui/audience_words.gd")
 const Feelings = preload("res://src/ui/feelings.gd")
@@ -214,6 +215,7 @@ static func end(main, game: Dictionary) -> void:
 	# c1c rule 1: an audience settled as declined is a crossing; read before the close
 	# settles the request, so the close can say why the price was a broken word.
 	var broken := Audiences.decline_price(main._state.player(), main._loader, String(session.get("request_id", ""))).has("broken_word")
+	var talk := AK.is_talk(session)
 	var r := Levers.close(main._state, main._state.player(), main._loader, session)
 	# Good news only for an outcome worded as one: anything else -- an outcome the sim leaves
 	# empty included -- is said as the refusal it is (Words.outcome). The price it cost is the
@@ -221,7 +223,12 @@ static func end(main, game: Dictionary) -> void:
 	var text := Words.outcome(String(r["outcome"]))
 	if String(r["outcome"]) == "declined" and broken:
 		text += " " + Strings.t("They held something on you. Refusing them broke your word.")
-	game["scene"].show_close(String(r["outcome"]), text, ResultTone.GOOD if String(r["outcome"]) in ["settled", "promised"] else ResultTone.BAD)
+	var tone := ResultTone.GOOD if String(r["outcome"]) in ["settled", "promised"] else ResultTone.BAD
+	if talk:  # settled unpriced, but nothing was served: said as it is, in no tone (#463 T3)
+		text = Strings.t("The audience ends. You summoned them, and nothing was asked.") if AK.is_summons(session) \
+			else Strings.t("The audience ends. Nothing was promised: what they want is still unanswered.")
+		tone = ""
+	game["scene"].show_close(String(r["outcome"]), text, tone)
 	main._windows.mark_all_dirty()
 
 

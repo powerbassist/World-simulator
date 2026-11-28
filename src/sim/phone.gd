@@ -68,7 +68,7 @@ static func options(state, ns, loader, person_id: String) -> Dictionary:
 		var row := Levers.lever_row(ns, person, lever, p, why_not, float(c["knowledge"]), _now(state))
 		if lever == "bargain" and not request.is_empty() and not WantTerms.is_act(String(request["object"])):
 			for currency in row["currencies"]:  # call 2 B: a vote trade is an IOU, a word, so none on talk
-				if String(currency["currency"]) == K.CURRENCY_VOTE_TRADE:
+				if String(currency["currency"]) == K.CURRENCY_VOTE_TRADE and bool(currency["offered"]):  # a reason already given stands
 					currency["offered"] = false
 					currency["why_not"] = AK.TALK_ONLY
 		(out["levers"] as Array).append(row)

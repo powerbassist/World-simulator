@@ -21,6 +21,7 @@ const TalkMenu = preload("res://src/ui/talk_menu.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const AWords = preload("res://src/ui/audience_words.gd")
 const Labels = preload("res://src/ui/labels.gd")
+const AK = preload("res://src/sim/audience_constants.gd")
 
 
 static func view_of(main, game: Dictionary) -> Dictionary:
@@ -33,7 +34,10 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	var kind := String(person.kind) if person != null else ""
 	var feel := Feelings.of(ns, pid)
 	var answers := Deal.answers(state, ns, loader, session)
-	var struck := session.has("struck") or String(session.get("won", "")) != ""
+	# A talk audience (a summons, or a want no act answers) has no deal to strike: it opens where a
+	# struck one goes, on the topics, with no cards and no money (#463 T1).
+	var talk := AK.is_talk(session)
+	var struck := talk or session.has("struck") or String(session.get("won", "")) != ""
 	var wants := _want_words(loader, ns, person, String(session["object"]))
 	var card := DealWords.card(loader, ns, answers, feel, wants, kind, pid)
 	# "money" is ALWAYS in the view: the scene merges a result's view over its own, and a key left
@@ -41,12 +45,14 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	var view := {"voice": AudienceVoice.lines(loader, pid), "choices": {"feel": feel}, "struck": struck, "money": {}, "notice_lines": game.get("notice", []),
 		"attempts_left": int(session["attempts_left"]), "talk_blocked": _blocked(state, ns, loader, session)}
 	if struck:
-		view["struck_lines"] = AWords.struck_lines(answers, card)
+		view["struck_lines"] = AWords.talk_lines(loader.person_name(pid), wants, AK.is_summons(session)) if talk \
+			else AWords.struck_lines(answers, card)
 		if game.has("money_taken"):
 			view["struck_lines"] += AWords.taken_lines(game["money_taken"])
 		view["affair"] = _affair(state, ns, loader, session, pid)
-		# Ranked once: the flow holds the first ranking, so a later redraw does not read it again.
-		if not game["scene"].flow.ranked:
+		# Ranked once: the flow holds the first ranking, so a later redraw does not read it again. A talk
+		# audience is read before the scene opens (visiting ""), while the flow is still the last one's.
+		if not game["scene"].flow.ranked or String(game["scene"].visiting) == "":
 			view["talk"] = _talk(state, ns, loader, session)
 		return view
 	# An offer of money not yet answered holds the question (Deal.MONEY_FIRST is the sim's own rule):
