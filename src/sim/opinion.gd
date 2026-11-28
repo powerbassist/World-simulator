@@ -491,7 +491,7 @@ static func top_issues(ns, count: int) -> Array:
 ## and it is exact only where target_of's inputs are this month's (after the Opinion step).
 static func causes(ns) -> Dictionary:
 	var sat := issue_satisfaction(ns)
-	var rows := {"neutral": K.APPROVAL_NEUTRAL, "time_in_office": 0.0, "competence": 0.0, "programme": 0.0, "direct": 0.0, "unrest": 0.0, "clamp": 0.0}
+	var rows := {"neutral": 0.0, "time_in_office": 0.0, "competence": 0.0, "programme": 0.0, "direct": 0.0, "unrest": 0.0, "clamp": 0.0}
 	var target := 0.0
 	for bloc in K.BLOC_KEYS:
 		var size := float(K.BLOC_SIZE[bloc])
@@ -506,6 +506,7 @@ static func causes(ns) -> Dictionary:
 		rows["direct"] += size * K.APPROVAL_SPAN * offset
 		rows["unrest"] -= size * K.APPROVAL_SPAN * float(ns.unrest_opinion_load)
 		rows["clamp"] += size * K.APPROVAL_SPAN * (clampf(raw, -1.0, 1.0) - raw)
+		rows["neutral"] += size * K.APPROVAL_NEUTRAL  # weighted like every row, so the sum holds whatever the sizes add to
 		rows["time_in_office"] += size * K.time_in_office_offset(int(ns.months_in_term))
 		rows["competence"] += size * competence_credit(ns)
 		rows["programme"] += size * programme_credit(ns)
