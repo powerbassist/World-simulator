@@ -24,6 +24,8 @@ const Labels = preload("res://src/ui/labels.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const Num = preload("res://src/ui/num.gd")
+const DateText = preload("res://src/ui/date_text.gd")
+const Tones = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -71,6 +73,7 @@ func _process(_delta: float) -> bool:
 			_check_withdraw_only_while_a_bill_is_at_vote()
 			_check_an_emptied_draft_puts_the_sheet_away()
 			_check_a_refusal_downs_table_and_the_force_box()
+			_check_a_queue_refusal_leads_in_red()
 			_check_an_amendment_prices_the_whole_bill()
 			_check_a_tabled_programme_is_priced_in_the_whole_bill()
 			_check_britain_has_no_forcing()
@@ -355,6 +358,42 @@ func _check_a_refusal_downs_table_and_the_force_box() -> void:
 	_state.player().tabled_bill = {}
 	_panel.shared_draft().revert()
 	_panel._sheet.hide()
+
+
+## R8, R9 on #464 (Design): a queueable draft says the held slot in red, then what the press would do, plain; one of
+## tabling's checks refusing the queue too is said first, in red.
+func _check_a_queue_refusal_leads_in_red() -> void:
+	var ns = _state.player()
+	ns.tabled_bill = {"law_id": "workplace_safety_act", "vote_year": _state.year, "vote_month": _state.month, "vote_day": 28}
+	ns.bill_queue = []
+	_draft_three()
+	_panel._process(0.0)
+	_open_sheet()
+	_panel._sheet._stamp = ""
+	_settle()
+	var lands := BillVerbs.division(_state, 0)
+	var note := Strings.t("If queued, it divides on %s.") % DateText.day_month(int(lands["day"]), int(lands["month"]))
+	var slot := Strings.t("Another bill holds this month's slot.")
+	var said := _lines([slot, note])
+	if said.size() != 2 or said[0] != [slot, Tones.BAD_TEXT] or said[1][0] != note or said[1][1] == Tones.BAD_TEXT:
+		_fail("a queueable draft's sheet says %s, want the slot in red, then the queue note plain" % [said])
+	_panel.shared_draft().set_value(FinanceDraft.TAX, "vat", float(ns.tax_library["vat"]["rate_range_pct"][1]) + 1.0)
+	_panel._on_moved()
+	_panel._sheet._stamp = ""
+	_settle()
+	var past := Strings.t("Outside the tax's range.")
+	said = _lines([slot, past])
+	if said != [[past, Tones.BAD_TEXT], [slot, Tones.BAD_TEXT]]:
+		_fail("a rate past its range: the sheet says %s, want the range then the slot, both red" % [said])
+	ns.tabled_bill = {}
+	_panel.shared_draft().revert()
+	_panel._sheet.hide()
+
+
+## The sheet's lines among `texts`, in its order: [text, variation].
+func _lines(texts: Array) -> Array:
+	return _sheet().find_children("*", "Label", true, false).filter(func(l) -> bool: return l.text in texts) \
+		.map(func(l) -> Array: return [l.text, String(l.theme_type_variation)])
 
 
 ## The sheet's visible words on the picture's draft, for the PR's prose delta (the prose budget counts a tab at rest).

@@ -361,7 +361,7 @@ func refresh(state, loader, draft, price) -> void:
 		_verdict.visible = true
 	_strip.say(_title.text, Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
 		Strings.t("deficit %s → %s bn a year") % [Num.f(float(whole["deficit_now_bn"]), 0), Num.f(float(whole["deficit_after_bn"]), 0)],
-		verdict, refusal == "" and bool(vote.get("passed", false)), refusal != "" or not bool(vote.get("passed", false)))
+		verdict, refusal == "" and bool(vote.get("passed", false)), refusal != "" or not bool(vote.get("passed", false)), can_queue)
 
 
 ## The title and the date tag: this month's bill, or the month a queued one (`lands`: {month, day}) divides in.

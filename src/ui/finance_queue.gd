@@ -21,7 +21,8 @@ static func at(ns) -> int:
 
 
 ## The verb when FinanceBill.refusal answers `flag`: {} unless another bill holds the slot, else {enabled, text (""
-## keeps the host's own label), note (said after the refusal)} and, when it can be pressed, {month, day} it divides.
+## keeps the host's own label), note (said after the refusal, before it when `cause`)} and, when it can be pressed,
+## {month, day} it divides.
 static func verb(state, loader, flag: String, bill: Dictionary, force := false) -> Dictionary:
 	if flag != "already_tabled":
 		return {}
@@ -37,7 +38,7 @@ static func verb(state, loader, flag: String, bill: Dictionary, force := false) 
 		# The register's own reason when it gave one, as the register's sheet says it; else the flag's words.
 		var own := String(why.get("reason", ""))
 		var flags := why.keys().filter(func(key) -> bool: return not key in ["tabled", "refused", "reason"])
-		return {"enabled": false, "text": "",
+		return {"enabled": false, "text": "", "cause": true,
 			"note": Strings.t(own) if own != "" else FinanceRefusal.reason(String(flags[0]))}  # i18n: row-ok the sim's reason, its English the msgid
 	var i: int = ns.bill_queue.size()
 	if i >= BillQueue.SIZE:
@@ -48,9 +49,13 @@ static func verb(state, loader, flag: String, bill: Dictionary, force := false) 
 		"month": int(lands["month"]), "day": int(lands["day"])}
 
 
-## `reason` and the verb's note as one line, in the sheet's order.
+## `reason` and the verb's note as one line, in the sheet's order. A `cause` is one of tabling's checks, which waiting
+## a month does not lift: it is said first, and the folded bar shows only the first words.
 static func said(queue: Dictionary, reason: String) -> String:
-	return " ".join([reason, String(queue.get("note", ""))]).strip_edges()
+	var parts := [reason, String(queue.get("note", ""))]
+	if queue.has("cause"):
+		parts.reverse()
+	return " ".join(parts).strip_edges()
 
 
 ## The finance bill waiting in the queue, said on the bar with no draft: {month, day, text}, {} when none is queued.

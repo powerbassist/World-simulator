@@ -30,6 +30,7 @@ const Sectors = preload("res://src/sim/sectors.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const FinanceMoves = preload("res://src/ui/finance_moves.gd")
 const FinanceQueue = preload("res://src/ui/finance_queue.gd")
+const Tones = preload("res://src/ui/ui_theme.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -360,8 +361,9 @@ func _check_a_held_slot_queues_the_budget() -> void:
 		_fail("held slot: the bar does not say, before the press, when it would divide: '%s'" % _panel._foot._text.text)
 	if not _panel._foot._title.text.contains(DateText.month_long(int(day["month"]))):
 		_fail("held slot: the bar's title is not the month the bill lands in: '%s'" % _panel._foot._title.text)
-	if _panel._foot._strip._verdict.theme_type_variation != preload("res://src/ui/ui_theme.gd").BAD_SMALL:
-		_fail("held slot: the folded bar's verdict lost its warning tone")
+	# R8 on #464 (Design): amber while the verb can still queue, red only under a greyed one.
+	if _panel._foot._strip._verdict.theme_type_variation != Tones.WARN_TEXT:
+		_fail("held slot: the folded bar's verdict beside a live queue verb is not amber: %s" % _panel._foot._strip._verdict.theme_type_variation)
 	var heard := []
 	_panel.committed.connect(func(_before: Dictionary, tabling: Dictionary) -> void: heard.append(tabling), CONNECT_ONE_SHOT)
 	table.pressed.emit()
@@ -403,6 +405,8 @@ func _check_a_held_slot_queues_the_budget() -> void:
 	table = _redraft()
 	if not table.disabled or not _panel._foot._text.text.contains(Strings.t("The queue holds three bills. Take one out first.")):
 		_fail("full queue: the verb is live or the reason is missing: '%s'" % _panel._foot._text.text)
+	if _panel._foot._strip._verdict.theme_type_variation != Tones.BAD_SMALL:
+		_fail("full queue: the folded bar's verdict under a greyed verb is not red: %s" % _panel._foot._strip._verdict.theme_type_variation)
 	ns.tabled_bill = {}
 	ns.bill_queue = []
 	_panel._draft.revert()
@@ -425,9 +429,12 @@ func _check_a_held_slot_refuses_what_the_slot_would_drop() -> void:
 	_panel._dirty = true
 	_panel._process(0.0)
 	var table: Button = _panel._foot.find_child("Table", true, false)
-	var why := Strings.t("Another bill holds this month's slot.") + " " + Strings.t("Outside the tax's range.")
+	# R9: the check that greys the verb leads; waiting a month does not lift it.
+	var why := Strings.t("Outside the tax's range.") + " " + Strings.t("Another bill holds this month's slot.")
 	if not table.disabled or not _panel._foot._text.text.begins_with(why):
 		_fail("a rate past its range behind a held slot: the verb reads '%s' (disabled %s), '%s'" % [table.text, table.disabled, _panel._foot._text.text])
+	if _panel._foot._strip._verdict.theme_type_variation != Tones.BAD_SMALL:
+		_fail("a rate past its range: the folded bar's verdict under a greyed verb is not red")
 	FinanceMoves.table(_state, _loader, _panel._draft, false)
 	if not ns.bill_queue.is_empty():
 		_fail("a rate past its range was queued: %s" % [ns.bill_queue])

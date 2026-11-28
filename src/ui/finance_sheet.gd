@@ -128,9 +128,12 @@ func _fill(forced: bool) -> void:
 	var refusal := String(_read["refusal"])
 	var queue: Dictionary = FinanceQueue.verb(_state, _loader, refusal, _draft.bill())
 	if refusal != "":
-		PanelKit.plain_line(_decision, FinanceRefusal.reason(refusal), PanelKit.Tone.BAD)
+		var held := PanelKit.plain_line(_decision, FinanceRefusal.reason(refusal), PanelKit.Tone.BAD)
 		if queue.has("note"):
-			PanelKit.plain_line(_decision, String(queue["note"]), PanelKit.Tone.PLAIN)
+			var cause := queue.has("cause")
+			var note := PanelKit.plain_line(_decision, String(queue["note"]), PanelKit.Tone.BAD if cause else PanelKit.Tone.PLAIN)
+			if cause:
+				_decision.move_child(note, held.get_index())
 	else:
 		_assembly(_state.player(), _read["vote"], forced)
 	_verbs(_tabled, refusal, forced, queue)
