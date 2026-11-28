@@ -546,6 +546,7 @@ func _check_the_distance_words() -> void:
 		["part of the way up", up, 50.0, 51.0, done.call(50.0, 53.0, 1.0, 3.0)],
 		["the wrong way, up", up, 50.0, 49.0, done.call(50.0, 53.0, 0.0, 3.0) + ", now %s the wrong way" % f.call(1.0)],
 		["met at the start", down, 6.8, 7.1, "now %s · goal %s" % [f.call(7.1), f.call(7.0)]],
+		["met within a rounding", down, 7.003, 7.003, "now %s · goal %s" % [f.call(7.0), f.call(7.0)]],
 		["no start kept", down, NAN, 7.4, "now %s · goal %s" % [f.call(7.4), f.call(7.0)]],
 		["terms are counted whole", terms_count, 0.0, 0.0, "0 to 1: 0 of 1 done"],
 	]

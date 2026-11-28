@@ -307,7 +307,7 @@ func refresh(state, loader, draft, price) -> void:
 		_table.text = Strings.t("Apply the moves")
 		_table.disabled = false
 		_text.text = Strings.tn("%d share move takes effect now, with no vote.", "%d share moves take effect now, with no vote.", moves) % moves + \
-			("\n" + before_vote if tabled != null else "")
+			("\n" + before_vote if before_vote != "" else "")
 		_strip.say(_title.text, _text.text.replace("\n", " "), "", false, false)
 		return
 	if not drafted:
@@ -317,7 +317,7 @@ func refresh(state, loader, draft, price) -> void:
 	var read: Dictionary = FinanceRead.draft(state, loader, draft.bill())
 	var refusal := String(read["refusal"])
 	# G2: another bill holds the slot, so the verb queues the draft and the bar is dated by the month it lands in.
-	var queue: Dictionary = FinanceQueue.verb(state, refusal)
+	var queue: Dictionary = FinanceQueue.verb(state, refusal, draft.bill())
 	var can_queue := bool(queue.get("enabled", false))
 	vote_on = _head_for(state, queue, vote_on)
 	# The same pricing as the sheet (FinancePrice.whole): the bill the vote decides. On an amendment the money is the

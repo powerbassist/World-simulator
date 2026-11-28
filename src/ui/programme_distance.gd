@@ -27,11 +27,11 @@ static func words(terms: Dictionary, start: float, now: float) -> String:
 	var way := -1.0 if String(terms["progressbar"]) == ProgrammeK.PROGRESS_DIRECTIONS[1] else 1.0
 	var places := 0 if String(terms.get("unit", "")) == "terms" else 2
 	var span := (goal - start) * way
-	if is_nan(start) or span <= 0.0:
+	var half := 0.5 * pow(10.0, -places)  # under half the last printed digit nothing shows
+	if is_nan(start) or span < half:
 		return Strings.t("now %s · goal %s") % [Num.f(now, places), Num.f(goal, places)]
 	var moved := (now - start) * way
 	var said := [Num.f(start, places), Num.f(goal, places), Num.f(absf(clampf(moved, 0.0, span)), places), Num.f(span, places)]
-	# Under half the last printed digit there is no wrong way to say.
-	if -moved < 0.5 * pow(10.0, -places):
+	if -moved < half:
 		return Strings.t("%s to %s: %s of %s done") % said
 	return Strings.t("%s to %s: %s of %s done, now %s the wrong way") % (said + [Num.f(-moved, places)])

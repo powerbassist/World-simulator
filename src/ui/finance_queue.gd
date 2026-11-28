@@ -7,6 +7,8 @@ extends RefCounted
 const BillQueue = preload("res://src/sim/bill_queue.gd")
 const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 
@@ -20,12 +22,15 @@ static func at(ns) -> int:
 
 ## The verb when FinanceBill.refusal answers `flag`: {} unless another bill holds the slot, else {enabled, text (""
 ## keeps the host's own label), note (said after the refusal)} and, when it can be pressed, {month, day} it divides.
-static func verb(state, flag: String) -> Dictionary:
+static func verb(state, flag: String, bill := {}) -> Dictionary:
 	if flag != "already_tabled":
 		return {}
 	var ns = state.player()
 	if at(ns) >= 0:
 		return {"enabled": false, "text": "", "note": Strings.t("A budget text is already queued.")}
+	# A queued bill is tabled in a later month, outside the autumn one: its creation or abolition would be dropped.
+	if not (bill.get(FinanceBill.CREATE, {}) as Dictionary).is_empty() or not (bill.get(FinanceBill.ABOLISH, []) as Array).is_empty():
+		return {"enabled": false, "text": "", "note": FinanceRefusal.reason("autumn")}
 	var i: int = ns.bill_queue.size()
 	if i >= BillQueue.SIZE:
 		return {"enabled": false, "text": Strings.t("The queue is full"), "note": Strings.t("The queue holds three bills. Take one out first.")}

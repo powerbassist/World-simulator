@@ -26,6 +26,7 @@ const LedgerBox = preload("res://src/ui/ledger_box.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const BillVerbs = preload("res://src/ui/bill_verbs.gd")
+const Sectors = preload("res://src/sim/sectors.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
 var _failures: Array[String] = []
@@ -367,6 +368,20 @@ func _check_a_held_slot_queues_the_budget() -> void:
 	_panel._process(0.0)
 	if not _panel._foot._text.text.contains(when) or not (_panel._foot.find_child("OpenBill", true, false) as Button).visible:
 		_fail("queued: the empty bar does not say when the queued budget divides: '%s'" % _panel._foot._text.text)
+	# Pass 1: share moves alone beside a queued budget keep its sentence under the queued month's date.
+	var sectors: Array = Sectors.shares(ns, _loader, "health").keys()
+	_panel._draft.add_move("health", String(sectors[0]), String(sectors[1]), 0.01)
+	_panel._foot._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+	if _panel._foot._table.text != Strings.t("Apply the moves"):
+		_fail("premise: the bar is not on the moves-only verb: '%s'" % _panel._foot._table.text)
+	if not _panel._foot._text.text.contains(when):
+		_fail("queued, moves drafted: the bar dropped the queued budget's sentence: '%s'" % _panel._foot._text.text)
+	_panel._draft.revert()
+	_panel._foot._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
 	var gone := []
 	_panel.go_requested.connect(func(id: String) -> void: gone.append(id), CONNECT_ONE_SHOT)
 	(_panel._foot.find_child("OpenBill", true, false) as Button).pressed.emit()

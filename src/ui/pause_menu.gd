@@ -32,6 +32,7 @@ var _saved := 0
 var _warning: Label
 var _save: Button
 var _asked_at := 0
+var _asking: Button  # the way out whose question is up, null when none
 var _ways_out := {}  # button -> its own words, while the question may replace them
 
 
@@ -111,10 +112,11 @@ func _add_way_out(column: VBoxContainer, text: String, anyway: String, leave: Si
 	var button := _add_entry(column, text)
 	_ways_out[button] = text
 	button.pressed.connect(func() -> void:
-		if button.text == anyway and Time.get_ticks_msec() - _asked_at < ANSWER_AFTER_MSEC:
+		if _asking == button and Time.get_ticks_msec() - _asked_at < ANSWER_AFTER_MSEC:
 			return
-		if button.text != anyway and changed():
+		if _asking != button and changed():
 			_withdraw_the_question()
+			_asking = button
 			button.text = anyway
 			_warning.show()
 			_asked_at = Time.get_ticks_msec()
@@ -124,6 +126,7 @@ func _add_way_out(column: VBoxContainer, text: String, anyway: String, leave: Si
 
 
 func _withdraw_the_question() -> void:
+	_asking = null
 	for button in _ways_out:
 		(button as Button).text = _ways_out[button]
 	_warning.hide()

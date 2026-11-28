@@ -126,7 +126,7 @@ func _fill(forced: bool) -> void:
 			box.remove_child(child)
 			child.queue_free()
 	var refusal := String(_read["refusal"])
-	var queue: Dictionary = FinanceQueue.verb(_state, refusal)
+	var queue: Dictionary = FinanceQueue.verb(_state, refusal, _draft.bill())
 	if refusal != "":
 		PanelKit.plain_line(_decision, FinanceRefusal.reason(refusal), PanelKit.Tone.BAD)
 		if queue.has("note"):
@@ -140,7 +140,7 @@ func _head(ns, tabled: bool) -> void:
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 12)
 	# G2: a draft the footer would queue is dated by the month it lands in.
-	var queue: Dictionary = FinanceQueue.verb(_state, String(_read["refusal"]))
+	var queue: Dictionary = FinanceQueue.verb(_state, String(_read["refusal"]), _draft.bill())
 	var title := PanelKit.plain_line(line, Strings.t("Finance bill · %s") % DateText.month_long(int(queue.get("month", _state.month))), PanelKit.Tone.PLAIN)
 	title.theme_type_variation = UiTheme.MICRO
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
