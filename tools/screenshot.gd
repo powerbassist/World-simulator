@@ -149,6 +149,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step refused
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step talk
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step answered
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step talk-only   (a want no act answers: the topics, no cards)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --open people
@@ -2849,7 +2850,7 @@ func _stage_requests() -> void:
 		people.sort_custom(func(a, b) -> bool: return Sh.spark(ns, String(a.id)) and not Sh.spark(ns, String(b.id)))
 	for person in people:
 		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
-			Audiences._arrive(ns, person, person.wants[0], now, [])
+			Audiences._arrive(ns, person, _staged_want(person), now, [])
 			asked += 1
 			if _broken_word:
 				ns.exposure_evidence.append({"kind": "favour", "person_id": String(person.id), "size": 1.0,
@@ -2907,6 +2908,17 @@ func _stage_requests() -> void:
 			_main._clock.month = int(date["month"])
 			_main._on_day_advanced(int(date["year"]), int(date["month"]), int(date["day"]))
 			break
+
+
+## The want a staged request arrives on. Call 2 B (#463): a word only on an act, so every step that
+## shows the cards or the money stages the person's first act want; talk-only stages a programme's.
+func _staged_want(person) -> Dictionary:
+	if _audience_step == "talk-only":
+		return {"object": "programme:prog_jobs_first", "stance": "oppose"}
+	for want in person.wants:
+		if load("res://src/sim/want_terms.gd").is_act(String(want["object"])):
+			return want
+	return person.wants[0]
 
 
 func _stage_audience_step() -> void:
