@@ -629,6 +629,12 @@ func _check_a_meter_want_reads_in_words() -> void:
 		var read: String = PersonCard.object_text(_loader, ns, "meter:press_freedom", {"above": near})
 		if read != level:
 			_fail("a distance of %s reads '%s', not '%s'" % [near, read, level])
+	# Under the start is a floor to hold: "less than 0.1 below" read as asking for the drop.
+	for meter in ["press_freedom", "judicial_independence"]:
+		var under: String = PersonCard.object_text(_loader, ns, "meter:%s" % meter, {"above": -0.1})
+		var floor_words := "a floor 0.1 under the starting level of %s" % meter.replace("_", " ")
+		if under != floor_words:
+			_fail("a distance under the start reads '%s', not '%s'" % [under, floor_words])
 	# The gossip tooltip says the tied face's own level.
 	var tips := 0
 	for pid in _loader.person_by_id:
