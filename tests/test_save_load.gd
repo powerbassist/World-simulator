@@ -180,12 +180,44 @@ func _init() -> void:
 	_check_energy_bump(loader)
 	_check_energy_absences(loader)
 	_check_programme_fields(loader)
+	_check_approval_causes_absent(loader)
 	_run_character_roundtrip(loader)
 	_run_commodity_roundtrip(loader)
 	_run_unknown_version()
 	_cleanup()
 	clock.free()  # a Node created off-tree isn't owned by anything; free it explicitly
 	_finish()
+
+
+## Call A (PR 1): a history entry carries Opinion's split of the approval target under
+## `approval_causes`. It earns NO bump: an entry saved before it has no key, and that
+## reads correctly as "no split for that month" (Opinion.causes_of -> {}), which a reader
+## shows as no comparison, never as a split of zeros. A present split survives the save.
+func _check_approval_causes_absent(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	for _i in range(2):
+		state.month += 1
+		Economy.tick_month(state)
+		Budget.tick_month(state)
+		Opinion.tick_month(state)
+		var entry := Budget.snapshot(state)
+		entry.merge(Opinion.snapshot(state))
+		entry["approval_causes"] = Opinion.causes(state.player())  # what the History step adds
+		state.append_history(entry)
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var kept = GameState.from_dict(saved.duplicate(true))
+	var split: Dictionary = Opinion.causes_of(kept.history[-1])
+	if split.is_empty() or absf(float(split.get("target", NAN)) - float(Opinion.causes_of(state.history[-1])["target"])) > 1e-6:
+		_fail("approval_causes did not survive the save: %s" % [split])
+	for e in saved["history"]:
+		(e as Dictionary).erase("approval_causes")
+	var older = GameState.from_dict(saved)
+	if older == null or older.history.size() != state.history.size():
+		_fail("a save whose history has no approval_causes did not load whole")
+		return
+	for e in older.history:
+		if not Opinion.causes_of(e).is_empty():
+			_fail("an entry saved before the split reads as a split: %s" % [Opinion.causes_of(e)])
 
 
 ## V1.2a: SAVE_VERSION did not move (see the plan step's own cold count), but

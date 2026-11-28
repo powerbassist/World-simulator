@@ -230,6 +230,9 @@ tests=(
   # the decay band, and the main.gd tick ordering the same-month guarantee
   # rests on. PROGRAMME_SPAN is deliberately not pinned; the sweep owns it.
   tests/test_programme_channel.gd
+  # V5.3 call A (PR 1, sim): Opinion.causes splits approval's target into its terms,
+  # summing exactly, with the lag; the History entry carries the split.
+  tests/test_approval_causes.gd
   # V4.6: the goods register and the recipe table -- the register's size and
   # category coverage, and the cross-file rule that makes an input naming a good
   # nobody declares a LOAD ERROR rather than a recipe that produces nothing.

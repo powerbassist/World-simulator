@@ -214,6 +214,7 @@
    "tests/test_poll_cost.gd",
    "tests/test_sectors.gd",
    "tests/test_programme_channel.gd",
+   "tests/test_approval_causes.gd",
    "tests/test_commodities_data.gd",
    "tests/test_judiciary.gd",
    "tests/test_event_speaker.gd",

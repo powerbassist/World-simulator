@@ -24,7 +24,8 @@ extends RefCounted
 ##   division          Division.divide's result, {} when nothing was tabled (V5.2 b+ R2)
 ##   queue             BillQueue.promote's results, the queue's heads tabled or refused at
 ##                     this close, in order; absent when nothing was queued (V5.3 e PR 2)
-##   history_entry     Budget.snapshot merged with Opinion.snapshot, undated
+##   history_entry     Budget.snapshot merged with Opinion.snapshot, plus Opinion.causes
+##                     (approval_causes, the month's own split), undated
 ##   character_acts    Characters.tick_month's acts (Array)
 ##   audience_requests Audiences.tick_month's {arrived, lapsed} (V5.2b)
 ##   commitments       Levers.tick_month's {kept, broken} (V5.2b b2)
@@ -314,6 +315,8 @@ static func _step(month: Month, step: String) -> Array:
 		"History":
 			var entry := Budget.snapshot(state)
 			entry.merge(Opinion.snapshot(state))
+			if state.player() != null:  # right after Opinion: the month's own split (call A)
+				entry["approval_causes"] = Opinion.causes(state.player())
 			state.append_history(entry)
 			month.report["history_entry"] = entry
 		# U6a prunes resolved bookings older than the strip can reach. The register is
