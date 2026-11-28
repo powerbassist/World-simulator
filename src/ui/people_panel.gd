@@ -252,8 +252,10 @@ func _offices(query := "") -> bool:
 		var name := tr("Vacant") if bool(row["vacant"]) else String(row["party"])
 		var sub := String(row["party"]) if bool(row["vacant"]) else (tr("Led by %s, %s") % [_loader.person_name(leader), row["seats"]])
 		var line := RosterLine.build(_body, ["office", f], leader, {}, [
-			{"text": name, "sub": sub, "tone": UiTheme.BAD_TEXT if bool(row["vacant"]) else ""}, {"text": row["office"]},
-			{"text": row["feels"], "tone": row["feels_tone"]}, {"text": row["delivers"], "tone": row["delivers_tone"]},
+			{"text": name, "sub": sub, "tone": UiTheme.BAD_TEXT if bool(row["vacant"]) else ""},
+			# What the office delivers is a reading of what is held, never a want (G21, blind play 11-28).
+			{"text": row["office"], "sub": row["delivers"], "sub_tone": row["delivers_tone"]},
+			{"text": row["feels"], "tone": row["feels_tone"]}, {"text": "—", "tone": UiTheme.CAPTION},
 			{"text": row["owe"], "tone": row["owe_tone"]}, {"text": "—", "tone": UiTheme.CAPTION}],
 			picked, _show_card, _hide_card, _pick.bind("office", f), _menu.bind("office", row))
 		# An office word's Go lands here: an office's verbs are the reshuffle.

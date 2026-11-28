@@ -30,6 +30,7 @@ const Feelings = preload("res://src/ui/feelings.gd")
 const Words = preload("res://src/ui/lever_words.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
 const Bills = preload("res://src/sim/bills.gd")
+const Judiciary = preload("res://src/sim/judiciary.gd")
 
 const KIND_LABEL := {
 	"politician": "Politician", "regional_figure": "Regional figure",  # i18n: msgid
@@ -96,6 +97,19 @@ static func _meter_text(loader, object: String, want: Dictionary) -> String:
 	return Strings.t(String(words[2] if above > 0.0 else words[3])) % Num.f(absf(above), 1)
 
 
+## " (now X)": the figure the sim judges a meter want by (WorldMonth.character_meters), to read the
+## level asked for against (gate-462 P2). "" for a meter it does not judge.
+static func _meter_now(ns, object: String) -> String:
+	match object:
+		"meter:grievance":
+			return " " + Strings.t("(now %s%%)") % Num.f(ns.unrest_pct, 1)
+		"meter:press_freedom":
+			return " " + Strings.t("(now %s)") % Num.fs(ns.press_freedom, 2)
+		"meter:judicial_independence":
+			return " " + Strings.t("(now %s)") % Num.fs(Judiciary.independence_deviation(ns), 2)
+	return ""
+
+
 static func stance_label(stance: String) -> String:
 	return String(STANCE_LABEL.get(stance, stance))
 
@@ -146,8 +160,8 @@ static func dated_lines(loader, ns, pid: String) -> PackedStringArray:
 
 ## What a want's object string reads as, in the panel's own voice. `ns` is in
 ## hand for the player's nation id (the party lookup); loader supplies the
-## programme register and the parties.
-static func object_text(loader, ns, object: String, want: Dictionary) -> String:
+## programme register and the parties. `now` adds where a meter stands today, for a want still open.
+static func object_text(loader, ns, object: String, want: Dictionary, now := false) -> String:
 	if object.begins_with("programme:"):
 		var entry_id := object.substr("programme:".length())
 		for entry in loader.programme:
@@ -188,7 +202,7 @@ static func object_text(loader, ns, object: String, want: Dictionary) -> String:
 		var law_id := object.substr("law:".length())
 		return Strings.law_name(Bills.by_id(loader, law_id), law_id)
 	if object.begins_with("meter:"):
-		return _meter_text(loader, object, want)
+		return _meter_text(loader, object, want) + (_meter_now(ns, object) if now else "")
 	return object
 
 var _body: VBoxContainer
@@ -282,7 +296,7 @@ func show_for(person_id: String, loader, ns, position: Vector2) -> void:
 		for want in person.wants:
 			PanelKit.line(_body, "  %s %s" % [
 				stance_label(String(want["stance"])),
-				object_text(loader, ns, String(want["object"]), want)])
+				object_text(loader, ns, String(want["object"]), want, true)])
 
 	visible = true
 	# In the frame of the show the rows are measured before their width is known, so

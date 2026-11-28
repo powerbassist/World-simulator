@@ -58,6 +58,7 @@ func _process(_delta: float) -> bool:
 	if _frame < 5:
 		return false  # laid out
 	_check_rows_read_as_lines(_main._people_panel)
+	_check_what_an_office_delivers_is_not_a_want(_main._people_panel)
 	_finish()
 	return true
 
@@ -254,6 +255,28 @@ func _check_rows_read_as_lines(panel) -> void:
 				return
 	if rows < 10:
 		_fail("premise: only %d person rows found" % rows)
+
+
+## G21 (blind play 11-28): "Delivers 96%" stood in the "Wants now" column. What an office delivers reads under what is
+## held; an office's want cell holds no word of it.
+func _check_what_an_office_delivers_is_not_a_want(panel) -> void:
+	panel._pick_chip("government")
+	panel._refresh()
+	var offices := 0
+	for node in _walk(panel._body):
+		if not node.has_meta("office"):
+			continue
+		offices += 1
+		var cells: Array = node.get_child(1).get_child(0).get_children()  # face, person, holds, feels, wants, owe, known
+		var words := func(cell) -> String: return " ".join(_walk(cell).filter(func(n) -> bool: return n is Label).map(func(l) -> String: return l.text))
+		var wants: String = words.call(cells[4])
+		if wants.contains("Delivers") or wants.contains("Counts half"):
+			_fail("an office's want cell reads '%s'" % wants)
+		var held: String = words.call(cells[2])
+		if not (held.contains("Delivers") or held.contains("Counts half")):
+			_fail("the office's holding does not say what it delivers: '%s'" % held)
+	if offices == 0:
+		_fail("premise: no office line on the page")
 
 
 ## Where a label's TEXT runs on screen, (start, end) in x: a label stretched to fill

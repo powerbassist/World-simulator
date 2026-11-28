@@ -7,13 +7,19 @@ extends RefCounted
 const Sectors = preload("res://src/sim/sectors.gd")
 const Forecast = preload("res://src/ui/budget_forecast.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const BillQueue = preload("res://src/sim/bill_queue.gd")
+const FinanceQueue = preload("res://src/ui/finance_queue.gd")
 
 
-## The footer's verb: the draft's rows tabled as the month's bill (none drafted, none tabled), then the moves booked
-## whatever the tabling answered. FinanceBill.table's answer, with "rows" (a bill was put) and "moves" (how many booked).
+## The footer's verb: the draft's rows tabled as the month's bill (none drafted, none tabled), or queued when another
+## bill holds the slot (G2), then the moves booked whatever the tabling answered. FinanceBill.table's answer, with "rows"
+## (a bill was put) and "moves" (how many booked); a queued bill adds "queued" and the "month" and "day" it divides.
 static func table(state, loader, draft, force: bool) -> Dictionary:
 	var rows: bool = not draft.is_empty()
 	var tabling: Dictionary = FinanceBill.table(state, loader, draft.bill(), force) if rows else {"tabled": false}
+	var lands: Dictionary = FinanceQueue.verb(state, loader, "already_tabled", draft.bill(), force) if bool(tabling.get("already_tabled", false)) else {}
+	if bool(lands.get("enabled", false)) and bool(BillQueue.add(state, {"finance": draft.bill(), "force": force}).get("queued", false)):
+		tabling = {"tabled": false, "queued": true, "month": lands["month"], "day": lands["day"]}
 	tabling["rows"] = rows
 	tabling["moves"] = apply(state, loader, draft)
 	return tabling

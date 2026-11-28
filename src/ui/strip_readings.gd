@@ -27,6 +27,7 @@ const PollNoise = preload("res://src/ui/poll_noise.gd")
 const PollingPanel = preload("res://src/ui/polling_panel.gd")
 const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ProgrammeDistance = preload("res://src/ui/programme_distance.gd")
 const Elections = preload("res://src/sim/elections.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Government = preload("res://src/sim/government.gd")
@@ -126,7 +127,7 @@ static func read(id: String, state, loader) -> Dictionary:
 		"election":
 			return _election(state, ns, loader)
 		"programme":
-			return _programme(ns, loader)
+			return _programme(state, ns, loader)
 		"desk":
 			return _desk(ns)
 		"europe":
@@ -326,7 +327,7 @@ static func _election_tooltip(ns, loader, months: int) -> String:
 ## says nothing in every game that never opens the Agenda, which is most of them.
 ## Derived off the same read the Agenda window draws, so the panel and the strip
 ## cannot print two answers to one question.
-static func _programme(ns, loader) -> Dictionary:
+static func _programme(state, ns, loader) -> Dictionary:
 	var programme := _nearest_programme(ns, loader)
 	if programme.is_empty():
 		return _reading(NOTHING, "", false)
@@ -336,9 +337,7 @@ static func _programme(ns, loader) -> Dictionary:
 	var progress: Dictionary = Programme.progress_of(ns, terms)
 	var fraction := PanelKit.progress_fraction(
 		float(progress["current_value"]), float(progress["goal_value"]), String(progress["progressbar"]))
-	var tip := Strings.t("%s -- now %s · goal %s") % [
-		name_text, Num.f(float(progress["current_value"]), 2), Num.f(float(progress["goal_value"]), 2),
-	]
+	var tip := "%s -- %s" % [name_text, ProgrammeDistance.of(state, terms)]
 	var clock_text := programme_clock_text(terms, live)
 	if not clock_text.is_empty():
 		tip += " · %s" % clock_text

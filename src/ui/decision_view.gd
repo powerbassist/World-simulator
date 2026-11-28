@@ -14,6 +14,7 @@ extends MarginContainer
 const FileRead = preload("res://src/ui/file_read.gd")
 const FileView = preload("res://src/ui/file_view.gd")
 const InboxFiles = preload("res://src/ui/inbox_files.gd")
+const AudienceDriver = preload("res://src/ui/audience_driver.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
@@ -70,6 +71,7 @@ func _rebuild() -> void:
 		_body.remove_child(child)
 		child.queue_free()
 	var inbox = _main._hud.inbox
+	_file_id = AudienceDriver.lane_of(_main).current(_file_id)
 	var page := FileRead.describe(_main, InboxFiles.of(inbox, _file_id))
 	FileView.build(_body, page, func(index: int) -> void:
 		InboxFiles.press(inbox, _file_id, index)

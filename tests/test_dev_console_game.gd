@@ -231,6 +231,8 @@ func _check_save_load(console) -> void:
 	var r: String = console.run_command("save %s" % SLOT)
 	if not r.contains("saved"):
 		_fail("save: %s" % r)
+	if _a._pause_menu.changed():
+		_fail("a game saved from the console still reads as unsaved")
 	console.run_command("set me.assembly_seats 22")
 	# A load rebuilds the game (game_reload.gd): the new main, with its own console, takes the
 	# old one's place in the tree.

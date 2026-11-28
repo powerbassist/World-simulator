@@ -37,6 +37,7 @@ var _inbox
 var _card_of := {}     # request id -> card id
 var _request_of := {}  # card id -> request id
 var _answers_of := {}  # request id -> the answers its card was put up with
+var _replaced := {}    # a card taken down to be put up again -> its request id
 
 
 func attach(inbox) -> void:
@@ -88,6 +89,7 @@ func show_requests(rows: Array) -> void:
 			_inbox.set_body(String(_card_of[request_id]), _body(row))
 			continue
 		if _card_of.has(request_id):
+			_replaced[String(_card_of[request_id])] = request_id
 			_inbox.dismiss(String(_card_of[request_id]))
 		var card_id: String = _inbox.push(Strings.t("%s wants to see you") % String(row["person"]), _body(row), answers, null, false, _inbox.REQUESTS)
 		# V5.2 close R3: whom you would be seeing, by party, under the name.
@@ -104,6 +106,12 @@ func request_ids() -> Array:
 
 func card_of(request_id: String) -> String:
 	return String(_card_of.get(request_id, ""))
+
+
+## The card id a page holding `card_id` shows now: a waiting request's card put up again (G5) has a new one.
+func current(card_id: String) -> String:
+	var now := card_of(String(_replaced.get(card_id, "")))
+	return card_id if now == "" else now
 
 
 ## A refused answer stays on the card, disabled, its reason on the hover: when

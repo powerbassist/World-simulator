@@ -36,6 +36,8 @@ const Events = preload("res://src/sim/events.gd")
 const ElectoralSystems = preload("res://src/sim/electoral_systems.gd")
 const Pledges = preload("res://src/sim/pledges.gd")
 const Programme = preload("res://src/sim/programme.gd")
+const ProgrammeDistance = preload("res://src/ui/programme_distance.gd")
+const Num = preload("res://src/ui/num.gd")
 const OpinionK = preload("res://src/sim/opinion_constants.gd")
 const ElectionK = preload("res://src/sim/election_constants.gd")
 const TaxK = preload("res://src/sim/tax_constants.gd")
@@ -3946,7 +3948,7 @@ func _check_programme_fields(loader) -> void:
 		_fail("the programme register did not survive the round trip")
 	var allowed := [
 		"entry_id", "chosen_term", "months_live", "status",
-		"concluded_term", "concluded_term_month",
+		"concluded_term", "concluded_term_month", "start",
 	]
 	for i in ns.programme.size():
 		var a: Dictionary = ns.programme[i]
@@ -3959,7 +3961,7 @@ func _check_programme_fields(loader) -> void:
 	if float(kept_ns.programme_stock) != float(ns.programme_stock):
 		_fail("programme_stock did not survive the round trip exactly: %f -> %f" % [float(ns.programme_stock), float(kept_ns.programme_stock)])
 
-	# THE SIX KEYS, on the SERIALISED register rather than the live one -- a save
+	# THE SEVEN KEYS, on the SERIALISED register rather than the live one -- a save
 	# that cached content or progress alongside the decision is the defect this
 	# catches, and the live register's own pin (tests/test_programme.gd) cannot
 	# see it.
@@ -3967,7 +3969,18 @@ func _check_programme_fields(loader) -> void:
 	for entry in serialised:
 		for key in (entry as Dictionary).keys():
 			if not allowed.has(String(key)):
-				_fail("a serialised programme entry carries '%s' -- the six decision keys are the whole register" % key)
+				_fail("a serialised programme entry carries '%s' -- the seven decision keys are the whole register" % key)
+
+	# `start` came without a bump: a row saved before it must come back WITHOUT one (never 0), and read "now · goal".
+	var old: Dictionary = full.duplicate(true)
+	((old["nations"]["FRA"]["programme"] as Array)[0] as Dictionary).erase("start")
+	var old_ns = GameState.from_dict(old).player()
+	if (old_ns.programme[0] as Dictionary).has("start"):
+		_fail("a programme row saved without a start came back with one: %s" % [old_ns.programme[0]])
+	var jobs: Dictionary = Programme.terms_of(loader, "prog_jobs_first")
+	var read := ProgrammeDistance.words(jobs, ProgrammeDistance.start_of(old_ns, "prog_jobs_first"), 7.4)
+	if read != "now %s · goal %s" % [Num.f(7.4, 2), Num.f(7.0, 2)]:
+		_fail("a row with no start does not read now and goal: '%s'" % read)
 
 	# PROGRESS IS NEVER STORED, at both places a field could land: beside the
 	# register on the nation, or cached inside an entry. The injection is the

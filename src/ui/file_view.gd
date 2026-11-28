@@ -9,7 +9,9 @@ extends RefCounted
 ## choices as cards, each with the tags it carries (effect_tags.gd), one sentence, and one
 ## 180 px button on a shared bottom edge. A choice with a `short` label heads its card with
 ## the full label and puts the short one on the button; without one the button carries the
-## label and the card has no separate head -- never a stand-in word. The default is marked
+## label -- never a stand-in word. Where any choice of the page has a short label, every card
+## is headed by its label, so no option stands untitled beside the others (G20); where none
+## has, there are no heads, since each would only say its button twice. The default is marked
 ## "if you say nothing", with no sentence explaining the rest of the interface.
 ##
 ## Pressing a button calls `press(index)` and nothing else: the host sends it through
@@ -74,8 +76,9 @@ static func build(parent: Control, page: Dictionary, press: Callable, face := FA
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12)
 		root.add_child(row)
+		var headed := choices.any(func(c: Dictionary) -> bool: return String(c["short"]) != "")
 		for i in choices.size():
-			row.add_child(_card(choices[i], i, press))
+			row.add_child(_card(choices[i], i, headed, press))
 	return root
 
 
@@ -92,9 +95,9 @@ static func _person(who: Dictionary, face: Vector2) -> Control:
 	return column
 
 
-## One choice: its head (when it has a short label), its default mark, its tags, its sentence,
+## One choice: its default mark, its head (when the page has heads), its tags, its sentence,
 ## and its button at the bottom edge.
-static func _card(choice: Dictionary, index: int, press: Callable) -> Control:
+static func _card(choice: Dictionary, index: int, headed: bool, press: Callable) -> Control:
 	var card := PanelContainer.new()
 	card.theme_type_variation = UiTheme.PLATE
 	card.custom_minimum_size = Vector2(BUTTON_WIDTH + 36, 0)
@@ -106,7 +109,7 @@ static func _card(choice: Dictionary, index: int, press: Callable) -> Control:
 	var short := String(choice["short"])
 	if bool(choice["default"]):
 		PanelKit.heading(column, Strings.t("If you say nothing"))
-	if short != "":
+	if headed:
 		var head := Label.new()
 		head.text = String(choice["words"])
 		head.theme_type_variation = UiTheme.LEAD

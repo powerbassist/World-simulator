@@ -118,12 +118,13 @@ static func drafted(state, loader, bill: Dictionary) -> Dictionary:
 ## Why table() would refuse `bill` now, {} when it would table it: its checks in its
 ## order, on the bill merged with the finance bill already tabled. Writes nothing, so a
 ## reader (the goal read's "can table now") asks the very rule the press meets.
-static func refusal(state, loader, bill: Dictionary, force := false) -> Dictionary:
+## `slot_free` asks the same checks as if no law held the slot: what a queued bill meets there (finance_queue.gd).
+static func refusal(state, loader, bill: Dictionary, force := false, slot_free := false) -> Dictionary:
 	var ns = state.player()
 	if bill.is_empty():
 		return {"tabled": false, "refused": true, "empty": true}
 	var held: Dictionary = ns.tabled_bill
-	if not held.is_empty() and not FinanceBillLaw.is_finance(String(held.get("law_id", ""))):
+	if not slot_free and not held.is_empty() and not FinanceBillLaw.is_finance(String(held.get("law_id", ""))):
 		return {"tabled": false, "refused": true, "already_tabled": true}
 	# One budget text at a time (section 10): a finance bill waiting in the queue is the
 	# year's text, so the slot takes no second one beside it. Promotion pops its entry first.

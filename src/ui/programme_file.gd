@@ -86,7 +86,7 @@ static func build(main, page: Control, picker) -> void:
 		"situation": Strings.t("Pick the term's [g=programme]programme[/g]. Delivery is judged when it lands or its deadline passes."),
 		"by_text": "", "by_month": -1, "who": {}, "choices": []}, func(_i: int) -> void: pass)
 	_record(page, ns, main._loader)
-	picker.fill(ns, offer(main))
+	picker.fill(main._state, offer(main))
 	picker.show()
 	page.move_child(picker, -1)
 	if page.is_visible_in_tree():  # a build the player sees; a hidden Folder's rebuild shows nothing
@@ -123,7 +123,7 @@ static func booked(main, page: Control, term: int) -> void:
 	page.add_child(title)
 	match String(entry["status"]):
 		ProgrammeK.STATUS_ACTIVE:
-			PanelKit.line(page, "%s · %s" % [ProgrammePicker.read_text(ns, terms), StripReadings.programme_clock_text(terms, entry)], PanelKit.Tone.DIM)
+			PanelKit.line(page, "%s · %s" % [ProgrammePicker.read_text(main._state, terms), StripReadings.programme_clock_text(terms, entry)], PanelKit.Tone.DIM)
 		ProgrammeK.STATUS_COMPLETE:
 			ResultTone.tint(PanelKit.line(page, Strings.t("Delivered")), ResultTone.GOOD)
 		ProgrammeK.STATUS_FAIL:

@@ -87,6 +87,7 @@ func _run() -> void:
 		return
 
 	_check_no_blocking_holder_at_start()
+	_check_leaving_an_unsaved_game_asks()
 	_check_the_pause_menu_still_opens_and_closes()
 	_check_map_is_the_background()
 	_check_hud_lets_the_map_through()
@@ -537,6 +538,103 @@ func _press(keycode: int) -> void:
 	event.keycode = keycode
 	event.pressed = true
 	_main._unhandled_input(event)
+
+
+## G19 (blind play 11-28): Quit closed at once. There is no autosave, so Quit and Main Menu ask first once the
+## game has moved since it was last on disk. Both signals are cut from what they do: a real Quit would end the run.
+func _check_leaving_an_unsaved_game_asks() -> void:
+	var menu = _main._pause_menu
+	if not menu.has_method("changed"):
+		_fail("the pause menu cannot say whether the game was saved")
+		return
+	if menu.changed():
+		_fail("a game just started reads as unsaved")
+	var gone := {"quit": 0, "menu": 0}
+	for pair in [["quit_requested", "quit"], ["main_menu_requested", "menu"]]:
+		for link in menu.get_signal_connection_list(pair[0]):
+			menu.disconnect(pair[0], link["callable"])
+		menu.connect(pair[0], func() -> void: gone[pair[1]] += 1)
+	var button := func(text: String) -> Button:
+		for node in menu.find_children("*", "Button", true, false):
+			if (node as Button).text == text:
+				return node
+		_fail("no pause menu button '%s'" % text)
+		return Button.new()
+	var ns = _main._state.player()
+	var before: float = ns.unrest_pct
+	for row in [["Quit", "Quit without saving", "quit"], ["Main Menu", "Leave without saving", "menu"]]:
+		menu.stamp()
+		_main._open_pause_menu()
+		button.call(row[0]).pressed.emit()
+		if gone[row[2]] != 1:
+			_fail("%s on a saved game did not leave at once" % row[0])
+		ns.unrest_pct += 1.0
+		button.call(row[0]).pressed.emit()
+		if gone[row[2]] != 1 or not menu.warns():
+			_fail("%s on a changed game did not ask first" % row[0])
+		# The question moves the buttons by less than one: a double click's second press lands on the answer.
+		button.call(row[1]).pressed.emit()
+		if gone[row[2]] != 1:
+			_fail("a double click on %s left the unsaved game" % row[0])
+		menu.set("_asked_at", -100000)
+		button.call(row[1]).pressed.emit()
+		if gone[row[2]] != 2:
+			_fail("'%s' did not leave" % row[1])
+		_main._close_pause_menu()
+		_main._open_pause_menu()
+		if menu.warns():
+			_fail("the question about %s outlived the menu's closing" % row[0])
+		button.call(row[0])
+		_main._close_pause_menu()
+	_main._on_save_requested("g19_probe")
+	if menu.changed():
+		_fail("a game just saved reads as unsaved")
+	_main._clock.day += 1
+	if not menu.changed():
+		_fail("a day gone by reads as saved")
+	_main._clock.day -= 1
+	_check_the_close_button_asks(menu, gone)
+	ns.unrest_pct = before
+
+
+## The window's own close button is the same Quit (pass 2 T2 on #464): what the engine sends every node.
+## Called on a changed game, with the real Quit already cut off.
+func _check_the_close_button_asks(menu, gone: Dictionary) -> void:
+	if auto_accept_quit:
+		_fail("the engine still quits on the window's close button by itself")
+	var close := func() -> void: root.propagate_notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
+	var quits: int = gone["quit"]
+	menu.stamp()
+	_main._close_pause_menu()
+	close.call()
+	if gone["quit"] != quits + 1 or menu.visible:
+		_fail("closing the window on a saved game did not quit at once")
+	_main._state.player().unrest_pct += 1.0
+	var settings: Control = _main._settings_panel
+	var dialog: Control = _main._save_load_panel
+	for under in ["the map", "the save dialog", "the settings"]:
+		quits = gone["quit"]
+		_main._close_pause_menu()
+		_main._clock.paused = false
+		if under == "the save dialog":
+			dialog.show()  # the top bar's SAVE: no menu under it
+		elif under == "the settings":
+			_main._open_pause_menu()
+			menu.settings_requested.emit()
+		close.call()
+		if gone["quit"] != quits or not menu.visible or not menu.warns() or dialog.visible or settings.visible:
+			_fail("closing the window over %s did not put the question: quits %d, menu %s, warns %s, dialog %s, settings %s" % [
+				under, gone["quit"] - quits, menu.visible, menu.warns(), dialog.visible, settings.visible])
+		close.call()
+		if gone["quit"] != quits:
+			_fail("a double close over %s quit the unsaved game" % under)
+		menu.set("_asked_at", -100000)
+		close.call()
+		if gone["quit"] != quits + 1:
+			_fail("the second close over %s did not quit" % under)
+		_main._close_pause_menu()
+		if _main._clock.paused:
+			_fail("closing the window over %s lost the running clock" % under)
 
 
 ## B16's focus/hotkey trap: with the save dialog visible, the single-letter

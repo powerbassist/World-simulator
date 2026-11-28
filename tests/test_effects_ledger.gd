@@ -21,6 +21,8 @@ const RecentEffects = preload("res://src/sim/recent_effects.gd")
 const RecentEffectsK = preload("res://src/sim/recent_effects_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const Inbox = preload("res://src/ui/inbox.gd")
+const PresidencyRows = preload("res://src/ui/presidency_rows.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 var _failures: Array[String] = []
 var _frame := 0
@@ -40,6 +42,7 @@ func _process(_delta: float) -> bool:
 	_check_a_flat_month()
 	_check_defaults_are_not_decisions()
 	_check_the_deficit_sign()
+	_check_the_month_decided()
 	_check_the_bound()
 	_check_one_writer()
 	_finish()
@@ -128,6 +131,25 @@ func _check_the_deficit_sign() -> void:
 
 
 ## The register keeps the newest RecentEffectsK.KEPT, newest first.
+## G22 (blind play 2026-11-28): the entry is stamped at the close that measured it, one month after the
+## decisions, and a bill passed on 30 June read "July 2026". The shown month is the one decided in.
+func _check_the_month_decided() -> void:
+	for pair in [[7, 2026, 6, 2026], [1, 2027, 12, 2026]]:
+		var effect := {"label": "Finance bill", "month": pair[0], "year": pair[1], "movements": []}
+		var row: Control = PresidencyRows.effect_row(effect)
+		var said := (row.get_child(0) as Label).text
+		var want := "%s %d" % [DateText.month_long(pair[2]), pair[3]]
+		if not said.contains(want):
+			_fail("the entry closed in %d/%d reads '%s', want %s" % [pair[0], pair[1], said, want])
+		row.free()
+		var state := FakeState.new()
+		state.recent_effects.append(effect)
+		EffectsLedger.restore_card(state, _inbox)
+		var card := _last_card_text()
+		if not card.contains(DateText.month_year(pair[2], pair[3])):
+			_fail("the restored card does not say %s: '%s'" % [DateText.month_year(pair[2], pair[3]), card])
+
+
 func _check_the_bound() -> void:
 	var state := FakeState.new()
 	for i in RecentEffectsK.KEPT + 2:

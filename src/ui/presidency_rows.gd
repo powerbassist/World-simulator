@@ -127,7 +127,8 @@ static func effect_row(effect: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	var label := Label.new()
-	label.text = "%s — %s %d:" % [String(effect["label"]), DateText.month_long(int(effect["month"])), int(effect["year"])]  # i18n: row-ok an effect's label, routed when queued
+	var decided := EffectsLedger.decided_in(effect)
+	label.text = "%s — %s %d:" % [String(effect["label"]), DateText.month_long(decided.x), decided.y]  # i18n: row-ok an effect's label, routed when queued
 	label.theme_type_variation = UiTheme.CAPTION
 	row.add_child(label)
 	var ranked: Array = EffectsLedger.moved(effect)

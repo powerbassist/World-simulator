@@ -81,8 +81,16 @@ static func restore_card(state, inbox) -> void:
 	if state.recent_effects.is_empty() or inbox == null:
 		return
 	var effect: Dictionary = state.recent_effects[0]
-	inbox.push(Strings.t("Decided in %s: %s") % [DateText.month_year(int(effect.get("month", 1)), int(effect.get("year", 0))),
+	var decided := decided_in(effect)
+	inbox.push(Strings.t("Decided in %s: %s") % [DateText.month_year(decided.x, decided.y),
 		String(effect.get("label", ""))], card_body(effect))  # i18n: row-ok an effect's label, routed when queued
+
+
+## (month, year) the entry's decisions were taken in: it is stamped at the close that measured them, the month
+## after (G22, blind play 11-28). Display only -- the briefing reads the stored stamp against today.
+static func decided_in(effect: Dictionary) -> Vector2i:
+	var at := int(effect.get("year", 0)) * 12 + int(effect.get("month", 1)) - 2
+	return Vector2i(posmod(at, 12) + 1, floori(at / 12.0))
 
 
 ## What moved, biggest first: the figures with a reading and a change that prints
