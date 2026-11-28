@@ -52,7 +52,7 @@ static func fade(ns) -> void:
 		var acts_was := _acts_row(ns, bloc)
 		ns.add_bloc_offset(bloc, kept - part, "acts", LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 		var pulled := float(ns.act_bound_share.get(bloc, 0.0))
-		if pulled != 0.0:
+		if pulled != 0.0 and part != 0.0:  # a share an opposite act cancelled to 0.0 moved nothing
 			var back := (_acts_row(ns, bloc) - acts_was) * pulled / part
 			ns.offset_by_source["acts"][bloc] = _acts_row(ns, bloc) - back
 			var bound: Dictionary = ns.offset_by_source.get("bound", {})

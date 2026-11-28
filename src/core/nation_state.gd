@@ -1454,7 +1454,7 @@ var person_party_override: Dictionary[String, String] = {}
 var person_want_state: Dictionary[String, bool] = {}
 
 ## bloc id -> the part of bloc_offset that character acts wrote and that has not
-## yet faded (V5.2b, "le cout s'efface"). Written by characters.gd alone: an act
+## yet faded (V5.2b, "le cout s'efface"). Written by act_share.gd alone: an act
 ## adds what it actually wrote, and each month the part shrinks by
 ## ACT_OFFSET_MONTHLY_KEEP and bloc_offset gets the difference back. absent_ok,
 ## no bump: a save from before V5.2b holds acts priced as permanent, and absent

@@ -60,6 +60,7 @@ func _init() -> void:
 	_test_a_pull_back_past_the_bound_is_the_bounds()
 	_test_an_old_saves_acts_fade_nets_out()
 	_test_an_acts_pull_back_fades_to_the_bound()
+	_test_a_share_cancelled_to_zero_fades_clean()
 	_test_causes_splits_the_direct_row_by_source()
 	_test_an_old_save_reads_its_offset_as_earlier()
 	_finish()
@@ -245,6 +246,34 @@ func _test_an_acts_pull_back_fades_to_the_bound() -> void:
 				_fail("from %s, the share faded out in %d fades and %s still reads %.6f, not 0" % [at, fades, source, _row(ns, source)])
 
 
+## The parent's pass 2 on #467: an act and its exact opposite leave the share at 0.0 while
+## its pull-back part stands; the next fade must not divide by that 0 and write NaN into
+## the rows a save keeps. Dyadic numbers, so the share cancels exactly: from 1.5 an act of
+## -0.25 moves 0.5 (0.25 own, 0.25 bound), an event takes the offset to 0.5, and an act
+## of +0.5 brings the share back to 0.0.
+func _test_a_share_cancelled_to_zero_fades_clean() -> void:
+	var ns = GameState.new_game(_loader, "FRA").player()
+	ns.bloc_offset["workers"] = 1.5
+	ns.offset_by_source = {"start": {"workers": 1.5}}
+	for move in [-0.25, null, 0.5]:
+		if move == null:
+			ns.add_bloc_offset("workers", -0.5, "events", -1.0, 1.0)
+			continue
+		var before := ActShare.snapshot(ns)
+		ns.add_bloc_offset("workers", float(move), "acts", -1.0, 1.0)
+		ActShare.book(ns, before)
+	if float(ns.act_bloc_offset.get("workers", NAN)) != 0.0 or float(ns.act_bound_share.get("workers", 0.0)) == 0.0:
+		_fail("the premise did not hold: share %s, its pull-back part %s" % [ns.act_bloc_offset.get("workers"), ns.act_bound_share.get("workers")])
+		return
+	ActShare.fade(ns)
+	for source in ns.offset_by_source:
+		if is_nan(_row(ns, source)):
+			_fail("a fade of a share at 0.0 wrote NaN into the %s row" % source)
+	var bad := _mismatch(ns)
+	if bad != "":
+		_fail("after the cancelled share's fade: %s" % bad)
+
+
 ## causes(): the direct row is one row per source plus `direct:earlier` (what no source
 ## booked), each size-weighted, and the rows still sum to the target.
 func _test_causes_splits_the_direct_row_by_source() -> void:
@@ -298,11 +327,12 @@ func _test_an_old_save_reads_its_offset_as_earlier() -> void:
 		_fail("an old save's rows sum to %.9f, the target is %.9f" % [total, float(c["target"])])
 
 
-## "" when every bloc's offset is the sum of its sources, otherwise what is off.
+## One source's row for workers, 0 where it has none.
 func _row(ns, source: String) -> float:
 	return float((ns.offset_by_source.get(source, {}) as Dictionary).get("workers", 0.0))
 
 
+## "" when every bloc's offset is the sum of its sources, otherwise what is off.
 func _mismatch(ns) -> String:
 	var sums := {}
 	for source in ns.offset_by_source:
