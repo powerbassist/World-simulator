@@ -400,7 +400,8 @@ func _check_the_job_figure() -> void:
 
 
 ## A tab press never changes the column count: the switch is the widest sector tab's need, read before that tab was
-## ever shown (gate on #461: from July, Poland's and Britain's Services stood in two between two tabs in three).
+## ever shown (measured on #461: from July, Poland's and Britain's Services stood in two columns while their other
+## tabs stood in three).
 func _check_a_tab_press(nation: String) -> void:
 	root.size = Vector2i(1920, 1080)
 	root.content_scale_factor = 1.0

@@ -262,7 +262,7 @@ func _check_axis(box: Control, state: String) -> void:
 		top = (_slot(box, "rate")[0] as Control).global_position.y
 	for mark in marks:
 		var off: bool = absf(mark.global_position.y - top) > 1.0 if head.text == "" else mark.global_position.y < top - 0.5
-		if off or mark.get_global_rect().end.y > head.get_global_rect().end.y + 1.0:
+		if off or mark.get_global_rect().end.y > head.get_global_rect().end.y + (1.0 if head.text == "" else 0.5):
 			_fail("%s: '%s' is on the column's name or out of its head: %s in %s" % [state, mark.text, mark.get_global_rect(), head.get_global_rect()])
 
 
