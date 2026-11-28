@@ -14,6 +14,7 @@ extends SceneTree
 ##     when it turns, and asked as a dated word.
 
 const DataLoader = preload("res://src/core/data_loader.gd")
+const AudienceView = preload("res://src/ui/audience_view.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Person = preload("res://src/core/person.gd")
 const PeopleLoader = preload("res://src/core/loaders/people_loader.gd")
@@ -68,6 +69,7 @@ func _init() -> void:
 	_check_a_ministers_word_on_a_plant_is_judged_on_the_plant()
 	_check_a_chief_brings_no_money_even_when_the_draw_would()
 	_check_no_minister_can_answer_for_a_firm_or_a_region()
+	_check_a_meter_want_reads_in_words()
 	_check_grant_is_the_rescue_and_writes_no_word()
 	_check_a_bargain_won_is_the_buyer_and_writes_no_word()
 	_check_a_promise_is_not_an_approach_on_a_firm()
@@ -596,6 +598,64 @@ func _check_the_card_names_both_objects() -> void:
 		# Read in the person's own voice too ("I want ..."), so never "their".
 		if text == "" or text.contains(":") or text.contains(REGION) or text.contains(company_id) or text.begins_with("their"):
 			_fail("the card shows a raw object for %s: '%s'" % [object, text])
+
+
+## A meter want in words, at the person's own threshold: a row that carries only their id
+## reads the same, and a row with neither never prints a figure it does not have.
+func _check_a_meter_want_reads_in_words() -> void:
+	var state = _state()
+	var ns = state.player()
+	var seen := 0
+	for pid in _loader.person_by_id:
+		for want in _loader.person_by_id[pid].wants:
+			var object := String(want["object"])
+			if not object.begins_with("meter:"):
+				continue
+			seen += 1
+			var own: String = PersonCard.object_text(_loader, ns, object, want)
+			var by_id: String = PersonCard.object_text(_loader, ns, object, {"person_id": pid})
+			var bare: String = PersonCard.object_text(_loader, ns, object, {})
+			var figure := "%.1f" % absf(float(want.get("below", want.get("above", 0.0))))
+			if own != by_id or own.contains("_") or own.contains("grievance") or (figure != "0.0" and not own.contains(figure)) \
+					or (figure == "0.0" and own.contains("0.0")):
+				_fail("%s: %s reads '%s', by id '%s'" % [pid, object, own, by_id])
+			if bare.contains("_") or bare.contains("0"):
+				_fail("%s with no threshold prints a figure: '%s'" % [object, bare])
+	if seen == 0:
+		_fail("no meter want in the data: the check read nothing")
+	# A distance that prints as 0.0 is the starting level, from either side.
+	var level: String = PersonCard.object_text(_loader, ns, "meter:press_freedom", {"above": 0.0})
+	for near in [0.04, -0.04]:
+		var read: String = PersonCard.object_text(_loader, ns, "meter:press_freedom", {"above": near})
+		if read != level:
+			_fail("a distance of %s reads '%s', not '%s'" % [near, read, level])
+	# Under the start is a floor to hold: "less than 0.1 below" read as asking for the drop.
+	for meter in ["press_freedom", "judicial_independence"]:
+		var under: String = PersonCard.object_text(_loader, ns, "meter:%s" % meter, {"above": -0.1})
+		var floor_words := "a floor 0.1 under the starting level of %s" % meter.replace("_", " ")
+		if under != floor_words:
+			_fail("a distance under the start reads '%s', not '%s'" % [under, floor_words])
+	# Over the start is a rise to win: "more than 0.2 above" read as if it were there already.
+	for meter in ["press_freedom", "judicial_independence"]:
+		var over: String = PersonCard.object_text(_loader, ns, "meter:%s" % meter, {"above": 0.2})
+		var rise := "a rise of more than 0.2 in %s" % meter.replace("_", " ")
+		if over != rise:
+			_fail("a distance over the start reads '%s', not '%s'" % [over, rise])
+	# The gossip tooltip says the tied face's own level.
+	var tips := 0
+	for pid in _loader.person_by_id:
+		if tips >= 3:
+			break
+		for line in AudienceView._talk(state, ns, _loader, {"person_id": pid}):
+			for face in line["people"]:
+				for want in _loader.person_by_id[face["id"]].wants:
+					var object := String(want["object"])
+					if object.begins_with("meter:") and String(face["tip"]).contains(PersonCard.object_text(_loader, ns, object, {})):
+						tips += 1
+						if not String(face["tip"]).contains(PersonCard.object_text(_loader, ns, object, want)):
+							_fail("%s's tie tooltip names no level: '%s'" % [face["id"], face["tip"]])
+	if tips == 0:
+		_fail("no gossip tie on a meter: the tooltip check read nothing")
 
 
 # --- Fixtures ----------------------------------------------------------------------------

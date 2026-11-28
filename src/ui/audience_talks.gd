@@ -263,7 +263,7 @@ static func want_words(main, person_id: String, object: String) -> String:
 		for w in person.wants:
 			if String(w["object"]) == object:
 				stance = String(w["stance"])
-	var thing := PersonCard.object_text(main._loader, ns, object, {"object": object})
+	var thing := PersonCard.object_text(main._loader, ns, object, {"person_id": person_id})
 	return "%s %s" % [Strings.t(PersonCard.stance_label(stance)), thing] if stance != "" else thing
 
 

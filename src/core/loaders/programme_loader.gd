@@ -160,6 +160,12 @@ static func extract_programme_entry(loader, d: Dictionary, filename: String, err
 	else:
 		out["current_value"] = current_value
 
+	var unit = d.get("unit", "")
+	if typeof(unit) != TYPE_STRING or not ProgrammeK.UNITS.has(unit):
+		errors.append("%s: %s unit '%s' is not one of %s" % [filename, id, str(unit), str(ProgrammeK.UNITS)])
+	else:
+		out["unit"] = unit
+
 	if d.has("goal_value") and (typeof(d["goal_value"]) == TYPE_INT or typeof(d["goal_value"]) == TYPE_FLOAT):
 		out["goal_value"] = float(d["goal_value"])
 	else:

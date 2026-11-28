@@ -462,7 +462,7 @@ func _entries(year: int, month: int) -> Dictionary:
 	for row in President.commitments(ns):
 		if int(row["due_month"]) == abs_month:
 			var who: String = _loader.person_name(String(row["person_id"]))
-			var want := PersonCard.object_text(_loader, ns, String(row["object"]), {})
+			var want := PersonCard.object_text(_loader, ns, String(row["object"]), row)
 			# The briefing's subject for this word (priorities.gd _commitments), so a
 			# commitment's Go lands on its Call here.
 			_add(out, 1, {"text": Words.commitment_text(String(row["kind"]), who, want, int(row["due_month"])), "mark": "due", "cancel": "", "short": Strings.t("Word due"),
