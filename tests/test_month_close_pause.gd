@@ -123,6 +123,8 @@ func _check_after_the_month() -> void:
 		press = "Resume after a window close sent"
 		if not _main._pause_menu.visible or not _main._pause_menu.warns():
 			_fail("a window close sent while the month closed did not put the pause menu's question")
+		if _main._month_runner._asked.is_valid():
+			_fail("the window close was kept after the month answered it: the next month's end would press Quit again")
 		_main._pause_menu.resumed.emit()
 		for i in 35:  # five seconds of the real clock at speed 3
 			_main._clock._process(1.0 / _main._clock.SPEED_DAYS_PER_SECOND[2])
