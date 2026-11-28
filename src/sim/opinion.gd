@@ -481,51 +481,66 @@ static func top_issues(ns, count: int) -> Array:
 	return ordered.slice(0, count)
 
 
-## Call A (PR 1): the national approval TARGET split into the terms target_of() adds up,
-## each bloc's weighted by its size -- {rows: {neutral (the 50 every target starts from),
-## time_in_office, competence, programme,
-## "issue:<key>", "direct:<source>", unrest, clamp -> points}, target, approval, lag}. The
-## bloc offsets are one row per offset_by_source source (PR 2), plus `direct:earlier`: what
-## no source booked (a save from before the register, and float drift: in a new game it is
-## residue near 1e-16, so a reader hides a row under a hundredth of a point). The rows sum to
-## the target exactly; `clamp` is what the +-1 clamp cut, so while it binds the issue rows
-## are pulls before the cap, plus what the approval band cut (the tick clamps each bloc's
-## approval to it, so a target past the band is one approval can never reach, and leaving it
-## in would read as a lag that never closes). `lag` is approval minus target: the inertia
-## still to close, which is how approval can rise in a month its target fell. A read: it writes nothing,
-## and it is exact only where target_of's inputs are this month's (after the Opinion step).
+## Call A (PR 1): the national approval TARGET split into the terms target_of() adds up --
+## {rows: {neutral (the 50 every target starts from), time_in_office, competence, programme,
+## "issue:<key>", "direct:<source>", unrest, clamp -> points}, target, approval, lag}. Each
+## row is the size-weighted sum of that row in bloc_causes(), so the national split is the
+## blocs' by construction and cannot drift from it. The bloc offsets are one row per
+## offset_by_source source (PR 2), plus `direct:earlier`: what no source booked (a save from
+## before the register, and float drift: in a new game it is residue near 1e-16, so a reader
+## hides a row under a hundredth of a point). The rows sum to the target exactly. `lag` is
+## approval minus target: the inertia still to close, which is how approval can rise in a
+## month its target fell. A read: it writes nothing, and it is exact only where target_of's
+## inputs are this month's (after the Opinion step).
 static func causes(ns) -> Dictionary:
-	var sat := issue_satisfaction(ns)
-	var rows := {"neutral": 0.0, "time_in_office": 0.0, "competence": 0.0, "programme": 0.0, "direct:earlier": 0.0, "unrest": 0.0, "clamp": 0.0}
+	var blocs := bloc_causes(ns)
+	var rows := {}
 	var target := 0.0
 	for bloc in K.BLOC_KEYS:
 		var size := float(K.BLOC_SIZE[bloc])
+		var own: Dictionary = blocs[bloc]["rows"]
+		for key in own:
+			rows[key] = float(rows.get(key, 0.0)) + size * float(own[key])
+		target += size * float(blocs[bloc]["target"])
+	return {"rows": rows, "target": target, "approval": float(ns.overall_approval_pct),
+		"lag": float(ns.overall_approval_pct) - target}
+
+
+## The same split for each bloc on its own -- {bloc -> {rows, target, approval, lag}}, the
+## rows those of causes() unweighted, summing to that bloc's own target. `clamp` is what
+## the +-1 clamp cut (while it binds, the issue rows are pulls before the cap) plus what the
+## approval band cut: the tick clamps the bloc's approval to it, so a target past the band
+## is one approval can never reach, and leaving it in would read as a lag that never
+## closes. Every source in offset_by_source has a row in every bloc, zero where that bloc
+## has none; an issue has a row only in the blocs that weigh it (absent reads as 0), so the
+## national keys are the union of the six.
+static func bloc_causes(ns) -> Dictionary:
+	var sat := issue_satisfaction(ns)
+	var out := {}
+	for bloc in K.BLOC_KEYS:
 		var weights := bloc_weights(ns, bloc, sat)
+		var rows := {"neutral": K.APPROVAL_NEUTRAL, "time_in_office": K.time_in_office_offset(int(ns.months_in_term)),
+			"competence": competence_credit(ns), "programme": programme_credit(ns)}
 		var score := 0.0
 		for issue in weights:
 			var pull := float(weights[issue]) * float(sat.get(issue, 0.0))
 			score += pull
-			rows["issue:%s" % issue] = float(rows.get("issue:%s" % issue, 0.0)) + size * K.APPROVAL_SPAN * pull
+			rows["issue:%s" % issue] = K.APPROVAL_SPAN * pull
 		var offset := float(ns.bloc_offset.get(bloc, 0.0))
-		var raw := score + offset - float(ns.unrest_opinion_load)
 		var booked := 0.0
 		for source in ns.offset_by_source:
 			var pts := float((ns.offset_by_source[source] as Dictionary).get(bloc, 0.0))
 			booked += pts
-			rows["direct:%s" % source] = float(rows.get("direct:%s" % source, 0.0)) + size * K.APPROVAL_SPAN * pts
-		rows["direct:earlier"] += size * K.APPROVAL_SPAN * (offset - booked)
-		rows["unrest"] -= size * K.APPROVAL_SPAN * float(ns.unrest_opinion_load)
-		rows["clamp"] += size * K.APPROVAL_SPAN * (clampf(raw, -1.0, 1.0) - raw)
-		rows["neutral"] += size * K.APPROVAL_NEUTRAL  # weighted like every row, so the sum holds whatever the sizes add to
-		rows["time_in_office"] += size * K.time_in_office_offset(int(ns.months_in_term))
-		rows["competence"] += size * competence_credit(ns)
-		rows["programme"] += size * programme_credit(ns)
+			rows["direct:%s" % source] = K.APPROVAL_SPAN * pts
+		rows["direct:earlier"] = K.APPROVAL_SPAN * (offset - booked)
+		rows["unrest"] = -K.APPROVAL_SPAN * float(ns.unrest_opinion_load)
+		var raw := score + offset - float(ns.unrest_opinion_load)
 		var bloc_target := target_of(ns, bloc, sat, weights)
 		var reachable := clampf(bloc_target, K.APPROVAL_MIN, K.APPROVAL_MAX)
-		rows["clamp"] += size * (reachable - bloc_target)
-		target += size * reachable
-	return {"rows": rows, "target": target, "approval": float(ns.overall_approval_pct),
-		"lag": float(ns.overall_approval_pct) - target}
+		rows["clamp"] = K.APPROVAL_SPAN * (clampf(raw, -1.0, 1.0) - raw) + (reachable - bloc_target)
+		var approval := float(ns.bloc_approval.get(bloc, 0.0))  # overall_approval()'s default, so the lags weight to the national one
+		out[bloc] = {"rows": rows, "target": reachable, "approval": approval, "lag": approval - reachable}
+	return out
 
 
 ## The split a history entry carries; {} for an entry saved before it existed, which a

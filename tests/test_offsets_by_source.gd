@@ -228,11 +228,15 @@ func _test_an_acts_pull_back_fades_to_the_bound() -> void:
 	for at in [-1.3, 1.3]:
 		var ns = GameState.new_game(_loader, "FRA").player()
 		ns.bloc_offset["workers"] = at
-		ns.offset_by_source = {"start": {"workers": at}}
+		ns.offset_by_source = {"start": {"workers": at - 0.1}, "bound": {"workers": 0.1}}
 		var before := ActShare.snapshot(ns)
 		ns.add_bloc_offset("workers", -0.02, "acts", -1.0, 1.0)
 		ActShare.book(ns, before)
-		ns.add_bloc_offset("workers", -0.4 * signf(at), "events", -1.0, 1.0)
+		ns.add_bloc_offset("workers", at - float(ns.bloc_offset["workers"]), "investment", -INF, INF)
+		before = ActShare.snapshot(ns)
+		ns.add_bloc_offset("workers", -0.02, "acts", -1.0, 1.0)
+		ActShare.book(ns, before)
+		ns.add_bloc_offset("workers", -0.8 * signf(at), "events", -1.0, 1.0)  # room for two shares
 		var fades := 0
 		while ns.act_bloc_offset.has("workers") and fades < 1000:
 			ActShare.fade(ns)
@@ -241,9 +245,11 @@ func _test_an_acts_pull_back_fades_to_the_bound() -> void:
 			if _row(ns, "acts") > EPS or bad != "":
 				_fail("from %s, fade %d: the acts row is %.6f for an act of -0.02 %s" % [at, fades, _row(ns, "acts"), bad])
 				break
-		for source in ["acts", "bound"]:
-			if absf(_row(ns, source)) > 1e-5:
-				_fail("from %s, the share faded out in %d fades and %s still reads %.6f, not 0" % [at, fades, source, _row(ns, source)])
+		for pair in [["acts", 0.0], ["bound", 0.1]]:
+			if absf(_row(ns, pair[0]) - pair[1]) > 1e-5:
+				_fail("from %s, the share faded out in %d fades and %s still reads %.6f, not %s" % [at, fades, pair[0], _row(ns, pair[0]), pair[1]])
+		if ns.act_bound_share.has("workers"):
+			_fail("from %s, the faded share left a pull-back part %s" % [at, ns.act_bound_share["workers"]])
 
 
 ## The parent's pass 2 on #467: an act and its exact opposite leave the share at 0.0 while
