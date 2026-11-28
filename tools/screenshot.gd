@@ -143,6 +143,16 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn --books-sheet
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet --books-force   (the document with the forced passage ticked)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-tabled --books-draft --books-move --books-document   (an amendment with a share move)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-refused --books-draft --books-document   (another bill holds the slot: the draft can queue)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn --books-refused --books-document   (a new tax cannot queue)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-refused --books-range --books-document   (a tabling check fails behind a held slot)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-range --books-document   (refused for the range alone)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn --books tax_rates_pct:vat --books-document   (an open tax editor on the page behind the document)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-long --books-document   (every line and tax drafted: the list scrolls)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet --books-surplus   (a deep pension cut: the bill ends in surplus, the chart crosses zero)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-draft --books-surplus   (the same on the bill's rail)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-about --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diary-booked   (G3 S2: the first request booked by a click on a free day, its appointment fresh)
@@ -591,6 +601,14 @@ var _books_sheet := false
 var _books_move := false
 ## --books-autumn: the autumn month, Books page: a creation (plastic packaging tax) and an abolition (sugar drinks levy) drafted; with --books-sheet the sheet open on them.
 var _books_autumn := false
+## --books-document: the bill's document open on whatever the other --books flags drafted; --books-force: its force box
+## ticked; --books-range: VAT past its range; --books-long: every spending line and tax in force drafted;
+## --books-surplus: pensions 8 points of GDP lower drafted, enough to leave a surplus.
+var _books_document := false
+var _books_force := false
+var _books_range := false
+var _books_long := false
+var _books_surplus := false
 var _books_tabled := false
 var _books_refused := false
 
@@ -1116,6 +1134,16 @@ func _init() -> void:
 			_books_autumn = true
 		elif args[i] == "--books-sheet":
 			_books_sheet = true
+		elif args[i] == "--books-document":
+			_books_document = true
+		elif args[i] == "--books-force":
+			_books_force = true
+		elif args[i] == "--books-range":
+			_books_range = true
+		elif args[i] == "--books-long":
+			_books_long = true
+		elif args[i] == "--books-surplus":
+			_books_surplus = true
 		elif args[i] == "--books-move":
 			_books_move = true
 		elif args[i] == "--books-draft":
@@ -1615,7 +1643,7 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
-	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_queued or _books_sheet or _books_autumn or _books_move:
+	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_queued or _books_sheet or _books_autumn or _books_move or _books_document or _books_range or _books_long or _books_surplus:
 		_stage_the_books()
 	if _moved:
 		_move_the_levers()
@@ -2490,14 +2518,29 @@ func _stage_the_books() -> void:
 		page._draft.set_value("tax_rates_pct", "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
 		page._draft.set_value("spending_pct_gdp", "health", float(ns.spending_pct_gdp["health"]) + 1.5)
 		page._draft.set_value("spending_pct_gdp", "education", float(ns.spending_pct_gdp["education"]) - 0.5)
+	if _books_range:
+		page._draft.set_value("tax_rates_pct", "vat", 80.0)
+	if _books_surplus:
+		page._draft.set_value("spending_pct_gdp", "pensions", float(ns.spending_pct_gdp["pensions"]) - 8.0)
+	if _books_long:
+		for line in ns.spending_pct_gdp:
+			page._draft.set_value("spending_pct_gdp", String(line), float(ns.spending_pct_gdp[line]) + 0.5)
+		for kind in ns.tax_rates_pct:
+			if float(ns.tax_rates_pct[kind]) > 0.0:
+				page._draft.set_value("tax_rates_pct", String(kind), float(ns.tax_rates_pct[kind]) + 0.1)
 	page._stamp = ""
 	page._dirty = true
 	page._process(0.0)
 	page._forecast.drain()
 	page._process(0.0)
-	if _books_sheet:
+	if _books_sheet or _books_document:
 		page._open_sheet()
 		page._sheet.refresh()
+		var force: CheckBox = page._sheet.find_child("Force", true, false)
+		if _books_force and force != null:
+			force.button_pressed = true
+		elif _books_force:
+			push_error("screenshot: --books-force found no force box (the draft is refused, or no forced passage)")
 	print("--books: row '%s', draft %s, tabled %s, refused %s" % [_books_row, _books_draft, _books_tabled, _books_refused])
 
 

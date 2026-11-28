@@ -37,6 +37,7 @@ const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
 const ChartKit = preload("res://src/ui/chart_kit.gd")
 const ChartWaterfall = preload("res://src/ui/chart_waterfall.gd")
+const FinanceSteps = preload("res://src/ui/finance_steps.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -55,8 +56,6 @@ const HOURGLASS := "res://assets/icons/ui/hourglass.svg"
 ## The rail's width at text 100: the waterfall's name column (a change and its figures, "Health, 11.0 → 12.5"), a bar
 ## that still reads at its shortest step, and its figure; with the sheet's margins.
 const WIDTH := 470.0
-## A residual under this (bn a year) is rounding, not a step.
-const RESIDUAL_BN := 0.05
 
 var _title: Label
 var _date: PanelContainer
@@ -321,15 +320,11 @@ func refresh(state, loader, draft, price) -> void:
 	var queue: Dictionary = FinanceQueue.verb(state, loader, refusal, draft.bill())
 	var can_queue := bool(queue.get("enabled", false))
 	vote_on = _head_for(state, queue, vote_on)
-	# The same pricing as the sheet (FinancePrice.whole): the bill the vote decides. On an amendment the money is the
+	# The same pricing as the document (FinancePrice.whole): the bill the vote decides. On an amendment the money is the
 	# whole bill's, and the sentence says so.
 	var whole: Dictionary = price.whole(loader, draft, refusal != "")
-	# An amendment's money is the whole bill's: the bill already tabled is its own first step (pass 2 T6 on #443).
-	var first := {}
-	if tabled != null and refusal == "":
-		var alone: Dictionary = price.tabled(loader)
-		first = {"label": Strings.t("The bill before the Assembly"), "value": float(alone["deficit_after_bn"]) - float(alone["deficit_now_bn"])}
-	_list(ns, draft, price, whole, first)
+	_list(ns, draft, price, whole)
+	FinanceSteps.setup(_chart, state, loader, draft, price, whole, refusal != "")
 	var text := ""
 	if tabled != null:
 		text = Strings.t("An amendment to the bill before the Assembly: the figures are the whole bill's.")
@@ -378,8 +373,8 @@ func _width() -> float:
 	return 0.0 if _folded else WIDTH * UiTheme.text_scale()
 
 
-## The waterfall and the change list: the list is rebuilt when the rows change, the figures every refresh.
-func _list(ns, draft, price, whole: Dictionary, first: Dictionary) -> void:
+## The change list: rebuilt when the rows change, the figures every refresh (the waterfall is FinanceSteps').
+func _list(ns, draft, price, whole: Dictionary) -> void:
 	var rows: Array = draft.rows()
 	var ids := []
 	for row in rows:
@@ -394,22 +389,12 @@ func _list(ns, draft, price, whole: Dictionary, first: Dictionary) -> void:
 			_change(ns, row)
 	_count.text = (Strings.tn("%d change", "%d changes", rows.size()) % rows.size()).to_upper()
 	# A row's money is kept by the price while the books hold (FinancePrice.row_balance_bn).
-	var steps := [] if first.is_empty() else [first]
-	var walked := 0.0 if first.is_empty() else float(first["value"])
 	for i in rows.size():
 		var gain: float = price.row_balance_bn(rows[i])
 		var money: Label = _groups.get_child(i).find_child("Money_*", true, false)
 		money.text = EffectsStrip.money_text(gain)
 		money.theme_type_variation = ControlStyle.STRONG  # a price is neutral with its sign (gate T4 on #443)
-		# A gain to the treasury narrows the deficit: the step is its opposite.
-		steps.append({"label": "%s, %s" % [FinanceRows.change_label(ns, rows[i]), FinanceRows.change_figures(ns, rows[i])], "value": -gain})
-		walked -= gain
-	var now := float(whole["deficit_now_bn"])
-	var after := float(whole["deficit_after_bn"])
-	if absf(after - now - walked) >= RESIDUAL_BN:
-		steps.append({"label": Strings.t("Together, and what the rows alone miss"), "value": after - now - walked})
-	_chart.setup({"label": Strings.t("Today"), "value": now}, steps, {"label": Strings.t("With the bill"), "value": after}, {"label_w": 190.0})
-	_pct.text = Strings.t("%s bn is %s %% of GDP; today %s %%.") % [Num.f(after, 0), Num.f(float(whole["deficit_after_pct"]), 2),
+	_pct.text = Strings.t("%s bn is %s %% of GDP; today %s %%.") % [Num.f(float(whole["deficit_after_bn"]), 0), Num.f(float(whole["deficit_after_pct"]), 2),
 		Num.f(float(price.now().get("deficit_pct_gdp", 0.0)), 2)]
 	if _dropped_at >= 0:
 		var marks_now := []

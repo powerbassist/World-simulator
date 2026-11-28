@@ -127,7 +127,7 @@ func _process(_delta: float) -> bool:
 			var books = _main._windows.content("finances")
 			if not _main._windows.is_open("finances") or not books._sheet.is_visible_in_tree():
 				_fail("Review the bill beside Register showed no sheet (Books open %s)" % _main._windows.is_open("finances"))
-			books._close_sheet()
+			books.close_sheet()
 			_main._windows.content("register")._fill(true)
 			_main._windows.content("register")._dirty = true
 			_main._windows.open("register")
@@ -745,7 +745,7 @@ func _check_the_amendment_steps() -> void:
 	else:
 		var first := float(steps[0]["delta"])
 		# VAT up a point narrows the deficit by billions: the first step is that bill's money.
-		if first > -1.0:
+		if first < 1.0:
 			_fail("the amendment's first step is %s bn, not the tabled VAT rise's" % first)
 		var residual := Strings.t("Together, and what the rows alone miss")
 		for step in steps:

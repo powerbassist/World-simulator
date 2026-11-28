@@ -3,11 +3,13 @@ extends Control
 ## A total walked step by step -- ChartKit.waterfall (G3 S4, the Books page in C: "the deficit is a waterfall").
 ## The first row is where it stands today, then each change a floating bar from the running total to where the
 ## change takes it, then the total after them all. One row a bar, its name at the left and its figure at the
-## right, signed for a step: the reader is never left to add the steps in the head.
+## right, signed for a step: the reader is never left to add the steps in the head. Zero is a line down the whole
+## chart, behind the bars (the author, 2026-11-28): a baseline is a data mark, not a divider.
 ##
 ## Tones (dataviz: status colours carry state, never identity): the two totals are the neutral bar; a step that
-## makes the total WORSE is BAD and one that makes it better GOOD -- for a deficit, a rise is worse. A dashed
-## connector joins each bar's end to the next bar's start. The colour is never alone: every step prints its sign.
+## makes the total WORSE is BAD and one that makes it better GOOD (worse_up says which way is worse: the finance
+## balance passes false). A dashed connector joins each bar's end to the next bar's start. The colour is never alone:
+## every step prints its sign.
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Num = preload("res://src/ui/num.gd")
@@ -26,19 +28,20 @@ var _total_places := 0
 var _step_places := 1
 
 
-## `start` and `end` {label, value}; `steps` [{label, value}] each a signed change. opts: label_w (at text 100),
+## `start` and `end` {label, value, figure?} (`figure` is the total's shown text, its value otherwise);
+## `steps` [{label, value}] each a signed change. opts: label_w (at text 100),
 ## worse_up (a rise is bad news; true for a deficit), total_places, step_places.
 func setup(start: Dictionary, steps: Array, end: Dictionary, opts := {}) -> void:
 	_label_w = float(opts.get("label_w", LABEL_W))
 	_worse_up = bool(opts.get("worse_up", true))
 	_total_places = int(opts.get("total_places", 0))
 	_step_places = int(opts.get("step_places", 1))
-	_rows = [{"label": String(start["label"]), "from": 0.0, "to": float(start["value"]), "kind": "total"}]  # i18n: row-ok chart data, the caller's shown text
+	_rows = [{"label": String(start["label"]), "from": 0.0, "to": float(start["value"]), "kind": "total", "figure": String(start.get("figure", ""))}]  # i18n: row-ok chart data, the caller's shown text
 	var at := float(start["value"])
 	for step in steps:
 		_rows.append({"label": String(step["label"]), "from": at, "to": at + float(step["value"]), "kind": "step", "delta": float(step["value"])})  # i18n: row-ok chart data, the caller's shown text
 		at += float(step["value"])
-	_rows.append({"label": String(end["label"]), "from": 0.0, "to": float(end["value"]), "kind": "total"})  # i18n: row-ok chart data, the caller's shown text
+	_rows.append({"label": String(end["label"]), "from": 0.0, "to": float(end["value"]), "kind": "total", "figure": String(end.get("figure", ""))})  # i18n: row-ok chart data, the caller's shown text
 	_lo = 0.0
 	_hi = 0.0
 	for row in _rows:
@@ -77,6 +80,11 @@ func bar_rect(i: int) -> Rect2:
 	return Rect2(a, i * h + (h - BAR_H) * 0.5, maxf(b - a, 1.0), BAR_H)
 
 
+## The zero line: 1 px, the chart's whole height.
+func zero_rect() -> Rect2:
+	return Rect2(floorf(x_of(0.0)), 0.0, 1.0, row_height() * _rows.size())
+
+
 func bar_color(i: int) -> Color:
 	var row: Dictionary = _rows[i]
 	if String(row["kind"]) == "total":
@@ -96,9 +104,12 @@ func label(i: int) -> String:
 func figure(i: int) -> String:
 	var row: Dictionary = _rows[i]
 	if String(row["kind"]) == "total":
-		return Num.f(float(row["to"]), _total_places)
+		return String(row["figure"]) if String(row["figure"]) != "" else Num.f(float(row["to"]), _total_places)  # i18n: row-ok chart data
 	# The step's own value, not to - from: a running sum's float error must not flip the last digit.
-	return Num.fs(float(row["delta"]), _step_places)
+	var delta := float(row["delta"])
+	if absf(delta) < 0.5 * pow(10.0, -_step_places):
+		return Num.f(0.0, _step_places)  # never "-0.0"
+	return Num.fs(delta, _step_places)
 
 
 func _draw() -> void:
@@ -106,6 +117,7 @@ func _draw() -> void:
 	var fs := _fs()
 	var h := row_height()
 	var label_w := _label_w * UiTheme.text_scale() - 8.0
+	draw_rect(zero_rect(), UiTheme.TEXT_DIM)  # first, so every bar draws over it
 	for i in _rows.size():
 		var row: Dictionary = _rows[i]
 		var bar := bar_rect(i)

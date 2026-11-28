@@ -67,6 +67,7 @@ func _process(_delta: float) -> bool:
 		return false
 
 	_check_the_kit_uses_variations_and_not_overrides()
+	_check_a_toned_figure_keeps_its_size()
 	_check_tiles_pad_themselves()
 	_check_button_classes()
 	_check_a_ledger_is_one_measurement()
@@ -77,6 +78,14 @@ func _process(_delta: float) -> bool:
 	_report_the_fold_contract()
 	_finish()
 	return false
+
+
+## A toned figure is a figure still: its tone changes its colour, never its size.
+func _check_a_toned_figure_keeps_its_size() -> void:
+	for entry in [[PanelKit.Tone.PLAIN, UiTheme.FIGURE], [PanelKit.Tone.GOOD, UiTheme.FIGURE_GOOD], [PanelKit.Tone.BAD, UiTheme.FIGURE_ALERT]]:
+		var big := PanelKit.figure(_sample_root, "+29.0 bn", "Spending", entry[0]).get_child(0) as Label
+		if String(big.theme_type_variation) != entry[1] or big.get_theme_font_size("font_size") < UiTheme.SIZE_FIGURE * 0.89:
+			_fail("a figure toned %s is %s at %d" % [entry[0], big.theme_type_variation, big.get_theme_font_size("font_size")])
 
 
 # -- G3's button classes ---------------------------------------------------------

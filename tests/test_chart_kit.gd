@@ -355,6 +355,14 @@ func _check_waterfall() -> void:
 		_fail("a green accent's order does not put violet third")
 	if chart.figure(1) != "+43.6" or chart.figure(2) != "-14.6" or chart.figure(0) != "147":
 		_fail("the waterfall's figures are %s, %s, %s" % [chart.figure(0), chart.figure(1), chart.figure(2)])
+	# A total may carry the caller's own words; a step that rounds to nothing is never "-0.0"; zero is a line.
+	var fall := ChartWaterfall.new()
+	fall.setup({"label": "a", "value": -3.0, "figure": "3 bn"}, [{"label": "b", "value": -0.01}], {"label": "c", "value": -3.01})
+	if fall.figure(0) != "3 bn" or fall.figure(1) != "0.0" or fall.figure(2) != "-3":
+		_fail("the waterfall's own figures are %s, %s, %s" % [fall.figure(0), fall.figure(1), fall.figure(2)])
+	if fall.zero_rect().size != Vector2(1.0, fall.row_height() * 3):
+		_fail("the zero line is %s" % fall.zero_rect())
+	fall.free()
 
 
 func _finish() -> void:

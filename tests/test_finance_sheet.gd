@@ -18,6 +18,8 @@ const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
+const Budget = preload("res://src/sim/budget.gd")
+const ChartWaterfall = preload("res://src/ui/chart_waterfall.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Government = preload("res://src/sim/government.gd")
 const Labels = preload("res://src/ui/labels.gd")
@@ -73,9 +75,11 @@ func _process(_delta: float) -> bool:
 			_check_withdraw_only_while_a_bill_is_at_vote()
 			_check_an_emptied_draft_puts_the_sheet_away()
 			_check_a_refusal_downs_table_and_the_force_box()
-			_check_a_queue_refusal_leads_in_red()
+			_check_a_refusal_is_amber_beside_a_live_verb()
 			_check_an_amendment_prices_the_whole_bill()
 			_check_a_tabled_programme_is_priced_in_the_whole_bill()
+			_check_the_waterfall_is_mirrored()
+			_check_a_surplus_says_surplus()
 			_check_britain_has_no_forcing()
 		5:
 			return _finish()
@@ -173,23 +177,34 @@ func _check_the_deficit_runs_from_now_to_after() -> void:
 		_fail("the deficit figure is not '%s'" % want)
 
 
-## A rise in a spending line pleases the blocs that weigh it, a rise in a tax angers its payers; four payers are three chips and "+1".
+## A rise in a spending line pleases the blocs that weigh it and a cut angers them, a rise in a tax angers its payers:
+## one phrase a side, the first three named and the rest counted (c-build.md section 2).
 func _check_the_chips_follow_the_direction() -> void:
-	var health := _text_of(_sheet().find_child("SheetRow_spending_pct_gdp_health", true, false))
-	var weights: Array = FinanceRead.line_blocs(_state, _loader, "health")["weights"]
-	if weights.is_empty() or not health.contains("▲ " + Strings.t("%s for") % Labels.bloc(String(weights[0][0]))):
-		_fail("a spending rise does not please the blocs that weigh the line: %s" % health)
-	if health.contains("▼"):
-		_fail("a spending rise angers someone on the sheet: %s" % health)
-	var vat := _sheet().find_child("SheetRow_tax_rates_pct_vat", true, false)
+	for entry in [["health", "▲ ", "%s for", Tones.GOOD_SMALL], ["education", "▼ ", "%s against", Tones.BAD_SMALL]]:
+		var blocs: Array = FinanceRead.line_blocs(_state, _loader, entry[0])["weights"].map(func(w: Array) -> String: return String(w[0]))
+		var said := _who("SheetRow_spending_pct_gdp_" + entry[0])
+		var want := [[entry[1] + Strings.t(entry[2]) % _named(blocs), entry[3]]]
+		if blocs.is_empty() or said != want:
+			_fail("the %s row says %s, want %s" % [entry[0], said, want])
 	var payers: Array = _state.player().tax_library["vat"]["who_pays"]
-	var angered := vat.find_children("*", "Label", true, false).filter(func(n: Node) -> bool: return (n as Label).text.begins_with("▼"))
-	if angered.size() != mini(payers.size(), 3):
-		_fail("a tax rise shows %d payer chips, wanted %d of %d" % [angered.size(), mini(payers.size(), 3), payers.size()])
-	if payers.size() > 3 and not _text_of(vat).contains("+%d" % (payers.size() - 3)):
-		_fail("the chips past three are not counted")
-	if _text_of(vat).contains("▲"):
-		_fail("a tax rise pleases someone on the sheet")
+	if payers.size() <= 3:
+		_fail("premise: VAT has no payer past the third to count")
+	var vat := _who("SheetRow_tax_rates_pct_vat")
+	var angry := [["▼ " + Strings.t("%s against") % _named(payers), Tones.BAD_SMALL]]
+	if vat != angry:
+		_fail("a tax rise says %s, want %s" % [vat, angry])
+
+
+## A row's for and against lines: [text, variation].
+func _who(row_name: String) -> Array:
+	return _sheet().find_child(row_name, true, false).find_children("*", "Label", true, false) \
+		.filter(func(l) -> bool: return l.text.begins_with("▲") or l.text.begins_with("▼")) \
+		.map(func(l) -> Array: return [l.text, String(l.theme_type_variation)])
+
+
+func _named(blocs: Array) -> String:
+	var names := ", ".join(blocs.slice(0, 3).map(func(b) -> String: return Labels.bloc(String(b))))
+	return names + (", +%d" % (blocs.size() - 3) if blocs.size() > 3 else "")
 
 
 func _check_a_ticked_force_survives_a_draft_move() -> void:
@@ -314,7 +329,8 @@ func _check_scope(want: Dictionary, price: FinancePrice, whole: Dictionary, extr
 	# arrow, not the new rows alone; the page's note no longer repeats it (#429 pass 2 T10: each number once).
 	var chart = _panel._foot._chart
 	var ends := "%s → %s" % [chart.figure(0), chart.figure(chart.row_count() - 1)]
-	if ends != arrow or not _panel._foot._pct.text.contains(Num.f(deficit_after / gdp * 100.0, 2)):
+	var sizes := "%s → %s" % [Strings.t("%s bn") % Num.f(absf(deficit_now), 0), Strings.t("%s bn") % Num.f(absf(deficit_after), 0)]
+	if ends != sizes or not _panel._foot._pct.text.contains(Num.f(deficit_after / gdp * 100.0, 2)):
 		_fail("the rail's waterfall is not the whole bill's (%s): %s, %s" % [arrow, ends, _panel._foot._pct.text])
 	if var_to_str(_panel._forecast._want) != var_to_str(whole):
 		_fail("the ranges forecast is not fed the whole bill: %s" % var_to_str(_panel._forecast._want))
@@ -354,15 +370,17 @@ func _check_a_refusal_downs_table_and_the_force_box() -> void:
 	table = _node("SheetTable") as Button
 	if table == null or not table.disabled or not _text_of(_sheet()).contains(Strings.t("The queue holds three bills. Take one out first.")):
 		_fail("full queue: the sheet's verb is up or says nothing")
+	if _refusals() != ["bad"]:
+		_fail("full queue: nothing can be pressed, the refusal says %s, want one red line with its glyph" % [_refusals()])
 	_state.player().bill_queue = []
 	_state.player().tabled_bill = {}
 	_panel.shared_draft().revert()
 	_panel._sheet.hide()
 
 
-## R8, R9 on #464 (Design): a queueable draft says the held slot in red, then what the press would do, plain; one of
-## tabling's checks refusing the queue too is said first, in red.
-func _check_a_queue_refusal_leads_in_red() -> void:
+## The tone rule (c-build.md section 4, #464's R10 and R11): beside a live verb the held slot is amber and what the
+## press would do is plain; one of tabling's checks refusing the queue too is said first, and both are red.
+func _check_a_refusal_is_amber_beside_a_live_verb() -> void:
 	var ns = _state.player()
 	ns.tabled_bill = {"law_id": "workplace_safety_act", "vote_year": _state.year, "vote_month": _state.month, "vote_day": 28}
 	ns.bill_queue = []
@@ -375,19 +393,26 @@ func _check_a_queue_refusal_leads_in_red() -> void:
 	var note := Strings.t("If queued, it divides on %s.") % DateText.day_month(int(lands["day"]), int(lands["month"]))
 	var slot := Strings.t("Another bill holds this month's slot.")
 	var said := _lines([slot, note])
-	if said.size() != 2 or said[0] != [slot, Tones.BAD_TEXT] or said[1][0] != note or said[1][1] == Tones.BAD_TEXT:
-		_fail("a queueable draft's sheet says %s, want the slot in red, then the queue note plain" % [said])
+	if said != [[slot, Tones.WARN_TEXT], [note, Tones.CHIP_TEXT]] or _refusals() != ["warn"]:
+		_fail("a queueable draft's sheet says %s %s, want the slot amber with its glyph, then the queue note plain" % [said, _refusals()])
 	_panel.shared_draft().set_value(FinanceDraft.TAX, "vat", float(ns.tax_library["vat"]["rate_range_pct"][1]) + 1.0)
 	_panel._on_moved()
 	_panel._sheet._stamp = ""
 	_settle()
 	var past := Strings.t("Outside the tax's range.")
 	said = _lines([slot, past])
-	if said != [[past, Tones.BAD_TEXT], [slot, Tones.BAD_TEXT]]:
-		_fail("a rate past its range: the sheet says %s, want the range then the slot, both red" % [said])
+	if said != [[past, Tones.BAD_SMALL], [slot, Tones.BAD_SMALL]] or _refusals() != ["bad", "bad"]:
+		_fail("a rate past its range: the sheet says %s %s, want the range then the slot, both red with a glyph" % [said, _refusals()])
 	ns.tabled_bill = {}
 	_panel.shared_draft().revert()
 	_panel._sheet.hide()
+
+
+## The sheet's refusal lines in order: their tone, and that each wears the warning glyph.
+func _refusals() -> Array:
+	return _sheet().find_children("*", "HBoxContainer", true, false) \
+		.filter(func(b) -> bool: return b.has_meta("refusal")) \
+		.map(func(b) -> String: return String(b.get_meta("refusal")) + ("" if b.find_children("*", "TextureRect", false, false).size() == 1 else " without a glyph"))
 
 
 ## The sheet's lines among `texts`, in its order: [text, variation].
@@ -584,6 +609,86 @@ func _check_withdraw_only_while_a_bill_is_at_vote() -> void:
 	if again != null and again.is_visible_in_tree():
 		_fail("Withdraw stays offered with no bill at vote")
 	_panel.shared_draft().revert()
+
+
+## The author's chart rules (2026-11-28), on the rail and the document: zero is a line down the whole chart, at the
+## right while the books run a deficit; a deficit reaches left of it; a change that widens the deficit steps left and
+## one that narrows it steps right, each signed as the list signs it.
+func _check_the_waterfall_is_mirrored() -> void:
+	_draft_three()  # Health up widens it; Education down narrows it
+	_panel._process(0.0)
+	_open_sheet()
+	_settle()
+	for chart in [_panel._foot._chart, _document_chart()]:
+		chart.size = Vector2(480.0, chart.custom_minimum_size.y)
+		var zero: Rect2 = chart.zero_rect()
+		if zero.position.y != 0.0 or zero.size != Vector2(1.0, chart.row_height() * chart.row_count()) or absf(zero.position.x - chart.x_of(0.0)) > 1.0:
+			_fail("the zero line is not 1 px down the whole chart at zero: %s" % zero)
+		for i in chart.row_count():
+			if chart.bar_rect(i).end.x > zero.position.x + 1.0:
+				_fail("in deficit, row %d reaches right of zero" % i)
+		var today: Rect2 = chart.bar_rect(0)
+		var health: Rect2 = chart.bar_rect(1)
+		var education: Rect2 = chart.bar_rect(2)
+		if absf(today.end.x - chart.x_of(0.0)) > 0.5 or today.position.x >= zero.position.x - 1.0:
+			_fail("today's deficit does not reach left of zero: %s" % today)
+		if absf(health.end.x - today.position.x) > 0.5 or health.position.x >= today.position.x - 0.5:
+			_fail("a widening step does not step left: %s after %s" % [health, today])
+		if absf(education.position.x - health.position.x) > 0.5 or education.end.x <= health.position.x + 0.5:
+			_fail("a narrowing step does not step right: %s after %s" % [education, health])
+		if not chart.figure(1).begins_with("-") or not chart.figure(2).begins_with("+") or chart.bar_color(1) != Tones.BAD or chart.bar_color(2) != Tones.GOOD:
+			_fail("the steps read %s and %s" % [chart.figure(1), chart.figure(2)])
+	_panel.close_sheet()
+
+
+func _document_chart() -> Control:
+	return _sheet().find_children("*", "Control", true, false).filter(func(c) -> bool: return c is ChartWaterfall and not c.is_queued_for_deletion())[0]
+
+
+## The author's rule (2026-11-28): the two deficit figures print a size and the caption's word carries the sign, so a
+## surplus is never a negative deficit; each side of "now -> after" has its word. Fresh books each time: FinancePrice
+## keeps today's by the day. A case is [pensions moved on the books, then drafted, the captions' words].
+func _check_a_surplus_says_surplus() -> void:
+	for case in [[0.0, -0.5, "Deficit"], [0.0, -8.0, "Deficit → surplus"], [-8.0, -0.5, "Surplus"], [-8.0, 8.0, "Surplus → deficit"]]:
+		var state = GameState.new_game(_loader, "FRA")
+		var ns = state.player()
+		ns.spending_pct_gdp["pensions"] = float(ns.spending_pct_gdp["pensions"]) + float(case[0])
+		Budget.recompute(state, ns)
+		_panel.setup(state, _loader)
+		_state = state
+		var draft = _panel.shared_draft()
+		draft.revert()
+		draft.set_value(FinanceDraft.SPENDING, "pensions", draft.live(FinanceDraft.SPENDING, "pensions") + float(case[1]))
+		_panel._on_moved()
+		_panel._process(0.0)
+		_open_sheet()
+		_settle()
+		var price := FinancePrice.new()
+		price.setup(state)
+		var now := price.now()
+		var after := price.after(draft.pending())
+		var was := float(now["deficit_pct_gdp"])
+		var will := float(after["deficit_pct_gdp"])
+		var words := String(case[2])
+		if (was < 0.0) != words.begins_with("Surplus") or (will < 0.0) != (words.ends_with("surplus") or words == "Surplus"):
+			_fail("premise (%s): the books run %.2f to %.2f %% of GDP" % [words, was, will])
+		var want := [
+			"%s → %s bn" % [Num.f(absf(was * float(now["gdp_eur_bn"]) / 100.0), 0), Num.f(absf(will * float(after["gdp_eur_bn"]) / 100.0), 0)], words + ", a year",
+			"%s → %s %%" % [Num.f(absf(was), 2), Num.f(absf(will), 2)], words + ", of GDP"]
+		var got := []
+		for box in _node("SheetTotals").get_children().slice(2):
+			got.append_array([box.get_child(0).text, box.get_child(1).text])
+		if got != want:
+			_fail("%s: the sheet says %s, want %s" % [words, got, want])
+		# The chart's end is the size too, on its own side of the zero line.
+		var chart := _document_chart()
+		chart.size = Vector2(480.0, chart.custom_minimum_size.y)
+		var last: int = chart.row_count() - 1
+		var end: Rect2 = chart.bar_rect(last)
+		var size_said := Strings.t("%s bn") % Num.f(absf(will * float(after["gdp_eur_bn"]) / 100.0), 0)
+		if chart.figure(last) != size_said or (will < 0.0) != (end.position.x >= chart.zero_rect().position.x - 1.0):
+			_fail("%s: the chart ends '%s' at %s (zero %s), want %s" % [words, chart.figure(last), end, chart.zero_rect().position.x, size_said])
+		_panel.close_sheet()
 
 
 func _check_britain_has_no_forcing() -> void:

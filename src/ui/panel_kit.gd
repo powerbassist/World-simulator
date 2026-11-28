@@ -456,7 +456,8 @@ static func figure(parent: Control, value: String, caption: String, tone := Tone
 
 	var big := Label.new()
 	big.text = value
-	big.theme_type_variation = UiTheme.FIGURE if tone == Tone.PLAIN else _variation(tone, UiTheme.FIGURE)
+	# A toned figure keeps the figure's size: the text tones are body-sized.
+	big.theme_type_variation = UiTheme.FIGURE_GOOD if tone == Tone.GOOD else (UiTheme.FIGURE_ALERT if tone == Tone.BAD else _variation(tone, UiTheme.FIGURE))
 	box.add_child(big)
 
 	var sub := Label.new()

@@ -208,8 +208,9 @@ func _check_a_birth_is_a_row_named_everywhere() -> void:
 	_panel._sheet._stamp = ""
 	_panel._paint(_state.player())
 	var row: Node = _panel._sheet.find_child("SheetRow_tax_rates_pct_" + _absent, true, false)
-	if row == null or not _text_of(row).contains("Creation of " + name):
-		_fail("the sheet does not list the creation")
+	# The document names the tax and tags it (c-build.md section 2), not "Creation of ...".
+	if row == null or not _text_of(row).begins_with(name + " ") or not _text_of(row).contains(Strings.t("New")):
+		_fail("the sheet does not list the creation: %s" % (_text_of(row) if row != null else "<no row>"))
 	if row != null and _text_of(row).contains("▲"):
 		_fail("a creation carries who-is-for chips before the sim prices it")
 	_panel._sheet.hide()
