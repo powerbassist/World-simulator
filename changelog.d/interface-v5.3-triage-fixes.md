@@ -9,3 +9,4 @@ Fixed: Cutting a budget line says who the cut pleases and angers.
 Fixed: One step of a tax rate is counted in points, not percent.
 Fixed: What an office delivers sits under what it holds, no longer under "Wants now".
 Fixed: Every choice on a decision page keeps its title.
+Changed: A programme goal reads as the distance covered since you chose it, and says when it has gone the wrong way, instead of a percentage.

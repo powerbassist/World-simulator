@@ -249,6 +249,8 @@ static func choose(state, ns, entry_id: String, loader) -> Dictionary:
 		"status": K.STATUS_ACTIVE,
 		"concluded_term": -1,
 		"concluded_term_month": -1,
+		# The judged figure before `immediate` moves anything: what the distance is read from.
+		"start": _read_field(ns, String(chosen["current_value"])),
 	})
 	ns.programme_chosen_term = int(ns.terms_served)
 

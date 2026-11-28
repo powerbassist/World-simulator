@@ -14,6 +14,7 @@ extends HBoxContainer
 ## main.gd performs the command -- and the reads it prints are its own.
 
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ProgrammeDistance = preload("res://src/ui/programme_distance.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Labels = preload("res://src/ui/labels.gd")
@@ -253,7 +254,7 @@ func _build_detail(terms: Dictionary) -> void:
 ## The derived pair, printed beside the clock so the number cannot disagree with where the figure stands.
 static func read_text(ns, terms: Dictionary) -> String:
 	var read: Dictionary = Programme.progress_of(ns, terms)
-	return Strings.t("now %s · goal %s") % [Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2)]
+	return ProgrammeDistance.of(ns, terms, float(read["current_value"]))
 
 
 ## The deadline as offered (the register's months-live counter is the Presidency page's lane now). 0 means

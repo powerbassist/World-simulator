@@ -2,6 +2,7 @@ extends RefCounted
 
 const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ProgrammeDistance = preload("res://src/ui/programme_distance.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const Industry = preload("res://src/sim/industry.gd")
@@ -105,9 +106,8 @@ static func _agenda(ns, loader) -> Array:
 		if terms.is_empty() or not bool(terms.get("pinned", false)):
 			continue
 		var progress: Dictionary = Programme.progress_of(ns, terms)
-		var fraction := PanelKit.progress_fraction(
-			float(progress["current_value"]), float(progress["goal_value"]), String(progress["progressbar"]))
-		var text := "%s — %.0f%%" % [Strings.row("programme", String(live["entry_id"]), "name", String(terms.get("name", String(live["entry_id"])))), fraction * 100.0]
+		var text := "%s — %s" % [Strings.row("programme", String(live["entry_id"]), "name", String(terms.get("name", String(live["entry_id"])))),
+			ProgrammeDistance.of(ns, terms, float(progress["current_value"]))]
 		var clock := StripReadings.programme_clock_text(terms, live)
 		if not clock.is_empty():
 			text += " · %s" % clock

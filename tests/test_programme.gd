@@ -80,6 +80,7 @@ func _init() -> void:
 	_test_the_term_end_leaves_a_deadline_entry_alone()
 	_test_an_invalid_trigger_concludes_silent()
 	_test_the_register_carries_no_content()
+	_test_a_choice_records_the_figure_it_started_from()
 	_test_the_register_round_trips_through_json()
 	_test_preloads_are_a_short_list()
 	_test_trigger_reads_delegate_to_the_laws_reader()
@@ -628,17 +629,28 @@ func _test_the_register_carries_no_content() -> void:
 	Programme.choose(state, ns, COMPLETE_ENTRY, _loader)
 	var allowed := [
 		"entry_id", "chosen_term", "months_live", "status",
-		"concluded_term", "concluded_term_month",
+		"concluded_term", "concluded_term_month", "start",
 	]
 	for entry in ns.programme:
 		for key in entry.keys():
 			if not allowed.has(String(key)):
-				_fail("the register carries '%s', which is not one of its six keys" % key)
+				_fail("the register carries '%s', which is not one of its seven keys" % key)
 		for key in allowed:
 			if not entry.has(key):
 				_fail("the register is missing '%s'" % key)
 		if entry.has("goal_value") or entry.has("on_complete") or entry.has("name"):
 			_fail("the register cached content -- the ladder must round-trip through data/programme/")
+
+
+## The distance an entry is read by (blind play 11-28, call A) starts at the judged figure on the day of the choice.
+func _test_a_choice_records_the_figure_it_started_from() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var terms: Dictionary = Programme.terms_of(_loader, COMPLETE_ENTRY)
+	ns.set(String(terms["current_value"]), 8.25)
+	Programme.choose(state, ns, COMPLETE_ENTRY, _loader)
+	if ns.programme.is_empty() or not is_equal_approx(float(ns.programme[0].get("start", -1.0)), 8.25):
+		_fail("a choice did not record the figure it started from: %s" % [ns.programme])
 
 
 ## JSON has one number type: a whole-number float comes back an int, and a stock of

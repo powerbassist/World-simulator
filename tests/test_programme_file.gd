@@ -31,6 +31,13 @@ const Domains = preload("res://src/ui/domains.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const ProgrammeFile = preload("res://src/ui/programme_file.gd")
 const ProgrammePicker = preload("res://src/ui/programme_picker.gd")
+const ProgrammeDistance = preload("res://src/ui/programme_distance.gd")
+const OutlinerReadings = preload("res://src/ui/outliner_readings.gd")
+const StripChildren = preload("res://src/ui/strip_children.gd")
+const TermReads = preload("res://src/ui/term_reads.gd")
+const PollNoise = preload("res://src/ui/poll_noise.gd")
+const PollingPanel = preload("res://src/ui/polling_panel.gd")
+const Num = preload("res://src/ui/num.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
 
 ## The Folder's page beside its 300 px list in the full dock (measured, s3 frames): the list column
@@ -78,7 +85,9 @@ func _run() -> void:
 	_check_the_choice_is_a_command(state, ns, loader)
 	_check_the_booked_page_reads_its_term(state, ns, loader)
 	_check_a_second_choice_refuses(state, ns, loader)
+	_check_the_distance_words()
 	_check_the_other_surfaces_read_the_register(state, ns, loader)
+	_check_the_polled_lane_starts_from_a_poll(state, ns, loader)
 	_check_a_conclusion_pushes_a_card(state, ns, loader)
 	_check_mid_term_says_when_the_next_programme_opens(state, ns, loader)
 	_check_a_reload_forgets_the_guard()
@@ -501,8 +510,67 @@ func _check_the_other_surfaces_read_the_register(state, ns, loader) -> void:
 	campaign.mark_dirty()
 	campaign._process(0.0)
 	var campaign_text := _text(campaign._body)
-	if not campaign_text.contains(String(terms["name"])) or not campaign_text.contains("%"):
-		_fail("the campaign panel's promises section does not read the chosen programme: %s" % campaign_text)
+	if is_nan(ProgrammeDistance.start_of(ns, String(terms["id"]))):
+		_fail("the chosen entry has no starting figure, so the surfaces below prove nothing")
+	var want: String = ProgrammeDistance.of(ns, terms, float(Programme.progress_of(ns, terms)["current_value"]))
+	if not campaign_text.contains(String(terms["name"])) or not campaign_text.contains(want):
+		_fail("the campaign panel's promises section does not read '%s': %s" % [want, campaign_text])
+	var surfaces := {
+		"the strip's tip": tip,
+		"the strip's list": str(StripChildren._programme(ns, loader)),
+		"the file's read": ProgrammePicker.read_text(ns, terms),
+	}
+	if bool(terms.get("pinned", false)):
+		surfaces["the outliner's row"] = str(OutlinerReadings._agenda(ns, loader))
+	if String(terms["current_value"]) != TermReads.APPROVAL_FIELD:
+		surfaces["the Presidency lane's words"] = String(TermReads.goal_lanes(state, loader)[0]["tip"])
+	for name in surfaces:
+		if not String(surfaces[name]).contains(want):
+			_fail("%s does not read '%s': %s" % [name, want, surfaces[name]])
+
+
+## The author's call A (blind play 11-28): the distance in the goal's own unit from the figure at the choice.
+func _check_the_distance_words() -> void:
+	var down := {"goal_value": 7.0, "progressbar": "down", "unit": "%"}
+	var up := {"goal_value": 53.0, "progressbar": "up", "unit": "%"}
+	var terms_count := {"goal_value": 1.0, "progressbar": "up", "unit": "terms"}
+	var f := func(v: float) -> String: return Num.f(v, 2)
+	var done := func(s: float, g: float, d: float, span: float) -> String:
+		return "%s to %s: %s of %s done" % [f.call(s), f.call(g), f.call(d), f.call(span)]
+	var cases := [
+		["nothing moved", down, 7.4, 7.4, done.call(7.4, 7.0, 0.0, 0.4)],
+		["part of the way", down, 7.4, 7.2, done.call(7.4, 7.0, 0.2, 0.4)],
+		["past the goal", down, 7.4, 6.5, done.call(7.4, 7.0, 0.4, 0.4)],
+		["the wrong way, down", down, 7.4, 7.77, done.call(7.4, 7.0, 0.0, 0.4) + ", now %s the wrong way" % f.call(0.37)],
+		["under a rounding", down, 7.4, 7.4001, done.call(7.4, 7.0, 0.0, 0.4)],
+		["part of the way up", up, 50.0, 51.0, done.call(50.0, 53.0, 1.0, 3.0)],
+		["the wrong way, up", up, 50.0, 49.0, done.call(50.0, 53.0, 0.0, 3.0) + ", now %s the wrong way" % f.call(1.0)],
+		["met at the start", down, 6.8, 7.1, "now %s · goal %s" % [f.call(7.1), f.call(7.0)]],
+		["no start kept", down, NAN, 7.4, "now %s · goal %s" % [f.call(7.4), f.call(7.0)]],
+		["terms are counted whole", terms_count, 0.0, 0.0, "0 to 1: 0 of 1 done"],
+	]
+	for case in cases:
+		var said: String = ProgrammeDistance.words(case[1], case[2], case[3])
+		if said != String(case[4]):
+			_fail("%s: '%s', expected '%s'" % [case[0], said, case[4]])
+
+
+## The Presidency lane prints approval as the poll the player was shown, so it starts from that month's poll too.
+func _check_the_polled_lane_starts_from_a_poll(state, ns, loader) -> void:
+	var terms := {}
+	for e in loader.programme:
+		if String(e["current_value"]) == TermReads.APPROVAL_FIELD and String(e["progressbar"]) == "up":
+			terms = e
+			break
+	var kept: Array = ns.programme
+	var start := float(terms["goal_value"]) - 10.0
+	ns.programme = [{"entry_id": String(terms["id"]), "chosen_term": int(ns.terms_served), "months_live": 3,
+		"status": "active", "concluded_term": -1, "concluded_term_month": -1, "start": start}]
+	var polled: float = PollNoise.displayed(PollNoise.poll_id(state.year, state.month) - 3, PollingPanel.HEADLINE_KEY, start)
+	var tip := String(TermReads.goal_lanes(state, loader)[0]["tip"])
+	if not tip.contains("%s to " % Num.f(polled, 2)):
+		_fail("the polled lane does not start from the choosing month's poll %s: '%s'" % [Num.f(polled, 2), tip])
+	ns.programme = kept
 
 
 ## A conclusion is news: a card, and the strip stands down with nothing live.

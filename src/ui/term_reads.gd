@@ -21,6 +21,7 @@ const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Trends = preload("res://src/ui/trends.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const ProgrammeDistance = preload("res://src/ui/programme_distance.gd")
 const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const StripReadings = preload("res://src/ui/strip_readings.gd")
@@ -117,13 +118,16 @@ static func _progress(state, terms: Dictionary) -> Dictionary:
 	return read
 
 
-## Now, the goal and the clock, in the Overview's words (its programme row's tooltip), so the
+## The distance and the clock, in the Overview's words (its programme row's tooltip), so the
 ## strip, the Agenda and the page word one deadline one way.
 static func _tip(state, terms: Dictionary, entry: Dictionary) -> String:
 	if terms.is_empty():
 		return ""
 	var read: Dictionary = _progress(state, terms)
-	var tip := Strings.t("now %s · goal %s") % [Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2)]
+	var start := float(entry.get("start", NAN)) if String(entry["status"]) == ProgrammeK.STATUS_ACTIVE else NAN
+	if String(terms.get("current_value", "")) == APPROVAL_FIELD and not is_nan(start):
+		start = PollNoise.displayed(PollNoise.poll_id(state.year, state.month) - int(entry["months_live"]), PollingPanel.HEADLINE_KEY, start)
+	var tip := ProgrammeDistance.words(terms, start, float(read["current_value"]))
 	if String(entry["status"]) == ProgrammeK.STATUS_ACTIVE:
 		tip += " · " + StripReadings.programme_clock_text(terms, entry)
 	return tip

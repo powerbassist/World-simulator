@@ -1322,14 +1322,16 @@ var last_pledge_result := {}
 
 ## The programme register: the entries this nation has CHOSEN, at most one per term,
 ## each carrying the six decision keys -- which entry, which term, how many months
-## live, the status, and the (term, month-of-term) pair the conclusion happened in.
+## live, the status, and the (term, month-of-term) pair the conclusion happened in --
+## and `start`, the judged figure on the day of the choice (what the distance is read
+## from; absent in a save from before it, and then no distance is said).
 ## Written by Programme.choose() and Programme.tick_month() and by nothing else.
 ##
 ## *** IT HOLDS NO CONTENT. *** The triggers, the goal and every effect live in
 ## data/programme/ and are read through the loader on every read, and progress is
 ## DERIVED from the live figure -- Programme.progress_of() -- never stored, because
 ## a cached value could disagree with the figure it reads and then the panel lies.
-## tests/test_programme.gd pins the six-key shape and the round trip.
+## tests/test_programme.gd pins the seven-key shape and the round trip.
 ##
 ## EARNED THE BUMP TO 35, taken at Task 3 with the absences rather than at the
 ## pulse wiring -- the version gate is shut on the day PROGRAMME_SPAN goes live,

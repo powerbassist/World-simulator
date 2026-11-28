@@ -23,6 +23,7 @@ const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Programme = preload("res://src/sim/programme.gd")
+const ProgrammeDistance = preload("res://src/ui/programme_distance.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
@@ -164,9 +165,9 @@ static func _programme(ns, loader) -> Dictionary:
 		if terms.is_empty():
 			continue
 		var progress: Dictionary = Programme.progress_of(ns, terms)
-		var line := Strings.t("%s -- now %s · goal %s") % [
+		var line := "%s -- %s" % [
 			Strings.row("programme", String(live["entry_id"]), "name", String(terms.get("name", String(live["entry_id"])))),
-			Num.f(float(progress["current_value"]), 2), Num.f(float(progress["goal_value"]), 2)]
+			ProgrammeDistance.of(ns, terms, float(progress["current_value"]))]
 		var clock := StripReadings.programme_clock_text(terms, live)
 		if not clock.is_empty():
 			line += " · %s" % clock
