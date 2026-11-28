@@ -21,8 +21,7 @@ static func at(ns) -> int:
 
 
 ## The verb when FinanceBill.refusal answers `flag`: {} unless another bill holds the slot, else {enabled, text (""
-## keeps the host's own label), note (said after the refusal, before it when `lead`)} and, when it can be pressed,
-## {month, day} it divides.
+## keeps the host's own label), note (said after the refusal)} and, when it can be pressed, {month, day} it divides.
 static func verb(state, loader, flag: String, bill: Dictionary, force := false) -> Dictionary:
 	if flag != "already_tabled":
 		return {}
@@ -31,28 +30,27 @@ static func verb(state, loader, flag: String, bill: Dictionary, force := false) 
 		return {"enabled": false, "text": "", "note": Strings.t("A budget text is already queued.")}
 	# A queued bill is tabled in a later month, outside the autumn one: its creation or abolition would be dropped.
 	if not (bill.get(FinanceBill.CREATE, {}) as Dictionary).is_empty() or not (bill.get(FinanceBill.ABOLISH, []) as Array).is_empty():
-		return {"enabled": false, "text": "", "lead": true, "note": Strings.t("A new or abolished tax cannot wait in the queue.")}
+		return {"enabled": false, "text": "", "note": Strings.t("A new or abolished tax cannot wait in the queue.")}
 	# The queue checks nothing and drops a bad bill months later, so tabling's other checks are asked here.
 	var why := FinanceBill.refusal(state, loader, bill, force, true)
 	if not why.is_empty():
-		# The flag is the third key of every refusal.
-		return {"enabled": false, "text": "", "lead": true, "note": FinanceRefusal.reason(String(why.keys()[2]))}
+		# The register's own reason when it gave one, as the register's sheet says it; else the flag's words.
+		var own := String(why.get("reason", ""))
+		var flags := why.keys().filter(func(key) -> bool: return not key in ["tabled", "refused", "reason"])
+		return {"enabled": false, "text": "",
+			"note": Strings.t(own) if own != "" else FinanceRefusal.reason(String(flags[0]))}  # i18n: row-ok the sim's reason, its English the msgid
 	var i: int = ns.bill_queue.size()
 	if i >= BillQueue.SIZE:
 		return {"enabled": false, "text": Strings.t("The queue is full"), "note": Strings.t("The queue holds three bills. Take one out first.")}
 	var lands := BillVerbs.division(state, i)
 	return {"enabled": true, "text": Strings.t("Queue for %s") % BillVerbs.month_name(state, i),
-		"note": Strings.t("Queued, it divides on %s.") % DateText.day_month(int(lands["day"]), int(lands["month"])),
+		"note": Strings.t("If queued, it divides on %s.") % DateText.day_month(int(lands["day"]), int(lands["month"])),
 		"month": int(lands["month"]), "day": int(lands["day"])}
 
 
-## `reason` and the verb's note as one line. A `lead` note is the cause, said first: the folded bar shows only the first
-## words.
+## `reason` and the verb's note as one line, in the sheet's order.
 static func said(queue: Dictionary, reason: String) -> String:
-	var parts := [reason, String(queue.get("note", ""))]
-	if queue.has("lead"):
-		parts.reverse()
-	return " ".join(parts).strip_edges()
+	return " ".join([reason, String(queue.get("note", ""))]).strip_edges()
 
 
 ## The finance bill waiting in the queue, said on the bar with no draft: {month, day, text}, {} when none is queued.

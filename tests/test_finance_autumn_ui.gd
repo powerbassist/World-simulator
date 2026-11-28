@@ -501,8 +501,8 @@ func _check_an_autumn_row_cannot_be_queued() -> void:
 		_panel._dirty = true
 		_panel._process(0.0)
 		var table: Button = _panel._foot.find_child("Table", true, false)
-		# The cause leads, and the folded line (which clips it) says it whole on a hover.
-		var why := Strings.t("A new or abolished tax cannot wait in the queue.")
+		# The held slot leads, as on the sheet, and the folded line (which clips it) says both whole on a hover.
+		var why := Strings.t("Another bill holds this month's slot.") + " " + Strings.t("A new or abolished tax cannot wait in the queue.")
 		var line: Label = _panel._foot._strip._verdict
 		if not table.disabled or not _panel._foot._text.text.begins_with(why):
 			_fail("an autumn row (birth %s) behind a held slot: the verb reads '%s' (disabled %s), '%s'" % [birth, table.text, table.disabled, _panel._foot._text.text])

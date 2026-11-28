@@ -29,6 +29,7 @@ const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const FinanceMoves = preload("res://src/ui/finance_moves.gd")
+const FinanceQueue = preload("res://src/ui/finance_queue.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -355,8 +356,8 @@ func _check_a_held_slot_queues_the_budget() -> void:
 		_fail("held slot: the verb reads '%s' (disabled %s), want a live 'Queue for %s'" % [table.text, table.disabled, lands])
 	var day := BillVerbs.division(_state, 2)
 	var when := DateText.day_month(int(day["day"]), int(day["month"]))
-	if not _panel._foot._text.text.contains(when):
-		_fail("held slot: the bar does not say the bill divides on %s: '%s'" % [when, _panel._foot._text.text])
+	if not _panel._foot._text.text.contains(Strings.t("If queued, it divides on %s.") % when):
+		_fail("held slot: the bar does not say, before the press, when it would divide: '%s'" % _panel._foot._text.text)
 	if not _panel._foot._title.text.contains(DateText.month_long(int(day["month"]))):
 		_fail("held slot: the bar's title is not the month the bill lands in: '%s'" % _panel._foot._title.text)
 	if _panel._foot._strip._verdict.theme_type_variation != preload("res://src/ui/ui_theme.gd").BAD_SMALL:
@@ -424,7 +425,7 @@ func _check_a_held_slot_refuses_what_the_slot_would_drop() -> void:
 	_panel._dirty = true
 	_panel._process(0.0)
 	var table: Button = _panel._foot.find_child("Table", true, false)
-	var why := Strings.t("Outside the tax's range.")
+	var why := Strings.t("Another bill holds this month's slot.") + " " + Strings.t("Outside the tax's range.")
 	if not table.disabled or not _panel._foot._text.text.begins_with(why):
 		_fail("a rate past its range behind a held slot: the verb reads '%s' (disabled %s), '%s'" % [table.text, table.disabled, _panel._foot._text.text])
 	FinanceMoves.table(_state, _loader, _panel._draft, false)
@@ -436,6 +437,11 @@ func _check_a_held_slot_refuses_what_the_slot_would_drop() -> void:
 	FinanceMoves.table(_state, _loader, _panel._draft, true)
 	if not ns.bill_queue.is_empty():
 		_fail("a forced passage with no right to force was queued: %s" % [ns.bill_queue])
+	# A units row says the register's own reason, as the register's sheet does.
+	var said := String(FinanceQueue.verb(_state, _loader, "already_tabled",
+		{"units": [{"type": "no_such_unit", "op": "build", "rows": []}]}).get("note", ""))
+	if said != Strings.t("This nation does not build that kind of unit."):
+		_fail("a units row behind a held slot: the verb says '%s', not the register's own reason" % said)
 	ns.formation_method = formation
 	ns.tabled_bill = {}
 	ns.bill_queue = []
