@@ -481,10 +481,50 @@ static func top_issues(ns, count: int) -> Array:
 	return ordered.slice(0, count)
 
 
+## Call A (PR 1): the national approval TARGET split into the terms target_of() adds up,
+## each bloc's weighted by its size -- {rows: {neutral (the 50 every target starts from),
+## time_in_office, competence, programme,
+## "issue:<key>", direct, unrest, clamp -> points}, target, approval, lag}. The rows sum to
+## the target exactly; `clamp` is what the +-1 clamp cut, so while it binds the issue rows
+## are pulls before the cap. `lag` is approval minus target: the inertia still to close,
+## which is how approval can rise in a month its target fell. A read: it writes nothing,
+## and it is exact only where target_of's inputs are this month's (after the Opinion step).
+static func causes(ns) -> Dictionary:
+	var sat := issue_satisfaction(ns)
+	var rows := {"neutral": K.APPROVAL_NEUTRAL, "time_in_office": 0.0, "competence": 0.0, "programme": 0.0, "direct": 0.0, "unrest": 0.0, "clamp": 0.0}
+	var target := 0.0
+	for bloc in K.BLOC_KEYS:
+		var size := float(K.BLOC_SIZE[bloc])
+		var weights := bloc_weights(ns, bloc, sat)
+		var score := 0.0
+		for issue in weights:
+			var pull := float(weights[issue]) * float(sat.get(issue, 0.0))
+			score += pull
+			rows["issue:%s" % issue] = float(rows.get("issue:%s" % issue, 0.0)) + size * K.APPROVAL_SPAN * pull
+		var offset := float(ns.bloc_offset.get(bloc, 0.0))
+		var raw := score + offset - float(ns.unrest_opinion_load)
+		rows["direct"] += size * K.APPROVAL_SPAN * offset
+		rows["unrest"] -= size * K.APPROVAL_SPAN * float(ns.unrest_opinion_load)
+		rows["clamp"] += size * K.APPROVAL_SPAN * (clampf(raw, -1.0, 1.0) - raw)
+		rows["time_in_office"] += size * K.time_in_office_offset(int(ns.months_in_term))
+		rows["competence"] += size * competence_credit(ns)
+		rows["programme"] += size * programme_credit(ns)
+		target += size * target_of(ns, bloc, sat, weights)
+	return {"rows": rows, "target": target, "approval": float(ns.overall_approval_pct),
+		"lag": float(ns.overall_approval_pct) - target}
+
+
+## The split a history entry carries; {} for an entry saved before it existed, which a
+## reader shows as "no comparison yet", never as a split of zeros that says nothing moved.
+static func causes_of(entry: Dictionary) -> Dictionary:
+	return entry.get("approval_causes", {})
+
+
 ## The player nation's opinion figures. Merged into the history entry alongside
 ## Budget.snapshot() by the caller — deliberately kept out of Budget.snapshot()
 ## itself, because Budget.project() does not run opinion and folding these in
-## would break the projection-equals-reality test.
+## would break the projection-equals-reality test. The History step runs right after
+## Opinion, so the split it carries is the month's own.
 static func snapshot(state) -> Dictionary:
 	var ns = state.player()
 	if ns == null:
@@ -493,6 +533,7 @@ static func snapshot(state) -> Dictionary:
 		"overall_approval_pct": ns.overall_approval_pct,
 		"bloc_approval": ns.bloc_approval.duplicate(true),
 		"issue_salience": ns.issue_salience.duplicate(true),
+		"approval_causes": causes(ns),
 	}
 
 
