@@ -391,7 +391,7 @@ func _chart(whole: Dictionary, refused: bool) -> void:
 	right.custom_minimum_size.x = CHART_W * UiTheme.text_scale()
 	_columns.add_child(right)
 	var none := {"label": "", "value": 0.0}
-	var chart := ChartKit.waterfall(right, Strings.t("The deficit, a year, bn").to_upper(), none, [], none)
+	var chart := ChartKit.waterfall(right, Strings.t("The deficit, a year").to_upper(), none, [], none)
 	FinanceSteps.setup(chart.get_meta("chart"), _state, _loader, _draft, _price, whole, refused)
 
 

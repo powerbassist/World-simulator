@@ -81,6 +81,7 @@ func _process(_delta: float) -> bool:
 			_check_the_waterfall_is_mirrored()
 			_check_a_surplus_says_surplus()
 			_check_a_small_change_reads_in_millions()
+			_check_small_changes_share_a_row_on_the_rail()
 			_check_britain_has_no_forcing()
 		5:
 			return _finish()
@@ -717,6 +718,45 @@ func _check_a_small_change_reads_in_millions() -> void:
 	if got != [said, said, said, said]:
 		_fail("a small change reads %s on the rail's list, the document's list and the two charts, want %s" % [got, said])
 	_panel.close_sheet()
+
+
+## The author's rule (2026-11-28): two changes under 50 m are one row of the rail's chart, which stays open across a
+## repaint; the list keeps both. The bill already before the Assembly is no change, so it is never one of them.
+func _check_small_changes_share_a_row_on_the_rail() -> void:
+	_state = GameState.new_game(_loader, "FRA")
+	_panel.setup(_state, _loader)
+	var draft = _panel.shared_draft()
+	draft.revert()
+	for kind in ["capital_gains", "alcohol_duty"]:
+		draft.set_value(FinanceDraft.TAX, kind, draft.live(FinanceDraft.TAX, kind) + 0.1)
+	_panel._on_moved()
+	_panel._process(0.0)
+	var chart: Control = _panel._foot._chart
+	var fold := chart.find_child("FoldRow", true, false) as BaseButton
+	if fold == null or not fold.visible or chart.row_count() != 3:
+		_fail("two changes under 50 m take %d rows on the rail's chart" % chart.row_count())
+		return
+	for kind in ["capital_gains", "alcohol_duty"]:
+		if _panel._foot.find_child("Money_tax_rates_pct_" + kind, true, false) == null:
+			_fail("the rail's list lost %s to the chart's fold" % kind)
+	fold.pressed.emit()
+	_panel._dirty = true
+	_panel._process(0.0)
+	if chart.row_count() != 5:
+		_fail("opened and repainted, the rail's chart has %d rows, want 5" % chart.row_count())
+	fold.pressed.emit()
+	draft.revert()
+	FinanceBill.table(_state, _loader, {"tax_rates_pct": {"capital_gains": 0.1}})
+	draft.set_value(FinanceDraft.TAX, "alcohol_duty", draft.live(FinanceDraft.TAX, "alcohol_duty") + 0.1)
+	_panel._on_moved()
+	_panel._process(0.0)
+	if not chart.figure(1).ends_with(" m"):
+		_fail("premise: the tabled bill's step reads %s, not millions" % chart.figure(1))
+	var named: Array = range(chart.row_count()).map(func(i) -> String: return chart.label(i))
+	if fold.visible or named.size() != 4 or named[1] != "The bill before the Assembly":
+		_fail("a small tabled bill and one small change read %s" % [named])
+	_panel._on_withdraw()
+	draft.revert()
 
 
 func _check_britain_has_no_forcing() -> void:

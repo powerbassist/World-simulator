@@ -5,3 +5,4 @@ Changed: The finance bill's deficit chart marks zero with a line: a deficit reac
 Changed: When the books are in surplus, the finance bill's review says surplus instead of showing a negative deficit.
 Fixed: The page's scroll bar no longer draws across the finance bill's review.
 Changed: A small sum now reads in millions or thousands instead of zero, in the finance bill's changes and deficit chart and wherever a one-off or yearly cost is priced.
+Changed: In the finance bill's deficit chart, changes under 50 million share one row; open it to see each one.

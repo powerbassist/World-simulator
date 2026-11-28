@@ -323,8 +323,16 @@ func _check_the_arrows_stay_inside(leg: String) -> void:
 
 ## Tab walks every remove mark, the box and the verbs, and never leaves the document.
 func _check_the_keyboard_stays_inside() -> void:
-	await _two()
+	# Two big changes and two under 50 m: the chart folds the small two into a row the keyboard reaches.
+	await _draft([[FinanceDraft.SPENDING, "health", 1.5], [FinanceDraft.TAX, "vat", 2.0],
+		[FinanceDraft.TAX, "capital_gains", 0.1], [FinanceDraft.TAX, "alcohol_duty", 0.1]])
 	await _open(true)
+	var fold := _doc().find_child("FoldRow", true, false) as BaseButton
+	if fold == null or not fold.is_visible_in_tree():
+		_fail("two changes under 50 m made no folded row on the document's chart")
+		return
+	if _crosses().size() != 4:
+		_fail("the list lost rows to the chart's fold (%d remove marks for 4 changes)" % _crosses().size())
 	var start := _main.get_viewport().gui_get_focus_owner() as Control
 	if start != _named("SheetTable"):
 		_fail("the document opens with the keyboard off its filled verb")
@@ -339,11 +347,17 @@ func _check_the_keyboard_stays_inside() -> void:
 		if not _doc().is_ancestor_of(at):
 			_fail("Tab leaves the document for %s" % at.name)
 			break
-	var wanted: Array = _crosses() + [_named("SheetCross"), _named("SheetDiscard"), _named("SheetClose"), _doc().find_child("Force", true, false)]
+	var wanted: Array = _crosses() + [_named("SheetCross"), _named("SheetDiscard"), _named("SheetClose"), _doc().find_child("Force", true, false), fold]
 	for node in wanted:
 		if not seen.has(node):
 			_fail("Tab does not reach %s" % (node.name if node != null else "<missing>"))
 	_check_the_arrows_stay_inside("as opened")
+	fold.pressed.emit()
+	await _frames(3)
+	var view: Vector2 = _main.get_viewport().get_visible_rect().size
+	if fold.get_parent().row_count() != 7 or _doc().get_global_rect().end.y > view.y - 39.5:
+		_fail("unfolded in the document: %d rows, the document ends at %s" % [fold.get_parent().row_count(), _doc().get_global_rect().end.y])
+	_check_the_arrows_stay_inside("with the small changes unfolded")
 	(_doc().find_child("Force", true, false) as CheckBox).button_pressed = true  # rebuilds the verbs
 	await _frames(2)
 	_check_the_arrows_stay_inside("with the force box ticked")

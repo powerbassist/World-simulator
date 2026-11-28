@@ -221,6 +221,7 @@ func _text(box: Node) -> String:
 
 func _check_charts() -> void:
 	_check_waterfall()
+	_check_small_steps_fold()
 	var empty := _chart(_empty, ChartLine)
 	if empty == null or empty.has_line():
 		_fail("one month drew a line")
@@ -377,6 +378,69 @@ func _check_waterfall() -> void:
 		var wide := 6.0 + font.get_string_size(longest, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 		if wide > ChartWaterfall.FIGURE_W * UiTheme.text_scale():
 			_fail("'%s' needs %s px, the figure column is %s" % [longest, wide, ChartWaterfall.FIGURE_W * UiTheme.text_scale()])
+
+
+## The author's rule (2026-11-28): two or more steps under the caller's fold_under are ONE step, their sum, which a
+## press or Enter unfolds to show each under it and folds again; one such step keeps its row. The bars still walk from
+## the first total to the last.
+func _check_small_steps_fold() -> void:
+	var chart := ChartWaterfall.new()
+	_box.add_child(chart)
+	var start := {"label": "Today", "value": 147.0}
+	var end := {"label": "With the bill", "value": 176.0084}
+	var big_a := {"label": "A", "value": 43.6}
+	var big_d := {"label": "D", "value": -14.6}
+	var steps := [big_a, {"label": "B", "value": 0.012}, {"label": "C", "value": -0.004}, big_d, {"label": "E", "value": 0.0004}]
+	var opts := {"step_text": EffectsStrip.sum_text, "fold_under": 0.05, "worse_up": false}
+	chart.setup(start, steps, end, opts)
+	chart.size = Vector2(480.0, chart.custom_minimum_size.y)
+	_expect_rows(chart, "folded", ["Today", "A", "▸ 3 small changes", "D", "With the bill"])
+	var fold := chart.find_child("FoldRow", true, false) as BaseButton
+	if fold == null or not fold.visible or fold.focus_mode != Control.FOCUS_ALL:
+		_fail("the folded row is no button the keyboard reaches")
+		chart.queue_free()
+		return
+	var h := chart.row_height()
+	if fold.get_rect() != Rect2(0.0, 2.0 * h, 480.0, h):
+		_fail("the fold's button is not on its row: %s" % fold.get_rect())
+	if chart.figure(2) != "+8 m" or absf(chart.bar_rect(3).end.x - chart.x_of(147.0 + 43.6 + 0.0084)) > 0.5:
+		_fail("the fold reads %s and the next step starts at %s, want its sum" % [chart.figure(2), chart.bar_rect(3).end.x])
+	fold.pressed.emit()
+	_expect_rows(chart, "unfolded", ["Today", "A", "▾ 3 small changes", "B", "C", "E", "D", "With the bill"])
+	if [chart.figure(2), chart.figure(3), chart.figure(4), chart.figure(5)] != ["+8 m", "+12 m", "-4 m", "+400 k"]:
+		_fail("unfolded, the figures read %s %s %s %s" % [chart.figure(2), chart.figure(3), chart.figure(4), chart.figure(5)])
+	# Under their fold, each walks from where the fold starts; the step after them starts where the fold ends.
+	if absf(chart.bar_rect(3).position.x - chart.x_of(190.6)) > 0.5 or absf(chart.bar_rect(6).end.x - chart.x_of(190.6084)) > 0.5:
+		_fail("unfolded, the bars do not walk: %s then %s" % [chart.bar_rect(3), chart.bar_rect(6)])
+	if chart.custom_minimum_size.y != h * 8:
+		_fail("unfolded, the chart asks for %s px for 8 rows of %s" % [chart.custom_minimum_size.y, h])
+	# The rail sets the same chart up again on every repaint: it stays as the reader left it.
+	chart.setup(start, steps, end, opts)
+	if chart.row_count() != 8:
+		_fail("a repaint folded the row again (%d rows)" % chart.row_count())
+	fold.grab_focus()
+	for down in [true, false]:
+		var enter := InputEventKey.new()
+		enter.keycode = KEY_ENTER
+		enter.physical_keycode = KEY_ENTER
+		enter.pressed = down
+		root.push_input(enter)
+	if chart.row_count() != 5 or root.gui_get_focus_owner() != fold:
+		_fail("Enter on the unfolded row does not fold it and keep the keyboard (%d rows)" % chart.row_count())
+	chart.setup(start, [big_a, {"label": "B", "value": 0.012}, big_d], end, opts)
+	_expect_rows(chart, "one small step", ["Today", "A", "B", "D", "With the bill"])
+	if fold.visible:
+		_fail("the fold's button stays with nothing folded")
+	chart.setup(start, steps, end, {"step_text": EffectsStrip.sum_text})
+	if chart.row_count() != 7:
+		_fail("a chart with no fold_under folded its steps (%d rows)" % chart.row_count())
+	chart.queue_free()
+
+
+func _expect_rows(chart: ChartWaterfall, leg: String, want: Array) -> void:
+	var got: Array = range(chart.row_count()).map(func(i) -> String: return chart.label(i))
+	if got != want:
+		_fail("%s: the rows read %s, want %s" % [leg, got, want])
 
 
 func _finish() -> void:

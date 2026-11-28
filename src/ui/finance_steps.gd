@@ -15,6 +15,9 @@ const Num = preload("res://src/ui/num.gd")
 
 ## A residual under this (bn a year) is rounding, not a step.
 const RESIDUAL_BN := 0.05
+## A step under this (bn a year) reads ±0.0 at one decimal, the author's "insignificant rows" (2026-11-28): two or
+## more of them are one row on the chart, which a press opens. The list of changes keeps every row.
+const SMALL_STEP_BN := 0.05
 ## The chart's name column at text 100: a change and its figures ("Health, 11.0 → 12.5").
 const LABEL_W := 190.0
 
@@ -29,7 +32,8 @@ static func setup(chart: ChartWaterfall, state, loader, draft, price, whole: Dic
 	if FinanceBillLaw.tabled(ns) != null and not refused:
 		var alone: Dictionary = price.tabled(loader)
 		walked = float(alone["deficit_now_bn"]) - float(alone["deficit_after_bn"])
-		steps.append({"label": Strings.t("The bill before the Assembly"), "value": walked})
+		# Never folded: it is not one of the changes the row would count.
+		steps.append({"label": Strings.t("The bill before the Assembly"), "value": walked, "keep": true})
 	for row in draft.rows():
 		var gain: float = price.row_balance_bn(row)
 		steps.append({"label": "%s, %s" % [FinanceRows.change_label(ns, row), FinanceRows.change_figures(ns, row)], "value": gain})
@@ -39,7 +43,7 @@ static func setup(chart: ChartWaterfall, state, loader, draft, price, whole: Dic
 	if absf(after - now - walked) >= RESIDUAL_BN:
 		steps.append({"label": Strings.t("Together, and what the rows alone miss"), "value": after - now - walked})
 	chart.setup(_total(Strings.t("Today"), now), steps, _total(Strings.t("With the bill"), after),
-		{"label_w": LABEL_W, "worse_up": false, "step_text": EffectsStrip.sum_text})
+		{"label_w": LABEL_W, "worse_up": false, "step_text": EffectsStrip.sum_text, "fold_under": SMALL_STEP_BN})
 
 
 ## A total's row: where the balance stands, printed as its size (its side of the zero line says which it is).

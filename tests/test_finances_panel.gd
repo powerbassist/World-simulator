@@ -577,7 +577,8 @@ func _start_a_long_bill() -> void:
 		if draft.count() >= 12:
 			break
 		if float(ns.tax_rates_pct[kind]) > 0.5:
-			draft.set_value(FinanceDraft.TAX, String(kind), float(ns.tax_rates_pct[kind]) + 0.5)
+			# Two points: a change under 50 m would fold into one row of the chart, and the premise is a long one.
+			draft.set_value(FinanceDraft.TAX, String(kind), float(ns.tax_rates_pct[kind]) + 2.0)
 	page._on_structure_changed()
 
 

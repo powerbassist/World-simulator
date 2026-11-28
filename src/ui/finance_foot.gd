@@ -149,7 +149,7 @@ func _ready() -> void:
 	scroll.add_child(listed)
 	_fall = VBoxContainer.new()
 	listed.add_child(_fall)
-	var box := ChartKit.waterfall(_fall, Strings.t("The deficit, a year, bn").to_upper(), {"label": "", "value": 0.0}, [], {"label": "", "value": 0.0})
+	var box := ChartKit.waterfall(_fall, Strings.t("The deficit, a year").to_upper(), {"label": "", "value": 0.0}, [], {"label": "", "value": 0.0})
 	_chart = box.get_meta("chart")
 	_chart.set_meta("rail", "waterfall")
 	_pct = PanelKit.plain_line(_fall, "", PanelKit.Tone.DIM)

@@ -151,6 +151,9 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-range --books-document   (refused for the range alone)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn --books tax_rates_pct:vat --books-document   (an open tax editor on the page behind the document)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-long --books-document   (every line and tax drafted: the list scrolls)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-long --books-unfold --books-document   (the chart's row of small changes opened)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-long --inbox-away   (the same draft on the bill's rail)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-long --books-unfold --inbox-away   (that row opened on the rail)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet --books-surplus   (a deep pension cut: the bill ends in surplus, the chart crosses zero)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-draft --books-surplus --inbox-away   (the same on the bill's rail)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-about --open region
@@ -603,12 +606,14 @@ var _books_move := false
 var _books_autumn := false
 ## --books-document: the bill's document open on whatever the other --books flags drafted; --books-force: its force box
 ## ticked; --books-range: VAT past its range; --books-long: every spending line and tax in force drafted;
-## --books-surplus: pensions 8 points of GDP lower drafted, enough to leave a surplus.
+## --books-surplus: pensions 8 points of GDP lower drafted, enough to leave a surplus; --books-unfold: the deficit
+## chart's row of small changes pressed open, on the rail and in the document.
 var _books_document := false
 var _books_force := false
 var _books_range := false
 var _books_long := false
 var _books_surplus := false
+var _books_unfold := false
 var _books_tabled := false
 var _books_refused := false
 
@@ -1144,6 +1149,8 @@ func _init() -> void:
 			_books_long = true
 		elif args[i] == "--books-surplus":
 			_books_surplus = true
+		elif args[i] == "--books-unfold":
+			_books_unfold = true
 		elif args[i] == "--books-move":
 			_books_move = true
 		elif args[i] == "--books-draft":
@@ -2541,6 +2548,13 @@ func _stage_the_books() -> void:
 			force.button_pressed = true
 		elif _books_force:
 			push_error("screenshot: --books-force found no force box (the draft is refused, or no forced passage)")
+	if _books_unfold:
+		var folds: Array = _main.find_children("FoldRow", "LinkButton", true, false).filter(
+			func(b) -> bool: return b.visible and not b.is_queued_for_deletion())
+		for fold in folds:
+			fold.pressed.emit()
+		if folds.is_empty():
+			push_error("screenshot: --books-unfold found no row of small changes")
 	print("--books: row '%s', draft %s, tabled %s, refused %s" % [_books_row, _books_draft, _books_tabled, _books_refused])
 
 
