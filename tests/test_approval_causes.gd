@@ -41,6 +41,7 @@ func _init() -> void:
 		return
 	_test_the_rows_sum_to_the_target_every_month()
 	_test_the_clamp_row_carries_what_the_clamp_cut()
+	_test_a_target_past_the_band_is_cut_to_it()
 	_test_history_carries_the_split()
 	_test_an_entry_from_before_reads_as_no_split()
 	_finish()
@@ -112,6 +113,34 @@ func _test_the_clamp_row_carries_what_the_clamp_cut() -> void:
 		_fail("past the clamp the rows sum to %.9f, the target is %.9f" % [total, _independent_target(ns)])
 
 
+## A target below the approval band (full fatigue, a failed programme, every offset and
+## the unrest load at the clamp): the band's cut sits in the clamp row, the target is the
+## reachable one, and the lag is measured to it -- not a gap approval can never close.
+func _test_a_target_past_the_band_is_cut_to_it() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	ns.months_in_term = 120
+	ns.programme_stock = -1.0
+	ns.unrest_opinion_load = 1.0
+	for bloc in K.BLOC_KEYS:
+		ns.bloc_offset[bloc] = -1.0
+	var sat := Opinion.issue_satisfaction(ns)
+	var unclamped := 0.0
+	for bloc in K.BLOC_KEYS:
+		unclamped += float(K.BLOC_SIZE[bloc]) * Opinion.target_of(ns, bloc, sat, Opinion.bloc_weights(ns, bloc, sat))
+	if not unclamped < K.APPROVAL_MIN:
+		_fail("premise: the staged target %.3f is not below the band" % unclamped)
+		return
+	var c: Dictionary = Opinion.causes(ns)
+	var total := 0.0
+	for key in c["rows"]:
+		total += float(c["rows"][key])
+	if float(c["target"]) < K.APPROVAL_MIN - EPS or absf(total - float(c["target"])) > EPS:
+		_fail("a target past the band: the split's target %.6f, its rows sum %.6f" % [float(c["target"]), total])
+	if absf(float(c["lag"]) - (float(ns.overall_approval_pct) - float(c["target"]))) > EPS:
+		_fail("past the band the lag %.6f is not measured to the reachable target" % float(c["lag"]))
+
+
 ## The History step carries the split: the month's entry holds causes(ns) as it stood
 ## after that month's Opinion, and Opinion.causes_of(entry) reads it back.
 func _test_history_carries_the_split() -> void:
@@ -131,6 +160,13 @@ func _test_history_carries_the_split() -> void:
 		return
 	if var_to_str(read) != var_to_str(at_opinion["c"]):
 		_fail("the history entry's split is not the month's causes(ns):\n%s\n%s" % [read, at_opinion["c"]])
+	# A copy: a reader that edits what it got cannot rewrite the saved month.
+	(read["rows"] as Dictionary)["neutral"] = -1.0
+	if float(Opinion.causes_of(entry)["rows"]["neutral"]) == -1.0:
+		_fail("causes_of() handed out the history entry's own dictionary")
+	# A mid-month snapshot (Trends.snapshot_now) carries no split: only History adds it.
+	if Opinion.snapshot(state).has("approval_causes"):
+		_fail("Opinion.snapshot carries the split; a mid-month caller would read an unticked one")
 	# Through a save: the split survives the round trip (JSON may cost the last bits).
 	var loaded = GameState.from_dict(JSON.parse_string(JSON.stringify(state.to_dict())))
 	var back: Dictionary = Opinion.causes_of(loaded.history[-1])
@@ -171,12 +207,13 @@ func _next_month(state) -> void:
 		state.year += 1
 
 
-## The tick's own target, size-weighted: target_of over the six blocs, nothing else.
+## The tick's own target, size-weighted: target_of over the six blocs, each cut to the
+## approval band the tick clamps that bloc's approval to.
 func _independent_target(ns) -> float:
 	var sat := Opinion.issue_satisfaction(ns)
 	var total := 0.0
 	for bloc in K.BLOC_KEYS:
-		total += float(K.BLOC_SIZE[bloc]) * Opinion.target_of(ns, bloc, sat, Opinion.bloc_weights(ns, bloc, sat))
+		total += float(K.BLOC_SIZE[bloc]) * clampf(Opinion.target_of(ns, bloc, sat, Opinion.bloc_weights(ns, bloc, sat)), K.APPROVAL_MIN, K.APPROVAL_MAX)
 	return total
 
 

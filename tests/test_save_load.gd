@@ -202,6 +202,7 @@ func _check_approval_causes_absent(loader) -> void:
 		Opinion.tick_month(state)
 		var entry := Budget.snapshot(state)
 		entry.merge(Opinion.snapshot(state))
+		entry["approval_causes"] = Opinion.causes(state.player())  # what the History step adds
 		state.append_history(entry)
 	var saved: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
 	var kept = GameState.from_dict(saved.duplicate(true))
