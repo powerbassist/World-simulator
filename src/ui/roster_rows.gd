@@ -157,7 +157,7 @@ static func _row(state, loader, ns, pid: String) -> Dictionary:
 	if not request.is_empty():
 		row["rank"] = Need.REQUEST
 		row["request_id"] = String(request["id"])
-		var about := PersonCard.object_text(loader, ns, String(request["object"]), request, true)
+		var about := PersonCard.object_text(loader, ns, String(request["object"]), request)
 		if String(request["status"]) == AK.STATUS_BOOKED and not (request["date"] as Dictionary).is_empty():
 			var d: Dictionary = request["date"]
 			row["booked"] = true
