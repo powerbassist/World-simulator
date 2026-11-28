@@ -62,11 +62,11 @@ func _init() -> void:
 		return
 
 	_check_a_sponsor_asks_for_the_first_open_law_the_entry_names()
-	_check_an_entry_with_no_law_is_a_word_at_the_next_term()
-	_check_the_term_word_is_after_the_vote_in_every_playable_nation()
-	_check_an_open_register_answers_next_month()
-	_check_an_oppose_is_a_word_too()
-	_check_a_meter_is_a_word_a_year_on()
+	_check_an_entry_with_no_law_is_talk()
+	_check_talk_in_every_playable_nation()
+	_check_talk_closes_settled_and_unpriced()
+	_check_an_oppose_is_talk_too()
+	_check_a_meter_is_talk_and_a_fund_is_a_word_a_year_on()
 	_check_a_portfolio_is_a_post()
 	_check_a_party_outside_the_coalition_cannot_be_granted_a_post()
 	_check_someone_with_no_party_cannot_be_granted_a_post()
@@ -154,60 +154,75 @@ func _check_a_sponsor_asks_for_the_first_open_law_the_entry_names() -> void:
 		_fail("a law is due in 6 months, 18 for the smaller grant, got %s" % [ask])
 
 
-func _check_an_entry_with_no_law_is_a_word_at_the_next_term() -> void:
+func _check_an_entry_with_no_law_is_talk() -> void:
 	var f := _held_on_want("programme:", "sponsor")
 	var ns = f["ns"]
 	var ask: Dictionary = Deal.ask_of(f["state"], ns, _loader, Audiences.request(ns, f["id"]))
-	var vote: int = int(ns.next_executive_year) * 12 + int(ns.next_executive_month)
-	if String(ask.get("kind", "")) != "word" or String(ask.get("object", "")) != String(f["object"]):
-		_fail("an entry with no law is a word on the want itself, got %s" % [ask])
-	# The register opens in the month of the vote, after that month's judge has run, so
-	# the word cannot be judged before the next month's.
-	if int(ask.get("due_month", 0)) != vote + 1:
-		_fail("a programme word falls due the month after the vote: %d, got %s" % [vote + 1, ask])
-	if int(ask.get("smaller_due_month", 0)) != vote + 13:
-		_fail("the smaller grant is a year on from it, got %s" % [ask])
+	# Call 2 B (the author, 2026-11-28): a programme's place on the register is not the
+	# president's to do, so there is no word to give on it.
+	if String(ask.get("kind", "")) != "word" or String(ask.get("object", "")) != String(f["object"]) \
+			or not bool(ask.get("talk", false)) or String(ask.get("why_not", "")) != AK.TALK_ONLY:
+		_fail("an entry with no law is talk, its ask closed with the reason, got %s" % [ask])
+	var answers: Dictionary = Deal.answers(f["state"], ns, _loader, f["session"])
+	if bool(answers["grant"]["ok"]) or not (answers["offer"] as Dictionary).is_empty() or not (answers["refuse"] as Dictionary).is_empty():
+		_fail("talk has no Grant, no offer and no price to refuse, got %s" % [answers])
+	for row in answers["bargain"]["approaches"]:
+		if bool(row["offered"]) or String(row["why_not"]) != AK.TALK_ONLY:
+			_fail("talk offers no approach, got %s" % [row])
+	var before: int = ns.commitments.size()
+	if bool(Deal.grant(f["state"], ns, _loader, f["session"]).get("ok", true)) \
+			or bool(Deal.bargain(f["state"], ns, _loader, f["session"], "argue").get("ok", true)) \
+			or bool(Deal.bargain(f["state"], ns, _loader, f["session"], "promise_date", {"due_month": _now(f) + 6}).get("ok", true)):
+		_fail("a talk audience took a Grant or an approach")
+	if ns.commitments.size() != before:
+		_fail("a talk audience wrote a word: %s" % [ns.commitments])
 
 
-func _check_the_term_word_is_after_the_vote_in_every_playable_nation() -> void:
+func _check_talk_in_every_playable_nation() -> void:
 	for id in PLAYABLE:
 		var state = GameState.new_game(_loader, id)
 		var ns = state.player()
-		var now: int = int(state.year) * 12 + int(state.month)
-		var ask: Dictionary = Deal.ask_of(state, ns, _loader, {"object": "programme:prog_jobs_first", "stance": "sponsor", "person_id": "%s_nobody" % id})
-		if int(ask.get("due_month", 0)) <= now:
-			_fail("%s: a programme word must fall due after today, got %s" % [id, ask])
+		for object in ["programme:prog_jobs_first", "meter:press_freedom", "office:premiership", "office:party_leadership:x"]:
+			var ask: Dictionary = Deal.ask_of(state, ns, _loader, {"object": object, "stance": "oppose", "person_id": "%s_nobody" % id})
+			if not bool(ask.get("talk", false)):
+				_fail("%s: a word on %s is talk, got %s" % [id, object, ask])
 
 
-func _check_an_open_register_answers_next_month() -> void:
-	var f := _held_on_want("programme:", "sponsor")
+func _check_talk_closes_settled_and_unpriced() -> void:
+	var f := _held_on_want("meter:", "")
 	var ns = f["ns"]
-	ns.months_in_term = 0
-	var row := Audiences.request(ns, f["id"])
-	if int(Deal.ask_of(f["state"], ns, _loader, row).get("due_month", 0)) != _now(f) + 1:
-		_fail("in the register's own month the word is judged next month")
-	ns.programme_chosen_term = int(ns.terms_served)
-	var vote: int = int(ns.next_executive_year) * 12 + int(ns.next_executive_month)
-	if int(Deal.ask_of(f["state"], ns, _loader, row).get("due_month", 0)) != vote + 1:
-		_fail("a register already chosen waits for the next term")
+	var pid: String = f["person_id"]
+	var grudge := float(ns.person_grudges.get(pid, 0.0))
+	# Nothing is priced, so the card shows no refusal's risk and no silence's worth either.
+	if not Deal.refusal_risk(f["state"], ns, _loader, f["session"]).is_empty() or not Deal.silence_worth(f["state"], ns, _loader, f["session"]).is_empty():
+		_fail("talk shows a refusal's risk or a silence's worth")
+	var closed: Dictionary = Levers.close(f["state"], ns, _loader, f["session"])
+	if String(closed.get("outcome", "")) != AK.STATUS_SETTLED or not (closed.get("price", {}) as Dictionary).is_empty():
+		_fail("talk closes settled, with no price: %s" % [closed])
+	if float(ns.person_grudges.get(pid, 0.0)) != grudge:
+		_fail("closing talk moved the grudge")
 
 
-func _check_an_oppose_is_a_word_too() -> void:
+func _check_an_oppose_is_talk_too() -> void:
 	var f := _held_on_want("programme:", "oppose")
 	var entry := _entry(f["object"])
 	entry["laws"] = _open_laws(f, 1)
 	var ask: Dictionary = Deal.ask_of(f["state"], f["ns"], _loader, Audiences.request(f["ns"], f["id"]))
 	entry.erase("laws")
-	if String(ask.get("kind", "")) != "word" or String(ask.get("object", "")) != String(f["object"]):
-		_fail("an entry someone opposes is no bill to bring, it stays a word, got %s" % [ask])
+	if String(ask.get("kind", "")) != "word" or String(ask.get("object", "")) != String(f["object"]) or not bool(ask.get("talk", false)):
+		_fail("an entry someone opposes is no bill to bring, it is talk, got %s" % [ask])
 
 
-func _check_a_meter_is_a_word_a_year_on() -> void:
+func _check_a_meter_is_talk_and_a_fund_is_a_word_a_year_on() -> void:
 	var f := _held_on_want("meter:", "")
 	var ask: Dictionary = Deal.ask_of(f["state"], f["ns"], _loader, Audiences.request(f["ns"], f["id"]))
-	var now := _now(f)
-	if String(ask.get("kind", "")) != "word" or int(ask.get("due_month", 0)) != now + 12 or int(ask.get("smaller_due_month", 0)) != now + 24:
-		_fail("a meter is a word 12 months on, 24 for the smaller grant, got %s" % [ask])
+	if not bool(ask.get("talk", false)):
+		_fail("a meter is talk, got %s" % [ask])
+	var g := _held_on_want("region:", "")
+	var fund: Dictionary = Deal.ask_of(g["state"], g["ns"], _loader, Audiences.request(g["ns"], g["id"]))
+	var now := _now(g)
+	if String(fund.get("kind", "")) != "word" or bool(fund.get("talk", false)) or int(fund.get("due_month", 0)) != now + 12 or int(fund.get("smaller_due_month", 0)) != now + 24:
+		_fail("a region's fund is a word 12 months on, 24 for the smaller grant, got %s" % [fund])
 
 
 func _check_a_portfolio_is_a_post() -> void:
@@ -258,7 +273,7 @@ func _check_someone_with_no_party_cannot_be_granted_a_post() -> void:
 # --- The offer --------------------------------------------------------------------------
 
 func _check_the_offer_is_a_vote_on_the_tabled_bill() -> void:
-	var f := _held_on_want("programme:", "sponsor", true)
+	var f := _held_on_want("region:", "", true)
 	var ns = f["ns"]
 	var law_id: String = _votable(f, 1)[0]
 	ns.tabled_bill = {"law_id": law_id}
@@ -312,7 +327,7 @@ func _check_a_party_already_voting_yes_offers_silence() -> void:
 ## The read is the bill as it will divide: at ten times a yes line peels, and a pledge holds
 ## seats that would have left, so the same person who offered silence at one offers a vote.
 func _check_a_grade_is_read_in_the_gain() -> void:
-	var f := _held_on_want("programme:", "sponsor", true)
+	var f := _held_on_want("region:", "", true)  # an act: Grant pays it (call 2 B)
 	var ns = f["ns"]
 	var party := President.party_id_of(ns, _loader, f["person_id"])
 	var graded = null

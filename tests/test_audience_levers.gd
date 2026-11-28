@@ -18,6 +18,7 @@ extends SceneTree
 ##   - a promise falling due is judged at the month, through main's own runner,
 ##     and the verdict is a card naming the person; the Diary drops it.
 
+const WantTerms = preload("res://src/sim/want_terms.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const DealK = preload("res://src/sim/deal_constants.gd")
@@ -89,10 +90,12 @@ func _open_an_audience() -> void:
 	var state = _main._state
 	var ns = state.player()
 	var now: int = int(state.year) * 12 + int(state.month)
+	# Call 2 B: a word is given only on an act (a region's fund here), so the Counter is open.
 	for person in _main._loader.people.get(String(ns.id), []):
-		if person.wants.is_empty() or String(person.id) == String(ns.head_of_state_person_id):
+		var acts: Array = person.wants.filter(func(w): return WantTerms.is_act(String(w["object"])) and not String(w["object"]).begins_with("office:"))
+		if acts.is_empty() or String(person.id) == String(ns.head_of_state_person_id):
 			continue
-		Audiences._arrive(ns, person, person.wants[0], now, [])
+		Audiences._arrive(ns, person, acts[0], now, [])
 		_request = String(ns.audience_requests[-1]["id"])
 		_person = String(person.id)
 		break
@@ -178,7 +181,8 @@ func _check_topic() -> void:
 func _check_end() -> void:
 	var ns = _main._state.player()
 	var won := String(_session().get("won", ""))
-	var want := "declined" if won == "" else ("promised" if won == "promise_date" else "settled")
+	# The Counter's win read when it landed: the scene's session after End is not the one it won in.
+	var want := "promised" if _won_promise or won == "promise_date" else ("declined" if won == "" else "settled")
 	if String(Audiences.request(ns, _request).get("status", "")) != want:
 		_fail("End did not close the audience as %s: %s" % [want, Audiences.request(ns, _request)])
 

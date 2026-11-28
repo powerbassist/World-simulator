@@ -6,7 +6,7 @@ extends RefCounted
 ##
 ## ONE ASK, ONE OFFER, THREE ANSWERS.
 ##   ask_of()    what they want, in the game's own objects: a bill, a portfolio, else a dated
-##               word on the want. Read when the audience opens, never stamped on the request,
+##               word on the want when it is an act, else talk (call 2 B). Read when the audience opens, never stamped on the request,
 ##               so a card is never stale and no save carries it.
 ##   offer_of()  what they give: their faction's seats on the next bill, else their silence.
 ##   grant()     pay the ask, take the offer, no roll.
@@ -45,11 +45,11 @@ const LawMagnitude = preload("res://src/core/law_magnitude.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const President = preload("res://src/sim/president.gd")
-const Programme = preload("res://src/sim/programme.gd")
 const Removal = preload("res://src/sim/removal.gd")
 const Shadows = preload("res://src/sim/shadows.gd")
 const RefusalRisk = preload("res://src/sim/refusal_risk.gd")
 const MatterPeople = preload("res://src/sim/matter_people.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 
 ## Why Grant and the counter wait while the money is on the table.
 const MONEY_FIRST := "the money on the table is not answered yet"
@@ -71,7 +71,8 @@ static func open(state, ns, loader, request_id: String) -> Dictionary:
 
 ## `row` a request as Audiences reads it. {kind, object, due_month, smaller_due_month}, with
 ## {law_id} on a bill and {portfolio, party_id, why_not} on a post, which has no due_month: it
-## is paid now.
+## is paid now. A want that is no act of the president's (a programme's place, a meter) is
+## {talk: true, why_not: AK.TALK_ONLY}: no word to give (call 2 B, WantTerms.is_act).
 static func ask_of(state, ns, loader, row: Dictionary) -> Dictionary:
 	var now := _now(state)
 	var object := String(row.get("object", ""))
@@ -91,7 +92,9 @@ static func ask_of(state, ns, loader, row: Dictionary) -> Dictionary:
 		if law_id != "":
 			var by := now + K.LAW_MONTHS
 			return {"kind": K.ASK_LAW, "object": "law:%s" % law_id, "law_id": law_id, "due_month": by, "smaller_due_month": by + K.SMALLER_EXTRA_MONTHS}
-	var due := _word_due(ns, now, object)
+	if not WantTerms.is_act(object):  # call 2 B: a programme or a meter is talk, no word to give
+		return {"kind": K.ASK_WORD, "object": object, "talk": true, "why_not": AK.TALK_ONLY, "due_month": now, "smaller_due_month": now}
+	var due := now + K.WORD_MONTHS
 	return {"kind": K.ASK_WORD, "object": object, "due_month": due, "smaller_due_month": due + K.SMALLER_EXTRA_MONTHS}
 
 
@@ -118,13 +121,13 @@ static func offer_of(state, ns, loader, person_id: String) -> Dictionary:
 ## (src/sim/refusal_risk.gd says what that projection can and cannot see). Copies the world:
 ## read it on a redraw, not every frame.
 static func refusal_risk(state, _ns, loader, session: Dictionary) -> Dictionary:
-	return {} if AK.is_summons(session) else RefusalRisk.of_refusal(state, loader, String(session.get("request_id", "")))  # no ask, no risk
+	return {} if AK.is_talk(session) else RefusalRisk.of_refusal(state, loader, String(session.get("request_id", "")))  # no ask, no risk
 
 
 ## What their silence is worth, from Grant's side: the same figures with no refusal, the
 ## briefs a word of silence spares over its term.
 static func silence_worth(state, _ns, loader, session: Dictionary) -> Dictionary:
-	return {} if AK.is_summons(session) else RefusalRisk.of_silence(state, loader, String(session.get("request_id", "")))
+	return {} if AK.is_talk(session) else RefusalRisk.of_silence(state, loader, String(session.get("request_id", "")))
 
 
 ## The people in the matter (mockup C's "Ask her about"): at most five person ids, ordered,
@@ -158,11 +161,11 @@ static func answers(state, ns, loader, session: Dictionary) -> Dictionary:
 	return {
 		"ask": session.get("ask", {}),
 		# Once struck, the offer it took: the card reads the deal, not what would be on offer now.
-		"offer": {} if AK.is_summons(session) else session.get("struck", offer_of(state, ns, loader, String(session.get("person_id", "")))),
+		"offer": {} if AK.is_talk(session) else session.get("struck", offer_of(state, ns, loader, String(session.get("person_id", "")))),
 		"money": {} if String(session.get("won", "")) != "" else _money(state, ns, loader, session),
 		"grant": grant_card,
 		"bargain": {"due_month": int(session.get("ask", {}).get("smaller_due_month", 0)), "approaches": approaches},
-		"refuse": Audiences.decline_price(ns, loader, String(session.get("request_id", ""))),
+		"refuse": {} if AK.is_talk(session) else Audiences.decline_price(ns, loader, String(session.get("request_id", ""))),
 	}
 
 
@@ -362,18 +365,6 @@ static func _open_law_named(state, ns, loader, entry_id: String) -> String:
 				if open.has(String(law_id)):
 					return String(law_id)
 	return ""
-
-
-## A programme's word falls due the month after its register opens: the register opens in the
-## month of the vote, after that month's judge has run (Programme runs before Elections). A
-## clock never set has no term to name, so it reads as any other word.
-static func _word_due(ns, now: int, object: String) -> int:
-	if not object.begins_with("programme:"):
-		return now + K.WORD_MONTHS
-	if Programme.is_term_start(ns) and int(ns.programme_chosen_term) != int(ns.terms_served):
-		return now + 1
-	var vote := int(ns.next_executive_year) * 12 + int(ns.next_executive_month)
-	return vote + 1 if vote >= now else now + K.WORD_MONTHS
 
 
 ## What this person's word adds to the yes line, the division read twice as Division.forecast

@@ -18,6 +18,21 @@ static func is_standing(object: String) -> bool:
 	return object.begins_with("meter:") or object.begins_with("programme:")
 
 
+## The author's call 2 B (2026-11-28): whether a word on `object` promises something the player
+## DOES -- a bill brought (`law:`), a post given, a region's fund opened, a measure lifted, a plant
+## answered. A programme's place on the register, a meter's level, the premiership (the largest
+## party's) and a party's leadership (the party's) are not the player's to do: no word is given on
+## them. Words already written on them (an older save) are judged as they were given.
+const ACTS := ["law:", "office:portfolio:", "region:", "measure:", "firm:"]
+
+
+static func is_act(object: String) -> bool:
+	for prefix in ACTS:
+		if object.begins_with(prefix):
+			return true
+	return false
+
+
 ## The want-shaped half of a grudge pulse. FERVENT amplifies a METER want's
 ## denial for the collective kinds, and only there: the meter IS a union
 ## leader's or an activist's lever (14.4), so being denied at the meter is

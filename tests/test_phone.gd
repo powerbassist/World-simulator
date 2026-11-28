@@ -127,7 +127,7 @@ func _check_the_odds_sit_one_penalty_below_the_audience() -> void:
 		for k in [0.0, 0.5, 1.0]:
 			ns.person_knowledge[person.id] = k
 			ns.person_bond[person.id] = "friend"
-			var c := Levers.cell(state, ns, _loader, {"person_id": person.id, "object": "programme:none"})
+			var c := Levers.cell(state, ns, _loader, {"person_id": person.id, "object": "region:none"})
 			var rows: Array = Phone.options(state, ns, _loader, person.id).get("levers", [])
 			for lever in LK.LEVERS:
 				var audience := LeverOdds.odds(person, lever, c)
@@ -351,7 +351,7 @@ func _check_a_word_given_holds_on_the_phone() -> void:
 	var ns = state.player()
 	var pid := _someone(ns)
 	_ask(state, ns, pid, "word")
-	President.commit(state, ns, _loader, "promise", pid, "programme:none", _now(state) + LK.PROMISE_MIN_MONTHS)
+	President.commit(state, ns, _loader, "promise", pid, "region:none", _now(state) + LK.PROMISE_MIN_MONTHS)
 	_warm(state, ns, pid)
 	var row := _row(Phone.options(state, ns, _loader, pid).get("levers", []), "promise_date")
 	if bool(row.get("offered", true)) or String(row.get("why_not", "")) != LK.WORD_GIVEN:
@@ -366,7 +366,7 @@ func _check_a_word_given_holds_on_the_phone() -> void:
 
 ## A pending request staged straight into the lane: its id.
 func _ask(state, ns, pid: String, tag: String) -> String:
-	var row := {"id": "%s|%s" % [pid, tag], "person_id": pid, "object": "programme:none", "stance": "sponsor",
+	var row := {"id": "%s|%s" % [pid, tag], "person_id": pid, "object": "region:none", "stance": "sponsor",
 		"arrived_month": _now(state), "deadline_month": _now(state) + 2, "status": AK.STATUS_PENDING,
 		"date": {}, "resolved_month": -1}
 	ns.audience_requests.append(row)

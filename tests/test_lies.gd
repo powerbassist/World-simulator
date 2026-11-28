@@ -6,6 +6,7 @@ extends SceneTree
 ## served or not. Caught or revealed, the price is b2's broken-promise price, paid
 ## once. The plan: .superpowers/sdd/v5.2c-plan.md, Task 5; the band: B8.
 
+const WantTerms = preload("res://src/sim/want_terms.gd")
 const DataLoader = preload("res://src/core/data_loader.gd")
 const GameState = preload("res://src/core/game_state.gd")
 const Audiences = preload("res://src/sim/audiences.gd")
@@ -77,7 +78,8 @@ func _booked() -> Dictionary:
 	var ns = state.player()
 	for _m in range(24):
 		Audiences.tick_month(state, _loader, METERS)
-		var lane: Array[Dictionary] = Audiences.pending(ns)
+		# Call 2 B: a word is given only on an act, so the fixture's request is the first one on one.
+		var lane: Array = Audiences.pending(ns).filter(func(r): return WantTerms.is_act(String(r["object"])))
 		if lane.is_empty():
 			_advance(state)
 			continue

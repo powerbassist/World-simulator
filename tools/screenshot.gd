@@ -155,6 +155,8 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step refused
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step talk
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step answered
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step talk-only   (a want no act answers: the topics, no cards)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --audience --audience-step talk-again   (talk-only ended, a second talk audience opened)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --phone open   (or: dialed, people, spent)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --open people
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request --people-pick first --open people
@@ -1440,6 +1442,8 @@ func _process(_delta: float) -> bool:
 		_stage_term_nested()
 	if _audience_step == "m-yes" and _frame == _frames_wanted - 8 and not _menu:
 		_flirt_said_and_redrawn()
+	if _audience_step == "talk-again" and _frame == _frames_wanted - 6 and not _menu:
+		_open_a_second_talk()
 	if _audience_step in ["counter", "answered", "m-no", "m-yes"] and _frame == _frames_wanted - 2 and not _menu:
 		_open_audience_pick()
 	if _queue == "queue-menu" and _frame == _frames_wanted - 3 and not _menu:
@@ -2878,8 +2882,9 @@ func _stage_requests() -> void:
 		var Sh := load("res://src/sim/shadows.gd")
 		people.sort_custom(func(a, b) -> bool: return Sh.spark(ns, String(a.id)) and not Sh.spark(ns, String(b.id)))
 	for person in people:
-		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
-			Audiences._arrive(ns, person, person.wants[0], now, [])
+		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id) \
+				and not _staged_want(person).is_empty():
+			Audiences._arrive(ns, person, _staged_want(person), now, [])
 			asked += 1
 			if _broken_word:
 				ns.exposure_evidence.append({"kind": "favour", "person_id": String(person.id), "size": 1.0,
@@ -2926,9 +2931,16 @@ func _stage_requests() -> void:
 			push_error("screenshot: --diary-booked found no free day to book; the frame shows no fresh booking")
 	if _request != "--audience":
 		return
-	for date in Audiences.offered_dates(_main._state, ns, String(first["id"])):
+	_book_and_open(String(first["id"]))
+
+
+## A request booked on its first free day and that day run: the audience opens on it.
+func _book_and_open(request_id: String) -> void:
+	var Audiences := load("res://src/sim/audiences.gd")
+	var ns = _main._state.player()
+	for date in Audiences.offered_dates(_main._state, ns, request_id):
 		if bool(date["free"]):
-			Audiences.book(_main._state, ns, _main._loader, String(first["id"]), date)
+			Audiences.book(_main._state, ns, _main._loader, request_id, date)
 			# The booked day through the day's own door, its month set as the
 			# month handler sets it: Levers.open() refuses a day still ahead.
 			_main._state.year = int(date["year"])
@@ -2939,11 +2951,40 @@ func _stage_requests() -> void:
 			break
 
 
+## talk-again: the first talk audience ended (at the staging), the second request booked and
+## opened, so the frame is a talk band with no goodbye of the last visitor above it (#463 Design T1).
+func _open_a_second_talk() -> void:
+	var pending: Array = load("res://src/sim/audiences.gd").pending(_main._state.player())
+	if pending.is_empty():
+		push_error("screenshot: --audience-step talk-again found no second request to open")
+		return
+	_book_and_open(String(pending[0]["id"]))
+
+
+## The want a staged request arrives on. Call 2 B (#463): a word only on an act, so every step that
+## shows the cards or the money stages the person's first act want Grant can pay (a post the
+## coalition cannot give greys Grant, and the struck frames then showed the question); the talk
+## steps stage their first want no act answers. A person with neither is passed over ({}).
+func _staged_want(person) -> Dictionary:
+	var talk := _audience_step in ["talk-only", "talk-again"]
+	var ns = _main._state.player()
+	for want in person.wants:
+		if load("res://src/sim/want_terms.gd").is_act(String(want["object"])) == talk:
+			continue
+		var row: Dictionary = (want as Dictionary).duplicate()
+		row["person_id"] = String(person.id)
+		if talk or String(load("res://src/sim/deal.gd").ask_of(_main._state, ns, _main._loader, row).get("why_not", "")) == "":
+			return want
+	return {}
+
+
 func _stage_audience_step() -> void:
 	var scene = load("res://src/ui/audience_driver.gd").scene_of(_main)
 	match _audience_step:
 		"grant", "talk":
 			scene.cards.find_child("GrantButton", true, false).pressed.emit()
+		"talk-again":
+			scene._end.pressed.emit()
 		"refused":
 			scene.cards.find_child("RefuseButton", true, false).pressed.emit()
 		"countered":
