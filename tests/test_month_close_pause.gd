@@ -14,6 +14,11 @@ extends SceneTree
 ## What must hold: the press was made against a running clock, so it meant
 ## pause -- the clock is paused after the month, and the decision's hold (the
 ## flag the next press reads) is still up.
+##
+## A second month, closed on the window's close button (QA's Q1 on #464): a close
+## is a notification, which the runner's deferral never saw, so the pause menu
+## opened on half a month and remembered a running clock -- Resume then ran it over
+## the hold the month's end had raised.
 
 const Events = preload("res://src/sim/events.gd")
 
@@ -24,6 +29,8 @@ var _main
 var _frame := 0
 var _event_id := ""
 var _closing := false
+var _by_close_button := false
+var _day_closed_on := 0
 
 
 func _init() -> void:
@@ -43,7 +50,11 @@ func _process(_delta: float) -> bool:
 	if _main._month_runner.running():
 		return false
 	_check_after_the_month()
-	return _finish()
+	if _by_close_button or not _failures.is_empty():
+		return _finish()
+	_by_close_button = true
+	_closing = false
+	return false
 
 
 func _stage_and_close() -> bool:
@@ -71,6 +82,9 @@ func _stage_and_close() -> bool:
 	_main._unseen_events[_event_id] = false
 	_main._paused_for_decision = false
 	_main._paused_for_programme = false
+	# One close press only asks; cut the real Quit all the same, so a regression cannot end the run as a pass.
+	for link in _main._pause_menu.quit_requested.get_connections():
+		_main._pause_menu.quit_requested.disconnect(link["callable"])
 
 	clock.set_process(false)
 	clock.set_speed(3)
@@ -81,6 +95,11 @@ func _stage_and_close() -> bool:
 	if not _main._month_runner.running():
 		_fail("premise: the 1st did not start a month across frames")
 		return _finish()
+	_day_closed_on = clock.day
+	if _by_close_button:
+		root.propagate_notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
+		_closing = true
+		return false
 	# Space while the month closes: deferred by the runner, replayed after it.
 	for pressed in [true, false]:
 		var key := InputEventKey.new()
@@ -99,10 +118,20 @@ func _check_after_the_month() -> void:
 			left = int(entry.get("months_left", -1))
 	if left != 1:
 		_fail("premise: the staged event has %d months left after the month, not 1" % left)
+	var press := "Space pressed"
+	if _by_close_button:
+		press = "Resume after a window close sent"
+		if not _main._pause_menu.visible or not _main._pause_menu.warns():
+			_fail("a window close sent while the month closed did not put the pause menu's question")
+		_main._pause_menu.resumed.emit()
+		for i in 35:  # five seconds of the real clock at speed 3
+			_main._clock._process(1.0 / _main._clock.SPEED_DAYS_PER_SECOND[2])
+		if _main._clock.day != _day_closed_on:
+			_fail("%s while the month closed ran the clock from day %d to %d" % [press, _day_closed_on, _main._clock.day])
 	if not _main._clock.paused:
-		_fail("Space pressed while the month closed left the clock RUNNING after it")
+		_fail("%s while the month closed left the clock RUNNING after it" % press)
 	if not _main._paused_for_decision:
-		_fail("Space pressed while the month closed released the decision's hold")
+		_fail("%s while the month closed released the decision's hold" % press)
 
 
 func _fail(message: String) -> void:

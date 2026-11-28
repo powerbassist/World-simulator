@@ -85,11 +85,16 @@ func _exit_tree() -> void:
 	get_tree().auto_accept_quit = true
 
 
-## The window's close button is a press on Quit, with the question brought to where it can be read. The panels over
-## the menu are closed through main from here: main.gd is at its size baseline.
+## The window's close button is a press on Quit, and like every press it waits for a month that is closing: a menu
+## opened on half a month remembers a running clock, and closing it drops the hold the month's end raises.
 func _notification(what: int) -> void:
-	if what != NOTIFICATION_WM_CLOSE_REQUEST or _main == null:
-		return
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and _main != null:
+		_main._month_runner.after_month(_press_quit)
+
+
+## Quit, with the question brought to where it can be read. The panels over the menu are closed through main from
+## here: main.gd is at its size baseline.
+func _press_quit() -> void:
 	if changed():
 		for panel in [_main._save_load_panel, _main._settings_panel]:
 			if panel.visible:
