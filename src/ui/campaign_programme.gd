@@ -20,7 +20,8 @@ const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 ## happens on the Agenda or nowhere. A concluded entry prints its verdict rather
 ## than a distance -- a figure over a delivered programme would be a lie about a
 ## term that is already priced.
-static func build(body: Control, ns, loader) -> void:
+static func build(body: Control, state, loader) -> void:
+	var ns = state.player()
 	var this_term: Array = Programme.this_term(ns)
 	if this_term.is_empty():
 		if Programme.is_term_start(ns):
@@ -38,8 +39,7 @@ static func build(body: Control, ns, loader) -> void:
 		var name_text := Strings.row_name("programme", terms)
 		match String(entry["status"]):
 			ProgrammeK.STATUS_ACTIVE:
-				var read: Dictionary = Programme.progress_of(ns, terms)
-				PanelKit.line(body, "%s · %s" % [name_text, ProgrammeDistance.of(ns, terms, float(read["current_value"]))], PanelKit.Tone.PLAIN)
+				PanelKit.line(body, "%s · %s" % [name_text, ProgrammeDistance.of(state, terms)], PanelKit.Tone.PLAIN)
 			ProgrammeK.STATUS_COMPLETE:
 				ResultTone.tint(PanelKit.line(body, Strings.t("%s · Delivered.") % name_text, PanelKit.Tone.PLAIN), ResultTone.GOOD)
 			ProgrammeK.STATUS_FAIL:

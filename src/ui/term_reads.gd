@@ -37,7 +37,7 @@ const GROUP_TAB := {"economy": "finances", "europe": "diplomacy", "institutions"
 ## The past half: the last year of polls, the span a reader compares a term against.
 const PAST_MONTHS := 12
 ## The field the approval lane reads; a programme entry judged on it is drawn as the poll.
-const APPROVAL_FIELD := "overall_approval_pct"
+const APPROVAL_FIELD := ProgrammeDistance.APPROVAL_FIELD
 
 
 ## The past half's snapshots, oldest first, at most a year (GameState.history).
@@ -123,11 +123,7 @@ static func _progress(state, terms: Dictionary) -> Dictionary:
 static func _tip(state, terms: Dictionary, entry: Dictionary) -> String:
 	if terms.is_empty():
 		return ""
-	var read: Dictionary = _progress(state, terms)
-	var start := float(entry.get("start", NAN)) if String(entry["status"]) == ProgrammeK.STATUS_ACTIVE else NAN
-	if String(terms.get("current_value", "")) == APPROVAL_FIELD and not is_nan(start):
-		start = PollNoise.displayed(PollNoise.poll_id(state.year, state.month) - int(entry["months_live"]), PollingPanel.HEADLINE_KEY, start)
-	var tip := ProgrammeDistance.words(terms, start, float(read["current_value"]))
+	var tip := ProgrammeDistance.of(state, terms)
 	if String(entry["status"]) == ProgrammeK.STATUS_ACTIVE:
 		tip += " · " + StripReadings.programme_clock_text(terms, entry)
 	return tip

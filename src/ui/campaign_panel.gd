@@ -433,7 +433,7 @@ func _on_act(ns, action) -> void:
 func _build_promises(ns) -> void:
 	PanelKit.heading(_body, tr("Promises"))
 
-	CampaignProgramme.build(_body, ns, _loader)
+	CampaignProgramme.build(_body, _state, _loader)
 
 	var books: Array = Pledges.on_the_books(ns)
 	for entry in books:

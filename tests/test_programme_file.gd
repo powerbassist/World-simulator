@@ -87,7 +87,7 @@ func _run() -> void:
 	_check_a_second_choice_refuses(state, ns, loader)
 	_check_the_distance_words()
 	_check_the_other_surfaces_read_the_register(state, ns, loader)
-	_check_the_polled_lane_starts_from_a_poll(state, ns, loader)
+	_check_approval_distances_read_the_polls(state, ns, loader)
 	_check_a_conclusion_pushes_a_card(state, ns, loader)
 	_check_mid_term_says_when_the_next_programme_opens(state, ns, loader)
 	_check_a_reload_forgets_the_guard()
@@ -304,21 +304,21 @@ func _check_focus_survives_a_rebuild() -> void:
 func _check_the_fill_refreshes_its_detail(state, ns, loader) -> void:
 	var picker = _folder()._picker
 	var offer: Array = Programme.available(state, ns, loader)
-	picker.fill(ns, offer)
+	picker.fill(state, offer)
 	picker.select(String(offer[0]["id"]))
 	var terms: Dictionary = offer[0]
 	var field := String(terms["current_value"])
 	var was: float = float(ns.get(field))
 	ns.set(field, was + 3.0)
-	picker.fill(ns, offer)
-	if not _text(picker._detail).contains(ProgrammePicker.read_text(ns, terms)):
+	picker.fill(state, offer)
+	if not _text(picker._detail).contains(ProgrammePicker.read_text(state, terms)):
 		_fail("an equal fill left the detail's read stale")
 	ns.set(field, was)
-	picker.fill(ns, [])
+	picker.fill(state, [])
 	var primary = picker.primary()
 	if primary != null and (not is_instance_valid(primary) or primary.is_queued_for_deletion()):
 		_fail("a fill that emptied the list left primary() on a freed Choose")
-	picker.fill(ns, offer)
+	picker.fill(state, offer)
 
 
 ## The fix drawn at the picture step: at the largest text size the list column leaves the detail its
@@ -326,7 +326,7 @@ func _check_the_fill_refreshes_its_detail(state, ns, loader) -> void:
 ## gone.)
 func _check_the_list_leaves_the_detail_room(state, ns, loader) -> void:
 	var picker = _folder()._picker
-	picker.fill(ns, Programme.available(state, ns, loader))
+	picker.fill(state, Programme.available(state, ns, loader))
 	var list_min: float = picker.list_min_width()
 	if list_min > PAGE_WIDTH - 20.0 - DETAIL_ROOM:
 		_fail("the programme list needs %.0f px of the %.0f px page -- the detail keeps less than %.0f" % [list_min, PAGE_WIDTH, DETAIL_ROOM])
@@ -348,7 +348,7 @@ func _check_the_list_leaves_the_detail_room(state, ns, loader) -> void:
 		_fail("premise: no two-bloc chip was measured")
 	if not cut.is_empty():
 		_fail("a bloc chip is cut: %s" % ", ".join(cut))
-	picker.fill(ns, Programme.available(state, ns, loader))
+	picker.fill(state, Programme.available(state, ns, loader))
 
 
 ## T5 (a): a past term's verdict on the programme file beside the offer, and in the Presidency
@@ -512,16 +512,16 @@ func _check_the_other_surfaces_read_the_register(state, ns, loader) -> void:
 	var campaign_text := _text(campaign._body)
 	if is_nan(ProgrammeDistance.start_of(ns, String(terms["id"]))):
 		_fail("the chosen entry has no starting figure, so the surfaces below prove nothing")
-	var want: String = ProgrammeDistance.of(ns, terms, float(Programme.progress_of(ns, terms)["current_value"]))
+	var want: String = ProgrammeDistance.of(state, terms)
 	if not campaign_text.contains(String(terms["name"])) or not campaign_text.contains(want):
 		_fail("the campaign panel's promises section does not read '%s': %s" % [want, campaign_text])
 	var surfaces := {
 		"the strip's tip": tip,
-		"the strip's list": str(StripChildren._programme(ns, loader)),
-		"the file's read": ProgrammePicker.read_text(ns, terms),
+		"the strip's list": str(StripChildren._programme(state, ns, loader)),
+		"the file's read": ProgrammePicker.read_text(state, terms),
 	}
 	if bool(terms.get("pinned", false)):
-		surfaces["the outliner's row"] = str(OutlinerReadings._agenda(ns, loader))
+		surfaces["the outliner's row"] = str(OutlinerReadings._agenda(state, ns, loader))
 	if String(terms["current_value"]) != TermReads.APPROVAL_FIELD:
 		surfaces["the Presidency lane's words"] = String(TermReads.goal_lanes(state, loader)[0]["tip"])
 	for name in surfaces:
@@ -556,21 +556,47 @@ func _check_the_distance_words() -> void:
 			_fail("%s: '%s', expected '%s'" % [case[0], said, case[4]])
 
 
-## The Presidency lane prints approval as the poll the player was shown, so it starts from that month's poll too.
-func _check_the_polled_lane_starts_from_a_poll(state, ns, loader) -> void:
+## The poll noise is the game's own hiding (the parent, 2026-11-28): every distance on a goal judged on approval reads
+## the poll at both ends -- the choosing month's and today's -- never the true figure.
+func _check_approval_distances_read_the_polls(state, ns, loader) -> void:
 	var terms := {}
 	for e in loader.programme:
 		if String(e["current_value"]) == TermReads.APPROVAL_FIELD and String(e["progressbar"]) == "up":
 			terms = e
 			break
+	var pinned: bool = terms.get("pinned", false)
+	terms["pinned"] = true  # the outliner lists pinned goals only
 	var kept: Array = ns.programme
+	var truth: float = ns.overall_approval_pct
 	var start := float(terms["goal_value"]) - 10.0
+	ns.overall_approval_pct = start + 4.0
 	ns.programme = [{"entry_id": String(terms["id"]), "chosen_term": int(ns.terms_served), "months_live": 3,
 		"status": "active", "concluded_term": -1, "concluded_term_month": -1, "start": start}]
-	var polled: float = PollNoise.displayed(PollNoise.poll_id(state.year, state.month) - 3, PollingPanel.HEADLINE_KEY, start)
-	var tip := String(TermReads.goal_lanes(state, loader)[0]["tip"])
-	if not tip.contains("%s to " % Num.f(polled, 2)):
-		_fail("the polled lane does not start from the choosing month's poll %s: '%s'" % [Num.f(polled, 2), tip])
+	var id := PollNoise.poll_id(state.year, state.month)
+	var want := ProgrammeDistance.words(terms, PollNoise.displayed(id - 3, PollingPanel.HEADLINE_KEY, start),
+		PollNoise.displayed(id, PollingPanel.HEADLINE_KEY, ns.overall_approval_pct))
+	if want == ProgrammeDistance.words(terms, start, ns.overall_approval_pct):
+		_fail("premise: the polls read as the truth, so nothing below proves anything: '%s'" % want)
+	_main._update_top_bar()
+	var tip := ""
+	for line in _main._top_bar._tips["programme"]:
+		tip += String(line["text"]) + " "
+	_main._windows.open("campaign")
+	_main._campaign_panel.mark_dirty()
+	_main._campaign_panel._process(0.0)
+	var surfaces := {
+		"the Presidency lane": String(TermReads.goal_lanes(state, loader)[0]["tip"]),
+		"the strip's tip": tip,
+		"the strip's list": str(StripChildren.child("programme", "entries", state, loader)),
+		"the outliner's row": str(OutlinerReadings.read("agenda", state, loader)),
+		"the campaign line": _text(_main._campaign_panel._body),
+		"the file's read": ProgrammePicker.read_text(state, terms),
+	}
+	for name in surfaces:
+		if not String(surfaces[name]).contains(want):
+			_fail("%s does not read the polls '%s': %s" % [name, want, surfaces[name]])
+	terms["pinned"] = pinned
+	ns.overall_approval_pct = truth
 	ns.programme = kept
 
 

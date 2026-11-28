@@ -38,7 +38,7 @@ var _rows: VBoxContainer
 var _detail: VBoxContainer
 var _shown: Array = []
 var _selected := ""
-var _ns
+var _state
 ## The selected entry's Choose (the page's fold answer).
 var _primary: Control = null
 ## What the list was last filled from (the offer's ids, the text size, the language, the term): an equal fill keeps the
@@ -87,8 +87,9 @@ func list_min_width() -> float:
 ## Sections per group, in the constants' own order, each by authored weight (the
 ## sweep in tests/test_programme.gd pins one on every entry). A group with nothing
 ## offered draws nothing.
-func fill(ns, offer: Array) -> void:
-	_ns = ns
+func fill(state, offer: Array) -> void:
+	_state = state
+	var ns = state.player()
 	var filled := "%s|%s|%s|%d" % [",".join(offer.map(func(t): return String(t["id"]))), UiTheme.text_scale(), Strings.language(), int(ns.terms_served)]
 	if filled == _filled:
 		select(_selected)  # pass 2 T11: the rows stay, the detail's read follows the state
@@ -236,7 +237,7 @@ func _build_detail(terms: Dictionary) -> void:
 	var block := _detail
 	PanelKit.heading(block, Strings.row_name("programme", terms))
 	PanelKit.rich(block, Strings.row_summary("programme", terms))
-	PanelKit.line(block, "%s · %s" % [read_text(_ns, terms), clock_text(terms)], PanelKit.Tone.DIM)
+	PanelKit.line(block, "%s · %s" % [read_text(_state, terms), clock_text(terms)], PanelKit.Tone.DIM)
 	var liked := liked_by(terms)
 	if not liked.is_empty():
 		PanelKit.line(block, tr("Welcomed by: %s") % ", ".join(liked.map(func(b): return Labels.bloc(String(b)))), PanelKit.Tone.DIM)
@@ -252,9 +253,8 @@ func _build_detail(terms: Dictionary) -> void:
 
 
 ## The derived pair, printed beside the clock so the number cannot disagree with where the figure stands.
-static func read_text(ns, terms: Dictionary) -> String:
-	var read: Dictionary = Programme.progress_of(ns, terms)
-	return ProgrammeDistance.of(ns, terms, float(read["current_value"]))
+static func read_text(state, terms: Dictionary) -> String:
+	return ProgrammeDistance.of(state, terms)
 
 
 ## The deadline as offered (the register's months-live counter is the Presidency page's lane now). 0 means

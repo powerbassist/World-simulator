@@ -3925,8 +3925,9 @@ func _check_programme_fields(loader) -> void:
 	if (old_ns.programme[0] as Dictionary).has("start"):
 		_fail("a programme row saved without a start came back with one: %s" % [old_ns.programme[0]])
 	var jobs: Dictionary = Programme.terms_of(loader, "prog_jobs_first")
-	if ProgrammeDistance.of(old_ns, jobs, 7.4) != "now %s · goal %s" % [Num.f(7.4, 2), Num.f(7.0, 2)]:
-		_fail("a row with no start does not read now and goal: '%s'" % ProgrammeDistance.of(old_ns, jobs, 7.4))
+	var read := ProgrammeDistance.words(jobs, ProgrammeDistance.start_of(old_ns, "prog_jobs_first"), 7.4)
+	if read != "now %s · goal %s" % [Num.f(7.4, 2), Num.f(7.0, 2)]:
+		_fail("a row with no start does not read now and goal: '%s'" % read)
 
 	# PROGRESS IS NEVER STORED, at both places a field could land: beside the
 	# register on the nation, or cached inside an entry. The injection is the
