@@ -668,7 +668,7 @@ static func _resolve(state, ns, loader, ev, choice: Dictionary, defaulted: bool,
 		applied = choice.get("effects", {}).duplicate()
 		for fiscal_key in ["tax_rates_pct", "spending_pct_gdp", "company", "other_revenue_pct_gdp"]:
 			applied.erase(fiscal_key)
-	Legislature.apply_effects(state, ns, applied, loader)
+	Legislature.apply_effects(state, ns, applied, loader, "events")
 
 	# The same one-month floor as _deliver's, applied at the other end of the
 	# occasion: a desk entry that DEFAULTS this tick (_tick_countdowns runs first)

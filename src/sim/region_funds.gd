@@ -229,8 +229,7 @@ static func _close(state, row: Dictionary, status: String) -> void:
 ## Clamped, as every writer of the register is (Companies.execute's comment).
 static func _blocs(ns, offsets: Dictionary, share: float) -> void:
 	for bloc in offsets:
-		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + share * float(offsets[bloc]),
-			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
+		ns.add_bloc_offset(bloc, share * float(offsets[bloc]), "region_funds", LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 
 
 static func _now(state) -> int:

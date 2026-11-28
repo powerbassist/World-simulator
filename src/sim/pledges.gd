@@ -148,10 +148,8 @@ static func _tick_nation(state, ns, terms: Dictionary) -> void:
 		# reached the same state by different routes must tick alike.
 		blocs.sort()
 		for bloc in blocs:
-			ns.bloc_offset[bloc] = clampf(
-				float(ns.bloc_offset.get(bloc, 0.0)) - float(offsets[bloc]),
-				LegislatureK.BLOC_OFFSET_MIN, LegislatureK.BLOC_OFFSET_MAX
-			)
+			ns.add_bloc_offset(bloc, -float(offsets[bloc]), "pledges",
+				LegislatureK.BLOC_OFFSET_MIN, LegislatureK.BLOC_OFFSET_MAX)
 
 	ns.pledges = kept
 
@@ -320,11 +318,8 @@ static func execute(state, ns, all_actions: Array, action) -> Dictionary:
 	})
 
 	for bloc_id in action.effects.get("bloc_offset", {}).keys():
-		ns.bloc_offset[bloc_id] = clampf(
-			float(ns.bloc_offset.get(bloc_id, 0.0))
-			+ float(action.effects["bloc_offset"][bloc_id]),
-			LegislatureK.BLOC_OFFSET_MIN, LegislatureK.BLOC_OFFSET_MAX
-		)
+		ns.add_bloc_offset(bloc_id, float(action.effects["bloc_offset"][bloc_id]), "pledges",
+			LegislatureK.BLOC_OFFSET_MIN, LegislatureK.BLOC_OFFSET_MAX)
 
 	var result := {
 		"action_id": action.id,

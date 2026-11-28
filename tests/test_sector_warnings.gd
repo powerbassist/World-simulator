@@ -304,7 +304,7 @@ func _test_the_restore_figure_brings_it_back_to_the_start() -> void:
 	var raised = _state()
 	raised.player().sector_drift["need_months"] = 120
 	var effects := SectorWarnings.raise_effects(raised.player(), _loader, "health", "hospitals")
-	Legislature.apply_effects(raised, raised.player(), effects, _loader)
+	Legislature.apply_effects(raised, raised.player(), effects, _loader, "laws")
 	_near(Sectors.quantity(raised.player(), _loader, "health", "hospitals"), 5.34, "the raise through the game's applier")
 	# A line cut to nothing is the worst case, not a free one (pass 1): the start's own
 	# level, here with no drift yet, brings the figure back.

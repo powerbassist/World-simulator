@@ -758,7 +758,7 @@ static func endorse(state, ns, loader, bill_id: String) -> Dictionary:
 	# Exact-zero reads on purpose: the register writes the bonus itself, so
 	# 0.0 is exactly "never endorsed" and no tolerance question exists.
 	entry["endorse_bonus"] = SK.PMB_ENDORSE_SUPPORT
-	Legislature.apply_effects(state, ns, {"bloc_offset": Dictionary(SK.PMB_ENDORSE_PRICE).duplicate(true)}, loader)
+	Legislature.apply_effects(state, ns, {"bloc_offset": Dictionary(SK.PMB_ENDORSE_PRICE).duplicate(true)}, loader, "laws")
 	return {"ok": true, "refusal": "", "bill_id": String(bill_id), "endorse_bonus": SK.PMB_ENDORSE_SUPPORT}
 
 

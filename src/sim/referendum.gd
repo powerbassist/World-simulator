@@ -284,7 +284,4 @@ static func withdraw(ns) -> Dictionary:
 static func _charge(ns, passed: bool) -> void:
 	var delta: float = K.REFERENDUM_RESULT_OFFSET if passed else -K.REFERENDUM_RESULT_OFFSET
 	for bloc in OpinionK.BLOC_KEYS:
-		ns.bloc_offset[bloc] = clampf(
-			float(ns.bloc_offset.get(bloc, 0.0)) + delta,
-			LegislatureK.BLOC_OFFSET_MIN, LegislatureK.BLOC_OFFSET_MAX
-		)
+		ns.add_bloc_offset(bloc, delta, "referendum", LegislatureK.BLOC_OFFSET_MIN, LegislatureK.BLOC_OFFSET_MAX)

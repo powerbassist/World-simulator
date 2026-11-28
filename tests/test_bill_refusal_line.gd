@@ -107,7 +107,7 @@ func _adopt_refused(state, ns, firm: String, action_id: String, label: String) -
 	var debt: float = float(ns.debt_eur_bn)
 	var blocs: Dictionary = ns.bloc_offset.duplicate()
 	var share: float = Companies.state_share_of(ns, firm)
-	Legislature.apply_effects(state, ns, {"company_ownership": {"company_id": firm, "action_id": action_id}}, _loader)
+	Legislature.apply_effects(state, ns, {"company_ownership": {"company_id": firm, "action_id": action_id}}, _loader, "laws")
 	if ns.processes.size() != rows:
 		_fail("%s: the refused bill started a process" % label)
 	if float(ns.debt_eur_bn) != debt or ns.bloc_offset != blocs or Companies.state_share_of(ns, firm) != share:
@@ -181,7 +181,7 @@ func _test_a_free_firm_says_nothing_and_starts() -> void:
 	var state = _new_state()
 	var ns = state.player()
 	var firm := _big(ns)
-	Legislature.apply_effects(state, ns, {"company_ownership": {"company_id": firm, "action_id": "full_nationalisation"}}, _loader)
+	Legislature.apply_effects(state, ns, {"company_ownership": {"company_id": firm, "action_id": "full_nationalisation"}}, _loader, "laws")
 	if Processes.live(ns, firm).is_empty():
 		_fail("control: the bill on a free firm opened no process")
 	if ProposalNote.ownership_line(state, ns, _loader) != "":
@@ -282,7 +282,7 @@ func _test_a_real_walk_out_reaches_the_line(walked_verb: String, bill_verb: Stri
 	var ends := int(closed[0]["hold_ends"])
 	state.year = floori((ends - 1) / 12.0)
 	state.month = ends - state.year * 12
-	Legislature.apply_effects(state, ns, {"company_ownership": {"company_id": firm, "action_id": bill_verb}}, _loader)
+	Legislature.apply_effects(state, ns, {"company_ownership": {"company_id": firm, "action_id": bill_verb}}, _loader, "laws")
 	if Processes.live(ns, firm).is_empty():
 		_fail("%s: the bill did not start once the hold ended" % label)
 	if ProposalNote.ownership_line(state, ns, _loader) != "":

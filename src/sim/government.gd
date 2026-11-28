@@ -570,7 +570,7 @@ static func fall(ns, party_list: Array, result: Dictionary) -> void:
 		if not ns.censure_barred_party_ids.has(pid):
 			ns.censure_barred_party_ids.append(pid)
 
-	penalise_blocs(ns, GK.FALLEN_BLOC_PENALTY)
+	penalise_blocs(ns, GK.FALLEN_BLOC_PENALTY, "government")
 
 	if ns.has_executive:
 		form(ns, party_list)
@@ -582,13 +582,11 @@ static func fall(ns, party_list: Array, result: Dictionary) -> void:
 ## accumulator opinion.gd already reads. Added to the *target*, not to approval
 ## directly, so INERTIA_RATE and every bound in docs/opinion-model.md still
 ## apply -- a political event cannot make approval jump in one month any more
-## than a law can.
-static func penalise_blocs(ns, amount: float) -> void:
+## than a law can. `source` names its offset_by_source row: the government's own
+## falls and forcings, or a person's act (characters.gd) that prices through here.
+static func penalise_blocs(ns, amount: float, source: String) -> void:
 	for bloc in OpinionK.BLOC_KEYS:
-		ns.bloc_offset[bloc] = clampf(
-			float(ns.bloc_offset.get(bloc, 0.0)) + amount,
-			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
-		)
+		ns.add_bloc_offset(bloc, amount, source, LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 
 
 ## True when the government may force a bill through without a vote. Article 49.3
