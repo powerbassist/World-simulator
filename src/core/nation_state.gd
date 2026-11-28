@@ -1456,12 +1456,18 @@ var person_party_override: Dictionary[String, String] = {}
 var person_want_state: Dictionary[String, bool] = {}
 
 ## bloc id -> the part of bloc_offset that character acts wrote and that has not
-## yet faded (V5.2b, "le cout s'efface"). Written by characters.gd alone: an act
+## yet faded (V5.2b, "le cout s'efface"). Written by act_share.gd alone: an act
 ## adds what it actually wrote, and each month the part shrinks by
 ## ACT_OFFSET_MONTHLY_KEEP and bloc_offset gets the difference back. absent_ok,
 ## no bump: a save from before V5.2b holds acts priced as permanent, and absent
 ## reads them that way -- nothing fades that was never recorded as fading.
 var act_bloc_offset: Dictionary[String, float] = {}
+
+## bloc id -> the part of act_bloc_offset a clamp's pull-back wrote rather than the act:
+## an act priced while the offset sat past a bound (call A, #466's QA R0). It fades with
+## the share, and its fade books to "bound", where the pull-back was booked. Written by
+## act_share.gd alone. absent_ok, no bump: absent is a share all the acts' own.
+var act_bound_share: Dictionary[String, float] = {}
 
 # --- The president's registers (V5.2a) ------------------------------------------
 ## SEVEN REGISTERS OF WHAT HAS PASSED BETWEEN THIS NATION'S LEADER AND A PERSON,

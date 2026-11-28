@@ -25,6 +25,7 @@ const Regions = preload("res://src/sim/regions.gd")
 const EK = preload("res://src/sim/economy_constants.gd")
 const Region = preload("res://src/core/region.gd")
 const Demography = preload("res://src/sim/demography.gd")
+const ActShare = preload("res://src/sim/act_share.gd")
 
 var _loader
 var _failures: Array[String] = []
@@ -67,6 +68,7 @@ func _init() -> void:
 	_test_the_three_answers_each_win_somewhere()
 	_test_the_buyer_pays_its_search_and_its_sweetener()
 	_test_a_landed_closures_bloc_move_fades()
+	_test_an_old_saves_share_seeds_before_a_cut()
 	_test_the_cooldown_ends_on_its_month()
 	_test_a_failed_firms_open_closure_is_voided()
 	_test_the_loader_refuses_a_short_cooldown()
@@ -940,6 +942,26 @@ func _test_a_landed_closures_bloc_move_fades() -> void:
 		var booked := float(ns.act_bloc_offset.get(bloc, 0.0)) - float(acts.get(bloc, 0.0))
 		if wrote == 0.0 or not is_equal_approx(booked, wrote):
 			_fail("%s: the closure wrote %.4f and booked %.4f to fade" % [bloc, wrote, booked])
+
+
+## QA's R1 on #466: on a save from before offset_by_source (the register reads {}), a
+## closure cut before the first fade still seeds the acts row with the old share, so the
+## acts row and the share fade together instead of the old share staying earlier.
+func _test_an_old_saves_share_seeds_before_a_cut() -> void:
+	var state = _new_state()
+	var ns = state.player()
+	var firm = _majors(ns)[0]
+	_falling(ns, firm, 2.0 * float(_rule()["fall"]))
+	_month(state)
+	var row := _row(ns, String(firm.id))
+	ns.act_bloc_offset["workers"] = float(ns.act_bloc_offset.get("workers", 0.0)) - 0.2
+	ns.offset_by_source = {}
+	Closures.answer(state, ns, _loader, String(row["id"]), "close")
+	ActShare.fade(ns)
+	var acts: Dictionary = ns.offset_by_source.get("acts", {})
+	for bloc in ns.act_bloc_offset:
+		if absf(float(acts.get(bloc, 0.0)) - float(ns.act_bloc_offset[bloc])) > 1e-9:
+			_fail("%s: after a cut and a fade the acts row is %.6f, the share %.6f" % [bloc, float(acts.get(bloc, 0.0)), float(ns.act_bloc_offset[bloc])])
 
 
 ## QA's RECORD C2 on #251: the cooldown's first allowed month is the closure's end +

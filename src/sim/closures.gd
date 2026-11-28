@@ -73,7 +73,7 @@ const Economy = preload("res://src/sim/economy.gd")
 const Processes = preload("res://src/sim/processes.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
 const K = preload("res://src/sim/closures_constants.gd")
-const Characters = preload("res://src/sim/characters.gd")
+const ActShare = preload("res://src/sim/act_share.gd")
 const LK = preload("res://src/sim/legislature_constants.gd")
 const NK = preload("res://src/sim/companies_constants.gd")
 const Negotiation = preload("res://src/sim/negotiation.gd")
@@ -452,7 +452,7 @@ static func _announce(ns, company, entry: Dictionary, fall: float, rule: Diction
 ## failure commit's own move, so the payroll in the firm's city falls with it), and
 ## the rule's bloc offsets land, clamped as every writer of the register is. The move
 ## is an act, not a standing condition (the parent's TAKE 2 on #251): what it wrote is
-## booked through Characters.book_act_offsets on the share that fades (#104's
+## booked through ActShare.book on the share that fades (#104's
 ## half-life), as every act's offset is.
 static func _cut(ns, company, entry: Dictionary, row: Dictionary, rule: Dictionary, now: int, regions: Array) -> void:
 	entry["share"] = Companies.share_of_company(ns, company) * (1.0 - float(rule["cut"]))
@@ -461,10 +461,10 @@ static func _cut(ns, company, entry: Dictionary, row: Dictionary, rule: Dictiona
 	row["city_id"] = Companies.live_city_of(ns, company)
 	ClosureRegion.book(ns, regions, String(row["city_id"]), float(row["jobs"]))
 	var offsets := _plant_offsets(rule, row)
-	var before: Dictionary = (ns.bloc_offset as Dictionary).duplicate()
+	var before := ActShare.snapshot(ns)
 	for bloc in offsets:  # booked to acts, the source its fade books to, so the two net out
 		ns.add_bloc_offset(bloc, float(offsets[bloc]), "acts", LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
-	Characters.book_act_offsets(ns, before)
+	ActShare.book(ns, before)
 	entry.erase("closure_watch")
 	_end(row, "closed", now)
 

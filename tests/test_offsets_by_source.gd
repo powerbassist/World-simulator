@@ -20,7 +20,7 @@ const K = preload("res://src/sim/opinion_constants.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Companies = preload("res://src/sim/companies.gd")
-const Characters = preload("res://src/sim/characters.gd")
+const ActShare = preload("res://src/sim/act_share.gd")
 
 const MONTHS := 36
 const EPS := 1e-9
@@ -59,6 +59,8 @@ func _init() -> void:
 	_test_the_writer_books_what_the_clamp_let_through()
 	_test_a_pull_back_past_the_bound_is_the_bounds()
 	_test_an_old_saves_acts_fade_nets_out()
+	_test_an_acts_pull_back_fades_to_the_bound()
+	_test_a_share_cancelled_to_zero_fades_clean()
 	_test_causes_splits_the_direct_row_by_source()
 	_test_an_old_save_reads_its_offset_as_earlier()
 	_finish()
@@ -167,10 +169,18 @@ func _test_a_pull_back_past_the_bound_is_the_bounds() -> void:
 	var bad := _mismatch(ns)
 	if bad != "":
 		_fail("after the pull-back: %s" % bad)
+	# QA's R3: the mirror below the lower bound, -0.8 - 0.5 = -1.3, then +0.02.
+	var low = GameState.new_game(_loader, "FRA").player()
+	low.bloc_offset["workers"] = -0.8
+	low.offset_by_source = {"start": {"workers": -0.8}}
+	low.add_bloc_offset("workers", -0.5, "investment", -INF, INF)
+	low.add_bloc_offset("workers", 0.02, "government", -1.0, 1.0)
+	if absf(_row(low, "government") - 0.02) > EPS or absf(_row(low, "bound") - 0.28) > EPS:
+		_fail("below the bound the reshuffle booked %s and bound %s, not 0.02 and 0.28" % [_row(low, "government"), _row(low, "bound")])
 
 
 ## A save from before the register carries acts' unfaded share in act_bloc_offset and no
-## sources. The first fade seeds "acts" with that share (Characters._fade_act_offsets),
+## sources. The first fade seeds "acts" with that share (ActShare.fade),
 ## so the fade nets the acts row toward 0 instead of opening a positive one; the rest of
 ## the offset stays earlier.
 func _test_an_old_saves_acts_fade_nets_out() -> void:
@@ -185,10 +195,21 @@ func _test_an_old_saves_acts_fade_nets_out() -> void:
 	if not old.offset_by_source.is_empty():
 		_fail("an old save's register reads %s, not {}" % [old.offset_by_source])
 		return
-	Characters._fade_act_offsets(old)
+	ActShare.fade(old)
 	var acts := float(old.offset_by_source["acts"]["workers"])
 	if acts > 0.0 or absf(acts - float(old.act_bloc_offset.get("workers", 0.0))) > EPS:
 		_fail("after a fade the acts row is %.6f, the unfaded share %.6f" % [acts, float(old.act_bloc_offset.get("workers", 0.0))])
+	# QA's R2: the seed is a copy of the share, not the share itself, so an act booked
+	# after it moves the two together, each by the act's own -0.05 (an alias moves the
+	# one dict twice and the two still read equal, so the move is what is checked).
+	var share_was := float(old.act_bloc_offset.get("workers", 0.0))
+	var before := ActShare.snapshot(old)
+	old.add_bloc_offset("workers", -0.05, "acts", -1.0, 1.0)
+	ActShare.book(old, before)
+	if absf(float(old.act_bloc_offset.get("workers", 0.0)) - share_was + 0.05) > EPS:
+		_fail("an act of -0.05 after the seed moved the share by %.6f" % (float(old.act_bloc_offset.get("workers", 0.0)) - share_was))
+	if absf(_row(old, "acts") - float(old.act_bloc_offset.get("workers", 0.0))) > EPS:
+		_fail("an act after the seed leaves the acts row at %.6f, the share at %.6f" % [_row(old, "acts"), float(old.act_bloc_offset.get("workers", 0.0))])
 	var c: Dictionary = Opinion.causes(old)
 	var earlier := float(c["rows"]["direct:earlier"])
 	var want := 0.0
@@ -196,6 +217,61 @@ func _test_an_old_saves_acts_fade_nets_out() -> void:
 		want += float(K.BLOC_SIZE[bloc]) * K.APPROVAL_SPAN * (float(old.bloc_offset.get(bloc, 0.0)) - (float(old.act_bloc_offset.get(bloc, 0.0)) if bloc == "workers" else 0.0))
 	if absf(earlier - want) > 1e-6:
 		_fail("after the fade earlier is %.6f, want %.6f (the offset less the acts' share)" % [earlier, want])
+
+
+## QA's R0 on #466: an act priced while the offset sits past a bound books its own move
+## to acts and the clamp's pull-back to bound, and the share's fade returns each part to
+## the row it came from: the acts row never turns against a negative act, and once the
+## share has faded out both rows are back at 0. From -1.3 the act's own move is 0 (its
+## zero row is what tells the fade this is no old save, R5), so the share is all bound.
+func _test_an_acts_pull_back_fades_to_the_bound() -> void:
+	for at in [-1.3, 1.3]:
+		var ns = GameState.new_game(_loader, "FRA").player()
+		ns.bloc_offset["workers"] = at
+		ns.offset_by_source = {"start": {"workers": at}}
+		var before := ActShare.snapshot(ns)
+		ns.add_bloc_offset("workers", -0.02, "acts", -1.0, 1.0)
+		ActShare.book(ns, before)
+		ns.add_bloc_offset("workers", -0.4 * signf(at), "events", -1.0, 1.0)
+		var fades := 0
+		while ns.act_bloc_offset.has("workers") and fades < 1000:
+			ActShare.fade(ns)
+			fades += 1
+			var bad := _mismatch(ns)
+			if _row(ns, "acts") > EPS or bad != "":
+				_fail("from %s, fade %d: the acts row is %.6f for an act of -0.02 %s" % [at, fades, _row(ns, "acts"), bad])
+				break
+		for source in ["acts", "bound"]:
+			if absf(_row(ns, source)) > 1e-5:
+				_fail("from %s, the share faded out in %d fades and %s still reads %.6f, not 0" % [at, fades, source, _row(ns, source)])
+
+
+## The parent's pass 2 on #467: an act and its exact opposite leave the share at 0.0 while
+## its pull-back part stands; the next fade must not divide by that 0 and write NaN into
+## the rows a save keeps. Dyadic numbers, so the share cancels exactly: from 1.5 an act of
+## -0.25 moves 0.5 (0.25 own, 0.25 bound), an event takes the offset to 0.5, and an act
+## of +0.5 brings the share back to 0.0.
+func _test_a_share_cancelled_to_zero_fades_clean() -> void:
+	var ns = GameState.new_game(_loader, "FRA").player()
+	ns.bloc_offset["workers"] = 1.5
+	ns.offset_by_source = {"start": {"workers": 1.5}}
+	for move in [-0.25, null, 0.5]:
+		if move == null:
+			ns.add_bloc_offset("workers", -0.5, "events", -1.0, 1.0)
+			continue
+		var before := ActShare.snapshot(ns)
+		ns.add_bloc_offset("workers", float(move), "acts", -1.0, 1.0)
+		ActShare.book(ns, before)
+	if float(ns.act_bloc_offset.get("workers", NAN)) != 0.0 or float(ns.act_bound_share.get("workers", 0.0)) == 0.0:
+		_fail("the premise did not hold: share %s, its pull-back part %s" % [ns.act_bloc_offset.get("workers"), ns.act_bound_share.get("workers")])
+		return
+	ActShare.fade(ns)
+	for source in ns.offset_by_source:
+		if is_nan(_row(ns, source)):
+			_fail("a fade of a share at 0.0 wrote NaN into the %s row" % source)
+	var bad := _mismatch(ns)
+	if bad != "":
+		_fail("after the cancelled share's fade: %s" % bad)
 
 
 ## causes(): the direct row is one row per source plus `direct:earlier` (what no source
@@ -249,6 +325,11 @@ func _test_an_old_save_reads_its_offset_as_earlier() -> void:
 		total += float(c["rows"][key])
 	if absf(total - float(c["target"])) > EPS:
 		_fail("an old save's rows sum to %.9f, the target is %.9f" % [total, float(c["target"])])
+
+
+## One source's row for workers, 0 where it has none.
+func _row(ns, source: String) -> float:
+	return float((ns.offset_by_source.get(source, {}) as Dictionary).get("workers", 0.0))
 
 
 ## "" when every bloc's offset is the sum of its sources, otherwise what is off.
