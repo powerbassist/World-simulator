@@ -33,6 +33,7 @@ func _ready() -> void:
 	_verdict.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_verdict.clip_text = true
 	_verdict.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_verdict.mouse_filter = Control.MOUSE_FILTER_PASS  # a Label ignores the mouse, so its hover would never show
 	add_child(_verdict)
 	_slot = HBoxContainer.new()
 	_slot.add_theme_constant_override("separation", 10)
@@ -55,6 +56,7 @@ func say(title: String, line: String, verdict: String, good: bool, bad: bool) ->
 	_line.text = line
 	_line.visible = line != ""
 	_verdict.text = verdict
+	_verdict.tooltip_text = verdict
 	_verdict.theme_type_variation = UiTheme.GOOD_SMALL if good else (UiTheme.BAD_SMALL if bad else UiTheme.CAPTION)
 
 

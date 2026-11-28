@@ -1,4 +1,4 @@
-Added: While another bill holds the month's slot, the budget can be queued, and the button says the month it divides in.
+Added: While another bill holds the month's slot, the budget can be queued, and the button says the month it divides in; a budget that creates or abolishes a tax cannot wait in the queue.
 Added: Quit and Main Menu ask first when the game has unsaved changes.
 Added: A want about unrest, press freedom or the courts says where that figure stands today.
 Fixed: "Start the fund" is greyed before you press it, with the reason, while another bill holds the slot.

@@ -378,6 +378,10 @@ func _check_a_held_slot_queues_the_budget() -> void:
 		_fail("premise: the bar is not on the moves-only verb: '%s'" % _panel._foot._table.text)
 	if not _panel._foot._text.text.contains(when):
 		_fail("queued, moves drafted: the bar dropped the queued budget's sentence: '%s'" % _panel._foot._text.text)
+	# The folded line does not clip: the sentence there pushed the verbs off the bar. It rides the part that does.
+	var strip = _panel._foot._strip
+	if strip.line_text().contains(when) or not strip.verdict_text().contains(when):
+		_fail("queued, moves drafted, folded: the line reads '%s', the clipped part '%s'" % [strip.line_text(), strip.verdict_text()])
 	_panel._draft.revert()
 	_panel._foot._stamp = ""
 	_panel._dirty = true

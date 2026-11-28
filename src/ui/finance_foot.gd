@@ -306,9 +306,10 @@ func refresh(state, loader, draft, price) -> void:
 	if not drafted and moves > 0:
 		_table.text = Strings.t("Apply the moves")
 		_table.disabled = false
-		_text.text = Strings.tn("%d share move takes effect now, with no vote.", "%d share moves take effect now, with no vote.", moves) % moves + \
-			("\n" + before_vote if before_vote != "" else "")
-		_strip.say(_title.text, _text.text.replace("\n", " "), "", false, false)
+		var now := Strings.tn("%d share move takes effect now, with no vote.", "%d share moves take effect now, with no vote.", moves) % moves
+		_text.text = now + ("\n" + before_vote if before_vote != "" else "")
+		# The folded line does not clip: a second sentence there pushed the verbs off the bar.
+		_strip.say(_title.text, now, before_vote, false, false)
 		return
 	if not drafted:
 		_text.text = before_vote
@@ -345,7 +346,7 @@ func refresh(state, loader, draft, price) -> void:
 	if moves > 0:
 		text += ("\n" if text != "" else "") + Strings.tn("%d share move applies now; the rest is voted on %s.", "%d share moves apply now; the rest is voted on %s.", moves) % [
 			moves, vote_on]
-	var said := "" if refusal == "" else FinanceRefusal.reason(refusal) + (" " + String(queue["note"]) if queue.has("note") else "")
+	var said := "" if refusal == "" else FinanceQueue.said(queue, FinanceRefusal.reason(refusal))
 	if said != "":
 		text = said + ("\n" + text if text != "" else "")
 	_text.text = text

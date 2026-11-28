@@ -501,8 +501,13 @@ func _check_an_autumn_row_cannot_be_queued() -> void:
 		_panel._dirty = true
 		_panel._process(0.0)
 		var table: Button = _panel._foot.find_child("Table", true, false)
-		if not table.disabled or not _panel._foot._text.text.contains(FinanceRefusal.reason("autumn")):
+		# The cause leads, and the folded line (which clips it) says it whole on a hover.
+		var why := Strings.t("A new or abolished tax cannot wait in the queue.")
+		var line: Label = _panel._foot._strip._verdict
+		if not table.disabled or not _panel._foot._text.text.begins_with(why):
 			_fail("an autumn row (birth %s) behind a held slot: the verb reads '%s' (disabled %s), '%s'" % [birth, table.text, table.disabled, _panel._foot._text.text])
+		if not line.text.begins_with(why) or line.tooltip_text != line.text or line.mouse_filter == Control.MOUSE_FILTER_IGNORE:
+			_fail("an autumn row (birth %s): the folded line reads '%s', its hover '%s'" % [birth, line.text, line.tooltip_text])
 		FinanceMoves.table(_state, _loader, draft, false)
 		if not ns.bill_queue.is_empty():
 			_fail("an autumn row (birth %s) was queued: %s" % [birth, ns.bill_queue])

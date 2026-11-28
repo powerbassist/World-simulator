@@ -8,7 +8,6 @@ const BillQueue = preload("res://src/sim/bill_queue.gd")
 const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
-const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 
@@ -21,7 +20,8 @@ static func at(ns) -> int:
 
 
 ## The verb when FinanceBill.refusal answers `flag`: {} unless another bill holds the slot, else {enabled, text (""
-## keeps the host's own label), note (said after the refusal)} and, when it can be pressed, {month, day} it divides.
+## keeps the host's own label), note (said after the refusal, before it when `lead`)} and, when it can be pressed,
+## {month, day} it divides.
 static func verb(state, flag: String, bill := {}) -> Dictionary:
 	if flag != "already_tabled":
 		return {}
@@ -30,7 +30,7 @@ static func verb(state, flag: String, bill := {}) -> Dictionary:
 		return {"enabled": false, "text": "", "note": Strings.t("A budget text is already queued.")}
 	# A queued bill is tabled in a later month, outside the autumn one: its creation or abolition would be dropped.
 	if not (bill.get(FinanceBill.CREATE, {}) as Dictionary).is_empty() or not (bill.get(FinanceBill.ABOLISH, []) as Array).is_empty():
-		return {"enabled": false, "text": "", "note": FinanceRefusal.reason("autumn")}
+		return {"enabled": false, "text": "", "lead": true, "note": Strings.t("A new or abolished tax cannot wait in the queue.")}
 	var i: int = ns.bill_queue.size()
 	if i >= BillQueue.SIZE:
 		return {"enabled": false, "text": Strings.t("The queue is full"), "note": Strings.t("The queue holds three bills. Take one out first.")}
@@ -38,6 +38,15 @@ static func verb(state, flag: String, bill := {}) -> Dictionary:
 	return {"enabled": true, "text": Strings.t("Queue for %s") % BillVerbs.month_name(state, i),
 		"note": Strings.t("Queued, it divides on %s.") % DateText.day_month(int(lands["day"]), int(lands["month"])),
 		"month": int(lands["month"]), "day": int(lands["day"])}
+
+
+## `reason` and the verb's note as one line. A `lead` note is the cause, said first: the folded bar shows only the first
+## words.
+static func said(queue: Dictionary, reason: String) -> String:
+	var parts := [reason, String(queue.get("note", ""))]
+	if queue.has("lead"):
+		parts.reverse()
+	return " ".join(parts).strip_edges()
 
 
 ## The finance bill waiting in the queue, said on the bar with no draft: {month, day, text}, {} when none is queued.
