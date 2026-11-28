@@ -304,4 +304,5 @@ const FIELDS := [
 	["rescue_bill_pct_gdp", SCALAR, VALUE, 0.0, true],  # V5.3 a: rewritten by the next tick
 	["measure_opinion", DEEP, COPIED, {}, true],  # V5.3 b: absent is no address given
 	["offset_by_source", DEEP, COPIED, {}, true],  # call A PR 2: absent is the whole offset read as earlier
+	["act_bound_share", DEEP, FLOAT_MAP_TYPED, {}, true],  # call A: absent is a share all the acts' own
 ]

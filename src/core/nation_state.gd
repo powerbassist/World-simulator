@@ -1461,6 +1461,12 @@ var person_want_state: Dictionary[String, bool] = {}
 ## reads them that way -- nothing fades that was never recorded as fading.
 var act_bloc_offset: Dictionary[String, float] = {}
 
+## bloc id -> the part of act_bloc_offset a clamp's pull-back wrote rather than the act:
+## an act priced while the offset sat past a bound (call A, #466's QA R0). It fades with
+## the share, and its fade books to "bound", where the pull-back was booked. Written by
+## act_share.gd alone. absent_ok, no bump: absent is a share all the acts' own.
+var act_bound_share: Dictionary[String, float] = {}
+
 # --- The president's registers (V5.2a) ------------------------------------------
 ## SEVEN REGISTERS OF WHAT HAS PASSED BETWEEN THIS NATION'S LEADER AND A PERSON,
 ## each an edge from the president to one person (theirs, or a foreign head met)

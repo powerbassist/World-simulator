@@ -240,6 +240,17 @@ func _check_offset_by_source_absent(loader) -> void:
 		return
 	if absf(float(older.player().bloc_offset.get("workers", NAN)) - float(state.player().bloc_offset["workers"])) > 1e-9:
 		_fail("a save without offset_by_source lost the offset itself")
+	# #466's QA R0: the share's pull-back part. A save from before it reads {}, a share all
+	# the acts' own, which is what every earlier build booked.
+	state.player().act_bound_share["workers"] = 0.3
+	var with_bound: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	if absf(float(GameState.from_dict(with_bound.duplicate(true)).player().act_bound_share.get("workers", NAN)) - 0.3) > 1e-9:
+		_fail("act_bound_share did not survive the save")
+	for nd in (with_bound["nations"] as Dictionary).values():
+		(nd as Dictionary).erase("act_bound_share")
+	var no_bound = GameState.from_dict(with_bound)
+	if no_bound == null or not no_bound.player().act_bound_share.is_empty():
+		_fail("a save without act_bound_share did not read it as {}")
 
 ## V1.2a: SAVE_VERSION did not move (see the plan step's own cold count), but
 ## a save still has to round-trip for whichever nation is playing -- checked

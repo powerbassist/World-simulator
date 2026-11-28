@@ -69,7 +69,12 @@ func _check_leaf_property() -> void:
 	_check_preloads("characters.gd", [
 		"character_constants.gd", "character_act_constants.gd",
 		"government.gd", "legislature.gd", "staff.gd", "character_seed.gd", "president.gd", "want_terms.gd",
-		"bloc_voice.gd",
+		"bloc_voice.gd", "act_share.gd",
+	])
+	# The acts' fading share, split out at the cap (#466's QA RECORDs): its constants and
+	# the bounds, no system.
+	_check_preloads("act_share.gd", [
+		"character_act_constants.gd", "legislature_constants.gd",
 	])
 	# V5.3 e: the voice on the briefing's blocs, split out at the cap: its constants and the one
 	# applier characters.gd already reads, no system of the month.
@@ -133,13 +138,14 @@ func _check_tick_order_pin() -> void:
 ## SINGLE WRITERS. seats_by_party is elections' alone to WRITE (the defect a
 ## defection could commit -- discipline/government/legislature READ it, which
 ## is their input and their right); the six person-state registers are
-## characters' alone to write. The scan matches the WRITE form, not the name:
-## assignment into the dict or erase on it.
+## characters' alone to write, and the acts' share (act_bloc_offset, act_bound_share)
+## act_share.gd's (split out at the cap). The scan matches the WRITE form, not the name: assignment into the dict or
+## erase on it.
 func _check_single_writers() -> void:
 	var register_writers: Array[String] = [
 		"person_loyalty", "person_standing", "person_grudges",
 		"party_leader_override", "person_party_override", "person_want_state",
-		"act_bloc_offset",
+		"act_bloc_offset", "act_bound_share",
 	]
 	for file in _sim_files():
 		var src := FileAccess.get_file_as_string("res://src/sim/%s" % file)
@@ -151,8 +157,9 @@ func _check_single_writers() -> void:
 			# seats_by_party through .get() or a for-in, never assigns into it.
 			_fail("src/sim/%s writes seats_by_party -- elections.gd owns the seat, the whip follows it" % file)
 		for reg in register_writers:
-			if file != "characters.gd" and _indexed_write(code, reg):
-				_fail("src/sim/%s writes the %s register -- characters.gd is its one writer" % [file, reg])
+			var owner := "act_share.gd" if reg.begins_with("act_") else "characters.gd"
+			if file != owner and _indexed_write(code, reg):
+				_fail("src/sim/%s writes the %s register -- %s is its one writer" % [file, reg, owner])
 	# And the same scan over src/core and src/ui, where a stray writer would be
 	# no less a defect -- the UI writes nothing, and core's state layer touches
 	# the registers only through whole-property assignment in the round-trip.
