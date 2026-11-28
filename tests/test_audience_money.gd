@@ -337,7 +337,7 @@ func _open_for_a_spark() -> bool:
 	if String(leader.spouse_id) == "":
 		leader.spouse_id = "FRA_a_spouse_the_premise_lends"
 	President.adjust_rapport(state, ns, loader, _person, 0.6)
-	Audiences._arrive(ns, chosen, chosen.wants[0], now, [])
+	Audiences._arrive(ns, chosen, {"object": "region:FRE", "stance": "want"}, now, [])  # an act: a word to give (call 2 B)
 	var request: Dictionary = ns.audience_requests[-1]
 	request.erase("offer")
 	var day := {}
@@ -424,10 +424,6 @@ func _open_with_offer(kind: String) -> bool:
 	var ns = state.player()
 	var now: int = int(state.year) * 12 + int(state.month)
 	var request := ""
-	var want := {}
-	for person in _main._loader.people.get(String(ns.id), []):
-		if want.is_empty() and not person.wants.is_empty():
-			want = person.wants[0]
 	for m in range(now, now + 60):
 		for person in _main._loader.people.get(String(ns.id), []):
 			if String(person.kind) != kind or not President.covers(state, ns, _main._loader, String(person.id)) \
@@ -435,7 +431,7 @@ func _open_with_offer(kind: String) -> bool:
 				continue
 			state.year = (m - 1) / 12
 			state.month = (m - 1) % 12 + 1
-			Audiences._arrive(ns, person, person.wants[0] if not person.wants.is_empty() else want, m, [])
+			Audiences._arrive(ns, person, {"object": "region:FRE", "stance": "want"}, m, [])  # an act: a word to give (call 2 B)
 			if not (ns.audience_requests[-1].get("offer", {}) as Dictionary).is_empty():
 				request = String(ns.audience_requests[-1]["id"])
 				_person = String(person.id)

@@ -168,8 +168,8 @@ static func attempt(state, ns, loader, session: Dictionary, lever: String, args 
 	# promise the person refuses binds NOTHING, so its word is written after the roll and only
 	# on a yes. A promise the president could not make is still refused before any roll.
 	var promise := lever == "promise_date"
-	if promise and not President.covers(state, ns, loader, String(person.id)):
-		refused["error"] = "the promise could not be made"
+	if promise and not (President.covers(state, ns, loader, String(person.id)) and WantTerms.is_act(_asked(session))):
+		refused["error"] = "the promise could not be made" if WantTerms.is_act(_asked(session)) else AK.TALK_ONLY
 		return refused
 	var spent := {} if promise else pay(state, ns, loader, person, _asked(session), lever, args, now)
 	if spent.has("refused"):
@@ -225,7 +225,7 @@ static func close(state, ns, loader, session: Dictionary) -> Dictionary:
 	if why != "":
 		return {"ok": false, "error": why, "outcome": "", "price": {}}
 	var won := String(session["won"])
-	var outcome := AK.STATUS_SETTLED if AK.is_summons(session) else AK.STATUS_DECLINED
+	var outcome := AK.STATUS_SETTLED if AK.is_talk(session) else AK.STATUS_DECLINED
 	if session.has("outcome"):
 		outcome = String(session["outcome"])
 	elif won == "promise_date":
@@ -337,12 +337,12 @@ static func pay(state, ns, loader, person, object: String, lever: String, args: 
 			if Shadows.is_currency(String(args.get("currency", ""))):
 				return Shadows.pay_currency(state, ns, loader, person, String(args["currency"]))
 			if String(args.get("currency", K.CURRENCY_FAVOUR)) == K.CURRENCY_VOTE_TRADE:
-				if not President.commit(state, ns, loader, "iou", pid, object, now + K.IOU_MONTHS):
+				if not WantTerms.is_act(object) or not President.commit(state, ns, loader, "iou", pid, object, now + K.IOU_MONTHS):
 					return {"refused": true}
 				return {"iou": now + K.IOU_MONTHS}
 			return {"rapport": _rapport(state, ns, loader, pid, -K.BARGAIN_FAVOUR_RAPPORT)}
 		"promise_date":
-			if not President.commit(state, ns, loader, "promise", pid, object, due, Lies.told(lever, args)):
+			if not WantTerms.is_act(object) or not President.commit(state, ns, loader, "promise", pid, object, due, Lies.told(lever, args)):
 				return {"refused": true}
 			# The day the player picked (mockup C's counter): kept for the diary, never judged --
 			# the judge takes the row at the end of its month, as before (no number moves).
@@ -410,8 +410,8 @@ static func _why_not(ns, session: Dictionary) -> String:
 	var why := _attempt_reason(ns, session)
 	if why == "" and String(session.get("won", "")) != "":
 		why = "they have already agreed"
-	if why == "" and AK.is_summons(session):
-		why = AK.SUMMON_NO_ASK  # a summons is talk only (audience_summons.gd)
+	if why == "" and AK.is_talk(session):  # a summons, or call 2 B's talk: no ask to move
+		why = AK.SUMMON_NO_ASK if AK.is_summons(session) else AK.TALK_ONLY
 	return why
 
 

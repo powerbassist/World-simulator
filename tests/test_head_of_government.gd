@@ -24,6 +24,9 @@ const STAGED_TITLE := "Staged Office Title"
 ## The audience scene, caught: AudienceTalks.open() hands it the view and nothing else.
 class SceneCatcher:
 	var view := {}
+	# What the view reads off a real scene: a talk audience (call 2 B) ranks its topics at the open.
+	var visiting := ""
+	var flow = preload("res://src/ui/audience_flow.gd").new()
 	func open(v: Dictionary) -> void:
 		view = v
 

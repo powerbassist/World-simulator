@@ -143,6 +143,14 @@ static func struck_lines(answers: Dictionary, card: Dictionary) -> Array:
 	return out
 
 
+## The band a talk audience opens on (#463 T1), in place of a struck deal's: a summons has nothing to
+## settle; any other talk names the want and says it is not the president's to do.
+static func talk_lines(name: String, wants: String, summons: bool) -> Array:
+	if summons:
+		return [line(NEUTRAL, DIM, Strings.t("You asked to see them: there is nothing to settle, only talk."))]
+	return [line(NEUTRAL, DIM, Strings.t("%s %s: no act of yours answers that, so there is no word to give, only talk.") % [name, wants])]
+
+
 ## The money on the table: where it lands (the band's head) and its two lines, the risk and what
 ## taking it gives. Take is Grant plus the money (the author, 2026-11-13: "Prendre = promettre +
 ## argent"), so the word is stated here, not left to be found out after the click.
