@@ -288,6 +288,25 @@ func _check_a_dated_meter_word() -> void:
 	var marks: Array = _main._calendar_panel._grid._entries((due - 1) / 12, (due - 1) % 12 + 1).get(1, [])
 	if not marks.any(func(e): return String(e["text"]).contains(level)):
 		_fail("the Diary's word due names no level: %s" % [marks])
+	# gate-462 P2: the want says where the meter stands beside the level it asks for.
+	_ns().press_freedom = 0.06
+	var now := "%s (now %s)" % [level, preload("res://src/ui/num.gd").fs(0.06, 2)]
+	_main._calendar_panel._grid.show_items(_main._state, _main._loader, [])
+	marks = _main._calendar_panel._grid._entries((due - 1) / 12, (due - 1) % 12 + 1).get(1, [])
+	if not marks.any(func(e): return String(e["text"]).contains(now)):
+		_fail("the Diary's word due does not say where the meter stands, '%s': %s" % [now, marks])
+	var rows: Array = preload("res://src/ui/roster_rows.gd").rows(_main._state, _main._loader, "", _main._loader.person_name(pid))
+	var wants: String = String(rows[0]["wants"]) + " | " + String(rows[0]["owe"]) if not rows.is_empty() else ""
+	if not wants.contains("press freedom (now "):
+		_fail("the roster's want does not say where the meter stands: '%s'" % wants)
+	var card := PersonCard.new()
+	_main.add_child(card)
+	card.show_for(pid, _main._loader, _ns(), Vector2.ZERO)
+	var shown := " ".join(card.find_children("*", "Label", true, false).map(func(l) -> String: return l.text))
+	if not shown.contains("press freedom (now "):
+		_fail("the person card's want does not say where the meter stands: '%s'" % shown)
+	card.queue_free()
+	_ns().press_freedom = 0.0
 	var lines := PersonCard.dated_lines(_main._loader, _ns(), pid)
 	if not "\n".join(lines).contains(level):
 		_fail("the person's dated lines name no level: %s" % [lines])

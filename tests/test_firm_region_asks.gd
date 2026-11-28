@@ -623,6 +623,15 @@ func _check_a_meter_want_reads_in_words() -> void:
 				_fail("%s with no threshold prints a figure: '%s'" % [object, bare])
 	if seen == 0:
 		_fail("no meter want in the data: the check read nothing")
+	# Asked for where it stands, each meter says the figure the sim judges (WorldMonth.character_meters), signed for
+	# the two that are a distance from the start.
+	ns.unrest_pct = 23.4
+	ns.press_freedom = 0.06
+	ns.judicial_independence = ns.start_judicial_independence - 0.12
+	for pair in [["grievance", "(now 23.4%)"], ["press_freedom", "(now +0.06)"], ["judicial_independence", "(now -0.12)"]]:
+		var text: String = PersonCard.object_text(_loader, ns, "meter:%s" % pair[0], {}, true)
+		if not text.ends_with(" " + pair[1]):
+			_fail("%s asked for where it stands reads '%s', not '... %s'" % [pair[0], text, pair[1]])
 	# A distance that prints as 0.0 is the starting level, from either side.
 	var level: String = PersonCard.object_text(_loader, ns, "meter:press_freedom", {"above": 0.0})
 	for near in [0.04, -0.04]:
