@@ -20,6 +20,7 @@ const K = preload("res://src/sim/opinion_constants.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const Legislature = preload("res://src/sim/legislature.gd")
 const Companies = preload("res://src/sim/companies.gd")
+const Characters = preload("res://src/sim/characters.gd")
 
 const MONTHS := 36
 const EPS := 1e-9
@@ -33,9 +34,13 @@ const AUSTERITY := {
 ##   nation_state.gd  the writer itself, and the declaration
 ##   legislature.gd   init_nation() resets the register and its sources together
 ##   processes.gd     _land() puts back what Companies.execute wrote, sources included
-## Every source a site may pass: a typo ("firm") would open a row of its own.
+## Every source a site may pass: a typo ("firm") would open a row of its own. "bound" is
+## the writer's own: a clamp pulling back an offset an unclamped writer left past a bound.
 const SOURCES := ["start", "laws", "events", "addresses", "acts", "campaign", "pledges", "programme",
-	"government", "diplomacy", "firms", "energy", "investment", "projects", "region_funds", "referendum", "units"]
+	"government", "diplomacy", "firms", "energy", "investment", "projects", "region_funds", "referendum", "units",
+	"bound"]
+## Each door, and which of its arguments is the source.
+const SOURCE_ARG := {"add_bloc_offset": 2, "apply_effects": 4, "penalise_blocs": 2}
 const WHOLE_WRITE_ALLOWED := ["res://src/core/nation_state.gd", "res://src/sim/legislature.gd", "res://src/sim/processes.gd"]
 
 var _failures: Array[String] = []
@@ -52,6 +57,8 @@ func _init() -> void:
 	_test_the_sources_sum_to_the_offset_every_month()
 	_test_no_site_writes_around_the_writer()
 	_test_the_writer_books_what_the_clamp_let_through()
+	_test_a_pull_back_past_the_bound_is_the_bounds()
+	_test_an_old_saves_acts_fade_nets_out()
 	_test_causes_splits_the_direct_row_by_source()
 	_test_an_old_save_reads_its_offset_as_earlier()
 	_finish()
@@ -89,9 +96,6 @@ func _test_the_sources_sum_to_the_offset_every_month() -> void:
 func _test_no_site_writes_around_the_writer() -> void:
 	var item := RegEx.create_from_string("(?<!act_)bloc_offset\\[[^\\]]*\\]\\s*(=|\\+=|-=)(?!=)")
 	var whole := RegEx.create_from_string("(?<!act_)bloc_offset\\s*=(?!=)|(?<!act_)bloc_offset\\.(clear|merge|erase)\\(")
-	# The source a call passes: the quoted word after a comma, which skips the
-	# ["bloc_offset"] / {"bloc_offset": ...} keys on the same lines.
-	var label := RegEx.create_from_string(", \"([a-z_]+)\"[,)]")
 	var calls := 0
 	var files := _gd_files("res://src")
 	if files.size() < 100:
@@ -106,15 +110,20 @@ func _test_no_site_writes_around_the_writer() -> void:
 				_fail("%s:%d writes a bloc's offset without the writer: %s" % [path, n + 1, line])
 			if not WHOLE_WRITE_ALLOWED.has(path) and whole.search(line) != null:
 				_fail("%s:%d rewrites bloc_offset whole: %s" % [path, n + 1, line])
-			var is_call := line.contains("add_bloc_offset(") or line.contains("apply_effects(") or line.contains("penalise_blocs(")
-			if not is_call or line.begins_with("func ") or line.begins_with("static func "):
+			if line.begins_with("func ") or line.begins_with("static func "):
 				continue
-			var m := label.search(line)
-			if m == null:
-				continue  # a call whose source is a variable (the two doors' own writes)
-			calls += 1
-			if not SOURCES.has(m.get_string(1)):
-				_fail("%s:%d passes an unknown source '%s'" % [path, n + 1, m.get_string(1)])
+			for call in SOURCE_ARG:
+				var at := line.find(call + "(")
+				if at < 0:
+					continue
+				# The call joined to its closing paren, split at its own commas: the
+				# source is its argument SOURCE_ARG[call], wherever the call wraps.
+				var args := _call_args(lines, n, lines[n].find(call + "(") + call.length())
+				var arg: String = args[SOURCE_ARG[call]] if args.size() > SOURCE_ARG[call] else ""
+				calls += 1
+				# `source` is a door handing its caller's source on (government.gd, legislature.gd).
+				if arg != "source" and not (arg.begins_with("\"") and SOURCES.has(arg.trim_prefix("\"").trim_suffix("\""))):
+					_fail("%s:%d passes no known source: '%s'" % [path, n + 1, arg])
 	if calls < 30:
 		_fail("premise: found the source of only %d calls in src/" % calls)
 
@@ -134,6 +143,59 @@ func _test_the_writer_books_what_the_clamp_let_through() -> void:
 	var bad := _mismatch(ns)
 	if bad != "":
 		_fail("after two writes: %s" % bad)
+
+
+## An unclamped writer (investment.gd, projects.gd) can leave an offset past the bound;
+## the next clamped writer pulls it back, and that pull-back is "bound", not its own.
+## The parent's case on #466: 0.8, +0.5 investment = 1.3, then a -0.02 reshuffle.
+func _test_a_pull_back_past_the_bound_is_the_bounds() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	ns.bloc_offset["workers"] = 0.8
+	ns.offset_by_source = {"start": {"workers": 0.8}}
+	ns.add_bloc_offset("workers", 0.5, "investment", -INF, INF)
+	ns.add_bloc_offset("workers", -0.02, "government", -1.0, 1.0)
+	var by: Dictionary = ns.offset_by_source
+	if absf(float(ns.bloc_offset["workers"]) - 1.0) > EPS:
+		_fail("the clamp no longer pulls 1.28 back to 1.0: %s" % ns.bloc_offset["workers"])
+	if absf(float(by["investment"]["workers"]) - 0.5) > EPS:
+		_fail("investment booked %s, not 0.5" % by["investment"]["workers"])
+	if absf(float(by["government"]["workers"]) + 0.02) > EPS:
+		_fail("the reshuffle booked %s, not its own -0.02" % by["government"]["workers"])
+	if absf(float(by.get("bound", {}).get("workers", NAN)) + 0.28) > EPS:
+		_fail("the pull-back booked %s to bound, not -0.28" % [by.get("bound", {})])
+	var bad := _mismatch(ns)
+	if bad != "":
+		_fail("after the pull-back: %s" % bad)
+
+
+## A save from before the register carries acts' unfaded share in act_bloc_offset and no
+## sources. The first fade seeds "acts" with that share (Characters._fade_act_offsets),
+## so the fade nets the acts row toward 0 instead of opening a positive one; the rest of
+## the offset stays earlier.
+func _test_an_old_saves_acts_fade_nets_out() -> void:
+	var state = GameState.new_game(_loader, "FRA")
+	var ns = state.player()
+	ns.bloc_offset["workers"] = -0.3
+	ns.act_bloc_offset["workers"] = -0.2
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	for nd in (saved["nations"] as Dictionary).values():
+		(nd as Dictionary).erase("offset_by_source")
+	var old = GameState.from_dict(saved).player()
+	if not old.offset_by_source.is_empty():
+		_fail("an old save's register reads %s, not {}" % [old.offset_by_source])
+		return
+	Characters._fade_act_offsets(old)
+	var acts := float(old.offset_by_source["acts"]["workers"])
+	if acts > 0.0 or absf(acts - float(old.act_bloc_offset.get("workers", 0.0))) > EPS:
+		_fail("after a fade the acts row is %.6f, the unfaded share %.6f" % [acts, float(old.act_bloc_offset.get("workers", 0.0))])
+	var c: Dictionary = Opinion.causes(old)
+	var earlier := float(c["rows"]["direct:earlier"])
+	var want := 0.0
+	for bloc in K.BLOC_KEYS:
+		want += float(K.BLOC_SIZE[bloc]) * K.APPROVAL_SPAN * (float(old.bloc_offset.get(bloc, 0.0)) - (float(old.act_bloc_offset.get(bloc, 0.0)) if bloc == "workers" else 0.0))
+	if absf(earlier - want) > 1e-6:
+		_fail("after the fade earlier is %.6f, want %.6f (the offset less the acts' share)" % [earlier, want])
 
 
 ## causes(): the direct row is one row per source plus `direct:earlier` (what no source
@@ -202,6 +264,42 @@ func _mismatch(ns) -> String:
 		if absf(offset - float(sums[bloc])) > EPS:
 			return "bloc %s: offset %.12f, its sources sum to %.12f (%s)" % [bloc, offset, float(sums[bloc]), ns.offset_by_source]
 	return ""
+
+
+## The top-level arguments of the call whose "(" ends at lines[n][from - 1], read on
+## across lines to its closing paren; commas inside (), [], {} or a string do not split.
+func _call_args(lines: PackedStringArray, n: int, from: int) -> Array[String]:
+	var out: Array[String] = []
+	var depth := 0
+	var quoted := false
+	var arg := ""
+	var row := n
+	var i := from + 1
+	while row < lines.size():
+		var text: String = lines[row]
+		while i < text.length():
+			var ch := text[i]
+			i += 1
+			if quoted:
+				quoted = ch != "\""
+			elif ch == "\"":
+				quoted = true
+			elif ch in ["(", "[", "{"]:
+				depth += 1
+			elif ch in [")", "]", "}"]:
+				if depth == 0:
+					out.append(arg.strip_edges())
+					return out
+				depth -= 1
+			elif ch == "," and depth == 0:
+				out.append(arg.strip_edges())
+				arg = ""
+				continue
+			arg += ch
+		arg += " "
+		row += 1
+		i = 0
+	return out
 
 
 func _gd_files(dir: String) -> Array[String]:

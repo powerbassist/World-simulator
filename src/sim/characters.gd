@@ -148,6 +148,11 @@ static func book_act_offsets(ns, before: Dictionary) -> void:
 ## what faded, so a leak hurts the next vote and is then forgotten. A share too
 ## small to read is dropped, so the register does not grow a tail of zeros.
 static func _fade_act_offsets(ns) -> void:
+	# A share with no "acts" row is a save from before offset_by_source (an act always
+	# books its row): the share is the acts', so seed it and the fade nets it out rather
+	# than opening a positive row against earlier. Lazy, so the field table's absent
+	# still reads its default.
+	if not ns.act_bloc_offset.is_empty() and not ns.offset_by_source.has("acts"): ns.offset_by_source["acts"] = ns.act_bloc_offset.duplicate()
 	for bloc in ns.act_bloc_offset.keys():
 		var part := float(ns.act_bloc_offset[bloc])
 		var kept := part * CK.ACT_OFFSET_MONTHLY_KEEP

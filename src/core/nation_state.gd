@@ -764,9 +764,15 @@ func add_bloc_offset(bloc: String, delta: float, source: String, lo: float, hi: 
 	var before := float(bloc_offset.get(bloc, 0.0))
 	var after := clampf(before + delta, lo, hi)
 	bloc_offset[bloc] = after
-	var by: Dictionary = offset_by_source.get(source, {})
-	by[bloc] = float(by.get(bloc, 0.0)) + (after - before)
-	offset_by_source[source] = by
+	# The source books what it moved inside bounds `before` had not already broken. An
+	# offset past a bound (an unclamped writer left it there) is pulled back by this
+	# clamp, and that pull-back books to "bound", never to the source that tripped it.
+	var own := clampf(before + delta, minf(lo, before), maxf(hi, before)) - before
+	for pair in [[source, own], ["bound", (after - before) - own]]:
+		if pair[0] == source or float(pair[1]) != 0.0:
+			var by: Dictionary = offset_by_source.get(pair[0], {})
+			by[bloc] = float(by.get(bloc, 0.0)) + float(pair[1])
+			offset_by_source[pair[0]] = by
 
 ## String law id -> true. A law with `once = true` that has passed can never be
 ## proposed again; a law that failed and has `cooldown_months > 0` goes in

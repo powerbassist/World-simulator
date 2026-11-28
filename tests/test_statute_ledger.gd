@@ -576,7 +576,7 @@ func _test_event_silence() -> void:
 	var ns = pair[1]
 	# An event choice reaches the same channels through apply_effects() directly
 	# and records NOTHING -- an event is not a statute and has no repeal verb.
-	Legislature.apply_effects(gs, ns, {"bloc_offset": {"business": -0.2}}, _loader, "laws")
+	Legislature.apply_effects(gs, ns, {"bloc_offset": {"business": -0.2}}, _loader, "events")
 	if not ns.law_ledger.is_empty():
 		_fail("apply_effects() recorded a ledger entry -- only apply() may")
 

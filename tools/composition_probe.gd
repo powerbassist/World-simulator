@@ -491,6 +491,7 @@ func _band_p5(prices: Dictionary) -> void:
 	for key in prices:
 		var price: Dictionary = prices[key]
 		ns.bloc_offset = {}
+		ns.offset_by_source = {}
 		Legislature.apply_effects(state, ns, {"bloc_offset": Dictionary(price).duplicate(true)}, _loader, "laws")
 		total += 1
 		var cell_inside := true
