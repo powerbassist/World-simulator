@@ -21,6 +21,7 @@ extends SceneTree
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Regions = preload("res://src/sim/regions.gd")
 const RegionFunds = preload("res://src/sim/region_funds.gd")
+const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const Division = preload("res://src/sim/division.gd")
 const Migration = preload("res://src/sim/migration.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
@@ -59,45 +60,49 @@ func _process(_delta: float) -> bool:
 		6:
 			_check_problem(_regions[0])
 			_check_strip(_regions[0])
-			# QA's T2 on #345: a Go refused while a law holds the slot says why, a frame on.
+			# G3 (blind play 11-28): a law holds the slot, so Go greys before any press and says why,
+			# as the law sheet does.
 			_main._state.player().tabled_bill = {"law_id": String(_main._loader.laws[0].id), "referendum": false,
 				"vote_year": 2026, "vote_month": 1, "vote_day": 31}
-			_press(_with_meta("go"))
+			_panel.mark_dirty()
 		7:
-			_check_refused("refusal")
+			_check_held("go", "refusal")
 			_main._state.player().tabled_bill = {}
-			_press(_with_meta("go"))
+			_panel.mark_dirty()
 		8:
+			_press(_with_meta("go"))
+		9:
 			# V5.3 e (finance-bill.md section 12): Go tabled a row of the finance bill; it
 			# opens at the division at the month's end.
 			_divide_the_bill("start")
-		9:
+		10:
 			_check_started(_regions[0])
 			_check_budget_row()
 			_fill_to_the_cap()
 			_press(_region_button(_regions[0]))
-		11:
+		12:
 			_press(_region_button(_regions[3]))
-		13:
+		14:
 			_check_cap()
 			_move_a_sum()
-		15:
+		16:
 			_check_redrawn()
 			_press(_region_button(_regions[3]))
 			_press(_region_button(_regions[1]))
-		17:
-			# QA's T2 on #345: a Stop pressed while a law holds the slot says why.
+		18:
+			# G3's other verb: a law holds the slot, so Stop greys the same way.
 			_main._state.player().tabled_bill = {"law_id": String(_main._loader.laws[0].id), "referendum": false,
 				"vote_year": 2026, "vote_month": 1, "vote_day": 31}
-			_press(_with_meta("fund_id"))
-		18:
-			# A frame on, after the redraw the press asked for: the line is still there.
-			_check_refused("stop_refusal")
-			_main._state.player().tabled_bill = {}
-			_press(_with_meta("fund_id"))
+			_panel.mark_dirty()
 		19:
-			_divide_the_bill("stop")
+			_check_held("fund_id", "stop_refusal")
+			_main._state.player().tabled_bill = {}
+			_panel.mark_dirty()
 		20:
+			_press(_with_meta("fund_id"))
+		21:
+			_divide_the_bill("stop")
+		22:
 			_check_stopped(_regions[1])
 			_finish()
 	return false
@@ -293,13 +298,14 @@ func _check_redrawn() -> void:
 		_fail("redraw: the money beside the slider did not follow the level to %s %%: '%s', the sim's %s" % [top, beside, money])
 
 
-func _check_refused(meta: String) -> void:
+func _check_held(verb: String, meta: String) -> void:
+	var button = _with_meta(verb)
+	if button == null or not (button as Button).disabled:
+		_fail("%s: the verb is live while a law holds the slot" % verb)
 	var line = _with_meta(meta)
-	var want := Strings.t("A bill is already before the Assembly.")
-	if line == null or (line as Label).text != want:
-		_fail("%s: no line says why (%s)" % [meta, line.text if line != null else "<none>"])
-	if not (_main._state.player().tabled_bill.get("finance", {}) as Dictionary).is_empty():
-		_fail("%s: the refused press tabled the row anyway" % meta)
+	var want := BillVerbs.tabled_reason(_main._state.player(), _main._loader)
+	if line == null or not (line as Control).is_visible_in_tree() or (line as Label).text != want:
+		_fail("%s: no visible line says why (%s)" % [meta, line.text if line != null else "<none>"])
 
 
 ## Stop on a running fund closes it, and the row said whom it angers before.

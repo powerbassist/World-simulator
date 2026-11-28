@@ -40,8 +40,8 @@ static func heads(parent: Control, texts: Array) -> Control:
 	return pad
 
 
-## `meta` is [key, id] ("person" or "office"); `cells` [{text, tone}] in COLS order, the
-## first with a "sub" line under the name. `face_id` "" draws no face. `hover` (id, line),
+## `meta` is [key, id] ("person" or "office"); `cells` [{text, tone}] in COLS order, any
+## with a "sub" line under it ("sub_tone", Caption unless said). `face_id` "" draws no face. `hover` (id, line),
 ## `unhover` (), `pick` (), `menu` () are the panel's.
 static func build(parent: Control, meta: Array, face_id: String, feel: Dictionary, cells: Array, picked: bool,
 		hover: Callable, unhover: Callable, pick: Callable, menu: Callable) -> Control:
@@ -83,19 +83,18 @@ static func build(parent: Control, meta: Array, face_id: String, feel: Dictionar
 	# The portrait's own parts stop the pointer (pass 2 on #388: a click on the face was
 	# dead and the card hid): every cell over the press target lets it through.
 	_let_through(face)
-	var first: Dictionary = cells[0]
-	var name := VBoxContainer.new()
-	name.add_theme_constant_override("separation", 0)
-	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name.size_flags_stretch_ratio = COLS[0]
-	name.alignment = BoxContainer.ALIGNMENT_CENTER
-	name.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(name)
-	_label(name, String(first["text"]), String(first.get("tone", "")), true)
-	if String(first.get("sub", "")) != "":
-		_label(name, String(first["sub"]), UiTheme.CAPTION, true)
-	for i in range(1, cells.size()):
-		_cell(row, String(cells[i]["text"]), i, String(cells[i].get("tone", "")))
+	for i in cells.size():
+		var cell: Dictionary = cells[i]
+		var sub := String(cell.get("sub", ""))
+		if i > 0 and sub == "":
+			_cell(row, String(cell["text"]), i, String(cell.get("tone", "")))
+			continue
+		# The name is one trimmed line over its side; any other two-line cell wraps in its column.
+		var stack := _stack(row, i)
+		_label(stack, String(cell["text"]), String(cell.get("tone", "")), i == 0)
+		if sub != "":
+			var tone := String(cell.get("sub_tone", ""))
+			_label(stack, sub, tone if tone != "" else UiTheme.CAPTION, i == 0)
 	press.pressed.connect(func() -> void: pick.call())
 	var on_input := func(event: InputEvent) -> void:
 		if event is InputEventMouseButton and event.pressed:
@@ -132,6 +131,17 @@ static func _spacer(width: float) -> Control:
 	gap.custom_minimum_size.x = width
 	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return gap
+
+
+static func _stack(row: Control, col: int) -> VBoxContainer:
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 0)
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_stretch_ratio = COLS[col]
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(stack)
+	return stack
 
 
 static func _cell(row: Control, text: String, col: int, tone: String) -> Label:

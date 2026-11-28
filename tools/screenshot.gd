@@ -133,6 +133,12 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-tabled
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-tabled --books-draft --inbox-away   (an amendment: the tabled bill is the waterfall's first step)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-refused
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-queued   (the finance bill queued behind a held slot, nothing drafted)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --queue --open region   (the slot held: Start the fund greyed, its reason under it)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --queue --open region
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pause-menu --pause-ask   (Quit pressed on an unsaved game)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-chip government --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-chip bench --people-pick hover --open people   (a meter want, its level on the card)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-units
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn
@@ -574,6 +580,12 @@ var _books_row := ""
 var _books_draft := false
 ## --books-units: --books-draft plus a fuel duty (EUR/l) and the brackets: the tray's three unit kinds, five rows.
 var _books_units := false
+## --books-queued: another bill holds the slot and the finance bill waits in the queue.
+var _books_queued := false
+## --pause-ask: with --pause-menu, a day later than the last save and Quit pressed once.
+var _pause_ask := false
+## --people-chip CHIP: the People roster on that chip.
+var _people_chip := ""
 ## --books-sheet: the bill's sheet open over the Books page on the picture's draft (health +1.5, education -0.5, VAT +2).
 var _books_sheet := false
 var _books_move := false
@@ -1115,6 +1127,12 @@ func _init() -> void:
 			_books_tabled = true
 		elif args[i] == "--books-refused":
 			_books_refused = true
+		elif args[i] == "--books-queued":
+			_books_queued = true
+		elif args[i] == "--pause-ask":
+			_pause_ask = true
+		elif args[i] == "--people-chip" and i + 1 < args.size():
+			_people_chip = args[i + 1]
 		elif args[i] == "--compose":
 			_compose = true
 		elif args[i] == "--pmb":
@@ -1597,7 +1615,7 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
-	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_sheet or _books_autumn or _books_move:
+	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_queued or _books_sheet or _books_autumn or _books_move:
 		_stage_the_books()
 	if _moved:
 		_move_the_levers()
@@ -1685,6 +1703,15 @@ func _apply_view() -> void:
 		_stage_the_election()
 	if _pause_menu:
 		_main._open_pause_menu()
+		if _pause_ask:
+			_main._clock.day += 1
+			for button in _main._pause_menu._ways_out:
+				if (button as Button).text == tr("Quit"):
+					(button as Button).pressed.emit()
+			if not _main._pause_menu.warns():
+				push_error("screenshot: --pause-ask asked nothing; the frame shows the plain menu")
+	if _people_chip != "":
+		_main._people_panel._pick_chip(_people_chip)
 	if _tally:
 		_stage_the_tally()
 	if _diverge:
@@ -2442,6 +2469,9 @@ func _stage_the_books() -> void:
 		FinanceBill.table(_main._state, _main._loader, {"tax_rates_pct": {"vat": 2.0}, "spending_pct_gdp": {"health": 0.5}})
 	if _books_refused:
 		ns.tabled_bill = {"law_id": "workplace_safety_act", "vote_year": _main._state.year, "vote_month": _main._state.month, "vote_day": 28}
+	if _books_queued:
+		ns.tabled_bill = {"law_id": "workplace_safety_act", "vote_year": _main._state.year, "vote_month": _main._state.month, "vote_day": 28}
+		preload("res://src/sim/bill_queue.gd").add(_main._state, {"finance": {"tax_rates_pct": {"vat": 1.0}}, "force": false})
 	if _books_row != "":
 		page.open_row(_books_row.get_slice(":", 0), _books_row.get_slice(":", 1))
 	if _books_draft or _books_refused:
@@ -2531,7 +2561,7 @@ func _stage_a_people_pick() -> void:
 		preload("res://src/sim/cabinet.gd").vacate(_main._state, "health")
 		panel._pick("office", "health")
 		return
-	var rows: Array = preload("res://src/ui/roster_rows.gd").rows(_main._state, _main._loader, "needs", "")
+	var rows: Array = preload("res://src/ui/roster_rows.gd").rows(_main._state, _main._loader, _people_chip if _people_chip != "" else "needs", "")
 	if rows.is_empty():
 		push_error("screenshot: --people-pick first found nobody who needs you (add --request)")
 		return

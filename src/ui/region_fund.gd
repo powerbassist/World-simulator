@@ -11,7 +11,8 @@ extends RefCounted
 ## region's people), the region's unemployment now and with the fund. A fund the
 ## register refuses (the cap of open funds, a fund already running here) greys its Go
 ## and prints RegionFunds.refusal()'s line under it, read before any press (A5's
-## grammar, the Industry tab's).
+## grammar, the Industry tab's). So does a slot the finance bill cannot take (G3): Go
+## and Stop grey with FinanceBill.refusal()'s reason, as the law sheet's verbs do.
 ##
 ## The two sums live on the panel's game state (region_state.gd), so a rebuild keeps them;
 ## a drag redraws only the strip, never the panel, so the slider keeps the mouse.
@@ -20,6 +21,9 @@ const RegionFunds = preload("res://src/sim/region_funds.gd")
 ## V5.3 e (section 12): Go and Stop table rows of the finance bill, applied at the month's end.
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
+const BillVerbs = preload("res://src/ui/bill_verbs.gd")
+const Bills = preload("res://src/sim/bills.gd")
+const Legislature = preload("res://src/sim/legislature.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
@@ -93,7 +97,11 @@ static func _running(panel, box: Control, ns, row: Dictionary) -> void:
 	# made the press do nothing, silently).
 	var refusal := PanelKit.plain_line(box, String(panel._game.fund_refusal))
 	refusal.set_meta("stop_refusal", true)
-	refusal.visible = String(panel._game.fund_refusal) != ""
+	var held := _held(panel, ns, {"stop": [String(row["id"])]})
+	stop.disabled = held != ""
+	if held != "":
+		refusal.text = held
+	refusal.visible = refusal.text != ""
 	ResultTone.tint(refusal, ResultTone.BLOCKED)
 	stop.pressed.connect(func() -> void:
 		_pressed(panel, FinanceBill.table(panel._state, panel._loader, {"funds": {"stop": [String(row["id"])]}})))
@@ -163,6 +171,19 @@ static func _verb(panel, box: Control, ns, region, rule: Dictionary) -> void:
 	redraw.call()
 
 
+## Why the finance bill takes no such fund row now, "" when it does: a law in the slot said as the law sheet says it,
+## naming it and its vote.
+static func _held(panel, ns, funds: Dictionary) -> String:
+	var why: Dictionary = FinanceBill.refusal(panel._state, panel._loader, {"funds": funds})
+	if why.is_empty():
+		return ""
+	if not bool(why.get("already_tabled", false)):
+		return ProposalNote.body(why)
+	return BillVerbs.tabled_reason(ns, panel._loader, func(id: String):
+		var law = Legislature.open_law(panel._state, ns, panel._loader, id)
+		return law if law != null else Bills.by_id(panel._loader, id))
+
+
 ## A Go or a Stop pressed: its refusal kept on the panel, so the line still says it after
 ## the rebuild the press asks for (a line set on the old controls was wiped by it).
 static func _pressed(panel, tabling: Dictionary) -> void:
@@ -177,8 +198,9 @@ static func _price(panel, ns, region, strip, go: Button, refusal: Label) -> void
 	var years := int(panel._game.fund_years)
 	var est: Dictionary = RegionFunds.estimate(panel._state, ns, panel._loader, String(region.id), share, years)
 	var ok := bool(est.get("ok", false))
-	go.disabled = not ok
-	refusal.text = String(panel._game.fund_refusal) if ok else Strings.t(String(est.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
+	var held := _held(panel, ns, {"start": [{"region_id": String(region.id), "share_pct": share, "years": years}]}) if ok else ""
+	go.disabled = not ok or held != ""
+	refusal.text = (held if held != "" else String(panel._game.fund_refusal)) if ok else Strings.t(String(est.get("reason", "")))  # i18n: row-ok the sim's reason, its English the msgid
 	refusal.visible = refusal.text != ""
 	strip.visible = ok
 	if not ok:

@@ -444,8 +444,8 @@ func _on_table(force := false) -> void:
 	var before := Trends.snapshot_now(_state)
 	var tabling := FinanceMoves.table(_state, _loader, _draft, force)
 	mark_dirty()  # a tabling and a booked move both change what the books and the forecast stand on
-	# A refusal keeps the draft on the rows; a tabled bill clears it.
-	if bool(tabling.get("tabled", false)):
+	# A refusal keeps the draft on the rows; a tabled or queued bill clears it.
+	if bool(tabling.get("tabled", false)) or bool(tabling.get("queued", false)):
 		_autumn_dropped = false
 		_draft.revert()
 		_put_sheet_away()

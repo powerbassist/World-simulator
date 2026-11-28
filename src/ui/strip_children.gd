@@ -23,6 +23,7 @@ const SectorGoods = preload("res://src/ui/sector_goods.gd")
 const Opinion = preload("res://src/sim/opinion.gd")
 const Inflation = preload("res://src/sim/inflation.gd")
 const Programme = preload("res://src/sim/programme.gd")
+const ProgrammeDistance = preload("res://src/ui/programme_distance.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 const Orgs = preload("res://src/sim/orgs.gd")
 const EventsK = preload("res://src/sim/events_constants.gd")
@@ -68,7 +69,7 @@ static func child(reading_id: String, child_id: String, state, loader) -> Dictio
 				return _coalition(ns, loader)
 		"programme":
 			if child_id == "entries":
-				return _programme(ns, loader)
+				return _programme(state, ns, loader)
 		"desk":
 			if child_id == "queue":
 				return _queue(ns, loader)
@@ -155,7 +156,7 @@ static func _coalition(ns, loader) -> Dictionary:
 
 
 ## Every running entry, not only the nearest-deadline one the figure prices.
-static func _programme(ns, loader) -> Dictionary:
+static func _programme(state, ns, loader) -> Dictionary:
 	var lines: Array = []
 	for live in ns.programme:
 		if String(live["status"]) != ProgrammeK.STATUS_ACTIVE:
@@ -163,10 +164,9 @@ static func _programme(ns, loader) -> Dictionary:
 		var terms: Dictionary = Programme.terms_of(loader, String(live["entry_id"]))
 		if terms.is_empty():
 			continue
-		var progress: Dictionary = Programme.progress_of(ns, terms)
-		var line := Strings.t("%s -- now %s · goal %s") % [
+		var line := "%s -- %s" % [
 			Strings.row("programme", String(live["entry_id"]), "name", String(terms.get("name", String(live["entry_id"])))),
-			Num.f(float(progress["current_value"]), 2), Num.f(float(progress["goal_value"]), 2)]
+			ProgrammeDistance.of(state, terms)]
 		var clock := StripReadings.programme_clock_text(terms, live)
 		if not clock.is_empty():
 			line += " · %s" % clock

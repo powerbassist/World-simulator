@@ -344,6 +344,8 @@ class MainHost extends DevRegistry.Host:
 		if not SaveManager.valid_slot_name(slot):
 			return "'%s' is not a usable slot name" % slot
 		var error: String = SaveManager.save_game(main._state, main._clock, slot)
+		if error.is_empty():
+			main._pause_menu.stamp()
 		main._save_load_panel.mark_dirty()
 		return error
 

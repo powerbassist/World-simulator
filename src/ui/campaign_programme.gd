@@ -6,7 +6,7 @@ extends RefCounted
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const ResultTone = preload("res://src/ui/result_tone.gd")
 const Strings = preload("res://src/ui/strings.gd")
-const Num = preload("res://src/ui/num.gd")
+const ProgrammeDistance = preload("res://src/ui/programme_distance.gd")
 const Programme = preload("res://src/sim/programme.gd")
 const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 
@@ -15,12 +15,13 @@ const ProgrammeK = preload("res://src/sim/programme_constants.gd")
 ## mitigation: pledges and programmes are kept apart, but "apart" must not rot
 ## into two lists the player reconciles by hand -- so the Promises section opens
 ## on the programme, read through the same Programme.this_term() /
-## progress_of() / PanelKit.progress_fraction() trio the Agenda and the Overview
-## read. Never a second answer to one read, and never a write: the choice
+## progress_of() pair and the same distance words (programme_distance.gd) as the
+## file page and the Presidency page. Never a second answer to one read, and never a write: the choice
 ## happens on the Agenda or nowhere. A concluded entry prints its verdict rather
-## than a fraction -- a bar over a delivered programme would be a lie about a
+## than a distance -- a figure over a delivered programme would be a lie about a
 ## term that is already priced.
-static func build(body: Control, ns, loader) -> void:
+static func build(body: Control, state, loader) -> void:
+	var ns = state.player()
 	var this_term: Array = Programme.this_term(ns)
 	if this_term.is_empty():
 		if Programme.is_term_start(ns):
@@ -38,12 +39,7 @@ static func build(body: Control, ns, loader) -> void:
 		var name_text := Strings.row_name("programme", terms)
 		match String(entry["status"]):
 			ProgrammeK.STATUS_ACTIVE:
-				var read: Dictionary = Programme.progress_of(ns, terms)
-				var fraction: float = PanelKit.progress_fraction(
-					float(read["current_value"]), float(read["goal_value"]), String(read["progressbar"]))
-				PanelKit.line(body, Strings.t("%s · now %s · goal %s · %d%% there") % [
-					name_text, Num.f(float(read["current_value"]), 2), Num.f(float(read["goal_value"]), 2), roundi(fraction * 100.0),
-				], PanelKit.Tone.PLAIN)
+				PanelKit.line(body, "%s · %s" % [name_text, ProgrammeDistance.of(state, terms)], PanelKit.Tone.PLAIN)
 			ProgrammeK.STATUS_COMPLETE:
 				ResultTone.tint(PanelKit.line(body, Strings.t("%s · Delivered.") % name_text, PanelKit.Tone.PLAIN), ResultTone.GOOD)
 			ProgrammeK.STATUS_FAIL:

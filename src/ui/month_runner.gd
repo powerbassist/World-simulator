@@ -54,6 +54,7 @@ var replaying := false
 var last_month_costs := {}
 var _month_costs := {}
 var _deferred: Array[InputEvent] = []
+var _asked := Callable()  # a window close asked while the month closed, answered once it is done
 
 
 ## One month, then `done.call(report)`. Real time passing is spread across
@@ -77,6 +78,15 @@ func run(state, loader, on_step: Callable, done: Callable, clock: Node, held: No
 
 func running() -> bool:
 	return _month != null
+
+
+## `what` now, or once the month closing is done and its input replayed. For the window's close button: a press that
+## arrives as a notification, which _input never sees (QA's Q1 on #464).
+func after_month(what: Callable) -> void:
+	if _month == null:
+		what.call()
+	else:
+		_asked = what
 
 
 func _process(_delta: float) -> void:
@@ -109,6 +119,10 @@ func _process(_delta: float) -> void:
 	var events := _deferred
 	_deferred = []
 	_replay(events)
+	var asked := _asked
+	_asked = Callable()
+	if asked.is_valid() and is_inside_tree():  # not after a replayed load: that game is gone
+		asked.call()
 
 
 ## The input the player gave while the month closed, in order. A replayed click can load a game,

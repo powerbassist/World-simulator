@@ -117,9 +117,10 @@ static func pledges(raw) -> Array:
 	return out
 
 
-## The programme register, the pledges' shape and reason. The six keys are what
+## The programme register, the pledges' shape and reason. The seven keys are what
 ## src/sim/programme.gd writes, which keeps "the register carries no content"
-## true across a round trip.
+## true across a round trip. `start` is kept only where the save has it: a row from
+## before it was written must not read as started at 0.
 static func programme(raw) -> Array:
 	if typeof(raw) != TYPE_ARRAY:
 		return []
@@ -135,6 +136,8 @@ static func programme(raw) -> Array:
 			"concluded_term": int(entry.get("concluded_term", -1)),
 			"concluded_term_month": int(entry.get("concluded_term_month", -1)),
 		})
+		if entry.has("start"):
+			out.back()["start"] = float(entry["start"])
 	return out
 
 

@@ -195,6 +195,10 @@ load-bearing half of §7's re-run prediction.
 - **No stored progress.** `current_value`/`goal_value`/`progressbar` are computed
   each read from the live figure the entry names; storing them is a second answer
   (the stored-city-population rule) and a panel that can disagree with the sim.
+- **One figure is kept, and it is not progress** (2026-11-28, the author's call on the
+  blind play): the register row's `start`, the judged figure on the day of the choice.
+  Sentence lines read the distance from it ("7.40 to 7.00: 0.00 of 0.40 done"), with no
+  percentage; a row saved without it reads "now X · goal Y". No `SAVE_VERSION` bump.
 - **No new effect channels.** Every `on_*` conclusion prices only on the shared
   channels the one applier already carries — a conclusion needing a channel laws
   and events cannot use is content this model refuses at load, the summits'

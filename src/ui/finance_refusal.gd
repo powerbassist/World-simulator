@@ -4,6 +4,18 @@ extends RefCounted
 ## moved out of the rail at G3 S4 to keep that file under the size ratchet. The Assembly's verdict in words too.
 
 const Strings = preload("res://src/ui/strings.gd")
+const ChartKit = preload("res://src/ui/chart_kit.gd")
+const UiTheme = preload("res://src/ui/ui_theme.gd")
+const FinanceRows = preload("res://src/ui/finance_rows.gd")
+
+
+## The Assembly's division on one bar, the rail's and the sheet's.
+static func division_bar(box: Control, title: String, vote: Dictionary) -> void:
+	ChartKit.stack(box, title, [
+		{"label": Strings.t("For"), "value": float(vote["yes_seats"])},
+		{"label": Strings.t("Against"), "value": float(vote["no_seats"])},
+		{"label": Strings.t("Undecided"), "value": float(vote["abstain_seats"])},
+	], {"places": 0, "colors": [UiTheme.GOOD, UiTheme.BAD, FinanceRows.MUTED], "marker": 0.5})
 
 
 ## "✓ It carries: 348 for, 229 against." -- the Assembly's result as the sim's own division rule reads it now.

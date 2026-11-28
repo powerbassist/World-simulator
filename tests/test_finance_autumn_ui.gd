@@ -19,7 +19,8 @@ const Num = preload("res://src/ui/num.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceUnits = preload("res://src/ui/finance_units.gd")
-const FinanceFoot = preload("res://src/ui/finance_foot.gd")
+const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
+const FinanceMoves = preload("res://src/ui/finance_moves.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
 const Click = preload("res://tests/click.gd")
@@ -61,6 +62,7 @@ func _process(_delta: float) -> bool:
 			_check_births_and_abolitions_are_priced()
 			_check_the_autumn_rows_leave_when_the_month_ends()
 			_check_a_bill_at_vote_locks_its_births()
+			_check_an_autumn_row_cannot_be_queued()
 			# Pass 2's T1 and T3 on #392: a real mouse click on Abolish, frames apart, then Space.
 			_mouse_abolish_start()
 		4:
@@ -391,7 +393,7 @@ func _check_the_autumn_rows_leave_when_the_month_ends() -> void:
 		_fail("the ordinary row did not stay (%d rows)" % draft.count())
 	if not _panel._with.text.contains("autumn month is over"):
 		_fail("the page does not say the autumn rows were taken out: %s" % _panel._with.text)
-	if not FinanceFoot.reason("autumn").contains("autumn month"):
+	if not FinanceRefusal.reason("autumn").contains("autumn month"):
 		_fail("a refusal for the autumn does not name the month")
 	_panel._on_moved()
 	_panel._paint(ns)
@@ -480,6 +482,39 @@ func _check_a_bill_at_vote_locks_its_births() -> void:
 	if abolish_cell.text != want_cell:
 		_fail("an abolition at vote reads '%s', wanted '%s'" % [abolish_cell.text, want_cell])
 	_panel._on_withdraw()
+
+
+## Pass 1 on #464: the queue's head is tabled in a later month, outside the autumn window, so a queued creation or
+## abolition was always dropped. With the slot held the verb stays down, says why, and nothing is queued.
+func _check_an_autumn_row_cannot_be_queued() -> void:
+	var ns = _state.player()
+	var draft = _panel.shared_draft()
+	for birth in [true, false]:
+		draft.revert()
+		ns.tabled_bill = {"law_id": "some_law", "vote_year": int(_state.year), "vote_month": int(_state.month), "vote_day": 28}
+		ns.bill_queue = []
+		if birth:
+			draft.set_create(_absent, 0.2)
+		else:
+			draft.toggle_abolish("sugar_drinks_levy")
+		_panel._foot._stamp = ""
+		_panel._dirty = true
+		_panel._process(0.0)
+		var table: Button = _panel._foot.find_child("Table", true, false)
+		# The held slot leads, as on the sheet, and the folded line (which clips it) says both whole on a hover.
+		var why := Strings.t("Another bill holds this month's slot.") + " " + Strings.t("A new or abolished tax cannot wait in the queue.")
+		var line: Label = _panel._foot._strip._verdict
+		if not table.disabled or not _panel._foot._text.text.begins_with(why):
+			_fail("an autumn row (birth %s) behind a held slot: the verb reads '%s' (disabled %s), '%s'" % [birth, table.text, table.disabled, _panel._foot._text.text])
+		if not line.text.begins_with(why) or line.tooltip_text != line.text or line.mouse_filter == Control.MOUSE_FILTER_IGNORE:
+			_fail("an autumn row (birth %s): the folded line reads '%s', its hover '%s'" % [birth, line.text, line.tooltip_text])
+		FinanceMoves.table(_state, _loader, draft, false)
+		if not ns.bill_queue.is_empty():
+			_fail("an autumn row (birth %s) was queued: %s" % [birth, ns.bill_queue])
+	ns.tabled_bill = {}
+	ns.bill_queue = []
+	draft.revert()
+	_rebuild()
 
 
 func _fail(message: String) -> void:

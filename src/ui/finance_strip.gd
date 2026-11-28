@@ -33,6 +33,7 @@ func _ready() -> void:
 	_verdict.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_verdict.clip_text = true
 	_verdict.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_verdict.mouse_filter = Control.MOUSE_FILTER_PASS  # a Label ignores the mouse, so its hover would never show
 	add_child(_verdict)
 	_slot = HBoxContainer.new()
 	_slot.add_theme_constant_override("separation", 10)
@@ -49,13 +50,16 @@ func _ready() -> void:
 
 
 ## The line: the bill's name, what it holds (`line`), and the verdict in its tone (`good` the good-news tone, `bad` the
-## bad, neither the caption's). The verdict carries its glyph, so the tone is never alone.
-func say(title: String, line: String, verdict: String, good: bool, bad: bool) -> void:
+## bad, neither the caption's; `warn`, amber, over `bad`: a refusal beside a verb that still queues). A vote's verdict
+## carries its glyph, and a refusal's tone follows its verb, live or greyed, so the tone is never alone.
+func say(title: String, line: String, verdict: String, good: bool, bad: bool, warn := false) -> void:
 	_title.text = title
 	_line.text = line
 	_line.visible = line != ""
 	_verdict.text = verdict
-	_verdict.theme_type_variation = UiTheme.GOOD_SMALL if good else (UiTheme.BAD_SMALL if bad else UiTheme.CAPTION)
+	_verdict.tooltip_text = verdict
+	var toned := UiTheme.WARN_TEXT if warn else (UiTheme.BAD_SMALL if bad else UiTheme.CAPTION)
+	_verdict.theme_type_variation = UiTheme.GOOD_SMALL if good else toned
 
 
 ## Moves `nodes` (the rail's date tag, its verbs one by one) into the line, in order: a flow container in a row wraps

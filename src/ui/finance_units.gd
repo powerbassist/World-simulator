@@ -26,6 +26,13 @@ static func suffix(code: String) -> String:
 	return " " + code
 
 
+## A rate's step, as a size of move: points of rate for a percentage ("5 %" read as five percent of the money, G14).
+static func step(number: String, size: float, code: String) -> String:
+	if code == "%":
+		return Strings.tn("%s point", "%s points", 1 if is_equal_approx(size, 1.0) else 2) % number
+	return rate(number, code)
+
+
 static func rate(number: String, code: String) -> String:
 	return Strings.t("index %s") % number if code == "index" else number + suffix(code)
 

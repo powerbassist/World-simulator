@@ -47,6 +47,7 @@ var autumn := false
 ## The row's own bar (finance_lever.gd), handed in by the page before setup(): the editor's lever when it can be dragged.
 var row_lever: HSlider = null
 var _state
+var _loader
 var _draft
 var _price
 var _slider: HSlider
@@ -60,10 +61,14 @@ var _lo := 0.0
 var _hi := 0.0
 ## A spending line's sectors (slice 5), drawn from the draft again whenever the slider moves.
 var _tile: FinanceSectors
+## Who the row is for, and the direction it was last said for (null before the first).
+var _who: VBoxContainer
+var _who_down: Variant = null
 
 
 func setup(state, loader, draft, price, row_channel: String, row_key: String) -> void:
 	_state = state
+	_loader = loader
 	_draft = draft
 	_price = price
 	channel = row_channel
@@ -103,20 +108,10 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	# The balance is the row's Balance cell and the rail's (gate T3 on #443: each number once). Kept, unshown, for the
 	# brackets, which have no row of their own: the rail's change carries their money.
 	_effect.visible = false
-	# [glyph, its tone, the words, the names]: the glyph carries the tone, the words are dim and the names plain (gate T10
-	# on #443, as Sectors' answer rows), so a whole sentence is never red.
-	for line in _who_lines(state, loader):
-		var said := HBoxContainer.new()
-		said.add_theme_constant_override("separation", 4)
-		add_child(said)
-		if String(line[0]) != "":
-			var glyph := PanelKit.plain_line(said, String(line[0]), PanelKit.Tone.PLAIN)
-			glyph.theme_type_variation = String(line[1])
-			glyph.autowrap_mode = TextServer.AUTOWRAP_OFF  # a wrapping glyph has no width and sat on its words
-		PanelKit.plain_line(said, String(line[2]), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
-		var names := PanelKit.plain_line(said, String(line[3]), PanelKit.Tone.PLAIN)
-		names.autowrap_mode = TextServer.AUTOWRAP_WORD
-		names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_who = VBoxContainer.new()
+	_who.add_theme_constant_override("separation", 6)
+	add_child(_who)
+	_say_who()
 	if channel == FinanceDraft.TAX and not in_force and _draft.is_created(key):
 		_verb(Strings.t("Take it back"), "TakeBack", func() -> void: _draft.clear_create(key))  # i18n: ok a node name
 	elif channel == FinanceDraft.TAX and autumn and in_force and ns.tax_library[key].has("rate_range_pct"):
@@ -129,7 +124,7 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	if channel == FinanceDraft.TAX:
 		var yields: Dictionary = FinanceRead.step_yields(ns).get(key, {})
 		if yields.has("up_bn"):
-			PanelKit.plain_line(self, Strings.t("One step (%s): %s a year.") % [FinanceUnits.rate(LedgerBox.text(float(yields["step"]), decimals), code), EffectsStrip.money_text(float(yields["up_bn"]))], PanelKit.Tone.DIM)
+			PanelKit.plain_line(self, Strings.t("One step (%s): %s a year.") % [FinanceUnits.step(LedgerBox.text(float(yields["step"]), decimals), float(yields["step"]), code), EffectsStrip.money_text(float(yields["up_bn"]))], PanelKit.Tone.DIM)
 	_sync()
 
 
@@ -221,8 +216,34 @@ func _write(lever_channel: String, lever_key: String, value: float) -> void:
 	moved.emit()
 
 
+## Who the row is for, said again when a line's draft crosses today's figure (a cut and a rise are read apart).
+## [glyph, its tone, the words, the names]: the glyph carries the tone, the words are dim and the names plain (gate T10
+## on #443, as Sectors' answer rows), so a whole sentence is never red.
+func _say_who() -> void:
+	var down: bool = channel == FinanceDraft.SPENDING and _draft.value(channel, key) < _draft.live(channel, key) - LINE_STEP * 0.5
+	if _who == null or _who_down == down:
+		return
+	_who_down = down
+	for child in _who.get_children():
+		_who.remove_child(child)
+		child.queue_free()
+	for line in _who_lines(_state, _loader, down):
+		var said := HBoxContainer.new()
+		said.add_theme_constant_override("separation", 4)
+		_who.add_child(said)
+		if String(line[0]) != "":
+			var glyph := PanelKit.plain_line(said, String(line[0]), PanelKit.Tone.PLAIN)
+			glyph.theme_type_variation = String(line[1])
+			glyph.autowrap_mode = TextServer.AUTOWRAP_OFF  # a wrapping glyph has no width and sat on its words
+		PanelKit.plain_line(said, String(line[2]), PanelKit.Tone.DIM).autowrap_mode = TextServer.AUTOWRAP_OFF
+		var names := PanelKit.plain_line(said, String(line[3]), PanelKit.Tone.PLAIN)
+		names.autowrap_mode = TextServer.AUTOWRAP_WORD
+		names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+
 ## Slider, box and effect line from the draft (a refresh from outside lands here too, and writes nothing).
 func _sync() -> void:
+	_say_who()
 	if _slider == null:
 		return
 	var ns = _state.player()
@@ -269,12 +290,13 @@ func _income_key(ns) -> String:
 ## Who the row is for: a tax's payers (the data); a spending line's blocs (what Opinion weighs for its issue) and
 ## what one step of it does to each (the net, in words: at a game's start a rise angers nearly every bloc, because
 ## the deficit it adds is counted). One FinanceRead.line_blocs call when the row opens (~30 ms).
-func _who_lines(state, loader) -> Array:
+func _who_lines(state, loader, cut: bool) -> Array:
 	if channel == FinanceDraft.TAX:
 		var paid: Array = state.player().tax_library[key].get("who_pays", [])
 		return [["", "", Strings.t("Paid by:"), ", ".join(paid.map(func(b) -> String: return Labels.bloc(String(b))))]]
-	# A step up of the line, bloc by bloc (gate T3 on #443): two glyph lines, the tone never alone.
-	var read: Dictionary = FinanceRead.line_blocs(state, loader, key)
+	# A step of the line in the draft's direction (up while untouched), bloc by bloc (gate T3 on #443): two glyph
+	# lines, the tone never alone.
+	var read: Dictionary = FinanceRead.line_blocs(state, loader, key, cut)
 	var up := []
 	var down := []
 	for pair in read["gains"] + read["loses"]:
@@ -284,9 +306,9 @@ func _who_lines(state, loader) -> Array:
 			down.append(Labels.bloc(String(pair[0])))
 	var out := []
 	if not up.is_empty():
-		out.append(["▲", UiTheme.GOOD_SMALL, Strings.t("A step up pleases"), ", ".join(up)])
+		out.append(["▲", UiTheme.GOOD_SMALL, Strings.t("A step down pleases") if cut else Strings.t("A step up pleases"), ", ".join(up)])
 	if not down.is_empty():
-		out.append(["▼", UiTheme.BAD_SMALL, Strings.t("A step up angers"), ", ".join(down)])
+		out.append(["▼", UiTheme.BAD_SMALL, Strings.t("A step down angers") if cut else Strings.t("A step up angers"), ", ".join(down)])
 	return out
 
 

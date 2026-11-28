@@ -53,9 +53,10 @@ static func draft(state, loader, bill: Dictionary) -> Dictionary:
 
 ## {weights: [[bloc, weight], ...], gains: [[bloc, points], ...], loses: [[bloc, points], ...]},
 ## each most first: the blocs that weigh the line's issue (a bloc with no weight on it is
-## absent), and each bloc's approval target moved by `key` rising one goal-read step (a bloc
-## left still is in neither).
-static func line_blocs(state, loader, key: String) -> Dictionary:
+## absent), and each bloc's approval target moved by `key` rising one goal-read step, or falling
+## one with `down` (read on its own: the deficit counts, so a cut is not a rise's mirror). A
+## bloc left still is in neither.
+static func line_blocs(state, loader, key: String, down := false) -> Dictionary:
 	var ns = state.player()
 	var sat := Opinion.issue_satisfaction(ns)
 	var weights := []
@@ -64,7 +65,7 @@ static func line_blocs(state, loader, key: String) -> Dictionary:
 		if w > 0.0:
 			weights.append([String(bloc), w])
 	weights.sort_custom(_most_first)
-	var read := GoalRead.read(state, loader, {"kind": "line", "key": key, "step": GK.SPENDING_STEP})
+	var read := GoalRead.read(state, loader, {"kind": "line", "key": key, "step": -GK.SPENDING_STEP if down else GK.SPENDING_STEP})
 	var gains := []
 	var loses := []
 	for bloc in read["bloc_target"]:
