@@ -152,9 +152,9 @@ def resolve_file(expr: str, text: str, before: int, fname: str = "") -> str:
     if re.fullmatch(r"\w+", expr):
         if re.search(r"\b%s\s*(?::=|=)\s*new\(" % re.escape(expr), text):
             return fname or "?"  # the file builds itself: `var card := new()`
-        typed = re.search(r"\bvar\s+%s\s*:\s*(\w+)\s*=" % re.escape(expr), text[:before])  # a panel another one built
-        if typed and typed.group(1) in consts:
-            return consts[typed.group(1)]
+        typed = re.findall(r"\bvar\s+%s\s*:\s*(\w+)\s*=" % re.escape(expr), text[:before])  # a panel another one built
+        if typed and typed[-1] in consts:
+            return consts[typed[-1]]
         pat = re.compile(r"\b%s\s*(?::=|=)\s*(\w+)\.(?:new|\w+)\(" % re.escape(expr))
         found = list(pat.finditer(text[:before])) or list(pat.finditer(text))
         if found:
@@ -366,6 +366,7 @@ func _ready():
 	_windows.register("sector_agriculture", Labels.sector("agriculture"), Other.build(self, "a"), KEY_NONE, "")
 	# _windows.register("commented", tr("Gone"), p, KEY_NONE, "")
 	_stack.add(ScreenStack.SYSTEM, _people_panel, false, _people_panel.close)
+	var lent: Nobody = null  # an earlier function's, of the same name: the nearest declaration counts
 	var lent: Other = _people_panel.lent()
 	_stack.add(ScreenStack.SCENE, lent, true)
 	match event.keycode:

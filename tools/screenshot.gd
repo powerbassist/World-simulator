@@ -152,7 +152,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn --books tax_rates_pct:vat --books-document   (an open tax editor on the page behind the document)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-long --books-document   (every line and tax drafted: the list scrolls)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet --books-surplus   (a deep pension cut: the bill ends in surplus, the chart crosses zero)
-##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-draft --books-surplus   (the same on the bill's rail)
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-draft --books-surplus --inbox-away   (the same on the bill's rail)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --region-about --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --request-book
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --diary-booked   (G3 S2: the first request booked by a click on a free day, its appointment fresh)

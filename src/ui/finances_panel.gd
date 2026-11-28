@@ -356,8 +356,9 @@ func close_sheet() -> void:
 
 
 ## The document goes (Close, the cross, Escape, a tabling, a draft emptied under it). If the keyboard was in it, it goes
-## to the footer's verb that is there now -- the Review button while rows are drafted, else the bill's "Open the bill" --
-## and is let go when the footer has none, never left on a hidden control.
+## to the footer's verb that is there now -- Review while rows are drafted, "Discard all" while only share moves are (the
+## parent's ruling on #468: never "Apply the moves", where a stray Enter books them), else "Open the bill" -- and is let
+## go when the footer has none, never left on a hidden control.
 func _put_sheet_away() -> void:
 	if not _sheet.visible:
 		return
@@ -367,12 +368,12 @@ func _put_sheet_away() -> void:
 	if not had_focus:
 		return
 	_foot.refresh(_state, _loader, _draft, _price)
-	var review := _foot.find_child("Review", true, false) as Button
-	var next: Control = review if review != null and review.is_visible_in_tree() else _foot.primary_action()
-	if next != null:
-		next.grab_focus()
-	else:
-		held.release_focus()
+	for verb in ["Review", "Discard", "OpenBill"]:  # i18n: ok node names
+		var button := _foot.find_child(verb, true, false) as Button
+		if button != null and button.is_visible_in_tree():
+			button.grab_focus()
+			return
+	held.release_focus()
 
 
 ## A remove mark, the rail's or the document's.

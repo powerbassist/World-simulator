@@ -35,6 +35,8 @@ func _run() -> void:
 	await _check_a_players_pause_stays()
 	await _check_a_tabling_gives_the_clock_back()
 	await _check_the_last_cross_and_discard_close_it()
+	await _check_the_last_cross_with_share_moves_lands_on_discard()
+	await _check_a_surplus_caption_is_one_line()
 	await _check_a_pending_decision_keeps_the_hold()
 	await _check_it_hugs_and_a_long_draft_scrolls()
 	await _check_the_keyboard_stays_inside()
@@ -190,6 +192,47 @@ func _check_the_last_cross_and_discard_close_it() -> void:
 		_fail("Discard all kept the draft")
 
 
+## The parent's ruling on #468: the last change taken out while share moves are drafted leaves the keyboard on the
+## rail's "Discard all", as the rail's own mark does, never on "Apply the moves", where Enter books them with no vote.
+func _check_the_last_cross_with_share_moves_lands_on_discard() -> void:
+	await _draft([[FinanceDraft.TAX, "vat", 2.0]])
+	var draft = _page().shared_draft()
+	draft.add_move("health", "hospitals", "prevention", 0.02)
+	_page()._on_structure_changed()
+	await _frames(3)
+	await _open(false)
+	if _crosses().size() != 1:
+		_fail("premise: %d remove marks for 1 change and a share move" % _crosses().size())
+		return
+	_crosses()[0].grab_focus()
+	_crosses()[0].pressed.emit()
+	await _frames(3)
+	_expect_closed("the last remove mark with a share move drafted", false)
+	var held: Control = _main.get_viewport().gui_get_focus_owner()
+	if held == null or held != _page().rail().find_child("Discard", true, false):
+		_fail("with a share move left the keyboard is on %s, want Discard all" % (held.name if held != null else "nothing"))
+	if draft.moves().size() != 1:
+		_fail("taking out the last change lost or booked the share move (%d left)" % draft.moves().size())
+	draft.revert()
+	_page()._on_structure_changed()
+	await _frames(2)
+
+
+## "Deficit -> surplus, a year" is the longest caption: it keeps one line under its figure.
+func _check_a_surplus_caption_is_one_line() -> void:
+	await _draft([[FinanceDraft.SPENDING, "pensions", -8.0]])
+	await _open(true)
+	var captions: Array = _doc().find_child("SheetTotals", true, false).get_children().slice(2).map(
+		func(box) -> Label: return box.get_child(1))
+	if not (captions[0] as Label).text.begins_with("Deficit → surplus"):
+		_fail("premise: the bill does not end in surplus (%s)" % (captions[0] as Label).text)
+	for caption in captions:
+		if (caption as Label).get_line_count() != 1:
+			_fail("'%s' runs on %d lines" % [(caption as Label).text, (caption as Label).get_line_count()])
+	_named("SheetClose").pressed.emit()
+	await _frames(2)
+
+
 func _check_a_pending_decision_keeps_the_hold() -> void:
 	await _two()
 	await _open(false)
@@ -259,6 +302,25 @@ func _check_the_list_whole(leg: String) -> void:
 		_fail("%s: the list is cut (%s of %s)" % [leg, list.size.y if list else -1.0, rows.get_combined_minimum_size().y if rows else -1.0])
 
 
+## Every arrow, from every button of the document, lands in the document: Godot gives an unpinned one to the closest
+## control in that direction, which may be one under the dim.
+func _check_the_arrows_stay_inside(leg: String) -> void:
+	for start in _doc().find_children("*", "BaseButton", true, false):
+		for key in [KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT]:
+			(start as Control).grab_focus()
+			for down in [true, false]:
+				var event := InputEventKey.new()
+				event.keycode = key
+				event.physical_keycode = key
+				event.pressed = down
+				root.push_input(event)
+			var at := root.gui_get_focus_owner()
+			if at == null or not _doc().is_ancestor_of(at):
+				_fail("%s: %s from '%s' leaves the document for %s" % [leg, OS.get_keycode_string(key), start.get("text"),
+					at.name if at != null else "nothing"])
+				return
+
+
 ## Tab walks every remove mark, the box and the verbs, and never leaves the document.
 func _check_the_keyboard_stays_inside() -> void:
 	await _two()
@@ -281,6 +343,10 @@ func _check_the_keyboard_stays_inside() -> void:
 	for node in wanted:
 		if not seen.has(node):
 			_fail("Tab does not reach %s" % (node.name if node != null else "<missing>"))
+	_check_the_arrows_stay_inside("as opened")
+	(_doc().find_child("Force", true, false) as CheckBox).button_pressed = true  # rebuilds the verbs
+	await _frames(2)
+	_check_the_arrows_stay_inside("with the force box ticked")
 	_named("SheetClose").pressed.emit()
 	await _frames(2)
 

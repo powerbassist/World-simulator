@@ -30,7 +30,7 @@ var _step_places := 1
 
 ## `start` and `end` {label, value, figure?} (`figure` is the total's shown text, its value otherwise);
 ## `steps` [{label, value}] each a signed change. opts: label_w (at text 100),
-## worse_up (a rise is bad news; true for a deficit), total_places, step_places.
+## worse_up (true when a rise is bad news, the default; false for a balance), total_places, step_places.
 func setup(start: Dictionary, steps: Array, end: Dictionary, opts := {}) -> void:
 	_label_w = float(opts.get("label_w", LABEL_W))
 	_worse_up = bool(opts.get("worse_up", true))

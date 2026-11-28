@@ -153,7 +153,7 @@ func _build() -> void:
 	var ns = _state.player()
 	var read: Dictionary = FinanceRead.draft(_state, _loader, _draft.bill())
 	var refused := String(read["refusal"]) != ""
-	var cross := _head(ns, FinanceQueue.verb(_state, _loader, String(read["refusal"]), _draft.bill()))
+	_head(ns, FinanceQueue.verb(_state, _loader, String(read["refusal"]), _draft.bill()))
 	var whole: Dictionary = _price.whole(_loader, _draft, refused)
 	_totals(whole)
 	_rule(_body)
@@ -165,15 +165,34 @@ func _build() -> void:
 	_rule(_body)
 	_foot = FinanceSheetFoot.new()
 	_body.add_child(_foot)
-	_foot.build(_state, _loader, _draft, read, cross, ticked)
+	_foot.build(_state, _loader, _draft, read, ticked)
 	_foot.table_pressed.connect(table_pressed.emit)
 	_foot.discard_pressed.connect(discard_pressed.emit)
 	_foot.withdraw_pressed.connect(withdraw_pressed.emit)
 	_foot.close_pressed.connect(close_pressed.emit)
+	_foot.refilled.connect(_pin_the_keyboard)  # the force box writes new verbs
+	_pin_the_keyboard()
 
 
-## The title row, and under it what the player must know before the figures. Returns the cross.
-func _head(ns, queue: Dictionary) -> Button:
+## Tab and the arrows walk the document's controls in reading order and come round: left unpinned, Godot gives an
+## arrow to the closest control in that direction, which may be one under the dim.
+func _pin_the_keyboard() -> void:
+	var ring: Array = find_children("*", "Control", true, false).filter(  # i18n: ok a class name
+		func(c) -> bool: return c.focus_mode == Control.FOCUS_ALL)
+	for i in ring.size():
+		var at: Control = ring[i]
+		var back: NodePath = at.get_path_to(ring[i - 1])
+		var on: NodePath = at.get_path_to(ring[(i + 1) % ring.size()])
+		at.focus_previous = back
+		at.focus_next = on
+		for side in [SIDE_LEFT, SIDE_TOP]:
+			at.set_focus_neighbor(side, back)
+		for side in [SIDE_RIGHT, SIDE_BOTTOM]:
+			at.set_focus_neighbor(side, on)
+
+
+## The title row, and under it what the player must know before the figures.
+func _head(ns, queue: Dictionary) -> void:
 	var tabled := FinanceBillLaw.tabled(ns) != null
 	# G2: a draft the footer would queue is dated by the month it lands in; a tabled bill by its own vote day.
 	var day := int(queue.get("day", Calendar.days_in_month(int(_state.year), int(_state.month))))
@@ -209,7 +228,6 @@ func _head(ns, queue: Dictionary) -> Button:
 			moves, DateText.day_month(day, month)]).name = "SheetMoves"  # i18n: ok a node name
 	if tabled:
 		PanelKit.plain_line(_body, Strings.t("An amendment to the bill before the Assembly: the figures are the whole bill's.")).name = "SheetAmendment"  # i18n: ok a node name
-	return cross
 
 
 ## What the bill does to each side a year, and the deficit before (the books today, no bill) and after (the whole bill
@@ -231,9 +249,13 @@ func _totals(whole: Dictionary) -> void:
 	var was := float(whole["deficit_now_bn"])
 	var will := float(whole["deficit_after_bn"])
 	var captions := _balance_captions(was < 0.0, will < 0.0)
-	PanelKit.figure(line, "%s → %s" % [Num.f(absf(was), 0), Strings.t("%s bn") % Num.f(absf(will), 0)], captions[0])
-	PanelKit.figure(line, "%s → %s %%" % [Num.f(absf(float(_price.now().get("deficit_pct_gdp", 0.0))), 2),
-		Num.f(absf(float(whole["deficit_after_pct"])), 2)], captions[1])
+	var sides: Array[Control] = [
+		PanelKit.figure(line, "%s → %s" % [Num.f(absf(was), 0), Strings.t("%s bn") % Num.f(absf(will), 0)], captions[0]),
+		PanelKit.figure(line, "%s → %s %%" % [Num.f(absf(float(_price.now().get("deficit_pct_gdp", 0.0))), 2),
+			Num.f(absf(float(whole["deficit_after_pct"])), 2)], captions[1])]
+	# "Deficit → surplus, a year" is longer than its figure: the column widens, the caption keeps one line.
+	for box in sides:
+		(box.get_child(1) as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
 
 
 ## The "a year" and "of GDP" captions, by whether today's books and the books with the bill are in surplus.

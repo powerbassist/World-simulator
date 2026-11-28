@@ -15,6 +15,8 @@ signal table_pressed(force: bool)
 signal discard_pressed
 signal withdraw_pressed
 signal close_pressed
+## The lines and the verbs were written again: the document pins the keyboard anew.
+signal refilled
 
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
@@ -37,17 +39,14 @@ var _read := {}
 var _lines: VBoxContainer
 var _verbs: HBoxContainer
 var _force: CheckBox
-## Where Tab goes after the last verb: the document's first control.
-var _first: Control
 
 
 ## Call once, after add_child(): `ticked` is the force box as the rebuilt document left it.
-func build(state, loader, draft, read: Dictionary, first: Control, ticked: bool) -> void:
+func build(state, loader, draft, read: Dictionary, ticked: bool) -> void:
 	_state = state
 	_loader = loader
 	_draft = draft
 	_read = read
-	_first = first
 	add_theme_constant_override("separation", 24)
 	var verdict := VBoxContainer.new()
 	verdict.add_theme_constant_override("separation", 6)
@@ -98,6 +97,7 @@ func _fill(forced: bool) -> void:
 	else:
 		_assembly(_read["vote"])
 	_fill_verbs(refusal, forced, queue, live)
+	refilled.emit()
 
 
 ## A refusal said with its glyph: red when nothing can be pressed, amber beside a live verb.
@@ -177,9 +177,6 @@ func _fill_verbs(refusal: String, forced: bool, queue: Dictionary, live: bool) -
 	table.disabled = refusal != "" and not live
 	table.pressed.connect(func() -> void: table_pressed.emit(forced))
 	_verbs.add_child(table)
-	# Tab stays in the document: past the last verb it comes round to the first control, and Shift+Tab back.
-	table.focus_next = table.get_path_to(_first)
-	_first.focus_previous = _first.get_path_to(table)
 
 
 func _ghost(node_name: String, label: String, signal_out: Signal) -> void:
