@@ -30,6 +30,7 @@ const AK = preload("res://src/sim/audience_constants.gd")
 const Lane = preload("res://src/sim/audience_lane.gd")
 const President = preload("res://src/sim/president.gd")
 const Cycle = preload("res://src/sim/cycle.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 
 
 ## A lever's true odds by phone in `cell`, or -1.0 when the phone does not offer it
@@ -58,6 +59,8 @@ static func options(state, ns, loader, person_id: String) -> Dictionary:
 		var why_not := why
 		if why_not == "" and request.is_empty():
 			why_not = "nothing to ask about: they have no request open"
+		elif why_not == "" and lever == "promise_date" and not WantTerms.is_act(String(request["object"])):
+			why_not = AK.TALK_ONLY  # call 2 B: no word on a programme or a meter, whatever the odds
 		elif why_not == "" and p < 0.0:
 			why_not = "you are not friends" if LeverOdds.odds(person, lever, c) < 0.0 else "too long a shot for a call"
 		elif why_not == "":

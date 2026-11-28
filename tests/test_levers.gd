@@ -17,6 +17,7 @@ const GameState = preload("res://src/core/game_state.gd")
 const NationState = preload("res://src/core/nation_state.gd")
 const Person = preload("res://src/core/person.gd")
 const LeverOdds = preload("res://src/sim/lever_odds.gd")
+const WantTerms = preload("res://src/sim/want_terms.gd")
 const LK = preload("res://src/sim/lever_constants.gd")
 const Levers = preload("res://src/sim/levers.gd")
 const President = preload("res://src/sim/president.gd")
@@ -362,10 +363,11 @@ func _check_each_lever_pays_its_spend() -> void:
 			_fail("a promise due at month %d (now %d) was accepted" % [bad, now])
 	if _snapshot(ns, pid) != before:
 		_fail("refused promises wrote the registers")
-	Levers.attempt(state, ns, _loader, c["session"], "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS})
+	# A promise refused binds nothing (#323): one row on a yes, none on a no.
+	var won := bool(Levers.attempt(state, ns, _loader, c["session"], "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS}).get("success", false))
 	var rows: Array[Dictionary] = President.commitments_with(ns, pid)
-	if rows.size() != 1 or rows[0]["kind"] != "promise" or int(rows[0]["due_month"]) != now + LK.PROMISE_MIN_MONTHS:
-		_fail("a promise left %s" % [rows])
+	if rows.size() != (1 if won else 0) or (won and (rows[0]["kind"] != "promise" or int(rows[0]["due_month"]) != now + LK.PROMISE_MIN_MONTHS)):
+		_fail("a promise (won %s) left %s" % [won, rows])
 	c = _booked()
 	state = c["state"]
 	ns = c["ns"]
@@ -591,7 +593,7 @@ func _check_knowing_someone_takes_time() -> void:
 	var to_acquaintance := -1
 	var to_known := -1
 	for n in range(1, 30):
-		var row := {"id": "%s|test%d" % [pid, n], "person_id": pid, "object": "programme:none", "stance": "sponsor",
+		var row := {"id": "%s|test%d" % [pid, n], "person_id": pid, "object": "region:none", "stance": "sponsor",
 			"arrived_month": _now(state), "deadline_month": _now(state) + 2, "status": AK.STATUS_BOOKED,
 			"date": {"year": int(state.year), "month": int(state.month), "day": 1}, "resolved_month": -1}
 		ns.audience_requests.append(row)
@@ -687,7 +689,7 @@ func _check_a_vanished_want_is_void() -> void:
 
 ## A booking staged straight onto today for `pid`, opened: the session.
 func _stage(state, ns, pid: String, tag: String) -> Dictionary:
-	var row := {"id": "%s|%s" % [pid, tag], "person_id": pid, "object": "programme:none", "stance": "sponsor",
+	var row := {"id": "%s|%s" % [pid, tag], "person_id": pid, "object": "region:none", "stance": "sponsor",
 		"arrived_month": _now(state), "deadline_month": _now(state) + 2, "status": AK.STATUS_BOOKED,
 		"date": {"year": int(state.year), "month": int(state.month), "day": int(state.day)}, "resolved_month": -1}
 	ns.audience_requests.append(row)
@@ -710,7 +712,9 @@ func _check_the_diary_can_read_every_commitment() -> void:
 	if other.is_empty():
 		return
 	President.commit(state, ns, _loader, "iou", other["id"], other["object"], now + LK.PROMISE_MAX_MONTHS)
-	Levers.attempt(state, ns, _loader, c["session"], "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS})
+	# The lever's word lands on a yes only (#323); on this fixture's no, the row a yes writes.
+	if not bool(Levers.attempt(state, ns, _loader, c["session"], "promise_date", {"due_month": now + LK.PROMISE_MIN_MONTHS}).get("success", false)):
+		President.commit(state, ns, _loader, "promise", pid, String(c["session"]["object"]), now + LK.PROMISE_MIN_MONTHS)
 	var rows: Array[Dictionary] = President.commitments(ns)
 	if rows.size() != 2:
 		_fail("the diary's read lists %d commitments, not 2: %s" % [rows.size(), rows])
@@ -1340,7 +1344,8 @@ func _booked() -> Dictionary:
 	var ns = state.player()
 	for m in range(24):
 		Audiences.tick_month(state, _loader, METERS)
-		var lane: Array[Dictionary] = Audiences.pending(ns)
+		# Call 2 B: a word is given only on an act, so the fixture's request is the first one on one.
+		var lane: Array = Audiences.pending(ns).filter(func(r): return WantTerms.is_act(String(r["object"])))
 		if not lane.is_empty():
 			var id := String(lane[0]["id"])
 			_advance(state)

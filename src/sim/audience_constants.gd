@@ -208,6 +208,18 @@ const SUMMON_NO_DELEGATE := "you summoned them yourself"
 static func is_summons(row: Dictionary) -> bool:
 	return String(row.get("object", "")) == SUMMON_OBJECT
 
+
+## THE AUTHOR'S CALL 2 B, "Seulement des actes" (2026-11-28; the blind playtest's G7): a word is
+## given only on something the player does (WantTerms.is_act). A want on a programme or a meter is
+## talk: Deal.ask_of marks its ask `talk` with this reason, every lever and the grant say it, and
+## closing the audience is unpriced, as a summons.
+const TALK_ONLY := "nothing you can promise: what they want is not yours to do"
+
+
+## Whether a scene's session is talk only: a summons, or an ask with no act behind it.
+static func is_talk(session: Dictionary) -> bool:
+	return is_summons(session) or bool((session.get("ask", {}) as Dictionary).get("talk", false))
+
 ## The open statuses: a request in the lane or in the diary.
 const OPEN := [STATUS_PENDING, STATUS_BOOKED]
 

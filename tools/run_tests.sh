@@ -91,6 +91,7 @@ tests=(
   tests/test_division_terms.gd
   tests/test_address.gd
   tests/test_deal.gd
+  tests/test_words_on_acts.gd
   tests/test_firm_region_asks.gd
   tests/test_bloc_voice.gd
   tests/test_measure_polls.gd

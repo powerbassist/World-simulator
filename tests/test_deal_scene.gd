@@ -96,7 +96,8 @@ func _stage() -> void:
 		return
 	for pid in [_voter, _quiet]:
 		var person = _main._loader.person_by_id[pid]
-		Audiences._arrive(ns, person, person.wants[0], now, [])
+		# Call 2 B: a word is given only on an act, so each asks for a region's fund.
+		Audiences._arrive(ns, person, {"object": "region:FRE", "stance": "want"}, now, [])
 	AudienceDriver.refresh(_main)
 
 
