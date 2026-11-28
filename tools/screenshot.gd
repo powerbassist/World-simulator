@@ -1650,7 +1650,7 @@ func _apply_view() -> void:
 		_fail_a_major()
 	if _tax:
 		_open_the_tax_code()
-	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_queued or _books_sheet or _books_autumn or _books_move or _books_document or _books_range or _books_long or _books_surplus:
+	if _books_row != "" or _books_draft or _books_tabled or _books_refused or _books_queued or _books_sheet or _books_autumn or _books_move or _books_document or _books_range or _books_long or _books_surplus or _books_unfold:
 		_stage_the_books()
 	if _moved:
 		_move_the_levers()
