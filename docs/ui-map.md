@@ -143,6 +143,7 @@ Panels added to a rank (`<stack>.add(ScreenStack.RANK, panel, ...)`):
 |---|---|---|
 | `SCENE` | `briefing.gd` | `main.gd` |
 | `SCENE` | `election_panel.gd` | `main.gd` |
+| `SCENE` | `finance_sheet.gd` | `finances_driver.gd` |
 | `SCENE` | `phone_dialog.gd` | `phone_driver.gd` |
 | `SYSTEM` | `confirm_card.gd` | `confirm_card.gd` |
 | `SYSTEM` | `pause_menu.gd` | `main.gd` |

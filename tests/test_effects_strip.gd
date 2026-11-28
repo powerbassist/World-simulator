@@ -60,6 +60,7 @@ func _process(_delta: float) -> bool:
 			_state = GameState.new_game(_loader, "FRA")
 			_panel.setup(_state, _loader)
 		3:
+			_check_a_sum_scales_its_unit()
 			_check_untouched()
 			_check_the_spending_lines()
 			_check_the_tax_rates()
@@ -91,6 +92,16 @@ func _open(channel: String, key: String) -> void:
 	_panel._stamp = ""
 	_panel._dirty = true
 	_panel._process(0.0)
+
+
+## The author's pick (2026-11-28): a sum's unit scales by itself, bn, m, then k, and a sum that is not zero never
+## prints as one (to half a thousand euros).
+func _check_a_sum_scales_its_unit() -> void:
+	for case in [[-1.26, "-1.3 bn"], [0.1, "+0.1 bn"], [-0.04, "-40 m"], [0.023, "+23 m"], [0.0006, "+1 m"],
+			[0.0005, "+500 k"], [0.00001, "+10 k"], [-0.000001, "-1 k"], [-0.0000004, "0 k"], [0.0, "0 k"]]:
+		var said := EffectsStrip.sum_text(float(case[0]))
+		if said != String(case[1]):
+			_fail("%.7f bn reads '%s', want '%s'" % [float(case[0]), said, case[1]])
 
 
 ## Nothing moved, nothing printed: an opened row says no effect and a dragged-back one says none either.

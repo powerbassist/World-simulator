@@ -676,13 +676,6 @@
   "%s, on the fund for %s: \"We asked for it for years and the government delivered. Now it has to bring jobs.\"": "%s, sur le fonds ouvert en région %s : « Nous le demandions depuis des années, et le gouvernement l'a fait. Reste à ce qu'il apporte des emplois. »",
   "Review the bill": "Examiner le texte",
   "Finance bill · %s": "Projet de loi de finances · %s",
-  "The Assembly divides on %s": "L'Assemblée vote le %s",
-  "Deficit, bn": "Déficit, Md€",
-  "Deficit, % of GDP": "Déficit, % du PIB",
-  "%d changed row": [
-    "%d ligne modifiée",
-    "%d lignes modifiées"
-  ],
   "Adopted without a vote. A censure motion follows: %d seats would move against the government, %d are needed.": "Adopté sans vote. Une motion de censure s'ensuit : %d sièges se rallieraient à la censure, il en faut %d.",
   "It survives: the bill is adopted.": "La motion serait rejetée : le texte serait adopté.",
   "It falls: the government goes and the bill with it.": "La motion serait adoptée : le gouvernement tomberait, et le texte avec lui.",

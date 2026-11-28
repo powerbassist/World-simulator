@@ -162,13 +162,18 @@ static func money_text(bn: float) -> String:
 	return PanelKit.Strings.t("%s bn") % PanelKit.Num.fs(bn, MONEY_PLACES)
 
 
-## A sum that may be small, in full: under a tenth of a billion in millions
-## ("-23 m"), so a priced answer never reads "0.0 bn" (QA's TAKE on #270: a third
-## of the playable majors' buyer searches cost under 0.05 bn).
+## A sum that may be small, its unit scaling by itself (the author, 2026-11-28):
+## billions, under a tenth of one millions ("-23 m"; QA's TAKE on #270: a third of
+## the playable majors' buyer searches cost under 0.05 bn), under half a million
+## thousands ("+10 k"). Only a sum under 500 € reads zero, unsigned.
 static func sum_text(bn: float) -> String:
-	if absf(bn) < 0.1 and absf(bn) >= 0.0005:
+	var size := absf(bn)
+	if size >= 0.1:
+		return money_text(bn)
+	if size > 0.0005:  # at exactly half a million "%.0f" would round to 0 m
 		return PanelKit.Strings.t("%s m") % PanelKit.Num.fs(bn * 1000.0, 0)
-	return money_text(bn)
+	var thousands := PanelKit.Num.f(0.0, 0) if size <= 0.0000005 else PanelKit.Num.fs(bn * 1000000.0, 0)
+	return PanelKit.Strings.t("%s k") % thousands
 
 
 ## A one-off sum to or from the treasury, or the words for none: a verb or an

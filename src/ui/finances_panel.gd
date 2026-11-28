@@ -135,15 +135,16 @@ func _ready() -> void:
 	_foot.withdraw_pressed.connect(_on_withdraw)
 	_foot.discard_pressed.connect(_on_discard)
 	_foot.review_pressed.connect(_open_sheet)
-	_foot.drop_pressed.connect(func(channel: String, key: String) -> void:
-		_draft.drop(channel, key)
-		_on_structure_changed())
-	# The bill's sheet lies over the page's right side (a PanelContainer stacks its children, and the sheet shrinks to the end).
+	_foot.drop_pressed.connect(_on_drop)
+	# The bill's document is built here, so a page with no screen stack (a test) still has it; in the game the driver
+	# moves it onto the stack (sheet()).
 	_sheet = FinanceSheet.new()
 	add_child(_sheet)
 	_sheet.table_pressed.connect(_on_table)
 	_sheet.withdraw_pressed.connect(_on_withdraw)
-	_sheet.close_pressed.connect(_close_sheet)
+	_sheet.discard_pressed.connect(_on_discard)
+	_sheet.drop_pressed.connect(_on_drop)
+	_sheet.close_pressed.connect(close_sheet)
 	add_child(_forecast)
 	_forecast.settled.connect(func() -> void: _paint_due = true)
 
@@ -254,7 +255,7 @@ func _paint(ns) -> void:
 		_autumn_dropped = true
 	FinanceRows.paint_rates(_ctx)
 	_foot.refresh(_state, _loader, _draft, _price)
-	# A sheet with nothing to say (the draft discarded or tabled) is put away; one with a draft follows it.
+	# A document with nothing to say (the draft discarded or tabled) is put away; one with a draft follows it.
 	if _draft.is_empty():
 		_put_sheet_away()
 	_sheet.refresh()
@@ -333,25 +334,31 @@ func shared_draft() -> FinanceDraft:
 	return _draft
 
 
+## The bill's document: the driver hands it to the screen stack, as it hands rail() to the window manager.
+func sheet() -> FinanceSheet:
+	return _sheet
+
+
 func _open_sheet() -> void:
-	# The sheet lies over Books: pressed beside another Finances tab, the rail's Review opens Books first (pass 2 T4 on
-	# #443); on Books it costs no history step.
+	# The document follows the draft on the Books page's paint: pressed beside another Finances tab, the rail's Review
+	# opens Books first (pass 2 T4 on #443; kept by the parent's ruling on C, 2026-11-28); on Books it costs no history step.
 	if not is_visible_in_tree():
 		go_requested.emit("finances")
 		if not is_visible_in_tree():
-			return  # Books could not open (a scene owns the screen): no sheet on a hidden page
+			return  # Books could not open (a scene owns the screen): no document over a page that cannot follow it
 	_sheet.show()
 	_sheet.refresh()
 	_sheet.focus_primary()
 
 
-func _close_sheet() -> void:
+func close_sheet() -> void:
 	_put_sheet_away()
 
 
-## The sheet goes (Close, a tabling, a draft emptied behind it). If the keyboard was in it, it goes to the footer's verb
-## that is there now -- the Review button while rows are drafted, else the bill's "Open the bill" -- and is let go
-## when the footer has none, never left on a hidden control.
+## The document goes (Close, the cross, Escape, a tabling, a draft emptied under it). If the keyboard was in it, it goes
+## to the footer's verb that is there now -- Review while rows are drafted, "Discard all" while only share moves are (the
+## parent's ruling on #468: never "Apply the moves", where a stray Enter books them), else "Open the bill" -- and is let
+## go when the footer has none, never left on a hidden control.
 func _put_sheet_away() -> void:
 	if not _sheet.visible:
 		return
@@ -361,12 +368,18 @@ func _put_sheet_away() -> void:
 	if not had_focus:
 		return
 	_foot.refresh(_state, _loader, _draft, _price)
-	var review := _foot.find_child("Review", true, false) as Button
-	var next: Control = review if review != null and review.is_visible_in_tree() else _foot.primary_action()
-	if next != null:
-		next.grab_focus()
-	else:
-		held.release_focus()
+	for verb in ["Review", "Discard", "OpenBill"]:  # i18n: ok node names
+		var button := _foot.find_child(verb, true, false) as Button
+		if button != null and button.is_visible_in_tree():
+			button.grab_focus()
+			return
+	held.release_focus()
+
+
+## A remove mark, the rail's or the document's.
+func _on_drop(channel: String, key: String) -> void:
+	_draft.drop(channel, key)
+	_on_structure_changed()
 
 
 func _on_discard() -> void:

@@ -138,18 +138,18 @@ func _check_tray() -> void:
 			continue
 		var money: Label = foot.find_child("Money_" + id.replace(":", "_"), true, false)
 		var gain: float = _panel._price.row_balance_bn(want)
-		if money == null or money.text != EffectsStrip.money_text(gain):
-			_fail("change %s's money reads '%s', priced %s" % [id, money.text if money != null else "<none>", EffectsStrip.money_text(gain)])
+		if money == null or money.text != EffectsStrip.sum_text(gain):
+			_fail("change %s's money reads '%s', priced %s" % [id, money.text if money != null else "<none>", EffectsStrip.sum_text(gain)])
 		if _remove_mark(id) == null:
 			_fail("change %s has no remove mark" % id)
-		# Its step in the waterfall: the opposite of its gain (a gain narrows the deficit), signed.
+		# Its step in the waterfall: its effect on the balance, signed as the list signs it.
 		steps += 1
-		if chart.figure(steps) != Num.fs(-gain, 1):
+		if chart.figure(steps) != EffectsStrip.sum_text(gain):
 			_fail("change %s's step reads %s, its gain %s" % [id, chart.figure(steps), gain])
 	# Today and the bill, the whole bill's (FinancePrice.whole), at the waterfall's two ends; a residual is one more step.
 	var whole: Dictionary = _panel._price.whole(_loader, draft, false)
 	var last: int = chart.row_count() - 1
-	if chart.figure(0) != Num.f(float(whole["deficit_now_bn"]), 0) or chart.figure(last) != Num.f(float(whole["deficit_after_bn"]), 0):
+	if chart.figure(0) != Strings.t("%s bn") % Num.f(absf(float(whole["deficit_now_bn"])), 0) or chart.figure(last) != Strings.t("%s bn") % Num.f(absf(float(whole["deficit_after_bn"])), 0):
 		_fail("the waterfall runs %s to %s, the whole bill %s to %s" % [chart.figure(0), chart.figure(last), whole["deficit_now_bn"], whole["deficit_after_bn"]])
 	if last - 1 != steps and last - 2 != steps:
 		_fail("the waterfall has %d steps for %d changes" % [last - 1, steps])
@@ -194,7 +194,7 @@ func _check_one_name() -> void:
 	var sheet_table := _panel._sheet.find_child("SheetTable", true, false) as Button
 	if sheet_table == null or sheet_table.text != Strings.t("Table the bill"):
 		_fail("the sheet's act reads '%s', the tray's 'Table the bill'" % (sheet_table.text if sheet_table != null else "<none>"))
-	_panel._close_sheet()
+	_panel.close_sheet()
 
 
 ## Pass 2 T2: a drag prices only the row it moves; the others are priced once per draft change.
