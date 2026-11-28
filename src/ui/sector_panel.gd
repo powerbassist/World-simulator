@@ -85,6 +85,10 @@ var tabs := {}
 ## The size caches may be stale for a measure taken hidden: set at a rebuild or a new theme (the text size), spent
 ## by the next measure.
 var _stale := false
+## What this tab asked last, answered again while a stale tab waits its turn to be built.
+var _asked := {}
+## On screen since the last frame, false once hidden or loaded anew.
+var _settled := false
 ## The good the chips filter the table to, "" for all of them.
 var _good_filter := ""
 var _sheet: VBoxContainer
@@ -143,6 +147,7 @@ func setup(state, loader) -> void:
 	_state = state
 	_loader = loader
 	_dirty = true
+	_settled = false
 	# A setup() after the first is a load: the discarded game's picks go with it (the retro review's item 7). The confirm
 	# card stays: it sits on the screen stack once and is re-armed by each ask (CompanyVerb.ask).
 	_good_filter = ""
@@ -163,6 +168,7 @@ func mark_dirty() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree():
 		_dragging = false
+		_settled = false
 	if what == NOTIFICATION_THEME_CHANGED:
 		_stale = true
 
@@ -175,10 +181,14 @@ func _process(_delta: float) -> void:
 	# A held slider holds the arrangement too: a track that changed length under it would jump its value.
 	if _dragging or not is_visible_in_tree() or _state == null:
 		return
+	# One sector tab is built a frame under a tab on screen, its own first (QA on #461: all three in a month turn's
+	# frame tripled the stall). A tab just shown builds every stale one: its column count holds from the press.
+	var spare := (0 if _dirty else 1) if _settled else tabs.size()
+	_settled = true
 	if _dirty:
 		_dirty = false
 		_refresh()
-	_arrange()
+	_arrange(spare)
 
 
 ## The width the page stops at in columns (window_manager.gd reads it); INF as two.
@@ -187,8 +197,11 @@ func page_cap() -> float:
 	return maxf(FinanceColumns.CEILING * UiTheme.text_scale(), _need + 1.0) if (_middle.get_parent() as Control).visible else INF
 
 
-## What three columns ask of this tab now. A tab not shown since the last change is built first, hidden, to say it.
-func _asks() -> Dictionary:
+## What three columns ask of this tab. A stale tab is built first, hidden, to say it; one that may not build yet answers
+## what it asked last.
+func _asks(build := true) -> Dictionary:
+	if _dirty and not build:
+		return _asked
 	if _dirty and _state != null:
 		_dirty = false
 		_refresh()
@@ -211,7 +224,8 @@ func _asks() -> Dictionary:
 	left = ceilf(left)
 	var firm := ceilf(maxf(SHEET_WIDTH, _sheet.get_combined_minimum_size().x))
 	# A px over the narrowest three: the columns' minimums stay under the switch, so a page they hold wide falls to two.
-	return {"left": left, "goods": goods, "firm": firm, "need": left + goods + firm + 1.0 + 2.0 * UiTheme.GAP_PANE}
+	_asked = {"left": left, "goods": goods, "firm": firm, "need": left + goods + firm + 1.0 + 2.0 * UiTheme.GAP_PANE}
+	return _asked
 
 
 static func _drop_sizes(node: Node) -> void:
@@ -222,14 +236,18 @@ static func _drop_sizes(node: Node) -> void:
 
 
 ## Two columns or three, by the page's width against what the widest sector tab asks: a tab press never changes it.
-func _arrange() -> void:
+## `spare` is how many stale tabs not showing may be built now.
+func _arrange(spare: int) -> void:
 	var mine := _asks()
 	if mine.is_empty():
 		return
 	_need = mine["need"]
 	for tab in tabs.values():
-		if tab != self:
-			_need = maxf(_need, tab._asks().get("need", 0.0))
+		if tab == self:
+			continue
+		var turn: bool = tab._dirty and spare > 0
+		spare -= int(turn)
+		_need = maxf(_need, tab._asks(turn).get("need", 0.0))
 	var text := UiTheme.text_scale()
 	var left: float = mine["left"]
 	var goods: float = mine["goods"]

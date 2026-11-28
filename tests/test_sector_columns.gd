@@ -461,9 +461,44 @@ func _check_a_tab_press(nation: String) -> void:
 	if not _scroll(alone._middle).visible:
 		_fail("premise, %s: Agriculture on its own does not stand in three (%.0f)" % [at, alone._need])
 	host.queue_free()
+	await _check_builds_a_frame(main, at)
 	main.queue_free()
 	for _i in 3:
 		await process_frame
+
+
+## A month turn under a sector tab builds one tab a frame: all three in one frame tripled the month's stall (QA on
+## #461). A tab just shown builds every stale one in its first frame, so its column count cannot change after the press.
+func _check_builds_a_frame(main, at: String) -> void:
+	var tabs: Array = main._sector_panels.values()
+	var stale := func() -> int: return tabs.filter(func(t) -> bool: return t._dirty).size()
+	main._windows.open("sector_services")
+	await _frames()
+	WorldMonth.tick_month(main._state, main._loader)
+	main._windows.mark_all_dirty()
+	var left: int = stale.call()
+	if left != 3:
+		_fail("premise, %s: a month turn leaves %d sector tabs stale, wanted 3" % [at, left])
+	var built := []
+	for _i in 6:
+		await process_frame
+		built.append(left - int(stale.call()))
+		left = stale.call()
+	if built.max() > 1 or left != 0:
+		_fail("%s: after a month turn the frames build %s sector tabs, %d left stale: wanted one a frame, none left" % [at, built, left])
+	main._windows.close_all()
+	await _frames()
+	WorldMonth.tick_month(main._state, main._loader)
+	main._windows.mark_all_dirty()
+	main._windows.open("sector_agriculture")
+	var first := 0
+	for _i in 6:
+		await process_frame
+		first = 3 - int(stale.call())
+		if first > 0:
+			break
+	if first != 3:
+		_fail("%s: a tab just shown built %d of 3 stale sector tabs in its first frame" % [at, first])
 
 
 func _major_cells() -> Array:
