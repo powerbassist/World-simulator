@@ -486,7 +486,8 @@ static func top_issues(ns, count: int) -> Array:
 ## time_in_office, competence, programme,
 ## "issue:<key>", "direct:<source>", unrest, clamp -> points}, target, approval, lag}. The
 ## bloc offsets are one row per offset_by_source source (PR 2), plus `direct:earlier`: what
-## no source booked (a save from before the register, and float drift). The rows sum to
+## no source booked (a save from before the register, and float drift: in a new game it is
+## residue near 1e-16, so a reader hides a row under a hundredth of a point). The rows sum to
 ## the target exactly; `clamp` is what the +-1 clamp cut, so while it binds the issue rows
 ## are pulls before the cap, plus what the approval band cut (the tick clamps each bloc's
 ## approval to it, so a target past the band is one approval can never reach, and leaving it

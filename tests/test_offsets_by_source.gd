@@ -33,6 +33,9 @@ const AUSTERITY := {
 ##   nation_state.gd  the writer itself, and the declaration
 ##   legislature.gd   init_nation() resets the register and its sources together
 ##   processes.gd     _land() puts back what Companies.execute wrote, sources included
+## Every source a site may pass: a typo ("firm") would open a row of its own.
+const SOURCES := ["start", "laws", "events", "addresses", "acts", "campaign", "pledges", "programme",
+	"government", "diplomacy", "firms", "energy", "investment", "projects", "region_funds", "referendum", "units"]
 const WHOLE_WRITE_ALLOWED := ["res://src/core/nation_state.gd", "res://src/sim/legislature.gd", "res://src/sim/processes.gd"]
 
 var _failures: Array[String] = []
@@ -69,6 +72,8 @@ func _test_the_sources_sum_to_the_offset_every_month() -> void:
 				_fail("month %d, %s: %s" % [i + 1, ns.id, bad])
 				return
 			for source in ns.offset_by_source:
+				if not SOURCES.has(source):
+					_fail("month %d, %s: an unknown source '%s'" % [i + 1, ns.id, source])
 				for bloc in ns.offset_by_source[source]:
 					if absf(float(ns.offset_by_source[source][bloc])) > 1e-6:
 						moved[source] = true
@@ -84,6 +89,10 @@ func _test_the_sources_sum_to_the_offset_every_month() -> void:
 func _test_no_site_writes_around_the_writer() -> void:
 	var item := RegEx.create_from_string("(?<!act_)bloc_offset\\[[^\\]]*\\]\\s*(=|\\+=|-=)(?!=)")
 	var whole := RegEx.create_from_string("(?<!act_)bloc_offset\\s*=(?!=)|(?<!act_)bloc_offset\\.(clear|merge|erase)\\(")
+	# The source a call passes: the quoted word after a comma, which skips the
+	# ["bloc_offset"] / {"bloc_offset": ...} keys on the same lines.
+	var label := RegEx.create_from_string(", \"([a-z_]+)\"[,)]")
+	var calls := 0
 	var files := _gd_files("res://src")
 	if files.size() < 100:
 		_fail("premise: read only %d files under src/" % files.size())
@@ -97,6 +106,17 @@ func _test_no_site_writes_around_the_writer() -> void:
 				_fail("%s:%d writes a bloc's offset without the writer: %s" % [path, n + 1, line])
 			if not WHOLE_WRITE_ALLOWED.has(path) and whole.search(line) != null:
 				_fail("%s:%d rewrites bloc_offset whole: %s" % [path, n + 1, line])
+			var is_call := line.contains("add_bloc_offset(") or line.contains("apply_effects(") or line.contains("penalise_blocs(")
+			if not is_call or line.begins_with("func ") or line.begins_with("static func "):
+				continue
+			var m := label.search(line)
+			if m == null:
+				continue  # a call whose source is a variable (the two doors' own writes)
+			calls += 1
+			if not SOURCES.has(m.get_string(1)):
+				_fail("%s:%d passes an unknown source '%s'" % [path, n + 1, m.get_string(1)])
+	if calls < 30:
+		_fail("premise: found the source of only %d calls in src/" % calls)
 
 
 ## The writer books the APPLIED delta: past the bound, only what the clamp let through.
