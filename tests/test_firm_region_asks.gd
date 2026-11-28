@@ -614,7 +614,8 @@ func _check_a_meter_want_reads_in_words() -> void:
 			var by_id: String = PersonCard.object_text(_loader, ns, object, {"person_id": pid})
 			var bare: String = PersonCard.object_text(_loader, ns, object, {})
 			var figure := "%.1f" % absf(float(want.get("below", want.get("above", 0.0))))
-			if own != by_id or own.contains("_") or own.contains("grievance") or (figure != "0.0" and not own.contains(figure)) 					or (figure == "0.0" and own.contains("0.0")):
+			if own != by_id or own.contains("_") or own.contains("grievance") or (figure != "0.0" and not own.contains(figure)) \
+					or (figure == "0.0" and own.contains("0.0")):
 				_fail("%s: %s reads '%s', by id '%s'" % [pid, object, own, by_id])
 			if bare.contains("_") or bare.contains("0"):
 				_fail("%s with no threshold prints a figure: '%s'" % [object, bare])
