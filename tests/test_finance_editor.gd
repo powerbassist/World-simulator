@@ -16,6 +16,8 @@ const GameState = preload("res://src/core/game_state.gd")
 const FinancesPanel = preload("res://src/ui/finances_panel.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
+const FinanceRead = preload("res://src/sim/finance_read.gd")
+const Labels = preload("res://src/ui/labels.gd")
 const FinanceLever = preload("res://src/ui/finance_lever.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
@@ -63,6 +65,8 @@ func _process(_delta: float) -> bool:
 			_check_a_typed_rate_is_exact()
 			_check_a_refused_entry_puts_the_figure_back()
 			_check_the_effect_line_is_the_strips_figure()
+			_check_a_cut_reads_a_step_down()
+			_check_a_rate_step_is_counted_in_points()
 			_check_the_brackets_are_a_lever_of_income()
 			_check_a_held_slot_queues_the_budget()
 			_check_table_locks_the_rows_and_withdraw_frees_them()
@@ -294,6 +298,45 @@ func _check_the_brackets_are_a_lever_of_income() -> void:
 	if not _panel._draft.bill().has(FinanceDraft.BRACKETS):
 		_fail("the brackets lever did not draft: %s" % [_panel._draft.bill()])
 	_panel._draft.revert()
+
+
+## G13 (blind play 11-28): a cut still read "A step up angers". The line follows the draft's direction, and a cut is
+## read as a step down of its own: the model counts the deficit, so a cut is not a rise's mirror.
+func _check_a_cut_reads_a_step_down() -> void:
+	_open(FinanceRows.row_id(FinanceDraft.SPENDING, "health"))
+	var live := float(_panel._draft.live(FinanceDraft.SPENDING, "health"))
+	_who_says("untouched", false)
+	_editor()._write(FinanceDraft.SPENDING, "health", live - 0.5)
+	_who_says("a cut", true)
+	_editor()._write(FinanceDraft.SPENDING, "health", live + 0.5)
+	_who_says("a rise", false)
+	_panel._draft.revert()
+
+
+func _who_says(when: String, down: bool) -> void:
+	var texts: Array = _editor().find_children("*", "Label", true, false).filter(func(l) -> bool: return not l.is_queued_for_deletion()).map(func(l) -> String: return l.text)  # i18n: ok a class name
+	var read: Dictionary = FinanceRead.line_blocs(_state, _loader, "health", down)
+	var heads := ["A step down pleases", "A step down angers"] if down else ["A step up pleases", "A step up angers"]
+	var stale := ["A step up pleases", "A step up angers"] if down else ["A step down pleases", "A step down angers"]
+	if stale.any(func(h: String) -> bool: return texts.has(Strings.t(h))):
+		_fail("%s: the row still says the other direction: %s" % [when, texts])
+	for i in 2:
+		var pairs: Array = read["gains"] + read["loses"]
+		var names := pairs.filter(func(p) -> bool: return float(p[1]) > 0.0 if i == 0 else float(p[1]) < 0.0).map(func(p) -> String: return Labels.bloc(String(p[0])))
+		var at := texts.find(Strings.t(heads[i]))
+		if names.is_empty():
+			if at >= 0:
+				_fail("%s: '%s' is said with nobody to name" % [when, heads[i]])
+		elif at < 0 or texts[at + 1] != ", ".join(names):
+			_fail("%s: '%s' does not name %s: %s" % [when, heads[i], names, texts])
+
+
+## G14: a tax rate's step is points of rate, never "%" ("One step (5 %)" read as five percent of the money).
+func _check_a_rate_step_is_counted_in_points() -> void:
+	_open(FinanceRows.row_id(FinanceDraft.TAX, "vat"))
+	var said: Array = _editor().find_children("*", "Label", true, false).filter(func(l) -> bool: return l.text.begins_with("One step"))  # i18n: ok a class name
+	if said.size() != 1 or not (said[0] as Label).text.get_slice(":", 0).contains("point") or (said[0] as Label).text.get_slice(":", 0).contains("%"):
+		_fail("the rate's step reads %s, want points" % [said.map(func(l) -> String: return l.text)])
 
 
 ## G2 (blind play 11-28): another bill holds the slot, so the bar's verb queues the draft and names the month it
