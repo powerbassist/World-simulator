@@ -572,6 +572,11 @@ func _check_leaving_an_unsaved_game_asks() -> void:
 		button.call(row[0]).pressed.emit()
 		if gone[row[2]] != 1 or not menu.warns():
 			_fail("%s on a changed game did not ask first" % row[0])
+		# The question moves the buttons by less than one: a double click's second press lands on the answer.
+		button.call(row[1]).pressed.emit()
+		if gone[row[2]] != 1:
+			_fail("a double click on %s left the unsaved game" % row[0])
+		menu.set("_asked_at", -100000)
 		button.call(row[1]).pressed.emit()
 		if gone[row[2]] != 2:
 			_fail("'%s' did not leave" % row[1])

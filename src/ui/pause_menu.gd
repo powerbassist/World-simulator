@@ -18,6 +18,9 @@ extends PanelContainer
 
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 
+## A press this soon after the question is the second half of a double click, not an answer.
+const ANSWER_AFTER_MSEC := 500
+
 signal resumed
 signal save_load_requested
 signal settings_requested
@@ -28,6 +31,7 @@ var _main  # read only, for the digest
 var _saved := 0
 var _warning: Label
 var _save: Button
+var _asked_at := 0
 var _ways_out := {}  # button -> its own words, while the question may replace them
 
 
@@ -107,10 +111,13 @@ func _add_way_out(column: VBoxContainer, text: String, anyway: String, leave: Si
 	var button := _add_entry(column, text)
 	_ways_out[button] = text
 	button.pressed.connect(func() -> void:
+		if button.text == anyway and Time.get_ticks_msec() - _asked_at < ANSWER_AFTER_MSEC:
+			return
 		if button.text != anyway and changed():
 			_withdraw_the_question()
 			button.text = anyway
 			_warning.show()
+			_asked_at = Time.get_ticks_msec()
 			_save.grab_focus()
 			return
 		leave.emit())

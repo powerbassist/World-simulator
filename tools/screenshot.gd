@@ -138,6 +138,7 @@ extends SceneTree
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --fund --fund-running --queue --open region
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --pause-menu --pause-ask   (Quit pressed on an unsaved game)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-chip government --open people
+##   godot --path "<repo>" --script res://tools/screenshot.gd -- --people-chip bench --people-pick hover --open people   (a meter want, its level on the card)
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-units
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-sheet
 ##   godot --path "<repo>" --script res://tools/screenshot.gd -- --books-autumn
@@ -2556,7 +2557,7 @@ func _stage_a_people_pick() -> void:
 		preload("res://src/sim/cabinet.gd").vacate(_main._state, "health")
 		panel._pick("office", "health")
 		return
-	var rows: Array = preload("res://src/ui/roster_rows.gd").rows(_main._state, _main._loader, "needs", "")
+	var rows: Array = preload("res://src/ui/roster_rows.gd").rows(_main._state, _main._loader, _people_chip if _people_chip != "" else "needs", "")
 	if rows.is_empty():
 		push_error("screenshot: --people-pick first found nobody who needs you (add --request)")
 		return
