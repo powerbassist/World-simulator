@@ -9,7 +9,8 @@ extends SceneTree
 ## Pinned here: the switch at text 100 and 90; the same column widths on every wide page; a long goods table widening
 ## its own column only, and past the page two columns; nothing wider than its column in either arrangement; a chip and
 ## a held programme slider moving nothing; the focused chip and its ring across a switch; a short page shrinking back;
-## the page's cap, in the dock too; the pseudo-locale.
+## the page's cap, in the dock too; the pseudo-locale; and in the shell, a tab press that never changes the column
+## count.
 
 const GameState = preload("res://src/core/game_state.gd")
 const SectorPanel = preload("res://src/ui/sector_panel.gd")
@@ -20,6 +21,7 @@ const WindowManager = preload("res://src/ui/window_manager.gd")
 const GapBars = preload("res://src/ui/gap_bars.gd")
 const CompanyVerb = preload("res://src/ui/company_verb.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
+const WorldMonth = preload("res://src/sim/world_month.gd")
 
 ## The page as the game gives it: 1080 with the inbox showing and away, 2K showing and away.
 const PAGE_1080 := 1240.0
@@ -59,6 +61,9 @@ func _run() -> void:
 	await _check_needs_you()
 	await _check_the_dock()
 	await _check_the_job_figure()
+	_panel.hide()
+	for nation in ["POL", "GBR"]:
+		await _check_a_tab_press(nation)
 	for line in _failures:
 		printerr("FAIL: " + line)
 	print("test_sector_columns: %s" % ("OK" if _failures.is_empty() else "%d failures" % _failures.size()))
@@ -392,6 +397,72 @@ func _check_the_job_figure() -> void:
 	if not line.get_theme_font("font").has_char(figure.unicode_at(1)):
 		_fail("the font has no glyph for the figure's separator %d" % figure.unicode_at(1))
 	host.queue_free()
+
+
+## A tab press never changes the column count: the switch is the widest sector tab's need, read before that tab was
+## ever shown (gate on #461: from July, Poland's and Britain's Services stood in two between two tabs in three).
+func _check_a_tab_press(nation: String) -> void:
+	root.size = Vector2i(1920, 1080)
+	root.content_scale_factor = 1.0
+	var main = load("res://src/ui/main.tscn").instantiate()
+	main.pending_player_id = nation
+	root.add_child(main)
+	for _i in 10:
+		await process_frame
+	root.content_scale_factor = 1.0
+	for _month in 6:
+		WorldMonth.tick_month(main._state, main._loader)
+	main._windows.mark_all_dirty()
+	var at := "%s, month 6, 1080 with the inbox away" % nation
+	var columns := []
+	var needs := []
+	for sector in ["agriculture", "industry", "services", "agriculture"]:
+		main._windows.open("sector_" + sector)
+		main._hud.inbox.slide_out()
+		for _i in 12:
+			await process_frame
+		var panel = main._sector_panels[sector]
+		if absf(panel.size.x - PAGE_1080_AWAY) > 0.5:
+			_fail("premise, %s: the %s page is %.0f wide, wanted %.0f" % [at, sector, panel.size.x, PAGE_1080_AWAY])
+		columns.append(3 if _scroll(panel._middle).visible else 2)
+		needs.append(panel._need)
+	print("test_sector_columns: %s, columns %s, switches %s" % [at, columns, needs])
+	if columns.count(columns[0]) != columns.size():
+		_fail("%s: a tab press changes the column count: agriculture, industry, services, agriculture read %s" % [at, columns])
+	if not _near(needs, [needs[2], needs[2], needs[2], needs[2]]):
+		_fail("%s: the tabs switch at different widths: %s" % [at, needs])
+	# A new text size reaches the tabs that are not showing: the switch read on Agriculture is the one Services shows.
+	UiTheme.set_text_scale(0.9)
+	UiTheme.rebuild(main)
+	var small := []
+	for sector in ["agriculture", "services"]:
+		main._windows.open("sector_" + sector)
+		main._hud.inbox.slide_out()
+		for _i in 12:
+			await process_frame
+		small.append(main._sector_panels[sector]._need)
+	if absf(small[0] - small[1]) > 0.5 or not small[1] < needs[2] - 0.5:
+		_fail("%s, then text 90: the switch is %.0f on Agriculture and %.0f on Services (%.0f at text 100)" % [at, small[0], small[1], needs[2]])
+	UiTheme.set_text_scale(1.0)
+	UiTheme.rebuild(main)
+	# Premise: Agriculture alone would stand in three here, so the equal counts above are not the data's doing.
+	var alone := SectorPanel.new("agriculture")
+	alone.theme = main._sector_panels["agriculture"].theme
+	var host := Control.new()
+	host.theme = UiTheme.build()
+	root.add_child(host)
+	host.add_child(alone)
+	alone.theme_type_variation = UiTheme.BARE
+	alone.setup(main._state, main._loader)
+	for _pass in 3:
+		alone.size = Vector2(PAGE_1080_AWAY, 1000)
+		await _frames()
+	if not _scroll(alone._middle).visible:
+		_fail("premise, %s: Agriculture on its own does not stand in three (%.0f)" % [at, alone._need])
+	host.queue_free()
+	main.queue_free()
+	for _i in 3:
+		await process_frame
 
 
 func _major_cells() -> Array:

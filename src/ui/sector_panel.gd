@@ -9,7 +9,7 @@ extends PanelContainer
 ## A page wide enough lays three columns (W2, the author's pick, 2026-11-27): the lead,
 ## what waits and the majors | what it makes | the firm. The switch is the page's OWN
 ## width against its blocks' minimums, read each frame, so it follows the text size, the
-## language and the month's figures.
+## language and the month's figures; the widest of the sector tabs' sets it for all.
 ##
 ## A major or a closure's Answer selects its firm on the sheet; a right click on a firm
 ## opens its verbs with their prices, the call to its chief and the map. A bid, a failing
@@ -78,8 +78,13 @@ var _goods: VBoxContainer
 var _majors_row: HFlowContainer
 ## The widest the unfiltered goods table asked: a chip narrows the table and must not move the switch.
 var _goods_wide := 0.0
-## The page's width from which three columns read whole.
+## The page's width from which three columns read whole, on this tab and on the others.
 var _need := INF
+## The sector tabs, this one among them (sectors_shell.gd hands main's table): none for a panel on its own.
+var tabs := {}
+## The size caches may be stale for a measure taken hidden: set at a rebuild or a new theme (the text size), spent
+## by the next measure.
+var _stale := false
 ## The good the chips filter the table to, "" for all of them.
 var _good_filter := ""
 var _sheet: VBoxContainer
@@ -158,6 +163,8 @@ func mark_dirty() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and not is_visible_in_tree():
 		_dragging = false
+	if what == NOTIFICATION_THEME_CHANGED:
+		_stale = true
 
 
 func hide_close_button() -> void:
@@ -180,10 +187,19 @@ func page_cap() -> float:
 	return maxf(FinanceColumns.CEILING * UiTheme.text_scale(), _need + 1.0) if (_middle.get_parent() as Control).visible else INF
 
 
-## Two columns or three, by the page's width against what the blocks ask now.
-func _arrange() -> void:
+## What three columns ask of this tab now. A tab not shown since the last change is built first, hidden, to say it.
+func _asks() -> Dictionary:
+	if _dirty and _state != null:
+		_dirty = false
+		_refresh()
+		_stale = true
 	if _goods == null:
-		return
+		return {}
+	# Measured: a tab built hidden read its goods names as 1 px (the switch 127 px short), and a new text size left its
+	# goods table at the old width.
+	if _stale and not is_visible_in_tree():
+		_drop_sizes(self)
+	_stale = false
 	var text := UiTheme.text_scale()
 	var asked := _goods.get_combined_minimum_size().x
 	_goods_wide = asked if _good_filter == "" else maxf(_goods_wide, asked)
@@ -194,9 +210,31 @@ func _arrange() -> void:
 			left = maxf(left, (child as Control).get_combined_minimum_size().x)
 	left = ceilf(left)
 	var firm := ceilf(maxf(SHEET_WIDTH, _sheet.get_combined_minimum_size().x))
-	var gaps := 2.0 * UiTheme.GAP_PANE
 	# A px over the narrowest three: the columns' minimums stay under the switch, so a page they hold wide falls to two.
-	_need = left + goods + firm + 1.0 + gaps
+	return {"left": left, "goods": goods, "firm": firm, "need": left + goods + firm + 1.0 + 2.0 * UiTheme.GAP_PANE}
+
+
+static func _drop_sizes(node: Node) -> void:
+	for child in node.get_children():
+		_drop_sizes(child)
+	if node is Control:
+		(node as Control).update_minimum_size()
+
+
+## Two columns or three, by the page's width against what the widest sector tab asks: a tab press never changes it.
+func _arrange() -> void:
+	var mine := _asks()
+	if mine.is_empty():
+		return
+	_need = mine["need"]
+	for tab in tabs.values():
+		if tab != self:
+			_need = maxf(_need, tab._asks().get("need", 0.0))
+	var text := UiTheme.text_scale()
+	var left: float = mine["left"]
+	var goods: float = mine["goods"]
+	var firm: float = mine["firm"]
+	var gaps := 2.0 * UiTheme.GAP_PANE
 	var three := size.x >= _need
 	var home := _middle if three else _body
 	if _goods.get_parent() != home:
