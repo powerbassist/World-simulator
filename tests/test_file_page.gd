@@ -53,6 +53,7 @@ func _process(_delta: float) -> bool:
 	_check_request_titles()
 	_check_a_gone_file()
 	_check_a_re_put_request_keeps_its_page()
+	_check_every_option_keeps_its_title()
 	_finish()
 	return true
 
@@ -367,6 +368,22 @@ func _check_a_gone_file() -> void:
 	_buttons(holder, buttons)
 	if not buttons.is_empty():
 		_fail("an empty page has buttons")
+
+
+## G20 (blind play 11-28): beside cards headed by their label, the one with no `short` had no title at all.
+func _check_every_option_keeps_its_title() -> void:
+	var choice := func(words: String, short: String) -> Dictionary:
+		return {"words": words, "short": short, "default": false, "tags": [], "note": "", "disabled": false, "tip": ""}
+	for case in [[[choice.call("Open talks at once", "Talk"), choice.call("Clear the halls", "")], 1], [[choice.call("Yes", ""), choice.call("No", "")], 0]]:
+		var holder := Control.new()
+		FileView.build(holder, {"who": {}, "micro": "", "by_text": "", "title": "A matter", "situation": "", "choices": case[0]}, func(_i: int) -> void: pass)
+		var texts := PackedStringArray()
+		_texts(holder, texts)
+		for option in case[0]:
+			# A page where no option has a short label stays buttons alone: a head would only say the button twice.
+			if texts.count(String(option["words"])) != case[1]:
+				_fail("the option '%s' heads %d cards, expected %d: %s" % [option["words"], texts.count(String(option["words"])), case[1], texts])
+		holder.free()
 
 
 func _days(month: int, year: int) -> int:

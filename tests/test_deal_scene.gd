@@ -232,7 +232,7 @@ func _check_a_word_is_judged_on_day_one() -> void:
 		_fail("the Counter card does not say its default word is judged on 01 OCT 2027: %s" % [texts])
 	if texts.any(func(t: String) -> bool: return t.contains("end of")):
 		_fail("a card still says a word is judged at the end of a month: %s" % [texts])
-	var struck := AudienceWords.struck_lines(answers, {"give_stake": "A silence."})
+	var struck := AudienceWords.struck_lines({"give_stake": "A silence."}, due)
 	var struck_texts: Array = struck.map(func(l: Dictionary) -> String: return String(l["text"]))
 	if not struck_texts.any(func(t: String) -> bool: return t.contains("01 OCT 2026")) or struck_texts.any(func(t: String) -> bool: return t.contains("end of")):
 		_fail("the struck band does not say the word is judged on 01 OCT 2026: %s" % [struck_texts])

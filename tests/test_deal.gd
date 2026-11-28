@@ -45,6 +45,7 @@ const PersonCard = preload("res://src/ui/person_card.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 const PLAYER := "FRA"
+const AudienceView = preload("res://src/ui/audience_view.gd")
 const METERS := {"press_freedom": 50.0, "judicial_independence": 50.0, "grievance": 30.0}
 const PLAYABLE := ["FRA", "DEU", "GBR", "POL"]
 
@@ -96,6 +97,7 @@ func _init() -> void:
 	_check_a_promise_win_is_the_named_date()
 	_check_a_refused_counter_binds_nothing()
 	_check_a_counter_keeps_its_day()
+	_check_the_struck_band_dates_the_counter()
 	_check_a_day_outside_its_month_is_refused()
 	_check_a_caught_lie_on_a_bill_is_no_word()
 	_check_refuse_is_a_decline()
@@ -661,6 +663,23 @@ func _check_a_promise_win_is_the_named_date() -> void:
 		_fail("the word is on the ask at the named date, in the deal, got %s" % [word])
 	if _owed_row(ns, f["person_id"], "pledge").is_empty():
 		_fail("the promise takes the same offer")
+
+
+## G8 (blind play 11-28): after a won Counter the struck band dated the word from the request's first month,
+## a year off the one the Diary holds. The band reads the word the sim wrote.
+func _check_the_struck_band_dates_the_counter() -> void:
+	var f := _law_deal(true)
+	var due := _now(f) + 9
+	_seed_for(f, "promise_date", true)
+	if not bool(Deal.bargain(f["state"], f["ns"], _loader, f["session"], "promise_date", {"due_month": due}).get("success", false)):
+		_fail("premise: the seeded counter did not win")
+		return
+	var view := AudienceView.view_of({"_state": f["state"], "_loader": _loader}, {"session": f["session"], "scene": {"flow": {"ranked": true}}})
+	var texts: Array = (view["struck_lines"] as Array).map(func(l: Dictionary) -> String: return String(l["text"]))
+	var year := floori((due - 1) / 12.0)
+	var day: String = preload("res://src/ui/date_text.gd").day_month_year(1, due - year * 12, year)
+	if not texts.any(func(t: String) -> bool: return t.contains(day)):
+		_fail("the struck band does not date the word %s, the month the sim holds it to: %s" % [day, texts])
 
 
 ## The author's ruling of 2026-11-13 (it replaces "Oui, parole donnee" for the audience): a

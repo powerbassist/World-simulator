@@ -134,12 +134,12 @@ static func risk_text(read: Dictionary, spared: bool) -> String:
 
 
 ## The band under her line once the deal is struck (the sim's `struck` row on the session): what it
-## gave and what it put in the Diary.
-static func struck_lines(answers: Dictionary, card: Dictionary) -> Array:
+## gave and what it put in the Diary. `held_due` is the month the sim holds the word to, 0 for none: a
+## Counter, or a word given earlier on the phone, moves it off the request's own (G8, blind play 11-28).
+static func struck_lines(card: Dictionary, held_due: int) -> Array:
 	var out: Array = [line(UP, GOOD, String(card["give_stake"]))]
-	var ask: Dictionary = answers.get("ask", {})
-	if ask.has("due_month"):
-		out.append(line(CALENDAR, DIM, Strings.t("Your word is in the Diary, judged on %s.") % _first_day(int(ask["due_month"]))))
+	if held_due > 0:
+		out.append(line(CALENDAR, DIM, Strings.t("Your word is in the Diary, judged on %s.") % _first_day(held_due)))
 	return out
 
 

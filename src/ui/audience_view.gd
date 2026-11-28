@@ -41,7 +41,7 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	var view := {"voice": AudienceVoice.lines(loader, pid), "choices": {"feel": feel}, "struck": struck, "money": {}, "notice_lines": game.get("notice", []),
 		"attempts_left": int(session["attempts_left"]), "talk_blocked": _blocked(state, ns, loader, session)}
 	if struck:
-		view["struck_lines"] = AWords.struck_lines(answers, card)
+		view["struck_lines"] = AWords.struck_lines(card, _held_due(ns, pid, String(session.get("ask", {}).get("object", ""))))
 		if game.has("money_taken"):
 			view["struck_lines"] += AWords.taken_lines(game["money_taken"])
 		view["affair"] = _affair(state, ns, loader, session, pid)
@@ -64,6 +64,14 @@ static func view_of(main, game: Dictionary) -> Dictionary:
 	view["refused_lines"] = AWords.refused_lines(card, reads)
 	view["counter_default"] = _default_date(state, int(answers["bargain"]["due_month"]))
 	return view
+
+
+## The month of the president's word to this person on the ask, 0 when there is none.
+static func _held_due(ns, pid: String, object: String) -> int:
+	for row in President.commitments_with(ns, pid):
+		if String(row["kind"]) == "promise" and String(row["object"]) == object:
+			return int(row["due_month"])
+	return 0
 
 
 ## The affair as the sim reads it: a lover, a Flirt said this audience, a proposal already put (once an
