@@ -2849,7 +2849,8 @@ func _stage_requests() -> void:
 		var Sh := load("res://src/sim/shadows.gd")
 		people.sort_custom(func(a, b) -> bool: return Sh.spark(ns, String(a.id)) and not Sh.spark(ns, String(b.id)))
 	for person in people:
-		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id):
+		if not person.wants.is_empty() and asked < 2 and String(person.id) != String(ns.head_of_state_person_id) \
+				and not _staged_want(person).is_empty():
 			Audiences._arrive(ns, person, _staged_want(person), now, [])
 			asked += 1
 			if _broken_word:
@@ -2911,14 +2912,14 @@ func _stage_requests() -> void:
 
 
 ## The want a staged request arrives on. Call 2 B (#463): a word only on an act, so every step that
-## shows the cards or the money stages the person's first act want; talk-only stages a programme's.
+## shows the cards or the money stages the person's first act want; talk-only stages their first
+## want no act answers, and passes over a person who has none ({}).
 func _staged_want(person) -> Dictionary:
-	if _audience_step == "talk-only":
-		return {"object": "programme:prog_jobs_first", "stance": "oppose"}
+	var talk := _audience_step == "talk-only"
 	for want in person.wants:
-		if load("res://src/sim/want_terms.gd").is_act(String(want["object"])):
+		if load("res://src/sim/want_terms.gd").is_act(String(want["object"])) != talk:
 			return want
-	return person.wants[0]
+	return {} if talk else person.wants[0]
 
 
 func _stage_audience_step() -> void:

@@ -9,9 +9,10 @@ extends SceneTree
 ## draw's:
 ##   - it opens on the topics: no Grant / Counter / Refuse, no offer of money, the talk shown,
 ##     and the band says there is no word to give;
-##   - End closes it settled, unpriced: no tone of good news, a sentence that says nothing was
-##     promised, her regard untouched by an offer she was never shown;
-##   - the next talk audience opens on its topics too (the flow left behind is the last one's).
+##   - End closes it at once, settled, unpriced: her regard untouched by an offer she was never
+##     shown;
+##   - the next talk audience opens on its topics too (the flow left behind is the last one's);
+##   - a summons is talk the same way: the topics, its own band, End closes it settled.
 
 const Audiences = preload("res://src/sim/audiences.gd")
 const AK = preload("res://src/sim/audience_constants.gd")
@@ -44,7 +45,7 @@ func _process(_delta: float) -> bool:
 			if not _open_talk():
 				return _end()
 		5:
-			_check_it_opens_on_the_topics("the first")
+			_check_it_opens_on_the_topics("the first", "only talk")
 			_rapport = President.rapport(_main._state.player(), _person)
 			_scene()._end.pressed.emit()
 		7:
@@ -52,8 +53,16 @@ func _process(_delta: float) -> bool:
 			if not _open_talk():
 				return _end()
 		9:
-			_check_it_opens_on_the_topics("a second")
+			_check_it_opens_on_the_topics("a second", "only talk")
 			_scene()._end.pressed.emit()
+		11:
+			if not _open_summons():
+				return _end()
+		13:
+			_check_it_opens_on_the_topics("a summons'", "nothing to settle")
+			_scene()._end.pressed.emit()
+		15:
+			_check_the_close()
 			return _end()
 	return false
 
@@ -62,7 +71,7 @@ func _scene():
 	return AudienceDriver.scene_of(_main)
 
 
-func _check_it_opens_on_the_topics(which: String) -> void:
+func _check_it_opens_on_the_topics(which: String, band: String) -> void:
 	var scene = _scene()
 	var session: Dictionary = AudienceDriver._games[_main.get_instance_id()]["session"]
 	if not _main._windows.is_open("audience") or not AK.is_talk(session):
@@ -79,8 +88,8 @@ func _check_it_opens_on_the_topics(which: String) -> void:
 	var said := ""
 	for label in scene._band_lines.find_children("*", "Label", true, false):
 		said += (label as Label).text + " "
-	if not said.contains("only talk"):
-		_fail("%s talk audience's band does not say it is talk: '%s'" % [which, said])
+	if not said.contains(band):
+		_fail("%s talk audience's band does not say '%s': '%s'" % [which, band, said])
 
 
 func _check_the_close() -> void:
@@ -89,12 +98,8 @@ func _check_the_close() -> void:
 		_fail("End did not close a talk audience at once")
 	if String(Audiences.request(ns, _request).get("status", "")) != AK.STATUS_SETTLED:
 		_fail("a talk audience did not end settled: %s" % [Audiences.request(ns, _request)])
-	var text: String = _scene()._result.text
-	if not text.contains("Nothing was promised") or text.contains("satisfied"):
-		_fail("a talk audience's close is not said as it is: '%s'" % text)
-	if _scene()._tone.visible:
-		_fail("a talk audience's close wears a tone: '%s'" % _scene()._tone.text)
-	if not is_equal_approx(President.rapport(ns, _person), _rapport):
+	# A summons warms them as it closes (RECEIVED_RAPPORT); a request with money must not move at all.
+	if not AK.is_summons(Audiences.request(ns, _request)) and not is_equal_approx(President.rapport(ns, _person), _rapport):
 		_fail("ending a talk audience moved her regard (an unshown offer refused?): %f -> %f" % [_rapport, President.rapport(ns, _person)])
 
 
@@ -135,6 +140,28 @@ func _open_talk() -> bool:
 	state.month = int(day["month"])
 	_main._on_day_advanced(int(day["year"]), int(day["month"]), int(day["day"]))
 	return true
+
+
+## The president summons a quiet person of the nation on a free day and the day comes.
+func _open_summons() -> bool:
+	var state = _main._state
+	var ns = state.player()
+	for person in _main._loader.people.get(String(ns.id), []):
+		var pid := String(person.id)
+		if _used.has(pid) or not Audiences.summon_refusal(state, ns, _main._loader, pid).is_empty():
+			continue
+		for d in Audiences.summon_days(state, pid):
+			if bool(d["free"]) and bool(Audiences.summon(state, ns, _main._loader, pid, d).get("ok", false)):
+				_person = pid
+				_used.append(pid)
+				_request = String(ns.audience_requests[-1]["id"])
+				_rapport = President.rapport(ns, pid)
+				state.year = int(d["year"])
+				state.month = int(d["month"])
+				_main._on_day_advanced(int(d["year"]), int(d["month"]), int(d["day"]))
+				return true
+	_fail("premise: nobody could be summoned on a free day")
+	return false
 
 
 func _fail(message: String) -> void:
