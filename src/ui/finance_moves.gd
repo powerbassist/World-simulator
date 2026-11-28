@@ -17,7 +17,7 @@ const FinanceQueue = preload("res://src/ui/finance_queue.gd")
 static func table(state, loader, draft, force: bool) -> Dictionary:
 	var rows: bool = not draft.is_empty()
 	var tabling: Dictionary = FinanceBill.table(state, loader, draft.bill(), force) if rows else {"tabled": false}
-	var lands: Dictionary = FinanceQueue.verb(state, "already_tabled", draft.bill()) if bool(tabling.get("already_tabled", false)) else {}
+	var lands: Dictionary = FinanceQueue.verb(state, loader, "already_tabled", draft.bill(), force) if bool(tabling.get("already_tabled", false)) else {}
 	if bool(lands.get("enabled", false)) and bool(BillQueue.add(state, {"finance": draft.bill(), "force": force}).get("queued", false)):
 		tabling = {"tabled": false, "queued": true, "month": lands["month"], "day": lands["day"]}
 	tabling["rows"] = rows

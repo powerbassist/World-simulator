@@ -318,7 +318,7 @@ func refresh(state, loader, draft, price) -> void:
 	var read: Dictionary = FinanceRead.draft(state, loader, draft.bill())
 	var refusal := String(read["refusal"])
 	# G2: another bill holds the slot, so the verb queues the draft and the bar is dated by the month it lands in.
-	var queue: Dictionary = FinanceQueue.verb(state, refusal, draft.bill())
+	var queue: Dictionary = FinanceQueue.verb(state, loader, refusal, draft.bill())
 	var can_queue := bool(queue.get("enabled", false))
 	vote_on = _head_for(state, queue, vote_on)
 	# The same pricing as the sheet (FinancePrice.whole): the bill the vote decides. On an amendment the money is the
@@ -361,7 +361,7 @@ func refresh(state, loader, draft, price) -> void:
 		_verdict.visible = true
 	_strip.say(_title.text, Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
 		Strings.t("deficit %s → %s bn a year") % [Num.f(float(whole["deficit_now_bn"]), 0), Num.f(float(whole["deficit_after_bn"]), 0)],
-		verdict, refusal == "" and bool(vote.get("passed", false)), not can_queue and (refusal != "" or not bool(vote.get("passed", false))))
+		verdict, refusal == "" and bool(vote.get("passed", false)), refusal != "" or not bool(vote.get("passed", false)))
 
 
 ## The title and the date tag: this month's bill, or the month a queued one (`lands`: {month, day}) divides in.

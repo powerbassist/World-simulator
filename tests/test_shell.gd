@@ -593,7 +593,48 @@ func _check_leaving_an_unsaved_game_asks() -> void:
 	if not menu.changed():
 		_fail("a day gone by reads as saved")
 	_main._clock.day -= 1
+	_check_the_close_button_asks(menu, gone)
 	ns.unrest_pct = before
+
+
+## The window's own close button is the same Quit (pass 2 T2 on #464): what the engine sends every node.
+## Called on a changed game, with the real Quit already cut off.
+func _check_the_close_button_asks(menu, gone: Dictionary) -> void:
+	if auto_accept_quit:
+		_fail("the engine still quits on the window's close button by itself")
+	var close := func() -> void: root.propagate_notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
+	var quits: int = gone["quit"]
+	menu.stamp()
+	_main._close_pause_menu()
+	close.call()
+	if gone["quit"] != quits + 1 or menu.visible:
+		_fail("closing the window on a saved game did not quit at once")
+	_main._state.player().unrest_pct += 1.0
+	var settings: Control = _main._settings_panel
+	var dialog: Control = _main._save_load_panel
+	for under in ["the map", "the save dialog", "the settings"]:
+		quits = gone["quit"]
+		_main._close_pause_menu()
+		_main._clock.paused = false
+		if under == "the save dialog":
+			dialog.show()  # the top bar's SAVE: no menu under it
+		elif under == "the settings":
+			_main._open_pause_menu()
+			menu.settings_requested.emit()
+		close.call()
+		if gone["quit"] != quits or not menu.visible or not menu.warns() or dialog.visible or settings.visible:
+			_fail("closing the window over %s did not put the question: quits %d, menu %s, warns %s, dialog %s, settings %s" % [
+				under, gone["quit"] - quits, menu.visible, menu.warns(), dialog.visible, settings.visible])
+		close.call()
+		if gone["quit"] != quits:
+			_fail("a double close over %s quit the unsaved game" % under)
+		menu.set("_asked_at", -100000)
+		close.call()
+		if gone["quit"] != quits + 1:
+			_fail("the second close over %s did not quit" % under)
+		_main._close_pause_menu()
+		if _main._clock.paused:
+			_fail("closing the window over %s lost the running clock" % under)
 
 
 ## B16's focus/hotkey trap: with the save dialog visible, the single-letter

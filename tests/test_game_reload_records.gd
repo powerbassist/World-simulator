@@ -132,6 +132,9 @@ func _process(_delta: float) -> bool:
 				return true
 		6:
 			_check_the_console_follows_the_rebuilt_game()
+			# #464 T2: the old pause menu left the tree before the new one watched, or the close button quits again.
+			if auto_accept_quit:
+				_fail("(d) after a load the window's close button quits without asking")
 			_check_the_hint_is_per_game()
 			SaveManager.delete_slot(SLOT)
 			# T2: a menu exit (the pause menu's "main menu") frees main like a swap does, so its
@@ -143,6 +146,8 @@ func _process(_delta: float) -> bool:
 			_main._pause_menu.main_menu_requested.emit()
 		10:
 			_check_a_menu_exit_forgets_the_main()
+			if not auto_accept_quit:
+				_fail("(T2) the main menu does not close on the window's close button")
 			_finish()
 	return false
 

@@ -7,9 +7,9 @@ extends PanelContainer
 ## Emits intent and owns nothing, the same shape as every other panel here:
 ## main.gd holds the Clock and the GameState, so main.gd is what pauses, saves,
 ## and swaps the scene. Quit is the one exception, because there is no state to
-## coordinate on the way out.
+## coordinate on the way out -- and with it the window's close button.
 ##
-## Quit and Main Menu ask first once the game has moved since it was last on disk
+## Quit, the window's close button and Main Menu ask first once the game has moved since it was last on disk
 ## (G19, blind play 11-28: Quit closed at once, and there is no autosave by
 ## design). "Moved" is a digest of what a save holds, the state and the day.
 ##
@@ -31,6 +31,7 @@ var _main  # read only, for the digest
 var _saved := 0
 var _warning: Label
 var _save: Button
+var _quit: Button
 var _asked_at := 0
 var _asking: Button  # the way out whose question is up, null when none
 var _ways_out := {}  # button -> its own words, while the question may replace them
@@ -66,7 +67,7 @@ func _ready() -> void:
 	_save = _add_entry(column, tr("Save / Load"), func(): save_load_requested.emit())
 	_add_entry(column, tr("Settings"), func(): settings_requested.emit())
 	_add_way_out(column, tr("Main Menu"), tr("Leave without saving"), main_menu_requested)
-	_add_way_out(column, tr("Quit"), tr("Quit without saving"), quit_requested)
+	_quit = _add_way_out(column, tr("Quit"), tr("Quit without saving"), quit_requested)
 	quit_requested.connect(func(): get_tree().quit())
 	visibility_changed.connect(_withdraw_the_question)
 
@@ -75,7 +76,27 @@ func _ready() -> void:
 ## establishing it (a new one, or a load's).
 func watch(main) -> void:
 	_main = main
+	get_tree().auto_accept_quit = false  # _notification answers the window's close button instead
 	stamp.call_deferred()
+
+
+## The menu scene closes on the first press, as the engine does it.
+func _exit_tree() -> void:
+	get_tree().auto_accept_quit = true
+
+
+## The window's close button is a press on Quit, with the question brought to where it can be read. The panels over
+## the menu are closed through main from here: main.gd is at its size baseline.
+func _notification(what: int) -> void:
+	if what != NOTIFICATION_WM_CLOSE_REQUEST or _main == null:
+		return
+	if changed():
+		for panel in [_main._save_load_panel, _main._settings_panel]:
+			if panel.visible:
+				panel.close()
+		if not visible:
+			_main._open_pause_menu()
+	_quit.pressed.emit()
 
 
 ## The game as it stands is on disk.
@@ -108,7 +129,7 @@ func _add_entry(column: VBoxContainer, text: String, action := Callable()) -> Bu
 
 ## A way out of the game: on a changed one the first press asks, on the button and
 ## above it, and hands the keyboard to Save / Load; the second leaves.
-func _add_way_out(column: VBoxContainer, text: String, anyway: String, leave: Signal) -> void:
+func _add_way_out(column: VBoxContainer, text: String, anyway: String, leave: Signal) -> Button:
 	var button := _add_entry(column, text)
 	_ways_out[button] = text
 	button.pressed.connect(func() -> void:
@@ -123,6 +144,7 @@ func _add_way_out(column: VBoxContainer, text: String, anyway: String, leave: Si
 			_save.grab_focus()
 			return
 		leave.emit())
+	return button
 
 
 func _withdraw_the_question() -> void:

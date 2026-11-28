@@ -8,6 +8,7 @@ const BillQueue = preload("res://src/sim/bill_queue.gd")
 const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
+const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
 const Strings = preload("res://src/ui/strings.gd")
 
 
@@ -22,7 +23,7 @@ static func at(ns) -> int:
 ## The verb when FinanceBill.refusal answers `flag`: {} unless another bill holds the slot, else {enabled, text (""
 ## keeps the host's own label), note (said after the refusal, before it when `lead`)} and, when it can be pressed,
 ## {month, day} it divides.
-static func verb(state, flag: String, bill := {}) -> Dictionary:
+static func verb(state, loader, flag: String, bill: Dictionary, force := false) -> Dictionary:
 	if flag != "already_tabled":
 		return {}
 	var ns = state.player()
@@ -31,6 +32,11 @@ static func verb(state, flag: String, bill := {}) -> Dictionary:
 	# A queued bill is tabled in a later month, outside the autumn one: its creation or abolition would be dropped.
 	if not (bill.get(FinanceBill.CREATE, {}) as Dictionary).is_empty() or not (bill.get(FinanceBill.ABOLISH, []) as Array).is_empty():
 		return {"enabled": false, "text": "", "lead": true, "note": Strings.t("A new or abolished tax cannot wait in the queue.")}
+	# The queue checks nothing and drops a bad bill months later, so tabling's other checks are asked here.
+	var why := FinanceBill.refusal(state, loader, bill, force, true)
+	if not why.is_empty():
+		# The flag is the third key of every refusal.
+		return {"enabled": false, "text": "", "lead": true, "note": FinanceRefusal.reason(String(why.keys()[2]))}
 	var i: int = ns.bill_queue.size()
 	if i >= BillQueue.SIZE:
 		return {"enabled": false, "text": Strings.t("The queue is full"), "note": Strings.t("The queue holds three bills. Take one out first.")}

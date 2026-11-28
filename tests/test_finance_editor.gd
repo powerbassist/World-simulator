@@ -28,6 +28,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const Sectors = preload("res://src/sim/sectors.gd")
 const DateText = preload("res://src/ui/date_text.gd")
+const FinanceMoves = preload("res://src/ui/finance_moves.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -70,6 +71,7 @@ func _process(_delta: float) -> bool:
 			_check_a_rate_step_is_counted_in_points()
 			_check_the_brackets_are_a_lever_of_income()
 			_check_a_held_slot_queues_the_budget()
+			_check_a_held_slot_refuses_what_the_slot_would_drop()
 			_check_table_locks_the_rows_and_withdraw_frees_them()
 			_check_another_row_and_a_reopen_keep_the_draft()
 			_check_a_refused_table_keeps_the_draft()
@@ -357,6 +359,8 @@ func _check_a_held_slot_queues_the_budget() -> void:
 		_fail("held slot: the bar does not say the bill divides on %s: '%s'" % [when, _panel._foot._text.text])
 	if not _panel._foot._title.text.contains(DateText.month_long(int(day["month"]))):
 		_fail("held slot: the bar's title is not the month the bill lands in: '%s'" % _panel._foot._title.text)
+	if _panel._foot._strip._verdict.theme_type_variation != preload("res://src/ui/ui_theme.gd").BAD_SMALL:
+		_fail("held slot: the folded bar's verdict lost its warning tone")
 	var heard := []
 	_panel.committed.connect(func(_before: Dictionary, tabling: Dictionary) -> void: heard.append(tabling), CONNECT_ONE_SHOT)
 	table.pressed.emit()
@@ -398,6 +402,41 @@ func _check_a_held_slot_queues_the_budget() -> void:
 	table = _redraft()
 	if not table.disabled or not _panel._foot._text.text.contains(Strings.t("The queue holds three bills. Take one out first.")):
 		_fail("full queue: the verb is live or the reason is missing: '%s'" % _panel._foot._text.text)
+	ns.tabled_bill = {}
+	ns.bill_queue = []
+	_panel._draft.revert()
+	_panel._foot._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+
+
+## Pass 2 on #464: the slot drops a queued bill that tabling's other checks refuse, so the verb asks them before it
+## queues: a rate past its range, a forced passage the system has not. Down with the reason leading, nothing queued.
+func _check_a_held_slot_refuses_what_the_slot_would_drop() -> void:
+	var ns = _state.player()
+	var formation: String = ns.formation_method
+	ns.tabled_bill = {"law_id": "some_law", "vote_year": 2026, "vote_month": 1, "vote_day": 31}
+	ns.bill_queue = []
+	_panel._draft.revert()
+	var span: Array = ns.tax_library["vat"]["rate_range_pct"]
+	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(span[1]) + 1.0)
+	_panel._foot._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+	var table: Button = _panel._foot.find_child("Table", true, false)
+	var why := Strings.t("Outside the tax's range.")
+	if not table.disabled or not _panel._foot._text.text.begins_with(why):
+		_fail("a rate past its range behind a held slot: the verb reads '%s' (disabled %s), '%s'" % [table.text, table.disabled, _panel._foot._text.text])
+	FinanceMoves.table(_state, _loader, _panel._draft, false)
+	if not ns.bill_queue.is_empty():
+		_fail("a rate past its range was queued: %s" % [ns.bill_queue])
+	ns.bill_queue = []
+	ns.formation_method = "parliamentary_investiture"
+	_redraft()
+	FinanceMoves.table(_state, _loader, _panel._draft, true)
+	if not ns.bill_queue.is_empty():
+		_fail("a forced passage with no right to force was queued: %s" % [ns.bill_queue])
+	ns.formation_method = formation
 	ns.tabled_bill = {}
 	ns.bill_queue = []
 	_panel._draft.revert()
