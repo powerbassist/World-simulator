@@ -485,6 +485,11 @@ func _check_rate_words() -> void:
 	if not FinanceRows.change_figures(ns, row).ends_with("\u00a0%") or FinanceRows.change_figures(ns, row).count("%") != 1:
 		_fail("a percentage's change reads '%s'" % FinanceRows.change_figures(ns, row))
 	_panel._draft.drop(FinanceDraft.TAX, "alcohol_duty")
+	# The editor's step line names an index step the same way: "index 10", never a bare 10.
+	await _open(FinanceDraft.TAX, "alcohol_duty")
+	var steps: Array = _panel._editor.find_children("*", "Label", true, false).filter(func(l) -> bool: return l.text.begins_with("One step"))  # i18n: ok a class name
+	if steps.size() != 1 or not (steps[0] as Label).text.begins_with("One step (index 10):"):
+		_fail("the index step reads %s" % [steps.map(func(l) -> String: return l.text)])
 
 
 ## A scale under 20 bn keeps a decimal on its half mark, or it names a sum the bar does not draw there (a small

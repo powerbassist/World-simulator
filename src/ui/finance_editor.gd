@@ -129,7 +129,7 @@ func setup(state, loader, draft, price, row_channel: String, row_key: String) ->
 	if channel == FinanceDraft.TAX:
 		var yields: Dictionary = FinanceRead.step_yields(ns).get(key, {})
 		if yields.has("up_bn"):
-			PanelKit.plain_line(self, Strings.t("One step (%s): %s a year.") % [LedgerBox.text(float(yields["step"]), decimals) + unit.strip_edges(), EffectsStrip.money_text(float(yields["up_bn"]))], PanelKit.Tone.DIM)
+			PanelKit.plain_line(self, Strings.t("One step (%s): %s a year.") % [FinanceUnits.rate(LedgerBox.text(float(yields["step"]), decimals), code), EffectsStrip.money_text(float(yields["up_bn"]))], PanelKit.Tone.DIM)
 	_sync()
 
 
