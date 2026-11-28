@@ -1447,7 +1447,7 @@ func _resolve_summit(choice_id: String) -> void:
 	if choice_id.is_empty(): return
 	var effects: Dictionary = _summit_panel._effects.get(choice_id, {})
 	if effects.is_empty(): return
-	Legislature.apply_effects(_state, _state.player(), effects, _loader)
+	Legislature.apply_effects(_state, _state.player(), effects, _loader, "diplomacy")
 	_queue_effect(tr("Summit: %s") % _summit_panel.chosen_label, _summit_before)
 	_update_top_bar()
 

@@ -181,6 +181,7 @@ func _init() -> void:
 	_check_energy_absences(loader)
 	_check_programme_fields(loader)
 	_check_approval_causes_absent(loader)
+	_check_offset_by_source_absent(loader)
 	_run_character_roundtrip(loader)
 	_run_commodity_roundtrip(loader)
 	_run_unknown_version()
@@ -219,6 +220,26 @@ func _check_approval_causes_absent(loader) -> void:
 		if not Opinion.causes_of(e).is_empty():
 			_fail("an entry saved before the split reads as a split: %s" % [Opinion.causes_of(e)])
 
+
+
+## Call A PR 2: offset_by_source survives a save, and a save from before it (the key
+## stripped from every nation) loads whole and reads {}, its whole offset then being
+## "earlier" in Opinion.causes(): no bump, the verdict nation_fields.gd's row states.
+func _check_offset_by_source_absent(loader) -> void:
+	var state = GameState.new_game(loader, "FRA")
+	state.player().add_bloc_offset("workers", -0.1, "events", -1.0, 1.0)
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(state.to_dict()))
+	var kept = GameState.from_dict(saved.duplicate(true))
+	if absf(float(kept.player().offset_by_source.get("events", {}).get("workers", NAN)) + 0.1) > 1e-9:
+		_fail("offset_by_source did not survive the save: %s" % [kept.player().offset_by_source])
+	for nd in (saved["nations"] as Dictionary).values():
+		(nd as Dictionary).erase("offset_by_source")
+	var older = GameState.from_dict(saved)
+	if older == null or not older.player().offset_by_source.is_empty():
+		_fail("a save without offset_by_source did not read it as {}")
+		return
+	if absf(float(older.player().bloc_offset.get("workers", NAN)) - float(state.player().bloc_offset["workers"])) > 1e-9:
+		_fail("a save without offset_by_source lost the offset itself")
 
 ## V1.2a: SAVE_VERSION did not move (see the plan step's own cold count), but
 ## a save still has to round-trip for whichever nation is playing -- checked

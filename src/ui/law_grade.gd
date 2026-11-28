@@ -96,7 +96,7 @@ static func money_bn(state, loader, bill) -> float:
 	var ns = sim.player()
 	Budget.recompute(sim, ns)
 	var before := {"deficit_pct_gdp": ns.deficit_pct_gdp, "gdp_eur_bn": ns.gdp_eur_bn}
-	Legislature.apply_effects(sim, ns, bill.effects, loader)
+	Legislature.apply_effects(sim, ns, bill.effects, loader, "laws")
 	Budget.recompute(sim, ns)
 	return EffectsStrip.balance_bn(before, {"deficit_pct_gdp": ns.deficit_pct_gdp, "gdp_eur_bn": ns.gdp_eur_bn})
 

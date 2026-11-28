@@ -166,7 +166,7 @@ static func _conclude(state, ns, loader, entry: Dictionary, effects: Dictionary,
 	entry["concluded_term"] = int(ns.terms_served)
 	entry["concluded_term_month"] = int(ns.months_in_term)
 	if not effects.is_empty():
-		Legislature.apply_effects(state, ns, effects, loader)
+		Legislature.apply_effects(state, ns, effects, loader, "programme")
 
 
 # --- The offer and the verb -----------------------------------------------------------
@@ -254,7 +254,7 @@ static func choose(state, ns, entry_id: String, loader) -> Dictionary:
 
 	var immediate: Dictionary = chosen.get("immediate", {})
 	if not immediate.is_empty():
-		Legislature.apply_effects(state, ns, immediate, loader)
+		Legislature.apply_effects(state, ns, immediate, loader, "programme")
 
 	return {
 		"entry_id": entry_id,

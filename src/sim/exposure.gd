@@ -60,7 +60,7 @@ static func tick_month(state, loader) -> Array[Dictionary]:
 			Events.arm(ns, loader, String(ev.id), now + 1)
 			# The scandal floor: what being found costs, once, through the applier.
 			if not (ev.exposure_on_arrival as Dictionary).is_empty():
-				Legislature.apply_effects(state, ns, ev.exposure_on_arrival, loader)
+				Legislature.apply_effects(state, ns, ev.exposure_on_arrival, loader, "events")
 		made.append(row)
 	return made
 

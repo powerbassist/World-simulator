@@ -282,7 +282,7 @@ static func seat_party(state, portfolio: String, party_id: String, party_list: A
 	ns.cabinet[portfolio] = party_id
 	ns.cabinet_effectiveness[portfolio] = _effectiveness_for(by_id[party_id], portfolio)
 	ns.reshuffles_called += 1
-	Government.penalise_blocs(ns, CK.RESHUFFLE_BLOC_PENALTY)
+	Government.penalise_blocs(ns, CK.RESHUFFLE_BLOC_PENALTY, "government")
 
 
 ## V5.2 b+ R4's other primitive: the holder out, the office vacant at
@@ -298,7 +298,7 @@ static func vacate(state, portfolio: String) -> void:
 	ns.cabinet[portfolio] = ""
 	ns.cabinet_effectiveness[portfolio] = CK.VACANT_EFFECTIVENESS
 	ns.reshuffles_called += 1
-	Government.penalise_blocs(ns, CK.RESHUFFLE_BLOC_PENALTY)
+	Government.penalise_blocs(ns, CK.RESHUFFLE_BLOC_PENALTY, "government")
 
 
 ## Vacate any portfolio whose holder's resignation signal --
@@ -342,4 +342,4 @@ static func tick_month(state, loader) -> void:
 			# V5.2d: a minister walking out is a front-page moment (the played
 			# nation's; FrontPage.note ignores the rest).
 			FrontPage.note_moment(state, ns, "character", "minister_resigned")
-			Government.penalise_blocs(ns, CK.RESIGNATION_BLOC_PENALTY)
+			Government.penalise_blocs(ns, CK.RESIGNATION_BLOC_PENALTY, "government")

@@ -1162,7 +1162,7 @@ func _balance_move(state, fiscal: Dictionary) -> float:
 	var cns = copy.player()
 	Budget.recompute(copy, cns)
 	var before := float(cns.deficit_pct_gdp)
-	Legislature.apply_effects(copy, cns, fiscal, _loader)
+	Legislature.apply_effects(copy, cns, fiscal, _loader, "laws")
 	Budget.recompute(copy, cns)
 	return -(float(cns.deficit_pct_gdp) - before) * float(cns.gdp_eur_bn) / 100.0
 

@@ -591,10 +591,7 @@ static func execute(state, all_actions: Array, action, actor_id: String, target_
 	# whole BLOC_SALIENCE_BASE measurement. See ROADMAP.md (retired 2026-10-05 -- the tier docs carry the build order now).
 	var offsets: Dictionary = action.effects.get("bloc_offset", {})
 	for bloc in offsets:
-		ns.bloc_offset[bloc] = clampf(
-			float(ns.bloc_offset.get(bloc, 0.0)) + float(offsets[bloc]),
-			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
-		)
+		ns.add_bloc_offset(bloc, float(offsets[bloc]), "diplomacy", LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 
 	# The third effect channel, added at V1.3b. Diplomacy owns this register
 	# because it is pair state written by a player command, exactly like relations;

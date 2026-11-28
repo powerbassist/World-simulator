@@ -674,11 +674,8 @@ static func execute(state, ns, loader, action, region_id := "") -> Dictionary:
 		# the V2.8 review, so an offset already at the bound could be pushed past it --
 		# and _op_legal()'s own comment reasons about the exploit it fixed in terms of
 		# BLOC_OFFSET_MAX, i.e. it assumes a bound this line did not enforce.
-		ns.bloc_offset[bloc_id] = clampf(
-			float(ns.bloc_offset.get(bloc_id, 0.0))
-			+ float(action.effects["bloc_offset"][bloc_id]),
-			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
-		)
+		ns.add_bloc_offset(bloc_id, float(action.effects["bloc_offset"][bloc_id]), "campaign",
+			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 
 	var result := {
 		"action_id": action.id,

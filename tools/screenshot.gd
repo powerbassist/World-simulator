@@ -2521,7 +2521,7 @@ func _stage_a_walk() -> void:
 	_main._companies_panel.mark_dirty()
 	if _bill_refused:
 		preload("res://src/sim/legislature.gd").apply_effects(state, ns,
-			{"company_ownership": {"company_id": String(major.id), "action_id": "full_nationalisation"}}, _main._loader)
+			{"company_ownership": {"company_id": String(major.id), "action_id": "full_nationalisation"}}, _main._loader, "laws")
 		preload("res://src/ui/proposal_note.gd").card_ownership_refusal(_main)
 
 

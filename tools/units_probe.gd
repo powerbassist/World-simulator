@@ -183,7 +183,7 @@ func _spend(nat: String, type_id: String, way: String, rows: Array) -> Dictionar
 		var q := UnitPrice.quote(state, ns, _loader, {"type": type_id, "op": UK.OP_BUILD,
 			"rows": Units.fill_by_need(ns, _loader, type_id, _band(type_id))})
 		raise = 100.0 * float(q["estimate_eur_m"]) / float(months) * 12.0 / (float(ns.gdp_eur_bn) * 1000.0)
-		Legislature.apply_effects(state, ns, {"spending_pct_gdp": {line: raise}}, _loader)
+		Legislature.apply_effects(state, ns, {"spending_pct_gdp": {line: raise}}, _loader, "laws")
 	elif way != "none":
 		var p := _vote(state, ns, type_id, rows)
 		union = float(p.get("union", {}).get("reserved_eur_m", 0.0))

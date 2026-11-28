@@ -462,9 +462,8 @@ static func _cut(ns, company, entry: Dictionary, row: Dictionary, rule: Dictiona
 	ClosureRegion.book(ns, regions, String(row["city_id"]), float(row["jobs"]))
 	var offsets := _plant_offsets(rule, row)
 	var before: Dictionary = (ns.bloc_offset as Dictionary).duplicate()
-	for bloc in offsets:
-		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + float(offsets[bloc]),
-			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
+	for bloc in offsets:  # booked to acts, the source its fade books to, so the two net out
+		ns.add_bloc_offset(bloc, float(offsets[bloc]), "acts", LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 	Characters.book_act_offsets(ns, before)
 	entry.erase("closure_watch")
 	_end(row, "closed", now)

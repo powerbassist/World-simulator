@@ -24,7 +24,7 @@ static func charge(ns, party_list: Array) -> Dictionary:
 	# Bypassing the assembly costs something whether or not the censure motion
 	# carries. Without this, a government that can cover the threshold would
 	# force every bill it could not win, for free.
-	Government.penalise_blocs(ns, GK.FORCE_BLOC_PENALTY)
+	Government.penalise_blocs(ns, GK.FORCE_BLOC_PENALTY, "government")
 
 	# The second price of the article, and the one paid in the chamber rather
 	# than in the polls: a government that goes over its own majority's head

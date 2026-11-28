@@ -213,7 +213,7 @@ func _check_the_deltas_ride_on_a_rate_moved_after_tabling() -> void:
 	var ns = state.player()
 	var vat := float(ns.tax_rates_pct["vat"])
 	FinanceBill.table(state, _loader, {"tax_rates_pct": {"vat": 3.0}})
-	Legislature.apply_effects(state, ns, {"tax_rates_pct": {"vat": 1.0}}, _loader)
+	Legislature.apply_effects(state, ns, {"tax_rates_pct": {"vat": 1.0}}, _loader, "laws")
 	Division.divide(state, _loader)
 	if not is_equal_approx(float(ns.tax_rates_pct["vat"]), vat + 4.0):
 		_fail("deltas: a rate moved after tabling was overwritten: vat %s, want %s" % [ns.tax_rates_pct["vat"], vat + 4.0])

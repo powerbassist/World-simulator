@@ -130,7 +130,7 @@ static func open(state, ns, loader, row: Dictionary) -> Dictionary:
 	# The blocs the vote moves, once, through the game's one applier (the parent's ruling).
 	var moves := blocs(ns, loader, row)
 	if not moves.is_empty():
-		Legislature.apply_effects(state, ns, {"bloc_offset": moves}, loader)
+		Legislature.apply_effects(state, ns, {"bloc_offset": moves}, loader, "units")
 	return p
 
 

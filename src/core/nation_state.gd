@@ -748,6 +748,26 @@ var law_other_revenue_pct_gdp: float = 0.0
 ## in which renaming a serialised field is free. See docs/diplomacy-model.md.
 var bloc_offset := {}
 
+## Call A, PR 2: source -> {bloc -> points of bloc_offset that source wrote}, the delta
+## each write APPLIED (after its clamp), so for a game started on this build each bloc's
+## offset is the sum of its sources. absent_ok: an older save reads {}, and its whole
+## offset then shows as "earlier" (bloc_offset minus the sources), true of every save
+## made before the register, so no bump. tests/test_offsets_by_source.gd.
+var offset_by_source := {}
+
+
+## THE one writer of bloc_offset (tests/test_offsets_by_source.gd reads src/ for any
+## other). Here rather than in Opinion because two writers are pinned leaves that may
+## preload no system (investment.gd, projects.gd); the bounds come from the caller, as
+## the clamp always did, so a bare writer passes -INF and INF and stays bare.
+func add_bloc_offset(bloc: String, delta: float, source: String, lo: float, hi: float) -> void:
+	var before := float(bloc_offset.get(bloc, 0.0))
+	var after := clampf(before + delta, lo, hi)
+	bloc_offset[bloc] = after
+	var by: Dictionary = offset_by_source.get(source, {})
+	by[bloc] = float(by.get(bloc, 0.0)) + (after - before)
+	offset_by_source[source] = by
+
 ## String law id -> true. A law with `once = true` that has passed can never be
 ## proposed again; a law that failed and has `cooldown_months > 0` goes in
 ## law_cooldown_months instead, not here.
