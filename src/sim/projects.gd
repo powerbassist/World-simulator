@@ -480,10 +480,7 @@ static func execute(state, ns, all_actions: Array, action) -> Dictionary:
 		# constant (campaign.gd, companies.gd, energy.gd); closing these two wants the
 		# bound moved to a home all five can see, which is a change with a blast radius
 		# rather than a line.
-		ns.bloc_offset[bloc_id] = (
-			float(ns.bloc_offset.get(bloc_id, 0.0))
-			+ float(action.effects["bloc_offset"][bloc_id])
-		)
+		ns.add_bloc_offset(bloc_id, float(action.effects["bloc_offset"][bloc_id]), "projects", -INF, INF)
 
 	var result := {
 		"action_id": action.id,

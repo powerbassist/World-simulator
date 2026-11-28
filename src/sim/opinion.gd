@@ -84,10 +84,10 @@ static func init_nation(ns, bloc_approval_override: Dictionary = {}) -> void:
 		# formula gives the offset that makes `authored` the resting point; the
 		# clamp is what bounds the sustainable band to [10, 90], the same band
 		# APPROVAL_SPAN gives a pure satisfaction score.
-		ns.bloc_offset[bloc] = clampf(
-			(authored - K.APPROVAL_NEUTRAL) / K.APPROVAL_SPAN,
-			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
-		)
+		# Onto the empty register Legislature.init_nation() left (game_state runs it
+		# first), so the writer's 0 + x is exactly the assignment it replaced.
+		ns.add_bloc_offset(bloc, (authored - K.APPROVAL_NEUTRAL) / K.APPROVAL_SPAN, "start",
+			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 
 	ns.overall_approval_pct = K.APPROVAL_NEUTRAL
 
@@ -484,7 +484,10 @@ static func top_issues(ns, count: int) -> Array:
 ## Call A (PR 1): the national approval TARGET split into the terms target_of() adds up,
 ## each bloc's weighted by its size -- {rows: {neutral (the 50 every target starts from),
 ## time_in_office, competence, programme,
-## "issue:<key>", direct, unrest, clamp -> points}, target, approval, lag}. The rows sum to
+## "issue:<key>", "direct:<source>", unrest, clamp -> points}, target, approval, lag}. The
+## bloc offsets are one row per offset_by_source source (PR 2), plus `direct:earlier`: what
+## no source booked (a save from before the register, and float drift: in a new game it is
+## residue near 1e-16, so a reader hides a row under a hundredth of a point). The rows sum to
 ## the target exactly; `clamp` is what the +-1 clamp cut, so while it binds the issue rows
 ## are pulls before the cap, plus what the approval band cut (the tick clamps each bloc's
 ## approval to it, so a target past the band is one approval can never reach, and leaving it
@@ -493,7 +496,7 @@ static func top_issues(ns, count: int) -> Array:
 ## and it is exact only where target_of's inputs are this month's (after the Opinion step).
 static func causes(ns) -> Dictionary:
 	var sat := issue_satisfaction(ns)
-	var rows := {"neutral": 0.0, "time_in_office": 0.0, "competence": 0.0, "programme": 0.0, "direct": 0.0, "unrest": 0.0, "clamp": 0.0}
+	var rows := {"neutral": 0.0, "time_in_office": 0.0, "competence": 0.0, "programme": 0.0, "direct:earlier": 0.0, "unrest": 0.0, "clamp": 0.0}
 	var target := 0.0
 	for bloc in K.BLOC_KEYS:
 		var size := float(K.BLOC_SIZE[bloc])
@@ -505,7 +508,12 @@ static func causes(ns) -> Dictionary:
 			rows["issue:%s" % issue] = float(rows.get("issue:%s" % issue, 0.0)) + size * K.APPROVAL_SPAN * pull
 		var offset := float(ns.bloc_offset.get(bloc, 0.0))
 		var raw := score + offset - float(ns.unrest_opinion_load)
-		rows["direct"] += size * K.APPROVAL_SPAN * offset
+		var booked := 0.0
+		for source in ns.offset_by_source:
+			var pts := float((ns.offset_by_source[source] as Dictionary).get(bloc, 0.0))
+			booked += pts
+			rows["direct:%s" % source] = float(rows.get("direct:%s" % source, 0.0)) + size * K.APPROVAL_SPAN * pts
+		rows["direct:earlier"] += size * K.APPROVAL_SPAN * (offset - booked)
 		rows["unrest"] -= size * K.APPROVAL_SPAN * float(ns.unrest_opinion_load)
 		rows["clamp"] += size * K.APPROVAL_SPAN * (clampf(raw, -1.0, 1.0) - raw)
 		rows["neutral"] += size * K.APPROVAL_NEUTRAL  # weighted like every row, so the sum holds whatever the sizes add to

@@ -99,7 +99,7 @@ static func give(state, loader, law_id: String) -> Dictionary:
 		if float(moved[bloc]) < 0.0:
 			price[bloc] = -K.APPROVAL_PRICE
 	if not price.is_empty():
-		Legislature.apply_effects(state, ns, {"bloc_offset": price}, loader)
+		Legislature.apply_effects(state, ns, {"bloc_offset": price}, loader, "addresses")
 	return {"ok": true, "error": "", "shifts": moved, "worth": worth_now}
 
 

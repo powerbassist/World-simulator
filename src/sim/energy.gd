@@ -408,11 +408,8 @@ static func execute(state, ns, loader, all_actions: Array, action, site: Vector2
 		# the V2.8 review, so an offset already at the bound could be pushed past it --
 		# and _op_legal()'s own comment reasons about the exploit it fixed in terms of
 		# BLOC_OFFSET_MAX, i.e. it assumes a bound this line did not enforce.
-		ns.bloc_offset[bloc_id] = clampf(
-			float(ns.bloc_offset.get(bloc_id, 0.0))
-			+ float(action.effects["bloc_offset"][bloc_id]),
-			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
-		)
+		ns.add_bloc_offset(bloc_id, float(action.effects["bloc_offset"][bloc_id]), "energy",
+			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 
 	# THE LOCAL PRICE LANDS ON THE SAME REGISTER AS THE NATIONAL ONE and is charged
 	# to the blocs the action already names, scaled by the region's concentration.
@@ -420,10 +417,7 @@ static func execute(state, ns, loader, all_actions: Array, action, site: Vector2
 	# where the second price is about WHERE rather than WHAT.
 	if opposition != 0.0:
 		for bloc_id in action.effects.get("bloc_offset", {}).keys():
-			ns.bloc_offset[bloc_id] = clampf(
-				float(ns.bloc_offset.get(bloc_id, 0.0)) - opposition,
-				LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
-			)
+			ns.add_bloc_offset(bloc_id, -opposition, "energy", LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 
 	# ALL FOUR DERIVED READINGS, not just the bill. Recomputing some and leaving the
 	# rest to the next tick was the inconsistent case: import_dependency_pct is

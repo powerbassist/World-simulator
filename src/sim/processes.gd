@@ -380,11 +380,13 @@ static func _tick_row(state, ns, loader, row: Dictionary) -> void:
 static func _land(state, ns, loader, action, row: Dictionary) -> bool:
 	var debt := float(ns.debt_eur_bn)
 	var offsets: Dictionary = (ns.bloc_offset as Dictionary).duplicate()
+	var sources: Dictionary = (ns.offset_by_source as Dictionary).duplicate(true)  # put back beside it
 	var result: Dictionary = Companies.execute(state, ns, loader.company_actions, action,
 		String(row["company_id"]), loader, action.requires_law)
 	ns.debt_eur_bn = debt
 	ns.bloc_offset.clear()
 	ns.bloc_offset.merge(offsets)
+	ns.offset_by_source = sources
 	if not bool(result.get("applied", false)):
 		row["reason"] = String(result.get("reason", ""))
 		_close(state, row, "refused")
@@ -413,8 +415,7 @@ static func _pay(ns, row: Dictionary, amount: float) -> void:
 ## Clamped, as every writer of the register is (Companies.execute's comment).
 static func _blocs(ns, offsets: Dictionary, share: float) -> void:
 	for bloc in offsets:
-		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + share * float(offsets[bloc]),
-			LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
+		ns.add_bloc_offset(bloc, share * float(offsets[bloc]), "firms", LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 
 
 static func _refused(ns, action, company_id: String, reason: String) -> Dictionary:

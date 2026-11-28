@@ -37,6 +37,6 @@ static func speak_for(state, ns, loader, speakers: Array, acted: Dictionary, act
 		if acted.has(person.id) or float(ns.person_grudges.get(person.id, 0.0)) >= CK.GRUDGE_BRIEF_THRESHOLD:
 			continue
 		var size: float = -CK.SPEAK_SHARE * float(brief_size.call(person, float(ns.person_standing.get(person.id, 0.0))))
-		Legislature.apply_effects(state, ns, {"bloc_offset": blocs(size)}, loader)
+		Legislature.apply_effects(state, ns, {"bloc_offset": blocs(size)}, loader, "acts")
 		acted[person.id] = true
 		acts.append(act.call(state, "speak_for", person.id, {"region": String(pair[1])}))

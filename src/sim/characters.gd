@@ -148,11 +148,15 @@ static func book_act_offsets(ns, before: Dictionary) -> void:
 ## what faded, so a leak hurts the next vote and is then forgotten. A share too
 ## small to read is dropped, so the register does not grow a tail of zeros.
 static func _fade_act_offsets(ns) -> void:
+	# A share with no "acts" row is a save from before offset_by_source (an act always
+	# books its row): the share is the acts', so seed it and the fade nets it out rather
+	# than opening a positive row against earlier. Lazy, so the field table's absent
+	# still reads its default.
+	if not ns.act_bloc_offset.is_empty() and not ns.offset_by_source.has("acts"): ns.offset_by_source["acts"] = ns.act_bloc_offset.duplicate()
 	for bloc in ns.act_bloc_offset.keys():
 		var part := float(ns.act_bloc_offset[bloc])
 		var kept := part * CK.ACT_OFFSET_MONTHLY_KEEP
-		ns.bloc_offset[bloc] = clampf(float(ns.bloc_offset.get(bloc, 0.0)) + (kept - part),
-			Legislature.LK.BLOC_OFFSET_MIN, Legislature.LK.BLOC_OFFSET_MAX)
+		ns.add_bloc_offset(bloc, kept - part, "acts", Legislature.LK.BLOC_OFFSET_MIN, Legislature.LK.BLOC_OFFSET_MAX)
 		if absf(kept) < 0.000001:
 			ns.act_bloc_offset.erase(bloc)
 		else:
@@ -335,7 +339,7 @@ static func _fire_act(state, ns, loader, person, act_key: String, meters: Dictio
 			if office == "" or loyalty > _resign_floor(person):
 				return false
 			_clear_office(ns, office)
-			Government.penalise_blocs(ns, CK.PRICE_RESIGN * _standing_weight(standing))
+			Government.penalise_blocs(ns, CK.PRICE_RESIGN * _standing_weight(standing), "acts")
 			_adjust_grudge(ns, person, -CK.GRUDGE_ACT_RELIEF)
 			acts.append(_act(state, "resign", person.id, {"office": office}))
 			return true
@@ -360,7 +364,7 @@ static func _fire_act(state, ns, loader, person, act_key: String, meters: Dictio
 			ns.person_party_override[person.id] = to_party
 			# The defection card is campaign-visible; the bloc price is the
 			# scandal's, priced through the government primitive.
-			Government.penalise_blocs(ns, CK.PRICE_DEFECT * _standing_weight(standing))
+			Government.penalise_blocs(ns, CK.PRICE_DEFECT * _standing_weight(standing), "acts")
 			acts.append(_act(state, "defect", person.id, {"from": from_party, "to": to_party}))
 			return true
 
@@ -400,7 +404,7 @@ static func _fire_act(state, ns, loader, person, act_key: String, meters: Dictio
 			# The party's own base reads a contest as disorder, whichever way
 			# it goes; the challenger's win costs the party, not the player's
 			# government, and the price is the primitive's again.
-			Government.penalise_blocs(ns, CK.PRICE_CHALLENGE * _standing_weight(standing))
+			Government.penalise_blocs(ns, CK.PRICE_CHALLENGE * _standing_weight(standing), "acts")
 			_adjust_grudge(ns, person, -CK.GRUDGE_ACT_RELIEF)
 			acts.append(_act(state, "challenge", person.id, {"party": target_party, "deposed": incumbent}))
 			return true
@@ -422,7 +426,7 @@ static func _fire_act(state, ns, loader, person, act_key: String, meters: Dictio
 			var magnitude := brief_magnitude(person, standing)
 			# Brief THROUGH the applier, with an effects dict shaped the way
 			# the law and the event choice shape theirs -- one channel.
-			Legislature.apply_effects(state, ns, {"bloc_offset": _brief_blocs(magnitude)}, loader)
+			Legislature.apply_effects(state, ns, {"bloc_offset": _brief_blocs(magnitude)}, loader, "acts")
 			# GRUDGE_BRIEF_RELIEF, not GRUDGE_ACT_RELIEF: a leak is a VALVE the
 			# ladder climbs through, and relieving more than one month's accrual
 			# would cap the grudge below the challenge floor for ever (the

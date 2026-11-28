@@ -67,6 +67,7 @@ static func init_nation(ns) -> void:
 	ns.law_potential_target_pct = 0.0
 	ns.law_other_revenue_pct_gdp = 0.0
 	ns.bloc_offset = {}
+	ns.offset_by_source = {}  # its sources, reset with it
 	# V1.4b. Reset here rather than in Companies.init_nation() for the reason the
 	# three law_* accumulators above are: whatever WRITES a field resets it, and a
 	# regulation is a law. companies.gd only reads this one, exactly as economy.gd
@@ -290,7 +291,7 @@ static func _tick_held_bills(state, ns, loader) -> void:
 		# constant carries has always been a cost. Gated on the origin since the
 		# ultra pass 2: an assembly bill's release charges nothing.
 		if origin != "assembly":
-			Government.penalise_blocs(ns, -ChambersK.UPPER_OVERRIDE_OFFSET)
+			Government.penalise_blocs(ns, -ChambersK.UPPER_OVERRIDE_OFFSET, "government")
 			released["override_offset"] = -ChambersK.UPPER_OVERRIDE_OFFSET
 		else:
 			# The ultra pass-3 finding: the release was silent everywhere but
@@ -608,7 +609,7 @@ static func apply(state, ns, law, loader) -> void:
 	if law.repeals != "":
 		_subtract_ledger(state, ns, loader, law.repeals)
 	var before := _effect_snapshot(ns, law.effects)
-	apply_effects(state, ns, law.effects, loader)
+	apply_effects(state, ns, law.effects, loader, "laws")
 	_record_ledger(state, ns, law, before, _effect_snapshot(ns, law.effects))
 	if law.once:
 		ns.passed_law_ids[law.id] = true
@@ -800,7 +801,7 @@ static func _subtract_ledger(state, ns, loader, law_id: String) -> void:
 		for term in channels["society"]:
 			terms[term] = -float(channels["society"][term])
 		negated["society"] = terms
-	apply_effects(state, ns, negated, loader)
+	apply_effects(state, ns, negated, loader, "laws")
 	ns.law_ledger.erase(law_id)
 	# V4.4: the erase is silent otherwise, and the law_repealed hook needs to know
 	# WHEN. One writer, one reader (events.gd), sparse.
@@ -865,8 +866,10 @@ static func _budget_removal(register: Dictionary, key: String, recorded: float) 
 ## through a vote where an event choice reaches them through a decision made under a
 ## deadline. Same mechanism, different route, one writer.
 ##
-## `loader` stays required for apply()'s own reason -- see its header.
-static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
+## `loader` stays required for apply()'s own reason -- see its header. `source` is
+## required too: it names the bloc_offset row a price lands on (call A PR 2's
+## offset_by_source, "laws", "events", "acts", ...), and only the caller knows it.
+static func apply_effects(state, ns, effects: Dictionary, loader, source: String) -> void:
 	var pending := {}
 	if effects.has("tax_rates_pct"):
 		var rates := {}
@@ -909,11 +912,7 @@ static func apply_effects(state, ns, effects: Dictionary, loader) -> void:
 
 	if effects.has("bloc_offset"):
 		for bloc in effects["bloc_offset"]:
-			var current: float = float(ns.bloc_offset.get(bloc, 0.0))
-			ns.bloc_offset[bloc] = clampf(
-				current + float(effects["bloc_offset"][bloc]),
-				LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX
-			)
+			ns.add_bloc_offset(bloc, float(effects["bloc_offset"][bloc]), source, LK.BLOC_OFFSET_MIN, LK.BLOC_OFFSET_MAX)
 
 	# V1.4b, THE FIFTH EFFECT CHANNEL REACHED FROM THIS SIDE. A subsidy reaches
 	# effects.company through Companies.execute() as an executive act; a regulation

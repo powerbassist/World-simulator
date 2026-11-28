@@ -132,7 +132,7 @@ static func dissolve(state, ns) -> void:
 	ns.last_dissolution = {"year": state.year, "month": state.month}
 	FrontPage.note_moment(state, ns, "dissolution", "called")
 
-	GovernmentSim.penalise_blocs(ns, DK.DISSOLUTION_BLOC_PENALTY)
+	GovernmentSim.penalise_blocs(ns, DK.DISSOLUTION_BLOC_PENALTY, "government")
 
 
 ## Count the lockout down. Its own module rather than folded into

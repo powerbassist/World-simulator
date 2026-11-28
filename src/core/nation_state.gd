@@ -748,6 +748,32 @@ var law_other_revenue_pct_gdp: float = 0.0
 ## in which renaming a serialised field is free. See docs/diplomacy-model.md.
 var bloc_offset := {}
 
+## Call A, PR 2: source -> {bloc -> points of bloc_offset that source wrote}, the delta
+## each write APPLIED (after its clamp), so for a game started on this build each bloc's
+## offset is the sum of its sources. absent_ok: an older save reads {}, and its whole
+## offset then shows as "earlier" (bloc_offset minus the sources), true of every save
+## made before the register, so no bump. tests/test_offsets_by_source.gd.
+var offset_by_source := {}
+
+
+## THE one writer of bloc_offset (tests/test_offsets_by_source.gd reads src/ for any
+## other). Here rather than in Opinion because two writers are pinned leaves that may
+## preload no system (investment.gd, projects.gd); the bounds come from the caller, as
+## the clamp always did, so a bare writer passes -INF and INF and stays bare.
+func add_bloc_offset(bloc: String, delta: float, source: String, lo: float, hi: float) -> void:
+	var before := float(bloc_offset.get(bloc, 0.0))
+	var after := clampf(before + delta, lo, hi)
+	bloc_offset[bloc] = after
+	# The source books what it moved inside bounds `before` had not already broken. An
+	# offset past a bound (an unclamped writer left it there) is pulled back by this
+	# clamp, and that pull-back books to "bound", never to the source that tripped it.
+	var own := clampf(before + delta, minf(lo, before), maxf(hi, before)) - before
+	for pair in [[source, own], ["bound", (after - before) - own]]:
+		if pair[0] == source or float(pair[1]) != 0.0:
+			var by: Dictionary = offset_by_source.get(pair[0], {})
+			by[bloc] = float(by.get(bloc, 0.0)) + float(pair[1])
+			offset_by_source[pair[0]] = by
+
 ## String law id -> true. A law with `once = true` that has passed can never be
 ## proposed again; a law that failed and has `cooldown_months > 0` goes in
 ## law_cooldown_months instead, not here.

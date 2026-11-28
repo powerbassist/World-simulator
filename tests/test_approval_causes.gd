@@ -74,7 +74,7 @@ func _test_the_rows_sum_to_the_target_every_month() -> void:
 				_fail("month %d: the split's approval %.6f is not the headline %.6f" % [i + 1, float(c.get("approval", NAN)), float(ns.overall_approval_pct)])
 			if absf(float(c.get("lag", NAN)) - (float(ns.overall_approval_pct) - target)) > EPS:
 				_fail("month %d: the lag %.6f is not approval minus target" % [i + 1, float(c.get("lag", NAN))])
-			for key in ["neutral", "time_in_office", "competence", "programme", "direct", "unrest", "clamp"]:
+			for key in ["neutral", "time_in_office", "competence", "programme", "direct:earlier", "unrest", "clamp"]:
 				if not rows.has(key):
 					_fail("month %d: no '%s' row: %s" % [i + 1, key, rows.keys()])
 			for issue in ns.issue_salience.keys():

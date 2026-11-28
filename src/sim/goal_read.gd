@@ -40,7 +40,7 @@ static func read(state, loader, measure: Dictionary) -> Dictionary:
 	var impulse_before := float(sns.demand_impulse_pct)
 	var vote: Dictionary
 	if law != null:
-		Legislature.apply_effects(sim, sns, law.effects, loader)
+		Legislature.apply_effects(sim, sns, law.effects, loader, "laws")
 		vote = Legislature.resolve_vote(ns, parties, law, Legislature.takes_route(ns, law, false))
 	else:
 		var bill := {_channel(measure): {String(measure["key"]): float(measure["step"])}}
