@@ -87,6 +87,7 @@ func _run() -> void:
 		return
 
 	_check_no_blocking_holder_at_start()
+	_check_leaving_an_unsaved_game_asks()
 	_check_the_pause_menu_still_opens_and_closes()
 	_check_map_is_the_background()
 	_check_hud_lets_the_map_through()
@@ -537,6 +538,57 @@ func _press(keycode: int) -> void:
 	event.keycode = keycode
 	event.pressed = true
 	_main._unhandled_input(event)
+
+
+## G19 (blind play 11-28): Quit closed at once. There is no autosave, so Quit and Main Menu ask first once the
+## game has moved since it was last on disk. Both signals are cut from what they do: a real Quit would end the run.
+func _check_leaving_an_unsaved_game_asks() -> void:
+	var menu = _main._pause_menu
+	if not menu.has_method("changed"):
+		_fail("the pause menu cannot say whether the game was saved")
+		return
+	if menu.changed():
+		_fail("a game just started reads as unsaved")
+	var gone := {"quit": 0, "menu": 0}
+	for pair in [["quit_requested", "quit"], ["main_menu_requested", "menu"]]:
+		for link in menu.get_signal_connection_list(pair[0]):
+			menu.disconnect(pair[0], link["callable"])
+		menu.connect(pair[0], func() -> void: gone[pair[1]] += 1)
+	var button := func(text: String) -> Button:
+		for node in menu.find_children("*", "Button", true, false):
+			if (node as Button).text == text:
+				return node
+		_fail("no pause menu button '%s'" % text)
+		return Button.new()
+	var ns = _main._state.player()
+	var before: float = ns.unrest_pct
+	for row in [["Quit", "Quit without saving", "quit"], ["Main Menu", "Leave without saving", "menu"]]:
+		menu.stamp()
+		_main._open_pause_menu()
+		button.call(row[0]).pressed.emit()
+		if gone[row[2]] != 1:
+			_fail("%s on a saved game did not leave at once" % row[0])
+		ns.unrest_pct += 1.0
+		button.call(row[0]).pressed.emit()
+		if gone[row[2]] != 1 or not menu.warns():
+			_fail("%s on a changed game did not ask first" % row[0])
+		button.call(row[1]).pressed.emit()
+		if gone[row[2]] != 2:
+			_fail("'%s' did not leave" % row[1])
+		_main._close_pause_menu()
+		_main._open_pause_menu()
+		if menu.warns():
+			_fail("the question about %s outlived the menu's closing" % row[0])
+		button.call(row[0])
+		_main._close_pause_menu()
+	_main._on_save_requested("g19_probe")
+	if menu.changed():
+		_fail("a game just saved reads as unsaved")
+	_main._clock.day += 1
+	if not menu.changed():
+		_fail("a day gone by reads as saved")
+	_main._clock.day -= 1
+	ns.unrest_pct = before
 
 
 ## B16's focus/hotkey trap: with the save dialog visible, the single-letter

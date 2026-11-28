@@ -664,6 +664,7 @@ func _ready() -> void:
 	_pause_menu = PauseMenu.new()
 	_stack.add(ScreenStack.SYSTEM, _pause_menu, true, _close_pause_menu)
 	_set_pause_menu_visible(false)
+	_pause_menu.watch(self)
 	_pause_menu.resumed.connect(_close_pause_menu)
 	_pause_menu.save_load_requested.connect(func():
 		_set_pause_menu_visible(false)
@@ -675,9 +676,7 @@ func _ready() -> void:
 		_set_pause_menu_visible(false)
 		_settings_panel.show()
 	)
-	_pause_menu.main_menu_requested.connect(func():
-		get_tree().change_scene_to_file(MENU_SCENE)
-	)
+	_pause_menu.main_menu_requested.connect(func(): get_tree().change_scene_to_file(MENU_SCENE))
 
 	_clock.day_advanced.connect(_on_day_advanced)
 	_clock.month_elapsed.connect(_on_month_elapsed)
@@ -1454,6 +1453,7 @@ func _resolve_summit(choice_id: String) -> void:
 func _on_save_requested(slot: String) -> void:
 	var error := SaveManager.save_game(_state, _clock, slot)
 	if error.is_empty():
+		_pause_menu.stamp()
 		_save_load_panel.report(tr("Saved '%s'.") % slot)
 	else:
 		_save_load_panel.report(tr("Save failed: %s") % error)
