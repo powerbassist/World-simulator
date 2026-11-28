@@ -82,6 +82,7 @@ const DiaryDriver = preload("res://src/ui/diary_driver.gd")
 const IndustryNews = preload("res://src/ui/industry_news.gd")
 const AssemblyNews = preload("res://src/ui/assembly_news.gd")
 const ProposalNote = preload("res://src/ui/proposal_note.gd")
+const FinanceQueue = preload("res://src/ui/finance_queue.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 
 const MENU_SCENE := "res://src/ui/menu.tscn"
@@ -1019,14 +1020,12 @@ func _unhandled_input(event: InputEvent) -> void:
 ## finance bill (docs/design/finance-bill.md). The acknowledgment the playtest found
 ## missing (F3): it says the bill waits for the vote, or why it was refused.
 func _fiscal_committed(label: String, tabling: Dictionary, before: Dictionary) -> void:
-	_queue_effect(label, before)
-	var moves := int(tabling.get("moves", 0))
-	# Share moves alone (Finances slice 5): no bill was put; they took effect at once, with no vote.
-	if not bool(tabling.get("rows", true)):
-		_hud.inbox.push(Strings.tn("Share move applied", "Share moves applied", moves), tr("The shares moved at once; no vote was needed."))
-		_update_top_bar()
-		return
-	_hud.inbox.push(tr("Finance bill withdrawn") if bool(tabling.get("withdrawn", false)) else tr("Finance bill tabled") if bool(tabling.get("tabled", false)) else tr("Finance bill not tabled"), tr("Nothing is voted on it; the books stand as they were.") if bool(tabling.get("withdrawn", false)) else tr("The Assembly votes on it at the month's end; it applies if carried.") if bool(tabling.get("tabled", false)) else tr("No finance bill is tabled, another bill holds this month's slot, or no line moved.") + (" " + Strings.tn("%d share move was applied all the same.", "%d share moves were applied all the same.", moves) % moves if moves > 0 else ""))
+	# A queued bill alone changed nothing yet: no effect to measure, the pages only redraw.
+	if bool(tabling.get("queued", false)) and int(tabling.get("moves", 0)) == 0:
+		_windows.mark_all_dirty()
+	else:
+		_queue_effect(label, before)
+	_hud.inbox.callv("push", FinanceQueue.card(tabling))
 	_update_top_bar()
 
 

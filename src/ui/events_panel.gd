@@ -223,7 +223,8 @@ func _follow(ns) -> String:
 		return _selected  # its offer gone: the page is what was booked (T1)
 	if _selected.begins_with("file:") or _selected.begins_with("desk:"):
 		if _shown_event == "":
-			return _selected
+			# A request's card put up again has a new id (G5): the page goes with it.
+			return "file:" + preload("res://src/ui/audience_driver.gd").lane_of(_main).current(_selected.trim_prefix("file:")) if _selected.begins_with("file:") else _selected
 		if ns.event_queue.any(func(e): return String(e.get("event_id", "")) == _shown_event):
 			return "desk:" + _shown_event
 		for record in ns.event_history:  # newest first

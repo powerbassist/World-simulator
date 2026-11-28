@@ -14,6 +14,7 @@ extends SceneTree
 ##     (now + months_left - 1), the default is marked exactly once, the buttons number the
 ##     choices (so the press index IS the choice index main.gd answers);
 ##   - a file that is gone reads as such, never as a stale page;
+##   - a request still waiting never reads "Answered." because its card was put up again (G5, blind play 11-28);
 ##   - the `short` label: optional, at most SHORT_MAX characters, absent reads as no short.
 
 const GameEvent = preload("res://src/core/event.gd")
@@ -51,6 +52,7 @@ func _process(_delta: float) -> bool:
 	_check_an_event_file()
 	_check_request_titles()
 	_check_a_gone_file()
+	_check_a_re_put_request_keeps_its_page()
 	_finish()
 	return true
 
@@ -271,6 +273,47 @@ func _check_request_titles() -> void:
 		_fail("a want with no target does not read as the plain ask")
 	if FileRead.ask_title(loader, ns, {"object": "programme:nothing_like_it", "stance": "oppose"}) != Strings.t("Asks to see you"):
 		_fail("a programme the register cannot name shows its raw id")
+
+
+## G5: a phone call spends the month's call, so the lane puts the request's card up again under a new id. Both pages
+## that showed the old card go on showing the request.
+func _check_a_re_put_request_keeps_its_page() -> void:
+	var ns = _main._state.player()
+	for person in _main._loader.people.get(String(ns.id), []):
+		if not person.wants.is_empty() and String(person.id) != String(ns.head_of_state_person_id):
+			Audiences._arrive(ns, person, person.wants[0], int(_main._state.year) * 12 + int(_main._state.month), [])
+			break
+	AudienceDriver.refresh(_main)
+	var lane = AudienceDriver.lane_of(_main)
+	if lane.request_ids().is_empty():
+		_fail("premise: no request card for the re-put check")
+		return
+	var request_id := String(lane.request_ids()[0])
+	var old: String = lane.card_of(request_id)
+	var folder = _main._events_panel
+	_main._windows.open("events")
+	folder.select("file:" + old)
+	var view = FilesDriver.view_of(_main)
+	view.show_file(old)
+	ns.phone_calls[String(Audiences.request(ns, request_id)["person_id"])] = int(_main._state.year) * 12 + int(_main._state.month)
+	AudienceDriver.refresh(_main)
+	if lane.card_of(request_id) == old:
+		_fail("premise: a spent call did not put the card up again")
+		return
+	folder._dirty = true
+	folder._process(0.0)
+	var said := PackedStringArray()
+	_texts(folder._page, said)
+	if " ".join(said).contains(Strings.t("Answered.")):
+		_fail("the folder says a waiting request is answered: %s" % [said])
+	if folder.selected() != "file:" + lane.card_of(request_id):
+		_fail("the folder does not follow the request's new card: %s" % folder.selected())
+	_main._windows.open("file")
+	view._rebuild()
+	said = PackedStringArray()
+	_texts(view, said)
+	if " ".join(said).contains(Strings.t("Answered.")):
+		_fail("the docked page says a waiting request is answered: %s" % [said])
 
 
 func _check_a_gone_file() -> void:

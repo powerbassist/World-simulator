@@ -23,6 +23,8 @@ const Budget = preload("res://src/sim/budget.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const BillVerbs = preload("res://src/ui/bill_verbs.gd")
+const DateText = preload("res://src/ui/date_text.gd")
 
 var _failures: Array[String] = []
 var _loader
@@ -62,7 +64,7 @@ func _process(_delta: float) -> bool:
 			_check_a_refused_entry_puts_the_figure_back()
 			_check_the_effect_line_is_the_strips_figure()
 			_check_the_brackets_are_a_lever_of_income()
-			_check_a_refusal_disables_the_button_and_says_why()
+			_check_a_held_slot_queues_the_budget()
 			_check_table_locks_the_rows_and_withdraw_frees_them()
 			_check_another_row_and_a_reopen_keep_the_draft()
 			_check_a_refused_table_keeps_the_draft()
@@ -294,23 +296,61 @@ func _check_the_brackets_are_a_lever_of_income() -> void:
 	_panel._draft.revert()
 
 
-func _check_a_refusal_disables_the_button_and_says_why() -> void:
+## G2 (blind play 11-28): another bill holds the slot, so the bar's verb queues the draft and names the month it
+## divides, behind the bills already queued; a full queue or a budget text already there greys it with its reason.
+func _check_a_held_slot_queues_the_budget() -> void:
 	var ns = _state.player()
-	ns.tabled_bill = {"law_id": "some_law", "vote_year": 2026, "vote_month": 1, "vote_day": 31}
-	_panel._stamp = ""
-	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
-	_panel._dirty = true
+	var held := {"law_id": "some_law", "vote_year": 2026, "vote_month": 1, "vote_day": 31}
+	ns.tabled_bill = held.duplicate()
+	ns.bill_queue = [{"law_id": "law_a"}, {"law_id": "law_b"}]
+	var table := _redraft()
+	var lands := BillVerbs.month_name(_state, 2)
+	if table.disabled or table.text != Strings.t("Queue for %s") % lands:
+		_fail("held slot: the verb reads '%s' (disabled %s), want a live 'Queue for %s'" % [table.text, table.disabled, lands])
+	var day := BillVerbs.division(_state, 2)
+	var when := DateText.day_month(int(day["day"]), int(day["month"]))
+	if not _panel._foot._text.text.contains(when):
+		_fail("held slot: the bar does not say the bill divides on %s: '%s'" % [when, _panel._foot._text.text])
+	if not _panel._foot._title.text.contains(DateText.month_long(int(day["month"]))):
+		_fail("held slot: the bar's title is not the month the bill lands in: '%s'" % _panel._foot._title.text)
+	var heard := []
+	_panel.committed.connect(func(_before: Dictionary, tabling: Dictionary) -> void: heard.append(tabling), CONNECT_ONE_SHOT)
+	table.pressed.emit()
+	if ns.tabled_bill != held or ns.bill_queue.size() != 3 or not (ns.bill_queue[2] as Dictionary).has("finance"):
+		_fail("held slot: the press did not queue the budget third: %s" % [ns.bill_queue])
+	if heard.is_empty() or not bool(heard[0].get("queued", false)) or not _panel._draft.is_empty():
+		_fail("held slot: the press is not told as queued, or the draft stands: %s" % [heard])
+	_panel._foot._stamp = ""
 	_panel._process(0.0)
-	var table: Button = _panel._foot.find_child("Table", true, false)
-	if not table.disabled:
-		_fail("the button is live while another bill holds the slot")
-	if not _panel._foot._text.text.contains("Another bill holds"):
-		_fail("the refusal is not said in words: '%s'" % _panel._foot._text.text)
+	if not _panel._foot._text.text.contains(when) or not (_panel._foot.find_child("OpenBill", true, false) as Button).visible:
+		_fail("queued: the empty bar does not say when the queued budget divides: '%s'" % _panel._foot._text.text)
+	var gone := []
+	_panel.go_requested.connect(func(id: String) -> void: gone.append(id), CONNECT_ONE_SHOT)
+	(_panel._foot.find_child("OpenBill", true, false) as Button).pressed.emit()
+	if gone != ["legislature"]:
+		_fail("queued: Open the bill goes to %s, want the chamber's page" % [gone])
+	table = _redraft()
+	if not table.disabled or not _panel._foot._text.text.contains(Strings.t("A budget text is already queued.")):
+		_fail("a second budget: the verb is live or the reason is missing: '%s'" % _panel._foot._text.text)
+	ns.bill_queue = [{"law_id": "law_a"}, {"law_id": "law_b"}, {"law_id": "law_c"}]
+	table = _redraft()
+	if not table.disabled or not _panel._foot._text.text.contains(Strings.t("The queue holds three bills. Take one out first.")):
+		_fail("full queue: the verb is live or the reason is missing: '%s'" % _panel._foot._text.text)
 	ns.tabled_bill = {}
+	ns.bill_queue = []
 	_panel._draft.revert()
-	_panel._stamp = ""
+	_panel._foot._stamp = ""
 	_panel._dirty = true
 	_panel._process(0.0)
+
+
+## A one-step VAT draft painted fresh; the bar's verb.
+func _redraft() -> Button:
+	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(_state.player().tax_rates_pct["vat"]) + 2.0)
+	_panel._foot._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+	return _panel._foot.find_child("Table", true, false)
 
 
 func _check_table_locks_the_rows_and_withdraw_frees_them() -> void:
@@ -370,6 +410,8 @@ func _check_another_row_and_a_reopen_keep_the_draft() -> void:
 func _check_a_refused_table_keeps_the_draft() -> void:
 	var ns = _state.player()
 	ns.tabled_bill = {"law_id": "some_law", "vote_year": 2026, "vote_month": 1, "vote_day": 31}
+	# A full queue: with room in it the press queues the budget instead (G2).
+	ns.bill_queue = [{"law_id": "law_a"}, {"law_id": "law_b"}, {"law_id": "law_c"}]
 	_panel._draft.set_value(FinanceDraft.TAX, "vat", float(ns.tax_rates_pct["vat"]) + 2.0)
 	var heard := []
 	_panel.committed.connect(func(_before: Dictionary, tabling: Dictionary) -> void: heard.append(tabling), CONNECT_ONE_SHOT)
@@ -379,6 +421,7 @@ func _check_a_refused_table_keeps_the_draft() -> void:
 	if _panel._draft.count() != 1:
 		_fail("a refused table cleared the draft")
 	ns.tabled_bill = {}
+	ns.bill_queue = []
 	_panel._draft.revert()
 
 

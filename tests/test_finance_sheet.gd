@@ -22,6 +22,7 @@ const EffectsStrip = preload("res://src/ui/effects_strip.gd")
 const Government = preload("res://src/sim/government.gd")
 const Labels = preload("res://src/ui/labels.gd")
 const Strings = preload("res://src/ui/strings.gd")
+const BillVerbs = preload("res://src/ui/bill_verbs.gd")
 const Num = preload("res://src/ui/num.gd")
 
 var _failures: Array[String] = []
@@ -331,16 +332,26 @@ func _check_a_refusal_downs_table_and_the_force_box() -> void:
 	_open_sheet()
 	_panel._sheet._stamp = ""
 	_settle()
+	# G2: the sheet's verb queues, as the bar's does.
 	var table := _node("SheetTable") as Button
-	if table == null or not table.disabled:
-		_fail("another bill holds the slot and the sheet's Table is still up")
+	if table == null or table.disabled or table.text != Strings.t("Queue for %s") % BillVerbs.month_name(_state, 0):
+		_fail("another bill holds the slot and the sheet's verb is not the queue's: '%s'" % (table.text if table != null else "<none>"))
 	if not _text_of(_sheet()).contains("Another bill holds this month's slot."):
 		_fail("a refused sheet does not say why")
 	var force := _node("Force") as CheckBox
 	if force != null and force.is_visible_in_tree():
 		_fail("a refused draft offers a forced passage")
-	if _panel.get_viewport().gui_get_focus_owner() != _node("SheetClose"):
-		_fail("a refused sheet does not hand the keyboard to Close")
+	if _panel.get_viewport().gui_get_focus_owner() != table:
+		_fail("a sheet that can queue does not hand the keyboard to its verb")
+	_state.player().bill_queue = [{"law_id": "law_a"}, {"law_id": "law_b"}, {"law_id": "law_c"}]
+	_panel._sheet._stamp = ""
+	_panel._dirty = true
+	_panel._process(0.0)
+	_settle()
+	table = _node("SheetTable") as Button
+	if table == null or not table.disabled or not _text_of(_sheet()).contains(Strings.t("The queue holds three bills. Take one out first.")):
+		_fail("full queue: the sheet's verb is up or says nothing")
+	_state.player().bill_queue = []
 	_state.player().tabled_bill = {}
 	_panel.shared_draft().revert()
 	_panel._sheet.hide()

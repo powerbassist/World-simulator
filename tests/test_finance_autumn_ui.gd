@@ -19,7 +19,7 @@ const Num = preload("res://src/ui/num.gd")
 const TaxLibrary = preload("res://src/core/tax_library.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceUnits = preload("res://src/ui/finance_units.gd")
-const FinanceFoot = preload("res://src/ui/finance_foot.gd")
+const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
 const FinancePrice = preload("res://src/ui/finance_price.gd")
 const LedgerBox = preload("res://src/ui/ledger_box.gd")
 const Click = preload("res://tests/click.gd")
@@ -391,7 +391,7 @@ func _check_the_autumn_rows_leave_when_the_month_ends() -> void:
 		_fail("the ordinary row did not stay (%d rows)" % draft.count())
 	if not _panel._with.text.contains("autumn month is over"):
 		_fail("the page does not say the autumn rows were taken out: %s" % _panel._with.text)
-	if not FinanceFoot.reason("autumn").contains("autumn month"):
+	if not FinanceRefusal.reason("autumn").contains("autumn month"):
 		_fail("a refusal for the autumn does not name the month")
 	_panel._on_moved()
 	_panel._paint(ns)

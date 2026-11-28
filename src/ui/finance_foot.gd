@@ -43,6 +43,7 @@ const Strings = preload("res://src/ui/strings.gd")
 const DateText = preload("res://src/ui/date_text.gd")
 const Num = preload("res://src/ui/num.gd")
 const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
+const FinanceQueue = preload("res://src/ui/finance_queue.gd")
 const FinanceStrip = preload("res://src/ui/finance_strip.gd")
 const FinancePages = preload("res://src/ui/finance_pages.gd")
 const FinanceLanding = preload("res://src/ui/finance_landing.gd")
@@ -248,7 +249,7 @@ func _process(_delta: float) -> void:
 	if _state == null or not is_visible_in_tree() or _state.player() == null:
 		return
 	var ns = _state.player()
-	var stamp := "%d|%d|%d|%s|%d|%d" % [_state.year, _state.month, _state.day, str(ns.tabled_bill), _draft.count(), _draft.moves().size()]
+	var stamp := FinanceQueue.stamp(_state, ns, _draft)
 	if not is_equal_approx(custom_minimum_size.x, _width()):
 		stamp = ""
 	if stamp != _stamp:
@@ -271,26 +272,26 @@ func refresh(state, loader, draft, price) -> void:
 	var tabled = FinanceBillLaw.tabled(ns)
 	var drafted: bool = not draft.is_empty()
 	var moves: int = draft.moves().size()
-	_stamp = "%d|%d|%d|%s|%d|%d" % [state.year, state.month, state.day, str(ns.tabled_bill), draft.count(), moves]
+	_stamp = FinanceQueue.stamp(state, ns, draft)
 	custom_minimum_size.x = _width()  # the text size may have moved
 	_lead_wait = 0
 	var vote_on := DateText.day_mon(Calendar.days_in_month(int(state.year), int(state.month)), int(state.month))
-	_title.text = Strings.t("Finance bill · %s") % DateText.month_long(int(state.month))
+	var waiting: Dictionary = FinanceQueue.waiting(state) if not drafted and tabled == null else {}
 	_text.visible = true
 	_verdict.visible = false
 	_table.visible = drafted or moves > 0
 	_discard.visible = drafted or moves > 0
 	_review.visible = drafted
-	_open.visible = not drafted and tabled != null
+	_open.visible = not drafted and (tabled != null or not waiting.is_empty())
 	_withdraw.visible = tabled != null
 	_changes.visible = drafted
 	_fall.visible = drafted
 	_vote_box.visible = false
-	_empty.visible = not drafted and moves == 0 and tabled == null
-	_date.visible = drafted or tabled != null
+	_empty.visible = not drafted and moves == 0 and tabled == null and waiting.is_empty()
+	_date.visible = drafted or tabled != null or not waiting.is_empty()
 	if tabled != null:
 		vote_on = DateText.day_mon(int(ns.tabled_bill.get("vote_day", 1)), int(ns.tabled_bill.get("vote_month", 1)))
-	_date_words().text = Strings.t("divides %s") % vote_on
+	vote_on = _head_for(state, waiting, vote_on)
 	_empty.text = Strings.t("No change yet.")
 	if not drafted and _dropped_at >= 0:
 		# The changes went with the last one: the focus goes to a verb still here (Discard all while share moves remain,
@@ -299,7 +300,7 @@ func refresh(state, loader, draft, price) -> void:
 		var next: Control = _discard if _discard.visible else (_open if _open.visible else null)
 		if next != null:
 			next.grab_focus()
-	var before_vote := ""
+	var before_vote := String(waiting.get("text", ""))
 	if tabled != null:
 		before_vote = Strings.t("A finance bill is before the Assembly: it divides on %s.") % vote_on
 	if not drafted and moves > 0:
@@ -311,10 +312,14 @@ func refresh(state, loader, draft, price) -> void:
 		return
 	if not drafted:
 		_text.text = before_vote
-		_strip.say(_title.text, before_vote if tabled != null else _empty.text, "", false, false)
+		_strip.say(_title.text, before_vote if before_vote != "" else _empty.text, "", false, false)
 		return
 	var read: Dictionary = FinanceRead.draft(state, loader, draft.bill())
 	var refusal := String(read["refusal"])
+	# G2: another bill holds the slot, so the verb queues the draft and the bar is dated by the month it lands in.
+	var queue: Dictionary = FinanceQueue.verb(state, refusal)
+	var can_queue := bool(queue.get("enabled", false))
+	vote_on = _head_for(state, queue, vote_on)
 	# The same pricing as the sheet (FinancePrice.whole): the bill the vote decides. On an amendment the money is the
 	# whole bill's, and the sentence says so.
 	var whole: Dictionary = price.whole(loader, draft, refusal != "")
@@ -334,17 +339,19 @@ func refresh(state, loader, draft, price) -> void:
 		autumn.append(Strings.t("abolition of %s") % Strings.row_name("taxes", ns.tax_library[kind]))
 	if not autumn.is_empty():
 		text += ("\n" if text != "" else "") + Strings.t("The autumn bill: %s.") % ", ".join(autumn)
-	_table.text = Strings.t("Add to the bill") if tabled != null else Strings.t("Table the bill")
-	_table.disabled = refusal != ""
+	var verb := Strings.t("Add to the bill") if tabled != null else Strings.t("Table the bill")
+	_table.text = verb if String(queue.get("text", "")) == "" else String(queue["text"])
+	_table.disabled = refusal != "" and not can_queue
 	if moves > 0:
 		text += ("\n" if text != "" else "") + Strings.tn("%d share move applies now; the rest is voted on %s.", "%d share moves apply now; the rest is voted on %s.", moves) % [
 			moves, vote_on]
-	if refusal != "":
-		text = reason(refusal) + ("\n" + text if text != "" else "")
+	var said := "" if refusal == "" else FinanceRefusal.reason(refusal) + (" " + String(queue["note"]) if queue.has("note") else "")
+	if said != "":
+		text = said + ("\n" + text if text != "" else "")
 	_text.text = text
 	_text.visible = text != ""
 	var vote: Dictionary = read["vote"]
-	var verdict := reason(refusal) if refusal != "" else FinanceRefusal.carries_text(vote)
+	var verdict := said if refusal != "" else FinanceRefusal.carries_text(vote)
 	if refusal == "":
 		# The seats are the bar's (its legend prints each count); the verdict says the result in words.
 		_vote(vote)
@@ -353,7 +360,17 @@ func refresh(state, loader, draft, price) -> void:
 		_verdict.visible = true
 	_strip.say(_title.text, Strings.tn("%d change", "%d changes", draft.count()) % draft.count() + " · " + \
 		Strings.t("deficit %s → %s bn a year") % [Num.f(float(whole["deficit_now_bn"]), 0), Num.f(float(whole["deficit_after_bn"]), 0)],
-		verdict, refusal == "" and bool(vote.get("passed", false)), refusal != "" or not bool(vote.get("passed", false)))
+		verdict, refusal == "" and bool(vote.get("passed", false)), not can_queue and (refusal != "" or not bool(vote.get("passed", false))))
+
+
+## The title and the date tag: this month's bill, or the month a queued one (`lands`: {month, day}) divides in.
+## Returns the vote's date as the bar writes it.
+func _head_for(state, lands: Dictionary, vote_on: String) -> String:
+	if lands.has("month"):
+		vote_on = DateText.day_mon(int(lands["day"]), int(lands["month"]))
+	_title.text = Strings.t("Finance bill · %s") % DateText.month_long(int(lands.get("month", state.month)))
+	_date_words().text = Strings.t("divides %s") % vote_on
+	return vote_on
 
 
 func _width() -> float:
@@ -462,11 +479,7 @@ func _vote(vote: Dictionary) -> void:
 	_vote_key = key
 	for child in _vote_box.get_children():
 		child.queue_free()
-	ChartKit.stack(_vote_box, Strings.t("Assembly, if it divided now").to_upper(), [
-		{"label": Strings.t("For"), "value": float(vote["yes_seats"])},
-		{"label": Strings.t("Against"), "value": float(vote["no_seats"])},
-		{"label": Strings.t("Undecided"), "value": float(vote["abstain_seats"])},
-	], {"places": 0, "colors": [UiTheme.GOOD, UiTheme.BAD, FinanceRows.MUTED], "marker": 0.5})
+	FinanceRefusal.division_bar(_vote_box, Strings.t("Assembly, if it divided now").to_upper(), vote)
 
 
 ## The parent's ruling (2026-11-22): one filled button a screen, the screen's next step. A tab that shows a PRIMARY
@@ -478,11 +491,6 @@ func _quiet_if_the_page_leads() -> void:
 	var want := "" if leads else UiTheme.PRIMARY
 	if _table.theme_type_variation != want:
 		_table.theme_type_variation = want
-
-
-## The refusal in words (finance_refusal.gd, the table the sheet and the rail both say).
-static func reason(flag: String) -> String:
-	return FinanceRefusal.reason(flag)
 
 
 ## The control the page exists to let the player press: the draft's verb, else the bill's sheet.

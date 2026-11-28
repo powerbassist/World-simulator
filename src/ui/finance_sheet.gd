@@ -20,13 +20,13 @@ signal close_pressed
 
 const FinanceBill = preload("res://src/sim/finance_bill.gd")
 const FinanceBillLaw = preload("res://src/sim/finance_bill_law.gd")
+const FinanceQueue = preload("res://src/ui/finance_queue.gd")
 const FinanceRead = preload("res://src/sim/finance_read.gd")
 const FinanceRows = preload("res://src/ui/finance_rows.gd")
 const FinanceDraft = preload("res://src/ui/finance_draft.gd")
-const FinanceFoot = preload("res://src/ui/finance_foot.gd")
+const FinanceRefusal = preload("res://src/ui/finance_refusal.gd")
 const Government = preload("res://src/sim/government.gd")
 const EffectsStrip = preload("res://src/ui/effects_strip.gd")
-const ChartKit = preload("res://src/ui/chart_kit.gd")
 const PanelKit = preload("res://src/ui/panel_kit.gd")
 const UiTheme = preload("res://src/ui/ui_theme.gd")
 const Strings = preload("res://src/ui/strings.gd")
@@ -83,7 +83,7 @@ func refresh() -> void:
 	# The whole bill, births and abolitions with the priced rows: hashing pending() alone left an autumn row
 	# drafted with the sheet open off it, and Table tabled what the player had not been shown.
 	var stamp := "%s|%d|%d|%d|%s|%s|%s|%d" % [var_to_str(_draft.bill()), _state.year, _state.month, _state.day,
-		str(_state.player().tabled_bill), UiTheme.text_scale(), Strings.language(), _draft.moves().size()]
+		str([_state.player().tabled_bill, _state.player().bill_queue]), UiTheme.text_scale(), Strings.language(), _draft.moves().size()]
 	if stamp == _stamp:
 		return
 	_stamp = stamp
@@ -126,17 +126,22 @@ func _fill(forced: bool) -> void:
 			box.remove_child(child)
 			child.queue_free()
 	var refusal := String(_read["refusal"])
+	var queue: Dictionary = FinanceQueue.verb(_state, refusal)
 	if refusal != "":
-		PanelKit.plain_line(_decision, FinanceFoot.reason(refusal), PanelKit.Tone.BAD)
+		PanelKit.plain_line(_decision, FinanceRefusal.reason(refusal), PanelKit.Tone.BAD)
+		if queue.has("note"):
+			PanelKit.plain_line(_decision, String(queue["note"]), PanelKit.Tone.PLAIN)
 	else:
 		_assembly(_state.player(), _read["vote"], forced)
-	_verbs(_tabled, refusal, forced)
+	_verbs(_tabled, refusal, forced, queue)
 
 
 func _head(ns, tabled: bool) -> void:
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 12)
-	var title := PanelKit.plain_line(line, Strings.t("Finance bill · %s") % DateText.month_long(int(_state.month)), PanelKit.Tone.PLAIN)
+	# G2: a draft the footer would queue is dated by the month it lands in.
+	var queue: Dictionary = FinanceQueue.verb(_state, String(_read["refusal"]))
+	var title := PanelKit.plain_line(line, Strings.t("Finance bill · %s") % DateText.month_long(int(queue.get("month", _state.month))), PanelKit.Tone.PLAIN)
 	title.theme_type_variation = UiTheme.MICRO
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var close := PanelKit.sized(Button.new())
@@ -146,8 +151,8 @@ func _head(ns, tabled: bool) -> void:
 	close.pressed.connect(close_pressed.emit)
 	line.add_child(close)
 	_body.add_child(line)
-	var day := _vote_day()
-	var month := int(_state.month)
+	var day := int(queue.get("day", _vote_day()))
+	var month := int(queue.get("month", _state.month))
 	if tabled:
 		day = int(ns.tabled_bill.get("vote_day", day))
 		month = int(ns.tabled_bill.get("vote_month", month))
@@ -271,11 +276,7 @@ func _assembly(ns, vote: Dictionary, forced: bool) -> void:
 			else Strings.t("It falls: the government goes and the bill with it."), PanelKit.Tone.GOOD if not bool(censure["carried"]) else PanelKit.Tone.BAD)
 		PanelKit.plain_line(_decision, Strings.t("Forcing costs standing with every bloc and with your own majority."), PanelKit.Tone.DIM)
 		return
-	ChartKit.stack(_decision, Strings.t("Assembly, if it divided now"), [
-		{"label": Strings.t("For"), "value": float(vote["yes_seats"])},
-		{"label": Strings.t("Against"), "value": float(vote["no_seats"])},
-		{"label": Strings.t("Undecided"), "value": float(vote["abstain_seats"])},
-	], {"places": 0, "colors": [UiTheme.GOOD, UiTheme.BAD, FinanceRows.MUTED], "marker": 0.5})
+	FinanceRefusal.division_bar(_decision, Strings.t("Assembly, if it divided now"), vote)
 	var rebels := 0
 	for party in vote.get("party_rebels", {}):
 		rebels += int(vote["party_rebels"][party])
@@ -295,12 +296,14 @@ func _force_box(ticked: bool) -> void:
 	_body.add_child(_force)
 
 
-func _verbs(tabled: bool, refusal: String, forced: bool) -> void:
+func _verbs(tabled: bool, refusal: String, forced: bool, queue: Dictionary) -> void:
 	var row := PanelKit.buttons(_verb_box)
 	var table := PanelKit.sized(Button.new())
 	table.name = "SheetTable"  # i18n: ok a node name, found by tests
 	table.text = Strings.t("Table and force it") if forced else (Strings.t("Add to the bill") if tabled else Strings.t("Table the bill"))
-	table.disabled = refusal != ""
+	if String(queue.get("text", "")) != "":
+		table.text = String(queue["text"])
+	table.disabled = refusal != "" and not bool(queue.get("enabled", false))
 	table.pressed.connect(func() -> void: table_pressed.emit(forced))
 	row.add_child(table)
 	if tabled:
